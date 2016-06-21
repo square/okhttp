@@ -73,12 +73,17 @@ import static okhttp3.internal.http.StatusLine.HTTP_PERM_REDIRECT;
 import static okhttp3.internal.http.StatusLine.HTTP_TEMP_REDIRECT;
 
 /**
- * Handles a single HTTP request/response pair. Each HTTP engine follows this lifecycle: <ol> <li>It
- * is created. <li>The HTTP request message is sent with sendRequest(). Once the request is sent it
- * is an error to modify the request headers. After sendRequest() has been called the request body
- * can be written to if it exists. <li>The HTTP response message is read with readResponse(). After
- * the response has been read the response headers and body can be read. All responses have a
- * response body input stream, though in some instances this stream is empty. </ol>
+ * Handles a single HTTP request/response pair. Each HTTP engine follows this lifecycle:
+ *
+ * <ol>
+ *     <li>It is created.
+ *     <li>The HTTP request message is sent with sendRequest(). Once the request is sent it is an
+ *         error to modify the request headers. After sendRequest() has been called the request body
+ *         can be written to if it exists.
+ *     <li>The HTTP response message is read with readResponse(). After the response has been read
+ *         the response headers and body can be read. All responses have a response body input
+ *         stream, though in some instances this stream is empty.
+ * </ol>
  *
  * <p>The request and response may be served by the HTTP response cache, by the network, or by both
  * in the event of a conditional GET.
@@ -151,9 +156,6 @@ public final class HttpEngine {
    */
   private Response userResponse;
 
-  private Sink requestBodyOut;
-  private BufferedSink bufferedRequestBody;
-  private final boolean callerWritesRequestBody;
   private final boolean forWebSocket;
 
   /** The cache request currently being populated from a network response. */
@@ -163,22 +165,16 @@ public final class HttpEngine {
   /**
    * @param request the HTTP request without a body. The body must be written via the engine's
    * request body stream.
-   * @param callerWritesRequestBody true for the {@code HttpURLConnection}-style interaction model
-   * where control flow is returned to the calling application to write the request body before the
-   * response body is readable.
    */
   public HttpEngine(OkHttpClient client, Request request, boolean bufferRequestBody,
-      boolean callerWritesRequestBody, boolean forWebSocket, StreamAllocation streamAllocation,
-      RetryableSink requestBodyOut, Response priorResponse) {
+      boolean forWebSocket, StreamAllocation streamAllocation, Response priorResponse) {
     this.client = client;
     this.userRequest = request;
     this.bufferRequestBody = bufferRequestBody;
-    this.callerWritesRequestBody = callerWritesRequestBody;
     this.forWebSocket = forWebSocket;
     this.streamAllocation = streamAllocation != null
         ? streamAllocation
         : new StreamAllocation(client.connectionPool(), createAddress(client, request));
-    this.requestBodyOut = requestBodyOut;
     this.priorResponse = priorResponse;
   }
 
@@ -186,13 +182,12 @@ public final class HttpEngine {
    * Figures out what the response source will be, and opens a socket to that source if necessary.
    * Prepares the request headers and gets ready to start writing the request body if it exists.
    *
-   * @throws RequestException if there was a problem with request setup. Unrecoverable.
    * @throws RouteException if the was a problem during connection via a specific route. Sometimes
    * recoverable. See {@link #recover}.
    * @throws IOException if there was a problem while making a request. Sometimes recoverable. See
    * {@link #recover(IOException, boolean)}.
    */
-  public void sendRequest() throws RequestException, RouteException, IOException {
+  public void sendRequest() throws RouteException, IOException {
     if (cacheStrategy != null) return; // Already sent.
     if (httpStream != null) throw new IllegalStateException();
 
@@ -247,29 +242,6 @@ public final class HttpEngine {
     try {
       httpStream = connect();
       httpStream.setHttpEngine(this);
-
-      if (writeRequestHeadersEagerly()) {
-        long contentLength = OkHeaders.contentLength(request);
-        if (bufferRequestBody) {
-          if (contentLength > Integer.MAX_VALUE) {
-            throw new IllegalStateException("Use setFixedLengthStreamingMode() or "
-                + "setChunkedStreamingMode() for requests larger than 2 GiB.");
-          }
-
-          if (contentLength != -1) {
-            // Buffer a request body of a known length.
-            httpStream.writeRequestHeaders(networkRequest);
-            requestBodyOut = new RetryableSink((int) contentLength);
-          } else {
-            // Buffer a request body of an unknown length. Don't write request headers until the
-            // entire body is ready; otherwise we can't set the Content-Length header correctly.
-            requestBodyOut = new RetryableSink();
-          }
-        } else {
-          httpStream.writeRequestHeaders(networkRequest);
-          requestBodyOut = httpStream.createRequestBody(networkRequest, contentLength);
-        }
-      }
       success = true;
     } finally {
       // If we're crashing on I/O or otherwise, don't leak the cache body.
@@ -279,19 +251,7 @@ public final class HttpEngine {
     }
   }
 
-  /**
-   * If the caller's control flow writes the request body, we need to create that stream
-   * immediately. And that means we need to immediately write the request headers, so we can
-   * start streaming the request body. (We may already have a request body if we're retrying a
-   * failed POST.)
-   */
-  private boolean writeRequestHeadersEagerly() {
-    return callerWritesRequestBody
-        && permitsRequestBody(networkRequest)
-        && requestBodyOut == null;
-  }
-
-  private HttpStream connect() throws RouteException, RequestException, IOException {
+  private HttpStream connect() throws RouteException, IOException {
     boolean doExtensiveHealthChecks = !networkRequest.method().equals("GET");
     return streamAllocation.newStream(client.connectTimeoutMillis(),
         client.readTimeoutMillis(), client.writeTimeoutMillis(),
@@ -317,29 +277,6 @@ public final class HttpEngine {
     return HttpMethod.permitsRequestBody(request.method());
   }
 
-  /** Returns the request body or null if this request doesn't have a body. */
-  public Sink getRequestBody() {
-    if (cacheStrategy == null) throw new IllegalStateException();
-    return requestBodyOut;
-  }
-
-  public BufferedSink getBufferedRequestBody() {
-    BufferedSink result = bufferedRequestBody;
-    if (result != null) return result;
-    Sink requestBody = getRequestBody();
-    return requestBody != null
-        ? (bufferedRequestBody = Okio.buffer(requestBody))
-        : null;
-  }
-
-  public boolean hasResponse() {
-    return userResponse != null;
-  }
-
-  public Request getRequest() {
-    return userRequest;
-  }
-
   /** Returns the engine's response. */
   // TODO: the returned body will always be null.
   public Response getResponse() {
@@ -356,15 +293,11 @@ public final class HttpEngine {
    * engine that should be used for the retry if {@code e} is recoverable, or null if the failure is
    * permanent. Requests with a body can only be recovered if the body is buffered.
    */
-  public HttpEngine recover(IOException e, boolean routeException, Sink requestBodyOut) {
+  public HttpEngine recover(IOException e, boolean routeException) {
     streamAllocation.streamFailed(e);
 
     if (!client.retryOnConnectionFailure()) {
       return null; // The application layer has forbidden retries.
-    }
-
-    if (requestBodyOut != null && !(requestBodyOut instanceof RetryableSink)) {
-      return null; // The body on this request cannot be retried.
     }
 
     if (!isRecoverable(e, routeException)) {
@@ -378,12 +311,8 @@ public final class HttpEngine {
     StreamAllocation streamAllocation = close();
 
     // For failure recovery, use the same route selector with a new connection.
-    return new HttpEngine(client, userRequest, bufferRequestBody, callerWritesRequestBody,
-        forWebSocket, streamAllocation, (RetryableSink) requestBodyOut, priorResponse);
-  }
-
-  public HttpEngine recover(IOException e, boolean routeException) {
-    return recover(e, routeException, requestBodyOut);
+    return new HttpEngine(client, userRequest, bufferRequestBody,
+        forWebSocket, streamAllocation, priorResponse);
   }
 
   private boolean isRecoverable(IOException e, boolean routeException) {
@@ -464,13 +393,6 @@ public final class HttpEngine {
    * which itself must be used or released.
    */
   public StreamAllocation close() {
-    if (bufferedRequestBody != null) {
-      // This also closes the wrapped requestBodyOut.
-      closeQuietly(bufferedRequestBody);
-    } else if (requestBodyOut != null) {
-      closeQuietly(requestBodyOut);
-    }
-
     if (userResponse != null) {
       closeQuietly(userResponse.body());
     } else {
@@ -608,41 +530,9 @@ public final class HttpEngine {
     if (forWebSocket) {
       httpStream.writeRequestHeaders(networkRequest);
       networkResponse = readNetworkResponse();
-    } else if (!callerWritesRequestBody) {
+    } else {
       networkResponse = new NetworkInterceptorChain(0, networkRequest,
           streamAllocation.connection()).proceed(networkRequest);
-    } else {
-      // Emit the request body's buffer so that everything is in requestBodyOut.
-      if (bufferedRequestBody != null && bufferedRequestBody.buffer().size() > 0) {
-        bufferedRequestBody.emit();
-      }
-
-      // Emit the request headers if we haven't yet. We might have just learned the Content-Length.
-      if (sentRequestMillis == -1) {
-        if (OkHeaders.contentLength(networkRequest) == -1
-            && requestBodyOut instanceof RetryableSink) {
-          long contentLength = ((RetryableSink) requestBodyOut).contentLength();
-          networkRequest = networkRequest.newBuilder()
-              .header("Content-Length", Long.toString(contentLength))
-              .build();
-        }
-        httpStream.writeRequestHeaders(networkRequest);
-      }
-
-      // Write the request body to the socket.
-      if (requestBodyOut != null) {
-        if (bufferedRequestBody != null) {
-          // This also closes the wrapped requestBodyOut.
-          bufferedRequestBody.close();
-        } else {
-          requestBodyOut.close();
-        }
-        if (requestBodyOut instanceof RetryableSink) {
-          httpStream.writeRequestBody((RetryableSink) requestBodyOut);
-        }
-      }
-
-      networkResponse = readNetworkResponse();
     }
 
     receiveHeaders(networkResponse.headers());

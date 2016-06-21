@@ -35,11 +35,6 @@ public interface HttpStream {
   /** This should update the HTTP engine's sentRequestMillis field. */
   void writeRequestHeaders(Request request) throws IOException;
 
-  /**
-   * Sends the request body returned by {@link #createRequestBody} to the remote peer.
-   */
-  void writeRequestBody(RetryableSink requestBody) throws IOException;
-
   /** Flush the request to the underlying socket. */
   void finishRequest() throws IOException;
 

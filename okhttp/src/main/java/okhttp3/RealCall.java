@@ -21,10 +21,9 @@ import java.net.ProtocolException;
 import okhttp3.internal.NamedRunnable;
 import okhttp3.internal.Platform;
 import okhttp3.internal.http.HttpEngine;
-import okhttp3.internal.http.UnrepeatableRequestBody;
-import okhttp3.internal.http.RequestException;
 import okhttp3.internal.http.RouteException;
 import okhttp3.internal.http.StreamAllocation;
+import okhttp3.internal.http.UnrepeatableRequestBody;
 
 import static okhttp3.internal.Platform.INFO;
 import static okhttp3.internal.http.HttpEngine.MAX_FOLLOW_UPS;
@@ -223,7 +222,7 @@ final class RealCall implements Call {
     }
 
     // Create the initial HTTP engine. Retries and redirects need new engine for each attempt.
-    engine = new HttpEngine(client, request, false, false, forWebSocket, null, null, null);
+    engine = new HttpEngine(client, request, false, forWebSocket, null, null);
 
     int followUpCount = 0;
     while (true) {
@@ -237,12 +236,9 @@ final class RealCall implements Call {
         engine.sendRequest();
         engine.readResponse();
         releaseConnection = false;
-      } catch (RequestException e) {
-        // The attempt to interpret the request failed. Give up.
-        throw e.getCause();
       } catch (RouteException e) {
         // The attempt to connect via a route failed. The request will not have been sent.
-        HttpEngine retryEngine = engine.recover(e.getLastConnectException(), true, null);
+        HttpEngine retryEngine = engine.recover(e.getLastConnectException(), true);
         if (retryEngine != null) {
           releaseConnection = false;
           engine = retryEngine;
@@ -252,7 +248,7 @@ final class RealCall implements Call {
         throw e.getLastConnectException();
       } catch (IOException e) {
         // An attempt to communicate with a server failed. The request may have been sent.
-        HttpEngine retryEngine = engine.recover(e, false, null);
+        HttpEngine retryEngine = engine.recover(e, false);
         if (retryEngine != null) {
           releaseConnection = false;
           engine = retryEngine;
@@ -299,8 +295,7 @@ final class RealCall implements Call {
       }
 
       request = followUp;
-      engine = new HttpEngine(client, request, false, false, forWebSocket, streamAllocation, null,
-          response);
+      engine = new HttpEngine(client, request, false, forWebSocket, streamAllocation, response);
     }
   }
 }

@@ -137,10 +137,6 @@ public final class Http2xStream implements HttpStream {
     stream.writeTimeout().timeout(httpEngine.client.writeTimeoutMillis(), TimeUnit.MILLISECONDS);
   }
 
-  @Override public void writeRequestBody(RetryableSink requestBody) throws IOException {
-    requestBody.writeToSocket(stream.getSink());
-  }
-
   @Override public void finishRequest() throws IOException {
     stream.getSink().close();
   }
