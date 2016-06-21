@@ -997,8 +997,7 @@ public final class HttpEngine {
         // 408's are rare in practice, but some servers like HAProxy use this response code. The
         // spec says that we may repeat the request without modifications. Modern browsers also
         // repeat the request (even non-idempotent ones.)
-        boolean retryableBody = requestBodyOut == null || requestBodyOut instanceof RetryableSink;
-        if (callerWritesRequestBody && !retryableBody) {
+        if (userRequest.body() instanceof UnrepeatableRequestBody) {
           return null;
         }
 

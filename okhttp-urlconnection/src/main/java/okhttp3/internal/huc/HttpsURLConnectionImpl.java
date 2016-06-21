@@ -40,16 +40,11 @@ public final class HttpsURLConnectionImpl extends DelegatingHttpsURLConnection {
   }
 
   @Override protected Handshake handshake() {
-    if (delegate.httpEngine == null) {
+    if (delegate.call == null) {
       throw new IllegalStateException("Connection has not yet been established");
     }
 
-    // If there's a response, get the handshake from there so that caching
-    // works. Otherwise get the handshake from the connection because we might
-    // have not connected yet.
-    return delegate.httpEngine.hasResponse()
-        ? delegate.httpEngine.getResponse().handshake()
-        : delegate.handshake;
+    return delegate.handshake;
   }
 
   @Override public void setHostnameVerifier(HostnameVerifier hostnameVerifier) {

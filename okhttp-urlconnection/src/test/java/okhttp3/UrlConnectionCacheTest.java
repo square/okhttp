@@ -174,6 +174,9 @@ public final class UrlConnectionCacheTest {
       response.addHeader("Proxy-Authenticate: Basic realm=\"protected area\"");
     } else if (responseCode == HttpURLConnection.HTTP_UNAUTHORIZED) {
       response.addHeader("WWW-Authenticate: Basic realm=\"protected area\"");
+    } else if (responseCode == HttpURLConnection.HTTP_NO_CONTENT
+        || responseCode == HttpURLConnection.HTTP_RESET) {
+      response.setBody(""); // We forbid bodies for 204 and 205.
     }
     server.enqueue(response);
 

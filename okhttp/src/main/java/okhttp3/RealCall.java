@@ -16,10 +16,12 @@
 package okhttp3;
 
 import java.io.IOException;
+import java.net.HttpRetryException;
 import java.net.ProtocolException;
 import okhttp3.internal.NamedRunnable;
 import okhttp3.internal.Platform;
 import okhttp3.internal.http.HttpEngine;
+import okhttp3.internal.http.UnrepeatableRequestBody;
 import okhttp3.internal.http.RequestException;
 import okhttp3.internal.http.RouteException;
 import okhttp3.internal.http.StreamAllocation;
@@ -282,6 +284,10 @@ final class RealCall implements Call {
       if (++followUpCount > MAX_FOLLOW_UPS) {
         streamAllocation.release();
         throw new ProtocolException("Too many follow-up requests: " + followUpCount);
+      }
+
+      if (followUp.body() instanceof UnrepeatableRequestBody) {
+        throw new HttpRetryException("Cannot retry streamed HTTP body", response.code());
       }
 
       if (!engine.sameConnection(followUp.url())) {

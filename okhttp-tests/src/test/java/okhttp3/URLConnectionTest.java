@@ -405,6 +405,9 @@ public final class URLConnectionTest {
   @Test public void invalidHost() throws Exception {
     // Note that 1234.1.1.1 is an invalid host in a URI, but URL isn't as strict.
     URL url = new URL("http://1234.1.1.1/index.html");
+    urlFactory.setClient(urlFactory.client().newBuilder()
+        .dns(new FakeDns())
+        .build());
     HttpURLConnection connection = urlFactory.open(url);
     try {
       connection.connect();
@@ -2309,7 +2312,6 @@ public final class URLConnectionTest {
     } catch (ProtocolException expected) {
       assertEquals(HttpURLConnection.HTTP_MOVED_TEMP, connection.getResponseCode());
       assertEquals("Too many follow-up requests: 21", expected.getMessage());
-      assertContent("Redirecting to /21", connection);
       assertEquals(server.url("/20").url(), connection.getURL());
     }
   }
@@ -2536,12 +2538,17 @@ public final class URLConnectionTest {
   }
 
   @Test public void responseCodeDisagreesWithHeaders() throws IOException, InterruptedException {
-    server.enqueue(new MockResponse().setResponseCode(HttpURLConnection.HTTP_NO_CONTENT)
+    server.enqueue(new MockResponse()
+        .setResponseCode(HttpURLConnection.HTTP_NO_CONTENT)
         .setBody("This body is not allowed!"));
 
     URLConnection connection = urlFactory.open(server.url("/").url());
-    assertEquals("This body is not allowed!",
-        readAscii(connection.getInputStream(), Integer.MAX_VALUE));
+    try {
+      connection.getInputStream();
+      fail();
+    } catch (IOException expected) {
+      assertEquals("HTTP 204 had non-zero Content-Length: 25", expected.getMessage());
+    }
   }
 
   @Test public void singleByteReadIsSigned() throws IOException {
@@ -2614,6 +2621,9 @@ public final class URLConnectionTest {
   }
 
   @Test public void dnsFailureThrowsIOException() throws IOException {
+    urlFactory.setClient(urlFactory.client().newBuilder()
+        .dns(new FakeDns())
+        .build());
     connection = urlFactory.open(new URL("http://host.unlikelytld"));
     try {
       connection.connect();
