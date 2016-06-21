@@ -42,8 +42,4 @@ public final class RouteDatabase {
   public synchronized boolean shouldPostpone(Route route) {
     return failedRoutes.contains(route);
   }
-
-  public synchronized int failedRoutesCount() {
-    return failedRoutes.size();
-  }
 }

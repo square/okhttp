@@ -224,12 +224,6 @@ public final class Http1xStream implements HttpStream {
     return new FixedLengthSink(contentLength);
   }
 
-  @Override public void writeRequestBody(RetryableSink requestBody) throws IOException {
-    if (state != STATE_OPEN_REQUEST_BODY) throw new IllegalStateException("state: " + state);
-    state = STATE_READ_RESPONSE_HEADERS;
-    requestBody.writeToSocket(sink);
-  }
-
   public Source newFixedLengthSource(long length) throws IOException {
     if (state != STATE_OPEN_RESPONSE_BODY) throw new IllegalStateException("state: " + state);
     state = STATE_READING_RESPONSE_BODY;
