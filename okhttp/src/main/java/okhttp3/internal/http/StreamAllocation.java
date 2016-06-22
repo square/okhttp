@@ -87,8 +87,7 @@ public final class StreamAllocation {
   }
 
   public HttpStream newStream(int connectTimeout, int readTimeout, int writeTimeout,
-      boolean connectionRetryEnabled, boolean doExtensiveHealthChecks)
-      throws RouteException, IOException {
+      boolean connectionRetryEnabled, boolean doExtensiveHealthChecks) throws IOException {
     try {
       RealConnection resultConnection = findHealthyConnection(connectTimeout, readTimeout,
           writeTimeout, connectionRetryEnabled, doExtensiveHealthChecks);
@@ -118,7 +117,7 @@ public final class StreamAllocation {
    */
   private RealConnection findHealthyConnection(int connectTimeout, int readTimeout,
       int writeTimeout, boolean connectionRetryEnabled, boolean doExtensiveHealthChecks)
-      throws IOException, RouteException {
+      throws IOException {
     while (true) {
       RealConnection candidate = findConnection(connectTimeout, readTimeout, writeTimeout,
           connectionRetryEnabled);
@@ -146,7 +145,7 @@ public final class StreamAllocation {
    * then the pool, finally building a new connection.
    */
   private RealConnection findConnection(int connectTimeout, int readTimeout, int writeTimeout,
-      boolean connectionRetryEnabled) throws IOException, RouteException {
+      boolean connectionRetryEnabled) throws IOException {
     Route selectedRoute;
     synchronized (connectionPool) {
       if (released) throw new IllegalStateException("released");

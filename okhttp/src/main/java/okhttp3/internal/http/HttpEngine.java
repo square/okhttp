@@ -124,57 +124,19 @@ public final class HttpEngine {
    */
   private boolean transparentGzip;
 
-  /**
-   * True if the request body must be completely buffered before transmission; false if it can be
-   * streamed. Buffering has two advantages: we don't need the content-length in advance and we can
-   * retransmit if necessary. The upside of streaming is that we can save memory.
-   */
-  public final boolean bufferRequestBody;
-
-  /**
-   * The original application-provided request. Never modified by OkHttp. When follow-up requests
-   * are necessary, they are derived from this request.
-   */
-  private final Request userRequest;
-
-  /**
-   * The request to send on the network, or null for no network request. This is derived from the
-   * user request, and customized to support OkHttp features like compression and caching.
-   */
-  private Request networkRequest;
-
-  /**
-   * The cached response, or null if the cache doesn't exist or cannot be used for this request.
-   * Conditional caching means this may be non-null even when the network request is non-null. Never
-   * modified by OkHttp.
-   */
-  private Response cacheResponse;
-
-  /**
-   * The user-visible response. This is derived from either the network response, cache response, or
-   * both. It is customized to support OkHttp features like compression and caching.
-   */
-  private Response userResponse;
+  /** The original application-provided request URL. Never modified by OkHttp. */
+  private final HttpUrl userRequestUrl;
 
   private final boolean forWebSocket;
 
-  /** The cache request currently being populated from a network response. */
-  private CacheRequest storeRequest;
-  private CacheStrategy cacheStrategy;
-
-  /**
-   * @param request the HTTP request without a body. The body must be written via the engine's
-   * request body stream.
-   */
-  public HttpEngine(OkHttpClient client, Request request, boolean bufferRequestBody,
+  public HttpEngine(OkHttpClient client, HttpUrl userRequestUrl,
       boolean forWebSocket, StreamAllocation streamAllocation, Response priorResponse) {
     this.client = client;
-    this.userRequest = request;
-    this.bufferRequestBody = bufferRequestBody;
+    this.userRequestUrl = userRequestUrl;
     this.forWebSocket = forWebSocket;
     this.streamAllocation = streamAllocation != null
         ? streamAllocation
-        : new StreamAllocation(client.connectionPool(), createAddress(client, request));
+        : new StreamAllocation(client.connectionPool(), createAddress(client, userRequestUrl));
     this.priorResponse = priorResponse;
   }
 
@@ -185,10 +147,9 @@ public final class HttpEngine {
    * @throws RouteException if the was a problem during connection via a specific route. Sometimes
    * recoverable. See {@link #recover}.
    * @throws IOException if there was a problem while making a request. Sometimes recoverable. See
-   * {@link #recover(IOException, boolean)}.
+   * {@link #recover}.
    */
-  public void sendRequest() throws RouteException, IOException {
-    if (cacheStrategy != null) return; // Already sent.
+  public Response proceed(Request userRequest) throws IOException {
     if (httpStream != null) throw new IllegalStateException();
 
     Request request = networkRequest(userRequest);
@@ -199,9 +160,10 @@ public final class HttpEngine {
         : null;
 
     long now = System.currentTimeMillis();
-    cacheStrategy = new CacheStrategy.Factory(now, request, cacheCandidate).get();
-    networkRequest = cacheStrategy.networkRequest;
-    cacheResponse = cacheStrategy.cacheResponse;
+
+    CacheStrategy cacheStrategy = new CacheStrategy.Factory(now, request, cacheCandidate).get();
+    Request networkRequest = cacheStrategy.networkRequest;
+    Response cacheResponse = cacheStrategy.cacheResponse;
 
     if (responseCache != null) {
       responseCache.trackResponse(cacheStrategy);
@@ -213,7 +175,7 @@ public final class HttpEngine {
 
     // If we're forbidden from using the network and the cache is insufficient, fail.
     if (networkRequest == null && cacheResponse == null) {
-      userResponse = new Response.Builder()
+      return new Response.Builder()
           .request(userRequest)
           .priorResponse(stripBody(priorResponse))
           .protocol(Protocol.HTTP_1_1)
@@ -223,24 +185,22 @@ public final class HttpEngine {
           .sentRequestAtMillis(sentRequestMillis)
           .receivedResponseAtMillis(System.currentTimeMillis())
           .build();
-      return;
     }
 
     // If we don't need the network, we're done.
     if (networkRequest == null) {
-      userResponse = cacheResponse.newBuilder()
+      Response userResponse = cacheResponse.newBuilder()
           .request(userRequest)
           .priorResponse(stripBody(priorResponse))
           .cacheResponse(stripBody(cacheResponse))
           .build();
-      userResponse = unzip(userResponse);
-      return;
+      return unzip(userResponse);
     }
 
     // We need the network to satisfy this request. Possibly for validating a conditional GET.
     boolean success = false;
     try {
-      httpStream = connect();
+      httpStream = connect(networkRequest);
       httpStream.setHttpEngine(this);
       success = true;
     } finally {
@@ -249,9 +209,58 @@ public final class HttpEngine {
         closeQuietly(cacheCandidate.body());
       }
     }
+
+    Response networkResponse;
+    if (forWebSocket) {
+      httpStream.writeRequestHeaders(networkRequest);
+      networkResponse = readNetworkResponse(networkRequest);
+    } else {
+      networkResponse = new NetworkInterceptorChain(0, networkRequest,
+          streamAllocation.connection()).proceed(networkRequest);
+    }
+
+    receiveHeaders(networkResponse.headers());
+
+    // If we have a cache response too, then we're doing a conditional get.
+    if (cacheResponse != null) {
+      if (validate(cacheResponse, networkResponse)) {
+        Response userResponse = cacheResponse.newBuilder()
+            .request(userRequest)
+            .priorResponse(stripBody(priorResponse))
+            .headers(combine(cacheResponse.headers(), networkResponse.headers()))
+            .cacheResponse(stripBody(cacheResponse))
+            .networkResponse(stripBody(networkResponse))
+            .build();
+        networkResponse.body().close();
+        releaseStreamAllocation();
+
+        // Update the cache after combining headers but before stripping the
+        // Content-Encoding header (as performed by initContentStream()).
+        responseCache.trackConditionalCacheHit();
+        responseCache.update(cacheResponse, userResponse);
+        return unzip(userResponse);
+      } else {
+        closeQuietly(cacheResponse.body());
+      }
+    }
+
+    Response userResponse = networkResponse.newBuilder()
+        .request(userRequest)
+        .priorResponse(stripBody(priorResponse))
+        .cacheResponse(stripBody(cacheResponse))
+        .networkResponse(stripBody(networkResponse))
+        .build();
+
+    if (hasBody(userResponse)) {
+      CacheRequest cacheRequest = maybeCache(
+          userResponse, networkResponse.request(), responseCache);
+      userResponse = unzip(cacheWritingResponse(cacheRequest, userResponse));
+    }
+
+    return userResponse;
   }
 
-  private HttpStream connect() throws RouteException, IOException {
+  private HttpStream connect(Request networkRequest) throws IOException {
     boolean doExtensiveHealthChecks = !networkRequest.method().equals("GET");
     return streamAllocation.newStream(client.connectTimeoutMillis(),
         client.readTimeoutMillis(), client.writeTimeoutMillis(),
@@ -277,13 +286,6 @@ public final class HttpEngine {
     return HttpMethod.permitsRequestBody(request.method());
   }
 
-  /** Returns the engine's response. */
-  // TODO: the returned body will always be null.
-  public Response getResponse() {
-    if (userResponse == null) throw new IllegalStateException();
-    return userResponse;
-  }
-
   public Connection getConnection() {
     return streamAllocation.connection();
   }
@@ -293,7 +295,7 @@ public final class HttpEngine {
    * engine that should be used for the retry if {@code e} is recoverable, or null if the failure is
    * permanent. Requests with a body can only be recovered if the body is buffered.
    */
-  public HttpEngine recover(IOException e, boolean routeException) {
+  public HttpEngine recover(IOException e, boolean routeException, Response userResponse) {
     streamAllocation.streamFailed(e);
 
     if (!client.retryOnConnectionFailure()) {
@@ -308,11 +310,11 @@ public final class HttpEngine {
       return null; // No more routes to attempt.
     }
 
-    StreamAllocation streamAllocation = close();
+    StreamAllocation streamAllocation = close(userResponse);
 
     // For failure recovery, use the same route selector with a new connection.
-    return new HttpEngine(client, userRequest, bufferRequestBody,
-        forWebSocket, streamAllocation, priorResponse);
+    return new HttpEngine(client, userRequestUrl, forWebSocket, streamAllocation,
+        priorResponse);
   }
 
   private boolean isRecoverable(IOException e, boolean routeException) {
@@ -347,9 +349,9 @@ public final class HttpEngine {
     return true;
   }
 
-  private void maybeCache() throws IOException {
-    InternalCache responseCache = Internal.instance.internalCache(client);
-    if (responseCache == null) return;
+  private CacheRequest maybeCache(Response userResponse, Request networkRequest,
+      InternalCache responseCache) throws IOException {
+    if (responseCache == null) return null;
 
     // Should we cache this response for this request?
     if (!CacheStrategy.isCacheable(userResponse, networkRequest)) {
@@ -360,11 +362,11 @@ public final class HttpEngine {
           // The cache cannot be written.
         }
       }
-      return;
+      return null;
     }
 
     // Offer this request to the cache.
-    storeRequest = responseCache.put(userResponse);
+    return responseCache.put(userResponse);
   }
 
   /**
@@ -392,7 +394,7 @@ public final class HttpEngine {
    * Release any resources held by this engine. Returns the stream allocation held by this engine,
    * which itself must be used or released.
    */
-  public StreamAllocation close() {
+  public StreamAllocation close(Response userResponse) {
     if (userResponse != null) {
       closeQuietly(userResponse.body());
     } else {
@@ -417,7 +419,7 @@ public final class HttpEngine {
    * attempt to decompress the zero-byte source.
    */
   private Response unzip(final Response response) throws IOException {
-    if (!transparentGzip || !"gzip".equalsIgnoreCase(userResponse.header("Content-Encoding"))) {
+    if (!transparentGzip || !"gzip".equalsIgnoreCase(response.header("Content-Encoding"))) {
       return response;
     }
 
@@ -510,71 +512,6 @@ public final class HttpEngine {
     return cookieHeader.toString();
   }
 
-  /**
-   * Flushes the remaining request header and body, parses the HTTP response headers and starts
-   * reading the HTTP response body if it exists.
-   */
-  public void readResponse() throws IOException {
-    if (userResponse != null) {
-      return; // Already ready.
-    }
-    if (networkRequest == null && cacheResponse == null) {
-      throw new IllegalStateException("call sendRequest() first!");
-    }
-    if (networkRequest == null) {
-      return; // No network response to read.
-    }
-
-    Response networkResponse;
-
-    if (forWebSocket) {
-      httpStream.writeRequestHeaders(networkRequest);
-      networkResponse = readNetworkResponse();
-    } else {
-      networkResponse = new NetworkInterceptorChain(0, networkRequest,
-          streamAllocation.connection()).proceed(networkRequest);
-    }
-
-    receiveHeaders(networkResponse.headers());
-
-    // If we have a cache response too, then we're doing a conditional get.
-    if (cacheResponse != null) {
-      if (validate(cacheResponse, networkResponse)) {
-        userResponse = cacheResponse.newBuilder()
-            .request(userRequest)
-            .priorResponse(stripBody(priorResponse))
-            .headers(combine(cacheResponse.headers(), networkResponse.headers()))
-            .cacheResponse(stripBody(cacheResponse))
-            .networkResponse(stripBody(networkResponse))
-            .build();
-        networkResponse.body().close();
-        releaseStreamAllocation();
-
-        // Update the cache after combining headers but before stripping the
-        // Content-Encoding header (as performed by initContentStream()).
-        InternalCache responseCache = Internal.instance.internalCache(client);
-        responseCache.trackConditionalCacheHit();
-        responseCache.update(cacheResponse, userResponse);
-        userResponse = unzip(userResponse);
-        return;
-      } else {
-        closeQuietly(cacheResponse.body());
-      }
-    }
-
-    userResponse = networkResponse.newBuilder()
-        .request(userRequest)
-        .priorResponse(stripBody(priorResponse))
-        .cacheResponse(stripBody(cacheResponse))
-        .networkResponse(stripBody(networkResponse))
-        .build();
-
-    if (hasBody(userResponse)) {
-      maybeCache();
-      userResponse = unzip(cacheWritingResponse(storeRequest, userResponse));
-    }
-  }
-
   class NetworkInterceptorChain implements Interceptor.Chain {
     private final int index;
     private final Request request;
@@ -637,9 +574,6 @@ public final class HttpEngine {
 
       httpStream.writeRequestHeaders(request);
 
-      //Update the networkRequest with the possibly updated interceptor request.
-      networkRequest = request;
-
       if (permitsRequestBody(request) && request.body() != null) {
         Sink requestBodyOut = httpStream.createRequestBody(request, request.body().contentLength());
         BufferedSink bufferedRequestBody = Okio.buffer(requestBodyOut);
@@ -647,7 +581,7 @@ public final class HttpEngine {
         bufferedRequestBody.close();
       }
 
-      Response response = readNetworkResponse();
+      Response response = readNetworkResponse(request);
 
       int code = response.code();
       if ((code == 204 || code == 205) && response.body().contentLength() > 0) {
@@ -659,7 +593,7 @@ public final class HttpEngine {
     }
   }
 
-  private Response readNetworkResponse() throws IOException {
+  private Response readNetworkResponse(Request networkRequest) throws IOException {
     httpStream.finishRequest();
 
     Response networkResponse = httpStream.readResponseHeaders()
@@ -802,10 +736,10 @@ public final class HttpEngine {
   public void receiveHeaders(Headers headers) throws IOException {
     if (client.cookieJar() == CookieJar.NO_COOKIES) return;
 
-    List<Cookie> cookies = Cookie.parseAll(userRequest.url(), headers);
+    List<Cookie> cookies = Cookie.parseAll(userRequestUrl, headers);
     if (cookies.isEmpty()) return;
 
-    client.cookieJar().saveFromResponse(userRequest.url(), cookies);
+    client.cookieJar().saveFromResponse(userRequestUrl, cookies);
   }
 
   /**
@@ -813,7 +747,7 @@ public final class HttpEngine {
    * either add authentication headers, follow redirects or handle a client request timeout. If a
    * follow-up is either unnecessary or not applicable, this returns null.
    */
-  public Request followUpRequest() throws IOException {
+  public Request followUpRequest(Response userResponse) throws IOException {
     if (userResponse == null) throw new IllegalStateException();
     Connection connection = streamAllocation.connection();
     Route route = connection != null
@@ -821,7 +755,7 @@ public final class HttpEngine {
         : null;
     int responseCode = userResponse.code();
 
-    final String method = userRequest.method();
+    final String method = userResponse.request().method();
     switch (responseCode) {
       case HTTP_PROXY_AUTH:
         Proxy selectedProxy = route != null
@@ -852,17 +786,17 @@ public final class HttpEngine {
 
         String location = userResponse.header("Location");
         if (location == null) return null;
-        HttpUrl url = userRequest.url().resolve(location);
+        HttpUrl url = userResponse.request().url().resolve(location);
 
         // Don't follow redirects to unsupported protocols.
         if (url == null) return null;
 
         // If configured, don't follow redirects between SSL and non-SSL.
-        boolean sameScheme = url.scheme().equals(userRequest.url().scheme());
+        boolean sameScheme = url.scheme().equals(userResponse.request().url().scheme());
         if (!sameScheme && !client.followSslRedirects()) return null;
 
         // Redirects don't include a request body.
-        Request.Builder requestBuilder = userRequest.newBuilder();
+        Request.Builder requestBuilder = userResponse.request().newBuilder();
         if (HttpMethod.permitsRequestBody(method)) {
           if (HttpMethod.redirectsToGet(method)) {
             requestBuilder.method("GET", null);
@@ -877,7 +811,7 @@ public final class HttpEngine {
         // When redirecting across hosts, drop all authentication headers. This
         // is potentially annoying to the application layer since they have no
         // way to retain them.
-        if (!sameConnection(url)) {
+        if (!sameConnection(userResponse, url)) {
           requestBuilder.removeHeader("Authorization");
         }
 
@@ -887,11 +821,11 @@ public final class HttpEngine {
         // 408's are rare in practice, but some servers like HAProxy use this response code. The
         // spec says that we may repeat the request without modifications. Modern browsers also
         // repeat the request (even non-idempotent ones.)
-        if (userRequest.body() instanceof UnrepeatableRequestBody) {
+        if (userResponse.request().body() instanceof UnrepeatableRequestBody) {
           return null;
         }
 
-        return userRequest;
+        return userResponse.request();
 
       default:
         return null;
@@ -902,26 +836,25 @@ public final class HttpEngine {
    * Returns true if an HTTP request for {@code followUp} can reuse the connection used by this
    * engine.
    */
-  public boolean sameConnection(HttpUrl followUp) {
-    HttpUrl url = userRequest.url();
+  public boolean sameConnection(Response response, HttpUrl followUp) {
+    HttpUrl url = response.request().url();
     return url.host().equals(followUp.host())
         && url.port() == followUp.port()
         && url.scheme().equals(followUp.scheme());
   }
 
-  private static Address createAddress(OkHttpClient client, Request request) {
+  private static Address createAddress(OkHttpClient client, HttpUrl url) {
     SSLSocketFactory sslSocketFactory = null;
     HostnameVerifier hostnameVerifier = null;
     CertificatePinner certificatePinner = null;
-    if (request.isHttps()) {
+    if (url.isHttps()) {
       sslSocketFactory = client.sslSocketFactory();
       hostnameVerifier = client.hostnameVerifier();
       certificatePinner = client.certificatePinner();
     }
 
-    return new Address(request.url().host(), request.url().port(), client.dns(),
-        client.socketFactory(), sslSocketFactory, hostnameVerifier, certificatePinner,
-        client.proxyAuthenticator(), client.proxy(), client.protocols(),
-        client.connectionSpecs(), client.proxySelector());
+    return new Address(url.host(), url.port(), client.dns(), client.socketFactory(),
+        sslSocketFactory, hostnameVerifier, certificatePinner, client.proxyAuthenticator(),
+        client.proxy(), client.protocols(), client.connectionSpecs(), client.proxySelector());
   }
 }

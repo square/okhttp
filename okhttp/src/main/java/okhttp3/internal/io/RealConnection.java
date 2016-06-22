@@ -90,7 +90,7 @@ public final class RealConnection extends FramedConnection.Listener implements C
   }
 
   public void connect(int connectTimeout, int readTimeout, int writeTimeout,
-      List<ConnectionSpec> connectionSpecs, boolean connectionRetryEnabled) throws RouteException {
+      List<ConnectionSpec> connectionSpecs, boolean connectionRetryEnabled) {
     if (protocol != null) throw new IllegalStateException("already connected");
 
     RouteException routeException = null;
