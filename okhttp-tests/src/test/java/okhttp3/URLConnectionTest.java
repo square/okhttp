@@ -322,6 +322,29 @@ public final class URLConnectionTest {
     assertEquals("body", server.takeRequest().getBody().readUtf8());
   }
 
+  @Test public void streamedBodyIsNotRetried() throws Exception {
+    server.enqueue(new MockResponse()
+        .setSocketPolicy(SocketPolicy.DISCONNECT_AFTER_REQUEST));
+
+    urlFactory = new OkUrlFactory(new OkHttpClient.Builder()
+        .dns(new DoubleInetAddressDns())
+        .build());
+    HttpURLConnection connection = urlFactory.open(server.url("/").url());
+    connection.setDoOutput(true);
+    connection.setChunkedStreamingMode(100);
+    OutputStream os = connection.getOutputStream();
+    os.write("OutputStream is no fun.".getBytes("UTF-8"));
+    os.close();
+
+    try {
+      connection.getResponseCode();
+      fail();
+    } catch (IOException expected) {
+    }
+
+    assertEquals(1, server.getRequestCount());
+  }
+
   @Test public void getErrorStreamOnSuccessfulRequest() throws Exception {
     server.enqueue(new MockResponse().setBody("A"));
     connection = urlFactory.open(server.url("/").url());

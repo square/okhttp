@@ -241,7 +241,7 @@ final class RealCall implements Call {
           releaseConnection = false;
         } catch (RouteException e) {
           // The attempt to connect via a route failed. The request will not have been sent.
-          HttpEngine retryEngine = engine.recover(e.getLastConnectException(), true, null);
+          HttpEngine retryEngine = engine.recover(e.getLastConnectException(), true, request);
           if (retryEngine != null) {
             releaseConnection = false;
             engine = retryEngine;
@@ -251,7 +251,7 @@ final class RealCall implements Call {
           throw e.getLastConnectException();
         } catch (IOException e) {
           // An attempt to communicate with a server failed. The request may have been sent.
-          HttpEngine retryEngine = engine.recover(e, false, null);
+          HttpEngine retryEngine = engine.recover(e, false, request);
           if (retryEngine != null) {
             releaseConnection = false;
             engine = retryEngine;

@@ -273,6 +273,7 @@ public final class Spdy3ConnectionTest {
     peer.play();
 
     // play it back
+    final CountDownLatch maxConcurrentStreamsUpdated = new CountDownLatch(1);
     final AtomicInteger maxConcurrentStreams = new AtomicInteger();
     FramedConnection.Listener listener = new FramedConnection.Listener() {
       @Override public void onStream(FramedStream stream) throws IOException {
@@ -281,6 +282,7 @@ public final class Spdy3ConnectionTest {
 
       @Override public void onSettings(FramedConnection connection) {
         maxConcurrentStreams.set(connection.maxConcurrentStreams());
+        maxConcurrentStreamsUpdated.countDown();
       }
     };
     FramedConnection connection = connectionBuilder(peer, SPDY3)
@@ -292,6 +294,7 @@ public final class Spdy3ConnectionTest {
     synchronized (connection) {
       assertEquals(10, connection.peerSettings.getMaxConcurrentStreams(-1));
     }
+    maxConcurrentStreamsUpdated.await();
     assertEquals(10, maxConcurrentStreams.get());
   }
 
