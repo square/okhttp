@@ -232,8 +232,11 @@ public final class Request {
       if (body != null && !HttpMethod.permitsRequestBody(method)) {
         throw new IllegalArgumentException("method " + method + " must not have a request body.");
       }
-      if (body == null && HttpMethod.requiresRequestBody(method)) {
-        throw new IllegalArgumentException("method " + method + " must have a request body.");
+      // if (body == null && HttpMethod.requiresRequestBody(method)) {
+      //   throw new IllegalArgumentException("method " + method + " must have a request body.");
+      // }
+      if (body == null && HttpMethod.permitsRequestBody(method)) {
+        body = RequestBody.create(null, Util.EMPTY_BYTE_ARRAY);
       }
       this.method = method;
       this.body = body;
