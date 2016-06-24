@@ -23,7 +23,7 @@ import java.lang.reflect.Method;
  * An exception thrown to indicate a problem connecting via a single Route. Multiple attempts may
  * have been made with alternative protocols, none of which were successful.
  */
-public final class RouteException extends Exception {
+public final class RouteException extends RuntimeException {
   private static final Method addSuppressedExceptionMethod;
 
   static {

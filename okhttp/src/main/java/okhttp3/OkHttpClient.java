@@ -110,11 +110,6 @@ public class OkHttpClient implements Cloneable, Call.Factory {
         return connectionPool.routeDatabase;
       }
 
-      @Override
-      public void callEnqueue(Call call, Callback responseCallback, boolean forWebSocket) {
-        ((RealCall) call).enqueue(responseCallback, forWebSocket);
-      }
-
       @Override public StreamAllocation callEngineGetStreamAllocation(Call call) {
         return ((RealCall) call).engine.streamAllocation;
       }
@@ -127,6 +122,10 @@ public class OkHttpClient implements Cloneable, Call.Factory {
       @Override public HttpUrl getHttpUrlChecked(String url)
           throws MalformedURLException, UnknownHostException {
         return HttpUrl.getChecked(url);
+      }
+
+      @Override public void setCallWebSocket(Call call) {
+        ((RealCall) call).setForWebSocket();
       }
     };
   }

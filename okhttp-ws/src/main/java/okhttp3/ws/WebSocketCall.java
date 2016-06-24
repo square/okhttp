@@ -105,7 +105,8 @@ public final class WebSocketCall {
       }
     };
     // TODO call.enqueue(responseCallback, true);
-    Internal.instance.callEnqueue(call, responseCallback, true);
+    Internal.instance.setCallWebSocket(call);
+    call.enqueue(responseCallback);
   }
 
   /** Cancels the request, if possible. Requests that are already complete cannot be canceled. */

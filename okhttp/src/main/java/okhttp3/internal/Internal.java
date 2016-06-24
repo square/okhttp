@@ -20,7 +20,6 @@ import java.net.UnknownHostException;
 import javax.net.ssl.SSLSocket;
 import okhttp3.Address;
 import okhttp3.Call;
-import okhttp3.Callback;
 import okhttp3.ConnectionPool;
 import okhttp3.ConnectionSpec;
 import okhttp3.Headers;
@@ -65,8 +64,7 @@ public abstract class Internal {
   public abstract HttpUrl getHttpUrlChecked(String url)
       throws MalformedURLException, UnknownHostException;
 
-  // TODO delete the following when web sockets move into the main package.
-  public abstract void callEnqueue(Call call, Callback responseCallback, boolean forWebSocket);
-
   public abstract StreamAllocation callEngineGetStreamAllocation(Call call);
+
+  public abstract void setCallWebSocket(Call call);
 }
