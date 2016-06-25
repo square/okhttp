@@ -126,8 +126,7 @@ public final class Http2xStream implements HttpStream {
   @Override public void writeRequestHeaders(Request request) throws IOException {
     if (stream != null) return;
 
-    httpEngine.writingRequestHeaders();
-    boolean permitsRequestBody = httpEngine.permitsRequestBody(request);
+    boolean permitsRequestBody = HttpMethod.permitsRequestBody(request.method());
     List<Header> requestHeaders = framedConnection.getProtocol() == Protocol.HTTP_2
         ? http2HeadersList(request)
         : spdy3HeadersList(request);

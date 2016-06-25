@@ -103,9 +103,6 @@ public final class HttpEngine {
   private final Response priorResponse;
   private HttpStream httpStream;
 
-  /** The time when the request headers were written, or -1 if they haven't been written yet. */
-  long sentRequestMillis = -1;
-
   /**
    * True if this client added an "Accept-Encoding: gzip" header field and is therefore responsible
    * for also decompressing the transfer stream.
@@ -137,7 +134,7 @@ public final class HttpEngine {
    * @throws IOException if there was a problem while making a request. Sometimes recoverable. See
    * {@link #recover}.
    */
-  public Response proceed(Request userRequest) throws IOException {
+  public Response proceed(Request userRequest, RealInterceptorChain chain) throws IOException {
     if (httpStream != null) throw new IllegalStateException();
 
     Request request = networkRequest(userRequest);
@@ -170,7 +167,7 @@ public final class HttpEngine {
           .code(504)
           .message("Unsatisfiable Request (only-if-cached)")
           .body(EMPTY_BODY)
-          .sentRequestAtMillis(sentRequestMillis)
+          .sentRequestAtMillis(-1L)
           .receivedResponseAtMillis(System.currentTimeMillis())
           .build();
     }
@@ -198,14 +195,8 @@ public final class HttpEngine {
       }
     }
 
-    Response networkResponse;
-    if (forWebSocket) {
-      httpStream.writeRequestHeaders(networkRequest);
-      networkResponse = readNetworkResponse(networkRequest);
-    } else {
-      networkResponse = new NetworkInterceptorChain(0, networkRequest,
-          streamAllocation.connection()).proceed(networkRequest);
-    }
+    Response networkResponse = chain.proceed(networkRequest, streamAllocation.connection(),
+        streamAllocation, httpStream);
 
     receiveHeaders(networkResponse.headers());
 
@@ -259,19 +250,6 @@ public final class HttpEngine {
     return response != null && response.body() != null
         ? response.newBuilder().body(null).build()
         : response;
-  }
-
-  /**
-   * Called immediately before the transport transmits HTTP request headers. This is used to observe
-   * the sent time should the request be cached.
-   */
-  public void writingRequestHeaders() {
-    if (sentRequestMillis != -1) throw new IllegalStateException();
-    sentRequestMillis = System.currentTimeMillis();
-  }
-
-  boolean permitsRequestBody(Request request) {
-    return HttpMethod.permitsRequestBody(request.method());
   }
 
   public Connection getConnection() {
@@ -503,76 +481,32 @@ public final class HttpEngine {
     return cookieHeader.toString();
   }
 
-  class NetworkInterceptorChain implements Interceptor.Chain {
-    private final int index;
-    private final Request request;
-    private final Connection connection;
-    private int calls;
+  public static class CallServerInterceptor implements Interceptor {
+    private final boolean forWebSocket;
 
-    NetworkInterceptorChain(int index, Request request, Connection connection) {
-      this.index = index;
-      this.request = request;
-      this.connection = connection;
+    /** The time when the request headers were written, or -1 if they haven't been written yet. */
+    long sentRequestMillis = -1;
+
+    public CallServerInterceptor(boolean forWebSocket) {
+      this.forWebSocket = forWebSocket;
     }
 
-    @Override public Connection connection() {
-      return connection;
-    }
+    @Override public Response intercept(Chain chain) throws IOException {
+      HttpStream httpStream = ((RealInterceptorChain) chain).httpStream();
+      StreamAllocation streamAllocation = ((RealInterceptorChain) chain).streamAllocation();
 
-    @Override public Request request() {
-      return request;
-    }
-
-    @Override public Response proceed(Request request) throws IOException {
-      calls++;
-
-      if (index > 0) {
-        Interceptor caller = client.networkInterceptors().get(index - 1);
-        Address address = connection().route().address();
-
-        // Confirm that the interceptor uses the connection we've already prepared.
-        if (!request.url().host().equals(address.url().host())
-            || request.url().port() != address.url().port()) {
-          throw new IllegalStateException("network interceptor " + caller
-              + " must retain the same host and port");
-        }
-
-        // Confirm that this is the interceptor's first call to chain.proceed().
-        if (calls > 1) {
-          throw new IllegalStateException("network interceptor " + caller
-              + " must call proceed() exactly once");
-        }
-      }
-
-      if (index < client.networkInterceptors().size()) {
-        // There's another interceptor in the chain. Call that.
-        NetworkInterceptorChain chain = new NetworkInterceptorChain(index + 1, request, connection);
-        Interceptor interceptor = client.networkInterceptors().get(index);
-        Response interceptedResponse = interceptor.intercept(chain);
-
-        // Confirm that the interceptor made the required call to chain.proceed().
-        if (chain.calls != 1) {
-          throw new IllegalStateException("network interceptor " + interceptor
-              + " must call proceed() exactly once");
-        }
-        if (interceptedResponse == null) {
-          throw new NullPointerException("network interceptor " + interceptor
-              + " returned null");
-        }
-
-        return interceptedResponse;
-      }
-
+      Request request = chain.request();
+      sentRequestMillis = System.currentTimeMillis();
       httpStream.writeRequestHeaders(request);
 
-      if (permitsRequestBody(request) && request.body() != null) {
+      if (HttpMethod.permitsRequestBody(request.method()) && request.body() != null) {
         Sink requestBodyOut = httpStream.createRequestBody(request, request.body().contentLength());
         BufferedSink bufferedRequestBody = Okio.buffer(requestBodyOut);
         request.body().writeTo(bufferedRequestBody);
         bufferedRequestBody.close();
       }
 
-      Response response = readNetworkResponse(request);
+      Response response = readNetworkResponse(httpStream, streamAllocation, request);
 
       int code = response.code();
       if ((code == 204 || code == 205) && response.body().contentLength() > 0) {
@@ -582,30 +516,31 @@ public final class HttpEngine {
 
       return response;
     }
-  }
 
-  private Response readNetworkResponse(Request networkRequest) throws IOException {
-    httpStream.finishRequest();
+    private Response readNetworkResponse(HttpStream httpStream, StreamAllocation streamAllocation,
+        Request networkRequest) throws IOException {
+      httpStream.finishRequest();
 
-    Response networkResponse = httpStream.readResponseHeaders()
-        .request(networkRequest)
-        .handshake(streamAllocation.connection().handshake())
-        .sentRequestAtMillis(sentRequestMillis)
-        .receivedResponseAtMillis(System.currentTimeMillis())
-        .build();
-
-    if (!forWebSocket || networkResponse.code() != 101) {
-      networkResponse = networkResponse.newBuilder()
-          .body(httpStream.openResponseBody(networkResponse))
+      Response networkResponse = httpStream.readResponseHeaders()
+          .request(networkRequest)
+          .handshake(streamAllocation.connection().handshake())
+          .sentRequestAtMillis(sentRequestMillis)
+          .receivedResponseAtMillis(System.currentTimeMillis())
           .build();
-    }
 
-    if ("close".equalsIgnoreCase(networkResponse.request().header("Connection"))
-        || "close".equalsIgnoreCase(networkResponse.header("Connection"))) {
-      streamAllocation.noNewStreams();
-    }
+      if (!forWebSocket || networkResponse.code() != 101) {
+        networkResponse = networkResponse.newBuilder()
+            .body(httpStream.openResponseBody(networkResponse))
+            .build();
+      }
 
-    return networkResponse;
+      if ("close".equalsIgnoreCase(networkResponse.request().header("Connection"))
+          || "close".equalsIgnoreCase(networkResponse.header("Connection"))) {
+        streamAllocation.noNewStreams();
+      }
+
+      return networkResponse;
+    }
   }
 
   /**

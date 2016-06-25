@@ -18,9 +18,12 @@ package okhttp3;
 import java.io.IOException;
 import java.net.HttpRetryException;
 import java.net.ProtocolException;
+import java.util.ArrayList;
+import java.util.List;
 import okhttp3.internal.NamedRunnable;
 import okhttp3.internal.Platform;
 import okhttp3.internal.http.HttpEngine;
+import okhttp3.internal.http.RealInterceptorChain;
 import okhttp3.internal.http.RouteException;
 import okhttp3.internal.http.StreamAllocation;
 import okhttp3.internal.http.UnrepeatableRequestBody;
@@ -152,46 +155,18 @@ final class RealCall implements Call {
   }
 
   private Response getResponseWithInterceptorChain() throws IOException {
-    Interceptor.Chain chain = new ApplicationInterceptorChain(0, originalRequest);
+    // Build a full stack of interceptors.
+    List<Interceptor> interceptors = new ArrayList<>();
+    interceptors.addAll(client.interceptors());
+    interceptors.add(new RetryAndFollowUpInterceptor());
+    if (!forWebSocket) {
+      interceptors.addAll(client.networkInterceptors());
+    }
+    interceptors.add(new HttpEngine.CallServerInterceptor(forWebSocket));
+
+    Interceptor.Chain chain = new RealInterceptorChain(
+        interceptors, null, null, null, 0, originalRequest);
     return chain.proceed(originalRequest);
-  }
-
-  class ApplicationInterceptorChain implements Interceptor.Chain {
-    private final int index;
-    private final Request request;
-
-    ApplicationInterceptorChain(int index, Request request) {
-      this.index = index;
-      this.request = request;
-    }
-
-    @Override public Connection connection() {
-      return null;
-    }
-
-    @Override public Request request() {
-      return request;
-    }
-
-    @Override public Response proceed(Request request) throws IOException {
-      Interceptor.Chain chain = new ApplicationInterceptorChain(index + 1, request);
-
-      // If there's another interceptor in the chain, call that.
-      if (index < client.interceptors().size()) {
-        Interceptor interceptor = client.interceptors().get(index);
-        Response interceptedResponse = interceptor.intercept(chain);
-
-        if (interceptedResponse == null) {
-          throw new NullPointerException("application interceptor " + interceptor
-              + " returned null");
-        }
-
-        return interceptedResponse;
-      }
-
-      // No more interceptors. Do HTTP.
-      return new RetryAndFollowUpInterceptor().intercept(chain);
-    }
   }
 
   /**
@@ -237,7 +212,7 @@ final class RealCall implements Call {
         Response response = null;
         boolean releaseConnection = true;
         try {
-          response = engine.proceed(request);
+          response = engine.proceed(request, (RealInterceptorChain) chain);
           releaseConnection = false;
         } catch (RouteException e) {
           // The attempt to connect via a route failed. The request will not have been sent.
