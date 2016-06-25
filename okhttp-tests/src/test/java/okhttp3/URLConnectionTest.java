@@ -85,7 +85,7 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 import static okhttp3.TestUtil.defaultClient;
 import static okhttp3.internal.Util.UTF_8;
-import static okhttp3.internal.http.OkHeaders.SELECTED_PROTOCOL;
+import static okhttp3.internal.huc.OkHttpURLConnection.SELECTED_PROTOCOL;
 import static okhttp3.internal.http.StatusLine.HTTP_PERM_REDIRECT;
 import static okhttp3.internal.http.StatusLine.HTTP_TEMP_REDIRECT;
 import static okhttp3.mockwebserver.SocketPolicy.DISCONNECT_AFTER_REQUEST;

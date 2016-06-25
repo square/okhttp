@@ -22,37 +22,13 @@ import java.util.Set;
 import java.util.TreeSet;
 import okhttp3.Challenge;
 import okhttp3.Headers;
-import okhttp3.Protocol;
 import okhttp3.Request;
 import okhttp3.Response;
-import okhttp3.internal.Platform;
 
 import static okhttp3.internal.Util.equal;
 
 /** Headers and utilities for internal use by OkHttp. */
 public final class OkHeaders {
-
-  static final String PREFIX = Platform.get().getPrefix();
-
-  /**
-   * Synthetic response header: the local time when the request was sent.
-   */
-  public static final String SENT_MILLIS = PREFIX + "-Sent-Millis";
-
-  /**
-   * Synthetic response header: the local time when the response was received.
-   */
-  public static final String RECEIVED_MILLIS = PREFIX + "-Received-Millis";
-
-  /**
-   * Synthetic response header: the selected {@link Protocol protocol} ("spdy/3.1", "http/1.1",
-   * etc).
-   */
-  public static final String SELECTED_PROTOCOL = PREFIX + "-Selected-Protocol";
-
-  /** Synthetic response header: the location from which the response was loaded. */
-  public static final String RESPONSE_SOURCE = PREFIX + "-Response-Source";
-
   private OkHeaders() {
   }
 

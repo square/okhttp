@@ -23,18 +23,18 @@ import okhttp3.Handshake;
 import okhttp3.OkHttpClient;
 import okhttp3.internal.URLFilter;
 
-public final class HttpsURLConnectionImpl extends DelegatingHttpsURLConnection {
-  private final HttpURLConnectionImpl delegate;
+public final class OkHttpsURLConnection extends DelegatingHttpsURLConnection {
+  private final OkHttpURLConnection delegate;
 
-  public HttpsURLConnectionImpl(URL url, OkHttpClient client) {
-    this(new HttpURLConnectionImpl(url, client));
+  public OkHttpsURLConnection(URL url, OkHttpClient client) {
+    this(new OkHttpURLConnection(url, client));
   }
 
-  public HttpsURLConnectionImpl(URL url, OkHttpClient client, URLFilter filter) {
-    this(new HttpURLConnectionImpl(url, client, filter));
+  public OkHttpsURLConnection(URL url, OkHttpClient client, URLFilter filter) {
+    this(new OkHttpURLConnection(url, client, filter));
   }
 
-  public HttpsURLConnectionImpl(HttpURLConnectionImpl delegate) {
+  public OkHttpsURLConnection(OkHttpURLConnection delegate) {
     super(delegate);
     this.delegate = delegate;
   }

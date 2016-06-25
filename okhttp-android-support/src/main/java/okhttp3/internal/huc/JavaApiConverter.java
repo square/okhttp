@@ -44,6 +44,7 @@ import okhttp3.Response;
 import okhttp3.ResponseBody;
 import okhttp3.internal.Internal;
 import okhttp3.internal.JavaNetHeaders;
+import okhttp3.internal.Platform;
 import okhttp3.internal.Util;
 import okhttp3.internal.http.CacheRequest;
 import okhttp3.internal.http.HttpMethod;
@@ -58,6 +59,12 @@ import okio.Sink;
  */
 public final class JavaApiConverter {
   private static final RequestBody EMPTY_REQUEST_BODY = RequestBody.create(null, new byte[0]);
+
+  /** Synthetic response header: the local time when the request was sent. */
+  private static final String SENT_MILLIS = Platform.get().getPrefix() + "-Sent-Millis";
+
+  /** Synthetic response header: the local time when the response was received. */
+  private static final String RECEIVED_MILLIS = Platform.get().getPrefix() + "-Received-Millis";
 
   private JavaApiConverter() {
   }
@@ -397,8 +404,8 @@ public final class JavaApiConverter {
 
   private static Headers withSyntheticHeaders(Response okResponse) {
     return okResponse.headers().newBuilder()
-        .add(OkHeaders.SENT_MILLIS, Long.toString(okResponse.sentRequestAtMillis()))
-        .add(OkHeaders.RECEIVED_MILLIS, Long.toString(okResponse.receivedResponseAtMillis()))
+        .add(SENT_MILLIS, Long.toString(okResponse.sentRequestAtMillis()))
+        .add(RECEIVED_MILLIS, Long.toString(okResponse.receivedResponseAtMillis()))
         .build();
   }
 
@@ -448,11 +455,11 @@ public final class JavaApiConverter {
         continue;
       }
       if (okResponseBuilder != null && javaHeader.getValue().size() == 1) {
-        if (name.equals(OkHeaders.SENT_MILLIS)) {
+        if (name.equals(SENT_MILLIS)) {
           okResponseBuilder.sentRequestAtMillis(Long.valueOf(javaHeader.getValue().get(0)));
           continue;
         }
-        if (name.equals(OkHeaders.RECEIVED_MILLIS)) {
+        if (name.equals(RECEIVED_MILLIS)) {
           okResponseBuilder.receivedResponseAtMillis(Long.valueOf(javaHeader.getValue().get(0)));
           continue;
         }
