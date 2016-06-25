@@ -22,8 +22,8 @@ import java.net.URLConnection;
 import java.net.URLStreamHandler;
 import java.net.URLStreamHandlerFactory;
 import okhttp3.internal.URLFilter;
-import okhttp3.internal.huc.HttpURLConnectionImpl;
-import okhttp3.internal.huc.HttpsURLConnectionImpl;
+import okhttp3.internal.huc.OkHttpURLConnection;
+import okhttp3.internal.huc.OkHttpsURLConnection;
 
 /**
  * @deprecated OkHttp will be dropping its ability to be used with {@link HttpURLConnection} in an
@@ -69,8 +69,8 @@ public final class OkUrlFactory implements URLStreamHandlerFactory, Cloneable {
         .proxy(proxy)
         .build();
 
-    if (protocol.equals("http")) return new HttpURLConnectionImpl(url, copy, urlFilter);
-    if (protocol.equals("https")) return new HttpsURLConnectionImpl(url, copy, urlFilter);
+    if (protocol.equals("http")) return new OkHttpURLConnection(url, copy, urlFilter);
+    if (protocol.equals("https")) return new OkHttpsURLConnection(url, copy, urlFilter);
     throw new IllegalArgumentException("Unexpected protocol: " + protocol);
   }
 

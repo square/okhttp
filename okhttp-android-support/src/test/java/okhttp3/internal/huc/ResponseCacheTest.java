@@ -2102,11 +2102,11 @@ public final class ResponseCacheTest {
 
     // Use the platform's HTTP stack.
     URLConnection connection = server.url("/").url().openConnection();
-    assertFalse(connection instanceof HttpURLConnectionImpl);
+    assertFalse(connection instanceof OkHttpURLConnection);
     assertEquals("A", readAscii(connection));
 
     URLConnection connection2 = server.url("/").url().openConnection();
-    assertFalse(connection2 instanceof HttpURLConnectionImpl);
+    assertFalse(connection2 instanceof OkHttpURLConnection);
     assertEquals("A", readAscii(connection2));
   }
 
@@ -2126,11 +2126,11 @@ public final class ResponseCacheTest {
 
     // Use the platform's HTTP stack.
     URLConnection connection = server.url("/").url().openConnection();
-    assertFalse(connection instanceof HttpURLConnectionImpl);
+    assertFalse(connection instanceof OkHttpURLConnection);
     assertEquals("A", readAscii(connection));
 
     URLConnection connection2 = server.url("/").url().openConnection();
-    assertFalse(connection2 instanceof HttpURLConnectionImpl);
+    assertFalse(connection2 instanceof OkHttpURLConnection);
     assertEquals("B", readAscii(connection2));
   }
 
@@ -2150,12 +2150,12 @@ public final class ResponseCacheTest {
 
     // Use the platform's HTTP stack.
     URLConnection connection = server.url("/").url().openConnection();
-    assertFalse(connection instanceof HttpURLConnectionImpl);
+    assertFalse(connection instanceof OkHttpURLConnection);
     connection.setRequestProperty("Accept-Language", "en-US");
     assertEquals("A", readAscii(connection));
 
     URLConnection connection2 = server.url("/").url().openConnection();
-    assertFalse(connection2 instanceof HttpURLConnectionImpl);
+    assertFalse(connection2 instanceof OkHttpURLConnection);
     assertEquals("B", readAscii(connection2));
   }
 
@@ -2175,11 +2175,11 @@ public final class ResponseCacheTest {
 
     // Use the platform's HTTP stack.
     URLConnection connection = server.url("/").url().openConnection();
-    assertFalse(connection instanceof HttpURLConnectionImpl);
+    assertFalse(connection instanceof OkHttpURLConnection);
     assertEquals("A", readAscii(connection));
 
     URLConnection connection2 = server.url("/").url().openConnection();
-    assertFalse(connection2 instanceof HttpURLConnectionImpl);
+    assertFalse(connection2 instanceof OkHttpURLConnection);
     assertEquals("B", readAscii(connection2));
   }
 

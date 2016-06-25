@@ -30,6 +30,7 @@ import java.util.List;
 import java.util.NoSuchElementException;
 import okhttp3.internal.DiskLruCache;
 import okhttp3.internal.InternalCache;
+import okhttp3.internal.Platform;
 import okhttp3.internal.Util;
 import okhttp3.internal.http.CacheRequest;
 import okhttp3.internal.http.CacheStrategy;
@@ -470,6 +471,12 @@ public final class Cache implements Closeable, Flushable {
   }
 
   private static final class Entry {
+    /** Synthetic response header: the local time when the request was sent. */
+    private static final String SENT_MILLIS = Platform.get().getPrefix() + "-Sent-Millis";
+
+    /** Synthetic response header: the local time when the response was received. */
+    private static final String RECEIVED_MILLIS = Platform.get().getPrefix() + "-Received-Millis";
+
     private final String url;
     private final Headers varyHeaders;
     private final String requestMethod;
@@ -550,10 +557,10 @@ public final class Cache implements Closeable, Flushable {
         for (int i = 0; i < responseHeaderLineCount; i++) {
           responseHeadersBuilder.addLenient(source.readUtf8LineStrict());
         }
-        String sendRequestMillisString = responseHeadersBuilder.get(OkHeaders.SENT_MILLIS);
-        String receivedResponseMillisString = responseHeadersBuilder.get(OkHeaders.RECEIVED_MILLIS);
-        responseHeadersBuilder.removeAll(OkHeaders.SENT_MILLIS);
-        responseHeadersBuilder.removeAll(OkHeaders.RECEIVED_MILLIS);
+        String sendRequestMillisString = responseHeadersBuilder.get(SENT_MILLIS);
+        String receivedResponseMillisString = responseHeadersBuilder.get(RECEIVED_MILLIS);
+        responseHeadersBuilder.removeAll(SENT_MILLIS);
+        responseHeadersBuilder.removeAll(RECEIVED_MILLIS);
         sentRequestMillis = sendRequestMillisString != null
             ? Long.parseLong(sendRequestMillisString)
             : 0L;
@@ -622,11 +629,11 @@ public final class Cache implements Closeable, Flushable {
             .writeUtf8(responseHeaders.value(i))
             .writeByte('\n');
       }
-      sink.writeUtf8(OkHeaders.SENT_MILLIS)
+      sink.writeUtf8(SENT_MILLIS)
           .writeUtf8(": ")
           .writeDecimalLong(sentRequestMillis)
           .writeByte('\n');
-      sink.writeUtf8(OkHeaders.RECEIVED_MILLIS)
+      sink.writeUtf8(RECEIVED_MILLIS)
           .writeUtf8(": ")
           .writeDecimalLong(receivedResponseMillis)
           .writeByte('\n');

@@ -12,7 +12,7 @@ import java.util.TimeZone;
 import java.util.concurrent.TimeUnit;
 import javax.net.ssl.HttpsURLConnection;
 import okhttp3.internal.URLFilter;
-import okhttp3.internal.http.OkHeaders;
+import okhttp3.internal.huc.OkHttpURLConnection;
 import okhttp3.internal.io.InMemoryFileSystem;
 import okhttp3.internal.tls.SslClient;
 import okhttp3.mockwebserver.MockResponse;
@@ -219,7 +219,7 @@ public class OkUrlFactoryTest {
   }
 
   private void assertResponseHeader(HttpURLConnection connection, String expected) {
-    assertEquals(expected, connection.getHeaderField(OkHeaders.RESPONSE_SOURCE));
+    assertEquals(expected, connection.getHeaderField(OkHttpURLConnection.RESPONSE_SOURCE));
   }
 
   private void assertResponseCode(HttpURLConnection connection, int expected) throws IOException {

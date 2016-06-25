@@ -14,7 +14,6 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package okhttp3.internal.huc;
 
 import java.io.FileNotFoundException;
@@ -57,7 +56,6 @@ import okhttp3.internal.Version;
 import okhttp3.internal.http.HttpDate;
 import okhttp3.internal.http.HttpEngine;
 import okhttp3.internal.http.HttpMethod;
-import okhttp3.internal.http.OkHeaders;
 import okhttp3.internal.http.StatusLine;
 
 import static okhttp3.internal.Platform.WARN;
@@ -71,7 +69,16 @@ import static okhttp3.internal.Platform.WARN;
  * connection has been attempted, certain properties (request header fields, request method, etc.)
  * are immutable.
  */
-public class HttpURLConnectionImpl extends HttpURLConnection implements Callback {
+public final class OkHttpURLConnection extends HttpURLConnection implements Callback {
+  /**
+   * Synthetic response header: the selected {@link Protocol protocol} ("spdy/3.1", "http/1.1",
+   * etc).
+   */
+  public static final String SELECTED_PROTOCOL = Platform.get().getPrefix() + "-Selected-Protocol";
+
+  /** Synthetic response header: the location from which the response was loaded. */
+  public static final String RESPONSE_SOURCE = Platform.get().getPrefix() + "-Response-Source";
+
   private static final Set<String> METHODS = new LinkedHashSet<>(
       Arrays.asList("OPTIONS", "GET", "HEAD", "POST", "PUT", "DELETE", "TRACE", "PATCH"));
 
@@ -99,17 +106,17 @@ public class HttpURLConnectionImpl extends HttpURLConnection implements Callback
   Proxy proxy;
   Handshake handshake;
 
-  public HttpURLConnectionImpl(URL url, OkHttpClient client) {
+  public OkHttpURLConnection(URL url, OkHttpClient client) {
     super(url);
     this.client = client;
   }
 
-  public HttpURLConnectionImpl(URL url, OkHttpClient client, URLFilter urlFilter) {
+  public OkHttpURLConnection(URL url, OkHttpClient client, URLFilter urlFilter) {
     this(url, client);
     this.urlFilter = urlFilter;
   }
 
-  @Override public final void connect() throws IOException {
+  @Override public void connect() throws IOException {
     if (executed) return;
 
     Call call = buildCall();
@@ -130,7 +137,7 @@ public class HttpURLConnectionImpl extends HttpURLConnection implements Callback
     }
   }
 
-  @Override public final void disconnect() {
+  @Override public void disconnect() {
     // Calling disconnect() before a connection exists should have no effect.
     if (call == null) return;
 
@@ -142,7 +149,7 @@ public class HttpURLConnectionImpl extends HttpURLConnection implements Callback
    * Returns an input stream from the server in the case of error such as the requested file (txt,
    * htm, html) is not found on the remote server.
    */
-  @Override public final InputStream getErrorStream() {
+  @Override public InputStream getErrorStream() {
     try {
       Response response = getResponse();
       if (HttpEngine.hasBody(response) && response.code() >= HTTP_BAD_REQUEST) {
@@ -159,8 +166,8 @@ public class HttpURLConnectionImpl extends HttpURLConnection implements Callback
       Response response = getResponse();
       Headers headers = response.headers();
       responseHeaders = headers.newBuilder()
-          .add(OkHeaders.SELECTED_PROTOCOL, response.protocol().toString())
-          .add(OkHeaders.RESPONSE_SOURCE, responseSourceHeader(response))
+          .add(SELECTED_PROTOCOL, response.protocol().toString())
+          .add(RESPONSE_SOURCE, responseSourceHeader(response))
           .build();
     }
     return responseHeaders;
@@ -183,7 +190,7 @@ public class HttpURLConnectionImpl extends HttpURLConnection implements Callback
    * Returns the value of the field at {@code position}. Returns null if there are fewer than {@code
    * position} headers.
    */
-  @Override public final String getHeaderField(int position) {
+  @Override public String getHeaderField(int position) {
     try {
       Headers headers = getHeaders();
       if (position < 0 || position >= headers.size()) return null;
@@ -197,7 +204,7 @@ public class HttpURLConnectionImpl extends HttpURLConnection implements Callback
    * Returns the value of the field corresponding to the {@code fieldName}, or null if there is no
    * such field. If the field has multiple values, the last value is returned.
    */
-  @Override public final String getHeaderField(String fieldName) {
+  @Override public String getHeaderField(String fieldName) {
     try {
       return fieldName == null
           ? StatusLine.get(getResponse()).toString()
@@ -207,7 +214,7 @@ public class HttpURLConnectionImpl extends HttpURLConnection implements Callback
     }
   }
 
-  @Override public final String getHeaderFieldKey(int position) {
+  @Override public String getHeaderFieldKey(int position) {
     try {
       Headers headers = getHeaders();
       if (position < 0 || position >= headers.size()) return null;
@@ -217,7 +224,7 @@ public class HttpURLConnectionImpl extends HttpURLConnection implements Callback
     }
   }
 
-  @Override public final Map<String, List<String>> getHeaderFields() {
+  @Override public Map<String, List<String>> getHeaderFields() {
     try {
       return JavaNetHeaders.toMultimap(getHeaders(),
           StatusLine.get(getResponse()).toString());
@@ -226,7 +233,7 @@ public class HttpURLConnectionImpl extends HttpURLConnection implements Callback
     }
   }
 
-  @Override public final Map<String, List<String>> getRequestProperties() {
+  @Override public Map<String, List<String>> getRequestProperties() {
     if (connected) {
       throw new IllegalStateException(
           "Cannot access request header fields after connection is set");
@@ -235,7 +242,7 @@ public class HttpURLConnectionImpl extends HttpURLConnection implements Callback
     return JavaNetHeaders.toMultimap(requestHeaders.build(), null);
   }
 
-  @Override public final InputStream getInputStream() throws IOException {
+  @Override public InputStream getInputStream() throws IOException {
     if (!doInput) {
       throw new ProtocolException("This protocol does not support input");
     }
@@ -249,7 +256,7 @@ public class HttpURLConnectionImpl extends HttpURLConnection implements Callback
     return response.body().byteStream();
   }
 
-  @Override public final OutputStream getOutputStream() throws IOException {
+  @Override public OutputStream getOutputStream() throws IOException {
     OutputStreamRequestBody requestBody = (OutputStreamRequestBody) buildCall().request().body();
     if (requestBody == null) {
       throw new ProtocolException("method does not support a request body: " + method);
@@ -269,7 +276,7 @@ public class HttpURLConnectionImpl extends HttpURLConnection implements Callback
     return requestBody.outputStream();
   }
 
-  @Override public final Permission getPermission() throws IOException {
+  @Override public Permission getPermission() throws IOException {
     URL url = getURL();
     String hostname = url.getHost();
     int hostPort = url.getPort() != -1
@@ -283,7 +290,7 @@ public class HttpURLConnectionImpl extends HttpURLConnection implements Callback
     return new SocketPermission(hostname + ":" + hostPort, "connect, resolve");
   }
 
-  @Override public final String getRequestProperty(String field) {
+  @Override public String getRequestProperty(String field) {
     if (field == null) return null;
     return requestHeaders.get(field);
   }
@@ -449,7 +456,7 @@ public class HttpURLConnectionImpl extends HttpURLConnection implements Callback
    * <p><strong>Warning:</strong> This method may return false before attempting to connect and true
    * afterwards.
    */
-  @Override public final boolean usingProxy() {
+  @Override public boolean usingProxy() {
     if (proxy != null) return true;
     Proxy clientProxy = client.proxy();
     return clientProxy != null && clientProxy.type() != Proxy.Type.DIRECT;
@@ -459,11 +466,11 @@ public class HttpURLConnectionImpl extends HttpURLConnection implements Callback
     return getResponse().message();
   }
 
-  @Override public final int getResponseCode() throws IOException {
+  @Override public int getResponseCode() throws IOException {
     return getResponse().code();
   }
 
-  @Override public final void setRequestProperty(String field, String newValue) {
+  @Override public void setRequestProperty(String field, String newValue) {
     if (connected) {
       throw new IllegalStateException("Cannot set request property after connection is made");
     }
@@ -497,7 +504,7 @@ public class HttpURLConnectionImpl extends HttpURLConnection implements Callback
     }
   }
 
-  @Override public final void addRequestProperty(String field, String value) {
+  @Override public void addRequestProperty(String field, String value) {
     if (connected) {
       throw new IllegalStateException("Cannot add request property after connection is made");
     }

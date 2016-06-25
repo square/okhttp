@@ -30,7 +30,7 @@ import okio.Timeout;
  * In either case the bytes of the body aren't known until the caller writes them to the output
  * stream.
  */
-public abstract class OutputStreamRequestBody extends RequestBody {
+abstract class OutputStreamRequestBody extends RequestBody {
   private Timeout timeout;
   private long expectedContentLength;
   private OutputStream outputStream;
