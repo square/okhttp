@@ -29,6 +29,7 @@ import java.util.List;
 import java.util.Map;
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.SSLPeerUnverifiedException;
 import okhttp3.AbstractResponseCache;
 import okhttp3.OkHttpClient;
 import okhttp3.OkUrlFactory;
@@ -83,11 +84,15 @@ public class CacheAdapterTest {
     ResponseCache responseCache = new AbstractResponseCache() {
       @Override public CacheResponse get(
           URI uri, String method, Map<String, List<String>> headers) throws IOException {
-        assertEquals(toUri(serverUrl), uri);
-        assertEquals("GET", method);
-        assertTrue("Arbitrary standard header not present", headers.containsKey("User-Agent"));
-        assertEquals(Collections.singletonList("value1"), headers.get("key1"));
-        return null;
+        try {
+          assertEquals(toUri(serverUrl), uri);
+          assertEquals("GET", method);
+          assertTrue("Arbitrary standard header not present", headers.containsKey("User-Agent"));
+          assertEquals(Collections.singletonList("value1"), headers.get("key1"));
+          return null;
+        } catch (Throwable t) {
+          throw new IOException("unexpected cache failure", t);
+        }
       }
     };
     setInternalCache(new CacheAdapter(responseCache));
@@ -105,12 +110,16 @@ public class CacheAdapterTest {
     ResponseCache responseCache = new AbstractResponseCache() {
       @Override public CacheResponse get(URI uri, String method, Map<String, List<String>> headers)
           throws IOException {
-        assertEquals("https", uri.getScheme());
-        assertEquals(toUri(serverUrl), uri);
-        assertEquals("GET", method);
-        assertTrue("Arbitrary standard header not present", headers.containsKey("User-Agent"));
-        assertEquals(Collections.singletonList("value1"), headers.get("key1"));
-        return null;
+        try {
+          assertEquals("https", uri.getScheme());
+          assertEquals(toUri(serverUrl), uri);
+          assertEquals("GET", method);
+          assertTrue("Arbitrary standard header not present", headers.containsKey("User-Agent"));
+          assertEquals(Collections.singletonList("value1"), headers.get("key1"));
+          return null;
+        } catch (Throwable t) {
+          throw new IOException("unexpected cache failure", t);
+        }
       }
     };
     setInternalCache(new CacheAdapter(responseCache));
@@ -136,27 +145,31 @@ public class CacheAdapterTest {
 
     ResponseCache responseCache = new AbstractResponseCache() {
       @Override public CacheRequest put(URI uri, URLConnection connection) throws IOException {
-        assertTrue(connection instanceof HttpURLConnection);
-        assertFalse(connection instanceof HttpsURLConnection);
+        try {
+          assertTrue(connection instanceof HttpURLConnection);
+          assertFalse(connection instanceof HttpsURLConnection);
 
-        assertEquals(response.length, connection.getContentLength());
+          assertEquals(response.length, connection.getContentLength());
 
-        HttpURLConnection httpUrlConnection = (HttpURLConnection) connection;
-        assertEquals("GET", httpUrlConnection.getRequestMethod());
-        assertTrue(httpUrlConnection.getDoInput());
-        assertFalse(httpUrlConnection.getDoOutput());
+          HttpURLConnection httpUrlConnection = (HttpURLConnection) connection;
+          assertEquals("GET", httpUrlConnection.getRequestMethod());
+          assertTrue(httpUrlConnection.getDoInput());
+          assertFalse(httpUrlConnection.getDoOutput());
 
-        assertEquals("Fantastic", httpUrlConnection.getResponseMessage());
-        assertEquals(toUri(serverUrl), uri);
-        assertEquals(serverUrl, connection.getURL());
-        assertEquals("value", connection.getRequestProperty("key"));
+          assertEquals("Fantastic", httpUrlConnection.getResponseMessage());
+          assertEquals(toUri(serverUrl), uri);
+          assertEquals(serverUrl, connection.getURL());
+          assertEquals("value", connection.getRequestProperty("key"));
 
-        // Check retrieval by string key.
-        assertEquals(statusLine, httpUrlConnection.getHeaderField(null));
-        assertEquals("c", httpUrlConnection.getHeaderField("A"));
-        // The RI and OkHttp supports case-insensitive matching for this method.
-        assertEquals("c", httpUrlConnection.getHeaderField("a"));
-        return null;
+          // Check retrieval by string key.
+          assertEquals(statusLine, httpUrlConnection.getHeaderField(null));
+          assertEquals("c", httpUrlConnection.getHeaderField("A"));
+          // The RI and OkHttp supports case-insensitive matching for this method.
+          assertEquals("c", httpUrlConnection.getHeaderField("a"));
+          return null;
+        } catch (Throwable t) {
+          throw new IOException("unexpected cache failure", t);
+        }
       }
     };
     setInternalCache(new CacheAdapter(responseCache));
@@ -175,27 +188,31 @@ public class CacheAdapterTest {
 
     ResponseCache responseCache = new AbstractResponseCache() {
       @Override public CacheRequest put(URI uri, URLConnection connection) throws IOException {
-        assertTrue(connection instanceof HttpURLConnection);
-        assertFalse(connection instanceof HttpsURLConnection);
+        try {
+          assertTrue(connection instanceof HttpURLConnection);
+          assertFalse(connection instanceof HttpsURLConnection);
 
-        assertEquals(0, connection.getContentLength());
+          assertEquals(0, connection.getContentLength());
 
-        HttpURLConnection httpUrlConnection = (HttpURLConnection) connection;
-        assertEquals("POST", httpUrlConnection.getRequestMethod());
-        assertTrue(httpUrlConnection.getDoInput());
-        assertTrue(httpUrlConnection.getDoOutput());
+          HttpURLConnection httpUrlConnection = (HttpURLConnection) connection;
+          assertEquals("POST", httpUrlConnection.getRequestMethod());
+          assertTrue(httpUrlConnection.getDoInput());
+          assertTrue(httpUrlConnection.getDoOutput());
 
-        assertEquals("Fantastic", httpUrlConnection.getResponseMessage());
-        assertEquals(toUri(serverUrl), uri);
-        assertEquals(serverUrl, connection.getURL());
-        assertEquals("value", connection.getRequestProperty("key"));
+          assertEquals("Fantastic", httpUrlConnection.getResponseMessage());
+          assertEquals(toUri(serverUrl), uri);
+          assertEquals(serverUrl, connection.getURL());
+          assertEquals("value", connection.getRequestProperty("key"));
 
-        // Check retrieval by string key.
-        assertEquals(statusLine, httpUrlConnection.getHeaderField(null));
-        assertEquals("c", httpUrlConnection.getHeaderField("A"));
-        // The RI and OkHttp supports case-insensitive matching for this method.
-        assertEquals("c", httpUrlConnection.getHeaderField("a"));
-        return null;
+          // Check retrieval by string key.
+          assertEquals(statusLine, httpUrlConnection.getHeaderField(null));
+          assertEquals("c", httpUrlConnection.getHeaderField("A"));
+          // The RI and OkHttp supports case-insensitive matching for this method.
+          assertEquals("c", httpUrlConnection.getHeaderField("a"));
+          return null;
+        } catch (Throwable t) {
+          throw new IOException("unexpected cache failure", t);
+        }
       }
     };
     setInternalCache(new CacheAdapter(responseCache));
@@ -211,24 +228,28 @@ public class CacheAdapterTest {
 
     ResponseCache responseCache = new AbstractResponseCache() {
       @Override public CacheRequest put(URI uri, URLConnection connection) throws IOException {
-        assertTrue(connection instanceof HttpsURLConnection);
-        assertEquals(toUri(serverUrl), uri);
-        assertEquals(serverUrl, connection.getURL());
+        try {
+          assertTrue(connection instanceof HttpsURLConnection);
+          assertEquals(toUri(serverUrl), uri);
+          assertEquals(serverUrl, connection.getURL());
 
-        HttpsURLConnection cacheHttpsUrlConnection = (HttpsURLConnection) connection;
-        HttpsURLConnection realHttpsUrlConnection =
-            (HttpsURLConnection) CacheAdapterTest.this.connection;
-        assertEquals(realHttpsUrlConnection.getCipherSuite(),
-            cacheHttpsUrlConnection.getCipherSuite());
-        assertEquals(realHttpsUrlConnection.getPeerPrincipal(),
-            cacheHttpsUrlConnection.getPeerPrincipal());
-        assertArrayEquals(realHttpsUrlConnection.getLocalCertificates(),
-            cacheHttpsUrlConnection.getLocalCertificates());
-        assertArrayEquals(realHttpsUrlConnection.getServerCertificates(),
-            cacheHttpsUrlConnection.getServerCertificates());
-        assertEquals(realHttpsUrlConnection.getLocalPrincipal(),
-            cacheHttpsUrlConnection.getLocalPrincipal());
-        return null;
+          HttpsURLConnection cacheHttpsUrlConnection = (HttpsURLConnection) connection;
+          HttpsURLConnection realHttpsUrlConnection =
+              (HttpsURLConnection) CacheAdapterTest.this.connection;
+          assertEquals(realHttpsUrlConnection.getCipherSuite(),
+              cacheHttpsUrlConnection.getCipherSuite());
+          assertEquals(realHttpsUrlConnection.getPeerPrincipal(),
+              cacheHttpsUrlConnection.getPeerPrincipal());
+          assertArrayEquals(realHttpsUrlConnection.getLocalCertificates(),
+              cacheHttpsUrlConnection.getLocalCertificates());
+          assertArrayEquals(realHttpsUrlConnection.getServerCertificates(),
+              cacheHttpsUrlConnection.getServerCertificates());
+          assertEquals(realHttpsUrlConnection.getLocalPrincipal(),
+              cacheHttpsUrlConnection.getLocalPrincipal());
+          return null;
+        } catch (Throwable t) {
+          throw new IOException("unexpected cache failure", t);
+        }
       }
     };
     setInternalCache(new CacheAdapter(responseCache));

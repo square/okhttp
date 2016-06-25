@@ -283,11 +283,15 @@ public final class HttpEngine {
    * engine that should be used for the retry if {@code e} is recoverable, or null if the failure is
    * permanent. Requests with a body can only be recovered if the body is buffered.
    */
-  public HttpEngine recover(IOException e, boolean routeException, Response userResponse) {
+  public HttpEngine recover(IOException e, boolean routeException, Request userRequest) {
     streamAllocation.streamFailed(e);
 
     if (!client.retryOnConnectionFailure()) {
       return null; // The application layer has forbidden retries.
+    }
+
+    if (!routeException && userRequest.body() instanceof UnrepeatableRequestBody) {
+      return null; // We can't send the request body again.
     }
 
     if (!isRecoverable(e, routeException)) {
@@ -298,11 +302,10 @@ public final class HttpEngine {
       return null; // No more routes to attempt.
     }
 
-    StreamAllocation streamAllocation = close(userResponse);
+    StreamAllocation streamAllocation = close(null);
 
     // For failure recovery, use the same route selector with a new connection.
-    return new HttpEngine(client, userRequestUrl, forWebSocket, streamAllocation,
-        priorResponse);
+    return new HttpEngine(client, userRequestUrl, forWebSocket, streamAllocation, priorResponse);
   }
 
   private boolean isRecoverable(IOException e, boolean routeException) {
