@@ -253,7 +253,7 @@
               <groupId>org.apache.maven.plugins</groupId>
               <artifactId>maven-surefire-plugin</artifactId>
               <configuration>
-                <argLine>-Xbootclasspath/p:${bootclasspathPrefix}</argLine>
+                <argLine>-Xbootclasspath/p:${bootclasspathPrefix} -Xms512m -Xmx512m</argLine>
               </configuration>
               <dependencies>
                 <dependency>
@@ -285,7 +285,7 @@
               <groupId>org.apache.maven.plugins</groupId>
               <artifactId>maven-surefire-plugin</artifactId>
               <configuration>
-                <argLine>-Xbootclasspath/p:${bootclasspathPrefix}</argLine>
+                <argLine>-Xbootclasspath/p:${bootclasspathPrefix} -Xms512m -Xmx512m</argLine>
               </configuration>
               <dependencies>
                 <dependency>
