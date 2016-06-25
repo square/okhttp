@@ -73,20 +73,8 @@ import static okhttp3.internal.http.StatusLine.HTTP_PERM_REDIRECT;
 import static okhttp3.internal.http.StatusLine.HTTP_TEMP_REDIRECT;
 
 /**
- * Handles a single HTTP request/response pair. Each HTTP engine follows this lifecycle:
- *
- * <ol>
- *     <li>It is created.
- *     <li>The HTTP request message is sent with sendRequest(). Once the request is sent it is an
- *         error to modify the request headers. After sendRequest() has been called the request body
- *         can be written to if it exists.
- *     <li>The HTTP response message is read with readResponse(). After the response has been read
- *         the response headers and body can be read. All responses have a response body input
- *         stream, though in some instances this stream is empty.
- * </ol>
- *
- * <p>The request and response may be served by the HTTP response cache, by the network, or by both
- * in the event of a conditional GET.
+ * Handles a single HTTP request/response pair. The request and response may be served by the HTTP
+ * response cache, by the network, or by both in the event of a conditional GET.
  */
 public final class HttpEngine {
   /**

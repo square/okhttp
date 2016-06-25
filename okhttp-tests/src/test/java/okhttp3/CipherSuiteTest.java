@@ -32,17 +32,16 @@ public class CipherSuiteTest {
       forJavaName(null);
       fail("Should have thrown");
     } catch (NullPointerException expected) {
-      // expected
     }
   }
 
   @Test public void hashCode_usesIdentityHashCode_legacyCase() {
-    CipherSuite cs = TLS_RSA_EXPORT_WITH_RC4_40_MD5; // this one's javaName starts with "SSL_"
+    CipherSuite cs = TLS_RSA_EXPORT_WITH_RC4_40_MD5; // This one's javaName starts with "SSL_".
     assertEquals(cs.toString(), System.identityHashCode(cs), cs.hashCode());
   }
 
   @Test public void hashCode_usesIdentityHashCode_regularCase() {
-    CipherSuite cs = TLS_RSA_WITH_AES_128_CBC_SHA256; // this one's javaName matches the identifer
+    CipherSuite cs = TLS_RSA_WITH_AES_128_CBC_SHA256; // This one's javaName matches the identifier.
     assertEquals(cs.toString(), System.identityHashCode(cs), cs.hashCode());
   }
 
@@ -53,28 +52,26 @@ public class CipherSuiteTest {
   }
 
   /**
-   * Tests that interned CipherSuite instances remain the case across garbage collections, even
-   * if the String used to construct them is no longer strongly referenced outside of the
-   * CipherSuite.
+   * Tests that interned CipherSuite instances remain the case across garbage collections, even if
+   * the String used to construct them is no longer strongly referenced outside of the CipherSuite.
    */
   @SuppressWarnings("RedundantStringConstructorCall")
   @Test public void instancesAreInterned_survivesGarbageCollection() {
-    // We're not holding onto a reference to this String instance outside of the CipherSuite
+    // We're not holding onto a reference to this String instance outside of the CipherSuite...
     CipherSuite cs = forJavaName(new String("FakeCipherSuite_instancesAreInterned"));
-    System.gc(); // unless cs references the String instance, it may now be garbage collected
+    System.gc(); // Unless cs references the String instance, it may now be garbage collected.
     assertSame(cs, forJavaName(new String(cs.javaName())));
   }
 
   @Test public void equals() {
     assertEquals(forJavaName("cipher"), forJavaName("cipher"));
     assertNotEquals(forJavaName("cipherA"), forJavaName("cipherB"));
-    assertEquals(forJavaName("SSL_RSA_EXPORT_WITH_RC4_40_MD5"),
-            TLS_RSA_EXPORT_WITH_RC4_40_MD5);
+    assertEquals(forJavaName("SSL_RSA_EXPORT_WITH_RC4_40_MD5"), TLS_RSA_EXPORT_WITH_RC4_40_MD5);
     assertNotEquals(TLS_RSA_EXPORT_WITH_RC4_40_MD5, TLS_RSA_WITH_AES_128_CBC_SHA256);
   }
 
   @Test public void forJavaName_acceptsArbitraryStrings() {
-    // shouldn't throw
+    // Shouldn't throw.
     forJavaName("example CipherSuite name that is not in the whitelist");
   }
 
@@ -86,15 +83,15 @@ public class CipherSuiteTest {
 
   @Test public void javaName_equalsToString() {
     assertEquals(TLS_RSA_EXPORT_WITH_RC4_40_MD5.javaName,
-            TLS_RSA_EXPORT_WITH_RC4_40_MD5.toString());
+        TLS_RSA_EXPORT_WITH_RC4_40_MD5.toString());
     assertEquals(TLS_RSA_WITH_AES_128_CBC_SHA256.javaName,
-            TLS_RSA_WITH_AES_128_CBC_SHA256.toString());
+        TLS_RSA_WITH_AES_128_CBC_SHA256.toString());
   }
 
   /**
    * Legacy ciphers (whose javaName starts with "SSL_") are now considered different from the
-   * corresponding "TLS_" ciphers. In OkHttp 3.3.1, only 19 of those would have been valid;
-   * those 19 would have been considered equal to the corresponding "TLS_" ciphers.
+   * corresponding "TLS_" ciphers. In OkHttp 3.3.1, only 19 of those would have been valid; those 19
+   * would have been considered equal to the corresponding "TLS_" ciphers.
    */
   @Test public void forJavaName_fromLegacyEnumName() {
     // These would have been considered equal in OkHttp 3.3.1, but now aren't.
@@ -104,12 +101,12 @@ public class CipherSuiteTest {
 
     // The SSL_ one of these would have been invalid in OkHttp 3.3.1; it now is valid and not equal.
     assertNotEquals(
-            forJavaName("TLS_DH_RSA_EXPORT_WITH_DES40_CBC_SHA"),
-            forJavaName("SSL_DH_RSA_EXPORT_WITH_DES40_CBC_SHA"));
+        forJavaName("TLS_DH_RSA_EXPORT_WITH_DES40_CBC_SHA"),
+        forJavaName("SSL_DH_RSA_EXPORT_WITH_DES40_CBC_SHA"));
 
     // These would have not been valid in OkHttp 3.3.1, and now aren't equal.
     assertNotEquals(
-            forJavaName("TLS_FAKE_NEW_CIPHER"),
-            forJavaName("SSL_FAKE_NEW_CIPHER"));
+        forJavaName("TLS_FAKE_NEW_CIPHER"),
+        forJavaName("SSL_FAKE_NEW_CIPHER"));
   }
 }
