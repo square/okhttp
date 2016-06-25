@@ -100,7 +100,7 @@ public final class OkHttpURLConnection extends HttpURLConnection implements Call
   // These fields are guarded by lock.
   private final Object lock = new Object();
   private Response response;
-  private IOException callFailure;
+  private Throwable callFailure;
   Response networkResponse;
   boolean connectPending = true;
   Proxy proxy;
@@ -129,7 +129,7 @@ public final class OkHttpURLConnection extends HttpURLConnection implements Call
           lock.wait(); // Wait 'til the network interceptor is reached or the call fails.
         }
         if (callFailure != null) {
-          throw callFailure;
+          throw propagate(callFailure);
         }
       } catch (InterruptedException e) {
         throw new InterruptedIOException();
@@ -382,6 +382,7 @@ public final class OkHttpURLConnection extends HttpURLConnection implements Call
 
     OkHttpClient.Builder clientBuilder = client.newBuilder();
     clientBuilder.interceptors().clear();
+    clientBuilder.interceptors().add(UnexpectedException.INTERCEPTOR);
     clientBuilder.networkInterceptors().clear();
     clientBuilder.networkInterceptors().add(networkInterceptor);
 
@@ -408,7 +409,7 @@ public final class OkHttpURLConnection extends HttpURLConnection implements Call
     } else if (networkResponse != null) {
       return networkResponse;
     } else if (callFailure != null) {
-      throw callFailure;
+      throw propagate(callFailure);
     }
 
     Call call = buildCall();
@@ -437,7 +438,7 @@ public final class OkHttpURLConnection extends HttpURLConnection implements Call
     }
 
     synchronized (lock) {
-      if (callFailure != null) throw callFailure;
+      if (callFailure != null) throw propagate(callFailure);
       if (response != null) return response;
     }
 
@@ -573,7 +574,7 @@ public final class OkHttpURLConnection extends HttpURLConnection implements Call
 
   @Override public void onFailure(Call call, IOException e) {
     synchronized (lock) {
-      this.callFailure = e;
+      this.callFailure = (e instanceof UnexpectedException) ? e.getCause() : e;
       lock.notifyAll();
     }
   }
@@ -585,6 +586,32 @@ public final class OkHttpURLConnection extends HttpURLConnection implements Call
       this.url = response.request().url().url();
       lock.notifyAll();
     }
+  }
+
+  static final class UnexpectedException extends IOException {
+    static final Interceptor INTERCEPTOR = new Interceptor() {
+      @Override public Response intercept(Chain chain) throws IOException {
+        try {
+          return chain.proceed(chain.request());
+        } catch (IOException e) {
+          throw e;
+        } catch (Error | RuntimeException e) {
+          throw new UnexpectedException(e);
+        }
+      }
+    };
+
+    public UnexpectedException(Throwable cause) {
+      super(cause);
+    }
+  }
+
+  /** Throws {@code throwable} as either an IOException, RuntimeException, or Error. */
+  private static IOException propagate(Throwable throwable) throws IOException {
+    if (throwable instanceof IOException) throw (IOException) throwable;
+    if (throwable instanceof Error) throw (Error) throwable;
+    if (throwable instanceof RuntimeException) throw (RuntimeException) throwable;
+    throw new AssertionError();
   }
 
   /**
