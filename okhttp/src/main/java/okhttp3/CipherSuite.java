@@ -393,7 +393,7 @@ public final class CipherSuite {
    * @param sinceAndroidVersion the first Android SDK version supporting this cipher suite.
    */
   private static CipherSuite of(
-          String javaName, int value, int rfc, int sinceJavaVersion, int sinceAndroidVersion) {
+      String javaName, int value, int rfc, int sinceJavaVersion, int sinceAndroidVersion) {
     return forJavaName(javaName);
   }
 
