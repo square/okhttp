@@ -138,11 +138,11 @@ public final class Dispatcher {
    */
   public synchronized void cancelAll() {
     for (AsyncCall call : readyAsyncCalls) {
-      call.cancel();
+      call.get().cancel();
     }
 
     for (AsyncCall call : runningAsyncCalls) {
-      call.cancel();
+      call.get().cancel();
     }
 
     for (RealCall call : runningSyncCalls) {

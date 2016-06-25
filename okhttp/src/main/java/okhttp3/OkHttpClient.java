@@ -111,7 +111,7 @@ public class OkHttpClient implements Cloneable, Call.Factory {
       }
 
       @Override public StreamAllocation callEngineGetStreamAllocation(Call call) {
-        return ((RealCall) call).engine.streamAllocation;
+        return ((RealCall) call).streamAllocation();
       }
 
       @Override
