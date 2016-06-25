@@ -293,7 +293,7 @@ public final class ConnectionSpecTest {
         .tlsVersions(TlsVersion.TLS_1_2)
         .cipherSuites(CipherSuite.TLS_RSA_WITH_RC4_128_MD5)
         .build();
-    assertEquals("ConnectionSpec(cipherSuites=[TLS_RSA_WITH_RC4_128_MD5], tlsVersions=[TLS_1_2], "
+    assertEquals("ConnectionSpec(cipherSuites=[SSL_RSA_WITH_RC4_128_MD5], tlsVersions=[TLS_1_2], "
         + "supportsTlsExtensions=true)", connectionSpec.toString());
   }
 
