@@ -597,8 +597,7 @@ public final class InterceptorTest {
       client.newCall(request).execute();
       fail();
     } catch (NullPointerException expected) {
-      assertEquals("application interceptor " + interceptor
-          + " returned null", expected.getMessage());
+      assertEquals("interceptor " + interceptor + " returned null", expected.getMessage());
     }
   }
 
@@ -627,7 +626,7 @@ public final class InterceptorTest {
       client.newCall(request).execute();
       fail();
     } catch (NullPointerException expected) {
-      assertEquals("network interceptor " + interceptor + " returned null", expected.getMessage());
+      assertEquals("interceptor " + interceptor + " returned null", expected.getMessage());
     }
   }
 

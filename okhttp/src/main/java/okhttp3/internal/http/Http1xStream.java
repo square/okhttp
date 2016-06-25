@@ -115,7 +115,6 @@ public final class Http1xStream implements HttpStream {
    * header field receives the proper value.
    */
   @Override public void writeRequestHeaders(Request request) throws IOException {
-    httpEngine.writingRequestHeaders();
     String requestLine = RequestLine.get(
         request, httpEngine.getConnection().route().proxy().type());
     writeRequest(request.headers(), requestLine);
