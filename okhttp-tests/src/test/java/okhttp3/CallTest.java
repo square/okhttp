@@ -1792,7 +1792,7 @@ public final class CallTest {
         .build());
     call.enqueue(callback);
     call.cancel();
-    callback.await(server.url("/a")).assertFailure("Canceled");
+    callback.await(server.url("/a")).assertFailure("Canceled", "Socket closed");
   }
 
   @Test public void cancelAll() throws Exception {
@@ -1801,7 +1801,7 @@ public final class CallTest {
         .build());
     call.enqueue(callback);
     client.dispatcher().cancelAll();
-    callback.await(server.url("/")).assertFailure("Canceled");
+    callback.await(server.url("/")).assertFailure("Canceled", "Socket closed");
   }
 
   @Test public void cancelBeforeBodyIsRead() throws Exception {
@@ -1864,7 +1864,12 @@ public final class CallTest {
    * I/O takes place.
    */
   @Test public void canceledBeforeIOSignalsOnFailure() throws Exception {
-    client.dispatcher().setMaxRequests(1); // Force requests to be executed serially.
+    // Force requests to be executed serially.
+    okhttp3.Dispatcher dispatcher = new okhttp3.Dispatcher(client.dispatcher().executorService());
+    dispatcher.setMaxRequests(1);
+    client = client.newBuilder()
+        .dispatcher(dispatcher)
+        .build();
 
     Request requestA = new Request.Builder().url(server.url("/a")).build();
     Request requestB = new Request.Builder().url(server.url("/b")).build();
@@ -1886,7 +1891,7 @@ public final class CallTest {
 
     callback.await(requestA.url()).assertBody("A");
     // At this point we know the callback is ready, and that it will receive a cancel failure.
-    callback.await(requestB.url()).assertFailure("Canceled");
+    callback.await(requestB.url()).assertFailure("Canceled", "Socket closed");
   }
 
   @Test public void canceledBeforeIOSignalsOnFailure_HTTPS() throws Exception {

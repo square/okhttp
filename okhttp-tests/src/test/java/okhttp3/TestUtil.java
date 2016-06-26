@@ -2,10 +2,7 @@ package okhttp3;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
-import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Set;
 import okhttp3.internal.SingleInetAddressDns;
 import okhttp3.internal.framed.Header;
 
@@ -14,6 +11,7 @@ public final class TestUtil {
   }
 
   private static final ConnectionPool connectionPool = new ConnectionPool();
+  private static final Dispatcher dispatcher = new Dispatcher();
 
   /**
    * Returns an OkHttpClient for all tests to use as a starting point.
@@ -27,6 +25,7 @@ public final class TestUtil {
   public static OkHttpClient defaultClient() {
     return new OkHttpClient.Builder()
         .connectionPool(connectionPool)
+        .dispatcher(dispatcher)
         .dns(new SingleInetAddressDns()) // Prevent unexpected fallback addresses.
         .build();
   }
@@ -37,14 +36,6 @@ public final class TestUtil {
       result.add(new Header(elements[i], elements[i + 1]));
     }
     return result;
-  }
-
-  public static <T> Set<T> setOf(T... elements) {
-    return setOf(Arrays.asList(elements));
-  }
-
-  public static <T> Set<T> setOf(Collection<T> elements) {
-    return new LinkedHashSet<>(elements);
   }
 
   public static String repeat(char c, int count) {
