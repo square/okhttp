@@ -286,7 +286,7 @@ public final class RealConnection extends FramedConnection.Listener implements C
     // Make an SSL Tunnel on the first message pair of each SSL + proxy connection.
     String requestLine = "CONNECT " + Util.hostHeader(url, true) + " HTTP/1.1";
     while (true) {
-      Http1xStream tunnelConnection = new Http1xStream(null, source, sink);
+      Http1xStream tunnelConnection = new Http1xStream(null, null, source, sink);
       source.timeout().timeout(readTimeout, MILLISECONDS);
       sink.timeout().timeout(writeTimeout, MILLISECONDS);
       tunnelConnection.writeRequest(tunnelRequest.headers(), requestLine);

@@ -88,10 +88,6 @@ public class OkHttpClient implements Cloneable, Call.Factory {
         builder.setInternalCache(internalCache);
       }
 
-      @Override public InternalCache internalCache(OkHttpClient client) {
-        return client.internalCache();
-      }
-
       @Override public boolean connectionBecameIdle(
           ConnectionPool pool, RealConnection connection) {
         return pool.connectionBecameIdle(connection);

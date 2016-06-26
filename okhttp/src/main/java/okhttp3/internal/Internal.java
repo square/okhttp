@@ -47,8 +47,6 @@ public abstract class Internal {
 
   public abstract void setCache(OkHttpClient.Builder builder, InternalCache internalCache);
 
-  public abstract InternalCache internalCache(OkHttpClient client);
-
   public abstract RealConnection get(
       ConnectionPool pool, Address address, StreamAllocation streamAllocation);
 

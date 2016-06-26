@@ -24,6 +24,7 @@ import java.util.Locale;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import okhttp3.Headers;
+import okhttp3.OkHttpClient;
 import okhttp3.Protocol;
 import okhttp3.Request;
 import okhttp3.Response;
@@ -105,18 +106,16 @@ public final class Http2xStream implements HttpStream {
       ENCODING,
       UPGRADE);
 
+  private final OkHttpClient client;
   private final StreamAllocation streamAllocation;
   private final FramedConnection framedConnection;
-  private HttpEngine httpEngine;
   private FramedStream stream;
 
-  public Http2xStream(StreamAllocation streamAllocation, FramedConnection framedConnection) {
+  public Http2xStream(
+      OkHttpClient client, StreamAllocation streamAllocation, FramedConnection framedConnection) {
+    this.client = client;
     this.streamAllocation = streamAllocation;
     this.framedConnection = framedConnection;
-  }
-
-  @Override public void setHttpEngine(HttpEngine httpEngine) {
-    this.httpEngine = httpEngine;
   }
 
   @Override public Sink createRequestBody(Request request, long contentLength) throws IOException {
@@ -132,8 +131,8 @@ public final class Http2xStream implements HttpStream {
         : spdy3HeadersList(request);
     boolean hasResponseBody = true;
     stream = framedConnection.newStream(requestHeaders, permitsRequestBody, hasResponseBody);
-    stream.readTimeout().timeout(httpEngine.client.readTimeoutMillis(), TimeUnit.MILLISECONDS);
-    stream.writeTimeout().timeout(httpEngine.client.writeTimeoutMillis(), TimeUnit.MILLISECONDS);
+    stream.readTimeout().timeout(client.readTimeoutMillis(), TimeUnit.MILLISECONDS);
+    stream.writeTimeout().timeout(client.writeTimeoutMillis(), TimeUnit.MILLISECONDS);
   }
 
   @Override public void finishRequest() throws IOException {

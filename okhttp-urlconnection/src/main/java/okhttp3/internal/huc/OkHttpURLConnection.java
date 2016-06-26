@@ -54,8 +54,8 @@ import okhttp3.internal.URLFilter;
 import okhttp3.internal.Util;
 import okhttp3.internal.Version;
 import okhttp3.internal.http.HttpDate;
-import okhttp3.internal.http.HttpEngine;
 import okhttp3.internal.http.HttpMethod;
+import okhttp3.internal.http.OkHeaders;
 import okhttp3.internal.http.StatusLine;
 
 import static okhttp3.internal.Platform.WARN;
@@ -152,7 +152,7 @@ public final class OkHttpURLConnection extends HttpURLConnection implements Call
   @Override public InputStream getErrorStream() {
     try {
       Response response = getResponse();
-      if (HttpEngine.hasBody(response) && response.code() >= HTTP_BAD_REQUEST) {
+      if (OkHeaders.hasBody(response) && response.code() >= HTTP_BAD_REQUEST) {
         return response.body().byteStream();
       }
       return null;

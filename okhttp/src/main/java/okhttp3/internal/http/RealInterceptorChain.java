@@ -29,15 +29,15 @@ import okhttp3.Response;
  */
 public final class RealInterceptorChain implements Interceptor.Chain {
   private final List<Interceptor> interceptors;
-  private final Connection connection;
   private final StreamAllocation streamAllocation;
   private final HttpStream httpStream;
+  private final Connection connection;
   private final int index;
   private final Request request;
   private int calls;
 
-  public RealInterceptorChain(List<Interceptor> interceptors, Connection connection,
-      StreamAllocation streamAllocation, HttpStream httpStream, int index, Request request) {
+  public RealInterceptorChain(List<Interceptor> interceptors, StreamAllocation streamAllocation,
+      HttpStream httpStream, Connection connection, int index, Request request) {
     this.interceptors = interceptors;
     this.connection = connection;
     this.streamAllocation = streamAllocation;
@@ -63,49 +63,49 @@ public final class RealInterceptorChain implements Interceptor.Chain {
   }
 
   @Override public Response proceed(Request request) throws IOException {
-    return proceed(request, connection, streamAllocation, httpStream);
+    return proceed(request, streamAllocation, httpStream, connection);
   }
 
-  public Response proceed(Request request, Connection connection, StreamAllocation streamAllocation,
-      HttpStream httpStream) throws IOException {
+  public Response proceed(Request request, StreamAllocation streamAllocation, HttpStream httpStream,
+      Connection connection) throws IOException {
     if (index >= interceptors.size()) throw new AssertionError();
 
     calls++;
 
-    // If we already have a connection, confirm that the incoming request will use it.
-    if (this.connection != null && !sameConnection(request.url())) {
+    // If we already have a stream, confirm that the incoming request will use it.
+    if (this.httpStream != null && !sameConnection(request.url())) {
       throw new IllegalStateException("network interceptor " + interceptors.get(index - 1)
           + " must retain the same host and port");
     }
 
-    // If we already have a connection, confirm that this is the only call to chain.proceed().
-    if (this.connection != null && calls > 1) {
+    // If we already have a stream, confirm that this is the only call to chain.proceed().
+    if (this.httpStream != null && calls > 1) {
       throw new IllegalStateException("network interceptor " + interceptors.get(index - 1)
           + " must call proceed() exactly once");
     }
 
     // Call the next interceptor in the chain.
-    RealInterceptorChain chain = new RealInterceptorChain(
-        interceptors, connection, streamAllocation, httpStream, index + 1, request);
+    RealInterceptorChain next = new RealInterceptorChain(
+        interceptors, streamAllocation, httpStream, connection, index + 1, request);
     Interceptor interceptor = interceptors.get(index);
-    Response interceptedResponse = interceptor.intercept(chain);
+    Response response = interceptor.intercept(next);
 
     // Confirm that the next interceptor made its required call to chain.proceed().
-    if (connection != null && index + 1 < interceptors.size() && chain.calls != 1) {
+    if (httpStream != null && index + 1 < interceptors.size() && next.calls != 1) {
       throw new IllegalStateException("network interceptor " + interceptor
           + " must call proceed() exactly once");
     }
 
     // Confirm that the intercepted response isn't null.
-    if (interceptedResponse == null) {
+    if (response == null) {
       throw new NullPointerException("interceptor " + interceptor + " returned null");
     }
 
-    return interceptedResponse;
+    return response;
   }
 
   private boolean sameConnection(HttpUrl url) {
-    return url.host().equals(connection().route().address().url().host())
-        && url.port() == connection().route().address().url().port();
+    return url.host().equals(connection.route().address().url().host())
+        && url.port() == connection.route().address().url().port();
   }
 }
