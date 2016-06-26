@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.net.ConnectException;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.security.cert.Certificate;
@@ -59,14 +60,22 @@ class AndroidPlatform extends Platform {
     try {
       socket.connect(address, connectTimeout);
     } catch (AssertionError e) {
-      if (Util.isAndroidGetsocknameError(e)) throw new IOException(e);
+      if (Util.isAndroidGetsocknameError(e)) {
+        ConnectException connectException = new ConnectException(e.getMessage());
+        connectException.initCause(e);
+        throw connectException;
+      }
       throw e;
     } catch (SecurityException e) {
       // Before android 4.3, socket.connect could throw a SecurityException
       // if opening a socket resulted in an EACCES error.
-      IOException ioException = new IOException("Exception in connect");
-      ioException.initCause(e);
-      throw ioException;
+      IOException connectException = new ConnectException("Exception in connect");
+      connectException.initCause(e);
+      throw connectException;
+    } catch (IOException e) {
+      IOException connectException = new ConnectException(e.getMessage());
+      connectException.initCause(e);
+      throw connectException;
     }
   }
 
