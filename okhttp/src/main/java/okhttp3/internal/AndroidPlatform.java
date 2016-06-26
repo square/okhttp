@@ -61,17 +61,21 @@ class AndroidPlatform extends Platform {
       socket.connect(address, connectTimeout);
     } catch (AssertionError e) {
       if (Util.isAndroidGetsocknameError(e)) {
-          ConnectException connectException = new ConnectException(e.getMessage());
-          connectException.initCause(e);
-          throw connectException;
+        ConnectException connectException = new ConnectException(e.getMessage());
+        connectException.initCause(e);
+        throw connectException;
       }
       throw e;
     } catch (SecurityException e) {
       // Before android 4.3, socket.connect could throw a SecurityException
       // if opening a socket resulted in an EACCES error.
-      IOException ioException = new ConnectException("Exception in connect");
-      ioException.initCause(e);
-      throw ioException;
+      IOException connectException = new ConnectException("Exception in connect");
+      connectException.initCause(e);
+      throw connectException;
+    } catch (IOException e) {
+      IOException connectException = new ConnectException(e.getMessage());
+      connectException.initCause(e);
+      throw connectException;
     }
   }
 
