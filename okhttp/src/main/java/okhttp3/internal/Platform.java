@@ -18,6 +18,7 @@ package okhttp3.internal;
 
 import java.io.IOException;
 import java.lang.reflect.Field;
+import java.net.ConnectException;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.util.ArrayList;
@@ -121,7 +122,13 @@ public class Platform {
 
   public void connectSocket(Socket socket, InetSocketAddress address,
       int connectTimeout) throws IOException {
-    socket.connect(address, connectTimeout);
+    try {
+      socket.connect(address, connectTimeout);
+    } catch (IOException e) {
+      ConnectException connectException = new ConnectException(e.getMessage());
+      connectException.initCause(e);
+      throw e;
+    }
   }
 
   public void log(int level, String message, Throwable t) {
