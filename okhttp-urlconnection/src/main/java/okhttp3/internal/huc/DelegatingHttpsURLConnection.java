@@ -32,6 +32,7 @@ import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLPeerUnverifiedException;
 import javax.net.ssl.SSLSocketFactory;
 import okhttp3.Handshake;
+import org.codehaus.mojo.animal_sniffer.IgnoreJRERequirement;
 
 /**
  * Implement an HTTPS connection by delegating to an HTTP connection for everything but the
@@ -146,6 +147,11 @@ abstract class DelegatingHttpsURLConnection extends HttpsURLConnection {
     return delegate.getContentLength();
   }
 
+  @IgnoreJRERequirement // Should only be invoked on Java 7+.
+  @Override public long getContentLengthLong() {
+    return delegate.getContentLengthLong();
+  }
+
   @Override public String getContentType() {
     return delegate.getContentType();
   }
@@ -188,6 +194,11 @@ abstract class DelegatingHttpsURLConnection extends HttpsURLConnection {
 
   @Override public String getHeaderField(String key) {
     return delegate.getHeaderField(key);
+  }
+
+  @IgnoreJRERequirement // Should only be invoked on Java 7+.
+  @Override public long getHeaderFieldLong(String field, long defaultValue) {
+    return delegate.getHeaderFieldLong(field, defaultValue);
   }
 
   @Override public long getHeaderFieldDate(String field, long defaultValue) {
@@ -248,6 +259,11 @@ abstract class DelegatingHttpsURLConnection extends HttpsURLConnection {
 
   @Override public void setDoOutput(boolean newValue) {
     delegate.setDoOutput(newValue);
+  }
+
+  @IgnoreJRERequirement // Should only be invoked on Java 7+.
+  @Override public void setFixedLengthStreamingMode(long contentLength) {
+    delegate.setFixedLengthStreamingMode(contentLength);
   }
 
   @Override public void setIfModifiedSince(long newValue) {

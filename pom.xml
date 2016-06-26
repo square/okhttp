@@ -47,6 +47,7 @@
     <!-- ALPN library targeted to Java 7 -->
     <alpn.jdk7.version>7.1.2.v20141202</alpn.jdk7.version>
     <android.version>4.1.1.4</android.version>
+    <animal.sniffer.version>1.11</animal.sniffer.version>
     <apache.http.version>4.2.2</apache.http.version>
     <bouncycastle.version>1.50</bouncycastle.version>
     <guava.version>16.0</guava.version>
@@ -214,7 +215,7 @@
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>animal-sniffer-maven-plugin</artifactId>
-        <version>1.11</version>
+        <version>${animal.sniffer.version}</version>
         <executions>
           <execution>
             <phase>test</phase>
