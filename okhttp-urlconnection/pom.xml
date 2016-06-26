@@ -14,6 +14,12 @@
 
   <dependencies>
     <dependency>
+      <groupId>org.codehaus.mojo</groupId>
+      <artifactId>animal-sniffer-annotations</artifactId>
+      <version>${animal.sniffer.version}</version>
+      <optional>true</optional>
+    </dependency>
+    <dependency>
       <groupId>${project.groupId}</groupId>
       <artifactId>okhttp</artifactId>
       <version>${project.version}</version>
