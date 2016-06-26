@@ -85,9 +85,9 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 import static okhttp3.TestUtil.defaultClient;
 import static okhttp3.internal.Util.UTF_8;
-import static okhttp3.internal.huc.OkHttpURLConnection.SELECTED_PROTOCOL;
 import static okhttp3.internal.http.StatusLine.HTTP_PERM_REDIRECT;
 import static okhttp3.internal.http.StatusLine.HTTP_TEMP_REDIRECT;
+import static okhttp3.internal.huc.OkHttpURLConnection.SELECTED_PROTOCOL;
 import static okhttp3.mockwebserver.SocketPolicy.DISCONNECT_AFTER_REQUEST;
 import static okhttp3.mockwebserver.SocketPolicy.DISCONNECT_AT_END;
 import static okhttp3.mockwebserver.SocketPolicy.DISCONNECT_AT_START;
@@ -3500,6 +3500,48 @@ public final class URLConnectionTest {
       connection.setSSLSocketFactory(sslClient.socketFactory);
       fail();
     } catch (UnsupportedOperationException expected) {
+    }
+  }
+
+  /** Confirm that runtime exceptions thrown inside of OkHttp propagate to the caller. */
+  @Test public void unexpectedExceptionSync() throws Exception {
+    urlFactory.setClient(urlFactory.client().newBuilder()
+        .dns(new Dns() {
+          @Override public List<InetAddress> lookup(String hostname) {
+            throw new RuntimeException("boom!");
+          }
+        })
+        .build());
+
+    server.enqueue(new MockResponse());
+
+    HttpURLConnection connection = urlFactory.open(server.url("/").url());
+    try {
+      connection.getResponseCode(); // Use the synchronous implementation.
+      fail();
+    } catch (RuntimeException expected) {
+      assertEquals("boom!", expected.getMessage());
+    }
+  }
+
+  /** Confirm that runtime exceptions thrown inside of OkHttp propagate to the caller. */
+  @Test public void unexpectedExceptionAsync() throws Exception {
+    urlFactory.setClient(urlFactory.client().newBuilder()
+        .dns(new Dns() {
+          @Override public List<InetAddress> lookup(String hostname) {
+            throw new RuntimeException("boom!");
+          }
+        })
+        .build());
+
+    server.enqueue(new MockResponse());
+
+    HttpURLConnection connection = urlFactory.open(server.url("/").url());
+    try {
+      connection.connect(); // Force the async implementation.
+      fail();
+    } catch (RuntimeException expected) {
+      assertEquals("boom!", expected.getMessage());
     }
   }
 
