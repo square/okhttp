@@ -188,6 +188,9 @@ public final class ConnectionReuseTest {
     assertEquals("a", responseA.body().string());
     assertEquals(0, server.takeRequest().getSequenceNumber());
 
+    // Give the socket a chance to become stale.
+    Thread.sleep(250);
+
     Request requestB = new Request.Builder()
         .url(server.url("/"))
         .post(RequestBody.create(MediaType.parse("text/plain"), "b"))

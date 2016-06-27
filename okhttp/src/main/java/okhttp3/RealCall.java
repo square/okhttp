@@ -20,7 +20,10 @@ import java.util.ArrayList;
 import java.util.List;
 import okhttp3.internal.NamedRunnable;
 import okhttp3.internal.Platform;
+import okhttp3.internal.http.BridgeInterceptor;
+import okhttp3.internal.http.CacheInterceptor;
 import okhttp3.internal.http.CallServerInterceptor;
+import okhttp3.internal.http.ConnectInterceptor;
 import okhttp3.internal.http.RealInterceptorChain;
 import okhttp3.internal.http.RetryAndFollowUpInterceptor;
 import okhttp3.internal.http.StreamAllocation;
@@ -153,6 +156,9 @@ final class RealCall implements Call {
     List<Interceptor> interceptors = new ArrayList<>();
     interceptors.addAll(client.interceptors());
     interceptors.add(retryAndFollowUpInterceptor);
+    interceptors.add(new BridgeInterceptor(client.cookieJar()));
+    interceptors.add(new CacheInterceptor(client.internalCache()));
+    interceptors.add(new ConnectInterceptor(client));
     if (!retryAndFollowUpInterceptor.isForWebSocket()) {
       interceptors.addAll(client.networkInterceptors());
     }

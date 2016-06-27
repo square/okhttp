@@ -22,15 +22,17 @@ import java.net.ProtocolException;
 import java.net.Proxy;
 import java.net.SocketTimeoutException;
 import java.security.cert.CertificateException;
+import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLHandshakeException;
 import javax.net.ssl.SSLPeerUnverifiedException;
+import javax.net.ssl.SSLSocketFactory;
+import okhttp3.Address;
+import okhttp3.CertificatePinner;
 import okhttp3.Connection;
 import okhttp3.HttpUrl;
 import okhttp3.Interceptor;
-import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
-import okhttp3.RequestBody;
 import okhttp3.Response;
 import okhttp3.Route;
 
@@ -41,7 +43,7 @@ import static java.net.HttpURLConnection.HTTP_MULT_CHOICE;
 import static java.net.HttpURLConnection.HTTP_PROXY_AUTH;
 import static java.net.HttpURLConnection.HTTP_SEE_OTHER;
 import static java.net.HttpURLConnection.HTTP_UNAUTHORIZED;
-import static okhttp3.internal.http.HttpEngine.MAX_FOLLOW_UPS;
+import static okhttp3.internal.Util.closeQuietly;
 import static okhttp3.internal.http.StatusLine.HTTP_PERM_REDIRECT;
 import static okhttp3.internal.http.StatusLine.HTTP_TEMP_REDIRECT;
 
@@ -50,8 +52,14 @@ import static okhttp3.internal.http.StatusLine.HTTP_TEMP_REDIRECT;
  * {@link IOException} if the call was canceled.
  */
 public final class RetryAndFollowUpInterceptor implements Interceptor {
+  /**
+   * How many redirects and auth challenges should we attempt? Chrome follows 21 redirects; Firefox,
+   * curl, and wget follow 20; Safari follows 16; and HTTP/1.0 recommends 5.
+   */
+  private static final int MAX_FOLLOW_UPS = 20;
+
   private final OkHttpClient client;
-  private HttpEngine engine;
+  private StreamAllocation streamAllocation;
   private boolean forWebSocket;
   private volatile boolean canceled;
 
@@ -70,8 +78,8 @@ public final class RetryAndFollowUpInterceptor implements Interceptor {
    */
   public void cancel() {
     canceled = true;
-    HttpEngine engine = this.engine;
-    if (engine != null) engine.streamAllocation.cancel();
+    StreamAllocation streamAllocation = this.streamAllocation;
+    if (streamAllocation != null) streamAllocation.cancel();
   }
 
   public boolean isCanceled() {
@@ -91,88 +99,65 @@ public final class RetryAndFollowUpInterceptor implements Interceptor {
   }
 
   public StreamAllocation streamAllocation() {
-    return engine.streamAllocation;
+    return streamAllocation;
   }
 
   @Override public Response intercept(Chain chain) throws IOException {
     Request request = chain.request();
 
-    // Copy body metadata to the appropriate request headers.
-    RequestBody body = request.body();
-    if (body != null) {
-      Request.Builder requestBuilder = request.newBuilder();
-
-      MediaType contentType = body.contentType();
-      if (contentType != null) {
-        requestBuilder.header("Content-Type", contentType.toString());
-      }
-
-      long contentLength = body.contentLength();
-      if (contentLength != -1) {
-        requestBuilder.header("Content-Length", Long.toString(contentLength));
-        requestBuilder.removeHeader("Transfer-Encoding");
-      } else {
-        requestBuilder.header("Transfer-Encoding", "chunked");
-        requestBuilder.removeHeader("Content-Length");
-      }
-
-      request = requestBuilder.build();
-    }
-
-    // Create the initial HTTP engine. Retries and redirects need new engine for each attempt.
-    engine = new HttpEngine(client, request.url(), null, null);
+    streamAllocation = new StreamAllocation(
+        client.connectionPool(), createAddress(request.url()));
 
     int followUpCount = 0;
+    Response priorResponse = null;
     while (true) {
       if (canceled) {
-        engine.streamAllocation.release();
+        streamAllocation.release();
         throw new IOException("Canceled");
       }
 
       Response response = null;
       boolean releaseConnection = true;
       try {
-        response = engine.proceed(request, (RealInterceptorChain) chain);
+        response = ((RealInterceptorChain) chain).proceed(request, streamAllocation, null, null);
         releaseConnection = false;
       } catch (RouteException e) {
         // The attempt to connect via a route failed. The request will not have been sent.
-        HttpEngine retryEngine = recover(e.getLastConnectException(), true, request);
-        if (retryEngine != null) {
-          releaseConnection = false;
-          engine = retryEngine;
-          continue;
-        }
-        // Give up; recovery is not possible.
-        throw e.getLastConnectException();
+        if (!recover(e.getLastConnectException(), true, request)) throw e.getLastConnectException();
+        releaseConnection = false;
+        continue;
       } catch (IOException e) {
         // An attempt to communicate with a server failed. The request may have been sent.
-        HttpEngine retryEngine = recover(e, false, request);
-        if (retryEngine != null) {
-          releaseConnection = false;
-          engine = retryEngine;
-          continue;
-        }
-
-        // Give up; recovery is not possible.
-        throw e;
+        if (!recover(e, false, request)) throw e;
+        releaseConnection = false;
+        continue;
       } finally {
         // We're throwing an unchecked exception. Release any resources.
         if (releaseConnection) {
-          StreamAllocation streamAllocation = engine.close(null);
+          streamAllocation.streamFailed(null);
           streamAllocation.release();
         }
+      }
+
+      // Attach the prior response if it exists. Such responses never have a body.
+      if (priorResponse != null) {
+        response = response.newBuilder()
+            .priorResponse(priorResponse.newBuilder()
+                .body(null)
+                .build())
+            .build();
       }
 
       Request followUp = followUpRequest(response);
 
       if (followUp == null) {
         if (!forWebSocket) {
-          engine.streamAllocation.release();
+          streamAllocation.release();
         }
         return response;
       }
 
-      StreamAllocation streamAllocation = engine.close(response);
+      closeQuietly(response.body());
 
       if (++followUpCount > MAX_FOLLOW_UPS) {
         streamAllocation.release();
@@ -185,45 +170,55 @@ public final class RetryAndFollowUpInterceptor implements Interceptor {
 
       if (!sameConnection(response, followUp.url())) {
         streamAllocation.release();
-        streamAllocation = null;
+        streamAllocation = new StreamAllocation(
+            client.connectionPool(), createAddress(followUp.url()));
       } else if (streamAllocation.stream() != null) {
         throw new IllegalStateException("Closing the body of " + response
             + " didn't close its backing stream. Bad interceptor?");
       }
 
       request = followUp;
-      engine = new HttpEngine(client, request.url(), streamAllocation, response);
+      priorResponse = response;
     }
   }
 
+  private Address createAddress(HttpUrl url) {
+    SSLSocketFactory sslSocketFactory = null;
+    HostnameVerifier hostnameVerifier = null;
+    CertificatePinner certificatePinner = null;
+    if (url.isHttps()) {
+      sslSocketFactory = client.sslSocketFactory();
+      hostnameVerifier = client.hostnameVerifier();
+      certificatePinner = client.certificatePinner();
+    }
+
+    return new Address(url.host(), url.port(), client.dns(), client.socketFactory(),
+        sslSocketFactory, hostnameVerifier, certificatePinner, client.proxyAuthenticator(),
+        client.proxy(), client.protocols(), client.connectionSpecs(), client.proxySelector());
+  }
+
   /**
-   * Report and attempt to recover from a failure to communicate with a server. Returns a new HTTP
-   * engine that should be used for the retry if {@code e} is recoverable, or null if the failure is
-   * permanent. Requests with a body can only be recovered if the body is buffered.
+   * Report and attempt to recover from a failure to communicate with a server. Returns true if
+   * {@code e} is recoverable, or false if the failure is permanent. Requests with a body can only
+   * be recovered if the body is buffered.
    */
-  private HttpEngine recover(IOException e, boolean routeException, Request userRequest) {
-    engine.streamAllocation.streamFailed(e);
+  private boolean recover(IOException e, boolean routeException, Request userRequest) {
+    streamAllocation.streamFailed(e);
 
-    if (!client.retryOnConnectionFailure()) {
-      return null; // The application layer has forbidden retries.
-    }
+    // The application layer has forbidden retries.
+    if (!client.retryOnConnectionFailure()) return false;
 
-    if (!routeException && userRequest.body() instanceof UnrepeatableRequestBody) {
-      return null; // We can't send the request body again.
-    }
+    // We can't send the request body again.
+    if (!routeException && userRequest.body() instanceof UnrepeatableRequestBody) return false;
 
-    if (!isRecoverable(e, routeException)) {
-      return null; // This exception is fatal.
-    }
+    // This exception is fatal.
+    if (!isRecoverable(e, routeException)) return false;
 
-    if (!engine.streamAllocation.hasMoreRoutes()) {
-      return null; // No more routes to attempt.
-    }
-
-    StreamAllocation streamAllocation = engine.close(null);
+    // No more routes to attempt.
+    if (!streamAllocation.hasMoreRoutes()) return false;
 
     // For failure recovery, use the same route selector with a new connection.
-    return new HttpEngine(client, engine.userRequestUrl, streamAllocation, engine.priorResponse);
+    return true;
   }
 
   private boolean isRecoverable(IOException e, boolean routeException) {
@@ -265,7 +260,7 @@ public final class RetryAndFollowUpInterceptor implements Interceptor {
    */
   private Request followUpRequest(Response userResponse) throws IOException {
     if (userResponse == null) throw new IllegalStateException();
-    Connection connection = engine.streamAllocation.connection();
+    Connection connection = streamAllocation.connection();
     Route route = connection != null
         ? connection.route()
         : null;

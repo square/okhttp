@@ -19,6 +19,8 @@ import java.io.EOFException;
 import java.io.IOException;
 import java.net.ProtocolException;
 import okhttp3.Headers;
+import okhttp3.HttpUrl;
+import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
 import okhttp3.ResponseBody;
@@ -67,21 +69,21 @@ public final class Http1xStream implements HttpStream {
   private static final int STATE_READING_RESPONSE_BODY = 5;
   private static final int STATE_CLOSED = 6;
 
+  /** The client that configures this stream. May be null for HTTPS proxy tunnels. */
+  private final OkHttpClient client;
   /** The stream allocation that owns this stream. May be null for HTTPS proxy tunnels. */
   private final StreamAllocation streamAllocation;
+
   private final BufferedSource source;
   private final BufferedSink sink;
-  private HttpEngine httpEngine;
   private int state = STATE_IDLE;
 
-  public Http1xStream(StreamAllocation streamAllocation, BufferedSource source, BufferedSink sink) {
+  public Http1xStream(OkHttpClient client, StreamAllocation streamAllocation, BufferedSource source,
+      BufferedSink sink) {
+    this.client = client;
     this.streamAllocation = streamAllocation;
     this.source = source;
     this.sink = sink;
-  }
-
-  @Override public void setHttpEngine(HttpEngine httpEngine) {
-    this.httpEngine = httpEngine;
   }
 
   @Override public Sink createRequestBody(Request request, long contentLength) throws IOException {
@@ -130,12 +132,12 @@ public final class Http1xStream implements HttpStream {
   }
 
   private Source getTransferStream(Response response) throws IOException {
-    if (!HttpEngine.hasBody(response)) {
+    if (!OkHeaders.hasBody(response)) {
       return newFixedLengthSource(0);
     }
 
     if ("chunked".equalsIgnoreCase(response.header("Transfer-Encoding"))) {
-      return newChunkedSource(httpEngine);
+      return newChunkedSource(response.request().url());
     }
 
     long contentLength = OkHeaders.contentLength(response);
@@ -229,10 +231,10 @@ public final class Http1xStream implements HttpStream {
     return new FixedLengthSource(length);
   }
 
-  public Source newChunkedSource(HttpEngine httpEngine) throws IOException {
+  public Source newChunkedSource(HttpUrl url) throws IOException {
     if (state != STATE_OPEN_RESPONSE_BODY) throw new IllegalStateException("state: " + state);
     state = STATE_READING_RESPONSE_BODY;
-    return new ChunkedSource(httpEngine);
+    return new ChunkedSource(url);
   }
 
   public Source newUnknownLengthSource() throws IOException {
@@ -398,12 +400,12 @@ public final class Http1xStream implements HttpStream {
   /** An HTTP body with alternating chunk sizes and chunk bodies. */
   private class ChunkedSource extends AbstractSource {
     private static final long NO_CHUNK_YET = -1L;
+    private final HttpUrl url;
     private long bytesRemainingInChunk = NO_CHUNK_YET;
     private boolean hasMoreChunks = true;
-    private final HttpEngine httpEngine;
 
-    ChunkedSource(HttpEngine httpEngine) throws IOException {
-      this.httpEngine = httpEngine;
+    ChunkedSource(HttpUrl url) {
+      this.url = url;
     }
 
     @Override public long read(Buffer sink, long byteCount) throws IOException {
@@ -442,7 +444,7 @@ public final class Http1xStream implements HttpStream {
       }
       if (bytesRemainingInChunk == 0L) {
         hasMoreChunks = false;
-        httpEngine.receiveHeaders(readHeaders());
+        OkHeaders.receiveHeaders(client.cookieJar(), url, readHeaders());
         endOfInput(true);
       }
     }

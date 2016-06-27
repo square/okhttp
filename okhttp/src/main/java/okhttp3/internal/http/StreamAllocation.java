@@ -20,6 +20,7 @@ import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
 import okhttp3.Address;
 import okhttp3.ConnectionPool;
+import okhttp3.OkHttpClient;
 import okhttp3.Route;
 import okhttp3.internal.Internal;
 import okhttp3.internal.RouteDatabase;
@@ -86,20 +87,26 @@ public final class StreamAllocation {
     this.routeSelector = new RouteSelector(address, routeDatabase());
   }
 
-  public HttpStream newStream(int connectTimeout, int readTimeout, int writeTimeout,
-      boolean connectionRetryEnabled, boolean doExtensiveHealthChecks) throws IOException {
+  public HttpStream newStream(OkHttpClient client, boolean doExtensiveHealthChecks)
+      throws IOException {
+    int connectTimeout = client.connectTimeoutMillis();
+    int readTimeout = client.readTimeoutMillis();
+    int writeTimeout = client.writeTimeoutMillis();
+    boolean connectionRetryEnabled = client.retryOnConnectionFailure();
+
     try {
       RealConnection resultConnection = findHealthyConnection(connectTimeout, readTimeout,
           writeTimeout, connectionRetryEnabled, doExtensiveHealthChecks);
 
       HttpStream resultStream;
       if (resultConnection.framedConnection != null) {
-        resultStream = new Http2xStream(this, resultConnection.framedConnection);
+        resultStream = new Http2xStream(client, this, resultConnection.framedConnection);
       } else {
         resultConnection.socket().setSoTimeout(readTimeout);
         resultConnection.source.timeout().timeout(readTimeout, MILLISECONDS);
         resultConnection.sink.timeout().timeout(writeTimeout, MILLISECONDS);
-        resultStream = new Http1xStream(this, resultConnection.source, resultConnection.sink);
+        resultStream = new Http1xStream(
+            client, this, resultConnection.source, resultConnection.sink);
       }
 
       synchronized (connectionPool) {

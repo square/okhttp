@@ -44,8 +44,6 @@ public interface HttpStream {
   /** Returns a stream that reads the response body. */
   ResponseBody openResponseBody(Response response) throws IOException;
 
-  void setHttpEngine(HttpEngine httpEngine);
-
   /**
    * Cancel this stream. Resources held by this stream will be cleaned up, though not synchronously.
    * That may happen later by the connection pool thread.
