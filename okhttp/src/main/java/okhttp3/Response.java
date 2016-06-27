@@ -19,7 +19,7 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
-import okhttp3.internal.http.OkHeaders;
+import okhttp3.internal.http.HttpHeaders;
 import okio.Buffer;
 import okio.BufferedSource;
 
@@ -234,7 +234,7 @@ public final class Response implements Closeable {
     } else {
       return Collections.emptyList();
     }
-    return OkHeaders.parseChallenges(headers(), responseField);
+    return HttpHeaders.parseChallenges(headers(), responseField);
   }
 
   /**

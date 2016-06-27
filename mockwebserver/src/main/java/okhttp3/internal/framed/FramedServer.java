@@ -28,14 +28,14 @@ import java.util.logging.Logger;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
 import okhttp3.Protocol;
-import okhttp3.internal.Platform;
 import okhttp3.internal.Util;
+import okhttp3.internal.platform.Platform;
 import okhttp3.internal.tls.SslClient;
 import okio.BufferedSink;
 import okio.Okio;
 import okio.Source;
 
-import static okhttp3.internal.Platform.INFO;
+import static okhttp3.internal.platform.Platform.INFO;
 
 /** A basic SPDY/HTTP_2 server that serves the contents of a local directory. */
 public final class FramedServer extends FramedConnection.Listener {

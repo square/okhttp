@@ -44,12 +44,12 @@ import okhttp3.Response;
 import okhttp3.ResponseBody;
 import okhttp3.internal.Internal;
 import okhttp3.internal.JavaNetHeaders;
-import okhttp3.internal.Platform;
 import okhttp3.internal.Util;
-import okhttp3.internal.http.CacheRequest;
+import okhttp3.internal.cache.CacheRequest;
+import okhttp3.internal.http.HttpHeaders;
 import okhttp3.internal.http.HttpMethod;
-import okhttp3.internal.http.OkHeaders;
 import okhttp3.internal.http.StatusLine;
+import okhttp3.internal.platform.Platform;
 import okio.BufferedSource;
 import okio.Okio;
 import okio.Sink;
@@ -162,11 +162,11 @@ public final class JavaApiConverter {
   }
 
   private static Headers varyHeaders(URLConnection urlConnection, Headers responseHeaders) {
-    if (OkHeaders.hasVaryAll(responseHeaders)) {
+    if (HttpHeaders.hasVaryAll(responseHeaders)) {
       // "*" means that this will be treated as uncacheable anyway.
       return null;
     }
-    Set<String> varyFields = OkHeaders.varyFields(responseHeaders);
+    Set<String> varyFields = HttpHeaders.varyFields(responseHeaders);
     if (varyFields.isEmpty()) {
       return new Headers.Builder().build();
     }
@@ -212,11 +212,11 @@ public final class JavaApiConverter {
     // Build a cache request for the response to use.
     Headers responseHeaders = createHeaders(javaResponse.getHeaders());
     Headers varyHeaders;
-    if (OkHeaders.hasVaryAll(responseHeaders)) {
+    if (HttpHeaders.hasVaryAll(responseHeaders)) {
       // "*" means that this will be treated as uncacheable anyway.
       varyHeaders = new Headers.Builder().build();
     } else {
-      varyHeaders = OkHeaders.varyHeaders(request.headers(), responseHeaders);
+      varyHeaders = HttpHeaders.varyHeaders(request.headers(), responseHeaders);
     }
 
     Request cacheRequest = new Request.Builder()
@@ -519,7 +519,7 @@ public final class JavaApiConverter {
 
       @Override
       public long contentLength() {
-        return OkHeaders.contentLength(okHeaders);
+        return HttpHeaders.contentLength(okHeaders);
       }
 
       @Override public BufferedSource source() {

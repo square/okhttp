@@ -49,16 +49,16 @@ import okhttp3.Request;
 import okhttp3.Response;
 import okhttp3.internal.Internal;
 import okhttp3.internal.JavaNetHeaders;
-import okhttp3.internal.Platform;
 import okhttp3.internal.URLFilter;
 import okhttp3.internal.Util;
 import okhttp3.internal.Version;
 import okhttp3.internal.http.HttpDate;
+import okhttp3.internal.http.HttpHeaders;
 import okhttp3.internal.http.HttpMethod;
-import okhttp3.internal.http.OkHeaders;
 import okhttp3.internal.http.StatusLine;
+import okhttp3.internal.platform.Platform;
 
-import static okhttp3.internal.Platform.WARN;
+import static okhttp3.internal.platform.Platform.WARN;
 
 /**
  * This implementation uses {@linkplain Call} to send requests and receive responses.
@@ -152,7 +152,7 @@ public final class OkHttpURLConnection extends HttpURLConnection implements Call
   @Override public InputStream getErrorStream() {
     try {
       Response response = getResponse();
-      if (OkHeaders.hasBody(response) && response.code() >= HTTP_BAD_REQUEST) {
+      if (HttpHeaders.hasBody(response) && response.code() >= HTTP_BAD_REQUEST) {
         return response.body().byteStream();
       }
       return null;

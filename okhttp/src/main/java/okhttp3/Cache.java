@@ -28,16 +28,16 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
-import okhttp3.internal.DiskLruCache;
-import okhttp3.internal.InternalCache;
-import okhttp3.internal.Platform;
 import okhttp3.internal.Util;
-import okhttp3.internal.http.CacheRequest;
-import okhttp3.internal.http.CacheStrategy;
+import okhttp3.internal.cache.CacheRequest;
+import okhttp3.internal.cache.CacheStrategy;
+import okhttp3.internal.cache.DiskLruCache;
+import okhttp3.internal.cache.InternalCache;
+import okhttp3.internal.http.HttpHeaders;
 import okhttp3.internal.http.HttpMethod;
-import okhttp3.internal.http.OkHeaders;
 import okhttp3.internal.http.StatusLine;
 import okhttp3.internal.io.FileSystem;
+import okhttp3.internal.platform.Platform;
 import okio.Buffer;
 import okio.BufferedSink;
 import okio.BufferedSource;
@@ -235,7 +235,7 @@ public final class Cache implements Closeable, Flushable {
       return null;
     }
 
-    if (OkHeaders.hasVaryAll(response)) {
+    if (HttpHeaders.hasVaryAll(response)) {
       return null;
     }
 
@@ -592,7 +592,7 @@ public final class Cache implements Closeable, Flushable {
 
     public Entry(Response response) {
       this.url = response.request().url().toString();
-      this.varyHeaders = OkHeaders.varyHeaders(response);
+      this.varyHeaders = HttpHeaders.varyHeaders(response);
       this.requestMethod = response.request().method();
       this.protocol = response.protocol();
       this.code = response.code();
@@ -695,7 +695,7 @@ public final class Cache implements Closeable, Flushable {
     public boolean matches(Request request, Response response) {
       return url.equals(request.url().toString())
           && requestMethod.equals(request.method())
-          && OkHeaders.varyMatches(response, varyHeaders, request);
+          && HttpHeaders.varyMatches(response, varyHeaders, request);
     }
 
     public Response response(DiskLruCache.Snapshot snapshot) {

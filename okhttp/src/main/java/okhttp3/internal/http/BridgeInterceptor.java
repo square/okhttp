@@ -92,14 +92,14 @@ public final class BridgeInterceptor implements Interceptor {
 
     Response networkResponse = chain.proceed(requestBuilder.build());
 
-    OkHeaders.receiveHeaders(cookieJar, userRequest.url(), networkResponse.headers());
+    HttpHeaders.receiveHeaders(cookieJar, userRequest.url(), networkResponse.headers());
 
     Response.Builder responseBuilder = networkResponse.newBuilder()
         .request(userRequest);
 
     if (transparentGzip
         && "gzip".equalsIgnoreCase(networkResponse.header("Content-Encoding"))
-        && OkHeaders.hasBody(networkResponse)) {
+        && HttpHeaders.hasBody(networkResponse)) {
       GzipSource responseBody = new GzipSource(networkResponse.body().source());
       Headers strippedHeaders = networkResponse.headers().newBuilder()
           .removeAll("Content-Encoding")
