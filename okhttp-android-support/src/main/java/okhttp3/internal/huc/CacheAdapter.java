@@ -78,7 +78,7 @@ public final class CacheAdapter implements InternalCache {
     // cacheable or the client should be careful about caching it.
   }
 
-  @Override public void update(Response cached, Response network) throws IOException {
+  @Override public void update(Response cached, Response network) {
     // This method is treated as optional and there is no obvious way of implementing it with
     // ResponseCache. Updating headers is useful if the server changes the metadata for a resource
     // (e.g. max age) to extend or truncate the life of that resource in the cache. If the metadata

@@ -137,7 +137,7 @@ public final class URLEncodingTest {
       @Override public void remove(Request request) throws IOException {
       }
 
-      @Override public void update(Response cached, Response network) throws IOException {
+      @Override public void update(Response cached, Response network) {
       }
 
       @Override public void trackConditionalCacheHit() {

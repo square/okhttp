@@ -49,7 +49,7 @@ public class FallbackTestClientSocketFactory extends DelegatingSSLSocketFactory 
     }
 
     @Override public void setEnabledCipherSuites(String[] suites) {
-      List<String> enabledCipherSuites = new ArrayList<String>(suites.length);
+      List<String> enabledCipherSuites = new ArrayList<>(suites.length);
       for (String suite : suites) {
         if (!suite.equals(TLS_FALLBACK_SCSV)) {
           enabledCipherSuites.add(suite);

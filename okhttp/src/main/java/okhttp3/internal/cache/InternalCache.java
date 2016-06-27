@@ -39,7 +39,7 @@ public interface InternalCache {
    * {@code network}. The cached response body is not updated. If the stored response has changed
    * since {@code cached} was returned, this does nothing.
    */
-  void update(Response cached, Response network) throws IOException;
+  void update(Response cached, Response network);
 
   /** Track an conditional GET that was satisfied by this cache. */
   void trackConditionalCacheHit();

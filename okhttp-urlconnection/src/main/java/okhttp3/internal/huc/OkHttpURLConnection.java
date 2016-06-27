@@ -593,8 +593,6 @@ public final class OkHttpURLConnection extends HttpURLConnection implements Call
       @Override public Response intercept(Chain chain) throws IOException {
         try {
           return chain.proceed(chain.request());
-        } catch (IOException e) {
-          throw e;
         } catch (Error | RuntimeException e) {
           throw new UnexpectedException(e);
         }

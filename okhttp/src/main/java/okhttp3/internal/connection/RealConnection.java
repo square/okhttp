@@ -145,7 +145,7 @@ public final class RealConnection extends FramedConnection.Listener implements C
         throw new ProtocolException("Too many tunnel connections attempted: " + maxAttempts);
       }
 
-      connectSocket(connectTimeout, readTimeout, writeTimeout, connectionSpecSelector);
+      connectSocket(connectTimeout, readTimeout);
       tunnelRequest = createTunnel(readTimeout, writeTimeout, tunnelRequest, url);
 
       if (tunnelRequest == null) break; // Tunnel successfully created.
@@ -164,12 +164,11 @@ public final class RealConnection extends FramedConnection.Listener implements C
   /** Does all the work necessary to build a full HTTP or HTTPS connection on a raw socket. */
   private void buildConnection(int connectTimeout, int readTimeout, int writeTimeout,
       ConnectionSpecSelector connectionSpecSelector) throws IOException {
-    connectSocket(connectTimeout, readTimeout, writeTimeout, connectionSpecSelector);
+    connectSocket(connectTimeout, readTimeout);
     establishProtocol(readTimeout, writeTimeout, connectionSpecSelector);
   }
 
-  private void connectSocket(int connectTimeout, int readTimeout, int writeTimeout,
-      ConnectionSpecSelector connectionSpecSelector) throws IOException {
+  private void connectSocket(int connectTimeout, int readTimeout) throws IOException {
     Proxy proxy = route.proxy();
     Address address = route.address();
 
@@ -331,18 +330,13 @@ public final class RealConnection extends FramedConnection.Listener implements C
    * is sent unencrypted to the proxy server, so tunnels include only the minimum set of headers.
    * This avoids sending potentially sensitive data like HTTP cookies to the proxy unencrypted.
    */
-  private Request createTunnelRequest() throws IOException {
+  private Request createTunnelRequest() {
     return new Request.Builder()
         .url(route.address().url())
         .header("Host", Util.hostHeader(route.address().url(), true))
         .header("Proxy-Connection", "Keep-Alive")
         .header("User-Agent", Version.userAgent()) // For HTTP/1.0 proxies like Squid.
         .build();
-  }
-
-  /** Returns true if {@link #connect} has been attempted on this connection. */
-  boolean isConnected() {
-    return protocol != null;
   }
 
   @Override public Route route() {

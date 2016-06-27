@@ -2094,7 +2094,7 @@ public final class URLConnectionTest {
   }
 
   @Test public void redirectWithProxySelector() throws Exception {
-    final List<URI> proxySelectionRequests = new ArrayList<URI>();
+    final List<URI> proxySelectionRequests = new ArrayList<>();
     urlFactory.setClient(urlFactory.client().newBuilder()
         .proxySelector(new ProxySelector() {
           @Override public List<Proxy> select(URI uri) {
@@ -3680,7 +3680,7 @@ public final class URLConnectionTest {
   }
 
   private static class RecordingTrustManager implements X509TrustManager {
-    private final List<String> calls = new ArrayList<String>();
+    private final List<String> calls = new ArrayList<>();
     private final X509TrustManager delegate;
 
     public RecordingTrustManager(X509TrustManager delegate) {
@@ -3702,7 +3702,7 @@ public final class URLConnectionTest {
     }
 
     private String certificatesToString(X509Certificate[] certificates) {
-      List<String> result = new ArrayList<String>();
+      List<String> result = new ArrayList<>();
       for (X509Certificate certificate : certificates) {
         result.add(certificate.getSubjectDN() + " " + certificate.getSerialNumber());
       }

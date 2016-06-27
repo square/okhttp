@@ -152,7 +152,7 @@ public final class Cache implements Closeable, Flushable {
       Cache.this.remove(request);
     }
 
-    @Override public void update(Response cached, Response network) throws IOException {
+    @Override public void update(Response cached, Response network) {
       Cache.this.update(cached, network);
     }
 
@@ -217,7 +217,7 @@ public final class Cache implements Closeable, Flushable {
     return response;
   }
 
-  private CacheRequest put(Response response) throws IOException {
+  private CacheRequest put(Response response) {
     String requestMethod = response.request().method();
 
     if (HttpMethod.invalidatesCache(response.request().method())) {
@@ -432,7 +432,7 @@ public final class Cache implements Closeable, Flushable {
     private boolean done;
     private Sink body;
 
-    public CacheRequestImpl(final DiskLruCache.Editor editor) throws IOException {
+    public CacheRequestImpl(final DiskLruCache.Editor editor) {
       this.editor = editor;
       this.cacheOut = editor.newSink(ENTRY_BODY);
       this.body = new ForwardingSink(cacheOut) {
