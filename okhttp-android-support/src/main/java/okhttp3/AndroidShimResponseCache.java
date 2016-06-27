@@ -70,7 +70,7 @@ public class AndroidShimResponseCache extends ResponseCache {
       // The URLConnection is not cacheable or could not be converted. Stop.
       return null;
     }
-    okhttp3.internal.http.CacheRequest okCacheRequest =
+    okhttp3.internal.cache.CacheRequest okCacheRequest =
         delegate.internalCache.put(okResponse);
     if (okCacheRequest == null) {
       return null;

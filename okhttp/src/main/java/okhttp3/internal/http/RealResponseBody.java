@@ -35,7 +35,7 @@ public final class RealResponseBody extends ResponseBody {
   }
 
   @Override public long contentLength() {
-    return OkHeaders.contentLength(headers);
+    return HttpHeaders.contentLength(headers);
   }
 
   @Override public BufferedSource source() {

@@ -31,7 +31,7 @@ import okhttp3.Request;
 import okhttp3.Response;
 import okhttp3.internal.Internal;
 import okhttp3.internal.Util;
-import okhttp3.internal.http.StreamAllocation;
+import okhttp3.internal.connection.StreamAllocation;
 import okhttp3.internal.ws.RealWebSocket;
 import okhttp3.internal.ws.WebSocketProtocol;
 import okio.ByteString;

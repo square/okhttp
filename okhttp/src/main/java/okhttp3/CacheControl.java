@@ -1,7 +1,7 @@
 package okhttp3;
 
 import java.util.concurrent.TimeUnit;
-import okhttp3.internal.http.HeaderParser;
+import okhttp3.internal.http.HttpHeaders;
 
 /**
  * A Cache-Control header with cache directives from a server or client. These directives set policy
@@ -178,7 +178,7 @@ public final class CacheControl {
       int pos = 0;
       while (pos < value.length()) {
         int tokenStart = pos;
-        pos = HeaderParser.skipUntil(value, pos, "=,;");
+        pos = HttpHeaders.skipUntil(value, pos, "=,;");
         String directive = value.substring(tokenStart, pos).trim();
         String parameter;
 
@@ -187,20 +187,20 @@ public final class CacheControl {
           parameter = null;
         } else {
           pos++; // consume '='
-          pos = HeaderParser.skipWhitespace(value, pos);
+          pos = HttpHeaders.skipWhitespace(value, pos);
 
           // quoted string
           if (pos < value.length() && value.charAt(pos) == '\"') {
             pos++; // consume '"' open quote
             int parameterStart = pos;
-            pos = HeaderParser.skipUntil(value, pos, "\"");
+            pos = HttpHeaders.skipUntil(value, pos, "\"");
             parameter = value.substring(parameterStart, pos);
             pos++; // consume '"' close quote (if necessary)
 
             // unquoted string
           } else {
             int parameterStart = pos;
-            pos = HeaderParser.skipUntil(value, pos, ",;");
+            pos = HttpHeaders.skipUntil(value, pos, ",;");
             parameter = value.substring(parameterStart, pos).trim();
           }
         }
@@ -210,9 +210,9 @@ public final class CacheControl {
         } else if ("no-store".equalsIgnoreCase(directive)) {
           noStore = true;
         } else if ("max-age".equalsIgnoreCase(directive)) {
-          maxAgeSeconds = HeaderParser.parseSeconds(parameter, -1);
+          maxAgeSeconds = HttpHeaders.parseSeconds(parameter, -1);
         } else if ("s-maxage".equalsIgnoreCase(directive)) {
-          sMaxAgeSeconds = HeaderParser.parseSeconds(parameter, -1);
+          sMaxAgeSeconds = HttpHeaders.parseSeconds(parameter, -1);
         } else if ("private".equalsIgnoreCase(directive)) {
           isPrivate = true;
         } else if ("public".equalsIgnoreCase(directive)) {
@@ -220,9 +220,9 @@ public final class CacheControl {
         } else if ("must-revalidate".equalsIgnoreCase(directive)) {
           mustRevalidate = true;
         } else if ("max-stale".equalsIgnoreCase(directive)) {
-          maxStaleSeconds = HeaderParser.parseSeconds(parameter, Integer.MAX_VALUE);
+          maxStaleSeconds = HttpHeaders.parseSeconds(parameter, Integer.MAX_VALUE);
         } else if ("min-fresh".equalsIgnoreCase(directive)) {
-          minFreshSeconds = HeaderParser.parseSeconds(parameter, -1);
+          minFreshSeconds = HttpHeaders.parseSeconds(parameter, -1);
         } else if ("only-if-cached".equalsIgnoreCase(directive)) {
           onlyIfCached = true;
         } else if ("no-transform".equalsIgnoreCase(directive)) {

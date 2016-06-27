@@ -22,6 +22,7 @@ import okhttp3.HttpUrl;
 import okhttp3.Interceptor;
 import okhttp3.Request;
 import okhttp3.Response;
+import okhttp3.internal.connection.StreamAllocation;
 
 /**
  * A concrete interceptor chain that carries the entire interceptor chain: all application

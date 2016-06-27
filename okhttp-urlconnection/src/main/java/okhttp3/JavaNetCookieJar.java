@@ -22,11 +22,11 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import okhttp3.internal.Platform;
+import okhttp3.internal.platform.Platform;
 
-import static okhttp3.internal.Platform.WARN;
 import static okhttp3.internal.Util.delimiterOffset;
 import static okhttp3.internal.Util.trimSubstring;
+import static okhttp3.internal.platform.Platform.WARN;
 
 /** A cookie jar that delegates to a {@link java.net.CookieHandler}. */
 public final class JavaNetCookieJar implements CookieJar {

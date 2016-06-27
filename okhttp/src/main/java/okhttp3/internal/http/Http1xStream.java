@@ -26,7 +26,8 @@ import okhttp3.Response;
 import okhttp3.ResponseBody;
 import okhttp3.internal.Internal;
 import okhttp3.internal.Util;
-import okhttp3.internal.io.RealConnection;
+import okhttp3.internal.connection.RealConnection;
+import okhttp3.internal.connection.StreamAllocation;
 import okio.Buffer;
 import okio.BufferedSink;
 import okio.BufferedSource;
@@ -132,7 +133,7 @@ public final class Http1xStream implements HttpStream {
   }
 
   private Source getTransferStream(Response response) throws IOException {
-    if (!OkHeaders.hasBody(response)) {
+    if (!HttpHeaders.hasBody(response)) {
       return newFixedLengthSource(0);
     }
 
@@ -140,7 +141,7 @@ public final class Http1xStream implements HttpStream {
       return newChunkedSource(response.request().url());
     }
 
-    long contentLength = OkHeaders.contentLength(response);
+    long contentLength = HttpHeaders.contentLength(response);
     if (contentLength != -1) {
       return newFixedLengthSource(contentLength);
     }
@@ -444,7 +445,7 @@ public final class Http1xStream implements HttpStream {
       }
       if (bytesRemainingInChunk == 0L) {
         hasMoreChunks = false;
-        OkHeaders.receiveHeaders(client.cookieJar(), url, readHeaders());
+        HttpHeaders.receiveHeaders(client.cookieJar(), url, readHeaders());
         endOfInput(true);
       }
     }

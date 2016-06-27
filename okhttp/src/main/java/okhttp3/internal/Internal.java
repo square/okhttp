@@ -25,8 +25,10 @@ import okhttp3.ConnectionSpec;
 import okhttp3.Headers;
 import okhttp3.HttpUrl;
 import okhttp3.OkHttpClient;
-import okhttp3.internal.http.StreamAllocation;
-import okhttp3.internal.io.RealConnection;
+import okhttp3.internal.cache.InternalCache;
+import okhttp3.internal.connection.RealConnection;
+import okhttp3.internal.connection.RouteDatabase;
+import okhttp3.internal.connection.StreamAllocation;
 
 /**
  * Escalate internal APIs in {@code okhttp3} so they can be used from OkHttp's implementation

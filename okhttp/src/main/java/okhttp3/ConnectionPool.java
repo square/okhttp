@@ -26,14 +26,14 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-import okhttp3.internal.Platform;
-import okhttp3.internal.RouteDatabase;
 import okhttp3.internal.Util;
-import okhttp3.internal.http.StreamAllocation;
-import okhttp3.internal.io.RealConnection;
+import okhttp3.internal.connection.RealConnection;
+import okhttp3.internal.connection.RouteDatabase;
+import okhttp3.internal.connection.StreamAllocation;
+import okhttp3.internal.platform.Platform;
 
-import static okhttp3.internal.Platform.WARN;
 import static okhttp3.internal.Util.closeQuietly;
+import static okhttp3.internal.platform.Platform.WARN;
 
 /**
  * Manages reuse of HTTP and SPDY connections for reduced network latency. HTTP requests that share

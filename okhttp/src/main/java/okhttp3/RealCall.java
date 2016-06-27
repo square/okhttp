@@ -19,16 +19,16 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import okhttp3.internal.NamedRunnable;
-import okhttp3.internal.Platform;
+import okhttp3.internal.cache.CacheInterceptor;
+import okhttp3.internal.connection.ConnectInterceptor;
+import okhttp3.internal.connection.StreamAllocation;
 import okhttp3.internal.http.BridgeInterceptor;
-import okhttp3.internal.http.CacheInterceptor;
 import okhttp3.internal.http.CallServerInterceptor;
-import okhttp3.internal.http.ConnectInterceptor;
 import okhttp3.internal.http.RealInterceptorChain;
 import okhttp3.internal.http.RetryAndFollowUpInterceptor;
-import okhttp3.internal.http.StreamAllocation;
+import okhttp3.internal.platform.Platform;
 
-import static okhttp3.internal.Platform.INFO;
+import static okhttp3.internal.platform.Platform.INFO;
 
 final class RealCall implements Call {
   private final OkHttpClient client;
