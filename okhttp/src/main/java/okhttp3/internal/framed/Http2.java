@@ -299,9 +299,6 @@ public final class Http2 implements Variant {
         settings.set(id, 0, value);
       }
       handler.settings(false, settings);
-      if (settings.getHeaderTableSize() >= 0) {
-        hpackReader.headerTableSizeSetting(settings.getHeaderTableSize());
-      }
     }
 
     private void readPushPromise(Handler handler, int length, byte flags, int streamId)
