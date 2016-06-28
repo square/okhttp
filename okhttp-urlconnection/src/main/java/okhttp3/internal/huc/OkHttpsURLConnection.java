@@ -68,15 +68,4 @@ public final class OkHttpsURLConnection extends DelegatingHttpsURLConnection {
     return delegate.client.sslSocketFactory();
   }
 
-  @Override public long getContentLengthLong() {
-    return delegate.getContentLengthLong();
-  }
-
-  @Override public void setFixedLengthStreamingMode(long contentLength) {
-    delegate.setFixedLengthStreamingMode(contentLength);
-  }
-
-  @Override public long getHeaderFieldLong(String field, long defaultValue) {
-    return delegate.getHeaderFieldLong(field, defaultValue);
-  }
 }
