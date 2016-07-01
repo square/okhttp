@@ -58,6 +58,7 @@ import okhttp3.HttpUrl;
 import okhttp3.Protocol;
 import okhttp3.Request;
 import okhttp3.Response;
+import okhttp3.internal.Internal;
 import okhttp3.internal.NamedRunnable;
 import okhttp3.internal.Util;
 import okhttp3.internal.framed.ErrorCode;
@@ -99,6 +100,10 @@ import static okhttp3.mockwebserver.SocketPolicy.UPGRADE_TO_SSL_AT_END;
  * in sequence.
  */
 public final class MockWebServer implements TestRule {
+  static {
+    Internal.initializeInstanceForTests();
+  }
+
   private static final X509TrustManager UNTRUSTED_TRUST_MANAGER = new X509TrustManager() {
     @Override public void checkClientTrusted(X509Certificate[] chain, String authType)
         throws CertificateException {
@@ -590,7 +595,7 @@ public final class MockWebServer implements TestRule {
     boolean expectContinue = false;
     String header;
     while ((header = source.readUtf8LineStrict()).length() != 0) {
-      headers.add(header);
+      Internal.instance.addLenient(headers, header);
       String lowercaseHeader = header.toLowerCase(Locale.US);
       if (contentLength == -1 && lowercaseHeader.startsWith("content-length:")) {
         contentLength = Long.parseLong(header.substring(15).trim());

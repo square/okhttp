@@ -2344,6 +2344,25 @@ public final class CacheTest {
     assertEquals("Delta", response2.header("Δ"));
     assertEquals("abcd", response2.body().string());
   }
+
+  @Test public void etagConditionCanBeNonAscii() throws Exception {
+    server.enqueue(new MockResponse()
+        .addHeaderLenient("Etag", "α")
+        .addHeader("Cache-Control: max-age=0")
+        .setBody("abcd"));
+    server.enqueue(new MockResponse()
+        .setResponseCode(HttpURLConnection.HTTP_NOT_MODIFIED));
+
+    Response response1 = get(server.url("/"));
+    assertEquals("abcd", response1.body().string());
+
+    Response response2 = get(server.url("/"));
+    assertEquals("abcd", response2.body().string());
+
+    assertEquals(null, server.takeRequest().getHeader("If-None-Match"));
+    assertEquals("α", server.takeRequest().getHeader("If-None-Match"));
+  }
+
   private Response get(HttpUrl url) throws IOException {
     Request request = new Request.Builder()
         .url(url)
