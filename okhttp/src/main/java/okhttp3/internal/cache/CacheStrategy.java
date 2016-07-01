@@ -20,6 +20,7 @@ import okhttp3.CacheControl;
 import okhttp3.Headers;
 import okhttp3.Request;
 import okhttp3.Response;
+import okhttp3.internal.Internal;
 import okhttp3.internal.http.HttpDate;
 import okhttp3.internal.http.HttpHeaders;
 import okhttp3.internal.http.StatusLine;
@@ -232,20 +233,30 @@ public final class CacheStrategy {
         return new CacheStrategy(null, builder.build());
       }
 
-      Request.Builder conditionalRequestBuilder = request.newBuilder();
-
+      // Find a condition to add to the request. If the condition is satisfied, the response body
+      // will not be transmitted.
+      String conditionName;
+      String conditionValue;
       if (etag != null) {
-        conditionalRequestBuilder.header("If-None-Match", etag);
+        conditionName = "If-None-Match";
+        conditionValue = etag;
       } else if (lastModified != null) {
-        conditionalRequestBuilder.header("If-Modified-Since", lastModifiedString);
+        conditionName = "If-Modified-Since";
+        conditionValue = lastModifiedString;
       } else if (servedDate != null) {
-        conditionalRequestBuilder.header("If-Modified-Since", servedDateString);
+        conditionName = "If-Modified-Since";
+        conditionValue = servedDateString;
+      } else {
+        return new CacheStrategy(request, null); // No condition! Make a regular request.
       }
 
-      Request conditionalRequest = conditionalRequestBuilder.build();
-      return hasConditions(conditionalRequest)
-          ? new CacheStrategy(conditionalRequest, cacheResponse)
-          : new CacheStrategy(conditionalRequest, null);
+      Headers.Builder conditionalRequestHeaders = request.headers().newBuilder();
+      Internal.instance.addLenient(conditionalRequestHeaders, conditionName, conditionValue);
+
+      Request conditionalRequest = request.newBuilder()
+          .headers(conditionalRequestHeaders.build())
+          .build();
+      return new CacheStrategy(conditionalRequest, cacheResponse);
     }
 
     /**
