@@ -253,11 +253,9 @@ public final class ConnectionReuseTest {
     response.body().close();
 
     // This client shares a connection pool but has a different SSL socket factory.
-    SSLContext sslContext2 = SSLContext.getInstance("TLS");
-    sslContext2.init(null, null, null);
-    SSLSocketFactory sslSocketFactory2 = sslContext2.getSocketFactory();
+    SslClient sslClient2 = new SslClient.Builder().build();
     OkHttpClient anotherClient = client.newBuilder()
-        .sslSocketFactory(sslSocketFactory2)
+        .sslSocketFactory(sslClient2.socketFactory, sslClient2.trustManager)
         .build();
 
     // This client fails to connect because the new SSL socket factory refuses.

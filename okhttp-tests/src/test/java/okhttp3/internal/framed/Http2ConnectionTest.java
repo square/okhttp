@@ -119,9 +119,6 @@ public final class Http2ConnectionTest {
 
     FramedConnection connection = connection(peer, HTTP_2);
 
-    // Default is 64KiB - 1.
-    assertEquals(65535, connection.peerSettings.getInitialWindowSize(-1));
-
     // Verify the peer received the ACK.
     MockSpdyPeer.InFrame ackFrame = peer.takeFrame();
     assertEquals(TYPE_SETTINGS, ackFrame.type);

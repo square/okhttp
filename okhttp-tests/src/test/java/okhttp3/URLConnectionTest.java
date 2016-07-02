@@ -3494,6 +3494,7 @@ public final class URLConnectionTest {
   @Test public void setSslSocketFactoryFailsOnJdk9() throws Exception {
     assumeTrue(getPlatform().equals("jdk9"));
 
+    enableProtocol(Protocol.HTTP_2);
     URL url = server.url("/").url();
     HttpsURLConnection connection = (HttpsURLConnection) urlFactory.open(url);
     try {

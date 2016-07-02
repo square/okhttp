@@ -84,6 +84,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.junit.Assume.assumeFalse;
 
 /**
  * Tests the interaction between OkHttp and {@link ResponseCache}. Based on okhttp3.CacheTest with
@@ -269,6 +270,8 @@ public final class ResponseCacheTest {
   }
 
   @Test public void secureResponseCaching() throws IOException {
+    assumeFalse(getPlatform().equals("jdk9"));
+
     server.useHttps(sslClient.socketFactory, false);
     server.enqueue(new MockResponse()
         .addHeader("Last-Modified: " + formatDate(-1, TimeUnit.HOURS))
@@ -1983,6 +1986,8 @@ public final class ResponseCacheTest {
   }
 
   @Test public void cacheReturnsInsecureResponseForSecureRequest() throws IOException {
+    assumeFalse(getPlatform().equals("jdk9"));
+
     server.useHttps(sslClient.socketFactory, false);
     server.enqueue(new MockResponse().setBody("ABC"));
     server.enqueue(new MockResponse().setBody("DEF"));
@@ -2187,5 +2192,9 @@ public final class ResponseCacheTest {
     OkHttpClient.Builder builder = urlFactory.client().newBuilder();
     Internal.instance.setCache(builder, internalCache);
     urlFactory.setClient(builder.build());
+  }
+
+  private String getPlatform() {
+    return System.getProperty("okhttp.platform", "platform");
   }
 }
