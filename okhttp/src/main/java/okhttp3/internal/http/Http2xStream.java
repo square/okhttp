@@ -119,7 +119,7 @@ public final class Http2xStream implements HttpStream {
     this.framedConnection = framedConnection;
   }
 
-  @Override public Sink createRequestBody(Request request, long contentLength) throws IOException {
+  @Override public Sink createRequestBody(Request request, long contentLength) {
     return stream.getSink();
   }
 

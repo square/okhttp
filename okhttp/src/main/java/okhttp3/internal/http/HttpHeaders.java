@@ -38,10 +38,6 @@ public final class HttpHeaders {
   private HttpHeaders() {
   }
 
-  public static long contentLength(Request request) {
-    return contentLength(request.headers());
-  }
-
   public static long contentLength(Response response) {
     return contentLength(response.headers());
   }

@@ -75,32 +75,32 @@ public class OptionalMethodTest {
   }
 
   private final static OptionalMethod<BaseClass> STRING_METHOD_RETURNS_ANY =
-      new OptionalMethod<BaseClass>(null, "stringMethod");
+      new OptionalMethod<>(null, "stringMethod");
   private final static OptionalMethod<BaseClass> STRING_METHOD_RETURNS_STRING =
-      new OptionalMethod<BaseClass>(String.class, "stringMethod");
+      new OptionalMethod<>(String.class, "stringMethod");
   private final static OptionalMethod<BaseClass> STRING_METHOD_RETURNS_INT =
-      new OptionalMethod<BaseClass>(Integer.TYPE, "stringMethod");
+      new OptionalMethod<>(Integer.TYPE, "stringMethod");
   private final static OptionalMethod<BaseClass> VOID_METHOD_RETURNS_ANY =
-      new OptionalMethod<BaseClass>(null, "voidMethod");
+      new OptionalMethod<>(null, "voidMethod");
   private final static OptionalMethod<BaseClass> VOID_METHOD_RETURNS_VOID =
-      new OptionalMethod<BaseClass>(Void.TYPE, "voidMethod");
+      new OptionalMethod<>(Void.TYPE, "voidMethod");
   private final static OptionalMethod<BaseClass> SUBCLASS_METHOD_RETURNS_ANY =
-      new OptionalMethod<BaseClass>(null, "subclassMethod");
+      new OptionalMethod<>(null, "subclassMethod");
   private final static OptionalMethod<BaseClass> SUBCLASS_METHOD_RETURNS_STRING =
-      new OptionalMethod<BaseClass>(String.class, "subclassMethod");
+      new OptionalMethod<>(String.class, "subclassMethod");
   private final static OptionalMethod<BaseClass> SUBCLASS_METHOD_RETURNS_INT =
-      new OptionalMethod<BaseClass>(Integer.TYPE, "subclassMethod");
+      new OptionalMethod<>(Integer.TYPE, "subclassMethod");
   private final static OptionalMethod<BaseClass> METHOD_WITH_ARGS_WRONG_PARAMS =
-      new OptionalMethod<BaseClass>(null, "methodWithArgs", Integer.class);
+      new OptionalMethod<>(null, "methodWithArgs", Integer.class);
   private final static OptionalMethod<BaseClass> METHOD_WITH_ARGS_CORRECT_PARAMS =
-      new OptionalMethod<BaseClass>(null, "methodWithArgs", String.class);
+      new OptionalMethod<>(null, "methodWithArgs", String.class);
 
   private final static OptionalMethod<BaseClass> THROWS_EXCEPTION =
-      new OptionalMethod<BaseClass>(null, "throwsException");
+      new OptionalMethod<>(null, "throwsException");
   private final static OptionalMethod<BaseClass> THROWS_RUNTIME_EXCEPTION =
-      new OptionalMethod<BaseClass>(null, "throwsRuntimeException");
+      new OptionalMethod<>(null, "throwsRuntimeException");
   private final static OptionalMethod<BaseClass> NON_PUBLIC =
-      new OptionalMethod<BaseClass>(null, "nonPublic");
+      new OptionalMethod<>(null, "nonPublic");
 
   @Test
   public void isSupported() throws Exception {

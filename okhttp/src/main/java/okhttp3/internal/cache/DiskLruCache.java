@@ -872,7 +872,7 @@ public final class DiskLruCache implements Closeable, Flushable {
      * Returns an unbuffered input stream to read the last committed value, or null if no value has
      * been committed.
      */
-    public Source newSource(int index) throws IOException {
+    public Source newSource(int index) {
       synchronized (DiskLruCache.this) {
         if (done) {
           throw new IllegalStateException();
@@ -893,7 +893,7 @@ public final class DiskLruCache implements Closeable, Flushable {
      * output stream encounters errors when writing to the filesystem, this edit will be aborted
      * when {@link #commit} is called. The returned output stream does not throw IOExceptions.
      */
-    public Sink newSink(int index) throws IOException {
+    public Sink newSink(int index) {
       synchronized (DiskLruCache.this) {
         if (done) {
           throw new IllegalStateException();

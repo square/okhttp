@@ -30,7 +30,7 @@ public interface HttpStream {
   int DISCARD_STREAM_TIMEOUT_MILLIS = 100;
 
   /** Returns an output stream where the request body can be streamed. */
-  Sink createRequestBody(Request request, long contentLength) throws IOException;
+  Sink createRequestBody(Request request, long contentLength);
 
   /** This should update the HTTP engine's sentRequestMillis field. */
   void writeRequestHeaders(Request request) throws IOException;

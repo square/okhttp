@@ -371,8 +371,7 @@ final class Hpack {
     private static final int SETTINGS_HEADER_TABLE_SIZE = 4096;
 
     private final Buffer out;
-    private final Map<ByteString, Integer> headerStringToDynamicIndex =
-        new LinkedHashMap<ByteString, Integer>();
+    private final Map<ByteString, Integer> headerStringToDynamicIndex = new LinkedHashMap<>();
 
     private int headerTableSizeSetting;
     private int maxDynamicTableByteCount;
@@ -494,7 +493,7 @@ final class Hpack {
     }
 
     // http://tools.ietf.org/html/draft-ietf-httpbis-header-compression-12#section-4.1.1
-    void writeInt(int value, int prefixMask, int bits) throws IOException {
+    void writeInt(int value, int prefixMask, int bits) {
       // Write the raw value for a single byte value.
       if (value < prefixMask) {
         out.writeByte(bits | value);

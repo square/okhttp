@@ -258,7 +258,7 @@ public final class CacheInterceptor implements Interceptor {
   }
 
   /** Combines cached headers with a network headers as defined by RFC 2616, 13.5.3. */
-  private static Headers combine(Headers cachedHeaders, Headers networkHeaders) throws IOException {
+  private static Headers combine(Headers cachedHeaders, Headers networkHeaders) {
     Headers.Builder result = new Headers.Builder();
 
     for (int i = 0, size = cachedHeaders.size(); i < size; i++) {

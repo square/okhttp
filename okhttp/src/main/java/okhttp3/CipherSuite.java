@@ -359,7 +359,6 @@ public final class CipherSuite {
   // public static final CipherSuite TLS_ECDHE_ECDSA_WITH_AES_256_CCM = of("TLS_ECDHE_ECDSA_WITH_AES_256_CCM", 0xc0ad, 7251, MAX_VALUE, MAX_VALUE);
   // public static final CipherSuite TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8 = of("TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8", 0xc0ae, 7251, MAX_VALUE, MAX_VALUE);
   // public static final CipherSuite TLS_ECDHE_ECDSA_WITH_AES_256_CCM_8 = of("TLS_ECDHE_ECDSA_WITH_AES_256_CCM_8", 0xc0af, 7251, MAX_VALUE, MAX_VALUE);
-  ;
 
   final String javaName;
 

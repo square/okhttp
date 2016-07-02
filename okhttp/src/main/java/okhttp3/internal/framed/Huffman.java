@@ -124,7 +124,7 @@ class Huffman {
     return (int) ((len + 7) >> 3);
   }
 
-  byte[] decode(byte[] buf) throws IOException {
+  byte[] decode(byte[] buf) {
     ByteArrayOutputStream baos = new ByteArrayOutputStream();
     Node node = root;
     int current = 0;

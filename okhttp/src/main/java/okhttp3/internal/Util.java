@@ -29,10 +29,8 @@ import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
 import java.util.TimeZone;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
@@ -242,11 +240,6 @@ public final class Util {
   /** Returns an immutable list containing {@code elements}. */
   public static <T> List<T> immutableList(T... elements) {
     return Collections.unmodifiableList(Arrays.asList(elements.clone()));
-  }
-
-  /** Returns an immutable copy of {@code map}. */
-  public static <K, V> Map<K, V> immutableMap(Map<K, V> map) {
-    return Collections.unmodifiableMap(new LinkedHashMap<>(map));
   }
 
   public static ThreadFactory threadFactory(final String name, final boolean daemon) {

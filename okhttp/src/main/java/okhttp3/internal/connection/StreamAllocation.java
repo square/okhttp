@@ -88,8 +88,7 @@ public final class StreamAllocation {
     this.routeSelector = new RouteSelector(address, routeDatabase());
   }
 
-  public HttpStream newStream(OkHttpClient client, boolean doExtensiveHealthChecks)
-      throws IOException {
+  public HttpStream newStream(OkHttpClient client, boolean doExtensiveHealthChecks) {
     int connectTimeout = client.connectTimeoutMillis();
     int readTimeout = client.readTimeoutMillis();
     int writeTimeout = client.writeTimeoutMillis();

@@ -87,7 +87,7 @@ public final class Http1xStream implements HttpStream {
     this.sink = sink;
   }
 
-  @Override public Sink createRequestBody(Request request, long contentLength) throws IOException {
+  @Override public Sink createRequestBody(Request request, long contentLength) {
     if ("chunked".equalsIgnoreCase(request.header("Transfer-Encoding"))) {
       // Stream a request body of unknown length.
       return newChunkedSink();

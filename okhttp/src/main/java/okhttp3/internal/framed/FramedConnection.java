@@ -126,7 +126,7 @@ public final class FramedConnection implements Closeable {
   // Visible for testing
   final Reader readerRunnable;
 
-  private FramedConnection(Builder builder) throws IOException {
+  private FramedConnection(Builder builder) {
     protocol = builder.protocol;
     pushObserver = builder.pushObserver;
     client = builder.client;
@@ -529,7 +529,7 @@ public final class FramedConnection implements Closeable {
      * @param client true if this peer initiated the connection; false if this peer accepted the
      * connection.
      */
-    public Builder(boolean client) throws IOException {
+    public Builder(boolean client) {
       this.client = client;
     }
 
