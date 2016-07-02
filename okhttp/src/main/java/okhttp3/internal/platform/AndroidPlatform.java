@@ -132,20 +132,17 @@ class AndroidPlatform extends Platform {
     }
   }
 
-  @Override public boolean isCleartextTrafficPermitted() {
+  @Override public boolean isCleartextTrafficPermitted(String hostname) {
     try {
       Class<?> networkPolicyClass = Class.forName("android.security.NetworkSecurityPolicy");
       Method getInstanceMethod = networkPolicyClass.getMethod("getInstance");
       Object networkSecurityPolicy = getInstanceMethod.invoke(null);
       Method isCleartextTrafficPermittedMethod = networkPolicyClass
-          .getMethod("isCleartextTrafficPermitted");
-      boolean cleartextPermitted = (boolean) isCleartextTrafficPermittedMethod
-          .invoke(networkSecurityPolicy);
-      return cleartextPermitted;
-    } catch (ClassNotFoundException e) {
-      return super.isCleartextTrafficPermitted();
-    } catch (NoSuchMethodException | IllegalAccessException | IllegalArgumentException
-        | InvocationTargetException e) {
+          .getMethod("isCleartextTrafficPermitted", String.class);
+      return (boolean) isCleartextTrafficPermittedMethod.invoke(networkSecurityPolicy, hostname);
+    } catch (ClassNotFoundException | NoSuchMethodException e) {
+      return super.isCleartextTrafficPermitted(hostname);
+    } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
       throw new AssertionError();
     }
   }

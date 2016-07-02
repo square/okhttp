@@ -93,10 +93,16 @@ public final class RealConnection extends FramedConnection.Listener implements C
     RouteException routeException = null;
     ConnectionSpecSelector connectionSpecSelector = new ConnectionSpecSelector(connectionSpecs);
 
-    if (route.address().sslSocketFactory() == null
-        && !connectionSpecs.contains(ConnectionSpec.CLEARTEXT)) {
-      throw new RouteException(new UnknownServiceException(
-          "CLEARTEXT communication not supported: " + connectionSpecs));
+    if (route.address().sslSocketFactory() == null) {
+      if (!connectionSpecs.contains(ConnectionSpec.CLEARTEXT)) {
+        throw new RouteException(new UnknownServiceException(
+            "CLEARTEXT communication not enabled for client"));
+      }
+      String host = route.address().url().host();
+      if (!Platform.get().isCleartextTrafficPermitted(host)) {
+        throw new RouteException(new UnknownServiceException(
+            "CLEARTEXT communication to " + host + " not permitted by network security policy"));
+      }
     }
 
     while (protocol == null) {
