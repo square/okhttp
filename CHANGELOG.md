@@ -1,6 +1,58 @@
 Change Log
 ==========
 
+## Version 3.4.0-RC1
+
+_2016-07-02_
+
+ *  **We’ve rewritten HttpURLConnection and HttpsURLConnection.** Previously we
+    shared a single HTTP engine between two frontend APIs: `HttpURLConnection`
+    and `Call`. With this release we’ve rearranged things so that the
+    `HttpURLConnection` frontend now delegates to the `Call` APIs internally.
+    This has enabled substantial simplifications and optimizations in the OkHttp
+    core for both frontends.
+
+    For most HTTP requests the consequences of this change will be negligible.
+    If your application uses `HttpURLConnection.connect()`,
+    `setFixedLengthStreamingMode()`, or `setChunkedStreamingMode()`, OkHttp will
+    now use a async dispatcher thread to establish the HTTP connection.
+
+    We don’t expect this change to have any behavior or performance
+    consequences. Regardless, please exercise your `OkUrlFactory` and
+    `HttpURLConnection` code when applying this update.
+
+ *  **Cipher suites may now have arbitrary names.** Previously `CipherSuite` was
+    a Java enum and it was impossible to define new cipher suites without first
+    upgrading OkHttp. With this change it is now a regular Java class with
+    enum-like constants. Application code that uses enum methods on cipher
+    suites (`ordinal()`, `name()`, etc.) will break with this change.
+
+ *  Fix: `CertificatePinner` now matches canonicalized hostnames. Previously
+    this was case sensitive. This change should also make it easier to configure
+    certificate pinning for internationalized domain names.
+ *  Fix: Don’t crash on non-ASCII `ETag` headers. Previously OkHttp would reject
+    these headers when validating a cached response.
+ *  Fix: Don’t allow remote peer to arbitrarily size the HPACK decoder dynamic
+    table.
+ *  Fix: Honor per-host configuration in Android’s network security config.
+    Previously disabling cleartext for any host would disable cleartext for all
+    hosts. Note that this setting is only available on Android 24+.
+ *  New: HPACK compression is now dynamic. This should improve performance when
+    transmitting request headers over HTTP/2.
+ *  New: `Dispatcher.setIdleCallback()` can be used to signal when there are no
+    calls in flight. This is useful for [testing with
+    Espresso][okhttp_idling_resource].
+ *  New: Upgrade to Okio 1.9.0.
+
+     ```xml
+     <dependency>
+       <groupId>com.squareup.okio</groupId>
+       <artifactId>okio</artifactId>
+       <version>1.9.0</version>
+     </dependency>
+     ```
+
+
 ## Version 3.3.1
 
 _2016-05-28_
@@ -1064,3 +1116,4 @@ Initial release.
  [webdav]: https://tools.ietf.org/html/rfc4918
  [major_versions]: http://jakewharton.com/java-interoperability-policy-for-major-version-updates/
  [nginx_959]: https://trac.nginx.org/nginx/ticket/959
+ [okhttp_idling_resource]: https://github.com/JakeWharton/okhttp-idling-resource
