@@ -17,10 +17,10 @@ package okhttp3.internal.huc;
 
 import java.io.IOException;
 import okhttp3.internal.http.UnrepeatableRequestBody;
-import okhttp3.internal.io.Pipe;
 import okio.Buffer;
 import okio.BufferedSink;
 import okio.Okio;
+import okio.Pipe;
 
 /**
  * This request body streams bytes from an application thread to an OkHttp dispatcher thread via a
@@ -30,12 +30,12 @@ final class StreamedRequestBody extends OutputStreamRequestBody implements Unrep
   private final Pipe pipe = new Pipe(8192);
 
   StreamedRequestBody(long expectedContentLength) {
-    initOutputStream(Okio.buffer(pipe.sink), expectedContentLength);
+    initOutputStream(Okio.buffer(pipe.sink()), expectedContentLength);
   }
 
   @Override public void writeTo(BufferedSink sink) throws IOException {
     Buffer buffer = new Buffer();
-    while (pipe.source.read(buffer, 8192) != -1L) {
+    while (pipe.source().read(buffer, 8192) != -1L) {
       sink.write(buffer, buffer.size());
     }
   }
