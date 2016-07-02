@@ -16,8 +16,10 @@
 package okhttp3.internal.huc;
 
 import java.io.IOException;
+import java.io.InterruptedIOException;
 import java.io.OutputStream;
 import java.net.ProtocolException;
+import java.net.SocketTimeoutException;
 import okhttp3.MediaType;
 import okhttp3.Request;
 import okhttp3.RequestBody;
@@ -58,7 +60,11 @@ abstract class OutputStreamRequestBody extends RequestBody {
         }
 
         bytesReceived += byteCount;
-        sink.write(source, offset, byteCount);
+        try {
+          sink.write(source, offset, byteCount);
+        } catch (InterruptedIOException e) {
+          throw new SocketTimeoutException(e.getMessage());
+        }
       }
 
       @Override public void flush() throws IOException {
