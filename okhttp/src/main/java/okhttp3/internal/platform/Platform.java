@@ -129,7 +129,7 @@ public class Platform {
     logger.log(logLevel, message, t);
   }
 
-  public boolean isCleartextTrafficPermitted() {
+  public boolean isCleartextTrafficPermitted(String hostname) {
     return true;
   }
 

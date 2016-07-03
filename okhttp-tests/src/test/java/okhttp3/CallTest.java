@@ -1063,7 +1063,7 @@ public final class CallTest {
       client.newCall(request).execute();
       fail();
     } catch (UnknownServiceException expected) {
-      assertTrue(expected.getMessage().contains("CLEARTEXT communication not supported"));
+      assertEquals("CLEARTEXT communication not enabled for client", expected.getMessage());
     }
   }
 
