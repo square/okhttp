@@ -78,6 +78,7 @@ public final class SslClient {
     private final List<X509Certificate> chainCertificates = new ArrayList<>();
     private final List<X509Certificate> certificates = new ArrayList<>();
     private KeyPair keyPair;
+    private String keyStoreType = KeyStore.getDefaultType();
 
     /**
      * Configure the certificate chain to use when serving HTTPS responses. The first certificate is
@@ -92,7 +93,7 @@ public final class SslClient {
       return certificateChain(serverCert.keyPair, serverCert.certificate, certificates);
     }
 
-    public SslClient.Builder certificateChain(KeyPair keyPair, X509Certificate keyCert,
+    public Builder certificateChain(KeyPair keyPair, X509Certificate keyCert,
         X509Certificate... certificates) {
       this.keyPair = keyPair;
       this.chainCertificates.add(keyCert);
@@ -107,6 +108,11 @@ public final class SslClient {
      */
     public Builder addTrustedCertificate(X509Certificate certificate) {
       this.certificates.add(certificate);
+      return this;
+    }
+
+    public Builder keyStoreType(String keyStoreType) {
+      this.keyStoreType = keyStoreType;
       return this;
     }
 
@@ -151,7 +157,7 @@ public final class SslClient {
 
     private KeyStore newEmptyKeyStore(char[] password) throws GeneralSecurityException {
       try {
-        KeyStore keyStore = KeyStore.getInstance(KeyStore.getDefaultType());
+        KeyStore keyStore = KeyStore.getInstance(keyStoreType);
         InputStream in = null; // By convention, 'null' creates an empty key store.
         keyStore.load(in, password);
         return keyStore;

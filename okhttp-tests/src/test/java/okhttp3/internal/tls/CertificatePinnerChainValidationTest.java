@@ -29,9 +29,11 @@ import okhttp3.mockwebserver.SocketPolicy;
 import org.junit.Rule;
 import org.junit.Test;
 
+import static okhttp3.internal.platform.PlatformTest.getPlatform;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.junit.Assume.assumeFalse;
 
 public final class CertificatePinnerChainValidationTest {
   @Rule public final MockWebServer server = new MockWebServer();
@@ -197,8 +199,20 @@ public final class CertificatePinnerChainValidationTest {
         .issuedBy(compromisedIntermediateCa)
         .commonName(server.getHostName())
         .build();
-    SslClient serverSslContext = new SslClient.Builder()
-        .certificateChain(rogueCertificate.keyPair, rogueCertificate.certificate, compromisedIntermediateCa.certificate, goodCertificate.certificate, rootCa.certificate)
+
+    SslClient.Builder sslBuilder = new SslClient.Builder();
+
+    // Test setup fails on JDK9
+    // java.security.KeyStoreException: Certificate chain is not valid
+    // at sun.security.pkcs12.PKCS12KeyStore.setKeyEntry
+    // http://openjdk.java.net/jeps/229
+    // http://hg.openjdk.java.net/jdk9/jdk9/jdk/file/2c1c21d11e58/src/share/classes/sun/security/pkcs12/PKCS12KeyStore.java#l596
+    if (getPlatform().equals("jdk9")) {
+      sslBuilder.keyStoreType("JKS");
+    }
+
+    SslClient serverSslContext = sslBuilder.certificateChain(
+        rogueCertificate.keyPair, rogueCertificate.certificate, compromisedIntermediateCa.certificate, goodCertificate.certificate, rootCa.certificate)
         .build();
     server.useHttps(serverSslContext.socketFactory, false);
     server.enqueue(new MockResponse()
@@ -271,8 +285,19 @@ public final class CertificatePinnerChainValidationTest {
         .issuedBy(compromisedIntermediateCa)
         .commonName(server.getHostName())
         .build();
-    SslClient serverSslContext = new SslClient.Builder()
-        .certificateChain(
+
+    SslClient.Builder sslBuilder = new SslClient.Builder();
+
+    // Test setup fails on JDK9
+    // java.security.KeyStoreException: Certificate chain is not valid
+    // at sun.security.pkcs12.PKCS12KeyStore.setKeyEntry
+    // http://openjdk.java.net/jeps/229
+    // http://hg.openjdk.java.net/jdk9/jdk9/jdk/file/2c1c21d11e58/src/share/classes/sun/security/pkcs12/PKCS12KeyStore.java#l596
+    if (getPlatform().equals("jdk9")) {
+      sslBuilder.keyStoreType("JKS");
+    }
+
+    SslClient serverSslContext = sslBuilder.certificateChain(
             rogueCertificate.keyPair, rogueCertificate.certificate, goodIntermediateCa.certificate, compromisedIntermediateCa.certificate, compromisedRootCa.certificate)
         .build();
     server.useHttps(serverSslContext.socketFactory, false);
