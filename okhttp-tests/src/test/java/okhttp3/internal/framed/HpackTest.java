@@ -65,6 +65,7 @@ public class HpackTest {
    * larger header content is not lost.
    */
   @Test public void tooLargeToHPackIsStillEmitted() throws IOException {
+    bytesIn.writeByte(0x21); // Dynamic table size update (size = 1).
     bytesIn.writeByte(0x00); // Literal indexed
     bytesIn.writeByte(0x0a); // Literal name (len = 10)
     bytesIn.writeUtf8("custom-key");
@@ -72,7 +73,6 @@ public class HpackTest {
     bytesIn.writeByte(0x0d); // Literal value (len = 13)
     bytesIn.writeUtf8("custom-header");
 
-    hpackReader.headerTableSizeSetting(1);
     hpackReader.readHeaders();
 
     assertEquals(0, hpackReader.headerCount);
@@ -81,7 +81,7 @@ public class HpackTest {
   }
 
   /** Oldest entries are evicted to support newer ones. */
-  @Test public void testEviction() throws IOException {
+  @Test public void writerEviction() throws IOException {
     List<Header> headerBlock =
         headerEntries(
             "custom-foo", "custom-header",
@@ -124,30 +124,69 @@ public class HpackTest {
 
     entry = writer.dynamicTable[tableLength - 2];
     checkEntry(entry, "custom-baz", "custom-header", 55);
+  }
+
+  @Test public void readerEviction() throws IOException {
+    List<Header> headerBlock =
+        headerEntries(
+            "custom-foo", "custom-header",
+            "custom-bar", "custom-header",
+            "custom-baz", "custom-header");
 
     // Set to only support 110 bytes (enough for 2 headers).
-    hpackReader.headerTableSizeSetting(110);
+    bytesIn.writeByte(0x3F); // Dynamic table size update (size = 110).
+    bytesIn.writeByte(0x4F);
+
+    bytesIn.writeByte(0x40); // Literal indexed
+    bytesIn.writeByte(0x0a); // Literal name (len = 10)
+    bytesIn.writeUtf8("custom-foo");
+
+    bytesIn.writeByte(0x0d); // Literal value (len = 13)
+    bytesIn.writeUtf8("custom-header");
+
+    bytesIn.writeByte(0x40); // Literal indexed
+    bytesIn.writeByte(0x0a); // Literal name (len = 10)
+    bytesIn.writeUtf8("custom-bar");
+
+    bytesIn.writeByte(0x0d); // Literal value (len = 13)
+    bytesIn.writeUtf8("custom-header");
+
+    bytesIn.writeByte(0x40); // Literal indexed
+    bytesIn.writeByte(0x0a); // Literal name (len = 10)
+    bytesIn.writeUtf8("custom-baz");
+
+    bytesIn.writeByte(0x0d); // Literal value (len = 13)
+    bytesIn.writeUtf8("custom-header");
+
     hpackReader.readHeaders();
 
     assertEquals(2, hpackReader.headerCount);
 
-    entry = hpackReader.dynamicTable[readerHeaderTableLength() - 1];
-    checkEntry(entry, "custom-bar", "custom-header", 55);
+    Header entry1 = hpackReader.dynamicTable[readerHeaderTableLength() - 1];
+    checkEntry(entry1, "custom-bar", "custom-header", 55);
 
-    entry = hpackReader.dynamicTable[readerHeaderTableLength() - 2];
-    checkEntry(entry, "custom-baz", "custom-header", 55);
+    Header entry2 = hpackReader.dynamicTable[readerHeaderTableLength() - 2];
+    checkEntry(entry2, "custom-baz", "custom-header", 55);
 
     // Once a header field is decoded and added to the reconstructed header
     // list, it cannot be removed from it. Hence, foo is here.
     assertEquals(headerBlock, hpackReader.getAndResetHeaderList());
 
-    // Simulate receiving a small settings frame, that implies eviction.
-    hpackReader.headerTableSizeSetting(55);
+    // Simulate receiving a small dynamic table size update, that implies eviction.
+    bytesIn.writeByte(0x3F); // Dynamic table size update (size = 55).
+    bytesIn.writeByte(0x18);
+    hpackReader.readHeaders();
     assertEquals(1, hpackReader.headerCount);
   }
 
   /** Header table backing array is initially 8 long, let's ensure it grows. */
   @Test public void dynamicallyGrowsBeyond64Entries() throws IOException {
+    // Lots of headers need more room!
+    hpackReader = new Hpack.Reader(16384, 4096, bytesIn);
+    bytesIn.writeByte(0x3F); // Dynamic table size update (size = 16384).
+    bytesIn.writeByte(0xE1);
+    bytesIn.writeByte(0x7F);
+
     for (int i = 0; i < 256; i++) {
       bytesIn.writeByte(0x40); // Literal indexed
       bytesIn.writeByte(0x0a); // Literal name (len = 10)
@@ -157,7 +196,6 @@ public class HpackTest {
       bytesIn.writeUtf8("custom-header");
     }
 
-    hpackReader.headerTableSizeSetting(16384); // Lots of headers need more room!
     hpackReader.readHeaders();
 
     assertEquals(256, hpackReader.headerCount);
@@ -435,10 +473,10 @@ public class HpackTest {
    * http://tools.ietf.org/html/draft-ietf-httpbis-header-compression-12#appendix-C.2.4
    */
   @Test public void readIndexedHeaderFieldFromStaticTableWithoutBuffering() throws IOException {
+    bytesIn.writeByte(0x20); // Dynamic table size update (size = 0).
     bytesIn.writeByte(0x82); // == Indexed - Add ==
                              // idx = 2 -> :method: GET
 
-    hpackReader.headerTableSizeSetting(0); // SETTINGS_HEADER_TABLE_SIZE == 0
     hpackReader.readHeaders();
 
     // Not buffered in header table.

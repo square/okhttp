@@ -116,8 +116,9 @@ final class Hpack {
     private final List<Header> headerList = new ArrayList<>();
     private final BufferedSource source;
 
-    private int headerTableSizeSetting;
+    private final int headerTableSizeSetting;
     private int maxDynamicTableByteCount;
+
     // Visible for testing.
     Header[] dynamicTable = new Header[8];
     // Array is populated back to front, so new entries always have lowest index.
@@ -126,26 +127,17 @@ final class Hpack {
     int dynamicTableByteCount = 0;
 
     Reader(int headerTableSizeSetting, Source source) {
+      this(headerTableSizeSetting, headerTableSizeSetting, source);
+    }
+
+    Reader(int headerTableSizeSetting, int maxDynamicTableByteCount, Source source) {
       this.headerTableSizeSetting = headerTableSizeSetting;
-      this.maxDynamicTableByteCount = headerTableSizeSetting;
+      this.maxDynamicTableByteCount = maxDynamicTableByteCount;
       this.source = Okio.buffer(source);
     }
 
     int maxDynamicTableByteCount() {
       return maxDynamicTableByteCount;
-    }
-
-    /**
-     * Called by the reader when the peer sent {@link Settings#HEADER_TABLE_SIZE}. While this
-     * establishes the maximum dynamic table size, the {@link #maxDynamicTableByteCount} set during
-     * processing may limit the table size to a smaller amount.
-     *
-     * <p>Evicts entries or clears the table as needed.
-     */
-    void headerTableSizeSetting(int headerTableSizeSetting) {
-      this.headerTableSizeSetting = headerTableSizeSetting;
-      this.maxDynamicTableByteCount = headerTableSizeSetting;
-      adjustDynamicTableByteCount();
     }
 
     private void adjustDynamicTableByteCount() {
