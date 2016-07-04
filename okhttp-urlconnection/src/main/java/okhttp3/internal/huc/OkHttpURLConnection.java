@@ -39,6 +39,7 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import okhttp3.Call;
 import okhttp3.Callback;
+import okhttp3.Dispatcher;
 import okhttp3.Handshake;
 import okhttp3.Headers;
 import okhttp3.HttpUrl;
@@ -385,6 +386,9 @@ public final class OkHttpURLConnection extends HttpURLConnection implements Call
     clientBuilder.interceptors().add(UnexpectedException.INTERCEPTOR);
     clientBuilder.networkInterceptors().clear();
     clientBuilder.networkInterceptors().add(networkInterceptor);
+
+    // Use a separate dispatcher so that limits aren't impacted. But use the same executor service!
+    clientBuilder.dispatcher(new Dispatcher(client.dispatcher().executorService()));
 
     // If we're currently not using caches, make sure the engine's client doesn't have one.
     if (!getUseCaches()) {
