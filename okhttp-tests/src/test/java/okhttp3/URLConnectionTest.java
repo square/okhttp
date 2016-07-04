@@ -3546,6 +3546,23 @@ public final class URLConnectionTest {
     }
   }
 
+  @Test public void callsNotManagedByDispatcher() throws Exception {
+    server.enqueue(new MockResponse()
+        .setBody("abc"));
+
+    Dispatcher dispatcher = urlFactory.client().dispatcher();
+    assertEquals(0, dispatcher.runningCallsCount());
+
+    connection = urlFactory.open(server.url("/").url());
+    assertEquals(0, dispatcher.runningCallsCount());
+
+    connection.connect();
+    assertEquals(0, dispatcher.runningCallsCount());
+
+    assertContent("abc", connection);
+    assertEquals(0, dispatcher.runningCallsCount());
+  }
+
   private void testInstanceFollowsRedirects(String spec) throws Exception {
     URL url = new URL(spec);
     HttpURLConnection urlConnection = urlFactory.open(url);
