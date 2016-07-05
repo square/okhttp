@@ -90,7 +90,7 @@ public final class HttpLoggingInterceptor implements Interceptor {
      * Content-Length: 3
      *
      * Hi?
-     * --> END GET
+     * --> END POST
      *
      * <-- 200 OK (22ms)
      * Content-Type: plain/text
