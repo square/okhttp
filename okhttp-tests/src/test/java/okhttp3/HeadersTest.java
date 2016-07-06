@@ -312,6 +312,15 @@ public final class HeadersTest {
     assertEquals(1, headerMap.get("user-agent").size());
   }
 
+  @Test public void toMultimapAllowsCaseInsensitiveGet() {
+    Headers headers = Headers.of(
+            "cache-control", "no-store",
+            "Cache-Control", "no-cache");
+    Map<String, List<String>> headerMap = headers.toMultimap();
+    assertEquals(2, headerMap.get("cache-control").size());
+    assertEquals(2, headerMap.get("Cache-Control").size());
+  }
+
   @Test public void nameIndexesAreStrict() {
     Headers headers = Headers.of("a", "b", "c", "d");
     try {
