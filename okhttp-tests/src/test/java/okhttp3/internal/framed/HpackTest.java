@@ -815,6 +815,98 @@ public class HpackTest {
     assertEquals(ByteString.EMPTY, newReader(byteStream(0)).readByteString());
   }
 
+  @Test public void emitsDynamicTableSizeUpdate() throws IOException {
+    hpackWriter.setHeaderTableSizeSetting(2048);
+    hpackWriter.writeHeaders(Arrays.asList(new Header("foo", "bar")));
+    assertBytes(
+        0x3F, 0xE1, 0xF, // Dynamic table size update (size = 2048).
+        0x40, 3, 'f', 'o', 'o', 3, 'b', 'a', 'r');
+
+    hpackWriter.setHeaderTableSizeSetting(8192);
+    hpackWriter.writeHeaders(Arrays.asList(new Header("bar", "foo")));
+    assertBytes(
+        0x3F, 0xE1, 0x3F, // Dynamic table size update (size = 8192).
+        0x40, 3, 'b', 'a', 'r', 3, 'f', 'o', 'o');
+
+    // No more dynamic table updates should be emitted.
+    hpackWriter.writeHeaders(Arrays.asList(new Header("far", "boo")));
+    assertBytes(0x40, 3, 'f', 'a', 'r', 3, 'b', 'o', 'o');
+  }
+
+  @Test public void noDynamicTableSizeUpdateWhenSizeIsEqual() throws IOException {
+    int currentSize = hpackWriter.headerTableSizeSetting;
+    hpackWriter.setHeaderTableSizeSetting(currentSize);
+    hpackWriter.writeHeaders(Arrays.asList(new Header("foo", "bar")));
+
+    assertBytes(0x40, 3, 'f', 'o', 'o', 3, 'b', 'a', 'r');
+  }
+
+  @Test public void growDynamicTableSize() throws IOException {
+    hpackWriter.setHeaderTableSizeSetting(8192);
+    hpackWriter.setHeaderTableSizeSetting(16384);
+    hpackWriter.writeHeaders(Arrays.asList(new Header("foo", "bar")));
+
+    assertBytes(
+        0x3F, 0xE1, 0x7F, // Dynamic table size update (size = 16384).
+        0x40, 3, 'f', 'o', 'o', 3, 'b', 'a', 'r');
+  }
+
+  @Test public void shrinkDynamicTableSize() throws IOException {
+    hpackWriter.setHeaderTableSizeSetting(2048);
+    hpackWriter.setHeaderTableSizeSetting(0);
+    hpackWriter.writeHeaders(Arrays.asList(new Header("foo", "bar")));
+
+    assertBytes(
+        0x20, // Dynamic size update (size = 0).
+        0x40, 3, 'f', 'o', 'o', 3, 'b', 'a', 'r');
+  }
+
+  @Test public void manyDynamicTableSizeChanges() throws IOException {
+    hpackWriter.setHeaderTableSizeSetting(16384);
+    hpackWriter.setHeaderTableSizeSetting(8096);
+    hpackWriter.setHeaderTableSizeSetting(0);
+    hpackWriter.setHeaderTableSizeSetting(4096);
+    hpackWriter.setHeaderTableSizeSetting(2048);
+    hpackWriter.writeHeaders(Arrays.asList(new Header("foo", "bar")));
+
+    assertBytes(
+        0x20, // Dynamic size update (size = 0).
+        0x3F, 0xE1, 0xF, // Dynamic size update (size = 2048).
+        0x40, 3, 'f', 'o', 'o', 3, 'b', 'a', 'r');
+  }
+
+  @Test public void dynamicTableEvictionWhenSizeLowered() throws IOException {
+    List<Header> headerBlock =
+        headerEntries(
+            "custom-key1", "custom-header",
+            "custom-key2", "custom-header");
+    hpackWriter.writeHeaders(headerBlock);
+    assertEquals(2, hpackWriter.headerCount);
+
+    hpackWriter.setHeaderTableSizeSetting(56);
+    assertEquals(1, hpackWriter.headerCount);
+
+    hpackWriter.setHeaderTableSizeSetting(0);
+    assertEquals(0, hpackWriter.headerCount);
+  }
+
+  @Test public void noEvictionOnDynamicTableSizeIncrease() throws IOException {
+    List<Header> headerBlock =
+        headerEntries(
+            "custom-key1", "custom-header",
+            "custom-key2", "custom-header");
+    hpackWriter.writeHeaders(headerBlock);
+    assertEquals(2, hpackWriter.headerCount);
+
+    hpackWriter.setHeaderTableSizeSetting(8192);
+    assertEquals(2, hpackWriter.headerCount);
+  }
+
+  @Test public void dynamicTableSizeHasAnUpperBound() {
+    hpackWriter.setHeaderTableSizeSetting(1048576);
+    assertEquals(16384, hpackWriter.maxDynamicTableByteCount);
+  }
+
   private Hpack.Reader newReader(Buffer source) {
     return new Hpack.Reader(4096, source);
   }

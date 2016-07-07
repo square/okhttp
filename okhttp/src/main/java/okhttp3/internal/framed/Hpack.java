@@ -362,11 +362,26 @@ final class Hpack {
     private static final byte SEPARATED_TOKEN = ':';
     private static final int SETTINGS_HEADER_TABLE_SIZE = 4096;
 
+    /**
+     * The decoder has ultimate control of the maximum size of the dynamic table but we can choose
+     * to use less. We'll put a cap at 16K. This is arbitrary but should be enough for most
+     * purposes.
+     */
+    private static final int SETTINGS_HEADER_TABLE_SIZE_LIMIT = 16384;
+
     private final Buffer out;
     private final Map<ByteString, Integer> headerStringToDynamicIndex = new LinkedHashMap<>();
 
-    private int headerTableSizeSetting;
-    private int maxDynamicTableByteCount;
+    /**
+     * In the scenario where the dynamic table size changes multiple times between transmission of
+     * header blocks, we need to keep track of the smallest value in that interval.
+     */
+    private int smallestHeaderTableSizeSetting = Integer.MAX_VALUE;
+    private boolean emitDynamicTableSizeUpdate;
+
+    int headerTableSizeSetting;
+    int maxDynamicTableByteCount;
+
     // Visible for testing.
     Header[] dynamicTable = new Header[8];
     // Array is populated back to front, so new entries always have lowest index.
@@ -378,8 +393,6 @@ final class Hpack {
       this(SETTINGS_HEADER_TABLE_SIZE, out);
     }
 
-    // This is the only method to set the dynamic table size.
-    // Don't support to change the dynamic table size after Writer constructed.
     Writer(int headerTableSizeSetting, Buffer out) {
       this.headerTableSizeSetting = headerTableSizeSetting;
       this.maxDynamicTableByteCount = headerTableSizeSetting;
@@ -456,6 +469,15 @@ final class Hpack {
     /** This does not use "never indexed" semantics for sensitive headers. */
     // http://tools.ietf.org/html/draft-ietf-httpbis-header-compression-12#section-6.2.3
     void writeHeaders(List<Header> headerBlock) throws IOException {
+      if (emitDynamicTableSizeUpdate) {
+        if (smallestHeaderTableSizeSetting < maxDynamicTableByteCount) {
+          // Multiple dynamic table size updates!
+          writeInt(smallestHeaderTableSizeSetting, PREFIX_5_BITS, 0x20);
+        }
+        emitDynamicTableSizeUpdate = false;
+        smallestHeaderTableSizeSetting = Integer.MAX_VALUE;
+        writeInt(maxDynamicTableByteCount, PREFIX_5_BITS, 0x20);
+      }
       // TODO: implement index tracking
       for (int i = 0, size = headerBlock.size(); i < size; i++) {
         Header header = headerBlock.get(i);
@@ -508,6 +530,32 @@ final class Hpack {
     void writeByteString(ByteString data) throws IOException {
       writeInt(data.size(), PREFIX_7_BITS, 0);
       out.write(data);
+    }
+
+    void setHeaderTableSizeSetting(int headerTableSizeSetting) {
+      this.headerTableSizeSetting = headerTableSizeSetting;
+      int effectiveHeaderTableSize = Math.min(headerTableSizeSetting,
+          SETTINGS_HEADER_TABLE_SIZE_LIMIT);
+
+      if (maxDynamicTableByteCount == effectiveHeaderTableSize) return; // No change.
+
+      if (effectiveHeaderTableSize < maxDynamicTableByteCount) {
+        smallestHeaderTableSizeSetting = Math.min(smallestHeaderTableSizeSetting,
+            effectiveHeaderTableSize);
+      }
+      emitDynamicTableSizeUpdate = true;
+      maxDynamicTableByteCount = effectiveHeaderTableSize;
+      adjustDynamicTableByteCount();
+    }
+
+    private void adjustDynamicTableByteCount() {
+      if (maxDynamicTableByteCount < dynamicTableByteCount) {
+        if (maxDynamicTableByteCount == 0) {
+          clearDynamicTable();
+        } else {
+          evictToRecoverBytes(dynamicTableByteCount - maxDynamicTableByteCount);
+        }
+      }
     }
   }
 

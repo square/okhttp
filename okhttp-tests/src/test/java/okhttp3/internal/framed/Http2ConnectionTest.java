@@ -138,20 +138,18 @@ public final class Http2ConnectionTest {
     assertEquals(3368, stream.bytesLeftInWriteWindow);
   }
 
-  @Test
-  @Ignore("Working through making this work with the new HPACK encoder.")
-  public void peerHttp2ServerZerosCompressionTable() throws Exception {
+  @Test public void peerHttp2ServerZerosCompressionTable() throws Exception {
     boolean client = false; // Peer is server, so we are client.
     Settings settings = new Settings();
     settings.set(HEADER_TABLE_SIZE, PERSIST_VALUE, 0);
 
     FramedConnection connection = sendHttp2SettingsAndCheckForAck(client, settings);
 
-    // verify the peer's settings were read and applied.
+    // Verify the peer's settings were read and applied.
     assertEquals(0, connection.peerSettings.getHeaderTableSize());
-    Http2.Reader frameReader = (Http2.Reader) connection.readerRunnable.frameReader;
-    assertEquals(0, frameReader.hpackReader.maxDynamicTableByteCount());
-    // TODO: when supported, check the frameWriter's compression table is unaffected.
+    Http2.Writer frameWriter = (Http2.Writer) connection.frameWriter;
+    assertEquals(0, frameWriter.hpackWriter.dynamicTableByteCount);
+    assertEquals(0, frameWriter.hpackWriter.headerTableSizeSetting);
   }
 
   @Test public void peerHttp2ClientDisablesPush() throws Exception {
