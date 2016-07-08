@@ -359,9 +359,10 @@ public final class Http2 implements Variant {
     private final BufferedSink sink;
     private final boolean client;
     private final Buffer hpackBuffer;
-    private final Hpack.Writer hpackWriter;
     private int maxFrameSize;
     private boolean closed;
+
+    final Hpack.Writer hpackWriter;
 
     Writer(BufferedSink sink, boolean client) {
       this.sink = sink;
@@ -376,9 +377,13 @@ public final class Http2 implements Variant {
       sink.flush();
     }
 
-    @Override public synchronized void ackSettings(Settings peerSettings) throws IOException {
+    @Override public synchronized void applyAndAckSettings(Settings peerSettings)
+        throws IOException {
       if (closed) throw new IOException("closed");
       this.maxFrameSize = peerSettings.getMaxFrameSize(maxFrameSize);
+      if (peerSettings.getHeaderTableSize() > -1) {
+        hpackWriter.setHeaderTableSizeSetting(peerSettings.getHeaderTableSize());
+      }
       int length = 0;
       byte type = TYPE_SETTINGS;
       byte flags = FLAG_ACK;

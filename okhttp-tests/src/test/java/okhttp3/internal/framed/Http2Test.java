@@ -629,7 +629,7 @@ public class Http2Test {
 
     Http2.Writer writer = new Http2.Writer(new Buffer(), true);
 
-    writer.ackSettings(new Settings().set(Settings.MAX_FRAME_SIZE, 0, newMaxFrameSize));
+    writer.applyAndAckSettings(new Settings().set(Settings.MAX_FRAME_SIZE, 0, newMaxFrameSize));
 
     assertEquals(newMaxFrameSize, writer.maxDataLength());
     writer.frameHeader(0, newMaxFrameSize, Http2.TYPE_DATA, FLAG_NONE);
