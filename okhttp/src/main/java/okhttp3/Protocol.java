@@ -44,9 +44,9 @@ public enum Protocol {
    * Chromium's binary-framed protocol that includes header compression, multiplexing multiple
    * requests on the same socket, and server-push. HTTP/1.1 semantics are layered on SPDY/3.
    *
-   * <p>This version of OkHttp implements SPDY 3 <a
-   * href="http://dev.chromium.org/spdy/spdy-protocol/spdy-protocol-draft3-1">draft 3.1</a>. Future
-   * releases of OkHttp may use this identifier for a newer draft of the SPDY spec.
+   * <p>Current versions of OkHttp do not support this protocol.
+   *
+   * @deprecated OkHttp has dropped support for SPDY. Prefer {@link #HTTP_2}.
    */
   SPDY_3("spdy/3.1"),
 

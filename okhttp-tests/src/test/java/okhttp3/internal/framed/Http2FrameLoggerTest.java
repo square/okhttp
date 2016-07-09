@@ -24,8 +24,8 @@ import static okhttp3.internal.framed.Http2.FLAG_ACK;
 import static okhttp3.internal.framed.Http2.FLAG_END_HEADERS;
 import static okhttp3.internal.framed.Http2.FLAG_END_STREAM;
 import static okhttp3.internal.framed.Http2.FLAG_NONE;
-import static okhttp3.internal.framed.Http2.FrameLogger.formatFlags;
-import static okhttp3.internal.framed.Http2.FrameLogger.formatHeader;
+import static okhttp3.internal.framed.FrameLogger.formatFlags;
+import static okhttp3.internal.framed.FrameLogger.formatHeader;
 import static okhttp3.internal.framed.Http2.TYPE_CONTINUATION;
 import static okhttp3.internal.framed.Http2.TYPE_DATA;
 import static okhttp3.internal.framed.Http2.TYPE_GOAWAY;
@@ -35,7 +35,7 @@ import static okhttp3.internal.framed.Http2.TYPE_PUSH_PROMISE;
 import static okhttp3.internal.framed.Http2.TYPE_SETTINGS;
 import static org.junit.Assert.assertEquals;
 
-public class Http2FrameLoggerTest {
+public final class Http2FrameLoggerTest {
 
   /** Real stream traffic applied to the log format. */
   @Test public void exampleStream() {

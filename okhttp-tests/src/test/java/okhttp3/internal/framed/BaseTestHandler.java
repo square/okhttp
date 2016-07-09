@@ -28,9 +28,8 @@ class BaseTestHandler implements FrameReader.Handler {
     fail();
   }
 
-  @Override
-  public void headers(boolean outFinished, boolean inFinished, int streamId, int associatedStreamId,
-      List<Header> headerBlock, HeadersMode headersMode) {
+  @Override public void headers(boolean inFinished, int streamId, int associatedStreamId,
+      List<Header> headerBlock) {
     fail();
   }
 

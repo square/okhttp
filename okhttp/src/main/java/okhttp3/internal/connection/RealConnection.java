@@ -201,12 +201,11 @@ public final class RealConnection extends FramedConnection.Listener implements C
       socket = rawSocket;
     }
 
-    if (protocol == Protocol.SPDY_3 || protocol == Protocol.HTTP_2) {
+    if (protocol == Protocol.HTTP_2) {
       socket.setSoTimeout(0); // Framed connection timeouts are set per-stream.
 
       FramedConnection framedConnection = new FramedConnection.Builder(true)
           .socket(socket, route.address().url().host(), source, sink)
-          .protocol(protocol)
           .listener(this)
           .build();
       framedConnection.start();
@@ -405,7 +404,7 @@ public final class RealConnection extends FramedConnection.Listener implements C
   }
 
   /**
-   * Returns true if this is a SPDY connection. Such connections can be used in multiple HTTP
+   * Returns true if this is an HTTP/2 connection. Such connections can be used in multiple HTTP
    * requests simultaneously.
    */
   public boolean isMultiplexed() {
@@ -416,7 +415,7 @@ public final class RealConnection extends FramedConnection.Listener implements C
     if (framedConnection == null) {
       return protocol != null ? protocol : Protocol.HTTP_1_1;
     } else {
-      return framedConnection.getProtocol();
+      return Protocol.HTTP_2;
     }
   }
 

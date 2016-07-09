@@ -42,7 +42,7 @@ import static org.junit.Assert.fail;
 
 public class Http2Test {
   final Buffer frame = new Buffer();
-  final FrameReader fr = new Http2.Reader(frame, 4096, false);
+  final FrameReader fr = new FrameReader(frame, false);
   final int expectedStreamId = 15;
 
   @Test public void unknownFrameTypeSkipped() throws IOException {
@@ -68,15 +68,12 @@ public class Http2Test {
     assertEquals(frame, sendHeaderFrames(true, sentHeaders)); // Check writer sends the same bytes.
 
     fr.nextFrame(new BaseTestHandler() {
-      @Override
-      public void headers(boolean outFinished, boolean inFinished, int streamId,
-          int associatedStreamId, List<Header> headerBlock, HeadersMode headersMode) {
-        assertFalse(outFinished);
+      @Override public void headers(boolean inFinished, int streamId,
+          int associatedStreamId, List<Header> headerBlock) {
         assertTrue(inFinished);
         assertEquals(expectedStreamId, streamId);
         assertEquals(-1, associatedStreamId);
         assertEquals(sentHeaders, headerBlock);
-        assertEquals(HeadersMode.HTTP_20_HEADERS, headersMode);
       }
     });
   }
@@ -101,15 +98,12 @@ public class Http2Test {
         assertFalse(exclusive);
       }
 
-      @Override public void headers(boolean outFinished, boolean inFinished, int streamId,
-          int associatedStreamId, List<Header> nameValueBlock,
-          HeadersMode headersMode) {
-        assertFalse(outFinished);
+      @Override public void headers(boolean inFinished, int streamId,
+          int associatedStreamId, List<Header> nameValueBlock) {
         assertFalse(inFinished);
         assertEquals(expectedStreamId, streamId);
         assertEquals(-1, associatedStreamId);
         assertEquals(sentHeaders, nameValueBlock);
-        assertEquals(HeadersMode.HTTP_20_HEADERS, headersMode);
       }
     });
   }
@@ -138,14 +132,12 @@ public class Http2Test {
 
     // Reading the above frames should result in a concatenated headerBlock.
     fr.nextFrame(new BaseTestHandler() {
-      @Override public void headers(boolean outFinished, boolean inFinished, int streamId,
-          int associatedStreamId, List<Header> headerBlock, HeadersMode headersMode) {
-        assertFalse(outFinished);
+      @Override public void headers(boolean inFinished, int streamId,
+          int associatedStreamId, List<Header> headerBlock) {
         assertFalse(inFinished);
         assertEquals(expectedStreamId, streamId);
         assertEquals(-1, associatedStreamId);
         assertEquals(sentHeaders, headerBlock);
-        assertEquals(HeadersMode.HTTP_20_HEADERS, headersMode);
       }
     });
   }
@@ -222,12 +214,12 @@ public class Http2Test {
     frame.writeByte(Http2.TYPE_RST_STREAM);
     frame.writeByte(Http2.FLAG_NONE);
     frame.writeInt(expectedStreamId & 0x7fffffff);
-    frame.writeInt(ErrorCode.COMPRESSION_ERROR.httpCode);
+    frame.writeInt(ErrorCode.PROTOCOL_ERROR.httpCode);
 
     fr.nextFrame(new BaseTestHandler() {
       @Override public void rstStream(int streamId, ErrorCode errorCode) {
         assertEquals(expectedStreamId, streamId);
-        assertEquals(ErrorCode.COMPRESSION_ERROR, errorCode);
+        assertEquals(ErrorCode.PROTOCOL_ERROR, errorCode);
       }
     });
   }
@@ -613,7 +605,7 @@ public class Http2Test {
   }
 
   @Test public void frameSizeError() throws IOException {
-    Http2.Writer writer = new Http2.Writer(new Buffer(), true);
+    FrameWriter writer = new FrameWriter(new Buffer(), true);
 
     try {
       writer.frameHeader(0, 16777216, Http2.TYPE_DATA, FLAG_NONE);
@@ -627,16 +619,16 @@ public class Http2Test {
   @Test public void ackSettingsAppliesMaxFrameSize() throws IOException {
     int newMaxFrameSize = 16777215;
 
-    Http2.Writer writer = new Http2.Writer(new Buffer(), true);
+    FrameWriter writer = new FrameWriter(new Buffer(), true);
 
-    writer.applyAndAckSettings(new Settings().set(Settings.MAX_FRAME_SIZE, 0, newMaxFrameSize));
+    writer.applyAndAckSettings(new Settings().set(Settings.MAX_FRAME_SIZE, newMaxFrameSize));
 
     assertEquals(newMaxFrameSize, writer.maxDataLength());
     writer.frameHeader(0, newMaxFrameSize, Http2.TYPE_DATA, FLAG_NONE);
   }
 
   @Test public void streamIdHasReservedBit() throws IOException {
-    Http2.Writer writer = new Http2.Writer(new Buffer(), true);
+    FrameWriter writer = new FrameWriter(new Buffer(), true);
 
     try {
       int streamId = 3;
@@ -656,52 +648,50 @@ public class Http2Test {
 
   private Buffer sendHeaderFrames(boolean outFinished, List<Header> headers) throws IOException {
     Buffer out = new Buffer();
-    new Http2.Writer(out, true).headers(outFinished, expectedStreamId, headers);
+    new FrameWriter(out, true).headers(outFinished, expectedStreamId, headers);
     return out;
   }
 
   private Buffer sendPushPromiseFrames(int streamId, List<Header> headers) throws IOException {
     Buffer out = new Buffer();
-    new Http2.Writer(out, true).pushPromise(expectedStreamId, streamId, headers);
+    new FrameWriter(out, true).pushPromise(expectedStreamId, streamId, headers);
     return out;
   }
 
   private Buffer sendPingFrame(boolean ack, int payload1, int payload2) throws IOException {
     Buffer out = new Buffer();
-    new Http2.Writer(out, true).ping(ack, payload1, payload2);
+    new FrameWriter(out, true).ping(ack, payload1, payload2);
     return out;
   }
 
   private Buffer sendGoAway(int lastGoodStreamId, ErrorCode errorCode, byte[] debugData)
       throws IOException {
     Buffer out = new Buffer();
-    new Http2.Writer(out, true).goAway(lastGoodStreamId, errorCode, debugData);
+    new FrameWriter(out, true).goAway(lastGoodStreamId, errorCode, debugData);
     return out;
   }
 
   private Buffer sendDataFrame(Buffer data) throws IOException {
     Buffer out = new Buffer();
-    new Http2.Writer(out, true).dataFrame(expectedStreamId, FLAG_NONE, data,
+    new FrameWriter(out, true).dataFrame(expectedStreamId, FLAG_NONE, data,
         (int) data.size());
     return out;
   }
 
   private Buffer windowUpdate(long windowSizeIncrement) throws IOException {
     Buffer out = new Buffer();
-    new Http2.Writer(out, true).windowUpdate(expectedStreamId, windowSizeIncrement);
+    new FrameWriter(out, true).windowUpdate(expectedStreamId, windowSizeIncrement);
     return out;
   }
 
   private FrameReader.Handler assertHeaderBlock() {
     return new BaseTestHandler() {
-      @Override public void headers(boolean outFinished, boolean inFinished, int streamId,
-          int associatedStreamId, List<Header> headerBlock, HeadersMode headersMode) {
-        assertFalse(outFinished);
+      @Override public void headers(boolean inFinished, int streamId,
+          int associatedStreamId, List<Header> headerBlock) {
         assertFalse(inFinished);
         assertEquals(expectedStreamId, streamId);
         assertEquals(-1, associatedStreamId);
         assertEquals(headerEntries("foo", "barrr", "baz", "qux"), headerBlock);
-        assertEquals(HeadersMode.HTTP_20_HEADERS, headersMode);
       }
     };
   }

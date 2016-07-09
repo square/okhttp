@@ -42,7 +42,7 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
  *     <li><strong>Streams:</strong> logical HTTP request/response pairs that are layered on
  *         connections. Each connection has its own allocation limit, which defines how many
  *         concurrent streams that connection can carry. HTTP/1.x connections can carry 1 stream
- *         at a time, SPDY and HTTP/2 typically carry multiple.
+ *         at a time, HTTP/2 typically carry multiple.
  *     <li><strong>Calls:</strong> a logical sequence of streams, typically an initial request and
  *         its follow up requests. We prefer to keep all streams of a single call on the same
  *         connection for better behavior and locality.

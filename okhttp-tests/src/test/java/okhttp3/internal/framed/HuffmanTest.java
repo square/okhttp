@@ -25,11 +25,8 @@ import org.junit.Test;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-/**
- * Original version of this class was lifted from {@code com.twitter.hpack.HuffmanTest}.
- */
-public class HuffmanTest {
-
+/** Original version of this class was lifted from {@code com.twitter.hpack.HuffmanTest}. */
+public final class HuffmanTest {
   @Test public void roundTripForRequestAndResponse() throws IOException {
     String s = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
     for (int i = 0; i < s.length(); i++) {

@@ -19,7 +19,7 @@ package okhttp3;
 import java.net.Socket;
 
 /**
- * The sockets and streams of an HTTP, HTTPS, or HTTPS+SPDY connection. May be used for multiple
+ * The sockets and streams of an HTTP, HTTPS, or HTTPS+HTTP/2 connection. May be used for multiple
  * HTTP request/response exchanges. Connections may be direct to the origin server or via a proxy.
  *
  * <p>Typically instances of this class are created, connected and exercised automatically by the
@@ -37,8 +37,8 @@ import java.net.Socket;
  * <ul>
  *     <li>Server Name Indication (SNI) enables one IP address to negotiate secure connections for
  *         multiple domain names.
- *     <li>Application Layer Protocol Negotiation (ALPN) enables the HTTPS port (443) to be used for
- *         different HTTP and SPDY protocols.
+ *     <li>Application Layer Protocol Negotiation (ALPN) enables the HTTPS port (443) to be used to
+ *         negotiate HTTP/2.
  * </ul>
  *
  * <p>Unfortunately, older HTTPS servers refuse to connect when such options are presented. Rather
@@ -73,7 +73,7 @@ public interface Connection {
 
   /**
    * Returns the socket that this connection is using. Returns an {@linkplain
-   * javax.net.ssl.SSLSocket SSL socket} if this connection is HTTPS. If this is an HTTP/2 or SPDY
+   * javax.net.ssl.SSLSocket SSL socket} if this connection is HTTPS. If this is an HTTP/2
    * connection the socket may be shared by multiple concurrent calls.
    */
   Socket socket();

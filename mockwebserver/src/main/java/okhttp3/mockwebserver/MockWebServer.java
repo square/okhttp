@@ -139,8 +139,7 @@ public final class MockWebServer implements TestRule {
   private int port = -1;
   private InetSocketAddress inetSocketAddress;
   private boolean protocolNegotiationEnabled = true;
-  private List<Protocol> protocols
-      = Util.immutableList(Protocol.HTTP_2, Protocol.SPDY_3, Protocol.HTTP_1_1);
+  private List<Protocol> protocols = Util.immutableList(Protocol.HTTP_2, Protocol.HTTP_1_1);
 
   private boolean started;
 
@@ -450,17 +449,18 @@ public final class MockWebServer implements TestRule {
           socket = raw;
         }
 
-        if (protocol != Protocol.HTTP_1_1) {
+        if (protocol == Protocol.HTTP_2) {
           FramedSocketHandler framedSocketListener = new FramedSocketHandler(socket, protocol);
           FramedConnection framedConnection = new FramedConnection.Builder(false)
               .socket(socket)
-              .protocol(protocol)
               .listener(framedSocketListener)
               .build();
           framedConnection.start();
           openFramedConnections.add(framedConnection);
           openClientSockets.remove(socket);
           return;
+        } else if (protocol != Protocol.HTTP_1_1) {
+          throw new AssertionError();
         }
 
         BufferedSource source = Okio.buffer(Okio.source(socket));
@@ -885,7 +885,6 @@ public final class MockWebServer implements TestRule {
       Headers.Builder httpHeaders = new Headers.Builder();
       String method = "<:method omitted>";
       String path = "<:path omitted>";
-      String version = protocol == Protocol.SPDY_3 ? "<:version omitted>" : "HTTP/1.1";
       for (int i = 0, size = streamHeaders.size(); i < size; i++) {
         ByteString name = streamHeaders.get(i).name;
         String value = streamHeaders.get(i).value.utf8();
@@ -893,12 +892,6 @@ public final class MockWebServer implements TestRule {
           method = value;
         } else if (name.equals(Header.TARGET_PATH)) {
           path = value;
-        } else if (name.equals(Header.VERSION)) {
-          version = value;
-        } else if (protocol == Protocol.SPDY_3) {
-          for (String s : value.split("\u0000", -1)) {
-            httpHeaders.add(name.utf8(), s);
-          }
         } else if (protocol == Protocol.HTTP_2) {
           httpHeaders.add(name.utf8(), value);
         } else {
@@ -910,8 +903,8 @@ public final class MockWebServer implements TestRule {
       body.writeAll(stream.getSource());
       body.close();
 
-      String requestLine = method + ' ' + path + ' ' + version;
-      List<Integer> chunkSizes = Collections.emptyList(); // No chunked encoding for SPDY.
+      String requestLine = method + ' ' + path + " HTTP/1.1";
+      List<Integer> chunkSizes = Collections.emptyList(); // No chunked encoding for HTTP/2.
       return new RecordedRequest(requestLine, httpHeaders.build(), chunkSizes, body.size(), body,
           sequenceNumber.getAndIncrement(), socket);
     }
@@ -925,24 +918,21 @@ public final class MockWebServer implements TestRule {
       if (response.getSocketPolicy() == NO_RESPONSE) {
         return;
       }
-      List<Header> spdyHeaders = new ArrayList<>();
+      List<Header> http2Headers = new ArrayList<>();
       String[] statusParts = response.getStatus().split(" ", 2);
       if (statusParts.length != 2) {
         throw new AssertionError("Unexpected status: " + response.getStatus());
       }
       // TODO: constants for well-known header names.
-      spdyHeaders.add(new Header(Header.RESPONSE_STATUS, statusParts[1]));
-      if (protocol == Protocol.SPDY_3) {
-        spdyHeaders.add(new Header(Header.VERSION, statusParts[0]));
-      }
+      http2Headers.add(new Header(Header.RESPONSE_STATUS, statusParts[1]));
       Headers headers = response.getHeaders();
       for (int i = 0, size = headers.size(); i < size; i++) {
-        spdyHeaders.add(new Header(headers.name(i), headers.value(i)));
+        http2Headers.add(new Header(headers.name(i), headers.value(i)));
       }
 
       Buffer body = response.getBody();
       boolean closeStreamAfterHeaders = body != null || !response.getPushPromises().isEmpty();
-      stream.reply(spdyHeaders, closeStreamAfterHeaders);
+      stream.reply(http2Headers, closeStreamAfterHeaders);
       pushPromises(stream, response.getPushPromises());
       if (body != null) {
         BufferedSink sink = Okio.buffer(stream.getSink());
@@ -957,9 +947,7 @@ public final class MockWebServer implements TestRule {
     private void pushPromises(FramedStream stream, List<PushPromise> promises) throws IOException {
       for (PushPromise pushPromise : promises) {
         List<Header> pushedHeaders = new ArrayList<>();
-        pushedHeaders.add(new Header(stream.getConnection().getProtocol() == Protocol.SPDY_3
-            ? Header.TARGET_HOST
-            : Header.TARGET_AUTHORITY, url(pushPromise.path()).host()));
+        pushedHeaders.add(new Header(Header.TARGET_AUTHORITY, url(pushPromise.path()).host()));
         pushedHeaders.add(new Header(Header.TARGET_METHOD, pushPromise.method()));
         pushedHeaders.add(new Header(Header.TARGET_PATH, pushPromise.path()));
         Headers pushPromiseHeaders = pushPromise.headers();
@@ -967,7 +955,7 @@ public final class MockWebServer implements TestRule {
           pushedHeaders.add(new Header(pushPromiseHeaders.name(i), pushPromiseHeaders.value(i)));
         }
         String requestLine = pushPromise.method() + ' ' + pushPromise.path() + " HTTP/1.1";
-        List<Integer> chunkSizes = Collections.emptyList(); // No chunked encoding for SPDY.
+        List<Integer> chunkSizes = Collections.emptyList(); // No chunked encoding for HTTP/2.
         requestQueue.add(new RecordedRequest(requestLine, pushPromise.headers(), chunkSizes, 0,
             new Buffer(), sequenceNumber.getAndIncrement(), socket));
         boolean hasBody = pushPromise.response().getBody() != null;

@@ -48,7 +48,7 @@ import static okhttp3.internal.platform.Platform.INFO;
  * data.
  *
  * <p>Many methods in this API are <strong>synchronous:</strong> the call is completed before the
- * method returns. This is typical for Java but atypical for SPDY. This is motivated by exception
+ * method returns. This is typical for Java but atypical for HTTP/2. This is motivated by exception
  * transparency: an IOException that was triggered by a certain caller can be caught and handled by
  * that caller.
  */
@@ -69,9 +69,6 @@ public final class FramedConnection implements Closeable {
   private static final ExecutorService executor = new ThreadPoolExecutor(0,
       Integer.MAX_VALUE, 60, TimeUnit.SECONDS, new SynchronousQueue<Runnable>(),
       Util.threadFactory("OkHttp FramedConnection", true));
-
-  /** The protocol variant, like {@link Spdy3}. */
-  final Protocol protocol;
 
   /** True if this peer initiated the connection. */
   final boolean client;
@@ -119,7 +116,6 @@ public final class FramedConnection implements Closeable {
   final Settings peerSettings = new Settings();
 
   private boolean receivedInitialPeerSettings = false;
-  final Variant variant;
   final Socket socket;
   final FrameWriter frameWriter;
 
@@ -127,13 +123,12 @@ public final class FramedConnection implements Closeable {
   final Reader readerRunnable;
 
   private FramedConnection(Builder builder) {
-    protocol = builder.protocol;
     pushObserver = builder.pushObserver;
     client = builder.client;
     listener = builder.listener;
     // http://tools.ietf.org/html/draft-ietf-httpbis-http2-17#section-5.1.1
     nextStreamId = builder.client ? 1 : 2;
-    if (builder.client && protocol == Protocol.HTTP_2) {
+    if (builder.client) {
       nextStreamId += 2; // In HTTP/2, 1 on client is reserved for Upgrade.
     }
 
@@ -144,36 +139,27 @@ public final class FramedConnection implements Closeable {
     // thrashing window updates every 64KiB, yet small enough to avoid blowing
     // up the heap.
     if (builder.client) {
-      okHttpSettings.set(Settings.INITIAL_WINDOW_SIZE, 0, OKHTTP_CLIENT_WINDOW_SIZE);
+      okHttpSettings.set(Settings.INITIAL_WINDOW_SIZE, OKHTTP_CLIENT_WINDOW_SIZE);
     }
 
     hostname = builder.hostname;
 
-    if (protocol == Protocol.HTTP_2) {
-      variant = new Http2();
-      // Like newSingleThreadExecutor, except lazy creates the thread.
-      pushExecutor = new ThreadPoolExecutor(0, 1, 60, TimeUnit.SECONDS,
-          new LinkedBlockingQueue<Runnable>(),
-          Util.threadFactory(Util.format("OkHttp %s Push Observer", hostname), true));
-      // 1 less than SPDY http://tools.ietf.org/html/draft-ietf-httpbis-http2-17#section-6.9.2
-      peerSettings.set(Settings.INITIAL_WINDOW_SIZE, 0, 65535);
-      peerSettings.set(Settings.MAX_FRAME_SIZE, 0, Http2.INITIAL_MAX_FRAME_SIZE);
-    } else if (protocol == Protocol.SPDY_3) {
-      variant = new Spdy3();
-      pushExecutor = null;
-    } else {
-      throw new AssertionError(protocol);
-    }
-    bytesLeftInWriteWindow = peerSettings.getInitialWindowSize(DEFAULT_INITIAL_WINDOW_SIZE);
+    // Like newSingleThreadExecutor, except lazy creates the thread.
+    pushExecutor = new ThreadPoolExecutor(0, 1, 60, TimeUnit.SECONDS,
+        new LinkedBlockingQueue<Runnable>(),
+        Util.threadFactory(Util.format("OkHttp %s Push Observer", hostname), true));
+    peerSettings.set(Settings.INITIAL_WINDOW_SIZE, DEFAULT_INITIAL_WINDOW_SIZE);
+    peerSettings.set(Settings.MAX_FRAME_SIZE, Http2.INITIAL_MAX_FRAME_SIZE);
+    bytesLeftInWriteWindow = peerSettings.getInitialWindowSize();
     socket = builder.socket;
-    frameWriter = variant.newWriter(builder.sink, client);
+    frameWriter = new FrameWriter(builder.sink, client);
 
-    readerRunnable = new Reader(variant.newReader(builder.source, client));
+    readerRunnable = new Reader(new FrameReader(builder.source, client));
   }
 
   /** The protocol as selected using ALPN. */
   public Protocol getProtocol() {
-    return protocol;
+    return Protocol.HTTP_2;
   }
 
   /**
@@ -207,27 +193,22 @@ public final class FramedConnection implements Closeable {
   public FramedStream pushStream(int associatedStreamId, List<Header> requestHeaders, boolean out)
       throws IOException {
     if (client) throw new IllegalStateException("Client cannot push requests.");
-    if (protocol != Protocol.HTTP_2) throw new IllegalStateException("protocol != HTTP_2");
-    return newStream(associatedStreamId, requestHeaders, out, false);
+    return newStream(associatedStreamId, requestHeaders, out);
   }
 
   /**
    * Returns a new locally-initiated stream.
-   *
    * @param out true to create an output stream that we can use to send data to the remote peer.
    * Corresponds to {@code FLAG_FIN}.
-   * @param in true to create an input stream that the remote peer can use to send data to us.
-   * Corresponds to {@code FLAG_UNIDIRECTIONAL}.
    */
-  public FramedStream newStream(List<Header> requestHeaders, boolean out, boolean in)
-      throws IOException {
-    return newStream(0, requestHeaders, out, in);
+  public FramedStream newStream(List<Header> requestHeaders, boolean out) throws IOException {
+    return newStream(0, requestHeaders, out);
   }
 
-  private FramedStream newStream(int associatedStreamId, List<Header> requestHeaders, boolean out,
-      boolean in) throws IOException {
+  private FramedStream newStream(
+      int associatedStreamId, List<Header> requestHeaders, boolean out) throws IOException {
     boolean outFinished = !out;
-    boolean inFinished = !in;
+    boolean inFinished = false;
     boolean flushHeaders;
     FramedStream stream;
     int streamId;
@@ -246,8 +227,7 @@ public final class FramedConnection implements Closeable {
         }
       }
       if (associatedStreamId == 0) {
-        frameWriter.synStream(outFinished, inFinished, streamId, associatedStreamId,
-            requestHeaders);
+        frameWriter.synStream(outFinished, streamId, associatedStreamId, requestHeaders);
       } else if (client) {
         throw new IllegalArgumentException("client streams shouldn't have associated stream IDs");
       } else { // HTTP/2 has a PUSH_PROMISE frame.
@@ -494,7 +474,7 @@ public final class FramedConnection implements Closeable {
     if (sendConnectionPreface) {
       frameWriter.connectionPreface();
       frameWriter.settings(okHttpSettings);
-      int windowSize = okHttpSettings.getInitialWindowSize(Settings.DEFAULT_INITIAL_WINDOW_SIZE);
+      int windowSize = okHttpSettings.getInitialWindowSize();
       if (windowSize != Settings.DEFAULT_INITIAL_WINDOW_SIZE) {
         frameWriter.windowUpdate(0, windowSize - Settings.DEFAULT_INITIAL_WINDOW_SIZE);
       }
@@ -521,7 +501,6 @@ public final class FramedConnection implements Closeable {
     private BufferedSource source;
     private BufferedSink sink;
     private Listener listener = Listener.REFUSE_INCOMING_STREAMS;
-    private Protocol protocol = Protocol.SPDY_3;
     private PushObserver pushObserver = PushObserver.CANCEL;
     private boolean client;
 
@@ -549,11 +528,6 @@ public final class FramedConnection implements Closeable {
 
     public Builder listener(Listener listener) {
       this.listener = listener;
-      return this;
-    }
-
-    public Builder protocol(Protocol protocol) {
-      this.protocol = protocol;
       return this;
     }
 
@@ -610,7 +584,7 @@ public final class FramedConnection implements Closeable {
       }
       FramedStream dataStream = getStream(streamId);
       if (dataStream == null) {
-        writeSynResetLater(streamId, ErrorCode.INVALID_STREAM);
+        writeSynResetLater(streamId, ErrorCode.PROTOCOL_ERROR);
         source.skip(length);
         return;
       }
@@ -620,8 +594,8 @@ public final class FramedConnection implements Closeable {
       }
     }
 
-    @Override public void headers(boolean outFinished, boolean inFinished, int streamId,
-        int associatedStreamId, List<Header> headerBlock, HeadersMode headersMode) {
+    @Override public void headers(boolean inFinished, int streamId, int associatedStreamId,
+        List<Header> headerBlock) {
       if (pushedStream(streamId)) {
         pushHeadersLater(streamId, headerBlock, inFinished);
         return;
@@ -634,12 +608,6 @@ public final class FramedConnection implements Closeable {
         stream = getStream(streamId);
 
         if (stream == null) {
-          // The headers claim to be for an existing stream, but we don't have one.
-          if (headersMode.failIfStreamAbsent()) {
-            writeSynResetLater(streamId, ErrorCode.INVALID_STREAM);
-            return;
-          }
-
           // If the stream ID is less than the last created ID, assume it's already closed.
           if (streamId <= lastGoodStreamId) return;
 
@@ -647,9 +615,8 @@ public final class FramedConnection implements Closeable {
           if (streamId % 2 == nextStreamId % 2) return;
 
           // Create a stream.
-          final FramedStream
-              newStream = new FramedStream(streamId, FramedConnection.this, outFinished,
-              inFinished, headerBlock);
+          final FramedStream newStream = new FramedStream(streamId, FramedConnection.this,
+              false, inFinished, headerBlock);
           lastGoodStreamId = streamId;
           streams.put(streamId, newStream);
           executor.execute(new NamedRunnable("OkHttp %s stream %d", hostname, streamId) {
@@ -669,15 +636,8 @@ public final class FramedConnection implements Closeable {
         }
       }
 
-      // The headers claim to be for a new stream, but we already have one.
-      if (headersMode.failIfStreamPresent()) {
-        stream.closeLater(ErrorCode.PROTOCOL_ERROR);
-        removeStream(streamId);
-        return;
-      }
-
       // Update an existing stream.
-      stream.receiveHeaders(headerBlock, headersMode);
+      stream.receiveHeaders(headerBlock);
       if (inFinished) stream.receiveFin();
     }
 
@@ -696,13 +656,11 @@ public final class FramedConnection implements Closeable {
       long delta = 0;
       FramedStream[] streamsToNotify = null;
       synchronized (FramedConnection.this) {
-        int priorWriteWindowSize = peerSettings.getInitialWindowSize(DEFAULT_INITIAL_WINDOW_SIZE);
+        int priorWriteWindowSize = peerSettings.getInitialWindowSize();
         if (clearPrevious) peerSettings.clear();
         peerSettings.merge(newSettings);
-        if (getProtocol() == Protocol.HTTP_2) {
-          applyAndAckSettings(newSettings);
-        }
-        int peerInitialWindowSize = peerSettings.getInitialWindowSize(DEFAULT_INITIAL_WINDOW_SIZE);
+        applyAndAckSettings(newSettings);
+        int peerInitialWindowSize = peerSettings.getInitialWindowSize();
         if (peerInitialWindowSize != -1 && peerInitialWindowSize != priorWriteWindowSize) {
           delta = peerInitialWindowSize - priorWriteWindowSize;
           if (!receivedInitialPeerSettings) {
@@ -809,7 +767,7 @@ public final class FramedConnection implements Closeable {
 
   /** Even, positive numbered streams are pushed streams in HTTP/2. */
   private boolean pushedStream(int streamId) {
-    return protocol == Protocol.HTTP_2 && streamId != 0 && (streamId & 1) == 0;
+    return streamId != 0 && (streamId & 1) == 0;
   }
 
   // Guarded by this.
