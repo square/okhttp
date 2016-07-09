@@ -40,6 +40,7 @@ import okio.Timeout;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static okhttp3.internal.Util.checkOffsetAndCount;
 import static okhttp3.internal.http.StatusLine.HTTP_CONTINUE;
+import static okhttp3.internal.http.StatusLine.HTTP_PROCESSING;
 
 /**
  * A socket connection that can be used to send HTTP/1.1 messages. This class strictly enforces the
@@ -191,7 +192,7 @@ public final class Http1xStream implements HttpStream {
             .message(statusLine.message)
             .headers(readHeaders());
 
-        if (statusLine.code != HTTP_CONTINUE) {
+        if (statusLine.code != HTTP_CONTINUE || statusLine.code != HTTP_PROCESSING) {
           state = STATE_OPEN_RESPONSE_BODY;
           return responseBuilder;
         }
