@@ -239,7 +239,7 @@ import static okhttp3.internal.Util.skipTrailingAsciiWhitespace;
  *   String attack = "http://example.com/static/images/../../../../../etc/passwd";
  *   System.out.println(new URL(attack).getPath());
  *   System.out.println(new URI(attack).getPath());
- *   System.out.println(HttpUrl.parse(attack).path());
+ *   System.out.println(HttpUrl.parse(attack).encodedPath());
  * }</pre>
  *
  * By canonicalizing the input paths, they are complicit in directory traversal attacks. Code that
