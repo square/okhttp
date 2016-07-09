@@ -1,6 +1,16 @@
 Change Log
 ==========
 
+## Version 3.4.0
+
+_2016-07-08_
+
+ *  New: Support dynamic table size changes to HPACK Encoder.
+ *  Fix: Use `TreeMap` in `Headers.toMultimap()`. This makes string lookups on
+    the returned map case-insensitive.
+ *  Fix: Don't share the OkHttpClient's `Dispatcher` in `HttpURLConnection`.
+
+
 ## Version 3.4.0-RC1
 
 _2016-07-02_
