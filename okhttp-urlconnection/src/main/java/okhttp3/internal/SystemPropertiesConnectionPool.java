@@ -23,8 +23,8 @@ import okhttp3.ConnectionPool;
  * A shared connection pool that uses system properties for tuning parameters:
  *
  * <ul>
- *     <li>{@code http.keepAlive} true if HTTP and SPDY connections should be pooled at all. Default
- *         is true.
+ *     <li>{@code http.keepAlive} true if HTTP and HTTP/2 connections should be pooled at all.
+ *         Default is true.
  *     <li>{@code http.maxConnections} maximum number of idle connections to each to keep in the
  *         pool. Default is 5.
  *     <li>{@code http.keepAliveDuration} Time in milliseconds to keep the connection alive in the

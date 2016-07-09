@@ -69,7 +69,7 @@ class JdkWithJettyBootPlatform extends Platform {
       JettyNegoProvider provider =
           (JettyNegoProvider) Proxy.getInvocationHandler(getMethod.invoke(null, socket));
       if (!provider.unsupported && provider.selected == null) {
-        Platform.get().log(INFO, "ALPN callback dropped: SPDY and HTTP/2 are disabled. "
+        Platform.get().log(INFO, "ALPN callback dropped: HTTP/2 is disabled. "
             + "Is alpn-boot on the boot class path?", null);
         return null;
       }

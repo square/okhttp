@@ -68,7 +68,7 @@ public class Benchmark extends com.google.caliper.Benchmark {
   @Param
   boolean gzip;
 
-  /** Don't combine chunked with SPDY_3 or HTTP_2; that's not allowed. */
+  /** Don't combine chunked with HTTP_2; that's not allowed. */
   @Param
   boolean chunked;
 

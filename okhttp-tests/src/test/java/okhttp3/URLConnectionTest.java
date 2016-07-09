@@ -1519,11 +1519,6 @@ public final class URLConnectionTest {
     postBodyRetransmittedAfterAuthorizationFail("abc");
   }
 
-  @Test public void postBodyRetransmittedAfterAuthorizationFail_SPDY_3() throws Exception {
-    enableProtocol(Protocol.SPDY_3);
-    postBodyRetransmittedAfterAuthorizationFail("abc");
-  }
-
   @Test public void postBodyRetransmittedAfterAuthorizationFail_HTTP_2() throws Exception {
     enableProtocol(Protocol.HTTP_2);
     postBodyRetransmittedAfterAuthorizationFail("abc");
@@ -1531,11 +1526,6 @@ public final class URLConnectionTest {
 
   /** Don't explode when resending an empty post. https://github.com/square/okhttp/issues/1131 */
   @Test public void postEmptyBodyRetransmittedAfterAuthorizationFail() throws Exception {
-    postBodyRetransmittedAfterAuthorizationFail("");
-  }
-
-  @Test public void postEmptyBodyRetransmittedAfterAuthorizationFail_SPDY_3() throws Exception {
-    enableProtocol(Protocol.SPDY_3);
     postBodyRetransmittedAfterAuthorizationFail("");
   }
 
@@ -2982,16 +2972,6 @@ public final class URLConnectionTest {
     fail("TODO");
   }
 
-  @Test @Ignore public void headerNamesContainingNullCharacter() {
-    // This is relevant for SPDY
-    fail("TODO");
-  }
-
-  @Test @Ignore public void headerValuesContainingNullCharacter() {
-    // This is relevant for SPDY
-    fail("TODO");
-  }
-
   @Test public void emptyRequestHeaderValueIsAllowed() throws Exception {
     server.enqueue(new MockResponse().setBody("body"));
     connection = urlFactory.open(server.url("/").url());
@@ -3186,10 +3166,6 @@ public final class URLConnectionTest {
     }
   }
 
-  @Test public void setsNegotiatedProtocolHeader_SPDY_3() throws Exception {
-    setsNegotiatedProtocolHeader(Protocol.SPDY_3);
-  }
-
   @Test public void setsNegotiatedProtocolHeader_HTTP_2() throws Exception {
     setsNegotiatedProtocolHeader(Protocol.HTTP_2);
   }
@@ -3225,11 +3201,6 @@ public final class URLConnectionTest {
     zeroLengthPayload("POST");
   }
 
-  @Test public void zeroLengthPost_SPDY_3() throws Exception {
-    enableProtocol(Protocol.SPDY_3);
-    zeroLengthPost();
-  }
-
   @Test public void zeroLengthPost_HTTP_2() throws Exception {
     enableProtocol(Protocol.HTTP_2);
     zeroLengthPost();
@@ -3238,11 +3209,6 @@ public final class URLConnectionTest {
   /** For example, creating an Amazon S3 bucket ends up as a zero-length POST. */
   @Test public void zeroLengthPut() throws IOException, InterruptedException {
     zeroLengthPayload("PUT");
-  }
-
-  @Test public void zeroLengthPut_SPDY_3() throws Exception {
-    enableProtocol(Protocol.SPDY_3);
-    zeroLengthPut();
   }
 
   @Test public void zeroLengthPut_HTTP_2() throws Exception {
@@ -3289,7 +3255,7 @@ public final class URLConnectionTest {
 
   @Test public void setProtocolsWithoutHttp11() throws Exception {
     try {
-      new OkHttpClient.Builder().protocols(Arrays.asList(Protocol.SPDY_3));
+      new OkHttpClient.Builder().protocols(Arrays.asList(Protocol.HTTP_2));
       fail();
     } catch (IllegalArgumentException expected) {
     }

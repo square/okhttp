@@ -25,9 +25,9 @@ Snapshots of the development version are available in [Sonatype's `snapshots` re
 MockWebServer
 -------------
 
-A library for testing HTTP, HTTPS, HTTP/2.0, and SPDY clients.
+A library for testing HTTP, HTTPS, and HTTP/2 clients.
 
-MockWebServer coupling with OkHttp is essential for proper testing of HTTP/2.0 so that code can be shared.
+MockWebServer coupling with OkHttp is essential for proper testing of HTTP/2 so that code can be shared.
 
 ### Download
 

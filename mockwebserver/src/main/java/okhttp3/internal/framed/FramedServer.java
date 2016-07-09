@@ -22,6 +22,7 @@ import java.net.ProtocolException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -37,12 +38,9 @@ import okio.Source;
 
 import static okhttp3.internal.platform.Platform.INFO;
 
-/** A basic SPDY/HTTP_2 server that serves the contents of a local directory. */
+/** A basic HTTP_2 server that serves the contents of a local directory. */
 public final class FramedServer extends FramedConnection.Listener {
   static final Logger logger = Logger.getLogger(FramedServer.class.getName());
-
-  private final List<Protocol> framedProtocols =
-      Util.immutableList(Protocol.HTTP_2, Protocol.SPDY_3);
 
   private final File baseDirectory;
   private final SSLSocketFactory sslSocketFactory;
@@ -64,12 +62,11 @@ public final class FramedServer extends FramedConnection.Listener {
         SSLSocket sslSocket = doSsl(socket);
         String protocolString = Platform.get().getSelectedProtocol(sslSocket);
         Protocol protocol = protocolString != null ? Protocol.get(protocolString) : null;
-        if (protocol == null || !framedProtocols.contains(protocol)) {
+        if (protocol != Protocol.HTTP_2) {
           throw new ProtocolException("Protocol " + protocol + " unsupported");
         }
         FramedConnection framedConnection = new FramedConnection.Builder(false)
             .socket(sslSocket)
-            .protocol(protocol)
             .listener(this)
             .build();
         framedConnection.start();
@@ -87,7 +84,8 @@ public final class FramedServer extends FramedConnection.Listener {
     SSLSocket sslSocket = (SSLSocket) sslSocketFactory.createSocket(
         socket, socket.getInetAddress().getHostAddress(), socket.getPort(), true);
     sslSocket.setUseClientMode(false);
-    Platform.get().configureTlsExtensions(sslSocket, null, framedProtocols);
+    Platform.get().configureTlsExtensions(sslSocket, null,
+        Collections.singletonList(Protocol.HTTP_2));
     sslSocket.startHandshake();
     return sslSocket;
   }

@@ -23,6 +23,7 @@ import java.security.GeneralSecurityException;
 import java.security.KeyStore;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -116,7 +117,7 @@ import okhttp3.internal.tls.OkHostnameVerifier;
  */
 public class OkHttpClient implements Cloneable, Call.Factory {
   private static final List<Protocol> DEFAULT_PROTOCOLS = Util.immutableList(
-      Protocol.HTTP_2, Protocol.SPDY_3, Protocol.HTTP_1_1);
+      Protocol.HTTP_2, Protocol.HTTP_1_1);
 
   private static final List<ConnectionSpec> DEFAULT_CONNECTION_SPECS = Util.immutableList(
       ConnectionSpec.MODERN_TLS, ConnectionSpec.COMPATIBLE_TLS, ConnectionSpec.CLEARTEXT);
@@ -753,14 +754,12 @@ public class OkHttpClient implements Cloneable, Call.Factory {
      * Configure the protocols used by this client to communicate with remote servers. By default
      * this client will prefer the most efficient transport available, falling back to more
      * ubiquitous protocols. Applications should only call this method to avoid specific
-     * compatibility problems, such as web servers that behave incorrectly when SPDY is enabled.
+     * compatibility problems, such as web servers that behave incorrectly when HTTP/2 is enabled.
      *
      * <p>The following protocols are currently supported:
      *
      * <ul>
      *     <li><a href="http://www.w3.org/Protocols/rfc2616/rfc2616.html">http/1.1</a>
-     *     <li><a
-     *         href="http://www.chromium.org/spdy/spdy-protocol/spdy-protocol-draft3-1">spdy/3.1</a>
      *     <li><a href="http://tools.ietf.org/html/draft-ietf-httpbis-http2-17">h2</a>
      * </ul>
      *
@@ -779,7 +778,10 @@ public class OkHttpClient implements Cloneable, Call.Factory {
      * Protocol#HTTP_1_1}. It must not contain null or {@link Protocol#HTTP_1_0}.
      */
     public Builder protocols(List<Protocol> protocols) {
-      protocols = Util.immutableList(protocols);
+      // Create a private copy of the list.
+      protocols = new ArrayList<>(protocols);
+
+      // Validate that the list has everything we require and nothing we forbid.
       if (!protocols.contains(Protocol.HTTP_1_1)) {
         throw new IllegalArgumentException("protocols doesn't contain http/1.1: " + protocols);
       }
@@ -789,7 +791,14 @@ public class OkHttpClient implements Cloneable, Call.Factory {
       if (protocols.contains(null)) {
         throw new IllegalArgumentException("protocols must not contain null");
       }
-      this.protocols = Util.immutableList(protocols);
+
+      // Remove protocols that we no longer support.
+      if (protocols.contains(Protocol.SPDY_3)) {
+        protocols.remove(Protocol.SPDY_3);
+      }
+
+      // Assign as an unmodifiable list. This is effectively immutable.
+      this.protocols = Collections.unmodifiableList(protocols);
       return this;
     }
 

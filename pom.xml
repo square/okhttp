@@ -15,7 +15,7 @@
   <packaging>pom</packaging>
 
   <name>OkHttp (Parent)</name>
-  <description>An HTTP+SPDY client for Android and Java applications</description>
+  <description>An HTTP+HTTP/2 client for Android and Java applications</description>
   <url>https://github.com/square/okhttp</url>
 
   <modules>

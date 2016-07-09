@@ -36,9 +36,9 @@ import static okhttp3.internal.Util.closeQuietly;
 import static okhttp3.internal.platform.Platform.WARN;
 
 /**
- * Manages reuse of HTTP and SPDY connections for reduced network latency. HTTP requests that share
- * the same {@link Address} may share a {@link Connection}. This class implements the policy of
- * which connections to keep open for future use.
+ * Manages reuse of HTTP and HTTP/2 connections for reduced network latency. HTTP requests that
+ * share the same {@link Address} may share a {@link Connection}. This class implements the policy
+ * of which connections to keep open for future use.
  */
 public final class ConnectionPool {
   /**
@@ -106,7 +106,7 @@ public final class ConnectionPool {
 
   /**
    * Returns total number of connections in the pool. Note that prior to OkHttp 2.7 this included
-   * only idle connections and SPDY connections. Since OkHttp 2.7 this includes all connections,
+   * only idle connections and HTTP/2 connections. Since OkHttp 2.7 this includes all connections,
    * both active and inactive. Use {@link #idleConnectionCount()} to count connections not currently
    * in use.
    */

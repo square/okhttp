@@ -20,14 +20,12 @@ import okio.ByteString;
 
 /** HTTP header: the name is an ASCII string, but the value can be UTF-8. */
 public final class Header {
-  // Special header names defined in the SPDY and HTTP/2 specs.
+  // Special header names defined in HTTP/2 spec.
   public static final ByteString RESPONSE_STATUS = ByteString.encodeUtf8(":status");
   public static final ByteString TARGET_METHOD = ByteString.encodeUtf8(":method");
   public static final ByteString TARGET_PATH = ByteString.encodeUtf8(":path");
   public static final ByteString TARGET_SCHEME = ByteString.encodeUtf8(":scheme");
-  public static final ByteString TARGET_AUTHORITY = ByteString.encodeUtf8(":authority"); // HTTP/2
-  public static final ByteString TARGET_HOST = ByteString.encodeUtf8(":host"); // spdy/3
-  public static final ByteString VERSION = ByteString.encodeUtf8(":version"); // spdy/3
+  public static final ByteString TARGET_AUTHORITY = ByteString.encodeUtf8(":authority");
 
   /** Name in case-insensitive ASCII encoding. */
   public final ByteString name;

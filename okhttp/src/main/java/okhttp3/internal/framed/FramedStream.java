@@ -28,8 +28,6 @@ import okio.Sink;
 import okio.Source;
 import okio.Timeout;
 
-import static okhttp3.internal.framed.Settings.DEFAULT_INITIAL_WINDOW_SIZE;
-
 /** A logical bidirectional stream. */
 public final class FramedStream {
   // Internal state is guarded by this. No long-running or potentially
@@ -78,9 +76,9 @@ public final class FramedStream {
     this.id = id;
     this.connection = connection;
     this.bytesLeftInWriteWindow =
-        connection.peerSettings.getInitialWindowSize(DEFAULT_INITIAL_WINDOW_SIZE);
+        connection.peerSettings.getInitialWindowSize();
     this.source = new FramedDataSource(
-        connection.okHttpSettings.getInitialWindowSize(DEFAULT_INITIAL_WINDOW_SIZE));
+        connection.okHttpSettings.getInitialWindowSize());
     this.sink = new FramedDataSink();
     this.source.finished = inFinished;
     this.sink.finished = outFinished;
@@ -249,33 +247,22 @@ public final class FramedStream {
     return true;
   }
 
-  void receiveHeaders(List<Header> headers, HeadersMode headersMode) {
+  void receiveHeaders(List<Header> headers) {
     assert (!Thread.holdsLock(FramedStream.this));
-    ErrorCode errorCode = null;
     boolean open = true;
     synchronized (this) {
       if (responseHeaders == null) {
-        if (headersMode.failIfHeadersAbsent()) {
-          errorCode = ErrorCode.PROTOCOL_ERROR;
-        } else {
-          responseHeaders = headers;
-          open = isOpen();
-          notifyAll();
-        }
+        responseHeaders = headers;
+        open = isOpen();
+        notifyAll();
       } else {
-        if (headersMode.failIfHeadersPresent()) {
-          errorCode = ErrorCode.STREAM_IN_USE;
-        } else {
-          List<Header> newHeaders = new ArrayList<>();
-          newHeaders.addAll(responseHeaders);
-          newHeaders.addAll(headers);
-          this.responseHeaders = newHeaders;
-        }
+        List<Header> newHeaders = new ArrayList<>();
+        newHeaders.addAll(responseHeaders);
+        newHeaders.addAll(headers);
+        this.responseHeaders = newHeaders;
       }
     }
-    if (errorCode != null) {
-      closeLater(errorCode);
-    } else if (!open) {
+    if (!open) {
       connection.removeStream(id);
     }
   }
@@ -349,7 +336,7 @@ public final class FramedStream {
         // Flow control: notify the peer that we're ready for more data!
         unacknowledgedBytesRead += read;
         if (unacknowledgedBytesRead
-            >= connection.okHttpSettings.getInitialWindowSize(DEFAULT_INITIAL_WINDOW_SIZE) / 2) {
+            >= connection.okHttpSettings.getInitialWindowSize() / 2) {
           connection.writeWindowUpdateLater(id, unacknowledgedBytesRead);
           unacknowledgedBytesRead = 0;
         }
@@ -359,7 +346,7 @@ public final class FramedStream {
       synchronized (connection) { // Multiple application threads may hit this section.
         connection.unacknowledgedBytesRead += read;
         if (connection.unacknowledgedBytesRead
-            >= connection.okHttpSettings.getInitialWindowSize(DEFAULT_INITIAL_WINDOW_SIZE) / 2) {
+            >= connection.okHttpSettings.getInitialWindowSize() / 2) {
           connection.writeWindowUpdateLater(0, connection.unacknowledgedBytesRead);
           connection.unacknowledgedBytesRead = 0;
         }

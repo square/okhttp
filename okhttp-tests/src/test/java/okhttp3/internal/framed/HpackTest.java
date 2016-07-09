@@ -28,8 +28,7 @@ import static okio.ByteString.decodeHex;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
-public class HpackTest {
-
+public final class HpackTest {
   private final Buffer bytesIn = new Buffer();
   private Hpack.Reader hpackReader;
   private Buffer bytesOut = new Buffer();

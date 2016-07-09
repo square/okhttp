@@ -27,7 +27,7 @@ public final class RequestLine {
   /**
    * Returns the request status line, like "GET / HTTP/1.1". This is exposed to the application by
    * {@link HttpURLConnection#getHeaderFields}, so it needs to be set even if the transport is
-   * SPDY.
+   * HTTP/2.
    */
   static String get(Request request, Proxy.Type proxyType) {
     StringBuilder result = new StringBuilder();

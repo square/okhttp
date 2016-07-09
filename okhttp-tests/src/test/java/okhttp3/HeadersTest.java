@@ -21,53 +21,20 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import okhttp3.internal.Internal;
 import okhttp3.internal.framed.Header;
 import okhttp3.internal.http.Http2xStream;
-import org.junit.Assert;
 import org.junit.Test;
 
 import static okhttp3.TestUtil.headerEntries;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 public final class HeadersTest {
-  @Test public void parseNameValueBlock() throws IOException {
-    List<Header> headerBlock = headerEntries(
-        "cache-control", "no-cache, no-store",
-        "set-cookie", "Cookie1\u0000Cookie2",
-        ":status", "200 OK",
-        ":version", "HTTP/1.1");
-    Request request = new Request.Builder().url("http://square.com/").build();
-    Response response = Http2xStream.readSpdy3HeadersList(headerBlock).request(request).build();
-    Headers headers = response.headers();
-    assertEquals(3, headers.size());
-    Assert.assertEquals(Protocol.SPDY_3, response.protocol());
-    assertEquals(200, response.code());
-    assertEquals("OK", response.message());
-    assertEquals("no-cache, no-store", headers.get("cache-control"));
-    assertEquals("Cookie2", headers.get("set-cookie"));
-    assertEquals("cache-control", headers.name(0));
-    assertEquals("no-cache, no-store", headers.value(0));
-    assertEquals("set-cookie", headers.name(1));
-    assertEquals("Cookie1", headers.value(1));
-    assertEquals("set-cookie", headers.name(2));
-    assertEquals("Cookie2", headers.value(2));
-    assertNull(headers.get(":status"));
-    assertNull(headers.get(":version"));
-  }
-
-  @Test public void readNameValueBlockDropsForbiddenHeadersSpdy3() throws IOException {
-    List<Header> headerBlock = headerEntries(
-        ":status", "200 OK",
-        ":version", "HTTP/1.1",
-        "connection", "close");
-    Request request = new Request.Builder().url("http://square.com/").build();
-    Response response = Http2xStream.readSpdy3HeadersList(headerBlock).request(request).build();
-    Headers headers = response.headers();
-    assertEquals(0, headers.size());
+  static {
+    Internal.initializeInstanceForTests();
   }
 
   @Test public void readNameValueBlockDropsForbiddenHeadersHttp2() throws IOException {
@@ -81,42 +48,6 @@ public final class HeadersTest {
     assertEquals(1, headers.size());
     assertEquals(":version", headers.name(0));
     assertEquals("HTTP/1.1", headers.value(0));
-  }
-
-  @Test public void spdy3HeadersList() {
-    Request request = new Request.Builder()
-        .url("http://square.com/")
-        .header("cache-control", "no-cache, no-store")
-        .addHeader("set-cookie", "Cookie1")
-        .addHeader("set-cookie", "Cookie2")
-        .header(":status", "200 OK")
-        .build();
-    List<Header> headerBlock = Http2xStream.spdy3HeadersList(request);
-    List<Header> expected = headerEntries(
-        ":method", "GET",
-        ":path", "/",
-        ":version", "HTTP/1.1",
-        ":host", "square.com",
-        ":scheme", "http",
-        "cache-control", "no-cache, no-store",
-        "set-cookie", "Cookie1\u0000Cookie2",
-        ":status", "200 OK");
-    assertEquals(expected, headerBlock);
-  }
-
-  @Test public void spdy3HeadersListDropsForbiddenHeadersSpdy3() {
-    Request request = new Request.Builder()
-        .url("http://square.com/")
-        .header("Connection", "close")
-        .header("Transfer-Encoding", "chunked")
-        .build();
-    List<Header> expected = headerEntries(
-        ":method", "GET",
-        ":path", "/",
-        ":version", "HTTP/1.1",
-        ":host", "square.com",
-        ":scheme", "http");
-    assertEquals(expected, Http2xStream.spdy3HeadersList(request));
   }
 
   @Test public void http2HeadersListDropsForbiddenHeadersHttp2() {
