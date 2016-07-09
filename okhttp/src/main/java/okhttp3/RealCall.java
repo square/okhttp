@@ -90,6 +90,11 @@ final class RealCall implements Call {
     return retryAndFollowUpInterceptor.isCanceled();
   }
 
+  @SuppressWarnings("CloneDoesntCallSuperClone") // We are a final type & this saves clearing state.
+  @Override public RealCall clone() {
+    return new RealCall(client, originalRequest);
+  }
+
   StreamAllocation streamAllocation() {
     return retryAndFollowUpInterceptor.streamAllocation();
   }
