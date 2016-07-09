@@ -27,6 +27,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 import okhttp3.Cache;
 import okhttp3.HttpUrl;
+import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
@@ -99,6 +100,12 @@ public final class Crawler {
 
     String contentType = response.header("Content-Type");
     if (responseCode != 200 || contentType == null) {
+      response.body().close();
+      return;
+    }
+
+    MediaType mediaType = MediaType.parse(contentType);
+    if (mediaType == null || !mediaType.subtype().equalsIgnoreCase("html")) {
       response.body().close();
       return;
     }
