@@ -24,11 +24,11 @@ import okhttp3.OkHttpClient;
 import okhttp3.Route;
 import okhttp3.internal.Internal;
 import okhttp3.internal.Util;
-import okhttp3.internal.framed.ErrorCode;
-import okhttp3.internal.framed.StreamResetException;
-import okhttp3.internal.http.Http1xStream;
-import okhttp3.internal.http.Http2xStream;
-import okhttp3.internal.http.HttpStream;
+import okhttp3.internal.http.HttpCodec;
+import okhttp3.internal.http1.Http1Codec;
+import okhttp3.internal.http2.ErrorCode;
+import okhttp3.internal.http2.Http2Codec;
+import okhttp3.internal.http2.StreamResetException;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
@@ -80,7 +80,7 @@ public final class StreamAllocation {
   private RealConnection connection;
   private boolean released;
   private boolean canceled;
-  private HttpStream stream;
+  private HttpCodec codec;
 
   public StreamAllocation(ConnectionPool connectionPool, Address address) {
     this.connectionPool = connectionPool;
@@ -88,7 +88,7 @@ public final class StreamAllocation {
     this.routeSelector = new RouteSelector(address, routeDatabase());
   }
 
-  public HttpStream newStream(OkHttpClient client, boolean doExtensiveHealthChecks) {
+  public HttpCodec newStream(OkHttpClient client, boolean doExtensiveHealthChecks) {
     int connectTimeout = client.connectTimeoutMillis();
     int readTimeout = client.readTimeoutMillis();
     int writeTimeout = client.writeTimeoutMillis();
@@ -98,20 +98,20 @@ public final class StreamAllocation {
       RealConnection resultConnection = findHealthyConnection(connectTimeout, readTimeout,
           writeTimeout, connectionRetryEnabled, doExtensiveHealthChecks);
 
-      HttpStream resultStream;
-      if (resultConnection.framedConnection != null) {
-        resultStream = new Http2xStream(client, this, resultConnection.framedConnection);
+      HttpCodec resultCodec;
+      if (resultConnection.http2Connection != null) {
+        resultCodec = new Http2Codec(client, this, resultConnection.http2Connection);
       } else {
         resultConnection.socket().setSoTimeout(readTimeout);
         resultConnection.source.timeout().timeout(readTimeout, MILLISECONDS);
         resultConnection.sink.timeout().timeout(writeTimeout, MILLISECONDS);
-        resultStream = new Http1xStream(
+        resultCodec = new Http1Codec(
             client, this, resultConnection.source, resultConnection.sink);
       }
 
       synchronized (connectionPool) {
-        stream = resultStream;
-        return resultStream;
+        codec = resultCodec;
+        return resultCodec;
       }
     } catch (IOException e) {
       throw new RouteException(e);
@@ -156,7 +156,7 @@ public final class StreamAllocation {
     Route selectedRoute;
     synchronized (connectionPool) {
       if (released) throw new IllegalStateException("released");
-      if (stream != null) throw new IllegalStateException("stream != null");
+      if (codec != null) throw new IllegalStateException("codec != null");
       if (canceled) throw new IOException("Canceled");
 
       RealConnection allocatedConnection = this.connection;
@@ -197,10 +197,10 @@ public final class StreamAllocation {
     return newConnection;
   }
 
-  public void streamFinished(boolean noNewStreams, HttpStream stream) {
+  public void streamFinished(boolean noNewStreams, HttpCodec codec) {
     synchronized (connectionPool) {
-      if (stream == null || stream != this.stream) {
-        throw new IllegalStateException("expected " + this.stream + " but was " + stream);
+      if (codec == null || codec != this.codec) {
+        throw new IllegalStateException("expected " + this.codec + " but was " + codec);
       }
       if (!noNewStreams) {
         connection.successCount++;
@@ -209,9 +209,9 @@ public final class StreamAllocation {
     deallocate(noNewStreams, false, true);
   }
 
-  public HttpStream stream() {
+  public HttpCodec codec() {
     synchronized (connectionPool) {
-      return stream;
+      return codec;
     }
   }
 
@@ -240,7 +240,7 @@ public final class StreamAllocation {
     RealConnection connectionToClose = null;
     synchronized (connectionPool) {
       if (streamFinished) {
-        this.stream = null;
+        this.codec = null;
       }
       if (released) {
         this.released = true;
@@ -249,7 +249,7 @@ public final class StreamAllocation {
         if (noNewStreams) {
           connection.noNewStreams = true;
         }
-        if (this.stream == null && (this.released || connection.noNewStreams)) {
+        if (this.codec == null && (this.released || connection.noNewStreams)) {
           release(connection);
           if (connection.allocations.isEmpty()) {
             connection.idleAtNanos = System.nanoTime();
@@ -267,15 +267,15 @@ public final class StreamAllocation {
   }
 
   public void cancel() {
-    HttpStream streamToCancel;
+    HttpCodec codecToCancel;
     RealConnection connectionToCancel;
     synchronized (connectionPool) {
       canceled = true;
-      streamToCancel = stream;
+      codecToCancel = codec;
       connectionToCancel = connection;
     }
-    if (streamToCancel != null) {
-      streamToCancel.cancel();
+    if (codecToCancel != null) {
+      codecToCancel.cancel();
     } else if (connectionToCancel != null) {
       connectionToCancel.cancel();
     }

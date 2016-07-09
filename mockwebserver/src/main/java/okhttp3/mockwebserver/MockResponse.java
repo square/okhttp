@@ -20,7 +20,7 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 import okhttp3.Headers;
 import okhttp3.internal.Internal;
-import okhttp3.internal.framed.Settings;
+import okhttp3.internal.http2.Settings;
 import okhttp3.ws.WebSocketListener;
 import okio.Buffer;
 

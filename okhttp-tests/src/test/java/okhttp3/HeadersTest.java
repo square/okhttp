@@ -22,8 +22,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import okhttp3.internal.Internal;
-import okhttp3.internal.framed.Header;
-import okhttp3.internal.http.Http2xStream;
+import okhttp3.internal.http2.Header;
+import okhttp3.internal.http2.Http2Codec;
 import org.junit.Test;
 
 import static okhttp3.TestUtil.headerEntries;
@@ -43,7 +43,7 @@ public final class HeadersTest {
         ":version", "HTTP/1.1",
         "connection", "close");
     Request request = new Request.Builder().url("http://square.com/").build();
-    Response response = Http2xStream.readHttp2HeadersList(headerBlock).request(request).build();
+    Response response = Http2Codec.readHttp2HeadersList(headerBlock).request(request).build();
     Headers headers = response.headers();
     assertEquals(1, headers.size());
     assertEquals(":version", headers.name(0));
@@ -61,7 +61,7 @@ public final class HeadersTest {
         ":path", "/",
         ":authority", "square.com",
         ":scheme", "http");
-    assertEquals(expected, Http2xStream.http2HeadersList(request));
+    assertEquals(expected, Http2Codec.http2HeadersList(request));
   }
 
   @Test public void ofTrims() {

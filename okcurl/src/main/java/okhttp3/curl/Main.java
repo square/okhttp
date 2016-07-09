@@ -45,8 +45,8 @@ import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
 import okhttp3.internal.Util;
-import okhttp3.internal.framed.Http2;
 import okhttp3.internal.http.StatusLine;
+import okhttp3.internal.http2.Http2;
 import okio.BufferedSource;
 import okio.Okio;
 import okio.Sink;
@@ -274,7 +274,7 @@ public class Main extends HelpOption implements Runnable {
   }
 
   private static void enableHttp2FrameLogging() {
-    frameLogger = Logger.getLogger(Http2.class.getName() + "$FrameLogger");
+    frameLogger = Logger.getLogger(Http2.class.getName());
     frameLogger.setLevel(Level.FINE);
     ConsoleHandler handler = new ConsoleHandler();
     handler.setLevel(Level.FINE);

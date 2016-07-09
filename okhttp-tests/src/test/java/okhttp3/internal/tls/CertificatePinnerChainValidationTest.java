@@ -33,7 +33,6 @@ import static okhttp3.internal.platform.PlatformTest.getPlatform;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
-import static org.junit.Assume.assumeFalse;
 
 public final class CertificatePinnerChainValidationTest {
   @Rule public final MockWebServer server = new MockWebServer();

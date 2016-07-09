@@ -34,23 +34,23 @@ public final class CallServerInterceptor implements Interceptor {
   }
 
   @Override public Response intercept(Chain chain) throws IOException {
-    HttpStream httpStream = ((RealInterceptorChain) chain).httpStream();
+    HttpCodec httpCodec = ((RealInterceptorChain) chain).httpStream();
     StreamAllocation streamAllocation = ((RealInterceptorChain) chain).streamAllocation();
     Request request = chain.request();
 
     long sentRequestMillis = System.currentTimeMillis();
-    httpStream.writeRequestHeaders(request);
+    httpCodec.writeRequestHeaders(request);
 
     if (HttpMethod.permitsRequestBody(request.method()) && request.body() != null) {
-      Sink requestBodyOut = httpStream.createRequestBody(request, request.body().contentLength());
+      Sink requestBodyOut = httpCodec.createRequestBody(request, request.body().contentLength());
       BufferedSink bufferedRequestBody = Okio.buffer(requestBodyOut);
       request.body().writeTo(bufferedRequestBody);
       bufferedRequestBody.close();
     }
 
-    httpStream.finishRequest();
+    httpCodec.finishRequest();
 
-    Response response = httpStream.readResponseHeaders()
+    Response response = httpCodec.readResponseHeaders()
         .request(request)
         .handshake(streamAllocation.connection().handshake())
         .sentRequestAtMillis(sentRequestMillis)
@@ -59,7 +59,7 @@ public final class CallServerInterceptor implements Interceptor {
 
     if (!forWebSocket || response.code() != 101) {
       response = response.newBuilder()
-          .body(httpStream.openResponseBody(response))
+          .body(httpCodec.openResponseBody(response))
           .build();
     }
 

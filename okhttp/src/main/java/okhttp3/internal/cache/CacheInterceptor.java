@@ -26,9 +26,9 @@ import okhttp3.Request;
 import okhttp3.Response;
 import okhttp3.ResponseBody;
 import okhttp3.internal.Internal;
+import okhttp3.internal.http.HttpCodec;
 import okhttp3.internal.http.HttpHeaders;
 import okhttp3.internal.http.HttpMethod;
-import okhttp3.internal.http.HttpStream;
 import okhttp3.internal.http.RealResponseBody;
 import okio.Buffer;
 import okio.BufferedSink;
@@ -222,7 +222,7 @@ public final class CacheInterceptor implements Interceptor {
 
       @Override public void close() throws IOException {
         if (!cacheRequestClosed
-            && !discard(this, HttpStream.DISCARD_STREAM_TIMEOUT_MILLIS, MILLISECONDS)) {
+            && !discard(this, HttpCodec.DISCARD_STREAM_TIMEOUT_MILLIS, MILLISECONDS)) {
           cacheRequestClosed = true;
           cacheRequest.abort();
         }
