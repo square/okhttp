@@ -619,6 +619,42 @@ public final class CallTest {
     assertEquals("SyncApiTest", server.takeRequest().getHeader("User-Agent"));
   }
 
+  @Test public void legalToExecuteTwiceCloning() throws Exception {
+    server.enqueue(new MockResponse().setBody("abc"));
+    server.enqueue(new MockResponse().setBody("def"));
+
+    Request request = new Request.Builder()
+        .url(server.url("/"))
+        .build();
+
+    Call call = client.newCall(request);
+    Response response1 = call.execute();
+
+    Call cloned = call.clone();
+    Response response2 = cloned.execute();
+
+    assertEquals(response1.body().string(), "abc");
+    assertEquals(response2.body().string(), "def");
+  }
+
+  @Test public void legalToExecuteTwiceCloning_Async() throws Exception {
+    server.enqueue(new MockResponse().setBody("abc"));
+    server.enqueue(new MockResponse().setBody("def"));
+
+    Request request = new Request.Builder()
+        .url(server.url("/"))
+        .build();
+
+    Call call = client.newCall(request);
+    call.enqueue(callback);
+
+    Call cloned = call.clone();
+    cloned.enqueue(callback);
+
+    callback.await(request.url()).assertBody("abc");
+    callback.await(request.url()).assertBody("def");
+  }
+
   @Test public void get_Async() throws Exception {
     server.enqueue(new MockResponse()
         .setBody("abc")

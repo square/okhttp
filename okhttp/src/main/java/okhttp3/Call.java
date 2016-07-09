@@ -21,7 +21,7 @@ import java.io.IOException;
  * A call is a request that has been prepared for execution. A call can be canceled. As this object
  * represents a single request/response pair (stream), it cannot be executed twice.
  */
-public interface Call {
+public interface Call extends Cloneable {
   /** Returns the original request that initiated this call. */
   Request request();
 
@@ -66,6 +66,12 @@ public interface Call {
   boolean isExecuted();
 
   boolean isCanceled();
+
+  /**
+   * Create a new, identical call to this one which can be enqueued or executed even if this call
+   * has already been.
+   */
+  Call clone();
 
   interface Factory {
     Call newCall(Request request);
