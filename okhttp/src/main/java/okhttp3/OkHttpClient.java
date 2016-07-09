@@ -24,6 +24,7 @@ import java.security.KeyStore;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import javax.net.SocketFactory;
 import javax.net.ssl.HostnameVerifier;
@@ -45,21 +46,73 @@ import okhttp3.internal.tls.OkHostnameVerifier;
 
 /**
  * Factory for {@linkplain Call calls}, which can be used to send HTTP requests and read their
- * responses. Most applications can use a single OkHttpClient for all of their HTTP requests,
- * benefiting from a shared response cache, thread pool, connection re-use, etc.
+ * responses.
  *
- * <p>To create an {@code OkHttpClient} with the default settings, use the {@linkplain
- * #OkHttpClient() default constructor}. Or create a configured instance with {@link
- * OkHttpClient.Builder}. To adjust an existing client before making a request, use {@link
- * #newBuilder()}. This example shows a call with a 30 second timeout:
+ * <h3>OkHttpClients should be shared</h3>
+ *
+ * <p>OkHttp performs best when you create a single {@code OkHttpClient} instance and reuse it for
+ * all of your HTTP calls. This is because each client holds its own connection pool and thread
+ * pools. Reusing connections and threads reduces latency and saves memory. Conversely, creating a
+ * client for each request wastes resources on idle pools.
+ *
+ * <p>Use {@code new OkHttpClient()} to create a shared instance with the default settings:
  * <pre>   {@code
  *
- *   OkHttpClient client = ...
- *   OkHttpClient clientWith30sTimeout = client.newBuilder()
- *       .readTimeout(30, TimeUnit.SECONDS)
- *       .build();
- *   Response response = clientWith30sTimeout.newCall(request).execute();
+ *   // The singleton HTTP client.
+ *   public final OkHttpClient client = new OkHttpClient();
  * }</pre>
+ *
+ * <p>Or use {@code new OkHttpClient.Builder()} to create a shared instance with custom settings:
+ * <pre>   {@code
+ *
+ *   // The singleton HTTP client.
+ *   public final OkHttpClient client = new OkHttpClient.Builder()
+ *       .addInterceptor(new HttpLoggingInterceptor())
+ *       .cache(new Cache(cacheDir, cacheSize))
+ *       .build();
+ * }</pre>
+ *
+ * <h3>Customize your client with newBuilder()</h3>
+ *
+ * <p>You can customize a shared OkHttpClient instance with {@link #newBuilder()}. This builds a
+ * client that shares the same connection pool, thread pools, and configuration. Use the builder
+ * methods to configure the derived client for a specific purpose.
+ *
+ * <p>This example shows a call with a short 500 millisecond timeout: <pre>   {@code
+ *
+ *   OkHttpClient eagerClient = client.newBuilder()
+ *       .readTimeout(500, TimeUnit.MILLISECONDS)
+ *       .build();
+ *   Response response = eagerClient.newCall(request).execute();
+ * }</pre>
+ *
+ * <h3>Shutdown isn't necessary</h3>
+ *
+ * <p>The threads and connections that are held will be released automatically if they remain idle.
+ * But if you are writing a application that needs to aggressively release unused resources you may
+ * do so.
+ *
+ * <p>Shutdown the dispatcher's executor service with {@link ExecutorService#shutdown shutdown()}.
+ * This will also cause future calls to the client to be rejected. <pre>   {@code
+ *
+ *     client.dispatcher().executorService().shutdown();
+ * }</pre>
+ *
+ * <p>Clear the connection pool with {@link ConnectionPool#evictAll() evictAll()}. Note that the
+ * connection pool's daemon thread may not exit immediately. <pre>   {@code
+ *
+ *     client.connectionPool().evictAll();
+ * }</pre>
+ *
+ * <p>If your client has a cache, call {@link Cache#close close()}. Note that it is an error to
+ * create calls against a cache that is closed, and doing so will cause the call to crash.
+ * <pre>   {@code
+ *
+ *     client.cache().close();
+ * }</pre>
+ *
+ * <p>OkHttp also uses daemon threads for HTTP/2 connections. These will exit automatically if they
+ * remain idle.
  */
 public class OkHttpClient implements Cloneable, Call.Factory {
   private static final List<Protocol> DEFAULT_PROTOCOLS = Util.immutableList(
