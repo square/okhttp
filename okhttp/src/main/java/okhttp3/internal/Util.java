@@ -314,8 +314,11 @@ public final class Util {
         && e.getMessage().contains("getsockname failed");
   }
 
-  public static boolean contains(String[] array, String value) {
-    return Arrays.asList(array).contains(value);
+  public static <T> int indexOf(T[] array, T value) {
+    for (int i = 0, size = array.length; i < size; i++) {
+      if (equal(array[i], value)) return i;
+    }
+    return -1;
   }
 
   public static String[] concat(String[] array, String value) {

@@ -19,8 +19,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.List;
-import okhttp3.internal.framed.Header;
-import okhttp3.internal.framed.Hpack;
 import okhttp3.internal.http2.hpackjson.Case;
 import okhttp3.internal.http2.hpackjson.HpackJsonUtil;
 import okhttp3.internal.http2.hpackjson.Story;

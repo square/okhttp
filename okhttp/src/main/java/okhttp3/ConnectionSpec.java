@@ -20,8 +20,8 @@ import java.util.List;
 import javax.net.ssl.SSLSocket;
 
 import static okhttp3.internal.Util.concat;
-import static okhttp3.internal.Util.contains;
 import static okhttp3.internal.Util.immutableList;
+import static okhttp3.internal.Util.indexOf;
 import static okhttp3.internal.Util.intersect;
 
 /**
@@ -153,7 +153,7 @@ public final class ConnectionSpec {
 
     // In accordance with https://tools.ietf.org/html/draft-ietf-tls-downgrade-scsv-00
     // the SCSV cipher is added to signal that a protocol fallback has taken place.
-    if (isFallback && contains(sslSocket.getSupportedCipherSuites(), "TLS_FALLBACK_SCSV")) {
+    if (isFallback && indexOf(sslSocket.getSupportedCipherSuites(), "TLS_FALLBACK_SCSV") != -1) {
       cipherSuitesIntersection = concat(cipherSuitesIntersection, "TLS_FALLBACK_SCSV");
     }
 
@@ -202,7 +202,7 @@ public final class ConnectionSpec {
       return false;
     }
     for (String toFind : a) {
-      if (contains(b, toFind)) {
+      if (indexOf(b, toFind) != -1) {
         return true;
       }
     }

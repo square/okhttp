@@ -16,7 +16,6 @@
 package okhttp3.internal.http2;
 
 import java.util.Collection;
-import okhttp3.internal.framed.Hpack;
 import okhttp3.internal.http2.hpackjson.Case;
 import okhttp3.internal.http2.hpackjson.Story;
 import okio.Buffer;
