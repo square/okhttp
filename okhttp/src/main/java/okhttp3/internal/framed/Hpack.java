@@ -22,6 +22,7 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import okhttp3.internal.Util;
 import okio.Buffer;
 import okio.BufferedSource;
 import okio.ByteString;
@@ -359,7 +360,6 @@ final class Hpack {
   }
 
   static final class Writer {
-    private static final byte SEPARATED_TOKEN = ':';
     private static final int SETTINGS_HEADER_TABLE_SIZE = 4096;
 
     /**
@@ -370,7 +370,6 @@ final class Hpack {
     private static final int SETTINGS_HEADER_TABLE_SIZE_LIMIT = 16384;
 
     private final Buffer out;
-    private final Map<ByteString, Integer> headerStringToDynamicIndex = new LinkedHashMap<>();
 
     /**
      * In the scenario where the dynamic table size changes multiple times between transmission of
@@ -399,18 +398,8 @@ final class Hpack {
       this.out = out;
     }
 
-    ByteString getHeaderString(Header entry) {
-      byte[] ret = new byte[entry.name.size() + 1 + entry.value.size()];
-      System.arraycopy(entry.name.toByteArray(), 0, ret, 0, entry.name.size());
-      ret[entry.name.size()] = SEPARATED_TOKEN;
-      System.arraycopy(entry.value.toByteArray(), 0, ret, entry.name.size() + 1,
-          entry.value.size());
-      return ByteString.of(ret);
-    }
-
     private void clearDynamicTable() {
       Arrays.fill(dynamicTable, null);
-      headerStringToDynamicIndex.clear();
       nextHeaderIndex = dynamicTable.length - 1;
       headerCount = 0;
       dynamicTableByteCount = 0;
@@ -429,9 +418,7 @@ final class Hpack {
         }
         System.arraycopy(dynamicTable, nextHeaderIndex + 1, dynamicTable,
             nextHeaderIndex + 1 + entriesToEvict, headerCount);
-        for (Map.Entry<ByteString, Integer> p : headerStringToDynamicIndex.entrySet()) {
-          p.setValue(p.getValue() + entriesToEvict);
-        }
+        Arrays.fill(dynamicTable, nextHeaderIndex + 1, nextHeaderIndex + 1 + entriesToEvict, null);
         nextHeaderIndex += entriesToEvict;
       }
       return entriesToEvict;
@@ -453,15 +440,11 @@ final class Hpack {
       if (headerCount + 1 > dynamicTable.length) { // Need to grow the dynamic table.
         Header[] doubled = new Header[dynamicTable.length * 2];
         System.arraycopy(dynamicTable, 0, doubled, dynamicTable.length, dynamicTable.length);
-        for (Map.Entry<ByteString, Integer> p : headerStringToDynamicIndex.entrySet()) {
-          p.setValue(p.getValue() + dynamicTable.length);
-        }
         nextHeaderIndex = dynamicTable.length - 1;
         dynamicTable = doubled;
       }
       int index = nextHeaderIndex--;
       dynamicTable[index] = entry;
-      headerStringToDynamicIndex.put(getHeaderString(entry), index);
       headerCount++;
       dynamicTableByteCount += delta;
     }
@@ -489,11 +472,10 @@ final class Hpack {
           writeInt(staticIndex + 1, PREFIX_4_BITS, 0);
           writeByteString(value);
         } else {
-          ByteString headerString = getHeaderString(header);
-          Integer dynamicIndex = headerStringToDynamicIndex.get(headerString);
-          if (dynamicIndex != null) {
+          int dynamicIndex = Util.indexOf(dynamicTable, header);
+          if (dynamicIndex != -1) {
             // Indexed Header.
-            writeInt(dynamicTable.length - dynamicIndex + STATIC_HEADER_TABLE.length, PREFIX_7_BITS,
+            writeInt(dynamicIndex - nextHeaderIndex + STATIC_HEADER_TABLE.length, PREFIX_7_BITS,
                 0x80);
           } else {
             // Literal Header Field with Incremental Indexing - New Name
