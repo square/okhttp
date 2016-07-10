@@ -61,12 +61,12 @@ import okhttp3.Response;
 import okhttp3.internal.Internal;
 import okhttp3.internal.NamedRunnable;
 import okhttp3.internal.Util;
-import okhttp3.internal.framed.ErrorCode;
-import okhttp3.internal.framed.FramedConnection;
-import okhttp3.internal.framed.FramedStream;
-import okhttp3.internal.framed.Header;
-import okhttp3.internal.framed.Settings;
 import okhttp3.internal.http.HttpMethod;
+import okhttp3.internal.http2.ErrorCode;
+import okhttp3.internal.http2.Header;
+import okhttp3.internal.http2.Http2Connection;
+import okhttp3.internal.http2.Http2Stream;
+import okhttp3.internal.http2.Settings;
 import okhttp3.internal.platform.Platform;
 import okhttp3.internal.ws.RealWebSocket;
 import okhttp3.internal.ws.WebSocketProtocol;
@@ -125,8 +125,8 @@ public final class MockWebServer implements TestRule {
 
   private final Set<Socket> openClientSockets =
       Collections.newSetFromMap(new ConcurrentHashMap<Socket, Boolean>());
-  private final Set<FramedConnection> openFramedConnections =
-      Collections.newSetFromMap(new ConcurrentHashMap<FramedConnection, Boolean>());
+  private final Set<Http2Connection> openConnections =
+      Collections.newSetFromMap(new ConcurrentHashMap<Http2Connection, Boolean>());
   private final AtomicInteger requestCount = new AtomicInteger();
   private long bodyLimit = Long.MAX_VALUE;
   private ServerSocketFactory serverSocketFactory = ServerSocketFactory.getDefault();
@@ -352,7 +352,7 @@ public final class MockWebServer implements TestRule {
           Util.closeQuietly(s.next());
           s.remove();
         }
-        for (Iterator<FramedConnection> s = openFramedConnections.iterator(); s.hasNext(); ) {
+        for (Iterator<Http2Connection> s = openConnections.iterator(); s.hasNext(); ) {
           Util.closeQuietly(s.next());
           s.remove();
         }
@@ -451,12 +451,12 @@ public final class MockWebServer implements TestRule {
 
         if (protocol == Protocol.HTTP_2) {
           FramedSocketHandler framedSocketListener = new FramedSocketHandler(socket, protocol);
-          FramedConnection framedConnection = new FramedConnection.Builder(false)
+          Http2Connection connection = new Http2Connection.Builder(false)
               .socket(socket)
               .listener(framedSocketListener)
               .build();
-          framedConnection.start();
-          openFramedConnections.add(framedConnection);
+          connection.start();
+          openConnections.add(connection);
           openClientSockets.remove(socket);
           return;
         } else if (protocol != Protocol.HTTP_1_1) {
@@ -842,7 +842,7 @@ public final class MockWebServer implements TestRule {
   }
 
   /** Processes HTTP requests layered over framed protocols. */
-  private class FramedSocketHandler extends FramedConnection.Listener {
+  private class FramedSocketHandler extends Http2Connection.Listener {
     private final Socket socket;
     private final Protocol protocol;
     private final AtomicInteger sequenceNumber = new AtomicInteger();
@@ -852,7 +852,7 @@ public final class MockWebServer implements TestRule {
       this.protocol = protocol;
     }
 
-    @Override public void onStream(FramedStream stream) throws IOException {
+    @Override public void onStream(Http2Stream stream) throws IOException {
       MockResponse peekedResponse = dispatcher.peek();
       if (peekedResponse.getSocketPolicy() == RESET_STREAM_AT_START) {
         try {
@@ -880,7 +880,7 @@ public final class MockWebServer implements TestRule {
       }
     }
 
-    private RecordedRequest readRequest(FramedStream stream) throws IOException {
+    private RecordedRequest readRequest(Http2Stream stream) throws IOException {
       List<Header> streamHeaders = stream.getRequestHeaders();
       Headers.Builder httpHeaders = new Headers.Builder();
       String method = "<:method omitted>";
@@ -909,7 +909,7 @@ public final class MockWebServer implements TestRule {
           sequenceNumber.getAndIncrement(), socket);
     }
 
-    private void writeResponse(FramedStream stream, MockResponse response) throws IOException {
+    private void writeResponse(Http2Stream stream, MockResponse response) throws IOException {
       Settings settings = response.getSettings();
       if (settings != null) {
         stream.getConnection().setSettings(settings);
@@ -944,7 +944,7 @@ public final class MockWebServer implements TestRule {
       }
     }
 
-    private void pushPromises(FramedStream stream, List<PushPromise> promises) throws IOException {
+    private void pushPromises(Http2Stream stream, List<PushPromise> promises) throws IOException {
       for (PushPromise pushPromise : promises) {
         List<Header> pushedHeaders = new ArrayList<>();
         pushedHeaders.add(new Header(Header.TARGET_AUTHORITY, url(pushPromise.path()).host()));
@@ -959,7 +959,7 @@ public final class MockWebServer implements TestRule {
         requestQueue.add(new RecordedRequest(requestLine, pushPromise.headers(), chunkSizes, 0,
             new Buffer(), sequenceNumber.getAndIncrement(), socket));
         boolean hasBody = pushPromise.response().getBody() != null;
-        FramedStream pushedStream =
+        Http2Stream pushedStream =
             stream.getConnection().pushStream(stream.getId(), pushedHeaders, hasBody);
         writeResponse(pushedStream, pushPromise.response());
       }

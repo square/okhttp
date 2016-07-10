@@ -174,7 +174,7 @@ public final class RetryAndFollowUpInterceptor implements Interceptor {
         streamAllocation.release();
         streamAllocation = new StreamAllocation(
             client.connectionPool(), createAddress(followUp.url()));
-      } else if (streamAllocation.stream() != null) {
+      } else if (streamAllocation.codec() != null) {
         throw new IllegalStateException("Closing the body of " + response
             + " didn't close its backing stream. Bad interceptor?");
       }

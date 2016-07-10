@@ -29,7 +29,7 @@ public final class RequestLine {
    * {@link HttpURLConnection#getHeaderFields}, so it needs to be set even if the transport is
    * HTTP/2.
    */
-  static String get(Request request, Proxy.Type proxyType) {
+  public static String get(Request request, Proxy.Type proxyType) {
     StringBuilder result = new StringBuilder();
     result.append(request.method());
     result.append(' ');

@@ -43,11 +43,11 @@ import okhttp3.Response;
 import okhttp3.Route;
 import okhttp3.internal.Util;
 import okhttp3.internal.Version;
-import okhttp3.internal.framed.ErrorCode;
-import okhttp3.internal.framed.FramedConnection;
-import okhttp3.internal.framed.FramedStream;
-import okhttp3.internal.http.Http1xStream;
 import okhttp3.internal.http.HttpHeaders;
+import okhttp3.internal.http1.Http1Codec;
+import okhttp3.internal.http2.ErrorCode;
+import okhttp3.internal.http2.Http2Connection;
+import okhttp3.internal.http2.Http2Stream;
 import okhttp3.internal.platform.Platform;
 import okhttp3.internal.tls.OkHostnameVerifier;
 import okio.BufferedSink;
@@ -60,7 +60,7 @@ import static java.net.HttpURLConnection.HTTP_PROXY_AUTH;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static okhttp3.internal.Util.closeQuietly;
 
-public final class RealConnection extends FramedConnection.Listener implements Connection {
+public final class RealConnection extends Http2Connection.Listener implements Connection {
   private final Route route;
 
   /** The low-level TCP socket. */
@@ -73,7 +73,7 @@ public final class RealConnection extends FramedConnection.Listener implements C
   public Socket socket;
   private Handshake handshake;
   private Protocol protocol;
-  public volatile FramedConnection framedConnection;
+  public volatile Http2Connection http2Connection;
   public int successCount;
   public BufferedSource source;
   public BufferedSink sink;
@@ -204,15 +204,15 @@ public final class RealConnection extends FramedConnection.Listener implements C
     if (protocol == Protocol.HTTP_2) {
       socket.setSoTimeout(0); // Framed connection timeouts are set per-stream.
 
-      FramedConnection framedConnection = new FramedConnection.Builder(true)
+      Http2Connection http2Connection = new Http2Connection.Builder(true)
           .socket(socket, route.address().url().host(), source, sink)
           .listener(this)
           .build();
-      framedConnection.start();
+      http2Connection.start();
 
       // Only assign the framed connection once the preface has been sent successfully.
-      this.allocationLimit = framedConnection.maxConcurrentStreams();
-      this.framedConnection = framedConnection;
+      this.allocationLimit = http2Connection.maxConcurrentStreams();
+      this.http2Connection = http2Connection;
     } else {
       this.allocationLimit = 1;
     }
@@ -287,7 +287,7 @@ public final class RealConnection extends FramedConnection.Listener implements C
     // Make an SSL Tunnel on the first message pair of each SSL + proxy connection.
     String requestLine = "CONNECT " + Util.hostHeader(url, true) + " HTTP/1.1";
     while (true) {
-      Http1xStream tunnelConnection = new Http1xStream(null, null, source, sink);
+      Http1Codec tunnelConnection = new Http1Codec(null, null, source, sink);
       source.timeout().timeout(readTimeout, MILLISECONDS);
       sink.timeout().timeout(writeTimeout, MILLISECONDS);
       tunnelConnection.writeRequest(tunnelRequest.headers(), requestLine);
@@ -363,7 +363,7 @@ public final class RealConnection extends FramedConnection.Listener implements C
       return false;
     }
 
-    if (framedConnection != null) {
+    if (http2Connection != null) {
       return true; // TODO: check framedConnection.shutdown.
     }
 
@@ -390,12 +390,12 @@ public final class RealConnection extends FramedConnection.Listener implements C
   }
 
   /** Refuse incoming streams. */
-  @Override public void onStream(FramedStream stream) throws IOException {
+  @Override public void onStream(Http2Stream stream) throws IOException {
     stream.close(ErrorCode.REFUSED_STREAM);
   }
 
   /** When settings are received, adjust the allocation limit. */
-  @Override public void onSettings(FramedConnection connection) {
+  @Override public void onSettings(Http2Connection connection) {
     allocationLimit = connection.maxConcurrentStreams();
   }
 
@@ -408,11 +408,11 @@ public final class RealConnection extends FramedConnection.Listener implements C
    * requests simultaneously.
    */
   public boolean isMultiplexed() {
-    return framedConnection != null;
+    return http2Connection != null;
   }
 
   @Override public Protocol protocol() {
-    if (framedConnection == null) {
+    if (http2Connection == null) {
       return protocol != null ? protocol : Protocol.HTTP_1_1;
     } else {
       return Protocol.HTTP_2;
