@@ -61,9 +61,17 @@ public final class MediaType {
 
       String name = parameter.group(1);
       if (name == null || !name.equalsIgnoreCase("charset")) continue;
-      String charsetParameter = parameter.group(2) != null
-          ? parameter.group(2)  // Value is a token.
-          : parameter.group(3); // Value is a quoted string.
+      String charsetParameter;
+      String token = parameter.group(2);
+      if (token != null) {
+        // If the token is 'single-quoted' it's invalid! But we're lenient and strip the quotes.
+        charsetParameter = (token.startsWith("'") && token.endsWith("'") && token.length() > 2)
+            ? token.substring(1, token.length() - 1)
+            : token;
+      } else {
+        // Value is "double-quoted". That's valid and our regex group already strips the quotes.
+        charsetParameter = parameter.group(3);
+      }
       if (charset != null && !charsetParameter.equalsIgnoreCase(charset)) {
         throw new IllegalArgumentException("Multiple different charsets: " + string);
       }
