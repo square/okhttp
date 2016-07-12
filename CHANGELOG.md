@@ -1,6 +1,386 @@
 Change Log
 ==========
 
+## Version 3.4.1
+
+_2016-07-10_
+
+ *  **Fix an major bug in encoding HTTP headers.** In 3.4.0 and 3.4.0-RC1 OkHttp
+    had an off-by-one bug in our HPACK encoder. This bug could have caused the
+    wrong headers to be emitted after a sequence of HTTP/2 requests! Everyone
+    who is using OkHttp 3.4.0 or 3.4.0-RC1 should upgrade for this bug fix.
+
+
+## Version 3.4.0
+
+_2016-07-08_
+
+ *  New: Support dynamic table size changes to HPACK Encoder.
+ *  Fix: Use `TreeMap` in `Headers.toMultimap()`. This makes string lookups on
+    the returned map case-insensitive.
+ *  Fix: Don't share the OkHttpClient's `Dispatcher` in `HttpURLConnection`.
+
+
+## Version 3.4.0-RC1
+
+_2016-07-02_
+
+ *  **We’ve rewritten HttpURLConnection and HttpsURLConnection.** Previously we
+    shared a single HTTP engine between two frontend APIs: `HttpURLConnection`
+    and `Call`. With this release we’ve rearranged things so that the
+    `HttpURLConnection` frontend now delegates to the `Call` APIs internally.
+    This has enabled substantial simplifications and optimizations in the OkHttp
+    core for both frontends.
+
+    For most HTTP requests the consequences of this change will be negligible.
+    If your application uses `HttpURLConnection.connect()`,
+    `setFixedLengthStreamingMode()`, or `setChunkedStreamingMode()`, OkHttp will
+    now use a async dispatcher thread to establish the HTTP connection.
+
+    We don’t expect this change to have any behavior or performance
+    consequences. Regardless, please exercise your `OkUrlFactory` and
+    `HttpURLConnection` code when applying this update.
+
+ *  **Cipher suites may now have arbitrary names.** Previously `CipherSuite` was
+    a Java enum and it was impossible to define new cipher suites without first
+    upgrading OkHttp. With this change it is now a regular Java class with
+    enum-like constants. Application code that uses enum methods on cipher
+    suites (`ordinal()`, `name()`, etc.) will break with this change.
+
+ *  Fix: `CertificatePinner` now matches canonicalized hostnames. Previously
+    this was case sensitive. This change should also make it easier to configure
+    certificate pinning for internationalized domain names.
+ *  Fix: Don’t crash on non-ASCII `ETag` headers. Previously OkHttp would reject
+    these headers when validating a cached response.
+ *  Fix: Don’t allow remote peer to arbitrarily size the HPACK decoder dynamic
+    table.
+ *  Fix: Honor per-host configuration in Android’s network security config.
+    Previously disabling cleartext for any host would disable cleartext for all
+    hosts. Note that this setting is only available on Android 24+.
+ *  New: HPACK compression is now dynamic. This should improve performance when
+    transmitting request headers over HTTP/2.
+ *  New: `Dispatcher.setIdleCallback()` can be used to signal when there are no
+    calls in flight. This is useful for [testing with
+    Espresso][okhttp_idling_resource].
+ *  New: Upgrade to Okio 1.9.0.
+
+     ```xml
+     <dependency>
+       <groupId>com.squareup.okio</groupId>
+       <artifactId>okio</artifactId>
+       <version>1.9.0</version>
+     </dependency>
+     ```
+
+
+## Version 3.3.1
+
+_2016-05-28_
+
+ *  Fix: The plaintext check in HttpLoggingInterceptor incorrectly classified
+    newline characters as control characters. This is fixed.
+ *  Fix: Don't crash reading non-ASCII characters in HTTP/2 headers or in cached
+    HTTP headers.
+ *  Fix: Retain the response body when an attempt to open a web socket returns a
+    non-101 response code.
+
+
+## Version 3.3.0
+
+_2016-05-24_
+
+ *  New: `Response.sentRequestAtMillis()` and `receivedResponseAtMillis()`
+    methods track the system's local time when network calls are made. These
+    replace the `OkHttp-Sent-Millis` and `OkHttp-Received-Millis` headers that were
+    present in earlier versions of OkHttp.
+ *  New: Accept user-provided trust managers in `OkHttpClient.Builder`. This
+    allows OkHttp to satisfy its TLS requirements directly. Otherwise OkHttp
+    will use reflection to extract the `TrustManager` from the
+    `SSLSocketFactory`.
+ *  New: Support prerelease Java 9. This gets ALPN from the platform rather than
+    relying on the alpn-boot bootclasspath override.
+ *  New: `HttpLoggingInterceptor` now logs connection failures.
+ *  New: Upgrade to Okio 1.8.0.
+
+     ```xml
+     <dependency>
+       <groupId>com.squareup.okio</groupId>
+       <artifactId>okio</artifactId>
+       <version>1.8.0</version>
+     </dependency>
+     ```
+
+ *  Fix: Gracefully recover from a failure to rebuild the cache journal.
+ *  Fix: Don't corrupt cache entries when a cache entry is evicted while it is
+    being updated.
+ *  Fix: Make logging more consistent throughout OkHttp.
+ *  Fix: Log plaintext bodies only. This uses simple heuristics to differentiate
+    text from other data.
+ *  Fix: Recover from `REFUSED_STREAM` errors in HTTP/2. This should improve
+    interoperability with Nginx 1.10.0, which [refuses][nginx_959] streams
+    created before HTTP/2 settings have been acknowledged.
+ *  Fix: Improve recovery from failed routes.
+ *  Fix: Accommodate tunneling proxies that close the connection after an auth
+    challenge.
+ *  Fix: Use the proxy authenticator when authenticating HTTP proxies. This
+    regression was introduced in OkHttp 3.0.
+ *  Fix: Fail fast if network interceptors transform the response body such that
+    closing it doesn't also close the underlying stream. We had a bug where
+    OkHttp would attempt to reuse a connection but couldn't because it was still
+    held by a prior request.
+ *  Fix: Ensure network interceptors always have access to the underlying
+    connection.
+ *  Fix: Use `X509TrustManagerExtensions` on Android 17+.
+ *  Fix: Unblock waiting dispatchers on MockWebServer shutdown.
+
+
+## Version 3.2.0
+
+_2016-02-25_
+
+ *  Fix: Change the certificate pinner to always build full chains. This
+    prevents a potential crash when using certificate pinning with the Google
+    Play Services security provider.
+ *  Fix: Make IPv6 request lines consistent with Firefox and Chrome.
+ *  Fix: Recover gracefully when trimming the response cache fails.
+ *  New: Add multiple path segments using a single string in `HttpUrl.Builder`.
+ *  New: Support SHA-256 pins in certificate pinner.
+
+
+## Version 3.1.2
+
+_2016-02-10_
+
+ *  Fix: Don’t crash when finding the trust manager on Robolectric. We attempted
+    to detect the host platform and got confused because Robolectric looks like
+    Android but isn’t!
+ *  Fix: Change `CertificatePinner` to skip sanitizing the certificate chain
+    when no certificates were pinned. This avoids an SSL failure in insecure
+    “trust everyone” configurations, such as when talking to a development
+    HTTPS server that has a self-signed certificate.
+
+
+## Version 3.1.1
+
+_2016-02-07_
+
+ *  Fix: Don't crash when finding the trust manager if the Play Services (GMS)
+    security provider is installed.
+ *  Fix: The previous release introduced a performance regression on Android,
+    caused by looking up CA certificates. This is now fixed.
+
+
+## Version 3.1.0
+
+_2016-02-06_
+
+ *  New: WebSockets now defer some writes. This should improve performance for
+    some applications.
+ *  New: Override `equals()` and `hashCode()` in our new cookie class. This
+    class now defines equality by value rather than by reference.
+ *  New: Handle 408 responses by retrying the request. This allows servers to
+    direct clients to retry rather than failing permanently.
+ *  New: Expose the framed protocol in `Connection`. Previously this would
+    return the application-layer protocol (HTTP/1.1 or HTTP/1.0); now it always
+    returns the wire-layer protocol (HTTP/2, SPDY/3.1, or HTTP/1.1).
+ *  Fix: Permit the trusted CA root to be pinned by `CertificatePinner`.
+ *  Fix: Silently ignore unknown HTTP/2 settings. Previously this would cause
+    the entire connection to fail.
+ *  Fix: Don’t crash on unexpected charsets in the logging interceptor.
+ *  Fix: `OkHttpClient` is now non-final for the benefit of mocking frameworks.
+    Mocking sophisticated classes like `OkHttpClient` is fragile and you
+    shouldn’t do it. But if that’s how you want to live your life we won’t stand
+    in your way!
+
+
+## Version 3.0.1
+
+_2016-01-14_
+
+ *  Rollback OSGi support. This was causing library jars to include more classes
+    than expected, which interfered with Gradle builds.
+
+
+## Version 3.0.0
+
+_2016-01-13_
+
+This release commits to a stable 3.0 API. Read the 3.0.0-RC1 changes for advice
+on upgrading from 2.x to 3.x.
+
+ *  **The `Callback` interface now takes a `Call`**. This makes it easier to
+    check if the call was canceled from within the callback. When migrating
+    async calls to this new API, `Call` is now the first parameter for both
+    `onResponse()` and `onFailure()`.
+ *  Fix: handle multiple cookies in `JavaNetCookieJar` on Android.
+ *  Fix: improve the default HTTP message in MockWebServer responses.
+ *  Fix: don't leak file handles when a conditional GET throws.
+ *  Fix: Use charset specified by the request body content type in OkHttp's
+    logging interceptor.
+ *  Fix: Don't eagerly release pools on cache hits.
+ *  New: Make OkHttp OSGi ready.
+ *  New: Add already-implemented interfaces Closeable and Flushable to the cache.
+
+## Version 3.0.0-RC1
+
+_2016-01-02_
+
+OkHttp 3 is a major release focused on API simplicity and consistency. The API
+changes are numerous but most are cosmetic. Applications should be able to
+upgrade from the 2.x API to the 3.x API mechanically and without risk.
+
+Because the release includes breaking API changes, we're changing the project's
+package name from `com.squareup.okhttp` to `okhttp3`. This should make it
+possible for large applications to migrate incrementally. The Maven group ID
+is now `com.squareup.okhttp3`. For an explanation of this strategy, see Jake
+Wharton's post, [Java Interoperability Policy for Major Version
+Updates][major_versions].
+
+This release obsoletes OkHttp 2.x, and all code that uses OkHttp's
+`com.squareup.okhttp` package should upgrade to the `okhttp3` package. Libraries
+that depend on OkHttp should upgrade quickly to prevent applications from being
+stuck on the old version.
+
+ *  **There is no longer a global singleton connection pool.** In OkHttp 2.x,
+    all `OkHttpClient` instances shared a common connection pool by default.
+    In OkHttp 3.x, each new `OkHttpClient` gets its own private connection pool.
+    Applications should avoid creating many connection pools as doing so
+    prevents connection reuse. Each connection pool holds its own set of
+    connections alive so applications that have many pools also risk exhausting
+    memory!
+
+    The best practice in OkHttp 3 is to create a single OkHttpClient instance
+    and share it throughout the application. Requests that needs a customized
+    client should call `OkHttpClient.newBuilder()` on that shared instance.
+    This allows customization without the drawbacks of separate connection
+    pools.
+
+ *  **OkHttpClient is now stateless.** In the 2.x API `OkHttpClient` had getters
+    and setters. Internally each request was forced to make its own complete
+    snapshot of the `OkHttpClient` instance to defend against racy configuration
+    changes. In 3.x, `OkHttpClient` is now stateless and has a builder. Note
+    that this class is not strictly immutable as it has stateful members like
+    the connection pool and cache.
+
+ *  **Get and Set prefixes are now avoided.** With ubiquitous builders
+    throughout OkHttp these accessor prefixes aren't necessary. Previously
+    OkHttp used _get_ and _set_ prefixes sporadically which make the API
+    inconsistent and awkward to explore.
+
+ *  **OkHttpClient now implements the new `Call.Factory` interface.** This
+    interface will make your code easier to test. When you test code that makes
+    HTTP requests, you can use this interface to replace the real `OkHttpClient`
+    with your own mocks or fakes.
+
+    The interface will also let you use OkHttp's API with another HTTP client's
+    implementation. This is useful in sandboxed environments like Google App
+    Engine.
+
+ *  **OkHttp now does cookies.** We've replaced `java.net.CookieHandler` with
+    a new interface, `CookieJar` and added our own `Cookie` model class. This
+    new cookie follows the latest RFC and supports the same cookie attributes
+    as modern web browsers.
+
+ *  **Form and Multipart bodies are now modeled.** We've replaced the opaque
+    `FormEncodingBuilder` with the more powerful `FormBody` and
+    `FormBody.Builder` combo. Similarly we've upgraded `MultipartBuilder` into
+    `MultipartBody`, `MultipartBody.Part`, and `MultipartBody.Builder`.
+
+ *  **The Apache HTTP client and HttpURLConnection APIs are deprecated.** They
+    continue to work as they always have, but we're moving everything to the new
+    OkHttp 3 API. The `okhttp-apache` and `okhttp-urlconnection` modules should
+    be only be used to accelerate a transition to OkHttp's request/response API.
+    These deprecated modules will be dropped in an upcoming OkHttp 3.x release.
+
+ *  **Canceling batches of calls is now the application's responsibility.**
+    The API to cancel calls by tag has been removed and replaced with a more
+    general mechanism. The dispatcher now exposes all in-flight calls via its
+    `runningCalls()` and `queuedCalls()` methods. You can write code that
+    selects calls by tag, host, or whatever, and invokes `Call.cancel()` on the
+    ones that are no longer necessary.
+
+ *  **OkHttp no longer uses the global `java.net.Authenticator` by default.**
+    We've changed our `Authenticator` interface to authenticate web and proxy
+    authentication failures through a single method. An adapter for the old
+    authenticator is available in the `okhttp-urlconnection` module.
+
+ *  Fix: Don't throw `IOException` on `ResponseBody.contentLength()` or `close()`.
+ *  Fix: Never throw converting an `HttpUrl` to a `java.net.URI`. This changes
+    the `uri()` method to handle malformed percent-escapes and characters
+    forbidden by `URI`.
+ *  Fix: When a connect times out, attempt an alternate route. Previously route
+    selection was less efficient when differentiating failures.
+ *  New: `Response.peekBody()` lets you access the response body without
+    consuming it. This may be handy for interceptors!
+ *  New: `HttpUrl.newBuilder()` resolves a link to a builder.
+ *  New: Add the TLS version to the `Handshake`.
+ *  New: Drop `Request.uri()` and `Request#urlString()`. Just use
+    `Request.url().uri()` and `Request.url().toString()`.
+ *  New: Add URL to HTTP response logging.
+ *  New: Make `HttpUrl` the blessed URL method of `Request`.
+
+
+## Version 2.7.5
+
+_2016-02-25_
+
+ *  Fix: Change the certificate pinner to always build full chains. This
+    prevents a potential crash when using certificate pinning with the Google
+    Play Services security provider.
+
+
+## Version 2.7.4
+
+_2016-02-07_
+
+ *  Fix: Don't crash when finding the trust manager if the Play Services (GMS)
+    security provider is installed.
+ *  Fix: The previous release introduced a performance regression on Android,
+    caused by looking up CA certificates. This is now fixed.
+
+
+## Version 2.7.3
+
+_2016-02-06_
+
+ *  Fix: Permit the trusted CA root to be pinned by `CertificatePinner`.
+
+
+## Version 2.7.2
+
+_2016-01-07_
+
+ *  Fix: Don't eagerly release stream allocations on cache hits. We might still
+    need them to handle redirects.
+
+
+## Version 2.7.1
+
+_2016-01-01_
+
+ *  Fix: Don't do a health check on newly-created connections. This is
+    unnecessary work that could put the client in an inconsistent state if the
+    health check fails.
+
+
+## Version 2.7.0
+
+_2015-12-13_
+
+ *  **Rewritten connection management.** Previously OkHttp's connection pool
+    managed both idle and active connections for HTTP/2, but only idle
+    connections for HTTP/1.x. With this update the connection pool manages both
+    idle and active connections for everything. OkHttp now detects and warns on
+    connections that were allocated but never released, and will enforce HTTP/2
+    stream limits. This update also fixes `Call.cancel()` to not do I/O on the
+    calling thread.
+ *  Fix: Don't log gzipped data in the logging interceptor.
+ *  Fix: Don't resolve DNS addresses when connecting through a SOCKS proxy.
+ *  Fix: Drop the synthetic `OkHttp-Selected-Protocol` response header.
+ *  Fix: Support 204 and 205 'No Content' replies in the logging interceptor.
+ *  New: Add `Call.isExecuted()`.
+
+
 ## Version 2.6.0
 
 _2015-11-22_
@@ -754,3 +1134,6 @@ Initial release.
 
  [brick]: https://noncombatant.org/2015/05/01/about-http-public-key-pinning/
  [webdav]: https://tools.ietf.org/html/rfc4918
+ [major_versions]: http://jakewharton.com/java-interoperability-policy-for-major-version-updates/
+ [nginx_959]: https://trac.nginx.org/nginx/ticket/959
+ [okhttp_idling_resource]: https://github.com/JakeWharton/okhttp-idling-resource

@@ -9,13 +9,13 @@
     <version>7</version>
   </parent>
 
-  <groupId>com.squareup.okhttp</groupId>
+  <groupId>com.squareup.okhttp3</groupId>
   <artifactId>parent</artifactId>
-  <version>2.7.0-SNAPSHOT</version>
+  <version>3.5.0-SNAPSHOT</version>
   <packaging>pom</packaging>
 
   <name>OkHttp (Parent)</name>
-  <description>An HTTP+SPDY client for Android and Java applications</description>
+  <description>An HTTP+HTTP/2 client for Android and Java applications</description>
   <url>https://github.com/square/okhttp</url>
 
   <modules>
@@ -43,21 +43,23 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
     <!-- Compilation -->
-    <java.version>1.7</java.version>
-    <okio.version>1.6.0</okio.version>
+    <airlift.version>0.7</airlift.version>
     <!-- ALPN library targeted to Java 7 -->
     <alpn.jdk7.version>7.1.2.v20141202</alpn.jdk7.version>
-    <!-- ALPN library targeted to Java 8 update 25. -->
-    <alpn.jdk8.version>8.1.2.v20141202</alpn.jdk8.version>
-    <bouncycastle.version>1.50</bouncycastle.version>
-    <gson.version>2.2.3</gson.version>
-    <apache.http.version>4.2.2</apache.http.version>
-    <airlift.version>0.6</airlift.version>
-    <guava.version>16.0</guava.version>
     <android.version>4.1.1.4</android.version>
+    <animal.sniffer.version>1.11</animal.sniffer.version>
+    <apache.http.version>4.2.2</apache.http.version>
+    <bouncycastle.version>1.50</bouncycastle.version>
+    <guava.version>16.0</guava.version>
+    <java.version>1.7</java.version>
+    <moshi.version>1.1.0</moshi.version>
+    <okio.version>1.9.0</okio.version>
 
     <!-- Test Dependencies -->
-    <junit.version>4.11</junit.version>
+    <junit.version>4.12</junit.version>
+
+    <!-- platform test mode -->
+    <okhttp.platform>platform</okhttp.platform>
   </properties>
 
   <scm>
@@ -97,11 +99,6 @@
         <version>${bouncycastle.version}</version>
       </dependency>
       <dependency>
-        <groupId>com.google.code.gson</groupId>
-        <artifactId>gson</artifactId>
-        <version>${gson.version}</version>
-      </dependency>
-      <dependency>
         <groupId>org.apache.httpcomponents</groupId>
         <artifactId>httpclient</artifactId>
         <version>${apache.http.version}</version>
@@ -120,6 +117,11 @@
         <groupId>com.google.android</groupId>
         <artifactId>android</artifactId>
         <version>${android.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.squareup.moshi</groupId>
+        <artifactId>moshi</artifactId>
+        <version>${moshi.version}</version>
       </dependency>
     </dependencies>
   </dependencyManagement>
@@ -142,6 +144,9 @@
           <artifactId>maven-surefire-plugin</artifactId>
           <version>2.17</version>
           <configuration>
+            <systemPropertyVariables>
+              <okhttp.platform>${okhttp.platform}</okhttp.platform>
+            </systemPropertyVariables>
             <properties>
               <!--
                 Configure a listener for enforcing that no uncaught exceptions issue from OkHttp
@@ -150,7 +155,7 @@
                 -->
               <property>
                 <name>listener</name>
-                <value>com.squareup.okhttp.testing.InstallUncaughtExceptionHandlerListener</value>
+                <value>okhttp3.testing.InstallUncaughtExceptionHandlerListener</value>
               </property>
             </properties>
           </configuration>
@@ -210,7 +215,7 @@
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>animal-sniffer-maven-plugin</artifactId>
-        <version>1.11</version>
+        <version>${animal.sniffer.version}</version>
         <executions>
           <execution>
             <phase>test</phase>
@@ -237,7 +242,10 @@
         <jdk>1.7</jdk>
       </activation>
       <properties>
-        <bootclasspathPrefix>${settings.localRepository}/org/mortbay/jetty/alpn/alpn-boot/${alpn.jdk7.version}/alpn-boot-${alpn.jdk7.version}.jar</bootclasspathPrefix>
+        <bootclasspathPrefix>
+          ${settings.localRepository}/org/mortbay/jetty/alpn/alpn-boot/${alpn.jdk7.version}/alpn-boot-${alpn.jdk7.version}.jar
+        </bootclasspathPrefix>
+        <okhttp.platform>jdk-with-jetty-boot</okhttp.platform>
       </properties>
       <build>
         <pluginManagement>
@@ -246,7 +254,7 @@
               <groupId>org.apache.maven.plugins</groupId>
               <artifactId>maven-surefire-plugin</artifactId>
               <configuration>
-                <argLine>-Xbootclasspath/p:${bootclasspathPrefix}</argLine>
+                <argLine>-Xbootclasspath/p:${bootclasspathPrefix} -Xms512m -Xmx512m</argLine>
               </configuration>
               <dependencies>
                 <dependency>
@@ -266,7 +274,10 @@
         <jdk>1.8</jdk>
       </activation>
       <properties>
-        <bootclasspathPrefix>${settings.localRepository}/org/mortbay/jetty/alpn/alpn-boot/${alpn.jdk8.version}/alpn-boot-${alpn.jdk8.version}.jar</bootclasspathPrefix>
+        <bootclasspathPrefix>
+          ${settings.localRepository}/org/mortbay/jetty/alpn/alpn-boot/${alpn.jdk8.version}/alpn-boot-${alpn.jdk8.version}.jar
+        </bootclasspathPrefix>
+        <okhttp.platform>jdk-with-jetty-boot</okhttp.platform>
       </properties>
       <build>
         <pluginManagement>
@@ -275,7 +286,7 @@
               <groupId>org.apache.maven.plugins</groupId>
               <artifactId>maven-surefire-plugin</artifactId>
               <configuration>
-                <argLine>-Xbootclasspath/p:${bootclasspathPrefix}</argLine>
+                <argLine>-Xbootclasspath/p:${bootclasspathPrefix} -Xms512m -Xmx512m</argLine>
               </configuration>
               <dependencies>
                 <dependency>
@@ -288,6 +299,180 @@
           </plugins>
         </pluginManagement>
       </build>
+    </profile>
+    <profile>
+      <id>jdk9</id>
+      <activation>
+        <jdk>9</jdk>
+      </activation>
+      <properties>
+        <okhttp.platform>jdk9</okhttp.platform>
+      </properties>
+    </profile>
+    <!-- ALPN Versions targeted for each Java 8 minor release -->
+    <!-- Check versions with this page: -->
+    <!-- http://www.eclipse.org/jetty/documentation/current/alpn-chapter.html#alpn-chapterchapterversions -->
+        <profile>
+      <id>alpn-when-jdk8_05</id>
+      <activation>
+        <jdk>1.8.0_05</jdk>
+      </activation>
+      <properties>
+        <alpn.jdk8.version>8.1.0.v20141016</alpn.jdk8.version>
+      </properties>
+    </profile>
+    <profile>
+      <id>alpn-when-jdk8_11</id>
+      <activation>
+        <jdk>1.8.0_11</jdk>
+      </activation>
+      <properties>
+        <alpn.jdk8.version>8.1.0.v20141016</alpn.jdk8.version>
+      </properties>
+    </profile>
+    <profile>
+      <id>alpn-when-jdk8_20</id>
+      <activation>
+        <jdk>1.8.0_20</jdk>
+      </activation>
+      <properties>
+        <alpn.jdk8.version>8.1.0.v20141016</alpn.jdk8.version>
+      </properties>
+    </profile>
+    <profile>
+      <id>alpn-when-jdk8_25</id>
+      <activation>
+        <jdk>1.8.0_25</jdk>
+      </activation>
+      <properties>
+        <alpn.jdk8.version>8.1.2.v20141202</alpn.jdk8.version>
+      </properties>
+    </profile>
+    <profile>
+      <id>alpn-when-jdk8_31</id>
+      <activation>
+        <jdk>1.8.0_31</jdk>
+      </activation>
+      <properties>
+        <alpn.jdk8.version>8.1.3.v20150130</alpn.jdk8.version>
+      </properties>
+    </profile>
+    <profile>
+      <id>alpn-when-jdk8_40</id>
+      <activation>
+        <jdk>1.8.0_40</jdk>
+      </activation>
+      <properties>
+        <alpn.jdk8.version>8.1.3.v20150130</alpn.jdk8.version>
+      </properties>
+    </profile>
+    <profile>
+      <id>alpn-when-jdk8_45</id>
+      <activation>
+        <jdk>1.8.0_45</jdk>
+      </activation>
+      <properties>
+        <alpn.jdk8.version>8.1.3.v20150130</alpn.jdk8.version>
+      </properties>
+    </profile>
+    <profile>
+      <id>alpn-when-jdk8_51</id>
+      <activation>
+        <jdk>1.8.0_51</jdk>
+      </activation>
+      <properties>
+        <alpn.jdk8.version>8.1.4.v20150727</alpn.jdk8.version>
+      </properties>
+    </profile>
+    <profile>
+      <id>alpn-when-jdk8_60</id>
+      <activation>
+        <jdk>1.8.0_60</jdk>
+      </activation>
+      <properties>
+        <alpn.jdk8.version>8.1.5.v20150921</alpn.jdk8.version>
+      </properties>
+    </profile>
+    <profile>
+      <id>alpn-when-jdk8_65</id>
+      <activation>
+        <jdk>1.8.0_65</jdk>
+      </activation>
+      <properties>
+        <alpn.jdk8.version>8.1.6.v20151105</alpn.jdk8.version>
+      </properties>
+    </profile>
+    <profile>
+      <id>alpn-when-jdk8_66</id>
+      <activation>
+        <jdk>1.8.0_66</jdk>
+      </activation>
+      <properties>
+        <alpn.jdk8.version>8.1.6.v20151105</alpn.jdk8.version>
+      </properties>
+    </profile>
+    <profile>
+      <id>alpn-when-jdk8_71</id>
+      <activation>
+        <jdk>1.8.0_71</jdk>
+      </activation>
+      <properties>
+        <alpn.jdk8.version>8.1.7.v20160121</alpn.jdk8.version>
+      </properties>
+    </profile>
+    <profile>
+      <id>alpn-when-jdk8_72</id>
+      <activation>
+        <jdk>1.8.0_72</jdk>
+      </activation>
+      <properties>
+        <alpn.jdk8.version>8.1.7.v20160121</alpn.jdk8.version>
+      </properties>
+    </profile>
+    <profile>
+      <id>alpn-when-jdk8_73</id>
+      <activation>
+        <jdk>1.8.0_73</jdk>
+      </activation>
+      <properties>
+        <alpn.jdk8.version>8.1.7.v20160121</alpn.jdk8.version>
+      </properties>
+    </profile>
+    <profile>
+      <id>alpn-when-jdk8_74</id>
+      <activation>
+        <jdk>1.8.0_74</jdk>
+      </activation>
+      <properties>
+        <alpn.jdk8.version>8.1.7.v20160121</alpn.jdk8.version>
+      </properties>
+    </profile>
+    <profile>
+      <id>alpn-when-jdk8_77</id>
+      <activation>
+        <jdk>1.8.0_77</jdk>
+      </activation>
+      <properties>
+        <alpn.jdk8.version>8.1.7.v20160121</alpn.jdk8.version>
+      </properties>
+    </profile>
+    <profile>
+      <id>alpn-when-jdk8_91</id>
+      <activation>
+        <jdk>1.8.0_91</jdk>
+      </activation>
+      <properties>
+        <alpn.jdk8.version>8.1.7.v20160121</alpn.jdk8.version>
+      </properties>
+    </profile>
+    <profile>
+      <id>alpn-when-jdk8_92</id>
+      <activation>
+        <jdk>1.8.0_92</jdk>
+      </activation>
+      <properties>
+        <alpn.jdk8.version>8.1.8.v20160420</alpn.jdk8.version>
+      </properties>
     </profile>
   </profiles>
 </project>

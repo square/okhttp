@@ -4,10 +4,11 @@ Logging Interceptor
 An [OkHttp interceptor][1] which logs HTTP request and response data.
 
 ```java
-OkHttpClient client = new OkHttpClient();
 HttpLoggingInterceptor logging = new HttpLoggingInterceptor();
 logging.setLevel(Level.BASIC);
-client.interceptors().add(logging);
+OkHttpClient client = new OkHttpClient.Builder()
+  .addInterceptor(logging)
+  .build();
 ```
 
 You can change the log level at any time by calling `setLevel`.
@@ -33,7 +34,7 @@ Download
 Get via Maven:
 ```xml
 <dependency>
-  <groupId>com.squareup.okhttp</groupId>
+  <groupId>com.squareup.okhttp3</groupId>
   <artifactId>logging-interceptor</artifactId>
   <version>(insert latest version)</version>
 </dependency>
@@ -41,7 +42,7 @@ Get via Maven:
 
 or via Gradle 
 ```groovy
-compile 'com.squareup.okhttp:logging-interceptor:(insert latest version)'
+compile 'com.squareup.okhttp3:logging-interceptor:(insert latest version)'
 ```
 
 
