@@ -2533,9 +2533,8 @@ public final class URLConnectionTest {
    * https://code.google.com/p/android/issues/detail?id=41576
    */
   @Test public void sameConnectionRedirectAndReuse() throws Exception {
-    // TODO(jwilson): this behavior shouldn't rely on having another IP address to attempt.
     urlFactory.setClient(urlFactory.client().newBuilder()
-        .dns(new DoubleInetAddressDns())
+        .dns(new SingleInetAddressDns())
         .build());
     server.enqueue(new MockResponse()
         .setResponseCode(HttpURLConnection.HTTP_MOVED_TEMP)
