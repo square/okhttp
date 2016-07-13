@@ -40,7 +40,7 @@ public final class JavaNetCookieJar implements CookieJar {
     if (cookieHandler != null) {
       List<String> cookieStrings = new ArrayList<>();
       for (Cookie cookie : cookies) {
-        cookieStrings.add(cookie.toString());
+        cookieStrings.add(cookie.toString(true));
       }
       Map<String, List<String>> multimap = Collections.singletonMap("Set-Cookie", cookieStrings);
       try {

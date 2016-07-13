@@ -23,6 +23,7 @@ import java.net.HttpCookie;
 import java.net.HttpURLConnection;
 import java.net.InetAddress;
 import java.net.URI;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -269,6 +270,58 @@ public class CookiesTest {
     assertEquals("Bar=bar; Baz=baz", request.getHeader("Cookie"));
     assertNull(request.getHeader("Cookie2"));
     assertNull(request.getHeader("Quux"));
+  }
+
+  @Test public void acceptOriginalServerMatchesSubdomain() throws Exception {
+    CookieManager cookieManager = new CookieManager(null, ACCEPT_ORIGINAL_SERVER);
+    JavaNetCookieJar cookieJar = new JavaNetCookieJar(cookieManager);
+
+    HttpUrl url = HttpUrl.parse("https://www.squareup.com/");
+    cookieJar.saveFromResponse(url, Arrays.asList(
+        Cookie.parse(url, "a=android; Domain=squareup.com")));
+    List<Cookie> actualCookies = cookieJar.loadForRequest(url);
+    assertEquals(1, actualCookies.size());
+    assertEquals("a", actualCookies.get(0).name());
+    assertEquals("android", actualCookies.get(0).value());
+  }
+
+  @Test public void acceptOriginalServerMatchesRfc2965Dot() throws Exception {
+    CookieManager cookieManager = new CookieManager(null, ACCEPT_ORIGINAL_SERVER);
+    JavaNetCookieJar cookieJar = new JavaNetCookieJar(cookieManager);
+
+    HttpUrl url = HttpUrl.parse("https://www.squareup.com/");
+    cookieJar.saveFromResponse(url, Arrays.asList(
+        Cookie.parse(url, "a=android; Domain=.squareup.com")));
+    List<Cookie> actualCookies = cookieJar.loadForRequest(url);
+    assertEquals(1, actualCookies.size());
+    assertEquals("a", actualCookies.get(0).name());
+    assertEquals("android", actualCookies.get(0).value());
+  }
+
+  @Test public void acceptOriginalServerMatchesExactly() throws Exception {
+    CookieManager cookieManager = new CookieManager(null, ACCEPT_ORIGINAL_SERVER);
+    JavaNetCookieJar cookieJar = new JavaNetCookieJar(cookieManager);
+
+    HttpUrl url = HttpUrl.parse("https://squareup.com/");
+    cookieJar.saveFromResponse(url, Arrays.asList(
+        Cookie.parse(url, "a=android; Domain=squareup.com")));
+    List<Cookie> actualCookies = cookieJar.loadForRequest(url);
+    assertEquals(1, actualCookies.size());
+    assertEquals("a", actualCookies.get(0).name());
+    assertEquals("android", actualCookies.get(0).value());
+  }
+
+  @Test public void acceptOriginalServerDoesNotMatchDifferentServer() throws Exception {
+    CookieManager cookieManager = new CookieManager(null, ACCEPT_ORIGINAL_SERVER);
+    JavaNetCookieJar cookieJar = new JavaNetCookieJar(cookieManager);
+
+    HttpUrl url1 = HttpUrl.parse("https://api.squareup.com/");
+    cookieJar.saveFromResponse(url1, Arrays.asList(
+        Cookie.parse(url1, "a=android; Domain=api.squareup.com")));
+
+    HttpUrl url2 = HttpUrl.parse("https://www.squareup.com/");
+    List<Cookie> actualCookies = cookieJar.loadForRequest(url2);
+    assertEquals(Collections.<Cookie>emptyList(), actualCookies);
   }
 
   private HttpUrl urlWithIpAddress(MockWebServer server, String path) throws Exception {

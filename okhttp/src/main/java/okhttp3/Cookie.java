@@ -530,6 +530,15 @@ public final class Cookie {
   }
 
   @Override public String toString() {
+    return toString(false);
+  }
+
+  /**
+   * @param forObsoleteRfc2965 true to include a leading {@code .} on the domain pattern. This is
+   *     necessary for {@code example.com} to match {@code www.example.com} under RFC 2965. This
+   *     extra dot is ignored by more recent specifications.
+   */
+  String toString(boolean forObsoleteRfc2965) {
     StringBuilder result = new StringBuilder();
     result.append(name);
     result.append('=');
@@ -544,7 +553,11 @@ public final class Cookie {
     }
 
     if (!hostOnly) {
-      result.append("; domain=").append(domain);
+      result.append("; domain=");
+      if (forObsoleteRfc2965) {
+        result.append(".");
+      }
+      result.append(domain);
     }
 
     result.append("; path=").append(path);
