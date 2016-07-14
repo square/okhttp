@@ -32,6 +32,7 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
 import okhttp3.internal.Util;
 import okhttp3.internal.io.FileSystem;
 import okhttp3.internal.platform.Platform;
@@ -388,14 +389,21 @@ public final class DiskLruCache implements Closeable, Flushable {
       journalWriter.close();
     }
 
-    BufferedSink writer = Okio.buffer(fileSystem.sink(journalFileTmp));
+    BufferedSink writer;
+    boolean failed = false;
     try {
-      writer.writeUtf8(MAGIC).writeByte('\n');
-      writer.writeUtf8(VERSION_1).writeByte('\n');
-      writer.writeDecimalLong(appVersion).writeByte('\n');
-      writer.writeDecimalLong(valueCount).writeByte('\n');
-      writer.writeByte('\n');
+      writer = Okio.buffer(fileSystem.sink(getRebuildJournalFile(false)));
+      rebuildJournalWithHeader(writer);
+      writer.close();
+    } catch (IOException e) {
+      writer = Okio.buffer(fileSystem.sink(getRebuildJournalFile(true)));
+      rebuildJournalWithHeader(writer);
+      writer.close();
+      failed = true;
+    }
 
+    writer = Okio.buffer(fileSystem.appendingSink(getRebuildJournalFile(failed)));
+    try {
       for (Entry entry : lruEntries.values()) {
         if (entry.currentEditor != null) {
           writer.writeUtf8(DIRTY).writeByte(' ');
@@ -412,15 +420,31 @@ public final class DiskLruCache implements Closeable, Flushable {
       writer.close();
     }
 
-    if (fileSystem.exists(journalFile)) {
+    if (!failed && fileSystem.exists(journalFile)) {
       fileSystem.rename(journalFile, journalFileBackup);
     }
-    fileSystem.rename(journalFileTmp, journalFile);
+
+    if (!failed) {
+      fileSystem.rename(journalFileTmp, journalFile);
+    }
+
     fileSystem.delete(journalFileBackup);
 
     journalWriter = newJournalWriter();
     hasJournalErrors = false;
     mostRecentRebuildFailed = false;
+  }
+
+  private File getRebuildJournalFile(boolean failed) {
+    return failed ? journalFile : journalFileTmp;
+  }
+
+  private void rebuildJournalWithHeader(BufferedSink writer) throws IOException {
+    writer.writeUtf8(MAGIC).writeByte('\n');
+    writer.writeUtf8(VERSION_1).writeByte('\n');
+    writer.writeDecimalLong(appVersion).writeByte('\n');
+    writer.writeDecimalLong(valueCount).writeByte('\n');
+    writer.writeByte('\n');
   }
 
   /**

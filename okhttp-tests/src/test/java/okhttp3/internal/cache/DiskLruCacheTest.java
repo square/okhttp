@@ -38,10 +38,7 @@ import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import org.junit.rules.Timeout;
 
-import static okhttp3.internal.cache.DiskLruCache.JOURNAL_FILE;
-import static okhttp3.internal.cache.DiskLruCache.JOURNAL_FILE_BACKUP;
-import static okhttp3.internal.cache.DiskLruCache.MAGIC;
-import static okhttp3.internal.cache.DiskLruCache.VERSION_1;
+import static okhttp3.internal.cache.DiskLruCache.*;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
@@ -889,6 +886,18 @@ public final class DiskLruCacheTest {
 
     assertAbsent("a");
     assertValue("b", "bb", "bb");
+  }
+
+  @Test public void rebuildJournalOnUnWritableDisk() throws Exception {
+    while (executor.jobs.isEmpty()) {
+      set("a", "aa", "aa");
+      set("b", "bb", "bb");
+    }
+
+    fileSystem.setFaultyWrite(new File(cacheDir, JOURNAL_FILE_TEMP), true);
+    executor.jobs.removeFirst().run();
+    assertJournalEquals("CLEAN a 2 2", "CLEAN b 2 2");
+    fileSystem.setFaultyWrite(new File(cacheDir, JOURNAL_FILE_TEMP), false);
   }
 
   @Test public void restoreBackupFile() throws Exception {
