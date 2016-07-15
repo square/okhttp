@@ -178,7 +178,7 @@ public final class Cache implements Closeable, Flushable {
     this(directory, maxSize, FileSystem.SYSTEM);
   }
 
-  Cache(File directory, long maxSize, FileSystem fileSystem) {
+  public Cache(File directory, long maxSize, FileSystem fileSystem) {
     this.cache = DiskLruCache.create(fileSystem, directory, VERSION, ENTRY_COUNT, maxSize);
   }
 
