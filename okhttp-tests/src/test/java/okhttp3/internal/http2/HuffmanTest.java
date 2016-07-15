@@ -15,11 +15,11 @@
  */
 package okhttp3.internal.http2;
 
-import java.io.ByteArrayOutputStream;
-import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Random;
+import okio.Buffer;
+import okio.ByteString;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
@@ -30,23 +30,21 @@ public final class HuffmanTest {
   @Test public void roundTripForRequestAndResponse() throws IOException {
     String s = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
     for (int i = 0; i < s.length(); i++) {
-      assertRoundTrip(s.substring(0, i).getBytes());
+      assertRoundTrip(ByteString.encodeUtf8(s.substring(0, i)));
     }
 
     Random random = new Random(123456789L);
     byte[] buf = new byte[4096];
     random.nextBytes(buf);
-    assertRoundTrip(buf);
+    assertRoundTrip(ByteString.of(buf));
   }
 
-  private void assertRoundTrip(byte[] buf) throws IOException {
-    ByteArrayOutputStream baos = new ByteArrayOutputStream();
-    DataOutputStream dos = new DataOutputStream(baos);
+  private void assertRoundTrip(ByteString data) throws IOException {
+    Buffer buffer = new Buffer();
+    Huffman.get().encode(data, buffer);
+    assertEquals(buffer.size(), Huffman.get().encodedLength(data));
 
-    Huffman.get().encode(buf, dos);
-    assertEquals(baos.size(), Huffman.get().encodedLength(buf));
-
-    byte[] decodedBytes = Huffman.get().decode(baos.toByteArray());
-    assertTrue(Arrays.equals(buf, decodedBytes));
+    byte[] decodedBytes = Huffman.get().decode(buffer.readByteArray());
+    assertTrue(Arrays.equals(data.toByteArray(), decodedBytes));
   }
 }

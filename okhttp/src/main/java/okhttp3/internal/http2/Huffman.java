@@ -17,7 +17,8 @@ package okhttp3.internal.http2;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.OutputStream;
+import okio.BufferedSink;
+import okio.ByteString;
 
 /**
  * This class was originally composed from the following classes in <a
@@ -87,12 +88,12 @@ class Huffman {
     buildTree();
   }
 
-  void encode(byte[] data, OutputStream out) throws IOException {
+  void encode(ByteString data, BufferedSink sink) throws IOException {
     long current = 0;
     int n = 0;
 
-    for (int i = 0; i < data.length; i++) {
-      int b = data[i] & 0xFF;
+    for (int i = 0; i < data.size(); i++) {
+      int b = data.getByte(i) & 0xFF;
       int code = CODES[b];
       int nbits = CODE_LENGTHS[b];
 
@@ -102,22 +103,22 @@ class Huffman {
 
       while (n >= 8) {
         n -= 8;
-        out.write(((int) (current >> n)));
+        sink.writeByte(((int) (current >> n)));
       }
     }
 
     if (n > 0) {
       current <<= (8 - n);
       current |= (0xFF >>> n);
-      out.write((int) current);
+      sink.writeByte((int) current);
     }
   }
 
-  int encodedLength(byte[] bytes) {
+  int encodedLength(ByteString bytes) {
     long len = 0;
 
-    for (int i = 0; i < bytes.length; i++) {
-      int b = bytes[i] & 0xFF;
+    for (int i = 0; i < bytes.size(); i++) {
+      int b = bytes.getByte(i) & 0xFF;
       len += CODE_LENGTHS[b];
     }
 

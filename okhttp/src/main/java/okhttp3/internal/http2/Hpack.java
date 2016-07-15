@@ -370,6 +370,7 @@ final class Hpack {
     private static final int SETTINGS_HEADER_TABLE_SIZE_LIMIT = 16384;
 
     private final Buffer out;
+    private final boolean useCompression;
 
     /**
      * In the scenario where the dynamic table size changes multiple times between transmission of
@@ -389,12 +390,13 @@ final class Hpack {
     int dynamicTableByteCount = 0;
 
     Writer(Buffer out) {
-      this(SETTINGS_HEADER_TABLE_SIZE, out);
+      this(SETTINGS_HEADER_TABLE_SIZE, true, out);
     }
 
-    Writer(int headerTableSizeSetting, Buffer out) {
+    Writer(int headerTableSizeSetting, boolean useCompression, Buffer out) {
       this.headerTableSizeSetting = headerTableSizeSetting;
       this.maxDynamicTableByteCount = headerTableSizeSetting;
+      this.useCompression = useCompression;
       this.out = out;
     }
 
@@ -510,8 +512,16 @@ final class Hpack {
     }
 
     void writeByteString(ByteString data) throws IOException {
-      writeInt(data.size(), PREFIX_7_BITS, 0);
-      out.write(data);
+      if (useCompression && Huffman.get().encodedLength(data) < data.size()) {
+        Buffer huffmanBuffer = new Buffer();
+        Huffman.get().encode(data, huffmanBuffer);
+        ByteString huffmanBytes = huffmanBuffer.readByteString();
+        writeInt(huffmanBytes.size(), PREFIX_7_BITS, 0x80);
+        out.write(huffmanBytes);
+      } else {
+        writeInt(data.size(), PREFIX_7_BITS, 0);
+        out.write(data);
+      }
     }
 
     void setHeaderTableSizeSetting(int headerTableSizeSetting) {
