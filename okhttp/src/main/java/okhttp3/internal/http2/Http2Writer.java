@@ -76,7 +76,7 @@ final class Http2Writer implements Closeable {
   public synchronized void applyAndAckSettings(Settings peerSettings) throws IOException {
     if (closed) throw new IOException("closed");
     this.maxFrameSize = peerSettings.getMaxFrameSize(maxFrameSize);
-    if (peerSettings.getHeaderTableSize() > -1) {
+    if (peerSettings.getHeaderTableSize() != -1) {
       hpackWriter.setHeaderTableSizeSetting(peerSettings.getHeaderTableSize());
     }
     int length = 0;
