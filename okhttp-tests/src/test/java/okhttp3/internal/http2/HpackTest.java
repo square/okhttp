@@ -36,7 +36,7 @@ public final class HpackTest {
 
   @Before public void reset() {
     hpackReader = newReader(bytesIn);
-    hpackWriter = new Hpack.Writer(bytesOut);
+    hpackWriter = new Hpack.Writer(4096, false, bytesOut);
   }
 
   /**
@@ -111,7 +111,7 @@ public final class HpackTest {
     // Set to only support 110 bytes (enough for 2 headers).
     // Use a new Writer because we don't support change the dynamic table
     // size after Writer constructed.
-    Hpack.Writer writer = new Hpack.Writer(110, bytesOut);
+    Hpack.Writer writer = new Hpack.Writer(110, false, bytesOut);
     writer.writeHeaders(headerBlock);
 
     assertEquals(bytesIn, bytesOut);
@@ -904,6 +904,25 @@ public final class HpackTest {
   @Test public void dynamicTableSizeHasAnUpperBound() {
     hpackWriter.setHeaderTableSizeSetting(1048576);
     assertEquals(16384, hpackWriter.maxDynamicTableByteCount);
+  }
+
+  @Test public void huffmanEncode() throws IOException {
+    hpackWriter = new Hpack.Writer(4096, true, bytesOut);
+    hpackWriter.writeHeaders(headerEntries("foo", "bar"));
+
+    ByteString expected = new Buffer()
+        .writeByte(0x40) // Literal header, new name.
+        .writeByte(0x82) // String literal is Huffman encoded (len = 2).
+        .writeByte(0x94) // 'foo' Huffman encoded.
+        .writeByte(0xE7)
+        .writeByte(3) // String literal not Huffman encoded (len = 3).
+        .writeByte('b')
+        .writeByte('a')
+        .writeByte('r')
+        .readByteString();
+
+    ByteString actual = bytesOut.readByteString();
+    assertEquals(expected, actual);
   }
 
   private Hpack.Reader newReader(Buffer source) {
