@@ -1278,6 +1278,78 @@ public final class Http2ConnectionTest {
     assertEquals(Http2.TYPE_RST_STREAM, peer.takeFrame().type);
   }
 
+  @Test public void readDeadlineTimesOut() throws Exception {
+    // write the mocking script
+    peer.acceptFrame(); // SYN_STREAM
+    peer.sendFrame().synReply(false, 3, headerEntries("a", "android"));
+    peer.acceptFrame(); // RST_STREAM
+    peer.play();
+
+    // play it back
+    Http2Connection connection = connection(peer);
+    Http2Stream stream = connection.newStream(headerEntries("b", "banana"), false);
+    stream.requestDeadline().timeout(500, TimeUnit.MILLISECONDS);
+    Source source = stream.getSource();
+    long startNanos = System.nanoTime();
+    try {
+      stream.startRequestDeadline();
+      source.read(new Buffer(), 1);
+      fail();
+    } catch (StreamResetException expected) {
+    }
+    long elapsedNanos = System.nanoTime() - startNanos;
+    awaitWatchdogIdle();
+    assertEquals(500d, TimeUnit.NANOSECONDS.toMillis(elapsedNanos), 200d /* 200ms delta */);
+    assertEquals(0, connection.openStreamCount());
+
+    // verify the peer received what was expected
+    assertEquals(Http2.TYPE_HEADERS, peer.takeFrame().type);
+    assertEquals(Http2.TYPE_RST_STREAM, peer.takeFrame().type);
+  }
+
+  @Test public void writeDeadlineTimeout() throws Exception {
+    // Set the peer's receive window to 5 bytes!
+    Settings peerSettings = new Settings().set(INITIAL_WINDOW_SIZE, 5);
+
+    // write the mocking script
+    peer.acceptFrame(); // PING
+    peer.sendFrame().settings(peerSettings);
+    peer.acceptFrame(); // ACK SETTINGS
+    peer.sendFrame().ping(true, 1, 0);
+    peer.acceptFrame(); // SYN_STREAM
+    peer.sendFrame().synReply(false, 3, headerEntries("a", "android"));
+    peer.acceptFrame(); // DATA
+    peer.acceptFrame(); // RST_STREAM
+    peer.play();
+
+    // play it back
+    Http2Connection connection = connection(peer);
+    connection.ping().roundTripTime(); // Make sure settings have been received.
+    Http2Stream stream = connection.newStream(headerEntries("b", "banana"), true);
+    Sink sink = stream.getSink();
+    sink.write(new Buffer().writeUtf8("abcde"), 5);
+    stream.requestDeadline().timeout(500, TimeUnit.MILLISECONDS);
+    long startNanos = System.nanoTime();
+    sink.write(new Buffer().writeUtf8("f"), 1);
+    try {
+      stream.startRequestDeadline();
+      sink.flush(); // This will time out waiting on the write window.
+      fail();
+    } catch (StreamResetException expected) {
+    }
+    long elapsedNanos = System.nanoTime() - startNanos;
+    awaitWatchdogIdle();
+    assertEquals(500d, TimeUnit.NANOSECONDS.toMillis(elapsedNanos), 200d /* 200ms delta */);
+    assertEquals(0, connection.openStreamCount());
+
+    // verify the peer received what was expected
+    assertEquals(Http2.TYPE_PING, peer.takeFrame().type);
+    assertEquals(Http2.TYPE_SETTINGS, peer.takeFrame().type);
+    assertEquals(Http2.TYPE_HEADERS, peer.takeFrame().type);
+    assertEquals(Http2.TYPE_DATA, peer.takeFrame().type);
+    assertEquals(Http2.TYPE_RST_STREAM, peer.takeFrame().type);
+  }
+
   @Test public void outgoingWritesAreBatched() throws Exception {
     // write the mocking script
     peer.acceptFrame(); // SYN_STREAM

@@ -831,7 +831,7 @@ public final class CallTest {
     server.enqueue(new MockResponse());
     server.enqueue(new MockResponse());
 
-    // Call 1: set a deadline on the request body.
+    // Call 1: set a requestDeadline on the request body.
     RequestBody requestBody1 = new RequestBody() {
       @Override public MediaType contentType() {
         return MediaType.parse("text/plain");
@@ -849,7 +849,7 @@ public final class CallTest {
     Response response1 = client.newCall(request1).execute();
     assertEquals(200, response1.code());
 
-    // Call 2: check for the absence of a deadline on the request body.
+    // Call 2: check for the absence of a requestDeadline on the request body.
     RequestBody requestBody2 = new RequestBody() {
       @Override public MediaType contentType() {
         return MediaType.parse("text/plain");
@@ -876,14 +876,14 @@ public final class CallTest {
     server.enqueue(new MockResponse().setBody("abc"));
     server.enqueue(new MockResponse().setBody("def"));
 
-    // Call 1: set a deadline on the response body.
+    // Call 1: set a requestDeadline on the response body.
     Request request1 = new Request.Builder().url(server.url("/")).build();
     Response response1 = client.newCall(request1).execute();
     BufferedSource body1 = response1.body().source();
     assertEquals("abc", body1.readUtf8());
     body1.timeout().deadline(5, TimeUnit.SECONDS);
 
-    // Call 2: check for the absence of a deadline on the request body.
+    // Call 2: check for the absence of a requestDeadline on the request body.
     Request request2 = new Request.Builder().url(server.url("/")).build();
     Response response2 = client.newCall(request2).execute();
     BufferedSource body2 = response2.body().source();

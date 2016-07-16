@@ -47,6 +47,7 @@ public final class OkHttpClientTest {
     assertEquals(10_000, client.connectTimeoutMillis());
     assertEquals(10_000, client.readTimeoutMillis());
     assertEquals(10_000, client.writeTimeoutMillis());
+    assertEquals(10_000, client.requestDeadlineMillis());
   }
 
   @Test public void timeoutValidRange() {
@@ -64,6 +65,10 @@ public final class OkHttpClientTest {
     } catch (IllegalArgumentException ignored) {
     }
     try {
+      builder.requestDeadline(1, TimeUnit.NANOSECONDS);
+    } catch (IllegalArgumentException ignored) {
+    }
+    try {
       builder.connectTimeout(365, TimeUnit.DAYS);
     } catch (IllegalArgumentException ignored) {
     }
@@ -73,6 +78,10 @@ public final class OkHttpClientTest {
     }
     try {
       builder.readTimeout(365, TimeUnit.DAYS);
+    } catch (IllegalArgumentException ignored) {
+    }
+    try {
+      builder.requestDeadline(365, TimeUnit.DAYS);
     } catch (IllegalArgumentException ignored) {
     }
   }

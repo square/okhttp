@@ -61,6 +61,7 @@ public final class Http2Stream {
   final FramedDataSink sink;
   private final StreamTimeout readTimeout = new StreamTimeout();
   private final StreamTimeout writeTimeout = new StreamTimeout();
+  private final StreamTimeout requestDeadline = new StreamTimeout();
 
   /**
    * The reason why this stream was abnormally closed. If there are multiple reasons to abnormally
@@ -188,6 +189,14 @@ public final class Http2Stream {
     return writeTimeout;
   }
 
+  public Timeout requestDeadline() {
+    return requestDeadline;
+  }
+
+  public void startRequestDeadline() {
+    requestDeadline.enter();
+  }
+
   /** Returns a source that reads data from the peer. */
   public Source getSource() {
     return source;
@@ -277,6 +286,7 @@ public final class Http2Stream {
     boolean open;
     synchronized (this) {
       this.source.finished = true;
+      requestDeadline.exit();
       open = isOpen();
       notifyAll();
     }
