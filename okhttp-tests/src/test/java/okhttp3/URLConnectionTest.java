@@ -3130,6 +3130,41 @@ public final class URLConnectionTest {
     assertEquals("/a", redirectedBy.request().url().url().getPath());
   }
 
+  @Test public void attemptAuthorization20Times() throws Exception {
+    for (int i = 0; i < 20; i++) {
+      server.enqueue(new MockResponse().setResponseCode(401));
+    }
+    server.enqueue(new MockResponse().setBody("Success!"));
+
+    String credential = Credentials.basic("jesse", "peanutbutter");
+    urlFactory.setClient(urlFactory.client().newBuilder()
+        .authenticator(new RecordingOkAuthenticator(credential))
+        .build());
+
+    connection = urlFactory.open(server.url("/0").url());
+    assertContent("Success!", connection);
+  }
+
+  @Test public void doesNotAttemptAuthorization21Times() throws Exception {
+    for (int i = 0; i < 21; i++) {
+      server.enqueue(new MockResponse().setResponseCode(401));
+    }
+
+    String credential = Credentials.basic("jesse", "peanutbutter");
+    urlFactory.setClient(urlFactory.client().newBuilder()
+        .authenticator(new RecordingOkAuthenticator(credential))
+        .build());
+
+    connection = urlFactory.open(server.url("/").url());
+    try {
+      connection.getInputStream();
+      fail();
+    } catch (ProtocolException expected) {
+      assertEquals(401, connection.getResponseCode());
+      assertEquals("Too many follow-up requests: 21", expected.getMessage());
+    }
+  }
+
   @Test public void setsNegotiatedProtocolHeader_HTTP_2() throws Exception {
     setsNegotiatedProtocolHeader(Protocol.HTTP_2);
   }
