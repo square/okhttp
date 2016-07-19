@@ -150,7 +150,7 @@ public final class RetryAndFollowUpInterceptor implements Interceptor {
             .build();
       }
 
-      Request followUp = followUpRequest(response);
+      Request followUp = followUpRequest(request, response);
 
       if (followUp == null) {
         if (!forWebSocket) {
@@ -260,7 +260,7 @@ public final class RetryAndFollowUpInterceptor implements Interceptor {
    * either add authentication headers, follow redirects or handle a client request timeout. If a
    * follow-up is either unnecessary or not applicable, this returns null.
    */
-  private Request followUpRequest(Response userResponse) throws IOException {
+  private Request followUpRequest(Request request, Response userResponse) throws IOException {
     if (userResponse == null) throw new IllegalStateException();
     Connection connection = streamAllocation.connection();
     Route route = connection != null
@@ -277,10 +277,28 @@ public final class RetryAndFollowUpInterceptor implements Interceptor {
         if (selectedProxy.type() != Proxy.Type.HTTP) {
           throw new ProtocolException("Received HTTP_PROXY_AUTH (407) code while not using proxy");
         }
-        return client.proxyAuthenticator().authenticate(route, userResponse);
+        String proxyAuth = request.header("Proxy-Authorization");
+
+        if (proxyAuth != null && proxyAuth.length() > 0)
+        {
+          return null;
+        }
+        else
+        {
+          return client.proxyAuthenticator().authenticate(route, userResponse);
+        }
 
       case HTTP_UNAUTHORIZED:
-        return client.authenticator().authenticate(route, userResponse);
+        String auth = request.header("Authorization");
+
+        if (auth != null && auth.length() > 0)
+        {
+          return null;
+        }
+        else
+        {
+          return client.authenticator().authenticate(route, userResponse);
+        }
 
       case HTTP_PERM_REDIRECT:
       case HTTP_TEMP_REDIRECT:
