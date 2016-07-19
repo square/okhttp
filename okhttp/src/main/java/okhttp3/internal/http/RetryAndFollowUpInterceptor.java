@@ -279,24 +279,18 @@ public final class RetryAndFollowUpInterceptor implements Interceptor {
         }
         String proxyAuth = request.header("Proxy-Authorization");
 
-        if (proxyAuth != null && proxyAuth.length() > 0)
-        {
+        if (proxyAuth != null && proxyAuth.length() > 0) {
           return null;
-        }
-        else
-        {
+        } else {
           return client.proxyAuthenticator().authenticate(route, userResponse);
         }
 
       case HTTP_UNAUTHORIZED:
         String auth = request.header("Authorization");
 
-        if (auth != null && auth.length() > 0)
-        {
+        if (auth != null && auth.length() > 0) {
           return null;
-        }
-        else
-        {
+        } else {
           return client.authenticator().authenticate(route, userResponse);
         }
 
