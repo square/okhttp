@@ -18,7 +18,7 @@ package okhttp3.internal.http1;
 import java.io.EOFException;
 import java.io.IOException;
 import java.net.ProtocolException;
-import java.net.SocketTimeoutException;
+import java.util.concurrent.TimeUnit;
 import okhttp3.Headers;
 import okhttp3.HttpUrl;
 import okhttp3.OkHttpClient;
@@ -31,6 +31,7 @@ import okhttp3.internal.connection.RealConnection;
 import okhttp3.internal.connection.StreamAllocation;
 import okhttp3.internal.http.HttpCodec;
 import okhttp3.internal.http.HttpHeaders;
+import okhttp3.internal.http.HttpRequestDeadline;
 import okhttp3.internal.http.RealResponseBody;
 import okhttp3.internal.http.RequestLine;
 import okhttp3.internal.http.StatusLine;
@@ -42,7 +43,6 @@ import okio.Okio;
 import okio.Sink;
 import okio.Source;
 import okio.Timeout;
-import okio.AsyncTimeout;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static okhttp3.internal.Util.checkOffsetAndCount;
@@ -96,9 +96,7 @@ public final class Http1Codec implements HttpCodec {
     this.sink = sink;
     this.requestDeadline = new Http1RequestDeadline();
     if (client != null) {
-      // Setting to AsyncTimeout#timeout() instead of AsyncTimeout#deadline() because the
-      // timeout will not be able to be reused if it's set to a deadline as it will be absolute
-      this.requestDeadline.timeout(client.requestDeadlineMillis(), MILLISECONDS);
+      this.requestDeadline.setHttp1RequestDeadline(client.requestDeadlineMillis(), MILLISECONDS);
     }
   }
 
@@ -510,17 +508,17 @@ public final class Http1Codec implements HttpCodec {
     }
   }
 
-  private class Http1RequestDeadline extends AsyncTimeout {
+  private class Http1RequestDeadline extends HttpRequestDeadline {
     @Override protected void timedOut() {
       cancel();
     }
 
-    @Override protected IOException newTimeoutException(IOException cause) {
-      SocketTimeoutException socketTimeoutException = new SocketTimeoutException("Request");
-      if (cause != null) {
-        socketTimeoutException.initCause(cause);
-      }
-      return socketTimeoutException;
+    /**
+     * Setting to AsyncTimeout#timeout() instead of AsyncTimeout#deadline() because
+     * this will not be able to be reused if it's set to a deadline as it will be absolute.
+     */
+    private void setHttp1RequestDeadline(long deadline, TimeUnit unit) {
+      timeout(deadline, unit);
     }
   }
 }
