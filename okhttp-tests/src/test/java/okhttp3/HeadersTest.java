@@ -329,4 +329,12 @@ public final class HeadersTest {
     assertFalse(headers1.equals(headers2));
     assertFalse(headers1.hashCode() == headers2.hashCode());
   }
+
+  @Test public void headersToString() {
+    Headers headers = new Headers.Builder()
+        .add("A", "a")
+        .add("B", "bb")
+        .build();
+    assertEquals("A: a\nB: bb\n", headers.toString());
+  }
 }
