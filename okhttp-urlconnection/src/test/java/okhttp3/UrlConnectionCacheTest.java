@@ -206,7 +206,9 @@ public final class UrlConnectionCacheTest {
     } else {
       assertNull(Integer.toString(responseCode), cached);
     }
-    server.shutdown(); // tearDown() isn't sufficient; this test starts multiple servers
+
+    // tearDown() isn't sufficient; this test starts multiple servers
+    assertTrue("Server failed to shutdown.", server.shutdown());
   }
 
   @Test public void responseCachingAndInputStreamSkipWithFixedLength() throws IOException {

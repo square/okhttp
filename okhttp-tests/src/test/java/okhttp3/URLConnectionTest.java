@@ -281,7 +281,7 @@ public final class URLConnectionTest {
 
   @Test public void connectRetriesUntilConnectedOrFailed() throws Exception {
     URL url = server.url("/foo").url();
-    server.shutdown();
+    assertTrue("Server failed to shutdown.", server.shutdown());
 
     connection = urlFactory.open(url);
     try {
@@ -311,7 +311,7 @@ public final class URLConnectionTest {
         .proxySelector(new FakeProxySelector()
             .addProxy(server2.toProxyAddress()))
         .build());
-    server2.shutdown();
+    assertTrue("Server failed to shutdown.", server2.shutdown());
 
     connection = urlFactory.open(server.url("/def").url());
     connection.setDoOutput(true);
@@ -2661,7 +2661,7 @@ public final class URLConnectionTest {
     connection1.setReadTimeout(100);
     InputStream input = connection1.getInputStream();
     assertEquals("ABC", readAscii(input, Integer.MAX_VALUE));
-    server.shutdown();
+    assertTrue("Server failed to shutdown.", server.shutdown());
     try {
       HttpURLConnection connection2 = urlFactory.open(server.url("").url());
       connection2.setReadTimeout(100);

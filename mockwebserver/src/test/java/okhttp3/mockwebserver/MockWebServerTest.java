@@ -336,17 +336,17 @@ public final class MockWebServerTest {
 
   @Test public void shutdownWithoutStart() throws IOException {
     MockWebServer server = new MockWebServer();
-    server.shutdown();
+    assertTrue("Server failed to shutdown.", server.shutdown());
   }
 
   @Test public void shutdownWithoutEnqueue() throws IOException {
     MockWebServer server = new MockWebServer();
     server.start();
-    server.shutdown();
+    assertTrue("Server failed to shutdown.", server.shutdown());
   }
 
   @After public void tearDown() throws IOException {
-    server.shutdown();
+    assertTrue("Server failed to shutdown.", server.shutdown());
   }
 
   @Test public void portImplicitlyStarts() throws IOException {
@@ -364,7 +364,7 @@ public final class MockWebServerTest {
   @Test public void differentInstancesGetDifferentPorts() throws IOException {
     MockWebServer other = new MockWebServer();
     assertNotEquals(server.getPort(), other.getPort());
-    other.shutdown();
+    assertTrue("Server failed to shutdown.", other.shutdown());
   }
 
   @Test public void statementStartsAndStops() throws Throwable {
@@ -397,6 +397,6 @@ public final class MockWebServerTest {
     }
 
     // Shutting down the server should unblock the dispatcher.
-    server.shutdown();
+    assertTrue("Server failed to shutdown.", server.shutdown());
   }
 }
