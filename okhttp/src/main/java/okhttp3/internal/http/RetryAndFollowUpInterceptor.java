@@ -88,10 +88,6 @@ public final class RetryAndFollowUpInterceptor implements Interceptor {
     return canceled;
   }
 
-  public OkHttpClient client() {
-    return client;
-  }
-
   public void setForWebSocket(boolean forWebSocket) {
     this.forWebSocket = forWebSocket;
   }

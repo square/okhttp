@@ -28,7 +28,6 @@ import java.net.Proxy;
 import java.net.SocketPermission;
 import java.net.URL;
 import java.security.Permission;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
@@ -302,8 +301,7 @@ public final class OkHttpURLConnection extends HttpURLConnection implements Call
         .build();
   }
 
-  @Override
-  public void setInstanceFollowRedirects(boolean followRedirects) {
+  @Override public void setInstanceFollowRedirects(boolean followRedirects) {
     client = client.newBuilder()
         .followRedirects(followRedirects)
         .build();
@@ -492,12 +490,7 @@ public final class OkHttpURLConnection extends HttpURLConnection implements Call
       return;
     }
 
-    // TODO: Deprecate use of X-Android-Transports header?
-    if ("X-Android-Transports".equals(field) || "X-Android-Protocols".equals(field)) {
-      setProtocols(newValue, false /* append */);
-    } else {
-      requestHeaders.set(field, newValue);
-    }
+    requestHeaders.set(field, newValue);
   }
 
   @Override public void setIfModifiedSince(long newValue) {
@@ -526,35 +519,7 @@ public final class OkHttpURLConnection extends HttpURLConnection implements Call
       return;
     }
 
-    // TODO: Deprecate use of X-Android-Transports header?
-    if ("X-Android-Transports".equals(field) || "X-Android-Protocols".equals(field)) {
-      setProtocols(value, true /* append */);
-    } else {
-      requestHeaders.add(field, value);
-    }
-  }
-
-  /*
-   * Splits and validates a comma-separated string of protocols.
-   * When append == false, we require that the transport list contains "http/1.1".
-   * Throws {@link IllegalStateException} when one of the protocols isn't
-   * defined in {@link Protocol OkHttp's protocol enumeration}.
-   */
-  private void setProtocols(String protocolsString, boolean append) {
-    List<Protocol> protocolsList = new ArrayList<>();
-    if (append) {
-      protocolsList.addAll(client.protocols());
-    }
-    for (String protocol : protocolsString.split(",", -1)) {
-      try {
-        protocolsList.add(Protocol.get(protocol));
-      } catch (IOException e) {
-        throw new IllegalStateException(e);
-      }
-    }
-    client = client.newBuilder()
-        .protocols(protocolsList)
-        .build();
+    requestHeaders.add(field, value);
   }
 
   @Override public void setRequestMethod(String method) throws ProtocolException {

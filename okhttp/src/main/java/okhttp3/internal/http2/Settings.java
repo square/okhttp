@@ -40,14 +40,9 @@ public final class Settings {
   static final int MAX_HEADER_LIST_SIZE = 6;
   /** Window size in bytes. */
   static final int INITIAL_WINDOW_SIZE = 7;
-  /** Flow control options. */
-  static final int FLOW_CONTROL_OPTIONS = 10;
 
   /** Total number of settings. */
   static final int COUNT = 10;
-
-  /** If set, flow control is disabled for streams directed to the sender of these settings. */
-  static final int FLOW_CONTROL_OPTIONS_DISABLED = 0x1;
 
   /** Bitfield of which flags that values. */
   private int set;
@@ -118,13 +113,6 @@ public final class Settings {
   int getInitialWindowSize() {
     int bit = 1 << INITIAL_WINDOW_SIZE;
     return (bit & set) != 0 ? values[INITIAL_WINDOW_SIZE] : DEFAULT_INITIAL_WINDOW_SIZE;
-  }
-
-  // TODO: honor this setting.
-  boolean isFlowControlDisabled() {
-    int bit = 1 << FLOW_CONTROL_OPTIONS;
-    int value = (bit & set) != 0 ? values[FLOW_CONTROL_OPTIONS] : 0;
-    return (value & FLOW_CONTROL_OPTIONS_DISABLED) != 0;
   }
 
   /**
