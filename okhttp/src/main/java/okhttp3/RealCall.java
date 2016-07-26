@@ -103,7 +103,7 @@ final class RealCall implements Call {
     private final Callback responseCallback;
 
     private AsyncCall(Callback responseCallback) {
-      super("OkHttp %s", redactedUrl().toString());
+      super("OkHttp %s", redactedUrl());
       this.responseCallback = responseCallback;
     }
 
@@ -152,8 +152,8 @@ final class RealCall implements Call {
     return string + " to " + redactedUrl();
   }
 
-  HttpUrl redactedUrl() {
-    return originalRequest.url().resolve("/...");
+  String redactedUrl() {
+    return originalRequest.url().redact().toString();
   }
 
   private Response getResponseWithInterceptorChain() throws IOException {

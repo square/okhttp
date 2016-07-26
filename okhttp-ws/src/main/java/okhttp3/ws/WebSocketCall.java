@@ -157,7 +157,7 @@ public final class WebSocketCall {
   private static class StreamWebSocket extends RealWebSocket {
     static RealWebSocket create(StreamAllocation streamAllocation, Response response,
         Random random, WebSocketListener listener) {
-      String url = response.request().url().toString();
+      String url = response.request().url().redact().toString();
       ThreadPoolExecutor replyExecutor =
           new ThreadPoolExecutor(1, 1, 1, SECONDS, new LinkedBlockingDeque<Runnable>(),
               Util.threadFactory(Util.format("OkHttp %s WebSocket", url), true));
