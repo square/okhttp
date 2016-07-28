@@ -17,9 +17,16 @@ package okhttp3.internal.platform;
 
 import org.junit.Test;
 
+import static org.junit.Assert.assertEquals;
+
 public class PlatformTest {
   @Test public void alwaysBuilds() {
     new Platform();
+  }
+
+  /** Guard against the default value changing by accident. */
+  @Test public void defaultPrefix() {
+    assertEquals("OkHttp", new Platform().getPrefix());
   }
 
   public static String getPlatform() {
