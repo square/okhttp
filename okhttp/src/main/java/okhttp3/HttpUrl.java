@@ -842,6 +842,17 @@ public final class HttpUrl {
   }
 
   /**
+   * Returns the HttpUrl with the username, password, path, query, and fragment stripped.
+   * Example: http://username:password@example.com/path returns http://example.com/...
+   */
+  public HttpUrl redact() {
+    Builder builder = newBuilder("/...");
+    builder.username("");
+    builder.password("");
+    return builder.build();
+  }
+
+  /**
    * Returns the URL that would be retrieved by following {@code link} from this URL, or null if
    * the resulting URL is not well-formed.
    */
