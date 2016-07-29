@@ -239,6 +239,25 @@ class AndroidPlatform extends Platform {
         throw new AssertionError(e);
       }
     }
+
+    @Override
+    public boolean equals(Object obj) {
+      if (this == obj) {
+        return true;
+      }
+      if (!(obj instanceof AndroidCertificateChainCleaner)) {
+        return false;
+      }
+      AndroidCertificateChainCleaner that = (AndroidCertificateChainCleaner) obj;
+      boolean result = x509TrustManagerExtensions.equals(that.x509TrustManagerExtensions)
+              && checkServerTrusted.equals(that.checkServerTrusted);
+      return result;
+    }
+
+    @Override
+    public int hashCode() {
+      return checkServerTrusted.hashCode() + 31 * x509TrustManagerExtensions.hashCode();
+    }
   }
 
   /**
