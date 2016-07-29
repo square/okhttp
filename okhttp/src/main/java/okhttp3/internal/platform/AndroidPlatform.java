@@ -239,6 +239,14 @@ class AndroidPlatform extends Platform {
         throw new AssertionError(e);
       }
     }
+
+    @Override public boolean equals(Object other) {
+      return other instanceof AndroidCertificateChainCleaner; // All instances are equivalent.
+    }
+
+    @Override public int hashCode() {
+      return 0;
+    }
   }
 
   /**
