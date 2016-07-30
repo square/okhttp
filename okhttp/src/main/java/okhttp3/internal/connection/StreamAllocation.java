@@ -182,9 +182,9 @@ public final class StreamAllocation {
       }
     }
     RealConnection newConnection = new RealConnection(selectedRoute);
-    acquire(newConnection);
 
     synchronized (connectionPool) {
+      acquire(newConnection);
       Internal.instance.put(connectionPool, newConnection);
       this.connection = newConnection;
       if (canceled) throw new IOException("Canceled");
@@ -317,6 +317,7 @@ public final class StreamAllocation {
    * {@link #release} on the same connection.
    */
   public void acquire(RealConnection connection) {
+    assert (Thread.holdsLock(connectionPool));
     connection.allocations.add(new WeakReference<>(this));
   }
 
