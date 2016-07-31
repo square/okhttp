@@ -33,6 +33,7 @@ import okhttp3.HttpUrl;
 import okhttp3.Interceptor;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
+import okhttp3.RequestBody;
 import okhttp3.Response;
 import okhttp3.Route;
 import okhttp3.internal.connection.RouteException;
@@ -141,8 +142,8 @@ public final class RetryAndFollowUpInterceptor implements Interceptor {
       if (priorResponse != null) {
         response = response.newBuilder()
             .priorResponse(priorResponse.newBuilder()
-                .body(null)
-                .build())
+                    .body(null)
+                    .build())
             .build();
       }
 
@@ -304,17 +305,21 @@ public final class RetryAndFollowUpInterceptor implements Interceptor {
         boolean sameScheme = url.scheme().equals(userResponse.request().url().scheme());
         if (!sameScheme && !client.followSslRedirects()) return null;
 
-        // Redirects don't include a request body.
+        // Most redirects don't include a request body.
         Request.Builder requestBuilder = userResponse.request().newBuilder();
         if (HttpMethod.permitsRequestBody(method)) {
+          final boolean maintainBody = HttpMethod.redirectsWithBody(method);
           if (HttpMethod.redirectsToGet(method)) {
             requestBuilder.method("GET", null);
           } else {
-            requestBuilder.method(method, null);
+            RequestBody requestBody = maintainBody ? userResponse.request().body() : null;
+            requestBuilder.method(method, requestBody);
           }
-          requestBuilder.removeHeader("Transfer-Encoding");
-          requestBuilder.removeHeader("Content-Length");
-          requestBuilder.removeHeader("Content-Type");
+          if (!maintainBody) {
+            requestBuilder.removeHeader("Transfer-Encoding");
+            requestBuilder.removeHeader("Content-Length");
+            requestBuilder.removeHeader("Content-Type");
+          }
         }
 
         // When redirecting across hosts, drop all authentication headers. This
