@@ -15,6 +15,8 @@
  */
 package okhttp3.mockwebserver;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -22,6 +24,7 @@ import okhttp3.Headers;
 import okhttp3.internal.Internal;
 import okhttp3.internal.http2.Settings;
 import okhttp3.ws.WebSocketListener;
+import okio.Okio;
 import okio.Buffer;
 
 /** A scripted response to be replayed by the mock web server. */
@@ -299,5 +302,20 @@ public final class MockResponse implements Cloneable {
 
   @Override public String toString() {
     return status;
+  }
+
+  /**
+   * Creates a MockResponse with body from a resource file on the classpath, e.g. a file relative
+   * to 'src/test/resources'.
+   */
+  public static MockResponse fromResource(String file, Class<?> clz) throws IOException {
+    return from(clz.getResourceAsStream(file));
+  }
+
+  public static MockResponse from(InputStream inputStream) {
+    return new MockResponse()
+      .setBody(
+        Okio.buffer(Okio.source(inputStream)).buffer()
+      );
   }
 }
