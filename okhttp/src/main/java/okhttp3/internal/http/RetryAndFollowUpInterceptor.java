@@ -64,6 +64,7 @@ public final class RetryAndFollowUpInterceptor implements Interceptor {
   private final OkHttpClient client;
   private StreamAllocation streamAllocation;
   private boolean forWebSocket;
+  private Object callStackTrace;
   private volatile boolean canceled;
 
   public RetryAndFollowUpInterceptor(OkHttpClient client) {
@@ -97,6 +98,10 @@ public final class RetryAndFollowUpInterceptor implements Interceptor {
     return forWebSocket;
   }
 
+  public void setCallStackTrace(Object callStackTrace) {
+    this.callStackTrace = callStackTrace;
+  }
+
   public StreamAllocation streamAllocation() {
     return streamAllocation;
   }
@@ -105,7 +110,7 @@ public final class RetryAndFollowUpInterceptor implements Interceptor {
     Request request = chain.request();
 
     streamAllocation = new StreamAllocation(
-        client.connectionPool(), createAddress(request.url()));
+        client.connectionPool(), createAddress(request.url()), callStackTrace);
 
     int followUpCount = 0;
     Response priorResponse = null;
@@ -164,13 +169,14 @@ public final class RetryAndFollowUpInterceptor implements Interceptor {
       }
 
       if (followUp.body() instanceof UnrepeatableRequestBody) {
+        streamAllocation.release();
         throw new HttpRetryException("Cannot retry streamed HTTP body", response.code());
       }
 
       if (!sameConnection(response, followUp.url())) {
         streamAllocation.release();
         streamAllocation = new StreamAllocation(
-            client.connectionPool(), createAddress(followUp.url()));
+            client.connectionPool(), createAddress(followUp.url()), callStackTrace);
       } else if (streamAllocation.codec() != null) {
         throw new IllegalStateException("Closing the body of " + response
             + " didn't close its backing stream. Bad interceptor?");

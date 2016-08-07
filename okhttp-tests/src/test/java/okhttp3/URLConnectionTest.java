@@ -1549,6 +1549,7 @@ public final class URLConnectionTest {
     outputStream.write(body.getBytes("UTF-8"));
     outputStream.close();
     assertEquals(200, connection.getResponseCode());
+    connection.getInputStream().close();
 
     RecordedRequest recordedRequest1 = server.takeRequest();
     assertEquals("POST", recordedRequest1.getMethod());
@@ -2399,6 +2400,7 @@ public final class URLConnectionTest {
 
     assertEquals(408, connection.getResponseCode());
     assertEquals(1, server.getRequestCount());
+    connection.getErrorStream().close();
   }
 
   @Test public void readTimeouts() throws IOException {

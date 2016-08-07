@@ -133,6 +133,26 @@ public class Platform {
     return true;
   }
 
+  /**
+   * Returns an object that holds a stack trace created at the moment this method is executed. This
+   * should be used specifically for {@link java.io.Closeable} objects and in conjunction with
+   * {@link #logCloseableLeak(String, Object)}.
+   */
+  public Object getStackTraceForCloseable(String closer) {
+    if (logger.isLoggable(Level.FINE)) {
+      return new Throwable(closer); // These are expensive to allocate.
+    }
+    return null;
+  }
+
+  public void logCloseableLeak(String message, Object stackTrace) {
+    if (stackTrace == null) {
+      message += " To see where this was allocated, set the OkHttpClient logger level to FINE: "
+          + "Logger.getLogger(OkHttpClient.class.getName()).setLevel(Level.FINE);";
+    }
+    log(WARN, message, (Throwable) stackTrace);
+  }
+
   public static List<String> alpnProtocolNames(List<Protocol> protocols) {
     List<String> names = new ArrayList<>(protocols.size());
     for (int i = 0, size = protocols.size(); i < size; i++) {

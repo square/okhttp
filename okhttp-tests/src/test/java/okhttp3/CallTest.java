@@ -45,7 +45,9 @@ import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.logging.SimpleFormatter;
 import javax.net.ServerSocketFactory;
 import javax.net.ssl.SSLHandshakeException;
 import javax.net.ssl.SSLPeerUnverifiedException;
@@ -79,6 +81,7 @@ import org.junit.rules.TestRule;
 import org.junit.rules.Timeout;
 
 import static java.net.CookiePolicy.ACCEPT_ORIGINAL_SERVER;
+import static okhttp3.TestUtil.awaitGarbageCollection;
 import static okhttp3.TestUtil.defaultClient;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -342,6 +345,7 @@ public final class CallTest {
 
     Response response = client.newCall(request).execute();
     assertEquals(200, response.code());
+    response.body().close();
 
     RecordedRequest recordedRequest1 = server.takeRequest();
     assertEquals("POST", recordedRequest1.getMethod());
@@ -2567,6 +2571,78 @@ public final class CallTest {
         .assertCode(200)
         .assertHeader("abc", "def")
         .assertBody("");
+  }
+
+  @Test public void leakedResponseBodyLogsStackTrace() throws Exception {
+    server.enqueue(new MockResponse()
+        .setBody("This gets leaked."));
+
+    client = new OkHttpClient.Builder()
+        .connectionPool(new ConnectionPool(0, 10, TimeUnit.MILLISECONDS))
+        .build();
+
+    Request request = new Request.Builder()
+        .url(server.url("/"))
+        .build();
+
+    Level original = logger.getLevel();
+    logger.setLevel(Level.FINE);
+    logHandler.setFormatter(new SimpleFormatter());
+    try {
+      client.newCall(request).execute(); // Ignore the response so it gets leaked then GC'd.
+      awaitGarbageCollection();
+
+      String message = logHandler.take();
+      assertTrue(message.contains("WARNING: A connection to " + server.url("/") + " was leaked."
+          + " Did you forget to close a response body?"));
+      assertTrue(message.contains("okhttp3.RealCall.execute("));
+      assertTrue(message.contains("okhttp3.CallTest.leakedResponseBodyLogsStackTrace("));
+    } finally {
+      logger.setLevel(original);
+    }
+  }
+
+  @Test public void asyncLeakedResponseBodyLogsStackTrace() throws Exception {
+    server.enqueue(new MockResponse()
+        .setBody("This gets leaked."));
+
+    client = new OkHttpClient.Builder()
+        .connectionPool(new ConnectionPool(0, 10, TimeUnit.MILLISECONDS))
+        .build();
+
+    Request request = new Request.Builder()
+        .url(server.url("/"))
+        .build();
+
+    Level original = logger.getLevel();
+    logger.setLevel(Level.FINE);
+    logHandler.setFormatter(new SimpleFormatter());
+    try {
+      final CountDownLatch latch = new CountDownLatch(1);
+      client.newCall(request).enqueue(new Callback() {
+        @Override public void onFailure(Call call, IOException e) {
+          fail();
+        }
+
+        @Override public void onResponse(Call call, Response response) throws IOException {
+          // Ignore the response so it gets leaked then GC'd.
+          latch.countDown();
+        }
+      });
+      latch.await();
+      // There's some flakiness when triggering a GC for objects in a separate thread. Adding a
+      // small delay appears to ensure the objects will get GC'd.
+      Thread.sleep(200);
+      awaitGarbageCollection();
+
+      String message = logHandler.take();
+      assertTrue(message.contains("WARNING: A connection to " + server.url("/") + " was leaked."
+          + " Did you forget to close a response body?"));
+      assertTrue(message.contains("okhttp3.RealCall.enqueue("));
+      assertTrue(message.contains("okhttp3.CallTest.asyncLeakedResponseBodyLogsStackTrace("));
+    } finally {
+      logger.setLevel(original);
+    }
   }
 
   private void makeFailingCall() {
