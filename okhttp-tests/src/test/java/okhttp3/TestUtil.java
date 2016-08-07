@@ -43,4 +43,15 @@ public final class TestUtil {
     Arrays.fill(array, c);
     return new String(array);
   }
+
+  /**
+   * See FinalizationTester for discussion on how to best trigger GC in tests.
+   * https://android.googlesource.com/platform/libcore/+/master/support/src/test/java/libcore/
+   * java/lang/ref/FinalizationTester.java
+   */
+  public static void awaitGarbageCollection() throws InterruptedException {
+    Runtime.getRuntime().gc();
+    Thread.sleep(100);
+    System.runFinalization();
+  }
 }

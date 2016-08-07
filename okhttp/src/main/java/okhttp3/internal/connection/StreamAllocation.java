@@ -73,6 +73,7 @@ public final class StreamAllocation {
   public final Address address;
   private Route route;
   private final ConnectionPool connectionPool;
+  private final Object callStackTrace;
 
   // State guarded by connectionPool.
   private final RouteSelector routeSelector;
@@ -82,10 +83,11 @@ public final class StreamAllocation {
   private boolean canceled;
   private HttpCodec codec;
 
-  public StreamAllocation(ConnectionPool connectionPool, Address address) {
+  public StreamAllocation(ConnectionPool connectionPool, Address address, Object callStackTrace) {
     this.connectionPool = connectionPool;
     this.address = address;
     this.routeSelector = new RouteSelector(address, routeDatabase());
+    this.callStackTrace = callStackTrace;
   }
 
   public HttpCodec newStream(OkHttpClient client, boolean doExtensiveHealthChecks) {
@@ -318,7 +320,7 @@ public final class StreamAllocation {
    */
   public void acquire(RealConnection connection) {
     assert (Thread.holdsLock(connectionPool));
-    connection.allocations.add(new WeakReference<>(this));
+    connection.allocations.add(new StreamAllocationReference(this, callStackTrace));
   }
 
   /** Remove this allocation from the connection's list of allocations. */
@@ -339,5 +341,18 @@ public final class StreamAllocation {
 
   @Override public String toString() {
     return address.toString();
+  }
+
+  public static final class StreamAllocationReference extends WeakReference<StreamAllocation> {
+    /**
+     * Captures the stack trace at the time the Call is executed or enqueued. This is helpful for
+     * identifying the origin of connection leaks.
+     */
+    public final Object callStackTrace;
+
+    StreamAllocationReference(StreamAllocation referent, Object callStackTrace) {
+      super(referent);
+      this.callStackTrace = callStackTrace;
+    }
   }
 }

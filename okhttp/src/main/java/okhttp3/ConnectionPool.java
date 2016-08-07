@@ -33,7 +33,6 @@ import okhttp3.internal.connection.StreamAllocation;
 import okhttp3.internal.platform.Platform;
 
 import static okhttp3.internal.Util.closeQuietly;
-import static okhttp3.internal.platform.Platform.WARN;
 
 /**
  * Manages reuse of HTTP and HTTP/2 connections for reduced network latency. HTTP requests that
@@ -246,8 +245,12 @@ public final class ConnectionPool {
       }
 
       // We've discovered a leaked allocation. This is an application bug.
-      Platform.get().log(WARN, "A connection to " + connection.route().address().url()
-          + " was leaked. Did you forget to close a response body?", null);
+      StreamAllocation.StreamAllocationReference streamAllocRef =
+          (StreamAllocation.StreamAllocationReference) reference;
+      String message = "A connection to " + connection.route().address().url()
+          + " was leaked. Did you forget to close a response body?";
+      Platform.get().logCloseableLeak(message, streamAllocRef.callStackTrace);
+
       references.remove(i);
       connection.noNewStreams = true;
 

@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Handler;
 import java.util.logging.LogRecord;
+import java.util.logging.SimpleFormatter;
 
 /**
  * A log handler that records which log messages were published so that a calling test can make
@@ -28,7 +29,11 @@ public final class TestLogHandler extends Handler {
   private final List<String> logs = new ArrayList<>();
 
   @Override public synchronized void publish(LogRecord logRecord) {
-    logs.add(logRecord.getLevel() + ": " + logRecord.getMessage());
+    if (getFormatter() == null) {
+      logs.add(logRecord.getLevel() + ": " + logRecord.getMessage());
+    } else {
+      logs.add(getFormatter().format(logRecord));
+    }
     notifyAll();
   }
 
