@@ -712,7 +712,7 @@ public class OkHttpClient implements Cloneable, Call.Factory {
       return this;
     }
 
-    /** Configure this client to follow redirects. If unset, redirects be followed. */
+    /** Configure this client to follow redirects. If unset, redirects will be followed. */
     public Builder followRedirects(boolean followRedirects) {
       this.followRedirects = followRedirects;
       return this;
