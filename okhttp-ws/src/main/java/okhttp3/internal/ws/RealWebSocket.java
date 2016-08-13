@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.net.ProtocolException;
 import java.util.Random;
 import java.util.concurrent.Executor;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import okhttp3.MediaType;
 import okhttp3.RequestBody;
@@ -41,6 +42,7 @@ public abstract class RealWebSocket implements WebSocket {
   private final WebSocketWriter writer;
   private final WebSocketReader reader;
   private final WebSocketListener listener;
+  private final BufferedSource source;
 
   /** True after calling {@link #close(int, String)}. No writes are allowed afterward. */
   private volatile boolean writerSentClose;
@@ -55,6 +57,7 @@ public abstract class RealWebSocket implements WebSocket {
   public RealWebSocket(boolean isClient, BufferedSource source, BufferedSink sink, Random random,
       final Executor replyExecutor, final WebSocketListener listener, final String url) {
     this.listener = listener;
+    this.source = source;
 
     writer = new WebSocketWriter(isClient, sink, random);
     reader = new WebSocketReader(isClient, source, new FrameCallback() {
@@ -166,6 +169,9 @@ public abstract class RealWebSocket implements WebSocket {
 
     try {
       writer.writeClose(code, reason);
+
+      // Wait graciously 5 seconds for server close response before shutdown
+      this.source.timeout().timeout(5, TimeUnit.SECONDS);
     } catch (IOException e) {
       if (connectionClosed.compareAndSet(false, true)) {
         // Try to close the connection without masking the original exception.
