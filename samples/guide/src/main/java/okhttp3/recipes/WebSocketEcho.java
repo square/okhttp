@@ -1,8 +1,10 @@
 package okhttp3.recipes;
 
 import java.io.IOException;
-import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.RequestBody;
@@ -18,10 +20,12 @@ import static okhttp3.ws.WebSocket.BINARY;
 import static okhttp3.ws.WebSocket.TEXT;
 
 public final class WebSocketEcho implements WebSocketListener {
-  private final Executor writeExecutor = Executors.newSingleThreadExecutor();
+  private final ExecutorService writeExecutor = Executors.newSingleThreadExecutor();
 
   private void run() throws IOException {
-    OkHttpClient client = new OkHttpClient();
+    OkHttpClient client = new OkHttpClient.Builder()
+        .readTimeout(0,  TimeUnit.MILLISECONDS)
+        .build();
 
     Request request = new Request.Builder()
         .url("ws://echo.websocket.org")
@@ -62,10 +66,12 @@ public final class WebSocketEcho implements WebSocketListener {
 
   @Override public void onClose(int code, String reason) {
     System.out.println("CLOSE: " + code + " " + reason);
+    writeExecutor.shutdown();
   }
 
   @Override public void onFailure(IOException e, Response response) {
     e.printStackTrace();
+    writeExecutor.shutdown();
   }
 
   public static void main(String... args) throws IOException {
