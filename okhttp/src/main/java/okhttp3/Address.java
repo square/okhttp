@@ -37,6 +37,7 @@ import static okhttp3.internal.Util.equal;
 public final class Address {
   final HttpUrl url;
   final Dns dns;
+  final boolean useTor;
   final SocketFactory socketFactory;
   final Authenticator proxyAuthenticator;
   final List<Protocol> protocols;
@@ -50,7 +51,8 @@ public final class Address {
   public Address(String uriHost, int uriPort, Dns dns, SocketFactory socketFactory,
       SSLSocketFactory sslSocketFactory, HostnameVerifier hostnameVerifier,
       CertificatePinner certificatePinner, Authenticator proxyAuthenticator, Proxy proxy,
-      List<Protocol> protocols, List<ConnectionSpec> connectionSpecs, ProxySelector proxySelector) {
+      List<Protocol> protocols, List<ConnectionSpec> connectionSpecs, ProxySelector proxySelector,
+      boolean useTor) {
     this.url = new HttpUrl.Builder()
         .scheme(sslSocketFactory != null ? "https" : "http")
         .host(uriHost)
@@ -59,6 +61,8 @@ public final class Address {
 
     if (dns == null) throw new NullPointerException("dns == null");
     this.dns = dns;
+
+    this.useTor = useTor;
 
     if (socketFactory == null) throw new NullPointerException("socketFactory == null");
     this.socketFactory = socketFactory;
@@ -94,6 +98,10 @@ public final class Address {
   /** Returns the service that will be used to resolve IP addresses for hostnames. */
   public Dns dns() {
     return dns;
+  }
+
+  public boolean useTor() {
+      return useTor;
   }
 
   /** Returns the socket factory for new connections. */
