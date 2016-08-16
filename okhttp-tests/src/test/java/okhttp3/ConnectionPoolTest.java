@@ -195,7 +195,7 @@ public final class ConnectionPoolTest {
     return new Address(name, 1, Dns.SYSTEM, SocketFactory.getDefault(), null, null, null,
         new RecordingOkAuthenticator("password"), null, Collections.<Protocol>emptyList(),
         Collections.<ConnectionSpec>emptyList(),
-        ProxySelector.getDefault());
+        ProxySelector.getDefault(), false);
   }
 
   private Route newRoute(Address address) {
