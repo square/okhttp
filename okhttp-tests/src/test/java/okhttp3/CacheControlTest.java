@@ -190,4 +190,11 @@ public final class CacheControlTest {
         .build();
     assertEquals(4, cacheControl.maxAgeSeconds());
   }
+
+  @Test public void longNanosecondsOkay() {
+    CacheControl cacheControl = new CacheControl.Builder()
+        .maxAge(100000000000L, TimeUnit.NANOSECONDS)
+        .build();
+    assertEquals(100, cacheControl.maxAgeSeconds());
+  }
 }
