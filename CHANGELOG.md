@@ -5,7 +5,7 @@ Change Log
 
 _2016-07-10_
 
- *  **Fix an major bug in encoding HTTP headers.** In 3.4.0 and 3.4.0-RC1 OkHttp
+ *  **Fix a major bug in encoding HTTP headers.** In 3.4.0 and 3.4.0-RC1 OkHttp
     had an off-by-one bug in our HPACK encoder. This bug could have caused the
     wrong headers to be emitted after a sequence of HTTP/2 requests! Everyone
     who is using OkHttp 3.4.0 or 3.4.0-RC1 should upgrade for this bug fix.
