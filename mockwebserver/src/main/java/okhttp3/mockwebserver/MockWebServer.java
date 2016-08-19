@@ -19,6 +19,7 @@ package okhttp3.mockwebserver;
 
 import java.io.IOException;
 import java.io.InterruptedIOException;
+import java.net.ConnectException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.ProtocolException;
@@ -850,6 +851,11 @@ public final class MockWebServer implements TestRule {
     private FramedSocketHandler(Socket socket, Protocol protocol) {
       this.socket = socket;
       this.protocol = protocol;
+    }
+
+    @Override
+    public void connectionFailed() throws IOException {
+      throw new ConnectException("HTTP2 connection preface is not sent by client");
     }
 
     @Override public void onStream(Http2Stream stream) throws IOException {
