@@ -85,12 +85,12 @@ public final class SslClient {
      * the server's certificate, further certificates are included in the handshake so the client
      * can build a trusted path to a CA certificate.
      */
-    public Builder certificateChain(HeldCertificate serverCert, HeldCertificate... chain) {
+    public Builder certificateChain(HeldCertificate localCert, HeldCertificate... chain) {
       X509Certificate[] certificates = new X509Certificate[chain.length];
       for (int i = 0; i < chain.length; i++) {
         certificates[i] = chain[i].certificate;
       }
-      return certificateChain(serverCert.keyPair, serverCert.certificate, certificates);
+      return certificateChain(localCert.keyPair, localCert.certificate, certificates);
     }
 
     public Builder certificateChain(KeyPair keyPair, X509Certificate keyCert,
