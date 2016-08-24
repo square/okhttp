@@ -34,7 +34,9 @@ import java.security.cert.Certificate;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
@@ -605,8 +607,15 @@ public final class CallTest {
     Call cloned = call.clone();
     cloned.enqueue(callback);
 
-    callback.await(request.url()).assertBody("abc");
-    callback.await(request.url()).assertBody("def");
+    RecordedResponse firstResponse = callback.await(request.url()).assertSuccessful();
+    RecordedResponse secondResponse = callback.await(request.url()).assertSuccessful();
+
+    Set<String> bodies = new LinkedHashSet<>();
+    bodies.add(firstResponse.getBody());
+    bodies.add(secondResponse.getBody());
+
+    assertTrue(bodies.contains("abc"));
+    assertTrue(bodies.contains("def"));
   }
 
   @Test public void get_Async() throws Exception {
@@ -2286,8 +2295,8 @@ public final class CallTest {
   }
 
   /**
-   * OkHttp has a bug where a `Connection: close` response header is not honored when establishing
-   * a TLS tunnel. https://github.com/square/okhttp/issues/2426
+   * OkHttp has a bug where a `Connection: close` response header is not honored when establishing a
+   * TLS tunnel. https://github.com/square/okhttp/issues/2426
    */
   @Test public void proxyAuthenticateOnConnectWithConnectionClose() throws Exception {
     server.useHttps(sslClient.socketFactory, true);
