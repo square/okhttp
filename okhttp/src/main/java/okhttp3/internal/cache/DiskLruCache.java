@@ -35,13 +35,11 @@ import java.util.regex.Pattern;
 import okhttp3.internal.Util;
 import okhttp3.internal.io.FileSystem;
 import okhttp3.internal.platform.Platform;
-import okio.Buffer;
 import okio.BufferedSink;
 import okio.BufferedSource;
 import okio.Okio;
 import okio.Sink;
 import okio.Source;
-import okio.Timeout;
 
 import static okhttp3.internal.platform.Platform.WARN;
 
@@ -187,7 +185,7 @@ public final class DiskLruCache implements Closeable, Flushable {
           }
         } catch (IOException e) {
           mostRecentRebuildFailed = true;
-          journalWriter = Okio.buffer(NULL_SINK);
+          journalWriter = Okio.buffer(Okio.blackhole());
         }
       }
     }
@@ -822,22 +820,6 @@ public final class DiskLruCache implements Closeable, Flushable {
     }
   }
 
-  private static final Sink NULL_SINK = new Sink() {
-    @Override public void write(Buffer source, long byteCount) throws IOException {
-      source.skip(byteCount);
-    }
-
-    @Override public void flush() throws IOException {
-    }
-
-    @Override public Timeout timeout() {
-      return Timeout.NONE;
-    }
-
-    @Override public void close() throws IOException {
-    }
-  };
-
   /** Edits the values for an entry. */
   public final class Editor {
     private final Entry entry;
@@ -899,7 +881,7 @@ public final class DiskLruCache implements Closeable, Flushable {
           throw new IllegalStateException();
         }
         if (entry.currentEditor != this) {
-          return NULL_SINK;
+          return Okio.blackhole();
         }
         if (!entry.readable) {
           written[index] = true;
@@ -909,7 +891,7 @@ public final class DiskLruCache implements Closeable, Flushable {
         try {
           sink = fileSystem.sink(dirtyFile);
         } catch (FileNotFoundException e) {
-          return NULL_SINK;
+          return Okio.blackhole();
         }
         return new FaultHidingSink(sink) {
           @Override protected void onException(IOException e) {
