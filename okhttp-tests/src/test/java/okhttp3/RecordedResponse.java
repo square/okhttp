@@ -173,4 +173,8 @@ public final class RecordedResponse {
   private String format(long time) {
     return new SimpleDateFormat("HH:mm:ss.SSS").format(new Date(time));
   }
+
+  public String getBody() {
+    return body;
+  }
 }
