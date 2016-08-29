@@ -1249,7 +1249,7 @@ public final class CallTest {
         .build();
 
     // Store a response in the cache.
-    long request1At = System.currentTimeMillis();
+    long request1SentAt = System.currentTimeMillis();
     executeSynchronously("/", "Accept-Language", "fr-CA", "Accept-Charset", "UTF-8")
         .assertCode(200)
         .assertHeader("Donut", "a")
@@ -1273,8 +1273,8 @@ public final class CallTest {
         .assertRequestHeader("Accept-Language", "en-US")
         .assertRequestHeader("Accept-Charset", "UTF-8")
         .assertRequestHeader("If-None-Match") // No If-None-Match on the user's request.
-        .assertSentRequestAtMillis(request1At, request1ReceivedAt)
-        .assertReceivedResponseAtMillis(request1At, request1ReceivedAt);
+        .assertSentRequestAtMillis(request2SentAt, request2ReceivedAt)
+        .assertReceivedResponseAtMillis(request2SentAt, request2ReceivedAt);
 
     // Check the cached response. Its request contains only the saved Vary headers.
     cacheHit.cacheResponse()
@@ -1285,8 +1285,8 @@ public final class CallTest {
         .assertRequestHeader("Accept-Language") // No Vary on Accept-Language.
         .assertRequestHeader("Accept-Charset", "UTF-8") // Because of Vary on Accept-Charset.
         .assertRequestHeader("If-None-Match") // This wasn't present in the original request.
-        .assertSentRequestAtMillis(request1At, request1ReceivedAt)
-        .assertReceivedResponseAtMillis(request1At, request1ReceivedAt);
+        .assertSentRequestAtMillis(request1SentAt, request1ReceivedAt)
+        .assertReceivedResponseAtMillis(request1SentAt, request1ReceivedAt);
 
     // Check the network response. It has the caller's request, plus some caching headers.
     cacheHit.networkResponse()

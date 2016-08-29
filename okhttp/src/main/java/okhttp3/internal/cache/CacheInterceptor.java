@@ -104,6 +104,8 @@ public final class CacheInterceptor implements Interceptor {
       if (validate(cacheResponse, networkResponse)) {
         Response response = cacheResponse.newBuilder()
             .headers(combine(cacheResponse.headers(), networkResponse.headers()))
+            .sentRequestAtMillis(networkResponse.sentRequestAtMillis())
+            .receivedResponseAtMillis(networkResponse.receivedResponseAtMillis())
             .cacheResponse(stripBody(cacheResponse))
             .networkResponse(stripBody(networkResponse))
             .build();
