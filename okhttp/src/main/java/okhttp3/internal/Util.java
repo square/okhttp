@@ -48,6 +48,18 @@ public final class Util {
   /** A cheap and type-safe constant for the UTF-8 Charset. */
   public static final Charset UTF_8 = Charset.forName("UTF-8");
 
+  /** A cheap and type-safe constant for the UTF-16BE Charset. */
+  public static final Charset UTF_16BE = Charset.forName("UTF-16BE");
+
+  /** A cheap and type-safe constant for the UTF-16LE Charset. */
+  public static final Charset UTF_16LE = Charset.forName("UTF-16LE");
+
+  /** A cheap and type-safe constant for the UTF-32BE Charset. */
+  public static final Charset UTF_32BE = Charset.forName("UTF-32BE");
+
+  /** A cheap and type-safe constant for the UTF-32LE Charset. */
+  public static final Charset UTF_32LE = Charset.forName("UTF-32LE");
+
   /** GMT and UTC are equivalent for our purposes. */
   public static final TimeZone UTC = TimeZone.getTimeZone("GMT");
 
@@ -423,5 +435,48 @@ public final class Util {
   /** Returns a {@link Locale#US} formatted {@link String}. */
   public static String format(String format, Object... args) {
     return String.format(Locale.US, format, args);
+  }
+
+  /**
+   * Returns a string with the BOM considered and stripped.
+   * @param bytes bytes that may or may not start with a BOM
+   * @param charset the default charset, if no BOM is specified
+   * @return BOM-less string
+   */
+  public static String getStringConsideringBOM(byte[] bytes, Charset charset) {
+    int bomSize = 0;
+
+    if (bytes.length >= 3) {
+      if (bytes[0] == (byte) 0xEF
+              && bytes[1] == (byte) 0xBB
+              && bytes[2] == (byte) 0xBF) {
+        bomSize = 3;
+        charset = UTF_8;
+      }
+    } else if (bytes.length >= 2) {
+      if (bytes[0] == (byte) 0xFE && bytes[1] == (byte) 0xFF) {
+        bomSize = 2;
+        charset = UTF_16BE;
+      } else if (bytes[0] == (byte) 0xFF && bytes[1] == (byte) 0xFE) {
+        bomSize = 2;
+        charset = UTF_16LE;
+      }
+    } else if (bytes.length >= 4) {
+      if (bytes[0] == (byte) 0x00
+              && bytes[1] == (byte) 0x00
+              && bytes[2] == (byte) 0xFE
+              && bytes[3] == (byte) 0xFF) {
+        bomSize = 4;
+        charset = UTF_32BE;
+      } else if (bytes[0] == (byte) 0xFE
+              && bytes[1] == (byte) 0xFF
+              && bytes[2] == (byte) 0x00
+              && bytes[3] == (byte) 0x00) {
+        bomSize = 4;
+        charset = UTF_32LE;
+      }
+    }
+
+    return new String(bytes, bomSize, bytes.length - bomSize, charset);
   }
 }

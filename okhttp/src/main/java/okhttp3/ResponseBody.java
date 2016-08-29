@@ -162,7 +162,7 @@ public abstract class ResponseBody implements Closeable {
    * possibility for your response.
    */
   public final String string() throws IOException {
-    return new String(bytes(), charset().name());
+    return Util.getStringConsideringBOM(bytes(), charset());
   }
 
   private Charset charset() {
