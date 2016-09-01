@@ -152,7 +152,6 @@ final class Hpack {
     }
 
     private void clearDynamicTable() {
-      headerList.clear();
       Arrays.fill(dynamicTable, null);
       nextHeaderIndex = dynamicTable.length - 1;
       headerCount = 0;
@@ -463,29 +462,56 @@ final class Hpack {
         smallestHeaderTableSizeSetting = Integer.MAX_VALUE;
         writeInt(maxDynamicTableByteCount, PREFIX_5_BITS, 0x20);
       }
-      // TODO: implement index tracking
+
       for (int i = 0, size = headerBlock.size(); i < size; i++) {
         Header header = headerBlock.get(i);
         ByteString name = header.name.toAsciiLowercase();
         ByteString value = header.value;
+        int headerIndex = -1;
+        int headerNameIndex = -1;
+
         Integer staticIndex = NAME_TO_FIRST_INDEX.get(name);
-        if (staticIndex != null) {
-          // Literal Header Field without Indexing - Indexed Name.
-          writeInt(staticIndex + 1, PREFIX_4_BITS, 0);
+        if (staticIndex != null) headerNameIndex = staticIndex + 1;
+
+        // Only search a subset of the static header table. Most entries have an empty value, so
+        // it's unnecessary to waste cycles looking at them.
+        for (int j = 1; j < 7; j++) {
+          if (Util.equal(STATIC_HEADER_TABLE[j], header)) {
+            headerIndex = j + 1;
+            break;
+          }
+        }
+
+        if (headerIndex == -1) {
+          for (int j = nextHeaderIndex + 1, length = dynamicTable.length; j < length; j++) {
+            if (Util.equal(dynamicTable[j], header)) {
+              headerIndex = j - nextHeaderIndex + STATIC_HEADER_TABLE.length;
+              break;
+            } else if (headerNameIndex == -1 && Util.equal(dynamicTable[j].name, name)) {
+              headerNameIndex = j - nextHeaderIndex + STATIC_HEADER_TABLE.length;
+            }
+          }
+        }
+
+        if (headerIndex != -1) {
+          // Indexed Header Field.
+          writeInt(headerIndex, PREFIX_7_BITS, 0x80);
+        } else if (headerNameIndex == -1) {
+          // Literal Header Field with Incremental Indexing - New Name.
+          out.writeByte(0x40);
+          writeByteString(name);
+          writeByteString(value);
+          insertIntoDynamicTable(header);
+        } else if (name.startsWith(Header.PSEUDO_PREFIX) && !Header.TARGET_AUTHORITY.equals(name)) {
+          // Follow Chromes lead - only include the :authority pseudo header, but exclude all other
+          // pseudo headers. Literal Header Field without Indexing - Indexed Name.
+          writeInt(headerNameIndex, PREFIX_4_BITS, 0);
           writeByteString(value);
         } else {
-          int dynamicIndex = Util.indexOf(dynamicTable, header);
-          if (dynamicIndex != -1) {
-            // Indexed Header.
-            writeInt(dynamicIndex - nextHeaderIndex + STATIC_HEADER_TABLE.length, PREFIX_7_BITS,
-                0x80);
-          } else {
-            // Literal Header Field with Incremental Indexing - New Name
-            out.writeByte(0x40);
-            writeByteString(name);
-            writeByteString(value);
-            insertIntoDynamicTable(header);
-          }
+          // Literal Header Field with Incremental Indexing - Indexed Name.
+          writeInt(headerNameIndex, PREFIX_6_BITS, 0x40);
+          writeByteString(value);
+          insertIntoDynamicTable(header);
         }
       }
     }
