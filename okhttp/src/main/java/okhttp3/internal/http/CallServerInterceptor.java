@@ -20,6 +20,7 @@ import java.net.ProtocolException;
 import okhttp3.Interceptor;
 import okhttp3.Request;
 import okhttp3.Response;
+import okhttp3.ResponseBody;
 import okhttp3.internal.connection.StreamAllocation;
 import okio.BufferedSink;
 import okio.Okio;
@@ -60,6 +61,10 @@ public final class CallServerInterceptor implements Interceptor {
     if (!forWebSocket || response.code() != 101) {
       response = response.newBuilder()
           .body(httpCodec.openResponseBody(response))
+          .build();
+    } else {
+      response = response.newBuilder()
+          .body(ResponseBody.create(null, new byte[0]))
           .build();
     }
 
