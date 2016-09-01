@@ -37,6 +37,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 import okhttp3.HttpUrl;
 import okio.Buffer;
+import okio.BufferedSource;
 import okio.ByteString;
 import okio.Source;
 
@@ -45,8 +46,17 @@ public final class Util {
   public static final byte[] EMPTY_BYTE_ARRAY = new byte[0];
   public static final String[] EMPTY_STRING_ARRAY = new String[0];
 
-  /** A cheap and type-safe constant for the UTF-8 Charset. */
+  private static final ByteString UTF_8_BOM = ByteString.decodeHex("efbbff");
+  private static final ByteString UTF_16_BE_BOM = ByteString.decodeHex("feff");
+  private static final ByteString UTF_16_LE_BOM = ByteString.decodeHex("fffe");
+  private static final ByteString UTF_32_BE_BOM = ByteString.decodeHex("0000ffff");
+  private static final ByteString UTF_32_LE_BOM = ByteString.decodeHex("ffff0000");
+
   public static final Charset UTF_8 = Charset.forName("UTF-8");
+  private static final Charset UTF_16_BE = Charset.forName("UTF-16BE");
+  private static final Charset UTF_16_LE = Charset.forName("UTF-16LE");
+  private static final Charset UTF_32_BE = Charset.forName("UTF-32BE");
+  private static final Charset UTF_32_LE = Charset.forName("UTF-32LE");
 
   /** GMT and UTC are equivalent for our purposes. */
   public static final TimeZone UTC = TimeZone.getTimeZone("GMT");
@@ -423,5 +433,29 @@ public final class Util {
   /** Returns a {@link Locale#US} formatted {@link String}. */
   public static String format(String format, Object... args) {
     return String.format(Locale.US, format, args);
+  }
+
+  public static Charset bomAwareCharset(BufferedSource source, Charset charset) throws IOException {
+    if (source.rangeEquals(0, UTF_8_BOM)) {
+      source.skip(UTF_8_BOM.size());
+      return UTF_8;
+    }
+    if (source.rangeEquals(0, UTF_16_BE_BOM)) {
+      source.skip(UTF_16_BE_BOM.size());
+      return UTF_16_BE;
+    }
+    if (source.rangeEquals(0, UTF_16_LE_BOM)) {
+      source.skip(UTF_16_LE_BOM.size());
+      return UTF_16_LE;
+    }
+    if (source.rangeEquals(0, UTF_32_BE_BOM)) {
+      source.skip(UTF_32_BE_BOM.size());
+      return UTF_32_BE;
+    }
+    if (source.rangeEquals(0, UTF_32_LE_BOM)) {
+      source.skip(UTF_32_LE_BOM.size());
+      return UTF_32_LE;
+    }
+    return charset;
   }
 }
