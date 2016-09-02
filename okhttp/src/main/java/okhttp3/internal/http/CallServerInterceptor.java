@@ -20,6 +20,7 @@ import java.net.ProtocolException;
 import okhttp3.Interceptor;
 import okhttp3.Request;
 import okhttp3.Response;
+import okhttp3.internal.Util;
 import okhttp3.internal.connection.StreamAllocation;
 import okio.BufferedSink;
 import okio.Okio;
@@ -57,7 +58,13 @@ public final class CallServerInterceptor implements Interceptor {
         .receivedResponseAtMillis(System.currentTimeMillis())
         .build();
 
-    if (!forWebSocket || response.code() != 101) {
+    int code = response.code();
+    if (forWebSocket && code == 101) {
+      // Connection is upgrading, but we need to ensure interceptors see a non-null response body.
+      response = response.newBuilder()
+          .body(Util.EMPTY_RESPONSE)
+          .build();
+    } else {
       response = response.newBuilder()
           .body(httpCodec.openResponseBody(response))
           .build();
@@ -68,7 +75,6 @@ public final class CallServerInterceptor implements Interceptor {
       streamAllocation.noNewStreams();
     }
 
-    int code = response.code();
     if ((code == 204 || code == 205) && response.body().contentLength() > 0) {
       throw new ProtocolException(
           "HTTP " + code + " had non-zero Content-Length: " + response.body().contentLength());

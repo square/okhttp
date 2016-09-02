@@ -17,6 +17,7 @@ package okhttp3;
 
 import java.net.URL;
 import java.util.List;
+import okhttp3.internal.Util;
 import okhttp3.internal.http.HttpMethod;
 
 /**
@@ -215,7 +216,7 @@ public final class Request {
     }
 
     public Builder delete() {
-      return delete(RequestBody.create(null, new byte[0]));
+      return delete(Util.EMPTY_REQUEST);
     }
 
     public Builder put(RequestBody body) {

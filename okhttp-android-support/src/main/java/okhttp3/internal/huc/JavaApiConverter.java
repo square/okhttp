@@ -58,8 +58,6 @@ import okio.Sink;
  * Helper methods that convert between Java and OkHttp representations.
  */
 public final class JavaApiConverter {
-  private static final RequestBody EMPTY_REQUEST_BODY = RequestBody.create(null, new byte[0]);
-
   /** Synthetic response header: the local time when the request was sent. */
   private static final String SENT_MILLIS = Platform.get().getPrefix() + "-Sent-Millis";
 
@@ -92,7 +90,7 @@ public final class JavaApiConverter {
     // OkHttp's Call API requires a placeholder body; the real body will be streamed separately.
     String requestMethod = httpUrlConnection.getRequestMethod();
     RequestBody placeholderBody = HttpMethod.requiresRequestBody(requestMethod)
-        ? EMPTY_REQUEST_BODY
+        ? Util.EMPTY_REQUEST
         : null;
 
     Request okRequest = new Request.Builder()
@@ -280,7 +278,7 @@ public final class JavaApiConverter {
       URI uri, String requestMethod, Map<String, List<String>> requestHeaders) {
     // OkHttp's Call API requires a placeholder body; the real body will be streamed separately.
     RequestBody placeholderBody = HttpMethod.requiresRequestBody(requestMethod)
-        ? EMPTY_REQUEST_BODY
+        ? Util.EMPTY_REQUEST
         : null;
 
     Request.Builder builder = new Request.Builder()

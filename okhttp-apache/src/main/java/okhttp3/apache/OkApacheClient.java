@@ -10,6 +10,7 @@ import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
 import okhttp3.ResponseBody;
+import okhttp3.internal.Util;
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpEntityEnclosingRequest;
@@ -66,7 +67,7 @@ public final class OkApacheClient implements HttpClient {
           builder.header(encoding.getName(), encoding.getValue());
         }
       } else {
-        body = RequestBody.create(null, new byte[0]);
+        body = Util.EMPTY_REQUEST;
       }
     }
     builder.method(method, body);

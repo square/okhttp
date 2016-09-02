@@ -21,6 +21,7 @@ import java.util.Random;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
+import okhttp3.Interceptor;
 import okhttp3.OkHttpClient;
 import okhttp3.RecordingHostnameVerifier;
 import okhttp3.Request;
@@ -36,6 +37,7 @@ import org.junit.Rule;
 import org.junit.Test;
 
 import static okhttp3.ws.WebSocket.TEXT;
+import static org.junit.Assert.assertNotNull;
 
 public final class WebSocketCallTest {
   @Rule public final MockWebServer server = new MockWebServer();
@@ -43,7 +45,15 @@ public final class WebSocketCallTest {
   private final SslClient sslClient = SslClient.localhost();
   private final WebSocketRecorder listener = new WebSocketRecorder();
   private final Random random = new Random(0);
-  private OkHttpClient client = new OkHttpClient();
+  private OkHttpClient client = new OkHttpClient.Builder()
+      .addInterceptor(new Interceptor() {
+        @Override public Response intercept(Chain chain) throws IOException {
+          Response response = chain.proceed(chain.request());
+          assertNotNull(response.body()); // Ensure application interceptors never see a null body.
+          return response;
+        }
+      })
+      .build();
 
   @After public void tearDown() {
     listener.assertExhausted();
