@@ -1726,8 +1726,10 @@ public final class HttpUrl {
   }
 
   private List<String> percentDecode(List<String> list, boolean plusIsSpace) {
-    List<String> result = new ArrayList<>(list.size());
-    for (String s : list) {
+    int size = list.size();
+    List<String> result = new ArrayList<>(size);
+    for (int i = 0; i < size; i++) {
+      String s = list.get(i);
       result.add(s != null ? percentDecode(s, plusIsSpace) : null);
     }
     return Collections.unmodifiableList(result);
