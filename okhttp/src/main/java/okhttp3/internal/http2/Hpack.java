@@ -471,24 +471,30 @@ final class Hpack {
         int headerNameIndex = -1;
 
         Integer staticIndex = NAME_TO_FIRST_INDEX.get(name);
-        if (staticIndex != null) headerNameIndex = staticIndex + 1;
-
-        // Only search a subset of the static header table. Most entries have an empty value, so
-        // it's unnecessary to waste cycles looking at them.
-        for (int j = 1; j < 7; j++) {
-          if (Util.equal(STATIC_HEADER_TABLE[j], header)) {
-            headerIndex = j + 1;
-            break;
+        if (staticIndex != null) {
+          headerNameIndex = staticIndex + 1;
+          if (headerNameIndex > 1 && headerNameIndex < 8) {
+            // Only search a subset of the static header table. Most entries have an empty value, so
+            // it's unnecessary to waste cycles looking at them. This check is built on the
+            // observation that the header entries we care about are in adjacent pairs, and we
+            // always know the first index of the pair.
+            if (Util.equal(STATIC_HEADER_TABLE[headerNameIndex - 1].value, value)) {
+              headerIndex = headerNameIndex;
+            } else if (Util.equal(STATIC_HEADER_TABLE[headerNameIndex].value, value)) {
+              headerIndex = headerNameIndex + 1;
+            }
           }
         }
 
         if (headerIndex == -1) {
           for (int j = nextHeaderIndex + 1, length = dynamicTable.length; j < length; j++) {
-            if (Util.equal(dynamicTable[j], header)) {
-              headerIndex = j - nextHeaderIndex + STATIC_HEADER_TABLE.length;
-              break;
-            } else if (headerNameIndex == -1 && Util.equal(dynamicTable[j].name, name)) {
-              headerNameIndex = j - nextHeaderIndex + STATIC_HEADER_TABLE.length;
+            if (Util.equal(dynamicTable[j].name, name)) {
+              if (Util.equal(dynamicTable[j].value, value)) {
+                headerIndex = j - nextHeaderIndex + STATIC_HEADER_TABLE.length;
+                break;
+              } else if (headerNameIndex == -1) {
+                headerNameIndex = j - nextHeaderIndex + STATIC_HEADER_TABLE.length;
+              }
             }
           }
         }

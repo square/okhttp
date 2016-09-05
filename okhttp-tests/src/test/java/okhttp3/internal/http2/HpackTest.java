@@ -925,9 +925,29 @@ public final class HpackTest {
     assertEquals(expected, actual);
   }
 
-  @Test public void staticTableIndexedHeader() throws IOException {
+  @Test public void staticTableIndexedHeaders() throws IOException {
     hpackWriter.writeHeaders(headerEntries(":method", "GET"));
     assertBytes(0x82);
+    assertEquals(0, hpackWriter.headerCount);
+
+    hpackWriter.writeHeaders(headerEntries(":method", "POST"));
+    assertBytes(0x83);
+    assertEquals(0, hpackWriter.headerCount);
+
+    hpackWriter.writeHeaders(headerEntries(":path", "/"));
+    assertBytes(0x84);
+    assertEquals(0, hpackWriter.headerCount);
+
+    hpackWriter.writeHeaders(headerEntries(":path", "/index.html"));
+    assertBytes(0x85);
+    assertEquals(0, hpackWriter.headerCount);
+
+    hpackWriter.writeHeaders(headerEntries(":scheme", "http"));
+    assertBytes(0x86);
+    assertEquals(0, hpackWriter.headerCount);
+
+    hpackWriter.writeHeaders(headerEntries(":scheme", "https"));
+    assertBytes(0x87);
     assertEquals(0, hpackWriter.headerCount);
   }
 
@@ -948,8 +968,8 @@ public final class HpackTest {
     assertBytes(0x02, 3, 'P', 'U', 'T');
     assertEquals(0, hpackWriter.headerCount);
 
-    hpackWriter.writeHeaders(headerEntries(":method", "PUT"));
-    assertBytes(0x02, 3, 'P', 'U', 'T');
+    hpackWriter.writeHeaders(headerEntries(":path", "/okhttp"));
+    assertBytes(0x04, 7, '/', 'o', 'k', 'h', 't', 't', 'p');
     assertEquals(0, hpackWriter.headerCount);
   }
 
