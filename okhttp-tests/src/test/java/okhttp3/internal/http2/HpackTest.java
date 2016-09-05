@@ -925,6 +925,77 @@ public final class HpackTest {
     assertEquals(expected, actual);
   }
 
+  @Test public void staticTableIndexedHeader() throws IOException {
+    hpackWriter.writeHeaders(headerEntries(":method", "GET"));
+    assertBytes(0x82);
+    assertEquals(0, hpackWriter.headerCount);
+  }
+
+  @Test public void dynamicTableIndexedHeader() throws IOException {
+    hpackWriter.writeHeaders(headerEntries("custom-key", "custom-header"));
+    assertBytes(0x40,
+        10, 'c', 'u', 's', 't', 'o', 'm', '-', 'k', 'e', 'y',
+        13, 'c', 'u', 's', 't', 'o', 'm', '-', 'h', 'e', 'a', 'd', 'e', 'r');
+    assertEquals(1, hpackWriter.headerCount);
+
+    hpackWriter.writeHeaders(headerEntries("custom-key", "custom-header"));
+    assertBytes(0xbe);
+    assertEquals(1, hpackWriter.headerCount);
+  }
+
+  @Test public void doNotIndexPseudoHeaders() throws IOException {
+    hpackWriter.writeHeaders(headerEntries(":method", "PUT"));
+    assertBytes(0x02, 3, 'P', 'U', 'T');
+    assertEquals(0, hpackWriter.headerCount);
+
+    hpackWriter.writeHeaders(headerEntries(":method", "PUT"));
+    assertBytes(0x02, 3, 'P', 'U', 'T');
+    assertEquals(0, hpackWriter.headerCount);
+  }
+
+  @Test public void incrementalIndexingWithAuthorityPseudoHeader() throws IOException {
+    hpackWriter.writeHeaders(headerEntries(":authority", "foo.com"));
+    assertBytes(0x41, 7, 'f', 'o', 'o', '.', 'c', 'o', 'm');
+    assertEquals(1, hpackWriter.headerCount);
+
+    hpackWriter.writeHeaders(headerEntries(":authority", "foo.com"));
+    assertBytes(0xbe);
+    assertEquals(1, hpackWriter.headerCount);
+
+    // If the :authority header somehow changes, it should be re-added to the dynamic table.
+    hpackWriter.writeHeaders(headerEntries(":authority", "bar.com"));
+    assertBytes(0x41, 7, 'b', 'a', 'r', '.', 'c', 'o', 'm');
+    assertEquals(2, hpackWriter.headerCount);
+
+    hpackWriter.writeHeaders(headerEntries(":authority", "bar.com"));
+    assertBytes(0xbe);
+    assertEquals(2, hpackWriter.headerCount);
+  }
+
+  @Test public void incrementalIndexingWithStaticTableIndexedName() throws IOException {
+    hpackWriter.writeHeaders(headerEntries("accept-encoding", "gzip"));
+    assertBytes(0x50, 4, 'g', 'z', 'i', 'p');
+    assertEquals(1, hpackWriter.headerCount);
+
+    hpackWriter.writeHeaders(headerEntries("accept-encoding", "gzip"));
+    assertBytes(0xbe);
+    assertEquals(1, hpackWriter.headerCount);
+  }
+
+  @Test public void incrementalIndexingWithDynamcTableIndexedName() throws IOException {
+    hpackWriter.writeHeaders(headerEntries("foo", "bar"));
+    assertBytes(0x40, 3, 'f', 'o', 'o', 3, 'b', 'a', 'r');
+    assertEquals(1, hpackWriter.headerCount);
+
+    hpackWriter.writeHeaders(headerEntries("foo", "bar1"));
+    assertBytes(0x7e, 4, 'b', 'a', 'r', '1');
+    assertEquals(2, hpackWriter.headerCount);
+
+    hpackWriter.writeHeaders(headerEntries("foo", "bar1"));
+    assertBytes(0xbe);
+    assertEquals(2, hpackWriter.headerCount);
+  }
+
   private Hpack.Reader newReader(Buffer source) {
     return new Hpack.Reader(4096, source);
   }
