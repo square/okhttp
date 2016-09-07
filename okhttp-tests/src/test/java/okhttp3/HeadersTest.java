@@ -75,10 +75,12 @@ public final class HeadersTest {
         .add("foo: bar")
         .add(" foo: baz") // Name leading whitespace is trimmed.
         .add("foo : bak") // Name trailing whitespace is trimmed.
+        .add("\tkey\t:\tvalue\t") // '\t' also counts as whitespace
         .add("ping:  pong  ") // Value whitespace is trimmed.
         .add("kit:kat") // Space after colon is not required.
         .build();
     assertEquals(Arrays.asList("bar", "baz", "bak"), headers.values("foo"));
+    assertEquals(Arrays.asList("value"), headers.values("key"));
     assertEquals(Arrays.asList("pong"), headers.values("ping"));
     assertEquals(Arrays.asList("kat"), headers.values("kit"));
   }
