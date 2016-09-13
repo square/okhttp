@@ -29,6 +29,7 @@ import okhttp3.RequestBody;
 import okhttp3.Response;
 import okhttp3.ResponseBody;
 import okhttp3.internal.tls.SslClient;
+import okhttp3.internal.ws.RealWebSocketCall;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import okio.Buffer;
@@ -231,7 +232,7 @@ public final class WebSocketCallTest {
   }
 
   private WebSocket awaitWebSocket(Request request) {
-    WebSocketCall call = new WebSocketCall(client, request, random);
+    WebSocketCall call = new RealWebSocketCall(client, request, random);
 
     final AtomicReference<Response> responseRef = new AtomicReference<>();
     final AtomicReference<WebSocket> webSocketRef = new AtomicReference<>();
