@@ -16,6 +16,7 @@
 package okhttp3.mockwebserver;
 
 import java.io.BufferedReader;
+import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -337,6 +338,11 @@ public final class MockWebServerTest {
   @Test public void shutdownWithoutStart() throws IOException {
     MockWebServer server = new MockWebServer();
     server.shutdown();
+  }
+
+  @Test public void closeViaClosable() throws IOException {
+    Closeable server = new MockWebServer();
+    server.close();
   }
 
   @Test public void shutdownWithoutEnqueue() throws IOException {

@@ -17,6 +17,7 @@
 
 package okhttp3.mockwebserver;
 
+import java.io.Closeable;
 import java.io.IOException;
 import java.io.InterruptedIOException;
 import java.net.InetAddress;
@@ -99,7 +100,7 @@ import static okhttp3.mockwebserver.SocketPolicy.UPGRADE_TO_SSL_AT_END;
  * A scriptable web server. Callers supply canned responses and the server replays them upon request
  * in sequence.
  */
-public final class MockWebServer implements TestRule {
+public final class MockWebServer implements TestRule, Closeable {
   static {
     Internal.initializeInstanceForTests();
   }
@@ -805,6 +806,10 @@ public final class MockWebServer implements TestRule {
 
   @Override public String toString() {
     return "MockWebServer[" + port + "]";
+  }
+
+  @Override public void close() throws IOException {
+    shutdown();
   }
 
   /** A buffer wrapper that drops data after {@code bodyLimit} bytes. */
