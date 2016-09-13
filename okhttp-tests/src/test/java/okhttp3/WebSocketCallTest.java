@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package okhttp3.ws;
+package okhttp3;
 
 import java.io.IOException;
 import java.net.ProtocolException;
@@ -21,13 +21,6 @@ import java.util.Random;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
-import okhttp3.Interceptor;
-import okhttp3.OkHttpClient;
-import okhttp3.RecordingHostnameVerifier;
-import okhttp3.Request;
-import okhttp3.RequestBody;
-import okhttp3.Response;
-import okhttp3.ResponseBody;
 import okhttp3.internal.tls.SslClient;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
@@ -36,7 +29,7 @@ import org.junit.After;
 import org.junit.Rule;
 import org.junit.Test;
 
-import static okhttp3.ws.WebSocket.TEXT;
+import static okhttp3.WebSocket.TEXT;
 import static org.junit.Assert.assertNotNull;
 
 public final class WebSocketCallTest {
@@ -231,7 +224,7 @@ public final class WebSocketCallTest {
   }
 
   private WebSocket awaitWebSocket(Request request) {
-    WebSocketCall call = new WebSocketCall(client, request, random);
+    WebSocketCall call = new RealWebSocketCall(client, request, random);
 
     final AtomicReference<Response> responseRef = new AtomicReference<>();
     final AtomicReference<WebSocket> webSocketRef = new AtomicReference<>();

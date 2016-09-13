@@ -19,11 +19,6 @@
       <version>${project.version}</version>
     </dependency>
     <dependency>
-      <groupId>com.squareup.okhttp3</groupId>
-      <artifactId>okhttp-ws</artifactId>
-      <version>${project.version}</version>
-    </dependency>
-    <dependency>
       <groupId>com.squareup.moshi</groupId>
       <artifactId>moshi</artifactId>
     </dependency>

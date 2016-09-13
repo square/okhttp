@@ -13,11 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package okhttp3.ws;
+package okhttp3;
 
 import java.io.IOException;
-import okhttp3.MediaType;
-import okhttp3.RequestBody;
 import okio.Buffer;
 
 /** Blocking interface to connect and write to a web socket. */

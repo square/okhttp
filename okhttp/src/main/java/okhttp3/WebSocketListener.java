@@ -13,11 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package okhttp3.ws;
+package okhttp3;
 
 import java.io.IOException;
-import okhttp3.Response;
-import okhttp3.ResponseBody;
 import okio.Buffer;
 
 /** Listener for server-initiated messages on a connected {@link WebSocket}. */

@@ -21,7 +21,7 @@ set -ex
 wstest -m fuzzingserver -s fuzzingserver-config.json &
 sleep 2 # wait for wstest to start
 
-java -jar target/okhttp-ws-tests-*-jar-with-dependencies.jar
+java -jar target/okhttp-tests-*-jar-with-dependencies.jar
 
 jq '.[] as $in | $in | keys[] | . + " " + $in[.].behavior' target/fuzzingserver-report/index.json > target/fuzzingserver-actual.txt
 

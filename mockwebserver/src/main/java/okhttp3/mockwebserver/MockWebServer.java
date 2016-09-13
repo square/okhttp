@@ -70,7 +70,7 @@ import okhttp3.internal.http2.Settings;
 import okhttp3.internal.platform.Platform;
 import okhttp3.internal.ws.RealWebSocket;
 import okhttp3.internal.ws.WebSocketProtocol;
-import okhttp3.ws.WebSocketListener;
+import okhttp3.WebSocketListener;
 import okio.Buffer;
 import okio.BufferedSink;
 import okio.BufferedSource;

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package okhttp3.ws;
+package okhttp3;
 
 import java.io.IOException;
 import java.util.concurrent.BlockingQueue;
@@ -22,11 +22,13 @@ import java.util.concurrent.TimeUnit;
 import okhttp3.MediaType;
 import okhttp3.Response;
 import okhttp3.ResponseBody;
+import okhttp3.WebSocket;
+import okhttp3.WebSocketListener;
 import okhttp3.internal.ws.WebSocketReader;
 import okio.Buffer;
 
-import static okhttp3.ws.WebSocket.BINARY;
-import static okhttp3.ws.WebSocket.TEXT;
+import static okhttp3.WebSocket.BINARY;
+import static okhttp3.WebSocket.TEXT;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
