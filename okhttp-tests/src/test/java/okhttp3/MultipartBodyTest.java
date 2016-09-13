@@ -258,4 +258,17 @@ public final class MultipartBodyTest {
     } catch (IllegalArgumentException expected) {
     }
   }
+
+  @Test public void partAccessors() throws IOException {
+    MultipartBody body = new MultipartBody.Builder()
+        .addPart(Headers.of("Foo", "Bar"), RequestBody.create(null, "Baz"))
+        .build();
+    assertEquals(1, body.parts().size());
+
+    Buffer part1Buffer = new Buffer();
+    MultipartBody.Part part1 = body.part(0);
+    part1.body().writeTo(part1Buffer);
+    assertEquals(Headers.of("Foo", "Bar"), part1.headers());
+    assertEquals("Baz", part1Buffer.readUtf8());
+  }
 }

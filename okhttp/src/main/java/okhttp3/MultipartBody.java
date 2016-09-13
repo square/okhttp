@@ -257,12 +257,20 @@ public final class MultipartBody extends RequestBody {
       return create(Headers.of("Content-Disposition", disposition.toString()), body);
     }
 
-    private final Headers headers;
-    private final RequestBody body;
+    final Headers headers;
+    final RequestBody body;
 
     private Part(Headers headers, RequestBody body) {
       this.headers = headers;
       this.body = body;
+    }
+
+    public Headers headers() {
+      return headers;
+    }
+
+    public RequestBody body() {
+      return body;
     }
   }
 
