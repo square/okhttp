@@ -115,7 +115,7 @@ import okhttp3.internal.tls.OkHostnameVerifier;
  * <p>OkHttp also uses daemon threads for HTTP/2 connections. These will exit automatically if they
  * remain idle.
  */
-public class OkHttpClient implements Cloneable, Call.Factory {
+public class OkHttpClient implements Cloneable, Call.Factory, WebSocketCall.Factory {
   private static final List<Protocol> DEFAULT_PROTOCOLS = Util.immutableList(
       Protocol.HTTP_2, Protocol.HTTP_1_1);
 
@@ -154,10 +154,6 @@ public class OkHttpClient implements Cloneable, Call.Factory {
         return connectionPool.routeDatabase;
       }
 
-      @Override public StreamAllocation callEngineGetStreamAllocation(Call call) {
-        return ((RealCall) call).streamAllocation();
-      }
-
       @Override
       public void apply(ConnectionSpec tlsConfiguration, SSLSocket sslSocket, boolean isFallback) {
         tlsConfiguration.apply(sslSocket, isFallback);
@@ -166,10 +162,6 @@ public class OkHttpClient implements Cloneable, Call.Factory {
       @Override public HttpUrl getHttpUrlChecked(String url)
           throws MalformedURLException, UnknownHostException {
         return HttpUrl.getChecked(url);
-      }
-
-      @Override public void setCallWebSocket(Call call) {
-        ((RealCall) call).setForWebSocket();
       }
     };
   }
@@ -385,7 +377,14 @@ public class OkHttpClient implements Cloneable, Call.Factory {
    * Prepares the {@code request} to be executed at some point in the future.
    */
   @Override public Call newCall(Request request) {
-    return new RealCall(this, request);
+    return new RealCall(this, request, false /* for web socket */);
+  }
+
+  /**
+   * Prepares the {@code request} to create a web socket at some point in the future.
+   */
+  @Override public WebSocketCall newWebSocketCall(Request request) {
+    return new RealWebSocketCall(this, request);
   }
 
   public Builder newBuilder() {

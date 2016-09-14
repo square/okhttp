@@ -4,25 +4,23 @@ import java.io.IOException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
-
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
 import okhttp3.ResponseBody;
-import okhttp3.ws.WebSocket;
-import okhttp3.ws.WebSocketCall;
-import okhttp3.ws.WebSocketListener;
+import okhttp3.WebSocket;
+import okhttp3.WebSocketListener;
 import okio.Buffer;
 import okio.ByteString;
 
-import static okhttp3.ws.WebSocket.BINARY;
-import static okhttp3.ws.WebSocket.TEXT;
+import static okhttp3.WebSocket.BINARY;
+import static okhttp3.WebSocket.TEXT;
 
 public final class WebSocketEcho implements WebSocketListener {
   private final ExecutorService writeExecutor = Executors.newSingleThreadExecutor();
 
-  private void run() throws IOException {
+  private void run() {
     OkHttpClient client = new OkHttpClient.Builder()
         .readTimeout(0,  TimeUnit.MILLISECONDS)
         .build();
@@ -30,7 +28,7 @@ public final class WebSocketEcho implements WebSocketListener {
     Request request = new Request.Builder()
         .url("ws://echo.websocket.org")
         .build();
-    WebSocketCall.create(client, request).enqueue(this);
+    client.newWebSocketCall(request).enqueue(this);
 
     // Trigger shutdown of the dispatcher's executor so this process can exit cleanly.
     client.dispatcher().executorService().shutdown();
@@ -74,7 +72,7 @@ public final class WebSocketEcho implements WebSocketListener {
     writeExecutor.shutdown();
   }
 
-  public static void main(String... args) throws IOException {
+  public static void main(String... args) {
     new WebSocketEcho().run();
   }
 }

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package okhttp3.ws;
+package okhttp3;
 
 import java.io.IOException;
 import java.net.ProtocolException;
@@ -23,13 +23,6 @@ import java.util.Random;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.ThreadPoolExecutor;
-import okhttp3.Call;
-import okhttp3.Callback;
-import okhttp3.OkHttpClient;
-import okhttp3.Protocol;
-import okhttp3.Request;
-import okhttp3.Response;
-import okhttp3.internal.Internal;
 import okhttp3.internal.Util;
 import okhttp3.internal.connection.StreamAllocation;
 import okhttp3.internal.ws.RealWebSocket;
@@ -38,23 +31,16 @@ import okio.ByteString;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
 
-public final class WebSocketCall {
-  /**
-   * Prepares the {@code request} to create a web socket at some point in the future.
-   */
-  public static WebSocketCall create(OkHttpClient client, Request request) {
-    return new WebSocketCall(client, request);
-  }
-
-  private final Call call;
+final class RealWebSocketCall implements WebSocketCall {
+  private final RealCall call;
   private final Random random;
   private final String key;
 
-  WebSocketCall(OkHttpClient client, Request request) {
+  RealWebSocketCall(OkHttpClient client, Request request) {
     this(client, request, new SecureRandom());
   }
 
-  WebSocketCall(OkHttpClient client, Request request, Random random) {
+  RealWebSocketCall(OkHttpClient client, Request request, Random random) {
     if (!"GET".equals(request.method())) {
       throw new IllegalArgumentException("Request must be GET: " + request.method());
     }
@@ -75,24 +61,12 @@ public final class WebSocketCall {
         .header("Sec-WebSocket-Version", "13")
         .build();
 
-    call = client.newCall(request);
+    call = new RealCall(client, request, true /* for web socket */);
   }
 
-  /**
-   * Schedules the request to be executed at some point in the future.
-   *
-   * <p>The {@link OkHttpClient#dispatcher dispatcher} defines when the request will run: usually
-   * immediately unless there are several other requests currently being executed.
-   *
-   * <p>This client will later call back {@code responseCallback} with either an HTTP response or a
-   * failure exception. If you {@link #cancel} a request before it completes the callback will not
-   * be invoked.
-   *
-   * @throws IllegalStateException when the call has already been executed.
-   */
-  public void enqueue(final WebSocketListener listener) {
+  @Override public void enqueue(final WebSocketListener listener) {
     Callback responseCallback = new Callback() {
-      @Override public void onResponse(Call call, Response response) throws IOException {
+      @Override public void onResponse(Call call, Response response) {
         try {
           createWebSocket(response, listener);
         } catch (IOException e) {
@@ -104,13 +78,10 @@ public final class WebSocketCall {
         listener.onFailure(e, null);
       }
     };
-    // TODO call.enqueue(responseCallback, true);
-    Internal.instance.setCallWebSocket(call);
     call.enqueue(responseCallback);
   }
 
-  /** Cancels the request, if possible. Requests that are already complete cannot be canceled. */
-  public void cancel() {
+  @Override public void cancel() {
     call.cancel();
   }
 
@@ -143,9 +114,8 @@ public final class WebSocketCall {
           + "'");
     }
 
-    StreamAllocation streamAllocation = Internal.instance.callEngineGetStreamAllocation(call);
-    RealWebSocket webSocket = StreamWebSocket.create(
-        streamAllocation, response, random, listener);
+    StreamAllocation streamAllocation = call.streamAllocation();
+    RealWebSocket webSocket = StreamWebSocket.create(streamAllocation, response, random, listener);
 
     listener.onOpen(webSocket, response);
 

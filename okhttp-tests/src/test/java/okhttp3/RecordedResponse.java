@@ -19,7 +19,6 @@ import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Date;
-import okhttp3.ws.WebSocket;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;

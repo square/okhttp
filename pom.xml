@@ -28,9 +28,6 @@
     <module>okhttp-testing-support</module>
     <module>okhttp-urlconnection</module>
 
-    <module>okhttp-ws</module>
-    <module>okhttp-ws-tests</module>
-
     <module>okhttp-logging-interceptor</module>
 
     <module>okcurl</module>

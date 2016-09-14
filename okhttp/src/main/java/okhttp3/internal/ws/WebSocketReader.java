@@ -20,7 +20,7 @@ import java.io.IOException;
 import java.net.ProtocolException;
 import okhttp3.MediaType;
 import okhttp3.ResponseBody;
-import okhttp3.ws.WebSocket;
+import okhttp3.WebSocket;
 import okio.Buffer;
 import okio.BufferedSource;
 import okio.Okio;

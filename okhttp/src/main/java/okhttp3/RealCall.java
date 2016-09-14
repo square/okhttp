@@ -40,10 +40,10 @@ final class RealCall implements Call {
   /** The application's original request unadulterated by redirects or auth headers. */
   Request originalRequest;
 
-  protected RealCall(OkHttpClient client, Request originalRequest) {
+  RealCall(OkHttpClient client, Request originalRequest, boolean forWebSocket) {
     this.client = client;
     this.originalRequest = originalRequest;
-    this.retryAndFollowUpInterceptor = new RetryAndFollowUpInterceptor(client);
+    this.retryAndFollowUpInterceptor = new RetryAndFollowUpInterceptor(client, forWebSocket);
   }
 
   @Override public Request request() {
@@ -71,11 +71,6 @@ final class RealCall implements Call {
     retryAndFollowUpInterceptor.setCallStackTrace(callStackTrace);
   }
 
-  synchronized void setForWebSocket() {
-    if (executed) throw new IllegalStateException("Already Executed");
-    this.retryAndFollowUpInterceptor.setForWebSocket(true);
-  }
-
   @Override public void enqueue(Callback responseCallback) {
     synchronized (this) {
       if (executed) throw new IllegalStateException("Already Executed");
@@ -99,7 +94,7 @@ final class RealCall implements Call {
 
   @SuppressWarnings("CloneDoesntCallSuperClone") // We are a final type & this saves clearing state.
   @Override public RealCall clone() {
-    return new RealCall(client, originalRequest);
+    return new RealCall(client, originalRequest, retryAndFollowUpInterceptor.isForWebSocket());
   }
 
   StreamAllocation streamAllocation() {
