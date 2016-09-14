@@ -201,7 +201,7 @@ public final class StreamAllocation {
 
   public void streamFinished(boolean noNewStreams, HttpCodec codec) {
     synchronized (connectionPool) {
-      if (codec == null || codec != this.codec) {
+      if (codec != this.codec) {
         throw new IllegalStateException("expected " + this.codec + " but was " + codec);
       }
       if (!noNewStreams) {
