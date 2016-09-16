@@ -100,7 +100,7 @@ public final class Cookie {
     return value;
   }
 
-  /** Returns true if this cookie expires at the end of the current session. */
+  /** Returns true if this cookie does not expire at the end of the current session. */
   public boolean persistent() {
     return persistent;
   }
