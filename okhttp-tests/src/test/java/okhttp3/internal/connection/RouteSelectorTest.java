@@ -24,7 +24,6 @@ import java.net.SocketAddress;
 import java.net.URI;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.NoSuchElementException;
 import javax.net.SocketFactory;
@@ -72,7 +71,7 @@ public final class RouteSelectorTest {
   private HostnameVerifier hostnameVerifier;
 
   private final Authenticator authenticator = Authenticator.NONE;
-  private final List<Protocol> protocols = Arrays.asList(Protocol.HTTP_1_1);
+  private final List<Protocol> protocols = Util.immutableList(Protocol.HTTP_1_1);
   private final FakeDns dns = new FakeDns();
   private final RecordingProxySelector proxySelector = new RecordingProxySelector();
   private RouteDatabase routeDatabase = new RouteDatabase();
