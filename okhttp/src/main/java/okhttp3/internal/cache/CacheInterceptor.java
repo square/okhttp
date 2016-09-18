@@ -20,12 +20,11 @@ import java.io.IOException;
 import java.util.Date;
 import okhttp3.Headers;
 import okhttp3.Interceptor;
-import okhttp3.MediaType;
 import okhttp3.Protocol;
 import okhttp3.Request;
 import okhttp3.Response;
-import okhttp3.ResponseBody;
 import okhttp3.internal.Internal;
+import okhttp3.internal.Util;
 import okhttp3.internal.http.HttpCodec;
 import okhttp3.internal.http.HttpHeaders;
 import okhttp3.internal.http.HttpMethod;
@@ -45,20 +44,6 @@ import static okhttp3.internal.Util.discard;
 
 /** Serves requests from the cache and writes responses to the cache. */
 public final class CacheInterceptor implements Interceptor {
-  private static final ResponseBody EMPTY_BODY = new ResponseBody() {
-    @Override public MediaType contentType() {
-      return null;
-    }
-
-    @Override public long contentLength() {
-      return 0;
-    }
-
-    @Override public BufferedSource source() {
-      return new Buffer();
-    }
-  };
-
   final InternalCache cache;
 
   public CacheInterceptor(InternalCache cache) {
@@ -91,7 +76,7 @@ public final class CacheInterceptor implements Interceptor {
           .protocol(Protocol.HTTP_1_1)
           .code(504)
           .message("Unsatisfiable Request (only-if-cached)")
-          .body(EMPTY_BODY)
+          .body(Util.EMPTY_RESPONSE)
           .sentRequestAtMillis(-1L)
           .receivedResponseAtMillis(System.currentTimeMillis())
           .build();
