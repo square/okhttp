@@ -15,12 +15,13 @@
  */
 package okhttp3;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import javax.net.ssl.SSLSocket;
 
 import static okhttp3.internal.Util.concat;
-import static okhttp3.internal.Util.immutableList;
 import static okhttp3.internal.Util.indexOf;
 import static okhttp3.internal.Util.intersect;
 
@@ -102,11 +103,11 @@ public final class ConnectionSpec {
   public List<CipherSuite> cipherSuites() {
     if (cipherSuites == null) return null;
 
-    CipherSuite[] result = new CipherSuite[cipherSuites.length];
-    for (int i = 0; i < cipherSuites.length; i++) {
-      result[i] = CipherSuite.forJavaName(cipherSuites[i]);
+    List<CipherSuite> result = new ArrayList<>(cipherSuites.length);
+    for (String cipherSuite : cipherSuites) {
+      result.add(CipherSuite.forJavaName(cipherSuite));
     }
-    return immutableList(result);
+    return Collections.unmodifiableList(result);
   }
 
   /**
@@ -116,11 +117,11 @@ public final class ConnectionSpec {
   public List<TlsVersion> tlsVersions() {
     if (tlsVersions == null) return null;
 
-    TlsVersion[] result = new TlsVersion[tlsVersions.length];
-    for (int i = 0; i < tlsVersions.length; i++) {
-      result[i] = TlsVersion.forJavaName(tlsVersions[i]);
+    List<TlsVersion> result = new ArrayList<>(tlsVersions.length);
+    for (String tlsVersion : tlsVersions) {
+      result.add(TlsVersion.forJavaName(tlsVersion));
     }
-    return immutableList(result);
+    return Collections.unmodifiableList(result);
   }
 
   public boolean supportsTlsExtensions() {
