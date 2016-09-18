@@ -108,8 +108,11 @@ final class WebSocketWriter {
     }
 
     synchronized (this) {
-      writeControlFrameSynchronized(OPCODE_CONTROL_CLOSE, payload);
-      writerClosed = true;
+      try {
+        writeControlFrameSynchronized(OPCODE_CONTROL_CLOSE, payload);
+      } finally {
+        writerClosed = true;
+      }
     }
   }
 
@@ -149,7 +152,7 @@ final class WebSocketWriter {
       }
     }
 
-    sink.emit();
+    sink.flush();
   }
 
   /**

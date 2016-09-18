@@ -62,7 +62,7 @@ public final class AutobahnTester {
     }
   }
 
-  private void runTest(final long number, final long count) throws IOException {
+  private void runTest(final long number, final long count) {
     final CountDownLatch latch = new CountDownLatch(1);
     final AtomicLong startNanos = new AtomicLong();
     newWebSocket("/runCase?case=" + number + "&agent=okhttp") //
@@ -105,8 +105,8 @@ public final class AutobahnTester {
             latch.countDown();
           }
 
-          @Override public void onFailure(IOException e, Response response) {
-            e.printStackTrace(System.out);
+          @Override public void onFailure(Throwable t, Response response) {
+            t.printStackTrace(System.out);
             latch.countDown();
           }
         });
@@ -126,7 +126,7 @@ public final class AutobahnTester {
   private long getTestCount() throws IOException {
     final CountDownLatch latch = new CountDownLatch(1);
     final AtomicLong countRef = new AtomicLong();
-    final AtomicReference<IOException> failureRef = new AtomicReference<>();
+    final AtomicReference<Throwable> failureRef = new AtomicReference<>();
     newWebSocket("/getCaseCount").enqueue(new WebSocketListener() {
       @Override public void onOpen(WebSocket webSocket, Response response) {
       }
@@ -143,8 +143,8 @@ public final class AutobahnTester {
         latch.countDown();
       }
 
-      @Override public void onFailure(IOException e, Response response) {
-        failureRef.set(e);
+      @Override public void onFailure(Throwable t, Response response) {
+        failureRef.set(t);
         latch.countDown();
       }
     });
@@ -155,9 +155,9 @@ public final class AutobahnTester {
     } catch (InterruptedException e) {
       throw new AssertionError();
     }
-    IOException failure = failureRef.get();
+    Throwable failure = failureRef.get();
     if (failure != null) {
-      throw failure;
+      throw new RuntimeException(failure);
     }
     return countRef.get();
   }
@@ -178,7 +178,7 @@ public final class AutobahnTester {
         latch.countDown();
       }
 
-      @Override public void onFailure(IOException e, Response response) {
+      @Override public void onFailure(Throwable t, Response response) {
         latch.countDown();
       }
     });

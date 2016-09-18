@@ -71,7 +71,6 @@ import okhttp3.internal.http2.Settings;
 import okhttp3.internal.platform.Platform;
 import okhttp3.internal.ws.RealWebSocket;
 import okhttp3.internal.ws.WebSocketProtocol;
-import okhttp3.WebSocketListener;
 import okio.Buffer;
 import okio.BufferedSink;
 import okio.BufferedSource;
@@ -656,22 +655,6 @@ public final class MockWebServer implements TestRule, Closeable {
 
     writeHttpResponse(socket, sink, response);
 
-    final WebSocketListener listener = response.getWebSocketListener();
-    final CountDownLatch connectionClose = new CountDownLatch(1);
-
-    ThreadPoolExecutor replyExecutor =
-        new ThreadPoolExecutor(1, 1, 1, SECONDS, new LinkedBlockingDeque<Runnable>(),
-            Util.threadFactory(Util.format("MockWebServer %s WebSocket", request.getPath()),
-                true));
-    replyExecutor.allowCoreThreadTimeOut(true);
-    final RealWebSocket webSocket =
-        new RealWebSocket(false /* is server */, source, sink, new SecureRandom(), replyExecutor,
-            listener, request.getPath()) {
-          @Override protected void close() throws IOException {
-            connectionClose.countDown();
-          }
-        };
-
     // Adapt the request and response into our Request and Response domain model.
     String scheme = request.getTlsVersion() != null ? "https" : "http";
     String authority = request.getHeader("Host"); // Has host and port.
@@ -687,16 +670,27 @@ public final class MockWebServer implements TestRule, Closeable {
         .protocol(Protocol.HTTP_1_1)
         .build();
 
-    listener.onOpen(webSocket, fancyResponse);
+    String name = request.getPath();
+    ThreadPoolExecutor replyExecutor =
+        new ThreadPoolExecutor(1, 1, 1, SECONDS, new LinkedBlockingDeque<Runnable>(),
+            Util.threadFactory(Util.format("MockWebServer %s WebSocket Replier", name), true));
+    replyExecutor.allowCoreThreadTimeOut(true);
 
-    while (webSocket.readMessage()) {
-    }
+    final CountDownLatch connectionClose = new CountDownLatch(1);
+    RealWebSocket webSocket =
+        new RealWebSocket(false /* is server */, source, sink, new SecureRandom(), replyExecutor,
+            response.getWebSocketListener(), fancyResponse, name) {
+          @Override protected void shutdown() {
+            connectionClose.countDown();
+          }
+        };
+
+    webSocket.loopReader();
 
     // Even if messages are no longer being read we need to wait for the connection close signal.
     try {
       connectionClose.await();
-    } catch (InterruptedException e) {
-      throw new RuntimeException(e);
+    } catch (InterruptedException ignored) {
     }
 
     replyExecutor.shutdown();

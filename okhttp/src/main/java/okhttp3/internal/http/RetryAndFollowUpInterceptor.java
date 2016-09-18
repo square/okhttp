@@ -91,10 +91,6 @@ public final class RetryAndFollowUpInterceptor implements Interceptor {
     return canceled;
   }
 
-  public boolean isForWebSocket() {
-    return forWebSocket;
-  }
-
   public void setCallStackTrace(Object callStackTrace) {
     this.callStackTrace = callStackTrace;
   }

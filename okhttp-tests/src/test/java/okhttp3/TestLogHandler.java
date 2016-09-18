@@ -15,38 +15,38 @@
  */
 package okhttp3;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Handler;
 import java.util.logging.LogRecord;
-import java.util.logging.SimpleFormatter;
 
 /**
  * A log handler that records which log messages were published so that a calling test can make
  * assertions about them.
  */
 public final class TestLogHandler extends Handler {
-  private final List<String> logs = new ArrayList<>();
+  private final BlockingQueue<String> logs = new LinkedBlockingQueue<>();
 
-  @Override public synchronized void publish(LogRecord logRecord) {
+  @Override public void publish(LogRecord logRecord) {
     if (getFormatter() == null) {
       logs.add(logRecord.getLevel() + ": " + logRecord.getMessage());
     } else {
       logs.add(getFormatter().format(logRecord));
     }
-    notifyAll();
   }
 
   @Override public void flush() {
   }
 
-  @Override public void close() throws SecurityException {
+  @Override public void close() {
   }
 
-  public synchronized String take() throws InterruptedException {
-    while (logs.isEmpty()) {
-      wait();
+  public String take() throws InterruptedException {
+    String message = logs.poll(10, TimeUnit.SECONDS);
+    if (message == null) {
+      throw new AssertionError("Timed out waiting for log message.");
     }
-    return logs.remove(0);
+    return message;
   }
 }

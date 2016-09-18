@@ -22,92 +22,209 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicBoolean;
 import okhttp3.MediaType;
 import okhttp3.RequestBody;
+import okhttp3.Response;
 import okhttp3.ResponseBody;
 import okhttp3.WebSocket;
 import okhttp3.WebSocketListener;
 import okhttp3.internal.NamedRunnable;
+import okhttp3.internal.Util;
+import okhttp3.internal.platform.Platform;
 import okio.Buffer;
 import okio.BufferedSink;
 import okio.BufferedSource;
 import okio.Okio;
 
+import static okhttp3.internal.platform.Platform.INFO;
 import static okhttp3.internal.ws.WebSocketProtocol.OPCODE_BINARY;
 import static okhttp3.internal.ws.WebSocketProtocol.OPCODE_TEXT;
 import static okhttp3.internal.ws.WebSocketReader.FrameCallback;
 
+/**
+ * An implementation of {@link WebSocket} which sits on top of {@link WebSocketReader} and
+ * {@link WebSocketWriter}.
+ *
+ * <h2>Threading</h2>
+ * This class deals with three threads concurrently and care must be taken to only access the
+ * appropriate resources on each:
+ * <ul>
+ * <li><b>Reader</b>: This is the only thread allowed to access {@link #reader}. Methods from
+ * {@link FrameCallback} will happen on this thread as a result. This is the only thread that
+ * should invoke methods on the {@link #readerListener}.</li>
+ * <li><b>Replier</b>: Invoked on {@link #replier} to write responses from reading
+ * frames. Contends with the "Sender" thread for access to {@link #writer}.</li>
+ * <li><b>Sender</b>: Methods from {@link WebSocket} will happen on this thread. Contends with the
+ * "Replier" thread</li>
+ * </ul>
+ * Instance variables have prefixes matching the thread names based on the thread on which they can
+ * be accessed. A prefix of "writer" indicates both "Sender" and "Replier" threads can access.
+ */
 public abstract class RealWebSocket implements WebSocket, FrameCallback {
+  private static final int CLOSE_LISTENER_EXCEPTION = 1001;
   private static final int CLOSE_PROTOCOL_EXCEPTION = 1002;
 
-  private final Executor replyExecutor;
-  private final WebSocketListener listener;
-  private final String url;
-
-  private final WebSocketWriter writer;
   private final WebSocketReader reader;
+  private final WebSocketListener readerListener;
+  /** True after a close frame was read by the reader. No frames will follow it. */
+  private boolean readerSawClose;
+
+  final WebSocketWriter writer;
+  /** True after calling {@link WebSocketWriter#writeClose(int, String)} to send a close frame. */
+  final AtomicBoolean writerClosed = new AtomicBoolean();
+
+  /** Guarded by itself. Must check {@link #isShutdown} before enqueuing work. */
+  private final Executor replier;
 
   /** True after calling {@link #close(int, String)}. No writes are allowed afterward. */
-  private volatile boolean writerSentClose;
+  private boolean senderSentClose;
   /** True after {@link IOException}. {@link #close(int, String)} becomes only valid call. */
-  private boolean writerWantsClose;
-  /** True after a close frame was read by the reader. No frames will follow it. */
-  private boolean readerSentClose;
+  private boolean senderWantsClose;
 
-  /** True after calling {@link #close()} to free connection resources. */
-  private final AtomicBoolean connectionClosed = new AtomicBoolean();
+  private final Response response;
+  private final String name;
+
+  /** Guarded by {@link #replier}. True after calling {@link #shutdown()}. */
+  private boolean isShutdown;
 
   protected RealWebSocket(boolean isClient, BufferedSource source, BufferedSink sink, Random random,
-      Executor replyExecutor, WebSocketListener listener, String url) {
-    this.replyExecutor = replyExecutor;
-    this.listener = listener;
-    this.url = url;
+      Executor replier, WebSocketListener readerListener, Response response, String name) {
+    this.readerListener = readerListener;
+    this.replier = replier;
+    this.response = response;
+    this.name = name;
 
-    writer = new WebSocketWriter(isClient, sink, random);
     reader = new WebSocketReader(isClient, source, this);
+    writer = new WebSocketWriter(isClient, sink, random);
   }
 
-  @Override public final void onMessage(ResponseBody message) throws IOException {
-    listener.onMessage(message);
-  }
+  ////// READER THREAD
 
-  @Override public final void onPing(final Buffer buffer) {
-    replyExecutor.execute(new NamedRunnable("OkHttp %s WebSocket Pong Reply", url) {
-      @Override protected void execute() {
-        peerPing(buffer);
-      }
-    });
-  }
+  /** Read and process all socket messages delivering callbacks to the supplied listener. */
+  public final void loopReader() {
+    try {
+      readerListener.onOpen(this, response);
+    } catch (Throwable t) {
+      Util.throwIfFatal(t);
+      replyToReaderError(t);
+      readerListener.onFailure(t, null);
+      return;
+    }
 
-  @Override public final void onPong(Buffer buffer) {
-    listener.onPong(buffer);
-  }
-
-  @Override public final void onClose(final int code, final String reason) {
-    readerSentClose = true;
-    replyExecutor.execute(new NamedRunnable("OkHttp %s WebSocket Close Reply", url) {
-      @Override protected void execute() {
-        peerClose(code, reason);
-      }
-    });
+    while (processNextFrame()) {
+    }
   }
 
   /**
-   * Read a single message from the web socket and deliver it to the listener. This method should be
-   * called in a loop with the return value indicating whether looping should continue.
+   * Read a single control frame or all frames of a message from the web socket and deliver any
+   * notifications to the listener. Returns false when no more messages can be read.
    */
-  public final boolean readMessage() {
+  final boolean processNextFrame() {
     try {
+      // This method call results in one or more onRead* methods being called on this thread.
       reader.processNextFrame();
-      return !readerSentClose;
-    } catch (IOException e) {
-      readerErrorClose(e);
+
+      return !readerSawClose;
+    } catch (Throwable t) {
+      Util.throwIfFatal(t);
+      replyToReaderError(t);
+      readerListener.onFailure(t, null);
       return false;
     }
   }
 
+  @Override public final void onReadMessage(ResponseBody message) throws IOException {
+    readerListener.onMessage(message);
+  }
+
+  @Override public final void onReadPing(Buffer buffer) {
+    replyToPeerPing(buffer);
+  }
+
+  @Override public final void onReadPong(Buffer buffer) {
+    readerListener.onPong(buffer);
+  }
+
+  @Override public final void onReadClose(int code, String reason) {
+    replyToPeerClose(code, reason);
+    readerSawClose = true;
+    readerListener.onClose(code, reason);
+  }
+
+  ///// REPLIER THREAD (executed on replier, contends with sender thread)
+
+  /** Replies with a pong when a ping frame is read from the peer. */
+  private void replyToPeerPing(final Buffer payload) {
+    Runnable replierPong = new NamedRunnable("OkHttp %s WebSocket Pong Reply", name) {
+      @Override protected void execute() {
+        try {
+          writer.writePong(payload);
+        } catch (IOException t) {
+          Platform.get().log(INFO, "Unable to send pong reply in response to peer ping.", t);
+        }
+      }
+    };
+    synchronized (replier) {
+      if (!isShutdown) {
+        replier.execute(replierPong);
+      }
+    }
+  }
+
+  /** Replies and closes this web socket when a close frame is read from the peer. */
+  private void replyToPeerClose(final int code, final String reason) {
+    Runnable replierClose = new NamedRunnable("OkHttp %s WebSocket Close Reply", name) {
+      @Override protected void execute() {
+        if (writerClosed.compareAndSet(false, true)) {
+          try {
+            writer.writeClose(code, reason);
+          } catch (IOException t) {
+            Platform.get().log(INFO, "Unable to send close reply in response to peer close.", t);
+          }
+        }
+
+        quietlyCloseConnection();
+      }
+    };
+    synchronized (replier) {
+      if (!isShutdown) {
+        replier.execute(replierClose);
+      }
+    }
+  }
+
+  private void replyToReaderError(final Throwable t) {
+    Runnable replierClose = new NamedRunnable("OkHttp %s WebSocket Fatal Reply", name) {
+      @Override protected void execute() {
+        if (writerClosed.compareAndSet(false, true)) {
+          // For protocol and runtime exceptions, try to inform the server of such.
+          boolean protocolException = t instanceof ProtocolException;
+          boolean runtimeException = !(t instanceof IOException);
+          if (protocolException || runtimeException) {
+            int code = protocolException ? CLOSE_PROTOCOL_EXCEPTION : CLOSE_LISTENER_EXCEPTION;
+            try {
+              writer.writeClose(code, null);
+            } catch (IOException inner) {
+              Platform.get()
+                  .log(INFO, "Unable to send close in response to listener error.", inner);
+            }
+          }
+        }
+
+        quietlyCloseConnection();
+      }
+    };
+    synchronized (replier) {
+      if (!isShutdown) {
+        replier.execute(replierClose);
+      }
+    }
+  }
+
+  ////// SENDER THREAD (aka user thread)
+
   @Override public final void sendMessage(RequestBody message) throws IOException {
     if (message == null) throw new NullPointerException("message == null");
-    if (writerSentClose) throw new IllegalStateException("closed");
-    if (writerWantsClose) throw new IllegalStateException("must call close()");
+    if (senderSentClose) throw new IllegalStateException("closed");
+    if (senderWantsClose) throw new IllegalStateException("must call close()");
 
     MediaType contentType = message.contentType();
     if (contentType == null) {
@@ -132,101 +249,68 @@ public abstract class RealWebSocket implements WebSocket, FrameCallback {
       message.writeTo(sink);
       sink.close();
     } catch (IOException e) {
-      writerWantsClose = true;
+      senderWantsClose = true;
       throw e;
     }
   }
 
   @Override public final void sendPing(Buffer payload) throws IOException {
-    if (writerSentClose) throw new IllegalStateException("closed");
-    if (writerWantsClose) throw new IllegalStateException("must call close()");
+    if (senderSentClose) throw new IllegalStateException("closed");
+    if (senderWantsClose) throw new IllegalStateException("must call close()");
 
     try {
       writer.writePing(payload);
     } catch (IOException e) {
-      writerWantsClose = true;
+      senderWantsClose = true;
       throw e;
     }
   }
 
   /** Send an unsolicited pong with the specified payload. */
   final void sendPong(Buffer payload) throws IOException {
-    if (writerSentClose) throw new IllegalStateException("closed");
-    if (writerWantsClose) throw new IllegalStateException("must call close()");
+    if (senderSentClose) throw new IllegalStateException("closed");
+    if (senderWantsClose) throw new IllegalStateException("must call close()");
 
     try {
       writer.writePong(payload);
     } catch (IOException e) {
-      writerWantsClose = true;
+      senderWantsClose = true;
       throw e;
     }
   }
 
   @Override public final void close(int code, String reason) throws IOException {
-    if (writerSentClose) throw new IllegalStateException("closed");
-    writerSentClose = true;
+    if (senderSentClose) throw new IllegalStateException("closed");
+    senderSentClose = true;
+
+    // Not doing a CAS because we want writer to throw if already closed via peer close.
+    writerClosed.set(true);
 
     try {
       writer.writeClose(code, reason);
     } catch (IOException e) {
-      if (connectionClosed.compareAndSet(false, true)) {
-        // Try to close the connection without masking the original exception.
-        try {
-          close();
-        } catch (IOException ignored) {
-        }
-      }
+      quietlyCloseConnection();
       throw e;
     }
+
+    // NOTE: We do not close the connection here! That will happen when we read the close reply.
   }
 
-  /** Replies with a pong when a ping frame is read from the peer. */
-  void peerPing(Buffer payload) {
+  ////// ANY THREAD
+
+  void quietlyCloseConnection() {
+    synchronized (replier) {
+      if (isShutdown) return;
+      isShutdown = true;
+    }
     try {
-      writer.writePong(payload);
-    } catch (IOException ignored) {
+      shutdown();
+    } catch (Throwable inner) {
+      Util.throwIfFatal(inner);
+      Platform.get().log(INFO, "Unable to close web socket connection.", inner);
     }
-  }
-
-  /** Replies and closes this web socket when a close frame is read from the peer. */
-  void peerClose(int code, String reason) {
-    if (!writerSentClose) {
-      try {
-        writer.writeClose(code, reason);
-      } catch (IOException ignored) {
-      }
-    }
-
-    if (connectionClosed.compareAndSet(false, true)) {
-      try {
-        close();
-      } catch (IOException ignored) {
-      }
-    }
-
-    listener.onClose(code, reason);
-  }
-
-  /** Called on the reader thread when an error occurs. */
-  private void readerErrorClose(IOException e) {
-    // For protocol exceptions, try to inform the server of such.
-    if (!writerSentClose && e instanceof ProtocolException) {
-      try {
-        writer.writeClose(CLOSE_PROTOCOL_EXCEPTION, null);
-      } catch (IOException ignored) {
-      }
-    }
-
-    if (connectionClosed.compareAndSet(false, true)) {
-      try {
-        close();
-      } catch (IOException ignored) {
-      }
-    }
-
-    listener.onFailure(e, null);
   }
 
   /** Perform any tear-down work (close the connection, shutdown executors). */
-  protected abstract void close() throws IOException;
+  protected abstract void shutdown();
 }
