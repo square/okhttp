@@ -22,7 +22,6 @@ import java.util.Random;
 import java.util.concurrent.Executor;
 import okhttp3.MediaType;
 import okhttp3.RequestBody;
-import okhttp3.WebSocketRecorder;
 import okio.Buffer;
 import okio.BufferedSink;
 import okio.BufferedSource;

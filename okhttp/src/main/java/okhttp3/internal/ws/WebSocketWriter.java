@@ -44,24 +44,24 @@ import static okhttp3.internal.ws.WebSocketProtocol.validateCloseCode;
  * may call {@link #writePing}, {@link #writePong}, or {@link #writeClose} which will interleave on
  * the wire with frames from the "main" sending thread.
  */
-public final class WebSocketWriter {
-  private final boolean isClient;
-  private final Random random;
+final class WebSocketWriter {
+  final boolean isClient;
+  final Random random;
 
   /** Writes must be guarded by synchronizing on 'this'. */
-  private final BufferedSink sink;
+  final BufferedSink sink;
   /** Access must be guarded by synchronizing on 'this'. */
-  private boolean writerClosed;
+  boolean writerClosed;
 
-  private final Buffer buffer = new Buffer();
-  private final FrameSink frameSink = new FrameSink();
+  final Buffer buffer = new Buffer();
+  final FrameSink frameSink = new FrameSink();
 
-  private boolean activeWriter;
+  boolean activeWriter;
 
-  private final byte[] maskKey;
-  private final byte[] maskBuffer;
+  final byte[] maskKey;
+  final byte[] maskBuffer;
 
-  public WebSocketWriter(boolean isClient, BufferedSink sink, Random random) {
+  WebSocketWriter(boolean isClient, BufferedSink sink, Random random) {
     if (sink == null) throw new NullPointerException("sink == null");
     if (random == null) throw new NullPointerException("random == null");
     this.isClient = isClient;
@@ -74,14 +74,14 @@ public final class WebSocketWriter {
   }
 
   /** Send a ping with the supplied {@code payload}. Payload may be {@code null} */
-  public void writePing(Buffer payload) throws IOException {
+  void writePing(Buffer payload) throws IOException {
     synchronized (this) {
       writeControlFrameSynchronized(OPCODE_CONTROL_PING, payload);
     }
   }
 
   /** Send a pong with the supplied {@code payload}. Payload may be {@code null} */
-  public void writePong(Buffer payload) throws IOException {
+  void writePong(Buffer payload) throws IOException {
     synchronized (this) {
       writeControlFrameSynchronized(OPCODE_CONTROL_PONG, payload);
     }
@@ -94,7 +94,7 @@ public final class WebSocketWriter {
    * href="http://tools.ietf.org/html/rfc6455#section-7.4">Section 7.4 of RFC 6455</a> or {@code 0}.
    * @param reason Reason for shutting down or {@code null}.
    */
-  public void writeClose(int code, String reason) throws IOException {
+  void writeClose(int code, String reason) throws IOException {
     Buffer payload = null;
     if (code != 0 || reason != null) {
       if (code != 0) {
@@ -156,7 +156,7 @@ public final class WebSocketWriter {
    * Stream a message payload as a series of frames. This allows control frames to be interleaved
    * between parts of the message.
    */
-  public Sink newMessageSink(int formatOpcode, long contentLength) {
+  Sink newMessageSink(int formatOpcode, long contentLength) {
     if (activeWriter) {
       throw new IllegalStateException("Another message writer is active. Did you call close()?");
     }
@@ -171,7 +171,7 @@ public final class WebSocketWriter {
     return frameSink;
   }
 
-  private void writeMessageFrameSynchronized(int formatOpcode, long byteCount, boolean isFirstFrame,
+  void writeMessageFrameSynchronized(int formatOpcode, long byteCount, boolean isFirstFrame,
       boolean isFinal) throws IOException {
     assert Thread.holdsLock(this);
 
@@ -225,11 +225,11 @@ public final class WebSocketWriter {
     }
   }
 
-  private final class FrameSink implements Sink {
-    private int formatOpcode;
-    private long contentLength;
-    private boolean isFirstFrame;
-    private boolean closed;
+  final class FrameSink implements Sink {
+    int formatOpcode;
+    long contentLength;
+    boolean isFirstFrame;
+    boolean closed;
 
     @Override public void write(Buffer source, long byteCount) throws IOException {
       if (closed) throw new IOException("closed");

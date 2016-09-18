@@ -23,9 +23,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import okhttp3.MediaType;
 import okhttp3.RequestBody;
 import okhttp3.ResponseBody;
-import okhttp3.internal.NamedRunnable;
 import okhttp3.WebSocket;
 import okhttp3.WebSocketListener;
+import okhttp3.internal.NamedRunnable;
 import okio.Buffer;
 import okio.BufferedSink;
 import okio.BufferedSource;
@@ -35,12 +35,15 @@ import static okhttp3.internal.ws.WebSocketProtocol.OPCODE_BINARY;
 import static okhttp3.internal.ws.WebSocketProtocol.OPCODE_TEXT;
 import static okhttp3.internal.ws.WebSocketReader.FrameCallback;
 
-public abstract class RealWebSocket implements WebSocket {
+public abstract class RealWebSocket implements WebSocket, FrameCallback {
   private static final int CLOSE_PROTOCOL_EXCEPTION = 1002;
+
+  private final Executor replyExecutor;
+  private final WebSocketListener listener;
+  private final String url;
 
   private final WebSocketWriter writer;
   private final WebSocketReader reader;
-  private final WebSocketListener listener;
 
   /** True after calling {@link #close(int, String)}. No writes are allowed afterward. */
   private volatile boolean writerSentClose;
@@ -52,38 +55,37 @@ public abstract class RealWebSocket implements WebSocket {
   /** True after calling {@link #close()} to free connection resources. */
   private final AtomicBoolean connectionClosed = new AtomicBoolean();
 
-  public RealWebSocket(boolean isClient, BufferedSource source, BufferedSink sink, Random random,
-      final Executor replyExecutor, final WebSocketListener listener, final String url) {
+  protected RealWebSocket(boolean isClient, BufferedSource source, BufferedSink sink, Random random,
+      Executor replyExecutor, WebSocketListener listener, String url) {
+    this.replyExecutor = replyExecutor;
     this.listener = listener;
+    this.url = url;
 
     writer = new WebSocketWriter(isClient, sink, random);
-    reader = new WebSocketReader(isClient, source, new FrameCallback() {
-      @Override public void onMessage(ResponseBody message) throws IOException {
-        listener.onMessage(message);
-      }
+    reader = new WebSocketReader(isClient, source, this);
+  }
 
-      @Override public void onPing(final Buffer buffer) {
-        replyExecutor.execute(new NamedRunnable("OkHttp %s WebSocket Pong Reply", url) {
-          @Override protected void execute() {
-            try {
-              writer.writePong(buffer);
-            } catch (IOException ignored) {
-            }
-          }
-        });
-      }
+  @Override public final void onMessage(ResponseBody message) throws IOException {
+    listener.onMessage(message);
+  }
 
-      @Override public void onPong(Buffer buffer) {
-        listener.onPong(buffer);
+  @Override public final void onPing(final Buffer buffer) {
+    replyExecutor.execute(new NamedRunnable("OkHttp %s WebSocket Pong Reply", url) {
+      @Override protected void execute() {
+        peerPing(buffer);
       }
+    });
+  }
 
-      @Override public void onClose(final int code, final String reason) {
-        readerSentClose = true;
-        replyExecutor.execute(new NamedRunnable("OkHttp %s WebSocket Close Reply", url) {
-          @Override protected void execute() {
-            peerClose(code, reason);
-          }
-        });
+  @Override public final void onPong(Buffer buffer) {
+    listener.onPong(buffer);
+  }
+
+  @Override public final void onClose(final int code, final String reason) {
+    readerSentClose = true;
+    replyExecutor.execute(new NamedRunnable("OkHttp %s WebSocket Close Reply", url) {
+      @Override protected void execute() {
+        peerClose(code, reason);
       }
     });
   }
@@ -92,7 +94,7 @@ public abstract class RealWebSocket implements WebSocket {
    * Read a single message from the web socket and deliver it to the listener. This method should be
    * called in a loop with the return value indicating whether looping should continue.
    */
-  public boolean readMessage() {
+  public final boolean readMessage() {
     try {
       reader.processNextFrame();
       return !readerSentClose;
@@ -102,7 +104,7 @@ public abstract class RealWebSocket implements WebSocket {
     }
   }
 
-  @Override public void sendMessage(RequestBody message) throws IOException {
+  @Override public final void sendMessage(RequestBody message) throws IOException {
     if (message == null) throw new NullPointerException("message == null");
     if (writerSentClose) throw new IllegalStateException("closed");
     if (writerWantsClose) throw new IllegalStateException("must call close()");
@@ -135,7 +137,7 @@ public abstract class RealWebSocket implements WebSocket {
     }
   }
 
-  @Override public void sendPing(Buffer payload) throws IOException {
+  @Override public final void sendPing(Buffer payload) throws IOException {
     if (writerSentClose) throw new IllegalStateException("closed");
     if (writerWantsClose) throw new IllegalStateException("must call close()");
 
@@ -148,7 +150,7 @@ public abstract class RealWebSocket implements WebSocket {
   }
 
   /** Send an unsolicited pong with the specified payload. */
-  public void sendPong(Buffer payload) throws IOException {
+  final void sendPong(Buffer payload) throws IOException {
     if (writerSentClose) throw new IllegalStateException("closed");
     if (writerWantsClose) throw new IllegalStateException("must call close()");
 
@@ -160,7 +162,7 @@ public abstract class RealWebSocket implements WebSocket {
     }
   }
 
-  @Override public void close(int code, String reason) throws IOException {
+  @Override public final void close(int code, String reason) throws IOException {
     if (writerSentClose) throw new IllegalStateException("closed");
     writerSentClose = true;
 
@@ -178,8 +180,16 @@ public abstract class RealWebSocket implements WebSocket {
     }
   }
 
+  /** Replies with a pong when a ping frame is read from the peer. */
+  void peerPing(Buffer payload) {
+    try {
+      writer.writePong(payload);
+    } catch (IOException ignored) {
+    }
+  }
+
   /** Replies and closes this web socket when a close frame is read from the peer. */
-  private void peerClose(int code, String reason) {
+  void peerClose(int code, String reason) {
     if (!writerSentClose) {
       try {
         writer.writeClose(code, reason);
