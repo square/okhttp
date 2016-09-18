@@ -51,7 +51,7 @@ import static okhttp3.internal.ws.WebSocketProtocol.validateCloseCode;
 /**
  * An <a href="http://tools.ietf.org/html/rfc6455">RFC 6455</a>-compatible WebSocket frame reader.
  */
-public final class WebSocketReader {
+final class WebSocketReader {
   public interface FrameCallback {
     void onMessage(ResponseBody body) throws IOException;
 
@@ -62,27 +62,27 @@ public final class WebSocketReader {
     void onClose(int code, String reason);
   }
 
-  private final boolean isClient;
-  private final BufferedSource source;
-  private final FrameCallback frameCallback;
+  final boolean isClient;
+  final BufferedSource source;
+  final FrameCallback frameCallback;
 
-  private final Source framedMessageSource = new FramedMessageSource();
+  final Source framedMessageSource = new FramedMessageSource();
 
-  private boolean closed;
-  private boolean messageClosed;
+  boolean closed;
+  boolean messageClosed;
 
   // Stateful data about the current frame.
-  private int opcode;
-  private long frameLength;
-  private long frameBytesRead;
-  private boolean isFinalFrame;
-  private boolean isControlFrame;
-  private boolean isMasked;
+  int opcode;
+  long frameLength;
+  long frameBytesRead;
+  boolean isFinalFrame;
+  boolean isControlFrame;
+  boolean isMasked;
 
-  private final byte[] maskKey = new byte[4];
-  private final byte[] maskBuffer = new byte[8192];
+  final byte[] maskKey = new byte[4];
+  final byte[] maskBuffer = new byte[8192];
 
-  public WebSocketReader(boolean isClient, BufferedSource source, FrameCallback frameCallback) {
+  WebSocketReader(boolean isClient, BufferedSource source, FrameCallback frameCallback) {
     if (source == null) throw new NullPointerException("source == null");
     if (frameCallback == null) throw new NullPointerException("frameCallback == null");
     this.isClient = isClient;
@@ -100,7 +100,7 @@ public final class WebSocketReader {
    *         control frame will result in a corresponding call to {@link FrameCallback}.
    * </ul>
    */
-  public void processNextFrame() throws IOException {
+  void processNextFrame() throws IOException {
     readHeader();
     if (isControlFrame) {
       readControlFrame();
@@ -246,7 +246,7 @@ public final class WebSocketReader {
   }
 
   /** Read headers and process any control frames until we reach a non-control frame. */
-  private void readUntilNonControlFrame() throws IOException {
+  void readUntilNonControlFrame() throws IOException {
     while (!closed) {
       readHeader();
       if (!isControlFrame) {
@@ -261,7 +261,7 @@ public final class WebSocketReader {
    * frames that occur between fragments will be processed. If the message payload is masked this
    * will unmask as it's being processed.
    */
-  private final class FramedMessageSource implements Source {
+  final class FramedMessageSource implements Source {
     @Override public long read(Buffer sink, long byteCount) throws IOException {
       if (closed) throw new IOException("closed");
       if (messageClosed) throw new IllegalStateException("closed");

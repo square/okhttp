@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package okhttp3;
+package okhttp3.internal.ws;
 
 import java.io.IOException;
 import java.util.concurrent.BlockingQueue;
@@ -24,7 +24,6 @@ import okhttp3.Response;
 import okhttp3.ResponseBody;
 import okhttp3.WebSocket;
 import okhttp3.WebSocketListener;
-import okhttp3.internal.ws.WebSocketReader;
 import okio.Buffer;
 
 import static okhttp3.WebSocket.BINARY;
@@ -154,11 +153,11 @@ public final class WebSocketRecorder implements WebSocketReader.FrameCallback, W
     assertEquals(body, response.body().string());
   }
 
-  private static class Message {
+  static final class Message {
     public final MediaType mediaType;
     public final Buffer buffer = new Buffer();
 
-    private Message(MediaType mediaType) {
+    Message(MediaType mediaType) {
       this.mediaType = mediaType;
     }
 
@@ -179,10 +178,10 @@ public final class WebSocketRecorder implements WebSocketReader.FrameCallback, W
     }
   }
 
-  private static class Ping {
+  static final class Ping {
     public final Buffer buffer;
 
-    private Ping(Buffer buffer) {
+    Ping(Buffer buffer) {
       this.buffer = buffer;
     }
 
@@ -203,10 +202,10 @@ public final class WebSocketRecorder implements WebSocketReader.FrameCallback, W
     }
   }
 
-  private static class Pong {
+  static final class Pong {
     public final Buffer buffer;
 
-    private Pong(Buffer buffer) {
+    Pong(Buffer buffer) {
       this.buffer = buffer;
     }
 
@@ -227,11 +226,11 @@ public final class WebSocketRecorder implements WebSocketReader.FrameCallback, W
     }
   }
 
-  private static class Close {
+  static final class Close {
     public final int code;
     public final String reason;
 
-    private Close(int code, String reason) {
+    Close(int code, String reason) {
       this.code = code;
       this.reason = reason;
     }
