@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.net.ProtocolException;
 import java.security.SecureRandom;
 import java.util.Collections;
+import java.util.List;
 import java.util.Random;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingDeque;
@@ -32,6 +33,8 @@ import okio.ByteString;
 import static java.util.concurrent.TimeUnit.SECONDS;
 
 final class RealWebSocketCall implements WebSocketCall {
+  private static final List<Protocol> ONLY_HTTP1 = Collections.singletonList(Protocol.HTTP_1_1);
+
   private final RealCall call;
   private final Random random;
   private final String key;
@@ -51,7 +54,9 @@ final class RealWebSocketCall implements WebSocketCall {
     key = ByteString.of(nonce).base64();
 
     client = client.newBuilder()
-        .protocols(Collections.singletonList(Protocol.HTTP_1_1))
+        .readTimeout(0, SECONDS) // i.e., no timeout because this is a long-lived connection.
+        .writeTimeout(0, SECONDS) // i.e., no timeout because this is a long-lived connection.
+        .protocols(ONLY_HTTP1)
         .build();
 
     request = request.newBuilder()
