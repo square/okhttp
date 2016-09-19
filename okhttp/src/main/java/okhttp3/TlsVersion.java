@@ -20,6 +20,7 @@ package okhttp3;
  * javax.net.ssl.SSLSocket#setEnabledProtocols}.
  */
 public enum TlsVersion {
+  TLS_1_3("TLSv1.3"), // 2016.
   TLS_1_2("TLSv1.2"), // 2008.
   TLS_1_1("TLSv1.1"), // 2006.
   TLS_1_0("TLSv1"),   // 1999.
@@ -34,6 +35,8 @@ public enum TlsVersion {
 
   public static TlsVersion forJavaName(String javaName) {
     switch (javaName) {
+      case "TLSv1.3":
+        return TLS_1_3;
       case "TLSv1.2":
         return TLS_1_2;
       case "TLSv1.1":
