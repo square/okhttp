@@ -19,7 +19,6 @@ import java.io.IOException;
 import java.util.Random;
 import okio.Buffer;
 import okio.BufferedSink;
-import okio.BufferedSource;
 import okio.ByteString;
 import okio.Sink;
 import okio.Timeout;
@@ -185,7 +184,6 @@ final class WebSocketWriter {
     int b1 = 0;
     if (isClient) {
       b1 |= B1_FLAG_MASK;
-      random.nextBytes(maskKey);
     }
     if (byteCount <= PAYLOAD_BYTE_MAX) {
       b1 |= (int) byteCount;
@@ -201,27 +199,22 @@ final class WebSocketWriter {
     }
 
     if (isClient) {
+      random.nextBytes(maskKey);
       sink.write(maskKey);
-      writeMaskedSynchronized(buffer, byteCount);
+
+      for (long written = 0; written < byteCount; ) {
+        int toRead = (int) Math.min(byteCount, maskBuffer.length);
+        int read = buffer.read(maskBuffer, 0, toRead);
+        if (read == -1) throw new AssertionError();
+        toggleMask(maskBuffer, read, maskKey, written);
+        sink.write(maskBuffer, 0, read);
+        written += read;
+      }
     } else {
       sink.write(buffer, byteCount);
     }
 
     sink.emit();
-  }
-
-  private void writeMaskedSynchronized(BufferedSource source, long byteCount) throws IOException {
-    assert Thread.holdsLock(this);
-
-    long written = 0;
-    while (written < byteCount) {
-      int toRead = (int) Math.min(byteCount, maskBuffer.length);
-      int read = source.read(maskBuffer, 0, toRead);
-      if (read == -1) throw new AssertionError();
-      toggleMask(maskBuffer, read, maskKey, written);
-      sink.write(maskBuffer, 0, read);
-      written += read;
-    }
   }
 
   final class FrameSink implements Sink {
