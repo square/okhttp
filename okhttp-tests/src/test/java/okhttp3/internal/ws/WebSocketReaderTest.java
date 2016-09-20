@@ -180,10 +180,10 @@ public final class WebSocketReaderTest {
     data.write(ByteString.decodeHex("8a00")); // Pong
     data.write(ByteString.decodeHex("80026c6f")); // lo
     clientReader.processNextFrame();
-    callback.assertPong(null);
-    callback.assertPong(null);
-    callback.assertPong(null);
-    callback.assertPong(null);
+    callback.assertPong(ByteString.EMPTY);
+    callback.assertPong(ByteString.EMPTY);
+    callback.assertPong(ByteString.EMPTY);
+    callback.assertPong(ByteString.EMPTY);
     callback.assertTextMessage("Hello");
   }
 
@@ -301,8 +301,8 @@ public final class WebSocketReaderTest {
 
     clientReader.processNextFrame();
     assertEquals("He", sink.readUtf8());
-    callback.assertPong(null);
-    callback.assertPong(null);
+    callback.assertPong(ByteString.EMPTY);
+    callback.assertPong(ByteString.EMPTY);
 
     clientReader.processNextFrame();
     callback.assertTextMessage("Hey!");
@@ -331,13 +331,13 @@ public final class WebSocketReaderTest {
   @Test public void emptyPingCallsCallback() throws IOException {
     data.write(ByteString.decodeHex("8900")); // Empty ping
     clientReader.processNextFrame();
-    callback.assertPing(null);
+    callback.assertPing(ByteString.EMPTY);
   }
 
   @Test public void pingCallsCallback() throws IOException {
     data.write(ByteString.decodeHex("890548656c6c6f")); // Ping with "Hello"
     clientReader.processNextFrame();
-    callback.assertPing(new Buffer().writeUtf8("Hello"));
+    callback.assertPing(ByteString.encodeUtf8("Hello"));
   }
 
   @Test public void emptyCloseCallsCallback() throws IOException {

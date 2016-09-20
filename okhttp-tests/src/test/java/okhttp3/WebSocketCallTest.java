@@ -24,7 +24,7 @@ import okhttp3.internal.ws.EmptyWebSocketListener;
 import okhttp3.internal.ws.WebSocketRecorder;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
-import okio.Buffer;
+import okio.ByteString;
 import org.junit.After;
 import org.junit.Ignore;
 import org.junit.Rule;
@@ -127,8 +127,21 @@ public final class WebSocketCallTest {
 
     WebSocket client = clientListener.assertOpen();
 
-    client.sendPing(new Buffer().writeUtf8("Hello, WebSockets!"));
-    clientListener.assertPong(new Buffer().writeUtf8("Hello, WebSockets!"));
+    client.sendPing(ByteString.encodeUtf8("Hello, WebSockets!"));
+    clientListener.assertPong(ByteString.encodeUtf8("Hello, WebSockets!"));
+  }
+
+  @Test public void nullPingPayloadThrows() throws IOException {
+    webServer.enqueue(new MockResponse().withWebSocketUpgrade(serverListener));
+    enqueueClientWebSocket();
+
+    WebSocket client = clientListener.assertOpen();
+    try {
+      client.sendPing(null);
+      fail();
+    } catch (NullPointerException e) {
+      assertEquals("payload == null", e.getMessage());
+    }
   }
 
   @Test public void serverMessage() throws IOException {
@@ -207,12 +220,12 @@ public final class WebSocketCallTest {
 
     final RuntimeException e = new RuntimeException();
     clientListener.setNextEventDelegate(new EmptyWebSocketListener() {
-      @Override public void onPong(Buffer payload) {
+      @Override public void onPong(ByteString payload) {
         throw e;
       }
     });
 
-    client.sendPing(new Buffer());
+    client.sendPing(ByteString.EMPTY);
     clientListener.assertFailure(e);
     serverListener.assertClose(1001, "");
   }
@@ -259,8 +272,8 @@ public final class WebSocketCallTest {
 
     WebSocket client = clientListener.assertOpen();
 
-    client.sendPing(new Buffer().writeUtf8("WebSockets are fun!"));
-    clientListener.assertPong(new Buffer().writeUtf8("WebSockets are fun!"));
+    client.sendPing(ByteString.encodeUtf8("WebSockets are fun!"));
+    clientListener.assertPong(ByteString.encodeUtf8("WebSockets are fun!"));
   }
 
   @Test public void missingConnectionHeader() throws IOException {

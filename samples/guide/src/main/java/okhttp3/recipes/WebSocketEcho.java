@@ -11,7 +11,6 @@ import okhttp3.Response;
 import okhttp3.ResponseBody;
 import okhttp3.WebSocket;
 import okhttp3.WebSocketListener;
-import okio.Buffer;
 import okio.ByteString;
 
 import static okhttp3.WebSocket.BINARY;
@@ -58,8 +57,8 @@ public final class WebSocketEcho implements WebSocketListener {
     message.close();
   }
 
-  @Override public void onPong(Buffer payload) {
-    System.out.println("PONG: " + payload.readUtf8());
+  @Override public void onPong(ByteString payload) {
+    System.out.println("PONG: " + payload.utf8());
   }
 
   @Override public void onClose(int code, String reason) {

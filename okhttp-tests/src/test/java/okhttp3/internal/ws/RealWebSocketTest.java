@@ -125,7 +125,7 @@ public final class RealWebSocketTest {
 
       @Override public void writeTo(BufferedSink sink) throws IOException {
         sink.writeUtf8("Hel").flush();
-        client.sendPing(new Buffer().writeUtf8("Pong?"));
+        client.sendPing(ByteString.encodeUtf8("Pong?"));
         sink.writeUtf8("lo!").flush();
         sink.close();
       }
@@ -135,20 +135,29 @@ public final class RealWebSocketTest {
     server.processNextFrame();
     serverListener.assertTextMessage("Hello!");
     client.processNextFrame();
-    clientListener.assertPong(new Buffer().writeUtf8("Pong?"));
+    clientListener.assertPong(ByteString.encodeUtf8("Pong?"));
   }
 
   @Test public void pingWritesPong() throws IOException {
-    client.sendPing(new Buffer().writeUtf8("Hello!"));
+    client.sendPing(ByteString.encodeUtf8("Hello!"));
     server.processNextFrame(); // Read the ping, write the pong.
     client.processNextFrame(); // Read the pong.
-    clientListener.assertPong(new Buffer().writeUtf8("Hello!"));
+    clientListener.assertPong(ByteString.encodeUtf8("Hello!"));
   }
 
   @Test public void unsolicitedPong() throws IOException {
-    client.sendPong(new Buffer().writeUtf8("Hello!"));
+    client.sendPong(ByteString.encodeUtf8("Hello!"));
     server.processNextFrame();
-    serverListener.assertPong(new Buffer().writeUtf8("Hello!"));
+    serverListener.assertPong(ByteString.encodeUtf8("Hello!"));
+  }
+
+  @Test public void nullPongPayloadThrows() throws IOException {
+    try {
+      client.sendPong(null);
+      fail();
+    } catch (NullPointerException e) {
+      assertEquals("payload == null", e.getMessage());
+    }
   }
 
   @Test public void close() throws IOException {
@@ -163,7 +172,7 @@ public final class RealWebSocketTest {
     client.close(1000, "Hello!");
 
     try {
-      client.sendPing(new Buffer().writeUtf8("Pong?"));
+      client.sendPing(ByteString.encodeUtf8("Pong?"));
       fail();
     } catch (IllegalStateException e) {
       assertEquals("closed", e.getMessage());
@@ -186,7 +195,7 @@ public final class RealWebSocketTest {
     client2Server.close();
 
     try {
-      client.sendPing(new Buffer().writeUtf8("Ping!"));
+      client.sendPing(ByteString.encodeUtf8("Ping!"));
       fail();
     } catch (IOException ignored) {
     }
@@ -199,7 +208,7 @@ public final class RealWebSocketTest {
       assertEquals("must call close()", e.getMessage());
     }
     try {
-      client.sendPing(new Buffer().writeUtf8("Ping!"));
+      client.sendPing(ByteString.encodeUtf8("Ping!"));
       fail();
     } catch (IllegalStateException e) {
       assertEquals("must call close()", e.getMessage());
@@ -223,7 +232,7 @@ public final class RealWebSocketTest {
       assertEquals("must call close()", e.getMessage());
     }
     try {
-      client.sendPing(new Buffer().writeUtf8("Ping!"));
+      client.sendPing(ByteString.encodeUtf8("Ping!"));
       fail();
     } catch (IllegalStateException e) {
       assertEquals("must call close()", e.getMessage());
@@ -236,7 +245,7 @@ public final class RealWebSocketTest {
     clientListener.assertClose(1000, "Hello!");
 
     try {
-      client.sendPing(new Buffer().writeUtf8("Pong?"));
+      client.sendPing(ByteString.encodeUtf8("Pong?"));
       fail();
     } catch (IOException e) {
       assertEquals("closed", e.getMessage());

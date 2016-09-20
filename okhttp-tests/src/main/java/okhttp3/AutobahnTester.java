@@ -23,8 +23,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import okhttp3.internal.Version;
-import okio.Buffer;
 import okio.BufferedSource;
+import okio.ByteString;
 
 import static okhttp3.WebSocket.BINARY;
 import static okhttp3.WebSocket.TEXT;
@@ -97,7 +97,7 @@ public final class AutobahnTester {
             });
           }
 
-          @Override public void onPong(Buffer payload) {
+          @Override public void onPong(ByteString payload) {
           }
 
           @Override public void onClose(int code, String reason) {
@@ -136,7 +136,7 @@ public final class AutobahnTester {
         message.close();
       }
 
-      @Override public void onPong(Buffer payload) {
+      @Override public void onPong(ByteString payload) {
       }
 
       @Override public void onClose(int code, String reason) {
@@ -171,7 +171,7 @@ public final class AutobahnTester {
       @Override public void onMessage(ResponseBody message) throws IOException {
       }
 
-      @Override public void onPong(Buffer payload) {
+      @Override public void onPong(ByteString payload) {
       }
 
       @Override public void onClose(int code, String reason) {

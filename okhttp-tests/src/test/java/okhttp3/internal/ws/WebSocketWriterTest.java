@@ -306,48 +306,48 @@ public final class WebSocketWriterTest {
   }
 
   @Test public void serverEmptyPing() throws IOException {
-    serverWriter.writePing(null);
+    serverWriter.writePing(ByteString.EMPTY);
     assertData("8900");
   }
 
   @Test public void clientEmptyPing() throws IOException {
-    clientWriter.writePing(null);
+    clientWriter.writePing(ByteString.EMPTY);
     assertData("898060b420bb");
   }
 
   @Test public void serverPingWithPayload() throws IOException {
-    serverWriter.writePing(new Buffer().writeUtf8("Hello"));
+    serverWriter.writePing(ByteString.encodeUtf8("Hello"));
     assertData("890548656c6c6f");
   }
 
   @Test public void clientPingWithPayload() throws IOException {
-    clientWriter.writePing(new Buffer().writeUtf8("Hello"));
+    clientWriter.writePing(ByteString.encodeUtf8("Hello"));
     assertData("898560b420bb28d14cd70f");
   }
 
   @Test public void serverEmptyPong() throws IOException {
-    serverWriter.writePong(null);
+    serverWriter.writePong(ByteString.EMPTY);
     assertData("8a00");
   }
 
   @Test public void clientEmptyPong() throws IOException {
-    clientWriter.writePong(null);
+    clientWriter.writePong(ByteString.EMPTY);
     assertData("8a8060b420bb");
   }
 
   @Test public void serverPongWithPayload() throws IOException {
-    serverWriter.writePong(new Buffer().writeUtf8("Hello"));
+    serverWriter.writePong(ByteString.encodeUtf8("Hello"));
     assertData("8a0548656c6c6f");
   }
 
   @Test public void clientPongWithPayload() throws IOException {
-    clientWriter.writePong(new Buffer().writeUtf8("Hello"));
+    clientWriter.writePong(ByteString.encodeUtf8("Hello"));
     assertData("8a8560b420bb28d14cd70f");
   }
 
   @Test public void pingTooLongThrows() throws IOException {
     try {
-      serverWriter.writePing(new Buffer().write(binaryData(1000)));
+      serverWriter.writePing(ByteString.of(binaryData(1000)));
       fail();
     } catch (IllegalArgumentException e) {
       assertEquals("Payload size must be less than or equal to 125", e.getMessage());
@@ -356,7 +356,7 @@ public final class WebSocketWriterTest {
 
   @Test public void pongTooLongThrows() throws IOException {
     try {
-      serverWriter.writePong(new Buffer().write(binaryData(1000)));
+      serverWriter.writePong(ByteString.of(binaryData(1000)));
       fail();
     } catch (IllegalArgumentException e) {
       assertEquals("Payload size must be less than or equal to 125", e.getMessage());

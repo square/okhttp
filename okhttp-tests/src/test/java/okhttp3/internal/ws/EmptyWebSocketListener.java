@@ -20,7 +20,7 @@ import okhttp3.Response;
 import okhttp3.ResponseBody;
 import okhttp3.WebSocket;
 import okhttp3.WebSocketListener;
-import okio.Buffer;
+import okio.ByteString;
 
 public class EmptyWebSocketListener implements WebSocketListener {
   @Override public void onOpen(WebSocket webSocket, Response response) {
@@ -29,7 +29,7 @@ public class EmptyWebSocketListener implements WebSocketListener {
   @Override public void onMessage(ResponseBody message) throws IOException {
   }
 
-  @Override public void onPong(Buffer payload) {
+  @Override public void onPong(ByteString payload) {
   }
 
   @Override public void onClose(int code, String reason) {
