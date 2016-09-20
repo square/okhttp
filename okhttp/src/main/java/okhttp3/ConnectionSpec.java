@@ -31,7 +31,7 @@ import static okhttp3.internal.Util.intersect;
  * connection.
  *
  * <p>The TLS versions configured in a connection spec are only be used if they are also enabled in
- * the SSL socket. For example, if an SSL socket does not have TLS 1.2 enabled, it will not be used
+ * the SSL socket. For example, if an SSL socket does not have TLS 1.3 enabled, it will not be used
  * even if it is present on the connection spec. The same policy also applies to cipher suites.
  *
  * <p>Use {@link Builder#allEnabledTlsVersions()} and {@link Builder#allEnabledCipherSuites} to
@@ -67,7 +67,7 @@ public final class ConnectionSpec {
   /** A modern TLS connection with extensions like SNI and ALPN available. */
   public static final ConnectionSpec MODERN_TLS = new Builder(true)
       .cipherSuites(APPROVED_CIPHER_SUITES)
-      .tlsVersions(TlsVersion.TLS_1_2, TlsVersion.TLS_1_1, TlsVersion.TLS_1_0)
+      .tlsVersions(TlsVersion.TLS_1_3, TlsVersion.TLS_1_2, TlsVersion.TLS_1_1, TlsVersion.TLS_1_0)
       .supportsTlsExtensions(true)
       .build();
 
