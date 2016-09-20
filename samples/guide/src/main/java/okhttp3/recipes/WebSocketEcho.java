@@ -67,8 +67,8 @@ public final class WebSocketEcho implements WebSocketListener {
     writeExecutor.shutdown();
   }
 
-  @Override public void onFailure(IOException e, Response response) {
-    e.printStackTrace();
+  @Override public void onFailure(Throwable t, Response response) {
+    t.printStackTrace();
     writeExecutor.shutdown();
   }
 

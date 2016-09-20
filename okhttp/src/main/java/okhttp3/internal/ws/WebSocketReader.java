@@ -50,16 +50,15 @@ import static okhttp3.internal.ws.WebSocketProtocol.validateCloseCode;
 
 /**
  * An <a href="http://tools.ietf.org/html/rfc6455">RFC 6455</a>-compatible WebSocket frame reader.
+ * <p>
+ * This class is not thread safe.
  */
 final class WebSocketReader {
   public interface FrameCallback {
-    void onMessage(ResponseBody body) throws IOException;
-
-    void onPing(Buffer buffer);
-
-    void onPong(Buffer buffer);
-
-    void onClose(int code, String reason);
+    void onReadMessage(ResponseBody body) throws IOException;
+    void onReadPing(Buffer buffer);
+    void onReadPong(Buffer buffer);
+    void onReadClose(int code, String reason);
   }
 
   final boolean isClient;
@@ -96,7 +95,7 @@ final class WebSocketReader {
    * <ul>
    *     <li>If it is a control frame this will result in a single call to {@link FrameCallback}.
    *     <li>If it is a message frame this will result in a single call to {@link
-   *         FrameCallback#onMessage}. If the message spans multiple frames, each interleaved
+   *         FrameCallback#onReadMessage}. If the message spans multiple frames, each interleaved
    *         control frame will result in a corresponding call to {@link FrameCallback}.
    * </ul>
    */
@@ -136,7 +135,9 @@ final class WebSocketReader {
     isMasked = (b1 & B1_FLAG_MASK) != 0;
     if (isMasked == isClient) {
       // Masked payloads must be read on the server. Unmasked payloads must be read on the client.
-      throw new ProtocolException("Client-sent frames must be masked. Server sent must not.");
+      throw new ProtocolException(isClient
+          ? "Server-sent frames must not be masked."
+          : "Client-sent frames must be masked.");
     }
 
     // Get frame length, optionally reading from follow-up bytes if indicated by special values.
@@ -183,10 +184,10 @@ final class WebSocketReader {
 
     switch (opcode) {
       case OPCODE_CONTROL_PING:
-        frameCallback.onPing(buffer);
+        frameCallback.onReadPing(buffer);
         break;
       case OPCODE_CONTROL_PONG:
-        frameCallback.onPong(buffer);
+        frameCallback.onReadPong(buffer);
         break;
       case OPCODE_CONTROL_CLOSE:
         int code = 1000;
@@ -202,7 +203,7 @@ final class WebSocketReader {
             reason = buffer.readUtf8();
           }
         }
-        frameCallback.onClose(code, reason);
+        frameCallback.onReadClose(code, reason);
         closed = true;
         break;
       default:
@@ -239,7 +240,7 @@ final class WebSocketReader {
     };
 
     messageClosed = false;
-    frameCallback.onMessage(body);
+    frameCallback.onReadMessage(body);
     if (!messageClosed) {
       throw new IllegalStateException("Listener failed to call close on message payload.");
     }

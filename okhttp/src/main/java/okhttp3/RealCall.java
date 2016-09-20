@@ -31,18 +31,20 @@ import okhttp3.internal.platform.Platform;
 import static okhttp3.internal.platform.Platform.INFO;
 
 final class RealCall implements Call {
-  private final OkHttpClient client;
-  private final RetryAndFollowUpInterceptor retryAndFollowUpInterceptor;
+  final OkHttpClient client;
+  final RetryAndFollowUpInterceptor retryAndFollowUpInterceptor;
+
+  /** The application's original request unadulterated by redirects or auth headers. */
+  final Request originalRequest;
+  final boolean forWebSocket;
 
   // Guarded by this.
   private boolean executed;
 
-  /** The application's original request unadulterated by redirects or auth headers. */
-  Request originalRequest;
-
   RealCall(OkHttpClient client, Request originalRequest, boolean forWebSocket) {
     this.client = client;
     this.originalRequest = originalRequest;
+    this.forWebSocket = forWebSocket;
     this.retryAndFollowUpInterceptor = new RetryAndFollowUpInterceptor(client, forWebSocket);
   }
 
@@ -94,7 +96,7 @@ final class RealCall implements Call {
 
   @SuppressWarnings("CloneDoesntCallSuperClone") // We are a final type & this saves clearing state.
   @Override public RealCall clone() {
-    return new RealCall(client, originalRequest, retryAndFollowUpInterceptor.isForWebSocket());
+    return new RealCall(client, originalRequest, forWebSocket);
   }
 
   StreamAllocation streamAllocation() {
@@ -104,7 +106,7 @@ final class RealCall implements Call {
   final class AsyncCall extends NamedRunnable {
     private final Callback responseCallback;
 
-    private AsyncCall(Callback responseCallback) {
+    AsyncCall(Callback responseCallback) {
       super("OkHttp %s", redactedUrl());
       this.responseCallback = responseCallback;
     }
@@ -149,16 +151,17 @@ final class RealCall implements Call {
    * Returns a string that describes this call. Doesn't include a full URL as that might contain
    * sensitive information.
    */
-  private String toLoggableString() {
-    String string = retryAndFollowUpInterceptor.isCanceled() ? "canceled call" : "call";
-    return string + " to " + redactedUrl();
+  String toLoggableString() {
+    return (isCanceled() ? "canceled " : "")
+        + (forWebSocket ? "web socket" : "call")
+        + " to " + redactedUrl();
   }
 
   String redactedUrl() {
     return originalRequest.url().redact().toString();
   }
 
-  private Response getResponseWithInterceptorChain() throws IOException {
+  Response getResponseWithInterceptorChain() throws IOException {
     // Build a full stack of interceptors.
     List<Interceptor> interceptors = new ArrayList<>();
     interceptors.addAll(client.interceptors());
@@ -166,11 +169,10 @@ final class RealCall implements Call {
     interceptors.add(new BridgeInterceptor(client.cookieJar()));
     interceptors.add(new CacheInterceptor(client.internalCache()));
     interceptors.add(new ConnectInterceptor(client));
-    if (!retryAndFollowUpInterceptor.isForWebSocket()) {
+    if (!forWebSocket) {
       interceptors.addAll(client.networkInterceptors());
     }
-    interceptors.add(new CallServerInterceptor(
-        retryAndFollowUpInterceptor.isForWebSocket()));
+    interceptors.add(new CallServerInterceptor(forWebSocket));
 
     Interceptor.Chain chain = new RealInterceptorChain(
         interceptors, null, null, null, 0, originalRequest);

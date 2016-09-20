@@ -23,7 +23,6 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Pattern;
 import okhttp3.ResponseBody;
 import okhttp3.internal.Util;
-import okhttp3.internal.ws.WebSocketRecorder.MessageDelegate;
 import okio.Buffer;
 import okio.BufferedSource;
 import okio.ByteString;
@@ -37,12 +36,12 @@ import static org.junit.Assert.fail;
 
 public final class WebSocketReaderTest {
   private final Buffer data = new Buffer();
-  private final WebSocketRecorder callback = new WebSocketRecorder();
+  private final WebSocketRecorder callback = new WebSocketRecorder("client");
   private final Random random = new Random(0);
 
   // Mutually exclusive. Use the one corresponding to the peer whose behavior you wish to test.
-  private final WebSocketReader serverReader = new WebSocketReader(false, data, callback);
-  private final WebSocketReader clientReader = new WebSocketReader(true, data, callback);
+  final WebSocketReader serverReader = new WebSocketReader(false, data, callback.asFrameCallback());
+  final WebSocketReader clientReader = new WebSocketReader(true, data, callback.asFrameCallback());
 
   @After public void tearDown() {
     callback.assertExhausted();
@@ -90,7 +89,7 @@ public final class WebSocketReaderTest {
       serverReader.processNextFrame();
       fail();
     } catch (ProtocolException e) {
-      assertEquals("Client-sent frames must be masked. Server sent must not.", e.getMessage());
+      assertEquals("Client-sent frames must be masked.", e.getMessage());
     }
   }
 
@@ -100,7 +99,7 @@ public final class WebSocketReaderTest {
       clientReader.processNextFrame();
       fail();
     } catch (ProtocolException e) {
-      assertEquals("Client-sent frames must be masked. Server sent must not.", e.getMessage());
+      assertEquals("Server-sent frames must not be masked.", e.getMessage());
     }
   }
 
@@ -152,7 +151,7 @@ public final class WebSocketReaderTest {
     data.write(ByteString.decodeHex("818537fa213d7f9f4d")); // Hel
 
     final Buffer sink = new Buffer();
-    callback.setNextMessageDelegate(new MessageDelegate() {
+    callback.setNextEventDelegate(new EmptyWebSocketListener() {
       @Override public void onMessage(ResponseBody message) throws IOException {
         BufferedSource source = message.source();
         source.readFully(sink, 3); // Read "Hel"
@@ -253,7 +252,7 @@ public final class WebSocketReaderTest {
 
   @Test public void noCloseErrors() throws IOException {
     data.write(ByteString.decodeHex("810548656c6c6f")); // Hello
-    callback.setNextMessageDelegate(new MessageDelegate() {
+    callback.setNextEventDelegate(new EmptyWebSocketListener() {
       @Override public void onMessage(ResponseBody body) throws IOException {
         body.source().readAll(new Buffer());
       }
@@ -271,7 +270,7 @@ public final class WebSocketReaderTest {
     data.write(ByteString.decodeHex("810448657921")); // Hey!
 
     final Buffer sink = new Buffer();
-    callback.setNextMessageDelegate(new MessageDelegate() {
+    callback.setNextEventDelegate(new EmptyWebSocketListener() {
       @Override public void onMessage(ResponseBody message) throws IOException {
         message.source().read(sink, 3);
         message.close();
@@ -293,7 +292,7 @@ public final class WebSocketReaderTest {
     data.write(ByteString.decodeHex("810448657921")); // Hey!
 
     final Buffer sink = new Buffer();
-    callback.setNextMessageDelegate(new MessageDelegate() {
+    callback.setNextEventDelegate(new EmptyWebSocketListener() {
       @Override public void onMessage(ResponseBody message) throws IOException {
         message.source().read(sink, 2);
         message.close();
@@ -313,7 +312,7 @@ public final class WebSocketReaderTest {
     data.write(ByteString.decodeHex("810548656c6c6f")); // Hello
 
     final AtomicReference<Exception> exception = new AtomicReference<>();
-    callback.setNextMessageDelegate(new MessageDelegate() {
+    callback.setNextEventDelegate(new EmptyWebSocketListener() {
       @Override public void onMessage(ResponseBody message) throws IOException {
         message.close();
         try {

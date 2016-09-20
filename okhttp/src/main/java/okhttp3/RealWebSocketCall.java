@@ -72,11 +72,15 @@ final class RealWebSocketCall implements WebSocketCall {
   @Override public void enqueue(final WebSocketListener listener) {
     Callback responseCallback = new Callback() {
       @Override public void onResponse(Call call, Response response) {
+        StreamWebSocket webSocket;
         try {
-          createWebSocket(response, listener);
+          webSocket = create(response, listener);
         } catch (IOException e) {
           listener.onFailure(e, response);
+          return;
         }
+
+        webSocket.loopReader();
       }
 
       @Override public void onFailure(Call call, IOException e) {
@@ -90,7 +94,7 @@ final class RealWebSocketCall implements WebSocketCall {
     call.cancel();
   }
 
-  private void createWebSocket(Response response, WebSocketListener listener) throws IOException {
+  StreamWebSocket create(Response response, WebSocketListener listener) throws IOException {
     if (response.code() != 101) {
       throw new ProtocolException("Expected HTTP 101 response but was '"
           + response.code()
@@ -119,42 +123,32 @@ final class RealWebSocketCall implements WebSocketCall {
           + "'");
     }
 
+    String name = response.request().url().redact().toString();
+    ThreadPoolExecutor replyExecutor =
+        new ThreadPoolExecutor(1, 1, 1, SECONDS, new LinkedBlockingDeque<Runnable>(),
+            Util.threadFactory(Util.format("OkHttp %s WebSocket Replier", name), true));
+    replyExecutor.allowCoreThreadTimeOut(true);
+
     StreamAllocation streamAllocation = call.streamAllocation();
-    RealWebSocket webSocket = StreamWebSocket.create(streamAllocation, response, random, listener);
-
-    listener.onOpen(webSocket, response);
-
-    while (webSocket.readMessage()) {
-    }
+    streamAllocation.noNewStreams(); // Web socket connections can't be re-used.
+    return new StreamWebSocket(streamAllocation, random, replyExecutor, listener, response, name);
   }
 
   // Keep static so that the WebSocketCall instance can be garbage collected.
-  private static class StreamWebSocket extends RealWebSocket {
-    static RealWebSocket create(StreamAllocation streamAllocation, Response response,
-        Random random, WebSocketListener listener) {
-      String url = response.request().url().redact().toString();
-      ThreadPoolExecutor replyExecutor =
-          new ThreadPoolExecutor(1, 1, 1, SECONDS, new LinkedBlockingDeque<Runnable>(),
-              Util.threadFactory(Util.format("OkHttp %s WebSocket", url), true));
-      replyExecutor.allowCoreThreadTimeOut(true);
-
-      return new StreamWebSocket(streamAllocation, random, replyExecutor, listener, url);
-    }
-
+  static final class StreamWebSocket extends RealWebSocket {
     private final StreamAllocation streamAllocation;
-    private final ExecutorService replyExecutor;
+    private final ExecutorService executor;
 
-    private StreamWebSocket(StreamAllocation streamAllocation,
-        Random random, ExecutorService replyExecutor, WebSocketListener listener, String url) {
+    StreamWebSocket(StreamAllocation streamAllocation, Random random, ExecutorService executor,
+        WebSocketListener listener, Response response, String name) {
       super(true /* is client */, streamAllocation.connection().source,
-          streamAllocation.connection().sink, random, replyExecutor, listener, url);
+          streamAllocation.connection().sink, random, executor, listener, response, name);
       this.streamAllocation = streamAllocation;
-      this.replyExecutor = replyExecutor;
+      this.executor = executor;
     }
 
-    @Override protected void close() throws IOException {
-      replyExecutor.shutdown();
-      streamAllocation.noNewStreams();
+    @Override protected void shutdown() {
+      executor.shutdown();
       streamAllocation.streamFinished(true, streamAllocation.codec());
     }
   }
