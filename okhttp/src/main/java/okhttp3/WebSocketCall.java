@@ -15,7 +15,10 @@
  */
 package okhttp3;
 
-public interface WebSocketCall {
+public interface WebSocketCall extends Cloneable {
+  /** Returns the original request that initiated this call. */
+  Request request();
+
   /**
    * Schedules the request to be executed at some point in the future.
    *
@@ -32,6 +35,20 @@ public interface WebSocketCall {
 
   /** Cancels the request, if possible. Requests that are already complete cannot be canceled. */
   void cancel();
+
+  /**
+   * Returns true if this call has been {@linkplain #enqueue(WebSocketListener) enqueued}. It is an
+   * error to enqueue a call more than once.
+   */
+  boolean isExecuted();
+
+  boolean isCanceled();
+
+  /**
+   * Create a new, identical call to this one which can be enqueued even if this call has already
+   * been.
+   */
+  WebSocketCall clone();
 
   interface Factory {
     WebSocketCall newWebSocketCall(Request request);
