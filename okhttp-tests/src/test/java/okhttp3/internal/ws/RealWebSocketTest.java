@@ -400,6 +400,12 @@ public final class RealWebSocketTest {
     serverListener.assertExhausted(); // Client should not have sent second close.
   }
 
+  @Test public void networkErrorReportedAsCloseNotFailure() {
+    server2client.close();
+    client.processNextFrame();
+    clientListener.assertClose(1006, "");
+  }
+
   @Test public void closeThrowingClosesConnection() {
     client2Server.close();
 

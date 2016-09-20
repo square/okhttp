@@ -36,6 +36,7 @@ import static okhttp3.internal.ws.WebSocketProtocol.B0_FLAG_RSV3;
 import static okhttp3.internal.ws.WebSocketProtocol.B0_MASK_OPCODE;
 import static okhttp3.internal.ws.WebSocketProtocol.B1_FLAG_MASK;
 import static okhttp3.internal.ws.WebSocketProtocol.B1_MASK_LENGTH;
+import static okhttp3.internal.ws.WebSocketProtocol.CLOSE_NO_STATUS_CODE;
 import static okhttp3.internal.ws.WebSocketProtocol.OPCODE_BINARY;
 import static okhttp3.internal.ws.WebSocketProtocol.OPCODE_CONTINUATION;
 import static okhttp3.internal.ws.WebSocketProtocol.OPCODE_CONTROL_CLOSE;
@@ -189,7 +190,7 @@ final class WebSocketReader {
         frameCallback.onReadPong(buffer.readByteString());
         break;
       case OPCODE_CONTROL_CLOSE:
-        int code = 1000;
+        int code = CLOSE_NO_STATUS_CODE;
         String reason = "";
         long bufferSize = buffer.size();
         if (bufferSize == 1) {

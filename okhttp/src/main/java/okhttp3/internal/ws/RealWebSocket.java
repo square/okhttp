@@ -35,6 +35,9 @@ import okio.ByteString;
 import okio.Okio;
 
 import static okhttp3.internal.platform.Platform.INFO;
+import static okhttp3.internal.ws.WebSocketProtocol.CLOSE_ABNORMAL_TERMINATION;
+import static okhttp3.internal.ws.WebSocketProtocol.CLOSE_CLIENT_GOING_AWAY;
+import static okhttp3.internal.ws.WebSocketProtocol.CLOSE_PROTOCOL_EXCEPTION;
 import static okhttp3.internal.ws.WebSocketProtocol.OPCODE_BINARY;
 import static okhttp3.internal.ws.WebSocketProtocol.OPCODE_TEXT;
 import static okhttp3.internal.ws.WebSocketReader.FrameCallback;
@@ -59,9 +62,6 @@ import static okhttp3.internal.ws.WebSocketReader.FrameCallback;
  * be accessed. A prefix of "writer" indicates both "Sender" and "Replier" threads can access.
  */
 public abstract class RealWebSocket implements WebSocket, FrameCallback {
-  private static final int CLOSE_LISTENER_EXCEPTION = 1001;
-  private static final int CLOSE_PROTOCOL_EXCEPTION = 1002;
-
   private final WebSocketReader reader;
   private final WebSocketListener readerListener;
   /** True after a close frame was read by the reader. No frames will follow it. */
@@ -126,7 +126,11 @@ public abstract class RealWebSocket implements WebSocket, FrameCallback {
     } catch (Throwable t) {
       Util.throwIfFatal(t);
       replyToReaderError(t);
-      readerListener.onFailure(t, null);
+      if (t instanceof IOException && !(t instanceof ProtocolException)) {
+        readerListener.onClose(CLOSE_ABNORMAL_TERMINATION, "");
+      } else {
+        readerListener.onFailure(t, null);
+      }
       return false;
     }
   }
@@ -199,7 +203,7 @@ public abstract class RealWebSocket implements WebSocket, FrameCallback {
           boolean protocolException = t instanceof ProtocolException;
           boolean runtimeException = !(t instanceof IOException);
           if (protocolException || runtimeException) {
-            int code = protocolException ? CLOSE_PROTOCOL_EXCEPTION : CLOSE_LISTENER_EXCEPTION;
+            int code = protocolException ? CLOSE_PROTOCOL_EXCEPTION : CLOSE_CLIENT_GOING_AWAY;
             try {
               writer.writeClose(code, null);
             } catch (IOException inner) {
