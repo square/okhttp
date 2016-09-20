@@ -35,6 +35,8 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 final class RealWebSocketCall implements WebSocketCall {
   private static final List<Protocol> ONLY_HTTP1 = Collections.singletonList(Protocol.HTTP_1_1);
 
+  /** The application's original request unadulterated by web socket headers. */
+  private final Request originalRequest;
   private final RealCall call;
   private final Random random;
   private final String key;
@@ -59,6 +61,7 @@ final class RealWebSocketCall implements WebSocketCall {
         .protocols(ONLY_HTTP1)
         .build();
 
+    originalRequest = request;
     request = request.newBuilder()
         .header("Upgrade", "websocket")
         .header("Connection", "Upgrade")
@@ -88,10 +91,6 @@ final class RealWebSocketCall implements WebSocketCall {
       }
     };
     call.enqueue(responseCallback);
-  }
-
-  @Override public void cancel() {
-    call.cancel();
   }
 
   StreamWebSocket create(Response response, WebSocketListener listener) throws IOException {
@@ -132,6 +131,26 @@ final class RealWebSocketCall implements WebSocketCall {
     StreamAllocation streamAllocation = call.streamAllocation();
     streamAllocation.noNewStreams(); // Web socket connections can't be re-used.
     return new StreamWebSocket(streamAllocation, random, replyExecutor, listener, response, name);
+  }
+
+  @Override public Request request() {
+    return originalRequest;
+  }
+
+  @Override public void cancel() {
+    call.cancel();
+  }
+
+  @Override public boolean isExecuted() {
+    return call.isExecuted();
+  }
+
+  @Override public boolean isCanceled() {
+    return call.isCanceled();
+  }
+
+  @Override public WebSocketCall clone() {
+    return new RealWebSocketCall(call.client, originalRequest, random);
   }
 
   // Keep static so that the WebSocketCall instance can be garbage collected.
