@@ -23,6 +23,7 @@ import okhttp3.ResponseBody;
 import okhttp3.WebSocket;
 import okio.Buffer;
 import okio.BufferedSource;
+import okio.ByteString;
 import okio.Okio;
 import okio.Source;
 import okio.Timeout;
@@ -56,8 +57,8 @@ import static okhttp3.internal.ws.WebSocketProtocol.validateCloseCode;
 final class WebSocketReader {
   public interface FrameCallback {
     void onReadMessage(ResponseBody body) throws IOException;
-    void onReadPing(Buffer buffer);
-    void onReadPong(Buffer buffer);
+    void onReadPing(ByteString buffer);
+    void onReadPong(ByteString buffer);
     void onReadClose(int code, String reason);
   }
 
@@ -164,10 +165,8 @@ final class WebSocketReader {
   }
 
   private void readControlFrame() throws IOException {
-    Buffer buffer = null;
+    Buffer buffer = new Buffer();
     if (frameBytesRead < frameLength) {
-      buffer = new Buffer();
-
       if (isClient) {
         source.readFully(buffer, frameLength);
       } else {
@@ -184,24 +183,21 @@ final class WebSocketReader {
 
     switch (opcode) {
       case OPCODE_CONTROL_PING:
-        frameCallback.onReadPing(buffer);
+        frameCallback.onReadPing(buffer.readByteString());
         break;
       case OPCODE_CONTROL_PONG:
-        frameCallback.onReadPong(buffer);
+        frameCallback.onReadPong(buffer.readByteString());
         break;
       case OPCODE_CONTROL_CLOSE:
         int code = 1000;
         String reason = "";
-        if (buffer != null) {
-          long bufferSize = buffer.size();
-          if (bufferSize == 1) {
-            throw new ProtocolException("Malformed close payload length of 1.");
-          } else if (bufferSize != 0) {
-            code = buffer.readShort();
-            validateCloseCode(code, false);
-
-            reason = buffer.readUtf8();
-          }
+        long bufferSize = buffer.size();
+        if (bufferSize == 1) {
+          throw new ProtocolException("Malformed close payload length of 1.");
+        } else if (bufferSize != 0) {
+          code = buffer.readShort();
+          reason = buffer.readUtf8();
+          validateCloseCode(code, false);
         }
         frameCallback.onReadClose(code, reason);
         closed = true;

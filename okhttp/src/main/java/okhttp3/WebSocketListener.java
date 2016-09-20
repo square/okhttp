@@ -16,7 +16,7 @@
 package okhttp3;
 
 import java.io.IOException;
-import okio.Buffer;
+import okio.ByteString;
 
 /**
  * Listener for server-initiated messages on a connected {@link WebSocket}. All callbacks will be
@@ -60,9 +60,9 @@ public interface WebSocketListener {
 
   /**
    * Called when a server pong is received. This is usually a result of calling {@link
-   * WebSocket#sendPing(Buffer)} but might also be unsolicited directly from the server.
+   * WebSocket#sendPing(ByteString)} but might also be unsolicited directly from the server.
    */
-  void onPong(Buffer payload);
+  void onPong(ByteString payload);
 
   /**
    * Called when the server sends a close message. This may have been initiated from a call to

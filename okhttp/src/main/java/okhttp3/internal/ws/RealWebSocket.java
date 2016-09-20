@@ -29,9 +29,9 @@ import okhttp3.WebSocketListener;
 import okhttp3.internal.NamedRunnable;
 import okhttp3.internal.Util;
 import okhttp3.internal.platform.Platform;
-import okio.Buffer;
 import okio.BufferedSink;
 import okio.BufferedSource;
+import okio.ByteString;
 import okio.Okio;
 
 import static okhttp3.internal.platform.Platform.INFO;
@@ -135,11 +135,11 @@ public abstract class RealWebSocket implements WebSocket, FrameCallback {
     readerListener.onMessage(message);
   }
 
-  @Override public final void onReadPing(Buffer buffer) {
+  @Override public final void onReadPing(ByteString buffer) {
     replyToPeerPing(buffer);
   }
 
-  @Override public final void onReadPong(Buffer buffer) {
+  @Override public final void onReadPong(ByteString buffer) {
     readerListener.onPong(buffer);
   }
 
@@ -152,7 +152,7 @@ public abstract class RealWebSocket implements WebSocket, FrameCallback {
   ///// REPLIER THREAD (executed on replier, contends with sender thread)
 
   /** Replies with a pong when a ping frame is read from the peer. */
-  private void replyToPeerPing(final Buffer payload) {
+  private void replyToPeerPing(final ByteString payload) {
     Runnable replierPong = new NamedRunnable("OkHttp %s WebSocket Pong Reply", name) {
       @Override protected void execute() {
         try {
@@ -254,7 +254,8 @@ public abstract class RealWebSocket implements WebSocket, FrameCallback {
     }
   }
 
-  @Override public final void sendPing(Buffer payload) throws IOException {
+  @Override public final void sendPing(ByteString payload) throws IOException {
+    if (payload == null) throw new NullPointerException("payload == null");
     if (senderSentClose) throw new IllegalStateException("closed");
     if (senderWantsClose) throw new IllegalStateException("must call close()");
 
@@ -267,7 +268,8 @@ public abstract class RealWebSocket implements WebSocket, FrameCallback {
   }
 
   /** Send an unsolicited pong with the specified payload. */
-  final void sendPong(Buffer payload) throws IOException {
+  final void sendPong(ByteString payload) throws IOException {
+    if (payload == null) throw new NullPointerException("payload == null");
     if (senderSentClose) throw new IllegalStateException("closed");
     if (senderWantsClose) throw new IllegalStateException("must call close()");
 

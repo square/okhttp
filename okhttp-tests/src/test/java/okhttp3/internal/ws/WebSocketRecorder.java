@@ -26,6 +26,7 @@ import okhttp3.WebSocket;
 import okhttp3.WebSocketListener;
 import okhttp3.internal.platform.Platform;
 import okio.Buffer;
+import okio.ByteString;
 
 import static okhttp3.WebSocket.BINARY;
 import static okhttp3.WebSocket.TEXT;
@@ -75,15 +76,15 @@ public final class WebSocketRecorder implements WebSocketListener {
     }
   }
 
-  @Override public void onPong(Buffer buffer) {
+  @Override public void onPong(ByteString payload) {
     Platform.get().log(Platform.INFO, "[WS " + name + "] onPong", null);
 
     WebSocketListener delegate = this.delegate;
     if (delegate != null) {
       this.delegate = null;
-      delegate.onPong(buffer);
+      delegate.onPong(payload);
     } else {
-      events.add(new Pong(buffer));
+      events.add(new Pong(payload));
     }
   }
 
@@ -137,7 +138,7 @@ public final class WebSocketRecorder implements WebSocketListener {
     assertEquals(message, actual);
   }
 
-  public void assertPong(Buffer payload) {
+  public void assertPong(ByteString payload) {
     Object actual = nextEvent();
     assertEquals(new Pong(payload), actual);
   }
@@ -252,24 +253,24 @@ public final class WebSocketRecorder implements WebSocketListener {
   }
 
   static final class Pong {
-    public final Buffer buffer;
+    public final ByteString payload;
 
-    Pong(Buffer buffer) {
-      this.buffer = buffer;
+    Pong(ByteString payload) {
+      this.payload = payload;
     }
 
     @Override public String toString() {
-      return "Pong[" + buffer + "]";
+      return "Pong[" + payload + "]";
     }
 
     @Override public int hashCode() {
-      return buffer.hashCode();
+      return payload.hashCode();
     }
 
     @Override public boolean equals(Object obj) {
       if (obj instanceof Pong) {
         Pong other = (Pong) obj;
-        return buffer == null ? other.buffer == null : buffer.equals(other.buffer);
+        return payload == null ? other.payload == null : payload.equals(other.payload);
       }
       return false;
     }
@@ -308,12 +309,12 @@ public final class WebSocketRecorder implements WebSocketListener {
         onMessage(body);
       }
 
-      @Override public void onReadPing(Buffer buffer) {
-        events.add(new Ping(buffer));
+      @Override public void onReadPing(ByteString payload) {
+        events.add(new Ping(payload));
       }
 
-      @Override public void onReadPong(Buffer buffer) {
-        onPong(buffer);
+      @Override public void onReadPong(ByteString padload) {
+        onPong(padload);
       }
 
       @Override public void onReadClose(int code, String reason) {
@@ -322,15 +323,15 @@ public final class WebSocketRecorder implements WebSocketListener {
     };
   }
 
-  void assertPing(Buffer payload) {
+  void assertPing(ByteString payload) {
     Object actual = nextEvent();
     assertEquals(new Ping(payload), actual);
   }
 
   static final class Ping {
-    public final Buffer buffer;
+    public final ByteString buffer;
 
-    Ping(Buffer buffer) {
+    Ping(ByteString buffer) {
       this.buffer = buffer;
     }
 

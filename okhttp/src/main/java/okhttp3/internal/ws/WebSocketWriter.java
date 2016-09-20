@@ -20,6 +20,7 @@ import java.util.Random;
 import okio.Buffer;
 import okio.BufferedSink;
 import okio.BufferedSource;
+import okio.ByteString;
 import okio.Sink;
 import okio.Timeout;
 
@@ -73,15 +74,15 @@ final class WebSocketWriter {
     maskBuffer = isClient ? new byte[8192] : null;
   }
 
-  /** Send a ping with the supplied {@code payload}. Payload may be {@code null} */
-  void writePing(Buffer payload) throws IOException {
+  /** Send a ping with the supplied {@code payload}. */
+  void writePing(ByteString payload) throws IOException {
     synchronized (this) {
       writeControlFrameSynchronized(OPCODE_CONTROL_PING, payload);
     }
   }
 
-  /** Send a pong with the supplied {@code payload}. Payload may be {@code null} */
-  void writePong(Buffer payload) throws IOException {
+  /** Send a pong with the supplied {@code payload}. */
+  void writePong(ByteString payload) throws IOException {
     synchronized (this) {
       writeControlFrameSynchronized(OPCODE_CONTROL_PONG, payload);
     }
@@ -95,16 +96,17 @@ final class WebSocketWriter {
    * @param reason Reason for shutting down or {@code null}.
    */
   void writeClose(int code, String reason) throws IOException {
-    Buffer payload = null;
+    ByteString payload = ByteString.EMPTY;
     if (code != 0 || reason != null) {
       if (code != 0) {
         validateCloseCode(code, true);
       }
-      payload = new Buffer();
-      payload.writeShort(code);
+      Buffer buffer = new Buffer();
+      buffer.writeShort(code);
       if (reason != null) {
-        payload.writeUtf8(reason);
+        buffer.writeUtf8(reason);
       }
+      payload = buffer.readByteString();
     }
 
     synchronized (this) {
@@ -116,18 +118,15 @@ final class WebSocketWriter {
     }
   }
 
-  private void writeControlFrameSynchronized(int opcode, Buffer payload) throws IOException {
+  private void writeControlFrameSynchronized(int opcode, ByteString payload) throws IOException {
     assert Thread.holdsLock(this);
 
     if (writerClosed) throw new IOException("closed");
 
-    int length = 0;
-    if (payload != null) {
-      length = (int) payload.size();
-      if (length > PAYLOAD_BYTE_MAX) {
-        throw new IllegalArgumentException(
-            "Payload size must be less than or equal to " + PAYLOAD_BYTE_MAX);
-      }
+    int length = payload.size();
+    if (length > PAYLOAD_BYTE_MAX) {
+      throw new IllegalArgumentException(
+          "Payload size must be less than or equal to " + PAYLOAD_BYTE_MAX);
     }
 
     int b0 = B0_FLAG_FIN | opcode;
@@ -141,15 +140,12 @@ final class WebSocketWriter {
       random.nextBytes(maskKey);
       sink.write(maskKey);
 
-      if (payload != null) {
-        writeMaskedSynchronized(payload, length);
-      }
+      byte[] bytes = payload.toByteArray();
+      toggleMask(bytes, bytes.length, maskKey, 0);
+      sink.write(bytes);
     } else {
       sink.writeByte(b1);
-
-      if (payload != null) {
-        sink.writeAll(payload);
-      }
+      sink.write(payload);
     }
 
     sink.flush();
