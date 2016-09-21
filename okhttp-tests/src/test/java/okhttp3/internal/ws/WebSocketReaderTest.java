@@ -343,7 +343,7 @@ public final class WebSocketReaderTest {
   @Test public void emptyCloseCallsCallback() throws IOException {
     data.write(ByteString.decodeHex("8800")); // Empty close
     clientReader.processNextFrame();
-    callback.assertClose(1000, "");
+    callback.assertClose(1005, "");
   }
 
   @Test public void closeLengthOfOneThrows() throws IOException {
