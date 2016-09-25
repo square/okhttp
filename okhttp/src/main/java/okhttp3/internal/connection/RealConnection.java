@@ -186,7 +186,8 @@ public final class RealConnection extends Http2Connection.Listener implements Co
     try {
       Platform.get().connectSocket(rawSocket, route.socketAddress(), connectTimeout);
     } catch (ConnectException e) {
-      throw new ConnectException("Failed to connect to " + route.socketAddress());
+      throw (ConnectException) new ConnectException("Failed to connect to " + route.socketAddress())
+          .initCause(e);
     }
     source = Okio.buffer(Okio.source(rawSocket));
     sink = Okio.buffer(Okio.sink(rawSocket));
