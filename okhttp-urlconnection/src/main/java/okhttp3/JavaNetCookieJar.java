@@ -32,6 +32,11 @@ import static okhttp3.internal.platform.Platform.WARN;
 public final class JavaNetCookieJar implements CookieJar {
   private final CookieHandler cookieHandler;
 
+  /**
+   * Remove the begin and quotes from the cookie value, default is true.
+   */
+  private boolean stripQuotes = true;
+
   public JavaNetCookieJar(CookieHandler cookieHandler) {
     this.cookieHandler = cookieHandler;
   }
@@ -79,6 +84,10 @@ public final class JavaNetCookieJar implements CookieJar {
         : Collections.<Cookie>emptyList();
   }
 
+  public void setStripQuotes(boolean stripQuotes) {
+    this.stripQuotes = stripQuotes;
+  }
+
   /**
    * Convert a request header to OkHttp's cookies via {@link HttpCookie}. That extra step handles
    * multiple cookies in a single request header, which {@link Cookie#parse} doesn't support.
@@ -97,7 +106,7 @@ public final class JavaNetCookieJar implements CookieJar {
           : "";
 
       // If the value is "quoted", drop the quotes.
-      if (value.startsWith("\"") && value.endsWith("\"")) {
+      if (this.stripQuotes && value.startsWith("\"") && value.endsWith("\"")) {
         value = value.substring(1, value.length() - 1);
       }
 
