@@ -18,7 +18,6 @@ package okhttp3.internal.http2;
 import java.io.Closeable;
 import java.io.IOException;
 import java.util.List;
-import java.util.logging.Logger;
 import okio.Buffer;
 import okio.BufferedSink;
 
@@ -39,13 +38,10 @@ import static okhttp3.internal.http2.Http2.TYPE_PUSH_PROMISE;
 import static okhttp3.internal.http2.Http2.TYPE_RST_STREAM;
 import static okhttp3.internal.http2.Http2.TYPE_SETTINGS;
 import static okhttp3.internal.http2.Http2.TYPE_WINDOW_UPDATE;
-import static okhttp3.internal.http2.Http2.frameLog;
 import static okhttp3.internal.http2.Http2.illegalArgument;
 
 /** Writes HTTP/2 transport frames. */
 final class Http2Writer implements Closeable {
-  private static final Logger logger = Logger.getLogger(Http2.class.getName());
-
   private final BufferedSink sink;
   private final boolean client;
   private final Buffer hpackBuffer;
@@ -65,8 +61,8 @@ final class Http2Writer implements Closeable {
   public synchronized void connectionPreface() throws IOException {
     if (closed) throw new IOException("closed");
     if (!client) return; // Nothing to write; servers don't send connection headers!
-    if (logger.isLoggable(FINE)) {
-      logger.fine(format(">> CONNECTION %s", CONNECTION_PREFACE.hex()));
+    if (Http2.logger.isLoggable(FINE)) {
+        Http2.logger.fine(format(">> CONNECTION %s", CONNECTION_PREFACE.hex()));
     }
     sink.write(CONNECTION_PREFACE.toByteArray());
     sink.flush();
@@ -263,7 +259,7 @@ final class Http2Writer implements Closeable {
   }
 
   public void frameHeader(int streamId, int length, byte type, byte flags) throws IOException {
-    if (logger.isLoggable(FINE)) logger.fine(frameLog(false, streamId, length, type, flags));
+    Http2.frameLog(false, streamId, length, type, flags);
     if (length > maxFrameSize) {
       throw illegalArgument("FRAME_SIZE_ERROR length > %d: %d", maxFrameSize, length);
     }

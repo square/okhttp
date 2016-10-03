@@ -31,57 +31,57 @@ import static okhttp3.internal.http2.Http2.TYPE_HEADERS;
 import static okhttp3.internal.http2.Http2.TYPE_PING;
 import static okhttp3.internal.http2.Http2.TYPE_PUSH_PROMISE;
 import static okhttp3.internal.http2.Http2.TYPE_SETTINGS;
-import static okhttp3.internal.http2.Http2.frameLog;
+import static okhttp3.internal.http2.Http2.frameLogFormat;
 import static org.junit.Assert.assertEquals;
 
 public final class FrameLogTest {
   /** Real stream traffic applied to the log format. */
   @Test public void exampleStream() {
     assertEquals(">> 0x00000000     5 SETTINGS      ",
-        frameLog(false, 0, 5, TYPE_SETTINGS, FLAG_NONE));
+        frameLogFormat(false, 0, 5, TYPE_SETTINGS, FLAG_NONE));
     assertEquals(">> 0x00000003   100 HEADERS       END_HEADERS",
-        frameLog(false, 3, 100, TYPE_HEADERS, FLAG_END_HEADERS));
+        frameLogFormat(false, 3, 100, TYPE_HEADERS, FLAG_END_HEADERS));
     assertEquals(">> 0x00000003     0 DATA          END_STREAM",
-        frameLog(false, 3, 0, TYPE_DATA, FLAG_END_STREAM));
+        frameLogFormat(false, 3, 0, TYPE_DATA, FLAG_END_STREAM));
     assertEquals("<< 0x00000000    15 SETTINGS      ",
-        frameLog(true, 0, 15, TYPE_SETTINGS, FLAG_NONE));
+        frameLogFormat(true, 0, 15, TYPE_SETTINGS, FLAG_NONE));
     assertEquals(">> 0x00000000     0 SETTINGS      ACK",
-        frameLog(false, 0, 0, TYPE_SETTINGS, FLAG_ACK));
+        frameLogFormat(false, 0, 0, TYPE_SETTINGS, FLAG_ACK));
     assertEquals("<< 0x00000000     0 SETTINGS      ACK",
-        frameLog(true, 0, 0, TYPE_SETTINGS, FLAG_ACK));
+        frameLogFormat(true, 0, 0, TYPE_SETTINGS, FLAG_ACK));
     assertEquals("<< 0x00000003    22 HEADERS       END_HEADERS",
-        frameLog(true, 3, 22, TYPE_HEADERS, FLAG_END_HEADERS));
+        frameLogFormat(true, 3, 22, TYPE_HEADERS, FLAG_END_HEADERS));
     assertEquals("<< 0x00000003   226 DATA          END_STREAM",
-        frameLog(true, 3, 226, TYPE_DATA, FLAG_END_STREAM));
+        frameLogFormat(true, 3, 226, TYPE_DATA, FLAG_END_STREAM));
     assertEquals(">> 0x00000000     8 GOAWAY        ",
-        frameLog(false, 0, 8, TYPE_GOAWAY, FLAG_NONE));
+        frameLogFormat(false, 0, 8, TYPE_GOAWAY, FLAG_NONE));
   }
 
   @Test public void flagOverlapOn0x1() {
     assertEquals("<< 0x00000000     0 SETTINGS      ACK",
-        frameLog(true, 0, 0, TYPE_SETTINGS, (byte) 0x1));
+        frameLogFormat(true, 0, 0, TYPE_SETTINGS, (byte) 0x1));
     assertEquals("<< 0x00000000     8 PING          ACK",
-        frameLog(true, 0, 8, TYPE_PING, (byte) 0x1));
+        frameLogFormat(true, 0, 8, TYPE_PING, (byte) 0x1));
     assertEquals("<< 0x00000003     0 HEADERS       END_STREAM",
-        frameLog(true, 3, 0, TYPE_HEADERS, (byte) 0x1));
+        frameLogFormat(true, 3, 0, TYPE_HEADERS, (byte) 0x1));
     assertEquals("<< 0x00000003     0 DATA          END_STREAM",
-        frameLog(true, 3, 0, TYPE_DATA, (byte) 0x1));
+        frameLogFormat(true, 3, 0, TYPE_DATA, (byte) 0x1));
   }
 
   @Test public void flagOverlapOn0x4() {
     assertEquals("<< 0x00000003 10000 HEADERS       END_HEADERS",
-        frameLog(true, 3, 10000, TYPE_HEADERS, (byte) 0x4));
+        frameLogFormat(true, 3, 10000, TYPE_HEADERS, (byte) 0x4));
     assertEquals("<< 0x00000003 10000 CONTINUATION  END_HEADERS",
-        frameLog(true, 3, 10000, TYPE_CONTINUATION, (byte) 0x4));
+        frameLogFormat(true, 3, 10000, TYPE_CONTINUATION, (byte) 0x4));
     assertEquals("<< 0x00000004 10000 PUSH_PROMISE  END_PUSH_PROMISE",
-        frameLog(true, 4, 10000, TYPE_PUSH_PROMISE, (byte) 0x4));
+        frameLogFormat(true, 4, 10000, TYPE_PUSH_PROMISE, (byte) 0x4));
   }
 
   @Test public void flagOverlapOn0x20() {
     assertEquals("<< 0x00000003 10000 HEADERS       PRIORITY",
-        frameLog(true, 3, 10000, TYPE_HEADERS, (byte) 0x20));
+        frameLogFormat(true, 3, 10000, TYPE_HEADERS, (byte) 0x20));
     assertEquals("<< 0x00000003 10000 DATA          COMPRESSED",
-        frameLog(true, 3, 10000, TYPE_DATA, (byte) 0x20));
+        frameLogFormat(true, 3, 10000, TYPE_DATA, (byte) 0x20));
   }
 
   /**
