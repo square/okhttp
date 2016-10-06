@@ -1834,21 +1834,29 @@ public final class CacheTest {
     server.enqueue(new MockResponse()
         .setBody("B"));
 
-    // cache miss; seed the cache
+    // A cache miss writes the cache.
+    long t0 = System.currentTimeMillis();
     Response response1 = get(server.url("/a"));
     assertEquals("A", response1.body().string());
     assertEquals(null, response1.header("Allow"));
+    assertEquals(0, response1.receivedResponseAtMillis() - t0, 250.0);
 
-    // conditional cache hit; update the cache
+    // A conditional cache hit updates the cache.
+    Thread.sleep(500); // Make sure t0 and t1 are distinct.
+    long t1 = System.currentTimeMillis();
     Response response2 = get(server.url("/a"));
     assertEquals(HttpURLConnection.HTTP_OK, response2.code());
     assertEquals("A", response2.body().string());
     assertEquals("GET, HEAD", response2.header("Allow"));
+    assertEquals(0, response2.receivedResponseAtMillis() - t1, 250.0);
 
-    // full cache hit
+    // A full cache hit reads the cache.
+    Thread.sleep(500); // Make sure t1 and t2 are distinct.
+    long t2 = System.currentTimeMillis();
     Response response3 = get(server.url("/a"));
     assertEquals("A", response3.body().string());
     assertEquals("GET, HEAD", response3.header("Allow"));
+    assertEquals(0, response3.receivedResponseAtMillis() - t1, 250.0);
 
     assertEquals(2, server.getRequestCount());
   }
