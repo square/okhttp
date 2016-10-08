@@ -43,6 +43,9 @@ public final class MockResponse implements Cloneable {
   private long bodyDelayAmount = 0;
   private TimeUnit bodyDelayUnit = TimeUnit.MILLISECONDS;
 
+  private long shutdownDelay = 0;
+  private TimeUnit shutdownDelayUnit = TimeUnit.MILLISECONDS;
+
   private List<PushPromise> promises = new ArrayList<>();
   private Settings settings;
   private WebSocketListener webSocketListener;
@@ -251,6 +254,21 @@ public final class MockResponse implements Cloneable {
 
   public long getBodyDelay(TimeUnit unit) {
     return unit.convert(bodyDelayAmount, bodyDelayUnit);
+  }
+
+  /**
+   * Set the time to {@code delay} prior to shutting down an HTTP/2 connection. This is only valid
+   * with {@link SocketPolicy#DISCONNECT_AT_END}. Use this to simulate a graceful HTTP/2
+   * connection shutdown.
+   */
+  public MockResponse setShutdownDelay(long delay, TimeUnit unit) {
+    shutdownDelay = delay;
+    shutdownDelayUnit = unit;
+    return this;
+  }
+
+  public long getShutdownDelay(TimeUnit unit) {
+    return unit.convert(shutdownDelay, shutdownDelayUnit);
   }
 
   /**

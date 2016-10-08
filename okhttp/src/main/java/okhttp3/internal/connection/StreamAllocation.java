@@ -28,6 +28,7 @@ import okhttp3.internal.http.HttpCodec;
 import okhttp3.internal.http1.Http1Codec;
 import okhttp3.internal.http2.ErrorCode;
 import okhttp3.internal.http2.Http2Codec;
+import okhttp3.internal.http2.ConnectionShutdownException;
 import okhttp3.internal.http2.StreamResetException;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
@@ -298,7 +299,8 @@ public final class StreamAllocation {
           noNewStreams = true;
           route = null;
         }
-      } else if (connection != null && !connection.isMultiplexed()) {
+      } else if (connection != null && !connection.isMultiplexed()
+          || e instanceof ConnectionShutdownException) {
         noNewStreams = true;
 
         // If this route hasn't completed a call, avoid it for new connections.

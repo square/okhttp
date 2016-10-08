@@ -216,7 +216,7 @@ public final class Http2Connection implements Closeable {
     synchronized (writer) {
       synchronized (this) {
         if (shutdown) {
-          throw new IOException("shutdown");
+          throw new ConnectionShutdownException();
         }
         streamId = nextStreamId;
         nextStreamId += 2;
@@ -335,7 +335,7 @@ public final class Http2Connection implements Closeable {
     int pingId;
     synchronized (this) {
       if (shutdown) {
-        throw new IOException("shutdown");
+        throw new ConnectionShutdownException();
       }
       pingId = nextPingId;
       nextPingId += 2;
@@ -482,12 +482,16 @@ public final class Http2Connection implements Closeable {
     new Thread(readerRunnable).start(); // Not a daemon thread.
   }
 
+  public synchronized boolean isShutdown() {
+    return shutdown;
+  }
+
   /** Merges {@code settings} into this peer's settings and sends them to the remote peer. */
   public void setSettings(Settings settings) throws IOException {
     synchronized (writer) {
       synchronized (this) {
         if (shutdown) {
-          throw new IOException("shutdown");
+          throw new ConnectionShutdownException();
         }
         okHttpSettings.merge(settings);
         writer.settings(settings);

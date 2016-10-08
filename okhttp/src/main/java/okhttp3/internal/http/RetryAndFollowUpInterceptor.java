@@ -38,6 +38,7 @@ import okhttp3.Response;
 import okhttp3.Route;
 import okhttp3.internal.connection.RouteException;
 import okhttp3.internal.connection.StreamAllocation;
+import okhttp3.internal.http2.ConnectionShutdownException;
 
 import static java.net.HttpURLConnection.HTTP_CLIENT_TIMEOUT;
 import static java.net.HttpURLConnection.HTTP_MOVED_PERM;
@@ -119,13 +120,18 @@ public final class RetryAndFollowUpInterceptor implements Interceptor {
         response = ((RealInterceptorChain) chain).proceed(request, streamAllocation, null, null);
         releaseConnection = false;
       } catch (RouteException e) {
+        e.printStackTrace();
         // The attempt to connect via a route failed. The request will not have been sent.
-        if (!recover(e.getLastConnectException(), true, request)) throw e.getLastConnectException();
+        if (!recover(e.getLastConnectException(), false, request)) {
+          throw e.getLastConnectException();
+        }
         releaseConnection = false;
         continue;
       } catch (IOException e) {
+        e.printStackTrace();
         // An attempt to communicate with a server failed. The request may have been sent.
-        if (!recover(e, false, request)) throw e;
+        boolean requestSendStarted = !(e instanceof ConnectionShutdownException);
+        if (!recover(e, requestSendStarted, request)) throw e;
         releaseConnection = false;
         continue;
       } finally {
@@ -198,19 +204,20 @@ public final class RetryAndFollowUpInterceptor implements Interceptor {
   /**
    * Report and attempt to recover from a failure to communicate with a server. Returns true if
    * {@code e} is recoverable, or false if the failure is permanent. Requests with a body can only
-   * be recovered if the body is buffered.
+   * be recovered if the body is buffered or if the failure occurred before the request has been
+   * sent.
    */
-  private boolean recover(IOException e, boolean routeException, Request userRequest) {
+  private boolean recover(IOException e, boolean requestSendStarted, Request userRequest) {
     streamAllocation.streamFailed(e);
 
     // The application layer has forbidden retries.
     if (!client.retryOnConnectionFailure()) return false;
 
     // We can't send the request body again.
-    if (!routeException && userRequest.body() instanceof UnrepeatableRequestBody) return false;
+    if (requestSendStarted && userRequest.body() instanceof UnrepeatableRequestBody) return false;
 
     // This exception is fatal.
-    if (!isRecoverable(e, routeException)) return false;
+    if (!isRecoverable(e, requestSendStarted)) return false;
 
     // No more routes to attempt.
     if (!streamAllocation.hasMoreRoutes()) return false;
@@ -219,7 +226,7 @@ public final class RetryAndFollowUpInterceptor implements Interceptor {
     return true;
   }
 
-  private boolean isRecoverable(IOException e, boolean routeException) {
+  private boolean isRecoverable(IOException e, boolean requestSendStarted) {
     // If there was a protocol problem, don't recover.
     if (e instanceof ProtocolException) {
       return false;
@@ -228,7 +235,7 @@ public final class RetryAndFollowUpInterceptor implements Interceptor {
     // If there was an interruption don't recover, but if there was a timeout connecting to a route
     // we should try the next route (if there is one).
     if (e instanceof InterruptedIOException) {
-      return e instanceof SocketTimeoutException && routeException;
+      return e instanceof SocketTimeoutException && !requestSendStarted;
     }
 
     // Look for known client-side or negotiation errors that are unlikely to be fixed by trying

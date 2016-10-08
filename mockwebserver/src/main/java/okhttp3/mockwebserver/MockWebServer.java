@@ -369,6 +369,7 @@ public final class MockWebServer implements TestRule, Closeable {
             logger.info(MockWebServer.this + " done accepting connections: " + e.getMessage());
             return;
           }
+          logger.info("accepted connection on port " + socket.getPort());
           SocketPolicy socketPolicy = dispatcher.peek().getSocketPolicy();
           if (socketPolicy == DISCONNECT_AT_START) {
             dispatchBookkeepingRequest(0, socket);
@@ -876,6 +877,17 @@ public final class MockWebServer implements TestRule, Closeable {
       if (logger.isLoggable(Level.INFO)) {
         logger.info(MockWebServer.this + " received request: " + request
             + " and responded: " + response + " protocol is " + protocol.toString());
+      }
+
+      if (response.getSocketPolicy() == DISCONNECT_AT_END) {
+        Http2Connection connection = stream.getConnection();
+        connection.shutdown(ErrorCode.NO_ERROR);
+        try {
+          Thread.sleep(response.getShutdownDelay(TimeUnit.MILLISECONDS));
+        } catch (InterruptedException e) {
+          throw new InterruptedIOException();
+        }
+        connection.close();
       }
     }
 
