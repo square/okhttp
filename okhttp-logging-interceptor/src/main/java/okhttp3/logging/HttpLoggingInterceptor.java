@@ -103,7 +103,7 @@ public final class HttpLoggingInterceptor implements Interceptor {
      */
     BODY
   }
-  
+
   /**
    * Default body loggable Content-Type array, should be text based content type.
    */
@@ -111,7 +111,7 @@ public final class HttpLoggingInterceptor implements Interceptor {
     MediaType.parse("text/*"),
     MediaType.parse("application/json")
   };
-  
+
   // body loggable content-type array.
   private final MediaType[] loggableContentTypes;
 
@@ -136,7 +136,7 @@ public final class HttpLoggingInterceptor implements Interceptor {
 
   public HttpLoggingInterceptor(Logger logger, MediaType[] loggableContentTypes) {
     this.logger = logger;
-    
+
     if (loggableContentTypes != null) {
       this.loggableContentTypes = Arrays.copyOf(loggableContentTypes, loggableContentTypes.length);
     } else {
@@ -258,7 +258,8 @@ public final class HttpLoggingInterceptor implements Interceptor {
         logger.log("<-- END HTTP");
       } else if (bodyEncoded(response.headers())) {
         logger.log("<-- END HTTP (encoded body omitted)");
-      } else if (!isTextContentType(MediaType.parse(response.header("Content-Type", "text/plain")))) {
+      } else if (!isTextContentType(MediaType.parse(
+              response.header("Content-Type", "text/plain")))) {
         logger.log("<-- END HTTP (non text body omitted)");
       } else {
         BufferedSource source = responseBody.source();
