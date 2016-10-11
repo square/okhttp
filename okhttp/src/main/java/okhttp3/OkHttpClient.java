@@ -551,6 +551,7 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocketCall.Fact
       this.cache = null;
     }
 
+    /** Sets the response cache to be used to read and write cached responses. */
     public Builder cache(Cache cache) {
       this.cache = cache;
       this.internalCache = null;
