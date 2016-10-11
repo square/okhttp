@@ -19,6 +19,7 @@ import java.io.EOFException;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.charset.UnsupportedCharsetException;
+import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
 import okhttp3.Connection;
 import okhttp3.Headers;
@@ -127,6 +128,10 @@ public final class HttpLoggingInterceptor implements Interceptor {
 
   public HttpLoggingInterceptor() {
     this(Logger.DEFAULT, DEFAULT_LOGGABLE_COTNENT_TYPE_LIST);
+  }
+
+  public HttpLoggingInterceptor(Logger logger) {
+    this(logger, DEFAULT_LOGGABLE_COTNENT_TYPE_LIST);
   }
 
   public HttpLoggingInterceptor(Logger logger, MediaType[] loggableContentTypes) {
@@ -320,8 +325,8 @@ public final class HttpLoggingInterceptor implements Interceptor {
     String contentEncoding = headers.get("Content-Encoding");
     return contentEncoding != null && !contentEncoding.equalsIgnoreCase("identity");
   }
-  
-  private boolean isTextContentType(MediaType contentType) {
+
+  boolean isTextContentType(MediaType contentType) {
     final String type = contentType.type();
     final String subType = contentType.subtype();
 
