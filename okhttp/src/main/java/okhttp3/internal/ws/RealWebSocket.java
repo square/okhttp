@@ -82,6 +82,8 @@ public abstract class RealWebSocket implements WebSocket, FrameCallback {
   private final Response response;
   private final String name;
 
+  /** The thread looping the reader. Will become null when looping stops for any reason. */
+  private volatile Thread looperThread;
   /** Guarded by {@link #replier}. True after calling {@link #shutdown()}. */
   private boolean isShutdown;
 
@@ -100,16 +102,22 @@ public abstract class RealWebSocket implements WebSocket, FrameCallback {
 
   /** Read and process all socket messages delivering callbacks to the supplied listener. */
   public final void loopReader() {
-    try {
-      readerListener.onOpen(this, response);
-    } catch (Throwable t) {
-      Util.throwIfFatal(t);
-      replyToReaderError(t);
-      readerListener.onFailure(t, null);
-      return;
-    }
+    looperThread = Thread.currentThread();
 
-    while (processNextFrame()) {
+    try {
+      try {
+        readerListener.onOpen(this, response);
+      } catch (Throwable t) {
+        Util.throwIfFatal(t);
+        replyToReaderError(t);
+        readerListener.onFailure(t, null);
+        return;
+      }
+
+      while (processNextFrame()) {
+      }
+    } finally {
+      looperThread = null;
     }
   }
 
@@ -229,6 +237,9 @@ public abstract class RealWebSocket implements WebSocket, FrameCallback {
     if (message == null) throw new NullPointerException("message == null");
     if (senderSentClose) throw new IllegalStateException("closed");
     if (senderWantsClose) throw new IllegalStateException("must call close()");
+    if (Thread.currentThread() == looperThread) {
+      throw new IllegalStateException("attempting to write from reader thread");
+    }
 
     MediaType contentType = message.contentType();
     if (contentType == null) {
@@ -262,6 +273,9 @@ public abstract class RealWebSocket implements WebSocket, FrameCallback {
     if (payload == null) throw new NullPointerException("payload == null");
     if (senderSentClose) throw new IllegalStateException("closed");
     if (senderWantsClose) throw new IllegalStateException("must call close()");
+    if (Thread.currentThread() == looperThread) {
+      throw new IllegalStateException("attempting to write from reader thread");
+    }
 
     try {
       writer.writePing(payload);
@@ -272,10 +286,13 @@ public abstract class RealWebSocket implements WebSocket, FrameCallback {
   }
 
   /** Send an unsolicited pong with the specified payload. */
-  final void sendPong(ByteString payload) throws IOException {
+  public final void pong(ByteString payload) throws IOException {
     if (payload == null) throw new NullPointerException("payload == null");
     if (senderSentClose) throw new IllegalStateException("closed");
     if (senderWantsClose) throw new IllegalStateException("must call close()");
+    if (Thread.currentThread() == looperThread) {
+      throw new IllegalStateException("attempting to write from reader thread");
+    }
 
     try {
       writer.writePong(payload);
@@ -287,6 +304,10 @@ public abstract class RealWebSocket implements WebSocket, FrameCallback {
 
   @Override public final void close(int code, String reason) throws IOException {
     if (senderSentClose) throw new IllegalStateException("closed");
+    if (Thread.currentThread() == looperThread) {
+      throw new IllegalStateException("attempting to write from reader thread");
+    }
+
     senderSentClose = true;
 
     // Not doing a CAS because we want writer to throw if already closed via peer close.

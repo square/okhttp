@@ -146,14 +146,14 @@ public final class RealWebSocketTest {
   }
 
   @Test public void unsolicitedPong() throws IOException {
-    client.sendPong(ByteString.encodeUtf8("Hello!"));
+    client.pong(ByteString.encodeUtf8("Hello!"));
     server.processNextFrame();
     serverListener.assertPong(ByteString.encodeUtf8("Hello!"));
   }
 
   @Test public void nullPongPayloadThrows() throws IOException {
     try {
-      client.sendPong(null);
+      client.pong(null);
       fail();
     } catch (NullPointerException e) {
       assertEquals("payload == null", e.getMessage());
