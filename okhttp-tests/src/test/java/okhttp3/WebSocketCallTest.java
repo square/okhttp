@@ -18,9 +18,12 @@ package okhttp3;
 import java.io.IOException;
 import java.net.ProtocolException;
 import java.util.Random;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Logger;
 import okhttp3.internal.tls.SslClient;
 import okhttp3.internal.ws.EmptyWebSocketListener;
+import okhttp3.internal.ws.RealWebSocket;
 import okhttp3.internal.ws.WebSocketRecorder;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
@@ -30,10 +33,12 @@ import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 
+import static java.util.concurrent.TimeUnit.SECONDS;
 import static okhttp3.WebSocket.BINARY;
 import static okhttp3.WebSocket.TEXT;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 public final class WebSocketCallTest {
@@ -153,6 +158,76 @@ public final class WebSocketCallTest {
 
     server.message(RequestBody.create(TEXT, "Hello, WebSockets!"));
     clientListener.assertTextMessage("Hello, WebSockets!");
+  }
+
+  @Test public void writingOnReaderThreadThrows() throws IOException, InterruptedException {
+    webServer.enqueue(new MockResponse().withWebSocketUpgrade(serverListener));
+
+    Request request = new Request.Builder().get().url(webServer.url("/")).build();
+    RealWebSocketCall call = new RealWebSocketCall(client, request, random);
+
+    final AtomicInteger count = new AtomicInteger();
+    final CountDownLatch latch = new CountDownLatch(1);
+    call.enqueue(new WebSocketListener() {
+      private WebSocket webSocket;
+
+      @Override public void onOpen(WebSocket webSocket, Response response) {
+        this.webSocket = webSocket;
+
+        try {
+          webSocket.close(1000, "");
+          fail();
+        } catch (IllegalStateException e) {
+          assertEquals("attempting to write from reader thread", e.getMessage());
+        } catch (IOException e) {
+          throw new AssertionError(e);
+        }
+
+        count.getAndIncrement();
+      }
+
+      @Override public void onMessage(ResponseBody message) throws IOException {
+        try {
+          webSocket.message(RequestBody.create(TEXT, "hey"));
+          fail();
+        } catch (IllegalStateException e) {
+          assertEquals("attempting to write from reader thread", e.getMessage());
+        }
+
+        message.close();
+        count.getAndIncrement();
+      }
+
+      @Override public void onPong(ByteString payload) {
+        try {
+          webSocket.ping(ByteString.EMPTY);
+          fail();
+        } catch (IllegalStateException e) {
+          assertEquals("attempting to write from reader thread", e.getMessage());
+        } catch (IOException e) {
+          throw new AssertionError(e);
+        }
+
+        count.getAndIncrement();
+      }
+
+      @Override public void onClose(int code, String reason) {
+        latch.countDown();
+      }
+
+      @Override public void onFailure(Throwable t, Response response) {
+        t.printStackTrace();
+      }
+    });
+
+    WebSocket server = serverListener.assertOpen();
+    server.message(RequestBody.create(TEXT, "hi"));
+    ((RealWebSocket) server).pong(ByteString.EMPTY);
+    server.close(1000, "");
+
+    assertTrue(latch.await(10, SECONDS));
+    // Verify we hit all three callbacks and attempted to write in them.
+    assertEquals(3, count.get());
   }
 
   @Test public void throwingOnOpenClosesAndFails() {
