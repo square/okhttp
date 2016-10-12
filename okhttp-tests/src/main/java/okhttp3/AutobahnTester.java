@@ -89,7 +89,7 @@ public final class AutobahnTester {
             sendExecutor.execute(new Runnable() {
               @Override public void run() {
                 try {
-                  webSocket.sendMessage(response);
+                  webSocket.message(response);
                 } catch (IOException e) {
                   e.printStackTrace(System.out);
                 }

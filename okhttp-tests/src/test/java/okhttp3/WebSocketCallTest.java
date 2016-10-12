@@ -64,7 +64,7 @@ public final class WebSocketCallTest {
     WebSocket client = clientListener.assertOpen();
     serverListener.assertOpen();
 
-    client.sendMessage(RequestBody.create(TEXT, "Hello, WebSockets!"));
+    client.message(RequestBody.create(TEXT, "Hello, WebSockets!"));
     serverListener.assertTextMessage("Hello, WebSockets!");
   }
 
@@ -75,7 +75,7 @@ public final class WebSocketCallTest {
     WebSocket client = clientListener.assertOpen();
     serverListener.assertOpen();
 
-    client.sendMessage(RequestBody.create(BINARY, "Hello!"));
+    client.message(RequestBody.create(BINARY, "Hello!"));
     serverListener.assertBinaryMessage(new byte[] {'H', 'e', 'l', 'l', 'o', '!'});
   }
 
@@ -85,7 +85,7 @@ public final class WebSocketCallTest {
 
     WebSocket client = clientListener.assertOpen();
     try {
-      client.sendMessage(null);
+      client.message(null);
       fail();
     } catch (NullPointerException e) {
       assertEquals("message == null", e.getMessage());
@@ -98,7 +98,7 @@ public final class WebSocketCallTest {
 
     WebSocket client = clientListener.assertOpen();
     try {
-      client.sendMessage(RequestBody.create(null, "Hey!"));
+      client.message(RequestBody.create(null, "Hey!"));
       fail();
     } catch (IllegalArgumentException e) {
       assertEquals("Message content type was null. Must use WebSocket.TEXT or WebSocket.BINARY.",
@@ -112,7 +112,7 @@ public final class WebSocketCallTest {
 
     WebSocket client = clientListener.assertOpen();
     try {
-      client.sendMessage(RequestBody.create(MediaType.parse("text/plain"), "Hey!"));
+      client.message(RequestBody.create(MediaType.parse("text/plain"), "Hey!"));
       fail();
     } catch (IllegalArgumentException e) {
       assertEquals(
@@ -127,7 +127,7 @@ public final class WebSocketCallTest {
 
     WebSocket client = clientListener.assertOpen();
 
-    client.sendPing(ByteString.encodeUtf8("Hello, WebSockets!"));
+    client.ping(ByteString.encodeUtf8("Hello, WebSockets!"));
     clientListener.assertPong(ByteString.encodeUtf8("Hello, WebSockets!"));
   }
 
@@ -137,7 +137,7 @@ public final class WebSocketCallTest {
 
     WebSocket client = clientListener.assertOpen();
     try {
-      client.sendPing(null);
+      client.ping(null);
       fail();
     } catch (NullPointerException e) {
       assertEquals("payload == null", e.getMessage());
@@ -151,7 +151,7 @@ public final class WebSocketCallTest {
     clientListener.assertOpen();
     WebSocket server = serverListener.assertOpen();
 
-    server.sendMessage(RequestBody.create(TEXT, "Hello, WebSockets!"));
+    server.message(RequestBody.create(TEXT, "Hello, WebSockets!"));
     clientListener.assertTextMessage("Hello, WebSockets!");
   }
 
@@ -206,7 +206,7 @@ public final class WebSocketCallTest {
       }
     });
 
-    server.sendMessage(RequestBody.create(TEXT, "Hello, WebSockets!"));
+    server.message(RequestBody.create(TEXT, "Hello, WebSockets!"));
     clientListener.assertFailure(e);
     serverListener.assertClose(1001, "");
   }
@@ -225,7 +225,7 @@ public final class WebSocketCallTest {
       }
     });
 
-    client.sendPing(ByteString.EMPTY);
+    client.ping(ByteString.EMPTY);
     clientListener.assertFailure(e);
     serverListener.assertClose(1001, "");
   }
@@ -272,7 +272,7 @@ public final class WebSocketCallTest {
 
     WebSocket client = clientListener.assertOpen();
 
-    client.sendPing(ByteString.encodeUtf8("WebSockets are fun!"));
+    client.ping(ByteString.encodeUtf8("WebSockets are fun!"));
     clientListener.assertPong(ByteString.encodeUtf8("WebSockets are fun!"));
   }
 
@@ -384,7 +384,7 @@ public final class WebSocketCallTest {
     WebSocket webSocket = clientListener.assertOpen();
     serverListener.assertOpen();
 
-    webSocket.sendMessage(RequestBody.create(TEXT, "abc"));
+    webSocket.message(RequestBody.create(TEXT, "abc"));
     serverListener.assertTextMessage("abc");
   }
 

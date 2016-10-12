@@ -34,7 +34,7 @@ public interface WebSocket {
    * happens to ensure resources are cleaned up.
    * @throws IllegalStateException if this web socket was already closed.
    */
-  void sendMessage(RequestBody message) throws IOException;
+  void message(RequestBody message) throws IOException;
 
   /**
    * Send a ping to the server.
@@ -45,7 +45,7 @@ public interface WebSocket {
    * happens to ensure resources are cleaned up.
    * @throws IllegalStateException if this web socket was already closed.
    */
-  void sendPing(ByteString payload) throws IOException;
+  void ping(ByteString payload) throws IOException;
 
   /**
    * Send a close indicator to the server.
