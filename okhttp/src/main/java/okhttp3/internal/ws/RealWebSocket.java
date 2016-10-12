@@ -225,7 +225,7 @@ public abstract class RealWebSocket implements WebSocket, FrameCallback {
 
   ////// SENDER THREAD (aka user thread)
 
-  @Override public final void sendMessage(RequestBody message) throws IOException {
+  @Override public final void message(RequestBody message) throws IOException {
     if (message == null) throw new NullPointerException("message == null");
     if (senderSentClose) throw new IllegalStateException("closed");
     if (senderWantsClose) throw new IllegalStateException("must call close()");
@@ -258,7 +258,7 @@ public abstract class RealWebSocket implements WebSocket, FrameCallback {
     }
   }
 
-  @Override public final void sendPing(ByteString payload) throws IOException {
+  @Override public final void ping(ByteString payload) throws IOException {
     if (payload == null) throw new NullPointerException("payload == null");
     if (senderSentClose) throw new IllegalStateException("closed");
     if (senderWantsClose) throw new IllegalStateException("must call close()");

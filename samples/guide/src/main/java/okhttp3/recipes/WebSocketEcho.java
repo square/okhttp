@@ -37,9 +37,9 @@ public final class WebSocketEcho implements WebSocketListener {
     writeExecutor.execute(new Runnable() {
       @Override public void run() {
         try {
-          webSocket.sendMessage(RequestBody.create(TEXT, "Hello..."));
-          webSocket.sendMessage(RequestBody.create(TEXT, "...World!"));
-          webSocket.sendMessage(RequestBody.create(BINARY, ByteString.decodeHex("deadbeef")));
+          webSocket.message(RequestBody.create(TEXT, "Hello..."));
+          webSocket.message(RequestBody.create(TEXT, "...World!"));
+          webSocket.message(RequestBody.create(BINARY, ByteString.decodeHex("deadbeef")));
           webSocket.close(1000, "Goodbye, World!");
         } catch (IOException e) {
           System.err.println("Unable to send messages: " + e.getMessage());

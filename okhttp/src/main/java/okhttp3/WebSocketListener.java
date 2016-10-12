@@ -60,7 +60,7 @@ public interface WebSocketListener {
 
   /**
    * Called when a server pong is received. This is usually a result of calling {@link
-   * WebSocket#sendPing(ByteString)} but might also be unsolicited directly from the server.
+   * WebSocket#ping(ByteString)} but might also be unsolicited directly from the server.
    */
   void onPong(ByteString payload);
 
