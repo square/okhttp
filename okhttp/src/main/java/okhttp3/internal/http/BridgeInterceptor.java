@@ -18,13 +18,13 @@ package okhttp3.internal.http;
 
 import java.io.IOException;
 import java.util.List;
+import okhttp3.Body;
 import okhttp3.Cookie;
 import okhttp3.CookieJar;
 import okhttp3.Headers;
 import okhttp3.Interceptor;
 import okhttp3.MediaType;
 import okhttp3.Request;
-import okhttp3.RequestBody;
 import okhttp3.Response;
 import okhttp3.internal.Version;
 import okio.GzipSource;
@@ -48,7 +48,7 @@ public final class BridgeInterceptor implements Interceptor {
     Request userRequest = chain.request();
     Request.Builder requestBuilder = userRequest.newBuilder();
 
-    RequestBody body = userRequest.body();
+    Body body = userRequest.body();
     if (body != null) {
       MediaType contentType = body.contentType();
       if (contentType != null) {
@@ -106,7 +106,7 @@ public final class BridgeInterceptor implements Interceptor {
           .removeAll("Content-Length")
           .build();
       responseBuilder.headers(strippedHeaders);
-      responseBuilder.body(new RealResponseBody(strippedHeaders, Okio.buffer(responseBody)));
+      responseBuilder.body(Body.create(strippedHeaders, Okio.buffer(responseBody)));
     }
 
     return responseBuilder.build();

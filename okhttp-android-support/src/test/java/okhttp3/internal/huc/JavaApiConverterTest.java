@@ -38,20 +38,18 @@ import java.util.Map;
 import java.util.Set;
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLPeerUnverifiedException;
+import okhttp3.Body;
 import okhttp3.CipherSuite;
 import okhttp3.Handshake;
 import okhttp3.Headers;
 import okhttp3.MediaType;
 import okhttp3.Protocol;
 import okhttp3.Request;
-import okhttp3.RequestBody;
 import okhttp3.Response;
-import okhttp3.ResponseBody;
 import okhttp3.internal.Internal;
 import okhttp3.internal.Util;
 import okhttp3.mockwebserver.MockWebServer;
 import okio.Buffer;
-import okio.BufferedSource;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -128,7 +126,7 @@ public class JavaApiConverterTest {
     assertEquals("Fantastic", response.message());
     Headers okResponseHeaders = response.headers();
     assertEquals("baz", okResponseHeaders.get("xyzzy"));
-    assertEquals("HelloWorld", response.body().string());
+    assertEquals("HelloWorld", ((Body) response.body()).string());
     assertNull(response.handshake());
   }
 
@@ -209,7 +207,7 @@ public class JavaApiConverterTest {
     assertEquals("Fantastic", response.message());
     Headers okResponseHeaders = response.headers();
     assertEquals("baz", okResponseHeaders.get("xyzzy"));
-    assertEquals("HelloWorld", response.body().string());
+    assertEquals("HelloWorld", ((Body) response.body()).string());
 
     Handshake handshake = response.handshake();
     assertNotNull(handshake);
@@ -349,7 +347,7 @@ public class JavaApiConverterTest {
   }
 
   @Test public void createJavaUrlConnection_responseHeadersOk() throws Exception {
-    ResponseBody responseBody = createResponseBody("BodyText");
+    Body responseBody = createResponseBody("BodyText");
     Response okResponse = new Response.Builder()
         .request(createArbitraryOkRequest())
         .protocol(Protocol.HTTP_1_1)
@@ -529,7 +527,7 @@ public class JavaApiConverterTest {
             .url("http://insecure/request")
             .post(createRequestBody("RequestBody"))
             .build();
-    ResponseBody responseBody = createResponseBody("ResponseBody");
+    Body responseBody = createResponseBody("ResponseBody");
     Response okResponse = createArbitraryOkResponse(okRequest).newBuilder()
         .protocol(Protocol.HTTP_1_1)
         .code(200)
@@ -553,7 +551,7 @@ public class JavaApiConverterTest {
             .url("https://secure/request")
             .post(createRequestBody("RequestBody"))
             .build();
-    ResponseBody responseBody = createResponseBody("ResponseBody");
+    Body responseBody = createResponseBody("ResponseBody");
     Handshake handshake = Handshake.get(null, CipherSuite.TLS_RSA_WITH_NULL_MD5,
         Arrays.<Certificate>asList(SERVER_CERT), Arrays.<Certificate>asList(LOCAL_CERT));
     Response okResponse = createArbitraryOkResponse(okRequest).newBuilder()
@@ -658,26 +656,13 @@ public class JavaApiConverterTest {
     return createArbitraryOkResponse(createArbitraryOkRequest());
   }
 
-  private static RequestBody createRequestBody(String bodyText) {
-    return RequestBody.create(MediaType.parse("text/plain"), bodyText);
+  private static Body createRequestBody(String bodyText) {
+    return Body.create(MediaType.parse("text/plain"), bodyText);
   }
 
-  private static ResponseBody createResponseBody(String bodyText) {
+  private static Body createResponseBody(String bodyText) {
     final Buffer source = new Buffer().writeUtf8(bodyText);
-    final long contentLength = source.size();
-    return new ResponseBody() {
-      @Override public MediaType contentType() {
-        return MediaType.parse("text/plain; charset=utf-8");
-      }
-
-      @Override public long contentLength() {
-        return contentLength;
-      }
-
-      @Override public BufferedSource source() {
-        return source;
-      }
-    };
+    return new Body(MediaType.parse("text/plain; charset=utf-8"), source.size(), source);
   }
 
   private String readAll(InputStream in) throws IOException {

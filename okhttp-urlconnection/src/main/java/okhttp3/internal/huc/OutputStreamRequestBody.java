@@ -20,9 +20,8 @@ import java.io.InterruptedIOException;
 import java.io.OutputStream;
 import java.net.ProtocolException;
 import java.net.SocketTimeoutException;
-import okhttp3.MediaType;
+import okhttp3.Body;
 import okhttp3.Request;
-import okhttp3.RequestBody;
 import okio.BufferedSink;
 import okio.Timeout;
 
@@ -32,11 +31,15 @@ import okio.Timeout;
  * In either case the bytes of the body aren't known until the caller writes them to the output
  * stream.
  */
-abstract class OutputStreamRequestBody extends RequestBody {
+abstract class OutputStreamRequestBody extends Body {
   private Timeout timeout;
   private long expectedContentLength;
   private OutputStream outputStream;
   boolean closed;
+
+  OutputStreamRequestBody() {
+    super(null);
+  }
 
   protected void initOutputStream(final BufferedSink sink, final long expectedContentLength) {
     this.timeout = sink.timeout();
@@ -99,10 +102,6 @@ abstract class OutputStreamRequestBody extends RequestBody {
 
   @Override public long contentLength() throws IOException {
     return expectedContentLength;
-  }
-
-  @Override public final MediaType contentType() {
-    return null; // Let the caller provide this in a regular header.
   }
 
   public Request prepareToSendRequest(Request request) throws IOException {

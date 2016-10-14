@@ -1,4 +1,5 @@
 /*
+
  * Copyright (C) 2014 Square, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,10 +17,10 @@
 package okhttp3.recipes;
 
 import java.io.IOException;
+import okhttp3.Body;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
-import okhttp3.RequestBody;
 import okhttp3.Response;
 import okio.BufferedSink;
 
@@ -30,11 +31,7 @@ public final class PostStreaming {
   private final OkHttpClient client = new OkHttpClient();
 
   public void run() throws Exception {
-    RequestBody requestBody = new RequestBody() {
-      @Override public MediaType contentType() {
-        return MEDIA_TYPE_MARKDOWN;
-      }
-
+    Body requestBody = new Body(MEDIA_TYPE_MARKDOWN) {
       @Override public void writeTo(BufferedSink sink) throws IOException {
         sink.writeUtf8("Numbers\n");
         sink.writeUtf8("-------\n");

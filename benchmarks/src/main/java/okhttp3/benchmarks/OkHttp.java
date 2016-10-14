@@ -24,7 +24,7 @@ import okhttp3.Call;
 import okhttp3.HttpUrl;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
-import okhttp3.ResponseBody;
+import okhttp3.Body;
 import okhttp3.internal.tls.SslClient;
 
 class OkHttp extends SynchronousHttpClient {
@@ -68,7 +68,7 @@ class OkHttp extends SynchronousHttpClient {
     public void run() {
       long start = System.nanoTime();
       try {
-        ResponseBody body = call.execute().body();
+        Body body = call.execute().body();
         long total = readAllAndClose(body.byteStream());
         long finish = System.nanoTime();
 

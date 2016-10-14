@@ -18,19 +18,18 @@ package okhttp3.internal.http1;
 import java.io.EOFException;
 import java.io.IOException;
 import java.net.ProtocolException;
+import okhttp3.Body;
 import okhttp3.Headers;
 import okhttp3.HttpUrl;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
-import okhttp3.ResponseBody;
 import okhttp3.internal.Internal;
 import okhttp3.internal.Util;
 import okhttp3.internal.connection.RealConnection;
 import okhttp3.internal.connection.StreamAllocation;
 import okhttp3.internal.http.HttpCodec;
 import okhttp3.internal.http.HttpHeaders;
-import okhttp3.internal.http.RealResponseBody;
 import okhttp3.internal.http.RequestLine;
 import okhttp3.internal.http.StatusLine;
 import okio.Buffer;
@@ -132,9 +131,9 @@ public final class Http1Codec implements HttpCodec {
     return readResponse();
   }
 
-  @Override public ResponseBody openResponseBody(Response response) throws IOException {
+  @Override public Body openResponseBody(Response response) throws IOException {
     Source source = getTransferStream(response);
-    return new RealResponseBody(response.headers(), Okio.buffer(source));
+    return Body.create(response.headers(), Okio.buffer(source));
   }
 
   private Source getTransferStream(Response response) throws IOException {

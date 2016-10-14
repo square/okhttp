@@ -25,6 +25,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import javax.net.ssl.HostnameVerifier;
+import okhttp3.Body;
 import okhttp3.Cache;
 import okhttp3.Call;
 import okhttp3.Cookie;
@@ -36,7 +37,6 @@ import okhttp3.Protocol;
 import okhttp3.RecordingCookieJar;
 import okhttp3.RecordingHostnameVerifier;
 import okhttp3.Request;
-import okhttp3.RequestBody;
 import okhttp3.Response;
 import okhttp3.internal.DoubleInetAddressDns;
 import okhttp3.internal.RecordingOkAuthenticator;
@@ -130,15 +130,10 @@ public final class HttpOverHttp2Test {
 
     Call call = client.newCall(new Request.Builder()
         .url(server.url("/foo"))
-        .post(new RequestBody() {
-          @Override public MediaType contentType() {
-            return MediaType.parse("text/plain; charset=utf-8");
-          }
-
+        .post(new Body(MediaType.parse("text/plain; charset=utf-8")) {
           @Override public void writeTo(BufferedSink sink) throws IOException {
             sink.write(postBytes);
-          }
-        })
+          }})
         .build());
 
     Response response = call.execute();
@@ -157,19 +152,7 @@ public final class HttpOverHttp2Test {
 
     Call call = client.newCall(new Request.Builder()
         .url(server.url("/foo"))
-        .post(new RequestBody() {
-          @Override public MediaType contentType() {
-            return MediaType.parse("text/plain; charset=utf-8");
-          }
-
-          @Override public long contentLength() throws IOException {
-            return postBytes.length;
-          }
-
-          @Override public void writeTo(BufferedSink sink) throws IOException {
-            sink.write(postBytes);
-          }
-        })
+        .post(Body.create(MediaType.parse("text/plain; charset=utf-8"), postBytes))
         .build());
 
     Response response = call.execute();
@@ -188,11 +171,7 @@ public final class HttpOverHttp2Test {
 
     Call call = client.newCall(new Request.Builder()
         .url(server.url("/foo"))
-        .post(new RequestBody() {
-          @Override public MediaType contentType() {
-            return MediaType.parse("text/plain; charset=utf-8");
-          }
-
+        .post(new Body(MediaType.parse("text/plain; charset=utf-8")) {
           @Override public long contentLength() throws IOException {
             return postBytes.length;
           }

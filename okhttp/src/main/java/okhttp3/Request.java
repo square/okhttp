@@ -17,7 +17,6 @@ package okhttp3;
 
 import java.net.URL;
 import java.util.List;
-import okhttp3.internal.Util;
 import okhttp3.internal.http.HttpMethod;
 
 /**
@@ -28,7 +27,7 @@ public final class Request {
   private final HttpUrl url;
   private final String method;
   private final Headers headers;
-  private final RequestBody body;
+  private final Body body;
   private final Object tag;
 
   private volatile CacheControl cacheControl; // Lazily initialized.
@@ -61,7 +60,7 @@ public final class Request {
     return headers.values(name);
   }
 
-  public RequestBody body() {
+  public Body body() {
     return body;
   }
 
@@ -100,7 +99,7 @@ public final class Request {
     private HttpUrl url;
     private String method;
     private Headers.Builder headers;
-    private RequestBody body;
+    private Body body;
     private Object tag;
 
     public Builder() {
@@ -207,27 +206,27 @@ public final class Request {
       return method("HEAD", null);
     }
 
-    public Builder post(RequestBody body) {
+    public Builder post(Body body) {
       return method("POST", body);
     }
 
-    public Builder delete(RequestBody body) {
+    public Builder delete(Body body) {
       return method("DELETE", body);
     }
 
     public Builder delete() {
-      return delete(Util.EMPTY_REQUEST);
+      return delete(Body.EMPTY);
     }
 
-    public Builder put(RequestBody body) {
+    public Builder put(Body body) {
       return method("PUT", body);
     }
 
-    public Builder patch(RequestBody body) {
+    public Builder patch(Body body) {
       return method("PATCH", body);
     }
 
-    public Builder method(String method, RequestBody body) {
+    public Builder method(String method, Body body) {
       if (method == null) throw new NullPointerException("method == null");
       if (method.length() == 0) throw new IllegalArgumentException("method.length() == 0");
       if (body != null && !HttpMethod.permitsRequestBody(method)) {

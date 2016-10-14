@@ -18,6 +18,7 @@ package okhttp3.internal.cache;
 
 import java.io.IOException;
 import java.util.Date;
+import okhttp3.Body;
 import okhttp3.Headers;
 import okhttp3.Interceptor;
 import okhttp3.Protocol;
@@ -28,7 +29,6 @@ import okhttp3.internal.Util;
 import okhttp3.internal.http.HttpCodec;
 import okhttp3.internal.http.HttpHeaders;
 import okhttp3.internal.http.HttpMethod;
-import okhttp3.internal.http.RealResponseBody;
 import okio.Buffer;
 import okio.BufferedSink;
 import okio.BufferedSource;
@@ -66,7 +66,8 @@ public final class CacheInterceptor implements Interceptor {
     }
 
     if (cacheCandidate != null && cacheResponse == null) {
-      closeQuietly(cacheCandidate.body()); // The cache candidate wasn't applicable. Close it.
+      // The cache candidate wasn't applicable. Close it.
+      closeQuietly(cacheCandidate.body());
     }
 
     // If we're forbidden from using the network and the cache is insufficient, fail.
@@ -218,7 +219,7 @@ public final class CacheInterceptor implements Interceptor {
     };
 
     return response.newBuilder()
-        .body(new RealResponseBody(response.headers(), Okio.buffer(cacheWritingSource)))
+        .body(Body.create(response.headers(), Okio.buffer(cacheWritingSource)))
         .build();
   }
 

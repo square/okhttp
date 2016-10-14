@@ -17,7 +17,6 @@ package okhttp3;
 
 import java.io.IOException;
 import okio.Buffer;
-import okio.BufferedSink;
 import org.junit.Test;
 
 import static okhttp3.internal.Util.UTF_8;
@@ -43,7 +42,7 @@ public final class MultipartBodyTest {
         + "--123--\r\n";
 
     MultipartBody body = new MultipartBody.Builder("123")
-        .addPart(RequestBody.create(null, "Hello, World!"))
+        .addPart(Body.create(null, "Hello, World!"))
         .build();
 
     assertEquals("123", body.boundary());
@@ -75,9 +74,9 @@ public final class MultipartBodyTest {
         + "--123--\r\n";
 
     MultipartBody body = new MultipartBody.Builder("123")
-        .addPart(RequestBody.create(null, "Quick"))
-        .addPart(RequestBody.create(null, "Brown"))
-        .addPart(RequestBody.create(null, "Fox"))
+        .addPart(Body.create(null, "Quick"))
+        .addPart(Body.create(null, "Brown"))
+        .addPart(Body.create(null, "Fox"))
         .build();
 
     assertEquals("123", body.boundary());
@@ -128,13 +127,13 @@ public final class MultipartBodyTest {
             new MultipartBody.Builder("BbC04y")
                 .addPart(
                     Headers.of("Content-Disposition", "file; filename=\"file1.txt\""),
-                    RequestBody.create(
+                    Body.create(
                         MediaType.parse("text/plain"), "... contents of file1.txt ..."))
                 .addPart(
                     Headers.of(
                         "Content-Disposition", "file; filename=\"file2.gif\"",
                         "Content-Transfer-Encoding", "binary"),
-                    RequestBody.create(
+                    Body.create(
                         MediaType.parse("image/gif"),
                         "... contents of file2.gif ...".getBytes(UTF_8)))
                 .build())
@@ -180,7 +179,7 @@ public final class MultipartBodyTest {
     MultipartBody body = new MultipartBody.Builder("AaB03x")
         .setType(MultipartBody.FORM)
         .addFormDataPart("field with spaces", "filename with spaces.txt",
-            RequestBody.create(MediaType.parse("text/plain; charset=utf-8"), "okay"))
+            Body.create(MediaType.parse("text/plain; charset=utf-8"), "okay"))
         .addFormDataPart("field with \"", "\"")
         .addFormDataPart("field with %22", "%22")
         .addFormDataPart("field with \u0391", "Alpha")
@@ -192,19 +191,13 @@ public final class MultipartBodyTest {
   }
 
   @Test public void streamingPartHasNoLength() throws Exception {
-    class StreamingBody extends RequestBody {
-      private final String body;
-
+    class StreamingBody extends Body {
       StreamingBody(String body) {
-        this.body = body;
+        super(null, new Buffer().writeUtf8(body));
       }
 
-      @Override public MediaType contentType() {
-        return null;
-      }
-
-      @Override public void writeTo(BufferedSink sink) throws IOException {
-        sink.writeUtf8(body);
+      @Override public long contentLength() throws IOException {
+        return -1;
       }
     }
 
@@ -223,9 +216,9 @@ public final class MultipartBodyTest {
         + "--123--\r\n";
 
     MultipartBody body = new MultipartBody.Builder("123")
-        .addPart(RequestBody.create(null, "Quick"))
+        .addPart(Body.create(null, "Quick"))
         .addPart(new StreamingBody("Brown"))
-        .addPart(RequestBody.create(null, "Fox"))
+        .addPart(Body.create(null, "Fox"))
         .build();
 
     assertEquals("123", body.boundary());
@@ -243,7 +236,7 @@ public final class MultipartBodyTest {
     MultipartBody.Builder multipart = new MultipartBody.Builder();
     try {
       multipart.addPart(Headers.of("Content-Type", "text/plain"),
-          RequestBody.create(null, "Hello, World!"));
+          Body.create(null, "Hello, World!"));
       fail();
     } catch (IllegalArgumentException expected) {
     }
@@ -253,7 +246,7 @@ public final class MultipartBodyTest {
     MultipartBody.Builder multipart = new MultipartBody.Builder();
     try {
       multipart.addPart(Headers.of("Content-Length", "13"),
-          RequestBody.create(null, "Hello, World!"));
+          Body.create(null, "Hello, World!"));
       fail();
     } catch (IllegalArgumentException expected) {
     }
@@ -261,7 +254,7 @@ public final class MultipartBodyTest {
 
   @Test public void partAccessors() throws IOException {
     MultipartBody body = new MultipartBody.Builder()
-        .addPart(Headers.of("Foo", "Bar"), RequestBody.create(null, "Baz"))
+        .addPart(Headers.of("Foo", "Bar"), Body.create(null, "Baz"))
         .build();
     assertEquals(1, body.parts().size());
 

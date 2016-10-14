@@ -36,8 +36,7 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 import okhttp3.HttpUrl;
-import okhttp3.RequestBody;
-import okhttp3.ResponseBody;
+import okhttp3.Body;
 import okio.Buffer;
 import okio.BufferedSource;
 import okio.ByteString;
@@ -48,8 +47,8 @@ public final class Util {
   public static final byte[] EMPTY_BYTE_ARRAY = new byte[0];
   public static final String[] EMPTY_STRING_ARRAY = new String[0];
 
-  public static final ResponseBody EMPTY_RESPONSE = ResponseBody.create(null, EMPTY_BYTE_ARRAY);
-  public static final RequestBody EMPTY_REQUEST = RequestBody.create(null, EMPTY_BYTE_ARRAY);
+  public static final Body EMPTY_RESPONSE = Body.create(null, EMPTY_BYTE_ARRAY);
+  public static final Body EMPTY_REQUEST = Body.create(null, EMPTY_BYTE_ARRAY);
 
   private static final ByteString UTF_8_BOM = ByteString.decodeHex("efbbff");
   private static final ByteString UTF_16_BE_BOM = ByteString.decodeHex("feff");

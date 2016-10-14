@@ -19,9 +19,9 @@ import java.io.IOException;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
+import okhttp3.Body;
 import okhttp3.MediaType;
 import okhttp3.Response;
-import okhttp3.ResponseBody;
 import okhttp3.WebSocket;
 import okhttp3.WebSocketListener;
 import okhttp3.internal.platform.Platform;
@@ -61,7 +61,7 @@ public final class WebSocketRecorder implements WebSocketListener {
     }
   }
 
-  @Override public void onMessage(ResponseBody message) throws IOException {
+  @Override public void onMessage(Body message) throws IOException {
     Platform.get().log(Platform.INFO, "[WS " + name + "] onMessage", null);
 
     WebSocketListener delegate = this.delegate;
@@ -305,7 +305,7 @@ public final class WebSocketRecorder implements WebSocketListener {
   /** Expose this recorder as a frame callback and shim in "ping" events. */
   WebSocketReader.FrameCallback asFrameCallback() {
     return new WebSocketReader.FrameCallback() {
-      @Override public void onReadMessage(ResponseBody body) throws IOException {
+      @Override public void onReadMessage(Body body) throws IOException {
         onMessage(body);
       }
 

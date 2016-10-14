@@ -25,7 +25,7 @@ import okio.BufferedSink;
 import static okhttp3.HttpUrl.FORM_ENCODE_SET;
 import static okhttp3.HttpUrl.percentDecode;
 
-public final class FormBody extends RequestBody {
+public final class FormBody extends Body {
   private static final MediaType CONTENT_TYPE =
       MediaType.parse("application/x-www-form-urlencoded");
 
@@ -33,6 +33,7 @@ public final class FormBody extends RequestBody {
   private final List<String> encodedValues;
 
   private FormBody(List<String> encodedNames, List<String> encodedValues) {
+    super(CONTENT_TYPE);
     this.encodedNames = Util.immutableList(encodedNames);
     this.encodedValues = Util.immutableList(encodedValues);
   }
@@ -56,10 +57,6 @@ public final class FormBody extends RequestBody {
 
   public String value(int index) {
     return percentDecode(encodedValue(index), true);
-  }
-
-  @Override public MediaType contentType() {
-    return CONTENT_TYPE;
   }
 
   @Override public long contentLength() {
