@@ -15,9 +15,11 @@
  */
 package okhttp3;
 
+import java.io.Closeable;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 import javax.net.ssl.SSLException;
 import okhttp3.internal.tls.SslClient;
 import okhttp3.mockwebserver.MockResponse;
@@ -294,6 +296,8 @@ public final class ConnectionReuseTest {
    * them after the redirect has completed. This forces a connection to not be reused where it would
    * be otherwise.
    *
+   * <p>This test leaks a response body by not closing it.
+   *
    * https://github.com/square/okhttp/issues/2409
    */
   @Test public void connectionsAreNotReusedIfNetworkInterceptorInterferes() throws Exception {
@@ -316,8 +320,9 @@ public final class ConnectionReuseTest {
     Request request = new Request.Builder()
         .url(server.url("/"))
         .build();
+    Call call = client.newCall(request);
     try {
-      client.newCall(request).execute();
+      call.execute();
       fail();
     } catch (IllegalStateException expected) {
       assertTrue(expected.getMessage().startsWith("Closing the body of"));
