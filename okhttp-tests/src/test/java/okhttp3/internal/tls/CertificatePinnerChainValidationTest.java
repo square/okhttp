@@ -29,6 +29,7 @@ import okhttp3.mockwebserver.SocketPolicy;
 import org.junit.Rule;
 import org.junit.Test;
 
+import static okhttp3.TestUtil.defaultClient;
 import static okhttp3.internal.platform.PlatformTest.getPlatform;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -61,7 +62,7 @@ public final class CertificatePinnerChainValidationTest {
     SslClient sslClient = new SslClient.Builder()
         .addTrustedCertificate(rootCa.certificate)
         .build();
-    OkHttpClient client = new OkHttpClient.Builder()
+    OkHttpClient client = defaultClient().newBuilder()
         .sslSocketFactory(sslClient.socketFactory, sslClient.trustManager)
         .hostnameVerifier(new RecordingHostnameVerifier())
         .certificatePinner(certificatePinner)
@@ -117,7 +118,7 @@ public final class CertificatePinnerChainValidationTest {
     SslClient contextBuilder = new SslClient.Builder()
         .addTrustedCertificate(rootCa.certificate)
         .build();
-    OkHttpClient client = new OkHttpClient.Builder()
+    OkHttpClient client = defaultClient().newBuilder()
         .sslSocketFactory(contextBuilder.socketFactory, contextBuilder.trustManager)
         .hostnameVerifier(new RecordingHostnameVerifier())
         .certificatePinner(certificatePinner)
@@ -137,6 +138,10 @@ public final class CertificatePinnerChainValidationTest {
         .build());
     Response response1 = call1.execute();
     assertEquals("abc", response1.body().string());
+    response1.close();
+
+    // Force a fresh connection for the next request.
+    client.connectionPool().evictAll();
 
     // Confirm that a second request also succeeds. This should detect caching problems.
     server.enqueue(new MockResponse()
@@ -147,6 +152,7 @@ public final class CertificatePinnerChainValidationTest {
         .build());
     Response response2 = call2.execute();
     assertEquals("def", response2.body().string());
+    response2.close();
   }
 
   @Test public void unrelatedPinnedLeafCertificateInChain() throws Exception {
@@ -177,7 +183,7 @@ public final class CertificatePinnerChainValidationTest {
     SslClient clientContextBuilder = new SslClient.Builder()
         .addTrustedCertificate(rootCa.certificate)
         .build();
-    OkHttpClient client = new OkHttpClient.Builder()
+    OkHttpClient client = defaultClient().newBuilder()
         .sslSocketFactory(clientContextBuilder.socketFactory, clientContextBuilder.trustManager)
         .hostnameVerifier(new RecordingHostnameVerifier())
         .certificatePinner(certificatePinner)
@@ -263,7 +269,7 @@ public final class CertificatePinnerChainValidationTest {
         .addTrustedCertificate(rootCa.certificate)
         .addTrustedCertificate(compromisedRootCa.certificate)
         .build();
-    OkHttpClient client = new OkHttpClient.Builder()
+    OkHttpClient client = defaultClient().newBuilder()
         .sslSocketFactory(clientContextBuilder.socketFactory, clientContextBuilder.trustManager)
         .hostnameVerifier(new RecordingHostnameVerifier())
         .certificatePinner(certificatePinner)

@@ -326,7 +326,7 @@ public final class URLConnectionTest {
     server.enqueue(new MockResponse()
         .setSocketPolicy(SocketPolicy.DISCONNECT_AFTER_REQUEST));
 
-    urlFactory = new OkUrlFactory(new OkHttpClient.Builder()
+    urlFactory = new OkUrlFactory(defaultClient().newBuilder()
         .dns(new DoubleInetAddressDns())
         .build());
     HttpURLConnection connection = urlFactory.open(server.url("/").url());

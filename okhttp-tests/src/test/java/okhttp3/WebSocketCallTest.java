@@ -34,6 +34,7 @@ import org.junit.Rule;
 import org.junit.Test;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
+import static okhttp3.TestUtil.defaultClient;
 import static okhttp3.WebSocket.BINARY;
 import static okhttp3.WebSocket.TEXT;
 import static org.junit.Assert.assertEquals;
@@ -48,7 +49,7 @@ public final class WebSocketCallTest {
   private final WebSocketRecorder clientListener = new WebSocketRecorder("client");
   private final WebSocketRecorder serverListener = new WebSocketRecorder("server");
   private final Random random = new Random(0);
-  private OkHttpClient client = new OkHttpClient.Builder()
+  private OkHttpClient client = defaultClient().newBuilder()
       .addInterceptor(new Interceptor() {
         @Override public Response intercept(Chain chain) throws IOException {
           Response response = chain.proceed(chain.request());
