@@ -20,6 +20,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import okhttp3.Challenge;
 import okhttp3.Cookie;
 import okhttp3.CookieJar;
@@ -35,6 +37,11 @@ import static okhttp3.internal.http.StatusLine.HTTP_CONTINUE;
 
 /** Headers and utilities for internal use by OkHttp. */
 public final class HttpHeaders {
+  private static final String TOKEN = "([^ \"=]*)";
+  private static final String QUOTED_STRING = "\"([^\"]*)\"";
+  private static final Pattern PARAMETER
+      = Pattern.compile(" +" + TOKEN + "=(:?" + QUOTED_STRING + "|" + TOKEN + ") *(:?,|$)");
+
   private HttpHeaders() {
   }
 
@@ -135,47 +142,35 @@ public final class HttpHeaders {
     return result.build();
   }
 
-  /** Parse RFC 2617 challenges. This API is only interested in the scheme name and realm. */
+  /**
+   * Parse RFC 2617 challenges, also wrong ordered ones.
+   * This API is only interested in the scheme name and realm.
+   */
   public static List<Challenge> parseChallenges(Headers responseHeaders, String challengeHeader) {
     // auth-scheme = token
     // auth-param  = token "=" ( token | quoted-string )
     // challenge   = auth-scheme 1*SP 1#auth-param
     // realm       = "realm" "=" realm-value
     // realm-value = quoted-string
-    List<Challenge> result = new ArrayList<>();
-    for (int i = 0, size = responseHeaders.size(); i < size; i++) {
-      if (!challengeHeader.equalsIgnoreCase(responseHeaders.name(i))) {
-        continue;
-      }
-      String value = responseHeaders.value(i);
-      int pos = 0;
-      while (pos < value.length()) {
-        int tokenStart = pos;
-        pos = skipUntil(value, pos, " ");
+    List<Challenge> challenges = new ArrayList<>();
+    List<String> authenticationHeaders = responseHeaders.values(challengeHeader);
+    for (String header : authenticationHeaders) {
+      int index = header.indexOf(' ');
+      if (index == -1) continue;
 
-        String scheme = value.substring(tokenStart, pos).trim();
-        pos = skipWhitespace(value, pos);
-
-        // TODO: This currently only handles schemes with a 'realm' parameter;
-        //       It needs to be fixed to handle any scheme and any parameters
-        //       http://code.google.com/p/android/issues/detail?id=11140
-
-        if (!value.regionMatches(true, pos, "realm=\"", 0, "realm=\"".length())) {
-          break; // Unexpected challenge parameter; give up!
+      Matcher matcher = PARAMETER.matcher(header);
+      for (int i = index; matcher.find(i); i = matcher.end()) {
+        if (header.regionMatches(true, matcher.start(1), "realm", 0, 5)) {
+          String scheme = header.substring(0, index);
+          String realm = matcher.group(3);
+          if (realm != null) {
+            challenges.add(new Challenge(scheme, realm));
+            break;
+          }
         }
-
-        pos += "realm=\"".length();
-        int realmStart = pos;
-        pos = skipUntil(value, pos, "\"");
-        String realm = value.substring(realmStart, pos);
-        pos++; // Consume '"' close quote.
-        pos = skipUntil(value, pos, ",");
-        pos++; // Consume ',' comma.
-        pos = skipWhitespace(value, pos);
-        result.add(new Challenge(scheme, realm));
       }
     }
-    return result;
+    return challenges;
   }
 
   public static void receiveHeaders(CookieJar cookieJar, HttpUrl url, Headers headers) {
