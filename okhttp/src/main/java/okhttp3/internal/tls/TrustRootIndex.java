@@ -20,10 +20,10 @@ import java.lang.reflect.Method;
 import java.security.PublicKey;
 import java.security.cert.TrustAnchor;
 import java.security.cert.X509Certificate;
-import java.util.ArrayList;
 import java.util.LinkedHashMap;
-import java.util.List;
+import java.util.LinkedHashSet;
 import java.util.Map;
+import java.util.Set;
 import javax.net.ssl.X509TrustManager;
 import javax.security.auth.x500.X500Principal;
 
@@ -79,19 +79,37 @@ public abstract class TrustRootIndex {
         return null;
       }
     }
+
+    @Override
+    public boolean equals(Object obj) {
+      if (obj == this) {
+        return true;
+      }
+      if (!(obj instanceof AndroidTrustRootIndex)) {
+        return false;
+      }
+      AndroidTrustRootIndex that = (AndroidTrustRootIndex) obj;
+      return trustManager.equals(that.trustManager)
+              && findByIssuerAndSignatureMethod.equals(that.findByIssuerAndSignatureMethod);
+    }
+
+    @Override
+    public int hashCode() {
+      return trustManager.hashCode() + 31 * findByIssuerAndSignatureMethod.hashCode();
+    }
   }
 
   /** A simple index that of trusted root certificates that have been loaded into memory. */
   static final class BasicTrustRootIndex extends TrustRootIndex {
-    private final Map<X500Principal, List<X509Certificate>> subjectToCaCerts;
+    private final Map<X500Principal, Set<X509Certificate>> subjectToCaCerts;
 
     public BasicTrustRootIndex(X509Certificate... caCerts) {
       subjectToCaCerts = new LinkedHashMap<>();
       for (X509Certificate caCert : caCerts) {
         X500Principal subject = caCert.getSubjectX500Principal();
-        List<X509Certificate> subjectCaCerts = subjectToCaCerts.get(subject);
+        Set<X509Certificate> subjectCaCerts = subjectToCaCerts.get(subject);
         if (subjectCaCerts == null) {
-          subjectCaCerts = new ArrayList<>(1);
+          subjectCaCerts = new LinkedHashSet<>(1);
           subjectToCaCerts.put(subject, subjectCaCerts);
         }
         subjectCaCerts.add(caCert);
@@ -100,7 +118,7 @@ public abstract class TrustRootIndex {
 
     @Override public X509Certificate findByIssuerAndSignature(X509Certificate cert) {
       X500Principal issuer = cert.getIssuerX500Principal();
-      List<X509Certificate> subjectCaCerts = subjectToCaCerts.get(issuer);
+      Set<X509Certificate> subjectCaCerts = subjectToCaCerts.get(issuer);
       if (subjectCaCerts == null) return null;
 
       for (X509Certificate caCert : subjectCaCerts) {
@@ -113,6 +131,23 @@ public abstract class TrustRootIndex {
       }
 
       return null;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+      if (obj == this) {
+        return true;
+      }
+      if (!(obj instanceof BasicTrustRootIndex)) {
+        return false;
+      }
+      BasicTrustRootIndex that = (BasicTrustRootIndex) obj;
+      return subjectToCaCerts.equals(that.subjectToCaCerts);
+    }
+
+    @Override
+    public int hashCode() {
+      return subjectToCaCerts.hashCode();
     }
   }
 }
