@@ -16,13 +16,6 @@
 
 package okhttp3;
 
-import java.io.Closeable;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.Reader;
-import java.nio.charset.Charset;
 import okhttp3.internal.Util;
 import okhttp3.internal.http.HttpHeaders;
 import okio.Buffer;
@@ -30,6 +23,14 @@ import okio.BufferedSink;
 import okio.BufferedSource;
 import okio.ByteString;
 import okio.Okio;
+
+import java.io.Closeable;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.Reader;
+import java.nio.charset.Charset;
 
 import static okhttp3.internal.Util.UTF_8;
 
