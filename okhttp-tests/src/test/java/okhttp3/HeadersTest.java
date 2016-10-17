@@ -22,6 +22,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import okhttp3.internal.Internal;
+import okhttp3.internal.http.HttpHeaders;
 import okhttp3.internal.http2.Header;
 import okhttp3.internal.http2.Http2Codec;
 import org.junit.Test;
@@ -338,5 +339,26 @@ public final class HeadersTest {
         .add("B", "bb")
         .build();
     assertEquals("A: a\nB: bb\n", headers.toString());
+  }
+
+  /**
+   * See: https://github.com/square/okhttp/issues/2780
+   */
+  @Test public void testDigestChallenges() {
+    // Strict RFC 2617 header
+    Headers headers = new Headers.Builder()
+            .add("WWW-Authenticate", "Digest realm=\"myrealm\", nonce=\"fjalskdflwejrlaskdfjlaskdjflaksjdflkasdf\", qop=\"auth\", stale=\"FALSE\"").build();
+    List<Challenge> challenges = HttpHeaders.parseChallenges(headers, "WWW-Authenticate");
+    assertEquals(1, challenges.size());
+    assertEquals("Digest", challenges.get(0).scheme());
+    assertEquals("myrealm", challenges.get(0).realm());
+
+    // Not strict RFC 2617 header
+    headers = new Headers.Builder()
+            .add("WWW-Authenticate", "Digest qop=\"auth\", realm=\"myrealm\", nonce=\"fjalskdflwejrlaskdfjlaskdjflaksjdflkasdf\", stale=\"FALSE\"").build();
+    challenges = HttpHeaders.parseChallenges(headers, "WWW-Authenticate");
+    assertEquals(1, challenges.size());
+    assertEquals("Digest", challenges.get(0).scheme());
+    assertEquals("myrealm", challenges.get(0).realm());
   }
 }
