@@ -25,7 +25,7 @@ import okio.BufferedSink;
 import okio.ByteString;
 
 /** An <a href="http://www.ietf.org/rfc/rfc2387.txt">RFC 2387</a>-compliant request body. */
-public final class MultipartBody extends RequestBody {
+public final class MultipartBody extends Body {
   /**
    * The "mixed" subtype of "multipart" is intended for use when the body parts are independent and
    * need to be bundled in a particular order. Any "multipart" subtypes that an implementation does
@@ -66,14 +66,13 @@ public final class MultipartBody extends RequestBody {
 
   private final ByteString boundary;
   private final MediaType originalType;
-  private final MediaType contentType;
   private final List<Part> parts;
   private long contentLength = -1L;
 
   MultipartBody(ByteString boundary, MediaType type, List<Part> parts) {
+    super(MediaType.parse(type + "; boundary=" + boundary.utf8()));
     this.boundary = boundary;
     this.originalType = type;
-    this.contentType = MediaType.parse(type + "; boundary=" + boundary.utf8());
     this.parts = Util.immutableList(parts);
   }
 
@@ -96,11 +95,6 @@ public final class MultipartBody extends RequestBody {
 
   public Part part(int index) {
     return parts.get(index);
-  }
-
-  /** A combination of {@link #type()} and {@link #boundary()}. */
-  @Override public MediaType contentType() {
-    return contentType;
   }
 
   @Override public long contentLength() throws IOException {
@@ -130,7 +124,7 @@ public final class MultipartBody extends RequestBody {
     for (int p = 0, partCount = parts.size(); p < partCount; p++) {
       Part part = parts.get(p);
       Headers headers = part.headers;
-      RequestBody body = part.body;
+      Body body = part.body;
 
       sink.write(DASHDASH);
       sink.write(boundary);
@@ -221,11 +215,11 @@ public final class MultipartBody extends RequestBody {
   }
 
   public static final class Part {
-    public static Part create(RequestBody body) {
+    public static Part create(Body body) {
       return create(null, body);
     }
 
-    public static Part create(Headers headers, RequestBody body) {
+    public static Part create(Headers headers, Body body) {
       if (body == null) {
         throw new NullPointerException("body == null");
       }
@@ -239,10 +233,10 @@ public final class MultipartBody extends RequestBody {
     }
 
     public static Part createFormData(String name, String value) {
-      return createFormData(name, null, RequestBody.create(null, value));
+      return createFormData(name, null, Body.create(null, value));
     }
 
-    public static Part createFormData(String name, String filename, RequestBody body) {
+    public static Part createFormData(String name, String filename, Body body) {
       if (name == null) {
         throw new NullPointerException("name == null");
       }
@@ -258,9 +252,9 @@ public final class MultipartBody extends RequestBody {
     }
 
     final Headers headers;
-    final RequestBody body;
+    final Body body;
 
-    private Part(Headers headers, RequestBody body) {
+    private Part(Headers headers, Body body) {
       this.headers = headers;
       this.body = body;
     }
@@ -269,7 +263,7 @@ public final class MultipartBody extends RequestBody {
       return headers;
     }
 
-    public RequestBody body() {
+    public Body body() {
       return body;
     }
   }
@@ -303,12 +297,12 @@ public final class MultipartBody extends RequestBody {
     }
 
     /** Add a part to the body. */
-    public Builder addPart(RequestBody body) {
+    public Builder addPart(Body body) {
       return addPart(Part.create(body));
     }
 
     /** Add a part to the body. */
-    public Builder addPart(Headers headers, RequestBody body) {
+    public Builder addPart(Headers headers, Body body) {
       return addPart(Part.create(headers, body));
     }
 
@@ -318,7 +312,7 @@ public final class MultipartBody extends RequestBody {
     }
 
     /** Add a form data part to the body. */
-    public Builder addFormDataPart(String name, String filename, RequestBody body) {
+    public Builder addFormDataPart(String name, String filename, Body body) {
       return addPart(Part.createFormData(name, filename, body));
     }
 

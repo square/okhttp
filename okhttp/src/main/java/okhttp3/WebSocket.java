@@ -28,13 +28,13 @@ public interface WebSocket {
   /**
    * Send a message to the server.
    *
-   * @param message The message body. The {@linkplain RequestBody#contentType() content type} of
+   * @param message The message body. The {@linkplain Body#contentType() content type} of
    * must be either {@link #TEXT} or {@link #BINARY}.
    * @throws IOException if unable to write the message. Clients must call {@link #close} when this
    * happens to ensure resources are cleaned up.
    * @throws IllegalStateException if this web socket was already closed.
    */
-  void message(RequestBody message) throws IOException;
+  void message(Body message) throws IOException;
 
   /**
    * Send a ping to the server.

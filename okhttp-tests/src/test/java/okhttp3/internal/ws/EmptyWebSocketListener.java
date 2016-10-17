@@ -17,7 +17,7 @@ package okhttp3.internal.ws;
 
 import java.io.IOException;
 import okhttp3.Response;
-import okhttp3.ResponseBody;
+import okhttp3.Body;
 import okhttp3.WebSocket;
 import okhttp3.WebSocketListener;
 import okio.ByteString;
@@ -26,7 +26,7 @@ public class EmptyWebSocketListener implements WebSocketListener {
   @Override public void onOpen(WebSocket webSocket, Response response) {
   }
 
-  @Override public void onMessage(ResponseBody message) throws IOException {
+  @Override public void onMessage(Body message) throws IOException {
   }
 
   @Override public void onPong(ByteString payload) {

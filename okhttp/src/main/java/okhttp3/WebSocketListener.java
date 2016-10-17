@@ -53,10 +53,10 @@ public interface WebSocketListener {
    * indicates completion of parsing the message payload and will consume any remaining bytes in the
    * message.
    *
-   * <p>The {@linkplain ResponseBody#contentType() content type} of {@code message} will be either
+   * <p>The {@linkplain Body#contentType() content type} of {@code message} will be either
    * {@link WebSocket#TEXT} or {@link WebSocket#BINARY} which indicates the format of the message.
    */
-  void onMessage(ResponseBody message) throws IOException;
+  void onMessage(Body message) throws IOException;
 
   /**
    * Called when a server pong is received. This is usually a result of calling {@link

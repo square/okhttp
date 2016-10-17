@@ -257,7 +257,8 @@ public final class OkHttpURLConnection extends HttpURLConnection implements Call
   }
 
   @Override public OutputStream getOutputStream() throws IOException {
-    OutputStreamRequestBody requestBody = (OutputStreamRequestBody) buildCall().request().body();
+    OutputStreamRequestBody requestBody
+        = (OutputStreamRequestBody) buildCall().request().body();
     if (requestBody == null) {
       throw new ProtocolException("method does not support a request body: " + method);
     }

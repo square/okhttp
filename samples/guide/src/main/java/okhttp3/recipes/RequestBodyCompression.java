@@ -21,11 +21,11 @@ import com.squareup.moshi.Types;
 import java.io.IOException;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import okhttp3.Body;
 import okhttp3.Interceptor;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
-import okhttp3.RequestBody;
 import okhttp3.Response;
 import okio.BufferedSink;
 import okio.GzipSink;
@@ -51,18 +51,16 @@ public final class RequestBodyCompression {
   public void run() throws Exception {
     Map<String, String> requestBody = new LinkedHashMap<>();
     requestBody.put("longUrl", "https://publicobject.com/2014/12/04/html-formatting-javadocs/");
-    RequestBody jsonRequestBody = RequestBody.create(
+    Body jsonRequestBody = Body.create(
         MEDIA_TYPE_JSON, mapJsonAdapter.toJson(requestBody));
     Request request = new Request.Builder()
         .url("https://www.googleapis.com/urlshortener/v1/url?key=" + GOOGLE_API_KEY)
         .post(jsonRequestBody)
         .build();
 
-    try (Response response = client.newCall(request).execute()) {
-      if (!response.isSuccessful()) throw new IOException("Unexpected code " + response);
-
-      System.out.println(response.body().string());
-    }
+    Response response = client.newCall(request).execute();
+    if (!response.isSuccessful()) throw new IOException("Unexpected code " + response);
+    System.out.println(response.body().string());
   }
 
   public static void main(String... args) throws Exception {
@@ -84,16 +82,8 @@ public final class RequestBodyCompression {
       return chain.proceed(compressedRequest);
     }
 
-    private RequestBody gzip(final RequestBody body) {
-      return new RequestBody() {
-        @Override public MediaType contentType() {
-          return body.contentType();
-        }
-
-        @Override public long contentLength() {
-          return -1; // We don't know the compressed length in advance!
-        }
-
+    private Body gzip(final Body body) {
+      return new Body(body.contentType()) {
         @Override public void writeTo(BufferedSink sink) throws IOException {
           BufferedSink gzipSink = Okio.buffer(new GzipSink(sink));
           body.writeTo(gzipSink);

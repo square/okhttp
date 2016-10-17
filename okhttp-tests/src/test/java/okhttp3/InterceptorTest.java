@@ -29,6 +29,7 @@ import okhttp3.mockwebserver.RecordedRequest;
 import okhttp3.mockwebserver.SocketPolicy;
 import okio.Buffer;
 import okio.BufferedSink;
+import okio.BufferedSource;
 import okio.ForwardingSink;
 import okio.ForwardingSource;
 import okio.GzipSink;
@@ -63,7 +64,7 @@ public final class InterceptorTest {
         .protocol(Protocol.HTTP_1_1)
         .code(200)
         .message("Intercepted!")
-        .body(ResponseBody.create(MediaType.parse("text/plain; charset=utf-8"), "abc"))
+        .body(Body.create(MediaType.parse("text/plain; charset=utf-8"), "abc"))
         .build();
 
     client = client.newBuilder()
@@ -87,7 +88,7 @@ public final class InterceptorTest {
             .protocol(Protocol.HTTP_1_1)
             .code(200)
             .message("Intercepted!")
-            .body(ResponseBody.create(MediaType.parse("text/plain; charset=utf-8"), "abc"))
+            .body(Body.create(MediaType.parse("text/plain; charset=utf-8"), "abc"))
             .build();
       }
     };
@@ -231,7 +232,7 @@ public final class InterceptorTest {
       @Override public Response intercept(Chain chain) throws IOException {
         Request originalRequest = chain.request();
         MediaType mediaType = MediaType.parse("text/plain");
-        RequestBody body = RequestBody.create(mediaType, "abc");
+        Body body = Body.create(mediaType, "abc");
         return chain.proceed(originalRequest.newBuilder()
             .method("POST", body)
             .header("Content-Type", mediaType.toString())
@@ -279,7 +280,7 @@ public final class InterceptorTest {
     Request request = new Request.Builder()
         .url(server.url("/"))
         .addHeader("Original-Header", "foo")
-        .method("PUT", RequestBody.create(MediaType.parse("text/plain"), "abc"))
+        .method("PUT", Body.create(MediaType.parse("text/plain"), "abc"))
         .build();
 
     client.newCall(request).execute();
@@ -655,14 +656,14 @@ public final class InterceptorTest {
     response.body().close();
   }
 
-  private RequestBody uppercase(final RequestBody original) {
-    return new RequestBody() {
-      @Override public MediaType contentType() {
-        return original.contentType();
-      }
-
+  static Body uppercase(final Body original) throws IOException {
+    return new Body(original.contentType()) {
       @Override public long contentLength() throws IOException {
         return original.contentLength();
+      }
+
+      @Override public BufferedSource source() {
+        return Okio.buffer(uppercase(original.source()));
       }
 
       @Override public void writeTo(BufferedSink sink) throws IOException {
@@ -674,17 +675,12 @@ public final class InterceptorTest {
     };
   }
 
-  private Sink uppercase(final BufferedSink original) {
+  private static Sink uppercase(final BufferedSink original) {
     return new ForwardingSink(original) {
       @Override public void write(Buffer source, long byteCount) throws IOException {
         original.writeUtf8(source.readUtf8(byteCount).toUpperCase(Locale.US));
       }
     };
-  }
-
-  static ResponseBody uppercase(ResponseBody original) throws IOException {
-    return ResponseBody.create(original.contentType(), original.contentLength(),
-        Okio.buffer(uppercase(original.source())));
   }
 
   private static Source uppercase(final Source original) {

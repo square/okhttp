@@ -21,9 +21,8 @@ import java.util.Random;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicBoolean;
 import okhttp3.MediaType;
-import okhttp3.RequestBody;
+import okhttp3.Body;
 import okhttp3.Response;
-import okhttp3.ResponseBody;
 import okhttp3.WebSocket;
 import okhttp3.WebSocketListener;
 import okhttp3.internal.NamedRunnable;
@@ -143,7 +142,7 @@ public abstract class RealWebSocket implements WebSocket, FrameCallback {
     }
   }
 
-  @Override public final void onReadMessage(ResponseBody message) throws IOException {
+  @Override public final void onReadMessage(Body message) throws IOException {
     readerListener.onMessage(message);
   }
 
@@ -233,7 +232,7 @@ public abstract class RealWebSocket implements WebSocket, FrameCallback {
 
   ////// SENDER THREAD (aka user thread)
 
-  @Override public final void message(RequestBody message) throws IOException {
+  @Override public final void message(Body message) throws IOException {
     if (message == null) throw new NullPointerException("message == null");
     if (senderSentClose) throw new IllegalStateException("closed");
     if (senderWantsClose) throw new IllegalStateException("must call close()");

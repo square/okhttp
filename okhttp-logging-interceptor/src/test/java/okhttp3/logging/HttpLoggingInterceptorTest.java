@@ -21,12 +21,12 @@ import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
+import okhttp3.Body;
 import okhttp3.Dns;
 import okhttp3.HttpUrl;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
-import okhttp3.RequestBody;
 import okhttp3.Response;
 import okhttp3.logging.HttpLoggingInterceptor.Level;
 import okhttp3.mockwebserver.MockResponse;
@@ -131,7 +131,7 @@ public final class HttpLoggingInterceptorTest {
     setLevel(Level.BASIC);
 
     server.enqueue(new MockResponse());
-    client.newCall(request().post(RequestBody.create(PLAIN, "Hi?")).build()).execute();
+    client.newCall(request().post(Body.create(PLAIN, "Hi?")).build()).execute();
 
     applicationLogs
         .assertLogEqual("--> POST " + url + " http/1.1 (3-byte body)")
@@ -216,7 +216,7 @@ public final class HttpLoggingInterceptorTest {
     setLevel(Level.HEADERS);
 
     server.enqueue(new MockResponse());
-    Request request = request().post(RequestBody.create(PLAIN, "Hi?")).build();
+    Request request = request().post(Body.create(PLAIN, "Hi?")).build();
     Response response = client.newCall(request).execute();
     response.body().close();
 
@@ -249,7 +249,7 @@ public final class HttpLoggingInterceptorTest {
     setLevel(Level.HEADERS);
 
     server.enqueue(new MockResponse());
-    Request request = request().post(RequestBody.create(null, "Hi?")).build();
+    Request request = request().post(Body.create(null, "Hi?")).build();
     Response response = client.newCall(request).execute();
     response.body().close();
 
@@ -280,11 +280,7 @@ public final class HttpLoggingInterceptorTest {
     setLevel(Level.HEADERS);
 
     server.enqueue(new MockResponse());
-    RequestBody body = new RequestBody() {
-      @Override public MediaType contentType() {
-        return PLAIN;
-      }
-
+    Body body = new Body(PLAIN) {
       @Override public void writeTo(BufferedSink sink) throws IOException {
         sink.writeUtf8("Hi!");
       }
@@ -417,7 +413,7 @@ public final class HttpLoggingInterceptorTest {
     setLevel(Level.BODY);
 
     server.enqueue(new MockResponse());
-    Request request = request().post(RequestBody.create(PLAIN, "Hi?")).build();
+    Request request = request().post(Body.create(PLAIN, "Hi?")).build();
     Response response = client.newCall(request).execute();
     response.body().close();
 

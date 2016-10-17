@@ -210,7 +210,7 @@ public final class Cache implements Closeable, Flushable {
     Response response = entry.response(snapshot);
 
     if (!entry.matches(request, response)) {
-      Util.closeQuietly(response.body());
+      Util.closeQuietly((Body) response.body());
       return null;
     }
 
@@ -733,41 +733,20 @@ public final class Cache implements Closeable, Flushable {
     }
   }
 
-  private static class CacheResponseBody extends ResponseBody {
+  private static class CacheResponseBody extends Body {
     private final DiskLruCache.Snapshot snapshot;
-    private final BufferedSource bodySource;
-    private final String contentType;
-    private final String contentLength;
 
-    public CacheResponseBody(final DiskLruCache.Snapshot snapshot,
-        String contentType, String contentLength) {
+    public CacheResponseBody(final DiskLruCache.Snapshot snapshot, String contentType,
+        String contentLength) {
+      super(contentType != null ? MediaType.parse(contentType) : null,
+          contentLength != null ? Long.parseLong(contentLength) : -1,
+          Okio.buffer(new ForwardingSource(Okio.buffer(snapshot.getSource(ENTRY_BODY))) {
+            @Override public void close() throws IOException {
+              snapshot.close();
+              super.close();
+            }
+          }));
       this.snapshot = snapshot;
-      this.contentType = contentType;
-      this.contentLength = contentLength;
-
-      Source source = snapshot.getSource(ENTRY_BODY);
-      bodySource = Okio.buffer(new ForwardingSource(source) {
-        @Override public void close() throws IOException {
-          snapshot.close();
-          super.close();
-        }
-      });
-    }
-
-    @Override public MediaType contentType() {
-      return contentType != null ? MediaType.parse(contentType) : null;
-    }
-
-    @Override public long contentLength() {
-      try {
-        return contentLength != null ? Long.parseLong(contentLength) : -1;
-      } catch (NumberFormatException e) {
-        return -1;
-      }
-    }
-
-    @Override public BufferedSource source() {
-      return bodySource;
     }
   }
 }

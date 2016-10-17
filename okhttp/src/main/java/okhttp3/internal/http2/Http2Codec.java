@@ -21,18 +21,17 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.TimeUnit;
+import okhttp3.Body;
 import okhttp3.Headers;
 import okhttp3.OkHttpClient;
 import okhttp3.Protocol;
 import okhttp3.Request;
 import okhttp3.Response;
-import okhttp3.ResponseBody;
 import okhttp3.internal.Internal;
 import okhttp3.internal.Util;
 import okhttp3.internal.connection.StreamAllocation;
 import okhttp3.internal.http.HttpCodec;
 import okhttp3.internal.http.HttpMethod;
-import okhttp3.internal.http.RealResponseBody;
 import okhttp3.internal.http.RequestLine;
 import okhttp3.internal.http.StatusLine;
 import okio.ByteString;
@@ -159,9 +158,9 @@ public final class Http2Codec implements HttpCodec {
         .headers(headersBuilder.build());
   }
 
-  @Override public ResponseBody openResponseBody(Response response) throws IOException {
+  @Override public Body openResponseBody(Response response) throws IOException {
     Source source = new StreamFinishingSource(stream.getSource());
-    return new RealResponseBody(response.headers(), Okio.buffer(source));
+    return Body.create(response.headers(), Okio.buffer(source));
   }
 
   @Override public void cancel() {

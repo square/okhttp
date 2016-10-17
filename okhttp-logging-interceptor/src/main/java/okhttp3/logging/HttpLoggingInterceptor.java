@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.charset.UnsupportedCharsetException;
 import java.util.concurrent.TimeUnit;
+import okhttp3.Body;
 import okhttp3.Connection;
 import okhttp3.Headers;
 import okhttp3.Interceptor;
@@ -27,9 +28,7 @@ import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import okhttp3.Protocol;
 import okhttp3.Request;
-import okhttp3.RequestBody;
 import okhttp3.Response;
-import okhttp3.ResponseBody;
 import okhttp3.internal.http.HttpHeaders;
 import okhttp3.internal.platform.Platform;
 import okio.Buffer;
@@ -148,7 +147,7 @@ public final class HttpLoggingInterceptor implements Interceptor {
     boolean logBody = level == Level.BODY;
     boolean logHeaders = logBody || level == Level.HEADERS;
 
-    RequestBody requestBody = request.body();
+    Body requestBody = request.body();
     boolean hasRequestBody = requestBody != null;
 
     Connection connection = chain.connection();
@@ -216,7 +215,7 @@ public final class HttpLoggingInterceptor implements Interceptor {
     }
     long tookMs = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startNs);
 
-    ResponseBody responseBody = response.body();
+    Body responseBody = response.body();
     long contentLength = responseBody.contentLength();
     String bodySize = contentLength != -1 ? contentLength + "-byte" : "unknown-length";
     logger.log("<-- " + response.code() + ' ' + response.message() + ' '

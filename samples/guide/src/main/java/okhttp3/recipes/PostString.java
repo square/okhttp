@@ -16,10 +16,10 @@
 package okhttp3.recipes;
 
 import java.io.IOException;
+import okhttp3.Body;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
-import okhttp3.RequestBody;
 import okhttp3.Response;
 
 public final class PostString {
@@ -39,7 +39,7 @@ public final class PostString {
 
     Request request = new Request.Builder()
         .url("https://api.github.com/markdown/raw")
-        .post(RequestBody.create(MEDIA_TYPE_MARKDOWN, postBody))
+        .post(Body.create(MEDIA_TYPE_MARKDOWN, postBody))
         .build();
 
     try (Response response = client.newCall(request).execute()) {

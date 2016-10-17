@@ -6,10 +6,10 @@ import com.squareup.moshi.Types;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import okhttp3.Body;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
-import okhttp3.ResponseBody;
 
 public class OkHttpContributors {
   private static final String ENDPOINT = "https://api.github.com/repos/square/okhttp/contributors";
@@ -34,7 +34,7 @@ public class OkHttpContributors {
     Response response = client.newCall(request).execute();
 
     // Deserialize HTTP response to concrete type.
-    ResponseBody body = response.body();
+    Body body = response.body();
     List<Contributor> contributors = CONTRIBUTORS_JSON_ADAPTER.fromJson(body.source());
     body.close();
 

@@ -18,7 +18,7 @@ package okhttp3.internal.ws;
 import java.io.EOFException;
 import java.io.IOException;
 import java.util.Random;
-import okhttp3.RequestBody;
+import okhttp3.Body;
 import okhttp3.internal.Util;
 import okio.Buffer;
 import okio.BufferedSink;
@@ -80,7 +80,7 @@ public final class WebSocketWriterTest {
     int length = 5;
     byte[] bytes = binaryData(length);
 
-    RequestBody body = RequestBody.create(null, bytes);
+    Body body = Body.create(null, bytes);
     BufferedSink sink = Okio.buffer(serverWriter.newMessageSink(OPCODE_TEXT, length));
     body.writeTo(sink);
     sink.close();
@@ -94,7 +94,7 @@ public final class WebSocketWriterTest {
     int length = 12345;
     byte[] bytes = binaryData(length);
 
-    RequestBody body = RequestBody.create(null, bytes);
+    Body body = Body.create(null, bytes);
     BufferedSink sink = Okio.buffer(serverWriter.newMessageSink(OPCODE_TEXT, length));
     body.writeTo(sink);
     sink.close();
