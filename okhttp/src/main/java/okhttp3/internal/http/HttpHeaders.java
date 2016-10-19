@@ -38,8 +38,7 @@ import static okhttp3.internal.http.StatusLine.HTTP_CONTINUE;
 
 /** Headers and utilities for internal use by OkHttp. */
 public final class HttpHeaders {
-  private static final Pattern AUTHENTICATION_HEADER_PATTERN
-          = Pattern.compile("(.*?) .*?realm=\"(.*?)\"", Pattern.CASE_INSENSITIVE);
+  private static final String AUTHENTICATION_HEADER_PATTERN = "(.*?) +(.*?, *)?realm=\"(.*?)\"";
 
   private HttpHeaders() {
   }
@@ -153,10 +152,11 @@ public final class HttpHeaders {
     // realm-value = quoted-string
     List<Challenge> challenges = new ArrayList<>();
     List<String> authenticationHeaders = responseHeaders.values(challengeHeader);
+    Pattern pattern = Pattern.compile(AUTHENTICATION_HEADER_PATTERN, Pattern.CASE_INSENSITIVE);
     for (String authenticationHeader : authenticationHeaders) {
-      Matcher matcher = AUTHENTICATION_HEADER_PATTERN.matcher(authenticationHeader);
+      Matcher matcher = pattern.matcher(authenticationHeader);
       if (matcher.find()) {
-        challenges.add(new Challenge(matcher.group(1), matcher.group(2)));
+        challenges.add(new Challenge(matcher.group(1), matcher.group(3)));
       }
     }
     return challenges;

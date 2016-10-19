@@ -360,5 +360,51 @@ public final class HeadersTest {
     assertEquals(1, challenges.size());
     assertEquals("Digest", challenges.get(0).scheme());
     assertEquals("myrealm", challenges.get(0).realm());
+
+    // Not strict RFC 2617 header #2
+    headers = new Headers.Builder()
+            .add("WWW-Authenticate", "Digest qop=\"auth\", nonce=\"fjalskdflwejrlaskdfjlaskdjflaksjdflkasdf\", realm=\"myrealm\", stale=\"FALSE\"").build();
+    challenges = HttpHeaders.parseChallenges(headers, "WWW-Authenticate");
+    assertEquals(1, challenges.size());
+    assertEquals("Digest", challenges.get(0).scheme());
+    assertEquals("myrealm", challenges.get(0).realm());
+
+    // Wrong header
+    headers = new Headers.Builder()
+            .add("WWW-Authenticate", "Digest qop=\"auth\", underrealm=\"myrealm\", nonce=\"fjalskdflwejrlaskdfjlaskdjflaksjdflkasdf\", stale=\"FALSE\"").build();
+    challenges = HttpHeaders.parseChallenges(headers, "WWW-Authenticate");
+    assertEquals(0, challenges.size());
+
+    // Not strict RFC 2617 header with some spaces
+    headers = new Headers.Builder()
+            .add("WWW-Authenticate", "Digest qop=\"auth\",    realm=\"myrealm\", nonce=\"fjalskdflwejrlaskdfjlaskdjflaksjdflkasdf\", stale=\"FALSE\"").build();
+    challenges = HttpHeaders.parseChallenges(headers, "WWW-Authenticate");
+    assertEquals(1, challenges.size());
+    assertEquals("Digest", challenges.get(0).scheme());
+    assertEquals("myrealm", challenges.get(0).realm());
+
+    // Strict RFC 2617 header with some spaces
+    headers = new Headers.Builder()
+            .add("WWW-Authenticate", "Digest    realm=\"myrealm\", nonce=\"fjalskdflwejrlaskdfjlaskdjflaksjdflkasdf\", qop=\"auth\", stale=\"FALSE\"").build();
+    challenges = HttpHeaders.parseChallenges(headers, "WWW-Authenticate");
+    assertEquals(1, challenges.size());
+    assertEquals("Digest", challenges.get(0).scheme());
+    assertEquals("myrealm", challenges.get(0).realm());
+
+    // Not strict RFC 2617 camelcased
+    headers = new Headers.Builder()
+            .add("WWW-Authenticate", "DiGeSt qop=\"auth\", rEaLm=\"myrealm\", nonce=\"fjalskdflwejrlaskdfjlaskdjflaksjdflkasdf\", stale=\"FALSE\"").build();
+    challenges = HttpHeaders.parseChallenges(headers, "WWW-Authenticate");
+    assertEquals(1, challenges.size());
+    assertEquals("DiGeSt", challenges.get(0).scheme());
+    assertEquals("myrealm", challenges.get(0).realm());
+
+    // Strict RFC 2617 camelcased
+    headers = new Headers.Builder()
+            .add("WWW-Authenticate", "DIgEsT rEaLm=\"myrealm\", nonce=\"fjalskdflwejrlaskdfjlaskdjflaksjdflkasdf\", qop=\"auth\", stale=\"FALSE\"").build();
+    challenges = HttpHeaders.parseChallenges(headers, "WWW-Authenticate");
+    assertEquals(1, challenges.size());
+    assertEquals("DIgEsT", challenges.get(0).scheme());
+    assertEquals("myrealm", challenges.get(0).realm());
   }
 }
