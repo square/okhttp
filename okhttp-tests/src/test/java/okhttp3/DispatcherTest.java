@@ -17,6 +17,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
+import static okhttp3.TestUtil.defaultClient;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -26,7 +27,7 @@ public final class DispatcherTest {
   RecordingExecutor executor = new RecordingExecutor();
   RecordingCallback callback = new RecordingCallback();
   Dispatcher dispatcher = new Dispatcher(executor);
-  OkHttpClient client = new OkHttpClient.Builder()
+  OkHttpClient client = defaultClient().newBuilder()
       .dispatcher(dispatcher)
       .build();
 

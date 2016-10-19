@@ -827,7 +827,7 @@ public final class CallTest {
 
   /** https://github.com/square/okhttp/issues/1801 */
   @Test public void asyncCallEngineInitialized() throws Exception {
-    OkHttpClient c = new OkHttpClient.Builder()
+    OkHttpClient c = defaultClient().newBuilder()
         .addInterceptor(new Interceptor() {
           @Override public Response intercept(Chain chain) throws IOException {
             throw new IOException();
@@ -2586,7 +2586,7 @@ public final class CallTest {
     server.enqueue(new MockResponse()
         .setBody("This gets leaked."));
 
-    client = new OkHttpClient.Builder()
+    client = defaultClient().newBuilder()
         .connectionPool(new ConnectionPool(0, 10, TimeUnit.MILLISECONDS))
         .build();
 
@@ -2615,7 +2615,7 @@ public final class CallTest {
     server.enqueue(new MockResponse()
         .setBody("This gets leaked."));
 
-    client = new OkHttpClient.Builder()
+    client = defaultClient().newBuilder()
         .connectionPool(new ConnectionPool(0, 10, TimeUnit.MILLISECONDS))
         .build();
 

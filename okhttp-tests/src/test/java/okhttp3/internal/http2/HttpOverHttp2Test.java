@@ -61,6 +61,7 @@ import org.junit.rules.TemporaryFolder;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
+import static okhttp3.TestUtil.defaultClient;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
@@ -79,7 +80,7 @@ public final class HttpOverHttp2Test {
   @Before public void setUp() throws Exception {
     server.useHttps(sslClient.socketFactory, false);
     cache = new Cache(tempDir.getRoot(), Integer.MAX_VALUE);
-    client = new OkHttpClient.Builder()
+    client = defaultClient().newBuilder()
         .protocols(Arrays.asList(Protocol.HTTP_2, Protocol.HTTP_1_1))
         .dns(new SingleInetAddressDns())
         .sslSocketFactory(sslClient.socketFactory, sslClient.trustManager)
@@ -233,6 +234,9 @@ public final class HttpOverHttp2Test {
     assertEquals("JKL", response2.body().source().readUtf8(3));
     assertEquals(0, server.takeRequest().getSequenceNumber());
     assertEquals(1, server.takeRequest().getSequenceNumber());
+
+    response1.close();
+    response2.close();
   }
 
   /** https://github.com/square/okhttp/issues/373 */
@@ -321,6 +325,8 @@ public final class HttpOverHttp2Test {
     assertEquals('C', in.read());
     assertEquals(-1, in.read());
     assertEquals(-1, in.read());
+
+    in.close();
   }
 
   @Ignore // See https://github.com/square/okhttp/issues/578
@@ -561,6 +567,10 @@ public final class HttpOverHttp2Test {
 
   /** https://github.com/square/okhttp/issues/1191 */
   @Test public void cancelWithStreamNotCompleted() throws Exception {
+    // Ensure that the (shared) connection pool is in a consistent state.
+    client.connectionPool().evictAll();
+    assertEquals(0, client.connectionPool().connectionCount());
+
     server.enqueue(new MockResponse()
         .setBody("abc"));
     server.enqueue(new MockResponse()
@@ -570,7 +580,7 @@ public final class HttpOverHttp2Test {
     Call call1 = client.newCall(new Request.Builder()
         .url(server.url("/"))
         .build());
-    call1.execute();
+    Response response = call1.execute();
     call1.cancel();
 
     // That connection is pooled, and it works.
@@ -581,6 +591,9 @@ public final class HttpOverHttp2Test {
     Response response2 = call2.execute();
     assertEquals("def", response2.body().string());
     assertEquals(0, server.takeRequest().getSequenceNumber());
+
+    // Clean up the connection.
+    response.close();
   }
 
   @Test public void recoverFromOneRefusedStreamReusesConnection() throws Exception {
@@ -685,6 +698,7 @@ public final class HttpOverHttp2Test {
         .url(server.url("/"))
         .build());
     Response response = call.execute();
+    response.close();
 
     assertEquals("α", response.header("Alpha"));
     assertEquals("Beta", response.header("β"));

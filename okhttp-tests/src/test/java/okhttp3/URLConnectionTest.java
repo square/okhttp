@@ -20,6 +20,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Authenticator;
 import java.net.ConnectException;
+import java.net.CookieManager;
 import java.net.HttpRetryException;
 import java.net.HttpURLConnection;
 import java.net.InetAddress;
@@ -326,7 +327,7 @@ public final class URLConnectionTest {
     server.enqueue(new MockResponse()
         .setSocketPolicy(SocketPolicy.DISCONNECT_AFTER_REQUEST));
 
-    urlFactory = new OkUrlFactory(new OkHttpClient.Builder()
+    urlFactory = new OkUrlFactory(defaultClient().newBuilder()
         .dns(new DoubleInetAddressDns())
         .build());
     HttpURLConnection connection = urlFactory.open(server.url("/").url());
@@ -593,7 +594,15 @@ public final class URLConnectionTest {
     assertNotNull(httpsConnection.getCipherSuite());
   }
 
-  @Test public void connectViaHttpsReusingConnections() throws IOException, InterruptedException {
+  @Test public void connectViaHttpsReusingConnections() throws Exception {
+    connectViaHttpsReusingConnections(false);
+  }
+
+  @Test public void connectViaHttpsReusingConnectionsAfterRebuildingClient() throws Exception {
+    connectViaHttpsReusingConnections(true);
+  }
+
+  private void connectViaHttpsReusingConnections(boolean rebuildClient) throws Exception {
     server.useHttps(sslClient.socketFactory, false);
     server.enqueue(new MockResponse().setBody("this response comes via HTTPS"));
     server.enqueue(new MockResponse().setBody("another response via HTTPS"));
@@ -602,12 +611,28 @@ public final class URLConnectionTest {
     SSLSocketFactory clientSocketFactory = sslClient.socketFactory;
     RecordingHostnameVerifier hostnameVerifier = new RecordingHostnameVerifier();
 
-    urlFactory.setClient(urlFactory.client().newBuilder()
+    CookieJar cookieJar = new JavaNetCookieJar(new CookieManager());
+    ConnectionPool connectionPool = new ConnectionPool();
+
+    urlFactory.setClient(new OkHttpClient.Builder()
+        .cache(cache)
+        .connectionPool(connectionPool)
+        .cookieJar(cookieJar)
         .sslSocketFactory(clientSocketFactory, sslClient.trustManager)
         .hostnameVerifier(hostnameVerifier)
         .build());
     connection = urlFactory.open(server.url("/").url());
     assertContent("this response comes via HTTPS", connection);
+
+    if (rebuildClient) {
+      urlFactory.setClient(new OkHttpClient.Builder()
+          .cache(cache)
+          .connectionPool(connectionPool)
+          .cookieJar(cookieJar)
+          .sslSocketFactory(clientSocketFactory, sslClient.trustManager)
+          .hostnameVerifier(hostnameVerifier)
+          .build());
+    }
 
     connection = urlFactory.open(server.url("/").url());
     assertContent("another response via HTTPS", connection);

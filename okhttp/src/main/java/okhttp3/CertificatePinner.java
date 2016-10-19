@@ -20,11 +20,15 @@ import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 import javax.net.ssl.SSLPeerUnverifiedException;
 import okhttp3.internal.Util;
 import okhttp3.internal.tls.CertificateChainCleaner;
 import okio.ByteString;
+
+import static okhttp3.internal.Util.equal;
 
 /**
  * Constrains which certificates are trusted. Pinning certificates defends against attacks on
@@ -124,12 +128,25 @@ import okio.ByteString;
 public final class CertificatePinner {
   public static final CertificatePinner DEFAULT = new Builder().build();
 
-  private final List<Pin> pins;
+  private final Set<Pin> pins;
   private final CertificateChainCleaner certificateChainCleaner;
 
-  private CertificatePinner(List<Pin> pins, CertificateChainCleaner certificateChainCleaner) {
+  private CertificatePinner(Set<Pin> pins, CertificateChainCleaner certificateChainCleaner) {
     this.pins = pins;
     this.certificateChainCleaner = certificateChainCleaner;
+  }
+
+  @Override public boolean equals(Object other) {
+    if (other == this) return true;
+    return other instanceof CertificatePinner
+        && (equal(certificateChainCleaner, ((CertificatePinner) other).certificateChainCleaner)
+        && pins.equals(((CertificatePinner) other).pins));
+  }
+
+  @Override public int hashCode() {
+    int result = certificateChainCleaner != null ? certificateChainCleaner.hashCode() : 0;
+    result = 31 * result + pins.hashCode();
+    return result;
   }
 
   /**
@@ -210,9 +227,9 @@ public final class CertificatePinner {
 
   /** Returns a certificate pinner that uses {@code certificateChainCleaner}. */
   CertificatePinner withCertificateChainCleaner(CertificateChainCleaner certificateChainCleaner) {
-    return this.certificateChainCleaner != certificateChainCleaner
-        ? new CertificatePinner(pins, certificateChainCleaner)
-        : this;
+    return equal(this.certificateChainCleaner, certificateChainCleaner)
+        ? this
+        : new CertificatePinner(pins, certificateChainCleaner);
   }
 
   /**
@@ -319,7 +336,7 @@ public final class CertificatePinner {
     }
 
     public CertificatePinner build() {
-      return new CertificatePinner(Util.immutableList(pins), null);
+      return new CertificatePinner(new LinkedHashSet<>(pins), null);
     }
   }
 }

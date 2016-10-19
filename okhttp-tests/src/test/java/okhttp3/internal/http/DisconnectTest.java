@@ -34,6 +34,7 @@ import okio.Buffer;
 import org.junit.Before;
 import org.junit.Test;
 
+import static okhttp3.TestUtil.defaultClient;
 import static org.junit.Assert.fail;
 
 public final class DisconnectTest {
@@ -56,7 +57,7 @@ public final class DisconnectTest {
             return serverSocket;
           }
         });
-    client = new OkHttpClient.Builder()
+    client = defaultClient().newBuilder()
         .socketFactory(new DelegatingSocketFactory(SocketFactory.getDefault()) {
           @Override protected Socket configureSocket(Socket socket) throws IOException {
             socket.setSendBufferSize(SOCKET_BUFFER_SIZE);
@@ -113,7 +114,7 @@ public final class DisconnectTest {
     } catch (IOException expected) {
     }
 
-    connection.disconnect();
+    responseBody.close();
   }
 
   private void disconnectLater(final HttpURLConnection connection, final int delayMillis) {

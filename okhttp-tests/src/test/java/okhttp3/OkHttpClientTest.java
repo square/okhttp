@@ -120,4 +120,10 @@ public final class OkHttpClientTest {
     } catch (IllegalArgumentException expected) {
     }
   }
+
+  @Test public void certificatePinnerEquality() {
+    OkHttpClient clientA = TestUtil.defaultClient();
+    OkHttpClient clientB = TestUtil.defaultClient();
+    assertEquals(clientA.certificatePinner(), clientB.certificatePinner());
+  }
 }

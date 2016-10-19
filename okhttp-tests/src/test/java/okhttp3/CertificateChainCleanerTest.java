@@ -21,6 +21,9 @@ import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.List;
 import javax.net.ssl.SSLPeerUnverifiedException;
+import javax.net.ssl.SSLSocketFactory;
+import javax.net.ssl.X509TrustManager;
+import okhttp3.internal.platform.Platform;
 import okhttp3.internal.tls.CertificateChainCleaner;
 import okhttp3.internal.tls.HeldCertificate;
 import org.junit.Test;
@@ -29,6 +32,27 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
 public final class CertificateChainCleanerTest {
+  @Test public void equalsFromCertificate() throws Exception {
+    HeldCertificate rootA = new HeldCertificate.Builder()
+        .serialNumber("1")
+        .build();
+    HeldCertificate rootB = new HeldCertificate.Builder()
+        .serialNumber("2")
+        .build();
+    assertEquals(
+        CertificateChainCleaner.get(rootA.certificate, rootB.certificate),
+        CertificateChainCleaner.get(rootB.certificate, rootA.certificate));
+  }
+
+  @Test public void equalsFromTrustManager() throws Exception {
+    Platform platform = Platform.get();
+    X509TrustManager x509TrustManager = platform.trustManager(
+        (SSLSocketFactory) SSLSocketFactory.getDefault());
+    assertEquals(
+        CertificateChainCleaner.get(x509TrustManager),
+        CertificateChainCleaner.get(x509TrustManager));
+  }
+
   @Test public void normalizeSingleSelfSignedCertificate() throws Exception {
     HeldCertificate root = new HeldCertificate.Builder()
         .serialNumber("1")

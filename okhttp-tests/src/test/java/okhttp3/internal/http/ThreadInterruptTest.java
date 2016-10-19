@@ -35,6 +35,7 @@ import okio.Buffer;
 import org.junit.Before;
 import org.junit.Test;
 
+import static okhttp3.TestUtil.defaultClient;
 import static org.junit.Assert.fail;
 
 public final class ThreadInterruptTest {
@@ -58,7 +59,7 @@ public final class ThreadInterruptTest {
             return serverSocket;
           }
         });
-    client = new OkHttpClient.Builder()
+    client = defaultClient().newBuilder()
         .socketFactory(new DelegatingSocketFactory(SocketFactory.getDefault()) {
           @Override
           protected Socket configureSocket(Socket socket) throws IOException {
@@ -116,7 +117,7 @@ public final class ThreadInterruptTest {
     } catch (InterruptedIOException expected) {
     }
 
-    connection.disconnect();
+    responseBody.close();
   }
 
   private void interruptLater(final int delayMillis) {

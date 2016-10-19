@@ -111,4 +111,14 @@ public final class BasicCertificateChainCleaner extends CertificateChainCleaner 
       return false;
     }
   }
+
+  @Override public int hashCode() {
+    return trustRootIndex.hashCode();
+  }
+
+  @Override public boolean equals(Object other) {
+    if (other == this) return true;
+    return other instanceof BasicCertificateChainCleaner
+        && ((BasicCertificateChainCleaner) other).trustRootIndex.equals(trustRootIndex);
+  }
 }
