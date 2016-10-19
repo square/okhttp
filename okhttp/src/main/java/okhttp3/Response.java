@@ -165,7 +165,12 @@ public final class Response implements Closeable {
   }
 
   /**
-   * Never {@code null}, must be closed after consumption, can be consumed only once.
+   * Returns a non-null value if this response was passed to {@link Callback#onResponse} or returned
+   * from {@link Call#execute()}. Response bodies must be {@linkplain ResponseBody closed} and may
+   * be consumed only once.
+   *
+   * <p>This always returns null on responses returned from {@link #cacheResponse}, {@link
+   * #networkResponse}, and {@link #priorResponse()}.
    */
   public ResponseBody body() {
     return body;
