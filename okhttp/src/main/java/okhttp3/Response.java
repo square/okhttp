@@ -165,7 +165,7 @@ public final class Response implements Closeable {
   }
 
   /**
-   * Never {@code null}, must be closed after consumption, can be consumed only once.
+   * Never {@code null} on responses returned from servers, must be closed after consumption, can be consumed only once.
    */
   public ResponseBody body() {
     return body;
