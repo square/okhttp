@@ -234,6 +234,60 @@ public final class CallTest {
     assertNull(recordedRequest.getHeader("Content-Length"));
   }
 
+  @Test public void headResponseContentLengthIsIgnored() throws Exception {
+    server.enqueue(new MockResponse()
+        .clearHeaders()
+        .addHeader("Content-Length", "100"));
+    server.enqueue(new MockResponse()
+        .setBody("abc"));
+
+    Request headRequest = new Request.Builder()
+        .url(server.url("/"))
+        .head()
+        .build();
+    executeSynchronously(headRequest)
+        .assertCode(200)
+        .assertHeader("Content-Length", "100")
+        .assertBody("");
+
+    Request getRequest = new Request.Builder()
+        .url(server.url("/"))
+        .build();
+    executeSynchronously(getRequest)
+        .assertCode(200)
+        .assertBody("abc");
+
+    assertEquals(0, server.takeRequest().getSequenceNumber());
+    assertEquals(1, server.takeRequest().getSequenceNumber());
+  }
+
+  @Test public void headResponseContentEncodingIsIgnored() throws Exception {
+    server.enqueue(new MockResponse()
+        .clearHeaders()
+        .addHeader("Content-Encoding", "chunked"));
+    server.enqueue(new MockResponse()
+        .setBody("abc"));
+
+    Request headRequest = new Request.Builder()
+        .url(server.url("/"))
+        .head()
+        .build();
+    executeSynchronously(headRequest)
+        .assertCode(200)
+        .assertHeader("Content-Encoding", "chunked")
+        .assertBody("");
+
+    Request getRequest = new Request.Builder()
+        .url(server.url("/"))
+        .build();
+    executeSynchronously(getRequest)
+        .assertCode(200)
+        .assertBody("abc");
+
+    assertEquals(0, server.takeRequest().getSequenceNumber());
+    assertEquals(1, server.takeRequest().getSequenceNumber());
+  }
+
   @Test public void head_HTTPS() throws Exception {
     enableTls();
     head();
