@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014 Square, Inc.
+ * Copyright (C) 2016 Square, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,28 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package okhttp3.internal.ws;
+package okhttp3;
 
 import java.io.IOException;
-import okhttp3.Response;
-import okhttp3.Body;
-import okhttp3.WebSocket;
-import okhttp3.WebSocketListener;
-import okio.ByteString;
+import okio.BufferedSink;
+import okio.BufferedSource;
 
-public class EmptyWebSocketListener implements WebSocketListener {
-  @Override public void onOpen(WebSocket webSocket, Response response) {
-  }
+public abstract class ReadableBody extends Body {
+  @Override public abstract BufferedSource source();
 
-  @Override public void onMessage(Body message) throws IOException {
-  }
-
-  @Override public void onPong(ByteString payload) {
-  }
-
-  @Override public void onClose(int code, String reason) {
-  }
-
-  @Override public void onFailure(Throwable t, Response response) {
+  @Override public final void writeTo(BufferedSink sink) throws IOException {
+    throw new UnsupportedOperationException();
   }
 }

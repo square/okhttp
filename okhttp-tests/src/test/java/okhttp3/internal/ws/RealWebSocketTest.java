@@ -20,11 +20,12 @@ import java.io.IOException;
 import java.net.ProtocolException;
 import java.util.Random;
 import java.util.concurrent.Executor;
+import okhttp3.Body;
 import okhttp3.MediaType;
 import okhttp3.Protocol;
 import okhttp3.Request;
-import okhttp3.RequestBody;
 import okhttp3.Response;
+import okhttp3.WritableBody;
 import okio.Buffer;
 import okio.BufferedSink;
 import okio.BufferedSource;
@@ -101,7 +102,7 @@ public final class RealWebSocketTest {
   }
 
   @Test public void streamingMessage() throws IOException {
-    RequestBody message = new RequestBody() {
+    Body message = new WritableBody() {
       @Override public MediaType contentType() {
         return TEXT;
       }
@@ -118,7 +119,7 @@ public final class RealWebSocketTest {
   }
 
   @Test public void streamingMessageCanInterleavePing() throws IOException {
-    RequestBody message = new RequestBody() {
+    Body message = new WritableBody() {
       @Override public MediaType contentType() {
         return TEXT;
       }
@@ -184,7 +185,7 @@ public final class RealWebSocketTest {
       assertEquals("closed", e.getMessage());
     }
     try {
-      client.message(RequestBody.create(TEXT, "Hello!"));
+      client.message(Body.create(TEXT, "Hello!"));
       fail();
     } catch (IllegalStateException e) {
       assertEquals("closed", e.getMessage());
@@ -202,7 +203,7 @@ public final class RealWebSocketTest {
 
     // A failed write prevents further use of the WebSocket instance.
     try {
-      client.message(RequestBody.create(TEXT, "Hello!"));
+      client.message(Body.create(TEXT, "Hello!"));
       fail();
     } catch (IllegalStateException e) {
       assertEquals("must call close()", e.getMessage());
@@ -219,14 +220,14 @@ public final class RealWebSocketTest {
     client2Server.close();
 
     try {
-      client.message(RequestBody.create(TEXT, "Hello!"));
+      client.message(Body.create(TEXT, "Hello!"));
       fail();
     } catch (IOException ignored) {
     }
 
     // A failed write prevents further use of the WebSocket instance.
     try {
-      client.message(RequestBody.create(TEXT, "Hello!"));
+      client.message(Body.create(TEXT, "Hello!"));
       fail();
     } catch (IllegalStateException e) {
       assertEquals("must call close()", e.getMessage());
@@ -258,7 +259,7 @@ public final class RealWebSocketTest {
     clientListener.assertClose(1000, "Hello!");
 
     try {
-      client.message(RequestBody.create(TEXT, "Hi!"));
+      client.message(Body.create(TEXT, "Hi!"));
       fail();
     } catch (IOException e) {
       assertEquals("closed", e.getMessage());
@@ -279,7 +280,7 @@ public final class RealWebSocketTest {
   }
 
   @Test public void serverCloseWhileWritingThrows() throws IOException {
-    RequestBody message = new RequestBody() {
+    Body message = new WritableBody() {
       @Override public MediaType contentType() {
         return TEXT;
       }
@@ -349,7 +350,7 @@ public final class RealWebSocketTest {
   }
 
   @Test public void serverCloseBreaksReadMessageLoop() throws IOException {
-    server.message(RequestBody.create(TEXT, "Hello!"));
+    server.message(Body.create(TEXT, "Hello!"));
     server.close(1000, "Bye!");
     assertTrue(client.processNextFrame());
     clientListener.assertTextMessage("Hello!");

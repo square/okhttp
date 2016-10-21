@@ -17,7 +17,7 @@ package okhttp3.curl;
 
 import java.io.IOException;
 import okhttp3.Request;
-import okhttp3.RequestBody;
+import okhttp3.Body;
 import okio.Buffer;
 import org.junit.Test;
 
@@ -42,7 +42,7 @@ public class MainTest {
 
   @Test public void dataPost() {
     Request request = fromArgs("-d", "foo", "http://example.com").createRequest();
-    RequestBody body = request.body();
+    Body body = request.body();
     assertEquals("POST", request.method());
     assertEquals("http://example.com/", request.url().toString());
     assertEquals("application/x-www-form-urlencoded; charset=utf-8", body.contentType().toString());
@@ -51,7 +51,7 @@ public class MainTest {
 
   @Test public void dataPut() {
     Request request = fromArgs("-d", "foo", "-X", "PUT", "http://example.com").createRequest();
-    RequestBody body = request.body();
+    Body body = request.body();
     assertEquals("PUT", request.method());
     assertEquals("http://example.com/", request.url().toString());
     assertEquals("application/x-www-form-urlencoded; charset=utf-8", body.contentType().toString());
@@ -61,7 +61,7 @@ public class MainTest {
   @Test public void contentTypeHeader() {
     Request request = fromArgs("-d", "foo", "-H", "Content-Type: application/json",
         "http://example.com").createRequest();
-    RequestBody body = request.body();
+    Body body = request.body();
     assertEquals("POST", request.method());
     assertEquals("http://example.com/", request.url().toString());
     assertEquals("application/json; charset=utf-8", body.contentType().toString());
@@ -90,7 +90,7 @@ public class MainTest {
     assertEquals("Mon, 18 Aug 2014 15:16:06 GMT", request.header("If-Modified-Since"));
   }
 
-  private static String bodyAsString(RequestBody body) {
+  private static String bodyAsString(Body body) {
     try {
       Buffer buffer = new Buffer();
       body.writeTo(buffer);

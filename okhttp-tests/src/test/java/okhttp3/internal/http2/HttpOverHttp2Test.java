@@ -36,8 +36,8 @@ import okhttp3.Protocol;
 import okhttp3.RecordingCookieJar;
 import okhttp3.RecordingHostnameVerifier;
 import okhttp3.Request;
-import okhttp3.RequestBody;
 import okhttp3.Response;
+import okhttp3.WritableBody;
 import okhttp3.internal.DoubleInetAddressDns;
 import okhttp3.internal.RecordingOkAuthenticator;
 import okhttp3.internal.SingleInetAddressDns;
@@ -131,7 +131,7 @@ public final class HttpOverHttp2Test {
 
     Call call = client.newCall(new Request.Builder()
         .url(server.url("/foo"))
-        .post(new RequestBody() {
+        .post(new WritableBody() {
           @Override public MediaType contentType() {
             return MediaType.parse("text/plain; charset=utf-8");
           }
@@ -158,12 +158,12 @@ public final class HttpOverHttp2Test {
 
     Call call = client.newCall(new Request.Builder()
         .url(server.url("/foo"))
-        .post(new RequestBody() {
+        .post(new WritableBody() {
           @Override public MediaType contentType() {
             return MediaType.parse("text/plain; charset=utf-8");
           }
 
-          @Override public long contentLength() throws IOException {
+          @Override public long contentLength() {
             return postBytes.length;
           }
 
@@ -189,12 +189,12 @@ public final class HttpOverHttp2Test {
 
     Call call = client.newCall(new Request.Builder()
         .url(server.url("/foo"))
-        .post(new RequestBody() {
+        .post(new WritableBody() {
           @Override public MediaType contentType() {
             return MediaType.parse("text/plain; charset=utf-8");
           }
 
-          @Override public long contentLength() throws IOException {
+          @Override public long contentLength() {
             return postBytes.length;
           }
 

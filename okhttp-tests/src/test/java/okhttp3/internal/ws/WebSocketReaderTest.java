@@ -21,7 +21,7 @@ import java.net.ProtocolException;
 import java.util.Random;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Pattern;
-import okhttp3.ResponseBody;
+import okhttp3.Body;
 import okhttp3.internal.Util;
 import okio.Buffer;
 import okio.BufferedSource;
@@ -152,7 +152,7 @@ public final class WebSocketReaderTest {
 
     final Buffer sink = new Buffer();
     callback.setNextEventDelegate(new EmptyWebSocketListener() {
-      @Override public void onMessage(ResponseBody message) throws IOException {
+      @Override public void onMessage(Body message) throws IOException {
         BufferedSource source = message.source();
         source.readFully(sink, 3); // Read "Hel"
         data.write(ByteString.decodeHex("5158")); // lo
@@ -253,7 +253,7 @@ public final class WebSocketReaderTest {
   @Test public void noCloseErrors() throws IOException {
     data.write(ByteString.decodeHex("810548656c6c6f")); // Hello
     callback.setNextEventDelegate(new EmptyWebSocketListener() {
-      @Override public void onMessage(ResponseBody body) throws IOException {
+      @Override public void onMessage(Body body) throws IOException {
         body.source().readAll(new Buffer());
       }
     });
@@ -271,7 +271,7 @@ public final class WebSocketReaderTest {
 
     final Buffer sink = new Buffer();
     callback.setNextEventDelegate(new EmptyWebSocketListener() {
-      @Override public void onMessage(ResponseBody message) throws IOException {
+      @Override public void onMessage(Body message) throws IOException {
         message.source().read(sink, 3);
         message.close();
       }
@@ -293,7 +293,7 @@ public final class WebSocketReaderTest {
 
     final Buffer sink = new Buffer();
     callback.setNextEventDelegate(new EmptyWebSocketListener() {
-      @Override public void onMessage(ResponseBody message) throws IOException {
+      @Override public void onMessage(Body message) throws IOException {
         message.source().read(sink, 2);
         message.close();
       }
@@ -313,7 +313,7 @@ public final class WebSocketReaderTest {
 
     final AtomicReference<Exception> exception = new AtomicReference<>();
     callback.setNextEventDelegate(new EmptyWebSocketListener() {
-      @Override public void onMessage(ResponseBody message) throws IOException {
+      @Override public void onMessage(Body message) throws IOException {
         message.close();
         try {
           message.source().readAll(new Buffer());

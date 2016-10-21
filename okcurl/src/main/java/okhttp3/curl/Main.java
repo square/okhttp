@@ -42,7 +42,7 @@ import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import okhttp3.Protocol;
 import okhttp3.Request;
-import okhttp3.RequestBody;
+import okhttp3.Body;
 import okhttp3.Response;
 import okhttp3.internal.Util;
 import okhttp3.internal.http.StatusLine;
@@ -196,7 +196,7 @@ public class Main extends HelpOption implements Runnable {
     return "GET";
   }
 
-  private RequestBody getRequestBody() {
+  private Body getRequestBody() {
     if (data == null) {
       return null;
     }
@@ -214,7 +214,7 @@ public class Main extends HelpOption implements Runnable {
       }
     }
 
-    return RequestBody.create(MediaType.parse(mimeType), bodyData);
+    return Body.create(MediaType.parse(mimeType), bodyData);
   }
 
   Request createRequest() {

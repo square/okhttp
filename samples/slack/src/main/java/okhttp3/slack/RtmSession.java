@@ -17,8 +17,8 @@ package okhttp3.slack;
 
 import java.io.Closeable;
 import java.io.IOException;
+import okhttp3.Body;
 import okhttp3.Response;
-import okhttp3.ResponseBody;
 import okhttp3.WebSocket;
 import okhttp3.WebSocketCall;
 import okhttp3.WebSocketListener;
@@ -52,7 +52,7 @@ public final class RtmSession implements WebSocketListener, Closeable {
   }
 
   // TOOD(jwilson): decode incoming messages and dispatch them somewhere.
-  @Override public void onMessage(ResponseBody message) throws IOException {
+  @Override public void onMessage(Body message) throws IOException {
     System.out.println("onMessage: " + message.string());
   }
 

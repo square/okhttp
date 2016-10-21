@@ -467,7 +467,7 @@ _2015-08-25_
  *  **Call canceling is more reliable.**  We had a bug where a socket being
      connected wasn't being closed when the application used `Call.cancel()`.
 
- *  **Changing a HttpUrl’s scheme now tracks the default port.** We had a bug
+ *  **Changing an HttpUrl’s scheme now tracks the default port.** We had a bug
     where changing a URL from `http` to `https` would leave it on port 80.
 
  *  **Okio has been updated to 1.6.0.**

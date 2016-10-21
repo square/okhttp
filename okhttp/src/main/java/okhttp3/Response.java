@@ -16,12 +16,10 @@
 package okhttp3;
 
 import java.io.Closeable;
-import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
+import okhttp3.internal.Util;
 import okhttp3.internal.http.HttpHeaders;
-import okio.Buffer;
-import okio.BufferedSource;
 
 import static java.net.HttpURLConnection.HTTP_MOVED_PERM;
 import static java.net.HttpURLConnection.HTTP_MOVED_TEMP;
@@ -33,11 +31,12 @@ import static okhttp3.internal.http.StatusLine.HTTP_PERM_REDIRECT;
 import static okhttp3.internal.http.StatusLine.HTTP_TEMP_REDIRECT;
 
 /**
- * An HTTP response. Instances of this class are not immutable: the response body is a one-shot
- * value that may be consumed only once and then closed. All other properties are immutable.
+ * An HTTP response.
  *
- * <p>This class implements {@link Closeable}. Closing it simply closes its response body. See
- * {@link ResponseBody} for an explanation and examples.
+ * The body of this class is not immutable. All other properties are immutable.
+ *
+ * <p>This class implements {@link Closeable}. Closing it simply closes its body. See
+ * {@link Body} for an explanation and examples.
  */
 public final class Response implements Closeable {
   private final Request request;
@@ -46,7 +45,7 @@ public final class Response implements Closeable {
   private final String message;
   private final Handshake handshake;
   private final Headers headers;
-  private final ResponseBody body;
+  private final Body body;
   private final Response networkResponse;
   private final Response cacheResponse;
   private final Response priorResponse;
@@ -135,44 +134,19 @@ public final class Response implements Closeable {
     return headers;
   }
 
-  /**
-   * Peeks up to {@code byteCount} bytes from the response body and returns them as a new response
-   * body. If fewer than {@code byteCount} bytes are in the response body, the full response body is
-   * returned. If more than {@code byteCount} bytes are in the response body, the returned value
-   * will be truncated to {@code byteCount} bytes.
-   *
-   * <p>It is an error to call this method after the body has been consumed.
-   *
-   * <p><strong>Warning:</strong> this method loads the requested bytes into memory. Most
-   * applications should set a modest limit on {@code byteCount}, such as 1 MiB.
-   */
-  public ResponseBody peekBody(long byteCount) throws IOException {
-    BufferedSource source = body.source();
-    source.request(byteCount);
-    Buffer copy = source.buffer().clone();
-
-    // There may be more than byteCount bytes in source.buffer(). If there is, return a prefix.
-    Buffer result;
-    if (copy.size() > byteCount) {
-      result = new Buffer();
-      result.write(copy, byteCount);
-      copy.clear();
-    } else {
-      result = copy;
-    }
-
-    return ResponseBody.create(body.contentType(), result.size(), result);
+  public Body peekBody(long byteCount) throws java.io.IOException {
+    return body.peek(byteCount);
   }
 
   /**
    * Returns a non-null value if this response was passed to {@link Callback#onResponse} or returned
-   * from {@link Call#execute()}. Response bodies must be {@linkplain ResponseBody closed} and may
+   * from {@link Call#execute()}. Response bodies must be {@linkplain Body closed} and may
    * be consumed only once.
    *
    * <p>This always returns null on responses returned from {@link #cacheResponse}, {@link
    * #networkResponse}, and {@link #priorResponse()}.
    */
-  public ResponseBody body() {
+  public Body body() {
     return body;
   }
 
@@ -270,7 +244,7 @@ public final class Response implements Closeable {
 
   /** Closes the response body. Equivalent to {@code body().close()}. */
   @Override public void close() {
-    body.close();
+    Util.closeQuietly(body);
   }
 
   @Override public String toString() {
@@ -292,7 +266,7 @@ public final class Response implements Closeable {
     private String message;
     private Handshake handshake;
     private Headers.Builder headers;
-    private ResponseBody body;
+    private Body body;
     private Response networkResponse;
     private Response cacheResponse;
     private Response priorResponse;
@@ -372,7 +346,7 @@ public final class Response implements Closeable {
       return this;
     }
 
-    public Builder body(ResponseBody body) {
+    public Builder body(Body body) {
       this.body = body;
       return this;
     }

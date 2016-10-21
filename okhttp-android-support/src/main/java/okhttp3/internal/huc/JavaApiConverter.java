@@ -34,14 +34,14 @@ import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLPeerUnverifiedException;
 import javax.net.ssl.SSLSocketFactory;
+import okhttp3.Body;
 import okhttp3.CipherSuite;
 import okhttp3.Handshake;
 import okhttp3.Headers;
 import okhttp3.MediaType;
+import okhttp3.ReadableBody;
 import okhttp3.Request;
-import okhttp3.RequestBody;
 import okhttp3.Response;
-import okhttp3.ResponseBody;
 import okhttp3.internal.Internal;
 import okhttp3.internal.JavaNetHeaders;
 import okhttp3.internal.Util;
@@ -89,8 +89,8 @@ public final class JavaApiConverter {
 
     // OkHttp's Call API requires a placeholder body; the real body will be streamed separately.
     String requestMethod = httpUrlConnection.getRequestMethod();
-    RequestBody placeholderBody = HttpMethod.requiresRequestBody(requestMethod)
-        ? Util.EMPTY_REQUEST
+    Body placeholderBody = HttpMethod.requiresRequestBody(requestMethod)
+        ? Body.EMPTY
         : null;
 
     Request okRequest = new Request.Builder()
@@ -115,7 +115,7 @@ public final class JavaApiConverter {
     okResponseBuilder.headers(okHeaders);
 
     // Response body
-    ResponseBody okBody = createOkBody(urlConnection);
+    Body okBody = createOkBody(urlConnection);
     okResponseBuilder.body(okBody);
 
     // Handle SSL handshake information as needed.
@@ -239,7 +239,7 @@ public final class JavaApiConverter {
     okResponseBuilder.headers(okHeaders);
 
     // Response body
-    ResponseBody okBody = createOkBody(okHeaders, javaResponse);
+    Body okBody = createOkBody(okHeaders, javaResponse);
     okResponseBuilder.body(okBody);
 
     // Handle SSL handshake information as needed.
@@ -277,8 +277,8 @@ public final class JavaApiConverter {
   public static Request createOkRequest(
       URI uri, String requestMethod, Map<String, List<String>> requestHeaders) {
     // OkHttp's Call API requires a placeholder body; the real body will be streamed separately.
-    RequestBody placeholderBody = HttpMethod.requiresRequestBody(requestMethod)
-        ? Util.EMPTY_REQUEST
+    Body placeholderBody = HttpMethod.requiresRequestBody(requestMethod)
+        ? Body.EMPTY
         : null;
 
     Request.Builder builder = new Request.Builder()
@@ -298,7 +298,7 @@ public final class JavaApiConverter {
    */
   public static CacheResponse createJavaCacheResponse(final Response response) {
     final Headers headers = withSyntheticHeaders(response);
-    final ResponseBody body = response.body();
+    final Body body = response.body();
     if (response.request().isHttps()) {
       final Handshake handshake = response.handshake();
       return new SecureCacheResponse() {
@@ -505,10 +505,10 @@ public final class JavaApiConverter {
   /**
    * Creates an OkHttp Response.Body containing the supplied information.
    */
-  private static ResponseBody createOkBody(final Headers okHeaders,
+  private static Body createOkBody(final Headers okHeaders,
       final CacheResponse cacheResponse) throws IOException {
     final BufferedSource body = Okio.buffer(Okio.source(cacheResponse.getBody()));
-    return new ResponseBody() {
+    return new ReadableBody() {
       @Override
       public MediaType contentType() {
         String contentTypeHeader = okHeaders.get("Content-Type");
@@ -529,13 +529,13 @@ public final class JavaApiConverter {
   /**
    * Creates an OkHttp Response.Body containing the supplied information.
    */
-  private static ResponseBody createOkBody(final URLConnection urlConnection) throws IOException {
+  private static Body createOkBody(final URLConnection urlConnection) throws IOException {
     if (!urlConnection.getDoInput()) {
       return null;
     }
 
     final BufferedSource body = Okio.buffer(Okio.source(urlConnection.getInputStream()));
-    return new ResponseBody() {
+    return new ReadableBody() {
       @Override public MediaType contentType() {
         String contentTypeHeader = urlConnection.getContentType();
         return contentTypeHeader == null ? null : MediaType.parse(contentTypeHeader);

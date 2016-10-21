@@ -193,7 +193,7 @@ public final class ConnectionReuseTest {
 
     Request requestB = new Request.Builder()
         .url(server.url("/"))
-        .post(RequestBody.create(MediaType.parse("text/plain"), "b"))
+        .post(Body.create(MediaType.parse("text/plain"), "b"))
         .build();
     Response responseB = client.newCall(requestB).execute();
     assertEquals("b", responseB.body().string());
@@ -305,7 +305,7 @@ public final class ConnectionReuseTest {
       @Override public Response intercept(Chain chain) throws IOException {
         Response response = chain.proceed(chain.request());
         return response.newBuilder()
-            .body(ResponseBody.create(null, "unrelated response body!"))
+            .body(Body.create(null, "unrelated response body!"))
             .build();
       }
     }).build();

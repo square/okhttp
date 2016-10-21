@@ -32,8 +32,8 @@ import okhttp3.Connection;
 import okhttp3.HttpUrl;
 import okhttp3.Interceptor;
 import okhttp3.OkHttpClient;
+import okhttp3.Body;
 import okhttp3.Request;
-import okhttp3.RequestBody;
 import okhttp3.Response;
 import okhttp3.Route;
 import okhttp3.internal.connection.RouteException;
@@ -78,7 +78,7 @@ public final class RetryAndFollowUpInterceptor implements Interceptor {
    * and response body streams; otherwise resources may be leaked.
    *
    * <p>This method is safe to be called concurrently, but provides limited guarantees. If a
-   * transport layer connection has been established (such as a HTTP/2 stream) that is terminated.
+   * transport layer connection has been established (such as an HTTP/2 stream) that is terminated.
    * Otherwise if a socket connection is being established, that is terminated.
    */
   public void cancel() {
@@ -311,7 +311,7 @@ public final class RetryAndFollowUpInterceptor implements Interceptor {
           if (HttpMethod.redirectsToGet(method)) {
             requestBuilder.method("GET", null);
           } else {
-            RequestBody requestBody = maintainBody ? userResponse.request().body() : null;
+            Body requestBody = maintainBody ? userResponse.request().body() : null;
             requestBuilder.method(method, requestBody);
           }
           if (!maintainBody) {

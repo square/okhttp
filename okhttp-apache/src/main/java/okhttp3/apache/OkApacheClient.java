@@ -4,12 +4,11 @@ package okhttp3.apache;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.Proxy;
+import okhttp3.Body;
 import okhttp3.Headers;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
-import okhttp3.RequestBody;
 import okhttp3.Response;
-import okhttp3.ResponseBody;
 import okhttp3.internal.Util;
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
@@ -55,7 +54,7 @@ public final class OkApacheClient implements HttpClient {
       }
     }
 
-    RequestBody body = null;
+    Body body = null;
     if (request instanceof HttpEntityEnclosingRequest) {
       HttpEntity entity = ((HttpEntityEnclosingRequest) request).getEntity();
       if (entity != null) {
@@ -67,7 +66,7 @@ public final class OkApacheClient implements HttpClient {
           builder.header(encoding.getName(), encoding.getValue());
         }
       } else {
-        body = Util.EMPTY_REQUEST;
+        body = Body.EMPTY;
       }
     }
     builder.method(method, body);
@@ -80,8 +79,9 @@ public final class OkApacheClient implements HttpClient {
     String message = response.message();
     BasicHttpResponse httpResponse = new BasicHttpResponse(HTTP_1_1, code, message);
 
-    ResponseBody body = response.body();
-    InputStreamEntity entity = new InputStreamEntity(body.byteStream(), body.contentLength());
+    Body body = response.body();
+    long contentLength = Util.contentLengthQuietly(body);
+    InputStreamEntity entity = new InputStreamEntity(body.byteStream(), contentLength);
     httpResponse.setEntity(entity);
 
     Headers headers = response.headers();

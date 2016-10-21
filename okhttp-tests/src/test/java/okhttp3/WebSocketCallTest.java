@@ -70,7 +70,7 @@ public final class WebSocketCallTest {
     WebSocket client = clientListener.assertOpen();
     serverListener.assertOpen();
 
-    client.message(RequestBody.create(TEXT, "Hello, WebSockets!"));
+    client.message(Body.create(TEXT, "Hello, WebSockets!"));
     serverListener.assertTextMessage("Hello, WebSockets!");
   }
 
@@ -81,7 +81,7 @@ public final class WebSocketCallTest {
     WebSocket client = clientListener.assertOpen();
     serverListener.assertOpen();
 
-    client.message(RequestBody.create(BINARY, "Hello!"));
+    client.message(Body.create(BINARY, "Hello!"));
     serverListener.assertBinaryMessage(new byte[] {'H', 'e', 'l', 'l', 'o', '!'});
   }
 
@@ -104,7 +104,7 @@ public final class WebSocketCallTest {
 
     WebSocket client = clientListener.assertOpen();
     try {
-      client.message(RequestBody.create(null, "Hey!"));
+      client.message(Body.create(null, "Hey!"));
       fail();
     } catch (IllegalArgumentException e) {
       assertEquals("Message content type was null. Must use WebSocket.TEXT or WebSocket.BINARY.",
@@ -118,7 +118,7 @@ public final class WebSocketCallTest {
 
     WebSocket client = clientListener.assertOpen();
     try {
-      client.message(RequestBody.create(MediaType.parse("text/plain"), "Hey!"));
+      client.message(Body.create(MediaType.parse("text/plain"), "Hey!"));
       fail();
     } catch (IllegalArgumentException e) {
       assertEquals(
@@ -157,7 +157,7 @@ public final class WebSocketCallTest {
     clientListener.assertOpen();
     WebSocket server = serverListener.assertOpen();
 
-    server.message(RequestBody.create(TEXT, "Hello, WebSockets!"));
+    server.message(Body.create(TEXT, "Hello, WebSockets!"));
     clientListener.assertTextMessage("Hello, WebSockets!");
   }
 
@@ -187,9 +187,9 @@ public final class WebSocketCallTest {
         count.getAndIncrement();
       }
 
-      @Override public void onMessage(ResponseBody message) throws IOException {
+      @Override public void onMessage(Body message) throws IOException {
         try {
-          webSocket.message(RequestBody.create(TEXT, "hey"));
+          webSocket.message(Body.create(TEXT, "hey"));
           fail();
         } catch (IllegalStateException e) {
           assertEquals("attempting to write from reader thread", e.getMessage());
@@ -222,7 +222,7 @@ public final class WebSocketCallTest {
     });
 
     WebSocket server = serverListener.assertOpen();
-    server.message(RequestBody.create(TEXT, "hi"));
+    server.message(Body.create(TEXT, "hi"));
     ((RealWebSocket) server).pong(ByteString.EMPTY);
     server.close(1000, "");
 
@@ -277,12 +277,12 @@ public final class WebSocketCallTest {
 
     final RuntimeException e = new RuntimeException();
     clientListener.setNextEventDelegate(new EmptyWebSocketListener() {
-      @Override public void onMessage(ResponseBody message) {
+      @Override public void onMessage(Body message) {
         throw e;
       }
     });
 
-    server.message(RequestBody.create(TEXT, "Hello, WebSockets!"));
+    server.message(Body.create(TEXT, "Hello, WebSockets!"));
     clientListener.assertFailure(e);
     serverListener.assertClose(1001, "");
   }
@@ -460,7 +460,7 @@ public final class WebSocketCallTest {
     WebSocket webSocket = clientListener.assertOpen();
     serverListener.assertOpen();
 
-    webSocket.message(RequestBody.create(TEXT, "abc"));
+    webSocket.message(Body.create(TEXT, "abc"));
     serverListener.assertTextMessage("abc");
   }
 

@@ -4,11 +4,10 @@ import java.io.IOException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import okhttp3.Body;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
-import okhttp3.RequestBody;
 import okhttp3.Response;
-import okhttp3.ResponseBody;
 import okhttp3.WebSocket;
 import okhttp3.WebSocketListener;
 import okio.ByteString;
@@ -37,9 +36,9 @@ public final class WebSocketEcho implements WebSocketListener {
     writeExecutor.execute(new Runnable() {
       @Override public void run() {
         try {
-          webSocket.message(RequestBody.create(TEXT, "Hello..."));
-          webSocket.message(RequestBody.create(TEXT, "...World!"));
-          webSocket.message(RequestBody.create(BINARY, ByteString.decodeHex("deadbeef")));
+          webSocket.message(Body.create(TEXT, "Hello..."));
+          webSocket.message(Body.create(TEXT, "...World!"));
+          webSocket.message(Body.create(BINARY, ByteString.decodeHex("deadbeef")));
           webSocket.close(1000, "Goodbye, World!");
         } catch (IOException e) {
           System.err.println("Unable to send messages: " + e.getMessage());
@@ -48,7 +47,7 @@ public final class WebSocketEcho implements WebSocketListener {
     });
   }
 
-  @Override public void onMessage(ResponseBody message) throws IOException {
+  @Override public void onMessage(Body message) throws IOException {
     if (message.contentType() == TEXT) {
       System.out.println("MESSAGE: " + message.string());
     } else {

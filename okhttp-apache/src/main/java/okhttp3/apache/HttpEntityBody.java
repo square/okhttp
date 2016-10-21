@@ -1,13 +1,14 @@
 package okhttp3.apache;
 
 import java.io.IOException;
+import okhttp3.Body;
 import okhttp3.MediaType;
-import okhttp3.RequestBody;
+import okhttp3.WritableBody;
 import okio.BufferedSink;
 import org.apache.http.HttpEntity;
 
-/** Adapts an {@link HttpEntity} to OkHttp's {@link RequestBody}. */
-final class HttpEntityBody extends RequestBody {
+/** Adapts an {@link HttpEntity} to OkHttp's {@link Body}. */
+final class HttpEntityBody extends WritableBody {
   private static final MediaType DEFAULT_MEDIA_TYPE = MediaType.parse("application/octet-stream");
 
   private final HttpEntity entity;

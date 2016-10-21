@@ -30,9 +30,9 @@ public interface Call extends Cloneable {
    * error.
    *
    * <p>The caller may read the response body with the response's {@link Response#body} method. To
-   * avoid leaking resources callers must {@linkplain ResponseBody close the response body}.
+   * avoid leaking resources callers must {@linkplain Body close the response body}.
    *
-   * <p>Note that transport-layer success (receiving a HTTP response code, headers and body) does
+   * <p>Note that transport-layer success (receiving an HTTP response code, headers and body) does
    * not necessarily indicate application-layer success: {@code response} may still indicate an
    * unhappy HTTP response code like 404 or 500.
    *

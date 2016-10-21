@@ -18,8 +18,9 @@ package okhttp3.internal.ws;
 import java.io.EOFException;
 import java.io.IOException;
 import java.net.ProtocolException;
+import okhttp3.Body;
 import okhttp3.MediaType;
-import okhttp3.ResponseBody;
+import okhttp3.ReadableBody;
 import okhttp3.WebSocket;
 import okio.Buffer;
 import okio.BufferedSource;
@@ -57,7 +58,7 @@ import static okhttp3.internal.ws.WebSocketProtocol.validateCloseCode;
  */
 final class WebSocketReader {
   public interface FrameCallback {
-    void onReadMessage(ResponseBody body) throws IOException;
+    void onReadMessage(Body body) throws IOException;
     void onReadPing(ByteString buffer);
     void onReadPong(ByteString buffer);
     void onReadClose(int code, String reason);
@@ -222,7 +223,7 @@ final class WebSocketReader {
     }
 
     final BufferedSource source = Okio.buffer(framedMessageSource);
-    ResponseBody body = new ResponseBody() {
+    Body body = new ReadableBody() {
       @Override public MediaType contentType() {
         return type;
       }

@@ -16,13 +16,13 @@
 package okhttp3.recipes;
 
 import java.io.IOException;
+import okhttp3.Body;
 import okhttp3.Call;
 import okhttp3.Callback;
 import okhttp3.Headers;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
-import okhttp3.ResponseBody;
 
 public final class AsynchronousGet {
   private final OkHttpClient client = new OkHttpClient();
@@ -38,7 +38,7 @@ public final class AsynchronousGet {
       }
 
       @Override public void onResponse(Call call, Response response) throws IOException {
-        try (ResponseBody responseBody = response.body()) {
+        try (Body responseBody = response.body()) {
           if (!response.isSuccessful()) throw new IOException("Unexpected code " + response);
 
           Headers responseHeaders = response.headers();

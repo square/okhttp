@@ -23,6 +23,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLSession;
 import javax.net.ssl.SSLSocketFactory;
+import okhttp3.Body;
 import okhttp3.Call;
 import okhttp3.Callback;
 import okhttp3.Dispatcher;
@@ -30,7 +31,6 @@ import okhttp3.HttpUrl;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
-import okhttp3.ResponseBody;
 import okhttp3.internal.tls.SslClient;
 
 class OkHttpAsync implements HttpClient {
@@ -73,7 +73,7 @@ class OkHttpAsync implements HttpClient {
       }
 
       @Override public void onResponse(Call call, Response response) throws IOException {
-        ResponseBody body = response.body();
+        Body body = response.body();
         long total = SynchronousHttpClient.readAllAndClose(body.byteStream());
         long finish = System.nanoTime();
         if (VERBOSE) {

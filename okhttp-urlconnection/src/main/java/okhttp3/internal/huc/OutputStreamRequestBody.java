@@ -22,7 +22,7 @@ import java.net.ProtocolException;
 import java.net.SocketTimeoutException;
 import okhttp3.MediaType;
 import okhttp3.Request;
-import okhttp3.RequestBody;
+import okhttp3.WritableBody;
 import okio.BufferedSink;
 import okio.Timeout;
 
@@ -32,7 +32,7 @@ import okio.Timeout;
  * In either case the bytes of the body aren't known until the caller writes them to the output
  * stream.
  */
-abstract class OutputStreamRequestBody extends RequestBody {
+abstract class OutputStreamRequestBody extends WritableBody {
   private Timeout timeout;
   private long expectedContentLength;
   private OutputStream outputStream;

@@ -733,7 +733,7 @@ public final class Cache implements Closeable, Flushable {
     }
   }
 
-  private static class CacheResponseBody extends ResponseBody {
+  private static class CacheResponseBody extends ReadableBody {
     private final DiskLruCache.Snapshot snapshot;
     private final BufferedSource bodySource;
     private final String contentType;

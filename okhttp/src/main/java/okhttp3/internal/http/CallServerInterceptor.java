@@ -17,10 +17,10 @@ package okhttp3.internal.http;
 
 import java.io.IOException;
 import java.net.ProtocolException;
+import okhttp3.Body;
 import okhttp3.Interceptor;
 import okhttp3.Request;
 import okhttp3.Response;
-import okhttp3.internal.Util;
 import okhttp3.internal.connection.StreamAllocation;
 import okio.BufferedSink;
 import okio.Okio;
@@ -62,7 +62,7 @@ public final class CallServerInterceptor implements Interceptor {
     if (forWebSocket && code == 101) {
       // Connection is upgrading, but we need to ensure interceptors see a non-null response body.
       response = response.newBuilder()
-          .body(Util.EMPTY_RESPONSE)
+          .body(Body.EMPTY)
           .build();
     } else {
       response = response.newBuilder()

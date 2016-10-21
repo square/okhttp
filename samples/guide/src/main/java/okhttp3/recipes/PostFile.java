@@ -20,7 +20,7 @@ import java.io.IOException;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
-import okhttp3.RequestBody;
+import okhttp3.Body;
 import okhttp3.Response;
 
 public final class PostFile {
@@ -34,7 +34,7 @@ public final class PostFile {
 
     Request request = new Request.Builder()
         .url("https://api.github.com/markdown/raw")
-        .post(RequestBody.create(MEDIA_TYPE_MARKDOWN, file))
+        .post(Body.create(MEDIA_TYPE_MARKDOWN, file))
         .build();
 
     try (Response response = client.newCall(request).execute()) {

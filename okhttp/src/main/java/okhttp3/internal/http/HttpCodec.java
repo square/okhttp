@@ -16,9 +16,9 @@
 package okhttp3.internal.http;
 
 import java.io.IOException;
+import okhttp3.Body;
 import okhttp3.Request;
 import okhttp3.Response;
-import okhttp3.ResponseBody;
 import okio.Sink;
 
 /** Encodes HTTP requests and decodes HTTP responses. */
@@ -43,7 +43,7 @@ public interface HttpCodec {
   Response.Builder readResponseHeaders() throws IOException;
 
   /** Returns a stream that reads the response body. */
-  ResponseBody openResponseBody(Response response) throws IOException;
+  Body openResponseBody(Response response) throws IOException;
 
   /**
    * Cancel this stream. Resources held by this stream will be cleaned up, though not synchronously.

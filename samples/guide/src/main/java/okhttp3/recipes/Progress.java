@@ -16,12 +16,13 @@
 package okhttp3.recipes;
 
 import java.io.IOException;
+import okhttp3.Body;
 import okhttp3.Interceptor;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
-import okhttp3.ResponseBody;
+import okhttp3.internal.Util;
 import okio.Buffer;
 import okio.BufferedSource;
 import okio.ForwardingSource;
@@ -66,13 +67,13 @@ public final class Progress {
     new Progress().run();
   }
 
-  private static class ProgressResponseBody extends ResponseBody {
+  private static class ProgressResponseBody extends Body {
 
-    private final ResponseBody responseBody;
+    private final Body responseBody;
     private final ProgressListener progressListener;
     private BufferedSource bufferedSource;
 
-    public ProgressResponseBody(ResponseBody responseBody, ProgressListener progressListener) {
+    public ProgressResponseBody(Body responseBody, ProgressListener progressListener) {
       this.responseBody = responseBody;
       this.progressListener = progressListener;
     }
@@ -82,7 +83,7 @@ public final class Progress {
     }
 
     @Override public long contentLength() {
-      return responseBody.contentLength();
+      return Util.contentLengthQuietly(responseBody);
     }
 
     @Override public BufferedSource source() {

@@ -77,13 +77,13 @@ public final class AutobahnTester {
             startNanos.set(System.nanoTime());
           }
 
-          @Override public void onMessage(final ResponseBody message) throws IOException {
-            final RequestBody response;
+          @Override public void onMessage(final Body message) throws IOException {
+            final Body response;
             if (message.contentType() == TEXT) {
-              response = RequestBody.create(TEXT, message.string());
+              response = Body.create(TEXT, message.string());
             } else {
               BufferedSource source = message.source();
-              response = RequestBody.create(BINARY, source.readByteString());
+              response = Body.create(BINARY, source.readByteString());
               source.close();
             }
             sendExecutor.execute(new Runnable() {
@@ -131,7 +131,7 @@ public final class AutobahnTester {
       @Override public void onOpen(WebSocket webSocket, Response response) {
       }
 
-      @Override public void onMessage(ResponseBody message) throws IOException {
+      @Override public void onMessage(Body message) throws IOException {
         countRef.set(message.source().readDecimalLong());
         message.close();
       }
@@ -168,7 +168,7 @@ public final class AutobahnTester {
       @Override public void onOpen(WebSocket webSocket, Response response) {
       }
 
-      @Override public void onMessage(ResponseBody message) throws IOException {
+      @Override public void onMessage(Body message) throws IOException {
       }
 
       @Override public void onPong(ByteString payload) {

@@ -25,7 +25,7 @@ import okio.BufferedSink;
 import static okhttp3.HttpUrl.FORM_ENCODE_SET;
 import static okhttp3.HttpUrl.percentDecode;
 
-public final class FormBody extends RequestBody {
+public final class FormBody extends WritableBody {
   private static final MediaType CONTENT_TYPE =
       MediaType.parse("application/x-www-form-urlencoded");
 

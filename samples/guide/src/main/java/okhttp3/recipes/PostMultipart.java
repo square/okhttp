@@ -17,11 +17,11 @@ package okhttp3.recipes;
 
 import java.io.File;
 import java.io.IOException;
+import okhttp3.Body;
 import okhttp3.MediaType;
 import okhttp3.MultipartBody;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
-import okhttp3.RequestBody;
 import okhttp3.Response;
 
 public final class PostMultipart {
@@ -36,11 +36,11 @@ public final class PostMultipart {
 
   public void run() throws Exception {
     // Use the imgur image upload API as documented at https://api.imgur.com/endpoints/image
-    RequestBody requestBody = new MultipartBody.Builder()
+    Body requestBody = new MultipartBody.Builder()
         .setType(MultipartBody.FORM)
         .addFormDataPart("title", "Square Logo")
         .addFormDataPart("image", "logo-square.png",
-            RequestBody.create(MEDIA_TYPE_PNG, new File("website/static/logo-square.png")))
+            Body.create(MEDIA_TYPE_PNG, new File("website/static/logo-square.png")))
         .build();
 
     Request request = new Request.Builder()

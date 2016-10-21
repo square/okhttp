@@ -18,17 +18,16 @@ package okhttp3.internal.cache;
 
 import java.io.IOException;
 import java.util.Date;
+import okhttp3.Body;
 import okhttp3.Headers;
 import okhttp3.Interceptor;
 import okhttp3.Protocol;
 import okhttp3.Request;
 import okhttp3.Response;
 import okhttp3.internal.Internal;
-import okhttp3.internal.Util;
 import okhttp3.internal.http.HttpCodec;
 import okhttp3.internal.http.HttpHeaders;
 import okhttp3.internal.http.HttpMethod;
-import okhttp3.internal.http.RealResponseBody;
 import okio.Buffer;
 import okio.BufferedSink;
 import okio.BufferedSource;
@@ -76,7 +75,7 @@ public final class CacheInterceptor implements Interceptor {
           .protocol(Protocol.HTTP_1_1)
           .code(504)
           .message("Unsatisfiable Request (only-if-cached)")
-          .body(Util.EMPTY_RESPONSE)
+          .body(Body.EMPTY)
           .sentRequestAtMillis(-1L)
           .receivedResponseAtMillis(System.currentTimeMillis())
           .build();
@@ -218,7 +217,7 @@ public final class CacheInterceptor implements Interceptor {
     };
 
     return response.newBuilder()
-        .body(new RealResponseBody(response.headers(), Okio.buffer(cacheWritingSource)))
+        .body(Body.create(response.headers(), Okio.buffer(cacheWritingSource)))
         .build();
   }
 

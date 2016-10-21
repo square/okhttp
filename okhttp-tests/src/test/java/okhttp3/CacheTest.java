@@ -776,9 +776,9 @@ public final class CacheTest {
     }
   }
 
-  private RequestBody requestBodyOrNull(String requestMethod) {
+  private Body requestBodyOrNull(String requestMethod) {
     return (requestMethod.equals("POST") || requestMethod.equals("PUT"))
-        ? RequestBody.create(MediaType.parse("text/plain"), "foo")
+        ? Body.create(MediaType.parse("text/plain"), "foo")
         : null;
   }
 
