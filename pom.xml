@@ -489,6 +489,15 @@
         <alpn.jdk8.version>8.1.9.v20160720</alpn.jdk8.version>
       </properties>
     </profile>
+    <profile>
+      <id>alpn-when-jdk8_111</id>
+      <activation>
+        <jdk>1.8.0_111</jdk>
+      </activation>
+      <properties>
+        <alpn.jdk8.version>8.1.9.v20160720</alpn.jdk8.version>
+      </properties>
+    </profile>
   </profiles>
 </project>
 
