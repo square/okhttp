@@ -18,6 +18,7 @@
     <module>guide</module>
     <module>crawler</module>
     <module>simple-client</module>
+    <module>slack</module>
     <module>static-server</module>
   </modules>
 
