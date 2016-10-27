@@ -442,6 +442,17 @@ public final class RealWebSocketTest {
     serverListener.assertClose(1000, "Bye!");
   }
 
+  @Test public void serverCloseWithoutBodyClosesConnection() throws IOException {
+    server.close(0, null);
+
+    client.processNextFrame(); // Read server close, send client close, close connection.
+    assertTrue(clientConnectionClosed);
+    clientListener.assertClose(1005, "");
+
+    server.processNextFrame();
+    serverListener.assertClose(1005, "");
+  }
+
   static final class MemorySocket implements Closeable {
     private final Buffer buffer = new Buffer();
     private boolean closed;

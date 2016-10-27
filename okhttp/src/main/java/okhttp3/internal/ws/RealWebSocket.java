@@ -155,8 +155,8 @@ public abstract class RealWebSocket implements WebSocket, FrameCallback {
     readerListener.onPong(buffer);
   }
 
-  @Override public final void onReadClose(int code, String reason) {
-    replyToPeerClose(code, reason);
+  @Override public final void onReadClose(int code, String reason, boolean isEmpty) {
+    replyToPeerClose(code, reason, isEmpty);
     readerSawClose = true;
     readerListener.onClose(code, reason);
   }
@@ -181,13 +181,23 @@ public abstract class RealWebSocket implements WebSocket, FrameCallback {
     }
   }
 
-  /** Replies and closes this web socket when a close frame is read from the peer. */
-  private void replyToPeerClose(final int code, final String reason) {
+  /**
+   * Replies and closes this web socket when a close frame is read from the peer.
+   * Do not reply with the assumed CLOSE_NO_STATUS_CODE (1005) as it should never be sent.
+   * https://tools.ietf.org/html/rfc6455#section-5.5.1
+   * "When sending a Close frame in response,
+   * the endpoint typically echos the status code it received."
+   */
+  private void replyToPeerClose(final int code, final String reason, final boolean isEmpty) {
     Runnable replierClose = new NamedRunnable("OkHttp %s WebSocket Close Reply", name) {
       @Override protected void execute() {
         if (writerClosed.compareAndSet(false, true)) {
           try {
-            writer.writeClose(code, reason);
+            if (isEmpty) {
+              writer.writeClose(0, null);
+            } else {
+              writer.writeClose(code, reason);
+            }
           } catch (IOException t) {
             Platform.get().log(INFO, "Unable to send close reply in response to peer close.", t);
           }
