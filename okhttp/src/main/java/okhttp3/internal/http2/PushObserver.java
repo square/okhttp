@@ -44,7 +44,7 @@ public interface PushObserver {
    *
    * @param streamId server-initiated stream ID: an even number.
    * @param requestHeaders minimally includes {@code :method}, {@code :scheme}, {@code :authority},
-   * and (@code :path}.
+   * and {@code :path}.
    */
   boolean onRequest(int streamId, List<Header> requestHeaders);
 
