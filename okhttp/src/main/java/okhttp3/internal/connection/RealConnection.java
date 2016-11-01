@@ -366,7 +366,7 @@ public final class RealConnection extends Http2Connection.Listener implements Co
     }
 
     if (http2Connection != null) {
-      return true; // TODO: check framedConnection.shutdown.
+      return !http2Connection.isShutdown();
     }
 
     if (doExtensiveChecks) {

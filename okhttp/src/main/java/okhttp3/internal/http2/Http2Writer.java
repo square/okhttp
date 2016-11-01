@@ -242,6 +242,7 @@ final class Http2Writer implements Closeable {
       sink.write(debugData);
     }
     sink.flush();
+    new Throwable().printStackTrace();
   }
 
   /**
@@ -263,7 +264,9 @@ final class Http2Writer implements Closeable {
   }
 
   public void frameHeader(int streamId, int length, byte type, byte flags) throws IOException {
-    if (logger.isLoggable(FINE)) logger.fine(frameLog(false, streamId, length, type, flags));
+    if (logger.isLoggable(FINE) && client) {
+      logger.fine(frameLog(false, streamId, length, type, flags));
+    }
     if (length > maxFrameSize) {
       throw illegalArgument("FRAME_SIZE_ERROR length > %d: %d", maxFrameSize, length);
     }

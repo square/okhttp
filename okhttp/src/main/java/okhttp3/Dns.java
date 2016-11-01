@@ -19,6 +19,7 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.Arrays;
 import java.util.List;
+import java.util.logging.Logger;
 
 /**
  * A domain name service that resolves IP addresses for host names. Most applications will use the
@@ -36,7 +37,9 @@ public interface Dns {
   Dns SYSTEM = new Dns() {
     @Override public List<InetAddress> lookup(String hostname) throws UnknownHostException {
       if (hostname == null) throw new UnknownHostException("hostname == null");
-      return Arrays.asList(InetAddress.getAllByName(hostname));
+      InetAddress[] a = InetAddress.getAllByName(hostname);
+      Logger.getLogger(Dns.class.getName()).warning(Arrays.toString(a));
+      return Arrays.asList(a);
     }
   };
 

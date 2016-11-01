@@ -24,12 +24,14 @@ import java.util.Arrays;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import javax.net.ssl.HostnameVerifier;
 import okhttp3.Cache;
 import okhttp3.Call;
 import okhttp3.Cookie;
 import okhttp3.Credentials;
 import okhttp3.Headers;
+import okhttp3.Interceptor;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import okhttp3.Protocol;
@@ -803,6 +805,80 @@ public final class HttpOverHttp2Test {
     assertEquals(1, server.takeRequest().getSequenceNumber()); // Reuse settings connection.
     assertEquals(2, server.takeRequest().getSequenceNumber()); // Reuse settings connection.
     assertEquals(0, server.takeRequest().getSequenceNumber()); // New connection!
+  }
+
+  @Test public void connectionNotReusedAfterShutdown() throws Exception {
+    server.enqueue(new MockResponse()
+        .setSocketPolicy(SocketPolicy.DISCONNECT_AT_END)
+        .setShutdownDelay(1, TimeUnit.SECONDS)
+        .setBody("ABC"));
+    server.enqueue(new MockResponse()
+        .setBody("DEF"));
+
+    Call call1 = client.newCall(new Request.Builder()
+        .url(server.url("/"))
+        .build());
+    Response response1 = call1.execute();
+    assertEquals("ABC", response1.body().string());
+
+    // Allow for graceful shutdown and processing of GOAWAY frame.
+    Thread.sleep(250);
+
+    Call call2 = client.newCall(new Request.Builder()
+        .url(server.url("/"))
+        .build());
+    Response response2 = call2.execute();
+    assertEquals("DEF", response2.body().string());
+    assertEquals(0, server.takeRequest().getSequenceNumber());
+    assertEquals(0, server.takeRequest().getSequenceNumber());
+  }
+
+  /**
+   * This simulates a race condition where we receive a healthy HTTP/2 connection and just prior to
+   * writing our request, we get a GOAWAY frame from the server.
+   */
+  @Test public void connectionShutdownAfterHealthCheck() throws Exception {
+    server.enqueue(new MockResponse()
+        .setSocketPolicy(SocketPolicy.DISCONNECT_AT_END)
+        .setShutdownDelay(1, TimeUnit.SECONDS)
+        .setBody("ABC"));
+    server.enqueue(new MockResponse()
+        .setBody("DEF"));
+
+    OkHttpClient client2 = client.newBuilder()
+        .addNetworkInterceptor(new Interceptor() {
+          boolean executedCall;
+
+          @Override public Response intercept(Chain chain) throws IOException {
+            if (!executedCall) {
+              // At this point, we have a healthy HTTP/2 connection. This call will trigger the
+              // server to send a GOAWAY frame, leaving the connection in a shutdown state.
+              executedCall = true;
+              Call call = client.newCall(new Request.Builder()
+                  .url(server.url("/"))
+                  .build());
+              Response response = call.execute();
+              assertEquals("ABC", response.body().string());
+              // Allow for graceful shutdown and processing of GOAWAY frame.
+              try {
+                Thread.sleep(250);
+              } catch (InterruptedException e) {
+                throw new AssertionError();
+              }
+            }
+            return chain.proceed(chain.request());
+          }
+        })
+        .build();
+
+    Call call = client2.newCall(new Request.Builder()
+        .url(server.url("/"))
+        .build());
+    Response response = call.execute();
+    assertEquals("DEF", response.body().string());
+
+    assertEquals(0, server.takeRequest().getSequenceNumber());
+    assertEquals(0, server.takeRequest().getSequenceNumber());
   }
 
   public Buffer gzip(String bytes) throws IOException {

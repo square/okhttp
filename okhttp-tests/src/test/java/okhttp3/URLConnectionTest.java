@@ -3555,6 +3555,40 @@ public final class URLConnectionTest {
     assertEquals(0, dispatcher.runningCallsCount());
   }
 
+  @Test public void streamedBodyIsRetriedOnHttp2Shutdown() throws Exception {
+    enableProtocol(Protocol.HTTP_2);
+    server.enqueue(new MockResponse()
+        .setSocketPolicy(SocketPolicy.DISCONNECT_AT_END)
+        .setShutdownDelay(1, TimeUnit.SECONDS)
+        .setBody("abc"));
+    server.enqueue(new MockResponse()
+        .setBody("def"));
+
+    HttpURLConnection connection1 = urlFactory.open(server.url("/").url());
+    connection1.setChunkedStreamingMode(4096);
+    connection1.setRequestMethod("POST");
+    connection1.connect(); // Establish healthy HTTP/2 connection, but don't write yet.
+
+    // Send a separate request which will trigger a GOAWAY frame on the healthy connection.
+    HttpURLConnection connection2 = urlFactory.open(server.url("/").url());
+    assertContent("abc", connection2);
+
+    // Delay to ensure the GOAWAY frame is processed.
+    Thread.sleep(250);
+
+    OutputStream os = connection1.getOutputStream();
+    os.write(new byte[] { '1', '2', '3' });
+    os.close();
+    assertContent("def", connection1);
+
+    RecordedRequest request1 = server.takeRequest();
+    assertEquals(0, request1.getSequenceNumber());
+
+    RecordedRequest request2 = server.takeRequest();
+    assertEquals("123", request2.getBody().readUtf8());
+    assertEquals(0, request2.getSequenceNumber());
+  }
+
   private void testInstanceFollowsRedirects(String spec) throws Exception {
     URL url = new URL(spec);
     HttpURLConnection urlConnection = urlFactory.open(url);

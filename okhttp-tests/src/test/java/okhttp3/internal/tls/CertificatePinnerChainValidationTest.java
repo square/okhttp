@@ -15,6 +15,11 @@
  */
 package okhttp3.internal.tls;
 
+import java.util.logging.ConsoleHandler;
+import java.util.logging.Level;
+import java.util.logging.LogRecord;
+import java.util.logging.Logger;
+import java.util.logging.SimpleFormatter;
 import javax.net.ssl.SSLHandshakeException;
 import javax.net.ssl.SSLPeerUnverifiedException;
 import okhttp3.Call;
@@ -23,6 +28,8 @@ import okhttp3.OkHttpClient;
 import okhttp3.RecordingHostnameVerifier;
 import okhttp3.Request;
 import okhttp3.Response;
+import okhttp3.internal.Util;
+import okhttp3.internal.http2.Http2;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import okhttp3.mockwebserver.SocketPolicy;
@@ -96,6 +103,16 @@ public final class CertificatePinnerChainValidationTest {
 
   /** The pinner should accept an intermediate from the server's chain. */
   @Test public void pinIntermediatePresentInChain() throws Exception {
+    Logger frameLogger = Logger.getLogger(Http2.class.getName());
+    frameLogger.setLevel(Level.FINE);
+    ConsoleHandler handler = new ConsoleHandler();
+    handler.setLevel(Level.FINE);
+    handler.setFormatter(new SimpleFormatter() {
+      @Override public String format(LogRecord record) {
+        return Util.format("%s%n", record.getMessage());
+      }
+    });
+    frameLogger.addHandler(handler);
     HeldCertificate rootCa = new HeldCertificate.Builder()
         .serialNumber("1")
         .ca(3)
@@ -142,6 +159,8 @@ public final class CertificatePinnerChainValidationTest {
 
     // Force a fresh connection for the next request.
     client.connectionPool().evictAll();
+
+    Thread.sleep(250);
 
     // Confirm that a second request also succeeds. This should detect caching problems.
     server.enqueue(new MockResponse()
