@@ -365,7 +365,7 @@ public final class HttpUrl {
    *     <li>Whitespace and control characters in the fragment will be stripped.
    * </ul>
    *
-   * <p>These differences may have a significant consequence when the URI is interpretted by a
+   * <p>These differences may have a significant consequence when the URI is interpreted by a
    * webserver. For this reason the {@linkplain URI URI class} and this method should be avoided.
    */
   public URI uri() {

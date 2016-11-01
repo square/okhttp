@@ -98,7 +98,7 @@ final class Http2Writer implements Closeable {
    * @param streamId client-initiated stream ID.  Must be an odd number.
    * @param promisedStreamId server-initiated stream ID.  Must be an even number.
    * @param requestHeaders minimally includes {@code :method}, {@code :scheme}, {@code :authority},
-   * and (@code :path}.
+   * and {@code :path}.
    */
   public synchronized void pushPromise(int streamId, int promisedStreamId,
       List<Header> requestHeaders) throws IOException {
@@ -162,7 +162,7 @@ final class Http2Writer implements Closeable {
    * Implementations must send multiple frames as necessary.
    *
    * @param source the buffer to draw bytes from. May be null if byteCount is 0.
-   * @param byteCount must be between 0 and the minimum of {code source.length} and {@link
+   * @param byteCount must be between 0 and the minimum of {@code source.length} and {@link
    * #maxDataLength}.
    */
   public synchronized void data(boolean outFinished, int streamId, Buffer source, int byteCount)
