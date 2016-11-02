@@ -390,7 +390,8 @@ public final class Http2Connection implements Closeable {
         shutdown = true;
         lastGoodStreamId = this.lastGoodStreamId;
       }
-      // TODO: propagate exception message into debugData
+      // TODO: propagate exception message into debugData.
+      // TODO: configure a timeout on the reader so that it doesn’t block forever.
       writer.goAway(lastGoodStreamId, statusCode, Util.EMPTY_BYTE_ARRAY);
     }
   }
@@ -493,6 +494,10 @@ public final class Http2Connection implements Closeable {
         writer.settings(settings);
       }
     }
+  }
+
+  public synchronized boolean isShutdown() {
+    return shutdown;
   }
 
   public static class Builder {
