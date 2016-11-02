@@ -878,6 +878,11 @@ public final class MockWebServer implements TestRule {
         logger.info(MockWebServer.this + " received request: " + request
             + " and responded: " + response + " protocol is " + protocol.toString());
       }
+
+      if (response.getSocketPolicy() == DISCONNECT_AT_END) {
+        FramedConnection connection = stream.getConnection();
+        connection.shutdown(ErrorCode.NO_ERROR);
+      }
     }
 
     private RecordedRequest readRequest(FramedStream stream) throws IOException {

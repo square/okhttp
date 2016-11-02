@@ -365,7 +365,7 @@ public final class RealConnection extends FramedConnection.Listener implements C
     }
 
     if (framedConnection != null) {
-      return true; // TODO: check framedConnection.shutdown.
+      return !framedConnection.isShutdown();
     }
 
     if (doExtensiveChecks) {

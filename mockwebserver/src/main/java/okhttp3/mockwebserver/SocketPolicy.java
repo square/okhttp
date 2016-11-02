@@ -37,7 +37,10 @@ public enum SocketPolicy {
   KEEP_OPEN,
 
   /**
-   * Close the socket after the response. This is the default HTTP/1.0 behavior.
+   * Close the socket after the response. This is the default HTTP/1.0 behavior. For HTTP/2
+   * connections, this sends a <a href="https://tools.ietf.org/html/rfc7540#section-6.8">GOAWAY
+   * frame</a> immediately after the response and will close the connection when the client's socket
+   * is exhausted.
    *
    * <p>See {@link SocketPolicy} for reasons why this can cause test flakiness and how to avoid it.
    */

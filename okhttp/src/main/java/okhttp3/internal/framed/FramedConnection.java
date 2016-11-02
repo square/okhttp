@@ -410,7 +410,8 @@ public final class FramedConnection implements Closeable {
         shutdown = true;
         lastGoodStreamId = this.lastGoodStreamId;
       }
-      // TODO: propagate exception message into debugData
+      // TODO: propagate exception message into debugData.
+      // TODO: configure a timeout on the reader so that it doesn’t block forever.
       frameWriter.goAway(lastGoodStreamId, statusCode, Util.EMPTY_BYTE_ARRAY);
     }
   }
@@ -513,6 +514,10 @@ public final class FramedConnection implements Closeable {
         frameWriter.settings(settings);
       }
     }
+  }
+
+  public synchronized boolean isShutdown() {
+    return shutdown;
   }
 
   public static class Builder {
