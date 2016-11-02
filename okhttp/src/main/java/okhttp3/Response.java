@@ -40,22 +40,22 @@ import static okhttp3.internal.http.StatusLine.HTTP_TEMP_REDIRECT;
  * {@link ResponseBody} for an explanation and examples.
  */
 public final class Response implements Closeable {
-  private final Request request;
-  private final Protocol protocol;
-  private final int code;
-  private final String message;
-  private final Handshake handshake;
-  private final Headers headers;
-  private final ResponseBody body;
-  private final Response networkResponse;
-  private final Response cacheResponse;
-  private final Response priorResponse;
-  private final long sentRequestAtMillis;
-  private final long receivedResponseAtMillis;
+  final Request request;
+  final Protocol protocol;
+  final int code;
+  final String message;
+  final Handshake handshake;
+  final Headers headers;
+  final ResponseBody body;
+  final Response networkResponse;
+  final Response cacheResponse;
+  final Response priorResponse;
+  final long sentRequestAtMillis;
+  final long receivedResponseAtMillis;
 
   private volatile CacheControl cacheControl; // Lazily initialized.
 
-  private Response(Builder builder) {
+  Response(Builder builder) {
     this.request = builder.request;
     this.protocol = builder.protocol;
     this.code = builder.code;
@@ -286,24 +286,24 @@ public final class Response implements Closeable {
   }
 
   public static class Builder {
-    private Request request;
-    private Protocol protocol;
-    private int code = -1;
-    private String message;
-    private Handshake handshake;
-    private Headers.Builder headers;
-    private ResponseBody body;
-    private Response networkResponse;
-    private Response cacheResponse;
-    private Response priorResponse;
-    private long sentRequestAtMillis;
-    private long receivedResponseAtMillis;
+    Request request;
+    Protocol protocol;
+    int code = -1;
+    String message;
+    Handshake handshake;
+    Headers.Builder headers;
+    ResponseBody body;
+    Response networkResponse;
+    Response cacheResponse;
+    Response priorResponse;
+    long sentRequestAtMillis;
+    long receivedResponseAtMillis;
 
     public Builder() {
       headers = new Headers.Builder();
     }
 
-    private Builder(Response response) {
+    Builder(Response response) {
       this.request = response.request;
       this.protocol = response.protocol;
       this.code = response.code;
