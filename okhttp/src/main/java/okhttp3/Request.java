@@ -25,15 +25,15 @@ import okhttp3.internal.http.HttpMethod;
  * immutable.
  */
 public final class Request {
-  private final HttpUrl url;
-  private final String method;
-  private final Headers headers;
-  private final RequestBody body;
-  private final Object tag;
+  final HttpUrl url;
+  final String method;
+  final Headers headers;
+  final RequestBody body;
+  final Object tag;
 
   private volatile CacheControl cacheControl; // Lazily initialized.
 
-  private Request(Builder builder) {
+  Request(Builder builder) {
     this.url = builder.url;
     this.method = builder.method;
     this.headers = builder.headers.build();
@@ -97,18 +97,18 @@ public final class Request {
   }
 
   public static class Builder {
-    private HttpUrl url;
-    private String method;
-    private Headers.Builder headers;
-    private RequestBody body;
-    private Object tag;
+    HttpUrl url;
+    String method;
+    Headers.Builder headers;
+    RequestBody body;
+    Object tag;
 
     public Builder() {
       this.method = "GET";
       this.headers = new Headers.Builder();
     }
 
-    private Builder(Request request) {
+    Builder(Request request) {
       this.url = request.url;
       this.method = request.method;
       this.body = request.body;

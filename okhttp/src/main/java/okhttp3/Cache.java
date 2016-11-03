@@ -165,11 +165,11 @@ public final class Cache implements Closeable, Flushable {
     }
   };
 
-  private final DiskLruCache cache;
+  final DiskLruCache cache;
 
   /* read and write statistics, all guarded by 'this' */
-  private int writeSuccessCount;
-  private int writeAbortCount;
+  int writeSuccessCount;
+  int writeAbortCount;
   private int networkCount;
   private int hitCount;
   private int requestCount;
@@ -217,7 +217,7 @@ public final class Cache implements Closeable, Flushable {
     return response;
   }
 
-  private CacheRequest put(Response response) {
+  CacheRequest put(Response response) {
     String requestMethod = response.request().method();
 
     if (HttpMethod.invalidatesCache(response.request().method())) {
@@ -254,11 +254,11 @@ public final class Cache implements Closeable, Flushable {
     }
   }
 
-  private void remove(Request request) throws IOException {
+  void remove(Request request) throws IOException {
     cache.remove(urlToKey(request));
   }
 
-  private void update(Response cached, Response network) {
+  void update(Response cached, Response network) {
     Entry entry = new Entry(network);
     DiskLruCache.Snapshot snapshot = ((CacheResponseBody) cached.body()).snapshot;
     DiskLruCache.Editor editor = null;
@@ -398,7 +398,7 @@ public final class Cache implements Closeable, Flushable {
     return cache.isClosed();
   }
 
-  private synchronized void trackResponse(CacheStrategy cacheStrategy) {
+  synchronized void trackResponse(CacheStrategy cacheStrategy) {
     requestCount++;
 
     if (cacheStrategy.networkRequest != null) {
@@ -410,7 +410,7 @@ public final class Cache implements Closeable, Flushable {
     }
   }
 
-  private synchronized void trackConditionalCacheHit() {
+  synchronized void trackConditionalCacheHit() {
     hitCount++;
   }
 
@@ -429,8 +429,8 @@ public final class Cache implements Closeable, Flushable {
   private final class CacheRequestImpl implements CacheRequest {
     private final DiskLruCache.Editor editor;
     private Sink cacheOut;
-    private boolean done;
     private Sink body;
+    boolean done;
 
     public CacheRequestImpl(final DiskLruCache.Editor editor) {
       this.editor = editor;
@@ -720,7 +720,7 @@ public final class Cache implements Closeable, Flushable {
     }
   }
 
-  private static int readInt(BufferedSource source) throws IOException {
+  static int readInt(BufferedSource source) throws IOException {
     try {
       long result = source.readDecimalLong();
       String line = source.readUtf8LineStrict();
@@ -734,7 +734,7 @@ public final class Cache implements Closeable, Flushable {
   }
 
   private static class CacheResponseBody extends ResponseBody {
-    private final DiskLruCache.Snapshot snapshot;
+    final DiskLruCache.Snapshot snapshot;
     private final BufferedSource bodySource;
     private final String contentType;
     private final String contentLength;
