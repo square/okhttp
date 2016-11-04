@@ -1,6 +1,15 @@
 Change Log
 ==========
 
+## Version 3.4.2
+
+_2016-11-03_
+
+ *  Fix: Recover gracefully when an HTTP/2 connection is shutdown. We had a
+    bug where shutdown HTTP/2 connections were considered usable. This caused
+    infinite loops when calls attempted to recover.
+
+
 ## Version 3.4.1
 
 _2016-07-10_
