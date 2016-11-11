@@ -57,6 +57,7 @@ import okhttp3.internal.http.HttpHeaders;
 import okhttp3.internal.http.HttpMethod;
 import okhttp3.internal.http.StatusLine;
 import okhttp3.internal.platform.Platform;
+import org.jetbrains.annotations.NotNull;
 
 import static okhttp3.internal.platform.Platform.WARN;
 
@@ -559,7 +560,7 @@ public final class OkHttpURLConnection extends HttpURLConnection implements Call
 
   static final class UnexpectedException extends IOException {
     static final Interceptor INTERCEPTOR = new Interceptor() {
-      @Override public Response intercept(Chain chain) throws IOException {
+      @Override public Response intercept(@NotNull Chain chain) throws IOException {
         try {
           return chain.proceed(chain.request());
         } catch (Error | RuntimeException e) {
@@ -597,7 +598,7 @@ public final class OkHttpURLConnection extends HttpURLConnection implements Call
       }
     }
 
-    @Override public Response intercept(Chain chain) throws IOException {
+    @Override public Response intercept(@NotNull Chain chain) throws IOException {
       Request request = chain.request();
 
       // Double-check the URL filter to prevent redirects from hitting filtered URLs.

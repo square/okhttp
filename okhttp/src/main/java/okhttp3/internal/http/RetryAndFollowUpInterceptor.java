@@ -38,6 +38,7 @@ import okhttp3.Response;
 import okhttp3.Route;
 import okhttp3.internal.connection.RouteException;
 import okhttp3.internal.connection.StreamAllocation;
+import org.jetbrains.annotations.NotNull;
 
 import static java.net.HttpURLConnection.HTTP_CLIENT_TIMEOUT;
 import static java.net.HttpURLConnection.HTTP_MOVED_PERM;
@@ -99,7 +100,7 @@ public final class RetryAndFollowUpInterceptor implements Interceptor {
     return streamAllocation;
   }
 
-  @Override public Response intercept(Chain chain) throws IOException {
+  @Override public Response intercept(@NotNull Chain chain) throws IOException {
     Request request = chain.request();
 
     streamAllocation = new StreamAllocation(

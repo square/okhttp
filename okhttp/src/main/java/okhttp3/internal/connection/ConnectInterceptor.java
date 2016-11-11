@@ -23,6 +23,7 @@ import okhttp3.Request;
 import okhttp3.Response;
 import okhttp3.internal.http.HttpCodec;
 import okhttp3.internal.http.RealInterceptorChain;
+import org.jetbrains.annotations.NotNull;
 
 /** Opens a connection to the target server and proceeds to the next interceptor. */
 public final class ConnectInterceptor implements Interceptor {
@@ -32,7 +33,7 @@ public final class ConnectInterceptor implements Interceptor {
     this.client = client;
   }
 
-  @Override public Response intercept(Chain chain) throws IOException {
+  @Override public Response intercept(@NotNull Chain chain) throws IOException {
     RealInterceptorChain realChain = (RealInterceptorChain) chain;
     Request request = realChain.request();
     StreamAllocation streamAllocation = realChain.streamAllocation();

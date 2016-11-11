@@ -15,6 +15,8 @@
  */
 package okhttp3;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.io.IOException;
 
 /**
@@ -23,12 +25,12 @@ import java.io.IOException;
  * or response.
  */
 public interface Interceptor {
-  Response intercept(Chain chain) throws IOException;
+  Response intercept(@NotNull Chain chain) throws IOException;
 
   interface Chain {
     Request request();
 
-    Response proceed(Request request) throws IOException;
+    Response proceed(@NotNull Request request) throws IOException;
 
     Connection connection();
   }

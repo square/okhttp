@@ -25,6 +25,7 @@ import okhttp3.internal.connection.StreamAllocation;
 import okio.BufferedSink;
 import okio.Okio;
 import okio.Sink;
+import org.jetbrains.annotations.NotNull;
 
 /** This is the last interceptor in the chain. It makes a network call to the server. */
 public final class CallServerInterceptor implements Interceptor {
@@ -34,7 +35,7 @@ public final class CallServerInterceptor implements Interceptor {
     this.forWebSocket = forWebSocket;
   }
 
-  @Override public Response intercept(Chain chain) throws IOException {
+  @Override public Response intercept(@NotNull Chain chain) throws IOException {
     HttpCodec httpCodec = ((RealInterceptorChain) chain).httpStream();
     StreamAllocation streamAllocation = ((RealInterceptorChain) chain).streamAllocation();
     Request request = chain.request();
