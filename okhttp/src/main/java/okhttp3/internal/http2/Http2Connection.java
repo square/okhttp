@@ -216,7 +216,7 @@ public final class Http2Connection implements Closeable {
     synchronized (writer) {
       synchronized (this) {
         if (shutdown) {
-          throw new IOException("shutdown");
+          throw new ConnectionShutdownException();
         }
         streamId = nextStreamId;
         nextStreamId += 2;
@@ -335,7 +335,7 @@ public final class Http2Connection implements Closeable {
     int pingId;
     synchronized (this) {
       if (shutdown) {
-        throw new IOException("shutdown");
+        throw new ConnectionShutdownException();
       }
       pingId = nextPingId;
       nextPingId += 2;
@@ -488,7 +488,7 @@ public final class Http2Connection implements Closeable {
     synchronized (writer) {
       synchronized (this) {
         if (shutdown) {
-          throw new IOException("shutdown");
+          throw new ConnectionShutdownException();
         }
         okHttpSettings.merge(settings);
         writer.settings(settings);
