@@ -301,7 +301,7 @@ public final class Http2Connection implements Closeable {
   }
 
   void writeSynResetLater(final int streamId, final ErrorCode errorCode) {
-    executor.submit(new NamedRunnable("OkHttp %s stream %d", hostname, streamId) {
+    executor.execute(new NamedRunnable("OkHttp %s stream %d", hostname, streamId) {
       @Override public void execute() {
         try {
           writeSynReset(streamId, errorCode);
