@@ -650,8 +650,7 @@ public final class MockWebServer implements TestRule, Closeable {
   private void handleWebSocketUpgrade(Socket socket, BufferedSource source, BufferedSink sink,
       RecordedRequest request, MockResponse response) throws IOException {
     String key = request.getHeader("Sec-WebSocket-Key");
-    String acceptKey = Util.shaBase64(key + WebSocketProtocol.ACCEPT_MAGIC);
-    response.setHeader("Sec-WebSocket-Accept", acceptKey);
+    response.setHeader("Sec-WebSocket-Accept", WebSocketProtocol.acceptHeader(key));
 
     writeHttpResponse(socket, sink, response);
 

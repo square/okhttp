@@ -39,7 +39,6 @@ import java.util.concurrent.atomic.AtomicReference;
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLSession;
 import okhttp3.internal.Internal;
-import okhttp3.internal.Util;
 import okhttp3.internal.io.InMemoryFileSystem;
 import okhttp3.internal.platform.Platform;
 import okhttp3.internal.tls.SslClient;
@@ -1943,7 +1942,7 @@ public final class CacheTest {
         .setResponseCode(HttpURLConnection.HTTP_NOT_MODIFIED));
 
     HttpUrl url = server.url("/");
-    String urlKey = Util.md5Hex(url.toString());
+    String urlKey = Cache.key(url);
     String entryMetadata = ""
         + "" + url + "\n"
         + "GET\n"
@@ -1993,7 +1992,7 @@ public final class CacheTest {
   /** Exercise the cache format in OkHttp 2.7 and all earlier releases. */
   @Test public void testGoldenCacheHttpsResponseOkHttp27() throws Exception {
     HttpUrl url = server.url("/");
-    String urlKey = Util.md5Hex(url.toString());
+    String urlKey = Cache.key(url);
     String prefix = Platform.get().getPrefix();
     String entryMetadata = ""
         + "" + url + "\n"
@@ -2042,7 +2041,7 @@ public final class CacheTest {
   /** The TLS version is present in OkHttp 3.0 and beyond. */
   @Test public void testGoldenCacheHttpsResponseOkHttp30() throws Exception {
     HttpUrl url = server.url("/");
-    String urlKey = Util.md5Hex(url.toString());
+    String urlKey = Cache.key(url);
     String prefix = Platform.get().getPrefix();
     String entryMetadata = ""
         + "" + url + "\n"
@@ -2091,7 +2090,7 @@ public final class CacheTest {
 
   @Test public void testGoldenCacheHttpResponseOkHttp30() throws Exception {
     HttpUrl url = server.url("/");
-    String urlKey = Util.md5Hex(url.toString());
+    String urlKey = Cache.key(url);
     String prefix = Platform.get().getPrefix();
     String entryMetadata = ""
         + "" + url + "\n"

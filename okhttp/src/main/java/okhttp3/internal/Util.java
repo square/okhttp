@@ -18,14 +18,11 @@ package okhttp3.internal;
 import java.io.Closeable;
 import java.io.IOException;
 import java.io.InterruptedIOException;
-import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Array;
 import java.net.IDN;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.charset.Charset;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -177,50 +174,6 @@ public final class Util {
       } else {
         source.timeout().deadlineNanoTime(now + originalDuration);
       }
-    }
-  }
-
-  /** Returns a 32 character string containing an MD5 hash of {@code s}. */
-  public static String md5Hex(String s) {
-    try {
-      MessageDigest messageDigest = MessageDigest.getInstance("MD5");
-      byte[] md5bytes = messageDigest.digest(s.getBytes("UTF-8"));
-      return ByteString.of(md5bytes).hex();
-    } catch (NoSuchAlgorithmException | UnsupportedEncodingException e) {
-      throw new AssertionError(e);
-    }
-  }
-
-  /** Returns a Base 64-encoded string containing a SHA-1 hash of {@code s}. */
-  public static String shaBase64(String s) {
-    try {
-      MessageDigest messageDigest = MessageDigest.getInstance("SHA-1");
-      byte[] sha1Bytes = messageDigest.digest(s.getBytes("UTF-8"));
-      return ByteString.of(sha1Bytes).base64();
-    } catch (NoSuchAlgorithmException | UnsupportedEncodingException e) {
-      throw new AssertionError(e);
-    }
-  }
-
-  /** Returns a SHA-1 hash of {@code s}. */
-  public static ByteString sha1(ByteString s) {
-    try {
-      MessageDigest messageDigest = MessageDigest.getInstance("SHA-1");
-      byte[] sha1Bytes = messageDigest.digest(s.toByteArray());
-      return ByteString.of(sha1Bytes);
-    } catch (NoSuchAlgorithmException e) {
-      throw new AssertionError(e);
-    }
-  }
-
-  /** Returns a SHA-256 hash of {@code s}. */
-  public static ByteString sha256(ByteString s) {
-    try {
-      MessageDigest messageDigest = MessageDigest.getInstance("SHA-256");
-      byte[] sha1Bytes = messageDigest.digest(s.toByteArray());
-      return ByteString.of(sha1Bytes);
-    } catch (NoSuchAlgorithmException e) {
-      throw new AssertionError(e);
     }
   }
 

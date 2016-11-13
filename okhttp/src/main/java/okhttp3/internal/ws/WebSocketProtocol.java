@@ -17,10 +17,11 @@ package okhttp3.internal.ws;
 
 import java.io.IOException;
 import java.net.ProtocolException;
+import okio.ByteString;
 
 public final class WebSocketProtocol {
   /** Magic value which must be appended to the key in a response header. */
-  public static final String ACCEPT_MAGIC = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
+  static final String ACCEPT_MAGIC = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
 
   /*
   Each frame starts with two bytes of data.
@@ -115,6 +116,10 @@ public final class WebSocketProtocol {
       }
       throw new ProtocolException(message);
     }
+  }
+
+  public static String acceptHeader(String key) {
+    return ByteString.encodeUtf8(key + WebSocketProtocol.ACCEPT_MAGIC).sha1().base64();
   }
 
   private WebSocketProtocol() {

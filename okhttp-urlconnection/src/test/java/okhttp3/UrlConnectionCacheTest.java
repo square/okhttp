@@ -42,7 +42,6 @@ import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLSession;
 import okhttp3.internal.Internal;
-import okhttp3.internal.Util;
 import okhttp3.internal.io.InMemoryFileSystem;
 import okhttp3.internal.platform.Platform;
 import okhttp3.internal.tls.SslClient;
@@ -1619,7 +1618,7 @@ public final class UrlConnectionCacheTest {
         .setResponseCode(HttpURLConnection.HTTP_NOT_MODIFIED));
 
     URL url = server.url("/").url();
-    String urlKey = Util.md5Hex(url.toString());
+    String urlKey = Cache.key(HttpUrl.get(url));
     String prefix = Platform.get().getPrefix();
     String entryMetadata = ""
         + "" + url + "\n"
