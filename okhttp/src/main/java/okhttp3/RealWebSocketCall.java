@@ -113,7 +113,7 @@ final class RealWebSocketCall implements WebSocketCall {
           "Expected 'Upgrade' header value 'websocket' but was '" + headerUpgrade + "'");
     }
     String headerAccept = response.header("Sec-WebSocket-Accept");
-    String acceptExpected = Util.shaBase64(key + WebSocketProtocol.ACCEPT_MAGIC);
+    String acceptExpected = WebSocketProtocol.acceptHeader(key);
     if (!acceptExpected.equals(headerAccept)) {
       throw new ProtocolException("Expected 'Sec-WebSocket-Accept' header value '"
           + acceptExpected

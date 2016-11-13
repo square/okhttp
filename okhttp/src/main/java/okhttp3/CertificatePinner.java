@@ -24,7 +24,6 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import javax.net.ssl.SSLPeerUnverifiedException;
-import okhttp3.internal.Util;
 import okhttp3.internal.tls.CertificateChainCleaner;
 import okio.ByteString;
 
@@ -246,11 +245,11 @@ public final class CertificatePinner {
   }
 
   static ByteString sha1(X509Certificate x509Certificate) {
-    return Util.sha1(ByteString.of(x509Certificate.getPublicKey().getEncoded()));
+    return ByteString.of(x509Certificate.getPublicKey().getEncoded()).sha1();
   }
 
   static ByteString sha256(X509Certificate x509Certificate) {
-    return Util.sha256(ByteString.of(x509Certificate.getPublicKey().getEncoded()));
+    return ByteString.of(x509Certificate.getPublicKey().getEncoded()).sha256();
   }
 
   static final class Pin {

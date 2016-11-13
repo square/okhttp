@@ -182,12 +182,12 @@ public final class Cache implements Closeable, Flushable {
     this.cache = DiskLruCache.create(fileSystem, directory, VERSION, ENTRY_COUNT, maxSize);
   }
 
-  private static String urlToKey(Request request) {
-    return Util.md5Hex(request.url().toString());
+  public static String key(HttpUrl url) {
+    return ByteString.encodeUtf8(url.toString()).md5().hex();
   }
 
   Response get(Request request) {
-    String key = urlToKey(request);
+    String key = key(request.url());
     DiskLruCache.Snapshot snapshot;
     Entry entry;
     try {
@@ -242,7 +242,7 @@ public final class Cache implements Closeable, Flushable {
     Entry entry = new Entry(response);
     DiskLruCache.Editor editor = null;
     try {
-      editor = cache.edit(urlToKey(response.request()));
+      editor = cache.edit(key(response.request().url()));
       if (editor == null) {
         return null;
       }
@@ -255,7 +255,7 @@ public final class Cache implements Closeable, Flushable {
   }
 
   void remove(Request request) throws IOException {
-    cache.remove(urlToKey(request));
+    cache.remove(key(request.url()));
   }
 
   void update(Response cached, Response network) {
