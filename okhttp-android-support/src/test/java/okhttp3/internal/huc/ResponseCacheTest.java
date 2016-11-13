@@ -43,7 +43,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -1929,7 +1929,7 @@ public final class ResponseCacheTest {
         return new CacheResponse() {
           @Override public Map<String, List<String>> getHeaders() throws IOException {
             String contentType = "text/plain";
-            Map<String, List<String>> headers = new HashMap<>();
+            Map<String, List<String>> headers = new LinkedHashMap<>();
             headers.put("Content-Length", Arrays.asList(Integer.toString(cachedContent.length)));
             headers.put("Content-Type", Arrays.asList(contentType));
             headers.put("Expires", Arrays.asList(formatDate(-1, TimeUnit.HOURS)));

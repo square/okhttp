@@ -25,7 +25,7 @@ import java.net.InetAddress;
 import java.net.URI;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import okhttp3.mockwebserver.MockResponse;
@@ -252,7 +252,7 @@ public class CookiesTest {
         .cookieJar(new JavaNetCookieJar(new CookieManager() {
           @Override public Map<String, List<String>> get(URI uri,
               Map<String, List<String>> requestHeaders) throws IOException {
-            Map<String, List<String>> result = new HashMap<>();
+            Map<String, List<String>> result = new LinkedHashMap<>();
             result.put("COOKIE", Collections.singletonList("Bar=bar"));
             result.put("cooKIE2", Collections.singletonList("Baz=baz"));
             return result;

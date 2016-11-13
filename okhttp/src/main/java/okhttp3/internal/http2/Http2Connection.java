@@ -20,7 +20,7 @@ import java.io.IOException;
 import java.io.InterruptedIOException;
 import java.net.InetSocketAddress;
 import java.net.Socket;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -78,7 +78,7 @@ public final class Http2Connection implements Closeable {
    * on {@link #executor}.
    */
   private final Listener listener;
-  private final Map<Integer, Http2Stream> streams = new HashMap<>();
+  private final Map<Integer, Http2Stream> streams = new LinkedHashMap<>();
   private final String hostname;
   private int lastGoodStreamId;
   private int nextStreamId;
@@ -339,7 +339,7 @@ public final class Http2Connection implements Closeable {
       }
       pingId = nextPingId;
       nextPingId += 2;
-      if (pings == null) pings = new HashMap<>();
+      if (pings == null) pings = new LinkedHashMap<>();
       pings.put(pingId, ping);
     }
     writePing(false, pingId, 0x4f4b6f6b /* ASCII "OKok" */, ping);
