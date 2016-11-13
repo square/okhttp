@@ -18,7 +18,7 @@ package okhttp3;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import okhttp3.internal.Internal;
@@ -202,7 +202,7 @@ public final class HeadersTest {
   }
 
   @Test public void ofMapMakesDefensiveCopy() {
-    Map<String, String> namesAndValues = new HashMap<>();
+    Map<String, String> namesAndValues = new LinkedHashMap<>();
     namesAndValues.put("User-Agent", "OkHttp");
 
     Headers headers = Headers.of(namesAndValues);
