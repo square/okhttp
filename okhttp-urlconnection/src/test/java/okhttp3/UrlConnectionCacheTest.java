@@ -803,7 +803,7 @@ public final class UrlConnectionCacheTest {
     URL url = server.url("/").url();
 
     assertEquals("A", readAscii(urlFactory.open(url)));
-    assertEquals("A", readAscii(urlFactory.open(url)));
+    assertEquals("B", readAscii(urlFactory.open(url)));
   }
 
   @Test public void nonIdentityEncodingAndConditionalCache() throws Exception {
