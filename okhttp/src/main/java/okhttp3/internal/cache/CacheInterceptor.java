@@ -17,7 +17,6 @@
 package okhttp3.internal.cache;
 
 import java.io.IOException;
-import java.util.Date;
 import okhttp3.Headers;
 import okhttp3.Interceptor;
 import okhttp3.Protocol;
@@ -101,7 +100,7 @@ public final class CacheInterceptor implements Interceptor {
 
     // If we have a cache response too, then we're doing a conditional get.
     if (cacheResponse != null) {
-      if (validate(cacheResponse, networkResponse)) {
+      if (networkResponse.code() == HTTP_NOT_MODIFIED) {
         Response response = cacheResponse.newBuilder()
             .headers(combine(cacheResponse.headers(), networkResponse.headers()))
             .sentRequestAtMillis(networkResponse.sentRequestAtMillis())
@@ -220,28 +219,6 @@ public final class CacheInterceptor implements Interceptor {
     return response.newBuilder()
         .body(new RealResponseBody(response.headers(), Okio.buffer(cacheWritingSource)))
         .build();
-  }
-
-  /**
-   * Returns true if {@code cached} should be used; false if {@code network} response should be
-   * used.
-   */
-  private static boolean validate(Response cached, Response network) {
-    if (network.code() == HTTP_NOT_MODIFIED) return true;
-
-    // The HTTP spec says that if the network's response is older than our
-    // cached response, we may return the cache's response. Like Chrome (but
-    // unlike Firefox), this client prefers to return the newer response.
-    Date lastModified = cached.headers().getDate("Last-Modified");
-    if (lastModified != null) {
-      Date networkLastModified = network.headers().getDate("Last-Modified");
-      if (networkLastModified != null
-          && networkLastModified.getTime() < lastModified.getTime()) {
-        return true;
-      }
-    }
-
-    return false;
   }
 
   /** Combines cached headers with a network headers as defined by RFC 2616, 13.5.3. */

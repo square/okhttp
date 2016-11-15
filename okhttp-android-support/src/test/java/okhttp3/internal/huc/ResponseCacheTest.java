@@ -908,7 +908,7 @@ public final class ResponseCacheTest {
     URL url = server.url("/").url();
 
     assertEquals("A", readAscii(openConnection(url)));
-    assertEquals("A", readAscii(openConnection(url)));
+    assertEquals("B", readAscii(openConnection(url)));
   }
 
   @Test public void clientSideNoStore() throws Exception {

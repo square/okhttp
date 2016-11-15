@@ -933,6 +933,13 @@ public final class CacheTest {
     assertEquals("BB", get(url).body().string());
   }
 
+  /**
+   * When the server returns a full response body we will store it and return it regardless of what
+   * its Last-Modified date is. This behavior was different prior to OkHttp 3.5 when we would prefer
+   * the response with the later Last-Modified date.
+   *
+   * https://github.com/square/okhttp/issues/2886
+   */
   @Test public void serverReturnsDocumentOlderThanCache() throws Exception {
     server.enqueue(new MockResponse()
         .setBody("A")
@@ -941,11 +948,14 @@ public final class CacheTest {
     server.enqueue(new MockResponse()
         .setBody("B")
         .addHeader("Last-Modified: " + formatDate(-4, TimeUnit.HOURS)));
+    server.enqueue(new MockResponse()
+        .setResponseCode(HttpURLConnection.HTTP_NOT_MODIFIED));
 
     HttpUrl url = server.url("/");
 
     assertEquals("A", get(url).body().string());
-    assertEquals("A", get(url).body().string());
+    assertEquals("B", get(url).body().string());
+    assertEquals("B", get(url).body().string());
   }
 
   @Test public void clientSideNoStore() throws Exception {
