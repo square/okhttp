@@ -310,7 +310,8 @@ public final class URLConnectionTest {
     // Use a misconfigured proxy to guarantee that the request is retried.
     urlFactory.setClient(urlFactory.client().newBuilder()
         .proxySelector(new FakeProxySelector()
-            .addProxy(server2.toProxyAddress()))
+            .addProxy(server2.toProxyAddress())
+            .addProxy(Proxy.NO_PROXY))
         .build());
     server2.shutdown();
 

@@ -206,12 +206,7 @@ public final class RouteSelectorTest {
     assertRoute(routeSelector.next(), address, proxyB, dns.address(0), proxyBPort);
     dns.assertRequests(proxyBHost);
 
-    // Finally try the only IP address of the origin server.
-    assertTrue(routeSelector.hasNext());
-    dns.addresses(makeFakeAddresses(253, 1));
-    assertRoute(routeSelector.next(), address, NO_PROXY, dns.address(0), uriPort);
-    dns.assertRequests(uriHost);
-
+    // No more proxies to try.
     assertFalse(routeSelector.hasNext());
   }
 
@@ -259,11 +254,6 @@ public final class RouteSelectorTest {
     assertRoute(routeSelector.next(), address, proxyA, dns.address(0), proxyAPort);
     dns.assertRequests(proxyAHost);
 
-    assertTrue(routeSelector.hasNext());
-    dns.addresses(makeFakeAddresses(254, 1));
-    assertRoute(routeSelector.next(), address, NO_PROXY, dns.address(0), uriPort);
-    dns.assertRequests(uriHost);
-
     assertFalse(routeSelector.hasNext());
   }
 
@@ -285,12 +275,7 @@ public final class RouteSelectorTest {
     dns.assertRequests(proxyBHost);
     assertRoute(routeSelector.next(), address, proxyB, dns.address(1), proxyBPort);
 
-    // Origin
-    dns.addresses(makeFakeAddresses(253, 2));
-    assertRoute(routeSelector.next(), address, NO_PROXY, dns.address(0), uriPort);
-    dns.assertRequests(uriHost);
-    assertRoute(routeSelector.next(), address, NO_PROXY, dns.address(1), uriPort);
-
+    // No more proxies to attempt.
     assertFalse(routeSelector.hasNext());
   }
 
