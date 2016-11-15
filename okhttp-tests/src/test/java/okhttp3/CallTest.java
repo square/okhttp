@@ -2514,7 +2514,8 @@ public final class CallTest {
     // Enable a misconfigured proxy selector to guarantee that the request is retried.
     client = client.newBuilder()
         .proxySelector(new FakeProxySelector()
-            .addProxy(server2.toProxyAddress()))
+            .addProxy(server2.toProxyAddress())
+            .addProxy(Proxy.NO_PROXY))
         .build();
     server2.shutdown();
 
