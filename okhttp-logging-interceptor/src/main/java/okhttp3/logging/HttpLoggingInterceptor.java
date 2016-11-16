@@ -34,6 +34,7 @@ import okhttp3.internal.http.HttpHeaders;
 import okhttp3.internal.platform.Platform;
 import okio.Buffer;
 import okio.BufferedSource;
+import org.jetbrains.annotations.NotNull;
 
 import static okhttp3.internal.platform.Platform.INFO;
 
@@ -137,7 +138,7 @@ public final class HttpLoggingInterceptor implements Interceptor {
     return level;
   }
 
-  @Override public Response intercept(Chain chain) throws IOException {
+  @Override public Response intercept(@NotNull Chain chain) throws IOException {
     Level level = this.level;
 
     Request request = chain.request();

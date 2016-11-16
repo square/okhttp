@@ -35,6 +35,7 @@ import okio.Okio;
 import okio.Sink;
 import okio.Source;
 import okio.Timeout;
+import org.jetbrains.annotations.NotNull;
 
 import static java.net.HttpURLConnection.HTTP_NOT_MODIFIED;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
@@ -49,7 +50,7 @@ public final class CacheInterceptor implements Interceptor {
     this.cache = cache;
   }
 
-  @Override public Response intercept(Chain chain) throws IOException {
+  @Override public Response intercept(@NotNull Chain chain) throws IOException {
     Response cacheCandidate = cache != null
         ? cache.get(chain.request())
         : null;

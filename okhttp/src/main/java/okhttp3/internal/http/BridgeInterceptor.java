@@ -29,6 +29,7 @@ import okhttp3.Response;
 import okhttp3.internal.Version;
 import okio.GzipSource;
 import okio.Okio;
+import org.jetbrains.annotations.NotNull;
 
 import static okhttp3.internal.Util.hostHeader;
 
@@ -44,7 +45,7 @@ public final class BridgeInterceptor implements Interceptor {
     this.cookieJar = cookieJar;
   }
 
-  @Override public Response intercept(Chain chain) throws IOException {
+  @Override public Response intercept(@NotNull Chain chain) throws IOException {
     Request userRequest = chain.request();
     Request.Builder requestBuilder = userRequest.newBuilder();
 

@@ -23,6 +23,7 @@ import okhttp3.Interceptor;
 import okhttp3.Request;
 import okhttp3.Response;
 import okhttp3.internal.connection.StreamAllocation;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * A concrete interceptor chain that carries the entire interceptor chain: all application
@@ -63,7 +64,7 @@ public final class RealInterceptorChain implements Interceptor.Chain {
     return request;
   }
 
-  @Override public Response proceed(Request request) throws IOException {
+  @Override public Response proceed(@NotNull Request request) throws IOException {
     return proceed(request, streamAllocation, httpCodec, connection);
   }
 
