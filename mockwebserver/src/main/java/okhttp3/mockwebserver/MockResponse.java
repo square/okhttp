@@ -19,9 +19,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import okhttp3.Headers;
+import okhttp3.NewWebSocket;
 import okhttp3.internal.Internal;
 import okhttp3.internal.http2.Settings;
-import okhttp3.WebSocketListener;
 import okio.Buffer;
 
 /** A scripted response to be replayed by the mock web server. */
@@ -45,7 +45,7 @@ public final class MockResponse implements Cloneable {
 
   private List<PushPromise> promises = new ArrayList<>();
   private Settings settings;
-  private WebSocketListener webSocketListener;
+  private NewWebSocket.Listener webSocketListener;
 
   /** Creates a new mock response with an empty body. */
   public MockResponse() {
@@ -284,7 +284,7 @@ public final class MockResponse implements Cloneable {
    * Attempts to perform a web socket upgrade on the connection. This will overwrite any previously
    * set status or body.
    */
-  public MockResponse withWebSocketUpgrade(WebSocketListener listener) {
+  public MockResponse withWebSocketUpgrade(NewWebSocket.Listener listener) {
     setStatus("HTTP/1.1 101 Switching Protocols");
     setHeader("Connection", "Upgrade");
     setHeader("Upgrade", "websocket");
@@ -293,7 +293,7 @@ public final class MockResponse implements Cloneable {
     return this;
   }
 
-  public WebSocketListener getWebSocketListener() {
+  public NewWebSocket.Listener getWebSocketListener() {
     return webSocketListener;
   }
 

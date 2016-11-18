@@ -17,17 +17,11 @@ package okhttp3;
 
 import java.io.IOException;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import okhttp3.internal.Version;
-import okio.BufferedSource;
 import okio.ByteString;
-
-import static okhttp3.WebSocket.BINARY;
-import static okhttp3.WebSocket.TEXT;
 
 /**
  * Exercises the web socket implementation against the <a
@@ -42,9 +36,9 @@ public final class AutobahnTester {
 
   final OkHttpClient client = new OkHttpClient();
 
-  private WebSocketCall newWebSocket(String path) {
+  private NewWebSocket newWebSocket(String path, NewWebSocket.Listener listener) {
     Request request = new Request.Builder().url(HOST + path).build();
-    return client.newWebSocketCall(request);
+    return client.newWebSocket(request, listener);
   }
 
   public void run() throws IOException {
@@ -65,51 +59,30 @@ public final class AutobahnTester {
   private void runTest(final long number, final long count) {
     final CountDownLatch latch = new CountDownLatch(1);
     final AtomicLong startNanos = new AtomicLong();
-    newWebSocket("/runCase?case=" + number + "&agent=okhttp") //
-        .enqueue(new WebSocketListener() {
-          private final ExecutorService sendExecutor = Executors.newSingleThreadExecutor();
-          private WebSocket webSocket;
+    newWebSocket("/runCase?case=" + number + "&agent=okhttp", new NewWebSocket.Listener() {
+      @Override public void onOpen(NewWebSocket webSocket, Response response) {
+        System.out.println("Executing test case " + number + "/" + count);
+        startNanos.set(System.nanoTime());
+      }
 
-          @Override public void onOpen(WebSocket webSocket, Response response) {
-            this.webSocket = webSocket;
+      @Override public void onMessage(final NewWebSocket webSocket, final ByteString bytes) {
+        webSocket.send(bytes);
+      }
 
-            System.out.println("Executing test case " + number + "/" + count);
-            startNanos.set(System.nanoTime());
-          }
+      @Override public void onMessage(final NewWebSocket webSocket, final String text) {
+        webSocket.send(text);
+      }
 
-          @Override public void onMessage(final ResponseBody message) throws IOException {
-            final RequestBody response;
-            if (message.contentType() == TEXT) {
-              response = RequestBody.create(TEXT, message.string());
-            } else {
-              BufferedSource source = message.source();
-              response = RequestBody.create(BINARY, source.readByteString());
-              source.close();
-            }
-            sendExecutor.execute(new Runnable() {
-              @Override public void run() {
-                try {
-                  webSocket.message(response);
-                } catch (IOException e) {
-                  e.printStackTrace(System.out);
-                }
-              }
-            });
-          }
+      @Override public void onClosing(NewWebSocket webSocket, int code, String reason) {
+        webSocket.close(1000, null);
+        latch.countDown();
+      }
 
-          @Override public void onPong(ByteString payload) {
-          }
-
-          @Override public void onClose(int code, String reason) {
-            sendExecutor.shutdown();
-            latch.countDown();
-          }
-
-          @Override public void onFailure(Throwable t, Response response) {
-            t.printStackTrace(System.out);
-            latch.countDown();
-          }
-        });
+      @Override public void onFailure(NewWebSocket webSocket, Throwable t, Response response) {
+        t.printStackTrace(System.out);
+        latch.countDown();
+      }
+    });
     try {
       if (!latch.await(30, TimeUnit.SECONDS)) {
         throw new IllegalStateException("Timed out waiting for test " + number + " to finish.");
@@ -127,23 +100,17 @@ public final class AutobahnTester {
     final CountDownLatch latch = new CountDownLatch(1);
     final AtomicLong countRef = new AtomicLong();
     final AtomicReference<Throwable> failureRef = new AtomicReference<>();
-    newWebSocket("/getCaseCount").enqueue(new WebSocketListener() {
-      @Override public void onOpen(WebSocket webSocket, Response response) {
+    newWebSocket("/getCaseCount", new NewWebSocket.Listener() {
+      @Override public void onMessage(NewWebSocket webSocket, String text) {
+        countRef.set(Long.parseLong(text));
       }
 
-      @Override public void onMessage(ResponseBody message) throws IOException {
-        countRef.set(message.source().readDecimalLong());
-        message.close();
-      }
-
-      @Override public void onPong(ByteString payload) {
-      }
-
-      @Override public void onClose(int code, String reason) {
+      @Override public void onClosing(NewWebSocket webSocket, int code, String reason) {
+        webSocket.close(1000, null);
         latch.countDown();
       }
 
-      @Override public void onFailure(Throwable t, Response response) {
+      @Override public void onFailure(NewWebSocket webSocket, Throwable t, Response response) {
         failureRef.set(t);
         latch.countDown();
       }
@@ -164,21 +131,13 @@ public final class AutobahnTester {
 
   private void updateReports() {
     final CountDownLatch latch = new CountDownLatch(1);
-    newWebSocket("/updateReports?agent=" + Version.userAgent()).enqueue(new WebSocketListener() {
-      @Override public void onOpen(WebSocket webSocket, Response response) {
-      }
-
-      @Override public void onMessage(ResponseBody message) throws IOException {
-      }
-
-      @Override public void onPong(ByteString payload) {
-      }
-
-      @Override public void onClose(int code, String reason) {
+    newWebSocket("/updateReports?agent=" + Version.userAgent(), new NewWebSocket.Listener() {
+      @Override public void onClosing(NewWebSocket webSocket, int code, String reason) {
+        webSocket.close(code, null);
         latch.countDown();
       }
 
-      @Override public void onFailure(Throwable t, Response response) {
+      @Override public void onFailure(NewWebSocket webSocket, Throwable t, Response response) {
         latch.countDown();
       }
     });

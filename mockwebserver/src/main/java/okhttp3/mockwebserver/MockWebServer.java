@@ -69,7 +69,7 @@ import okhttp3.internal.http2.Http2Connection;
 import okhttp3.internal.http2.Http2Stream;
 import okhttp3.internal.http2.Settings;
 import okhttp3.internal.platform.Platform;
-import okhttp3.internal.ws.RealWebSocket;
+import okhttp3.internal.ws.RealNewWebSocket;
 import okhttp3.internal.ws.WebSocketProtocol;
 import okio.Buffer;
 import okio.BufferedSink;
@@ -676,14 +676,15 @@ public final class MockWebServer implements TestRule, Closeable {
     replyExecutor.allowCoreThreadTimeOut(true);
 
     final CountDownLatch connectionClose = new CountDownLatch(1);
-    RealWebSocket webSocket =
-        new RealWebSocket(false /* is server */, source, sink, new SecureRandom(), replyExecutor,
-            response.getWebSocketListener(), fancyResponse, name) {
-          @Override protected void shutdown() {
-            connectionClose.countDown();
-          }
-        };
-
+    RealNewWebSocket.Streams streams = new RealNewWebSocket.Streams(false, source, sink) {
+      @Override public void close() {
+        connectionClose.countDown();
+      }
+    };
+    RealNewWebSocket webSocket = new RealNewWebSocket(fancyRequest,
+        response.getWebSocketListener(), new SecureRandom());
+    response.getWebSocketListener().onOpen(webSocket, fancyResponse);
+    webSocket.initReaderAndWriter(streams);
     webSocket.loopReader();
 
     // Even if messages are no longer being read we need to wait for the connection close signal.

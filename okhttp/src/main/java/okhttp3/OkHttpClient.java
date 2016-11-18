@@ -117,8 +117,7 @@ import okhttp3.internal.ws.RealNewWebSocket;
  * <p>OkHttp also uses daemon threads for HTTP/2 connections. These will exit automatically if they
  * remain idle.
  */
-public class OkHttpClient
-    implements Cloneable, Call.Factory, WebSocketCall.Factory, NewWebSocket.Factory {
+public class OkHttpClient implements Cloneable, Call.Factory, NewWebSocket.Factory {
   private static final List<Protocol> DEFAULT_PROTOCOLS = Util.immutableList(
       Protocol.HTTP_2, Protocol.HTTP_1_1);
 
@@ -392,18 +391,11 @@ public class OkHttpClient
   }
 
   /**
-   * Prepares the {@code request} to create a web socket at some point in the future.
-   */
-  @Override public WebSocketCall newWebSocketCall(Request request) {
-    return new RealWebSocketCall(this, request);
-  }
-
-  /**
    * Uses {@code request} to connect a new web socket.
    */
   @Override public NewWebSocket newWebSocket(Request request, NewWebSocket.Listener listener) {
-    RealNewWebSocket webSocket = new RealNewWebSocket(this, request, listener, new SecureRandom());
-    webSocket.connnect();
+    RealNewWebSocket webSocket = new RealNewWebSocket(request, listener, new SecureRandom());
+    webSocket.connect(this);
     return webSocket;
   }
 
