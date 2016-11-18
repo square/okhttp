@@ -17,73 +17,58 @@ package okhttp3.slack;
 
 import java.io.Closeable;
 import java.io.IOException;
+import okhttp3.NewWebSocket;
 import okhttp3.Response;
-import okhttp3.ResponseBody;
-import okhttp3.WebSocket;
-import okhttp3.WebSocketCall;
-import okhttp3.WebSocketListener;
-import okio.ByteString;
 
 /** A realtime messaging session. */
-public final class RtmSession implements WebSocketListener, Closeable {
+public final class RtmSession extends NewWebSocket.Listener implements Closeable {
   private final SlackApi slackApi;
-  private WebSocketCall webSocketCall;
 
   /** Guarded by this. */
-  private WebSocket webSocket;
+  private NewWebSocket webSocket;
 
   public RtmSession(SlackApi slackApi) {
     this.slackApi = slackApi;
   }
 
   public void open(String accessToken) throws IOException {
-    if (webSocketCall != null) throw new IllegalStateException();
+    if (webSocket != null) throw new IllegalStateException();
 
     RtmStartResponse rtmStartResponse = slackApi.rtmStart(accessToken);
-    webSocketCall = slackApi.rtm(rtmStartResponse.url);
-    webSocketCall.enqueue(this);
+    webSocket = slackApi.rtm(rtmStartResponse.url, this);
   }
 
   // TODO(jwilson): can I read the response body? Do I have to?
   //                the body from slack is a 0-byte-buffer
-  @Override public synchronized void onOpen(WebSocket webSocket, Response response) {
+  @Override public synchronized void onOpen(NewWebSocket webSocket, Response response) {
     System.out.println("onOpen: " + response);
-    this.webSocket = webSocket;
   }
 
   // TOOD(jwilson): decode incoming messages and dispatch them somewhere.
-  @Override public void onMessage(ResponseBody message) throws IOException {
-    System.out.println("onMessage: " + message.string());
+  @Override public void onMessage(NewWebSocket webSocket, String text) {
+    System.out.println("onMessage: " + text);
   }
 
-  @Override public void onPong(ByteString payload) {
-    System.out.println("onPong: " + payload);
-  }
-
-  @Override public void onClose(int code, String reason) {
+  @Override public void onClosing(NewWebSocket webSocket, int code, String reason) {
+    webSocket.close(1000, null);
     System.out.println("onClose (" + code + "): " + reason);
   }
 
-  // TODO(jwilson): can I read the response body? Do I have to?
-  @Override public void onFailure(Throwable t, Response response) {
+  @Override public void onFailure(NewWebSocket webSocket, Throwable t, Response response) {
+    // TODO(jwilson): can I read the response body? Do I have to?
     System.out.println("onFailure " + response);
   }
 
   @Override public void close() throws IOException {
-    if (webSocketCall == null) return;
+    if (webSocket == null) return;
 
-    WebSocket webSocket;
+    NewWebSocket webSocket;
     synchronized (this) {
       webSocket = this.webSocket;
     }
 
-    // TODO(jwilson): Racy? Is there an interleaving of events where the websocket is not closed?
-    //                Our docs say we can’t close if we have an active writer: that seems like it
-    //                could cause problems?
     if (webSocket != null) {
       webSocket.close(1000, "bye");
-    } else {
-      webSocketCall.cancel();
     }
   }
 }

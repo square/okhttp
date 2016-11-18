@@ -22,10 +22,10 @@ import com.squareup.moshi.ToJson;
 import java.io.IOException;
 import okhttp3.Call;
 import okhttp3.HttpUrl;
+import okhttp3.NewWebSocket;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
-import okhttp3.WebSocketCall;
 import okio.ByteString;
 
 /**
@@ -105,10 +105,10 @@ public final class SlackApi {
   }
 
   /** See https://api.slack.com/rtm. */
-  public WebSocketCall rtm(HttpUrl url) {
-    return httpClient.newWebSocketCall(new Request.Builder()
+  public NewWebSocket rtm(HttpUrl url, NewWebSocket.Listener listener) {
+    return httpClient.newWebSocket(new Request.Builder()
         .url(url)
-        .build());
+        .build(), listener);
   }
 
   static final class SlackJsonAdapters {
