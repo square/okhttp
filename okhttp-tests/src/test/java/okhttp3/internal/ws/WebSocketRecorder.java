@@ -317,7 +317,7 @@ public final class WebSocketRecorder implements WebSocketListener {
         onPong(padload);
       }
 
-      @Override public void onReadClose(int code, String reason) {
+      @Override public void onReadClose(int code, String reason, boolean isEmpty) {
         onClose(code, reason);
       }
     };

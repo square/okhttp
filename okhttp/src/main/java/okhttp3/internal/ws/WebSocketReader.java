@@ -60,7 +60,7 @@ final class WebSocketReader {
     void onReadMessage(ResponseBody body) throws IOException;
     void onReadPing(ByteString buffer);
     void onReadPong(ByteString buffer);
-    void onReadClose(int code, String reason);
+    void onReadClose(int code, String reason, boolean isEmpty);
   }
 
   final boolean isClient;
@@ -199,8 +199,10 @@ final class WebSocketReader {
           code = buffer.readShort();
           reason = buffer.readUtf8();
           validateCloseCode(code, false);
+          frameCallback.onReadClose(code, reason, false);
+        } else {
+          frameCallback.onReadClose(code, reason, true);
         }
-        frameCallback.onReadClose(code, reason);
         closed = true;
         break;
       default:
