@@ -21,6 +21,7 @@ import java.net.ProxySelector;
 import java.net.UnknownHostException;
 import java.security.GeneralSecurityException;
 import java.security.KeyStore;
+import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -44,6 +45,7 @@ import okhttp3.internal.connection.StreamAllocation;
 import okhttp3.internal.platform.Platform;
 import okhttp3.internal.tls.CertificateChainCleaner;
 import okhttp3.internal.tls.OkHostnameVerifier;
+import okhttp3.internal.ws.RealNewWebSocket;
 
 /**
  * Factory for {@linkplain Call calls}, which can be used to send HTTP requests and read their
@@ -115,7 +117,8 @@ import okhttp3.internal.tls.OkHostnameVerifier;
  * <p>OkHttp also uses daemon threads for HTTP/2 connections. These will exit automatically if they
  * remain idle.
  */
-public class OkHttpClient implements Cloneable, Call.Factory, WebSocketCall.Factory {
+public class OkHttpClient
+    implements Cloneable, Call.Factory, WebSocketCall.Factory, NewWebSocket.Factory {
   private static final List<Protocol> DEFAULT_PROTOCOLS = Util.immutableList(
       Protocol.HTTP_2, Protocol.HTTP_1_1);
 
@@ -162,6 +165,14 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocketCall.Fact
       @Override public HttpUrl getHttpUrlChecked(String url)
           throws MalformedURLException, UnknownHostException {
         return HttpUrl.getChecked(url);
+      }
+
+      @Override public StreamAllocation streamAllocation(Call call) {
+        return ((RealCall) call).streamAllocation();
+      }
+
+      @Override public Call newWebSocketCall(OkHttpClient client, Request originalRequest) {
+        return new RealCall(client, originalRequest, true);
       }
     };
   }
@@ -385,6 +396,15 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocketCall.Fact
    */
   @Override public WebSocketCall newWebSocketCall(Request request) {
     return new RealWebSocketCall(this, request);
+  }
+
+  /**
+   * Uses {@code request} to connect a new web socket.
+   */
+  @Override public NewWebSocket newWebSocket(Request request, NewWebSocket.Listener listener) {
+    RealNewWebSocket webSocket = new RealNewWebSocket(this, request, listener, new SecureRandom());
+    webSocket.connnect();
+    return webSocket;
   }
 
   public Builder newBuilder() {

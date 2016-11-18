@@ -1,0 +1,488 @@
+/*
+ * Copyright (C) 2016 Square, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package okhttp3.internal.ws;
+
+import java.io.Closeable;
+import java.io.IOException;
+import java.net.ProtocolException;
+import java.util.ArrayDeque;
+import java.util.Collections;
+import java.util.List;
+import java.util.Random;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.SynchronousQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+import okhttp3.Call;
+import okhttp3.Callback;
+import okhttp3.NewWebSocket;
+import okhttp3.OkHttpClient;
+import okhttp3.Protocol;
+import okhttp3.Request;
+import okhttp3.Response;
+import okhttp3.ResponseBody;
+import okhttp3.WebSocket;
+import okhttp3.internal.Internal;
+import okhttp3.internal.NamedRunnable;
+import okhttp3.internal.Util;
+import okhttp3.internal.connection.StreamAllocation;
+import okio.BufferedSink;
+import okio.BufferedSource;
+import okio.ByteString;
+import okio.Okio;
+
+import static java.util.concurrent.TimeUnit.SECONDS;
+import static okhttp3.internal.Util.closeQuietly;
+import static okhttp3.internal.ws.WebSocketProtocol.CLOSE_CLIENT_GOING_AWAY;
+import static okhttp3.internal.ws.WebSocketProtocol.OPCODE_BINARY;
+import static okhttp3.internal.ws.WebSocketProtocol.OPCODE_TEXT;
+
+public final class RealNewWebSocket implements NewWebSocket, WebSocketReader.FrameCallback {
+  private static final List<Protocol> ONLY_HTTP1 = Collections.singletonList(Protocol.HTTP_1_1);
+
+  /**
+   * The maximum number of bytes to enqueue. Rather than enqueueing beyond this limit we tear down
+   * the web socket! It's possible that we're writing faster than the peer can read.
+   */
+  private static final long MAX_QUEUE_SIZE = 1024 * 1024; // 1 MiB.
+
+  /** A shared executor for all web sockets. */
+  private static final ExecutorService executor = new ThreadPoolExecutor(0,
+      Integer.MAX_VALUE, 60, TimeUnit.SECONDS, new SynchronousQueue<Runnable>(),
+      Util.threadFactory("OkHttp WebSocket", true));
+
+  /** The application's original request unadulterated by web socket headers. */
+  private final Request originalRequest;
+
+  private final Listener listener;
+  private final Random random;
+  private final String key;
+  private final Call call;
+
+  /** This runnable processes the outgoing queues. Call {@link #runWriter()} to after enqueueing. */
+  private final NamedRunnable writerRunnable;
+
+  // All mutable web socket state is guarded by this.
+
+  /**
+   * True if {@link #writerRunnable} is active. Because writing is single-threaded we only enqueue
+   * it if it isn't already enqueued.
+   */
+  private boolean writerRunning;
+
+  /** Null until this web Socket is connected. Note that messages may be enqueued before that. */
+  private WebSocketWriter writer;
+
+  /**
+   * The streams held by this web socket. This is non-null until all incoming messages have been
+   * read and all outgoing messages have been written. It is closed when both reader and writer are
+   * exhausted, or if there is any failure.
+   */
+  private Streams streams;
+
+  /** Outgoing pongs in the order they should be written. */
+  private final ArrayDeque<ByteString> pongQueue = new ArrayDeque<>();
+
+  /** Outgoing messages and close frames in the order they should be written. */
+  private final ArrayDeque<Object> messageAndCloseQueue = new ArrayDeque<>();
+
+  /** The total size in bytes of enqueued but not yet transmitted messages. */
+  private long queueSize;
+
+  /** True if we've enqueued a close frame. No further message frames will be enqueued. */
+  private boolean enqueuedClose;
+
+  /** The close code from the peer, or -1 if this web socket has not yet read a close frame. */
+  private int receivedCloseCode = -1;
+
+  /** The close reason from the peer, or null if this web socket has not yet read a close frame. */
+  private String receivedCloseReason;
+
+  /** True if this web socket failed and the listener has been notified. */
+  private boolean failed;
+
+  public RealNewWebSocket(OkHttpClient client, Request request, Listener listener, Random random) {
+    if (!"GET".equals(request.method())) {
+      throw new IllegalArgumentException("Request must be GET: " + request.method());
+    }
+    this.originalRequest = request;
+    this.listener = listener;
+    this.random = random;
+
+    byte[] nonce = new byte[16];
+    random.nextBytes(nonce);
+    this.key = ByteString.of(nonce).base64();
+
+    this.writerRunnable = new NamedRunnable("OkHttp WebSocket %s", request.url().redact()) {
+      @Override protected void execute() {
+        try {
+          while (writeOneFrame()) {
+          }
+        } catch (IOException e) {
+          failWebSocket(e, null);
+        }
+      }
+    };
+
+    client = client.newBuilder()
+        .readTimeout(0, SECONDS) // i.e., no timeout because this is a long-lived connection.
+        .writeTimeout(0, SECONDS) // i.e., no timeout because this is a long-lived connection.
+        .protocols(ONLY_HTTP1)
+        .build();
+    request = request.newBuilder()
+        .header("Upgrade", "websocket")
+        .header("Connection", "Upgrade")
+        .header("Sec-WebSocket-Key", key)
+        .header("Sec-WebSocket-Version", "13")
+        .build();
+    this.call = Internal.instance.newWebSocketCall(client, request);
+  }
+
+  @Override public Request request() {
+    return originalRequest;
+  }
+
+  @Override public synchronized long queueSize() {
+    return queueSize;
+  }
+
+  @Override public void cancel() {
+    call.cancel();
+  }
+
+  public void connnect() {
+    call.enqueue(new Callback() {
+      @Override public void onResponse(Call call, Response response) {
+        try {
+          checkResponse(response);
+        } catch (ProtocolException e) {
+          failWebSocket(e, response);
+          closeQuietly(response);
+          return;
+        }
+
+        // Promote the HTTP streams into web socket streams.
+        StreamAllocation streamAllocation = Internal.instance.streamAllocation(call);
+        streamAllocation.noNewStreams(); // Prevent connection pooling!
+        Streams streams = new ClientStreams(streamAllocation);
+
+        try {
+          readWebsocket(streams, response);
+        } catch (Exception e) {
+          failWebSocket(e, null);
+        }
+      }
+
+      @Override public void onFailure(Call call, IOException e) {
+        failWebSocket(e, null);
+      }
+    });
+  }
+
+  private void checkResponse(Response response) throws ProtocolException {
+    if (response.code() != 101) {
+      throw new ProtocolException("Expected HTTP 101 response but was '"
+          + response.code() + " " + response.message() + "'");
+    }
+
+    String headerConnection = response.header("Connection");
+    if (!"Upgrade".equalsIgnoreCase(headerConnection)) {
+      throw new ProtocolException("Expected 'Connection' header value 'Upgrade' but was '"
+          + headerConnection + "'");
+    }
+
+    String headerUpgrade = response.header("Upgrade");
+    if (!"websocket".equalsIgnoreCase(headerUpgrade)) {
+      throw new ProtocolException(
+          "Expected 'Upgrade' header value 'websocket' but was '" + headerUpgrade + "'");
+    }
+
+    String headerAccept = response.header("Sec-WebSocket-Accept");
+    String acceptExpected = Util.shaBase64(key + WebSocketProtocol.ACCEPT_MAGIC);
+    if (!acceptExpected.equals(headerAccept)) {
+      throw new ProtocolException("Expected 'Sec-WebSocket-Accept' header value '"
+          + acceptExpected + "' but was '" + headerAccept + "'");
+    }
+  }
+
+  void readWebsocket(Streams streams, Response response) throws IOException {
+    synchronized (this) {
+      this.streams = streams;
+      this.writer = new WebSocketWriter(streams.client, streams.sink, random);
+      if (!messageAndCloseQueue.isEmpty()) {
+        runWriter(); // Send messages that were enqueued before we were connected.
+      }
+    }
+
+    // Receive frames until there are no more.
+    WebSocketReader reader = new WebSocketReader(streams.client, streams.source, this);
+    listener.onOpen(this, response);
+    while (receivedCloseCode == -1) {
+      // This method call results in one or more onRead* methods being called on this thread.
+      reader.processNextFrame();
+    }
+  }
+
+  @Override public void onReadMessage(ResponseBody body) throws IOException {
+    try {
+      if (body.contentType().equals(WebSocket.TEXT)) {
+        String text = body.source().readUtf8();
+        listener.onMessage(this, text);
+      } else if (body.contentType().equals(WebSocket.BINARY)) {
+        ByteString bytes = body.source().readByteString();
+        listener.onMessage(this, bytes);
+      } else {
+        throw new IllegalArgumentException();
+      }
+    } finally {
+      Util.closeQuietly(body);
+    }
+  }
+
+  @Override public synchronized void onReadPing(final ByteString payload) {
+    // Don't respond to pings after we've failed or sent the close frame.
+    if (failed || (enqueuedClose && messageAndCloseQueue.isEmpty())) return;
+
+    pongQueue.add(payload);
+    runWriter();
+  }
+
+  @Override public void onReadPong(ByteString buffer) {
+    // This API doesn't expose pings.
+  }
+
+  @Override public void onReadClose(int code, String reason) {
+    if (code == -1) throw new IllegalArgumentException();
+
+    Streams toClose = null;
+    synchronized (this) {
+      if (receivedCloseCode != -1) throw new IllegalStateException("already closed");
+      receivedCloseCode = code;
+      receivedCloseReason = reason;
+      if (enqueuedClose && messageAndCloseQueue.isEmpty()) {
+        toClose = this.streams;
+        this.streams = null;
+      }
+    }
+
+    try {
+      listener.onClosing(this, code, reason);
+
+      if (toClose != null) {
+        listener.onClosed(this, code, reason);
+      }
+    } finally {
+      closeQuietly(toClose);
+    }
+  }
+
+  // Writer methods to enqueue frames. They'll be sent asynchronously by the writer thread.
+
+  @Override public boolean send(String text) {
+    if (text == null) throw new NullPointerException("text == null");
+    return send(ByteString.encodeUtf8(text), OPCODE_TEXT);
+  }
+
+  @Override public boolean send(ByteString bytes) {
+    if (bytes == null) throw new NullPointerException("bytes == null");
+    return send(bytes, OPCODE_BINARY);
+  }
+
+  private synchronized boolean send(final ByteString data, final int formatOpcode) {
+    // Don't send new frames after we've failed or enqueued a close frame.
+    if (failed || enqueuedClose) return false;
+
+    // If this frame overflows the buffer, reject it and close the web socket.
+    if (queueSize + data.size() > MAX_QUEUE_SIZE) {
+      close(CLOSE_CLIENT_GOING_AWAY, null);
+      return false;
+    }
+
+    // Enqueue the message frame.
+    queueSize += data.size();
+    messageAndCloseQueue.add(new Message(formatOpcode, data));
+    runWriter();
+    return true;
+  }
+
+  @Override public synchronized boolean close(final int code, final String reason) {
+    // TODO(jwilson): confirm reason is well-formed. (<=123 bytes, etc.)
+
+    if (failed || enqueuedClose) return false;
+
+    // Immediately prevent further frames from being enqueued.
+    enqueuedClose = true;
+
+    // Enqueue the close frame.
+    messageAndCloseQueue.add(new Close(code, reason));
+    runWriter();
+    return true;
+  }
+
+  private void runWriter() {
+    assert (Thread.holdsLock(this));
+
+    if (!writerRunning) {
+      writerRunning = true;
+      executor.execute(writerRunnable);
+    }
+  }
+
+  /**
+   * Attempts to remove a single frame from a queue and send it. This prefers to write urgent pongs
+   * before less urgent messages and close frames. For example it's possible that a caller will
+   * enqueue messages followed by pongs, but this sends pongs followed by messages. Pongs are always
+   * written in the order they were enqueued.
+   *
+   * <p>If a frame cannot be sent - because there are none enqueued or because the web socket is not
+   * connected - this does nothing and returns false. Otherwise this returns true and the caller
+   * should immediately invoke this method again until it returns false.
+   *
+   * <p>This method may only be invoked by the writer thread. There may be only thread invoking this
+   * method at a time.
+   */
+  private boolean writeOneFrame() throws IOException {
+    WebSocketWriter writer;
+    ByteString pong;
+    Object messageOrClose = null;
+    int receivedCloseCode = -1;
+    String receivedCloseReason = null;
+    Streams streamsToClose = null;
+
+    synchronized (RealNewWebSocket.this) {
+      if (failed) {
+        writerRunning = false;
+        return false; // Failed web socket.
+      }
+
+      writer = this.writer;
+      if (writer == null) {
+        writerRunning = false;
+        return false; // Not yet connected.
+      }
+
+      pong = pongQueue.poll();
+      if (pong == null) {
+        messageOrClose = messageAndCloseQueue.poll();
+        if (messageOrClose instanceof Close) {
+          receivedCloseCode = this.receivedCloseCode;
+          receivedCloseReason = this.receivedCloseReason;
+          if (receivedCloseCode != -1) {
+            streamsToClose = this.streams;
+            this.streams = null;
+          }
+
+        } else if (messageOrClose == null) {
+          writerRunning = false;
+          return false; // The queue is exhausted.
+        }
+      }
+    }
+
+    try {
+      if (pong != null) {
+        writer.writePong(pong);
+
+      } else if (messageOrClose instanceof Message) {
+        ByteString data = ((Message) messageOrClose).data;
+        BufferedSink sink = Okio.buffer(writer.newMessageSink(
+            ((Message) messageOrClose).formatOpcode, data.size()));
+        sink.write(data);
+        sink.close();
+        synchronized (this) {
+          queueSize -= data.size();
+        }
+
+      } else if (messageOrClose instanceof Close) {
+        Close close = (Close) messageOrClose;
+        writer.writeClose(close.code, close.reason);
+
+        // We closed the writer: now both reader and writer are closed.
+        if (streamsToClose != null) {
+          listener.onClosed(this, receivedCloseCode, receivedCloseReason);
+        }
+
+      } else {
+        throw new AssertionError();
+      }
+
+      return true;
+    } finally {
+      closeQuietly(streamsToClose);
+    }
+  }
+
+  private void failWebSocket(Exception e, Response response) {
+    Streams streamsToClose;
+    synchronized (this) {
+      if (failed) return; // Already failed.
+      failed = true;
+      streamsToClose = this.streams;
+      this.streams = null;
+    }
+
+    try {
+      listener.onFailure(this, e, response);
+    } finally {
+      closeQuietly(streamsToClose);
+    }
+  }
+
+  static final class Message {
+    final int formatOpcode;
+    final ByteString data;
+
+    public Message(int formatOpcode, ByteString data) {
+      this.formatOpcode = formatOpcode;
+      this.data = data;
+    }
+  }
+
+  static final class Close {
+    final int code;
+    final String reason;
+
+    public Close(int code, String reason) {
+      this.code = code;
+      this.reason = reason;
+    }
+  }
+
+  abstract static class Streams implements Closeable {
+    final boolean client;
+    final BufferedSource source;
+    final BufferedSink sink;
+
+    public Streams(boolean client, BufferedSource source, BufferedSink sink) {
+      this.client = client;
+      this.source = source;
+      this.sink = sink;
+    }
+  }
+
+  static final class ClientStreams extends Streams {
+    private final StreamAllocation streamAllocation;
+
+    public ClientStreams(StreamAllocation streamAllocation) {
+      super(true, streamAllocation.connection().source, streamAllocation.connection().sink);
+      this.streamAllocation = streamAllocation;
+    }
+
+    @Override public void close() {
+      streamAllocation.streamFinished(true, streamAllocation.codec());
+    }
+  }
+}

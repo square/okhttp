@@ -19,11 +19,13 @@ import java.net.MalformedURLException;
 import java.net.UnknownHostException;
 import javax.net.ssl.SSLSocket;
 import okhttp3.Address;
+import okhttp3.Call;
 import okhttp3.ConnectionPool;
 import okhttp3.ConnectionSpec;
 import okhttp3.Headers;
 import okhttp3.HttpUrl;
 import okhttp3.OkHttpClient;
+import okhttp3.Request;
 import okhttp3.internal.cache.InternalCache;
 import okhttp3.internal.connection.RealConnection;
 import okhttp3.internal.connection.RouteDatabase;
@@ -62,4 +64,8 @@ public abstract class Internal {
 
   public abstract HttpUrl getHttpUrlChecked(String url)
       throws MalformedURLException, UnknownHostException;
+
+  public abstract StreamAllocation streamAllocation(Call call);
+
+  public abstract Call newWebSocketCall(OkHttpClient client, Request request);
 }
