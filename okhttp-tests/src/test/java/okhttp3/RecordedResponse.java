@@ -32,11 +32,11 @@ import static org.junit.Assert.assertTrue;
 public final class RecordedResponse {
   public final Request request;
   public final Response response;
-  public final WebSocket webSocket;
+  public final NewWebSocket webSocket;
   public final String body;
   public final IOException failure;
 
-  public RecordedResponse(Request request, Response response, WebSocket webSocket, String body,
+  public RecordedResponse(Request request, Response response, NewWebSocket webSocket, String body,
       IOException failure) {
     this.request = request;
     this.response = response;
