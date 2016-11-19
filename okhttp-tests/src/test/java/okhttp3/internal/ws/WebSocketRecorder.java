@@ -19,8 +19,9 @@ import java.io.IOException;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
-import okhttp3.NewWebSocket;
+import okhttp3.WebSocket;
 import okhttp3.Response;
+import okhttp3.WebSocketListener;
 import okhttp3.internal.Util;
 import okhttp3.internal.platform.Platform;
 import okio.ByteString;
@@ -30,24 +31,24 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 
-public final class NewWebSocketRecorder extends NewWebSocket.Listener {
+public final class WebSocketRecorder extends WebSocketListener {
   private final String name;
   private final BlockingQueue<Object> events = new LinkedBlockingQueue<>();
-  private NewWebSocket.Listener delegate;
+  private WebSocketListener delegate;
 
-  public NewWebSocketRecorder(String name) {
+  public WebSocketRecorder(String name) {
     this.name = name;
   }
 
   /** Sets a delegate for handling the next callback to this listener. Cleared after invoked. */
-  public void setNextEventDelegate(NewWebSocket.Listener delegate) {
+  public void setNextEventDelegate(WebSocketListener delegate) {
     this.delegate = delegate;
   }
 
-  @Override public void onOpen(NewWebSocket webSocket, Response response) {
+  @Override public void onOpen(WebSocket webSocket, Response response) {
     Platform.get().log(Platform.INFO, "[WS " + name + "] onOpen", null);
 
-    NewWebSocket.Listener delegate = this.delegate;
+    WebSocketListener delegate = this.delegate;
     if (delegate != null) {
       this.delegate = null;
       delegate.onOpen(webSocket, response);
@@ -56,10 +57,10 @@ public final class NewWebSocketRecorder extends NewWebSocket.Listener {
     }
   }
 
-  @Override public void onMessage(NewWebSocket webSocket, ByteString bytes) {
+  @Override public void onMessage(WebSocket webSocket, ByteString bytes) {
     Platform.get().log(Platform.INFO, "[WS " + name + "] onMessage", null);
 
-    NewWebSocket.Listener delegate = this.delegate;
+    WebSocketListener delegate = this.delegate;
     if (delegate != null) {
       this.delegate = null;
       delegate.onMessage(webSocket, bytes);
@@ -69,10 +70,10 @@ public final class NewWebSocketRecorder extends NewWebSocket.Listener {
     }
   }
 
-  @Override public void onMessage(NewWebSocket webSocket, String text) {
+  @Override public void onMessage(WebSocket webSocket, String text) {
     Platform.get().log(Platform.INFO, "[WS " + name + "] onMessage", null);
 
-    NewWebSocket.Listener delegate = this.delegate;
+    WebSocketListener delegate = this.delegate;
     if (delegate != null) {
       this.delegate = null;
       delegate.onMessage(webSocket, text);
@@ -82,10 +83,10 @@ public final class NewWebSocketRecorder extends NewWebSocket.Listener {
     }
   }
 
-  @Override public void onClosing(NewWebSocket webSocket, int code, String reason) {
+  @Override public void onClosing(WebSocket webSocket, int code, String reason) {
     Platform.get().log(Platform.INFO, "[WS " + name + "] onClose " + code, null);
 
-    NewWebSocket.Listener delegate = this.delegate;
+    WebSocketListener delegate = this.delegate;
     if (delegate != null) {
       this.delegate = null;
       delegate.onClosing(webSocket, code, reason);
@@ -94,10 +95,10 @@ public final class NewWebSocketRecorder extends NewWebSocket.Listener {
     }
   }
 
-  @Override public void onClosed(NewWebSocket webSocket, int code, String reason) {
+  @Override public void onClosed(WebSocket webSocket, int code, String reason) {
     Platform.get().log(Platform.INFO, "[WS " + name + "] onClose " + code, null);
 
-    NewWebSocket.Listener delegate = this.delegate;
+    WebSocketListener delegate = this.delegate;
     if (delegate != null) {
       this.delegate = null;
       delegate.onClosed(webSocket, code, reason);
@@ -106,10 +107,10 @@ public final class NewWebSocketRecorder extends NewWebSocket.Listener {
     }
   }
 
-  @Override public void onFailure(NewWebSocket webSocket, Throwable t, Response response)  {
+  @Override public void onFailure(WebSocket webSocket, Throwable t, Response response)  {
     Platform.get().log(Platform.INFO, "[WS " + name + "] onFailure", t);
 
-    NewWebSocket.Listener delegate = this.delegate;
+    WebSocketListener delegate = this.delegate;
     if (delegate != null) {
       this.delegate = null;
       delegate.onFailure(webSocket, t, response);
@@ -164,7 +165,7 @@ public final class NewWebSocketRecorder extends NewWebSocket.Listener {
     assertTrue("Remaining events: " + events, events.isEmpty());
   }
 
-  public NewWebSocket assertOpen() {
+  public WebSocket assertOpen() {
     Object event = nextEvent();
     if (!(event instanceof Open)) {
       throw new AssertionError("Expected Open but was " + event);
@@ -234,10 +235,10 @@ public final class NewWebSocketRecorder extends NewWebSocket.Listener {
   }
 
   static final class Open {
-    final NewWebSocket webSocket;
+    final WebSocket webSocket;
     final Response response;
 
-    Open(NewWebSocket webSocket, Response response) {
+    Open(WebSocket webSocket, Response response) {
       this.webSocket = webSocket;
       this.response = response;
     }

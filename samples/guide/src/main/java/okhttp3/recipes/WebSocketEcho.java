@@ -1,13 +1,14 @@
 package okhttp3.recipes;
 
 import java.util.concurrent.TimeUnit;
-import okhttp3.NewWebSocket;
+import okhttp3.WebSocket;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
+import okhttp3.WebSocketListener;
 import okio.ByteString;
 
-public final class WebSocketEcho extends NewWebSocket.Listener {
+public final class WebSocketEcho extends WebSocketListener {
   private void run() {
     OkHttpClient client = new OkHttpClient.Builder()
         .readTimeout(0,  TimeUnit.MILLISECONDS)
@@ -22,27 +23,27 @@ public final class WebSocketEcho extends NewWebSocket.Listener {
     client.dispatcher().executorService().shutdown();
   }
 
-  @Override public void onOpen(NewWebSocket webSocket, Response response) {
+  @Override public void onOpen(WebSocket webSocket, Response response) {
     webSocket.send("Hello...");
     webSocket.send("...World!");
     webSocket.send(ByteString.decodeHex("deadbeef"));
     webSocket.close(1000, "Goodbye, World!");
   }
 
-  @Override public void onMessage(NewWebSocket webSocket, String text) {
+  @Override public void onMessage(WebSocket webSocket, String text) {
     System.out.println("MESSAGE: " + text);
   }
 
-  @Override public void onMessage(NewWebSocket webSocket, ByteString bytes) {
+  @Override public void onMessage(WebSocket webSocket, ByteString bytes) {
     System.out.println("MESSAGE: " + bytes.hex());
   }
 
-  @Override public void onClosing(NewWebSocket webSocket, int code, String reason) {
+  @Override public void onClosing(WebSocket webSocket, int code, String reason) {
     webSocket.close(1000, null);
     System.out.println("CLOSE: " + code + " " + reason);
   }
 
-  @Override public void onFailure(NewWebSocket webSocket, Throwable t, Response response) {
+  @Override public void onFailure(WebSocket webSocket, Throwable t, Response response) {
     t.printStackTrace();
   }
 

@@ -32,7 +32,7 @@ import static org.junit.Assert.fail;
 
 public final class WebSocketReaderTest {
   private final Buffer data = new Buffer();
-  private final NewWebSocketRecorder callback = new NewWebSocketRecorder("client");
+  private final WebSocketRecorder callback = new WebSocketRecorder("client");
   private final Random random = new Random(0);
 
   // Mutually exclusive. Use the one corresponding to the peer whose behavior you wish to test.

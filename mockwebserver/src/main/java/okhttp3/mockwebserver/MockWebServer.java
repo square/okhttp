@@ -69,7 +69,7 @@ import okhttp3.internal.http2.Http2Connection;
 import okhttp3.internal.http2.Http2Stream;
 import okhttp3.internal.http2.Settings;
 import okhttp3.internal.platform.Platform;
-import okhttp3.internal.ws.RealNewWebSocket;
+import okhttp3.internal.ws.RealWebSocket;
 import okhttp3.internal.ws.WebSocketProtocol;
 import okio.Buffer;
 import okio.BufferedSink;
@@ -676,12 +676,12 @@ public final class MockWebServer implements TestRule, Closeable {
     replyExecutor.allowCoreThreadTimeOut(true);
 
     final CountDownLatch connectionClose = new CountDownLatch(1);
-    RealNewWebSocket.Streams streams = new RealNewWebSocket.Streams(false, source, sink) {
+    RealWebSocket.Streams streams = new RealWebSocket.Streams(false, source, sink) {
       @Override public void close() {
         connectionClose.countDown();
       }
     };
-    RealNewWebSocket webSocket = new RealNewWebSocket(fancyRequest,
+    RealWebSocket webSocket = new RealWebSocket(fancyRequest,
         response.getWebSocketListener(), new SecureRandom());
     response.getWebSocketListener().onOpen(webSocket, fancyResponse);
     webSocket.initReaderAndWriter(streams);

@@ -17,15 +17,16 @@ package okhttp3.slack;
 
 import java.io.Closeable;
 import java.io.IOException;
-import okhttp3.NewWebSocket;
+import okhttp3.WebSocket;
 import okhttp3.Response;
+import okhttp3.WebSocketListener;
 
 /** A realtime messaging session. */
-public final class RtmSession extends NewWebSocket.Listener implements Closeable {
+public final class RtmSession extends WebSocketListener implements Closeable {
   private final SlackApi slackApi;
 
   /** Guarded by this. */
-  private NewWebSocket webSocket;
+  private WebSocket webSocket;
 
   public RtmSession(SlackApi slackApi) {
     this.slackApi = slackApi;
@@ -40,21 +41,21 @@ public final class RtmSession extends NewWebSocket.Listener implements Closeable
 
   // TODO(jwilson): can I read the response body? Do I have to?
   //                the body from slack is a 0-byte-buffer
-  @Override public synchronized void onOpen(NewWebSocket webSocket, Response response) {
+  @Override public synchronized void onOpen(WebSocket webSocket, Response response) {
     System.out.println("onOpen: " + response);
   }
 
   // TOOD(jwilson): decode incoming messages and dispatch them somewhere.
-  @Override public void onMessage(NewWebSocket webSocket, String text) {
+  @Override public void onMessage(WebSocket webSocket, String text) {
     System.out.println("onMessage: " + text);
   }
 
-  @Override public void onClosing(NewWebSocket webSocket, int code, String reason) {
+  @Override public void onClosing(WebSocket webSocket, int code, String reason) {
     webSocket.close(1000, null);
     System.out.println("onClose (" + code + "): " + reason);
   }
 
-  @Override public void onFailure(NewWebSocket webSocket, Throwable t, Response response) {
+  @Override public void onFailure(WebSocket webSocket, Throwable t, Response response) {
     // TODO(jwilson): can I read the response body? Do I have to?
     System.out.println("onFailure " + response);
   }
@@ -62,7 +63,7 @@ public final class RtmSession extends NewWebSocket.Listener implements Closeable
   @Override public void close() throws IOException {
     if (webSocket == null) return;
 
-    NewWebSocket webSocket;
+    WebSocket webSocket;
     synchronized (this) {
       webSocket = this.webSocket;
     }

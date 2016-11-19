@@ -39,18 +39,18 @@ public final class RealWebSocketTest {
   // zero effect on the behavior of the WebSocket API which is why tests are only written once
   // from the perspective of a single peer.
 
-  private RealNewWebSocket client;
+  private RealWebSocket client;
   private boolean clientConnectionCloseThrows;
   private boolean clientConnectionClosed;
   private final Pipe client2Server = new Pipe(1024L);
   private final BufferedSink client2ServerSink = Okio.buffer(client2Server.sink());
-  private final NewWebSocketRecorder clientListener = new NewWebSocketRecorder("client");
+  private final WebSocketRecorder clientListener = new WebSocketRecorder("client");
 
-  private RealNewWebSocket server;
+  private RealWebSocket server;
   private boolean serverConnectionClosed;
   private final Pipe server2client = new Pipe(1024L);
   private final BufferedSink server2clientSink = Okio.buffer(server2client.sink());
-  private final NewWebSocketRecorder serverListener = new NewWebSocketRecorder("server");
+  private final WebSocketRecorder serverListener = new WebSocketRecorder("server");
 
   @Before public void setUp() throws IOException {
     Random random = new Random(0);
@@ -61,8 +61,8 @@ public final class RealWebSocketTest {
         .protocol(Protocol.HTTP_1_1)
         .build();
 
-    client = new RealNewWebSocket(response.request(), clientListener, random);
-    client.initReaderAndWriter(new RealNewWebSocket.Streams(
+    client = new RealWebSocket(response.request(), clientListener, random);
+    client.initReaderAndWriter(new RealWebSocket.Streams(
         true, Okio.buffer(server2client.source()), client2ServerSink) {
       @Override public void close() throws IOException {
         source.close();
@@ -78,8 +78,8 @@ public final class RealWebSocketTest {
       }
     });
 
-    server = new RealNewWebSocket(response.request(), serverListener, random);
-    server.initReaderAndWriter(new RealNewWebSocket.Streams(
+    server = new RealWebSocket(response.request(), serverListener, random);
+    server.initReaderAndWriter(new RealWebSocket.Streams(
         false, Okio.buffer(client2Server.source()), server2clientSink) {
       @Override public void close() throws IOException {
         source.close();

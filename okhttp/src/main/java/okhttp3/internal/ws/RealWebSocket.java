@@ -28,11 +28,12 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import okhttp3.Call;
 import okhttp3.Callback;
-import okhttp3.NewWebSocket;
+import okhttp3.WebSocket;
 import okhttp3.OkHttpClient;
 import okhttp3.Protocol;
 import okhttp3.Request;
 import okhttp3.Response;
+import okhttp3.WebSocketListener;
 import okhttp3.internal.Internal;
 import okhttp3.internal.NamedRunnable;
 import okhttp3.internal.Util;
@@ -48,7 +49,7 @@ import static okhttp3.internal.ws.WebSocketProtocol.CLOSE_CLIENT_GOING_AWAY;
 import static okhttp3.internal.ws.WebSocketProtocol.OPCODE_BINARY;
 import static okhttp3.internal.ws.WebSocketProtocol.OPCODE_TEXT;
 
-public final class RealNewWebSocket implements NewWebSocket, WebSocketReader.FrameCallback {
+public final class RealWebSocket implements WebSocket, WebSocketReader.FrameCallback {
   private static final List<Protocol> ONLY_HTTP1 = Collections.singletonList(Protocol.HTTP_1_1);
 
   /**
@@ -65,7 +66,7 @@ public final class RealNewWebSocket implements NewWebSocket, WebSocketReader.Fra
   /** The application's original request unadulterated by web socket headers. */
   private final Request originalRequest;
 
-  private final Listener listener;
+  private final WebSocketListener listener;
   private final Random random;
   private final String key;
 
@@ -117,7 +118,7 @@ public final class RealNewWebSocket implements NewWebSocket, WebSocketReader.Fra
   /** True if this web socket failed and the listener has been notified. */
   private boolean failed;
 
-  public RealNewWebSocket(Request request, Listener listener, Random random) {
+  public RealWebSocket(Request request, WebSocketListener listener, Random random) {
     if (!"GET".equals(request.method())) {
       throw new IllegalArgumentException("Request must be GET: " + request.method());
     }
@@ -183,7 +184,7 @@ public final class RealNewWebSocket implements NewWebSocket, WebSocketReader.Fra
 
         // Process all websocket messages.
         try {
-          listener.onOpen(RealNewWebSocket.this, response);
+          listener.onOpen(RealWebSocket.this, response);
           initReaderAndWriter(streams);
           loopReader();
         } catch (Exception e) {
@@ -382,7 +383,7 @@ public final class RealNewWebSocket implements NewWebSocket, WebSocketReader.Fra
     String receivedCloseReason = null;
     Streams streamsToClose = null;
 
-    synchronized (RealNewWebSocket.this) {
+    synchronized (RealWebSocket.this) {
       if (failed) {
         writerRunning = false;
         return false; // Failed web socket.

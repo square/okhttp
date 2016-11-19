@@ -18,7 +18,7 @@ package okhttp3;
 import okio.ByteString;
 
 /**
- * A non-blocking interface to a web socket. Use the {@linkplain NewWebSocket.Factory factory} to
+ * A non-blocking interface to a web socket. Use the {@linkplain WebSocket.Factory factory} to
  * create instances; usually this is {@link OkHttpClient}.
  *
  * <h3>Web Socket Lifecycle</h3>
@@ -50,7 +50,7 @@ import okio.ByteString;
  * incoming messages. But it does not guarantee that the other peer will successfully receive all of
  * its incoming messages.
  */
-public interface NewWebSocket {
+public interface WebSocket {
   /** Returns the original request that initiated this web socket. */
   Request request();
 
@@ -110,42 +110,6 @@ public interface NewWebSocket {
   void cancel();
 
   interface Factory {
-    NewWebSocket newWebSocket(Request request, Listener listener);
-  }
-
-  abstract class Listener {
-    /**
-     * Invoked when a web socket has been accepted by the remote peer and may begin transmitting
-     * messages.
-     */
-    public void onOpen(NewWebSocket webSocket, Response response) {
-    }
-
-    /** Invoked when a text (type {@code 0x1}) message has been received. */
-    public void onMessage(NewWebSocket webSocket, String text) {
-    }
-
-    /** Invoked when a binary (type {@code 0x2}) message has been received. */
-    public void onMessage(NewWebSocket webSocket, ByteString bytes) {
-    }
-
-    /** Invoked when the peer has indicated that no more incoming messages will be transmitted. */
-    public void onClosing(NewWebSocket webSocket, int code, String reason) {
-    }
-
-    /**
-     * Invoked when both peers have indicated that no more messages will be transmitted and the
-     * connection has been successfully released. No further calls to this listener will be made.
-     */
-    public void onClosed(NewWebSocket webSocket, int code, String reason) {
-    }
-
-    /**
-     * Invoked when a web socket has been closed due to an error reading from or writing to the
-     * network. Both outgoing and incoming messages may have been lost. No further calls to this
-     * listener will be made.
-     */
-    public void onFailure(NewWebSocket webSocket, Throwable t, Response response) {
-    }
+    WebSocket newWebSocket(Request request, WebSocketListener listener);
   }
 }
