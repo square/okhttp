@@ -18,15 +18,9 @@ package okhttp3.internal.ws;
 import java.io.EOFException;
 import java.io.IOException;
 import java.net.ProtocolException;
-import okhttp3.MediaType;
-import okhttp3.ResponseBody;
-import okhttp3.WebSocket;
 import okio.Buffer;
 import okio.BufferedSource;
 import okio.ByteString;
-import okio.Okio;
-import okio.Source;
-import okio.Timeout;
 
 import static java.lang.Integer.toHexString;
 import static okhttp3.internal.ws.WebSocketProtocol.B0_FLAG_FIN;
@@ -57,7 +51,8 @@ import static okhttp3.internal.ws.WebSocketProtocol.validateCloseCode;
  */
 final class WebSocketReader {
   public interface FrameCallback {
-    void onReadMessage(ResponseBody body) throws IOException;
+    void onReadMessage(String text) throws IOException;
+    void onReadMessage(ByteString bytes) throws IOException;
     void onReadPing(ByteString buffer);
     void onReadPong(ByteString buffer);
     void onReadClose(int code, String reason);
@@ -67,10 +62,7 @@ final class WebSocketReader {
   final BufferedSource source;
   final FrameCallback frameCallback;
 
-  final Source framedMessageSource = new FramedMessageSource();
-
   boolean closed;
-  boolean messageClosed;
 
   // Stateful data about the current frame.
   int opcode;
@@ -209,37 +201,18 @@ final class WebSocketReader {
   }
 
   private void readMessageFrame() throws IOException {
-    final MediaType type;
-    switch (opcode) {
-      case OPCODE_TEXT:
-        type = WebSocket.TEXT;
-        break;
-      case OPCODE_BINARY:
-        type = WebSocket.BINARY;
-        break;
-      default:
-        throw new ProtocolException("Unknown opcode: " + toHexString(opcode));
+    int opcode = this.opcode;
+    if (opcode != OPCODE_TEXT && opcode != OPCODE_BINARY) {
+      throw new ProtocolException("Unknown opcode: " + toHexString(opcode));
     }
 
-    final BufferedSource source = Okio.buffer(framedMessageSource);
-    ResponseBody body = new ResponseBody() {
-      @Override public MediaType contentType() {
-        return type;
-      }
+    Buffer message = new Buffer();
+    readMessage(message);
 
-      @Override public long contentLength() {
-        return -1;
-      }
-
-      @Override public BufferedSource source() {
-        return source;
-      }
-    };
-
-    messageClosed = false;
-    frameCallback.onReadMessage(body);
-    if (!messageClosed) {
-      throw new IllegalStateException("Listener failed to call close on message payload.");
+    if (opcode == OPCODE_TEXT) {
+      frameCallback.onReadMessage(message.readUtf8());
+    } else {
+      frameCallback.onReadMessage(message.readByteString());
     }
   }
 
@@ -255,28 +228,27 @@ final class WebSocketReader {
   }
 
   /**
-   * A special source which knows how to read a message body across one or more frames. Control
-   * frames that occur between fragments will be processed. If the message payload is masked this
-   * will unmask as it's being processed.
+   * Reads a message body into across one or more frames. Control frames that occur between
+   * fragments will be processed. If the message payload is masked this will unmask as it's being
+   * processed.
    */
-  final class FramedMessageSource implements Source {
-    @Override public long read(Buffer sink, long byteCount) throws IOException {
+  private void readMessage(Buffer sink) throws IOException {
+    while (true) {
       if (closed) throw new IOException("closed");
-      if (messageClosed) throw new IllegalStateException("closed");
 
       if (frameBytesRead == frameLength) {
-        if (isFinalFrame) return -1; // We are exhausted and have no continuations.
+        if (isFinalFrame) return; // We are exhausted and have no continuations.
 
         readUntilNonControlFrame();
         if (opcode != OPCODE_CONTINUATION) {
           throw new ProtocolException("Expected continuation opcode. Got: " + toHexString(opcode));
         }
         if (isFinalFrame && frameLength == 0) {
-          return -1; // Fast-path for empty final frame.
+          return; // Fast-path for empty final frame.
         }
       }
 
-      long toRead = Math.min(byteCount, frameLength - frameBytesRead);
+      long toRead = frameLength - frameBytesRead;
 
       long read;
       if (isMasked) {
@@ -291,24 +263,6 @@ final class WebSocketReader {
       }
 
       frameBytesRead += read;
-      return read;
-    }
-
-    @Override public Timeout timeout() {
-      return source.timeout();
-    }
-
-    @Override public void close() throws IOException {
-      if (messageClosed) return;
-      messageClosed = true;
-      if (closed) return;
-
-      // Exhaust the remainder of the message, if any.
-      source.skip(frameLength - frameBytesRead);
-      while (!isFinalFrame) {
-        readUntilNonControlFrame();
-        source.skip(frameLength);
-      }
     }
   }
 }

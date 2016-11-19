@@ -19,24 +19,20 @@ import java.io.EOFException;
 import java.io.IOException;
 import java.net.ProtocolException;
 import java.util.Random;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Pattern;
-import okhttp3.ResponseBody;
 import okhttp3.internal.Util;
 import okio.Buffer;
-import okio.BufferedSource;
 import okio.ByteString;
 import org.junit.After;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 public final class WebSocketReaderTest {
   private final Buffer data = new Buffer();
-  private final WebSocketRecorder callback = new WebSocketRecorder("client");
+  private final NewWebSocketRecorder callback = new NewWebSocketRecorder("client");
   private final Random random = new Random(0);
 
   // Mutually exclusive. Use the one corresponding to the peer whose behavior you wish to test.
@@ -149,20 +145,11 @@ public final class WebSocketReaderTest {
 
   @Test public void serverHelloTwoChunks() throws IOException {
     data.write(ByteString.decodeHex("818537fa213d7f9f4d")); // Hel
+    data.write(ByteString.decodeHex("5158")); // lo
 
-    final Buffer sink = new Buffer();
-    callback.setNextEventDelegate(new EmptyWebSocketListener() {
-      @Override public void onMessage(ResponseBody message) throws IOException {
-        BufferedSource source = message.source();
-        source.readFully(sink, 3); // Read "Hel"
-        data.write(ByteString.decodeHex("5158")); // lo
-        source.readFully(sink, 2); // Read "lo"
-        source.close();
-      }
-    });
     serverReader.processNextFrame();
 
-    assertEquals("Hello", sink.readUtf8());
+    callback.assertTextMessage("Hello");
   }
 
   @Test public void clientTwoFrameHello() throws IOException {
@@ -250,84 +237,6 @@ public final class WebSocketReaderTest {
     }
   }
 
-  @Test public void noCloseErrors() throws IOException {
-    data.write(ByteString.decodeHex("810548656c6c6f")); // Hello
-    callback.setNextEventDelegate(new EmptyWebSocketListener() {
-      @Override public void onMessage(ResponseBody body) throws IOException {
-        body.source().readAll(new Buffer());
-      }
-    });
-    try {
-      clientReader.processNextFrame();
-      fail();
-    } catch (IllegalStateException e) {
-      assertEquals("Listener failed to call close on message payload.", e.getMessage());
-    }
-  }
-
-  @Test public void closeExhaustsMessage() throws IOException {
-    data.write(ByteString.decodeHex("810548656c6c6f")); // Hello
-    data.write(ByteString.decodeHex("810448657921")); // Hey!
-
-    final Buffer sink = new Buffer();
-    callback.setNextEventDelegate(new EmptyWebSocketListener() {
-      @Override public void onMessage(ResponseBody message) throws IOException {
-        message.source().read(sink, 3);
-        message.close();
-      }
-    });
-
-    clientReader.processNextFrame();
-    assertEquals("Hel", sink.readUtf8());
-
-    clientReader.processNextFrame();
-    callback.assertTextMessage("Hey!");
-  }
-
-  @Test public void closeExhaustsMessageOverControlFrames() throws IOException {
-    data.write(ByteString.decodeHex("010348656c")); // Hel
-    data.write(ByteString.decodeHex("8a00")); // Pong
-    data.write(ByteString.decodeHex("8a00")); // Pong
-    data.write(ByteString.decodeHex("80026c6f")); // lo
-    data.write(ByteString.decodeHex("810448657921")); // Hey!
-
-    final Buffer sink = new Buffer();
-    callback.setNextEventDelegate(new EmptyWebSocketListener() {
-      @Override public void onMessage(ResponseBody message) throws IOException {
-        message.source().read(sink, 2);
-        message.close();
-      }
-    });
-
-    clientReader.processNextFrame();
-    assertEquals("He", sink.readUtf8());
-    callback.assertPong(ByteString.EMPTY);
-    callback.assertPong(ByteString.EMPTY);
-
-    clientReader.processNextFrame();
-    callback.assertTextMessage("Hey!");
-  }
-
-  @Test public void closedMessageSourceThrows() throws IOException {
-    data.write(ByteString.decodeHex("810548656c6c6f")); // Hello
-
-    final AtomicReference<Exception> exception = new AtomicReference<>();
-    callback.setNextEventDelegate(new EmptyWebSocketListener() {
-      @Override public void onMessage(ResponseBody message) throws IOException {
-        message.close();
-        try {
-          message.source().readAll(new Buffer());
-          fail();
-        } catch (IllegalStateException e) {
-          exception.set(e);
-        }
-      }
-    });
-    clientReader.processNextFrame();
-
-    assertNotNull(exception.get());
-  }
-
   @Test public void emptyPingCallsCallback() throws IOException {
     data.write(ByteString.decodeHex("8900")); // Empty ping
     clientReader.processNextFrame();
@@ -343,7 +252,7 @@ public final class WebSocketReaderTest {
   @Test public void emptyCloseCallsCallback() throws IOException {
     data.write(ByteString.decodeHex("8800")); // Empty close
     clientReader.processNextFrame();
-    callback.assertClose(1005, "");
+    callback.assertClosing(1005, "");
   }
 
   @Test public void closeLengthOfOneThrows() throws IOException {
@@ -359,7 +268,7 @@ public final class WebSocketReaderTest {
   @Test public void closeCallsCallback() throws IOException {
     data.write(ByteString.decodeHex("880703e848656c6c6f")); // Close with code and reason
     clientReader.processNextFrame();
-    callback.assertClose(1000, "Hello");
+    callback.assertClosing(1000, "Hello");
   }
 
   @Test public void closeOutOfRangeThrows() throws IOException {

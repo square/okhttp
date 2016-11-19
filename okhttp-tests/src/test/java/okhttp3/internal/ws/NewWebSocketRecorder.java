@@ -140,6 +140,16 @@ public final class NewWebSocketRecorder extends NewWebSocket.Listener {
     assertEquals(new Message(ByteString.of(payload)), actual);
   }
 
+  public void assertPing(ByteString payload) {
+    Object actual = nextEvent();
+    assertEquals(new Ping(payload), actual);
+  }
+
+  public void assertPong(ByteString payload) {
+    Object actual = nextEvent();
+    assertEquals(new Pong(payload), actual);
+  }
+
   public void assertClosing(int code, String reason) {
     Object actual = nextEvent();
     assertEquals(new Closing(code, reason), actual);
@@ -196,6 +206,31 @@ public final class NewWebSocketRecorder extends NewWebSocket.Listener {
     }
     assertEquals(cls, failure.t.getClass());
     assertEquals(message, failure.t.getMessage());
+  }
+
+  /** Expose this recorder as a frame callback and shim in "ping" events. */
+  public WebSocketReader.FrameCallback asFrameCallback() {
+    return new WebSocketReader.FrameCallback() {
+      @Override public void onReadMessage(String text) throws IOException {
+        onMessage(null, text);
+      }
+
+      @Override public void onReadMessage(ByteString bytes) throws IOException {
+        onMessage(null, bytes);
+      }
+
+      @Override public void onReadPing(ByteString payload) {
+        events.add(new Ping(payload));
+      }
+
+      @Override public void onReadPong(ByteString payload) {
+        events.add(new Pong(payload));
+      }
+
+      @Override public void onReadClose(int code, String reason) {
+        onClosing(null, code, reason);
+      }
+    };
   }
 
   static final class Open {
@@ -264,6 +299,48 @@ public final class NewWebSocketRecorder extends NewWebSocket.Listener {
       return other instanceof Message
           && Util.equal(((Message) other).bytes, bytes)
           && Util.equal(((Message) other).string, string);
+    }
+  }
+
+  static final class Ping {
+    public final ByteString payload;
+
+    public Ping(ByteString payload) {
+      this.payload = payload;
+    }
+
+    @Override public String toString() {
+      return "Ping[" + payload + "]";
+    }
+
+    @Override public int hashCode() {
+      return payload.hashCode();
+    }
+
+    @Override public boolean equals(Object other) {
+      return other instanceof Ping
+          && ((Ping) other).payload.equals(payload);
+    }
+  }
+
+  static final class Pong {
+    public final ByteString payload;
+
+    public Pong(ByteString payload) {
+      this.payload = payload;
+    }
+
+    @Override public String toString() {
+      return "Pong[" + payload + "]";
+    }
+
+    @Override public int hashCode() {
+      return payload.hashCode();
+    }
+
+    @Override public boolean equals(Object other) {
+      return other instanceof Pong
+          && ((Pong) other).payload.equals(payload);
     }
   }
 

@@ -33,8 +33,6 @@ import okhttp3.OkHttpClient;
 import okhttp3.Protocol;
 import okhttp3.Request;
 import okhttp3.Response;
-import okhttp3.ResponseBody;
-import okhttp3.WebSocket;
 import okhttp3.internal.Internal;
 import okhttp3.internal.NamedRunnable;
 import okhttp3.internal.Util;
@@ -257,20 +255,12 @@ public final class RealNewWebSocket implements NewWebSocket, WebSocketReader.Fra
     }
   }
 
-  @Override public void onReadMessage(ResponseBody body) throws IOException {
-    try {
-      if (body.contentType().equals(WebSocket.TEXT)) {
-        String text = body.source().readUtf8();
-        listener.onMessage(this, text);
-      } else if (body.contentType().equals(WebSocket.BINARY)) {
-        ByteString bytes = body.source().readByteString();
-        listener.onMessage(this, bytes);
-      } else {
-        throw new IllegalArgumentException();
-      }
-    } finally {
-      Util.closeQuietly(body);
-    }
+  @Override public void onReadMessage(String text) throws IOException {
+    listener.onMessage(this, text);
+  }
+
+  @Override public void onReadMessage(ByteString bytes) throws IOException {
+    listener.onMessage(this, bytes);
   }
 
   @Override public synchronized void onReadPing(final ByteString payload) {
