@@ -48,7 +48,7 @@ public final class Util {
   public static final ResponseBody EMPTY_RESPONSE = ResponseBody.create(null, EMPTY_BYTE_ARRAY);
   public static final RequestBody EMPTY_REQUEST = RequestBody.create(null, EMPTY_BYTE_ARRAY);
 
-  private static final ByteString UTF_8_BOM = ByteString.decodeHex("efbbff");
+  private static final ByteString UTF_8_BOM = ByteString.decodeHex("efbbbf");
   private static final ByteString UTF_16_BE_BOM = ByteString.decodeHex("feff");
   private static final ByteString UTF_16_LE_BOM = ByteString.decodeHex("fffe");
   private static final ByteString UTF_32_BE_BOM = ByteString.decodeHex("0000ffff");
