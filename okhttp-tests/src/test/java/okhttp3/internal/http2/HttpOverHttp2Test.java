@@ -43,6 +43,7 @@ import okhttp3.internal.DoubleInetAddressDns;
 import okhttp3.internal.RecordingOkAuthenticator;
 import okhttp3.internal.SingleInetAddressDns;
 import okhttp3.internal.Util;
+import okhttp3.internal.connection.RealConnection;
 import okhttp3.internal.tls.SslClient;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
@@ -854,6 +855,9 @@ public final class HttpOverHttp2Test {
                   .build());
               Response response = call.execute();
               assertEquals("ABC", response.body().string());
+              // Wait until the GOAWAY has been processed.
+              RealConnection connection = (RealConnection) chain.connection();
+              while (connection.isHealthy(false)) ;
             }
             return chain.proceed(chain.request());
           }

@@ -3556,7 +3556,6 @@ public final class URLConnectionTest {
     assertEquals(0, dispatcher.runningCallsCount());
   }
 
-  @Ignore // TODO: recover gracefully when a connection is shutdown.
   @Test public void streamedBodyIsRetriedOnHttp2Shutdown() throws Exception {
     enableProtocol(Protocol.HTTP_2);
     server.enqueue(new MockResponse()
@@ -3573,6 +3572,9 @@ public final class URLConnectionTest {
     // Send a separate request which will trigger a GOAWAY frame on the healthy connection.
     HttpURLConnection connection2 = urlFactory.open(server.url("/").url());
     assertContent("abc", connection2);
+
+    // Ensure the GOAWAY frame has time to be read and processed.
+    Thread.sleep(500);
 
     OutputStream os = connection1.getOutputStream();
     os.write(new byte[] { '1', '2', '3' });

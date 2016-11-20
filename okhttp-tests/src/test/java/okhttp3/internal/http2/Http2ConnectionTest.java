@@ -245,8 +245,7 @@ public final class Http2ConnectionTest {
     try {
       connection.newStream(headerEntries("c", "cola"), true);
       fail();
-    } catch (IOException expected) {
-      assertEquals("shutdown", expected.getMessage());
+    } catch (ConnectionShutdownException expected) {
     }
     assertTrue(stream1.isOpen());
     assertFalse(stream2.isOpen());
@@ -1009,8 +1008,7 @@ public final class Http2ConnectionTest {
     try {
       connection.newStream(headerEntries("c", "cola"), false);
       fail();
-    } catch (IOException expected) {
-      assertEquals("shutdown", expected.getMessage());
+    } catch (ConnectionShutdownException expected) {
     }
     assertTrue(stream1.isOpen());
     assertFalse(stream2.isOpen());
@@ -1068,8 +1066,7 @@ public final class Http2ConnectionTest {
     try {
       connection.ping();
       fail();
-    } catch (IOException expected) {
-      assertEquals("shutdown", expected.getMessage());
+    } catch (ConnectionShutdownException expected) {
     }
 
     // verify the peer received what was expected
@@ -1094,8 +1091,7 @@ public final class Http2ConnectionTest {
     try {
       connection.newStream(headerEntries("b", "banana"), false);
       fail();
-    } catch (IOException expected) {
-      assertEquals("shutdown", expected.getMessage());
+    } catch (ConnectionShutdownException expected) {
     }
     BufferedSink sink = Okio.buffer(stream.getSink());
     try {
