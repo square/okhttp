@@ -103,19 +103,19 @@ public final class WebSocketProtocol {
     }
   }
 
-  static void validateCloseCode(int code, boolean argument) throws ProtocolException {
-    String message = null;
+  static String closeCodeExceptionMessage(int code) {
     if (code < 1000 || code >= 5000) {
-      message = "Code must be in range [1000,5000): " + code;
+      return "Code must be in range [1000,5000): " + code;
     } else if ((code >= 1004 && code <= 1006) || (code >= 1012 && code <= 2999)) {
-      message = "Code " + code + " is reserved and may not be used.";
+      return "Code " + code + " is reserved and may not be used.";
+    } else {
+      return null;
     }
-    if (message != null) {
-      if (argument) {
-        throw new IllegalArgumentException(message);
-      }
-      throw new ProtocolException(message);
-    }
+  }
+
+  static void validateCloseCode(int code) {
+    String message = closeCodeExceptionMessage(code);
+    if (message != null) throw new IllegalArgumentException(message);
   }
 
   public static String acceptHeader(String key) {

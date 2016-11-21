@@ -42,7 +42,6 @@ import static okhttp3.internal.ws.WebSocketProtocol.PAYLOAD_BYTE_MAX;
 import static okhttp3.internal.ws.WebSocketProtocol.PAYLOAD_LONG;
 import static okhttp3.internal.ws.WebSocketProtocol.PAYLOAD_SHORT;
 import static okhttp3.internal.ws.WebSocketProtocol.toggleMask;
-import static okhttp3.internal.ws.WebSocketProtocol.validateCloseCode;
 
 /**
  * An <a href="http://tools.ietf.org/html/rfc6455">RFC 6455</a>-compatible WebSocket frame reader.
@@ -190,7 +189,8 @@ final class WebSocketReader {
         } else if (bufferSize != 0) {
           code = buffer.readShort();
           reason = buffer.readUtf8();
-          validateCloseCode(code, false);
+          String codeExceptionMessage = WebSocketProtocol.closeCodeExceptionMessage(code);
+          if (codeExceptionMessage != null) throw new ProtocolException(codeExceptionMessage);
         }
         frameCallback.onReadClose(code, reason);
         closed = true;

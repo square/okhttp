@@ -48,6 +48,7 @@ import static okhttp3.internal.Util.closeQuietly;
 import static okhttp3.internal.ws.WebSocketProtocol.CLOSE_CLIENT_GOING_AWAY;
 import static okhttp3.internal.ws.WebSocketProtocol.OPCODE_BINARY;
 import static okhttp3.internal.ws.WebSocketProtocol.OPCODE_TEXT;
+import static okhttp3.internal.ws.WebSocketProtocol.validateCloseCode;
 
 public final class RealWebSocket implements WebSocket, WebSocketReader.FrameCallback {
   private static final List<Protocol> ONLY_HTTP1 = Collections.singletonList(Protocol.HTTP_1_1);
@@ -56,7 +57,7 @@ public final class RealWebSocket implements WebSocket, WebSocketReader.FrameCall
    * The maximum number of bytes to enqueue. Rather than enqueueing beyond this limit we tear down
    * the web socket! It's possible that we're writing faster than the peer can read.
    */
-  private static final long MAX_QUEUE_SIZE = 1024 * 1024; // 1 MiB.
+  private static final long MAX_QUEUE_SIZE = 16 * 1024 * 1024; // 16 MiB.
 
   /** A shared executor for all web sockets. */
   private static final ExecutorService executor = new ThreadPoolExecutor(0,
@@ -340,6 +341,7 @@ public final class RealWebSocket implements WebSocket, WebSocketReader.FrameCall
   }
 
   @Override public synchronized boolean close(final int code, final String reason) {
+    validateCloseCode(code);
     // TODO(jwilson): confirm reason is well-formed. (<=123 bytes, etc.)
 
     if (failed || enqueuedClose) return false;

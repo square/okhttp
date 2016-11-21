@@ -28,7 +28,7 @@ import okio.ByteString;
  * href="http://autobahn.ws/testsuite/">Autobahn Testsuite</a>.
  */
 public final class AutobahnTester {
-  private static final String HOST = "ws://localhost:9001";
+  private static final String HOST = "ws://localhost:9099";
 
   public static void main(String... args) throws IOException {
     new AutobahnTester().run();
@@ -133,7 +133,7 @@ public final class AutobahnTester {
     final CountDownLatch latch = new CountDownLatch(1);
     newWebSocket("/updateReports?agent=" + Version.userAgent(), new WebSocketListener() {
       @Override public void onClosing(WebSocket webSocket, int code, String reason) {
-        webSocket.close(code, null);
+        webSocket.close(1000, null);
         latch.countDown();
       }
 
