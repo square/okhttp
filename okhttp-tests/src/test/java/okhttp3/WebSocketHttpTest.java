@@ -20,8 +20,8 @@ import java.net.ProtocolException;
 import java.util.Random;
 import java.util.logging.Logger;
 import okhttp3.internal.tls.SslClient;
-import okhttp3.internal.ws.NewWebSocketRecorder;
-import okhttp3.internal.ws.RealNewWebSocket;
+import okhttp3.internal.ws.WebSocketRecorder;
+import okhttp3.internal.ws.RealWebSocket;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import okio.ByteString;
@@ -39,8 +39,8 @@ public final class WebSocketHttpTest {
   @Rule public final MockWebServer webServer = new MockWebServer();
 
   private final SslClient sslClient = SslClient.localhost();
-  private final NewWebSocketRecorder clientListener = new NewWebSocketRecorder("client");
-  private final NewWebSocketRecorder serverListener = new NewWebSocketRecorder("server");
+  private final WebSocketRecorder clientListener = new WebSocketRecorder("client");
+  private final WebSocketRecorder serverListener = new WebSocketRecorder("server");
   private final Random random = new Random(0);
   private OkHttpClient client = defaultClient().newBuilder()
       .addInterceptor(new Interceptor() {
@@ -58,7 +58,7 @@ public final class WebSocketHttpTest {
 
   @Test public void textMessage() throws IOException {
     webServer.enqueue(new MockResponse().withWebSocketUpgrade(serverListener));
-    NewWebSocket client = enqueueClientWebSocket();
+    WebSocket client = enqueueClientWebSocket();
 
     clientListener.assertOpen();
     serverListener.assertOpen();
@@ -69,7 +69,7 @@ public final class WebSocketHttpTest {
 
   @Test public void binaryMessage() throws IOException {
     webServer.enqueue(new MockResponse().withWebSocketUpgrade(serverListener));
-    RealNewWebSocket client = enqueueClientWebSocket();
+    RealWebSocket client = enqueueClientWebSocket();
 
     clientListener.assertOpen();
     serverListener.assertOpen();
@@ -80,7 +80,7 @@ public final class WebSocketHttpTest {
 
   @Test public void nullStringThrows() throws IOException {
     webServer.enqueue(new MockResponse().withWebSocketUpgrade(serverListener));
-    RealNewWebSocket client = enqueueClientWebSocket();
+    RealWebSocket client = enqueueClientWebSocket();
 
     clientListener.assertOpen();
     try {
@@ -93,7 +93,7 @@ public final class WebSocketHttpTest {
 
   @Test public void nullByteStringThrows() throws IOException {
     webServer.enqueue(new MockResponse().withWebSocketUpgrade(serverListener));
-    RealNewWebSocket client = enqueueClientWebSocket();
+    RealWebSocket client = enqueueClientWebSocket();
 
     clientListener.assertOpen();
     try {
@@ -109,7 +109,7 @@ public final class WebSocketHttpTest {
     enqueueClientWebSocket();
 
     clientListener.assertOpen();
-    NewWebSocket server = serverListener.assertOpen();
+    WebSocket server = serverListener.assertOpen();
 
     server.send("Hello, WebSockets!");
     clientListener.assertTextMessage("Hello, WebSockets!");
@@ -119,8 +119,8 @@ public final class WebSocketHttpTest {
     webServer.enqueue(new MockResponse().withWebSocketUpgrade(serverListener));
 
     final RuntimeException e = new RuntimeException();
-    clientListener.setNextEventDelegate(new NewWebSocket.Listener() {
-      @Override public void onOpen(NewWebSocket webSocket, Response response) {
+    clientListener.setNextEventDelegate(new WebSocketListener() {
+      @Override public void onOpen(WebSocket webSocket, Response response) {
         throw e;
       }
     });
@@ -140,8 +140,8 @@ public final class WebSocketHttpTest {
     webServer.enqueue(new MockResponse().setResponseCode(200).setBody("Body"));
 
     final RuntimeException e = new RuntimeException();
-    clientListener.setNextEventDelegate(new NewWebSocket.Listener() {
-      @Override public void onFailure(NewWebSocket webSocket, Throwable t, Response response) {
+    clientListener.setNextEventDelegate(new WebSocketListener() {
+      @Override public void onFailure(WebSocket webSocket, Throwable t, Response response) {
         throw e;
       }
     });
@@ -157,11 +157,11 @@ public final class WebSocketHttpTest {
     enqueueClientWebSocket();
 
     clientListener.assertOpen();
-    NewWebSocket server = serverListener.assertOpen();
+    WebSocket server = serverListener.assertOpen();
 
     final RuntimeException e = new RuntimeException();
-    clientListener.setNextEventDelegate(new NewWebSocket.Listener() {
-      @Override public void onMessage(NewWebSocket webSocket, String text) {
+    clientListener.setNextEventDelegate(new WebSocketListener() {
+      @Override public void onMessage(WebSocket webSocket, String text) {
         throw e;
       }
     });
@@ -176,11 +176,11 @@ public final class WebSocketHttpTest {
     enqueueClientWebSocket();
 
     clientListener.assertOpen();
-    NewWebSocket server = serverListener.assertOpen();
+    WebSocket server = serverListener.assertOpen();
 
     final RuntimeException e = new RuntimeException();
-    clientListener.setNextEventDelegate(new NewWebSocket.Listener() {
-      @Override public void onClosing(NewWebSocket webSocket, int code, String reason) {
+    clientListener.setNextEventDelegate(new WebSocketListener() {
+      @Override public void onClosing(WebSocket webSocket, int code, String reason) {
         throw e;
       }
     });
@@ -209,10 +209,10 @@ public final class WebSocketHttpTest {
   @Test public void clientTimeoutClosesBody() throws IOException {
     webServer.enqueue(new MockResponse().setResponseCode(408));
     webServer.enqueue(new MockResponse().withWebSocketUpgrade(serverListener));
-    RealNewWebSocket client = enqueueClientWebSocket();
+    RealWebSocket client = enqueueClientWebSocket();
 
     clientListener.assertOpen();
-    NewWebSocket server = serverListener.assertOpen();
+    WebSocket server = serverListener.assertOpen();
 
     client.send("abc");
     serverListener.assertTextMessage("abc");
@@ -325,7 +325,7 @@ public final class WebSocketHttpTest {
         .url(scheme + "://" + webServer.getHostName() + ":" + webServer.getPort() + "/")
         .build();
 
-    RealNewWebSocket webSocket = enqueueClientWebSocket(request);
+    RealWebSocket webSocket = enqueueClientWebSocket(request);
     clientListener.assertOpen();
     serverListener.assertOpen();
 
@@ -333,12 +333,12 @@ public final class WebSocketHttpTest {
     serverListener.assertTextMessage("abc");
   }
 
-  private RealNewWebSocket enqueueClientWebSocket() {
+  private RealWebSocket enqueueClientWebSocket() {
     return enqueueClientWebSocket(new Request.Builder().get().url(webServer.url("/")).build());
   }
 
-  private RealNewWebSocket enqueueClientWebSocket(Request request) {
-    RealNewWebSocket webSocket = new RealNewWebSocket(request, clientListener, random);
+  private RealWebSocket enqueueClientWebSocket(Request request) {
+    RealWebSocket webSocket = new RealWebSocket(request, clientListener, random);
     webSocket.connect(client);
     return webSocket;
   }

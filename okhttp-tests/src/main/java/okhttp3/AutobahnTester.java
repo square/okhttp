@@ -36,7 +36,7 @@ public final class AutobahnTester {
 
   final OkHttpClient client = new OkHttpClient();
 
-  private NewWebSocket newWebSocket(String path, NewWebSocket.Listener listener) {
+  private WebSocket newWebSocket(String path, WebSocketListener listener) {
     Request request = new Request.Builder().url(HOST + path).build();
     return client.newWebSocket(request, listener);
   }
@@ -59,26 +59,26 @@ public final class AutobahnTester {
   private void runTest(final long number, final long count) {
     final CountDownLatch latch = new CountDownLatch(1);
     final AtomicLong startNanos = new AtomicLong();
-    newWebSocket("/runCase?case=" + number + "&agent=okhttp", new NewWebSocket.Listener() {
-      @Override public void onOpen(NewWebSocket webSocket, Response response) {
+    newWebSocket("/runCase?case=" + number + "&agent=okhttp", new WebSocketListener() {
+      @Override public void onOpen(WebSocket webSocket, Response response) {
         System.out.println("Executing test case " + number + "/" + count);
         startNanos.set(System.nanoTime());
       }
 
-      @Override public void onMessage(final NewWebSocket webSocket, final ByteString bytes) {
+      @Override public void onMessage(final WebSocket webSocket, final ByteString bytes) {
         webSocket.send(bytes);
       }
 
-      @Override public void onMessage(final NewWebSocket webSocket, final String text) {
+      @Override public void onMessage(final WebSocket webSocket, final String text) {
         webSocket.send(text);
       }
 
-      @Override public void onClosing(NewWebSocket webSocket, int code, String reason) {
+      @Override public void onClosing(WebSocket webSocket, int code, String reason) {
         webSocket.close(1000, null);
         latch.countDown();
       }
 
-      @Override public void onFailure(NewWebSocket webSocket, Throwable t, Response response) {
+      @Override public void onFailure(WebSocket webSocket, Throwable t, Response response) {
         t.printStackTrace(System.out);
         latch.countDown();
       }
@@ -100,17 +100,17 @@ public final class AutobahnTester {
     final CountDownLatch latch = new CountDownLatch(1);
     final AtomicLong countRef = new AtomicLong();
     final AtomicReference<Throwable> failureRef = new AtomicReference<>();
-    newWebSocket("/getCaseCount", new NewWebSocket.Listener() {
-      @Override public void onMessage(NewWebSocket webSocket, String text) {
+    newWebSocket("/getCaseCount", new WebSocketListener() {
+      @Override public void onMessage(WebSocket webSocket, String text) {
         countRef.set(Long.parseLong(text));
       }
 
-      @Override public void onClosing(NewWebSocket webSocket, int code, String reason) {
+      @Override public void onClosing(WebSocket webSocket, int code, String reason) {
         webSocket.close(1000, null);
         latch.countDown();
       }
 
-      @Override public void onFailure(NewWebSocket webSocket, Throwable t, Response response) {
+      @Override public void onFailure(WebSocket webSocket, Throwable t, Response response) {
         failureRef.set(t);
         latch.countDown();
       }
@@ -131,13 +131,13 @@ public final class AutobahnTester {
 
   private void updateReports() {
     final CountDownLatch latch = new CountDownLatch(1);
-    newWebSocket("/updateReports?agent=" + Version.userAgent(), new NewWebSocket.Listener() {
-      @Override public void onClosing(NewWebSocket webSocket, int code, String reason) {
+    newWebSocket("/updateReports?agent=" + Version.userAgent(), new WebSocketListener() {
+      @Override public void onClosing(WebSocket webSocket, int code, String reason) {
         webSocket.close(code, null);
         latch.countDown();
       }
 
-      @Override public void onFailure(NewWebSocket webSocket, Throwable t, Response response) {
+      @Override public void onFailure(WebSocket webSocket, Throwable t, Response response) {
         latch.countDown();
       }
     });

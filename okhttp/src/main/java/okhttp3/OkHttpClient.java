@@ -45,7 +45,7 @@ import okhttp3.internal.connection.StreamAllocation;
 import okhttp3.internal.platform.Platform;
 import okhttp3.internal.tls.CertificateChainCleaner;
 import okhttp3.internal.tls.OkHostnameVerifier;
-import okhttp3.internal.ws.RealNewWebSocket;
+import okhttp3.internal.ws.RealWebSocket;
 
 /**
  * Factory for {@linkplain Call calls}, which can be used to send HTTP requests and read their
@@ -117,7 +117,7 @@ import okhttp3.internal.ws.RealNewWebSocket;
  * <p>OkHttp also uses daemon threads for HTTP/2 connections. These will exit automatically if they
  * remain idle.
  */
-public class OkHttpClient implements Cloneable, Call.Factory, NewWebSocket.Factory {
+public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory {
   private static final List<Protocol> DEFAULT_PROTOCOLS = Util.immutableList(
       Protocol.HTTP_2, Protocol.HTTP_1_1);
 
@@ -393,8 +393,8 @@ public class OkHttpClient implements Cloneable, Call.Factory, NewWebSocket.Facto
   /**
    * Uses {@code request} to connect a new web socket.
    */
-  @Override public NewWebSocket newWebSocket(Request request, NewWebSocket.Listener listener) {
-    RealNewWebSocket webSocket = new RealNewWebSocket(request, listener, new SecureRandom());
+  @Override public WebSocket newWebSocket(Request request, WebSocketListener listener) {
+    RealWebSocket webSocket = new RealWebSocket(request, listener, new SecureRandom());
     webSocket.connect(this);
     return webSocket;
   }
