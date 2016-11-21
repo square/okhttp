@@ -58,7 +58,7 @@ public final class ResponseBodyTest {
   }
 
   @Test public void stringBomUtf8() throws IOException {
-    ResponseBody body = body("efbbff68656c6c6f");
+    ResponseBody body = body("efbbbf68656c6c6f");
     assertEquals("hello", body.string());
   }
 
@@ -128,7 +128,7 @@ public final class ResponseBodyTest {
   }
 
   @Test public void readerBomUtf8() throws IOException {
-    ResponseBody body = body("efbbff68656c6c6f");
+    ResponseBody body = body("efbbbf68656c6c6f");
     assertEquals("hello", exhaust(body.charStream()));
   }
 
@@ -212,11 +212,11 @@ public final class ResponseBodyTest {
   }
 
   @Test public void sourceSeesBom() throws IOException {
-    ResponseBody body = body("efbbff68656c6c6f");
+    ResponseBody body = body("efbbbf68656c6c6f");
     BufferedSource source = body.source();
     assertEquals(0xef, source.readByte() & 0xff);
     assertEquals(0xbb, source.readByte() & 0xff);
-    assertEquals(0xff, source.readByte() & 0xff);
+    assertEquals(0xbf, source.readByte() & 0xff);
     assertEquals("hello", source.readUtf8());
   }
 
@@ -251,11 +251,11 @@ public final class ResponseBodyTest {
   }
 
   @Test public void bytesSeesBom() throws IOException {
-    ResponseBody body = body("efbbff68656c6c6f");
+    ResponseBody body = body("efbbbf68656c6c6f");
     byte[] bytes = body.bytes();
     assertEquals(0xef, bytes[0] & 0xff);
     assertEquals(0xbb, bytes[1] & 0xff);
-    assertEquals(0xff, bytes[2] & 0xff);
+    assertEquals(0xbf, bytes[2] & 0xff);
     assertEquals("hello", new String(bytes, 3, 5, "UTF-8"));
   }
 
@@ -335,11 +335,11 @@ public final class ResponseBodyTest {
   }
 
   @Test public void byteStreamSeesBom() throws IOException {
-    ResponseBody body = body("efbbff68656c6c6f");
+    ResponseBody body = body("efbbbf68656c6c6f");
     InputStream bytes = body.byteStream();
     assertEquals(0xef, bytes.read());
     assertEquals(0xbb, bytes.read());
-    assertEquals(0xff, bytes.read());
+    assertEquals(0xbf, bytes.read());
     assertEquals("hello", exhaust(new InputStreamReader(bytes, "utf-8")));
   }
 
