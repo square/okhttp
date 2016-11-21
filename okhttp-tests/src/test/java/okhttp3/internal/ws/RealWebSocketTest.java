@@ -152,11 +152,23 @@ public final class RealWebSocketTest {
     serverListener.assertTextMessage("Hi!");
   }
 
-  @Test public void serverCloseThenWritingCloseThrows() throws IOException {
+  @Test public void serverCloseThenClientClose() throws IOException {
     server.close(1000, "Hello!");
     client.processNextFrame();
     clientListener.assertClosing(1000, "Hello!");
     assertTrue(client.close(1000, "Bye!"));
+  }
+
+  @Test public void emptyCloseInitiatesShutdown() throws IOException {
+    server2clientSink.write(ByteString.decodeHex("8800")).emit(); // Close without code.
+    client.processNextFrame();
+    clientListener.assertClosing(1005, "");
+
+    assertTrue(client.close(1000, "Bye!"));
+    server.processNextFrame();
+    serverListener.assertClosing(1000, "Bye!");
+
+    clientListener.assertClosed(1005, "");
   }
 
   @Test public void clientCloseClosesConnection() throws IOException {
@@ -237,9 +249,10 @@ public final class RealWebSocketTest {
     // Manually write an invalid masked close frame.
     server2clientSink.write(ByteString.decodeHex("888760b420bb635c68de0cd84f")).emit();
 
-    client.processNextFrame(); // Detects error, closes connection immediately since close already sent.
+    client.processNextFrame();// Detects error, disconnects immediately since close already sent.
     assertTrue(clientConnectionClosed);
-    clientListener.assertFailure(ProtocolException.class, "Server-sent frames must not be masked.");
+    clientListener.assertFailure(
+        ProtocolException.class, "Server-sent frames must not be masked.");
 
     serverListener.assertClosing(1000, "Hello");
     serverListener.assertExhausted(); // Client should not have sent second close.
@@ -252,7 +265,7 @@ public final class RealWebSocketTest {
     assertFalse(clientConnectionClosed); // Not closed until close reply is received.
     server2clientSink.write(ByteString.decodeHex("0a00")).emit(); // Invalid non-final ping frame.
 
-    client.processNextFrame(); // Detects error, closes connection immediately since close already sent.
+    client.processNextFrame(); // Detects error, disconnects immediately since close already sent.
     assertTrue(clientConnectionClosed);
     clientListener.assertFailure(ProtocolException.class, "Control frames must be final.");
 
