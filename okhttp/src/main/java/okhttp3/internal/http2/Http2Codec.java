@@ -31,7 +31,6 @@ import okhttp3.internal.Internal;
 import okhttp3.internal.Util;
 import okhttp3.internal.connection.StreamAllocation;
 import okhttp3.internal.http.HttpCodec;
-import okhttp3.internal.http.HttpMethod;
 import okhttp3.internal.http.RealResponseBody;
 import okhttp3.internal.http.RequestLine;
 import okhttp3.internal.http.StatusLine;
@@ -101,9 +100,9 @@ public final class Http2Codec implements HttpCodec {
   @Override public void writeRequestHeaders(Request request) throws IOException {
     if (stream != null) return;
 
-    boolean permitsRequestBody = HttpMethod.permitsRequestBody(request.method());
+    boolean hasRequestBody = request.body() != null;
     List<Header> requestHeaders = http2HeadersList(request);
-    stream = connection.newStream(requestHeaders, permitsRequestBody);
+    stream = connection.newStream(requestHeaders, hasRequestBody);
     stream.readTimeout().timeout(client.readTimeoutMillis(), TimeUnit.MILLISECONDS);
     stream.writeTimeout().timeout(client.writeTimeoutMillis(), TimeUnit.MILLISECONDS);
   }
