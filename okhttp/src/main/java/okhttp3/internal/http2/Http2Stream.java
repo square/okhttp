@@ -21,6 +21,7 @@ import java.io.InterruptedIOException;
 import java.net.SocketTimeoutException;
 import java.util.ArrayList;
 import java.util.List;
+import okhttp3.internal.http.HttpRequestDeadline;
 import okio.AsyncTimeout;
 import okio.Buffer;
 import okio.BufferedSource;
@@ -61,6 +62,7 @@ public final class Http2Stream {
   final FramedDataSink sink;
   private final StreamTimeout readTimeout = new StreamTimeout();
   private final StreamTimeout writeTimeout = new StreamTimeout();
+  private final Http2RequestDeadline requestDeadline = new Http2RequestDeadline();
 
   /**
    * The reason why this stream was abnormally closed. If there are multiple reasons to abnormally
@@ -188,6 +190,14 @@ public final class Http2Stream {
     return writeTimeout;
   }
 
+  public Timeout requestDeadline() {
+    return requestDeadline;
+  }
+
+  public void startRequestDeadline() {
+    requestDeadline.enter();
+  }
+
   /** Returns a source that reads data from the peer. */
   public Source getSource() {
     return source;
@@ -277,6 +287,7 @@ public final class Http2Stream {
     boolean open;
     synchronized (this) {
       this.source.finished = true;
+      requestDeadline.exit();
       open = isOpen();
       notifyAll();
     }
@@ -593,6 +604,13 @@ public final class Http2Stream {
 
     public void exitAndThrowIfTimedOut() throws IOException {
       if (exit()) throw newTimeoutException(null /* cause */);
+    }
+  }
+
+  private class Http2RequestDeadline extends HttpRequestDeadline {
+    @Override
+    protected void timedOut() {
+      closeLater(ErrorCode.CANCEL);
     }
   }
 }

@@ -18,6 +18,7 @@ package okhttp3.internal.http1;
 import java.io.EOFException;
 import java.io.IOException;
 import java.net.ProtocolException;
+import java.util.concurrent.TimeUnit;
 import okhttp3.Headers;
 import okhttp3.HttpUrl;
 import okhttp3.OkHttpClient;
@@ -30,6 +31,7 @@ import okhttp3.internal.connection.RealConnection;
 import okhttp3.internal.connection.StreamAllocation;
 import okhttp3.internal.http.HttpCodec;
 import okhttp3.internal.http.HttpHeaders;
+import okhttp3.internal.http.HttpRequestDeadline;
 import okhttp3.internal.http.RealResponseBody;
 import okhttp3.internal.http.RequestLine;
 import okhttp3.internal.http.StatusLine;
@@ -80,9 +82,11 @@ public final class Http1Codec implements HttpCodec {
   /** The stream allocation that owns this stream. May be null for HTTPS proxy tunnels. */
   private final StreamAllocation streamAllocation;
 
+  private final Http1RequestDeadline requestDeadline;
+
   private final BufferedSource source;
   private final BufferedSink sink;
-  private int state = STATE_IDLE;
+  private volatile int state = STATE_IDLE;
 
   public Http1Codec(OkHttpClient client, StreamAllocation streamAllocation, BufferedSource source,
       BufferedSink sink) {
@@ -90,6 +94,10 @@ public final class Http1Codec implements HttpCodec {
     this.streamAllocation = streamAllocation;
     this.source = source;
     this.sink = sink;
+    this.requestDeadline = new Http1RequestDeadline();
+    if (client != null) {
+      this.requestDeadline.setHttp1RequestDeadline(client.requestDeadlineMillis(), MILLISECONDS);
+    }
   }
 
   @Override public Sink createRequestBody(Request request, long contentLength) {
@@ -108,6 +116,10 @@ public final class Http1Codec implements HttpCodec {
   }
 
   @Override public void cancel() {
+    if (streamAllocation == null) {
+      return;
+    }
+
     RealConnection connection = streamAllocation.connection();
     if (connection != null) connection.cancel();
   }
@@ -169,6 +181,8 @@ public final class Http1Codec implements HttpCodec {
   /** Returns bytes of a request header for sending on an HTTP transport. */
   public void writeRequest(Headers headers, String requestLine) throws IOException {
     if (state != STATE_IDLE) throw new IllegalStateException("state: " + state);
+
+    requestDeadline.enter();
     sink.writeUtf8(requestLine).writeUtf8("\r\n");
     for (int i = 0, size = headers.size(); i < size; i++) {
       sink.writeUtf8(headers.name(i))
@@ -206,6 +220,8 @@ public final class Http1Codec implements HttpCodec {
       IOException exception = new IOException("unexpected end of stream on " + streamAllocation);
       exception.initCause(e);
       throw exception;
+    } finally {
+      requestDeadline.exit();
     }
   }
 
@@ -489,6 +505,20 @@ public final class Http1Codec implements HttpCodec {
         endOfInput(false);
       }
       closed = true;
+    }
+  }
+
+  private class Http1RequestDeadline extends HttpRequestDeadline {
+    @Override protected void timedOut() {
+      cancel();
+    }
+
+    /**
+     * Setting to AsyncTimeout#timeout() instead of AsyncTimeout#deadline() because
+     * this will not be able to be reused if it's set to a deadline as it will be absolute.
+     */
+    private void setHttp1RequestDeadline(long deadline, TimeUnit unit) {
+      timeout(deadline, unit);
     }
   }
 }

@@ -201,6 +201,7 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
   final int connectTimeout;
   final int readTimeout;
   final int writeTimeout;
+  final int requestDeadline;
 
   public OkHttpClient() {
     this(new Builder());
@@ -246,6 +247,7 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
     this.connectTimeout = builder.connectTimeout;
     this.readTimeout = builder.readTimeout;
     this.writeTimeout = builder.writeTimeout;
+    this.requestDeadline = builder.requestDeadline;
   }
 
   private X509TrustManager systemDefaultTrustManager() {
@@ -287,6 +289,11 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
   /** Default write timeout (in milliseconds). */
   public int writeTimeoutMillis() {
     return writeTimeout;
+  }
+
+  /** Default request deadline (in milliseconds). */
+  public int requestDeadlineMillis() {
+    return requestDeadline;
   }
 
   public Proxy proxy() {
@@ -429,6 +436,7 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
     int connectTimeout;
     int readTimeout;
     int writeTimeout;
+    int requestDeadline;
 
     public Builder() {
       dispatcher = new Dispatcher();
@@ -449,6 +457,7 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
       connectTimeout = 10_000;
       readTimeout = 10_000;
       writeTimeout = 10_000;
+      requestDeadline = 10_000;
     }
 
     Builder(OkHttpClient okHttpClient) {
@@ -477,6 +486,7 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
       this.connectTimeout = okHttpClient.connectTimeout;
       this.readTimeout = okHttpClient.readTimeout;
       this.writeTimeout = okHttpClient.writeTimeout;
+      this.requestDeadline = okHttpClient.requestDeadline;
     }
 
     /**
@@ -519,6 +529,21 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
       if (millis > Integer.MAX_VALUE) throw new IllegalArgumentException("Timeout too large.");
       if (millis == 0 && timeout > 0) throw new IllegalArgumentException("Timeout too small.");
       writeTimeout = (int) millis;
+      return this;
+    }
+
+    /**
+     * Sets the default requestDeadline for new connections. A value of 0 means no deadline,
+     * otherwise values must be between 1 and {@link Integer#MAX_VALUE} when converted
+     * to milliseconds.
+     */
+    public Builder requestDeadline(long deadline, TimeUnit unit) {
+      if (deadline < 0) throw new IllegalArgumentException("deadline < 0");
+      if (unit == null) throw new NullPointerException("unit == null");
+      long millis = unit.toMillis(deadline);
+      if (millis > Integer.MAX_VALUE) throw new IllegalArgumentException("deadline too large.");
+      if (millis == 0 && deadline > 0) throw new IllegalArgumentException("deadline too small.");
+      requestDeadline = (int) millis;
       return this;
     }
 

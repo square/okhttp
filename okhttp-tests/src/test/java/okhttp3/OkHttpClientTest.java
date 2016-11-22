@@ -47,32 +47,49 @@ public final class OkHttpClientTest {
     assertEquals(10_000, client.connectTimeoutMillis());
     assertEquals(10_000, client.readTimeoutMillis());
     assertEquals(10_000, client.writeTimeoutMillis());
+    assertEquals(10_000, client.requestDeadlineMillis());
   }
 
   @Test public void timeoutValidRange() {
     OkHttpClient.Builder builder = new OkHttpClient.Builder();
     try {
       builder.connectTimeout(1, TimeUnit.NANOSECONDS);
+      fail("Connect timeout value is too small and check is not working");
     } catch (IllegalArgumentException ignored) {
     }
     try {
       builder.writeTimeout(1, TimeUnit.NANOSECONDS);
+      fail("Write timeout value is too small and check is not working");
     } catch (IllegalArgumentException ignored) {
     }
     try {
       builder.readTimeout(1, TimeUnit.NANOSECONDS);
+      fail("Read timeout value is too small and check is not working");
+    } catch (IllegalArgumentException ignored) {
+    }
+    try {
+      builder.requestDeadline(1, TimeUnit.NANOSECONDS);
+      fail("Request deadline value is too small and check is not working");
     } catch (IllegalArgumentException ignored) {
     }
     try {
       builder.connectTimeout(365, TimeUnit.DAYS);
+      fail("Connect timeout value is too large and check is not working");
     } catch (IllegalArgumentException ignored) {
     }
     try {
       builder.writeTimeout(365, TimeUnit.DAYS);
+      fail("Write timeout value is too large and check is not working");
     } catch (IllegalArgumentException ignored) {
     }
     try {
       builder.readTimeout(365, TimeUnit.DAYS);
+      fail("Read timeout value is too large and check is not working");
+    } catch (IllegalArgumentException ignored) {
+    }
+    try {
+      builder.requestDeadline(365, TimeUnit.DAYS);
+      fail("Request deadline value is too large and check is not working");
     } catch (IllegalArgumentException ignored) {
     }
   }

@@ -105,6 +105,8 @@ public final class Http2Codec implements HttpCodec {
     stream = connection.newStream(requestHeaders, hasRequestBody);
     stream.readTimeout().timeout(client.readTimeoutMillis(), TimeUnit.MILLISECONDS);
     stream.writeTimeout().timeout(client.writeTimeoutMillis(), TimeUnit.MILLISECONDS);
+    stream.requestDeadline().deadline(client.requestDeadlineMillis(), TimeUnit.MILLISECONDS);
+    stream.startRequestDeadline();
   }
 
   @Override public void finishRequest() throws IOException {
