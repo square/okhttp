@@ -151,7 +151,7 @@ public final class OkHttpURLConnection extends HttpURLConnection implements Call
    */
   @Override public InputStream getErrorStream() {
     try {
-      Response response = getResponse();
+      Response response = getResponse(true);
       if (HttpHeaders.hasBody(response) && response.code() >= HTTP_BAD_REQUEST) {
         return response.body().byteStream();
       }
@@ -163,7 +163,7 @@ public final class OkHttpURLConnection extends HttpURLConnection implements Call
 
   private Headers getHeaders() throws IOException {
     if (responseHeaders == null) {
-      Response response = getResponse();
+      Response response = getResponse(true);
       Headers headers = response.headers();
       responseHeaders = headers.newBuilder()
           .add(SELECTED_PROTOCOL, response.protocol().toString())
@@ -207,7 +207,7 @@ public final class OkHttpURLConnection extends HttpURLConnection implements Call
   @Override public String getHeaderField(String fieldName) {
     try {
       return fieldName == null
-          ? StatusLine.get(getResponse()).toString()
+          ? StatusLine.get(getResponse(true)).toString()
           : getHeaders().get(fieldName);
     } catch (IOException e) {
       return null;
@@ -227,7 +227,7 @@ public final class OkHttpURLConnection extends HttpURLConnection implements Call
   @Override public Map<String, List<String>> getHeaderFields() {
     try {
       return JavaNetHeaders.toMultimap(getHeaders(),
-          StatusLine.get(getResponse()).toString());
+          StatusLine.get(getResponse(true)).toString());
     } catch (IOException e) {
       return Collections.emptyMap();
     }
@@ -247,7 +247,7 @@ public final class OkHttpURLConnection extends HttpURLConnection implements Call
       throw new ProtocolException("This protocol does not support input");
     }
 
-    Response response = getResponse();
+    Response response = getResponse(false);
 
     if (response.code() >= HTTP_BAD_REQUEST) {
       throw new FileNotFoundException(url.toString());
@@ -405,13 +405,13 @@ public final class OkHttpURLConnection extends HttpURLConnection implements Call
    * Aggressively tries to get the final HTTP response, potentially making many HTTP requests in the
    * process in order to cope with redirects and authentication.
    */
-  private Response getResponse() throws IOException {
-    if (response != null) {
-      return response;
-    } else if (networkResponse != null) {
-      return networkResponse;
-    } else if (callFailure != null) {
-      throw propagate(callFailure);
+  private Response getResponse(boolean networkResponseOnError) throws IOException {
+    synchronized (lock) {
+      if (response != null) return response;
+      if (callFailure != null) {
+        if (networkResponseOnError && networkResponse != null) return networkResponse;
+        throw propagate(callFailure);
+      }
     }
 
     Call call = buildCall();
@@ -466,11 +466,11 @@ public final class OkHttpURLConnection extends HttpURLConnection implements Call
   }
 
   @Override public String getResponseMessage() throws IOException {
-    return getResponse().message();
+    return getResponse(true).message();
   }
 
   @Override public int getResponseCode() throws IOException {
-    return getResponse().code();
+    return getResponse(true).code();
   }
 
   @Override public void setRequestProperty(String field, String newValue) {
