@@ -25,14 +25,13 @@ import java.util.Random;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
 import okhttp3.Call;
 import okhttp3.Callback;
-import okhttp3.WebSocket;
 import okhttp3.OkHttpClient;
 import okhttp3.Protocol;
 import okhttp3.Request;
 import okhttp3.Response;
+import okhttp3.WebSocket;
 import okhttp3.WebSocketListener;
 import okhttp3.internal.Internal;
 import okhttp3.internal.NamedRunnable;
@@ -61,7 +60,7 @@ public final class RealWebSocket implements WebSocket, WebSocketReader.FrameCall
 
   /** A shared executor for all web sockets. */
   private static final ExecutorService executor = new ThreadPoolExecutor(0,
-      Integer.MAX_VALUE, 60, TimeUnit.SECONDS, new SynchronousQueue<Runnable>(),
+      Integer.MAX_VALUE, 60, SECONDS, new SynchronousQueue<Runnable>(),
       Util.threadFactory("OkHttp WebSocket", true));
 
   /** The application's original request unadulterated by web socket headers. */
@@ -157,8 +156,6 @@ public final class RealWebSocket implements WebSocket, WebSocketReader.FrameCall
 
   public void connect(OkHttpClient client) {
     client = client.newBuilder()
-        .readTimeout(0, SECONDS) // i.e., no timeout because this is a long-lived connection.
-        .writeTimeout(0, SECONDS) // i.e., no timeout because this is a long-lived connection.
         .protocols(ONLY_HTTP1)
         .build();
     Request request = originalRequest.newBuilder()
@@ -187,6 +184,7 @@ public final class RealWebSocket implements WebSocket, WebSocketReader.FrameCall
         try {
           listener.onOpen(RealWebSocket.this, response);
           initReaderAndWriter(streams);
+          streamAllocation.connection().socket().setSoTimeout(0);
           loopReader();
         } catch (Exception e) {
           failWebSocket(e, null);
