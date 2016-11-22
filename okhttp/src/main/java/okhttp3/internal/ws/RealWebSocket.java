@@ -238,7 +238,7 @@ public final class RealWebSocket implements WebSocket, WebSocketReader.FrameCall
     reader = new WebSocketReader(streams.client, streams.source, this);
   }
 
-  /** Receive frames until there are no more. */
+  /** Receive frames until there are no more. Invoked only by the reader thread. */
   public void loopReader() throws IOException {
     while (receivedCloseCode == -1) {
       // This method call results in one or more onRead* methods being called on this thread.
@@ -246,7 +246,10 @@ public final class RealWebSocket implements WebSocket, WebSocketReader.FrameCall
     }
   }
 
-  /** Receive a single frame and return true if there are more frames to read. */
+  /**
+   * For testing: receive a single frame and return true if there are more frames to read. Invoked
+   * only by the reader thread.
+   */
   boolean processNextFrame() throws IOException {
     try {
       reader.processNextFrame();
