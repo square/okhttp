@@ -18,6 +18,7 @@ package okhttp3.internal.ws;
 import java.io.EOFException;
 import java.io.IOException;
 import java.net.ProtocolException;
+import java.util.concurrent.TimeUnit;
 import okio.Buffer;
 import okio.BufferedSource;
 import okio.ByteString;
@@ -104,7 +105,15 @@ final class WebSocketReader {
   private void readHeader() throws IOException {
     if (closed) throw new IOException("closed");
 
-    int b0 = source.readByte() & 0xff;
+    // Disable the timeout to read the first byte of a new frame.
+    int b0;
+    long timeoutBefore = source.timeout().timeoutNanos();
+    source.timeout().clearTimeout();
+    try {
+      b0 = source.readByte() & 0xff;
+    } finally {
+      source.timeout().timeout(timeoutBefore, TimeUnit.NANOSECONDS);
+    }
 
     opcode = b0 & B0_MASK_OPCODE;
     isFinalFrame = (b0 & B0_FLAG_FIN) != 0;

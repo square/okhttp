@@ -17,13 +17,20 @@ package okhttp3;
 
 import java.io.IOException;
 import java.net.ProtocolException;
+import java.net.SocketTimeoutException;
 import java.util.Random;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 import okhttp3.internal.tls.SslClient;
-import okhttp3.internal.ws.WebSocketRecorder;
 import okhttp3.internal.ws.RealWebSocket;
+import okhttp3.internal.ws.WebSocketProtocol;
+import okhttp3.internal.ws.WebSocketRecorder;
+import okhttp3.mockwebserver.Dispatcher;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
+import okhttp3.mockwebserver.RecordedRequest;
+import okhttp3.mockwebserver.SocketPolicy;
+import okio.Buffer;
 import okio.ByteString;
 import org.junit.After;
 import org.junit.Ignore;
@@ -32,6 +39,7 @@ import org.junit.Test;
 
 import static okhttp3.TestUtil.defaultClient;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.fail;
 
@@ -43,6 +51,8 @@ public final class WebSocketHttpTest {
   private final WebSocketRecorder serverListener = new WebSocketRecorder("server");
   private final Random random = new Random(0);
   private OkHttpClient client = defaultClient().newBuilder()
+      .writeTimeout(500, TimeUnit.MILLISECONDS)
+      .readTimeout(500, TimeUnit.MILLISECONDS)
       .addInterceptor(new Interceptor() {
         @Override public Response intercept(Chain chain) throws IOException {
           Response response = chain.proceed(chain.request());
@@ -58,33 +68,33 @@ public final class WebSocketHttpTest {
 
   @Test public void textMessage() throws IOException {
     webServer.enqueue(new MockResponse().withWebSocketUpgrade(serverListener));
-    WebSocket client = enqueueClientWebSocket();
+    WebSocket webSocket = newWebSocket();
 
     clientListener.assertOpen();
     serverListener.assertOpen();
 
-    client.send("Hello, WebSockets!");
+    webSocket.send("Hello, WebSockets!");
     serverListener.assertTextMessage("Hello, WebSockets!");
   }
 
   @Test public void binaryMessage() throws IOException {
     webServer.enqueue(new MockResponse().withWebSocketUpgrade(serverListener));
-    RealWebSocket client = enqueueClientWebSocket();
+    WebSocket webSocket = newWebSocket();
 
     clientListener.assertOpen();
     serverListener.assertOpen();
 
-    client.send(ByteString.encodeUtf8("Hello!"));
+    webSocket.send(ByteString.encodeUtf8("Hello!"));
     serverListener.assertBinaryMessage(new byte[] {'H', 'e', 'l', 'l', 'o', '!'});
   }
 
   @Test public void nullStringThrows() throws IOException {
     webServer.enqueue(new MockResponse().withWebSocketUpgrade(serverListener));
-    RealWebSocket client = enqueueClientWebSocket();
+    WebSocket webSocket = newWebSocket();
 
     clientListener.assertOpen();
     try {
-      client.send((String) null);
+      webSocket.send((String) null);
       fail();
     } catch (NullPointerException e) {
       assertEquals("text == null", e.getMessage());
@@ -93,11 +103,11 @@ public final class WebSocketHttpTest {
 
   @Test public void nullByteStringThrows() throws IOException {
     webServer.enqueue(new MockResponse().withWebSocketUpgrade(serverListener));
-    RealWebSocket client = enqueueClientWebSocket();
+    WebSocket webSocket = newWebSocket();
 
     clientListener.assertOpen();
     try {
-      client.send((ByteString) null);
+      webSocket.send((ByteString) null);
       fail();
     } catch (NullPointerException e) {
       assertEquals("bytes == null", e.getMessage());
@@ -106,7 +116,7 @@ public final class WebSocketHttpTest {
 
   @Test public void serverMessage() throws IOException {
     webServer.enqueue(new MockResponse().withWebSocketUpgrade(serverListener));
-    enqueueClientWebSocket();
+    newWebSocket();
 
     clientListener.assertOpen();
     WebSocket server = serverListener.assertOpen();
@@ -124,7 +134,7 @@ public final class WebSocketHttpTest {
         throw e;
       }
     });
-    enqueueClientWebSocket();
+    newWebSocket();
 
     serverListener.assertOpen();
     serverListener.assertExhausted();
@@ -146,7 +156,7 @@ public final class WebSocketHttpTest {
       }
     });
 
-    enqueueClientWebSocket();
+    newWebSocket();
 
     assertEquals("", logs.take());
     logger.removeHandler(logs);
@@ -154,7 +164,7 @@ public final class WebSocketHttpTest {
 
   @Test public void throwingOnMessageClosesImmediatelyAndFails() throws IOException {
     webServer.enqueue(new MockResponse().withWebSocketUpgrade(serverListener));
-    enqueueClientWebSocket();
+    newWebSocket();
 
     clientListener.assertOpen();
     WebSocket server = serverListener.assertOpen();
@@ -173,7 +183,7 @@ public final class WebSocketHttpTest {
 
   @Test public void throwingOnClosingClosesImmediatelyAndFails() throws IOException {
     webServer.enqueue(new MockResponse().withWebSocketUpgrade(serverListener));
-    enqueueClientWebSocket();
+    newWebSocket();
 
     clientListener.assertOpen();
     WebSocket server = serverListener.assertOpen();
@@ -192,7 +202,7 @@ public final class WebSocketHttpTest {
 
   @Test public void non101RetainsBody() throws IOException {
     webServer.enqueue(new MockResponse().setResponseCode(200).setBody("Body"));
-    enqueueClientWebSocket();
+    newWebSocket();
 
     clientListener.assertFailure(200, "Body", ProtocolException.class,
         "Expected HTTP 101 response but was '200 OK'");
@@ -200,7 +210,7 @@ public final class WebSocketHttpTest {
 
   @Test public void notFound() throws IOException {
     webServer.enqueue(new MockResponse().setStatus("HTTP/1.1 404 Not Found"));
-    enqueueClientWebSocket();
+    newWebSocket();
 
     clientListener.assertFailure(404, null, ProtocolException.class,
         "Expected HTTP 101 response but was '404 Not Found'");
@@ -209,12 +219,12 @@ public final class WebSocketHttpTest {
   @Test public void clientTimeoutClosesBody() throws IOException {
     webServer.enqueue(new MockResponse().setResponseCode(408));
     webServer.enqueue(new MockResponse().withWebSocketUpgrade(serverListener));
-    RealWebSocket client = enqueueClientWebSocket();
+    WebSocket webSocket = newWebSocket();
 
     clientListener.assertOpen();
     WebSocket server = serverListener.assertOpen();
 
-    client.send("abc");
+    webSocket.send("abc");
     serverListener.assertTextMessage("abc");
 
     server.send("def");
@@ -226,7 +236,7 @@ public final class WebSocketHttpTest {
         .setResponseCode(101)
         .setHeader("Upgrade", "websocket")
         .setHeader("Sec-WebSocket-Accept", "ujmZX4KXZqjwy6vi1aQFH5p4Ygk="));
-    enqueueClientWebSocket();
+    newWebSocket();
 
     clientListener.assertFailure(101, null, ProtocolException.class,
         "Expected 'Connection' header value 'Upgrade' but was 'null'");
@@ -238,7 +248,7 @@ public final class WebSocketHttpTest {
         .setHeader("Upgrade", "websocket")
         .setHeader("Connection", "Downgrade")
         .setHeader("Sec-WebSocket-Accept", "ujmZX4KXZqjwy6vi1aQFH5p4Ygk="));
-    enqueueClientWebSocket();
+    newWebSocket();
 
     clientListener.assertFailure(101, null, ProtocolException.class,
         "Expected 'Connection' header value 'Upgrade' but was 'Downgrade'");
@@ -249,7 +259,7 @@ public final class WebSocketHttpTest {
         .setResponseCode(101)
         .setHeader("Connection", "Upgrade")
         .setHeader("Sec-WebSocket-Accept", "ujmZX4KXZqjwy6vi1aQFH5p4Ygk="));
-    enqueueClientWebSocket();
+    newWebSocket();
 
     clientListener.assertFailure(101, null, ProtocolException.class,
         "Expected 'Upgrade' header value 'websocket' but was 'null'");
@@ -261,7 +271,7 @@ public final class WebSocketHttpTest {
         .setHeader("Connection", "Upgrade")
         .setHeader("Upgrade", "Pepsi")
         .setHeader("Sec-WebSocket-Accept", "ujmZX4KXZqjwy6vi1aQFH5p4Ygk="));
-    enqueueClientWebSocket();
+    newWebSocket();
 
     clientListener.assertFailure(101, null, ProtocolException.class,
         "Expected 'Upgrade' header value 'websocket' but was 'Pepsi'");
@@ -272,7 +282,7 @@ public final class WebSocketHttpTest {
         .setResponseCode(101)
         .setHeader("Connection", "Upgrade")
         .setHeader("Upgrade", "websocket"));
-    enqueueClientWebSocket();
+    newWebSocket();
 
     clientListener.assertFailure(101, null, ProtocolException.class,
         "Expected 'Sec-WebSocket-Accept' header value 'ujmZX4KXZqjwy6vi1aQFH5p4Ygk=' but was 'null'");
@@ -284,7 +294,7 @@ public final class WebSocketHttpTest {
         .setHeader("Connection", "Upgrade")
         .setHeader("Upgrade", "websocket")
         .setHeader("Sec-WebSocket-Accept", "magic"));
-    enqueueClientWebSocket();
+    newWebSocket();
 
     clientListener.assertFailure(101, null, ProtocolException.class,
         "Expected 'Sec-WebSocket-Accept' header value 'ujmZX4KXZqjwy6vi1aQFH5p4Ygk=' but was 'magic'");
@@ -318,6 +328,61 @@ public final class WebSocketHttpTest {
     websocketScheme("https");
   }
 
+  @Test public void readTimeoutAppliesToHttpRequest() throws IOException {
+    webServer.enqueue(new MockResponse()
+        .setSocketPolicy(SocketPolicy.NO_RESPONSE));
+
+    WebSocket webSocket = newWebSocket();
+
+    clientListener.assertFailure(SocketTimeoutException.class, "timeout");
+    assertFalse(webSocket.close(1000, null));
+  }
+
+  /**
+   * There's no read timeout when reading the first byte of a new frame. But as soon as we start
+   * reading a frame we enable the read timeout. In this test we have the server returning the first
+   * byte of a frame but no more frames.
+   */
+  @Test public void readTimeoutAppliesWithinFrames() throws IOException {
+    webServer.setDispatcher(new Dispatcher() {
+      @Override public MockResponse dispatch(RecordedRequest request) throws InterruptedException {
+        return upgradeResponse(request)
+            .setBody(new Buffer().write(ByteString.decodeHex("81"))) // Truncated frame.
+            .removeHeader("Content-Length")
+            .setSocketPolicy(SocketPolicy.KEEP_OPEN);
+      }
+    });
+
+    WebSocket webSocket = newWebSocket();
+    clientListener.assertOpen();
+
+    clientListener.assertFailure(SocketTimeoutException.class, "timeout");
+    assertFalse(webSocket.close(1000, null));
+  }
+
+  @Test public void readTimeoutDoesNotApplyAcrossFrames() throws Exception {
+    webServer.enqueue(new MockResponse().withWebSocketUpgrade(serverListener));
+    newWebSocket();
+
+    clientListener.assertOpen();
+    WebSocket server = serverListener.assertOpen();
+
+    // Sleep longer than the HTTP client's read timeout.
+    Thread.sleep(client.readTimeoutMillis() + 500);
+
+    server.send("abc");
+    clientListener.assertTextMessage("abc");
+  }
+
+  private MockResponse upgradeResponse(RecordedRequest request) {
+    String key = request.getHeader("Sec-WebSocket-Key");
+    return new MockResponse()
+        .setStatus("HTTP/1.1 101 Switching Protocols")
+        .setHeader("Connection", "Upgrade")
+        .setHeader("Upgrade", "websocket")
+        .setHeader("Sec-WebSocket-Accept", WebSocketProtocol.acceptHeader(key));
+  }
+
   private void websocketScheme(String scheme) throws IOException {
     webServer.enqueue(new MockResponse().withWebSocketUpgrade(serverListener));
 
@@ -325,7 +390,7 @@ public final class WebSocketHttpTest {
         .url(scheme + "://" + webServer.getHostName() + ":" + webServer.getPort() + "/")
         .build();
 
-    RealWebSocket webSocket = enqueueClientWebSocket(request);
+    RealWebSocket webSocket = newWebSocket(request);
     clientListener.assertOpen();
     serverListener.assertOpen();
 
@@ -333,11 +398,11 @@ public final class WebSocketHttpTest {
     serverListener.assertTextMessage("abc");
   }
 
-  private RealWebSocket enqueueClientWebSocket() {
-    return enqueueClientWebSocket(new Request.Builder().get().url(webServer.url("/")).build());
+  private RealWebSocket newWebSocket() {
+    return newWebSocket(new Request.Builder().get().url(webServer.url("/")).build());
   }
 
-  private RealWebSocket enqueueClientWebSocket(Request request) {
+  private RealWebSocket newWebSocket(Request request) {
     RealWebSocket webSocket = new RealWebSocket(request, clientListener, random);
     webSocket.connect(client);
     return webSocket;
