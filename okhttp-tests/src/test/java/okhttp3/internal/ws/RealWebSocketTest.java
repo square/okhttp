@@ -19,10 +19,10 @@ import java.io.EOFException;
 import java.io.IOException;
 import java.net.ProtocolException;
 import java.util.Random;
+import java.util.concurrent.TimeUnit;
 import okhttp3.Protocol;
 import okhttp3.Request;
 import okhttp3.Response;
-import okio.BufferedSink;
 import okio.ByteString;
 import okio.Okio;
 import okio.Pipe;
@@ -31,6 +31,7 @@ import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
@@ -39,273 +40,295 @@ public final class RealWebSocketTest {
   // zero effect on the behavior of the WebSocket API which is why tests are only written once
   // from the perspective of a single peer.
 
-  private RealWebSocket client;
-  private boolean clientConnectionCloseThrows;
-  private boolean clientConnectionClosed;
+  private final Random random = new Random(0);
   private final Pipe client2Server = new Pipe(1024L);
-  private final BufferedSink client2ServerSink = Okio.buffer(client2Server.sink());
-  private final WebSocketRecorder clientListener = new WebSocketRecorder("client");
-
-  private RealWebSocket server;
-  private boolean serverConnectionClosed;
   private final Pipe server2client = new Pipe(1024L);
-  private final BufferedSink server2clientSink = Okio.buffer(server2client.sink());
-  private final WebSocketRecorder serverListener = new WebSocketRecorder("server");
+
+  private TestStreams client = new TestStreams(true, server2client, client2Server);
+  private TestStreams server = new TestStreams(false, client2Server, server2client);
 
   @Before public void setUp() throws IOException {
-    Random random = new Random(0);
-    String url = "http://example.com/websocket";
-    final Response response = new Response.Builder()
-        .code(101)
-        .request(new Request.Builder().url(url).build())
-        .protocol(Protocol.HTTP_1_1)
-        .build();
-
-    client = new RealWebSocket(response.request(), clientListener, random);
-    client.initReaderAndWriter(new RealWebSocket.Streams(
-        true, Okio.buffer(server2client.source()), client2ServerSink) {
-      @Override public void close() throws IOException {
-        source.close();
-        sink.close();
-        if (clientConnectionClosed) {
-          throw new AssertionError("Already closed");
-        }
-        clientConnectionClosed = true;
-
-        if (clientConnectionCloseThrows) {
-          throw new RuntimeException("Oops!");
-        }
-      }
-    });
-
-    server = new RealWebSocket(response.request(), serverListener, random);
-    server.initReaderAndWriter(new RealWebSocket.Streams(
-        false, Okio.buffer(client2Server.source()), server2clientSink) {
-      @Override public void close() throws IOException {
-        source.close();
-        sink.close();
-        if (serverConnectionClosed) {
-          throw new AssertionError("Already closed");
-        }
-        serverConnectionClosed = true;
-      }
-    });
+    client.initWebSocket(random, 0);
+    server.initWebSocket(random, 0);
   }
 
   @After public void tearDown() {
-    clientListener.assertExhausted();
-    serverListener.assertExhausted();
+    client.listener.assertExhausted();
+    server.listener.assertExhausted();
   }
 
   @Test public void close() throws IOException {
-    client.close(1000, "Hello!");
+    client.webSocket.close(1000, "Hello!");
     assertFalse(server.processNextFrame()); // This will trigger a close response.
-    serverListener.assertClosing(1000, "Hello!");
-    server.close(1000, "Goodbye!");
+    server.listener.assertClosing(1000, "Hello!");
+    server.webSocket.close(1000, "Goodbye!");
     assertFalse(client.processNextFrame());
-    clientListener.assertClosing(1000, "Goodbye!");
-    serverListener.assertClosed(1000, "Hello!");
-    clientListener.assertClosed(1000, "Goodbye!");
+    client.listener.assertClosing(1000, "Goodbye!");
+    server.listener.assertClosed(1000, "Hello!");
+    client.listener.assertClosed(1000, "Goodbye!");
   }
 
   @Test public void clientCloseThenMethodsReturnFalse() throws IOException {
-    client.close(1000, "Hello!");
+    client.webSocket.close(1000, "Hello!");
 
-    assertFalse(client.close(1000, "Hello!"));
-    assertFalse(client.send("Hello!"));
+    assertFalse(client.webSocket.close(1000, "Hello!"));
+    assertFalse(client.webSocket.send("Hello!"));
   }
 
   @Test public void afterSocketClosedPingFailsWebSocket() throws IOException {
     client2Server.source().close();
-    client.pong(ByteString.encodeUtf8("Ping!"));
-    clientListener.assertFailure(IOException.class, "source is closed");
+    client.webSocket.pong(ByteString.encodeUtf8("Ping!"));
+    client.listener.assertFailure(IOException.class, "source is closed");
 
-    assertFalse(client.send("Hello!"));
+    assertFalse(client.webSocket.send("Hello!"));
   }
 
   @Test public void socketClosedDuringMessageKillsWebSocket() throws IOException {
     client2Server.source().close();
 
-    assertTrue(client.send("Hello!"));
-    clientListener.assertFailure(IOException.class, "source is closed");
+    assertTrue(client.webSocket.send("Hello!"));
+    client.listener.assertFailure(IOException.class, "source is closed");
 
     // A failed write prevents further use of the WebSocket instance.
-    assertFalse(client.send("Hello!"));
-    assertFalse(client.pong(ByteString.encodeUtf8("Ping!")));
+    assertFalse(client.webSocket.send("Hello!"));
+    assertFalse(client.webSocket.pong(ByteString.encodeUtf8("Ping!")));
   }
 
   @Test public void serverCloseThenWritingPingSucceeds() throws IOException {
-    server.close(1000, "Hello!");
+    server.webSocket.close(1000, "Hello!");
     client.processNextFrame();
-    clientListener.assertClosing(1000, "Hello!");
+    client.listener.assertClosing(1000, "Hello!");
 
-    assertTrue(client.pong(ByteString.encodeUtf8("Pong?")));
+    assertTrue(client.webSocket.pong(ByteString.encodeUtf8("Pong?")));
   }
 
   @Test public void clientCanWriteMessagesAfterServerClose() throws IOException {
-    server.close(1000, "Hello!");
+    server.webSocket.close(1000, "Hello!");
     client.processNextFrame();
-    clientListener.assertClosing(1000, "Hello!");
+    client.listener.assertClosing(1000, "Hello!");
 
-    assertTrue(client.send("Hi!"));
+    assertTrue(client.webSocket.send("Hi!"));
     server.processNextFrame();
-    serverListener.assertTextMessage("Hi!");
+    server.listener.assertTextMessage("Hi!");
   }
 
   @Test public void serverCloseThenClientClose() throws IOException {
-    server.close(1000, "Hello!");
+    server.webSocket.close(1000, "Hello!");
     client.processNextFrame();
-    clientListener.assertClosing(1000, "Hello!");
-    assertTrue(client.close(1000, "Bye!"));
+    client.listener.assertClosing(1000, "Hello!");
+    assertTrue(client.webSocket.close(1000, "Bye!"));
   }
 
   @Test public void emptyCloseInitiatesShutdown() throws IOException {
-    server2clientSink.write(ByteString.decodeHex("8800")).emit(); // Close without code.
+    server.sink.write(ByteString.decodeHex("8800")).emit(); // Close without code.
     client.processNextFrame();
-    clientListener.assertClosing(1005, "");
+    client.listener.assertClosing(1005, "");
 
-    assertTrue(client.close(1000, "Bye!"));
+    assertTrue(client.webSocket.close(1000, "Bye!"));
     server.processNextFrame();
-    serverListener.assertClosing(1000, "Bye!");
+    server.listener.assertClosing(1000, "Bye!");
 
-    clientListener.assertClosed(1005, "");
+    client.listener.assertClosed(1005, "");
   }
 
   @Test public void clientCloseClosesConnection() throws IOException {
-    client.close(1000, "Hello!");
-    assertFalse(clientConnectionClosed);
+    client.webSocket.close(1000, "Hello!");
+    assertFalse(client.closed);
     server.processNextFrame(); // Read client closing, send server close.
-    serverListener.assertClosing(1000, "Hello!");
+    server.listener.assertClosing(1000, "Hello!");
 
-    server.close(1000, "Goodbye!");
+    server.webSocket.close(1000, "Goodbye!");
     client.processNextFrame(); // Read server closing, close connection.
-    assertTrue(clientConnectionClosed);
-    clientListener.assertClosing(1000, "Goodbye!");
+    assertTrue(client.closed);
+    client.listener.assertClosing(1000, "Goodbye!");
 
     // Server and client both finished closing, connection is closed.
-    serverListener.assertClosed(1000, "Hello!");
-    clientListener.assertClosed(1000, "Goodbye!");
+    server.listener.assertClosed(1000, "Hello!");
+    client.listener.assertClosed(1000, "Goodbye!");
   }
 
   @Test public void serverCloseClosesConnection() throws IOException {
-    server.close(1000, "Hello!");
+    server.webSocket.close(1000, "Hello!");
 
     client.processNextFrame(); // Read server close, send client close, close connection.
-    assertFalse(clientConnectionClosed);
-    clientListener.assertClosing(1000, "Hello!");
+    assertFalse(client.closed);
+    client.listener.assertClosing(1000, "Hello!");
 
-    client.close(1000, "Hello!");
+    client.webSocket.close(1000, "Hello!");
     server.processNextFrame();
-    serverListener.assertClosing(1000, "Hello!");
+    server.listener.assertClosing(1000, "Hello!");
 
-    clientListener.assertClosed(1000, "Hello!");
-    serverListener.assertClosed(1000, "Hello!");
+    client.listener.assertClosed(1000, "Hello!");
+    server.listener.assertClosed(1000, "Hello!");
   }
 
   @Test public void clientAndServerCloseClosesConnection() throws IOException {
     // Send close from both sides at the same time.
-    server.close(1000, "Hello!");
+    server.webSocket.close(1000, "Hello!");
     client.processNextFrame(); // Read close, close connection close.
 
-    assertFalse(clientConnectionClosed);
-    client.close(1000, "Hi!");
+    assertFalse(client.closed);
+    client.webSocket.close(1000, "Hi!");
     server.processNextFrame();
 
-    clientListener.assertClosing(1000, "Hello!");
-    serverListener.assertClosing(1000, "Hi!");
-    clientListener.assertClosed(1000, "Hello!");
-    serverListener.assertClosed(1000, "Hi!");
-    assertTrue(clientConnectionClosed);
+    client.listener.assertClosing(1000, "Hello!");
+    server.listener.assertClosing(1000, "Hi!");
+    client.listener.assertClosed(1000, "Hello!");
+    server.listener.assertClosed(1000, "Hi!");
+    assertTrue(client.closed);
 
-    serverListener.assertExhausted(); // Client should not have sent second close.
-    clientListener.assertExhausted(); // Server should not have sent second close.
+    server.listener.assertExhausted(); // Client should not have sent second close.
+    client.listener.assertExhausted(); // Server should not have sent second close.
   }
 
   @Test public void serverCloseBreaksReadMessageLoop() throws IOException {
-    server.send("Hello!");
-    server.close(1000, "Bye!");
+    server.webSocket.send("Hello!");
+    server.webSocket.close(1000, "Bye!");
     assertTrue(client.processNextFrame());
-    clientListener.assertTextMessage("Hello!");
+    client.listener.assertTextMessage("Hello!");
     assertFalse(client.processNextFrame());
-    clientListener.assertClosing(1000, "Bye!");
+    client.listener.assertClosing(1000, "Bye!");
   }
 
   @Test public void protocolErrorBeforeCloseSendsFailure() throws IOException {
-    server2clientSink.write(ByteString.decodeHex("0a00")).emit(); // Invalid non-final ping frame.
+    server.sink.write(ByteString.decodeHex("0a00")).emit(); // Invalid non-final ping frame.
 
     client.processNextFrame(); // Detects error, send close, close connection.
-    assertTrue(clientConnectionClosed);
-    clientListener.assertFailure(ProtocolException.class, "Control frames must be final.");
+    assertTrue(client.closed);
+    client.listener.assertFailure(ProtocolException.class, "Control frames must be final.");
 
     server.processNextFrame();
-    serverListener.assertFailure(EOFException.class, null);
+    server.listener.assertFailure(EOFException.class, null);
   }
 
   @Test public void protocolErrorInCloseResponseClosesConnection() throws IOException {
-    client.close(1000, "Hello");
+    client.webSocket.close(1000, "Hello");
     server.processNextFrame();
-    assertFalse(clientConnectionClosed); // Not closed until close reply is received.
+    assertFalse(client.closed); // Not closed until close reply is received.
 
     // Manually write an invalid masked close frame.
-    server2clientSink.write(ByteString.decodeHex("888760b420bb635c68de0cd84f")).emit();
+    server.sink.write(ByteString.decodeHex("888760b420bb635c68de0cd84f")).emit();
 
     client.processNextFrame();// Detects error, disconnects immediately since close already sent.
-    assertTrue(clientConnectionClosed);
-    clientListener.assertFailure(
+    assertTrue(client.closed);
+    client.listener.assertFailure(
         ProtocolException.class, "Server-sent frames must not be masked.");
 
-    serverListener.assertClosing(1000, "Hello");
-    serverListener.assertExhausted(); // Client should not have sent second close.
+    server.listener.assertClosing(1000, "Hello");
+    server.listener.assertExhausted(); // Client should not have sent second close.
   }
 
   @Test public void protocolErrorAfterCloseDoesNotSendClose() throws IOException {
-    client.close(1000, "Hello!");
+    client.webSocket.close(1000, "Hello!");
     server.processNextFrame();
 
-    assertFalse(clientConnectionClosed); // Not closed until close reply is received.
-    server2clientSink.write(ByteString.decodeHex("0a00")).emit(); // Invalid non-final ping frame.
+    assertFalse(client.closed); // Not closed until close reply is received.
+    server.sink.write(ByteString.decodeHex("0a00")).emit(); // Invalid non-final ping frame.
 
     client.processNextFrame(); // Detects error, disconnects immediately since close already sent.
-    assertTrue(clientConnectionClosed);
-    clientListener.assertFailure(ProtocolException.class, "Control frames must be final.");
+    assertTrue(client.closed);
+    client.listener.assertFailure(ProtocolException.class, "Control frames must be final.");
 
-    serverListener.assertClosing(1000, "Hello!");
+    server.listener.assertClosing(1000, "Hello!");
 
-    serverListener.assertExhausted(); // Client should not have sent second close.
+    server.listener.assertExhausted(); // Client should not have sent second close.
   }
 
   @Test public void networkErrorReportedAsFailure() throws IOException {
-    server2clientSink.close();
+    server.sink.close();
     client.processNextFrame();
-    clientListener.assertFailure(EOFException.class, null);
+    client.listener.assertFailure(EOFException.class, null);
   }
 
   @Test public void closeThrowingFailsConnection() throws IOException {
     client2Server.source().close();
-    client.close(1000, null);
-    clientListener.assertFailure(IOException.class, "source is closed");
+    client.webSocket.close(1000, null);
+    client.listener.assertFailure(IOException.class, "source is closed");
   }
 
   @Ignore // TODO(jwilson): come up with a way to test unchecked exceptions on the writer thread.
   @Test public void closeMessageAndConnectionCloseThrowingDoesNotMaskOriginal() throws IOException {
-    client2ServerSink.close();
-    clientConnectionCloseThrows = true;
+    client.sink.close();
+    client.closeThrows = true;
 
-    client.close(1000, "Bye!");
-    clientListener.assertFailure(IOException.class, "failure");
-    assertTrue(clientConnectionClosed);
+    client.webSocket.close(1000, "Bye!");
+    client.listener.assertFailure(IOException.class, "failure");
+    assertTrue(client.closed);
   }
 
   @Ignore // TODO(jwilson): come up with a way to test unchecked exceptions on the writer thread.
   @Test public void peerConnectionCloseThrowingPropagates() throws IOException {
-    clientConnectionCloseThrows = true;
+    client.closeThrows = true;
 
-    server.close(1000, "Bye from Server!");
+    server.webSocket.close(1000, "Bye from Server!");
     client.processNextFrame();
-    clientListener.assertClosing(1000, "Bye from Server!");
+    client.listener.assertClosing(1000, "Bye from Server!");
 
-    client.close(1000, "Bye from Client!");
+    client.webSocket.close(1000, "Bye from Client!");
     server.processNextFrame();
-    serverListener.assertClosing(1000, "Bye from Client!");
+    server.listener.assertClosing(1000, "Bye from Client!");
+  }
+
+  @Test public void pingOnInterval() throws IOException {
+    long startNanos = System.nanoTime();
+    client.initWebSocket(random, 500);
+
+    server.processNextFrame(); // Ping.
+    client.processNextFrame(); // Pong.
+    long elapsedUntilPing1 = System.nanoTime() - startNanos;
+    assertEquals(500, TimeUnit.NANOSECONDS.toMillis(elapsedUntilPing1), 250d);
+
+    server.processNextFrame(); // Ping.
+    client.processNextFrame(); // Pong.
+    long elapsedUntilPing2 = System.nanoTime() - startNanos;
+    assertEquals(1000, TimeUnit.NANOSECONDS.toMillis(elapsedUntilPing2), 250d);
+
+    server.processNextFrame(); // Ping.
+    client.processNextFrame(); // Pong.
+    long elapsedUntilPing3 = System.nanoTime() - startNanos;
+    assertEquals(1500, TimeUnit.NANOSECONDS.toMillis(elapsedUntilPing3), 250d);
+  }
+
+  /** One peer's streams, listener, and web socket in the test. */
+  private static class TestStreams extends RealWebSocket.Streams {
+    private final String name;
+    private final WebSocketRecorder listener;
+    private RealWebSocket webSocket;
+    boolean closeThrows;
+    boolean closed;
+
+    public TestStreams(boolean client, Pipe source, Pipe sink) {
+      super(client, Okio.buffer(source.source()), Okio.buffer(sink.sink()));
+      this.name = client ? "client" : "server";
+      this.listener = new WebSocketRecorder(name);
+    }
+
+    public void initWebSocket(Random random, int pingIntervalMillis) throws IOException {
+      String url = "http://example.com/websocket";
+      Response response = new Response.Builder()
+          .code(101)
+          .request(new Request.Builder().url(url).build())
+          .protocol(Protocol.HTTP_1_1)
+          .build();
+      webSocket = new RealWebSocket(response.request(), listener, random);
+      webSocket.initReaderAndWriter(name, pingIntervalMillis, this);
+    }
+
+    public boolean processNextFrame() throws IOException {
+      return webSocket.processNextFrame();
+    }
+
+    @Override public void close() throws IOException {
+      source.close();
+      sink.close();
+      if (closed) {
+        throw new AssertionError("Already closed");
+      }
+      closed = true;
+
+      if (closeThrows) {
+        throw new RuntimeException("Oops!");
+      }
+    }
   }
 }

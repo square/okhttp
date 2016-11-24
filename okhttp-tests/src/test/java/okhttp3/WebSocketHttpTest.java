@@ -374,6 +374,50 @@ public final class WebSocketHttpTest {
     clientListener.assertTextMessage("abc");
   }
 
+  @Test public void clientPingsServerOnInterval() throws Exception {
+    client = client.newBuilder()
+        .pingInterval(500, TimeUnit.MILLISECONDS)
+        .build();
+
+    webServer.enqueue(new MockResponse().withWebSocketUpgrade(serverListener));
+    RealWebSocket webSocket = newWebSocket();
+
+    clientListener.assertOpen();
+    RealWebSocket server = (RealWebSocket) serverListener.assertOpen();
+
+    long startNanos = System.nanoTime();
+    while (webSocket.pongCount() < 3) {
+      Thread.sleep(50);
+    }
+
+    long elapsedUntilPong3 = System.nanoTime() - startNanos;
+    assertEquals(1500, TimeUnit.NANOSECONDS.toMillis(elapsedUntilPong3), 250d);
+
+    // The client pinged the server 3 times, and it has ponged back 3 times.
+    assertEquals(3, server.pingCount());
+    assertEquals(3, webSocket.pongCount());
+
+    // The server has never pinged the client.
+    assertEquals(0, server.pongCount());
+    assertEquals(0, webSocket.pingCount());
+  }
+
+  @Test public void clientDoesNotPingServerByDefault() throws Exception {
+    webServer.enqueue(new MockResponse().withWebSocketUpgrade(serverListener));
+    RealWebSocket webSocket = newWebSocket();
+
+    clientListener.assertOpen();
+    RealWebSocket server = (RealWebSocket) serverListener.assertOpen();
+
+    Thread.sleep(1000);
+
+    // No pings and no pongs.
+    assertEquals(0, server.pingCount());
+    assertEquals(0, webSocket.pongCount());
+    assertEquals(0, server.pongCount());
+    assertEquals(0, webSocket.pingCount());
+  }
+
   private MockResponse upgradeResponse(RecordedRequest request) {
     String key = request.getHeader("Sec-WebSocket-Key");
     return new MockResponse()

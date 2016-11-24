@@ -22,9 +22,8 @@ import java.util.ArrayDeque;
 import java.util.Collections;
 import java.util.List;
 import java.util.Random;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.SynchronousQueue;
-import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
 import okhttp3.Call;
 import okhttp3.Callback;
 import okhttp3.OkHttpClient;
@@ -34,7 +33,6 @@ import okhttp3.Response;
 import okhttp3.WebSocket;
 import okhttp3.WebSocketListener;
 import okhttp3.internal.Internal;
-import okhttp3.internal.NamedRunnable;
 import okhttp3.internal.Util;
 import okhttp3.internal.connection.StreamAllocation;
 import okio.BufferedSink;
@@ -42,7 +40,7 @@ import okio.BufferedSource;
 import okio.ByteString;
 import okio.Okio;
 
-import static java.util.concurrent.TimeUnit.SECONDS;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static okhttp3.internal.Util.closeQuietly;
 import static okhttp3.internal.ws.WebSocketProtocol.CLOSE_CLIENT_GOING_AWAY;
 import static okhttp3.internal.ws.WebSocketProtocol.OPCODE_BINARY;
@@ -58,11 +56,6 @@ public final class RealWebSocket implements WebSocket, WebSocketReader.FrameCall
    */
   private static final long MAX_QUEUE_SIZE = 16 * 1024 * 1024; // 16 MiB.
 
-  /** A shared executor for all web sockets. */
-  private static final ExecutorService executor = new ThreadPoolExecutor(0,
-      Integer.MAX_VALUE, 60, SECONDS, new SynchronousQueue<Runnable>(),
-      Util.threadFactory("OkHttp WebSocket", true));
-
   /** The application's original request unadulterated by web socket headers. */
   private final Request originalRequest;
 
@@ -74,21 +67,18 @@ public final class RealWebSocket implements WebSocket, WebSocketReader.FrameCall
   private Call call;
 
   /** This runnable processes the outgoing queues. Call {@link #runWriter()} to after enqueueing. */
-  private final NamedRunnable writerRunnable;
+  private final Runnable writerRunnable;
 
   /** Null until this web socket is connected. Only accessed by the reader thread. */
   private WebSocketReader reader;
 
   // All mutable web socket state is guarded by this.
 
-  /**
-   * True if {@link #writerRunnable} is active. Because writing is single-threaded we only enqueue
-   * it if it isn't already enqueued.
-   */
-  private boolean writerRunning;
-
   /** Null until this web socket is connected. Note that messages may be enqueued before that. */
   private WebSocketWriter writer;
+
+  /** Null until this web socket is connected. Used for writes, pings, and close timeouts. */
+  private ScheduledExecutorService executor;
 
   /**
    * The streams held by this web socket. This is non-null until all incoming messages have been
@@ -118,6 +108,12 @@ public final class RealWebSocket implements WebSocket, WebSocketReader.FrameCall
   /** True if this web socket failed and the listener has been notified. */
   private boolean failed;
 
+  /** For testing. */
+  int pingCount;
+
+  /** For testing. */
+  int pongCount;
+
   public RealWebSocket(Request request, WebSocketListener listener, Random random) {
     if (!"GET".equals(request.method())) {
       throw new IllegalArgumentException("Request must be GET: " + request.method());
@@ -130,8 +126,8 @@ public final class RealWebSocket implements WebSocket, WebSocketReader.FrameCall
     random.nextBytes(nonce);
     this.key = ByteString.of(nonce).base64();
 
-    this.writerRunnable = new NamedRunnable("OkHttp WebSocket %s", request.url().redact()) {
-      @Override protected void execute() {
+    this.writerRunnable = new Runnable() {
+      @Override public void run() {
         try {
           while (writeOneFrame()) {
           }
@@ -158,7 +154,8 @@ public final class RealWebSocket implements WebSocket, WebSocketReader.FrameCall
     client = client.newBuilder()
         .protocols(ONLY_HTTP1)
         .build();
-    Request request = originalRequest.newBuilder()
+    final int pingIntervalMillis = client.pingIntervalMillis();
+    final Request request = originalRequest.newBuilder()
         .header("Upgrade", "websocket")
         .header("Connection", "Upgrade")
         .header("Sec-WebSocket-Key", key)
@@ -183,7 +180,8 @@ public final class RealWebSocket implements WebSocket, WebSocketReader.FrameCall
         // Process all websocket messages.
         try {
           listener.onOpen(RealWebSocket.this, response);
-          initReaderAndWriter(streams);
+          String name = "OkHttp WebSocket " + request.url().redact();
+          initReaderAndWriter(name, pingIntervalMillis, streams);
           streamAllocation.connection().socket().setSoTimeout(0);
           loopReader();
         } catch (Exception e) {
@@ -224,10 +222,16 @@ public final class RealWebSocket implements WebSocket, WebSocketReader.FrameCall
     }
   }
 
-  public void initReaderAndWriter(Streams streams) throws IOException {
+  public void initReaderAndWriter(
+      String name, long pingIntervalMillis, Streams streams) throws IOException {
     synchronized (this) {
       this.streams = streams;
       this.writer = new WebSocketWriter(streams.client, streams.sink, random);
+      this.executor = new ScheduledThreadPoolExecutor(1, Util.threadFactory(name, false));
+      if (pingIntervalMillis != 0) {
+        executor.scheduleAtFixedRate(
+            new PingRunnable(), pingIntervalMillis, pingIntervalMillis, MILLISECONDS);
+      }
       if (!messageAndCloseQueue.isEmpty()) {
         runWriter(); // Send messages that were enqueued before we were connected.
       }
@@ -258,6 +262,14 @@ public final class RealWebSocket implements WebSocket, WebSocketReader.FrameCall
     }
   }
 
+  public synchronized int pingCount() {
+    return pingCount;
+  }
+
+  public synchronized int pongCount() {
+    return pongCount;
+  }
+
   @Override public void onReadMessage(String text) throws IOException {
     listener.onMessage(this, text);
   }
@@ -272,10 +284,12 @@ public final class RealWebSocket implements WebSocket, WebSocketReader.FrameCall
 
     pongQueue.add(payload);
     runWriter();
+    pingCount++;
   }
 
-  @Override public void onReadPong(ByteString buffer) {
+  @Override public synchronized void onReadPong(ByteString buffer) {
     // This API doesn't expose pings.
+    pongCount++;
   }
 
   @Override public void onReadClose(int code, String reason) {
@@ -289,6 +303,7 @@ public final class RealWebSocket implements WebSocket, WebSocketReader.FrameCall
       if (enqueuedClose && messageAndCloseQueue.isEmpty()) {
         toClose = this.streams;
         this.streams = null;
+        this.executor.shutdown();
       }
     }
 
@@ -359,8 +374,7 @@ public final class RealWebSocket implements WebSocket, WebSocketReader.FrameCall
   private void runWriter() {
     assert (Thread.holdsLock(this));
 
-    if (!writerRunning) {
-      writerRunning = true;
+    if (executor != null) {
       executor.execute(writerRunnable);
     }
   }
@@ -388,16 +402,10 @@ public final class RealWebSocket implements WebSocket, WebSocketReader.FrameCall
 
     synchronized (RealWebSocket.this) {
       if (failed) {
-        writerRunning = false;
         return false; // Failed web socket.
       }
 
       writer = this.writer;
-      if (writer == null) {
-        writerRunning = false;
-        return false; // Not yet connected.
-      }
-
       pong = pongQueue.poll();
       if (pong == null) {
         messageOrClose = messageAndCloseQueue.poll();
@@ -407,10 +415,10 @@ public final class RealWebSocket implements WebSocket, WebSocketReader.FrameCall
           if (receivedCloseCode != -1) {
             streamsToClose = this.streams;
             this.streams = null;
+            this.executor.shutdown();
           }
 
         } else if (messageOrClose == null) {
-          writerRunning = false;
           return false; // The queue is exhausted.
         }
       }
@@ -449,6 +457,26 @@ public final class RealWebSocket implements WebSocket, WebSocketReader.FrameCall
     }
   }
 
+  private final class PingRunnable implements Runnable {
+    @Override public void run() {
+      writePingFrame();
+    }
+  }
+
+  private void writePingFrame() {
+    WebSocketWriter writer;
+    synchronized (this) {
+      if (failed) return;
+      writer = this.writer;
+    }
+
+    try {
+      writer.writePing(ByteString.EMPTY);
+    } catch (IOException e) {
+      failWebSocket(e, null);
+    }
+  }
+
   private void failWebSocket(Exception e, Response response) {
     Streams streamsToClose;
     synchronized (this) {
@@ -456,6 +484,7 @@ public final class RealWebSocket implements WebSocket, WebSocketReader.FrameCall
       failed = true;
       streamsToClose = this.streams;
       this.streams = null;
+      if (executor != null) executor.shutdown();
     }
 
     try {
@@ -486,9 +515,9 @@ public final class RealWebSocket implements WebSocket, WebSocketReader.FrameCall
   }
 
   public abstract static class Streams implements Closeable {
-    final boolean client;
-    final BufferedSource source;
-    final BufferedSink sink;
+    public final boolean client;
+    public final BufferedSource source;
+    public final BufferedSink sink;
 
     public Streams(boolean client, BufferedSource source, BufferedSink sink) {
       this.client = client;
