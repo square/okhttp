@@ -130,7 +130,7 @@ public final class CertificatePinner {
   private final Set<Pin> pins;
   private final CertificateChainCleaner certificateChainCleaner;
 
-  private CertificatePinner(Set<Pin> pins, CertificateChainCleaner certificateChainCleaner) {
+  CertificatePinner(Set<Pin> pins, CertificateChainCleaner certificateChainCleaner) {
     this.pins = pins;
     this.certificateChainCleaner = certificateChainCleaner;
   }

@@ -235,7 +235,7 @@ public abstract class ResponseBody implements Closeable {
     private boolean closed;
     private Reader delegate;
 
-    private BomAwareReader(BufferedSource source, Charset charset) {
+    BomAwareReader(BufferedSource source, Charset charset) {
       this.source = source;
       this.charset = charset;
     }

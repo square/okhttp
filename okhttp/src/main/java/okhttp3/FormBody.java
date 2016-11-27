@@ -32,7 +32,7 @@ public final class FormBody extends RequestBody {
   private final List<String> encodedNames;
   private final List<String> encodedValues;
 
-  private FormBody(List<String> encodedNames, List<String> encodedValues) {
+  FormBody(List<String> encodedNames, List<String> encodedValues) {
     this.encodedNames = Util.immutableList(encodedNames);
     this.encodedValues = Util.immutableList(encodedValues);
   }

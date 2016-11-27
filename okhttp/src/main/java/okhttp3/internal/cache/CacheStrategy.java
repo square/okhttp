@@ -53,7 +53,7 @@ public final class CacheStrategy {
   /** The cached response to return or validate; or null if this call doesn't use a cache. */
   public final Response cacheResponse;
 
-  private CacheStrategy(Request networkRequest, Response cacheResponse) {
+  CacheStrategy(Request networkRequest, Response cacheResponse) {
     this.networkRequest = networkRequest;
     this.cacheResponse = cacheResponse;
   }

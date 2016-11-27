@@ -74,7 +74,7 @@ public final class Cookie {
     this.persistent = persistent;
   }
 
-  private Cookie(Builder builder) {
+  Cookie(Builder builder) {
     if (builder.name == null) throw new NullPointerException("builder.name == null");
     if (builder.value == null) throw new NullPointerException("builder.value == null");
     if (builder.domain == null) throw new NullPointerException("builder.domain == null");

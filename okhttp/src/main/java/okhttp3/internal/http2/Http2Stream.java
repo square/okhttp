@@ -48,8 +48,8 @@ public final class Http2Stream {
   // guarded by this
   long bytesLeftInWriteWindow;
 
-  private final int id;
-  private final Http2Connection connection;
+  final int id;
+  final Http2Connection connection;
 
   /** Headers sent by the stream initiator. Immutable and non null. */
   private final List<Header> requestHeaders;
@@ -59,15 +59,15 @@ public final class Http2Stream {
 
   private final FramedDataSource source;
   final FramedDataSink sink;
-  private final StreamTimeout readTimeout = new StreamTimeout();
-  private final StreamTimeout writeTimeout = new StreamTimeout();
+  final StreamTimeout readTimeout = new StreamTimeout();
+  final StreamTimeout writeTimeout = new StreamTimeout();
 
   /**
    * The reason why this stream was abnormally closed. If there are multiple reasons to abnormally
    * close this stream (such as both peers closing it near-simultaneously) then this is the first
    * reason known to this peer.
    */
-  private ErrorCode errorCode = null;
+  ErrorCode errorCode = null;
 
   Http2Stream(int id, Http2Connection connection, boolean outFinished, boolean inFinished,
       List<Header> requestHeaders) {
@@ -308,15 +308,15 @@ public final class Http2Stream {
     private final long maxByteCount;
 
     /** True if the caller has closed this stream. */
-    private boolean closed;
+    boolean closed;
 
     /**
      * True if either side has cleanly shut down this stream. We will receive no more bytes beyond
      * those already in the buffer.
      */
-    private boolean finished;
+    boolean finished;
 
-    private FramedDataSource(long maxByteCount) {
+    FramedDataSource(long maxByteCount) {
       this.maxByteCount = maxByteCount;
     }
 
@@ -430,7 +430,7 @@ public final class Http2Stream {
     }
   }
 
-  private void cancelStreamIfNecessary() throws IOException {
+  void cancelStreamIfNecessary() throws IOException {
     assert (!Thread.holdsLock(Http2Stream.this));
     boolean open;
     boolean cancel;
@@ -461,12 +461,12 @@ public final class Http2Stream {
      */
     private final Buffer sendBuffer = new Buffer();
 
-    private boolean closed;
+    boolean closed;
 
     /**
      * True if either side has cleanly shut down this stream. We shall send no more bytes.
      */
-    private boolean finished;
+    boolean finished;
 
     @Override public void write(Buffer source, long byteCount) throws IOException {
       assert (!Thread.holdsLock(Http2Stream.this));
@@ -552,7 +552,7 @@ public final class Http2Stream {
     if (delta > 0) Http2Stream.this.notifyAll();
   }
 
-  private void checkOutNotClosed() throws IOException {
+  void checkOutNotClosed() throws IOException {
     if (sink.closed) {
       throw new IOException("stream closed");
     } else if (sink.finished) {
@@ -566,7 +566,7 @@ public final class Http2Stream {
    * Like {@link #wait}, but throws an {@code InterruptedIOException} when interrupted instead of
    * the more awkward {@link InterruptedException}.
    */
-  private void waitForIo() throws InterruptedIOException {
+  void waitForIo() throws InterruptedIOException {
     try {
       wait();
     } catch (InterruptedException e) {

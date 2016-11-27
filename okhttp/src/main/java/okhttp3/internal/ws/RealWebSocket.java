@@ -59,7 +59,7 @@ public final class RealWebSocket implements WebSocket, WebSocketReader.FrameCall
   /** The application's original request unadulterated by web socket headers. */
   private final Request originalRequest;
 
-  private final WebSocketListener listener;
+  final WebSocketListener listener;
   private final Random random;
   private final String key;
 
@@ -195,7 +195,7 @@ public final class RealWebSocket implements WebSocket, WebSocketReader.FrameCall
     });
   }
 
-  private void checkResponse(Response response) throws ProtocolException {
+  void checkResponse(Response response) throws ProtocolException {
     if (response.code() != 101) {
       throw new ProtocolException("Expected HTTP 101 response but was '"
           + response.code() + " " + response.message() + "'");
@@ -392,7 +392,7 @@ public final class RealWebSocket implements WebSocket, WebSocketReader.FrameCall
    * <p>This method may only be invoked by the writer thread. There may be only thread invoking this
    * method at a time.
    */
-  private boolean writeOneFrame() throws IOException {
+  boolean writeOneFrame() throws IOException {
     WebSocketWriter writer;
     ByteString pong;
     Object messageOrClose = null;
@@ -477,7 +477,7 @@ public final class RealWebSocket implements WebSocket, WebSocketReader.FrameCall
     }
   }
 
-  private void failWebSocket(Exception e, Response response) {
+  void failWebSocket(Exception e, Response response) {
     Streams streamsToClose;
     synchronized (this) {
       if (failed) return; // Already failed.
