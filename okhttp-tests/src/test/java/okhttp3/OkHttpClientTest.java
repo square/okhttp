@@ -42,11 +42,12 @@ public final class OkHttpClientTest {
     ResponseCache.setDefault(DEFAULT_RESPONSE_CACHE);
   }
 
-  @Test public void timeoutDefaults() {
+  @Test public void durationDefaults() {
     OkHttpClient client = defaultClient();
     assertEquals(10_000, client.connectTimeoutMillis());
     assertEquals(10_000, client.readTimeoutMillis());
     assertEquals(10_000, client.writeTimeoutMillis());
+    assertEquals(0, client.pingIntervalMillis());
   }
 
   @Test public void timeoutValidRange() {
