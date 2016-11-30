@@ -82,7 +82,7 @@ public final class Http2Codec implements HttpCodec {
       UPGRADE);
 
   private final OkHttpClient client;
-  private final StreamAllocation streamAllocation;
+  final StreamAllocation streamAllocation;
   private final Http2Connection connection;
   private Http2Stream stream;
 

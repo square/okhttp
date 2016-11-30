@@ -57,7 +57,7 @@ import static okio.ByteString.EMPTY;
  * Http2#INITIAL_MAX_FRAME_SIZE}.
  */
 final class Http2Reader implements Closeable {
-  private static final Logger logger = Logger.getLogger(Http2.class.getName());
+  static final Logger logger = Logger.getLogger(Http2.class.getName());
 
   private final BufferedSource source;
   private final ContinuationSource continuation;

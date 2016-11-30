@@ -106,9 +106,9 @@ class JdkWithJettyBootPlatform extends Platform {
     /** This peer's supported protocols. */
     private final List<String> protocols;
     /** Set when remote peer notifies ALPN is unsupported. */
-    private boolean unsupported;
+    boolean unsupported;
     /** The protocol the server selected. */
-    private String selected;
+    String selected;
 
     public JettyNegoProvider(List<String> protocols) {
       this.protocols = protocols;

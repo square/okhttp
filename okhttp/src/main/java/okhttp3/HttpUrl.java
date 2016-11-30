@@ -296,7 +296,7 @@ public final class HttpUrl {
   static final String FRAGMENT_ENCODE_SET_URI = " \"#<>\\^`{|}";
 
   /** Either "http" or "https". */
-  private final String scheme;
+  final String scheme;
 
   /** Decoded username. */
   private final String username;
@@ -305,10 +305,10 @@ public final class HttpUrl {
   private final String password;
 
   /** Canonical hostname. */
-  private final String host;
+  final String host;
 
   /** Either 80, 443 or a user-specified port. In range [1..65535]. */
-  private final int port;
+  final int port;
 
   /**
    * A list of canonical path segments. This list always contains at least one element, which may be
@@ -330,7 +330,7 @@ public final class HttpUrl {
   /** Canonical URL. */
   private final String url;
 
-  private HttpUrl(Builder builder) {
+  HttpUrl(Builder builder) {
     this.scheme = builder.scheme;
     this.username = percentDecode(builder.encodedUsername, false);
     this.password = percentDecode(builder.encodedPassword, false);

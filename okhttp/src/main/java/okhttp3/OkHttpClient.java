@@ -118,10 +118,10 @@ import okhttp3.internal.ws.RealWebSocket;
  * remain idle.
  */
 public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory {
-  private static final List<Protocol> DEFAULT_PROTOCOLS = Util.immutableList(
+  static final List<Protocol> DEFAULT_PROTOCOLS = Util.immutableList(
       Protocol.HTTP_2, Protocol.HTTP_1_1);
 
-  private static final List<ConnectionSpec> DEFAULT_CONNECTION_SPECS = Util.immutableList(
+  static final List<ConnectionSpec> DEFAULT_CONNECTION_SPECS = Util.immutableList(
       ConnectionSpec.MODERN_TLS, ConnectionSpec.COMPATIBLE_TLS, ConnectionSpec.CLEARTEXT);
 
   static {
@@ -207,7 +207,7 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
     this(new Builder());
   }
 
-  private OkHttpClient(Builder builder) {
+  OkHttpClient(Builder builder) {
     this.dispatcher = builder.dispatcher;
     this.proxy = builder.proxy;
     this.protocols = builder.protocols;

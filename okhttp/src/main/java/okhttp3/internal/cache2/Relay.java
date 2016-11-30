@@ -61,28 +61,28 @@ final class Relay {
    * <p>This is closed and assigned to null when the last source is closed and no further sources
    * are permitted.
    */
-  private RandomAccessFile file;
+  RandomAccessFile file;
 
   /** The thread that currently has access to upstream. Possibly null. Guarded by this. */
-  private Thread upstreamReader;
+  Thread upstreamReader;
 
   /**
    * Null once the file has a complete copy of the upstream bytes. Only the {@code upstreamReader}
    * thread may access this source.
    */
-  private Source upstream;
+  Source upstream;
 
   /**
    * A buffer for {@code upstreamReader} to use when pulling bytes from upstream. Only the {@code
    * upstreamReader} thread may access this buffer.
    */
-  private final Buffer upstreamBuffer = new Buffer();
+  final Buffer upstreamBuffer = new Buffer();
 
   /** The number of bytes consumed from {@link #upstream}. Guarded by this. */
-  private long upstreamPos;
+  long upstreamPos;
 
   /** True if there are no further bytes to read from {@code upstream}. Guarded by this. */
-  private boolean complete;
+  boolean complete;
 
   /** User-supplied additional data persisted with the source data. */
   private final ByteString metadata;
@@ -91,17 +91,17 @@ final class Relay {
    * The most recently read bytes from {@link #upstream}. This is a suffix of {@link #file}. Guarded
    * by this.
    */
-  private final Buffer buffer = new Buffer();
+  final Buffer buffer = new Buffer();
 
   /** The maximum size of {@code buffer}. */
-  private final long bufferMaxSize;
+  final long bufferMaxSize;
 
   /**
    * Reference count of the number of active sources reading this stream. When decremented to 0
    * resources are released and all following calls to {@link #newSource} return null. Guarded by
    * this.
    */
-  private int sourceCount;
+  int sourceCount;
 
   private Relay(RandomAccessFile file, Source upstream, long upstreamPos, ByteString metadata,
       long bufferMaxSize) {

@@ -196,13 +196,13 @@ class Huffman {
   private static final class Node {
 
     // Null if terminal.
-    private final Node[] children;
+    final Node[] children;
 
     // Terminal nodes have a symbol.
-    private final int symbol;
+    final int symbol;
 
     // Number of bits represented in the terminal node.
-    private final int terminalBits;
+    final int terminalBits;
 
     /** Construct an internal node. */
     Node() {

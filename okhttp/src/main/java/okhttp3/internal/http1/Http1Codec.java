@@ -76,13 +76,13 @@ public final class Http1Codec implements HttpCodec {
   private static final int STATE_CLOSED = 6;
 
   /** The client that configures this stream. May be null for HTTPS proxy tunnels. */
-  private final OkHttpClient client;
+  final OkHttpClient client;
   /** The stream allocation that owns this stream. May be null for HTTPS proxy tunnels. */
-  private final StreamAllocation streamAllocation;
+  final StreamAllocation streamAllocation;
 
-  private final BufferedSource source;
-  private final BufferedSink sink;
-  private int state = STATE_IDLE;
+  final BufferedSource source;
+  final BufferedSink sink;
+  int state = STATE_IDLE;
 
   public Http1Codec(OkHttpClient client, StreamAllocation streamAllocation, BufferedSource source,
       BufferedSink sink) {
@@ -256,7 +256,7 @@ public final class Http1Codec implements HttpCodec {
    * to the default configuration. Use this to avoid unexpected sharing of timeouts between pooled
    * connections.
    */
-  private void detachTimeout(ForwardingTimeout timeout) {
+  void detachTimeout(ForwardingTimeout timeout) {
     Timeout oldDelegate = timeout.delegate();
     timeout.setDelegate(Timeout.NONE);
     oldDelegate.clearDeadline();
@@ -269,7 +269,7 @@ public final class Http1Codec implements HttpCodec {
     private boolean closed;
     private long bytesRemaining;
 
-    private FixedLengthSink(long bytesRemaining) {
+    FixedLengthSink(long bytesRemaining) {
       this.bytesRemaining = bytesRemaining;
     }
 
@@ -309,6 +309,9 @@ public final class Http1Codec implements HttpCodec {
   private final class ChunkedSink implements Sink {
     private final ForwardingTimeout timeout = new ForwardingTimeout(sink.timeout());
     private boolean closed;
+
+    ChunkedSink() {
+    }
 
     @Override public Timeout timeout() {
       return timeout;
@@ -467,6 +470,9 @@ public final class Http1Codec implements HttpCodec {
   /** An HTTP message body terminated by the end of the underlying stream. */
   private class UnknownLengthSource extends AbstractSource {
     private boolean inputExhausted;
+
+    UnknownLengthSource() {
+    }
 
     @Override public long read(Buffer sink, long byteCount)
         throws IOException {

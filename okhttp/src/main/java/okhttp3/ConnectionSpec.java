@@ -80,12 +80,12 @@ public final class ConnectionSpec {
   /** Unencrypted, unauthenticated connections for {@code http:} URLs. */
   public static final ConnectionSpec CLEARTEXT = new Builder(false).build();
 
-  private final boolean tls;
-  private final boolean supportsTlsExtensions;
-  private final String[] cipherSuites;
-  private final String[] tlsVersions;
+  final boolean tls;
+  final boolean supportsTlsExtensions;
+  final String[] cipherSuites;
+  final String[] tlsVersions;
 
-  private ConnectionSpec(Builder builder) {
+  ConnectionSpec(Builder builder) {
     this.tls = builder.tls;
     this.cipherSuites = builder.cipherSuites;
     this.tlsVersions = builder.tlsVersions;
@@ -251,10 +251,10 @@ public final class ConnectionSpec {
   }
 
   public static final class Builder {
-    private boolean tls;
-    private String[] cipherSuites;
-    private String[] tlsVersions;
-    private boolean supportsTlsExtensions;
+    boolean tls;
+    String[] cipherSuites;
+    String[] tlsVersions;
+    boolean supportsTlsExtensions;
 
     Builder(boolean tls) {
       this.tls = tls;
