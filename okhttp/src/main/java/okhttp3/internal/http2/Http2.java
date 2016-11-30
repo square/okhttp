@@ -16,11 +16,16 @@
 package okhttp3.internal.http2;
 
 import java.io.IOException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
 import okio.ByteString;
 
 import static okhttp3.internal.Util.format;
 
 public final class Http2 {
+  static final Logger logger = Logger.getLogger(Http2.class.getName());
+
   static final ByteString CONNECTION_PREFACE
       = ByteString.encodeUtf8("PRI * HTTP/2.0\r\n\r\nSM\r\n\r\n");
 
@@ -46,6 +51,20 @@ public final class Http2 {
   static final byte FLAG_PADDED = 0x8; // Used for headers and data.
   static final byte FLAG_PRIORITY = 0x20; // Used for headers.
   static final byte FLAG_COMPRESSED = 0x20; // Used for data.
+
+  private static FrameLogger frameLogger = new FrameLogger() {
+    @Override
+    public void frameLog(boolean inbound, int streamId, int length, byte type, byte flags) {
+      if (logger.isLoggable(Level.FINE)) {
+        logger.fine(frameLogFormat(inbound, streamId, length, type, flags));
+      }
+    }
+  };
+
+  // TODO better mechanism, just for testing and discussion
+  public static void setFrameLogger(FrameLogger frameLogger) {
+    Http2.frameLogger = frameLogger;
+  }
 
   /** Lookup table for valid frame types. */
   private static final String[] FRAME_NAMES = new String[] {
@@ -113,6 +132,10 @@ public final class Http2 {
     throw new IOException(format(message, args));
   }
 
+  static void frameLog(boolean inbound, int streamId, int length, byte type, byte flags) {
+    frameLogger.frameLog(inbound, streamId, length, type, flags);
+  }
+
   /**
    * Returns human-readable representation of HTTP/2 frame headers.
    *
@@ -131,7 +154,7 @@ public final class Http2 {
    * }
    * </pre>
    */
-  static String frameLog(boolean inbound, int streamId, int length, byte type, byte flags) {
+  static String frameLogFormat(boolean inbound, int streamId, int length, byte type, byte flags) {
     String formattedType = type < FRAME_NAMES.length ? FRAME_NAMES[type] : format("0x%02x", type);
     String formattedFlags = formatFlags(type, flags);
     return format("%s 0x%08x %5d %-13s %s", inbound ? "<<" : ">>", streamId, length,

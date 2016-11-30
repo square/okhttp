@@ -18,7 +18,6 @@ package okhttp3.internal.http2;
 import java.io.Closeable;
 import java.io.IOException;
 import java.util.List;
-import java.util.logging.Logger;
 import okio.Buffer;
 import okio.BufferedSource;
 import okio.ByteString;
@@ -57,8 +56,6 @@ import static okio.ByteString.EMPTY;
  * Http2#INITIAL_MAX_FRAME_SIZE}.
  */
 final class Http2Reader implements Closeable {
-  private static final Logger logger = Logger.getLogger(Http2.class.getName());
-
   private final BufferedSource source;
   private final ContinuationSource continuation;
   private final boolean client;
@@ -77,7 +74,9 @@ final class Http2Reader implements Closeable {
   public void readConnectionPreface() throws IOException {
     if (client) return; // Nothing to read; servers doesn't send a connection preface!
     ByteString connectionPreface = source.readByteString(CONNECTION_PREFACE.size());
-    if (logger.isLoggable(FINE)) logger.fine(format("<< CONNECTION %s", connectionPreface.hex()));
+    if (Http2.logger.isLoggable(FINE)) {
+      Http2.logger.fine(format("<< CONNECTION %s", connectionPreface.hex()));
+    }
     if (!CONNECTION_PREFACE.equals(connectionPreface)) {
       throw ioException("Expected a connection header but was %s", connectionPreface.utf8());
     }
@@ -109,7 +108,7 @@ final class Http2Reader implements Closeable {
     byte type = (byte) (source.readByte() & 0xff);
     byte flags = (byte) (source.readByte() & 0xff);
     int streamId = (source.readInt() & 0x7fffffff); // Ignore reserved bit.
-    if (logger.isLoggable(FINE)) logger.fine(frameLog(true, streamId, length, type, flags));
+    frameLog(true, streamId, length, type, flags);
 
     switch (type) {
       case TYPE_DATA:
@@ -377,7 +376,7 @@ final class Http2Reader implements Closeable {
       length = left = readMedium(source);
       byte type = (byte) (source.readByte() & 0xff);
       flags = (byte) (source.readByte() & 0xff);
-      if (logger.isLoggable(FINE)) logger.fine(frameLog(true, streamId, length, type, flags));
+      Http2.frameLog(true, streamId, length, type, flags);
       streamId = (source.readInt() & 0x7fffffff);
       if (type != TYPE_CONTINUATION) throw ioException("%s != TYPE_CONTINUATION", type);
       if (streamId != previousStreamId) throw ioException("TYPE_CONTINUATION streamId changed");
