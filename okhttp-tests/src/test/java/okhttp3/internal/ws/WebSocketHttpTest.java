@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package okhttp3;
+package okhttp3.internal.ws;
 
 import java.io.IOException;
 import java.net.ProtocolException;
@@ -22,10 +22,15 @@ import java.util.Random;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Logger;
+import okhttp3.Interceptor;
+import okhttp3.OkHttpClient;
+import okhttp3.RecordingHostnameVerifier;
+import okhttp3.Request;
+import okhttp3.Response;
+import okhttp3.TestLogHandler;
+import okhttp3.WebSocket;
+import okhttp3.WebSocketListener;
 import okhttp3.internal.tls.SslClient;
-import okhttp3.internal.ws.RealWebSocket;
-import okhttp3.internal.ws.WebSocketProtocol;
-import okhttp3.internal.ws.WebSocketRecorder;
 import okhttp3.mockwebserver.Dispatcher;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
@@ -542,6 +547,29 @@ public final class WebSocketHttpTest {
     assertEquals(0, webSocket.pongCount());
     assertEquals(0, server.pongCount());
     assertEquals(0, webSocket.pingCount());
+  }
+
+  /** https://github.com/square/okhttp/issues/2788 */
+  @Test public void clientCancelsIfCloseIsNotAcknowledged() throws Exception {
+    webServer.enqueue(new MockResponse().withWebSocketUpgrade(serverListener));
+    RealWebSocket webSocket = newWebSocket();
+
+    clientListener.assertOpen();
+    WebSocket server = serverListener.assertOpen();
+
+    // Initiate a close on the client, which will schedule a hard cancel in 500 ms.
+    long closeAtNanos = System.nanoTime();
+    webSocket.close(1000, "goodbye", 500);
+    serverListener.assertClosing(1000, "goodbye");
+
+    // Confirm that the hard cancel occurred after 500 ms.
+    clientListener.assertFailure();
+    long elapsedUntilFailure = System.nanoTime() - closeAtNanos;
+    assertEquals(500, TimeUnit.NANOSECONDS.toMillis(elapsedUntilFailure), 250d);
+
+    // Close the server and confirm it saw what we expected.
+    server.close(1000, null);
+    serverListener.assertClosed(1000, "goodbye");
   }
 
   private MockResponse upgradeResponse(RecordedRequest request) {
