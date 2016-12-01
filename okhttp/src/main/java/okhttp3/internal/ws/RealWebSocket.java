@@ -43,6 +43,7 @@ import okio.Okio;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static okhttp3.internal.Util.closeQuietly;
 import static okhttp3.internal.ws.WebSocketProtocol.CLOSE_CLIENT_GOING_AWAY;
+import static okhttp3.internal.ws.WebSocketProtocol.CLOSE_MESSAGE_MAX;
 import static okhttp3.internal.ws.WebSocketProtocol.OPCODE_BINARY;
 import static okhttp3.internal.ws.WebSocketProtocol.OPCODE_TEXT;
 import static okhttp3.internal.ws.WebSocketProtocol.validateCloseCode;
@@ -63,7 +64,7 @@ public final class RealWebSocket implements WebSocket, WebSocketReader.FrameCall
   private final Random random;
   private final String key;
 
-  /** Non-null for client websockets. These can be canceled. */
+  /** Non-null for client web sockets. These can be canceled. */
   private Call call;
 
   /** This runnable processes the outgoing queues. Call {@link #runWriter()} to after enqueueing. */
@@ -177,7 +178,7 @@ public final class RealWebSocket implements WebSocket, WebSocketReader.FrameCall
         streamAllocation.noNewStreams(); // Prevent connection pooling!
         Streams streams = new ClientStreams(streamAllocation);
 
-        // Process all websocket messages.
+        // Process all web socket messages.
         try {
           listener.onOpen(RealWebSocket.this, response);
           String name = "OkHttp WebSocket " + request.url().redact();
@@ -278,7 +279,7 @@ public final class RealWebSocket implements WebSocket, WebSocketReader.FrameCall
     listener.onMessage(this, bytes);
   }
 
-  @Override public synchronized void onReadPing(final ByteString payload) {
+  @Override public synchronized void onReadPing(ByteString payload) {
     // Don't respond to pings after we've failed or sent the close frame.
     if (failed || (enqueuedClose && messageAndCloseQueue.isEmpty())) return;
 
@@ -356,9 +357,16 @@ public final class RealWebSocket implements WebSocket, WebSocketReader.FrameCall
     return true;
   }
 
-  @Override public synchronized boolean close(final int code, final String reason) {
+  @Override public synchronized boolean close(int code, String reason) {
     validateCloseCode(code);
-    // TODO(jwilson): confirm reason is well-formed. (<=123 bytes, etc.)
+
+    ByteString reasonBytes = null;
+    if (reason != null) {
+      reasonBytes = ByteString.encodeUtf8(reason);
+      if (reasonBytes.size() > CLOSE_MESSAGE_MAX) {
+        throw new IllegalArgumentException("reason.size() > " + CLOSE_MESSAGE_MAX + ": " + reason);
+      }
+    }
 
     if (failed || enqueuedClose) return false;
 
@@ -366,7 +374,7 @@ public final class RealWebSocket implements WebSocket, WebSocketReader.FrameCall
     enqueuedClose = true;
 
     // Enqueue the close frame.
-    messageAndCloseQueue.add(new Close(code, reason));
+    messageAndCloseQueue.add(new Close(code, reasonBytes));
     runWriter();
     return true;
   }
@@ -506,9 +514,9 @@ public final class RealWebSocket implements WebSocket, WebSocketReader.FrameCall
 
   static final class Close {
     final int code;
-    final String reason;
+    final ByteString reason;
 
-    public Close(int code, String reason) {
+    public Close(int code, ByteString reason) {
       this.code = code;
       this.reason = reason;
     }

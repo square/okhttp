@@ -20,6 +20,7 @@ import java.net.ProtocolException;
 import java.net.SocketTimeoutException;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Logger;
 import okhttp3.internal.tls.SslClient;
 import okhttp3.internal.ws.RealWebSocket;
@@ -38,9 +39,12 @@ import org.junit.Rule;
 import org.junit.Test;
 
 import static okhttp3.TestUtil.defaultClient;
+import static okhttp3.TestUtil.repeat;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 public final class WebSocketHttpTest {
@@ -85,7 +89,7 @@ public final class WebSocketHttpTest {
     serverListener.assertOpen();
 
     webSocket.send(ByteString.encodeUtf8("Hello!"));
-    serverListener.assertBinaryMessage(new byte[] {'H', 'e', 'l', 'l', 'o', '!'});
+    serverListener.assertBinaryMessage(ByteString.of(new byte[] {'H', 'e', 'l', 'l', 'o', '!'}));
   }
 
   @Test public void nullStringThrows() throws IOException {
@@ -298,6 +302,127 @@ public final class WebSocketHttpTest {
 
     clientListener.assertFailure(101, null, ProtocolException.class,
         "Expected 'Sec-WebSocket-Accept' header value 'ujmZX4KXZqjwy6vi1aQFH5p4Ygk=' but was 'magic'");
+  }
+
+  @Test public void webSocketAndApplicationInterceptors() throws IOException {
+    final AtomicInteger interceptedCount = new AtomicInteger();
+
+    client = client.newBuilder()
+        .addInterceptor(new Interceptor() {
+          @Override public Response intercept(Chain chain) throws IOException {
+            assertNull(chain.request().body());
+            Response response = chain.proceed(chain.request());
+            assertEquals("Upgrade", response.header("Connection"));
+            assertTrue("", response.body().source().exhausted());
+            interceptedCount.incrementAndGet();
+            return response;
+          }
+        }).build();
+
+    webServer.enqueue(new MockResponse().withWebSocketUpgrade(serverListener));
+
+    WebSocket webSocket = newWebSocket();
+    clientListener.assertOpen();
+    assertEquals(1, interceptedCount.get());
+    webSocket.close(1000, null);
+
+    WebSocket server = serverListener.assertOpen();
+    server.close(1000, null);
+  }
+
+  @Test public void webSocketAndNetworkInterceptors() throws IOException {
+    client = client.newBuilder()
+        .addNetworkInterceptor(new Interceptor() {
+          @Override public Response intercept(Chain chain) throws IOException {
+            throw new AssertionError(); // Network interceptors don't execute.
+          }
+        }).build();
+
+    webServer.enqueue(new MockResponse().withWebSocketUpgrade(serverListener));
+
+    WebSocket webSocket = newWebSocket();
+    clientListener.assertOpen();
+    webSocket.close(1000, null);
+
+    WebSocket server = serverListener.assertOpen();
+    server.close(1000, null);
+  }
+
+  @Test public void overflowOutgoingQueue() throws IOException {
+    webServer.enqueue(new MockResponse().withWebSocketUpgrade(serverListener));
+
+    WebSocket webSocket = newWebSocket();
+    clientListener.assertOpen();
+
+    // Send messages until the client's outgoing buffer overflows!
+    ByteString message = ByteString.of(new byte[1024 * 1024]);
+    int messageCount = 0;
+    while (true) {
+      boolean success = webSocket.send(message);
+      if (!success) break;
+
+      messageCount++;
+      long queueSize = webSocket.queueSize();
+      assertTrue(queueSize >= 0 && queueSize <= messageCount * message.size());
+      assertTrue(messageCount < 32); // Expect to fail before enqueueing 32 MiB.
+    }
+
+    // Confirm all sent messages were received, followed by a client-initiated close.
+    WebSocket server = serverListener.assertOpen();
+    for (int i = 0; i < messageCount; i++) {
+      serverListener.assertBinaryMessage(message);
+    }
+    serverListener.assertClosing(1001, "");
+
+    // When the server acknowledges the close the connection shuts down gracefully.
+    server.close(1000, null);
+    clientListener.assertClosing(1000, "");
+    clientListener.assertClosed(1000, "");
+    serverListener.assertClosed(1001, "");
+  }
+
+  @Test public void closeReasonMaximumLength() throws IOException {
+    webServer.enqueue(new MockResponse().withWebSocketUpgrade(serverListener));
+
+    String clientReason = repeat('C', 123);
+    String serverReason = repeat('S', 123);
+
+    WebSocket webSocket = newWebSocket();
+    WebSocket server = serverListener.assertOpen();
+
+    clientListener.assertOpen();
+    webSocket.close(1000, clientReason);
+    serverListener.assertClosing(1000, clientReason);
+
+    server.close(1000, serverReason);
+    clientListener.assertClosing(1000, serverReason);
+    clientListener.assertClosed(1000, serverReason);
+
+    serverListener.assertClosed(1000, clientReason);
+  }
+
+  @Test public void closeReasonTooLong() throws IOException {
+    webServer.enqueue(new MockResponse().withWebSocketUpgrade(serverListener));
+
+    WebSocket webSocket = newWebSocket();
+    WebSocket server = serverListener.assertOpen();
+
+    clientListener.assertOpen();
+    String reason = repeat('X', 124);
+    try {
+      webSocket.close(1000, reason);
+      fail();
+    } catch (IllegalArgumentException expected) {
+      assertEquals("reason.size() > 123: " + reason, expected.getMessage());
+    }
+
+    webSocket.close(1000, null);
+    server.close(1000, null);
+
+    clientListener.assertClosing(1000, "");
+    clientListener.assertClosed(1000, "");
+    serverListener.assertClosing(1000, "");
+    serverListener.assertClosed(1000, "");
   }
 
   @Test public void wsScheme() throws IOException {
