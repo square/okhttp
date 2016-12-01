@@ -214,7 +214,7 @@ public final class WebSocketReaderTest {
     byte[] bytes = binaryData(256);
     data.write(ByteString.decodeHex("827E0100")).write(bytes);
     clientReader.processNextFrame();
-    callback.assertBinaryMessage(bytes);
+    callback.assertBinaryMessage(ByteString.of(bytes));
   }
 
   @Test public void clientTwoFrameBinary() throws IOException {
@@ -222,7 +222,7 @@ public final class WebSocketReaderTest {
     data.write(ByteString.decodeHex("0264")).write(bytes, 0, 100);
     data.write(ByteString.decodeHex("8064")).write(bytes, 100, 100);
     clientReader.processNextFrame();
-    callback.assertBinaryMessage(bytes);
+    callback.assertBinaryMessage(ByteString.of(bytes));
   }
 
   @Test public void twoFrameNotContinuation() throws IOException {

@@ -131,7 +131,7 @@ public final class Request {
     public Builder url(String url) {
       if (url == null) throw new NullPointerException("url == null");
 
-      // Silently replace websocket URLs with HTTP URLs.
+      // Silently replace web socket URLs with HTTP URLs.
       if (url.regionMatches(true, 0, "ws:", 0, 3)) {
         url = "http:" + url.substring(3);
       } else if (url.regionMatches(true, 0, "wss:", 0, 4)) {

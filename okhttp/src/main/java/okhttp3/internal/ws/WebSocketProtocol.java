@@ -74,6 +74,8 @@ public final class WebSocketProtocol {
    * special values {@link #PAYLOAD_SHORT} or {@link #PAYLOAD_LONG}.
    */
   static final long PAYLOAD_BYTE_MAX = 125L;
+  /** Maximum length of close message in bytes. */
+  static final long CLOSE_MESSAGE_MAX = PAYLOAD_BYTE_MAX - 2;
   /**
    * Value for {@link #B1_MASK_LENGTH} which indicates the next two bytes are the unsigned length.
    */

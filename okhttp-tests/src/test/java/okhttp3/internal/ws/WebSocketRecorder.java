@@ -19,8 +19,8 @@ import java.io.IOException;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
-import okhttp3.WebSocket;
 import okhttp3.Response;
+import okhttp3.WebSocket;
 import okhttp3.WebSocketListener;
 import okhttp3.internal.Util;
 import okhttp3.internal.platform.Platform;
@@ -136,9 +136,9 @@ public final class WebSocketRecorder extends WebSocketListener {
     assertEquals(new Message(payload), actual);
   }
 
-  public void assertBinaryMessage(byte[] payload) {
+  public void assertBinaryMessage(ByteString payload) {
     Object actual = nextEvent();
-    assertEquals(new Message(ByteString.of(payload)), actual);
+    assertEquals(new Message(payload), actual);
   }
 
   public void assertPing(ByteString payload) {
