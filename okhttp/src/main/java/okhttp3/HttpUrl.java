@@ -842,14 +842,16 @@ public final class HttpUrl {
   }
 
   /**
-   * Returns the HttpUrl with the username, password, path, query, and fragment stripped.
-   * Example: http://username:password@example.com/path returns http://example.com/...
+   * Returns a string with containing this URL with its username, password, query, and fragment
+   * stripped, and its path replaced with {@code /...}. For example, redacting {@code
+   * http://username:password@example.com/path} returns {@code http://example.com/...}.
    */
-  public HttpUrl redact() {
-    Builder builder = newBuilder("/...");
-    builder.username("");
-    builder.password("");
-    return builder.build();
+  public String redact() {
+    return newBuilder("/...")
+        .username("")
+        .password("")
+        .build()
+        .toString();
   }
 
   /**

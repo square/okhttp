@@ -417,11 +417,12 @@ public final class WebSocketHttpTest {
     }
 
     webSocket.close(1000, null);
-    server.close(1000, null);
+    serverListener.assertClosing(1000, "");
 
+    server.close(1000, null);
     clientListener.assertClosing(1000, "");
     clientListener.assertClosed(1000, "");
-    serverListener.assertClosing(1000, "");
+
     serverListener.assertClosed(1000, "");
   }
 
