@@ -63,6 +63,7 @@ import okhttp3.internal.Util;
 import okhttp3.internal.Version;
 import okhttp3.internal.http.RecordingProxySelector;
 import okhttp3.internal.io.InMemoryFileSystem;
+import okhttp3.internal.tls.HeldCertificate;
 import okhttp3.internal.tls.SslClient;
 import okhttp3.mockwebserver.Dispatcher;
 import okhttp3.mockwebserver.MockResponse;
@@ -2707,6 +2708,43 @@ public final class CallTest {
     } finally {
       logger.setLevel(original);
     }
+  }
+
+  @Test public void httpsWithIpAddress() throws Exception {
+    String localIpAddress = InetAddress.getLoopbackAddress().getHostAddress();
+
+    // Create a certificate with an IP address in the subject alt name.
+    HeldCertificate heldCertificate = new HeldCertificate.Builder()
+        .commonName("example.com")
+        .subjectAlternativeName(localIpAddress)
+        .build();
+    SslClient sslClient = new SslClient.Builder()
+        .certificateChain(heldCertificate.keyPair, heldCertificate.certificate)
+        .addTrustedCertificate(heldCertificate.certificate)
+        .build();
+
+    // Use that certificate on the server and trust it on the client.
+    server.useHttps(sslClient.socketFactory, false);
+    client = client.newBuilder()
+        .sslSocketFactory(sslClient.socketFactory, sslClient.trustManager)
+        .hostnameVerifier(new RecordingHostnameVerifier())
+        .protocols(Collections.singletonList(Protocol.HTTP_1_1))
+        .build();
+
+    // Make a request.
+    server.enqueue(new MockResponse());
+    HttpUrl url = server.url("/").newBuilder()
+        .host(localIpAddress)
+        .build();
+    Request request = new Request.Builder()
+        .url(url)
+        .build();
+    executeSynchronously(request)
+        .assertCode(200);
+
+    // Confirm that the IP address was used in the host header.
+    RecordedRequest recordedRequest = server.takeRequest();
+    assertEquals(localIpAddress + ":" + server.getPort(), recordedRequest.getHeader("Host"));
   }
 
   private void makeFailingCall() {

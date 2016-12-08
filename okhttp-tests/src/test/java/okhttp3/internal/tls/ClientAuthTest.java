@@ -40,7 +40,7 @@ public final class ClientAuthTest {
   @Rule public final MockWebServer server = new MockWebServer();
 
   public enum ClientAuth {
-    NONE, WANTS, NEEDS;
+    NONE, WANTS, NEEDS
   }
 
   private HeldCertificate serverRootCa;
@@ -51,7 +51,7 @@ public final class ClientAuthTest {
   private HeldCertificate clientCert;
 
   @Before
-  public void initialise() throws GeneralSecurityException {
+  public void setUp() throws GeneralSecurityException {
     serverRootCa = new HeldCertificate.Builder()
         .serialNumber("1")
         .ca(3)
