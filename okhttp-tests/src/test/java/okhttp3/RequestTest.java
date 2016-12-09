@@ -117,6 +117,16 @@ public final class RequestTest {
     assertEquals(body, patch.body());
   }
 
+  /** Custom methods we might create that include a body */
+  @Test public void customMethods() throws IOException {
+    MediaType contentType = MediaType.parse("application/json");
+    RequestBody body = RequestBody.create(contentType, "{}");
+
+    Request custom = new Request.Builder().url("http://localhost/api").method("CUSTOM", body).build();
+    assertEquals("CUSTOM", custom.method());
+    assertEquals(body, custom.body());
+  }
+
   @Test public void uninitializedURI() throws Exception {
     Request request = new Request.Builder().url("http://localhost/api").build();
     assertEquals(new URI("http://localhost/api"), request.url().uri());

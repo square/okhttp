@@ -205,16 +205,6 @@ public final class CallTest {
     repeatedHeaderNames();
   }
 
-  @Test public void getWithRequestBody() throws Exception {
-    server.enqueue(new MockResponse());
-
-    try {
-      new Request.Builder().method("GET", RequestBody.create(MediaType.parse("text/plain"), "abc"));
-      fail();
-    } catch (IllegalArgumentException expected) {
-    }
-  }
-
   @Test public void head() throws Exception {
     server.enqueue(new MockResponse().addHeader("Content-Type: text/plain"));
 

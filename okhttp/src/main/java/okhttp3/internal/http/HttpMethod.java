@@ -15,6 +15,9 @@
  */
 package okhttp3.internal.http;
 
+import static okhttp3.internal.http.StatusLine.HTTP_PERM_REDIRECT;
+import static okhttp3.internal.http.StatusLine.HTTP_TEMP_REDIRECT;
+
 public final class HttpMethod {
   public static boolean invalidatesCache(String method) {
     return method.equals("POST")
@@ -32,22 +35,16 @@ public final class HttpMethod {
         || method.equals("REPORT");   // CalDAV/CardDAV (defined in WebDAV Versioning)
   }
 
-  public static boolean permitsRequestBody(String method) {
-    return requiresRequestBody(method)
-        || method.equals("OPTIONS")
-        || method.equals("DELETE")    // Permitted as spec is ambiguous.
-        || method.equals("PROPFIND")  // (WebDAV) without body: request <allprop/>
-        || method.equals("MKCOL")     // (WebDAV) may contain a body, but behaviour is unspecified
-        || method.equals("LOCK");     // (WebDAV) body: create lock, without body: refresh lock
-  }
-
   public static boolean redirectsWithBody(String method) {
     return method.equals("PROPFIND"); // (WebDAV) redirects should also maintain the request body
   }
 
-  public static boolean redirectsToGet(String method) {
-    // All requests but PROPFIND should redirect to a GET request.
-    return !method.equals("PROPFIND");
+  public static boolean redirectsToGet(String method, int statusCode) {
+    //The POST requests combined with either 307 or 308 status codes should not redirect to GET.
+    if (method.equals("POST")) {
+      return statusCode != HTTP_TEMP_REDIRECT && statusCode != HTTP_PERM_REDIRECT;
+    }
+    return false;
   }
 
   private HttpMethod() {
