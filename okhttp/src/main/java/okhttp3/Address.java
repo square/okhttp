@@ -180,4 +180,19 @@ public final class Address {
     result = 31 * result + (certificatePinner != null ? certificatePinner.hashCode() : 0);
     return result;
   }
+
+  @Override public String toString() {
+    StringBuilder result = new StringBuilder()
+        .append("Address{")
+        .append(url.host()).append(":").append(url.port());
+
+    if (proxy != null) {
+      result.append(", proxy=").append(proxy);
+    } else {
+      result.append(", proxySelector=").append(proxySelector);
+    }
+
+    result.append("}");
+    return result.toString();
+  }
 }

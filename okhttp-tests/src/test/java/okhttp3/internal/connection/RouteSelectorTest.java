@@ -327,6 +327,12 @@ public final class RouteSelectorTest {
     assertEquals("127.0.0.1", RouteSelector.getHostString(socketAddress));
   }
 
+  @Test public void routeToString() throws Exception {
+    Route route = new Route(httpAddress(), Proxy.NO_PROXY,
+        InetSocketAddress.createUnresolved("host", 1234));
+    assertEquals("Route{host:1234}", route.toString());
+  }
+
   private void assertRoute(Route route, Address address, Proxy proxy, InetAddress socketAddress,
       int socketPort) {
     assertEquals(address, route.address());
