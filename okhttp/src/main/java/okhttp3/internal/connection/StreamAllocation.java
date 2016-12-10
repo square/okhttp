@@ -26,9 +26,9 @@ import okhttp3.internal.Internal;
 import okhttp3.internal.Util;
 import okhttp3.internal.http.HttpCodec;
 import okhttp3.internal.http1.Http1Codec;
+import okhttp3.internal.http2.ConnectionShutdownException;
 import okhttp3.internal.http2.ErrorCode;
 import okhttp3.internal.http2.Http2Codec;
-import okhttp3.internal.http2.ConnectionShutdownException;
 import okhttp3.internal.http2.StreamResetException;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
@@ -342,7 +342,8 @@ public final class StreamAllocation {
   }
 
   @Override public String toString() {
-    return address.toString();
+    RealConnection connection = connection();
+    return connection != null ? connection.toString() : address.toString();
   }
 
   public static final class StreamAllocationReference extends WeakReference<StreamAllocation> {

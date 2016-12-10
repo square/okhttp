@@ -15,6 +15,7 @@
  */
 package okhttp3;
 
+import java.net.Proxy;
 import java.util.List;
 import javax.net.SocketFactory;
 import okhttp3.internal.Util;
@@ -47,5 +48,18 @@ public final class AddressTest {
     Address b = new Address("square.com", 80, dns, socketFactory, null, null, null,
         authenticator, null, protocols, connectionSpecs, new RecordingProxySelector());
     assertFalse(a.equals(b));
+  }
+
+  @Test public void addressToString() throws Exception {
+    Address address = new Address("square.com", 80, dns, socketFactory, null, null, null,
+        authenticator, null, protocols, connectionSpecs, proxySelector);
+    assertEquals("Address{square.com:80, proxySelector=RecordingProxySelector}",
+        address.toString());
+  }
+
+  @Test public void addressWithProxyToString() throws Exception {
+    Address address = new Address("square.com", 80, dns, socketFactory, null, null, null,
+        authenticator, Proxy.NO_PROXY, protocols, connectionSpecs, proxySelector);
+    assertEquals("Address{square.com:80, proxy=" + Proxy.NO_PROXY + "}", address.toString());
   }
 }

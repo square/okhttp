@@ -1013,7 +1013,10 @@ public final class CallTest {
     executeSynchronously("/").assertBody("seed connection pool");
 
     // If this succeeds, too many requests were made.
-    executeSynchronously("/").assertFailure(IOException.class);
+    executeSynchronously("/")
+        .assertFailure(IOException.class)
+        .assertFailureMatches("unexpected end of stream on Connection.*"
+            + server.getHostName() + ":" + server.getPort() + ".*");
   }
 
   @Test public void recoverFromTlsHandshakeFailure() throws Exception {
