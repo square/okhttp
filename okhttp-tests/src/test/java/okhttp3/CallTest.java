@@ -2095,6 +2095,33 @@ public final class CallTest {
     executeSynchronously("/").assertBody("abcabcabc");
   }
 
+  @Test public void rangeHeaderPreventsAutomaticGzip() throws Exception {
+    Buffer gzippedBody = gzip("abcabcabc");
+
+    // Enqueue a gzipped response. Our request isn't expecting it, but that's okay.
+    server.enqueue(new MockResponse()
+        .setResponseCode(HttpURLConnection.HTTP_PARTIAL)
+        .setBody(gzippedBody)
+        .addHeader("Content-Encoding: gzip")
+        .addHeader("Content-Range: bytes 0-" + (gzippedBody.size() - 1)));
+
+    // Make a range request.
+    Request request = new Request.Builder()
+        .url(server.url("/"))
+        .header("Range", "bytes=0-")
+        .build();
+    Call call = client.newCall(request);
+
+    // The response is not decompressed.
+    Response response = call.execute();
+    assertEquals("gzip", response.header("Content-Encoding"));
+    assertEquals(gzippedBody.snapshot(), response.body().source().readByteString());
+
+    // The request did not offer gzip support.
+    RecordedRequest recordedRequest = server.takeRequest();
+    assertNull(recordedRequest.getHeader("Accept-Encoding"));
+  }
+
   @Test public void asyncResponseCanBeConsumedLater() throws Exception {
     server.enqueue(new MockResponse().setBody("abc"));
     server.enqueue(new MockResponse().setBody("def"));
