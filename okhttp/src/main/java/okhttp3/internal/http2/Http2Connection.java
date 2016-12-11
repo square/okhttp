@@ -562,10 +562,8 @@ public final class Http2Connection implements Closeable {
       ErrorCode connectionErrorCode = ErrorCode.INTERNAL_ERROR;
       ErrorCode streamErrorCode = ErrorCode.INTERNAL_ERROR;
       try {
-        if (!client) {
-          reader.readConnectionPreface();
-        }
-        while (reader.nextFrame(this)) {
+        reader.readConnectionPreface(this);
+        while (reader.nextFrame(false, this)) {
         }
         connectionErrorCode = ErrorCode.NO_ERROR;
         streamErrorCode = ErrorCode.CANCEL;

@@ -171,7 +171,7 @@ public final class MockHttp2Peer implements Closeable {
       } else {
         // read a frame
         InFrame inFrame = new InFrame(i, reader);
-        reader.nextFrame(inFrame);
+        reader.nextFrame(false, inFrame);
         inFrames.add(inFrame);
       }
     }
