@@ -156,8 +156,8 @@ public final class RequestTest {
 
   @Test public void headerAcceptsPermittedCharacters() throws Exception {
     Request.Builder builder = new Request.Builder();
-    builder.header("AZab09 ~", "AZab09 ~");
-    builder.addHeader("AZab09 ~", "AZab09 ~");
+    builder.header("AZab09~", "AZab09 ~");
+    builder.addHeader("AZab09~", "AZab09 ~");
   }
 
   @Test public void emptyNameForbidden() throws Exception {
