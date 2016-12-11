@@ -25,6 +25,7 @@ import java.util.Random;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import okhttp3.Call;
 import okhttp3.Callback;
 import okhttp3.OkHttpClient;
@@ -274,6 +275,13 @@ public final class RealWebSocket implements WebSocket, WebSocketReader.FrameCall
       failWebSocket(e, null);
       return false;
     }
+  }
+
+  /**
+   * For testing: wait until the web socket's executor has terminated.
+   */
+  void awaitTermination(int timeout, TimeUnit timeUnit) throws InterruptedException {
+    executor.awaitTermination(timeout, timeUnit);
   }
 
   synchronized int pingCount() {
