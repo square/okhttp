@@ -561,9 +561,12 @@ public final class Http2Connection implements Closeable {
     @Override protected void execute() {
       ErrorCode connectionErrorCode = ErrorCode.INTERNAL_ERROR;
       ErrorCode streamErrorCode = ErrorCode.INTERNAL_ERROR;
+      boolean connectionFailed = false;
       try {
         if (!client) {
+          connectionFailed = true;
           reader.readConnectionPreface();
+          connectionFailed = false;
         }
         while (reader.nextFrame(this)) {
         }
@@ -572,6 +575,19 @@ public final class Http2Connection implements Closeable {
       } catch (IOException e) {
         connectionErrorCode = ErrorCode.PROTOCOL_ERROR;
         streamErrorCode = ErrorCode.PROTOCOL_ERROR;
+
+        if (connectionFailed) {
+          executor.execute(new NamedRunnable("OkHttp %s stream", hostname) {
+            @Override
+            public void execute() {
+              try {
+                listener.connectionFailed();
+              } catch (IOException e) {
+                Platform.get().log(INFO, "FramedConnection.Listener failure for " + hostname, e);
+              }
+            }
+          });
+        }
       } finally {
         try {
           close(connectionErrorCode, streamErrorCode);
@@ -881,6 +897,12 @@ public final class Http2Connection implements Closeable {
      * and those calls are not necessarily serialized.
      */
     public void onSettings(Http2Connection connection) {
+    }
+
+    /**
+     * Notification that the HTTP2 connection has failed.
+     */
+    public void connectionFailed() throws IOException {
     }
   }
 }
