@@ -74,39 +74,48 @@ final class Http2Reader implements Closeable {
     this.hpackReader = new Hpack.Reader(4096, continuation);
   }
 
-  public void readConnectionPreface() throws IOException {
-    if (client) return; // Nothing to read; servers doesn't send a connection preface!
-    ByteString connectionPreface = source.readByteString(CONNECTION_PREFACE.size());
-    if (logger.isLoggable(FINE)) logger.fine(format("<< CONNECTION %s", connectionPreface.hex()));
-    if (!CONNECTION_PREFACE.equals(connectionPreface)) {
-      throw ioException("Expected a connection header but was %s", connectionPreface.utf8());
+  public void readConnectionPreface(Handler handler) throws IOException {
+    if (client) {
+      // The client reads the initial SETTINGS frame.
+      if (!nextFrame(true, handler)) {
+        throw ioException("Required SETTINGS preface not received");
+      }
+    } else {
+      // The server reads the CONNECTION_PREFACE byte string.
+      ByteString connectionPreface = source.readByteString(CONNECTION_PREFACE.size());
+      if (logger.isLoggable(FINE)) logger.fine(format("<< CONNECTION %s", connectionPreface.hex()));
+      if (!CONNECTION_PREFACE.equals(connectionPreface)) {
+        throw ioException("Expected a connection header but was %s", connectionPreface.utf8());
+      }
     }
   }
 
-  public boolean nextFrame(Handler handler) throws IOException {
+  public boolean nextFrame(boolean requireSettings, Handler handler) throws IOException {
     try {
       source.require(9); // Frame header size
     } catch (IOException e) {
       return false; // This might be a normal socket close.
     }
 
-      /*  0                   1                   2                   3
-       *  0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
-       * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-       * |                 Length (24)                   |
-       * +---------------+---------------+---------------+
-       * |   Type (8)    |   Flags (8)   |
-       * +-+-+-----------+---------------+-------------------------------+
-       * |R|                 Stream Identifier (31)                      |
-       * +=+=============================================================+
-       * |                   Frame Payload (0...)                      ...
-       * +---------------------------------------------------------------+
-       */
+    //  0                   1                   2                   3
+    //  0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+    // +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+    // |                 Length (24)                   |
+    // +---------------+---------------+---------------+
+    // |   Type (8)    |   Flags (8)   |
+    // +-+-+-----------+---------------+-------------------------------+
+    // |R|                 Stream Identifier (31)                      |
+    // +=+=============================================================+
+    // |                   Frame Payload (0...)                      ...
+    // +---------------------------------------------------------------+
     int length = readMedium(source);
     if (length < 0 || length > INITIAL_MAX_FRAME_SIZE) {
       throw ioException("FRAME_SIZE_ERROR: %s", length);
     }
     byte type = (byte) (source.readByte() & 0xff);
+    if (requireSettings && type != TYPE_SETTINGS) {
+      throw ioException("Expected a SETTINGS frame but was %s", type);
+    }
     byte flags = (byte) (source.readByte() & 0xff);
     int streamId = (source.readInt() & 0x7fffffff); // Ignore reserved bit.
     if (logger.isLoggable(FINE)) logger.fine(frameLog(true, streamId, length, type, flags));
