@@ -162,7 +162,7 @@ public final class RealWebSocketTest {
     server.listener.assertClosed(1000, "Hello!");
   }
 
-  @Test public void clientAndServerCloseClosesConnection() throws IOException {
+  @Test public void clientAndServerCloseClosesConnection() throws Exception {
     // Send close from both sides at the same time.
     server.webSocket.close(1000, "Hello!");
     client.processNextFrame(); // Read close, close connection close.
@@ -175,6 +175,7 @@ public final class RealWebSocketTest {
     server.listener.assertClosing(1000, "Hi!");
     client.listener.assertClosed(1000, "Hello!");
     server.listener.assertClosed(1000, "Hi!");
+    client.webSocket.awaitTermination(5, TimeUnit.SECONDS);
     assertTrue(client.closed);
 
     server.listener.assertExhausted(); // Client should not have sent second close.
