@@ -13,18 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package okhttp3;
+package okhttp3.internal.ws;
 
 import java.io.IOException;
 import java.net.ProtocolException;
 import java.net.SocketTimeoutException;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Logger;
+import okhttp3.Interceptor;
+import okhttp3.OkHttpClient;
+import okhttp3.RecordingHostnameVerifier;
+import okhttp3.Request;
+import okhttp3.Response;
+import okhttp3.TestLogHandler;
+import okhttp3.WebSocket;
+import okhttp3.WebSocketListener;
 import okhttp3.internal.tls.SslClient;
-import okhttp3.internal.ws.RealWebSocket;
-import okhttp3.internal.ws.WebSocketProtocol;
-import okhttp3.internal.ws.WebSocketRecorder;
 import okhttp3.mockwebserver.Dispatcher;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
@@ -38,9 +44,12 @@ import org.junit.Rule;
 import org.junit.Test;
 
 import static okhttp3.TestUtil.defaultClient;
+import static okhttp3.TestUtil.repeat;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 public final class WebSocketHttpTest {
@@ -85,7 +94,7 @@ public final class WebSocketHttpTest {
     serverListener.assertOpen();
 
     webSocket.send(ByteString.encodeUtf8("Hello!"));
-    serverListener.assertBinaryMessage(new byte[] {'H', 'e', 'l', 'l', 'o', '!'});
+    serverListener.assertBinaryMessage(ByteString.of(new byte[] {'H', 'e', 'l', 'l', 'o', '!'}));
   }
 
   @Test public void nullStringThrows() throws IOException {
@@ -300,6 +309,128 @@ public final class WebSocketHttpTest {
         "Expected 'Sec-WebSocket-Accept' header value 'ujmZX4KXZqjwy6vi1aQFH5p4Ygk=' but was 'magic'");
   }
 
+  @Test public void webSocketAndApplicationInterceptors() throws IOException {
+    final AtomicInteger interceptedCount = new AtomicInteger();
+
+    client = client.newBuilder()
+        .addInterceptor(new Interceptor() {
+          @Override public Response intercept(Chain chain) throws IOException {
+            assertNull(chain.request().body());
+            Response response = chain.proceed(chain.request());
+            assertEquals("Upgrade", response.header("Connection"));
+            assertTrue("", response.body().source().exhausted());
+            interceptedCount.incrementAndGet();
+            return response;
+          }
+        }).build();
+
+    webServer.enqueue(new MockResponse().withWebSocketUpgrade(serverListener));
+
+    WebSocket webSocket = newWebSocket();
+    clientListener.assertOpen();
+    assertEquals(1, interceptedCount.get());
+    webSocket.close(1000, null);
+
+    WebSocket server = serverListener.assertOpen();
+    server.close(1000, null);
+  }
+
+  @Test public void webSocketAndNetworkInterceptors() throws IOException {
+    client = client.newBuilder()
+        .addNetworkInterceptor(new Interceptor() {
+          @Override public Response intercept(Chain chain) throws IOException {
+            throw new AssertionError(); // Network interceptors don't execute.
+          }
+        }).build();
+
+    webServer.enqueue(new MockResponse().withWebSocketUpgrade(serverListener));
+
+    WebSocket webSocket = newWebSocket();
+    clientListener.assertOpen();
+    webSocket.close(1000, null);
+
+    WebSocket server = serverListener.assertOpen();
+    server.close(1000, null);
+  }
+
+  @Test public void overflowOutgoingQueue() throws IOException {
+    webServer.enqueue(new MockResponse().withWebSocketUpgrade(serverListener));
+
+    WebSocket webSocket = newWebSocket();
+    clientListener.assertOpen();
+
+    // Send messages until the client's outgoing buffer overflows!
+    ByteString message = ByteString.of(new byte[1024 * 1024]);
+    int messageCount = 0;
+    while (true) {
+      boolean success = webSocket.send(message);
+      if (!success) break;
+
+      messageCount++;
+      long queueSize = webSocket.queueSize();
+      assertTrue(queueSize >= 0 && queueSize <= messageCount * message.size());
+      assertTrue(messageCount < 32); // Expect to fail before enqueueing 32 MiB.
+    }
+
+    // Confirm all sent messages were received, followed by a client-initiated close.
+    WebSocket server = serverListener.assertOpen();
+    for (int i = 0; i < messageCount; i++) {
+      serverListener.assertBinaryMessage(message);
+    }
+    serverListener.assertClosing(1001, "");
+
+    // When the server acknowledges the close the connection shuts down gracefully.
+    server.close(1000, null);
+    clientListener.assertClosing(1000, "");
+    clientListener.assertClosed(1000, "");
+    serverListener.assertClosed(1001, "");
+  }
+
+  @Test public void closeReasonMaximumLength() throws IOException {
+    webServer.enqueue(new MockResponse().withWebSocketUpgrade(serverListener));
+
+    String clientReason = repeat('C', 123);
+    String serverReason = repeat('S', 123);
+
+    WebSocket webSocket = newWebSocket();
+    WebSocket server = serverListener.assertOpen();
+
+    clientListener.assertOpen();
+    webSocket.close(1000, clientReason);
+    serverListener.assertClosing(1000, clientReason);
+
+    server.close(1000, serverReason);
+    clientListener.assertClosing(1000, serverReason);
+    clientListener.assertClosed(1000, serverReason);
+
+    serverListener.assertClosed(1000, clientReason);
+  }
+
+  @Test public void closeReasonTooLong() throws IOException {
+    webServer.enqueue(new MockResponse().withWebSocketUpgrade(serverListener));
+
+    WebSocket webSocket = newWebSocket();
+    WebSocket server = serverListener.assertOpen();
+
+    clientListener.assertOpen();
+    String reason = repeat('X', 124);
+    try {
+      webSocket.close(1000, reason);
+      fail();
+    } catch (IllegalArgumentException expected) {
+      assertEquals("reason.size() > 123: " + reason, expected.getMessage());
+    }
+
+    webSocket.close(1000, null);
+    serverListener.assertClosing(1000, "");
+
+    server.close(1000, null);
+    clientListener.assertClosing(1000, "");
+    clientListener.assertClosed(1000, "");
+
+    serverListener.assertClosed(1000, "");
+  }
+
   @Test public void wsScheme() throws IOException {
     websocketScheme("ws");
   }
@@ -372,6 +503,73 @@ public final class WebSocketHttpTest {
 
     server.send("abc");
     clientListener.assertTextMessage("abc");
+  }
+
+  @Test public void clientPingsServerOnInterval() throws Exception {
+    client = client.newBuilder()
+        .pingInterval(500, TimeUnit.MILLISECONDS)
+        .build();
+
+    webServer.enqueue(new MockResponse().withWebSocketUpgrade(serverListener));
+    RealWebSocket webSocket = newWebSocket();
+
+    clientListener.assertOpen();
+    RealWebSocket server = (RealWebSocket) serverListener.assertOpen();
+
+    long startNanos = System.nanoTime();
+    while (webSocket.pongCount() < 3) {
+      Thread.sleep(50);
+    }
+
+    long elapsedUntilPong3 = System.nanoTime() - startNanos;
+    assertEquals(1500, TimeUnit.NANOSECONDS.toMillis(elapsedUntilPong3), 250d);
+
+    // The client pinged the server 3 times, and it has ponged back 3 times.
+    assertEquals(3, server.pingCount());
+    assertEquals(3, webSocket.pongCount());
+
+    // The server has never pinged the client.
+    assertEquals(0, server.pongCount());
+    assertEquals(0, webSocket.pingCount());
+  }
+
+  @Test public void clientDoesNotPingServerByDefault() throws Exception {
+    webServer.enqueue(new MockResponse().withWebSocketUpgrade(serverListener));
+    RealWebSocket webSocket = newWebSocket();
+
+    clientListener.assertOpen();
+    RealWebSocket server = (RealWebSocket) serverListener.assertOpen();
+
+    Thread.sleep(1000);
+
+    // No pings and no pongs.
+    assertEquals(0, server.pingCount());
+    assertEquals(0, webSocket.pongCount());
+    assertEquals(0, server.pongCount());
+    assertEquals(0, webSocket.pingCount());
+  }
+
+  /** https://github.com/square/okhttp/issues/2788 */
+  @Test public void clientCancelsIfCloseIsNotAcknowledged() throws Exception {
+    webServer.enqueue(new MockResponse().withWebSocketUpgrade(serverListener));
+    RealWebSocket webSocket = newWebSocket();
+
+    clientListener.assertOpen();
+    WebSocket server = serverListener.assertOpen();
+
+    // Initiate a close on the client, which will schedule a hard cancel in 500 ms.
+    long closeAtNanos = System.nanoTime();
+    webSocket.close(1000, "goodbye", 500);
+    serverListener.assertClosing(1000, "goodbye");
+
+    // Confirm that the hard cancel occurred after 500 ms.
+    clientListener.assertFailure();
+    long elapsedUntilFailure = System.nanoTime() - closeAtNanos;
+    assertEquals(500, TimeUnit.NANOSECONDS.toMillis(elapsedUntilFailure), 250d);
+
+    // Close the server and confirm it saw what we expected.
+    server.close(1000, null);
+    serverListener.assertClosed(1000, "goodbye");
   }
 
   private MockResponse upgradeResponse(RecordedRequest request) {

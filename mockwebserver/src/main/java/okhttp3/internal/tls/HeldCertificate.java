@@ -22,13 +22,20 @@ import java.security.KeyPairGenerator;
 import java.security.SecureRandom;
 import java.security.Security;
 import java.security.cert.X509Certificate;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.UUID;
 import javax.security.auth.x500.X500Principal;
+import org.bouncycastle.asn1.ASN1Encodable;
+import org.bouncycastle.asn1.DERSequence;
 import org.bouncycastle.asn1.x509.BasicConstraints;
+import org.bouncycastle.asn1.x509.GeneralName;
 import org.bouncycastle.asn1.x509.X509Extensions;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.x509.X509V3CertificateGenerator;
+
+import static okhttp3.internal.Util.verifyAsIpAddress;
 
 /**
  * A certificate and its private key. This can be used on the server side by HTTPS servers, or on
@@ -51,6 +58,7 @@ public final class HeldCertificate {
 
     private final long duration = 1000L * 60 * 60 * 24; // One day.
     private String hostname;
+    private List<String> altNames = new ArrayList<>();
     private String serialNumber = "1";
     private KeyPair keyPair;
     private HeldCertificate issuedBy;
@@ -93,6 +101,15 @@ public final class HeldCertificate {
       return this;
     }
 
+    /**
+     * Adds a subject alternative name to the certificate. This is usually a hostname or IP address.
+     * If no subject alternative names are added that extension will not be used.
+     */
+    public Builder subjectAlternativeName(String altName) {
+      altNames.add(altName);
+      return this;
+    }
+
     public HeldCertificate build() throws GeneralSecurityException {
       // Subject, public & private keys for this certificate.
       KeyPair heldKeyPair = keyPair != null
@@ -127,6 +144,19 @@ public final class HeldCertificate {
       if (maxIntermediateCas > 0) {
         generator.addExtension(X509Extensions.BasicConstraints, true,
             new BasicConstraints(maxIntermediateCas));
+      }
+
+      if (!altNames.isEmpty()) {
+        ASN1Encodable[] encodableAltNames = new ASN1Encodable[altNames.size()];
+        for (int i = 0, size = altNames.size(); i < size; i++) {
+          String altName = altNames.get(i);
+          int tag = verifyAsIpAddress(altName)
+              ? GeneralName.iPAddress
+              : GeneralName.dNSName;
+          encodableAltNames[i] = new GeneralName(tag, altName);
+        }
+        generator.addExtension(X509Extensions.SubjectAlternativeName, true,
+            new DERSequence(encodableAltNames));
       }
 
       X509Certificate certificate = generator.generateX509Certificate(

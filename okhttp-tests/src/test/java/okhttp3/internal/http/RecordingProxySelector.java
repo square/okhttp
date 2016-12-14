@@ -49,4 +49,8 @@ public final class RecordingProxySelector extends ProxySelector {
         Util.format("%s %s:%d %s", uri, socketAddress.getHostName(), socketAddress.getPort(),
             ioe.getMessage()));
   }
+
+  @Override public String toString() {
+    return "RecordingProxySelector";
+  }
 }

@@ -1,6 +1,58 @@
 Change Log
 ==========
 
+## Version 3.5.0
+
+_2016-11-30_
+
+ *  **Web Sockets are now a stable feature of OkHttp.** Since being introduced as a beta feature in
+    OkHttp 2.3 our web socket client has matured. Connect to a server's web socket with
+    `OkHttpClient.newWebSocket()`, send messages with `send()`, and receive messages with the
+    `WebSocketListener`.
+
+    The `okhttp-ws` submodule is no longer available and `okhttp-ws` artifacts from previous
+    releases of OkHttp are not compatible with OkHttp 3.5. When upgrading to the new package
+    please note that the `WebSocket` and `WebSocketCall` classes have been merged. Sending messages
+    is now asynchronous and they may be enqueued before the web socket is connected.
+
+ *  **OkHttp no longer attempts a direct connection if the system's HTTP proxy fails.** This
+    behavior was surprising because OkHttp was disregarding the user's specified configuration. If
+    you need to customize proxy fallback behavior, implement your own `java.net.ProxySelector`.
+
+ *  Fix: Support TLSv1.3 on devices that support it.
+
+ *  Fix: Share pooled connections across equivalent `OkHttpClient` instances. Previous releases had
+    a bug where a shared connection pool did not guarantee shared connections in some cases.
+ *  Fix: Prefer the server's response body on all conditional cache misses. Previously we would
+    return the cached response's body if it had a newer `Last-Modified` date.
+ *  Fix: Update the stored timestamp on conditional cache hits.
+ *  New: Optimized HTTP/2 request header encoding. More headers are HPACK-encoded and string
+    literals are now Huffman-encoded.
+ *  New: Expose `Part` headers and body in `Multipart`.
+ *  New: Make `ResponseBody.string()` and `ResponseBody.charStream()` BOM-aware. If your HTTP
+    response body begins with a [byte order mark][bom] it will be consumed and used to select a
+    charset for the remaining bytes. Most applications should not not need a byte order mark.
+
+ *  New: Upgrade to Okio 1.11.0.
+
+     ```xml
+     <dependency>
+       <groupId>com.squareup.okio</groupId>
+       <artifactId>okio</artifactId>
+       <version>1.11.0</version>
+     </dependency>
+
+     com.squareup.okio:okio:1.11.0
+     ```
+
+ *  Fix: Avoid sending empty HTTP/2 data frames when there is no request body.
+ *  Fix: Add a leading `.` for better domain matching in `JavaNetCookieJar`.
+ *  Fix: Gracefully recover from HTTP/2 connection shutdowns at start of request.
+ *  Fix: Be lenient if a `MediaType`'s character set is `'single-quoted'`.
+ *  Fix: Allow horizontal tab characters in header values.
+ *  Fix: When parsing HTTP authentication headers permit challenge parameters in any order.
+
+
 ## Version 3.4.2
 
 _2016-11-03_
@@ -1146,3 +1198,4 @@ Initial release.
  [major_versions]: http://jakewharton.com/java-interoperability-policy-for-major-version-updates/
  [nginx_959]: https://trac.nginx.org/nginx/ticket/959
  [okhttp_idling_resource]: https://github.com/JakeWharton/okhttp-idling-resource
+ [bom]: https://en.wikipedia.org/wiki/Byte_order_mark

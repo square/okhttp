@@ -158,7 +158,7 @@ final class RealCall implements Call {
   }
 
   String redactedUrl() {
-    return originalRequest.url().redact().toString();
+    return originalRequest.url().redact();
   }
 
   Response getResponseWithInterceptorChain() throws IOException {

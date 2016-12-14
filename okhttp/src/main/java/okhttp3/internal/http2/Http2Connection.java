@@ -66,7 +66,7 @@ public final class Http2Connection implements Closeable {
   // operations must synchronize on 'this' last. This ensures that we never
   // wait for a blocking operation while holding 'this'.
 
-  private static final ExecutorService executor = new ThreadPoolExecutor(0,
+  static final ExecutorService executor = new ThreadPoolExecutor(0,
       Integer.MAX_VALUE, 60, TimeUnit.SECONDS, new SynchronousQueue<Runnable>(),
       Util.threadFactory("OkHttp FramedConnection", true));
 
@@ -77,12 +77,12 @@ public final class Http2Connection implements Closeable {
    * User code to run in response to incoming streams or settings. Calls to this are always invoked
    * on {@link #executor}.
    */
-  private final Listener listener;
-  private final Map<Integer, Http2Stream> streams = new LinkedHashMap<>();
-  private final String hostname;
-  private int lastGoodStreamId;
-  private int nextStreamId;
-  private boolean shutdown;
+  final Listener listener;
+  final Map<Integer, Http2Stream> streams = new LinkedHashMap<>();
+  final String hostname;
+  int lastGoodStreamId;
+  int nextStreamId;
+  boolean shutdown;
 
   /** Ensures push promise callbacks events are sent in order per stream. */
   private final ExecutorService pushExecutor;
@@ -90,7 +90,7 @@ public final class Http2Connection implements Closeable {
   /** Lazily-created map of in-flight pings awaiting a response. Guarded by this. */
   private Map<Integer, Ping> pings;
   /** User code to run in response to push promise events. */
-  private final PushObserver pushObserver;
+  final PushObserver pushObserver;
   private int nextPingId;
 
   /**
@@ -115,14 +115,14 @@ public final class Http2Connection implements Closeable {
   // TODO: MWS will need to guard on this setting before attempting to push.
   final Settings peerSettings = new Settings();
 
-  private boolean receivedInitialPeerSettings = false;
+  boolean receivedInitialPeerSettings = false;
   final Socket socket;
   final Http2Writer writer;
 
   // Visible for testing
   final ReaderRunnable readerRunnable;
 
-  private Http2Connection(Builder builder) {
+  Http2Connection(Builder builder) {
     pushObserver = builder.pushObserver;
     client = builder.client;
     listener = builder.listener;
@@ -346,7 +346,7 @@ public final class Http2Connection implements Closeable {
     return ping;
   }
 
-  private void writePingLater(
+  void writePingLater(
       final boolean reply, final int payload1, final int payload2, final Ping ping) {
     executor.execute(new NamedRunnable("OkHttp %s ping %08x%08x",
         hostname, payload1, payload2) {
@@ -359,7 +359,7 @@ public final class Http2Connection implements Closeable {
     });
   }
 
-  private void writePing(boolean reply, int payload1, int payload2, Ping ping) throws IOException {
+  void writePing(boolean reply, int payload1, int payload2, Ping ping) throws IOException {
     synchronized (writer) {
       // Observe the sent time immediately before performing I/O.
       if (ping != null) ping.send();
@@ -367,7 +367,7 @@ public final class Http2Connection implements Closeable {
     }
   }
 
-  private synchronized Ping removePing(int id) {
+  synchronized Ping removePing(int id) {
     return pings != null ? pings.remove(id) : null;
   }
 
@@ -404,7 +404,7 @@ public final class Http2Connection implements Closeable {
     close(ErrorCode.NO_ERROR, ErrorCode.CANCEL);
   }
 
-  private void close(ErrorCode connectionCode, ErrorCode streamCode) throws IOException {
+  void close(ErrorCode connectionCode, ErrorCode streamCode) throws IOException {
     assert (!Thread.holdsLock(this));
     IOException thrown = null;
     try {
@@ -501,13 +501,13 @@ public final class Http2Connection implements Closeable {
   }
 
   public static class Builder {
-    private Socket socket;
-    private String hostname;
-    private BufferedSource source;
-    private BufferedSink sink;
-    private Listener listener = Listener.REFUSE_INCOMING_STREAMS;
-    private PushObserver pushObserver = PushObserver.CANCEL;
-    private boolean client;
+    Socket socket;
+    String hostname;
+    BufferedSource source;
+    BufferedSink sink;
+    Listener listener = Listener.REFUSE_INCOMING_STREAMS;
+    PushObserver pushObserver = PushObserver.CANCEL;
+    boolean client;
 
     /**
      * @param client true if this peer initiated the connection; false if this peer accepted the
@@ -553,7 +553,7 @@ public final class Http2Connection implements Closeable {
   class ReaderRunnable extends NamedRunnable implements Http2Reader.Handler {
     final Http2Reader reader;
 
-    private ReaderRunnable(Http2Reader reader) {
+    ReaderRunnable(Http2Reader reader) {
       super("OkHttp %s", hostname);
       this.reader = reader;
     }
@@ -562,10 +562,8 @@ public final class Http2Connection implements Closeable {
       ErrorCode connectionErrorCode = ErrorCode.INTERNAL_ERROR;
       ErrorCode streamErrorCode = ErrorCode.INTERNAL_ERROR;
       try {
-        if (!client) {
-          reader.readConnectionPreface();
-        }
-        while (reader.nextFrame(this)) {
+        reader.readConnectionPreface(this);
+        while (reader.nextFrame(false, this)) {
         }
         connectionErrorCode = ErrorCode.NO_ERROR;
         streamErrorCode = ErrorCode.CANCEL;
@@ -771,14 +769,14 @@ public final class Http2Connection implements Closeable {
   }
 
   /** Even, positive numbered streams are pushed streams in HTTP/2. */
-  private boolean pushedStream(int streamId) {
+  boolean pushedStream(int streamId) {
     return streamId != 0 && (streamId & 1) == 0;
   }
 
   // Guarded by this.
-  private final Set<Integer> currentPushRequests = new LinkedHashSet<>();
+  final Set<Integer> currentPushRequests = new LinkedHashSet<>();
 
-  private void pushRequestLater(final int streamId, final List<Header> requestHeaders) {
+  void pushRequestLater(final int streamId, final List<Header> requestHeaders) {
     synchronized (this) {
       if (currentPushRequests.contains(streamId)) {
         writeSynResetLater(streamId, ErrorCode.PROTOCOL_ERROR);
@@ -802,7 +800,7 @@ public final class Http2Connection implements Closeable {
     });
   }
 
-  private void pushHeadersLater(final int streamId, final List<Header> requestHeaders,
+  void pushHeadersLater(final int streamId, final List<Header> requestHeaders,
       final boolean inFinished) {
     pushExecutor.execute(new NamedRunnable("OkHttp %s Push Headers[%s]", hostname, streamId) {
       @Override public void execute() {
@@ -824,7 +822,7 @@ public final class Http2Connection implements Closeable {
    * Eagerly reads {@code byteCount} bytes from the source before launching a background task to
    * process the data.  This avoids corrupting the stream.
    */
-  private void pushDataLater(final int streamId, final BufferedSource source, final int byteCount,
+  void pushDataLater(final int streamId, final BufferedSource source, final int byteCount,
       final boolean inFinished) throws IOException {
     final Buffer buffer = new Buffer();
     source.require(byteCount); // Eagerly read the frame before firing client thread.
@@ -846,7 +844,7 @@ public final class Http2Connection implements Closeable {
     });
   }
 
-  private void pushResetLater(final int streamId, final ErrorCode errorCode) {
+  void pushResetLater(final int streamId, final ErrorCode errorCode) {
     pushExecutor.execute(new NamedRunnable("OkHttp %s Push Reset[%s]", hostname, streamId) {
       @Override public void execute() {
         pushObserver.onReset(streamId, errorCode);

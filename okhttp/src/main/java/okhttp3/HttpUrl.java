@@ -296,7 +296,7 @@ public final class HttpUrl {
   static final String FRAGMENT_ENCODE_SET_URI = " \"#<>\\^`{|}";
 
   /** Either "http" or "https". */
-  private final String scheme;
+  final String scheme;
 
   /** Decoded username. */
   private final String username;
@@ -305,10 +305,10 @@ public final class HttpUrl {
   private final String password;
 
   /** Canonical hostname. */
-  private final String host;
+  final String host;
 
   /** Either 80, 443 or a user-specified port. In range [1..65535]. */
-  private final int port;
+  final int port;
 
   /**
    * A list of canonical path segments. This list always contains at least one element, which may be
@@ -330,7 +330,7 @@ public final class HttpUrl {
   /** Canonical URL. */
   private final String url;
 
-  private HttpUrl(Builder builder) {
+  HttpUrl(Builder builder) {
     this.scheme = builder.scheme;
     this.username = percentDecode(builder.encodedUsername, false);
     this.password = percentDecode(builder.encodedPassword, false);
@@ -842,14 +842,16 @@ public final class HttpUrl {
   }
 
   /**
-   * Returns the HttpUrl with the username, password, path, query, and fragment stripped.
-   * Example: http://username:password@example.com/path returns http://example.com/...
+   * Returns a string with containing this URL with its username, password, query, and fragment
+   * stripped, and its path replaced with {@code /...}. For example, redacting {@code
+   * http://username:password@example.com/path} returns {@code http://example.com/...}.
    */
-  public HttpUrl redact() {
-    Builder builder = newBuilder("/...");
-    builder.username("");
-    builder.password("");
-    return builder.build();
+  public String redact() {
+    return newBuilder("/...")
+        .username("")
+        .password("")
+        .build()
+        .toString();
   }
 
   /**

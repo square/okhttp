@@ -29,7 +29,6 @@ import org.junit.Test;
 
 import static java.util.Collections.singletonList;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.fail;
 
@@ -129,9 +128,9 @@ public final class HttpUrlTest {
     HttpUrl baseWithPasswordAndUsername = HttpUrl.parse("http://username:password@host/a/b#fragment");
     HttpUrl baseWithUsernameOnly = HttpUrl.parse("http://username@host/a/b#fragment");
     HttpUrl baseWithPasswordOnly = HttpUrl.parse("http://password@host/a/b#fragment");
-    assertEquals(HttpUrl.parse("http://host/..."), baseWithPasswordAndUsername.redact());
-    assertEquals(HttpUrl.parse("http://host/..."), baseWithUsernameOnly.redact());
-    assertEquals(HttpUrl.parse("http://host/..."), baseWithPasswordOnly.redact());
+    assertEquals("http://host/...", baseWithPasswordAndUsername.redact());
+    assertEquals("http://host/...", baseWithUsernameOnly.redact());
+    assertEquals("http://host/...", baseWithPasswordOnly.redact());
   }
 
   @Test public void resolveNoScheme() throws Exception {

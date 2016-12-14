@@ -58,7 +58,7 @@ public final class CacheControl {
     this.headerValue = headerValue;
   }
 
-  private CacheControl(Builder builder) {
+  CacheControl(Builder builder) {
     this.noCache = builder.noCache;
     this.noStore = builder.noStore;
     this.maxAgeSeconds = builder.maxAgeSeconds;

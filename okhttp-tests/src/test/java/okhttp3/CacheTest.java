@@ -19,15 +19,12 @@ package okhttp3;
 import java.io.File;
 import java.io.IOException;
 import java.net.CookieManager;
-import java.net.HttpCookie;
 import java.net.HttpURLConnection;
 import java.net.ResponseCache;
 import java.security.Principal;
 import java.security.cert.Certificate;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
@@ -1818,14 +1815,6 @@ public final class CacheTest {
     Response response2 = get(server.url("/"));
     assertEquals("A", response2.body().string());
     assertEquals("299 test danger", response2.header("Warning"));
-  }
-
-  public void assertCookies(HttpUrl url, String... expectedCookies) throws Exception {
-    List<String> actualCookies = new ArrayList<>();
-    for (HttpCookie cookie : cookieManager.getCookieStore().get(url.uri())) {
-      actualCookies.add(cookie.toString());
-    }
-    assertEquals(Arrays.asList(expectedCookies), actualCookies);
   }
 
   @Test public void doNotCachePartialResponse() throws Exception {

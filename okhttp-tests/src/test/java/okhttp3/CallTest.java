@@ -63,6 +63,7 @@ import okhttp3.internal.Util;
 import okhttp3.internal.Version;
 import okhttp3.internal.http.RecordingProxySelector;
 import okhttp3.internal.io.InMemoryFileSystem;
+import okhttp3.internal.tls.HeldCertificate;
 import okhttp3.internal.tls.SslClient;
 import okhttp3.mockwebserver.Dispatcher;
 import okhttp3.mockwebserver.MockResponse;
@@ -1012,7 +1013,10 @@ public final class CallTest {
     executeSynchronously("/").assertBody("seed connection pool");
 
     // If this succeeds, too many requests were made.
-    executeSynchronously("/").assertFailure(IOException.class);
+    executeSynchronously("/")
+        .assertFailure(IOException.class)
+        .assertFailureMatches("unexpected end of stream on Connection.*"
+            + server.getHostName() + ":" + server.getPort() + ".*");
   }
 
   @Test public void recoverFromTlsHandshakeFailure() throws Exception {
@@ -2091,6 +2095,33 @@ public final class CallTest {
     executeSynchronously("/").assertBody("abcabcabc");
   }
 
+  @Test public void rangeHeaderPreventsAutomaticGzip() throws Exception {
+    Buffer gzippedBody = gzip("abcabcabc");
+
+    // Enqueue a gzipped response. Our request isn't expecting it, but that's okay.
+    server.enqueue(new MockResponse()
+        .setResponseCode(HttpURLConnection.HTTP_PARTIAL)
+        .setBody(gzippedBody)
+        .addHeader("Content-Encoding: gzip")
+        .addHeader("Content-Range: bytes 0-" + (gzippedBody.size() - 1)));
+
+    // Make a range request.
+    Request request = new Request.Builder()
+        .url(server.url("/"))
+        .header("Range", "bytes=0-")
+        .build();
+    Call call = client.newCall(request);
+
+    // The response is not decompressed.
+    Response response = call.execute();
+    assertEquals("gzip", response.header("Content-Encoding"));
+    assertEquals(gzippedBody.snapshot(), response.body().source().readByteString());
+
+    // The request did not offer gzip support.
+    RecordedRequest recordedRequest = server.takeRequest();
+    assertNull(recordedRequest.getHeader("Accept-Encoding"));
+  }
+
   @Test public void asyncResponseCanBeConsumedLater() throws Exception {
     server.enqueue(new MockResponse().setBody("abc"));
     server.enqueue(new MockResponse().setBody("def"));
@@ -2501,6 +2532,46 @@ public final class CallTest {
         .assertFailure("Unexpected status line:  HTTP/1.1 200 OK");
   }
 
+  @Test public void requestHeaderNameWithSpaceForbidden() throws Exception {
+    try {
+      new Request.Builder().addHeader("a b", "c");
+      fail();
+    } catch (IllegalArgumentException expected) {
+      assertEquals("Unexpected char 0x20 at 1 in header name: a b", expected.getMessage());
+    }
+  }
+
+  @Test public void requestHeaderNameWithTabForbidden() throws Exception {
+    try {
+      new Request.Builder().addHeader("a\tb", "c");
+      fail();
+    } catch (IllegalArgumentException expected) {
+      assertEquals("Unexpected char 0x09 at 1 in header name: a\tb", expected.getMessage());
+    }
+  }
+
+  @Test public void responseHeaderNameWithSpacePermitted() throws Exception {
+    server.enqueue(new MockResponse()
+        .clearHeaders()
+        .addHeader("content-length: 0")
+        .addHeaderLenient("a b", "c"));
+
+    Call call = client.newCall(new Request.Builder().url(server.url("/")).build());
+    Response response = call.execute();
+    assertEquals("c", response.header("a b"));
+  }
+
+  @Test public void responseHeaderNameWithTabPermitted() throws Exception {
+    server.enqueue(new MockResponse()
+        .clearHeaders()
+        .addHeader("content-length: 0")
+        .addHeaderLenient("a\tb", "c"));
+
+    Call call = client.newCall(new Request.Builder().url(server.url("/")).build());
+    Response response = call.execute();
+    assertEquals("c", response.header("a\tb"));
+  }
+
   @Test public void connectFails() throws Exception {
     server.shutdown();
 
@@ -2707,6 +2778,43 @@ public final class CallTest {
     } finally {
       logger.setLevel(original);
     }
+  }
+
+  @Test public void httpsWithIpAddress() throws Exception {
+    String localIpAddress = InetAddress.getLoopbackAddress().getHostAddress();
+
+    // Create a certificate with an IP address in the subject alt name.
+    HeldCertificate heldCertificate = new HeldCertificate.Builder()
+        .commonName("example.com")
+        .subjectAlternativeName(localIpAddress)
+        .build();
+    SslClient sslClient = new SslClient.Builder()
+        .certificateChain(heldCertificate.keyPair, heldCertificate.certificate)
+        .addTrustedCertificate(heldCertificate.certificate)
+        .build();
+
+    // Use that certificate on the server and trust it on the client.
+    server.useHttps(sslClient.socketFactory, false);
+    client = client.newBuilder()
+        .sslSocketFactory(sslClient.socketFactory, sslClient.trustManager)
+        .hostnameVerifier(new RecordingHostnameVerifier())
+        .protocols(Collections.singletonList(Protocol.HTTP_1_1))
+        .build();
+
+    // Make a request.
+    server.enqueue(new MockResponse());
+    HttpUrl url = server.url("/").newBuilder()
+        .host(localIpAddress)
+        .build();
+    Request request = new Request.Builder()
+        .url(url)
+        .build();
+    executeSynchronously(request)
+        .assertCode(200);
+
+    // Confirm that the IP address was used in the host header.
+    RecordedRequest recordedRequest = server.takeRequest();
+    assertEquals(localIpAddress + ":" + server.getPort(), recordedRequest.getHeader("Host"));
   }
 
   private void makeFailingCall() {

@@ -676,7 +676,8 @@ public final class MockWebServer implements TestRule, Closeable {
     RealWebSocket webSocket = new RealWebSocket(fancyRequest,
         response.getWebSocketListener(), new SecureRandom());
     response.getWebSocketListener().onOpen(webSocket, fancyResponse);
-    webSocket.initReaderAndWriter(streams);
+    String name = "MockWebServer WebSocket " + request.getPath();
+    webSocket.initReaderAndWriter(name, 0, streams);
     webSocket.loopReader();
 
     // Even if messages are no longer being read we need to wait for the connection close signal.

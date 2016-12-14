@@ -44,7 +44,7 @@ final class Hpack {
   private static final int PREFIX_6_BITS = 0x3f;
   private static final int PREFIX_7_BITS = 0x7f;
 
-  private static final Header[] STATIC_HEADER_TABLE = new Header[] {
+  static final Header[] STATIC_HEADER_TABLE = new Header[] {
       new Header(Header.TARGET_AUTHORITY, ""),
       new Header(Header.TARGET_METHOD, "GET"),
       new Header(Header.TARGET_METHOD, "POST"),
@@ -346,7 +346,7 @@ final class Hpack {
     }
   }
 
-  private static final Map<ByteString, Integer> NAME_TO_FIRST_INDEX = nameToFirstIndex();
+  static final Map<ByteString, Integer> NAME_TO_FIRST_INDEX = nameToFirstIndex();
 
   private static Map<ByteString, Integer> nameToFirstIndex() {
     Map<ByteString, Integer> result = new LinkedHashMap<>(STATIC_HEADER_TABLE.length);
@@ -587,7 +587,7 @@ final class Hpack {
    * An HTTP/2 response cannot contain uppercase header characters and must be treated as
    * malformed.
    */
-  private static ByteString checkLowercase(ByteString name) throws IOException {
+  static ByteString checkLowercase(ByteString name) throws IOException {
     for (int i = 0, length = name.size(); i < length; i++) {
       byte c = name.getByte(i);
       if (c >= 'A' && c <= 'Z') {

@@ -49,7 +49,7 @@ import okhttp3.internal.http.HttpDate;
 public final class Headers {
   private final String[] namesAndValues;
 
-  private Headers(Builder builder) {
+  Headers(Builder builder) {
     this.namesAndValues = builder.namesAndValues.toArray(new String[builder.namesAndValues.size()]);
   }
 
@@ -237,7 +237,7 @@ public final class Headers {
   }
 
   public static final class Builder {
-    private final List<String> namesAndValues = new ArrayList<>(20);
+    final List<String> namesAndValues = new ArrayList<>(20);
 
     /**
      * Add a header line without any validation. Only appropriate for headers from the remote peer
@@ -308,7 +308,7 @@ public final class Headers {
       if (name.isEmpty()) throw new IllegalArgumentException("name is empty");
       for (int i = 0, length = name.length(); i < length; i++) {
         char c = name.charAt(i);
-        if (c <= '\u001f' || c >= '\u007f') {
+        if (c <= '\u0020' || c >= '\u007f') {
           throw new IllegalArgumentException(Util.format(
               "Unexpected char %#04x at %d in header name: %s", (int) c, i, name));
         }
