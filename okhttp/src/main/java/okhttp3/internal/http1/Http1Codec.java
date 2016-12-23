@@ -55,7 +55,7 @@ import static okhttp3.internal.http.StatusLine.HTTP_CONTINUE;
  *     <li>Open a sink to write the request body. Either {@linkplain #newFixedLengthSink
  *         fixed-length} or {@link #newChunkedSink chunked}.
  *     <li>Write to and then close that sink.
- *     <li>{@linkplain #readResponse Read response headers}.
+ *     <li>{@linkplain #readResponseHeaders Read response headers}.
  *     <li>Open a source to read the response body. Either {@linkplain #newFixedLengthSource
  *         fixed-length}, {@linkplain #newChunkedSource chunked} or {@linkplain
  *         #newUnknownLengthSource unknown length}.
@@ -128,10 +128,6 @@ public final class Http1Codec implements HttpCodec {
     writeRequest(request.headers(), requestLine);
   }
 
-  @Override public Response.Builder readResponseHeaders() throws IOException {
-    return readResponse();
-  }
-
   @Override public ResponseBody openResponseBody(Response response) throws IOException {
     Source source = getTransferStream(response);
     return new RealResponseBody(response.headers(), Okio.buffer(source));
@@ -162,6 +158,10 @@ public final class Http1Codec implements HttpCodec {
     return state == STATE_CLOSED;
   }
 
+  @Override public void flushRequest() throws IOException {
+    sink.flush();
+  }
+
   @Override public void finishRequest() throws IOException {
     sink.flush();
   }
@@ -180,27 +180,26 @@ public final class Http1Codec implements HttpCodec {
     state = STATE_OPEN_REQUEST_BODY;
   }
 
-  /** Parses bytes of a response header from an HTTP transport. */
-  public Response.Builder readResponse() throws IOException {
+  @Override public Response.Builder readResponseHeaders(boolean expectContinue) throws IOException {
     if (state != STATE_OPEN_REQUEST_BODY && state != STATE_READ_RESPONSE_HEADERS) {
       throw new IllegalStateException("state: " + state);
     }
 
     try {
-      while (true) {
-        StatusLine statusLine = StatusLine.parse(source.readUtf8LineStrict());
+      StatusLine statusLine = StatusLine.parse(source.readUtf8LineStrict());
 
-        Response.Builder responseBuilder = new Response.Builder()
-            .protocol(statusLine.protocol)
-            .code(statusLine.code)
-            .message(statusLine.message)
-            .headers(readHeaders());
+      Response.Builder responseBuilder = new Response.Builder()
+          .protocol(statusLine.protocol)
+          .code(statusLine.code)
+          .message(statusLine.message)
+          .headers(readHeaders());
 
-        if (statusLine.code != HTTP_CONTINUE) {
-          state = STATE_OPEN_RESPONSE_BODY;
-          return responseBuilder;
-        }
+      if (expectContinue && statusLine.code == HTTP_CONTINUE) {
+        return null;
       }
+
+      state = STATE_OPEN_RESPONSE_BODY;
+      return responseBuilder;
     } catch (EOFException e) {
       // Provide more context if the server ends the stream before sending a response.
       IOException exception = new IOException("unexpected end of stream on " + streamAllocation);

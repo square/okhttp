@@ -40,6 +40,7 @@ import okio.Okio;
 import okio.Sink;
 import okio.Source;
 
+import static okhttp3.internal.http.StatusLine.HTTP_CONTINUE;
 import static okhttp3.internal.http2.Header.RESPONSE_STATUS;
 import static okhttp3.internal.http2.Header.TARGET_AUTHORITY;
 import static okhttp3.internal.http2.Header.TARGET_METHOD;
@@ -107,12 +108,21 @@ public final class Http2Codec implements HttpCodec {
     stream.writeTimeout().timeout(client.writeTimeoutMillis(), TimeUnit.MILLISECONDS);
   }
 
+  @Override public void flushRequest() throws IOException {
+    connection.flush();
+  }
+
   @Override public void finishRequest() throws IOException {
     stream.getSink().close();
   }
 
-  @Override public Response.Builder readResponseHeaders() throws IOException {
-    return readHttp2HeadersList(stream.getResponseHeaders());
+  @Override public Response.Builder readResponseHeaders(boolean expectContinue) throws IOException {
+    List<Header> headers = stream.takeResponseHeaders();
+    Response.Builder responseBuilder = readHttp2HeadersList(headers);
+    if (expectContinue && Internal.instance.code(responseBuilder) == HTTP_CONTINUE) {
+      return null;
+    }
+    return responseBuilder;
   }
 
   public static List<Header> http2HeadersList(Request request) {
@@ -135,22 +145,31 @@ public final class Http2Codec implements HttpCodec {
 
   /** Returns headers for a name value block containing an HTTP/2 response. */
   public static Response.Builder readHttp2HeadersList(List<Header> headerBlock) throws IOException {
-    String status = null;
-
+    StatusLine statusLine = null;
     Headers.Builder headersBuilder = new Headers.Builder();
     for (int i = 0, size = headerBlock.size(); i < size; i++) {
-      ByteString name = headerBlock.get(i).name;
+      Header header = headerBlock.get(i);
 
-      String value = headerBlock.get(i).value.utf8();
+      // If there were multiple header blocks they will be delimited by nulls. Discard existing
+      // header blocks if the existing header block is a '100 Continue' intermediate response.
+      if (header == null) {
+        if (statusLine != null && statusLine.code == HTTP_CONTINUE) {
+          statusLine = null;
+          headersBuilder = new Headers.Builder();
+        }
+        continue;
+      }
+
+      ByteString name = header.name;
+      String value = header.value.utf8();
       if (name.equals(RESPONSE_STATUS)) {
-        status = value;
+        statusLine = StatusLine.parse("HTTP/1.1 " + value);
       } else if (!HTTP_2_SKIPPED_RESPONSE_HEADERS.contains(name)) {
         Internal.instance.addLenient(headersBuilder, name.utf8(), value);
       }
     }
-    if (status == null) throw new ProtocolException("Expected ':status' header not present");
+    if (statusLine == null) throw new ProtocolException("Expected ':status' header not present");
 
-    StatusLine statusLine = StatusLine.parse("HTTP/1.1 " + status);
     return new Response.Builder()
         .protocol(Protocol.HTTP_2)
         .code(statusLine.code)

@@ -865,8 +865,8 @@ public final class Http2Connection implements Closeable {
 
     /**
      * Handle a new stream from this connection's peer. Implementations should respond by either
-     * {@linkplain Http2Stream#reply replying to the stream} or {@linkplain Http2Stream#close
-     * closing it}. This response does not need to be synchronous.
+     * {@linkplain Http2Stream#sendResponseHeaders replying to the stream} or {@linkplain
+     * Http2Stream#close closing it}. This response does not need to be synchronous.
      */
     public abstract void onStream(Http2Stream stream) throws IOException;
 

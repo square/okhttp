@@ -156,6 +156,10 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
         return connectionPool.routeDatabase;
       }
 
+      @Override public int code(Response.Builder responseBuilder) {
+        return responseBuilder.code;
+      }
+
       @Override
       public void apply(ConnectionSpec tlsConfiguration, SSLSocket sslSocket, boolean isFallback) {
         tlsConfiguration.apply(sslSocket, isFallback);

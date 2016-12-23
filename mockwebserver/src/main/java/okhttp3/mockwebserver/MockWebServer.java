@@ -86,6 +86,7 @@ import static okhttp3.mockwebserver.SocketPolicy.DISCONNECT_AT_END;
 import static okhttp3.mockwebserver.SocketPolicy.DISCONNECT_AT_START;
 import static okhttp3.mockwebserver.SocketPolicy.DISCONNECT_DURING_REQUEST_BODY;
 import static okhttp3.mockwebserver.SocketPolicy.DISCONNECT_DURING_RESPONSE_BODY;
+import static okhttp3.mockwebserver.SocketPolicy.EXPECT_CONTINUE;
 import static okhttp3.mockwebserver.SocketPolicy.FAIL_HANDSHAKE;
 import static okhttp3.mockwebserver.SocketPolicy.NO_RESPONSE;
 import static okhttp3.mockwebserver.SocketPolicy.RESET_STREAM_AT_START;
@@ -590,7 +591,7 @@ public final class MockWebServer implements TestRule, Closeable {
     Headers.Builder headers = new Headers.Builder();
     long contentLength = -1;
     boolean chunked = false;
-    boolean expectContinue = false;
+    boolean readBody = true;
     String header;
     while ((header = source.readUtf8LineStrict()).length() != 0) {
       Internal.instance.addLenient(headers, header);
@@ -603,23 +604,26 @@ public final class MockWebServer implements TestRule, Closeable {
         chunked = true;
       }
       if (lowercaseHeader.startsWith("expect:")
-          && lowercaseHeader.substring(7).trim().equals("100-continue")) {
-        expectContinue = true;
+          && lowercaseHeader.substring(7).trim().equalsIgnoreCase("100-continue")) {
+        readBody = false;
       }
     }
 
-    if (expectContinue) {
+    if (!readBody && dispatcher.peek().getSocketPolicy() == EXPECT_CONTINUE) {
       sink.writeUtf8("HTTP/1.1 100 Continue\r\n");
       sink.writeUtf8("Content-Length: 0\r\n");
       sink.writeUtf8("\r\n");
       sink.flush();
+      readBody = true;
     }
 
     boolean hasBody = false;
     TruncatingBuffer requestBody = new TruncatingBuffer(bodyLimit);
     List<Integer> chunkSizes = new ArrayList<>();
     MockResponse policy = dispatcher.peek();
-    if (contentLength != -1) {
+    if (!readBody) {
+      // Don't read the body unless we've invited the client to send it.
+    } else if (contentLength != -1) {
       hasBody = contentLength > 0;
       throttledTransfer(policy, socket, source, Okio.buffer(requestBody), contentLength, true);
     } else if (chunked) {
@@ -881,6 +885,7 @@ public final class MockWebServer implements TestRule, Closeable {
       Headers.Builder httpHeaders = new Headers.Builder();
       String method = "<:method omitted>";
       String path = "<:path omitted>";
+      boolean readBody = true;
       for (int i = 0, size = streamHeaders.size(); i < size; i++) {
         ByteString name = streamHeaders.get(i).name;
         String value = streamHeaders.get(i).value.utf8();
@@ -893,11 +898,23 @@ public final class MockWebServer implements TestRule, Closeable {
         } else {
           throw new IllegalStateException();
         }
+        if (name.utf8().equals("expect") && value.equalsIgnoreCase("100-continue")) {
+          // Don't read the body unless we've invited the client to send it.
+          readBody = false;
+        }
+      }
+
+      if (!readBody && dispatcher.peek().getSocketPolicy() == EXPECT_CONTINUE) {
+        stream.sendResponseHeaders(Collections.singletonList(
+            new Header(Header.RESPONSE_STATUS, ByteString.encodeUtf8("100 Continue"))), true);
+        stream.getConnection().flush();
+        readBody = true;
       }
 
       Buffer body = new Buffer();
-      body.writeAll(stream.getSource());
-      body.close();
+      if (readBody) {
+        body.writeAll(stream.getSource());
+      }
 
       String requestLine = method + ' ' + path + " HTTP/1.1";
       List<Integer> chunkSizes = Collections.emptyList(); // No chunked encoding for HTTP/2.
@@ -928,7 +945,7 @@ public final class MockWebServer implements TestRule, Closeable {
 
       Buffer body = response.getBody();
       boolean closeStreamAfterHeaders = body != null || !response.getPushPromises().isEmpty();
-      stream.reply(http2Headers, closeStreamAfterHeaders);
+      stream.sendResponseHeaders(http2Headers, closeStreamAfterHeaders);
       pushPromises(stream, response.getPushPromises());
       if (body != null) {
         BufferedSink sink = Okio.buffer(stream.getSink());

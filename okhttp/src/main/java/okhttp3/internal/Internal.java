@@ -26,6 +26,7 @@ import okhttp3.Headers;
 import okhttp3.HttpUrl;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
+import okhttp3.Response;
 import okhttp3.internal.cache.InternalCache;
 import okhttp3.internal.connection.RealConnection;
 import okhttp3.internal.connection.RouteDatabase;
@@ -58,6 +59,8 @@ public abstract class Internal {
   public abstract boolean connectionBecameIdle(ConnectionPool pool, RealConnection connection);
 
   public abstract RouteDatabase routeDatabase(ConnectionPool connectionPool);
+
+  public abstract int code(Response.Builder responseBuilder);
 
   public abstract void apply(ConnectionSpec tlsConfiguration, SSLSocket sslSocket,
       boolean isFallback);
