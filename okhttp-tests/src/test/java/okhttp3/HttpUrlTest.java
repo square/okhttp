@@ -160,6 +160,58 @@ public final class HttpUrlTest {
     assertEquals(HttpUrl.parse("http://a/ht.tp//b/"), base.resolve("ht.tp//b/"));
   }
 
+  /** https://tools.ietf.org/html/rfc3986#section-5.4.1 */
+  @Test public void rfc3886NormalExamples() {
+    HttpUrl url = HttpUrl.parse("http://a/b/c/d;p?q");
+    assertEquals(null, url.resolve("g:h")); // No 'g:' scheme in HttpUrl.
+    assertEquals(HttpUrl.parse("http://a/b/c/g"), url.resolve("g"));
+    assertEquals(HttpUrl.parse("http://a/b/c/g"), url.resolve("./g"));
+    assertEquals(HttpUrl.parse("http://a/b/c/g/"), url.resolve("g/"));
+    assertEquals(HttpUrl.parse("http://a/g"), url.resolve("/g"));
+    assertEquals(HttpUrl.parse("http://g"), url.resolve("//g"));
+    assertEquals(HttpUrl.parse("http://a/b/c/d;p?y"), url.resolve("?y"));
+    assertEquals(HttpUrl.parse("http://a/b/c/g?y"), url.resolve("g?y"));
+    assertEquals(HttpUrl.parse("http://a/b/c/d;p?q#s"), url.resolve("#s"));
+    assertEquals(HttpUrl.parse("http://a/b/c/g#s"), url.resolve("g#s"));
+    assertEquals(HttpUrl.parse("http://a/b/c/g?y#s"), url.resolve("g?y#s"));
+    assertEquals(HttpUrl.parse("http://a/b/c/;x"), url.resolve(";x"));
+    assertEquals(HttpUrl.parse("http://a/b/c/g;x"), url.resolve("g;x"));
+    assertEquals(HttpUrl.parse("http://a/b/c/g;x?y#s"), url.resolve("g;x?y#s"));
+    assertEquals(HttpUrl.parse("http://a/b/c/d;p?q"), url.resolve(""));
+    assertEquals(HttpUrl.parse("http://a/b/c/"), url.resolve("."));
+    assertEquals(HttpUrl.parse("http://a/b/c/"), url.resolve("./"));
+    assertEquals(HttpUrl.parse("http://a/b/"), url.resolve(".."));
+    assertEquals(HttpUrl.parse("http://a/b/"), url.resolve("../"));
+    assertEquals(HttpUrl.parse("http://a/b/g"), url.resolve("../g"));
+    assertEquals(HttpUrl.parse("http://a/"), url.resolve("../.."));
+    assertEquals(HttpUrl.parse("http://a/"), url.resolve("../../"));
+    assertEquals(HttpUrl.parse("http://a/g"), url.resolve("../../g"));
+  }
+
+  /** https://tools.ietf.org/html/rfc3986#section-5.4.2 */
+  @Test public void rfc3886AbnormalExamples() {
+    HttpUrl url = HttpUrl.parse("http://a/b/c/d;p?q");
+    assertEquals(HttpUrl.parse("http://a/g"), url.resolve("../../../g"));
+    assertEquals(HttpUrl.parse("http://a/g"), url.resolve("../../../../g"));
+    assertEquals(HttpUrl.parse("http://a/g"), url.resolve("/./g"));
+    assertEquals(HttpUrl.parse("http://a/g"), url.resolve("/../g"));
+    assertEquals(HttpUrl.parse("http://a/b/c/g."), url.resolve("g."));
+    assertEquals(HttpUrl.parse("http://a/b/c/.g"), url.resolve(".g"));
+    assertEquals(HttpUrl.parse("http://a/b/c/g.."), url.resolve("g.."));
+    assertEquals(HttpUrl.parse("http://a/b/c/..g"), url.resolve("..g"));
+    assertEquals(HttpUrl.parse("http://a/b/g"), url.resolve("./../g"));
+    assertEquals(HttpUrl.parse("http://a/b/c/g/"), url.resolve("./g/."));
+    assertEquals(HttpUrl.parse("http://a/b/c/g/h"), url.resolve("g/./h"));
+    assertEquals(HttpUrl.parse("http://a/b/c/h"), url.resolve("g/../h"));
+    assertEquals(HttpUrl.parse("http://a/b/c/g;x=1/y"), url.resolve("g;x=1/./y"));
+    assertEquals(HttpUrl.parse("http://a/b/c/y"), url.resolve("g;x=1/../y"));
+    assertEquals(HttpUrl.parse("http://a/b/c/g?y/./x"), url.resolve("g?y/./x"));
+    assertEquals(HttpUrl.parse("http://a/b/c/g?y/../x"), url.resolve("g?y/../x"));
+    assertEquals(HttpUrl.parse("http://a/b/c/g#s/./x"), url.resolve("g#s/./x"));
+    assertEquals(HttpUrl.parse("http://a/b/c/g#s/../x"), url.resolve("g#s/../x"));
+    assertEquals(HttpUrl.parse("http://a/b/c/g"), url.resolve("http:g")); // "http:g" also okay.
+  }
+
   @Test public void parseAuthoritySlashCountDoesntMatter() throws Exception {
     assertEquals(HttpUrl.parse("http://host/path"), HttpUrl.parse("http:host/path"));
     assertEquals(HttpUrl.parse("http://host/path"), HttpUrl.parse("http:/host/path"));
