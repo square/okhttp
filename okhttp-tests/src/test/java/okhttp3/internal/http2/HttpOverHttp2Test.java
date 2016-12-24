@@ -20,7 +20,10 @@ import java.io.InputStream;
 import java.net.Authenticator;
 import java.net.HttpURLConnection;
 import java.net.SocketTimeoutException;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -42,6 +45,7 @@ import okhttp3.Response;
 import okhttp3.internal.DoubleInetAddressDns;
 import okhttp3.internal.RecordingOkAuthenticator;
 import okhttp3.internal.SingleInetAddressDns;
+import okhttp3.internal.SocketRecorder;
 import okhttp3.internal.Util;
 import okhttp3.internal.connection.RealConnection;
 import okhttp3.internal.tls.SslClient;
@@ -52,6 +56,7 @@ import okhttp3.mockwebserver.RecordedRequest;
 import okhttp3.mockwebserver.SocketPolicy;
 import okio.Buffer;
 import okio.BufferedSink;
+import okio.BufferedSource;
 import okio.GzipSink;
 import okio.Okio;
 import org.junit.After;
@@ -67,6 +72,7 @@ import static okhttp3.TestUtil.defaultClient;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 /** Test how SPDY interacts with HTTP/2 features. */
@@ -760,6 +766,70 @@ public final class HttpOverHttp2Test {
     assertEquals("bar", pushedRequest.getHeader("foo"));
   }
 
+  @Test public void noDataFramesSentWithNullRequestBody() throws Exception {
+    server.enqueue(new MockResponse()
+        .setBody("ABC"));
+
+    SocketRecorder socketRecorder = new SocketRecorder();
+    client = client.newBuilder()
+        .sslSocketFactory(socketRecorder.sslSocketFactory(sslClient.socketFactory),
+            sslClient.trustManager)
+        .build();
+
+    Call call = client.newCall(new Request.Builder()
+        .url(server.url("/"))
+        .method("DELETE", null)
+        .build());
+    Response response = call.execute();
+    assertEquals("ABC", response.body().string());
+
+    // Replay the bytes written by the client to confirm no data frames were sent.
+    SocketRecorder.RecordedSocket recordedSocket = socketRecorder.takeSocket();
+    Buffer buffer = new Buffer();
+    buffer.write(recordedSocket.bytesWritten());
+
+    RecordingHandler handler = new RecordingHandler();
+    Http2Reader reader = new Http2Reader(buffer, false);
+    reader.readConnectionPreface(null);
+    while (reader.nextFrame(false, handler)) {
+    }
+
+    assertEquals(1, handler.headerFrameCount);
+    assertTrue(handler.dataFrames.isEmpty());
+  }
+
+  @Test public void emptyDataFrameSentWithEmptyBody() throws Exception {
+    server.enqueue(new MockResponse()
+        .setBody("ABC"));
+
+    SocketRecorder socketRecorder = new SocketRecorder();
+    client = client.newBuilder()
+        .sslSocketFactory(socketRecorder.sslSocketFactory(sslClient.socketFactory),
+            sslClient.trustManager)
+        .build();
+
+    Call call = client.newCall(new Request.Builder()
+        .url(server.url("/"))
+        .method("DELETE", Util.EMPTY_REQUEST)
+        .build());
+    Response response = call.execute();
+    assertEquals("ABC", response.body().string());
+
+    // Replay the bytes written by the client to confirm an empty data frame was sent.
+    SocketRecorder.RecordedSocket recordedSocket = socketRecorder.takeSocket();
+    Buffer buffer = new Buffer();
+    buffer.write(recordedSocket.bytesWritten());
+
+    RecordingHandler handler = new RecordingHandler();
+    Http2Reader reader = new Http2Reader(buffer, false);
+    reader.readConnectionPreface(null);
+    while (reader.nextFrame(false, handler)) {
+    }
+
+    assertEquals(1, handler.headerFrameCount);
+    assertEquals(Collections.singletonList(0), handler.dataFrames);
+  }
+
   /**
    * Push a setting that permits up to 2 concurrent streams, then make 3 concurrent requests and
    * confirm that the third concurrent request prepared a new connection.
@@ -902,6 +972,30 @@ public final class HttpOverHttp2Test {
       } catch (Exception e) {
         throw new RuntimeException(e);
       }
+    }
+  }
+
+  static final class RecordingHandler extends BaseTestHandler {
+    int headerFrameCount;
+    final List<Integer> dataFrames = new ArrayList<>();
+
+    @Override public void settings(boolean clearPrevious, Settings settings) {
+    }
+
+    @Override public void ackSettings() {
+    }
+
+    @Override public void windowUpdate(int streamId, long windowSizeIncrement) {
+    }
+
+    @Override public void data(boolean inFinished, int streamId, BufferedSource source, int length)
+        throws IOException {
+      dataFrames.add(length);
+    }
+
+    @Override public void headers(boolean inFinished, int streamId, int associatedStreamId,
+        List<Header> headerBlock) {
+      headerFrameCount++;
     }
   }
 }
