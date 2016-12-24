@@ -39,6 +39,7 @@ import okhttp3.RecordingHostnameVerifier;
 import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
+import okhttp3.TestUtil;
 import okhttp3.internal.DoubleInetAddressDns;
 import okhttp3.internal.RecordingOkAuthenticator;
 import okhttp3.internal.SingleInetAddressDns;
@@ -331,8 +332,7 @@ public final class HttpOverHttp2Test {
     in.close();
   }
 
-  @Ignore // See https://github.com/square/okhttp/issues/578
-  @Test(timeout = 3000) public void readResponseHeaderTimeout() throws Exception {
+  @Test public void readResponseHeaderTimeout() throws Exception {
     server.enqueue(new MockResponse().setSocketPolicy(SocketPolicy.NO_RESPONSE));
     server.enqueue(new MockResponse().setBody("A"));
 
@@ -340,11 +340,27 @@ public final class HttpOverHttp2Test {
         .readTimeout(1000, MILLISECONDS)
         .build();
 
-    Call call = client.newCall(new Request.Builder()
+    // Make a call expecting a timeout reading the response headers.
+    Call call1 = client.newCall(new Request.Builder()
         .url(server.url("/"))
         .build());
-    Response response = call.execute();
-    assertEquals("A", response.body().string());
+    try {
+      call1.execute();
+      fail("Should have timed out!");
+    } catch (SocketTimeoutException expected) {
+      assertEquals("timeout", expected.getMessage());
+    }
+
+    // Confirm that a subsequent request on the same connection is not impacted.
+    Call call2 = client.newCall(new Request.Builder()
+        .url(server.url("/"))
+        .build());
+    Response response2 = call2.execute();
+    assertEquals("A", response2.body().string());
+
+    // Confirm that the connection was reused.
+    assertEquals(0, server.takeRequest().getSequenceNumber());
+    assertEquals(1, server.takeRequest().getSequenceNumber());
   }
 
   /**
@@ -377,27 +393,39 @@ public final class HttpOverHttp2Test {
    * time.
    */
   @Test public void readTimeoutOnSlowConnection() throws Exception {
-    char[] body = new char[2048]; // 2KiB to read.
-    Arrays.fill(body, 'y');
+    String body = TestUtil.repeat('y', 2048);
     server.enqueue(new MockResponse()
-        .setBody(new String(body))
+        .setBody(body)
         .throttleBody(1024, 1, SECONDS)); // Slow connection 1KiB/second.
+    server.enqueue(new MockResponse()
+        .setBody(body));
 
     client = client.newBuilder()
         .readTimeout(500, MILLISECONDS) // Half a second to read something.
         .build();
 
-    Call call = client.newCall(new Request.Builder()
+    // Make a call expecting a timeout reading the response body.
+    Call call1 = client.newCall(new Request.Builder()
         .url(server.url("/"))
         .build());
-    Response response = call.execute();
-
+    Response response1 = call1.execute();
     try {
-      response.body().string();
+      response1.body().string();
       fail("Should have timed out!");
     } catch (SocketTimeoutException expected) {
       assertEquals("timeout", expected.getMessage());
     }
+
+    // Confirm that a subsequent request on the same connection is not impacted.
+    Call call2 = client.newCall(new Request.Builder()
+        .url(server.url("/"))
+        .build());
+    Response response2 = call2.execute();
+    assertEquals(body, response2.body().string());
+
+    // Confirm that the connection was reused.
+    assertEquals(0, server.takeRequest().getSequenceNumber());
+    assertEquals(1, server.takeRequest().getSequenceNumber());
   }
 
   @Test public void connectionTimeout() throws Exception {
@@ -429,6 +457,10 @@ public final class HttpOverHttp2Test {
       fail();
     } catch (IOException expected) {
     }
+
+    // Confirm that the connection was reused.
+    assertEquals(0, server.takeRequest().getSequenceNumber());
+    assertEquals(1, server.takeRequest().getSequenceNumber());
   }
 
   @Test public void responsesAreCached() throws IOException {

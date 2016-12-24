@@ -858,11 +858,16 @@ public final class MockWebServer implements TestRule, Closeable {
       RecordedRequest request = readRequest(stream);
       requestCount.incrementAndGet();
       requestQueue.add(request);
+
       MockResponse response;
       try {
         response = dispatcher.dispatch(request);
       } catch (InterruptedException e) {
         throw new AssertionError(e);
+      }
+      if (response.getSocketPolicy() == DISCONNECT_AFTER_REQUEST) {
+        socket.close();
+        return;
       }
       writeResponse(stream, response);
       if (logger.isLoggable(Level.INFO)) {

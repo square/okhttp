@@ -154,10 +154,12 @@ public final class RecordedResponse {
     return this;
   }
 
-  public RecordedResponse assertFailureMatches(String pattern) {
+  public RecordedResponse assertFailureMatches(String... patterns) {
     assertNotNull(failure);
-    assertTrue(failure.getMessage(), failure.getMessage().matches(pattern));
-    return this;
+    for (String pattern : patterns) {
+      if (failure.getMessage().matches(pattern)) return this;
+    }
+    throw new AssertionError(failure.getMessage());
   }
 
   public RecordedResponse assertSentRequestAtMillis(long minimum, long maximum) {
