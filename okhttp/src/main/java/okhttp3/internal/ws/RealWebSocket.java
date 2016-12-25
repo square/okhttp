@@ -495,12 +495,15 @@ public final class RealWebSocket implements WebSocket, WebSocketReader.FrameCall
   }
 
   private final class PingRunnable implements Runnable {
+    PingRunnable() {
+    }
+
     @Override public void run() {
       writePingFrame();
     }
   }
 
-  private void writePingFrame() {
+  void writePingFrame() {
     WebSocketWriter writer;
     synchronized (this) {
       if (failed) return;
