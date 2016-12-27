@@ -42,7 +42,7 @@ public final class CallServerInterceptor implements Interceptor {
     long sentRequestMillis = System.currentTimeMillis();
     httpCodec.writeRequestHeaders(request);
 
-    if (HttpMethod.permitsRequestBody(request.method()) && request.body() != null) {
+    if (request.body() != null) {
       Sink requestBodyOut = httpCodec.createRequestBody(request, request.body().contentLength());
       BufferedSink bufferedRequestBody = Okio.buffer(requestBodyOut);
       request.body().writeTo(bufferedRequestBody);

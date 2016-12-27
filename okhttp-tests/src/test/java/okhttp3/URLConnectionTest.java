@@ -2737,17 +2737,6 @@ public final class URLConnectionTest {
     connection.getInputStream().close();
   }
 
-  @Test public void getOutputStreamOnGetFails() throws Exception {
-    server.enqueue(new MockResponse());
-    connection = urlFactory.open(server.url("/").url());
-    try {
-      connection.getOutputStream();
-      fail();
-    } catch (ProtocolException expected) {
-    }
-    connection.getInputStream().close();
-  }
-
   @Test public void getOutputAfterGetInputStreamFails() throws Exception {
     server.enqueue(new MockResponse());
     connection = urlFactory.open(server.url("/").url());
@@ -2819,17 +2808,6 @@ public final class URLConnectionTest {
     assertEquals("A", readAscii(urlFactory.open(url).getInputStream(), Integer.MAX_VALUE));
     RecordedRequest request = server.takeRequest();
     assertEquals("GET /?query HTTP/1.1", request.getRequestLine());
-  }
-
-  @Test public void doOutputForMethodThatDoesntSupportOutput() throws Exception {
-    connection = urlFactory.open(server.url("/").url());
-    connection.setRequestMethod("HEAD");
-    connection.setDoOutput(true);
-    try {
-      connection.connect();
-      fail();
-    } catch (IOException expected) {
-    }
   }
 
   // http://code.google.com/p/android/issues/detail?id=20442

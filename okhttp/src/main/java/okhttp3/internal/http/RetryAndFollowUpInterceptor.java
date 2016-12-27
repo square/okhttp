@@ -311,19 +311,17 @@ public final class RetryAndFollowUpInterceptor implements Interceptor {
 
         // Most redirects don't include a request body.
         Request.Builder requestBuilder = userResponse.request().newBuilder();
-        if (HttpMethod.permitsRequestBody(method)) {
-          final boolean maintainBody = HttpMethod.redirectsWithBody(method);
-          if (HttpMethod.redirectsToGet(method)) {
-            requestBuilder.method("GET", null);
-          } else {
-            RequestBody requestBody = maintainBody ? userResponse.request().body() : null;
-            requestBuilder.method(method, requestBody);
-          }
-          if (!maintainBody) {
-            requestBuilder.removeHeader("Transfer-Encoding");
-            requestBuilder.removeHeader("Content-Length");
-            requestBuilder.removeHeader("Content-Type");
-          }
+        final boolean maintainBody = HttpMethod.redirectsWithBody(method);
+        if (HttpMethod.redirectsToGet(method, responseCode)) {
+          requestBuilder.method("GET", null);
+        } else {
+          RequestBody requestBody = maintainBody ? userResponse.request().body() : null;
+          requestBuilder.method(method, requestBody);
+        }
+        if (!maintainBody) {
+          requestBuilder.removeHeader("Transfer-Encoding");
+          requestBuilder.removeHeader("Content-Length");
+          requestBuilder.removeHeader("Content-Type");
         }
 
         // When redirecting across hosts, drop all authentication headers. This
