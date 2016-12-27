@@ -26,6 +26,7 @@ import javax.net.ssl.X509TrustManager;
 import okhttp3.internal.platform.Platform;
 import okhttp3.internal.tls.CertificateChainCleaner;
 import okhttp3.internal.tls.HeldCertificate;
+import okhttp3.internal.tls.SslClient;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
@@ -45,9 +46,8 @@ public final class CertificateChainCleanerTest {
   }
 
   @Test public void equalsFromTrustManager() throws Exception {
-    Platform platform = Platform.get();
-    X509TrustManager x509TrustManager = platform.trustManager(
-        (SSLSocketFactory) SSLSocketFactory.getDefault());
+    SslClient client = new SslClient.Builder().build();
+    X509TrustManager x509TrustManager = client.trustManager;
     assertEquals(
         CertificateChainCleaner.get(x509TrustManager),
         CertificateChainCleaner.get(x509TrustManager));
