@@ -294,7 +294,9 @@ public final class RealConnection extends Http2Connection.Listener implements Co
       sink.timeout().timeout(writeTimeout, MILLISECONDS);
       tunnelConnection.writeRequest(tunnelRequest.headers(), requestLine);
       tunnelConnection.finishRequest();
-      Response response = tunnelConnection.readResponse().request(tunnelRequest).build();
+      Response response = tunnelConnection.readResponseHeaders(false)
+          .request(tunnelRequest)
+          .build();
       // The response body from a CONNECT should be empty, but if it is not then we should consume
       // it before proceeding.
       long contentLength = HttpHeaders.contentLength(response);

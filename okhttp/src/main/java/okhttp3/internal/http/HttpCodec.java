@@ -37,10 +37,18 @@ public interface HttpCodec {
   void writeRequestHeaders(Request request) throws IOException;
 
   /** Flush the request to the underlying socket. */
+  void flushRequest() throws IOException;
+
+  /** Flush the request to the underlying socket and signal no more bytes will be transmitted. */
   void finishRequest() throws IOException;
 
-  /** Read and return response headers. */
-  Response.Builder readResponseHeaders() throws IOException;
+  /**
+   * Parses bytes of a response header from an HTTP transport.
+   *
+   * @param expectContinue true to return null if this is an intermediate response with a "100"
+   *     response code. Otherwise this method never returns null.
+   */
+  Response.Builder readResponseHeaders(boolean expectContinue) throws IOException;
 
   /** Returns a stream that reads the response body. */
   ResponseBody openResponseBody(Response response) throws IOException;

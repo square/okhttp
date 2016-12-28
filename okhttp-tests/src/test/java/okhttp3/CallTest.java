@@ -2185,7 +2185,8 @@ public final class CallTest {
   }
 
   @Test public void expect100ContinueNonEmptyRequestBody() throws Exception {
-    server.enqueue(new MockResponse());
+    server.enqueue(new MockResponse()
+        .setSocketPolicy(SocketPolicy.EXPECT_CONTINUE));
 
     Request request = new Request.Builder()
         .url(server.url("/"))
@@ -2212,6 +2213,88 @@ public final class CallTest {
     executeSynchronously(request)
         .assertCode(200)
         .assertSuccessful();
+  }
+
+  @Test public void expect100ContinueEmptyRequestBody_HTTP2() throws Exception {
+    enableProtocol(Protocol.HTTP_2);
+    expect100ContinueEmptyRequestBody();
+  }
+
+  @Test public void expect100ContinueTimesOutWithoutContinue() throws Exception {
+    server.enqueue(new MockResponse()
+        .setSocketPolicy(SocketPolicy.NO_RESPONSE));
+
+    client = client.newBuilder()
+        .readTimeout(500, TimeUnit.MILLISECONDS)
+        .build();
+
+    Request request = new Request.Builder()
+        .url(server.url("/"))
+        .header("Expect", "100-continue")
+        .post(RequestBody.create(MediaType.parse("text/plain"), "abc"))
+        .build();
+
+    Call call = client.newCall(request);
+    try {
+      call.execute();
+      fail();
+    } catch (SocketTimeoutException expected) {
+    }
+
+    RecordedRequest recordedRequest = server.takeRequest();
+    assertEquals("", recordedRequest.getBody().readUtf8());
+  }
+
+  @Test public void expect100ContinueTimesOutWithoutContinue_HTTP2() throws Exception {
+    enableProtocol(Protocol.HTTP_2);
+    expect100ContinueTimesOutWithoutContinue();
+  }
+
+  @Test public void serverRespondsWithUnsolicited100Continue() throws Exception {
+    server.enqueue(new MockResponse()
+        .setStatus("HTTP/1.1 100 Continue"));
+
+    Request request = new Request.Builder()
+        .url(server.url("/"))
+        .post(RequestBody.create(MediaType.parse("text/plain"), "abc"))
+        .build();
+
+    Call call = client.newCall(request);
+    Response response = call.execute();
+    assertEquals(100, response.code());
+    assertEquals("Continue", response.message());
+    assertEquals("", response.body().string());
+
+    RecordedRequest recordedRequest = server.takeRequest();
+    assertEquals("abc", recordedRequest.getBody().readUtf8());
+  }
+
+  @Test public void serverRespondsWithUnsolicited100Continue_HTTP2() throws Exception {
+    enableProtocol(Protocol.HTTP_2);
+    serverRespondsWithUnsolicited100Continue();
+  }
+
+  @Test public void successfulExpectContinueAndConnectionReuse() throws Exception {
+    server.enqueue(new MockResponse()
+        .setSocketPolicy(SocketPolicy.EXPECT_CONTINUE));
+    server.enqueue(new MockResponse());
+
+    executeSynchronously("/", "Expect", "100-continue");
+    executeSynchronously("/");
+
+    assertEquals(0, server.takeRequest().getSequenceNumber());
+    assertEquals(1, server.takeRequest().getSequenceNumber());
+  }
+
+  @Test public void unsuccessfulExpectContinueAndConnectionReuse() throws Exception {
+    server.enqueue(new MockResponse());
+    server.enqueue(new MockResponse());
+
+    executeSynchronously("/", "Expect", "100-continue");
+    executeSynchronously("/");
+
+    assertEquals(0, server.takeRequest().getSequenceNumber());
+    assertEquals(1, server.takeRequest().getSequenceNumber());
   }
 
   /** We forbid non-ASCII characters in outgoing request headers, but accept UTF-8. */
