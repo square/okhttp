@@ -94,7 +94,7 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 public final class CallTest {
-  @Rule public final TestRule timeout = new Timeout(30_000);
+  @Rule public final TestRule timeout = new Timeout(30_000, TimeUnit.MILLISECONDS);
   @Rule public final MockWebServer server = new MockWebServer();
   @Rule public final MockWebServer server2 = new MockWebServer();
   @Rule public final InMemoryFileSystem fileSystem = new InMemoryFileSystem();
@@ -1000,6 +1000,11 @@ public final class CallTest {
     executeSynchronously("/").assertBody("retry success");
   }
 
+  @Test public void recoverWhenRetryOnConnectionFailureIsTrue_HTTP2() throws Exception {
+    enableProtocol(Protocol.HTTP_2);
+    recoverWhenRetryOnConnectionFailureIsTrue();
+  }
+
   @Test public void noRecoverWhenRetryOnConnectionFailureIsFalse() throws Exception {
     server.enqueue(new MockResponse().setBody("seed connection pool"));
     server.enqueue(new MockResponse().setSocketPolicy(SocketPolicy.DISCONNECT_AFTER_REQUEST));
@@ -1015,8 +1020,14 @@ public final class CallTest {
     // If this succeeds, too many requests were made.
     executeSynchronously("/")
         .assertFailure(IOException.class)
-        .assertFailureMatches("unexpected end of stream on Connection.*"
-            + server.getHostName() + ":" + server.getPort() + ".*");
+        .assertFailureMatches("stream was reset: CANCEL",
+            "unexpected end of stream on Connection.*"
+                + server.getHostName() + ":" + server.getPort() + ".*");
+  }
+
+  @Test public void recoverWhenRetryOnConnectionFailureIsFalse_HTTP2() throws Exception {
+    enableProtocol(Protocol.HTTP_2);
+    noRecoverWhenRetryOnConnectionFailureIsFalse();
   }
 
   @Test public void recoverFromTlsHandshakeFailure() throws Exception {
@@ -1231,6 +1242,11 @@ public final class CallTest {
     RecordedRequest post2 = server.takeRequest();
     assertEquals("body!", post2.getBody().readUtf8());
     assertEquals(0, post2.getSequenceNumber());
+  }
+
+  @Test public void postBodyRetransmittedOnFailureRecovery_HTTP2() throws Exception {
+    enableProtocol(Protocol.HTTP_2);
+    postBodyRetransmittedOnFailureRecovery();
   }
 
   @Test public void cacheHit() throws Exception {
