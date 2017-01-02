@@ -25,13 +25,9 @@ import okhttp3.Route;
 import okhttp3.internal.Internal;
 import okhttp3.internal.Util;
 import okhttp3.internal.http.HttpCodec;
-import okhttp3.internal.http1.Http1Codec;
 import okhttp3.internal.http2.ConnectionShutdownException;
 import okhttp3.internal.http2.ErrorCode;
-import okhttp3.internal.http2.Http2Codec;
 import okhttp3.internal.http2.StreamResetException;
-
-import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 /**
  * This class coordinates the relationship between three entities:
@@ -100,17 +96,7 @@ public final class StreamAllocation {
     try {
       RealConnection resultConnection = findHealthyConnection(connectTimeout, readTimeout,
           writeTimeout, connectionRetryEnabled, doExtensiveHealthChecks);
-
-      HttpCodec resultCodec;
-      if (resultConnection.http2Connection != null) {
-        resultCodec = new Http2Codec(client, this, resultConnection.http2Connection);
-      } else {
-        resultConnection.socket().setSoTimeout(readTimeout);
-        resultConnection.source.timeout().timeout(readTimeout, MILLISECONDS);
-        resultConnection.sink.timeout().timeout(writeTimeout, MILLISECONDS);
-        resultCodec = new Http1Codec(
-            client, this, resultConnection.source, resultConnection.sink);
-      }
+      HttpCodec resultCodec = resultConnection.newCodec(client, this);
 
       synchronized (connectionPool) {
         codec = resultCodec;
@@ -184,7 +170,7 @@ public final class StreamAllocation {
         refusedStreamCount = 0;
       }
     }
-    RealConnection newConnection = new RealConnection(selectedRoute);
+    RealConnection newConnection = new RealConnection(connectionPool, selectedRoute);
 
     synchronized (connectionPool) {
       acquire(newConnection);

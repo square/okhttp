@@ -54,27 +54,27 @@ public final class ConnectionPoolTest {
     // Running at time 50, the pool returns that nothing can be evicted until time 150.
     assertEquals(100L, pool.cleanup(50L));
     assertEquals(1, pool.connectionCount());
-    assertFalse(c1.socket.isClosed());
+    assertFalse(c1.socket().isClosed());
 
     // Running at time 60, the pool returns that nothing can be evicted until time 150.
     assertEquals(90L, pool.cleanup(60L));
     assertEquals(1, pool.connectionCount());
-    assertFalse(c1.socket.isClosed());
+    assertFalse(c1.socket().isClosed());
 
     // Running at time 149, the pool returns that nothing can be evicted until time 150.
     assertEquals(1L, pool.cleanup(149L));
     assertEquals(1, pool.connectionCount());
-    assertFalse(c1.socket.isClosed());
+    assertFalse(c1.socket().isClosed());
 
     // Running at time 150, the pool evicts.
     assertEquals(0, pool.cleanup(150L));
     assertEquals(0, pool.connectionCount());
-    assertTrue(c1.socket.isClosed());
+    assertTrue(c1.socket().isClosed());
 
     // Running again, the pool reports that no further runs are necessary.
     assertEquals(-1, pool.cleanup(150L));
     assertEquals(0, pool.connectionCount());
-    assertTrue(c1.socket.isClosed());
+    assertTrue(c1.socket().isClosed());
   }
 
   @Test public void inUseConnectionsNotEvicted() throws Exception {
@@ -90,17 +90,17 @@ public final class ConnectionPoolTest {
     // Running at time 50, the pool returns that nothing can be evicted until time 150.
     assertEquals(100L, pool.cleanup(50L));
     assertEquals(1, pool.connectionCount());
-    assertFalse(c1.socket.isClosed());
+    assertFalse(c1.socket().isClosed());
 
     // Running at time 60, the pool returns that nothing can be evicted until time 160.
     assertEquals(100L, pool.cleanup(60L));
     assertEquals(1, pool.connectionCount());
-    assertFalse(c1.socket.isClosed());
+    assertFalse(c1.socket().isClosed());
 
     // Running at time 160, the pool returns that nothing can be evicted until time 260.
     assertEquals(100L, pool.cleanup(160L));
     assertEquals(1, pool.connectionCount());
-    assertFalse(c1.socket.isClosed());
+    assertFalse(c1.socket().isClosed());
   }
 
   @Test public void cleanupPrioritizesEarliestEviction() throws Exception {
@@ -121,8 +121,8 @@ public final class ConnectionPoolTest {
     // Running at time 150, the pool evicts c2.
     assertEquals(0L, pool.cleanup(150L));
     assertEquals(1, pool.connectionCount());
-    assertFalse(c1.socket.isClosed());
-    assertTrue(c2.socket.isClosed());
+    assertFalse(c1.socket().isClosed());
+    assertTrue(c2.socket().isClosed());
 
     // Running at time 150, the pool returns that nothing can be evicted until time 175.
     assertEquals(25L, pool.cleanup(150L));
@@ -131,8 +131,8 @@ public final class ConnectionPoolTest {
     // Running at time 175, the pool evicts c1.
     assertEquals(0L, pool.cleanup(175L));
     assertEquals(0, pool.connectionCount());
-    assertTrue(c1.socket.isClosed());
-    assertTrue(c2.socket.isClosed());
+    assertTrue(c1.socket().isClosed());
+    assertTrue(c2.socket().isClosed());
   }
 
   @Test public void oldestConnectionsEvictedIfIdleLimitExceeded() throws Exception {
@@ -145,8 +145,8 @@ public final class ConnectionPoolTest {
     // With 2 connections, there's no need to evict until the connections time out.
     assertEquals(50L, pool.cleanup(100L));
     assertEquals(2, pool.connectionCount());
-    assertFalse(c1.socket.isClosed());
-    assertFalse(c2.socket.isClosed());
+    assertFalse(c1.socket().isClosed());
+    assertFalse(c2.socket().isClosed());
 
     // Add a third connection
     RealConnection c3 = newConnection(pool, routeC1, 75L);
@@ -154,9 +154,9 @@ public final class ConnectionPoolTest {
     // The third connection bounces the first.
     assertEquals(0L, pool.cleanup(100L));
     assertEquals(2, pool.connectionCount());
-    assertTrue(c1.socket.isClosed());
-    assertFalse(c2.socket.isClosed());
-    assertFalse(c3.socket.isClosed());
+    assertTrue(c1.socket().isClosed());
+    assertFalse(c2.socket().isClosed());
+    assertFalse(c3.socket().isClosed());
   }
 
   @Test public void leakedAllocation() throws Exception {
@@ -182,13 +182,11 @@ public final class ConnectionPoolTest {
   }
 
   private RealConnection newConnection(ConnectionPool pool, Route route, long idleAtNanos) {
-    RealConnection connection = new RealConnection(route);
-    connection.idleAtNanos = idleAtNanos;
-    connection.socket = new Socket();
+    RealConnection result = RealConnection.testConnection(pool, route, new Socket(), idleAtNanos);
     synchronized (pool) {
-      pool.put(connection);
+      pool.put(result);
     }
-    return connection;
+    return result;
   }
 
   private Address newAddress(String name) {
