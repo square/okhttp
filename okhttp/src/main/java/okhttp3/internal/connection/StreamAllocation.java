@@ -15,6 +15,7 @@
  */
 package okhttp3.internal.connection;
 
+import java.io.Closeable;
 import java.io.IOException;
 import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
@@ -28,6 +29,8 @@ import okhttp3.internal.http.HttpCodec;
 import okhttp3.internal.http2.ConnectionShutdownException;
 import okhttp3.internal.http2.ErrorCode;
 import okhttp3.internal.http2.StreamResetException;
+
+import static okhttp3.internal.Util.closeQuietly;
 
 /**
  * This class coordinates the relationship between three entities:
@@ -148,45 +151,60 @@ public final class StreamAllocation {
       if (codec != null) throw new IllegalStateException("codec != null");
       if (canceled) throw new IOException("Canceled");
 
+      // Attempt to use an already-allocated connection.
       RealConnection allocatedConnection = this.connection;
       if (allocatedConnection != null && !allocatedConnection.noNewStreams) {
         return allocatedConnection;
       }
 
       // Attempt to get a connection from the pool.
-      RealConnection pooledConnection = Internal.instance.get(connectionPool, address, this);
-      if (pooledConnection != null) {
-        this.connection = pooledConnection;
-        return pooledConnection;
+      Internal.instance.get(connectionPool, address, this);
+      if (connection != null) {
+        return connection;
       }
 
       selectedRoute = route;
     }
 
+    // If we need a route, make one. This is a blocking operation.
     if (selectedRoute == null) {
       selectedRoute = routeSelector.next();
-      synchronized (connectionPool) {
-        route = selectedRoute;
-        refusedStreamCount = 0;
-      }
     }
-    RealConnection newConnection = new RealConnection(connectionPool, selectedRoute);
 
+    // Create a connection and assign it to this allocation immediately. This makes it possible for
+    // an asynchronous cancel() to interrupt the handshake we're about to do.
+    RealConnection result;
     synchronized (connectionPool) {
-      acquire(newConnection);
-      Internal.instance.put(connectionPool, newConnection);
-      this.connection = newConnection;
+      route = selectedRoute;
+      refusedStreamCount = 0;
+      result = new RealConnection(connectionPool, selectedRoute);
+      acquire(result);
       if (canceled) throw new IOException("Canceled");
     }
 
-    newConnection.connect(connectTimeout, readTimeout, writeTimeout, address.connectionSpecs(),
-        connectionRetryEnabled);
-    routeDatabase().connected(newConnection.route());
+    // Do TCP + TLS handshakes. This is a blocking operation.
+    result.connect(connectTimeout, readTimeout, writeTimeout, connectionRetryEnabled);
+    routeDatabase().connected(result.route());
 
-    return newConnection;
+    Closeable closeable = null;
+    synchronized (connectionPool) {
+      // Pool the connection.
+      Internal.instance.put(connectionPool, result);
+
+      // If another multiplexed connection to the same address was created concurrently, then
+      // release this connection and acquire that one.
+      if (result.isMultiplexed()) {
+        closeable = Internal.instance.deduplicate(connectionPool, address, this);
+        result = connection;
+      }
+    }
+    closeQuietly(closeable);
+
+    return result;
   }
 
   public void streamFinished(boolean noNewStreams, HttpCodec codec) {
+    Closeable closeable;
     synchronized (connectionPool) {
       if (codec == null || codec != this.codec) {
         throw new IllegalStateException("expected " + this.codec + " but was " + codec);
@@ -194,8 +212,9 @@ public final class StreamAllocation {
       if (!noNewStreams) {
         connection.successCount++;
       }
+      closeable = deallocate(noNewStreams, false, true);
     }
-    deallocate(noNewStreams, false, true);
+    closeQuietly(closeable);
   }
 
   public HttpCodec codec() {
@@ -213,46 +232,55 @@ public final class StreamAllocation {
   }
 
   public void release() {
-    deallocate(false, true, false);
+    Closeable closeable;
+    synchronized (connectionPool) {
+      closeable = deallocate(false, true, false);
+    }
+    closeQuietly(closeable);
   }
 
   /** Forbid new streams from being created on the connection that hosts this allocation. */
   public void noNewStreams() {
-    deallocate(true, false, false);
+    Closeable closeable;
+    synchronized (connectionPool) {
+      closeable = deallocate(true, false, false);
+    }
+    closeQuietly(closeable);
   }
 
   /**
    * Releases resources held by this allocation. If sufficient resources are allocated, the
-   * connection will be detached or closed.
+   * connection will be detached or closed. Callers must be synchronized on the connection pool.
+   *
+   * <p>Returns a closeable that the caller should pass to {@link Util#closeQuietly} upon completion
+   * of the synchronized block. (We don't do I/O while synchronized on the connection pool.)
    */
-  private void deallocate(boolean noNewStreams, boolean released, boolean streamFinished) {
-    RealConnection connectionToClose = null;
-    synchronized (connectionPool) {
-      if (streamFinished) {
-        this.codec = null;
+  private Closeable deallocate(boolean noNewStreams, boolean released, boolean streamFinished) {
+    assert (Thread.holdsLock(connectionPool));
+
+    if (streamFinished) {
+      this.codec = null;
+    }
+    if (released) {
+      this.released = true;
+    }
+    Closeable closeable = null;
+    if (connection != null) {
+      if (noNewStreams) {
+        connection.noNewStreams = true;
       }
-      if (released) {
-        this.released = true;
-      }
-      if (connection != null) {
-        if (noNewStreams) {
-          connection.noNewStreams = true;
-        }
-        if (this.codec == null && (this.released || connection.noNewStreams)) {
-          release(connection);
-          if (connection.allocations.isEmpty()) {
-            connection.idleAtNanos = System.nanoTime();
-            if (Internal.instance.connectionBecameIdle(connectionPool, connection)) {
-              connectionToClose = connection;
-            }
+      if (this.codec == null && (this.released || connection.noNewStreams)) {
+        release(connection);
+        if (connection.allocations.isEmpty()) {
+          connection.idleAtNanos = System.nanoTime();
+          if (Internal.instance.connectionBecameIdle(connectionPool, connection)) {
+            closeable = connection.socket();
           }
-          connection = null;
         }
+        connection = null;
       }
     }
-    if (connectionToClose != null) {
-      Util.closeQuietly(connectionToClose.socket());
-    }
+    return closeable;
   }
 
   public void cancel() {
@@ -271,6 +299,7 @@ public final class StreamAllocation {
   }
 
   public void streamFailed(IOException e) {
+    Closeable closeable;
     boolean noNewStreams = false;
 
     synchronized (connectionPool) {
@@ -285,8 +314,8 @@ public final class StreamAllocation {
           noNewStreams = true;
           route = null;
         }
-      } else if (connection != null && !connection.isMultiplexed()
-          || e instanceof ConnectionShutdownException) {
+      } else if (connection != null
+          && (!connection.isMultiplexed() || e instanceof ConnectionShutdownException)) {
         noNewStreams = true;
 
         // If this route hasn't completed a call, avoid it for new connections.
@@ -297,9 +326,10 @@ public final class StreamAllocation {
           route = null;
         }
       }
+      closeable = deallocate(noNewStreams, false, true);
     }
 
-    deallocate(noNewStreams, false, true);
+    closeQuietly(closeable);
   }
 
   /**
@@ -308,6 +338,9 @@ public final class StreamAllocation {
    */
   public void acquire(RealConnection connection) {
     assert (Thread.holdsLock(connectionPool));
+    if (this.connection != null) throw new IllegalStateException();
+
+    this.connection = connection;
     connection.allocations.add(new StreamAllocationReference(this, callStackTrace));
   }
 
@@ -321,6 +354,29 @@ public final class StreamAllocation {
       }
     }
     throw new IllegalStateException();
+  }
+
+  /**
+   * Release the connection held by this connection and acquire {@code newConnection} instead. It is
+   * only safe to call this if the held connection is newly connected but duplicated by {@code
+   * newConnection}. Typically this occurs when concurrently connecting to an HTTP/2 webserver.
+   *
+   * <p>Returns a closeable that the caller should pass to {@link Util#closeQuietly} upon completion
+   * of the synchronized block. (We don't do I/O while synchronized on the connection pool.)
+   */
+  public Closeable releaseAndAcquire(RealConnection newConnection) {
+    assert (Thread.holdsLock(connectionPool));
+    if (codec != null || connection.allocations.size() != 1) throw new IllegalStateException();
+
+    // Release the old connection.
+    Reference<StreamAllocation> onlyAllocation = connection.allocations.get(0);
+    Closeable closeable = deallocate(true, false, false);
+
+    // Acquire the new connection.
+    this.connection = newConnection;
+    newConnection.allocations.add(onlyAllocation);
+
+    return closeable;
   }
 
   public boolean hasMoreRoutes() {

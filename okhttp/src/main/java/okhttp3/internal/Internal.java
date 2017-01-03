@@ -15,6 +15,7 @@
  */
 package okhttp3.internal;
 
+import java.io.Closeable;
 import java.net.MalformedURLException;
 import java.net.UnknownHostException;
 import javax.net.ssl.SSLSocket;
@@ -52,6 +53,9 @@ public abstract class Internal {
   public abstract void setCache(OkHttpClient.Builder builder, InternalCache internalCache);
 
   public abstract RealConnection get(
+      ConnectionPool pool, Address address, StreamAllocation streamAllocation);
+
+  public abstract Closeable deduplicate(
       ConnectionPool pool, Address address, StreamAllocation streamAllocation);
 
   public abstract void put(ConnectionPool pool, RealConnection connection);

@@ -50,9 +50,11 @@ import okhttp3.internal.SocketRecorder;
 import okhttp3.internal.Util;
 import okhttp3.internal.connection.RealConnection;
 import okhttp3.internal.tls.SslClient;
+import okhttp3.mockwebserver.Dispatcher;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import okhttp3.mockwebserver.PushPromise;
+import okhttp3.mockwebserver.QueueDispatcher;
 import okhttp3.mockwebserver.RecordedRequest;
 import okhttp3.mockwebserver.SocketPolicy;
 import okio.Buffer;
@@ -974,6 +976,95 @@ public final class HttpOverHttp2Test {
 
     assertEquals(0, server.takeRequest().getSequenceNumber());
     assertEquals(0, server.takeRequest().getSequenceNumber());
+  }
+
+  /**
+   * We don't know if the connection will support HTTP/2 until after we've connected. When multiple
+   * connections are requested concurrently OkHttp will pessimistically connect multiple times, then
+   * close any unnecessary connections. This test confirms that behavior works as intended.
+   *
+   * <p>This test uses proxy tunnels to get a hook while a connection is being established.
+   */
+  @Test public void concurrentHttp2ConnectionsDeduplicated() throws Exception {
+    server.useHttps(sslClient.socketFactory, true);
+
+    // Force a fresh connection pool for the test.
+    client.connectionPool().evictAll();
+
+    final QueueDispatcher queueDispatcher = new QueueDispatcher();
+    queueDispatcher.enqueueResponse(new MockResponse()
+        .setSocketPolicy(SocketPolicy.UPGRADE_TO_SSL_AT_END)
+        .clearHeaders());
+    queueDispatcher.enqueueResponse(new MockResponse()
+        .setSocketPolicy(SocketPolicy.UPGRADE_TO_SSL_AT_END)
+        .clearHeaders());
+    queueDispatcher.enqueueResponse(new MockResponse()
+        .setBody("call2 response"));
+    queueDispatcher.enqueueResponse(new MockResponse()
+        .setBody("call1 response"));
+
+    // We use a re-entrant dispatcher to initiate one HTTPS connection while the other is in flight.
+    server.setDispatcher(new Dispatcher() {
+      int requestCount;
+
+      @Override public MockResponse dispatch(RecordedRequest request) throws InterruptedException {
+        MockResponse result = queueDispatcher.dispatch(request);
+
+        requestCount++;
+        if (requestCount == 1) {
+          // Before handling call1's CONNECT we do all of call2. This part re-entrant!
+          try {
+            Call call2 = client.newCall(new Request.Builder()
+                .url("https://android.com/call2")
+                .build());
+            Response response2 = call2.execute();
+            assertEquals("call2 response", response2.body().string());
+          } catch (IOException e) {
+            throw new RuntimeException(e);
+          }
+        }
+
+        return result;
+      }
+
+      @Override public MockResponse peek() {
+        return queueDispatcher.peek();
+      }
+
+      @Override public void shutdown() {
+        queueDispatcher.shutdown();
+      }
+    });
+
+    client = client.newBuilder()
+        .proxy(server.toProxyAddress())
+        .build();
+
+    Call call1 = client.newCall(new Request.Builder()
+        .url("https://android.com/call1")
+        .build());
+    Response response2 = call1.execute();
+    assertEquals("call1 response", response2.body().string());
+
+    RecordedRequest call1Connect = server.takeRequest();
+    assertEquals("CONNECT", call1Connect.getMethod());
+    assertEquals(0, call1Connect.getSequenceNumber());
+
+    RecordedRequest call2Connect = server.takeRequest();
+    assertEquals("CONNECT", call2Connect.getMethod());
+    assertEquals(0, call2Connect.getSequenceNumber());
+
+    RecordedRequest call2Get = server.takeRequest();
+    assertEquals("GET", call2Get.getMethod());
+    assertEquals("/call2", call2Get.getPath());
+    assertEquals(0, call2Get.getSequenceNumber());
+
+    RecordedRequest call1Get = server.takeRequest();
+    assertEquals("GET", call1Get.getMethod());
+    assertEquals("/call1", call1Get.getPath());
+    assertEquals(1, call1Get.getSequenceNumber());
+
+    assertEquals(1, client.connectionPool().connectionCount());
   }
 
   public Buffer gzip(String bytes) throws IOException {
