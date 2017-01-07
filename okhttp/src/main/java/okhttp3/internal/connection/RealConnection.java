@@ -118,11 +118,12 @@ public final class RealConnection extends Http2Connection.Listener implements Co
     return result;
   }
 
-  public void connect(int connectTimeout, int readTimeout, int writeTimeout,
-      List<ConnectionSpec> connectionSpecs, boolean connectionRetryEnabled) {
+  public void connect(
+      int connectTimeout, int readTimeout, int writeTimeout, boolean connectionRetryEnabled) {
     if (protocol != null) throw new IllegalStateException("already connected");
 
     RouteException routeException = null;
+    List<ConnectionSpec> connectionSpecs = route.address().connectionSpecs();
     ConnectionSpecSelector connectionSpecSelector = new ConnectionSpecSelector(connectionSpecs);
 
     if (route.address().sslSocketFactory() == null) {
@@ -370,6 +371,13 @@ public final class RealConnection extends Http2Connection.Listener implements Co
         .header("Proxy-Connection", "Keep-Alive") // For HTTP/1.0 proxies like Squid.
         .header("User-Agent", Version.userAgent())
         .build();
+  }
+
+  /** Returns true if this connection can carry a stream allocation to {@code address}. */
+  public boolean isEligible(Address address) {
+    return allocations.size() < allocationLimit
+        && address.equals(route().address())
+        && !noNewStreams;
   }
 
   public HttpCodec newCodec(
