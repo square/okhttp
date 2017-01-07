@@ -72,10 +72,15 @@ public final class Crawler {
         continue;
       }
 
+      Thread currentThread = Thread.currentThread();
+      String originalName = currentThread.getName();
+      currentThread.setName("Crawler " + url.toString());
       try {
         fetch(url);
       } catch (IOException e) {
         System.out.printf("XXX: %s %s%n", url, e);
+      } finally {
+        currentThread.setName(originalName);
       }
     }
   }
@@ -114,7 +119,8 @@ public final class Crawler {
     for (Element element : document.select("a[href]")) {
       String href = element.attr("href");
       HttpUrl link = response.request().url().resolve(href);
-      if (link != null) queue.add(link);
+      if (link == null) continue; // URL is either invalid or its scheme isn't http/https.
+      queue.add(link.newBuilder().fragment(null).build());
     }
   }
 
