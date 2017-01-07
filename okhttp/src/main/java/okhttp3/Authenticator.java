@@ -23,9 +23,17 @@ import java.io.IOException;
  * an authorization header, or they may refuse the challenge by returning null. In this case the
  * unauthenticated response will be returned to the caller that triggered it.
  *
+ * <p>Implementations should check if the initial request already included an attempt to
+ * authenticate. If so it is likely that further attempts will not be useful and the authenticator
+ * should give up.
+ *
  * <p>When authentication is requested by an origin server, the response code is 401 and the
  * implementation should respond with a new request that sets the "Authorization" header.
  * <pre>   {@code
+ *
+ *    if (response.request().header("Authorization") != null) {
+ *      return null; // Give up, we've already failed to authenticate.
+ *    }
  *
  *    String credential = Credentials.basic(...)
  *    return response.request().newBuilder()
@@ -36,6 +44,10 @@ import java.io.IOException;
  * <p>When authentication is requested by a proxy server, the response code is 407 and the
  * implementation should respond with a new request that sets the "Proxy-Authorization" header.
  * <pre>   {@code
+ *
+ *    if (response.request().header("Proxy-Authorization") != null) {
+ *      return null; // Give up, we've already failed to authenticate.
+ *    }
  *
  *    String credential = Credentials.basic(...)
  *    return response.request().newBuilder()
