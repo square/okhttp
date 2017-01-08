@@ -45,7 +45,13 @@ or Gradle:
 testCompile 'com.squareup.okhttp3:mockwebserver:3.5.0'
 ```
 
+ProGuard
+--------
 
+If you are using ProGuard you might need to add the following option:
+```
+-dontwarn okhttp3.**
+```
 
 License
 -------
