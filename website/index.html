@@ -78,11 +78,8 @@ String run(String url) throws IOException {
       .url(url)
       .build();
 
-  try {
-    Response response = client.newCall(request).execute();
+  try (Response response = client.newCall(request).execute()) {
     return response.body().string();
-  } finally {
-    response.close();
   }
 }
 </pre>
