@@ -78,8 +78,12 @@ String run(String url) throws IOException {
       .url(url)
       .build();
 
-  Response response = client.newCall(request).execute();
-  return response.body().string();
+  try {
+    Response response = client.newCall(request).execute();
+    return response.body().string();
+  } finally {
+    response.close();
+  }
 }
 </pre>
             <h4>Post to a Server</h4>
@@ -97,8 +101,9 @@ String post(String url, String json) throws IOException {
       .url(url)
       .post(body)
       .build();
-  Response response = client.newCall(request).execute();
-  return response.body().string();
+  try (Response response = client.newCall(request).execute()) {
+    return response.body().string();
+  }
 }
 </pre>
 
