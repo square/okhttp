@@ -29,8 +29,21 @@ public interface Call extends Cloneable {
    * Invokes the request immediately, and blocks until the response can be processed or is in
    * error.
    *
+   * <p>To avoid leaking resources callers should close the {@link Response} which in turn will
+   * close the underlying {@link ResponseBody}.
+   *
+   * <pre>@{code
+   *
+   *   // ensure the response (and underlying response body) is closed
+   *   try (Response response = client.newCall(request).execute()) {
+   *     ...
+   *   }
+   *
+   * }</pre>
+   *
    * <p>The caller may read the response body with the response's {@link Response#body} method. To
-   * avoid leaking resources callers must {@linkplain ResponseBody close the response body}.
+   * avoid leaking resources callers must {@linkplain ResponseBody close the response body} or the
+   * Response.
    *
    * <p>Note that transport-layer success (receiving a HTTP response code, headers and body) does
    * not necessarily indicate application-layer success: {@code response} may still indicate an
