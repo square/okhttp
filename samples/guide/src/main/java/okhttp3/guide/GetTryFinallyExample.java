@@ -3,7 +3,6 @@ package okhttp3.guide;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
-import okhttp3.internal.Util;
 
 import java.io.IOException;
 
@@ -24,8 +23,10 @@ public class GetTryFinallyExample {
       response = client.newCall(request).execute();
       return response.body().string();
     } finally {
-      // ensure underlying response resources are closed
-      Util.closeQuietly(response);
+      if (response != null) {
+        // ensure underlying response resources are closed
+        response.close();
+      }
     }
   }
 
