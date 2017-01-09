@@ -107,6 +107,33 @@ String post(String url, String json) throws IOException {
 }
 </pre>
 
+            <h4>Try/Finally example</h4>
+            <p>This program uses try/finally to ensure underlying resources are closed. <a href="https://raw.github.com/square/okhttp/master/samples/guide/src/main/java/okhttp3/guide/GetTryFinallyExample.java">Full source</a>.
+            <p>The Response must be closed and this can be done in a finally block (ensuring the underlying response body is closed).
+
+            <pre class="prettyprint">
+
+OkHttpClient client = new OkHttpClient();
+
+  String run(String url) throws IOException {
+    Request request = new Request.Builder()
+        .url(url)
+        .build();
+
+    // use Try/Finally block to ensure underlying
+    // response resources are closed
+
+    Response response = null;
+    try {
+      response = client.newCall(request).execute();
+      return response.body().string();
+    } finally {
+      // ensure underlying resources are closed
+      Util.closeQuietly(response);
+    }
+  }
+</pre>
+
             <h3 id="download">Download</h3>
             <p><a href="https://search.maven.org/remote_content?g=com.squareup.okhttp3&a=okhttp&v=LATEST" class="dl version-href">&darr; <span class="version-tag">Latest</span> JAR</a></p>
             <p>You'll also need <a href="http://github.com/square/okio">Okio</a>, which OkHttp
