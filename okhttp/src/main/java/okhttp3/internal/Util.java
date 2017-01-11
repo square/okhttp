@@ -383,6 +383,21 @@ public final class Util {
     return false;
   }
 
+  /**
+   * Returns the index of the first character in {@code input} that is either a control character
+   * (like {@code \u0000 or \n}) or a non-ASCII character. Returns -1 if {@code input} has no such
+   * characters.
+   */
+  public static int indexOfControlOrNonAscii(String input) {
+    for (int i = 0, length = input.length(); i < length; i++) {
+      char c = input.charAt(i);
+      if (c <= '\u001f' || c >= '\u007f') {
+        return i;
+      }
+    }
+    return -1;
+  }
+
   /** Returns true if {@code host} is not a host name and might be an IP address. */
   public static boolean verifyAsIpAddress(String host) {
     return VERIFY_AS_IP_ADDRESS.matcher(host).matches();
@@ -415,12 +430,5 @@ public final class Util {
       return UTF_32_LE;
     }
     return charset;
-  }
-
-  /** Re-throws {@code t} if it is a fatal exception which should not be handled. */
-  public static void throwIfFatal(Throwable t) {
-    if (t instanceof VirtualMachineError) throw (VirtualMachineError) t;
-    if (t instanceof ThreadDeath) throw (ThreadDeath) t;
-    if (t instanceof LinkageError) throw (LinkageError) t;
   }
 }

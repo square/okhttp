@@ -30,6 +30,7 @@ import okhttp3.internal.http.HttpDate;
 import static okhttp3.internal.Util.UTC;
 import static okhttp3.internal.Util.delimiterOffset;
 import static okhttp3.internal.Util.domainToAscii;
+import static okhttp3.internal.Util.indexOfControlOrNonAscii;
 import static okhttp3.internal.Util.trimSubstring;
 import static okhttp3.internal.Util.verifyAsIpAddress;
 
@@ -227,9 +228,10 @@ public final class Cookie {
     if (pairEqualsSign == cookiePairEnd) return null;
 
     String cookieName = trimSubstring(setCookie, pos, pairEqualsSign);
-    if (cookieName.isEmpty()) return null;
+    if (cookieName.isEmpty() || indexOfControlOrNonAscii(cookieName) != -1) return null;
 
     String cookieValue = trimSubstring(setCookie, pairEqualsSign + 1, cookiePairEnd);
+    if (indexOfControlOrNonAscii(cookieValue) != -1) return null;
 
     long expiresAt = HttpDate.MAX_DATE;
     long deltaSeconds = -1L;
