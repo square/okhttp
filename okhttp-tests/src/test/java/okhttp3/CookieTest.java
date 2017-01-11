@@ -50,6 +50,14 @@ public final class CookieTest {
     assertNull(Cookie.parse(url, "\r\t \n=b"));
   }
 
+  @Test public void spaceInName() throws Exception {
+    assertEquals("a b", Cookie.parse(url, "a b=cd").name());
+  }
+
+  @Test public void spaceInValue() throws Exception {
+    assertEquals("c d", Cookie.parse(url, "ab=c d").value());
+  }
+
   @Test public void trimLeadingAndTrailingWhitespaceFromName() throws Exception {
     assertEquals("a", Cookie.parse(url, " a=b").name());
     assertEquals("a", Cookie.parse(url, "a =b").name());
@@ -67,6 +75,23 @@ public final class CookieTest {
     assertEquals("b", Cookie.parse(url, "a= b").value());
     assertEquals("b", Cookie.parse(url, "a=b ").value());
     assertEquals("b", Cookie.parse(url, "a=\r\t \nb\n\t \n").value());
+  }
+
+  @Test public void invalidCharacters() throws Exception {
+    assertEquals(null, Cookie.parse(url, "a\u0000b=cd"));
+    assertEquals(null, Cookie.parse(url, "ab=c\u0000d"));
+    assertEquals(null, Cookie.parse(url, "a\u0001b=cd"));
+    assertEquals(null, Cookie.parse(url, "ab=c\u0001d"));
+    assertEquals(null, Cookie.parse(url, "a\u0009b=cd"));
+    assertEquals(null, Cookie.parse(url, "ab=c\u0009d"));
+    assertEquals(null, Cookie.parse(url, "a\u001fb=cd"));
+    assertEquals(null, Cookie.parse(url, "ab=c\u001fd"));
+    assertEquals(null, Cookie.parse(url, "a\u007fb=cd"));
+    assertEquals(null, Cookie.parse(url, "ab=c\u007fd"));
+    assertEquals(null, Cookie.parse(url, "a\u0080b=cd"));
+    assertEquals(null, Cookie.parse(url, "ab=c\u0080d"));
+    assertEquals(null, Cookie.parse(url, "a\u00ffb=cd"));
+    assertEquals(null, Cookie.parse(url, "ab=c\u00ffd"));
   }
 
   @Test public void maxAge() throws Exception {
