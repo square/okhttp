@@ -1067,6 +1067,32 @@ public final class HttpOverHttp2Test {
     assertEquals(1, client.connectionPool().connectionCount());
   }
 
+  /** https://github.com/square/okhttp/issues/3103 */
+  @Test public void domainFronting() throws Exception {
+    client = client.newBuilder()
+        .addNetworkInterceptor(new Interceptor() {
+          @Override public Response intercept(Chain chain) throws IOException {
+            Request request = chain.request().newBuilder()
+                .header("Host", "privateobject.com")
+                .build();
+            return chain.proceed(request);
+          }
+        })
+        .build();
+
+    server.enqueue(new MockResponse());
+
+    Call call = client.newCall(new Request.Builder()
+        .url(server.url("/"))
+        .build());
+
+    Response response = call.execute();
+    assertEquals("", response.body().string());
+
+    RecordedRequest recordedRequest = server.takeRequest();
+    assertEquals("privateobject.com", recordedRequest.getHeader(":authority"));
+  }
+
   public Buffer gzip(String bytes) throws IOException {
     Buffer bytesOut = new Buffer();
     BufferedSink sink = Okio.buffer(new GzipSink(bytesOut));

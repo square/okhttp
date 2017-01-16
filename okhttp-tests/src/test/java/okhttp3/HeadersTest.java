@@ -56,6 +56,7 @@ public final class HeadersTest {
         .url("http://square.com/")
         .header("Connection", "upgrade")
         .header("Upgrade", "websocket")
+        .header("Host", "square.com")
         .build();
     List<Header> expected = headerEntries(
         ":method", "GET",
