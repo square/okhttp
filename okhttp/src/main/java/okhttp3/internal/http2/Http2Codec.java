@@ -130,7 +130,10 @@ public final class Http2Codec implements HttpCodec {
     List<Header> result = new ArrayList<>(headers.size() + 4);
     result.add(new Header(TARGET_METHOD, request.method()));
     result.add(new Header(TARGET_PATH, RequestLine.requestPath(request.url())));
-    result.add(new Header(TARGET_AUTHORITY, Util.hostHeader(request.url(), false))); // Optional.
+    String host = request.header("Host");
+    if (host != null) {
+      result.add(new Header(TARGET_AUTHORITY, host)); // Optional.
+    }
     result.add(new Header(TARGET_SCHEME, request.url().scheme()));
 
     for (int i = 0, size = headers.size(); i < size; i++) {
