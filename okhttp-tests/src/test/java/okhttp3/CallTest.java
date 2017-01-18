@@ -2672,7 +2672,7 @@ public final class CallTest {
   }
 
   @Test public void connectFails() throws Exception {
-    server.shutdown();
+    assertTrue("Server failed to shutdown.", server.shutdown());
 
     executeSynchronously("/")
         .assertFailure(IOException.class);
@@ -2687,7 +2687,7 @@ public final class CallTest {
             .addProxy(server2.toProxyAddress())
             .addProxy(Proxy.NO_PROXY))
         .build();
-    server2.shutdown();
+    assertTrue("Server failed to shutdown.", server2.shutdown());
 
     Request request = new Request.Builder()
         .url(server.url("/"))

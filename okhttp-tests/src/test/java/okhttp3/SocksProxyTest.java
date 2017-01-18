@@ -30,6 +30,7 @@ import org.junit.Test;
 
 import static okhttp3.TestUtil.defaultClient;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 public final class SocksProxyTest {
   private final SocksProxy socksProxy = new SocksProxy();
@@ -41,7 +42,7 @@ public final class SocksProxyTest {
   }
 
   @After public void tearDown() throws Exception {
-    server.shutdown();
+    assertTrue("Server failed to shutdown.", server.shutdown());
     socksProxy.shutdown();
   }
 

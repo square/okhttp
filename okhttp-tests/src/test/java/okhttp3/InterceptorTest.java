@@ -43,6 +43,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 public final class InterceptorTest {
@@ -52,7 +53,7 @@ public final class InterceptorTest {
   private RecordingCallback callback = new RecordingCallback();
 
   @Test public void applicationInterceptorsCanShortCircuitResponses() throws Exception {
-    server.shutdown(); // Accept no connections.
+    assertTrue("Server failed to shutdown.", server.shutdown()); // Accept no connections.
 
     Request request = new Request.Builder()
         .url("https://localhost:1/")

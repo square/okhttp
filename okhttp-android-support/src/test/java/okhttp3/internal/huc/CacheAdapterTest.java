@@ -73,7 +73,7 @@ public class CacheAdapterTest {
     if (connection != null) {
       connection.disconnect();
     }
-    server.shutdown();
+    assertTrue("Server failed to shutdown.", server.shutdown());
   }
 
   @Test public void get_httpGet() throws Exception {

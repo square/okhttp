@@ -158,10 +158,15 @@ public final class MockWebServer implements TestRule, Closeable {
         try {
           base.evaluate();
         } finally {
+          boolean shutDownSuccess = true;
           try {
-            shutdown();
+            shutDownSuccess = shutdown();
           } catch (IOException e) {
-            logger.log(Level.WARNING, "MockWebServer shutdown failed", e);
+            shutDownSuccess = false;
+          } finally {
+            if (!shutDownSuccess) {
+              logger.log(Level.WARNING, "MockWebServer shutdown failed");
+            }
           }
         }
       }
@@ -381,18 +386,18 @@ public final class MockWebServer implements TestRule, Closeable {
     });
   }
 
-  public synchronized void shutdown() throws IOException {
-    if (!started) return;
+  public synchronized boolean shutdown() throws IOException {
+    if (!started) return true;
     if (serverSocket == null) throw new IllegalStateException("shutdown() before start()");
 
     // Cause acceptConnections() to break out.
     serverSocket.close();
 
+    if (executor == null) return true;
+
     // Await shutdown.
     try {
-      if (!executor.awaitTermination(5, TimeUnit.SECONDS)) {
-        throw new IOException("Gave up waiting for executor to shut down");
-      }
+      return executor.awaitTermination(5, TimeUnit.SECONDS);
     } catch (InterruptedException e) {
       throw new AssertionError();
     }

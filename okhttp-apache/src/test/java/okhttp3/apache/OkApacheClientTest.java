@@ -29,6 +29,7 @@ import static okhttp3.internal.Util.UTF_8;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 public class OkApacheClientTest {
   private MockWebServer server;
@@ -41,7 +42,7 @@ public class OkApacheClientTest {
   }
 
   @After public void tearDown() throws IOException {
-    server.shutdown();
+    assertTrue("Server failed to shutdown.", server.shutdown());
   }
 
   @Test public void success() throws Exception {
