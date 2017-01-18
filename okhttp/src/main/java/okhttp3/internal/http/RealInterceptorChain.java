@@ -20,6 +20,7 @@ import java.util.List;
 import okhttp3.Connection;
 import okhttp3.HttpUrl;
 import okhttp3.Interceptor;
+import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
 import okhttp3.internal.connection.StreamAllocation;
@@ -35,16 +36,18 @@ public final class RealInterceptorChain implements Interceptor.Chain {
   private final Connection connection;
   private final int index;
   private final Request request;
+  private OkHttpClient client;
   private int calls;
 
   public RealInterceptorChain(List<Interceptor> interceptors, StreamAllocation streamAllocation,
-      HttpCodec httpCodec, Connection connection, int index, Request request) {
+      HttpCodec httpCodec, Connection connection, int index, Request request, OkHttpClient client) {
     this.interceptors = interceptors;
     this.connection = connection;
     this.streamAllocation = streamAllocation;
     this.httpCodec = httpCodec;
     this.index = index;
     this.request = request;
+    this.client = client;
   }
 
   @Override public Connection connection() {
@@ -87,7 +90,7 @@ public final class RealInterceptorChain implements Interceptor.Chain {
 
     // Call the next interceptor in the chain.
     RealInterceptorChain next = new RealInterceptorChain(
-        interceptors, streamAllocation, httpCodec, connection, index + 1, request);
+        interceptors, streamAllocation, httpCodec, connection, index + 1, request, client);
     Interceptor interceptor = interceptors.get(index);
     Response response = interceptor.intercept(next);
 
@@ -108,5 +111,9 @@ public final class RealInterceptorChain implements Interceptor.Chain {
   private boolean sameConnection(HttpUrl url) {
     return url.host().equals(connection.route().address().url().host())
         && url.port() == connection.route().address().url().port();
+  }
+
+  @Override public OkHttpClient client() {
+    return client;
   }
 }
