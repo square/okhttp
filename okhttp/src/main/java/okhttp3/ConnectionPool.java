@@ -16,8 +16,8 @@
  */
 package okhttp3;
 
-import java.io.Closeable;
 import java.lang.ref.Reference;
+import java.net.Socket;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
@@ -130,7 +130,7 @@ public final class ConnectionPool {
    * Replaces the connection held by {@code streamAllocation} with a shared connection if possible.
    * This recovers when multiple multiplexed connections are created concurrently.
    */
-  Closeable deduplicate(Address address, StreamAllocation streamAllocation) {
+  Socket deduplicate(Address address, StreamAllocation streamAllocation) {
     assert (Thread.holdsLock(this));
     for (RealConnection connection : connections) {
       if (connection.isEligible(address)
