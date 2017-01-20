@@ -33,6 +33,7 @@ import okio.Okio;
 import okio.Source;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -91,6 +92,38 @@ public final class DiskLruCacheTest {
   @Test public void emptyCache() throws Exception {
     cache.close();
     assertJournalEquals();
+  }
+
+  @Test
+  @Ignore
+  public void recoverFromInitializationFailure() throws IOException {
+    // Add an uncommitted entry. This will get detected on initialization, and the cache will
+    // attempt to delete the file. Do not explicitly close the cache here so the entry is left as
+    // incomplete.
+    DiskLruCache.Editor creator = cache.edit("k1");
+    BufferedSink sink = Okio.buffer(creator.newSink(0));
+    sink.writeUtf8("Hello");
+    sink.close();
+
+    // Simulate a filesystem failure on the first initialization.
+    fileSystem.setFaultyDelete(new File(cacheDir, "k1.0.tmp"), true);
+    fileSystem.setFaultyDelete(cacheDir, true);
+
+    cache = new DiskLruCache(fileSystem, cacheDir, appVersion, 2, Integer.MAX_VALUE, executor);
+    toClose.add(cache);
+
+    try {
+      cache.get("k1");
+      fail();
+    } catch (Exception expected) {
+    }
+
+    // Now let it operate normally.
+    fileSystem.setFaultyDelete(new File(cacheDir, "k1.0.tmp"), false);
+    fileSystem.setFaultyDelete(cacheDir, false);
+
+    DiskLruCache.Snapshot snapshot = cache.get("k1");
+    assertNull(snapshot);
   }
 
   @Test public void validateKey() throws Exception {
