@@ -145,8 +145,8 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
       }
 
       @Override public RealConnection get(
-          ConnectionPool pool, Address address, StreamAllocation streamAllocation) {
-        return pool.get(address, streamAllocation);
+          ConnectionPool pool, Address address, StreamAllocation streamAllocation, ConnectionCoalescing connectionCoalescing) {
+        return pool.get(address, streamAllocation, connectionCoalescing);
       }
 
       @Override public Closeable deduplicate(
@@ -212,6 +212,7 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
   final int readTimeout;
   final int writeTimeout;
   final int pingInterval;
+  final ConnectionCoalescing connectionCoalescing;
 
   public OkHttpClient() {
     this(new Builder());
@@ -258,6 +259,7 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
     this.readTimeout = builder.readTimeout;
     this.writeTimeout = builder.writeTimeout;
     this.pingInterval = builder.pingInterval;
+    this.connectionCoalescing = builder.connectionCoalescing;
   }
 
   private X509TrustManager systemDefaultTrustManager() {
@@ -382,6 +384,10 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
     return connectionSpecs;
   }
 
+  public ConnectionCoalescing connectionCoalescing() {
+    return connectionCoalescing;
+  }
+
   /**
    * Returns an immutable list of interceptors that observe the full span of each call: from before
    * the connection is established (if any) until after the response source is selected (either the
@@ -447,6 +453,7 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
     int readTimeout;
     int writeTimeout;
     int pingInterval;
+    ConnectionCoalescing connectionCoalescing;
 
     public Builder() {
       dispatcher = new Dispatcher();
@@ -468,6 +475,7 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
       readTimeout = 10_000;
       writeTimeout = 10_000;
       pingInterval = 0;
+      connectionCoalescing = ConnectionCoalescing.NONE;
     }
 
     Builder(OkHttpClient okHttpClient) {
@@ -843,6 +851,11 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
 
     public Builder connectionSpecs(List<ConnectionSpec> connectionSpecs) {
       this.connectionSpecs = Util.immutableList(connectionSpecs);
+      return this;
+    }
+
+    public Builder connectionCoalescing(ConnectionCoalescing connectionCoalescing) {
+      this.connectionCoalescing = connectionCoalescing;
       return this;
     }
 

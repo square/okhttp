@@ -22,6 +22,8 @@ import java.net.ProtocolException;
 import java.net.Proxy;
 import java.net.SocketTimeoutException;
 import java.security.cert.CertificateException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLHandshakeException;
 import javax.net.ssl.SSLPeerUnverifiedException;
@@ -56,6 +58,8 @@ import static okhttp3.internal.http.StatusLine.HTTP_TEMP_REDIRECT;
  * {@link IOException} if the call was canceled.
  */
 public final class RetryAndFollowUpInterceptor implements Interceptor {
+  static final Logger logger = Logger.getLogger(RetryAndFollowUpInterceptor.class.getName());
+
   /**
    * How many redirects and auth challenges should we attempt? Chrome follows 21 redirects; Firefox,
    * curl, and wget follow 20; Safari follows 16; and HTTP/1.0 recommends 5.
@@ -144,8 +148,8 @@ public final class RetryAndFollowUpInterceptor implements Interceptor {
       if (priorResponse != null) {
         response = response.newBuilder()
             .priorResponse(priorResponse.newBuilder()
-                    .body(null)
-                    .build())
+                .body(null)
+                .build())
             .build();
       }
 
@@ -194,7 +198,17 @@ public final class RetryAndFollowUpInterceptor implements Interceptor {
       certificatePinner = client.certificatePinner();
     }
 
-    return new Address(url.host(), url.port(), client.dns(), client.socketFactory(),
+    String host = url.host();
+
+    if (!client.connectionCoalescing().isDefault()) {
+      String destinationHost = client.connectionCoalescing().getTarget(host);
+      if (logger.isLoggable(Level.FINE)) {
+        logger.fine("request for " + host + " connected to " + destinationHost);
+      }
+      host = destinationHost;
+    }
+
+    return new Address(host, url.port(), client.dns(), client.socketFactory(),
         sslSocketFactory, hostnameVerifier, certificatePinner, client.proxyAuthenticator(),
         client.proxy(), client.protocols(), client.connectionSpecs(), client.proxySelector());
   }

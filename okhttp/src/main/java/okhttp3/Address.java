@@ -153,17 +153,21 @@ public final class Address {
     if (other instanceof Address) {
       Address that = (Address) other;
       return this.url.equals(that.url)
-          && this.dns.equals(that.dns)
-          && this.proxyAuthenticator.equals(that.proxyAuthenticator)
-          && this.protocols.equals(that.protocols)
-          && this.connectionSpecs.equals(that.connectionSpecs)
-          && this.proxySelector.equals(that.proxySelector)
-          && equal(this.proxy, that.proxy)
-          && equal(this.sslSocketFactory, that.sslSocketFactory)
-          && equal(this.hostnameVerifier, that.hostnameVerifier)
-          && equal(this.certificatePinner, that.certificatePinner);
+          && equalsNonUrl(that);
     }
     return false;
+  }
+
+  public boolean equalsNonUrl(Address that) {
+    return this.dns.equals(that.dns)
+        && this.proxyAuthenticator.equals(that.proxyAuthenticator)
+        && this.protocols.equals(that.protocols)
+        && this.connectionSpecs.equals(that.connectionSpecs)
+        && this.proxySelector.equals(that.proxySelector)
+        && equal(this.proxy, that.proxy)
+        && equal(this.sslSocketFactory, that.sslSocketFactory)
+        && equal(this.hostnameVerifier, that.hostnameVerifier)
+        && equal(this.certificatePinner, that.certificatePinner);
   }
 
   @Override public int hashCode() {

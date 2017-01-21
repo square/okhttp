@@ -21,6 +21,7 @@ import java.net.UnknownHostException;
 import javax.net.ssl.SSLSocket;
 import okhttp3.Address;
 import okhttp3.Call;
+import okhttp3.ConnectionCoalescing;
 import okhttp3.ConnectionPool;
 import okhttp3.ConnectionSpec;
 import okhttp3.Headers;
@@ -53,7 +54,7 @@ public abstract class Internal {
   public abstract void setCache(OkHttpClient.Builder builder, InternalCache internalCache);
 
   public abstract RealConnection get(
-      ConnectionPool pool, Address address, StreamAllocation streamAllocation);
+      ConnectionPool pool, Address address, StreamAllocation streamAllocation, ConnectionCoalescing connectionCoalescing);
 
   public abstract Closeable deduplicate(
       ConnectionPool pool, Address address, StreamAllocation streamAllocation);

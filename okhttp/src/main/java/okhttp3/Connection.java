@@ -91,6 +91,4 @@ public interface Connection {
    * using {@link Protocol#HTTP_1_0}.
    */
   Protocol protocol();
-
-  List<String> getSupportedHosts();
 }

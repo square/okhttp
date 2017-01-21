@@ -27,7 +27,9 @@ import java.net.SocketTimeoutException;
 import java.net.UnknownServiceException;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import javax.net.ssl.SSLPeerUnverifiedException;
 import javax.net.ssl.SSLSocket;
@@ -35,6 +37,7 @@ import javax.net.ssl.SSLSocketFactory;
 import okhttp3.Address;
 import okhttp3.CertificatePinner;
 import okhttp3.Connection;
+import okhttp3.ConnectionCoalescing;
 import okhttp3.ConnectionPool;
 import okhttp3.ConnectionSpec;
 import okhttp3.Handshake;
@@ -104,15 +107,11 @@ public final class RealConnection extends Http2Connection.Listener implements Co
 
   /** Nanotime timestamp when {@code allocations.size()} reached zero. */
   public long idleAtNanos = Long.MAX_VALUE;
-  private List<String> supportedHosts;
+  private Set<String> supportedHosts;
 
   public RealConnection(ConnectionPool connectionPool, Route route) {
     this.connectionPool = connectionPool;
     this.route = route;
-  }
-
-  @Override public List<String> getSupportedHosts() {
-    return supportedHosts;
   }
 
   public static RealConnection testConnection(
@@ -282,7 +281,7 @@ public final class RealConnection extends Http2Connection.Listener implements Co
       }
 
       X509Certificate cert = (X509Certificate) unverifiedHandshake.peerCertificates().get(0);
-      supportedHosts = OkHostnameVerifier.allSubjectAltNames(cert);
+      supportedHosts = new HashSet<>(OkHostnameVerifier.allSubjectAltNames(cert));
 
       // Check that the certificate pinner is satisfied by the certificates presented.
       address.certificatePinner().check(address.url().host(),
@@ -382,10 +381,48 @@ public final class RealConnection extends Http2Connection.Listener implements Co
   }
 
   /** Returns true if this connection can carry a stream allocation to {@code address}. */
-  public boolean isEligible(Address address) {
+  public boolean isEligible(Address address, ConnectionCoalescing connectionCoalescing) {
     return allocations.size() < allocationLimit
-        && address.equals(route().address())
-        && !noNewStreams;
+        && !noNewStreams
+        && canCarryAddress(address, connectionCoalescing);
+  }
+
+  private boolean canCarryAddress(Address address, ConnectionCoalescing connectionCoalescing) {
+    boolean directMatch = address.equals(route().address());
+
+    if (directMatch) {
+      return true;
+    }
+
+    // attempt to coalesce secure HTTP/2 connections by subjectAltNames
+    if (connectionCoalescing.isAutoCoalescing() && address.url().isHttps()) {
+      boolean isSecuredMultiplexed = supportedHosts != null && http2Connection != null;
+
+      if (!isSecuredMultiplexed) {
+        return false;
+      }
+
+      if (!address.equalsNonUrl(route.address()) || address.url().port() != route().address()
+          .url().port()) {
+        return false;
+      }
+
+      // TODO test wildcard hosts
+      boolean supportedHost = supportedHosts.contains(address.url().host());
+      if (!supportedHost) {
+        return false;
+      }
+
+      // TODO
+      boolean supportedDns = true;
+      if (!supportedDns) {
+        return false;
+      }
+
+      return true;
+    }
+
+    return false;
   }
 
   public HttpCodec newCodec(

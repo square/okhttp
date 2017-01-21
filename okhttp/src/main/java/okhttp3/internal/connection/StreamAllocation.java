@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
 import okhttp3.Address;
+import okhttp3.ConnectionCoalescing;
 import okhttp3.ConnectionPool;
 import okhttp3.OkHttpClient;
 import okhttp3.Route;
@@ -98,7 +99,7 @@ public final class StreamAllocation {
 
     try {
       RealConnection resultConnection = findHealthyConnection(connectTimeout, readTimeout,
-          writeTimeout, connectionRetryEnabled, doExtensiveHealthChecks);
+          writeTimeout, connectionRetryEnabled, doExtensiveHealthChecks, client.connectionCoalescing());
       HttpCodec resultCodec = resultConnection.newCodec(client, this);
 
       synchronized (connectionPool) {
@@ -115,11 +116,12 @@ public final class StreamAllocation {
    * until a healthy connection is found.
    */
   private RealConnection findHealthyConnection(int connectTimeout, int readTimeout,
-      int writeTimeout, boolean connectionRetryEnabled, boolean doExtensiveHealthChecks)
+      int writeTimeout, boolean connectionRetryEnabled, boolean doExtensiveHealthChecks,
+      ConnectionCoalescing connectionCoalescing)
       throws IOException {
     while (true) {
       RealConnection candidate = findConnection(connectTimeout, readTimeout, writeTimeout,
-          connectionRetryEnabled);
+          connectionRetryEnabled, connectionCoalescing);
 
       // If this is a brand new connection, we can skip the extensive health checks.
       synchronized (connectionPool) {
@@ -144,7 +146,7 @@ public final class StreamAllocation {
    * then the pool, finally building a new connection.
    */
   private RealConnection findConnection(int connectTimeout, int readTimeout, int writeTimeout,
-      boolean connectionRetryEnabled) throws IOException {
+      boolean connectionRetryEnabled, ConnectionCoalescing connectionCoalescing) throws IOException {
     Route selectedRoute;
     synchronized (connectionPool) {
       if (released) throw new IllegalStateException("released");
@@ -158,7 +160,7 @@ public final class StreamAllocation {
       }
 
       // Attempt to get a connection from the pool.
-      Internal.instance.get(connectionPool, address, this);
+      Internal.instance.get(connectionPool, address, this, connectionCoalescing);
       if (connection != null) {
         return connection;
       }
