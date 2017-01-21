@@ -27,7 +27,7 @@ public final class ConfigureTimeouts {
     client = new OkHttpClient.Builder()
         .connectTimeout(10, TimeUnit.SECONDS)
         .writeTimeout(10, TimeUnit.SECONDS)
-        .readTimeout(100, TimeUnit.MILLISECONDS)
+        .readTimeout(30, TimeUnit.SECONDS)
         .build();
   }
 

@@ -31,7 +31,5 @@ public interface Interceptor {
     Response proceed(Request request) throws IOException;
 
     Connection connection();
-
-    OkHttpClient client();
   }
 }
