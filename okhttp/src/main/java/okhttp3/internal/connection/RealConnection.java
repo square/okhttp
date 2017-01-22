@@ -19,11 +19,13 @@ package okhttp3.internal.connection;
 import java.io.IOException;
 import java.lang.ref.Reference;
 import java.net.ConnectException;
+import java.net.InetAddress;
 import java.net.ProtocolException;
 import java.net.Proxy;
 import java.net.Socket;
 import java.net.SocketException;
 import java.net.SocketTimeoutException;
+import java.net.UnknownHostException;
 import java.net.UnknownServiceException;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
@@ -408,9 +410,12 @@ public final class RealConnection extends Http2Connection.Listener implements Co
         return false;
       }
 
-      // TODO
-      boolean supportedDns = true;
-      if (!supportedDns) {
+      try {
+        List<InetAddress> ips = address.dns().lookup(address.url().host());
+        if (!ips.contains(route.socketAddress().getAddress())) {
+          return false;
+        }
+      } catch (UnknownHostException e) {
         return false;
       }
 
