@@ -278,8 +278,4 @@ public final class ConnectionPool {
 
     return references.size();
   }
-
-  public List<Connection> liveConnections() {
-    return new ArrayList<Connection>(connections);
-  }
 }

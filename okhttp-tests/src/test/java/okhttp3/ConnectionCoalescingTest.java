@@ -28,9 +28,7 @@ public class ConnectionCoalescingTest {
     assertEquals("www.twitter.com", wwwResponse.request().url().host());
     assertEquals(Protocol.HTTP_2, wwwResponse.protocol());
 
-    List<Connection> connections = client.connectionPool().liveConnections();
-    assertEquals(1, connections.size());
-    assertEquals("twitter.com", connections.get(0).route().socketAddress().getHostName());
+    assertEquals(1, client.connectionPool().connectionCount());
   }
 
   private Response execute(String url) throws IOException {
