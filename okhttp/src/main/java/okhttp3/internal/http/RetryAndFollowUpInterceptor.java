@@ -144,8 +144,8 @@ public final class RetryAndFollowUpInterceptor implements Interceptor {
       if (priorResponse != null) {
         response = response.newBuilder()
             .priorResponse(priorResponse.newBuilder()
-                .body(null)
-                .build())
+                    .body(null)
+                    .build())
             .build();
       }
 
