@@ -37,7 +37,6 @@ import javax.net.ssl.SSLSocketFactory;
 import okhttp3.Address;
 import okhttp3.CertificatePinner;
 import okhttp3.Connection;
-import okhttp3.ConnectionCoalescing;
 import okhttp3.ConnectionPool;
 import okhttp3.ConnectionSpec;
 import okhttp3.Handshake;
@@ -381,13 +380,13 @@ public final class RealConnection extends Http2Connection.Listener implements Co
   }
 
   /** Returns true if this connection can carry a stream allocation to {@code address}. */
-  public boolean isEligible(Address address, ConnectionCoalescing connectionCoalescing) {
+  public boolean isEligible(Address address) {
     return allocations.size() < allocationLimit
         && !noNewStreams
-        && canCarryAddress(address, connectionCoalescing);
+        && canCarryAddress(address);
   }
 
-  private boolean canCarryAddress(Address address, ConnectionCoalescing connectionCoalescing) {
+  private boolean canCarryAddress(Address address) {
     boolean directMatch = address.equals(route().address());
 
     if (directMatch) {
@@ -395,13 +394,9 @@ public final class RealConnection extends Http2Connection.Listener implements Co
     }
 
     // attempt to coalesce secure HTTP/2 connections by subjectAltNames
-    if (connectionCoalescing.isAutoCoalescing() && address.url().isHttps()) {
-      boolean isSecuredMultiplexed = supportedHosts != null && http2Connection != null;
-
-      if (!isSecuredMultiplexed) {
-        return false;
-      }
-
+    // currently does not apply to HTTP/1.1 because reuse assumptions are not the same
+    // e.g. app may use domain sharding for performance
+    if (address.url().isHttps() && http2Connection != null && supportedHosts != null) {
       if (!address.equalsNonUrl(route.address()) || address.url().port() != route().address()
           .url().port()) {
         return false;

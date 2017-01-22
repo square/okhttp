@@ -115,10 +115,10 @@ public final class ConnectionPool {
   }
 
   /** Returns a recycled connection to {@code address}, or null if no such connection exists. */
-  RealConnection get(Address address, StreamAllocation streamAllocation, ConnectionCoalescing connectionCoalescing) {
+  RealConnection get(Address address, StreamAllocation streamAllocation) {
     assert (Thread.holdsLock(this));
     for (RealConnection connection : connections) {
-      if (connection.isEligible(address, connectionCoalescing)) {
+      if (connection.isEligible(address)) {
         streamAllocation.acquire(connection);
         return connection;
       }
@@ -133,8 +133,7 @@ public final class ConnectionPool {
   Closeable deduplicate(Address address, StreamAllocation streamAllocation) {
     assert (Thread.holdsLock(this));
     for (RealConnection connection : connections) {
-      // don't dedup with connection coalescing as clients may be configured differently
-      if (connection.isEligible(address, ConnectionCoalescing.NONE)
+      if (connection.isEligible(address)
           && connection.isMultiplexed()
           && connection != streamAllocation.connection()) {
         return streamAllocation.releaseAndAcquire(connection);

@@ -198,17 +198,7 @@ public final class RetryAndFollowUpInterceptor implements Interceptor {
       certificatePinner = client.certificatePinner();
     }
 
-    String host = url.host();
-
-    if (!client.connectionCoalescing().isDefault()) {
-      String destinationHost = client.connectionCoalescing().getTarget(host);
-      if (logger.isLoggable(Level.FINE)) {
-        logger.fine("request for " + host + " connected to " + destinationHost);
-      }
-      host = destinationHost;
-    }
-
-    return new Address(host, url.port(), client.dns(), client.socketFactory(),
+    return new Address(url.host(), url.port(), client.dns(), client.socketFactory(),
         sslSocketFactory, hostnameVerifier, certificatePinner, client.proxyAuthenticator(),
         client.proxy(), client.protocols(), client.connectionSpecs(), client.proxySelector());
   }
