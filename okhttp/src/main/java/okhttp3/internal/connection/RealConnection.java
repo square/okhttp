@@ -27,7 +27,7 @@ import java.net.SocketTimeoutException;
 import java.net.UnknownServiceException;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
-import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -280,7 +280,7 @@ public final class RealConnection extends Http2Connection.Listener implements Co
       }
 
       X509Certificate cert = (X509Certificate) unverifiedHandshake.peerCertificates().get(0);
-      supportedHosts = new HashSet<>(OkHostnameVerifier.allSubjectAltNames(cert));
+      supportedHosts = new LinkedHashSet<>(OkHostnameVerifier.allSubjectAltNames(cert));
 
       // Check that the certificate pinner is satisfied by the certificates presented.
       address.certificatePinner().check(address.url().host(),
