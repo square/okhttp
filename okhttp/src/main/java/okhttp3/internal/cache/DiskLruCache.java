@@ -231,7 +231,13 @@ public final class DiskLruCache implements Closeable, Flushable {
       } catch (IOException journalIsCorrupt) {
         Platform.get().log(WARN, "DiskLruCache " + directory + " is corrupt: "
             + journalIsCorrupt.getMessage() + ", removing", journalIsCorrupt);
+      }
+
+      // The cache is corrupted, attempt to delete the contents of the directory. This can throw and
+      // we'll let that propagate out as it likely means there is a severe filesystem problem.
+      try {
         delete();
+      } finally {
         closed = false;
       }
     }

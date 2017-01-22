@@ -94,9 +94,7 @@ public final class DiskLruCacheTest {
     assertJournalEquals();
   }
 
-  @Test
-  @Ignore
-  public void recoverFromInitializationFailure() throws IOException {
+  @Test public void recoverFromInitializationFailure() throws IOException {
     // Add an uncommitted entry. This will get detected on initialization, and the cache will
     // attempt to delete the file. Do not explicitly close the cache here so the entry is left as
     // incomplete.
@@ -105,7 +103,7 @@ public final class DiskLruCacheTest {
     sink.writeUtf8("Hello");
     sink.close();
 
-    // Simulate a filesystem failure on the first initialization.
+    // Simulate a severe filesystem failure on the first initialization.
     fileSystem.setFaultyDelete(new File(cacheDir, "k1.0.tmp"), true);
     fileSystem.setFaultyDelete(cacheDir, true);
 
@@ -115,7 +113,7 @@ public final class DiskLruCacheTest {
     try {
       cache.get("k1");
       fail();
-    } catch (Exception expected) {
+    } catch (IOException expected) {
     }
 
     // Now let it operate normally.
