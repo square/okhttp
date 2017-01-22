@@ -90,6 +90,7 @@ public final class FaultyFileSystem implements FileSystem {
   }
 
   @Override public void deleteContents(File directory) throws IOException {
+    if (deleteFaults.contains(directory)) throw new IOException("boom!");
     delegate.deleteContents(directory);
   }
 
