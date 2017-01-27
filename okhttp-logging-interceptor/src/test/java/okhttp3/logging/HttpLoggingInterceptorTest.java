@@ -56,11 +56,11 @@ public final class HttpLoggingInterceptorTest {
 
   private final LogRecorder networkLogs = new LogRecorder();
   private final HttpLoggingInterceptor networkInterceptor =
-      new HttpLoggingInterceptor(networkLogs);
+      new HttpLoggingInterceptor(networkLogs, new MediaType[]{MediaType.parse("text/*"), MediaType.parse("image/png")});
 
   private final LogRecorder applicationLogs = new LogRecorder();
   private final HttpLoggingInterceptor applicationInterceptor =
-      new HttpLoggingInterceptor(applicationLogs);
+      new HttpLoggingInterceptor(applicationLogs, new MediaType[]{MediaType.parse("text/*"), MediaType.parse("image/png")});
 
   private void setLevel(Level level) {
     networkInterceptor.setLevel(level);
@@ -646,6 +646,45 @@ public final class HttpLoggingInterceptorTest {
         .assertNoMoreLogs();
   }
 
+  @Test public void responseContentTypeIsNotText() throws IOException {
+    setLevel(Level.BODY);
+    Buffer buffer = new Buffer();
+    buffer.writeByte(0xff);
+    buffer.writeByte(0xd8);
+    buffer.writeByte(0xff);
+    buffer.writeByte(0xe0);
+    buffer.writeByte(0x00);
+    buffer.writeByte(0x10);
+    buffer.writeByte(0x4a);
+    server.enqueue(new MockResponse()
+            .setBody(buffer)
+            .setHeader("Content-Type", "image/jpg"));
+    Response response = client.newCall(request().build()).execute();
+    response.body().close();
+
+    applicationLogs
+            .assertLogEqual("--> GET " + url + " http/1.1")
+            .assertLogEqual("--> END GET")
+            .assertLogMatch("<-- 200 OK " + url + " \\(\\d+ms\\)")
+            .assertLogEqual("Content-Length: 7")
+            .assertLogEqual("Content-Type: image/jpg")
+            .assertLogEqual("<-- END HTTP (non text body omitted)")
+            .assertNoMoreLogs();
+
+    networkLogs
+            .assertLogEqual("--> GET " + url + " http/1.1")
+            .assertLogEqual("Host: " + host)
+            .assertLogEqual("Connection: Keep-Alive")
+            .assertLogEqual("Accept-Encoding: gzip")
+            .assertLogMatch("User-Agent: okhttp/.+")
+            .assertLogEqual("--> END GET")
+            .assertLogMatch("<-- 200 OK " + url + " \\(\\d+ms\\)")
+            .assertLogEqual("Content-Length: 7")
+            .assertLogEqual("Content-Type: image/jpg")
+            .assertLogEqual("<-- END HTTP (non text body omitted)")
+            .assertNoMoreLogs();
+  }
+
   @Test public void connectFail() throws IOException {
     setLevel(Level.BASIC);
     client = new OkHttpClient.Builder()
@@ -667,6 +706,19 @@ public final class HttpLoggingInterceptorTest {
         .assertLogEqual("--> GET " + url + " http/1.1")
         .assertLogEqual("<-- HTTP FAILED: java.net.UnknownHostException: reason")
         .assertNoMoreLogs();
+  }
+
+  @Test public void checkTextContentType() {
+
+    HttpLoggingInterceptor loggingInterceptor = new HttpLoggingInterceptor(null,
+            new MediaType[]{MediaType.parse("text/*"), MediaType.parse("application/json")});
+
+    assertTrue(loggingInterceptor.isTextContentType(MediaType.parse("text/plain")));
+    assertTrue(loggingInterceptor.isTextContentType(MediaType.parse("Text/Plain")));
+    assertTrue(loggingInterceptor.isTextContentType(MediaType.parse("application/json")));
+    assertTrue(loggingInterceptor.isTextContentType(MediaType.parse("application/json; charset=utf-8")));
+    assertFalse(loggingInterceptor.isTextContentType(MediaType.parse("image/png")));
+    assertFalse(loggingInterceptor.isTextContentType(MediaType.parse("application/pdf")));
   }
 
   private Request.Builder request() {
