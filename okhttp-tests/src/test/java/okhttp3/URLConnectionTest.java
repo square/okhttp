@@ -15,11 +15,14 @@
  */
 package okhttp3;
 
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Authenticator;
 import java.net.ConnectException;
+import java.net.CookieHandler;
 import java.net.CookieManager;
 import java.net.HttpRetryException;
 import java.net.HttpURLConnection;
@@ -35,6 +38,7 @@ import java.net.URI;
 import java.net.URL;
 import java.net.URLConnection;
 import java.net.UnknownHostException;
+import java.nio.charset.Charset;
 import java.security.KeyStore;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
@@ -48,6 +52,7 @@ import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.zip.GZIPInputStream;
 import javax.net.ServerSocketFactory;
 import javax.net.SocketFactory;
@@ -66,6 +71,7 @@ import okhttp3.internal.RecordingOkAuthenticator;
 import okhttp3.internal.SingleInetAddressDns;
 import okhttp3.internal.Util;
 import okhttp3.internal.Version;
+import okhttp3.internal.huc.OkHttpURLConnection;
 import okhttp3.internal.tls.SslClient;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
@@ -75,6 +81,7 @@ import okio.Buffer;
 import okio.BufferedSink;
 import okio.GzipSink;
 import okio.Okio;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Ignore;
@@ -1152,6 +1159,33 @@ public final class URLConnectionTest {
     } catch (IOException expected) {
     }
     in.close();
+  }
+
+  @Test public void disconnectDuringConnect_cookieJar() throws Exception {
+    final AtomicReference<HttpURLConnection> connectionHolder = new AtomicReference<>();
+    class DisconnectingCookieJar implements CookieJar {
+      @Override public void saveFromResponse(HttpUrl url, List<Cookie> cookies) { }
+      @Override
+      public List<Cookie> loadForRequest(HttpUrl url) {
+        connectionHolder.get().disconnect();
+        return Collections.emptyList();
+      }
+    }
+    OkHttpClient client = new okhttp3.OkHttpClient.Builder()
+            .cookieJar(new DisconnectingCookieJar())
+            .build();
+
+    URL url = server.url("path that should never be accessed").url();
+    HttpURLConnection connection = new OkHttpURLConnection(url, client);
+    connectionHolder.set(connection);
+    try {
+      connection.getInputStream();
+      fail("Connection should not be established");
+    } catch (IOException expected) {
+      assertEquals("Canceled", expected.getMessage());
+    } finally {
+      connection.disconnect();
+    }
   }
 
   @Test public void disconnectBeforeConnect() throws IOException {
