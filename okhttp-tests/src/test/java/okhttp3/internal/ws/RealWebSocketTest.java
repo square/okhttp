@@ -52,9 +52,13 @@ public final class RealWebSocketTest {
     server.initWebSocket(random, 0);
   }
 
-  @After public void tearDown() {
+  @After public void tearDown() throws Exception {
     client.listener.assertExhausted();
     server.listener.assertExhausted();
+    server.source.close();
+    client.source.close();
+    server.webSocket.tearDown();
+    client.webSocket.tearDown();
   }
 
   @Test public void close() throws IOException {
