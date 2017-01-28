@@ -29,9 +29,7 @@ import java.net.UnknownHostException;
 import java.net.UnknownServiceException;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
-import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import javax.net.ssl.SSLPeerUnverifiedException;
 import javax.net.ssl.SSLSocket;
@@ -108,7 +106,7 @@ public final class RealConnection extends Http2Connection.Listener implements Co
 
   /** Nanotime timestamp when {@code allocations.size()} reached zero. */
   public long idleAtNanos = Long.MAX_VALUE;
-  private Set<String> supportedHosts;
+  private List<String> subjectAlternativeNames;
 
   public RealConnection(ConnectionPool connectionPool, Route route) {
     this.connectionPool = connectionPool;
@@ -282,7 +280,7 @@ public final class RealConnection extends Http2Connection.Listener implements Co
       }
 
       X509Certificate cert = (X509Certificate) unverifiedHandshake.peerCertificates().get(0);
-      supportedHosts = new LinkedHashSet<>(OkHostnameVerifier.allSubjectAltNames(cert));
+      subjectAlternativeNames = OkHostnameVerifier.allSubjectAltNames(cert);
 
       // Check that the certificate pinner is satisfied by the certificates presented.
       address.certificatePinner().check(address.url().host(),
@@ -398,19 +396,26 @@ public final class RealConnection extends Http2Connection.Listener implements Co
     // attempt to coalesce secure HTTP/2 connections by subjectAltNames
     // currently does not apply to HTTP/1.1 because reuse assumptions are not the same
     // e.g. app may use domain sharding for performance
-    if (address.url().isHttps() && http2Connection != null && supportedHosts != null) {
+    if (address.url().isHttps() && http2Connection != null && subjectAlternativeNames != null) {
       if (!address.equalsNonUrl(route.address()) || address.url().port() != route().address()
           .url().port()) {
         return false;
       }
 
-      // TODO test wildcard hosts
-      boolean supportedHost = supportedHosts.contains(address.url().host());
-      if (!supportedHost) {
+      String urlHost = address.url().host();
+      boolean hostMatch = false;
+      for (String subjectAlternativeName: subjectAlternativeNames) {
+        if (OkHostnameVerifier.verifyHostname(urlHost, subjectAlternativeName)) {
+          hostMatch = true;
+          break;
+        }
+      }
+      if (!hostMatch) {
         return false;
       }
 
       try {
+        // TODO cache dns lookup
         List<InetAddress> ips = address.dns().lookup(address.url().host());
         if (!ips.contains(route.socketAddress().getAddress())) {
           return false;

@@ -2,13 +2,13 @@ package okhttp3;
 
 import java.io.IOException;
 import java.net.InetAddress;
-import java.net.Socket;
 import java.net.UnknownHostException;
 import java.security.GeneralSecurityException;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import javax.net.SocketFactory;
 import okhttp3.internal.tls.HeldCertificate;
 import okhttp3.internal.tls.SslClient;
 import okhttp3.mockwebserver.MockResponse;
@@ -31,7 +31,8 @@ public class ConnectionCoalescingTest {
   private HeldCertificate rootCa;
   private HeldCertificate certificate;
   private Map<String, List<InetAddress>> dnsResults = new LinkedHashMap<>();
-  private HttpUrl robotsUrl;
+  private HttpUrl url;
+  private List<InetAddress> serverIps;
 
   @Before
   public void initialise() throws GeneralSecurityException, IOException {
@@ -45,17 +46,18 @@ public class ConnectionCoalescingTest {
         .serialNumber("2")
         .commonName(server.getHostName())
         .subjectAlternativeName(server.getHostName())
-        .subjectAlternativeName("test1.com")
-        .subjectAlternativeName("test2.com")
-        .subjectAlternativeName("*.test3.com")
+        .subjectAlternativeName("san.com")
+        .subjectAlternativeName("*.wildcard.com")
+        .subjectAlternativeName("differentdns.com")
         .build();
 
-    List<InetAddress> serverIps = Dns.SYSTEM.lookup(server.getHostName());
+    serverIps = Dns.SYSTEM.lookup(server.getHostName());
 
-    dnsResults.put("test1.com", serverIps);
-    dnsResults.put("test2.com", serverIps);
-    dnsResults.put("www.test3.com", serverIps);
-    dnsResults.put("google.com", serverIps);
+    dnsResults.put(server.getHostName(), serverIps);
+    dnsResults.put("san.com", serverIps);
+    dnsResults.put("nonsan.com", serverIps);
+    dnsResults.put("www.wildcard.com", serverIps);
+    dnsResults.put("differentdns.com", Collections.<InetAddress>emptyList());
 
     SslClient sslClient = new SslClient.Builder()
         .addTrustedCertificate(rootCa.certificate)
@@ -82,59 +84,104 @@ public class ConnectionCoalescingTest {
         .build();
     server.useHttps(serverSslClient.socketFactory, false);
 
-    robotsUrl = server.url("/robots.txt");
+    url = server.url("/robots.txt");
   }
 
   @Test
   public void commonThenAlternative() throws IOException {
+    // test connecting to the main host then an alternative,
+    // although only subject alternative names are used if present
+    // no special consideration of common name
+
     server.enqueue(new MockResponse().setResponseCode(200));
     server.enqueue(new MockResponse().setResponseCode(200));
 
-    HttpUrl test1Url = robotsUrl.newBuilder().host("test1.com").build();
+    assert200Http2Response(execute(url), server.getHostName());
 
-    assert200Http2Response(execute(robotsUrl), server.getHostName());
-    assert200Http2Response(execute(test1Url), "test1.com");
+    HttpUrl sanUrl = url.newBuilder().host("san.com").build();
+    assert200Http2Response(execute(sanUrl), "san.com");
 
     assertEquals(1, client.connectionPool().connectionCount());
   }
 
   @Test
   public void alternativeThenCommon() throws IOException {
+    // test connecting to an alternative host then common name,
+    // although only subject alternative names are used if present
+    // no special consideration of common name
+
     server.enqueue(new MockResponse().setResponseCode(200));
     server.enqueue(new MockResponse().setResponseCode(200));
 
-    HttpUrl test1Url = robotsUrl.newBuilder().host("test1.com").build();
+    HttpUrl sanUrl = url.newBuilder().host("san.com").build();
+    assert200Http2Response(execute(sanUrl), "san.com");
 
-    assert200Http2Response(execute(test1Url), "test1.com");
-    assert200Http2Response(execute(robotsUrl), server.getHostName());
+    assert200Http2Response(execute(url), server.getHostName());
 
     assertEquals(1, client.connectionPool().connectionCount());
   }
 
   @Test
   public void skipsWhenDnsDontMatch() throws IOException {
+    //
+
     server.enqueue(new MockResponse().setResponseCode(200));
-    server.enqueue(new MockResponse().setResponseCode(200));
 
-    // TODO how to use a fake host but redirect to same webserver
-    HttpUrl test1Url = robotsUrl.newBuilder().host("google.com").build();
+    assert200Http2Response(execute(url), server.getHostName());
 
-    dnsResults.remove("google.com");
+    HttpUrl differentdnsUrl = url.newBuilder().host("differentdns.com").build();
 
-    assert200Http2Response(execute(test1Url), "google.com");
-    assert200Http2Response(execute(robotsUrl), server.getHostName());
-
-    assertEquals(2, client.connectionPool().connectionCount());
+    try {
+      execute(differentdnsUrl);
+      fail("expected a failed attempt to connect");
+    } catch (IOException se) {
+      // expected
+    }
   }
 
   @Test
-  public void skipsWhenNotSubjectAltName() {
-    fail();
+  public void skipsWhenNotSubjectAltName() throws IOException {
+    server.enqueue(new MockResponse().setResponseCode(200));
+
+    assert200Http2Response(execute(url), server.getHostName());
+
+    HttpUrl nonsanUrl = url.newBuilder().host("nonsan.com").build();
+
+    try {
+      execute(nonsanUrl);
+      fail("expected a failed attempt to connect");
+    } catch (IOException se) {
+      // expected
+    }
   }
 
   @Test
-  public void prefersExistingCompatible() {
-    fail();
+  public void prefersExistingCompatible() throws IOException {
+    server.enqueue(new MockResponse().setResponseCode(200));
+    server.enqueue(new MockResponse().setResponseCode(200));
+
+    assert200Http2Response(execute(url), server.getHostName());
+
+    HttpUrl sanUrl = url.newBuilder().host("san.com").build();
+    dnsResults.put("san.com",
+        Arrays.asList(InetAddress.getByAddress("san.com", new byte[] {0, 0, 0, 0}),
+            serverIps.get(0)));
+    assert200Http2Response(execute(sanUrl), "san.com");
+
+    assertEquals(1, client.connectionPool().connectionCount());
+  }
+
+  @Test
+  public void commonThenWildcard() throws IOException {
+    server.enqueue(new MockResponse().setResponseCode(200));
+    server.enqueue(new MockResponse().setResponseCode(200));
+
+    assert200Http2Response(execute(url), server.getHostName());
+
+    HttpUrl sanUrl = url.newBuilder().host("www.wildcard.com").build();
+    assert200Http2Response(execute(sanUrl), "www.wildcard.com");
+
+    assertEquals(1, client.connectionPool().connectionCount());
   }
 
   private Response execute(HttpUrl url) throws IOException {
