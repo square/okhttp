@@ -404,7 +404,7 @@ public final class RealConnection extends Http2Connection.Listener implements Co
 
       String urlHost = address.url().host();
       boolean hostMatch = false;
-      for (String subjectAlternativeName: subjectAlternativeNames) {
+      for (String subjectAlternativeName : subjectAlternativeNames) {
         if (OkHostnameVerifier.verifyHostname(urlHost, subjectAlternativeName)) {
           hostMatch = true;
           break;
