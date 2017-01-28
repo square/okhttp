@@ -123,7 +123,8 @@ public class ConnectionCoalescingTest {
 
   @Test
   public void skipsWhenDnsDontMatch() throws IOException {
-    //
+    // if the existing connection matches a SAN
+    // but not a match for DNS then skip
 
     server.enqueue(new MockResponse().setResponseCode(200));
 
@@ -141,6 +142,8 @@ public class ConnectionCoalescingTest {
 
   @Test
   public void skipsWhenNotSubjectAltName() throws IOException {
+    // not in the certificate SAN
+
     server.enqueue(new MockResponse().setResponseCode(200));
 
     assert200Http2Response(execute(url), server.getHostName());
@@ -157,6 +160,10 @@ public class ConnectionCoalescingTest {
 
   @Test
   public void prefersExistingCompatible() throws IOException {
+    // check we would use an existing connection to a
+    // later DNS result instead of connecting to the first
+    // DNS result for the first time
+
     server.enqueue(new MockResponse().setResponseCode(200));
     server.enqueue(new MockResponse().setResponseCode(200));
 
@@ -173,6 +180,8 @@ public class ConnectionCoalescingTest {
 
   @Test
   public void commonThenWildcard() throws IOException {
+    // check that wildcard SANs are supported
+
     server.enqueue(new MockResponse().setResponseCode(200));
     server.enqueue(new MockResponse().setResponseCode(200));
 

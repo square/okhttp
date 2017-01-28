@@ -415,7 +415,9 @@ public final class RealConnection extends Http2Connection.Listener implements Co
       }
 
       try {
-        // TODO cache dns lookup
+        // TODO cache dns lookup and move out to or before StreamAllocation.findConnection
+        // awkwardly this check happens before we would normally do a dns lookup
+        // since in the standard reuse case we would skip the lookup completely
         List<InetAddress> ips = address.dns().lookup(address.url().host());
         if (!ips.contains(route.socketAddress().getAddress())) {
           return false;
