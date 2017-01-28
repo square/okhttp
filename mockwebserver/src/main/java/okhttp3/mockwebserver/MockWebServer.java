@@ -76,9 +76,7 @@ import okio.ByteString;
 import okio.Okio;
 import okio.Sink;
 import okio.Timeout;
-import org.junit.rules.TestRule;
-import org.junit.runner.Description;
-import org.junit.runners.model.Statement;
+import org.junit.rules.ExternalResource;
 
 import static okhttp3.internal.Util.closeQuietly;
 import static okhttp3.mockwebserver.SocketPolicy.DISCONNECT_AFTER_REQUEST;
@@ -98,7 +96,7 @@ import static okhttp3.mockwebserver.SocketPolicy.UPGRADE_TO_SSL_AT_END;
  * A scriptable web server. Callers supply canned responses and the server replays them upon request
  * in sequence.
  */
-public final class MockWebServer implements TestRule, Closeable {
+public final class MockWebServer extends ExternalResource implements Closeable {
   static {
     Internal.initializeInstanceForTests();
   }
@@ -142,7 +140,7 @@ public final class MockWebServer implements TestRule, Closeable {
 
   private boolean started;
 
-  private synchronized void maybeStart() {
+  @Override protected synchronized void before() {
     if (started) return;
     try {
       start();
@@ -151,35 +149,18 @@ public final class MockWebServer implements TestRule, Closeable {
     }
   }
 
-  @Override public Statement apply(final Statement base, Description description) {
-    return new Statement() {
-      @Override public void evaluate() throws Throwable {
-        maybeStart();
-        try {
-          base.evaluate();
-        } finally {
-          try {
-            shutdown();
-          } catch (IOException e) {
-            logger.log(Level.WARNING, "MockWebServer shutdown failed", e);
-          }
-        }
-      }
-    };
-  }
-
   public int getPort() {
-    maybeStart();
+    before();
     return port;
   }
 
   public String getHostName() {
-    maybeStart();
+    before();
     return inetSocketAddress.getHostName();
   }
 
   public Proxy toProxyAddress() {
-    maybeStart();
+    before();
     InetSocketAddress address = new InetSocketAddress(inetSocketAddress.getAddress(), getPort());
     return new Proxy(Proxy.Type.HTTP, address);
   }
@@ -395,6 +376,14 @@ public final class MockWebServer implements TestRule, Closeable {
       }
     } catch (InterruptedException e) {
       throw new AssertionError();
+    }
+  }
+
+  @Override protected synchronized void after() {
+    try {
+      shutdown();
+    } catch (IOException e) {
+      logger.log(Level.WARNING, "MockWebServer shutdown failed", e);
     }
   }
 
