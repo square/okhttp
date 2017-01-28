@@ -140,7 +140,7 @@ public final class MockWebServer extends ExternalResource implements Closeable {
 
   private boolean started;
 
-  protected synchronized void before() {
+  @Override protected synchronized void before() {
     if (started) return;
     try {
       start();
@@ -379,7 +379,7 @@ public final class MockWebServer extends ExternalResource implements Closeable {
     }
   }
 
-  public synchronized void after() {
+  @Override protected synchronized void after() {
     try {
       shutdown();
     } catch (IOException e) {
