@@ -211,8 +211,8 @@ public final class HttpOverHttp2Test {
 
           @Override public void writeTo(BufferedSink sink) throws IOException {
             sink.write(postBytes);  // push bytes into the stream's buffer
-            sink.flush(); // FramedConnection.writeData subject to write window
-            sink.close(); // FramedConnection.writeData empty frame
+            sink.flush(); // Http2Connection.writeData subject to write window
+            sink.close(); // Http2Connection.writeData empty frame
           }
         })
         .build());

@@ -438,10 +438,10 @@ public final class MockWebServer extends ExternalResource implements Closeable {
         }
 
         if (protocol == Protocol.HTTP_2) {
-          FramedSocketHandler framedSocketListener = new FramedSocketHandler(socket, protocol);
+          Http2SocketHandler http2SocketHandler = new Http2SocketHandler(socket, protocol);
           Http2Connection connection = new Http2Connection.Builder(false)
               .socket(socket)
-              .listener(framedSocketListener)
+              .listener(http2SocketHandler)
               .build();
           connection.start();
           openConnections.add(connection);
@@ -825,13 +825,13 @@ public final class MockWebServer extends ExternalResource implements Closeable {
     }
   }
 
-  /** Processes HTTP requests layered over framed protocols. */
-  private class FramedSocketHandler extends Http2Connection.Listener {
+  /** Processes HTTP requests layered over HTTP/2. */
+  private class Http2SocketHandler extends Http2Connection.Listener {
     private final Socket socket;
     private final Protocol protocol;
     private final AtomicInteger sequenceNumber = new AtomicInteger();
 
-    private FramedSocketHandler(Socket socket, Protocol protocol) {
+    private Http2SocketHandler(Socket socket, Protocol protocol) {
       this.socket = socket;
       this.protocol = protocol;
     }

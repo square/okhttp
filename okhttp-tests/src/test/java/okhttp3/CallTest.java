@@ -2578,7 +2578,7 @@ public final class CallTest {
     assertEquals("password", get.getHeader("Proxy-Authorization"));
   }
 
-  @Test public void interceptorGetsFramedProtocol() throws Exception {
+  @Test public void interceptorGetsHttp2() throws Exception {
     enableProtocol(Protocol.HTTP_2);
 
     // Capture the protocol as it is observed by the interceptor.
