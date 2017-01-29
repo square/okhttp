@@ -18,7 +18,6 @@ package okhttp3.logging;
 import java.io.EOFException;
 import java.io.IOException;
 import java.nio.charset.Charset;
-import java.nio.charset.UnsupportedCharsetException;
 import java.util.concurrent.TimeUnit;
 import okhttp3.Connection;
 import okhttp3.Headers;
@@ -241,15 +240,7 @@ public final class HttpLoggingInterceptor implements Interceptor {
         Charset charset = UTF8;
         MediaType contentType = responseBody.contentType();
         if (contentType != null) {
-          try {
-            charset = contentType.charset(UTF8);
-          } catch (UnsupportedCharsetException e) {
-            logger.log("");
-            logger.log("Couldn't decode the response body; charset is likely malformed.");
-            logger.log("<-- END HTTP");
-
-            return response;
-          }
+          charset = contentType.charset(UTF8);
         }
 
         if (!isPlaintext(buffer)) {
