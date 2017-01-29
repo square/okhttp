@@ -58,6 +58,7 @@ public final class Util {
   private static final ByteString UTF_32_LE_BOM = ByteString.decodeHex("ffff0000");
 
   public static final Charset UTF_8 = Charset.forName("UTF-8");
+  public static final Charset ISO_8859_1 = Charset.forName("ISO-8859-1");
   private static final Charset UTF_16_BE = Charset.forName("UTF-16BE");
   private static final Charset UTF_16_LE = Charset.forName("UTF-16LE");
   private static final Charset UTF_32_BE = Charset.forName("UTF-32BE");
