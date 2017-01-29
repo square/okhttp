@@ -1,6 +1,28 @@
 Change Log
 ==========
 
+## Version 3.6.0
+
+_2017-01-29_
+
+ *  Fix: Don't crash with a "cache is closed" error when there is an error initializing the cache.
+ *  Fix: Calling `disconnect()` on a connecting `HttpUrlConnection` could cause it to retry in an
+    infinite loop! This regression was introduced in OkHttp 2.7.0.
+ *  Fix: Drop cookies that contain ASCII NULL and other bad characters. Previously such cookies
+    would cause OkHttp to crash when they were included in a request.
+ *  Fix: Release duplicated multiplexed connections. If we concurrently establish connections to an
+    HTTP/2 server, close all but the first connection.
+ *  Fix: Fail the HTTP/2 connection if first frame isn't `SETTINGS`.
+ *  Fix: Forbid spaces in header names.
+ *  Fix: Don't offer to do gzip if the request is partial.
+ *  Fix: MockWebServer is now usable with JUnit 5. That update [broke the rules][junit_5_rules].
+ *  New: Support `Expect: 100-continue` as a request header. Callers can use this header to
+    pessimistically hold off on transmitting a request body until a server gives the go-ahead.
+ *  New: Permit network interceptors to rewrite the host header for HTTP/2. This makes it possible
+    to do domain fronting.
+ *  New: charset support for `Credentials.basic()`.
+
+
 ## Version 3.5.0
 
 _2016-11-30_
@@ -1199,3 +1221,4 @@ Initial release.
  [nginx_959]: https://trac.nginx.org/nginx/ticket/959
  [okhttp_idling_resource]: https://github.com/JakeWharton/okhttp-idling-resource
  [bom]: https://en.wikipedia.org/wiki/Byte_order_mark
+ [junit_5_rules]: http://junit.org/junit5/docs/current/user-guide/#migrating-from-junit4-rulesupport
