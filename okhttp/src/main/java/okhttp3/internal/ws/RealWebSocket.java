@@ -284,6 +284,17 @@ public final class RealWebSocket implements WebSocket, WebSocketReader.FrameCall
     executor.awaitTermination(timeout, timeUnit);
   }
 
+  /**
+   * For testing: force this web socket to release its threads.
+   */
+  void tearDown() throws InterruptedException {
+    if (cancelFuture != null) {
+      cancelFuture.cancel(false);
+    }
+    executor.shutdown();
+    executor.awaitTermination(10, TimeUnit.SECONDS);
+  }
+
   synchronized int pingCount() {
     return pingCount;
   }
@@ -517,7 +528,7 @@ public final class RealWebSocket implements WebSocket, WebSocketReader.FrameCall
     }
   }
 
-  void failWebSocket(Exception e, Response response) {
+  public void failWebSocket(Exception e, Response response) {
     Streams streamsToClose;
     synchronized (this) {
       if (failed) return; // Already failed.

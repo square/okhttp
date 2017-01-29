@@ -15,14 +15,11 @@
  */
 package okhttp3;
 
-import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Authenticator;
 import java.net.ConnectException;
-import java.net.CookieHandler;
 import java.net.CookieManager;
 import java.net.HttpRetryException;
 import java.net.HttpURLConnection;
@@ -38,7 +35,6 @@ import java.net.URI;
 import java.net.URL;
 import java.net.URLConnection;
 import java.net.UnknownHostException;
-import java.nio.charset.Charset;
 import java.security.KeyStore;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
@@ -81,7 +77,6 @@ import okio.Buffer;
 import okio.BufferedSink;
 import okio.GzipSink;
 import okio.Okio;
-
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Ignore;
