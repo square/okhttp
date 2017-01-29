@@ -228,6 +228,13 @@ public final class CookieTest {
     assertFalse(cookie.matches(HttpUrl.parse("http://square.com")));
   }
 
+  @Test public void topLevelDomainMatches() {
+    Cookie cookie = Cookie.parse(url, "a=b; domain=com");
+    assertTrue(cookie.matches(HttpUrl.parse("http://example.com")));
+    assertTrue(cookie.matches(HttpUrl.parse("http://www.example.com")));
+    assertTrue(cookie.matches(HttpUrl.parse("http://square.com")));
+  }
+
   /** Ignore an optional leading `.` in the domain. */
   @Test public void domainMatchesIgnoresLeadingDot() throws Exception {
     Cookie cookie = Cookie.parse(url, "a=b; domain=.example.com");
