@@ -71,10 +71,10 @@ public final class Http2Server extends Http2Connection.Listener {
             .build();
         connection.start();
       } catch (IOException e) {
-        logger.log(Level.INFO, "FramedServer connection failure: " + e);
+        logger.log(Level.INFO, "Http2Server connection failure: " + e);
         Util.closeQuietly(socket);
       } catch (Exception e) {
-        logger.log(Level.WARNING, "FramedServer unexpected failure", e);
+        logger.log(Level.WARNING, "Http2Server unexpected failure", e);
         Util.closeQuietly(socket);
       }
     }
@@ -90,7 +90,7 @@ public final class Http2Server extends Http2Connection.Listener {
     return sslSocket;
   }
 
-  @Override public void onStream(final Http2Stream stream) throws IOException {
+  @Override public void onStream(Http2Stream stream) throws IOException {
     try {
       List<Header> requestHeaders = stream.getRequestHeaders();
       String path = null;
@@ -116,7 +116,7 @@ public final class Http2Server extends Http2Connection.Listener {
         send404(stream, path);
       }
     } catch (IOException e) {
-      Platform.get().log(INFO, "Failure serving FramedStream: " + e.getMessage(), null);
+      Platform.get().log(INFO, "Failure serving Http2Stream: " + e.getMessage(), null);
     }
   }
 
@@ -177,7 +177,7 @@ public final class Http2Server extends Http2Connection.Listener {
 
   public static void main(String... args) throws Exception {
     if (args.length != 1 || args[0].startsWith("-")) {
-      System.out.println("Usage: FramedServer <base directory>");
+      System.out.println("Usage: Http2Server <base directory>");
       return;
     }
 
