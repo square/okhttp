@@ -563,7 +563,7 @@ public final class HttpLoggingInterceptorTest {
 
     server.enqueue(new MockResponse()
         .setHeader("Content-Type", "text/html; charset=0")
-        .setBody("Ignore This"));
+        .setBody("Body with unknown charset"));
     Response response = client.newCall(request().build()).execute();
     response.body().close();
 
@@ -578,8 +578,8 @@ public final class HttpLoggingInterceptorTest {
         .assertLogEqual("Content-Type: text/html; charset=0")
         .assertLogMatch("Content-Length: \\d+")
         .assertLogMatch("")
-        .assertLogEqual("Couldn't decode the response body; charset is likely malformed.")
-        .assertLogEqual("<-- END HTTP")
+        .assertLogEqual("Body with unknown charset")
+        .assertLogEqual("<-- END HTTP (25-byte body)")
         .assertNoMoreLogs();
 
     applicationLogs
@@ -589,8 +589,8 @@ public final class HttpLoggingInterceptorTest {
         .assertLogEqual("Content-Type: text/html; charset=0")
         .assertLogMatch("Content-Length: \\d+")
         .assertLogEqual("")
-        .assertLogEqual("Couldn't decode the response body; charset is likely malformed.")
-        .assertLogEqual("<-- END HTTP")
+        .assertLogEqual("Body with unknown charset")
+        .assertLogEqual("<-- END HTTP (25-byte body)")
         .assertNoMoreLogs();
   }
 

@@ -17,15 +17,12 @@
 package okhttp3;
 
 import java.nio.charset.Charset;
-import java.nio.charset.IllegalCharsetNameException;
-import java.nio.charset.UnsupportedCharsetException;
 import okhttp3.internal.Util;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 
 /**
  * Test MediaType API and parsing.
@@ -123,29 +120,17 @@ public class MediaTypeTest {
   }
 
   @Test public void testMultipleCharsets() {
-    try {
-      MediaType.parse("text/plain; charset=utf-8; charset=utf-16");
-      fail();
-    } catch (IllegalArgumentException expected) {
-    }
+    assertNull(MediaType.parse("text/plain; charset=utf-8; charset=utf-16"));
   }
 
   @Test public void testIllegalCharsetName() {
     MediaType mediaType = MediaType.parse("text/plain; charset=\"!@#$%^&*()\"");
-    try {
-      mediaType.charset();
-      fail();
-    } catch (IllegalCharsetNameException expected) {
-    }
+    assertNull(mediaType.charset());
   }
 
   @Test public void testUnsupportedCharset() {
     MediaType mediaType = MediaType.parse("text/plain; charset=utf-wtf");
-    try {
-      mediaType.charset();
-      fail();
-    } catch (UnsupportedCharsetException expected) {
-    }
+    assertNull(mediaType.charset());
   }
 
   /**
@@ -159,20 +144,12 @@ public class MediaTypeTest {
 
   @Test public void testCharsetNameIsDoubleQuotedAndSingleQuoted() throws Exception {
     MediaType mediaType = MediaType.parse("text/plain;charset=\"'utf-8'\"");
-    try {
-      mediaType.charset();
-      fail();
-    } catch (IllegalCharsetNameException expected) {
-    }
+    assertNull(mediaType.charset());
   }
 
   @Test public void testCharsetNameIsDoubleQuotedSingleQuote() throws Exception {
     MediaType mediaType = MediaType.parse("text/plain;charset=\"'\"");
-    try {
-      mediaType.charset();
-      fail();
-    } catch (IllegalCharsetNameException expected) {
-    }
+    assertNull(mediaType.charset());
   }
 
   @Test public void testDefaultCharset() throws Exception {
@@ -189,7 +166,7 @@ public class MediaTypeTest {
     MediaType mediaType = MediaType.parse("text/plain;");
     assertEquals("text", mediaType.type());
     assertEquals("plain", mediaType.subtype());
-    assertEquals(null, mediaType.charset());
+    assertNull(mediaType.charset());
     assertEquals("text/plain;", mediaType.toString());
   }
 
