@@ -21,140 +21,114 @@ import javax.security.auth.x500.X500Principal;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
 import static org.junit.Assert.fail;
 
 public final class DistinguishedNameParserTest {
-  @Test public void testGetCns() {
-    assertCns("");
-    assertCns("ou=xxx");
-    assertCns("ou=xxx,cn=xxx", "xxx");
-    assertCns("ou=xxx+cn=yyy,cn=zzz+cn=abc", "yyy", "zzz", "abc");
-    assertCns("cn=a,cn=b", "a", "b");
-    assertCns("cn=a   c,cn=b", "a   c", "b");
-    assertCns("cn=a   ,cn=b", "a", "b");
-    assertCns("cn=Cc,cn=Bb,cn=Aa", "Cc", "Bb", "Aa");
-    assertCns("cn=imap.gmail.com", "imap.gmail.com");
-    assertCns("l=\"abcn=a,b\", cn=c", "c");
-    assertCns("l=\"abcn=a,b\", cn=c", "c");
-    assertCns("l=\"abcn=a,b\", cn= c", "c");
-    assertCns("cn=<", "<");
-    assertCns("cn=>", ">");
-    assertCns("cn= >", ">");
-    assertCns("cn=a b", "a b");
-    assertCns("cn   =a b", "a b");
-    assertCns("Cn=a b", "a b");
-    assertCns("cN=a b", "a b");
-    assertCns("CN=a b", "a b");
-    assertCns("cn=a#b", "a#b");
-    assertCns("cn=#130161", "a");
-    assertCns("l=q\t+cn=p", "p");
-    assertCns("l=q\n+cn=p", "p");
-    assertCns("l=q\n,cn=p", "p");
-    assertCns("l=,cn=p", "p");
-    assertCns("l=\tq\n,cn=\tp", "\tp");
+  @Test public void regularCases() {
+    assertCn("xxx", "ou=xxx,cn=xxx");
+    assertCn("yyy", "ou=xxx+cn=yyy,cn=zzz+cn=abc");
+    assertCn("a", "cn=a,cn=b");
+    assertCn("a   c", "cn=a   c,cn=b");
+    assertCn("Cc", "cn=Cc,cn=Bb,cn=Aa");
+    assertCn("imap.gmail.com", "cn=imap.gmail.com");
+    assertCn("c", "l=\"abcn=a,b\", cn=c");
+    assertCn("c", "l=\"abcn=a,b\", cn=c");
+    assertCn("c", "l=\"abcn=a,b\", cn= c");
+    assertCn("a b", "cn=a b");
+    assertCn("a b", "cn   =a b");
+    assertCn("a b", "Cn=a b");
+    assertCn("a b", "cN=a b");
+    assertCn("a b", "CN=a b");
+    assertCn("a#b", "cn=a#b");
+    assertCn("a", "cn=#130161");
+    assertCn("p", "l=q\t+cn=p");
+    assertCn("p", "l=q\n+cn=p");
+    assertCn("p", "l=q\n,cn=p");
+    assertCn("p", "l=,cn=p");
+    assertCn("\tp", "l=\tq\n,cn=\tp");
   }
 
-  /** A cn=, generates an empty value, unless it's at the very end. */
   @Test public void emptyValues() {
-    assertCns("l=,cn=+cn=q", "", "q");
-    assertCns("l=,cn=,cn=q", "", "q");
-    assertCns("l=,cn=");
-    assertCns("l=,cn=q,cn=   ", "q");
-    assertCns("l=,cn=q  ,cn=   ", "q");
-    assertCns("l=,cn=\"\"");
-    assertCns("l=,cn=\"  \",cn=\"  \"","  ");
-    assertCns("l=,cn=  ,cn=  ","");
-    assertCns("l=,cn=,cn=  ,cn=  ", "", "");
+    assertCn(null, "");
+    assertCn(null, "ou=xxx");
+    assertCn("", "l=,cn=+cn=q");
+    assertCn("", "l=,cn=,cn=q");
+    assertCn(null, "l=,cn=");
+    assertCn("q", "l=,cn=q,cn=   ");
+    assertCn("q", "l=,cn=q  ,cn=   ");
+    assertCn(null, "l=,cn=\"\"");
+    assertCn("", "l=,cn=  ,cn=  ");
+    assertCn("", "l=,cn=,cn=  ,cn=  ");
   }
 
-
-  @Test public void testGetCns_escapedChars() {
-    assertCns("cn=\\,", ",");
-    assertCns("cn=\\#", "#");
-    assertCns("cn=\\+", "+");
-    assertCns("cn=\\\"", "\"");
-    assertCns("cn=\\\\", "\\");
-    assertCns("cn=\\<", "<");
-    assertCns("cn=\\>", ">");
-    assertCns("cn=\\;", ";");
-    assertCns("cn=\\+", "+");
-    assertCns("cn=\"\\+\"", "+");
-    assertCns("cn=\"\\,\"", ",");
-    assertCns("cn= a =", "a =");
-    assertCns("cn==", "=");
+  @Test public void escapedChars() {
+    assertCn(",", "cn=\\,");
+    assertCn("#", "cn=\\#");
+    assertCn("+", "cn=\\+");
+    assertCn("\"", "cn=\\\"");
+    assertCn("\\", "cn=\\\\");
+    assertCn("<", "cn=\\<");
+    assertCn(">", "cn=\\>");
+    assertCn(";", "cn=\\;");
+    assertCn("+", "cn=\\+");
+    assertCn("+", "cn=\"\\+\"");
+    assertCn(",", "cn=\"\\,\"");
+    assertCn("a =", "cn= a =");
+    assertCn("=", "cn==");
   }
 
-  @Test public void testGetCns_whitespace() {
-    assertCns("cn= p", "p");
-    assertCns("cn=\np", "\np");
-    assertCns("cn=\tp", "\tp");
+  @Test public void whitespace() {
+    assertCn("p", "cn= p");
+    assertCn("p", "cn=\np");
+    assertCn("\tp", "cn=\tp");
   }
 
-  @Test public void testGetCnsWithOid() {
-    assertCns("2.5.4.3=a,ou=xxx", "a");
-    assertCns("2.5.4.3=\" a \",ou=xxx", " a ");
-    assertCns("2.5.5.3=a,ou=xxx,cn=b", "b");
+  @Test public void withOid() {
+    assertCn("a", "2.5.4.3=a,ou=xxx");
+    assertCn("a", "2.5.4.3=\" a \",ou=xxx");
+    assertCn("b", "2.5.5.3=a,ou=xxx,cn=b");
   }
 
-  @Test public void testGetCnsWithQuotedStrings() {
-    assertCns("cn=\"\\\" a ,=<>#;\"", "\" a ,=<>#;");
-    assertCns("cn=abc\\,def", "abc,def");
-    assertCns("cn=\"\\\" a ,\\=<>\\#;\"", "\" a ,=<>#;");
+  @Test public void quotedStrings() {
+    assertCn("\" a ,=<>#;", "cn=\"\\\" a ,=<>#;\"");
+    assertCn("abc,def", "cn=abc\\,def");
+    assertCn("\" a ,=<>#;", "cn=\"\\\" a ,\\=<>\\#;\"");
   }
 
-  @Test public void testGetCnsWithUtf8() {
-    assertCns("cn=\"Lu\\C4\\8Di\\C4\\87\"", "\u004c\u0075\u010d\u0069\u0107");
-    assertCns("cn=Lu\\C4\\8Di\\C4\\87", "\u004c\u0075\u010d\u0069\u0107");
-    assertCns("cn=Lu\\C4\\8di\\c4\\87", "\u004c\u0075\u010d\u0069\u0107");
-    assertCns("cn=\"Lu\\C4\\8di\\c4\\87\"", "\u004c\u0075\u010d\u0069\u0107");
-    assertCns("cn=\u004c\u0075\u010d\u0069\u0107", "\u004c\u0075\u010d\u0069\u0107");
+  @Test public void utf8() {
+    assertCn("\u004c\u0075\u010d\u0069\u0107", "cn=\"Lu\\C4\\8Di\\C4\\87\"");
+    assertCn("\u004c\u0075\u010d\u0069\u0107", "cn=Lu\\C4\\8Di\\C4\\87");
+    assertCn("\u004c\u0075\u010d\u0069\u0107", "cn=Lu\\C4\\8di\\c4\\87");
+    assertCn("\u004c\u0075\u010d\u0069\u0107", "cn=\"Lu\\C4\\8di\\c4\\87\"");
+    assertCn("\u004c\u0075\u010d\u0069\u0107", "cn=\u004c\u0075\u010d\u0069\u0107");
     // \63=c
     expectExceptionInPrincipal("\\63n=ab");
     expectExceptionInPrincipal("cn=\\a");
   }
 
-  @Test public void testGetCnsWithWhitespace() {
-
-    assertCns("ou=a, cn=  a  b  ,o=x", "a  b");
-    assertCns("cn=\"  a  b  \" ,o=x", "  a  b  ");
+  @Test public void trailingWhitespace() {
+    assertCn("a  b", "ou=a, cn=  a  b  ,o=x");
+    assertCn("a  b", "cn=\"  a  b  \" ,o=x");
+    assertCn("a", "cn=a   ,cn=b");
+    assertCn("", "l=,cn=\"  \",cn=\"  \"");
   }
 
-  private void assertCns(String dn, String... expected) {
+  /**
+   * @param expected the value of the first "cn=" argument in {@code dn},
+   *                 or null if none is expected
+   */
+  private void assertCn(String expected, String dn) {
     X500Principal principal = new X500Principal(dn);
     DistinguishedNameParser parser = new DistinguishedNameParser(principal);
-    // Test getAllMostSpecificFirst
-//        assertEquals(dn, Arrays.asList(expected), parser.getAllMostSpecificFirst("cn"));
-
-    // Test findMostSpecific
-    if (expected.length > 0) {
-      assertEquals(dn, expected[0], parser.findMostSpecific("cn"));
-    } else {
-      assertNull(dn, parser.findMostSpecific("cn"));
-    }
-  }
-
-  private void assertGetAttribute(String dn, String attribute, String... expected) {
-    X500Principal principal = new X500Principal(dn);
-    DistinguishedNameParser parser = new DistinguishedNameParser(principal);
-    // Test getAllMostSpecificFirst
-//        assertEquals(dn, Arrays.asList(expected), parser.getAllMostSpecificFirst(attribute));
-
-    // Test findMostSpecific
-    if (expected.length > 0) {
-      assertEquals(dn, expected[0], parser.findMostSpecific(attribute));
-    } else {
-      assertNull(dn, parser.findMostSpecific(attribute));
-    }
+    assertEquals(dn, expected, parser.findMostSpecific("cn"));
   }
 
   private void expectExceptionInPrincipal(String dn) {
     try {
-      X500Principal principal = new X500Principal(dn);
+      new X500Principal(dn);
       fail("Expected " + IllegalArgumentException.class.getName()
           + " because of incorrect input name");
-    } catch (IllegalArgumentException e) {
-      // Expected.
+    } catch (IllegalArgumentException expected) {
     }
   }
 }
