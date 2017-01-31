@@ -123,7 +123,7 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
       Protocol.HTTP_2, Protocol.HTTP_1_1);
 
   static final List<ConnectionSpec> DEFAULT_CONNECTION_SPECS = Util.immutableList(
-      ConnectionSpec.MODERN_TLS, ConnectionSpec.COMPATIBLE_TLS, ConnectionSpec.CLEARTEXT);
+      ConnectionSpec.MODERN_TLS, ConnectionSpec.CLEARTEXT);
 
   static {
     Internal.instance = new Internal() {

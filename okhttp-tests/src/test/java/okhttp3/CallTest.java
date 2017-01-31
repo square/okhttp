@@ -1030,6 +1030,18 @@ public final class CallTest {
     noRecoverWhenRetryOnConnectionFailureIsFalse();
   }
 
+  @Test public void tlsHandshakeFailure_noFallbackByDefault() throws Exception {
+    server.useHttps(sslClient.socketFactory, false);
+    server.enqueue(new MockResponse().setSocketPolicy(SocketPolicy.FAIL_HANDSHAKE));
+    server.enqueue(new MockResponse().setBody("response that will never be received"));
+    RecordedResponse response = executeSynchronously("/");
+    response.assertFailure(
+            SSLProtocolException.class, // RI response to the FAIL_HANDSHAKE
+            SSLHandshakeException.class // Android's response to the FAIL_HANDSHAKE
+    );
+    assertFalse(client.connectionSpecs().contains(ConnectionSpec.COMPATIBLE_TLS));
+  }
+
   @Test public void recoverFromTlsHandshakeFailure() throws Exception {
     server.useHttps(sslClient.socketFactory, false);
     server.enqueue(new MockResponse().setSocketPolicy(SocketPolicy.FAIL_HANDSHAKE));
@@ -1038,6 +1050,8 @@ public final class CallTest {
     client = client.newBuilder()
         .hostnameVerifier(new RecordingHostnameVerifier())
         .dns(new SingleInetAddressDns())
+        // opt-in to fallback to COMPATIBLE_TLS
+        .connectionSpecs(Arrays.asList(ConnectionSpec.MODERN_TLS, ConnectionSpec.COMPATIBLE_TLS))
         .sslSocketFactory(suppressTlsFallbackClientSocketFactory(), sslClient.trustManager)
         .build();
 
@@ -1060,6 +1074,8 @@ public final class CallTest {
         new RecordingSSLSocketFactory(sslClient.socketFactory);
     client = client.newBuilder()
         .sslSocketFactory(clientSocketFactory, sslClient.trustManager)
+        // opt-in to fallback to COMPATIBLE_TLS
+        .connectionSpecs(Arrays.asList(ConnectionSpec.MODERN_TLS, ConnectionSpec.COMPATIBLE_TLS))
         .hostnameVerifier(new RecordingHostnameVerifier())
         .dns(new SingleInetAddressDns())
         .build();
@@ -1085,6 +1101,7 @@ public final class CallTest {
 
     client = client.newBuilder()
         .hostnameVerifier(new RecordingHostnameVerifier())
+        .connectionSpecs(Arrays.asList(ConnectionSpec.MODERN_TLS, ConnectionSpec.COMPATIBLE_TLS))
         .sslSocketFactory(suppressTlsFallbackClientSocketFactory(), sslClient.trustManager)
         .build();
 
