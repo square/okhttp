@@ -15,7 +15,8 @@
  */
 package okhttp3;
 
-import java.io.IOException;
+import java.net.InetAddress;
+import java.util.List;
 
 /**
  * Observes, modifies, and potentially short-circuits requests going out and the corresponding
@@ -23,51 +24,52 @@ import java.io.IOException;
  * or response.
  */
 public class EventListener {
-	public static final EventListener NULL_EVENT_LISTENER = new EventListener() {
-	};
+  public static final EventListener NULL_EVENT_LISTENER = new EventListener() {
+  };
 
-	void requestEnqueued(Call call) {
-	}
+  void requestEnqueued(Call call) {
+  }
 
-	void dnsStart(Call call, String domainName) {
-	}
+  void dnsStart(Call call, String domainName) {
+  }
 
-	void dnsEnd(Call call, String domainName, List<InetAddress> inetAddressList, Throwable throwable) {
-	}
+  void dnsEnd(Call call, String domainName, List<InetAddress> inetAddressList,
+      Throwable throwable) {
+  }
 
-	void connectStart(Call call, InetAddress address, int port) {
-	}
-	
-	void secureConnectStart(Call call) {
-	}
+  void connectStart(Call call, InetAddress address, int port) {
+  }
 
-	void secureConnectEnd(Call call, String cipherSuite, String protocol, Throwable throwable) {
-	}
+  void secureConnectStart(Call call) {
+  }
 
-	void connectEnd(Call call,  InetAddress address, int port, String protocol, Throwable throwable) {
-	}
+  void secureConnectEnd(Call call, String cipherSuite, String protocol, Throwable throwable) {
+  }
 
-	void requestHeadersStart(Call call) {
-	}
+  void connectEnd(Call call,  InetAddress address, int port, String protocol, Throwable throwable) {
+  }
 
-	void requestHeadersEnd(Call call, Throwable throwable) {
-	}
+  void requestHeadersStart(Call call) {
+  }
 
-	void requestBodyStart(Call call) {
-	}
+  void requestHeadersEnd(Call call, Throwable throwable) {
+  }
 
-	void requestBodyEnd(Call call, Throwable throwable) {
-	}
+  void requestBodyStart(Call call) {
+  }
 
-	void responseHeadersStart(Call call) {
-	}
+  void requestBodyEnd(Call call, Throwable throwable) {
+  }
 
-	void responseHeadersEnd(Call call, Throwable throwable) {
-	}
+  void responseHeadersStart(Call call) {
+  }
 
-	void responseBodyStart(Call call) {
-	}
+  void responseHeadersEnd(Call call, Throwable throwable) {
+  }
 
-	void responseBodyEnd(Call call, Throwable throwable) {
-	}
+  void responseBodyStart(Call call) {
+  }
+
+  void responseBodyEnd(Call call, Throwable throwable) {
+  }
 }
