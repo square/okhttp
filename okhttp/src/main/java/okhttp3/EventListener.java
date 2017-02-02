@@ -77,4 +77,8 @@ public class EventListener {
 
   public void fetchEnd(Call call, Throwable throwable) {
   }
+
+  public interface Factory {
+    EventListener create(Call call);
+  }
 }
