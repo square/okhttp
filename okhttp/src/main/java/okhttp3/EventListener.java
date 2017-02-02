@@ -27,49 +27,54 @@ public class EventListener {
   public static final EventListener NULL_EVENT_LISTENER = new EventListener() {
   };
 
-  void requestEnqueued(Call call) {
+  public void fetchStart(Call call) {
   }
 
-  void dnsStart(Call call, String domainName) {
+  public void dnsStart(Call call, String domainName) {
   }
 
-  void dnsEnd(Call call, String domainName, List<InetAddress> inetAddressList,
+  public void dnsEnd(Call call, String domainName, List<InetAddress> inetAddressList,
       Throwable throwable) {
   }
 
-  void connectStart(Call call, InetAddress address, int port) {
+  public void connectStart(Call call, InetAddress address, int port) {
   }
 
-  void secureConnectStart(Call call) {
+  public void secureConnectStart(Call call) {
   }
 
-  void secureConnectEnd(Call call, String cipherSuite, String protocol, Throwable throwable) {
+  public void secureConnectEnd(Call call, Handshake handshake,
+      Throwable throwable) {
   }
 
-  void connectEnd(Call call,  InetAddress address, int port, String protocol, Throwable throwable) {
+  public void connectEnd(Call call,  InetAddress address, int port, String protocol,
+      Throwable throwable) {
   }
 
-  void requestHeadersStart(Call call) {
+  public void requestHeadersStart(Call call) {
   }
 
-  void requestHeadersEnd(Call call, Throwable throwable) {
+  public void requestHeadersEnd(Call call, Throwable throwable) {
   }
 
-  void requestBodyStart(Call call) {
+  public void requestBodyStart(Call call) {
   }
 
-  void requestBodyEnd(Call call, Throwable throwable) {
+  public void requestBodyEnd(Call call, Throwable throwable) {
   }
 
-  void responseHeadersStart(Call call) {
+  public void responseHeadersStart(Call call) {
   }
 
-  void responseHeadersEnd(Call call, Throwable throwable) {
+  public void responseHeadersEnd(Call call, Throwable throwable) {
   }
 
-  void responseBodyStart(Call call) {
+  public void responseBodyStart(Call call) {
   }
 
-  void responseBodyEnd(Call call, Throwable throwable) {
+  public void responseBodyEnd(Call call, Throwable throwable) {
+  }
+
+  public void fetchEnd(Call call, Throwable throwable) {
   }
 }
