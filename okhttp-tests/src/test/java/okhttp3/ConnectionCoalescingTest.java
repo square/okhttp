@@ -9,6 +9,8 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.SSLSession;
 import okhttp3.internal.tls.HeldCertificate;
 import okhttp3.internal.tls.SslClient;
 import okhttp3.mockwebserver.MockResponse;
@@ -65,6 +67,8 @@ public class ConnectionCoalescingTest {
 
     Dns dns = new Dns() {
       @Override public List<InetAddress> lookup(String hostname) throws UnknownHostException {
+        System.out.println("DNS: " + hostname);
+
         List<InetAddress> testResults = dnsResults.get(hostname);
 
         if (testResults == null) {
@@ -156,6 +160,73 @@ public class ConnectionCoalescingTest {
     } catch (IOException se) {
       // expected
     }
+  }
+
+  @Test
+  public void coalescesWhenCertificatePinsMatch() throws IOException {
+    // can still coalesce when pinning is used if pins match
+
+    CertificatePinner pinner = new CertificatePinner.Builder().add("san.com",
+        "sha1/" + CertificatePinner.sha1(certificate.certificate).base64()).build();
+    client = client.newBuilder().certificatePinner(pinner).build();
+
+    server.enqueue(new MockResponse().setResponseCode(200));
+    server.enqueue(new MockResponse().setResponseCode(200));
+
+    assert200Http2Response(execute(url), server.getHostName());
+
+    HttpUrl sanUrl = url.newBuilder().host("san.com").build();
+
+    assert200Http2Response(execute(sanUrl), "san.com");
+
+    assertEquals(1, client.connectionPool().connectionCount());
+  }
+
+  @Test
+  public void skipsWhenCertificatePinningFails() throws IOException {
+    // certificate pinning used and not a match
+    // will avoid coalescing and try to connect
+
+    CertificatePinner pinner = new CertificatePinner.Builder().add("san.com",
+        "sha1/afwiKY3RxoMmLkuRW1l7QsPZTJPwDS2pdDROQjXw8ig=").build();
+    client = client.newBuilder().certificatePinner(pinner).build();
+
+    server.enqueue(new MockResponse().setResponseCode(200));
+
+    assert200Http2Response(execute(url), server.getHostName());
+
+    HttpUrl sanUrl = url.newBuilder().host("san.com").build();
+
+    try {
+      execute(sanUrl);
+      fail("expected a failed attempt to connect");
+    } catch (IOException se) {
+      // expected
+    }
+  }
+
+  @Test
+  public void skipsWhenHostnameVerifierUsed() throws IOException {
+    // skips coalescing when hostname verifier is overriden
+    // since the intention of the hostname verification is a blackbox
+
+    HostnameVerifier verifier = new HostnameVerifier() {
+      @Override public boolean verify(String s, SSLSession sslSession) {
+        return true;
+      }
+    };
+    client = client.newBuilder().hostnameVerifier(verifier).build();
+
+    server.enqueue(new MockResponse().setResponseCode(200));
+    server.enqueue(new MockResponse().setResponseCode(200));
+
+    assert200Http2Response(execute(url), server.getHostName());
+
+    HttpUrl sanUrl = url.newBuilder().host("san.com").build();
+
+    assert200Http2Response(execute(sanUrl), "san.com");
+
+    assertEquals(2, client.connectionPool().connectionCount());
   }
 
   @Test

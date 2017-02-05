@@ -167,7 +167,7 @@ public final class RouteSelector {
       inetSocketAddresses.add(InetSocketAddress.createUnresolved(socketHost, socketPort));
     } else {
       // Try each address for best behavior in mixed IPv4/IPv6 environments.
-      List<InetAddress> addresses = address.dns().lookup(socketHost);
+      List<InetAddress> addresses = address.dnsLookup(socketHost);
       for (int i = 0, size = addresses.size(); i < size; i++) {
         InetAddress inetAddress = addresses.get(i);
         inetSocketAddresses.add(new InetSocketAddress(inetAddress, socketPort));

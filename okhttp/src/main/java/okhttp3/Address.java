@@ -15,13 +15,19 @@
  */
 package okhttp3;
 
+import java.net.InetAddress;
 import java.net.Proxy;
 import java.net.ProxySelector;
+import java.net.UnknownHostException;
+import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import javax.net.SocketFactory;
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLSocketFactory;
 import okhttp3.internal.Util;
+import okhttp3.internal.tls.OkHostnameVerifier;
 
 import static okhttp3.internal.Util.equal;
 
@@ -46,6 +52,8 @@ public final class Address {
   final SSLSocketFactory sslSocketFactory;
   final HostnameVerifier hostnameVerifier;
   final CertificatePinner certificatePinner;
+  private Map<String, List<InetAddress>> cachedDnsResults =
+      Collections.synchronizedMap(new LinkedHashMap<String, List<InetAddress>>());
 
   public Address(String uriHost, int uriPort, Dns dns, SocketFactory socketFactory,
       SSLSocketFactory sslSocketFactory, HostnameVerifier hostnameVerifier,
@@ -152,13 +160,12 @@ public final class Address {
   @Override public boolean equals(Object other) {
     if (other instanceof Address) {
       Address that = (Address) other;
-      return this.url.equals(that.url)
-          && equalsNonUrl(that);
+      return this.url.equals(that.url) && equalsNonHost(that);
     }
     return false;
   }
 
-  public boolean equalsNonUrl(Address that) {
+  public boolean equalsNonHost(Address that) {
     return this.dns.equals(that.dns)
         && this.proxyAuthenticator.equals(that.proxyAuthenticator)
         && this.protocols.equals(that.protocols)
@@ -167,7 +174,8 @@ public final class Address {
         && equal(this.proxy, that.proxy)
         && equal(this.sslSocketFactory, that.sslSocketFactory)
         && equal(this.hostnameVerifier, that.hostnameVerifier)
-        && equal(this.certificatePinner, that.certificatePinner);
+        && equal(this.certificatePinner, that.certificatePinner)
+        && this.url().port() == that.url().port();
   }
 
   @Override public int hashCode() {
@@ -198,5 +206,26 @@ public final class Address {
 
     result.append("}");
     return result.toString();
+  }
+
+  public boolean isCoalescable() {
+    return url().isHttps()
+        && this.proxy() == null
+        && hostnameVerifier == OkHostnameVerifier.INSTANCE;
+  }
+
+  public List<InetAddress> dnsLookup(String hostname) throws UnknownHostException {
+    List<InetAddress> dnsResults = cachedDnsResults.get(hostname);
+
+    if (dnsResults == null) {
+      dnsResults = dns().lookup(hostname);
+      cachedDnsResults.put(hostname, dnsResults);
+    }
+
+    return dnsResults;
+  }
+
+  public List<InetAddress> cachedDnsResults(String hostname) {
+    return cachedDnsResults.get(hostname);
   }
 }

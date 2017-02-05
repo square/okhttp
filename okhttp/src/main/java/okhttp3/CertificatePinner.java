@@ -252,6 +252,16 @@ public final class CertificatePinner {
     return ByteString.of(x509Certificate.getPublicKey().getEncoded()).sha256();
   }
 
+  boolean isPinned(String hostname) {
+    for (Pin pin: pins) {
+      if (pin.matches(hostname)) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
   static final class Pin {
     private static final String WILDCARD = "*.";
     /** A hostname like {@code example.com} or a pattern like {@code *.example.com}. */

@@ -25,11 +25,12 @@ import java.net.Proxy;
 import java.net.Socket;
 import java.net.SocketException;
 import java.net.SocketTimeoutException;
-import java.net.UnknownHostException;
 import java.net.UnknownServiceException;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import javax.net.ssl.SSLPeerUnverifiedException;
 import javax.net.ssl.SSLSocket;
@@ -107,6 +108,8 @@ public final class RealConnection extends Http2Connection.Listener implements Co
   /** Nanotime timestamp when {@code allocations.size()} reached zero. */
   public long idleAtNanos = Long.MAX_VALUE;
   private List<String> subjectAlternativeNames;
+
+  private Map<String, Boolean> supportedHostCache = new LinkedHashMap<>();
 
   public RealConnection(ConnectionPool connectionPool, Route route) {
     this.connectionPool = connectionPool;
@@ -393,43 +396,61 @@ public final class RealConnection extends Http2Connection.Listener implements Co
       return true;
     }
 
-    // attempt to coalesce secure HTTP/2 connections by subjectAltNames
-    // currently does not apply to HTTP/1.1 because reuse assumptions are not the same
-    // e.g. app may use domain sharding for performance
-    if (address.url().isHttps() && http2Connection != null && subjectAlternativeNames != null) {
-      if (!address.equalsNonUrl(route.address()) || address.url().port() != route().address()
-          .url().port()) {
-        return false;
-      }
-
-      String urlHost = address.url().host();
-      boolean hostMatch = false;
-      for (String subjectAlternativeName : subjectAlternativeNames) {
-        if (OkHostnameVerifier.verifyHostname(urlHost, subjectAlternativeName)) {
-          hostMatch = true;
-          break;
-        }
-      }
-      if (!hostMatch) {
-        return false;
-      }
-
-      try {
-        // TODO cache dns lookup and move out to or before StreamAllocation.findConnection
-        // awkwardly this check happens before we would normally do a dns lookup
-        // since in the standard reuse case we would skip the lookup completely
-        List<InetAddress> ips = address.dns().lookup(address.url().host());
-        if (!ips.contains(route.socketAddress().getAddress())) {
-          return false;
-        }
-      } catch (UnknownHostException e) {
-        return false;
-      }
-
-      return true;
+    if (address.isCoalescable() && this.isCoalescable() && address.equalsNonHost(route.address())) {
+      return supportsHost(address);
     }
 
     return false;
+  }
+
+  private boolean isCoalescable() {
+    return http2Connection != null && subjectAlternativeNames != null
+        && route().address().isCoalescable();
+  }
+
+  private boolean supportsHost(Address address) {
+    String addressHost = address.url().host();
+
+    Boolean supportsHost = supportedHostCache.get(addressHost);
+
+    if (supportsHost != null) {
+      return supportsHost;
+    }
+
+    // attempt to coalesce secure HTTP/2 connections by subjectAltNames
+    // currently does not apply to HTTP/1.1 because reuse assumptions are not the same
+    // e.g. app may use domain sharding for performance
+    boolean hostMatch = false;
+    for (String subjectAlternativeName : subjectAlternativeNames) {
+      if (OkHostnameVerifier.verifyHostname(addressHost, subjectAlternativeName)) {
+        hostMatch = true;
+        break;
+      }
+    }
+    if (!hostMatch) {
+      supportedHostCache.put(addressHost, false);
+      return false;
+    }
+
+    List<InetAddress> ips = address.cachedDnsResults(addressHost);
+    if (ips == null) {
+      // called on first pass without pre-emptive DNS lookup
+      return false;
+    }
+
+    boolean result = ips.contains(route.socketAddress().getAddress());
+
+    if (result) {
+      try {
+        address.certificatePinner().check(addressHost, handshake().peerCertificates());
+      } catch (SSLPeerUnverifiedException e) {
+        result = false;
+      }
+    }
+
+    supportedHostCache.put(addressHost, result);
+
+    return result;
   }
 
   public HttpCodec newCodec(
