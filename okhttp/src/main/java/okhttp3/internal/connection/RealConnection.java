@@ -28,6 +28,7 @@ import java.net.SocketTimeoutException;
 import java.net.UnknownServiceException;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -109,7 +110,8 @@ public final class RealConnection extends Http2Connection.Listener implements Co
   public long idleAtNanos = Long.MAX_VALUE;
   private List<String> subjectAlternativeNames;
 
-  private Map<String, Boolean> supportedHostCache = new LinkedHashMap<>();
+  private Map<String, Boolean> supportedHostCache =
+      Collections.synchronizedMap(new LinkedHashMap<String, Boolean>());
 
   public RealConnection(ConnectionPool connectionPool, Route route) {
     this.connectionPool = connectionPool;
@@ -451,6 +453,12 @@ public final class RealConnection extends Http2Connection.Listener implements Co
     supportedHostCache.put(addressHost, result);
 
     return result;
+  }
+
+  public boolean supportsHost(String hostname) {
+    Boolean supportsHost = supportedHostCache.get(hostname);
+
+    return supportsHost != null && supportsHost.booleanValue();
   }
 
   public HttpCodec newCodec(
