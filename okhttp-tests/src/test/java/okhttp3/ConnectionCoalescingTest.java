@@ -262,6 +262,27 @@ public class ConnectionCoalescingTest {
     assertEquals(1, client.connectionPool().connectionCount());
   }
 
+  @Test
+  public void worksWithNetworkInterceptors() throws IOException {
+    // network interceptors check for changes to target
+
+    client = client.newBuilder().addNetworkInterceptor(new Interceptor() {
+      @Override public Response intercept(Chain chain) throws IOException {
+        return chain.proceed(chain.request());
+      }
+    }).build();
+
+    server.enqueue(new MockResponse().setResponseCode(200));
+    server.enqueue(new MockResponse().setResponseCode(200));
+
+    assert200Http2Response(execute(url), server.getHostName());
+
+    HttpUrl sanUrl = url.newBuilder().host("san.com").build();
+    assert200Http2Response(execute(sanUrl), "san.com");
+
+    assertEquals(1, client.connectionPool().connectionCount());
+  }
+
   private Response execute(HttpUrl url) throws IOException {
     return client.newCall(new Request.Builder().url(url).build()).execute();
   }
