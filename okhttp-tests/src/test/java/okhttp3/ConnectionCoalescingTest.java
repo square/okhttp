@@ -67,8 +67,6 @@ public class ConnectionCoalescingTest {
 
     Dns dns = new Dns() {
       @Override public List<InetAddress> lookup(String hostname) throws UnknownHostException {
-        System.out.println("DNS: " + hostname);
-
         List<InetAddress> testResults = dnsResults.get(hostname);
 
         if (testResults == null) {
