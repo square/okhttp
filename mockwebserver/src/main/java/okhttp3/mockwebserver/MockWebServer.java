@@ -76,9 +76,7 @@ import okio.ByteString;
 import okio.Okio;
 import okio.Sink;
 import okio.Timeout;
-import org.junit.rules.TestRule;
-import org.junit.runner.Description;
-import org.junit.runners.model.Statement;
+import org.junit.rules.ExternalResource;
 
 import static okhttp3.internal.Util.closeQuietly;
 import static okhttp3.mockwebserver.SocketPolicy.DISCONNECT_AFTER_REQUEST;
@@ -98,7 +96,7 @@ import static okhttp3.mockwebserver.SocketPolicy.UPGRADE_TO_SSL_AT_END;
  * A scriptable web server. Callers supply canned responses and the server replays them upon request
  * in sequence.
  */
-public final class MockWebServer implements TestRule, Closeable {
+public final class MockWebServer extends ExternalResource implements Closeable {
   static {
     Internal.initializeInstanceForTests();
   }
@@ -142,7 +140,7 @@ public final class MockWebServer implements TestRule, Closeable {
 
   private boolean started;
 
-  private synchronized void maybeStart() {
+  @Override protected synchronized void before() {
     if (started) return;
     try {
       start();
@@ -151,35 +149,18 @@ public final class MockWebServer implements TestRule, Closeable {
     }
   }
 
-  @Override public Statement apply(final Statement base, Description description) {
-    return new Statement() {
-      @Override public void evaluate() throws Throwable {
-        maybeStart();
-        try {
-          base.evaluate();
-        } finally {
-          try {
-            shutdown();
-          } catch (IOException e) {
-            logger.log(Level.WARNING, "MockWebServer shutdown failed", e);
-          }
-        }
-      }
-    };
-  }
-
   public int getPort() {
-    maybeStart();
+    before();
     return port;
   }
 
   public String getHostName() {
-    maybeStart();
+    before();
     return inetSocketAddress.getHostName();
   }
 
   public Proxy toProxyAddress() {
-    maybeStart();
+    before();
     InetSocketAddress address = new InetSocketAddress(inetSocketAddress.getAddress(), getPort());
     return new Proxy(Proxy.Type.HTTP, address);
   }
@@ -398,6 +379,14 @@ public final class MockWebServer implements TestRule, Closeable {
     }
   }
 
+  @Override protected synchronized void after() {
+    try {
+      shutdown();
+    } catch (IOException e) {
+      logger.log(Level.WARNING, "MockWebServer shutdown failed", e);
+    }
+  }
+
   private void serveConnection(final Socket raw) {
     executor.execute(new NamedRunnable("MockWebServer %s", raw.getRemoteSocketAddress()) {
       int sequenceNumber = 0;
@@ -449,10 +438,10 @@ public final class MockWebServer implements TestRule, Closeable {
         }
 
         if (protocol == Protocol.HTTP_2) {
-          FramedSocketHandler framedSocketListener = new FramedSocketHandler(socket, protocol);
+          Http2SocketHandler http2SocketHandler = new Http2SocketHandler(socket, protocol);
           Http2Connection connection = new Http2Connection.Builder(false)
               .socket(socket)
-              .listener(framedSocketListener)
+              .listener(http2SocketHandler)
               .build();
           connection.start();
           openConnections.add(connection);
@@ -682,16 +671,21 @@ public final class MockWebServer implements TestRule, Closeable {
     response.getWebSocketListener().onOpen(webSocket, fancyResponse);
     String name = "MockWebServer WebSocket " + request.getPath();
     webSocket.initReaderAndWriter(name, 0, streams);
-    webSocket.loopReader();
-
-    // Even if messages are no longer being read we need to wait for the connection close signal.
     try {
-      connectionClose.await();
-    } catch (InterruptedException ignored) {
-    }
+      webSocket.loopReader();
 
-    closeQuietly(sink);
-    closeQuietly(source);
+      // Even if messages are no longer being read we need to wait for the connection close signal.
+      try {
+        connectionClose.await();
+      } catch (InterruptedException ignored) {
+      }
+
+    } catch (IOException e) {
+      webSocket.failWebSocket(e, null);
+    } finally {
+      closeQuietly(sink);
+      closeQuietly(source);
+    }
   }
 
   private void writeHttpResponse(Socket socket, BufferedSink sink, MockResponse response)
@@ -836,13 +830,13 @@ public final class MockWebServer implements TestRule, Closeable {
     }
   }
 
-  /** Processes HTTP requests layered over framed protocols. */
-  private class FramedSocketHandler extends Http2Connection.Listener {
+  /** Processes HTTP requests layered over HTTP/2. */
+  private class Http2SocketHandler extends Http2Connection.Listener {
     private final Socket socket;
     private final Protocol protocol;
     private final AtomicInteger sequenceNumber = new AtomicInteger();
 
-    private FramedSocketHandler(Socket socket, Protocol protocol) {
+    private Http2SocketHandler(Socket socket, Protocol protocol) {
       this.socket = socket;
       this.protocol = protocol;
     }

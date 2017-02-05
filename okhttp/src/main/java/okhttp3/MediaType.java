@@ -73,7 +73,7 @@ public final class MediaType {
         charsetParameter = parameter.group(3);
       }
       if (charset != null && !charsetParameter.equalsIgnoreCase(charset)) {
-        throw new IllegalArgumentException("Multiple different charsets: " + string);
+        return null; // Multiple different charsets!
       }
       charset = charsetParameter;
     }
@@ -100,15 +100,19 @@ public final class MediaType {
    * Returns the charset of this media type, or null if this media type doesn't specify a charset.
    */
   public Charset charset() {
-    return charset != null ? Charset.forName(charset) : null;
+    return charset(null);
   }
 
   /**
-   * Returns the charset of this media type, or {@code defaultValue} if this media type doesn't
-   * specify a charset.
+   * Returns the charset of this media type, or {@code defaultValue} if either this media type
+   * doesn't specify a charset, of it its charset is unsupported by the current runtime.
    */
   public Charset charset(Charset defaultValue) {
-    return charset != null ? Charset.forName(charset) : defaultValue;
+    try {
+      return charset != null ? Charset.forName(charset) : defaultValue;
+    } catch (IllegalArgumentException e) {
+      return defaultValue; // This charset is invalid or unsupported. Give up.
+    }
   }
 
   /**

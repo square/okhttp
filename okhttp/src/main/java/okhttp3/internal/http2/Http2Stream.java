@@ -34,7 +34,7 @@ public final class Http2Stream {
   // blocking operations are performed while the lock is held.
 
   /**
-   * The total number of bytes consumed by the application (with {@link FramedDataSource#read}), but
+   * The total number of bytes consumed by the application (with {@link FramingSource#read}), but
    * not yet acknowledged by sending a {@code WINDOW_UPDATE} frame on this stream.
    */
   // Visible for testing
@@ -60,8 +60,8 @@ public final class Http2Stream {
   /** True if response headers have been sent or received. */
   private boolean hasResponseHeaders;
 
-  private final FramedDataSource source;
-  final FramedDataSink sink;
+  private final FramingSource source;
+  final FramingSink sink;
   final StreamTimeout readTimeout = new StreamTimeout();
   final StreamTimeout writeTimeout = new StreamTimeout();
 
@@ -80,9 +80,8 @@ public final class Http2Stream {
     this.connection = connection;
     this.bytesLeftInWriteWindow =
         connection.peerSettings.getInitialWindowSize();
-    this.source = new FramedDataSource(
-        connection.okHttpSettings.getInitialWindowSize());
-    this.sink = new FramedDataSink();
+    this.source = new FramingSource(connection.okHttpSettings.getInitialWindowSize());
+    this.sink = new FramingSink();
     this.source.finished = inFinished;
     this.sink.finished = outFinished;
     this.requestHeaders = requestHeaders;
@@ -307,11 +306,11 @@ public final class Http2Stream {
    * synchronization to safely receive incoming data frames, it is not intended for use by multiple
    * readers.
    */
-  private final class FramedDataSource implements Source {
+  private final class FramingSource implements Source {
     /** Buffer to receive data from the network into. Only accessed by the reader thread. */
     private final Buffer receiveBuffer = new Buffer();
 
-    /** Buffer with readable data. Guarded by FramedStream.this. */
+    /** Buffer with readable data. Guarded by Http2Stream.this. */
     private final Buffer readBuffer = new Buffer();
 
     /** Maximum number of bytes to buffer before reporting a flow control error. */
@@ -326,7 +325,7 @@ public final class Http2Stream {
      */
     boolean finished;
 
-    FramedDataSource(long maxByteCount) {
+    FramingSource(long maxByteCount) {
       this.maxByteCount = maxByteCount;
     }
 
@@ -458,10 +457,8 @@ public final class Http2Stream {
     }
   }
 
-  /**
-   * A sink that writes outgoing data frames of a stream. This class is not thread safe.
-   */
-  final class FramedDataSink implements Sink {
+  /** A sink that writes outgoing data frames of a stream. This class is not thread safe. */
+  final class FramingSink implements Sink {
     private static final long EMIT_BUFFER_SIZE = 16384;
 
     /**
@@ -481,7 +478,7 @@ public final class Http2Stream {
       assert (!Thread.holdsLock(Http2Stream.this));
       sendBuffer.write(source, byteCount);
       while (sendBuffer.size() >= EMIT_BUFFER_SIZE) {
-        emitDataFrame(false);
+        emitFrame(false);
       }
     }
 
@@ -489,7 +486,7 @@ public final class Http2Stream {
      * Emit a single data frame to the connection. The frame's size be limited by this stream's
      * write window. This method will block until the write window is nonempty.
      */
-    private void emitDataFrame(boolean outFinished) throws IOException {
+    private void emitFrame(boolean outFinished) throws IOException {
       long toWrite;
       synchronized (Http2Stream.this) {
         writeTimeout.enter();
@@ -520,7 +517,7 @@ public final class Http2Stream {
         checkOutNotClosed();
       }
       while (sendBuffer.size() > 0) {
-        emitDataFrame(false);
+        emitFrame(false);
         connection.flush();
       }
     }
@@ -538,7 +535,7 @@ public final class Http2Stream {
         // Emit the remaining data, setting the END_STREAM flag on the last frame.
         if (sendBuffer.size() > 0) {
           while (sendBuffer.size() > 0) {
-            emitDataFrame(true);
+            emitFrame(true);
           }
         } else {
           // Send an empty frame just so we can set the END_STREAM flag.

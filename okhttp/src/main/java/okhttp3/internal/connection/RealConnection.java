@@ -243,7 +243,7 @@ public final class RealConnection extends Http2Connection.Listener implements Co
     connectTls(connectionSpecSelector);
 
     if (protocol == Protocol.HTTP_2) {
-      socket.setSoTimeout(0); // Framed connection timeouts are set per-stream.
+      socket.setSoTimeout(0); // HTTP/2 connection timeouts are set per-stream.
       http2Connection = new Http2Connection.Builder(true)
           .socket(socket, route.address().url().host(), source, sink)
           .listener(this)

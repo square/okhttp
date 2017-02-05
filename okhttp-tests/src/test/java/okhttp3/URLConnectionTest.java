@@ -42,12 +42,14 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.EnumSet;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.zip.GZIPInputStream;
 import javax.net.ServerSocketFactory;
 import javax.net.SocketFactory;
@@ -55,6 +57,8 @@ import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLException;
 import javax.net.ssl.SSLHandshakeException;
+import javax.net.ssl.SSLProtocolException;
+import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
@@ -66,6 +70,7 @@ import okhttp3.internal.RecordingOkAuthenticator;
 import okhttp3.internal.SingleInetAddressDns;
 import okhttp3.internal.Util;
 import okhttp3.internal.Version;
+import okhttp3.internal.huc.OkHttpURLConnection;
 import okhttp3.internal.tls.SslClient;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
@@ -684,6 +689,7 @@ public final class URLConnectionTest {
 
     urlFactory.setClient(urlFactory.client().newBuilder()
         .hostnameVerifier(new RecordingHostnameVerifier())
+        .connectionSpecs(Arrays.asList(ConnectionSpec.MODERN_TLS, ConnectionSpec.COMPATIBLE_TLS))
         .sslSocketFactory(suppressTlsFallbackClientSocketFactory(), sslClient.trustManager)
         .build());
     connection = urlFactory.open(server.url("/foo").url());
@@ -705,6 +711,7 @@ public final class URLConnectionTest {
 
     urlFactory.setClient(urlFactory.client().newBuilder()
         .dns(new SingleInetAddressDns())
+        .connectionSpecs(Arrays.asList(ConnectionSpec.MODERN_TLS, ConnectionSpec.COMPATIBLE_TLS))
         .hostnameVerifier(new RecordingHostnameVerifier())
         .sslSocketFactory(suppressTlsFallbackClientSocketFactory(), sslClient.trustManager)
         .build());
@@ -1152,6 +1159,33 @@ public final class URLConnectionTest {
     } catch (IOException expected) {
     }
     in.close();
+  }
+
+  @Test public void disconnectDuringConnect_cookieJar() throws Exception {
+    final AtomicReference<HttpURLConnection> connectionHolder = new AtomicReference<>();
+    class DisconnectingCookieJar implements CookieJar {
+      @Override public void saveFromResponse(HttpUrl url, List<Cookie> cookies) { }
+      @Override
+      public List<Cookie> loadForRequest(HttpUrl url) {
+        connectionHolder.get().disconnect();
+        return Collections.emptyList();
+      }
+    }
+    OkHttpClient client = new okhttp3.OkHttpClient.Builder()
+            .cookieJar(new DisconnectingCookieJar())
+            .build();
+
+    URL url = server.url("path that should never be accessed").url();
+    HttpURLConnection connection = new OkHttpURLConnection(url, client);
+    connectionHolder.set(connection);
+    try {
+      connection.getInputStream();
+      fail("Connection should not be established");
+    } catch (IOException expected) {
+      assertEquals("Canceled", expected.getMessage());
+    } finally {
+      connection.disconnect();
+    }
   }
 
   @Test public void disconnectBeforeConnect() throws IOException {
@@ -3315,6 +3349,23 @@ public final class URLConnectionTest {
 
     RecordedRequest request = server.takeRequest();
     assertEquals(Long.toString(contentLength), request.getHeader("Content-Length"));
+  }
+
+  @Test public void testNoSslFallback() throws Exception {
+    server.useHttps(sslClient.socketFactory, false /* tunnelProxy */);
+    server.enqueue(new MockResponse().setSocketPolicy(FAIL_HANDSHAKE));
+    server.enqueue(new MockResponse().setBody("Response that would have needed fallbacks"));
+
+    HttpsURLConnection connection = (HttpsURLConnection) server.url("/").url().openConnection();
+    connection.setSSLSocketFactory(sslClient.socketFactory);
+    try {
+      connection.getInputStream();
+      fail();
+    } catch (SSLProtocolException expected) {
+      // RI response to the FAIL_HANDSHAKE
+    } catch (SSLHandshakeException expected) {
+      // Android's response to the FAIL_HANDSHAKE
+    }
   }
 
   /**
