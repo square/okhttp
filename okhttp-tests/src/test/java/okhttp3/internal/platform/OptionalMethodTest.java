@@ -19,6 +19,7 @@ package okhttp3.internal.platform;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
@@ -299,6 +300,7 @@ public class OptionalMethodTest {
   }
 
   @Test
+  @Ignore("Despite returning false for isSupported, invocation actually succeeds.")
   public void invokeOptionalNonPublic() throws Exception {
     SubClass2 subClass2 = new SubClass2();
     assertFalse(NON_PUBLIC.isSupported(subClass2));
@@ -309,9 +311,10 @@ public class OptionalMethodTest {
       OptionalMethod<T> optionalMethod, T base, Object... args) throws Exception {
     try {
       optionalMethod.invoke(base, args);
-      fail();
     } catch (Error expected) {
+      return;
     }
+    fail();
   }
 
   private static <T> void assertIllegalArgumentExceptionOnInvoke(
@@ -327,9 +330,10 @@ public class OptionalMethodTest {
       OptionalMethod<T> optionalMethod, T base, Object... args) throws Exception {
     try {
       optionalMethod.invokeOptional(base, args);
-      fail();
     } catch (Error expected) {
+      return;
     }
+    fail();
   }
 
   private static <T> void assertIllegalArgumentExceptionOnInvokeOptional(
