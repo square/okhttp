@@ -16,6 +16,7 @@ import okhttp3.internal.tls.SslClient;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 
@@ -281,6 +282,27 @@ public class ConnectionCoalescingTest {
     assert200Http2Response(execute(sanUrl), "san.com");
 
     assertEquals(1, client.connectionPool().connectionCount());
+  }
+
+
+  /*
+   * Run against public external sites, doesn't run by default.
+   */
+  @Test @Ignore
+  public void coalescesConnectionsToRealSites() throws IOException {
+    client = new OkHttpClient();
+
+    assert200Http2Response(execute("https://graph.facebook.com/robots.txt"), "graph.facebook.com");
+    assert200Http2Response(execute("https://www.facebook.com/robots.txt"), "m.facebook.com");
+    assert200Http2Response(execute("https://fb.com/robots.txt"), "m.facebook.com");
+    assert200Http2Response(execute("https://messenger.com/robots.txt"), "messenger.com");
+    assert200Http2Response(execute("https://m.facebook.com/robots.txt"), "m.facebook.com");
+
+    assertEquals(3, client.connectionPool().connectionCount());
+  }
+
+  private Response execute(String url) throws IOException {
+    return execute(HttpUrl.parse(url));
   }
 
   private Response execute(HttpUrl url) throws IOException {
