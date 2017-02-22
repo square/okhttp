@@ -293,7 +293,7 @@ public final class CacheControl {
      */
     public Builder maxAge(int maxAge, TimeUnit timeUnit) {
       if (maxAge < 0) throw new IllegalArgumentException("maxAge < 0: " + maxAge);
-      this.maxAgeSeconds = getMaxValueInSeconds(maxAge, timeUnit)
+      this.maxAgeSeconds = getMaxValueInSeconds(maxAge, timeUnit);
       return this;
     }
 
