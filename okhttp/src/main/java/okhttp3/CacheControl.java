@@ -256,9 +256,7 @@ public final class CacheControl {
     if (minFreshSeconds != -1) result.append("min-fresh=").append(minFreshSeconds).append(", ");
     if (onlyIfCached) result.append("only-if-cached, ");
     if (noTransform) result.append("no-transform, ");
-    if (result.length() == 0) return "";
-    result.delete(result.length() - 2, result.length());
-    return result.toString();
+    return result.length() == 0 ? "" :result.substring(0,result.length()-2);
   }
 
   /** Builds a {@code Cache-Control} request header. */
@@ -292,11 +290,7 @@ public final class CacheControl {
      */
     public Builder maxAge(int maxAge, TimeUnit timeUnit) {
       if (maxAge < 0) throw new IllegalArgumentException("maxAge < 0: " + maxAge);
-      long maxAgeSecondsLong = timeUnit.toSeconds(maxAge);
-      this.maxAgeSeconds = maxAgeSecondsLong > Integer.MAX_VALUE
-          ? Integer.MAX_VALUE
-          : (int) maxAgeSecondsLong;
-      return this;
+      return setValueAndReturnBuilder(this.maxAgeSeconds,maxAge,timeUnit);
     }
 
     /**
@@ -308,11 +302,7 @@ public final class CacheControl {
      */
     public Builder maxStale(int maxStale, TimeUnit timeUnit) {
       if (maxStale < 0) throw new IllegalArgumentException("maxStale < 0: " + maxStale);
-      long maxStaleSecondsLong = timeUnit.toSeconds(maxStale);
-      this.maxStaleSeconds = maxStaleSecondsLong > Integer.MAX_VALUE
-          ? Integer.MAX_VALUE
-          : (int) maxStaleSecondsLong;
-      return this;
+      return setValueAndReturnBuilder(this.maxStaleSeconds,maxStale,timeUnit);
     }
 
     /**
@@ -325,11 +315,7 @@ public final class CacheControl {
      */
     public Builder minFresh(int minFresh, TimeUnit timeUnit) {
       if (minFresh < 0) throw new IllegalArgumentException("minFresh < 0: " + minFresh);
-      long minFreshSecondsLong = timeUnit.toSeconds(minFresh);
-      this.minFreshSeconds = minFreshSecondsLong > Integer.MAX_VALUE
-          ? Integer.MAX_VALUE
-          : (int) minFreshSecondsLong;
-      return this;
+      return setValueAndReturnBuilder(this.minFreshSeconds,minFresh,timeUnit);
     }
 
     /**
@@ -349,6 +335,12 @@ public final class CacheControl {
 
     public CacheControl build() {
       return new CacheControl(this);
+    }
+
+    private Builder setValueAndReturnBuilder(int valueToUpdate,int valueToConvert, TimeUnit timeUnit) {
+      long valueInSeconds = timeUnit.toSeconds(valueToConvert);
+      valueToUpdate = valueInSeconds > Integer.MAX_VALUE ? Integer.MAX_VALUE : (int)valueInSeconds;
+      return this;
     }
   }
 }
