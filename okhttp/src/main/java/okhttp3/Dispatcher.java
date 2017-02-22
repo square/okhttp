@@ -25,6 +25,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+
 import okhttp3.RealCall.AsyncCall;
 import okhttp3.internal.Util;
 
@@ -137,16 +138,26 @@ public final class Dispatcher {
    * Call#execute() synchronously} and {@linkplain Call#enqueue asynchronously}.
    */
   public synchronized void cancelAll() {
-    for (AsyncCall call : readyAsyncCalls) {
-      call.get().cancel();
-    }
 
-    for (AsyncCall call : runningAsyncCalls) {
-      call.get().cancel();
-    }
+    int readAsyncSize = readyAsyncCalls.size();
+    int runningAsyncSize = runningAsyncCalls.size();
+    int runningSyncSize = runningSyncCalls.size();
+    int maxLoopCount = getMax(readAsyncSize, getMax(runningAsyncSize, runningSyncSize));
 
-    for (RealCall call : runningSyncCalls) {
-      call.cancel();
+    Iterator<AsyncCall> readIterator = readyAsyncCalls.iterator();
+    Iterator<AsyncCall> runningAsyncIterator = runningAsyncCalls.iterator();
+    Iterator<RealCall> runningSyncIterator = runningSyncCalls.iterator();
+
+    for (int i = 0; i < maxLoopCount; i++) {
+      if (i < readAsyncSize) {
+        readIterator.next().get().cancel();
+      }
+      if (i < runningAsyncSize) {
+        runningAsyncIterator.next().get().cancel();
+      }
+      if (i < runningSyncSize) {
+        runningSyncIterator.next().cancel();
+      }
     }
   }
 
@@ -231,5 +242,9 @@ public final class Dispatcher {
 
   public synchronized int runningCallsCount() {
     return runningAsyncCalls.size() + runningSyncCalls.size();
+  }
+
+  private int getMax(int num1, int num2) {
+    return num1 > num2 ? num1 : num2;
   }
 }
