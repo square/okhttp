@@ -291,7 +291,8 @@ public final class CacheControl {
      */
     public Builder maxAge(int maxAge, TimeUnit timeUnit) {
       if (maxAge < 0) throw new IllegalArgumentException("maxAge < 0: " + maxAge);
-      return setValueAndReturnBuilder(this.maxAgeSeconds, maxAge, timeUnit);
+      this.maxAgeSeconds = getMaxValueInSeconds(maxAge, timeUnit);
+      return this;
     }
 
     /**
@@ -303,7 +304,8 @@ public final class CacheControl {
      */
     public Builder maxStale(int maxStale, TimeUnit timeUnit) {
       if (maxStale < 0) throw new IllegalArgumentException("maxStale < 0: " + maxStale);
-      return setValueAndReturnBuilder(this.maxStaleSeconds, maxStale, timeUnit);
+      this.maxStaleSeconds = getMaxValueInSeconds(maxStale, timeUnit);
+      return this;
     }
 
     /**
@@ -316,7 +318,8 @@ public final class CacheControl {
      */
     public Builder minFresh(int minFresh, TimeUnit timeUnit) {
       if (minFresh < 0) throw new IllegalArgumentException("minFresh < 0: " + minFresh);
-      return setValueAndReturnBuilder(this.minFreshSeconds, minFresh, timeUnit);
+      this.minFreshSeconds = getMaxValueInSeconds(minFresh, timeUnit);
+      return this;
     }
 
     /**
@@ -338,10 +341,10 @@ public final class CacheControl {
       return new CacheControl(this);
     }
 
-    private Builder setValueAndReturnBuilder(int valueToUpdate, int valueToConvert, TimeUnit timeUnit) {
+    private int getMaxValueInSeconds(int valueToConvert, TimeUnit timeUnit) {
       long valueInSeconds = timeUnit.toSeconds(valueToConvert);
-      valueToUpdate = valueInSeconds > Integer.MAX_VALUE ? Integer.MAX_VALUE : (int) valueInSeconds;
-      return this;
+      return valueInSeconds > Integer.MAX_VALUE
+              ? Integer.MAX_VALUE : (int) valueInSeconds;
     }
   }
 }
