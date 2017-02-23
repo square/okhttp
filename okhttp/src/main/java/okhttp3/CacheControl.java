@@ -1,7 +1,6 @@
 package okhttp3;
 
 import java.util.concurrent.TimeUnit;
-
 import okhttp3.internal.http.HttpHeaders;
 
 /**
@@ -346,7 +345,8 @@ public final class CacheControl {
     private static int getMaxValueInSeconds(int valueToConvert, TimeUnit timeUnit) {
       long valueInSeconds = timeUnit.toSeconds(valueToConvert);
       return valueInSeconds > Integer.MAX_VALUE
-              ? Integer.MAX_VALUE : (int) valueInSeconds;
+          ? Integer.MAX_VALUE
+          : (int) valueInSeconds;
     }
   }
 }
