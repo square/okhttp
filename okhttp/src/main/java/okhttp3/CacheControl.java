@@ -343,7 +343,7 @@ public final class CacheControl {
       return new CacheControl(this);
     }
 
-    private int getMaxValueInSeconds(int valueToConvert, TimeUnit timeUnit) {
+    private static int getMaxValueInSeconds(int valueToConvert, TimeUnit timeUnit) {
       long valueInSeconds = timeUnit.toSeconds(valueToConvert);
       return valueInSeconds > Integer.MAX_VALUE
               ? Integer.MAX_VALUE : (int) valueInSeconds;
