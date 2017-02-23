@@ -42,7 +42,7 @@ public void test() throws Exception {
   server.start();
 
   // Ask the server for its URL. You'll need this to make HTTP requests.
-  HttpUrl baseUrl = server.url("/v1/chat/");
+  HttpUrl baseUrl = server.url("/v1/chat/messages/");
 
   // Exercise your application code, which should make those HTTP requests.
   // Responses are returned in the same order that they are enqueued.
