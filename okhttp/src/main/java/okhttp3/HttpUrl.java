@@ -1787,6 +1787,11 @@ public final class HttpUrl {
     return -1;
   }
 
+  private static boolean isValidCode(int codePoint) {
+    return (codePoint < 0xd800 || codePoint > 0xdfff)
+            && codePoint <= 0x10ffff;
+  }
+
   /**
    * Returns a substring of {@code input} on the range {@code [pos..limit)} with the following
    * transformations:
@@ -1810,7 +1815,7 @@ public final class HttpUrl {
       codePoint = input.codePointAt(i);
       if (codePoint < 0x20
           || codePoint == 0x7f
-          || codePoint >= 0x80 && asciiOnly
+          || codePoint >= 0x80 && asciiOnly && isValidCode(codePoint)
           || encodeSet.indexOf(codePoint) != -1
           || codePoint == '%' && (!alreadyEncoded || strict && !percentEncoded(input, i, limit))
           || codePoint == '+' && plusIsSpace) {
@@ -1841,7 +1846,7 @@ public final class HttpUrl {
         out.writeUtf8(alreadyEncoded ? "+" : "%2B");
       } else if (codePoint < 0x20
           || codePoint == 0x7f
-          || codePoint >= 0x80 && asciiOnly
+          || codePoint >= 0x80 && asciiOnly && isValidCode(codePoint)
           || encodeSet.indexOf(codePoint) != -1
           || codePoint == '%' && (!alreadyEncoded || strict && !percentEncoded(input, i, limit))) {
         // Percent encode this character.
@@ -1855,7 +1860,7 @@ public final class HttpUrl {
           out.writeByte(HEX_DIGITS[(b >> 4) & 0xf]);
           out.writeByte(HEX_DIGITS[b & 0xf]);
         }
-      } else {
+      } else if (isValidCode(codePoint)) {
         // This character doesn't need encoding. Just copy it over.
         out.writeUtf8CodePoint(codePoint);
       }
