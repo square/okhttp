@@ -1788,8 +1788,7 @@ public final class HttpUrl {
   }
 
   private static boolean isValidCode(int codePoint) {
-    return (codePoint < 0xd800 || codePoint > 0xdfff)
-            && codePoint <= 0x10ffff;
+    return codePoint < 0xd800 || codePoint > 0xdfff && codePoint <= 0x10ffff;
   }
 
   /**
