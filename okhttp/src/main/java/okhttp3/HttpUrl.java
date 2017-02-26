@@ -1789,7 +1789,7 @@ public final class HttpUrl {
 
   private static boolean isValidCodePoint(int codePoint) {
     return Character.isValidCodePoint(codePoint)
-            && !Character.isSurrogate((char) codePoint);
+            && codePoint < 0xd800 || codePoint > 0xdfff;
   }
 
   /**
