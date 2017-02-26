@@ -184,6 +184,14 @@ public final class FormBodyTest {
     assertEquals("%7F", formEncode(127));
     assertEquals("%C2%80", formEncode(128));
     assertEquals("%C3%BF", formEncode(255));
+    //check illegal surrogate chars
+    assertEquals("%ED%9F%BF", formEncode(0xD7FF));
+    assertEquals("?", formEncode(0xD800));
+    assertEquals("?", formEncode(0xDFFF));
+    assertEquals("%EE%80%80", formEncode(0xE000));
+    assertEquals("%EF%BF%BF", formEncode(0xFFFF));
+    assertEquals("%F4%8F%BF%BF", formEncode(0x10FFFF));
+    assertEquals("?", formEncode(0xD83D));
   }
 
   private String formEncode(int codePoint) throws IOException {
