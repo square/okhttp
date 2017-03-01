@@ -1,6 +1,7 @@
 package okhttp3;
 
 import java.util.concurrent.TimeUnit;
+
 import okhttp3.internal.http.HttpHeaders;
 
 /**
@@ -291,11 +292,7 @@ public final class CacheControl {
      * TimeUnit#SECONDS} precision; finer precision will be lost.
      */
     public Builder maxAge(int maxAge, TimeUnit timeUnit) {
-      if (maxAge < 0) throw new IllegalArgumentException("maxAge < 0: " + maxAge);
-      long maxAgeSecondsLong = timeUnit.toSeconds(maxAge);
-      this.maxAgeSeconds = maxAgeSecondsLong > Integer.MAX_VALUE
-          ? Integer.MAX_VALUE
-          : (int) maxAgeSecondsLong;
+      this.maxAgeSeconds = getMaxValueInSeconds(maxAge, timeUnit, "maxAge < 0: " + maxAge);
       return this;
     }
 
@@ -307,11 +304,7 @@ public final class CacheControl {
      * TimeUnit#SECONDS} precision; finer precision will be lost.
      */
     public Builder maxStale(int maxStale, TimeUnit timeUnit) {
-      if (maxStale < 0) throw new IllegalArgumentException("maxStale < 0: " + maxStale);
-      long maxStaleSecondsLong = timeUnit.toSeconds(maxStale);
-      this.maxStaleSeconds = maxStaleSecondsLong > Integer.MAX_VALUE
-          ? Integer.MAX_VALUE
-          : (int) maxStaleSecondsLong;
+      this.maxStaleSeconds = getMaxValueInSeconds(maxStale, timeUnit, "maxStale < 0: " + maxStale);
       return this;
     }
 
@@ -324,11 +317,7 @@ public final class CacheControl {
      * TimeUnit#SECONDS} precision; finer precision will be lost.
      */
     public Builder minFresh(int minFresh, TimeUnit timeUnit) {
-      if (minFresh < 0) throw new IllegalArgumentException("minFresh < 0: " + minFresh);
-      long minFreshSecondsLong = timeUnit.toSeconds(minFresh);
-      this.minFreshSeconds = minFreshSecondsLong > Integer.MAX_VALUE
-          ? Integer.MAX_VALUE
-          : (int) minFreshSecondsLong;
+      this.minFreshSeconds = getMaxValueInSeconds(minFresh, timeUnit, "minFresh < 0: " + minFresh);
       return this;
     }
 
@@ -349,6 +338,14 @@ public final class CacheControl {
 
     public CacheControl build() {
       return new CacheControl(this);
+    }
+
+    private static int getMaxValueInSeconds(int valueToConvert, TimeUnit timeUnit, String errorMessage) {
+      if (valueToConvert < 0) throw new IllegalArgumentException(errorMessage);
+      long valueInSeconds = timeUnit.toSeconds(valueToConvert);
+      return valueInSeconds > Integer.MAX_VALUE
+              ? Integer.MAX_VALUE
+              : (int) valueInSeconds;
     }
   }
 }
