@@ -68,7 +68,7 @@ public final class JavaNetCookieJar implements CookieJar {
       String key = entry.getKey();
       if (("Cookie".equalsIgnoreCase(key) || "Cookie2".equalsIgnoreCase(key))
           && !entry.getValue().isEmpty()) {
-        if (cookies == null) cookies = new ArrayList<>();
+        if (cookies == null) cookies = new ArrayList<>(entry.getValue().size());
         for (String header : entry.getValue()) {
           cookies.addAll(decodeHeaderAsJavaNetCookies(url, header));
         }
