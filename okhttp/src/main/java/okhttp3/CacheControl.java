@@ -292,7 +292,8 @@ public final class CacheControl {
      * TimeUnit#SECONDS} precision; finer precision will be lost.
      */
     public Builder maxAge(int maxAge, TimeUnit timeUnit) {
-      this.maxAgeSeconds = getMaxValueInSeconds(maxAge, timeUnit, "maxAge < 0: " + maxAge);
+      this.maxAgeSeconds = getMaxValueInSeconds(maxAge,
+              timeUnit, "maxAge < 0: " + maxAge);
       return this;
     }
 
@@ -304,7 +305,8 @@ public final class CacheControl {
      * TimeUnit#SECONDS} precision; finer precision will be lost.
      */
     public Builder maxStale(int maxStale, TimeUnit timeUnit) {
-      this.maxStaleSeconds = getMaxValueInSeconds(maxStale, timeUnit, "maxStale < 0: " + maxStale);
+      this.maxStaleSeconds = getMaxValueInSeconds(maxStale,
+              timeUnit, "maxStale < 0: " + maxStale);
       return this;
     }
 
@@ -317,7 +319,8 @@ public final class CacheControl {
      * TimeUnit#SECONDS} precision; finer precision will be lost.
      */
     public Builder minFresh(int minFresh, TimeUnit timeUnit) {
-      this.minFreshSeconds = getMaxValueInSeconds(minFresh, timeUnit, "minFresh < 0: " + minFresh);
+      this.minFreshSeconds = getMaxValueInSeconds(minFresh,
+              timeUnit, "minFresh < 0: " + minFresh);
       return this;
     }
 
@@ -340,8 +343,11 @@ public final class CacheControl {
       return new CacheControl(this);
     }
 
-    private static int getMaxValueInSeconds(int valueToConvert, TimeUnit timeUnit, String errorMessage) {
-      if (valueToConvert < 0) throw new IllegalArgumentException(errorMessage);
+    private static int getMaxValueInSeconds(int valueToConvert,
+                                            TimeUnit timeUnit, String errorMessage) {
+      if (valueToConvert < 0) {
+        throw new IllegalArgumentException(errorMessage);
+      }
       long valueInSeconds = timeUnit.toSeconds(valueToConvert);
       return valueInSeconds > Integer.MAX_VALUE
               ? Integer.MAX_VALUE
