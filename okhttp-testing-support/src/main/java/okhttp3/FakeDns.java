@@ -19,39 +19,61 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
 
 public final class FakeDns implements Dns {
-  private List<String> requestedHosts = new ArrayList<>();
-  private List<InetAddress> addresses = Collections.emptyList();
+  private final Map<String, List<InetAddress>> hostAddresses = new LinkedHashMap<>();
+  private final List<String> requestedHosts = new ArrayList<>();
+  private int nextAddress = 100;
 
-  /** Sets the addresses to be returned by this fake DNS service. */
-  public FakeDns addresses(List<InetAddress> addresses) {
-    this.addresses = new ArrayList<>(addresses);
+  /** Sets the results for {@code hostname}. */
+  public FakeDns set(String hostname, List<InetAddress> addresses) {
+    hostAddresses.put(hostname, addresses);
     return this;
   }
 
-  /** Sets the service to throw when a hostname is requested. */
-  public FakeDns unknownHost() {
-    this.addresses = Collections.emptyList();
+  /** Clears the results for {@code hostname}. */
+  public FakeDns clear(String hostname) {
+    hostAddresses.remove(hostname);
     return this;
   }
 
-  public InetAddress address(int index) {
-    return addresses.get(index);
+  public InetAddress lookup(String hostname, int index) throws UnknownHostException {
+    return hostAddresses.get(hostname).get(index);
   }
 
   @Override public List<InetAddress> lookup(String hostname) throws UnknownHostException {
     requestedHosts.add(hostname);
-    if (addresses.isEmpty()) throw new UnknownHostException();
-    return addresses;
+
+    List<InetAddress> result = hostAddresses.get(hostname);
+    if (result != null) return result;
+
+    throw new UnknownHostException();
   }
 
   public void assertRequests(String... expectedHosts) {
     assertEquals(Arrays.asList(expectedHosts), requestedHosts);
     requestedHosts.clear();
+  }
+
+  /** Allocates and returns {@code count} fake addresses like [255.0.0.100, 255.0.0.101]. */
+  public List<InetAddress> allocate(int count) {
+    try {
+      List<InetAddress> result = new ArrayList<>();
+      for (int i = 0; i < count; i++) {
+        if (nextAddress > 255) {
+          throw new AssertionError("too many addresses allocated");
+        }
+        result.add(InetAddress.getByAddress(
+            new byte[] {(byte) 255, (byte) 0, (byte) 0, (byte) nextAddress++}));
+      }
+      return result;
+    } catch (UnknownHostException e) {
+      throw new AssertionError();
+    }
   }
 }
