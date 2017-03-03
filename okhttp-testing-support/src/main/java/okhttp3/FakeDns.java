@@ -16,7 +16,6 @@
 package okhttp3;
 
 import java.net.InetAddress;
-import java.net.Proxy;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Arrays;
