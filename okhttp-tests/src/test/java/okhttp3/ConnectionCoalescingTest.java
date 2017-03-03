@@ -17,13 +17,10 @@ package okhttp3;
 
 import java.io.IOException;
 import java.net.InetAddress;
-import java.net.UnknownHostException;
 import java.security.GeneralSecurityException;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLSession;
 import okhttp3.internal.tls.HeldCertificate;
@@ -48,7 +45,7 @@ public class ConnectionCoalescingTest {
 
   private HeldCertificate rootCa;
   private HeldCertificate certificate;
-  private Map<String, List<InetAddress>> dnsResults = new LinkedHashMap<>();
+  private FakeDns dns = new FakeDns().unknownHost();
   private HttpUrl url;
   private List<InetAddress> serverIps;
 
@@ -71,27 +68,15 @@ public class ConnectionCoalescingTest {
 
     serverIps = Dns.SYSTEM.lookup(server.getHostName());
 
-    dnsResults.put(server.getHostName(), serverIps);
-    dnsResults.put("san.com", serverIps);
-    dnsResults.put("nonsan.com", serverIps);
-    dnsResults.put("www.wildcard.com", serverIps);
-    dnsResults.put("differentdns.com", Collections.<InetAddress>emptyList());
+    dns.addHost(server.getHostName(), serverIps);
+    dns.addHost("san.com", serverIps);
+    dns.addHost("nonsan.com", serverIps);
+    dns.addHost("www.wildcard.com", serverIps);
+    dns.addHost("differentdns.com", Collections.<InetAddress>emptyList());
 
     SslClient sslClient = new SslClient.Builder()
         .addTrustedCertificate(rootCa.certificate)
         .build();
-
-    Dns dns = new Dns() {
-      @Override public List<InetAddress> lookup(String hostname) throws UnknownHostException {
-        List<InetAddress> testResults = dnsResults.get(hostname);
-
-        if (testResults == null) {
-          testResults = Dns.SYSTEM.lookup(hostname);
-        }
-
-        return testResults;
-      }
-    };
 
     client = new OkHttpClient.Builder().dns(dns)
         .sslSocketFactory(sslClient.socketFactory, sslClient.trustManager)
@@ -255,7 +240,7 @@ public class ConnectionCoalescingTest {
     assert200Http2Response(execute(url), server.getHostName());
 
     HttpUrl sanUrl = url.newBuilder().host("san.com").build();
-    dnsResults.put("san.com",
+    dns.addHost("san.com",
         Arrays.asList(InetAddress.getByAddress("san.com", new byte[] {0, 0, 0, 0}),
             serverIps.get(0)));
     assert200Http2Response(execute(sanUrl), "san.com");
@@ -298,7 +283,6 @@ public class ConnectionCoalescingTest {
 
     assertEquals(1, client.connectionPool().connectionCount());
   }
-
 
   /*
    * Run against public external sites, doesn't run by default.
