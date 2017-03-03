@@ -19,6 +19,7 @@ package okhttp3.internal.connection;
 import java.io.IOException;
 import java.lang.ref.Reference;
 import java.net.ConnectException;
+import java.net.InetAddress;
 import java.net.ProtocolException;
 import java.net.Proxy;
 import java.net.Socket;
@@ -27,7 +28,10 @@ import java.net.SocketTimeoutException;
 import java.net.UnknownServiceException;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import javax.net.ssl.SSLPeerUnverifiedException;
 import javax.net.ssl.SSLSocket;
@@ -104,6 +108,13 @@ public final class RealConnection extends Http2Connection.Listener implements Co
 
   /** Nanotime timestamp when {@code allocations.size()} reached zero. */
   public long idleAtNanos = Long.MAX_VALUE;
+  private List<String> subjectAlternativeNames;
+
+  /**
+   * Cache of supported hosts (including negative results) to short circuit coalescing checks.
+   */
+  private Map<String, Boolean> supportedHostCache =
+      Collections.synchronizedMap(new LinkedHashMap<String, Boolean>());
 
   public RealConnection(ConnectionPool connectionPool, Route route) {
     this.connectionPool = connectionPool;
@@ -267,13 +278,15 @@ public final class RealConnection extends Http2Connection.Listener implements Co
       sslSocket.startHandshake();
       Handshake unverifiedHandshake = Handshake.get(sslSocket.getSession());
 
+      X509Certificate cert = (X509Certificate) unverifiedHandshake.peerCertificates().get(0);
+      subjectAlternativeNames = OkHostnameVerifier.allSubjectAltNames(cert);
+
       // Verify that the socket's certificates are acceptable for the target host.
       if (!address.hostnameVerifier().verify(address.url().host(), sslSocket.getSession())) {
-        X509Certificate cert = (X509Certificate) unverifiedHandshake.peerCertificates().get(0);
         throw new SSLPeerUnverifiedException("Hostname " + address.url().host() + " not verified:"
             + "\n    certificate: " + CertificatePinner.pin(cert)
             + "\n    DN: " + cert.getSubjectDN().getName()
-            + "\n    subjectAltNames: " + OkHostnameVerifier.allSubjectAltNames(cert));
+            + "\n    subjectAltNames: " + subjectAlternativeNames);
       }
 
       // Check that the certificate pinner is satisfied by the certificates presented.
@@ -376,8 +389,75 @@ public final class RealConnection extends Http2Connection.Listener implements Co
   /** Returns true if this connection can carry a stream allocation to {@code address}. */
   public boolean isEligible(Address address) {
     return allocations.size() < allocationLimit
-        && address.equals(route().address())
-        && !noNewStreams;
+        && !noNewStreams
+        && canCarryAddress(address);
+  }
+
+  private boolean canCarryAddress(Address address) {
+    if (address.equals(route().address())) {
+      return true;
+    }
+
+    return address.isCoalescable()
+        && this.isCoalescable()
+        && address.equalsNonHost(route.address())
+        && supportsHost(address);
+  }
+
+  private boolean isCoalescable() {
+    return http2Connection != null && subjectAlternativeNames != null
+        && route().address().isCoalescable();
+  }
+
+  private boolean supportsHost(Address address) {
+    String addressHost = address.url().host();
+
+    Boolean supportsHost = supportedHostCache.get(addressHost);
+
+    if (supportsHost != null) {
+      return supportsHost;
+    }
+
+    // Attempt to coalesce secure HTTP/2 connections by subjectAltNames.
+    // Currently this does not apply to HTTP/1.1 because reuse assumptions are not the same
+    // e.g. app may use domain sharding for performance.
+    boolean hostMatch = false;
+    for (String subjectAlternativeName : subjectAlternativeNames) {
+      if (OkHostnameVerifier.verifyHostname(addressHost, subjectAlternativeName)) {
+        hostMatch = true;
+        break;
+      }
+    }
+    if (!hostMatch) {
+      supportedHostCache.put(addressHost, false);
+      return false;
+    }
+
+    List<InetAddress> ips = address.cachedDnsResults();
+    if (ips == null) {
+      // called on first pass without pre-emptive DNS lookup
+      return false;
+    }
+
+    boolean result = ips.contains(route.socketAddress().getAddress());
+
+    if (result) {
+      try {
+        address.certificatePinner().check(addressHost, handshake().peerCertificates());
+      } catch (SSLPeerUnverifiedException e) {
+        result = false;
+      }
+    }
+
+    supportedHostCache.put(addressHost, result);
+
+    return result;
+  }
+
+  public boolean supportsHost(String hostname) {
+    Boolean supportsHost = supportedHostCache.get(hostname);
+
+    return supportsHost != null && supportsHost.booleanValue();
   }
 
   public HttpCodec newCodec(

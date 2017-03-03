@@ -20,34 +20,50 @@ import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
 
 public final class FakeDns implements Dns {
   private List<String> requestedHosts = new ArrayList<>();
-  private List<InetAddress> addresses = Collections.emptyList();
+  private List<InetAddress> defaultAddresses = Collections.emptyList();
+  private Map<String, List<InetAddress>> hostAddresses = new LinkedHashMap<>();
 
-  /** Sets the addresses to be returned by this fake DNS service. */
+  /** Sets the defaultAddresses to be returned by this fake DNS service. */
   public FakeDns addresses(List<InetAddress> addresses) {
-    this.addresses = new ArrayList<>(addresses);
+    this.defaultAddresses = new ArrayList<>(addresses);
     return this;
   }
 
   /** Sets the service to throw when a hostname is requested. */
   public FakeDns unknownHost() {
-    this.addresses = Collections.emptyList();
+    this.defaultAddresses = Collections.emptyList();
+    return this;
+  }
+
+  /**
+   * Defines specific results for a host.
+   */
+  public FakeDns addHost(String host, List<InetAddress> addresses) {
+    hostAddresses.put(host, addresses);
     return this;
   }
 
   public InetAddress address(int index) {
-    return addresses.get(index);
+    return defaultAddresses.get(index);
   }
 
   @Override public List<InetAddress> lookup(String hostname) throws UnknownHostException {
     requestedHosts.add(hostname);
-    if (addresses.isEmpty()) throw new UnknownHostException();
-    return addresses;
+
+    if (hostAddresses.containsKey(hostname)) {
+      return hostAddresses.get(hostname);
+    }
+
+    if (defaultAddresses.isEmpty()) throw new UnknownHostException();
+    return defaultAddresses;
   }
 
   public void assertRequests(String... expectedHosts) {

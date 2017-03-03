@@ -74,7 +74,7 @@ public final class RealInterceptorChain implements Interceptor.Chain {
     calls++;
 
     // If we already have a stream, confirm that the incoming request will use it.
-    if (this.httpCodec != null && !sameConnection(request.url())) {
+    if (this.httpCodec != null && !supportsUrl(request.url())) {
       throw new IllegalStateException("network interceptor " + interceptors.get(index - 1)
           + " must retain the same host and port");
     }
@@ -105,8 +105,10 @@ public final class RealInterceptorChain implements Interceptor.Chain {
     return response;
   }
 
-  private boolean sameConnection(HttpUrl url) {
-    return url.host().equals(connection.route().address().url().host())
-        && url.port() == connection.route().address().url().port();
+  private boolean supportsUrl(HttpUrl url) {
+    boolean portMatch = url.port() == connection.route().address().url().port();
+    boolean hostMatch = url.host().equals(connection.route().address().url().host());
+
+    return portMatch && (hostMatch || this.streamAllocation.connection().supportsHost(url.host()));
   }
 }

@@ -15,13 +15,16 @@
  */
 package okhttp3;
 
+import java.net.InetAddress;
 import java.net.Proxy;
 import java.net.ProxySelector;
+import java.net.UnknownHostException;
 import java.util.List;
 import javax.net.SocketFactory;
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLSocketFactory;
 import okhttp3.internal.Util;
+import okhttp3.internal.tls.OkHostnameVerifier;
 
 import static okhttp3.internal.Util.equal;
 
@@ -46,6 +49,7 @@ public final class Address {
   final SSLSocketFactory sslSocketFactory;
   final HostnameVerifier hostnameVerifier;
   final CertificatePinner certificatePinner;
+  private List<InetAddress> cachedDnsResults;
 
   public Address(String uriHost, int uriPort, Dns dns, SocketFactory socketFactory,
       SSLSocketFactory sslSocketFactory, HostnameVerifier hostnameVerifier,
@@ -152,18 +156,22 @@ public final class Address {
   @Override public boolean equals(Object other) {
     if (other instanceof Address) {
       Address that = (Address) other;
-      return this.url.equals(that.url)
-          && this.dns.equals(that.dns)
-          && this.proxyAuthenticator.equals(that.proxyAuthenticator)
-          && this.protocols.equals(that.protocols)
-          && this.connectionSpecs.equals(that.connectionSpecs)
-          && this.proxySelector.equals(that.proxySelector)
-          && equal(this.proxy, that.proxy)
-          && equal(this.sslSocketFactory, that.sslSocketFactory)
-          && equal(this.hostnameVerifier, that.hostnameVerifier)
-          && equal(this.certificatePinner, that.certificatePinner);
+      return this.url.equals(that.url) && equalsNonHost(that);
     }
     return false;
+  }
+
+  public boolean equalsNonHost(Address that) {
+    return this.dns.equals(that.dns)
+        && this.proxyAuthenticator.equals(that.proxyAuthenticator)
+        && this.protocols.equals(that.protocols)
+        && this.connectionSpecs.equals(that.connectionSpecs)
+        && this.proxySelector.equals(that.proxySelector)
+        && equal(this.proxy, that.proxy)
+        && equal(this.sslSocketFactory, that.sslSocketFactory)
+        && equal(this.hostnameVerifier, that.hostnameVerifier)
+        && equal(this.certificatePinner, that.certificatePinner)
+        && this.url().port() == that.url().port();
   }
 
   @Override public int hashCode() {
@@ -194,5 +202,24 @@ public final class Address {
 
     result.append("}");
     return result.toString();
+  }
+
+  // TODO: should not be public
+  public boolean isCoalescable() {
+    return url().isHttps()
+        && this.proxy() == null
+        && hostnameVerifier == OkHostnameVerifier.INSTANCE;
+  }
+
+  public List<InetAddress> dnsLookup() throws UnknownHostException {
+    if (cachedDnsResults == null) {
+      cachedDnsResults = dns().lookup(url.host());
+    }
+
+    return cachedDnsResults;
+  }
+
+  public List<InetAddress> cachedDnsResults() {
+    return cachedDnsResults;
   }
 }

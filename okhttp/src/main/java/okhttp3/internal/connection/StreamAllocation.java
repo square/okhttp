@@ -147,23 +147,27 @@ public final class StreamAllocation {
       boolean connectionRetryEnabled) throws IOException {
     Route selectedRoute;
     synchronized (connectionPool) {
-      if (released) throw new IllegalStateException("released");
-      if (codec != null) throw new IllegalStateException("codec != null");
-      if (canceled) throw new IOException("Canceled");
+      RealConnection allocatedConnection = findConnectionInternal();
 
-      // Attempt to use an already-allocated connection.
-      RealConnection allocatedConnection = this.connection;
-      if (allocatedConnection != null && !allocatedConnection.noNewStreams) {
+      if (allocatedConnection != null) {
         return allocatedConnection;
       }
 
-      // Attempt to get a connection from the pool.
-      Internal.instance.get(connectionPool, address, this);
-      if (connection != null) {
-        return connection;
-      }
-
       selectedRoute = route;
+    }
+
+    if (address.isCoalescable()) {
+      // TODO this is a clumsy way to pass through the cached DNS results
+      // alternative is changing Internal.get, ConnectionPool.get, RealConnection.isEligible
+      address.dnsLookup();
+
+      synchronized (connectionPool) {
+        RealConnection allocatedConnection = findConnectionInternal();
+
+        if (allocatedConnection != null) {
+          return allocatedConnection;
+        }
+      }
     }
 
     // If we need a route, make one. This is a blocking operation.
@@ -201,6 +205,25 @@ public final class StreamAllocation {
     closeQuietly(socket);
 
     return result;
+  }
+
+  private RealConnection findConnectionInternal() throws IOException {
+    if (released) throw new IllegalStateException("released");
+    if (codec != null) throw new IllegalStateException("codec != null");
+    if (canceled) throw new IOException("Canceled");
+
+    // Attempt to use an already-allocated connection.
+    RealConnection allocatedConnection = this.connection;
+    if (allocatedConnection != null && !allocatedConnection.noNewStreams) {
+      return allocatedConnection;
+    }
+
+    // Attempt to get a connection from the pool.
+    Internal.instance.get(connectionPool, address, this);
+    if (connection != null) {
+      return connection;
+    }
+    return null;
   }
 
   public void streamFinished(boolean noNewStreams, HttpCodec codec) {
