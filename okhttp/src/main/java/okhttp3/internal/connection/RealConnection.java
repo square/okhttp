@@ -278,17 +278,16 @@ public final class RealConnection extends Http2Connection.Listener implements Co
       sslSocket.startHandshake();
       Handshake unverifiedHandshake = Handshake.get(sslSocket.getSession());
 
+      X509Certificate cert = (X509Certificate) unverifiedHandshake.peerCertificates().get(0);
+      subjectAlternativeNames = OkHostnameVerifier.allSubjectAltNames(cert);
+
       // Verify that the socket's certificates are acceptable for the target host.
       if (!address.hostnameVerifier().verify(address.url().host(), sslSocket.getSession())) {
-        X509Certificate cert = (X509Certificate) unverifiedHandshake.peerCertificates().get(0);
         throw new SSLPeerUnverifiedException("Hostname " + address.url().host() + " not verified:"
             + "\n    certificate: " + CertificatePinner.pin(cert)
             + "\n    DN: " + cert.getSubjectDN().getName()
-            + "\n    subjectAltNames: " + OkHostnameVerifier.allSubjectAltNames(cert));
+            + "\n    subjectAltNames: " + subjectAlternativeNames);
       }
-
-      X509Certificate cert = (X509Certificate) unverifiedHandshake.peerCertificates().get(0);
-      subjectAlternativeNames = OkHostnameVerifier.allSubjectAltNames(cert);
 
       // Check that the certificate pinner is satisfied by the certificates presented.
       address.certificatePinner().check(address.url().host(),
