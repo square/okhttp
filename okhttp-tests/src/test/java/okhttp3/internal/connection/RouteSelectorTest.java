@@ -252,8 +252,7 @@ public final class RouteSelectorTest {
     assertTrue(routeSelector.hasNext());
     dns.addresses(makeFakeAddresses(255, 1));
     assertRoute(routeSelector.next(), address, proxyA, dns.address(0), proxyAPort);
-    // use previously cached result
-    dns.assertRequests();
+    dns.assertRequests(proxyAHost);
 
     assertFalse(routeSelector.hasNext());
   }

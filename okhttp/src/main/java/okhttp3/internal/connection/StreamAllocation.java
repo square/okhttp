@@ -159,7 +159,7 @@ public final class StreamAllocation {
     if (address.isCoalescable()) {
       // TODO this is a clumsy way to pass through the cached DNS results
       // alternative is changing Internal.get, ConnectionPool.get, RealConnection.isEligible
-      address.dnsLookup(address.url().host());
+      address.dnsLookup();
 
       synchronized (connectionPool) {
         RealConnection allocatedConnection = findConnectionInternal();

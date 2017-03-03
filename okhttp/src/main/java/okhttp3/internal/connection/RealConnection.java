@@ -110,6 +110,9 @@ public final class RealConnection extends Http2Connection.Listener implements Co
   public long idleAtNanos = Long.MAX_VALUE;
   private List<String> subjectAlternativeNames;
 
+  /**
+   * Cache of supported hosts (including negative results) to short circuit coalescing checks.
+   */
   private Map<String, Boolean> supportedHostCache =
       Collections.synchronizedMap(new LinkedHashMap<String, Boolean>());
 
@@ -392,17 +395,14 @@ public final class RealConnection extends Http2Connection.Listener implements Co
   }
 
   private boolean canCarryAddress(Address address) {
-    boolean directMatch = address.equals(route().address());
-
-    if (directMatch) {
+    if (address.equals(route().address())) {
       return true;
     }
 
-    if (address.isCoalescable() && this.isCoalescable() && address.equalsNonHost(route.address())) {
-      return supportsHost(address);
-    }
-
-    return false;
+    return address.isCoalescable()
+        && this.isCoalescable()
+        && address.equalsNonHost(route.address())
+        && supportsHost(address);
   }
 
   private boolean isCoalescable() {
@@ -419,9 +419,9 @@ public final class RealConnection extends Http2Connection.Listener implements Co
       return supportsHost;
     }
 
-    // attempt to coalesce secure HTTP/2 connections by subjectAltNames
-    // currently does not apply to HTTP/1.1 because reuse assumptions are not the same
-    // e.g. app may use domain sharding for performance
+    // Attempt to coalesce secure HTTP/2 connections by subjectAltNames.
+    // Currently this does not apply to HTTP/1.1 because reuse assumptions are not the same
+    // e.g. app may use domain sharding for performance.
     boolean hostMatch = false;
     for (String subjectAlternativeName : subjectAlternativeNames) {
       if (OkHostnameVerifier.verifyHostname(addressHost, subjectAlternativeName)) {
@@ -434,7 +434,7 @@ public final class RealConnection extends Http2Connection.Listener implements Co
       return false;
     }
 
-    List<InetAddress> ips = address.cachedDnsResults(addressHost);
+    List<InetAddress> ips = address.cachedDnsResults();
     if (ips == null) {
       // called on first pass without pre-emptive DNS lookup
       return false;

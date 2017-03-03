@@ -19,6 +19,7 @@ import java.net.InetAddress;
 import java.net.Proxy;
 import java.net.ProxySelector;
 import java.net.UnknownHostException;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -52,8 +53,7 @@ public final class Address {
   final SSLSocketFactory sslSocketFactory;
   final HostnameVerifier hostnameVerifier;
   final CertificatePinner certificatePinner;
-  private Map<String, List<InetAddress>> cachedDnsResults =
-      Collections.synchronizedMap(new LinkedHashMap<String, List<InetAddress>>());
+  private List<InetAddress> cachedDnsResults;
 
   public Address(String uriHost, int uriPort, Dns dns, SocketFactory socketFactory,
       SSLSocketFactory sslSocketFactory, HostnameVerifier hostnameVerifier,
@@ -208,24 +208,22 @@ public final class Address {
     return result.toString();
   }
 
+  // TODO: should not be public
   public boolean isCoalescable() {
     return url().isHttps()
         && this.proxy() == null
         && hostnameVerifier == OkHostnameVerifier.INSTANCE;
   }
 
-  public List<InetAddress> dnsLookup(String hostname) throws UnknownHostException {
-    List<InetAddress> dnsResults = cachedDnsResults.get(hostname);
-
-    if (dnsResults == null) {
-      dnsResults = dns().lookup(hostname);
-      cachedDnsResults.put(hostname, dnsResults);
+  public List<InetAddress> dnsLookup() throws UnknownHostException {
+    if (cachedDnsResults == null) {
+      cachedDnsResults = dns().lookup(url.host());
     }
 
-    return dnsResults;
+    return cachedDnsResults;
   }
 
-  public List<InetAddress> cachedDnsResults(String hostname) {
-    return cachedDnsResults.get(hostname);
+  public List<InetAddress> cachedDnsResults() {
+    return cachedDnsResults;
   }
 }
