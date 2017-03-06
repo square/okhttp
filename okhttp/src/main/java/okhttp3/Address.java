@@ -150,20 +150,9 @@ public final class Address {
   }
 
   @Override public boolean equals(Object other) {
-    if (other instanceof Address) {
-      Address that = (Address) other;
-      return this.url.equals(that.url)
-          && this.dns.equals(that.dns)
-          && this.proxyAuthenticator.equals(that.proxyAuthenticator)
-          && this.protocols.equals(that.protocols)
-          && this.connectionSpecs.equals(that.connectionSpecs)
-          && this.proxySelector.equals(that.proxySelector)
-          && equal(this.proxy, that.proxy)
-          && equal(this.sslSocketFactory, that.sslSocketFactory)
-          && equal(this.hostnameVerifier, that.hostnameVerifier)
-          && equal(this.certificatePinner, that.certificatePinner);
-    }
-    return false;
+    return other instanceof Address
+        && url.equals(((Address) other).url)
+        && equalsNonHost((Address) other);
   }
 
   @Override public int hashCode() {
@@ -179,6 +168,19 @@ public final class Address {
     result = 31 * result + (hostnameVerifier != null ? hostnameVerifier.hashCode() : 0);
     result = 31 * result + (certificatePinner != null ? certificatePinner.hashCode() : 0);
     return result;
+  }
+
+  boolean equalsNonHost(Address that) {
+    return this.dns.equals(that.dns)
+        && this.proxyAuthenticator.equals(that.proxyAuthenticator)
+        && this.protocols.equals(that.protocols)
+        && this.connectionSpecs.equals(that.connectionSpecs)
+        && this.proxySelector.equals(that.proxySelector)
+        && equal(this.proxy, that.proxy)
+        && equal(this.sslSocketFactory, that.sslSocketFactory)
+        && equal(this.hostnameVerifier, that.hostnameVerifier)
+        && equal(this.certificatePinner, that.certificatePinner)
+        && this.url().port() == that.url().port();
   }
 
   @Override public String toString() {
