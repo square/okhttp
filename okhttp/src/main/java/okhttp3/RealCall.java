@@ -43,7 +43,7 @@ final class RealCall implements Call {
   private boolean executed;
 
   RealCall(OkHttpClient client, Request originalRequest, boolean forWebSocket) {
-    final EventListener eventListenerFactory = client.eventListenerFactory();
+    final EventListener.Factory eventListenerFactory = client.eventListenerFactory();
 
     this.client = client;
     this.originalRequest = originalRequest;
@@ -52,7 +52,7 @@ final class RealCall implements Call {
     if (null == eventListenerFactory) {
       this.eventListener = client.eventListener();
     } else {
-      this.eventListener = eventListenerFactory.Factory.create(this);
+      this.eventListener = eventListenerFactory.create(this);
     }
   }
 

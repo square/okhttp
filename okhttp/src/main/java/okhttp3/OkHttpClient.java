@@ -213,7 +213,7 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
   final int writeTimeout;
   final int pingInterval;
   final EventListener eventListener;
-  final EventListener eventListenerFactory;
+  final EventListener.Factory eventListenerFactory;
 
   public OkHttpClient() {
     this(new Builder());
@@ -408,7 +408,7 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
     return eventListener;
   }
 
-  public EventListener eventListenerFactory() {
+  public EventListener.Factory eventListenerFactory() {
     return eventListenerFactory;
   }
 
@@ -460,7 +460,7 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
     int writeTimeout;
     int pingInterval;
     EventListener eventListener;
-    EventListener eventListenerFactory;
+    EventListener.Factory eventListenerFactory;
 
     public Builder() {
       dispatcher = new Dispatcher();
@@ -897,7 +897,7 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
       return this;
     }
 
-    public Builder addEventListenerFactory(EventListener listenerFactory) {
+    public Builder addEventListenerFactory(EventListener.Factory listenerFactory) {
       eventListenerFactory = listenerFactory;
       return this;
     }
