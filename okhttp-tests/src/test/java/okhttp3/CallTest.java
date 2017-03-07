@@ -2844,7 +2844,7 @@ public final class CallTest {
       awaitGarbageCollection();
 
       String message = logHandler.take();
-      assertTrue(message.contains("WARNING: A connection to " + server.url("/") + " was leaked."
+      assertTrue(message.contains("A connection to " + server.url("/") + " was leaked."
           + " Did you forget to close a response body?"));
       assertTrue(message.contains("okhttp3.RealCall.execute("));
       assertTrue(message.contains("okhttp3.CallTest.leakedResponseBodyLogsStackTrace("));
@@ -2887,7 +2887,7 @@ public final class CallTest {
       awaitGarbageCollection();
 
       String message = logHandler.take();
-      assertTrue(message.contains("WARNING: A connection to " + server.url("/") + " was leaked."
+      assertTrue(message.contains("A connection to " + server.url("/") + " was leaked."
           + " Did you forget to close a response body?"));
       assertTrue(message.contains("okhttp3.RealCall.enqueue("));
       assertTrue(message.contains("okhttp3.CallTest.asyncLeakedResponseBodyLogsStackTrace("));
