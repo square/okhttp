@@ -33,6 +33,7 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import okhttp3.Headers;
+import okhttp3.HttpUrl;
 import okhttp3.internal.Util;
 import org.junit.After;
 import org.junit.Rule;
@@ -404,5 +405,26 @@ public final class MockWebServerTest {
 
     // Shutting down the server should unblock the dispatcher.
     server.shutdown();
+  }
+
+  @Test public void requestUrlReconstructed() throws Exception {
+    server.enqueue(new MockResponse().setBody("hello world"));
+
+    URL url = server.url("/a/deep/path?key=foo%20bar").url();
+    HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+    InputStream in = connection.getInputStream();
+    BufferedReader reader = new BufferedReader(new InputStreamReader(in));
+    assertEquals(HttpURLConnection.HTTP_OK, connection.getResponseCode());
+    assertEquals("hello world", reader.readLine());
+
+    RecordedRequest request = server.takeRequest();
+    assertEquals("GET /a/deep/path?key=foo%20bar HTTP/1.1", request.getRequestLine());
+
+    HttpUrl requestUrl = request.getRequestUrl();
+    assertEquals("http", requestUrl.scheme());
+    assertEquals(server.getHostName(), requestUrl.host());
+    assertEquals(server.getPort(), requestUrl.port());
+    assertEquals("/a/deep/path", requestUrl.encodedPath());
+    assertEquals("foo bar", requestUrl.queryParameter("key"));
   }
 }
