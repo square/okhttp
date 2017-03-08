@@ -17,6 +17,7 @@
 package okhttp3;
 
 import java.net.Socket;
+import java.util.List;
 
 /**
  * The sockets and streams of an HTTP, HTTPS, or HTTPS+HTTP/2 connection. May be used for multiple
@@ -90,4 +91,6 @@ public interface Connection {
    * using {@link Protocol#HTTP_1_0}.
    */
   Protocol protocol();
+
+  List<String> getSupportedHosts();
 }

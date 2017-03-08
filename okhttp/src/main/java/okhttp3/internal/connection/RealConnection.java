@@ -104,10 +104,15 @@ public final class RealConnection extends Http2Connection.Listener implements Co
 
   /** Nanotime timestamp when {@code allocations.size()} reached zero. */
   public long idleAtNanos = Long.MAX_VALUE;
+  private List<String> supportedHosts;
 
   public RealConnection(ConnectionPool connectionPool, Route route) {
     this.connectionPool = connectionPool;
     this.route = route;
+  }
+
+  @Override public List<String> getSupportedHosts() {
+    return supportedHosts;
   }
 
   public static RealConnection testConnection(
@@ -275,6 +280,9 @@ public final class RealConnection extends Http2Connection.Listener implements Co
             + "\n    DN: " + cert.getSubjectDN().getName()
             + "\n    subjectAltNames: " + OkHostnameVerifier.allSubjectAltNames(cert));
       }
+
+      X509Certificate cert = (X509Certificate) unverifiedHandshake.peerCertificates().get(0);
+      supportedHosts = OkHostnameVerifier.allSubjectAltNames(cert);
 
       // Check that the certificate pinner is satisfied by the certificates presented.
       address.certificatePinner().check(address.url().host(),
