@@ -18,10 +18,10 @@ package okhttp3.internal.http;
 import java.io.IOException;
 import java.util.List;
 import okhttp3.Connection;
-import okhttp3.HttpUrl;
 import okhttp3.Interceptor;
 import okhttp3.Request;
 import okhttp3.Response;
+import okhttp3.internal.connection.RealConnection;
 import okhttp3.internal.connection.StreamAllocation;
 
 /**
@@ -32,13 +32,13 @@ public final class RealInterceptorChain implements Interceptor.Chain {
   private final List<Interceptor> interceptors;
   private final StreamAllocation streamAllocation;
   private final HttpCodec httpCodec;
-  private final Connection connection;
+  private final RealConnection connection;
   private final int index;
   private final Request request;
   private int calls;
 
   public RealInterceptorChain(List<Interceptor> interceptors, StreamAllocation streamAllocation,
-      HttpCodec httpCodec, Connection connection, int index, Request request) {
+      HttpCodec httpCodec, RealConnection connection, int index, Request request) {
     this.interceptors = interceptors;
     this.connection = connection;
     this.streamAllocation = streamAllocation;
@@ -68,13 +68,13 @@ public final class RealInterceptorChain implements Interceptor.Chain {
   }
 
   public Response proceed(Request request, StreamAllocation streamAllocation, HttpCodec httpCodec,
-      Connection connection) throws IOException {
+      RealConnection connection) throws IOException {
     if (index >= interceptors.size()) throw new AssertionError();
 
     calls++;
 
     // If we already have a stream, confirm that the incoming request will use it.
-    if (this.httpCodec != null && !sameConnection(request.url())) {
+    if (this.httpCodec != null && !this.connection.supportsUrl(request.url())) {
       throw new IllegalStateException("network interceptor " + interceptors.get(index - 1)
           + " must retain the same host and port");
     }
@@ -103,10 +103,5 @@ public final class RealInterceptorChain implements Interceptor.Chain {
     }
 
     return response;
-  }
-
-  private boolean sameConnection(HttpUrl url) {
-    return url.host().equals(connection.route().address().url().host())
-        && url.port() == connection.route().address().url().port();
   }
 }
