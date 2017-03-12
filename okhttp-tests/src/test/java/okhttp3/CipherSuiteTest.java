@@ -21,6 +21,7 @@ import static okhttp3.CipherSuite.TLS_KRB5_WITH_DES_CBC_MD5;
 import static okhttp3.CipherSuite.TLS_RSA_EXPORT_WITH_RC4_40_MD5;
 import static okhttp3.CipherSuite.TLS_RSA_WITH_AES_128_CBC_SHA256;
 import static okhttp3.CipherSuite.forJavaName;
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertSame;
@@ -89,24 +90,131 @@ public class CipherSuiteTest {
   }
 
   /**
-   * Legacy ciphers (whose javaName starts with "SSL_") are now considered different from the
-   * corresponding "TLS_" ciphers. In OkHttp 3.3.1, only 19 of those would have been valid; those 19
-   * would have been considered equal to the corresponding "TLS_" ciphers.
+   * On the Oracle JVM some older cipher suites have the "SSL_" prefix and others have the "TLS_"
+   * prefix. On the IBM JVM all cipher suites have the "SSL_" prefix.
+   *
+   * <p>Prior to OkHttp 3.3.1 we accepted either form and consider them equivalent. And since OkHttp
+   * 3.7.0 this is also true. But OkHttp 3.3.1 through 3.6.0 treated these as different.
    */
   @Test public void forJavaName_fromLegacyEnumName() {
     // These would have been considered equal in OkHttp 3.3.1, but now aren't.
-    assertNotEquals(
+    assertEquals(
         forJavaName("TLS_RSA_EXPORT_WITH_RC4_40_MD5"),
         forJavaName("SSL_RSA_EXPORT_WITH_RC4_40_MD5"));
-
-    // The SSL_ one of these would have been invalid in OkHttp 3.3.1; it now is valid and not equal.
-    assertNotEquals(
+    assertEquals(
         forJavaName("TLS_DH_RSA_EXPORT_WITH_DES40_CBC_SHA"),
         forJavaName("SSL_DH_RSA_EXPORT_WITH_DES40_CBC_SHA"));
-
-    // These would have not been valid in OkHttp 3.3.1, and now aren't equal.
-    assertNotEquals(
+    assertEquals(
         forJavaName("TLS_FAKE_NEW_CIPHER"),
         forJavaName("SSL_FAKE_NEW_CIPHER"));
+  }
+
+  @Test public void applyIntersectionRetainsSslPrefixes() throws Exception {
+    FakeSslSocket socket = new FakeSslSocket();
+    socket.setEnabledProtocols(new String[] { "TLSv1" });
+    socket.setSupportedCipherSuites(new String[] { "SSL_A", "SSL_B", "SSL_C", "SSL_D", "SSL_E" });
+    socket.setEnabledCipherSuites(new String[] { "SSL_A", "SSL_B", "SSL_C" });
+
+    ConnectionSpec connectionSpec = new ConnectionSpec.Builder(true)
+        .tlsVersions(TlsVersion.TLS_1_0)
+        .cipherSuites("TLS_A", "TLS_C", "TLS_E")
+        .build();
+    connectionSpec.apply(socket, false);
+
+    assertArrayEquals(new String[] { "SSL_A", "SSL_C" }, socket.enabledCipherSuites);
+  }
+
+  @Test public void applyIntersectionRetainsTlsPrefixes() throws Exception {
+    FakeSslSocket socket = new FakeSslSocket();
+    socket.setEnabledProtocols(new String[] { "TLSv1" });
+    socket.setSupportedCipherSuites(new String[] { "TLS_A", "TLS_B", "TLS_C", "TLS_D", "TLS_E" });
+    socket.setEnabledCipherSuites(new String[] { "TLS_A", "TLS_B", "TLS_C" });
+
+    ConnectionSpec connectionSpec = new ConnectionSpec.Builder(true)
+        .tlsVersions(TlsVersion.TLS_1_0)
+        .cipherSuites("SSL_A", "SSL_C", "SSL_E")
+        .build();
+    connectionSpec.apply(socket, false);
+
+    assertArrayEquals(new String[] { "TLS_A", "TLS_C" }, socket.enabledCipherSuites);
+  }
+
+  @Test public void applyIntersectionAddsSslScsvForFallback() throws Exception {
+    FakeSslSocket socket = new FakeSslSocket();
+    socket.setEnabledProtocols(new String[] { "TLSv1" });
+    socket.setSupportedCipherSuites(new String[] { "SSL_A", "SSL_FALLBACK_SCSV" });
+    socket.setEnabledCipherSuites(new String[] { "SSL_A" });
+
+    ConnectionSpec connectionSpec = new ConnectionSpec.Builder(true)
+        .tlsVersions(TlsVersion.TLS_1_0)
+        .cipherSuites("SSL_A")
+        .build();
+    connectionSpec.apply(socket, true);
+
+    assertArrayEquals(new String[] { "SSL_A", "SSL_FALLBACK_SCSV" }, socket.enabledCipherSuites);
+  }
+
+  @Test public void applyIntersectionAddsTlsScsvForFallback() throws Exception {
+    FakeSslSocket socket = new FakeSslSocket();
+    socket.setEnabledProtocols(new String[] { "TLSv1" });
+    socket.setSupportedCipherSuites(new String[] { "TLS_A", "TLS_FALLBACK_SCSV" });
+    socket.setEnabledCipherSuites(new String[] { "TLS_A" });
+
+    ConnectionSpec connectionSpec = new ConnectionSpec.Builder(true)
+        .tlsVersions(TlsVersion.TLS_1_0)
+        .cipherSuites("TLS_A")
+        .build();
+    connectionSpec.apply(socket, true);
+
+    assertArrayEquals(new String[] { "TLS_A", "TLS_FALLBACK_SCSV" }, socket.enabledCipherSuites);
+  }
+
+  @Test public void applyIntersectionToProtocolVersion() throws Exception {
+    FakeSslSocket socket = new FakeSslSocket();
+    socket.setEnabledProtocols(new String[] { "TLSv1", "TLSv1.1", "TLSv1.2" });
+    socket.setSupportedCipherSuites(new String[] { "TLS_A" });
+    socket.setEnabledCipherSuites(new String[] { "TLS_A" });
+
+    ConnectionSpec connectionSpec = new ConnectionSpec.Builder(true)
+        .tlsVersions(TlsVersion.TLS_1_1, TlsVersion.TLS_1_2, TlsVersion.TLS_1_3)
+        .cipherSuites("TLS_A")
+        .build();
+    connectionSpec.apply(socket, false);
+
+    assertArrayEquals(new String[] { "TLSv1.1", "TLSv1.2" }, socket.enabledProtocols);
+  }
+
+  static final class FakeSslSocket extends DelegatingSSLSocket {
+    private String[] enabledProtocols;
+    private String[] supportedCipherSuites;
+    private String[] enabledCipherSuites;
+
+    FakeSslSocket() {
+      super(null);
+    }
+
+    @Override public String[] getEnabledProtocols() {
+      return enabledProtocols;
+    }
+
+    @Override public void setEnabledProtocols(String[] enabledProtocols) {
+      this.enabledProtocols = enabledProtocols;
+    }
+
+    @Override public String[] getSupportedCipherSuites() {
+      return supportedCipherSuites;
+    }
+
+    public void setSupportedCipherSuites(String[] supportedCipherSuites) {
+      this.supportedCipherSuites = supportedCipherSuites;
+    }
+
+    @Override public String[] getEnabledCipherSuites() {
+      return enabledCipherSuites;
+    }
+
+    @Override public void setEnabledCipherSuites(String[] enabledCipherSuites) {
+      this.enabledCipherSuites = enabledCipherSuites;
+    }
   }
 }

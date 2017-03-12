@@ -15,8 +15,12 @@
  */
 package okhttp3;
 
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 
 /**
  * <a href="https://www.iana.org/assignments/tls-parameters/tls-parameters.xhtml">TLS cipher
@@ -32,10 +36,29 @@ import java.util.concurrent.ConcurrentMap;
  */
 public final class CipherSuite {
   /**
-   * Holds interned instances. This needs to be above the of() calls below so that it's
-   * initialized by the time those parts of {@code <clinit>()} run.
+   * Compares cipher suites names like "TLS_RSA_WITH_NULL_MD5" and "SSL_RSA_WITH_NULL_MD5", ignoring
+   * the "TLS_" or "SSL_" prefix which is not consistent across platforms. In particular some IBM
+   * JVMs use the "SSL_" prefix everywhere whereas Oracle JVMs mix "TLS_" and "SSL_".
    */
-  private static final ConcurrentMap<String, CipherSuite> INSTANCES = new ConcurrentHashMap<>();
+  static final Comparator<String> ORDER_BY_NAME = new Comparator<String>() {
+    @Override public int compare(String a, String b) {
+      for (int i = 4, limit = Math.min(a.length(), b.length()); i < limit; i++) {
+        char charA = a.charAt(i);
+        char charB = b.charAt(i);
+        if (charA != charB) return charA < charB ? -1 : 1;
+      }
+      int lengthA = a.length();
+      int lengthB = b.length();
+      if (lengthA != lengthB) return lengthA < lengthB ? -1 : 1;
+      return 0;
+    }
+  };
+
+  /**
+   * Holds interned instances. This needs to be above the of() calls below so that it's
+   * initialized by the time those parts of {@code <clinit>()} run. Guarded by CipherSuite.class.
+   */
+  private static final Map<String, CipherSuite> INSTANCES = new TreeMap<>(ORDER_BY_NAME);
 
   // Last updated 2016-07-03 using cipher suites from Android 24 and Java 9.
 
@@ -370,16 +393,23 @@ public final class CipherSuite {
 
   /**
    * @param javaName the name used by Java APIs for this cipher suite. Different than the IANA name
-   * for older cipher suites because the prefix is {@code SSL_} instead of {@code TLS_}.
+   *     for older cipher suites because the prefix is {@code SSL_} instead of {@code TLS_}.
    */
-  public static CipherSuite forJavaName(String javaName) {
+  public static synchronized CipherSuite forJavaName(String javaName) {
     CipherSuite result = INSTANCES.get(javaName);
     if (result == null) {
-      CipherSuite sample = new CipherSuite(javaName);
-      CipherSuite canonical = INSTANCES.putIfAbsent(javaName, sample);
-      result = (canonical == null) ? sample : canonical;
+      result = new CipherSuite(javaName);
+      INSTANCES.put(javaName, result);
     }
     return result;
+  }
+
+  static List<CipherSuite> forJavaNames(String... cipherSuites) {
+    List<CipherSuite> result = new ArrayList<>(cipherSuites.length);
+    for (String cipherSuite : cipherSuites) {
+      result.add(forJavaName(cipherSuite));
+    }
+    return Collections.unmodifiableList(result);
   }
 
   private CipherSuite(String javaName) {
@@ -391,7 +421,7 @@ public final class CipherSuite {
 
   /**
    * @param javaName the name used by Java APIs for this cipher suite. Different than the IANA name
-   * for older cipher suites because the prefix is {@code SSL_} instead of {@code TLS_}.
+   *     for older cipher suites because the prefix is {@code SSL_} instead of {@code TLS_}.
    * @param value the integer identifier for this cipher suite. (Documentation only.)
    */
   private static CipherSuite of(String javaName, int value) {
