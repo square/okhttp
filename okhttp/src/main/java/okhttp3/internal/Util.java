@@ -204,7 +204,7 @@ public final class Util {
   }
 
   /**
-   * Returns an array containing containing only elements found in {@code first} and also in {@code
+   * Returns an array containing only elements found in {@code first} and also in {@code
    * second}. The returned elements are in the same order as in {@code first}.
    */
   @SuppressWarnings("unchecked")
