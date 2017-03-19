@@ -56,7 +56,7 @@ public final class PublicSuffixDatabase {
 
   /**
    * Returns the effective top-level domain plus one (eTLD+1) by referencing the public suffix list.
-   * Returns null if the domain is a public suffix or the list was unable to be loaded.
+   * Returns null if the domain is a public suffix.
    *
    * <p>Here are some examples: <pre>{@code
    * assertEquals("google.com", getEffectiveTldPlusOne("google.com"));
@@ -84,9 +84,8 @@ public final class PublicSuffixDatabase {
     String[] domainLabels = unicodeDomain.split("\\.");
     String[] rule = findMatchingRule(domainLabels);
 
-    if (rule == null
-        || (domainLabels.length == rule.length && rule[0].charAt(0) != EXCEPTION_MARKER)) {
-      // We failed to read the list or the domain is a public suffix.
+    if (domainLabels.length == rule.length && rule[0].charAt(0) != EXCEPTION_MARKER) {
+      // The domain is a public suffix.
       return null;
     }
 
@@ -121,9 +120,8 @@ public final class PublicSuffixDatabase {
 
     synchronized (this) {
       if (publicSuffixListBytes == null) {
-        // We failed to read the public suffix list. One scenario where this might happen is if the
-        // thread is interrupted.
-        return null;
+        throw new IllegalStateException("Unable to load " + PUBLIC_SUFFIX_RESOURCE + " resource "
+            + "from the classpath.");
       }
     }
 
