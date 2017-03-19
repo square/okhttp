@@ -41,7 +41,7 @@ import okio.GzipSink;
  * connection to a MockWebServer to measure how many identical requests per second can be carried
  * over a fixed number of threads.
  */
-public class Benchmark extends com.google.caliper.Benchmark {
+public class Benchmark implements com.google.caliper.Benchmark {
   private static final int NUM_REPORTS = 10;
   private static final boolean VERBOSE = false;
 
