@@ -194,8 +194,8 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
   final Proxy proxy;
   final List<Protocol> protocols;
   final List<ConnectionSpec> connectionSpecs;
-  final List<Interceptor> interceptors;
-  final List<Interceptor> networkInterceptors;
+  final UnmodifiableList<Interceptor> interceptors;
+  final UnmodifiableList<Interceptor> networkInterceptors;
   final ProxySelector proxySelector;
   final CookieJar cookieJar;
   final Cache cache;
@@ -226,8 +226,8 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
     this.proxy = builder.proxy;
     this.protocols = builder.protocols;
     this.connectionSpecs = builder.connectionSpecs;
-    this.interceptors = Util.immutableList(builder.interceptors);
-    this.networkInterceptors = Util.immutableList(builder.networkInterceptors);
+    this.interceptors = new UnmodifiableList<>(builder.interceptors);
+    this.networkInterceptors = new UnmodifiableList<>(builder.networkInterceptors);
     this.proxySelector = builder.proxySelector;
     this.cookieJar = builder.cookieJar;
     this.cache = builder.cache;
@@ -391,7 +391,7 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
    * the connection is established (if any) until after the response source is selected (either the
    * origin server, cache, or both).
    */
-  public List<Interceptor> interceptors() {
+  public UnmodifiableList<Interceptor> interceptors() {
     return interceptors;
   }
 
@@ -400,7 +400,7 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
    * These interceptors must call {@link Interceptor.Chain#proceed} exactly once: it is an error for
    * a network interceptor to short-circuit or repeat a network request.
    */
-  public List<Interceptor> networkInterceptors() {
+  public UnmodifiableList<Interceptor> networkInterceptors() {
     return networkInterceptors;
   }
 
@@ -429,8 +429,8 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
     Proxy proxy;
     List<Protocol> protocols;
     List<ConnectionSpec> connectionSpecs;
-    final List<Interceptor> interceptors = new ArrayList<>();
-    final List<Interceptor> networkInterceptors = new ArrayList<>();
+    final ArrayList<Interceptor> interceptors = new ArrayList<>();
+    final ArrayList<Interceptor> networkInterceptors = new ArrayList<>();
     ProxySelector proxySelector;
     CookieJar cookieJar;
     Cache cache;
@@ -479,8 +479,19 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
       this.proxy = okHttpClient.proxy;
       this.protocols = okHttpClient.protocols;
       this.connectionSpecs = okHttpClient.connectionSpecs;
-      this.interceptors.addAll(okHttpClient.interceptors);
-      this.networkInterceptors.addAll(okHttpClient.networkInterceptors);
+
+      final int interceptorsSize = okHttpClient.interceptors.size();
+      this.interceptors.ensureCapacity(okHttpClient.interceptors.size());
+      for (int i = 0; i < interceptorsSize; i++) {
+        this.interceptors.add(okHttpClient.interceptors.get(i));
+      }
+
+      final int networkInterceptorsSize = okHttpClient.networkInterceptors.size();
+      this.networkInterceptors.ensureCapacity(networkInterceptorsSize);
+      for (int i = 0; i < networkInterceptorsSize; i++) {
+        this.networkInterceptors.add(okHttpClient.networkInterceptors.get(i));
+      }
+
       this.proxySelector = okHttpClient.proxySelector;
       this.cookieJar = okHttpClient.cookieJar;
       this.internalCache = okHttpClient.internalCache;
