@@ -27,6 +27,7 @@ import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -264,6 +265,26 @@ public final class CookieTest {
     HttpUrl urlWithIp = HttpUrl.parse("http://123.45.234.56/");
     assertNull(Cookie.parse(urlWithIp, "a=b; domain=234.56"));
     assertEquals("123.45.234.56", Cookie.parse(urlWithIp, "a=b; domain=123.45.234.56").domain());
+  }
+
+  /**
+   * These public suffixes were selected by inspecting the publicsuffix.org list. It's possible they
+   * may change in the future. If this test begins to fail, please double check they are still
+   * present in the public suffix list.
+   */
+  @Test public void domainIsPublicSuffix() {
+    HttpUrl ascii = HttpUrl.parse("https://foo1.foo.bar.elb.amazonaws.com");
+    assertNotNull(Cookie.parse(ascii, "a=b; domain=foo.bar.elb.amazonaws.com"));
+    assertNull(Cookie.parse(ascii, "a=b; domain=bar.elb.amazonaws.com"));
+    assertNull(Cookie.parse(ascii, "a=b; domain=com"));
+
+    HttpUrl unicode = HttpUrl.parse("https://長.長.長崎.jp");
+    assertNotNull(Cookie.parse(unicode, "a=b; domain=長.長崎.jp"));
+    assertNull(Cookie.parse(unicode, "a=b; domain=長崎.jp"));
+
+    HttpUrl punycode = HttpUrl.parse("https://xn--ue5a.xn--ue5a.xn--8ltr62k.jp");
+    assertNotNull(Cookie.parse(punycode, "a=b; domain=xn--ue5a.xn--8ltr62k.jp"));
+    assertNull(Cookie.parse(punycode, "a=b; domain=xn--8ltr62k.jp"));
   }
 
   @Test public void hostOnly() throws Exception {
