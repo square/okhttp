@@ -17,6 +17,7 @@ package okhttp3.internal.publicsuffix;
 
 import java.io.IOException;
 import java.io.InputStream;
+import okhttp3.internal.Util;
 import okio.Buffer;
 import okio.BufferedSource;
 import okio.GzipSource;
@@ -26,6 +27,7 @@ import org.junit.Test;
 import static okhttp3.internal.publicsuffix.PublicSuffixDatabase.PUBLIC_SUFFIX_RESOURCE;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.fail;
 
 public final class PublicSuffixDatabaseTest {
   private final PublicSuffixDatabase publicSuffixDatabase = new PublicSuffixDatabase();
@@ -249,7 +251,23 @@ public final class PublicSuffixDatabaseTest {
   }
 
   private void checkPublicSuffix(String domain, String registrablePart) {
-    String result = publicSuffixDatabase.getEffectiveTldPlusOne(domain);
-    assertEquals(registrablePart, result);
+    if (domain == null) {
+      try {
+        publicSuffixDatabase.getEffectiveTldPlusOne(null);
+        fail();
+      } catch (NullPointerException expected) {
+      }
+      return;
+    }
+
+    String canonicalDomain = Util.domainToAscii(domain);
+    if (canonicalDomain == null) return;
+
+    String result = publicSuffixDatabase.getEffectiveTldPlusOne(canonicalDomain);
+    if (registrablePart == null) {
+      assertNull(result);
+    } else {
+      assertEquals(Util.domainToAscii(registrablePart), result);
+    }
   }
 }
