@@ -41,6 +41,8 @@ public final class PublicSuffixDatabase {
 
   private static final byte EXCEPTION_MARKER = '!';
 
+  private static final PublicSuffixDatabase instance = new PublicSuffixDatabase();
+
   /** True after we've attempted to read the list for the first time. */
   private final AtomicBoolean listRead = new AtomicBoolean(false);
 
@@ -53,6 +55,10 @@ public final class PublicSuffixDatabase {
   // Guarded by this.
   private byte[] publicSuffixListBytes;
   private byte[] publicSuffixExceptionListBytes;
+
+  public static PublicSuffixDatabase get() {
+    return instance;
+  }
 
   /**
    * Returns the effective top-level domain plus one (eTLD+1) by referencing the public suffix list.
