@@ -18,6 +18,11 @@
       <artifactId>okio</artifactId>
     </dependency>
     <dependency>
+      <groupId>org.conscrypt</groupId>
+      <artifactId>conscrypt-openjdk-uber</artifactId>
+      <version>1.0.0.RC6</version>
+    </dependency>
+    <dependency>
       <groupId>com.google.android</groupId>
       <artifactId>android</artifactId>
       <scope>provided</scope>
