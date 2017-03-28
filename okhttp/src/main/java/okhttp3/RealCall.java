@@ -33,6 +33,7 @@ import static okhttp3.internal.platform.Platform.INFO;
 final class RealCall implements Call {
   final OkHttpClient client;
   final RetryAndFollowUpInterceptor retryAndFollowUpInterceptor;
+  final EventListener eventListener;
 
   /** The application's original request unadulterated by redirects or auth headers. */
   final Request originalRequest;
@@ -42,10 +43,17 @@ final class RealCall implements Call {
   private boolean executed;
 
   RealCall(OkHttpClient client, Request originalRequest, boolean forWebSocket) {
+    final EventListener.Factory eventListenerFactory = client.eventListenerFactory();
+
     this.client = client;
     this.originalRequest = originalRequest;
     this.forWebSocket = forWebSocket;
     this.retryAndFollowUpInterceptor = new RetryAndFollowUpInterceptor(client, forWebSocket);
+    if (null == eventListenerFactory) {
+      this.eventListener = client.eventListener();
+    } else {
+      this.eventListener = eventListenerFactory.create(this);
+    }
   }
 
   @Override public Request request() {
