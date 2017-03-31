@@ -50,7 +50,7 @@ ProGuard
 
 If you are using ProGuard you might need to add the following option:
 ```
--dontwarn okhttp3.**
+-dontwarn okio.**
 ```
 
 License
