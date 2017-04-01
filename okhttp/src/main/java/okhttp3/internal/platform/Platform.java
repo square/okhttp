@@ -174,6 +174,12 @@ public class Platform {
 
   /** Attempt to match the host runtime to a capable Platform implementation. */
   private static Platform findPlatform() {
+    Platform conscrypt = ConscryptPlatform.buildIfSupported();
+
+    if (conscrypt != null) {
+      return conscrypt;
+    }
+
     Platform android = AndroidPlatform.buildIfSupported();
 
     if (android != null) {

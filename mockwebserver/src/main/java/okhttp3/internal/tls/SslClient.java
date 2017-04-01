@@ -34,6 +34,7 @@ import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
 import javax.net.ssl.X509TrustManager;
+import okhttp3.internal.platform.Platform;
 
 /**
  * Combines an SSL socket factory and trust manager, a pairing enough for OkHttp or MockWebServer to
@@ -146,7 +147,7 @@ public final class SslClient {
               + Arrays.toString(trustManagers));
         }
 
-        SSLContext sslContext = SSLContext.getInstance("TLS");
+        SSLContext sslContext = SSLContext.getInstance("TLS", Platform.get().getProvider());
         sslContext.init(keyManagerFactory.getKeyManagers(), trustManagers, new SecureRandom());
 
         return new SslClient(sslContext, (X509TrustManager) trustManagers[0]);

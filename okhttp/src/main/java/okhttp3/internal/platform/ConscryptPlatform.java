@@ -10,8 +10,11 @@ import javax.net.ssl.X509TrustManager;
 import okhttp3.Protocol;
 import okhttp3.internal.Util;
 import org.conscrypt.OpenSSLProvider;
+import org.conscrypt.OpenSSLSocketFactoryImpl;
 import org.conscrypt.OpenSSLSocketImpl;
+import org.conscrypt.SSLParametersImpl;
 
+// TODO support SSLClientSessionCache
 public class ConscryptPlatform extends Platform {
   public ConscryptPlatform() {
   }
@@ -21,8 +24,16 @@ public class ConscryptPlatform extends Platform {
   }
 
   @Override public X509TrustManager trustManager(SSLSocketFactory sslSocketFactory) {
-    throw new UnsupportedOperationException(
-        "clientBuilder.sslSocketFactory(SSLSocketFactory) not supported on Conscrypt");
+    try {
+      Class<?> sslContextClass = OpenSSLSocketFactoryImpl.class;
+      SSLParametersImpl sp =
+          readFieldOrNull(sslSocketFactory, SSLParametersImpl.class, "sslParameters");
+      if (sp == null) return null;
+      return sp.getDefaultX509TrustManager();
+    } catch (Exception e) {
+      throw new UnsupportedOperationException(
+          "clientBuilder.sslSocketFactory(SSLSocketFactory) not supported on Conscrypt", e);
+    }
   }
 
   @Override public void configureTlsExtensions(
@@ -46,5 +57,9 @@ public class ConscryptPlatform extends Platform {
     byte[] alpnResult = i.getAlpnSelectedProtocol();
 
     return alpnResult != null ? new String(alpnResult, Util.UTF_8) : null;
+  }
+
+  public static ConscryptPlatform buildIfSupported() {
+    return new ConscryptPlatform();
   }
 }
