@@ -84,7 +84,7 @@ public class Platform {
   /** Prefix used on custom headers. */
   public String getPrefix() {
     return "OkHttp";
-  } 
+  }
 
   public X509TrustManager trustManager(SSLSocketFactory sslSocketFactory) {
     // Attempt to get the trust manager from an OpenJDK socket factory. We attempt this on all

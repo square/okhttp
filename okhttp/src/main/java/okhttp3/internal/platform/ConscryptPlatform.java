@@ -26,7 +26,7 @@ public class ConscryptPlatform extends Platform {
   public ConscryptPlatform() {
   }
 
-  @Override public Provider getProvider() {
+  public Provider getProvider() {
     return new OpenSSLProvider();
   }
 
