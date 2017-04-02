@@ -147,7 +147,7 @@ public final class SslClient {
               + Arrays.toString(trustManagers));
         }
 
-        SSLContext sslContext = SSLContext.getInstance("TLS", Platform.get().getProvider());
+        SSLContext sslContext = Platform.get().getSSLContext();
         sslContext.init(keyManagerFactory.getKeyManagers(), trustManagers, new SecureRandom());
 
         return new SslClient(sslContext, (X509TrustManager) trustManagers[0]);

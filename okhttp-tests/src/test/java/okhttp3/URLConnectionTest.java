@@ -661,7 +661,7 @@ public final class URLConnectionTest {
     HttpURLConnection connection1 = urlFactory.open(server.url("/").url());
     assertContent("this response comes via HTTPS", connection1);
 
-    SSLContext sslContext2 = SSLContext.getInstance("TLS", Platform.get().getProvider());
+    SSLContext sslContext2 = Platform.get().getSSLContext();
     sslContext2.init(null, null, null);
     SSLSocketFactory sslSocketFactory2 = sslContext2.getSocketFactory();
 
@@ -2394,7 +2394,7 @@ public final class URLConnectionTest {
   @Test public void httpsWithCustomTrustManager() throws Exception {
     RecordingHostnameVerifier hostnameVerifier = new RecordingHostnameVerifier();
     RecordingTrustManager trustManager = new RecordingTrustManager(sslClient.trustManager);
-    SSLContext sslContext = SSLContext.getInstance("TLS", Platform.get().getProvider());
+    SSLContext sslContext = Platform.get().getSSLContext();
     sslContext.init(null, new TrustManager[] { trustManager }, null);
 
     urlFactory.setClient(urlFactory.client().newBuilder()
