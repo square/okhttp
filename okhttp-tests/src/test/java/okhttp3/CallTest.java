@@ -2307,24 +2307,60 @@ public final class CallTest {
     serverRespondsWithUnsolicited100Continue();
   }
 
-  @Test public void successfulExpectContinueAndConnectionReuse() throws Exception {
+  @Test public void successfulExpectContinuePermitsConnectionReuse() throws Exception {
     server.enqueue(new MockResponse()
         .setSocketPolicy(SocketPolicy.EXPECT_CONTINUE));
     server.enqueue(new MockResponse());
 
-    executeSynchronously("/", "Expect", "100-continue");
-    executeSynchronously("/");
+    executeSynchronously(new Request.Builder()
+        .url(server.url("/"))
+        .header("Expect", "100-continue")
+        .post(RequestBody.create(MediaType.parse("text/plain"), "abc"))
+        .build());
+    executeSynchronously(new Request.Builder()
+        .url(server.url("/"))
+        .build());
 
     assertEquals(0, server.takeRequest().getSequenceNumber());
     assertEquals(1, server.takeRequest().getSequenceNumber());
   }
 
-  @Test public void unsuccessfulExpectContinueAndConnectionReuse() throws Exception {
+  @Test public void successfulExpectContinuePermitsConnectionReuseWithHttp2() throws Exception {
+    enableProtocol(Protocol.HTTP_2);
+    successfulExpectContinuePermitsConnectionReuse();
+  }
+
+  @Test public void unsuccessfulExpectContinuePreventsConnectionReuse() throws Exception {
     server.enqueue(new MockResponse());
     server.enqueue(new MockResponse());
 
-    executeSynchronously("/", "Expect", "100-continue");
-    executeSynchronously("/");
+    executeSynchronously(new Request.Builder()
+        .url(server.url("/"))
+        .header("Expect", "100-continue")
+        .post(RequestBody.create(MediaType.parse("text/plain"), "abc"))
+        .build());
+    executeSynchronously(new Request.Builder()
+        .url(server.url("/"))
+        .build());
+
+    assertEquals(0, server.takeRequest().getSequenceNumber());
+    assertEquals(0, server.takeRequest().getSequenceNumber());
+  }
+
+  @Test public void unsuccessfulExpectContinuePermitsConnectionReuseWithHttp2() throws Exception {
+    enableProtocol(Protocol.HTTP_2);
+
+    server.enqueue(new MockResponse());
+    server.enqueue(new MockResponse());
+
+    executeSynchronously(new Request.Builder()
+        .url(server.url("/"))
+        .header("Expect", "100-continue")
+        .post(RequestBody.create(MediaType.parse("text/plain"), "abc"))
+        .build());
+    executeSynchronously(new Request.Builder()
+        .url(server.url("/"))
+        .build());
 
     assertEquals(0, server.takeRequest().getSequenceNumber());
     assertEquals(1, server.takeRequest().getSequenceNumber());
