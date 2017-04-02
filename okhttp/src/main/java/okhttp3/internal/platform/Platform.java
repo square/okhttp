@@ -21,7 +21,6 @@ import java.lang.reflect.Field;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.security.NoSuchAlgorithmException;
-import java.security.Provider;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
@@ -85,11 +84,7 @@ public class Platform {
   /** Prefix used on custom headers. */
   public String getPrefix() {
     return "OkHttp";
-  }
-
-  public Provider getProvider() {
-    return null;
-  }
+  } 
 
   public X509TrustManager trustManager(SSLSocketFactory sslSocketFactory) {
     // Attempt to get the trust manager from an OpenJDK socket factory. We attempt this on all
