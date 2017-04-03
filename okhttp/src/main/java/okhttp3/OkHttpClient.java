@@ -144,9 +144,13 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
         return pool.connectionBecameIdle(connection);
       }
 
-      @Override public RealConnection get(
-          ConnectionPool pool, Address address, StreamAllocation streamAllocation) {
-        return pool.get(address, streamAllocation);
+      @Override public RealConnection get(ConnectionPool pool, Address address,
+          StreamAllocation streamAllocation, Route route) {
+        return pool.get(address, streamAllocation, route);
+      }
+
+      @Override public boolean equalsNonHost(Address a, Address b) {
+        return a.equalsNonHost(b);
       }
 
       @Override public Socket deduplicate(

@@ -53,7 +53,7 @@ _2016-11-30_
  *  New: Expose `Part` headers and body in `Multipart`.
  *  New: Make `ResponseBody.string()` and `ResponseBody.charStream()` BOM-aware. If your HTTP
     response body begins with a [byte order mark][bom] it will be consumed and used to select a
-    charset for the remaining bytes. Most applications should not not need a byte order mark.
+    charset for the remaining bytes. Most applications should not need a byte order mark.
 
  *  New: Upgrade to Okio 1.11.0.
 
@@ -754,7 +754,7 @@ _2014-12-30_
  *  New: APIs to iterate and selectively clear the response cache.
  *  New: Support for SOCKS proxies.
  *  New: Support for `TLS_FALLBACK_SCSV`.
- *  New: Update HTTP/2 support to to `h2-16` and `hpack-10`.
+ *  New: Update HTTP/2 support to `h2-16` and `hpack-10`.
  *  New: APIs to prevent retrying non-idempotent requests.
  *  Fix: Drop NPN support. Going forward we support ALPN only.
  *  Fix: The hostname verifier is now strict. This is consistent with the hostname

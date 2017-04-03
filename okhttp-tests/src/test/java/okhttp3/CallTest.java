@@ -1518,7 +1518,7 @@ public final class CallTest {
     // Attempt conditional cache validation and a DNS miss.
     client.connectionPool().evictAll();
     client = client.newBuilder()
-        .dns(new FakeDns().unknownHost())
+        .dns(new FakeDns())
         .build();
     executeSynchronously("/").assertFailure(UnknownHostException.class);
   }
@@ -2347,9 +2347,9 @@ public final class CallTest {
   }
 
   @Test public void customDns() throws Exception {
-    // Configure a DNS that returns our MockWebServer for every hostname.
+    // Configure a DNS that returns our local MockWebServer for android.com.
     FakeDns dns = new FakeDns();
-    dns.addresses(Dns.SYSTEM.lookup(server.url("/").host()));
+    dns.set("android.com", Dns.SYSTEM.lookup(server.url("/").host()));
     client = client.newBuilder()
         .dns(dns)
         .build();
@@ -2844,7 +2844,7 @@ public final class CallTest {
       awaitGarbageCollection();
 
       String message = logHandler.take();
-      assertTrue(message.contains("WARNING: A connection to " + server.url("/") + " was leaked."
+      assertTrue(message.contains("A connection to " + server.url("/") + " was leaked."
           + " Did you forget to close a response body?"));
       assertTrue(message.contains("okhttp3.RealCall.execute("));
       assertTrue(message.contains("okhttp3.CallTest.leakedResponseBodyLogsStackTrace("));
@@ -2887,7 +2887,7 @@ public final class CallTest {
       awaitGarbageCollection();
 
       String message = logHandler.take();
-      assertTrue(message.contains("WARNING: A connection to " + server.url("/") + " was leaked."
+      assertTrue(message.contains("A connection to " + server.url("/") + " was leaked."
           + " Did you forget to close a response body?"));
       assertTrue(message.contains("okhttp3.RealCall.enqueue("));
       assertTrue(message.contains("okhttp3.CallTest.asyncLeakedResponseBodyLogsStackTrace("));

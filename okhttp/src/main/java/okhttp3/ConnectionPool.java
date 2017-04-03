@@ -114,11 +114,14 @@ public final class ConnectionPool {
     return connections.size();
   }
 
-  /** Returns a recycled connection to {@code address}, or null if no such connection exists. */
-  RealConnection get(Address address, StreamAllocation streamAllocation) {
+  /**
+   * Returns a recycled connection to {@code address}, or null if no such connection exists. The
+   * route is null if the address has not yet been routed.
+   */
+  RealConnection get(Address address, StreamAllocation streamAllocation, Route route) {
     assert (Thread.holdsLock(this));
     for (RealConnection connection : connections) {
-      if (connection.isEligible(address)) {
+      if (connection.isEligible(address, route)) {
         streamAllocation.acquire(connection);
         return connection;
       }
@@ -133,7 +136,7 @@ public final class ConnectionPool {
   Socket deduplicate(Address address, StreamAllocation streamAllocation) {
     assert (Thread.holdsLock(this));
     for (RealConnection connection : connections) {
-      if (connection.isEligible(address)
+      if (connection.isEligible(address, null)
           && connection.isMultiplexed()
           && connection != streamAllocation.connection()) {
         return streamAllocation.releaseAndAcquire(connection);
