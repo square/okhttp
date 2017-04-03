@@ -212,7 +212,6 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
   final int readTimeout;
   final int writeTimeout;
   final int pingInterval;
-  final EventListener eventListener;
   final EventListener.Factory eventListenerFactory;
 
   public OkHttpClient() {
@@ -231,7 +230,6 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
     this.cache = builder.cache;
     this.internalCache = builder.internalCache;
     this.socketFactory = builder.socketFactory;
-    this.eventListener = builder.eventListener;
     this.eventListenerFactory = builder.eventListenerFactory;
 
     boolean isTLS = false;
@@ -404,10 +402,6 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
     return networkInterceptors;
   }
 
-  public EventListener eventListener() {
-    return eventListener;
-  }
-
   public EventListener.Factory eventListenerFactory() {
     return eventListenerFactory;
   }
@@ -459,7 +453,6 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
     int readTimeout;
     int writeTimeout;
     int pingInterval;
-    EventListener eventListener;
     EventListener.Factory eventListenerFactory;
 
     public Builder() {
@@ -482,8 +475,7 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
       readTimeout = 10_000;
       writeTimeout = 10_000;
       pingInterval = 0;
-      eventListener = EventListener.NULL_EVENT_LISTENER;
-      eventListenerFactory = null;
+      eventListenerFactory = EventListener.constantFactory(EventListener.NULL_EVENT_LISTENER);
     }
 
     Builder(OkHttpClient okHttpClient) {
@@ -513,7 +505,6 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
       this.readTimeout = okHttpClient.readTimeout;
       this.writeTimeout = okHttpClient.writeTimeout;
       this.pingInterval = okHttpClient.pingInterval;
-      this.eventListener = okHttpClient.eventListener;
       this.eventListenerFactory = okHttpClient.eventListenerFactory;
     }
 
@@ -892,13 +883,17 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
       return this;
     }
 
-    public Builder addEventListener(EventListener listener) {
-      eventListener = listener;
+    public Builder setEventListener(EventListener eventListener) {
+      if (eventListener == null) throw new NullPointerException("eventListener == null");
+      this.eventListenerFactory = EventListener.constantFactory(eventListener);
       return this;
     }
 
-    public Builder addEventListenerFactory(EventListener.Factory listenerFactory) {
-      eventListenerFactory = listenerFactory;
+    public Builder setEventListenerFactory(EventListener.Factory eventListenerFactory) {
+      if (eventListenerFactory == null) {
+        throw new NullPointerException("eventListenerFactory == null");
+      }
+      this.eventListenerFactory = eventListenerFactory;
       return this;
     }
 

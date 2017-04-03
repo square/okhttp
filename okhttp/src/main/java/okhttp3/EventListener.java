@@ -26,6 +26,13 @@ import java.util.List;
 public class EventListener {
   public static final EventListener NULL_EVENT_LISTENER = new EventListener() {
   };
+  public static final EventListener.Factory constantFactory(final EventListener listener) {
+    return new EventListener.Factory() {
+      public EventListener create(Call call) {
+        return listener;
+      }
+    };
+  }
 
   public void fetchStart(Call call) {
   }
