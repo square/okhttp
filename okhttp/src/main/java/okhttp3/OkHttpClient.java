@@ -216,6 +216,7 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
   final int readTimeout;
   final int writeTimeout;
   final int pingInterval;
+  final EventListener eventListener;
   final EventListener.Factory eventListenerFactory;
 
   public OkHttpClient() {
@@ -234,6 +235,7 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
     this.cache = builder.cache;
     this.internalCache = builder.internalCache;
     this.socketFactory = builder.socketFactory;
+    this.eventListener = builder.eventListener;
     this.eventListenerFactory = builder.eventListenerFactory;
 
     boolean isTLS = false;
