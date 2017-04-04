@@ -49,11 +49,7 @@ final class RealCall implements Call {
     this.originalRequest = originalRequest;
     this.forWebSocket = forWebSocket;
     this.retryAndFollowUpInterceptor = new RetryAndFollowUpInterceptor(client, forWebSocket);
-    if (null == eventListenerFactory) {
-      this.eventListener = client.eventListener();
-    } else {
-      this.eventListener = eventListenerFactory.create(this);
-    }
+    this.eventListener = eventListenerFactory.create(this);
   }
 
   @Override public Request request() {
