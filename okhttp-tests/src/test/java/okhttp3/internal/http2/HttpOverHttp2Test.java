@@ -42,7 +42,6 @@ import okhttp3.RecordingHostnameVerifier;
 import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
-import okhttp3.StatisticsData;
 import okhttp3.TestUtil;
 import okhttp3.internal.DoubleInetAddressDns;
 import okhttp3.internal.RecordingOkAuthenticator;
@@ -1138,13 +1137,13 @@ public final class HttpOverHttp2Test {
     @Override public void windowUpdate(int streamId, long windowSizeIncrement) {
     }
 
-    @Override public void data(boolean inFinished, int streamId, BufferedSource source, int length, StatisticsData statsData)
+    @Override public void data(boolean inFinished, int streamId, BufferedSource source, int length)
         throws IOException {
       dataFrames.add(length);
     }
 
     @Override public void headers(boolean inFinished, int streamId, int associatedStreamId,
-        List<Header> headerBlock, StatisticsData statsData) {
+        List<Header> headerBlock) {
       headerFrameCount++;
     }
   }

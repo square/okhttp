@@ -31,8 +31,6 @@ import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import okhttp3.Protocol;
-import okhttp3.StatisticsData;
-import okhttp3.StatisticsObserver;
 import okhttp3.internal.NamedRunnable;
 import okhttp3.internal.Util;
 import okhttp3.internal.platform.Platform;
@@ -195,7 +193,7 @@ public final class Http2Connection implements Closeable {
   public Http2Stream pushStream(int associatedStreamId, List<Header> requestHeaders, boolean out)
       throws IOException {
     if (client) throw new IllegalStateException("Client cannot push requests.");
-    return newStream(associatedStreamId, requestHeaders, out, new StatisticsData(), null);
+    return newStream(associatedStreamId, requestHeaders, out);
   }
 
   /**
@@ -203,16 +201,12 @@ public final class Http2Connection implements Closeable {
    * @param out true to create an output stream that we can use to send data to the remote peer.
    * Corresponds to {@code FLAG_FIN}.
    */
-  Http2Stream newStream(List<Header> requestHeaders, boolean out) throws IOException {
-    return newStream(requestHeaders, out, new StatisticsData(), null);
-  }
-
-  public Http2Stream newStream(List<Header> requestHeaders, boolean out, StatisticsData statsData, StatisticsObserver observer) throws IOException {
-    return newStream(0, requestHeaders, out, statsData, observer);
+  public Http2Stream newStream(List<Header> requestHeaders, boolean out) throws IOException {
+    return newStream(0, requestHeaders, out);
   }
 
   private Http2Stream newStream(
-      int associatedStreamId, List<Header> requestHeaders, boolean out, StatisticsData statsData, StatisticsObserver observer) throws IOException {
+      int associatedStreamId, List<Header> requestHeaders, boolean out) throws IOException {
     boolean outFinished = !out;
     boolean inFinished = false;
     boolean flushHeaders;
@@ -226,18 +220,18 @@ public final class Http2Connection implements Closeable {
         }
         streamId = nextStreamId;
         nextStreamId += 2;
-        stream = new Http2Stream(streamId, this, outFinished, inFinished, requestHeaders, statsData, observer);
+        stream = new Http2Stream(streamId, this, outFinished, inFinished, requestHeaders);
         flushHeaders = !out || bytesLeftInWriteWindow == 0L || stream.bytesLeftInWriteWindow == 0L;
         if (stream.isOpen()) {
           streams.put(streamId, stream);
         }
       }
       if (associatedStreamId == 0) {
-        writer.synStream(outFinished, streamId, associatedStreamId, requestHeaders, statsData);
+        writer.synStream(outFinished, streamId, associatedStreamId, requestHeaders);
       } else if (client) {
         throw new IllegalArgumentException("client streams shouldn't have associated stream IDs");
       } else { // HTTP/2 has a PUSH_PROMISE frame.
-        writer.pushPromise(associatedStreamId, streamId, requestHeaders, statsData);
+        writer.pushPromise(associatedStreamId, streamId, requestHeaders);
       }
     }
 
@@ -248,9 +242,9 @@ public final class Http2Connection implements Closeable {
     return stream;
   }
 
-  void writeSynReply(int streamId, boolean outFinished, List<Header> alternating, StatisticsData statsData)
+  void writeSynReply(int streamId, boolean outFinished, List<Header> alternating)
       throws IOException {
-    writer.synReply(outFinished, streamId, alternating, statsData);
+    writer.synReply(outFinished, streamId, alternating);
   }
 
   /**
@@ -265,10 +259,10 @@ public final class Http2Connection implements Closeable {
    * <p>Zero {@code byteCount} writes are not subject to flow control and will not block. The only
    * use case for zero {@code byteCount} is closing a flushed output stream.
    */
-  public void writeData(int streamId, boolean outFinished, Buffer buffer, long byteCount, StatisticsData statsData)
+  public void writeData(int streamId, boolean outFinished, Buffer buffer, long byteCount)
       throws IOException {
     if (byteCount == 0) { // Empty data frames are not flow-controlled.
-      writer.data(outFinished, streamId, buffer, 0, statsData);
+      writer.data(outFinished, streamId, buffer, 0);
       return;
     }
 
@@ -294,7 +288,7 @@ public final class Http2Connection implements Closeable {
       }
 
       byteCount -= toWrite;
-      writer.data(outFinished && byteCount == 0, streamId, buffer, toWrite, statsData);
+      writer.data(outFinished && byteCount == 0, streamId, buffer, toWrite);
     }
   }
 
@@ -514,7 +508,6 @@ public final class Http2Connection implements Closeable {
     Listener listener = Listener.REFUSE_INCOMING_STREAMS;
     PushObserver pushObserver = PushObserver.CANCEL;
     boolean client;
-    StatisticsData statsData;
 
     /**
      * @param client true if this peer initiated the connection; false if this peer accepted the
@@ -545,11 +538,6 @@ public final class Http2Connection implements Closeable {
 
     public Builder pushObserver(PushObserver pushObserver) {
       this.pushObserver = pushObserver;
-      return this;
-    }
-
-    public Builder statisticsData(StatisticsData statsData) {
-      this.statsData = statsData;
       return this;
     }
 
@@ -591,7 +579,7 @@ public final class Http2Connection implements Closeable {
       }
     }
 
-    @Override public void data(boolean inFinished, int streamId, BufferedSource source, int length, StatisticsData statsData)
+    @Override public void data(boolean inFinished, int streamId, BufferedSource source, int length)
         throws IOException {
       if (pushedStream(streamId)) {
         pushDataLater(streamId, source, length, inFinished);
@@ -603,7 +591,6 @@ public final class Http2Connection implements Closeable {
         source.skip(length);
         return;
       }
-      dataStream.mergeDataStats(statsData);
       dataStream.receiveData(source, length);
       if (inFinished) {
         dataStream.receiveFin();
@@ -611,7 +598,7 @@ public final class Http2Connection implements Closeable {
     }
 
     @Override public void headers(boolean inFinished, int streamId, int associatedStreamId,
-        List<Header> headerBlock, StatisticsData statsData) {
+        List<Header> headerBlock) {
       if (pushedStream(streamId)) {
         pushHeadersLater(streamId, headerBlock, inFinished);
         return;
@@ -632,7 +619,7 @@ public final class Http2Connection implements Closeable {
 
           // Create a stream.
           final Http2Stream newStream = new Http2Stream(streamId, Http2Connection.this,
-              false, inFinished, headerBlock, statsData, null);
+              false, inFinished, headerBlock);
           lastGoodStreamId = streamId;
           streams.put(streamId, newStream);
           executor.execute(new NamedRunnable("OkHttp %s stream %d", hostname, streamId) {
@@ -653,7 +640,6 @@ public final class Http2Connection implements Closeable {
       }
 
       // Update an existing stream.
-      stream.mergeHeaderStats(statsData);
       stream.receiveHeaders(headerBlock);
       if (inFinished) stream.receiveFin();
     }

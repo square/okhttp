@@ -44,7 +44,6 @@ import okhttp3.Protocol;
 import okhttp3.Request;
 import okhttp3.Response;
 import okhttp3.Route;
-import okhttp3.StatisticsData;
 import okhttp3.internal.Internal;
 import okhttp3.internal.Util;
 import okhttp3.internal.Version;
@@ -121,8 +120,7 @@ public final class RealConnection extends Http2Connection.Listener implements Co
   }
 
   public void connect(
-      int connectTimeout, int readTimeout, int writeTimeout, boolean connectionRetryEnabled,
-      StatisticsData statsData) {
+      int connectTimeout, int readTimeout, int writeTimeout, boolean connectionRetryEnabled) {
     if (protocol != null) throw new IllegalStateException("already connected");
 
     RouteException routeException = null;
@@ -144,7 +142,7 @@ public final class RealConnection extends Http2Connection.Listener implements Co
     while (true) {
       try {
         if (route.requiresTunnel()) {
-          connectTunnel(connectTimeout, readTimeout, writeTimeout, statsData);
+          connectTunnel(connectTimeout, readTimeout, writeTimeout);
         } else {
           connectSocket(connectTimeout, readTimeout);
         }
@@ -184,7 +182,7 @@ public final class RealConnection extends Http2Connection.Listener implements Co
    * Does all the work to build an HTTPS connection over a proxy tunnel. The catch here is that a
    * proxy server can issue an auth challenge and then close the connection.
    */
-  private void connectTunnel(int connectTimeout, int readTimeout, int writeTimeout, StatisticsData statsData)
+  private void connectTunnel(int connectTimeout, int readTimeout, int writeTimeout)
       throws IOException {
     Request tunnelRequest = createTunnelRequest();
     HttpUrl url = tunnelRequest.url();
@@ -196,7 +194,7 @@ public final class RealConnection extends Http2Connection.Listener implements Co
       }
 
       connectSocket(connectTimeout, readTimeout);
-      tunnelRequest = createTunnel(readTimeout, writeTimeout, tunnelRequest, url, statsData);
+      tunnelRequest = createTunnel(readTimeout, writeTimeout, tunnelRequest, url);
 
       if (tunnelRequest == null) break; // Tunnel successfully created.
 
@@ -313,11 +311,11 @@ public final class RealConnection extends Http2Connection.Listener implements Co
    * the proxy connection. This may need to be retried if the proxy requires authorization.
    */
   private Request createTunnel(int readTimeout, int writeTimeout, Request tunnelRequest,
-      HttpUrl url, StatisticsData statsData) throws IOException {
+      HttpUrl url) throws IOException {
     // Make an SSL Tunnel on the first message pair of each SSL + proxy connection.
     String requestLine = "CONNECT " + Util.hostHeader(url, true) + " HTTP/1.1";
     while (true) {
-      Http1Codec tunnelConnection = new Http1Codec(null, null, source, sink, statsData);
+      Http1Codec tunnelConnection = new Http1Codec(null, null, source, sink);
       source.timeout().timeout(readTimeout, MILLISECONDS);
       sink.timeout().timeout(writeTimeout, MILLISECONDS);
       tunnelConnection.writeRequest(tunnelRequest.headers(), requestLine);
@@ -444,7 +442,7 @@ public final class RealConnection extends Http2Connection.Listener implements Co
       socket.setSoTimeout(client.readTimeoutMillis());
       source.timeout().timeout(client.readTimeoutMillis(), MILLISECONDS);
       sink.timeout().timeout(client.writeTimeoutMillis(), MILLISECONDS);
-      return new Http1Codec(client, streamAllocation, source, sink, streamAllocation.statisticsData());
+      return new Http1Codec(client, streamAllocation, source, sink);
     }
   }
 

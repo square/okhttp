@@ -80,7 +80,6 @@ public final class CallServerInterceptor implements Interceptor {
         .handshake(streamAllocation.connection().handshake())
         .sentRequestAtMillis(sentRequestMillis)
         .receivedResponseAtMillis(System.currentTimeMillis())
-        .statisticsData(httpCodec.statisticsData())
         .build();
 
     int code = response.code();

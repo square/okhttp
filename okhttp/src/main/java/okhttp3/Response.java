@@ -68,12 +68,6 @@ public final class Response implements Closeable {
     this.priorResponse = builder.priorResponse;
     this.sentRequestAtMillis = builder.sentRequestAtMillis;
     this.receivedResponseAtMillis = builder.receivedResponseAtMillis;
-
-    if (builder.statsData != null) {
-      builder.statsData.response = this;
-      if (builder.statsData.request == null)
-        builder.statsData.request = this.request;
-    }
   }
 
   /**
@@ -304,7 +298,6 @@ public final class Response implements Closeable {
     Response priorResponse;
     long sentRequestAtMillis;
     long receivedResponseAtMillis;
-    StatisticsData statsData;
 
     public Builder() {
       headers = new Headers.Builder();
@@ -427,11 +420,6 @@ public final class Response implements Closeable {
 
     public Builder receivedResponseAtMillis(long receivedResponseAtMillis) {
       this.receivedResponseAtMillis = receivedResponseAtMillis;
-      return this;
-    }
-
-    public Builder statisticsData(StatisticsData statsData) {
-      this.statsData = statsData;
       return this;
     }
 

@@ -31,8 +31,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.logging.Logger;
-
-import okhttp3.StatisticsData;
 import okhttp3.internal.Util;
 import okio.Buffer;
 import okio.BufferedSource;
@@ -242,7 +240,7 @@ public final class MockHttp2Peer implements Closeable {
     }
 
     @Override public void headers(boolean inFinished, int streamId,
-        int associatedStreamId, List<Header> headerBlock, StatisticsData statsData) {
+        int associatedStreamId, List<Header> headerBlock) {
       if (this.type != -1) throw new IllegalStateException();
       this.type = Http2.TYPE_HEADERS;
       this.inFinished = inFinished;
@@ -251,7 +249,7 @@ public final class MockHttp2Peer implements Closeable {
       this.headerBlock = headerBlock;
     }
 
-    @Override public void data(boolean inFinished, int streamId, BufferedSource source, int length, StatisticsData statsData)
+    @Override public void data(boolean inFinished, int streamId, BufferedSource source, int length)
         throws IOException {
       if (this.type != -1) throw new IllegalStateException();
       this.type = Http2.TYPE_DATA;

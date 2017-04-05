@@ -89,19 +89,7 @@ public final class RealInterceptorChain implements Interceptor.Chain {
     RealInterceptorChain next = new RealInterceptorChain(
         interceptors, streamAllocation, httpCodec, connection, index + 1, request);
     Interceptor interceptor = interceptors.get(index);
-
-    if (streamAllocation != null && streamAllocation.statisticsData() != null)
-      streamAllocation.statisticsData().request = request;
-
-    Response response;
-    boolean succeeded = false;
-    try {
-      response = interceptor.intercept(next);
-      succeeded = true;
-    } finally {
-      if ( ! succeeded && streamAllocation != null && streamAllocation.statisticsData() != null)
-        streamAllocation.statisticsData().reportAborted(request.observer());
-    }
+    Response response = interceptor.intercept(next);
 
     // Confirm that the next interceptor made its required call to chain.proceed().
     if (httpCodec != null && index + 1 < interceptors.size() && next.calls != 1) {

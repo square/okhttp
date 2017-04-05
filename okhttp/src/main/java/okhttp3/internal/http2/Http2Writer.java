@@ -19,7 +19,6 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.util.List;
 import java.util.logging.Logger;
-import okhttp3.StatisticsData;
 import okio.Buffer;
 import okio.BufferedSink;
 
@@ -101,12 +100,8 @@ final class Http2Writer implements Closeable {
    * @param requestHeaders minimally includes {@code :method}, {@code :scheme}, {@code :authority},
    * and {@code :path}.
    */
-  void pushPromise(int streamId, int promisedStreamId, List<Header> requestHeaders) throws IOException {
-    pushPromise(streamId, promisedStreamId, requestHeaders, new StatisticsData());
-  }
-
   public synchronized void pushPromise(int streamId, int promisedStreamId,
-      List<Header> requestHeaders, StatisticsData statsData) throws IOException {
+      List<Header> requestHeaders) throws IOException {
     if (closed) throw new IOException("closed");
     hpackWriter.writeHeaders(requestHeaders);
 
@@ -117,10 +112,8 @@ final class Http2Writer implements Closeable {
     frameHeader(streamId, length + 4, type, flags);
     sink.writeInt(promisedStreamId & 0x7fffffff);
     sink.write(hpackBuffer, length);
-    statsData.byteCountHeadersSent = 9 + 4 + length; // 9 = framing data. 4 = promised id. length = headers.
 
-    if (byteCount > length) writeContinuationFrames(streamId, byteCount - length, statsData);
-    statsData.finishSendAtMillis = System.currentTimeMillis();
+    if (byteCount > length) writeContinuationFrames(streamId, byteCount - length);
   }
 
   public synchronized void flush() throws IOException {
@@ -128,35 +121,22 @@ final class Http2Writer implements Closeable {
     sink.flush();
   }
 
-  void synStream(boolean outFinished, int streamId,
-      int associatedStreamId, List<Header> headerBlock) throws IOException {
-    synStream(outFinished, streamId, associatedStreamId, headerBlock, new StatisticsData());
-  }
-
   public synchronized void synStream(boolean outFinished, int streamId,
-      int associatedStreamId, List<Header> headerBlock, StatisticsData statsData) throws IOException {
+      int associatedStreamId, List<Header> headerBlock) throws IOException {
     if (closed) throw new IOException("closed");
-    headers(outFinished, streamId, headerBlock, statsData);
-  }
-
-  void synReply(boolean outFinished, int streamId, List<Header> headerBlock) throws IOException {
-    synReply(outFinished, streamId, headerBlock, new StatisticsData());
+    headers(outFinished, streamId, headerBlock);
   }
 
   public synchronized void synReply(boolean outFinished, int streamId,
-      List<Header> headerBlock, StatisticsData statsData) throws IOException {
+      List<Header> headerBlock) throws IOException {
     if (closed) throw new IOException("closed");
-    headers(outFinished, streamId, headerBlock, statsData);
+    headers(outFinished, streamId, headerBlock);
   }
 
-  synchronized void headers(int streamId, List<Header> headerBlock) throws IOException {
+  public synchronized void headers(int streamId, List<Header> headerBlock)
+      throws IOException {
     if (closed) throw new IOException("closed");
-    headers(false, streamId, headerBlock, new StatisticsData());
-  }
-
-  public synchronized void headers(int streamId, List<Header> headerBlock, StatisticsData statsData) throws IOException {
-    if (closed) throw new IOException("closed");
-    headers(false, streamId, headerBlock, statsData);
+    headers(false, streamId, headerBlock);
   }
 
   public synchronized void rstStream(int streamId, ErrorCode errorCode)
@@ -185,28 +165,19 @@ final class Http2Writer implements Closeable {
    * @param byteCount must be between 0 and the minimum of {@code source.length} and {@link
    * #maxDataLength}.
    */
-  void data(boolean outFinished, int streamId, Buffer source, int byteCount) throws IOException {
-    data(outFinished, streamId, source, byteCount, new StatisticsData());
-  }
-
-  public synchronized void data(boolean outFinished, int streamId, Buffer source, int byteCount, StatisticsData statsData)
+  public synchronized void data(boolean outFinished, int streamId, Buffer source, int byteCount)
       throws IOException {
     if (closed) throw new IOException("closed");
     byte flags = FLAG_NONE;
     if (outFinished) flags |= FLAG_END_STREAM;
-    dataFrame(streamId, flags, source, byteCount, statsData);
+    dataFrame(streamId, flags, source, byteCount);
   }
 
   void dataFrame(int streamId, byte flags, Buffer buffer, int byteCount) throws IOException {
-    dataFrame(streamId, flags, buffer, byteCount, new StatisticsData());
-  }
-
-  void dataFrame(int streamId, byte flags, Buffer buffer, int byteCount, StatisticsData statsData) throws IOException {
     byte type = TYPE_DATA;
     frameHeader(streamId, byteCount, type, flags);
     if (byteCount > 0) {
       sink.write(buffer, byteCount);
-      statsData.byteCountBodySent += byteCount;
     }
   }
 
@@ -314,21 +285,16 @@ final class Http2Writer implements Closeable {
     sink.writeByte(i & 0xff);
   }
 
-  private void writeContinuationFrames(int streamId, long byteCount, StatisticsData statsData) throws IOException {
+  private void writeContinuationFrames(int streamId, long byteCount) throws IOException {
     while (byteCount > 0) {
       int length = (int) Math.min(maxFrameSize, byteCount);
       byteCount -= length;
       frameHeader(streamId, length, TYPE_CONTINUATION, byteCount == 0 ? FLAG_END_HEADERS : 0);
       sink.write(hpackBuffer, length);
-      statsData.byteCountHeadersSent += length + 9; // 9 for the frame header.
     }
   }
 
   void headers(boolean outFinished, int streamId, List<Header> headerBlock) throws IOException {
-    headers(outFinished, streamId, headerBlock, new StatisticsData());
-  }
-
-  void headers(boolean outFinished, int streamId, List<Header> headerBlock, StatisticsData statsData) throws IOException {
     if (closed) throw new IOException("closed");
     hpackWriter.writeHeaders(headerBlock);
 
@@ -337,13 +303,9 @@ final class Http2Writer implements Closeable {
     byte type = TYPE_HEADERS;
     byte flags = byteCount == length ? FLAG_END_HEADERS : 0;
     if (outFinished) flags |= FLAG_END_STREAM;
-    statsData.initiateSendAtMillis = System.currentTimeMillis();
     frameHeader(streamId, length, type, flags);
     sink.write(hpackBuffer, length);
-    statsData.byteCountHeadersSent += length + 9; // 9 for the frame header.
 
-    if (byteCount > length) writeContinuationFrames(streamId, byteCount - length, statsData);
-    if (outFinished)
-      statsData.finishSendAtMillis = System.currentTimeMillis();
+    if (byteCount > length) writeContinuationFrames(streamId, byteCount - length);
   }
 }

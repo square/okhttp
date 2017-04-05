@@ -19,7 +19,6 @@ import java.io.IOException;
 import okhttp3.Request;
 import okhttp3.Response;
 import okhttp3.ResponseBody;
-import okhttp3.StatisticsData;
 import okio.Sink;
 
 /** Encodes HTTP requests and decodes HTTP responses. */
@@ -59,7 +58,4 @@ public interface HttpCodec {
    * That may happen later by the connection pool thread.
    */
   void cancel();
-
-  /** Returns the statistics data allocated for this codec. */
-  StatisticsData statisticsData();
 }

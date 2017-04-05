@@ -17,21 +17,19 @@ package okhttp3.internal.http2;
 
 import java.io.IOException;
 import java.util.List;
-
-import okhttp3.StatisticsData;
 import okio.BufferedSource;
 import okio.ByteString;
 
 import static org.junit.Assert.fail;
 
 class BaseTestHandler implements Http2Reader.Handler {
-  @Override public void data(boolean inFinished, int streamId, BufferedSource source, int length, StatisticsData statsData)
+  @Override public void data(boolean inFinished, int streamId, BufferedSource source, int length)
       throws IOException {
     fail();
   }
 
   @Override public void headers(boolean inFinished, int streamId, int associatedStreamId,
-      List<Header> headerBlock, StatisticsData statsData) {
+      List<Header> headerBlock) {
     fail();
   }
 

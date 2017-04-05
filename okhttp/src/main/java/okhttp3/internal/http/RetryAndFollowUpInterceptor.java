@@ -177,9 +177,6 @@ public final class RetryAndFollowUpInterceptor implements Interceptor {
       } else if (streamAllocation.codec() != null) {
         throw new IllegalStateException("Closing the body of " + response
             + " didn't close its backing stream. Bad interceptor?");
-      } else {
-        // We're starting a new request on the same stream. Reset statistics.
-        streamAllocation.resetStatistics();
       }
 
       request = followUp;

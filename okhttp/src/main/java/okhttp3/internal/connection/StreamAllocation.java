@@ -23,7 +23,6 @@ import okhttp3.Address;
 import okhttp3.ConnectionPool;
 import okhttp3.OkHttpClient;
 import okhttp3.Route;
-import okhttp3.StatisticsData;
 import okhttp3.internal.Internal;
 import okhttp3.internal.Util;
 import okhttp3.internal.http.HttpCodec;
@@ -83,14 +82,12 @@ public final class StreamAllocation {
   private boolean released;
   private boolean canceled;
   private HttpCodec codec;
-  private StatisticsData statsData;
 
   public StreamAllocation(ConnectionPool connectionPool, Address address, Object callStackTrace) {
     this.connectionPool = connectionPool;
     this.address = address;
     this.routeSelector = new RouteSelector(address, routeDatabase());
     this.callStackTrace = callStackTrace;
-    statsData = new StatisticsData();
   }
 
   public HttpCodec newStream(OkHttpClient client, boolean doExtensiveHealthChecks) {
@@ -112,10 +109,6 @@ public final class StreamAllocation {
       throw new RouteException(e);
     }
   }
-
-  public StatisticsData statisticsData() { return statsData; }
-
-  public void resetStatistics() { statsData = new StatisticsData(); }
 
   /**
    * Finds a connection and returns it if it is healthy. If it is unhealthy the process is repeated
@@ -173,14 +166,10 @@ public final class StreamAllocation {
       selectedRoute = route;
     }
 
-    statsData.initiateDNSQueryAtMillis = System.currentTimeMillis();
-
     // If we need a route, make one. This is a blocking operation.
     if (selectedRoute == null) {
       selectedRoute = routeSelector.next();
     }
-
-    statsData.finishDNSQueryAtMillis = System.currentTimeMillis();
 
     RealConnection result;
     synchronized (connectionPool) {
@@ -199,12 +188,9 @@ public final class StreamAllocation {
       acquire(result);
     }
 
-    statsData.initiateConnectAtMillis = statsData.finishDNSQueryAtMillis;
     // Do TCP + TLS handshakes. This is a blocking operation.
-    result.connect(connectTimeout, readTimeout, writeTimeout, connectionRetryEnabled, statsData);
+    result.connect(connectTimeout, readTimeout, writeTimeout, connectionRetryEnabled);
     routeDatabase().connected(result.route());
-    statsData.finishConnectAtMillis = System.currentTimeMillis();
-    statsData.isNewConnection = true;
 
     Socket socket = null;
     synchronized (connectionPool) {

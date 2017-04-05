@@ -24,8 +24,6 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
 import okhttp3.ResponseBody;
-import okhttp3.StatisticsData;
-import okhttp3.StatisticsObserver;
 import okhttp3.internal.Internal;
 import okhttp3.internal.Util;
 import okhttp3.internal.connection.RealConnection;
@@ -85,18 +83,13 @@ public final class Http1Codec implements HttpCodec {
   final BufferedSource source;
   final BufferedSink sink;
   int state = STATE_IDLE;
-  final StatisticsData statsData;
-  StatisticsObserver observer;
 
   public Http1Codec(OkHttpClient client, StreamAllocation streamAllocation, BufferedSource source,
-      BufferedSink sink, StatisticsData statsData) {
+      BufferedSink sink) {
     this.client = client;
     this.streamAllocation = streamAllocation;
     this.source = source;
     this.sink = sink;
-    if (statsData == null) // shouldn't be, but maybe from test code.
-      statsData = new StatisticsData();
-    this.statsData = statsData;
   }
 
   @Override public Sink createRequestBody(Request request, long contentLength) {
@@ -119,11 +112,6 @@ public final class Http1Codec implements HttpCodec {
     if (connection != null) connection.cancel();
   }
 
-  @Override
-  public StatisticsData statisticsData() {
-    return statsData;
-  }
-
   /**
    * Prepares the HTTP headers and sends them to the server.
    *
@@ -135,7 +123,6 @@ public final class Http1Codec implements HttpCodec {
    * header field receives the proper value.
    */
   @Override public void writeRequestHeaders(Request request) throws IOException {
-    observer = request.observer();
     String requestLine = RequestLine.get(
         request, streamAllocation.connection().route().proxy().type());
     writeRequest(request.headers(), requestLine);
@@ -177,14 +164,11 @@ public final class Http1Codec implements HttpCodec {
 
   @Override public void finishRequest() throws IOException {
     sink.flush();
-    statsData.finishSendAtMillis = System.currentTimeMillis();
   }
 
   /** Returns bytes of a request header for sending on an HTTP transport. */
   public void writeRequest(Headers headers, String requestLine) throws IOException {
     if (state != STATE_IDLE) throw new IllegalStateException("state: " + state);
-    long origSize = sink.buffer().size();
-    statsData.initiateSendAtMillis = System.currentTimeMillis();
     sink.writeUtf8(requestLine).writeUtf8("\r\n");
     for (int i = 0, size = headers.size(); i < size; i++) {
       sink.writeUtf8(headers.name(i))
@@ -193,10 +177,6 @@ public final class Http1Codec implements HttpCodec {
           .writeUtf8("\r\n");
     }
     sink.writeUtf8("\r\n");
-    long newSize = sink.buffer().size();
-    long len = newSize - origSize;
-    if (len > 0)
-      statsData.byteCountHeadersSent += len;
     state = STATE_OPEN_REQUEST_BODY;
   }
 
@@ -206,13 +186,7 @@ public final class Http1Codec implements HttpCodec {
     }
 
     try {
-      long origSize = source.buffer().size();
       StatusLine statusLine = StatusLine.parse(source.readUtf8LineStrict());
-      statsData.receivedHeadersAtMillis = System.currentTimeMillis();
-      long newSize = source.buffer().size();
-      long len = newSize - origSize;
-      if (len > 0)
-        statsData.byteCountHeadersReceived += len;
 
       Response.Builder responseBuilder = new Response.Builder()
           .protocol(statusLine.protocol)
@@ -237,15 +211,10 @@ public final class Http1Codec implements HttpCodec {
   /** Reads headers or trailers. */
   public Headers readHeaders() throws IOException {
     Headers.Builder headers = new Headers.Builder();
-    long origSize = source.buffer().size();
     // parse the result headers until the first blank line
     for (String line; (line = source.readUtf8LineStrict()).length() != 0; ) {
       Internal.instance.addLenient(headers, line);
     }
-    long newSize = source.buffer().size();
-    long len = newSize - origSize;
-    if (len > 0)
-      statsData.byteCountHeadersReceived += len;
     return headers.build();
   }
 
@@ -316,7 +285,6 @@ public final class Http1Codec implements HttpCodec {
       }
       sink.write(source, byteCount);
       bytesRemaining -= byteCount;
-      statsData.byteCountBodySent += byteCount; // only track what we've actually written.
     }
 
     @Override public void flush() throws IOException {
@@ -352,18 +320,10 @@ public final class Http1Codec implements HttpCodec {
       if (closed) throw new IllegalStateException("closed");
       if (byteCount == 0) return;
 
-      long origSize = sink.buffer().size();
       sink.writeHexadecimalUnsignedLong(byteCount);
-      long newSize = sink.buffer().size();
-      long len = newSize - origSize;
-      if (len > 0)
-        statsData.byteCountBodySent += len;
-
       sink.writeUtf8("\r\n");
       sink.write(source, byteCount);
       sink.writeUtf8("\r\n");
-
-      statsData.byteCountBodySent += byteCount + 4;
     }
 
     @Override public synchronized void flush() throws IOException {
@@ -398,18 +358,10 @@ public final class Http1Codec implements HttpCodec {
 
       detachTimeout(timeout);
 
-      long now = System.currentTimeMillis();
-      if (reuseConnection)
-        statsData.receivedBodyAtMillis = now;
-      else
-        statsData.abortAtMillis = now;
-
       state = STATE_CLOSED;
       if (streamAllocation != null) {
         streamAllocation.streamFinished(!reuseConnection, Http1Codec.this);
       }
-
-      statsData.reportCompleted(observer);
     }
   }
 
@@ -434,8 +386,6 @@ public final class Http1Codec implements HttpCodec {
         endOfInput(false); // The server didn't supply the promised content length.
         throw new ProtocolException("unexpected end of stream");
       }
-
-      statsData.byteCountBodyReceived += read;
 
       bytesRemaining -= read;
       if (bytesRemaining == 0) {
@@ -481,9 +431,6 @@ public final class Http1Codec implements HttpCodec {
         endOfInput(false); // The server didn't supply the promised chunk length.
         throw new ProtocolException("unexpected end of stream");
       }
-
-      statsData.byteCountBodyReceived += read;
-
       bytesRemainingInChunk -= read;
       return read;
     }
@@ -538,7 +485,6 @@ public final class Http1Codec implements HttpCodec {
         endOfInput(true);
         return -1;
       }
-      statsData.byteCountBodyReceived += read;
       return read;
     }
 

@@ -19,8 +19,6 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.util.List;
 import java.util.logging.Logger;
-
-import okhttp3.StatisticsData;
 import okio.Buffer;
 import okio.BufferedSource;
 import okio.ByteString;
@@ -65,10 +63,6 @@ final class Http2Reader implements Closeable {
   private final ContinuationSource continuation;
   private final boolean client;
 
-  private long totalBytesRead;
-  private long frameInitialTBR;
-  private long frameRecvTime;
-
   // Visible for testing.
   final Hpack.Reader hpackReader;
 
@@ -80,9 +74,6 @@ final class Http2Reader implements Closeable {
     this.hpackReader = new Hpack.Reader(4096, continuation);
   }
 
-  public long totalBytesRead() { return totalBytesRead; }
-  public long frameBytesRead() { return totalBytesRead - frameInitialTBR; }
-
   public void readConnectionPreface(Handler handler) throws IOException {
     if (client) {
       // The client reads the initial SETTINGS frame.
@@ -92,7 +83,6 @@ final class Http2Reader implements Closeable {
     } else {
       // The server reads the CONNECTION_PREFACE byte string.
       ByteString connectionPreface = source.readByteString(CONNECTION_PREFACE.size());
-      totalBytesRead += CONNECTION_PREFACE.size();
       if (logger.isLoggable(FINE)) logger.fine(format("<< CONNECTION %s", connectionPreface.hex()));
       if (!CONNECTION_PREFACE.equals(connectionPreface)) {
         throw ioException("Expected a connection header but was %s", connectionPreface.utf8());
@@ -107,8 +97,6 @@ final class Http2Reader implements Closeable {
       return false; // This might be a normal socket close.
     }
 
-    frameInitialTBR = totalBytesRead;
-
     //  0                   1                   2                   3
     //  0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
     // +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
@@ -121,19 +109,15 @@ final class Http2Reader implements Closeable {
     // |                   Frame Payload (0...)                      ...
     // +---------------------------------------------------------------+
     int length = readMedium(source);
-    frameRecvTime = System.currentTimeMillis();
     if (length < 0 || length > INITIAL_MAX_FRAME_SIZE) {
       throw ioException("FRAME_SIZE_ERROR: %s", length);
     }
     byte type = (byte) (source.readByte() & 0xff);
-    totalBytesRead += 1;
     if (requireSettings && type != TYPE_SETTINGS) {
       throw ioException("Expected a SETTINGS frame but was %s", type);
     }
     byte flags = (byte) (source.readByte() & 0xff);
-    totalBytesRead += 1;
     int streamId = (source.readInt() & 0x7fffffff); // Ignore reserved bit.
-    totalBytesRead += 4;
     if (logger.isLoggable(FINE)) logger.fine(frameLog(true, streamId, length, type, flags));
 
     switch (type) {
@@ -186,12 +170,7 @@ final class Http2Reader implements Closeable {
 
     boolean endStream = (flags & FLAG_END_STREAM) != 0;
 
-    short padding = 0;
-
-    if ((flags & FLAG_PADDED) != 0) {
-      padding = (short) (source.readByte() & 0xff);
-      totalBytesRead += 1;
-    }
+    short padding = (flags & FLAG_PADDED) != 0 ? (short) (source.readByte() & 0xff) : 0;
 
     if ((flags & FLAG_PRIORITY) != 0) {
       readPriority(handler, streamId);
@@ -202,8 +181,7 @@ final class Http2Reader implements Closeable {
 
     List<Header> headerBlock = readHeaderBlock(length, padding, flags, streamId);
 
-    handler.headers(endStream, streamId, -1, headerBlock,
-      StatisticsData.allocateForReceivedHeaders(frameRecvTime, frameBytesRead()));
+    handler.headers(endStream, streamId, -1, headerBlock);
   }
 
   private List<Header> readHeaderBlock(int length, short padding, byte flags, int streamId)
@@ -216,7 +194,6 @@ final class Http2Reader implements Closeable {
     // TODO: Concat multi-value headers with 0x0, except COOKIE, which uses 0x3B, 0x20.
     // http://tools.ietf.org/html/draft-ietf-httpbis-http2-17#section-8.1.2.5
     hpackReader.readHeaders();
-    totalBytesRead += hpackReader.totalBytesRead();
     return hpackReader.getAndResetHeaderList();
   }
 
@@ -231,16 +208,10 @@ final class Http2Reader implements Closeable {
       throw ioException("PROTOCOL_ERROR: FLAG_COMPRESSED without SETTINGS_COMPRESS_DATA");
     }
 
-    short padding = 0;
-    if ((flags & FLAG_PADDED) != 0) {
-      padding = (short) (source.readByte() & 0xff);
-      totalBytesRead += 1;
-    }
-
+    short padding = (flags & FLAG_PADDED) != 0 ? (short) (source.readByte() & 0xff) : 0;
     length = lengthWithoutPadding(length, flags, padding);
 
-    handler.data(inFinished, streamId, source, length,
-      StatisticsData.allocateForReceivedData(frameRecvTime, frameBytesRead()));
+    handler.data(inFinished, streamId, source, length);
     source.skip(padding);
   }
 
@@ -253,11 +224,9 @@ final class Http2Reader implements Closeable {
 
   private void readPriority(Handler handler, int streamId) throws IOException {
     int w1 = source.readInt();
-    totalBytesRead += 4;
     boolean exclusive = (w1 & 0x80000000) != 0;
     int streamDependency = (w1 & 0x7fffffff);
     int weight = (source.readByte() & 0xff) + 1;
-    totalBytesRead += 1;
     handler.priority(streamId, streamDependency, weight, exclusive);
   }
 
@@ -266,7 +235,6 @@ final class Http2Reader implements Closeable {
     if (length != 4) throw ioException("TYPE_RST_STREAM length: %d != 4", length);
     if (streamId == 0) throw ioException("TYPE_RST_STREAM streamId == 0");
     int errorCodeInt = source.readInt();
-    totalBytesRead += 4;
     ErrorCode errorCode = ErrorCode.fromHttp2(errorCodeInt);
     if (errorCode == null) {
       throw ioException("TYPE_RST_STREAM unexpected error code: %d", errorCodeInt);
@@ -287,9 +255,7 @@ final class Http2Reader implements Closeable {
     Settings settings = new Settings();
     for (int i = 0; i < length; i += 6) {
       short id = source.readShort();
-      totalBytesRead += 2;
       int value = source.readInt();
-      totalBytesRead += 4;
 
       switch (id) {
         case 1: // SETTINGS_HEADER_TABLE_SIZE
@@ -328,13 +294,8 @@ final class Http2Reader implements Closeable {
     if (streamId == 0) {
       throw ioException("PROTOCOL_ERROR: TYPE_PUSH_PROMISE streamId == 0");
     }
-    short padding = 0;
-    if ((flags & FLAG_PADDED) != 0) {
-      padding = (short) (source.readByte() & 0xff);
-      totalBytesRead += 1;
-    }
+    short padding = (flags & FLAG_PADDED) != 0 ? (short) (source.readByte() & 0xff) : 0;
     int promisedStreamId = source.readInt() & 0x7fffffff;
-    totalBytesRead += 4;
     length -= 4; // account for above read.
     length = lengthWithoutPadding(length, flags, padding);
     List<Header> headerBlock = readHeaderBlock(length, padding, flags, streamId);
@@ -346,9 +307,7 @@ final class Http2Reader implements Closeable {
     if (length != 8) throw ioException("TYPE_PING length != 8: %s", length);
     if (streamId != 0) throw ioException("TYPE_PING streamId != 0");
     int payload1 = source.readInt();
-    totalBytesRead += 4;
     int payload2 = source.readInt();
-    totalBytesRead += 4;
     boolean ack = (flags & FLAG_ACK) != 0;
     handler.ping(ack, payload1, payload2);
   }
@@ -358,9 +317,7 @@ final class Http2Reader implements Closeable {
     if (length < 8) throw ioException("TYPE_GOAWAY length < 8: %s", length);
     if (streamId != 0) throw ioException("TYPE_GOAWAY streamId != 0");
     int lastStreamId = source.readInt();
-    totalBytesRead += 4;
     int errorCodeInt = source.readInt();
-    totalBytesRead += 4;
     int opaqueDataLength = length - 8;
     ErrorCode errorCode = ErrorCode.fromHttp2(errorCodeInt);
     if (errorCode == null) {
@@ -369,7 +326,6 @@ final class Http2Reader implements Closeable {
     ByteString debugData = EMPTY;
     if (opaqueDataLength > 0) { // Must read debug data in order to not corrupt the connection.
       debugData = source.readByteString(opaqueDataLength);
-      totalBytesRead += opaqueDataLength;
     }
     handler.goAway(lastStreamId, errorCode, debugData);
   }
@@ -378,7 +334,6 @@ final class Http2Reader implements Closeable {
       throws IOException {
     if (length != 4) throw ioException("TYPE_WINDOW_UPDATE length !=4: %s", length);
     long increment = (source.readInt() & 0x7fffffffL);
-    totalBytesRead += 4;
     if (increment == 0) throw ioException("windowSizeIncrement was 0", increment);
     handler.windowUpdate(streamId, increment);
   }
@@ -414,9 +369,7 @@ final class Http2Reader implements Closeable {
         // TODO: test case for empty continuation header?
       }
 
-      final long amt = Math.min(byteCount, left);
-      long read = source.read(sink, amt);
-      // We track the number of bytes read from the Hpack.Reader
+      long read = source.read(sink, Math.min(byteCount, left));
       if (read == -1) return -1;
       left -= read;
       return read;
@@ -458,7 +411,7 @@ final class Http2Reader implements Closeable {
   }
 
   interface Handler {
-    void data(boolean inFinished, int streamId, BufferedSource source, int length, StatisticsData statsData)
+    void data(boolean inFinished, int streamId, BufferedSource source, int length)
         throws IOException;
 
     /**
@@ -470,7 +423,7 @@ final class Http2Reader implements Closeable {
      * @param associatedStreamId the stream that triggered the sender to create this stream.
      */
     void headers(boolean inFinished, int streamId, int associatedStreamId,
-        List<Header> headerBlock, StatisticsData statsData);
+        List<Header> headerBlock);
 
     void rstStream(int streamId, ErrorCode errorCode);
 
