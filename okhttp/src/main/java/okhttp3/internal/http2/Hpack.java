@@ -114,11 +114,13 @@ final class Hpack {
   // http://tools.ietf.org/html/draft-ietf-httpbis-header-compression-12#section-3.1
   static final class Reader {
 
-    private final List<Header> headerList = new ArrayList<>();
+    private List<Header> headerList = new ArrayList<>();
     private final BufferedSource source;
 
     private final int headerTableSizeSetting;
     private int maxDynamicTableByteCount;
+
+    private long totalBytesRead;
 
     // Visible for testing.
     Header[] dynamicTable = new Header[8];
@@ -136,6 +138,8 @@ final class Hpack {
       this.maxDynamicTableByteCount = maxDynamicTableByteCount;
       this.source = Okio.buffer(source);
     }
+
+    long totalBytesRead() { return totalBytesRead; }
 
     int maxDynamicTableByteCount() {
       return maxDynamicTableByteCount;
@@ -182,7 +186,7 @@ final class Hpack {
      */
     void readHeaders() throws IOException {
       while (!source.exhausted()) {
-        int b = source.readByte() & 0xff;
+        int b = readByte();
         if (b == 0x80) { // 10000000
           throw new IOException("index == 0");
         } else if ((b & 0x80) == 0x80) { // 1NNNNNNN
@@ -210,8 +214,9 @@ final class Hpack {
     }
 
     public List<Header> getAndResetHeaderList() {
-      List<Header> result = new ArrayList<>(headerList);
-      headerList.clear();
+      List<Header> result = headerList;
+      headerList = new ArrayList<>();
+      totalBytesRead = 0;
       return result;
     }
 
@@ -307,7 +312,9 @@ final class Hpack {
     }
 
     private int readByte() throws IOException {
-      return source.readByte() & 0xff;
+      int b = source.readByte() & 0xff;
+      totalBytesRead += 1;
+      return b;
     }
 
     int readInt(int firstByte, int prefixMask) throws IOException {
@@ -338,11 +345,15 @@ final class Hpack {
       boolean huffmanDecode = (firstByte & 0x80) == 0x80; // 1NNNNNNN
       int length = readInt(firstByte, PREFIX_7_BITS);
 
+      ByteString bs;
+
       if (huffmanDecode) {
-        return ByteString.of(Huffman.get().decode(source.readByteArray(length)));
+        bs = ByteString.of(Huffman.get().decode(source.readByteArray(length)));
       } else {
-        return source.readByteString(length);
+        bs = source.readByteString(length);
       }
+      totalBytesRead += length;
+      return bs;
     }
   }
 

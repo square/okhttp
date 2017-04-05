@@ -19,6 +19,8 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import okhttp3.StatisticsData;
 import okhttp3.internal.Util;
 import okio.Buffer;
 import okio.BufferedSink;
@@ -69,7 +71,7 @@ public final class Http2Test {
 
     reader.nextFrame(false, new BaseTestHandler() {
       @Override public void headers(boolean inFinished, int streamId,
-          int associatedStreamId, List<Header> headerBlock) {
+          int associatedStreamId, List<Header> headerBlock, StatisticsData statsData) {
         assertTrue(inFinished);
         assertEquals(expectedStreamId, streamId);
         assertEquals(-1, associatedStreamId);
@@ -99,7 +101,7 @@ public final class Http2Test {
       }
 
       @Override public void headers(boolean inFinished, int streamId,
-          int associatedStreamId, List<Header> nameValueBlock) {
+          int associatedStreamId, List<Header> nameValueBlock, StatisticsData statsData) {
         assertFalse(inFinished);
         assertEquals(expectedStreamId, streamId);
         assertEquals(-1, associatedStreamId);
@@ -133,7 +135,7 @@ public final class Http2Test {
     // Reading the above frames should result in a concatenated headerBlock.
     reader.nextFrame(false, new BaseTestHandler() {
       @Override public void headers(boolean inFinished, int streamId,
-          int associatedStreamId, List<Header> headerBlock) {
+          int associatedStreamId, List<Header> headerBlock, StatisticsData statsData) {
         assertFalse(inFinished);
         assertEquals(expectedStreamId, streamId);
         assertEquals(-1, associatedStreamId);
@@ -380,7 +382,7 @@ public final class Http2Test {
 
     reader.nextFrame(false, new BaseTestHandler() {
       @Override public void data(boolean inFinished, int streamId, BufferedSource source,
-          int length) throws IOException {
+          int length, StatisticsData statsData) throws IOException {
         assertFalse(inFinished);
         assertEquals(expectedStreamId, streamId);
         assertEquals(Http2.INITIAL_MAX_FRAME_SIZE, length);
@@ -704,7 +706,7 @@ public final class Http2Test {
   private Http2Reader.Handler assertHeaderBlock() {
     return new BaseTestHandler() {
       @Override public void headers(boolean inFinished, int streamId,
-          int associatedStreamId, List<Header> headerBlock) {
+          int associatedStreamId, List<Header> headerBlock, StatisticsData statsData) {
         assertFalse(inFinished);
         assertEquals(expectedStreamId, streamId);
         assertEquals(-1, associatedStreamId);
@@ -716,7 +718,7 @@ public final class Http2Test {
   private Http2Reader.Handler assertData() {
     return new BaseTestHandler() {
       @Override public void data(boolean inFinished, int streamId, BufferedSource source,
-          int length) throws IOException {
+          int length, StatisticsData statsData) throws IOException {
         assertFalse(inFinished);
         assertEquals(expectedStreamId, streamId);
         assertEquals(1123, length);
