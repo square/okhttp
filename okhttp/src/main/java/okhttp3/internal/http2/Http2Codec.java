@@ -27,6 +27,7 @@ import okhttp3.Protocol;
 import okhttp3.Request;
 import okhttp3.Response;
 import okhttp3.ResponseBody;
+import okhttp3.StatisticsData;
 import okhttp3.internal.Internal;
 import okhttp3.internal.Util;
 import okhttp3.internal.connection.StreamAllocation;
@@ -86,12 +87,14 @@ public final class Http2Codec implements HttpCodec {
   final StreamAllocation streamAllocation;
   private final Http2Connection connection;
   private Http2Stream stream;
+  private StatisticsData statsData;
 
   public Http2Codec(
       OkHttpClient client, StreamAllocation streamAllocation, Http2Connection connection) {
     this.client = client;
     this.streamAllocation = streamAllocation;
     this.connection = connection;
+    this.statsData = streamAllocation.statisticsData();
   }
 
   @Override public Sink createRequestBody(Request request, long contentLength) {
@@ -103,7 +106,7 @@ public final class Http2Codec implements HttpCodec {
 
     boolean hasRequestBody = request.body() != null;
     List<Header> requestHeaders = http2HeadersList(request);
-    stream = connection.newStream(requestHeaders, hasRequestBody);
+    stream = connection.newStream(requestHeaders, hasRequestBody, statsData, request.observer());
     stream.readTimeout().timeout(client.readTimeoutMillis(), TimeUnit.MILLISECONDS);
     stream.writeTimeout().timeout(client.writeTimeoutMillis(), TimeUnit.MILLISECONDS);
   }
@@ -114,6 +117,7 @@ public final class Http2Codec implements HttpCodec {
 
   @Override public void finishRequest() throws IOException {
     stream.getSink().close();
+    statsData.finishSendAtMillis = System.currentTimeMillis();
   }
 
   @Override public Response.Builder readResponseHeaders(boolean expectContinue) throws IOException {
@@ -187,6 +191,11 @@ public final class Http2Codec implements HttpCodec {
 
   @Override public void cancel() {
     if (stream != null) stream.closeLater(ErrorCode.CANCEL);
+  }
+
+  @Override
+  public StatisticsData statisticsData() {
+    return statsData;
   }
 
   class StreamFinishingSource extends ForwardingSource {
