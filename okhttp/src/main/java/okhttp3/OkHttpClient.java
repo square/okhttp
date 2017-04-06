@@ -216,6 +216,7 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
   final int readTimeout;
   final int writeTimeout;
   final int pingInterval;
+  final EventListener.Factory eventListenerFactory;
 
   public OkHttpClient() {
     this(new Builder());
@@ -233,6 +234,7 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
     this.cache = builder.cache;
     this.internalCache = builder.internalCache;
     this.socketFactory = builder.socketFactory;
+    this.eventListenerFactory = builder.eventListenerFactory;
 
     boolean isTLS = false;
     for (ConnectionSpec spec : connectionSpecs) {
@@ -404,6 +406,10 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
     return networkInterceptors;
   }
 
+  public EventListener.Factory eventListenerFactory() {
+    return eventListenerFactory;
+  }
+
   /**
    * Prepares the {@code request} to be executed at some point in the future.
    */
@@ -451,6 +457,7 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
     int readTimeout;
     int writeTimeout;
     int pingInterval;
+    EventListener.Factory eventListenerFactory;
 
     public Builder() {
       dispatcher = new Dispatcher();
@@ -472,6 +479,7 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
       readTimeout = 10_000;
       writeTimeout = 10_000;
       pingInterval = 0;
+      eventListenerFactory = EventListener.constantFactory(EventListener.NULL_EVENT_LISTENER);
     }
 
     Builder(OkHttpClient okHttpClient) {
@@ -501,6 +509,7 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
       this.readTimeout = okHttpClient.readTimeout;
       this.writeTimeout = okHttpClient.writeTimeout;
       this.pingInterval = okHttpClient.pingInterval;
+      this.eventListenerFactory = okHttpClient.eventListenerFactory;
     }
 
     /**
@@ -875,6 +884,20 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
 
     public Builder addNetworkInterceptor(Interceptor interceptor) {
       networkInterceptors.add(interceptor);
+      return this;
+    }
+
+    public Builder setEventListener(EventListener eventListener) {
+      if (eventListener == null) throw new NullPointerException("eventListener == null");
+      this.eventListenerFactory = EventListener.constantFactory(eventListener);
+      return this;
+    }
+
+    public Builder setEventListenerFactory(EventListener.Factory eventListenerFactory) {
+      if (eventListenerFactory == null) {
+        throw new NullPointerException("eventListenerFactory == null");
+      }
+      this.eventListenerFactory = eventListenerFactory;
       return this;
     }
 
