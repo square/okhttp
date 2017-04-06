@@ -491,9 +491,14 @@ public final class HttpUrlTest {
     assertEquals("a::b:0:0:0", HttpUrl.parse("http://[a:0:0:0:b:0:0:0]/").host());
     assertEquals("::a:b:0:0:0", HttpUrl.parse("http://[0:0:0:a:b:0:0:0]/").host());
     assertEquals("::a:0:0:0:b", HttpUrl.parse("http://[0:0:0:a:0:0:0:b]/").host());
-    assertEquals("::a:b:c:d:e:f:1", HttpUrl.parse("http://[0:a:b:c:d:e:f:1]/").host());
-    assertEquals("a:b:c:d:e:f:1::", HttpUrl.parse("http://[a:b:c:d:e:f:1:0]/").host());
+    assertEquals("0:a:b:c:d:e:f:1", HttpUrl.parse("http://[0:a:b:c:d:e:f:1]/").host());
+    assertEquals("a:b:c:d:e:f:1:0", HttpUrl.parse("http://[a:b:c:d:e:f:1:0]/").host());
     assertEquals("ff01::101", HttpUrl.parse("http://[FF01:0:0:0:0:0:0:101]/").host());
+    assertEquals("2001:db8::1", HttpUrl.parse("http://[2001:db8::1]/").host());
+    assertEquals("2001:db8::2:1", HttpUrl.parse("http://[2001:db8:0:0:0:0:2:1]/").host());
+    assertEquals("2001:db8:0:1:1:1:1:1", HttpUrl.parse("http://[2001:db8:0:1:1:1:1:1]/").host());
+    assertEquals("2001:db8::1:0:0:1", HttpUrl.parse("http://[2001:db8:0:0:1:0:0:1]/").host());
+    assertEquals("2001:0:0:1::1", HttpUrl.parse("http://[2001:0:0:1:0:0:0:1]/").host());
     assertEquals("1::", HttpUrl.parse("http://[1:0:0:0:0:0:0:0]/").host());
     assertEquals("::1", HttpUrl.parse("http://[0:0:0:0:0:0:0:1]/").host());
     assertEquals("::", HttpUrl.parse("http://[0:0:0:0:0:0:0:0]/").host());

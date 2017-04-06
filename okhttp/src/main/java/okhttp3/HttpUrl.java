@@ -1677,8 +1677,11 @@ public final class HttpUrl {
       return true; // Success.
     }
 
+    /** Encodes an IPv6 address in canonical form according to RFC 5952. */
     private static String inet6AddressToAscii(byte[] address) {
       // Go through the address looking for the longest run of 0s. Each group is 2-bytes.
+      // A run must be longer than one group (section 4.2.2).
+      // If there are multiple equal runs, the first one must be used (section 4.2.3).
       int longestRunOffset = -1;
       int longestRunLength = 0;
       for (int i = 0; i < address.length; i += 2) {
@@ -1687,7 +1690,7 @@ public final class HttpUrl {
           i += 2;
         }
         int currentRunLength = i - currentRunOffset;
-        if (currentRunLength > longestRunLength) {
+        if (currentRunLength > longestRunLength && currentRunLength >= 4) {
           longestRunOffset = currentRunOffset;
           longestRunLength = currentRunLength;
         }
