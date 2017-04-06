@@ -12,6 +12,8 @@ public class StatisticsData {
   public long finishDNSQueryAtMillis;
   public long initiateConnectAtMillis;
   public long finishConnectAtMillis;
+  public Address address;
+  public Route route;
 
   // Request and Response times. May be zero on abort.
   public long initiateSendAtMillis;
@@ -67,6 +69,12 @@ public class StatisticsData {
     // Response generally isn't populated until the very end, but just in case...
     if (response == null)
       response = otherData.response;
+
+    if (address == null)
+      address = otherData.address;
+
+    if (route == null)
+      route = otherData.route;
   }
 
   public void mergeDataStats(StatisticsData otherData) {

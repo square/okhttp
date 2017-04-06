@@ -91,6 +91,7 @@ public final class StreamAllocation {
     this.routeSelector = new RouteSelector(address, routeDatabase());
     this.callStackTrace = callStackTrace;
     statsData = new StatisticsData();
+    statsData.address = address;
   }
 
   public HttpCodec newStream(OkHttpClient client, boolean doExtensiveHealthChecks) {
@@ -102,6 +103,7 @@ public final class StreamAllocation {
     try {
       RealConnection resultConnection = findHealthyConnection(connectTimeout, readTimeout,
           writeTimeout, connectionRetryEnabled, doExtensiveHealthChecks);
+      statsData.route = resultConnection.route();
       HttpCodec resultCodec = resultConnection.newCodec(client, this);
 
       synchronized (connectionPool) {

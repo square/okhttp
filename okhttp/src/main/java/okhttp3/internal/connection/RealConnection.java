@@ -317,7 +317,7 @@ public final class RealConnection extends Http2Connection.Listener implements Co
     // Make an SSL Tunnel on the first message pair of each SSL + proxy connection.
     String requestLine = "CONNECT " + Util.hostHeader(url, true) + " HTTP/1.1";
     while (true) {
-      Http1Codec tunnelConnection = new Http1Codec(null, null, source, sink, statsData);
+      Http1Codec tunnelConnection = new Http1Codec(null, null, source, sink, null);
       source.timeout().timeout(readTimeout, MILLISECONDS);
       sink.timeout().timeout(writeTimeout, MILLISECONDS);
       tunnelConnection.writeRequest(tunnelRequest.headers(), requestLine);

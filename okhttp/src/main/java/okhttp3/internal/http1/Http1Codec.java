@@ -94,7 +94,7 @@ public final class Http1Codec implements HttpCodec {
     this.streamAllocation = streamAllocation;
     this.source = source;
     this.sink = sink;
-    if (statsData == null) // shouldn't be, but maybe from test code.
+    if (statsData == null) // Will be null when this connection is a tunnel.
       statsData = new StatisticsData();
     this.statsData = statsData;
   }

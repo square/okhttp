@@ -114,7 +114,7 @@ final class Hpack {
   // http://tools.ietf.org/html/draft-ietf-httpbis-header-compression-12#section-3.1
   static final class Reader {
 
-    private List<Header> headerList = new ArrayList<>();
+    private final List<Header> headerList = new ArrayList<>();
     private final BufferedSource source;
 
     private final int headerTableSizeSetting;
@@ -214,8 +214,8 @@ final class Hpack {
     }
 
     public List<Header> getAndResetHeaderList() {
-      List<Header> result = headerList;
-      headerList = new ArrayList<>();
+      List<Header> result = new ArrayList<>(headerList);
+      headerList.clear();
       totalBytesRead = 0;
       return result;
     }
