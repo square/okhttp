@@ -24,6 +24,8 @@ import okio.Timeout;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.fail;
 
 public final class ResponseTest {
@@ -59,6 +61,19 @@ public final class ResponseTest {
     assertEquals("abcdef", response.body().string());
     assertEquals("abcd", p1.string());
     assertEquals("ab", p2.string());
+  }
+
+  @Test public void closeDoesNotThrowNPEIfBodyIsNull() throws Exception {
+    Response response = newResponse(null);
+    response.close();
+    assertNull(response.body());
+  }
+
+  @Test public void closingResponseTwiceSucceeds() throws Exception {
+    Response response = newResponse(responseBody("abcdef"));
+    assertNotNull(response.body());
+    response.close();
+    response.close();
   }
 
   /**
