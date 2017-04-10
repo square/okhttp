@@ -55,7 +55,6 @@ public final class TestLogHandler extends Handler {
     if (message == null) {
       throw new AssertionError("Timed out waiting for log message.");
     }
-    logs.take();
     return message;
   }
 }
