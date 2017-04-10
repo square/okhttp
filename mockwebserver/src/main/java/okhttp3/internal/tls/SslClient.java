@@ -118,7 +118,7 @@ public final class SslClient {
       return this;
     }
 
-    public Builder setSslContext(SSLContext sslContext) {
+    public Builder sslContext(SSLContext sslContext) {
       this.sslContext = sslContext;
       return this;
     }

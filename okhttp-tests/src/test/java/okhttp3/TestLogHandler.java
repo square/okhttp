@@ -15,6 +15,8 @@
  */
 package okhttp3;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
@@ -42,11 +44,18 @@ public final class TestLogHandler extends Handler {
   @Override public void close() {
   }
 
+  public List<String> takeAll() {
+    List<String> list = new ArrayList<>();
+    logs.drainTo(list);
+    return list;
+  }
+
   public String take() throws InterruptedException {
     String message = logs.poll(10, TimeUnit.SECONDS);
     if (message == null) {
       throw new AssertionError("Timed out waiting for log message.");
     }
+    logs.take();
     return message;
   }
 }

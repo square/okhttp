@@ -22,11 +22,12 @@ import java.net.HttpURLConnection;
 import java.net.SocketTimeoutException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.net.ssl.HostnameVerifier;
 import okhttp3.Cache;
 import okhttp3.Call;
@@ -42,11 +43,11 @@ import okhttp3.RecordingHostnameVerifier;
 import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
+import okhttp3.TestLogHandler;
 import okhttp3.TestUtil;
 import okhttp3.internal.DoubleInetAddressDns;
 import okhttp3.internal.RecordingOkAuthenticator;
 import okhttp3.internal.SingleInetAddressDns;
-import okhttp3.internal.SocketRecorder;
 import okhttp3.internal.Util;
 import okhttp3.internal.connection.RealConnection;
 import okhttp3.internal.tls.SslClient;
@@ -75,11 +76,12 @@ import static okhttp3.TestUtil.defaultClient;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 /** Test how SPDY interacts with HTTP/2 features. */
 public final class HttpOverHttp2Test {
+  private static final Logger http2Logger = Logger.getLogger(Http2.class.getName());
+
   @Rule public final TemporaryFolder tempDir = new TemporaryFolder();
   @Rule public final MockWebServer server = new MockWebServer();
 
@@ -87,6 +89,8 @@ public final class HttpOverHttp2Test {
   private HostnameVerifier hostnameVerifier = new RecordingHostnameVerifier();
   private OkHttpClient client;
   private Cache cache;
+  private TestLogHandler http2Handler = new TestLogHandler();
+  private Level previousLevel;
 
   @Before public void setUp() throws Exception {
     server.useHttps(sslClient.socketFactory, false);
@@ -97,10 +101,16 @@ public final class HttpOverHttp2Test {
         .sslSocketFactory(sslClient.socketFactory, sslClient.trustManager)
         .hostnameVerifier(hostnameVerifier)
         .build();
+
+    http2Logger.addHandler(http2Handler);
+    previousLevel = http2Logger.getLevel();
+    http2Logger.setLevel(Level.FINE);
   }
 
   @After public void tearDown() throws Exception {
     Authenticator.setDefault(null);
+    http2Logger.removeHandler(http2Handler);
+    http2Logger.setLevel(previousLevel);
   }
 
   @Test public void get() throws Exception {
@@ -804,12 +814,6 @@ public final class HttpOverHttp2Test {
     server.enqueue(new MockResponse()
         .setBody("ABC"));
 
-    SocketRecorder socketRecorder = new SocketRecorder();
-    client = client.newBuilder()
-        .sslSocketFactory(socketRecorder.sslSocketFactory(sslClient.socketFactory),
-            sslClient.trustManager)
-        .build();
-
     Call call = client.newCall(new Request.Builder()
         .url(server.url("/"))
         .method("DELETE", null)
@@ -817,30 +821,16 @@ public final class HttpOverHttp2Test {
     Response response = call.execute();
     assertEquals("ABC", response.body().string());
 
-    // Replay the bytes written by the client to confirm no data frames were sent.
-    SocketRecorder.RecordedSocket recordedSocket = socketRecorder.takeSocket();
-    Buffer buffer = new Buffer();
-    buffer.write(recordedSocket.bytesWritten());
+    assertEquals(Protocol.HTTP_2, response.protocol());
 
-    RecordingHandler handler = new RecordingHandler();
-    Http2Reader reader = new Http2Reader(buffer, false);
-    reader.readConnectionPreface(null);
-    while (reader.nextFrame(false, handler)) {
-    }
-
-    assertEquals(1, handler.headerFrameCount);
-    assertTrue(handler.dataFrames.isEmpty());
+    List<String> logs = http2Handler.takeAll();
+    assertEquals(20, logs.size());
+    assertEquals("FINE: >> 0x00000003    47 HEADERS       END_STREAM|END_HEADERS", firstFrame(logs, "HEADERS"));
   }
 
   @Test public void emptyDataFrameSentWithEmptyBody() throws Exception {
     server.enqueue(new MockResponse()
         .setBody("ABC"));
-
-    SocketRecorder socketRecorder = new SocketRecorder();
-    client = client.newBuilder()
-        .sslSocketFactory(socketRecorder.sslSocketFactory(sslClient.socketFactory),
-            sslClient.trustManager)
-        .build();
 
     Call call = client.newCall(new Request.Builder()
         .url(server.url("/"))
@@ -849,19 +839,21 @@ public final class HttpOverHttp2Test {
     Response response = call.execute();
     assertEquals("ABC", response.body().string());
 
-    // Replay the bytes written by the client to confirm an empty data frame was sent.
-    SocketRecorder.RecordedSocket recordedSocket = socketRecorder.takeSocket();
-    Buffer buffer = new Buffer();
-    buffer.write(recordedSocket.bytesWritten());
+    assertEquals(Protocol.HTTP_2, response.protocol());
 
-    RecordingHandler handler = new RecordingHandler();
-    Http2Reader reader = new Http2Reader(buffer, false);
-    reader.readConnectionPreface(null);
-    while (reader.nextFrame(false, handler)) {
+    List<String> logs = http2Handler.takeAll();
+    assertEquals(22, logs.size());
+    assertEquals("FINE: >> 0x00000003    50 HEADERS       END_HEADERS", firstFrame(logs, "HEADERS"));
+    assertEquals("FINE: >> 0x00000003     0 DATA          END_STREAM", firstFrame(logs, "DATA"));
+  }
+
+  private String firstFrame(List<String> logs, String type) {
+    for (String l: logs) {
+      if (l.contains(type)) {
+        return l;
+      }
     }
-
-    assertEquals(1, handler.headerFrameCount);
-    assertEquals(Collections.singletonList(0), handler.dataFrames);
+    return null;
   }
 
   /**

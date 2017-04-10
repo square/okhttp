@@ -32,7 +32,6 @@ import okhttp3.Request;
 import okhttp3.Response;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -226,7 +225,7 @@ public final class ClientAuthTest {
         .addTrustedCertificate(serverRootCa.certificate)
         .addTrustedCertificate(clientRootCa.certificate)
         .certificateChain(serverCert, serverIntermediateCa)
-        .setSslContext(getSslContext())
+        .sslContext(getSslContext())
         .build();
 
     return new DelegatingSSLSocketFactory(serverSslClient.socketFactory) {
