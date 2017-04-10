@@ -18,6 +18,7 @@ package okhttp3.internal.tls;
 import java.io.IOException;
 import java.net.SocketException;
 import java.security.GeneralSecurityException;
+import javax.net.ssl.SSLException;
 import javax.net.ssl.SSLHandshakeException;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
@@ -29,12 +30,15 @@ import okhttp3.Request;
 import okhttp3.Response;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 
 import static okhttp3.TestUtil.defaultClient;
+import static okhttp3.internal.platform.PlatformTest.getPlatform;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 public final class ClientAuthTest {
@@ -163,8 +167,12 @@ public final class ClientAuthTest {
       call.execute();
       fail();
     } catch (SSLHandshakeException expected) {
+    } catch (SSLException expected) {
+      // Conscrypt
+      assertTrue(getPlatform().equals("conscrypt"));
     } catch (SocketException expected) {
       // JDK 9
+      assertTrue(getPlatform().equals("jdk9"));
     }
   }
 
@@ -186,8 +194,12 @@ public final class ClientAuthTest {
       call.execute();
       fail();
     } catch (SSLHandshakeException expected) {
+    } catch (SSLException expected) {
+      // Conscrypt
+      assertTrue(getPlatform().equals("conscrypt"));
     } catch (SocketException expected) {
       // JDK 9
+      assertTrue(getPlatform().equals("jdk9"));
     }
   }
 
