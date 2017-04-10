@@ -18,14 +18,17 @@ package okhttp3;
 import java.net.InetAddress;
 import java.util.List;
 
-/**
- * Observes, modifies, and potentially short-circuits requests going out and the corresponding
- * responses coming back in. Typically interceptors add, remove, or transform headers on the request
- * or response.
- */
-public class EventListener {
-  public static final EventListener NULL_EVENT_LISTENER = new EventListener() {
+public abstract class EventListener {
+  public static final EventListener NONE = new EventListener() {
   };
+
+  static EventListener.Factory factory(final EventListener listener) {
+    return new EventListener.Factory() {
+      public EventListener create(Call call) {
+        return listener;
+      }
+    };
+  }
 
   public void fetchStart(Call call) {
   }
