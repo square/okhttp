@@ -1492,4 +1492,19 @@ public final class HttpUrlTest {
     assertEquals(null, url.fragment());
     assertEquals(null, url.encodedFragment());
   }
+
+  @Test public void topPrivateDomain() {
+    assertEquals("google.com", HttpUrl.parse("https://google.com").topPrivateDomain());
+    assertEquals("google.co.uk", HttpUrl.parse("https://adwords.google.co.uk").topPrivateDomain());
+    assertEquals("xn--ewv.xn--4pvxs.jp", HttpUrl.parse("https://栃.栃木.jp").topPrivateDomain());
+    assertEquals("xn--ewv.xn--4pvxs.jp",
+        HttpUrl.parse("https://xn--ewv.xn--4pvxs.jp").topPrivateDomain());
+
+    assertNull(HttpUrl.parse("https://co.uk").topPrivateDomain());
+    assertNull(HttpUrl.parse("https://square").topPrivateDomain());
+    assertNull(HttpUrl.parse("https://栃木.jp").topPrivateDomain());
+    assertNull(HttpUrl.parse("https://xn--4pvxs.jp").topPrivateDomain());
+    assertNull(HttpUrl.parse("https://localhost").topPrivateDomain());
+    assertNull(HttpUrl.parse("https://127.0.0.1").topPrivateDomain());
+  }
 }
