@@ -22,11 +22,11 @@ import java.net.Socket;
 import java.net.UnknownHostException;
 import java.security.GeneralSecurityException;
 import java.security.KeyStore;
-import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Random;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import javax.net.SocketFactory;
@@ -421,7 +421,7 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
    * Uses {@code request} to connect a new web socket.
    */
   @Override public WebSocket newWebSocket(Request request, WebSocketListener listener) {
-    RealWebSocket webSocket = new RealWebSocket(request, listener, new SecureRandom());
+    RealWebSocket webSocket = new RealWebSocket(request, listener, new Random());
     webSocket.connect(this);
     return webSocket;
   }
