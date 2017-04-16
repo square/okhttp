@@ -426,11 +426,11 @@ public final class HttpUrlTest {
     assertEquals(null, HttpUrl.parse("http://[1:]"));
     assertEquals(null, HttpUrl.parse("http://[1:::]"));
     assertEquals(null, HttpUrl.parse("http://[1:::1]"));
-    assertEquals(null, HttpUrl.parse("http://[00000:0000:0000:0000::0000:0000:0000:0001]"));
+    assertEquals(null, HttpUrl.parse("http://[0000:0000:0000:0000::0000:0000:0000:0001]"));
   }
 
   @Test public void hostIpv6AddressTooManyGroups() throws Exception {
-    assertEquals(null, HttpUrl.parse("http://[00000:0000:0000:0000:0000:0000:0000:0000:0001]"));
+    assertEquals(null, HttpUrl.parse("http://[0000:0000:0000:0000:0000:0000:0000:0000:0001]"));
   }
 
   @Test public void hostIpv6AddressTooMuchCompression() throws Exception {
