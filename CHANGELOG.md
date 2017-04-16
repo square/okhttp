@@ -22,6 +22,18 @@ _2017-04-15_
  *  Fix: Handle either `TLS_` or `SSL_` prefixes for cipher suite names. This is necessary for
     IBM JVMs that use the `SSL_` prefix exclusively.
  *  Fix: Reject HTTP/2 data frames if the stream ID is 0.
+ *  New: Upgrade to Okio 1.12.0.
+
+     ```xml
+     <dependency>
+       <groupId>com.squareup.okio</groupId>
+       <artifactId>okio</artifactId>
+       <version>1.12.0</version>
+     </dependency>
+
+     com.squareup.okio:okio:1.12.0
+     ```
+
  *  New: Connection coalescing. OkHttp may reuse HTTP/2 connections across calls that share an IP
     address and HTTPS certificate, even if their domain names are different.
  *  New: MockWebServer's `RecordedRequest` exposes the requested `HttpUrl` with `getRequestUrl()`.
