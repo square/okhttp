@@ -1,6 +1,32 @@
 Change Log
 ==========
 
+## Version 3.7.0
+
+_2017-04-15_
+
+ *  **OkHttp no longer recovers from TLS handshake failures by attempting a TLSv1 connection.**
+    The fallback was necessary for servers that implemented version negotiation incorrectly. Now
+    that 99.99% of servers do it right this fallback is obsolete.
+ *  Fix: Do not honor cookies set on a public domain. Previously a malicious site could inject
+    cookies on top-level domains like `co.uk` because our cookie parser didn't honor the [public
+    suffix][public_suffix] list. Alongside this fix is a new API, `HttpUrl.topPrivateDomain()`,
+    which returns the privately domain name if the URL has one.
+ *  Fix: Change `MediaType.charset()` to return null for unexpected charsets.
+ *  Fix: Don't skip cache invalidation if the invalidating response has no body.
+ *  Fix: Don't use a cryptographic random number generator for web sockets. Some Android devices
+    implement `SecureRandom` incorrectly!
+ *  Fix: Correctly canonicalize IPv6 addresses in `HttpUrl`. This prevented OkHttp from trusting
+    HTTPS certificates issued to certain IPv6 addresses.
+ *  Fix: Don't reuse connections after an unsuccessful `Expect: 100-continue`.
+ *  Fix: Handle either `TLS_` or `SSL_` prefixes for cipher suite names. This is necessary for
+    IBM JVMs that use the `SSL_` prefix exclusively.
+ *  Fix: Reject HTTP/2 data frames if the stream ID is 0.
+ *  New: Connection coalescing. OkHttp may reuse HTTP/2 connections across calls that share an IP
+    address and HTTPS certificate, even if their domain names are different.
+ *  New: MockWebServer's `RecordedRequest` exposes the requested `HttpUrl` with `getRequestUrl()`.
+
+
 ## Version 3.6.0
 
 _2017-01-29_
@@ -1222,3 +1248,4 @@ Initial release.
  [okhttp_idling_resource]: https://github.com/JakeWharton/okhttp-idling-resource
  [bom]: https://en.wikipedia.org/wiki/Byte_order_mark
  [junit_5_rules]: http://junit.org/junit5/docs/current/user-guide/#migrating-from-junit4-rulesupport
+ [public_suffix]: https://publicsuffix.org/
