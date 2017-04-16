@@ -406,7 +406,8 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
     return networkInterceptors;
   }
 
-  public EventListener.Factory eventListenerFactory() {
+  // TODO(jwilson): make this public after the 3.7 release.
+  /*public*/ EventListener.Factory eventListenerFactory() {
     return eventListenerFactory;
   }
 
@@ -887,13 +888,15 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
       return this;
     }
 
-    public Builder eventListener(EventListener eventListener) {
+    // TODO(jwilson): make this public after the 3.7 release.
+    /*public*/ Builder eventListener(EventListener eventListener) {
       if (eventListener == null) throw new NullPointerException("eventListener == null");
       this.eventListenerFactory = EventListener.factory(eventListener);
       return this;
     }
 
-    public Builder eventListenerFactory(EventListener.Factory eventListenerFactory) {
+    // TODO(jwilson): make this public after the 3.7 release.
+    /*public*/ Builder eventListenerFactory(EventListener.Factory eventListenerFactory) {
       if (eventListenerFactory == null) {
         throw new NullPointerException("eventListenerFactory == null");
       }

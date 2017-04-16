@@ -49,6 +49,8 @@ final class RealCall implements Call {
     this.originalRequest = originalRequest;
     this.forWebSocket = forWebSocket;
     this.retryAndFollowUpInterceptor = new RetryAndFollowUpInterceptor(client, forWebSocket);
+
+    // TODO(jwilson): this is unsafe publication and not threadsafe.
     this.eventListener = eventListenerFactory.create(this);
   }
 
