@@ -832,9 +832,7 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
       }
 
       // Remove protocols that we no longer support.
-      if (protocols.contains(Protocol.SPDY_3)) {
-        protocols.remove(Protocol.SPDY_3);
-      }
+      protocols.remove(Protocol.SPDY_3);
 
       // Assign as an unmodifiable list. This is effectively immutable.
       this.protocols = Collections.unmodifiableList(protocols);
