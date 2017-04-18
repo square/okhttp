@@ -194,6 +194,30 @@ public final class WebSocketRecorder extends WebSocketListener {
     assertEquals(message, failure.t.getMessage());
   }
 
+  public void assertFailureA(Class<? extends IOException> cls, String[] possibleMessages) {
+    Object event = nextEvent();
+    if (!(event instanceof Failure)) {
+      throw new AssertionError("Expected Failure but was " + event);
+    }
+    Failure failure = (Failure) event;
+    assertNull(failure.response);
+    assertEquals(cls, failure.t.getClass());
+    String failureMsg = failure.t.getMessage();
+    for (int i=0; i < possibleMessages.length - 1; ++i) {
+      String message = possibleMessages[i];
+      if (message == null) {
+        if (failureMsg == null)
+          return;
+      }
+      else if (failureMsg != null) {
+        if (message.equals(failureMsg))
+          return;
+      }
+    }
+    // Throw if the final one does not match.
+    assertEquals(possibleMessages[possibleMessages.length-1], failureMsg);
+  }
+
   public void assertFailure() {
     Object event = nextEvent();
     if (!(event instanceof Failure)) {

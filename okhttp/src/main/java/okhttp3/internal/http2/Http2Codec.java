@@ -198,6 +198,12 @@ public final class Http2Codec implements HttpCodec {
     return statsData;
   }
 
+  @Override
+  public void resetStatistics(StatisticsData statsData) {
+    this.statsData = statsData;
+    stream.resetStatistics(statsData);
+  }
+
   class StreamFinishingSource extends ForwardingSource {
     public StreamFinishingSource(Source delegate) {
       super(delegate);

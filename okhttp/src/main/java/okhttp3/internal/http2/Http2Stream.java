@@ -68,7 +68,7 @@ public final class Http2Stream {
   final StreamTimeout writeTimeout = new StreamTimeout();
 
   private StatisticsObserver observer;
-  private final StatisticsData statsData; // This instance is shared across several objects.
+  private StatisticsData statsData; // This instance is shared across several objects.
 
   /**
    * The reason why this stream was abnormally closed. If there are multiple reasons to abnormally
@@ -316,6 +316,11 @@ public final class Http2Stream {
       this.errorCode = errorCode;
       notifyAll();
     }
+  }
+
+  void resetStatistics(StatisticsData statsData) {
+    this.statsData.reportCompleted(observer);
+    this.statsData = statsData;
   }
 
   /**

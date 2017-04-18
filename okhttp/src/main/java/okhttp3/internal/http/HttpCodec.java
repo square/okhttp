@@ -20,6 +20,7 @@ import okhttp3.Request;
 import okhttp3.Response;
 import okhttp3.ResponseBody;
 import okhttp3.StatisticsData;
+import okhttp3.internal.connection.StreamAllocation;
 import okio.Sink;
 
 /** Encodes HTTP requests and decodes HTTP responses. */
@@ -62,4 +63,7 @@ public interface HttpCodec {
 
   /** Returns the statistics data allocated for this codec. */
   StatisticsData statisticsData();
+
+  /** If the codec is being reused on a follow-up request, it needs to reset its statistics */
+  void resetStatistics(StatisticsData statsData);
 }

@@ -103,8 +103,9 @@ public final class RetryAndFollowUpInterceptor implements Interceptor {
   @Override public Response intercept(Chain chain) throws IOException {
     Request request = chain.request();
 
-    streamAllocation = new StreamAllocation(
-        client.connectionPool(), createAddress(request.url()), callStackTrace);
+    streamAllocation = new StreamAllocation(client, request.url(), callStackTrace);
+
+    streamAllocation.statisticsData().url = request.url();
 
     int followUpCount = 0;
     Response priorResponse = null;
@@ -172,34 +173,18 @@ public final class RetryAndFollowUpInterceptor implements Interceptor {
 
       if (!sameConnection(response, followUp.url())) {
         streamAllocation.release();
-        streamAllocation = new StreamAllocation(
-            client.connectionPool(), createAddress(followUp.url()), callStackTrace);
+        streamAllocation = new StreamAllocation(client, followUp.url(), callStackTrace);
       } else if (streamAllocation.codec() != null) {
         throw new IllegalStateException("Closing the body of " + response
             + " didn't close its backing stream. Bad interceptor?");
       } else {
         // We're starting a new request on the same stream. Reset statistics.
-        streamAllocation.resetStatistics();
+        streamAllocation.resetStatistics(followUp.url());
       }
 
       request = followUp;
       priorResponse = response;
     }
-  }
-
-  private Address createAddress(HttpUrl url) {
-    SSLSocketFactory sslSocketFactory = null;
-    HostnameVerifier hostnameVerifier = null;
-    CertificatePinner certificatePinner = null;
-    if (url.isHttps()) {
-      sslSocketFactory = client.sslSocketFactory();
-      hostnameVerifier = client.hostnameVerifier();
-      certificatePinner = client.certificatePinner();
-    }
-
-    return new Address(url.host(), url.port(), client.dns(), client.socketFactory(),
-        sslSocketFactory, hostnameVerifier, certificatePinner, client.proxyAuthenticator(),
-        client.proxy(), client.protocols(), client.connectionSpecs(), client.proxySelector());
   }
 
   /**

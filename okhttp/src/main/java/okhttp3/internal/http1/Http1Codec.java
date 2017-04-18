@@ -85,7 +85,7 @@ public final class Http1Codec implements HttpCodec {
   final BufferedSource source;
   final BufferedSink sink;
   int state = STATE_IDLE;
-  final StatisticsData statsData;
+  StatisticsData statsData;
   StatisticsObserver observer;
 
   public Http1Codec(OkHttpClient client, StreamAllocation streamAllocation, BufferedSource source,
@@ -122,6 +122,12 @@ public final class Http1Codec implements HttpCodec {
   @Override
   public StatisticsData statisticsData() {
     return statsData;
+  }
+
+  @Override
+  public void resetStatistics(StatisticsData statsData) {
+    statsData.reportCompleted(observer);
+    this.statsData = statsData;
   }
 
   /**
