@@ -101,7 +101,8 @@ final class Http2Writer implements Closeable {
    * @param requestHeaders minimally includes {@code :method}, {@code :scheme}, {@code :authority},
    * and {@code :path}.
    */
-  void pushPromise(int streamId, int promisedStreamId, List<Header> requestHeaders) throws IOException {
+  void pushPromise(int streamId, int promisedStreamId, List<Header> requestHeaders)
+      throws IOException {
     pushPromise(streamId, promisedStreamId, requestHeaders, new StatisticsData());
   }
 
@@ -117,7 +118,7 @@ final class Http2Writer implements Closeable {
     frameHeader(streamId, length + 4, type, flags);
     sink.writeInt(promisedStreamId & 0x7fffffff);
     sink.write(hpackBuffer, length);
-    statsData.byteCountHeadersSent = 9 + 4 + length; // 9 = framing data. 4 = promised id. length = headers.
+    statsData.byteCountHeadersSent = 9 + 4 + length; // 9 = framing data. 4 = promised id.
 
     if (byteCount > length) writeContinuationFrames(streamId, byteCount - length, statsData);
     statsData.finishSendAtMillis = System.currentTimeMillis();
@@ -134,7 +135,8 @@ final class Http2Writer implements Closeable {
   }
 
   public synchronized void synStream(boolean outFinished, int streamId,
-      int associatedStreamId, List<Header> headerBlock, StatisticsData statsData) throws IOException {
+      int associatedStreamId, List<Header> headerBlock, StatisticsData statsData)
+      throws IOException {
     if (closed) throw new IOException("closed");
     headers(outFinished, streamId, headerBlock, statsData);
   }
@@ -154,7 +156,8 @@ final class Http2Writer implements Closeable {
     headers(false, streamId, headerBlock, new StatisticsData());
   }
 
-  public synchronized void headers(int streamId, List<Header> headerBlock, StatisticsData statsData) throws IOException {
+  public synchronized void headers(int streamId, List<Header> headerBlock,
+      StatisticsData statsData) throws IOException {
     if (closed) throw new IOException("closed");
     headers(false, streamId, headerBlock, statsData);
   }
@@ -189,8 +192,8 @@ final class Http2Writer implements Closeable {
     data(outFinished, streamId, source, byteCount, new StatisticsData());
   }
 
-  public synchronized void data(boolean outFinished, int streamId, Buffer source, int byteCount, StatisticsData statsData)
-      throws IOException {
+  public synchronized void data(boolean outFinished, int streamId, Buffer source, int byteCount,
+      StatisticsData statsData) throws IOException {
     if (closed) throw new IOException("closed");
     byte flags = FLAG_NONE;
     if (outFinished) flags |= FLAG_END_STREAM;
@@ -201,7 +204,8 @@ final class Http2Writer implements Closeable {
     dataFrame(streamId, flags, buffer, byteCount, new StatisticsData());
   }
 
-  void dataFrame(int streamId, byte flags, Buffer buffer, int byteCount, StatisticsData statsData) throws IOException {
+  void dataFrame(int streamId, byte flags, Buffer buffer, int byteCount, StatisticsData statsData)
+      throws IOException {
     byte type = TYPE_DATA;
     frameHeader(streamId, byteCount, type, flags);
     if (byteCount > 0) {
@@ -314,7 +318,8 @@ final class Http2Writer implements Closeable {
     sink.writeByte(i & 0xff);
   }
 
-  private void writeContinuationFrames(int streamId, long byteCount, StatisticsData statsData) throws IOException {
+  private void writeContinuationFrames(int streamId, long byteCount, StatisticsData statsData)
+      throws IOException {
     while (byteCount > 0) {
       int length = (int) Math.min(maxFrameSize, byteCount);
       byteCount -= length;
@@ -328,7 +333,8 @@ final class Http2Writer implements Closeable {
     headers(outFinished, streamId, headerBlock, new StatisticsData());
   }
 
-  void headers(boolean outFinished, int streamId, List<Header> headerBlock, StatisticsData statsData) throws IOException {
+  void headers(boolean outFinished, int streamId, List<Header> headerBlock,
+      StatisticsData statsData) throws IOException {
     if (closed) throw new IOException("closed");
     hpackWriter.writeHeaders(headerBlock);
 

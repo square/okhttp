@@ -99,7 +99,7 @@ public final class RealInterceptorChain implements Interceptor.Chain {
       response = interceptor.intercept(next);
       succeeded = true;
     } finally {
-      if ( ! succeeded && streamAllocation != null && streamAllocation.statisticsData() != null)
+      if (!succeeded && streamAllocation != null && streamAllocation.statisticsData() != null)
         streamAllocation.statisticsData().reportAborted(request.observer());
     }
 

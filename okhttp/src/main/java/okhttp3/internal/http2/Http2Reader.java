@@ -458,8 +458,8 @@ final class Http2Reader implements Closeable {
   }
 
   interface Handler {
-    void data(boolean inFinished, int streamId, BufferedSource source, int length, StatisticsData statsData)
-        throws IOException;
+    void data(boolean inFinished, int streamId, BufferedSource source, int length,
+        StatisticsData statsData) throws IOException;
 
     /**
      * Create or update incoming headers, creating the corresponding streams if necessary. Frames

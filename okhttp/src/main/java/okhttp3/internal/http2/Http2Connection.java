@@ -207,12 +207,14 @@ public final class Http2Connection implements Closeable {
     return newStream(requestHeaders, out, new StatisticsData(), null);
   }
 
-  public Http2Stream newStream(List<Header> requestHeaders, boolean out, StatisticsData statsData, StatisticsObserver observer) throws IOException {
+  public Http2Stream newStream(List<Header> requestHeaders, boolean out,
+      StatisticsData statsData, StatisticsObserver observer) throws IOException {
     return newStream(0, requestHeaders, out, statsData, observer);
   }
 
   private Http2Stream newStream(
-      int associatedStreamId, List<Header> requestHeaders, boolean out, StatisticsData statsData, StatisticsObserver observer) throws IOException {
+      int associatedStreamId, List<Header> requestHeaders, boolean out,
+      StatisticsData statsData, StatisticsObserver observer) throws IOException {
     boolean outFinished = !out;
     boolean inFinished = false;
     boolean flushHeaders;
@@ -226,7 +228,8 @@ public final class Http2Connection implements Closeable {
         }
         streamId = nextStreamId;
         nextStreamId += 2;
-        stream = new Http2Stream(streamId, this, outFinished, inFinished, requestHeaders, statsData, observer);
+        stream = new Http2Stream(streamId, this, outFinished, inFinished, requestHeaders,
+                                 statsData, observer);
         flushHeaders = !out || bytesLeftInWriteWindow == 0L || stream.bytesLeftInWriteWindow == 0L;
         if (stream.isOpen()) {
           streams.put(streamId, stream);
@@ -248,8 +251,8 @@ public final class Http2Connection implements Closeable {
     return stream;
   }
 
-  void writeSynReply(int streamId, boolean outFinished, List<Header> alternating, StatisticsData statsData)
-      throws IOException {
+  void writeSynReply(int streamId, boolean outFinished, List<Header> alternating,
+      StatisticsData statsData) throws IOException {
     writer.synReply(outFinished, streamId, alternating, statsData);
   }
 
@@ -265,8 +268,8 @@ public final class Http2Connection implements Closeable {
    * <p>Zero {@code byteCount} writes are not subject to flow control and will not block. The only
    * use case for zero {@code byteCount} is closing a flushed output stream.
    */
-  public void writeData(int streamId, boolean outFinished, Buffer buffer, long byteCount, StatisticsData statsData)
-      throws IOException {
+  public void writeData(int streamId, boolean outFinished, Buffer buffer, long byteCount,
+      StatisticsData statsData) throws IOException {
     if (byteCount == 0) { // Empty data frames are not flow-controlled.
       writer.data(outFinished, streamId, buffer, 0, statsData);
       return;
@@ -591,8 +594,8 @@ public final class Http2Connection implements Closeable {
       }
     }
 
-    @Override public void data(boolean inFinished, int streamId, BufferedSource source, int length, StatisticsData statsData)
-        throws IOException {
+    @Override public void data(boolean inFinished, int streamId, BufferedSource source,
+        int length, StatisticsData statsData) throws IOException {
       if (pushedStream(streamId)) {
         pushDataLater(streamId, source, length, inFinished);
         return;

@@ -45,7 +45,6 @@ import okhttp3.Protocol;
 import okhttp3.Request;
 import okhttp3.Response;
 import okhttp3.Route;
-import okhttp3.StatisticsData;
 import okhttp3.internal.Internal;
 import okhttp3.internal.Util;
 import okhttp3.internal.Version;
@@ -444,7 +443,8 @@ public final class RealConnection extends Http2Connection.Listener implements Co
       socket.setSoTimeout(client.readTimeoutMillis());
       source.timeout().timeout(client.readTimeoutMillis(), MILLISECONDS);
       sink.timeout().timeout(client.writeTimeoutMillis(), MILLISECONDS);
-      return new Http1Codec(client, streamAllocation, source, sink, streamAllocation.statisticsData());
+      return new Http1Codec(client, streamAllocation, source, sink,
+        streamAllocation.statisticsData());
     }
   }
 

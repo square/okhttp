@@ -528,7 +528,8 @@ public final class Http2Stream {
 
       writeTimeout.enter();
       try {
-        connection.writeData(id, outFinished && toWrite == sendBuffer.size(), sendBuffer, toWrite, statsData);
+        connection.writeData(id, outFinished && toWrite == sendBuffer.size(),
+                             sendBuffer, toWrite, statsData);
       } finally {
         writeTimeout.exitAndThrowIfTimedOut();
       }

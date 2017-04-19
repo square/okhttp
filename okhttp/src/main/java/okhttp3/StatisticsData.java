@@ -21,8 +21,8 @@ package okhttp3;
 public class StatisticsData {
 
   // It is possible for the DNS query timestamps to be populated without the connect timestamps.
-  // In this case, either connection coalescing of different hostnames to the same IP address was used,
-  // or there was a race between two threads in establishing the connection.
+  // In this case, either connection coalescing of different hostnames to the same IP address
+  // was used or there was a race between two threads in establishing the connection.
 
   // DNS query timing
   /// When the DNS Query was initiated.
@@ -90,7 +90,6 @@ public class StatisticsData {
    * @param otherData The StatisticsData to merge into this one.
    */
   public void mergeHeaderStats(StatisticsData otherData) {
-    
     if (initiateDNSQueryAtMillis == 0)
       initiateDNSQueryAtMillis = otherData.initiateDNSQueryAtMillis;
 
@@ -150,12 +149,13 @@ public class StatisticsData {
   }
 
   /**
-   * Report this data as completed to the given observer if this data has not been reported previously.
+   * Report this data as completed to the given observer if this data has not been
+   * reported previously.
    *
    * @param observer The StatisticsObserver to report to.
    */
   public void reportCompleted(StatisticsObserver observer) {
-    if ( ! reported) {
+    if (!reported) {
       reported = true;
       if (observer != null)
         observer.streamCompletion(this);
@@ -173,13 +173,13 @@ public class StatisticsData {
   }
 
   /**
-   * Report this data as completed (but aborted at the given time) to the given observer if this data
-   * has not been reported previously.
+   * Report this data as completed (but aborted at the given time) to the given observer if this
+   * data has not been reported previously.
    *
    * @param observer The StatisticsObserver to report to.
    */
   public void reportAborted(StatisticsObserver observer, long abortTime) {
-    if ( ! reported) {
+    if (!reported) {
       reported = true;
       this.abortAtMillis = abortTime;
       if (observer != null)
@@ -188,7 +188,8 @@ public class StatisticsData {
   }
 
   /// Allocate a new StatisticsData instance given the time and length of received Headers.
-  public static StatisticsData allocateForReceivedHeaders(long frameRecvTime, long byteCountHeaders) {
+  public static StatisticsData allocateForReceivedHeaders(long frameRecvTime,
+      long byteCountHeaders) {
     StatisticsData statsData = new StatisticsData();
     statsData.receivedHeadersAtMillis = frameRecvTime;
     statsData.byteCountHeadersReceived = byteCountHeaders;
@@ -196,7 +197,8 @@ public class StatisticsData {
   }
 
   /// Allocate a new StatisticsData instance given the time and length of received Body.
-  public static StatisticsData allocateForReceivedData(long frameRecvTime, long byteCountBody) {
+  public static StatisticsData allocateForReceivedData(long frameRecvTime,
+      long byteCountBody) {
     StatisticsData statsData = new StatisticsData();
     statsData.receivedBodyAtMillis = frameRecvTime;
     statsData.byteCountBodyReceived = byteCountBody;
