@@ -134,6 +134,7 @@ public final class StreamAllocation {
       RealConnection resultConnection = findHealthyConnection(connectTimeout, readTimeout,
           writeTimeout, connectionRetryEnabled, doExtensiveHealthChecks);
       statsData.route = resultConnection.route();
+      statsData.connectionID = resultConnection.connectionID();
       HttpCodec resultCodec = resultConnection.newCodec(client, this);
 
       synchronized (connectionPool) {
@@ -258,8 +259,6 @@ public final class StreamAllocation {
       }
     }
     closeQuietly(socket);
-
-    statsData.connectionID = result.connectionID();
 
     return result;
   }
