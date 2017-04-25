@@ -234,6 +234,11 @@ public final class HttpLoggingInterceptor implements Interceptor {
         logger.log("<-- END HTTP (encoded body omitted)");
       } else {
         BufferedSource source = responseBody.source();
+        if (source.buffer().size() == 0) {
+          logger.log("<-- END HTTP (" + buffer.size() + "-byte body)");
+          return response;
+        }
+		
         source.request(Long.MAX_VALUE); // Buffer the entire body.
         Buffer buffer = source.buffer();
 
