@@ -313,7 +313,7 @@ public final class Headers {
               "Unexpected char %#04x at %d in header name: %s", (int) c, i, name));
         }
       }
-      if (value == null) throw new NullPointerException("value == null");
+      if (value == null) throw new NullPointerException("value for name " + name + " == null");
       for (int i = 0, length = value.length(); i < length; i++) {
         char c = value.charAt(i);
         if ((c <= '\u001f' && c != '\t') || c >= '\u007f') {
