@@ -2398,6 +2398,23 @@ public final class CallTest {
 
     dns.assertRequests("android.com");
   }
+  @Test public void dnsReturnsZeroIpAddresses() throws Exception {
+    // Configure a DNS that returns our local MockWebServer for android.com.
+    FakeDns dns = new FakeDns();
+    List<InetAddress> ipAddresses = new ArrayList<>();
+    dns.set("android.com", ipAddresses);
+    client = client.newBuilder()
+        .dns(dns)
+        .build();
+
+    server.enqueue(new MockResponse());
+    Request request = new Request.Builder()
+        .url(server.url("/").newBuilder().host("android.com").build())
+        .build();
+    executeSynchronously(request).assertFailure(dns + " returned no addresses for android.com");
+
+    dns.assertRequests("android.com");
+  }
 
   /** We had a bug where failed HTTP/2 calls could break the entire connection. */
   @Test public void failingCallsDoNotInterfereWithConnection() throws Exception {
