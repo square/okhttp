@@ -60,7 +60,7 @@ public final class MediaType {
       if (!parameter.lookingAt()) return null; // This is not a well-formed media type.
 
       String name = parameter.group(1);
-      if (name == null || !name.equalsIgnoreCase("charset")) continue;
+      if (!"charset".equalsIgnoreCase(name)) continue;
       String charsetParameter;
       String token = parameter.group(2);
       if (token != null) {
@@ -72,7 +72,7 @@ public final class MediaType {
         // Value is "double-quoted". That's valid and our regex group already strips the quotes.
         charsetParameter = parameter.group(3);
       }
-      if (charset != null && !charsetParameter.equalsIgnoreCase(charset)) {
+      if (!charsetParameter.equalsIgnoreCase(charset)) {
         return null; // Multiple different charsets!
       }
       charset = charsetParameter;

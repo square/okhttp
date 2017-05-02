@@ -38,7 +38,7 @@ public final class JavaNetCookieJar implements CookieJar {
 
   @Override public void saveFromResponse(HttpUrl url, List<Cookie> cookies) {
     if (cookieHandler != null) {
-      List<String> cookieStrings = new ArrayList<>();
+      List<String> cookieStrings = new ArrayList<>(cookies.size());
       for (Cookie cookie : cookies) {
         cookieStrings.add(cookie.toString(true));
       }
@@ -67,8 +67,8 @@ public final class JavaNetCookieJar implements CookieJar {
       String key = entry.getKey();
       if (("Cookie".equalsIgnoreCase(key) || "Cookie2".equalsIgnoreCase(key))
           && !entry.getValue().isEmpty()) {
+        if (cookies == null) cookies = new ArrayList<>();
         for (String header : entry.getValue()) {
-          if (cookies == null) cookies = new ArrayList<>();
           cookies.addAll(decodeHeaderAsJavaNetCookies(url, header));
         }
       }

@@ -1,6 +1,7 @@
 package okhttp3;
 
 import java.util.concurrent.TimeUnit;
+
 import okhttp3.internal.http.HttpHeaders;
 
 /**
@@ -256,9 +257,7 @@ public final class CacheControl {
     if (minFreshSeconds != -1) result.append("min-fresh=").append(minFreshSeconds).append(", ");
     if (onlyIfCached) result.append("only-if-cached, ");
     if (noTransform) result.append("no-transform, ");
-    if (result.length() == 0) return "";
-    result.delete(result.length() - 2, result.length());
-    return result.toString();
+    return result.length() == 0 ? "" : result.substring(0, result.length() - 2);
   }
 
   /** Builds a {@code Cache-Control} request header. */
@@ -288,14 +287,11 @@ public final class CacheControl {
      * maxAge}, it will not be used and a network request will be made.
      *
      * @param maxAge a non-negative integer. This is stored and transmitted with {@link
-     * TimeUnit#SECONDS} precision; finer precision will be lost.
+     *               TimeUnit#SECONDS} precision; finer precision will be lost.
      */
     public Builder maxAge(int maxAge, TimeUnit timeUnit) {
       if (maxAge < 0) throw new IllegalArgumentException("maxAge < 0: " + maxAge);
-      long maxAgeSecondsLong = timeUnit.toSeconds(maxAge);
-      this.maxAgeSeconds = maxAgeSecondsLong > Integer.MAX_VALUE
-          ? Integer.MAX_VALUE
-          : (int) maxAgeSecondsLong;
+      this.maxAgeSeconds = getMaxValueInSeconds(maxAge, timeUnit);
       return this;
     }
 
@@ -304,14 +300,11 @@ public final class CacheControl {
      * maxStale}. If unspecified, stale cache responses will not be used.
      *
      * @param maxStale a non-negative integer. This is stored and transmitted with {@link
-     * TimeUnit#SECONDS} precision; finer precision will be lost.
+     *                 TimeUnit#SECONDS} precision; finer precision will be lost.
      */
     public Builder maxStale(int maxStale, TimeUnit timeUnit) {
       if (maxStale < 0) throw new IllegalArgumentException("maxStale < 0: " + maxStale);
-      long maxStaleSecondsLong = timeUnit.toSeconds(maxStale);
-      this.maxStaleSeconds = maxStaleSecondsLong > Integer.MAX_VALUE
-          ? Integer.MAX_VALUE
-          : (int) maxStaleSecondsLong;
+      this.maxStaleSeconds = getMaxValueInSeconds(maxStale, timeUnit);
       return this;
     }
 
@@ -321,14 +314,11 @@ public final class CacheControl {
      * used and a network request will be made.
      *
      * @param minFresh a non-negative integer. This is stored and transmitted with {@link
-     * TimeUnit#SECONDS} precision; finer precision will be lost.
+     *                 TimeUnit#SECONDS} precision; finer precision will be lost.
      */
     public Builder minFresh(int minFresh, TimeUnit timeUnit) {
       if (minFresh < 0) throw new IllegalArgumentException("minFresh < 0: " + minFresh);
-      long minFreshSecondsLong = timeUnit.toSeconds(minFresh);
-      this.minFreshSeconds = minFreshSecondsLong > Integer.MAX_VALUE
-          ? Integer.MAX_VALUE
-          : (int) minFreshSecondsLong;
+      this.minFreshSeconds = getMaxValueInSeconds(minFresh, timeUnit);
       return this;
     }
 
@@ -349,6 +339,12 @@ public final class CacheControl {
 
     public CacheControl build() {
       return new CacheControl(this);
+    }
+
+    private int getMaxValueInSeconds(int valueToConvert, TimeUnit timeUnit) {
+      long valueInSeconds = timeUnit.toSeconds(valueToConvert);
+      return valueInSeconds > Integer.MAX_VALUE
+              ? Integer.MAX_VALUE : (int) valueInSeconds;
     }
   }
 }
