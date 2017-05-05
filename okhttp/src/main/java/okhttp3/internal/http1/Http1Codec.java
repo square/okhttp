@@ -18,6 +18,8 @@ package okhttp3.internal.http1;
 import java.io.EOFException;
 import java.io.IOException;
 import java.net.ProtocolException;
+import java.nio.charset.Charset;
+
 import okhttp3.Headers;
 import okhttp3.HttpUrl;
 import okhttp3.OkHttpClient;
@@ -189,21 +191,37 @@ public final class Http1Codec implements HttpCodec {
   /** Returns bytes of a request header for sending on an HTTP transport. */
   public void writeRequest(Headers headers, String requestLine) throws IOException {
     if (state != STATE_IDLE) throw new IllegalStateException("state: " + state);
-    long origSize = sink.buffer().size();
     statsData.initiateSendAtMillis = System.currentTimeMillis();
-    sink.writeUtf8(requestLine).writeUtf8("\r\n");
+    StringBuilder sb = new StringBuilder();
+    sb.append(requestLine).append("\r\n");
     for (int i = 0, size = headers.size(); i < size; i++) {
-      sink.writeUtf8(headers.name(i))
-          .writeUtf8(": ")
-          .writeUtf8(headers.value(i))
-          .writeUtf8("\r\n");
+      sb.append(headers.name(i))
+        .append(": ")
+        .append(headers.value(i))
+        .append("\r\n");
     }
-    sink.writeUtf8("\r\n");
-    long newSize = sink.buffer().size();
-    long len = newSize - origSize;
-    if (len > 0)
-      statsData.byteCountHeadersSent += len;
+    sb.append("\r\n");
+    byte[] data = sb.toString().getBytes(Charset.forName("UTF-8")/*StandardCharsets.UTF_8*/);
+    sink.write(data);
+    statsData.byteCountHeadersSent += data.length;
     state = STATE_OPEN_REQUEST_BODY;
+  }
+
+  private static String readUtf8LineStrict(BufferedSource source, long newline) throws IOException {
+    // Copied from RealBufferedSource
+    if (newline == -1L) {
+      Buffer data = new Buffer();
+      source.buffer().copyTo(data, 0, Math.min(32, source.buffer().size()));
+      throw new EOFException("\\n not found: size=" + source.buffer().size()
+              + " content=" + data.readByteString().hex() + "…");
+    }
+    String result;
+    int extra = 0;
+    if (newline > 0 && source.buffer().getByte(newline-1) == '\r')
+      extra = 1;
+    result = source.buffer().readString(newline-extra, Charset.forName("UTF-8")/*StandardCharsets.UTF_8*/);
+    source.buffer().skip(1 + extra);
+    return result;
   }
 
   @Override public Response.Builder readResponseHeaders(boolean expectContinue) throws IOException {
@@ -212,13 +230,10 @@ public final class Http1Codec implements HttpCodec {
     }
 
     try {
-      long origSize = source.buffer().size();
-      StatusLine statusLine = StatusLine.parse(source.readUtf8LineStrict());
+      long newlineIndex = source.indexOf((byte) '\n');
       statsData.receivedHeadersAtMillis = System.currentTimeMillis();
-      long newSize = source.buffer().size();
-      long len = newSize - origSize;
-      if (len > 0)
-        statsData.byteCountHeadersReceived += len;
+      StatusLine statusLine = StatusLine.parse(readUtf8LineStrict(source, newlineIndex));
+      statsData.byteCountHeadersReceived += newlineIndex;
 
       Response.Builder responseBuilder = new Response.Builder()
           .protocol(statusLine.protocol)
@@ -243,15 +258,15 @@ public final class Http1Codec implements HttpCodec {
   /** Reads headers or trailers. */
   public Headers readHeaders() throws IOException {
     Headers.Builder headers = new Headers.Builder();
-    long origSize = source.buffer().size();
     // parse the result headers until the first blank line
-    for (String line; (line = source.readUtf8LineStrict()).length() != 0; ) {
+    while (true) {
+      long newlineIndex = source.indexOf((byte) '\n');
+      String line = readUtf8LineStrict(source, newlineIndex);
+      statsData.byteCountHeadersReceived += newlineIndex;
+      if (line.length() == 0)
+        break;
       Internal.instance.addLenient(headers, line);
     }
-    long newSize = source.buffer().size();
-    long len = newSize - origSize;
-    if (len > 0)
-      statsData.byteCountHeadersReceived += len;
     return headers.build();
   }
 
