@@ -568,7 +568,7 @@ public final class JavaApiConverter {
     private final Request request;
     private final Response response;
 
-    public CacheHttpURLConnection(Response response) {
+    CacheHttpURLConnection(Response response) {
       super(response.request().url().url());
       this.request = response.request();
       this.response = response;
@@ -835,7 +835,7 @@ public final class JavaApiConverter {
   private static final class CacheHttpsURLConnection extends DelegatingHttpsURLConnection {
     private final CacheHttpURLConnection delegate;
 
-    public CacheHttpsURLConnection(CacheHttpURLConnection delegate) {
+    CacheHttpsURLConnection(CacheHttpURLConnection delegate) {
       super(delegate);
       this.delegate = delegate;
     }

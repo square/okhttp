@@ -54,7 +54,7 @@ final class Http2Writer implements Closeable {
 
   final Hpack.Writer hpackWriter;
 
-  public Http2Writer(BufferedSink sink, boolean client) {
+  Http2Writer(BufferedSink sink, boolean client) {
     this.sink = sink;
     this.client = client;
     this.hpackBuffer = new Buffer();

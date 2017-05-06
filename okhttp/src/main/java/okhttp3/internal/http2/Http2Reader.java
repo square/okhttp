@@ -67,7 +67,7 @@ final class Http2Reader implements Closeable {
   final Hpack.Reader hpackReader;
 
   /** Creates a frame reader with max header table size of 4096. */
-  public Http2Reader(BufferedSource source, boolean client) {
+  Http2Reader(BufferedSource source, boolean client) {
     this.source = source;
     this.client = client;
     this.continuation = new ContinuationSource(this.source);
@@ -356,7 +356,7 @@ final class Http2Reader implements Closeable {
     int left;
     short padding;
 
-    public ContinuationSource(BufferedSource source) {
+    ContinuationSource(BufferedSource source) {
       this.source = source;
     }
 
