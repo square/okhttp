@@ -580,7 +580,7 @@ public final class Cache implements Closeable, Flushable {
           List<Certificate> localCertificates = readCertificateList(source);
           TlsVersion tlsVersion = !source.exhausted()
               ? TlsVersion.forJavaName(source.readUtf8LineStrict())
-              : null;
+              : TlsVersion.SSL_3_0;
           handshake = Handshake.get(tlsVersion, cipherSuite, peerCertificates, localCertificates);
         } else {
           handshake = null;
@@ -644,11 +644,7 @@ public final class Cache implements Closeable, Flushable {
             .writeByte('\n');
         writeCertList(sink, handshake.peerCertificates());
         writeCertList(sink, handshake.localCertificates());
-        // The handshake’s TLS version is null on HttpsURLConnection and on older cached responses.
-        if (handshake.tlsVersion() != null) {
-          sink.writeUtf8(handshake.tlsVersion().javaName())
-              .writeByte('\n');
-        }
+        sink.writeUtf8(handshake.tlsVersion().javaName()).writeByte('\n');
       }
       sink.close();
     }
