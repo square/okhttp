@@ -72,7 +72,7 @@ public final class Progress {
     private final ProgressListener progressListener;
     private BufferedSource bufferedSource;
 
-    public ProgressResponseBody(ResponseBody responseBody, ProgressListener progressListener) {
+    ProgressResponseBody(ResponseBody responseBody, ProgressListener progressListener) {
       this.responseBody = responseBody;
       this.progressListener = progressListener;
     }

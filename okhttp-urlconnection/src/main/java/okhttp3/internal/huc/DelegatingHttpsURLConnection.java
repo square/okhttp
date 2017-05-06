@@ -41,7 +41,7 @@ import org.codehaus.mojo.animal_sniffer.IgnoreJRERequirement;
 abstract class DelegatingHttpsURLConnection extends HttpsURLConnection {
   private final HttpURLConnection delegate;
 
-  public DelegatingHttpsURLConnection(HttpURLConnection delegate) {
+  DelegatingHttpsURLConnection(HttpURLConnection delegate) {
     super(delegate.getURL());
     this.delegate = delegate;
   }
