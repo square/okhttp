@@ -51,15 +51,18 @@ public final class CacheControlTest {
         .minFresh(3, TimeUnit.SECONDS)
         .onlyIfCached()
         .noTransform()
+        .immutable()
         .build();
     assertEquals("no-cache, no-store, max-age=1, max-stale=2, min-fresh=3, only-if-cached, "
-        + "no-transform", cacheControl.toString());
+        + "no-transform, immutable", cacheControl.toString());
     assertTrue(cacheControl.noCache());
     assertTrue(cacheControl.noStore());
     assertEquals(1, cacheControl.maxAgeSeconds());
     assertEquals(2, cacheControl.maxStaleSeconds());
     assertEquals(3, cacheControl.minFreshSeconds());
     assertTrue(cacheControl.onlyIfCached());
+    assertTrue(cacheControl.noTransform());
+    assertTrue(cacheControl.immutable());
 
     // These members are accessible to response headers only.
     assertEquals(-1, cacheControl.sMaxAgeSeconds());
@@ -121,6 +124,7 @@ public final class CacheControlTest {
     assertEquals(-1, cacheControl.minFreshSeconds());
     assertFalse(cacheControl.onlyIfCached());
     assertFalse(cacheControl.noTransform());
+    assertFalse(cacheControl.immutable());
     assertEquals(header, cacheControl.toString());
   }
 
