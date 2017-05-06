@@ -42,6 +42,7 @@ import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
 import okhttp3.ResponseBody;
+import okhttp3.TlsVersion;
 import okhttp3.internal.Internal;
 import okhttp3.internal.JavaNetHeaders;
 import okhttp3.internal.Util;
@@ -133,7 +134,7 @@ public final class JavaApiConverter {
 
       String cipherSuiteString = httpsUrlConnection.getCipherSuite();
       CipherSuite cipherSuite = CipherSuite.forJavaName(cipherSuiteString);
-      Handshake handshake = Handshake.get(null, cipherSuite,
+      Handshake handshake = Handshake.get(TlsVersion.SSL_3_0, cipherSuite,
           nullSafeImmutableList(peerCertificates), nullSafeImmutableList(localCertificates));
       okResponseBuilder.handshake(handshake);
     }
@@ -260,7 +261,8 @@ public final class JavaApiConverter {
 
       String cipherSuiteString = javaSecureCacheResponse.getCipherSuite();
       CipherSuite cipherSuite = CipherSuite.forJavaName(cipherSuiteString);
-      Handshake handshake = Handshake.get(null, cipherSuite, peerCertificates, localCertificates);
+      Handshake handshake = Handshake.get(
+          TlsVersion.SSL_3_0, cipherSuite, peerCertificates, localCertificates);
       okResponseBuilder.handshake(handshake);
     }
 
