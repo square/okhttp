@@ -16,6 +16,7 @@
 package okhttp3.internal.cache;
 
 import java.util.Date;
+import javax.annotation.Nullable;
 import okhttp3.CacheControl;
 import okhttp3.Headers;
 import okhttp3.Request;
@@ -48,10 +49,10 @@ import static java.util.concurrent.TimeUnit.SECONDS;
  */
 public final class CacheStrategy {
   /** The request to send on the network, or null if this call doesn't use the network. */
-  public final Request networkRequest;
+  public final @Nullable Request networkRequest;
 
   /** The cached response to return or validate; or null if this call doesn't use a cache. */
-  public final Response cacheResponse;
+  public final @Nullable Response cacheResponse;
 
   CacheStrategy(Request networkRequest, Response cacheResponse) {
     this.networkRequest = networkRequest;

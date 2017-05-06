@@ -29,6 +29,7 @@ import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import javax.annotation.Nullable;
 import javax.net.ssl.SSLPeerUnverifiedException;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
@@ -378,7 +379,7 @@ public final class RealConnection extends Http2Connection.Listener implements Co
    * Returns true if this connection can carry a stream allocation to {@code address}. If non-null
    * {@code route} is the resolved route for a connection.
    */
-  public boolean isEligible(Address address, Route route) {
+  public boolean isEligible(Address address, @Nullable Route route) {
     // If this connection is not accepting new streams, we're done.
     if (allocations.size() >= allocationLimit || noNewStreams) return false;
 

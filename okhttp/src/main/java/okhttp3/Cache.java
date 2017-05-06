@@ -28,6 +28,7 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
+import javax.annotation.Nullable;
 import okhttp3.internal.Util;
 import okhttp3.internal.cache.CacheRequest;
 import okhttp3.internal.cache.CacheStrategy;
@@ -186,7 +187,7 @@ public final class Cache implements Closeable, Flushable {
     return ByteString.encodeUtf8(url.toString()).md5().hex();
   }
 
-  Response get(Request request) {
+  @Nullable Response get(Request request) {
     String key = key(request.url());
     DiskLruCache.Snapshot snapshot;
     Entry entry;
@@ -217,7 +218,7 @@ public final class Cache implements Closeable, Flushable {
     return response;
   }
 
-  CacheRequest put(Response response) {
+  @Nullable CacheRequest put(Response response) {
     String requestMethod = response.request().method();
 
     if (HttpMethod.invalidatesCache(response.request().method())) {
@@ -273,7 +274,7 @@ public final class Cache implements Closeable, Flushable {
     }
   }
 
-  private void abortQuietly(DiskLruCache.Editor editor) {
+  private void abortQuietly(@Nullable DiskLruCache.Editor editor) {
     // Give up because the cache cannot be written.
     try {
       if (editor != null) {
@@ -327,7 +328,7 @@ public final class Cache implements Closeable, Flushable {
     return new Iterator<String>() {
       final Iterator<DiskLruCache.Snapshot> delegate = cache.snapshots();
 
-      String nextUrl;
+      @Nullable String nextUrl;
       boolean canRemove;
 
       @Override public boolean hasNext() {
@@ -484,7 +485,7 @@ public final class Cache implements Closeable, Flushable {
     private final int code;
     private final String message;
     private final Headers responseHeaders;
-    private final Handshake handshake;
+    private final @Nullable Handshake handshake;
     private final long sentRequestMillis;
     private final long receivedResponseMillis;
 
@@ -732,8 +733,8 @@ public final class Cache implements Closeable, Flushable {
   private static class CacheResponseBody extends ResponseBody {
     final DiskLruCache.Snapshot snapshot;
     private final BufferedSource bodySource;
-    private final String contentType;
-    private final String contentLength;
+    private final @Nullable String contentType;
+    private final @Nullable String contentLength;
 
     CacheResponseBody(final DiskLruCache.Snapshot snapshot,
         String contentType, String contentLength) {
