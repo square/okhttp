@@ -312,6 +312,7 @@ public final class RealWebSocketTest {
       String url = "http://example.com/websocket";
       Response response = new Response.Builder()
           .code(101)
+          .message("OK")
           .request(new Request.Builder().url(url).build())
           .protocol(Protocol.HTTP_1_1)
           .build();

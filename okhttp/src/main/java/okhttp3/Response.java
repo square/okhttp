@@ -105,7 +105,7 @@ public final class Response implements Closeable {
     return code >= 200 && code < 300;
   }
 
-  /** Returns the HTTP status message or null if it is unknown. */
+  /** Returns the HTTP status message. */
   public String message() {
     return message;
   }
@@ -427,6 +427,7 @@ public final class Response implements Closeable {
       if (request == null) throw new IllegalStateException("request == null");
       if (protocol == null) throw new IllegalStateException("protocol == null");
       if (code < 0) throw new IllegalStateException("code < 0: " + code);
+      if (message == null) throw new IllegalStateException("message == null");
       return new Response(this);
     }
   }
