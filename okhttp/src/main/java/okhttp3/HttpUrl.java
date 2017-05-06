@@ -26,6 +26,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import okhttp3.internal.publicsuffix.PublicSuffixDatabase;
 import okio.Buffer;
@@ -1161,6 +1162,14 @@ public final class HttpUrl {
       return this;
     }
 
+    public Builder addQueryParameters(Map<String, String> params) {
+      if (params == null) throw new NullPointerException("params == null");
+      for (Map.Entry<String, String> entry : params.entrySet()) {
+        addQueryParameter(entry.getKey(), entry.getValue());
+      }
+      return this;
+    }
+
     /** Adds the pre-encoded query parameter to this URL's query string. */
     public Builder addEncodedQueryParameter(String encodedName, String encodedValue) {
       if (encodedName == null) throw new NullPointerException("encodedName == null");
@@ -1170,6 +1179,14 @@ public final class HttpUrl {
       encodedQueryNamesAndValues.add(encodedValue != null
           ? canonicalize(encodedValue, QUERY_COMPONENT_ENCODE_SET, true, false, true, true)
           : null);
+      return this;
+    }
+
+    public Builder addEncodedQueryParameters(Map<String, String> encodedParams) {
+      if (encodedParams == null) throw new NullPointerException("params == null");
+      for (Map.Entry<String, String> entry : encodedParams.entrySet()) {
+        addEncodedQueryParameter(entry.getKey(), entry.getValue());
+      }
       return this;
     }
 
