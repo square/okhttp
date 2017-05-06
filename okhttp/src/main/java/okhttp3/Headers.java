@@ -27,6 +27,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
+import javax.annotation.Nullable;
 import okhttp3.internal.Util;
 import okhttp3.internal.http.HttpDate;
 
@@ -58,7 +59,7 @@ public final class Headers {
   }
 
   /** Returns the last value corresponding to the specified field, or null. */
-  public String get(String name) {
+  public @Nullable String get(String name) {
     return get(namesAndValues, name);
   }
 
@@ -66,7 +67,7 @@ public final class Headers {
    * Returns the last value corresponding to the specified field parsed as an HTTP date, or null if
    * either the field is absent or cannot be parsed as a date.
    */
-  public Date getDate(String name) {
+  public @Nullable Date getDate(String name) {
     String value = get(name);
     return value != null ? HttpDate.parse(value) : null;
   }
@@ -141,7 +142,7 @@ public final class Headers {
    * Applications that require semantically equal headers should convert them into a canonical form
    * before comparing them for equality.
    */
-  @Override public boolean equals(Object other) {
+  @Override public boolean equals(@Nullable Object other) {
     return other instanceof Headers
         && Arrays.equals(((Headers) other).namesAndValues, namesAndValues);
   }

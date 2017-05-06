@@ -17,6 +17,7 @@ package okhttp3;
 
 import java.util.Arrays;
 import java.util.List;
+import javax.annotation.Nullable;
 import javax.net.ssl.SSLSocket;
 import okhttp3.internal.Util;
 
@@ -82,8 +83,8 @@ public final class ConnectionSpec {
 
   final boolean tls;
   final boolean supportsTlsExtensions;
-  final String[] cipherSuites;
-  final String[] tlsVersions;
+  final @Nullable String[] cipherSuites;
+  final @Nullable String[] tlsVersions;
 
   ConnectionSpec(Builder builder) {
     this.tls = builder.tls;
@@ -97,18 +98,18 @@ public final class ConnectionSpec {
   }
 
   /**
-   * Returns the cipher suites to use for a connection. Returns {@code null} if all of the SSL
-   * socket's enabled cipher suites should be used.
+   * Returns the cipher suites to use for a connection. Returns null if all of the SSL socket's
+   * enabled cipher suites should be used.
    */
-  public List<CipherSuite> cipherSuites() {
+  public @Nullable List<CipherSuite> cipherSuites() {
     return cipherSuites != null ? CipherSuite.forJavaNames(cipherSuites) : null;
   }
 
   /**
-   * Returns the TLS versions to use when negotiating a connection. Returns {@code null} if all of
-   * the SSL socket's enabled TLS versions should be used.
+   * Returns the TLS versions to use when negotiating a connection. Returns null if all of the SSL
+   * socket's enabled TLS versions should be used.
    */
-  public List<TlsVersion> tlsVersions() {
+  public @Nullable List<TlsVersion> tlsVersions() {
     return tlsVersions != null ? TlsVersion.forJavaNames(tlsVersions) : null;
   }
 
@@ -185,7 +186,7 @@ public final class ConnectionSpec {
     return true;
   }
 
-  @Override public boolean equals(Object other) {
+  @Override public boolean equals(@Nullable Object other) {
     if (!(other instanceof ConnectionSpec)) return false;
     if (other == this) return true;
 
@@ -227,8 +228,8 @@ public final class ConnectionSpec {
 
   public static final class Builder {
     boolean tls;
-    String[] cipherSuites;
-    String[] tlsVersions;
+    @Nullable String[] cipherSuites;
+    @Nullable String[] tlsVersions;
     boolean supportsTlsExtensions;
 
     Builder(boolean tls) {

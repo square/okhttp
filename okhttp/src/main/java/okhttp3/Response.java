@@ -19,6 +19,7 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
+import javax.annotation.Nullable;
 import okhttp3.internal.http.HttpHeaders;
 import okio.Buffer;
 import okio.BufferedSource;
@@ -44,12 +45,12 @@ public final class Response implements Closeable {
   final Protocol protocol;
   final int code;
   final String message;
-  final Handshake handshake;
+  final @Nullable Handshake handshake;
   final Headers headers;
-  final ResponseBody body;
-  final Response networkResponse;
-  final Response cacheResponse;
-  final Response priorResponse;
+  final @Nullable ResponseBody body;
+  final @Nullable Response networkResponse;
+  final @Nullable Response cacheResponse;
+  final @Nullable Response priorResponse;
   final long sentRequestAtMillis;
   final long receivedResponseAtMillis;
 
@@ -122,11 +123,11 @@ public final class Response implements Closeable {
     return headers.values(name);
   }
 
-  public String header(String name) {
+  public @Nullable String header(String name) {
     return header(name, null);
   }
 
-  public String header(String name, String defaultValue) {
+  public @Nullable String header(String name, @Nullable String defaultValue) {
     String result = headers.get(name);
     return result != null ? result : defaultValue;
   }
@@ -172,7 +173,7 @@ public final class Response implements Closeable {
    * <p>This always returns null on responses returned from {@link #cacheResponse}, {@link
    * #networkResponse}, and {@link #priorResponse()}.
    */
-  public ResponseBody body() {
+  public @Nullable ResponseBody body() {
     return body;
   }
 
@@ -200,7 +201,7 @@ public final class Response implements Closeable {
    * the network, such as when the response is fully cached. The body of the returned response
    * should not be read.
    */
-  public Response networkResponse() {
+  public @Nullable Response networkResponse() {
     return networkResponse;
   }
 
@@ -209,7 +210,7 @@ public final class Response implements Closeable {
    * cache. For conditional get requests the cache response and network response may both be
    * non-null. The body of the returned response should not be read.
    */
-  public Response cacheResponse() {
+  public @Nullable Response cacheResponse() {
     return cacheResponse;
   }
 
@@ -219,7 +220,7 @@ public final class Response implements Closeable {
    * returned response should not be read because it has already been consumed by the redirecting
    * client.
    */
-  public Response priorResponse() {
+  public @Nullable Response priorResponse() {
     return priorResponse;
   }
 
@@ -290,7 +291,7 @@ public final class Response implements Closeable {
     Protocol protocol;
     int code = -1;
     String message;
-    Handshake handshake;
+    @Nullable Handshake handshake;
     Headers.Builder headers;
     ResponseBody body;
     Response networkResponse;
@@ -338,7 +339,7 @@ public final class Response implements Closeable {
       return this;
     }
 
-    public Builder handshake(Handshake handshake) {
+    public Builder handshake(@Nullable Handshake handshake) {
       this.handshake = handshake;
       return this;
     }
@@ -372,18 +373,18 @@ public final class Response implements Closeable {
       return this;
     }
 
-    public Builder body(ResponseBody body) {
+    public Builder body(@Nullable ResponseBody body) {
       this.body = body;
       return this;
     }
 
-    public Builder networkResponse(Response networkResponse) {
+    public Builder networkResponse(@Nullable Response networkResponse) {
       if (networkResponse != null) checkSupportResponse("networkResponse", networkResponse);
       this.networkResponse = networkResponse;
       return this;
     }
 
-    public Builder cacheResponse(Response cacheResponse) {
+    public Builder cacheResponse(@Nullable Response cacheResponse) {
       if (cacheResponse != null) checkSupportResponse("cacheResponse", cacheResponse);
       this.cacheResponse = cacheResponse;
       return this;
@@ -401,7 +402,7 @@ public final class Response implements Closeable {
       }
     }
 
-    public Builder priorResponse(Response priorResponse) {
+    public Builder priorResponse(@Nullable Response priorResponse) {
       if (priorResponse != null) checkPriorResponse(priorResponse);
       this.priorResponse = priorResponse;
       return this;

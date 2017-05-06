@@ -15,6 +15,8 @@
  */
 package okhttp3;
 
+import javax.annotation.Nullable;
+
 /** An RFC 2617 challenge. */
 public final class Challenge {
   private final String scheme;
@@ -37,10 +39,10 @@ public final class Challenge {
     return realm;
   }
 
-  @Override public boolean equals(Object o) {
-    return o instanceof Challenge
-        && ((Challenge) o).scheme.equals(scheme)
-        && ((Challenge) o).realm.equals(realm);
+  @Override public boolean equals(@Nullable Object other) {
+    return other instanceof Challenge
+        && ((Challenge) other).scheme.equals(scheme)
+        && ((Challenge) other).realm.equals(realm);
   }
 
   @Override public int hashCode() {
