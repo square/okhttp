@@ -35,18 +35,18 @@ public final class AddressTest {
 
   @Test public void equalsAndHashcode() throws Exception {
     Address a = new Address("square.com", 80, dns, socketFactory, null, null, null,
-        authenticator, null, protocols, connectionSpecs, proxySelector);
+        authenticator, null, protocols, connectionSpecs, proxySelector, false);
     Address b = new Address("square.com", 80, dns, socketFactory, null, null, null,
-        authenticator, null, protocols, connectionSpecs, proxySelector);
+        authenticator, null, protocols, connectionSpecs, proxySelector, false);
     assertEquals(a, b);
     assertEquals(a.hashCode(), b.hashCode());
   }
 
   @Test public void differentProxySelectorsAreDifferent() throws Exception {
     Address a = new Address("square.com", 80, dns, socketFactory, null, null, null,
-        authenticator, null, protocols, connectionSpecs, new RecordingProxySelector());
+        authenticator, null, protocols, connectionSpecs, new RecordingProxySelector(), false);
     Address b = new Address("square.com", 80, dns, socketFactory, null, null, null,
-        authenticator, null, protocols, connectionSpecs, new RecordingProxySelector());
+        authenticator, null, protocols, connectionSpecs, new RecordingProxySelector(), false);
     assertFalse(a.equals(b));
   }
 

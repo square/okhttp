@@ -210,6 +210,7 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
   final Authenticator authenticator;
   final ConnectionPool connectionPool;
   final Dns dns;
+  final boolean useTor;
   final boolean followSslRedirects;
   final boolean followRedirects;
   final boolean retryOnConnectionFailure;
@@ -257,6 +258,7 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
     this.authenticator = builder.authenticator;
     this.connectionPool = builder.connectionPool;
     this.dns = builder.dns;
+    this.useTor = builder.useTor;
     this.followSslRedirects = builder.followSslRedirects;
     this.followRedirects = builder.followRedirects;
     this.retryOnConnectionFailure = builder.retryOnConnectionFailure;
@@ -334,6 +336,10 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
 
   public Dns dns() {
     return dns;
+  }
+
+  public boolean useTor() {
+    return useTor;
   }
 
   public SocketFactory socketFactory() {
@@ -452,6 +458,7 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
     Authenticator authenticator;
     ConnectionPool connectionPool;
     Dns dns;
+    boolean useTor;
     boolean followSslRedirects;
     boolean followRedirects;
     boolean retryOnConnectionFailure;
@@ -474,6 +481,7 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
       authenticator = Authenticator.NONE;
       connectionPool = new ConnectionPool();
       dns = Dns.SYSTEM;
+      useTor = false;
       followSslRedirects = true;
       followRedirects = true;
       retryOnConnectionFailure = true;
@@ -504,6 +512,7 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
       this.authenticator = okHttpClient.authenticator;
       this.connectionPool = okHttpClient.connectionPool;
       this.dns = okHttpClient.dns;
+      this.useTor = okHttpClient.useTor;
       this.followSslRedirects = okHttpClient.followSslRedirects;
       this.followRedirects = okHttpClient.followRedirects;
       this.retryOnConnectionFailure = okHttpClient.retryOnConnectionFailure;
@@ -620,6 +629,16 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
       if (dns == null) throw new NullPointerException("dns == null");
       this.dns = dns;
       return this;
+    }
+
+    /**
+     * Disables hostname lookup in RouteSelector.resetNextInetSocketAddress() to allow using
+     * unresolved addresses with socket factory. If set to false, every DIRECT connection will
+     * be resolved before connecting.
+     */
+    public Builder useTor(boolean useTor) {
+        this.useTor = useTor;
+        return this;
     }
 
     /**

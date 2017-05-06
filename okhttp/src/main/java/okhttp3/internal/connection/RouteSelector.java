@@ -164,7 +164,7 @@ public final class RouteSelector {
           + "; port is out of range");
     }
 
-    if (proxy.type() == Proxy.Type.SOCKS) {
+    if (proxy.type() == Proxy.Type.SOCKS || address.useTor()) {
       inetSocketAddresses.add(InetSocketAddress.createUnresolved(socketHost, socketPort));
     } else {
       // Try each address for best behavior in mixed IPv4/IPv6 environments.

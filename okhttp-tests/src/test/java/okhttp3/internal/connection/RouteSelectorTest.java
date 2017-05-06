@@ -119,7 +119,7 @@ public final class RouteSelectorTest {
 
   @Test public void explicitProxyTriesThatProxysAddressesOnly() throws Exception {
     Address address = new Address(uriHost, uriPort, dns, socketFactory, null, null, null,
-        authenticator, proxyA, protocols, connectionSpecs, proxySelector);
+        authenticator, proxyA, protocols, connectionSpecs, proxySelector, false);
     RouteSelector routeSelector = new RouteSelector(address, routeDatabase);
 
     assertTrue(routeSelector.hasNext());
@@ -134,7 +134,7 @@ public final class RouteSelectorTest {
 
   @Test public void explicitDirectProxy() throws Exception {
     Address address = new Address(uriHost, uriPort, dns, socketFactory, null, null, null,
-        authenticator, NO_PROXY, protocols, connectionSpecs, proxySelector);
+        authenticator, NO_PROXY, protocols, connectionSpecs, proxySelector, false);
     RouteSelector routeSelector = new RouteSelector(address, routeDatabase);
 
     assertTrue(routeSelector.hasNext());
@@ -161,7 +161,7 @@ public final class RouteSelectorTest {
     };
 
     Address address = new Address(uriHost, uriPort, dns, socketFactory, null, null, null,
-        authenticator, null, protocols, connectionSpecs, nullProxySelector);
+        authenticator, null, protocols, connectionSpecs, nullProxySelector, false);
     RouteSelector routeSelector = new RouteSelector(address, routeDatabase);
     assertTrue(routeSelector.hasNext());
     dns.set(uriHost, dns.allocate(1));
@@ -344,11 +344,11 @@ public final class RouteSelectorTest {
   /** Returns an address that's without an SSL socket factory or hostname verifier. */
   private Address httpAddress() {
     return new Address(uriHost, uriPort, dns, socketFactory, null, null, null, authenticator, null,
-        protocols, connectionSpecs, proxySelector);
+        protocols, connectionSpecs, proxySelector, false);
   }
 
   private Address httpsAddress() {
     return new Address(uriHost, uriPort, dns, socketFactory, sslSocketFactory,
-        hostnameVerifier, null, authenticator, null, protocols, connectionSpecs, proxySelector);
+        hostnameVerifier, null, authenticator, null, protocols, connectionSpecs, proxySelector, false);
   }
 }
