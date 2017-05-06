@@ -15,16 +15,23 @@
  */
 package okhttp3;
 
+import java.nio.charset.Charset;
 import okhttp3.internal.Util;
 
-/** An RFC 2617 challenge. */
+/** An RFC 7617 challenge. */
 public final class Challenge {
   private final String scheme;
   private final String realm;
+  private Charset charset;
 
   public Challenge(String scheme, String realm) {
     this.scheme = scheme;
     this.realm = realm;
+  }
+
+  public Challenge withCharset(Charset charset) {
+    this.charset = charset;
+    return this;
   }
 
   /** Returns the authentication scheme, like {@code Basic}. */
@@ -40,17 +47,19 @@ public final class Challenge {
   @Override public boolean equals(Object o) {
     return o instanceof Challenge
         && Util.equal(scheme, ((Challenge) o).scheme)
-        && Util.equal(realm, ((Challenge) o).realm);
+        && Util.equal(realm, ((Challenge) o).realm)
+        && Util.equal(charset, ((Challenge) o).charset);
   }
 
   @Override public int hashCode() {
     int result = 29;
     result = 31 * result + (realm != null ? realm.hashCode() : 0);
     result = 31 * result + (scheme != null ? scheme.hashCode() : 0);
+    result = 31 * result + (charset != null ? charset.hashCode() : 0);
     return result;
   }
 
   @Override public String toString() {
-    return scheme + " realm=\"" + realm + "\"";
+    return scheme + " realm=\"" + realm + "\"" + (charset == null ? "" : ", charset=\"" + charset + "\"");
   }
 }
