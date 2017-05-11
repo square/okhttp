@@ -1,7 +1,10 @@
 package okhttp3;
 
 import java.util.concurrent.TimeUnit;
+import javax.annotation.Nullable;
 import okhttp3.internal.http.HttpHeaders;
+
+
 
 /**
  * A Cache-Control header with cache directives from a server or client. These directives set policy
@@ -44,7 +47,10 @@ public final class CacheControl {
 
   private CacheControl(boolean noCache, boolean noStore, int maxAgeSeconds, int sMaxAgeSeconds,
       boolean isPrivate, boolean isPublic, boolean mustRevalidate, int maxStaleSeconds,
-      int minFreshSeconds, boolean onlyIfCached, boolean noTransform, boolean immutable, String headerValue) {
+      int minFreshSeconds, boolean onlyIfCached, boolean noTransform, boolean immutable, @Nullable String headerValue) {
+
+
+
     this.noCache = noCache;
     this.noStore = noStore;
     this.maxAgeSeconds = maxAgeSeconds;
