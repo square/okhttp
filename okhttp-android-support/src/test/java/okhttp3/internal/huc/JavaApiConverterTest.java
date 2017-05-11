@@ -47,6 +47,7 @@ import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
 import okhttp3.ResponseBody;
+import okhttp3.TlsVersion;
 import okhttp3.internal.Internal;
 import okhttp3.internal.Util;
 import okhttp3.mockwebserver.MockWebServer;
@@ -464,7 +465,7 @@ public class JavaApiConverterTest {
         .get()
         .url("https://secure/request")
         .build();
-    Handshake handshake = Handshake.get(null, CipherSuite.TLS_RSA_WITH_NULL_MD5,
+    Handshake handshake = Handshake.get(TlsVersion.SSL_3_0, CipherSuite.TLS_RSA_WITH_NULL_MD5,
         Arrays.<Certificate>asList(SERVER_CERT), Arrays.<Certificate>asList(LOCAL_CERT));
     Response okResponse = createArbitraryOkResponse(okRequest).newBuilder()
         .handshake(handshake)
@@ -554,7 +555,7 @@ public class JavaApiConverterTest {
             .post(createRequestBody("RequestBody"))
             .build();
     ResponseBody responseBody = createResponseBody("ResponseBody");
-    Handshake handshake = Handshake.get(null, CipherSuite.TLS_RSA_WITH_NULL_MD5,
+    Handshake handshake = Handshake.get(TlsVersion.SSL_3_0, CipherSuite.TLS_RSA_WITH_NULL_MD5,
         Arrays.<Certificate>asList(SERVER_CERT), Arrays.<Certificate>asList(LOCAL_CERT));
     Response okResponse = createArbitraryOkResponse(okRequest).newBuilder()
         .protocol(Protocol.HTTP_1_1)

@@ -34,7 +34,7 @@ class JdkWithJettyBootPlatform extends Platform {
   private final Class<?> clientProviderClass;
   private final Class<?> serverProviderClass;
 
-  public JdkWithJettyBootPlatform(Method putMethod, Method getMethod, Method removeMethod,
+  JdkWithJettyBootPlatform(Method putMethod, Method getMethod, Method removeMethod,
       Class<?> clientProviderClass, Class<?> serverProviderClass) {
     this.putMethod = putMethod;
     this.getMethod = getMethod;
@@ -110,7 +110,7 @@ class JdkWithJettyBootPlatform extends Platform {
     /** The protocol the server selected. */
     String selected;
 
-    public JettyNegoProvider(List<String> protocols) {
+    JettyNegoProvider(List<String> protocols) {
       this.protocols = protocols;
     }
 

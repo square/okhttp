@@ -47,7 +47,7 @@ class AndroidPlatform extends Platform {
 
   private final CloseGuard closeGuard = CloseGuard.get();
 
-  public AndroidPlatform(Class<?> sslParametersClass, OptionalMethod<Socket> setUseSessionTickets,
+  AndroidPlatform(Class<?> sslParametersClass, OptionalMethod<Socket> setUseSessionTickets,
       OptionalMethod<Socket> setHostname, OptionalMethod<Socket> getAlpnSelectedProtocol,
       OptionalMethod<Socket> setAlpnProtocols) {
     this.sslParametersClass = sslParametersClass;

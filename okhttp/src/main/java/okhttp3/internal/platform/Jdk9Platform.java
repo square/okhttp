@@ -31,7 +31,7 @@ final class Jdk9Platform extends Platform {
   final Method setProtocolMethod;
   final Method getProtocolMethod;
 
-  public Jdk9Platform(Method setProtocolMethod, Method getProtocolMethod) {
+  Jdk9Platform(Method setProtocolMethod, Method getProtocolMethod) {
     this.setProtocolMethod = setProtocolMethod;
     this.getProtocolMethod = getProtocolMethod;
   }
