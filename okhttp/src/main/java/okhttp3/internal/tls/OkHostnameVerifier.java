@@ -139,7 +139,7 @@ public final class OkHostnameVerifier implements HostnameVerifier {
    * @param pattern domain name pattern from certificate. May be a wildcard pattern such as {@code
    * *.android.com}.
    */
-  private boolean verifyHostname(String hostname, String pattern) {
+  public boolean verifyHostname(String hostname, String pattern) {
     // Basic sanity checks
     // Check length == 0 instead of .isEmpty() to support Java 5.
     if ((hostname == null) || (hostname.length() == 0) || (hostname.startsWith("."))

@@ -21,6 +21,7 @@ import java.net.InetSocketAddress;
 import java.net.Proxy;
 import java.net.SocketAddress;
 import java.net.SocketException;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -168,6 +169,10 @@ public final class RouteSelector {
     } else {
       // Try each address for best behavior in mixed IPv4/IPv6 environments.
       List<InetAddress> addresses = address.dns().lookup(socketHost);
+      if (addresses.isEmpty()) {
+        throw new UnknownHostException(address.dns() + " returned no addresses for " + socketHost);
+      }
+
       for (int i = 0, size = addresses.size(); i < size; i++) {
         InetAddress inetAddress = addresses.get(i);
         inetSocketAddresses.add(new InetSocketAddress(inetAddress, socketPort));

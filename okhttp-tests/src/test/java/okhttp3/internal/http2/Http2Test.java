@@ -392,6 +392,23 @@ public final class Http2Test {
     });
   }
 
+  @Test public void dataFrameNotAssociateWithStream() throws IOException {
+    byte[] payload = new byte[] {0x01, 0x02};
+
+    writeMedium(frame, payload.length);
+    frame.writeByte(Http2.TYPE_DATA);
+    frame.writeByte(Http2.FLAG_NONE);
+    frame.writeInt(0);
+    frame.write(payload);
+
+    try {
+      reader.nextFrame(false, new BaseTestHandler());
+      fail();
+    } catch (IOException e) {
+      assertEquals("PROTOCOL_ERROR: TYPE_DATA streamId == 0", e.getMessage());
+    }
+  }
+
   /** We do not send SETTINGS_COMPRESS_DATA = 1, nor want to. Let's make sure we error. */
   @Test public void compressedDataFrameWhenSettingDisabled() throws IOException {
     byte[] expectedData = new byte[Http2.INITIAL_MAX_FRAME_SIZE];

@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import javax.annotation.Nullable;
 import okhttp3.internal.Util;
 import okio.Buffer;
 import okio.BufferedSink;
@@ -119,7 +120,8 @@ public final class MultipartBody extends RequestBody {
    * to awkward operations like measuring the encoded length of header strings, or the
    * length-in-digits of an encoded integer.
    */
-  private long writeOrCountBytes(BufferedSink sink, boolean countBytes) throws IOException {
+  private long writeOrCountBytes(
+      @Nullable BufferedSink sink, boolean countBytes) throws IOException {
     long byteCount = 0L;
 
     Buffer byteCountBuffer = null;
@@ -225,7 +227,7 @@ public final class MultipartBody extends RequestBody {
       return create(null, body);
     }
 
-    public static Part create(Headers headers, RequestBody body) {
+    public static Part create(@Nullable Headers headers, RequestBody body) {
       if (body == null) {
         throw new NullPointerException("body == null");
       }
@@ -242,7 +244,7 @@ public final class MultipartBody extends RequestBody {
       return createFormData(name, null, RequestBody.create(null, value));
     }
 
-    public static Part createFormData(String name, String filename, RequestBody body) {
+    public static Part createFormData(String name, @Nullable String filename, RequestBody body) {
       if (name == null) {
         throw new NullPointerException("name == null");
       }
@@ -257,15 +259,15 @@ public final class MultipartBody extends RequestBody {
       return create(Headers.of("Content-Disposition", disposition.toString()), body);
     }
 
-    final Headers headers;
+    final @Nullable Headers headers;
     final RequestBody body;
 
-    private Part(Headers headers, RequestBody body) {
+    private Part(@Nullable Headers headers, RequestBody body) {
       this.headers = headers;
       this.body = body;
     }
 
-    public Headers headers() {
+    public @Nullable Headers headers() {
       return headers;
     }
 
@@ -308,7 +310,7 @@ public final class MultipartBody extends RequestBody {
     }
 
     /** Add a part to the body. */
-    public Builder addPart(Headers headers, RequestBody body) {
+    public Builder addPart(@Nullable Headers headers, RequestBody body) {
       return addPart(Part.create(headers, body));
     }
 
@@ -318,7 +320,7 @@ public final class MultipartBody extends RequestBody {
     }
 
     /** Add a form data part to the body. */
-    public Builder addFormDataPart(String name, String filename, RequestBody body) {
+    public Builder addFormDataPart(String name, @Nullable String filename, RequestBody body) {
       return addPart(Part.createFormData(name, filename, body));
     }
 

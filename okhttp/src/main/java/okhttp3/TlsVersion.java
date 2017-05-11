@@ -15,6 +15,10 @@
  */
 package okhttp3;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
 /**
  * Versions of TLS that can be offered when negotiating a secure socket. See {@link
  * javax.net.ssl.SSLSocket#setEnabledProtocols}.
@@ -47,6 +51,14 @@ public enum TlsVersion {
         return SSL_3_0;
     }
     throw new IllegalArgumentException("Unexpected TLS version: " + javaName);
+  }
+
+  static List<TlsVersion> forJavaNames(String... tlsVersions) {
+    List<TlsVersion> result = new ArrayList<>(tlsVersions.length);
+    for (String tlsVersion : tlsVersions) {
+      result.add(forJavaName(tlsVersion));
+    }
+    return Collections.unmodifiableList(result);
   }
 
   public String javaName() {

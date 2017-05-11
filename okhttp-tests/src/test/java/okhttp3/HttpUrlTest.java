@@ -426,11 +426,11 @@ public final class HttpUrlTest {
     assertEquals(null, HttpUrl.parse("http://[1:]"));
     assertEquals(null, HttpUrl.parse("http://[1:::]"));
     assertEquals(null, HttpUrl.parse("http://[1:::1]"));
-    assertEquals(null, HttpUrl.parse("http://[00000:0000:0000:0000::0000:0000:0000:0001]"));
+    assertEquals(null, HttpUrl.parse("http://[0000:0000:0000:0000::0000:0000:0000:0001]"));
   }
 
   @Test public void hostIpv6AddressTooManyGroups() throws Exception {
-    assertEquals(null, HttpUrl.parse("http://[00000:0000:0000:0000:0000:0000:0000:0000:0001]"));
+    assertEquals(null, HttpUrl.parse("http://[0000:0000:0000:0000:0000:0000:0000:0000:0001]"));
   }
 
   @Test public void hostIpv6AddressTooMuchCompression() throws Exception {
@@ -491,9 +491,14 @@ public final class HttpUrlTest {
     assertEquals("a::b:0:0:0", HttpUrl.parse("http://[a:0:0:0:b:0:0:0]/").host());
     assertEquals("::a:b:0:0:0", HttpUrl.parse("http://[0:0:0:a:b:0:0:0]/").host());
     assertEquals("::a:0:0:0:b", HttpUrl.parse("http://[0:0:0:a:0:0:0:b]/").host());
-    assertEquals("::a:b:c:d:e:f:1", HttpUrl.parse("http://[0:a:b:c:d:e:f:1]/").host());
-    assertEquals("a:b:c:d:e:f:1::", HttpUrl.parse("http://[a:b:c:d:e:f:1:0]/").host());
+    assertEquals("0:a:b:c:d:e:f:1", HttpUrl.parse("http://[0:a:b:c:d:e:f:1]/").host());
+    assertEquals("a:b:c:d:e:f:1:0", HttpUrl.parse("http://[a:b:c:d:e:f:1:0]/").host());
     assertEquals("ff01::101", HttpUrl.parse("http://[FF01:0:0:0:0:0:0:101]/").host());
+    assertEquals("2001:db8::1", HttpUrl.parse("http://[2001:db8::1]/").host());
+    assertEquals("2001:db8::2:1", HttpUrl.parse("http://[2001:db8:0:0:0:0:2:1]/").host());
+    assertEquals("2001:db8:0:1:1:1:1:1", HttpUrl.parse("http://[2001:db8:0:1:1:1:1:1]/").host());
+    assertEquals("2001:db8::1:0:0:1", HttpUrl.parse("http://[2001:db8:0:0:1:0:0:1]/").host());
+    assertEquals("2001:0:0:1::1", HttpUrl.parse("http://[2001:0:0:1:0:0:0:1]/").host());
     assertEquals("1::", HttpUrl.parse("http://[1:0:0:0:0:0:0:0]/").host());
     assertEquals("::1", HttpUrl.parse("http://[0:0:0:0:0:0:0:1]/").host());
     assertEquals("::", HttpUrl.parse("http://[0:0:0:0:0:0:0:0]/").host());
@@ -1486,5 +1491,20 @@ public final class HttpUrlTest {
     assertEquals("http://host/", url.toString());
     assertEquals(null, url.fragment());
     assertEquals(null, url.encodedFragment());
+  }
+
+  @Test public void topPrivateDomain() {
+    assertEquals("google.com", HttpUrl.parse("https://google.com").topPrivateDomain());
+    assertEquals("google.co.uk", HttpUrl.parse("https://adwords.google.co.uk").topPrivateDomain());
+    assertEquals("xn--ewv.xn--4pvxs.jp", HttpUrl.parse("https://栃.栃木.jp").topPrivateDomain());
+    assertEquals("xn--ewv.xn--4pvxs.jp",
+        HttpUrl.parse("https://xn--ewv.xn--4pvxs.jp").topPrivateDomain());
+
+    assertNull(HttpUrl.parse("https://co.uk").topPrivateDomain());
+    assertNull(HttpUrl.parse("https://square").topPrivateDomain());
+    assertNull(HttpUrl.parse("https://栃木.jp").topPrivateDomain());
+    assertNull(HttpUrl.parse("https://xn--4pvxs.jp").topPrivateDomain());
+    assertNull(HttpUrl.parse("https://localhost").topPrivateDomain());
+    assertNull(HttpUrl.parse("https://127.0.0.1").topPrivateDomain());
   }
 }

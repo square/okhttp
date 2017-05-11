@@ -33,7 +33,7 @@ public final class RouteDatabase {
     failedRoutes.add(failedRoute);
   }
 
-  /** Records success connecting to {@code failedRoute}. */
+  /** Records success connecting to {@code route}. */
   public synchronized void connected(Route route) {
     failedRoutes.remove(route);
   }

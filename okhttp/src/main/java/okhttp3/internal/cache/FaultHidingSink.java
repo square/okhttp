@@ -24,7 +24,7 @@ import okio.Sink;
 class FaultHidingSink extends ForwardingSink {
   private boolean hasErrors;
 
-  public FaultHidingSink(Sink delegate) {
+  FaultHidingSink(Sink delegate) {
     super(delegate);
   }
 

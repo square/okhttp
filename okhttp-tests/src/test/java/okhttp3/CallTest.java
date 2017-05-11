@@ -1518,7 +1518,7 @@ public final class CallTest {
     // Attempt conditional cache validation and a DNS miss.
     client.connectionPool().evictAll();
     client = client.newBuilder()
-        .dns(new FakeDns().unknownHost())
+        .dns(new FakeDns())
         .build();
     executeSynchronously("/").assertFailure(UnknownHostException.class);
   }
@@ -2307,24 +2307,60 @@ public final class CallTest {
     serverRespondsWithUnsolicited100Continue();
   }
 
-  @Test public void successfulExpectContinueAndConnectionReuse() throws Exception {
+  @Test public void successfulExpectContinuePermitsConnectionReuse() throws Exception {
     server.enqueue(new MockResponse()
         .setSocketPolicy(SocketPolicy.EXPECT_CONTINUE));
     server.enqueue(new MockResponse());
 
-    executeSynchronously("/", "Expect", "100-continue");
-    executeSynchronously("/");
+    executeSynchronously(new Request.Builder()
+        .url(server.url("/"))
+        .header("Expect", "100-continue")
+        .post(RequestBody.create(MediaType.parse("text/plain"), "abc"))
+        .build());
+    executeSynchronously(new Request.Builder()
+        .url(server.url("/"))
+        .build());
 
     assertEquals(0, server.takeRequest().getSequenceNumber());
     assertEquals(1, server.takeRequest().getSequenceNumber());
   }
 
-  @Test public void unsuccessfulExpectContinueAndConnectionReuse() throws Exception {
+  @Test public void successfulExpectContinuePermitsConnectionReuseWithHttp2() throws Exception {
+    enableProtocol(Protocol.HTTP_2);
+    successfulExpectContinuePermitsConnectionReuse();
+  }
+
+  @Test public void unsuccessfulExpectContinuePreventsConnectionReuse() throws Exception {
     server.enqueue(new MockResponse());
     server.enqueue(new MockResponse());
 
-    executeSynchronously("/", "Expect", "100-continue");
-    executeSynchronously("/");
+    executeSynchronously(new Request.Builder()
+        .url(server.url("/"))
+        .header("Expect", "100-continue")
+        .post(RequestBody.create(MediaType.parse("text/plain"), "abc"))
+        .build());
+    executeSynchronously(new Request.Builder()
+        .url(server.url("/"))
+        .build());
+
+    assertEquals(0, server.takeRequest().getSequenceNumber());
+    assertEquals(0, server.takeRequest().getSequenceNumber());
+  }
+
+  @Test public void unsuccessfulExpectContinuePermitsConnectionReuseWithHttp2() throws Exception {
+    enableProtocol(Protocol.HTTP_2);
+
+    server.enqueue(new MockResponse());
+    server.enqueue(new MockResponse());
+
+    executeSynchronously(new Request.Builder()
+        .url(server.url("/"))
+        .header("Expect", "100-continue")
+        .post(RequestBody.create(MediaType.parse("text/plain"), "abc"))
+        .build());
+    executeSynchronously(new Request.Builder()
+        .url(server.url("/"))
+        .build());
 
     assertEquals(0, server.takeRequest().getSequenceNumber());
     assertEquals(1, server.takeRequest().getSequenceNumber());
@@ -2347,9 +2383,9 @@ public final class CallTest {
   }
 
   @Test public void customDns() throws Exception {
-    // Configure a DNS that returns our MockWebServer for every hostname.
+    // Configure a DNS that returns our local MockWebServer for android.com.
     FakeDns dns = new FakeDns();
-    dns.addresses(Dns.SYSTEM.lookup(server.url("/").host()));
+    dns.set("android.com", Dns.SYSTEM.lookup(server.url("/").host()));
     client = client.newBuilder()
         .dns(dns)
         .build();
@@ -2359,6 +2395,23 @@ public final class CallTest {
         .url(server.url("/").newBuilder().host("android.com").build())
         .build();
     executeSynchronously(request).assertCode(200);
+
+    dns.assertRequests("android.com");
+  }
+  @Test public void dnsReturnsZeroIpAddresses() throws Exception {
+    // Configure a DNS that returns our local MockWebServer for android.com.
+    FakeDns dns = new FakeDns();
+    List<InetAddress> ipAddresses = new ArrayList<>();
+    dns.set("android.com", ipAddresses);
+    client = client.newBuilder()
+        .dns(dns)
+        .build();
+
+    server.enqueue(new MockResponse());
+    Request request = new Request.Builder()
+        .url(server.url("/").newBuilder().host("android.com").build())
+        .build();
+    executeSynchronously(request).assertFailure(dns + " returned no addresses for android.com");
 
     dns.assertRequests("android.com");
   }
@@ -2844,7 +2897,7 @@ public final class CallTest {
       awaitGarbageCollection();
 
       String message = logHandler.take();
-      assertTrue(message.contains("WARNING: A connection to " + server.url("/") + " was leaked."
+      assertTrue(message.contains("A connection to " + server.url("/") + " was leaked."
           + " Did you forget to close a response body?"));
       assertTrue(message.contains("okhttp3.RealCall.execute("));
       assertTrue(message.contains("okhttp3.CallTest.leakedResponseBodyLogsStackTrace("));
@@ -2887,7 +2940,7 @@ public final class CallTest {
       awaitGarbageCollection();
 
       String message = logHandler.take();
-      assertTrue(message.contains("WARNING: A connection to " + server.url("/") + " was leaked."
+      assertTrue(message.contains("A connection to " + server.url("/") + " was leaked."
           + " Did you forget to close a response body?"));
       assertTrue(message.contains("okhttp3.RealCall.enqueue("));
       assertTrue(message.contains("okhttp3.CallTest.asyncLeakedResponseBodyLogsStackTrace("));

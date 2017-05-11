@@ -158,7 +158,7 @@ public final class StreamAllocation {
       }
 
       // Attempt to get a connection from the pool.
-      Internal.instance.get(connectionPool, address, this);
+      Internal.instance.get(connectionPool, address, this, null);
       if (connection != null) {
         return connection;
       }
@@ -171,15 +171,21 @@ public final class StreamAllocation {
       selectedRoute = routeSelector.next();
     }
 
-    // Create a connection and assign it to this allocation immediately. This makes it possible for
-    // an asynchronous cancel() to interrupt the handshake we're about to do.
     RealConnection result;
     synchronized (connectionPool) {
+      if (canceled) throw new IOException("Canceled");
+
+      // Now that we have an IP address, make another attempt at getting a connection from the pool.
+      // This could match due to connection coalescing.
+      Internal.instance.get(connectionPool, address, this, selectedRoute);
+      if (connection != null) return connection;
+
+      // Create a connection and assign it to this allocation immediately. This makes it possible
+      // for an asynchronous cancel() to interrupt the handshake we're about to do.
       route = selectedRoute;
       refusedStreamCount = 0;
       result = new RealConnection(connectionPool, selectedRoute);
       acquire(result);
-      if (canceled) throw new IOException("Canceled");
     }
 
     // Do TCP + TLS handshakes. This is a blocking operation.

@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
   <parent>
@@ -11,7 +13,7 @@
 
   <groupId>com.squareup.okhttp3</groupId>
   <artifactId>parent</artifactId>
-  <version>3.7.0-SNAPSHOT</version>
+  <version>3.8.0-SNAPSHOT</version>
   <packaging>pom</packaging>
 
   <name>OkHttp (Parent)</name>
@@ -50,7 +52,7 @@
     <guava.version>16.0</guava.version>
     <java.version>1.7</java.version>
     <moshi.version>1.1.0</moshi.version>
-    <okio.version>1.11.0</okio.version>
+    <okio.version>1.12.0</okio.version>
 
     <!-- Test Dependencies -->
     <junit.version>4.12</junit.version>
@@ -84,6 +86,12 @@
         <groupId>com.squareup.okio</groupId>
         <artifactId>okio</artifactId>
         <version>${okio.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.google.code.findbugs</groupId>
+        <artifactId>jsr305</artifactId>
+        <version>3.0.2</version>
+        <scope>provided</scope>
       </dependency>
       <dependency>
         <groupId>junit</groupId>
@@ -207,7 +215,14 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-checkstyle-plugin</artifactId>
-        <version>2.12</version>
+        <version>2.17</version>
+        <dependencies>
+          <dependency>
+            <groupId>com.puppycrawl.tools</groupId>
+            <artifactId>checkstyle</artifactId>
+            <version>7.7</version>
+          </dependency>
+        </dependencies>
         <configuration>
           <failsOnError>true</failsOnError>
           <configLocation>checkstyle.xml</configLocation>
@@ -323,7 +338,7 @@
     <!-- ALPN Versions targeted for each Java 8 minor release -->
     <!-- Check versions with this page: -->
     <!-- http://www.eclipse.org/jetty/documentation/current/alpn-chapter.html#alpn-chapterchapterversions -->
-        <profile>
+    <profile>
       <id>alpn-when-jdk8_05</id>
       <activation>
         <jdk>1.8.0_05</jdk>
@@ -525,6 +540,15 @@
       <id>alpn-when-jdk8_121</id>
       <activation>
         <jdk>1.8.0_121</jdk>
+      </activation>
+      <properties>
+        <alpn.jdk8.version>8.1.11.v20170118</alpn.jdk8.version>
+      </properties>
+    </profile>
+    <profile>
+      <id>alpn-when-jdk8_131</id>
+      <activation>
+        <jdk>1.8.0_131</jdk>
       </activation>
       <properties>
         <alpn.jdk8.version>8.1.11.v20170118</alpn.jdk8.version>

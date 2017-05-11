@@ -18,6 +18,7 @@ package okhttp3;
 import java.net.Proxy;
 import java.net.ProxySelector;
 import java.util.List;
+import javax.annotation.Nullable;
 import javax.net.SocketFactory;
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLSocketFactory;
@@ -42,15 +43,16 @@ public final class Address {
   final List<Protocol> protocols;
   final List<ConnectionSpec> connectionSpecs;
   final ProxySelector proxySelector;
-  final Proxy proxy;
-  final SSLSocketFactory sslSocketFactory;
-  final HostnameVerifier hostnameVerifier;
-  final CertificatePinner certificatePinner;
+  final @Nullable Proxy proxy;
+  final @Nullable SSLSocketFactory sslSocketFactory;
+  final @Nullable HostnameVerifier hostnameVerifier;
+  final @Nullable CertificatePinner certificatePinner;
 
   public Address(String uriHost, int uriPort, Dns dns, SocketFactory socketFactory,
-      SSLSocketFactory sslSocketFactory, HostnameVerifier hostnameVerifier,
-      CertificatePinner certificatePinner, Authenticator proxyAuthenticator, Proxy proxy,
-      List<Protocol> protocols, List<ConnectionSpec> connectionSpecs, ProxySelector proxySelector) {
+      @Nullable SSLSocketFactory sslSocketFactory, @Nullable HostnameVerifier hostnameVerifier,
+      @Nullable CertificatePinner certificatePinner, Authenticator proxyAuthenticator,
+      @Nullable Proxy proxy, List<Protocol> protocols, List<ConnectionSpec> connectionSpecs,
+      ProxySelector proxySelector) {
     this.url = new HttpUrl.Builder()
         .scheme(sslSocketFactory != null ? "https" : "http")
         .host(uriHost)
@@ -130,40 +132,29 @@ public final class Address {
    * Returns this address's explicitly-specified HTTP proxy, or null to delegate to the {@linkplain
    * #proxySelector proxy selector}.
    */
-  public Proxy proxy() {
+  public @Nullable Proxy proxy() {
     return proxy;
   }
 
   /** Returns the SSL socket factory, or null if this is not an HTTPS address. */
-  public SSLSocketFactory sslSocketFactory() {
+  public @Nullable SSLSocketFactory sslSocketFactory() {
     return sslSocketFactory;
   }
 
   /** Returns the hostname verifier, or null if this is not an HTTPS address. */
-  public HostnameVerifier hostnameVerifier() {
+  public @Nullable HostnameVerifier hostnameVerifier() {
     return hostnameVerifier;
   }
 
   /** Returns this address's certificate pinner, or null if this is not an HTTPS address. */
-  public CertificatePinner certificatePinner() {
+  public @Nullable CertificatePinner certificatePinner() {
     return certificatePinner;
   }
 
-  @Override public boolean equals(Object other) {
-    if (other instanceof Address) {
-      Address that = (Address) other;
-      return this.url.equals(that.url)
-          && this.dns.equals(that.dns)
-          && this.proxyAuthenticator.equals(that.proxyAuthenticator)
-          && this.protocols.equals(that.protocols)
-          && this.connectionSpecs.equals(that.connectionSpecs)
-          && this.proxySelector.equals(that.proxySelector)
-          && equal(this.proxy, that.proxy)
-          && equal(this.sslSocketFactory, that.sslSocketFactory)
-          && equal(this.hostnameVerifier, that.hostnameVerifier)
-          && equal(this.certificatePinner, that.certificatePinner);
-    }
-    return false;
+  @Override public boolean equals(@Nullable Object other) {
+    return other instanceof Address
+        && url.equals(((Address) other).url)
+        && equalsNonHost((Address) other);
   }
 
   @Override public int hashCode() {
@@ -179,6 +170,19 @@ public final class Address {
     result = 31 * result + (hostnameVerifier != null ? hostnameVerifier.hashCode() : 0);
     result = 31 * result + (certificatePinner != null ? certificatePinner.hashCode() : 0);
     return result;
+  }
+
+  boolean equalsNonHost(Address that) {
+    return this.dns.equals(that.dns)
+        && this.proxyAuthenticator.equals(that.proxyAuthenticator)
+        && this.protocols.equals(that.protocols)
+        && this.connectionSpecs.equals(that.connectionSpecs)
+        && this.proxySelector.equals(that.proxySelector)
+        && equal(this.proxy, that.proxy)
+        && equal(this.sslSocketFactory, that.sslSocketFactory)
+        && equal(this.hostnameVerifier, that.hostnameVerifier)
+        && equal(this.certificatePinner, that.certificatePinner)
+        && this.url().port() == that.url().port();
   }
 
   @Override public String toString() {

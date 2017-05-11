@@ -24,8 +24,10 @@ import java.util.List;
 import java.util.Locale;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import javax.annotation.Nullable;
 import okhttp3.internal.Util;
 import okhttp3.internal.http.HttpDate;
+import okhttp3.internal.publicsuffix.PublicSuffixDatabase;
 
 import static okhttp3.internal.Util.UTC;
 import static okhttp3.internal.Util.delimiterOffset;
@@ -170,7 +172,7 @@ public final class Cookie {
   public boolean matches(HttpUrl url) {
     boolean domainMatch = hostOnly
         ? url.host().equals(domain)
-        : domainMatch(url, domain);
+        : domainMatch(url.host(), domain);
     if (!domainMatch) return false;
 
     if (!pathMatch(url, path)) return false;
@@ -180,9 +182,7 @@ public final class Cookie {
     return true;
   }
 
-  private static boolean domainMatch(HttpUrl url, String domain) {
-    String urlHost = url.host();
-
+  private static boolean domainMatch(String urlHost, String domain) {
     if (urlHost.equals(domain)) {
       return true; // As in 'example.com' matching 'example.com'.
     }
@@ -215,11 +215,11 @@ public final class Cookie {
    * Attempt to parse a {@code Set-Cookie} HTTP header value {@code setCookie} as a cookie. Returns
    * null if {@code setCookie} is not a well-formed cookie.
    */
-  public static Cookie parse(HttpUrl url, String setCookie) {
+  public static @Nullable Cookie parse(HttpUrl url, String setCookie) {
     return parse(System.currentTimeMillis(), url, setCookie);
   }
 
-  static Cookie parse(long currentTimeMillis, HttpUrl url, String setCookie) {
+  static @Nullable Cookie parse(long currentTimeMillis, HttpUrl url, String setCookie) {
     int pos = 0;
     int limit = setCookie.length();
     int cookiePairEnd = delimiterOffset(setCookie, pos, limit, ';');
@@ -299,10 +299,17 @@ public final class Cookie {
     }
 
     // If the domain is present, it must domain match. Otherwise we have a host-only cookie.
+    String urlHost = url.host();
     if (domain == null) {
-      domain = url.host();
-    } else if (!domainMatch(url, domain)) {
+      domain = urlHost;
+    } else if (!domainMatch(urlHost, domain)) {
       return null; // No domain match? This is either incompetence or malice!
+    }
+
+    // If the domain is a suffix of the url host, it must not be a public suffix.
+    if (urlHost.length() != domain.length()
+        && PublicSuffixDatabase.get().getEffectiveTldPlusOne(domain) == null) {
+      return null;
     }
 
     // If the path is absent or didn't start with '/', use the default path. It's a string like
@@ -575,7 +582,7 @@ public final class Cookie {
     return result.toString();
   }
 
-  @Override public boolean equals(Object other) {
+  @Override public boolean equals(@Nullable Object other) {
     if (!(other instanceof Cookie)) return false;
     Cookie that = (Cookie) other;
     return that.name.equals(name)

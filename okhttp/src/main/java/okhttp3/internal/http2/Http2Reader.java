@@ -67,7 +67,7 @@ final class Http2Reader implements Closeable {
   final Hpack.Reader hpackReader;
 
   /** Creates a frame reader with max header table size of 4096. */
-  public Http2Reader(BufferedSource source, boolean client) {
+  Http2Reader(BufferedSource source, boolean client) {
     this.source = source;
     this.client = client;
     this.continuation = new ContinuationSource(this.source);
@@ -199,6 +199,8 @@ final class Http2Reader implements Closeable {
 
   private void readData(Handler handler, int length, byte flags, int streamId)
       throws IOException {
+    if (streamId == 0) throw ioException("PROTOCOL_ERROR: TYPE_DATA streamId == 0");
+
     // TODO: checkState open or half-closed (local) or raise STREAM_CLOSED
     boolean inFinished = (flags & FLAG_END_STREAM) != 0;
     boolean gzipped = (flags & FLAG_COMPRESSED) != 0;
@@ -354,7 +356,7 @@ final class Http2Reader implements Closeable {
     int left;
     short padding;
 
-    public ContinuationSource(BufferedSource source) {
+    ContinuationSource(BufferedSource source) {
       this.source = source;
     }
 

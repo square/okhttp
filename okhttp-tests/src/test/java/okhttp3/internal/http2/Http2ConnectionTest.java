@@ -1534,7 +1534,7 @@ public final class Http2ConnectionTest {
     assertEquals(0, connection.bytesLeftInWriteWindow);
     assertEquals(0, connection.getStream(3).bytesLeftInWriteWindow);
 
-    // receiving a window update on the the connection will unblock new streams.
+    // receiving a window update on the connection will unblock new streams.
     connection.readerRunnable.windowUpdate(0, 3);
 
     assertEquals(3, connection.bytesLeftInWriteWindow);
