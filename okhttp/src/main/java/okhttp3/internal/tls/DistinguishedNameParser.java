@@ -35,7 +35,7 @@ final class DistinguishedNameParser {
   /** Distinguished name characters. */
   private char[] chars;
 
-  public DistinguishedNameParser(X500Principal principal) {
+  DistinguishedNameParser(X500Principal principal) {
     // RFC2253 is used to ensure we get attributes in the reverse
     // order of the underlying ASN.1 encoding, so that the most
     // significant values of repeated attributes occur first.

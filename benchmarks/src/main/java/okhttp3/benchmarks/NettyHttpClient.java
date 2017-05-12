@@ -137,7 +137,7 @@ class NettyHttpClient implements HttpClient {
     int total;
     long start;
 
-    public HttpChannel(SocketChannel channel) {
+    HttpChannel(SocketChannel channel) {
       this.channel = channel;
     }
 

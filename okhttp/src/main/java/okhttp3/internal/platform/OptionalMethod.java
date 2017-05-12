@@ -42,7 +42,7 @@ class OptionalMethod<T> {
    * @param methodName the name of the method
    * @param methodParams the method parameter types
    */
-  public OptionalMethod(Class<?> returnType, String methodName, Class... methodParams) {
+  OptionalMethod(Class<?> returnType, String methodName, Class... methodParams) {
     this.returnType = returnType;
     this.methodName = methodName;
     this.methodParams = methodParams;

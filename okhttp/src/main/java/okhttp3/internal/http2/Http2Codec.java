@@ -190,7 +190,7 @@ public final class Http2Codec implements HttpCodec {
   }
 
   class StreamFinishingSource extends ForwardingSource {
-    public StreamFinishingSource(Source delegate) {
+    StreamFinishingSource(Source delegate) {
       super(delegate);
     }
 

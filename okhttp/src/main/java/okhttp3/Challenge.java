@@ -15,7 +15,7 @@
  */
 package okhttp3;
 
-import okhttp3.internal.Util;
+import javax.annotation.Nullable;
 
 /** An RFC 2617 challenge. */
 public final class Challenge {
@@ -23,6 +23,8 @@ public final class Challenge {
   private final String realm;
 
   public Challenge(String scheme, String realm) {
+    if (scheme == null) throw new NullPointerException("scheme == null");
+    if (realm == null) throw new NullPointerException("realm == null");
     this.scheme = scheme;
     this.realm = realm;
   }
@@ -37,16 +39,16 @@ public final class Challenge {
     return realm;
   }
 
-  @Override public boolean equals(Object o) {
-    return o instanceof Challenge
-        && Util.equal(scheme, ((Challenge) o).scheme)
-        && Util.equal(realm, ((Challenge) o).realm);
+  @Override public boolean equals(@Nullable Object other) {
+    return other instanceof Challenge
+        && ((Challenge) other).scheme.equals(scheme)
+        && ((Challenge) other).realm.equals(realm);
   }
 
   @Override public int hashCode() {
     int result = 29;
-    result = 31 * result + (realm != null ? realm.hashCode() : 0);
-    result = 31 * result + (scheme != null ? scheme.hashCode() : 0);
+    result = 31 * result + realm.hashCode();
+    result = 31 * result + scheme.hashCode();
     return result;
   }
 

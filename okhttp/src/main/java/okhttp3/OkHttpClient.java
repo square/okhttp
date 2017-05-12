@@ -29,6 +29,7 @@ import java.util.List;
 import java.util.Random;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
+import javax.annotation.Nullable;
 import javax.net.SocketFactory;
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLContext;
@@ -191,7 +192,7 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
   }
 
   final Dispatcher dispatcher;
-  final Proxy proxy;
+  final @Nullable Proxy proxy;
   final List<Protocol> protocols;
   final List<ConnectionSpec> connectionSpecs;
   final List<Interceptor> interceptors;
@@ -199,11 +200,11 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
   final EventListener.Factory eventListenerFactory;
   final ProxySelector proxySelector;
   final CookieJar cookieJar;
-  final Cache cache;
-  final InternalCache internalCache;
+  final @Nullable Cache cache;
+  final @Nullable InternalCache internalCache;
   final SocketFactory socketFactory;
-  final SSLSocketFactory sslSocketFactory;
-  final CertificateChainCleaner certificateChainCleaner;
+  final @Nullable SSLSocketFactory sslSocketFactory;
+  final @Nullable CertificateChainCleaner certificateChainCleaner;
   final HostnameVerifier hostnameVerifier;
   final CertificatePinner certificatePinner;
   final Authenticator proxyAuthenticator;
@@ -433,7 +434,7 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
 
   public static final class Builder {
     Dispatcher dispatcher;
-    Proxy proxy;
+    @Nullable Proxy proxy;
     List<Protocol> protocols;
     List<ConnectionSpec> connectionSpecs;
     final List<Interceptor> interceptors = new ArrayList<>();
@@ -441,11 +442,11 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
     EventListener.Factory eventListenerFactory;
     ProxySelector proxySelector;
     CookieJar cookieJar;
-    Cache cache;
-    InternalCache internalCache;
+    @Nullable Cache cache;
+    @Nullable InternalCache internalCache;
     SocketFactory socketFactory;
-    SSLSocketFactory sslSocketFactory;
-    CertificateChainCleaner certificateChainCleaner;
+    @Nullable SSLSocketFactory sslSocketFactory;
+    @Nullable CertificateChainCleaner certificateChainCleaner;
     HostnameVerifier hostnameVerifier;
     CertificatePinner certificatePinner;
     Authenticator proxyAuthenticator;
@@ -568,7 +569,7 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
      * precedence over {@link #proxySelector}, which is only honored when this proxy is null (which
      * it is by default). To disable proxy use completely, call {@code setProxy(Proxy.NO_PROXY)}.
      */
-    public Builder proxy(Proxy proxy) {
+    public Builder proxy(@Nullable Proxy proxy) {
       this.proxy = proxy;
       return this;
     }
@@ -599,13 +600,13 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
     }
 
     /** Sets the response cache to be used to read and write cached responses. */
-    void setInternalCache(InternalCache internalCache) {
+    void setInternalCache(@Nullable InternalCache internalCache) {
       this.internalCache = internalCache;
       this.cache = null;
     }
 
     /** Sets the response cache to be used to read and write cached responses. */
-    public Builder cache(Cache cache) {
+    public Builder cache(@Nullable Cache cache) {
       this.cache = cache;
       this.internalCache = null;
       return this;

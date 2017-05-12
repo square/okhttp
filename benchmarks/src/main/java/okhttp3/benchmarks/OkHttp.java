@@ -61,7 +61,7 @@ class OkHttp extends SynchronousHttpClient {
   class OkHttpRequest implements Runnable {
     private final Call call;
 
-    public OkHttpRequest(Call call) {
+    OkHttpRequest(Call call) {
       this.call = call;
     }
 

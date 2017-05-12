@@ -41,7 +41,7 @@ public final class CacheControl {
   private final boolean noTransform;
   private final boolean immutable;
 
-  String headerValue; // Lazily computed, null if absent.
+  @Nullable String headerValue; // Lazily computed, null if absent.
 
   private CacheControl(boolean noCache, boolean noStore, int maxAgeSeconds, int sMaxAgeSeconds,
       boolean isPrivate, boolean isPublic, boolean mustRevalidate, int maxStaleSeconds,
