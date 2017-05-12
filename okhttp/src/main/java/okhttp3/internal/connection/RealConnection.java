@@ -69,6 +69,7 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static okhttp3.internal.Util.closeQuietly;
 
 public final class RealConnection extends Http2Connection.Listener implements Connection {
+  private static final String NPE_THROW_WITH_NULL = "throw with null exception";
   private final ConnectionPool connectionPool;
   private final Route route;
 
@@ -225,8 +226,19 @@ public final class RealConnection extends Http2Connection.Listener implements Co
       ce.initCause(e);
       throw ce;
     }
-    source = Okio.buffer(Okio.source(rawSocket));
-    sink = Okio.buffer(Okio.sink(rawSocket));
+
+    // The following try/catch block is a pseudo hacky way to get around a crash on Android 7.0
+    // More details:
+    // https://github.com/square/okhttp/issues/3245
+    // https://android-review.googlesource.com/#/c/271775/
+    try {
+      source = Okio.buffer(Okio.source(rawSocket));
+      sink = Okio.buffer(Okio.sink(rawSocket));
+    } catch (NullPointerException npe) {
+      if (NPE_THROW_WITH_NULL.equals(npe.getMessage())) {
+        throw new IOException(npe);
+      }
+    }
   }
 
   private void establishProtocol(ConnectionSpecSelector connectionSpecSelector) throws IOException {
