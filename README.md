@@ -48,9 +48,11 @@ testCompile 'com.squareup.okhttp3:mockwebserver:3.8.0'
 ProGuard
 --------
 
-If you are using ProGuard you might need to add the following option:
+If you are using ProGuard you might need to add the following options:
 ```
 -dontwarn okio.**
+-dontwarn javax.annotation.Nullable
+-dontwarn javax.annotation.ParametersAreNonnullByDefault
 ```
 
 License
