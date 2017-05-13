@@ -151,13 +151,33 @@ class AndroidPlatform extends Platform {
       Class<?> networkPolicyClass = Class.forName("android.security.NetworkSecurityPolicy");
       Method getInstanceMethod = networkPolicyClass.getMethod("getInstance");
       Object networkSecurityPolicy = getInstanceMethod.invoke(null);
-      Method isCleartextTrafficPermittedMethod = networkPolicyClass
-          .getMethod("isCleartextTrafficPermitted", String.class);
-      return (boolean) isCleartextTrafficPermittedMethod.invoke(networkSecurityPolicy, hostname);
+      return api24IsCleartextTrafficPermitted(hostname, networkPolicyClass, networkSecurityPolicy);
     } catch (ClassNotFoundException | NoSuchMethodException e) {
       return super.isCleartextTrafficPermitted(hostname);
     } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
       throw new AssertionError();
+    }
+  }
+
+  private boolean api24IsCleartextTrafficPermitted(String hostname, Class<?> networkPolicyClass,
+      Object networkSecurityPolicy) throws InvocationTargetException, IllegalAccessException {
+    try {
+      Method isCleartextTrafficPermittedMethod = networkPolicyClass
+          .getMethod("isCleartextTrafficPermitted", String.class);
+      return (boolean) isCleartextTrafficPermittedMethod.invoke(networkSecurityPolicy, hostname);
+    } catch (NoSuchMethodException e) {
+      return api23IsCleartextTrafficPermitted(hostname, networkPolicyClass, networkSecurityPolicy);
+    }
+  }
+
+  private boolean api23IsCleartextTrafficPermitted(String hostname, Class<?> networkPolicyClass,
+      Object networkSecurityPolicy) throws InvocationTargetException, IllegalAccessException {
+    try {
+      Method isCleartextTrafficPermittedMethod = networkPolicyClass
+          .getMethod("isCleartextTrafficPermitted");
+      return (boolean) isCleartextTrafficPermittedMethod.invoke(networkSecurityPolicy);
+    } catch (NoSuchMethodException e) {
+      return super.isCleartextTrafficPermitted(hostname);
     }
   }
 
