@@ -18,7 +18,7 @@ package okhttp3;
 import java.net.InetAddress;
 import java.util.List;
 
-// TODO(jwilson): make this public after the 3.7 release.
+// TODO(jwilson): make this public after the 3.8 release.
 abstract class EventListener {
   public static final EventListener NONE = new EventListener() {
   };
