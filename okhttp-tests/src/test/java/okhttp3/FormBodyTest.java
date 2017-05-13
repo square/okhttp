@@ -152,7 +152,7 @@ public final class FormBodyTest {
     assertEquals("%27", formEncode(39));
     assertEquals("%28", formEncode(40));
     assertEquals("%29", formEncode(41));
-    assertEquals("*", formEncode(42));
+    assertEquals("%2A", formEncode(42));
     assertEquals("%2B", formEncode(43));
     assertEquals("%2C", formEncode(44));
     assertEquals("-", formEncode(45));
