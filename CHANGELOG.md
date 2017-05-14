@@ -1310,3 +1310,4 @@ Initial release.
  [bom]: https://en.wikipedia.org/wiki/Byte_order_mark
  [junit_5_rules]: http://junit.org/junit5/docs/current/user-guide/#migrating-from-junit4-rulesupport
  [public_suffix]: https://publicsuffix.org/
+ [maven_provided]: https://maven.apache.org/guides/introduction/introduction-to-dependency-mechanism.html
