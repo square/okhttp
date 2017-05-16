@@ -305,7 +305,7 @@ public final class CacheControl {
      * @param maxAge a non-negative integer. This is stored and transmitted with {@link
      * TimeUnit#SECONDS} precision; finer precision will be lost.
      */
-    public Builder maxAge(int maxAge, TimeUnit timeUnit) {
+    public Builder maxAge(long maxAge, TimeUnit timeUnit) {
       if (maxAge < 0) throw new IllegalArgumentException("maxAge < 0: " + maxAge);
       long maxAgeSecondsLong = timeUnit.toSeconds(maxAge);
       this.maxAgeSeconds = maxAgeSecondsLong > Integer.MAX_VALUE
@@ -321,7 +321,7 @@ public final class CacheControl {
      * @param maxStale a non-negative integer. This is stored and transmitted with {@link
      * TimeUnit#SECONDS} precision; finer precision will be lost.
      */
-    public Builder maxStale(int maxStale, TimeUnit timeUnit) {
+    public Builder maxStale(long maxStale, TimeUnit timeUnit) {
       if (maxStale < 0) throw new IllegalArgumentException("maxStale < 0: " + maxStale);
       long maxStaleSecondsLong = timeUnit.toSeconds(maxStale);
       this.maxStaleSeconds = maxStaleSecondsLong > Integer.MAX_VALUE
@@ -338,7 +338,7 @@ public final class CacheControl {
      * @param minFresh a non-negative integer. This is stored and transmitted with {@link
      * TimeUnit#SECONDS} precision; finer precision will be lost.
      */
-    public Builder minFresh(int minFresh, TimeUnit timeUnit) {
+    public Builder minFresh(long minFresh, TimeUnit timeUnit) {
       if (minFresh < 0) throw new IllegalArgumentException("minFresh < 0: " + minFresh);
       long minFreshSecondsLong = timeUnit.toSeconds(minFresh);
       this.minFreshSeconds = minFreshSecondsLong > Integer.MAX_VALUE
