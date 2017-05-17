@@ -214,6 +214,9 @@ public final class RetryAndFollowUpInterceptor implements Interceptor {
     // We can't send the request body again.
     if (requestSendStarted && userRequest.body() instanceof UnrepeatableRequestBody) return false;
 
+    // Don't recover connection when request method is not GET.
+    if (!routeException && !userRequest.method().equals("GET")) return false;
+
     // This exception is fatal.
     if (!isRecoverable(e, requestSendStarted)) return false;
 
