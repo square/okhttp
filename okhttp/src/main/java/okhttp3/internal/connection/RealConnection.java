@@ -30,6 +30,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import javax.net.ssl.SSLPeerUnverifiedException;
+import javax.net.ssl.SSLSession;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
 import okhttp3.Address;
@@ -256,6 +257,7 @@ public final class RealConnection extends Http2Connection.Listener implements Co
       // Create the wrapper over the connected socket.
       sslSocket = (SSLSocket) sslSocketFactory.createSocket(
           rawSocket, address.url().host(), address.url().port(), true /* autoClose */);
+      socket = sslSocket;
 
       // Configure the socket's ciphers, TLS versions, and extensions.
       ConnectionSpec connectionSpec = connectionSpecSelector.configureSecureSocket(sslSocket);
@@ -266,10 +268,16 @@ public final class RealConnection extends Http2Connection.Listener implements Co
 
       // Force handshake. This can throw!
       sslSocket.startHandshake();
-      Handshake unverifiedHandshake = Handshake.get(sslSocket.getSession());
+
+      // block for session establishment, can return a Null session for OpenSSLSocketImpl if cancelled
+      SSLSession sslSocketSession = sslSocket.getSession();
+      if (socket.isClosed()) {
+        throw new IOException("socket closed");
+      }
+      Handshake unverifiedHandshake = Handshake.get(sslSocketSession);
 
       // Verify that the socket's certificates are acceptable for the target host.
-      if (!address.hostnameVerifier().verify(address.url().host(), sslSocket.getSession())) {
+      if (!address.hostnameVerifier().verify(address.url().host(), sslSocketSession)) {
         X509Certificate cert = (X509Certificate) unverifiedHandshake.peerCertificates().get(0);
         throw new SSLPeerUnverifiedException("Hostname " + address.url().host() + " not verified:"
             + "\n    certificate: " + CertificatePinner.pin(cert)
@@ -459,7 +467,7 @@ public final class RealConnection extends Http2Connection.Listener implements Co
   }
 
   public void cancel() {
-    // Close the raw socket so we don't end up doing synchronous I/O.
+    closeQuietly(socket);
     closeQuietly(rawSocket);
   }
 
