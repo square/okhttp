@@ -269,8 +269,9 @@ public final class RealConnection extends Http2Connection.Listener implements Co
       // Force handshake. This can throw!
       sslSocket.startHandshake();
 
-      // block for session establishment, can return a Null session for OpenSSLSocketImpl if cancelled
+      // block for session establishment
       SSLSession sslSocketSession = sslSocket.getSession();
+      // don't use SslSocket.getSession since for failed results it returns SSL_NULL_WITH_NULL_NULL
       if (socket.isClosed()) {
         throw new IOException("socket closed");
       }
