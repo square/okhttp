@@ -178,7 +178,10 @@ public final class StreamAllocation {
       // Now that we have an IP address, make another attempt at getting a connection from the pool.
       // This could match due to connection coalescing.
       Internal.instance.get(connectionPool, address, this, selectedRoute);
-      if (connection != null) return connection;
+      if (connection != null) {
+        route = selectedRoute;
+        return connection;
+      }
 
       // Create a connection and assign it to this allocation immediately. This makes it possible
       // for an asynchronous cancel() to interrupt the handshake we're about to do.
