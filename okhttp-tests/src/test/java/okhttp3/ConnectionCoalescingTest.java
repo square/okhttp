@@ -20,6 +20,7 @@ import java.net.InetAddress;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLSession;
 import okhttp3.internal.tls.HeldCertificate;
@@ -113,6 +114,33 @@ public final class ConnectionCoalescingTest {
     assert200Http2Response(execute(sanUrl), "san.com");
 
     assert200Http2Response(execute(url), server.getHostName());
+
+    assertEquals(1, client.connectionPool().connectionCount());
+  }
+
+  /** Test a previously coalesced connection that's no longer healthy. */
+  @Test public void staleCoalescedConnection() throws Exception {
+    server.enqueue(new MockResponse().setResponseCode(200));
+    server.enqueue(new MockResponse().setResponseCode(200));
+
+    final AtomicReference<Connection> connection = new AtomicReference<>();
+    client = client.newBuilder()
+        .addNetworkInterceptor(new Interceptor() {
+          @Override public Response intercept(Chain chain) throws IOException {
+            connection.set(chain.connection());
+            return chain.proceed(chain.request());
+          }
+        })
+        .build();
+    dns.set("san.com", Dns.SYSTEM.lookup(server.getHostName()).subList(0, 1));
+
+    assert200Http2Response(execute(url), server.getHostName());
+
+    // Simulate a stale connection in the pool.
+    connection.get().socket().close();
+
+    HttpUrl sanUrl = url.newBuilder().host("san.com").build();
+    assert200Http2Response(execute(sanUrl), "san.com");
 
     assertEquals(1, client.connectionPool().connectionCount());
   }
@@ -287,5 +315,6 @@ public final class ConnectionCoalescingTest {
     assertEquals(200, response.code());
     assertEquals(expectedHost, response.request().url().host());
     assertEquals(Protocol.HTTP_2, response.protocol());
+    response.body().close();
   }
 }
