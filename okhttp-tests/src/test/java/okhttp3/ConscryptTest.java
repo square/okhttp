@@ -2,6 +2,8 @@ package okhttp3;
 
 import java.io.IOException;
 import java.util.Arrays;
+
+import org.conscrypt.Conscrypt;
 import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Ignore;
@@ -93,5 +95,10 @@ public class ConscryptTest {
     // TODO why 1.2?
     assertEquals(TlsVersion.TLS_1_2, response.handshake().tlsVersion());
     assertEquals(Protocol.HTTP_2, response.protocol());
+  }
+
+  public void testNullSession() throws Exception {
+    // TODO test against a null session
+//    Handshake.get(new FakeSSLSession());
   }
 }

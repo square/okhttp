@@ -9,6 +9,7 @@ import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.X509TrustManager;
 import okhttp3.Protocol;
 import okhttp3.internal.Util;
+import org.conscrypt.Conscrypt;
 import org.conscrypt.OpenSSLProvider;
 import org.conscrypt.OpenSSLSocketImpl;
 
@@ -23,7 +24,7 @@ import org.conscrypt.OpenSSLSocketImpl;
  * Returns org.conscrypt:conscrypt-openjdk-uber on the classpath.
  */
 public class ConscryptPlatform extends Platform {
-  public ConscryptPlatform() {
+  private ConscryptPlatform() {
   }
 
   public Provider getProvider() {
@@ -84,9 +85,21 @@ public class ConscryptPlatform extends Platform {
 
   @Override public SSLContext getSSLContext() {
     try {
-      return SSLContext.getInstance("TLS", getProvider());
+      SSLContext sslContext = SSLContext.getInstance("TLS", getProvider());
+      return sslContext;
     } catch (NoSuchAlgorithmException e) {
       throw new IllegalStateException("No TLS provider", e);
+    }
+  }
+
+  public static Platform buildIfSupported() {
+    try {
+      // TODO consider checking for native library
+      Conscrypt.SocketFactories.setUseEngineSocketByDefault(true);
+      Class.forName("org.conscrypt.OpenSSLEngineSocketImpl");
+      return new ConscryptPlatform();
+    } catch (ClassNotFoundException e) {
+      return null;
     }
   }
 }

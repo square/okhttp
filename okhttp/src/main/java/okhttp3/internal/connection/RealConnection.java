@@ -468,7 +468,7 @@ public final class RealConnection extends Http2Connection.Listener implements Co
   }
 
   public void cancel() {
-    closeQuietly(socket);
+    // Close the raw socket so we don't end up doing synchronous I/O.
     closeQuietly(rawSocket);
   }
 
