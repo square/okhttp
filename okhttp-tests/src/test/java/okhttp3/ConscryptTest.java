@@ -3,7 +3,6 @@ package okhttp3;
 import java.io.IOException;
 import java.util.Arrays;
 
-import org.conscrypt.Conscrypt;
 import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Ignore;
