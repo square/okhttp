@@ -56,7 +56,7 @@ public final class Settings {
   }
 
   Settings set(int id, int value) {
-    if (id >= values.length) {
+    if (id < 0 || id >= values.length) {
       return this; // Discard unknown settings.
     }
 
