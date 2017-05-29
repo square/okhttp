@@ -28,6 +28,7 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
+import javax.annotation.Nullable;
 import okhttp3.internal.Util;
 import okhttp3.internal.cache.CacheRequest;
 import okhttp3.internal.cache.CacheStrategy;
@@ -186,7 +187,7 @@ public final class Cache implements Closeable, Flushable {
     return ByteString.encodeUtf8(url.toString()).md5().hex();
   }
 
-  Response get(Request request) {
+  @Nullable Response get(Request request) {
     String key = key(request.url());
     DiskLruCache.Snapshot snapshot;
     Entry entry;
@@ -217,7 +218,7 @@ public final class Cache implements Closeable, Flushable {
     return response;
   }
 
-  CacheRequest put(Response response) {
+  @Nullable CacheRequest put(Response response) {
     String requestMethod = response.request().method();
 
     if (HttpMethod.invalidatesCache(response.request().method())) {
@@ -273,7 +274,7 @@ public final class Cache implements Closeable, Flushable {
     }
   }
 
-  private void abortQuietly(DiskLruCache.Editor editor) {
+  private void abortQuietly(@Nullable DiskLruCache.Editor editor) {
     // Give up because the cache cannot be written.
     try {
       if (editor != null) {
@@ -327,7 +328,7 @@ public final class Cache implements Closeable, Flushable {
     return new Iterator<String>() {
       final Iterator<DiskLruCache.Snapshot> delegate = cache.snapshots();
 
-      String nextUrl;
+      @Nullable String nextUrl;
       boolean canRemove;
 
       @Override public boolean hasNext() {
@@ -432,7 +433,7 @@ public final class Cache implements Closeable, Flushable {
     private Sink body;
     boolean done;
 
-    public CacheRequestImpl(final DiskLruCache.Editor editor) {
+    CacheRequestImpl(final DiskLruCache.Editor editor) {
       this.editor = editor;
       this.cacheOut = editor.newSink(ENTRY_BODY);
       this.body = new ForwardingSink(cacheOut) {
@@ -484,7 +485,7 @@ public final class Cache implements Closeable, Flushable {
     private final int code;
     private final String message;
     private final Headers responseHeaders;
-    private final Handshake handshake;
+    private final @Nullable Handshake handshake;
     private final long sentRequestMillis;
     private final long receivedResponseMillis;
 
@@ -536,7 +537,7 @@ public final class Cache implements Closeable, Flushable {
      * base64-encoded and appear each on their own line. A length of -1 is used to encode a null
      * array. The last line is optional. If present, it contains the TLS version.
      */
-    public Entry(Source in) throws IOException {
+    Entry(Source in) throws IOException {
       try {
         BufferedSource source = Okio.buffer(in);
         url = source.readUtf8LineStrict();
@@ -580,7 +581,7 @@ public final class Cache implements Closeable, Flushable {
           List<Certificate> localCertificates = readCertificateList(source);
           TlsVersion tlsVersion = !source.exhausted()
               ? TlsVersion.forJavaName(source.readUtf8LineStrict())
-              : null;
+              : TlsVersion.SSL_3_0;
           handshake = Handshake.get(tlsVersion, cipherSuite, peerCertificates, localCertificates);
         } else {
           handshake = null;
@@ -590,7 +591,7 @@ public final class Cache implements Closeable, Flushable {
       }
     }
 
-    public Entry(Response response) {
+    Entry(Response response) {
       this.url = response.request().url().toString();
       this.varyHeaders = HttpHeaders.varyHeaders(response);
       this.requestMethod = response.request().method();
@@ -644,11 +645,7 @@ public final class Cache implements Closeable, Flushable {
             .writeByte('\n');
         writeCertList(sink, handshake.peerCertificates());
         writeCertList(sink, handshake.localCertificates());
-        // The handshake’s TLS version is null on HttpsURLConnection and on older cached responses.
-        if (handshake.tlsVersion() != null) {
-          sink.writeUtf8(handshake.tlsVersion().javaName())
-              .writeByte('\n');
-        }
+        sink.writeUtf8(handshake.tlsVersion().javaName()).writeByte('\n');
       }
       sink.close();
     }
@@ -736,10 +733,10 @@ public final class Cache implements Closeable, Flushable {
   private static class CacheResponseBody extends ResponseBody {
     final DiskLruCache.Snapshot snapshot;
     private final BufferedSource bodySource;
-    private final String contentType;
-    private final String contentLength;
+    private final @Nullable String contentType;
+    private final @Nullable String contentLength;
 
-    public CacheResponseBody(final DiskLruCache.Snapshot snapshot,
+    CacheResponseBody(final DiskLruCache.Snapshot snapshot,
         String contentType, String contentLength) {
       this.snapshot = snapshot;
       this.contentType = contentType;

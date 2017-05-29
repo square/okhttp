@@ -21,6 +21,7 @@ import okhttp3.Interceptor;
 import okhttp3.Request;
 import okhttp3.Response;
 import okhttp3.internal.Util;
+import okhttp3.internal.connection.RealConnection;
 import okhttp3.internal.connection.StreamAllocation;
 import okio.BufferedSink;
 import okio.Okio;
@@ -35,9 +36,11 @@ public final class CallServerInterceptor implements Interceptor {
   }
 
   @Override public Response intercept(Chain chain) throws IOException {
-    HttpCodec httpCodec = ((RealInterceptorChain) chain).httpStream();
-    StreamAllocation streamAllocation = ((RealInterceptorChain) chain).streamAllocation();
-    Request request = chain.request();
+    RealInterceptorChain realChain = (RealInterceptorChain) chain;
+    HttpCodec httpCodec = realChain.httpStream();
+    StreamAllocation streamAllocation = realChain.streamAllocation();
+    RealConnection connection = (RealConnection) realChain.connection();
+    Request request = realChain.request();
 
     long sentRequestMillis = System.currentTimeMillis();
     httpCodec.writeRequestHeaders(request);
@@ -52,12 +55,17 @@ public final class CallServerInterceptor implements Interceptor {
         responseBuilder = httpCodec.readResponseHeaders(true);
       }
 
-      // Write the request body, unless an "Expect: 100-continue" expectation failed.
       if (responseBuilder == null) {
+        // Write the request body if the "Expect: 100-continue" expectation was met.
         Sink requestBodyOut = httpCodec.createRequestBody(request, request.body().contentLength());
         BufferedSink bufferedRequestBody = Okio.buffer(requestBodyOut);
         request.body().writeTo(bufferedRequestBody);
         bufferedRequestBody.close();
+      } else if (!connection.isMultiplexed()) {
+        // If the "Expect: 100-continue" expectation wasn't met, prevent the HTTP/1 connection from
+        // being reused. Otherwise we're still obligated to transmit the request body to leave the
+        // connection in a consistent state.
+        streamAllocation.noNewStreams();
       }
     }
 

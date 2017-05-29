@@ -15,6 +15,7 @@
  */
 package okhttp3;
 
+import javax.annotation.Nullable;
 import okio.ByteString;
 
 /**
@@ -101,7 +102,7 @@ public interface WebSocket {
    * href="http://tools.ietf.org/html/rfc6455#section-7.4">Section 7.4 of RFC 6455</a> or {@code 0}.
    * @param reason Reason for shutting down or {@code null}.
    */
-  boolean close(int code, String reason);
+  boolean close(int code, @Nullable String reason);
 
   /**
    * Immediately and violently release resources held by this web socket, discarding any enqueued

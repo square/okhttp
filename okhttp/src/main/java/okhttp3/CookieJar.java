@@ -22,7 +22,7 @@ import java.util.List;
  * Provides <strong>policy</strong> and <strong>persistence</strong> for HTTP cookies.
  *
  * <p>As policy, implementations of this interface are responsible for selecting which cookies to
- * accept and which to reject. A reasonable policy is to reject all cookies, though that may be
+ * accept and which to reject. A reasonable policy is to reject all cookies, though that may
  * interfere with session-based authentication schemes that require cookies.
  *
  * <p>As persistence, implementations of this interface must also provide storage of cookies. Simple

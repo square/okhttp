@@ -568,7 +568,7 @@ public final class OkHttpURLConnection extends HttpURLConnection implements Call
       }
     };
 
-    public UnexpectedException(Throwable cause) {
+    UnexpectedException(Throwable cause) {
       super(cause);
     }
   }

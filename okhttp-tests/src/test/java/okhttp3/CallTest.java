@@ -2307,24 +2307,60 @@ public final class CallTest {
     serverRespondsWithUnsolicited100Continue();
   }
 
-  @Test public void successfulExpectContinueAndConnectionReuse() throws Exception {
+  @Test public void successfulExpectContinuePermitsConnectionReuse() throws Exception {
     server.enqueue(new MockResponse()
         .setSocketPolicy(SocketPolicy.EXPECT_CONTINUE));
     server.enqueue(new MockResponse());
 
-    executeSynchronously("/", "Expect", "100-continue");
-    executeSynchronously("/");
+    executeSynchronously(new Request.Builder()
+        .url(server.url("/"))
+        .header("Expect", "100-continue")
+        .post(RequestBody.create(MediaType.parse("text/plain"), "abc"))
+        .build());
+    executeSynchronously(new Request.Builder()
+        .url(server.url("/"))
+        .build());
 
     assertEquals(0, server.takeRequest().getSequenceNumber());
     assertEquals(1, server.takeRequest().getSequenceNumber());
   }
 
-  @Test public void unsuccessfulExpectContinueAndConnectionReuse() throws Exception {
+  @Test public void successfulExpectContinuePermitsConnectionReuseWithHttp2() throws Exception {
+    enableProtocol(Protocol.HTTP_2);
+    successfulExpectContinuePermitsConnectionReuse();
+  }
+
+  @Test public void unsuccessfulExpectContinuePreventsConnectionReuse() throws Exception {
     server.enqueue(new MockResponse());
     server.enqueue(new MockResponse());
 
-    executeSynchronously("/", "Expect", "100-continue");
-    executeSynchronously("/");
+    executeSynchronously(new Request.Builder()
+        .url(server.url("/"))
+        .header("Expect", "100-continue")
+        .post(RequestBody.create(MediaType.parse("text/plain"), "abc"))
+        .build());
+    executeSynchronously(new Request.Builder()
+        .url(server.url("/"))
+        .build());
+
+    assertEquals(0, server.takeRequest().getSequenceNumber());
+    assertEquals(0, server.takeRequest().getSequenceNumber());
+  }
+
+  @Test public void unsuccessfulExpectContinuePermitsConnectionReuseWithHttp2() throws Exception {
+    enableProtocol(Protocol.HTTP_2);
+
+    server.enqueue(new MockResponse());
+    server.enqueue(new MockResponse());
+
+    executeSynchronously(new Request.Builder()
+        .url(server.url("/"))
+        .header("Expect", "100-continue")
+        .post(RequestBody.create(MediaType.parse("text/plain"), "abc"))
+        .build());
+    executeSynchronously(new Request.Builder()
+        .url(server.url("/"))
+        .build());
 
     assertEquals(0, server.takeRequest().getSequenceNumber());
     assertEquals(1, server.takeRequest().getSequenceNumber());
@@ -2359,6 +2395,23 @@ public final class CallTest {
         .url(server.url("/").newBuilder().host("android.com").build())
         .build();
     executeSynchronously(request).assertCode(200);
+
+    dns.assertRequests("android.com");
+  }
+  @Test public void dnsReturnsZeroIpAddresses() throws Exception {
+    // Configure a DNS that returns our local MockWebServer for android.com.
+    FakeDns dns = new FakeDns();
+    List<InetAddress> ipAddresses = new ArrayList<>();
+    dns.set("android.com", ipAddresses);
+    client = client.newBuilder()
+        .dns(dns)
+        .build();
+
+    server.enqueue(new MockResponse());
+    Request request = new Request.Builder()
+        .url(server.url("/").newBuilder().host("android.com").build())
+        .build();
+    executeSynchronously(request).assertFailure(dns + " returned no addresses for android.com");
 
     dns.assertRequests("android.com");
   }

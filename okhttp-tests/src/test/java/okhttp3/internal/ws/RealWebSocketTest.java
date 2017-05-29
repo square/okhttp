@@ -203,7 +203,7 @@ public final class RealWebSocketTest {
     client.listener.assertFailure(ProtocolException.class, "Control frames must be final.");
 
     server.processNextFrame();
-    server.listener.assertFailure(EOFException.class, null);
+    server.listener.assertFailure(EOFException.class);
   }
 
   @Test public void protocolErrorInCloseResponseClosesConnection() throws IOException {
@@ -242,7 +242,7 @@ public final class RealWebSocketTest {
   @Test public void networkErrorReportedAsFailure() throws IOException {
     server.sink.close();
     client.processNextFrame();
-    client.listener.assertFailure(EOFException.class, null);
+    client.listener.assertFailure(EOFException.class);
   }
 
   @Test public void closeThrowingFailsConnection() throws IOException {
@@ -312,6 +312,7 @@ public final class RealWebSocketTest {
       String url = "http://example.com/websocket";
       Response response = new Response.Builder()
           .code(101)
+          .message("OK")
           .request(new Request.Builder().url(url).build())
           .protocol(Protocol.HTTP_1_1)
           .build();
