@@ -168,9 +168,6 @@ public final class ClientAuthTest {
       call.execute();
       fail();
     } catch (SSLHandshakeException expected) {
-    } catch (SSLException expected) {
-      // Conscrypt
-      assertTrue(getPlatform().equals("conscrypt"));
     } catch (SocketException expected) {
       // JDK 9
       assertTrue(getPlatform().equals("jdk9"));
@@ -195,9 +192,6 @@ public final class ClientAuthTest {
       call.execute();
       fail();
     } catch (SSLHandshakeException expected) {
-    } catch (SSLException expected) {
-      // Conscrypt
-      assertTrue(getPlatform().equals("conscrypt"));
     } catch (SocketException expected) {
       // JDK 9
       assertTrue(getPlatform().equals("jdk9"));
