@@ -67,6 +67,16 @@ public final class OkHostnameVerifier implements HostnameVerifier {
         return true;
       }
     }
+
+    X500Principal principal = certificate.getSubjectX500Principal();
+    // RFC 2818 advises using the most specific name for matching.
+    String cn = new DistinguishedNameParser(principal).findMostSpecific("cn");
+    if (cn != null) {
+      if (ipAddress.equalsIgnoreCase(cn)) {
+        return true;
+      }
+    }
+
     return false;
   }
 
