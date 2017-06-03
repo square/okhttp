@@ -13,7 +13,7 @@
 
   <groupId>com.squareup.okhttp3</groupId>
   <artifactId>parent</artifactId>
-  <version>3.8.0-SNAPSHOT</version>
+  <version>3.9.0-SNAPSHOT</version>
   <packaging>pom</packaging>
 
   <name>OkHttp (Parent)</name>
@@ -52,7 +52,7 @@
     <guava.version>16.0</guava.version>
     <java.version>1.7</java.version>
     <moshi.version>1.1.0</moshi.version>
-    <okio.version>1.12.0</okio.version>
+    <okio.version>1.13.0</okio.version>
 
     <!-- Test Dependencies -->
     <junit.version>4.12</junit.version>
