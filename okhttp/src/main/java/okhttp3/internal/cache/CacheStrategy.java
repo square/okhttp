@@ -105,6 +105,7 @@ public final class CacheStrategy {
     final Request request;
     final Response cacheResponse;
 
+
     /** The server's time when the cached response was served, if known. */
     private Date servedDate;
     private String servedDateString;
@@ -141,6 +142,7 @@ public final class CacheStrategy {
       this.nowMillis = nowMillis;
       this.request = request;
       this.cacheResponse = cacheResponse;
+
 
       if (cacheResponse != null) {
         this.sentRequestMillis = cacheResponse.sentRequestAtMillis();
