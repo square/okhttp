@@ -2480,6 +2480,33 @@ public final class CacheTest {
     return server.takeRequest(); // conditional get
   }
 
+  @Test public void immutableIsCached() throws Exception {
+    server.enqueue(new MockResponse()
+        .addHeader("Cache-Control", "immutable")
+        .setBody("A"));
+    server.enqueue(new MockResponse()
+        .setBody("B"));
+
+    HttpUrl url = server.url("/");
+    assertEquals("A", get(url).body().string());
+    assertEquals("A", get(url).body().string());
+  }
+
+  @Test public void immutableIsCachedAfterMultipleCalls() throws Exception {
+    server.enqueue(new MockResponse()
+        .setBody("A"));
+    server.enqueue(new MockResponse()
+        .addHeader("Cache-Control", "immutable")
+        .setBody("B"));
+    server.enqueue(new MockResponse()
+        .setBody("C"));
+
+    HttpUrl url = server.url("/");
+    assertEquals("A", get(url).body().string());
+    assertEquals("B", get(url).body().string());
+    assertEquals("B", get(url).body().string());
+  }
+
   private void assertFullyCached(MockResponse response) throws Exception {
     server.enqueue(response.setBody("A"));
     server.enqueue(response.setBody("B"));
