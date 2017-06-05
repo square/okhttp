@@ -271,7 +271,9 @@ public final class Response implements Closeable {
 
   /** Closes the response body. Equivalent to {@code body().close()}. */
   @Override public void close() {
-    body.close();
+    if (body != null) {
+      body.close();
+    }
   }
 
   @Override public String toString() {
