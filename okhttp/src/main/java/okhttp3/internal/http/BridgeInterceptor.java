@@ -82,7 +82,7 @@ public final class BridgeInterceptor implements Interceptor {
     }
 
     List<Cookie> cookies = cookieJar.loadForRequest(userRequest.url());
-    if (!cookies.isEmpty()) {
+    if (null != cookies && !cookies.isEmpty()) {
       requestBuilder.header("Cookie", cookieHeader(cookies));
     }
 
