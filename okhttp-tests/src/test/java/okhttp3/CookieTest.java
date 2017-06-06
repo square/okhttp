@@ -387,12 +387,20 @@ public final class CookieTest {
 
   @Test public void builderNameValidation() throws Exception {
     try {
-      new Cookie.Builder().name(null);
+      Cookie cookie = new Cookie.Builder()
+          .name(null)
+          .value("b")
+          .hostOnlyDomain("example.com")
+          .build();
       fail();
     } catch (NullPointerException expected) {
     }
     try {
-      new Cookie.Builder().name(" a ");
+      Cookie cookie = new Cookie.Builder()
+          .name(" a ")
+          .value("b")
+          .hostOnlyDomain("example.com")
+          .build();
       fail();
     } catch (IllegalArgumentException expected) {
     }
@@ -400,12 +408,20 @@ public final class CookieTest {
 
   @Test public void builderValueValidation() throws Exception {
     try {
-      new Cookie.Builder().value(null);
+      Cookie cookie = new Cookie.Builder()
+          .name("a")
+          .value(null)
+          .hostOnlyDomain("example.com")
+          .build();
       fail();
     } catch (NullPointerException expected) {
     }
     try {
-      new Cookie.Builder().value(" b ");
+      Cookie cookie = new Cookie.Builder()
+          .name("a")
+          .value(" b ")
+          .hostOnlyDomain("example.com")
+          .build();
       fail();
     } catch (IllegalArgumentException expected) {
     }
@@ -443,12 +459,20 @@ public final class CookieTest {
 
   @Test public void builderDomainValidation() throws Exception {
     try {
-      new Cookie.Builder().hostOnlyDomain(null);
+      Cookie cookie = new Cookie.Builder()
+          .name("a")
+          .value("b")
+          .hostOnlyDomain(null)
+          .build();
       fail();
     } catch (NullPointerException expected) {
     }
     try {
-      new Cookie.Builder().hostOnlyDomain("a/b");
+      Cookie cookie = new Cookie.Builder()
+          .name("a")
+          .value("b")
+          .hostOnlyDomain("a/b")
+          .build();
       fail();
     } catch (IllegalArgumentException expected) {
     }
@@ -476,12 +500,22 @@ public final class CookieTest {
 
   @Test public void builderPathValidation() throws Exception {
     try {
-      new Cookie.Builder().path(null);
+      Cookie cookie = new Cookie.Builder()
+          .name("a")
+          .value("b")
+          .hostOnlyDomain("example.com")
+          .path(null)
+          .build();
       fail();
     } catch (NullPointerException expected) {
     }
     try {
-      new Cookie.Builder().path("foo");
+      Cookie cookie = new Cookie.Builder()
+          .name("a")
+          .value("b")
+          .hostOnlyDomain("example.com")
+          .path("foo")
+          .build();
       fail();
     } catch (IllegalArgumentException expected) {
     }

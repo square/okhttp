@@ -534,6 +534,9 @@ public final class Cookie {
     }
 
     public Cookie build() {
+      if (this.name == null) throw new NullPointerException("name == null");
+      if (this.value == null) throw new NullPointerException("value == null");
+      if (this.domain == null) throw new NullPointerException("domain == null");
       return new Cookie(this);
     }
   }
