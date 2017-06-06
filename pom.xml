@@ -20,6 +20,7 @@
 
   <modules>
     <module>okhttp</module>
+    <module>okhttp-server</module>
     <module>okhttp-tests</module>
 
     <module>okhttp-android-support</module>
