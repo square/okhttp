@@ -1866,11 +1866,9 @@ public final class URLConnectionTest {
     MockResponse pleaseAuthenticate = new MockResponse().setResponseCode(401)
         .addHeader("WWW-Authenticate: Basic realm=\"protected area\"")
         .setBody("Please authenticate.");
-    // fail auth three times...
+    // fail auth one time...
     server.enqueue(pleaseAuthenticate);
-    server.enqueue(pleaseAuthenticate);
-    server.enqueue(pleaseAuthenticate);
-    // ...then succeed the fourth time
+    // ...then succeed
     server.enqueue(new MockResponse().setBody("Successful auth!"));
 
     Authenticator.setDefault(new RecordingAuthenticator());
@@ -1889,25 +1887,21 @@ public final class URLConnectionTest {
     RecordedRequest request = server.takeRequest();
     assertNull(request.getHeader("Authorization"));
 
-    // ...but the three requests that follow include an authorization header
-    for (int i = 0; i < 3; i++) {
-      request = server.takeRequest();
-      assertEquals("POST / HTTP/1.1", request.getRequestLine());
-      assertEquals("Basic " + RecordingAuthenticator.BASE_64_CREDENTIALS,
-          request.getHeader("Authorization"));
-      assertEquals("ABCD", request.getBody().readUtf8());
-    }
+    // ...but the request that follow include an authorization header
+    request = server.takeRequest();
+    assertEquals("POST / HTTP/1.1", request.getRequestLine());
+    assertEquals("Basic " + RecordingAuthenticator.BASE_64_CREDENTIALS,
+        request.getHeader("Authorization"));
+    assertEquals("ABCD", request.getBody().readUtf8());
   }
 
   @Test public void authenticateWithGet() throws Exception {
     MockResponse pleaseAuthenticate = new MockResponse().setResponseCode(401)
         .addHeader("WWW-Authenticate: Basic realm=\"protected area\"")
         .setBody("Please authenticate.");
-    // fail auth three times...
+    // fail auth one time...
     server.enqueue(pleaseAuthenticate);
-    server.enqueue(pleaseAuthenticate);
-    server.enqueue(pleaseAuthenticate);
-    // ...then succeed the fourth time
+    // ...then succeed the second time
     server.enqueue(new MockResponse().setBody("Successful auth!"));
 
     Authenticator.setDefault(new RecordingAuthenticator());
@@ -1921,13 +1915,11 @@ public final class URLConnectionTest {
     RecordedRequest request = server.takeRequest();
     assertNull(request.getHeader("Authorization"));
 
-    // ...but the three requests that follow requests include an authorization header
-    for (int i = 0; i < 3; i++) {
-      request = server.takeRequest();
-      assertEquals("GET / HTTP/1.1", request.getRequestLine());
-      assertEquals("Basic " + RecordingAuthenticator.BASE_64_CREDENTIALS,
-          request.getHeader("Authorization"));
-    }
+    // ...but the request that follow include an authorization header
+    request = server.takeRequest();
+    assertEquals("GET / HTTP/1.1", request.getRequestLine());
+    assertEquals("Basic " + RecordingAuthenticator.BASE_64_CREDENTIALS,
+        request.getHeader("Authorization"));
   }
 
   /** https://code.google.com/p/android/issues/detail?id=74026 */
@@ -1935,11 +1927,9 @@ public final class URLConnectionTest {
     MockResponse pleaseAuthenticate = new MockResponse().setResponseCode(401)
         .addHeader("WWW-Authenticate: Basic realm=\"protected area\"")
         .setBody("Please authenticate.");
-    // fail auth three times...
+    // fail auth one time...
     server.enqueue(pleaseAuthenticate);
-    server.enqueue(pleaseAuthenticate);
-    server.enqueue(pleaseAuthenticate);
-    // ...then succeed the fourth time
+    // ...then succeed
     MockResponse successfulResponse = new MockResponse()
         .addHeader("Content-Encoding", "gzip")
         .setBody(gzip("Successful auth!"));
@@ -1956,13 +1946,11 @@ public final class URLConnectionTest {
     RecordedRequest request = server.takeRequest();
     assertNull(request.getHeader("Authorization"));
 
-    // ...but the three requests that follow requests include an authorization header
-    for (int i = 0; i < 3; i++) {
-      request = server.takeRequest();
-      assertEquals("GET / HTTP/1.1", request.getRequestLine());
-      assertEquals("Basic " + RecordingAuthenticator.BASE_64_CREDENTIALS,
-          request.getHeader("Authorization"));
-    }
+    // ...but the request that follow requests include an authorization header
+    request = server.takeRequest();
+    assertEquals("GET / HTTP/1.1", request.getRequestLine());
+    assertEquals("Basic " + RecordingAuthenticator.BASE_64_CREDENTIALS,
+        request.getHeader("Authorization"));
   }
 
   /** https://github.com/square/okhttp/issues/342 */
@@ -3190,41 +3178,6 @@ public final class URLConnectionTest {
 
     Response redirectedBy = challengeResponse.priorResponse();
     assertEquals("/a", redirectedBy.request().url().url().getPath());
-  }
-
-  @Test public void attemptAuthorization20Times() throws Exception {
-    for (int i = 0; i < 20; i++) {
-      server.enqueue(new MockResponse().setResponseCode(401));
-    }
-    server.enqueue(new MockResponse().setBody("Success!"));
-
-    String credential = Credentials.basic("jesse", "peanutbutter");
-    urlFactory.setClient(urlFactory.client().newBuilder()
-        .authenticator(new RecordingOkAuthenticator(credential))
-        .build());
-
-    connection = urlFactory.open(server.url("/0").url());
-    assertContent("Success!", connection);
-  }
-
-  @Test public void doesNotAttemptAuthorization21Times() throws Exception {
-    for (int i = 0; i < 21; i++) {
-      server.enqueue(new MockResponse().setResponseCode(401));
-    }
-
-    String credential = Credentials.basic("jesse", "peanutbutter");
-    urlFactory.setClient(urlFactory.client().newBuilder()
-        .authenticator(new RecordingOkAuthenticator(credential))
-        .build());
-
-    connection = urlFactory.open(server.url("/").url());
-    try {
-      connection.getInputStream();
-      fail();
-    } catch (ProtocolException expected) {
-      assertEquals(401, connection.getResponseCode());
-      assertEquals("Too many follow-up requests: 21", expected.getMessage());
-    }
   }
 
   @Test public void setsNegotiatedProtocolHeader_HTTP_2() throws Exception {
