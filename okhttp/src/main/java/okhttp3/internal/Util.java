@@ -185,11 +185,16 @@ public final class Util {
 
   /** Returns an immutable copy of {@code list}. */
   public static <T> List<T> immutableList(List<T> list) {
+    if (list.isEmpty()) return Collections.emptyList();
+    if (list.size() == 1) return Collections.singletonList(list.get(0));
     return Collections.unmodifiableList(new ArrayList<>(list));
   }
 
   /** Returns an immutable list containing {@code elements}. */
+  @SafeVarargs
   public static <T> List<T> immutableList(T... elements) {
+    if (elements.length == 0) return Collections.emptyList();
+    if (elements.length == 1) return Collections.singletonList(elements[0]);
     return Collections.unmodifiableList(Arrays.asList(elements.clone()));
   }
 
