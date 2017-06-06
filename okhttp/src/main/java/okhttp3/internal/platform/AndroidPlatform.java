@@ -16,22 +16,25 @@
 package okhttp3.internal.platform;
 
 import android.util.Log;
+import okhttp3.Protocol;
+import okhttp3.internal.Util;
+import okhttp3.internal.tls.CertificateChainCleaner;
+
+import javax.net.ssl.SSLPeerUnverifiedException;
+import javax.net.ssl.SSLSocket;
+import javax.net.ssl.SSLSocketFactory;
+import javax.net.ssl.X509TrustManager;
 import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.InetSocketAddress;
 import java.net.Socket;
+import java.security.Provider;
+import java.security.Security;
 import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
 import java.util.List;
-import javax.net.ssl.SSLPeerUnverifiedException;
-import javax.net.ssl.SSLSocket;
-import javax.net.ssl.SSLSocketFactory;
-import javax.net.ssl.X509TrustManager;
-import okhttp3.Protocol;
-import okhttp3.internal.Util;
-import okhttp3.internal.tls.CertificateChainCleaner;
 
 /** Android 2.3 or better. */
 class AndroidPlatform extends Platform {
@@ -45,16 +48,23 @@ class AndroidPlatform extends Platform {
   private final OptionalMethod<Socket> getAlpnSelectedProtocol;
   private final OptionalMethod<Socket> setAlpnProtocols;
 
+  // Non-null when Google Play Service Dynamic Security Provider is installed.
+  private final OptionalMethod<Socket> getNpnSelectedProtocol;
+  private final OptionalMethod<Socket> setNpnProtocols;
+
   private final CloseGuard closeGuard = CloseGuard.get();
 
   AndroidPlatform(Class<?> sslParametersClass, OptionalMethod<Socket> setUseSessionTickets,
       OptionalMethod<Socket> setHostname, OptionalMethod<Socket> getAlpnSelectedProtocol,
-      OptionalMethod<Socket> setAlpnProtocols) {
+      OptionalMethod<Socket> setAlpnProtocols, OptionalMethod<Socket> getNpnSelectedProtocol,
+      OptionalMethod<Socket> setNpnProtocols) {
     this.sslParametersClass = sslParametersClass;
     this.setUseSessionTickets = setUseSessionTickets;
     this.setHostname = setHostname;
     this.getAlpnSelectedProtocol = getAlpnSelectedProtocol;
     this.setAlpnProtocols = setAlpnProtocols;
+    this.getNpnSelectedProtocol = getNpnSelectedProtocol;
+    this.setNpnProtocols = setNpnProtocols;
   }
 
   @Override public void connectSocket(Socket socket, InetSocketAddress address,
@@ -108,14 +118,30 @@ class AndroidPlatform extends Platform {
       Object[] parameters = {concatLengthPrefixed(protocols)};
       setAlpnProtocols.invokeWithoutCheckedException(sslSocket, parameters);
     }
+
+    // Enable NPN.
+    if (setNpnProtocols != null && setNpnProtocols.isSupported(sslSocket)) {
+      Object[] parameters = { concatLengthPrefixed(protocols) };
+      setNpnProtocols.invokeWithoutCheckedException(sslSocket, parameters);
+    }
   }
 
   @Override public String getSelectedProtocol(SSLSocket socket) {
-    if (getAlpnSelectedProtocol == null) return null;
-    if (!getAlpnSelectedProtocol.isSupported(socket)) return null;
+    if (getAlpnSelectedProtocol != null && getAlpnSelectedProtocol.isSupported(socket)) {
+      byte[] alpnResult = (byte[]) getAlpnSelectedProtocol.invokeWithoutCheckedException(socket);
+      if (alpnResult != null) {
+        return new String(alpnResult, Util.UTF_8);
+      }
+    }
 
-    byte[] alpnResult = (byte[]) getAlpnSelectedProtocol.invokeWithoutCheckedException(socket);
-    return alpnResult != null ? new String(alpnResult, Util.UTF_8) : null;
+    if (getNpnSelectedProtocol != null && getNpnSelectedProtocol.isSupported(socket)) {
+      byte[] npnResult = (byte[]) getNpnSelectedProtocol.invokeWithoutCheckedException(socket);
+      if (npnResult != null) {
+        return new String(npnResult, Util.UTF_8);
+      }
+    }
+
+    return null;
   }
 
   @Override public void log(int level, String message, Throwable t) {
@@ -212,7 +238,15 @@ class AndroidPlatform extends Platform {
           null, "setHostname", String.class);
       OptionalMethod<Socket> getAlpnSelectedProtocol = null;
       OptionalMethod<Socket> setAlpnProtocols = null;
+      OptionalMethod<Socket> getNpnSelectedProtocol = null;
+      OptionalMethod<Socket> setNpnProtocols = null;
 
+      // Attempt to find Google Play Services Dynamic Security Provider.
+      Provider provider = Security.getProvider("GmsCore_OpenSSL");
+      if (provider != null) {
+        getNpnSelectedProtocol = new OptionalMethod<>(byte[].class, "getNpnSelectedProtocol");
+        setNpnProtocols = new OptionalMethod<>(null, "setNpnProtocols", byte[].class);
+      }
       // Attempt to find Android 5.0+ APIs.
       try {
         Class.forName("android.net.Network"); // Arbitrary class added in Android 5.0.
@@ -222,7 +256,7 @@ class AndroidPlatform extends Platform {
       }
 
       return new AndroidPlatform(sslParametersClass, setUseSessionTickets, setHostname,
-          getAlpnSelectedProtocol, setAlpnProtocols);
+          getAlpnSelectedProtocol, setAlpnProtocols, getNpnSelectedProtocol, setNpnProtocols);
     } catch (ClassNotFoundException ignored) {
       // This isn't an Android runtime.
     }
