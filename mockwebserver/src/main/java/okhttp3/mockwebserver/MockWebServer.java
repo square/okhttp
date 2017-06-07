@@ -374,6 +374,7 @@ public final class MockWebServer extends ExternalResource implements Closeable {
       if (!executor.awaitTermination(5, TimeUnit.SECONDS)) {
         throw new IOException("Gave up waiting for executor to shut down");
       }
+      started = false;
     } catch (InterruptedException e) {
       throw new AssertionError();
     }
