@@ -67,6 +67,23 @@
 
             <p>OkHttp supports Android 2.3 and above. For Java, the minimum requirement is 1.7.</p>
 
+            <h3 id="configuration">Configuration</h3>
+            <p>Connections are created and configured through an instance of the <code>OkHttpClient</code> class.
+              A single instance can create connections for your entire application.</p>
+            <p>Some of the included configuration options are:</p>
+            <ul>
+              <li><code>setProxy</code> - Sets the HTTP proxy that will be used by created connections.</li>
+              <li><code>setProxySelector</code> - Sets the proxy selection policy to be used if no proxy is specified explicitly.</li>
+              <li><code>setCookieHandler</code> - Sets the cookie handler to be used to read outgoing cookies and write incoming cookies.</li>
+              <li><code>setResponseCache</code> - Sets the response cache to be used to read and write cached responses.</li>
+              <li><code>setSSLSocketFactory</code> - Sets the socket factory used to secure HTTPS connections.</li>
+              <li><code>setHostnameVerifier</code> - Sets the verifier used to confirm that response certificates apply to requested hostnames for HTTPS connections.</li>
+              <li><code>setAuthenticator</code> - Sets the authenticator used to respond to challenges from the remote web server or proxy server.</li>
+              <li><code>setConnectionPool</code> - Sets the connection pool used to recycle HTTP and HTTPS connections.</li>
+            </ul>
+            <p>Changing these settings will only take effect for new connections that are made.
+
+
             <h3 id="examples">Examples</h3>
             <h4>Get a URL</h4>
             <p>This program downloads a URL and print its contents as a string. <a href="https://raw.github.com/square/okhttp/master/samples/guide/src/main/java/okhttp3/guide/GetExample.java">Full source</a>.
@@ -145,6 +162,7 @@ limitations under the License.</pre>
             <div class="content-nav" data-spy="affix" data-offset-top="80">
               <ul class="nav nav-tabs nav-stacked primary">
                 <li><a href="#overview">Overview</a></li>
+                <li><a href="#configuration">Configuration</a></li>
                 <li><a href="#examples">Examples</a></li>
                 <li><a href="#download">Download</a></li>
                 <li><a href="#contributing">Contributing</a></li>
