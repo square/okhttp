@@ -173,7 +173,11 @@ public class Platform {
   private static Platform findPlatform() {
     if ("conscrypt".equals(System.getProperty("okhttp.platform"))) {
       // TODO better installation mechanism for new platforms
-      return ConscryptPlatform.buildIfSupported();
+      Platform conscrypt = ConscryptPlatform.buildIfSupported();
+
+      if (conscrypt != null) {
+        return conscrypt;
+      }
     }
 
     Platform android = AndroidPlatform.buildIfSupported();
