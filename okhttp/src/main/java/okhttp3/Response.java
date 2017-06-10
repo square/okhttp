@@ -269,8 +269,17 @@ public final class Response implements Closeable {
     return receivedResponseAtMillis;
   }
 
-  /** Closes the response body. Equivalent to {@code body().close()}. */
+  /**
+   * Closes the response body. Equivalent to {@code body().close()}.
+   *
+   * <p>It is an error to close a response that is not eligible for a body. This includes the
+   * responses returned from {@link #cacheResponse}, {@link #networkResponse}, and {@link
+   * #priorResponse()}.
+   */
   @Override public void close() {
+    if (body == null) {
+      throw new IllegalStateException("response is not eligible for a body and must not be closed");
+    }
     body.close();
   }
 

@@ -111,6 +111,12 @@ public interface WebSocket {
   void cancel();
 
   interface Factory {
+    /**
+     * Creates a new web socket and immediately returns it. Creating a web socket initiates an
+     * asynchronous process to connect the socket. Once that succeeds or fails, {@code listener}
+     * will be notified. The caller must either close or cancel the returned web socket when it is
+     * no longer in use.
+     */
     WebSocket newWebSocket(Request request, WebSocketListener listener);
   }
 }
