@@ -287,7 +287,8 @@ public final class CertificatePinner {
     boolean matches(String hostname) {
       if (pattern.startsWith(WILDCARD)) {
         int firstDot = hostname.indexOf('.');
-        return hostname.regionMatches(false, firstDot + 1, canonicalHostname, 0,
+        return (hostname.length() - firstDot - 1) == canonicalHostname.length()
+            && hostname.regionMatches(false, firstDot + 1, canonicalHostname, 0,
             canonicalHostname.length());
       }
 
