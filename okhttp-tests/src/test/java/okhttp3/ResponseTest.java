@@ -61,6 +61,39 @@ public final class ResponseTest {
     assertEquals("ab", p2.string());
   }
 
+  @Test public void responseBuilderValidates() throws Exception {
+    try {
+      newResponse(responseBody("")).newBuilder().request(null).build();
+      fail();
+    } catch (IllegalStateException expected) {
+      assertEquals("request == null", expected.getMessage());
+    }
+    try {
+      newResponse(responseBody("")).newBuilder().protocol(null).build();
+      fail();
+    } catch (IllegalStateException expected) {
+      assertEquals("protocol == null", expected.getMessage());
+    }
+    try {
+      newResponse(responseBody("")).newBuilder().code(-1).build();
+      fail();
+    } catch (IllegalStateException expected) {
+      assertEquals("code < 0: -1", expected.getMessage());
+    }
+    try {
+      newResponse(responseBody("")).newBuilder().message(null).build();
+      fail();
+    } catch (IllegalStateException expected) {
+      assertEquals("message == null", expected.getMessage());
+    }
+    try {
+      newResponse(null);
+      fail();
+    } catch (IllegalStateException expected) {
+      assertEquals("body == null", expected.getMessage());
+    }
+  }
+
   /**
    * Returns a new response body that refuses to be read once it has been closed. This is true of
    * most {@link BufferedSource} instances, but not of {@link Buffer}.
