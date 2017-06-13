@@ -438,6 +438,7 @@ public final class Response implements Closeable {
       if (protocol == null) throw new IllegalStateException("protocol == null");
       if (code < 0) throw new IllegalStateException("code < 0: " + code);
       if (message == null) throw new IllegalStateException("message == null");
+      if (body == null) throw new IllegalStateException("body == null");
       return new Response(this);
     }
   }
