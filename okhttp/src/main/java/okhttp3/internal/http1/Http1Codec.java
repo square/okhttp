@@ -335,9 +335,16 @@ public final class Http1Codec implements HttpCodec {
         throw new ProtocolException("expected " + bytesRemaining
             + " bytes but received " + byteCount);
       }
-      sink.write(source, byteCount);
-      bytesRemaining -= byteCount;
-      statsData.byteCountBodySent += byteCount; // only track what we've actually written.
+      boolean succeeded = false;
+      try {
+        sink.write(source, byteCount);
+        succeeded = true;
+        bytesRemaining -= byteCount;
+        statsData.byteCountBodySent += byteCount; // only track what we've actually written.
+      } finally {
+        if ( ! succeeded)
+          statsData.reportAborted(observer);
+      }
     }
 
     @Override public void flush() throws IOException {
@@ -373,18 +380,25 @@ public final class Http1Codec implements HttpCodec {
       if (closed) throw new IllegalStateException("closed");
       if (byteCount == 0) return;
 
-      long origSize = sink.buffer().size();
-      sink.writeHexadecimalUnsignedLong(byteCount);
-      long newSize = sink.buffer().size();
-      long len = newSize - origSize;
-      if (len > 0)
-        statsData.byteCountBodySent += len;
+      boolean succeeded = false;
+      try {
+        long origSize = sink.buffer().size();
+        sink.writeHexadecimalUnsignedLong(byteCount);
+        long newSize = sink.buffer().size();
+        long len = newSize - origSize;
+        if (len > 0)
+          statsData.byteCountBodySent += len;
 
-      sink.writeUtf8("\r\n");
-      sink.write(source, byteCount);
-      sink.writeUtf8("\r\n");
+        sink.writeUtf8("\r\n");
+        sink.write(source, byteCount);
+        sink.writeUtf8("\r\n");
 
-      statsData.byteCountBodySent += byteCount + 4;
+        statsData.byteCountBodySent += byteCount + 4;
+        succeeded = true;
+      } finally {
+        if ( ! succeeded)
+          statsData.reportAborted(observer);
+      }
     }
 
     @Override public synchronized void flush() throws IOException {
@@ -450,10 +464,18 @@ public final class Http1Codec implements HttpCodec {
       if (closed) throw new IllegalStateException("closed");
       if (bytesRemaining == 0) return -1;
 
-      long read = source.read(sink, Math.min(bytesRemaining, byteCount));
-      if (read == -1) {
-        endOfInput(false); // The server didn't supply the promised content length.
-        throw new ProtocolException("unexpected end of stream");
+      boolean succeeded = false;
+      long read;
+      try {
+        read = source.read(sink, Math.min(bytesRemaining, byteCount));
+        if (read == -1) {
+          endOfInput(false); // The server didn't supply the promised content length.
+          throw new ProtocolException("unexpected end of stream");
+        }
+        succeeded = true;
+      } finally {
+        if ( ! succeeded)
+          statsData.reportAborted(observer);
       }
 
       statsData.byteCountBodyReceived += read;
@@ -492,20 +514,31 @@ public final class Http1Codec implements HttpCodec {
       if (closed) throw new IllegalStateException("closed");
       if (!hasMoreChunks) return -1;
 
-      if (bytesRemainingInChunk == 0 || bytesRemainingInChunk == NO_CHUNK_YET) {
-        readChunkSize();
-        if (!hasMoreChunks) return -1;
+      boolean succeeded = false;
+      long read;
+      try {
+        if (bytesRemainingInChunk == 0 || bytesRemainingInChunk == NO_CHUNK_YET) {
+          readChunkSize();
+          if (!hasMoreChunks) {
+            succeeded = true;
+            return -1;
+          }
+        }
+
+        read = source.read(sink, Math.min(byteCount, bytesRemainingInChunk));
+        if (read == -1) {
+          endOfInput(false); // The server didn't supply the promised chunk length.
+          throw new ProtocolException("unexpected end of stream");
+        }
+
+        statsData.byteCountBodyReceived += read;
+
+        bytesRemainingInChunk -= read;
+        succeeded = true;
+      } finally {
+        if ( ! succeeded)
+          statsData.reportAborted(observer);
       }
-
-      long read = source.read(sink, Math.min(byteCount, bytesRemainingInChunk));
-      if (read == -1) {
-        endOfInput(false); // The server didn't supply the promised chunk length.
-        throw new ProtocolException("unexpected end of stream");
-      }
-
-      statsData.byteCountBodyReceived += read;
-
-      bytesRemainingInChunk -= read;
       return read;
     }
 

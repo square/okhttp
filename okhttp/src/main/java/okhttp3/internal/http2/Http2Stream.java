@@ -412,6 +412,7 @@ public final class Http2Stream {
         if (flowControlError) {
           in.skip(byteCount);
           closeLater(ErrorCode.FLOW_CONTROL_ERROR);
+          statsData.reportAborted(observer);
           return;
         }
 
@@ -622,7 +623,10 @@ public final class Http2Stream {
     }
 
     public void exitAndThrowIfTimedOut() throws IOException {
-      if (exit()) throw newTimeoutException(null /* cause */);
+      if (exit()) {
+        statsData.reportAborted(observer);
+        throw newTimeoutException(null /* cause */);
+      }
     }
   }
 }
