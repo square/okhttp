@@ -156,51 +156,54 @@ public final class HttpLoggingInterceptor implements Interceptor {
     if (!logHeaders && hasRequestBody) {
       requestStartMessage += " (" + requestBody.contentLength() + "-byte body)";
     }
-    logger.log(requestStartMessage);
 
-    if (logHeaders) {
-      if (hasRequestBody) {
-        // Request body headers are only present when installed as a network interceptor. Force
-        // them to be included (when available) so there values are known.
-        if (requestBody.contentType() != null) {
-          logger.log("Content-Type: " + requestBody.contentType());
-        }
-        if (requestBody.contentLength() != -1) {
-          logger.log("Content-Length: " + requestBody.contentLength());
-        }
-      }
+    synchronized (logger) {
+      logger.log(requestStartMessage);
 
-      Headers headers = request.headers();
-      for (int i = 0, count = headers.size(); i < count; i++) {
-        String name = headers.name(i);
-        // Skip headers from the request body as they are explicitly logged above.
-        if (!"Content-Type".equalsIgnoreCase(name) && !"Content-Length".equalsIgnoreCase(name)) {
-          logger.log(name + ": " + headers.value(i));
-        }
-      }
-
-      if (!logBody || !hasRequestBody) {
-        logger.log("--> END " + request.method());
-      } else if (bodyEncoded(request.headers())) {
-        logger.log("--> END " + request.method() + " (encoded body omitted)");
-      } else {
-        Buffer buffer = new Buffer();
-        requestBody.writeTo(buffer);
-
-        Charset charset = UTF8;
-        MediaType contentType = requestBody.contentType();
-        if (contentType != null) {
-          charset = contentType.charset(UTF8);
+      if (logHeaders) {
+        if (hasRequestBody) {
+          // Request body headers are only present when installed as a network interceptor. Force
+          // them to be included (when available) so there values are known.
+          if (requestBody.contentType() != null) {
+            logger.log("Content-Type: " + requestBody.contentType());
+          }
+          if (requestBody.contentLength() != -1) {
+            logger.log("Content-Length: " + requestBody.contentLength());
+          }
         }
 
-        logger.log("");
-        if (isPlaintext(buffer)) {
-          logger.log(buffer.readString(charset));
-          logger.log("--> END " + request.method()
-              + " (" + requestBody.contentLength() + "-byte body)");
+        Headers headers = request.headers();
+        for (int i = 0, count = headers.size(); i < count; i++) {
+          String name = headers.name(i);
+          // Skip headers from the request body as they are explicitly logged above.
+          if (!"Content-Type".equalsIgnoreCase(name) && !"Content-Length".equalsIgnoreCase(name)) {
+            logger.log(name + ": " + headers.value(i));
+          }
+        }
+
+        if (!logBody || !hasRequestBody) {
+          logger.log("--> END " + request.method());
+        } else if (bodyEncoded(request.headers())) {
+          logger.log("--> END " + request.method() + " (encoded body omitted)");
         } else {
-          logger.log("--> END " + request.method() + " (binary "
-              + requestBody.contentLength() + "-byte body omitted)");
+          Buffer buffer = new Buffer();
+          requestBody.writeTo(buffer);
+
+          Charset charset = UTF8;
+          MediaType contentType = requestBody.contentType();
+          if (contentType != null) {
+            charset = contentType.charset(UTF8);
+          }
+
+          logger.log("");
+          if (isPlaintext(buffer)) {
+            logger.log(buffer.readString(charset));
+            logger.log("--> END " + request.method()
+                    + " (" + requestBody.contentLength() + "-byte body)");
+          } else {
+            logger.log("--> END " + request.method() + " (binary "
+                    + requestBody.contentLength() + "-byte body omitted)");
+          }
         }
       }
     }
@@ -218,43 +221,46 @@ public final class HttpLoggingInterceptor implements Interceptor {
     ResponseBody responseBody = response.body();
     long contentLength = responseBody.contentLength();
     String bodySize = contentLength != -1 ? contentLength + "-byte" : "unknown-length";
-    logger.log("<-- " + response.code() + ' ' + response.message() + ' '
-        + response.request().url() + " (" + tookMs + "ms" + (!logHeaders ? ", "
-        + bodySize + " body" : "") + ')');
 
-    if (logHeaders) {
-      Headers headers = response.headers();
-      for (int i = 0, count = headers.size(); i < count; i++) {
-        logger.log(headers.name(i) + ": " + headers.value(i));
-      }
+    synchronized (logger) {
+      logger.log("<-- " + response.code() + ' ' + response.message() + ' '
+              + response.request().url() + " (" + tookMs + "ms" + (!logHeaders ? ", "
+              + bodySize + " body" : "") + ')');
 
-      if (!logBody || !HttpHeaders.hasBody(response)) {
-        logger.log("<-- END HTTP");
-      } else if (bodyEncoded(response.headers())) {
-        logger.log("<-- END HTTP (encoded body omitted)");
-      } else {
-        BufferedSource source = responseBody.source();
-        source.request(Long.MAX_VALUE); // Buffer the entire body.
-        Buffer buffer = source.buffer();
-
-        Charset charset = UTF8;
-        MediaType contentType = responseBody.contentType();
-        if (contentType != null) {
-          charset = contentType.charset(UTF8);
+      if (logHeaders) {
+        Headers headers = response.headers();
+        for (int i = 0, count = headers.size(); i < count; i++) {
+          logger.log(headers.name(i) + ": " + headers.value(i));
         }
 
-        if (!isPlaintext(buffer)) {
-          logger.log("");
-          logger.log("<-- END HTTP (binary " + buffer.size() + "-byte body omitted)");
-          return response;
-        }
+        if (!logBody || !HttpHeaders.hasBody(response)) {
+          logger.log("<-- END HTTP");
+        } else if (bodyEncoded(response.headers())) {
+          logger.log("<-- END HTTP (encoded body omitted)");
+        } else {
+          BufferedSource source = responseBody.source();
+          source.request(Long.MAX_VALUE); // Buffer the entire body.
+          Buffer buffer = source.buffer();
 
-        if (contentLength != 0) {
-          logger.log("");
-          logger.log(buffer.clone().readString(charset));
-        }
+          Charset charset = UTF8;
+          MediaType contentType = responseBody.contentType();
+          if (contentType != null) {
+            charset = contentType.charset(UTF8);
+          }
 
-        logger.log("<-- END HTTP (" + buffer.size() + "-byte body)");
+          if (!isPlaintext(buffer)) {
+            logger.log("");
+            logger.log("<-- END HTTP (binary " + buffer.size() + "-byte body omitted)");
+            return response;
+          }
+
+          if (contentLength != 0) {
+            logger.log("");
+            logger.log(buffer.clone().readString(charset));
+          }
+
+          logger.log("<-- END HTTP (" + buffer.size() + "-byte body)");
+        }
       }
     }
 
