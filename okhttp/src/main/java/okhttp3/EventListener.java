@@ -17,9 +17,9 @@ package okhttp3;
 
 import java.net.InetAddress;
 import java.util.List;
+import javax.annotation.Nullable;
 
-// TODO(jwilson): make this public after the 3.8 release.
-abstract class EventListener {
+public abstract class EventListener {
   public static final EventListener NONE = new EventListener() {
   };
 
@@ -34,11 +34,21 @@ abstract class EventListener {
   public void fetchStart(Call call) {
   }
 
+  /** Invoked just prior to a DNS lookup. See {@link Dns#lookup(String)}. */
   public void dnsStart(Call call, String domainName) {
   }
 
-  public void dnsEnd(Call call, String domainName, List<InetAddress> inetAddressList,
-      Throwable throwable) {
+  /**
+   * Invoked immediately after a DNS lookup.
+   *
+   * <p>{@code inetAddressList} will be non-null and {@code throwable} will be null in the case of a
+   * successful DNS lookup.
+   *
+   * <p>{@code inetAddressList} will be null and {@code throwable} will be non-null in the case of a
+   * failed DNS lookup.
+   */
+  public void dnsEnd(Call call, String domainName, @Nullable List<InetAddress> inetAddressList,
+      @Nullable Throwable throwable) {
   }
 
   public void connectStart(Call call, InetAddress address, int port) {
@@ -83,6 +93,16 @@ abstract class EventListener {
   }
 
   public interface Factory {
+    /**
+     * Creates an instance of the {@link EventListener} for a particular {@link Call}. The returned
+     * {@link EventListener} instance will be used during the lifecycle of the {@code call}.
+     *
+     * <p>This method is invoked after the {@code call} is created. See
+     * {@link OkHttpClient#newCall(Request)}.
+     *
+     * <p><strong>It is an error for implementations to issue any mutating operations on the
+     * {@code call} instance from this method.</strong>
+     */
     EventListener create(Call call);
   }
 }
