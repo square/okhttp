@@ -186,7 +186,7 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
       }
 
       @Override public Call newWebSocketCall(OkHttpClient client, Request originalRequest) {
-        return new RealCall(client, originalRequest, true);
+        return RealCall.newRealCall(client, originalRequest, true);
       }
     };
   }
@@ -407,8 +407,7 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
     return networkInterceptors;
   }
 
-  // TODO(jwilson): make this public after the 3.8 release.
-  /*public*/ EventListener.Factory eventListenerFactory() {
+  public EventListener.Factory eventListenerFactory() {
     return eventListenerFactory;
   }
 
@@ -416,7 +415,7 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
    * Prepares the {@code request} to be executed at some point in the future.
    */
   @Override public Call newCall(Request request) {
-    return new RealCall(this, request, false /* for web socket */);
+    return RealCall.newRealCall(this, request, false /* for web socket */);
   }
 
   /**
@@ -887,15 +886,13 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
       return this;
     }
 
-    // TODO(jwilson): make this public after the 3.8 release.
-    /*public*/ Builder eventListener(EventListener eventListener) {
+    public Builder eventListener(EventListener eventListener) {
       if (eventListener == null) throw new NullPointerException("eventListener == null");
       this.eventListenerFactory = EventListener.factory(eventListener);
       return this;
     }
 
-    // TODO(jwilson): make this public after the 3.8 release.
-    /*public*/ Builder eventListenerFactory(EventListener.Factory eventListenerFactory) {
+    public Builder eventListenerFactory(EventListener.Factory eventListenerFactory) {
       if (eventListenerFactory == null) {
         throw new NullPointerException("eventListenerFactory == null");
       }
