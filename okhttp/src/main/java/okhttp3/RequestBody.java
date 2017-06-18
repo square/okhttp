@@ -30,14 +30,14 @@ public abstract class RequestBody {
   public abstract @Nullable MediaType contentType();
 
   /**
-   * Returns the number of bytes that will be written to {@code out} in a call to {@link #writeTo},
+   * Returns the number of bytes that will be written to {@code sink} in a call to {@link #writeTo},
    * or -1 if that count is unknown.
    */
   public long contentLength() throws IOException {
     return -1;
   }
 
-  /** Writes the content of this request to {@code out}. */
+  /** Writes the content of this request to {@code sink}. */
   public abstract void writeTo(BufferedSink sink) throws IOException;
 
   /**
