@@ -19,17 +19,22 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Deque;
 import java.util.List;
 import okhttp3.internal.SingleInetAddressDns;
+import okhttp3.internal.tls.SslClient;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
+import okhttp3.mockwebserver.SocketPolicy;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
@@ -40,12 +45,44 @@ public final class EventListenerTest {
 
   private OkHttpClient client;
   private final RecordingEventListener listener = new RecordingEventListener();
+  private final SslClient sslClient = SslClient.localhost();
 
   @Before public void setUp() {
     client = new OkHttpClient.Builder()
         .dns(new SingleInetAddressDns())
         .eventListener(listener)
         .build();
+  }
+
+  @Test public void successfulCallEventSequence() throws IOException {
+    server.enqueue(new MockResponse());
+
+    Call call = client.newCall(new Request.Builder()
+        .url(server.url("/"))
+        .build());
+    Response response = call.execute();
+    assertEquals(200, response.code());
+    response.body().close();
+
+    List<Class<?>> expectedEvents = Arrays.asList(DnsStart.class, DnsEnd.class);
+    assertEquals(expectedEvents, listener.recordedEventTypes());
+  }
+
+  @Test public void successfulHttpsCallEventSequence() throws IOException {
+    enableTls(false);
+    server.enqueue(new MockResponse());
+
+    Call call = client.newCall(new Request.Builder()
+        .url(server.url("/"))
+        .build());
+    Response response = call.execute();
+    assertEquals(200, response.code());
+    response.body().close();
+
+    List<Class<?>> expectedEvents = Arrays.asList(
+        DnsStart.class, DnsEnd.class,
+        SecureConnectStart.class, SecureConnectEnd.class);
+    assertEquals(expectedEvents, listener.recordedEventTypes());
   }
 
   @Test public void successfulDnsLookup() throws IOException {
@@ -58,11 +95,11 @@ public final class EventListenerTest {
     assertEquals(200, response.code());
     response.body().close();
 
-    DnsStart dnsStart = listener.expectNextEvent(DnsStart.class);
+    DnsStart dnsStart = listener.findNextEvent(DnsStart.class);
     assertSame(call, dnsStart.call);
     assertEquals("localhost", dnsStart.domainName);
 
-    DnsEnd dnsEnd = listener.expectNextEvent(DnsEnd.class);
+    DnsEnd dnsEnd = listener.findNextEvent(DnsEnd.class);
     assertSame(call, dnsEnd.call);
     assertEquals("localhost", dnsEnd.domainName);
     assertEquals(1, dnsEnd.inetAddressList.size());
@@ -82,9 +119,9 @@ public final class EventListenerTest {
     } catch (IOException expected) {
     }
 
-    listener.expectNextEvent(DnsStart.class);
+    listener.findNextEvent(DnsStart.class);
 
-    DnsEnd dnsEnd = listener.expectNextEvent(DnsEnd.class);
+    DnsEnd dnsEnd = listener.findNextEvent(DnsEnd.class);
     assertSame(call, dnsEnd.call);
     assertEquals("fakeurl", dnsEnd.domainName);
     assertNull(dnsEnd.inetAddressList);
@@ -110,13 +147,90 @@ public final class EventListenerTest {
     } catch (IOException expected) {
     }
 
-    listener.expectNextEvent(DnsStart.class);
+    listener.findNextEvent(DnsStart.class);
 
-    DnsEnd dnsEnd = listener.expectNextEvent(DnsEnd.class);
+    DnsEnd dnsEnd = listener.findNextEvent(DnsEnd.class);
     assertSame(call, dnsEnd.call);
     assertEquals("fakeurl", dnsEnd.domainName);
     assertNull(dnsEnd.inetAddressList);
     assertTrue(dnsEnd.throwable instanceof UnknownHostException);
+  }
+
+  @Test public void successfulSecureConnect() throws IOException {
+    enableTls(false);
+    server.enqueue(new MockResponse());
+
+    Call call = client.newCall(new Request.Builder()
+        .url(server.url("/"))
+        .build());
+    Response response = call.execute();
+    assertEquals(200, response.code());
+    response.body().close();
+
+    SecureConnectStart secureStart = listener.findNextEvent(SecureConnectStart.class);
+    assertSame(call, secureStart.call);
+
+    SecureConnectEnd secureEnd = listener.findNextEvent(SecureConnectEnd.class);
+    assertSame(call, secureEnd.call);
+    assertNotNull(secureEnd.handshake);
+    assertNull(secureEnd.throwable);
+  }
+
+  @Test public void failedSecureConnect() {
+    enableTls(false);
+    server.enqueue(new MockResponse()
+        .setSocketPolicy(SocketPolicy.FAIL_HANDSHAKE));
+
+    Call call = client.newCall(new Request.Builder()
+        .url(server.url("/"))
+        .build());
+    try {
+      call.execute();
+      fail();
+    } catch (IOException expected) {
+    }
+
+    SecureConnectStart secureStart = listener.findNextEvent(SecureConnectStart.class);
+    assertSame(call, secureStart.call);
+
+    SecureConnectEnd secureEnd = listener.findNextEvent(SecureConnectEnd.class);
+    assertSame(call, secureEnd.call);
+    assertNull(secureEnd.handshake);
+    assertTrue(secureEnd.throwable instanceof IOException);
+  }
+
+  @Test public void secureConnectWithTunnel() throws IOException {
+    enableTls(true);
+    server.enqueue(new MockResponse()
+        .setSocketPolicy(SocketPolicy.UPGRADE_TO_SSL_AT_END));
+    server.enqueue(new MockResponse());
+
+    client = client.newBuilder()
+        .proxy(server.toProxyAddress())
+        .build();
+
+    Call call = client.newCall(new Request.Builder()
+        .url(server.url("/"))
+        .build());
+    Response response = call.execute();
+    assertEquals(200, response.code());
+    response.body().close();
+
+    SecureConnectStart secureStart = listener.findNextEvent(SecureConnectStart.class);
+    assertSame(call, secureStart.call);
+
+    SecureConnectEnd secureEnd = listener.findNextEvent(SecureConnectEnd.class);
+    assertSame(call, secureEnd.call);
+    assertNotNull(secureEnd.handshake);
+    assertNull(secureEnd.throwable);
+  }
+
+  private void enableTls(boolean tunnelProxy) {
+    client = client.newBuilder()
+        .sslSocketFactory(sslClient.socketFactory, sslClient.trustManager)
+        .hostnameVerifier(new RecordingHostnameVerifier())
+        .build();
+    server.useHttps(sslClient.socketFactory, tunnelProxy);
   }
 
   static final class DnsStart {
@@ -143,15 +257,46 @@ public final class EventListenerTest {
     }
   }
 
+  static final class SecureConnectStart {
+    final Call call;
+
+    SecureConnectStart(Call call) {
+      this.call = call;
+    }
+  }
+
+  static final class SecureConnectEnd {
+    final Call call;
+    final Handshake handshake;
+    final Throwable throwable;
+
+    SecureConnectEnd(Call call, Handshake handshake, Throwable throwable) {
+      this.call = call;
+      this.handshake = handshake;
+      this.throwable = throwable;
+    }
+  }
+
   static final class RecordingEventListener extends EventListener {
     final Deque<Object> eventSequence = new ArrayDeque<>();
 
-    <T> T expectNextEvent(Class<T> eventClass) {
+    <T> T findNextEvent(Class<T> eventClass) {
       Object event = eventSequence.poll();
-      if (!eventClass.isInstance(event)) {
+      while (event != null && !eventClass.isInstance(event)) {
+        event = eventSequence.poll();
+      }
+      if (event == null) {
         fail("Expected event type: " + eventClass.getName());
       }
       return (T) event;
+    }
+
+    List<Class<?>> recordedEventTypes() {
+      List<Class<?>> eventTypes = new ArrayList<>();
+      for (Object event : eventSequence) {
+        eventTypes.add(event.getClass());
+      }
+      return eventTypes;
     }
 
     @Override public void dnsStart(Call call, String domainName) {
@@ -161,6 +306,14 @@ public final class EventListenerTest {
     @Override public void dnsEnd(Call call, String domainName, List<InetAddress> inetAddressList,
         Throwable throwable) {
       eventSequence.offer(new DnsEnd(call, domainName, inetAddressList, throwable));
+    }
+
+    @Override public void secureConnectStart(Call call) {
+      eventSequence.offer(new SecureConnectStart(call));
+    }
+
+    @Override public void secureConnectEnd(Call call, Handshake handshake, Throwable throwable) {
+      eventSequence.offer(new SecureConnectEnd(call, handshake, throwable));
     }
   }
 }

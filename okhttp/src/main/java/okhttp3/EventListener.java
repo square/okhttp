@@ -54,11 +54,27 @@ public abstract class EventListener {
   public void connectStart(Call call, InetAddress address, int port) {
   }
 
+  /**
+   * Invoked just prior to initiating a TLS connection.
+   *
+   * <p>If the {@link Call#request()} does not use TLS, this method will not be invoked.
+   */
   public void secureConnectStart(Call call) {
   }
 
-  public void secureConnectEnd(Call call, Handshake handshake,
-      Throwable throwable) {
+  /**
+   * Invoked immediately after a TLS connection was attempted.
+   *
+   * <p>If the {@link Call#request()} does not use TLS, this method will not be invoked.
+   *
+   * <p>{@code handshake} will be non-null and {@code throwable} will be null in the case of a
+   * successful TLS connection.
+   *
+   * <p>{@code handshake} will be null and {@code throwable} will be non-null in the case of a
+   * failed TLS connection attempt.
+   */
+  public void secureConnectEnd(Call call, @Nullable Handshake handshake,
+      @Nullable Throwable throwable) {
   }
 
   public void connectEnd(Call call,  InetAddress address, int port, String protocol,
