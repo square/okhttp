@@ -106,7 +106,7 @@ public final class PublicSuffixDatabaseTest {
   }
 
   @Test public void allPublicSuffixes() throws IOException {
-    InputStream resource = PublicSuffixDatabaseTest.class.getClassLoader()
+    InputStream resource = PublicSuffixDatabaseTest.class
         .getResourceAsStream(PUBLIC_SUFFIX_RESOURCE);
     BufferedSource source = Okio.buffer(new GzipSource(Okio.source(resource)));
     int length = source.readInt();
@@ -128,7 +128,7 @@ public final class PublicSuffixDatabaseTest {
   }
 
   @Test public void publicSuffixExceptions() throws IOException {
-    InputStream resource = PublicSuffixDatabaseTest.class.getClassLoader()
+    InputStream resource = PublicSuffixDatabaseTest.class
         .getResourceAsStream(PUBLIC_SUFFIX_RESOURCE);
     BufferedSource source = Okio.buffer(new GzipSource(Okio.source(resource)));
     int length = source.readInt();
