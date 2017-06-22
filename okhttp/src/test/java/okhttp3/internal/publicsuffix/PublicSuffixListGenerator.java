@@ -40,7 +40,8 @@ import okio.Sink;
  */
 public final class PublicSuffixListGenerator {
   private static final String OKHTTP_RESOURCE_DIR = "okhttp" + File.separator + "src"
-      + File.separator + "main" + File.separator + "resources";
+      + File.separator + "main" + File.separator + "resources" + File.separator
+      + "okhttp3" + File.separator + "internal" + File.separator + "publicsuffix";
 
   private static final ByteString EXCEPTION_RULE_MARKER = ByteString.encodeUtf8("!");
   private static final String WILDCARD_CHAR = "*";
