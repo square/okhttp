@@ -278,6 +278,21 @@ public final class Http2Test {
     assertEquals(settingValue.intValue(), 1);
   }
 
+  @Test public void readSettingsFrameExperimentalId() throws IOException {
+    writeMedium(frame, 6); // 2 for the code and 4 for the value
+    frame.writeByte(Http2.TYPE_SETTINGS);
+    frame.writeByte(Http2.FLAG_NONE);
+    frame.writeInt(0); // Settings are always on the connection stream 0.
+    frame.write(ByteString.decodeHex("f000")); // Id reserved for experimental use.
+    frame.writeInt(1);
+
+    reader.nextFrame(false, new BaseTestHandler() {
+      @Override public void settings(boolean clearPrevious, Settings settings) {
+        // no-op
+      }
+    });
+  }
+
   @Test public void readSettingsFrameNegativeWindowSize() throws IOException {
     writeMedium(frame, 6); // 2 for the code and 4 for the value
     frame.writeByte(Http2.TYPE_SETTINGS);

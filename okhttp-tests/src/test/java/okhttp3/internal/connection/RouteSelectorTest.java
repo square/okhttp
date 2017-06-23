@@ -34,6 +34,7 @@ import javax.net.ssl.SSLSocketFactory;
 import okhttp3.Address;
 import okhttp3.Authenticator;
 import okhttp3.ConnectionSpec;
+import okhttp3.EventListener;
 import okhttp3.FakeDns;
 import okhttp3.Protocol;
 import okhttp3.Route;
@@ -84,7 +85,8 @@ public final class RouteSelectorTest {
 
   @Test public void singleRoute() throws Exception {
     Address address = httpAddress();
-    RouteSelector routeSelector = new RouteSelector(address, routeDatabase);
+    RouteSelector routeSelector = new RouteSelector(address, routeDatabase, null,
+        EventListener.NONE);
 
     assertTrue(routeSelector.hasNext());
     dns.set(uriHost, dns.allocate(1));
@@ -101,13 +103,14 @@ public final class RouteSelectorTest {
 
   @Test public void singleRouteReturnsFailedRoute() throws Exception {
     Address address = httpAddress();
-    RouteSelector routeSelector = new RouteSelector(address, routeDatabase);
+    RouteSelector routeSelector = new RouteSelector(address, routeDatabase, null,
+        EventListener.NONE);
 
     assertTrue(routeSelector.hasNext());
     dns.set(uriHost, dns.allocate(1));
     Route route = routeSelector.next();
     routeDatabase.failed(route);
-    routeSelector = new RouteSelector(address, routeDatabase);
+    routeSelector = new RouteSelector(address, routeDatabase, null, EventListener.NONE);
     assertRoute(routeSelector.next(), address, NO_PROXY, dns.lookup(uriHost, 0), uriPort);
     assertFalse(routeSelector.hasNext());
     try {
@@ -120,7 +123,8 @@ public final class RouteSelectorTest {
   @Test public void explicitProxyTriesThatProxysAddressesOnly() throws Exception {
     Address address = new Address(uriHost, uriPort, dns, socketFactory, null, null, null,
         authenticator, proxyA, protocols, connectionSpecs, proxySelector);
-    RouteSelector routeSelector = new RouteSelector(address, routeDatabase);
+    RouteSelector routeSelector = new RouteSelector(address, routeDatabase, null,
+        EventListener.NONE);
 
     assertTrue(routeSelector.hasNext());
     dns.set(proxyAHost, dns.allocate(2));
@@ -135,7 +139,8 @@ public final class RouteSelectorTest {
   @Test public void explicitDirectProxy() throws Exception {
     Address address = new Address(uriHost, uriPort, dns, socketFactory, null, null, null,
         authenticator, NO_PROXY, protocols, connectionSpecs, proxySelector);
-    RouteSelector routeSelector = new RouteSelector(address, routeDatabase);
+    RouteSelector routeSelector = new RouteSelector(address, routeDatabase, null,
+        EventListener.NONE);
 
     assertTrue(routeSelector.hasNext());
     dns.set(uriHost, dns.allocate(2));
@@ -162,7 +167,8 @@ public final class RouteSelectorTest {
 
     Address address = new Address(uriHost, uriPort, dns, socketFactory, null, null, null,
         authenticator, null, protocols, connectionSpecs, nullProxySelector);
-    RouteSelector routeSelector = new RouteSelector(address, routeDatabase);
+    RouteSelector routeSelector = new RouteSelector(address, routeDatabase, null,
+        EventListener.NONE);
     assertTrue(routeSelector.hasNext());
     dns.set(uriHost, dns.allocate(1));
     assertRoute(routeSelector.next(), address, NO_PROXY, dns.lookup(uriHost, 0), uriPort);
@@ -173,7 +179,8 @@ public final class RouteSelectorTest {
 
   @Test public void proxySelectorReturnsNoProxies() throws Exception {
     Address address = httpAddress();
-    RouteSelector routeSelector = new RouteSelector(address, routeDatabase);
+    RouteSelector routeSelector = new RouteSelector(address, routeDatabase, null,
+        EventListener.NONE);
 
     assertTrue(routeSelector.hasNext());
     dns.set(uriHost, dns.allocate(2));
@@ -190,7 +197,8 @@ public final class RouteSelectorTest {
 
     proxySelector.proxies.add(proxyA);
     proxySelector.proxies.add(proxyB);
-    RouteSelector routeSelector = new RouteSelector(address, routeDatabase);
+    RouteSelector routeSelector = new RouteSelector(address, routeDatabase, null,
+        EventListener.NONE);
     proxySelector.assertRequests(address.url().uri());
 
     // First try the IP addresses of the first proxy, in sequence.
@@ -214,7 +222,8 @@ public final class RouteSelectorTest {
     Address address = httpAddress();
 
     proxySelector.proxies.add(NO_PROXY);
-    RouteSelector routeSelector = new RouteSelector(address, routeDatabase);
+    RouteSelector routeSelector = new RouteSelector(address, routeDatabase, null,
+        EventListener.NONE);
     proxySelector.assertRequests(address.url().uri());
 
     // Only the origin server will be attempted.
@@ -232,7 +241,8 @@ public final class RouteSelectorTest {
     proxySelector.proxies.add(proxyA);
     proxySelector.proxies.add(proxyB);
     proxySelector.proxies.add(proxyA);
-    RouteSelector routeSelector = new RouteSelector(address, routeDatabase);
+    RouteSelector routeSelector = new RouteSelector(address, routeDatabase, null,
+        EventListener.NONE);
     proxySelector.assertRequests(address.url().uri());
 
     assertTrue(routeSelector.hasNext());
@@ -261,7 +271,8 @@ public final class RouteSelectorTest {
     Address address = httpsAddress();
     proxySelector.proxies.add(proxyA);
     proxySelector.proxies.add(proxyB);
-    RouteSelector routeSelector = new RouteSelector(address, routeDatabase);
+    RouteSelector routeSelector = new RouteSelector(address, routeDatabase, null,
+        EventListener.NONE);
 
     // Proxy A
     dns.set(proxyAHost, dns.allocate(2));
@@ -281,7 +292,8 @@ public final class RouteSelectorTest {
 
   @Test public void failedRoutesAreLast() throws Exception {
     Address address = httpsAddress();
-    RouteSelector routeSelector = new RouteSelector(address, routeDatabase);
+    RouteSelector routeSelector = new RouteSelector(address, routeDatabase, null,
+        EventListener.NONE);
 
     final int numberOfAddresses = 2;
     dns.set(uriHost, dns.allocate(numberOfAddresses));
@@ -297,7 +309,7 @@ public final class RouteSelectorTest {
     // Add first regular route as failed.
     routeDatabase.failed(regularRoutes.get(0));
     // Reset selector
-    routeSelector = new RouteSelector(address, routeDatabase);
+    routeSelector = new RouteSelector(address, routeDatabase, null, EventListener.NONE);
 
     List<Route> routesWithFailedRoute = new ArrayList<>();
     while (routeSelector.hasNext()) {

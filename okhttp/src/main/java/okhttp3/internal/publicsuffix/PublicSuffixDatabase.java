@@ -17,6 +17,7 @@ package okhttp3.internal.publicsuffix;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InterruptedIOException;
 import java.net.IDN;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -106,7 +107,7 @@ public final class PublicSuffixDatabase {
 
   private String[] findMatchingRule(String[] domainLabels) {
     if (!listRead.get() && listRead.compareAndSet(false, true)) {
-      readTheList();
+      readTheListUninterruptibly();
     } else {
       try {
         readCompleteLatch.await();
@@ -275,30 +276,50 @@ public final class PublicSuffixDatabase {
     return match;
   }
 
-  private void readTheList() {
-    byte[] publicSuffixListBytes = null;
-    byte[] publicSuffixExceptionListBytes = null;
-
-    InputStream is = PublicSuffixDatabase.class.getClassLoader().getResourceAsStream(
-        PUBLIC_SUFFIX_RESOURCE);
-
-    if (is != null) {
-      BufferedSource bufferedSource = Okio.buffer(new GzipSource(Okio.source(is)));
-      try {
-        int totalBytes = bufferedSource.readInt();
-        publicSuffixListBytes = new byte[totalBytes];
-        bufferedSource.readFully(publicSuffixListBytes);
-
-        int totalExceptionBytes = bufferedSource.readInt();
-        publicSuffixExceptionListBytes = new byte[totalExceptionBytes];
-        bufferedSource.readFully(publicSuffixExceptionListBytes);
-      } catch (IOException e) {
-        Platform.get().log(Platform.WARN, "Failed to read public suffix list", e);
-        publicSuffixListBytes = null;
-        publicSuffixExceptionListBytes = null;
-      } finally {
-        closeQuietly(bufferedSource);
+  /**
+   * Reads the public suffix list treating the operation as uninterruptible. We always want to read
+   * the list otherwise we'll be left in a bad state. If the thread was interrupted prior to this
+   * operation, it will be re-interrupted after the list is read.
+   */
+  private void readTheListUninterruptibly() {
+    boolean interrupted = false;
+    try {
+      while (true) {
+        try {
+          readTheList();
+          return;
+        } catch (InterruptedIOException e) {
+          interrupted = true;
+        } catch (IOException e) {
+          Platform.get().log(Platform.WARN, "Failed to read public suffix list", e);
+          return;
+        }
       }
+    } finally {
+      if (interrupted) {
+        Thread.currentThread().interrupt();
+      }
+    }
+  }
+
+  private void readTheList() throws IOException {
+    byte[] publicSuffixListBytes;
+    byte[] publicSuffixExceptionListBytes;
+
+    InputStream resource = PublicSuffixDatabase.class.getResourceAsStream(PUBLIC_SUFFIX_RESOURCE);
+    if (resource == null) return;
+
+    BufferedSource bufferedSource = Okio.buffer(new GzipSource(Okio.source(resource)));
+    try {
+      int totalBytes = bufferedSource.readInt();
+      publicSuffixListBytes = new byte[totalBytes];
+      bufferedSource.readFully(publicSuffixListBytes);
+
+      int totalExceptionBytes = bufferedSource.readInt();
+      publicSuffixExceptionListBytes = new byte[totalExceptionBytes];
+      bufferedSource.readFully(publicSuffixExceptionListBytes);
+    } finally {
+      closeQuietly(bufferedSource);
     }
 
     synchronized (this) {

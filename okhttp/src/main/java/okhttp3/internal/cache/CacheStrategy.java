@@ -204,6 +204,11 @@ public final class CacheStrategy {
         return new CacheStrategy(request, null);
       }
 
+      CacheControl responseCaching = cacheResponse.cacheControl();
+      if (responseCaching.immutable()) {
+        return new CacheStrategy(null, cacheResponse);
+      }
+
       long ageMillis = cacheResponseAge();
       long freshMillis = computeFreshnessLifetime();
 
@@ -217,7 +222,6 @@ public final class CacheStrategy {
       }
 
       long maxStaleMillis = 0;
-      CacheControl responseCaching = cacheResponse.cacheControl();
       if (!responseCaching.mustRevalidate() && requestCaching.maxStaleSeconds() != -1) {
         maxStaleMillis = SECONDS.toMillis(requestCaching.maxStaleSeconds());
       }

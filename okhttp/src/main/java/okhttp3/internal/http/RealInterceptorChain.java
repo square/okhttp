@@ -17,7 +17,9 @@ package okhttp3.internal.http;
 
 import java.io.IOException;
 import java.util.List;
+import okhttp3.Call;
 import okhttp3.Connection;
+import okhttp3.EventListener;
 import okhttp3.Interceptor;
 import okhttp3.Request;
 import okhttp3.Response;
@@ -35,16 +37,21 @@ public final class RealInterceptorChain implements Interceptor.Chain {
   private final RealConnection connection;
   private final int index;
   private final Request request;
+  private final Call call;
+  private final EventListener eventListener;
   private int calls;
 
   public RealInterceptorChain(List<Interceptor> interceptors, StreamAllocation streamAllocation,
-      HttpCodec httpCodec, RealConnection connection, int index, Request request) {
+      HttpCodec httpCodec, RealConnection connection, int index, Request request, Call call,
+      EventListener eventListener) {
     this.interceptors = interceptors;
     this.connection = connection;
     this.streamAllocation = streamAllocation;
     this.httpCodec = httpCodec;
     this.index = index;
     this.request = request;
+    this.call = call;
+    this.eventListener = eventListener;
   }
 
   @Override public Connection connection() {
@@ -57,6 +64,14 @@ public final class RealInterceptorChain implements Interceptor.Chain {
 
   public HttpCodec httpStream() {
     return httpCodec;
+  }
+
+  public Call call() {
+    return call;
+  }
+
+  public EventListener eventListener() {
+    return eventListener;
   }
 
   @Override public Request request() {
@@ -86,8 +101,8 @@ public final class RealInterceptorChain implements Interceptor.Chain {
     }
 
     // Call the next interceptor in the chain.
-    RealInterceptorChain next = new RealInterceptorChain(
-        interceptors, streamAllocation, httpCodec, connection, index + 1, request);
+    RealInterceptorChain next = new RealInterceptorChain(interceptors, streamAllocation, httpCodec,
+        connection, index + 1, request, call, eventListener);
     Interceptor interceptor = interceptors.get(index);
     Response response = interceptor.intercept(next);
 
@@ -100,6 +115,11 @@ public final class RealInterceptorChain implements Interceptor.Chain {
     // Confirm that the intercepted response isn't null.
     if (response == null) {
       throw new NullPointerException("interceptor " + interceptor + " returned null");
+    }
+
+    if (response.body() == null) {
+      throw new IllegalStateException(
+          "interceptor " + interceptor + " returned a response with no body");
     }
 
     return response;

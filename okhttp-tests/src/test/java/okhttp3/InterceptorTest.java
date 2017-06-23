@@ -655,6 +655,54 @@ public final class InterceptorTest {
     response.body().close();
   }
 
+  @Test public void applicationInterceptorResponseMustHaveBody() throws Exception {
+    server.enqueue(new MockResponse());
+
+    Interceptor interceptor = new Interceptor() {
+      @Override public Response intercept(Chain chain) throws IOException {
+        return chain.proceed(chain.request()).newBuilder().body(null).build();
+      }
+    };
+    client = client.newBuilder()
+        .addInterceptor(interceptor)
+        .build();
+
+    Request request = new Request.Builder()
+        .url(server.url("/"))
+        .build();
+    try {
+      client.newCall(request).execute();
+      fail();
+    } catch (IllegalStateException expected) {
+      assertEquals("interceptor " + interceptor + " returned a response with no body",
+          expected.getMessage());
+    }
+  }
+
+  @Test public void networkInterceptorResponseMustHaveBody() throws Exception {
+    server.enqueue(new MockResponse());
+
+    Interceptor interceptor = new Interceptor() {
+      @Override public Response intercept(Chain chain) throws IOException {
+        return chain.proceed(chain.request()).newBuilder().body(null).build();
+      }
+    };
+    client = client.newBuilder()
+        .addNetworkInterceptor(interceptor)
+        .build();
+
+    Request request = new Request.Builder()
+        .url(server.url("/"))
+        .build();
+    try {
+      client.newCall(request).execute();
+      fail();
+    } catch (IllegalStateException expected) {
+      assertEquals("interceptor " + interceptor + " returned a response with no body",
+          expected.getMessage());
+    }
+  }
+
   private RequestBody uppercase(final RequestBody original) {
     return new RequestBody() {
       @Override public MediaType contentType() {

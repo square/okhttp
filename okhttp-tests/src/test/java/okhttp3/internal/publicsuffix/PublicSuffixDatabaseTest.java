@@ -17,6 +17,7 @@ package okhttp3.internal.publicsuffix;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InterruptedIOException;
 import okhttp3.internal.Util;
 import okio.Buffer;
 import okio.BufferedSource;
@@ -27,6 +28,7 @@ import org.junit.Test;
 import static okhttp3.internal.publicsuffix.PublicSuffixDatabase.PUBLIC_SUFFIX_RESOURCE;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 public final class PublicSuffixDatabaseTest {
@@ -104,7 +106,7 @@ public final class PublicSuffixDatabaseTest {
   }
 
   @Test public void allPublicSuffixes() throws IOException {
-    InputStream resource = PublicSuffixDatabaseTest.class.getClassLoader()
+    InputStream resource = PublicSuffixDatabaseTest.class
         .getResourceAsStream(PUBLIC_SUFFIX_RESOURCE);
     BufferedSource source = Okio.buffer(new GzipSource(Okio.source(resource)));
     int length = source.readInt();
@@ -126,7 +128,7 @@ public final class PublicSuffixDatabaseTest {
   }
 
   @Test public void publicSuffixExceptions() throws IOException {
-    InputStream resource = PublicSuffixDatabaseTest.class.getClassLoader()
+    InputStream resource = PublicSuffixDatabaseTest.class
         .getResourceAsStream(PUBLIC_SUFFIX_RESOURCE);
     BufferedSource source = Okio.buffer(new GzipSource(Okio.source(resource)));
     int length = source.readInt();
@@ -143,6 +145,16 @@ public final class PublicSuffixDatabaseTest {
 
       String test = "foobar." + exception;
       assertEquals(exception, publicSuffixDatabase.getEffectiveTldPlusOne(test));
+    }
+  }
+
+  @Test public void threadIsInterruptedOnFirstRead() {
+    Thread.currentThread().interrupt();
+    try {
+      String result = publicSuffixDatabase.getEffectiveTldPlusOne("squareup.com");
+      assertEquals("squareup.com", result);
+    } finally {
+      assertTrue(Thread.interrupted());
     }
   }
 
