@@ -34,12 +34,22 @@ public abstract class EventListener {
   public void fetchStart(Call call) {
   }
 
-  /** Invoked just prior to a DNS lookup. See {@link Dns#lookup(String)}. */
+  /**
+   * Invoked just prior to a DNS lookup. See {@link Dns#lookup(String)}.
+   *
+   * <p>This can be invoked more than 1 time for a single {@link Call}. For example, if the response
+   * to the {@link Call#request()} is a redirect to a different host.
+   *
+   * <p>If the {@link Call} is able to reuse an existing pooled connection, this method will not be
+   * invoked. See {@link ConnectionPool}.
+   */
   public void dnsStart(Call call, String domainName) {
   }
 
   /**
    * Invoked immediately after a DNS lookup.
+   *
+   * <p>This method is always invoked after {@link #dnsStart(Call, String)}.
    *
    * <p>{@code inetAddressList} will be non-null and {@code throwable} will be null in the case of a
    * successful DNS lookup.
@@ -57,7 +67,14 @@ public abstract class EventListener {
   /**
    * Invoked just prior to initiating a TLS connection.
    *
-   * <p>If the {@link Call#request()} does not use TLS, this method will not be invoked.
+   * <p>This method is invoked if the following conditions are met:
+   * <ul>
+   *   <li>The {@link Call#request()} requires TLS.</li>
+   *   <li>No existing connection from the {@link ConnectionPool} can be reused.</li>
+   * </ul>
+   *
+   * <p>This can be invoked more than 1 time for a single {@link Call}. For example, if the response
+   * to the {@link Call#request()} is a redirect to a different address, or a connection is retried.
    */
   public void secureConnectStart(Call call) {
   }
@@ -65,7 +82,7 @@ public abstract class EventListener {
   /**
    * Invoked immediately after a TLS connection was attempted.
    *
-   * <p>If the {@link Call#request()} does not use TLS, this method will not be invoked.
+   * <p>This method is always invoked after {@link #secureConnectStart(Call)}.
    *
    * <p>{@code handshake} will be non-null and {@code throwable} will be null in the case of a
    * successful TLS connection.
