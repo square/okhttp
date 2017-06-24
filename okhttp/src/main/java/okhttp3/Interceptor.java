@@ -38,7 +38,9 @@ public interface Interceptor {
      */
     @Nullable Connection connection();
 
+
     int getReadTimeout();
     Chain withReadTimeout(int newReadTimeout, TimeUnit timeUnit);
+
   }
 }
