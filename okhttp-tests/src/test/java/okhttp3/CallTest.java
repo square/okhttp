@@ -126,19 +126,6 @@ public final class CallTest {
   }
 
   @Test
-  public void stringOperationsAreWeird() throws Exception {
-    String s = "    erica     ";
-    String s2 = s.trim();
-    System.out.println(s2);
-    String s3 = s.toUpperCase();
-    System.out.println(s3);
-
-    int i = 5;
-    i = i + 1;
-    System.out.println(i);
-  }
-
-  @Test
   public void interceptorsChainsStuff() throws Exception {
 
     final NetworkSpeed networkSpeed = NetworkSpeed.REALLY_BAD_SLOW_INTERNET;
