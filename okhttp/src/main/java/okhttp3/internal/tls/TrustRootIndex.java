@@ -15,19 +15,7 @@
  */
 package okhttp3.internal.tls;
 
-import okhttp3.internal.platform.Platform;
-
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.security.PublicKey;
-import java.security.cert.TrustAnchor;
 import java.security.cert.X509Certificate;
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
-import java.util.Map;
-import java.util.Set;
-import javax.net.ssl.X509TrustManager;
-import javax.security.auth.x500.X500Principal;
 
 public interface TrustRootIndex {
   /** Returns the trusted CA certificate that signed {@code cert}. */
