@@ -17,6 +17,7 @@ package okhttp3.internal.http;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import okhttp3.Connection;
 import okhttp3.Interceptor;
 import okhttp3.Request;
@@ -30,6 +31,8 @@ import okhttp3.internal.connection.StreamAllocation;
  */
 public final class RealInterceptorChain implements Interceptor.Chain {
   private final List<Interceptor> interceptors;
+
+
   private final StreamAllocation streamAllocation;
   private final HttpCodec httpCodec;
   private final RealConnection connection;
@@ -37,18 +40,32 @@ public final class RealInterceptorChain implements Interceptor.Chain {
   private final Request request;
   private int calls;
 
+  private final int readTimeout;
+
   public RealInterceptorChain(List<Interceptor> interceptors, StreamAllocation streamAllocation,
-      HttpCodec httpCodec, RealConnection connection, int index, Request request) {
+                              HttpCodec httpCodec, RealConnection connection, int index,
+                              Request request, int readTimeout) {
     this.interceptors = interceptors;
-    this.connection = connection;
     this.streamAllocation = streamAllocation;
     this.httpCodec = httpCodec;
+    this.connection = connection;
     this.index = index;
     this.request = request;
+    this.readTimeout = readTimeout;
   }
 
   @Override public Connection connection() {
     return connection;
+  }
+
+  @Override
+  public int getReadTimeout() {
+    return readTimeout;
+  }
+
+  @Override
+  public Interceptor.Chain withReadTimeout(int newReadTimeout, TimeUnit timeUnit) {
+    return new RealInterceptorChain(interceptors, streamAllocation, httpCodec, connection, index, request, (int) timeUnit.toMillis(newReadTimeout));
   }
 
   public StreamAllocation streamAllocation() {
@@ -87,7 +104,7 @@ public final class RealInterceptorChain implements Interceptor.Chain {
 
     // Call the next interceptor in the chain.
     RealInterceptorChain next = new RealInterceptorChain(
-        interceptors, streamAllocation, httpCodec, connection, index + 1, request);
+        interceptors, streamAllocation, httpCodec, connection, index + 1, request, readTimeout);
     Interceptor interceptor = interceptors.get(index);
     Response response = interceptor.intercept(next);
 

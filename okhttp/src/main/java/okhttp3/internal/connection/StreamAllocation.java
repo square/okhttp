@@ -90,9 +90,8 @@ public final class StreamAllocation {
     this.callStackTrace = callStackTrace;
   }
 
-  public HttpCodec newStream(OkHttpClient client, boolean doExtensiveHealthChecks) {
+  public HttpCodec newStream(OkHttpClient client, boolean doExtensiveHealthChecks, int readTimeout) {
     int connectTimeout = client.connectTimeoutMillis();
-    int readTimeout = client.readTimeoutMillis();
     int writeTimeout = client.writeTimeoutMillis();
     boolean connectionRetryEnabled = client.retryOnConnectionFailure();
 
