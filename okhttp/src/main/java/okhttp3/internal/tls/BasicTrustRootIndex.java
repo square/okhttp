@@ -15,13 +15,13 @@
  */
 package okhttp3.internal.tls;
 
-import javax.security.auth.x500.X500Principal;
 import java.security.PublicKey;
 import java.security.cert.X509Certificate;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
+import javax.security.auth.x500.X500Principal;
 
 /** A simple index that of trusted root certificates that have been loaded into memory. */
 public final class BasicTrustRootIndex implements TrustRootIndex {
@@ -60,7 +60,8 @@ public final class BasicTrustRootIndex implements TrustRootIndex {
   @Override public boolean equals(Object other) {
     if (other == this) return true;
     return other instanceof okhttp3.internal.tls.BasicTrustRootIndex
-        && ((okhttp3.internal.tls.BasicTrustRootIndex) other).subjectToCaCerts.equals(subjectToCaCerts);
+        && ((okhttp3.internal.tls.BasicTrustRootIndex) other).subjectToCaCerts.equals(
+        subjectToCaCerts);
   }
 
   @Override public int hashCode() {
