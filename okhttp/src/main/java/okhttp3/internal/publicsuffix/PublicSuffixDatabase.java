@@ -306,8 +306,7 @@ public final class PublicSuffixDatabase {
     byte[] publicSuffixListBytes;
     byte[] publicSuffixExceptionListBytes;
 
-    InputStream resource = PublicSuffixDatabase.class.getClassLoader().getResourceAsStream(
-        PUBLIC_SUFFIX_RESOURCE);
+    InputStream resource = PublicSuffixDatabase.class.getResourceAsStream(PUBLIC_SUFFIX_RESOURCE);
     if (resource == null) return;
 
     BufferedSource bufferedSource = Okio.buffer(new GzipSource(Okio.source(resource)));

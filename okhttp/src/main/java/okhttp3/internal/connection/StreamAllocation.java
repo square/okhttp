@@ -20,7 +20,9 @@ import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
 import java.net.Socket;
 import okhttp3.Address;
+import okhttp3.Call;
 import okhttp3.ConnectionPool;
+import okhttp3.EventListener;
 import okhttp3.OkHttpClient;
 import okhttp3.Route;
 import okhttp3.internal.Internal;
@@ -73,6 +75,8 @@ public final class StreamAllocation {
   public final Address address;
   private Route route;
   private final ConnectionPool connectionPool;
+  private final Call call;
+  private final EventListener eventListener;
   private final Object callStackTrace;
 
   // State guarded by connectionPool.
@@ -83,10 +87,13 @@ public final class StreamAllocation {
   private boolean canceled;
   private HttpCodec codec;
 
-  public StreamAllocation(ConnectionPool connectionPool, Address address, Object callStackTrace) {
+  public StreamAllocation(ConnectionPool connectionPool, Address address, Call call,
+      EventListener eventListener, Object callStackTrace) {
     this.connectionPool = connectionPool;
     this.address = address;
-    this.routeSelector = new RouteSelector(address, routeDatabase());
+    this.call = call;
+    this.eventListener = eventListener;
+    this.routeSelector = new RouteSelector(address, routeDatabase(), call, eventListener);
     this.callStackTrace = callStackTrace;
   }
 
@@ -191,7 +198,8 @@ public final class StreamAllocation {
     }
 
     // Do TCP + TLS handshakes. This is a blocking operation.
-    result.connect(connectTimeout, readTimeout, writeTimeout, connectionRetryEnabled);
+    result.connect(
+        connectTimeout, readTimeout, writeTimeout, connectionRetryEnabled, call, eventListener);
     routeDatabase().connected(result.route());
 
     Socket socket = null;

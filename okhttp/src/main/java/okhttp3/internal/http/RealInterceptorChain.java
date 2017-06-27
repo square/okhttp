@@ -17,8 +17,9 @@ package okhttp3.internal.http;
 
 import java.io.IOException;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
+import okhttp3.Call;
 import okhttp3.Connection;
+import okhttp3.EventListener;
 import okhttp3.Interceptor;
 import okhttp3.Request;
 import okhttp3.Response;
@@ -31,41 +32,30 @@ import okhttp3.internal.connection.StreamAllocation;
  */
 public final class RealInterceptorChain implements Interceptor.Chain {
   private final List<Interceptor> interceptors;
-
-
   private final StreamAllocation streamAllocation;
   private final HttpCodec httpCodec;
   private final RealConnection connection;
   private final int index;
   private final Request request;
+  private final Call call;
+  private final EventListener eventListener;
   private int calls;
 
-  private final int readTimeout;
-
   public RealInterceptorChain(List<Interceptor> interceptors, StreamAllocation streamAllocation,
-                              HttpCodec httpCodec, RealConnection connection, int index,
-                              Request request, int readTimeout) {
+                              HttpCodec httpCodec, RealConnection connection, int index, Request request, Call call,
+                              EventListener eventListener) {
     this.interceptors = interceptors;
+    this.connection = connection;
     this.streamAllocation = streamAllocation;
     this.httpCodec = httpCodec;
-    this.connection = connection;
     this.index = index;
     this.request = request;
-    this.readTimeout = readTimeout;
+    this.call = call;
+    this.eventListener = eventListener;
   }
 
   @Override public Connection connection() {
     return connection;
-  }
-
-  @Override
-  public int getReadTimeout() {
-    return readTimeout;
-  }
-
-  @Override
-  public Interceptor.Chain withReadTimeout(int newReadTimeout, TimeUnit timeUnit) {
-    return new RealInterceptorChain(interceptors, streamAllocation, httpCodec, connection, index, request, (int) timeUnit.toMillis(newReadTimeout));
   }
 
   public StreamAllocation streamAllocation() {
@@ -74,6 +64,14 @@ public final class RealInterceptorChain implements Interceptor.Chain {
 
   public HttpCodec httpStream() {
     return httpCodec;
+  }
+
+  public Call call() {
+    return call;
+  }
+
+  public EventListener eventListener() {
+    return eventListener;
   }
 
   @Override public Request request() {
@@ -85,7 +83,7 @@ public final class RealInterceptorChain implements Interceptor.Chain {
   }
 
   public Response proceed(Request request, StreamAllocation streamAllocation, HttpCodec httpCodec,
-      RealConnection connection) throws IOException {
+                          RealConnection connection) throws IOException {
     if (index >= interceptors.size()) throw new AssertionError();
 
     calls++;
@@ -103,8 +101,8 @@ public final class RealInterceptorChain implements Interceptor.Chain {
     }
 
     // Call the next interceptor in the chain.
-    RealInterceptorChain next = new RealInterceptorChain(
-        interceptors, streamAllocation, httpCodec, connection, index + 1, request, readTimeout);
+    RealInterceptorChain next = new RealInterceptorChain(interceptors, streamAllocation, httpCodec,
+        connection, index + 1, request, call, eventListener);
     Interceptor interceptor = interceptors.get(index);
     Response response = interceptor.intercept(next);
 

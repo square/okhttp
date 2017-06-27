@@ -1,6 +1,16 @@
 Change Log
 ==========
 
+## Version 3.8.1
+
+_2017-06-18_
+
+ *  Fix: Recover gracefully from stale coalesced connections. We had a bug where
+    connection coalescing (introduced in OkHttp 3.7.0) and stale connection
+    recovery could interact to cause a `NoSuchElementException` crash in the
+    `RouteSelector`.
+
+
 ## Version 3.8.0
 
 _2017-05-13_

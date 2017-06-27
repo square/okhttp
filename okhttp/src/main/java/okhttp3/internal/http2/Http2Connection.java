@@ -541,7 +541,7 @@ public final class Http2Connection implements Closeable {
       return this;
     }
 
-    public Http2Connection build() throws IOException {
+    public Http2Connection build() {
       return new Http2Connection(this);
     }
   }
