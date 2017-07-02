@@ -42,6 +42,7 @@ import okhttp3.ConnectionSpec;
 import okhttp3.EventListener;
 import okhttp3.Handshake;
 import okhttp3.HttpUrl;
+import okhttp3.Interceptor;
 import okhttp3.OkHttpClient;
 import okhttp3.Protocol;
 import okhttp3.Request;
@@ -457,13 +458,13 @@ public final class RealConnection extends Http2Connection.Listener implements Co
     return true; // Success. The URL is supported.
   }
 
-  public HttpCodec newCodec(
-      OkHttpClient client, StreamAllocation streamAllocation) throws SocketException {
+  public HttpCodec newCodec(OkHttpClient client, Interceptor.Chain chain,
+      StreamAllocation streamAllocation) throws SocketException {
     if (http2Connection != null) {
-      return new Http2Codec(client, streamAllocation, http2Connection);
+      return new Http2Codec(client, chain, streamAllocation, http2Connection);
     } else {
-      socket.setSoTimeout(client.readTimeoutMillis());
-      source.timeout().timeout(client.readTimeoutMillis(), MILLISECONDS);
+      socket.setSoTimeout(chain.readTimeoutMillis());
+      source.timeout().timeout(chain.readTimeoutMillis(), MILLISECONDS);
       sink.timeout().timeout(client.writeTimeoutMillis(), MILLISECONDS);
       return new Http1Codec(client, streamAllocation, source, sink);
     }
