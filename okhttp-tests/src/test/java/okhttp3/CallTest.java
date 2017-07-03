@@ -117,66 +117,6 @@ public final class CallTest {
     logger.removeHandler(logHandler);
   }
 
-  enum NetworkSpeed {
-    REALLY_BAD_SLOW_INTERNET;
-
-    public boolean isSuperSlow() {
-      return true;
-    }
-  }
-
-  @Test
-  public void interceptorsChainsStuff() throws Exception {
-
-    final NetworkSpeed networkSpeed = NetworkSpeed.REALLY_BAD_SLOW_INTERNET;
-
-    Interceptor outerInterceptor = new Interceptor() {
-      @Override public Response intercept(Chain originalChain) throws IOException {
-        Chain chain222 = originalChain.withReadTimeout(10, TimeUnit.SECONDS);
-
-        assertEquals(TimeUnit.SECONDS.toMillis(5), originalChain.getReadTimeout());
-        assertEquals(TimeUnit.SECONDS.toMillis(10), chain222.getReadTimeout());
-
-        Response response = chain222.proceed(originalChain.request());
-
-        assertEquals(TimeUnit.SECONDS.toMillis(5), originalChain.getReadTimeout());
-        assertEquals(TimeUnit.SECONDS.toMillis(10), chain222.getReadTimeout());
-
-        return response;
-      }
-    };
-
-
-    Interceptor innerInterceptor = new Interceptor() {
-      @Override public Response intercept(Chain chain) throws IOException {
-        System.out.println("2  INNER CHAIN TIMEOUT BEFORE: " + chain.getReadTimeout());
-
-        assertEquals(TimeUnit.SECONDS.toMillis(10), chain.getReadTimeout());
-
-        Response response = chain.proceed(chain.request());
-        System.out.println("3  INNER CHAIN TIMEOUT AFTER: " + chain.getReadTimeout());
-        return response;
-      }
-    };
-
-    client = client.newBuilder()
-        .readTimeout(5L, TimeUnit.SECONDS)
-        .addInterceptor(outerInterceptor)
-        .addInterceptor(innerInterceptor)
-        .build();
-
-    server.enqueue(new MockResponse().setBody("abc"));
-    server.enqueue(new MockResponse().setBody("def"));
-
-    Request request1 = new Request.Builder()
-        .url(server.url("/"))
-        .build();
-    Call call1 = client.newCall(request1);
-    Response response1 = call1.execute();
-    System.out.println(response1.body().string());
-
-  }
-
   @Test public void get() throws Exception {
     server.enqueue(new MockResponse()
         .setBody("abc")
@@ -1096,8 +1036,8 @@ public final class CallTest {
     server.enqueue(new MockResponse().setBody("response that will never be received"));
     RecordedResponse response = executeSynchronously("/");
     response.assertFailure(
-            SSLProtocolException.class, // RI response to the FAIL_HANDSHAKE
-            SSLHandshakeException.class // Android's response to the FAIL_HANDSHAKE
+        SSLProtocolException.class, // RI response to the FAIL_HANDSHAKE
+        SSLHandshakeException.class // Android's response to the FAIL_HANDSHAKE
     );
     assertFalse(client.connectionSpecs().contains(ConnectionSpec.COMPATIBLE_TLS));
   }
