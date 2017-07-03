@@ -106,6 +106,17 @@ public final class MockWebServerTest {
     assertEquals(Arrays.asList("Cookies: delicious", "cookie: r=robot"), headersToList(response));
   }
 
+  @Test public void mockResponseSetHeaders() {
+    MockResponse response = new MockResponse()
+        .clearHeaders()
+        .addHeader("Cookie: s=square")
+        .addHeader("Cookies: delicious");
+
+    response.setHeaders(new Headers.Builder().add("Cookie", "a=android").build());
+
+    assertEquals(Arrays.asList("Cookie: a=android"), headersToList(response));
+  }
+
   @Test public void regularResponse() throws Exception {
     server.enqueue(new MockResponse().setBody("hello world"));
 
