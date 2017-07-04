@@ -6,7 +6,7 @@
   <parent>
     <groupId>com.squareup.okhttp3</groupId>
     <artifactId>parent</artifactId>
-    <version>3.9.0-SNAPSHOT</version>
+    <version>3.8.0-SNAPSHOT</version>
   </parent>
 
   <artifactId>okhttp</artifactId>
@@ -23,9 +23,20 @@
       <scope>provided</scope>
     </dependency>
     <dependency>
+<<<<<<< HEAD
       <groupId>com.google.code.findbugs</groupId>
       <artifactId>jsr305</artifactId>
       <scope>provided</scope>
+=======
+      <groupId>org.jetbrains</groupId>
+      <artifactId>annotations-java5</artifactId>
+      <version>15.0</version>
+    </dependency>
+    <dependency>
+      <groupId>com.google.code.findbugs</groupId>
+      <artifactId>annotations</artifactId>
+      <version>3.0.1u2</version>
+>>>>>>> square_okhttp_master
     </dependency>
   </dependencies>
 

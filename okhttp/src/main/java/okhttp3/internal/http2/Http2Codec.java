@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 import okhttp3.Headers;
+import okhttp3.Interceptor;
 import okhttp3.OkHttpClient;
 import okhttp3.Protocol;
 import okhttp3.Request;
@@ -83,13 +84,15 @@ public final class Http2Codec implements HttpCodec {
       UPGRADE);
 
   private final OkHttpClient client;
+  private final Interceptor.Chain chain;
   final StreamAllocation streamAllocation;
   private final Http2Connection connection;
   private Http2Stream stream;
 
-  public Http2Codec(
-      OkHttpClient client, StreamAllocation streamAllocation, Http2Connection connection) {
+  public Http2Codec(OkHttpClient client, Interceptor.Chain chain, StreamAllocation streamAllocation,
+      Http2Connection connection) {
     this.client = client;
+    this.chain = chain;
     this.streamAllocation = streamAllocation;
     this.connection = connection;
   }
@@ -104,7 +107,7 @@ public final class Http2Codec implements HttpCodec {
     boolean hasRequestBody = request.body() != null;
     List<Header> requestHeaders = http2HeadersList(request);
     stream = connection.newStream(requestHeaders, hasRequestBody);
-    stream.readTimeout().timeout(client.readTimeoutMillis(), TimeUnit.MILLISECONDS);
+    stream.readTimeout().timeout(chain.readTimeoutMillis(), TimeUnit.MILLISECONDS);
     stream.writeTimeout().timeout(client.writeTimeoutMillis(), TimeUnit.MILLISECONDS);
   }
 

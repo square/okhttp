@@ -187,8 +187,8 @@ final class RealCall implements Call {
     }
     interceptors.add(new CallServerInterceptor(forWebSocket));
 
-    Interceptor.Chain chain = new RealInterceptorChain(
-        interceptors, null, null, null, 0, originalRequest, this, eventListener);
+    Interceptor.Chain chain = new RealInterceptorChain(interceptors, null, null, null, 0,
+        originalRequest, this, eventListener, client.readTimeoutMillis());
     return chain.proceed(originalRequest);
   }
 }

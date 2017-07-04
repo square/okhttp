@@ -16,6 +16,7 @@
 package okhttp3;
 
 import java.io.IOException;
+import java.net.SocketTimeoutException;
 import java.util.Arrays;
 import java.util.Locale;
 import java.util.concurrent.BlockingQueue;
@@ -700,6 +701,48 @@ public final class InterceptorTest {
     } catch (IllegalStateException expected) {
       assertEquals("interceptor " + interceptor + " returned a response with no body",
           expected.getMessage());
+    }
+  }
+
+  @Test public void chainWithReadTimeout() throws Exception {
+    Interceptor interceptor1 = new Interceptor() {
+      @Override public Response intercept(Chain chainA) throws IOException {
+        assertEquals(5000, chainA.readTimeoutMillis());
+
+        Chain chainB = chainA.withReadTimeout(100, TimeUnit.MILLISECONDS);
+        assertEquals(100, chainB.readTimeoutMillis());
+
+        return chainB.proceed(chainA.request());
+      }
+    };
+
+    Interceptor interceptor2 = new Interceptor() {
+      @Override public Response intercept(Chain chain) throws IOException {
+        assertEquals(100, chain.readTimeoutMillis());
+        return chain.proceed(chain.request());
+      }
+    };
+
+    client = client.newBuilder()
+        .readTimeout(5, TimeUnit.SECONDS)
+        .addInterceptor(interceptor1)
+        .addInterceptor(interceptor2)
+        .build();
+
+    server.enqueue(new MockResponse()
+        .setBody("abc")
+        .throttleBody(1, 1, TimeUnit.SECONDS));
+
+    Request request1 = new Request.Builder()
+        .url(server.url("/"))
+        .build();
+    Call call = client.newCall(request1);
+    Response response = call.execute();
+    ResponseBody body = response.body();
+    try {
+      body.string();
+      fail();
+    } catch (SocketTimeoutException expected) {
     }
   }
 
