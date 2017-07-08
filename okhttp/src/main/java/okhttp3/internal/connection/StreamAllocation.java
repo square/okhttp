@@ -102,7 +102,7 @@ public final class StreamAllocation {
       OkHttpClient client, Interceptor.Chain chain, boolean doExtensiveHealthChecks) {
     int connectTimeout = client.connectTimeoutMillis();
     int readTimeout = chain.readTimeoutMillis();
-    int writeTimeout = client.writeTimeoutMillis();
+    int writeTimeout = chain.writeTimeoutMillis();
     boolean connectionRetryEnabled = client.retryOnConnectionFailure();
 
     try {
