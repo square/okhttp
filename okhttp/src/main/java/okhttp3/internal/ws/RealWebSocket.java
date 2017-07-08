@@ -26,6 +26,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import javax.annotation.Nullable;
 import okhttp3.Call;
 import okhttp3.Callback;
 import okhttp3.OkHttpClient;
@@ -528,7 +529,7 @@ public final class RealWebSocket implements WebSocket, WebSocketReader.FrameCall
     }
   }
 
-  public void failWebSocket(Exception e, Response response) {
+  public void failWebSocket(Exception e, @Nullable Response response) {
     Streams streamsToClose;
     synchronized (this) {
       if (failed) return; // Already failed.
