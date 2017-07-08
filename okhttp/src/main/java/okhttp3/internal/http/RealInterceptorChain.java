@@ -42,13 +42,14 @@ public final class RealInterceptorChain implements Interceptor.Chain {
   private final Request request;
   private final Call call;
   private final EventListener eventListener;
+  private final int connectTimeout;
   private final int readTimeout;
   private final int writeTimeout;
   private int calls;
 
   public RealInterceptorChain(List<Interceptor> interceptors, StreamAllocation streamAllocation,
       HttpCodec httpCodec, RealConnection connection, int index, Request request, Call call,
-      EventListener eventListener, int readTimeout, int writeTimeout) {
+      EventListener eventListener, int connectTimeout, int readTimeout, int writeTimeout) {
     this.interceptors = interceptors;
     this.connection = connection;
     this.streamAllocation = streamAllocation;
@@ -57,12 +58,23 @@ public final class RealInterceptorChain implements Interceptor.Chain {
     this.request = request;
     this.call = call;
     this.eventListener = eventListener;
+    this.connectTimeout = connectTimeout;
     this.readTimeout = readTimeout;
     this.writeTimeout = writeTimeout;
   }
 
   @Override public Connection connection() {
     return connection;
+  }
+
+  @Override public int connectTimeoutMillis() {
+    return connectTimeout;
+  }
+
+  @Override public Interceptor.Chain withConnectTimeout(int timeout, TimeUnit unit) {
+    int millis = checkDuration("timeout", timeout, unit);
+    return new RealInterceptorChain(interceptors, streamAllocation, httpCodec, connection, index,
+        request, call, eventListener, millis, readTimeout, writeTimeout);
   }
 
   @Override public int readTimeoutMillis() {
@@ -72,7 +84,7 @@ public final class RealInterceptorChain implements Interceptor.Chain {
   @Override public Interceptor.Chain withReadTimeout(int timeout, TimeUnit unit) {
     int millis = checkDuration("timeout", timeout, unit);
     return new RealInterceptorChain(interceptors, streamAllocation, httpCodec, connection, index,
-        request, call, eventListener, millis, writeTimeout);
+        request, call, eventListener, connectTimeout, millis, writeTimeout);
   }
 
   @Override public int writeTimeoutMillis() {
@@ -82,7 +94,7 @@ public final class RealInterceptorChain implements Interceptor.Chain {
   @Override public Interceptor.Chain withWriteTimeout(int timeout, TimeUnit unit) {
     int millis = checkDuration("timeout", timeout, unit);
     return new RealInterceptorChain(interceptors, streamAllocation, httpCodec, connection, index,
-        request, call, eventListener, readTimeout, millis);
+        request, call, eventListener, connectTimeout, readTimeout, millis);
   }
 
   public StreamAllocation streamAllocation() {
@@ -129,7 +141,8 @@ public final class RealInterceptorChain implements Interceptor.Chain {
 
     // Call the next interceptor in the chain.
     RealInterceptorChain next = new RealInterceptorChain(interceptors, streamAllocation, httpCodec,
-        connection, index + 1, request, call, eventListener, readTimeout, writeTimeout);
+        connection, index + 1, request, call, eventListener, connectTimeout, readTimeout,
+        writeTimeout);
     Interceptor interceptor = interceptors.get(index);
     Response response = interceptor.intercept(next);
 

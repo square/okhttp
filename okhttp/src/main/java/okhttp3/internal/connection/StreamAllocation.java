@@ -100,7 +100,7 @@ public final class StreamAllocation {
 
   public HttpCodec newStream(
       OkHttpClient client, Interceptor.Chain chain, boolean doExtensiveHealthChecks) {
-    int connectTimeout = client.connectTimeoutMillis();
+    int connectTimeout = chain.connectTimeoutMillis();
     int readTimeout = chain.readTimeoutMillis();
     int writeTimeout = chain.writeTimeoutMillis();
     boolean connectionRetryEnabled = client.retryOnConnectionFailure();

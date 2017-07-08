@@ -704,6 +704,43 @@ public final class InterceptorTest {
     }
   }
 
+  @Test public void connectTimeout() throws Exception {
+    Interceptor interceptor1 = new Interceptor() {
+      @Override public Response intercept(Chain chainA) throws IOException {
+        assertEquals(5000, chainA.connectTimeoutMillis());
+
+        Chain chainB = chainA.withConnectTimeout(100, TimeUnit.MILLISECONDS);
+        assertEquals(100, chainB.connectTimeoutMillis());
+
+        return chainB.proceed(chainA.request());
+      }
+    };
+
+    Interceptor interceptor2 = new Interceptor() {
+      @Override public Response intercept(Chain chain) throws IOException {
+        assertEquals(100, chain.connectTimeoutMillis());
+        return chain.proceed(chain.request());
+      }
+    };
+
+    client = client.newBuilder()
+        .connectTimeout(5, TimeUnit.SECONDS)
+        .addInterceptor(interceptor1)
+        .addInterceptor(interceptor2)
+        .build();
+
+    Request request1 = new Request.Builder()
+        .url("http://" + TestUtil.UNREACHABLE_ADDRESS)
+        .build();
+    Call call = client.newCall(request1);
+
+    try {
+      call.execute();
+      fail();
+    } catch (SocketTimeoutException expected) {
+    }
+  }
+
   @Test public void chainWithReadTimeout() throws Exception {
     Interceptor interceptor1 = new Interceptor() {
       @Override public Response intercept(Chain chainA) throws IOException {

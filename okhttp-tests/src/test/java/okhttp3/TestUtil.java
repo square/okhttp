@@ -1,5 +1,6 @@
 package okhttp3;
 
+import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -7,6 +8,9 @@ import okhttp3.internal.SingleInetAddressDns;
 import okhttp3.internal.http2.Header;
 
 public final class TestUtil {
+  public static final InetSocketAddress UNREACHABLE_ADDRESS
+      = new InetSocketAddress("198.51.100.1", 8080);
+
   private TestUtil() {
   }
 
