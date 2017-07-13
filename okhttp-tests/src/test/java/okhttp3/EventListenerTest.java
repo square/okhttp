@@ -82,7 +82,8 @@ public final class EventListenerTest {
 
     List<Class<?>> expectedEvents = Arrays.asList(
         DnsStart.class, DnsEnd.class,
-        ConnectStart.class, ConnectEnd.class);
+        ConnectStart.class, ConnectEnd.class,
+        ConnectionFound.class);
     assertEquals(expectedEvents, listener.recordedEventTypes());
   }
 
@@ -100,7 +101,8 @@ public final class EventListenerTest {
     List<Class<?>> expectedEvents = Arrays.asList(
         DnsStart.class, DnsEnd.class,
         ConnectStart.class, SecureConnectStart.class,
-        SecureConnectEnd.class, ConnectEnd.class);
+        SecureConnectEnd.class, ConnectEnd.class,
+        ConnectionFound.class);
     assertEquals(expectedEvents, listener.recordedEventTypes());
   }
 
@@ -523,6 +525,84 @@ public final class EventListenerTest {
     assertFalse(recordedEvents.contains(SecureConnectEnd.class));
   }
 
+  @Test public void successfulConnectionFound() throws IOException {
+    server.enqueue(new MockResponse());
+
+    Call call = client.newCall(new Request.Builder()
+        .url(server.url("/"))
+        .build());
+    Response response = call.execute();
+    assertEquals(200, response.code());
+    response.body().close();
+
+    ConnectionFound connectionFound = listener.removeUpToEvent(ConnectionFound.class);
+    assertSame(call, connectionFound.call);
+    assertNotNull(connectionFound.connection);
+  }
+
+  @Test public void noConnectionFoundOnFollowUp() throws IOException {
+    server.enqueue(new MockResponse()
+        .setResponseCode(301)
+        .addHeader("Location", "/foo"));
+    server.enqueue(new MockResponse()
+        .setBody("ABC"));
+
+    Call call = client.newCall(new Request.Builder()
+        .url(server.url("/"))
+        .build());
+    Response response = call.execute();
+    assertEquals("ABC", response.body().string());
+
+    listener.removeUpToEvent(ConnectionFound.class);
+
+    List<Class<?>> remainingEvents = listener.recordedEventTypes();
+    assertFalse(remainingEvents.contains(ConnectionFound.class));
+  }
+
+  @Test public void pooledConnectionFound() throws IOException {
+    server.enqueue(new MockResponse());
+    server.enqueue(new MockResponse());
+
+    // Seed the pool.
+    Call call1 = client.newCall(new Request.Builder()
+        .url(server.url("/"))
+        .build());
+    Response response1 = call1.execute();
+    assertEquals(200, response1.code());
+    response1.body().close();
+
+    ConnectionFound connectionFound1 = listener.removeUpToEvent(ConnectionFound.class);
+    listener.clearAllEvents();
+
+    Call call2 = client.newCall(new Request.Builder()
+        .url(server.url("/"))
+        .build());
+    Response response2 = call2.execute();
+    assertEquals(200, response2.code());
+    response2.body().close();
+
+    ConnectionFound connectionFound2 = listener.removeUpToEvent(ConnectionFound.class);
+    assertSame(connectionFound1.connection, connectionFound2.connection);
+  }
+
+  @Test public void multipleConnectionsFoundForSingleCall() throws IOException {
+    server.enqueue(new MockResponse()
+        .setResponseCode(301)
+        .addHeader("Location", "/foo")
+        .addHeader("Connection", "Close"));
+    server.enqueue(new MockResponse()
+        .setBody("ABC"));
+
+    Call call = client.newCall(new Request.Builder()
+        .url(server.url("/"))
+        .build());
+    Response response = call.execute();
+    assertEquals("ABC", response.body().string());
+
+    listener.removeUpToEvent(ConnectionFound.class);
+    listener.removeUpToEvent(ConnectionFound.class);
+  }
+
   private void enableTlsWithTunnel(boolean tunnelProxy) {
     client = client.newBuilder()
         .sslSocketFactory(sslClient.socketFactory, sslClient.trustManager)
@@ -601,6 +681,16 @@ public final class EventListenerTest {
     }
   }
 
+  static final class ConnectionFound {
+    final Call call;
+    final Connection connection;
+
+    ConnectionFound(Call call, Connection connection) {
+      this.call = call;
+      this.connection = connection;
+    }
+  }
+
   static final class RecordingEventListener extends EventListener {
     final Deque<Object> eventSequence = new ArrayDeque<>();
 
@@ -654,6 +744,10 @@ public final class EventListenerTest {
     @Override public void connectEnd(Call call, InetSocketAddress inetSocketAddress,
         Protocol protocol, Throwable throwable) {
       eventSequence.offer(new ConnectEnd(call, inetSocketAddress, protocol, throwable));
+    }
+
+    @Override public void connectionFound(Call call, Connection connection) {
+      eventSequence.offer(new ConnectionFound(call, connection));
     }
   }
 }

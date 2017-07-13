@@ -122,6 +122,15 @@ public abstract class EventListener {
       @Nullable Protocol protocol, @Nullable Throwable throwable) {
   }
 
+  /**
+   * Invoked after a connection has been acquired for the {@code call}.
+   *
+   * <p>This can be invoked more than 1 time for a single {@link Call}. For example, if the response
+   * to the {@link Call#request()} is a redirect to a different address.
+   */
+  public void connectionFound(Call call, Connection connection) {
+  }
+
   public void requestHeadersStart(Call call) {
   }
 

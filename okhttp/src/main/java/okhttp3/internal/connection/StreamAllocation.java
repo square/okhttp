@@ -106,9 +106,15 @@ public final class StreamAllocation {
     boolean connectionRetryEnabled = client.retryOnConnectionFailure();
 
     try {
+      RealConnection existingConnection = connection;
+
       RealConnection resultConnection = findHealthyConnection(connectTimeout, readTimeout,
           writeTimeout, connectionRetryEnabled, doExtensiveHealthChecks);
       HttpCodec resultCodec = resultConnection.newCodec(client, chain, this);
+
+      if (existingConnection != connection) {
+        eventListener.connectionFound(call, connection);
+      }
 
       synchronized (connectionPool) {
         codec = resultCodec;
