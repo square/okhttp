@@ -43,17 +43,12 @@ public final class RouteSelector {
   private final Call call;
   private final EventListener eventListener;
 
-  /* The most recently attempted route. */
-  private Proxy lastProxy;
-  private InetSocketAddress lastInetSocketAddress;
-
   /* State for negotiating the next proxy to use. */
   private List<Proxy> proxies = Collections.emptyList();
   private int nextProxyIndex;
 
   /* State for negotiating the next socket address to use. */
   private List<InetSocketAddress> inetSocketAddresses = Collections.emptyList();
-  private int nextInetSocketAddressIndex;
 
   /* State for negotiating failed routes */
   private final List<Route> postponedRoutes = new ArrayList<>();
@@ -69,35 +64,45 @@ public final class RouteSelector {
   }
 
   /**
-   * Returns true if there's another route to attempt. Every address has at least one route.
+   * Returns true if there's another set of routes to attempt. Every address has at least one route.
    */
   public boolean hasNext() {
-    return hasNextInetSocketAddress()
-        || hasNextProxy()
-        || hasNextPostponed();
+    return hasNextProxy() || !postponedRoutes.isEmpty();
   }
 
-  public Route next() throws IOException {
-    // Compute the next route to attempt.
-    if (!hasNextInetSocketAddress()) {
-      if (!hasNextProxy()) {
-        if (!hasNextPostponed()) {
-          throw new NoSuchElementException();
+  public Selection next() throws IOException {
+    if (!hasNext()) {
+      throw new NoSuchElementException();
+    }
+
+    // Compute the next set of routes to attempt.
+    List<Route> routes = new ArrayList<>();
+    while (hasNextProxy()) {
+      // Postponed routes are always tried last. For example, if we have 2 proxies and all the
+      // routes for proxy1 should be postponed, we'll move to proxy2. Only after we've exhausted
+      // all the good routes will we attempt the postponed routes.
+      Proxy lastProxy = nextProxy();
+      for (int i = 0, size = inetSocketAddresses.size(); i < size; i++) {
+        Route route = new Route(address, lastProxy, inetSocketAddresses.get(i));
+        if (routeDatabase.shouldPostpone(route)) {
+          postponedRoutes.add(route);
+        } else {
+          routes.add(route);
         }
-        return nextPostponed();
       }
-      lastProxy = nextProxy();
-    }
-    lastInetSocketAddress = nextInetSocketAddress();
 
-    Route route = new Route(address, lastProxy, lastInetSocketAddress);
-    if (routeDatabase.shouldPostpone(route)) {
-      postponedRoutes.add(route);
-      // We will only recurse in order to skip previously failed routes. They will be tried last.
-      return next();
+      if (!routes.isEmpty()) {
+        break;
+      }
     }
 
-    return route;
+    if (routes.isEmpty()) {
+      // We've exhausted all Proxies so fallback to the postponed routes.
+      routes.addAll(postponedRoutes);
+      postponedRoutes.clear();
+    }
+
+    return new Selection(routes);
   }
 
   /**
@@ -198,8 +203,6 @@ public final class RouteSelector {
         inetSocketAddresses.add(new InetSocketAddress(inetAddress, socketPort));
       }
     }
-
-    nextInetSocketAddressIndex = 0;
   }
 
   /**
@@ -220,27 +223,28 @@ public final class RouteSelector {
     return address.getHostAddress();
   }
 
-  /** Returns true if there's another socket address to try. */
-  private boolean hasNextInetSocketAddress() {
-    return nextInetSocketAddressIndex < inetSocketAddresses.size();
-  }
+  /** A set of selected Routes. */
+  public static final class Selection {
+    private final List<Route> routes;
+    private int nextRouteIndex = 0;
 
-  /** Returns the next socket address to try. */
-  private InetSocketAddress nextInetSocketAddress() throws IOException {
-    if (!hasNextInetSocketAddress()) {
-      throw new SocketException("No route to " + address.url().host()
-          + "; exhausted inet socket addresses: " + inetSocketAddresses);
+    Selection(List<Route> routes) {
+      this.routes = routes;
     }
-    return inetSocketAddresses.get(nextInetSocketAddressIndex++);
-  }
 
-  /** Returns true if there is another postponed route to try. */
-  private boolean hasNextPostponed() {
-    return !postponedRoutes.isEmpty();
-  }
+    public boolean hasNext() {
+      return nextRouteIndex < routes.size();
+    }
 
-  /** Returns the next postponed route to try. */
-  private Route nextPostponed() {
-    return postponedRoutes.remove(0);
+    public Route next() {
+      if (!hasNext()) {
+        throw new NoSuchElementException();
+      }
+      return routes.get(nextRouteIndex++);
+    }
+
+    public List<Route> getAll() {
+      return new ArrayList<>(routes);
+    }
   }
 }
