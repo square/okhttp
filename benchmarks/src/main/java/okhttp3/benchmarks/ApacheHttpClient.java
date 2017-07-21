@@ -55,7 +55,7 @@ class ApacheHttpClient extends SynchronousHttpClient {
   class ApacheHttpClientRequest implements Runnable {
     private final HttpUrl url;
 
-    public ApacheHttpClientRequest(HttpUrl url) {
+    ApacheHttpClientRequest(HttpUrl url) {
       this.url = url;
     }
 

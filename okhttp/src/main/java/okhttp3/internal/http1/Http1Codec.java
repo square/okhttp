@@ -369,7 +369,7 @@ public final class Http1Codec implements HttpCodec {
   private class FixedLengthSource extends AbstractSource {
     private long bytesRemaining;
 
-    public FixedLengthSource(long length) throws IOException {
+    FixedLengthSource(long length) throws IOException {
       bytesRemaining = length;
       if (bytesRemaining == 0) {
         endOfInput(true);

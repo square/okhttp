@@ -32,6 +32,7 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import javax.annotation.Nullable;
 import okhttp3.internal.Util;
 import okhttp3.internal.io.FileSystem;
 import okhttp3.internal.platform.Platform;
@@ -454,7 +455,7 @@ public final class DiskLruCache implements Closeable, Flushable {
   /**
    * Returns an editor for the entry named {@code key}, or null if another edit is in progress.
    */
-  public Editor edit(String key) throws IOException {
+  public @Nullable Editor edit(String key) throws IOException {
     return edit(key, ANY_SEQUENCE_NUMBER);
   }
 
@@ -805,7 +806,7 @@ public final class DiskLruCache implements Closeable, Flushable {
      * Returns an editor for this snapshot's entry, or null if either the entry has changed since
      * this snapshot was created or if another edit is in progress.
      */
-    public Editor edit() throws IOException {
+    public @Nullable Editor edit() throws IOException {
       return DiskLruCache.this.edit(key, sequenceNumber);
     }
 

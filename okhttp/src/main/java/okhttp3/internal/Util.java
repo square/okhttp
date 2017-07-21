@@ -18,7 +18,6 @@ package okhttp3.internal;
 import java.io.Closeable;
 import java.io.IOException;
 import java.io.InterruptedIOException;
-import java.lang.reflect.Array;
 import java.net.IDN;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -26,6 +25,7 @@ import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 import java.util.TimeZone;
@@ -62,6 +62,12 @@ public final class Util {
 
   /** GMT and UTC are equivalent for our purposes. */
   public static final TimeZone UTC = TimeZone.getTimeZone("GMT");
+
+  public static final Comparator<String> NATURAL_ORDER = new Comparator<String>() {
+    @Override public int compare(String a, String b) {
+      return a.compareTo(b);
+    }
+  };
 
   /**
    * Quick and dirty pattern to differentiate IP addresses from hostnames. This is an approximation
@@ -198,30 +204,43 @@ public final class Util {
   }
 
   /**
-   * Returns an array containing containing only elements found in {@code first}  and also in {@code
+   * Returns an array containing only elements found in {@code first} and also in {@code
    * second}. The returned elements are in the same order as in {@code first}.
    */
   @SuppressWarnings("unchecked")
-  public static <T> T[] intersect(Class<T> arrayType, T[] first, T[] second) {
-    List<T> result = intersect(first, second);
-    return result.toArray((T[]) Array.newInstance(arrayType, result.size()));
-  }
-
-  /**
-   * Returns a list containing containing only elements found in {@code first}  and also in {@code
-   * second}. The returned elements are in the same order as in {@code first}.
-   */
-  private static <T> List<T> intersect(T[] first, T[] second) {
-    List<T> result = new ArrayList<>();
-    for (T a : first) {
-      for (T b : second) {
-        if (a.equals(b)) {
-          result.add(b);
+  public static String[] intersect(
+      Comparator<? super String> comparator, String[] first, String[] second) {
+    List<String> result = new ArrayList<>();
+    for (String a : first) {
+      for (String b : second) {
+        if (comparator.compare(a, b) == 0) {
+          result.add(a);
           break;
         }
       }
     }
-    return result;
+    return result.toArray(new String[result.size()]);
+  }
+
+  /**
+   * Returns true if there is an element in {@code first} that is also in {@code second}. This
+   * method terminates if any intersection is found. The sizes of both arguments are assumed to be
+   * so small, and the likelihood of an intersection so great, that it is not worth the CPU cost of
+   * sorting or the memory cost of hashing.
+   */
+  public static boolean nonEmptyIntersection(
+      Comparator<String> comparator, String[] first, String[] second) {
+    if (first == null || second == null || first.length == 0 || second.length == 0) {
+      return false;
+    }
+    for (String a : first) {
+      for (String b : second) {
+        if (comparator.compare(a, b) == 0) {
+          return true;
+        }
+      }
+    }
+    return false;
   }
 
   public static String hostHeader(HttpUrl url, boolean includeDefaultPort) {
@@ -259,9 +278,9 @@ public final class Util {
         && e.getMessage().contains("getsockname failed");
   }
 
-  public static <T> int indexOf(T[] array, T value) {
+  public static int indexOf(Comparator<String> comparator, String[] array, String value) {
     for (int i = 0, size = array.length; i < size; i++) {
-      if (equal(array[i], value)) return i;
+      if (comparator.compare(array[i], value) == 0) return i;
     }
     return -1;
   }
@@ -430,5 +449,14 @@ public final class Util {
       return UTF_32_LE;
     }
     return charset;
+  }
+
+  public static int checkDuration(String name, long duration, TimeUnit unit) {
+    if (duration < 0) throw new IllegalArgumentException(name + " < 0");
+    if (unit == null) throw new NullPointerException("unit == null");
+    long millis = unit.toMillis(duration);
+    if (millis > Integer.MAX_VALUE) throw new IllegalArgumentException(name + " too large.");
+    if (millis == 0 && duration > 0) throw new IllegalArgumentException(name + " too small.");
+    return (int) millis;
   }
 }

@@ -17,6 +17,7 @@
 package okhttp3;
 
 import java.net.Socket;
+import javax.annotation.Nullable;
 
 /**
  * The sockets and streams of an HTTP, HTTPS, or HTTPS+HTTP/2 connection. May be used for multiple
@@ -82,7 +83,7 @@ public interface Connection {
    * Returns the TLS handshake used to establish this connection, or null if the connection is not
    * HTTPS.
    */
-  Handshake handshake();
+  @Nullable Handshake handshake();
 
   /**
    * Returns the protocol negotiated by this connection, or {@link Protocol#HTTP_1_1} if no protocol

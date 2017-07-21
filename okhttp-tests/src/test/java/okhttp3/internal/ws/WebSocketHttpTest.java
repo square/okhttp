@@ -15,6 +15,7 @@
  */
 package okhttp3.internal.ws;
 
+import java.io.EOFException;
 import java.io.IOException;
 import java.net.ProtocolException;
 import java.net.SocketTimeoutException;
@@ -187,6 +188,7 @@ public final class WebSocketHttpTest {
 
     server.send("Hello, WebSockets!");
     clientListener.assertFailure(e);
+    serverListener.assertFailure(EOFException.class);
     serverListener.assertExhausted();
   }
 
@@ -465,7 +467,7 @@ public final class WebSocketHttpTest {
 
     WebSocket webSocket = newWebSocket();
 
-    clientListener.assertFailure(SocketTimeoutException.class, "timeout");
+    clientListener.assertFailure(SocketTimeoutException.class, "timeout", "Read timed out");
     assertFalse(webSocket.close(1000, null));
   }
 
@@ -487,7 +489,7 @@ public final class WebSocketHttpTest {
     WebSocket webSocket = newWebSocket();
     clientListener.assertOpen();
 
-    clientListener.assertFailure(SocketTimeoutException.class, "timeout");
+    clientListener.assertFailure(SocketTimeoutException.class, "timeout", "Read timed out");
     assertFalse(webSocket.close(1000, null));
   }
 

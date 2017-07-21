@@ -23,6 +23,7 @@ import java.lang.reflect.Method;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.security.cert.Certificate;
+import java.security.cert.TrustAnchor;
 import java.security.cert.X509Certificate;
 import java.util.List;
 import javax.net.ssl.SSLPeerUnverifiedException;
@@ -31,7 +32,9 @@ import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.X509TrustManager;
 import okhttp3.Protocol;
 import okhttp3.internal.Util;
+import okhttp3.internal.tls.BasicTrustRootIndex;
 import okhttp3.internal.tls.CertificateChainCleaner;
+import okhttp3.internal.tls.TrustRootIndex;
 
 /** Android 2.3 or better. */
 class AndroidPlatform extends Platform {
@@ -47,7 +50,7 @@ class AndroidPlatform extends Platform {
 
   private final CloseGuard closeGuard = CloseGuard.get();
 
-  public AndroidPlatform(Class<?> sslParametersClass, OptionalMethod<Socket> setUseSessionTickets,
+  AndroidPlatform(Class<?> sslParametersClass, OptionalMethod<Socket> setUseSessionTickets,
       OptionalMethod<Socket> setHostname, OptionalMethod<Socket> getAlpnSelectedProtocol,
       OptionalMethod<Socket> setAlpnProtocols) {
     this.sslParametersClass = sslParametersClass;
@@ -151,13 +154,33 @@ class AndroidPlatform extends Platform {
       Class<?> networkPolicyClass = Class.forName("android.security.NetworkSecurityPolicy");
       Method getInstanceMethod = networkPolicyClass.getMethod("getInstance");
       Object networkSecurityPolicy = getInstanceMethod.invoke(null);
-      Method isCleartextTrafficPermittedMethod = networkPolicyClass
-          .getMethod("isCleartextTrafficPermitted", String.class);
-      return (boolean) isCleartextTrafficPermittedMethod.invoke(networkSecurityPolicy, hostname);
+      return api24IsCleartextTrafficPermitted(hostname, networkPolicyClass, networkSecurityPolicy);
     } catch (ClassNotFoundException | NoSuchMethodException e) {
       return super.isCleartextTrafficPermitted(hostname);
     } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
       throw new AssertionError();
+    }
+  }
+
+  private boolean api24IsCleartextTrafficPermitted(String hostname, Class<?> networkPolicyClass,
+      Object networkSecurityPolicy) throws InvocationTargetException, IllegalAccessException {
+    try {
+      Method isCleartextTrafficPermittedMethod = networkPolicyClass
+          .getMethod("isCleartextTrafficPermitted", String.class);
+      return (boolean) isCleartextTrafficPermittedMethod.invoke(networkSecurityPolicy, hostname);
+    } catch (NoSuchMethodException e) {
+      return api23IsCleartextTrafficPermitted(hostname, networkPolicyClass, networkSecurityPolicy);
+    }
+  }
+
+  private boolean api23IsCleartextTrafficPermitted(String hostname, Class<?> networkPolicyClass,
+      Object networkSecurityPolicy) throws InvocationTargetException, IllegalAccessException {
+    try {
+      Method isCleartextTrafficPermittedMethod = networkPolicyClass
+          .getMethod("isCleartextTrafficPermitted");
+      return (boolean) isCleartextTrafficPermittedMethod.invoke(networkSecurityPolicy);
+    } catch (NoSuchMethodException e) {
+      return super.isCleartextTrafficPermitted(hostname);
     }
   }
 
@@ -208,6 +231,21 @@ class AndroidPlatform extends Platform {
     }
 
     return null;
+  }
+
+  @Override
+  public TrustRootIndex buildTrustRootIndex(X509TrustManager trustManager) {
+
+    try {
+      // From org.conscrypt.TrustManagerImpl, we want the method with this signature:
+      // private TrustAnchor findTrustAnchorByIssuerAndSignature(X509Certificate lastCert);
+      Method method = trustManager.getClass().getDeclaredMethod(
+              "findTrustAnchorByIssuerAndSignature", X509Certificate.class);
+      method.setAccessible(true);
+      return new AndroidTrustRootIndex(trustManager, method);
+    } catch (NoSuchMethodException e) {
+      return super.buildTrustRootIndex(trustManager);
+    }
   }
 
   /**
@@ -305,6 +343,57 @@ class AndroidPlatform extends Platform {
         warnIfOpenMethod = null;
       }
       return new CloseGuard(getMethod, openMethod, warnIfOpenMethod);
+    }
+  }
+
+  /**
+   * An index of trusted root certificates that exploits knowledge of Android implementation
+   * details. This class is potentially much faster to initialize than {@link BasicTrustRootIndex}
+   * because it doesn't need to load and index trusted CA certificates.
+   *
+   * <p>This class uses APIs added to Android in API 14 (Android 4.0, released October 2011). This
+   * class shouldn't be used in Android API 17 or better because those releases are better served by
+   * {@link AndroidPlatform.AndroidCertificateChainCleaner}.
+   */
+  static final class AndroidTrustRootIndex implements TrustRootIndex {
+    private final X509TrustManager trustManager;
+    private final Method findByIssuerAndSignatureMethod;
+
+    AndroidTrustRootIndex(X509TrustManager trustManager, Method findByIssuerAndSignatureMethod) {
+      this.findByIssuerAndSignatureMethod = findByIssuerAndSignatureMethod;
+      this.trustManager = trustManager;
+    }
+
+    @Override public X509Certificate findByIssuerAndSignature(X509Certificate cert) {
+      try {
+        TrustAnchor trustAnchor = (TrustAnchor) findByIssuerAndSignatureMethod.invoke(
+                trustManager, cert);
+        return trustAnchor != null
+                ? trustAnchor.getTrustedCert()
+                : null;
+      } catch (IllegalAccessException e) {
+        throw new AssertionError();
+      } catch (InvocationTargetException e) {
+        return null;
+      }
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+      if (obj == this) {
+        return true;
+      }
+      if (!(obj instanceof AndroidTrustRootIndex)) {
+        return false;
+      }
+      AndroidTrustRootIndex that = (AndroidTrustRootIndex) obj;
+      return trustManager.equals(that.trustManager)
+              && findByIssuerAndSignatureMethod.equals(that.findByIssuerAndSignatureMethod);
+    }
+
+    @Override
+    public int hashCode() {
+      return trustManager.hashCode() + 31 * findByIssuerAndSignatureMethod.hashCode();
     }
   }
 }

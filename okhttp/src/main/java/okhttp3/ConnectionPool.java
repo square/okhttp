@@ -27,6 +27,7 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import javax.annotation.Nullable;
 import okhttp3.internal.Util;
 import okhttp3.internal.connection.RealConnection;
 import okhttp3.internal.connection.RouteDatabase;
@@ -114,11 +115,14 @@ public final class ConnectionPool {
     return connections.size();
   }
 
-  /** Returns a recycled connection to {@code address}, or null if no such connection exists. */
-  RealConnection get(Address address, StreamAllocation streamAllocation) {
+  /**
+   * Returns a recycled connection to {@code address}, or null if no such connection exists. The
+   * route is null if the address has not yet been routed.
+   */
+  @Nullable RealConnection get(Address address, StreamAllocation streamAllocation, Route route) {
     assert (Thread.holdsLock(this));
     for (RealConnection connection : connections) {
-      if (connection.isEligible(address)) {
+      if (connection.isEligible(address, route)) {
         streamAllocation.acquire(connection);
         return connection;
       }
@@ -130,10 +134,10 @@ public final class ConnectionPool {
    * Replaces the connection held by {@code streamAllocation} with a shared connection if possible.
    * This recovers when multiple multiplexed connections are created concurrently.
    */
-  Socket deduplicate(Address address, StreamAllocation streamAllocation) {
+  @Nullable Socket deduplicate(Address address, StreamAllocation streamAllocation) {
     assert (Thread.holdsLock(this));
     for (RealConnection connection : connections) {
-      if (connection.isEligible(address)
+      if (connection.isEligible(address, null)
           && connection.isMultiplexed()
           && connection != streamAllocation.connection()) {
         return streamAllocation.releaseAndAcquire(connection);

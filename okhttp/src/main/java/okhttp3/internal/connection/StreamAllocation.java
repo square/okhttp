@@ -20,7 +20,10 @@ import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
 import java.net.Socket;
 import okhttp3.Address;
+import okhttp3.Call;
 import okhttp3.ConnectionPool;
+import okhttp3.EventListener;
+import okhttp3.Interceptor;
 import okhttp3.OkHttpClient;
 import okhttp3.Route;
 import okhttp3.internal.Internal;
@@ -73,6 +76,8 @@ public final class StreamAllocation {
   public final Address address;
   private Route route;
   private final ConnectionPool connectionPool;
+  private final Call call;
+  private final EventListener eventListener;
   private final Object callStackTrace;
 
   // State guarded by connectionPool.
@@ -83,23 +88,33 @@ public final class StreamAllocation {
   private boolean canceled;
   private HttpCodec codec;
 
-  public StreamAllocation(ConnectionPool connectionPool, Address address, Object callStackTrace) {
+  public StreamAllocation(ConnectionPool connectionPool, Address address, Call call,
+      EventListener eventListener, Object callStackTrace) {
     this.connectionPool = connectionPool;
     this.address = address;
-    this.routeSelector = new RouteSelector(address, routeDatabase());
+    this.call = call;
+    this.eventListener = eventListener;
+    this.routeSelector = new RouteSelector(address, routeDatabase(), call, eventListener);
     this.callStackTrace = callStackTrace;
   }
 
-  public HttpCodec newStream(OkHttpClient client, boolean doExtensiveHealthChecks) {
+  public HttpCodec newStream(
+      OkHttpClient client, Interceptor.Chain chain, boolean doExtensiveHealthChecks) {
     int connectTimeout = client.connectTimeoutMillis();
-    int readTimeout = client.readTimeoutMillis();
-    int writeTimeout = client.writeTimeoutMillis();
+    int readTimeout = chain.readTimeoutMillis();
+    int writeTimeout = chain.writeTimeoutMillis();
     boolean connectionRetryEnabled = client.retryOnConnectionFailure();
 
     try {
+      RealConnection existingConnection = connection;
+
       RealConnection resultConnection = findHealthyConnection(connectTimeout, readTimeout,
           writeTimeout, connectionRetryEnabled, doExtensiveHealthChecks);
-      HttpCodec resultCodec = resultConnection.newCodec(client, this);
+      HttpCodec resultCodec = resultConnection.newCodec(client, chain, this);
+
+      if (existingConnection != connection) {
+        eventListener.connectionFound(call, connection);
+      }
 
       synchronized (connectionPool) {
         codec = resultCodec;
@@ -158,7 +173,7 @@ public final class StreamAllocation {
       }
 
       // Attempt to get a connection from the pool.
-      Internal.instance.get(connectionPool, address, this);
+      Internal.instance.get(connectionPool, address, this, null);
       if (connection != null) {
         return connection;
       }
@@ -171,19 +186,29 @@ public final class StreamAllocation {
       selectedRoute = routeSelector.next();
     }
 
-    // Create a connection and assign it to this allocation immediately. This makes it possible for
-    // an asynchronous cancel() to interrupt the handshake we're about to do.
     RealConnection result;
     synchronized (connectionPool) {
+      if (canceled) throw new IOException("Canceled");
+
+      // Now that we have an IP address, make another attempt at getting a connection from the pool.
+      // This could match due to connection coalescing.
+      Internal.instance.get(connectionPool, address, this, selectedRoute);
+      if (connection != null) {
+        route = selectedRoute;
+        return connection;
+      }
+
+      // Create a connection and assign it to this allocation immediately. This makes it possible
+      // for an asynchronous cancel() to interrupt the handshake we're about to do.
       route = selectedRoute;
       refusedStreamCount = 0;
       result = new RealConnection(connectionPool, selectedRoute);
       acquire(result);
-      if (canceled) throw new IOException("Canceled");
     }
 
     // Do TCP + TLS handshakes. This is a blocking operation.
-    result.connect(connectTimeout, readTimeout, writeTimeout, connectionRetryEnabled);
+    result.connect(
+        connectTimeout, readTimeout, writeTimeout, connectionRetryEnabled, call, eventListener);
     routeDatabase().connected(result.route());
 
     Socket socket = null;

@@ -56,7 +56,7 @@ public final class Settings {
   }
 
   Settings set(int id, int value) {
-    if (id >= values.length) {
+    if (id < 0 || id >= values.length) {
       return this; // Discard unknown settings.
     }
 
@@ -94,7 +94,6 @@ public final class Settings {
     return ((bit & set) != 0 ? values[ENABLE_PUSH] : defaultValue ? 1 : 0) == 1;
   }
 
-  // TODO: honor this setting.
   int getMaxConcurrentStreams(int defaultValue) {
     int bit = 1 << MAX_CONCURRENT_STREAMS;
     return (bit & set) != 0 ? values[MAX_CONCURRENT_STREAMS] : defaultValue;

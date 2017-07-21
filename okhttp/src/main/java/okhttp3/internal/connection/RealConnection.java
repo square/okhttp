@@ -29,21 +29,26 @@ import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import javax.annotation.Nullable;
 import javax.net.ssl.SSLPeerUnverifiedException;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
 import okhttp3.Address;
+import okhttp3.Call;
 import okhttp3.CertificatePinner;
 import okhttp3.Connection;
 import okhttp3.ConnectionPool;
 import okhttp3.ConnectionSpec;
+import okhttp3.EventListener;
 import okhttp3.Handshake;
 import okhttp3.HttpUrl;
+import okhttp3.Interceptor;
 import okhttp3.OkHttpClient;
 import okhttp3.Protocol;
 import okhttp3.Request;
 import okhttp3.Response;
 import okhttp3.Route;
+import okhttp3.internal.Internal;
 import okhttp3.internal.Util;
 import okhttp3.internal.Version;
 import okhttp3.internal.http.HttpCodec;
@@ -67,6 +72,9 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static okhttp3.internal.Util.closeQuietly;
 
 public final class RealConnection extends Http2Connection.Listener implements Connection {
+  private static final String NPE_THROW_WITH_NULL = "throw with null exception";
+  private static final int MAX_TUNNEL_ATTEMPTS = 21;
+
   private final ConnectionPool connectionPool;
   private final Route route;
 
@@ -118,8 +126,8 @@ public final class RealConnection extends Http2Connection.Listener implements Co
     return result;
   }
 
-  public void connect(
-      int connectTimeout, int readTimeout, int writeTimeout, boolean connectionRetryEnabled) {
+  public void connect(int connectTimeout, int readTimeout, int writeTimeout,
+      boolean connectionRetryEnabled, Call call, EventListener eventListener) {
     if (protocol != null) throw new IllegalStateException("already connected");
 
     RouteException routeException = null;
@@ -141,11 +149,16 @@ public final class RealConnection extends Http2Connection.Listener implements Co
     while (true) {
       try {
         if (route.requiresTunnel()) {
-          connectTunnel(connectTimeout, readTimeout, writeTimeout);
+          connectTunnel(connectTimeout, readTimeout, writeTimeout, call, eventListener);
+          if (rawSocket == null) {
+            // We were unable to connect the tunnel but properly closed down our resources.
+            break;
+          }
         } else {
-          connectSocket(connectTimeout, readTimeout);
+          connectSocket(connectTimeout, readTimeout, call, eventListener);
         }
-        establishProtocol(connectionSpecSelector);
+        establishProtocol(connectionSpecSelector, call, eventListener);
+        eventListener.connectEnd(call, route.socketAddress(), protocol, null);
         break;
       } catch (IOException e) {
         closeQuietly(socket);
@@ -157,6 +170,8 @@ public final class RealConnection extends Http2Connection.Listener implements Co
         handshake = null;
         protocol = null;
         http2Connection = null;
+
+        eventListener.connectEnd(call, route.socketAddress(), null, e);
 
         if (routeException == null) {
           routeException = new RouteException(e);
@@ -170,6 +185,12 @@ public final class RealConnection extends Http2Connection.Listener implements Co
       }
     }
 
+    if (route.requiresTunnel() && rawSocket == null) {
+      ProtocolException exception = new ProtocolException("Too many tunnel connections attempted: "
+          + MAX_TUNNEL_ATTEMPTS);
+      throw new RouteException(exception);
+    }
+
     if (http2Connection != null) {
       synchronized (connectionPool) {
         allocationLimit = http2Connection.maxConcurrentStreams();
@@ -181,18 +202,12 @@ public final class RealConnection extends Http2Connection.Listener implements Co
    * Does all the work to build an HTTPS connection over a proxy tunnel. The catch here is that a
    * proxy server can issue an auth challenge and then close the connection.
    */
-  private void connectTunnel(int connectTimeout, int readTimeout, int writeTimeout)
-      throws IOException {
+  private void connectTunnel(int connectTimeout, int readTimeout, int writeTimeout, Call call,
+      EventListener eventListener) throws IOException {
     Request tunnelRequest = createTunnelRequest();
     HttpUrl url = tunnelRequest.url();
-    int attemptedConnections = 0;
-    int maxAttempts = 21;
-    while (true) {
-      if (++attemptedConnections > maxAttempts) {
-        throw new ProtocolException("Too many tunnel connections attempted: " + maxAttempts);
-      }
-
-      connectSocket(connectTimeout, readTimeout);
+    for (int i = 0; i < MAX_TUNNEL_ATTEMPTS; i++) {
+      connectSocket(connectTimeout, readTimeout, call, eventListener);
       tunnelRequest = createTunnel(readTimeout, writeTimeout, tunnelRequest, url);
 
       if (tunnelRequest == null) break; // Tunnel successfully created.
@@ -203,11 +218,13 @@ public final class RealConnection extends Http2Connection.Listener implements Co
       rawSocket = null;
       sink = null;
       source = null;
+      eventListener.connectEnd(call, route.socketAddress(), null, null);
     }
   }
 
   /** Does all the work necessary to build a full HTTP or HTTPS connection on a raw socket. */
-  private void connectSocket(int connectTimeout, int readTimeout) throws IOException {
+  private void connectSocket(int connectTimeout, int readTimeout, Call call,
+      EventListener eventListener) throws IOException {
     Proxy proxy = route.proxy();
     Address address = route.address();
 
@@ -215,6 +232,7 @@ public final class RealConnection extends Http2Connection.Listener implements Co
         ? address.socketFactory().createSocket()
         : new Socket(proxy);
 
+    eventListener.connectStart(call, route.socketAddress(), proxy);
     rawSocket.setSoTimeout(readTimeout);
     try {
       Platform.get().connectSocket(rawSocket, route.socketAddress(), connectTimeout);
@@ -223,18 +241,37 @@ public final class RealConnection extends Http2Connection.Listener implements Co
       ce.initCause(e);
       throw ce;
     }
-    source = Okio.buffer(Okio.source(rawSocket));
-    sink = Okio.buffer(Okio.sink(rawSocket));
+
+    // The following try/catch block is a pseudo hacky way to get around a crash on Android 7.0
+    // More details:
+    // https://github.com/square/okhttp/issues/3245
+    // https://android-review.googlesource.com/#/c/271775/
+    try {
+      source = Okio.buffer(Okio.source(rawSocket));
+      sink = Okio.buffer(Okio.sink(rawSocket));
+    } catch (NullPointerException npe) {
+      if (NPE_THROW_WITH_NULL.equals(npe.getMessage())) {
+        throw new IOException(npe);
+      }
+    }
   }
 
-  private void establishProtocol(ConnectionSpecSelector connectionSpecSelector) throws IOException {
+  private void establishProtocol(ConnectionSpecSelector connectionSpecSelector, Call call,
+      EventListener eventListener) throws IOException {
     if (route.address().sslSocketFactory() == null) {
       protocol = Protocol.HTTP_1_1;
       socket = rawSocket;
       return;
     }
 
-    connectTls(connectionSpecSelector);
+    eventListener.secureConnectStart(call);
+    try {
+      connectTls(connectionSpecSelector);
+    } catch (Exception e) {
+      eventListener.secureConnectEnd(call, null, e);
+      throw e;
+    }
+    eventListener.secureConnectEnd(call, handshake, null);
 
     if (protocol == Protocol.HTTP_2) {
       socket.setSoTimeout(0); // HTTP/2 connection timeouts are set per-stream.
@@ -373,20 +410,73 @@ public final class RealConnection extends Http2Connection.Listener implements Co
         .build();
   }
 
-  /** Returns true if this connection can carry a stream allocation to {@code address}. */
-  public boolean isEligible(Address address) {
-    return allocations.size() < allocationLimit
-        && address.equals(route().address())
-        && !noNewStreams;
+  /**
+   * Returns true if this connection can carry a stream allocation to {@code address}. If non-null
+   * {@code route} is the resolved route for a connection.
+   */
+  public boolean isEligible(Address address, @Nullable Route route) {
+    // If this connection is not accepting new streams, we're done.
+    if (allocations.size() >= allocationLimit || noNewStreams) return false;
+
+    // If the non-host fields of the address don't overlap, we're done.
+    if (!Internal.instance.equalsNonHost(this.route.address(), address)) return false;
+
+    // If the host exactly matches, we're done: this connection can carry the address.
+    if (address.url().host().equals(this.route().address().url().host())) {
+      return true; // This connection is a perfect match.
+    }
+
+    // At this point we don't have a hostname match. But we still be able to carry the request if
+    // our connection coalescing requirements are met. See also:
+    // https://hpbn.co/optimizing-application-delivery/#eliminate-domain-sharding
+    // https://daniel.haxx.se/blog/2016/08/18/http2-connection-coalescing/
+
+    // 1. This connection must be HTTP/2.
+    if (http2Connection == null) return false;
+
+    // 2. The routes must share an IP address. This requires us to have a DNS address for both
+    // hosts, which only happens after route planning. We can't coalesce connections that use a
+    // proxy, since proxies don't tell us the origin server's IP address.
+    if (route == null) return false;
+    if (route.proxy().type() != Proxy.Type.DIRECT) return false;
+    if (this.route.proxy().type() != Proxy.Type.DIRECT) return false;
+    if (!this.route.socketAddress().equals(route.socketAddress())) return false;
+
+    // 3. This connection's server certificate's must cover the new host.
+    if (route.address().hostnameVerifier() != OkHostnameVerifier.INSTANCE) return false;
+    if (!supportsUrl(address.url())) return false;
+
+    // 4. Certificate pinning must match the host.
+    try {
+      address.certificatePinner().check(address.url().host(), handshake().peerCertificates());
+    } catch (SSLPeerUnverifiedException e) {
+      return false;
+    }
+
+    return true; // The caller's address can be carried by this connection.
   }
 
-  public HttpCodec newCodec(
-      OkHttpClient client, StreamAllocation streamAllocation) throws SocketException {
+  public boolean supportsUrl(HttpUrl url) {
+    if (url.port() != route.address().url().port()) {
+      return false; // Port mismatch.
+    }
+
+    if (!url.host().equals(route.address().url().host())) {
+      // We have a host mismatch. But if the certificate matches, we're still good.
+      return handshake != null && OkHostnameVerifier.INSTANCE.verify(
+          url.host(), (X509Certificate) handshake.peerCertificates().get(0));
+    }
+
+    return true; // Success. The URL is supported.
+  }
+
+  public HttpCodec newCodec(OkHttpClient client, Interceptor.Chain chain,
+      StreamAllocation streamAllocation) throws SocketException {
     if (http2Connection != null) {
-      return new Http2Codec(client, streamAllocation, http2Connection);
+      return new Http2Codec(client, chain, streamAllocation, http2Connection);
     } else {
-      socket.setSoTimeout(client.readTimeoutMillis());
-      source.timeout().timeout(client.readTimeoutMillis(), MILLISECONDS);
+      socket.setSoTimeout(chain.readTimeoutMillis());
+      source.timeout().timeout(chain.readTimeoutMillis(), MILLISECONDS);
       sink.timeout().timeout(client.writeTimeoutMillis(), MILLISECONDS);
       return new Http1Codec(client, streamAllocation, source, sink);
     }

@@ -20,6 +20,7 @@ import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
 import java.util.Collections;
 import java.util.List;
+import javax.annotation.Nullable;
 import javax.net.ssl.SSLPeerUnverifiedException;
 import javax.net.ssl.SSLSession;
 import okhttp3.internal.Util;
@@ -74,14 +75,15 @@ public final class Handshake {
 
   public static Handshake get(TlsVersion tlsVersion, CipherSuite cipherSuite,
       List<Certificate> peerCertificates, List<Certificate> localCertificates) {
+    if (tlsVersion == null) throw new NullPointerException("tlsVersion == null");
     if (cipherSuite == null) throw new NullPointerException("cipherSuite == null");
     return new Handshake(tlsVersion, cipherSuite, Util.immutableList(peerCertificates),
         Util.immutableList(localCertificates));
   }
 
   /**
-   * Returns the TLS version used for this connection. May return null if the response was cached
-   * with a version of OkHttp prior to 3.0.
+   * Returns the TLS version used for this connection. This value wasn't tracked prior to OkHttp
+   * 3.0. For responses cached by preceding versions this returns {@link TlsVersion#SSL_3_0}.
    */
   public TlsVersion tlsVersion() {
     return tlsVersion;
@@ -98,7 +100,7 @@ public final class Handshake {
   }
 
   /** Returns the remote peer's principle, or null if that peer is anonymous. */
-  public Principal peerPrincipal() {
+  public @Nullable Principal peerPrincipal() {
     return !peerCertificates.isEmpty()
         ? ((X509Certificate) peerCertificates.get(0)).getSubjectX500Principal()
         : null;
@@ -110,16 +112,16 @@ public final class Handshake {
   }
 
   /** Returns the local principle, or null if this peer is anonymous. */
-  public Principal localPrincipal() {
+  public @Nullable Principal localPrincipal() {
     return !localCertificates.isEmpty()
         ? ((X509Certificate) localCertificates.get(0)).getSubjectX500Principal()
         : null;
   }
 
-  @Override public boolean equals(Object other) {
+  @Override public boolean equals(@Nullable Object other) {
     if (!(other instanceof Handshake)) return false;
     Handshake that = (Handshake) other;
-    return Util.equal(cipherSuite, that.cipherSuite)
+    return tlsVersion.equals(that.tlsVersion)
         && cipherSuite.equals(that.cipherSuite)
         && peerCertificates.equals(that.peerCertificates)
         && localCertificates.equals(that.localCertificates);
@@ -127,7 +129,7 @@ public final class Handshake {
 
   @Override public int hashCode() {
     int result = 17;
-    result = 31 * result + (tlsVersion != null ? tlsVersion.hashCode() : 0);
+    result = 31 * result + tlsVersion.hashCode();
     result = 31 * result + cipherSuite.hashCode();
     result = 31 * result + peerCertificates.hashCode();
     result = 31 * result + localCertificates.hashCode();

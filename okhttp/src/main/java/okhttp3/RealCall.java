@@ -34,6 +34,12 @@ final class RealCall implements Call {
   final OkHttpClient client;
   final RetryAndFollowUpInterceptor retryAndFollowUpInterceptor;
 
+  /**
+   * There is a cycle between the {@link Call} and {@link EventListener} that makes this awkward.
+   * This will be set after we create the call instance then create the event listener instance.
+   */
+  private EventListener eventListener;
+
   /** The application's original request unadulterated by redirects or auth headers. */
   final Request originalRequest;
   final boolean forWebSocket;
@@ -41,11 +47,18 @@ final class RealCall implements Call {
   // Guarded by this.
   private boolean executed;
 
-  RealCall(OkHttpClient client, Request originalRequest, boolean forWebSocket) {
+  private RealCall(OkHttpClient client, Request originalRequest, boolean forWebSocket) {
     this.client = client;
     this.originalRequest = originalRequest;
     this.forWebSocket = forWebSocket;
     this.retryAndFollowUpInterceptor = new RetryAndFollowUpInterceptor(client, forWebSocket);
+  }
+
+  static RealCall newRealCall(OkHttpClient client, Request originalRequest, boolean forWebSocket) {
+    // Safely publish the Call instance to the EventListener.
+    RealCall call = new RealCall(client, originalRequest, forWebSocket);
+    call.eventListener = client.eventListenerFactory().create(call);
+    return call;
   }
 
   @Override public Request request() {
@@ -96,7 +109,7 @@ final class RealCall implements Call {
 
   @SuppressWarnings("CloneDoesntCallSuperClone") // We are a final type & this saves clearing state.
   @Override public RealCall clone() {
-    return new RealCall(client, originalRequest, forWebSocket);
+    return RealCall.newRealCall(client, originalRequest, forWebSocket);
   }
 
   StreamAllocation streamAllocation() {
@@ -174,8 +187,10 @@ final class RealCall implements Call {
     }
     interceptors.add(new CallServerInterceptor(forWebSocket));
 
-    Interceptor.Chain chain = new RealInterceptorChain(
-        interceptors, null, null, null, 0, originalRequest);
+    Interceptor.Chain chain = new RealInterceptorChain(interceptors, null, null, null, 0,
+        originalRequest, this, eventListener, client.readTimeoutMillis(),
+        client.writeTimeoutMillis());
+
     return chain.proceed(originalRequest);
   }
 }
