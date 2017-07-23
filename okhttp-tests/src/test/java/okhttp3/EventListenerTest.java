@@ -83,7 +83,7 @@ public final class EventListenerTest {
     List<Class<?>> expectedEvents = Arrays.asList(
         DnsStart.class, DnsEnd.class,
         ConnectStart.class, ConnectEnd.class,
-        ConnectionFound.class);
+        ConnectionAcquired.class);
     assertEquals(expectedEvents, listener.recordedEventTypes());
   }
 
@@ -102,7 +102,7 @@ public final class EventListenerTest {
         DnsStart.class, DnsEnd.class,
         ConnectStart.class, SecureConnectStart.class,
         SecureConnectEnd.class, ConnectEnd.class,
-        ConnectionFound.class);
+        ConnectionAcquired.class);
     assertEquals(expectedEvents, listener.recordedEventTypes());
   }
 
@@ -535,9 +535,9 @@ public final class EventListenerTest {
     assertEquals(200, response.code());
     response.body().close();
 
-    ConnectionFound connectionFound = listener.removeUpToEvent(ConnectionFound.class);
-    assertSame(call, connectionFound.call);
-    assertNotNull(connectionFound.connection);
+    ConnectionAcquired connectionAcquired = listener.removeUpToEvent(ConnectionAcquired.class);
+    assertSame(call, connectionAcquired.call);
+    assertNotNull(connectionAcquired.connection);
   }
 
   @Test public void noConnectionFoundOnFollowUp() throws IOException {
@@ -553,10 +553,10 @@ public final class EventListenerTest {
     Response response = call.execute();
     assertEquals("ABC", response.body().string());
 
-    listener.removeUpToEvent(ConnectionFound.class);
+    listener.removeUpToEvent(ConnectionAcquired.class);
 
     List<Class<?>> remainingEvents = listener.recordedEventTypes();
-    assertFalse(remainingEvents.contains(ConnectionFound.class));
+    assertFalse(remainingEvents.contains(ConnectionAcquired.class));
   }
 
   @Test public void pooledConnectionFound() throws IOException {
@@ -571,7 +571,7 @@ public final class EventListenerTest {
     assertEquals(200, response1.code());
     response1.body().close();
 
-    ConnectionFound connectionFound1 = listener.removeUpToEvent(ConnectionFound.class);
+    ConnectionAcquired connectionAcquired1 = listener.removeUpToEvent(ConnectionAcquired.class);
     listener.clearAllEvents();
 
     Call call2 = client.newCall(new Request.Builder()
@@ -581,8 +581,8 @@ public final class EventListenerTest {
     assertEquals(200, response2.code());
     response2.body().close();
 
-    ConnectionFound connectionFound2 = listener.removeUpToEvent(ConnectionFound.class);
-    assertSame(connectionFound1.connection, connectionFound2.connection);
+    ConnectionAcquired connectionAcquired2 = listener.removeUpToEvent(ConnectionAcquired.class);
+    assertSame(connectionAcquired1.connection, connectionAcquired2.connection);
   }
 
   @Test public void multipleConnectionsFoundForSingleCall() throws IOException {
@@ -599,8 +599,8 @@ public final class EventListenerTest {
     Response response = call.execute();
     assertEquals("ABC", response.body().string());
 
-    listener.removeUpToEvent(ConnectionFound.class);
-    listener.removeUpToEvent(ConnectionFound.class);
+    listener.removeUpToEvent(ConnectionAcquired.class);
+    listener.removeUpToEvent(ConnectionAcquired.class);
   }
 
   private void enableTlsWithTunnel(boolean tunnelProxy) {
@@ -681,11 +681,21 @@ public final class EventListenerTest {
     }
   }
 
-  static final class ConnectionFound {
+  static final class ConnectionAcquired {
     final Call call;
     final Connection connection;
 
-    ConnectionFound(Call call, Connection connection) {
+    ConnectionAcquired(Call call, Connection connection) {
+      this.call = call;
+      this.connection = connection;
+    }
+  }
+
+  static final class ConnectionReleased {
+    final Call call;
+    final Connection connection;
+
+    ConnectionReleased(Call call, Connection connection) {
       this.call = call;
       this.connection = connection;
     }
@@ -747,7 +757,11 @@ public final class EventListenerTest {
     }
 
     @Override public void connectionAcquired(Call call, Connection connection) {
-      eventSequence.offer(new ConnectionFound(call, connection));
+      eventSequence.offer(new ConnectionAcquired(call, connection));
+    }
+
+    @Override public void connectionReleased(Call call, Connection connection) {
+      eventSequence.offer(new ConnectionReleased(call, connection));
     }
   }
 }
