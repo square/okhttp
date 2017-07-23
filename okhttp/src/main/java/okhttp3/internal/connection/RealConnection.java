@@ -267,11 +267,11 @@ public final class RealConnection extends Http2Connection.Listener implements Co
     eventListener.secureConnectStart(call);
     try {
       connectTls(connectionSpecSelector);
+      eventListener.secureConnectEnd(call, handshake, null);
     } catch (Exception e) {
       eventListener.secureConnectEnd(call, null, e);
       throw e;
     }
-    eventListener.secureConnectEnd(call, handshake, null);
 
     if (protocol == Protocol.HTTP_2) {
       socket.setSoTimeout(0); // HTTP/2 connection timeouts are set per-stream.
