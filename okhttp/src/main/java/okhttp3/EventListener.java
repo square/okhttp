@@ -238,8 +238,8 @@ public abstract class EventListener {
   /**
    * Invoked immediately after receiving a request body and completing reading it.
    *
-   * <p>Will only be invoked for requests having a response body e.g. won't be invoked for a websocket
-   * upgrade.
+   * <p>Will only be invoked for requests having a response body e.g. won't be invoked for a
+   * websocket upgrade.
    *
    * <p>This method is always invoked after {@link #requestBodyStart(Call)}.
    *
