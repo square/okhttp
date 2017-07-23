@@ -746,7 +746,7 @@ public final class EventListenerTest {
       eventSequence.offer(new ConnectEnd(call, inetSocketAddress, protocol, throwable));
     }
 
-    @Override public void connectionFound(Call call, Connection connection) {
+    @Override public void connectionAcquired(Call call, Connection connection) {
       eventSequence.offer(new ConnectionFound(call, connection));
     }
   }

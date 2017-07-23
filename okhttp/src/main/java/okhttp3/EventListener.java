@@ -136,14 +136,25 @@ public abstract class EventListener {
    * <p>This can be invoked more than 1 time for a single {@link Call}. For example, if the response
    * to the {@link Call#request()} is a redirect to a different address.
    */
-  public void connectionFound(Call call, Connection connection) {
+  public void connectionAcquired(Call call, Connection connection) {
+  }
+
+  /**
+   * Invoked after a connection has been released for the {@code call}.
+   *
+   * <p>This method is always invoked after {@link #connectionAcquired(Call, Connection)}.
+   *
+   * <p>This can be invoked more than 1 time for a single {@link Call}. For example, if the response
+   * to the {@link Call#request()} is a redirect to a different address.
+   */
+  public void connectionReleased(Call call, Connection connection) {
   }
 
   /**
    * Invoked just prior to sending request headers.
    *
    * <p>The connection is implicit, and will generally relate to the last
-   * {@link #connectionFound(Call, Connection)} event.
+   * {@link #connectionAcquired(Call, Connection)} event.
    *
    * <p>This can be invoked more than 1 time for a single {@link Call}. For example, if the response
    * to the {@link Call#request()} is a redirect to a different address.
@@ -168,7 +179,7 @@ public abstract class EventListener {
    * having a request body to send.
    *
    * <p>The connection is implicit, and will generally relate to the last
-   * {@link #connectionFound(Call, Connection)} event.
+   * {@link #connectionAcquired(Call, Connection)} event.
    *
    * <p>This can be invoked more than 1 time for a single {@link Call}. For example, if the response
    * to the {@link Call#request()} is a redirect to a different address.
@@ -192,7 +203,7 @@ public abstract class EventListener {
    * Invoked just prior to receiving response headers.
    *
    * <p>The connection is implicit, and will generally relate to the last
-   * {@link #connectionFound(Call, Connection)} event.
+   * {@link #connectionAcquired(Call, Connection)} event.
    *
    * <p>This can be invoked more than 1 time for a single {@link Call}. For example, if the response
    * to the {@link Call#request()} is a redirect to a different address.
@@ -216,7 +227,7 @@ public abstract class EventListener {
    * Invoked just prior to receiving the response body.
    *
    * <p>The connection is implicit, and will generally relate to the last
-   * {@link #connectionFound(Call, Connection)} event.
+   * {@link #connectionAcquired(Call, Connection)} event.
    *
    * <p>This can be invoked more than 1 time for a single {@link Call}. For example, if the response
    * to the {@link Call#request()} is a redirect to a different address.
