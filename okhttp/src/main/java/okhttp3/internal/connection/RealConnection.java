@@ -477,7 +477,7 @@ public final class RealConnection extends Http2Connection.Listener implements Co
     } else {
       socket.setSoTimeout(chain.readTimeoutMillis());
       source.timeout().timeout(chain.readTimeoutMillis(), MILLISECONDS);
-      sink.timeout().timeout(client.writeTimeoutMillis(), MILLISECONDS);
+      sink.timeout().timeout(chain.writeTimeoutMillis(), MILLISECONDS);
       return new Http1Codec(client, streamAllocation, source, sink);
     }
   }
