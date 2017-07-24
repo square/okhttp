@@ -113,7 +113,7 @@ public final class StreamAllocation {
       HttpCodec resultCodec = resultConnection.newCodec(client, chain, this);
 
       if (existingConnection != connection) {
-        eventListener.connectionFound(call, connection);
+        eventListener.connectionAcquired(call, connection);
       }
 
       synchronized (connectionPool) {

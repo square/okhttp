@@ -80,10 +80,11 @@ public final class EventListenerTest {
     assertEquals(200, response.code());
     response.body().close();
 
-    List<Class<?>> expectedEvents = Arrays.asList(
-        DnsStart.class, DnsEnd.class,
-        ConnectStart.class, ConnectEnd.class,
-        ConnectionFound.class);
+    List<Class<? extends CallEvent>> expectedEvents = Arrays.asList(FetchStart.class,
+        DnsStart.class, DnsEnd.class, ConnectStart.class, ConnectEnd.class,
+        ConnectionAcquired.class, RequestHeadersStart.class, RequestHeadersEnd.class,
+        ResponseHeadersStart.class, ResponseHeadersEnd.class, ResponseBodyStart.class,
+        ResponseBodyEnd.class, FetchEnd.class);
     assertEquals(expectedEvents, listener.recordedEventTypes());
   }
 
@@ -98,11 +99,12 @@ public final class EventListenerTest {
     assertEquals(200, response.code());
     response.body().close();
 
-    List<Class<?>> expectedEvents = Arrays.asList(
-        DnsStart.class, DnsEnd.class,
-        ConnectStart.class, SecureConnectStart.class,
+    List<Class<? extends CallEvent>> expectedEvents = Arrays.asList(FetchStart.class,
+        DnsStart.class, DnsEnd.class, ConnectStart.class, SecureConnectStart.class,
         SecureConnectEnd.class, ConnectEnd.class,
-        ConnectionFound.class);
+        ConnectionAcquired.class, RequestHeadersStart.class, RequestHeadersEnd.class,
+        ResponseHeadersStart.class, ResponseHeadersEnd.class, ResponseBodyStart.class,
+        ResponseBodyEnd.class, FetchEnd.class);
     assertEquals(expectedEvents, listener.recordedEventTypes());
   }
 
@@ -535,7 +537,7 @@ public final class EventListenerTest {
     assertEquals(200, response.code());
     response.body().close();
 
-    ConnectionFound connectionFound = listener.removeUpToEvent(ConnectionFound.class);
+    ConnectionAcquired connectionFound = listener.removeUpToEvent(ConnectionAcquired.class);
     assertSame(call, connectionFound.call);
     assertNotNull(connectionFound.connection);
   }
@@ -553,10 +555,10 @@ public final class EventListenerTest {
     Response response = call.execute();
     assertEquals("ABC", response.body().string());
 
-    listener.removeUpToEvent(ConnectionFound.class);
+    listener.removeUpToEvent(ConnectionAcquired.class);
 
     List<Class<?>> remainingEvents = listener.recordedEventTypes();
-    assertFalse(remainingEvents.contains(ConnectionFound.class));
+    assertFalse(remainingEvents.contains(ConnectionAcquired.class));
   }
 
   @Test public void pooledConnectionFound() throws IOException {
@@ -571,7 +573,7 @@ public final class EventListenerTest {
     assertEquals(200, response1.code());
     response1.body().close();
 
-    ConnectionFound connectionFound1 = listener.removeUpToEvent(ConnectionFound.class);
+    ConnectionAcquired connectionFound1 = listener.removeUpToEvent(ConnectionAcquired.class);
     listener.clearAllEvents();
 
     Call call2 = client.newCall(new Request.Builder()
@@ -581,7 +583,7 @@ public final class EventListenerTest {
     assertEquals(200, response2.code());
     response2.body().close();
 
-    ConnectionFound connectionFound2 = listener.removeUpToEvent(ConnectionFound.class);
+    ConnectionAcquired connectionFound2 = listener.removeUpToEvent(ConnectionAcquired.class);
     assertSame(connectionFound1.connection, connectionFound2.connection);
   }
 
@@ -599,8 +601,8 @@ public final class EventListenerTest {
     Response response = call.execute();
     assertEquals("ABC", response.body().string());
 
-    listener.removeUpToEvent(ConnectionFound.class);
-    listener.removeUpToEvent(ConnectionFound.class);
+    listener.removeUpToEvent(ConnectionAcquired.class);
+    listener.removeUpToEvent(ConnectionAcquired.class);
   }
 
   private void enableTlsWithTunnel(boolean tunnelProxy) {
@@ -611,88 +613,175 @@ public final class EventListenerTest {
     server.useHttps(sslClient.socketFactory, tunnelProxy);
   }
 
-  static final class DnsStart {
+  static class CallEvent {
     final Call call;
+    final List<Object> params;
+
+    CallEvent(Call call, Object... params) {
+      this.call = call;
+      this.params = Arrays.asList(params);
+    }
+  }
+
+  static final class DnsStart extends CallEvent {
     final String domainName;
 
     DnsStart(Call call, String domainName) {
-      this.call = call;
+      super(call, domainName);
       this.domainName = domainName;
     }
   }
 
-  static final class DnsEnd {
-    final Call call;
+  static final class DnsEnd extends CallEvent {
     final String domainName;
     final List<InetAddress> inetAddressList;
     final Throwable throwable;
 
     DnsEnd(Call call, String domainName, List<InetAddress> inetAddressList, Throwable throwable) {
-      this.call = call;
+      super(call, domainName, inetAddressList, throwable);
       this.domainName = domainName;
       this.inetAddressList = inetAddressList;
       this.throwable = throwable;
     }
   }
 
-  static final class ConnectStart {
-    final Call call;
+  static final class ConnectStart extends CallEvent {
     final InetSocketAddress inetSocketAddress;
     final Proxy proxy;
 
     ConnectStart(Call call, InetSocketAddress inetSocketAddress, Proxy proxy) {
-      this.call = call;
+      super(call, inetSocketAddress, proxy);
       this.inetSocketAddress = inetSocketAddress;
       this.proxy = proxy;
     }
   }
 
-  static final class ConnectEnd {
-    final Call call;
+  static final class ConnectEnd extends CallEvent {
     final InetSocketAddress inetSocketAddress;
     final Protocol protocol;
     final Throwable throwable;
 
-    ConnectEnd(Call call, InetSocketAddress inetSocketAddress, Protocol protocol, Throwable throwable) {
-      this.call = call;
+    ConnectEnd(Call call, InetSocketAddress inetSocketAddress, Protocol protocol,
+        Throwable throwable) {
+      super(call, inetSocketAddress, protocol, throwable);
       this.inetSocketAddress = inetSocketAddress;
       this.protocol = protocol;
       this.throwable = throwable;
     }
   }
 
-  static final class SecureConnectStart {
-    final Call call;
-
+  static final class SecureConnectStart extends CallEvent {
     SecureConnectStart(Call call) {
-      this.call = call;
+      super(call);
     }
   }
 
-  static final class SecureConnectEnd {
-    final Call call;
+  static final class SecureConnectEnd extends CallEvent {
     final Handshake handshake;
     final Throwable throwable;
 
     SecureConnectEnd(Call call, Handshake handshake, Throwable throwable) {
-      this.call = call;
+      super(call, handshake, throwable);
       this.handshake = handshake;
       this.throwable = throwable;
     }
   }
 
-  static final class ConnectionFound {
-    final Call call;
+  static final class ConnectionAcquired extends CallEvent {
     final Connection connection;
 
-    ConnectionFound(Call call, Connection connection) {
-      this.call = call;
+    ConnectionAcquired(Call call, Connection connection) {
+      super(call, connection);
       this.connection = connection;
     }
   }
 
+  static final class ConnectionReleased extends CallEvent {
+    final Connection connection;
+
+    ConnectionReleased(Call call, Connection connection) {
+      super(call, connection);
+      this.connection = connection;
+    }
+  }
+
+  static final class FetchStart extends CallEvent {
+    FetchStart(Call call) {
+      super(call);
+    }
+  }
+
+  static final class FetchEnd extends CallEvent {
+    final Throwable throwable;
+
+    FetchEnd(Call call, Throwable throwable) {
+      super(call, throwable);
+      this.throwable = throwable;
+    }
+  }
+
+  static final class RequestHeadersStart extends CallEvent {
+    RequestHeadersStart(Call call) {
+      super(call);
+    }
+  }
+
+  static final class RequestHeadersEnd extends CallEvent {
+    final Throwable throwable;
+
+    RequestHeadersEnd(Call call, Throwable throwable) {
+      super(call, throwable);
+      this.throwable = throwable;
+    }
+  }
+
+  static final class RequestBodyStart extends CallEvent {
+    RequestBodyStart(Call call) {
+      super(call);
+    }
+  }
+
+  static final class RequestBodyEnd extends CallEvent {
+    final Throwable throwable;
+
+    RequestBodyEnd(Call call, Throwable throwable) {
+      super(call, throwable);
+      this.throwable = throwable;
+    }
+  }
+
+  static final class ResponseHeadersStart extends CallEvent {
+    ResponseHeadersStart(Call call) {
+      super(call);
+    }
+  }
+
+  static final class ResponseHeadersEnd extends CallEvent {
+    final Throwable throwable;
+
+    ResponseHeadersEnd(Call call, Throwable throwable) {
+      super(call, throwable);
+      this.throwable = throwable;
+    }
+  }
+
+  static final class ResponseBodyStart extends CallEvent {
+    ResponseBodyStart(Call call) {
+      super(call);
+    }
+  }
+
+  static final class ResponseBodyEnd extends CallEvent {
+    final Throwable throwable;
+
+    ResponseBodyEnd(Call call, Throwable throwable) {
+      super(call, throwable);
+      this.throwable = throwable;
+    }
+  }
+
   static final class RecordingEventListener extends EventListener {
-    final Deque<Object> eventSequence = new ArrayDeque<>();
+    final Deque<CallEvent> eventSequence = new ArrayDeque<>();
 
     /**
      * Removes recorded events up to (and including) an event is found whose class equals
@@ -719,35 +808,83 @@ public final class EventListenerTest {
       eventSequence.clear();
     }
 
+    private void logEvent(CallEvent e) {
+      eventSequence.offer(e);
+    }
+
     @Override public void dnsStart(Call call, String domainName) {
-      eventSequence.offer(new DnsStart(call, domainName));
+      logEvent(new DnsStart(call, domainName));
     }
 
     @Override public void dnsEnd(Call call, String domainName, List<InetAddress> inetAddressList,
         Throwable throwable) {
-      eventSequence.offer(new DnsEnd(call, domainName, inetAddressList, throwable));
+      logEvent(new DnsEnd(call, domainName, inetAddressList, throwable));
     }
 
     @Override public void connectStart(Call call, InetSocketAddress inetSocketAddress,
         Proxy proxy) {
-      eventSequence.offer(new ConnectStart(call, inetSocketAddress, proxy));
+      logEvent(new ConnectStart(call, inetSocketAddress, proxy));
     }
 
     @Override public void secureConnectStart(Call call) {
-      eventSequence.offer(new SecureConnectStart(call));
+      logEvent(new SecureConnectStart(call));
     }
 
     @Override public void secureConnectEnd(Call call, Handshake handshake, Throwable throwable) {
-      eventSequence.offer(new SecureConnectEnd(call, handshake, throwable));
+      logEvent(new SecureConnectEnd(call, handshake, throwable));
     }
 
     @Override public void connectEnd(Call call, InetSocketAddress inetSocketAddress,
         Protocol protocol, Throwable throwable) {
-      eventSequence.offer(new ConnectEnd(call, inetSocketAddress, protocol, throwable));
+      logEvent(new ConnectEnd(call, inetSocketAddress, protocol, throwable));
     }
 
-    @Override public void connectionFound(Call call, Connection connection) {
-      eventSequence.offer(new ConnectionFound(call, connection));
+    @Override public void connectionAcquired(Call call, Connection connection) {
+      logEvent(new ConnectionAcquired(call, connection));
+    }
+
+    @Override public void connectionReleased(Call call, Connection connection) {
+      logEvent(new ConnectionAcquired(call, connection));
+    }
+
+    @Override public void fetchStart(Call call) {
+      logEvent(new FetchStart(call));
+    }
+
+    @Override public void requestHeadersStart(Call call) {
+      logEvent(new RequestHeadersStart(call));
+    }
+
+    @Override public void requestHeadersEnd(Call call, Throwable throwable) {
+      logEvent(new RequestHeadersEnd(call, throwable));
+    }
+
+    @Override public void requestBodyStart(Call call) {
+      logEvent(new RequestBodyStart(call));
+    }
+
+    @Override public void requestBodyEnd(Call call, Throwable throwable) {
+      logEvent(new RequestBodyEnd(call, throwable));
+    }
+
+    @Override public void responseHeadersStart(Call call) {
+      logEvent(new ResponseHeadersStart(call));
+    }
+
+    @Override public void responseHeadersEnd(Call call, Throwable throwable) {
+      logEvent(new ResponseHeadersEnd(call, throwable));
+    }
+
+    @Override public void responseBodyStart(Call call) {
+      logEvent(new ResponseBodyStart(call));
+    }
+
+    @Override public void responseBodyEnd(Call call, Throwable throwable) {
+      logEvent(new ResponseBodyEnd(call, throwable));
+    }
+
+    @Override public void fetchEnd(Call call, Throwable throwable) {
+      logEvent(new FetchEnd(call, throwable));
     }
   }
 }
