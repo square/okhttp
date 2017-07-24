@@ -15,9 +15,6 @@
  */
 package okhttp3;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 import okhttp3.internal.NamedRunnable;
 import okhttp3.internal.cache.CacheInterceptor;
 import okhttp3.internal.connection.ConnectInterceptor;
@@ -27,6 +24,11 @@ import okhttp3.internal.http.CallServerInterceptor;
 import okhttp3.internal.http.RealInterceptorChain;
 import okhttp3.internal.http.RetryAndFollowUpInterceptor;
 import okhttp3.internal.platform.Platform;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static okhttp3.internal.platform.Platform.INFO;
 
@@ -44,8 +46,7 @@ final class RealCall implements Call {
   final Request originalRequest;
   final boolean forWebSocket;
 
-  // Guarded by this.
-  private boolean executed;
+  private AtomicBoolean executed = new AtomicBoolean(false);
 
   private RealCall(OkHttpClient client, Request originalRequest, boolean forWebSocket) {
     this.client = client;
@@ -66,10 +67,8 @@ final class RealCall implements Call {
   }
 
   @Override public Response execute() throws IOException {
-    synchronized (this) {
-      if (executed) throw new IllegalStateException("Already Executed");
-      executed = true;
-    }
+    ensureExecutedOnce();
+
     captureCallStackTrace();
     try {
       client.dispatcher().executed(this);
@@ -87,20 +86,22 @@ final class RealCall implements Call {
   }
 
   @Override public void enqueue(Callback responseCallback) {
-    synchronized (this) {
-      if (executed) throw new IllegalStateException("Already Executed");
-      executed = true;
-    }
-    captureCallStackTrace();
-    client.dispatcher().enqueue(new AsyncCall(responseCallback));
+      ensureExecutedOnce();
+      captureCallStackTrace();
+      client.dispatcher().enqueue(new AsyncCall(responseCallback));
+  }
+
+  private void ensureExecutedOnce() {
+      boolean alreadyExecuted = executed.getAndSet(true);
+      if (alreadyExecuted) throw new IllegalStateException("Already Executed");
   }
 
   @Override public void cancel() {
     retryAndFollowUpInterceptor.cancel();
   }
 
-  @Override public synchronized boolean isExecuted() {
-    return executed;
+  @Override public boolean isExecuted() {
+    return executed.get();
   }
 
   @Override public boolean isCanceled() {
