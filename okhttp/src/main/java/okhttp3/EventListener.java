@@ -229,8 +229,8 @@ public abstract class EventListener {
    * <p>The connection is implicit, and will generally relate to the last
    * {@link #connectionAcquired(Call, Connection)} event.
    *
-   * <p>This can be invoked more than 1 time for a single {@link Call}. For example, if the response
-   * to the {@link Call#request()} is a redirect to a different address.
+   * <p>This will usually be invoked only 1 time for a single {@link Call},
+   * exceptions are a limited set of cases including failure recovery.
    */
   public void responseBodyStart(Call call) {
   }
