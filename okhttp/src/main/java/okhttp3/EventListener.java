@@ -163,7 +163,7 @@ public abstract class EventListener {
   }
 
   /**
-   * Invoked immediately after sending a request body.
+   * Invoked immediately after sending request headers.
    *
    * <p>This method is always invoked after {@link #requestHeadersStart(Call)}.
    *
@@ -236,7 +236,7 @@ public abstract class EventListener {
   }
 
   /**
-   * Invoked immediately after receiving a request body and completing reading it.
+   * Invoked immediately after receiving a response body and completing reading it.
    *
    * <p>Will only be invoked for requests having a response body e.g. won't be invoked for a
    * websocket upgrade.
