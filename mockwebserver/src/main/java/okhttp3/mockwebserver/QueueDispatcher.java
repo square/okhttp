@@ -15,10 +15,12 @@
  */
 package okhttp3.mockwebserver;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.net.HttpURLConnection;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.logging.Logger;
 
 /**
  * Default dispatcher that processes a script of responses. Populate the script by calling {@link
@@ -32,7 +34,7 @@ public class QueueDispatcher extends Dispatcher {
   private static final MockResponse DEAD_LETTER = new MockResponse()
       .setStatus("HTTP/1.1 " + 503 + " shutting down");
 
-  private static final Logger logger = Logger.getLogger(QueueDispatcher.class.getName());
+  private static final Logger logger = LoggerFactory.getLogger(QueueDispatcher.class.getName());
   protected final BlockingQueue<MockResponse> responseQueue = new LinkedBlockingQueue<>();
   private MockResponse failFastResponse;
 
@@ -40,7 +42,7 @@ public class QueueDispatcher extends Dispatcher {
     // To permit interactive/browser testing, ignore requests for favicons.
     final String requestLine = request.getRequestLine();
     if (requestLine != null && requestLine.equals("GET /favicon.ico HTTP/1.1")) {
-      logger.info("served " + requestLine);
+      logger.info("served {}", requestLine);
       return new MockResponse().setResponseCode(HttpURLConnection.HTTP_NOT_FOUND);
     }
 

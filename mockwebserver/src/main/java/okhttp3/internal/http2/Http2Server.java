@@ -24,8 +24,6 @@ import java.net.Socket;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
 import okhttp3.Protocol;
@@ -35,12 +33,14 @@ import okhttp3.internal.tls.SslClient;
 import okio.BufferedSink;
 import okio.Okio;
 import okio.Source;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static okhttp3.internal.platform.Platform.INFO;
 
 /** A basic HTTP/2 server that serves the contents of a local directory. */
 public final class Http2Server extends Http2Connection.Listener {
-  static final Logger logger = Logger.getLogger(Http2Server.class.getName());
+  static final Logger logger = LoggerFactory.getLogger(Http2Server.class.getName());
 
   private final File baseDirectory;
   private final SSLSocketFactory sslSocketFactory;
@@ -71,10 +71,10 @@ public final class Http2Server extends Http2Connection.Listener {
             .build();
         connection.start();
       } catch (IOException e) {
-        logger.log(Level.INFO, "Http2Server connection failure: " + e);
+        logger.info("Http2Server connection failure: {}", e);
         Util.closeQuietly(socket);
       } catch (Exception e) {
-        logger.log(Level.WARNING, "Http2Server unexpected failure", e);
+        logger.warn("Http2Server unexpected failure", e);
         Util.closeQuietly(socket);
       }
     }

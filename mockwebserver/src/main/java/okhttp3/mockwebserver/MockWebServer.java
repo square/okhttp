@@ -44,8 +44,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.net.ServerSocketFactory;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocket;
@@ -77,6 +75,8 @@ import okio.Okio;
 import okio.Sink;
 import okio.Timeout;
 import org.junit.rules.ExternalResource;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static okhttp3.internal.Util.closeQuietly;
 import static okhttp3.mockwebserver.SocketPolicy.DISCONNECT_AFTER_REQUEST;
@@ -116,7 +116,7 @@ public final class MockWebServer extends ExternalResource implements Closeable {
     }
   };
 
-  private static final Logger logger = Logger.getLogger(MockWebServer.class.getName());
+  private static final Logger logger = LoggerFactory.getLogger(MockWebServer.class.getName());
 
   private final BlockingQueue<RecordedRequest> requestQueue = new LinkedBlockingQueue<>();
 
@@ -320,10 +320,10 @@ public final class MockWebServer extends ExternalResource implements Closeable {
     executor.execute(new NamedRunnable("MockWebServer %s", port) {
       @Override protected void execute() {
         try {
-          logger.info(MockWebServer.this + " starting to accept connections");
+          logger.info("{} starting to accept connections", MockWebServer.this);
           acceptConnections();
         } catch (Throwable e) {
-          logger.log(Level.WARNING, MockWebServer.this + " failed unexpectedly", e);
+          logger.warn("{} failed unexpectedly", MockWebServer.this ,e);
         }
 
         // Release all sockets and all threads, even if any close fails.
@@ -346,7 +346,7 @@ public final class MockWebServer extends ExternalResource implements Closeable {
           try {
             socket = serverSocket.accept();
           } catch (SocketException e) {
-            logger.info(MockWebServer.this + " done accepting connections: " + e.getMessage());
+            logger.info("{} done accepting connections: {}", MockWebServer.this, e.getMessage());
             return;
           }
           SocketPolicy socketPolicy = dispatcher.peek().getSocketPolicy();
@@ -383,7 +383,7 @@ public final class MockWebServer extends ExternalResource implements Closeable {
     try {
       shutdown();
     } catch (IOException e) {
-      logger.log(Level.WARNING, "MockWebServer shutdown failed", e);
+      logger.warn("MockWebServer shutdown failed", e);
     }
   }
 
@@ -395,11 +395,9 @@ public final class MockWebServer extends ExternalResource implements Closeable {
         try {
           processConnection();
         } catch (IOException e) {
-          logger.info(
-              MockWebServer.this + " connection from " + raw.getInetAddress() + " failed: " + e);
+          logger.info("{} connection from {} failed: {}", MockWebServer.this, raw.getInetAddress(), e);
         } catch (Exception e) {
-          logger.log(Level.SEVERE,
-              MockWebServer.this + " connection from " + raw.getInetAddress() + " crashed", e);
+          logger.error("{} connection from {} crashed", MockWebServer.this, raw.getInetAddress(), e);
         }
       }
 
@@ -458,10 +456,11 @@ public final class MockWebServer extends ExternalResource implements Closeable {
         }
 
         if (sequenceNumber == 0) {
-          logger.warning(MockWebServer.this
-              + " connection from "
-              + raw.getInetAddress()
-              + " didn't make a request");
+          logger.warn(
+                  "{} connection from {} didn't make a request",
+                  MockWebServer.this,
+                  raw.getInetAddress()
+          );
         }
 
         source.close();
@@ -520,10 +519,7 @@ public final class MockWebServer extends ExternalResource implements Closeable {
           writeHttpResponse(socket, sink, response);
         }
 
-        if (logger.isLoggable(Level.INFO)) {
-          logger.info(MockWebServer.this + " received request: " + request
-              + " and responded: " + response);
-        }
+        logger.info("{} received request: {} and responded: {}", MockWebServer.this, request, response);
 
         // See warnings associated with these socket policies in SocketPolicy.
         if (response.getSocketPolicy() == DISCONNECT_AT_END) {
@@ -868,10 +864,13 @@ public final class MockWebServer extends ExternalResource implements Closeable {
         return;
       }
       writeResponse(stream, response);
-      if (logger.isLoggable(Level.INFO)) {
-        logger.info(MockWebServer.this + " received request: " + request
-            + " and responded: " + response + " protocol is " + protocol.toString());
-      }
+      logger.info(
+              "{} received request: {} and responded: {} protocol is {}",
+              MockWebServer.this,
+              request,
+              response,
+              protocol.toString()
+      );
 
       if (response.getSocketPolicy() == DISCONNECT_AT_END) {
         Http2Connection connection = stream.getConnection();
