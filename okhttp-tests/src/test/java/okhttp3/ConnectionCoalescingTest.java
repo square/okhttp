@@ -17,9 +17,12 @@ package okhttp3;
 
 import java.io.IOException;
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
+import java.net.Proxy;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLSession;
@@ -245,6 +248,17 @@ public final class ConnectionCoalescingTest {
     server.enqueue(new MockResponse().setResponseCode(200));
     server.enqueue(new MockResponse().setResponseCode(200));
 
+    final AtomicInteger connectCount = new AtomicInteger();
+    EventListener listener = new EventListener() {
+      @Override public void connectStart(Call call, InetSocketAddress inetSocketAddress,
+          Proxy proxy) {
+        connectCount.getAndIncrement();
+      }
+    };
+    client = client.newBuilder()
+        .eventListener(listener)
+        .build();
+
     assert200Http2Response(execute(url), server.getHostName());
 
     HttpUrl sanUrl = url.newBuilder().host("san.com").build();
@@ -254,6 +268,7 @@ public final class ConnectionCoalescingTest {
     assert200Http2Response(execute(sanUrl), "san.com");
 
     assertEquals(1, client.connectionPool().connectionCount());
+    assertEquals(1, connectCount.get());
   }
 
   /** Check that wildcard SANs are supported. */
