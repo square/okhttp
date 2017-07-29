@@ -752,7 +752,7 @@ public final class EventListenerTest {
     }
 
     @Override public void connectEnd(Call call, InetSocketAddress inetSocketAddress,
-        Protocol protocol, Throwable throwable) {
+        Proxy proxy, Protocol protocol, Throwable throwable) {
       eventSequence.offer(new ConnectEnd(call, inetSocketAddress, protocol, throwable));
     }
 

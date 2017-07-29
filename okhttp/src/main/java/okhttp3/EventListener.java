@@ -120,14 +120,14 @@ public abstract class EventListener {
    * {@link #secureConnectEnd(Call, Handshake, Throwable)}, otherwise it will invoked after
    * {@link #connectStart(Call, InetSocketAddress, Proxy)}.
    *
-   * <p>{@code protocol} will be non-null and {@code throwable} will be null when the connection is
-   * successfully established.
+   * <p>{@code protocol} and {@code proxy} will be non-null and {@code throwable} will be null when
+   * the connection is successfully established.
    *
-   * <p>{@code protocol} will be null and {@code throwable} will be non-null in the case of a failed
-   * connection attempt.
+   * <p>{@code protocol} and {@code proxy} will be null and {@code throwable} will be non-null in
+   * the case of a failed connection attempt.
    */
   public void connectEnd(Call call, InetSocketAddress inetSocketAddress,
-      @Nullable Protocol protocol, @Nullable Throwable throwable) {
+      Proxy proxy, @Nullable Protocol protocol, @Nullable Throwable throwable) {
   }
 
   /**
