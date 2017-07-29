@@ -78,8 +78,8 @@ public final class StreamAllocation {
   private RouteSelector.Selection routeSelection;
   private Route route;
   private final ConnectionPool connectionPool;
-  private final Call call;
-  private final EventListener eventListener;
+  public final Call call;
+  public final EventListener eventListener;
   private final Object callStackTrace;
 
   // State guarded by connectionPool.

@@ -36,6 +36,7 @@ import okhttp3.internal.http.StatusLine;
 import okio.Buffer;
 import okio.BufferedSink;
 import okio.BufferedSource;
+import okio.ForwardingSource;
 import okio.ForwardingTimeout;
 import okio.Okio;
 import okio.Sink;
@@ -123,14 +124,41 @@ public final class Http1Codec implements HttpCodec {
    * header field receives the proper value.
    */
   @Override public void writeRequestHeaders(Request request) throws IOException {
+
     String requestLine = RequestLine.get(
         request, streamAllocation.connection().route().proxy().type());
     writeRequest(request.headers(), requestLine);
   }
 
   @Override public ResponseBody openResponseBody(Response response) throws IOException {
-    Source source = getTransferStream(response);
+    streamAllocation.eventListener.responseBodyStart(streamAllocation.call);
+    Source source = new EventListenerSource(getTransferStream(response));
     return new RealResponseBody(response.headers(), Okio.buffer(source));
+  }
+
+  class EventListenerSource extends ForwardingSource {
+    private boolean completed = false;
+
+    EventListenerSource(Source delegate) {
+      super(delegate);
+    }
+
+    @Override public long read(Buffer sink, long byteCount) throws IOException {
+      try {
+        return super.read(sink, byteCount);
+      } catch (IOException ioe) {
+        completed = true;
+        streamAllocation.eventListener.responseBodyEnd(streamAllocation.call, ioe);
+        throw ioe;
+      }
+    }
+
+    @Override public void close() throws IOException {
+      if (!completed) {
+        streamAllocation.eventListener.responseBodyEnd(streamAllocation.call, null);
+      }
+      super.close();
+    }
   }
 
   private Source getTransferStream(Response response) throws IOException {

@@ -43,10 +43,10 @@ final class RecordingEventListener extends EventListener {
     return (T) event;
   }
 
-  List<Class<?>> recordedEventTypes() {
-    List<Class<?>> eventTypes = new ArrayList<>();
-    for (Object event : eventSequence) {
-      eventTypes.add(event.getClass());
+  List<String> recordedEventTypes() {
+    List<String> eventTypes = new ArrayList<>();
+    for (CallEvent event : eventSequence) {
+      eventTypes.add(event.getName());
     }
     return eventTypes;
   }

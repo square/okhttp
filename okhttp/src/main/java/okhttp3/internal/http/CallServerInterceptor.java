@@ -119,21 +119,13 @@ public final class CallServerInterceptor implements Interceptor {
           .body(Util.EMPTY_RESPONSE)
           .build();
     } else {
-      realChain.eventListener().responseBodyStart(realChain.call());
-      try {
-        response = response.newBuilder()
-            .body(httpCodec.openResponseBody(response))
-            .build();
+      response = response.newBuilder()
+          .body(httpCodec.openResponseBody(response))
+          .build();
 
-        if ((code == 204 || code == 205) && response.body().contentLength() > 0) {
-          throw new ProtocolException(
-              "HTTP " + code + " had non-zero Content-Length: " + response.body().contentLength());
-        }
-
-        realChain.eventListener().responseBodyEnd(realChain.call(), null);
-      } catch (IOException ioe) {
-        realChain.eventListener().responseBodyEnd(realChain.call(), ioe);
-        throw ioe;
+      if ((code == 204 || code == 205) && response.body().contentLength() > 0) {
+        throw new ProtocolException(
+            "HTTP " + code + " had non-zero Content-Length: " + response.body().contentLength());
       }
     }
 
