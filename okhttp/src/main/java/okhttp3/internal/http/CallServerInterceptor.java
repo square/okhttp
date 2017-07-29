@@ -107,11 +107,6 @@ public final class CallServerInterceptor implements Interceptor {
         .receivedResponseAtMillis(System.currentTimeMillis())
         .build();
 
-    if ("close".equalsIgnoreCase(response.request().header("Connection"))
-        || "close".equalsIgnoreCase(response.header("Connection"))) {
-      streamAllocation.noNewStreams();
-    }
-
     int code = response.code();
     if (forWebSocket && code == 101) {
       // Connection is upgrading, but we need to ensure interceptors see a non-null response body.
@@ -122,6 +117,11 @@ public final class CallServerInterceptor implements Interceptor {
       response = response.newBuilder()
           .body(httpCodec.openResponseBody(response))
           .build();
+
+      if ("close".equalsIgnoreCase(response.request().header("Connection"))
+          || "close".equalsIgnoreCase(response.header("Connection"))) {
+        streamAllocation.noNewStreams();
+      }
 
       if ((code == 204 || code == 205) && response.body().contentLength() > 0) {
         throw new ProtocolException(

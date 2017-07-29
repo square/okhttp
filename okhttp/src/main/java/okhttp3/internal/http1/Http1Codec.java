@@ -124,7 +124,6 @@ public final class Http1Codec implements HttpCodec {
    * header field receives the proper value.
    */
   @Override public void writeRequestHeaders(Request request) throws IOException {
-
     String requestLine = RequestLine.get(
         request, streamAllocation.connection().route().proxy().type());
     writeRequest(request.headers(), requestLine);
