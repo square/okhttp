@@ -89,8 +89,8 @@ final class RecordingEventListener extends EventListener {
   }
 
   @Override public void connectEnd(Call call, InetSocketAddress inetSocketAddress,
-      Protocol protocol, @Nullable Proxy proxy, Throwable throwable) {
-    logEvent(new ConnectEnd(call, inetSocketAddress, protocol, proxy, throwable));
+      @Nullable Proxy proxy, Protocol protocol, Throwable throwable) {
+    logEvent(new ConnectEnd(call, inetSocketAddress, proxy, protocol, throwable));
   }
 
   @Override public void connectionAcquired(Call call, Connection connection) {
@@ -220,13 +220,13 @@ final class RecordingEventListener extends EventListener {
     final Throwable throwable;
     final Proxy proxy;
 
-    ConnectEnd(Call call, InetSocketAddress inetSocketAddress, Protocol protocol,
-        Proxy proxy, Throwable throwable) {
-      super(call, inetSocketAddress, protocol, throwable, proxy);
+    ConnectEnd(Call call, InetSocketAddress inetSocketAddress, Proxy proxy, Protocol protocol,
+        Throwable throwable) {
+      super(call, inetSocketAddress, proxy, protocol, throwable);
       this.inetSocketAddress = inetSocketAddress;
+      this.proxy = proxy;
       this.protocol = protocol;
       this.throwable = throwable;
-      this.proxy = proxy;
     }
 
     @Nullable @Override public CallEvent closes() {

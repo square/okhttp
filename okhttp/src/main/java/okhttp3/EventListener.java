@@ -119,7 +119,8 @@ public abstract class EventListener {
    * connection attempt.
    */
   public void connectEnd(Call call, InetSocketAddress inetSocketAddress,
-      @Nullable Protocol protocol, @Nullable Proxy proxy, @Nullable Throwable throwable) {
+      @Nullable Proxy proxy, @Nullable Protocol protocol,
+      @Nullable Throwable throwable) {
   }
 
   /**

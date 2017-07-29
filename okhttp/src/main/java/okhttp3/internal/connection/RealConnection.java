@@ -158,7 +158,7 @@ public final class RealConnection extends Http2Connection.Listener implements Co
           connectSocket(connectTimeout, readTimeout, call, eventListener);
         }
         establishProtocol(connectionSpecSelector, call, eventListener);
-        eventListener.connectEnd(call, route.socketAddress(), protocol, route.proxy(), null);
+        eventListener.connectEnd(call, route.socketAddress(), route.proxy(), protocol, null);
         break;
       } catch (IOException e) {
         closeQuietly(socket);
@@ -171,7 +171,7 @@ public final class RealConnection extends Http2Connection.Listener implements Co
         protocol = null;
         http2Connection = null;
 
-        eventListener.connectEnd(call, route.socketAddress(), null, route.proxy(), e);
+        eventListener.connectEnd(call, route.socketAddress(), route.proxy(), null, e);
 
         if (routeException == null) {
           routeException = new RouteException(e);
@@ -218,7 +218,7 @@ public final class RealConnection extends Http2Connection.Listener implements Co
       rawSocket = null;
       sink = null;
       source = null;
-      eventListener.connectEnd(call, route.socketAddress(), null, route.proxy(), null);
+      eventListener.connectEnd(call, route.socketAddress(), route.proxy(), null, null);
     }
   }
 
