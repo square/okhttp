@@ -287,6 +287,9 @@ public final class StreamAllocation {
       this.codec = null;
     }
     if (released) {
+      if (connection != null) {
+        eventListener.connectionReleased(call, connection);
+      }
       this.released = true;
     }
     Socket socket = null;
