@@ -551,9 +551,9 @@ public final class EventListenerTest {
     assertEquals(200, response.code());
     response.body().close();
 
-    ConnectionAcquired connectionFound = listener.removeUpToEvent(ConnectionAcquired.class);
-    assertSame(call, connectionFound.call);
-    assertNotNull(connectionFound.connection);
+    ConnectionAcquired connectionAcquired = listener.removeUpToEvent(ConnectionAcquired.class);
+    assertSame(call, connectionAcquired.call);
+    assertNotNull(connectionAcquired.connection);
   }
 
   @Test public void noConnectionFoundOnFollowUp() throws IOException {
@@ -587,7 +587,7 @@ public final class EventListenerTest {
     assertEquals(200, response1.code());
     response1.body().close();
 
-    ConnectionAcquired connectionFound1 = listener.removeUpToEvent(ConnectionAcquired.class);
+    ConnectionAcquired connectionAcquired1 = listener.removeUpToEvent(ConnectionAcquired.class);
     listener.clearAllEvents();
 
     Call call2 = client.newCall(new Request.Builder()
@@ -597,8 +597,8 @@ public final class EventListenerTest {
     assertEquals(200, response2.code());
     response2.body().close();
 
-    ConnectionAcquired connectionFound2 = listener.removeUpToEvent(ConnectionAcquired.class);
-    assertSame(connectionFound1.connection, connectionFound2.connection);
+    ConnectionAcquired connectionAcquired2 = listener.removeUpToEvent(ConnectionAcquired.class);
+    assertSame(connectionAcquired1.connection, connectionAcquired2.connection);
   }
 
   @Test public void multipleConnectionsFoundForSingleCall() throws IOException {

@@ -23,10 +23,8 @@ import java.net.CookieManager;
 import java.net.HttpCookie;
 import java.net.HttpURLConnection;
 import java.net.InetAddress;
-import java.net.InetSocketAddress;
 import java.net.ProtocolException;
 import java.net.Proxy;
-import java.net.ServerSocket;
 import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
 import java.net.UnknownServiceException;
@@ -50,7 +48,6 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.logging.SimpleFormatter;
-import javax.net.ServerSocketFactory;
 import javax.net.ssl.SSLHandshakeException;
 import javax.net.ssl.SSLPeerUnverifiedException;
 import javax.net.ssl.SSLProtocolException;
@@ -104,7 +101,7 @@ public final class CallTest {
   private RecordingCallback callback = new RecordingCallback();
   private TestLogHandler logHandler = new TestLogHandler();
   private Cache cache = new Cache(new File("/cache/"), Integer.MAX_VALUE, fileSystem);
-  private ServerSocket nullServer;
+  private NullServer nullServer = new NullServer();
   private Logger logger = Logger.getLogger(OkHttpClient.class.getName());
 
   @Before public void setUp() throws Exception {
@@ -113,7 +110,7 @@ public final class CallTest {
 
   @After public void tearDown() throws Exception {
     cache.delete();
-    Util.closeQuietly(nullServer);
+    nullServer.shutdown();
     logger.removeHandler(logHandler);
   }
 
@@ -832,10 +829,8 @@ public final class CallTest {
    * special address that never connects. The automatic retry will succeed.
    */
   @Test public void connectTimeoutsAttemptsAlternateRoute() throws Exception {
-    InetSocketAddress unreachableAddress = new InetSocketAddress("10.255.255.1", 8080);
-
     RecordingProxySelector proxySelector = new RecordingProxySelector();
-    proxySelector.proxies.add(new Proxy(Proxy.Type.HTTP, unreachableAddress));
+    proxySelector.proxies.add(new Proxy(Proxy.Type.HTTP, TestUtil.UNREACHABLE_ADDRESS));
     proxySelector.proxies.add(server.toProxyAddress());
 
     server.enqueue(new MockResponse()
@@ -858,10 +853,10 @@ public final class CallTest {
    * never responds. The manual retry will succeed.
    */
   @Test public void readTimeoutFails() throws Exception {
-    InetSocketAddress nullServerAddress = startNullServer();
+    nullServer.start();
 
     RecordingProxySelector proxySelector = new RecordingProxySelector();
-    proxySelector.proxies.add(new Proxy(Proxy.Type.HTTP, nullServerAddress));
+    proxySelector.proxies.add(new Proxy(Proxy.Type.HTTP, nullServer.address()));
     proxySelector.proxies.add(server.toProxyAddress());
 
     server.enqueue(new MockResponse()
@@ -1851,16 +1846,12 @@ public final class CallTest {
 
   /** Cancel a call that's waiting for connect to complete. */
   private void cancelDuringConnect(String scheme) throws Exception {
-    InetSocketAddress socketAddress = startNullServer();
-
-    HttpUrl url = new HttpUrl.Builder()
-        .scheme(scheme)
-        .host(socketAddress.getHostName())
-        .port(socketAddress.getPort())
-        .build();
+    nullServer.start();
 
     long cancelDelayMillis = 300L;
-    Call call = client.newCall(new Request.Builder().url(url).build());
+    Call call = client.newCall(new Request.Builder()
+        .url(nullServer.url(scheme))
+        .build());
     cancelLater(call, cancelDelayMillis);
 
     long startNanos = System.nanoTime();
@@ -1871,13 +1862,6 @@ public final class CallTest {
     }
     long elapsedNanos = System.nanoTime() - startNanos;
     assertEquals(cancelDelayMillis, TimeUnit.NANOSECONDS.toMillis(elapsedNanos), 100f);
-  }
-
-  private InetSocketAddress startNullServer() throws IOException {
-    InetSocketAddress address = new InetSocketAddress(InetAddress.getByName("localhost"), 0);
-    nullServer = ServerSocketFactory.getDefault().createServerSocket();
-    nullServer.bind(address);
-    return new InetSocketAddress(address.getAddress(), nullServer.getLocalPort());
   }
 
   @Test public void cancelImmediatelyAfterEnqueue() throws Exception {
