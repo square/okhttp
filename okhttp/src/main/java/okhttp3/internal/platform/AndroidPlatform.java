@@ -22,6 +22,8 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.InetSocketAddress;
 import java.net.Socket;
+import java.security.Provider;
+import java.security.Security;
 import java.security.cert.Certificate;
 import java.security.cert.TrustAnchor;
 import java.security.cert.X509Certificate;
@@ -39,6 +41,11 @@ import okhttp3.internal.tls.TrustRootIndex;
 /** Android 2.3 or better. */
 class AndroidPlatform extends Platform {
   private static final int MAX_LOG_LENGTH = 4000;
+
+  private static final OptionalMethod<Socket> getAlpnMethod
+      = new OptionalMethod<>(byte[].class, "getAlpnSelectedProtocol");
+  private static final OptionalMethod<Socket> setAlpnMethod
+      = new OptionalMethod<>(byte[].class, "getAlpnSelectedProtocol");
 
   private final Class<?> sslParametersClass;
   private final OptionalMethod<Socket> setUseSessionTickets;
@@ -216,12 +223,19 @@ class AndroidPlatform extends Platform {
       OptionalMethod<Socket> getAlpnSelectedProtocol = null;
       OptionalMethod<Socket> setAlpnProtocols = null;
 
-      // Attempt to find Android 5.0+ APIs.
-      try {
-        Class.forName("android.net.Network"); // Arbitrary class added in Android 5.0.
-        getAlpnSelectedProtocol = new OptionalMethod<>(byte[].class, "getAlpnSelectedProtocol");
-        setAlpnProtocols = new OptionalMethod<>(null, "setAlpnProtocols", byte[].class);
-      } catch (ClassNotFoundException ignored) {
+      // Attempt to find Google Play Services Dynamic Security Provider.
+      Provider provider = Security.getProvider("GMSCore_OpenSSL");
+      if (provider != null) {
+        getAlpnSelectedProtocol = getAlpnMethod;
+        setAlpnProtocols = setAlpnMethod;
+      } else {
+        // Fallback to Android 5.0+ APIs if present.
+        try {
+          Class.forName("android.net.Network"); // Arbitrary class added in Android 5.0.
+          getAlpnSelectedProtocol = getAlpnMethod;
+          setAlpnProtocols = setAlpnMethod;
+        } catch (ClassNotFoundException ignored) {
+        }
       }
 
       return new AndroidPlatform(sslParametersClass, setUseSessionTickets, setHostname,
