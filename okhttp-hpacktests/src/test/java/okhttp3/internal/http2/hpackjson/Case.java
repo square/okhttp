@@ -34,10 +34,9 @@ public class Case implements Cloneable {
 
   public List<Header> getHeaders() {
     List<Header> result = new ArrayList<>();
-    for (Map<String, String> inputHeader : headers) {
-      Map.Entry<String, String> entry = inputHeader.entrySet().iterator().next();
+    headers.stream().map(entry -> inputHeader.entrySet().iterator().next()).forEach(entry -> {
       result.add(new Header(entry.getKey(), entry.getValue()));
-    }
+    });
     return result;
   }
 
@@ -59,9 +58,9 @@ public class Case implements Cloneable {
     result.seqno = seqno;
     result.wire = wire;
     result.headers = new ArrayList<>();
-    for (Map<String, String> header : headers) {
+    headers.forEach(header -> {
       result.headers.add(new LinkedHashMap<String, String>(header));
-    }
+    });
     return result;
   }
 }

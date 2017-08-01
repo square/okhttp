@@ -719,9 +719,9 @@ public final class EventListenerTest {
 
     List<Class<?>> recordedEventTypes() {
       List<Class<?>> eventTypes = new ArrayList<>();
-      for (Object event : eventSequence) {
+      eventSequence.forEach(event -> {
         eventTypes.add(event.getClass());
-      }
+      });
       return eventTypes;
     }
 

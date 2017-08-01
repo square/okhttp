@@ -286,9 +286,9 @@ public final class DispatcherTest {
 
     public void assertJobs(String... expectedUrls) {
       List<String> actualUrls = new ArrayList<>();
-      for (AsyncCall call : calls) {
+      calls.forEach(call -> {
         actualUrls.add(call.request().url().toString());
-      }
+      });
       assertEquals(Arrays.asList(expectedUrls), actualUrls);
     }
 

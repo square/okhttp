@@ -39,9 +39,9 @@ public final class RecordingCookieJar implements CookieJar {
   public void assertResponseCookies(String... cookies) {
     List<Cookie> actualCookies = takeResponseCookies();
     List<String> actualCookieStrings = new ArrayList<>();
-    for (Cookie cookie : actualCookies) {
+    actualCookies.forEach(cookie -> {
       actualCookieStrings.add(cookie.toString());
-    }
+    });
     assertEquals(Arrays.asList(cookies), actualCookieStrings);
   }
 

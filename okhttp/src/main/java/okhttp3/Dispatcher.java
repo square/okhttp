@@ -146,9 +146,9 @@ public final class Dispatcher {
       call.get().cancel();
     }
 
-    for (RealCall call : runningSyncCalls) {
+    runningSyncCalls.forEach(call -> {
       call.cancel();
-    }
+    });
   }
 
   private void promoteCalls() {
@@ -210,19 +210,18 @@ public final class Dispatcher {
   /** Returns a snapshot of the calls currently awaiting execution. */
   public synchronized List<Call> queuedCalls() {
     List<Call> result = new ArrayList<>();
-    for (AsyncCall asyncCall : readyAsyncCalls) {
+    readyAsyncCalls.forEach(asyncCall -> {
       result.add(asyncCall.get());
-    }
+    });
     return Collections.unmodifiableList(result);
   }
 
-  /** Returns a snapshot of the calls currently being executed. */
   public synchronized List<Call> runningCalls() {
     List<Call> result = new ArrayList<>();
     result.addAll(runningSyncCalls);
-    for (AsyncCall asyncCall : runningAsyncCalls) {
+    runningAsyncCalls.forEach(asyncCall -> {
       result.add(asyncCall.get());
-    }
+    });
     return Collections.unmodifiableList(result);
   }
 

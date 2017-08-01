@@ -50,9 +50,9 @@ public class Story implements Cloneable {
     Story story = new Story();
     story.fileName = this.fileName;
     story.cases = new ArrayList<>();
-    for (Case caze : cases) {
+    cases.forEach(caze -> {
       story.cases.add(caze.clone());
-    }
+    });
     story.draft = draft;
     story.description = description;
     return story;

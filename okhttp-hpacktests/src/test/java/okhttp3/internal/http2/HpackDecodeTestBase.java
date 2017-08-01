@@ -43,9 +43,9 @@ public class HpackDecodeTestBase {
       if (stories.isEmpty()) {
         fail("No stories for: " + interopTestName);
       }
-      for (Story story : stories) {
+      stories.forEach(story -> {
         result.add(new Story[] {story});
-      }
+      });
     }
     return result;
   }
