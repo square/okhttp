@@ -42,11 +42,6 @@ import okhttp3.internal.tls.TrustRootIndex;
 class AndroidPlatform extends Platform {
   private static final int MAX_LOG_LENGTH = 4000;
 
-  private static final OptionalMethod<Socket> getAlpnMethod
-      = new OptionalMethod<>(byte[].class, "getAlpnSelectedProtocol");
-  private static final OptionalMethod<Socket> setAlpnMethod
-      = new OptionalMethod<>(byte[].class, "getAlpnSelectedProtocol");
-
   private final Class<?> sslParametersClass;
   private final OptionalMethod<Socket> setUseSessionTickets;
   private final OptionalMethod<Socket> setHostname;
@@ -222,6 +217,11 @@ class AndroidPlatform extends Platform {
           null, "setHostname", String.class);
       OptionalMethod<Socket> getAlpnSelectedProtocol = null;
       OptionalMethod<Socket> setAlpnProtocols = null;
+
+      final OptionalMethod<Socket> getAlpnMethod
+          = new OptionalMethod<>(byte[].class, "getAlpnSelectedProtocol");
+      final OptionalMethod<Socket> setAlpnMethod
+          = new OptionalMethod<>(null, "setAlpnProtocols", byte[].class);
 
       // Attempt to find Google Play Services Dynamic Security Provider.
       Provider provider = Security.getProvider("GMSCore_OpenSSL");
