@@ -329,9 +329,9 @@ public final class CertificatePinner {
     public Builder add(String pattern, String... pins) {
       if (pattern == null) throw new NullPointerException("pattern == null");
 
-      for (String pin : pins) {
+      pins.forEach(pin -> {
         this.pins.add(new Pin(pattern, pin));
-      }
+      });
 
       return this;
     }

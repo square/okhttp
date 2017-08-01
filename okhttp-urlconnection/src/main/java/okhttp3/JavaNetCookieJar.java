@@ -39,9 +39,9 @@ public final class JavaNetCookieJar implements CookieJar {
   @Override public void saveFromResponse(HttpUrl url, List<Cookie> cookies) {
     if (cookieHandler != null) {
       List<String> cookieStrings = new ArrayList<>();
-      for (Cookie cookie : cookies) {
+      cookies.forEach(cookie -> {
         cookieStrings.add(cookie.toString(true));
-      }
+      });
       Map<String, List<String>> multimap = Collections.singletonMap("Set-Cookie", cookieStrings);
       try {
         cookieHandler.put(url.uri(), multimap);

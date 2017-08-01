@@ -224,10 +224,9 @@ public class Main extends HelpOption implements Runnable {
     request.method(getRequestMethod(), getRequestBody());
 
     if (headers != null) {
-      for (String header : headers) {
-        String[] parts = header.split(":", 2);
+      headers.stream().map(parts -> header.split(":", 2)).forEach(parts -> {
         request.header(parts[0], parts[1]);
-      }
+      });
     }
     if (referer != null) {
       request.header("Referer", referer);
