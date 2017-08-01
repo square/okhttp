@@ -81,9 +81,9 @@ public final class RouteSelector {
       // Postponed routes are always tried last. For example, if we have 2 proxies and all the
       // routes for proxy1 should be postponed, we'll move to proxy2. Only after we've exhausted
       // all the good routes will we attempt the postponed routes.
-      Proxy lastProxy = nextProxy();
+      Proxy proxy = nextProxy();
       for (int i = 0, size = inetSocketAddresses.size(); i < size; i++) {
-        Route route = new Route(address, lastProxy, inetSocketAddresses.get(i));
+        Route route = new Route(address, proxy, inetSocketAddresses.get(i));
         if (routeDatabase.shouldPostpone(route)) {
           postponedRoutes.add(route);
         } else {
