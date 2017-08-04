@@ -22,6 +22,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.InetSocketAddress;
 import java.net.Socket;
+import java.security.Security;
 import java.security.cert.Certificate;
 import java.security.cert.TrustAnchor;
 import java.security.cert.X509Certificate;
@@ -184,6 +185,23 @@ class AndroidPlatform extends Platform {
     }
   }
 
+  /**
+   * Checks to see if Google Play Services Dynamic Security Provider is present which provides ALPN
+   * support. If it isn't checks to see if device is Android 5.0+ since 4.x device have broken
+   * ALPN support.
+   */
+  private static boolean supportsAlpn() {
+    if (Security.getProvider("GMSCore_OpenSSL") != null) {
+      return true;
+    } else {
+      try {
+        Class.forName("android.net.Network"); // Arbitrary class added in Android 5.0.
+        return true;
+      } catch (ClassNotFoundException ignored) { }
+    }
+    return false;
+  }
+
   public CertificateChainCleaner buildCertificateChainCleaner(X509TrustManager trustManager) {
     try {
       Class<?> extensionsClass = Class.forName("android.net.http.X509TrustManagerExtensions");
@@ -216,12 +234,11 @@ class AndroidPlatform extends Platform {
       OptionalMethod<Socket> getAlpnSelectedProtocol = null;
       OptionalMethod<Socket> setAlpnProtocols = null;
 
-      // Attempt to find Android 5.0+ APIs.
-      try {
-        Class.forName("android.net.Network"); // Arbitrary class added in Android 5.0.
-        getAlpnSelectedProtocol = new OptionalMethod<>(byte[].class, "getAlpnSelectedProtocol");
-        setAlpnProtocols = new OptionalMethod<>(null, "setAlpnProtocols", byte[].class);
-      } catch (ClassNotFoundException ignored) {
+      if (supportsAlpn()) {
+        getAlpnSelectedProtocol
+            = new OptionalMethod<>(byte[].class, "getAlpnSelectedProtocol");
+        setAlpnProtocols
+            = new OptionalMethod<>(null, "setAlpnProtocols", byte[].class);
       }
 
       return new AndroidPlatform(sslParametersClass, setUseSessionTickets, setHostname,
