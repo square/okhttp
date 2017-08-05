@@ -23,21 +23,11 @@ import java.net.UnknownHostException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import okhttp3.RecordingEventListener.CallEvent;
 import okhttp3.RecordingEventListener.ConnectEnd;
 import okhttp3.RecordingEventListener.ConnectStart;
 import okhttp3.RecordingEventListener.ConnectionAcquired;
-import okhttp3.RecordingEventListener.ConnectionReleased;
 import okhttp3.RecordingEventListener.DnsEnd;
 import okhttp3.RecordingEventListener.DnsStart;
-import okhttp3.RecordingEventListener.FetchEnd;
-import okhttp3.RecordingEventListener.FetchStart;
-import okhttp3.RecordingEventListener.RequestHeadersEnd;
-import okhttp3.RecordingEventListener.RequestHeadersStart;
-import okhttp3.RecordingEventListener.ResponseBodyEnd;
-import okhttp3.RecordingEventListener.ResponseBodyStart;
-import okhttp3.RecordingEventListener.ResponseHeadersEnd;
-import okhttp3.RecordingEventListener.ResponseHeadersStart;
 import okhttp3.RecordingEventListener.SecureConnectEnd;
 import okhttp3.RecordingEventListener.SecureConnectStart;
 import okhttp3.internal.DoubleInetAddressDns;
@@ -94,12 +84,11 @@ public final class EventListenerTest {
     assertEquals(200, response.code());
     response.body().close();
 
-    // TODO ResponseBodyEnd should not be last event
     List<String> expectedEvents = Arrays.asList("FetchStart",
         "DnsStart", "DnsEnd", "ConnectStart", "ConnectEnd",
         "ConnectionAcquired", "RequestHeadersStart", "RequestHeadersEnd",
         "ResponseHeadersStart", "ResponseHeadersEnd", "ResponseBodyStart",
-        "ConnectionReleased", "FetchEnd", "ResponseBodyEnd");
+        "ResponseBodyEnd", "ConnectionReleased", "FetchEnd");
     assertEquals(expectedEvents, listener.recordedEventTypes());
   }
 
@@ -114,13 +103,12 @@ public final class EventListenerTest {
     assertEquals(200, response.code());
     response.body().close();
 
-    // TODO ResponseBodyEnd should not be last event
     List<String> expectedEvents = Arrays.asList("FetchStart",
         "DnsStart", "DnsEnd", "ConnectStart", "SecureConnectStart",
         "SecureConnectEnd", "ConnectEnd",
         "ConnectionAcquired", "RequestHeadersStart", "RequestHeadersEnd",
         "ResponseHeadersStart", "ResponseHeadersEnd", "ResponseBodyStart",
-        "ConnectionReleased", "FetchEnd", "ResponseBodyEnd");
+        "ResponseBodyEnd", "ConnectionReleased", "FetchEnd");
     assertEquals(expectedEvents, listener.recordedEventTypes());
   }
 
