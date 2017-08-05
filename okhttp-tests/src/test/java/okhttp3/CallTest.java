@@ -1568,30 +1568,34 @@ public final class CallTest {
   }
 
   @Test public void getClientRequestTimeout() throws Exception {
-    enqueueRequestTimeoutResponses();
+    server.enqueue(new MockResponse()
+        .setSocketPolicy(SocketPolicy.DISCONNECT_AT_END)
+        .setResponseCode(408)
+        .setHeader("Connection", "Close")
+        .setBody("You took too long!"));
+    server.enqueue(new MockResponse().setBody("Body"));
 
-    Response response = client.newCall(new Request.Builder()
-        .url(server.url("/")).build()).execute();
+    Request request = new Request.Builder()
+        .url(server.url("/"))
+        .build();
+    Response response = client.newCall(request).execute();
 
     assertEquals("Body", response.body().string());
   }
 
-  private void enqueueRequestTimeoutResponses() {
+  @Test public void requestBodyRetransmittedOnClientRequestTimeout() throws Exception {
     server.enqueue(new MockResponse()
         .setSocketPolicy(SocketPolicy.DISCONNECT_AT_END)
-        .setResponseCode(HttpURLConnection.HTTP_CLIENT_TIMEOUT)
+        .setResponseCode(408)
         .setHeader("Connection", "Close")
         .setBody("You took too long!"));
     server.enqueue(new MockResponse().setBody("Body"));
-  }
 
-  @Test public void requestBodyRetransmittedOnClientRequestTimeout() throws Exception {
-    enqueueRequestTimeoutResponses();
-
-    Response response = client.newCall(new Request.Builder()
+    Request request = new Request.Builder()
         .url(server.url("/"))
         .post(RequestBody.create(MediaType.parse("text/plain"), "Hello"))
-        .build()).execute();
+        .build();
+    Response response = client.newCall(request).execute();
 
     assertEquals("Body", response.body().string());
 
@@ -1600,6 +1604,49 @@ public final class CallTest {
 
     RecordedRequest request2 = server.takeRequest();
     assertEquals("Hello", request2.getBody().readUtf8());
+  }
+
+  @Test public void disableClientRequestTimeoutRetry() throws IOException {
+    server.enqueue(new MockResponse()
+        .setSocketPolicy(SocketPolicy.DISCONNECT_AT_END)
+        .setResponseCode(408)
+        .setHeader("Connection", "Close")
+        .setBody("You took too long!"));
+
+    client = client.newBuilder()
+        .retryOnConnectionFailure(false)
+        .build();
+
+    Request request = new Request.Builder()
+        .url(server.url("/"))
+        .build();
+    Response response = client.newCall(request).execute();
+
+    assertEquals(408, response.code());
+    assertEquals("You took too long!", response.body().string());
+  }
+
+  @Test public void maxClientRequestTimeoutRetries() throws IOException {
+    server.enqueue(new MockResponse()
+        .setSocketPolicy(SocketPolicy.DISCONNECT_AT_END)
+        .setResponseCode(408)
+        .setHeader("Connection", "Close")
+        .setBody("You took too long!"));
+    server.enqueue(new MockResponse()
+        .setSocketPolicy(SocketPolicy.DISCONNECT_AT_END)
+        .setResponseCode(408)
+        .setHeader("Connection", "Close")
+        .setBody("You took too long!"));
+
+    Request request = new Request.Builder()
+        .url(server.url("/"))
+        .build();
+    Response response = client.newCall(request).execute();
+
+    assertEquals(408, response.code());
+    assertEquals("You took too long!", response.body().string());
+
+    assertEquals(2, server.getRequestCount());
   }
 
   @Test public void propfindRedirectsToPropfindAndMaintainsRequestBody() throws Exception {
