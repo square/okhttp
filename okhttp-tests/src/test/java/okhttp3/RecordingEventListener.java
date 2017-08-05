@@ -25,10 +25,18 @@ import java.util.Deque;
 import java.util.List;
 import javax.annotation.Nullable;
 
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 final class RecordingEventListener extends EventListener {
   final Deque<CallEvent> eventSequence = new ArrayDeque<>();
+
+  final List<Object> forbiddenLocks = new ArrayList<>();
+
+  /** Confirm that the thread does not hold a lock on {@code lock} during the callback. */
+  public void forbidLock(Object lock) {
+    forbiddenLocks.add(lock);
+  }
 
   /**
    * Removes recorded events up to (and including) an event is found whose class equals
@@ -56,6 +64,10 @@ final class RecordingEventListener extends EventListener {
   }
 
   private void logEvent(CallEvent e) {
+    for (Object lock : forbiddenLocks) {
+      assertFalse(lock.toString(), Thread.holdsLock(lock));
+    }
+
     CallEvent startEvent = e.closes();
 
     if (startEvent != null) {
