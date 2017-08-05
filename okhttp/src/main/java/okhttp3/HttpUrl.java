@@ -15,20 +15,25 @@
  */
 package okhttp3;
 
+import java.net.IDN;
 import java.net.InetAddress;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.UnknownHostException;
+import java.text.CharacterIterator;
+import java.text.StringCharacterIterator;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import javax.annotation.Nullable;
 import okhttp3.internal.publicsuffix.PublicSuffixDatabase;
+import okhttp3.internal.punycode.Punycode;
 import okio.Buffer;
 
 import static okhttp3.internal.Util.delimiterOffset;
@@ -36,6 +41,8 @@ import static okhttp3.internal.Util.domainToAscii;
 import static okhttp3.internal.Util.skipLeadingAsciiWhitespace;
 import static okhttp3.internal.Util.skipTrailingAsciiWhitespace;
 import static okhttp3.internal.Util.verifyAsIpAddress;
+import static okhttp3.internal.punycode.Punycode.isDisplaySafe;
+import static okhttp3.internal.punycode.Punycode.safeScriptCombination;
 
 /**
  * A uniform resource locator (URL) with a scheme of either {@code http} or {@code https}. Use this
@@ -972,6 +979,35 @@ public final class HttpUrl {
     return PublicSuffixDatabase.get().getEffectiveTldPlusOne(host);
   }
 
+  public static String displayHost(Builder.IDNMode idnMode, String host) {
+    switch (idnMode) {
+      case SAFE:
+        String unicodeHost = IDN.toUnicode(host, 0);
+        if (unicodeHost.equals(host)) {
+          return host;
+        }
+        return isDisplaySafe(unicodeHost) ? unicodeHost : host;
+      case UNICODE:
+        return IDN.toUnicode(host, 0);
+      default:
+        return host;
+    }
+  }
+
+  /**
+   * Returns the unicode host if the host is considered IDN safe.
+   *
+   * @see Punycode#isDisplaySafe(String)
+   * @return unicode host if safe, punycode otherwise
+   */
+  public String displayHost() {
+    return displayHost(Builder.IDNMode.SAFE, host);
+  }
+
+  public String toDisplayString() {
+    return this.newBuilder().toDisplayString();
+  }
+
   public static final class Builder {
     @Nullable String scheme;
     String encodedUsername = "";
@@ -1263,6 +1299,10 @@ public final class HttpUrl {
     }
 
     @Override public String toString() {
+      return toString(IDNMode.RAW);
+    }
+
+    private String toString(IDNMode idnMode) {
       StringBuilder result = new StringBuilder();
       result.append(scheme);
       result.append("://");
@@ -1282,7 +1322,7 @@ public final class HttpUrl {
         result.append(host);
         result.append(']');
       } else {
-        result.append(host);
+        result.append(displayHost(idnMode, host));
       }
 
       int effectivePort = effectivePort();
@@ -1304,6 +1344,16 @@ public final class HttpUrl {
       }
 
       return result.toString();
+    }
+
+    public String toDisplayString() {
+      return toString(IDNMode.SAFE);
+    }
+
+    enum IDNMode {
+      RAW,
+      SAFE,
+      UNICODE
     }
 
     enum ParseResult {

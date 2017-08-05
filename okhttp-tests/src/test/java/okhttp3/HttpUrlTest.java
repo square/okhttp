@@ -15,6 +15,7 @@
  */
 package okhttp3;
 
+import java.net.IDN;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
@@ -1506,5 +1507,54 @@ public final class HttpUrlTest {
     assertNull(HttpUrl.parse("https://xn--4pvxs.jp").topPrivateDomain());
     assertNull(HttpUrl.parse("https://localhost").topPrivateDomain());
     assertNull(HttpUrl.parse("https://127.0.0.1").topPrivateDomain());
+  }
+
+  @Test public void testPunyCodeNonIdentifier() {
+    HttpUrl url = HttpUrl.parse("http://☃.net/file.html");
+
+    assertEquals("xn--n3h.net", url.host());
+    assertEquals("xn--n3h.net", url.displayHost());
+    assertEquals("http://xn--n3h.net/file.html", url.toDisplayString());
+  }
+
+  @Test public void testPunyCodeChinese() {
+    HttpUrl url = HttpUrl.parse("http://她是這麼說的.net/file.html");
+
+    assertEquals("xn--1uss90anwmq5syggmvx.net", url.host());
+    assertEquals("她是這麼說的.net", url.displayHost());
+    assertEquals("http://她是這麼說的.net/file.html", url.toDisplayString());
+  }
+
+  @Test public void testPunyCodeLatin() {
+    HttpUrl url = HttpUrl.parse("http://en.wikipedia.org/file.html");
+
+    assertEquals("en.wikipedia.org", url.host());
+    assertEquals("en.wikipedia.org", url.displayHost());
+    assertEquals("http://en.wikipedia.org/file.html", url.toDisplayString());
+  }
+
+  @Test public void testPunyCodeRussian() {
+    HttpUrl url = HttpUrl.parse("http://правительство.рф/file.html");
+
+    assertEquals("xn--80aealotwbjpid2k.xn--p1ai", url
+        .host());
+    assertEquals("правительство.рф", url.displayHost());
+    assertEquals("http://правительство.рф/file.html", url.toDisplayString());
+  }
+
+  @Test public void testPunyCodeGreek() {
+    HttpUrl url = HttpUrl.parse("http://ακρόπολητώρα.org/file.html");
+
+    assertEquals("xn--mxaarlfxghe3a7f3a.org", url.host());
+    assertEquals("ακρόπολητώρα.org", url.displayHost());
+    assertEquals("http://ακρόπολητώρα.org/file.html", url.toDisplayString());
+  }
+
+  @Test public void testPunyCodeGreekLatinMix() {
+    HttpUrl url = HttpUrl.parse("http://wіkіреdіа.org/file.html");
+
+    assertEquals("xn--wkd-8cdx9d7hbd.org", url.host());
+    assertEquals("xn--wkd-8cdx9d7hbd.org", url.displayHost());
+    assertEquals("http://xn--wkd-8cdx9d7hbd.org/file.html", url.toDisplayString());
   }
 }
