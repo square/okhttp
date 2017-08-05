@@ -20,12 +20,26 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.Proxy;
 import java.net.UnknownHostException;
-import java.util.ArrayDeque;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Deque;
 import java.util.List;
+import okhttp3.RecordingEventListener.CallEvent;
+import okhttp3.RecordingEventListener.ConnectEnd;
+import okhttp3.RecordingEventListener.ConnectStart;
+import okhttp3.RecordingEventListener.ConnectionAcquired;
+import okhttp3.RecordingEventListener.ConnectionReleased;
+import okhttp3.RecordingEventListener.DnsEnd;
+import okhttp3.RecordingEventListener.DnsStart;
+import okhttp3.RecordingEventListener.FetchEnd;
+import okhttp3.RecordingEventListener.FetchStart;
+import okhttp3.RecordingEventListener.RequestHeadersEnd;
+import okhttp3.RecordingEventListener.RequestHeadersStart;
+import okhttp3.RecordingEventListener.ResponseBodyEnd;
+import okhttp3.RecordingEventListener.ResponseBodyStart;
+import okhttp3.RecordingEventListener.ResponseHeadersEnd;
+import okhttp3.RecordingEventListener.ResponseHeadersStart;
+import okhttp3.RecordingEventListener.SecureConnectEnd;
+import okhttp3.RecordingEventListener.SecureConnectStart;
 import okhttp3.internal.DoubleInetAddressDns;
 import okhttp3.internal.RecordingOkAuthenticator;
 import okhttp3.internal.SingleInetAddressDns;
@@ -80,10 +94,12 @@ public final class EventListenerTest {
     assertEquals(200, response.code());
     response.body().close();
 
-    List<Class<?>> expectedEvents = Arrays.asList(
-        DnsStart.class, DnsEnd.class,
-        ConnectStart.class, ConnectEnd.class,
-        ConnectionAcquired.class);
+    // TODO ResponseBodyEnd should not be last event
+    List<String> expectedEvents = Arrays.asList("FetchStart",
+        "DnsStart", "DnsEnd", "ConnectStart", "ConnectEnd",
+        "ConnectionAcquired", "RequestHeadersStart", "RequestHeadersEnd",
+        "ResponseHeadersStart", "ResponseHeadersEnd", "ResponseBodyStart",
+        "ConnectionReleased", "FetchEnd", "ResponseBodyEnd");
     assertEquals(expectedEvents, listener.recordedEventTypes());
   }
 
@@ -98,11 +114,13 @@ public final class EventListenerTest {
     assertEquals(200, response.code());
     response.body().close();
 
-    List<Class<?>> expectedEvents = Arrays.asList(
-        DnsStart.class, DnsEnd.class,
-        ConnectStart.class, SecureConnectStart.class,
-        SecureConnectEnd.class, ConnectEnd.class,
-        ConnectionAcquired.class);
+    // TODO ResponseBodyEnd should not be last event
+    List<String> expectedEvents = Arrays.asList("FetchStart",
+        "DnsStart", "DnsEnd", "ConnectStart", "SecureConnectStart",
+        "SecureConnectEnd", "ConnectEnd",
+        "ConnectionAcquired", "RequestHeadersStart", "RequestHeadersEnd",
+        "ResponseHeadersStart", "ResponseHeadersEnd", "ResponseBodyStart",
+        "ConnectionReleased", "FetchEnd", "ResponseBodyEnd");
     assertEquals(expectedEvents, listener.recordedEventTypes());
   }
 
@@ -148,9 +166,9 @@ public final class EventListenerTest {
     assertEquals(200, response2.code());
     response2.body().close();
 
-    List<Class<?>> recordedEvents = listener.recordedEventTypes();
-    assertFalse(recordedEvents.contains(DnsStart.class));
-    assertFalse(recordedEvents.contains(DnsEnd.class));
+    List<String> recordedEvents = listener.recordedEventTypes();
+    assertFalse(recordedEvents.contains("DnsStart"));
+    assertFalse(recordedEvents.contains("DnsEnd"));
   }
 
   @Test public void multipleDnsLookupsForSingleCall() throws IOException {
@@ -520,9 +538,9 @@ public final class EventListenerTest {
     assertEquals(200, response2.code());
     response2.body().close();
 
-    List<Class<?>> recordedEvents = listener.recordedEventTypes();
-    assertFalse(recordedEvents.contains(SecureConnectStart.class));
-    assertFalse(recordedEvents.contains(SecureConnectEnd.class));
+    List<String> recordedEvents = listener.recordedEventTypes();
+    assertFalse(recordedEvents.contains("SecureConnectStart"));
+    assertFalse(recordedEvents.contains("SecureConnectEnd"));
   }
 
   @Test public void successfulConnectionFound() throws IOException {
@@ -555,8 +573,8 @@ public final class EventListenerTest {
 
     listener.removeUpToEvent(ConnectionAcquired.class);
 
-    List<Class<?>> remainingEvents = listener.recordedEventTypes();
-    assertFalse(remainingEvents.contains(ConnectionAcquired.class));
+    List<String> remainingEvents = listener.recordedEventTypes();
+    assertFalse(remainingEvents.contains("ConnectionAcquired"));
   }
 
   @Test public void pooledConnectionFound() throws IOException {
@@ -609,159 +627,5 @@ public final class EventListenerTest {
         .hostnameVerifier(new RecordingHostnameVerifier())
         .build();
     server.useHttps(sslClient.socketFactory, tunnelProxy);
-  }
-
-  static final class DnsStart {
-    final Call call;
-    final String domainName;
-
-    DnsStart(Call call, String domainName) {
-      this.call = call;
-      this.domainName = domainName;
-    }
-  }
-
-  static final class DnsEnd {
-    final Call call;
-    final String domainName;
-    final List<InetAddress> inetAddressList;
-    final Throwable throwable;
-
-    DnsEnd(Call call, String domainName, List<InetAddress> inetAddressList, Throwable throwable) {
-      this.call = call;
-      this.domainName = domainName;
-      this.inetAddressList = inetAddressList;
-      this.throwable = throwable;
-    }
-  }
-
-  static final class ConnectStart {
-    final Call call;
-    final InetSocketAddress inetSocketAddress;
-    final Proxy proxy;
-
-    ConnectStart(Call call, InetSocketAddress inetSocketAddress, Proxy proxy) {
-      this.call = call;
-      this.inetSocketAddress = inetSocketAddress;
-      this.proxy = proxy;
-    }
-  }
-
-  static final class ConnectEnd {
-    final Call call;
-    final InetSocketAddress inetSocketAddress;
-    final Protocol protocol;
-    final Throwable throwable;
-
-    ConnectEnd(Call call, InetSocketAddress inetSocketAddress, Protocol protocol, Throwable throwable) {
-      this.call = call;
-      this.inetSocketAddress = inetSocketAddress;
-      this.protocol = protocol;
-      this.throwable = throwable;
-    }
-  }
-
-  static final class SecureConnectStart {
-    final Call call;
-
-    SecureConnectStart(Call call) {
-      this.call = call;
-    }
-  }
-
-  static final class SecureConnectEnd {
-    final Call call;
-    final Handshake handshake;
-    final Throwable throwable;
-
-    SecureConnectEnd(Call call, Handshake handshake, Throwable throwable) {
-      this.call = call;
-      this.handshake = handshake;
-      this.throwable = throwable;
-    }
-  }
-
-  static final class ConnectionAcquired {
-    final Call call;
-    final Connection connection;
-
-    ConnectionAcquired(Call call, Connection connection) {
-      this.call = call;
-      this.connection = connection;
-    }
-  }
-
-  static final class ConnectionReleased {
-    final Call call;
-    final Connection connection;
-
-    ConnectionReleased(Call call, Connection connection) {
-      this.call = call;
-      this.connection = connection;
-    }
-  }
-
-  static final class RecordingEventListener extends EventListener {
-    final Deque<Object> eventSequence = new ArrayDeque<>();
-
-    /**
-     * Removes recorded events up to (and including) an event is found whose class equals
-     * {@code eventClass} and returns it.
-     */
-    <T> T removeUpToEvent(Class<T> eventClass) {
-      Object event = eventSequence.poll();
-      while (event != null && !eventClass.isInstance(event)) {
-        event = eventSequence.poll();
-      }
-      if (event == null) throw new AssertionError();
-      return (T) event;
-    }
-
-    List<Class<?>> recordedEventTypes() {
-      List<Class<?>> eventTypes = new ArrayList<>();
-      for (Object event : eventSequence) {
-        eventTypes.add(event.getClass());
-      }
-      return eventTypes;
-    }
-
-    void clearAllEvents() {
-      eventSequence.clear();
-    }
-
-    @Override public void dnsStart(Call call, String domainName) {
-      eventSequence.offer(new DnsStart(call, domainName));
-    }
-
-    @Override public void dnsEnd(Call call, String domainName, List<InetAddress> inetAddressList,
-        Throwable throwable) {
-      eventSequence.offer(new DnsEnd(call, domainName, inetAddressList, throwable));
-    }
-
-    @Override public void connectStart(Call call, InetSocketAddress inetSocketAddress,
-        Proxy proxy) {
-      eventSequence.offer(new ConnectStart(call, inetSocketAddress, proxy));
-    }
-
-    @Override public void secureConnectStart(Call call) {
-      eventSequence.offer(new SecureConnectStart(call));
-    }
-
-    @Override public void secureConnectEnd(Call call, Handshake handshake, Throwable throwable) {
-      eventSequence.offer(new SecureConnectEnd(call, handshake, throwable));
-    }
-
-    @Override public void connectEnd(Call call, InetSocketAddress inetSocketAddress,
-        Proxy proxy, Protocol protocol, Throwable throwable) {
-      eventSequence.offer(new ConnectEnd(call, inetSocketAddress, protocol, throwable));
-    }
-
-    @Override public void connectionAcquired(Call call, Connection connection) {
-      eventSequence.offer(new ConnectionAcquired(call, connection));
-    }
-
-    @Override public void connectionReleased(Call call, Connection connection) {
-      eventSequence.offer(new ConnectionReleased(call, connection));
-    }
   }
 }

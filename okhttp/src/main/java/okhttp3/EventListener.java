@@ -127,7 +127,8 @@ public abstract class EventListener {
    * the case of a failed connection attempt.
    */
   public void connectEnd(Call call, InetSocketAddress inetSocketAddress,
-      Proxy proxy, @Nullable Protocol protocol, @Nullable Throwable throwable) {
+      @Nullable Proxy proxy, @Nullable Protocol protocol,
+      @Nullable Throwable throwable) {
   }
 
   /**
