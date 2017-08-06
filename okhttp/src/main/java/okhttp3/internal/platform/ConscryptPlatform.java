@@ -96,6 +96,10 @@ public class ConscryptPlatform extends Platform {
     try {
       Class.forName("org.conscrypt.ConscryptEngineSocket");
 
+      if (!Conscrypt.isAvailable()) {
+        return null;
+      }
+
       // TODO consider checking for native library
       Conscrypt.SocketFactories.setUseEngineSocketByDefault(true);
       return new ConscryptPlatform();
