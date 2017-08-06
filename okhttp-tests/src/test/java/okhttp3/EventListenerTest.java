@@ -121,9 +121,8 @@ public final class EventListenerTest {
   }
 
   @Test public void successfulEmptyHttpsCallEventSequence() throws IOException {
-    client = client.newBuilder().protocols(asList(Protocol.HTTP_1_1)).build();
-
     enableTlsWithTunnel(false);
+    server.setProtocols(Arrays.asList(Protocol.HTTP_1_1));
     server.enqueue(new MockResponse()
         .setBody("abc"));
 
