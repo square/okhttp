@@ -24,7 +24,10 @@ import javax.annotation.Nullable;
 /**
  * EventListener for analytic events for an OkHttpClient instance.
  *
- * <p>All start/connect/acquire events will eventually receive a matching end/release event.
+ * <p>All start/connect/acquire events will eventually receive a matching end/release event,
+ * either successful (non-null parameters), or failed (non-null throwable).  The first common
+ * parameters of each event pair are used to link the event in case of concurrent or repeated
+ * events e.g. dnsStart(call, domainName) -> dnsEnd(call, domainName, inetAddressList, throwable).
  *
  * <p>Nesting is as follows
  * <ul>
@@ -34,7 +37,7 @@ import javax.annotation.Nullable;
  *
  * <p>Request events are ordered: requestHeaders -> requestBody -> responseHeaders -> responseBody
  *
- * <p>Since connections may be reused the dns and connect events may not be present for a call,
+ * <p>Since connections may be reused, the dns and connect events may not be present for a call,
  * or may be repeated in case of failure retries, even concurrently in case of happy eyeballs type
  * scenarios. A redirect cross domain, or to use https may cause additional connection and request
  * events.
