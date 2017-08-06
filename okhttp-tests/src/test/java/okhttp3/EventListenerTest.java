@@ -23,6 +23,7 @@ import java.net.UnknownHostException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import okhttp3.RecordingEventListener.ConnectEnd;
 import okhttp3.RecordingEventListener.ConnectStart;
 import okhttp3.RecordingEventListener.ConnectionAcquired;
@@ -42,6 +43,7 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 
+import static java.util.Arrays.asList;
 import static okhttp3.TestUtil.defaultClient;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -96,25 +98,56 @@ public final class EventListenerTest {
     assertEquals(expectedEvents, listener.recordedEventTypes());
   }
 
-  @Test public void successfulHttpsCallEventSequence() throws IOException {
+  private void assertSuccessfulEventOrder() throws IOException {
+    Call call = client.newCall(new Request.Builder()
+            .url(server.url("/"))
+            .build());
+    Response response = call.execute();
+    assertEquals(200, response.code());
+    response.body().string();
+    response.body().close();
+
+    List<String> expectedEvents = asList("FetchStart", "DnsStart", "DnsEnd", "ConnectionAcquired",
+            "ConnectStart", "SecureConnectStart", "SecureConnectEnd", "ConnectEnd",
+            "RequestHeadersStart", "RequestHeadersEnd", "ResponseHeadersStart", "ResponseHeadersEnd",
+            "ResponseBodyStart", "FetchEnd", "ResponseBodyEnd", "ConnectionReleased");
+
+    assertEquals(expectedEvents, listener.recordedEventTypes());
+  }
+
+  @Test public void successfulEmptyH2CallEventSequence() throws IOException {
     enableTlsWithTunnel(false);
+    server.setProtocols(Arrays.asList(Protocol.HTTP_2, Protocol.HTTP_1_1));
+    server.enqueue(new MockResponse());
+
+    assertSuccessfulEventOrder();
+  }
+
+  @Test public void successfulEmptyHttpsCallEventSequence() throws IOException {
+    enableTlsWithTunnel(false);
+    server.setProtocols(Arrays.asList(Protocol.HTTP_1_1));
     server.enqueue(new MockResponse()
         .setBody("abc"));
 
-    Call call = client.newCall(new Request.Builder()
-        .url(server.url("/"))
-        .build());
-    Response response = call.execute();
-    assertEquals(200, response.code());
-    assertEquals("abc", response.body().string());
-    response.body().close();
+    assertSuccessfulEventOrder();
+  }
 
-    List<String> expectedEvents = Arrays.asList("FetchStart", "DnsStart", "DnsEnd",
-        "ConnectionAcquired", "ConnectStart", "SecureConnectStart", "SecureConnectEnd",
-        "ConnectEnd", "RequestHeadersStart", "RequestHeadersEnd", "ResponseHeadersStart",
-        "ResponseHeadersEnd", "ResponseBodyStart", "FetchEnd", "ResponseBodyEnd",
-        "ConnectionReleased");
-    assertEquals(expectedEvents, listener.recordedEventTypes());
+  @Test public void successfulChunkedHttpsCallEventSequence() throws IOException {
+    enableTlsWithTunnel(false);
+    server.setProtocols(Arrays.asList(Protocol.HTTP_1_1));
+    server.enqueue(
+        new MockResponse().setBodyDelay(100, TimeUnit.MILLISECONDS).setChunkedBody("Hello!", 2));
+
+    assertSuccessfulEventOrder();
+  }
+
+  @Test public void successfulChunkedH2CallEventSequence() throws IOException {
+    enableTlsWithTunnel(false);
+    server.setProtocols(Arrays.asList(Protocol.HTTP_2, Protocol.HTTP_1_1));
+    server.enqueue(
+            new MockResponse().setBodyDelay(100, TimeUnit.MILLISECONDS).setChunkedBody("Hello!", 2));
+
+    assertSuccessfulEventOrder();
   }
 
   @Test public void successfulDnsLookup() throws IOException {
