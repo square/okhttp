@@ -138,7 +138,6 @@ public final class EventListenerTest {
     response.body().close();
 
     // ordering of response body end currently differs
-    System.out.println(response.protocol);
     List<String> expectedEvents = Arrays.asList("FetchStart",
         "DnsStart", "DnsEnd", "ConnectStart", "SecureConnectStart",
         "SecureConnectEnd", "ConnectEnd",
