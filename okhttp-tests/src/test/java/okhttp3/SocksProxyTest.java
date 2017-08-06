@@ -99,7 +99,7 @@ public final class SocksProxyTest {
 
     HttpUrl url = server.url("/")
         .newBuilder()
-        .host(socksProxy.HOSTNAME_THAT_ONLY_THE_PROXY_KNOWS)
+        .host(SocksProxy.HOSTNAME_THAT_ONLY_THE_PROXY_KNOWS)
         .build();
 
     Request request = new Request.Builder().url(url).build();

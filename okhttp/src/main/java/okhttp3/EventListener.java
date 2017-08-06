@@ -16,6 +16,8 @@
 package okhttp3;
 
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
+import java.net.Proxy;
 import java.util.List;
 import javax.annotation.Nullable;
 
@@ -31,6 +33,14 @@ public abstract class EventListener {
     };
   }
 
+  /**
+   * Invoked as soon as a call is enqueued or executed by a client. In case of thread or stream
+   * limits, this call may be executed well before processing the request is able to begin.
+   *
+   * <p>This will be invoked only once for a single {@link Call}. Retries of different routes
+   * or redirects will be handled within the boundaries of a single fetchStart and
+   * {@link #fetchEnd(Call, Throwable)} pair.
+   */
   public void fetchStart(Call call) {
   }
 
@@ -61,7 +71,16 @@ public abstract class EventListener {
       @Nullable Throwable throwable) {
   }
 
-  public void connectStart(Call call, InetAddress address, int port) {
+  /**
+   * Invoked just prior to initiating a socket connection.
+   *
+   * <p>This method will be invoked if no existing connection in the {@link ConnectionPool} can be
+   * reused.
+   *
+   * <p>This can be invoked more than 1 time for a single {@link Call}. For example, if the response
+   * to the {@link Call#request()} is a redirect to a different address, or a connection is retried.
+   */
+  public void connectStart(Call call, InetSocketAddress inetSocketAddress, Proxy proxy) {
   }
 
   /**
@@ -94,34 +113,154 @@ public abstract class EventListener {
       @Nullable Throwable throwable) {
   }
 
-  public void connectEnd(Call call,  InetAddress address, int port, String protocol,
-      Throwable throwable) {
+  /**
+   * Invoked immediately after a socket connection was attempted.
+   *
+   * <p>If the {@code call} uses HTTPS, this will be invoked after
+   * {@link #secureConnectEnd(Call, Handshake, Throwable)}, otherwise it will invoked after
+   * {@link #connectStart(Call, InetSocketAddress, Proxy)}.
+   *
+   * <p>{@code protocol} and {@code proxy} will be non-null and {@code throwable} will be null when
+   * the connection is successfully established.
+   *
+   * <p>{@code protocol} and {@code proxy} will be null and {@code throwable} will be non-null in
+   * the case of a failed connection attempt.
+   */
+  public void connectEnd(Call call, InetSocketAddress inetSocketAddress,
+      @Nullable Proxy proxy, @Nullable Protocol protocol,
+      @Nullable Throwable throwable) {
   }
 
+  /**
+   * Invoked after a connection has been acquired for the {@code call}.
+   *
+   * <p>This can be invoked more than 1 time for a single {@link Call}. For example, if the response
+   * to the {@link Call#request()} is a redirect to a different address.
+   */
+  public void connectionAcquired(Call call, Connection connection) {
+  }
+
+  /**
+   * Invoked after a connection has been released for the {@code call}.
+   *
+   * <p>This method is always invoked after {@link #connectionAcquired(Call, Connection)}.
+   *
+   * <p>This can be invoked more than 1 time for a single {@link Call}. For example, if the response
+   * to the {@link Call#request()} is a redirect to a different address.
+   */
+  public void connectionReleased(Call call, Connection connection) {
+  }
+
+  /**
+   * Invoked just prior to sending request headers.
+   *
+   * <p>The connection is implicit, and will generally relate to the last
+   * {@link #connectionAcquired(Call, Connection)} event.
+   *
+   * <p>This can be invoked more than 1 time for a single {@link Call}. For example, if the response
+   * to the {@link Call#request()} is a redirect to a different address.
+   */
   public void requestHeadersStart(Call call) {
   }
 
+  /**
+   * Invoked immediately after sending request headers.
+   *
+   * <p>This method is always invoked after {@link #requestHeadersStart(Call)}.
+   *
+   * <p>{@code throwable} will be null in the case of a successful attempt to send the headers.
+   *
+   * <p>{@code throwable} will be non-null in the case of a failed attempt to send the headers.
+   */
   public void requestHeadersEnd(Call call, Throwable throwable) {
   }
 
+  /**
+   * Invoked just prior to sending a request body.  Will only be invoked for request allowing and
+   * having a request body to send.
+   *
+   * <p>The connection is implicit, and will generally relate to the last
+   * {@link #connectionAcquired(Call, Connection)} event.
+   *
+   * <p>This can be invoked more than 1 time for a single {@link Call}. For example, if the response
+   * to the {@link Call#request()} is a redirect to a different address.
+   */
   public void requestBodyStart(Call call) {
   }
 
+  /**
+   * Invoked immediately after sending a request body.
+   *
+   * <p>This method is always invoked after {@link #requestBodyStart(Call)}.
+   *
+   * <p>{@code throwable} will be null in the case of a successful attempt to send the body.
+   *
+   * <p>{@code throwable} will be non-null in the case of a failed attempt to send the body.
+   */
   public void requestBodyEnd(Call call, Throwable throwable) {
   }
 
+  /**
+   * Invoked just prior to receiving response headers.
+   *
+   * <p>The connection is implicit, and will generally relate to the last
+   * {@link #connectionAcquired(Call, Connection)} event.
+   *
+   * <p>This can be invoked more than 1 time for a single {@link Call}. For example, if the response
+   * to the {@link Call#request()} is a redirect to a different address.
+   */
   public void responseHeadersStart(Call call) {
   }
 
+  /**
+   * Invoked immediately after receiving response headers.
+   *
+   * <p>This method is always invoked after {@link #responseHeadersStart(Call)}.
+   *
+   * <p>{@code throwable} will be null in the case of a successful attempt to receive the headers.
+   *
+   * <p>{@code throwable} will be non-null in the case of a failed attempt to receive the headers.
+   */
   public void responseHeadersEnd(Call call, Throwable throwable) {
   }
 
+  /**
+   * Invoked just prior to receiving the response body.
+   *
+   * <p>The connection is implicit, and will generally relate to the last
+   * {@link #connectionAcquired(Call, Connection)} event.
+   *
+   * <p>This will usually be invoked only 1 time for a single {@link Call},
+   * exceptions are a limited set of cases including failure recovery.
+   */
   public void responseBodyStart(Call call) {
   }
 
+  /**
+   * Invoked immediately after receiving a response body and completing reading it.
+   *
+   * <p>Will only be invoked for requests having a response body e.g. won't be invoked for a
+   * websocket upgrade.
+   *
+   * <p>This method is always invoked after {@link #requestBodyStart(Call)}.
+   *
+   * <p>{@code throwable} will be null in the case of a successful attempt to send the body.
+   *
+   * <p>{@code throwable} will be non-null in the case of a failed attempt to send the body.
+   */
   public void responseBodyEnd(Call call, Throwable throwable) {
   }
 
+  /**
+   * Invoked immediately after a call has completely ended.  This includes delayed consumption
+   * of response body by the caller.
+   *
+   * <p>This method is always invoked after {@link #fetchStart(Call)}.
+   *
+   * <p>{@code throwable} will be null in the case of a successful attempt to execute the call.
+   *
+   * <p>{@code throwable} will be non-null in the case of a failed attempt to execute the call.
+   */
   public void fetchEnd(Call call, Throwable throwable) {
   }
 

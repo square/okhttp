@@ -16,6 +16,7 @@
 package okhttp3;
 
 import java.io.IOException;
+import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 
 /**
@@ -36,5 +37,17 @@ public interface Interceptor {
      * of network interceptors; for application interceptors this is always null.
      */
     @Nullable Connection connection();
+
+    int connectTimeoutMillis();
+
+    Chain withConnectTimeout(int timeout, TimeUnit unit);
+
+    int readTimeoutMillis();
+
+    Chain withReadTimeout(int timeout, TimeUnit unit);
+
+    int writeTimeoutMillis();
+
+    Chain withWriteTimeout(int timeout, TimeUnit unit);
   }
 }

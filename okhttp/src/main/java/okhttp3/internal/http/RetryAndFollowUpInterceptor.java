@@ -344,7 +344,18 @@ public final class RetryAndFollowUpInterceptor implements Interceptor {
         // 408's are rare in practice, but some servers like HAProxy use this response code. The
         // spec says that we may repeat the request without modifications. Modern browsers also
         // repeat the request (even non-idempotent ones.)
+        if (!client.retryOnConnectionFailure()) {
+          // The application layer has directed us not to retry the request.
+          return null;
+        }
+
         if (userResponse.request().body() instanceof UnrepeatableRequestBody) {
+          return null;
+        }
+
+        if (userResponse.priorResponse() != null
+            && userResponse.priorResponse().code() == HTTP_CLIENT_TIMEOUT) {
+          // We attempted to retry and got another timeout. Give up.
           return null;
         }
 

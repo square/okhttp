@@ -32,6 +32,7 @@ import javax.net.ssl.X509TrustManager;
 import okhttp3.OkHttpClient;
 import okhttp3.Protocol;
 import okhttp3.internal.tls.BasicCertificateChainCleaner;
+import okhttp3.internal.tls.BasicTrustRootIndex;
 import okhttp3.internal.tls.CertificateChainCleaner;
 import okhttp3.internal.tls.TrustRootIndex;
 import okio.Buffer;
@@ -166,7 +167,7 @@ public class Platform {
   }
 
   public CertificateChainCleaner buildCertificateChainCleaner(X509TrustManager trustManager) {
-    return new BasicCertificateChainCleaner(TrustRootIndex.get(trustManager));
+    return new BasicCertificateChainCleaner(buildTrustRootIndex(trustManager));
   }
 
   /** Attempt to match the host runtime to a capable Platform implementation. */
@@ -246,5 +247,9 @@ public class Platform {
     } catch (NoSuchAlgorithmException e) {
       throw new IllegalStateException("No TLS provider", e);
     }
+  }
+
+  public TrustRootIndex buildTrustRootIndex(X509TrustManager trustManager) {
+    return new BasicTrustRootIndex(trustManager.getAcceptedIssuers());
   }
 }

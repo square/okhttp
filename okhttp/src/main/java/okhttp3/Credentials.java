@@ -30,8 +30,7 @@ public final class Credentials {
 
   public static String basic(String userName, String password, Charset charset) {
     String usernameAndPassword = userName + ":" + password;
-    byte[] bytes = usernameAndPassword.getBytes(charset);
-    String encoded = ByteString.of(bytes).base64();
+    String encoded = ByteString.encodeString(usernameAndPassword, charset).base64();
     return "Basic " + encoded;
   }
 }

@@ -43,6 +43,7 @@ import okhttp3.ConnectionSpec;
 import okhttp3.EventListener;
 import okhttp3.Handshake;
 import okhttp3.HttpUrl;
+import okhttp3.Interceptor;
 import okhttp3.OkHttpClient;
 import okhttp3.Protocol;
 import okhttp3.Request;
@@ -73,6 +74,8 @@ import static okhttp3.internal.Util.closeQuietly;
 
 public final class RealConnection extends Http2Connection.Listener implements Connection {
   private static final String NPE_THROW_WITH_NULL = "throw with null exception";
+  private static final int MAX_TUNNEL_ATTEMPTS = 21;
+
   private final ConnectionPool connectionPool;
   private final Route route;
 
@@ -147,11 +150,16 @@ public final class RealConnection extends Http2Connection.Listener implements Co
     while (true) {
       try {
         if (route.requiresTunnel()) {
-          connectTunnel(connectTimeout, readTimeout, writeTimeout);
+          connectTunnel(connectTimeout, readTimeout, writeTimeout, call, eventListener);
+          if (rawSocket == null) {
+            // We were unable to connect the tunnel but properly closed down our resources.
+            break;
+          }
         } else {
-          connectSocket(connectTimeout, readTimeout);
+          connectSocket(connectTimeout, readTimeout, call, eventListener);
         }
         establishProtocol(connectionSpecSelector, call, eventListener);
+        eventListener.connectEnd(call, route.socketAddress(), route.proxy(), protocol, null);
         break;
       } catch (IOException e) {
         closeQuietly(socket);
@@ -163,6 +171,8 @@ public final class RealConnection extends Http2Connection.Listener implements Co
         handshake = null;
         protocol = null;
         http2Connection = null;
+
+        eventListener.connectEnd(call, route.socketAddress(), route.proxy(), null, e);
 
         if (routeException == null) {
           routeException = new RouteException(e);
@@ -176,6 +186,12 @@ public final class RealConnection extends Http2Connection.Listener implements Co
       }
     }
 
+    if (route.requiresTunnel() && rawSocket == null) {
+      ProtocolException exception = new ProtocolException("Too many tunnel connections attempted: "
+          + MAX_TUNNEL_ATTEMPTS);
+      throw new RouteException(exception);
+    }
+
     if (http2Connection != null) {
       synchronized (connectionPool) {
         allocationLimit = http2Connection.maxConcurrentStreams();
@@ -187,18 +203,12 @@ public final class RealConnection extends Http2Connection.Listener implements Co
    * Does all the work to build an HTTPS connection over a proxy tunnel. The catch here is that a
    * proxy server can issue an auth challenge and then close the connection.
    */
-  private void connectTunnel(int connectTimeout, int readTimeout, int writeTimeout)
-      throws IOException {
+  private void connectTunnel(int connectTimeout, int readTimeout, int writeTimeout, Call call,
+      EventListener eventListener) throws IOException {
     Request tunnelRequest = createTunnelRequest();
     HttpUrl url = tunnelRequest.url();
-    int attemptedConnections = 0;
-    int maxAttempts = 21;
-    while (true) {
-      if (++attemptedConnections > maxAttempts) {
-        throw new ProtocolException("Too many tunnel connections attempted: " + maxAttempts);
-      }
-
-      connectSocket(connectTimeout, readTimeout);
+    for (int i = 0; i < MAX_TUNNEL_ATTEMPTS; i++) {
+      connectSocket(connectTimeout, readTimeout, call, eventListener);
       tunnelRequest = createTunnel(readTimeout, writeTimeout, tunnelRequest, url);
 
       if (tunnelRequest == null) break; // Tunnel successfully created.
@@ -209,11 +219,13 @@ public final class RealConnection extends Http2Connection.Listener implements Co
       rawSocket = null;
       sink = null;
       source = null;
+      eventListener.connectEnd(call, route.socketAddress(), route.proxy(), null, null);
     }
   }
 
   /** Does all the work necessary to build a full HTTP or HTTPS connection on a raw socket. */
-  private void connectSocket(int connectTimeout, int readTimeout) throws IOException {
+  private void connectSocket(int connectTimeout, int readTimeout, Call call,
+      EventListener eventListener) throws IOException {
     Proxy proxy = route.proxy();
     Address address = route.address();
 
@@ -221,6 +233,7 @@ public final class RealConnection extends Http2Connection.Listener implements Co
         ? address.socketFactory().createSocket()
         : new Socket(proxy);
 
+    eventListener.connectStart(call, route.socketAddress(), proxy);
     rawSocket.setSoTimeout(readTimeout);
     try {
       Platform.get().connectSocket(rawSocket, route.socketAddress(), connectTimeout);
@@ -255,11 +268,11 @@ public final class RealConnection extends Http2Connection.Listener implements Co
     eventListener.secureConnectStart(call);
     try {
       connectTls(connectionSpecSelector);
+      eventListener.secureConnectEnd(call, handshake, null);
     } catch (Exception e) {
       eventListener.secureConnectEnd(call, null, e);
       throw e;
     }
-    eventListener.secureConnectEnd(call, handshake, null);
 
     if (protocol == Protocol.HTTP_2) {
       socket.setSoTimeout(0); // HTTP/2 connection timeouts are set per-stream.
@@ -466,14 +479,14 @@ public final class RealConnection extends Http2Connection.Listener implements Co
     return true; // Success. The URL is supported.
   }
 
-  public HttpCodec newCodec(
-      OkHttpClient client, StreamAllocation streamAllocation) throws SocketException {
+  public HttpCodec newCodec(OkHttpClient client, Interceptor.Chain chain,
+      StreamAllocation streamAllocation) throws SocketException {
     if (http2Connection != null) {
-      return new Http2Codec(client, streamAllocation, http2Connection);
+      return new Http2Codec(client, chain, streamAllocation, http2Connection);
     } else {
-      socket.setSoTimeout(client.readTimeoutMillis());
-      source.timeout().timeout(client.readTimeoutMillis(), MILLISECONDS);
-      sink.timeout().timeout(client.writeTimeoutMillis(), MILLISECONDS);
+      socket.setSoTimeout(chain.readTimeoutMillis());
+      source.timeout().timeout(chain.readTimeoutMillis(), MILLISECONDS);
+      sink.timeout().timeout(chain.writeTimeoutMillis(), MILLISECONDS);
       return new Http1Codec(client, streamAllocation, source, sink);
     }
   }

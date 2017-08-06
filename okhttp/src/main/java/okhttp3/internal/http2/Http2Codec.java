@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 import okhttp3.Headers;
+import okhttp3.Interceptor;
 import okhttp3.OkHttpClient;
 import okhttp3.Protocol;
 import okhttp3.Request;
@@ -34,6 +35,7 @@ import okhttp3.internal.http.HttpCodec;
 import okhttp3.internal.http.RealResponseBody;
 import okhttp3.internal.http.RequestLine;
 import okhttp3.internal.http.StatusLine;
+import okio.Buffer;
 import okio.ByteString;
 import okio.ForwardingSource;
 import okio.Okio;
@@ -83,13 +85,15 @@ public final class Http2Codec implements HttpCodec {
       UPGRADE);
 
   private final OkHttpClient client;
+  private final Interceptor.Chain chain;
   final StreamAllocation streamAllocation;
   private final Http2Connection connection;
   private Http2Stream stream;
 
-  public Http2Codec(
-      OkHttpClient client, StreamAllocation streamAllocation, Http2Connection connection) {
+  public Http2Codec(OkHttpClient client, Interceptor.Chain chain, StreamAllocation streamAllocation,
+      Http2Connection connection) {
     this.client = client;
+    this.chain = chain;
     this.streamAllocation = streamAllocation;
     this.connection = connection;
   }
@@ -104,8 +108,8 @@ public final class Http2Codec implements HttpCodec {
     boolean hasRequestBody = request.body() != null;
     List<Header> requestHeaders = http2HeadersList(request);
     stream = connection.newStream(requestHeaders, hasRequestBody);
-    stream.readTimeout().timeout(client.readTimeoutMillis(), TimeUnit.MILLISECONDS);
-    stream.writeTimeout().timeout(client.writeTimeoutMillis(), TimeUnit.MILLISECONDS);
+    stream.readTimeout().timeout(chain.readTimeoutMillis(), TimeUnit.MILLISECONDS);
+    stream.writeTimeout().timeout(chain.writeTimeoutMillis(), TimeUnit.MILLISECONDS);
   }
 
   @Override public void flushRequest() throws IOException {
@@ -181,6 +185,7 @@ public final class Http2Codec implements HttpCodec {
   }
 
   @Override public ResponseBody openResponseBody(Response response) throws IOException {
+    streamAllocation.eventListener.responseBodyStart(streamAllocation.call);
     Source source = new StreamFinishingSource(stream.getSource());
     return new RealResponseBody(response.headers(), Okio.buffer(source));
   }
@@ -190,11 +195,26 @@ public final class Http2Codec implements HttpCodec {
   }
 
   class StreamFinishingSource extends ForwardingSource {
+    private boolean completed = false;
+
     StreamFinishingSource(Source delegate) {
       super(delegate);
     }
 
+    @Override public long read(Buffer sink, long byteCount) throws IOException {
+      try {
+        return super.read(sink, byteCount);
+      } catch (IOException ioe) {
+        completed = true;
+        streamAllocation.eventListener.responseBodyEnd(streamAllocation.call, ioe);
+        throw ioe;
+      }
+    }
+
     @Override public void close() throws IOException {
+      if (!completed) {
+        streamAllocation.eventListener.responseBodyEnd(streamAllocation.call, null);
+      }
       streamAllocation.streamFinished(false, Http2Codec.this);
       super.close();
     }
