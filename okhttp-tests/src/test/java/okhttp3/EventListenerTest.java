@@ -66,6 +66,9 @@ public final class EventListenerTest {
         .dns(singleDns)
         .eventListener(listener)
         .build();
+
+    listener.forbidLock(client.connectionPool());
+    listener.forbidLock(client.dispatcher());
   }
 
   @After public void tearDown() throws Exception {
@@ -75,40 +78,42 @@ public final class EventListenerTest {
   }
 
   @Test public void successfulCallEventSequence() throws IOException {
-    server.enqueue(new MockResponse());
+    server.enqueue(new MockResponse()
+        .setBody("abc"));
 
     Call call = client.newCall(new Request.Builder()
         .url(server.url("/"))
         .build());
     Response response = call.execute();
     assertEquals(200, response.code());
+    assertEquals("abc", response.body().string());
     response.body().close();
 
-    List<String> expectedEvents = Arrays.asList("FetchStart",
-        "DnsStart", "DnsEnd", "ConnectStart", "ConnectEnd",
-        "ConnectionAcquired", "RequestHeadersStart", "RequestHeadersEnd",
-        "ResponseHeadersStart", "ResponseHeadersEnd", "ResponseBodyStart",
-        "ResponseBodyEnd", "ConnectionReleased", "FetchEnd");
+    List<String> expectedEvents = Arrays.asList("FetchStart", "DnsStart", "DnsEnd",
+        "ConnectionAcquired", "ConnectStart", "ConnectEnd", "RequestHeadersStart",
+        "RequestHeadersEnd", "ResponseHeadersStart", "ResponseHeadersEnd", "ResponseBodyStart",
+        "FetchEnd", "ResponseBodyEnd", "ConnectionReleased");
     assertEquals(expectedEvents, listener.recordedEventTypes());
   }
 
   @Test public void successfulHttpsCallEventSequence() throws IOException {
     enableTlsWithTunnel(false);
-    server.enqueue(new MockResponse());
+    server.enqueue(new MockResponse()
+        .setBody("abc"));
 
     Call call = client.newCall(new Request.Builder()
         .url(server.url("/"))
         .build());
     Response response = call.execute();
     assertEquals(200, response.code());
+    assertEquals("abc", response.body().string());
     response.body().close();
 
-    List<String> expectedEvents = Arrays.asList("FetchStart",
-        "DnsStart", "DnsEnd", "ConnectStart", "SecureConnectStart",
-        "SecureConnectEnd", "ConnectEnd",
-        "ConnectionAcquired", "RequestHeadersStart", "RequestHeadersEnd",
-        "ResponseHeadersStart", "ResponseHeadersEnd", "ResponseBodyStart",
-        "ResponseBodyEnd", "ConnectionReleased", "FetchEnd");
+    List<String> expectedEvents = Arrays.asList("FetchStart", "DnsStart", "DnsEnd",
+        "ConnectionAcquired", "ConnectStart", "SecureConnectStart", "SecureConnectEnd",
+        "ConnectEnd", "RequestHeadersStart", "RequestHeadersEnd", "ResponseHeadersStart",
+        "ResponseHeadersEnd", "ResponseBodyStart", "FetchEnd", "ResponseBodyEnd",
+        "ConnectionReleased");
     assertEquals(expectedEvents, listener.recordedEventTypes());
   }
 

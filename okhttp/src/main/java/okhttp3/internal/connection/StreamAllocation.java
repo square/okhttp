@@ -22,6 +22,7 @@ import java.net.Socket;
 import java.util.List;
 import okhttp3.Address;
 import okhttp3.Call;
+import okhttp3.Connection;
 import okhttp3.ConnectionPool;
 import okhttp3.EventListener;
 import okhttp3.Interceptor;
@@ -108,15 +109,9 @@ public final class StreamAllocation {
     boolean connectionRetryEnabled = client.retryOnConnectionFailure();
 
     try {
-      RealConnection existingConnection = connection;
-
       RealConnection resultConnection = findHealthyConnection(connectTimeout, readTimeout,
           writeTimeout, connectionRetryEnabled, doExtensiveHealthChecks);
       HttpCodec resultCodec = resultConnection.newCodec(client, chain, this);
-
-      if (existingConnection != connection) {
-        eventListener.connectionAcquired(call, connection);
-      }
 
       synchronized (connectionPool) {
         codec = resultCodec;
@@ -162,7 +157,9 @@ public final class StreamAllocation {
    */
   private RealConnection findConnection(int connectTimeout, int readTimeout, int writeTimeout,
       boolean connectionRetryEnabled) throws IOException {
-    Route selectedRoute;
+    boolean foundPooledConnection = false;
+    RealConnection result = null;
+    Route selectedRoute = null;
     synchronized (connectionPool) {
       if (released) throw new IllegalStateException("released");
       if (codec != null) throw new IllegalStateException("codec != null");
@@ -177,10 +174,17 @@ public final class StreamAllocation {
       // Attempt to get a connection from the pool.
       Internal.instance.get(connectionPool, address, this, null);
       if (connection != null) {
-        return connection;
+        foundPooledConnection = true;
+        result = connection;
+      } else {
+        selectedRoute = route;
       }
+    }
 
-      selectedRoute = route;
+    // If we found a pooled connection, we're done.
+    if (foundPooledConnection) {
+      eventListener.connectionAcquired(call, result);
+      return result;
     }
 
     // If we need a route selection, make one. This is a blocking operation.
@@ -190,7 +194,6 @@ public final class StreamAllocation {
       routeSelection = routeSelector.next();
     }
 
-    RealConnection result;
     synchronized (connectionPool) {
       if (canceled) throw new IOException("Canceled");
 
@@ -202,22 +205,34 @@ public final class StreamAllocation {
           Route route = routes.get(i);
           Internal.instance.get(connectionPool, address, this, route);
           if (connection != null) {
+            foundPooledConnection = true;
+            result = connection;
             this.route = route;
-            return connection;
+            break;
           }
         }
       }
 
-      if (selectedRoute == null) {
-        selectedRoute = routeSelection.next();
-      }
+      if (!foundPooledConnection) {
+        if (selectedRoute == null) {
+          selectedRoute = routeSelection.next();
+        }
 
-      // Create a connection and assign it to this allocation immediately. This makes it possible
-      // for an asynchronous cancel() to interrupt the handshake we're about to do.
-      route = selectedRoute;
-      refusedStreamCount = 0;
-      result = new RealConnection(connectionPool, selectedRoute);
-      acquire(result);
+        // Create a connection and assign it to this allocation immediately. This makes it possible
+        // for an asynchronous cancel() to interrupt the handshake we're about to do.
+        route = selectedRoute;
+        refusedStreamCount = 0;
+        result = new RealConnection(connectionPool, selectedRoute);
+        acquire(result);
+      }
+    }
+
+    // We have a connection. Either a connected one from the pool, or one we need to connect.
+    eventListener.connectionAcquired(call, result);
+
+    // If we found a pooled connection on the 2nd time around, we're done.
+    if (foundPooledConnection) {
+      return result;
     }
 
     // Do TCP + TLS handshakes. This is a blocking operation.
@@ -244,6 +259,7 @@ public final class StreamAllocation {
 
   public void streamFinished(boolean noNewStreams, HttpCodec codec) {
     Socket socket;
+    Connection releasedConnection;
     synchronized (connectionPool) {
       if (codec == null || codec != this.codec) {
         throw new IllegalStateException("expected " + this.codec + " but was " + codec);
@@ -251,9 +267,14 @@ public final class StreamAllocation {
       if (!noNewStreams) {
         connection.successCount++;
       }
+      releasedConnection = connection;
       socket = deallocate(noNewStreams, false, true);
+      if (connection != null) releasedConnection = null;
     }
     closeQuietly(socket);
+    if (releasedConnection != null) {
+      eventListener.connectionReleased(call, releasedConnection);
+    }
   }
 
   public HttpCodec codec() {
@@ -272,19 +293,31 @@ public final class StreamAllocation {
 
   public void release() {
     Socket socket;
+    Connection releasedConnection;
     synchronized (connectionPool) {
+      releasedConnection = connection;
       socket = deallocate(false, true, false);
+      if (connection != null) releasedConnection = null;
     }
     closeQuietly(socket);
+    if (releasedConnection != null) {
+      eventListener.connectionReleased(call, releasedConnection);
+    }
   }
 
   /** Forbid new streams from being created on the connection that hosts this allocation. */
   public void noNewStreams() {
     Socket socket;
+    Connection releasedConnection;
     synchronized (connectionPool) {
+      releasedConnection = connection;
       socket = deallocate(true, false, false);
+      if (connection != null) releasedConnection = null;
     }
     closeQuietly(socket);
+    if (releasedConnection != null) {
+      eventListener.connectionReleased(call, releasedConnection);
+    }
   }
 
   /**
@@ -301,9 +334,6 @@ public final class StreamAllocation {
       this.codec = null;
     }
     if (released) {
-      if (connection != null) {
-        eventListener.connectionReleased(call, connection);
-      }
       this.released = true;
     }
     Socket socket = null;
@@ -342,6 +372,7 @@ public final class StreamAllocation {
 
   public void streamFailed(IOException e) {
     Socket socket;
+    Connection releasedConnection;
     boolean noNewStreams = false;
 
     synchronized (connectionPool) {
@@ -368,10 +399,15 @@ public final class StreamAllocation {
           route = null;
         }
       }
+      releasedConnection = connection;
       socket = deallocate(noNewStreams, false, true);
+      if (connection != null) releasedConnection = null;
     }
 
     closeQuietly(socket);
+    if (releasedConnection != null) {
+      eventListener.connectionReleased(call, releasedConnection);
+    }
   }
 
   /**
