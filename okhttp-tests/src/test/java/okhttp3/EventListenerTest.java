@@ -23,6 +23,7 @@ import java.net.UnknownHostException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import okhttp3.RecordingEventListener.ConnectEnd;
 import okhttp3.RecordingEventListener.ConnectStart;
 import okhttp3.RecordingEventListener.ConnectionAcquired;
@@ -92,7 +93,7 @@ public final class EventListenerTest {
     assertEquals(expectedEvents, listener.recordedEventTypes());
   }
 
-  @Test public void successfulHttpsCallEventSequence() throws IOException {
+  @Test public void successfulEmptyHttpsCallEventSequence() throws IOException {
     enableTlsWithTunnel(false);
     server.enqueue(new MockResponse());
 
@@ -103,12 +104,48 @@ public final class EventListenerTest {
     assertEquals(200, response.code());
     response.body().close();
 
+    // ordering of response body end currently differs
+    List<String> expectedEvents;
+    if (response.protocol == Protocol.HTTP_2) {
+      expectedEvents = Arrays.asList("FetchStart",
+          "DnsStart", "DnsEnd", "ConnectStart", "SecureConnectStart",
+          "SecureConnectEnd", "ConnectEnd",
+          "ConnectionAcquired", "RequestHeadersStart", "RequestHeadersEnd",
+          "ResponseHeadersStart", "ResponseHeadersEnd", "ResponseBodyStart",
+          "ConnectionReleased", "FetchEnd", "ResponseBodyEnd");
+    } else {
+      expectedEvents = Arrays.asList("FetchStart",
+          "DnsStart", "DnsEnd", "ConnectStart", "SecureConnectStart",
+          "SecureConnectEnd", "ConnectEnd",
+          "ConnectionAcquired", "RequestHeadersStart", "RequestHeadersEnd",
+          "ResponseHeadersStart", "ResponseHeadersEnd", "ResponseBodyStart",
+          "ResponseBodyEnd", "ConnectionReleased", "FetchEnd");
+    }
+
+    assertEquals(expectedEvents, listener.recordedEventTypes());
+  }
+
+  @Test public void successfulChunkedHttpsCallEventSequence() throws IOException {
+    enableTlsWithTunnel(false);
+    server.enqueue(
+        new MockResponse().setBodyDelay(100, TimeUnit.MILLISECONDS).setChunkedBody("Hello!", 2));
+
+    Call call = client.newCall(new Request.Builder()
+        .url(server.url("/"))
+        .build());
+    Response response = call.execute();
+    assertEquals(200, response.code());
+    response.body().close();
+
+    // ordering of response body end currently differs
+    System.out.println(response.protocol);
     List<String> expectedEvents = Arrays.asList("FetchStart",
         "DnsStart", "DnsEnd", "ConnectStart", "SecureConnectStart",
         "SecureConnectEnd", "ConnectEnd",
         "ConnectionAcquired", "RequestHeadersStart", "RequestHeadersEnd",
         "ResponseHeadersStart", "ResponseHeadersEnd", "ResponseBodyStart",
-        "ResponseBodyEnd", "ConnectionReleased", "FetchEnd");
+        "ConnectionReleased", "FetchEnd", "ResponseBodyEnd");
+
     assertEquals(expectedEvents, listener.recordedEventTypes());
   }
 
