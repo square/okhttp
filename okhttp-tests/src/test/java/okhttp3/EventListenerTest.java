@@ -52,7 +52,6 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
-import static org.junit.Assume.assumeTrue;
 
 public final class EventListenerTest {
   @Rule public final MockWebServer server = new MockWebServer();
@@ -99,18 +98,14 @@ public final class EventListenerTest {
     assertEquals(expectedEvents, listener.recordedEventTypes());
   }
 
-  @Test public void successfulEmptyH2CallEventSequence() throws IOException {
-    enableTlsWithTunnel(false);
-    server.enqueue(new MockResponse());
-
+  private void assertSuccessfulEventOrder() throws IOException {
     Call call = client.newCall(new Request.Builder()
             .url(server.url("/"))
             .build());
     Response response = call.execute();
     assertEquals(200, response.code());
+    response.body().string();
     response.body().close();
-
-    assumeTrue("Not running in H2 supported mode", response.protocol == Protocol.HTTP_2);
 
     List<String> expectedEvents = asList("FetchStart", "DnsStart", "DnsEnd", "ConnectionAcquired",
             "ConnectStart", "SecureConnectStart", "SecureConnectEnd", "ConnectEnd",
@@ -118,6 +113,14 @@ public final class EventListenerTest {
             "ResponseBodyStart", "FetchEnd", "ResponseBodyEnd", "ConnectionReleased");
 
     assertEquals(expectedEvents, listener.recordedEventTypes());
+  }
+
+  @Test public void successfulEmptyH2CallEventSequence() throws IOException {
+    enableTlsWithTunnel(false);
+    server.setProtocols(Arrays.asList(Protocol.HTTP_2, Protocol.HTTP_1_1));
+    server.enqueue(new MockResponse());
+
+    assertSuccessfulEventOrder();
   }
 
   @Test public void successfulEmptyHttpsCallEventSequence() throws IOException {
@@ -126,40 +129,25 @@ public final class EventListenerTest {
     server.enqueue(new MockResponse()
         .setBody("abc"));
 
-    Call call = client.newCall(new Request.Builder()
-        .url(server.url("/"))
-        .build());
-    Response response = call.execute();
-    assertEquals(200, response.code());
-    assertEquals("abc", response.body().string());
-    response.body().close();
-
-    List<String> expectedEvents = asList("FetchStart", "DnsStart", "DnsEnd", "ConnectionAcquired",
-            "ConnectStart", "SecureConnectStart", "SecureConnectEnd", "ConnectEnd",
-            "RequestHeadersStart", "RequestHeadersEnd", "ResponseHeadersStart", "ResponseHeadersEnd",
-            "ResponseBodyStart", "FetchEnd", "ResponseBodyEnd", "ConnectionReleased");
-
-    assertEquals(expectedEvents, listener.recordedEventTypes());
+    assertSuccessfulEventOrder();
   }
 
   @Test public void successfulChunkedHttpsCallEventSequence() throws IOException {
     enableTlsWithTunnel(false);
+    server.setProtocols(Arrays.asList(Protocol.HTTP_1_1));
     server.enqueue(
         new MockResponse().setBodyDelay(100, TimeUnit.MILLISECONDS).setChunkedBody("Hello!", 2));
 
-    Call call = client.newCall(new Request.Builder()
-        .url(server.url("/"))
-        .build());
-    Response response = call.execute();
-    assertEquals(200, response.code());
-    response.body().close();
+    assertSuccessfulEventOrder();
+  }
 
-    List<String> expectedEvents = asList("FetchStart", "DnsStart", "DnsEnd", "ConnectionAcquired",
-            "ConnectStart", "SecureConnectStart", "SecureConnectEnd", "ConnectEnd",
-            "RequestHeadersStart", "RequestHeadersEnd", "ResponseHeadersStart", "ResponseHeadersEnd",
-            "ResponseBodyStart", "FetchEnd", "ResponseBodyEnd", "ConnectionReleased");
+  @Test public void successfulChunkedH2CallEventSequence() throws IOException {
+    enableTlsWithTunnel(false);
+    server.setProtocols(Arrays.asList(Protocol.HTTP_2, Protocol.HTTP_1_1));
+    server.enqueue(
+            new MockResponse().setBodyDelay(100, TimeUnit.MILLISECONDS).setChunkedBody("Hello!", 2));
 
-    assertEquals(expectedEvents, listener.recordedEventTypes());
+    assertSuccessfulEventOrder();
   }
 
   @Test public void successfulDnsLookup() throws IOException {
