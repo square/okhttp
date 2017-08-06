@@ -39,6 +39,7 @@ import okhttp3.mockwebserver.MockWebServer;
 import okhttp3.mockwebserver.SocketPolicy;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 
@@ -92,6 +93,7 @@ public final class EventListenerTest {
     assertEquals(expectedEvents, listener.recordedEventTypes());
   }
 
+  @Ignore
   @Test public void successfulHttpsCallEventSequence() throws IOException {
     enableTlsWithTunnel(false);
     server.enqueue(new MockResponse());
