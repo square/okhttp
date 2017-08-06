@@ -172,7 +172,7 @@ public abstract class EventListener {
    *
    * <p>{@code throwable} will be non-null in the case of a failed attempt to send the headers.
    */
-  public void requestHeadersEnd(Call call, Throwable throwable) {
+  public void requestHeadersEnd(Call call, @Nullable Throwable throwable) {
   }
 
   /**
@@ -197,7 +197,7 @@ public abstract class EventListener {
    *
    * <p>{@code throwable} will be non-null in the case of a failed attempt to send the body.
    */
-  public void requestBodyEnd(Call call, Throwable throwable) {
+  public void requestBodyEnd(Call call, @Nullable Throwable throwable) {
   }
 
   /**
@@ -221,7 +221,7 @@ public abstract class EventListener {
    *
    * <p>{@code throwable} will be non-null in the case of a failed attempt to receive the headers.
    */
-  public void responseHeadersEnd(Call call, Throwable throwable) {
+  public void responseHeadersEnd(Call call, @Nullable Throwable throwable) {
   }
 
   /**
@@ -248,7 +248,7 @@ public abstract class EventListener {
    *
    * <p>{@code throwable} will be non-null in the case of a failed attempt to send the body.
    */
-  public void responseBodyEnd(Call call, Throwable throwable) {
+  public void responseBodyEnd(Call call, @Nullable Throwable throwable) {
   }
 
   /**
@@ -261,7 +261,7 @@ public abstract class EventListener {
    *
    * <p>{@code throwable} will be non-null in the case of a failed attempt to execute the call.
    */
-  public void fetchEnd(Call call, Throwable throwable) {
+  public void fetchEnd(Call call, @Nullable Throwable throwable) {
   }
 
   public interface Factory {
