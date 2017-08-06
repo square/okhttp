@@ -42,7 +42,7 @@ import javax.annotation.Nullable;
  * scenarios. A redirect cross domain, or to use https may cause additional connection and request
  * events.
  *
- * <p>All events methods must execute fast, without external locking, cannot throw exceptions,
+ * <p>All event methods must execute fast, without external locking, cannot throw exceptions,
  * attempt to mutate the event parameters, or be reentrant back into the client.
  * Any IO - writing to files or network should be done asynchronously.
  */
