@@ -100,17 +100,17 @@ public final class EventListenerTest {
 
   private void assertSuccessfulEventOrder() throws IOException {
     Call call = client.newCall(new Request.Builder()
-            .url(server.url("/"))
-            .build());
+        .url(server.url("/"))
+        .build());
     Response response = call.execute();
     assertEquals(200, response.code());
     response.body().string();
     response.body().close();
 
     List<String> expectedEvents = asList("FetchStart", "DnsStart", "DnsEnd", "ConnectionAcquired",
-            "ConnectStart", "SecureConnectStart", "SecureConnectEnd", "ConnectEnd",
-            "RequestHeadersStart", "RequestHeadersEnd", "ResponseHeadersStart", "ResponseHeadersEnd",
-            "ResponseBodyStart", "FetchEnd", "ResponseBodyEnd", "ConnectionReleased");
+        "ConnectStart", "SecureConnectStart", "SecureConnectEnd", "ConnectEnd",
+        "RequestHeadersStart", "RequestHeadersEnd", "ResponseHeadersStart", "ResponseHeadersEnd",
+        "ResponseBodyStart", "FetchEnd", "ResponseBodyEnd", "ConnectionReleased");
 
     assertEquals(expectedEvents, listener.recordedEventTypes());
   }
@@ -145,7 +145,7 @@ public final class EventListenerTest {
     enableTlsWithTunnel(false);
     server.setProtocols(Arrays.asList(Protocol.HTTP_2, Protocol.HTTP_1_1));
     server.enqueue(
-            new MockResponse().setBodyDelay(100, TimeUnit.MILLISECONDS).setChunkedBody("Hello!", 2));
+        new MockResponse().setBodyDelay(100, TimeUnit.MILLISECONDS).setChunkedBody("Hello!", 2));
 
     assertSuccessfulEventOrder();
   }
