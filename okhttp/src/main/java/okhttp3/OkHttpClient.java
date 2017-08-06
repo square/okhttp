@@ -879,12 +879,24 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
       return this;
     }
 
+    /**
+     * Configure a single client scoped listener that will receive all analytic events
+     * for this client.
+     *
+     * @see EventListener for semantics and restrictions on listener implementations.
+     */
     public Builder eventListener(EventListener eventListener) {
       if (eventListener == null) throw new NullPointerException("eventListener == null");
       this.eventListenerFactory = EventListener.factory(eventListener);
       return this;
     }
 
+    /**
+     * Configure a factory to provide per-call scoped listeners that will receive analytic events
+     * for this client.
+     *
+     * @see EventListener for semantics and restrictions on listener implementations.
+     */
     public Builder eventListenerFactory(EventListener.Factory eventListenerFactory) {
       if (eventListenerFactory == null) {
         throw new NullPointerException("eventListenerFactory == null");

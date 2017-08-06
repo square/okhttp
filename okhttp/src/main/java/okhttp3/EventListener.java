@@ -21,6 +21,28 @@ import java.net.Proxy;
 import java.util.List;
 import javax.annotation.Nullable;
 
+/**
+ * EventListener for analytic events for an OkHttpClient instance.
+ *
+ * <p>All start/connect/acquire events will eventually receive a matching end/release event.
+ *
+ * <p>Nesting is as follows
+ * <ul>
+ * <li>call -> (dns -> connect -> secure connect)* -> request events</li>
+ * <li>call -> (connection acquire/release)*</li>
+ * </ul>
+ *
+ * <p>Request events are ordered: requestHeaders -> requestBody -> responseHeaders -> responseBody
+ *
+ * <p>Since connections may be reused the dns and connect events may not be present for a call,
+ * or may be repeated in case of failure retries, even concurrently in case of happy eyeballs type
+ * scenarios. A redirect cross domain, or to use https may cause additional connection and request
+ * events.
+ *
+ * <p>All events must fast, without external locking, cannot throw exceptions,
+ * attempt to mutate the event parameters, or be reentrant back into the client.
+ * Any IO - writing to files or network should be done asynchronously.
+ */
 public abstract class EventListener {
   public static final EventListener NONE = new EventListener() {
   };
