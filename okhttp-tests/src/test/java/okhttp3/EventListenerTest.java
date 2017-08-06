@@ -38,11 +38,15 @@ import okhttp3.internal.tls.SslClient;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import okhttp3.mockwebserver.SocketPolicy;
+import org.hamcrest.CoreMatchers;
+import org.hamcrest.Matcher;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.matchers.JUnitMatchers;
 
+import static java.util.Arrays.asList;
 import static okhttp3.TestUtil.defaultClient;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -51,6 +55,8 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.junit.Assume.assumeThat;
+import static org.junit.Assume.assumeTrue;
 
 public final class EventListenerTest {
   @Rule public final MockWebServer server = new MockWebServer();
@@ -85,7 +91,7 @@ public final class EventListenerTest {
     assertEquals(200, response.code());
     response.body().close();
 
-    List<String> expectedEvents = Arrays.asList("FetchStart",
+    List<String> expectedEvents = asList("FetchStart",
         "DnsStart", "DnsEnd", "ConnectStart", "ConnectEnd",
         "ConnectionAcquired", "RequestHeadersStart", "RequestHeadersEnd",
         "ResponseHeadersStart", "ResponseHeadersEnd", "ResponseBodyStart",
@@ -93,7 +99,32 @@ public final class EventListenerTest {
     assertEquals(expectedEvents, listener.recordedEventTypes());
   }
 
+  @Test public void successfulEmptyH2CallEventSequence() throws IOException {
+    enableTlsWithTunnel(false);
+    server.enqueue(new MockResponse());
+
+    Call call = client.newCall(new Request.Builder()
+            .url(server.url("/"))
+            .build());
+    Response response = call.execute();
+    assertEquals(200, response.code());
+    response.body().close();
+
+    assumeTrue("Not running in H2 supported mode", response.protocol == Protocol.HTTP_2);
+
+    List<String> expectedEvents = asList("FetchStart",
+              "DnsStart", "DnsEnd", "ConnectStart", "SecureConnectStart",
+              "SecureConnectEnd", "ConnectEnd",
+              "ConnectionAcquired", "RequestHeadersStart", "RequestHeadersEnd",
+              "ResponseHeadersStart", "ResponseHeadersEnd", "ResponseBodyStart",
+              "ConnectionReleased", "FetchEnd", "ResponseBodyEnd");
+
+    assertEquals(expectedEvents, listener.recordedEventTypes());
+  }
+
   @Test public void successfulEmptyHttpsCallEventSequence() throws IOException {
+    client = client.newBuilder().protocols(asList(Protocol.HTTP_1_1)).build();
+
     enableTlsWithTunnel(false);
     server.enqueue(new MockResponse());
 
@@ -104,23 +135,12 @@ public final class EventListenerTest {
     assertEquals(200, response.code());
     response.body().close();
 
-    // ordering of response body end currently differs
-    List<String> expectedEvents;
-    if (response.protocol == Protocol.HTTP_2) {
-      expectedEvents = Arrays.asList("FetchStart",
-          "DnsStart", "DnsEnd", "ConnectStart", "SecureConnectStart",
-          "SecureConnectEnd", "ConnectEnd",
-          "ConnectionAcquired", "RequestHeadersStart", "RequestHeadersEnd",
-          "ResponseHeadersStart", "ResponseHeadersEnd", "ResponseBodyStart",
-          "ConnectionReleased", "FetchEnd", "ResponseBodyEnd");
-    } else {
-      expectedEvents = Arrays.asList("FetchStart",
+    List<String> expectedEvents = asList("FetchStart",
           "DnsStart", "DnsEnd", "ConnectStart", "SecureConnectStart",
           "SecureConnectEnd", "ConnectEnd",
           "ConnectionAcquired", "RequestHeadersStart", "RequestHeadersEnd",
           "ResponseHeadersStart", "ResponseHeadersEnd", "ResponseBodyStart",
           "ResponseBodyEnd", "ConnectionReleased", "FetchEnd");
-    }
 
     assertEquals(expectedEvents, listener.recordedEventTypes());
   }
@@ -138,7 +158,7 @@ public final class EventListenerTest {
     response.body().close();
 
     // ordering of response body end currently differs
-    List<String> expectedEvents = Arrays.asList("FetchStart",
+    List<String> expectedEvents = asList("FetchStart",
         "DnsStart", "DnsEnd", "ConnectStart", "SecureConnectStart",
         "SecureConnectEnd", "ConnectEnd",
         "ConnectionAcquired", "RequestHeadersStart", "RequestHeadersEnd",
