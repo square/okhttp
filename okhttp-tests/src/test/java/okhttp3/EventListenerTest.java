@@ -38,13 +38,10 @@ import okhttp3.internal.tls.SslClient;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import okhttp3.mockwebserver.SocketPolicy;
-import org.hamcrest.CoreMatchers;
-import org.hamcrest.Matcher;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.matchers.JUnitMatchers;
 
 import static java.util.Arrays.asList;
 import static okhttp3.TestUtil.defaultClient;
@@ -55,7 +52,6 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
-import static org.junit.Assume.assumeThat;
 import static org.junit.Assume.assumeTrue;
 
 public final class EventListenerTest {
@@ -73,6 +69,9 @@ public final class EventListenerTest {
         .dns(singleDns)
         .eventListener(listener)
         .build();
+
+    listener.forbidLock(client.connectionPool());
+    listener.forbidLock(client.dispatcher());
   }
 
   @After public void tearDown() throws Exception {
@@ -82,20 +81,21 @@ public final class EventListenerTest {
   }
 
   @Test public void successfulCallEventSequence() throws IOException {
-    server.enqueue(new MockResponse());
+    server.enqueue(new MockResponse()
+        .setBody("abc"));
 
     Call call = client.newCall(new Request.Builder()
         .url(server.url("/"))
         .build());
     Response response = call.execute();
     assertEquals(200, response.code());
+    assertEquals("abc", response.body().string());
     response.body().close();
 
-    List<String> expectedEvents = asList("FetchStart",
-        "DnsStart", "DnsEnd", "ConnectStart", "ConnectEnd",
-        "ConnectionAcquired", "RequestHeadersStart", "RequestHeadersEnd",
-        "ResponseHeadersStart", "ResponseHeadersEnd", "ResponseBodyStart",
-        "ResponseBodyEnd", "ConnectionReleased", "FetchEnd");
+    List<String> expectedEvents = Arrays.asList("FetchStart", "DnsStart", "DnsEnd",
+        "ConnectionAcquired", "ConnectStart", "ConnectEnd", "RequestHeadersStart",
+        "RequestHeadersEnd", "ResponseHeadersStart", "ResponseHeadersEnd", "ResponseBodyStart",
+        "FetchEnd", "ResponseBodyEnd", "ConnectionReleased");
     assertEquals(expectedEvents, listener.recordedEventTypes());
   }
 
@@ -112,12 +112,10 @@ public final class EventListenerTest {
 
     assumeTrue("Not running in H2 supported mode", response.protocol == Protocol.HTTP_2);
 
-    List<String> expectedEvents = asList("FetchStart",
-              "DnsStart", "DnsEnd", "ConnectStart", "SecureConnectStart",
-              "SecureConnectEnd", "ConnectEnd",
-              "ConnectionAcquired", "RequestHeadersStart", "RequestHeadersEnd",
-              "ResponseHeadersStart", "ResponseHeadersEnd", "ResponseBodyStart",
-              "ConnectionReleased", "FetchEnd", "ResponseBodyEnd");
+    List<String> expectedEvents = asList("FetchStart", "DnsStart", "DnsEnd", "ConnectionAcquired",
+            "ConnectStart", "SecureConnectStart", "SecureConnectEnd", "ConnectEnd",
+            "RequestHeadersStart", "RequestHeadersEnd", "ResponseHeadersStart", "ResponseHeadersEnd",
+            "ResponseBodyStart", "FetchEnd", "ResponseBodyEnd", "ConnectionReleased");
 
     assertEquals(expectedEvents, listener.recordedEventTypes());
   }
@@ -126,21 +124,21 @@ public final class EventListenerTest {
     client = client.newBuilder().protocols(asList(Protocol.HTTP_1_1)).build();
 
     enableTlsWithTunnel(false);
-    server.enqueue(new MockResponse());
+    server.enqueue(new MockResponse()
+        .setBody("abc"));
 
     Call call = client.newCall(new Request.Builder()
         .url(server.url("/"))
         .build());
     Response response = call.execute();
     assertEquals(200, response.code());
+    assertEquals("abc", response.body().string());
     response.body().close();
 
-    List<String> expectedEvents = asList("FetchStart",
-          "DnsStart", "DnsEnd", "ConnectStart", "SecureConnectStart",
-          "SecureConnectEnd", "ConnectEnd",
-          "ConnectionAcquired", "RequestHeadersStart", "RequestHeadersEnd",
-          "ResponseHeadersStart", "ResponseHeadersEnd", "ResponseBodyStart",
-          "ResponseBodyEnd", "ConnectionReleased", "FetchEnd");
+    List<String> expectedEvents = asList("FetchStart", "DnsStart", "DnsEnd", "ConnectionAcquired",
+            "ConnectStart", "SecureConnectStart", "SecureConnectEnd", "ConnectEnd",
+            "RequestHeadersStart", "RequestHeadersEnd", "ResponseHeadersStart", "ResponseHeadersEnd",
+            "ResponseBodyStart", "FetchEnd", "ResponseBodyEnd", "ConnectionReleased");
 
     assertEquals(expectedEvents, listener.recordedEventTypes());
   }
@@ -157,13 +155,10 @@ public final class EventListenerTest {
     assertEquals(200, response.code());
     response.body().close();
 
-    // ordering of response body end currently differs
-    List<String> expectedEvents = asList("FetchStart",
-        "DnsStart", "DnsEnd", "ConnectStart", "SecureConnectStart",
-        "SecureConnectEnd", "ConnectEnd",
-        "ConnectionAcquired", "RequestHeadersStart", "RequestHeadersEnd",
-        "ResponseHeadersStart", "ResponseHeadersEnd", "ResponseBodyStart",
-        "ConnectionReleased", "FetchEnd", "ResponseBodyEnd");
+    List<String> expectedEvents = asList("FetchStart", "DnsStart", "DnsEnd", "ConnectionAcquired",
+            "ConnectStart", "SecureConnectStart", "SecureConnectEnd", "ConnectEnd",
+            "RequestHeadersStart", "RequestHeadersEnd", "ResponseHeadersStart", "ResponseHeadersEnd",
+            "ResponseBodyStart", "FetchEnd", "ResponseBodyEnd", "ConnectionReleased");
 
     assertEquals(expectedEvents, listener.recordedEventTypes());
   }

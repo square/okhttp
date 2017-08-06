@@ -119,7 +119,7 @@ public final class RetryAndFollowUpInterceptor implements Interceptor {
         throw new IOException("Canceled");
       }
 
-      Response response = null;
+      Response response;
       boolean releaseConnection = true;
       try {
         response = realChain.proceed(request, streamAllocation, null, null);
