@@ -35,6 +35,7 @@ import okhttp3.internal.http.HttpCodec;
 import okhttp3.internal.http.RealResponseBody;
 import okhttp3.internal.http.RequestLine;
 import okhttp3.internal.http.StatusLine;
+import okio.Buffer;
 import okio.ByteString;
 import okio.ForwardingSource;
 import okio.Okio;
@@ -200,11 +201,24 @@ public final class Http2Codec implements HttpCodec {
       super(delegate);
     }
 
+    @Override public long read(Buffer sink, long byteCount) throws IOException {
+      try {
+        return delegate().read(sink, byteCount);
+      } catch (IOException e) {
+        endOfInput(e);
+        throw e;
+      }
+    }
+
     @Override public void close() throws IOException {
-      if (completed) return;
       super.close();
+      endOfInput(null);
+    }
+
+    private void endOfInput(IOException e) {
+      if (completed) return;
       completed = true;
-      streamAllocation.eventListener.responseBodyEnd(streamAllocation.call, null);
+      streamAllocation.eventListener.responseBodyEnd(streamAllocation.call, e);
       streamAllocation.streamFinished(false, Http2Codec.this);
     }
   }

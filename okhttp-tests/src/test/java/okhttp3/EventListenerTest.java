@@ -29,6 +29,7 @@ import okhttp3.RecordingEventListener.ConnectStart;
 import okhttp3.RecordingEventListener.ConnectionAcquired;
 import okhttp3.RecordingEventListener.DnsEnd;
 import okhttp3.RecordingEventListener.DnsStart;
+import okhttp3.RecordingEventListener.ResponseBodyEnd;
 import okhttp3.RecordingEventListener.SecureConnectEnd;
 import okhttp3.RecordingEventListener.SecureConnectStart;
 import okhttp3.internal.DoubleInetAddressDns;
@@ -38,6 +39,7 @@ import okhttp3.internal.tls.SslClient;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import okhttp3.mockwebserver.SocketPolicy;
+import okio.Buffer;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -645,6 +647,44 @@ public final class EventListenerTest {
 
     listener.removeUpToEvent(ConnectionAcquired.class);
     listener.removeUpToEvent(ConnectionAcquired.class);
+  }
+
+  @Test public void responseBodyFailHttp1OverHttps() throws IOException {
+    enableTlsWithTunnel(false);
+    server.setProtocols(Arrays.asList(Protocol.HTTP_1_1));
+    responseBodyFail(Protocol.HTTP_1_1);
+  }
+
+  @Test public void responseBodyFailHttp2OverHttps() throws IOException {
+    enableTlsWithTunnel(false);
+    server.setProtocols(Arrays.asList(Protocol.HTTP_2, Protocol.HTTP_1_1));
+    responseBodyFail(Protocol.HTTP_2);
+  }
+
+  @Test public void responseBodyFailHttp() throws IOException {
+    responseBodyFail(Protocol.HTTP_1_1);
+  }
+
+  private void responseBodyFail(Protocol expectedProtocol) throws IOException {
+    // Use a 2 MiB body so the disconnect won't happen until the client has read some data.
+    int responseBodySize = 2 * 1024 * 1024; // 2 MiB
+    server.enqueue(new MockResponse()
+        .setBody(new Buffer().write(new byte[responseBodySize]))
+        .setSocketPolicy(SocketPolicy.DISCONNECT_DURING_RESPONSE_BODY));
+
+    Call call = client.newCall(new Request.Builder()
+        .url(server.url("/"))
+        .build());
+    Response response = call.execute();
+    assertEquals(expectedProtocol, response.protocol());
+    try {
+      response.body.string();
+      fail();
+    } catch (IOException expected) {
+    }
+
+    ResponseBodyEnd responseBodyEnd = listener.removeUpToEvent(ResponseBodyEnd.class);
+    assertNotNull(responseBodyEnd.throwable);
   }
 
   private void enableTlsWithTunnel(boolean tunnelProxy) {

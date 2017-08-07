@@ -949,7 +949,7 @@ public final class MockWebServer extends ExternalResource implements Closeable {
       if (body != null) {
         BufferedSink sink = Okio.buffer(stream.getSink());
         sleepIfDelayed(response);
-        throttledTransfer(response, socket, body, sink, bodyLimit, false);
+        throttledTransfer(response, socket, body, sink, body.size(), false);
         sink.close();
       } else if (closeStreamAfterHeaders) {
         stream.close(ErrorCode.NO_ERROR);
