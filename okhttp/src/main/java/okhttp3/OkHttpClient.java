@@ -216,6 +216,7 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
   final boolean followSslRedirects;
   final boolean followRedirects;
   final boolean retryOnConnectionFailure;
+  final boolean skipExtensiveHealthChecks;
   final int connectTimeout;
   final int readTimeout;
   final int writeTimeout;
@@ -263,6 +264,7 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
     this.followSslRedirects = builder.followSslRedirects;
     this.followRedirects = builder.followRedirects;
     this.retryOnConnectionFailure = builder.retryOnConnectionFailure;
+    this.skipExtensiveHealthChecks = builder.skipExtensiveHealthChecks;
     this.connectTimeout = builder.connectTimeout;
     this.readTimeout = builder.readTimeout;
     this.writeTimeout = builder.writeTimeout;
@@ -379,6 +381,10 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
     return retryOnConnectionFailure;
   }
 
+  public boolean skipExtensiveHealthChecks() {
+    return skipExtensiveHealthChecks;
+  }
+
   public Dispatcher dispatcher() {
     return dispatcher;
   }
@@ -457,6 +463,7 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
     boolean followSslRedirects;
     boolean followRedirects;
     boolean retryOnConnectionFailure;
+    boolean skipExtensiveHealthChecks;
     int connectTimeout;
     int readTimeout;
     int writeTimeout;
@@ -479,6 +486,7 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
       followSslRedirects = true;
       followRedirects = true;
       retryOnConnectionFailure = true;
+      skipExtensiveHealthChecks = false;
       connectTimeout = 10_000;
       readTimeout = 10_000;
       writeTimeout = 10_000;
@@ -509,6 +517,7 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
       this.followSslRedirects = okHttpClient.followSslRedirects;
       this.followRedirects = okHttpClient.followRedirects;
       this.retryOnConnectionFailure = okHttpClient.retryOnConnectionFailure;
+      this.skipExtensiveHealthChecks = okHttpClient.skipExtensiveHealthChecks;
       this.connectTimeout = okHttpClient.connectTimeout;
       this.readTimeout = okHttpClient.readTimeout;
       this.writeTimeout = okHttpClient.writeTimeout;
@@ -784,6 +793,15 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
      */
     public Builder retryOnConnectionFailure(boolean retryOnConnectionFailure) {
       this.retryOnConnectionFailure = retryOnConnectionFailure;
+      return this;
+    }
+
+    /** Configure this client to skip extensive health checks so that non-GET requests will not
+     *  block for 1ms or throw a SocketTimeoutException to verify the connection is still active.
+     *  If unset, the health checks will be performed.
+     */
+    public Builder skipExtensiveHealthChecks(boolean skipExtensiveHealthChecks) {
+      this.skipExtensiveHealthChecks = skipExtensiveHealthChecks;
       return this;
     }
 
