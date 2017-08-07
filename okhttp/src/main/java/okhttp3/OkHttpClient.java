@@ -796,9 +796,9 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
       return this;
     }
 
-    /** Configure this client to skip extensive health checks so that non-GET requests will not block for 1ms
-     *  or throw a SocketTimeoutException to verify the connection is still active. If unset, the health checks
-     *  will be performed.
+    /** Configure this client to skip extensive health checks so that non-GET requests will not
+     *  block for 1ms or throw a SocketTimeoutException to verify the connection is still active.
+     *  If unset, the health checks will be performed.
      */
     public Builder skipExtensiveHealthChecks(boolean skipExtensiveHealthChecks) {
       this.skipExtensiveHealthChecks = skipExtensiveHealthChecks;
