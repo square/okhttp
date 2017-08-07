@@ -29,6 +29,7 @@ import okhttp3.RecordingEventListener.ConnectStart;
 import okhttp3.RecordingEventListener.ConnectionAcquired;
 import okhttp3.RecordingEventListener.DnsEnd;
 import okhttp3.RecordingEventListener.DnsStart;
+import okhttp3.RecordingEventListener.RequestBodyEnd;
 import okhttp3.RecordingEventListener.ResponseBodyEnd;
 import okhttp3.RecordingEventListener.SecureConnectEnd;
 import okhttp3.RecordingEventListener.SecureConnectStart;
@@ -40,6 +41,7 @@ import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import okhttp3.mockwebserver.SocketPolicy;
 import okio.Buffer;
+import okio.BufferedSink;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -684,6 +686,58 @@ public final class EventListenerTest {
     }
 
     ResponseBodyEnd responseBodyEnd = listener.removeUpToEvent(ResponseBodyEnd.class);
+    assertNotNull(responseBodyEnd.throwable);
+  }
+
+  @Test public void requestBodyFailHttp1OverHttps() throws IOException {
+    enableTlsWithTunnel(false);
+    server.setProtocols(Arrays.asList(Protocol.HTTP_1_1));
+    requestBodyFail();
+  }
+
+  @Test public void requestBodyFailHttp2OverHttps() throws IOException {
+    enableTlsWithTunnel(false);
+    server.setProtocols(Arrays.asList(Protocol.HTTP_2, Protocol.HTTP_1_1));
+    requestBodyFail();
+  }
+
+  @Test public void requestBodyFailHttp() throws IOException {
+    requestBodyFail();
+  }
+
+  private void requestBodyFail() throws IOException {
+    // Stream a 8 MiB body so the disconnect will happen before the server has read everything.
+    RequestBody requestBody = new RequestBody() {
+      @Override public MediaType contentType() {
+        return MediaType.parse("text/plain");
+      }
+
+      @Override public long contentLength() throws IOException {
+        return 1024 * 8192;
+      }
+
+      @Override public void writeTo(BufferedSink sink) throws IOException {
+        for (int i = 0; i < 1024; i++) {
+          sink.write(new byte[8192]);
+          sink.flush();
+        }
+      }
+    };
+
+    server.enqueue(new MockResponse()
+        .setSocketPolicy(SocketPolicy.DISCONNECT_DURING_REQUEST_BODY));
+
+    Call call = client.newCall(new Request.Builder()
+        .url(server.url("/"))
+        .post(requestBody)
+        .build());
+    try {
+      call.execute();
+      fail();
+    } catch (IOException expected) {
+    }
+
+    RequestBodyEnd responseBodyEnd = listener.removeUpToEvent(RequestBodyEnd.class);
     assertNotNull(responseBodyEnd.throwable);
   }
 

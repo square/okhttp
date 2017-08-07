@@ -902,8 +902,10 @@ public final class MockWebServer extends ExternalResource implements Closeable {
           readBody = false;
         }
       }
+      Headers headers = httpHeaders.build();
 
-      if (!readBody && dispatcher.peek().getSocketPolicy() == EXPECT_CONTINUE) {
+      MockResponse peek = dispatcher.peek();
+      if (!readBody && peek.getSocketPolicy() == EXPECT_CONTINUE) {
         stream.sendResponseHeaders(Collections.singletonList(
             new Header(Header.RESPONSE_STATUS, ByteString.encodeUtf8("100 Continue"))), true);
         stream.getConnection().flush();
@@ -912,12 +914,16 @@ public final class MockWebServer extends ExternalResource implements Closeable {
 
       Buffer body = new Buffer();
       if (readBody) {
-        body.writeAll(stream.getSource());
+        String contentLengthString = headers.get("content-length");
+        long byteCount = contentLengthString != null
+            ? Long.parseLong(contentLengthString)
+            : Long.MAX_VALUE;
+        throttledTransfer(peek, socket, Okio.buffer(stream.getSource()), body, byteCount, true);
       }
 
       String requestLine = method + ' ' + path + " HTTP/1.1";
       List<Integer> chunkSizes = Collections.emptyList(); // No chunked encoding for HTTP/2.
-      return new RecordedRequest(requestLine, httpHeaders.build(), chunkSizes, body.size(), body,
+      return new RecordedRequest(requestLine, headers, chunkSizes, body.size(), body,
           sequenceNumber.getAndIncrement(), socket);
     }
 
