@@ -28,55 +28,56 @@ import java.util.Set;
 public class Punycode {
 
   /**
-   * Returns whether a given combination of scripts is considered safe given Chrome's rules.
+   * Returns whether a given combination of scripts is considered safe given
+   * an approximation of Chrome's rules.
    *
-   * @param scriptsInBlock the script combination in a single block
+   * @param blocks the block combination in a single hostname section
    * @return whether the combination is considered safe.
    */
-  public static boolean safeScriptCombination(Set<Character.UnicodeScript> scriptsInBlock) {
-    if (scriptsInBlock.size() == 1) {
+  public static boolean safeScriptCombination(Set<Character.UnicodeBlock> blocks) {
+    if (blocks.size() == 1) {
       return true;
     }
 
-    if (scriptsInBlock.contains(Character.UnicodeScript.LATIN)) {
-      if (scriptsInBlock.contains(Character.UnicodeScript.CYRILLIC)) {
+    if (blocks.contains(Character.UnicodeBlock.BASIC_LATIN)) {
+      if (blocks.contains(Character.UnicodeBlock.CYRILLIC)) {
         return false;
       }
-      if (scriptsInBlock.contains(Character.UnicodeScript.GREEK)) {
+      if (blocks.contains(Character.UnicodeBlock.GREEK)) {
         return false;
       }
-      // TODO Should only be Latin (ascii)
-      scriptsInBlock.remove(Character.UnicodeScript.LATIN);
+      blocks.remove(Character.UnicodeBlock.BASIC_LATIN);
     }
 
-    if (scriptsInBlock.size() == 1) {
+    if (blocks.size() == 1) {
       return true;
     }
 
-    if (scriptsInBlock.contains(Character.UnicodeScript.HAN)) {
-      scriptsInBlock.remove(Character.UnicodeScript.HAN);
-
-      if (scriptsInBlock.size() == 2) {
-        if (scriptsInBlock.contains(Character.UnicodeScript.HIRAGANA) && scriptsInBlock.contains(
-            Character.UnicodeScript.KATAKANA)) {
-          return true;
-        }
-      } else if (scriptsInBlock.size() == 1) {
-        if (scriptsInBlock.contains(Character.UnicodeScript.HANGUL)) {
-          return true;
-        }
-        // TODO should only be Han (CJK Ideographs)
-        if (scriptsInBlock.contains(Character.UnicodeScript.BOPOMOFO)) {
-          return true;
-        }
-        if (scriptsInBlock.contains(Character.UnicodeScript.HIRAGANA)) {
-          return true;
-        }
-        if (scriptsInBlock.contains(Character.UnicodeScript.KATAKANA)) {
-          return true;
-        }
-      }
-    }
+    // TODO check valid HAN combinations
+    //if (scriptsInBlock.contains(Character.UnicodeScript.HAN)) {
+    //  scriptsInBlock.remove(Character.UnicodeBlock.HAN);
+    //
+    //  if (scriptsInBlock.size() == 2) {
+    //    if (scriptsInBlock.contains(Character.UnicodeBlock.HIRAGANA) && scriptsInBlock.contains(
+    //        Character.UnicodeBlock.KATAKANA)) {
+    //      return true;
+    //    }
+    //  } else if (scriptsInBlock.size() == 1) {
+    //    if (scriptsInBlock.contains(Character.UnicodeBlock.HANGUL)) {
+    //      return true;
+    //    }
+    //    // TODO should only be Han (CJK Ideographs)
+    //    if (scriptsInBlock.contains(Character.UnicodeBlock.BOPOMOFO)) {
+    //      return true;
+    //    }
+    //    if (scriptsInBlock.contains(Character.UnicodeBlock.HIRAGANA)) {
+    //      return true;
+    //    }
+    //    if (scriptsInBlock.contains(Character.UnicodeBlock.KATAKANA)) {
+    //      return true;
+    //    }
+    //  }
+    //}
 
     return false;
   }
@@ -89,17 +90,17 @@ public class Punycode {
    * @return whether the host string is considered safe, i.e. is not designed to confuse users.
    */
   public static boolean isDisplaySafe(String unicodeHost) {
-    Set<Character.UnicodeScript> scriptsInBlock = new LinkedHashSet<>();
+    Set<Character.UnicodeBlock> blocks = new LinkedHashSet<>();
 
     final int length = unicodeHost.length();
     for (int offset = 0; offset < length; ) {
       final int codepoint = unicodeHost.codePointAt(offset);
 
       if (codepoint == '.') {
-        if (!safeScriptCombination(scriptsInBlock)) {
+        if (!safeScriptCombination(blocks)) {
           return false;
         }
-        scriptsInBlock.clear();
+        blocks.clear();
       } else {
         // confusable with / and .
         if (codepoint == '\u2027' || codepoint == '\u0338') {
@@ -110,13 +111,13 @@ public class Punycode {
           return false;
         }
 
-        scriptsInBlock.add(Character.UnicodeScript.of(codepoint));
+        blocks.add(Character.UnicodeBlock.of(codepoint));
       }
 
       offset += Character.charCount(codepoint);
     }
 
-    if (!safeScriptCombination(scriptsInBlock)) {
+    if (!safeScriptCombination(blocks)) {
       return false;
     }
 

@@ -22,12 +22,9 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.UnknownHostException;
-import java.text.CharacterIterator;
-import java.text.StringCharacterIterator;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -42,7 +39,6 @@ import static okhttp3.internal.Util.skipLeadingAsciiWhitespace;
 import static okhttp3.internal.Util.skipTrailingAsciiWhitespace;
 import static okhttp3.internal.Util.verifyAsIpAddress;
 import static okhttp3.internal.punycode.Punycode.isDisplaySafe;
-import static okhttp3.internal.punycode.Punycode.safeScriptCombination;
 
 /**
  * A uniform resource locator (URL) with a scheme of either {@code http} or {@code https}. Use this
@@ -979,8 +975,8 @@ public final class HttpUrl {
     return PublicSuffixDatabase.get().getEffectiveTldPlusOne(host);
   }
 
-  public static String displayHost(Builder.IDNMode idnMode, String host) {
-    switch (idnMode) {
+  public static String displayHost(Builder.DisplayMode displayMode, String host) {
+    switch (displayMode) {
       case SAFE:
         String unicodeHost = IDN.toUnicode(host, 0);
         if (unicodeHost.equals(host)) {
@@ -1001,7 +997,7 @@ public final class HttpUrl {
    * @return unicode host if safe, punycode otherwise
    */
   public String displayHost() {
-    return displayHost(Builder.IDNMode.SAFE, host);
+    return displayHost(Builder.DisplayMode.SAFE, host);
   }
 
   public String toDisplayString() {
@@ -1299,10 +1295,10 @@ public final class HttpUrl {
     }
 
     @Override public String toString() {
-      return toString(IDNMode.RAW);
+      return toString(DisplayMode.RAW);
     }
 
-    private String toString(IDNMode idnMode) {
+    private String toString(DisplayMode displayMode) {
       StringBuilder result = new StringBuilder();
       result.append(scheme);
       result.append("://");
@@ -1322,7 +1318,7 @@ public final class HttpUrl {
         result.append(host);
         result.append(']');
       } else {
-        result.append(displayHost(idnMode, host));
+        result.append(displayHost(displayMode, host));
       }
 
       int effectivePort = effectivePort();
@@ -1347,10 +1343,10 @@ public final class HttpUrl {
     }
 
     public String toDisplayString() {
-      return toString(IDNMode.SAFE);
+      return toString(DisplayMode.SAFE);
     }
 
-    enum IDNMode {
+    enum DisplayMode {
       RAW,
       SAFE,
       UNICODE
