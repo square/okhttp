@@ -26,6 +26,8 @@ import java.util.Set;
  * @see <a href="https://wiki.mozilla.org/IDN_Display_Algorithm">Mozilla Treatment</a>
  */
 public class Punycode {
+  private Punycode() {
+  }
 
   /**
    * Returns whether a given combination of scripts is considered safe given

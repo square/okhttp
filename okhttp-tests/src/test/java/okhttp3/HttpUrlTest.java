@@ -23,6 +23,7 @@ import java.net.UnknownHostException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashSet;
+import java.util.regex.Pattern;
 import okhttp3.UrlComponentEncodingTester.Component;
 import okhttp3.UrlComponentEncodingTester.Encoding;
 import org.junit.Ignore;
@@ -32,6 +33,7 @@ import static java.util.Collections.singletonList;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 public final class HttpUrlTest {
@@ -1550,7 +1552,7 @@ public final class HttpUrlTest {
     assertEquals("q=%D1%80%D1%84", url.encodedQuery());
     assertEquals("http://test.org/search?q=%D1%80%D1%84", url.toString());
     // TODO display the unencoded params and values
-    //assertEquals("http://test.org/search?q=рф", url.toDisplayString());
+    assertEquals("http://test.org/search?q=рф", url.toDisplayString());
   }
 
   @Test public void testDisplayStringPunyCodeGreek() {
@@ -1570,34 +1572,36 @@ public final class HttpUrlTest {
   }
 
   @Test public void testDisplayStringReversible() {
-    assertReversible("http://她是這麼說的.net/file.html", true);
-    assertReversible("http://en.wikipedia.org/file.html", true);
-    assertReversible("http://правительство.рф/file.html", true);
-    // TODO
-    //assertReversible("http://правительство.рф/search?q=рф", true);
-    assertReversible("http://ακρόπολητώρα.org/file.html", true);
+    assertReversible("http://她是這麼說的.net/file.html", "她是這麼說的");
+    assertReversible("http://en.wikipedia.org/file.html", "en.wikipedia.org");
+    assertReversible("http://правительство.рф/file.html", "правительство.рф");
+    assertReversible("http://ακρόπολητώρα.org/file.html", "ακρόπολητώρα.org");
 
-    assertReversible("http://☃.net/file.html", false);
+    assertReversible("http://☃.net/file.html", "");
     // mixed characters in wikipedia
-    assertReversible("http://wіkіреdіа.org/file.html", false);
+    assertReversible("http://wіkіреdіа.org/file.html", "");
+
+    assertReversible("http://правительство.рф/search?q=рф", "правительство.рф");
+    assertReversible("http://en.wikipedia.org/search?q", "q");
+    assertReversible("http://en.wikipedia.org/search?q=a b", "q=a b");
+    // TODO how to handle?
+    //assertReversible("http://en.wikipedia.org/search?q=a+b", "q=a b");
+    //assertReversible("http://en.wikipedia.org/search?q=a%20b", "q=a%20b");
   }
 
-  private void assertReversible(String originalUrlString, boolean safe) {
-    HttpUrl origianlUrl = HttpUrl.parse(originalUrlString);
+  private void assertReversible(String originalUrlString, String toStringCheck) {
+    HttpUrl originalUrl = HttpUrl.parse(originalUrlString);
 
-    String urlToString = origianlUrl.toString();
-    String urlToDisplayString = origianlUrl.toDisplayString();
+    String urlToString = originalUrl.toString();
+    String urlToDisplayString = originalUrl.toDisplayString();
 
-    if (safe) {
-      assertEquals(originalUrlString, urlToDisplayString);
-    } else {
-      assertEquals(urlToString, urlToDisplayString);
-    }
+    assertTrue("Couldn't find pattern '" + toStringCheck + "' in '" + urlToDisplayString + "'",
+        Pattern.compile(toStringCheck).matcher(urlToDisplayString).find());
 
     HttpUrl reparsedUrl = HttpUrl.parse(urlToString);
     HttpUrl reparsedDisplayUrl = HttpUrl.parse(urlToDisplayString);
 
-    assertEquals(origianlUrl, reparsedUrl);
-    assertEquals(origianlUrl, reparsedDisplayUrl);
+    assertEquals(originalUrl, reparsedUrl);
+    assertEquals(originalUrl, reparsedDisplayUrl);
   }
 }

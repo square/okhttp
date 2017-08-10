@@ -1000,6 +1000,15 @@ public final class HttpUrl {
     return displayHost(Builder.DisplayMode.SAFE, host);
   }
 
+  /**
+   * Returns a safe version of the HttpUrl as a string that will always return an equal
+   * instance when passed back into {@link #parse(String)}.  The host may be left as punycode
+   * if the host is not known to be safe e.g. may contain a confusing mix of unicode blocks.
+   *
+   * <p>This string is generally the form the user would expect to see in a browser location bar.
+   *
+   * @return an equivalent string represention to the original url String.
+   */
   public String toDisplayString() {
     return this.newBuilder().toDisplayString();
   }
@@ -1331,7 +1340,12 @@ public final class HttpUrl {
 
       if (encodedQueryNamesAndValues != null) {
         result.append('?');
-        namesAndValuesToQueryString(result, encodedQueryNamesAndValues);
+        if (displayMode != DisplayMode.RAW) {
+          List<String> decoded = percentDecode(encodedQueryNamesAndValues, true);
+          namesAndValuesToQueryString(result, decoded);
+        } else {
+          namesAndValuesToQueryString(result, encodedQueryNamesAndValues);
+        }
       }
 
       if (encodedFragment != null) {
@@ -1803,7 +1817,7 @@ public final class HttpUrl {
     return percentDecode(encoded, 0, encoded.length(), plusIsSpace);
   }
 
-  private List<String> percentDecode(List<String> list, boolean plusIsSpace) {
+  private static List<String> percentDecode(List<String> list, boolean plusIsSpace) {
     int size = list.size();
     List<String> result = new ArrayList<>(size);
     for (int i = 0; i < size; i++) {
