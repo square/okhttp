@@ -21,6 +21,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.UnknownHostException;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -28,6 +29,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import javax.annotation.Nullable;
+import okhttp3.internal.Util;
 import okhttp3.internal.publicsuffix.PublicSuffixDatabase;
 import okio.Buffer;
 
@@ -1096,7 +1098,8 @@ public final class HttpUrl {
     public Builder setPathSegment(int index, String pathSegment) {
       if (pathSegment == null) throw new NullPointerException("pathSegment == null");
       String canonicalPathSegment = canonicalize(
-          pathSegment, 0, pathSegment.length(), PATH_SEGMENT_ENCODE_SET, false, false, false, true);
+          pathSegment, 0, pathSegment.length(), PATH_SEGMENT_ENCODE_SET, false, false, false, true,
+              null);
       if (isDot(canonicalPathSegment) || isDotDot(canonicalPathSegment)) {
         throw new IllegalArgumentException("unexpected path segment: " + pathSegment);
       }
@@ -1109,7 +1112,8 @@ public final class HttpUrl {
         throw new NullPointerException("encodedPathSegment == null");
       }
       String canonicalPathSegment = canonicalize(encodedPathSegment,
-          0, encodedPathSegment.length(), PATH_SEGMENT_ENCODE_SET, true, false, false, true);
+          0, encodedPathSegment.length(), PATH_SEGMENT_ENCODE_SET, true, false, false, true,
+          null);
       encodedPathSegments.set(index, canonicalPathSegment);
       if (isDot(canonicalPathSegment) || isDotDot(canonicalPathSegment)) {
         throw new IllegalArgumentException("unexpected path segment: " + encodedPathSegment);
@@ -1364,19 +1368,22 @@ public final class HttpUrl {
                 int passwordColonOffset = delimiterOffset(
                     input, pos, componentDelimiterOffset, ':');
                 String canonicalUsername = canonicalize(
-                    input, pos, passwordColonOffset, USERNAME_ENCODE_SET, true, false, false, true);
+                    input, pos, passwordColonOffset, USERNAME_ENCODE_SET, true, false, false, true,
+                    null);
                 this.encodedUsername = hasUsername
                     ? this.encodedUsername + "%40" + canonicalUsername
                     : canonicalUsername;
                 if (passwordColonOffset != componentDelimiterOffset) {
                   hasPassword = true;
                   this.encodedPassword = canonicalize(input, passwordColonOffset + 1,
-                      componentDelimiterOffset, PASSWORD_ENCODE_SET, true, false, false, true);
+                      componentDelimiterOffset, PASSWORD_ENCODE_SET, true, false, false, true,
+                      null);
                 }
                 hasUsername = true;
               } else {
                 this.encodedPassword = this.encodedPassword + "%40" + canonicalize(input, pos,
-                    componentDelimiterOffset, PASSWORD_ENCODE_SET, true, false, false, true);
+                    componentDelimiterOffset, PASSWORD_ENCODE_SET, true, false, false, true,
+                    null);
               }
               pos = componentDelimiterOffset + 1;
               break;
@@ -1423,14 +1430,14 @@ public final class HttpUrl {
       if (pos < limit && input.charAt(pos) == '?') {
         int queryDelimiterOffset = delimiterOffset(input, pos, limit, '#');
         this.encodedQueryNamesAndValues = queryStringToNamesAndValues(canonicalize(
-            input, pos + 1, queryDelimiterOffset, QUERY_ENCODE_SET, true, false, true, true));
+            input, pos + 1, queryDelimiterOffset, QUERY_ENCODE_SET, true, false, true, true, null));
         pos = queryDelimiterOffset;
       }
 
       // Fragment.
       if (pos < limit && input.charAt(pos) == '#') {
         this.encodedFragment = canonicalize(
-            input, pos + 1, limit, FRAGMENT_ENCODE_SET, true, false, false, false);
+            input, pos + 1, limit, FRAGMENT_ENCODE_SET, true, false, false, false, null);
       }
 
       return ParseResult.SUCCESS;
@@ -1467,7 +1474,7 @@ public final class HttpUrl {
     private void push(String input, int pos, int limit, boolean addTrailingSlash,
         boolean alreadyEncoded) {
       String segment = canonicalize(
-          input, pos, limit, PATH_SEGMENT_ENCODE_SET, alreadyEncoded, false, false, true);
+          input, pos, limit, PATH_SEGMENT_ENCODE_SET, alreadyEncoded, false, false, true, null);
       if (isDot(segment)) {
         return; // Skip '.' path segments.
       }
@@ -1743,7 +1750,7 @@ public final class HttpUrl {
     private static int parsePort(String input, int pos, int limit) {
       try {
         // Canonicalize the port string to skip '\n' etc.
-        String portString = canonicalize(input, pos, limit, "", false, false, false, true);
+        String portString = canonicalize(input, pos, limit, "", false, false, false, true, null);
         int i = Integer.parseInt(portString);
         if (i > 0 && i <= 65535) return i;
         return -1;
@@ -1832,9 +1839,11 @@ public final class HttpUrl {
    * @param strict true to encode '%' if it is not the prefix of a valid percent encoding.
    * @param plusIsSpace true to encode '+' as "%2B" if it is not already encoded.
    * @param asciiOnly true to encode all non-ASCII codepoints.
+   * @param charset which charset to use, null equals UTF-8.
    */
   static String canonicalize(String input, int pos, int limit, String encodeSet,
-      boolean alreadyEncoded, boolean strict, boolean plusIsSpace, boolean asciiOnly) {
+      boolean alreadyEncoded, boolean strict, boolean plusIsSpace, boolean asciiOnly,
+      Charset charset) {
     int codePoint;
     for (int i = pos; i < limit; i += Character.charCount(codePoint)) {
       codePoint = input.codePointAt(i);
@@ -1848,7 +1857,7 @@ public final class HttpUrl {
         Buffer out = new Buffer();
         out.writeUtf8(input, pos, i);
         canonicalize(out, input, i, limit, encodeSet, alreadyEncoded, strict, plusIsSpace,
-            asciiOnly);
+            asciiOnly, charset);
         return out.readUtf8();
       }
     }
@@ -1858,8 +1867,9 @@ public final class HttpUrl {
   }
 
   static void canonicalize(Buffer out, String input, int pos, int limit, String encodeSet,
-      boolean alreadyEncoded, boolean strict, boolean plusIsSpace, boolean asciiOnly) {
-    Buffer utf8Buffer = null; // Lazily allocated.
+      boolean alreadyEncoded, boolean strict, boolean plusIsSpace, boolean asciiOnly,
+      Charset charset) {
+    Buffer encodedCharBuffer = null; // Lazily allocated.
     int codePoint;
     for (int i = pos; i < limit; i += Character.charCount(codePoint)) {
       codePoint = input.codePointAt(i);
@@ -1875,12 +1885,19 @@ public final class HttpUrl {
           || encodeSet.indexOf(codePoint) != -1
           || codePoint == '%' && (!alreadyEncoded || strict && !percentEncoded(input, i, limit))) {
         // Percent encode this character.
-        if (utf8Buffer == null) {
-          utf8Buffer = new Buffer();
+        if (encodedCharBuffer == null) {
+          encodedCharBuffer = new Buffer();
         }
-        utf8Buffer.writeUtf8CodePoint(codePoint);
-        while (!utf8Buffer.exhausted()) {
-          int b = utf8Buffer.readByte() & 0xff;
+
+        if (charset == null || charset.equals(Util.UTF_8)) {
+          encodedCharBuffer.writeUtf8CodePoint(codePoint);
+        } else {
+          encodedCharBuffer.writeString(input.substring(i, i + Character.charCount(codePoint)),
+              charset);
+        }
+
+        while (!encodedCharBuffer.exhausted()) {
+          int b = encodedCharBuffer.readByte() & 0xff;
           out.writeByte('%');
           out.writeByte(HEX_DIGITS[(b >> 4) & 0xf]);
           out.writeByte(HEX_DIGITS[b & 0xf]);
@@ -1893,8 +1910,15 @@ public final class HttpUrl {
   }
 
   static String canonicalize(String input, String encodeSet, boolean alreadyEncoded, boolean strict,
-      boolean plusIsSpace, boolean asciiOnly) {
+      boolean plusIsSpace, boolean asciiOnly, Charset charset) {
     return canonicalize(
-        input, 0, input.length(), encodeSet, alreadyEncoded, strict, plusIsSpace, asciiOnly);
+        input, 0, input.length(), encodeSet, alreadyEncoded, strict, plusIsSpace, asciiOnly,
+            charset);
+  }
+
+  static String canonicalize(String input, String encodeSet, boolean alreadyEncoded, boolean strict,
+      boolean plusIsSpace, boolean asciiOnly) {
+   return canonicalize(
+        input, 0, input.length(), encodeSet, alreadyEncoded, strict, plusIsSpace, asciiOnly, null);
   }
 }
