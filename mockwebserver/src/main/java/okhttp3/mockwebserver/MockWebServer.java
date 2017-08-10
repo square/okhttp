@@ -690,6 +690,7 @@ public final class MockWebServer extends ExternalResource implements Closeable {
 
   private void writeHttpResponse(Socket socket, BufferedSink sink, MockResponse response)
       throws IOException {
+    sleepIfDelayed(response.getBodyDelay(TimeUnit.MILLISECONDS));
     sink.writeUtf8(response.getStatus());
     sink.writeUtf8("\r\n");
 
@@ -705,12 +706,11 @@ public final class MockWebServer extends ExternalResource implements Closeable {
 
     Buffer body = response.getBody();
     if (body == null) return;
-    sleepIfDelayed(response);
+    sleepIfDelayed(response.getBodyDelay(TimeUnit.MILLISECONDS));
     throttledTransfer(response, socket, body, sink, body.size(), false);
   }
 
-  private void sleepIfDelayed(MockResponse response) {
-    long delayMs = response.getBodyDelay(TimeUnit.MILLISECONDS);
+  private void sleepIfDelayed(long delayMs) {
     if (delayMs != 0) {
       try {
         Thread.sleep(delayMs);
@@ -948,13 +948,15 @@ public final class MockWebServer extends ExternalResource implements Closeable {
         http2Headers.add(new Header(headers.name(i), headers.value(i)));
       }
 
+      sleepIfDelayed(response.getHeadersDelay(TimeUnit.MILLISECONDS));
+
       Buffer body = response.getBody();
       boolean closeStreamAfterHeaders = body != null || !response.getPushPromises().isEmpty();
       stream.sendResponseHeaders(http2Headers, closeStreamAfterHeaders);
       pushPromises(stream, response.getPushPromises());
       if (body != null) {
         BufferedSink sink = Okio.buffer(stream.getSink());
-        sleepIfDelayed(response);
+        sleepIfDelayed(response.getBodyDelay(TimeUnit.MILLISECONDS));
         throttledTransfer(response, socket, body, sink, body.size(), false);
         sink.close();
       } else if (closeStreamAfterHeaders) {
