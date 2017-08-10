@@ -710,7 +710,10 @@ public final class MockWebServer extends ExternalResource implements Closeable {
   }
 
   private void sleepIfDelayed(MockResponse response) {
-    long delayMs = response.getBodyDelay(TimeUnit.MILLISECONDS);
+    sleepIfDelayed(response.getBodyDelay(TimeUnit.MILLISECONDS));
+  }
+
+  private void sleepIfDelayed(long delayMs) {
     if (delayMs != 0) {
       try {
         Thread.sleep(delayMs);
@@ -947,6 +950,8 @@ public final class MockWebServer extends ExternalResource implements Closeable {
       for (int i = 0, size = headers.size(); i < size; i++) {
         http2Headers.add(new Header(headers.name(i), headers.value(i)));
       }
+
+      sleepIfDelayed(response.getHeadersDelay(TimeUnit.MILLISECONDS));
 
       Buffer body = response.getBody();
       boolean closeStreamAfterHeaders = body != null || !response.getPushPromises().isEmpty();

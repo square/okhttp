@@ -605,8 +605,8 @@ public final class Http2Connection implements Closeable {
       }
       Http2Stream stream;
       synchronized (Http2Connection.this) {
-        // If we're shutdown, don't bother with this stream.
-        if (shutdown) return;
+        // If we're shutdown, don't bother with unprocessed streams.
+        if (shutdown && streamId > lastGoodStreamId) return;
 
         stream = getStream(streamId);
 
@@ -620,7 +620,7 @@ public final class Http2Connection implements Closeable {
           // Create a stream.
           final Http2Stream newStream = new Http2Stream(streamId, Http2Connection.this,
               false, inFinished, headerBlock);
-          lastGoodStreamId = streamId;
+          if (streamId > lastGoodStreamId) lastGoodStreamId = streamId;
           streams.put(streamId, newStream);
           executor.execute(new NamedRunnable("OkHttp %s stream %d", hostname, streamId) {
             @Override public void execute() {
@@ -725,6 +725,7 @@ public final class Http2Connection implements Closeable {
       synchronized (Http2Connection.this) {
         streamsCopy = streams.values().toArray(new Http2Stream[streams.size()]);
         shutdown = true;
+        Http2Connection.this.lastGoodStreamId = lastGoodStreamId;
       }
 
       // Fail all streams created after the last good stream ID.
