@@ -1892,8 +1892,7 @@ public final class HttpUrl {
         if (charset == null || charset.equals(Util.UTF_8)) {
           encodedCharBuffer.writeUtf8CodePoint(codePoint);
         } else {
-          encodedCharBuffer.writeString(input.substring(i, i + Character.charCount(codePoint)),
-              charset);
+          encodedCharBuffer.writeString(input, i, i + Character.charCount(codePoint), charset);
         }
 
         while (!encodedCharBuffer.exhausted()) {
