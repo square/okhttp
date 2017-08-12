@@ -18,6 +18,7 @@ package okhttp3;
 import java.io.IOException;
 import okio.Buffer;
 import org.junit.Test;
+import java.nio.charset.Charset;
 
 import static org.junit.Assert.assertEquals;
 
@@ -195,5 +196,18 @@ public final class FormBodyTest {
     body.writeTo(buffer);
     buffer.skip(3); // Skip "a=b" prefix.
     return buffer.readUtf8(buffer.size() - 1); // Skip the "c" suffix.
+  }
+
+  @Test public void manualCharset() throws Exception {
+    FormBody body = new FormBody.Builder(Charset.forName("ISO-8859-1"))
+        .add("name", "Nicolás")
+        .build();
+
+    String expected = "name=Nicol%E1s";
+    assertEquals(expected.length(), body.contentLength());
+
+    Buffer out = new Buffer();
+    body.writeTo(out);
+    assertEquals(expected, out.readUtf8());
   }
 }

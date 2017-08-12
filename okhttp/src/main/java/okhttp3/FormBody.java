@@ -16,6 +16,7 @@
 package okhttp3;
 
 import java.io.IOException;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
 import javax.annotation.Nullable;
@@ -105,16 +106,25 @@ public final class FormBody extends RequestBody {
   public static final class Builder {
     private final List<String> names = new ArrayList<>();
     private final List<String> values = new ArrayList<>();
+    private final Charset charset;
+
+    public Builder() {
+      this(null);
+    }
+
+    public Builder(Charset charset) {
+      this.charset = charset;
+    }
 
     public Builder add(String name, String value) {
-      names.add(HttpUrl.canonicalize(name, FORM_ENCODE_SET, false, false, true, true));
-      values.add(HttpUrl.canonicalize(value, FORM_ENCODE_SET, false, false, true, true));
+      names.add(HttpUrl.canonicalize(name, FORM_ENCODE_SET, false, false, true, true, charset));
+      values.add(HttpUrl.canonicalize(value, FORM_ENCODE_SET, false, false, true, true, charset));
       return this;
     }
 
     public Builder addEncoded(String name, String value) {
-      names.add(HttpUrl.canonicalize(name, FORM_ENCODE_SET, true, false, true, true));
-      values.add(HttpUrl.canonicalize(value, FORM_ENCODE_SET, true, false, true, true));
+      names.add(HttpUrl.canonicalize(name, FORM_ENCODE_SET, true, false, true, true, charset));
+      values.add(HttpUrl.canonicalize(value, FORM_ENCODE_SET, true, false, true, true, charset));
       return this;
     }
 
