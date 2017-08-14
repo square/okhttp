@@ -43,6 +43,9 @@ public final class MockResponse implements Cloneable {
   private long bodyDelayAmount = 0;
   private TimeUnit bodyDelayUnit = TimeUnit.MILLISECONDS;
 
+  private long headersDelayAmount = 0;
+  private TimeUnit headersDelayUnit = TimeUnit.MILLISECONDS;
+
   private List<PushPromise> promises = new ArrayList<>();
   private Settings settings;
   private WebSocketListener webSocketListener;
@@ -251,6 +254,16 @@ public final class MockResponse implements Cloneable {
 
   public long getBodyDelay(TimeUnit unit) {
     return unit.convert(bodyDelayAmount, bodyDelayUnit);
+  }
+
+  public MockResponse setHeadersDelay(long delay, TimeUnit unit) {
+    headersDelayAmount = delay;
+    headersDelayUnit = unit;
+    return this;
+  }
+
+  public long getHeadersDelay(TimeUnit unit) {
+    return unit.convert(headersDelayAmount, headersDelayUnit);
   }
 
   /**

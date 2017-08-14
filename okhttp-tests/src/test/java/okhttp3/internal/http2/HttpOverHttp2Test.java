@@ -24,12 +24,16 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.SynchronousQueue;
+
 import javax.net.ssl.HostnameVerifier;
 import okhttp3.Cache;
 import okhttp3.Call;
+import okhttp3.Callback;
 import okhttp3.Cookie;
 import okhttp3.Credentials;
 import okhttp3.Headers;
@@ -976,6 +980,31 @@ public final class HttpOverHttp2Test {
 
     assertEquals(0, server.takeRequest().getSequenceNumber());
     assertEquals(0, server.takeRequest().getSequenceNumber());
+  }
+
+  @Test public void responseHeadersAfterGoaway() throws Exception {
+    server.enqueue(new MockResponse()
+        .setHeadersDelay(1, SECONDS)
+        .setBody("ABC"));
+    server.enqueue(new MockResponse()
+        .setSocketPolicy(SocketPolicy.DISCONNECT_AT_END)
+        .setBody("DEF"));
+
+    final BlockingQueue<String> bodies = new SynchronousQueue<>();
+    Callback callback = new Callback() {
+      @Override public void onResponse(Call call, Response response) throws IOException {
+        bodies.add(response.body().string());
+      }
+      @Override public void onFailure(Call call, IOException e) {
+        System.out.println(e);
+      }
+    };
+    client.newCall(new Request.Builder().url(server.url("/")).build()).enqueue(callback);
+    client.newCall(new Request.Builder().url(server.url("/")).build()).enqueue(callback);
+
+    assertEquals("DEF", bodies.poll(2, SECONDS));
+    assertEquals("ABC", bodies.poll(2, SECONDS));
+    assertEquals(2, server.getRequestCount());
   }
 
   /**
