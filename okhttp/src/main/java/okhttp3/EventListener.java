@@ -63,10 +63,10 @@ public abstract class EventListener {
    * limits, this call may be executed well before processing the request is able to begin.
    *
    * <p>This will be invoked only once for a single {@link Call}. Retries of different routes
-   * or redirects will be handled within the boundaries of a single fetchStart and
-   * {@link #fetchEnd(Call, Throwable)} pair.
+   * or redirects will be handled within the boundaries of a single callStart and
+   * {@link #callEnd(Call, Throwable)} pair.
    */
-  public void fetchStart(Call call) {
+  public void callStart(Call call) {
   }
 
   /**
@@ -280,13 +280,13 @@ public abstract class EventListener {
    * Invoked immediately after a call has completely ended.  This includes delayed consumption
    * of response body by the caller.
    *
-   * <p>This method is always invoked after {@link #fetchStart(Call)}.
+   * <p>This method is always invoked after {@link #callStart(Call)}.
    *
    * <p>{@code throwable} will be null in the case of a successful attempt to execute the call.
    *
    * <p>{@code throwable} will be non-null in the case of a failed attempt to execute the call.
    */
-  public void fetchEnd(Call call, @Nullable Throwable throwable) {
+  public void callEnd(Call call, @Nullable Throwable throwable) {
   }
 
   public interface Factory {

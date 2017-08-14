@@ -95,10 +95,10 @@ public final class EventListenerTest {
     assertEquals("abc", response.body().string());
     response.body().close();
 
-    List<String> expectedEvents = Arrays.asList("FetchStart", "DnsStart", "DnsEnd",
+    List<String> expectedEvents = Arrays.asList("CallStart", "DnsStart", "DnsEnd",
         "ConnectionAcquired", "ConnectStart", "ConnectEnd", "RequestHeadersStart",
         "RequestHeadersEnd", "ResponseHeadersStart", "ResponseHeadersEnd", "ResponseBodyStart",
-        "FetchEnd", "ResponseBodyEnd", "ConnectionReleased");
+        "CallEnd", "ResponseBodyEnd", "ConnectionReleased");
     assertEquals(expectedEvents, listener.recordedEventTypes());
   }
 
@@ -111,10 +111,10 @@ public final class EventListenerTest {
     response.body().string();
     response.body().close();
 
-    List<String> expectedEvents = asList("FetchStart", "DnsStart", "DnsEnd", "ConnectionAcquired",
+    List<String> expectedEvents = asList("CallStart", "DnsStart", "DnsEnd", "ConnectionAcquired",
         "ConnectStart", "SecureConnectStart", "SecureConnectEnd", "ConnectEnd",
         "RequestHeadersStart", "RequestHeadersEnd", "ResponseHeadersStart", "ResponseHeadersEnd",
-        "ResponseBodyStart", "FetchEnd", "ResponseBodyEnd", "ConnectionReleased");
+        "ResponseBodyStart", "CallEnd", "ResponseBodyEnd", "ConnectionReleased");
 
     assertEquals(expectedEvents, listener.recordedEventTypes());
   }
