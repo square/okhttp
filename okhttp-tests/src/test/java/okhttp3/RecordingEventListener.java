@@ -113,8 +113,8 @@ final class RecordingEventListener extends EventListener {
     logEvent(new ConnectionReleased(call, connection));
   }
 
-  @Override public void fetchStart(Call call) {
-    logEvent(new FetchStart(call));
+  @Override public void callStart(Call call) {
+    logEvent(new CallStart(call));
   }
 
   @Override public void requestHeadersStart(Call call) {
@@ -149,8 +149,8 @@ final class RecordingEventListener extends EventListener {
     logEvent(new ResponseBodyEnd(call, throwable));
   }
 
-  @Override public void fetchEnd(Call call, Throwable throwable) {
-    logEvent(new FetchEnd(call, throwable));
+  @Override public void callEnd(Call call, Throwable throwable) {
+    logEvent(new CallEnd(call, throwable));
   }
 
   static class CallEvent {
@@ -289,22 +289,22 @@ final class RecordingEventListener extends EventListener {
     }
   }
 
-  static final class FetchStart extends CallEvent {
-    FetchStart(Call call) {
+  static final class CallStart extends CallEvent {
+    CallStart(Call call) {
       super(call);
     }
   }
 
-  static final class FetchEnd extends CallEvent {
+  static final class CallEnd extends CallEvent {
     final Throwable throwable;
 
-    FetchEnd(Call call, Throwable throwable) {
+    CallEnd(Call call, Throwable throwable) {
       super(call, throwable);
       this.throwable = throwable;
     }
 
     @Nullable @Override public CallEvent closes() {
-      return new FetchStart(call);
+      return new CallStart(call);
     }
   }
 
