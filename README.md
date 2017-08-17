@@ -19,8 +19,10 @@ or Gradle:
 compile 'com.squareup.okhttp3:okhttp:3.8.1'
 ```
 
-Snapshots of the development version are available in [Sonatype's `snapshots` repository][snap].
-
+Snapshots of the development version are available in [Sonatype's `snapshots` repository][snap]:
+```
+https://oss.sonatype.org/content/repositories/snapshots/
+```
 
 MockWebServer
 -------------
