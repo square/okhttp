@@ -121,32 +121,32 @@ final class RecordingEventListener extends EventListener {
     logEvent(new RequestHeadersStart(call));
   }
 
-  @Override public void requestHeadersEnd(Call call, Throwable throwable) {
-    logEvent(new RequestHeadersEnd(call, throwable));
+  @Override public void requestHeadersEnd(Call call, long bytesWritten, Throwable throwable) {
+    logEvent(new RequestHeadersEnd(call, bytesWritten, throwable));
   }
 
   @Override public void requestBodyStart(Call call) {
     logEvent(new RequestBodyStart(call));
   }
 
-  @Override public void requestBodyEnd(Call call, Throwable throwable) {
-    logEvent(new RequestBodyEnd(call, throwable));
+  @Override public void requestBodyEnd(Call call, long bytesWritten, Throwable throwable) {
+    logEvent(new RequestBodyEnd(call, bytesWritten, throwable));
   }
 
   @Override public void responseHeadersStart(Call call) {
     logEvent(new ResponseHeadersStart(call));
   }
 
-  @Override public void responseHeadersEnd(Call call, Throwable throwable) {
-    logEvent(new ResponseHeadersEnd(call, throwable));
+  @Override public void responseHeadersEnd(Call call, long bytesRead, Throwable throwable) {
+    logEvent(new ResponseHeadersEnd(call, bytesRead, throwable));
   }
 
   @Override public void responseBodyStart(Call call) {
     logEvent(new ResponseBodyStart(call));
   }
 
-  @Override public void responseBodyEnd(Call call, Throwable throwable) {
-    logEvent(new ResponseBodyEnd(call, throwable));
+  @Override public void responseBodyEnd(Call call, long bytesRead, Throwable throwable) {
+    logEvent(new ResponseBodyEnd(call, bytesRead, throwable));
   }
 
   @Override public void callEnd(Call call, Throwable throwable) {
@@ -316,10 +316,12 @@ final class RecordingEventListener extends EventListener {
 
   static final class RequestHeadersEnd extends CallEvent {
     final Throwable throwable;
+    final long bytesWritten;
 
-    RequestHeadersEnd(Call call, Throwable throwable) {
-      super(call, throwable);
+    RequestHeadersEnd(Call call, long bytesWritten, Throwable throwable) {
+      super(call, bytesWritten, throwable);
       this.throwable = throwable;
+      this.bytesWritten = bytesWritten;
     }
 
     @Nullable @Override public CallEvent closes() {
@@ -335,10 +337,12 @@ final class RecordingEventListener extends EventListener {
 
   static final class RequestBodyEnd extends CallEvent {
     final Throwable throwable;
+    final long bytesWritten;
 
-    RequestBodyEnd(Call call, Throwable throwable) {
-      super(call, throwable);
+    RequestBodyEnd(Call call, long bytesWritten, Throwable throwable) {
+      super(call, bytesWritten, throwable);
       this.throwable = throwable;
+      this.bytesWritten = bytesWritten;
     }
 
     @Nullable @Override public CallEvent closes() {
@@ -354,10 +358,12 @@ final class RecordingEventListener extends EventListener {
 
   static final class ResponseHeadersEnd extends CallEvent {
     final Throwable throwable;
+    final long bytesRead;
 
-    ResponseHeadersEnd(Call call, Throwable throwable) {
-      super(call, throwable);
+    ResponseHeadersEnd(Call call, long bytesRead, Throwable throwable) {
+      super(call, bytesRead, throwable);
       this.throwable = throwable;
+      this.bytesRead = bytesRead;
     }
 
     @Nullable @Override public CallEvent closes() {
@@ -373,10 +379,12 @@ final class RecordingEventListener extends EventListener {
 
   static final class ResponseBodyEnd extends CallEvent {
     final Throwable throwable;
+    final long bytesRead;
 
-    ResponseBodyEnd(Call call, Throwable throwable) {
-      super(call, throwable);
+    ResponseBodyEnd(Call call, long bytesRead, Throwable throwable) {
+      super(call, bytesRead, throwable);
       this.throwable = throwable;
+      this.bytesRead = bytesRead;
     }
 
     @Nullable @Override public CallEvent closes() {

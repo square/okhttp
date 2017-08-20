@@ -196,6 +196,7 @@ public final class Http2Codec implements HttpCodec {
 
   class StreamFinishingSource extends ForwardingSource {
     boolean completed = false;
+    long bytesRead = 0;
 
     StreamFinishingSource(Source delegate) {
       super(delegate);
@@ -203,7 +204,11 @@ public final class Http2Codec implements HttpCodec {
 
     @Override public long read(Buffer sink, long byteCount) throws IOException {
       try {
-        return delegate().read(sink, byteCount);
+        long read = delegate().read(sink, byteCount);
+        if (read > 0) {
+          bytesRead += read;
+        }
+        return read;
       } catch (IOException e) {
         endOfInput(e);
         throw e;
@@ -218,7 +223,7 @@ public final class Http2Codec implements HttpCodec {
     private void endOfInput(IOException e) {
       if (completed) return;
       completed = true;
-      streamAllocation.eventListener.responseBodyEnd(streamAllocation.call, e);
+      streamAllocation.eventListener.responseBodyEnd(streamAllocation.call, bytesRead, e);
       streamAllocation.streamFinished(false, Http2Codec.this);
     }
   }

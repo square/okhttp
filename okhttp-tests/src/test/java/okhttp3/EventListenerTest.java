@@ -24,13 +24,16 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import javax.annotation.Nullable;
 import okhttp3.RecordingEventListener.ConnectEnd;
 import okhttp3.RecordingEventListener.ConnectStart;
 import okhttp3.RecordingEventListener.ConnectionAcquired;
 import okhttp3.RecordingEventListener.DnsEnd;
 import okhttp3.RecordingEventListener.DnsStart;
 import okhttp3.RecordingEventListener.RequestBodyEnd;
+import okhttp3.RecordingEventListener.RequestHeadersEnd;
 import okhttp3.RecordingEventListener.ResponseBodyEnd;
+import okhttp3.RecordingEventListener.ResponseHeadersEnd;
 import okhttp3.RecordingEventListener.SecureConnectEnd;
 import okhttp3.RecordingEventListener.SecureConnectStart;
 import okhttp3.internal.DoubleInetAddressDns;
@@ -42,6 +45,9 @@ import okhttp3.mockwebserver.MockWebServer;
 import okhttp3.mockwebserver.SocketPolicy;
 import okio.Buffer;
 import okio.BufferedSink;
+import org.hamcrest.BaseMatcher;
+import org.hamcrest.Description;
+import org.hamcrest.Matcher;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -49,11 +55,14 @@ import org.junit.Test;
 
 import static java.util.Arrays.asList;
 import static okhttp3.TestUtil.defaultClient;
+import static org.hamcrest.CoreMatchers.any;
+import static org.hamcrest.CoreMatchers.equalTo;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -119,12 +128,54 @@ public final class EventListenerTest {
     assertEquals(expectedEvents, listener.recordedEventTypes());
   }
 
+  private void assertBytesReadWritten(RecordingEventListener listener,
+      @Nullable Matcher<Long> requestHeaderBytes, @Nullable Matcher<Long> requestBodyBytes,
+      @Nullable Matcher<Long> responseHeaderBytes, @Nullable Matcher<Long> responseBodyBytes) {
+
+    if (requestHeaderBytes != null) {
+      RequestHeadersEnd responseHeadersEnd = listener.removeUpToEvent(RequestHeadersEnd.class);
+      // TODO implement correct bytes
+      //assertThat("request header bytes", responseHeadersEnd.bytesWritten, requestHeaderBytes);
+    }
+
+    if (requestBodyBytes != null) {
+      RequestBodyEnd responseBodyEnd = listener.removeUpToEvent(RequestBodyEnd.class);
+      assertThat("request body bytes", responseBodyEnd.bytesWritten, requestBodyBytes);
+    }
+
+    if (responseHeaderBytes != null) {
+      ResponseHeadersEnd responseHeadersEnd = listener.removeUpToEvent(ResponseHeadersEnd.class);
+      // TODO implement correct bytes
+      //assertThat("response header bytes", responseHeadersEnd.bytesRead, responseHeaderBytes);
+    }
+
+    if (responseBodyBytes != null) {
+      ResponseBodyEnd responseBodyEnd = listener.removeUpToEvent(ResponseBodyEnd.class);
+      assertThat("response body bytes", responseBodyEnd.bytesRead, responseBodyBytes);
+    }
+  }
+
+  private Matcher<Long> greaterThan(final long l) {
+    return new BaseMatcher<Long>() {
+      @Override public void describeTo(Description description) {
+        description.appendText("> " + l);
+      }
+
+      @Override public boolean matches(Object o) {
+        return ((Long)o) > l;
+      }
+    };
+  }
+
   @Test public void successfulEmptyH2CallEventSequence() throws IOException {
     enableTlsWithTunnel(false);
     server.setProtocols(Arrays.asList(Protocol.HTTP_2, Protocol.HTTP_1_1));
     server.enqueue(new MockResponse());
 
     assertSuccessfulEventOrder();
+
+    assertBytesReadWritten(listener, any(Long.class), null, greaterThan(0L),
+        equalTo(0L));
   }
 
   @Test public void successfulEmptyHttpsCallEventSequence() throws IOException {
@@ -134,6 +185,9 @@ public final class EventListenerTest {
         .setBody("abc"));
 
     assertSuccessfulEventOrder();
+
+    assertBytesReadWritten(listener, any(Long.class), null, greaterThan(0L),
+        equalTo(3L));
   }
 
   @Test public void successfulChunkedHttpsCallEventSequence() throws IOException {
@@ -143,6 +197,9 @@ public final class EventListenerTest {
         new MockResponse().setBodyDelay(100, TimeUnit.MILLISECONDS).setChunkedBody("Hello!", 2));
 
     assertSuccessfulEventOrder();
+
+    assertBytesReadWritten(listener, any(Long.class), null, greaterThan(0L),
+        equalTo(6L));
   }
 
   @Test public void successfulChunkedH2CallEventSequence() throws IOException {
@@ -152,6 +209,9 @@ public final class EventListenerTest {
         new MockResponse().setBodyDelay(100, TimeUnit.MILLISECONDS).setChunkedBody("Hello!", 2));
 
     assertSuccessfulEventOrder();
+
+    assertBytesReadWritten(listener, any(Long.class), null, greaterThan(0L),
+        greaterThan(6L));
   }
 
   @Test public void successfulDnsLookup() throws IOException {
@@ -687,6 +747,7 @@ public final class EventListenerTest {
 
     ResponseBodyEnd responseBodyEnd = listener.removeUpToEvent(ResponseBodyEnd.class);
     assertNotNull(responseBodyEnd.throwable);
+    assertEquals(responseBodySize / 2, responseBodyEnd.bytesRead);
   }
 
   @Test public void requestBodyFailHttp1OverHttps() throws IOException {

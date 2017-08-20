@@ -344,6 +344,7 @@ public final class Http1Codec implements HttpCodec {
   private abstract class AbstractSource implements Source {
     protected final ForwardingTimeout timeout = new ForwardingTimeout(source.timeout());
     protected boolean closed;
+    protected long bytesRead = 0;
 
     @Override public Timeout timeout() {
       return timeout;
@@ -351,7 +352,11 @@ public final class Http1Codec implements HttpCodec {
 
     @Override public long read(Buffer sink, long byteCount) throws IOException {
       try {
-        return source.read(sink, byteCount);
+        long read = source.read(sink, byteCount);
+        if (read > 0) {
+          bytesRead += read;
+        }
+        return read;
       } catch (IOException e) {
         endOfInput(false, e);
         throw e;
@@ -370,7 +375,7 @@ public final class Http1Codec implements HttpCodec {
 
       state = STATE_CLOSED;
       if (streamAllocation != null) {
-        streamAllocation.eventListener.responseBodyEnd(streamAllocation.call, e);
+        streamAllocation.eventListener.responseBodyEnd(streamAllocation.call, bytesRead, e);
         streamAllocation.streamFinished(!reuseConnection, Http1Codec.this);
       }
     }

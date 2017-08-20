@@ -47,9 +47,10 @@ public final class CallServerInterceptor implements Interceptor {
     realChain.eventListener().requestHeadersStart(realChain.call());
     try {
       httpCodec.writeRequestHeaders(request);
-      realChain.eventListener().requestHeadersEnd(realChain.call(), null);
+      // TODO implement correct bytes logic
+      realChain.eventListener().requestHeadersEnd(realChain.call(), -1, null);
     } catch (IOException ioe) {
-      realChain.eventListener().requestHeadersEnd(realChain.call(), ioe);
+      realChain.eventListener().requestHeadersEnd(realChain.call(), -1, ioe);
       throw ioe;
     }
 
@@ -80,9 +81,10 @@ public final class CallServerInterceptor implements Interceptor {
           // leave the connection in a consistent state.
           streamAllocation.noNewStreams();
         }
-        realChain.eventListener().requestBodyEnd(realChain.call(), null);
+        // TODO implement correct bytes logic
+        realChain.eventListener().requestBodyEnd(realChain.call(), -1, null);
       } catch (IOException ioe) {
-        realChain.eventListener().requestBodyEnd(realChain.call(), ioe);
+        realChain.eventListener().requestBodyEnd(realChain.call(), -1, ioe);
         throw ioe;
       }
     }
@@ -93,9 +95,10 @@ public final class CallServerInterceptor implements Interceptor {
       realChain.eventListener().responseHeadersStart(realChain.call());
       try {
         responseBuilder = httpCodec.readResponseHeaders(false);
-        realChain.eventListener().responseHeadersEnd(realChain.call(), null);
+        // TODO implement correct bytes logic
+        realChain.eventListener().responseHeadersEnd(realChain.call(), -1, null);
       } catch (IOException ioe) {
-        realChain.eventListener().responseHeadersEnd(realChain.call(), ioe);
+        realChain.eventListener().responseHeadersEnd(realChain.call(), -1, ioe);
         throw ioe;
       }
     }
