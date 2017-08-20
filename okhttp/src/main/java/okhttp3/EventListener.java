@@ -193,7 +193,7 @@ public abstract class EventListener {
    *
    * <p>This method is always invoked after {@link #requestHeadersStart(Call)}.
    *
-   * @param bytesWritten the length in bytes of body written, including partial success.
+   * @param bytesWritten the length in bytes of headers written, including partial success.
    * @param throwable null if request body was successfully written, non-null otherwise.
    */
   public void requestHeadersEnd(Call call, long bytesWritten, @Nullable Throwable throwable) {
