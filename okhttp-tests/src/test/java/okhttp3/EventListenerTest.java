@@ -134,24 +134,30 @@ public final class EventListenerTest {
 
     if (requestHeaderLength != null) {
       RequestHeadersEnd responseHeadersEnd = listener.removeUpToEvent(RequestHeadersEnd.class);
-      // TODO implement correct bytes
-      assertThat("request header bytes", responseHeadersEnd.headerLength, requestHeaderLength);
+      assertThat("request header length", responseHeadersEnd.headerLength, requestHeaderLength);
+    } else {
+      assertFalse("Found RequestHeadersEnd", listener.recordedEventTypes().contains("RequestHeadersEnd"));
     }
 
     if (requestBodyBytes != null) {
       RequestBodyEnd responseBodyEnd = listener.removeUpToEvent(RequestBodyEnd.class);
       assertThat("request body bytes", responseBodyEnd.bytesWritten, requestBodyBytes);
+    } else {
+      assertFalse("Found RequestBodyEnd", listener.recordedEventTypes().contains("RequestBodyEnd"));
     }
 
     if (responseHeaderLength != null) {
       ResponseHeadersEnd responseHeadersEnd = listener.removeUpToEvent(ResponseHeadersEnd.class);
-      // TODO implement correct bytes
-      assertThat("response header bytes", responseHeadersEnd.headerLength, responseHeaderLength);
+      assertThat("response header length", responseHeadersEnd.headerLength, responseHeaderLength);
+    } else {
+      assertFalse("Found ResponseHeadersEnd", listener.recordedEventTypes().contains("ResponseHeadersEnd"));
     }
 
     if (responseBodyBytes != null) {
       ResponseBodyEnd responseBodyEnd = listener.removeUpToEvent(ResponseBodyEnd.class);
       assertThat("response body bytes", responseBodyEnd.bytesRead, responseBodyBytes);
+    } else {
+      assertFalse("Found ResponseBodyEnd", listener.recordedEventTypes().contains("ResponseBodyEnd"));
     }
   }
 
@@ -163,6 +169,18 @@ public final class EventListenerTest {
 
       @Override public boolean matches(Object o) {
         return ((Long)o) > l;
+      }
+    };
+  }
+
+  private Matcher<Long> lessThan(final long l) {
+    return new BaseMatcher<Long>() {
+      @Override public void describeTo(Description description) {
+        description.appendText("< " + l);
+      }
+
+      @Override public boolean matches(Object o) {
+        return ((Long)o) < l;
       }
     };
   }
@@ -748,7 +766,7 @@ public final class EventListenerTest {
 
     ResponseBodyEnd responseBodyEnd = listener.removeUpToEvent(ResponseBodyEnd.class);
     assertNotNull(responseBodyEnd.throwable);
-    assertEquals(responseBodySize / 2, responseBodyEnd.bytesRead);
+    assertThat("response body bytes", responseBodyEnd.bytesRead, lessThan(responseBodySize));
   }
 
   @Test public void requestBodyFailHttp1OverHttps() throws IOException {
@@ -801,6 +819,61 @@ public final class EventListenerTest {
 
     RequestBodyEnd responseBodyEnd = listener.removeUpToEvent(RequestBodyEnd.class);
     assertNotNull(responseBodyEnd.throwable);
+  }
+
+  @Test public void requestBodySuccessHttp1OverHttps() throws IOException {
+    enableTlsWithTunnel(false);
+    server.setProtocols(Arrays.asList(Protocol.HTTP_1_1));
+    requestBodySuccess(RequestBody.create(MediaType.parse("text/plain"), "Hello"), equalTo(5L),
+        equalTo(15L));
+  }
+
+  @Test public void requestBodySuccessHttp2OverHttps() throws IOException {
+    enableTlsWithTunnel(false);
+    server.setProtocols(Arrays.asList(Protocol.HTTP_2, Protocol.HTTP_1_1));
+    requestBodySuccess(RequestBody.create(MediaType.parse("text/plain"), "Hello"), equalTo(5L),
+        equalTo(15L));
+  }
+
+  @Test public void requestBodySuccessHttp() throws IOException {
+    requestBodySuccess(RequestBody.create(MediaType.parse("text/plain"), "Hello"), equalTo(5L),
+        equalTo(15L));
+  }
+
+  @Test public void requestBodySuccessStreaming() throws IOException {
+    RequestBody requestBody = new RequestBody() {
+      @Override public MediaType contentType() {
+        return MediaType.parse("text/plain");
+      }
+
+      @Override public void writeTo(BufferedSink sink) throws IOException {
+        sink.write(new byte[8192]);
+        sink.flush();
+      }
+    };
+
+    // TODO send correct bytes in streaming case
+    requestBodySuccess(requestBody, equalTo(-1L), equalTo(15L));
+  }
+
+  @Test public void requestBodySuccessEmpty() throws IOException {
+    requestBodySuccess(RequestBody.create(MediaType.parse("text/plain"), ""), equalTo(0L),
+        equalTo(15L));
+  }
+
+  private void requestBodySuccess(RequestBody body, Matcher<Long> requestBodyBytes,
+      Matcher<Long> responseHeaderLength) throws IOException {
+    server.enqueue(new MockResponse().setResponseCode(200).setBody("World!"));
+
+    Call call = client.newCall(new Request.Builder()
+        .url(server.url("/"))
+        .post(body)
+        .build());
+    Response response = call.execute();
+    assertEquals("World!", response.body().string());
+
+    assertBytesReadWritten(listener, any(Long.class), requestBodyBytes, responseHeaderLength,
+        equalTo(6L));
   }
 
   private void enableTlsWithTunnel(boolean tunnelProxy) {
