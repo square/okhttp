@@ -121,8 +121,8 @@ final class RecordingEventListener extends EventListener {
     logEvent(new RequestHeadersStart(call));
   }
 
-  @Override public void requestHeadersEnd(Call call, long bytesWritten, Throwable throwable) {
-    logEvent(new RequestHeadersEnd(call, bytesWritten, throwable));
+  @Override public void requestHeadersEnd(Call call, long headerLength, Throwable throwable) {
+    logEvent(new RequestHeadersEnd(call, headerLength, throwable));
   }
 
   @Override public void requestBodyStart(Call call) {
@@ -137,8 +137,8 @@ final class RecordingEventListener extends EventListener {
     logEvent(new ResponseHeadersStart(call));
   }
 
-  @Override public void responseHeadersEnd(Call call, long bytesRead, Throwable throwable) {
-    logEvent(new ResponseHeadersEnd(call, bytesRead, throwable));
+  @Override public void responseHeadersEnd(Call call, long headerLength, Throwable throwable) {
+    logEvent(new ResponseHeadersEnd(call, headerLength, throwable));
   }
 
   @Override public void responseBodyStart(Call call) {
@@ -316,12 +316,12 @@ final class RecordingEventListener extends EventListener {
 
   static final class RequestHeadersEnd extends CallEvent {
     final Throwable throwable;
-    final long bytesWritten;
+    final long headerLength;
 
-    RequestHeadersEnd(Call call, long bytesWritten, Throwable throwable) {
-      super(call, bytesWritten, throwable);
+    RequestHeadersEnd(Call call, long headerLength, Throwable throwable) {
+      super(call, headerLength, throwable);
       this.throwable = throwable;
-      this.bytesWritten = bytesWritten;
+      this.headerLength = headerLength;
     }
 
     @Nullable @Override public CallEvent closes() {
@@ -358,12 +358,12 @@ final class RecordingEventListener extends EventListener {
 
   static final class ResponseHeadersEnd extends CallEvent {
     final Throwable throwable;
-    final long bytesRead;
+    final long headerLength;
 
-    ResponseHeadersEnd(Call call, long bytesRead, Throwable throwable) {
-      super(call, bytesRead, throwable);
+    ResponseHeadersEnd(Call call, long headerLength, Throwable throwable) {
+      super(call, headerLength, throwable);
       this.throwable = throwable;
-      this.bytesRead = bytesRead;
+      this.headerLength = headerLength;
     }
 
     @Nullable @Override public CallEvent closes() {

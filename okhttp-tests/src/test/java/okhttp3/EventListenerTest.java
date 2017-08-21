@@ -129,13 +129,13 @@ public final class EventListenerTest {
   }
 
   private void assertBytesReadWritten(RecordingEventListener listener,
-      @Nullable Matcher<Long> requestHeaderBytes, @Nullable Matcher<Long> requestBodyBytes,
-      @Nullable Matcher<Long> responseHeaderBytes, @Nullable Matcher<Long> responseBodyBytes) {
+      @Nullable Matcher<Long> requestHeaderLength, @Nullable Matcher<Long> requestBodyBytes,
+      @Nullable Matcher<Long> responseHeaderLength, @Nullable Matcher<Long> responseBodyBytes) {
 
-    if (requestHeaderBytes != null) {
+    if (requestHeaderLength != null) {
       RequestHeadersEnd responseHeadersEnd = listener.removeUpToEvent(RequestHeadersEnd.class);
       // TODO implement correct bytes
-      //assertThat("request header bytes", responseHeadersEnd.bytesWritten, requestHeaderBytes);
+      assertThat("request header bytes", responseHeadersEnd.headerLength, requestHeaderLength);
     }
 
     if (requestBodyBytes != null) {
@@ -143,10 +143,10 @@ public final class EventListenerTest {
       assertThat("request body bytes", responseBodyEnd.bytesWritten, requestBodyBytes);
     }
 
-    if (responseHeaderBytes != null) {
+    if (responseHeaderLength != null) {
       ResponseHeadersEnd responseHeadersEnd = listener.removeUpToEvent(ResponseHeadersEnd.class);
       // TODO implement correct bytes
-      //assertThat("response header bytes", responseHeadersEnd.bytesRead, responseHeaderBytes);
+      assertThat("response header bytes", responseHeadersEnd.headerLength, responseHeaderLength);
     }
 
     if (responseBodyBytes != null) {
@@ -172,6 +172,7 @@ public final class EventListenerTest {
     server.setProtocols(Arrays.asList(Protocol.HTTP_2, Protocol.HTTP_1_1));
     server.enqueue(new MockResponse());
 
+    // TODO check H2 used and ignore otherwise
     assertSuccessfulEventOrder();
 
     assertBytesReadWritten(listener, any(Long.class), null, greaterThan(0L),
@@ -210,7 +211,7 @@ public final class EventListenerTest {
 
     assertSuccessfulEventOrder();
 
-    assertBytesReadWritten(listener, any(Long.class), null, greaterThan(0L),
+    assertBytesReadWritten(listener, any(Long.class), null, equalTo(0L),
         greaterThan(6L));
   }
 
@@ -809,4 +810,6 @@ public final class EventListenerTest {
         .build();
     server.useHttps(sslClient.socketFactory, tunnelProxy);
   }
+
+  // TODO add POST requests with body (streaming, empty, etc) and check length
 }
