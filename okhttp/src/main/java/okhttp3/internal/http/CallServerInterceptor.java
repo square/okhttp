@@ -114,8 +114,8 @@ public final class CallServerInterceptor implements Interceptor {
         .receivedResponseAtMillis(System.currentTimeMillis())
         .build();
 
-    realChain.eventListener().responseHeadersEnd(realChain.call(),
-        headerLength(response.headers()),null);
+    realChain.eventListener()
+        .responseHeadersEnd(realChain.call(), headerLength(response.headers()), null);
 
     int code = response.code();
     if (forWebSocket && code == 101) {
