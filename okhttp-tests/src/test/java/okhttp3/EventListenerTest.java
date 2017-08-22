@@ -883,6 +883,4 @@ public final class EventListenerTest {
         .build();
     server.useHttps(sslClient.socketFactory, tunnelProxy);
   }
-
-  // TODO add POST requests with body (streaming, empty, etc) and check length
 }
