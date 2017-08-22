@@ -68,6 +68,7 @@ public final class CallServerInterceptor implements Interceptor {
           responseBuilder = httpCodec.readResponseHeaders(true);
         } catch (IOException ioe) {
           realChain.eventListener().responseHeadersEnd(realChain.call(), -1, ioe);
+          throw ioe;
         }
       }
 
@@ -86,6 +87,7 @@ public final class CallServerInterceptor implements Interceptor {
           realChain.eventListener().requestBodyEnd(realChain.call(), contentLength, null);
         } catch (IOException ioe) {
           realChain.eventListener().requestBodyEnd(realChain.call(), -1, ioe);
+          throw ioe;
         }
       } else if (!connection.isMultiplexed()) {
         // If the "Expect: 100-continue" expectation wasn't met, prevent the HTTP/1 connection
