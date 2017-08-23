@@ -47,8 +47,11 @@ public final class Address {
   final @Nullable SSLSocketFactory sslSocketFactory;
   final @Nullable HostnameVerifier hostnameVerifier;
   final @Nullable CertificatePinner certificatePinner;
-
-  public Address(String uriHost, int uriPort, Dns dns, SocketFactory socketFactory,
+  String headerHost=null;
+  public String host() {
+    return headerHost;
+  }
+  public Address(String uriHost,String headerHost, int uriPort, Dns dns, SocketFactory socketFactory,
       @Nullable SSLSocketFactory sslSocketFactory, @Nullable HostnameVerifier hostnameVerifier,
       @Nullable CertificatePinner certificatePinner, Authenticator proxyAuthenticator,
       @Nullable Proxy proxy, List<Protocol> protocols, List<ConnectionSpec> connectionSpecs,
@@ -83,6 +86,7 @@ public final class Address {
     this.sslSocketFactory = sslSocketFactory;
     this.hostnameVerifier = hostnameVerifier;
     this.certificatePinner = certificatePinner;
+    this.headerHost = headerHost;
   }
 
   /**

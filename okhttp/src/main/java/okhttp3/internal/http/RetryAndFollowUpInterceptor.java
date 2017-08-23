@@ -104,7 +104,7 @@ public final class RetryAndFollowUpInterceptor implements Interceptor {
     Request request = chain.request();
 
     streamAllocation = new StreamAllocation(
-        client.connectionPool(), createAddress(request.url()), callStackTrace);
+        client.connectionPool(), createAddress(request.url(),request), callStackTrace);
 
     int followUpCount = 0;
     Response priorResponse = null;
@@ -173,7 +173,7 @@ public final class RetryAndFollowUpInterceptor implements Interceptor {
       if (!sameConnection(response, followUp.url())) {
         streamAllocation.release();
         streamAllocation = new StreamAllocation(
-            client.connectionPool(), createAddress(followUp.url()), callStackTrace);
+            client.connectionPool(), createAddress(followUp.url(),request), callStackTrace);
       } else if (streamAllocation.codec() != null) {
         throw new IllegalStateException("Closing the body of " + response
             + " didn't close its backing stream. Bad interceptor?");
@@ -184,7 +184,7 @@ public final class RetryAndFollowUpInterceptor implements Interceptor {
     }
   }
 
-  private Address createAddress(HttpUrl url) {
+  private Address createAddress(HttpUrl url,Request request) {
     SSLSocketFactory sslSocketFactory = null;
     HostnameVerifier hostnameVerifier = null;
     CertificatePinner certificatePinner = null;
@@ -194,7 +194,7 @@ public final class RetryAndFollowUpInterceptor implements Interceptor {
       certificatePinner = client.certificatePinner();
     }
 
-    return new Address(url.host(), url.port(), client.dns(), client.socketFactory(),
+    return new Address(url.host(), request.header("Host"),url.port(), client.dns(), client.socketFactory(),
         sslSocketFactory, hostnameVerifier, certificatePinner, client.proxyAuthenticator(),
         client.proxy(), client.protocols(), client.connectionSpecs(), client.proxySelector());
   }
