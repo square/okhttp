@@ -72,6 +72,19 @@ public final class RealWebSocketTest {
     client.listener.assertClosed(1000, "Goodbye!");
   }
 
+  @Test public void closeWith0() throws IOException {
+    // 1005 No Status Rcvd
+
+    client.webSocket.close(0, null);
+    assertFalse(server.processNextFrame()); // This will trigger a close response.
+    server.listener.assertClosing(1005, "");
+    server.webSocket.close(0, null);
+    assertFalse(client.processNextFrame());
+    client.listener.assertClosing(1005, "");
+    server.listener.assertClosed(1005, "");
+    client.listener.assertClosed(1005, "");
+  }
+
   @Test public void clientCloseThenMethodsReturnFalse() throws IOException {
     client.webSocket.close(1000, "Hello!");
 
