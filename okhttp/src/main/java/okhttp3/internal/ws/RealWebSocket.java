@@ -396,7 +396,9 @@ public final class RealWebSocket implements WebSocket, WebSocketReader.FrameCall
   }
 
   synchronized boolean close(int code, String reason, long cancelAfterCloseMillis) {
-    validateCloseCode(code);
+    if (code != 0) {
+      validateCloseCode(code);
+    }
 
     ByteString reasonBytes = null;
     if (reason != null) {
