@@ -15,7 +15,7 @@
  */
 package okhttp3.internal.platform;
 
-import android.util.Log;
+//import android.util.Log;
 import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
@@ -119,8 +119,8 @@ class AndroidPlatform extends Platform {
   }
 
   @Override public void log(int level, String message, Throwable t) {
-    int logLevel = level == WARN ? Log.WARN : Log.DEBUG;
-    if (t != null) message = message + '\n' + Log.getStackTraceString(t);
+    //int logLevel = level == WARN ? Log.WARN : Log.DEBUG;
+    //if (t != null) message = message + '\n' + Log.getStackTraceString(t);
 
     // Split by line, then ensure each line can fit into Log's maximum length.
     for (int i = 0, length = message.length(); i < length; i++) {
@@ -128,7 +128,7 @@ class AndroidPlatform extends Platform {
       newline = newline != -1 ? newline : length;
       do {
         int end = Math.min(newline, i + MAX_LOG_LENGTH);
-        Log.println(logLevel, "OkHttp", message.substring(i, end));
+        //Log.println(logLevel, "OkHttp", message.substring(i, end));
         i = end;
       } while (i < newline);
     }
