@@ -46,6 +46,7 @@ import okhttp3.mockwebserver.SocketPolicy;
 import okio.Buffer;
 import okio.BufferedSink;
 import org.hamcrest.BaseMatcher;
+import org.hamcrest.CoreMatchers;
 import org.hamcrest.Description;
 import org.hamcrest.Matcher;
 import org.junit.After;
@@ -65,8 +66,10 @@ import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.junit.Assume.assumeThat;
 
 public final class EventListenerTest {
+  public static final Matcher<Response> anyResponse = CoreMatchers.any(Response.class);
   @Rule public final MockWebServer server = new MockWebServer();
 
   private final SingleInetAddressDns singleDns = new SingleInetAddressDns();
@@ -111,7 +114,7 @@ public final class EventListenerTest {
     assertEquals(expectedEvents, listener.recordedEventTypes());
   }
 
-  private void assertSuccessfulEventOrder() throws IOException {
+  private void assertSuccessfulEventOrder(Matcher<Response> responseMatcher) throws IOException {
     Call call = client.newCall(new Request.Builder()
         .url(server.url("/"))
         .build());
@@ -119,6 +122,8 @@ public final class EventListenerTest {
     assertEquals(200, response.code());
     response.body().string();
     response.body().close();
+
+    assumeThat(response, responseMatcher);
 
     List<String> expectedEvents = asList("CallStart", "DnsStart", "DnsEnd", "ConnectionAcquired",
         "ConnectStart", "SecureConnectStart", "SecureConnectEnd", "ConnectEnd",
@@ -185,13 +190,24 @@ public final class EventListenerTest {
     };
   }
 
+  private Matcher<Response> matchesProtocol(final Protocol protocol) {
+    return new BaseMatcher<Response>() {
+      @Override public void describeTo(Description description) {
+        description.appendText("is HTTP/2");
+      }
+
+      @Override public boolean matches(Object o) {
+        return ((Response)o).protocol == protocol;
+      }
+    };
+  }
+
   @Test public void successfulEmptyH2CallEventSequence() throws IOException {
     enableTlsWithTunnel(false);
     server.setProtocols(Arrays.asList(Protocol.HTTP_2, Protocol.HTTP_1_1));
     server.enqueue(new MockResponse());
 
-    // TODO check H2 used and ignore otherwise
-    assertSuccessfulEventOrder();
+    assertSuccessfulEventOrder(matchesProtocol(Protocol.HTTP_2));
 
     assertBytesReadWritten(listener, any(Long.class), null, greaterThan(0L),
         equalTo(0L));
@@ -203,7 +219,7 @@ public final class EventListenerTest {
     server.enqueue(new MockResponse()
         .setBody("abc"));
 
-    assertSuccessfulEventOrder();
+    assertSuccessfulEventOrder(anyResponse);
 
     assertBytesReadWritten(listener, any(Long.class), null, greaterThan(0L),
         equalTo(3L));
@@ -215,7 +231,7 @@ public final class EventListenerTest {
     server.enqueue(
         new MockResponse().setBodyDelay(100, TimeUnit.MILLISECONDS).setChunkedBody("Hello!", 2));
 
-    assertSuccessfulEventOrder();
+    assertSuccessfulEventOrder(anyResponse);
 
     assertBytesReadWritten(listener, any(Long.class), null, greaterThan(0L),
         equalTo(6L));
@@ -227,7 +243,7 @@ public final class EventListenerTest {
     server.enqueue(
         new MockResponse().setBodyDelay(100, TimeUnit.MILLISECONDS).setChunkedBody("Hello!", 2));
 
-    assertSuccessfulEventOrder();
+    assertSuccessfulEventOrder(matchesProtocol(Protocol.HTTP_2));
 
     assertBytesReadWritten(listener, any(Long.class), null, equalTo(0L),
         greaterThan(6L));
@@ -757,6 +773,10 @@ public final class EventListenerTest {
         .url(server.url("/"))
         .build());
     Response response = call.execute();
+    if (expectedProtocol == Protocol.HTTP_2) {
+      // soft failure since client may not support depending on Platform
+      assumeThat(response, matchesProtocol(Protocol.HTTP_2));
+    }
     assertEquals(expectedProtocol, response.protocol());
     try {
       response.body.string();
@@ -852,8 +872,7 @@ public final class EventListenerTest {
       }
     };
 
-    // TODO send correct bytes in streaming case
-    requestBodySuccess(requestBody, equalTo(-1L), equalTo(15L));
+    requestBodySuccess(requestBody, equalTo(8192L), equalTo(15L));
   }
 
   @Test public void requestBodySuccessEmpty() throws IOException {

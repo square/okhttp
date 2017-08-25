@@ -24,7 +24,9 @@ import okhttp3.Response;
 import okhttp3.internal.Util;
 import okhttp3.internal.connection.RealConnection;
 import okhttp3.internal.connection.StreamAllocation;
+import okio.Buffer;
 import okio.BufferedSink;
+import okio.ForwardingSink;
 import okio.Okio;
 import okio.Sink;
 
@@ -77,14 +79,14 @@ public final class CallServerInterceptor implements Interceptor {
         realChain.eventListener().requestBodyStart(realChain.call());
         try {
           long contentLength = request.body().contentLength();
-          Sink requestBodyOut =
-              httpCodec.createRequestBody(request, contentLength);
+          CountingSink requestBodyOut =
+              new CountingSink(httpCodec.createRequestBody(request, contentLength));
           BufferedSink bufferedRequestBody = Okio.buffer(requestBodyOut);
 
           request.body().writeTo(bufferedRequestBody);
           bufferedRequestBody.close();
-          // TODO implement correct bytes logic via httpCodec
-          realChain.eventListener().requestBodyEnd(realChain.call(), contentLength, null);
+          realChain.eventListener()
+              .requestBodyEnd(realChain.call(), requestBodyOut.successfulCount, null);
         } catch (IOException ioe) {
           realChain.eventListener().requestBodyEnd(realChain.call(), -1, ioe);
           throw ioe;
@@ -153,5 +155,18 @@ public final class CallServerInterceptor implements Interceptor {
     }
 
     return length;
+  }
+
+  final class CountingSink extends ForwardingSink {
+    long successfulCount;
+
+    CountingSink(Sink delegate) {
+      super(delegate);
+    }
+
+    @Override public void write(Buffer source, long byteCount) throws IOException {
+      super.write(source, byteCount);
+      successfulCount += byteCount;
+    }
   }
 }
