@@ -202,7 +202,7 @@ public final class WebSocketHttpTest {
     final RuntimeException e = new RuntimeException();
     clientListener.setNextEventDelegate(new WebSocketListener() {
       @Override public void onClosing(WebSocket webSocket, int code, String reason) {
-        throw e;
+        throw (RuntimeException) e.fillInStackTrace();
       }
     });
 
