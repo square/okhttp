@@ -166,26 +166,26 @@ public final class EventListenerTest {
     }
   }
 
-  private Matcher<Long> greaterThan(final long l) {
+  private Matcher<Long> greaterThan(final long value) {
     return new BaseMatcher<Long>() {
       @Override public void describeTo(Description description) {
-        description.appendText("> " + l);
+        description.appendText("> " + value);
       }
 
       @Override public boolean matches(Object o) {
-        return ((Long)o) > l;
+        return ((Long)o) > value;
       }
     };
   }
 
-  private Matcher<Long> lessThan(final long l) {
+  private Matcher<Long> lessThan(final long value) {
     return new BaseMatcher<Long>() {
       @Override public void describeTo(Description description) {
-        description.appendText("< " + l);
+        description.appendText("< " + value);
       }
 
       @Override public boolean matches(Object o) {
-        return ((Long)o) < l;
+        return ((Long)o) < value;
       }
     };
   }
