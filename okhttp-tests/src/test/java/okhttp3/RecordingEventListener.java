@@ -15,6 +15,7 @@
  */
 package okhttp3;
 
+import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.Proxy;
@@ -83,8 +84,8 @@ final class RecordingEventListener extends EventListener {
   }
 
   @Override public void dnsEnd(Call call, String domainName, List<InetAddress> inetAddressList,
-      Throwable throwable) {
-    logEvent(new DnsEnd(call, domainName, inetAddressList, throwable));
+      IOException ioe) {
+    logEvent(new DnsEnd(call, domainName, inetAddressList, ioe));
   }
 
   @Override public void connectStart(Call call, InetSocketAddress inetSocketAddress,
@@ -96,13 +97,13 @@ final class RecordingEventListener extends EventListener {
     logEvent(new SecureConnectStart(call));
   }
 
-  @Override public void secureConnectEnd(Call call, Handshake handshake, Throwable throwable) {
-    logEvent(new SecureConnectEnd(call, handshake, throwable));
+  @Override public void secureConnectEnd(Call call, Handshake handshake, IOException ioe) {
+    logEvent(new SecureConnectEnd(call, handshake, ioe));
   }
 
   @Override public void connectEnd(Call call, InetSocketAddress inetSocketAddress,
-      @Nullable Proxy proxy, Protocol protocol, Throwable throwable) {
-    logEvent(new ConnectEnd(call, inetSocketAddress, proxy, protocol, throwable));
+      @Nullable Proxy proxy, Protocol protocol, IOException ioe) {
+    logEvent(new ConnectEnd(call, inetSocketAddress, proxy, protocol, ioe));
   }
 
   @Override public void connectionAcquired(Call call, Connection connection) {
@@ -121,36 +122,36 @@ final class RecordingEventListener extends EventListener {
     logEvent(new RequestHeadersStart(call));
   }
 
-  @Override public void requestHeadersEnd(Call call, long headerLength, Throwable throwable) {
-    logEvent(new RequestHeadersEnd(call, headerLength, throwable));
+  @Override public void requestHeadersEnd(Call call, long headerLength, IOException ioe) {
+    logEvent(new RequestHeadersEnd(call, headerLength, ioe));
   }
 
   @Override public void requestBodyStart(Call call) {
     logEvent(new RequestBodyStart(call));
   }
 
-  @Override public void requestBodyEnd(Call call, long bytesWritten, Throwable throwable) {
-    logEvent(new RequestBodyEnd(call, bytesWritten, throwable));
+  @Override public void requestBodyEnd(Call call, long bytesWritten, IOException ioe) {
+    logEvent(new RequestBodyEnd(call, bytesWritten, ioe));
   }
 
   @Override public void responseHeadersStart(Call call) {
     logEvent(new ResponseHeadersStart(call));
   }
 
-  @Override public void responseHeadersEnd(Call call, long headerLength, Throwable throwable) {
-    logEvent(new ResponseHeadersEnd(call, headerLength, throwable));
+  @Override public void responseHeadersEnd(Call call, long headerLength, IOException ioe) {
+    logEvent(new ResponseHeadersEnd(call, headerLength, ioe));
   }
 
   @Override public void responseBodyStart(Call call) {
     logEvent(new ResponseBodyStart(call));
   }
 
-  @Override public void responseBodyEnd(Call call, long bytesRead, Throwable throwable) {
-    logEvent(new ResponseBodyEnd(call, bytesRead, throwable));
+  @Override public void responseBodyEnd(Call call, long bytesRead, IOException ioe) {
+    logEvent(new ResponseBodyEnd(call, bytesRead, ioe));
   }
 
-  @Override public void callEnd(Call call, Throwable throwable) {
-    logEvent(new CallEnd(call, throwable));
+  @Override public void callEnd(Call call, IOException ioe) {
+    logEvent(new CallEnd(call, ioe));
   }
 
   static class CallEvent {
@@ -201,13 +202,13 @@ final class RecordingEventListener extends EventListener {
   static final class DnsEnd extends CallEvent {
     final String domainName;
     final List<InetAddress> inetAddressList;
-    final Throwable throwable;
+    final IOException ioe;
 
-    DnsEnd(Call call, String domainName, List<InetAddress> inetAddressList, Throwable throwable) {
-      super(call, domainName, inetAddressList, throwable);
+    DnsEnd(Call call, String domainName, List<InetAddress> inetAddressList, IOException ioe) {
+      super(call, domainName, inetAddressList, ioe);
       this.domainName = domainName;
       this.inetAddressList = inetAddressList;
-      this.throwable = throwable;
+      this.ioe = ioe;
     }
 
     @Nullable @Override public CallEvent closes() {
@@ -229,16 +230,16 @@ final class RecordingEventListener extends EventListener {
   static final class ConnectEnd extends CallEvent {
     final InetSocketAddress inetSocketAddress;
     final Protocol protocol;
-    final Throwable throwable;
+    final IOException ioe;
     final Proxy proxy;
 
     ConnectEnd(Call call, InetSocketAddress inetSocketAddress, Proxy proxy, Protocol protocol,
-        Throwable throwable) {
-      super(call, inetSocketAddress, proxy, protocol, throwable);
+        IOException ioe) {
+      super(call, inetSocketAddress, proxy, protocol, ioe);
       this.inetSocketAddress = inetSocketAddress;
       this.proxy = proxy;
       this.protocol = protocol;
-      this.throwable = throwable;
+      this.ioe = ioe;
     }
 
     @Nullable @Override public CallEvent closes() {
@@ -254,12 +255,12 @@ final class RecordingEventListener extends EventListener {
 
   static final class SecureConnectEnd extends CallEvent {
     final Handshake handshake;
-    final Throwable throwable;
+    final IOException ioe;
 
-    SecureConnectEnd(Call call, Handshake handshake, Throwable throwable) {
-      super(call, handshake, throwable);
+    SecureConnectEnd(Call call, Handshake handshake, IOException ioe) {
+      super(call, handshake, ioe);
       this.handshake = handshake;
-      this.throwable = throwable;
+      this.ioe = ioe;
     }
 
     @Nullable @Override public CallEvent closes() {
@@ -296,11 +297,11 @@ final class RecordingEventListener extends EventListener {
   }
 
   static final class CallEnd extends CallEvent {
-    final Throwable throwable;
+    final IOException ioe;
 
-    CallEnd(Call call, Throwable throwable) {
-      super(call, throwable);
-      this.throwable = throwable;
+    CallEnd(Call call, IOException ioe) {
+      super(call, ioe);
+      this.ioe = ioe;
     }
 
     @Nullable @Override public CallEvent closes() {
@@ -315,12 +316,12 @@ final class RecordingEventListener extends EventListener {
   }
 
   static final class RequestHeadersEnd extends CallEvent {
-    final Throwable throwable;
+    final IOException ioe;
     final long headerLength;
 
-    RequestHeadersEnd(Call call, long headerLength, Throwable throwable) {
-      super(call, headerLength, throwable);
-      this.throwable = throwable;
+    RequestHeadersEnd(Call call, long headerLength, IOException ioe) {
+      super(call, headerLength, ioe);
+      this.ioe = ioe;
       this.headerLength = headerLength;
     }
 
@@ -336,12 +337,12 @@ final class RecordingEventListener extends EventListener {
   }
 
   static final class RequestBodyEnd extends CallEvent {
-    final Throwable throwable;
+    final IOException ioe;
     final long bytesWritten;
 
-    RequestBodyEnd(Call call, long bytesWritten, Throwable throwable) {
-      super(call, bytesWritten, throwable);
-      this.throwable = throwable;
+    RequestBodyEnd(Call call, long bytesWritten, IOException ioe) {
+      super(call, bytesWritten, ioe);
+      this.ioe = ioe;
       this.bytesWritten = bytesWritten;
     }
 
@@ -357,12 +358,12 @@ final class RecordingEventListener extends EventListener {
   }
 
   static final class ResponseHeadersEnd extends CallEvent {
-    final Throwable throwable;
+    final IOException ioe;
     final long headerLength;
 
-    ResponseHeadersEnd(Call call, long headerLength, Throwable throwable) {
-      super(call, headerLength, throwable);
-      this.throwable = throwable;
+    ResponseHeadersEnd(Call call, long headerLength, IOException ioe) {
+      super(call, headerLength, ioe);
+      this.ioe = ioe;
       this.headerLength = headerLength;
     }
 
@@ -378,12 +379,12 @@ final class RecordingEventListener extends EventListener {
   }
 
   static final class ResponseBodyEnd extends CallEvent {
-    final Throwable throwable;
+    final IOException ioe;
     final long bytesRead;
 
-    ResponseBodyEnd(Call call, long bytesRead, Throwable throwable) {
-      super(call, bytesRead, throwable);
-      this.throwable = throwable;
+    ResponseBodyEnd(Call call, long bytesRead, IOException ioe) {
+      super(call, bytesRead, ioe);
+      this.ioe = ioe;
       this.bytesRead = bytesRead;
     }
 

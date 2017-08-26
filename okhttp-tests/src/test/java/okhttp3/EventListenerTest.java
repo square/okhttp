@@ -267,7 +267,7 @@ public final class EventListenerTest {
     assertSame(call, dnsEnd.call);
     assertEquals("localhost", dnsEnd.domainName);
     assertEquals(1, dnsEnd.inetAddressList.size());
-    assertNull(dnsEnd.throwable);
+    assertNull(dnsEnd.ioe);
   }
 
   @Test public void noDnsLookupOnPooledConnection() throws IOException {
@@ -342,7 +342,7 @@ public final class EventListenerTest {
     assertSame(call, dnsEnd.call);
     assertEquals("fakeurl", dnsEnd.domainName);
     assertNull(dnsEnd.inetAddressList);
-    assertTrue(dnsEnd.throwable instanceof UnknownHostException);
+    assertTrue(dnsEnd.ioe instanceof UnknownHostException);
   }
 
   @Test public void emptyDnsLookup() {
@@ -370,7 +370,7 @@ public final class EventListenerTest {
     assertSame(call, dnsEnd.call);
     assertEquals("fakeurl", dnsEnd.domainName);
     assertNull(dnsEnd.inetAddressList);
-    assertTrue(dnsEnd.throwable instanceof UnknownHostException);
+    assertTrue(dnsEnd.ioe instanceof UnknownHostException);
   }
 
   @Test public void successfulConnect() throws IOException {
@@ -395,7 +395,7 @@ public final class EventListenerTest {
     assertSame(call, connectEnd.call);
     assertEquals(expectedAddress, connectEnd.inetSocketAddress);
     assertEquals(Protocol.HTTP_1_1, connectEnd.protocol);
-    assertNull(connectEnd.throwable);
+    assertNull(connectEnd.ioe);
   }
 
   @Test public void failedConnect() throws UnknownHostException {
@@ -424,7 +424,7 @@ public final class EventListenerTest {
     assertSame(call, connectEnd.call);
     assertEquals(expectedAddress, connectEnd.inetSocketAddress);
     assertNull(connectEnd.protocol);
-    assertTrue(connectEnd.throwable instanceof IOException);
+    assertNotNull(connectEnd.ioe);
   }
 
   @Test public void multipleConnectsForSingleCall() throws IOException {
@@ -476,7 +476,7 @@ public final class EventListenerTest {
     assertSame(call, connectEnd.call);
     assertEquals(expectedAddress, connectEnd.inetSocketAddress);
     assertEquals(Protocol.HTTP_1_1, connectEnd.protocol);
-    assertNull(connectEnd.throwable);
+    assertNull(connectEnd.ioe);
   }
 
   @Test public void successfulSocksProxyConnect() throws Exception {
@@ -509,7 +509,7 @@ public final class EventListenerTest {
     assertSame(call, connectEnd.call);
     assertEquals(expectedAddress, connectEnd.inetSocketAddress);
     assertEquals(Protocol.HTTP_1_1, connectEnd.protocol);
-    assertNull(connectEnd.throwable);
+    assertNull(connectEnd.ioe);
   }
 
   @Test public void authenticatingTunnelProxyConnect() throws IOException {
@@ -538,7 +538,7 @@ public final class EventListenerTest {
 
     ConnectEnd connectEnd = listener.removeUpToEvent(ConnectEnd.class);
     assertNull(connectEnd.protocol);
-    assertNull(connectEnd.throwable);
+    assertNull(connectEnd.ioe);
 
     listener.removeUpToEvent(ConnectStart.class);
     listener.removeUpToEvent(ConnectEnd.class);
@@ -561,7 +561,7 @@ public final class EventListenerTest {
     SecureConnectEnd secureEnd = listener.removeUpToEvent(SecureConnectEnd.class);
     assertSame(call, secureEnd.call);
     assertNotNull(secureEnd.handshake);
-    assertNull(secureEnd.throwable);
+    assertNull(secureEnd.ioe);
   }
 
   @Test public void failedSecureConnect() {
@@ -584,7 +584,7 @@ public final class EventListenerTest {
     SecureConnectEnd secureEnd = listener.removeUpToEvent(SecureConnectEnd.class);
     assertSame(call, secureEnd.call);
     assertNull(secureEnd.handshake);
-    assertTrue(secureEnd.throwable instanceof IOException);
+    assertNotNull(secureEnd.ioe);
   }
 
   @Test public void secureConnectWithTunnel() throws IOException {
@@ -610,7 +610,7 @@ public final class EventListenerTest {
     SecureConnectEnd secureEnd = listener.removeUpToEvent(SecureConnectEnd.class);
     assertSame(call, secureEnd.call);
     assertNotNull(secureEnd.handshake);
-    assertNull(secureEnd.throwable);
+    assertNull(secureEnd.ioe);
   }
 
   @Test public void multipleSecureConnectsForSingleCall() throws IOException {
@@ -785,7 +785,7 @@ public final class EventListenerTest {
     }
 
     ResponseBodyEnd responseBodyEnd = listener.removeUpToEvent(ResponseBodyEnd.class);
-    assertNotNull(responseBodyEnd.throwable);
+    assertNotNull(responseBodyEnd.ioe);
     assertThat("response body bytes", responseBodyEnd.bytesRead, lessThan(responseBodySize));
   }
 
@@ -838,7 +838,7 @@ public final class EventListenerTest {
     }
 
     RequestBodyEnd responseBodyEnd = listener.removeUpToEvent(RequestBodyEnd.class);
-    assertNotNull(responseBodyEnd.throwable);
+    assertNotNull(responseBodyEnd.ioe);
   }
 
   @Test public void requestBodySuccessHttp1OverHttps() throws IOException {
