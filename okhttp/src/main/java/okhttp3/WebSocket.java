@@ -99,8 +99,9 @@ public interface WebSocket {
    * a graceful shutdown was already underway or if the web socket is already closed or canceled.
    *
    * @param code Status code as defined by <a
-   * href="http://tools.ietf.org/html/rfc6455#section-7.4">Section 7.4 of RFC 6455</a> or {@code 0}.
+   * href="http://tools.ietf.org/html/rfc6455#section-7.4">Section 7.4 of RFC 6455</a>.
    * @param reason Reason for shutting down or {@code null}.
+   * @throws IllegalArgumentException if code is invalid.
    */
   boolean close(int code, @Nullable String reason);
 
