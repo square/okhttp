@@ -81,7 +81,7 @@ public final class RealWebSocketTest {
 
   @Test public void clientCloseWith0Fails() throws IOException {
     try {
-    client.webSocket.close(0, null);
+      client.webSocket.close(0, null);
     } catch (IllegalArgumentException expected) {
       assertEquals(expected.getMessage(), "Code must be in range [1000,5000): 0");
     }
