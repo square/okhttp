@@ -193,11 +193,10 @@ public abstract class EventListener {
    *
    * <p>This method is always invoked after {@link #requestHeadersStart(Call)}.
    *
-   * <p>{@code throwable} will be null in the case of a successful attempt to send the headers.
-   *
-   * <p>{@code throwable} will be non-null in the case of a failed attempt to send the headers.
+   * @param headerLength the length in java characters of headers to be written.
+   * @param throwable null if request body was successfully written, non-null otherwise.
    */
-  public void requestHeadersEnd(Call call, @Nullable Throwable throwable) {
+  public void requestHeadersEnd(Call call, long headerLength, @Nullable Throwable throwable) {
   }
 
   /**
@@ -221,8 +220,11 @@ public abstract class EventListener {
    * <p>{@code throwable} will be null in the case of a successful attempt to send the body.
    *
    * <p>{@code throwable} will be non-null in the case of a failed attempt to send the body.
+   *
+   * @param bytesWritten the length in bytes of body written, including partial success.
+   * @param throwable null if request body was successfully written, non-null otherwise.
    */
-  public void requestBodyEnd(Call call, @Nullable Throwable throwable) {
+  public void requestBodyEnd(Call call, long bytesWritten, @Nullable Throwable throwable) {
   }
 
   /**
@@ -242,11 +244,10 @@ public abstract class EventListener {
    *
    * <p>This method is always invoked after {@link #responseHeadersStart(Call)}.
    *
-   * <p>{@code throwable} will be null in the case of a successful attempt to receive the headers.
-   *
-   * <p>{@code throwable} will be non-null in the case of a failed attempt to receive the headers.
+   * @param headerLength the length in bytes of headers read, or -1 if failed to read.
+   * @param throwable null if response headers were successfully received, non-null otherwise.
    */
-  public void responseHeadersEnd(Call call, @Nullable Throwable throwable) {
+  public void responseHeadersEnd(Call call, long headerLength, @Nullable Throwable throwable) {
   }
 
   /**
@@ -269,11 +270,10 @@ public abstract class EventListener {
    *
    * <p>This method is always invoked after {@link #requestBodyStart(Call)}.
    *
-   * <p>{@code throwable} will be null in the case of a successful attempt to send the body.
-   *
-   * <p>{@code throwable} will be non-null in the case of a failed attempt to send the body.
+   * @param bytesRead the length in bytes of the body read, including partial success.
+   * @param throwable null if response body was successfully received, non-null otherwise.
    */
-  public void responseBodyEnd(Call call, @Nullable Throwable throwable) {
+  public void responseBodyEnd(Call call, long bytesRead, @Nullable Throwable throwable) {
   }
 
   /**

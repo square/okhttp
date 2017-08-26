@@ -17,13 +17,16 @@ package okhttp3.internal.http;
 
 import java.io.IOException;
 import java.net.ProtocolException;
+import okhttp3.Headers;
 import okhttp3.Interceptor;
 import okhttp3.Request;
 import okhttp3.Response;
 import okhttp3.internal.Util;
 import okhttp3.internal.connection.RealConnection;
 import okhttp3.internal.connection.StreamAllocation;
+import okio.Buffer;
 import okio.BufferedSink;
+import okio.ForwardingSink;
 import okio.Okio;
 import okio.Sink;
 
@@ -47,55 +50,63 @@ public final class CallServerInterceptor implements Interceptor {
     realChain.eventListener().requestHeadersStart(realChain.call());
     try {
       httpCodec.writeRequestHeaders(request);
-      realChain.eventListener().requestHeadersEnd(realChain.call(), null);
+      realChain.eventListener()
+          .requestHeadersEnd(realChain.call(), headerLength(request.headers()), null);
     } catch (IOException ioe) {
-      realChain.eventListener().requestHeadersEnd(realChain.call(), ioe);
+      realChain.eventListener()
+          .requestHeadersEnd(realChain.call(), headerLength(request.headers()), ioe);
       throw ioe;
     }
 
     Response.Builder responseBuilder = null;
     if (HttpMethod.permitsRequestBody(request.method()) && request.body() != null) {
-      realChain.eventListener().requestBodyStart(realChain.call());
-      try {
-        // If there's a "Expect: 100-continue" header on the request, wait for a "HTTP/1.1 100
-        // Continue" response before transmitting the request body. If we don't get that, return
-        // what we did get (such as a 4xx response) without ever transmitting the request body.
-        if ("100-continue".equalsIgnoreCase(request.header("Expect"))) {
-          httpCodec.flushRequest();
-          // TODO event listener
+      // If there's a "Expect: 100-continue" header on the request, wait for a "HTTP/1.1 100
+      // Continue" response before transmitting the request body. If we don't get that, return
+      // what we did get (such as a 4xx response) without ever transmitting the request body.
+      if ("100-continue".equalsIgnoreCase(request.header("Expect"))) {
+        httpCodec.flushRequest();
+        try {
+          realChain.eventListener().responseHeadersStart(realChain.call());
           responseBuilder = httpCodec.readResponseHeaders(true);
+        } catch (IOException ioe) {
+          realChain.eventListener().responseHeadersEnd(realChain.call(), -1, ioe);
+          throw ioe;
         }
+      }
 
-        if (responseBuilder == null) {
-          // Write the request body if the "Expect: 100-continue" expectation was met.
-          Sink requestBodyOut =
-              httpCodec.createRequestBody(request, request.body().contentLength());
+      if (responseBuilder == null) {
+        // Write the request body if the "Expect: 100-continue" expectation was met.
+        realChain.eventListener().requestBodyStart(realChain.call());
+        try {
+          long contentLength = request.body().contentLength();
+          CountingSink requestBodyOut =
+              new CountingSink(httpCodec.createRequestBody(request, contentLength));
           BufferedSink bufferedRequestBody = Okio.buffer(requestBodyOut);
 
           request.body().writeTo(bufferedRequestBody);
           bufferedRequestBody.close();
-        } else if (!connection.isMultiplexed()) {
-          // If the "Expect: 100-continue" expectation wasn't met, prevent the HTTP/1 connection
-          // from being reused. Otherwise we're still obligated to transmit the request body to
-          // leave the connection in a consistent state.
-          streamAllocation.noNewStreams();
+          realChain.eventListener()
+              .requestBodyEnd(realChain.call(), requestBodyOut.successfulCount, null);
+        } catch (IOException ioe) {
+          realChain.eventListener().requestBodyEnd(realChain.call(), -1, ioe);
+          throw ioe;
         }
-        realChain.eventListener().requestBodyEnd(realChain.call(), null);
-      } catch (IOException ioe) {
-        realChain.eventListener().requestBodyEnd(realChain.call(), ioe);
-        throw ioe;
+      } else if (!connection.isMultiplexed()) {
+        // If the "Expect: 100-continue" expectation wasn't met, prevent the HTTP/1 connection
+        // from being reused. Otherwise we're still obligated to transmit the request body to
+        // leave the connection in a consistent state.
+        streamAllocation.noNewStreams();
       }
     }
 
     httpCodec.finishRequest();
 
     if (responseBuilder == null) {
-      realChain.eventListener().responseHeadersStart(realChain.call());
       try {
+        realChain.eventListener().responseHeadersStart(realChain.call());
         responseBuilder = httpCodec.readResponseHeaders(false);
-        realChain.eventListener().responseHeadersEnd(realChain.call(), null);
       } catch (IOException ioe) {
-        realChain.eventListener().responseHeadersEnd(realChain.call(), ioe);
+        realChain.eventListener().responseHeadersEnd(realChain.call(), -1, ioe);
         throw ioe;
       }
     }
@@ -106,6 +117,9 @@ public final class CallServerInterceptor implements Interceptor {
         .sentRequestAtMillis(sentRequestMillis)
         .receivedResponseAtMillis(System.currentTimeMillis())
         .build();
+
+    realChain.eventListener()
+        .responseHeadersEnd(realChain.call(), headerLength(response.headers()), null);
 
     int code = response.code();
     if (forWebSocket && code == 101) {
@@ -130,5 +144,29 @@ public final class CallServerInterceptor implements Interceptor {
     }
 
     return response;
+  }
+
+  private long headerLength(Headers headers) {
+    long length = 0;
+
+    for (int i = 0, size = headers.size(); i < size; i++) {
+      length += headers.name(i).length();
+      length += headers.value(i).length();
+    }
+
+    return length;
+  }
+
+  final class CountingSink extends ForwardingSink {
+    long successfulCount;
+
+    CountingSink(Sink delegate) {
+      super(delegate);
+    }
+
+    @Override public void write(Buffer source, long byteCount) throws IOException {
+      super.write(source, byteCount);
+      successfulCount += byteCount;
+    }
   }
 }
