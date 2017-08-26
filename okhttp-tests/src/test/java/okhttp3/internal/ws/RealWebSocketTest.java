@@ -79,6 +79,14 @@ public final class RealWebSocketTest {
     assertFalse(client.webSocket.send("Hello!"));
   }
 
+  @Test public void clientCloseWith0Fails() throws IOException {
+    try {
+      client.webSocket.close(0, null);
+    } catch (IllegalArgumentException expected) {
+      assertEquals(expected.getMessage(), "Code must be in range [1000,5000): 0");
+    }
+  }
+
   @Test public void afterSocketClosedPingFailsWebSocket() throws IOException {
     client2Server.source().close();
     client.webSocket.pong(ByteString.encodeUtf8("Ping!"));
