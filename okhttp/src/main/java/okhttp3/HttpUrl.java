@@ -1599,7 +1599,7 @@ public final class HttpUrl {
         if (inetAddress == null) return null;
         byte[] address = inetAddress.getAddress();
         if (address.length == 16) return inet6AddressToAscii(address);
-        throw new AssertionError();
+        throw new AssertionError("Invalid IPv6 address: '" + percentDecoded + "'");
       }
 
       return domainToAscii(percentDecoded);

@@ -159,7 +159,7 @@ class AndroidPlatform extends Platform {
     } catch (ClassNotFoundException | NoSuchMethodException e) {
       return super.isCleartextTrafficPermitted(hostname);
     } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
-      throw new AssertionError();
+      throw new AssertionError("unable to determine cleartext support", e);
     }
   }
 
@@ -389,7 +389,7 @@ class AndroidPlatform extends Platform {
                 ? trustAnchor.getTrustedCert()
                 : null;
       } catch (IllegalAccessException e) {
-        throw new AssertionError();
+        throw new AssertionError("unable to get issues and signature", e);
       } catch (InvocationTargetException e) {
         return null;
       }

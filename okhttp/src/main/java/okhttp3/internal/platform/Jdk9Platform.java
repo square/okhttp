@@ -49,7 +49,7 @@ final class Jdk9Platform extends Platform {
 
       sslSocket.setSSLParameters(sslParameters);
     } catch (IllegalAccessException | InvocationTargetException e) {
-      throw new AssertionError();
+      throw new AssertionError("unable to set ssl parameters", e);
     }
   }
 
@@ -66,7 +66,7 @@ final class Jdk9Platform extends Platform {
 
       return protocol;
     } catch (IllegalAccessException | InvocationTargetException e) {
-      throw new AssertionError();
+      throw new AssertionError("unable to get selected protocols", e);
     }
   }
 

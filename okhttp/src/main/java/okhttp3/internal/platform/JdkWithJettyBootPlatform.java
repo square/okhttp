@@ -60,7 +60,7 @@ class JdkWithJettyBootPlatform extends Platform {
     try {
       removeMethod.invoke(null, sslSocket);
     } catch (IllegalAccessException | InvocationTargetException ignored) {
-      throw new AssertionError();
+      throw new AssertionError("unable to remove", ignored);
     }
   }
 
@@ -75,7 +75,7 @@ class JdkWithJettyBootPlatform extends Platform {
       }
       return provider.unsupported ? null : provider.selected;
     } catch (InvocationTargetException | IllegalAccessException e) {
-      throw new AssertionError();
+      throw new AssertionError("unable to get selected protocol", e);
     }
   }
 

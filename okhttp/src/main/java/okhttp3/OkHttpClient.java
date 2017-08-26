@@ -281,7 +281,7 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
       }
       return (X509TrustManager) trustManagers[0];
     } catch (GeneralSecurityException e) {
-      throw new AssertionError(); // The system has no TLS. Just give up.
+      throw new AssertionError("No System TLS", e); // The system has no TLS. Just give up.
     }
   }
 
@@ -291,7 +291,7 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
       sslContext.init(null, new TrustManager[] { trustManager }, null);
       return sslContext.getSocketFactory();
     } catch (GeneralSecurityException e) {
-      throw new AssertionError(); // The system has no TLS. Just give up.
+      throw new AssertionError("No System TLS", e); // The system has no TLS. Just give up.
     }
   }
 

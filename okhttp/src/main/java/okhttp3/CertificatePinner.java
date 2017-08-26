@@ -182,7 +182,7 @@ public final class CertificatePinner {
           if (sha1 == null) sha1 = sha1(x509Certificate);
           if (pin.hash.equals(sha1)) return; // Success!
         } else {
-          throw new AssertionError();
+          throw new AssertionError("unsupported hashAlgorithm: " + pin.hashAlgorithm);
         }
       }
     }
