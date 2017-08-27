@@ -157,7 +157,7 @@ public final class CallServerInterceptor implements Interceptor {
     return length;
   }
 
-  final class CountingSink extends ForwardingSink {
+  static final class CountingSink extends ForwardingSink {
     long successfulCount;
 
     CountingSink(Sink delegate) {
