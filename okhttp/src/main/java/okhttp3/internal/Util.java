@@ -459,4 +459,8 @@ public final class Util {
     if (millis == 0 && duration > 0) throw new IllegalArgumentException(name + " too small.");
     return (int) millis;
   }
+
+  public static AssertionError assertionError(String message, Exception e) {
+    return (AssertionError) new AssertionError(message).initCause(e);
+  }
 }
