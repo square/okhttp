@@ -23,6 +23,7 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.ConnectException;
 import java.net.HttpURLConnection;
+import java.net.InetAddress;
 import java.net.ProtocolException;
 import java.net.SocketTimeoutException;
 import java.net.URL;
@@ -432,8 +433,9 @@ public final class MockWebServerTest {
     assertEquals("GET /a/deep/path?key=foo%20bar HTTP/1.1", request.getRequestLine());
 
     HttpUrl requestUrl = request.getRequestUrl();
+    String serverFQDN = InetAddress.getByName(server.getHostName()).getCanonicalHostName();
     assertEquals("http", requestUrl.scheme());
-    assertEquals(server.getHostName(), requestUrl.host());
+    assertEquals(serverFQDN, requestUrl.host());
     assertEquals(server.getPort(), requestUrl.port());
     assertEquals("/a/deep/path", requestUrl.encodedPath());
     assertEquals("foo bar", requestUrl.queryParameter("key"));
