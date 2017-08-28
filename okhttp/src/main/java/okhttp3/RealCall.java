@@ -145,15 +145,19 @@ final class RealCall implements Call {
     @Override protected void execute() {
       boolean signalledCallback = false;
       try {
-        Response response = getResponseWithInterceptorChain();
-        if (retryAndFollowUpInterceptor.isCanceled()) {
-          signalledCallback = true;
-          responseCallback.onFailure(RealCall.this, new IOException("Canceled"));
-        } else {
-          signalledCallback = true;
-          responseCallback.onResponse(RealCall.this, response);
+        try {
+          Response response = getResponseWithInterceptorChain();
+          if (retryAndFollowUpInterceptor.isCanceled()) {
+            signalledCallback = true;
+            responseCallback.onFailure(RealCall.this, new IOException("Canceled"));
+          } else {
+            signalledCallback = true;
+            responseCallback.onResponse(RealCall.this, response);
+          }
+          eventListener.callEnd(RealCall.this, null);
+        } catch (RuntimeException re) {
+          throw new IOException("caught RuntimeException", re);
         }
-        eventListener.callEnd(RealCall.this, null);
       } catch (IOException e) {
         if (signalledCallback) {
           // Do not signal the callback twice!
