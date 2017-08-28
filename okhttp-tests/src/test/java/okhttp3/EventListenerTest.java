@@ -902,4 +902,47 @@ public final class EventListenerTest {
         .build();
     server.useHttps(sslClient.socketFactory, tunnelProxy);
   }
+
+  @Test public void npeInExecuteListener() throws IOException {
+    server.enqueue(new MockResponse());
+
+    listener.addOnEvent(new RecordingEventListener.OnEvent() {
+      @Override public void event(RecordingEventListener.CallEvent e) {
+        if (e instanceof ConnectEnd) {
+          throw new NullPointerException();
+        }
+      }
+    });
+
+    Call call = client.newCall(new Request.Builder()
+        .url(server.url("/"))
+        .build());
+    try {
+      call.execute();
+      fail();
+    } catch (NullPointerException expected) {
+      // expected
+    }
+  }
+
+  @Test(timeout = 5000L) public void npeInEnqueueListener() throws Exception {
+    server.enqueue(new MockResponse());
+
+    listener.addOnEvent(new RecordingEventListener.OnEvent() {
+      @Override public void event(RecordingEventListener.CallEvent e) {
+        if (e instanceof ConnectEnd) {
+          throw new NullPointerException();
+        }
+      }
+    });
+
+    Call call = client.newCall(new Request.Builder()
+        .url(server.url("/"))
+        .build());
+    RecordingCallback callback = new RecordingCallback();
+    call.enqueue(callback);
+
+    RecordedResponse response = callback.await(server.url("/"));
+    assertEquals("caught RuntimeException", response.failure.getMessage());
+  }
 }

@@ -33,6 +33,7 @@ final class RecordingEventListener extends EventListener {
   final Deque<CallEvent> eventSequence = new ArrayDeque<>();
 
   final List<Object> forbiddenLocks = new ArrayList<>();
+  private List<OnEvent> onEvents = new ArrayList<>();
 
   /** Confirm that the thread does not hold a lock on {@code lock} during the callback. */
   public void forbidLock(Object lock) {
@@ -74,6 +75,10 @@ final class RecordingEventListener extends EventListener {
     if (startEvent != null) {
       assertTrue(e.getName() + " without matching " + startEvent.getName(),
           eventSequence.contains(startEvent));
+    }
+
+    for (OnEvent onEvent: onEvents) {
+      onEvent.event(e);
     }
 
     eventSequence.offer(e);
@@ -391,5 +396,13 @@ final class RecordingEventListener extends EventListener {
     @Nullable @Override public CallEvent closes() {
       return new ResponseBodyStart(call);
     }
+  }
+
+  public void addOnEvent(OnEvent onEvent) {
+    onEvents.add(onEvent);
+  }
+
+  public interface OnEvent {
+    void event(CallEvent e);
   }
 }
