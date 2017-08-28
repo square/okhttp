@@ -48,15 +48,8 @@ public final class CallServerInterceptor implements Interceptor {
     long sentRequestMillis = System.currentTimeMillis();
 
     realChain.eventListener().requestHeadersStart(realChain.call());
-    try {
-      httpCodec.writeRequestHeaders(request);
-      realChain.eventListener()
-          .requestHeadersEnd(realChain.call(), headerLength(request.headers()), null);
-    } catch (IOException ioe) {
-      realChain.eventListener()
-          .requestHeadersEnd(realChain.call(), headerLength(request.headers()), ioe);
-      throw ioe;
-    }
+    httpCodec.writeRequestHeaders(request);
+    realChain.eventListener().requestHeadersEnd(realChain.call(), headerLength(request.headers()));
 
     Response.Builder responseBuilder = null;
     if (HttpMethod.permitsRequestBody(request.method()) && request.body() != null) {
@@ -65,32 +58,22 @@ public final class CallServerInterceptor implements Interceptor {
       // what we did get (such as a 4xx response) without ever transmitting the request body.
       if ("100-continue".equalsIgnoreCase(request.header("Expect"))) {
         httpCodec.flushRequest();
-        try {
-          realChain.eventListener().responseHeadersStart(realChain.call());
-          responseBuilder = httpCodec.readResponseHeaders(true);
-        } catch (IOException ioe) {
-          realChain.eventListener().responseHeadersEnd(realChain.call(), -1, ioe);
-          throw ioe;
-        }
+        realChain.eventListener().responseHeadersStart(realChain.call());
+        responseBuilder = httpCodec.readResponseHeaders(true);
       }
 
       if (responseBuilder == null) {
         // Write the request body if the "Expect: 100-continue" expectation was met.
         realChain.eventListener().requestBodyStart(realChain.call());
-        try {
-          long contentLength = request.body().contentLength();
-          CountingSink requestBodyOut =
-              new CountingSink(httpCodec.createRequestBody(request, contentLength));
-          BufferedSink bufferedRequestBody = Okio.buffer(requestBodyOut);
+        long contentLength = request.body().contentLength();
+        CountingSink requestBodyOut =
+            new CountingSink(httpCodec.createRequestBody(request, contentLength));
+        BufferedSink bufferedRequestBody = Okio.buffer(requestBodyOut);
 
-          request.body().writeTo(bufferedRequestBody);
-          bufferedRequestBody.close();
-          realChain.eventListener()
-              .requestBodyEnd(realChain.call(), requestBodyOut.successfulCount, null);
-        } catch (IOException ioe) {
-          realChain.eventListener().requestBodyEnd(realChain.call(), -1, ioe);
-          throw ioe;
-        }
+        request.body().writeTo(bufferedRequestBody);
+        bufferedRequestBody.close();
+        realChain.eventListener()
+            .requestBodyEnd(realChain.call(), requestBodyOut.successfulCount);
       } else if (!connection.isMultiplexed()) {
         // If the "Expect: 100-continue" expectation wasn't met, prevent the HTTP/1 connection
         // from being reused. Otherwise we're still obligated to transmit the request body to
@@ -102,13 +85,8 @@ public final class CallServerInterceptor implements Interceptor {
     httpCodec.finishRequest();
 
     if (responseBuilder == null) {
-      try {
-        realChain.eventListener().responseHeadersStart(realChain.call());
-        responseBuilder = httpCodec.readResponseHeaders(false);
-      } catch (IOException ioe) {
-        realChain.eventListener().responseHeadersEnd(realChain.call(), -1, ioe);
-        throw ioe;
-      }
+      realChain.eventListener().responseHeadersStart(realChain.call());
+      responseBuilder = httpCodec.readResponseHeaders(false);
     }
 
     Response response = responseBuilder
@@ -119,7 +97,7 @@ public final class CallServerInterceptor implements Interceptor {
         .build();
 
     realChain.eventListener()
-        .responseHeadersEnd(realChain.call(), headerLength(response.headers()), null);
+        .responseHeadersEnd(realChain.call(), headerLength(response.headers()));
 
     int code = response.code();
     if (forWebSocket && code == 101) {

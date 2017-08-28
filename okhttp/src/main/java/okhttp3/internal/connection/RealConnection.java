@@ -158,7 +158,7 @@ public final class RealConnection extends Http2Connection.Listener implements Co
           connectSocket(connectTimeout, readTimeout, call, eventListener);
         }
         establishProtocol(connectionSpecSelector, call, eventListener);
-        eventListener.connectEnd(call, route.socketAddress(), route.proxy(), protocol, null);
+        eventListener.connectEnd(call, route.socketAddress(), route.proxy(), protocol);
         break;
       } catch (IOException e) {
         closeQuietly(socket);
@@ -171,7 +171,7 @@ public final class RealConnection extends Http2Connection.Listener implements Co
         protocol = null;
         http2Connection = null;
 
-        eventListener.connectEnd(call, route.socketAddress(), route.proxy(), null, e);
+        eventListener.connectFailed(call, route.socketAddress(), route.proxy(), null, e);
 
         if (routeException == null) {
           routeException = new RouteException(e);
@@ -218,7 +218,7 @@ public final class RealConnection extends Http2Connection.Listener implements Co
       rawSocket = null;
       sink = null;
       source = null;
-      eventListener.connectEnd(call, route.socketAddress(), route.proxy(), null, null);
+      eventListener.connectEnd(call, route.socketAddress(), route.proxy(), null);
     }
   }
 
@@ -265,13 +265,8 @@ public final class RealConnection extends Http2Connection.Listener implements Co
     }
 
     eventListener.secureConnectStart(call);
-    try {
-      connectTls(connectionSpecSelector);
-      eventListener.secureConnectEnd(call, handshake, null);
-    } catch (IOException ioe) {
-      eventListener.secureConnectEnd(call, null, ioe);
-      throw ioe;
-    }
+    connectTls(connectionSpecSelector);
+    eventListener.secureConnectEnd(call, handshake);
 
     if (protocol == Protocol.HTTP_2) {
       socket.setSoTimeout(0); // HTTP/2 connection timeouts are set per-stream.

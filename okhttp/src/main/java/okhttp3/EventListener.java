@@ -64,8 +64,8 @@ public abstract class EventListener {
    * limits, this call may be executed well before processing the request is able to begin.
    *
    * <p>This will be invoked only once for a single {@link Call}. Retries of different routes
-   * or redirects will be handled within the boundaries of a single callStart and
-   * {@link #callEnd(Call, IOException)} pair.
+   * or redirects will be handled within the boundaries of a single callStart and {@link
+   * #callEnd}/{@link #callFailed} pair.
    */
   public void callStart(Call call) {
   }
@@ -85,16 +85,9 @@ public abstract class EventListener {
   /**
    * Invoked immediately after a DNS lookup.
    *
-   * <p>This method is always invoked after {@link #dnsStart(Call, String)}.
-   *
-   * <p>{@code inetAddressList} will be non-null and {@code ioe} will be null in the case of a
-   * successful DNS lookup.
-   *
-   * <p>{@code inetAddressList} will be null and {@code ioe} will be non-null in the case of a
-   * failed DNS lookup.
+   * <p>This method is invoked after {@link #dnsStart}.
    */
-  public void dnsEnd(Call call, String domainName, @Nullable List<InetAddress> inetAddressList,
-      @Nullable IOException ioe) {
+  public void dnsEnd(Call call, String domainName, @Nullable List<InetAddress> inetAddressList) {
   }
 
   /**
@@ -127,34 +120,32 @@ public abstract class EventListener {
   /**
    * Invoked immediately after a TLS connection was attempted.
    *
-   * <p>This method is always invoked after {@link #secureConnectStart(Call)}.
-   *
-   * <p>{@code handshake} will be non-null and {@code ioe} will be null in the case of a
-   * successful TLS connection.
-   *
-   * <p>{@code handshake} will be null and {@code ioe} will be non-null in the case of a
-   * failed TLS connection attempt.
+   * <p>This method is invoked after {@link #secureConnectStart}.
    */
-  public void secureConnectEnd(Call call, @Nullable Handshake handshake,
-      @Nullable IOException ioe) {
+  public void secureConnectEnd(Call call, @Nullable Handshake handshake) {
   }
 
   /**
    * Invoked immediately after a socket connection was attempted.
    *
    * <p>If the {@code call} uses HTTPS, this will be invoked after
-   * {@link #secureConnectEnd(Call, Handshake, IOException)}, otherwise it will invoked after
+   * {@link #secureConnectEnd(Call, Handshake)}, otherwise it will invoked after
    * {@link #connectStart(Call, InetSocketAddress, Proxy)}.
-   *
-   * <p>{@code protocol} and {@code proxy} will be non-null and {@code ioe} will be null when
-   * the connection is successfully established.
-   *
-   * <p>{@code protocol} and {@code proxy} will be null and {@code ioe} will be non-null in
-   * the case of a failed connection attempt.
    */
   public void connectEnd(Call call, InetSocketAddress inetSocketAddress,
-      @Nullable Proxy proxy, @Nullable Protocol protocol,
-      @Nullable IOException ioe) {
+      @Nullable Proxy proxy, @Nullable Protocol protocol) {
+  }
+
+  /**
+   * Invoked when a connection attempt fails. This failure is not terminal if further routes are
+   * available and failure recovery is enabled.
+   *
+   * <p>If the {@code call} uses HTTPS, this will be invoked after {@link #secureConnectEnd(Call,
+   * Handshake)}, otherwise it will invoked after {@link #connectStart(Call, InetSocketAddress,
+   * Proxy)}.
+   */
+  public void connectFailed(Call call, InetSocketAddress inetSocketAddress,
+      @Nullable Proxy proxy, @Nullable Protocol protocol, @Nullable IOException ioe) {
   }
 
   /**
@@ -195,9 +186,8 @@ public abstract class EventListener {
    * <p>This method is always invoked after {@link #requestHeadersStart(Call)}.
    *
    * @param headerLength the length in java characters of headers to be written.
-   * @param ioe null if request body was successfully written, non-null otherwise.
    */
-  public void requestHeadersEnd(Call call, long headerLength, @Nullable IOException ioe) {
+  public void requestHeadersEnd(Call call, long headerLength) {
   }
 
   /**
@@ -218,14 +208,9 @@ public abstract class EventListener {
    *
    * <p>This method is always invoked after {@link #requestBodyStart(Call)}.
    *
-   * <p>{@code ioe} will be null in the case of a successful attempt to send the body.
-   *
-   * <p>{@code ioe} will be non-null in the case of a failed attempt to send the body.
-   *
    * @param bytesWritten the length in bytes of body written, including partial success.
-   * @param ioe null if request body was successfully written, non-null otherwise.
    */
-  public void requestBodyEnd(Call call, long bytesWritten, @Nullable IOException ioe) {
+  public void requestBodyEnd(Call call, long bytesWritten) {
   }
 
   /**
@@ -246,9 +231,8 @@ public abstract class EventListener {
    * <p>This method is always invoked after {@link #responseHeadersStart(Call)}.
    *
    * @param headerLength the length in bytes of headers read, or -1 if failed to read.
-   * @param ioe null if response headers were successfully received, non-null otherwise.
    */
-  public void responseHeadersEnd(Call call, long headerLength, @Nullable IOException ioe) {
+  public void responseHeadersEnd(Call call, long headerLength) {
   }
 
   /**
@@ -272,9 +256,8 @@ public abstract class EventListener {
    * <p>This method is always invoked after {@link #requestBodyStart(Call)}.
    *
    * @param bytesRead the length in bytes of the body read, including partial success.
-   * @param ioe null if response body was successfully received, non-null otherwise.
    */
-  public void responseBodyEnd(Call call, long bytesRead, @Nullable IOException ioe) {
+  public void responseBodyEnd(Call call, long bytesRead) {
   }
 
   /**
@@ -287,7 +270,15 @@ public abstract class EventListener {
    *
    * <p>{@code ioe} will be non-null in the case of a failed attempt to execute the call.
    */
-  public void callEnd(Call call, @Nullable IOException ioe) {
+  public void callEnd(Call call) {
+  }
+
+  /**
+   * Invoked when a call fails permanently.
+   *
+   * <p>This method is always invoked after {@link #callStart(Call)}.
+   */
+  public void callFailed(Call call, IOException ioe) {
   }
 
   public interface Factory {
