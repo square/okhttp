@@ -15,6 +15,7 @@
  */
 package okhttp3;
 
+import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.Proxy;
@@ -64,7 +65,7 @@ public abstract class EventListener {
    *
    * <p>This will be invoked only once for a single {@link Call}. Retries of different routes
    * or redirects will be handled within the boundaries of a single callStart and
-   * {@link #callEnd(Call, Throwable)} pair.
+   * {@link #callEnd(Call, IOException)} pair.
    */
   public void callStart(Call call) {
   }
@@ -86,14 +87,14 @@ public abstract class EventListener {
    *
    * <p>This method is always invoked after {@link #dnsStart(Call, String)}.
    *
-   * <p>{@code inetAddressList} will be non-null and {@code throwable} will be null in the case of a
+   * <p>{@code inetAddressList} will be non-null and {@code ioe} will be null in the case of a
    * successful DNS lookup.
    *
-   * <p>{@code inetAddressList} will be null and {@code throwable} will be non-null in the case of a
+   * <p>{@code inetAddressList} will be null and {@code ioe} will be non-null in the case of a
    * failed DNS lookup.
    */
   public void dnsEnd(Call call, String domainName, @Nullable List<InetAddress> inetAddressList,
-      @Nullable Throwable throwable) {
+      @Nullable IOException ioe) {
   }
 
   /**
@@ -128,32 +129,32 @@ public abstract class EventListener {
    *
    * <p>This method is always invoked after {@link #secureConnectStart(Call)}.
    *
-   * <p>{@code handshake} will be non-null and {@code throwable} will be null in the case of a
+   * <p>{@code handshake} will be non-null and {@code ioe} will be null in the case of a
    * successful TLS connection.
    *
-   * <p>{@code handshake} will be null and {@code throwable} will be non-null in the case of a
+   * <p>{@code handshake} will be null and {@code ioe} will be non-null in the case of a
    * failed TLS connection attempt.
    */
   public void secureConnectEnd(Call call, @Nullable Handshake handshake,
-      @Nullable Throwable throwable) {
+      @Nullable IOException ioe) {
   }
 
   /**
    * Invoked immediately after a socket connection was attempted.
    *
    * <p>If the {@code call} uses HTTPS, this will be invoked after
-   * {@link #secureConnectEnd(Call, Handshake, Throwable)}, otherwise it will invoked after
+   * {@link #secureConnectEnd(Call, Handshake, IOException)}, otherwise it will invoked after
    * {@link #connectStart(Call, InetSocketAddress, Proxy)}.
    *
-   * <p>{@code protocol} and {@code proxy} will be non-null and {@code throwable} will be null when
+   * <p>{@code protocol} and {@code proxy} will be non-null and {@code ioe} will be null when
    * the connection is successfully established.
    *
-   * <p>{@code protocol} and {@code proxy} will be null and {@code throwable} will be non-null in
+   * <p>{@code protocol} and {@code proxy} will be null and {@code ioe} will be non-null in
    * the case of a failed connection attempt.
    */
   public void connectEnd(Call call, InetSocketAddress inetSocketAddress,
       @Nullable Proxy proxy, @Nullable Protocol protocol,
-      @Nullable Throwable throwable) {
+      @Nullable IOException ioe) {
   }
 
   /**
@@ -194,9 +195,9 @@ public abstract class EventListener {
    * <p>This method is always invoked after {@link #requestHeadersStart(Call)}.
    *
    * @param headerLength the length in java characters of headers to be written.
-   * @param throwable null if request body was successfully written, non-null otherwise.
+   * @param ioe null if request body was successfully written, non-null otherwise.
    */
-  public void requestHeadersEnd(Call call, long headerLength, @Nullable Throwable throwable) {
+  public void requestHeadersEnd(Call call, long headerLength, @Nullable IOException ioe) {
   }
 
   /**
@@ -217,14 +218,14 @@ public abstract class EventListener {
    *
    * <p>This method is always invoked after {@link #requestBodyStart(Call)}.
    *
-   * <p>{@code throwable} will be null in the case of a successful attempt to send the body.
+   * <p>{@code ioe} will be null in the case of a successful attempt to send the body.
    *
-   * <p>{@code throwable} will be non-null in the case of a failed attempt to send the body.
+   * <p>{@code ioe} will be non-null in the case of a failed attempt to send the body.
    *
    * @param bytesWritten the length in bytes of body written, including partial success.
-   * @param throwable null if request body was successfully written, non-null otherwise.
+   * @param ioe null if request body was successfully written, non-null otherwise.
    */
-  public void requestBodyEnd(Call call, long bytesWritten, @Nullable Throwable throwable) {
+  public void requestBodyEnd(Call call, long bytesWritten, @Nullable IOException ioe) {
   }
 
   /**
@@ -245,9 +246,9 @@ public abstract class EventListener {
    * <p>This method is always invoked after {@link #responseHeadersStart(Call)}.
    *
    * @param headerLength the length in bytes of headers read, or -1 if failed to read.
-   * @param throwable null if response headers were successfully received, non-null otherwise.
+   * @param ioe null if response headers were successfully received, non-null otherwise.
    */
-  public void responseHeadersEnd(Call call, long headerLength, @Nullable Throwable throwable) {
+  public void responseHeadersEnd(Call call, long headerLength, @Nullable IOException ioe) {
   }
 
   /**
@@ -271,9 +272,9 @@ public abstract class EventListener {
    * <p>This method is always invoked after {@link #requestBodyStart(Call)}.
    *
    * @param bytesRead the length in bytes of the body read, including partial success.
-   * @param throwable null if response body was successfully received, non-null otherwise.
+   * @param ioe null if response body was successfully received, non-null otherwise.
    */
-  public void responseBodyEnd(Call call, long bytesRead, @Nullable Throwable throwable) {
+  public void responseBodyEnd(Call call, long bytesRead, @Nullable IOException ioe) {
   }
 
   /**
@@ -282,11 +283,11 @@ public abstract class EventListener {
    *
    * <p>This method is always invoked after {@link #callStart(Call)}.
    *
-   * <p>{@code throwable} will be null in the case of a successful attempt to execute the call.
+   * <p>{@code ioe} will be null in the case of a successful attempt to execute the call.
    *
-   * <p>{@code throwable} will be non-null in the case of a failed attempt to execute the call.
+   * <p>{@code ioe} will be non-null in the case of a failed attempt to execute the call.
    */
-  public void callEnd(Call call, @Nullable Throwable throwable) {
+  public void callEnd(Call call, @Nullable IOException ioe) {
   }
 
   public interface Factory {

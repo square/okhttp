@@ -185,9 +185,9 @@ public final class RouteSelector {
       List<InetAddress> addresses;
       try {
         addresses = address.dns().lookup(socketHost);
-      } catch (Exception e) {
-        eventListener.dnsEnd(call, socketHost, null, e);
-        throw e;
+      } catch (IOException ioe) {
+        eventListener.dnsEnd(call, socketHost, null, ioe);
+        throw ioe;
       }
       if (addresses.isEmpty()) {
         UnknownHostException exception = new UnknownHostException(

@@ -268,9 +268,9 @@ public final class RealConnection extends Http2Connection.Listener implements Co
     try {
       connectTls(connectionSpecSelector);
       eventListener.secureConnectEnd(call, handshake, null);
-    } catch (Exception e) {
-      eventListener.secureConnectEnd(call, null, e);
-      throw e;
+    } catch (IOException ioe) {
+      eventListener.secureConnectEnd(call, null, ioe);
+      throw ioe;
     }
 
     if (protocol == Protocol.HTTP_2) {
