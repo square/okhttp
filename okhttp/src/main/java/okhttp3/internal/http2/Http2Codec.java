@@ -223,7 +223,7 @@ public final class Http2Codec implements HttpCodec {
     private void endOfInput(IOException e) {
       if (completed) return;
       completed = true;
-      streamAllocation.eventListener.responseBodyEnd(streamAllocation.call, bytesRead, e);
+      streamAllocation.eventListener.responseBodyEnd(streamAllocation.call, bytesRead);
       streamAllocation.streamFinished(false, Http2Codec.this);
     }
   }

@@ -49,7 +49,7 @@ final class RecordingEventListener extends EventListener {
       event = eventSequence.poll();
     }
     if (event == null) throw new AssertionError();
-    return (T) event;
+    return eventClass.cast(event);
   }
 
   List<String> recordedEventTypes() {
@@ -83,9 +83,8 @@ final class RecordingEventListener extends EventListener {
     logEvent(new DnsStart(call, domainName));
   }
 
-  @Override public void dnsEnd(Call call, String domainName, List<InetAddress> inetAddressList,
-      IOException ioe) {
-    logEvent(new DnsEnd(call, domainName, inetAddressList, ioe));
+  @Override public void dnsEnd(Call call, String domainName, List<InetAddress> inetAddressList) {
+    logEvent(new DnsEnd(call, domainName, inetAddressList));
   }
 
   @Override public void connectStart(Call call, InetSocketAddress inetSocketAddress,
@@ -97,13 +96,18 @@ final class RecordingEventListener extends EventListener {
     logEvent(new SecureConnectStart(call));
   }
 
-  @Override public void secureConnectEnd(Call call, Handshake handshake, IOException ioe) {
-    logEvent(new SecureConnectEnd(call, handshake, ioe));
+  @Override public void secureConnectEnd(Call call, Handshake handshake) {
+    logEvent(new SecureConnectEnd(call, handshake));
   }
 
   @Override public void connectEnd(Call call, InetSocketAddress inetSocketAddress,
-      @Nullable Proxy proxy, Protocol protocol, IOException ioe) {
-    logEvent(new ConnectEnd(call, inetSocketAddress, proxy, protocol, ioe));
+      @Nullable Proxy proxy, Protocol protocol) {
+    logEvent(new ConnectEnd(call, inetSocketAddress, proxy, protocol));
+  }
+
+  @Override public void connectFailed(Call call, InetSocketAddress inetSocketAddress,
+      @Nullable Proxy proxy, @Nullable Protocol protocol, @Nullable IOException ioe) {
+    logEvent(new ConnectFailed(call, inetSocketAddress, proxy, protocol, ioe));
   }
 
   @Override public void connectionAcquired(Call call, Connection connection) {
@@ -122,36 +126,40 @@ final class RecordingEventListener extends EventListener {
     logEvent(new RequestHeadersStart(call));
   }
 
-  @Override public void requestHeadersEnd(Call call, long headerLength, IOException ioe) {
-    logEvent(new RequestHeadersEnd(call, headerLength, ioe));
+  @Override public void requestHeadersEnd(Call call, long headerLength) {
+    logEvent(new RequestHeadersEnd(call, headerLength));
   }
 
   @Override public void requestBodyStart(Call call) {
     logEvent(new RequestBodyStart(call));
   }
 
-  @Override public void requestBodyEnd(Call call, long bytesWritten, IOException ioe) {
-    logEvent(new RequestBodyEnd(call, bytesWritten, ioe));
+  @Override public void requestBodyEnd(Call call, long bytesWritten) {
+    logEvent(new RequestBodyEnd(call, bytesWritten));
   }
 
   @Override public void responseHeadersStart(Call call) {
     logEvent(new ResponseHeadersStart(call));
   }
 
-  @Override public void responseHeadersEnd(Call call, long headerLength, IOException ioe) {
-    logEvent(new ResponseHeadersEnd(call, headerLength, ioe));
+  @Override public void responseHeadersEnd(Call call, long headerLength) {
+    logEvent(new ResponseHeadersEnd(call, headerLength));
   }
 
   @Override public void responseBodyStart(Call call) {
     logEvent(new ResponseBodyStart(call));
   }
 
-  @Override public void responseBodyEnd(Call call, long bytesRead, IOException ioe) {
-    logEvent(new ResponseBodyEnd(call, bytesRead, ioe));
+  @Override public void responseBodyEnd(Call call, long bytesRead) {
+    logEvent(new ResponseBodyEnd(call, bytesRead));
   }
 
-  @Override public void callEnd(Call call, IOException ioe) {
-    logEvent(new CallEnd(call, ioe));
+  @Override public void callEnd(Call call) {
+    logEvent(new CallEnd(call));
+  }
+
+  @Override public void callFailed(Call call, IOException ioe) {
+    logEvent(new CallFailed(call, ioe));
   }
 
   static class CallEvent {
@@ -202,13 +210,11 @@ final class RecordingEventListener extends EventListener {
   static final class DnsEnd extends CallEvent {
     final String domainName;
     final List<InetAddress> inetAddressList;
-    final IOException ioe;
 
-    DnsEnd(Call call, String domainName, List<InetAddress> inetAddressList, IOException ioe) {
-      super(call, domainName, inetAddressList, ioe);
+    DnsEnd(Call call, String domainName, List<InetAddress> inetAddressList) {
+      super(call, domainName, inetAddressList);
       this.domainName = domainName;
       this.inetAddressList = inetAddressList;
-      this.ioe = ioe;
     }
 
     @Nullable @Override public CallEvent closes() {
@@ -230,10 +236,27 @@ final class RecordingEventListener extends EventListener {
   static final class ConnectEnd extends CallEvent {
     final InetSocketAddress inetSocketAddress;
     final Protocol protocol;
-    final IOException ioe;
     final Proxy proxy;
 
-    ConnectEnd(Call call, InetSocketAddress inetSocketAddress, Proxy proxy, Protocol protocol,
+    ConnectEnd(Call call, InetSocketAddress inetSocketAddress, Proxy proxy, Protocol protocol) {
+      super(call, inetSocketAddress, proxy, protocol);
+      this.inetSocketAddress = inetSocketAddress;
+      this.proxy = proxy;
+      this.protocol = protocol;
+    }
+
+    @Override public CallEvent closes() {
+      return new ConnectStart(call, inetSocketAddress, proxy);
+    }
+  }
+
+  static final class ConnectFailed extends CallEvent {
+    final InetSocketAddress inetSocketAddress;
+    final Protocol protocol;
+    final Proxy proxy;
+    final IOException ioe;
+
+    ConnectFailed(Call call, InetSocketAddress inetSocketAddress, Proxy proxy, Protocol protocol,
         IOException ioe) {
       super(call, inetSocketAddress, proxy, protocol, ioe);
       this.inetSocketAddress = inetSocketAddress;
@@ -255,12 +278,10 @@ final class RecordingEventListener extends EventListener {
 
   static final class SecureConnectEnd extends CallEvent {
     final Handshake handshake;
-    final IOException ioe;
 
-    SecureConnectEnd(Call call, Handshake handshake, IOException ioe) {
-      super(call, handshake, ioe);
+    SecureConnectEnd(Call call, Handshake handshake) {
+      super(call, handshake);
       this.handshake = handshake;
-      this.ioe = ioe;
     }
 
     @Nullable @Override public CallEvent closes() {
@@ -297,15 +318,21 @@ final class RecordingEventListener extends EventListener {
   }
 
   static final class CallEnd extends CallEvent {
-    final IOException ioe;
-
-    CallEnd(Call call, IOException ioe) {
-      super(call, ioe);
-      this.ioe = ioe;
+    CallEnd(Call call) {
+      super(call);
     }
 
     @Nullable @Override public CallEvent closes() {
       return new CallStart(call);
+    }
+  }
+
+  static final class CallFailed extends CallEvent {
+    final IOException ioe;
+
+    CallFailed(Call call, IOException ioe) {
+      super(call, ioe);
+      this.ioe = ioe;
     }
   }
 
@@ -316,12 +343,10 @@ final class RecordingEventListener extends EventListener {
   }
 
   static final class RequestHeadersEnd extends CallEvent {
-    final IOException ioe;
     final long headerLength;
 
-    RequestHeadersEnd(Call call, long headerLength, IOException ioe) {
-      super(call, headerLength, ioe);
-      this.ioe = ioe;
+    RequestHeadersEnd(Call call, long headerLength) {
+      super(call, headerLength);
       this.headerLength = headerLength;
     }
 
@@ -337,12 +362,10 @@ final class RecordingEventListener extends EventListener {
   }
 
   static final class RequestBodyEnd extends CallEvent {
-    final IOException ioe;
     final long bytesWritten;
 
-    RequestBodyEnd(Call call, long bytesWritten, IOException ioe) {
-      super(call, bytesWritten, ioe);
-      this.ioe = ioe;
+    RequestBodyEnd(Call call, long bytesWritten) {
+      super(call, bytesWritten);
       this.bytesWritten = bytesWritten;
     }
 
@@ -358,12 +381,10 @@ final class RecordingEventListener extends EventListener {
   }
 
   static final class ResponseHeadersEnd extends CallEvent {
-    final IOException ioe;
     final long headerLength;
 
-    ResponseHeadersEnd(Call call, long headerLength, IOException ioe) {
-      super(call, headerLength, ioe);
-      this.ioe = ioe;
+    ResponseHeadersEnd(Call call, long headerLength) {
+      super(call, headerLength);
       this.headerLength = headerLength;
     }
 
@@ -379,12 +400,10 @@ final class RecordingEventListener extends EventListener {
   }
 
   static final class ResponseBodyEnd extends CallEvent {
-    final IOException ioe;
     final long bytesRead;
 
-    ResponseBodyEnd(Call call, long bytesRead, IOException ioe) {
-      super(call, bytesRead, ioe);
-      this.ioe = ioe;
+    ResponseBodyEnd(Call call, long bytesRead) {
+      super(call, bytesRead);
       this.bytesRead = bytesRead;
     }
 
