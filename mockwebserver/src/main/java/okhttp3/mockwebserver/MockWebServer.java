@@ -156,12 +156,13 @@ public final class MockWebServer extends ExternalResource implements Closeable {
 
   public String getHostName() {
     before();
-    return inetSocketAddress.getHostName();
+    return inetSocketAddress.getAddress().getCanonicalHostName();
   }
 
   public Proxy toProxyAddress() {
     before();
-    InetSocketAddress address = new InetSocketAddress(inetSocketAddress.getAddress(), getPort());
+    InetSocketAddress address = new InetSocketAddress(inetSocketAddress.getAddress()
+            .getCanonicalHostName(), getPort());
     return new Proxy(Proxy.Type.HTTP, address);
   }
 

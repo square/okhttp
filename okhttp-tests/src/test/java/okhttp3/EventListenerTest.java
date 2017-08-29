@@ -261,11 +261,11 @@ public final class EventListenerTest {
 
     DnsStart dnsStart = listener.removeUpToEvent(DnsStart.class);
     assertSame(call, dnsStart.call);
-    assertEquals("localhost", dnsStart.domainName);
+    assertEquals(server.getHostName(), dnsStart.domainName);
 
     DnsEnd dnsEnd = listener.removeUpToEvent(DnsEnd.class);
     assertSame(call, dnsEnd.call);
-    assertEquals("localhost", dnsEnd.domainName);
+    assertEquals(server.getHostName(), dnsEnd.domainName);
     assertEquals(1, dnsEnd.inetAddressList.size());
     assertNull(dnsEnd.throwable);
   }
