@@ -160,30 +160,44 @@ public final class StreamAllocation {
     boolean foundPooledConnection = false;
     RealConnection result = null;
     Route selectedRoute = null;
+    Connection releasedConnection;
+    Socket toClose;
     synchronized (connectionPool) {
       if (released) throw new IllegalStateException("released");
       if (codec != null) throw new IllegalStateException("codec != null");
       if (canceled) throw new IOException("Canceled");
 
-      // Attempt to use an already-allocated connection.
-      RealConnection allocatedConnection = this.connection;
-      if (allocatedConnection != null && !allocatedConnection.noNewStreams) {
-        return allocatedConnection;
+      // Attempt to use an already-allocated connection. We need to be careful here because our
+      // already-allocated connection may have been restricted from creating new streams.
+      releasedConnection = this.connection;
+      toClose = releaseIfNoNewStreams();
+      if (this.connection != null) {
+        // We had an already-allocated connection and it's good.
+        result = this.connection;
+        releasedConnection = null;
       }
 
-      // Attempt to get a connection from the pool.
-      Internal.instance.get(connectionPool, address, this, null);
-      if (connection != null) {
-        foundPooledConnection = true;
-        result = connection;
-      } else {
-        selectedRoute = route;
+      if (result == null) {
+        // Attempt to get a connection from the pool.
+        Internal.instance.get(connectionPool, address, this, null);
+        if (connection != null) {
+          foundPooledConnection = true;
+          result = connection;
+        } else {
+          selectedRoute = route;
+        }
       }
     }
+    closeQuietly(toClose);
 
-    // If we found a pooled connection, we're done.
+    if (releasedConnection != null) {
+      eventListener.connectionReleased(call, releasedConnection);
+    }
     if (foundPooledConnection) {
       eventListener.connectionAcquired(call, result);
+    }
+    if (result != null) {
+      // If we found an already-allocated or pooled connection, we're done.
       return result;
     }
 
@@ -255,6 +269,21 @@ public final class StreamAllocation {
     closeQuietly(socket);
 
     return result;
+  }
+
+  /**
+   * Releases the currently held connection and returns a socket to close if the held connection
+   * restricts new streams from being created. With HTTP/2 multiple requests share the same
+   * connection so it's possible that our connection is restricted from creating new streams during
+   * a follow-up request.
+   */
+  private Socket releaseIfNoNewStreams() {
+    assert (Thread.holdsLock(connectionPool));
+    RealConnection allocatedConnection = this.connection;
+    if (allocatedConnection != null && allocatedConnection.noNewStreams) {
+      return deallocate(false, false, true);
+    }
+    return null;
   }
 
   public void streamFinished(boolean noNewStreams, HttpCodec codec, long bytesRead, IOException e) {

@@ -29,7 +29,6 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.SynchronousQueue;
-
 import javax.net.ssl.HostnameVerifier;
 import okhttp3.Cache;
 import okhttp3.Call;
@@ -46,6 +45,7 @@ import okhttp3.RecordingHostnameVerifier;
 import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
+import okhttp3.Route;
 import okhttp3.TestUtil;
 import okhttp3.internal.DoubleInetAddressDns;
 import okhttp3.internal.RecordingOkAuthenticator;
@@ -734,6 +734,74 @@ public final class HttpOverHttp2Test {
     } catch (StreamResetException expected) {
       assertEquals(errorCode, expected.errorCode);
     }
+  }
+
+  @Test public void recoverFromConnectionNoNewStreamsOnFollowUp() throws InterruptedException {
+    server.enqueue(new MockResponse()
+        .setResponseCode(401));
+    server.enqueue(new MockResponse()
+        .setSocketPolicy(SocketPolicy.RESET_STREAM_AT_START)
+        .setHttp2ErrorCode(ErrorCode.CANCEL.httpCode));
+    server.enqueue(new MockResponse()
+        .setBody("DEF"));
+    server.enqueue(new MockResponse()
+        .setResponseCode(301)
+        .addHeader("Location", "/foo"));
+    server.enqueue(new MockResponse()
+        .setBody("ABC"));
+
+    final CountDownLatch latch = new CountDownLatch(1);
+    final BlockingQueue<String> responses = new SynchronousQueue<>();
+    okhttp3.Authenticator authenticator = new okhttp3.Authenticator() {
+      @Override public Request authenticate(Route route, Response response) throws IOException {
+        responses.offer(response.body().string());
+        try {
+          latch.await();
+        } catch (InterruptedException e) {
+          throw new AssertionError();
+        }
+        return response.request();
+      }
+    };
+
+    OkHttpClient blockingAuthClient = client.newBuilder()
+        .authenticator(authenticator)
+        .build();
+
+    Callback callback = new Callback() {
+      @Override public void onFailure(Call call, IOException e) {
+        fail();
+      }
+
+      @Override public void onResponse(Call call, Response response) throws IOException {
+        responses.offer(response.body().string());
+      }
+    };
+
+    // Make the first request waiting until we get our auth challenge.
+    Request request = new Request.Builder()
+        .url(server.url("/"))
+        .build();
+    blockingAuthClient.newCall(request).enqueue(callback);
+    String response1 = responses.take();
+    assertEquals("", response1);
+    assertEquals(0, server.takeRequest().getSequenceNumber());
+
+    // Now make the second request which will restrict the first HTTP/2 connection from creating new
+    // streams.
+    client.newCall(request).enqueue(callback);
+    String response2 = responses.take();
+    assertEquals("DEF", response2);
+    assertEquals(1, server.takeRequest().getSequenceNumber());
+    assertEquals(0, server.takeRequest().getSequenceNumber());
+
+    // Let the first request proceed. It should discard the the held HTTP/2 connection and get a new
+    // one.
+    latch.countDown();
+    String response3 = responses.take();
+    assertEquals("ABC", response3);
+    assertEquals(1, server.takeRequest().getSequenceNumber());
+    assertEquals(2, server.takeRequest().getSequenceNumber());
   }
 
   @Test public void nonAsciiResponseHeader() throws Exception {
