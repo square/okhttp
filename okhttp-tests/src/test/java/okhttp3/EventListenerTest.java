@@ -53,7 +53,6 @@ import org.hamcrest.Description;
 import org.hamcrest.Matcher;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 
@@ -113,7 +112,7 @@ public final class EventListenerTest {
     List<String> expectedEvents = Arrays.asList("CallStart", "DnsStart", "DnsEnd",
         "ConnectionAcquired", "ConnectStart", "ConnectEnd", "RequestHeadersStart",
         "RequestHeadersEnd", "ResponseHeadersStart", "ResponseHeadersEnd", "ResponseBodyStart",
-        "CallEnd", "ResponseBodyEnd", "ConnectionReleased");
+        "ResponseBodyEnd", "ConnectionReleased", "CallEnd");
     assertEquals(expectedEvents, listener.recordedEventTypes());
   }
 
@@ -147,7 +146,7 @@ public final class EventListenerTest {
     List<String> expectedEvents = asList("CallStart", "DnsStart", "DnsEnd", "ConnectionAcquired",
         "ConnectStart", "SecureConnectStart", "SecureConnectEnd", "ConnectEnd",
         "RequestHeadersStart", "RequestHeadersEnd", "ResponseHeadersStart", "ResponseHeadersEnd",
-        "ResponseBodyStart", "CallEnd", "ResponseBodyEnd", "ConnectionReleased");
+        "ResponseBodyStart", "ResponseBodyEnd", "ConnectionReleased", "CallEnd");
 
     assertEquals(expectedEvents, listener.recordedEventTypes());
   }
@@ -753,21 +752,18 @@ public final class EventListenerTest {
     listener.removeUpToEvent(ConnectionAcquired.class);
   }
 
-  @Ignore("TODO(jwilson): move callEnd/callFail to follow the responseBodyEnd")
   @Test public void responseBodyFailHttp1OverHttps() throws IOException {
     enableTlsWithTunnel(false);
     server.setProtocols(Arrays.asList(Protocol.HTTP_1_1));
     responseBodyFail(Protocol.HTTP_1_1);
   }
 
-  @Ignore("TODO(jwilson): move callEnd/callFail to follow the responseBodyEnd")
   @Test public void responseBodyFailHttp2OverHttps() throws IOException {
     enableTlsWithTunnel(false);
     server.setProtocols(Arrays.asList(Protocol.HTTP_2, Protocol.HTTP_1_1));
     responseBodyFail(Protocol.HTTP_2);
   }
 
-  @Ignore("TODO(jwilson): move callEnd/callFail to follow the responseBodyEnd")
   @Test public void responseBodyFailHttp() throws IOException {
     responseBodyFail(Protocol.HTTP_1_1);
   }

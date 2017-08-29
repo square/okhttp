@@ -257,9 +257,12 @@ public final class StreamAllocation {
     return result;
   }
 
-  public void streamFinished(boolean noNewStreams, HttpCodec codec) {
+  public void streamFinished(boolean noNewStreams, HttpCodec codec, long bytesRead, IOException e) {
+    eventListener.responseBodyEnd(call, bytesRead);
+
     Socket socket;
     Connection releasedConnection;
+    boolean callEnd;
     synchronized (connectionPool) {
       if (codec == null || codec != this.codec) {
         throw new IllegalStateException("expected " + this.codec + " but was " + codec);
@@ -270,10 +273,17 @@ public final class StreamAllocation {
       releasedConnection = connection;
       socket = deallocate(noNewStreams, false, true);
       if (connection != null) releasedConnection = null;
+      callEnd = this.released;
     }
     closeQuietly(socket);
     if (releasedConnection != null) {
       eventListener.connectionReleased(call, releasedConnection);
+    }
+
+    if (e != null) {
+      eventListener.callFailed(call, e);
+    } else if (callEnd) {
+      eventListener.callEnd(call);
     }
   }
 
