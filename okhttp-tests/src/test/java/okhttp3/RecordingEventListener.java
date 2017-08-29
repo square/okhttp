@@ -29,7 +29,7 @@ import javax.annotation.Nullable;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
-final class RecordingEventListener extends EventListener {
+public final class RecordingEventListener extends EventListener {
   final Deque<CallEvent> eventSequence = new ArrayDeque<>();
 
   final List<Object> forbiddenLocks = new ArrayList<>();
@@ -43,7 +43,7 @@ final class RecordingEventListener extends EventListener {
    * Removes recorded events up to (and including) an event is found whose class equals
    * {@code eventClass} and returns it.
    */
-  <T> T removeUpToEvent(Class<T> eventClass) {
+  public <T> T removeUpToEvent(Class<T> eventClass) {
     Object event = eventSequence.poll();
     while (event != null && !eventClass.isInstance(event)) {
       event = eventSequence.poll();
@@ -52,7 +52,7 @@ final class RecordingEventListener extends EventListener {
     return eventClass.cast(event);
   }
 
-  List<String> recordedEventTypes() {
+  public List<String> recordedEventTypes() {
     List<String> eventTypes = new ArrayList<>();
     for (CallEvent event : eventSequence) {
       eventTypes.add(event.getName());
@@ -60,7 +60,7 @@ final class RecordingEventListener extends EventListener {
     return eventTypes;
   }
 
-  void clearAllEvents() {
+  public void clearAllEvents() {
     eventSequence.clear();
   }
 
