@@ -43,11 +43,13 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 
+import static org.hamcrest.CoreMatchers.equalTo;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.junit.Assume.assumeThat;
 
 public final class HttpLoggingInterceptorTest {
   private static final MediaType PLAIN = MediaType.parse("text/plain; charset=utf-8");
@@ -685,16 +687,16 @@ public final class HttpLoggingInterceptorTest {
 
     server.enqueue(new MockResponse());
     Response response = client.newCall(request().build()).execute();
-    assertEquals(Protocol.HTTP_2, response.protocol());
+    assumeThat(response.protocol(), equalTo(Protocol.HTTP_2));
 
     applicationLogs
         .assertLogEqual("--> GET " + url)
-        .assertLogMatch("<-- 200 OK " + url + " \\(\\d+ms, 0-byte body\\)")
+        .assertLogMatch("<-- 200 " + url + " \\(\\d+ms, 0-byte body\\)")
         .assertNoMoreLogs();
 
     networkLogs
         .assertLogEqual("--> GET " + url + " h2")
-        .assertLogMatch("<-- 200 OK " + url + " \\(\\d+ms, 0-byte body\\)")
+        .assertLogMatch("<-- 200 " + url + " \\(\\d+ms, 0-byte body\\)")
         .assertNoMoreLogs();
   }
 

@@ -2326,7 +2326,6 @@ public final class CallTest {
     Call call = client.newCall(request);
     Response response = call.execute();
     assertEquals(100, response.code());
-    assertEquals("Continue", response.message());
     assertEquals("", response.body().string());
 
     RecordedRequest recordedRequest = server.takeRequest();
