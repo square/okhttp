@@ -24,6 +24,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import okhttp3.mockwebserver.RecordedRequest;
@@ -41,9 +42,11 @@ import org.junit.Test;
 
 import static okhttp3.TestUtil.defaultClient;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 public final class InterceptorTest {
@@ -820,10 +823,44 @@ public final class InterceptorTest {
     Call call = client.newCall(request1);
 
     try {
-      Response response = call.execute(); // we want this call to throw a SocketTimeoutException
+      call.execute(); // we want this call to throw a SocketTimeoutException
       fail();
     } catch (SocketTimeoutException expected) {
     }
+  }
+
+  @Test public void chainCanCancelCall() throws Exception {
+    final AtomicReference<Call> callRef = new AtomicReference<>();
+
+    Interceptor interceptor = new Interceptor() {
+      @Override public Response intercept(Chain chain) throws IOException {
+        Call call = chain.call();
+        callRef.set(call);
+
+        assertFalse(call.isCanceled());
+        call.cancel();
+        assertTrue(call.isCanceled());
+
+        return chain.proceed(chain.request());
+      }
+    };
+
+    client = client.newBuilder()
+        .addInterceptor(interceptor)
+        .build();
+
+    Request request = new Request.Builder()
+        .url(server.url("/"))
+        .build();
+    Call call = client.newCall(request);
+
+    try {
+      call.execute();
+      fail();
+    } catch (IOException expected) {
+    }
+
+    assertSame(call, callRef.get());
   }
 
   private RequestBody uppercase(final RequestBody original) {
