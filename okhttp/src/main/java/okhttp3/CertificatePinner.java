@@ -226,7 +226,8 @@ public final class CertificatePinner {
   }
 
   /** Returns a certificate pinner that uses {@code certificateChainCleaner}. */
-  CertificatePinner withCertificateChainCleaner(CertificateChainCleaner certificateChainCleaner) {
+  CertificatePinner withCertificateChainCleaner(
+      @Nullable CertificateChainCleaner certificateChainCleaner) {
     return equal(this.certificateChainCleaner, certificateChainCleaner)
         ? this
         : new CertificatePinner(pins, certificateChainCleaner);

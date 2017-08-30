@@ -268,6 +268,13 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
     this.readTimeout = builder.readTimeout;
     this.writeTimeout = builder.writeTimeout;
     this.pingInterval = builder.pingInterval;
+
+    if (interceptors.contains(null)) {
+      throw new IllegalStateException("Null interceptor: " + interceptors);
+    }
+    if (networkInterceptors.contains(null)) {
+      throw new IllegalStateException("Null network interceptor: " + networkInterceptors);
+    }
   }
 
   private X509TrustManager systemDefaultTrustManager() {
@@ -862,6 +869,7 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
     }
 
     public Builder addInterceptor(Interceptor interceptor) {
+      if (interceptor == null) throw new IllegalArgumentException("interceptor == null");
       interceptors.add(interceptor);
       return this;
     }
@@ -876,6 +884,7 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
     }
 
     public Builder addNetworkInterceptor(Interceptor interceptor) {
+      if (interceptor == null) throw new IllegalArgumentException("interceptor == null");
       networkInterceptors.add(interceptor);
       return this;
     }
