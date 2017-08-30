@@ -938,8 +938,8 @@ public final class MockWebServer extends ExternalResource implements Closeable {
         return;
       }
       List<Header> http2Headers = new ArrayList<>();
-      String[] statusParts = response.getStatus().split(" ", 2);
-      if (statusParts.length != 2) {
+      String[] statusParts = response.getStatus().split(" ", 3);
+      if (statusParts.length < 2) {
         throw new AssertionError("Unexpected status: " + response.getStatus());
       }
       // TODO: constants for well-known header names.

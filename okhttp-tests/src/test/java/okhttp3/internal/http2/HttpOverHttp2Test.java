@@ -119,7 +119,7 @@ public final class HttpOverHttp2Test {
 
     assertEquals("ABCDE", response.body().string());
     assertEquals(200, response.code());
-    assertEquals("Sweet", response.message());
+    assertEquals("", response.message());
 
     RecordedRequest request = server.takeRequest();
     assertEquals("GET /foo HTTP/1.1", request.getRequestLine());
@@ -766,7 +766,7 @@ public final class HttpOverHttp2Test {
 
     assertEquals("ABCDE", response.body().string());
     assertEquals(200, response.code());
-    assertEquals("Sweet", response.message());
+    assertEquals("", response.message());
 
     RecordedRequest request = server.takeRequest();
     assertEquals("GET /foo HTTP/1.1", request.getRequestLine());
@@ -792,7 +792,7 @@ public final class HttpOverHttp2Test {
     Response response = call.execute();
     assertEquals("ABCDE", response.body().string());
     assertEquals(200, response.code());
-    assertEquals("Sweet", response.message());
+    assertEquals("", response.message());
 
     RecordedRequest request = server.takeRequest();
     assertEquals("GET /foo HTTP/1.1", request.getRequestLine());
