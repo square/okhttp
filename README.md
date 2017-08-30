@@ -49,10 +49,11 @@ ProGuard
 --------
 
 If you are using ProGuard you might need to add the following options:
+
 ```
+-dontwarn okhttp3.**
 -dontwarn okio.**
--dontwarn javax.annotation.Nullable
--dontwarn javax.annotation.ParametersAreNonnullByDefault
+-dontwarn javax.annotation.**
 ```
 
 License
