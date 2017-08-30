@@ -23,6 +23,7 @@ import java.net.UnknownHostException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 import okhttp3.RecordingEventListener.CallFailed;
@@ -57,6 +58,7 @@ import org.junit.Rule;
 import org.junit.Test;
 
 import static java.util.Arrays.asList;
+import static okhttp3.RecordingEventListener.*;
 import static okhttp3.TestUtil.defaultClient;
 import static org.hamcrest.CoreMatchers.any;
 import static org.hamcrest.CoreMatchers.equalTo;
@@ -116,6 +118,59 @@ public final class EventListenerTest {
     assertEquals(expectedEvents, listener.recordedEventTypes());
   }
 
+  @Test public void successfulCallEventSequenceForEnqueue() throws IOException,
+      InterruptedException {
+    server.enqueue(new MockResponse()
+        .setBody("abc"));
+
+    Call call = client.newCall(new Request.Builder()
+        .url(server.url("/"))
+        .build());
+
+    final CountDownLatch l = new CountDownLatch(1);
+    Callback callback = new Callback() {
+      @Override public void onFailure(Call call, IOException e) {
+        l.countDown();
+      }
+
+      @Override public void onResponse(Call call, Response response) throws IOException {
+        response.close();
+        l.countDown();
+      }
+    };
+
+    call.enqueue(callback);
+
+    l.await();
+
+    List<String> expectedEvents = Arrays.asList("CallStart", "DnsStart", "DnsEnd",
+        "ConnectionAcquired", "ConnectStart", "ConnectEnd", "RequestHeadersStart",
+        "RequestHeadersEnd", "ResponseHeadersStart", "ResponseHeadersEnd", "ResponseBodyStart",
+        "ResponseBodyEnd", "ConnectionReleased", "CallEnd");
+    assertEquals(expectedEvents, listener.recordedEventTypes());
+  }
+
+  @Test public void failedCallEventSequence() throws IOException {
+    server.enqueue(new MockResponse().setBodyDelay(2, TimeUnit.SECONDS));
+
+    client = client.newBuilder().readTimeout(250, TimeUnit.MILLISECONDS).build();
+
+    Call call = client.newCall(new Request.Builder()
+        .url(server.url("/"))
+        .build());
+    try {
+      call.execute();
+      fail();
+    } catch (IOException expected) {
+      assertEquals("timeout", expected.getMessage());
+    }
+
+    List<String> expectedEvents = Arrays.asList("CallStart", "DnsStart", "DnsEnd",
+        "ConnectionAcquired", "ConnectStart", "ConnectEnd", "RequestHeadersStart",
+        "RequestHeadersEnd", "ResponseHeadersStart", "ConnectionReleased", "CallFailed");
+    assertEquals(expectedEvents, listener.recordedEventTypes());
+  }
+
   @Test public void canceledCallEventSequence() throws IOException {
     Call call = client.newCall(new Request.Builder()
         .url(server.url("/"))
@@ -145,6 +200,31 @@ public final class EventListenerTest {
 
     List<String> expectedEvents = asList("CallStart", "DnsStart", "DnsEnd", "ConnectionAcquired",
         "ConnectStart", "SecureConnectStart", "SecureConnectEnd", "ConnectEnd",
+        "RequestHeadersStart", "RequestHeadersEnd", "ResponseHeadersStart", "ResponseHeadersEnd",
+        "ResponseBodyStart", "ResponseBodyEnd", "ConnectionReleased", "CallEnd");
+
+    assertEquals(expectedEvents, listener.recordedEventTypes());
+  }
+
+  @Test public void secondCallEventSequence() throws IOException {
+    enableTlsWithTunnel(false);
+    server.setProtocols(Arrays.asList(Protocol.HTTP_2, Protocol.HTTP_1_1));
+    server.enqueue(new MockResponse());
+    server.enqueue(new MockResponse());
+
+    client.newCall(new Request.Builder()
+        .url(server.url("/"))
+        .build()).execute().close();
+
+    listener.removeUpToEvent(CallEnd.class);
+
+    Call call = client.newCall(new Request.Builder()
+        .url(server.url("/"))
+        .build());
+    Response response = call.execute();
+    response.close();
+
+    List<String> expectedEvents = asList("CallStart", "ConnectionAcquired",
         "RequestHeadersStart", "RequestHeadersEnd", "ResponseHeadersStart", "ResponseHeadersEnd",
         "ResponseBodyStart", "ResponseBodyEnd", "ConnectionReleased", "CallEnd");
 
