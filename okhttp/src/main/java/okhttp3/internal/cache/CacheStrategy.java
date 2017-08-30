@@ -295,7 +295,7 @@ public final class CacheStrategy {
 
     /**
      * Returns the current age of the response, in milliseconds. The calculation is specified by RFC
-     * 2616, 13.2.3 Age Calculations.
+     * 7234, 4.2.3 Calculating Age.
      */
     private long cacheResponseAge() {
       long apparentReceivedAge = servedDate != null

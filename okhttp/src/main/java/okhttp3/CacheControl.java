@@ -8,8 +8,7 @@ import okhttp3.internal.http.HttpHeaders;
  * A Cache-Control header with cache directives from a server or client. These directives set policy
  * on what responses can be stored, and which requests can be satisfied by those stored responses.
  *
- * <p>See <a href="http://www.w3.org/Protocols/rfc2616/rfc2616-sec14.html#sec14.9">RFC 2616,
- * 14.9</a>.
+ * <p>See <a href="https://tools.ietf.org/html/rfc7234#section-5.2">RFC 7234, 5.2</a>.
  */
 public final class CacheControl {
   /**
