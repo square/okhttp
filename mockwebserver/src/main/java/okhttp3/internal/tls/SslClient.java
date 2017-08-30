@@ -60,7 +60,7 @@ public final class SslClient {
       // Generate a self-signed cert for the server to serve and the client to trust.
       HeldCertificate heldCertificate = new HeldCertificate.Builder()
           .serialNumber("1")
-          .commonName(InetAddress.getByName("localhost").getHostName())
+          .commonName(InetAddress.getByName("localhost").getCanonicalHostName())
           .build();
 
       localhost = new Builder()
