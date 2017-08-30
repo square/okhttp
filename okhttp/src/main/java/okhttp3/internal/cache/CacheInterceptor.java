@@ -212,7 +212,7 @@ public final class CacheInterceptor implements Interceptor {
         .build();
   }
 
-  /** Combines cached headers with a network headers as defined by RFC 2616, 13.5.3. */
+  /** Combines cached headers with a network headers as defined by RFC 7234, 4.3.4. */
   private static Headers combine(Headers cachedHeaders, Headers networkHeaders) {
     Headers.Builder result = new Headers.Builder();
 

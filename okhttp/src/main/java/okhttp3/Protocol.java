@@ -35,8 +35,8 @@ public enum Protocol {
   /**
    * A plaintext framing that includes persistent connections.
    *
-   * <p>This version of OkHttp implements <a href="http://www.ietf.org/rfc/rfc2616.txt">RFC
-   * 2616</a>, and tracks revisions to that spec.
+   * <p>This version of OkHttp implements <a href="https://tools.ietf.org/html/rfc7230">RFC
+   * 7230</a>, and tracks revisions to that spec.
    */
   HTTP_1_1("http/1.1"),
 
