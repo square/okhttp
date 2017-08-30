@@ -105,7 +105,7 @@ public final class RealInterceptorChain implements Interceptor.Chain {
     return httpCodec;
   }
 
-  public Call call() {
+  @Override public Call call() {
     return call;
   }
 
