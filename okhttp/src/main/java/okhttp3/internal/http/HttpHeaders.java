@@ -29,6 +29,7 @@ import okhttp3.Headers;
 import okhttp3.HttpUrl;
 import okhttp3.Request;
 import okhttp3.Response;
+import okhttp3.internal.Util;
 
 import static java.net.HttpURLConnection.HTTP_NOT_MODIFIED;
 import static java.net.HttpURLConnection.HTTP_NO_CONTENT;
@@ -143,7 +144,7 @@ public final class HttpHeaders {
   }
 
   /**
-   * Parse RFC 2617 challenges, also wrong ordered ones.
+   * Parse RFC 7617 challenges, also wrong ordered ones.
    * This API is only interested in the scheme name and realm.
    */
   public static List<Challenge> parseChallenges(Headers responseHeaders, String challengeHeader) {
@@ -158,17 +159,38 @@ public final class HttpHeaders {
       int index = header.indexOf(' ');
       if (index == -1) continue;
 
+      String scheme = header.substring(0, index);
+      String realm = null;
+      String charset = null;
+
       Matcher matcher = PARAMETER.matcher(header);
       for (int i = index; matcher.find(i); i = matcher.end()) {
         if (header.regionMatches(true, matcher.start(1), "realm", 0, 5)) {
-          String scheme = header.substring(0, index);
-          String realm = matcher.group(3);
-          if (realm != null) {
-            challenges.add(new Challenge(scheme, realm));
-            break;
-          }
+          realm = matcher.group(3);
+        } else if (header.regionMatches(true, matcher.start(1), "charset", 0, 7)) {
+          charset = matcher.group(3);
+        }
+
+        if (realm != null && charset != null) {
+          break;
         }
       }
+
+      // "realm" is required.
+      if (realm == null) continue;
+
+      Challenge challenge = new Challenge(scheme, realm);
+
+      // If a charset is provided, RFC 7617 says it must be "UTF-8".
+      if (charset != null) {
+        if (charset.equalsIgnoreCase("UTF-8")) {
+          challenge = challenge.withCharset(Util.UTF_8);
+        } else {
+          continue;
+        }
+      }
+
+      challenges.add(challenge);
     }
     return challenges;
   }
