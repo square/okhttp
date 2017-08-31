@@ -118,8 +118,7 @@ public final class EventListenerTest {
     assertEquals(expectedEvents, listener.recordedEventTypes());
   }
 
-  @Test public void successfulCallEventSequenceForEnqueue() throws IOException,
-      InterruptedException {
+  @Test public void successfulCallEventSequenceForEnqueue() throws Exception {
     server.enqueue(new MockResponse()
         .setBody("abc"));
 
@@ -127,21 +126,21 @@ public final class EventListenerTest {
         .url(server.url("/"))
         .build());
 
-    final CountDownLatch l = new CountDownLatch(1);
+    final CountDownLatch completionLatch = new CountDownLatch(1);
     Callback callback = new Callback() {
       @Override public void onFailure(Call call, IOException e) {
-        l.countDown();
+        completionLatch.countDown();
       }
 
       @Override public void onResponse(Call call, Response response) throws IOException {
         response.close();
-        l.countDown();
+        completionLatch.countDown();
       }
     };
 
     call.enqueue(callback);
 
-    l.await();
+    completionLatch.await();
 
     List<String> expectedEvents = Arrays.asList("CallStart", "DnsStart", "DnsEnd",
         "ConnectionAcquired", "ConnectStart", "ConnectEnd", "RequestHeadersStart",
