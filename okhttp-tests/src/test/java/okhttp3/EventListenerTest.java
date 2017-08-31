@@ -61,6 +61,7 @@ import org.junit.Test;
 import static java.util.Arrays.asList;
 import static okhttp3.TestUtil.defaultClient;
 import static org.hamcrest.CoreMatchers.any;
+import static org.hamcrest.CoreMatchers.either;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -161,7 +162,7 @@ public final class EventListenerTest {
       call.execute();
       fail();
     } catch (IOException expected) {
-      assertEquals("timeout", expected.getMessage());
+      assertThat(expected.getMessage(), either(equalTo("timeout")).or(equalTo("Read timed out")));
     }
 
     List<String> expectedEvents = Arrays.asList("CallStart", "DnsStart", "DnsEnd",
