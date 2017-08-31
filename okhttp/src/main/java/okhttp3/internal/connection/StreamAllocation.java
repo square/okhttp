@@ -87,6 +87,7 @@ public final class StreamAllocation {
   private final RouteSelector routeSelector;
   private int refusedStreamCount;
   private RealConnection connection;
+  private boolean reportedAcquired;
   private boolean released;
   private boolean canceled;
   private HttpCodec codec;
@@ -176,6 +177,10 @@ public final class StreamAllocation {
         result = this.connection;
         releasedConnection = null;
       }
+      if (!reportedAcquired) {
+        // If the connection was never reported acquired, don't report it as released!
+        releasedConnection = null;
+      }
 
       if (result == null) {
         // Attempt to get a connection from the pool.
@@ -237,15 +242,13 @@ public final class StreamAllocation {
         route = selectedRoute;
         refusedStreamCount = 0;
         result = new RealConnection(connectionPool, selectedRoute);
-        acquire(result);
+        acquire(result, false);
       }
     }
 
-    // We have a connection. Either a connected one from the pool, or one we need to connect.
-    eventListener.connectionAcquired(call, result);
-
     // If we found a pooled connection on the 2nd time around, we're done.
     if (foundPooledConnection) {
+      eventListener.connectionAcquired(call, result);
       return result;
     }
 
@@ -256,6 +259,8 @@ public final class StreamAllocation {
 
     Socket socket = null;
     synchronized (connectionPool) {
+      reportedAcquired = true;
+
       // Pool the connection.
       Internal.instance.put(connectionPool, result);
 
@@ -268,6 +273,7 @@ public final class StreamAllocation {
     }
     closeQuietly(socket);
 
+    eventListener.connectionAcquired(call, result);
     return result;
   }
 
@@ -440,7 +446,7 @@ public final class StreamAllocation {
       }
       releasedConnection = connection;
       socket = deallocate(noNewStreams, false, true);
-      if (connection != null) releasedConnection = null;
+      if (connection != null || !reportedAcquired) releasedConnection = null;
     }
 
     closeQuietly(socket);
@@ -453,11 +459,12 @@ public final class StreamAllocation {
    * Use this allocation to hold {@code connection}. Each call to this must be paired with a call to
    * {@link #release} on the same connection.
    */
-  public void acquire(RealConnection connection) {
+  public void acquire(RealConnection connection, boolean reportedAcquired) {
     assert (Thread.holdsLock(connectionPool));
     if (this.connection != null) throw new IllegalStateException();
 
     this.connection = connection;
+    this.reportedAcquired = reportedAcquired;
     connection.allocations.add(new StreamAllocationReference(this, callStackTrace));
   }
 

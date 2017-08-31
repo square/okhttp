@@ -113,7 +113,7 @@ public final class EventListenerTest {
     response.body().close();
 
     List<String> expectedEvents = Arrays.asList("CallStart", "DnsStart", "DnsEnd",
-        "ConnectionAcquired", "ConnectStart", "ConnectEnd", "RequestHeadersStart",
+        "ConnectStart", "ConnectEnd", "ConnectionAcquired", "RequestHeadersStart",
         "RequestHeadersEnd", "ResponseHeadersStart", "ResponseHeadersEnd", "ResponseBodyStart",
         "ResponseBodyEnd", "ConnectionReleased", "CallEnd");
     assertEquals(expectedEvents, listener.recordedEventTypes());
@@ -144,7 +144,7 @@ public final class EventListenerTest {
     completionLatch.await();
 
     List<String> expectedEvents = Arrays.asList("CallStart", "DnsStart", "DnsEnd",
-        "ConnectionAcquired", "ConnectStart", "ConnectEnd", "RequestHeadersStart",
+        "ConnectStart", "ConnectEnd", "ConnectionAcquired", "RequestHeadersStart",
         "RequestHeadersEnd", "ResponseHeadersStart", "ResponseHeadersEnd", "ResponseBodyStart",
         "ResponseBodyEnd", "ConnectionReleased", "CallEnd");
     assertEquals(expectedEvents, listener.recordedEventTypes());
@@ -166,7 +166,7 @@ public final class EventListenerTest {
     }
 
     List<String> expectedEvents = Arrays.asList("CallStart", "DnsStart", "DnsEnd",
-        "ConnectionAcquired", "ConnectStart", "ConnectEnd", "RequestHeadersStart",
+        "ConnectStart", "ConnectEnd", "ConnectionAcquired", "RequestHeadersStart",
         "RequestHeadersEnd", "ResponseHeadersStart", "ConnectionReleased", "CallFailed");
     assertEquals(expectedEvents, listener.recordedEventTypes());
   }
@@ -198,8 +198,8 @@ public final class EventListenerTest {
 
     assumeThat(response, responseMatcher);
 
-    List<String> expectedEvents = asList("CallStart", "DnsStart", "DnsEnd", "ConnectionAcquired",
-        "ConnectStart", "SecureConnectStart", "SecureConnectEnd", "ConnectEnd",
+    List<String> expectedEvents = asList("CallStart", "DnsStart", "DnsEnd", "ConnectStart",
+        "SecureConnectStart", "SecureConnectEnd", "ConnectEnd", "ConnectionAcquired",
         "RequestHeadersStart", "RequestHeadersEnd", "ResponseHeadersStart", "ResponseHeadersEnd",
         "ResponseBodyStart", "ResponseBodyEnd", "ConnectionReleased", "CallEnd");
 
@@ -239,7 +239,8 @@ public final class EventListenerTest {
       RequestHeadersEnd responseHeadersEnd = listener.removeUpToEvent(RequestHeadersEnd.class);
       assertThat("request header length", responseHeadersEnd.headerLength, requestHeaderLength);
     } else {
-      assertFalse("Found RequestHeadersEnd", listener.recordedEventTypes().contains("RequestHeadersEnd"));
+      assertFalse("Found RequestHeadersEnd",
+          listener.recordedEventTypes().contains("RequestHeadersEnd"));
     }
 
     if (requestBodyBytes != null) {
@@ -253,14 +254,16 @@ public final class EventListenerTest {
       ResponseHeadersEnd responseHeadersEnd = listener.removeUpToEvent(ResponseHeadersEnd.class);
       assertThat("response header length", responseHeadersEnd.headerLength, responseHeaderLength);
     } else {
-      assertFalse("Found ResponseHeadersEnd", listener.recordedEventTypes().contains("ResponseHeadersEnd"));
+      assertFalse("Found ResponseHeadersEnd",
+          listener.recordedEventTypes().contains("ResponseHeadersEnd"));
     }
 
     if (responseBodyBytes != null) {
       ResponseBodyEnd responseBodyEnd = listener.removeUpToEvent(ResponseBodyEnd.class);
       assertThat("response body bytes", responseBodyEnd.bytesRead, responseBodyBytes);
     } else {
-      assertFalse("Found ResponseBodyEnd", listener.recordedEventTypes().contains("ResponseBodyEnd"));
+      assertFalse("Found ResponseBodyEnd",
+          listener.recordedEventTypes().contains("ResponseBodyEnd"));
     }
   }
 
