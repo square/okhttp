@@ -23,8 +23,10 @@ import java.net.UnknownHostException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
+import okhttp3.RecordingEventListener.CallEnd;
 import okhttp3.RecordingEventListener.CallFailed;
 import okhttp3.RecordingEventListener.ConnectEnd;
 import okhttp3.RecordingEventListener.ConnectFailed;
@@ -59,6 +61,7 @@ import org.junit.Test;
 import static java.util.Arrays.asList;
 import static okhttp3.TestUtil.defaultClient;
 import static org.hamcrest.CoreMatchers.any;
+import static org.hamcrest.CoreMatchers.either;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -116,6 +119,58 @@ public final class EventListenerTest {
     assertEquals(expectedEvents, listener.recordedEventTypes());
   }
 
+  @Test public void successfulCallEventSequenceForEnqueue() throws Exception {
+    server.enqueue(new MockResponse()
+        .setBody("abc"));
+
+    Call call = client.newCall(new Request.Builder()
+        .url(server.url("/"))
+        .build());
+
+    final CountDownLatch completionLatch = new CountDownLatch(1);
+    Callback callback = new Callback() {
+      @Override public void onFailure(Call call, IOException e) {
+        completionLatch.countDown();
+      }
+
+      @Override public void onResponse(Call call, Response response) throws IOException {
+        response.close();
+        completionLatch.countDown();
+      }
+    };
+
+    call.enqueue(callback);
+
+    completionLatch.await();
+
+    List<String> expectedEvents = Arrays.asList("CallStart", "DnsStart", "DnsEnd",
+        "ConnectionAcquired", "ConnectStart", "ConnectEnd", "RequestHeadersStart",
+        "RequestHeadersEnd", "ResponseHeadersStart", "ResponseHeadersEnd", "ResponseBodyStart",
+        "ResponseBodyEnd", "ConnectionReleased", "CallEnd");
+    assertEquals(expectedEvents, listener.recordedEventTypes());
+  }
+
+  @Test public void failedCallEventSequence() throws IOException {
+    server.enqueue(new MockResponse().setBodyDelay(2, TimeUnit.SECONDS));
+
+    client = client.newBuilder().readTimeout(250, TimeUnit.MILLISECONDS).build();
+
+    Call call = client.newCall(new Request.Builder()
+        .url(server.url("/"))
+        .build());
+    try {
+      call.execute();
+      fail();
+    } catch (IOException expected) {
+      assertThat(expected.getMessage(), either(equalTo("timeout")).or(equalTo("Read timed out")));
+    }
+
+    List<String> expectedEvents = Arrays.asList("CallStart", "DnsStart", "DnsEnd",
+        "ConnectionAcquired", "ConnectStart", "ConnectEnd", "RequestHeadersStart",
+        "RequestHeadersEnd", "ResponseHeadersStart", "ConnectionReleased", "CallFailed");
+    assertEquals(expectedEvents, listener.recordedEventTypes());
+  }
+
   @Test public void canceledCallEventSequence() throws IOException {
     Call call = client.newCall(new Request.Builder()
         .url(server.url("/"))
@@ -145,6 +200,31 @@ public final class EventListenerTest {
 
     List<String> expectedEvents = asList("CallStart", "DnsStart", "DnsEnd", "ConnectionAcquired",
         "ConnectStart", "SecureConnectStart", "SecureConnectEnd", "ConnectEnd",
+        "RequestHeadersStart", "RequestHeadersEnd", "ResponseHeadersStart", "ResponseHeadersEnd",
+        "ResponseBodyStart", "ResponseBodyEnd", "ConnectionReleased", "CallEnd");
+
+    assertEquals(expectedEvents, listener.recordedEventTypes());
+  }
+
+  @Test public void secondCallEventSequence() throws IOException {
+    enableTlsWithTunnel(false);
+    server.setProtocols(Arrays.asList(Protocol.HTTP_2, Protocol.HTTP_1_1));
+    server.enqueue(new MockResponse());
+    server.enqueue(new MockResponse());
+
+    client.newCall(new Request.Builder()
+        .url(server.url("/"))
+        .build()).execute().close();
+
+    listener.removeUpToEvent(CallEnd.class);
+
+    Call call = client.newCall(new Request.Builder()
+        .url(server.url("/"))
+        .build());
+    Response response = call.execute();
+    response.close();
+
+    List<String> expectedEvents = asList("CallStart", "ConnectionAcquired",
         "RequestHeadersStart", "RequestHeadersEnd", "ResponseHeadersStart", "ResponseHeadersEnd",
         "ResponseBodyStart", "ResponseBodyEnd", "ConnectionReleased", "CallEnd");
 
