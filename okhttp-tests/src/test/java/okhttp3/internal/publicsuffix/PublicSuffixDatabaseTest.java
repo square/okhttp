@@ -17,7 +17,6 @@ package okhttp3.internal.publicsuffix;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InterruptedIOException;
 import okhttp3.internal.Util;
 import okio.Buffer;
 import okio.BufferedSource;
@@ -272,14 +271,14 @@ public final class PublicSuffixDatabaseTest {
       return;
     }
 
-    String canonicalDomain = Util.domainToAscii(domain);
+    String canonicalDomain = Util.canonicalizeHost(domain);
     if (canonicalDomain == null) return;
 
     String result = publicSuffixDatabase.getEffectiveTldPlusOne(canonicalDomain);
     if (registrablePart == null) {
       assertNull(result);
     } else {
-      assertEquals(Util.domainToAscii(registrablePart), result);
+      assertEquals(Util.canonicalizeHost(registrablePart), result);
     }
   }
 }

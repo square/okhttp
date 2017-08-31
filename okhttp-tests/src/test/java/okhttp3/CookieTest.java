@@ -267,6 +267,35 @@ public final class CookieTest {
     assertEquals("123.45.234.56", Cookie.parse(urlWithIp, "a=b; domain=123.45.234.56").domain());
   }
 
+  @Test public void domainMatchesIpv6Address() throws Exception {
+    Cookie cookie = Cookie.parse(HttpUrl.parse("http://[::1]/"), "a=b; domain=::1");
+    assertEquals("::1", cookie.domain());
+    assertTrue(cookie.matches(HttpUrl.parse("http://[::1]/")));
+  }
+
+  @Test public void domainMatchesIpv6AddressWithCompression() throws Exception {
+    Cookie cookie = Cookie.parse(HttpUrl.parse("http://[0001:0000::]/"), "a=b; domain=0001:0000::");
+    assertEquals("1::", cookie.domain());
+    assertTrue(cookie.matches(HttpUrl.parse("http://[1::]/")));
+  }
+
+  @Test public void domainMatchesIpv6AddressWithIpv4Suffix() throws Exception {
+    Cookie cookie = Cookie.parse(
+        HttpUrl.parse("http://[::1:ffff:ffff]/"), "a=b; domain=::1:255.255.255.255");
+    assertEquals("::1:ffff:ffff", cookie.domain());
+    assertTrue(cookie.matches(HttpUrl.parse("http://[::1:ffff:ffff]/")));
+  }
+
+  @Test public void ipv6AddressDoesntMatch() throws Exception {
+    Cookie cookie = Cookie.parse(HttpUrl.parse("http://[::1]/"), "a=b; domain=::2");
+    assertNull(cookie);
+  }
+
+  @Test public void ipv6AddressMalformed() throws Exception {
+    Cookie cookie = Cookie.parse(HttpUrl.parse("http://[::1]/"), "a=b; domain=::2::2");
+    assertEquals("::1", cookie.domain());
+  }
+
   /**
    * These public suffixes were selected by inspecting the publicsuffix.org list. It's possible they
    * may change in the future. If this test begins to fail, please double check they are still
@@ -505,6 +534,15 @@ public final class CookieTest {
         .httpOnly()
         .build();
     assertEquals(true, cookie.httpOnly());
+  }
+
+  @Test public void builderIpv6() throws Exception {
+    Cookie cookie = new Cookie.Builder()
+        .name("a")
+        .value("b")
+        .domain("0:0:0:0:0:0:0:1")
+        .build();
+    assertEquals("::1", cookie.domain());
   }
 
   @Test public void equalsAndHashCode() throws Exception {
