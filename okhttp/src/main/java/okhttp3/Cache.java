@@ -15,6 +15,8 @@
  */
 package okhttp3;
 
+import android.text.TextUtils;
+
 import java.io.Closeable;
 import java.io.File;
 import java.io.Flushable;
@@ -186,12 +188,14 @@ public final class Cache implements Closeable, Flushable {
     this.cache = DiskLruCache.create(fileSystem, directory, VERSION, ENTRY_COUNT, maxSize);
   }
 
-  public static String key(HttpUrl url) {
-    return ByteString.encodeUtf8(url.toString()).md5().hex();
+  public static String key(Request request) {
+    String result = TextUtils.isEmpty(request.cacheKey) ? request.url.uri().toString()
+            : request.cacheKey;
+    return ByteString.encodeUtf8(result).md5().hex();
   }
 
   @Nullable Response get(Request request) {
-    String key = key(request.url());
+    String key = key(request);
     DiskLruCache.Snapshot snapshot;
     Entry entry;
     try {
@@ -246,7 +250,7 @@ public final class Cache implements Closeable, Flushable {
     Entry entry = new Entry(response);
     DiskLruCache.Editor editor = null;
     try {
-      editor = cache.edit(key(response.request().url()));
+      editor = cache.edit(key(response.request()));
       if (editor == null) {
         return null;
       }
@@ -259,7 +263,7 @@ public final class Cache implements Closeable, Flushable {
   }
 
   void remove(Request request) throws IOException {
-    cache.remove(key(request.url()));
+    cache.remove(key(request));
   }
 
   void update(Response cached, Response network) {
@@ -483,6 +487,7 @@ public final class Cache implements Closeable, Flushable {
     private static final String RECEIVED_MILLIS = Platform.get().getPrefix() + "-Received-Millis";
 
     private final String url;
+    private final String cacheKey;
     private final Headers varyHeaders;
     private final String requestMethod;
     private final Protocol protocol;
@@ -545,6 +550,7 @@ public final class Cache implements Closeable, Flushable {
       try {
         BufferedSource source = Okio.buffer(in);
         url = source.readUtf8LineStrict();
+        cacheKey = source.readUtf8LineStrict();
         requestMethod = source.readUtf8LineStrict();
         Headers.Builder varyHeadersBuilder = new Headers.Builder();
         int varyRequestHeaderLineCount = readInt(source);
@@ -597,6 +603,7 @@ public final class Cache implements Closeable, Flushable {
 
     Entry(Response response) {
       this.url = response.request().url().toString();
+      this.cacheKey = response.request().cacheKey();
       this.varyHeaders = HttpHeaders.varyHeaders(response);
       this.requestMethod = response.request().method();
       this.protocol = response.protocol();
@@ -613,6 +620,10 @@ public final class Cache implements Closeable, Flushable {
 
       sink.writeUtf8(url)
           .writeByte('\n');
+      if (!TextUtils.isEmpty(cacheKey)) {
+        sink.writeUtf8(cacheKey)
+                .writeByte('\n');
+      }
       sink.writeUtf8(requestMethod)
           .writeByte('\n');
       sink.writeDecimalLong(varyHeaders.size())
@@ -694,7 +705,15 @@ public final class Cache implements Closeable, Flushable {
     }
 
     public boolean matches(Request request, Response response) {
-      return url.equals(request.url().toString())
+      boolean isUseCacheKey = !TextUtils.isEmpty(cacheKey);
+      boolean isCacheKeyEquals;
+      if (isUseCacheKey) {
+        isCacheKeyEquals = cacheKey.equals(request.cacheKey());
+      } else {
+        isCacheKeyEquals = url.equals(request.url().toString());
+      }
+      
+      return isCacheKeyEquals
           && requestMethod.equals(request.method())
           && HttpHeaders.varyMatches(response, varyHeaders, request);
     }
@@ -704,6 +723,7 @@ public final class Cache implements Closeable, Flushable {
       String contentLength = responseHeaders.get("Content-Length");
       Request cacheRequest = new Request.Builder()
           .url(url)
+          .cacheKey(cacheKey)
           .method(requestMethod, null)
           .headers(varyHeaders)
           .build();

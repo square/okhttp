@@ -80,6 +80,10 @@ final class RealCall implements Call {
   }
 
   @Override public Response execute() throws IOException {
+    return execute(null);
+  }
+
+  @Override public Response execute(DiskCacheListener diskCacheListener) throws IOException {
     synchronized (this) {
       if (executed) throw new IllegalStateException("Already Executed");
       executed = true;
@@ -89,7 +93,7 @@ final class RealCall implements Call {
     eventListener.callStart(this);
     try {
       client.dispatcher().executed(this);
-      Response result = getResponseWithInterceptorChain();
+      Response result = getResponseWithInterceptorChain(diskCacheListener);
       if (result == null) throw new IOException("Canceled");
       return result;
     } catch (IOException e) {
@@ -197,7 +201,7 @@ final class RealCall implements Call {
       boolean signalledCallback = false;
       timeout.enter();
       try {
-        Response response = getResponseWithInterceptorChain();
+        Response response = getResponseWithInterceptorChain(null);
         if (retryAndFollowUpInterceptor.isCanceled()) {
           signalledCallback = true;
           responseCallback.onFailure(RealCall.this, new IOException("Canceled"));
@@ -234,13 +238,13 @@ final class RealCall implements Call {
     return originalRequest.url().redact();
   }
 
-  Response getResponseWithInterceptorChain() throws IOException {
+  Response getResponseWithInterceptorChain(DiskCacheListener diskCacheListener) throws IOException {
     // Build a full stack of interceptors.
     List<Interceptor> interceptors = new ArrayList<>();
     interceptors.addAll(client.interceptors());
     interceptors.add(retryAndFollowUpInterceptor);
     interceptors.add(new BridgeInterceptor(client.cookieJar()));
-    interceptors.add(new CacheInterceptor(client.internalCache()));
+    interceptors.add(new CacheInterceptor(client.internalCache(), diskCacheListener));
     interceptors.add(new ConnectInterceptor(client));
     if (!forWebSocket) {
       interceptors.addAll(client.networkInterceptors());

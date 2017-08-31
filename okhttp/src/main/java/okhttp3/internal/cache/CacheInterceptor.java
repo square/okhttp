@@ -16,6 +16,7 @@
  */
 package okhttp3.internal.cache;
 
+import okhttp3.DiskCacheListener;
 import java.io.IOException;
 import okhttp3.Headers;
 import okhttp3.Interceptor;
@@ -44,9 +45,11 @@ import static okhttp3.internal.Util.discard;
 /** Serves requests from the cache and writes responses to the cache. */
 public final class CacheInterceptor implements Interceptor {
   final InternalCache cache;
+  final DiskCacheListener diskCacheListener;
 
-  public CacheInterceptor(InternalCache cache) {
+  public CacheInterceptor(InternalCache cache, DiskCacheListener diskCacheListener) {
     this.cache = cache;
+    this.diskCacheListener = diskCacheListener;
   }
 
   @Override public Response intercept(Chain chain) throws IOException {
@@ -155,7 +158,7 @@ public final class CacheInterceptor implements Interceptor {
    * consumer. This is careful to discard bytes left over when the stream is closed; otherwise we
    * may never exhaust the source stream and therefore not complete the cached response.
    */
-  private Response cacheWritingResponse(final CacheRequest cacheRequest, Response response)
+  private Response cacheWritingResponse(final CacheRequest cacheRequest, final Response response)
       throws IOException {
     // Some apps return a null body; for compatibility we treat that like a null cache request.
     if (cacheRequest == null) return response;
@@ -165,11 +168,25 @@ public final class CacheInterceptor implements Interceptor {
     final BufferedSource source = response.body().source();
     final BufferedSink cacheBody = Okio.buffer(cacheBodyUnbuffered);
 
+    final String cacheUrl;
+    if (response.request() != null && response.request().url() != null) {
+      cacheUrl = response.request().url().toString();
+    } else {
+      cacheUrl = null;
+    }
+    final long responseBodyLength = response.body().contentLength();
+
     Source cacheWritingSource = new Source() {
       boolean cacheRequestClosed;
+      long cachedByteCount = 0;
 
       @Override public long read(Buffer sink, long byteCount) throws IOException {
         long bytesRead;
+
+        if (cachedByteCount == 0 && diskCacheListener != null) {
+          diskCacheListener.onStart(cacheUrl, responseBodyLength);
+        }
+
         try {
           bytesRead = source.read(sink, byteCount);
         } catch (IOException e) {
@@ -177,6 +194,9 @@ public final class CacheInterceptor implements Interceptor {
             cacheRequestClosed = true;
             cacheRequest.abort(); // Failed to write a complete cache response.
           }
+
+          if (diskCacheListener != null)
+            diskCacheListener.onComplete(cacheUrl);
           throw e;
         }
 
@@ -185,11 +205,23 @@ public final class CacheInterceptor implements Interceptor {
             cacheRequestClosed = true;
             cacheBody.close(); // The cache response is complete!
           }
+
+          if (diskCacheListener != null)
+            diskCacheListener.onComplete(cacheUrl);
           return -1;
         }
 
         sink.copyTo(cacheBody.buffer(), sink.size() - bytesRead, bytesRead);
         cacheBody.emitCompleteSegments();
+
+        cachedByteCount += bytesRead;
+
+        if (diskCacheListener != null) {
+          diskCacheListener.onProgress(cacheUrl, responseBodyLength, cachedByteCount);
+          if (cachedByteCount >= responseBodyLength) {
+            diskCacheListener.onComplete(cacheUrl);
+          }
+        }
         return bytesRead;
       }
 

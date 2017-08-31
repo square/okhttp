@@ -57,6 +57,8 @@ public interface Call extends Cloneable {
    */
   Response execute() throws IOException;
 
+  Response execute(DiskCacheListener diskCacheListener) throws IOException;
+
   /**
    * Schedules the request to be executed at some point in the future.
    *

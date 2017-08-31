@@ -20,7 +20,9 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+
 import javax.annotation.Nullable;
+
 import okhttp3.internal.Util;
 import okhttp3.internal.http.HttpMethod;
 
@@ -35,6 +37,7 @@ public final class Request {
   final @Nullable RequestBody body;
   final boolean duplex;
   final Map<Class<?>, Object> tags;
+  final String cacheKey;
 
   private volatile @Nullable CacheControl cacheControl; // Lazily initialized.
 
@@ -45,6 +48,7 @@ public final class Request {
     this.body = builder.body;
     this.duplex = builder.duplex;
     this.tags = Util.immutableMap(builder.tags);
+    this.cacheKey = builder.cacheKey;
   }
 
   public HttpUrl url() {
@@ -95,6 +99,10 @@ public final class Request {
     return type.cast(tags.get(type));
   }
 
+  public String cacheKey() {
+    return cacheKey;
+  }
+
   public Builder newBuilder() {
     return new Builder(this);
   }
@@ -131,10 +139,12 @@ public final class Request {
 
     /** A mutable map of tags, or an immutable empty map if we don't have any. */
     Map<Class<?>, Object> tags = Collections.emptyMap();
+    String cacheKey;
 
     public Builder() {
       this.method = "GET";
       this.headers = new Headers.Builder();
+      this.cacheKey = null;
     }
 
     Builder(Request request) {
@@ -146,6 +156,7 @@ public final class Request {
           ? Collections.<Class<?>, Object>emptyMap()
           : new LinkedHashMap<>(request.tags);
       this.headers = request.headers.newBuilder();
+      this.cacheKey = request.cacheKey;
     }
 
     public Builder url(HttpUrl url) {
@@ -214,6 +225,11 @@ public final class Request {
     /** Removes all headers on this builder and adds {@code headers}. */
     public Builder headers(Headers headers) {
       this.headers = headers.newBuilder();
+      return this;
+    }
+
+    public Builder cacheKey(String cacheKey) {
+      this.cacheKey = cacheKey;
       return this;
     }
 
