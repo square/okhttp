@@ -322,7 +322,7 @@ public final class WebSocketHttpTest {
             assertNull(chain.request().body());
             Response response = chain.proceed(chain.request());
             assertEquals("Upgrade", response.header("Connection"));
-            assertTrue("", response.body().source().exhausted());
+            assertTrue(response.body().source().exhausted());
             interceptedCount.incrementAndGet();
             return response;
           }
