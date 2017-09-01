@@ -210,6 +210,7 @@ public final class WebSocketHttpTest {
 
     server.close(1000, "bye");
     clientListener.assertFailure(e);
+    serverListener.assertFailure();
     serverListener.assertExhausted();
   }
 
