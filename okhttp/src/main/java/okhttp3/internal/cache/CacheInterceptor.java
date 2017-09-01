@@ -207,8 +207,10 @@ public final class CacheInterceptor implements Interceptor {
       }
     };
 
+    String contentType = response.header("Content-Type");
+    long contentLength = response.body().contentLength();
     return response.newBuilder()
-        .body(new RealResponseBody(response.headers(), Okio.buffer(cacheWritingSource)))
+        .body(new RealResponseBody(contentType, contentLength, Okio.buffer(cacheWritingSource)))
         .build();
   }
 

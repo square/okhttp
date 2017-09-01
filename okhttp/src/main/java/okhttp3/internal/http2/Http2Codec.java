@@ -32,6 +32,7 @@ import okhttp3.internal.Internal;
 import okhttp3.internal.Util;
 import okhttp3.internal.connection.StreamAllocation;
 import okhttp3.internal.http.HttpCodec;
+import okhttp3.internal.http.HttpHeaders;
 import okhttp3.internal.http.RealResponseBody;
 import okhttp3.internal.http.RequestLine;
 import okhttp3.internal.http.StatusLine;
@@ -186,8 +187,10 @@ public final class Http2Codec implements HttpCodec {
 
   @Override public ResponseBody openResponseBody(Response response) throws IOException {
     streamAllocation.eventListener.responseBodyStart(streamAllocation.call);
+    String contentType = response.header("Content-Type");
+    long contentLength = HttpHeaders.contentLength(response);
     Source source = new StreamFinishingSource(stream.getSource());
-    return new RealResponseBody(response.headers(), Okio.buffer(source));
+    return new RealResponseBody(contentType, contentLength, Okio.buffer(source));
   }
 
   @Override public void cancel() {

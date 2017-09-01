@@ -130,28 +130,25 @@ public final class Http1Codec implements HttpCodec {
 
   @Override public ResponseBody openResponseBody(Response response) throws IOException {
     streamAllocation.eventListener.responseBodyStart(streamAllocation.call);
-    Source source = getTransferStream(response);
-    return new RealResponseBody(response.headers(), Okio.buffer(source));
-  }
+    String contentType = response.header("Content-Type");
 
-  private Source getTransferStream(Response response) throws IOException {
     if (!HttpHeaders.hasBody(response)) {
-      return newFixedLengthSource(0);
+      Source source = newFixedLengthSource(0);
+      return new RealResponseBody(contentType, 0, Okio.buffer(source));
     }
 
     if ("chunked".equalsIgnoreCase(response.header("Transfer-Encoding"))) {
-      return newChunkedSource(response.request().url());
+      Source source = newChunkedSource(response.request().url());
+      return new RealResponseBody(contentType, -1L, Okio.buffer(source));
     }
 
     long contentLength = HttpHeaders.contentLength(response);
     if (contentLength != -1) {
-      return newFixedLengthSource(contentLength);
+      Source source = newFixedLengthSource(contentLength);
+      return new RealResponseBody(contentType, contentLength, Okio.buffer(source));
     }
 
-    // Wrap the input stream from the connection (rather than just returning
-    // "socketIn" directly here), so that we can control its use after the
-    // reference escapes.
-    return newUnknownLengthSource();
+    return new RealResponseBody(contentType, -1L, Okio.buffer(newUnknownLengthSource()));
   }
 
   /** Returns true if this connection is closed. */
