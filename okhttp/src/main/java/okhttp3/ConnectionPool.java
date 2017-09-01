@@ -123,7 +123,7 @@ public final class ConnectionPool {
     assert (Thread.holdsLock(this));
     for (RealConnection connection : connections) {
       if (connection.isEligible(address, route)) {
-        streamAllocation.acquire(connection);
+        streamAllocation.acquire(connection, true);
         return connection;
       }
     }
