@@ -39,10 +39,7 @@ import static okhttp3.internal.ws.WebSocketProtocol.validateCloseCode;
 /**
  * An <a href="http://tools.ietf.org/html/rfc6455">RFC 6455</a>-compatible WebSocket frame writer.
  *
- * <p>This class is partially thread safe. Only a single "main" thread should be sending messages
- * via calls to {@link #newMessageSink}, {@link #writePing}, or {@link #writeClose}. Other threads
- * may call {@link #writePing}, {@link #writePong}, or {@link #writeClose} which will interleave on
- * the wire with frames from the "main" sending thread.
+ * <p>This class is not thread safe.
  */
 final class WebSocketWriter {
   final boolean isClient;
@@ -75,16 +72,12 @@ final class WebSocketWriter {
 
   /** Send a ping with the supplied {@code payload}. */
   void writePing(ByteString payload) throws IOException {
-    synchronized (this) {
-      writeControlFrameSynchronized(OPCODE_CONTROL_PING, payload);
-    }
+    writeControlFrame(OPCODE_CONTROL_PING, payload);
   }
 
   /** Send a pong with the supplied {@code payload}. */
   void writePong(ByteString payload) throws IOException {
-    synchronized (this) {
-      writeControlFrameSynchronized(OPCODE_CONTROL_PONG, payload);
-    }
+    writeControlFrame(OPCODE_CONTROL_PONG, payload);
   }
 
   /**
@@ -108,18 +101,14 @@ final class WebSocketWriter {
       payload = buffer.readByteString();
     }
 
-    synchronized (this) {
-      try {
-        writeControlFrameSynchronized(OPCODE_CONTROL_CLOSE, payload);
-      } finally {
-        writerClosed = true;
-      }
+    try {
+      writeControlFrame(OPCODE_CONTROL_CLOSE, payload);
+    } finally {
+      writerClosed = true;
     }
   }
 
-  private void writeControlFrameSynchronized(int opcode, ByteString payload) throws IOException {
-    assert Thread.holdsLock(this);
-
+  private void writeControlFrame(int opcode, ByteString payload) throws IOException {
     if (writerClosed) throw new IOException("closed");
 
     int length = payload.size();
@@ -169,10 +158,8 @@ final class WebSocketWriter {
     return frameSink;
   }
 
-  void writeMessageFrameSynchronized(int formatOpcode, long byteCount, boolean isFirstFrame,
+  void writeMessageFrame(int formatOpcode, long byteCount, boolean isFirstFrame,
       boolean isFinal) throws IOException {
-    assert Thread.holdsLock(this);
-
     if (writerClosed) throw new IOException("closed");
 
     int b0 = isFirstFrame ? formatOpcode : OPCODE_CONTINUATION;
@@ -235,9 +222,7 @@ final class WebSocketWriter {
 
       long emitCount = buffer.completeSegmentByteCount();
       if (emitCount > 0 && !deferWrite) {
-        synchronized (WebSocketWriter.this) {
-          writeMessageFrameSynchronized(formatOpcode, emitCount, isFirstFrame, false /* final */);
-        }
+        writeMessageFrame(formatOpcode, emitCount, isFirstFrame, false /* final */);
         isFirstFrame = false;
       }
     }
@@ -245,9 +230,7 @@ final class WebSocketWriter {
     @Override public void flush() throws IOException {
       if (closed) throw new IOException("closed");
 
-      synchronized (WebSocketWriter.this) {
-        writeMessageFrameSynchronized(formatOpcode, buffer.size(), isFirstFrame, false /* final */);
-      }
+      writeMessageFrame(formatOpcode, buffer.size(), isFirstFrame, false /* final */);
       isFirstFrame = false;
     }
 
@@ -259,9 +242,7 @@ final class WebSocketWriter {
     @Override public void close() throws IOException {
       if (closed) throw new IOException("closed");
 
-      synchronized (WebSocketWriter.this) {
-        writeMessageFrameSynchronized(formatOpcode, buffer.size(), isFirstFrame, true /* final */);
-      }
+      writeMessageFrame(formatOpcode, buffer.size(), isFirstFrame, true /* final */);
       closed = true;
       activeWriter = false;
     }
