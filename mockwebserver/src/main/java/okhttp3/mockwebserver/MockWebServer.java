@@ -465,8 +465,6 @@ public final class MockWebServer extends ExternalResource implements Closeable {
               + " didn't make a request");
         }
 
-        source.close();
-        sink.close();
         socket.close();
         openClientSockets.remove(socket);
       }
@@ -681,7 +679,6 @@ public final class MockWebServer extends ExternalResource implements Closeable {
     } catch (IOException e) {
       webSocket.failWebSocket(e, null);
     } finally {
-      closeQuietly(sink);
       closeQuietly(source);
     }
   }
