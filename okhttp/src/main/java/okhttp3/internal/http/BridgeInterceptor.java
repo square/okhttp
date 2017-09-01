@@ -106,7 +106,8 @@ public final class BridgeInterceptor implements Interceptor {
           .removeAll("Content-Length")
           .build();
       responseBuilder.headers(strippedHeaders);
-      responseBuilder.body(new RealResponseBody(strippedHeaders, Okio.buffer(responseBody)));
+      String contentType = networkResponse.header("Content-Type");
+      responseBuilder.body(new RealResponseBody(contentType, -1L, Okio.buffer(responseBody)));
     }
 
     return responseBuilder.build();

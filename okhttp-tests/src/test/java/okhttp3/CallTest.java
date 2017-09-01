@@ -83,6 +83,7 @@ import org.junit.rules.Timeout;
 import static java.net.CookiePolicy.ACCEPT_ORIGINAL_SERVER;
 import static okhttp3.TestUtil.awaitGarbageCollection;
 import static okhttp3.TestUtil.defaultClient;
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotSame;
@@ -243,10 +244,9 @@ public final class CallTest {
         .url(server.url("/"))
         .head()
         .build();
-    executeSynchronously(headRequest)
-        .assertCode(200)
-        .assertHeader("Content-Length", "100")
-        .assertBody("");
+    Response response = client.newCall(headRequest).execute();
+    assertEquals(200, response.code());
+    assertArrayEquals(new byte[0], response.body().bytes());
 
     Request getRequest = new Request.Builder()
         .url(server.url("/"))
