@@ -107,13 +107,11 @@ public final class Crawler {
 
       String contentType = response.header("Content-Type");
       if (responseCode != 200 || contentType == null) {
-        response.body().close();
         return;
       }
 
       MediaType mediaType = MediaType.parse(contentType);
       if (mediaType == null || !mediaType.subtype().equalsIgnoreCase("html")) {
-        response.body().close();
         return;
       }
 

@@ -35,7 +35,6 @@ public class OkHttpContributors {
       // Deserialize HTTP response to concrete type.
       ResponseBody body = response.body();
       List<Contributor> contributors = CONTRIBUTORS_JSON_ADAPTER.fromJson(body.source());
-      body.close();
 
       // Sort list by the most contributions.
       Collections.sort(contributors, new Comparator<Contributor>() {
