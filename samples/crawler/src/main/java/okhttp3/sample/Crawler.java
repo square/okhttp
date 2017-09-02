@@ -95,32 +95,35 @@ public final class Crawler {
     Request request = new Request.Builder()
         .url(url)
         .build();
-    Response response = client.newCall(request).execute();
-    String responseSource = response.networkResponse() != null
-        ? ("(network: " + response.networkResponse().code() + " over " + response.protocol() + ")")
-        : "(cache)";
-    int responseCode = response.code();
+    try (Response response = client.newCall(request).execute()) {
+      String responseSource = response.networkResponse() != null ? ("(network: "
+          + response.networkResponse().code()
+          + " over "
+          + response.protocol()
+          + ")") : "(cache)";
+      int responseCode = response.code();
 
-    System.out.printf("%03d: %s %s%n", responseCode, url, responseSource);
+      System.out.printf("%03d: %s %s%n", responseCode, url, responseSource);
 
-    String contentType = response.header("Content-Type");
-    if (responseCode != 200 || contentType == null) {
-      response.body().close();
-      return;
-    }
+      String contentType = response.header("Content-Type");
+      if (responseCode != 200 || contentType == null) {
+        response.body().close();
+        return;
+      }
 
-    MediaType mediaType = MediaType.parse(contentType);
-    if (mediaType == null || !mediaType.subtype().equalsIgnoreCase("html")) {
-      response.body().close();
-      return;
-    }
+      MediaType mediaType = MediaType.parse(contentType);
+      if (mediaType == null || !mediaType.subtype().equalsIgnoreCase("html")) {
+        response.body().close();
+        return;
+      }
 
-    Document document = Jsoup.parse(response.body().string(), url.toString());
-    for (Element element : document.select("a[href]")) {
-      String href = element.attr("href");
-      HttpUrl link = response.request().url().resolve(href);
-      if (link == null) continue; // URL is either invalid or its scheme isn't http/https.
-      queue.add(link.newBuilder().fragment(null).build());
+      Document document = Jsoup.parse(response.body().string(), url.toString());
+      for (Element element : document.select("a[href]")) {
+        String href = element.attr("href");
+        HttpUrl link = response.request().url().resolve(href);
+        if (link == null) continue; // URL is either invalid or its scheme isn't http/https.
+        queue.add(link.newBuilder().fragment(null).build());
+      }
     }
   }
 
