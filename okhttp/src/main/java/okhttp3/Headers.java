@@ -110,6 +110,23 @@ public final class Headers {
         : Collections.<String>emptyList();
   }
 
+  /**
+   * Returns the number of bytes required to encode these headers using HTTP/1.1. This is also the
+   * approximate size of HTTP/2 headers before they are compressed with HPACK. This value is
+   * intended to be used as a metric: smaller headers are more efficient to encode and transmit.
+   */
+  public long byteCount() {
+    // Each header name has 2 bytes of overhead for ': ' and every header value has 2 bytes of
+    // overhead for '\r\n'.
+    long result = namesAndValues.length * 2;
+
+    for (int i = 0, size = namesAndValues.length; i < size; i++) {
+      result += namesAndValues[i].length();
+    }
+
+    return result;
+  }
+
   public Builder newBuilder() {
     Builder result = new Builder();
     Collections.addAll(result.namesAndValues, namesAndValues);

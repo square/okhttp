@@ -458,4 +458,17 @@ public final class HeadersTest {
         .build();
     assertEquals(Collections.emptyList(), HttpHeaders.parseChallenges(headers, "WWW-Authenticate"));
   }
+
+  @Test public void byteCount() {
+    assertEquals(0L, new Headers.Builder().build().byteCount());
+    assertEquals(10L, new Headers.Builder()
+        .add("abc", "def")
+        .build()
+        .byteCount());
+    assertEquals(20L, new Headers.Builder()
+        .add("abc", "def")
+        .add("ghi", "jkl")
+        .build()
+        .byteCount());
+  }
 }
