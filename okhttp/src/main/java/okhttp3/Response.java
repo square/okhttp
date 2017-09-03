@@ -99,7 +99,7 @@ public final class Response implements Closeable {
   }
 
   /**
-   * Returns true if the code is in [200..300), which means the request was successfully received,
+   * Returns true if the code is in [200..300], which means the request was successfully received,
    * understood, and accepted.
    */
   public boolean isSuccessful() {
