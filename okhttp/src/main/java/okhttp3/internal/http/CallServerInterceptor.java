@@ -17,7 +17,6 @@ package okhttp3.internal.http;
 
 import java.io.IOException;
 import java.net.ProtocolException;
-import okhttp3.Headers;
 import okhttp3.Interceptor;
 import okhttp3.Request;
 import okhttp3.Response;
@@ -49,7 +48,7 @@ public final class CallServerInterceptor implements Interceptor {
 
     realChain.eventListener().requestHeadersStart(realChain.call());
     httpCodec.writeRequestHeaders(request);
-    realChain.eventListener().requestHeadersEnd(realChain.call(), headerLength(request.headers()));
+    realChain.eventListener().requestHeadersEnd(realChain.call(), request);
 
     Response.Builder responseBuilder = null;
     if (HttpMethod.permitsRequestBody(request.method()) && request.body() != null) {
@@ -97,7 +96,7 @@ public final class CallServerInterceptor implements Interceptor {
         .build();
 
     realChain.eventListener()
-        .responseHeadersEnd(realChain.call(), headerLength(response.headers()));
+        .responseHeadersEnd(realChain.call(), response);
 
     int code = response.code();
     if (forWebSocket && code == 101) {
@@ -122,17 +121,6 @@ public final class CallServerInterceptor implements Interceptor {
     }
 
     return response;
-  }
-
-  private long headerLength(Headers headers) {
-    long length = 0;
-
-    for (int i = 0, size = headers.size(); i < size; i++) {
-      length += headers.name(i).length();
-      length += headers.value(i).length();
-    }
-
-    return length;
   }
 
   static final class CountingSink extends ForwardingSink {

@@ -185,9 +185,10 @@ public abstract class EventListener {
    *
    * <p>This method is always invoked after {@link #requestHeadersStart(Call)}.
    *
-   * @param headerLength the length in java characters of headers to be written.
+   * @param request the request sent over the network. It is an error to access the body of this
+   *     request.
    */
-  public void requestHeadersEnd(Call call, long headerLength) {
+  public void requestHeadersEnd(Call call, Request request) {
   }
 
   /**
@@ -207,10 +208,8 @@ public abstract class EventListener {
    * Invoked immediately after sending a request body.
    *
    * <p>This method is always invoked after {@link #requestBodyStart(Call)}.
-   *
-   * @param bytesWritten the length in bytes of body written, including partial success.
    */
-  public void requestBodyEnd(Call call, long bytesWritten) {
+  public void requestBodyEnd(Call call, long byteCount) {
   }
 
   /**
@@ -228,11 +227,12 @@ public abstract class EventListener {
   /**
    * Invoked immediately after receiving response headers.
    *
-   * <p>This method is always invoked after {@link #responseHeadersStart(Call)}.
+   * <p>This method is always invoked after {@link #responseHeadersStart}.
    *
-   * @param headerLength the length in bytes of headers read, or -1 if failed to read.
+   * @param response the response received over the network. It is an error to access the body of
+   *     this response.
    */
-  public void responseHeadersEnd(Call call, long headerLength) {
+  public void responseHeadersEnd(Call call, Response response) {
   }
 
   /**
@@ -254,10 +254,8 @@ public abstract class EventListener {
    * websocket upgrade.
    *
    * <p>This method is always invoked after {@link #requestBodyStart(Call)}.
-   *
-   * @param bytesRead the length in bytes of the body read, including partial success.
    */
-  public void responseBodyEnd(Call call, long bytesRead) {
+  public void responseBodyEnd(Call call, long byteCount) {
   }
 
   /**
@@ -265,10 +263,6 @@ public abstract class EventListener {
    * of response body by the caller.
    *
    * <p>This method is always invoked after {@link #callStart(Call)}.
-   *
-   * <p>{@code ioe} will be null in the case of a successful attempt to execute the call.
-   *
-   * <p>{@code ioe} will be non-null in the case of a failed attempt to execute the call.
    */
   public void callEnd(Call call) {
   }

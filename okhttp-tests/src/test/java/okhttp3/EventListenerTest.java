@@ -933,19 +933,19 @@ public final class EventListenerTest {
     enableTlsWithTunnel(false);
     server.setProtocols(Arrays.asList(Protocol.HTTP_1_1));
     requestBodySuccess(RequestBody.create(MediaType.parse("text/plain"), "Hello"), equalTo(5L),
-        equalTo(15L));
+        equalTo(19L));
   }
 
   @Test public void requestBodySuccessHttp2OverHttps() throws IOException {
     enableTlsWithTunnel(false);
     server.setProtocols(Arrays.asList(Protocol.HTTP_2, Protocol.HTTP_1_1));
     requestBodySuccess(RequestBody.create(MediaType.parse("text/plain"), "Hello"), equalTo(5L),
-        equalTo(15L));
+        equalTo(19L));
   }
 
   @Test public void requestBodySuccessHttp() throws IOException {
     requestBodySuccess(RequestBody.create(MediaType.parse("text/plain"), "Hello"), equalTo(5L),
-        equalTo(15L));
+        equalTo(19L));
   }
 
   @Test public void requestBodySuccessStreaming() throws IOException {
@@ -960,12 +960,12 @@ public final class EventListenerTest {
       }
     };
 
-    requestBodySuccess(requestBody, equalTo(8192L), equalTo(15L));
+    requestBodySuccess(requestBody, equalTo(8192L), equalTo(19L));
   }
 
   @Test public void requestBodySuccessEmpty() throws IOException {
     requestBodySuccess(RequestBody.create(MediaType.parse("text/plain"), ""), equalTo(0L),
-        equalTo(15L));
+        equalTo(19L));
   }
 
   private void requestBodySuccess(RequestBody body, Matcher<Long> requestBodyBytes,

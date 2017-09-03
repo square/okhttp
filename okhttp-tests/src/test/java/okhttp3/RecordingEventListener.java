@@ -126,32 +126,32 @@ public final class RecordingEventListener extends EventListener {
     logEvent(new RequestHeadersStart(call));
   }
 
-  @Override public void requestHeadersEnd(Call call, long headerLength) {
-    logEvent(new RequestHeadersEnd(call, headerLength));
+  @Override public void requestHeadersEnd(Call call, Request request) {
+    logEvent(new RequestHeadersEnd(call, request.headers.byteCount()));
   }
 
   @Override public void requestBodyStart(Call call) {
     logEvent(new RequestBodyStart(call));
   }
 
-  @Override public void requestBodyEnd(Call call, long bytesWritten) {
-    logEvent(new RequestBodyEnd(call, bytesWritten));
+  @Override public void requestBodyEnd(Call call, long byteCount) {
+    logEvent(new RequestBodyEnd(call, byteCount));
   }
 
   @Override public void responseHeadersStart(Call call) {
     logEvent(new ResponseHeadersStart(call));
   }
 
-  @Override public void responseHeadersEnd(Call call, long headerLength) {
-    logEvent(new ResponseHeadersEnd(call, headerLength));
+  @Override public void responseHeadersEnd(Call call, Response response) {
+    logEvent(new ResponseHeadersEnd(call, response.headers.byteCount()));
   }
 
   @Override public void responseBodyStart(Call call) {
     logEvent(new ResponseBodyStart(call));
   }
 
-  @Override public void responseBodyEnd(Call call, long bytesRead) {
-    logEvent(new ResponseBodyEnd(call, bytesRead));
+  @Override public void responseBodyEnd(Call call, long byteCount) {
+    logEvent(new ResponseBodyEnd(call, byteCount));
   }
 
   @Override public void callEnd(Call call) {
