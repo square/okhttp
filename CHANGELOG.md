@@ -1,6 +1,57 @@
 Change Log
 ==========
 
+## Version 3.9.0
+
+_2017-09-03_
+
+ *  **Interceptors are more capable.** The `Chain` interface now offers access
+    to the call and can adjust all call timeouts. Note that this change is
+    source-incompatible for code that implements the `Chain` interface.
+    We don't expect this to be a problem in practice.
+
+ *  **OkHttp has an experimental new API for tracking metrics.** The new
+    `EventListener` API is designed to help developers monitor HTTP requests'
+    size and duration. This feature is an API preview: the API is subject to
+    change, and the implementation is incomplete. Please try out the API and
+    provide feedback to us. Because this is a big new API we are unlikely to
+    get all of the details right and we're eager for feedback.
+
+ *  New: Support ALPN via Google Play Services' Dynamic Security Provider. This
+    expands HTTP/2 support to older Android devices that have Google Play
+    Services.
+ *  New: Consider all routes when looking for candidate coalesced connections.
+    This increases the likelihood that HTTP/2 connections will be shared.
+ *  New: Authentication challenges and credentials now use a charset. Use this in
+    your authenticator to support user names and passwords with non-ASCII
+    characters.
+ *  New: Accept a charset in `FormBody.Builder`. Previously form bodies were
+    always UTF-8.
+ *  New: Support the `immutable` cache-control directive.
+ *  Fix: Don't crash when an HTTP/2 call is redirected while the connection is
+    being shut down.
+ *  Fix: Don't drop headers of healthy streams that raced with `GOAWAY` frames.
+    This bug would cause HTTP/2 streams to occasional hang when the connection
+    was shutting down.
+ *  Fix: Honor `OkHttpClient.retryOnConnectionFailure()` when the response is a
+    HTTP 408 Request Timeout. If retries are enabled, OkHttp will retry exactly
+    once in response to a 408.
+ *  Fix: Don't crash when reading the empty `HEAD` response body if it specifies
+    a `Content-Length`.
+ *  Fix: Don't crash if the thread is interrupted while reading the public
+    suffix database.
+ *  Fix: Use relative resource path when loading the public suffix database.
+    Loading the resource using a path relative to the class prevents conflicts
+    when the OkHttp classes are relocated (shaded) by allowing multiple private
+    copies of the database.
+ *  Fix: Accept cookies for URLs that have an IPv6 address for a host.
+ *  Fix: Don't log the protocol (HTTP/1.1, h2) in HttpLoggingInterceptor if the
+    protocol isn't negotiated yet! Previously we'd log HTTP/1.1 by default, and
+    this was confusing.
+ *  Fix: Omit the message from MockWebServer's HTTP/2 `:status` header.
+ *  Fix: Handle 'Expect: 100 Continue' properly in MockWebServer.
+
+
 ## Version 3.8.1
 
 _2017-06-18_
