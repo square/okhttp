@@ -55,6 +55,7 @@ import org.hamcrest.Description;
 import org.hamcrest.Matcher;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 
@@ -875,6 +876,46 @@ public final class EventListenerTest {
 
     CallFailed callFailed = listener.removeUpToEvent(CallFailed.class);
     assertNotNull(callFailed.ioe);
+  }
+
+  @Ignore("the CallEnd event is omitted")
+  @Test public void emptyResponseBody() throws IOException {
+    server.enqueue(new MockResponse()
+        .setBody("")
+        .setBodyDelay(1, TimeUnit.SECONDS)
+        .setSocketPolicy(SocketPolicy.DISCONNECT_DURING_RESPONSE_BODY));
+
+    Call call = client.newCall(new Request.Builder()
+        .url(server.url("/"))
+        .build());
+    Response response = call.execute();
+    response.body().close();
+
+    List<String> expectedEvents = Arrays.asList("CallStart", "DnsStart", "DnsEnd",
+        "ConnectStart", "ConnectEnd", "ConnectionAcquired", "RequestHeadersStart",
+        "RequestHeadersEnd", "ResponseHeadersStart", "ResponseHeadersEnd", "ResponseBodyStart",
+        "ResponseBodyEnd", "ConnectionReleased", "CallEnd");
+    assertEquals(expectedEvents, listener.recordedEventTypes());
+  }
+
+  @Ignore("this reports CallFailed not CallEnd")
+  @Test public void responseBodyClosedClosedWithoutReadingAllData() throws IOException {
+    server.enqueue(new MockResponse()
+        .setBody("abc")
+        .setBodyDelay(1, TimeUnit.SECONDS)
+        .setSocketPolicy(SocketPolicy.DISCONNECT_DURING_RESPONSE_BODY));
+
+    Call call = client.newCall(new Request.Builder()
+        .url(server.url("/"))
+        .build());
+    Response response = call.execute();
+    response.body().close();
+
+    List<String> expectedEvents = Arrays.asList("CallStart", "DnsStart", "DnsEnd",
+        "ConnectStart", "ConnectEnd", "ConnectionAcquired", "RequestHeadersStart",
+        "RequestHeadersEnd", "ResponseHeadersStart", "ResponseHeadersEnd", "ResponseBodyStart",
+        "ResponseBodyEnd", "ConnectionReleased", "CallEnd");
+    assertEquals(expectedEvents, listener.recordedEventTypes());
   }
 
   @Test public void requestBodyFailHttp1OverHttps() throws IOException {
