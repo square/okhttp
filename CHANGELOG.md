@@ -13,9 +13,8 @@ _2017-09-03_
  *  **OkHttp has an experimental new API for tracking metrics.** The new
     `EventListener` API is designed to help developers monitor HTTP requests'
     size and duration. This feature is an API preview: the API is subject to
-    change, and the implementation is incomplete. Please try out the API and
-    provide feedback to us. Because this is a big new API we are unlikely to
-    get all of the details right and we're eager for feedback.
+    change, and the implementation is incomplete. This is a big new API we are
+    eager for feedback.
 
  *  New: Support ALPN via Google Play Services' Dynamic Security Provider. This
     expands HTTP/2 support to older Android devices that have Google Play
