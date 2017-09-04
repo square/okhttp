@@ -35,15 +35,16 @@ import javax.annotation.Nullable;
  * <p>All start/connect/acquire events will eventually receive a matching end/release event,
  * either successful (non-null parameters), or failed (non-null throwable).  The first common
  * parameters of each event pair are used to link the event in case of concurrent or repeated
- * events e.g. dnsStart(call, domainName) -> dnsEnd(call, domainName, inetAddressList, throwable).
+ * events e.g. dnsStart(call, domainName) -&gt; dnsEnd(call, domainName, inetAddressList).
  *
  * <p>Nesting is as follows
  * <ul>
- * <li>call -> (dns -> connect -> secure connect)* -> request events</li>
- * <li>call -> (connection acquire/release)*</li>
+ *   <li>call -&gt; (dns -&gt; connect -&gt; secure connect)* -&gt; request events</li>
+ *   <li>call -&gt; (connection acquire/release)*</li>
  * </ul>
  *
- * <p>Request events are ordered: requestHeaders -> requestBody -> responseHeaders -> responseBody
+ * <p>Request events are ordered:
+ * requestHeaders -&gt; requestBody -&gt; responseHeaders -&gt; responseBody
  *
  * <p>Since connections may be reused, the dns and connect events may not be present for a call,
  * or may be repeated in case of failure retries, even concurrently in case of happy eyeballs type
