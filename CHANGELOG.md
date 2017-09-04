@@ -8,13 +8,13 @@ _2017-09-03_
  *  **Interceptors are more capable.** The `Chain` interface now offers access
     to the call and can adjust all call timeouts. Note that this change is
     source-incompatible for code that implements the `Chain` interface.
-    We don't expect this to be a problem in practice.
+    We don't expect this to be a problem in practice!
 
  *  **OkHttp has an experimental new API for tracking metrics.** The new
     `EventListener` API is designed to help developers monitor HTTP requests'
-    size and duration. This feature is an API preview: the API is subject to
-    change, and the implementation is incomplete. This is a big new API we are
-    eager for feedback.
+    size and duration. This feature is an unstable preview: the API is subject
+    to change, and the implementation is incomplete. This is a big new API we
+    are eager for feedback.
 
  *  New: Support ALPN via Google Play Services' Dynamic Security Provider. This
     expands HTTP/2 support to older Android devices that have Google Play
