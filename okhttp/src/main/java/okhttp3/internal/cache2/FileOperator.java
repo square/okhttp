@@ -41,7 +41,7 @@ final class FileOperator {
   private final ByteBuffer byteBuffer = ByteBuffer.wrap(byteArray);
   private final FileChannel fileChannel;
 
-  public FileOperator(FileChannel fileChannel) {
+  FileOperator(FileChannel fileChannel) {
     this.fileChannel = fileChannel;
   }
 

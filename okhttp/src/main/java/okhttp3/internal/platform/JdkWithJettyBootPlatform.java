@@ -24,6 +24,8 @@ import javax.net.ssl.SSLSocket;
 import okhttp3.Protocol;
 import okhttp3.internal.Util;
 
+import static okhttp3.internal.Util.assertionError;
+
 /**
  * OpenJDK 7 or OpenJDK 8 with {@code org.mortbay.jetty.alpn/alpn-boot} in the boot class path.
  */
@@ -34,7 +36,7 @@ class JdkWithJettyBootPlatform extends Platform {
   private final Class<?> clientProviderClass;
   private final Class<?> serverProviderClass;
 
-  public JdkWithJettyBootPlatform(Method putMethod, Method getMethod, Method removeMethod,
+  JdkWithJettyBootPlatform(Method putMethod, Method getMethod, Method removeMethod,
       Class<?> clientProviderClass, Class<?> serverProviderClass) {
     this.putMethod = putMethod;
     this.getMethod = getMethod;
@@ -52,15 +54,15 @@ class JdkWithJettyBootPlatform extends Platform {
           new Class[] {clientProviderClass, serverProviderClass}, new JettyNegoProvider(names));
       putMethod.invoke(null, sslSocket, provider);
     } catch (InvocationTargetException | IllegalAccessException e) {
-      throw new AssertionError(e);
+      throw assertionError("unable to set alpn", e);
     }
   }
 
   @Override public void afterHandshake(SSLSocket sslSocket) {
     try {
       removeMethod.invoke(null, sslSocket);
-    } catch (IllegalAccessException | InvocationTargetException ignored) {
-      throw new AssertionError();
+    } catch (IllegalAccessException | InvocationTargetException e) {
+      throw assertionError("unable to remove alpn", e);
     }
   }
 
@@ -75,7 +77,7 @@ class JdkWithJettyBootPlatform extends Platform {
       }
       return provider.unsupported ? null : provider.selected;
     } catch (InvocationTargetException | IllegalAccessException e) {
-      throw new AssertionError();
+      throw assertionError("unable to get selected protocol", e);
     }
   }
 
@@ -110,7 +112,7 @@ class JdkWithJettyBootPlatform extends Platform {
     /** The protocol the server selected. */
     String selected;
 
-    public JettyNegoProvider(List<String> protocols) {
+    JettyNegoProvider(List<String> protocols) {
       this.protocols = protocols;
     }
 

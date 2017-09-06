@@ -16,6 +16,7 @@
 package okhttp3;
 
 import java.io.IOException;
+import java.net.SocketTimeoutException;
 import java.util.Arrays;
 import java.util.Locale;
 import java.util.concurrent.BlockingQueue;
@@ -23,6 +24,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import okhttp3.mockwebserver.RecordedRequest;
@@ -40,9 +42,11 @@ import org.junit.Test;
 
 import static okhttp3.TestUtil.defaultClient;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 public final class InterceptorTest {
@@ -653,6 +657,210 @@ public final class InterceptorTest {
 
     Response response = client.newCall(request).execute();
     response.body().close();
+  }
+
+  @Test public void applicationInterceptorResponseMustHaveBody() throws Exception {
+    server.enqueue(new MockResponse());
+
+    Interceptor interceptor = new Interceptor() {
+      @Override public Response intercept(Chain chain) throws IOException {
+        return chain.proceed(chain.request()).newBuilder().body(null).build();
+      }
+    };
+    client = client.newBuilder()
+        .addInterceptor(interceptor)
+        .build();
+
+    Request request = new Request.Builder()
+        .url(server.url("/"))
+        .build();
+    try {
+      client.newCall(request).execute();
+      fail();
+    } catch (IllegalStateException expected) {
+      assertEquals("interceptor " + interceptor + " returned a response with no body",
+          expected.getMessage());
+    }
+  }
+
+  @Test public void networkInterceptorResponseMustHaveBody() throws Exception {
+    server.enqueue(new MockResponse());
+
+    Interceptor interceptor = new Interceptor() {
+      @Override public Response intercept(Chain chain) throws IOException {
+        return chain.proceed(chain.request()).newBuilder().body(null).build();
+      }
+    };
+    client = client.newBuilder()
+        .addNetworkInterceptor(interceptor)
+        .build();
+
+    Request request = new Request.Builder()
+        .url(server.url("/"))
+        .build();
+    try {
+      client.newCall(request).execute();
+      fail();
+    } catch (IllegalStateException expected) {
+      assertEquals("interceptor " + interceptor + " returned a response with no body",
+          expected.getMessage());
+    }
+  }
+
+  @Test public void connectTimeout() throws Exception {
+    Interceptor interceptor1 = new Interceptor() {
+      @Override public Response intercept(Chain chainA) throws IOException {
+        assertEquals(5000, chainA.connectTimeoutMillis());
+
+        Chain chainB = chainA.withConnectTimeout(100, TimeUnit.MILLISECONDS);
+        assertEquals(100, chainB.connectTimeoutMillis());
+
+        return chainB.proceed(chainA.request());
+      }
+    };
+
+    Interceptor interceptor2 = new Interceptor() {
+      @Override public Response intercept(Chain chain) throws IOException {
+        assertEquals(100, chain.connectTimeoutMillis());
+        return chain.proceed(chain.request());
+      }
+    };
+
+    client = client.newBuilder()
+        .connectTimeout(5, TimeUnit.SECONDS)
+        .addInterceptor(interceptor1)
+        .addInterceptor(interceptor2)
+        .build();
+
+    Request request1 = new Request.Builder()
+        .url("http://" + TestUtil.UNREACHABLE_ADDRESS)
+        .build();
+    Call call = client.newCall(request1);
+
+    try {
+      call.execute();
+      fail();
+    } catch (SocketTimeoutException expected) {
+    }
+  }
+
+  @Test public void chainWithReadTimeout() throws Exception {
+    Interceptor interceptor1 = new Interceptor() {
+      @Override public Response intercept(Chain chainA) throws IOException {
+        assertEquals(5000, chainA.readTimeoutMillis());
+
+        Chain chainB = chainA.withReadTimeout(100, TimeUnit.MILLISECONDS);
+        assertEquals(100, chainB.readTimeoutMillis());
+
+        return chainB.proceed(chainA.request());
+      }
+    };
+
+    Interceptor interceptor2 = new Interceptor() {
+      @Override public Response intercept(Chain chain) throws IOException {
+        assertEquals(100, chain.readTimeoutMillis());
+        return chain.proceed(chain.request());
+      }
+    };
+
+    client = client.newBuilder()
+        .readTimeout(5, TimeUnit.SECONDS)
+        .addInterceptor(interceptor1)
+        .addInterceptor(interceptor2)
+        .build();
+
+    server.enqueue(new MockResponse()
+        .setBody("abc")
+        .throttleBody(1, 1, TimeUnit.SECONDS));
+
+    Request request1 = new Request.Builder()
+        .url(server.url("/"))
+        .build();
+    Call call = client.newCall(request1);
+    Response response = call.execute();
+    ResponseBody body = response.body();
+    try {
+      body.string();
+      fail();
+    } catch (SocketTimeoutException expected) {
+    }
+  }
+
+  @Test public void chainWithWriteTimeout() throws Exception {
+    Interceptor interceptor1 = new Interceptor() {
+      @Override public Response intercept(Chain chainA) throws IOException {
+        assertEquals(5000, chainA.writeTimeoutMillis());
+
+        Chain chainB = chainA.withWriteTimeout(100, TimeUnit.MILLISECONDS);
+        assertEquals(100, chainB.writeTimeoutMillis());
+
+        return chainB.proceed(chainA.request());
+      }
+    };
+
+    Interceptor interceptor2 = new Interceptor() {
+      @Override public Response intercept(Chain chain) throws IOException {
+        assertEquals(100, chain.writeTimeoutMillis());
+        return chain.proceed(chain.request());
+      }
+    };
+
+    client = client.newBuilder()
+        .writeTimeout(5, TimeUnit.SECONDS)
+        .addInterceptor(interceptor1)
+        .addInterceptor(interceptor2)
+        .build();
+
+    server.enqueue(new MockResponse()
+        .setBody("abc")
+        .throttleBody(1, 1, TimeUnit.SECONDS));
+
+    byte[] data = new byte[2 * 1024 * 1024]; // 2 MiB.
+    Request request1 = new Request.Builder()
+        .url(server.url("/"))
+        .post(RequestBody.create(MediaType.parse("text/plain"), data))
+        .build();
+    Call call = client.newCall(request1);
+
+    try {
+      call.execute(); // we want this call to throw a SocketTimeoutException
+      fail();
+    } catch (SocketTimeoutException expected) {
+    }
+  }
+
+  @Test public void chainCanCancelCall() throws Exception {
+    final AtomicReference<Call> callRef = new AtomicReference<>();
+
+    Interceptor interceptor = new Interceptor() {
+      @Override public Response intercept(Chain chain) throws IOException {
+        Call call = chain.call();
+        callRef.set(call);
+
+        assertFalse(call.isCanceled());
+        call.cancel();
+        assertTrue(call.isCanceled());
+
+        return chain.proceed(chain.request());
+      }
+    };
+
+    client = client.newBuilder()
+        .addInterceptor(interceptor)
+        .build();
+
+    Request request = new Request.Builder()
+        .url(server.url("/"))
+        .build();
+    Call call = client.newCall(request);
+
+    try {
+      call.execute();
+      fail();
+    } catch (IOException expected) {
+    }
+
+    assertSame(call, callRef.get());
   }
 
   private RequestBody uppercase(final RequestBody original) {

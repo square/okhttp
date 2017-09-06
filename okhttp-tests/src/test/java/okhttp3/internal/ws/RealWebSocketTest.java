@@ -34,6 +34,7 @@ import org.junit.Test;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 public final class RealWebSocketTest {
   // NOTE: Fields are named 'client' and 'server' for cognitive simplicity. This differentiation has
@@ -77,6 +78,15 @@ public final class RealWebSocketTest {
 
     assertFalse(client.webSocket.close(1000, "Hello!"));
     assertFalse(client.webSocket.send("Hello!"));
+  }
+
+  @Test public void clientCloseWith0Fails() throws IOException {
+    try {
+      client.webSocket.close(0, null);
+      fail();
+    } catch (IllegalArgumentException expected) {
+      assertEquals(expected.getMessage(), "Code must be in range [1000,5000): 0");
+    }
   }
 
   @Test public void afterSocketClosedPingFailsWebSocket() throws IOException {
@@ -203,7 +213,7 @@ public final class RealWebSocketTest {
     client.listener.assertFailure(ProtocolException.class, "Control frames must be final.");
 
     server.processNextFrame();
-    server.listener.assertFailure(EOFException.class, null);
+    server.listener.assertFailure(EOFException.class);
   }
 
   @Test public void protocolErrorInCloseResponseClosesConnection() throws IOException {
@@ -242,7 +252,7 @@ public final class RealWebSocketTest {
   @Test public void networkErrorReportedAsFailure() throws IOException {
     server.sink.close();
     client.processNextFrame();
-    client.listener.assertFailure(EOFException.class, null);
+    client.listener.assertFailure(EOFException.class);
   }
 
   @Test public void closeThrowingFailsConnection() throws IOException {
@@ -312,6 +322,7 @@ public final class RealWebSocketTest {
       String url = "http://example.com/websocket";
       Response response = new Response.Builder()
           .code(101)
+          .message("OK")
           .request(new Request.Builder().url(url).build())
           .protocol(Protocol.HTTP_1_1)
           .build();

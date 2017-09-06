@@ -109,7 +109,7 @@ public final class CustomCipherSuites {
   static class DelegatingSSLSocketFactory extends SSLSocketFactory {
     protected final SSLSocketFactory delegate;
 
-    public DelegatingSSLSocketFactory(SSLSocketFactory delegate) {
+    DelegatingSSLSocketFactory(SSLSocketFactory delegate) {
       this.delegate = delegate;
     }
 

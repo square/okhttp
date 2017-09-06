@@ -17,6 +17,7 @@ package okhttp3;
 
 import java.net.URL;
 import java.util.List;
+import javax.annotation.Nullable;
 import okhttp3.internal.Util;
 import okhttp3.internal.http.HttpMethod;
 
@@ -28,7 +29,7 @@ public final class Request {
   final HttpUrl url;
   final String method;
   final Headers headers;
-  final RequestBody body;
+  final @Nullable RequestBody body;
   final Object tag;
 
   private volatile CacheControl cacheControl; // Lazily initialized.
@@ -61,7 +62,7 @@ public final class Request {
     return headers.values(name);
   }
 
-  public RequestBody body() {
+  public @Nullable RequestBody body() {
     return body;
   }
 
@@ -211,7 +212,7 @@ public final class Request {
       return method("POST", body);
     }
 
-    public Builder delete(RequestBody body) {
+    public Builder delete(@Nullable RequestBody body) {
       return method("DELETE", body);
     }
 
@@ -227,7 +228,7 @@ public final class Request {
       return method("PATCH", body);
     }
 
-    public Builder method(String method, RequestBody body) {
+    public Builder method(String method, @Nullable RequestBody body) {
       if (method == null) throw new NullPointerException("method == null");
       if (method.length() == 0) throw new IllegalArgumentException("method.length() == 0");
       if (body != null && !HttpMethod.permitsRequestBody(method)) {

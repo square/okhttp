@@ -27,8 +27,10 @@ import javax.net.ssl.SSLHandshakeException;
 import javax.net.ssl.SSLPeerUnverifiedException;
 import javax.net.ssl.SSLSocketFactory;
 import okhttp3.Address;
+import okhttp3.Call;
 import okhttp3.CertificatePinner;
 import okhttp3.Connection;
+import okhttp3.EventListener;
 import okhttp3.HttpUrl;
 import okhttp3.Interceptor;
 import okhttp3.OkHttpClient;
@@ -102,9 +104,12 @@ public final class RetryAndFollowUpInterceptor implements Interceptor {
 
   @Override public Response intercept(Chain chain) throws IOException {
     Request request = chain.request();
+    RealInterceptorChain realChain = (RealInterceptorChain) chain;
+    Call call = realChain.call();
+    EventListener eventListener = realChain.eventListener();
 
-    streamAllocation = new StreamAllocation(
-        client.connectionPool(), createAddress(request.url()), callStackTrace);
+    streamAllocation = new StreamAllocation(client.connectionPool(), createAddress(request.url()),
+        call, eventListener, callStackTrace);
 
     int followUpCount = 0;
     Response priorResponse = null;
@@ -114,10 +119,10 @@ public final class RetryAndFollowUpInterceptor implements Interceptor {
         throw new IOException("Canceled");
       }
 
-      Response response = null;
+      Response response;
       boolean releaseConnection = true;
       try {
-        response = ((RealInterceptorChain) chain).proceed(request, streamAllocation, null, null);
+        response = realChain.proceed(request, streamAllocation, null, null);
         releaseConnection = false;
       } catch (RouteException e) {
         // The attempt to connect via a route failed. The request will not have been sent.
@@ -172,8 +177,8 @@ public final class RetryAndFollowUpInterceptor implements Interceptor {
 
       if (!sameConnection(response, followUp.url())) {
         streamAllocation.release();
-        streamAllocation = new StreamAllocation(
-            client.connectionPool(), createAddress(followUp.url()), callStackTrace);
+        streamAllocation = new StreamAllocation(client.connectionPool(),
+            createAddress(followUp.url()), call, eventListener, callStackTrace);
       } else if (streamAllocation.codec() != null) {
         throw new IllegalStateException("Closing the body of " + response
             + " didn't close its backing stream. Bad interceptor?");
@@ -339,7 +344,18 @@ public final class RetryAndFollowUpInterceptor implements Interceptor {
         // 408's are rare in practice, but some servers like HAProxy use this response code. The
         // spec says that we may repeat the request without modifications. Modern browsers also
         // repeat the request (even non-idempotent ones.)
+        if (!client.retryOnConnectionFailure()) {
+          // The application layer has directed us not to retry the request.
+          return null;
+        }
+
         if (userResponse.request().body() instanceof UnrepeatableRequestBody) {
+          return null;
+        }
+
+        if (userResponse.priorResponse() != null
+            && userResponse.priorResponse().code() == HTTP_CLIENT_TIMEOUT) {
+          // We attempted to retry and got another timeout. Give up.
           return null;
         }
 

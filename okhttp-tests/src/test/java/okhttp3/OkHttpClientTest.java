@@ -127,4 +127,46 @@ public final class OkHttpClientTest {
     OkHttpClient clientB = TestUtil.defaultClient();
     assertEquals(clientA.certificatePinner(), clientB.certificatePinner());
   }
+
+  @Test public void nullInterceptor() {
+    OkHttpClient.Builder builder = new OkHttpClient.Builder();
+    try {
+      builder.addInterceptor(null);
+      fail();
+    } catch (IllegalArgumentException expected) {
+      assertEquals("interceptor == null", expected.getMessage());
+    }
+  }
+
+  @Test public void nullNetworkInterceptor() {
+    OkHttpClient.Builder builder = new OkHttpClient.Builder();
+    try {
+      builder.addNetworkInterceptor(null);
+      fail();
+    } catch (IllegalArgumentException expected) {
+      assertEquals("interceptor == null", expected.getMessage());
+    }
+  }
+
+  @Test public void nullInterceptorInList() {
+    OkHttpClient.Builder builder = new OkHttpClient.Builder();
+    builder.interceptors().add(null);
+    try {
+      builder.build();
+      fail();
+    } catch (IllegalStateException expected) {
+      assertEquals("Null interceptor: [null]", expected.getMessage());
+    }
+  }
+
+  @Test public void nullNetworkInterceptorInList() {
+    OkHttpClient.Builder builder = new OkHttpClient.Builder();
+    builder.networkInterceptors().add(null);
+    try {
+      builder.build();
+      fail();
+    } catch (IllegalStateException expected) {
+      assertEquals("Null network interceptor: [null]", expected.getMessage());
+    }
+  }
 }

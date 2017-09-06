@@ -24,7 +24,6 @@ import okhttp3.Headers;
 import okhttp3.Interceptor;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
-import okhttp3.Protocol;
 import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
@@ -151,8 +150,10 @@ public final class HttpLoggingInterceptor implements Interceptor {
     boolean hasRequestBody = requestBody != null;
 
     Connection connection = chain.connection();
-    Protocol protocol = connection != null ? connection.protocol() : Protocol.HTTP_1_1;
-    String requestStartMessage = "--> " + request.method() + ' ' + request.url() + ' ' + protocol;
+    String requestStartMessage = "--> "
+        + request.method()
+        + ' ' + request.url()
+        + (connection != null ? " " + connection.protocol() : "");
     if (!logHeaders && hasRequestBody) {
       requestStartMessage += " (" + requestBody.contentLength() + "-byte body)";
     }
@@ -218,9 +219,11 @@ public final class HttpLoggingInterceptor implements Interceptor {
     ResponseBody responseBody = response.body();
     long contentLength = responseBody.contentLength();
     String bodySize = contentLength != -1 ? contentLength + "-byte" : "unknown-length";
-    logger.log("<-- " + response.code() + ' ' + response.message() + ' '
-        + response.request().url() + " (" + tookMs + "ms" + (!logHeaders ? ", "
-        + bodySize + " body" : "") + ')');
+    logger.log("<-- "
+        + response.code()
+        + (response.message().isEmpty() ? "" : ' ' + response.message())
+        + ' ' + response.request().url()
+        + " (" + tookMs + "ms" + (!logHeaders ? ", " + bodySize + " body" : "") + ')');
 
     if (logHeaders) {
       Headers headers = response.headers();

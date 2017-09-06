@@ -46,8 +46,8 @@ import static okhttp3.internal.ws.WebSocketProtocol.toggleMask;
 
 /**
  * An <a href="http://tools.ietf.org/html/rfc6455">RFC 6455</a>-compatible WebSocket frame reader.
- * <p>
- * This class is not thread safe.
+ *
+ * <p>This class is not thread safe.
  */
 final class WebSocketReader {
   public interface FrameCallback {

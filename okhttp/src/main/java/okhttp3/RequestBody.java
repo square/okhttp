@@ -18,6 +18,7 @@ package okhttp3;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
+import javax.annotation.Nullable;
 import okhttp3.internal.Util;
 import okio.BufferedSink;
 import okio.ByteString;
@@ -26,24 +27,24 @@ import okio.Source;
 
 public abstract class RequestBody {
   /** Returns the Content-Type header for this body. */
-  public abstract MediaType contentType();
+  public abstract @Nullable MediaType contentType();
 
   /**
-   * Returns the number of bytes that will be written to {@code out} in a call to {@link #writeTo},
+   * Returns the number of bytes that will be written to {@code sink} in a call to {@link #writeTo},
    * or -1 if that count is unknown.
    */
   public long contentLength() throws IOException {
     return -1;
   }
 
-  /** Writes the content of this request to {@code out}. */
+  /** Writes the content of this request to {@code sink}. */
   public abstract void writeTo(BufferedSink sink) throws IOException;
 
   /**
    * Returns a new request body that transmits {@code content}. If {@code contentType} is non-null
    * and lacks a charset, this will use UTF-8.
    */
-  public static RequestBody create(MediaType contentType, String content) {
+  public static RequestBody create(@Nullable MediaType contentType, String content) {
     Charset charset = Util.UTF_8;
     if (contentType != null) {
       charset = contentType.charset();
@@ -57,9 +58,10 @@ public abstract class RequestBody {
   }
 
   /** Returns a new request body that transmits {@code content}. */
-  public static RequestBody create(final MediaType contentType, final ByteString content) {
+  public static RequestBody create(
+      final @Nullable MediaType contentType, final ByteString content) {
     return new RequestBody() {
-      @Override public MediaType contentType() {
+      @Override public @Nullable MediaType contentType() {
         return contentType;
       }
 
@@ -74,17 +76,17 @@ public abstract class RequestBody {
   }
 
   /** Returns a new request body that transmits {@code content}. */
-  public static RequestBody create(final MediaType contentType, final byte[] content) {
+  public static RequestBody create(final @Nullable MediaType contentType, final byte[] content) {
     return create(contentType, content, 0, content.length);
   }
 
   /** Returns a new request body that transmits {@code content}. */
-  public static RequestBody create(final MediaType contentType, final byte[] content,
+  public static RequestBody create(final @Nullable MediaType contentType, final byte[] content,
       final int offset, final int byteCount) {
     if (content == null) throw new NullPointerException("content == null");
     Util.checkOffsetAndCount(content.length, offset, byteCount);
     return new RequestBody() {
-      @Override public MediaType contentType() {
+      @Override public @Nullable MediaType contentType() {
         return contentType;
       }
 
@@ -99,11 +101,11 @@ public abstract class RequestBody {
   }
 
   /** Returns a new request body that transmits the content of {@code file}. */
-  public static RequestBody create(final MediaType contentType, final File file) {
+  public static RequestBody create(final @Nullable MediaType contentType, final File file) {
     if (file == null) throw new NullPointerException("content == null");
 
     return new RequestBody() {
-      @Override public MediaType contentType() {
+      @Override public @Nullable MediaType contentType() {
         return contentType;
       }
 

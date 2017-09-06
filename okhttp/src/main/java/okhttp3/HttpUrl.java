@@ -21,18 +21,22 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.UnknownHostException;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
+import javax.annotation.Nullable;
+import okhttp3.internal.Util;
+import okhttp3.internal.publicsuffix.PublicSuffixDatabase;
 import okio.Buffer;
 
+import static okhttp3.internal.Util.decodeHexDigit;
 import static okhttp3.internal.Util.delimiterOffset;
-import static okhttp3.internal.Util.domainToAscii;
 import static okhttp3.internal.Util.skipLeadingAsciiWhitespace;
 import static okhttp3.internal.Util.skipTrailingAsciiWhitespace;
+import static okhttp3.internal.Util.verifyAsIpAddress;
 
 /**
  * A uniform resource locator (URL) with a scheme of either {@code http} or {@code https}. Use this
@@ -322,10 +326,10 @@ public final class HttpUrl {
    * non-empty, but never null. Values are null if the name has no corresponding '=' separator, or
    * empty, or non-empty.
    */
-  private final List<String> queryNamesAndValues;
+  private final @Nullable List<String> queryNamesAndValues;
 
   /** Decoded fragment. */
-  private final String fragment;
+  private final @Nullable String fragment;
 
   /** Canonical URL. */
   private final String url;
@@ -604,7 +608,7 @@ public final class HttpUrl {
    *   <tr><td>{@code http://host/?a=apple&b}</td><td>{@code "a=apple&b"}</td></tr>
    * </table>
    */
-  public String encodedQuery() {
+  public @Nullable String encodedQuery() {
     if (queryNamesAndValues == null) return null; // No query.
     int queryStart = url.indexOf('?') + 1;
     int queryEnd = delimiterOffset(url, queryStart + 1, url.length(), '#');
@@ -664,7 +668,7 @@ public final class HttpUrl {
    *   <tr><td>{@code http://host/?a=apple&b}</td><td>{@code "a=apple&b"}</td></tr>
    * </table>
    */
-  public String query() {
+  public @Nullable String query() {
     if (queryNamesAndValues == null) return null; // No query.
     StringBuilder result = new StringBuilder();
     namesAndValuesToQueryString(result, queryNamesAndValues);
@@ -702,7 +706,7 @@ public final class HttpUrl {
    *   <tr><td>{@code http://host/?a=apple&b}</td><td>{@code "apple"}</td></tr>
    * </table>
    */
-  public String queryParameter(String name) {
+  public @Nullable String queryParameter(String name) {
     if (queryNamesAndValues == null) return null;
     for (int i = 0, size = queryNamesAndValues.size(); i < size; i += 2) {
       if (name.equals(queryNamesAndValues.get(i))) {
@@ -819,7 +823,7 @@ public final class HttpUrl {
    *   <tr><td>{@code http://host/#abc|def}</td><td>{@code "abc|def"}</td></tr>
    * </table>
    */
-  public String encodedFragment() {
+  public @Nullable String encodedFragment() {
     if (fragment == null) return null;
     int fragmentStart = url.indexOf('#') + 1;
     return url.substring(fragmentStart);
@@ -837,7 +841,7 @@ public final class HttpUrl {
    *   <tr><td>{@code http://host/#abc|def}</td><td>{@code "abc|def"}</td></tr>
    * </table>
    */
-  public String fragment() {
+  public @Nullable String fragment() {
     return fragment;
   }
 
@@ -858,7 +862,7 @@ public final class HttpUrl {
    * Returns the URL that would be retrieved by following {@code link} from this URL, or null if
    * the resulting URL is not well-formed.
    */
-  public HttpUrl resolve(String link) {
+  public @Nullable HttpUrl resolve(String link) {
     Builder builder = newBuilder(link);
     return builder != null ? builder.build() : null;
   }
@@ -882,7 +886,7 @@ public final class HttpUrl {
    * Returns a builder for the URL that would be retrieved by following {@code link} from this URL,
    * or null if the resulting URL is not well-formed.
    */
-  public Builder newBuilder(String link) {
+  public @Nullable Builder newBuilder(String link) {
     Builder builder = new Builder();
     Builder.ParseResult result = builder.parse(this, link);
     return result == Builder.ParseResult.SUCCESS ? builder : null;
@@ -892,7 +896,7 @@ public final class HttpUrl {
    * Returns a new {@code HttpUrl} representing {@code url} if it is a well-formed HTTP or HTTPS
    * URL, or null if it isn't.
    */
-  public static HttpUrl parse(String url) {
+  public static @Nullable HttpUrl parse(String url) {
     Builder builder = new Builder();
     Builder.ParseResult result = builder.parse(null, url);
     return result == Builder.ParseResult.SUCCESS ? builder.build() : null;
@@ -902,7 +906,7 @@ public final class HttpUrl {
    * Returns an {@link HttpUrl} for {@code url} if its protocol is {@code http} or {@code https}, or
    * null if it has any other protocol.
    */
-  public static HttpUrl get(URL url) {
+  public static @Nullable HttpUrl get(URL url) {
     return parse(url.toString());
   }
 
@@ -929,12 +933,12 @@ public final class HttpUrl {
     }
   }
 
-  public static HttpUrl get(URI uri) {
+  public static @Nullable HttpUrl get(URI uri) {
     return parse(uri.toString());
   }
 
-  @Override public boolean equals(Object o) {
-    return o instanceof HttpUrl && ((HttpUrl) o).url.equals(url);
+  @Override public boolean equals(@Nullable Object other) {
+    return other instanceof HttpUrl && ((HttpUrl) other).url.equals(url);
   }
 
   @Override public int hashCode() {
@@ -945,15 +949,39 @@ public final class HttpUrl {
     return url;
   }
 
+  /**
+   * Returns the domain name of this URL's {@link #host()} that is one level beneath the public
+   * suffix by consulting the <a href="https://publicsuffix.org">public suffix list</a>. Returns
+   * null if this URL's {@link #host()} is an IP address or is considered a public suffix by the
+   * public suffix list.
+   *
+   * <p>In general this method <strong>should not</strong> be used to test whether a domain is valid
+   * or routable. Instead, DNS is the recommended source for that information.
+   *
+   * <p><table summary="">
+   *   <tr><th>URL</th><th>{@code topPrivateDomain()}</th></tr>
+   *   <tr><td>{@code http://google.com}</td><td>{@code "google.com"}</td></tr>
+   *   <tr><td>{@code http://adwords.google.co.uk}</td><td>{@code "google.co.uk"}</td></tr>
+   *   <tr><td>{@code http://square}</td><td>null</td></tr>
+   *   <tr><td>{@code http://co.uk}</td><td>null</td></tr>
+   *   <tr><td>{@code http://localhost}</td><td>null</td></tr>
+   *   <tr><td>{@code http://127.0.0.1}</td><td>null</td></tr>
+   * </table>
+   */
+  public @Nullable String topPrivateDomain() {
+    if (verifyAsIpAddress(host)) return null;
+    return PublicSuffixDatabase.get().getEffectiveTldPlusOne(host);
+  }
+
   public static final class Builder {
-    String scheme;
+    @Nullable String scheme;
     String encodedUsername = "";
     String encodedPassword = "";
-    String host;
+    @Nullable String host;
     int port = -1;
     final List<String> encodedPathSegments = new ArrayList<>();
-    List<String> encodedQueryNamesAndValues;
-    String encodedFragment;
+    @Nullable List<String> encodedQueryNamesAndValues;
+    @Nullable String encodedFragment;
 
     public Builder() {
       encodedPathSegments.add(""); // The default path is '/' which needs a trailing space.
@@ -1069,7 +1097,8 @@ public final class HttpUrl {
     public Builder setPathSegment(int index, String pathSegment) {
       if (pathSegment == null) throw new NullPointerException("pathSegment == null");
       String canonicalPathSegment = canonicalize(
-          pathSegment, 0, pathSegment.length(), PATH_SEGMENT_ENCODE_SET, false, false, false, true);
+          pathSegment, 0, pathSegment.length(), PATH_SEGMENT_ENCODE_SET, false, false, false, true,
+              null);
       if (isDot(canonicalPathSegment) || isDotDot(canonicalPathSegment)) {
         throw new IllegalArgumentException("unexpected path segment: " + pathSegment);
       }
@@ -1082,7 +1111,8 @@ public final class HttpUrl {
         throw new NullPointerException("encodedPathSegment == null");
       }
       String canonicalPathSegment = canonicalize(encodedPathSegment,
-          0, encodedPathSegment.length(), PATH_SEGMENT_ENCODE_SET, true, false, false, true);
+          0, encodedPathSegment.length(), PATH_SEGMENT_ENCODE_SET, true, false, false, true,
+          null);
       encodedPathSegments.set(index, canonicalPathSegment);
       if (isDot(canonicalPathSegment) || isDotDot(canonicalPathSegment)) {
         throw new IllegalArgumentException("unexpected path segment: " + encodedPathSegment);
@@ -1107,7 +1137,7 @@ public final class HttpUrl {
       return this;
     }
 
-    public Builder query(String query) {
+    public Builder query(@Nullable String query) {
       this.encodedQueryNamesAndValues = query != null
           ? queryStringToNamesAndValues(canonicalize(
           query, QUERY_ENCODE_SET, false, false, true, true))
@@ -1115,7 +1145,7 @@ public final class HttpUrl {
       return this;
     }
 
-    public Builder encodedQuery(String encodedQuery) {
+    public Builder encodedQuery(@Nullable String encodedQuery) {
       this.encodedQueryNamesAndValues = encodedQuery != null
           ? queryStringToNamesAndValues(
           canonicalize(encodedQuery, QUERY_ENCODE_SET, true, false, true, true))
@@ -1124,7 +1154,7 @@ public final class HttpUrl {
     }
 
     /** Encodes the query parameter using UTF-8 and adds it to this URL's query string. */
-    public Builder addQueryParameter(String name, String value) {
+    public Builder addQueryParameter(String name, @Nullable String value) {
       if (name == null) throw new NullPointerException("name == null");
       if (encodedQueryNamesAndValues == null) encodedQueryNamesAndValues = new ArrayList<>();
       encodedQueryNamesAndValues.add(
@@ -1136,7 +1166,7 @@ public final class HttpUrl {
     }
 
     /** Adds the pre-encoded query parameter to this URL's query string. */
-    public Builder addEncodedQueryParameter(String encodedName, String encodedValue) {
+    public Builder addEncodedQueryParameter(String encodedName, @Nullable String encodedValue) {
       if (encodedName == null) throw new NullPointerException("encodedName == null");
       if (encodedQueryNamesAndValues == null) encodedQueryNamesAndValues = new ArrayList<>();
       encodedQueryNamesAndValues.add(
@@ -1147,13 +1177,13 @@ public final class HttpUrl {
       return this;
     }
 
-    public Builder setQueryParameter(String name, String value) {
+    public Builder setQueryParameter(String name, @Nullable String value) {
       removeAllQueryParameters(name);
       addQueryParameter(name, value);
       return this;
     }
 
-    public Builder setEncodedQueryParameter(String encodedName, String encodedValue) {
+    public Builder setEncodedQueryParameter(String encodedName, @Nullable String encodedValue) {
       removeAllEncodedQueryParameters(encodedName);
       addEncodedQueryParameter(encodedName, encodedValue);
       return this;
@@ -1189,14 +1219,14 @@ public final class HttpUrl {
       }
     }
 
-    public Builder fragment(String fragment) {
+    public Builder fragment(@Nullable String fragment) {
       this.encodedFragment = fragment != null
           ? canonicalize(fragment, FRAGMENT_ENCODE_SET, false, false, false, false)
           : null;
       return this;
     }
 
-    public Builder encodedFragment(String encodedFragment) {
+    public Builder encodedFragment(@Nullable String encodedFragment) {
       this.encodedFragment = encodedFragment != null
           ? canonicalize(encodedFragment, FRAGMENT_ENCODE_SET, true, false, false, false)
           : null;
@@ -1287,7 +1317,7 @@ public final class HttpUrl {
       INVALID_HOST,
     }
 
-    ParseResult parse(HttpUrl base, String input) {
+    ParseResult parse(@Nullable HttpUrl base, String input) {
       int pos = skipLeadingAsciiWhitespace(input, 0, input.length());
       int limit = skipTrailingAsciiWhitespace(input, pos, input.length());
 
@@ -1337,19 +1367,22 @@ public final class HttpUrl {
                 int passwordColonOffset = delimiterOffset(
                     input, pos, componentDelimiterOffset, ':');
                 String canonicalUsername = canonicalize(
-                    input, pos, passwordColonOffset, USERNAME_ENCODE_SET, true, false, false, true);
+                    input, pos, passwordColonOffset, USERNAME_ENCODE_SET, true, false, false, true,
+                    null);
                 this.encodedUsername = hasUsername
                     ? this.encodedUsername + "%40" + canonicalUsername
                     : canonicalUsername;
                 if (passwordColonOffset != componentDelimiterOffset) {
                   hasPassword = true;
                   this.encodedPassword = canonicalize(input, passwordColonOffset + 1,
-                      componentDelimiterOffset, PASSWORD_ENCODE_SET, true, false, false, true);
+                      componentDelimiterOffset, PASSWORD_ENCODE_SET, true, false, false, true,
+                      null);
                 }
                 hasUsername = true;
               } else {
                 this.encodedPassword = this.encodedPassword + "%40" + canonicalize(input, pos,
-                    componentDelimiterOffset, PASSWORD_ENCODE_SET, true, false, false, true);
+                    componentDelimiterOffset, PASSWORD_ENCODE_SET, true, false, false, true,
+                    null);
               }
               pos = componentDelimiterOffset + 1;
               break;
@@ -1396,14 +1429,14 @@ public final class HttpUrl {
       if (pos < limit && input.charAt(pos) == '?') {
         int queryDelimiterOffset = delimiterOffset(input, pos, limit, '#');
         this.encodedQueryNamesAndValues = queryStringToNamesAndValues(canonicalize(
-            input, pos + 1, queryDelimiterOffset, QUERY_ENCODE_SET, true, false, true, true));
+            input, pos + 1, queryDelimiterOffset, QUERY_ENCODE_SET, true, false, true, true, null));
         pos = queryDelimiterOffset;
       }
 
       // Fragment.
       if (pos < limit && input.charAt(pos) == '#') {
         this.encodedFragment = canonicalize(
-            input, pos + 1, limit, FRAGMENT_ENCODE_SET, true, false, false, false);
+            input, pos + 1, limit, FRAGMENT_ENCODE_SET, true, false, false, false, null);
       }
 
       return ParseResult.SUCCESS;
@@ -1440,7 +1473,7 @@ public final class HttpUrl {
     private void push(String input, int pos, int limit, boolean addTrailingSlash,
         boolean alreadyEncoded) {
       String segment = canonicalize(
-          input, pos, limit, PATH_SEGMENT_ENCODE_SET, alreadyEncoded, false, false, true);
+          input, pos, limit, PATH_SEGMENT_ENCODE_SET, alreadyEncoded, false, false, true, null);
       if (isDot(segment)) {
         return; // Skip '.' path segments.
       }
@@ -1555,168 +1588,13 @@ public final class HttpUrl {
       // Start by percent decoding the host. The WHATWG spec suggests doing this only after we've
       // checked for IPv6 square braces. But Chrome does it first, and that's more lenient.
       String percentDecoded = percentDecode(input, pos, limit, false);
-
-      // If the input contains a :, it’s an IPv6 address.
-      if (percentDecoded.contains(":")) {
-        // If the input is encased in square braces "[...]", drop 'em.
-        InetAddress inetAddress = percentDecoded.startsWith("[") && percentDecoded.endsWith("]")
-            ? decodeIpv6(percentDecoded, 1, percentDecoded.length() - 1)
-            : decodeIpv6(percentDecoded, 0, percentDecoded.length());
-        if (inetAddress == null) return null;
-        byte[] address = inetAddress.getAddress();
-        if (address.length == 16) return inet6AddressToAscii(address);
-        throw new AssertionError();
-      }
-
-      return domainToAscii(percentDecoded);
-    }
-
-    /** Decodes an IPv6 address like 1111:2222:3333:4444:5555:6666:7777:8888 or ::1. */
-    private static InetAddress decodeIpv6(String input, int pos, int limit) {
-      byte[] address = new byte[16];
-      int b = 0;
-      int compress = -1;
-      int groupOffset = -1;
-
-      for (int i = pos; i < limit; ) {
-        if (b == address.length) return null; // Too many groups.
-
-        // Read a delimiter.
-        if (i + 2 <= limit && input.regionMatches(i, "::", 0, 2)) {
-          // Compression "::" delimiter, which is anywhere in the input, including its prefix.
-          if (compress != -1) return null; // Multiple "::" delimiters.
-          i += 2;
-          b += 2;
-          compress = b;
-          if (i == limit) break;
-        } else if (b != 0) {
-          // Group separator ":" delimiter.
-          if (input.regionMatches(i, ":", 0, 1)) {
-            i++;
-          } else if (input.regionMatches(i, ".", 0, 1)) {
-            // If we see a '.', rewind to the beginning of the previous group and parse as IPv4.
-            if (!decodeIpv4Suffix(input, groupOffset, limit, address, b - 2)) return null;
-            b += 2; // We rewound two bytes and then added four.
-            break;
-          } else {
-            return null; // Wrong delimiter.
-          }
-        }
-
-        // Read a group, one to four hex digits.
-        int value = 0;
-        groupOffset = i;
-        for (; i < limit; i++) {
-          char c = input.charAt(i);
-          int hexDigit = decodeHexDigit(c);
-          if (hexDigit == -1) break;
-          value = (value << 4) + hexDigit;
-        }
-        int groupLength = i - groupOffset;
-        if (groupLength == 0 || groupLength > 4) return null; // Group is the wrong size.
-
-        // We've successfully read a group. Assign its value to our byte array.
-        address[b++] = (byte) ((value >>> 8) & 0xff);
-        address[b++] = (byte) (value & 0xff);
-      }
-
-      // All done. If compression happened, we need to move bytes to the right place in the
-      // address. Here's a sample:
-      //
-      //      input: "1111:2222:3333::7777:8888"
-      //     before: { 11, 11, 22, 22, 33, 33, 00, 00, 77, 77, 88, 88, 00, 00, 00, 00  }
-      //   compress: 6
-      //          b: 10
-      //      after: { 11, 11, 22, 22, 33, 33, 00, 00, 00, 00, 00, 00, 77, 77, 88, 88 }
-      //
-      if (b != address.length) {
-        if (compress == -1) return null; // Address didn't have compression or enough groups.
-        System.arraycopy(address, compress, address, address.length - (b - compress), b - compress);
-        Arrays.fill(address, compress, compress + (address.length - b), (byte) 0);
-      }
-
-      try {
-        return InetAddress.getByAddress(address);
-      } catch (UnknownHostException e) {
-        throw new AssertionError();
-      }
-    }
-
-    /** Decodes an IPv4 address suffix of an IPv6 address, like 1111::5555:6666:192.168.0.1. */
-    private static boolean decodeIpv4Suffix(
-        String input, int pos, int limit, byte[] address, int addressOffset) {
-      int b = addressOffset;
-
-      for (int i = pos; i < limit; ) {
-        if (b == address.length) return false; // Too many groups.
-
-        // Read a delimiter.
-        if (b != addressOffset) {
-          if (input.charAt(i) != '.') return false; // Wrong delimiter.
-          i++;
-        }
-
-        // Read 1 or more decimal digits for a value in 0..255.
-        int value = 0;
-        int groupOffset = i;
-        for (; i < limit; i++) {
-          char c = input.charAt(i);
-          if (c < '0' || c > '9') break;
-          if (value == 0 && groupOffset != i) return false; // Reject unnecessary leading '0's.
-          value = (value * 10) + c - '0';
-          if (value > 255) return false; // Value out of range.
-        }
-        int groupLength = i - groupOffset;
-        if (groupLength == 0) return false; // No digits.
-
-        // We've successfully read a byte.
-        address[b++] = (byte) value;
-      }
-
-      if (b != addressOffset + 4) return false; // Too few groups. We wanted exactly four.
-      return true; // Success.
-    }
-
-    /** Encodes an IPv6 address in canonical form according to RFC 5952. */
-    private static String inet6AddressToAscii(byte[] address) {
-      // Go through the address looking for the longest run of 0s. Each group is 2-bytes.
-      // A run must be longer than one group (section 4.2.2).
-      // If there are multiple equal runs, the first one must be used (section 4.2.3).
-      int longestRunOffset = -1;
-      int longestRunLength = 0;
-      for (int i = 0; i < address.length; i += 2) {
-        int currentRunOffset = i;
-        while (i < 16 && address[i] == 0 && address[i + 1] == 0) {
-          i += 2;
-        }
-        int currentRunLength = i - currentRunOffset;
-        if (currentRunLength > longestRunLength && currentRunLength >= 4) {
-          longestRunOffset = currentRunOffset;
-          longestRunLength = currentRunLength;
-        }
-      }
-
-      // Emit each 2-byte group in hex, separated by ':'. The longest run of zeroes is "::".
-      Buffer result = new Buffer();
-      for (int i = 0; i < address.length; ) {
-        if (i == longestRunOffset) {
-          result.writeByte(':');
-          i += longestRunLength;
-          if (i == 16) result.writeByte(':');
-        } else {
-          if (i > 0) result.writeByte(':');
-          int group = (address[i] & 0xff) << 8 | address[i + 1] & 0xff;
-          result.writeHexadecimalUnsignedLong(group);
-          i += 2;
-        }
-      }
-      return result.readUtf8();
+      return Util.canonicalizeHost(percentDecoded);
     }
 
     private static int parsePort(String input, int pos, int limit) {
       try {
         // Canonicalize the port string to skip '\n' etc.
-        String portString = canonicalize(input, pos, limit, "", false, false, false, true);
+        String portString = canonicalize(input, pos, limit, "", false, false, false, true, null);
         int i = Integer.parseInt(portString);
         if (i > 0 && i <= 65535) return i;
         return -1;
@@ -1783,13 +1661,6 @@ public final class HttpUrl {
         && decodeHexDigit(encoded.charAt(pos + 2)) != -1;
   }
 
-  static int decodeHexDigit(char c) {
-    if (c >= '0' && c <= '9') return c - '0';
-    if (c >= 'a' && c <= 'f') return c - 'a' + 10;
-    if (c >= 'A' && c <= 'F') return c - 'A' + 10;
-    return -1;
-  }
-
   /**
    * Returns a substring of {@code input} on the range {@code [pos..limit)} with the following
    * transformations:
@@ -1805,9 +1676,11 @@ public final class HttpUrl {
    * @param strict true to encode '%' if it is not the prefix of a valid percent encoding.
    * @param plusIsSpace true to encode '+' as "%2B" if it is not already encoded.
    * @param asciiOnly true to encode all non-ASCII codepoints.
+   * @param charset which charset to use, null equals UTF-8.
    */
   static String canonicalize(String input, int pos, int limit, String encodeSet,
-      boolean alreadyEncoded, boolean strict, boolean plusIsSpace, boolean asciiOnly) {
+      boolean alreadyEncoded, boolean strict, boolean plusIsSpace, boolean asciiOnly,
+      Charset charset) {
     int codePoint;
     for (int i = pos; i < limit; i += Character.charCount(codePoint)) {
       codePoint = input.codePointAt(i);
@@ -1821,7 +1694,7 @@ public final class HttpUrl {
         Buffer out = new Buffer();
         out.writeUtf8(input, pos, i);
         canonicalize(out, input, i, limit, encodeSet, alreadyEncoded, strict, plusIsSpace,
-            asciiOnly);
+            asciiOnly, charset);
         return out.readUtf8();
       }
     }
@@ -1831,8 +1704,9 @@ public final class HttpUrl {
   }
 
   static void canonicalize(Buffer out, String input, int pos, int limit, String encodeSet,
-      boolean alreadyEncoded, boolean strict, boolean plusIsSpace, boolean asciiOnly) {
-    Buffer utf8Buffer = null; // Lazily allocated.
+      boolean alreadyEncoded, boolean strict, boolean plusIsSpace, boolean asciiOnly,
+      Charset charset) {
+    Buffer encodedCharBuffer = null; // Lazily allocated.
     int codePoint;
     for (int i = pos; i < limit; i += Character.charCount(codePoint)) {
       codePoint = input.codePointAt(i);
@@ -1848,12 +1722,18 @@ public final class HttpUrl {
           || encodeSet.indexOf(codePoint) != -1
           || codePoint == '%' && (!alreadyEncoded || strict && !percentEncoded(input, i, limit))) {
         // Percent encode this character.
-        if (utf8Buffer == null) {
-          utf8Buffer = new Buffer();
+        if (encodedCharBuffer == null) {
+          encodedCharBuffer = new Buffer();
         }
-        utf8Buffer.writeUtf8CodePoint(codePoint);
-        while (!utf8Buffer.exhausted()) {
-          int b = utf8Buffer.readByte() & 0xff;
+
+        if (charset == null || charset.equals(Util.UTF_8)) {
+          encodedCharBuffer.writeUtf8CodePoint(codePoint);
+        } else {
+          encodedCharBuffer.writeString(input, i, i + Character.charCount(codePoint), charset);
+        }
+
+        while (!encodedCharBuffer.exhausted()) {
+          int b = encodedCharBuffer.readByte() & 0xff;
           out.writeByte('%');
           out.writeByte(HEX_DIGITS[(b >> 4) & 0xf]);
           out.writeByte(HEX_DIGITS[b & 0xf]);
@@ -1866,8 +1746,15 @@ public final class HttpUrl {
   }
 
   static String canonicalize(String input, String encodeSet, boolean alreadyEncoded, boolean strict,
-      boolean plusIsSpace, boolean asciiOnly) {
+      boolean plusIsSpace, boolean asciiOnly, Charset charset) {
     return canonicalize(
-        input, 0, input.length(), encodeSet, alreadyEncoded, strict, plusIsSpace, asciiOnly);
+        input, 0, input.length(), encodeSet, alreadyEncoded, strict, plusIsSpace, asciiOnly,
+            charset);
+  }
+
+  static String canonicalize(String input, String encodeSet, boolean alreadyEncoded, boolean strict,
+      boolean plusIsSpace, boolean asciiOnly) {
+   return canonicalize(
+        input, 0, input.length(), encodeSet, alreadyEncoded, strict, plusIsSpace, asciiOnly, null);
   }
 }

@@ -42,6 +42,6 @@ public abstract class CertificateChainCleaner {
   }
 
   public static CertificateChainCleaner get(X509Certificate... caCerts) {
-    return new BasicCertificateChainCleaner(TrustRootIndex.get(caCerts));
+    return new BasicCertificateChainCleaner(new BasicTrustRootIndex(caCerts));
   }
 }

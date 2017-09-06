@@ -52,7 +52,7 @@ class UrlConnection extends SynchronousHttpClient {
   static class UrlConnectionRequest implements Runnable {
     private final HttpUrl url;
 
-    public UrlConnectionRequest(HttpUrl url) {
+    UrlConnectionRequest(HttpUrl url) {
       this.url = url;
     }
 

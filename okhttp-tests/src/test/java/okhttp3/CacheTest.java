@@ -745,8 +745,8 @@ public final class CacheTest {
   }
 
   private void testRequestMethod(String requestMethod, boolean expectCached) throws Exception {
-    // 1. seed the cache (potentially)
-    // 2. expect a cache hit or miss
+    // 1. Seed the cache (potentially).
+    // 2. Expect a cache hit or miss.
     server.enqueue(new MockResponse()
         .addHeader("Expires: " + formatDate(1, TimeUnit.HOURS))
         .addHeader("X-Response-ID: 1"));
@@ -791,9 +791,9 @@ public final class CacheTest {
   }
 
   private void testMethodInvalidates(String requestMethod) throws Exception {
-    // 1. seed the cache
-    // 2. invalidate it
-    // 3. expect a cache miss
+    // 1. Seed the cache.
+    // 2. Invalidate it.
+    // 3. Expect a cache miss.
     server.enqueue(new MockResponse()
         .setBody("A")
         .addHeader("Expires: " + formatDate(1, TimeUnit.HOURS)));
@@ -817,9 +817,9 @@ public final class CacheTest {
   }
 
   @Test public void postInvalidatesCacheWithUncacheableResponse() throws Exception {
-    // 1. seed the cache
-    // 2. invalidate it with uncacheable response
-    // 3. expect a cache miss
+    // 1. Seed the cache.
+    // 2. Invalidate it with an uncacheable response.
+    // 3. Expect a cache miss.
     server.enqueue(new MockResponse()
         .setBody("A")
         .addHeader("Expires: " + formatDate(1, TimeUnit.HOURS)));
@@ -839,6 +839,33 @@ public final class CacheTest {
         .build();
     Response invalidate = client.newCall(request).execute();
     assertEquals("B", invalidate.body().string());
+
+    assertEquals("C", get(url).body().string());
+  }
+
+  @Test public void putInvalidatesWithNoContentResponse() throws Exception {
+    // 1. Seed the cache.
+    // 2. Invalidate it.
+    // 3. Expect a cache miss.
+    server.enqueue(new MockResponse()
+        .setBody("A")
+        .addHeader("Expires: " + formatDate(1, TimeUnit.HOURS)));
+    server.enqueue(new MockResponse()
+        .clearHeaders()
+        .setResponseCode(HttpURLConnection.HTTP_NO_CONTENT));
+    server.enqueue(new MockResponse()
+        .setBody("C"));
+
+    HttpUrl url = server.url("/");
+
+    assertEquals("A", get(url).body().string());
+
+    Request request = new Request.Builder()
+        .url(url)
+        .put(RequestBody.create(MediaType.parse("text/plain"), "foo"))
+        .build();
+    Response invalidate = client.newCall(request).execute();
+    assertEquals("", invalidate.body().string());
 
     assertEquals("C", get(url).body().string());
   }
@@ -908,8 +935,8 @@ public final class CacheTest {
   }
 
   @Test public void partialRangeResponsesDoNotCorruptCache() throws Exception {
-    // 1. request a range
-    // 2. request a full document, expecting a cache miss
+    // 1. Request a range.
+    // 2. Request a full document, expecting a cache miss.
     server.enqueue(new MockResponse()
         .setBody("AA")
         .setResponseCode(HttpURLConnection.HTTP_PARTIAL)
@@ -2451,6 +2478,33 @@ public final class CacheTest {
 
     server.takeRequest(); // regular get
     return server.takeRequest(); // conditional get
+  }
+
+  @Test public void immutableIsCached() throws Exception {
+    server.enqueue(new MockResponse()
+        .addHeader("Cache-Control", "immutable")
+        .setBody("A"));
+    server.enqueue(new MockResponse()
+        .setBody("B"));
+
+    HttpUrl url = server.url("/");
+    assertEquals("A", get(url).body().string());
+    assertEquals("A", get(url).body().string());
+  }
+
+  @Test public void immutableIsCachedAfterMultipleCalls() throws Exception {
+    server.enqueue(new MockResponse()
+        .setBody("A"));
+    server.enqueue(new MockResponse()
+        .addHeader("Cache-Control", "immutable")
+        .setBody("B"));
+    server.enqueue(new MockResponse()
+        .setBody("C"));
+
+    HttpUrl url = server.url("/");
+    assertEquals("A", get(url).body().string());
+    assertEquals("B", get(url).body().string());
+    assertEquals("B", get(url).body().string());
   }
 
   private void assertFullyCached(MockResponse response) throws Exception {

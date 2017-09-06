@@ -1,14 +1,14 @@
 package okhttp3;
 
 import java.util.concurrent.TimeUnit;
+import javax.annotation.Nullable;
 import okhttp3.internal.http.HttpHeaders;
 
 /**
  * A Cache-Control header with cache directives from a server or client. These directives set policy
  * on what responses can be stored, and which requests can be satisfied by those stored responses.
  *
- * <p>See <a href="http://www.w3.org/Protocols/rfc2616/rfc2616-sec14.html#sec14.9">RFC 2616,
- * 14.9</a>.
+ * <p>See <a href="https://tools.ietf.org/html/rfc7234#section-5.2">RFC 7234, 5.2</a>.
  */
 public final class CacheControl {
   /**
@@ -38,12 +38,14 @@ public final class CacheControl {
   private final int minFreshSeconds;
   private final boolean onlyIfCached;
   private final boolean noTransform;
+  private final boolean immutable;
 
-  String headerValue; // Lazily computed, null if absent.
+  @Nullable String headerValue; // Lazily computed, null if absent.
 
   private CacheControl(boolean noCache, boolean noStore, int maxAgeSeconds, int sMaxAgeSeconds,
       boolean isPrivate, boolean isPublic, boolean mustRevalidate, int maxStaleSeconds,
-      int minFreshSeconds, boolean onlyIfCached, boolean noTransform, String headerValue) {
+      int minFreshSeconds, boolean onlyIfCached, boolean noTransform, boolean immutable,
+      @Nullable String headerValue) {
     this.noCache = noCache;
     this.noStore = noStore;
     this.maxAgeSeconds = maxAgeSeconds;
@@ -55,6 +57,7 @@ public final class CacheControl {
     this.minFreshSeconds = minFreshSeconds;
     this.onlyIfCached = onlyIfCached;
     this.noTransform = noTransform;
+    this.immutable = immutable;
     this.headerValue = headerValue;
   }
 
@@ -70,6 +73,7 @@ public final class CacheControl {
     this.minFreshSeconds = builder.minFreshSeconds;
     this.onlyIfCached = builder.onlyIfCached;
     this.noTransform = builder.noTransform;
+    this.immutable = builder.immutable;
   }
 
   /**
@@ -137,6 +141,10 @@ public final class CacheControl {
     return noTransform;
   }
 
+  public boolean immutable() {
+    return immutable;
+  }
+
   /**
    * Returns the cache directives of {@code headers}. This honors both Cache-Control and Pragma
    * headers if they are present.
@@ -153,6 +161,7 @@ public final class CacheControl {
     int minFreshSeconds = -1;
     boolean onlyIfCached = false;
     boolean noTransform = false;
+    boolean immutable = false;
 
     boolean canUseHeaderValue = true;
     String headerValue = null;
@@ -227,6 +236,8 @@ public final class CacheControl {
           onlyIfCached = true;
         } else if ("no-transform".equalsIgnoreCase(directive)) {
           noTransform = true;
+        } else if ("immutable".equalsIgnoreCase(directive)) {
+          immutable = true;
         }
       }
     }
@@ -235,7 +246,8 @@ public final class CacheControl {
       headerValue = null;
     }
     return new CacheControl(noCache, noStore, maxAgeSeconds, sMaxAgeSeconds, isPrivate, isPublic,
-        mustRevalidate, maxStaleSeconds, minFreshSeconds, onlyIfCached, noTransform, headerValue);
+        mustRevalidate, maxStaleSeconds, minFreshSeconds, onlyIfCached, noTransform, immutable,
+        headerValue);
   }
 
   @Override public String toString() {
@@ -256,6 +268,7 @@ public final class CacheControl {
     if (minFreshSeconds != -1) result.append("min-fresh=").append(minFreshSeconds).append(", ");
     if (onlyIfCached) result.append("only-if-cached, ");
     if (noTransform) result.append("no-transform, ");
+    if (immutable) result.append("immutable, ");
     if (result.length() == 0) return "";
     result.delete(result.length() - 2, result.length());
     return result.toString();
@@ -270,6 +283,7 @@ public final class CacheControl {
     int minFreshSeconds = -1;
     boolean onlyIfCached;
     boolean noTransform;
+    boolean immutable;
 
     /** Don't accept an unvalidated cached response. */
     public Builder noCache() {
@@ -344,6 +358,11 @@ public final class CacheControl {
     /** Don't accept a transformed response. */
     public Builder noTransform() {
       this.noTransform = true;
+      return this;
+    }
+
+    public Builder immutable() {
+      this.immutable = true;
       return this;
     }
 

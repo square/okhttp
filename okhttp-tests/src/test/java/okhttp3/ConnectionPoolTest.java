@@ -83,8 +83,9 @@ public final class ConnectionPoolTest {
 
     RealConnection c1 = newConnection(pool, routeA1, 50L);
     synchronized (pool) {
-      StreamAllocation streamAllocation = new StreamAllocation(pool, addressA, null);
-      streamAllocation.acquire(c1);
+      StreamAllocation streamAllocation = new StreamAllocation(pool, addressA, null,
+          EventListener.NONE, null);
+      streamAllocation.acquire(c1, true);
     }
 
     // Running at time 50, the pool returns that nothing can be evicted until time 150.
@@ -176,8 +177,9 @@ public final class ConnectionPoolTest {
   /** Use a helper method so there's no hidden reference remaining on the stack. */
   private void allocateAndLeakAllocation(ConnectionPool pool, RealConnection connection) {
     synchronized (pool) {
-      StreamAllocation leak = new StreamAllocation(pool, connection.route().address(), null);
-      leak.acquire(connection);
+      StreamAllocation leak = new StreamAllocation(pool, connection.route().address(), null,
+          EventListener.NONE, null);
+      leak.acquire(connection, true);
     }
   }
 

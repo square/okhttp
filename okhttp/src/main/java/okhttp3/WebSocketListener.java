@@ -15,6 +15,7 @@
  */
 package okhttp3;
 
+import javax.annotation.Nullable;
 import okio.ByteString;
 
 public abstract class WebSocketListener {
@@ -33,7 +34,10 @@ public abstract class WebSocketListener {
   public void onMessage(WebSocket webSocket, ByteString bytes) {
   }
 
-  /** Invoked when the peer has indicated that no more incoming messages will be transmitted. */
+  /**
+   * Invoked when the remote peer has indicated that no more incoming messages will be
+   * transmitted.
+   */
   public void onClosing(WebSocket webSocket, int code, String reason) {
   }
 
@@ -49,6 +53,6 @@ public abstract class WebSocketListener {
    * network. Both outgoing and incoming messages may have been lost. No further calls to this
    * listener will be made.
    */
-  public void onFailure(WebSocket webSocket, Throwable t, Response response) {
+  public void onFailure(WebSocket webSocket, Throwable t, @Nullable Response response) {
   }
 }

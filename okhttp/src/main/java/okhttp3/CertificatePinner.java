@@ -23,6 +23,7 @@ import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
+import javax.annotation.Nullable;
 import javax.net.ssl.SSLPeerUnverifiedException;
 import okhttp3.internal.tls.CertificateChainCleaner;
 import okio.ByteString;
@@ -128,14 +129,14 @@ public final class CertificatePinner {
   public static final CertificatePinner DEFAULT = new Builder().build();
 
   private final Set<Pin> pins;
-  private final CertificateChainCleaner certificateChainCleaner;
+  private final @Nullable CertificateChainCleaner certificateChainCleaner;
 
-  CertificatePinner(Set<Pin> pins, CertificateChainCleaner certificateChainCleaner) {
+  CertificatePinner(Set<Pin> pins, @Nullable CertificateChainCleaner certificateChainCleaner) {
     this.pins = pins;
     this.certificateChainCleaner = certificateChainCleaner;
   }
 
-  @Override public boolean equals(Object other) {
+  @Override public boolean equals(@Nullable Object other) {
     if (other == this) return true;
     return other instanceof CertificatePinner
         && (equal(certificateChainCleaner, ((CertificatePinner) other).certificateChainCleaner)
@@ -181,7 +182,7 @@ public final class CertificatePinner {
           if (sha1 == null) sha1 = sha1(x509Certificate);
           if (pin.hash.equals(sha1)) return; // Success!
         } else {
-          throw new AssertionError();
+          throw new AssertionError("unsupported hashAlgorithm: " + pin.hashAlgorithm);
         }
       }
     }
@@ -225,7 +226,8 @@ public final class CertificatePinner {
   }
 
   /** Returns a certificate pinner that uses {@code certificateChainCleaner}. */
-  CertificatePinner withCertificateChainCleaner(CertificateChainCleaner certificateChainCleaner) {
+  CertificatePinner withCertificateChainCleaner(
+      @Nullable CertificateChainCleaner certificateChainCleaner) {
     return equal(this.certificateChainCleaner, certificateChainCleaner)
         ? this
         : new CertificatePinner(pins, certificateChainCleaner);
@@ -286,7 +288,8 @@ public final class CertificatePinner {
     boolean matches(String hostname) {
       if (pattern.startsWith(WILDCARD)) {
         int firstDot = hostname.indexOf('.');
-        return hostname.regionMatches(false, firstDot + 1, canonicalHostname, 0,
+        return (hostname.length() - firstDot - 1) == canonicalHostname.length()
+            && hostname.regionMatches(false, firstDot + 1, canonicalHostname, 0,
             canonicalHostname.length());
       }
 

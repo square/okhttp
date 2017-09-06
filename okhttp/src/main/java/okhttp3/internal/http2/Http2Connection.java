@@ -541,7 +541,7 @@ public final class Http2Connection implements Closeable {
       return this;
     }
 
-    public Http2Connection build() throws IOException {
+    public Http2Connection build() {
       return new Http2Connection(this);
     }
   }
@@ -605,12 +605,12 @@ public final class Http2Connection implements Closeable {
       }
       Http2Stream stream;
       synchronized (Http2Connection.this) {
-        // If we're shutdown, don't bother with this stream.
-        if (shutdown) return;
-
         stream = getStream(streamId);
 
         if (stream == null) {
+          // If we're shutdown, don't bother with this stream.
+          if (shutdown) return;
+
           // If the stream ID is less than the last created ID, assume it's already closed.
           if (streamId <= lastGoodStreamId) return;
 

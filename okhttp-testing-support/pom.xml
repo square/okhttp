@@ -6,7 +6,7 @@
   <parent>
     <groupId>com.squareup.okhttp3</groupId>
     <artifactId>parent</artifactId>
-    <version>3.7.0-SNAPSHOT</version>
+    <version>3.10.0-SNAPSHOT</version>
   </parent>
 
   <artifactId>okhttp-testing-support</artifactId>
@@ -22,6 +22,11 @@
       <groupId>${project.groupId}</groupId>
       <artifactId>okhttp</artifactId>
       <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>com.google.code.findbugs</groupId>
+      <artifactId>jsr305</artifactId>
+      <scope>provided</scope>
     </dependency>
   </dependencies>
 </project>
