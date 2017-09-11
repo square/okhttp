@@ -260,7 +260,8 @@ public final class RealConnection extends Http2Connection.Listener implements Co
   }
 
   private Socket configure(SocketFactory socketFactory, Socket socket) {
-    OptionalMethod<SocketFactory> m = new OptionalMethod<SocketFactory>(Socket.class, "configureSocket", Socket.class);
+    OptionalMethod<SocketFactory> m =
+        new OptionalMethod<SocketFactory>(Socket.class, "configureSocket", Socket.class);
 
     try {
       m.invoke(socketFactory, socket);
