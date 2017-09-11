@@ -2533,7 +2533,7 @@ public final class URLConnectionTest {
         });
     urlFactory.setClient(urlFactory.client().newBuilder()
         .socketFactory(new DelegatingSocketFactory(SocketFactory.getDefault()) {
-          @Override protected Socket configureSocket(Socket socket) throws IOException {
+          @Override public Socket configureSocket(Socket socket) throws IOException {
             socket.setReceiveBufferSize(SOCKET_BUFFER_SIZE);
             socket.setSendBufferSize(SOCKET_BUFFER_SIZE);
             return socket;
