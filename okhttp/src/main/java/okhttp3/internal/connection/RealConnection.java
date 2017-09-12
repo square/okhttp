@@ -18,6 +18,7 @@ package okhttp3.internal.connection;
 
 import java.io.IOException;
 import java.lang.ref.Reference;
+import java.lang.reflect.InvocationTargetException;
 import java.net.ConnectException;
 import java.net.ProtocolException;
 import java.net.Proxy;
@@ -30,6 +31,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
+import javax.net.SocketFactory;
 import javax.net.ssl.SSLPeerUnverifiedException;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
@@ -58,6 +60,7 @@ import okhttp3.internal.http2.ErrorCode;
 import okhttp3.internal.http2.Http2Codec;
 import okhttp3.internal.http2.Http2Connection;
 import okhttp3.internal.http2.Http2Stream;
+import okhttp3.internal.platform.OptionalMethod;
 import okhttp3.internal.platform.Platform;
 import okhttp3.internal.tls.OkHostnameVerifier;
 import okhttp3.internal.ws.RealWebSocket;
@@ -230,7 +233,7 @@ public final class RealConnection extends Http2Connection.Listener implements Co
 
     rawSocket = proxy.type() == Proxy.Type.DIRECT || proxy.type() == Proxy.Type.HTTP
         ? address.socketFactory().createSocket()
-        : new Socket(proxy);
+        : configure(address.socketFactory(), new Socket(proxy));
 
     eventListener.connectStart(call, route.socketAddress(), proxy);
     rawSocket.setSoTimeout(readTimeout);
@@ -254,6 +257,19 @@ public final class RealConnection extends Http2Connection.Listener implements Co
         throw new IOException(npe);
       }
     }
+  }
+
+  private Socket configure(SocketFactory socketFactory, Socket socket) {
+    OptionalMethod<SocketFactory> m =
+        new OptionalMethod<SocketFactory>(Socket.class, "configureSocket", Socket.class);
+
+    try {
+      m.invoke(socketFactory, socket);
+    } catch (InvocationTargetException e) {
+      e.printStackTrace();
+    }
+
+    return socket;
   }
 
   private void establishProtocol(ConnectionSpecSelector connectionSpecSelector, Call call,

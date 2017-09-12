@@ -59,7 +59,7 @@ public final class DisconnectTest {
         });
     client = defaultClient().newBuilder()
         .socketFactory(new DelegatingSocketFactory(SocketFactory.getDefault()) {
-          @Override protected Socket configureSocket(Socket socket) throws IOException {
+          @Override public Socket configureSocket(Socket socket) throws IOException {
             socket.setSendBufferSize(SOCKET_BUFFER_SIZE);
             socket.setReceiveBufferSize(SOCKET_BUFFER_SIZE);
             return socket;

@@ -58,7 +58,7 @@ public class DelegatingSocketFactory extends SocketFactory {
     return configureSocket(socket);
   }
 
-  protected Socket configureSocket(Socket socket) throws IOException {
+  public Socket configureSocket(Socket socket) throws IOException {
     // No-op by default.
     return socket;
   }
