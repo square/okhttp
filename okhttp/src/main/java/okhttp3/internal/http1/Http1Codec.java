@@ -83,6 +83,7 @@ public final class Http1Codec implements HttpCodec {
   final BufferedSource source;
   final BufferedSink sink;
   int state = STATE_IDLE;
+  private long headerLimit = 1024 * 100;
 
   public Http1Codec(OkHttpClient client, StreamAllocation streamAllocation, BufferedSource source,
       BufferedSink sink) {
@@ -184,7 +185,10 @@ public final class Http1Codec implements HttpCodec {
     }
 
     try {
-      StatusLine statusLine = StatusLine.parse(source.readUtf8LineStrict());
+      String line = source.readUtf8LineStrict(headerLimit);
+      StatusLine statusLine = StatusLine.parse(line);
+
+      headerLimit -= line.length();
 
       Response.Builder responseBuilder = new Response.Builder()
           .protocol(statusLine.protocol)
@@ -210,7 +214,8 @@ public final class Http1Codec implements HttpCodec {
   public Headers readHeaders() throws IOException {
     Headers.Builder headers = new Headers.Builder();
     // parse the result headers until the first blank line
-    for (String line; (line = source.readUtf8LineStrict()).length() != 0; ) {
+    for (String line; (line = source.readUtf8LineStrict(headerLimit)).length() != 0; ) {
+      headerLimit -= line.length();
       Internal.instance.addLenient(headers, line);
     }
     return headers.build();

@@ -157,7 +157,7 @@ public final class RecordedResponse {
   }
 
   public RecordedResponse assertFailure(String... messages) {
-    assertNotNull(failure);
+    assertNotNull("No failure found", failure);
     assertTrue(failure.getMessage(), Arrays.asList(messages).contains(failure.getMessage()));
     return this;
   }
