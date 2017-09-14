@@ -1872,7 +1872,7 @@ public final class CallTest {
   }
 
   @Test public void httpWithExcessiveHeaders() throws IOException {
-    String longLine = "HTTP/1.1 200 " + stringFill('O', 100 * 1024) + "K";
+    String longLine = "HTTP/1.1 200 " + stringFill('O', 256 * 1024) + "K";
 
     server.setProtocols(Collections.singletonList(Protocol.HTTP_1_1));
 

@@ -74,6 +74,7 @@ public final class Http1Codec implements HttpCodec {
   private static final int STATE_OPEN_RESPONSE_BODY = 4;
   private static final int STATE_READING_RESPONSE_BODY = 5;
   private static final int STATE_CLOSED = 6;
+  private static final int HEADER_LIMIT = Integer.getInteger("okhttp.headerlimit", 256 * 1024);
 
   /** The client that configures this stream. May be null for HTTPS proxy tunnels. */
   final OkHttpClient client;
@@ -83,7 +84,7 @@ public final class Http1Codec implements HttpCodec {
   final BufferedSource source;
   final BufferedSink sink;
   int state = STATE_IDLE;
-  private long headerLimit = 1024 * 100;
+  private long headerLimit = HEADER_LIMIT;
 
   public Http1Codec(OkHttpClient client, StreamAllocation streamAllocation, BufferedSource source,
       BufferedSink sink) {
@@ -185,10 +186,7 @@ public final class Http1Codec implements HttpCodec {
     }
 
     try {
-      String line = source.readUtf8LineStrict(headerLimit);
-      StatusLine statusLine = StatusLine.parse(line);
-
-      headerLimit -= line.length();
+      StatusLine statusLine = StatusLine.parse(readHeaderLine());
 
       Response.Builder responseBuilder = new Response.Builder()
           .protocol(statusLine.protocol)
@@ -210,12 +208,17 @@ public final class Http1Codec implements HttpCodec {
     }
   }
 
+  private String readHeaderLine() throws IOException {
+    String line = source.readUtf8LineStrict(headerLimit);
+    headerLimit -= line.length();
+    return line;
+  }
+
   /** Reads headers or trailers. */
   public Headers readHeaders() throws IOException {
     Headers.Builder headers = new Headers.Builder();
     // parse the result headers until the first blank line
-    for (String line; (line = source.readUtf8LineStrict(headerLimit)).length() != 0; ) {
-      headerLimit -= line.length();
+    for (String line; (line = readHeaderLine()).length() != 0; ) {
       Internal.instance.addLenient(headers, line);
     }
     return headers.build();
