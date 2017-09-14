@@ -87,7 +87,7 @@ public final class PrintEvents {
     final long callId;
     final long callStartNanos;
 
-    public PrintingEventListener(long callId, long callStartNanos) {
+    PrintingEventListener(long callId, long callStartNanos) {
       this.callId = callId;
       this.callStartNanos = callStartNanos;
     }
