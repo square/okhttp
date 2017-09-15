@@ -182,21 +182,12 @@ public final class RouteSelector {
       eventListener.dnsStart(call, socketHost);
 
       // Try each address for best behavior in mixed IPv4/IPv6 environments.
-      List<InetAddress> addresses;
-      try {
-        addresses = address.dns().lookup(socketHost);
-      } catch (Exception e) {
-        eventListener.dnsEnd(call, socketHost, null, e);
-        throw e;
-      }
+      List<InetAddress> addresses = address.dns().lookup(socketHost);
       if (addresses.isEmpty()) {
-        UnknownHostException exception = new UnknownHostException(
-            address.dns() + " returned no addresses for " + socketHost);
-        eventListener.dnsEnd(call, socketHost, null, exception);
-        throw exception;
+        throw new UnknownHostException(address.dns() + " returned no addresses for " + socketHost);
       }
 
-      eventListener.dnsEnd(call, socketHost, addresses, null);
+      eventListener.dnsEnd(call, socketHost, addresses);
 
       for (int i = 0, size = addresses.size(); i < size; i++) {
         InetAddress inetAddress = addresses.get(i);

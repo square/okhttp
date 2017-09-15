@@ -30,8 +30,8 @@ import okhttp3.internal.http.HttpDate;
 import okhttp3.internal.publicsuffix.PublicSuffixDatabase;
 
 import static okhttp3.internal.Util.UTC;
+import static okhttp3.internal.Util.canonicalizeHost;
 import static okhttp3.internal.Util.delimiterOffset;
-import static okhttp3.internal.Util.domainToAscii;
 import static okhttp3.internal.Util.indexOfControlOrNonAscii;
 import static okhttp3.internal.Util.trimSubstring;
 import static okhttp3.internal.Util.verifyAsIpAddress;
@@ -429,7 +429,7 @@ public final class Cookie {
     if (s.startsWith(".")) {
       s = s.substring(1);
     }
-    String canonicalDomain = domainToAscii(s);
+    String canonicalDomain = canonicalizeHost(s);
     if (canonicalDomain == null) {
       throw new IllegalArgumentException();
     }
@@ -508,7 +508,7 @@ public final class Cookie {
 
     private Builder domain(String domain, boolean hostOnly) {
       if (domain == null) throw new NullPointerException("domain == null");
-      String canonicalDomain = Util.domainToAscii(domain);
+      String canonicalDomain = Util.canonicalizeHost(domain);
       if (canonicalDomain == null) {
         throw new IllegalArgumentException("unexpected domain: " + domain);
       }

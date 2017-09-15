@@ -37,6 +37,8 @@ import okhttp3.internal.tls.BasicTrustRootIndex;
 import okhttp3.internal.tls.CertificateChainCleaner;
 import okhttp3.internal.tls.TrustRootIndex;
 
+import static okhttp3.internal.Util.assertionError;
+
 /** Android 2.3 or better. */
 class AndroidPlatform extends Platform {
   private static final int MAX_LOG_LENGTH = 4000;
@@ -159,7 +161,7 @@ class AndroidPlatform extends Platform {
     } catch (ClassNotFoundException | NoSuchMethodException e) {
       return super.isCleartextTrafficPermitted(hostname);
     } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
-      throw new AssertionError();
+      throw assertionError("unable to determine cleartext support", e);
     }
   }
 
@@ -389,7 +391,7 @@ class AndroidPlatform extends Platform {
                 ? trustAnchor.getTrustedCert()
                 : null;
       } catch (IllegalAccessException e) {
-        throw new AssertionError();
+        throw assertionError("unable to get issues and signature", e);
       } catch (InvocationTargetException e) {
         return null;
       }

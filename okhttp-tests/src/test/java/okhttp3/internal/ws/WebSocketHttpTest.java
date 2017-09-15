@@ -19,12 +19,14 @@ import java.io.EOFException;
 import java.io.IOException;
 import java.net.ProtocolException;
 import java.net.SocketTimeoutException;
+import java.util.Collections;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Logger;
 import okhttp3.Interceptor;
 import okhttp3.OkHttpClient;
+import okhttp3.RecordingEventListener;
 import okhttp3.RecordingHostnameVerifier;
 import okhttp3.Request;
 import okhttp3.Response;
@@ -208,6 +210,7 @@ public final class WebSocketHttpTest {
 
     server.close(1000, "bye");
     clientListener.assertFailure(e);
+    serverListener.assertFailure();
     serverListener.assertExhausted();
   }
 
@@ -320,7 +323,7 @@ public final class WebSocketHttpTest {
             assertNull(chain.request().body());
             Response response = chain.proceed(chain.request());
             assertEquals("Upgrade", response.header("Connection"));
-            assertTrue("", response.body().source().exhausted());
+            assertTrue(response.body().source().exhausted());
             interceptedCount.incrementAndGet();
             return response;
           }
@@ -572,6 +575,33 @@ public final class WebSocketHttpTest {
     // Close the server and confirm it saw what we expected.
     server.close(1000, null);
     serverListener.assertClosed(1000, "goodbye");
+  }
+
+  @Test public void webSocketsDontTriggerEventListener() throws IOException {
+    RecordingEventListener listener = new RecordingEventListener();
+
+    client = client.newBuilder()
+        .eventListener(listener)
+        .build();
+
+    webServer.enqueue(new MockResponse().withWebSocketUpgrade(serverListener));
+    WebSocket webSocket = newWebSocket();
+
+    clientListener.assertOpen();
+    WebSocket server = serverListener.assertOpen();
+
+    webSocket.send("Web Sockets and Events?!");
+    serverListener.assertTextMessage("Web Sockets and Events?!");
+
+    webSocket.close(1000, "");
+    serverListener.assertClosing(1000, "");
+
+    server.close(1000, "");
+    clientListener.assertClosing(1000, "");
+    clientListener.assertClosed(1000, "");
+    serverListener.assertClosed(1000, "");
+
+    assertEquals(Collections.emptyList(), listener.recordedEventTypes());
   }
 
   private MockResponse upgradeResponse(RecordedRequest request) {

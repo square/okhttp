@@ -182,7 +182,7 @@ public final class CertificatePinner {
           if (sha1 == null) sha1 = sha1(x509Certificate);
           if (pin.hash.equals(sha1)) return; // Success!
         } else {
-          throw new AssertionError();
+          throw new AssertionError("unsupported hashAlgorithm: " + pin.hashAlgorithm);
         }
       }
     }
@@ -226,7 +226,8 @@ public final class CertificatePinner {
   }
 
   /** Returns a certificate pinner that uses {@code certificateChainCleaner}. */
-  CertificatePinner withCertificateChainCleaner(CertificateChainCleaner certificateChainCleaner) {
+  CertificatePinner withCertificateChainCleaner(
+      @Nullable CertificateChainCleaner certificateChainCleaner) {
     return equal(this.certificateChainCleaner, certificateChainCleaner)
         ? this
         : new CertificatePinner(pins, certificateChainCleaner);

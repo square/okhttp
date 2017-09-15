@@ -24,6 +24,7 @@ import java.net.CookieManager;
 import java.net.HttpRetryException;
 import java.net.HttpURLConnection;
 import java.net.InetAddress;
+import java.net.PasswordAuthentication;
 import java.net.ProtocolException;
 import java.net.Proxy;
 import java.net.ProxySelector;
@@ -43,7 +44,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.EnumSet;
-import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -59,7 +59,6 @@ import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLException;
 import javax.net.ssl.SSLHandshakeException;
 import javax.net.ssl.SSLProtocolException;
-import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
@@ -1930,6 +1929,37 @@ public final class URLConnectionTest {
       assertEquals("Basic " + RecordingAuthenticator.BASE_64_CREDENTIALS,
           request.getHeader("Authorization"));
     }
+  }
+
+  @Test public void authenticateWithCharset() throws Exception {
+    server.enqueue(new MockResponse().setResponseCode(401)
+        .addHeader("WWW-Authenticate: Basic realm=\"protected area\", charset=\"UTF-8\"")
+        .setBody("Please authenticate with UTF-8."));
+    server.enqueue(new MockResponse().setResponseCode(401)
+        .addHeader("WWW-Authenticate: Basic realm=\"protected area\"")
+        .setBody("Please authenticate with ISO-8859-1."));
+    server.enqueue(new MockResponse()
+        .setBody("Successful auth!"));
+
+    Authenticator.setDefault(new RecordingAuthenticator(
+        new PasswordAuthentication("username", "mötorhead".toCharArray())));
+    urlFactory.setClient(urlFactory.client().newBuilder()
+        .authenticator(new JavaNetAuthenticator())
+        .build());
+    connection = urlFactory.open(server.url("/").url());
+    assertEquals("Successful auth!", readAscii(connection.getInputStream(), Integer.MAX_VALUE));
+
+    // No authorization header for the first request...
+    RecordedRequest request1 = server.takeRequest();
+    assertNull(request1.getHeader("Authorization"));
+
+    // UTF-8 encoding for the first credential.
+    RecordedRequest request2 = server.takeRequest();
+    assertEquals("Basic dXNlcm5hbWU6bcO2dG9yaGVhZA==", request2.getHeader("Authorization"));
+
+    // ISO-8859-1 encoding for the second credential.
+    RecordedRequest request3 = server.takeRequest();
+    assertEquals("Basic dXNlcm5hbWU6bfZ0b3JoZWFk", request3.getHeader("Authorization"));
   }
 
   /** https://code.google.com/p/android/issues/detail?id=74026 */

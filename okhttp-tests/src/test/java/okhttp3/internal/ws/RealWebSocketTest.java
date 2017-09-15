@@ -34,6 +34,7 @@ import org.junit.Test;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 public final class RealWebSocketTest {
   // NOTE: Fields are named 'client' and 'server' for cognitive simplicity. This differentiation has
@@ -77,6 +78,15 @@ public final class RealWebSocketTest {
 
     assertFalse(client.webSocket.close(1000, "Hello!"));
     assertFalse(client.webSocket.send("Hello!"));
+  }
+
+  @Test public void clientCloseWith0Fails() throws IOException {
+    try {
+      client.webSocket.close(0, null);
+      fail();
+    } catch (IllegalArgumentException expected) {
+      assertEquals(expected.getMessage(), "Code must be in range [1000,5000): 0");
+    }
   }
 
   @Test public void afterSocketClosedPingFailsWebSocket() throws IOException {

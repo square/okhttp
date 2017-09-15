@@ -37,7 +37,7 @@ public final class HttpDate {
   private static final ThreadLocal<DateFormat> STANDARD_DATE_FORMAT =
       new ThreadLocal<DateFormat>() {
         @Override protected DateFormat initialValue() {
-          // RFC 2616 specified: RFC 822, updated by RFC 1123 format with fixed GMT.
+          // Date format specified by RFC 7231 section 7.1.1.1.
           DateFormat rfc1123 = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss 'GMT'", Locale.US);
           rfc1123.setLenient(false);
           rfc1123.setTimeZone(UTC);
@@ -90,7 +90,7 @@ public final class HttpDate {
         if (format == null) {
           format = new SimpleDateFormat(BROWSER_COMPATIBLE_DATE_FORMAT_STRINGS[i], Locale.US);
           // Set the timezone to use when interpreting formats that don't have a timezone. GMT is
-          // specified by RFC 2616.
+          // specified by RFC 7231.
           format.setTimeZone(UTC);
           BROWSER_COMPATIBLE_DATE_FORMATS[i] = format;
         }

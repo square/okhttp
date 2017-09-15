@@ -21,13 +21,17 @@ import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
+import javax.net.ssl.HostnameVerifier;
 import okhttp3.Dns;
 import okhttp3.HttpUrl;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
+import okhttp3.Protocol;
+import okhttp3.RecordingHostnameVerifier;
 import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
+import okhttp3.internal.tls.SslClient;
 import okhttp3.logging.HttpLoggingInterceptor.Level;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
@@ -39,17 +43,21 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 
+import static org.hamcrest.CoreMatchers.equalTo;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.junit.Assume.assumeThat;
 
 public final class HttpLoggingInterceptorTest {
   private static final MediaType PLAIN = MediaType.parse("text/plain; charset=utf-8");
 
   @Rule public final MockWebServer server = new MockWebServer();
 
+  private SslClient sslClient = SslClient.localhost();
+  private HostnameVerifier hostnameVerifier = new RecordingHostnameVerifier();
   private OkHttpClient client;
   private String host;
   private HttpUrl url;
@@ -71,6 +79,8 @@ public final class HttpLoggingInterceptorTest {
     client = new OkHttpClient.Builder()
         .addNetworkInterceptor(networkInterceptor)
         .addInterceptor(applicationInterceptor)
+        .sslSocketFactory(sslClient.socketFactory, sslClient.trustManager)
+        .hostnameVerifier(hostnameVerifier)
         .build();
 
     host = server.getHostName() + ":" + server.getPort();
@@ -117,7 +127,7 @@ public final class HttpLoggingInterceptorTest {
     client.newCall(request().build()).execute();
 
     applicationLogs
-        .assertLogEqual("--> GET " + url + " http/1.1")
+        .assertLogEqual("--> GET " + url)
         .assertLogMatch("<-- 200 OK " + url + " \\(\\d+ms, 0-byte body\\)")
         .assertNoMoreLogs();
 
@@ -134,7 +144,7 @@ public final class HttpLoggingInterceptorTest {
     client.newCall(request().post(RequestBody.create(PLAIN, "Hi?")).build()).execute();
 
     applicationLogs
-        .assertLogEqual("--> POST " + url + " http/1.1 (3-byte body)")
+        .assertLogEqual("--> POST " + url + " (3-byte body)")
         .assertLogMatch("<-- 200 OK " + url + " \\(\\d+ms, 0-byte body\\)")
         .assertNoMoreLogs();
 
@@ -154,7 +164,7 @@ public final class HttpLoggingInterceptorTest {
     response.body().close();
 
     applicationLogs
-        .assertLogEqual("--> GET " + url + " http/1.1")
+        .assertLogEqual("--> GET " + url)
         .assertLogMatch("<-- 200 OK " + url + " \\(\\d+ms, 6-byte body\\)")
         .assertNoMoreLogs();
 
@@ -174,7 +184,7 @@ public final class HttpLoggingInterceptorTest {
     response.body().close();
 
     applicationLogs
-        .assertLogEqual("--> GET " + url + " http/1.1")
+        .assertLogEqual("--> GET " + url)
         .assertLogMatch("<-- 200 OK " + url + " \\(\\d+ms, unknown-length body\\)")
         .assertNoMoreLogs();
 
@@ -192,7 +202,7 @@ public final class HttpLoggingInterceptorTest {
     response.body().close();
 
     applicationLogs
-        .assertLogEqual("--> GET " + url + " http/1.1")
+        .assertLogEqual("--> GET " + url)
         .assertLogEqual("--> END GET")
         .assertLogMatch("<-- 200 OK " + url + " \\(\\d+ms\\)")
         .assertLogEqual("Content-Length: 0")
@@ -221,7 +231,7 @@ public final class HttpLoggingInterceptorTest {
     response.body().close();
 
     applicationLogs
-        .assertLogEqual("--> POST " + url + " http/1.1")
+        .assertLogEqual("--> POST " + url)
         .assertLogEqual("Content-Type: text/plain; charset=utf-8")
         .assertLogEqual("Content-Length: 3")
         .assertLogEqual("--> END POST")
@@ -254,7 +264,7 @@ public final class HttpLoggingInterceptorTest {
     response.body().close();
 
     applicationLogs
-        .assertLogEqual("--> POST " + url + " http/1.1")
+        .assertLogEqual("--> POST " + url)
         .assertLogEqual("Content-Length: 3")
         .assertLogEqual("--> END POST")
         .assertLogMatch("<-- 200 OK " + url + " \\(\\d+ms\\)")
@@ -293,7 +303,7 @@ public final class HttpLoggingInterceptorTest {
     response.body().close();
 
     applicationLogs
-        .assertLogEqual("--> POST " + url + " http/1.1")
+        .assertLogEqual("--> POST " + url)
         .assertLogEqual("Content-Type: text/plain; charset=utf-8")
         .assertLogEqual("--> END POST")
         .assertLogMatch("<-- 200 OK " + url + " \\(\\d+ms\\)")
@@ -326,7 +336,7 @@ public final class HttpLoggingInterceptorTest {
     response.body().close();
 
     applicationLogs
-        .assertLogEqual("--> GET " + url + " http/1.1")
+        .assertLogEqual("--> GET " + url)
         .assertLogEqual("--> END GET")
         .assertLogMatch("<-- 200 OK " + url + " \\(\\d+ms\\)")
         .assertLogEqual("Content-Length: 6")
@@ -356,7 +366,7 @@ public final class HttpLoggingInterceptorTest {
     response.body().close();
 
     applicationLogs
-        .assertLogEqual("--> GET " + url + " http/1.1")
+        .assertLogEqual("--> GET " + url)
         .assertLogEqual("--> END GET")
         .assertLogMatch("<-- 200 OK " + url + " \\(\\d+ms\\)")
         .assertLogEqual("Content-Length: 0")
@@ -393,7 +403,7 @@ public final class HttpLoggingInterceptorTest {
     response.body().close();
 
     applicationLogs
-        .assertLogEqual("--> GET " + url + " http/1.1")
+        .assertLogEqual("--> GET " + url)
         .assertLogEqual("--> END GET")
         .assertLogMatch("<-- " + code + " No Content " + url + " \\(\\d+ms\\)")
         .assertLogEqual("Content-Length: 0")
@@ -422,7 +432,7 @@ public final class HttpLoggingInterceptorTest {
     response.body().close();
 
     applicationLogs
-        .assertLogEqual("--> POST " + url + " http/1.1")
+        .assertLogEqual("--> POST " + url)
         .assertLogEqual("Content-Type: text/plain; charset=utf-8")
         .assertLogEqual("Content-Length: 3")
         .assertLogEqual("")
@@ -460,7 +470,7 @@ public final class HttpLoggingInterceptorTest {
     response.body().close();
 
     applicationLogs
-        .assertLogEqual("--> GET " + url + " http/1.1")
+        .assertLogEqual("--> GET " + url)
         .assertLogEqual("--> END GET")
         .assertLogMatch("<-- 200 OK " + url + " \\(\\d+ms\\)")
         .assertLogEqual("Content-Length: 6")
@@ -496,7 +506,7 @@ public final class HttpLoggingInterceptorTest {
     response.body().close();
 
     applicationLogs
-        .assertLogEqual("--> GET " + url + " http/1.1")
+        .assertLogEqual("--> GET " + url)
         .assertLogEqual("--> END GET")
         .assertLogMatch("<-- 200 OK " + url + " \\(\\d+ms\\)")
         .assertLogEqual("Transfer-encoding: chunked")
@@ -548,7 +558,7 @@ public final class HttpLoggingInterceptorTest {
         .assertNoMoreLogs();
 
     applicationLogs
-        .assertLogEqual("--> GET " + url + " http/1.1")
+        .assertLogEqual("--> GET " + url)
         .assertLogEqual("--> END GET")
         .assertLogMatch("<-- 200 OK " + url + " \\(\\d+ms\\)")
         .assertLogEqual("Content-Type: text/plain; charset=utf-8")
@@ -583,7 +593,7 @@ public final class HttpLoggingInterceptorTest {
         .assertNoMoreLogs();
 
     applicationLogs
-        .assertLogEqual("--> GET " + url + " http/1.1")
+        .assertLogEqual("--> GET " + url)
         .assertLogEqual("--> END GET")
         .assertLogMatch("<-- 200 OK " + url + " \\(\\d+ms\\)")
         .assertLogEqual("Content-Type: text/html; charset=0")
@@ -622,7 +632,7 @@ public final class HttpLoggingInterceptorTest {
     response.body().close();
 
     applicationLogs
-        .assertLogEqual("--> GET " + url + " http/1.1")
+        .assertLogEqual("--> GET " + url)
         .assertLogEqual("--> END GET")
         .assertLogMatch("<-- 200 OK " + url + " \\(\\d+ms\\)")
         .assertLogEqual("Content-Length: 9")
@@ -664,8 +674,29 @@ public final class HttpLoggingInterceptorTest {
     }
 
     applicationLogs
-        .assertLogEqual("--> GET " + url + " http/1.1")
+        .assertLogEqual("--> GET " + url)
         .assertLogEqual("<-- HTTP FAILED: java.net.UnknownHostException: reason")
+        .assertNoMoreLogs();
+  }
+
+  @Test public void http2() throws Exception {
+    server.useHttps(sslClient.socketFactory, false);
+    url = server.url("/");
+
+    setLevel(Level.BASIC);
+
+    server.enqueue(new MockResponse());
+    Response response = client.newCall(request().build()).execute();
+    assumeThat(response.protocol(), equalTo(Protocol.HTTP_2));
+
+    applicationLogs
+        .assertLogEqual("--> GET " + url)
+        .assertLogMatch("<-- 200 " + url + " \\(\\d+ms, 0-byte body\\)")
+        .assertNoMoreLogs();
+
+    networkLogs
+        .assertLogEqual("--> GET " + url + " h2")
+        .assertLogMatch("<-- 200 " + url + " \\(\\d+ms, 0-byte body\\)")
         .assertNoMoreLogs();
   }
 

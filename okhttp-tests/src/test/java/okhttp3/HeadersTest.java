@@ -22,6 +22,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import okhttp3.internal.Internal;
+import okhttp3.internal.Util;
 import okhttp3.internal.http.HttpHeaders;
 import okhttp3.internal.http2.Header;
 import okhttp3.internal.http2.Http2Codec;
@@ -433,5 +434,41 @@ public final class HeadersTest {
         .add("WWW-Authenticate", "Digest").build();
     challenges = HttpHeaders.parseChallenges(headers, "WWW-Authenticate");
     assertEquals(0, challenges.size());
+  }
+
+  @Test public void basicChallenge() {
+    Headers headers = new Headers.Builder()
+        .add("WWW-Authenticate: Basic realm=\"protected area\"")
+        .build();
+    assertEquals(Arrays.asList(new Challenge("Basic", "protected area")),
+        HttpHeaders.parseChallenges(headers, "WWW-Authenticate"));
+  }
+
+  @Test public void basicChallengeWithCharset() {
+    Headers headers = new Headers.Builder()
+        .add("WWW-Authenticate: Basic realm=\"protected area\", charset=\"UTF-8\"")
+        .build();
+    assertEquals(Arrays.asList(new Challenge("Basic", "protected area").withCharset(Util.UTF_8)),
+        HttpHeaders.parseChallenges(headers, "WWW-Authenticate"));
+  }
+
+  @Test public void basicChallengeWithUnexpectedCharset() {
+    Headers headers = new Headers.Builder()
+        .add("WWW-Authenticate: Basic realm=\"protected area\", charset=\"US-ASCII\"")
+        .build();
+    assertEquals(Collections.emptyList(), HttpHeaders.parseChallenges(headers, "WWW-Authenticate"));
+  }
+
+  @Test public void byteCount() {
+    assertEquals(0L, new Headers.Builder().build().byteCount());
+    assertEquals(10L, new Headers.Builder()
+        .add("abc", "def")
+        .build()
+        .byteCount());
+    assertEquals(20L, new Headers.Builder()
+        .add("abc", "def")
+        .add("ghi", "jkl")
+        .build()
+        .byteCount());
   }
 }

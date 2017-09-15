@@ -130,28 +130,25 @@ public final class Http1Codec implements HttpCodec {
 
   @Override public ResponseBody openResponseBody(Response response) throws IOException {
     streamAllocation.eventListener.responseBodyStart(streamAllocation.call);
-    Source source = getTransferStream(response);
-    return new RealResponseBody(response.headers(), Okio.buffer(source));
-  }
+    String contentType = response.header("Content-Type");
 
-  private Source getTransferStream(Response response) throws IOException {
     if (!HttpHeaders.hasBody(response)) {
-      return newFixedLengthSource(0);
+      Source source = newFixedLengthSource(0);
+      return new RealResponseBody(contentType, 0, Okio.buffer(source));
     }
 
     if ("chunked".equalsIgnoreCase(response.header("Transfer-Encoding"))) {
-      return newChunkedSource(response.request().url());
+      Source source = newChunkedSource(response.request().url());
+      return new RealResponseBody(contentType, -1L, Okio.buffer(source));
     }
 
     long contentLength = HttpHeaders.contentLength(response);
     if (contentLength != -1) {
-      return newFixedLengthSource(contentLength);
+      Source source = newFixedLengthSource(contentLength);
+      return new RealResponseBody(contentType, contentLength, Okio.buffer(source));
     }
 
-    // Wrap the input stream from the connection (rather than just returning
-    // "socketIn" directly here), so that we can control its use after the
-    // reference escapes.
-    return newUnknownLengthSource();
+    return new RealResponseBody(contentType, -1L, Okio.buffer(newUnknownLengthSource()));
   }
 
   /** Returns true if this connection is closed. */
@@ -344,6 +341,7 @@ public final class Http1Codec implements HttpCodec {
   private abstract class AbstractSource implements Source {
     protected final ForwardingTimeout timeout = new ForwardingTimeout(source.timeout());
     protected boolean closed;
+    protected long bytesRead = 0;
 
     @Override public Timeout timeout() {
       return timeout;
@@ -351,7 +349,11 @@ public final class Http1Codec implements HttpCodec {
 
     @Override public long read(Buffer sink, long byteCount) throws IOException {
       try {
-        return source.read(sink, byteCount);
+        long read = source.read(sink, byteCount);
+        if (read > 0) {
+          bytesRead += read;
+        }
+        return read;
       } catch (IOException e) {
         endOfInput(false, e);
         throw e;
@@ -370,8 +372,7 @@ public final class Http1Codec implements HttpCodec {
 
       state = STATE_CLOSED;
       if (streamAllocation != null) {
-        streamAllocation.eventListener.responseBodyEnd(streamAllocation.call, e);
-        streamAllocation.streamFinished(!reuseConnection, Http1Codec.this);
+        streamAllocation.streamFinished(!reuseConnection, Http1Codec.this, bytesRead, e);
       }
     }
   }

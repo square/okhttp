@@ -32,6 +32,7 @@ import okhttp3.internal.Internal;
 import okhttp3.internal.Util;
 import okhttp3.internal.connection.StreamAllocation;
 import okhttp3.internal.http.HttpCodec;
+import okhttp3.internal.http.HttpHeaders;
 import okhttp3.internal.http.RealResponseBody;
 import okhttp3.internal.http.RequestLine;
 import okhttp3.internal.http.StatusLine;
@@ -186,8 +187,10 @@ public final class Http2Codec implements HttpCodec {
 
   @Override public ResponseBody openResponseBody(Response response) throws IOException {
     streamAllocation.eventListener.responseBodyStart(streamAllocation.call);
+    String contentType = response.header("Content-Type");
+    long contentLength = HttpHeaders.contentLength(response);
     Source source = new StreamFinishingSource(stream.getSource());
-    return new RealResponseBody(response.headers(), Okio.buffer(source));
+    return new RealResponseBody(contentType, contentLength, Okio.buffer(source));
   }
 
   @Override public void cancel() {
@@ -195,7 +198,8 @@ public final class Http2Codec implements HttpCodec {
   }
 
   class StreamFinishingSource extends ForwardingSource {
-    private boolean completed = false;
+    boolean completed = false;
+    long bytesRead = 0;
 
     StreamFinishingSource(Source delegate) {
       super(delegate);
@@ -203,20 +207,26 @@ public final class Http2Codec implements HttpCodec {
 
     @Override public long read(Buffer sink, long byteCount) throws IOException {
       try {
-        return super.read(sink, byteCount);
-      } catch (IOException ioe) {
-        completed = true;
-        streamAllocation.eventListener.responseBodyEnd(streamAllocation.call, ioe);
-        throw ioe;
+        long read = delegate().read(sink, byteCount);
+        if (read > 0) {
+          bytesRead += read;
+        }
+        return read;
+      } catch (IOException e) {
+        endOfInput(e);
+        throw e;
       }
     }
 
     @Override public void close() throws IOException {
-      if (!completed) {
-        streamAllocation.eventListener.responseBodyEnd(streamAllocation.call, null);
-      }
-      streamAllocation.streamFinished(false, Http2Codec.this);
       super.close();
+      endOfInput(null);
+    }
+
+    private void endOfInput(IOException e) {
+      if (completed) return;
+      completed = true;
+      streamAllocation.streamFinished(false, Http2Codec.this, bytesRead, e);
     }
   }
 }

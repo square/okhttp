@@ -15,12 +15,46 @@
  */
 package okhttp3;
 
+import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.Proxy;
 import java.util.List;
 import javax.annotation.Nullable;
 
+/**
+ * Listener for metrics events. Extend this class to monitor the quantity, size, and duration of
+ * your application's HTTP calls.
+ *
+ * <h3>Warning: This is a non-final API.</h3>
+ *
+ * <p><strong>As of OkHttp 3.9, this feature is an unstable preview: the API is subject to change,
+ * and the implementation is incomplete. We expect that OkHttp 3.10 or 3.11 will finalize this API.
+ * Until then, expect API and behavior changes when you update your OkHttp dependency.</strong>
+ *
+ * <p>All start/connect/acquire events will eventually receive a matching end/release event,
+ * either successful (non-null parameters), or failed (non-null throwable).  The first common
+ * parameters of each event pair are used to link the event in case of concurrent or repeated
+ * events e.g. dnsStart(call, domainName) -&gt; dnsEnd(call, domainName, inetAddressList).
+ *
+ * <p>Nesting is as follows
+ * <ul>
+ *   <li>call -&gt; (dns -&gt; connect -&gt; secure connect)* -&gt; request events</li>
+ *   <li>call -&gt; (connection acquire/release)*</li>
+ * </ul>
+ *
+ * <p>Request events are ordered:
+ * requestHeaders -&gt; requestBody -&gt; responseHeaders -&gt; responseBody
+ *
+ * <p>Since connections may be reused, the dns and connect events may not be present for a call,
+ * or may be repeated in case of failure retries, even concurrently in case of happy eyeballs type
+ * scenarios. A redirect cross domain, or to use https may cause additional connection and request
+ * events.
+ *
+ * <p>All event methods must execute fast, without external locking, cannot throw exceptions,
+ * attempt to mutate the event parameters, or be reentrant back into the client.
+ * Any IO - writing to files or network should be done asynchronously.
+ */
 public abstract class EventListener {
   public static final EventListener NONE = new EventListener() {
   };
@@ -38,10 +72,10 @@ public abstract class EventListener {
    * limits, this call may be executed well before processing the request is able to begin.
    *
    * <p>This will be invoked only once for a single {@link Call}. Retries of different routes
-   * or redirects will be handled within the boundaries of a single fetchStart and
-   * {@link #fetchEnd(Call, Throwable)} pair.
+   * or redirects will be handled within the boundaries of a single callStart and {@link
+   * #callEnd}/{@link #callFailed} pair.
    */
-  public void fetchStart(Call call) {
+  public void callStart(Call call) {
   }
 
   /**
@@ -59,16 +93,9 @@ public abstract class EventListener {
   /**
    * Invoked immediately after a DNS lookup.
    *
-   * <p>This method is always invoked after {@link #dnsStart(Call, String)}.
-   *
-   * <p>{@code inetAddressList} will be non-null and {@code throwable} will be null in the case of a
-   * successful DNS lookup.
-   *
-   * <p>{@code inetAddressList} will be null and {@code throwable} will be non-null in the case of a
-   * failed DNS lookup.
+   * <p>This method is invoked after {@link #dnsStart}.
    */
-  public void dnsEnd(Call call, String domainName, @Nullable List<InetAddress> inetAddressList,
-      @Nullable Throwable throwable) {
+  public void dnsEnd(Call call, String domainName, @Nullable List<InetAddress> inetAddressList) {
   }
 
   /**
@@ -88,8 +115,8 @@ public abstract class EventListener {
    *
    * <p>This method is invoked if the following conditions are met:
    * <ul>
-   *   <li>The {@link Call#request()} requires TLS.</li>
-   *   <li>No existing connection from the {@link ConnectionPool} can be reused.</li>
+   * <li>The {@link Call#request()} requires TLS.</li>
+   * <li>No existing connection from the {@link ConnectionPool} can be reused.</li>
    * </ul>
    *
    * <p>This can be invoked more than 1 time for a single {@link Call}. For example, if the response
@@ -101,34 +128,32 @@ public abstract class EventListener {
   /**
    * Invoked immediately after a TLS connection was attempted.
    *
-   * <p>This method is always invoked after {@link #secureConnectStart(Call)}.
-   *
-   * <p>{@code handshake} will be non-null and {@code throwable} will be null in the case of a
-   * successful TLS connection.
-   *
-   * <p>{@code handshake} will be null and {@code throwable} will be non-null in the case of a
-   * failed TLS connection attempt.
+   * <p>This method is invoked after {@link #secureConnectStart}.
    */
-  public void secureConnectEnd(Call call, @Nullable Handshake handshake,
-      @Nullable Throwable throwable) {
+  public void secureConnectEnd(Call call, @Nullable Handshake handshake) {
   }
 
   /**
    * Invoked immediately after a socket connection was attempted.
    *
    * <p>If the {@code call} uses HTTPS, this will be invoked after
-   * {@link #secureConnectEnd(Call, Handshake, Throwable)}, otherwise it will invoked after
+   * {@link #secureConnectEnd(Call, Handshake)}, otherwise it will invoked after
    * {@link #connectStart(Call, InetSocketAddress, Proxy)}.
-   *
-   * <p>{@code protocol} and {@code proxy} will be non-null and {@code throwable} will be null when
-   * the connection is successfully established.
-   *
-   * <p>{@code protocol} and {@code proxy} will be null and {@code throwable} will be non-null in
-   * the case of a failed connection attempt.
    */
   public void connectEnd(Call call, InetSocketAddress inetSocketAddress,
-      @Nullable Proxy proxy, @Nullable Protocol protocol,
-      @Nullable Throwable throwable) {
+      @Nullable Proxy proxy, @Nullable Protocol protocol) {
+  }
+
+  /**
+   * Invoked when a connection attempt fails. This failure is not terminal if further routes are
+   * available and failure recovery is enabled.
+   *
+   * <p>If the {@code call} uses HTTPS, this will be invoked after {@link #secureConnectEnd(Call,
+   * Handshake)}, otherwise it will invoked after {@link #connectStart(Call, InetSocketAddress,
+   * Proxy)}.
+   */
+  public void connectFailed(Call call, InetSocketAddress inetSocketAddress,
+      @Nullable Proxy proxy, @Nullable Protocol protocol, @Nullable IOException ioe) {
   }
 
   /**
@@ -168,11 +193,10 @@ public abstract class EventListener {
    *
    * <p>This method is always invoked after {@link #requestHeadersStart(Call)}.
    *
-   * <p>{@code throwable} will be null in the case of a successful attempt to send the headers.
-   *
-   * <p>{@code throwable} will be non-null in the case of a failed attempt to send the headers.
+   * @param request the request sent over the network. It is an error to access the body of this
+   *     request.
    */
-  public void requestHeadersEnd(Call call, Throwable throwable) {
+  public void requestHeadersEnd(Call call, Request request) {
   }
 
   /**
@@ -192,12 +216,8 @@ public abstract class EventListener {
    * Invoked immediately after sending a request body.
    *
    * <p>This method is always invoked after {@link #requestBodyStart(Call)}.
-   *
-   * <p>{@code throwable} will be null in the case of a successful attempt to send the body.
-   *
-   * <p>{@code throwable} will be non-null in the case of a failed attempt to send the body.
    */
-  public void requestBodyEnd(Call call, Throwable throwable) {
+  public void requestBodyEnd(Call call, long byteCount) {
   }
 
   /**
@@ -215,13 +235,12 @@ public abstract class EventListener {
   /**
    * Invoked immediately after receiving response headers.
    *
-   * <p>This method is always invoked after {@link #responseHeadersStart(Call)}.
+   * <p>This method is always invoked after {@link #responseHeadersStart}.
    *
-   * <p>{@code throwable} will be null in the case of a successful attempt to receive the headers.
-   *
-   * <p>{@code throwable} will be non-null in the case of a failed attempt to receive the headers.
+   * @param response the response received over the network. It is an error to access the body of
+   *     this response.
    */
-  public void responseHeadersEnd(Call call, Throwable throwable) {
+  public void responseHeadersEnd(Call call, Response response) {
   }
 
   /**
@@ -243,27 +262,35 @@ public abstract class EventListener {
    * websocket upgrade.
    *
    * <p>This method is always invoked after {@link #requestBodyStart(Call)}.
-   *
-   * <p>{@code throwable} will be null in the case of a successful attempt to send the body.
-   *
-   * <p>{@code throwable} will be non-null in the case of a failed attempt to send the body.
    */
-  public void responseBodyEnd(Call call, Throwable throwable) {
+  public void responseBodyEnd(Call call, long byteCount) {
   }
 
   /**
    * Invoked immediately after a call has completely ended.  This includes delayed consumption
    * of response body by the caller.
    *
-   * <p>This method is always invoked after {@link #fetchStart(Call)}.
-   *
-   * <p>{@code throwable} will be null in the case of a successful attempt to execute the call.
-   *
-   * <p>{@code throwable} will be non-null in the case of a failed attempt to execute the call.
+   * <p>This method is always invoked after {@link #callStart(Call)}.
    */
-  public void fetchEnd(Call call, Throwable throwable) {
+  public void callEnd(Call call) {
   }
 
+  /**
+   * Invoked when a call fails permanently.
+   *
+   * <p>This method is always invoked after {@link #callStart(Call)}.
+   */
+  public void callFailed(Call call, IOException ioe) {
+  }
+
+  /**
+   * <h3>Warning: This is a non-final API.</h3>
+   *
+   * <p><strong>As of OkHttp 3.9, this feature is an unstable preview: the API is subject to change,
+   * and the implementation is incomplete. We expect that OkHttp 3.10 or 3.11 will finalize this
+   * API. Until then, expect API and behavior changes when you update your OkHttp
+   * dependency.</strong>
+   */
   public interface Factory {
     /**
      * Creates an instance of the {@link EventListener} for a particular {@link Call}. The returned

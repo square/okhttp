@@ -105,7 +105,7 @@ public final class ClientAuthTest {
 
     Call call = client.newCall(new Request.Builder().url(server.url("/")).build());
     Response response = call.execute();
-    assertEquals(new X500Principal("CN=localhost"), response.handshake().peerPrincipal());
+    assertEquals(new X500Principal("CN=" + server.getHostName()), response.handshake().peerPrincipal());
     assertEquals(new X500Principal("CN=Jethro Willis"), response.handshake().localPrincipal());
     assertEquals("abc", response.body().string());
   }
@@ -120,7 +120,7 @@ public final class ClientAuthTest {
 
     Call call = client.newCall(new Request.Builder().url(server.url("/")).build());
     Response response = call.execute();
-    assertEquals(new X500Principal("CN=localhost"), response.handshake().peerPrincipal());
+    assertEquals(new X500Principal("CN=" + server.getHostName()), response.handshake().peerPrincipal());
     assertEquals(new X500Principal("CN=Jethro Willis"), response.handshake().localPrincipal());
     assertEquals("abc", response.body().string());
   }
@@ -135,7 +135,7 @@ public final class ClientAuthTest {
 
     Call call = client.newCall(new Request.Builder().url(server.url("/")).build());
     Response response = call.execute();
-    assertEquals(new X500Principal("CN=localhost"), response.handshake().peerPrincipal());
+    assertEquals(new X500Principal("CN=" + server.getHostName()), response.handshake().peerPrincipal());
     assertEquals(null, response.handshake().localPrincipal());
     assertEquals("abc", response.body().string());
   }
@@ -150,7 +150,7 @@ public final class ClientAuthTest {
 
     Call call = client.newCall(new Request.Builder().url(server.url("/")).build());
     Response response = call.execute();
-    assertEquals(new X500Principal("CN=localhost"), response.handshake().peerPrincipal());
+    assertEquals(new X500Principal("CN=" + server.getHostName()), response.handshake().peerPrincipal());
     assertEquals(null, response.handshake().localPrincipal());
     assertEquals("abc", response.body().string());
   }

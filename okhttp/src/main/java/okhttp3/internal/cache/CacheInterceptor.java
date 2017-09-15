@@ -207,12 +207,14 @@ public final class CacheInterceptor implements Interceptor {
       }
     };
 
+    String contentType = response.header("Content-Type");
+    long contentLength = response.body().contentLength();
     return response.newBuilder()
-        .body(new RealResponseBody(response.headers(), Okio.buffer(cacheWritingSource)))
+        .body(new RealResponseBody(contentType, contentLength, Okio.buffer(cacheWritingSource)))
         .build();
   }
 
-  /** Combines cached headers with a network headers as defined by RFC 2616, 13.5.3. */
+  /** Combines cached headers with a network headers as defined by RFC 7234, 4.3.4. */
   private static Headers combine(Headers cachedHeaders, Headers networkHeaders) {
     Headers.Builder result = new Headers.Builder();
 

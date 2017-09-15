@@ -48,11 +48,11 @@ import javax.annotation.Nullable;
  *
  * <h3>Connection Reuse</h3>
  *
- * <p>Each connection can carry a varying number streams, depending on the underlying protocol being
- * used. HTTP/1.x connections can carry either zero or one streams. HTTP/2 connections can carry any
- * number of streams, dynamically configured with {@code SETTINGS_MAX_CONCURRENT_STREAMS}. A
- * connection currently carrying zero streams is an idle stream. We keep it alive because reusing an
- * existing connection is typically faster than establishing a new one.
+ * <p>Each connection can carry a varying number of streams, depending on the underlying protocol
+ * being used. HTTP/1.x connections can carry either zero or one streams. HTTP/2 connections can
+ * carry any number of streams, dynamically configured with {@code SETTINGS_MAX_CONCURRENT_STREAMS}.
+ * A connection currently carrying zero streams is an idle stream. We keep it alive because reusing
+ * an existing connection is typically faster than establishing a new one.
  *
  * <p>When a single logical call requires multiple streams due to redirects or authorization
  * challenges, we prefer to use the same physical connection for all streams in the sequence. There

@@ -49,6 +49,7 @@ import okhttp3.internal.tls.CertificateChainCleaner;
 import okhttp3.internal.tls.OkHostnameVerifier;
 import okhttp3.internal.ws.RealWebSocket;
 
+import static okhttp3.internal.Util.assertionError;
 import static okhttp3.internal.Util.checkDuration;
 
 /**
@@ -267,6 +268,13 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
     this.readTimeout = builder.readTimeout;
     this.writeTimeout = builder.writeTimeout;
     this.pingInterval = builder.pingInterval;
+
+    if (interceptors.contains(null)) {
+      throw new IllegalStateException("Null interceptor: " + interceptors);
+    }
+    if (networkInterceptors.contains(null)) {
+      throw new IllegalStateException("Null network interceptor: " + networkInterceptors);
+    }
   }
 
   private X509TrustManager systemDefaultTrustManager() {
@@ -281,7 +289,7 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
       }
       return (X509TrustManager) trustManagers[0];
     } catch (GeneralSecurityException e) {
-      throw new AssertionError(); // The system has no TLS. Just give up.
+      throw assertionError("No System TLS", e); // The system has no TLS. Just give up.
     }
   }
 
@@ -291,7 +299,7 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
       sslContext.init(null, new TrustManager[] { trustManager }, null);
       return sslContext.getSocketFactory();
     } catch (GeneralSecurityException e) {
-      throw new AssertionError(); // The system has no TLS. Just give up.
+      throw assertionError("No System TLS", e); // The system has no TLS. Just give up.
     }
   }
 
@@ -861,6 +869,7 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
     }
 
     public Builder addInterceptor(Interceptor interceptor) {
+      if (interceptor == null) throw new IllegalArgumentException("interceptor == null");
       interceptors.add(interceptor);
       return this;
     }
@@ -875,16 +884,29 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
     }
 
     public Builder addNetworkInterceptor(Interceptor interceptor) {
+      if (interceptor == null) throw new IllegalArgumentException("interceptor == null");
       networkInterceptors.add(interceptor);
       return this;
     }
 
+    /**
+     * Configure a single client scoped listener that will receive all analytic events
+     * for this client.
+     *
+     * @see EventListener for semantics and restrictions on listener implementations.
+     */
     public Builder eventListener(EventListener eventListener) {
       if (eventListener == null) throw new NullPointerException("eventListener == null");
       this.eventListenerFactory = EventListener.factory(eventListener);
       return this;
     }
 
+    /**
+     * Configure a factory to provide per-call scoped listeners that will receive analytic events
+     * for this client.
+     *
+     * @see EventListener for semantics and restrictions on listener implementations.
+     */
     public Builder eventListenerFactory(EventListener.Factory eventListenerFactory) {
       if (eventListenerFactory == null) {
         throw new NullPointerException("eventListenerFactory == null");

@@ -159,7 +159,7 @@ public final class RealConnection extends Http2Connection.Listener implements Co
           connectSocket(connectTimeout, readTimeout, call, eventListener);
         }
         establishProtocol(connectionSpecSelector, call, eventListener);
-        eventListener.connectEnd(call, route.socketAddress(), route.proxy(), protocol, null);
+        eventListener.connectEnd(call, route.socketAddress(), route.proxy(), protocol);
         break;
       } catch (IOException e) {
         closeQuietly(socket);
@@ -172,7 +172,7 @@ public final class RealConnection extends Http2Connection.Listener implements Co
         protocol = null;
         http2Connection = null;
 
-        eventListener.connectEnd(call, route.socketAddress(), route.proxy(), null, e);
+        eventListener.connectFailed(call, route.socketAddress(), route.proxy(), null, e);
 
         if (routeException == null) {
           routeException = new RouteException(e);
@@ -219,7 +219,7 @@ public final class RealConnection extends Http2Connection.Listener implements Co
       rawSocket = null;
       sink = null;
       source = null;
-      eventListener.connectEnd(call, route.socketAddress(), route.proxy(), null, null);
+      eventListener.connectEnd(call, route.socketAddress(), route.proxy(), null);
     }
   }
 
@@ -266,13 +266,8 @@ public final class RealConnection extends Http2Connection.Listener implements Co
     }
 
     eventListener.secureConnectStart(call);
-    try {
-      connectTls(connectionSpecSelector);
-      eventListener.secureConnectEnd(call, handshake, null);
-    } catch (Exception e) {
-      eventListener.secureConnectEnd(call, null, e);
-      throw e;
-    }
+    connectTls(connectionSpecSelector);
+    eventListener.secureConnectEnd(call, handshake);
 
     if (protocol == Protocol.HTTP_2) {
       socket.setSoTimeout(0); // HTTP/2 connection timeouts are set per-stream.
@@ -494,7 +489,7 @@ public final class RealConnection extends Http2Connection.Listener implements Co
   public RealWebSocket.Streams newWebSocketStreams(final StreamAllocation streamAllocation) {
     return new RealWebSocket.Streams(true, source, sink) {
       @Override public void close() throws IOException {
-        streamAllocation.streamFinished(true, streamAllocation.codec());
+        streamAllocation.streamFinished(true, streamAllocation.codec(), -1L, null);
       }
     };
   }

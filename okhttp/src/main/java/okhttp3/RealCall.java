@@ -71,15 +71,14 @@ final class RealCall implements Call {
       executed = true;
     }
     captureCallStackTrace();
-    eventListener.fetchStart(this);
+    eventListener.callStart(this);
     try {
       client.dispatcher().executed(this);
       Response result = getResponseWithInterceptorChain();
       if (result == null) throw new IOException("Canceled");
-      eventListener.fetchEnd(this, null);
       return result;
     } catch (IOException e) {
-      eventListener.fetchEnd(this, e);
+      eventListener.callFailed(this, e);
       throw e;
     } finally {
       client.dispatcher().finished(this);
@@ -97,7 +96,7 @@ final class RealCall implements Call {
       executed = true;
     }
     captureCallStackTrace();
-    eventListener.fetchStart(this);
+    eventListener.callStart(this);
     client.dispatcher().enqueue(new AsyncCall(responseCallback));
   }
 
@@ -153,13 +152,12 @@ final class RealCall implements Call {
           signalledCallback = true;
           responseCallback.onResponse(RealCall.this, response);
         }
-        eventListener.fetchEnd(RealCall.this, null);
       } catch (IOException e) {
         if (signalledCallback) {
           // Do not signal the callback twice!
           Platform.get().log(INFO, "Callback failure for " + toLoggableString(), e);
         } else {
-          eventListener.fetchEnd(RealCall.this, e);
+          eventListener.callFailed(RealCall.this, e);
           responseCallback.onFailure(RealCall.this, e);
         }
       } finally {

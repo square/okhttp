@@ -15,6 +15,7 @@
  */
 package okhttp3;
 
+import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.Proxy;
@@ -25,25 +26,33 @@ import java.util.Deque;
 import java.util.List;
 import javax.annotation.Nullable;
 
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
-final class RecordingEventListener extends EventListener {
+public final class RecordingEventListener extends EventListener {
   final Deque<CallEvent> eventSequence = new ArrayDeque<>();
+
+  final List<Object> forbiddenLocks = new ArrayList<>();
+
+  /** Confirm that the thread does not hold a lock on {@code lock} during the callback. */
+  public void forbidLock(Object lock) {
+    forbiddenLocks.add(lock);
+  }
 
   /**
    * Removes recorded events up to (and including) an event is found whose class equals
    * {@code eventClass} and returns it.
    */
-  <T> T removeUpToEvent(Class<T> eventClass) {
+  public <T> T removeUpToEvent(Class<T> eventClass) {
     Object event = eventSequence.poll();
     while (event != null && !eventClass.isInstance(event)) {
       event = eventSequence.poll();
     }
     if (event == null) throw new AssertionError();
-    return (T) event;
+    return eventClass.cast(event);
   }
 
-  List<String> recordedEventTypes() {
+  public List<String> recordedEventTypes() {
     List<String> eventTypes = new ArrayList<>();
     for (CallEvent event : eventSequence) {
       eventTypes.add(event.getName());
@@ -51,11 +60,15 @@ final class RecordingEventListener extends EventListener {
     return eventTypes;
   }
 
-  void clearAllEvents() {
+  public void clearAllEvents() {
     eventSequence.clear();
   }
 
   private void logEvent(CallEvent e) {
+    for (Object lock : forbiddenLocks) {
+      assertFalse(lock.toString(), Thread.holdsLock(lock));
+    }
+
     CallEvent startEvent = e.closes();
 
     if (startEvent != null) {
@@ -70,9 +83,8 @@ final class RecordingEventListener extends EventListener {
     logEvent(new DnsStart(call, domainName));
   }
 
-  @Override public void dnsEnd(Call call, String domainName, List<InetAddress> inetAddressList,
-      Throwable throwable) {
-    logEvent(new DnsEnd(call, domainName, inetAddressList, throwable));
+  @Override public void dnsEnd(Call call, String domainName, List<InetAddress> inetAddressList) {
+    logEvent(new DnsEnd(call, domainName, inetAddressList));
   }
 
   @Override public void connectStart(Call call, InetSocketAddress inetSocketAddress,
@@ -84,13 +96,18 @@ final class RecordingEventListener extends EventListener {
     logEvent(new SecureConnectStart(call));
   }
 
-  @Override public void secureConnectEnd(Call call, Handshake handshake, Throwable throwable) {
-    logEvent(new SecureConnectEnd(call, handshake, throwable));
+  @Override public void secureConnectEnd(Call call, Handshake handshake) {
+    logEvent(new SecureConnectEnd(call, handshake));
   }
 
   @Override public void connectEnd(Call call, InetSocketAddress inetSocketAddress,
-      @Nullable Proxy proxy, Protocol protocol, Throwable throwable) {
-    logEvent(new ConnectEnd(call, inetSocketAddress, proxy, protocol, throwable));
+      @Nullable Proxy proxy, Protocol protocol) {
+    logEvent(new ConnectEnd(call, inetSocketAddress, proxy, protocol));
+  }
+
+  @Override public void connectFailed(Call call, InetSocketAddress inetSocketAddress,
+      @Nullable Proxy proxy, @Nullable Protocol protocol, @Nullable IOException ioe) {
+    logEvent(new ConnectFailed(call, inetSocketAddress, proxy, protocol, ioe));
   }
 
   @Override public void connectionAcquired(Call call, Connection connection) {
@@ -101,44 +118,48 @@ final class RecordingEventListener extends EventListener {
     logEvent(new ConnectionReleased(call, connection));
   }
 
-  @Override public void fetchStart(Call call) {
-    logEvent(new FetchStart(call));
+  @Override public void callStart(Call call) {
+    logEvent(new CallStart(call));
   }
 
   @Override public void requestHeadersStart(Call call) {
     logEvent(new RequestHeadersStart(call));
   }
 
-  @Override public void requestHeadersEnd(Call call, Throwable throwable) {
-    logEvent(new RequestHeadersEnd(call, throwable));
+  @Override public void requestHeadersEnd(Call call, Request request) {
+    logEvent(new RequestHeadersEnd(call, request.headers.byteCount()));
   }
 
   @Override public void requestBodyStart(Call call) {
     logEvent(new RequestBodyStart(call));
   }
 
-  @Override public void requestBodyEnd(Call call, Throwable throwable) {
-    logEvent(new RequestBodyEnd(call, throwable));
+  @Override public void requestBodyEnd(Call call, long byteCount) {
+    logEvent(new RequestBodyEnd(call, byteCount));
   }
 
   @Override public void responseHeadersStart(Call call) {
     logEvent(new ResponseHeadersStart(call));
   }
 
-  @Override public void responseHeadersEnd(Call call, Throwable throwable) {
-    logEvent(new ResponseHeadersEnd(call, throwable));
+  @Override public void responseHeadersEnd(Call call, Response response) {
+    logEvent(new ResponseHeadersEnd(call, response.headers.byteCount()));
   }
 
   @Override public void responseBodyStart(Call call) {
     logEvent(new ResponseBodyStart(call));
   }
 
-  @Override public void responseBodyEnd(Call call, Throwable throwable) {
-    logEvent(new ResponseBodyEnd(call, throwable));
+  @Override public void responseBodyEnd(Call call, long byteCount) {
+    logEvent(new ResponseBodyEnd(call, byteCount));
   }
 
-  @Override public void fetchEnd(Call call, Throwable throwable) {
-    logEvent(new FetchEnd(call, throwable));
+  @Override public void callEnd(Call call) {
+    logEvent(new CallEnd(call));
+  }
+
+  @Override public void callFailed(Call call, IOException ioe) {
+    logEvent(new CallFailed(call, ioe));
   }
 
   static class CallEvent {
@@ -189,13 +210,11 @@ final class RecordingEventListener extends EventListener {
   static final class DnsEnd extends CallEvent {
     final String domainName;
     final List<InetAddress> inetAddressList;
-    final Throwable throwable;
 
-    DnsEnd(Call call, String domainName, List<InetAddress> inetAddressList, Throwable throwable) {
-      super(call, domainName, inetAddressList, throwable);
+    DnsEnd(Call call, String domainName, List<InetAddress> inetAddressList) {
+      super(call, domainName, inetAddressList);
       this.domainName = domainName;
       this.inetAddressList = inetAddressList;
-      this.throwable = throwable;
     }
 
     @Nullable @Override public CallEvent closes() {
@@ -217,16 +236,33 @@ final class RecordingEventListener extends EventListener {
   static final class ConnectEnd extends CallEvent {
     final InetSocketAddress inetSocketAddress;
     final Protocol protocol;
-    final Throwable throwable;
     final Proxy proxy;
 
-    ConnectEnd(Call call, InetSocketAddress inetSocketAddress, Proxy proxy, Protocol protocol,
-        Throwable throwable) {
-      super(call, inetSocketAddress, proxy, protocol, throwable);
+    ConnectEnd(Call call, InetSocketAddress inetSocketAddress, Proxy proxy, Protocol protocol) {
+      super(call, inetSocketAddress, proxy, protocol);
       this.inetSocketAddress = inetSocketAddress;
       this.proxy = proxy;
       this.protocol = protocol;
-      this.throwable = throwable;
+    }
+
+    @Override public CallEvent closes() {
+      return new ConnectStart(call, inetSocketAddress, proxy);
+    }
+  }
+
+  static final class ConnectFailed extends CallEvent {
+    final InetSocketAddress inetSocketAddress;
+    final Protocol protocol;
+    final Proxy proxy;
+    final IOException ioe;
+
+    ConnectFailed(Call call, InetSocketAddress inetSocketAddress, Proxy proxy, Protocol protocol,
+        IOException ioe) {
+      super(call, inetSocketAddress, proxy, protocol, ioe);
+      this.inetSocketAddress = inetSocketAddress;
+      this.proxy = proxy;
+      this.protocol = protocol;
+      this.ioe = ioe;
     }
 
     @Nullable @Override public CallEvent closes() {
@@ -242,12 +278,10 @@ final class RecordingEventListener extends EventListener {
 
   static final class SecureConnectEnd extends CallEvent {
     final Handshake handshake;
-    final Throwable throwable;
 
-    SecureConnectEnd(Call call, Handshake handshake, Throwable throwable) {
-      super(call, handshake, throwable);
+    SecureConnectEnd(Call call, Handshake handshake) {
+      super(call, handshake);
       this.handshake = handshake;
-      this.throwable = throwable;
     }
 
     @Nullable @Override public CallEvent closes() {
@@ -277,22 +311,28 @@ final class RecordingEventListener extends EventListener {
     }
   }
 
-  static final class FetchStart extends CallEvent {
-    FetchStart(Call call) {
+  static final class CallStart extends CallEvent {
+    CallStart(Call call) {
       super(call);
     }
   }
 
-  static final class FetchEnd extends CallEvent {
-    final Throwable throwable;
-
-    FetchEnd(Call call, Throwable throwable) {
-      super(call, throwable);
-      this.throwable = throwable;
+  static final class CallEnd extends CallEvent {
+    CallEnd(Call call) {
+      super(call);
     }
 
     @Nullable @Override public CallEvent closes() {
-      return new FetchStart(call);
+      return new CallStart(call);
+    }
+  }
+
+  static final class CallFailed extends CallEvent {
+    final IOException ioe;
+
+    CallFailed(Call call, IOException ioe) {
+      super(call, ioe);
+      this.ioe = ioe;
     }
   }
 
@@ -303,11 +343,11 @@ final class RecordingEventListener extends EventListener {
   }
 
   static final class RequestHeadersEnd extends CallEvent {
-    final Throwable throwable;
+    final long headerLength;
 
-    RequestHeadersEnd(Call call, Throwable throwable) {
-      super(call, throwable);
-      this.throwable = throwable;
+    RequestHeadersEnd(Call call, long headerLength) {
+      super(call, headerLength);
+      this.headerLength = headerLength;
     }
 
     @Nullable @Override public CallEvent closes() {
@@ -322,11 +362,11 @@ final class RecordingEventListener extends EventListener {
   }
 
   static final class RequestBodyEnd extends CallEvent {
-    final Throwable throwable;
+    final long bytesWritten;
 
-    RequestBodyEnd(Call call, Throwable throwable) {
-      super(call, throwable);
-      this.throwable = throwable;
+    RequestBodyEnd(Call call, long bytesWritten) {
+      super(call, bytesWritten);
+      this.bytesWritten = bytesWritten;
     }
 
     @Nullable @Override public CallEvent closes() {
@@ -341,11 +381,11 @@ final class RecordingEventListener extends EventListener {
   }
 
   static final class ResponseHeadersEnd extends CallEvent {
-    final Throwable throwable;
+    final long headerLength;
 
-    ResponseHeadersEnd(Call call, Throwable throwable) {
-      super(call, throwable);
-      this.throwable = throwable;
+    ResponseHeadersEnd(Call call, long headerLength) {
+      super(call, headerLength);
+      this.headerLength = headerLength;
     }
 
     @Nullable @Override public CallEvent closes() {
@@ -360,11 +400,11 @@ final class RecordingEventListener extends EventListener {
   }
 
   static final class ResponseBodyEnd extends CallEvent {
-    final Throwable throwable;
+    final long bytesRead;
 
-    ResponseBodyEnd(Call call, Throwable throwable) {
-      super(call, throwable);
-      this.throwable = throwable;
+    ResponseBodyEnd(Call call, long bytesRead) {
+      super(call, bytesRead);
+      this.bytesRead = bytesRead;
     }
 
     @Nullable @Override public CallEvent closes() {

@@ -27,6 +27,7 @@ import java.net.ProtocolException;
 import java.net.SocketTimeoutException;
 import java.net.URL;
 import java.net.URLConnection;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -437,5 +438,22 @@ public final class MockWebServerTest {
     assertEquals(server.getPort(), requestUrl.port());
     assertEquals("/a/deep/path", requestUrl.encodedPath());
     assertEquals("foo bar", requestUrl.queryParameter("key"));
+  }
+
+  @Test public void http100Continue() throws Exception {
+    server.enqueue(new MockResponse().setBody("response"));
+
+    URL url = server.url("/").url();
+    HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+    connection.setDoOutput(true);
+    connection.setRequestProperty("Expect", "100-Continue");
+    connection.getOutputStream().write("request".getBytes(StandardCharsets.UTF_8));
+
+    InputStream in = connection.getInputStream();
+    BufferedReader reader = new BufferedReader(new InputStreamReader(in));
+    assertEquals("response", reader.readLine());
+
+    RecordedRequest request = server.takeRequest();
+    assertEquals("request", request.getBody().readUtf8());
   }
 }

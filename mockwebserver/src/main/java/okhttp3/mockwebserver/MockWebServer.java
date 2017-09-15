@@ -156,12 +156,13 @@ public final class MockWebServer extends ExternalResource implements Closeable {
 
   public String getHostName() {
     before();
-    return inetSocketAddress.getHostName();
+    return inetSocketAddress.getAddress().getCanonicalHostName();
   }
 
   public Proxy toProxyAddress() {
     before();
-    InetSocketAddress address = new InetSocketAddress(inetSocketAddress.getAddress(), getPort());
+    InetSocketAddress address = new InetSocketAddress(inetSocketAddress.getAddress()
+            .getCanonicalHostName(), getPort());
     return new Proxy(Proxy.Type.HTTP, address);
   }
 
@@ -464,8 +465,6 @@ public final class MockWebServer extends ExternalResource implements Closeable {
               + " didn't make a request");
         }
 
-        source.close();
-        sink.close();
         socket.close();
         openClientSockets.remove(socket);
       }
@@ -580,7 +579,7 @@ public final class MockWebServer extends ExternalResource implements Closeable {
     Headers.Builder headers = new Headers.Builder();
     long contentLength = -1;
     boolean chunked = false;
-    boolean readBody = true;
+    boolean expectContinue = false;
     String header;
     while ((header = source.readUtf8LineStrict()).length() != 0) {
       Internal.instance.addLenient(headers, header);
@@ -594,25 +593,22 @@ public final class MockWebServer extends ExternalResource implements Closeable {
       }
       if (lowercaseHeader.startsWith("expect:")
           && lowercaseHeader.substring(7).trim().equalsIgnoreCase("100-continue")) {
-        readBody = false;
+        expectContinue = true;
       }
     }
 
-    if (!readBody && dispatcher.peek().getSocketPolicy() == EXPECT_CONTINUE) {
+    if (expectContinue && dispatcher.peek().getSocketPolicy() == EXPECT_CONTINUE) {
       sink.writeUtf8("HTTP/1.1 100 Continue\r\n");
       sink.writeUtf8("Content-Length: 0\r\n");
       sink.writeUtf8("\r\n");
       sink.flush();
-      readBody = true;
     }
 
     boolean hasBody = false;
     TruncatingBuffer requestBody = new TruncatingBuffer(bodyLimit);
     List<Integer> chunkSizes = new ArrayList<>();
     MockResponse policy = dispatcher.peek();
-    if (!readBody) {
-      // Don't read the body unless we've invited the client to send it.
-    } else if (contentLength != -1) {
+    if (contentLength != -1) {
       hasBody = contentLength > 0;
       throttledTransfer(policy, socket, source, Okio.buffer(requestBody), contentLength, true);
     } else if (chunked) {
@@ -683,13 +679,13 @@ public final class MockWebServer extends ExternalResource implements Closeable {
     } catch (IOException e) {
       webSocket.failWebSocket(e, null);
     } finally {
-      closeQuietly(sink);
       closeQuietly(source);
     }
   }
 
   private void writeHttpResponse(Socket socket, BufferedSink sink, MockResponse response)
       throws IOException {
+    sleepIfDelayed(response.getBodyDelay(TimeUnit.MILLISECONDS));
     sink.writeUtf8(response.getStatus());
     sink.writeUtf8("\r\n");
 
@@ -705,12 +701,11 @@ public final class MockWebServer extends ExternalResource implements Closeable {
 
     Buffer body = response.getBody();
     if (body == null) return;
-    sleepIfDelayed(response);
+    sleepIfDelayed(response.getBodyDelay(TimeUnit.MILLISECONDS));
     throttledTransfer(response, socket, body, sink, body.size(), false);
   }
 
-  private void sleepIfDelayed(MockResponse response) {
-    long delayMs = response.getBodyDelay(TimeUnit.MILLISECONDS);
+  private void sleepIfDelayed(long delayMs) {
     if (delayMs != 0) {
       try {
         Thread.sleep(delayMs);
@@ -902,8 +897,10 @@ public final class MockWebServer extends ExternalResource implements Closeable {
           readBody = false;
         }
       }
+      Headers headers = httpHeaders.build();
 
-      if (!readBody && dispatcher.peek().getSocketPolicy() == EXPECT_CONTINUE) {
+      MockResponse peek = dispatcher.peek();
+      if (!readBody && peek.getSocketPolicy() == EXPECT_CONTINUE) {
         stream.sendResponseHeaders(Collections.singletonList(
             new Header(Header.RESPONSE_STATUS, ByteString.encodeUtf8("100 Continue"))), true);
         stream.getConnection().flush();
@@ -912,12 +909,16 @@ public final class MockWebServer extends ExternalResource implements Closeable {
 
       Buffer body = new Buffer();
       if (readBody) {
-        body.writeAll(stream.getSource());
+        String contentLengthString = headers.get("content-length");
+        long byteCount = contentLengthString != null
+            ? Long.parseLong(contentLengthString)
+            : Long.MAX_VALUE;
+        throttledTransfer(peek, socket, Okio.buffer(stream.getSource()), body, byteCount, true);
       }
 
       String requestLine = method + ' ' + path + " HTTP/1.1";
       List<Integer> chunkSizes = Collections.emptyList(); // No chunked encoding for HTTP/2.
-      return new RecordedRequest(requestLine, httpHeaders.build(), chunkSizes, body.size(), body,
+      return new RecordedRequest(requestLine, headers, chunkSizes, body.size(), body,
           sequenceNumber.getAndIncrement(), socket);
     }
 
@@ -931,8 +932,8 @@ public final class MockWebServer extends ExternalResource implements Closeable {
         return;
       }
       List<Header> http2Headers = new ArrayList<>();
-      String[] statusParts = response.getStatus().split(" ", 2);
-      if (statusParts.length != 2) {
+      String[] statusParts = response.getStatus().split(" ", 3);
+      if (statusParts.length < 2) {
         throw new AssertionError("Unexpected status: " + response.getStatus());
       }
       // TODO: constants for well-known header names.
@@ -942,14 +943,16 @@ public final class MockWebServer extends ExternalResource implements Closeable {
         http2Headers.add(new Header(headers.name(i), headers.value(i)));
       }
 
+      sleepIfDelayed(response.getHeadersDelay(TimeUnit.MILLISECONDS));
+
       Buffer body = response.getBody();
       boolean closeStreamAfterHeaders = body != null || !response.getPushPromises().isEmpty();
       stream.sendResponseHeaders(http2Headers, closeStreamAfterHeaders);
       pushPromises(stream, response.getPushPromises());
       if (body != null) {
         BufferedSink sink = Okio.buffer(stream.getSink());
-        sleepIfDelayed(response);
-        throttledTransfer(response, socket, body, sink, bodyLimit, false);
+        sleepIfDelayed(response.getBodyDelay(TimeUnit.MILLISECONDS));
+        throttledTransfer(response, socket, body, sink, body.size(), false);
         sink.close();
       } else if (closeStreamAfterHeaders) {
         stream.close(ErrorCode.NO_ERROR);
