@@ -8,10 +8,8 @@ import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.X509TrustManager;
 import okhttp3.Protocol;
-import okhttp3.internal.Util;
 import org.conscrypt.Conscrypt;
 import org.conscrypt.OpenSSLProvider;
-import org.conscrypt.OpenSSLSocketImpl;
 
 // TODO support SSLClientSessionCache
 // TODO support TLS 1.3 (debugging needed)
@@ -32,7 +30,7 @@ public class ConscryptPlatform extends Platform {
   }
 
   @Override public X509TrustManager trustManager(SSLSocketFactory sslSocketFactory) {
-    if (sslSocketFactory.getClass().getName().endsWith("OpenSSLSocketFactoryImpl")) {
+    if (Conscrypt.isConscrypt(sslSocketFactory)) {
       try {
         // org.conscrypt.SSLParametersImpl
         Object sp =
@@ -54,30 +52,26 @@ public class ConscryptPlatform extends Platform {
 
   @Override public void configureTlsExtensions(
       SSLSocket sslSocket, String hostname, List<Protocol> protocols) {
-    if (sslSocket instanceof OpenSSLSocketImpl) {
-      OpenSSLSocketImpl i = (OpenSSLSocketImpl) sslSocket;
-
+    if (Conscrypt.isConscrypt(sslSocket)) {
       // Enable SNI and session tickets.
       if (hostname != null) {
-        i.setUseSessionTickets(true);
-        i.setHostname(hostname);
+        Conscrypt.setUseSessionTickets(sslSocket, true);
+        Conscrypt.setHostname(sslSocket, hostname);
       }
 
       // Enable ALPN.
       List<String> names = Platform.alpnProtocolNames(protocols);
-      i.setAlpnProtocols(names.toArray(new String[0]));
+      Conscrypt.setAlpnProtocols(sslSocket, names.toArray(new String[0]));
     } else {
       super.configureTlsExtensions(sslSocket, hostname, protocols);
     }
   }
 
   @Override public String getSelectedProtocol(SSLSocket sslSocket) {
-    if (sslSocket instanceof OpenSSLSocketImpl) {
-      OpenSSLSocketImpl i = (OpenSSLSocketImpl) sslSocket;
+    if (Conscrypt.isConscrypt(sslSocket)) {
+      String alpnResult = Conscrypt.getAlpnSelectedProtocol(sslSocket);
 
-      byte[] alpnResult = i.getAlpnSelectedProtocol();
-
-      return alpnResult != null ? new String(alpnResult, Util.UTF_8) : null;
+      return alpnResult != null ? alpnResult : null;
     } else {
       return super.getSelectedProtocol(sslSocket);
     }
@@ -100,8 +94,7 @@ public class ConscryptPlatform extends Platform {
         return null;
       }
 
-      // TODO consider checking for native library
-      Conscrypt.SocketFactories.setUseEngineSocketByDefault(true);
+      Conscrypt.setUseEngineSocketByDefault(true);
       return new ConscryptPlatform();
     } catch (ClassNotFoundException e) {
       return null;
