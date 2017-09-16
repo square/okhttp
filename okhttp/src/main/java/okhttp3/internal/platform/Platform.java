@@ -168,7 +168,6 @@ public class Platform {
     return new BasicCertificateChainCleaner(buildTrustRootIndex(trustManager));
   }
 
-
   public CertificateChainCleaner buildCertificateChainCleaner(SSLSocketFactory sslSocketFactory) {
     X509TrustManager trustManager = trustManager(sslSocketFactory);
 
