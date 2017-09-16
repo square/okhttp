@@ -85,7 +85,7 @@ public class Platform {
     return "OkHttp";
   }
 
-  public X509TrustManager trustManager(SSLSocketFactory sslSocketFactory) {
+  protected X509TrustManager trustManager(SSLSocketFactory sslSocketFactory) {
     // Attempt to get the trust manager from an OpenJDK socket factory. We attempt this on all
     // platforms in order to support Robolectric, which mixes classes from both Android and the
     // Oracle JDK. Note that we don't support HTTP/2 or other nice features on Robolectric.
@@ -165,6 +165,18 @@ public class Platform {
   }
 
   public CertificateChainCleaner buildCertificateChainCleaner(X509TrustManager trustManager) {
+    return new BasicCertificateChainCleaner(buildTrustRootIndex(trustManager));
+  }
+
+
+  public CertificateChainCleaner buildCertificateChainCleaner(SSLSocketFactory sslSocketFactory) {
+    X509TrustManager trustManager = trustManager(sslSocketFactory);
+
+    if (trustManager == null) {
+      throw new IllegalStateException("Unable to extract the trust manager on " + Platform.get()
+          + ", sslSocketFactory is " + sslSocketFactory.getClass());
+    }
+
     return new BasicCertificateChainCleaner(buildTrustRootIndex(trustManager));
   }
 

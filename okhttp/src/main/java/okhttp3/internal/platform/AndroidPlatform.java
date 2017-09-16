@@ -79,7 +79,7 @@ class AndroidPlatform extends Platform {
     }
   }
 
-  @Override public X509TrustManager trustManager(SSLSocketFactory sslSocketFactory) {
+  @Override protected X509TrustManager trustManager(SSLSocketFactory sslSocketFactory) {
     Object context = readFieldOrNull(sslSocketFactory, sslParametersClass, "sslParameters");
     if (context == null) {
       // If that didn't work, try the Google Play Services SSL provider before giving up. This
