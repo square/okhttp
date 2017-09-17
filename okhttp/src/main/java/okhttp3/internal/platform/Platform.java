@@ -176,7 +176,7 @@ public class Platform {
           + ", sslSocketFactory is " + sslSocketFactory.getClass());
     }
 
-    return new BasicCertificateChainCleaner(buildTrustRootIndex(trustManager));
+    return buildCertificateChainCleaner(trustManager);
   }
 
   /** Attempt to match the host runtime to a capable Platform implementation. */
