@@ -74,7 +74,7 @@ public final class Http1Codec implements HttpCodec {
   private static final int STATE_OPEN_RESPONSE_BODY = 4;
   private static final int STATE_READING_RESPONSE_BODY = 5;
   private static final int STATE_CLOSED = 6;
-  private static final int HEADER_LIMIT = Integer.getInteger("okhttp.headerlimit", 256 * 1024);
+  private static final int HEADER_LIMIT = 256 * 1024;
 
   /** The client that configures this stream. May be null for HTTPS proxy tunnels. */
   final OkHttpClient client;
