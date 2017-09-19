@@ -418,7 +418,7 @@ public final class Http1Codec implements HttpCodec {
     @Override public void close() throws IOException {
       if (closed) return;
 
-      if (bytesRemaining != 0 && !Util.discard(this, DISCARD_STREAM_TIMEOUT_MILLIS, MILLISECONDS)) {
+      if (bytesRemaining != 0 && !Util.discard(this, client.readaheadTimeout(), MILLISECONDS)) {
         endOfInput(false, null);
       }
 
@@ -481,7 +481,7 @@ public final class Http1Codec implements HttpCodec {
 
     @Override public void close() throws IOException {
       if (closed) return;
-      if (hasMoreChunks && !Util.discard(this, DISCARD_STREAM_TIMEOUT_MILLIS, MILLISECONDS)) {
+      if (hasMoreChunks && !Util.discard(this, client.readaheadTimeout(), MILLISECONDS)) {
         endOfInput(false, null);
       }
       closed = true;
