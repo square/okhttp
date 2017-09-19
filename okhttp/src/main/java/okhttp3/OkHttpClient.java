@@ -220,6 +220,7 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
   final int connectTimeout;
   final int readTimeout;
   final int writeTimeout;
+  final int readaheadTimeout;
   final int pingInterval;
 
   public OkHttpClient() {
@@ -267,6 +268,7 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
     this.connectTimeout = builder.connectTimeout;
     this.readTimeout = builder.readTimeout;
     this.writeTimeout = builder.writeTimeout;
+    this.readaheadTimeout = builder.readaheadTimeout;
     this.pingInterval = builder.pingInterval;
 
     if (interceptors.contains(null)) {
@@ -316,6 +318,11 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
   /** Default write timeout (in milliseconds). */
   public int writeTimeoutMillis() {
     return writeTimeout;
+  }
+
+  /** Default read-ahead timeout (in milliseconds). */
+  public int readaheadTimeout() {
+    return readaheadTimeout;
   }
 
   /** Web socket ping interval (in milliseconds). */
@@ -468,6 +475,7 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
     int connectTimeout;
     int readTimeout;
     int writeTimeout;
+    int readaheadTimeout;
     int pingInterval;
 
     public Builder() {
@@ -490,6 +498,7 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
       connectTimeout = 10_000;
       readTimeout = 10_000;
       writeTimeout = 10_000;
+      readaheadTimeout = 100;
       pingInterval = 0;
     }
 
@@ -520,6 +529,7 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
       this.connectTimeout = okHttpClient.connectTimeout;
       this.readTimeout = okHttpClient.readTimeout;
       this.writeTimeout = okHttpClient.writeTimeout;
+      this.readaheadTimeout = okHttpClient.readaheadTimeout;
       this.pingInterval = okHttpClient.pingInterval;
     }
 
@@ -548,6 +558,16 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
      */
     public Builder writeTimeout(long timeout, TimeUnit unit) {
       writeTimeout = checkDuration("timeout", timeout, unit);
+      return this;
+    }
+
+    /**
+     * The timeout to use while discarding a stream of input data. Since this is used for connection
+     * reuse, this timeout should be significantly less than the time it takes to establish a new
+     * connection. Values must be between 0 and {@link Integer#MAX_VALUE} when converted to milliseconds.
+     */
+    public Builder readaheadTimeout(long timeout, TimeUnit unit) {
+      readaheadTimeout = checkDuration("timeout", timeout, unit);
       return this;
     }
 
