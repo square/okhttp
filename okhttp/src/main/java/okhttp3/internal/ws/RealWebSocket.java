@@ -366,7 +366,7 @@ public final class RealWebSocket implements WebSocket, WebSocketReader.FrameCall
     @Override
     public synchronized void onWritePing() {
       if (pingSentPongNotReceived) {
-        failWebSocket(new IllegalStateException("Pong does not recieved!"), null);
+        failWebSocket(new IllegalStateException("Pong does not received!"), null);
       }
       pingSentPongNotReceived = true;
     }
