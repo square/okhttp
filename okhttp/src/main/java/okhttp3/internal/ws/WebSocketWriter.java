@@ -17,6 +17,7 @@ package okhttp3.internal.ws;
 
 import java.io.IOException;
 import java.util.Random;
+
 import okio.Buffer;
 import okio.BufferedSink;
 import okio.ByteString;
@@ -42,8 +43,15 @@ import static okhttp3.internal.ws.WebSocketProtocol.validateCloseCode;
  * <p>This class is not thread safe.
  */
 final class WebSocketWriter {
+
+  public interface FrameCallback {
+      void onWritePing();
+      void onWritePong();
+  }
+
   final boolean isClient;
   final Random random;
+  final WebSocketWriter.FrameCallback frameCallback;
 
   /** Writes must be guarded by synchronizing on 'this'. */
   final BufferedSink sink;
@@ -58,12 +66,14 @@ final class WebSocketWriter {
   final byte[] maskKey;
   final byte[] maskBuffer;
 
-  WebSocketWriter(boolean isClient, BufferedSink sink, Random random) {
+  WebSocketWriter(boolean isClient, BufferedSink sink, Random random, FrameCallback frameCallback) {
     if (sink == null) throw new NullPointerException("sink == null");
     if (random == null) throw new NullPointerException("random == null");
+    if (frameCallback == null) throw new NullPointerException("frameCallback == null");
     this.isClient = isClient;
     this.sink = sink;
     this.random = random;
+    this.frameCallback = frameCallback;
 
     // Masks are only a concern for client writers.
     maskKey = isClient ? new byte[4] : null;
@@ -73,11 +83,13 @@ final class WebSocketWriter {
   /** Send a ping with the supplied {@code payload}. */
   void writePing(ByteString payload) throws IOException {
     writeControlFrame(OPCODE_CONTROL_PING, payload);
+    frameCallback.onWritePing();
   }
 
   /** Send a pong with the supplied {@code payload}. */
   void writePong(ByteString payload) throws IOException {
     writeControlFrame(OPCODE_CONTROL_PONG, payload);
+    frameCallback.onWritePong();
   }
 
   /**
