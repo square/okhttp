@@ -136,7 +136,7 @@ public final class RealWebSocket implements WebSocket, WebSocketReader.FrameCall
   int pongCount;
 
   /** True if ping has been sent and pong is not received within some reasonable period.  */
-  private boolean pingSentPongNotRecived;
+  private boolean pingSentPongNotReceived;
 
   public RealWebSocket(Request request, WebSocketListener listener, Random random) {
     if (!"GET".equals(request.method())) {
@@ -333,7 +333,7 @@ public final class RealWebSocket implements WebSocket, WebSocketReader.FrameCall
   @Override public synchronized void onReadPong(ByteString buffer) {
     // This API doesn't expose pings.
     pongCount++;
-    pingSentPongNotRecived = false;
+    pingSentPongNotReceived = false;
   }
 
   @Override public void onReadClose(int code, String reason) {
@@ -365,10 +365,10 @@ public final class RealWebSocket implements WebSocket, WebSocketReader.FrameCall
 
     @Override
     public synchronized void onWritePing() {
-      if (pingSentPongNotRecived) {
+      if (pingSentPongNotReceived) {
         failWebSocket(new IllegalStateException("Pong does not recieved!"), null);
       }
-      pingSentPongNotRecived = true;
+      pingSentPongNotReceived = true;
     }
 
   @Override
