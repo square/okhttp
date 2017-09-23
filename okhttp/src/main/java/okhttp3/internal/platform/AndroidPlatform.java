@@ -15,6 +15,7 @@
  */
 package okhttp3.internal.platform;
 
+import android.os.Build;
 import android.util.Log;
 import java.io.IOException;
 import java.lang.reflect.Constructor;
@@ -76,6 +77,13 @@ class AndroidPlatform extends Platform {
       IOException ioException = new IOException("Exception in connect");
       ioException.initCause(e);
       throw ioException;
+    } catch (ClassCastException e) {
+      // On android 8.0, socket.connect throws a ClassCastException due to a bug
+      if (Build.VERSION.SDK_INT == 26) {
+        log(WARN, "Swallowed ClassCastException, see https://issuetracker.google.com/issues/63649622", e);
+      } else {
+        throw e;
+      }
     }
   }
 
