@@ -79,8 +79,11 @@ class AndroidPlatform extends Platform {
       throw ioException;
     } catch (ClassCastException e) {
       // On android 8.0, socket.connect throws a ClassCastException due to a bug
+      // see https://issuetracker.google.com/issues/63649622
       if (Build.VERSION.SDK_INT == 26) {
-        log(WARN, "Swallowed ClassCastException, see https://issuetracker.google.com/issues/63649622", e);
+        IOException ioException = new IOException("Exception in connect");
+        ioException.initCause(e);
+        throw ioException;
       } else {
         throw e;
       }
