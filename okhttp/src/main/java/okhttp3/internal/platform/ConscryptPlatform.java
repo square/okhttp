@@ -61,7 +61,7 @@ public class ConscryptPlatform extends Platform {
 
       // Enable ALPN.
       List<String> names = Platform.alpnProtocolNames(protocols);
-      Conscrypt.setAlpnProtocols(sslSocket, names.toArray(new String[0]));
+      Conscrypt.setApplicationProtocols(sslSocket, names.toArray(new String[0]));
     } else {
       super.configureTlsExtensions(sslSocket, hostname, protocols);
     }
@@ -69,7 +69,7 @@ public class ConscryptPlatform extends Platform {
 
   @Override public String getSelectedProtocol(SSLSocket sslSocket) {
     if (Conscrypt.isConscrypt(sslSocket)) {
-      String alpnResult = Conscrypt.getAlpnSelectedProtocol(sslSocket);
+      String alpnResult = Conscrypt.getApplicationProtocol(sslSocket);
 
       return alpnResult != null ? alpnResult : null;
     } else {
