@@ -54,7 +54,7 @@ If you are using ProGuard you might need to add the following options:
 -dontwarn okhttp3.**
 -dontwarn okio.**
 -dontwarn javax.annotation.**
--keep class okhttp3.internal.publicsuffix.PublicSuffixDatabase
+-keepnames class okhttp3.internal.publicsuffix.PublicSuffixDatabase
 ```
 
 License
