@@ -36,8 +36,10 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -708,6 +710,42 @@ public final class CallTest {
 
     assertEquals("INFO: Callback failure for call to " + server.url("/") + "...",
         logHandler.take());
+  }
+
+  @Test public void callbackCalledEvenIfRequestThrows() throws BrokenBarrierException, InterruptedException {
+    final RuntimeException exception = new RuntimeException("We should expect to be notified of this in our callback.");
+    final CyclicBarrier barrier = new CyclicBarrier(2);
+    OkHttpClient clientWithBogusInterceptor = client.newBuilder()
+            .addInterceptor(new Interceptor() {
+              @Override
+              public Response intercept(Chain chain) throws IOException {
+                throw exception;
+              }
+            })
+            .build();
+
+    Request request = new Request.Builder()
+            .url(server.url("/secret"))
+            .build();
+
+    clientWithBogusInterceptor.newCall(request).enqueue(new Callback() {
+      @Override public void onFailure(Call call, IOException e) {
+        if (e.getCause() == exception) {
+          try {
+            barrier.await();
+          } catch (InterruptedException e1) {
+            Thread.currentThread().interrupt();
+            throw new RuntimeException(e1);
+          } catch (BrokenBarrierException e1) {
+            throw new RuntimeException(e1);
+          }
+        }
+      }
+
+      @Override public void onResponse(Call call, Response response) throws IOException { }
+    });
+
+    barrier.await();
   }
 
   @Test public void connectionPooling() throws Exception {
