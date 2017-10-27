@@ -152,18 +152,29 @@ final class RealCall implements Call {
           signalledCallback = true;
           responseCallback.onResponse(RealCall.this, response);
         }
-      } catch (IOException e) {
+      } catch (Throwable t) {
+        IOException ioException = wrapWithIoException(t);
         if (signalledCallback) {
           // Do not signal the callback twice!
-          Platform.get().log(INFO, "Callback failure for " + toLoggableString(), e);
+          Platform.get().log(INFO, "Callback failure for " + toLoggableString(), ioException);
         } else {
-          eventListener.callFailed(RealCall.this, e);
-          responseCallback.onFailure(RealCall.this, e);
+          eventListener.callFailed(RealCall.this, ioException);
+          responseCallback.onFailure(RealCall.this, ioException);
         }
       } finally {
         client.dispatcher().finished(this);
       }
     }
+  }
+
+  private static IOException wrapWithIoException(Throwable throwable) {
+    if (throwable instanceof IOException) {
+      return (IOException) throwable;
+    }
+    return new IOException(
+            "Execution threw a throwable that's not an IOException. Wrapping "
+                   + "with an IOException to ensure we can report the failure to callbacks.",
+            throwable);
   }
 
   /**
