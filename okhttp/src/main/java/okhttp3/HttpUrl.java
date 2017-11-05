@@ -611,7 +611,7 @@ public final class HttpUrl {
   public @Nullable String encodedQuery() {
     if (queryNamesAndValues == null) return null; // No query.
     int queryStart = url.indexOf('?') + 1;
-    int queryEnd = delimiterOffset(url, queryStart + 1, url.length(), '#');
+    int queryEnd = delimiterOffset(url, queryStart, url.length(), '#');
     return url.substring(queryStart, queryEnd);
   }
 

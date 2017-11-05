@@ -1440,6 +1440,13 @@ public final class HttpUrlTest {
     assertEquals(" ", url.queryParameter(" "));
   }
 
+  @Test public void parsedQueryDoesntIncludeFragment() {
+    HttpUrl url = HttpUrl.parse("http://host/?#fragment");
+    assertEquals("fragment", url.fragment());
+    assertEquals("", url.query());
+    assertEquals("", url.encodedQuery());
+  }
+
   @Test public void roundTripBuilder() throws Exception {
     HttpUrl url = new HttpUrl.Builder()
         .scheme("http")
