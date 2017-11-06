@@ -15,6 +15,7 @@
  */
 package okhttp3;
 
+import java.net.IDN;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
@@ -22,6 +23,7 @@ import java.net.UnknownHostException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashSet;
+import java.util.regex.Pattern;
 import okhttp3.UrlComponentEncodingTester.Component;
 import okhttp3.UrlComponentEncodingTester.Encoding;
 import org.junit.Ignore;
@@ -29,7 +31,9 @@ import org.junit.Test;
 
 import static java.util.Collections.singletonList;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 public final class HttpUrlTest {
@@ -1513,5 +1517,98 @@ public final class HttpUrlTest {
     assertNull(HttpUrl.parse("https://xn--4pvxs.jp").topPrivateDomain());
     assertNull(HttpUrl.parse("https://localhost").topPrivateDomain());
     assertNull(HttpUrl.parse("https://127.0.0.1").topPrivateDomain());
+  }
+
+  @Test public void testDisplayStringPunyCodeNonIdentifier() {
+    HttpUrl url = HttpUrl.parse("http://☃.net/file.html");
+
+    assertEquals("xn--n3h.net", url.host());
+    assertEquals("xn--n3h.net", url.displayHost());
+    assertEquals("http://xn--n3h.net/file.html", url.toDisplayString());
+  }
+
+  @Test public void testDisplayStringPunyCodeChinese() {
+    HttpUrl url = HttpUrl.parse("http://她是這麼說的.net/file.html");
+
+    assertEquals("xn--1uss90anwmq5syggmvx.net", url.host());
+    assertEquals("她是這麼說的.net", url.displayHost());
+    assertEquals("http://她是這麼說的.net/file.html", url.toDisplayString());
+  }
+
+  @Test public void testDisplayStringPunyCodeLatin() {
+    HttpUrl url = HttpUrl.parse("http://en.wikipedia.org/file.html");
+
+    assertEquals("en.wikipedia.org", url.host());
+    assertEquals("en.wikipedia.org", url.displayHost());
+    assertEquals("http://en.wikipedia.org/file.html", url.toDisplayString());
+  }
+
+  @Test public void testDisplayStringPunyCodeRussian() {
+    HttpUrl url = HttpUrl.parse("http://правительство.рф/file.html");
+
+    assertEquals("xn--80aealotwbjpid2k.xn--p1ai", url
+        .host());
+    assertEquals("правительство.рф", url.displayHost());
+    assertEquals("http://правительство.рф/file.html", url.toDisplayString());
+  }
+
+  @Test public void testDisplayStringQueryParams() {
+    HttpUrl url = HttpUrl.parse("http://test.org/search?q=рф");
+
+    assertEquals("рф", url.queryParameter("q"));
+    assertEquals("q=%D1%80%D1%84", url.encodedQuery());
+    assertEquals("http://test.org/search?q=%D1%80%D1%84", url.toString());
+    // TODO display the unencoded params and values
+    assertEquals("http://test.org/search?q=рф", url.toDisplayString());
+  }
+
+  @Test public void testDisplayStringPunyCodeGreek() {
+    HttpUrl url = HttpUrl.parse("http://ακρόπολητώρα.org/file.html");
+
+    assertEquals("xn--mxaarlfxghe3a7f3a.org", url.host());
+    assertEquals("ακρόπολητώρα.org", url.displayHost());
+    assertEquals("http://ακρόπολητώρα.org/file.html", url.toDisplayString());
+  }
+
+  @Test public void testDisplayStringPunyCodeGreekLatinMix() {
+    HttpUrl url = HttpUrl.parse("http://wіkіреdіа.org/file.html");
+
+    assertEquals("xn--wkd-8cdx9d7hbd.org", url.host());
+    assertEquals("xn--wkd-8cdx9d7hbd.org", url.displayHost());
+    assertEquals("http://xn--wkd-8cdx9d7hbd.org/file.html", url.toDisplayString());
+  }
+
+  @Test public void testDisplayStringReversible() {
+    assertReversible("http://她是這麼說的.net/file.html", "她是這麼說的");
+    assertReversible("http://en.wikipedia.org/file.html", "en.wikipedia.org");
+    assertReversible("http://правительство.рф/file.html", "правительство.рф");
+    assertReversible("http://ακρόπολητώρα.org/file.html", "ακρόπολητώρα.org");
+
+    assertReversible("http://☃.net/file.html", "");
+    // mixed characters in wikipedia
+    assertReversible("http://wіkіреdіа.org/file.html", "");
+
+    assertReversible("http://правительство.рф/search?q=рф", "правительство.рф");
+    assertReversible("http://en.wikipedia.org/search?q", "q");
+    assertReversible("http://en.wikipedia.org/search?q=a b", "q=a b");
+    // TODO how to handle?
+    //assertReversible("http://en.wikipedia.org/search?q=a+b", "q=a b");
+    //assertReversible("http://en.wikipedia.org/search?q=a%20b", "q=a%20b");
+  }
+
+  private void assertReversible(String originalUrlString, String toStringCheck) {
+    HttpUrl originalUrl = HttpUrl.parse(originalUrlString);
+
+    String urlToString = originalUrl.toString();
+    String urlToDisplayString = originalUrl.toDisplayString();
+
+    assertTrue("Couldn't find pattern '" + toStringCheck + "' in '" + urlToDisplayString + "'",
+        Pattern.compile(toStringCheck).matcher(urlToDisplayString).find());
+
+    HttpUrl reparsedUrl = HttpUrl.parse(urlToString);
+    HttpUrl reparsedDisplayUrl = HttpUrl.parse(urlToDisplayString);
+
+    assertEquals(originalUrl, reparsedUrl);
+    assertEquals(originalUrl, reparsedDisplayUrl);
   }
 }

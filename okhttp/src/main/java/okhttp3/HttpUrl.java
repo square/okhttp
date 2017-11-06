@@ -15,6 +15,7 @@
  */
 package okhttp3;
 
+import java.net.IDN;
 import java.net.InetAddress;
 import java.net.MalformedURLException;
 import java.net.URI;
@@ -30,6 +31,7 @@ import java.util.Set;
 import javax.annotation.Nullable;
 import okhttp3.internal.Util;
 import okhttp3.internal.publicsuffix.PublicSuffixDatabase;
+import okhttp3.internal.punycode.Punycode;
 import okio.Buffer;
 
 import static okhttp3.internal.Util.decodeHexDigit;
@@ -37,6 +39,7 @@ import static okhttp3.internal.Util.delimiterOffset;
 import static okhttp3.internal.Util.skipLeadingAsciiWhitespace;
 import static okhttp3.internal.Util.skipTrailingAsciiWhitespace;
 import static okhttp3.internal.Util.verifyAsIpAddress;
+import static okhttp3.internal.punycode.Punycode.isDisplaySafe;
 
 /**
  * A uniform resource locator (URL) with a scheme of either {@code http} or {@code https}. Use this
@@ -973,6 +976,44 @@ public final class HttpUrl {
     return PublicSuffixDatabase.get().getEffectiveTldPlusOne(host);
   }
 
+  public static String displayHost(Builder.DisplayMode displayMode, String host) {
+    switch (displayMode) {
+      case SAFE:
+        String unicodeHost = IDN.toUnicode(host, 0);
+        if (unicodeHost.equals(host)) {
+          return host;
+        }
+        return isDisplaySafe(unicodeHost) ? unicodeHost : host;
+      case UNICODE:
+        return IDN.toUnicode(host, 0);
+      default:
+        return host;
+    }
+  }
+
+  /**
+   * Returns the unicode host if the host is considered IDN safe.
+   *
+   * @see Punycode#isDisplaySafe(String)
+   * @return unicode host if safe, punycode otherwise
+   */
+  public String displayHost() {
+    return displayHost(Builder.DisplayMode.SAFE, host);
+  }
+
+  /**
+   * Returns a safe version of the HttpUrl as a string that will always return an equal
+   * instance when passed back into {@link #parse(String)}.  The host may be left as punycode
+   * if the host is not known to be safe e.g. may contain a confusing mix of unicode blocks.
+   *
+   * <p>This string is generally the form the user would expect to see in a browser location bar.
+   *
+   * @return an equivalent string represention to the original url String.
+   */
+  public String toDisplayString() {
+    return this.newBuilder().toDisplayString();
+  }
+
   public static final class Builder {
     @Nullable String scheme;
     String encodedUsername = "";
@@ -1266,6 +1307,10 @@ public final class HttpUrl {
     }
 
     @Override public String toString() {
+      return toString(DisplayMode.RAW);
+    }
+
+    private String toString(DisplayMode displayMode) {
       StringBuilder result = new StringBuilder();
       result.append(scheme);
       result.append("://");
@@ -1285,7 +1330,7 @@ public final class HttpUrl {
         result.append(host);
         result.append(']');
       } else {
-        result.append(host);
+        result.append(displayHost(displayMode, host));
       }
 
       int effectivePort = effectivePort();
@@ -1298,7 +1343,12 @@ public final class HttpUrl {
 
       if (encodedQueryNamesAndValues != null) {
         result.append('?');
-        namesAndValuesToQueryString(result, encodedQueryNamesAndValues);
+        if (displayMode != DisplayMode.RAW) {
+          List<String> decoded = percentDecode(encodedQueryNamesAndValues, true);
+          namesAndValuesToQueryString(result, decoded);
+        } else {
+          namesAndValuesToQueryString(result, encodedQueryNamesAndValues);
+        }
       }
 
       if (encodedFragment != null) {
@@ -1307,6 +1357,16 @@ public final class HttpUrl {
       }
 
       return result.toString();
+    }
+
+    public String toDisplayString() {
+      return toString(DisplayMode.SAFE);
+    }
+
+    enum DisplayMode {
+      RAW,
+      SAFE,
+      UNICODE
     }
 
     enum ParseResult {
@@ -1608,7 +1668,7 @@ public final class HttpUrl {
     return percentDecode(encoded, 0, encoded.length(), plusIsSpace);
   }
 
-  private List<String> percentDecode(List<String> list, boolean plusIsSpace) {
+  private static List<String> percentDecode(List<String> list, boolean plusIsSpace) {
     int size = list.size();
     List<String> result = new ArrayList<>(size);
     for (int i = 0; i < size; i++) {
