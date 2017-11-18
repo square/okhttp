@@ -1,6 +1,17 @@
 Change Log
 ==========
 
+## Version 3.9.1
+
+_2017-11-18_
+
+ *  New: Recover gracefully when Android's DNS crashes with an unexpected
+    `NullPointerException`.
+ *  New: Recover gracefully when Android's socket connections crash with an
+    unexpected `ClassCastException`.
+ *  Fix: Don't include the URL's fragment in `encodedQuery()` when the query
+    itself is empty.
+
 ## Version 3.9.0
 
 _2017-09-03_
