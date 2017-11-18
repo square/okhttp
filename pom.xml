@@ -570,5 +570,23 @@
         <alpn.jdk8.version>8.1.11.v20170118</alpn.jdk8.version>
       </properties>
     </profile>
+    <profile>
+      <id>alpn-when-jdk8_151</id>
+      <activation>
+        <jdk>1.8.0_151</jdk>
+      </activation>
+      <properties>
+        <alpn.jdk8.version>8.1.11.v20170118</alpn.jdk8.version>
+      </properties>
+    </profile>
+    <profile>
+      <id>alpn-when-jdk8_152</id>
+      <activation>
+        <jdk>1.8.0_152</jdk>
+      </activation>
+      <properties>
+        <alpn.jdk8.version>8.1.11.v20170118</alpn.jdk8.version>
+      </properties>
+    </profile>
   </profiles>
 </project>
