@@ -1871,6 +1871,25 @@ public final class CallTest {
         .assertFailure("HTTP 205 had non-zero Content-Length: 39");
   }
 
+  @Test public void httpWithExcessiveHeaders() throws IOException {
+    String longLine = "HTTP/1.1 200 " + stringFill('O', 256 * 1024) + "K";
+
+    server.setProtocols(Collections.singletonList(Protocol.HTTP_1_1));
+
+    server.enqueue(new MockResponse()
+        .setStatus(longLine)
+        .setBody("I'm not even supposed to be here today."));
+
+    executeSynchronously("/")
+        .assertFailureMatches(".*unexpected end of stream on Connection.*");
+  }
+
+  private String stringFill(char fillChar, int length) {
+    char[] value = new char[length];
+    Arrays.fill(value, fillChar);
+    return new String(value);
+  }
+
   @Test public void canceledBeforeExecute() throws Exception {
     Call call = client.newCall(new Request.Builder().url(server.url("/a")).build());
     call.cancel();
