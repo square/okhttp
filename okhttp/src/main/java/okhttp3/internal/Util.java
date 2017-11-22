@@ -479,7 +479,13 @@ public final class Util {
   }
 
   public static AssertionError assertionError(String message, Exception e) {
-    return (AssertionError) new AssertionError(message).initCause(e);
+    AssertionError assertionError = new AssertionError(message);
+    try {
+      assertionError.initCause(e);
+    } catch (IllegalStateException ise) {
+      // ignored, shouldn't happen
+    }
+    return assertionError;
   }
 
   public static int decodeHexDigit(char c) {
