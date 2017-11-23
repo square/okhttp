@@ -101,8 +101,16 @@ public final class CacheInterceptor implements Interceptor {
     // If we have a cache response too, then we're doing a conditional get.
     if (cacheResponse != null) {
       if (networkResponse.code() == HTTP_NOT_MODIFIED) {
+        Headers.Builder newResponseHeadersBuilder = combine(cacheResponse.headers(), networkResponse.headers()).newBuilder();
+
+        // If we have Content-Encoding IN the new response, but NOT in the old response our response body will be broken
+        // that's why we ignore the new Content-Encoding header. See https://github.com/square/okhttp/pull/3700 for more information.
+        if (!cacheResponse.headers().names().contains("Content-Encoding")) {
+          newResponseHeadersBuilder.removeAll("Content-Encoding");
+        }
+
         Response response = cacheResponse.newBuilder()
-            .headers(combine(cacheResponse.headers(), networkResponse.headers()))
+            .headers(newResponseHeadersBuilder.build())
             .sentRequestAtMillis(networkResponse.sentRequestAtMillis())
             .receivedResponseAtMillis(networkResponse.receivedResponseAtMillis())
             .cacheResponse(stripBody(cacheResponse))
