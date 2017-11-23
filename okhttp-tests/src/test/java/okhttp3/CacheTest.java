@@ -1036,10 +1036,12 @@ public final class CacheTest {
   @Test public void previouslyNotGzippedContentIsNotModifiedAndSpecifiesGzipEncoding() throws Exception {
     server.enqueue(new MockResponse()
             .setBody("ABCABCABC")
+            .addHeader("Content-Type: text/plain")
             .addHeader("Last-Modified: " + formatDate(-2, TimeUnit.HOURS))
             .addHeader("Expires: " + formatDate(-1, TimeUnit.HOURS)));
     server.enqueue(new MockResponse()
             .setResponseCode(HttpURLConnection.HTTP_NOT_MODIFIED)
+            .addHeader("Content-Type: text/plain")
             .addHeader("Content-Encoding: gzip"));
     server.enqueue(new MockResponse()
             .setBody("DEFDEFDEF"));
