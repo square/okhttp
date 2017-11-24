@@ -224,7 +224,8 @@ public final class CacheInterceptor implements Interceptor {
       if ("Warning".equalsIgnoreCase(fieldName) && value.startsWith("1")) {
         continue; // Drop 100-level freshness warnings.
       }
-      if (!isNotContentSpecificHeader(fieldName) || !isEndToEnd(fieldName) || networkHeaders.get(fieldName) == null) {
+      if (!isNotContentSpecificHeader(fieldName) || !isEndToEnd(fieldName)
+              || networkHeaders.get(fieldName) == null) {
         Internal.instance.addLenient(result, fieldName, value);
       }
     }
@@ -256,7 +257,7 @@ public final class CacheInterceptor implements Interceptor {
 
   /**
    * Returns true if {@code fieldName} should be ignored, when combining cache headers with
-   * network headers
+   * network headers.
    */
   static boolean isNotContentSpecificHeader(String fieldName) {
     return !"Content-Length".equalsIgnoreCase(fieldName)
