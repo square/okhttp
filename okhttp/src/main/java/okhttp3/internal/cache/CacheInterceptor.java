@@ -101,23 +101,8 @@ public final class CacheInterceptor implements Interceptor {
     // If we have a cache response too, then we're doing a conditional get.
     if (cacheResponse != null) {
       if (networkResponse.code() == HTTP_NOT_MODIFIED) {
-        Headers.Builder newResponseHeadersBuilder = combine(
-            cacheResponse.headers(),
-            networkResponse.headers()
-        ).newBuilder();
-
-        // If we have Content-Encoding IN the new response, but NOT in the old response our
-        // response body will be broken that's why we ignore the new Content-Encoding header. See
-        // https://github.com/square/okhttp/pull/3700 for more information.
-        String cachedContentEncoding = cacheResponse.headers().get("Content-Encoding");
-        if (cachedContentEncoding == null) {
-          newResponseHeadersBuilder.removeAll("Content-Encoding");
-        } else {
-          newResponseHeadersBuilder.set("Content-Encoding", cachedContentEncoding);
-        }
-
         Response response = cacheResponse.newBuilder()
-            .headers(newResponseHeadersBuilder.build())
+            .headers(combine(cacheResponse.headers(), networkResponse.headers()))
             .sentRequestAtMillis(networkResponse.sentRequestAtMillis())
             .receivedResponseAtMillis(networkResponse.receivedResponseAtMillis())
             .cacheResponse(stripBody(cacheResponse))
@@ -239,17 +224,14 @@ public final class CacheInterceptor implements Interceptor {
       if ("Warning".equalsIgnoreCase(fieldName) && value.startsWith("1")) {
         continue; // Drop 100-level freshness warnings.
       }
-      if (!isEndToEnd(fieldName) || networkHeaders.get(fieldName) == null) {
+      if (!isNotContentSpecificHeader(fieldName) || !isEndToEnd(fieldName) || networkHeaders.get(fieldName) == null) {
         Internal.instance.addLenient(result, fieldName, value);
       }
     }
 
     for (int i = 0, size = networkHeaders.size(); i < size; i++) {
       String fieldName = networkHeaders.name(i);
-      if ("Content-Length".equalsIgnoreCase(fieldName)) {
-        continue; // Ignore content-length headers of validating responses.
-      }
-      if (isEndToEnd(fieldName)) {
+      if (isNotContentSpecificHeader(fieldName) && isEndToEnd(fieldName)) {
         Internal.instance.addLenient(result, fieldName, networkHeaders.value(i));
       }
     }
@@ -270,5 +252,15 @@ public final class CacheInterceptor implements Interceptor {
         && !"Trailers".equalsIgnoreCase(fieldName)
         && !"Transfer-Encoding".equalsIgnoreCase(fieldName)
         && !"Upgrade".equalsIgnoreCase(fieldName);
+  }
+
+  /**
+   * Returns true if {@code fieldName} should be ignored, when combining cache headers with
+   * network headers
+   */
+  static boolean isNotContentSpecificHeader(String fieldName) {
+    return !"Content-Length".equalsIgnoreCase(fieldName)
+        && !"Content-Encoding".equalsIgnoreCase(fieldName)
+        && !"Content-Type".equalsIgnoreCase(fieldName);
   }
 }
