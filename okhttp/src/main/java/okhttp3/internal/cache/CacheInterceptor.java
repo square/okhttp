@@ -101,7 +101,10 @@ public final class CacheInterceptor implements Interceptor {
     // If we have a cache response too, then we're doing a conditional get.
     if (cacheResponse != null) {
       if (networkResponse.code() == HTTP_NOT_MODIFIED) {
-        Headers.Builder newResponseHeadersBuilder = combine(cacheResponse.headers(), networkResponse.headers()).newBuilder();
+        Headers.Builder newResponseHeadersBuilder = combine(
+            cacheResponse.headers(),
+            networkResponse.headers()
+        ).newBuilder();
 
         // If we have Content-Encoding IN the new response, but NOT in the old response our
         // response body will be broken that's why we ignore the new Content-Encoding header. See
