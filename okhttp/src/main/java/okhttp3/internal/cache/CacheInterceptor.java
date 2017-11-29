@@ -256,7 +256,7 @@ public final class CacheInterceptor implements Interceptor {
   }
 
   /**
-   * Returns true if {@code fieldName} is content specific and therefor should always be used
+   * Returns true if {@code fieldName} is content specific and therefore should always be used
    * from cached headers.
    */
   static boolean isContentSpecificHeader(String fieldName) {
