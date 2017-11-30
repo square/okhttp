@@ -342,7 +342,7 @@
         <dependency>
           <groupId>org.conscrypt</groupId>
           <artifactId>conscrypt-openjdk-uber</artifactId>
-          <version>1.0.0.RC12</version>
+          <version>1.0.0.RC13</version>
           <scope>provided</scope>
         </dependency>
       </dependencies>
