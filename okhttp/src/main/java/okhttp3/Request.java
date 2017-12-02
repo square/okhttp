@@ -54,7 +54,7 @@ public final class Request {
     return headers;
   }
 
-  public String header(String name) {
+  public @Nullable String header(String name) {
     return headers.get(name);
   }
 
