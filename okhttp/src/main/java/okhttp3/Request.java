@@ -31,6 +31,7 @@ public final class Request {
   final Headers headers;
   final @Nullable RequestBody body;
   final Object tag;
+  final String sni;
 
   private volatile CacheControl cacheControl; // Lazily initialized.
 
@@ -39,6 +40,7 @@ public final class Request {
     this.method = builder.method;
     this.headers = builder.headers.build();
     this.body = builder.body;
+    this.sni = builder.sni;
     this.tag = builder.tag != null ? builder.tag : this;
   }
 
@@ -96,9 +98,14 @@ public final class Request {
         + (tag != this ? tag : null)
         + '}';
   }
+  
+  public String sni() {
+    return sni;
+  }
 
   public static class Builder {
-    HttpUrl url;
+    String sni;
+	HttpUrl url;
     String method;
     Headers.Builder headers;
     RequestBody body;
@@ -254,6 +261,11 @@ public final class Request {
     public Request build() {
       if (url == null) throw new IllegalStateException("url == null");
       return new Request(this);
+    }
+      
+    public Builder sni(String sni) {
+      this.sni = sni;
+      return this;
     }
   }
 }

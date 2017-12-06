@@ -265,7 +265,7 @@ public final class RealConnection extends Http2Connection.Listener implements Co
     }
 
     eventListener.secureConnectStart(call);
-    connectTls(connectionSpecSelector);
+    connectTls(connectionSpecSelector, call);
     eventListener.secureConnectEnd(call, handshake);
 
     if (protocol == Protocol.HTTP_2) {
@@ -278,7 +278,7 @@ public final class RealConnection extends Http2Connection.Listener implements Co
     }
   }
 
-  private void connectTls(ConnectionSpecSelector connectionSpecSelector) throws IOException {
+  private void connectTls(ConnectionSpecSelector connectionSpecSelector, Call call) throws IOException {
     Address address = route.address();
     SSLSocketFactory sslSocketFactory = address.sslSocketFactory();
     boolean success = false;
@@ -291,8 +291,14 @@ public final class RealConnection extends Http2Connection.Listener implements Co
       // Configure the socket's ciphers, TLS versions, and extensions.
       ConnectionSpec connectionSpec = connectionSpecSelector.configureSecureSocket(sslSocket);
       if (connectionSpec.supportsTlsExtensions()) {
+        String proxyHost = address.url().host();
+        
+        if (null != call.request().sni() && !call.request().sni().isEmpty()) {
+        	proxyHost = call.request().sni();
+        }
+
         Platform.get().configureTlsExtensions(
-            sslSocket, address.url().host(), address.protocols());
+            sslSocket, proxyHost, address.protocols());
       }
 
       // Force handshake. This can throw!
