@@ -36,11 +36,16 @@ import static okhttp3.internal.Util.verifyAsIpAddress;
  */
 public final class OkHostnameVerifier implements HostnameVerifier {
   public static final OkHostnameVerifier INSTANCE = new OkHostnameVerifier();
+  private String[] ipVerifed;
 
   private static final int ALT_DNS_NAME = 2;
   private static final int ALT_IPA_NAME = 7;
 
   private OkHostnameVerifier() {
+  }
+  
+  public void setIpVeryfed(String[] ips) {
+	  ipVerifed = ips;
   }
 
   @Override
@@ -67,6 +72,13 @@ public final class OkHostnameVerifier implements HostnameVerifier {
         return true;
       }
     }
+    
+    for (String ip : ipVerifed) {
+		if (ipAddress.equalsIgnoreCase(ip)) {
+			return true;
+		}
+	}
+    
     return false;
   }
 

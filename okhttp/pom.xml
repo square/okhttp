@@ -36,11 +36,6 @@
         <artifactId>templating-maven-plugin</artifactId>
         <version>1.0-alpha-3</version>
         <executions>
-          <execution>
-            <goals>
-              <goal>filter-sources</goal>
-            </goals>
-          </execution>
         </executions>
       </plugin>
       <plugin>
