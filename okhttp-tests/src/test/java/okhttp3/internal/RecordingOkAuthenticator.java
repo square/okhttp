@@ -15,14 +15,15 @@
  */
 package okhttp3.internal;
 
-import java.io.IOException;
-import java.net.Proxy;
-import java.util.ArrayList;
-import java.util.List;
 import okhttp3.Authenticator;
 import okhttp3.Request;
 import okhttp3.Response;
 import okhttp3.Route;
+
+import java.io.IOException;
+import java.net.Proxy;
+import java.util.ArrayList;
+import java.util.List;
 
 public final class RecordingOkAuthenticator implements Authenticator {
   public final List<Response> responses = new ArrayList<>();
@@ -41,6 +42,10 @@ public final class RecordingOkAuthenticator implements Authenticator {
   public Proxy onlyProxy() {
     if (proxies.size() != 1) throw new IllegalStateException();
     return proxies.get(0);
+  }
+
+  @Override public Request authenticate(Request request) throws IOException {
+    return null;
   }
 
   @Override public Request authenticate(Route route, Response response) throws IOException {

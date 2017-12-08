@@ -396,13 +396,18 @@ public final class RealConnection extends Http2Connection.Listener implements Co
    * is sent unencrypted to the proxy server, so tunnels include only the minimum set of headers.
    * This avoids sending potentially sensitive data like HTTP cookies to the proxy unencrypted.
    */
-  private Request createTunnelRequest() {
-    return new Request.Builder()
+  private Request createTunnelRequest() throws IOException {
+    Request request = new Request.Builder()
         .url(route.address().url())
         .header("Host", Util.hostHeader(route.address().url(), true))
         .header("Proxy-Connection", "Keep-Alive") // For HTTP/1.0 proxies like Squid.
         .header("User-Agent", Version.userAgent())
         .build();
+    Request authenticateRequest = route.address().proxyAuthenticator().authenticate(request);
+    if (authenticateRequest == null) {
+      return request;
+    }
+    return authenticateRequest;
   }
 
   /**

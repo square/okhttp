@@ -15,7 +15,6 @@
  */
 package okhttp3.recipes;
 
-import java.io.IOException;
 import okhttp3.Authenticator;
 import okhttp3.Credentials;
 import okhttp3.OkHttpClient;
@@ -23,12 +22,18 @@ import okhttp3.Request;
 import okhttp3.Response;
 import okhttp3.Route;
 
+import java.io.IOException;
+
 public final class Authenticate {
   private final OkHttpClient client;
 
   public Authenticate() {
     client = new OkHttpClient.Builder()
         .authenticator(new Authenticator() {
+          @Override public Request authenticate(Request request) throws IOException {
+            return null;
+          }
+
           @Override public Request authenticate(Route route, Response response) throws IOException {
             if (response.request().header("Authorization") != null) {
               return null; // Give up, we've already attempted to authenticate.

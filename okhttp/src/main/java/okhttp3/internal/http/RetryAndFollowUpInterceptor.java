@@ -15,17 +15,6 @@
  */
 package okhttp3.internal.http;
 
-import java.io.IOException;
-import java.io.InterruptedIOException;
-import java.net.HttpRetryException;
-import java.net.ProtocolException;
-import java.net.Proxy;
-import java.net.SocketTimeoutException;
-import java.security.cert.CertificateException;
-import javax.net.ssl.HostnameVerifier;
-import javax.net.ssl.SSLHandshakeException;
-import javax.net.ssl.SSLPeerUnverifiedException;
-import javax.net.ssl.SSLSocketFactory;
 import okhttp3.Address;
 import okhttp3.Call;
 import okhttp3.CertificatePinner;
@@ -41,6 +30,18 @@ import okhttp3.Route;
 import okhttp3.internal.connection.RouteException;
 import okhttp3.internal.connection.StreamAllocation;
 import okhttp3.internal.http2.ConnectionShutdownException;
+
+import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.SSLHandshakeException;
+import javax.net.ssl.SSLPeerUnverifiedException;
+import javax.net.ssl.SSLSocketFactory;
+import java.io.IOException;
+import java.io.InterruptedIOException;
+import java.net.HttpRetryException;
+import java.net.ProtocolException;
+import java.net.Proxy;
+import java.net.SocketTimeoutException;
+import java.security.cert.CertificateException;
 
 import static java.net.HttpURLConnection.HTTP_CLIENT_TIMEOUT;
 import static java.net.HttpURLConnection.HTTP_MOVED_PERM;
@@ -102,8 +103,23 @@ public final class RetryAndFollowUpInterceptor implements Interceptor {
     return streamAllocation;
   }
 
-  @Override public Response intercept(Chain chain) throws IOException {
+  @Override public Response intercept(Interceptor.Chain chain) throws IOException {
     Request request = chain.request();
+
+    // HTTP Authentication
+    Request authenticateRequest = client.authenticator().authenticate(request);
+    if (authenticateRequest != null) {
+      request = authenticateRequest;
+    }
+
+    // HTTP Proxy-Authentication
+    if (client.proxy() != null && "http".equals(request.url().scheme())) {
+      Request proxyAuthenticateRequest = client.proxyAuthenticator().authenticate(request);
+      if (proxyAuthenticateRequest != null) {
+        request = proxyAuthenticateRequest;
+      }
+    }
+
     RealInterceptorChain realChain = (RealInterceptorChain) chain;
     Call call = realChain.call();
     EventListener eventListener = realChain.eventListener();

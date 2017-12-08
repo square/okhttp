@@ -15,8 +15,8 @@
  */
 package okhttp3;
 
-import java.io.IOException;
 import javax.annotation.Nullable;
+import java.io.IOException;
 
 /**
  * Responds to an authentication challenge from either a remote web server or a proxy server.
@@ -28,24 +28,30 @@ import javax.annotation.Nullable;
  * authenticate. If so it is likely that further attempts will not be useful and the authenticator
  * should give up.
  *
+ * <p></p>
+ *
  * <p>When authentication is requested by an origin server, the response code is 401 and the
  * implementation should respond with a new request that sets the "Authorization" header.
  * <pre>   {@code
  *
- *    if (response.request().header("Authorization") != null) {
- *      return null; // Give up, we've already failed to authenticate.
- *    }
+ *  Request authenticate(Route route, Response response) {
+ *      if (response.request().header("Authorization") != null) {
+ *        return null; // Give up, we've already failed to authenticate.
+ *      }
  *
- *    String credential = Credentials.basic(...)
- *    return response.request().newBuilder()
- *        .header("Authorization", credential)
- *        .build();
+ *      String credential = Credentials.basic(...)
+ *        return response.request().newBuilder()
+ *          .header("Authorization", credential)
+ *          .build();
+ *  }
+ *
  * }</pre>
  *
  * <p>When authentication is requested by a proxy server, the response code is 407 and the
  * implementation should respond with a new request that sets the "Proxy-Authorization" header.
  * <pre>   {@code
  *
+ *  Request authenticate(Route route, Response response) {
  *    if (response.request().header("Proxy-Authorization") != null) {
  *      return null; // Give up, we've already failed to authenticate.
  *    }
@@ -54,6 +60,8 @@ import javax.annotation.Nullable;
  *    return response.request().newBuilder()
  *        .header("Proxy-Authorization", credential)
  *        .build();
+ *  }
+ *
  * }</pre>
  *
  * <p>Applications may configure OkHttp with an authenticator for origin servers, or proxy servers,
@@ -62,10 +70,20 @@ import javax.annotation.Nullable;
 public interface Authenticator {
   /** An authenticator that knows no credentials and makes no attempt to authenticate. */
   Authenticator NONE = new Authenticator() {
+    @Override public Request authenticate(Request request) {
+      return null;
+    }
+
     @Override public Request authenticate(Route route, Response response) {
       return null;
     }
   };
+
+  /**
+   * Returns a tunnel request if a TLS tunnel via an HTTP proxy. Returns a request before
+   * connect socket. Returns null if no authentication.
+   */
+  @Nullable Request authenticate(Request request) throws IOException;
 
   /**
    * Returns a request that includes a credential to satisfy an authentication challenge in {@code

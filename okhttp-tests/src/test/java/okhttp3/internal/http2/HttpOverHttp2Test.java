@@ -15,21 +15,6 @@
  */
 package okhttp3.internal.http2;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.Authenticator;
-import java.net.HttpURLConnection;
-import java.net.SocketTimeoutException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.SynchronousQueue;
-import javax.net.ssl.HostnameVerifier;
 import okhttp3.Cache;
 import okhttp3.Call;
 import okhttp3.Callback;
@@ -73,6 +58,22 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
+import javax.net.ssl.HostnameVerifier;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.Authenticator;
+import java.net.HttpURLConnection;
+import java.net.SocketTimeoutException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.SynchronousQueue;
+
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static okhttp3.TestUtil.defaultClient;
@@ -84,7 +85,8 @@ import static org.junit.Assert.fail;
 
 /** Test how SPDY interacts with HTTP/2 features. */
 public final class HttpOverHttp2Test {
-  @Rule public final TemporaryFolder tempDir = new TemporaryFolder();
+  @Rule
+  public final TemporaryFolder tempDir = new TemporaryFolder();
   @Rule public final MockWebServer server = new MockWebServer();
 
   private SslClient sslClient = SslClient.localhost();
@@ -753,6 +755,10 @@ public final class HttpOverHttp2Test {
     final CountDownLatch latch = new CountDownLatch(1);
     final BlockingQueue<String> responses = new SynchronousQueue<>();
     okhttp3.Authenticator authenticator = new okhttp3.Authenticator() {
+      @Override public Request authenticate(Request request) throws IOException {
+        return null;
+      }
+
       @Override public Request authenticate(Route route, Response response) throws IOException {
         responses.offer(response.body().string());
         try {

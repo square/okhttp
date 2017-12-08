@@ -15,11 +15,6 @@
  */
 package okhttp3.internal.connection;
 
-import java.io.IOException;
-import java.lang.ref.Reference;
-import java.lang.ref.WeakReference;
-import java.net.Socket;
-import java.util.List;
 import okhttp3.Address;
 import okhttp3.Call;
 import okhttp3.Connection;
@@ -34,6 +29,12 @@ import okhttp3.internal.http.HttpCodec;
 import okhttp3.internal.http2.ConnectionShutdownException;
 import okhttp3.internal.http2.ErrorCode;
 import okhttp3.internal.http2.StreamResetException;
+
+import java.io.IOException;
+import java.lang.ref.Reference;
+import java.lang.ref.WeakReference;
+import java.net.Socket;
+import java.util.List;
 
 import static okhttp3.internal.Util.closeQuietly;
 
@@ -220,8 +221,7 @@ public final class StreamAllocation {
         // Now that we have a set of IP addresses, make another attempt at getting a connection from
         // the pool. This could match due to connection coalescing.
         List<Route> routes = routeSelection.getAll();
-        for (int i = 0, size = routes.size(); i < size; i++) {
-          Route route = routes.get(i);
+        for (Route route : routes) {
           Internal.instance.get(connectionPool, address, this, route);
           if (connection != null) {
             foundPooledConnection = true;
