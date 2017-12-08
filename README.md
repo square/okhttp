@@ -16,7 +16,7 @@ Download [the latest JAR][3] or grab via Maven:
 ```
 or Gradle:
 ```groovy
-compile 'com.squareup.okhttp3:okhttp:3.9.1'
+implementation 'com.squareup.okhttp3:okhttp:3.9.1'
 ```
 
 Snapshots of the development version are available in [Sonatype's `snapshots` repository][snap].
