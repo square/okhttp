@@ -60,7 +60,6 @@ import okhttp3.Response;
 import okhttp3.internal.Internal;
 import okhttp3.internal.NamedRunnable;
 import okhttp3.internal.Util;
-import okhttp3.internal.http.HttpMethod;
 import okhttp3.internal.http2.ErrorCode;
 import okhttp3.internal.http2.Header;
 import okhttp3.internal.http2.Http2Connection;
