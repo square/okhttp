@@ -604,15 +604,12 @@ public final class MockWebServer extends ExternalResource implements Closeable {
       sink.flush();
     }
 
-    boolean hasBody = false;
     TruncatingBuffer requestBody = new TruncatingBuffer(bodyLimit);
     List<Integer> chunkSizes = new ArrayList<>();
     MockResponse policy = dispatcher.peek();
     if (contentLength != -1) {
-      hasBody = contentLength > 0;
       throttledTransfer(policy, socket, source, Okio.buffer(requestBody), contentLength, true);
     } else if (chunked) {
-      hasBody = true;
       while (true) {
         int chunkSize = Integer.parseInt(source.readUtf8LineStrict().trim(), 16);
         if (chunkSize == 0) {
@@ -623,11 +620,6 @@ public final class MockWebServer extends ExternalResource implements Closeable {
         throttledTransfer(policy, socket, source, Okio.buffer(requestBody), chunkSize, true);
         readEmptyLine(source);
       }
-    }
-
-    String method = request.substring(0, request.indexOf(' '));
-    if (hasBody && !HttpMethod.permitsRequestBody(method)) {
-      throw new IllegalArgumentException("Request must not have a body: " + request);
     }
 
     return new RecordedRequest(request, headers.build(), chunkSizes, requestBody.receivedByteCount,

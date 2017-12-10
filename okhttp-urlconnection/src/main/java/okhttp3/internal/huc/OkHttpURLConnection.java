@@ -335,8 +335,6 @@ public final class OkHttpURLConnection extends HttpURLConnection implements Call
       if (method.equals("GET")) {
         // they are requesting a stream to write to. This implies a POST method
         method = "POST";
-      } else if (!HttpMethod.permitsRequestBody(method)) {
-        throw new ProtocolException(method + " does not support writing");
       }
     }
 
@@ -345,8 +343,7 @@ public final class OkHttpURLConnection extends HttpURLConnection implements Call
     }
 
     OutputStreamRequestBody requestBody = null;
-    if (HttpMethod.permitsRequestBody(method)) {
-      // Add a content type for the request body, if one isn't already present.
+
       String contentType = requestHeaders.get("Content-Type");
       if (contentType == null) {
         contentType = "application/x-www-form-urlencoded";
@@ -367,7 +364,7 @@ public final class OkHttpURLConnection extends HttpURLConnection implements Call
           ? new StreamedRequestBody(contentLength)
           : new BufferedRequestBody(contentLength);
       requestBody.timeout().timeout(client.writeTimeoutMillis(), TimeUnit.MILLISECONDS);
-    }
+
 
     Request request = new Request.Builder()
         .url(Internal.instance.getHttpUrlChecked(getURL().toString()))
