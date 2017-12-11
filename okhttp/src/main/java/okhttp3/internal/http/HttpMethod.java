@@ -37,7 +37,8 @@ public final class HttpMethod {
     }
 
     public static boolean redirectsWithBody(String method) {
-        return method.equals("PROPFIND"); // (WebDAV) redirects should also maintain the request body
+        // (WebDAV) redirects should also maintain the request body
+        return method.equals("PROPFIND");
     }
 
     public static boolean redirectsToGet(String method) {
