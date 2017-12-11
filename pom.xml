@@ -341,9 +341,10 @@
       <dependencies>
         <dependency>
           <groupId>org.conscrypt</groupId>
-          <artifactId>conscrypt-openjdk-uber</artifactId>
-          <version>1.0.0.RC13</version>
+          <artifactId>conscrypt-openjdk</artifactId>
+          <version>1.0.0.RC14</version>
           <scope>provided</scope>
+          <classifier>linux-x86_64</classifier>
         </dependency>
       </dependencies>
     </profile>
