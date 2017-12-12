@@ -19,10 +19,9 @@
     </dependency>
     <dependency>
       <groupId>org.conscrypt</groupId>
-      <artifactId>conscrypt-openjdk</artifactId>
+      <artifactId>conscrypt-openjdk-uber</artifactId>
       <version>1.0.0.RC14</version>
       <scope>provided</scope>
-      <classifier>linux-x86_64</classifier>
     </dependency>
     <dependency>
       <groupId>com.google.android</groupId>
