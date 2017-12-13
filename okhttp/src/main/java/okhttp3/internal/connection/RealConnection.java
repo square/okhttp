@@ -31,6 +31,7 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 import javax.net.ssl.SSLPeerUnverifiedException;
+import javax.net.ssl.SSLSession;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
 import okhttp3.Address;
@@ -297,7 +298,16 @@ public final class RealConnection extends Http2Connection.Listener implements Co
 
       // Force handshake. This can throw!
       sslSocket.startHandshake();
-      Handshake unverifiedHandshake = Handshake.get(sslSocket.getSession());
+      // block for session establishment
+      SSLSession sslSocketSession = sslSocket.getSession();
+      // don't use SslSocket.getSession since for failed results it returns SSL_NULL_WITH_NULL_NULL
+      if (socket.isClosed()) {
+        throw new IOException("socket closed");
+      }
+      if (!sslSocketSession.isValid() || "NONE".equals(sslSocketSession.getProtocol())) {
+        throw new IOException("a valid ssl session was not established");
+      }
+      Handshake unverifiedHandshake = Handshake.get(sslSocketSession);
 
       // Verify that the socket's certificates are acceptable for the target host.
       if (!address.hostnameVerifier().verify(address.url().host(), sslSocket.getSession())) {
