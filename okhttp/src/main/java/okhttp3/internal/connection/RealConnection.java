@@ -288,6 +288,7 @@ public final class RealConnection extends Http2Connection.Listener implements Co
       // Create the wrapper over the connected socket.
       sslSocket = (SSLSocket) sslSocketFactory.createSocket(
           rawSocket, address.url().host(), address.url().port(), true /* autoClose */);
+      socket = sslSocket;
 
       // Configure the socket's ciphers, TLS versions, and extensions.
       ConnectionSpec connectionSpec = connectionSpecSelector.configureSecureSocket(sslSocket);
@@ -301,6 +302,9 @@ public final class RealConnection extends Http2Connection.Listener implements Co
       // block for session establishment
       SSLSession sslSocketSession = sslSocket.getSession();
       // don't use SslSocket.getSession since for failed results it returns SSL_NULL_WITH_NULL_NULL
+      if (socket.isClosed()) {
+        throw new IOException("socket closed");
+      }
       if (!sslSocketSession.isValid() || "NONE".equals(sslSocketSession.getProtocol())) {
         throw new IOException("a valid ssl session was not established");
       }
@@ -323,7 +327,6 @@ public final class RealConnection extends Http2Connection.Listener implements Co
       String maybeProtocol = connectionSpec.supportsTlsExtensions()
           ? Platform.get().getSelectedProtocol(sslSocket)
           : null;
-      socket = sslSocket;
       source = Okio.buffer(Okio.source(socket));
       sink = Okio.buffer(Okio.sink(socket));
       handshake = unverifiedHandshake;
