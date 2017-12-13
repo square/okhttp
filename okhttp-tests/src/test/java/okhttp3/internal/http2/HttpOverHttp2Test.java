@@ -67,6 +67,7 @@ import okio.BufferedSink;
 import okio.BufferedSource;
 import okio.GzipSink;
 import okio.Okio;
+import org.hamcrest.CoreMatchers;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Ignore;
@@ -77,9 +78,11 @@ import org.junit.rules.TemporaryFolder;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static okhttp3.TestUtil.defaultClient;
+import static org.hamcrest.CoreMatchers.containsString;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;
 
 /** Test how SPDY interacts with HTTP/2 features. */
@@ -897,7 +900,7 @@ public final class HttpOverHttp2Test {
 
     List<String> logs = http2Handler.takeAll();
     assertEquals(20, logs.size());
-    assertEquals("FINE: >> 0x00000003    47 HEADERS       END_STREAM|END_HEADERS", firstFrame(logs, "HEADERS"));
+    assertThat("header logged", firstFrame(logs, "HEADERS"), containsString("HEADERS       END_STREAM|END_HEADERS"));
   }
 
   @Test public void emptyDataFrameSentWithEmptyBody() throws Exception {
@@ -915,8 +918,8 @@ public final class HttpOverHttp2Test {
 
     List<String> logs = http2Handler.takeAll();
     assertEquals(22, logs.size());
-    assertEquals("FINE: >> 0x00000003    50 HEADERS       END_HEADERS", firstFrame(logs, "HEADERS"));
-    assertEquals("FINE: >> 0x00000003     0 DATA          END_STREAM", firstFrame(logs, "DATA"));
+    assertThat("header logged", firstFrame(logs, "HEADERS"), containsString("HEADERS       END_HEADERS"));
+    assertThat("data logged", firstFrame(logs, "DATA"), containsString("0 DATA          END_STREAM"));
   }
 
   private String firstFrame(List<String> logs, String type) {
