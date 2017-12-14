@@ -152,7 +152,7 @@ Get MockWebServer via Maven:
 
 or via Gradle 
 ```groovy
-testCompile 'com.squareup.okhttp3:mockwebserver:(insert latest version)'
+testImplementation 'com.squareup.okhttp3:mockwebserver:(insert latest version)'
 ```
 
 ### License
