@@ -214,6 +214,20 @@ public final class WebSocketHttpTest {
     serverListener.assertExhausted();
   }
 
+  @Test public void unplannedCloseHandledWithoutFailure() throws IOException {
+    webServer.enqueue(new MockResponse().withWebSocketUpgrade(serverListener));
+    newWebSocket();
+
+    clientListener.assertOpen();
+    WebSocket server = serverListener.assertOpen();
+
+    server.close(1001, "bye");
+    clientListener.assertClosing(1001, "bye");
+    //clientListener.assertClosed(1001, "bye");
+    clientListener.assertExhausted();
+    serverListener.assertExhausted();
+  }
+
   @Test public void non101RetainsBody() throws IOException {
     webServer.enqueue(new MockResponse().setResponseCode(200).setBody("Body"));
     newWebSocket();

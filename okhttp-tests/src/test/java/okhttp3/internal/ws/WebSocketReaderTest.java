@@ -271,6 +271,13 @@ public final class WebSocketReaderTest {
     callback.assertClosing(1000, "Hello");
   }
 
+  @Test public void closeIncompleteCallsCallback() throws IOException {
+    data.write(ByteString.decodeHex("880703e948656c6c6f")); // Close with code and reason
+    data.close();
+    clientReader.processNextFrame();
+    callback.assertClosing(1001, "Hello");
+  }
+
   @Test public void closeOutOfRangeThrows() throws IOException {
     data.write(ByteString.decodeHex("88020001")); // Close with code 1
     try {
