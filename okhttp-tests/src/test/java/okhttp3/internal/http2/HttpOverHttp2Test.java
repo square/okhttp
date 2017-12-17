@@ -67,7 +67,6 @@ import okio.BufferedSink;
 import okio.BufferedSource;
 import okio.GzipSink;
 import okio.Okio;
-import org.hamcrest.CoreMatchers;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Ignore;
@@ -78,7 +77,9 @@ import org.junit.rules.TemporaryFolder;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static okhttp3.TestUtil.defaultClient;
+import static org.hamcrest.CoreMatchers.anyOf;
 import static org.hamcrest.CoreMatchers.containsString;
+import static org.hamcrest.CoreMatchers.equalTo;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
@@ -899,7 +900,7 @@ public final class HttpOverHttp2Test {
     assertEquals(Protocol.HTTP_2, response.protocol());
 
     List<String> logs = http2Handler.takeAll();
-    assertEquals(20, logs.size());
+    assertThat("log count", logs.size(), anyOf(equalTo(19), equalTo(20)));
     assertThat("header logged", firstFrame(logs, "HEADERS"), containsString("HEADERS       END_STREAM|END_HEADERS"));
   }
 
@@ -917,7 +918,7 @@ public final class HttpOverHttp2Test {
     assertEquals(Protocol.HTTP_2, response.protocol());
 
     List<String> logs = http2Handler.takeAll();
-    assertEquals(22, logs.size());
+    assertThat("log count", logs.size(), anyOf(equalTo(21), equalTo(22)));
     assertThat("header logged", firstFrame(logs, "HEADERS"), containsString("HEADERS       END_HEADERS"));
     assertThat("data logged", firstFrame(logs, "DATA"), containsString("0 DATA          END_STREAM"));
   }
