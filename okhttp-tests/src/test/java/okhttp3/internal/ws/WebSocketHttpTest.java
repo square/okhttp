@@ -214,6 +214,39 @@ public final class WebSocketHttpTest {
     serverListener.assertExhausted();
   }
 
+  @Test public void unplannedCloseHandledByCloseWithoutFailure() {
+    webServer.enqueue(new MockResponse().withWebSocketUpgrade(serverListener));
+    newWebSocket();
+
+    clientListener.assertOpen();
+    WebSocket server = serverListener.assertOpen();
+    clientListener.setNextEventDelegate(new WebSocketListener() {
+      @Override public void onClosing(WebSocket webSocket, int code, String reason) {
+        webSocket.close(1000, null);
+      }
+    });
+
+    server.close(1001, "bye");
+    clientListener.assertClosed(1001, "bye");
+    clientListener.assertExhausted();
+    serverListener.assertClosing(1000,  "");
+    serverListener.assertClosed(1000,  "");
+    serverListener.assertExhausted();
+  }
+
+  @Test public void unplannedCloseHandledWithoutFailure() {
+    webServer.enqueue(new MockResponse().withWebSocketUpgrade(serverListener));
+    newWebSocket();
+
+    clientListener.assertOpen();
+    WebSocket server = serverListener.assertOpen();
+
+    server.close(1001, "bye");
+    clientListener.assertClosing(1001, "bye");
+    clientListener.assertExhausted();
+    serverListener.assertExhausted();
+  }
+
   @Test public void non101RetainsBody() throws IOException {
     webServer.enqueue(new MockResponse().setResponseCode(200).setBody("Body"));
     newWebSocket();
@@ -230,7 +263,7 @@ public final class WebSocketHttpTest {
         "Expected HTTP 101 response but was '404 Not Found'");
   }
 
-  @Test public void clientTimeoutClosesBody() throws IOException {
+  @Test public void clientTimeoutClosesBody() {
     webServer.enqueue(new MockResponse().setResponseCode(408));
     webServer.enqueue(new MockResponse().withWebSocketUpgrade(serverListener));
     WebSocket webSocket = newWebSocket();
