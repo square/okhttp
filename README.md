@@ -18,7 +18,6 @@ or Gradle:
 ```groovy
 implementation 'com.squareup.okhttp3:okhttp:3.9.1'
 ```
-Note : Use `api` instead of `implementation` if you're using OkHttp in a library and want to expose it's types as part of the public API.
 
 Snapshots of the development version are available in [Sonatype's `snapshots` repository][snap].
 
