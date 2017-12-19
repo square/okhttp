@@ -302,9 +302,6 @@ public final class RealConnection extends Http2Connection.Listener implements Co
       // block for session establishment
       SSLSession sslSocketSession = sslSocket.getSession();
       // don't use SslSocket.getSession since for failed results it returns SSL_NULL_WITH_NULL_NULL
-      if (socket.isClosed()) {
-        throw new IOException("socket closed");
-      }
       if (!sslSocketSession.isValid() || "NONE".equals(sslSocketSession.getProtocol())) {
         throw new IOException("a valid ssl session was not established");
       }
