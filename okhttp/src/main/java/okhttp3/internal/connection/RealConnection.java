@@ -345,7 +345,8 @@ public final class RealConnection extends Http2Connection.Listener implements Co
 
   private boolean isValid(SSLSession sslSocketSession) {
     // don't use SslSocket.getSession since for failed results it returns SSL_NULL_WITH_NULL_NULL
-    return !"NONE".equals(sslSocketSession.getProtocol()) && !"SSL_NULL_WITH_NULL_NULL".equals(sslSocketSession.getCipherSuite());
+    return !"NONE".equals(sslSocketSession.getProtocol()) && !"SSL_NULL_WITH_NULL_NULL".equals(
+        sslSocketSession.getCipherSuite());
   }
 
   /**
