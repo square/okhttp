@@ -76,8 +76,6 @@ final class WebSocketReader {
   final byte[] maskBuffer = new byte[8192];
 
   WebSocketReader(boolean isClient, BufferedSource source, FrameCallback frameCallback) {
-    if (source == null) throw new NullPointerException("source == null");
-    if (frameCallback == null) throw new NullPointerException("frameCallback == null");
     this.isClient = isClient;
     this.source = source;
     this.frameCallback = frameCallback;

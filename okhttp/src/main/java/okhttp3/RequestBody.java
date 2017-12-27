@@ -83,7 +83,6 @@ public abstract class RequestBody {
   /** Returns a new request body that transmits {@code content}. */
   public static RequestBody create(final @Nullable MediaType contentType, final byte[] content,
       final int offset, final int byteCount) {
-    if (content == null) throw new NullPointerException("content == null");
     Util.checkOffsetAndCount(content.length, offset, byteCount);
     return new RequestBody() {
       @Override public @Nullable MediaType contentType() {
@@ -102,8 +101,6 @@ public abstract class RequestBody {
 
   /** Returns a new request body that transmits the content of {@code file}. */
   public static RequestBody create(final @Nullable MediaType contentType, final File file) {
-    if (file == null) throw new NullPointerException("content == null");
-
     return new RequestBody() {
       @Override public @Nullable MediaType contentType() {
         return contentType;

@@ -988,9 +988,7 @@ public final class HttpUrl {
     }
 
     public Builder scheme(String scheme) {
-      if (scheme == null) {
-        throw new NullPointerException("scheme == null");
-      } else if (scheme.equalsIgnoreCase("http")) {
+      if (scheme.equalsIgnoreCase("http")) {
         this.scheme = "http";
       } else if (scheme.equalsIgnoreCase("https")) {
         this.scheme = "https";
@@ -1001,26 +999,22 @@ public final class HttpUrl {
     }
 
     public Builder username(String username) {
-      if (username == null) throw new NullPointerException("username == null");
       this.encodedUsername = canonicalize(username, USERNAME_ENCODE_SET, false, false, false, true);
       return this;
     }
 
     public Builder encodedUsername(String encodedUsername) {
-      if (encodedUsername == null) throw new NullPointerException("encodedUsername == null");
       this.encodedUsername = canonicalize(
           encodedUsername, USERNAME_ENCODE_SET, true, false, false, true);
       return this;
     }
 
     public Builder password(String password) {
-      if (password == null) throw new NullPointerException("password == null");
       this.encodedPassword = canonicalize(password, PASSWORD_ENCODE_SET, false, false, false, true);
       return this;
     }
 
     public Builder encodedPassword(String encodedPassword) {
-      if (encodedPassword == null) throw new NullPointerException("encodedPassword == null");
       this.encodedPassword = canonicalize(
           encodedPassword, PASSWORD_ENCODE_SET, true, false, false, true);
       return this;
@@ -1031,7 +1025,6 @@ public final class HttpUrl {
      * address.
      */
     public Builder host(String host) {
-      if (host == null) throw new NullPointerException("host == null");
       String encoded = canonicalizeHost(host, 0, host.length());
       if (encoded == null) throw new IllegalArgumentException("unexpected host: " + host);
       this.host = encoded;
@@ -1049,7 +1042,6 @@ public final class HttpUrl {
     }
 
     public Builder addPathSegment(String pathSegment) {
-      if (pathSegment == null) throw new NullPointerException("pathSegment == null");
       push(pathSegment, 0, pathSegment.length(), false, false);
       return this;
     }
@@ -1059,14 +1051,10 @@ public final class HttpUrl {
      * {@code pathSegments} starts with a slash, the resulting URL will have empty path segment.
      */
     public Builder addPathSegments(String pathSegments) {
-      if (pathSegments == null) throw new NullPointerException("pathSegments == null");
       return addPathSegments(pathSegments, false);
     }
 
     public Builder addEncodedPathSegment(String encodedPathSegment) {
-      if (encodedPathSegment == null) {
-        throw new NullPointerException("encodedPathSegment == null");
-      }
       push(encodedPathSegment, 0, encodedPathSegment.length(), false, true);
       return this;
     }
@@ -1077,9 +1065,6 @@ public final class HttpUrl {
      * segment.
      */
     public Builder addEncodedPathSegments(String encodedPathSegments) {
-      if (encodedPathSegments == null) {
-        throw new NullPointerException("encodedPathSegments == null");
-      }
       return addPathSegments(encodedPathSegments, true);
     }
 
@@ -1095,7 +1080,6 @@ public final class HttpUrl {
     }
 
     public Builder setPathSegment(int index, String pathSegment) {
-      if (pathSegment == null) throw new NullPointerException("pathSegment == null");
       String canonicalPathSegment = canonicalize(
           pathSegment, 0, pathSegment.length(), PATH_SEGMENT_ENCODE_SET, false, false, false, true,
               null);
@@ -1107,9 +1091,6 @@ public final class HttpUrl {
     }
 
     public Builder setEncodedPathSegment(int index, String encodedPathSegment) {
-      if (encodedPathSegment == null) {
-        throw new NullPointerException("encodedPathSegment == null");
-      }
       String canonicalPathSegment = canonicalize(encodedPathSegment,
           0, encodedPathSegment.length(), PATH_SEGMENT_ENCODE_SET, true, false, false, true,
           null);
@@ -1129,7 +1110,6 @@ public final class HttpUrl {
     }
 
     public Builder encodedPath(String encodedPath) {
-      if (encodedPath == null) throw new NullPointerException("encodedPath == null");
       if (!encodedPath.startsWith("/")) {
         throw new IllegalArgumentException("unexpected encodedPath: " + encodedPath);
       }
@@ -1155,7 +1135,6 @@ public final class HttpUrl {
 
     /** Encodes the query parameter using UTF-8 and adds it to this URL's query string. */
     public Builder addQueryParameter(String name, @Nullable String value) {
-      if (name == null) throw new NullPointerException("name == null");
       if (encodedQueryNamesAndValues == null) encodedQueryNamesAndValues = new ArrayList<>();
       encodedQueryNamesAndValues.add(
           canonicalize(name, QUERY_COMPONENT_ENCODE_SET, false, false, true, true));
@@ -1167,7 +1146,6 @@ public final class HttpUrl {
 
     /** Adds the pre-encoded query parameter to this URL's query string. */
     public Builder addEncodedQueryParameter(String encodedName, @Nullable String encodedValue) {
-      if (encodedName == null) throw new NullPointerException("encodedName == null");
       if (encodedQueryNamesAndValues == null) encodedQueryNamesAndValues = new ArrayList<>();
       encodedQueryNamesAndValues.add(
           canonicalize(encodedName, QUERY_COMPONENT_ENCODE_SET, true, false, true, true));
@@ -1190,7 +1168,6 @@ public final class HttpUrl {
     }
 
     public Builder removeAllQueryParameters(String name) {
-      if (name == null) throw new NullPointerException("name == null");
       if (encodedQueryNamesAndValues == null) return this;
       String nameToRemove = canonicalize(
           name, QUERY_COMPONENT_ENCODE_SET, false, false, true, true);
@@ -1199,7 +1176,6 @@ public final class HttpUrl {
     }
 
     public Builder removeAllEncodedQueryParameters(String encodedName) {
-      if (encodedName == null) throw new NullPointerException("encodedName == null");
       if (encodedQueryNamesAndValues == null) return this;
       removeAllCanonicalQueryParameters(
           canonicalize(encodedName, QUERY_COMPONENT_ENCODE_SET, true, false, true, true));
@@ -1680,7 +1656,7 @@ public final class HttpUrl {
    */
   static String canonicalize(String input, int pos, int limit, String encodeSet,
       boolean alreadyEncoded, boolean strict, boolean plusIsSpace, boolean asciiOnly,
-      Charset charset) {
+      @Nullable Charset charset) {
     int codePoint;
     for (int i = pos; i < limit; i += Character.charCount(codePoint)) {
       codePoint = input.codePointAt(i);
@@ -1705,7 +1681,7 @@ public final class HttpUrl {
 
   static void canonicalize(Buffer out, String input, int pos, int limit, String encodeSet,
       boolean alreadyEncoded, boolean strict, boolean plusIsSpace, boolean asciiOnly,
-      Charset charset) {
+      @Nullable Charset charset) {
     Buffer encodedCharBuffer = null; // Lazily allocated.
     int codePoint;
     for (int i = pos; i < limit; i += Character.charCount(codePoint)) {
@@ -1746,7 +1722,7 @@ public final class HttpUrl {
   }
 
   static String canonicalize(String input, String encodeSet, boolean alreadyEncoded, boolean strict,
-      boolean plusIsSpace, boolean asciiOnly, Charset charset) {
+      boolean plusIsSpace, boolean asciiOnly, @Nullable Charset charset) {
     return canonicalize(
         input, 0, input.length(), encodeSet, alreadyEncoded, strict, plusIsSpace, asciiOnly,
             charset);

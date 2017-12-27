@@ -133,7 +133,7 @@ public final class OkHttpClientTest {
     try {
       builder.addInterceptor(null);
       fail();
-    } catch (IllegalArgumentException expected) {
+    } catch (NullPointerException expected) {
       assertEquals("interceptor == null", expected.getMessage());
     }
   }
@@ -143,7 +143,7 @@ public final class OkHttpClientTest {
     try {
       builder.addNetworkInterceptor(null);
       fail();
-    } catch (IllegalArgumentException expected) {
+    } catch (NullPointerException expected) {
       assertEquals("interceptor == null", expected.getMessage());
     }
   }

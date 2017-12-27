@@ -737,7 +737,7 @@ public final class Cache implements Closeable, Flushable {
     private final @Nullable String contentLength;
 
     CacheResponseBody(final DiskLruCache.Snapshot snapshot,
-        String contentType, String contentLength) {
+        @Nullable String contentType, @Nullable String contentLength) {
       this.snapshot = snapshot;
       this.contentType = contentType;
       this.contentLength = contentLength;

@@ -74,8 +74,6 @@ public final class Http2Stream {
 
   Http2Stream(int id, Http2Connection connection, boolean outFinished, boolean inFinished,
       List<Header> requestHeaders) {
-    if (connection == null) throw new NullPointerException("connection == null");
-    if (requestHeaders == null) throw new NullPointerException("requestHeaders == null");
     this.id = id;
     this.connection = connection;
     this.bytesLeftInWriteWindow =
@@ -169,9 +167,6 @@ public final class Http2Stream {
    */
   public void sendResponseHeaders(List<Header> responseHeaders, boolean out) throws IOException {
     assert (!Thread.holdsLock(Http2Stream.this));
-    if (responseHeaders == null) {
-      throw new NullPointerException("responseHeaders == null");
-    }
     boolean outFinished = false;
     synchronized (this) {
       this.hasResponseHeaders = true;

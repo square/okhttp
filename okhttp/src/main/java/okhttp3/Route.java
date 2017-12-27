@@ -40,15 +40,6 @@ public final class Route {
   final InetSocketAddress inetSocketAddress;
 
   public Route(Address address, Proxy proxy, InetSocketAddress inetSocketAddress) {
-    if (address == null) {
-      throw new NullPointerException("address == null");
-    }
-    if (proxy == null) {
-      throw new NullPointerException("proxy == null");
-    }
-    if (inetSocketAddress == null) {
-      throw new NullPointerException("inetSocketAddress == null");
-    }
     this.address = address;
     this.proxy = proxy;
     this.inetSocketAddress = inetSocketAddress;

@@ -23,6 +23,8 @@ import okio.ByteString;
 import okio.Sink;
 import okio.Timeout;
 
+import javax.annotation.Nullable;
+
 import static okhttp3.internal.ws.WebSocketProtocol.B0_FLAG_FIN;
 import static okhttp3.internal.ws.WebSocketProtocol.B1_FLAG_MASK;
 import static okhttp3.internal.ws.WebSocketProtocol.OPCODE_CONTINUATION;
@@ -59,8 +61,6 @@ final class WebSocketWriter {
   final byte[] maskBuffer;
 
   WebSocketWriter(boolean isClient, BufferedSink sink, Random random) {
-    if (sink == null) throw new NullPointerException("sink == null");
-    if (random == null) throw new NullPointerException("random == null");
     this.isClient = isClient;
     this.sink = sink;
     this.random = random;
@@ -87,7 +87,7 @@ final class WebSocketWriter {
    * href="http://tools.ietf.org/html/rfc6455#section-7.4">Section 7.4 of RFC 6455</a> or {@code 0}.
    * @param reason Reason for shutting down or {@code null}.
    */
-  void writeClose(int code, ByteString reason) throws IOException {
+  void writeClose(int code, @Nullable ByteString reason) throws IOException {
     ByteString payload = ByteString.EMPTY;
     if (code != 0 || reason != null) {
       if (code != 0) {

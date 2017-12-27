@@ -228,9 +228,6 @@ public final class MultipartBody extends RequestBody {
     }
 
     public static Part create(@Nullable Headers headers, RequestBody body) {
-      if (body == null) {
-        throw new NullPointerException("body == null");
-      }
       if (headers != null && headers.get("Content-Type") != null) {
         throw new IllegalArgumentException("Unexpected header: Content-Type");
       }
@@ -245,9 +242,6 @@ public final class MultipartBody extends RequestBody {
     }
 
     public static Part createFormData(String name, @Nullable String filename, RequestBody body) {
-      if (name == null) {
-        throw new NullPointerException("name == null");
-      }
       StringBuilder disposition = new StringBuilder("form-data; name=");
       appendQuotedString(disposition, name);
 
@@ -294,9 +288,6 @@ public final class MultipartBody extends RequestBody {
      * #ALTERNATIVE}, {@link #DIGEST}, {@link #PARALLEL} and {@link #FORM}.
      */
     public Builder setType(MediaType type) {
-      if (type == null) {
-        throw new NullPointerException("type == null");
-      }
       if (!type.type().equals("multipart")) {
         throw new IllegalArgumentException("multipart != " + type);
       }
@@ -326,7 +317,6 @@ public final class MultipartBody extends RequestBody {
 
     /** Add a part to the body. */
     public Builder addPart(Part part) {
-      if (part == null) throw new NullPointerException("part == null");
       parts.add(part);
       return this;
     }

@@ -75,8 +75,6 @@ public final class PublicSuffixDatabase {
    *    encoded.
    */
   public String getEffectiveTldPlusOne(String domain) {
-    if (domain == null) throw new NullPointerException("domain == null");
-
     // We use UTF-8 in the list so we need to convert to Unicode.
     String unicodeDomain = IDN.toUnicode(domain);
     String[] domainLabels = unicodeDomain.split("\\.");
