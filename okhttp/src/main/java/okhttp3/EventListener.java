@@ -95,7 +95,8 @@ public abstract class EventListener {
    *
    * <p>This method is invoked after {@link #dnsStart}.
    */
-  public void dnsEnd(@Nullable Call call, String domainName, @Nullable List<InetAddress> inetAddressList) {
+  public void dnsEnd(@Nullable Call call, String domainName,
+      @Nullable List<InetAddress> inetAddressList) {
   }
 
   /**
