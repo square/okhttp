@@ -59,7 +59,14 @@ public enum Protocol {
    * that enforce this may send an exception message including the string {@code
    * INADEQUATE_SECURITY}.
    */
-  HTTP_2("h2");
+  HTTP_2("h2"),
+
+  /**
+   * QUIC (Quick UDP Internet Connection) is a new multiplexed and secure transport atop UDP,
+   * designed from the ground up and optimized for HTTP/2 semantics.
+   * HTTP/1.1 semantics are layered on HTTP/2.
+   */
+  QUIC("quic");
 
   private final String protocol;
 
@@ -78,12 +85,15 @@ public enum Protocol {
     if (protocol.equals(HTTP_1_1.protocol)) return HTTP_1_1;
     if (protocol.equals(HTTP_2.protocol)) return HTTP_2;
     if (protocol.equals(SPDY_3.protocol)) return SPDY_3;
+    if (protocol.equals(QUIC.protocol)) return QUIC;
     throw new IOException("Unexpected protocol: " + protocol);
   }
 
   /**
    * Returns the string used to identify this protocol for ALPN, like "http/1.1", "spdy/3.1" or
    * "h2".
+   *
+   * @link https://www.iana.org/assignments/tls-extensiontype-values/tls-extensiontype-values.xhtml
    */
   @Override public String toString() {
     return protocol;
