@@ -27,7 +27,6 @@ import okio.BufferedSource;
 import okio.ForwardingSource;
 import okio.Okio;
 import okio.Source;
-import sun.net.ProgressListener;
 
 public final class Progress {
 
