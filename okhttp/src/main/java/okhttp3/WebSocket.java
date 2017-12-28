@@ -82,9 +82,9 @@ public interface WebSocket {
    * message.
    *
    * <p>This method returns true if the message was enqueued. Messages that would overflow the
-   * outgoing message buffer will be rejected and trigger a {@linkplain #close graceful shutdown} of
-   * this web socket. This method returns false in that case, and in any other case where this
-   * web socket is closing, closed, or canceled.
+   * outgoing message buffer (16 MiB) will be rejected and trigger a
+   * {@linkplain #close graceful shutdown} of this web socket. This method returns false in that
+   * case, and in any other case where this web socket is closing, closed, or canceled.
    *
    * <p>This method returns immediately.
    */
