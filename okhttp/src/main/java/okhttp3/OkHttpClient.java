@@ -530,7 +530,7 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
      * otherwise values must be between 1 and {@link Integer#MAX_VALUE} when converted to
      * milliseconds.
      *
-     * The connectTimeout is applied when connecting a TCP socket to the target host.
+     * <p>The connectTimeout is applied when connecting a TCP socket to the target host.
      * The default value is 10 seconds.
      */
     public Builder connectTimeout(long timeout, TimeUnit unit) {
@@ -542,7 +542,7 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
      * Sets the default read timeout for new connections. A value of 0 means no timeout, otherwise
      * values must be between 1 and {@link Integer#MAX_VALUE} when converted to milliseconds.
      *
-     * The read timeout is applied to both the TCP socket and for individual read IO operations
+     * <p>The read timeout is applied to both the TCP socket and for individual read IO operations
      * including on {@link Source} of the {@link Response}. The default value is 10 seconds.
      *
      * @see Socket#setSoTimeout(int)
@@ -557,7 +557,7 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
      * Sets the default write timeout for new connections. A value of 0 means no timeout, otherwise
      * values must be between 1 and {@link Integer#MAX_VALUE} when converted to milliseconds.
      *
-     * The write timeout is applied for individual write IO operations.
+     * <p>The write timeout is applied for individual write IO operations.
      * The default value is 10 seconds.
      *
      * @see Sink#timeout()
