@@ -127,7 +127,7 @@ public final class Http2Connection implements Closeable {
     client = builder.client;
     listener = builder.listener;
     // http://tools.ietf.org/html/draft-ietf-httpbis-http2-17#section-5.1.1
-    nextStreamId = builder.client ? Integer.MAX_VALUE - 4 : 2;
+    nextStreamId = builder.client ? 1 : 2;
     if (builder.client) {
       nextStreamId += 2; // In HTTP/2, 1 on client is reserved for Upgrade.
     }
