@@ -48,7 +48,9 @@ import static java.net.HttpURLConnection.HTTP_MOVED_TEMP;
 import static java.net.HttpURLConnection.HTTP_MULT_CHOICE;
 import static java.net.HttpURLConnection.HTTP_PROXY_AUTH;
 import static java.net.HttpURLConnection.HTTP_SEE_OTHER;
+import static java.net.HttpURLConnection.HTTP_SERVER_ERROR;
 import static java.net.HttpURLConnection.HTTP_UNAUTHORIZED;
+import static java.net.HttpURLConnection.HTTP_UNAVAILABLE;
 import static okhttp3.internal.Util.closeQuietly;
 import static okhttp3.internal.http.StatusLine.HTTP_PERM_REDIRECT;
 import static okhttp3.internal.http.StatusLine.HTTP_TEMP_REDIRECT;
@@ -359,11 +361,45 @@ public final class RetryAndFollowUpInterceptor implements Interceptor {
           return null;
         }
 
+        if (retryAfter(userResponse, 0) > 0) {
+          return null;
+        }
+
         return userResponse.request();
+
+      case HTTP_UNAVAILABLE:
+        if (userResponse.priorResponse() != null
+            && userResponse.priorResponse().code() == HTTP_UNAVAILABLE) {
+          // We attempted to retry and got another timeout. Give up.
+          return null;
+        }
+
+        if (retryAfter(userResponse, Integer.MAX_VALUE) == 0) {
+          // specifically received an instruction to retry without delay
+          return userResponse.request();
+        }
+
+        return null;
 
       default:
         return null;
     }
+  }
+
+  private int retryAfter(Response userResponse, int defaultDelay) {
+    String header = userResponse.header("Retry-After");
+
+    if (header == null) {
+      return defaultDelay;
+    }
+
+    // https://tools.ietf.org/html/rfc7231#section-7.1.3
+    // currently ignores a HTTP-date, and assumes any non int 0 is a delay
+    if (header.matches("\\d+")) {
+      return Integer.valueOf(header);
+    }
+
+    return Integer.MAX_VALUE;
   }
 
   /**
