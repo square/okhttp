@@ -1647,13 +1647,11 @@ public final class CallTest {
         .setSocketPolicy(SocketPolicy.DISCONNECT_AT_END)
         .setResponseCode(408)
         .setHeader("Connection", "Close")
-        .setHeader("Retry-After", "0")
         .setBody("You took too long!"));
     server.enqueue(new MockResponse()
         .setSocketPolicy(SocketPolicy.DISCONNECT_AT_END)
         .setResponseCode(408)
         .setHeader("Connection", "Close")
-        .setHeader("Retry-After", "0")
         .setBody("You took too long!"));
 
     Request request = new Request.Builder()
