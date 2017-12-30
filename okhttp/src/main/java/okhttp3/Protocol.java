@@ -65,6 +65,9 @@ public enum Protocol {
    * QUIC (Quick UDP Internet Connection) is a new multiplexed and secure transport atop UDP,
    * designed from the ground up and optimized for HTTP/2 semantics.
    * HTTP/1.1 semantics are layered on HTTP/2.
+   *
+   * <p>QUIC is not natively supported by OkHttp, but provided to allow a theoretical
+   * interceptor that provides support.
    */
   QUIC("quic");
 
