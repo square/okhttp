@@ -22,4 +22,10 @@ import java.io.IOException;
  * frame) and an attempt is made to use the connection.
  */
 public final class ConnectionShutdownException extends IOException {
+  public ConnectionShutdownException() {
+  }
+
+  public ConnectionShutdownException(String message) {
+    super(message);
+  }
 }
