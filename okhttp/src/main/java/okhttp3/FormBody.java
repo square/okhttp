@@ -117,12 +117,18 @@ public final class FormBody extends RequestBody {
     }
 
     public Builder add(String name, String value) {
+      if (name == null) throw new NullPointerException("name == null");
+      if (value == null) throw new NullPointerException("value == null");
+
       names.add(HttpUrl.canonicalize(name, FORM_ENCODE_SET, false, false, true, true, charset));
       values.add(HttpUrl.canonicalize(value, FORM_ENCODE_SET, false, false, true, true, charset));
       return this;
     }
 
     public Builder addEncoded(String name, String value) {
+      if (name == null) throw new NullPointerException("name == null");
+      if (value == null) throw new NullPointerException("value == null");
+
       names.add(HttpUrl.canonicalize(name, FORM_ENCODE_SET, true, false, true, true, charset));
       values.add(HttpUrl.canonicalize(value, FORM_ENCODE_SET, true, false, true, true, charset));
       return this;
