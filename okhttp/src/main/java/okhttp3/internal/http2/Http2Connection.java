@@ -40,6 +40,7 @@ import okio.BufferedSource;
 import okio.ByteString;
 import okio.Okio;
 
+import static okhttp3.internal.http2.ErrorCode.REFUSED_STREAM;
 import static okhttp3.internal.http2.Settings.DEFAULT_INITIAL_WINDOW_SIZE;
 import static okhttp3.internal.platform.Platform.INFO;
 
@@ -215,13 +216,13 @@ public final class Http2Connection implements Closeable {
 
     synchronized (writer) {
       synchronized (this) {
+        if (nextStreamId > Integer.MAX_VALUE / 2) {
+          shutdown(REFUSED_STREAM);
+        }
         if (shutdown) {
           throw new ConnectionShutdownException();
         }
         streamId = nextStreamId;
-        if (streamId < 0) {
-          throw new ConnectionShutdownException("rolled over maximum stream id");
-        }
         nextStreamId += 2;
         stream = new Http2Stream(streamId, this, outFinished, inFinished, requestHeaders);
         flushHeaders = !out || bytesLeftInWriteWindow == 0L || stream.bytesLeftInWriteWindow == 0L;
@@ -733,7 +734,7 @@ public final class Http2Connection implements Closeable {
       // Fail all streams created after the last good stream ID.
       for (Http2Stream http2Stream : streamsCopy) {
         if (http2Stream.getId() > lastGoodStreamId && http2Stream.isLocallyInitiated()) {
-          http2Stream.receiveRstStream(ErrorCode.REFUSED_STREAM);
+          http2Stream.receiveRstStream(REFUSED_STREAM);
           removeStream(http2Stream.getId());
         }
       }
@@ -862,7 +863,7 @@ public final class Http2Connection implements Closeable {
   public abstract static class Listener {
     public static final Listener REFUSE_INCOMING_STREAMS = new Listener() {
       @Override public void onStream(Http2Stream stream) throws IOException {
-        stream.close(ErrorCode.REFUSED_STREAM);
+        stream.close(REFUSED_STREAM);
       }
     };
 
