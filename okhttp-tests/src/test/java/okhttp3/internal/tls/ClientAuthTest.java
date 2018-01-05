@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.net.SocketException;
 import java.security.GeneralSecurityException;
 import javax.net.ssl.SSLHandshakeException;
+import javax.net.ssl.SSLPeerUnverifiedException;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
 import javax.security.auth.x500.X500Principal;
@@ -57,36 +58,42 @@ public final class ClientAuthTest {
         .serialNumber("1")
         .ca(3)
         .commonName("root")
+        .subjectAlternativeName("root_ca.com")
         .build();
     serverIntermediateCa = new HeldCertificate.Builder()
         .issuedBy(serverRootCa)
         .ca(2)
         .serialNumber("2")
         .commonName("intermediate_ca")
+        .subjectAlternativeName("intermediate_ca.com")
         .build();
 
     serverCert = new HeldCertificate.Builder()
         .issuedBy(serverIntermediateCa)
         .serialNumber("3")
-        .commonName(server.getHostName())
+        .commonName("Local Host")
+        .subjectAlternativeName(server.getHostName())
         .build();
 
     clientRootCa = new HeldCertificate.Builder()
         .serialNumber("1")
         .ca(13)
         .commonName("root")
+        .subjectAlternativeName("root_ca.com")
         .build();
     clientIntermediateCa = new HeldCertificate.Builder()
         .issuedBy(serverRootCa)
         .ca(12)
         .serialNumber("2")
         .commonName("intermediate_ca")
+        .subjectAlternativeName("intermediate_ca.com")
         .build();
 
     clientCert = new HeldCertificate.Builder()
         .issuedBy(clientIntermediateCa)
         .serialNumber("4")
         .commonName("Jethro Willis")
+        .subjectAlternativeName("jethrowillis.com")
         .build();
   }
 
@@ -100,7 +107,7 @@ public final class ClientAuthTest {
 
     Call call = client.newCall(new Request.Builder().url(server.url("/")).build());
     Response response = call.execute();
-    assertEquals(new X500Principal("CN=" + server.getHostName()), response.handshake().peerPrincipal());
+    assertEquals(new X500Principal("CN=Local Host"), response.handshake().peerPrincipal());
     assertEquals(new X500Principal("CN=Jethro Willis"), response.handshake().localPrincipal());
     assertEquals("abc", response.body().string());
   }
@@ -115,7 +122,7 @@ public final class ClientAuthTest {
 
     Call call = client.newCall(new Request.Builder().url(server.url("/")).build());
     Response response = call.execute();
-    assertEquals(new X500Principal("CN=" + server.getHostName()), response.handshake().peerPrincipal());
+    assertEquals(new X500Principal("CN=Local Host"), response.handshake().peerPrincipal());
     assertEquals(new X500Principal("CN=Jethro Willis"), response.handshake().localPrincipal());
     assertEquals("abc", response.body().string());
   }
@@ -130,7 +137,7 @@ public final class ClientAuthTest {
 
     Call call = client.newCall(new Request.Builder().url(server.url("/")).build());
     Response response = call.execute();
-    assertEquals(new X500Principal("CN=" + server.getHostName()), response.handshake().peerPrincipal());
+    assertEquals(new X500Principal("CN=Local Host"), response.handshake().peerPrincipal());
     assertEquals(null, response.handshake().localPrincipal());
     assertEquals("abc", response.body().string());
   }
@@ -145,7 +152,7 @@ public final class ClientAuthTest {
 
     Call call = client.newCall(new Request.Builder().url(server.url("/")).build());
     Response response = call.execute();
-    assertEquals(new X500Principal("CN=" + server.getHostName()), response.handshake().peerPrincipal());
+    assertEquals(new X500Principal("CN=Local Host"), response.handshake().peerPrincipal());
     assertEquals(null, response.handshake().localPrincipal());
     assertEquals("abc", response.body().string());
   }
@@ -165,6 +172,29 @@ public final class ClientAuthTest {
     } catch (SSLHandshakeException expected) {
     } catch (SocketException expected) {
       // JDK 9
+    }
+  }
+
+  @Test public void commonNameIsNotTrusted() throws Exception {
+    serverCert = new HeldCertificate.Builder()
+        .issuedBy(serverIntermediateCa)
+        .serialNumber("3")
+        .commonName(server.getHostName())
+        .subjectAlternativeName("different-host.com")
+        .build();
+
+    OkHttpClient client = buildClient(clientCert, clientIntermediateCa);
+
+    SSLSocketFactory socketFactory = buildServerSslSocketFactory(ClientAuth.NEEDS);
+
+    server.useHttps(socketFactory, false);
+
+    Call call = client.newCall(new Request.Builder().url(server.url("/")).build());
+
+    try {
+      call.execute();
+      fail();
+    } catch (SSLPeerUnverifiedException expected) {
     }
   }
 
