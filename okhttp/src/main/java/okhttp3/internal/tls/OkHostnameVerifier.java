@@ -27,7 +27,6 @@ import java.util.Locale;
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLException;
 import javax.net.ssl.SSLSession;
-import javax.security.auth.x500.X500Principal;
 
 import static okhttp3.internal.Util.verifyAsIpAddress;
 
@@ -73,24 +72,12 @@ public final class OkHostnameVerifier implements HostnameVerifier {
   /** Returns true if {@code certificate} matches {@code hostname}. */
   private boolean verifyHostname(String hostname, X509Certificate certificate) {
     hostname = hostname.toLowerCase(Locale.US);
-    boolean hasDns = false;
     List<String> altNames = getSubjectAltNames(certificate, ALT_DNS_NAME);
-    for (int i = 0, size = altNames.size(); i < size; i++) {
-      hasDns = true;
-      if (verifyHostname(hostname, altNames.get(i))) {
+    for (String altName : altNames) {
+      if (verifyHostname(hostname, altName)) {
         return true;
       }
     }
-
-    if (!hasDns) {
-      X500Principal principal = certificate.getSubjectX500Principal();
-      // RFC 2818 advises using the most specific name for matching.
-      String cn = new DistinguishedNameParser(principal).findMostSpecific("cn");
-      if (cn != null) {
-        return verifyHostname(hostname, cn);
-      }
-    }
-
     return false;
   }
 
