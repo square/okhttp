@@ -51,7 +51,7 @@ public final class CallServerInterceptor implements Interceptor {
     realChain.eventListener().requestHeadersEnd(realChain.call(), request);
 
     Response.Builder responseBuilder = null;
-    if (HttpMethod.permitsRequestBody(request.method()) && request.body() != null) {
+    if (request.body() != null) {
       // If there's a "Expect: 100-continue" header on the request, wait for a "HTTP/1.1 100
       // Continue" response before transmitting the request body. If we don't get that, return
       // what we did get (such as a 4xx response) without ever transmitting the request body.

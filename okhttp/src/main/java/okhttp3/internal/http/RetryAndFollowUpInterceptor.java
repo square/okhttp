@@ -317,7 +317,6 @@ public final class RetryAndFollowUpInterceptor implements Interceptor {
 
         // Most redirects don't include a request body.
         Request.Builder requestBuilder = userResponse.request().newBuilder();
-        if (HttpMethod.permitsRequestBody(method)) {
           final boolean maintainBody = HttpMethod.redirectsWithBody(method);
           if (HttpMethod.redirectsToGet(method)) {
             requestBuilder.method("GET", null);
@@ -330,7 +329,7 @@ public final class RetryAndFollowUpInterceptor implements Interceptor {
             requestBuilder.removeHeader("Content-Length");
             requestBuilder.removeHeader("Content-Type");
           }
-        }
+
 
         // When redirecting across hosts, drop all authentication headers. This
         // is potentially annoying to the application layer since they have no
