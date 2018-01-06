@@ -84,6 +84,7 @@ import static okhttp3.mockwebserver.SocketPolicy.DISCONNECT_AT_END;
 import static okhttp3.mockwebserver.SocketPolicy.DISCONNECT_AT_START;
 import static okhttp3.mockwebserver.SocketPolicy.DISCONNECT_DURING_REQUEST_BODY;
 import static okhttp3.mockwebserver.SocketPolicy.DISCONNECT_DURING_RESPONSE_BODY;
+import static okhttp3.mockwebserver.SocketPolicy.CONTINUE_ALWAYS;
 import static okhttp3.mockwebserver.SocketPolicy.EXPECT_CONTINUE;
 import static okhttp3.mockwebserver.SocketPolicy.FAIL_HANDSHAKE;
 import static okhttp3.mockwebserver.SocketPolicy.NO_RESPONSE;
@@ -597,7 +598,8 @@ public final class MockWebServer extends ExternalResource implements Closeable {
       }
     }
 
-    if (expectContinue && dispatcher.peek().getSocketPolicy() == EXPECT_CONTINUE) {
+    final SocketPolicy socketPolicy = dispatcher.peek().getSocketPolicy();
+    if (expectContinue && socketPolicy == EXPECT_CONTINUE || socketPolicy == CONTINUE_ALWAYS) {
       sink.writeUtf8("HTTP/1.1 100 Continue\r\n");
       sink.writeUtf8("Content-Length: 0\r\n");
       sink.writeUtf8("\r\n");

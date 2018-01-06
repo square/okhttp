@@ -104,5 +104,11 @@ public enum SocketPolicy {
    * Typically this response is sent when a client makes a request with the header {@code
    * Expect: 100-continue}.
    */
-  EXPECT_CONTINUE
+  EXPECT_CONTINUE,
+
+  /**
+   * Transmit a {@code HTTP/1.1 100 Continue} response before reading the HTTP request body even
+   * if the client does not send the header {@code Expect: 100-continue} in its request.
+   */
+  CONTINUE_ALWAYS
 }
