@@ -742,8 +742,8 @@ public final class Http2Connection implements Closeable {
         }
       } else {
         Http2Stream stream = getStream(streamId);
-        if (stream != null) {
-          synchronized (stream) {
+        synchronized (Http2Connection.this) {
+          if (stream != null) {
             stream.addBytesToWriteWindow(windowSizeIncrement);
           }
         }
