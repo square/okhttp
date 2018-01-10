@@ -639,10 +639,7 @@ public final class Http2ConnectionTest {
       }
     };
     Http2Connection connection = connect(peer, IGNORE, listener);
-
-    synchronized (connection) {
-      assertEquals(10, connection.peerSettings.getMaxConcurrentStreams(-1));
-    }
+    assertEquals(10, connection.peerSettings.getMaxConcurrentStreams(-1));
     maxConcurrentStreamsUpdated.await();
     assertEquals(10, maxConcurrentStreams.get());
   }
@@ -670,12 +667,10 @@ public final class Http2ConnectionTest {
 
     assertEquals(Http2.TYPE_SETTINGS, peer.takeFrame().type);
     assertEquals(Http2.TYPE_PING, peer.takeFrame().type);
-    synchronized (connection) {
-      assertEquals(10000, connection.peerSettings.getHeaderTableSize());
-      assertEquals(40000, connection.peerSettings.getInitialWindowSize());
-      assertEquals(50000, connection.peerSettings.getMaxFrameSize(-1));
-      assertEquals(60000, connection.peerSettings.getMaxConcurrentStreams(-1));
-    }
+    assertEquals(10000, connection.peerSettings.getHeaderTableSize());
+    assertEquals(40000, connection.peerSettings.getInitialWindowSize());
+    assertEquals(50000, connection.peerSettings.getMaxFrameSize(-1));
+    assertEquals(60000, connection.peerSettings.getMaxConcurrentStreams(-1));
   }
 
   @Test public void clearSettingsBeforeMerge() throws Exception {
@@ -698,12 +693,11 @@ public final class Http2ConnectionTest {
     settings2.set(MAX_CONCURRENT_STREAMS, 60000);
     connection.readerRunnable.settings(true, settings2);
 
-    synchronized (connection) {
-      assertEquals(-1, connection.peerSettings.getHeaderTableSize());
-      assertEquals(DEFAULT_INITIAL_WINDOW_SIZE, connection.peerSettings.getInitialWindowSize());
-      assertEquals(-1, connection.peerSettings.getMaxFrameSize(-1));
-      assertEquals(60000, connection.peerSettings.getMaxConcurrentStreams(-1));
-    }
+    assertEquals(-1, connection.peerSettings.getHeaderTableSize());
+    assertEquals(DEFAULT_INITIAL_WINDOW_SIZE, connection.peerSettings.getInitialWindowSize());
+    assertEquals(-1, connection.peerSettings.getMaxFrameSize(-1));
+    assertEquals(60000, connection.peerSettings.getMaxConcurrentStreams(-1));
+
   }
 
   @Test public void bogusDataFrameDoesNotDisruptConnection() throws Exception {
