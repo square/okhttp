@@ -682,9 +682,7 @@ public final class Http2Connection implements Closeable {
       }
       if (streamsToNotify != null && delta != 0) {
         for (Http2Stream stream : streamsToNotify) {
-          synchronized (stream) {
-            stream.addBytesToWriteWindow(delta);
-          }
+          stream.addBytesToWriteWindow(delta);
         }
       }
     }
