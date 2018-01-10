@@ -82,11 +82,10 @@ public final class ConnectionPoolTest {
     pool.cleanupRunning = true; // Prevent the cleanup runnable from being started.
 
     RealConnection c1 = newConnection(pool, routeA1, 50L);
-    synchronized (pool) {
-      StreamAllocation streamAllocation = new StreamAllocation(pool, addressA, null,
-          EventListener.NONE, null);
-      streamAllocation.acquire(c1, true);
-    }
+
+    StreamAllocation streamAllocation = new StreamAllocation(pool, addressA, null,
+        EventListener.NONE, null);
+    streamAllocation.acquire(c1, true);
 
     // Running at time 50, the pool returns that nothing can be evicted until time 150.
     assertEquals(100L, pool.cleanup(50L));

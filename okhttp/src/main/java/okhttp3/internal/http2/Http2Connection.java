@@ -682,9 +682,7 @@ public final class Http2Connection implements Closeable {
       }
       if (streamsToNotify != null && delta != 0) {
         for (Http2Stream stream : streamsToNotify) {
-          synchronized (stream) {
-            stream.addBytesToWriteWindow(delta);
-          }
+          stream.addBytesToWriteWindow(delta);
         }
       }
     }
@@ -744,8 +742,8 @@ public final class Http2Connection implements Closeable {
         }
       } else {
         Http2Stream stream = getStream(streamId);
-        if (stream != null) {
-          synchronized (stream) {
+        synchronized (Http2Connection.this) {
+          if (stream != null) {
             stream.addBytesToWriteWindow(windowSizeIncrement);
           }
         }
