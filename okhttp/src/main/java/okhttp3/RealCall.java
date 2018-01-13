@@ -55,6 +55,15 @@ final class RealCall implements Call {
   }
 
   static RealCall newRealCall(OkHttpClient client, Request originalRequest, boolean forWebSocket) {
+    HttpMethods httpMethods = client.methods();
+    if (originalRequest.body != null && !httpMethods.permitsRequestBody(originalRequest.method)) {
+      throw new IllegalArgumentException("method " + originalRequest.method
+          + " must not have a request body.");
+    }
+    if (originalRequest.body == null && httpMethods.requiresRequestBody(originalRequest.method)) {
+      throw new IllegalArgumentException("method " + originalRequest.method
+          + " must have a request body.");
+    }
     // Safely publish the Call instance to the EventListener.
     RealCall call = new RealCall(client, originalRequest, forWebSocket);
     call.eventListener = client.eventListenerFactory().create(call);
@@ -186,12 +195,12 @@ final class RealCall implements Call {
     interceptors.addAll(client.interceptors());
     interceptors.add(retryAndFollowUpInterceptor);
     interceptors.add(new BridgeInterceptor(client.cookieJar()));
-    interceptors.add(new CacheInterceptor(client.internalCache()));
+    interceptors.add(new CacheInterceptor(client.internalCache(), client.methods()));
     interceptors.add(new ConnectInterceptor(client));
     if (!forWebSocket) {
       interceptors.addAll(client.networkInterceptors());
     }
-    interceptors.add(new CallServerInterceptor(forWebSocket));
+    interceptors.add(new CallServerInterceptor(forWebSocket, client.methods()));
 
     Interceptor.Chain chain = new RealInterceptorChain(interceptors, null, null, null, 0,
         originalRequest, this, eventListener, client.connectTimeoutMillis(),

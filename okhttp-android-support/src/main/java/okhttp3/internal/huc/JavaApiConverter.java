@@ -37,6 +37,7 @@ import javax.net.ssl.SSLSocketFactory;
 import okhttp3.CipherSuite;
 import okhttp3.Handshake;
 import okhttp3.Headers;
+import okhttp3.HttpMethods;
 import okhttp3.MediaType;
 import okhttp3.Request;
 import okhttp3.RequestBody;
@@ -48,7 +49,6 @@ import okhttp3.internal.JavaNetHeaders;
 import okhttp3.internal.Util;
 import okhttp3.internal.cache.CacheRequest;
 import okhttp3.internal.http.HttpHeaders;
-import okhttp3.internal.http.HttpMethod;
 import okhttp3.internal.http.StatusLine;
 import okhttp3.internal.platform.Platform;
 import okio.BufferedSource;
@@ -90,7 +90,7 @@ public final class JavaApiConverter {
 
     // OkHttp's Call API requires a placeholder body; the real body will be streamed separately.
     String requestMethod = httpUrlConnection.getRequestMethod();
-    RequestBody placeholderBody = HttpMethod.requiresRequestBody(requestMethod)
+    RequestBody placeholderBody = HttpMethods.defaultMethods().requiresRequestBody(requestMethod)
         ? Util.EMPTY_REQUEST
         : null;
 
@@ -279,7 +279,7 @@ public final class JavaApiConverter {
   public static Request createOkRequest(
       URI uri, String requestMethod, Map<String, List<String>> requestHeaders) {
     // OkHttp's Call API requires a placeholder body; the real body will be streamed separately.
-    RequestBody placeholderBody = HttpMethod.requiresRequestBody(requestMethod)
+    RequestBody placeholderBody = HttpMethods.defaultMethods().requiresRequestBody(requestMethod)
         ? Util.EMPTY_REQUEST
         : null;
 

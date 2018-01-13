@@ -31,6 +31,7 @@ import okhttp3.Call;
 import okhttp3.CertificatePinner;
 import okhttp3.Connection;
 import okhttp3.EventListener;
+import okhttp3.HttpMethods;
 import okhttp3.HttpUrl;
 import okhttp3.Interceptor;
 import okhttp3.OkHttpClient;
@@ -317,9 +318,10 @@ public final class RetryAndFollowUpInterceptor implements Interceptor {
 
         // Most redirects don't include a request body.
         Request.Builder requestBuilder = userResponse.request().newBuilder();
-        if (HttpMethod.permitsRequestBody(method)) {
-          final boolean maintainBody = HttpMethod.redirectsWithBody(method);
-          if (HttpMethod.redirectsToGet(method)) {
+        HttpMethods httpMethods = client.methods();
+        if (httpMethods.permitsRequestBody(method)) {
+          final boolean maintainBody = httpMethods.redirectsWithBody(method);
+          if (httpMethods.redirectsToGet(method)) {
             requestBuilder.method("GET", null);
           } else {
             RequestBody requestBody = maintainBody ? userResponse.request().body() : null;

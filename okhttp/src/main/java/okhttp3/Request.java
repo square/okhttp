@@ -19,7 +19,6 @@ import java.net.URL;
 import java.util.List;
 import javax.annotation.Nullable;
 import okhttp3.internal.Util;
-import okhttp3.internal.http.HttpMethod;
 
 /**
  * An HTTP request. Instances of this class are immutable if their {@link #body} is null or itself
@@ -231,12 +230,6 @@ public final class Request {
     public Builder method(String method, @Nullable RequestBody body) {
       if (method == null) throw new NullPointerException("method == null");
       if (method.length() == 0) throw new IllegalArgumentException("method.length() == 0");
-      if (body != null && !HttpMethod.permitsRequestBody(method)) {
-        throw new IllegalArgumentException("method " + method + " must not have a request body.");
-      }
-      if (body == null && HttpMethod.requiresRequestBody(method)) {
-        throw new IllegalArgumentException("method " + method + " must have a request body.");
-      }
       this.method = method;
       this.body = body;
       return this;

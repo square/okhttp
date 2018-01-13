@@ -18,6 +18,7 @@ package okhttp3.internal.cache;
 
 import java.io.IOException;
 import okhttp3.Headers;
+import okhttp3.HttpMethods;
 import okhttp3.Interceptor;
 import okhttp3.Protocol;
 import okhttp3.Request;
@@ -26,7 +27,6 @@ import okhttp3.internal.Internal;
 import okhttp3.internal.Util;
 import okhttp3.internal.http.HttpCodec;
 import okhttp3.internal.http.HttpHeaders;
-import okhttp3.internal.http.HttpMethod;
 import okhttp3.internal.http.RealResponseBody;
 import okio.Buffer;
 import okio.BufferedSink;
@@ -44,9 +44,11 @@ import static okhttp3.internal.Util.discard;
 /** Serves requests from the cache and writes responses to the cache. */
 public final class CacheInterceptor implements Interceptor {
   final InternalCache cache;
+  final HttpMethods httpMethods;
 
-  public CacheInterceptor(InternalCache cache) {
+  public CacheInterceptor(InternalCache cache, HttpMethods httpMethods) {
     this.cache = cache;
+    this.httpMethods = httpMethods;
   }
 
   @Override public Response intercept(Chain chain) throws IOException {
@@ -132,7 +134,7 @@ public final class CacheInterceptor implements Interceptor {
         return cacheWritingResponse(cacheRequest, response);
       }
 
-      if (HttpMethod.invalidatesCache(networkRequest.method())) {
+      if (httpMethods.invalidatesCache(networkRequest.method())) {
         try {
           cache.remove(networkRequest);
         } catch (IOException ignored) {

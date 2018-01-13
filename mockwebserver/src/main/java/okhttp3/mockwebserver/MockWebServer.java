@@ -53,6 +53,7 @@ import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
 import okhttp3.Headers;
+import okhttp3.HttpMethods;
 import okhttp3.HttpUrl;
 import okhttp3.Protocol;
 import okhttp3.Request;
@@ -60,7 +61,6 @@ import okhttp3.Response;
 import okhttp3.internal.Internal;
 import okhttp3.internal.NamedRunnable;
 import okhttp3.internal.Util;
-import okhttp3.internal.http.HttpMethod;
 import okhttp3.internal.http2.ErrorCode;
 import okhttp3.internal.http2.Header;
 import okhttp3.internal.http2.Http2Connection;
@@ -118,6 +118,7 @@ public final class MockWebServer extends ExternalResource implements Closeable {
 
   private static final Logger logger = Logger.getLogger(MockWebServer.class.getName());
 
+  private final HttpMethods httpMethods;
   private final BlockingQueue<RecordedRequest> requestQueue = new LinkedBlockingQueue<>();
 
   private final Set<Socket> openClientSockets =
@@ -139,6 +140,14 @@ public final class MockWebServer extends ExternalResource implements Closeable {
   private List<Protocol> protocols = Util.immutableList(Protocol.HTTP_2, Protocol.HTTP_1_1);
 
   private boolean started;
+
+  public MockWebServer() {
+    this(HttpMethods.defaultMethods());
+  }
+
+  public MockWebServer(HttpMethods httpMethods) {
+    this.httpMethods = httpMethods;
+  }
 
   @Override protected synchronized void before() {
     if (started) return;
@@ -626,7 +635,7 @@ public final class MockWebServer extends ExternalResource implements Closeable {
     }
 
     String method = request.substring(0, request.indexOf(' '));
-    if (hasBody && !HttpMethod.permitsRequestBody(method)) {
+    if (hasBody && !httpMethods.permitsRequestBody(method)) {
       throw new IllegalArgumentException("Request must not have a body: " + request);
     }
 
