@@ -17,6 +17,7 @@ package okhttp3.internal.http;
 
 import java.io.IOException;
 import java.net.ProtocolException;
+import okhttp3.HttpMethods;
 import okhttp3.Interceptor;
 import okhttp3.Request;
 import okhttp3.Response;
@@ -32,9 +33,11 @@ import okio.Sink;
 /** This is the last interceptor in the chain. It makes a network call to the server. */
 public final class CallServerInterceptor implements Interceptor {
   private final boolean forWebSocket;
+  private final HttpMethods httpMethods;
 
-  public CallServerInterceptor(boolean forWebSocket) {
+  public CallServerInterceptor(boolean forWebSocket, HttpMethods httpMethods) {
     this.forWebSocket = forWebSocket;
+    this.httpMethods = httpMethods;
   }
 
   @Override public Response intercept(Chain chain) throws IOException {
@@ -51,7 +54,7 @@ public final class CallServerInterceptor implements Interceptor {
     realChain.eventListener().requestHeadersEnd(realChain.call(), request);
 
     Response.Builder responseBuilder = null;
-    if (HttpMethod.permitsRequestBody(request.method()) && request.body() != null) {
+    if (httpMethods.permitsRequestBody(request.method()) && request.body() != null) {
       // If there's a "Expect: 100-continue" header on the request, wait for a "HTTP/1.1 100
       // Continue" response before transmitting the request body. If we don't get that, return
       // what we did get (such as a 4xx response) without ever transmitting the request body.

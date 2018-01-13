@@ -54,7 +54,6 @@ import okhttp3.internal.Util;
 import okhttp3.internal.Version;
 import okhttp3.internal.http.HttpDate;
 import okhttp3.internal.http.HttpHeaders;
-import okhttp3.internal.http.HttpMethod;
 import okhttp3.internal.http.StatusLine;
 import okhttp3.internal.platform.Platform;
 
@@ -335,7 +334,7 @@ public final class OkHttpURLConnection extends HttpURLConnection implements Call
       if (method.equals("GET")) {
         // they are requesting a stream to write to. This implies a POST method
         method = "POST";
-      } else if (!HttpMethod.permitsRequestBody(method)) {
+      } else if (!client.methods().permitsRequestBody(method)) {
         throw new ProtocolException(method + " does not support writing");
       }
     }
@@ -345,7 +344,7 @@ public final class OkHttpURLConnection extends HttpURLConnection implements Call
     }
 
     OutputStreamRequestBody requestBody = null;
-    if (HttpMethod.permitsRequestBody(method)) {
+    if (client.methods().permitsRequestBody(method)) {
       // Add a content type for the request body, if one isn't already present.
       String contentType = requestHeaders.get("Content-Type");
       if (contentType == null) {

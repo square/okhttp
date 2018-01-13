@@ -35,7 +35,6 @@ import okhttp3.internal.cache.CacheStrategy;
 import okhttp3.internal.cache.DiskLruCache;
 import okhttp3.internal.cache.InternalCache;
 import okhttp3.internal.http.HttpHeaders;
-import okhttp3.internal.http.HttpMethod;
 import okhttp3.internal.http.StatusLine;
 import okhttp3.internal.io.FileSystem;
 import okhttp3.internal.platform.Platform;
@@ -167,6 +166,7 @@ public final class Cache implements Closeable, Flushable {
   };
 
   final DiskLruCache cache;
+  final HttpMethods httpMethods;
 
   /* read and write statistics, all guarded by 'this' */
   int writeSuccessCount;
@@ -176,10 +176,19 @@ public final class Cache implements Closeable, Flushable {
   private int requestCount;
 
   public Cache(File directory, long maxSize) {
-    this(directory, maxSize, FileSystem.SYSTEM);
+    this(directory, maxSize, FileSystem.SYSTEM, HttpMethods.defaultMethods());
+  }
+
+  public Cache(File directory, long maxSize, HttpMethods httpMethods) {
+    this(directory, maxSize, FileSystem.SYSTEM, httpMethods);
   }
 
   Cache(File directory, long maxSize, FileSystem fileSystem) {
+    this(directory, maxSize, fileSystem, HttpMethods.defaultMethods());
+  }
+
+  Cache(File directory, long maxSize, FileSystem fileSystem, HttpMethods httpMethods) {
+    this.httpMethods = httpMethods;
     this.cache = DiskLruCache.create(fileSystem, directory, VERSION, ENTRY_COUNT, maxSize);
   }
 
@@ -221,7 +230,7 @@ public final class Cache implements Closeable, Flushable {
   @Nullable CacheRequest put(Response response) {
     String requestMethod = response.request().method();
 
-    if (HttpMethod.invalidatesCache(response.request().method())) {
+    if (httpMethods.invalidatesCache(response.request().method())) {
       try {
         remove(response.request());
       } catch (IOException ignored) {
