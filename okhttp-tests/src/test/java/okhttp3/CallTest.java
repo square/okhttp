@@ -550,6 +550,25 @@ public final class CallTest {
     patch();
   }
 
+  @Test public void customMethodWithBody() throws Exception {
+    server.enqueue(new MockResponse().setBody("abc"));
+
+    Request request = new Request.Builder()
+        .url(server.url("/"))
+        .method("CUSTOM", RequestBody.create(MediaType.parse("text/plain"), "def"))
+        .build();
+
+    executeSynchronously(request)
+        .assertCode(200)
+        .assertBody("abc");
+
+    RecordedRequest recordedRequest = server.takeRequest();
+    assertEquals("CUSTOM", recordedRequest.getMethod());
+    assertEquals("def", recordedRequest.getBody().readUtf8());
+    assertEquals("3", recordedRequest.getHeader("Content-Length"));
+    assertEquals("text/plain; charset=utf-8", recordedRequest.getHeader("Content-Type"));
+  }
+
   @Test public void unspecifiedRequestBodyContentTypeDoesNotGetDefault() throws Exception {
     server.enqueue(new MockResponse());
 
