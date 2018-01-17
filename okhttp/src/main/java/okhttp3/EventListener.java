@@ -87,7 +87,7 @@ public abstract class EventListener {
    * <p>If the {@link Call} is able to reuse an existing pooled connection, this method will not be
    * invoked. See {@link ConnectionPool}.
    */
-  public void dnsStart(Call call, String domainName) {
+  public void dnsStart(@Nullable Call call, String domainName) {
   }
 
   /**
@@ -95,7 +95,8 @@ public abstract class EventListener {
    *
    * <p>This method is invoked after {@link #dnsStart}.
    */
-  public void dnsEnd(Call call, String domainName, @Nullable List<InetAddress> inetAddressList) {
+  public void dnsEnd(@Nullable Call call, String domainName,
+      @Nullable List<InetAddress> inetAddressList) {
   }
 
   /**

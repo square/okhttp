@@ -75,8 +75,6 @@ public final class Handshake {
 
   public static Handshake get(TlsVersion tlsVersion, CipherSuite cipherSuite,
       List<Certificate> peerCertificates, List<Certificate> localCertificates) {
-    if (tlsVersion == null) throw new NullPointerException("tlsVersion == null");
-    if (cipherSuite == null) throw new NullPointerException("cipherSuite == null");
     return new Handshake(tlsVersion, cipherSuite, Util.immutableList(peerCertificates),
         Util.immutableList(localCertificates));
   }

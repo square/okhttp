@@ -413,9 +413,6 @@ public final class CipherSuite {
   }
 
   private CipherSuite(String javaName) {
-    if (javaName == null) {
-      throw new NullPointerException();
-    }
     this.javaName = javaName;
   }
 

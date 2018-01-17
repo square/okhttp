@@ -59,26 +59,12 @@ public final class Address {
         .port(uriPort)
         .build();
 
-    if (dns == null) throw new NullPointerException("dns == null");
     this.dns = dns;
-
-    if (socketFactory == null) throw new NullPointerException("socketFactory == null");
     this.socketFactory = socketFactory;
-
-    if (proxyAuthenticator == null) {
-      throw new NullPointerException("proxyAuthenticator == null");
-    }
     this.proxyAuthenticator = proxyAuthenticator;
-
-    if (protocols == null) throw new NullPointerException("protocols == null");
     this.protocols = Util.immutableList(protocols);
-
-    if (connectionSpecs == null) throw new NullPointerException("connectionSpecs == null");
     this.connectionSpecs = Util.immutableList(connectionSpecs);
-
-    if (proxySelector == null) throw new NullPointerException("proxySelector == null");
     this.proxySelector = proxySelector;
-
     this.proxy = proxy;
     this.sslSocketFactory = sslSocketFactory;
     this.hostnameVerifier = hostnameVerifier;

@@ -31,9 +31,6 @@ public final class Challenge {
   }
 
   private Challenge(String scheme, String realm, Charset charset) {
-    if (scheme == null) throw new NullPointerException("scheme == null");
-    if (realm == null) throw new NullPointerException("realm == null");
-    if (charset == null) throw new NullPointerException("charset == null");
     this.scheme = scheme;
     this.realm = realm;
     this.charset = charset;

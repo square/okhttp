@@ -78,10 +78,6 @@ public final class Cookie {
   }
 
   Cookie(Builder builder) {
-    if (builder.name == null) throw new NullPointerException("builder.name == null");
-    if (builder.value == null) throw new NullPointerException("builder.value == null");
-    if (builder.domain == null) throw new NullPointerException("builder.domain == null");
-
     this.name = builder.name;
     this.value = builder.value;
     this.expiresAt = builder.expiresAt;
@@ -469,14 +465,12 @@ public final class Cookie {
     boolean hostOnly;
 
     public Builder name(String name) {
-      if (name == null) throw new NullPointerException("name == null");
       if (!name.trim().equals(name)) throw new IllegalArgumentException("name is not trimmed");
       this.name = name;
       return this;
     }
 
     public Builder value(String value) {
-      if (value == null) throw new NullPointerException("value == null");
       if (!value.trim().equals(value)) throw new IllegalArgumentException("value is not trimmed");
       this.value = value;
       return this;
@@ -507,7 +501,6 @@ public final class Cookie {
     }
 
     private Builder domain(String domain, boolean hostOnly) {
-      if (domain == null) throw new NullPointerException("domain == null");
       String canonicalDomain = Util.canonicalizeHost(domain);
       if (canonicalDomain == null) {
         throw new IllegalArgumentException("unexpected domain: " + domain);

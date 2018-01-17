@@ -112,7 +112,7 @@ public final class FormBody extends RequestBody {
       this(null);
     }
 
-    public Builder(Charset charset) {
+    public Builder(@Nullable Charset charset) {
       this.charset = charset;
     }
 

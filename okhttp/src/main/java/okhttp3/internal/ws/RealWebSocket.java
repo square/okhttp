@@ -358,12 +358,10 @@ public final class RealWebSocket implements WebSocket, WebSocketReader.FrameCall
   // Writer methods to enqueue frames. They'll be sent asynchronously by the writer thread.
 
   @Override public boolean send(String text) {
-    if (text == null) throw new NullPointerException("text == null");
     return send(ByteString.encodeUtf8(text), OPCODE_TEXT);
   }
 
   @Override public boolean send(ByteString bytes) {
-    if (bytes == null) throw new NullPointerException("bytes == null");
     return send(bytes, OPCODE_BINARY);
   }
 
@@ -393,11 +391,11 @@ public final class RealWebSocket implements WebSocket, WebSocketReader.FrameCall
     return true;
   }
 
-  @Override public boolean close(int code, String reason) {
+  @Override public boolean close(int code, @Nullable String reason) {
     return close(code, reason, CANCEL_AFTER_CLOSE_MILLIS);
   }
 
-  synchronized boolean close(int code, String reason, long cancelAfterCloseMillis) {
+  synchronized boolean close(int code, @Nullable String reason, long cancelAfterCloseMillis) {
     validateCloseCode(code);
 
     ByteString reasonBytes = null;
@@ -564,7 +562,7 @@ public final class RealWebSocket implements WebSocket, WebSocketReader.FrameCall
     final ByteString reason;
     final long cancelAfterCloseMillis;
 
-    Close(int code, ByteString reason, long cancelAfterCloseMillis) {
+    Close(int code, @Nullable ByteString reason, long cancelAfterCloseMillis) {
       this.code = code;
       this.reason = reason;
       this.cancelAfterCloseMillis = cancelAfterCloseMillis;

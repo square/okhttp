@@ -328,8 +328,6 @@ public final class CertificatePinner {
      * Info, base64-encoded and prefixed with either {@code sha256/} or {@code sha1/}.
      */
     public Builder add(String pattern, String... pins) {
-      if (pattern == null) throw new NullPointerException("pattern == null");
-
       for (String pin : pins) {
         this.pins.add(new Pin(pattern, pin));
       }

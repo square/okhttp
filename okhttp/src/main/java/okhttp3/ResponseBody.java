@@ -213,7 +213,6 @@ public abstract class ResponseBody implements Closeable {
   /** Returns a new response body that transmits {@code content}. */
   public static ResponseBody create(final @Nullable MediaType contentType,
       final long contentLength, final BufferedSource content) {
-    if (content == null) throw new NullPointerException("source == null");
     return new ResponseBody() {
       @Override public @Nullable MediaType contentType() {
         return contentType;
