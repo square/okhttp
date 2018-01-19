@@ -554,7 +554,9 @@ public final class HttpLoggingInterceptorTest {
         .assertLogEqual("Content-Encoding: gzip")
         .assertLogEqual("Content-Type: text/plain; charset=utf-8")
         .assertLogMatch("Content-Length: \\d+")
-        .assertLogEqual("<-- END HTTP (encoded body omitted)")
+        .assertLogEqual("")
+        .assertLogEqual("Hello, Hello, Hello")
+        .assertLogEqual("<-- END HTTP (19-byte 29-gzipped-byte body)")
         .assertNoMoreLogs();
 
     applicationLogs
