@@ -529,6 +529,11 @@ public final class OkHttpURLConnection extends HttpURLConnection implements Call
     this.method = method;
   }
 
+  @Override
+  public String getRequestMethod() {
+    return method;
+  }
+
   @Override public void setFixedLengthStreamingMode(int contentLength) {
     setFixedLengthStreamingMode((long) contentLength);
   }
