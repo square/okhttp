@@ -34,6 +34,7 @@ import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
 import javax.net.ssl.X509TrustManager;
+import okhttp3.internal.platform.Platform;
 
 /**
  * Combines an SSL socket factory and trust manager, a pairing enough for OkHttp or MockWebServer to
@@ -79,6 +80,7 @@ public final class SslClient {
     private final List<X509Certificate> certificates = new ArrayList<>();
     private KeyPair keyPair;
     private String keyStoreType = KeyStore.getDefaultType();
+    private SSLContext sslContext = null;
 
     /**
      * Configure the certificate chain to use when serving HTTPS responses. The first certificate is
@@ -116,6 +118,11 @@ public final class SslClient {
       return this;
     }
 
+    public Builder sslContext(SSLContext sslContext) {
+      this.sslContext = sslContext;
+      return this;
+    }
+
     public SslClient build() {
       try {
         // Put the certificate in a key store.
@@ -146,10 +153,12 @@ public final class SslClient {
               + Arrays.toString(trustManagers));
         }
 
-        SSLContext sslContext = SSLContext.getInstance("TLS");
-        sslContext.init(keyManagerFactory.getKeyManagers(), trustManagers, new SecureRandom());
+        SSLContext activeSslContext =
+            this.sslContext != null ? this.sslContext : Platform.get().getSSLContext();
+        activeSslContext.init(keyManagerFactory.getKeyManagers(), trustManagers,
+            new SecureRandom());
 
-        return new SslClient(sslContext, (X509TrustManager) trustManagers[0]);
+        return new SslClient(activeSslContext, (X509TrustManager) trustManagers[0]);
       } catch (GeneralSecurityException gse) {
         throw new AssertionError(gse);
       }
