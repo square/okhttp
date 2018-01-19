@@ -183,15 +183,6 @@ public class Platform {
 
   /** Attempt to match the host runtime to a capable Platform implementation. */
   private static Platform findPlatform() {
-    if ("conscrypt".equals(System.getProperty("okhttp.platform"))) {
-      // TODO better installation mechanism for new platforms
-      Platform conscrypt = ConscryptPlatform.buildIfSupported();
-
-      if (conscrypt != null) {
-        return conscrypt;
-      }
-    }
-
     Platform android = AndroidPlatform.buildIfSupported();
 
     if (android != null) {
