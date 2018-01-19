@@ -50,11 +50,12 @@ public final class JavaNetHeaders {
    */
   public static Map<String, List<String>> toMultimap(Headers headers, String valueForNullKey) {
     Map<String, List<String>> result = new TreeMap<>(FIELD_NAME_COMPARATOR);
+    List<String> allValues;
     for (int i = 0, size = headers.size(); i < size; i++) {
       String fieldName = headers.name(i);
       String value = headers.value(i);
 
-      List<String> allValues = new ArrayList<>();
+      allValues = new ArrayList<>();
       List<String> otherValues = result.get(fieldName);
       if (otherValues != null) {
         allValues.addAll(otherValues);
