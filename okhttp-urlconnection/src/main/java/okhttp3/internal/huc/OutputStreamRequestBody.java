@@ -36,7 +36,7 @@ abstract class OutputStreamRequestBody extends RequestBody {
   private Timeout timeout;
   private long expectedContentLength;
   private OutputStream outputStream;
-  boolean closed;
+  private boolean closed;
 
   protected void initOutputStream(final BufferedSink sink, final long expectedContentLength) {
     this.timeout = sink.timeout();
