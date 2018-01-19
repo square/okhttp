@@ -20,10 +20,12 @@ import java.io.IOException;
 import java.lang.reflect.Field;
 import java.net.InetSocketAddress;
 import java.net.Socket;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.X509TrustManager;
@@ -181,6 +183,15 @@ public class Platform {
 
   /** Attempt to match the host runtime to a capable Platform implementation. */
   private static Platform findPlatform() {
+    if ("conscrypt".equals(System.getProperty("okhttp.platform"))) {
+      // TODO better installation mechanism for new platforms
+      Platform conscrypt = ConscryptPlatform.buildIfSupported();
+
+      if (conscrypt != null) {
+        return conscrypt;
+      }
+    }
+
     Platform android = AndroidPlatform.buildIfSupported();
 
     if (android != null) {
@@ -241,7 +252,15 @@ public class Platform {
     return null;
   }
 
-    public TrustRootIndex buildTrustRootIndex(X509TrustManager trustManager) {
-      return new BasicTrustRootIndex(trustManager.getAcceptedIssuers());
+  public SSLContext getSSLContext() {
+    try {
+      return SSLContext.getInstance("TLS");
+    } catch (NoSuchAlgorithmException e) {
+      throw new IllegalStateException("No TLS provider", e);
     }
+  }
+
+  public TrustRootIndex buildTrustRootIndex(X509TrustManager trustManager) {
+    return new BasicTrustRootIndex(trustManager.getAcceptedIssuers());
+  }
 }
