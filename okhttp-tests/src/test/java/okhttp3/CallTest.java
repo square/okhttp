@@ -550,6 +550,25 @@ public final class CallTest {
     patch();
   }
 
+  @Test public void customMethodWithBody() throws Exception {
+    server.enqueue(new MockResponse().setBody("abc"));
+
+    Request request = new Request.Builder()
+        .url(server.url("/"))
+        .method("CUSTOM", RequestBody.create(MediaType.parse("text/plain"), "def"))
+        .build();
+
+    executeSynchronously(request)
+        .assertCode(200)
+        .assertBody("abc");
+
+    RecordedRequest recordedRequest = server.takeRequest();
+    assertEquals("CUSTOM", recordedRequest.getMethod());
+    assertEquals("def", recordedRequest.getBody().readUtf8());
+    assertEquals("3", recordedRequest.getHeader("Content-Length"));
+    assertEquals("text/plain; charset=utf-8", recordedRequest.getHeader("Content-Type"));
+  }
+
   @Test public void unspecifiedRequestBodyContentTypeDoesNotGetDefault() throws Exception {
     server.enqueue(new MockResponse());
 
@@ -1583,6 +1602,22 @@ public final class CallTest {
     assertEquals("Body", response.body().string());
   }
 
+  @Test public void getClientRequestTimeoutWithBackPressure() throws Exception {
+    server.enqueue(new MockResponse()
+        .setSocketPolicy(SocketPolicy.DISCONNECT_AT_END)
+        .setResponseCode(408)
+        .setHeader("Connection", "Close")
+        .setHeader("Retry-After", "1")
+        .setBody("You took too long!"));
+
+    Request request = new Request.Builder()
+        .url(server.url("/"))
+        .build();
+    Response response = client.newCall(request).execute();
+
+    assertEquals("You took too long!", response.body().string());
+  }
+
   @Test public void requestBodyRetransmittedOnClientRequestTimeout() throws Exception {
     server.enqueue(new MockResponse()
         .setSocketPolicy(SocketPolicy.DISCONNECT_AT_END)
@@ -1647,6 +1682,48 @@ public final class CallTest {
     assertEquals("You took too long!", response.body().string());
 
     assertEquals(2, server.getRequestCount());
+  }
+
+  @Test public void maxUnavailableTimeoutRetries() throws IOException {
+    server.enqueue(new MockResponse()
+        .setSocketPolicy(SocketPolicy.DISCONNECT_AT_END)
+        .setResponseCode(503)
+        .setHeader("Connection", "Close")
+        .setHeader("Retry-After", "0")
+        .setBody("You took too long!"));
+    server.enqueue(new MockResponse()
+        .setSocketPolicy(SocketPolicy.DISCONNECT_AT_END)
+        .setResponseCode(503)
+        .setHeader("Connection", "Close")
+        .setHeader("Retry-After", "0")
+        .setBody("You took too long!"));
+
+    Request request = new Request.Builder()
+        .url(server.url("/"))
+        .build();
+    Response response = client.newCall(request).execute();
+
+    assertEquals(503, response.code());
+    assertEquals("You took too long!", response.body().string());
+
+    assertEquals(2, server.getRequestCount());
+  }
+
+  @Test public void retryOnUnavailableWith0RetryAfter() throws IOException {
+    server.enqueue(new MockResponse()
+        .setSocketPolicy(SocketPolicy.DISCONNECT_AT_END)
+        .setResponseCode(503)
+        .setHeader("Connection", "Close")
+        .setHeader("Retry-After", "0")
+        .setBody("You took too long!"));
+    server.enqueue(new MockResponse().setBody("Body"));
+
+    Request request = new Request.Builder()
+        .url(server.url("/"))
+        .build();
+    Response response = client.newCall(request).execute();
+
+    assertEquals("Body", response.body().string());
   }
 
   @Test public void propfindRedirectsToPropfindAndMaintainsRequestBody() throws Exception {

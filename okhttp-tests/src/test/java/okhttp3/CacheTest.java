@@ -1033,6 +1033,43 @@ public final class CacheTest {
     assertEquals("ABCABCABC", get(server.url("/")).body().string());
   }
 
+  @Test public void previouslyNotGzippedContentIsNotModifiedAndSpecifiesGzipEncoding() throws Exception {
+    server.enqueue(new MockResponse()
+            .setBody("ABCABCABC")
+            .addHeader("Content-Type: text/plain")
+            .addHeader("Last-Modified: " + formatDate(-2, TimeUnit.HOURS))
+            .addHeader("Expires: " + formatDate(-1, TimeUnit.HOURS)));
+    server.enqueue(new MockResponse()
+            .setResponseCode(HttpURLConnection.HTTP_NOT_MODIFIED)
+            .addHeader("Content-Type: text/plain")
+            .addHeader("Content-Encoding: gzip"));
+    server.enqueue(new MockResponse()
+            .setBody("DEFDEFDEF"));
+
+    assertEquals("ABCABCABC", get(server.url("/")).body().string());
+    assertEquals("ABCABCABC", get(server.url("/")).body().string());
+    assertEquals("DEFDEFDEF", get(server.url("/")).body().string());
+  }
+
+  @Test public void changedGzippedContentIsNotModifiedAndSpecifiesNewEncoding() throws Exception {
+    server.enqueue(new MockResponse()
+            .setBody(gzip("ABCABCABC"))
+            .addHeader("Content-Type: text/plain")
+            .addHeader("Last-Modified: " + formatDate(-2, TimeUnit.HOURS))
+            .addHeader("Expires: " + formatDate(-1, TimeUnit.HOURS))
+            .addHeader("Content-Encoding: gzip"));
+    server.enqueue(new MockResponse()
+            .setResponseCode(HttpURLConnection.HTTP_NOT_MODIFIED)
+            .addHeader("Content-Type: text/plain")
+            .addHeader("Content-Encoding: identity"));
+    server.enqueue(new MockResponse()
+            .setBody("DEFDEFDEF"));
+
+    assertEquals("ABCABCABC", get(server.url("/")).body().string());
+    assertEquals("ABCABCABC", get(server.url("/")).body().string());
+    assertEquals("DEFDEFDEF", get(server.url("/")).body().string());
+  }
+
   @Test public void notModifiedSpecifiesEncoding() throws Exception {
     server.enqueue(new MockResponse()
         .setBody(gzip("ABCABCABC"))

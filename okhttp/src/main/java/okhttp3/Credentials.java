@@ -26,12 +26,12 @@ public final class Credentials {
   }
 
   /** Returns an auth credential for the Basic scheme. */
-  public static String basic(String userName, String password) {
-    return basic(userName, password, ISO_8859_1);
+  public static String basic(String username, String password) {
+    return basic(username, password, ISO_8859_1);
   }
 
-  public static String basic(String userName, String password, Charset charset) {
-    String usernameAndPassword = userName + ":" + password;
+  public static String basic(String username, String password, Charset charset) {
+    String usernameAndPassword = username + ":" + password;
     String encoded = ByteString.encodeString(usernameAndPassword, charset).base64();
     return "Basic " + encoded;
   }
