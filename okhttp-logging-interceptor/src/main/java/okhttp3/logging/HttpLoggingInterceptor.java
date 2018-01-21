@@ -244,12 +244,18 @@ public final class HttpLoggingInterceptor implements Interceptor {
         Long gzippedLength = null;
         if ("gzip".equalsIgnoreCase(headers.get("Content-Encoding"))) {
             gzippedLength = buffer.size();
-            try (GzipSource gzippedResponseBody = new GzipSource(buffer.clone())) {
+            GzipSource gzippedResponseBody = null;
+            try {
+                gzippedResponseBody = new GzipSource(buffer.clone());
                 buffer = new Buffer();
                 gzippedResponseBody.read(buffer, Long.MAX_VALUE);
+            } finally {
+                if (gzippedResponseBody != null) {
+                    gzippedResponseBody.close();
+                }
             }
         }
-        
+
         Charset charset = UTF8;
         MediaType contentType = responseBody.contentType();
         if (contentType != null) {
@@ -268,7 +274,8 @@ public final class HttpLoggingInterceptor implements Interceptor {
         }
 
         if (gzippedLength != null) {
-            logger.log("<-- END HTTP (" + buffer.size() + "-byte " + gzippedLength + "-gzipped-byte body)");            
+            logger.log("<-- END HTTP (" + buffer.size() + "-byte "
+                + gzippedLength + "-gzipped-byte body)");
         } else {
             logger.log("<-- END HTTP (" + buffer.size() + "-byte body)");
         }
@@ -304,6 +311,8 @@ public final class HttpLoggingInterceptor implements Interceptor {
 
   private boolean bodyHasUnknownEncofing(Headers headers) {
     String contentEncoding = headers.get("Content-Encoding");
-    return contentEncoding != null && !contentEncoding.equalsIgnoreCase("identity")  && !contentEncoding.equalsIgnoreCase("gzip");
+    return contentEncoding != null
+        && !contentEncoding.equalsIgnoreCase("identity")
+        && !contentEncoding.equalsIgnoreCase("gzip");
   }
 }
