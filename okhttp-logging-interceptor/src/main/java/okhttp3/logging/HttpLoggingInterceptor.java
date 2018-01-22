@@ -183,7 +183,7 @@ public final class HttpLoggingInterceptor implements Interceptor {
 
       if (!logBody || !hasRequestBody) {
         logger.log("--> END " + request.method());
-      } else if (bodyHasUnknownEncofing(request.headers())) {
+      } else if (bodyHasUnknownEncoding(request.headers())) {
         logger.log("--> END " + request.method() + " (encoded body omitted)");
       } else {
         Buffer buffer = new Buffer();
@@ -234,7 +234,7 @@ public final class HttpLoggingInterceptor implements Interceptor {
 
       if (!logBody || !HttpHeaders.hasBody(response)) {
         logger.log("<-- END HTTP");
-      } else if (bodyHasUnknownEncofing(response.headers())) {
+      } else if (bodyHasUnknownEncoding(response.headers())) {
         logger.log("<-- END HTTP (encoded body omitted)");
       } else {
         BufferedSource source = responseBody.source();
@@ -309,7 +309,7 @@ public final class HttpLoggingInterceptor implements Interceptor {
     }
   }
 
-  private boolean bodyHasUnknownEncofing(Headers headers) {
+  private boolean bodyHasUnknownEncoding(Headers headers) {
     String contentEncoding = headers.get("Content-Encoding");
     return contentEncoding != null
         && !contentEncoding.equalsIgnoreCase("identity")
