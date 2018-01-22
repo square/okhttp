@@ -556,7 +556,7 @@ public final class HttpLoggingInterceptorTest {
         .assertLogMatch("Content-Length: \\d+")
         .assertLogEqual("")
         .assertLogEqual("Hello, Hello, Hello")
-        .assertLogEqual("<-- END HTTP (19-byte 29-gzipped-byte body)")
+        .assertLogEqual("<-- END HTTP (19-byte, 29-gzipped-byte body)")
         .assertNoMoreLogs();
 
     applicationLogs
