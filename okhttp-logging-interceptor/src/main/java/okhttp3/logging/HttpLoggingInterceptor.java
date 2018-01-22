@@ -274,7 +274,7 @@ public final class HttpLoggingInterceptor implements Interceptor {
         }
 
         if (gzippedLength != null) {
-            logger.log("<-- END HTTP (" + buffer.size() + "-byte "
+            logger.log("<-- END HTTP (" + buffer.size() + "-byte, "
                 + gzippedLength + "-gzipped-byte body)");
         } else {
             logger.log("<-- END HTTP (" + buffer.size() + "-byte body)");
