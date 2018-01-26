@@ -95,7 +95,7 @@ public abstract class EventListener {
    *
    * <p>This method is invoked after {@link #dnsStart}.
    */
-  public void dnsEnd(Call call, String domainName, @Nullable List<InetAddress> inetAddressList) {
+  public void dnsEnd(Call call, String domainName, List<InetAddress> inetAddressList) {
   }
 
   /**
@@ -140,8 +140,8 @@ public abstract class EventListener {
    * {@link #secureConnectEnd(Call, Handshake)}, otherwise it will invoked after
    * {@link #connectStart(Call, InetSocketAddress, Proxy)}.
    */
-  public void connectEnd(Call call, InetSocketAddress inetSocketAddress,
-      @Nullable Proxy proxy, @Nullable Protocol protocol) {
+  public void connectEnd(Call call, InetSocketAddress inetSocketAddress, Proxy proxy,
+      @Nullable Protocol protocol) {
   }
 
   /**
@@ -152,8 +152,8 @@ public abstract class EventListener {
    * Handshake)}, otherwise it will invoked after {@link #connectStart(Call, InetSocketAddress,
    * Proxy)}.
    */
-  public void connectFailed(Call call, InetSocketAddress inetSocketAddress,
-      @Nullable Proxy proxy, @Nullable Protocol protocol, @Nullable IOException ioe) {
+  public void connectFailed(Call call, InetSocketAddress inetSocketAddress, Proxy proxy,
+      @Nullable Protocol protocol, IOException ioe) {
   }
 
   /**
