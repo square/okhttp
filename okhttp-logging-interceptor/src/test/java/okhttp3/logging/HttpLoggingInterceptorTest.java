@@ -31,6 +31,7 @@ import okhttp3.RecordingHostnameVerifier;
 import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
+import okhttp3.ResponseBody;
 import okhttp3.internal.tls.SslClient;
 import okhttp3.logging.HttpLoggingInterceptor.Level;
 import okhttp3.mockwebserver.MockResponse;
@@ -541,7 +542,10 @@ public final class HttpLoggingInterceptorTest {
         .setBody(new Buffer().write(ByteString.decodeBase64(
             "H4sIAAAAAAAAAPNIzcnJ11HwQKIAdyO+9hMAAAA="))));
     Response response = client.newCall(request().build()).execute();
-    response.body().close();
+
+    ResponseBody responseBody = response.body();
+    assertEquals("Expected response body to be valid","Hello, Hello, Hello", responseBody.string());
+    responseBody.close();
 
     networkLogs
         .assertLogEqual("--> GET " + url + " http/1.1")
