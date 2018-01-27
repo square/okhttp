@@ -26,6 +26,7 @@ import static org.junit.Assert.fail;
 public final class DispatcherTest {
   RecordingExecutor executor = new RecordingExecutor();
   RecordingCallback callback = new RecordingCallback();
+  RecordingWebSocketListener webSocketListener = new RecordingWebSocketListener();
   Dispatcher dispatcher = new Dispatcher(executor);
   OkHttpClient client = defaultClient().newBuilder()
       .dispatcher(dispatcher)
@@ -72,6 +73,14 @@ public final class DispatcherTest {
     client.newCall(newRequest("http://a/2")).enqueue(callback);
     client.newCall(newRequest("http://a/3")).enqueue(callback);
     executor.assertJobs("http://a/1", "http://a/2");
+  }
+
+  @Test public void maxPerHostNotEnforcedForWebSockets() {
+    dispatcher.setMaxRequestsPerHost(2);
+    client.newWebSocket(newRequest("http://a/1"), webSocketListener);
+    client.newWebSocket(newRequest("http://a/2"), webSocketListener);
+    client.newWebSocket(newRequest("http://a/3"), webSocketListener);
+    executor.assertJobs("http://a/1", "http://a/2", "http://a/3");
   }
 
   @Test public void increasingMaxRequestsPromotesJobsImmediately() throws Exception {
