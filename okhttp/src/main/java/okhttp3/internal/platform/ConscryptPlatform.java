@@ -11,10 +11,6 @@ import okhttp3.Protocol;
 import org.conscrypt.Conscrypt;
 import org.conscrypt.OpenSSLProvider;
 
-// TODO support SSLClientSessionCache
-// TODO support TLS 1.3 (debugging needed)
-// TODO support 0-RTT (TLS 1.3)
-
 /**
  * Platform using Conscrypt (conscrypt.org) if system property
  * okhttp.platform is set to conscrypt.
