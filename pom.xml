@@ -594,7 +594,7 @@
         <jdk>1.8.0_161</jdk>
       </activation>
       <properties>
-        <alpn.jdk8.version>8.1.11.v20170118</alpn.jdk8.version>
+        <alpn.jdk8.version>8.1.12.v20180117</alpn.jdk8.version>
       </properties>
     </profile>
     <profile>
@@ -603,7 +603,7 @@
         <jdk>1.8.0_162</jdk>
       </activation>
       <properties>
-        <alpn.jdk8.version>8.1.11.v20170118</alpn.jdk8.version>
+        <alpn.jdk8.version>8.1.12.v20180117</alpn.jdk8.version>
       </properties>
     </profile>
   </profiles>
