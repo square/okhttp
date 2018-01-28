@@ -15,7 +15,7 @@ import org.conscrypt.OpenSSLProvider;
  * Platform using Conscrypt (conscrypt.org) if system property
  * okhttp.platform is set to conscrypt.
  *
- * Returns org.conscrypt:conscrypt-openjdk-uber on the classpath.
+ * Requires org.conscrypt:conscrypt-openjdk-uber on the classpath.
  */
 public class ConscryptPlatform extends Platform {
   private ConscryptPlatform() {
