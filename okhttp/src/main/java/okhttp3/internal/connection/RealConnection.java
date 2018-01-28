@@ -243,6 +243,11 @@ public final class RealConnection extends Http2Connection.Listener implements Co
       throw ce;
     }
 
+    // Protecting against rare occasion when input or output stream is null due to hardware/firmware issues
+    if (rawSocket.getInputStream() == null || rawSocket.getOutputStream() == null) {
+      throw new IOException("Socket's input or output stream is null");
+    }
+
     // The following try/catch block is a pseudo hacky way to get around a crash on Android 7.0
     // More details:
     // https://github.com/square/okhttp/issues/3245
