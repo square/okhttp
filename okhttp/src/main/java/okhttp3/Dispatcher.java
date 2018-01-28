@@ -95,6 +95,8 @@ public final class Dispatcher {
    *
    * <p>If more than {@code maxRequestsPerHost} requests are in flight when this is invoked, those
    * requests will remain in flight.
+   *
+   * <p>WebSocket connections to hosts <b>do not</b> count against this limit.
    */
   public synchronized void setMaxRequestsPerHost(int maxRequestsPerHost) {
     if (maxRequestsPerHost < 1) {
@@ -172,6 +174,7 @@ public final class Dispatcher {
   private int runningCallsForHost(AsyncCall call) {
     int result = 0;
     for (AsyncCall c : runningAsyncCalls) {
+      if (c.get().forWebSocket) continue;
       if (c.host().equals(call.host())) result++;
     }
     return result;

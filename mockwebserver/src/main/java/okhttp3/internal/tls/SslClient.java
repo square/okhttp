@@ -80,7 +80,7 @@ public final class SslClient {
     private final List<X509Certificate> certificates = new ArrayList<>();
     private KeyPair keyPair;
     private String keyStoreType = KeyStore.getDefaultType();
-    private SSLContext sslContext = null;
+    private SSLContext sslContext;
 
     /**
      * Configure the certificate chain to use when serving HTTPS responses. The first certificate is
