@@ -484,6 +484,35 @@ public final class HpackTest {
     assertEquals(headerEntries(":method", "GET"), hpackReader.getAndResetHeaderList());
   }
 
+  @Test public void readLiteralHeaderWithIncrementalIndexingStaticName() throws IOException {
+    bytesIn.writeByte(0x7d); // == Literal indexed ==
+    // Indexed name (idx = 60) -> "www-authenticate"
+    bytesIn.writeByte(0x05); // Literal value (len = 5)
+    bytesIn.writeUtf8("Basic");
+
+    hpackReader.readHeaders();
+
+    assertEquals(Arrays.asList(new Header("www-authenticate", "Basic")), hpackReader.getAndResetHeaderList());
+  }
+
+  @Test public void readLiteralHeaderWithIncrementalIndexingDynamicName() throws IOException {
+    bytesIn.writeByte(0x40);
+    bytesIn.writeByte(0x0a); // Literal name (len = 10)
+    bytesIn.writeUtf8("custom-foo");
+    bytesIn.writeByte(0x05); // Literal value (len = 5)
+    bytesIn.writeUtf8("Basic");
+
+    bytesIn.writeByte(0x7e);
+    bytesIn.writeByte(0x06); // Literal value (len = 6)
+    bytesIn.writeUtf8("Basic2");
+
+    hpackReader.readHeaders();
+
+    assertEquals(
+        Arrays.asList(new Header("custom-foo", "Basic"), new Header("custom-foo", "Basic2")),
+        hpackReader.getAndResetHeaderList());
+  }
+
   /**
    * http://tools.ietf.org/html/draft-ietf-httpbis-header-compression-12#appendix-C.2
    */
@@ -499,6 +528,27 @@ public final class HpackTest {
     thirdRequestWithoutHuffman();
     hpackReader.readHeaders();
     checkReadThirdRequestWithoutHuffman();
+  }
+
+  @Test public void readFailingRequestExample() throws IOException {
+    bytesIn.writeByte(0x82); // == Indexed - Add ==
+    // idx = 2 -> :method: GET
+    bytesIn.writeByte(0x86); // == Indexed - Add ==
+    // idx = 7 -> :scheme: http
+    bytesIn.writeByte(0x84); // == Indexed - Add ==
+
+    bytesIn.writeByte(0x7f); // == Bad index! ==
+
+    // Indexed name (idx = 4) -> :authority
+    bytesIn.writeByte(0x0f); // Literal value (len = 15)
+    bytesIn.writeUtf8("www.example.com");
+
+    try {
+      hpackReader.readHeaders();
+      fail();
+    } catch (IOException e) {
+      assertEquals("Header index too large 78", e.getMessage());
+    }
   }
 
   private void firstRequestWithoutHuffman() {
