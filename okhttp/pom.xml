@@ -59,7 +59,7 @@
         <configuration>
           <archive>
             <manifestEntries>
-              <Automatic-Module-Name>${project.groupId}</Automatic-Module-Name>
+              <Automatic-Module-Name>okhttp3</Automatic-Module-Name>
             </manifestEntries>
           </archive>
         </configuration>
