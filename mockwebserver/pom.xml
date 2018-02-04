@@ -69,7 +69,7 @@
         <configuration>
           <archive>
             <manifestEntries>
-              <Automatic-Module-Name>${project.groupId}.mockwebserver</Automatic-Module-Name>
+              <Automatic-Module-Name>okhttp3.mockwebserver</Automatic-Module-Name>
             </manifestEntries>
           </archive>
         </configuration>
