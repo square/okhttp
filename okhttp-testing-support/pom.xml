@@ -38,7 +38,7 @@
         <configuration>
           <archive>
             <manifestEntries>
-              <Automatic-Module-Name>${project.groupId}.testingsupport</Automatic-Module-Name>
+              <Automatic-Module-Name>okhttp3.testing</Automatic-Module-Name>
             </manifestEntries>
           </archive>
         </configuration>
