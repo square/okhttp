@@ -96,7 +96,8 @@ public enum Protocol {
    * Returns the string used to identify this protocol for ALPN, like "http/1.1", "spdy/3.1" or
    * "h2".
    *
-   * @link https://www.iana.org/assignments/tls-extensiontype-values/tls-extensiontype-values.xhtml
+   * @see <a href="https://www.iana.org/assignments/tls-extensiontype-values">IANA
+   * tls-extensiontype-values</a>
    */
   @Override public String toString() {
     return protocol;
