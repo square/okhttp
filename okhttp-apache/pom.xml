@@ -62,7 +62,7 @@
         <configuration>
           <archive>
             <manifestEntries>
-              <Automatic-Module-Name>${project.groupId}.apache</Automatic-Module-Name>
+              <Automatic-Module-Name>okhttp3.apache</Automatic-Module-Name>
             </manifestEntries>
           </archive>
         </configuration>
