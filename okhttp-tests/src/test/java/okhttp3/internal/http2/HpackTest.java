@@ -501,6 +501,27 @@ public final class HpackTest {
     checkReadThirdRequestWithoutHuffman();
   }
 
+  @Test public void readFailingRequestExample() throws IOException {
+    bytesIn.writeByte(0x82); // == Indexed - Add ==
+    // idx = 2 -> :method: GET
+    bytesIn.writeByte(0x86); // == Indexed - Add ==
+    // idx = 7 -> :scheme: http
+    bytesIn.writeByte(0x84); // == Indexed - Add ==
+
+    bytesIn.writeByte(0x7f); // == Bad index! ==
+
+    // Indexed name (idx = 4) -> :authority
+    bytesIn.writeByte(0x0f); // Literal value (len = 15)
+    bytesIn.writeUtf8("www.example.com");
+
+    try {
+      hpackReader.readHeaders();
+      fail();
+    } catch (IOException e) {
+      assertEquals("Header index too large 78", e.getMessage());
+    }
+  }
+
   private void firstRequestWithoutHuffman() {
     bytesIn.writeByte(0x82); // == Indexed - Add ==
                              // idx = 2 -> :method: GET
