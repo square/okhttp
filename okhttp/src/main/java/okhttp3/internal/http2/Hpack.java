@@ -221,7 +221,7 @@ final class Hpack {
         headerList.add(staticEntry);
       } else {
         int dynamicTableIndex = dynamicTableIndex(index - STATIC_HEADER_TABLE.length);
-        if (dynamicTableIndex < 0 || dynamicTableIndex > dynamicTable.length - 1) {
+        if (dynamicTableIndex < 0 || dynamicTableIndex >= dynamicTable.length) {
           throw new IOException("Header index too large " + (index + 1));
         }
         headerList.add(dynamicTable[dynamicTableIndex]);
@@ -263,7 +263,7 @@ final class Hpack {
         return STATIC_HEADER_TABLE[index].name;
       } else {
         int dynamicTableIndex = dynamicTableIndex(index - STATIC_HEADER_TABLE.length);
-        if (dynamicTableIndex < 0 || dynamicTableIndex > dynamicTable.length - 1) {
+        if (dynamicTableIndex < 0 || dynamicTableIndex >= dynamicTable.length) {
           throw new IOException("Header index too large " + (index + 1));
         }
 
