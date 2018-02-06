@@ -48,7 +48,7 @@ import static okhttp3.internal.Util.UTF_8;
  *   <li>Response.body().close()</li>
  *   <li>Response.body().source().close()</li>
  *   <li>Response.body().charStream().close()</li>
- *   <li>Response.body().byteString().close()</li>
+ *   <li>Response.body().byteStream().close()</li>
  *   <li>Response.body().bytes()</li>
  *   <li>Response.body().string()</li>
  * </ul>
