@@ -51,31 +51,32 @@ public final class Http2Server extends Http2Connection.Listener {
   }
 
   private void run() throws Exception {
-    ServerSocket serverSocket = new ServerSocket(8888);
-    serverSocket.setReuseAddress(true);
+    try (ServerSocket serverSocket = new ServerSocket(8888)) {
+      serverSocket.setReuseAddress(true);
 
-    while (true) {
-      Socket socket = null;
-      try {
-        socket = serverSocket.accept();
+      while (true) {
+        Socket socket = null;
+        try {
+          socket = serverSocket.accept();
 
-        SSLSocket sslSocket = doSsl(socket);
-        String protocolString = Platform.get().getSelectedProtocol(sslSocket);
-        Protocol protocol = protocolString != null ? Protocol.get(protocolString) : null;
-        if (protocol != Protocol.HTTP_2) {
-          throw new ProtocolException("Protocol " + protocol + " unsupported");
+          SSLSocket sslSocket = doSsl(socket);
+          String protocolString = Platform.get().getSelectedProtocol(sslSocket);
+          Protocol protocol = protocolString != null ? Protocol.get(protocolString) : null;
+          if (protocol != Protocol.HTTP_2) {
+            throw new ProtocolException("Protocol " + protocol + " unsupported");
+          }
+          Http2Connection connection = new Http2Connection.Builder(false)
+              .socket(sslSocket)
+              .listener(this)
+              .build();
+          connection.start();
+        } catch (IOException e) {
+          logger.log(Level.INFO, "Http2Server connection failure: " + e);
+          Util.closeQuietly(socket);
+        } catch (Exception e) {
+          logger.log(Level.WARNING, "Http2Server unexpected failure", e);
+          Util.closeQuietly(socket);
         }
-        Http2Connection connection = new Http2Connection.Builder(false)
-            .socket(sslSocket)
-            .listener(this)
-            .build();
-        connection.start();
-      } catch (IOException e) {
-        logger.log(Level.INFO, "Http2Server connection failure: " + e);
-        Util.closeQuietly(socket);
-      } catch (Exception e) {
-        logger.log(Level.WARNING, "Http2Server unexpected failure", e);
-        Util.closeQuietly(socket);
       }
     }
   }

@@ -185,9 +185,9 @@ public class Benchmark extends com.google.caliper.Benchmark {
 
     if (gzip) {
       Buffer gzipBody = new Buffer();
-      GzipSink gzipSink = new GzipSink(gzipBody);
-      gzipSink.write(body, body.size());
-      gzipSink.close();
+      try (GzipSink gzipSink = new GzipSink(gzipBody)) {
+        gzipSink.write(body, body.size());
+      }
       body = gzipBody;
       result.addHeader("Content-Encoding: gzip");
     }
