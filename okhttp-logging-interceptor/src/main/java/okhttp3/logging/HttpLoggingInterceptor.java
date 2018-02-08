@@ -125,6 +125,7 @@ public final class HttpLoggingInterceptor implements Interceptor {
 
   private volatile Level level = Level.NONE;
 
+  /** set to false to skip multipart body. */
   private boolean showMultipartLog = true;
 
   /** Change the level at which this interceptor logs. */
@@ -138,19 +139,11 @@ public final class HttpLoggingInterceptor implements Interceptor {
     return level;
   }
 
-  /**
-   *
-   * @return check mutipart logging is enabled or not
-   */
+
   public boolean isShowMultipartLog() {
     return showMultipartLog;
   }
 
-  /**
-   *
-   * @param showMultipartLogging set to false to display multipart length in integer instead of non-plain text (by default true)]
-   *        set to false before you attach logging interceptor.
-   */
   public void setShowMultipartLog(boolean showMultipartLogging) {
     this.showMultipartLog = showMultipartLogging;
   }
