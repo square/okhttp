@@ -205,7 +205,7 @@ public final class RealConnection extends Http2Connection.Listener implements Co
    */
   private void connectTunnel(int connectTimeout, int readTimeout, int writeTimeout, Call call,
       EventListener eventListener) throws IOException {
-    Request tunnelRequest = createTunnelRequest();
+    Request tunnelRequest = createTunnelRequest(call);
     HttpUrl url = tunnelRequest.url();
     for (int i = 0; i < MAX_TUNNEL_ATTEMPTS; i++) {
       connectSocket(connectTimeout, readTimeout, call, eventListener);
@@ -408,13 +408,18 @@ public final class RealConnection extends Http2Connection.Listener implements Co
    * is sent unencrypted to the proxy server, so tunnels include only the minimum set of headers.
    * This avoids sending potentially sensitive data like HTTP cookies to the proxy unencrypted.
    */
-  private Request createTunnelRequest() {
-    return new Request.Builder()
-        .url(route.address().url())
-        .header("Host", Util.hostHeader(route.address().url(), true))
-        .header("Proxy-Connection", "Keep-Alive") // For HTTP/1.0 proxies like Squid.
-        .header("User-Agent", Version.userAgent())
-        .build();
+  private Request createTunnelRequest(Call call) {
+      Request.Builder builder = new Request.Builder()
+                .url(route.address().url())
+                .header("Host", Util.hostHeader(route.address().url(), true))
+                .header("Proxy-Connection", "Keep-Alive") // For HTTP/1.0 proxies like Squid.
+                .header("User-Agent", Version.userAgent());
+        //set the Proxy-Authorization
+        String value = call.request().header("Proxy-Authorization");
+        if (value != null) {
+            builder.header("Proxy-Authorization", value);
+        }
+      return builder.build();
   }
 
   /**
