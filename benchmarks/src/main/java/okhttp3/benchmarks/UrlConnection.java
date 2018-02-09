@@ -25,7 +25,7 @@ import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLSession;
 import javax.net.ssl.SSLSocketFactory;
 import okhttp3.HttpUrl;
-import okhttp3.internal.tls.SslClient;
+import okhttp3.mockwebserver.internal.tls.SslClient;
 
 class UrlConnection extends SynchronousHttpClient {
   private static final boolean VERBOSE = false;

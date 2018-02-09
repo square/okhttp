@@ -53,7 +53,7 @@ import okhttp3.internal.SingleInetAddressDns;
 import okhttp3.internal.SocketRecorder;
 import okhttp3.internal.Util;
 import okhttp3.internal.connection.RealConnection;
-import okhttp3.internal.tls.SslClient;
+import okhttp3.mockwebserver.internal.tls.SslClient;
 import okhttp3.mockwebserver.Dispatcher;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
