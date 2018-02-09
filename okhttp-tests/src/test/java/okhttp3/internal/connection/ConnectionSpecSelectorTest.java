@@ -25,7 +25,7 @@ import javax.net.ssl.SSLSocket;
 import okhttp3.ConnectionSpec;
 import okhttp3.TlsVersion;
 import okhttp3.internal.Internal;
-import okhttp3.internal.tls.SslClient;
+import okhttp3.mockwebserver.internal.tls.SslClient;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;

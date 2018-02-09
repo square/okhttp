@@ -25,7 +25,7 @@ import okhttp3.HttpUrl;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.ResponseBody;
-import okhttp3.internal.tls.SslClient;
+import okhttp3.mockwebserver.internal.tls.SslClient;
 
 class OkHttp extends SynchronousHttpClient {
   private static final boolean VERBOSE = false;

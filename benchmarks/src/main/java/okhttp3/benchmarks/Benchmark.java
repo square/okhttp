@@ -28,7 +28,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import okhttp3.HttpUrl;
 import okhttp3.Protocol;
-import okhttp3.internal.tls.SslClient;
+import okhttp3.mockwebserver.internal.tls.SslClient;
 import okhttp3.mockwebserver.Dispatcher;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package okhttp3.internal.http2;
+package okhttp3.mockwebserver.internal.http2;
 
 import java.io.File;
 import java.io.IOException;
@@ -30,8 +30,11 @@ import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
 import okhttp3.Protocol;
 import okhttp3.internal.Util;
+import okhttp3.internal.http2.Header;
+import okhttp3.internal.http2.Http2Connection;
+import okhttp3.internal.http2.Http2Stream;
 import okhttp3.internal.platform.Platform;
-import okhttp3.internal.tls.SslClient;
+import okhttp3.mockwebserver.internal.tls.SslClient;
 import okio.BufferedSink;
 import okio.Okio;
 import okio.Source;

@@ -15,13 +15,11 @@
  */
 package okhttp3;
 
-import java.io.Closeable;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
 import javax.net.ssl.SSLException;
-import okhttp3.internal.tls.SslClient;
+import okhttp3.mockwebserver.internal.tls.SslClient;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import okhttp3.mockwebserver.SocketPolicy;

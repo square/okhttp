@@ -14,7 +14,7 @@ import javax.net.ssl.HttpsURLConnection;
 import okhttp3.internal.URLFilter;
 import okhttp3.internal.huc.OkHttpURLConnection;
 import okhttp3.internal.io.InMemoryFileSystem;
-import okhttp3.internal.tls.SslClient;
+import okhttp3.mockwebserver.internal.tls.SslClient;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import okio.BufferedSource;

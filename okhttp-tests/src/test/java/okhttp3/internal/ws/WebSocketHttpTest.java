@@ -33,7 +33,7 @@ import okhttp3.Response;
 import okhttp3.TestLogHandler;
 import okhttp3.WebSocket;
 import okhttp3.WebSocketListener;
-import okhttp3.internal.tls.SslClient;
+import okhttp3.mockwebserver.internal.tls.SslClient;
 import okhttp3.mockwebserver.Dispatcher;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;

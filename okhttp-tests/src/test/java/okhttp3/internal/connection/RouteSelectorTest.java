@@ -23,7 +23,6 @@ import java.net.ProxySelector;
 import java.net.SocketAddress;
 import java.net.URI;
 import java.net.UnknownHostException;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -40,7 +39,7 @@ import okhttp3.Protocol;
 import okhttp3.Route;
 import okhttp3.internal.Util;
 import okhttp3.internal.http.RecordingProxySelector;
-import okhttp3.internal.tls.SslClient;
+import okhttp3.mockwebserver.internal.tls.SslClient;
 import org.junit.Before;
 import org.junit.Test;
 

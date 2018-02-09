@@ -35,7 +35,7 @@ import okhttp3.OkUrlFactory;
 import okhttp3.RecordingHostnameVerifier;
 import okhttp3.internal.Internal;
 import okhttp3.internal.cache.InternalCache;
-import okhttp3.internal.tls.SslClient;
+import okhttp3.mockwebserver.internal.tls.SslClient;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import okio.Buffer;

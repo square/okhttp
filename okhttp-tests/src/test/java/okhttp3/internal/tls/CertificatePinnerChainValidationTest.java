@@ -26,6 +26,8 @@ import okhttp3.Response;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import okhttp3.mockwebserver.SocketPolicy;
+import okhttp3.mockwebserver.internal.tls.HeldCertificate;
+import okhttp3.mockwebserver.internal.tls.SslClient;
 import org.junit.Rule;
 import org.junit.Test;
 
