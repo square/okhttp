@@ -8,8 +8,16 @@ addons:
     packages:
       - oracle-java8-installer # Updates JDK 8 to the latest available.
 
+before_install:
+  - mkdir -p $HOME/bin
+  - curl -fsSL https://testspace-client.s3.amazonaws.com/testspace-linux.tgz | tar -zxvf- -C $HOME/bin
+  - testspace config url $TS_ORG.testspace.com
+  
 script: mvn test javadoc:jar source:jar -B
 
+after_script:
+  - testspace [Tests]*/target/surefire-reports/TEST-*.xml{.} target/site/cobertura/coverage.xml
+ 
 after_success:
   - .buildscript/deploy_snapshot.sh
 
