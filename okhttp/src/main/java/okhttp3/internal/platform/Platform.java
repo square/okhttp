@@ -158,8 +158,7 @@ public class Platform {
 
   public static List<String> alpnProtocolNames(List<Protocol> protocols) {
     List<String> names = new ArrayList<>(protocols.size());
-    for (int i = 0, size = protocols.size(); i < size; i++) {
-      Protocol protocol = protocols.get(i);
+    for (Protocol protocol : protocols) {
       if (protocol == Protocol.HTTP_1_0) continue; // No HTTP/1.0 for ALPN.
       names.add(protocol.toString());
     }
@@ -211,8 +210,7 @@ public class Platform {
    */
   static byte[] concatLengthPrefixed(List<Protocol> protocols) {
     Buffer result = new Buffer();
-    for (int i = 0, size = protocols.size(); i < size; i++) {
-      Protocol protocol = protocols.get(i);
+    for (Protocol protocol : protocols) {
       if (protocol == Protocol.HTTP_1_0) continue; // No HTTP/1.0 for ALPN.
       result.writeByte(protocol.toString().length());
       result.writeUtf8(protocol.toString());

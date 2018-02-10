@@ -85,15 +85,13 @@ public final class Http2Codec implements HttpCodec {
       ENCODING,
       UPGRADE);
 
-  private final OkHttpClient client;
   private final Interceptor.Chain chain;
   final StreamAllocation streamAllocation;
   private final Http2Connection connection;
   private Http2Stream stream;
 
-  public Http2Codec(OkHttpClient client, Interceptor.Chain chain, StreamAllocation streamAllocation,
+  public Http2Codec(Interceptor.Chain chain, StreamAllocation streamAllocation,
       Http2Connection connection) {
-    this.client = client;
     this.chain = chain;
     this.streamAllocation = streamAllocation;
     this.connection = connection;
@@ -155,9 +153,7 @@ public final class Http2Codec implements HttpCodec {
   public static Response.Builder readHttp2HeadersList(List<Header> headerBlock) throws IOException {
     StatusLine statusLine = null;
     Headers.Builder headersBuilder = new Headers.Builder();
-    for (int i = 0, size = headerBlock.size(); i < size; i++) {
-      Header header = headerBlock.get(i);
-
+    for (Header header : headerBlock) {
       // If there were multiple header blocks they will be delimited by nulls. Discard existing
       // header blocks if the existing header block is a '100 Continue' intermediate response.
       if (header == null) {

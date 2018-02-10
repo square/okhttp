@@ -61,8 +61,8 @@ public final class OkHostnameVerifier implements HostnameVerifier {
   /** Returns true if {@code certificate} matches {@code ipAddress}. */
   private boolean verifyIpAddress(String ipAddress, X509Certificate certificate) {
     List<String> altNames = getSubjectAltNames(certificate, ALT_IPA_NAME);
-    for (int i = 0, size = altNames.size(); i < size; i++) {
-      if (ipAddress.equalsIgnoreCase(altNames.get(i))) {
+    for (String altName : altNames) {
+      if (ipAddress.equalsIgnoreCase(altName)) {
         return true;
       }
     }

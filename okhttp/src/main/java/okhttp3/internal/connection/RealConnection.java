@@ -480,7 +480,7 @@ public final class RealConnection extends Http2Connection.Listener implements Co
   public HttpCodec newCodec(OkHttpClient client, Interceptor.Chain chain,
       StreamAllocation streamAllocation) throws SocketException {
     if (http2Connection != null) {
-      return new Http2Codec(client, chain, streamAllocation, http2Connection);
+      return new Http2Codec(chain, streamAllocation, http2Connection);
     } else {
       socket.setSoTimeout(chain.readTimeoutMillis());
       source.timeout().timeout(chain.readTimeoutMillis(), MILLISECONDS);
