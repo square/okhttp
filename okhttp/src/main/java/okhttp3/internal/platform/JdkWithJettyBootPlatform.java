@@ -133,9 +133,9 @@ class JdkWithJettyBootPlatform extends Platform {
           && String.class == returnType && args.length == 1 && args[0] instanceof List) {
         List<String> peerProtocols = (List) args[0];
         // Pick the first known protocol the peer advertises.
-        for (int i = 0, size = peerProtocols.size(); i < size; i++) {
-          if (protocols.contains(peerProtocols.get(i))) {
-            return selected = peerProtocols.get(i);
+        for (String peerProtocol : peerProtocols) {
+          if (protocols.contains(peerProtocol)) {
+            return selected = peerProtocol;
           }
         }
         return selected = protocols.get(0); // On no intersection, try peer's first protocol.

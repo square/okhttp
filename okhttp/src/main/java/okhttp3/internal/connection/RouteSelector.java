@@ -82,8 +82,8 @@ public final class RouteSelector {
       // routes for proxy1 should be postponed, we'll move to proxy2. Only after we've exhausted
       // all the good routes will we attempt the postponed routes.
       Proxy proxy = nextProxy();
-      for (int i = 0, size = inetSocketAddresses.size(); i < size; i++) {
-        Route route = new Route(address, proxy, inetSocketAddresses.get(i));
+      for (InetSocketAddress inetSocketAddress : inetSocketAddresses) {
+        Route route = new Route(address, proxy, inetSocketAddress);
         if (routeDatabase.shouldPostpone(route)) {
           postponedRoutes.add(route);
         } else {
@@ -189,8 +189,7 @@ public final class RouteSelector {
 
       eventListener.dnsEnd(call, socketHost, addresses);
 
-      for (int i = 0, size = addresses.size(); i < size; i++) {
-        InetAddress inetAddress = addresses.get(i);
+      for (InetAddress inetAddress : addresses) {
         inetSocketAddresses.add(new InetSocketAddress(inetAddress, socketPort));
       }
     }

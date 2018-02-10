@@ -220,8 +220,7 @@ public final class StreamAllocation {
         // Now that we have a set of IP addresses, make another attempt at getting a connection from
         // the pool. This could match due to connection coalescing.
         List<Route> routes = routeSelection.getAll();
-        for (int i = 0, size = routes.size(); i < size; i++) {
-          Route route = routes.get(i);
+        for (Route route : routes) {
           Internal.instance.get(connectionPool, address, this, route);
           if (connection != null) {
             foundPooledConnection = true;
