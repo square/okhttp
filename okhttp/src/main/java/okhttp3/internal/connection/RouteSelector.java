@@ -21,6 +21,7 @@ import java.net.InetSocketAddress;
 import java.net.Proxy;
 import java.net.SocketAddress;
 import java.net.SocketException;
+import java.net.URI;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -125,8 +126,17 @@ public final class RouteSelector {
       // If the user specifies a proxy, try that and only that.
       proxies = Collections.singletonList(proxy);
     } else {
+      // select based on clean URL to simplify sharing logic
+      URI uri = url.newBuilder()
+          .encodedPath("/")
+          .query(null)
+          .encodedUsername("")
+          .encodedPassword("")
+          .build()
+          .uri();
+
       // Try each of the ProxySelector choices until one connection succeeds.
-      List<Proxy> proxiesOrNull = address.proxySelector().select(url.uri());
+      List<Proxy> proxiesOrNull = address.proxySelector().select(uri);
       proxies = proxiesOrNull != null && !proxiesOrNull.isEmpty()
           ? Util.immutableList(proxiesOrNull)
           : Util.immutableList(Proxy.NO_PROXY);
