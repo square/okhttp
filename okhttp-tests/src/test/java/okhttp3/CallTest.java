@@ -60,13 +60,13 @@ import okhttp3.internal.Util;
 import okhttp3.internal.Version;
 import okhttp3.internal.http.RecordingProxySelector;
 import okhttp3.internal.io.InMemoryFileSystem;
-import okhttp3.mockwebserver.internal.tls.HeldCertificate;
-import okhttp3.mockwebserver.internal.tls.SslClient;
 import okhttp3.mockwebserver.Dispatcher;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import okhttp3.mockwebserver.RecordedRequest;
 import okhttp3.mockwebserver.SocketPolicy;
+import okhttp3.mockwebserver.internal.tls.HeldCertificate;
+import okhttp3.mockwebserver.internal.tls.SslClient;
 import okio.Buffer;
 import okio.BufferedSink;
 import okio.BufferedSource;
@@ -86,6 +86,7 @@ import static okhttp3.TestUtil.defaultClient;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNotSame;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
@@ -444,6 +445,28 @@ public final class CallTest {
     } catch (IOException expected) {
       assertEquals("Too many follow-up requests: 21", expected.getMessage());
     }
+  }
+
+  /**
+   * We had a bug where we were passing a null route to the authenticator.
+   * https://github.com/square/okhttp/issues/3809
+   */
+  @Test public void authenticateWithNoConnection() throws Exception {
+    server.enqueue(new MockResponse()
+        .addHeader("Connection: close")
+        .setResponseCode(401)
+        .setSocketPolicy(SocketPolicy.DISCONNECT_AT_END));
+
+    RecordingOkAuthenticator authenticator = new RecordingOkAuthenticator(null);
+
+    client = client.newBuilder()
+        .authenticator(authenticator)
+        .build();
+
+    executeSynchronously("/")
+        .assertCode(401);
+
+    assertNotNull(authenticator.onlyRoute());
   }
 
   @Test public void delete() throws Exception {
