@@ -332,6 +332,10 @@ public final class StreamAllocation {
     return Internal.instance.routeDatabase(connectionPool);
   }
 
+  public Route route() {
+    return route;
+  }
+
   public synchronized RealConnection connection() {
     return connection;
   }

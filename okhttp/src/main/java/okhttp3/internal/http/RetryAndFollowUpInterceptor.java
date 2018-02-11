@@ -29,7 +29,6 @@ import javax.net.ssl.SSLSocketFactory;
 import okhttp3.Address;
 import okhttp3.Call;
 import okhttp3.CertificatePinner;
-import okhttp3.Connection;
 import okhttp3.EventListener;
 import okhttp3.HttpUrl;
 import okhttp3.Interceptor;
@@ -156,7 +155,7 @@ public final class RetryAndFollowUpInterceptor implements Interceptor {
             .build();
       }
 
-      Request followUp = followUpRequest(response, streamAllocation.connection());
+      Request followUp = followUpRequest(response, streamAllocation.route());
 
       if (followUp == null) {
         if (!forWebSocket) {
@@ -270,11 +269,8 @@ public final class RetryAndFollowUpInterceptor implements Interceptor {
    * either add authentication headers, follow redirects or handle a client request timeout. If a
    * follow-up is either unnecessary or not applicable, this returns null.
    */
-  private Request followUpRequest(Response userResponse, Connection connection) throws IOException {
+  private Request followUpRequest(Response userResponse, Route route) throws IOException {
     if (userResponse == null) throw new IllegalStateException();
-    Route route = connection != null
-        ? connection.route()
-        : null;
     int responseCode = userResponse.code();
 
     final String method = userResponse.request().method();
