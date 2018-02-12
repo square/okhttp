@@ -71,8 +71,8 @@ final class WebSocketReader {
   boolean isFinalFrame;
   boolean isControlFrame;
 
-  final byte[] maskKey = new byte[4];
-  final byte[] maskBuffer = new byte[8192];
+  private final byte[] maskKey;
+  private final byte[] maskBuffer;
 
   WebSocketReader(boolean isClient, BufferedSource source, FrameCallback frameCallback) {
     if (source == null) throw new NullPointerException("source == null");
@@ -80,6 +80,10 @@ final class WebSocketReader {
     this.isClient = isClient;
     this.source = source;
     this.frameCallback = frameCallback;
+
+    // Masks are only a concern for server writers.
+    maskKey = isClient ? null : new byte[4];
+    maskBuffer = isClient ? null : new byte[8192];
   }
 
   /**
