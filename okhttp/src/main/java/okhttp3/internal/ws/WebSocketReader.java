@@ -67,7 +67,6 @@ final class WebSocketReader {
   // Stateful data about the current frame.
   int opcode;
   long frameLength;
-  long frameBytesRead;
   boolean isFinalFrame;
   boolean isControlFrame;
 
@@ -156,7 +155,6 @@ final class WebSocketReader {
             "Frame length 0x" + Long.toHexString(frameLength) + " > 0x7FFFFFFFFFFFFFFF");
       }
     }
-    frameBytesRead = 0;
 
     if (isControlFrame && frameLength > PAYLOAD_BYTE_MAX) {
       throw new ProtocolException("Control frame must be less than " + PAYLOAD_BYTE_MAX + "B.");
@@ -170,11 +168,11 @@ final class WebSocketReader {
 
   private void readControlFrame() throws IOException {
     Buffer buffer = new Buffer();
-    if (frameBytesRead < frameLength) {
+    if (frameLength > 0L) {
       if (isClient) {
         source.readFully(buffer, frameLength);
       } else {
-        while (frameBytesRead < frameLength) {
+        for (long frameBytesRead = 0L; frameBytesRead < frameLength; ) {
           int toRead = (int) Math.min(frameLength - frameBytesRead, maskBuffer.length);
           int read = source.read(maskBuffer, 0, toRead);
           if (read == -1) throw new EOFException();
@@ -245,6 +243,7 @@ final class WebSocketReader {
    * processed.
    */
   private void readMessage(Buffer sink) throws IOException {
+    long frameBytesRead = 0L;
     while (true) {
       if (closed) throw new IOException("closed");
 
@@ -258,6 +257,7 @@ final class WebSocketReader {
         if (isFinalFrame && frameLength == 0) {
           return; // Fast-path for empty final frame.
         }
+        frameBytesRead = 0L;
       }
 
       long toRead = frameLength - frameBytesRead;
