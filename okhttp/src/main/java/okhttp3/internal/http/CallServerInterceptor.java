@@ -99,7 +99,6 @@ public final class CallServerInterceptor implements Interceptor {
     if (code == 100) {
       // server sent a 100-continue even though we did not request one.
       // try again to read the actual response
-      realChain.eventListener().responseHeadersStart(realChain.call());
       responseBuilder = httpCodec.readResponseHeaders(false);
 
       response = responseBuilder
