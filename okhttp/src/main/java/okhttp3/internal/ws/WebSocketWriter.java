@@ -55,8 +55,8 @@ final class WebSocketWriter {
 
   boolean activeWriter;
 
-  final byte[] maskKey;
-  final byte[] maskBuffer;
+  private final byte[] maskKey;
+  private final Buffer.UnsafeCursor maskCursor;
 
   WebSocketWriter(boolean isClient, BufferedSink sink, Random random) {
     if (sink == null) throw new NullPointerException("sink == null");
@@ -68,7 +68,7 @@ final class WebSocketWriter {
 
     // Masks are only a concern for client writers.
     maskKey = isClient ? new byte[4] : null;
-    maskBuffer = isClient ? new byte[8192] : null;
+    maskCursor = isClient ? new Buffer.UnsafeCursor() : null;
   }
 
   /** Send a ping with the supplied {@code payload}. */
@@ -129,9 +129,15 @@ final class WebSocketWriter {
       random.nextBytes(maskKey);
       sinkBuffer.write(maskKey);
 
-      byte[] bytes = payload.toByteArray();
-      toggleMask(bytes, bytes.length, maskKey, 0);
-      sinkBuffer.write(bytes);
+      if (length > 0) {
+        long payloadStart = sinkBuffer.size();
+        sinkBuffer.write(payload);
+
+        sinkBuffer.readAndWriteUnsafe(maskCursor);
+        maskCursor.seek(payloadStart);
+        toggleMask(maskCursor, maskKey);
+        maskCursor.close();
+      }
     } else {
       sinkBuffer.writeByte(b1);
       sinkBuffer.write(payload);
@@ -190,13 +196,14 @@ final class WebSocketWriter {
       random.nextBytes(maskKey);
       sinkBuffer.write(maskKey);
 
-      for (long written = 0; written < byteCount; ) {
-        int toRead = (int) Math.min(byteCount, maskBuffer.length);
-        int read = buffer.read(maskBuffer, 0, toRead);
-        if (read == -1) throw new AssertionError();
-        toggleMask(maskBuffer, read, maskKey, written);
-        sinkBuffer.write(maskBuffer, 0, read);
-        written += read;
+      if (byteCount > 0) {
+        long bufferStart = sinkBuffer.size();
+        sinkBuffer.write(buffer, byteCount);
+
+        sinkBuffer.readAndWriteUnsafe(maskCursor);
+        maskCursor.seek(bufferStart);
+        toggleMask(maskCursor, maskKey);
+        maskCursor.close();
       }
     } else {
       sinkBuffer.write(buffer, byteCount);
