@@ -70,7 +70,6 @@ final class WebSocketReader {
   long frameBytesRead;
   boolean isFinalFrame;
   boolean isControlFrame;
-  boolean isMasked;
 
   final byte[] maskKey = new byte[4];
   final byte[] maskBuffer = new byte[8192];
@@ -134,7 +133,7 @@ final class WebSocketReader {
 
     int b1 = source.readByte() & 0xff;
 
-    isMasked = (b1 & B1_FLAG_MASK) != 0;
+    boolean isMasked = (b1 & B1_FLAG_MASK) != 0;
     if (isMasked == isClient) {
       // Masked payloads must be read on the server. Unmasked payloads must be read on the client.
       throw new ProtocolException(isClient
@@ -260,15 +259,15 @@ final class WebSocketReader {
       long toRead = frameLength - frameBytesRead;
 
       long read;
-      if (isMasked) {
+      if (isClient) {
+        read = source.read(sink, toRead);
+        if (read == -1) throw new EOFException();
+      } else {
         toRead = Math.min(toRead, maskBuffer.length);
         read = source.read(maskBuffer, 0, (int) toRead);
         if (read == -1) throw new EOFException();
         toggleMask(maskBuffer, read, maskKey, frameBytesRead);
         sink.write(maskBuffer, 0, (int) read);
-      } else {
-        read = source.read(sink, toRead);
-        if (read == -1) throw new EOFException();
       }
 
       frameBytesRead += read;
