@@ -225,7 +225,7 @@ final class WebSocketReader {
   }
 
   /** Read headers and process any control frames until we reach a non-control frame. */
-  void readUntilNonControlFrame() throws IOException {
+  private void readUntilNonControlFrame() throws IOException {
     while (!closed) {
       readHeader();
       if (!isControlFrame) {
