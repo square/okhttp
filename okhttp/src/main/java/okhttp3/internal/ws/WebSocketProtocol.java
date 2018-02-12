@@ -15,8 +15,6 @@
  */
 package okhttp3.internal.ws;
 
-import java.io.IOException;
-import java.net.ProtocolException;
 import okio.ByteString;
 
 public final class WebSocketProtocol {
@@ -90,12 +88,8 @@ public final class WebSocketProtocol {
 
   /** Used when an unchecked exception was thrown in a listener. */
   static final int CLOSE_CLIENT_GOING_AWAY = 1001;
-  /** Used when a {@link ProtocolException} was thrown by the reader or writer. */
-  static final int CLOSE_PROTOCOL_EXCEPTION = 1002;
   /** Used when an empty close frame was received (i.e., without a status code). */
   static final int CLOSE_NO_STATUS_CODE = 1005;
-  /** Used when a non-{@link ProtocolException} {@link IOException} was thrown by the reader. */
-  static final int CLOSE_ABNORMAL_TERMINATION = 1006;
 
   static void toggleMask(byte[] buffer, long byteCount, byte[] key, long frameBytesRead) {
     int keyLength = key.length;
