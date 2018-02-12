@@ -70,6 +70,9 @@ final class WebSocketReader {
   boolean isFinalFrame;
   boolean isControlFrame;
 
+  private final Buffer controlFrameBuffer = new Buffer();
+  private final Buffer messageFrameBuffer = new Buffer();
+
   private final byte[] maskKey;
   private final byte[] maskBuffer;
 
@@ -167,17 +170,16 @@ final class WebSocketReader {
   }
 
   private void readControlFrame() throws IOException {
-    Buffer buffer = new Buffer();
     if (frameLength > 0L) {
       if (isClient) {
-        source.readFully(buffer, frameLength);
+        source.readFully(controlFrameBuffer, frameLength);
       } else {
         for (long frameBytesRead = 0L; frameBytesRead < frameLength; ) {
           int toRead = (int) Math.min(frameLength - frameBytesRead, maskBuffer.length);
           int read = source.read(maskBuffer, 0, toRead);
           if (read == -1) throw new EOFException();
           toggleMask(maskBuffer, read, maskKey, frameBytesRead);
-          buffer.write(maskBuffer, 0, read);
+          controlFrameBuffer.write(maskBuffer, 0, read);
           frameBytesRead += read;
         }
       }
@@ -185,20 +187,20 @@ final class WebSocketReader {
 
     switch (opcode) {
       case OPCODE_CONTROL_PING:
-        frameCallback.onReadPing(buffer.readByteString());
+        frameCallback.onReadPing(controlFrameBuffer.readByteString());
         break;
       case OPCODE_CONTROL_PONG:
-        frameCallback.onReadPong(buffer.readByteString());
+        frameCallback.onReadPong(controlFrameBuffer.readByteString());
         break;
       case OPCODE_CONTROL_CLOSE:
         int code = CLOSE_NO_STATUS_CODE;
         String reason = "";
-        long bufferSize = buffer.size();
+        long bufferSize = controlFrameBuffer.size();
         if (bufferSize == 1) {
           throw new ProtocolException("Malformed close payload length of 1.");
         } else if (bufferSize != 0) {
-          code = buffer.readShort();
-          reason = buffer.readUtf8();
+          code = controlFrameBuffer.readShort();
+          reason = controlFrameBuffer.readUtf8();
           String codeExceptionMessage = WebSocketProtocol.closeCodeExceptionMessage(code);
           if (codeExceptionMessage != null) throw new ProtocolException(codeExceptionMessage);
         }
@@ -216,13 +218,12 @@ final class WebSocketReader {
       throw new ProtocolException("Unknown opcode: " + toHexString(opcode));
     }
 
-    Buffer message = new Buffer();
-    readMessage(message);
+    readMessage();
 
     if (opcode == OPCODE_TEXT) {
-      frameCallback.onReadMessage(message.readUtf8());
+      frameCallback.onReadMessage(messageFrameBuffer.readUtf8());
     } else {
-      frameCallback.onReadMessage(message.readByteString());
+      frameCallback.onReadMessage(messageFrameBuffer.readByteString());
     }
   }
 
@@ -242,7 +243,7 @@ final class WebSocketReader {
    * fragments will be processed. If the message payload is masked this will unmask as it's being
    * processed.
    */
-  private void readMessage(Buffer sink) throws IOException {
+  private void readMessage() throws IOException {
     long frameBytesRead = 0L;
     while (true) {
       if (closed) throw new IOException("closed");
@@ -264,14 +265,14 @@ final class WebSocketReader {
 
       long read;
       if (isClient) {
-        read = source.read(sink, toRead);
+        read = source.read(messageFrameBuffer, toRead);
         if (read == -1) throw new EOFException();
       } else {
         toRead = Math.min(toRead, maskBuffer.length);
         read = source.read(maskBuffer, 0, (int) toRead);
         if (read == -1) throw new EOFException();
         toggleMask(maskBuffer, read, maskKey, frameBytesRead);
-        sink.write(maskBuffer, 0, (int) read);
+        messageFrameBuffer.write(maskBuffer, 0, (int) read);
       }
 
       frameBytesRead += read;
