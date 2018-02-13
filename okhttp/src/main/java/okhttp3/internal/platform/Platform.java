@@ -25,6 +25,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.annotation.Nullable;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
@@ -118,7 +119,7 @@ public class Platform {
   }
 
   /** Returns the negotiated protocol, or null if no protocol was negotiated. */
-  public String getSelectedProtocol(SSLSocket socket) {
+  public @Nullable String getSelectedProtocol(SSLSocket socket) {
     return null;
   }
 
@@ -183,19 +184,18 @@ public class Platform {
 
   /** Attempt to match the host runtime to a capable Platform implementation. */
   private static Platform findPlatform() {
-    if ("conscrypt".equals(System.getProperty("okhttp.platform"))) {
-      // TODO better installation mechanism for new platforms
+    Platform android = AndroidPlatform.buildIfSupported();
+
+    if (android != null) {
+      return android;
+    }
+
+    if (ConscryptPlatform.isPreferredPlatform()) {
       Platform conscrypt = ConscryptPlatform.buildIfSupported();
 
       if (conscrypt != null) {
         return conscrypt;
       }
-    }
-
-    Platform android = AndroidPlatform.buildIfSupported();
-
-    if (android != null) {
-      return android;
     }
 
     Platform jdk9 = Jdk9Platform.buildIfSupported();

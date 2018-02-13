@@ -1,15 +1,34 @@
+/*
+ * Copyright (C) 2014 Square, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package okhttp3;
 
 import java.io.IOException;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+import java.security.Security;
 import java.util.Arrays;
-
+import okhttp3.internal.platform.ConscryptPlatform;
+import org.conscrypt.OpenSSLProvider;
 import org.junit.Assume;
-import org.junit.Before;
-import org.junit.Ignore;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
-import static okhttp3.internal.platform.PlatformTest.getPlatform;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 public class ConscryptTest {
   public static final CipherSuite[] MANDATORY_CIPHER_SUITES = new CipherSuite[] {
@@ -33,13 +52,23 @@ public class ConscryptTest {
     return new OkHttpClient.Builder().connectionSpecs(Arrays.asList(spec)).build();
   }
 
-  @Before
-  public void setup() {
-    Assume.assumeTrue(getPlatform().equals("conscrypt"));
+  private static void assumeConscrypt() {
+    Assume.assumeTrue("conscrypt".equals(System.getProperty("okhttp.platform")));
+  }
+
+  private static void assumeNetwork() {
+    try {
+      InetAddress.getByName("www.google.com");
+    } catch (UnknownHostException uhe) {
+      Assume.assumeNoException(uhe);
+    }
   }
 
   @Test
   public void testMozilla() throws IOException {
+    assumeNetwork();
+    assumeConscrypt();
+
     Request request = new Request.Builder().url("https://mozilla.org/robots.txt").build();
 
     Response response = client.newCall(request).execute();
@@ -49,6 +78,9 @@ public class ConscryptTest {
 
   @Test
   public void testGoogle() throws IOException {
+    assumeNetwork();
+    assumeConscrypt();
+
     Request request = new Request.Builder().url("https://google.com/robots.txt").build();
 
     Response response = client.newCall(request).execute();
@@ -57,9 +89,19 @@ public class ConscryptTest {
   }
 
   @Test
-  @Ignore
-  public void testNullSession() throws Exception {
-    // TODO test against a null session
-    Handshake.get(new FakeSSLSession());
+  public void testBuild() {
+    assertNotNull(ConscryptPlatform.buildIfSupported());
+  }
+
+  @Test
+  public void testPreferred() {
+    Assume.assumeFalse(ConscryptPlatform.isPreferredPlatform());
+
+    try {
+      Security.insertProviderAt(new OpenSSLProvider(), 1);
+      assertTrue(ConscryptPlatform.isPreferredPlatform());
+    } finally {
+      Security.removeProvider("Conscrypt");
+    }
   }
 }

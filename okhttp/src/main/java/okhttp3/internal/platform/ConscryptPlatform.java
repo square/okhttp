@@ -2,7 +2,9 @@ package okhttp3.internal.platform;
 
 import java.security.NoSuchAlgorithmException;
 import java.security.Provider;
+import java.security.Security;
 import java.util.List;
+import javax.annotation.Nullable;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
@@ -12,8 +14,7 @@ import org.conscrypt.Conscrypt;
 import org.conscrypt.OpenSSLProvider;
 
 /**
- * Platform using Conscrypt (conscrypt.org) if system property
- * okhttp.platform is set to conscrypt.
+ * Platform using Conscrypt (conscrypt.org) if installed as the first Security Provider.
  *
  * Requires org.conscrypt:conscrypt-openjdk-uber on the classpath.
  */
@@ -21,28 +22,39 @@ public class ConscryptPlatform extends Platform {
   private ConscryptPlatform() {
   }
 
-  public Provider getProvider() {
+  public static boolean isPreferredPlatform() {
+    // mainly to allow tests to run cleanly
+    if ("conscrypt".equals(System.getProperty("okhttp.platform"))) {
+      return true;
+    }
+
+    // check if Provider manually installed
+    String preferredProvider = Security.getProviders()[0].getName();
+    return "Conscrypt".equals(preferredProvider);
+  }
+
+  private Provider getProvider() {
     return new OpenSSLProvider();
   }
 
   @Override public X509TrustManager trustManager(SSLSocketFactory sslSocketFactory) {
-    if (Conscrypt.isConscrypt(sslSocketFactory)) {
-      try {
-        // org.conscrypt.SSLParametersImpl
-        Object sp =
-            readFieldOrNull(sslSocketFactory, Object.class, "sslParameters");
-
-        if (sp != null) {
-          return readFieldOrNull(sp, X509TrustManager.class, "x509TrustManager");
-        }
-
-        return null;
-      } catch (Exception e) {
-        throw new UnsupportedOperationException(
-            "clientBuilder.sslSocketFactory(SSLSocketFactory) not supported on Conscrypt", e);
-      }
-    } else {
+    if (!Conscrypt.isConscrypt(sslSocketFactory)) {
       return super.trustManager(sslSocketFactory);
+    }
+
+    try {
+      // org.conscrypt.SSLParametersImpl
+      Object sp =
+          readFieldOrNull(sslSocketFactory, Object.class, "sslParameters");
+
+      if (sp != null) {
+        return readFieldOrNull(sp, X509TrustManager.class, "x509TrustManager");
+      }
+
+      return null;
+    } catch (Exception e) {
+      throw new UnsupportedOperationException(
+          "clientBuilder.sslSocketFactory(SSLSocketFactory) not supported on Conscrypt", e);
     }
   }
 
@@ -63,11 +75,9 @@ public class ConscryptPlatform extends Platform {
     }
   }
 
-  @Override public String getSelectedProtocol(SSLSocket sslSocket) {
+  @Override public @Nullable String getSelectedProtocol(SSLSocket sslSocket) {
     if (Conscrypt.isConscrypt(sslSocket)) {
-      String alpnResult = Conscrypt.getApplicationProtocol(sslSocket);
-
-      return alpnResult != null ? alpnResult : null;
+      return Conscrypt.getApplicationProtocol(sslSocket);
     } else {
       return super.getSelectedProtocol(sslSocket);
     }
@@ -75,8 +85,7 @@ public class ConscryptPlatform extends Platform {
 
   @Override public SSLContext getSSLContext() {
     try {
-      SSLContext sslContext = SSLContext.getInstance("TLS", getProvider());
-      return sslContext;
+      return SSLContext.getInstance("TLS", getProvider());
     } catch (NoSuchAlgorithmException e) {
       throw new IllegalStateException("No TLS provider", e);
     }
@@ -84,6 +93,7 @@ public class ConscryptPlatform extends Platform {
 
   public static Platform buildIfSupported() {
     try {
+      // trigger early exception over a fatal error
       Class.forName("org.conscrypt.ConscryptEngineSocket");
 
       if (!Conscrypt.isAvailable()) {

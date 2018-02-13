@@ -23,8 +23,6 @@ branches:
 notifications:
   email: false
 
-script: "mvn clean test -P conscrypt"
-
 sudo: false
 
 cache:
