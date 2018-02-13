@@ -15,6 +15,7 @@
  */
 package okhttp3.internal.ws;
 
+import okio.Buffer;
 import okio.ByteString;
 
 public final class WebSocketProtocol {
@@ -91,12 +92,16 @@ public final class WebSocketProtocol {
   /** Used when an empty close frame was received (i.e., without a status code). */
   static final int CLOSE_NO_STATUS_CODE = 1005;
 
-  static void toggleMask(byte[] buffer, long byteCount, byte[] key, long frameBytesRead) {
+  static void toggleMask(Buffer.UnsafeCursor cursor, byte[] key) {
+    int keyIndex = 0;
     int keyLength = key.length;
-    for (int i = 0; i < byteCount; i++, frameBytesRead++) {
-      int keyIndex = (int) (frameBytesRead % keyLength);
-      buffer[i] = (byte) (buffer[i] ^ key[keyIndex]);
-    }
+    do {
+      byte[] buffer = cursor.data;
+      for (int i = cursor.start, end = cursor.end; i < end; i++, keyIndex++) {
+        keyIndex %= keyLength; // Reassign to prevent overflow breaking counter.
+        buffer[i] = (byte) (buffer[i] ^ key[keyIndex]);
+      }
+    } while (cursor.next() != -1);
   }
 
   static String closeCodeExceptionMessage(int code) {

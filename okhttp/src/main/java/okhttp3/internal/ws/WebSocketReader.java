@@ -15,7 +15,6 @@
  */
 package okhttp3.internal.ws;
 
-import java.io.EOFException;
 import java.io.IOException;
 import java.net.ProtocolException;
 import java.util.concurrent.TimeUnit;
@@ -74,7 +73,7 @@ final class WebSocketReader {
   private final Buffer messageFrameBuffer = new Buffer();
 
   private final byte[] maskKey;
-  private final byte[] maskBuffer;
+  private final Buffer.UnsafeCursor maskCursor;
 
   WebSocketReader(boolean isClient, BufferedSource source, FrameCallback frameCallback) {
     if (source == null) throw new NullPointerException("source == null");
@@ -85,7 +84,7 @@ final class WebSocketReader {
 
     // Masks are only a concern for server writers.
     maskKey = isClient ? null : new byte[4];
-    maskBuffer = isClient ? null : new byte[8192];
+    maskCursor = isClient ? null : new Buffer.UnsafeCursor();
   }
 
   /**
@@ -170,18 +169,14 @@ final class WebSocketReader {
   }
 
   private void readControlFrame() throws IOException {
-    if (frameLength > 0L) {
-      if (isClient) {
-        source.readFully(controlFrameBuffer, frameLength);
-      } else {
-        for (long frameBytesRead = 0L; frameBytesRead < frameLength; ) {
-          int toRead = (int) Math.min(frameLength - frameBytesRead, maskBuffer.length);
-          int read = source.read(maskBuffer, 0, toRead);
-          if (read == -1) throw new EOFException();
-          toggleMask(maskBuffer, read, maskKey, frameBytesRead);
-          controlFrameBuffer.write(maskBuffer, 0, read);
-          frameBytesRead += read;
-        }
+    if (frameLength > 0) {
+      source.readFully(controlFrameBuffer, frameLength);
+
+      if (!isClient) {
+        controlFrameBuffer.readAndWriteUnsafe(maskCursor);
+        maskCursor.seek(0);
+        toggleMask(maskCursor, maskKey);
+        maskCursor.close();
       }
     }
 
@@ -244,38 +239,26 @@ final class WebSocketReader {
    * processed.
    */
   private void readMessage() throws IOException {
-    long frameBytesRead = 0L;
     while (true) {
       if (closed) throw new IOException("closed");
 
-      if (frameBytesRead == frameLength) {
-        if (isFinalFrame) return; // We are exhausted and have no continuations.
+      if (frameLength > 0) {
+        source.readFully(messageFrameBuffer, frameLength);
 
-        readUntilNonControlFrame();
-        if (opcode != OPCODE_CONTINUATION) {
-          throw new ProtocolException("Expected continuation opcode. Got: " + toHexString(opcode));
+        if (!isClient) {
+          messageFrameBuffer.readAndWriteUnsafe(maskCursor);
+          maskCursor.seek(messageFrameBuffer.size() - frameLength);
+          toggleMask(maskCursor, maskKey);
+          maskCursor.close();
         }
-        if (isFinalFrame && frameLength == 0) {
-          return; // Fast-path for empty final frame.
-        }
-        frameBytesRead = 0L;
       }
 
-      long toRead = frameLength - frameBytesRead;
+      if (isFinalFrame) break; // We are exhausted and have no continuations.
 
-      long read;
-      if (isClient) {
-        read = source.read(messageFrameBuffer, toRead);
-        if (read == -1) throw new EOFException();
-      } else {
-        toRead = Math.min(toRead, maskBuffer.length);
-        read = source.read(maskBuffer, 0, (int) toRead);
-        if (read == -1) throw new EOFException();
-        toggleMask(maskBuffer, read, maskKey, frameBytesRead);
-        messageFrameBuffer.write(maskBuffer, 0, (int) read);
+      readUntilNonControlFrame();
+      if (opcode != OPCODE_CONTINUATION) {
+        throw new ProtocolException("Expected continuation opcode. Got: " + toHexString(opcode));
       }
-
-      frameBytesRead += read;
     }
   }
 }
