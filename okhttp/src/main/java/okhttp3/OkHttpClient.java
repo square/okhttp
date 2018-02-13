@@ -695,7 +695,7 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
      *   SSLSocketFactory sslSocketFactory = sslContext.getSocketFactory();
      *
      *   OkHttpClient client = new OkHttpClient.Builder()
-     *       .sslSocketFactory(sslSocketFactory, trustManager);
+     *       .sslSocketFactory(sslSocketFactory, trustManager)
      *       .build();
      * }</pre>
      */
