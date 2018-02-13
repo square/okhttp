@@ -21,9 +21,9 @@ import java.net.UnknownHostException;
 import java.security.Security;
 import java.util.Arrays;
 import okhttp3.internal.platform.ConscryptPlatform;
+import okhttp3.internal.platform.Platform;
 import org.conscrypt.OpenSSLProvider;
 import org.junit.Assume;
-import org.junit.BeforeClass;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
@@ -95,11 +95,11 @@ public class ConscryptTest {
 
   @Test
   public void testPreferred() {
-    Assume.assumeFalse(ConscryptPlatform.isPreferredPlatform());
+    Assume.assumeFalse(Platform.isConscryptPreferred());
 
     try {
       Security.insertProviderAt(new OpenSSLProvider(), 1);
-      assertTrue(ConscryptPlatform.isPreferredPlatform());
+      assertTrue(Platform.isConscryptPreferred());
     } finally {
       Security.removeProvider("Conscrypt");
     }

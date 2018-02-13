@@ -17,6 +17,7 @@ package okhttp3.internal.platform;
 
 import java.security.NoSuchAlgorithmException;
 import java.security.Provider;
+import java.security.Security;
 import java.util.List;
 import javax.annotation.Nullable;
 import javax.net.ssl.SSLContext;
@@ -34,6 +35,17 @@ import org.conscrypt.OpenSSLProvider;
  */
 public class ConscryptPlatform extends Platform {
   private ConscryptPlatform() {
+  }
+
+  public static boolean isPreferredPlatform() {
+    // mainly to allow tests to run cleanly
+    if ("conscrypt".equals(System.getProperty("okhttp.platform"))) {
+      return true;
+    }
+
+    // check if Provider manually installed
+    String preferredProvider = Security.getProviders()[0].getName();
+    return "Conscrypt".equals(preferredProvider);
   }
 
   private Provider getProvider() {
