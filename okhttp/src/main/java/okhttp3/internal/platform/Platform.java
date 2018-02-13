@@ -21,6 +21,7 @@ import java.lang.reflect.Field;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.security.NoSuchAlgorithmException;
+import java.security.Security;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
@@ -182,6 +183,17 @@ public class Platform {
     return buildCertificateChainCleaner(trustManager);
   }
 
+  public static boolean isConscryptPreferred() {
+    // mainly to allow tests to run cleanly
+    if ("conscrypt".equals(System.getProperty("okhttp.platform"))) {
+      return true;
+    }
+
+    // check if Provider manually installed
+    String preferredProvider = Security.getProviders()[0].getName();
+    return "Conscrypt".equals(preferredProvider);
+  }
+
   /** Attempt to match the host runtime to a capable Platform implementation. */
   private static Platform findPlatform() {
     Platform android = AndroidPlatform.buildIfSupported();
@@ -190,7 +202,7 @@ public class Platform {
       return android;
     }
 
-    if (ConscryptPlatform.isPreferredPlatform()) {
+    if (isConscryptPreferred()) {
       Platform conscrypt = ConscryptPlatform.buildIfSupported();
 
       if (conscrypt != null) {
