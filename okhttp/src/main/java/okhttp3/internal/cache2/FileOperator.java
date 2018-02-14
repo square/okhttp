@@ -17,7 +17,6 @@ package okhttp3.internal.cache2;
 
 import java.io.EOFException;
 import java.io.IOException;
-import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import okio.Buffer;
 import okio.Okio;
@@ -35,10 +34,6 @@ import okio.Okio;
  * </ul>
  */
 final class FileOperator {
-  private static final int BUFFER_SIZE = 8192;
-
-  private final byte[] byteArray = new byte[BUFFER_SIZE];
-  private final ByteBuffer byteBuffer = ByteBuffer.wrap(byteArray);
   private final FileChannel fileChannel;
 
   FileOperator(FileChannel fileChannel) {
@@ -50,22 +45,9 @@ final class FileOperator {
     if (byteCount < 0 || byteCount > source.size()) throw new IndexOutOfBoundsException();
 
     while (byteCount > 0L) {
-      try {
-        // Write bytes to the byte[], and tell the ByteBuffer wrapper about 'em.
-        int toWrite = (int) Math.min(BUFFER_SIZE, byteCount);
-        source.read(byteArray, 0, toWrite);
-        byteBuffer.limit(toWrite);
-
-        // Copy bytes from the ByteBuffer to the file.
-        do {
-          int bytesWritten = fileChannel.write(byteBuffer, pos);
-          pos += bytesWritten;
-        } while (byteBuffer.hasRemaining());
-
-        byteCount -= toWrite;
-      } finally {
-        byteBuffer.clear();
-      }
+      long bytesWritten = fileChannel.transferFrom(source, pos, byteCount);
+      pos += bytesWritten;
+      byteCount -= bytesWritten;
     }
   }
 
@@ -78,19 +60,9 @@ final class FileOperator {
     if (byteCount < 0) throw new IndexOutOfBoundsException();
 
     while (byteCount > 0L) {
-      try {
-        // Read up to byteCount bytes.
-        byteBuffer.limit((int) Math.min(BUFFER_SIZE, byteCount));
-        if (fileChannel.read(byteBuffer, pos) == -1) throw new EOFException();
-        int bytesRead = byteBuffer.position();
-
-        // Write those bytes to sink.
-        sink.write(byteArray, 0, bytesRead);
-        pos += bytesRead;
-        byteCount -= bytesRead;
-      } finally {
-        byteBuffer.clear();
-      }
+      long bytesRead = fileChannel.transferTo(pos, byteCount, sink);
+      pos += bytesRead;
+      byteCount -= bytesRead;
     }
   }
 }
