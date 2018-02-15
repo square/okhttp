@@ -256,23 +256,6 @@ public final class Util {
         : host;
   }
 
-  /** Returns {@code s} with control characters and non-ASCII characters replaced with '?'. */
-  public static String toHumanReadableAscii(String s) {
-    for (int i = 0, length = s.length(), c; i < length; i += Character.charCount(c)) {
-      c = s.codePointAt(i);
-      if (c > '\u001f' && c < '\u007f') continue;
-
-      Buffer buffer = new Buffer();
-      buffer.writeUtf8(s, 0, i);
-      for (int j = i; j < length; j += Character.charCount(c)) {
-        c = s.codePointAt(j);
-        buffer.writeUtf8CodePoint(c > '\u001f' && c < '\u007f' ? c : '?');
-      }
-      return buffer.readUtf8();
-    }
-    return s;
-  }
-
   /**
    * Returns true if {@code e} is due to a firmware bug fixed after Android 4.2.2.
    * https://code.google.com/p/android/issues/detail?id=54072

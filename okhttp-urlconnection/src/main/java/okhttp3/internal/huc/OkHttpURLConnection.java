@@ -50,13 +50,13 @@ import okhttp3.Response;
 import okhttp3.internal.Internal;
 import okhttp3.internal.JavaNetHeaders;
 import okhttp3.internal.URLFilter;
-import okhttp3.internal.Util;
 import okhttp3.internal.Version;
 import okhttp3.internal.http.HttpDate;
 import okhttp3.internal.http.HttpHeaders;
 import okhttp3.internal.http.HttpMethod;
 import okhttp3.internal.http.StatusLine;
 import okhttp3.internal.platform.Platform;
+import okio.Buffer;
 
 import static okhttp3.internal.platform.Platform.WARN;
 
@@ -398,7 +398,25 @@ public final class OkHttpURLConnection extends HttpURLConnection implements Call
 
   private String defaultUserAgent() {
     String agent = System.getProperty("http.agent");
-    return agent != null ? Util.toHumanReadableAscii(agent) : Version.userAgent();
+    return agent != null ? toHumanReadableAscii(agent) : Version.userAgent();
+  }
+
+  /** Returns {@code s} with control characters and non-ASCII characters replaced with '?'. */
+  private static String toHumanReadableAscii(String s) {
+    for (int i = 0, length = s.length(), c; i < length; i += Character.charCount(c)) {
+      c = s.codePointAt(i);
+      if (c > '\u001f' && c < '\u007f') continue;
+
+      Buffer buffer = new Buffer();
+      buffer.writeUtf8(s, 0, i);
+      buffer.writeUtf8CodePoint('?');
+      for (int j = i + Character.charCount(c); j < length; j += Character.charCount(c)) {
+        c = s.codePointAt(j);
+        buffer.writeUtf8CodePoint(c > '\u001f' && c < '\u007f' ? c : '?');
+      }
+      return buffer.readUtf8();
+    }
+    return s;
   }
 
   /**

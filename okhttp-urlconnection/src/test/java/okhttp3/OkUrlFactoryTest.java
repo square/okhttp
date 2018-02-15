@@ -2,6 +2,7 @@ package okhttp3;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.text.DateFormat;
@@ -14,9 +15,10 @@ import javax.net.ssl.HttpsURLConnection;
 import okhttp3.internal.URLFilter;
 import okhttp3.internal.huc.OkHttpURLConnection;
 import okhttp3.internal.io.InMemoryFileSystem;
-import okhttp3.mockwebserver.internal.tls.SslClient;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
+import okhttp3.mockwebserver.RecordedRequest;
+import okhttp3.mockwebserver.internal.tls.SslClient;
 import okio.BufferedSource;
 import org.junit.After;
 import org.junit.Before;
@@ -209,6 +211,51 @@ public class OkUrlFactoryTest {
       fail("Connection was successful");
     } catch (IOException expected) {
     }
+  }
+
+  @Test public void usesValidHeaderValueForDefaultUserAgent() throws Exception {
+    String userAgent =  "🍩 " + "\u001F" + ('\u001f' + 1) + ('\u007f' - 1)+ '\u007f' + " 🍩";
+    String expected = "? ?" + ('\u001f' + 1) + ('\u007f' - 1) + "? ?";
+
+    System.setProperty("http.agent", userAgent);
+    server.enqueue(new MockResponse().setResponseCode(200));
+    InputStream inputStream = factory.open(server.url("/").url()).getInputStream();
+    long skipped;
+    do {
+      skipped = inputStream.skip(Long.MAX_VALUE);
+    } while (skipped != 0);
+    RecordedRequest recordedRequest = server.takeRequest();
+    assertEquals(expected, recordedRequest.getHeader("User-Agent"));
+  }
+
+  @Test public void usesSimpleDefaultUserAgentWithoutModification() throws Exception {
+    String userAgent = "OkHttp";
+    String expected = "OkHttp";
+
+    System.setProperty("http.agent", userAgent);
+    server.enqueue(new MockResponse().setResponseCode(200));
+    InputStream inputStream = factory.open(server.url("/").url()).getInputStream();
+    long skipped;
+    do {
+      skipped = inputStream.skip(Long.MAX_VALUE);
+    } while (skipped != 0);
+    RecordedRequest recordedRequest = server.takeRequest();
+    assertEquals(expected, recordedRequest.getHeader("User-Agent"));
+  }
+
+  @Test public void handlesBadUnicodeStringsInDefaultUserAgent() throws Exception {
+    String userAgent =  "🔊".substring(0, 1);
+    String expected = "?";
+
+    System.setProperty("http.agent", userAgent);
+    server.enqueue(new MockResponse().setResponseCode(200));
+    InputStream inputStream = factory.open(server.url("/").url()).getInputStream();
+    long skipped;
+    do {
+      skipped = inputStream.skip(Long.MAX_VALUE);
+    } while (skipped != 0);
+    RecordedRequest recordedRequest = server.takeRequest();
+    assertEquals(expected, recordedRequest.getHeader("User-Agent"));
   }
 
   private void assertResponseBody(HttpURLConnection connection, String expected) throws Exception {
