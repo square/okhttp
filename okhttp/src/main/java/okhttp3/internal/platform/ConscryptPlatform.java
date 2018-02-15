@@ -37,17 +37,6 @@ public class ConscryptPlatform extends Platform {
   private ConscryptPlatform() {
   }
 
-  public static boolean isPreferredPlatform() {
-    // mainly to allow tests to run cleanly
-    if ("conscrypt".equals(System.getProperty("okhttp.platform"))) {
-      return true;
-    }
-
-    // check if Provider manually installed
-    String preferredProvider = Security.getProviders()[0].getName();
-    return "Conscrypt".equals(preferredProvider);
-  }
-
   private Provider getProvider() {
     return new OpenSSLProvider();
   }
