@@ -17,7 +17,6 @@ package okhttp3.internal.platform;
 
 import java.security.NoSuchAlgorithmException;
 import java.security.Provider;
-import java.security.Security;
 import java.util.List;
 import javax.annotation.Nullable;
 import javax.net.ssl.SSLContext;
