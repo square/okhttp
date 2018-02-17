@@ -154,7 +154,7 @@ public final class ConnectionPool {
       executor.execute(cleanupRunnable);
     }
     connections.add(connection);
-    for (ConnectionListener listener: listeners) {
+    for (ConnectionListener listener : listeners) {
       listener.connectionOpened(new WrappedConnection(connection));
     }
   }
@@ -168,7 +168,7 @@ public final class ConnectionPool {
     if (connection.noNewStreams || maxIdleConnections == 0) {
       connections.remove(connection);
 
-      for (ConnectionListener listener: listeners) {
+      for (ConnectionListener listener : listeners) {
         listener.connectionClosed(new WrappedConnection(connection));
       }
 
@@ -238,7 +238,7 @@ public final class ConnectionPool {
         // of the synchronized block).
         connections.remove(longestIdleConnection);
 
-        for (ConnectionListener listener: listeners) {
+        for (ConnectionListener listener : listeners) {
           listener.connectionClosed(new WrappedConnection(longestIdleConnection));
         }
       } else if (idleConnectionCount > 0) {
