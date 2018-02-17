@@ -73,9 +73,14 @@ License
     See the License for the specific language governing permissions and
     limitations under the License.
 
+CI Builds
+---------
+
+[![Travis](https://travis-ci.org/square/okhttp.svg?branch=master)](https://travis-ci.org/square/okhttp)
 
  [1]: http://square.github.io/okhttp
  [2]: https://github.com/square/okhttp/wiki
  [3]: https://search.maven.org/remote_content?g=com.squareup.okhttp3&a=okhttp&v=LATEST
  [4]: https://search.maven.org/remote_content?g=com.squareup.okhttp3&a=mockwebserver&v=LATEST
  [snap]: https://oss.sonatype.org/content/repositories/snapshots/
+
