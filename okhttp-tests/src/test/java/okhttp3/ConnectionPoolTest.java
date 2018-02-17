@@ -19,7 +19,9 @@ import java.net.InetSocketAddress;
 import java.net.Proxy;
 import java.net.ProxySelector;
 import java.net.Socket;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 import javax.net.SocketFactory;
 import okhttp3.internal.Internal;
@@ -28,6 +30,7 @@ import okhttp3.internal.connection.RealConnection;
 import okhttp3.internal.connection.StreamAllocation;
 import org.junit.Test;
 
+import static java.util.Arrays.asList;
 import static okhttp3.TestUtil.awaitGarbageCollection;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -158,6 +161,48 @@ public final class ConnectionPoolTest {
     assertTrue(c1.socket().isClosed());
     assertFalse(c2.socket().isClosed());
     assertFalse(c3.socket().isClosed());
+  }
+
+  @Test public void publishesConnectionEvents() throws Exception {
+    ConnectionPool pool = new ConnectionPool(2, 100L, TimeUnit.NANOSECONDS);
+    pool.cleanupRunning = true; // Prevent the cleanup runnable from being started.
+
+    final List<Route> routes = new ArrayList<>();
+
+    ConnectionListener listener = new ConnectionListener() {
+      @Override public void connectionOpened(Connection connection) {
+        routes.add(connection.route());
+      }
+
+      @Override public void connectionClosed(Connection connection) {
+        routes.remove(connection.route());
+      }
+    };
+    pool.addConnectionListener(listener);
+
+    newConnection(pool, routeA1, 50L);
+    assertEquals(asList(routeA1), routes);
+    List<Connection> connections = pool.listConnections();
+    assertEquals(1, connections.size());
+    assertEquals(routeA1, connections.get(0).route());
+
+    newConnection(pool, routeB1, 75L);
+    assertEquals(asList(routeA1, routeB1), routes);
+    assertEquals(2, pool.listConnections().size());
+
+    // Add a third connection (bounces the first)
+    newConnection(pool, routeC1, 75L);
+    assertEquals(0L, pool.cleanup(101L));
+    assertEquals(asList(routeB1, routeC1), routes);
+    assertEquals(2, pool.listConnections().size());
+
+    assertEquals(0L, pool.cleanup(300L));
+    assertEquals(asList(routeC1), routes);
+    assertEquals(1, pool.listConnections().size());
+
+    assertEquals(0L, pool.cleanup(300L));
+    assertEquals(asList(), routes);
+    assertEquals(0, pool.listConnections().size());
   }
 
   @Test public void leakedAllocation() throws Exception {

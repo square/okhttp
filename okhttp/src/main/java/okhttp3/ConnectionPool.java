@@ -76,6 +76,7 @@ public final class ConnectionPool {
   private final Deque<RealConnection> connections = new ArrayDeque<>();
   final RouteDatabase routeDatabase = new RouteDatabase();
   boolean cleanupRunning;
+  private final List<ConnectionListener> listeners = new ArrayList<>();
 
   /**
    * Create a new connection pool with tuning parameters appropriate for a single-user application.
@@ -153,6 +154,9 @@ public final class ConnectionPool {
       executor.execute(cleanupRunnable);
     }
     connections.add(connection);
+    for (ConnectionListener listener: listeners) {
+      listener.connectionOpened(new WrappedConnection(connection));
+    }
   }
 
   /**
@@ -163,6 +167,11 @@ public final class ConnectionPool {
     assert (Thread.holdsLock(this));
     if (connection.noNewStreams || maxIdleConnections == 0) {
       connections.remove(connection);
+
+      for (ConnectionListener listener: listeners) {
+        listener.connectionClosed(new WrappedConnection(connection));
+      }
+
       return true;
     } else {
       notifyAll(); // Awake the cleanup thread: we may have exceeded the idle connection limit.
@@ -228,6 +237,10 @@ public final class ConnectionPool {
         // We've found a connection to evict. Remove it from the list, then close it below (outside
         // of the synchronized block).
         connections.remove(longestIdleConnection);
+
+        for (ConnectionListener listener: listeners) {
+          listener.connectionClosed(new WrappedConnection(longestIdleConnection));
+        }
       } else if (idleConnectionCount > 0) {
         // A connection will be ready to evict soon.
         return keepAliveDurationNs - longestIdleDurationNs;
@@ -281,5 +294,53 @@ public final class ConnectionPool {
     }
 
     return references.size();
+  }
+
+  class WrappedConnection implements Connection {
+    private final RealConnection realConnection;
+
+    WrappedConnection(RealConnection realConnection) {
+      this.realConnection = realConnection;
+    }
+
+    @Override public Route route() {
+      return realConnection.route();
+    }
+
+    @Override public Socket socket() {
+      return realConnection.socket();
+    }
+
+    @Nullable @Override public Handshake handshake() {
+      return realConnection.handshake();
+    }
+
+    @Override public Protocol protocol() {
+      return realConnection.protocol();
+    }
+  }
+
+  /**
+   * Returns a list of active connections, potentially including duplicates where
+   * multiple connections have been established.
+   *
+   * @return connection list.
+   */
+  public synchronized List<Connection> listConnections() {
+    List<Connection> addresses = new ArrayList<>(connections.size());
+
+    for (RealConnection connection : connections) {
+      addresses.add(new WrappedConnection(connection));
+    }
+
+    return addresses;
+  }
+
+  public synchronized void addConnectionListener(ConnectionListener listener) {
+    listeners.add(listener);
+  }
+
+  public synchronized void removeConnectionListener(ConnectionListener listener) {
+    listeners.remove(listener);
   }
 }
