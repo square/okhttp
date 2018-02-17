@@ -2435,17 +2435,16 @@ public final class CallTest {
 
   @Test public void serverRespondsWithUnsolicited100Continue() throws Exception {
     server.enqueue(new MockResponse()
-        .setStatus("HTTP/1.1 100 Continue"));
+        .setSocketPolicy(SocketPolicy.CONTINUE_ALWAYS));
 
     Request request = new Request.Builder()
         .url(server.url("/"))
         .post(RequestBody.create(MediaType.parse("text/plain"), "abc"))
         .build();
 
-    Call call = client.newCall(request);
-    Response response = call.execute();
-    assertEquals(100, response.code());
-    assertEquals("", response.body().string());
+    executeSynchronously(request)
+        .assertCode(200)
+        .assertSuccessful();
 
     RecordedRequest recordedRequest = server.takeRequest();
     assertEquals("abc", recordedRequest.getBody().readUtf8());
@@ -2454,6 +2453,31 @@ public final class CallTest {
   @Test public void serverRespondsWithUnsolicited100Continue_HTTP2() throws Exception {
     enableProtocol(Protocol.HTTP_2);
     serverRespondsWithUnsolicited100Continue();
+  }
+
+  @Test public void serverRespondsWith100ContinueOnly() throws Exception {
+    server.enqueue(new MockResponse()
+            .setStatus("HTTP/1.1 100 Continue"));
+
+    Request request = new Request.Builder()
+        .url(server.url("/"))
+        .post(RequestBody.create(MediaType.parse("text/plain"), "abc"))
+        .build();
+
+    Call call = client.newCall(request);
+    try {
+      call.execute();
+      fail();
+    } catch (SocketTimeoutException expected) {
+    }
+
+    RecordedRequest recordedRequest = server.takeRequest();
+    assertEquals("abc", recordedRequest.getBody().readUtf8());
+  }
+
+  @Test public void serverRespondsWith100ContinueOnly_HTTP2() throws Exception {
+    enableProtocol(Protocol.HTTP_2);
+    serverRespondsWith100ContinueOnly();
   }
 
   @Test public void successfulExpectContinuePermitsConnectionReuse() throws Exception {
