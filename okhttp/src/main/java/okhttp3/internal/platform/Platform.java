@@ -21,10 +21,12 @@ import java.lang.reflect.Field;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.security.NoSuchAlgorithmException;
+import java.security.Security;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.annotation.Nullable;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
@@ -118,7 +120,7 @@ public class Platform {
   }
 
   /** Returns the negotiated protocol, or null if no protocol was negotiated. */
-  public String getSelectedProtocol(SSLSocket socket) {
+  public @Nullable String getSelectedProtocol(SSLSocket socket) {
     return null;
   }
 
@@ -181,12 +183,31 @@ public class Platform {
     return buildCertificateChainCleaner(trustManager);
   }
 
+  public static boolean isConscryptPreferred() {
+    // mainly to allow tests to run cleanly
+    if ("conscrypt".equals(System.getProperty("okhttp.platform"))) {
+      return true;
+    }
+
+    // check if Provider manually installed
+    String preferredProvider = Security.getProviders()[0].getName();
+    return "Conscrypt".equals(preferredProvider);
+  }
+
   /** Attempt to match the host runtime to a capable Platform implementation. */
   private static Platform findPlatform() {
     Platform android = AndroidPlatform.buildIfSupported();
 
     if (android != null) {
       return android;
+    }
+
+    if (isConscryptPreferred()) {
+      Platform conscrypt = ConscryptPlatform.buildIfSupported();
+
+      if (conscrypt != null) {
+        return conscrypt;
+      }
     }
 
     Platform jdk9 = Jdk9Platform.buildIfSupported();

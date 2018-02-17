@@ -333,6 +333,19 @@
         <okhttp.platform>jdk9</okhttp.platform>
       </properties>
     </profile>
+    <profile>
+      <id>conscrypt</id>
+      <properties>
+        <okhttp.platform>conscrypt</okhttp.platform>
+      </properties>
+      <dependencies>
+        <dependency>
+          <groupId>org.conscrypt</groupId>
+          <artifactId>conscrypt-openjdk-uber</artifactId>
+          <version>1.0.1</version>
+        </dependency>
+      </dependencies>
+    </profile>
     <!-- ALPN Versions targeted for each Java 8 minor release -->
     <!-- Check versions with this page: -->
     <!-- http://www.eclipse.org/jetty/documentation/current/alpn-chapter.html#alpn-chapterchapterversions -->

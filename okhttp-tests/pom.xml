@@ -38,6 +38,11 @@
       <artifactId>okhttp-urlconnection</artifactId>
       <version>${project.version}</version>
     </dependency>
+    <dependency>
+      <groupId>org.conscrypt</groupId>
+      <artifactId>conscrypt-openjdk-uber</artifactId>
+      <version>1.0.1</version>
+    </dependency>
 
     <dependency>
       <groupId>junit</groupId>
