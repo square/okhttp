@@ -74,6 +74,7 @@
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>exec-maven-plugin</artifactId>
+        <version>1.5.0</version>
         <executions>
           <execution>
             <goals>
@@ -129,6 +130,7 @@
             <!-- Fails on caliper's ASM on OpenJDK 8. -->
             <groupId>org.codehaus.mojo</groupId>
             <artifactId>animal-sniffer-maven-plugin</artifactId>
+            <version>1.15</version>
             <executions>
               <execution>
                 <phase>none</phase>
