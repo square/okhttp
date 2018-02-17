@@ -51,6 +51,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-javadoc-plugin</artifactId>
+        <version>2.10.4</version>
         <configuration>
           <excludePackageNames>okhttp3.internal.*</excludePackageNames>
           <links>
@@ -61,6 +62,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-jar-plugin</artifactId>
+        <version>3.0.2</version>
         <configuration>
           <archive>
             <manifestEntries>

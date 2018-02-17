@@ -164,6 +164,7 @@
             <systemPropertyVariables>
               <okhttp.platform>${okhttp.platform}</okhttp.platform>
             </systemPropertyVariables>
+            <redirectTestOutputToFile>true</redirectTestOutputToFile>
             <properties>
               <!--
                 Configure a listener for enforcing that no uncaught exceptions issue from OkHttp
@@ -188,7 +189,7 @@
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-javadoc-plugin</artifactId>
-          <version>2.9</version>
+          <version>2.10.4</version>
         </plugin>
       </plugins>
     </pluginManagement>
