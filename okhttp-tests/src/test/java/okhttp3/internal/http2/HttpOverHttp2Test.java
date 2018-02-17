@@ -899,6 +899,13 @@ public final class HttpOverHttp2Test {
     assertEquals(Protocol.HTTP_2, response.protocol());
 
     List<String> logs = http2Handler.takeAll();
+
+    if (logs.size() != 20) {
+      for (String s: logs) {
+        System.out.println(s);
+      }
+    }
+
     assertEquals(20, logs.size());
     assertThat("header logged", firstFrame(logs, "HEADERS"), containsString("HEADERS       END_STREAM|END_HEADERS"));
   }
@@ -917,6 +924,13 @@ public final class HttpOverHttp2Test {
     assertEquals(Protocol.HTTP_2, response.protocol());
 
     List<String> logs = http2Handler.takeAll();
+
+    if (logs.size() != 22) {
+      for (String s: logs) {
+        System.out.println(s);
+      }
+    }
+
     assertEquals(22, logs.size());
     assertThat("header logged", firstFrame(logs, "HEADERS"), containsString("HEADERS       END_HEADERS"));
     assertThat("data logged", firstFrame(logs, "DATA"), containsString("0 DATA          END_STREAM"));
