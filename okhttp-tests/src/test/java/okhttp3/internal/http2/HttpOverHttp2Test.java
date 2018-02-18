@@ -899,7 +899,7 @@ public final class HttpOverHttp2Test {
     assertEquals(Protocol.HTTP_2, response.protocol());
 
     List<String> logs = http2Handler.takeAll();
-    assertEquals(20, logs.size());
+
     assertThat("header logged", firstFrame(logs, "HEADERS"), containsString("HEADERS       END_STREAM|END_HEADERS"));
   }
 
@@ -917,7 +917,7 @@ public final class HttpOverHttp2Test {
     assertEquals(Protocol.HTTP_2, response.protocol());
 
     List<String> logs = http2Handler.takeAll();
-    assertEquals(22, logs.size());
+
     assertThat("header logged", firstFrame(logs, "HEADERS"), containsString("HEADERS       END_HEADERS"));
     assertThat("data logged", firstFrame(logs, "DATA"), containsString("0 DATA          END_STREAM"));
   }
