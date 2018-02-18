@@ -178,6 +178,7 @@ public final class Request {
       return this;
     }
 
+    /** Removes all headers named {@code name} on this builder. */
     public Builder removeHeader(String name) {
       headers.removeAll(name);
       return this;
