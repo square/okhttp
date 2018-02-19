@@ -495,8 +495,8 @@ public final class Http2Connection implements Closeable {
           throw new ConnectionShutdownException();
         }
         okHttpSettings.merge(settings);
-        writer.settings(settings);
       }
+      writer.settings(settings);
     }
   }
 
