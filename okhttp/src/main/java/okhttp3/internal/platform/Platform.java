@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.lang.reflect.Field;
 import java.net.InetSocketAddress;
 import java.net.Socket;
+import java.security.GeneralSecurityException;
 import java.security.NoSuchAlgorithmException;
 import java.security.Security;
 import java.util.ArrayList;
@@ -30,6 +31,7 @@ import javax.annotation.Nullable;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
+import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
 import okhttp3.OkHttpClient;
 import okhttp3.Protocol;
@@ -38,6 +40,8 @@ import okhttp3.internal.tls.BasicTrustRootIndex;
 import okhttp3.internal.tls.CertificateChainCleaner;
 import okhttp3.internal.tls.TrustRootIndex;
 import okio.Buffer;
+
+import static okhttp3.internal.Util.assertionError;
 
 /**
  * Access to platform-specific features.
@@ -269,6 +273,16 @@ public class Platform {
       return SSLContext.getInstance("TLS");
     } catch (NoSuchAlgorithmException e) {
       throw new IllegalStateException("No TLS provider", e);
+    }
+  }
+
+  public SSLSocketFactory getSslSocketFactory(X509TrustManager trustManager) {
+    try {
+      SSLContext sslContext = getSSLContext();
+      sslContext.init(null, new TrustManager[] { trustManager }, null);
+      return sslContext.getSocketFactory();
+    } catch (GeneralSecurityException e) {
+      throw assertionError("No System TLS", e); // The system has no TLS. Just give up.
     }
   }
 

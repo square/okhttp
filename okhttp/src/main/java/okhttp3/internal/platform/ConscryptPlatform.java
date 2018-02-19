@@ -94,6 +94,12 @@ public class ConscryptPlatform extends Platform {
     }
   }
 
+  @Override public SSLSocketFactory getSslSocketFactory(X509TrustManager trustManager) {
+    SSLSocketFactory sslSocketFactory = super.getSslSocketFactory(trustManager);
+    Conscrypt.setUseEngineSocket(sslSocketFactory, true);
+    return sslSocketFactory;
+  }
+
   public static Platform buildIfSupported() {
     try {
       // trigger early exception over a fatal error
@@ -103,7 +109,6 @@ public class ConscryptPlatform extends Platform {
         return null;
       }
 
-      Conscrypt.setUseEngineSocketByDefault(true);
       return new ConscryptPlatform();
     } catch (ClassNotFoundException e) {
       return null;
