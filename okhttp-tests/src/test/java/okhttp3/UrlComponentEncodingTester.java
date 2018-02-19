@@ -402,6 +402,25 @@ class UrlComponentEncodingTester {
         return query.substring(1, query.length() - 1);
       }
     },
+    QUERY_VALUE {
+      @Override public String urlString(String value) {
+        return "http://example.com/?q=a" + value + "z";
+      }
+
+      @Override public String encodedValue(HttpUrl url) {
+        String query = url.encodedQuery();
+        return query.substring(3, query.length() - 1);
+      }
+
+      @Override public void set(HttpUrl.Builder builder, String value) {
+        builder.addQueryParameter("q", "a" + value + "z");
+      }
+
+      @Override public String get(HttpUrl url) {
+        String value = url.queryParameter("q");
+        return value.substring(1, value.length() - 1);
+      }
+    },
     FRAGMENT {
       @Override public String urlString(String value) {
         return "http://example.com/#a" + value + "z";
