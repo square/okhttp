@@ -293,7 +293,8 @@ public final class HttpUrl {
   static final String PATH_SEGMENT_ENCODE_SET = " \"<>^`{}|/\\?#";
   static final String PATH_SEGMENT_ENCODE_SET_URI = "[]";
   static final String QUERY_ENCODE_SET = " \"'<>#";
-  static final String QUERY_COMPONENT_ENCODE_SET = " \"'<>#&=";
+  static final String QUERY_COMPONENT_REENCODE_SET = " \"'<>#&=";
+  static final String QUERY_COMPONENT_ENCODE_SET = " !\"#$&'(),/:;<=>?@[]\\^`{|}~";
   static final String QUERY_COMPONENT_ENCODE_SET_URI = "\\^`{|}";
   static final String FORM_ENCODE_SET = " \"':;<=>@[]^`{}|/\\?#&!$(),~";
   static final String FRAGMENT_ENCODE_SET = "";
@@ -1170,9 +1171,9 @@ public final class HttpUrl {
       if (encodedName == null) throw new NullPointerException("encodedName == null");
       if (encodedQueryNamesAndValues == null) encodedQueryNamesAndValues = new ArrayList<>();
       encodedQueryNamesAndValues.add(
-          canonicalize(encodedName, QUERY_COMPONENT_ENCODE_SET, true, false, true, true));
+          canonicalize(encodedName, QUERY_COMPONENT_REENCODE_SET, true, false, true, true));
       encodedQueryNamesAndValues.add(encodedValue != null
-          ? canonicalize(encodedValue, QUERY_COMPONENT_ENCODE_SET, true, false, true, true)
+          ? canonicalize(encodedValue, QUERY_COMPONENT_REENCODE_SET, true, false, true, true)
           : null);
       return this;
     }
@@ -1202,7 +1203,7 @@ public final class HttpUrl {
       if (encodedName == null) throw new NullPointerException("encodedName == null");
       if (encodedQueryNamesAndValues == null) return this;
       removeAllCanonicalQueryParameters(
-          canonicalize(encodedName, QUERY_COMPONENT_ENCODE_SET, true, false, true, true));
+          canonicalize(encodedName, QUERY_COMPONENT_REENCODE_SET, true, false, true, true));
       return this;
     }
 

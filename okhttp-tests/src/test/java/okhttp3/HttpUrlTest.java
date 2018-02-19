@@ -553,6 +553,15 @@ public final class HttpUrlTest {
         .test(Component.QUERY);
   }
 
+  @Test public void queryValueCharacters() throws Exception {
+    new UrlComponentEncodingTester()
+        .override(Encoding.IDENTITY, '?', '`')
+        .override(Encoding.PERCENT, '\'')
+        .override(Encoding.SKIP, '#', '+')
+        .skipForUri('%', '\\', '^', '`', '{', '|', '}')
+        .test(Component.QUERY_VALUE);
+  }
+
   @Test public void fragmentCharacters() throws Exception {
     new UrlComponentEncodingTester()
         .override(Encoding.IDENTITY, ' ', '"', '#', '<', '>', '?', '`')
@@ -1168,8 +1177,11 @@ public final class HttpUrlTest {
         .host("host")
         .addQueryParameter("=[]:;\"~|?#@^/$%*", "a")
         .build();
-    assertEquals("http://host/?%3D[]:;%22~|?%23@^/$%25*=a", url.toString());
-    assertEquals("http://host/?%3D[]:;%22~%7C?%23@%5E/$%25*=a", url.uri().toString());
+    assertEquals("http://host/?%3D%5B%5D%3A%3B%22%7E%7C%3F%23%40%5E%2F%24%25*=a",
+        url.toString());
+    assertEquals("http://host/?%3D%5B%5D%3A%3B%22%7E%7C%3F%23%40%5E%2F%24%25*=a",
+        url.uri().toString());
+    assertEquals("a", url.queryParameter("=[]:;\"~|?#@^/$%*"));
   }
 
   @Test public void toUriQueryParameterValueSpecialCharacters() throws Exception {
@@ -1178,8 +1190,11 @@ public final class HttpUrlTest {
         .host("host")
         .addQueryParameter("a", "=[]:;\"~|?#@^/$%*")
         .build();
-    assertEquals("http://host/?a=%3D[]:;%22~|?%23@^/$%25*", url.toString());
-    assertEquals("http://host/?a=%3D[]:;%22~%7C?%23@%5E/$%25*", url.uri().toString());
+    assertEquals("http://host/?a=%3D%5B%5D%3A%3B%22%7E%7C%3F%23%40%5E%2F%24%25*",
+        url.toString());
+    assertEquals("http://host/?a=%3D%5B%5D%3A%3B%22%7E%7C%3F%23%40%5E%2F%24%25*",
+        url.uri().toString());
+    assertEquals("=[]:;\"~|?#@^/$%*", url.queryParameter("a"));
   }
 
   @Test public void toUriQueryValueSpecialCharacters() throws Exception {
@@ -1190,6 +1205,42 @@ public final class HttpUrlTest {
         .build();
     assertEquals("http://host/?=[]:;%22~|?%23@^/$%25*", url.toString());
     assertEquals("http://host/?=[]:;%22~%7C?%23@%5E/$%25*", url.uri().toString());
+  }
+
+  @Test public void queryCharactersEncodedWhenComposed() throws Exception {
+    HttpUrl url = new HttpUrl.Builder()
+        .scheme("http")
+        .host("host")
+        .addQueryParameter("a", "!$(),/:;?@[]\\^`{|}~")
+        .build();
+    assertEquals("http://host/?a=%21%24%28%29%2C%2F%3A%3B%3F%40%5B%5D%5C%5E%60%7B%7C%7D%7E",
+        url.toString());
+    assertEquals("!$(),/:;?@[]\\^`{|}~", url.queryParameter("a"));
+  }
+
+  /**
+   * When callers use {@code addEncodedQueryParameter()} we only encode what's strictly required.
+   * We retain the encoded (or non-encoded) state of the input.
+   */
+  @Test public void queryCharactersNotReencodedWhenComposedWithAddEncoded() throws Exception {
+    HttpUrl url = new HttpUrl.Builder()
+        .scheme("http")
+        .host("host")
+        .addEncodedQueryParameter("a", "!$(),/:;?@[]\\^`{|}~")
+        .build();
+    assertEquals("http://host/?a=!$(),/:;?@[]\\^`{|}~",
+        url.toString());
+    assertEquals("!$(),/:;?@[]\\^`{|}~", url.queryParameter("a"));
+  }
+
+  /**
+   * When callers parse a URL with query components that aren't encoded, we shouldn't convert them
+   * into a canonical form because doing so could be semantically different.
+   */
+  @Test public void queryCharactersNotReencodedWhenParsed() throws Exception {
+    HttpUrl url = HttpUrl.parse("http://host/?a=!$(),/:;?@[]\\^`{|}~");
+    assertEquals("http://host/?a=!$(),/:;?@[]\\^`{|}~", url.toString());
+    assertEquals("!$(),/:;?@[]\\^`{|}~", url.queryParameter("a"));
   }
 
   @Test public void toUriFragmentSpecialCharacters() throws Exception {
