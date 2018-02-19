@@ -54,9 +54,7 @@ public final class ConnectionSpec {
       // Note that the following cipher suites are all on HTTP/2's bad cipher suites list. We'll
       // continue to include them until better suites are commonly available. For example, none
       // of the better cipher suites listed above shipped with Android 4.4 or Java 7.
-      CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA,
       CipherSuite.TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA,
-      CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA,
       CipherSuite.TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA,
       CipherSuite.TLS_RSA_WITH_AES_128_GCM_SHA256,
       CipherSuite.TLS_RSA_WITH_AES_256_GCM_SHA384,
