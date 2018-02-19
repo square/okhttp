@@ -28,8 +28,8 @@ import javax.annotation.Nullable;
  *
  * <h3>Warning: This is a non-final API.</h3>
  *
- * <p><strong>As of OkHttp 3.9, this feature is an unstable preview: the API is subject to change,
- * and the implementation is incomplete. We expect that OkHttp 3.10 or 3.11 will finalize this API.
+ * <p><strong>As of OkHttp 3.10, this feature is an unstable preview: the API is subject to change,
+ * and the implementation is incomplete. We expect that OkHttp 3.11 or 3.12 will finalize this API.
  * Until then, expect API and behavior changes when you update your OkHttp dependency.</strong>
  *
  * <p>All start/connect/acquire events will eventually receive a matching end/release event,
@@ -286,9 +286,9 @@ public abstract class EventListener {
   /**
    * <h3>Warning: This is a non-final API.</h3>
    *
-   * <p><strong>As of OkHttp 3.9, this feature is an unstable preview: the API is subject to change,
-   * and the implementation is incomplete. We expect that OkHttp 3.10 or 3.11 will finalize this
-   * API. Until then, expect API and behavior changes when you update your OkHttp
+   * <p><strong>As of OkHttp 3.10, this feature is an unstable preview: the API is subject to
+   * change, and the implementation is incomplete. We expect that OkHttp 3.11 or 3.12 will finalize
+   * this API. Until then, expect API and behavior changes when you update your OkHttp
    * dependency.</strong>
    */
   public interface Factory {
