@@ -79,12 +79,12 @@ import okio.Timeout;
 import org.junit.rules.ExternalResource;
 
 import static okhttp3.internal.Util.closeQuietly;
+import static okhttp3.mockwebserver.SocketPolicy.CONTINUE_ALWAYS;
 import static okhttp3.mockwebserver.SocketPolicy.DISCONNECT_AFTER_REQUEST;
 import static okhttp3.mockwebserver.SocketPolicy.DISCONNECT_AT_END;
 import static okhttp3.mockwebserver.SocketPolicy.DISCONNECT_AT_START;
 import static okhttp3.mockwebserver.SocketPolicy.DISCONNECT_DURING_REQUEST_BODY;
 import static okhttp3.mockwebserver.SocketPolicy.DISCONNECT_DURING_RESPONSE_BODY;
-import static okhttp3.mockwebserver.SocketPolicy.CONTINUE_ALWAYS;
 import static okhttp3.mockwebserver.SocketPolicy.EXPECT_CONTINUE;
 import static okhttp3.mockwebserver.SocketPolicy.FAIL_HANDSHAKE;
 import static okhttp3.mockwebserver.SocketPolicy.NO_RESPONSE;
@@ -665,10 +665,10 @@ public final class MockWebServer extends ExternalResource implements Closeable {
       }
     };
     RealWebSocket webSocket = new RealWebSocket(fancyRequest,
-        response.getWebSocketListener(), new SecureRandom());
+        response.getWebSocketListener(), new SecureRandom(), 0);
     response.getWebSocketListener().onOpen(webSocket, fancyResponse);
     String name = "MockWebServer WebSocket " + request.getPath();
-    webSocket.initReaderAndWriter(name, 0, streams);
+    webSocket.initReaderAndWriter(name, streams);
     try {
       webSocket.loopReader();
 
