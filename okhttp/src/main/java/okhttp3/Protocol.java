@@ -62,6 +62,12 @@ public enum Protocol {
   HTTP_2("h2"),
 
   /**
+   * Cleartext implementation of HTTP2. This enumeration exists for the "prior knowledge" upgrade
+   * semantic supported by the protocol.
+   */
+  H2C("h2c"),
+
+  /**
    * QUIC (Quick UDP Internet Connection) is a new multiplexed and secure transport atop UDP,
    * designed from the ground up and optimized for HTTP/2 semantics.
    * HTTP/1.1 semantics are layered on HTTP/2.
