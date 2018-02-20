@@ -21,6 +21,7 @@ import java.net.ProtocolException;
 import java.net.SocketTimeoutException;
 import java.util.Collections;
 import java.util.Random;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Logger;
@@ -33,12 +34,12 @@ import okhttp3.Response;
 import okhttp3.TestLogHandler;
 import okhttp3.WebSocket;
 import okhttp3.WebSocketListener;
-import okhttp3.mockwebserver.internal.tls.SslClient;
 import okhttp3.mockwebserver.Dispatcher;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import okhttp3.mockwebserver.RecordedRequest;
 import okhttp3.mockwebserver.SocketPolicy;
+import okhttp3.mockwebserver.internal.tls.SslClient;
 import okio.Buffer;
 import okio.ByteString;
 import org.junit.After;
@@ -555,7 +556,7 @@ public final class WebSocketHttpTest {
     RealWebSocket server = (RealWebSocket) serverListener.assertOpen();
 
     long startNanos = System.nanoTime();
-    while (webSocket.pongCount() < 3) {
+    while (webSocket.receivedPongCount() < 3) {
       Thread.sleep(50);
     }
 
@@ -563,12 +564,13 @@ public final class WebSocketHttpTest {
     assertEquals(1500, TimeUnit.NANOSECONDS.toMillis(elapsedUntilPong3), 250d);
 
     // The client pinged the server 3 times, and it has ponged back 3 times.
-    assertEquals(3, server.pingCount());
-    assertEquals(3, webSocket.pongCount());
+    assertEquals(3, webSocket.sentPingCount());
+    assertEquals(3, server.receivedPingCount());
+    assertEquals(3, webSocket.receivedPongCount());
 
     // The server has never pinged the client.
-    assertEquals(0, server.pongCount());
-    assertEquals(0, webSocket.pingCount());
+    assertEquals(0, server.receivedPongCount());
+    assertEquals(0, webSocket.receivedPingCount());
   }
 
   @Test public void clientDoesNotPingServerByDefault() throws Exception {
@@ -581,10 +583,45 @@ public final class WebSocketHttpTest {
     Thread.sleep(1000);
 
     // No pings and no pongs.
-    assertEquals(0, server.pingCount());
-    assertEquals(0, webSocket.pongCount());
-    assertEquals(0, server.pongCount());
-    assertEquals(0, webSocket.pingCount());
+    assertEquals(0, webSocket.sentPingCount());
+    assertEquals(0, webSocket.receivedPingCount());
+    assertEquals(0, webSocket.receivedPongCount());
+    assertEquals(0, server.sentPingCount());
+    assertEquals(0, server.receivedPingCount());
+    assertEquals(0, server.receivedPongCount());
+  }
+
+  /**
+   * Configure the websocket to send pings every 500 ms. Artificially prevent the server from
+   * responding to pings. The client should give up when attempting to send its 2nd ping, at about
+   * 1000 ms.
+   */
+  @Test public void unacknowledgedPingFailsConnection() throws Exception {
+    client = client.newBuilder()
+        .pingInterval(500, TimeUnit.MILLISECONDS)
+        .build();
+
+    // Stall in onOpen to prevent pongs from being sent.
+    final CountDownLatch latch = new CountDownLatch(1);
+    webServer.enqueue(new MockResponse().withWebSocketUpgrade(new WebSocketListener() {
+      @Override public void onOpen(WebSocket webSocket, Response response) {
+        try {
+          latch.await(); // The server can't respond to pings!
+        } catch (InterruptedException e) {
+          throw new AssertionError(e);
+        }
+      }
+    }));
+
+    long openAtNanos = System.nanoTime();
+    newWebSocket();
+    clientListener.assertOpen();
+    clientListener.assertFailure(SocketTimeoutException.class,
+        "sent ping but didn't receive pong within 500ms (after 0 successful ping/pongs)");
+    latch.countDown();
+
+    long elapsedUntilFailure = System.nanoTime() - openAtNanos;
+    assertEquals(1000, TimeUnit.NANOSECONDS.toMillis(elapsedUntilFailure), 250d);
   }
 
   /** https://github.com/square/okhttp/issues/2788 */
@@ -666,7 +703,8 @@ public final class WebSocketHttpTest {
   }
 
   private RealWebSocket newWebSocket(Request request) {
-    RealWebSocket webSocket = new RealWebSocket(request, clientListener, random);
+    RealWebSocket webSocket = new RealWebSocket(
+        request, clientListener, random, client.pingIntervalMillis());
     webSocket.connect(client);
     return webSocket;
   }

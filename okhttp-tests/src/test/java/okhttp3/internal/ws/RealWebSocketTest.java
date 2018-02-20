@@ -326,8 +326,8 @@ public final class RealWebSocketTest {
           .request(new Request.Builder().url(url).build())
           .protocol(Protocol.HTTP_1_1)
           .build();
-      webSocket = new RealWebSocket(response.request(), listener, random);
-      webSocket.initReaderAndWriter(name, pingIntervalMillis, this);
+      webSocket = new RealWebSocket(response.request(), listener, random, pingIntervalMillis);
+      webSocket.initReaderAndWriter(name, this);
     }
 
     public boolean processNextFrame() throws IOException {
