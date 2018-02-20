@@ -21,6 +21,7 @@ import java.lang.reflect.Field;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.security.NoSuchAlgorithmException;
+import java.security.Provider;
 import java.security.Security;
 import java.util.ArrayList;
 import java.util.List;
@@ -190,8 +191,10 @@ public class Platform {
     }
 
     // check if Provider manually installed
-    String preferredProvider = Security.getProviders()[0].getName();
-    return "Conscrypt".equals(preferredProvider);
+    // double check since name can be changed, and class can be obfuscated
+    Provider preferredProvider = Security.getProviders()[0];
+    return "Conscrypt".equals(preferredProvider.getName())
+        || "org.conscrypt.OpenSSLProvider".equals(preferredProvider.getClass().getName());
   }
 
   /** Attempt to match the host runtime to a capable Platform implementation. */
