@@ -583,7 +583,7 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
     /**
      * Sets the HTTP proxy that will be used by connections created by this client. This takes
      * precedence over {@link #proxySelector}, which is only honored when this proxy is null (which
-     * it is by default). To disable proxy use completely, call {@code setProxy(Proxy.NO_PROXY)}.
+     * it is by default). To disable proxy use completely, call {@code proxy(Proxy.NO_PROXY)}.
      */
     public Builder proxy(@Nullable Proxy proxy) {
       this.proxy = proxy;
