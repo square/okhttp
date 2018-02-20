@@ -44,6 +44,14 @@ import static org.junit.Assert.fail;
 public final class WebSocketWriterTest {
   private final Buffer data = new Buffer();
   private final Random random = new Random(0);
+  private final WebSocketWriter.FrameCallback frameCallback = new WebSocketWriter.FrameCallback() {
+    @Override
+    public void onWritePing() {
+    }
+    @Override
+    public void onWritePong() {
+    }
+  };
 
   /**
    * Check all data as verified inside of the test. We do this in a rule instead of @After so that
@@ -61,8 +69,8 @@ public final class WebSocketWriterTest {
   };
 
   // Mutually exclusive. Use the one corresponding to the peer whose behavior you wish to test.
-  private final WebSocketWriter serverWriter = new WebSocketWriter(false, data, random);
-  private final WebSocketWriter clientWriter = new WebSocketWriter(true, data, random);
+  private final WebSocketWriter serverWriter = new WebSocketWriter(false, data, random, frameCallback);
+  private final WebSocketWriter clientWriter = new WebSocketWriter(true, data, random, frameCallback);
 
   @Test public void serverTextMessage() throws IOException {
     BufferedSink sink = Okio.buffer(serverWriter.newMessageSink(OPCODE_TEXT, -1));

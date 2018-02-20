@@ -26,7 +26,9 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+
 import javax.annotation.Nullable;
+
 import okhttp3.Call;
 import okhttp3.Callback;
 import okhttp3.EventListener;
@@ -52,7 +54,9 @@ import static okhttp3.internal.ws.WebSocketProtocol.OPCODE_BINARY;
 import static okhttp3.internal.ws.WebSocketProtocol.OPCODE_TEXT;
 import static okhttp3.internal.ws.WebSocketProtocol.validateCloseCode;
 
-public final class RealWebSocket implements WebSocket, WebSocketReader.FrameCallback {
+public final class RealWebSocket implements WebSocket, WebSocketReader.FrameCallback,
+        WebSocketWriter.FrameCallback {
+
   private static final List<Protocol> ONLY_HTTP1 = Collections.singletonList(Protocol.HTTP_1_1);
 
   /**
@@ -130,6 +134,9 @@ public final class RealWebSocket implements WebSocket, WebSocketReader.FrameCall
 
   /** For testing. */
   int pongCount;
+
+  /** True if ping has been sent and pong is not received within some reasonable period.  */
+  private boolean pingSentPongNotReceived;
 
   public RealWebSocket(Request request, WebSocketListener listener, Random random) {
     if (!"GET".equals(request.method())) {
@@ -244,7 +251,7 @@ public final class RealWebSocket implements WebSocket, WebSocketReader.FrameCall
       String name, long pingIntervalMillis, Streams streams) throws IOException {
     synchronized (this) {
       this.streams = streams;
-      this.writer = new WebSocketWriter(streams.client, streams.sink, random);
+      this.writer = new WebSocketWriter(streams.client, streams.sink, random, this);
       this.executor = new ScheduledThreadPoolExecutor(1, Util.threadFactory(name, false));
       if (pingIntervalMillis != 0) {
         executor.scheduleAtFixedRate(
@@ -326,6 +333,7 @@ public final class RealWebSocket implements WebSocket, WebSocketReader.FrameCall
   @Override public synchronized void onReadPong(ByteString buffer) {
     // This API doesn't expose pings.
     pongCount++;
+    pingSentPongNotReceived = false;
   }
 
   @Override public void onReadClose(int code, String reason) {
@@ -353,6 +361,19 @@ public final class RealWebSocket implements WebSocket, WebSocketReader.FrameCall
     } finally {
       closeQuietly(toClose);
     }
+  }
+
+    @Override
+    public synchronized void onWritePing() {
+      if (pingSentPongNotReceived) {
+        failWebSocket(new IllegalStateException("Pong does not received!"), null);
+      }
+      pingSentPongNotReceived = true;
+    }
+
+  @Override
+  public synchronized void onWritePong() {
+
   }
 
   // Writer methods to enqueue frames. They'll be sent asynchronously by the writer thread.
