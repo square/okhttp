@@ -28,6 +28,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.SynchronousQueue;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.net.ssl.HostnameVerifier;
@@ -54,7 +55,6 @@ import okhttp3.internal.RecordingOkAuthenticator;
 import okhttp3.internal.SingleInetAddressDns;
 import okhttp3.internal.Util;
 import okhttp3.internal.connection.RealConnection;
-import okhttp3.mockwebserver.internal.tls.SslClient;
 import okhttp3.mockwebserver.Dispatcher;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
@@ -62,12 +62,12 @@ import okhttp3.mockwebserver.PushPromise;
 import okhttp3.mockwebserver.QueueDispatcher;
 import okhttp3.mockwebserver.RecordedRequest;
 import okhttp3.mockwebserver.SocketPolicy;
+import okhttp3.mockwebserver.internal.tls.SslClient;
 import okio.Buffer;
 import okio.BufferedSink;
 import okio.BufferedSource;
 import okio.GzipSink;
 import okio.Okio;
-import org.hamcrest.CoreMatchers;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Ignore;
@@ -922,13 +922,50 @@ public final class HttpOverHttp2Test {
     assertThat("data logged", firstFrame(logs, "DATA"), containsString("0 DATA          END_STREAM"));
   }
 
+  @Test public void pingsTransmitted() throws Exception {
+    // Ping every 500 ms, starting at 500 ms.
+    client = client.newBuilder()
+        .pingInterval(500, TimeUnit.MILLISECONDS)
+        .build();
+
+    // Delay the response to give 1 ping enough time to be sent and replied to.
+    server.enqueue(new MockResponse()
+        .setBodyDelay(750, TimeUnit.MILLISECONDS)
+        .setBody("ABC"));
+
+    Call call = client.newCall(new Request.Builder()
+        .url(server.url("/"))
+        .build());
+    Response response = call.execute();
+    assertEquals("ABC", response.body().string());
+
+    assertEquals(Protocol.HTTP_2, response.protocol());
+
+    // Confirm a single ping was sent and received, and its reply was sent and received.
+    List<String> logs = http2Handler.takeAll();
+    assertEquals(1, countFrames(logs, "FINE: >> 0x00000000     8 PING          "));
+    assertEquals(1, countFrames(logs, "FINE: << 0x00000000     8 PING          "));
+    assertEquals(1, countFrames(logs, "FINE: >> 0x00000000     8 PING          ACK"));
+    assertEquals(1, countFrames(logs, "FINE: << 0x00000000     8 PING          ACK"));
+  }
+
   private String firstFrame(List<String> logs, String type) {
-    for (String l: logs) {
-      if (l.contains(type)) {
-        return l;
+    for (String log: logs) {
+      if (log.contains(type)) {
+        return log;
       }
     }
     return null;
+  }
+
+  private int countFrames(List<String> logs, String message) {
+    int result = 0;
+    for (String log: logs) {
+      if (log.equals(message)) {
+        result++;
+      }
+    }
+    return result;
   }
 
   /**
