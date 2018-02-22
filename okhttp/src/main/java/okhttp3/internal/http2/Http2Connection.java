@@ -100,11 +100,14 @@ public final class Http2Connection implements Closeable {
   /** Ensures push promise callbacks events are sent in order per stream. */
   private final ExecutorService pushExecutor;
 
-  /** Lazily-created map of in-flight pings awaiting a response. Guarded by this. */
-  private Map<Integer, Ping> pings;
   /** User code to run in response to push promise events. */
   final PushObserver pushObserver;
-  private int nextPingId;
+
+  /** Total number of pings sent by this connection. */
+  private int sentPingCount;
+
+  /** Total number of pongs received thus far. */
+  private int receivedPongCount;
 
   /**
    * The total number of bytes consumed by the application, but not yet acknowledged by sending a
@@ -143,8 +146,6 @@ public final class Http2Connection implements Closeable {
       nextStreamId += 2; // In HTTP/2, 1 on client is reserved for Upgrade.
     }
 
-    nextPingId = builder.client ? 1 : 2;
-
     // Flow control was designed more for servers, or proxies than edge clients.
     // If we are a client, set the flow control window to 16MiB.  This avoids
     // thrashing window updates every 64KiB, yet small enough to avoid blowing
@@ -158,7 +159,7 @@ public final class Http2Connection implements Closeable {
     writerExecutor = new ScheduledThreadPoolExecutor(1,
         Util.threadFactory(Util.format("OkHttp %s Writer", hostname), false));
     if (builder.pingIntervalMillis != 0) {
-      writerExecutor.scheduleAtFixedRate(new PingRunnable(false, 0, 0, null),
+      writerExecutor.scheduleAtFixedRate(new PingRunnable(false, 0, 0),
           builder.pingIntervalMillis, builder.pingIntervalMillis, MILLISECONDS);
     }
 
@@ -350,60 +351,56 @@ public final class Http2Connection implements Closeable {
         });
   }
 
-  /**
-   * Sends a ping frame to the peer. Use the returned object to await the ping's response and
-   * observe its round trip time.
-   */
-  public Ping ping() throws IOException {
-    Ping ping = new Ping();
-    int pingId;
-    synchronized (this) {
-      if (shutdown) {
-        throw new ConnectionShutdownException();
-      }
-      pingId = nextPingId;
-      nextPingId += 2;
-      if (pings == null) pings = new LinkedHashMap<>();
-      pings.put(pingId, ping);
-    }
-    writePing(false, pingId, 0x4f4b6f6b /* ASCII "OKok" */, ping);
-    return ping;
-  }
-
   final class PingRunnable extends NamedRunnable {
     final boolean reply;
     final int payload1;
     final int payload2;
-    final Ping ping;
 
-    PingRunnable(boolean reply, int payload1, int payload2, Ping ping) {
+    PingRunnable(boolean reply, int payload1, int payload2) {
       super("OkHttp %s ping %08x%08x", hostname, payload1, payload2);
       this.reply = reply;
       this.payload1 = payload1;
       this.payload2 = payload2;
-      this.ping = ping;
     }
 
     @Override public void execute() {
-      try {
-        // TODO(jwilson): fail the connection if replies are missing (and this is not a reply).
-        writePing(reply, payload1, payload2, ping);
-      } catch (IOException e) {
+      writePing(reply, payload1, payload2);
+    }
+  }
+
+  void writePing(boolean reply, int payload1, int payload2) {
+    if (!reply) {
+      int sentPingCount;
+      int receivedPongCount;
+      synchronized (this) {
+        sentPingCount = this.sentPingCount;
+        receivedPongCount = this.receivedPongCount;
+        this.sentPingCount++;
+      }
+      if (sentPingCount > receivedPongCount) {
         failConnection();
+        return;
       }
     }
-  }
 
-  void writePing(boolean reply, int payload1, int payload2, Ping ping) throws IOException {
-    synchronized (writer) {
-      // Observe the sent time immediately before performing I/O.
-      if (ping != null) ping.send();
+    try {
       writer.ping(reply, payload1, payload2);
+    } catch (IOException e) {
+      failConnection();
     }
   }
 
-  synchronized Ping removePing(int id) {
-    return pings != null ? pings.remove(id) : null;
+  /** For testing: sends a ping and waits for a pong. */
+  void writePingAndAwaitPong() throws IOException, InterruptedException {
+    writePing(false, 0x4f4b6f6b /* "OKok" */, 0xf09f8da9 /* donut */);
+    awaitPong();
+  }
+
+  /** For testing: waits until {@code requiredPongCount} pings have been received from the peer. */
+  synchronized void awaitPong() throws IOException, InterruptedException {
+    while (sentPingCount > receivedPongCount) {
+      wait();
+    }
   }
 
   public void flush() throws IOException {
@@ -449,15 +446,10 @@ public final class Http2Connection implements Closeable {
     }
 
     Http2Stream[] streamsToClose = null;
-    Ping[] pingsToCancel = null;
     synchronized (this) {
       if (!streams.isEmpty()) {
         streamsToClose = streams.values().toArray(new Http2Stream[streams.size()]);
         streams.clear();
-      }
-      if (pings != null) {
-        pingsToCancel = pings.values().toArray(new Ping[pings.size()]);
-        pings = null;
       }
     }
 
@@ -468,12 +460,6 @@ public final class Http2Connection implements Closeable {
         } catch (IOException e) {
           if (thrown != null) thrown = e;
         }
-      }
-    }
-
-    if (pingsToCancel != null) {
-      for (Ping ping : pingsToCancel) {
-        ping.cancel();
       }
     }
 
@@ -755,13 +741,13 @@ public final class Http2Connection implements Closeable {
 
     @Override public void ping(boolean reply, int payload1, int payload2) {
       if (reply) {
-        Ping ping = removePing(payload1);
-        if (ping != null) {
-          ping.receive();
+        synchronized (Http2Connection.this) {
+          receivedPongCount++;
+          Http2Connection.this.notifyAll();
         }
       } else {
         // Send a reply to a client ping if this is a server and vice versa.
-        writerExecutor.execute(new PingRunnable(true, payload1, payload2, null));
+        writerExecutor.execute(new PingRunnable(true, payload1, payload2));
       }
     }
 

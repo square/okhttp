@@ -949,6 +949,38 @@ public final class HttpOverHttp2Test {
     assertEquals(1, countFrames(logs, "FINE: << 0x00000000     8 PING          ACK"));
   }
 
+  @Test public void missingPongsFailsConnection() throws Exception {
+    // Ping every 500 ms, starting at 500 ms.
+    client = client.newBuilder()
+        .readTimeout(10, TimeUnit.SECONDS) // Confirm we fail before the read timeout.
+        .pingInterval(500, TimeUnit.MILLISECONDS)
+        .build();
+
+    // Set up the server to ignore the socket. It won't respond to pings!
+    server.enqueue(new MockResponse()
+        .setSocketPolicy(SocketPolicy.STALL_SOCKET_AT_START));
+
+    // Make a call. It'll fail as soon as our pings detect a problem.
+    Call call = client.newCall(new Request.Builder()
+        .url(server.url("/"))
+        .build());
+    long executeAtNanos = System.nanoTime();
+    try {
+      call.execute();
+      fail();
+    } catch (StreamResetException expected) {
+      assertEquals("stream was reset: PROTOCOL_ERROR", expected.getMessage());
+    }
+
+    long elapsedUntilFailure = System.nanoTime() - executeAtNanos;
+    assertEquals(1000, TimeUnit.NANOSECONDS.toMillis(elapsedUntilFailure), 250d);
+
+    // Confirm a single ping was sent but not acknowledged.
+    List<String> logs = http2Handler.takeAll();
+    assertEquals(1, countFrames(logs, "FINE: >> 0x00000000     8 PING          "));
+    assertEquals(0, countFrames(logs, "FINE: << 0x00000000     8 PING          ACK"));
+  }
+
   private String firstFrame(List<String> logs, String type) {
     for (String log: logs) {
       if (log.contains(type)) {
