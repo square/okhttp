@@ -107,11 +107,12 @@ public final class StreamAllocation {
     int connectTimeout = chain.connectTimeoutMillis();
     int readTimeout = chain.readTimeoutMillis();
     int writeTimeout = chain.writeTimeoutMillis();
+    int pingIntervalMillis = client.pingIntervalMillis();
     boolean connectionRetryEnabled = client.retryOnConnectionFailure();
 
     try {
       RealConnection resultConnection = findHealthyConnection(connectTimeout, readTimeout,
-          writeTimeout, connectionRetryEnabled, doExtensiveHealthChecks);
+          writeTimeout, pingIntervalMillis, connectionRetryEnabled, doExtensiveHealthChecks);
       HttpCodec resultCodec = resultConnection.newCodec(client, chain, this);
 
       synchronized (connectionPool) {
@@ -128,11 +129,11 @@ public final class StreamAllocation {
    * until a healthy connection is found.
    */
   private RealConnection findHealthyConnection(int connectTimeout, int readTimeout,
-      int writeTimeout, boolean connectionRetryEnabled, boolean doExtensiveHealthChecks)
-      throws IOException {
+      int writeTimeout, int pingIntervalMillis, boolean connectionRetryEnabled,
+      boolean doExtensiveHealthChecks) throws IOException {
     while (true) {
       RealConnection candidate = findConnection(connectTimeout, readTimeout, writeTimeout,
-          connectionRetryEnabled);
+          pingIntervalMillis, connectionRetryEnabled);
 
       // If this is a brand new connection, we can skip the extensive health checks.
       synchronized (connectionPool) {
@@ -157,7 +158,7 @@ public final class StreamAllocation {
    * then the pool, finally building a new connection.
    */
   private RealConnection findConnection(int connectTimeout, int readTimeout, int writeTimeout,
-      boolean connectionRetryEnabled) throws IOException {
+      int pingIntervalMillis, boolean connectionRetryEnabled) throws IOException {
     boolean foundPooledConnection = false;
     RealConnection result = null;
     Route selectedRoute = null;
@@ -253,8 +254,8 @@ public final class StreamAllocation {
     }
 
     // Do TCP + TLS handshakes. This is a blocking operation.
-    result.connect(
-        connectTimeout, readTimeout, writeTimeout, connectionRetryEnabled, call, eventListener);
+    result.connect(connectTimeout, readTimeout, writeTimeout, pingIntervalMillis,
+        connectionRetryEnabled, call, eventListener);
     routeDatabase().connected(result.route());
 
     Socket socket = null;

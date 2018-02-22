@@ -568,14 +568,15 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
     }
 
     /**
-     * Sets the interval between web socket pings initiated by this client. Use this to
-     * automatically send web socket ping frames until either the web socket fails or it is closed.
-     * This keeps the connection alive and may detect connectivity failures.
+     * Sets the interval between HTTP/2 and web socket pings initiated by this client. Use this to
+     * automatically send ping frames until either the connection fails or it is closed. This keeps
+     * the connection alive and may detect connectivity failures.
      *
      * <p>If the server does not respond to each ping with a pong within {@code interval}, this
-     * client will assume that connectivity has been lost. When this happens the connection is
-     * canceled and its listener is {@linkplain WebSocketListener#onFailure notified of the
-     * failure}.
+     * client will assume that connectivity has been lost. When this happens on a web socket the
+     * connection is canceled and its listener is {@linkplain WebSocketListener#onFailure notified
+     * of the failure}. When it happens on an HTTP/2 connection the connection is closed and any
+     * calls it is carrying {@linkplain java.io.IOException will fail with an IOException}.
      *
      * <p>The default value of 0 disables client-initiated pings.
      */
