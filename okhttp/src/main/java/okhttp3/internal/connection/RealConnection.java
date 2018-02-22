@@ -258,19 +258,24 @@ public final class RealConnection extends Http2Connection.Listener implements Co
     }
   }
 
+<<<<<<< HEAD
   private void establishProtocol(ConnectionSpecSelector connectionSpecSelector,
       int pingIntervalMillis, Call call, EventListener eventListener) throws IOException {
     if (route.address().sslSocketFactory() == null) {
+=======
+  private void establishProtocol(ConnectionSpecSelector connectionSpecSelector, Call call,
+      EventListener eventListener) throws IOException {
+    // this implementation takes the "prior knowledge" approach to the spec
+    // https://tools.ietf.org/html/rfc7540#section-3.4
+    if (route.address().protocols().contains(Protocol.H2C)) {
+>>>>>>> gh-1019: added strict requirement on h2c being the only protocol when using prior knowledge
       socket = rawSocket;
-
-      // this implementation takes the "prior knowledge" approach to the spec
-      // https://tools.ietf.org/html/rfc7540#section-3.4
-      if (route.address().protocols().contains(Protocol.H2C)) {
-        protocol = Protocol.H2C;
-        startHttp2();
-      } else {
-        protocol = Protocol.HTTP_1_1;
-      }
+      protocol = Protocol.H2C;
+      startHttp2();
+      return;
+    } else if (route.address().sslSocketFactory() == null) {
+      socket = rawSocket;
+      protocol = Protocol.HTTP_1_1;
       return;
     }
 

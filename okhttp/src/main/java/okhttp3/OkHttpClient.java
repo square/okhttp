@@ -25,8 +25,10 @@ import java.security.KeyStore;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Random;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
@@ -849,24 +851,30 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
      */
     public Builder protocols(List<Protocol> protocols) {
       // Create a private copy of the list.
-      protocols = new ArrayList<>(protocols);
+      final Set<Protocol> uniqueProtocols = new HashSet<>(protocols);
 
-      // Validate that the list has everything we require and nothing we forbid.
-      if (!protocols.contains(Protocol.HTTP_1_1)) {
-        throw new IllegalArgumentException("protocols doesn't contain http/1.1: " + protocols);
+      if (uniqueProtocols.contains(Protocol.H2C) && uniqueProtocols.size() > 1) {
+        // when using h2c prior knowledge, no other protocol should be supported.
+        throw new IllegalArgumentException("protocols containing h2c cannot use other protocols:"
+                + uniqueProtocols);
+      } else if (!uniqueProtocols.contains(Protocol.HTTP_1_1)) {
+        // Validate that the list has everything we require and nothing we forbid.
+        throw new IllegalArgumentException("protocols doesn't contain http/1.1: "
+                + uniqueProtocols);
       }
-      if (protocols.contains(Protocol.HTTP_1_0)) {
-        throw new IllegalArgumentException("protocols must not contain http/1.0: " + protocols);
+      if (uniqueProtocols.contains(Protocol.HTTP_1_0)) {
+        throw new IllegalArgumentException("protocols must not contain http/1.0: "
+                + uniqueProtocols);
       }
-      if (protocols.contains(null)) {
+      if (uniqueProtocols.contains(null)) {
         throw new IllegalArgumentException("protocols must not contain null");
       }
 
       // Remove protocols that we no longer support.
-      protocols.remove(Protocol.SPDY_3);
+      uniqueProtocols.remove(Protocol.SPDY_3);
 
       // Assign as an unmodifiable list. This is effectively immutable.
-      this.protocols = Collections.unmodifiableList(protocols);
+      this.protocols = Collections.unmodifiableList(new ArrayList<>(uniqueProtocols));
       return this;
     }
 
