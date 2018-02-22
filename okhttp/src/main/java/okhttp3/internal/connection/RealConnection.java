@@ -128,7 +128,8 @@ public final class RealConnection extends Http2Connection.Listener implements Co
   }
 
   public void connect(int connectTimeout, int readTimeout, int writeTimeout,
-      boolean connectionRetryEnabled, Call call, EventListener eventListener) {
+      int pingIntervalMillis, boolean connectionRetryEnabled, Call call,
+      EventListener eventListener) {
     if (protocol != null) throw new IllegalStateException("already connected");
 
     RouteException routeException = null;
@@ -158,7 +159,7 @@ public final class RealConnection extends Http2Connection.Listener implements Co
         } else {
           connectSocket(connectTimeout, readTimeout, call, eventListener);
         }
-        establishProtocol(connectionSpecSelector, call, eventListener);
+        establishProtocol(connectionSpecSelector, pingIntervalMillis, call, eventListener);
         eventListener.connectEnd(call, route.socketAddress(), route.proxy(), protocol);
         break;
       } catch (IOException e) {
@@ -257,8 +258,8 @@ public final class RealConnection extends Http2Connection.Listener implements Co
     }
   }
 
-  private void establishProtocol(ConnectionSpecSelector connectionSpecSelector, Call call,
-      EventListener eventListener) throws IOException {
+  private void establishProtocol(ConnectionSpecSelector connectionSpecSelector,
+      int pingIntervalMillis, Call call, EventListener eventListener) throws IOException {
     if (route.address().sslSocketFactory() == null) {
       protocol = Protocol.HTTP_1_1;
       socket = rawSocket;
@@ -274,6 +275,7 @@ public final class RealConnection extends Http2Connection.Listener implements Co
       http2Connection = new Http2Connection.Builder(true)
           .socket(socket, route.address().url().host(), source, sink)
           .listener(this)
+          .pingIntervalMillis(pingIntervalMillis)
           .build();
       http2Connection.start();
     }
