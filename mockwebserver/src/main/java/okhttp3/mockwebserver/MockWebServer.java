@@ -91,6 +91,7 @@ import static okhttp3.mockwebserver.SocketPolicy.NO_RESPONSE;
 import static okhttp3.mockwebserver.SocketPolicy.RESET_STREAM_AT_START;
 import static okhttp3.mockwebserver.SocketPolicy.SHUTDOWN_INPUT_AT_END;
 import static okhttp3.mockwebserver.SocketPolicy.SHUTDOWN_OUTPUT_AT_END;
+import static okhttp3.mockwebserver.SocketPolicy.STALL_SOCKET_AT_START;
 import static okhttp3.mockwebserver.SocketPolicy.UPGRADE_TO_SSL_AT_END;
 
 /**
@@ -406,13 +407,13 @@ public final class MockWebServer extends ExternalResource implements Closeable {
       }
 
       public void processConnection() throws Exception {
+        SocketPolicy socketPolicy = dispatcher.peek().getSocketPolicy();
         Protocol protocol = Protocol.HTTP_1_1;
         Socket socket;
         if (sslSocketFactory != null) {
           if (tunnelProxy) {
             createTunnel();
           }
-          SocketPolicy socketPolicy = dispatcher.peek().getSocketPolicy();
           if (socketPolicy == FAIL_HANDSHAKE) {
             dispatchBookkeepingRequest(sequenceNumber, raw);
             processHandshakeFailure(raw);
@@ -437,6 +438,10 @@ public final class MockWebServer extends ExternalResource implements Closeable {
           openClientSockets.remove(raw);
         } else {
           socket = raw;
+        }
+
+        if (socketPolicy == STALL_SOCKET_AT_START) {
+          return; // Ignore the socket until the server is shut down!
         }
 
         if (protocol == Protocol.HTTP_2) {

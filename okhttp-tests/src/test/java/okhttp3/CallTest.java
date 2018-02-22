@@ -103,7 +103,6 @@ public final class CallTest {
   private RecordingCallback callback = new RecordingCallback();
   private TestLogHandler logHandler = new TestLogHandler();
   private Cache cache = new Cache(new File("/cache/"), Integer.MAX_VALUE, fileSystem);
-  private NullServer nullServer = new NullServer();
   private Logger logger = Logger.getLogger(OkHttpClient.class.getName());
 
   @Before public void setUp() throws Exception {
@@ -112,7 +111,6 @@ public final class CallTest {
 
   @After public void tearDown() throws Exception {
     cache.delete();
-    nullServer.shutdown();
     logger.removeHandler(logHandler);
   }
 
@@ -895,14 +893,14 @@ public final class CallTest {
    * never responds. The manual retry will succeed.
    */
   @Test public void readTimeoutFails() throws Exception {
-    nullServer.start();
+    server.enqueue(new MockResponse()
+        .setSocketPolicy(SocketPolicy.STALL_SOCKET_AT_START));
+    server2.enqueue(new MockResponse()
+        .setBody("success!"));
 
     RecordingProxySelector proxySelector = new RecordingProxySelector();
-    proxySelector.proxies.add(new Proxy(Proxy.Type.HTTP, nullServer.address()));
     proxySelector.proxies.add(server.toProxyAddress());
-
-    server.enqueue(new MockResponse()
-        .setBody("success!"));
+    proxySelector.proxies.add(server2.toProxyAddress());
 
     client = client.newBuilder()
         .proxySelector(proxySelector)
@@ -2012,11 +2010,12 @@ public final class CallTest {
 
   /** Cancel a call that's waiting for connect to complete. */
   private void cancelDuringConnect(String scheme) throws Exception {
-    nullServer.start();
+    server.enqueue(new MockResponse()
+        .setSocketPolicy(SocketPolicy.STALL_SOCKET_AT_START));
 
     long cancelDelayMillis = 300L;
     Call call = client.newCall(new Request.Builder()
-        .url(nullServer.url(scheme))
+        .url(server.url("/").newBuilder().scheme(scheme).build())
         .build());
     cancelLater(call, cancelDelayMillis);
 
@@ -2456,8 +2455,12 @@ public final class CallTest {
   }
 
   @Test public void serverRespondsWith100ContinueOnly() throws Exception {
+    client = client.newBuilder()
+        .readTimeout(1, TimeUnit.SECONDS)
+        .build();
+
     server.enqueue(new MockResponse()
-            .setStatus("HTTP/1.1 100 Continue"));
+        .setStatus("HTTP/1.1 100 Continue"));
 
     Request request = new Request.Builder()
         .url(server.url("/"))
