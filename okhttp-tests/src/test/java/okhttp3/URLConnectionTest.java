@@ -3429,6 +3429,16 @@ public final class URLConnectionTest {
     assertEquals(1, requestB.getSequenceNumber());
   }
 
+  @Test public void nullSSLSocketFactory_throws() throws Exception {
+    server.useHttps(sslClient.socketFactory, false /* tunnelProxy */);
+    HttpsURLConnection connection = (HttpsURLConnection) server.url("/").url().openConnection();
+    try {
+      connection.setSSLSocketFactory(null);
+      fail();
+    } catch (IllegalArgumentException expected) {
+    }
+  }
+
   /**
    * We had a bug where we weren't closing Gzip streams on redirects.
    * https://github.com/square/okhttp/issues/441
