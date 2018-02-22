@@ -156,7 +156,7 @@ public final class HeadersTest {
     assertEquals("OkHttp", headers.value(0));
   }
 
-  @Test public void ofRejectsNulChar() {
+  @Test public void ofRejectsNullChar() {
     try {
       Headers.of("User-Agent", "Square\u0000OkHttp");
       fail();
@@ -212,17 +212,17 @@ public final class HeadersTest {
     assertEquals("OkHttp", headers.value(0));
   }
 
-  @Test public void ofMapRejectsNulCharInName() {
+  @Test public void ofMapRejectsNullCharInName() {
     try {
-      Headers.of(Collections.singletonMap("User-Agent", "Square\u0000OkHttp"));
+      Headers.of(Collections.singletonMap("User-\u0000Agent", "OkHttp"));
       fail();
     } catch (IllegalArgumentException expected) {
     }
   }
 
-  @Test public void ofMapRejectsNulCharInValue() {
+  @Test public void ofMapRejectsNullCharInValue() {
     try {
-      Headers.of(Collections.singletonMap("User-\u0000Agent", "OkHttp"));
+      Headers.of(Collections.singletonMap("User-Agent", "Square\u0000OkHttp"));
       fail();
     } catch (IllegalArgumentException expected) {
     }
@@ -250,8 +250,8 @@ public final class HeadersTest {
 
   @Test public void toMultimapAllowsCaseInsensitiveGet() {
     Headers headers = Headers.of(
-            "cache-control", "no-store",
-            "Cache-Control", "no-cache");
+        "cache-control", "no-store",
+        "Cache-Control", "no-cache");
     Map<String, List<String>> headerMap = headers.toMultimap();
     assertEquals(2, headerMap.get("cache-control").size());
     assertEquals(2, headerMap.get("Cache-Control").size());
