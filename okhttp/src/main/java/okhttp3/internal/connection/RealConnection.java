@@ -260,12 +260,14 @@ public final class RealConnection extends Http2Connection.Listener implements Co
 
   private void establishProtocol(ConnectionSpecSelector connectionSpecSelector,
       int pingIntervalMillis, Call call, EventListener eventListener) throws IOException {
-    if (route.address().protocols().contains(Protocol.H2C)) {
-      socket = rawSocket;
-      protocol = Protocol.H2C;
-      startHttp2(pingIntervalMillis);
-      return;
-    } else if (route.address().sslSocketFactory() == null) {
+    if (route.address().sslSocketFactory() == null) {
+      if (route.address().protocols().contains(Protocol.H2C)) {
+        socket = rawSocket;
+        protocol = Protocol.H2C;
+        startHttp2(pingIntervalMillis);
+        return;
+      }
+
       socket = rawSocket;
       protocol = Protocol.HTTP_1_1;
       return;

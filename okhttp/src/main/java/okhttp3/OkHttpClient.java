@@ -844,14 +844,9 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
      * HTTP/1.1} only. If the server responds with {@code HTTP/1.0}, that will be exposed by {@link
      * Response#protocol()}.
      *
-     * @param protocols the protocols to use, in order of preference. If the list contains {@link
-     * Protocol#H2C}, then no other protocol should be provided. H2C uses the prior knowledge
-     * approach which shouldn't fallback to any other protocol. If you are not using H2C, then the
-     * list must contain {@link Protocol#HTTP_1_1}. It must not contain null or {@link
-     * Protocol#HTTP_1_0}.
-     *
-     * @see <a href="https://tools.ietf.org/html/rfc7540#section-3.4">Starting HTTP/2 with Prior
-     * Knowledge</a>
+     * @param protocols the protocols to use, in order of preference. The list must contain {@link
+     * Protocol#HTTP_1_1}. It should not contain null or {@link Protocol#HTTP_1_0}. If you use
+     * {@link Protocol#H2C}, then it should be the only specified protocol in the list.
      */
     public Builder protocols(List<Protocol> protocols) {
       // Create a private copy of the list.
