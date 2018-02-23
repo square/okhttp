@@ -124,6 +124,9 @@ public final class Http2Codec implements HttpCodec {
   @Override public Response.Builder readResponseHeaders(boolean expectContinue) throws IOException {
     List<Header> headers = stream.takeResponseHeaders();
     Response.Builder responseBuilder = readHttp2HeadersList(headers);
+    if (client.protocols().contains(Protocol.H2C)) {
+      responseBuilder.protocol(Protocol.H2C);
+    }
     if (expectContinue && Internal.instance.code(responseBuilder) == HTTP_CONTINUE) {
       return null;
     }
