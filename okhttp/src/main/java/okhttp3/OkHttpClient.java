@@ -25,10 +25,8 @@ import java.security.KeyStore;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Random;
-import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
@@ -846,35 +844,39 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
      * HTTP/1.1} only. If the server responds with {@code HTTP/1.0}, that will be exposed by {@link
      * Response#protocol()}.
      *
-     * @param protocols the protocols to use, in order of preference. The list must contain {@link
-     * Protocol#HTTP_1_1}. It must not contain null or {@link Protocol#HTTP_1_0}.
+     * @param protocols the protocols to use, in order of preference. If the list contains {@link
+     * Protocol#H2C}, then no other protocol should be provided. H2C uses the prior knowledge
+     * approach which shouldn't fallback to any other protocol. If you are not using H2C, then the
+     * list must contain {@link Protocol#HTTP_1_1}. It must not contain null or {@link
+     * Protocol#HTTP_1_0}.
+     *
+     * @see <a href="https://tools.ietf.org/html/rfc7540#section-3.4">Starting HTTP/2 with Prior
+     * Knowledge</a>
      */
     public Builder protocols(List<Protocol> protocols) {
       // Create a private copy of the list.
-      final Set<Protocol> uniqueProtocols = new HashSet<>(protocols);
+      protocols = new ArrayList<>(protocols);
 
-      if (uniqueProtocols.contains(Protocol.H2C) && uniqueProtocols.size() > 1) {
+      if (protocols.contains(Protocol.H2C) && protocols.size() > 1) {
         // when using h2c prior knowledge, no other protocol should be supported.
-        throw new IllegalArgumentException("protocols containing h2c cannot use other protocols:"
-                + uniqueProtocols);
-      } else if (!uniqueProtocols.contains(Protocol.HTTP_1_1)) {
+        throw new IllegalArgumentException("protocols containing h2c cannot use other protocols: "
+                + protocols);
+      } else if (!protocols.contains(Protocol.H2C) && !protocols.contains(Protocol.HTTP_1_1)) {
         // Validate that the list has everything we require and nothing we forbid.
-        throw new IllegalArgumentException("protocols doesn't contain http/1.1: "
-                + uniqueProtocols);
+        throw new IllegalArgumentException("protocols doesn't contain http/1.1: " + protocols);
       }
-      if (uniqueProtocols.contains(Protocol.HTTP_1_0)) {
-        throw new IllegalArgumentException("protocols must not contain http/1.0: "
-                + uniqueProtocols);
+      if (protocols.contains(Protocol.HTTP_1_0)) {
+        throw new IllegalArgumentException("protocols must not contain http/1.0: " + protocols);
       }
-      if (uniqueProtocols.contains(null)) {
+      if (protocols.contains(null)) {
         throw new IllegalArgumentException("protocols must not contain null");
       }
 
       // Remove protocols that we no longer support.
-      uniqueProtocols.remove(Protocol.SPDY_3);
+      protocols.remove(Protocol.SPDY_3);
 
       // Assign as an unmodifiable list. This is effectively immutable.
-      this.protocols = Collections.unmodifiableList(new ArrayList<>(uniqueProtocols));
+      this.protocols = Collections.unmodifiableList(protocols);
       return this;
     }
 

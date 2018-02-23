@@ -92,6 +92,7 @@ public enum Protocol {
     // Unroll the loop over values() to save an allocation.
     if (protocol.equals(HTTP_1_0.protocol)) return HTTP_1_0;
     if (protocol.equals(HTTP_1_1.protocol)) return HTTP_1_1;
+    if (protocol.equals(H2C.protocol)) return H2C;
     if (protocol.equals(HTTP_2.protocol)) return HTTP_2;
     if (protocol.equals(SPDY_3.protocol)) return SPDY_3;
     if (protocol.equals(QUIC.protocol)) return QUIC;
