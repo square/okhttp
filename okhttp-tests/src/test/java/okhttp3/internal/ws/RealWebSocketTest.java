@@ -18,6 +18,7 @@ package okhttp3.internal.ws;
 import java.io.EOFException;
 import java.io.IOException;
 import java.net.ProtocolException;
+import java.net.SocketTimeoutException;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
 import okhttp3.Protocol;
@@ -302,6 +303,43 @@ public final class RealWebSocketTest {
     client.processNextFrame(); // Pong.
     long elapsedUntilPing3 = System.nanoTime() - startNanos;
     assertEquals(1500, TimeUnit.NANOSECONDS.toMillis(elapsedUntilPing3), 250d);
+  }
+
+  @Test public void unacknowledgedPingFailsConnection() throws IOException {
+    long startNanos = System.nanoTime();
+    client.initWebSocket(random, 500);
+
+    // Don't process the ping and pong frames!
+    client.listener.assertFailure(SocketTimeoutException.class,
+        "sent ping but didn't receive pong within 500ms (after 0 successful ping/pongs)");
+    long elapsedUntilFailure = System.nanoTime() - startNanos;
+    assertEquals(1000, TimeUnit.NANOSECONDS.toMillis(elapsedUntilFailure), 250d);
+  }
+
+  @Test public void unexpectedPongsDoNotInterfereWithFailureDetection() throws IOException {
+    long startNanos = System.nanoTime();
+    client.initWebSocket(random, 500);
+
+    // At 0ms the server sends 3 unexpected pongs. The client accepts 'em and ignores em.
+    server.webSocket.pong(ByteString.encodeUtf8("pong 1"));
+    client.processNextFrame();
+    server.webSocket.pong(ByteString.encodeUtf8("pong 2"));
+    client.processNextFrame();
+    server.webSocket.pong(ByteString.encodeUtf8("pong 3"));
+    client.processNextFrame();
+
+    // After 500ms the client automatically pings and the server pongs back.
+    server.processNextFrame(); // Ping.
+    client.processNextFrame(); // Pong.
+    long elapsedUntilPing = System.nanoTime() - startNanos;
+    assertEquals(500, TimeUnit.NANOSECONDS.toMillis(elapsedUntilPing), 250d);
+
+    // After 1000ms the client will attempt a ping 2, but we don't process it. That'll cause the
+    // client to fail at 1500ms when it's time to send ping 3 because pong 2 hasn't been received.
+    client.listener.assertFailure(SocketTimeoutException.class,
+        "sent ping but didn't receive pong within 500ms (after 1 successful ping/pongs)");
+    long elapsedUntilFailure = System.nanoTime() - startNanos;
+    assertEquals(1500, TimeUnit.NANOSECONDS.toMillis(elapsedUntilFailure), 250d);
   }
 
   /** One peer's streams, listener, and web socket in the test. */

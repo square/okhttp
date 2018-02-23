@@ -136,6 +136,9 @@ public final class RealWebSocket implements WebSocket, WebSocketReader.FrameCall
   /** Total number of pongs received by this web socket. */
   private int receivedPongCount;
 
+  /** True if we have sent a ping that is still awaiting a reply. */
+  private boolean awaitingPong;
+
   public RealWebSocket(Request request, WebSocketListener listener, Random random,
       long pingIntervalMillis) {
     if (!"GET".equals(request.method())) {
@@ -335,6 +338,7 @@ public final class RealWebSocket implements WebSocket, WebSocketReader.FrameCall
   @Override public synchronized void onReadPong(ByteString buffer) {
     // This API doesn't expose pings.
     receivedPongCount++;
+    awaitingPong = false;
   }
 
   @Override public void onReadClose(int code, String reason) {
@@ -528,19 +532,18 @@ public final class RealWebSocket implements WebSocket, WebSocketReader.FrameCall
 
   void writePingFrame() {
     WebSocketWriter writer;
-    int sentPingCount;
-    int receivedPongCount;
+    int failedPing;
     synchronized (this) {
       if (failed) return;
       writer = this.writer;
-      sentPingCount = this.sentPingCount;
-      receivedPongCount = this.receivedPongCount;
-      this.sentPingCount++;
+      failedPing = awaitingPong ? sentPingCount : -1;
+      sentPingCount++;
+      awaitingPong = true;
     }
 
-    if (sentPingCount > receivedPongCount) {
+    if (failedPing != -1) {
       failWebSocket(new SocketTimeoutException("sent ping but didn't receive pong within "
-          + pingIntervalMillis + "ms (after " + receivedPongCount + " successful ping/pongs)"),
+          + pingIntervalMillis + "ms (after " + (failedPing - 1) + " successful ping/pongs)"),
           null);
       return;
     }
