@@ -64,6 +64,9 @@ public enum Protocol {
   /**
    * Cleartext implementation of HTTP2. This enumeration exists for the "prior knowledge" upgrade
    * semantic supported by the protocol.
+   *
+   * @see <a href="https://tools.ietf.org/html/rfc7540#section-3.4">Starting HTTP/2 with Prior
+   * Knowledge</a>
    */
   H2C("h2c"),
 

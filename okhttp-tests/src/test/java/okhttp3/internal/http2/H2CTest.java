@@ -20,7 +20,7 @@ public class H2CTest {
 
     @Test(expected = IllegalArgumentException.class)
     public void testOkHttpClientConstructionFallback() {
-        //
+        // fallbacks are not allowed when using h2c prior knowledge
         new OkHttpClient.Builder()
                 .protocols(Arrays.asList(Protocol.H2C, Protocol.HTTP_1_1))
                 .build();
@@ -41,5 +41,6 @@ public class H2CTest {
                 .build();
 
         assertEquals(1, okHttpClient.protocols().size());
+        assertEquals(Protocol.H2C, okHttpClient.protocols().get(0));
     }
 }
