@@ -25,7 +25,12 @@ _2018-02-24_
     interval of 30 seconds is reasonable for most use cases.
 
  *  **OkHttp now supports [Conscrypt][conscrypt].** Conscrypt is a Java Security
-    Provider that integrates BoringSSL into the Java platform.
+    Provider that integrates BoringSSL into the Java platform. Conscrypt
+    supports more cipher suites than the JVM’s default provider and may also
+    execute more efficiently.
+
+    To use it, first register a [Conscrypt dependency][conscrypt_dependency] in
+    your build system.
 
     OkHttp will use Conscrypt if you set the `okhttp.platform` system property
     to `conscrypt`.
@@ -1474,3 +1479,4 @@ Initial release.
  [maven_provided]: https://maven.apache.org/guides/introduction/introduction-to-dependency-mechanism.html
  [remove_cbc_ecdsa]: https://developers.google.com/web/updates/2016/12/chrome-56-deprecations#remove_cbc-mode_ecdsa_ciphers_in_tls
  [conscrypt]: https://github.com/google/conscrypt/
+ [conscrypt_dependency]: https://github.com/google/conscrypt/#download
