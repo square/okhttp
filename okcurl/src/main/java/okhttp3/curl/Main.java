@@ -32,10 +32,8 @@ import java.util.logging.LogRecord;
 import java.util.logging.Logger;
 import java.util.logging.SimpleFormatter;
 import javax.net.ssl.HostnameVerifier;
-import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSession;
 import javax.net.ssl.SSLSocketFactory;
-import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
 import okhttp3.Headers;
 import okhttp3.MediaType;
@@ -180,7 +178,7 @@ public class Main extends HelpOption implements Runnable {
     }
     if (allowInsecure) {
       X509TrustManager trustManager = createInsecureTrustManager();
-      SSLSocketFactory sslSocketFactory = createInsecureSslSocketFactory(trustManager);
+      SSLSocketFactory sslSocketFactory = Platform.get().getSslSocketFactory(trustManager);
       builder.sslSocketFactory(sslSocketFactory, trustManager);
       builder.hostnameVerifier(createInsecureHostnameVerifier());
     }
@@ -254,16 +252,6 @@ public class Main extends HelpOption implements Runnable {
         return new X509Certificate[0];
       }
     };
-  }
-
-  private static SSLSocketFactory createInsecureSslSocketFactory(TrustManager trustManager) {
-    try {
-      SSLContext context = Platform.get().getSSLContext();
-      context.init(null, new TrustManager[] {trustManager}, null);
-      return context.getSocketFactory();
-    } catch (Exception e) {
-      throw new AssertionError(e);
-    }
   }
 
   private static HostnameVerifier createInsecureHostnameVerifier() {

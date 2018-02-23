@@ -24,7 +24,6 @@ import java.security.cert.CertificateFactory;
 import java.util.Arrays;
 import java.util.Collection;
 import javax.net.ssl.KeyManagerFactory;
-import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
@@ -34,6 +33,7 @@ import okhttp3.Headers;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
+import okhttp3.internal.platform.Platform;
 import okio.Buffer;
 
 public final class CustomTrust {
@@ -44,9 +44,7 @@ public final class CustomTrust {
     SSLSocketFactory sslSocketFactory;
     try {
       trustManager = trustManagerForCertificates(trustedCertificatesInputStream());
-      SSLContext sslContext = SSLContext.getInstance("TLS");
-      sslContext.init(null, new TrustManager[] { trustManager }, null);
-      sslSocketFactory = sslContext.getSocketFactory();
+      sslSocketFactory = Platform.get().getSslSocketFactory(trustManager);
     } catch (GeneralSecurityException e) {
       throw new RuntimeException(e);
     }

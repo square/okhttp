@@ -32,7 +32,6 @@ import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 import javax.net.SocketFactory;
 import javax.net.ssl.HostnameVerifier;
-import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.TrustManager;
@@ -252,7 +251,7 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
       this.certificateChainCleaner = builder.certificateChainCleaner;
     } else {
       X509TrustManager trustManager = systemDefaultTrustManager();
-      this.sslSocketFactory = systemDefaultSslSocketFactory(trustManager);
+      this.sslSocketFactory = Platform.get().getSslSocketFactory(trustManager);
       this.certificateChainCleaner = CertificateChainCleaner.get(trustManager);
     }
 
@@ -290,16 +289,6 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
             + Arrays.toString(trustManagers));
       }
       return (X509TrustManager) trustManagers[0];
-    } catch (GeneralSecurityException e) {
-      throw assertionError("No System TLS", e); // The system has no TLS. Just give up.
-    }
-  }
-
-  private SSLSocketFactory systemDefaultSslSocketFactory(X509TrustManager trustManager) {
-    try {
-      SSLContext sslContext = Platform.get().getSSLContext();
-      sslContext.init(null, new TrustManager[] { trustManager }, null);
-      return sslContext.getSocketFactory();
     } catch (GeneralSecurityException e) {
       throw assertionError("No System TLS", e); // The system has no TLS. Just give up.
     }

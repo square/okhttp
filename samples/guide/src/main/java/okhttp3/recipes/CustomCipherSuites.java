@@ -19,13 +19,10 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.security.GeneralSecurityException;
-import java.security.KeyManagementException;
 import java.security.KeyStore;
-import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.TrustManager;
@@ -36,6 +33,7 @@ import okhttp3.ConnectionSpec;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
+import okhttp3.internal.platform.Platform;
 
 public final class CustomCipherSuites {
   private final OkHttpClient client;
@@ -55,7 +53,7 @@ public final class CustomCipherSuites {
         .build();
 
     X509TrustManager trustManager = defaultTrustManager();
-    SSLSocketFactory sslSocketFactory = defaultSslSocketFactory(trustManager);
+    SSLSocketFactory sslSocketFactory = Platform.get().getSslSocketFactory(trustManager);
     SSLSocketFactory customSslSocketFactory = new DelegatingSSLSocketFactory(sslSocketFactory) {
       @Override protected SSLSocket configureSocket(SSLSocket socket) throws IOException {
         socket.setEnabledCipherSuites(javaNames(spec.cipherSuites()));
@@ -67,18 +65,6 @@ public final class CustomCipherSuites {
         .connectionSpecs(Collections.singletonList(spec))
         .sslSocketFactory(customSslSocketFactory, trustManager)
         .build();
-  }
-
-  /**
-   * Returns the VM's default SSL socket factory, using {@code trustManager} for trusted root
-   * certificates.
-   */
-  private SSLSocketFactory defaultSslSocketFactory(X509TrustManager trustManager)
-      throws NoSuchAlgorithmException, KeyManagementException {
-    SSLContext sslContext = SSLContext.getInstance("TLS");
-    sslContext.init(null, new TrustManager[] { trustManager }, null);
-
-    return sslContext.getSocketFactory();
   }
 
   /** Returns a trust manager that trusts the VM's default certificate authorities. */
