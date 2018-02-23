@@ -157,7 +157,7 @@ public final class RetryAndFollowUpInterceptor implements Interceptor {
 
       Request followUp = null;
       try {
-		followUp = followUpRequest(response, streamAllocation.route());
+        followUp = followUpRequest(response, streamAllocation.route());
       } catch (IOException e) {
     	  streamAllocation.release();
     	  throw e;
