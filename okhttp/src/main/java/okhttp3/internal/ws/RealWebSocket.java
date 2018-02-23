@@ -526,7 +526,9 @@ public final class RealWebSocket implements WebSocket, WebSocketReader.FrameCall
     }
 
     @Override public void run() {
-      writePingFrame();
+      if (!enqueuedClose) {
+        writePingFrame();
+      }
     }
   }
 
