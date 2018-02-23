@@ -258,20 +258,12 @@ public final class RealConnection extends Http2Connection.Listener implements Co
     }
   }
 
-<<<<<<< HEAD
   private void establishProtocol(ConnectionSpecSelector connectionSpecSelector,
       int pingIntervalMillis, Call call, EventListener eventListener) throws IOException {
-    if (route.address().sslSocketFactory() == null) {
-=======
-  private void establishProtocol(ConnectionSpecSelector connectionSpecSelector, Call call,
-      EventListener eventListener) throws IOException {
-    // this implementation takes the "prior knowledge" approach to the spec
-    // https://tools.ietf.org/html/rfc7540#section-3.4
     if (route.address().protocols().contains(Protocol.H2C)) {
->>>>>>> gh-1019: added strict requirement on h2c being the only protocol when using prior knowledge
       socket = rawSocket;
       protocol = Protocol.H2C;
-      startHttp2();
+      startHttp2(pingIntervalMillis);
       return;
     } else if (route.address().sslSocketFactory() == null) {
       socket = rawSocket;
@@ -284,11 +276,11 @@ public final class RealConnection extends Http2Connection.Listener implements Co
     eventListener.secureConnectEnd(call, handshake);
 
     if (protocol == Protocol.HTTP_2) {
-      startHttp2();
+      startHttp2(pingIntervalMillis);
     }
   }
 
-  private void startHttp2() throws IOException {
+  private void startHttp2(int pingIntervalMillis) throws IOException {
     socket.setSoTimeout(0); // HTTP/2 connection timeouts are set per-stream.
     http2Connection = new Http2Connection.Builder(true)
             .socket(socket, route.address().url().host(), source, sink)
