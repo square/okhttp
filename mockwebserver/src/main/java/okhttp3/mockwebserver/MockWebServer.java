@@ -214,13 +214,21 @@ public final class MockWebServer extends ExternalResource implements Closeable {
    */
   public void setProtocols(List<Protocol> protocols) {
     protocols = Util.immutableList(protocols);
-    if (!protocols.contains(Protocol.HTTP_1_1)) {
+    if (protocols.contains(Protocol.H2C) && protocols.size() > 1) {
+      // when using h2c prior knowledge, no other protocol should be supported.
+      throw new IllegalArgumentException("protocols containing h2c cannot use other protocols: "
+              + protocols);
+    } else if (!protocols.contains(Protocol.H2C) && !protocols.contains(Protocol.HTTP_1_1)) {
       throw new IllegalArgumentException("protocols doesn't contain http/1.1: " + protocols);
     }
     if (protocols.contains(null)) {
       throw new IllegalArgumentException("protocols must not contain null");
     }
     this.protocols = protocols;
+  }
+
+  public List<Protocol> protocols() {
+    return Collections.unmodifiableList(protocols);
   }
 
   /**
@@ -420,7 +428,7 @@ public final class MockWebServer extends ExternalResource implements Closeable {
             return;
           }
           socket = sslSocketFactory.createSocket(raw, raw.getInetAddress().getHostAddress(),
-              raw.getPort(), true);
+                  raw.getPort(), true);
           SSLSocket sslSocket = (SSLSocket) socket;
           sslSocket.setUseClientMode(false);
           openClientSockets.add(socket);
@@ -436,6 +444,10 @@ public final class MockWebServer extends ExternalResource implements Closeable {
             protocol = protocolString != null ? Protocol.get(protocolString) : Protocol.HTTP_1_1;
           }
           openClientSockets.remove(raw);
+        } else if (protocols.contains(Protocol.H2C)) {
+          // force use of H2c
+          socket = raw;
+          protocol = Protocol.H2C;
         } else {
           socket = raw;
         }
@@ -444,7 +456,7 @@ public final class MockWebServer extends ExternalResource implements Closeable {
           return; // Ignore the socket until the server is shut down!
         }
 
-        if (protocol == Protocol.HTTP_2) {
+        if (protocol == Protocol.HTTP_2 || protocol == Protocol.H2C) {
           Http2SocketHandler http2SocketHandler = new Http2SocketHandler(socket, protocol);
           Http2Connection connection = new Http2Connection.Builder(false)
               .socket(socket)
@@ -894,7 +906,7 @@ public final class MockWebServer extends ExternalResource implements Closeable {
           method = value;
         } else if (name.equals(Header.TARGET_PATH)) {
           path = value;
-        } else if (protocol == Protocol.HTTP_2) {
+        } else if (protocol == Protocol.HTTP_2 || protocol == Protocol.H2C) {
           httpHeaders.add(name.utf8(), value);
         } else {
           throw new IllegalStateException();

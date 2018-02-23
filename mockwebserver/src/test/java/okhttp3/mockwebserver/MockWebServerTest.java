@@ -35,6 +35,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import okhttp3.Headers;
 import okhttp3.HttpUrl;
+import okhttp3.Protocol;
 import okhttp3.internal.Util;
 import org.junit.After;
 import org.junit.Rule;
@@ -455,5 +456,23 @@ public final class MockWebServerTest {
 
     RecordedRequest request = server.takeRequest();
     assertEquals("request", request.getBody().readUtf8());
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testH2CServerFallback() {
+    server.setProtocols(Arrays.asList(Protocol.H2C, Protocol.HTTP_1_1));
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testH2CServerDuplicates() {
+    // Treating this use case as user error
+    server.setProtocols(Arrays.asList(Protocol.H2C, Protocol.HTTP_1_1));
+  }
+
+  @Test public void testMockWebServerH2CProtocol() {
+    server.setProtocols(Arrays.asList(Protocol.H2C));
+
+    assertEquals(1, server.protocols().size());
+    assertEquals(Protocol.H2C, server.protocols().get(0));
   }
 }

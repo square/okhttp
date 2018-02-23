@@ -169,4 +169,30 @@ public final class OkHttpClientTest {
       assertEquals("Null network interceptor: [null]", expected.getMessage());
     }
   }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testH2COkHttpClientConstructionFallback() {
+    // fallbacks are not allowed when using h2c prior knowledge
+    new OkHttpClient.Builder()
+            .protocols(Arrays.asList(Protocol.H2C, Protocol.HTTP_1_1))
+            .build();
+  }
+
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testH2COkHttpClientConstructionDuplicates() {
+    // Treating this use case as user error
+    new OkHttpClient.Builder()
+            .protocols(Arrays.asList(Protocol.H2C, Protocol.H2C))
+            .build();
+  }
+
+  @Test public void testH2COkHttpClientConstructionSuccess() {
+    final OkHttpClient okHttpClient = new OkHttpClient.Builder()
+            .protocols(Arrays.asList(Protocol.H2C))
+            .build();
+
+    assertEquals(1, okHttpClient.protocols().size());
+    assertEquals(Protocol.H2C, okHttpClient.protocols().get(0));
+  }
 }
