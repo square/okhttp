@@ -90,7 +90,7 @@ public final class Http2Codec implements HttpCodec {
   final StreamAllocation streamAllocation;
   private final Http2Connection connection;
   private Http2Stream stream;
-  private final boolean useH2C;
+  private final Protocol protocol;
 
   public Http2Codec(OkHttpClient client, Interceptor.Chain chain, StreamAllocation streamAllocation,
       Http2Connection connection) {
@@ -100,7 +100,7 @@ public final class Http2Codec implements HttpCodec {
     this.connection = connection;
 
     // cache this so we don't do linear scans on every call
-    useH2C = client.protocols().contains(Protocol.H2C);
+    protocol = client.protocols().contains(Protocol.H2C) ? Protocol.H2C : Protocol.HTTP_2;
   }
 
   @Override public Sink createRequestBody(Request request, long contentLength) {
@@ -127,10 +127,7 @@ public final class Http2Codec implements HttpCodec {
 
   @Override public Response.Builder readResponseHeaders(boolean expectContinue) throws IOException {
     List<Header> headers = stream.takeResponseHeaders();
-    Response.Builder responseBuilder = readHttp2HeadersList(headers);
-    if (useH2C) {
-      responseBuilder.protocol(Protocol.H2C);
-    }
+    Response.Builder responseBuilder = readHttp2HeadersList(headers, protocol);
     if (expectContinue && Internal.instance.code(responseBuilder) == HTTP_CONTINUE) {
       return null;
     }
@@ -159,7 +156,7 @@ public final class Http2Codec implements HttpCodec {
   }
 
   /** Returns headers for a name value block containing an HTTP/2 response. */
-  public static Response.Builder readHttp2HeadersList(List<Header> headerBlock) throws IOException {
+  public static Response.Builder readHttp2HeadersList(List<Header> headerBlock, Protocol protocol) throws IOException {
     StatusLine statusLine = null;
     Headers.Builder headersBuilder = new Headers.Builder();
     for (int i = 0, size = headerBlock.size(); i < size; i++) {
@@ -186,7 +183,7 @@ public final class Http2Codec implements HttpCodec {
     if (statusLine == null) throw new ProtocolException("Expected ':status' header not present");
 
     return new Response.Builder()
-        .protocol(Protocol.HTTP_2)
+        .protocol(protocol)
         .code(statusLine.code)
         .message(statusLine.message)
         .headers(headersBuilder.build());
