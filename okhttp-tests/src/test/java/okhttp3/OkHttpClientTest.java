@@ -170,21 +170,26 @@ public final class OkHttpClientTest {
     }
   }
 
-  @Test(expected = IllegalArgumentException.class)
-  public void testH2COkHttpClientConstructionFallback() {
+  @Test public void testH2COkHttpClientConstructionFallback() {
     // fallbacks are not allowed when using h2c prior knowledge
-    new OkHttpClient.Builder()
-            .protocols(Arrays.asList(Protocol.H2C, Protocol.HTTP_1_1))
-            .build();
+    try {
+      new OkHttpClient.Builder()
+              .protocols(Arrays.asList(Protocol.H2C, Protocol.HTTP_1_1));
+      fail("When H2C is specified, no other protocol can be specified");
+    } catch (final IllegalArgumentException e) {
+      assertEquals("protocols containing h2c cannot use other protocols: [h2c, http/1.1]", e.getMessage());
+    }
   }
 
-
-  @Test(expected = IllegalArgumentException.class)
-  public void testH2COkHttpClientConstructionDuplicates() {
+  @Test public void testH2COkHttpClientConstructionDuplicates() {
     // Treating this use case as user error
-    new OkHttpClient.Builder()
-            .protocols(Arrays.asList(Protocol.H2C, Protocol.H2C))
-            .build();
+    try {
+      new OkHttpClient.Builder()
+              .protocols(Arrays.asList(Protocol.H2C, Protocol.H2C));
+      fail("When H2C is specified, no other protocol can be specified");
+    } catch (final IllegalArgumentException e) {
+      assertEquals("protocols containing h2c cannot use other protocols: [h2c, h2c]", e.getMessage());
+    }
   }
 
   @Test public void testH2COkHttpClientConstructionSuccess() {

@@ -96,27 +96,28 @@ public final class HttpOverHttp2Test {
 
   @Parameters
   public static Collection<Object[]> data() {
+    return Arrays.asList(new Object[][] {
+        // H2C
+        {
+            defaultClient().newBuilder()
+                .protocols(Arrays.asList(Protocol.H2C))
+                .build(),
+            "http",
+            Protocol.H2C
+        },
 
-      return Arrays.asList(new Object[][] {
-              // H2C Configuration
-              {
-                      defaultClient().newBuilder()
-                              .protocols(Arrays.asList(Protocol.H2C))
-                              .build(),
-                      "http",
-                      Protocol.H2C
-              },
-              {
-                      defaultClient().newBuilder()
-                              .protocols(Arrays.asList(Protocol.HTTP_2, Protocol.HTTP_1_1))
-                              .dns(new SingleInetAddressDns())
-                              .sslSocketFactory(sslClient.socketFactory, sslClient.trustManager)
-                              .hostnameVerifier(new RecordingHostnameVerifier())
-                              .build(),
-                      "https",
-                      Protocol.HTTP_2
-              }
-      });
+        // HTTP_2
+        {
+            defaultClient().newBuilder()
+                .protocols(Arrays.asList(Protocol.HTTP_2, Protocol.HTTP_1_1))
+                .dns(new SingleInetAddressDns())
+                .sslSocketFactory(sslClient.socketFactory, sslClient.trustManager)
+                .hostnameVerifier(new RecordingHostnameVerifier())
+                .build(),
+            "https",
+            Protocol.HTTP_2
+        }
+    });
   }
 
   @Rule public final TemporaryFolder tempDir = new TemporaryFolder();
