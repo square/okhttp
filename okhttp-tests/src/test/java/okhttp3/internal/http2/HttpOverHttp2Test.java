@@ -1182,9 +1182,9 @@ public final class HttpOverHttp2Test {
    * <p>This test uses proxy tunnels to get a hook while a connection is being established.
    */
   @Test public void concurrentHttp2ConnectionsDeduplicated() throws Exception {
-    if (protocol != Protocol.H2C) {
-      server.useHttps(sslClient.socketFactory, true);
-    }
+    if (protocol == Protocol.H2C) return; // skip
+
+    server.useHttps(sslClient.socketFactory, true);
 
     // Force a fresh connection pool for the test.
     client.connectionPool().evictAll();
