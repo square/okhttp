@@ -1,6 +1,101 @@
 Change Log
 ==========
 
+## Version 3.10.0
+
+_2018-02-24_
+
+ *  **The pingInterval() feature now aggressively checks connectivity for web
+    sockets and HTTP/2 connections.**
+
+    Previously if you configured a ping interval that would cause OkHttp to send
+    pings, but it did not track whether the reply pongs were received. With this
+    update OkHttp requires that every ping receive a response: if it does not
+    the connection will be closed and the listener's `onFailure()` method will
+    be called.
+
+    Web sockets have always been had pings, but pings on HTTP/2 connections is
+    new in this release. Pings are used for connections that are busy carrying
+    calls and for idle connections in the connection pool. (Pings do not impact
+    when pooled connections are evicted).
+
+    If you have a configured ping interval, you should confirm that it is long
+    enough for a roundtrip from client to server. If your ping interval is too
+    short, slow connections may be misinterpreted as failed connections. A ping
+    interval of 30 seconds is reasonable for most use cases.
+
+ *  **OkHttp now supports [Conscrypt][conscrypt].** Conscrypt is a Java Security
+    Provider that integrates BoringSSL into the Java platform. Conscrypt
+    supports more cipher suites than the JVM’s default provider and may also
+    execute more efficiently.
+
+    To use it, first register a [Conscrypt dependency][conscrypt_dependency] in
+    your build system.
+
+    OkHttp will use Conscrypt if you set the `okhttp.platform` system property
+    to `conscrypt`.
+
+    Alternatively, OkHttp will also use Conscrypt if you install it as your
+    preferred security provider. To do so, add the following code to execute
+    before you create your `OkHttpClient`.
+
+    ```
+    Security.insertProviderAt(
+        new org.conscrypt.OpenSSLProvider(), 1);
+    ```
+
+    Conscrypt is the bundled security provider on Android so it is not necessary
+    to configure it on that platform.
+
+ *  New: `HttpUrl.addQueryParameter()` percent-escapes more characters.
+    Previously several ASCII punctuation characters were not percent-escaped
+    when used with this method. This does not impact already-encoded query
+    parameters in APIs like `HttpUrl.parse()` and
+    `HttpUrl.Builder.addEncodedQueryParameter()`.
+ *  New: CBC-mode ECDSA cipher suites have been removed from OkHttp's default
+    configuration: `TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA` and
+    `TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA`. This tracks a [Chromium
+    change][remove_cbc_ecdsa] to remove these cipher suites because they are
+    fragile and rarely-used.
+ *  New: Don't fall back to common name (CN) verification for hostnames. This
+    behavior was deprecated with RFC 2818 in May 2000 and was recently dropped
+    from major web browsers.
+ *  New: Honor the `Retry-After` response header. HTTP 503 (Unavailable)
+    responses are retried automatically if this header is present and its delay
+    is 0 seconds. HTTP 408 (Client Timeout) responses are retried automatically
+    if the header is absent or its delay is 0 seconds.
+ *  New: Allow request bodies for all HTTP methods except GET and HEAD.
+ *  New: Automatic module name of `okhttp3` for use with the Java Platform
+    Module System.
+ *  New: Log gzipped bodies when `HttpLoggingInterceptor` is used as a network
+    interceptor.
+ *  New: `Protocol.QUIC` constant. This protocol is not supported but this
+    constant is included for completeness.
+ *  New: Upgrade to Okio 1.14.0.
+
+     ```xml
+     <dependency>
+       <groupId>com.squareup.okio</groupId>
+       <artifactId>okio</artifactId>
+       <version>1.14.0</version>
+     </dependency>
+
+     com.squareup.okio:okio:1.14.0
+     ```
+
+ *  Fix: Handle `HTTP/1.1 100 Continue` status lines, even on requests that did
+    not send the `Expect: continue` request header.
+ *  Fix: Do not count web sockets toward the dispatcher's per-host connection
+    limit.
+ *  Fix: Avoid using invalid HTTPS sessions. This prevents OkHttp from crashing
+    with the error, `Unexpected TLS version: NONE`.
+ *  Fix: Don't corrupt the response cache when a 304 (Not Modified) response
+    overrides the stored "Content-Encoding" header.
+ *  Fix: Gracefully shut down the HTTP/2 connection before it exhausts the
+    namespace of stream IDs (~536 million streams).
+ *  Fix: Never pass a null `Route` to `Authenticator`. There was a bug where
+    routes were omitted for eagerly-closed connections.
+
 ## Version 3.9.1
 
 _2017-11-18_
@@ -1382,3 +1477,6 @@ Initial release.
  [junit_5_rules]: http://junit.org/junit5/docs/current/user-guide/#migrating-from-junit4-rulesupport
  [public_suffix]: https://publicsuffix.org/
  [maven_provided]: https://maven.apache.org/guides/introduction/introduction-to-dependency-mechanism.html
+ [remove_cbc_ecdsa]: https://developers.google.com/web/updates/2016/12/chrome-56-deprecations#remove_cbc-mode_ecdsa_ciphers_in_tls
+ [conscrypt]: https://github.com/google/conscrypt/
+ [conscrypt_dependency]: https://github.com/google/conscrypt/#download

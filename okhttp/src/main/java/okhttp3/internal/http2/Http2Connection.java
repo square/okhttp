@@ -103,11 +103,8 @@ public final class Http2Connection implements Closeable {
   /** User code to run in response to push promise events. */
   final PushObserver pushObserver;
 
-  /** Total number of pings sent by this connection. */
-  private int sentPingCount;
-
-  /** Total number of pongs received thus far. */
-  private int receivedPongCount;
+  /** True if we have sent a ping that is still awaiting a reply. */
+  private boolean awaitingPong;
 
   /**
    * The total number of bytes consumed by the application, but not yet acknowledged by sending a
@@ -370,14 +367,12 @@ public final class Http2Connection implements Closeable {
 
   void writePing(boolean reply, int payload1, int payload2) {
     if (!reply) {
-      int sentPingCount;
-      int receivedPongCount;
+      boolean failedDueToMissingPong;
       synchronized (this) {
-        sentPingCount = this.sentPingCount;
-        receivedPongCount = this.receivedPongCount;
-        this.sentPingCount++;
+        failedDueToMissingPong = awaitingPong;
+        awaitingPong = true;
       }
-      if (sentPingCount > receivedPongCount) {
+      if (failedDueToMissingPong) {
         failConnection();
         return;
       }
@@ -398,7 +393,7 @@ public final class Http2Connection implements Closeable {
 
   /** For testing: waits until {@code requiredPongCount} pings have been received from the peer. */
   synchronized void awaitPong() throws IOException, InterruptedException {
-    while (sentPingCount > receivedPongCount) {
+    while (awaitingPong) {
       wait();
     }
   }
@@ -742,7 +737,7 @@ public final class Http2Connection implements Closeable {
     @Override public void ping(boolean reply, int payload1, int payload2) {
       if (reply) {
         synchronized (Http2Connection.this) {
-          receivedPongCount++;
+          awaitingPong = false;
           Http2Connection.this.notifyAll();
         }
       } else {
