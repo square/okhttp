@@ -123,7 +123,7 @@ public final class HttpOverHttp2Test {
   @Rule public final MockWebServer server = new MockWebServer();
 
   private OkHttpClient client;
-  private Cache cache = new Cache(tempDir.getRoot(), Integer.MAX_VALUE);
+  private Cache cache;
   private TestLogHandler http2Handler = new TestLogHandler();
   private Level previousLevel;
   private String scheme;
@@ -141,6 +141,8 @@ public final class HttpOverHttp2Test {
     } else {
       server.useHttps(sslClient.socketFactory, false);
     }
+
+    cache = new Cache(tempDir.getRoot(), Integer.MAX_VALUE);
 
     http2Logger.addHandler(http2Handler);
     previousLevel = http2Logger.getLevel();
