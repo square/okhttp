@@ -87,7 +87,6 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;
-import static org.junit.Assume.assumeTrue;
 
 /** Test how SPDY interacts with HTTP/2 features. */
 @RunWith(Parameterized.class)
@@ -1183,7 +1182,7 @@ public final class HttpOverHttp2Test {
    * <p>This test uses proxy tunnels to get a hook while a connection is being established.
    */
   @Test public void concurrentHttp2ConnectionsDeduplicated() throws Exception {
-    assumeTrue(protocol == Protocol.HTTP_2);  // only run for http2
+    if (protocol == Protocol.H2C) return; // only run for http2
 
     server.useHttps(sslClient.socketFactory, true);
 
