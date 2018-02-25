@@ -33,7 +33,7 @@ public class InstallUncaughtExceptionHandlerListener extends RunListener {
 
   private Thread.UncaughtExceptionHandler oldDefaultUncaughtExceptionHandler;
   private Description lastTestStarted;
-  private List<Throwable> exceptions = new ArrayList<>();
+  public static List<Throwable> exceptions = new ArrayList<>();
 
   @Override public void testRunStarted(Description description) throws Exception {
     System.err.println("Installing aggressive uncaught exception handler");

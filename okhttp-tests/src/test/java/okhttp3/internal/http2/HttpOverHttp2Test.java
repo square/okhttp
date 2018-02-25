@@ -63,6 +63,7 @@ import okhttp3.mockwebserver.QueueDispatcher;
 import okhttp3.mockwebserver.RecordedRequest;
 import okhttp3.mockwebserver.SocketPolicy;
 import okhttp3.mockwebserver.internal.tls.SslClient;
+import okhttp3.testing.InstallUncaughtExceptionHandlerListener;
 import okio.Buffer;
 import okio.BufferedSink;
 import okio.BufferedSource;
@@ -73,6 +74,7 @@ import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.internal.Throwables;
 import org.junit.rules.TemporaryFolder;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -154,6 +156,10 @@ public final class HttpOverHttp2Test {
     Authenticator.setDefault(null);
     http2Logger.removeHandler(http2Handler);
     http2Logger.setLevel(previousLevel);
+
+    if (!InstallUncaughtExceptionHandlerListener.exceptions.isEmpty()) {
+      throw Throwables.rethrowAsException(InstallUncaughtExceptionHandlerListener.exceptions.get(0));
+    }
   }
 
   @Test public void get() throws Exception {
