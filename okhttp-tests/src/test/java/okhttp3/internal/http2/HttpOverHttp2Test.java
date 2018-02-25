@@ -95,29 +95,11 @@ public final class HttpOverHttp2Test {
   private static final Logger http2Logger = Logger.getLogger(Http2.class.getName());
   private static final SslClient sslClient = SslClient.localhost();
 
-  @Parameters(name = "{2}")
+  @Parameters(name = "{0}")
   public static Collection<Object[]> data() {
     return Arrays.asList(new Object[][] {
-        // H2C
-        {
-            defaultClient().newBuilder()
-                .protocols(Arrays.asList(Protocol.H2C))
-                .build(),
-            "http",
-            Protocol.H2C
-        },
-
-        // HTTP_2
-        {
-            defaultClient().newBuilder()
-                .protocols(Arrays.asList(Protocol.HTTP_2, Protocol.HTTP_1_1))
-                .dns(new SingleInetAddressDns())
-                .sslSocketFactory(sslClient.socketFactory, sslClient.trustManager)
-                .hostnameVerifier(new RecordingHostnameVerifier())
-                .build(),
-            "https",
-            Protocol.HTTP_2
-        }
+            { Protocol.H2C },
+            { Protocol.HTTP_2 }
     });
   }
 
@@ -131,10 +113,25 @@ public final class HttpOverHttp2Test {
   private String scheme;
   private Protocol protocol;
 
-  public HttpOverHttp2Test(OkHttpClient client, String scheme, Protocol protocol) {
-    this.client = client;
-    this.scheme = scheme;
+  public HttpOverHttp2Test(Protocol protocol) {
+    this.client = protocol == Protocol.HTTP_2 ? buildHttp2Client() : buildH2cClient();
+    this.scheme = protocol == Protocol.HTTP_2 ? "https" : "http";
     this.protocol = protocol;
+  }
+
+  private static OkHttpClient buildH2cClient() {
+    return defaultClient().newBuilder()
+            .protocols(Arrays.asList(Protocol.H2C))
+            .build();
+  }
+
+  private static OkHttpClient buildHttp2Client() {
+    return defaultClient().newBuilder()
+            .protocols(Arrays.asList(Protocol.HTTP_2, Protocol.HTTP_1_1))
+            .dns(new SingleInetAddressDns())
+            .sslSocketFactory(sslClient.socketFactory, sslClient.trustManager)
+            .hostnameVerifier(new RecordingHostnameVerifier())
+            .build();
   }
 
   @Before public void setUp() throws Exception {
@@ -155,6 +152,8 @@ public final class HttpOverHttp2Test {
     Authenticator.setDefault(null);
     http2Logger.removeHandler(http2Handler);
     http2Logger.setLevel(previousLevel);
+
+    client.connectionPool().evictAll();
   }
 
   @Test public void get() throws Exception {
