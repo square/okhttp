@@ -17,6 +17,9 @@ package okhttp3.testing;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.ArrayList;
+import java.util.List;
+import org.junit.internal.Throwables;
 import org.junit.runner.Description;
 import org.junit.runner.Result;
 import org.junit.runner.notification.RunListener;
@@ -30,6 +33,7 @@ public class InstallUncaughtExceptionHandlerListener extends RunListener {
 
   private Thread.UncaughtExceptionHandler oldDefaultUncaughtExceptionHandler;
   private Description lastTestStarted;
+  private List<Throwable> exceptions = new ArrayList<>();
 
   @Override public void testRunStarted(Description description) throws Exception {
     System.err.println("Installing aggressive uncaught exception handler");
@@ -48,7 +52,9 @@ public class InstallUncaughtExceptionHandlerListener extends RunListener {
           errorText.append("\n");
         }
         System.err.print(errorText.toString());
-        System.exit(-1);
+        //System.exit(-1);
+
+        exceptions.add(throwable);
       }
     });
   }
@@ -60,5 +66,9 @@ public class InstallUncaughtExceptionHandlerListener extends RunListener {
   @Override public void testRunFinished(Result result) throws Exception {
     Thread.setDefaultUncaughtExceptionHandler(oldDefaultUncaughtExceptionHandler);
     System.err.println("Uninstalled aggressive uncaught exception handler");
+
+    if (!exceptions.isEmpty()) {
+      throw Throwables.rethrowAsException(exceptions.get(0));
+    }
   }
 }
