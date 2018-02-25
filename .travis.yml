@@ -8,7 +8,7 @@ addons:
     packages:
       - oracle-java8-installer # Updates JDK 8 to the latest available.
 
-script: mvn test -e -X -Dtest=HttpOverHttp2Test -DfailIfNoTests=false; find .
+script: mvn test -e -X -Dtest=HttpOverHttp2Test -DfailIfNoTests=false; cat okhttp-tests/target/surefire-reports/*
 
 env:
   global:
