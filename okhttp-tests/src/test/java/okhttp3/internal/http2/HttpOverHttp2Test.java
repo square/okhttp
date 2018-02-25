@@ -35,6 +35,7 @@ import java.util.logging.Logger;
 import okhttp3.Cache;
 import okhttp3.Call;
 import okhttp3.Callback;
+import okhttp3.ConnectionPool;
 import okhttp3.Cookie;
 import okhttp3.Credentials;
 import okhttp3.Headers;
@@ -116,7 +117,10 @@ import static org.junit.Assert.fail;
   }
 
   private static OkHttpClient buildH2cClient() {
-    return defaultClient().newBuilder().protocols(Arrays.asList(Protocol.H2C)).build();
+    return defaultClient().newBuilder()
+        .connectionPool(new ConnectionPool())
+        .protocols(Arrays.asList(Protocol.H2C))
+        .build();
   }
 
   private static OkHttpClient buildClient() {
@@ -125,6 +129,7 @@ import static org.junit.Assert.fail;
         .dns(new SingleInetAddressDns())
         .sslSocketFactory(sslClient.socketFactory, sslClient.trustManager)
         .hostnameVerifier(new RecordingHostnameVerifier())
+        .connectionPool(new ConnectionPool())
         .build();
   }
 
