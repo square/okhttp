@@ -428,7 +428,7 @@ public final class MockWebServer extends ExternalResource implements Closeable {
             return;
           }
           socket = sslSocketFactory.createSocket(raw, raw.getInetAddress().getHostAddress(),
-                  raw.getPort(), true);
+              raw.getPort(), true);
           SSLSocket sslSocket = (SSLSocket) socket;
           sslSocket.setUseClientMode(false);
           openClientSockets.add(socket);
@@ -445,7 +445,6 @@ public final class MockWebServer extends ExternalResource implements Closeable {
           }
           openClientSockets.remove(raw);
         } else if (protocols.contains(Protocol.H2C)) {
-          // force use of H2c
           socket = raw;
           protocol = Protocol.H2C;
         } else {

@@ -193,7 +193,7 @@ public final class OkHttpClientTest {
   }
 
   @Test public void testH2COkHttpClientConstructionSuccess() {
-    final OkHttpClient okHttpClient = new OkHttpClient.Builder()
+    OkHttpClient okHttpClient = new OkHttpClient.Builder()
             .protocols(Arrays.asList(Protocol.H2C))
             .build();
 

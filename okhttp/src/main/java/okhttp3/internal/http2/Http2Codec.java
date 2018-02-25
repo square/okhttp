@@ -99,7 +99,6 @@ public final class Http2Codec implements HttpCodec {
     this.streamAllocation = streamAllocation;
     this.connection = connection;
 
-    // cache this so we don't do linear scans on every call
     protocol = client.protocols().contains(Protocol.H2C) ? Protocol.H2C : Protocol.HTTP_2;
   }
 

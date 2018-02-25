@@ -285,10 +285,10 @@ public final class RealConnection extends Http2Connection.Listener implements Co
   private void startHttp2(int pingIntervalMillis) throws IOException {
     socket.setSoTimeout(0); // HTTP/2 connection timeouts are set per-stream.
     http2Connection = new Http2Connection.Builder(true)
-            .socket(socket, route.address().url().host(), source, sink)
-            .listener(this)
-            .pingIntervalMillis(pingIntervalMillis)
-          .build();
+        .socket(socket, route.address().url().host(), source, sink)
+        .listener(this)
+        .pingIntervalMillis(pingIntervalMillis)
+        .build();
     http2Connection.start();
   }
 
