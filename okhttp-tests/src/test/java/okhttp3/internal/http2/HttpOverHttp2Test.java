@@ -96,11 +96,8 @@ public final class HttpOverHttp2Test {
   private static final SslClient sslClient = SslClient.localhost();
 
   @Parameters(name = "{0}")
-  public static Collection<Object[]> data() {
-    return Arrays.asList(new Object[][] {
-        { Protocol.H2C },
-        { Protocol.HTTP_2 }
-    });
+  public static Collection<Protocol> data() {
+    return Arrays.asList(Protocol.H2C, Protocol.HTTP_2);
   }
 
   @Rule public final TemporaryFolder tempDir = new TemporaryFolder();
