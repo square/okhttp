@@ -22,6 +22,7 @@ import java.net.HttpURLConnection;
 import java.net.SocketTimeoutException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CountDownLatch;
@@ -31,10 +32,10 @@ import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.net.ssl.HostnameVerifier;
 import okhttp3.Cache;
 import okhttp3.Call;
 import okhttp3.Callback;
+import okhttp3.ConnectionPool;
 import okhttp3.Cookie;
 import okhttp3.Credentials;
 import okhttp3.Headers;
@@ -63,6 +64,7 @@ import okhttp3.mockwebserver.QueueDispatcher;
 import okhttp3.mockwebserver.RecordedRequest;
 import okhttp3.mockwebserver.SocketPolicy;
 import okhttp3.mockwebserver.internal.tls.SslClient;
+import okhttp3.testing.InstallUncaughtExceptionHandlerListener;
 import okio.Buffer;
 import okio.BufferedSink;
 import okio.BufferedSource;
@@ -73,7 +75,11 @@ import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.internal.Throwables;
 import org.junit.rules.TemporaryFolder;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
+import org.junit.runners.Parameterized.Parameters;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
@@ -86,28 +92,55 @@ import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;
 
 /** Test how SPDY interacts with HTTP/2 features. */
-public final class HttpOverHttp2Test {
+@RunWith(Parameterized.class) public final class HttpOverHttp2Test {
   private static final Logger http2Logger = Logger.getLogger(Http2.class.getName());
+  private static final SslClient sslClient = SslClient.localhost();
+
+  @Parameters(name = "{0}") public static Collection<Protocol> data() {
+    return Arrays.asList(Protocol.H2C, Protocol.HTTP_2);
+  }
 
   @Rule public final TemporaryFolder tempDir = new TemporaryFolder();
   @Rule public final MockWebServer server = new MockWebServer();
 
-  private SslClient sslClient = SslClient.localhost();
-  private HostnameVerifier hostnameVerifier = new RecordingHostnameVerifier();
   private OkHttpClient client;
   private Cache cache;
   private TestLogHandler http2Handler = new TestLogHandler();
   private Level previousLevel;
+  private String scheme;
+  private Protocol protocol;
 
-  @Before public void setUp() throws Exception {
-    server.useHttps(sslClient.socketFactory, false);
-    cache = new Cache(tempDir.getRoot(), Integer.MAX_VALUE);
-    client = defaultClient().newBuilder()
+  public HttpOverHttp2Test(Protocol protocol) {
+    this.protocol = protocol;
+    this.client = protocol == Protocol.HTTP_2 ? buildClient() : buildH2cClient();
+    this.scheme = protocol == Protocol.HTTP_2 ? "https" : "http";
+  }
+
+  private static OkHttpClient buildH2cClient() {
+    return defaultClient().newBuilder()
+        .connectionPool(new ConnectionPool())
+        .protocols(Arrays.asList(Protocol.H2C))
+        .build();
+  }
+
+  private static OkHttpClient buildClient() {
+    return defaultClient().newBuilder()
         .protocols(Arrays.asList(Protocol.HTTP_2, Protocol.HTTP_1_1))
         .dns(new SingleInetAddressDns())
         .sslSocketFactory(sslClient.socketFactory, sslClient.trustManager)
-        .hostnameVerifier(hostnameVerifier)
+        .hostnameVerifier(new RecordingHostnameVerifier())
+        .connectionPool(new ConnectionPool())
         .build();
+  }
+
+  @Before public void setUp() throws Exception {
+    if (protocol == Protocol.H2C) {
+      server.setProtocols(Arrays.asList(Protocol.H2C));
+    } else {
+      server.useHttps(sslClient.socketFactory, false);
+    }
+
+    cache = new Cache(tempDir.getRoot(), Integer.MAX_VALUE);
 
     http2Logger.addHandler(http2Handler);
     previousLevel = http2Logger.getLevel();
@@ -118,16 +151,17 @@ public final class HttpOverHttp2Test {
     Authenticator.setDefault(null);
     http2Logger.removeHandler(http2Handler);
     http2Logger.setLevel(previousLevel);
+
+    if (!InstallUncaughtExceptionHandlerListener.exceptions.isEmpty()) {
+      throw Throwables.rethrowAsException(
+          InstallUncaughtExceptionHandlerListener.exceptions.get(0));
+    }
   }
 
   @Test public void get() throws Exception {
-    server.enqueue(new MockResponse()
-        .setBody("ABCDE")
-        .setStatus("HTTP/1.1 200 Sweet"));
+    server.enqueue(new MockResponse().setBody("ABCDE").setStatus("HTTP/1.1 200 Sweet"));
 
-    Call call = client.newCall(new Request.Builder()
-        .url(server.url("/foo"))
-        .build());
+    Call call = client.newCall(new Request.Builder().url(server.url("/foo")).build());
     Response response = call.execute();
 
     assertEquals("ABCDE", response.body().string());
@@ -136,16 +170,14 @@ public final class HttpOverHttp2Test {
 
     RecordedRequest request = server.takeRequest();
     assertEquals("GET /foo HTTP/1.1", request.getRequestLine());
-    assertEquals("https", request.getHeader(":scheme"));
+    assertEquals(scheme, request.getHeader(":scheme"));
     assertEquals(server.getHostName() + ":" + server.getPort(), request.getHeader(":authority"));
   }
 
   @Test public void emptyResponse() throws IOException {
     server.enqueue(new MockResponse());
 
-    Call call = client.newCall(new Request.Builder()
-        .url(server.url("/foo"))
-        .build());
+    Call call = client.newCall(new Request.Builder().url(server.url("/foo")).build());
     Response response = call.execute();
 
     assertEquals(-1, response.body().byteStream().read());
@@ -157,9 +189,8 @@ public final class HttpOverHttp2Test {
 
     server.enqueue(new MockResponse().setBody("ABCDE"));
 
-    Call call = client.newCall(new Request.Builder()
-        .url(server.url("/foo"))
-        .post(new RequestBody() {
+    Call call =
+        client.newCall(new Request.Builder().url(server.url("/foo")).post(new RequestBody() {
           @Override public MediaType contentType() {
             return MediaType.parse("text/plain; charset=utf-8");
           }
@@ -167,8 +198,7 @@ public final class HttpOverHttp2Test {
           @Override public void writeTo(BufferedSink sink) throws IOException {
             sink.write(postBytes);
           }
-        })
-        .build());
+        }).build());
 
     Response response = call.execute();
     assertEquals("ABCDE", response.body().string());
@@ -184,9 +214,8 @@ public final class HttpOverHttp2Test {
 
     server.enqueue(new MockResponse().setBody("ABCDE"));
 
-    Call call = client.newCall(new Request.Builder()
-        .url(server.url("/foo"))
-        .post(new RequestBody() {
+    Call call =
+        client.newCall(new Request.Builder().url(server.url("/foo")).post(new RequestBody() {
           @Override public MediaType contentType() {
             return MediaType.parse("text/plain; charset=utf-8");
           }
@@ -198,8 +227,7 @@ public final class HttpOverHttp2Test {
           @Override public void writeTo(BufferedSink sink) throws IOException {
             sink.write(postBytes);
           }
-        })
-        .build());
+        }).build());
 
     Response response = call.execute();
     assertEquals("ABCDE", response.body().string());
@@ -215,9 +243,8 @@ public final class HttpOverHttp2Test {
 
     server.enqueue(new MockResponse().setBody("ABCDE"));
 
-    Call call = client.newCall(new Request.Builder()
-        .url(server.url("/foo"))
-        .post(new RequestBody() {
+    Call call =
+        client.newCall(new Request.Builder().url(server.url("/foo")).post(new RequestBody() {
           @Override public MediaType contentType() {
             return MediaType.parse("text/plain; charset=utf-8");
           }
@@ -231,8 +258,7 @@ public final class HttpOverHttp2Test {
             sink.flush(); // Http2Connection.writeData subject to write window
             sink.close(); // Http2Connection.writeData empty frame
           }
-        })
-        .build());
+        }).build());
 
     Response response = call.execute();
     assertEquals("ABCDE", response.body().string());
@@ -247,12 +273,8 @@ public final class HttpOverHttp2Test {
     server.enqueue(new MockResponse().setBody("ABCDEF"));
     server.enqueue(new MockResponse().setBody("GHIJKL"));
 
-    Call call1 = client.newCall(new Request.Builder()
-        .url(server.url("/r1"))
-        .build());
-    Call call2 = client.newCall(new Request.Builder()
-        .url(server.url("/r1"))
-        .build());
+    Call call1 = client.newCall(new Request.Builder().url(server.url("/r1")).build());
+    Call call2 = client.newCall(new Request.Builder().url(server.url("/r1")).build());
     Response response1 = call1.execute();
     Response response2 = call2.execute();
 
@@ -282,34 +304,25 @@ public final class HttpOverHttp2Test {
   }
 
   @Test public void gzippedResponseBody() throws Exception {
-    server.enqueue(new MockResponse()
-        .addHeader("Content-Encoding: gzip")
-        .setBody(gzip("ABCABCABC")));
+    server.enqueue(
+        new MockResponse().addHeader("Content-Encoding: gzip").setBody(gzip("ABCABCABC")));
 
-    Call call = client.newCall(new Request.Builder()
-        .url(server.url("/r1"))
-        .build());
+    Call call = client.newCall(new Request.Builder().url(server.url("/r1")).build());
 
     Response response = call.execute();
     assertEquals("ABCABCABC", response.body().string());
   }
 
   @Test public void authenticate() throws Exception {
-    server.enqueue(new MockResponse()
-        .setResponseCode(HttpURLConnection.HTTP_UNAUTHORIZED)
+    server.enqueue(new MockResponse().setResponseCode(HttpURLConnection.HTTP_UNAUTHORIZED)
         .addHeader("www-authenticate: Basic realm=\"protected area\"")
         .setBody("Please authenticate."));
-    server.enqueue(new MockResponse()
-        .setBody("Successful auth!"));
+    server.enqueue(new MockResponse().setBody("Successful auth!"));
 
     String credential = Credentials.basic("username", "password");
-    client = client.newBuilder()
-        .authenticator(new RecordingOkAuthenticator(credential))
-        .build();
+    client = client.newBuilder().authenticator(new RecordingOkAuthenticator(credential)).build();
 
-    Call call = client.newCall(new Request.Builder()
-        .url(server.url("/"))
-        .build());
+    Call call = client.newCall(new Request.Builder().url(server.url("/")).build());
     Response response = call.execute();
     assertEquals("Successful auth!", response.body().string());
 
@@ -326,9 +339,7 @@ public final class HttpOverHttp2Test {
         .setBody("This page has moved!"));
     server.enqueue(new MockResponse().setBody("This is the new location!"));
 
-    Call call = client.newCall(new Request.Builder()
-        .url(server.url("/"))
-        .build());
+    Call call = client.newCall(new Request.Builder().url(server.url("/")).build());
 
     Response response = call.execute();
     assertEquals("This is the new location!", response.body().string());
@@ -342,9 +353,7 @@ public final class HttpOverHttp2Test {
   @Test public void readAfterLastByte() throws Exception {
     server.enqueue(new MockResponse().setBody("ABC"));
 
-    Call call = client.newCall(new Request.Builder()
-        .url(server.url("/"))
-        .build());
+    Call call = client.newCall(new Request.Builder().url(server.url("/")).build());
     Response response = call.execute();
 
     InputStream in = response.body().byteStream();
@@ -361,14 +370,10 @@ public final class HttpOverHttp2Test {
     server.enqueue(new MockResponse().setSocketPolicy(SocketPolicy.NO_RESPONSE));
     server.enqueue(new MockResponse().setBody("A"));
 
-    client = client.newBuilder()
-        .readTimeout(1000, MILLISECONDS)
-        .build();
+    client = client.newBuilder().readTimeout(1000, MILLISECONDS).build();
 
     // Make a call expecting a timeout reading the response headers.
-    Call call1 = client.newCall(new Request.Builder()
-        .url(server.url("/"))
-        .build());
+    Call call1 = client.newCall(new Request.Builder().url(server.url("/")).build());
     try {
       call1.execute();
       fail("Should have timed out!");
@@ -377,9 +382,7 @@ public final class HttpOverHttp2Test {
     }
 
     // Confirm that a subsequent request on the same connection is not impacted.
-    Call call2 = client.newCall(new Request.Builder()
-        .url(server.url("/"))
-        .build());
+    Call call2 = client.newCall(new Request.Builder().url(server.url("/")).build());
     Response response2 = call2.execute();
     assertEquals("A", response2.body().string());
 
@@ -399,13 +402,9 @@ public final class HttpOverHttp2Test {
     server.enqueue(new MockResponse().setBody(new String(body))
         .throttleBody(1024, 1, SECONDS)); // Slow connection 1KiB/second.
 
-    client = client.newBuilder()
-        .readTimeout(2, SECONDS)
-        .build();
+    client = client.newBuilder().readTimeout(2, SECONDS).build();
 
-    Call call = client.newCall(new Request.Builder()
-        .url(server.url("/"))
-        .build());
+    Call call = client.newCall(new Request.Builder().url(server.url("/")).build());
 
     Response response = call.execute();
     assertEquals(new String(body), response.body().string());
@@ -419,20 +418,15 @@ public final class HttpOverHttp2Test {
    */
   @Test public void readTimeoutOnSlowConnection() throws Exception {
     String body = TestUtil.repeat('y', 2048);
-    server.enqueue(new MockResponse()
-        .setBody(body)
+    server.enqueue(new MockResponse().setBody(body)
         .throttleBody(1024, 1, SECONDS)); // Slow connection 1KiB/second.
-    server.enqueue(new MockResponse()
-        .setBody(body));
+    server.enqueue(new MockResponse().setBody(body));
 
-    client = client.newBuilder()
-        .readTimeout(500, MILLISECONDS) // Half a second to read something.
+    client = client.newBuilder().readTimeout(500, MILLISECONDS) // Half a second to read something.
         .build();
 
     // Make a call expecting a timeout reading the response body.
-    Call call1 = client.newCall(new Request.Builder()
-        .url(server.url("/"))
-        .build());
+    Call call1 = client.newCall(new Request.Builder().url(server.url("/")).build());
     Response response1 = call1.execute();
     try {
       response1.body().string();
@@ -442,9 +436,7 @@ public final class HttpOverHttp2Test {
     }
 
     // Confirm that a subsequent request on the same connection is not impacted.
-    Call call2 = client.newCall(new Request.Builder()
-        .url(server.url("/"))
-        .build());
+    Call call2 = client.newCall(new Request.Builder().url(server.url("/")).build());
     Response response2 = call2.execute();
     assertEquals(body, response2.body().string());
 
@@ -454,25 +446,13 @@ public final class HttpOverHttp2Test {
   }
 
   @Test public void connectionTimeout() throws Exception {
-    server.enqueue(new MockResponse()
-        .setBody("A")
-        .setBodyDelay(1, SECONDS));
+    server.enqueue(new MockResponse().setBody("A").setBodyDelay(1, SECONDS));
 
-    OkHttpClient client1 = client.newBuilder()
-        .readTimeout(2000, MILLISECONDS)
-        .build();
-    Call call1 = client1
-        .newCall(new Request.Builder()
-        .url(server.url("/"))
-        .build());
+    OkHttpClient client1 = client.newBuilder().readTimeout(2000, MILLISECONDS).build();
+    Call call1 = client1.newCall(new Request.Builder().url(server.url("/")).build());
 
-    OkHttpClient client2 = client.newBuilder()
-        .readTimeout(200, MILLISECONDS)
-        .build();
-    Call call2 = client2
-        .newCall(new Request.Builder()
-        .url(server.url("/"))
-        .build());
+    OkHttpClient client2 = client.newBuilder().readTimeout(200, MILLISECONDS).build();
+    Call call2 = client2.newCall(new Request.Builder().url(server.url("/")).build());
 
     Response response1 = call1.execute();
     assertEquals("A", response1.body().string());
@@ -489,17 +469,11 @@ public final class HttpOverHttp2Test {
   }
 
   @Test public void responsesAreCached() throws IOException {
-    client = client.newBuilder()
-        .cache(cache)
-        .build();
+    client = client.newBuilder().cache(cache).build();
 
-    server.enqueue(new MockResponse()
-        .addHeader("cache-control: max-age=60")
-        .setBody("A"));
+    server.enqueue(new MockResponse().addHeader("cache-control: max-age=60").setBody("A"));
 
-    Call call1 = client.newCall(new Request.Builder()
-        .url(server.url("/"))
-        .build());
+    Call call1 = client.newCall(new Request.Builder().url(server.url("/")).build());
     Response response1 = call1.execute();
 
     assertEquals("A", response1.body().string());
@@ -507,15 +481,11 @@ public final class HttpOverHttp2Test {
     assertEquals(1, cache.networkCount());
     assertEquals(0, cache.hitCount());
 
-    Call call2 = client.newCall(new Request.Builder()
-        .url(server.url("/"))
-        .build());
+    Call call2 = client.newCall(new Request.Builder().url(server.url("/")).build());
     Response response2 = call2.execute();
     assertEquals("A", response2.body().string());
 
-    Call call3 = client.newCall(new Request.Builder()
-        .url(server.url("/"))
-        .build());
+    Call call3 = client.newCall(new Request.Builder().url(server.url("/")).build());
     Response response3 = call3.execute();
     assertEquals("A", response3.body().string());
 
@@ -525,19 +495,12 @@ public final class HttpOverHttp2Test {
   }
 
   @Test public void conditionalCache() throws IOException {
-    client = client.newBuilder()
-        .cache(cache)
-        .build();
+    client = client.newBuilder().cache(cache).build();
 
-    server.enqueue(new MockResponse()
-        .addHeader("ETag: v1")
-        .setBody("A"));
-    server.enqueue(new MockResponse()
-        .setResponseCode(HttpURLConnection.HTTP_NOT_MODIFIED));
+    server.enqueue(new MockResponse().addHeader("ETag: v1").setBody("A"));
+    server.enqueue(new MockResponse().setResponseCode(HttpURLConnection.HTTP_NOT_MODIFIED));
 
-    Call call1 = client.newCall(new Request.Builder()
-        .url(server.url("/"))
-        .build());
+    Call call1 = client.newCall(new Request.Builder().url(server.url("/")).build());
     Response response1 = call1.execute();
     assertEquals("A", response1.body().string());
 
@@ -545,9 +508,7 @@ public final class HttpOverHttp2Test {
     assertEquals(1, cache.networkCount());
     assertEquals(0, cache.hitCount());
 
-    Call call2 = client.newCall(new Request.Builder()
-        .url(server.url("/"))
-        .build());
+    Call call2 = client.newCall(new Request.Builder().url(server.url("/")).build());
     Response response2 = call2.execute();
     assertEquals("A", response2.body().string());
 
@@ -557,27 +518,17 @@ public final class HttpOverHttp2Test {
   }
 
   @Test public void responseCachedWithoutConsumingFullBody() throws IOException {
-    client = client.newBuilder()
-        .cache(cache)
-        .build();
+    client = client.newBuilder().cache(cache).build();
 
-    server.enqueue(new MockResponse()
-        .addHeader("cache-control: max-age=60")
-        .setBody("ABCD"));
-    server.enqueue(new MockResponse()
-        .addHeader("cache-control: max-age=60")
-        .setBody("EFGH"));
+    server.enqueue(new MockResponse().addHeader("cache-control: max-age=60").setBody("ABCD"));
+    server.enqueue(new MockResponse().addHeader("cache-control: max-age=60").setBody("EFGH"));
 
-    Call call1 = client.newCall(new Request.Builder()
-        .url(server.url("/"))
-        .build());
+    Call call1 = client.newCall(new Request.Builder().url(server.url("/")).build());
     Response response1 = call1.execute();
     assertEquals("AB", response1.body().source().readUtf8(2));
     response1.body().close();
 
-    Call call2 = client.newCall(new Request.Builder()
-        .url(server.url("/"))
-        .build());
+    Call call2 = client.newCall(new Request.Builder().url(server.url("/")).build());
     Response response2 = call2.execute();
     assertEquals("ABCD", response2.body().source().readUtf8());
     response2.body().close();
@@ -585,20 +536,13 @@ public final class HttpOverHttp2Test {
 
   @Test public void sendRequestCookies() throws Exception {
     RecordingCookieJar cookieJar = new RecordingCookieJar();
-    Cookie requestCookie = new Cookie.Builder()
-        .name("a")
-        .value("b")
-        .domain(server.getHostName())
-        .build();
+    Cookie requestCookie =
+        new Cookie.Builder().name("a").value("b").domain(server.getHostName()).build();
     cookieJar.enqueueRequestCookies(requestCookie);
-    client = client.newBuilder()
-        .cookieJar(cookieJar)
-        .build();
+    client = client.newBuilder().cookieJar(cookieJar).build();
 
     server.enqueue(new MockResponse());
-    Call call = client.newCall(new Request.Builder()
-        .url(server.url("/"))
-        .build());
+    Call call = client.newCall(new Request.Builder().url(server.url("/")).build());
     Response response = call.execute();
     assertEquals("", response.body().string());
 
@@ -608,16 +552,11 @@ public final class HttpOverHttp2Test {
 
   @Test public void receiveResponseCookies() throws Exception {
     RecordingCookieJar cookieJar = new RecordingCookieJar();
-    client = client.newBuilder()
-        .cookieJar(cookieJar)
-        .build();
+    client = client.newBuilder().cookieJar(cookieJar).build();
 
-    server.enqueue(new MockResponse()
-        .addHeader("set-cookie: a=b"));
+    server.enqueue(new MockResponse().addHeader("set-cookie: a=b"));
 
-    Call call = client.newCall(new Request.Builder()
-        .url(server.url("/"))
-        .build());
+    Call call = client.newCall(new Request.Builder().url(server.url("/")).build());
     Response response = call.execute();
     assertEquals("", response.body().string());
 
@@ -631,23 +570,17 @@ public final class HttpOverHttp2Test {
     client.connectionPool().evictAll();
     assertEquals(0, client.connectionPool().connectionCount());
 
-    server.enqueue(new MockResponse()
-        .setBody("abc"));
-    server.enqueue(new MockResponse()
-        .setBody("def"));
+    server.enqueue(new MockResponse().setBody("abc"));
+    server.enqueue(new MockResponse().setBody("def"));
 
     // Disconnect before the stream is created. A connection is still established!
-    Call call1 = client.newCall(new Request.Builder()
-        .url(server.url("/"))
-        .build());
+    Call call1 = client.newCall(new Request.Builder().url(server.url("/")).build());
     Response response = call1.execute();
     call1.cancel();
 
     // That connection is pooled, and it works.
     assertEquals(1, client.connectionPool().connectionCount());
-    Call call2 = client.newCall(new Request.Builder()
-        .url(server.url("/"))
-        .build());
+    Call call2 = client.newCall(new Request.Builder().url(server.url("/")).build());
     Response response2 = call2.execute();
     assertEquals("def", response2.body().string());
     assertEquals(0, server.takeRequest().getSequenceNumber());
@@ -657,15 +590,11 @@ public final class HttpOverHttp2Test {
   }
 
   @Test public void recoverFromOneRefusedStreamReusesConnection() throws Exception {
-    server.enqueue(new MockResponse()
-        .setSocketPolicy(SocketPolicy.RESET_STREAM_AT_START)
+    server.enqueue(new MockResponse().setSocketPolicy(SocketPolicy.RESET_STREAM_AT_START)
         .setHttp2ErrorCode(ErrorCode.REFUSED_STREAM.httpCode));
-    server.enqueue(new MockResponse()
-        .setBody("abc"));
+    server.enqueue(new MockResponse().setBody("abc"));
 
-    Call call = client.newCall(new Request.Builder()
-        .url(server.url("/"))
-        .build());
+    Call call = client.newCall(new Request.Builder().url(server.url("/")).build());
     Response response = call.execute();
     assertEquals("abc", response.body().string());
 
@@ -674,19 +603,13 @@ public final class HttpOverHttp2Test {
   }
 
   @Test public void recoverFromOneInternalErrorRequiresNewConnection() throws Exception {
-    server.enqueue(new MockResponse()
-        .setSocketPolicy(SocketPolicy.RESET_STREAM_AT_START)
+    server.enqueue(new MockResponse().setSocketPolicy(SocketPolicy.RESET_STREAM_AT_START)
         .setHttp2ErrorCode(ErrorCode.INTERNAL_ERROR.httpCode));
-    server.enqueue(new MockResponse()
-        .setBody("abc"));
+    server.enqueue(new MockResponse().setBody("abc"));
 
-    client = client.newBuilder()
-        .dns(new DoubleInetAddressDns())
-        .build();
+    client = client.newBuilder().dns(new DoubleInetAddressDns()).build();
 
-    Call call = client.newCall(new Request.Builder()
-        .url(server.url("/"))
-        .build());
+    Call call = client.newCall(new Request.Builder().url(server.url("/")).build());
     Response response = call.execute();
     assertEquals("abc", response.body().string());
 
@@ -695,22 +618,15 @@ public final class HttpOverHttp2Test {
   }
 
   @Test public void recoverFromMultipleRefusedStreamsRequiresNewConnection() throws Exception {
-    server.enqueue(new MockResponse()
-        .setSocketPolicy(SocketPolicy.RESET_STREAM_AT_START)
+    server.enqueue(new MockResponse().setSocketPolicy(SocketPolicy.RESET_STREAM_AT_START)
         .setHttp2ErrorCode(ErrorCode.REFUSED_STREAM.httpCode));
-    server.enqueue(new MockResponse()
-        .setSocketPolicy(SocketPolicy.RESET_STREAM_AT_START)
+    server.enqueue(new MockResponse().setSocketPolicy(SocketPolicy.RESET_STREAM_AT_START)
         .setHttp2ErrorCode(ErrorCode.REFUSED_STREAM.httpCode));
-    server.enqueue(new MockResponse()
-        .setBody("abc"));
+    server.enqueue(new MockResponse().setBody("abc"));
 
-    client = client.newBuilder()
-        .dns(new DoubleInetAddressDns())
-        .build();
+    client = client.newBuilder().dns(new DoubleInetAddressDns()).build();
 
-    Call call = client.newCall(new Request.Builder()
-        .url(server.url("/"))
-        .build());
+    Call call = client.newCall(new Request.Builder().url(server.url("/")).build());
     Response response = call.execute();
     assertEquals("abc", response.body().string());
 
@@ -728,19 +644,13 @@ public final class HttpOverHttp2Test {
   }
 
   private void noRecoveryFromErrorWithRetryDisabled(ErrorCode errorCode) throws Exception {
-    server.enqueue(new MockResponse()
-        .setSocketPolicy(SocketPolicy.RESET_STREAM_AT_START)
+    server.enqueue(new MockResponse().setSocketPolicy(SocketPolicy.RESET_STREAM_AT_START)
         .setHttp2ErrorCode(errorCode.httpCode));
-    server.enqueue(new MockResponse()
-        .setBody("abc"));
+    server.enqueue(new MockResponse().setBody("abc"));
 
-    client = client.newBuilder()
-        .retryOnConnectionFailure(false)
-        .build();
+    client = client.newBuilder().retryOnConnectionFailure(false).build();
 
-    Call call = client.newCall(new Request.Builder()
-        .url(server.url("/"))
-        .build());
+    Call call = client.newCall(new Request.Builder().url(server.url("/")).build());
     try {
       call.execute();
       fail();
@@ -750,18 +660,12 @@ public final class HttpOverHttp2Test {
   }
 
   @Test public void recoverFromConnectionNoNewStreamsOnFollowUp() throws InterruptedException {
-    server.enqueue(new MockResponse()
-        .setResponseCode(401));
-    server.enqueue(new MockResponse()
-        .setSocketPolicy(SocketPolicy.RESET_STREAM_AT_START)
+    server.enqueue(new MockResponse().setResponseCode(401));
+    server.enqueue(new MockResponse().setSocketPolicy(SocketPolicy.RESET_STREAM_AT_START)
         .setHttp2ErrorCode(ErrorCode.CANCEL.httpCode));
-    server.enqueue(new MockResponse()
-        .setBody("DEF"));
-    server.enqueue(new MockResponse()
-        .setResponseCode(301)
-        .addHeader("Location", "/foo"));
-    server.enqueue(new MockResponse()
-        .setBody("ABC"));
+    server.enqueue(new MockResponse().setBody("DEF"));
+    server.enqueue(new MockResponse().setResponseCode(301).addHeader("Location", "/foo"));
+    server.enqueue(new MockResponse().setBody("ABC"));
 
     final CountDownLatch latch = new CountDownLatch(1);
     final BlockingQueue<String> responses = new SynchronousQueue<>();
@@ -777,9 +681,7 @@ public final class HttpOverHttp2Test {
       }
     };
 
-    OkHttpClient blockingAuthClient = client.newBuilder()
-        .authenticator(authenticator)
-        .build();
+    OkHttpClient blockingAuthClient = client.newBuilder().authenticator(authenticator).build();
 
     Callback callback = new Callback() {
       @Override public void onFailure(Call call, IOException e) {
@@ -792,9 +694,7 @@ public final class HttpOverHttp2Test {
     };
 
     // Make the first request waiting until we get our auth challenge.
-    Request request = new Request.Builder()
-        .url(server.url("/"))
-        .build();
+    Request request = new Request.Builder().url(server.url("/")).build();
     blockingAuthClient.newCall(request).enqueue(callback);
     String response1 = responses.take();
     assertEquals("", response1);
@@ -818,13 +718,9 @@ public final class HttpOverHttp2Test {
   }
 
   @Test public void nonAsciiResponseHeader() throws Exception {
-    server.enqueue(new MockResponse()
-        .addHeaderLenient("Alpha", "α")
-        .addHeaderLenient("β", "Beta"));
+    server.enqueue(new MockResponse().addHeaderLenient("Alpha", "α").addHeaderLenient("β", "Beta"));
 
-    Call call = client.newCall(new Request.Builder()
-        .url(server.url("/"))
-        .build());
+    Call call = client.newCall(new Request.Builder().url(server.url("/")).build());
     Response response = call.execute();
     response.close();
 
@@ -835,14 +731,10 @@ public final class HttpOverHttp2Test {
   @Test public void serverSendsPushPromise_GET() throws Exception {
     PushPromise pushPromise = new PushPromise("GET", "/foo/bar", Headers.of("foo", "bar"),
         new MockResponse().setBody("bar").setStatus("HTTP/1.1 200 Sweet"));
-    server.enqueue(new MockResponse()
-        .setBody("ABCDE")
-        .setStatus("HTTP/1.1 200 Sweet")
-        .withPush(pushPromise));
+    server.enqueue(
+        new MockResponse().setBody("ABCDE").setStatus("HTTP/1.1 200 Sweet").withPush(pushPromise));
 
-    Call call = client.newCall(new Request.Builder()
-        .url(server.url("/foo"))
-        .build());
+    Call call = client.newCall(new Request.Builder().url(server.url("/foo")).build());
     Response response = call.execute();
 
     assertEquals("ABCDE", response.body().string());
@@ -851,7 +743,7 @@ public final class HttpOverHttp2Test {
 
     RecordedRequest request = server.takeRequest();
     assertEquals("GET /foo HTTP/1.1", request.getRequestLine());
-    assertEquals("https", request.getHeader(":scheme"));
+    assertEquals(scheme, request.getHeader(":scheme"));
     assertEquals(server.getHostName() + ":" + server.getPort(), request.getHeader(":authority"));
 
     RecordedRequest pushedRequest = server.takeRequest();
@@ -862,14 +754,10 @@ public final class HttpOverHttp2Test {
   @Test public void serverSendsPushPromise_HEAD() throws Exception {
     PushPromise pushPromise = new PushPromise("HEAD", "/foo/bar", Headers.of("foo", "bar"),
         new MockResponse().setStatus("HTTP/1.1 204 Sweet"));
-    server.enqueue(new MockResponse()
-        .setBody("ABCDE")
-        .setStatus("HTTP/1.1 200 Sweet")
-        .withPush(pushPromise));
+    server.enqueue(
+        new MockResponse().setBody("ABCDE").setStatus("HTTP/1.1 200 Sweet").withPush(pushPromise));
 
-    Call call = client.newCall(new Request.Builder()
-        .url(server.url("/foo"))
-        .build());
+    Call call = client.newCall(new Request.Builder().url(server.url("/foo")).build());
     Response response = call.execute();
     assertEquals("ABCDE", response.body().string());
     assertEquals(200, response.code());
@@ -877,7 +765,7 @@ public final class HttpOverHttp2Test {
 
     RecordedRequest request = server.takeRequest();
     assertEquals("GET /foo HTTP/1.1", request.getRequestLine());
-    assertEquals("https", request.getHeader(":scheme"));
+    assertEquals(scheme, request.getHeader(":scheme"));
     assertEquals(server.getHostName() + ":" + server.getPort(), request.getHeader(":authority"));
 
     RecordedRequest pushedRequest = server.takeRequest();
@@ -886,60 +774,51 @@ public final class HttpOverHttp2Test {
   }
 
   @Test public void noDataFramesSentWithNullRequestBody() throws Exception {
-    server.enqueue(new MockResponse()
-        .setBody("ABC"));
+    server.enqueue(new MockResponse().setBody("ABC"));
 
-    Call call = client.newCall(new Request.Builder()
-        .url(server.url("/"))
-        .method("DELETE", null)
-        .build());
+    Call call =
+        client.newCall(new Request.Builder().url(server.url("/")).method("DELETE", null).build());
     Response response = call.execute();
     assertEquals("ABC", response.body().string());
 
-    assertEquals(Protocol.HTTP_2, response.protocol());
+    assertEquals(protocol, response.protocol());
 
     List<String> logs = http2Handler.takeAll();
 
-    assertThat("header logged", firstFrame(logs, "HEADERS"), containsString("HEADERS       END_STREAM|END_HEADERS"));
+    assertThat("header logged", firstFrame(logs, "HEADERS"),
+        containsString("HEADERS       END_STREAM|END_HEADERS"));
   }
 
   @Test public void emptyDataFrameSentWithEmptyBody() throws Exception {
-    server.enqueue(new MockResponse()
-        .setBody("ABC"));
+    server.enqueue(new MockResponse().setBody("ABC"));
 
-    Call call = client.newCall(new Request.Builder()
-        .url(server.url("/"))
-        .method("DELETE", Util.EMPTY_REQUEST)
-        .build());
+    Call call = client.newCall(
+        new Request.Builder().url(server.url("/")).method("DELETE", Util.EMPTY_REQUEST).build());
     Response response = call.execute();
     assertEquals("ABC", response.body().string());
 
-    assertEquals(Protocol.HTTP_2, response.protocol());
+    assertEquals(protocol, response.protocol());
 
     List<String> logs = http2Handler.takeAll();
 
-    assertThat("header logged", firstFrame(logs, "HEADERS"), containsString("HEADERS       END_HEADERS"));
-    assertThat("data logged", firstFrame(logs, "DATA"), containsString("0 DATA          END_STREAM"));
+    assertThat("header logged", firstFrame(logs, "HEADERS"),
+        containsString("HEADERS       END_HEADERS"));
+    assertThat("data logged", firstFrame(logs, "DATA"),
+        containsString("0 DATA          END_STREAM"));
   }
 
   @Test public void pingsTransmitted() throws Exception {
     // Ping every 500 ms, starting at 500 ms.
-    client = client.newBuilder()
-        .pingInterval(500, TimeUnit.MILLISECONDS)
-        .build();
+    client = client.newBuilder().pingInterval(500, TimeUnit.MILLISECONDS).build();
 
     // Delay the response to give 1 ping enough time to be sent and replied to.
-    server.enqueue(new MockResponse()
-        .setBodyDelay(750, TimeUnit.MILLISECONDS)
-        .setBody("ABC"));
+    server.enqueue(new MockResponse().setBodyDelay(750, TimeUnit.MILLISECONDS).setBody("ABC"));
 
-    Call call = client.newCall(new Request.Builder()
-        .url(server.url("/"))
-        .build());
+    Call call = client.newCall(new Request.Builder().url(server.url("/")).build());
     Response response = call.execute();
     assertEquals("ABC", response.body().string());
 
-    assertEquals(Protocol.HTTP_2, response.protocol());
+    assertEquals(protocol, response.protocol());
 
     // Confirm a single ping was sent and received, and its reply was sent and received.
     List<String> logs = http2Handler.takeAll();
@@ -957,13 +836,10 @@ public final class HttpOverHttp2Test {
         .build();
 
     // Set up the server to ignore the socket. It won't respond to pings!
-    server.enqueue(new MockResponse()
-        .setSocketPolicy(SocketPolicy.STALL_SOCKET_AT_START));
+    server.enqueue(new MockResponse().setSocketPolicy(SocketPolicy.STALL_SOCKET_AT_START));
 
     // Make a call. It'll fail as soon as our pings detect a problem.
-    Call call = client.newCall(new Request.Builder()
-        .url(server.url("/"))
-        .build());
+    Call call = client.newCall(new Request.Builder().url(server.url("/")).build());
     long executeAtNanos = System.nanoTime();
     try {
       call.execute();
@@ -982,7 +858,7 @@ public final class HttpOverHttp2Test {
   }
 
   private String firstFrame(List<String> logs, String type) {
-    for (String log: logs) {
+    for (String log : logs) {
       if (log.contains(type)) {
         return log;
       }
@@ -992,7 +868,7 @@ public final class HttpOverHttp2Test {
 
   private int countFrames(List<String> logs, String message) {
     int result = 0;
-    for (String log: logs) {
+    for (String log : logs) {
       if (log.equals(message)) {
         result++;
       }
@@ -1011,32 +887,21 @@ public final class HttpOverHttp2Test {
     // Read & write a full request to confirm settings are accepted.
     server.enqueue(new MockResponse().withSettings(settings));
 
-    Call call = client.newCall(new Request.Builder()
-        .url(server.url("/"))
-        .build());
+    Call call = client.newCall(new Request.Builder().url(server.url("/")).build());
     Response response = call.execute();
     assertEquals("", response.body().string());
 
-    server.enqueue(new MockResponse()
-        .setBody("ABC"));
-    server.enqueue(new MockResponse()
-        .setBody("DEF"));
-    server.enqueue(new MockResponse()
-        .setBody("GHI"));
+    server.enqueue(new MockResponse().setBody("ABC"));
+    server.enqueue(new MockResponse().setBody("DEF"));
+    server.enqueue(new MockResponse().setBody("GHI"));
 
-    Call call1 = client.newCall(new Request.Builder()
-        .url(server.url("/"))
-        .build());
+    Call call1 = client.newCall(new Request.Builder().url(server.url("/")).build());
     Response response1 = call1.execute();
 
-    Call call2 = client.newCall(new Request.Builder()
-        .url(server.url("/"))
-        .build());
+    Call call2 = client.newCall(new Request.Builder().url(server.url("/")).build());
     Response response2 = call2.execute();
 
-    Call call3 = client.newCall(new Request.Builder()
-        .url(server.url("/"))
-        .build());
+    Call call3 = client.newCall(new Request.Builder().url(server.url("/")).build());
     Response response3 = call3.execute();
 
     assertEquals("ABC", response1.body().string());
@@ -1049,21 +914,15 @@ public final class HttpOverHttp2Test {
   }
 
   @Test public void connectionNotReusedAfterShutdown() throws Exception {
-    server.enqueue(new MockResponse()
-        .setSocketPolicy(SocketPolicy.DISCONNECT_AT_END)
-        .setBody("ABC"));
-    server.enqueue(new MockResponse()
-        .setBody("DEF"));
+    server.enqueue(
+        new MockResponse().setSocketPolicy(SocketPolicy.DISCONNECT_AT_END).setBody("ABC"));
+    server.enqueue(new MockResponse().setBody("DEF"));
 
-    Call call1 = client.newCall(new Request.Builder()
-        .url(server.url("/"))
-        .build());
+    Call call1 = client.newCall(new Request.Builder().url(server.url("/")).build());
     Response response1 = call1.execute();
     assertEquals("ABC", response1.body().string());
 
-    Call call2 = client.newCall(new Request.Builder()
-        .url(server.url("/"))
-        .build());
+    Call call2 = client.newCall(new Request.Builder().url(server.url("/")).build());
     Response response2 = call2.execute();
     assertEquals("DEF", response2.body().string());
     assertEquals(0, server.takeRequest().getSequenceNumber());
@@ -1075,38 +934,30 @@ public final class HttpOverHttp2Test {
    * writing our request, we get a GOAWAY frame from the server.
    */
   @Test public void connectionShutdownAfterHealthCheck() throws Exception {
-    server.enqueue(new MockResponse()
-        .setSocketPolicy(SocketPolicy.DISCONNECT_AT_END)
-        .setBody("ABC"));
-    server.enqueue(new MockResponse()
-        .setBody("DEF"));
+    server.enqueue(
+        new MockResponse().setSocketPolicy(SocketPolicy.DISCONNECT_AT_END).setBody("ABC"));
+    server.enqueue(new MockResponse().setBody("DEF"));
 
-    OkHttpClient client2 = client.newBuilder()
-        .addNetworkInterceptor(new Interceptor() {
-          boolean executedCall;
+    OkHttpClient client2 = client.newBuilder().addNetworkInterceptor(new Interceptor() {
+      boolean executedCall;
 
-          @Override public Response intercept(Chain chain) throws IOException {
-            if (!executedCall) {
-              // At this point, we have a healthy HTTP/2 connection. This call will trigger the
-              // server to send a GOAWAY frame, leaving the connection in a shutdown state.
-              executedCall = true;
-              Call call = client.newCall(new Request.Builder()
-                  .url(server.url("/"))
-                  .build());
-              Response response = call.execute();
-              assertEquals("ABC", response.body().string());
-              // Wait until the GOAWAY has been processed.
-              RealConnection connection = (RealConnection) chain.connection();
-              while (connection.isHealthy(false)) ;
-            }
-            return chain.proceed(chain.request());
-          }
-        })
-        .build();
+      @Override public Response intercept(Chain chain) throws IOException {
+        if (!executedCall) {
+          // At this point, we have a healthy HTTP/2 connection. This call will trigger the
+          // server to send a GOAWAY frame, leaving the connection in a shutdown state.
+          executedCall = true;
+          Call call = client.newCall(new Request.Builder().url(server.url("/")).build());
+          Response response = call.execute();
+          assertEquals("ABC", response.body().string());
+          // Wait until the GOAWAY has been processed.
+          RealConnection connection = (RealConnection) chain.connection();
+          while (connection.isHealthy(false)) ;
+        }
+        return chain.proceed(chain.request());
+      }
+    }).build();
 
-    Call call = client2.newCall(new Request.Builder()
-        .url(server.url("/"))
-        .build());
+    Call call = client2.newCall(new Request.Builder().url(server.url("/")).build());
     Response response = call.execute();
     assertEquals("DEF", response.body().string());
 
@@ -1115,18 +966,16 @@ public final class HttpOverHttp2Test {
   }
 
   @Test public void responseHeadersAfterGoaway() throws Exception {
-    server.enqueue(new MockResponse()
-        .setHeadersDelay(1, SECONDS)
-        .setBody("ABC"));
-    server.enqueue(new MockResponse()
-        .setSocketPolicy(SocketPolicy.DISCONNECT_AT_END)
-        .setBody("DEF"));
+    server.enqueue(new MockResponse().setHeadersDelay(1, SECONDS).setBody("ABC"));
+    server.enqueue(
+        new MockResponse().setSocketPolicy(SocketPolicy.DISCONNECT_AT_END).setBody("DEF"));
 
     final BlockingQueue<String> bodies = new SynchronousQueue<>();
     Callback callback = new Callback() {
       @Override public void onResponse(Call call, Response response) throws IOException {
         bodies.add(response.body().string());
       }
+
       @Override public void onFailure(Call call, IOException e) {
         System.out.println(e);
       }
@@ -1147,22 +996,20 @@ public final class HttpOverHttp2Test {
    * <p>This test uses proxy tunnels to get a hook while a connection is being established.
    */
   @Test public void concurrentHttp2ConnectionsDeduplicated() throws Exception {
+    if (protocol == Protocol.H2C) return; // only run for http2
+
     server.useHttps(sslClient.socketFactory, true);
 
     // Force a fresh connection pool for the test.
     client.connectionPool().evictAll();
 
     final QueueDispatcher queueDispatcher = new QueueDispatcher();
-    queueDispatcher.enqueueResponse(new MockResponse()
-        .setSocketPolicy(SocketPolicy.UPGRADE_TO_SSL_AT_END)
-        .clearHeaders());
-    queueDispatcher.enqueueResponse(new MockResponse()
-        .setSocketPolicy(SocketPolicy.UPGRADE_TO_SSL_AT_END)
-        .clearHeaders());
-    queueDispatcher.enqueueResponse(new MockResponse()
-        .setBody("call2 response"));
-    queueDispatcher.enqueueResponse(new MockResponse()
-        .setBody("call1 response"));
+    queueDispatcher.enqueueResponse(
+        new MockResponse().setSocketPolicy(SocketPolicy.UPGRADE_TO_SSL_AT_END).clearHeaders());
+    queueDispatcher.enqueueResponse(
+        new MockResponse().setSocketPolicy(SocketPolicy.UPGRADE_TO_SSL_AT_END).clearHeaders());
+    queueDispatcher.enqueueResponse(new MockResponse().setBody("call2 response"));
+    queueDispatcher.enqueueResponse(new MockResponse().setBody("call1 response"));
 
     // We use a re-entrant dispatcher to initiate one HTTPS connection while the other is in flight.
     server.setDispatcher(new Dispatcher() {
@@ -1175,9 +1022,8 @@ public final class HttpOverHttp2Test {
         if (requestCount == 1) {
           // Before handling call1's CONNECT we do all of call2. This part re-entrant!
           try {
-            Call call2 = client.newCall(new Request.Builder()
-                .url("https://android.com/call2")
-                .build());
+            Call call2 =
+                client.newCall(new Request.Builder().url("https://android.com/call2").build());
             Response response2 = call2.execute();
             assertEquals("call2 response", response2.body().string());
           } catch (IOException e) {
@@ -1197,13 +1043,9 @@ public final class HttpOverHttp2Test {
       }
     });
 
-    client = client.newBuilder()
-        .proxy(server.toProxyAddress())
-        .build();
+    client = client.newBuilder().proxy(server.toProxyAddress()).build();
 
-    Call call1 = client.newCall(new Request.Builder()
-        .url("https://android.com/call1")
-        .build());
+    Call call1 = client.newCall(new Request.Builder().url("https://android.com/call1").build());
     Response response2 = call1.execute();
     assertEquals("call1 response", response2.body().string());
 
@@ -1230,22 +1072,16 @@ public final class HttpOverHttp2Test {
 
   /** https://github.com/square/okhttp/issues/3103 */
   @Test public void domainFronting() throws Exception {
-    client = client.newBuilder()
-        .addNetworkInterceptor(new Interceptor() {
-          @Override public Response intercept(Chain chain) throws IOException {
-            Request request = chain.request().newBuilder()
-                .header("Host", "privateobject.com")
-                .build();
-            return chain.proceed(request);
-          }
-        })
-        .build();
+    client = client.newBuilder().addNetworkInterceptor(new Interceptor() {
+      @Override public Response intercept(Chain chain) throws IOException {
+        Request request = chain.request().newBuilder().header("Host", "privateobject.com").build();
+        return chain.proceed(request);
+      }
+    }).build();
 
     server.enqueue(new MockResponse());
 
-    Call call = client.newCall(new Request.Builder()
-        .url(server.url("/"))
-        .build());
+    Call call = client.newCall(new Request.Builder().url(server.url("/")).build());
 
     Response response = call.execute();
     assertEquals("", response.body().string());
@@ -1273,9 +1109,7 @@ public final class HttpOverHttp2Test {
 
     @Override public void run() {
       try {
-        Call call = client.newCall(new Request.Builder()
-            .url(server.url(path))
-            .build());
+        Call call = client.newCall(new Request.Builder().url(server.url(path)).build());
         Response response = call.execute();
         assertEquals("A", response.body().string());
         countDownLatch.countDown();

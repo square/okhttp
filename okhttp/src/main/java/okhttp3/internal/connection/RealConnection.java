@@ -261,8 +261,15 @@ public final class RealConnection extends Http2Connection.Listener implements Co
   private void establishProtocol(ConnectionSpecSelector connectionSpecSelector,
       int pingIntervalMillis, Call call, EventListener eventListener) throws IOException {
     if (route.address().sslSocketFactory() == null) {
-      protocol = Protocol.HTTP_1_1;
+      if (route.address().protocols().contains(Protocol.H2C)) {
+        socket = rawSocket;
+        protocol = Protocol.H2C;
+        startHttp2(pingIntervalMillis);
+        return;
+      }
+
       socket = rawSocket;
+      protocol = Protocol.HTTP_1_1;
       return;
     }
 
@@ -271,14 +278,18 @@ public final class RealConnection extends Http2Connection.Listener implements Co
     eventListener.secureConnectEnd(call, handshake);
 
     if (protocol == Protocol.HTTP_2) {
-      socket.setSoTimeout(0); // HTTP/2 connection timeouts are set per-stream.
-      http2Connection = new Http2Connection.Builder(true)
-          .socket(socket, route.address().url().host(), source, sink)
-          .listener(this)
-          .pingIntervalMillis(pingIntervalMillis)
-          .build();
-      http2Connection.start();
+      startHttp2(pingIntervalMillis);
     }
+  }
+
+  private void startHttp2(int pingIntervalMillis) throws IOException {
+    socket.setSoTimeout(0); // HTTP/2 connection timeouts are set per-stream.
+    http2Connection = new Http2Connection.Builder(true)
+            .socket(socket, route.address().url().host(), source, sink)
+            .listener(this)
+            .pingIntervalMillis(pingIntervalMillis)
+          .build();
+    http2Connection.start();
   }
 
   private void connectTls(ConnectionSpecSelector connectionSpecSelector) throws IOException {

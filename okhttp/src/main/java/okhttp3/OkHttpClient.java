@@ -845,14 +845,19 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
      * Response#protocol()}.
      *
      * @param protocols the protocols to use, in order of preference. The list must contain {@link
-     * Protocol#HTTP_1_1}. It must not contain null or {@link Protocol#HTTP_1_0}.
+     * Protocol#HTTP_1_1}. It should not contain null or {@link Protocol#HTTP_1_0}. If you use
+     * {@link Protocol#H2C}, then it should be the only specified protocol in the list.
      */
     public Builder protocols(List<Protocol> protocols) {
       // Create a private copy of the list.
       protocols = new ArrayList<>(protocols);
 
-      // Validate that the list has everything we require and nothing we forbid.
-      if (!protocols.contains(Protocol.HTTP_1_1)) {
+      if (protocols.contains(Protocol.H2C) && protocols.size() > 1) {
+        // when using h2c prior knowledge, no other protocol should be supported.
+        throw new IllegalArgumentException("protocols containing h2c cannot use other protocols: "
+                + protocols);
+      } else if (!protocols.contains(Protocol.H2C) && !protocols.contains(Protocol.HTTP_1_1)) {
+        // Validate that the list has everything we require and nothing we forbid.
         throw new IllegalArgumentException("protocols doesn't contain http/1.1: " + protocols);
       }
       if (protocols.contains(Protocol.HTTP_1_0)) {

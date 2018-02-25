@@ -45,7 +45,7 @@ public final class HeadersTest {
         ":version", "HTTP/1.1",
         "connection", "close");
     Request request = new Request.Builder().url("http://square.com/").build();
-    Response response = Http2Codec.readHttp2HeadersList(headerBlock).request(request).build();
+    Response response = Http2Codec.readHttp2HeadersList(headerBlock, Protocol.HTTP_2).request(request).build();
     Headers headers = response.headers();
     assertEquals(1, headers.size());
     assertEquals(":version", headers.name(0));
