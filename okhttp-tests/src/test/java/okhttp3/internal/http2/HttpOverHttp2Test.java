@@ -121,17 +121,17 @@ public final class HttpOverHttp2Test {
 
   private static OkHttpClient buildH2cClient() {
     return defaultClient().newBuilder()
-            .protocols(Arrays.asList(Protocol.H2C))
-            .build();
+        .protocols(Arrays.asList(Protocol.H2C))
+        .build();
   }
 
   private static OkHttpClient buildHttp2Client() {
     return defaultClient().newBuilder()
-            .protocols(Arrays.asList(Protocol.HTTP_2, Protocol.HTTP_1_1))
-            .dns(new SingleInetAddressDns())
-            .sslSocketFactory(sslClient.socketFactory, sslClient.trustManager)
-            .hostnameVerifier(new RecordingHostnameVerifier())
-            .build();
+        .protocols(Arrays.asList(Protocol.HTTP_2, Protocol.HTTP_1_1))
+        .dns(new SingleInetAddressDns())
+        .sslSocketFactory(sslClient.socketFactory, sslClient.trustManager)
+        .hostnameVerifier(new RecordingHostnameVerifier())
+        .build();
   }
 
   @Before public void setUp() throws Exception {
