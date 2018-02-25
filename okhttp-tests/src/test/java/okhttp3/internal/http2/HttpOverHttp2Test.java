@@ -94,7 +94,7 @@ public final class HttpOverHttp2Test {
   private static final Logger http2Logger = Logger.getLogger(Http2.class.getName());
   private static final SslClient sslClient = SslClient.localhost();
 
-  @Parameters
+  @Parameters(name="{2}")
   public static Collection<Object[]> data() {
     return Arrays.asList(new Object[][] {
         // H2C
