@@ -17,6 +17,9 @@ package okhttp3.testing;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.ArrayList;
+import java.util.List;
+import org.junit.internal.Throwables;
 import org.junit.runner.Description;
 import org.junit.runner.Result;
 import org.junit.runner.notification.RunListener;
@@ -30,8 +33,9 @@ public class InstallUncaughtExceptionHandlerListener extends RunListener {
 
   private Thread.UncaughtExceptionHandler oldDefaultUncaughtExceptionHandler;
   private Description lastTestStarted;
+  private List<Throwable> exceptions = new ArrayList<>();
 
-  @Override public void testRunStarted(Description description) throws Exception {
+  @Override public void testRunStarted(Description description) {
     System.err.println("Installing aggressive uncaught exception handler");
     oldDefaultUncaughtExceptionHandler = Thread.getDefaultUncaughtExceptionHandler();
     Thread.setDefaultUncaughtExceptionHandler(new Thread.UncaughtExceptionHandler() {
@@ -48,16 +52,29 @@ public class InstallUncaughtExceptionHandlerListener extends RunListener {
           errorText.append("\n");
         }
         System.err.print(errorText.toString());
-        System.exit(-1);
+
+        synchronized (exceptions) {
+          exceptions.add(throwable);
+        }
       }
     });
   }
 
-  @Override public void testStarted(Description description) throws Exception {
+  @Override public void testStarted(Description description) {
     lastTestStarted = description;
   }
 
-  @Override public void testRunFinished(Result result) throws Exception {
+  @Override public void testFinished(Description description) throws Exception {
+    synchronized (exceptions) {
+      if (!exceptions.isEmpty()) {
+        Throwable throwable = exceptions.get(0);
+        exceptions.clear();
+        throw Throwables.rethrowAsException(throwable);
+      }
+    }
+  }
+
+  @Override public void testRunFinished(Result result) {
     Thread.setDefaultUncaughtExceptionHandler(oldDefaultUncaughtExceptionHandler);
     System.err.println("Uninstalled aggressive uncaught exception handler");
   }
