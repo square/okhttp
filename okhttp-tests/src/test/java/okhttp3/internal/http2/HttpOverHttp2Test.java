@@ -98,8 +98,8 @@ public final class HttpOverHttp2Test {
   @Parameters(name = "{0}")
   public static Collection<Object[]> data() {
     return Arrays.asList(new Object[][] {
-            { Protocol.H2C },
-            { Protocol.HTTP_2 }
+        { Protocol.H2C },
+        { Protocol.HTTP_2 }
     });
   }
 
