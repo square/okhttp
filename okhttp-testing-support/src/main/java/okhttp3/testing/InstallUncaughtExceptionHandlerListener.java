@@ -66,9 +66,5 @@ public class InstallUncaughtExceptionHandlerListener extends RunListener {
   @Override public void testRunFinished(Result result) throws Exception {
     Thread.setDefaultUncaughtExceptionHandler(oldDefaultUncaughtExceptionHandler);
     System.err.println("Uninstalled aggressive uncaught exception handler");
-
-    if (!exceptions.isEmpty()) {
-      throw Throwables.rethrowAsException(exceptions.get(0));
-    }
   }
 }
