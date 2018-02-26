@@ -994,7 +994,7 @@ _2014-12-30_
     for OkHttp 2.0 and 2.1 will continue to work with this update.
 
  *  **`COMPATIBLE_TLS` no longer supports SSLv3.** In response to the
-    [POODLE](http://googleonlinesecurity.blogspot.ca/2014/10/this-poodle-bites-exploiting-ssl-30.html)
+    [POODLE](https://googleonlinesecurity.blogspot.ca/2014/10/this-poodle-bites-exploiting-ssl-30.html)
     vulnerability, OkHttp no longer offers SSLv3 when negotiation an
     HTTPS connection. If you continue to need to connect to webservers
     running SSLv3, you must manually configure your own `ConnectionSpec`.
@@ -1474,7 +1474,7 @@ Initial release.
  [nginx_959]: https://trac.nginx.org/nginx/ticket/959
  [okhttp_idling_resource]: https://github.com/JakeWharton/okhttp-idling-resource
  [bom]: https://en.wikipedia.org/wiki/Byte_order_mark
- [junit_5_rules]: http://junit.org/junit5/docs/current/user-guide/#migrating-from-junit4-rulesupport
+ [junit_5_rules]: https://junit.org/junit5/docs/current/user-guide/#migrating-from-junit4-rulesupport
  [public_suffix]: https://publicsuffix.org/
  [maven_provided]: https://maven.apache.org/guides/introduction/introduction-to-dependency-mechanism.html
  [remove_cbc_ecdsa]: https://developers.google.com/web/updates/2016/12/chrome-56-deprecations#remove_cbc-mode_ecdsa_ciphers_in_tls
