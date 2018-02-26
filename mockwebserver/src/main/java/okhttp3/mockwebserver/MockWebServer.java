@@ -228,7 +228,7 @@ public final class MockWebServer extends ExternalResource implements Closeable {
   }
 
   public List<Protocol> protocols() {
-    return Collections.unmodifiableList(protocols);
+    return protocols;
   }
 
   /**
