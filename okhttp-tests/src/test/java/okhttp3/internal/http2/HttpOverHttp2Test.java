@@ -22,6 +22,7 @@ import java.net.HttpURLConnection;
 import java.net.SocketTimeoutException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CountDownLatch;
@@ -31,7 +32,6 @@ import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.net.ssl.HostnameVerifier;
 import okhttp3.Cache;
 import okhttp3.Call;
 import okhttp3.Callback;
@@ -74,6 +74,9 @@ import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
+import org.junit.runners.Parameterized.Parameters;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
@@ -84,30 +87,58 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;
+import static org.junit.Assume.assumeTrue;
 
 /** Test how SPDY interacts with HTTP/2 features. */
+@RunWith(Parameterized.class)
 public final class HttpOverHttp2Test {
   private static final Logger http2Logger = Logger.getLogger(Http2.class.getName());
+  private static final SslClient sslClient = SslClient.localhost();
+
+  @Parameters(name = "{0}")
+  public static Collection<Protocol> data() {
+    return Arrays.asList(Protocol.H2C, Protocol.HTTP_2);
+  }
 
   @Rule public final TemporaryFolder tempDir = new TemporaryFolder();
   @Rule public final MockWebServer server = new MockWebServer();
 
-  private SslClient sslClient = SslClient.localhost();
-  private HostnameVerifier hostnameVerifier = new RecordingHostnameVerifier();
   private OkHttpClient client;
   private Cache cache;
   private TestLogHandler http2Handler = new TestLogHandler();
   private Level previousLevel;
+  private String scheme;
+  private Protocol protocol;
 
-  @Before public void setUp() throws Exception {
-    server.useHttps(sslClient.socketFactory, false);
-    cache = new Cache(tempDir.getRoot(), Integer.MAX_VALUE);
-    client = defaultClient().newBuilder()
+  public HttpOverHttp2Test(Protocol protocol) {
+    this.client = protocol == Protocol.HTTP_2 ? buildHttp2Client() : buildH2cClient();
+    this.scheme = protocol == Protocol.HTTP_2 ? "https" : "http";
+    this.protocol = protocol;
+  }
+
+  private static OkHttpClient buildH2cClient() {
+    return defaultClient().newBuilder()
+        .protocols(Arrays.asList(Protocol.H2C))
+        .build();
+  }
+
+  private static OkHttpClient buildHttp2Client() {
+    return defaultClient().newBuilder()
         .protocols(Arrays.asList(Protocol.HTTP_2, Protocol.HTTP_1_1))
         .dns(new SingleInetAddressDns())
         .sslSocketFactory(sslClient.socketFactory, sslClient.trustManager)
-        .hostnameVerifier(hostnameVerifier)
+        .hostnameVerifier(new RecordingHostnameVerifier())
         .build();
+  }
+
+  @Before public void setUp() throws Exception {
+    if (protocol == Protocol.H2C) {
+      server.setProtocols(Arrays.asList(Protocol.H2C));
+    } else {
+      server.useHttps(sslClient.socketFactory, false);
+    }
+
+    cache = new Cache(tempDir.getRoot(), Integer.MAX_VALUE);
 
     http2Logger.addHandler(http2Handler);
     previousLevel = http2Logger.getLevel();
@@ -118,6 +149,8 @@ public final class HttpOverHttp2Test {
     Authenticator.setDefault(null);
     http2Logger.removeHandler(http2Handler);
     http2Logger.setLevel(previousLevel);
+
+    client.connectionPool().evictAll();
   }
 
   @Test public void get() throws Exception {
@@ -136,7 +169,7 @@ public final class HttpOverHttp2Test {
 
     RecordedRequest request = server.takeRequest();
     assertEquals("GET /foo HTTP/1.1", request.getRequestLine());
-    assertEquals("https", request.getHeader(":scheme"));
+    assertEquals(scheme, request.getHeader(":scheme"));
     assertEquals(server.getHostName() + ":" + server.getPort(), request.getHeader(":authority"));
   }
 
@@ -851,7 +884,7 @@ public final class HttpOverHttp2Test {
 
     RecordedRequest request = server.takeRequest();
     assertEquals("GET /foo HTTP/1.1", request.getRequestLine());
-    assertEquals("https", request.getHeader(":scheme"));
+    assertEquals(scheme, request.getHeader(":scheme"));
     assertEquals(server.getHostName() + ":" + server.getPort(), request.getHeader(":authority"));
 
     RecordedRequest pushedRequest = server.takeRequest();
@@ -877,7 +910,7 @@ public final class HttpOverHttp2Test {
 
     RecordedRequest request = server.takeRequest();
     assertEquals("GET /foo HTTP/1.1", request.getRequestLine());
-    assertEquals("https", request.getHeader(":scheme"));
+    assertEquals(scheme, request.getHeader(":scheme"));
     assertEquals(server.getHostName() + ":" + server.getPort(), request.getHeader(":authority"));
 
     RecordedRequest pushedRequest = server.takeRequest();
@@ -896,7 +929,7 @@ public final class HttpOverHttp2Test {
     Response response = call.execute();
     assertEquals("ABC", response.body().string());
 
-    assertEquals(Protocol.HTTP_2, response.protocol());
+    assertEquals(protocol, response.protocol());
 
     List<String> logs = http2Handler.takeAll();
 
@@ -914,7 +947,7 @@ public final class HttpOverHttp2Test {
     Response response = call.execute();
     assertEquals("ABC", response.body().string());
 
-    assertEquals(Protocol.HTTP_2, response.protocol());
+    assertEquals(protocol, response.protocol());
 
     List<String> logs = http2Handler.takeAll();
 
@@ -939,7 +972,7 @@ public final class HttpOverHttp2Test {
     Response response = call.execute();
     assertEquals("ABC", response.body().string());
 
-    assertEquals(Protocol.HTTP_2, response.protocol());
+    assertEquals(protocol, response.protocol());
 
     // Confirm a single ping was sent and received, and its reply was sent and received.
     List<String> logs = http2Handler.takeAll();
@@ -1147,6 +1180,8 @@ public final class HttpOverHttp2Test {
    * <p>This test uses proxy tunnels to get a hook while a connection is being established.
    */
   @Test public void concurrentHttp2ConnectionsDeduplicated() throws Exception {
+    assumeTrue(protocol == Protocol.HTTP_2);
+
     server.useHttps(sslClient.socketFactory, true);
 
     // Force a fresh connection pool for the test.

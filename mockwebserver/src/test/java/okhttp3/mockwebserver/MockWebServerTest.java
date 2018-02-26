@@ -35,6 +35,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import okhttp3.Headers;
 import okhttp3.HttpUrl;
+import okhttp3.Protocol;
 import okhttp3.internal.Util;
 import org.junit.After;
 import org.junit.Rule;
@@ -455,5 +456,31 @@ public final class MockWebServerTest {
 
     RecordedRequest request = server.takeRequest();
     assertEquals("request", request.getBody().readUtf8());
+  }
+
+  @Test public void testH2CServerFallback() {
+    try {
+      server.setProtocols(Arrays.asList(Protocol.H2C, Protocol.HTTP_1_1));
+      fail("When H2C is specified, no other protocol can be specified");
+    } catch (IllegalArgumentException expected) {
+      assertEquals("protocols containing h2c cannot use other protocols: [h2c, http/1.1]", expected.getMessage());
+    }
+  }
+
+  @Test public void testH2CServerDuplicates() {
+    try {
+      // Treating this use case as user error
+      server.setProtocols(Arrays.asList(Protocol.H2C, Protocol.H2C));
+      fail("When H2C is specified, no other protocol can be specified");
+    } catch (IllegalArgumentException expected) {
+      assertEquals("protocols containing h2c cannot use other protocols: [h2c, h2c]", expected.getMessage());
+    }
+  }
+
+  @Test public void testMockWebServerH2CProtocol() {
+    server.setProtocols(Arrays.asList(Protocol.H2C));
+
+    assertEquals(1, server.protocols().size());
+    assertEquals(Protocol.H2C, server.protocols().get(0));
   }
 }
