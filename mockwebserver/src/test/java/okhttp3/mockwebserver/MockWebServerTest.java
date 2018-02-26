@@ -462,8 +462,8 @@ public final class MockWebServerTest {
     try {
       server.setProtocols(Arrays.asList(Protocol.H2C, Protocol.HTTP_1_1));
       fail("When H2C is specified, no other protocol can be specified");
-    } catch (final IllegalArgumentException e) {
-      assertEquals("protocols containing h2c cannot use other protocols: [h2c, http/1.1]", e.getMessage());
+    } catch (IllegalArgumentException expected) {
+      assertEquals("protocols containing h2c cannot use other protocols: [h2c, http/1.1]", expected.getMessage());
     }
   }
 
@@ -472,8 +472,8 @@ public final class MockWebServerTest {
       // Treating this use case as user error
       server.setProtocols(Arrays.asList(Protocol.H2C, Protocol.H2C));
       fail("When H2C is specified, no other protocol can be specified");
-    } catch (final IllegalArgumentException e) {
-      assertEquals("protocols containing h2c cannot use other protocols: [h2c, h2c]", e.getMessage());
+    } catch (IllegalArgumentException expected) {
+      assertEquals("protocols containing h2c cannot use other protocols: [h2c, h2c]", expected.getMessage());
     }
   }
 
