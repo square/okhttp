@@ -74,7 +74,7 @@ License
     limitations under the License.
 
 
- [1]: http://square.github.io/okhttp
+ [1]: https://square.github.io/okhttp
  [2]: https://github.com/square/okhttp/wiki
  [3]: https://search.maven.org/remote_content?g=com.squareup.okhttp3&a=okhttp&v=LATEST
  [4]: https://search.maven.org/remote_content?g=com.squareup.okhttp3&a=mockwebserver&v=LATEST
