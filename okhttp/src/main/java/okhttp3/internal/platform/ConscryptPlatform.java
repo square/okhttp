@@ -103,10 +103,16 @@ public class ConscryptPlatform extends Platform {
         return null;
       }
 
-      Conscrypt.setUseEngineSocketByDefault(true);
       return new ConscryptPlatform();
     } catch (ClassNotFoundException e) {
       return null;
+    }
+  }
+
+  @Override
+  public void configureSslSocketFactory(SSLSocketFactory socketFactory) {
+    if (Conscrypt.isConscrypt(socketFactory)) {
+      Conscrypt.setUseEngineSocket(socketFactory, true);
     }
   }
 }

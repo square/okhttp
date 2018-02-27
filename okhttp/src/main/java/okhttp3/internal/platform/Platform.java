@@ -275,4 +275,7 @@ public class Platform {
   public TrustRootIndex buildTrustRootIndex(X509TrustManager trustManager) {
     return new BasicTrustRootIndex(trustManager.getAcceptedIssuers());
   }
+
+  public void configureSslSocketFactory(SSLSocketFactory socketFactory) {
+  }
 }

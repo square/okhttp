@@ -256,6 +256,10 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
       this.certificateChainCleaner = CertificateChainCleaner.get(trustManager);
     }
 
+    if (sslSocketFactory != null) {
+      Platform.get().configureSslSocketFactory(sslSocketFactory);
+    }
+
     this.hostnameVerifier = builder.hostnameVerifier;
     this.certificatePinner = builder.certificatePinner.withCertificateChainCleaner(
         certificateChainCleaner);
