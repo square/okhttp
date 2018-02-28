@@ -857,27 +857,23 @@ public final class Http2Connection implements Closeable {
 
   void pushHeadersLater(final int streamId, final List<Header> requestHeaders,
       final boolean inFinished) {
-    synchronized (this) {
-      if (!shutdown) {
-        try {
-          pushExecutorExecute(new NamedRunnable("OkHttp %s Push Headers[%s]", hostname, streamId) {
-            @Override public void execute() {
-              boolean cancel = pushObserver.onHeaders(streamId, requestHeaders, inFinished);
-              try {
-                if (cancel) writer.rstStream(streamId, ErrorCode.CANCEL);
-                if (cancel || inFinished) {
-                  synchronized (Http2Connection.this) {
-                    currentPushRequests.remove(streamId);
-                  }
-                }
-              } catch (IOException ignored) {
+    try {
+      pushExecutorExecute(new NamedRunnable("OkHttp %s Push Headers[%s]", hostname, streamId) {
+        @Override public void execute() {
+          boolean cancel = pushObserver.onHeaders(streamId, requestHeaders, inFinished);
+          try {
+            if (cancel) writer.rstStream(streamId, ErrorCode.CANCEL);
+            if (cancel || inFinished) {
+              synchronized (Http2Connection.this) {
+                currentPushRequests.remove(streamId);
               }
             }
-          });
-        } catch (RejectedExecutionException ignored) {
-          // This connection has been closed.
+          } catch (IOException ignored) {
+          }
         }
-      }
+      });
+    } catch (RejectedExecutionException ignored) {
+      // This connection has been closed.
     }
   }
 
