@@ -11,12 +11,12 @@ Download [the latest JAR][3] or grab via Maven:
 <dependency>
   <groupId>com.squareup.okhttp3</groupId>
   <artifactId>okhttp</artifactId>
-  <version>3.9.1</version>
+  <version>3.10.0</version>
 </dependency>
 ```
 or Gradle:
 ```groovy
-implementation 'com.squareup.okhttp3:okhttp:3.9.1'
+implementation 'com.squareup.okhttp3:okhttp:3.10.0'
 ```
 
 Snapshots of the development version are available in [Sonatype's `snapshots` repository][snap].
@@ -36,13 +36,13 @@ Download [the latest JAR][4] or grab via Maven:
 <dependency>
   <groupId>com.squareup.okhttp3</groupId>
   <artifactId>mockwebserver</artifactId>
-  <version>3.9.1</version>
+  <version>3.10.0</version>
   <scope>test</scope>
 </dependency>
 ```
 or Gradle:
 ```groovy
-testImplementation 'com.squareup.okhttp3:mockwebserver:3.9.1'
+testImplementation 'com.squareup.okhttp3:mockwebserver:3.10.0'
 ```
 
 ProGuard
@@ -54,6 +54,7 @@ If you are using ProGuard you might need to add the following options:
 -dontwarn okhttp3.**
 -dontwarn okio.**
 -dontwarn javax.annotation.**
+-dontwarn org.conscrypt.**
 # A resource is loaded with a relative path so the package of this class must be preserved.
 -keepnames class okhttp3.internal.publicsuffix.PublicSuffixDatabase
 ```
