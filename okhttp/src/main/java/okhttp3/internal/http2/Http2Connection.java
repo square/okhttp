@@ -914,11 +914,9 @@ public final class Http2Connection implements Closeable {
     });
   }
 
-  private void pushExecutorExecute(NamedRunnable namedRunnable) {
-    synchronized (this) {
-      if (!isShutdown()) {
-        pushExecutor.execute(namedRunnable);
-      }
+  private synchronized void pushExecutorExecute(NamedRunnable namedRunnable) {
+    if (!isShutdown()) {
+      pushExecutor.execute(namedRunnable);
     }
   }
 
