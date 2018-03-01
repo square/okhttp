@@ -836,7 +836,7 @@ public final class Http2Connection implements Closeable {
       currentPushRequests.add(streamId);
     }
     try {
-      pushExecutor.execute(new NamedRunnable("OkHttp %s Push Request[%s]", hostname, streamId) {
+      pushExecutorExecute(new NamedRunnable("OkHttp %s Push Request[%s]", hostname, streamId) {
         @Override public void execute() {
           boolean cancel = pushObserver.onRequest(streamId, requestHeaders);
           try {
@@ -858,7 +858,7 @@ public final class Http2Connection implements Closeable {
   void pushHeadersLater(final int streamId, final List<Header> requestHeaders,
       final boolean inFinished) {
     try {
-      pushExecutor.execute(new NamedRunnable("OkHttp %s Push Headers[%s]", hostname, streamId) {
+      pushExecutorExecute(new NamedRunnable("OkHttp %s Push Headers[%s]", hostname, streamId) {
         @Override public void execute() {
           boolean cancel = pushObserver.onHeaders(streamId, requestHeaders, inFinished);
           try {
@@ -887,7 +887,7 @@ public final class Http2Connection implements Closeable {
     source.require(byteCount); // Eagerly read the frame before firing client thread.
     source.read(buffer, byteCount);
     if (buffer.size() != byteCount) throw new IOException(buffer.size() + " != " + byteCount);
-    pushExecutor.execute(new NamedRunnable("OkHttp %s Push Data[%s]", hostname, streamId) {
+    pushExecutorExecute(new NamedRunnable("OkHttp %s Push Data[%s]", hostname, streamId) {
       @Override public void execute() {
         try {
           boolean cancel = pushObserver.onData(streamId, buffer, byteCount, inFinished);
@@ -904,7 +904,7 @@ public final class Http2Connection implements Closeable {
   }
 
   void pushResetLater(final int streamId, final ErrorCode errorCode) {
-    pushExecutor.execute(new NamedRunnable("OkHttp %s Push Reset[%s]", hostname, streamId) {
+    pushExecutorExecute(new NamedRunnable("OkHttp %s Push Reset[%s]", hostname, streamId) {
       @Override public void execute() {
         pushObserver.onReset(streamId, errorCode);
         synchronized (Http2Connection.this) {
@@ -912,6 +912,12 @@ public final class Http2Connection implements Closeable {
         }
       }
     });
+  }
+
+  private synchronized void pushExecutorExecute(NamedRunnable namedRunnable) {
+    if (!isShutdown()) {
+      pushExecutor.execute(namedRunnable);
+    }
   }
 
   /** Listener of streams and settings initiated by the peer. */
