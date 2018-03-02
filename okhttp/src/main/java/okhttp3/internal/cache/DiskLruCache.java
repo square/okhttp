@@ -753,6 +753,8 @@ public final class DiskLruCache implements Closeable, Flushable {
 
           while (delegate.hasNext()) {
             Entry entry = delegate.next();
+            if (entry == null || !entry.readable) continue; // Entry during edit
+
             Snapshot snapshot = entry.snapshot();
             if (snapshot == null) continue; // Evicted since we copied the entries.
             nextSnapshot = snapshot;
