@@ -40,7 +40,7 @@ import static okhttp3.internal.Util.nonEmptyIntersection;
  */
 public final class ConnectionSpec {
 
-  // Most secure but generally supported list. */
+  // Most secure but generally supported list.
   private static final CipherSuite[] RESTRICTED_CIPHER_SUITES = new CipherSuite[] {
       CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
       CipherSuite.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
