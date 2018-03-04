@@ -39,8 +39,6 @@ import java.util.TreeMap;
  *
  * <p>See <a href="https://github.com/google/conscrypt/blob/master/common/src/main/java/org/conscrypt/NativeCrypto.java">NativeCrypto.java</a>
  * from conscrypt, which lists the cipher suites supported by Conscrypt.
- *
- * https://docs.oracle.com/javase/9/security/oracleproviders.htm
  */
 public final class CipherSuite {
   /**
