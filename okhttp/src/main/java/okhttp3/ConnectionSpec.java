@@ -40,15 +40,14 @@ import static okhttp3.internal.Util.nonEmptyIntersection;
  */
 public final class ConnectionSpec {
 
-  // Most secure but supported list as defined by Google Cloud Platform.
-  // https://cloud.google.com/compute/docs/load-balancing/ssl-policies#profilefeaturesupport */
+  // Most secure but generally supported list. */
   private static final CipherSuite[] RESTRICTED_CIPHER_SUITES = new CipherSuite[] {
-      CipherSuite.TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256,
-      CipherSuite.TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256,
       CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
       CipherSuite.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
       CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,
-      CipherSuite.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
+      CipherSuite.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
+      CipherSuite.TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256,
+      CipherSuite.TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256
   };
 
   // This is nearly equal to the cipher suites supported in Chrome 51, current as of 2016-05-25.
