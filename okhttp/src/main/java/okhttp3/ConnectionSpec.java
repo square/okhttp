@@ -40,6 +40,16 @@ import static okhttp3.internal.Util.nonEmptyIntersection;
  */
 public final class ConnectionSpec {
 
+  /** https://cloud.google.com/compute/docs/load-balancing/ssl-policies#profilefeaturesupport */
+  private static final CipherSuite[] RESTRICTED_CIPHER_SUITES = new CipherSuite[] {
+      CipherSuite.TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256,
+      CipherSuite.TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256,
+      CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
+      CipherSuite.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
+      CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,
+      CipherSuite.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
+  };
+
   // This is nearly equal to the cipher suites supported in Chrome 51, current as of 2016-05-25.
   // All of these suites are available on Android 7.0; earlier releases support a subset of these
   // suites. https://github.com/square/okhttp/issues/1972
@@ -62,6 +72,13 @@ public final class ConnectionSpec {
       CipherSuite.TLS_RSA_WITH_AES_256_CBC_SHA,
       CipherSuite.TLS_RSA_WITH_3DES_EDE_CBC_SHA,
   };
+
+  /** A modern TLS connection with extensions like SNI and ALPN available. */
+  public static final ConnectionSpec RESTRICTED_TLS = new Builder(true)
+      .cipherSuites(RESTRICTED_CIPHER_SUITES)
+      .tlsVersions(TlsVersion.TLS_1_3, TlsVersion.TLS_1_2)
+      .supportsTlsExtensions(true)
+      .build();
 
   /** A modern TLS connection with extensions like SNI and ALPN available. */
   public static final ConnectionSpec MODERN_TLS = new Builder(true)
