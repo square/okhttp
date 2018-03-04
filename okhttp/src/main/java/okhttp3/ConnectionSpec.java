@@ -74,7 +74,7 @@ public final class ConnectionSpec {
       CipherSuite.TLS_RSA_WITH_3DES_EDE_CBC_SHA,
   };
 
-  /** A modern TLS connection with extensions like SNI and ALPN available. */
+  /** A secure TLS connection assuming a modern client platform and server. */
   public static final ConnectionSpec RESTRICTED_TLS = new Builder(true)
       .cipherSuites(RESTRICTED_CIPHER_SUITES)
       .tlsVersions(TlsVersion.TLS_1_3, TlsVersion.TLS_1_2)
