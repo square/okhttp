@@ -15,7 +15,10 @@
  */
 package okhttp3;
 
+import java.io.BufferedInputStream;
+import java.io.ByteArrayInputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.net.URI;
@@ -30,6 +33,9 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.fail;
 
 public final class RequestTest {
+
+  private static final MediaType CONTENTTYPE_TEXT_PLAIN = MediaType.parse("text/plain");
+
   @Test public void string() throws Exception {
     MediaType contentType = MediaType.parse("text/plain; charset=utf-8");
     RequestBody body = RequestBody.create(contentType, "abc".getBytes(Util.UTF_8));
@@ -85,6 +91,38 @@ public final class RequestTest {
     assertEquals(3, body.contentLength());
     assertEquals("616263", bodyToHex(body));
     assertEquals("Retransmit body", "616263", bodyToHex(body));
+  }
+
+  @Test public void inputStreamFromFile() throws Exception {
+    File file = createFile("abc");
+    try (BufferedInputStream inputStream = new BufferedInputStream(new FileInputStream(file))) {
+      RequestBody body = RequestBody.create(CONTENTTYPE_TEXT_PLAIN, inputStream);
+      checkRequestBodyFeatures(body, CONTENTTYPE_TEXT_PLAIN, 3, "616263");
+    }
+  }
+
+  @Test public void inputStreamFromByteArray() throws Exception {
+    byte[] bytes = "abc".getBytes(Util.UTF_8);
+    try (BufferedInputStream inputStream = new BufferedInputStream(new ByteArrayInputStream(bytes))) {
+      RequestBody body = RequestBody.create(CONTENTTYPE_TEXT_PLAIN, inputStream);
+      checkRequestBodyFeatures(body, CONTENTTYPE_TEXT_PLAIN, bytes.length, "616263");
+    }
+  }
+
+  private File createFile(String content) throws IOException {
+    File file = File.createTempFile("RequestTest", "tmp");
+    FileWriter writer = new FileWriter(file);
+    writer.write(content);
+    writer.close();
+
+    return file;
+  }
+
+  private void checkRequestBodyFeatures(RequestBody requestBody, MediaType expectedContentType, int expectedLength, String expectedBody) throws IOException {
+    assertEquals(expectedContentType, requestBody.contentType());
+    assertEquals(expectedLength, requestBody.contentLength());
+    assertEquals(expectedBody, bodyToHex(requestBody));
+    assertEquals("Retransmit body", expectedBody, bodyToHex(requestBody));
   }
 
   /** Common verbs used for apis such as GitHub, AWS, and Google Cloud. */
