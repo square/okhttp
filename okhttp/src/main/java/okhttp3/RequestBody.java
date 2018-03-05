@@ -15,6 +15,7 @@
  */
 package okhttp3;
 
+import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
@@ -120,6 +121,40 @@ public abstract class RequestBody {
           sink.writeAll(source);
         } finally {
           Util.closeQuietly(source);
+        }
+      }
+    };
+  }
+
+  /**
+   * Returns a new request body that transmits the content of an {@code inputStream}.
+   * Note that {@code RequestBody} is not responsible for closing the {@code inputStream}.
+   */
+  public static RequestBody create(final MediaType contentType,
+                                   final BufferedInputStream inputStream) {
+    if (inputStream == null) throw new NullPointerException("inputStream == null");
+
+    return new RequestBody() {
+      @Override public MediaType contentType() {
+        return contentType;
+      }
+
+      @Override public long contentLength() {
+        try {
+          return inputStream.available();
+        } catch (IOException e) {
+          //a IOException is sent if the input stream has been closed, i.e. no content to read.
+          return 0;
+        }
+      }
+
+      @Override public void writeTo(BufferedSink sink) throws IOException {
+        try {
+          inputStream.mark(0);
+          Source source = Okio.source(inputStream);
+          sink.writeAll(source);
+        } finally {
+          inputStream.reset();
         }
       }
     };
