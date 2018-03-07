@@ -341,7 +341,7 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
     return cookieJar;
   }
 
-  public Cache cache() {
+  public @Nullable Cache cache() {
     return cache;
   }
 
