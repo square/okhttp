@@ -312,14 +312,6 @@ public final class Http2Connection implements Closeable {
     }
   }
 
-  /**
-   * {@code delta} will be negative if a settings frame initial window is smaller than the last.
-   */
-  void addBytesToWriteWindow(long delta) {
-    bytesLeftInWriteWindow += delta;
-    if (delta > 0) Http2Connection.this.notifyAll();
-  }
-
   void writeSynResetLater(final int streamId, final ErrorCode errorCode) {
     try {
       writerExecutor.execute(new NamedRunnable("OkHttp %s stream %d", hostname, streamId) {
@@ -709,7 +701,6 @@ public final class Http2Connection implements Closeable {
         if (peerInitialWindowSize != -1 && peerInitialWindowSize != priorWriteWindowSize) {
           delta = peerInitialWindowSize - priorWriteWindowSize;
           if (!receivedInitialPeerSettings) {
-            addBytesToWriteWindow(delta);
             receivedInitialPeerSettings = true;
           }
           if (!streams.isEmpty()) {
