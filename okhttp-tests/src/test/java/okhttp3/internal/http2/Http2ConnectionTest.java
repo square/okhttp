@@ -108,7 +108,6 @@ public final class Http2ConnectionTest {
     Http2Stream stream = connection.newStream(headerEntries("a", "android"), false);
 
     assertEquals(3368, connection.peerSettings.getInitialWindowSize());
-    assertEquals(1684, connection.bytesLeftInWriteWindow); // initial wasn't affected.
     // New Stream is has the most recent initial window size.
     assertEquals(3368, stream.bytesLeftInWriteWindow);
   }
@@ -1234,7 +1233,6 @@ public final class Http2ConnectionTest {
     peer.sendFrame().ping(true, 1, 0);
     peer.acceptFrame(); // SYN_STREAM
     peer.sendFrame().synReply(false, 3, headerEntries("a", "android"));
-    peer.sendFrame().windowUpdate(3, 5);
     peer.acceptFrame(); // PING
     peer.sendFrame().ping(true, 3, 0);
     peer.acceptFrame(); // DATA
