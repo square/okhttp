@@ -84,6 +84,7 @@ import static okhttp3.TestUtil.defaultClient;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;
@@ -298,6 +299,40 @@ public final class HttpOverHttp2Test {
 
     response1.close();
     response2.close();
+  }
+
+  @Test public void connectionWindowUpdateAfterCanceling() throws Exception {
+    server.enqueue(new MockResponse()
+        .setBody(new Buffer().write(new byte[Http2Connection.OKHTTP_CLIENT_WINDOW_SIZE + 1])));
+    server.enqueue(new MockResponse()
+        .setBody("abc"));
+
+    Call call1 = client.newCall(new Request.Builder()
+        .url(server.url("/"))
+        .build());
+    Response response1 = call1.execute();
+
+    // Wait until the server has completely filled the stream and connection flow-control windows.
+    int expectedFrameCount = Http2Connection.OKHTTP_CLIENT_WINDOW_SIZE / 16384;
+    int dataFrameCount = 0;
+    while (dataFrameCount < expectedFrameCount) {
+      String log = http2Handler.take();
+      if (log.equals("FINE: << 0x00000003 16384 DATA          ")) {
+        dataFrameCount++;
+      }
+    }
+
+    // Cancel the call and discard what we've buffered for the response body. This should free up
+    // the connection flow-control window so new requests can proceed.
+    call1.cancel();
+    assertFalse("Call should not have completed successfully.",
+        Util.discard(response1.body().source(), 1, TimeUnit.SECONDS));
+
+    Call call2 = client.newCall(new Request.Builder()
+        .url(server.url("/"))
+        .build());
+    Response response2 = call2.execute();
+    assertEquals("abc", response2.body().string());
   }
 
   /** https://github.com/square/okhttp/issues/373 */
