@@ -706,6 +706,24 @@ public final class HttpOverHttp2Test {
     assertEquals(1, server.takeRequest().getSequenceNumber()); // Reused connection.
   }
 
+  @Test public void recoverFromCancelReusesConnection() throws Exception {
+    server.enqueue(new MockResponse()
+            .setSocketPolicy(SocketPolicy.RESET_STREAM_AT_START)
+            .setHttp2ErrorCode(ErrorCode.CANCEL.httpCode));
+    server.enqueue(new MockResponse()
+            .setBody("abc"));
+
+    Call call = client.newCall(new Request.Builder()
+            .url(server.url("/"))
+            .build());
+    Response response = call.execute();
+    assertEquals("abc", response.body().string());
+
+    assertEquals(0, server.takeRequest().getSequenceNumber()); // New connection.
+    assertEquals(1, server.takeRequest().getSequenceNumber()); // Reused connection.
+  }
+
+
   @Test public void recoverFromOneInternalErrorRequiresNewConnection() throws Exception {
     server.enqueue(new MockResponse()
         .setSocketPolicy(SocketPolicy.RESET_STREAM_AT_START)
@@ -752,6 +770,31 @@ public final class HttpOverHttp2Test {
     assertEquals(0, server.takeRequest().getSequenceNumber()); // New connection.
   }
 
+  @Test public void recoverFromMultipleCancelReusesConnection() throws Exception {
+    server.enqueue(new MockResponse()
+            .setSocketPolicy(SocketPolicy.RESET_STREAM_AT_START)
+            .setHttp2ErrorCode(ErrorCode.CANCEL.httpCode));
+    server.enqueue(new MockResponse()
+            .setSocketPolicy(SocketPolicy.RESET_STREAM_AT_START)
+            .setHttp2ErrorCode(ErrorCode.CANCEL.httpCode));
+    server.enqueue(new MockResponse()
+            .setBody("abc"));
+
+    client = client.newBuilder()
+            .dns(new DoubleInetAddressDns())
+            .build();
+
+    Call call = client.newCall(new Request.Builder()
+            .url(server.url("/"))
+            .build());
+    Response response = call.execute();
+    assertEquals("abc", response.body().string());
+
+    assertEquals(0, server.takeRequest().getSequenceNumber()); // New connection.
+    assertEquals(1, server.takeRequest().getSequenceNumber()); // Reused connection.
+    assertEquals(2, server.takeRequest().getSequenceNumber()); // Reused connection.
+  }
+
   @Test public void noRecoveryFromRefusedStreamWithRetryDisabled() throws Exception {
     noRecoveryFromErrorWithRetryDisabled(ErrorCode.REFUSED_STREAM);
   }
@@ -787,7 +830,7 @@ public final class HttpOverHttp2Test {
         .setResponseCode(401));
     server.enqueue(new MockResponse()
         .setSocketPolicy(SocketPolicy.RESET_STREAM_AT_START)
-        .setHttp2ErrorCode(ErrorCode.CANCEL.httpCode));
+        .setHttp2ErrorCode(ErrorCode.INTERNAL_ERROR.httpCode));
     server.enqueue(new MockResponse()
         .setBody("DEF"));
     server.enqueue(new MockResponse()
