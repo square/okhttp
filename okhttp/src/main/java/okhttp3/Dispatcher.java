@@ -42,7 +42,7 @@ public final class Dispatcher {
   private @Nullable Runnable idleCallback;
 
   /** Executes calls. Created lazily. */
-  private @Nullable ExecutorService executorService;
+  private @Nullable volatile ExecutorService executorService;
 
   /** Ready async calls in the order they'll be run. */
   private final Deque<AsyncCall> readyAsyncCalls = new ArrayDeque<>();
@@ -60,10 +60,14 @@ public final class Dispatcher {
   public Dispatcher() {
   }
 
-  public synchronized ExecutorService executorService() {
+  public ExecutorService executorService() {
     if (executorService == null) {
-      executorService = new ThreadPoolExecutor(0, Integer.MAX_VALUE, 60, TimeUnit.SECONDS,
-          new SynchronousQueue<Runnable>(), Util.threadFactory("OkHttp Dispatcher", false));
+      synchronized (this){
+        if (executorService == null){
+          executorService = new ThreadPoolExecutor(0, Integer.MAX_VALUE, 60, TimeUnit.SECONDS,
+              new SynchronousQueue<Runnable>(), Util.threadFactory("OkHttp Dispatcher", false));
+        }
+      }
     }
     return executorService;
   }
