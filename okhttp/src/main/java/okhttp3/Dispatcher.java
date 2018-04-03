@@ -62,8 +62,8 @@ public final class Dispatcher {
 
   public ExecutorService executorService() {
     if (executorService == null) {
-      synchronized (this){
-        if (executorService == null){
+      synchronized (this) {
+        if (executorService == null) {
           executorService = new ThreadPoolExecutor(0, Integer.MAX_VALUE, 60, TimeUnit.SECONDS,
               new SynchronousQueue<Runnable>(), Util.threadFactory("OkHttp Dispatcher", false));
         }
