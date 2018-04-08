@@ -2031,11 +2031,27 @@ public final class CallTest {
 
   @Test public void cancelImmediatelyAfterEnqueue() throws Exception {
     server.enqueue(new MockResponse());
+    final CountDownLatch latch = new CountDownLatch(1);
+    client = client.newBuilder()
+        .addNetworkInterceptor(new Interceptor() {
+          @Override public Response intercept(Chain chain) throws IOException {
+            try {
+              latch.await();
+            } catch (InterruptedException e) {
+              throw new AssertionError(e);
+            }
+            return chain.proceed(chain.request());
+          }
+        })
+        .build();
+
     Call call = client.newCall(new Request.Builder()
         .url(server.url("/a"))
         .build());
     call.enqueue(callback);
     call.cancel();
+    latch.countDown();
+
     callback.await(server.url("/a")).assertFailure("Canceled", "Socket closed");
   }
 
