@@ -71,7 +71,7 @@ public final class Http2Connection implements Closeable {
   // operations must synchronize on 'this' last. This ensures that we never
   // wait for a blocking operation while holding 'this'.
 
-  private static final int OKHTTP_CLIENT_WINDOW_SIZE = 16 * 1024 * 1024;
+  static final int OKHTTP_CLIENT_WINDOW_SIZE = 16 * 1024 * 1024;
 
   /**
    * Shared executor to send notifications of incoming streams. This executor requires multiple
