@@ -155,7 +155,13 @@ public final class RetryAndFollowUpInterceptor implements Interceptor {
             .build();
       }
 
-      Request followUp = followUpRequest(response, streamAllocation.route());
+      Request followUp = null;
+      try {
+        followUp = followUpRequest(response, streamAllocation.route());
+      } catch (IOException e) {
+          streamAllocation.release();
+          throw e;
+      }
 
       if (followUp == null) {
         if (!forWebSocket) {
