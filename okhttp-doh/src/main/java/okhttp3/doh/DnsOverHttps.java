@@ -1,9 +1,23 @@
+/*
+ * Copyright (C) 2014 Square, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package okhttp3.doh;
 
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 import okhttp3.Dns;
@@ -30,6 +44,8 @@ public class DnsOverHttps implements Dns {
 
     if (results == null) {
       try {
+        //System.out.println("Host: " + hostname);
+
         String query = DnsRecordCodec.encodeQuery(hostname);
 
         Request request = buildRequest(query);
@@ -60,6 +76,10 @@ public class DnsOverHttps implements Dns {
   }
 
   private Request buildRequest(String query) {
-    return new Request.Builder().url("https://dns.google.com/experimental?ct&dns=" + query).build();
+    String url = urlPrefix + query;
+
+    //System.out.println("URL: " + url);
+
+    return new Request.Builder().url(url).build();
   }
 }
