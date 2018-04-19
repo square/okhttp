@@ -51,8 +51,10 @@ public class DnsOverHttps implements Dns {
         Request request = buildRequest(query);
         Response response = client.newCall(request).execute();
 
+        // TODO warn on http/1.1?
+
         try {
-          if (response.code() != 200) {
+          if (!response.isSuccessful()) {
             throw new IOException("response: " + response.code() + " " + response.message());
           }
 
@@ -80,6 +82,8 @@ public class DnsOverHttps implements Dns {
 
     //System.out.println("URL: " + url);
 
-    return new Request.Builder().url(url).build();
+    // TODO implement caching
+
+    return new Request.Builder().url(url).header("Accept", "application/dns-message").build();
   }
 }

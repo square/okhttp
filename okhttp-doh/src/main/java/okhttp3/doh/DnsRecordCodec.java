@@ -61,6 +61,8 @@ public class DnsRecordCodec {
 
     //System.out.println("Response: " + response);
 
+    // TODO check for SERVFAIL or NXDOMAIN
+
     int recordCount = response.count(DnsSection.ANSWER);
     List<InetAddress> result = new ArrayList<>(recordCount);
     for (int i = 0; i < recordCount; i++) {
