@@ -35,6 +35,7 @@ import io.netty.handler.codec.dns.DnsResponseCode;
 import io.netty.handler.codec.dns.DnsSection;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.List;
 import okio.ByteString;
@@ -46,21 +47,34 @@ public class DnsRecordCodec {
   public static String encodeQuery(String host, boolean includeIPv6) throws Exception {
     DatagramDnsQuery query = new DatagramDnsQuery(DUMMY, DUMMY, 0);
     query.setRecursionDesired(true);
-    query.addRecord(DnsSection.QUESTION, 0, new DefaultDnsQuestion(host, DnsRecordType.A));
+    int index = 0;
+    query.addRecord(DnsSection.QUESTION, index++, new DefaultDnsQuestion(host, DnsRecordType.A));
     if (includeIPv6) {
-      query.addRecord(DnsSection.QUESTION, 1, new DefaultDnsQuestion(host, DnsRecordType.AAAA));
+      query.addRecord(DnsSection.QUESTION, index++, new DefaultDnsQuestion(host, DnsRecordType.AAAA));
     }
 
     //System.out.println("Query: " + query);
 
-    return encode(query);
+    String encoded = encode(query);
+
+    //System.out.println("Query: " + encoded);
+
+    return encoded;
   }
 
-  public static List<InetAddress> decodeAnswers(ByteString byteString) throws Exception {
+  public static List<InetAddress> decodeAnswers(String hostname, ByteString byteString) throws Exception {
+    System.out.println("Response: " + byteString.hex());
+
     DnsResponse response = decode(Unpooled.wrappedBuffer(byteString.asByteBuffer()));
 
     //System.out.println("Response: " + response);
 
+    //System.out.println("Code: " + response.code());
+    if (response.code() == DnsResponseCode.NXDOMAIN) {
+      throw new UnknownHostException(hostname + ": NXDOMAIN");
+    } else if (response.code() == DnsResponseCode.SERVFAIL) {
+      throw new UnknownHostException(hostname + ": SERVFAIL");
+    }
     // TODO check for SERVFAIL or NXDOMAIN
 
     int recordCount = response.count(DnsSection.ANSWER);

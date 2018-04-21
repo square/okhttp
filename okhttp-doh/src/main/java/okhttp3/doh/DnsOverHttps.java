@@ -71,7 +71,7 @@ public class DnsOverHttps implements Dns {
 
           //System.out.println("Response: " + responseBytes.hex());
 
-          results = DnsRecordCodec.decodeAnswers(responseBytes);
+          results = DnsRecordCodec.decodeAnswers(hostname, responseBytes);
         } finally {
           response.close();
         }

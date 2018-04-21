@@ -43,6 +43,7 @@ public class TestDohMain {
 
       System.out.println(dns.lookup("google.com"));
       System.out.println(dns.lookup("www.example.com"));
+      //System.out.println(dns.lookup("sdflkhfsdlkjdf.ee"));
 
       OkHttpClient client = bootstrapClient.newBuilder().dns(dns).cache(null).build();
 
