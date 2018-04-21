@@ -46,6 +46,11 @@
       <artifactId>netty-codec-dns</artifactId>
       <version>4.1.15.Final</version>
     </dependency>
+    <dependency>
+      <groupId>org.conscrypt</groupId>
+      <artifactId>conscrypt-openjdk-uber</artifactId>
+      <version>1.1.0</version>
+    </dependency>
   </dependencies>
 
   <build>

@@ -18,8 +18,6 @@ package okhttp3.doh;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
-import io.netty.channel.AddressedEnvelope;
-import io.netty.channel.socket.DatagramPacket;
 import io.netty.handler.codec.CorruptedFrameException;
 import io.netty.handler.codec.dns.DatagramDnsQuery;
 import io.netty.handler.codec.dns.DatagramDnsResponse;
@@ -45,11 +43,13 @@ public class DnsRecordCodec {
   private static final InetSocketAddress DUMMY =
       InetSocketAddress.createUnresolved("localhost", 53);
 
-  public static String encodeQuery(String host) throws Exception {
+  public static String encodeQuery(String host, boolean includeIPv6) throws Exception {
     DatagramDnsQuery query = new DatagramDnsQuery(DUMMY, DUMMY, 0);
     query.setRecursionDesired(true);
     query.addRecord(DnsSection.QUESTION, 0, new DefaultDnsQuestion(host, DnsRecordType.A));
-    query.addRecord(DnsSection.QUESTION, 1, new DefaultDnsQuestion(host, DnsRecordType.AAAA));
+    if (includeIPv6) {
+      query.addRecord(DnsSection.QUESTION, 1, new DefaultDnsQuestion(host, DnsRecordType.AAAA));
+    }
 
     //System.out.println("Query: " + query);
 
@@ -162,12 +162,9 @@ public class DnsRecordCodec {
       throw new CorruptedFrameException("not a response");
     }
 
-    final DnsResponse response = new DatagramDnsResponse(
-        DUMMY,
-        DUMMY,
-        id,
-        DnsOpCode.valueOf((byte) (flags >> 11 & 0xf)),
-        DnsResponseCode.valueOf((byte) (flags & 0xf)));
+    final DnsResponse response =
+        new DatagramDnsResponse(DUMMY, DUMMY, id, DnsOpCode.valueOf((byte) (flags >> 11 & 0xf)),
+            DnsResponseCode.valueOf((byte) (flags & 0xf)));
 
     response.setRecursionDesired((flags >> 8 & 1) == 1);
     response.setAuthoritativeAnswer((flags >> 10 & 1) == 1);
@@ -184,8 +181,8 @@ public class DnsRecordCodec {
     }
   }
 
-  private static void decodeRecords(
-      DnsResponse response, DnsSection section, ByteBuf buf, int count) throws Exception {
+  private static void decodeRecords(DnsResponse response, DnsSection section, ByteBuf buf,
+      int count) throws Exception {
     for (int i = count; i > 0; i--) {
       final DnsRecord r = DnsRecordDecoder.DEFAULT.decodeRecord(buf);
       if (r == null) {
