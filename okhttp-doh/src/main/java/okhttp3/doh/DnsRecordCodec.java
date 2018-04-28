@@ -20,7 +20,10 @@ import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.handler.codec.CorruptedFrameException;
 import io.netty.handler.codec.dns.DatagramDnsResponse;
+import io.netty.handler.codec.dns.DefaultDnsQuestion;
+import io.netty.handler.codec.dns.DefaultDnsRawRecord;
 import io.netty.handler.codec.dns.DnsOpCode;
+import io.netty.handler.codec.dns.DnsQuestion;
 import io.netty.handler.codec.dns.DnsRawRecord;
 import io.netty.handler.codec.dns.DnsRecord;
 import io.netty.handler.codec.dns.DnsRecordDecoder;
@@ -28,6 +31,7 @@ import io.netty.handler.codec.dns.DnsRecordType;
 import io.netty.handler.codec.dns.DnsResponse;
 import io.netty.handler.codec.dns.DnsResponseCode;
 import io.netty.handler.codec.dns.DnsSection;
+import io.netty.util.CharsetUtil;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
@@ -46,7 +50,7 @@ public class DnsRecordCodec {
 
     buf.writeShort(0); // query id
     buf.writeShort(256); // flags with recursion
-    buf.writeShort(includeIPv6 ? 2 : 1);
+    buf.writeShort(includeIPv6 ? 2 : 1); // question count
     buf.writeShort(0); // answerCount
     buf.writeShort(0); // authorityResourceCount
     buf.writeShort(0); // additional
@@ -80,7 +84,146 @@ public class DnsRecordCodec {
       throws Exception {
     //System.out.println("Response: " + byteString.hex());
 
-    DnsResponse response = decode(Unpooled.wrappedBuffer(byteString.asByteBuffer()));
+    List<InetAddress> result = new ArrayList<>();
+
+    ByteBuf buf = Unpooled.wrappedBuffer(byteString.asByteBuffer());
+    buf.readUnsignedShort(); // query id
+
+    final int flags = buf.readUnsignedShort();
+    if (flags >> 15 == 0) {
+      throw new IllegalArgumentException("not a response");
+    }
+
+    byte responseCode = (byte) (flags & 0xf);
+
+    //System.out.println("Code: " + responseCode);
+    if (responseCode == DnsResponseCode.NXDOMAIN.intValue()) {
+      throw new UnknownHostException(hostname + ": NXDOMAIN");
+    } else if (responseCode == DnsResponseCode.SERVFAIL.intValue()) {
+      throw new UnknownHostException(hostname + ": SERVFAIL");
+    }
+
+    final int questionCount = buf.readUnsignedShort();
+    final int answerCount = buf.readUnsignedShort();
+    buf.readUnsignedShort(); // authority record count
+    buf.readUnsignedShort(); // additional record count
+
+    for (int i = 0; i <  questionCount; i++) {
+      decodeNameDirect(buf); // name
+      buf.readUnsignedShort(); // type
+      buf.readUnsignedShort(); // class
+    }
+
+    for (int i = 0; i < answerCount; i++) {
+      decodeNameDirect(buf); // name
+
+      int type = buf.readUnsignedShort();
+      final int aClass = buf.readUnsignedShort(); // class
+      final long ttl = buf.readUnsignedInt(); // ttl
+      final int length = buf.readUnsignedShort();
+      final int offset = buf.readerIndex();
+
+      buf.readerIndex(offset + length);
+
+      if (type == DnsRecordType.A.intValue() || type == DnsRecordType.AAAA.intValue()) {
+        ByteBuf content = buf.retainedDuplicate().setIndex(offset, offset + length);
+        byte[] bytes = new byte[content.readableBytes()];
+        content.readBytes(bytes);
+        result.add(InetAddress.getByAddress(bytes));
+      }
+    }
+
+    return result;
+  }
+
+  private static String decodeNameDirect(ByteBuf in) {
+    int position = -1;
+    int checked = 0;
+    final int end = in.writerIndex();
+
+    final StringBuilder name = new StringBuilder();
+    while (in.isReadable()) {
+      final int len = in.readUnsignedByte();
+      final boolean pointer = (len & 0xc0) == 0xc0;
+      if (pointer) {
+        if (position == -1) {
+          position = in.readerIndex() + 1;
+        }
+
+        if (!in.isReadable()) {
+          throw new CorruptedFrameException("truncated pointer in a name");
+        }
+
+        final int next = (len & 0x3f) << 8 | in.readUnsignedByte();
+        if (next >= end) {
+          throw new CorruptedFrameException("name has an out-of-range pointer");
+        }
+        in.readerIndex(next);
+
+        // check for loops
+        checked += 2;
+        if (checked >= end) {
+          throw new CorruptedFrameException("name contains a loop.");
+        }
+      } else if (len != 0) {
+        if (!in.isReadable(len)) {
+          throw new CorruptedFrameException("truncated label in a name");
+        }
+        name.append(in.toString(in.readerIndex(), len, CharsetUtil.UTF_8)).append('.');
+        in.skipBytes(len);
+      } else { // len == 0
+        break;
+      }
+    }
+
+    if (position != -1) {
+      in.readerIndex(position);
+    }
+
+    if (name.length() == 0) {
+      return ".";
+    }
+
+    if (name.charAt(name.length() - 1) != '.') {
+      name.append('.');
+    }
+
+    return name.toString();
+  }
+
+  public static List<InetAddress> decodeAnswersNetty(String hostname, ByteString byteString)
+      throws Exception {
+    //System.out.println("Response: " + byteString.hex());
+
+    ByteBuf buf = Unpooled.wrappedBuffer(byteString.asByteBuffer());
+    buf.readUnsignedShort(); // query id
+
+    final int flags = buf.readUnsignedShort();
+    if (flags >> 15 == 0) {
+      throw new CorruptedFrameException("not a response");
+    }
+
+    final DnsResponse response1 =
+        new DatagramDnsResponse(DUMMY, DUMMY, 0, DnsOpCode.valueOf((byte) (flags >> 11 & 0xf)),
+            DnsResponseCode.valueOf((byte) (flags & 0xf)));
+
+    response1.setRecursionDesired((flags >> 8 & 1) == 1);
+    response1.setAuthoritativeAnswer((flags >> 10 & 1) == 1);
+    response1.setTruncated((flags >> 9 & 1) == 1);
+    response1.setRecursionAvailable((flags >> 7 & 1) == 1);
+    response1.setZ(flags >> 4 & 0x7);
+    final DnsResponse response = response1;
+
+    final int questionCount = buf.readUnsignedShort();
+    final int answerCount = buf.readUnsignedShort();
+    buf.readUnsignedShort(); // authority record count
+    buf.readUnsignedShort(); // additional record count
+
+    for (int i1 = questionCount; i1 > 0; i1--) {
+      decodeQuestion(buf);
+    }
+
+    decodeRecords(response, DnsSection.ANSWER, buf, answerCount);
 
     //System.out.println("Response: " + response);
 
@@ -124,8 +267,8 @@ public class DnsRecordCodec {
    * License for the specific language governing permissions and limitations
    * under the License.
    */
-  
-  private static DnsResponse decode(ByteBuf buf) throws Exception {
+
+  private static DnsResponse decodeNetty(ByteBuf buf) throws Exception {
     final DnsResponse response = newResponse(buf);
     final int questionCount = buf.readUnsignedShort();
     final int answerCount = buf.readUnsignedShort();
@@ -160,11 +303,92 @@ public class DnsRecordCodec {
     return response;
   }
 
-  private static void decodeQuestions(DnsResponse response, ByteBuf buf, int questionCount)
-      throws Exception {
+  private static void decodeQuestions(DnsResponse response, ByteBuf buf, int questionCount) {
     for (int i = questionCount; i > 0; i--) {
-      response.addRecord(DnsSection.QUESTION, DnsRecordDecoder.DEFAULT.decodeQuestion(buf));
+      response.addRecord(DnsSection.QUESTION, decodeQuestion(buf));
     }
+  }
+
+  public static final DnsQuestion decodeQuestion(ByteBuf in) {
+    String name = decodeName(in);
+    DnsRecordType type = DnsRecordType.valueOf(in.readUnsignedShort());
+    int qClass = in.readUnsignedShort();
+    return new DefaultDnsQuestion(name, type, qClass);
+  }
+
+  /**
+   * Retrieves a domain name given a buffer containing a DNS packet. If the
+   * name contains a pointer, the position of the buffer will be set to
+   * directly after the pointer's index after the name has been read.
+   *
+   * @param in the byte buffer containing the DNS packet
+   * @return the domain name for an entry
+   */
+  public static String decodeName(ByteBuf in) {
+    int position = -1;
+    int checked = 0;
+    final int end = in.writerIndex();
+    final int readable = in.readableBytes();
+
+    // Looking at the spec we should always have at least enough readable bytes to read a byte here but it seems
+    // some servers do not respect this for empty names. So just workaround this and return an empty name in this
+    // case.
+    //
+    // See:
+    // - https://github.com/netty/netty/issues/5014
+    // - https://www.ietf.org/rfc/rfc1035.txt , Section 3.1
+    if (readable == 0) {
+      return ".";
+    }
+
+    final StringBuilder name = new StringBuilder(readable << 1);
+    while (in.isReadable()) {
+      final int len = in.readUnsignedByte();
+      final boolean pointer = (len & 0xc0) == 0xc0;
+      if (pointer) {
+        if (position == -1) {
+          position = in.readerIndex() + 1;
+        }
+
+        if (!in.isReadable()) {
+          throw new CorruptedFrameException("truncated pointer in a name");
+        }
+
+        final int next = (len & 0x3f) << 8 | in.readUnsignedByte();
+        if (next >= end) {
+          throw new CorruptedFrameException("name has an out-of-range pointer");
+        }
+        in.readerIndex(next);
+
+        // check for loops
+        checked += 2;
+        if (checked >= end) {
+          throw new CorruptedFrameException("name contains a loop.");
+        }
+      } else if (len != 0) {
+        if (!in.isReadable(len)) {
+          throw new CorruptedFrameException("truncated label in a name");
+        }
+        name.append(in.toString(in.readerIndex(), len, CharsetUtil.UTF_8)).append('.');
+        in.skipBytes(len);
+      } else { // len == 0
+        break;
+      }
+    }
+
+    if (position != -1) {
+      in.readerIndex(position);
+    }
+
+    if (name.length() == 0) {
+      return ".";
+    }
+
+    if (name.charAt(name.length() - 1) != '.') {
+      name.append('.');
+    }
+
+    return name.toString();
   }
 
   private static void decodeRecords(DnsResponse response, DnsSection section, ByteBuf buf,
