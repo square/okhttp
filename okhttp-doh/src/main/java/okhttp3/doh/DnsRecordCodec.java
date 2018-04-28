@@ -65,7 +65,7 @@ public class DnsRecordCodec {
 
   public static List<InetAddress> decodeAnswers(String hostname, ByteString byteString)
       throws Exception {
-    System.out.println("Response: " + byteString.hex());
+    //System.out.println("Response: " + byteString.hex());
 
     DnsResponse response = decode(Unpooled.wrappedBuffer(byteString.asByteBuffer()));
 

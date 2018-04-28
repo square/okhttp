@@ -28,6 +28,7 @@ public class DohCallTest {
   private final OkHttpClient bootstrapClient =
       new OkHttpClient.Builder().protocols(Arrays.asList(Protocol.HTTP_2, Protocol.HTTP_1_1))
           .build();
+  private final Dns bootstrapDns = new BootstrapDns("localhost", localhost);
   private final Dns dns = buildLocalhost(bootstrapClient);
 
   private static final InetAddress localhost = address("localhost");
@@ -51,8 +52,8 @@ public class DohCallTest {
 
     RecordedRequest recordedRequest = server.takeRequest();
     assertEquals("GET", recordedRequest.getMethod());
-    assertEquals("/lookup?ct&dns=AAABAAACAAAAAAAABmdvb2dsZQNjb20AAAEAAQZnb29nbGUDY29tAAAcAAE",
-        recordedRequest.getPath());
+    assertEquals("/lookup?ct&dns=AAABAAACAAAAAAAABmdvb2dsZQNjb20AAAEAAQZnb29nbGUDY29t"
+        + "AAAcAAE", recordedRequest.getPath());
   }
 
   @Test public void getIpv6() throws Exception {
@@ -67,8 +68,8 @@ public class DohCallTest {
 
     RecordedRequest recordedRequest = server.takeRequest();
     assertEquals("GET", recordedRequest.getMethod());
-    assertEquals("/lookup?ct&dns=AAABAAACAAAAAAAABmdvb2dsZQNjb20AAAEAAQZnb29nbGUDY29tAAAcAAE",
-        recordedRequest.getPath());
+    assertEquals("/lookup?ct&dns=AAABAAACAAAAAAAABmdvb2dsZQNjb20AAAEAAQZnb29nbGUDY29t"
+        + "AAAcAAE", recordedRequest.getPath());
   }
 
   @Test public void failure() throws Exception {
@@ -86,8 +87,8 @@ public class DohCallTest {
 
     RecordedRequest recordedRequest = server.takeRequest();
     assertEquals("GET", recordedRequest.getMethod());
-    assertEquals("/lookup?ct&dns=AAABAAACAAAAAAAABmdvb2dsZQNjb20AAAEAAQZnb29nbGUDY29tAAAcAAE",
-        recordedRequest.getPath());
+    assertEquals("/lookup?ct&dns=AAABAAACAAAAAAAABmdvb2dsZQNjb20AAAEAAQZnb29nbGUDY29t"
+        + "AAAcAAE", recordedRequest.getPath());
   }
 
   private MockResponse dnsResponse(String s) {
@@ -98,9 +99,8 @@ public class DohCallTest {
   }
 
   DnsOverHttps buildLocalhost(OkHttpClient bootstrapClient) {
-    BootstrapDns bootstrapDns = new BootstrapDns("localhost", localhost);
-    HttpUrl urlPrefix = server.url("/lookup?ct&dns=");
-    return new DnsOverHttps(bootstrapClient, urlPrefix.toString(), bootstrapDns, true);
+    HttpUrl url = server.url("/lookup?ct");
+    return new DnsOverHttps(bootstrapClient, url, bootstrapDns, true, "GET");
   }
 
   private static InetAddress address(String host) {

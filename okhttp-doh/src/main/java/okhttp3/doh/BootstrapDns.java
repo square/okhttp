@@ -5,9 +5,13 @@ import java.net.UnknownHostException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import javax.annotation.Nullable;
 import okhttp3.Dns;
 
+/**
+ * Internal Bootstrap DNS implementation for handling initial connection to DNS over HTTPS server.
+ *
+ * Returns hardcoded results for the known host.
+ */
 public class BootstrapDns implements Dns {
   private final String dnsHost;
   private final List<InetAddress> dnsServers;
@@ -23,13 +27,5 @@ public class BootstrapDns implements Dns {
     }
 
     throw new UnknownHostException(hostname);
-  }
-
-  public @Nullable List<InetAddress> get(String hostname) {
-    if (hostname.equals(dnsHost)) {
-      return dnsServers;
-    }
-
-    return null;
   }
 }
