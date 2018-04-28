@@ -50,7 +50,8 @@ public class DnsRecordCodec {
     int index = 0;
     query.addRecord(DnsSection.QUESTION, index++, new DefaultDnsQuestion(host, DnsRecordType.A));
     if (includeIPv6) {
-      query.addRecord(DnsSection.QUESTION, index++, new DefaultDnsQuestion(host, DnsRecordType.AAAA));
+      query.addRecord(DnsSection.QUESTION, index++,
+          new DefaultDnsQuestion(host, DnsRecordType.AAAA));
     }
 
     //System.out.println("Query: " + query);
@@ -62,7 +63,8 @@ public class DnsRecordCodec {
     return encoded;
   }
 
-  public static List<InetAddress> decodeAnswers(String hostname, ByteString byteString) throws Exception {
+  public static List<InetAddress> decodeAnswers(String hostname, ByteString byteString)
+      throws Exception {
     System.out.println("Response: " + byteString.hex());
 
     DnsResponse response = decode(Unpooled.wrappedBuffer(byteString.asByteBuffer()));

@@ -28,6 +28,9 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
 
+import static okhttp3.doh.DohProviders.buildCloudflare;
+import static okhttp3.doh.DohProviders.buildGoogle;
+
 public class TestDohMain {
   public static void main(String[] args) throws IOException {
     Security.insertProviderAt(new org.conscrypt.OpenSSLProvider(), 1);
@@ -63,7 +66,7 @@ public class TestDohMain {
     }
   }
 
-  private static DnsOverHttps buildDns(OkHttpClient bootstrapClient) throws UnknownHostException {
+  private static DnsOverHttps buildDns(OkHttpClient bootstrapClient) {
     boolean google = true;
 
     if (google) {
@@ -71,26 +74,5 @@ public class TestDohMain {
     } else {
       return buildCloudflare(bootstrapClient);
     }
-  }
-
-  private static DnsOverHttps buildGoogle(OkHttpClient bootstrapClient)
-      throws UnknownHostException {
-    Map<String, List<InetAddress>> bootstrapAddresses = Collections.singletonMap("dns.google.com",
-        Arrays.asList(InetAddress.getByName("216.58.204.78"),
-            InetAddress.getByName("2a00:1450:4009:814:0:0:0:200e")));
-    String urlPrefix = "https://dns.google.com/experimental?ct&dns=";
-    return new DnsOverHttps(bootstrapClient, urlPrefix, bootstrapAddresses, true);
-  }
-
-  private static DnsOverHttps buildCloudflare(OkHttpClient bootstrapClient)
-      throws UnknownHostException {
-    Map<String, List<InetAddress>> bootstrapAddresses =
-        Collections.singletonMap("cloudflare-dns.com",
-            Arrays.asList(InetAddress.getByName("104.16.111.25"),
-                InetAddress.getByName("104.16.112.25"),
-                InetAddress.getByName("2400:cb00:2048:1:0:0:6810:7019"),
-                InetAddress.getByName("2400:cb00:2048:1:0:0:6810:6f19")));
-    String urlPrefix = "https://cloudflare-dns.com/dns-query?ct=application/dns-udpwireformat&dns=";
-    return new DnsOverHttps(bootstrapClient, urlPrefix, bootstrapAddresses, false);
   }
 }

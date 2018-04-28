@@ -19,7 +19,6 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.List;
-import java.util.Map;
 import okhttp3.Dns;
 import okhttp3.HttpUrl;
 import okhttp3.OkHttpClient;
@@ -33,12 +32,12 @@ import okio.ByteString;
 public class DnsOverHttps implements Dns {
   private final OkHttpClient client;
   private final String urlPrefix;
-  private final Map<String, List<InetAddress>> bootstrapAddresses;
+  private final BootstrapDns bootstrapAddresses;
   private final boolean includeIPv6;
 
   public DnsOverHttps(OkHttpClient client, String urlPrefix,
-      Map<String, List<InetAddress>> bootstrapAddresses, boolean includeIPv6) {
-    this.client = client;
+      BootstrapDns bootstrapAddresses, boolean includeIPv6) {
+    this.client = client.newBuilder().dns(bootstrapAddresses).build();
     this.urlPrefix = urlPrefix;
     this.bootstrapAddresses = bootstrapAddresses;
     this.includeIPv6 = includeIPv6;
