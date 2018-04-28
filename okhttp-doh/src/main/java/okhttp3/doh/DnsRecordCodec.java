@@ -19,16 +19,11 @@ package okhttp3.doh;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.handler.codec.CorruptedFrameException;
-import io.netty.handler.codec.dns.DatagramDnsQuery;
 import io.netty.handler.codec.dns.DatagramDnsResponse;
-import io.netty.handler.codec.dns.DefaultDnsQuestion;
 import io.netty.handler.codec.dns.DnsOpCode;
-import io.netty.handler.codec.dns.DnsQuery;
-import io.netty.handler.codec.dns.DnsQuestion;
 import io.netty.handler.codec.dns.DnsRawRecord;
 import io.netty.handler.codec.dns.DnsRecord;
 import io.netty.handler.codec.dns.DnsRecordDecoder;
-import io.netty.handler.codec.dns.DnsRecordEncoder;
 import io.netty.handler.codec.dns.DnsRecordType;
 import io.netty.handler.codec.dns.DnsResponse;
 import io.netty.handler.codec.dns.DnsResponseCode;
@@ -36,27 +31,45 @@ import io.netty.handler.codec.dns.DnsSection;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import okio.Buffer;
 import okio.ByteString;
 
 public class DnsRecordCodec {
   private static final InetSocketAddress DUMMY =
       InetSocketAddress.createUnresolved("localhost", 53);
 
-  public static String encodeQuery(String host, boolean includeIPv6) throws Exception {
-    DatagramDnsQuery query = new DatagramDnsQuery(DUMMY, DUMMY, 0);
-    query.setRecursionDesired(true);
-    int index = 0;
-    query.addRecord(DnsSection.QUESTION, index++, new DefaultDnsQuestion(host, DnsRecordType.A));
+  public static String encodeQuery(String host, boolean includeIPv6) {
+    Buffer buf = new Buffer();
+
+    buf.writeShort(0); // query id
+    buf.writeShort(256); // flags with recursion
+    buf.writeShort(includeIPv6 ? 2 : 1);
+    buf.writeShort(0); // answerCount
+    buf.writeShort(0); // authorityResourceCount
+    buf.writeShort(0); // additional
+
+    Buffer nameBuf = new Buffer();
+    final String[] labels = host.split("\\.");
+    for (String label : labels) {
+      nameBuf.writeByte(label.length());
+      nameBuf.writeString(label, StandardCharsets.US_ASCII);
+    }
+    nameBuf.writeByte(0); // end
+
+    nameBuf.copyTo(buf, 0, nameBuf.size());
+    buf.writeShort(1); // A
+    buf.writeShort(1); // CLASS_IN
+
     if (includeIPv6) {
-      query.addRecord(DnsSection.QUESTION, index++,
-          new DefaultDnsQuestion(host, DnsRecordType.AAAA));
+      nameBuf.copyTo(buf, 0, nameBuf.size());
+      buf.writeShort(0x001c); // AAAA
+      buf.writeShort(1); // CLASS_IN
     }
 
-    //System.out.println("Query: " + query);
-
-    String encoded = encode(query);
+    String encoded = buf.readByteString().base64Url().replace("=", "");
 
     //System.out.println("Query: " + encoded);
 
@@ -111,50 +124,7 @@ public class DnsRecordCodec {
    * License for the specific language governing permissions and limitations
    * under the License.
    */
-
-  private static String encode(DatagramDnsQuery envelope) throws Exception {
-    DatagramDnsQuery query = envelope.content();
-    ByteBuf buf = Unpooled.buffer(1024);
-
-    encodeHeader(query, buf);
-    encodeQuestions(query, buf);
-    encodeRecords(query, DnsSection.ADDITIONAL, buf);
-
-    ByteString bytes = ByteString.of(buf.array(), 0, buf.readableBytes());
-
-    return bytes.base64Url().replace("=", "");
-  }
-
-  private static void encodeHeader(DnsQuery query, ByteBuf buf) {
-    buf.writeShort(query.id());
-    int flags = 0;
-    flags |= (query.opCode().byteValue() & 0xFF) << 14;
-    if (query.isRecursionDesired()) {
-      flags |= 1 << 8;
-    }
-    buf.writeShort(flags);
-    buf.writeShort(query.count(DnsSection.QUESTION));
-    buf.writeShort(0); // answerCount
-    buf.writeShort(0); // authorityResourceCount
-    buf.writeShort(query.count(DnsSection.ADDITIONAL));
-  }
-
-  private static void encodeQuestions(DnsQuery query, ByteBuf buf) throws Exception {
-    final int count = query.count(DnsSection.QUESTION);
-    for (int i = 0; i < count; i++) {
-      DnsRecordEncoder.DEFAULT.encodeQuestion((DnsQuestion) query.recordAt(DnsSection.QUESTION, i),
-          buf);
-    }
-  }
-
-  private static void encodeRecords(DnsQuery query, DnsSection section, ByteBuf buf)
-      throws Exception {
-    final int count = query.count(section);
-    for (int i = 0; i < count; i++) {
-      DnsRecordEncoder.DEFAULT.encodeRecord(query.recordAt(section, i), buf);
-    }
-  }
-
+  
   private static DnsResponse decode(ByteBuf buf) throws Exception {
     final DnsResponse response = newResponse(buf);
     final int questionCount = buf.readUnsignedShort();
