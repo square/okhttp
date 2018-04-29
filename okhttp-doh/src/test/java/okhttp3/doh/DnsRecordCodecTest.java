@@ -57,7 +57,9 @@ public class DnsRecordCodecTest {
     List<InetAddress> decoded = DnsRecordCodec.decodeAnswers("test.com", ByteString.decodeHex(
         "0000818000010003000000000567726170680866616365626f6f6b03636f6d00001c0001c00c0005000100000a1b000603617069c012c0300005000100000b1f000c04737461720463313072c012c042001c00010000003b00102a032880f0290011faceb00c00000002"));
 
-    assertEquals(Collections.singletonList(InetAddress.getByName("2a03:2880:f029:11:face:b00c:0:2")), decoded);
+    assertEquals(
+        Collections.singletonList(InetAddress.getByName("2a03:2880:f029:11:face:b00c:0:2")),
+        decoded);
   }
 
   @Test public void testGoogleDotComDecodingNxdomainFailure() throws Exception {
