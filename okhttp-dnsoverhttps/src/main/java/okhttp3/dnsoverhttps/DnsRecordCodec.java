@@ -26,9 +26,9 @@ import okio.Buffer;
 import okio.ByteString;
 
 /**
- *
+ * Trivial Dns Encoder/Decoder, basically ripped from Netty full implementation.
  */
-public class DnsRecordCodec {
+class DnsRecordCodec {
   private static final byte SERVFAIL = 2;
   private static final byte NXDOMAIN = 3;
   private static int DnsRecordTypeA = 1;
@@ -128,6 +128,7 @@ public class DnsRecordCodec {
   }
 
   private static void consumeName(Buffer in) throws EOFException {
+    // TODO this code has signedness bugs and needs a rework
     int length = in.readByte();
 
     while (length > 0) {
