@@ -15,6 +15,7 @@
  */
 package okhttp3.dnsoverhttps;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -30,10 +31,9 @@ public class TestDohMain {
   public static void main(String[] args) throws IOException {
     Security.insertProviderAt(new org.conscrypt.OpenSSLProvider(), 1);
 
-    // TODO use cache
-    //Cache dnsCache = new Cache(new File("./target/TestDohMain.cache"), 10 * 1024 * 1024);
+    Cache dnsCache = new Cache(new File("./target/TestDohMain.cache"), 10 * 1024 * 1024);
     OkHttpClient bootstrapClient = new OkHttpClient.Builder()
-        //.cache(dnsCache)
+        .cache(dnsCache)
         .build();
 
     List<String> names = Arrays.asList("google.com", "graph.facebook.com", "sdflkhfsdlkjdf.ee");

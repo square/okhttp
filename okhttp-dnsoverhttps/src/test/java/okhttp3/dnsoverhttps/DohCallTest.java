@@ -28,10 +28,7 @@ public class DohCallTest {
   private final OkHttpClient bootstrapClient =
       new OkHttpClient.Builder().protocols(Arrays.asList(Protocol.HTTP_2, Protocol.HTTP_1_1))
           .build();
-  private final Dns bootstrapDns = new BootstrapDns("localhost", localhost);
   private final Dns dns = buildLocalhost(bootstrapClient);
-
-  private static final InetAddress localhost = address("localhost");
 
   @Before public void setUp() {
     server.setProtocols(bootstrapClient.protocols());
@@ -100,7 +97,7 @@ public class DohCallTest {
 
   DnsOverHttps buildLocalhost(OkHttpClient bootstrapClient) {
     HttpUrl url = server.url("/lookup?ct");
-    return new DnsOverHttps(bootstrapClient, url, bootstrapDns, true, "GET");
+    return new DnsOverHttps(bootstrapClient, url, null, true, "GET");
   }
 
   private static InetAddress address(String host) {

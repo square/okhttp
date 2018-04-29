@@ -25,6 +25,7 @@ import okhttp3.HttpUrl;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
+import okhttp3.internal.platform.Platform;
 import okio.ByteString;
 
 /**
@@ -67,6 +68,11 @@ public class DnsOverHttps implements Dns {
       //  Platform.get().log(Platform.WARN, "Incorrect protocol: " + response.protocol(), null);
       //}
 
+      // TODO remove (temporary info only currently)
+      if (response.cacheResponse() != null) {
+        Platform.get().log(Platform.INFO, "DNS used cache: " + hostname, null);
+      }
+
       try {
         if (!response.isSuccessful()) {
           throw new IOException("response: " + response.code() + " " + response.message());
@@ -92,8 +98,6 @@ public class DnsOverHttps implements Dns {
   }
 
   private Request buildRequest(String query) {
-    // TODO implement caching
-
     HttpUrl requestUrl = url.newBuilder().addQueryParameter("dns", query).build();
 
     //System.out.println("URL: " + requestUrl);
