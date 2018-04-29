@@ -32,8 +32,6 @@ import okio.ByteString;
  * DNS over HTTPS implementation.
  *
  * Implementation of https://tools.ietf.org/html/draft-ietf-doh-dns-over-https-07
- *
- * TODO implement rules and caching according to spec
  */
 public class DnsOverHttps implements Dns {
   private final OkHttpClient client;
