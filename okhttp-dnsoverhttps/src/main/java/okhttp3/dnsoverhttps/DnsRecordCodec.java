@@ -31,9 +31,12 @@ import okio.ByteString;
 class DnsRecordCodec {
   private static final byte SERVFAIL = 2;
   private static final byte NXDOMAIN = 3;
-  private static int DnsRecordTypeA = 1;
-  private static int DnsRecordTypeAAAA = 28;
-  private static Charset ascii = Charset.forName("ASCII");
+  private static final int TYPE_A = 1;
+  private static final int TYPE_AAAA = 28;
+  private static final Charset ASCII = Charset.forName("ASCII");
+
+  private DnsRecordCodec() {
+  }
 
   public static String encodeQuery(String host, boolean includeIPv6) {
     Buffer buf = new Buffer();
@@ -49,7 +52,7 @@ class DnsRecordCodec {
     final String[] labels = host.split("\\.");
     for (String label : labels) {
       nameBuf.writeByte(label.length());
-      nameBuf.writeString(label, ascii);
+      nameBuf.writeString(label, ASCII);
     }
     nameBuf.writeByte(0); // end
 
@@ -116,7 +119,7 @@ class DnsRecordCodec {
       final long ttl = buf.readInt() & 0xffffffffL; // ttl
       final int length = buf.readShort() & 0xffff;
 
-      if (type == DnsRecordTypeA || type == DnsRecordTypeAAAA) {
+      if (type == TYPE_A || type == TYPE_AAAA) {
         byte[] bytes = new byte[length];
         buf.read(bytes);
         result.add(InetAddress.getByAddress(bytes));
