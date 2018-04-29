@@ -1,4 +1,4 @@
-package okhttp3.doh;
+package okhttp3.dnsoverhttps;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -82,7 +82,7 @@ public class DohCallTest {
       List<InetAddress> result = dns.lookup("google.com");
       fail();
     } catch (UnknownHostException uhe) {
-      assertEquals("google.com", uhe.getMessage());
+      assertEquals("google.com: NXDOMAIN", uhe.getMessage());
     }
 
     RecordedRequest recordedRequest = server.takeRequest();

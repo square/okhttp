@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package okhttp3.doh;
+package okhttp3.dnsoverhttps;
 
 import java.io.IOException;
 import java.net.InetAddress;
@@ -51,6 +51,10 @@ public class DnsOverHttps implements Dns {
     }
   }
 
+  public HttpUrl getUrl() {
+    return url;
+  }
+
   @Override public List<InetAddress> lookup(String hostname) throws UnknownHostException {
     try {
       //System.out.println("Host: " + hostname);
@@ -60,11 +64,10 @@ public class DnsOverHttps implements Dns {
       Request request = buildRequest(query);
       Response response = client.newCall(request).execute();
 
-      if (response.protocol() != Protocol.HTTP_2) {
-        Platform.get().log(Platform.WARN, "Incorrect protocol: " + response.protocol(), null);
-      }
-
-      // TODO warn on http/1.1?
+      // TODO reenable (currently noisy with test servers)
+      //if (response.protocol() != Protocol.HTTP_2) {
+      //  Platform.get().log(Platform.WARN, "Incorrect protocol: " + response.protocol(), null);
+      //}
 
       try {
         if (!response.isSuccessful()) {
@@ -81,6 +84,8 @@ public class DnsOverHttps implements Dns {
       } finally {
         response.close();
       }
+    } catch (UnknownHostException uhe) {
+      throw uhe;
     } catch (Exception e) {
       UnknownHostException unknownHostException = new UnknownHostException(hostname);
       unknownHostException.initCause(e);

@@ -13,17 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package okhttp3.doh;
+package okhttp3.dnsoverhttps;
 
 import java.io.IOException;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.security.Security;
+import java.util.Arrays;
+import java.util.List;
 import okhttp3.Cache;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
-
-import static okhttp3.doh.DohProviders.buildCloudflare;
-import static okhttp3.doh.DohProviders.buildGoogle;
 
 public class TestDohMain {
   public static void main(String[] args) throws IOException {
@@ -35,21 +36,34 @@ public class TestDohMain {
         //.cache(dnsCache)
         .build();
 
+    List<String> names = Arrays.asList("google.com", "graph.facebook.com", "sdflkhfsdlkjdf.ee");
+
     try {
-      DnsOverHttps dns = buildDns(bootstrapClient);
+      List<DnsOverHttps> dnsProviders = DohProviders.providers(bootstrapClient);
 
-      System.out.println(dns.lookup("google.com"));
-      System.out.println(dns.lookup("www.example.com"));
-      //System.out.println(dns.lookup("sdflkhfsdlkjdf.ee"));
+      for (DnsOverHttps dns : dnsProviders) {
+        System.out.println("Testing " + dns.getUrl());
 
-      OkHttpClient client = bootstrapClient.newBuilder().dns(dns).cache(null).build();
+        for (String host: names) {
+          System.out.print(host + ": ");
+          System.out.flush();
 
-      Request request = new Request.Builder().url("https://graph.facebook.com/robots.txt").build();
-      Response response = client.newCall(request).execute();
+          try {
+            List<InetAddress> results = dns.lookup(host);
+            System.out.println(results);
+          } catch (UnknownHostException uhe) {
+            Throwable e = uhe;
 
-      System.out.println(response.code());
+            while (e != null) {
+              System.out.println(e.toString());
 
-      response.close();
+              e = e.getCause();
+            }
+          }
+        }
+
+        System.out.println();
+      }
     } finally {
       bootstrapClient.connectionPool().evictAll();
       bootstrapClient.dispatcher().executorService().shutdownNow();
@@ -57,16 +71,6 @@ public class TestDohMain {
       if (cache != null) {
         cache.close();
       }
-    }
-  }
-
-  private static DnsOverHttps buildDns(OkHttpClient bootstrapClient) {
-    boolean google = true;
-
-    if (google) {
-      return buildGoogle(bootstrapClient);
-    } else {
-      return buildCloudflare(bootstrapClient);
     }
   }
 }

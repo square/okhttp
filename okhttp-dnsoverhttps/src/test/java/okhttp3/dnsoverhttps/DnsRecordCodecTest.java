@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package okhttp3.doh;
+package okhttp3.dnsoverhttps;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;

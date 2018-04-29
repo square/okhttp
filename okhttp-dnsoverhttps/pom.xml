@@ -9,7 +9,7 @@
     <version>3.11.0-SNAPSHOT</version>
   </parent>
 
-  <artifactId>okhttp-doh</artifactId>
+  <artifactId>okhttp-dnsoverhttps</artifactId>
   <name>OkHttp DNS over HTTPS</name>
 
   <dependencies>
@@ -69,7 +69,7 @@
         <configuration>
           <archive>
             <manifestEntries>
-              <Automatic-Module-Name>okhttp3.doh</Automatic-Module-Name>
+              <Automatic-Module-Name>okhttp3.dnsoverhttps</Automatic-Module-Name>
             </manifestEntries>
           </archive>
         </configuration>

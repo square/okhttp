@@ -30,7 +30,7 @@
 
     <module>okhttp-logging-interceptor</module>
 
-    <module>okhttp-doh</module>
+    <module>okhttp-dnsoverhttps</module>
 
     <module>okcurl</module>
     <module>mockwebserver</module>
