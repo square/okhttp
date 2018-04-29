@@ -100,12 +100,7 @@ public class DnsOverHttps implements Dns {
 
     Request.Builder builder = new Request.Builder().url(requestUrl);
 
-    if (url.host().equals("cloudflare-dns.com")) {
-      builder.header("Accept", "application/dns-udpwireformat");
-      builder.header("Content-Type", "application/dns-udpwireformat");
-    } else {
-      builder.header("Accept", "application/dns-message");
-    }
+    builder.header("Accept", "application/dns-message");
 
     return builder.build();
   }
