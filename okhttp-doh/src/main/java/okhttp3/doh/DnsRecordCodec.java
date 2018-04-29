@@ -16,8 +16,6 @@
 
 package okhttp3.doh;
 
-import io.netty.handler.codec.dns.DnsRecordType;
-import io.netty.handler.codec.dns.DnsResponseCode;
 import java.io.EOFException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
@@ -31,6 +29,10 @@ import okio.ByteString;
 public class DnsRecordCodec {
   private static final InetSocketAddress DUMMY =
       InetSocketAddress.createUnresolved("localhost", 53);
+  private static final byte SERVFAIL = 2;
+  private static final byte NXDOMAIN = 3;
+  private static int DnsRecordTypeA = 1;
+  private static int DnsRecordTypeAAAA = 28;
 
   public static String encodeQuery(String host, boolean includeIPv6) {
     Buffer buf = new Buffer();
@@ -87,9 +89,9 @@ public class DnsRecordCodec {
     byte responseCode = (byte) (flags & 0xf);
 
     //System.out.println("Code: " + responseCode);
-    if (responseCode == DnsResponseCode.NXDOMAIN.intValue()) {
+    if (responseCode == NXDOMAIN) {
       throw new UnknownHostException(hostname + ": NXDOMAIN");
-    } else if (responseCode == DnsResponseCode.SERVFAIL.intValue()) {
+    } else if (responseCode == SERVFAIL) {
       throw new UnknownHostException(hostname + ": SERVFAIL");
     }
 
@@ -113,7 +115,7 @@ public class DnsRecordCodec {
       final long ttl = buf.readInt(); // ttl
       final int length = buf.readShort();
 
-      if (type == DnsRecordType.A.intValue() || type == DnsRecordType.AAAA.intValue()) {
+      if (type == DnsRecordTypeA || type == DnsRecordTypeAAAA) {
         byte[] bytes = new byte[length];
         buf.read(bytes);
         result.add(InetAddress.getByAddress(bytes));
