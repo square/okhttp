@@ -19,7 +19,7 @@ package okhttp3.dnsoverhttps;
 import java.io.EOFException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.nio.charset.StandardCharsets;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
 import okio.Buffer;
@@ -33,6 +33,7 @@ class DnsRecordCodec {
   private static final byte NXDOMAIN = 3;
   private static int DnsRecordTypeA = 1;
   private static int DnsRecordTypeAAAA = 28;
+  private static Charset ascii = Charset.forName("ASCII");
 
   public static String encodeQuery(String host, boolean includeIPv6) {
     Buffer buf = new Buffer();
@@ -48,7 +49,7 @@ class DnsRecordCodec {
     final String[] labels = host.split("\\.");
     for (String label : labels) {
       nameBuf.writeByte(label.length());
-      nameBuf.writeString(label, StandardCharsets.US_ASCII);
+      nameBuf.writeString(label, ascii);
     }
     nameBuf.writeByte(0); // end
 
