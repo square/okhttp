@@ -53,8 +53,6 @@ class AndroidPlatform extends Platform {
   private final OptionalMethod<Socket> getAlpnSelectedProtocol;
   private final OptionalMethod<Socket> setAlpnProtocols;
 
-  private final CloseGuard closeGuard = CloseGuard.get();
-
   AndroidPlatform(Class<?> sslParametersClass, OptionalMethod<Socket> setUseSessionTickets,
       OptionalMethod<Socket> setHostname, OptionalMethod<Socket> getAlpnSelectedProtocol,
       OptionalMethod<Socket> setAlpnProtocols) {
@@ -149,18 +147,6 @@ class AndroidPlatform extends Platform {
         Log.println(logLevel, "OkHttp", message.substring(i, end));
         i = end;
       } while (i < newline);
-    }
-  }
-
-  @Override public Object getStackTraceForCloseable(String closer) {
-    return closeGuard.createAndOpen(closer);
-  }
-
-  @Override public void logCloseableLeak(String message, Object stackTrace) {
-    boolean reported = closeGuard.warnIfOpen(stackTrace);
-    if (!reported) {
-      // Unable to report via CloseGuard. As a last-ditch effort, send it to the logger.
-      log(WARN, message, null);
     }
   }
 
@@ -315,65 +301,6 @@ class AndroidPlatform extends Platform {
 
     @Override public int hashCode() {
       return 0;
-    }
-  }
-
-  /**
-   * Provides access to the internal dalvik.system.CloseGuard class. Android uses this in
-   * combination with android.os.StrictMode to report on leaked java.io.Closeable's. Available since
-   * Android API 11.
-   */
-  static final class CloseGuard {
-    private final Method getMethod;
-    private final Method openMethod;
-    private final Method warnIfOpenMethod;
-
-    CloseGuard(Method getMethod, Method openMethod, Method warnIfOpenMethod) {
-      this.getMethod = getMethod;
-      this.openMethod = openMethod;
-      this.warnIfOpenMethod = warnIfOpenMethod;
-    }
-
-    Object createAndOpen(String closer) {
-      if (getMethod != null) {
-        try {
-          Object closeGuardInstance = getMethod.invoke(null);
-          openMethod.invoke(closeGuardInstance, closer);
-          return closeGuardInstance;
-        } catch (Exception ignored) {
-        }
-      }
-      return null;
-    }
-
-    boolean warnIfOpen(Object closeGuardInstance) {
-      boolean reported = false;
-      if (closeGuardInstance != null) {
-        try {
-          warnIfOpenMethod.invoke(closeGuardInstance);
-          reported = true;
-        } catch (Exception ignored) {
-        }
-      }
-      return reported;
-    }
-
-    static CloseGuard get() {
-      Method getMethod;
-      Method openMethod;
-      Method warnIfOpenMethod;
-
-      try {
-        Class<?> closeGuardClass = Class.forName("dalvik.system.CloseGuard");
-        getMethod = closeGuardClass.getMethod("get");
-        openMethod = closeGuardClass.getMethod("open", String.class);
-        warnIfOpenMethod = closeGuardClass.getMethod("warnIfOpen");
-      } catch (Exception ignored) {
-        getMethod = null;
-        openMethod = null;
-        warnIfOpenMethod = null;
-      }
-      return new CloseGuard(getMethod, openMethod, warnIfOpenMethod);
     }
   }
 
