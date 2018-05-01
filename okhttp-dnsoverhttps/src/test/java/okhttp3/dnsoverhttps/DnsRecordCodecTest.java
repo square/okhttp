@@ -28,13 +28,17 @@ import static org.junit.Assert.fail;
 
 public class DnsRecordCodecTest {
   @Test public void testGoogleDotComEncoding() throws Exception {
-    String encoded = DnsRecordCodec.encodeQuery("google.com", false);
+    String encoded = encodeQuery("google.com", false);
 
     assertEquals("AAABAAABAAAAAAAABmdvb2dsZQNjb20AAAEAAQ", encoded);
   }
 
+  private String encodeQuery(String host, boolean includeIpv6) {
+    return DnsRecordCodec.encodeQuery(host, includeIpv6).base64Url().replace("=", "");
+  }
+
   @Test public void testGoogleDotComEncodingWithIPv6() throws Exception {
-    String encoded = DnsRecordCodec.encodeQuery("google.com", true);
+    String encoded = encodeQuery("google.com", true);
 
     assertEquals("AAABAAACAAAAAAAABmdvb2dsZQNjb20AAAEAAQZnb29nbGUDY29tAAAcAAE", encoded);
   }

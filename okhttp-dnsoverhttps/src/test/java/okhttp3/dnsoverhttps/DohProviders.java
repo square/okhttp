@@ -13,13 +13,13 @@ import okhttp3.OkHttpClient;
  * https://github.com/curl/curl/wiki/DNS-over-HTTPS
  */
 public class DohProviders {
-  static DnsOverHttps buildGoogle(OkHttpClient bootstrapClient) {
+  static DnsOverHttps buildGoogle(OkHttpClient bootstrapClient, boolean post) {
     HttpUrl url = parseUrl("https://dns.google.com/experimental?ct");
 
     BootstrapDns bootstrapDns = new BootstrapDns("dns.google.com", getByIp("216.58.204.78"),
         getByIp("2a00:1450:4009:814:0:0:0:200e"));
 
-    return new DnsOverHttps(bootstrapClient, url, bootstrapDns, true, "GET");
+    return new DnsOverHttps(bootstrapClient, url, bootstrapDns, true, post ? "POST" : "GET");
   }
 
   static DnsOverHttps buildCloudflare(OkHttpClient bootstrapClient) {
@@ -31,6 +31,12 @@ public class DohProviders {
         getByIp("2400:cb00:2048:1:0:0:6810:6f19"));
 
     return new DnsOverHttps(bootstrapClient, url, bootstrapDns, false, "GET");
+  }
+
+  static DnsOverHttps buildCloudflarePost(OkHttpClient bootstrapClient) {
+    HttpUrl url = parseUrl("https://dns.cloudflare.com/.well-known/dns-query");
+
+    return new DnsOverHttps(bootstrapClient, url, null, false, "POST");
   }
 
   static DnsOverHttps buildCleanBrowsing(OkHttpClient bootstrapClient) {
@@ -54,7 +60,8 @@ public class DohProviders {
   }
 
   public static List<DnsOverHttps> providers(OkHttpClient client) {
-    return Arrays.asList(buildGoogle(client), buildCloudflare(client), buildCleanBrowsing(client),
+    return Arrays.asList(buildGoogle(client, false), buildGoogle(client, true),
+        buildCloudflare(client), buildCloudflarePost(client), buildCleanBrowsing(client),
         buildChantra(client), buildCryptoSx(client), buildSecureDns(client));
   }
 

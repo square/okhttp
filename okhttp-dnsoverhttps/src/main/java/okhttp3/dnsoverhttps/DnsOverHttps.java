@@ -22,8 +22,10 @@ import java.util.List;
 import javax.annotation.Nullable;
 import okhttp3.Dns;
 import okhttp3.HttpUrl;
+import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
+import okhttp3.RequestBody;
 import okhttp3.Response;
 import okhttp3.internal.platform.Platform;
 import okio.ByteString;
@@ -34,18 +36,21 @@ import okio.ByteString;
  * Implementation of https://tools.ietf.org/html/draft-ietf-doh-dns-over-https-07
  */
 public class DnsOverHttps implements Dns {
+  private static final MediaType DNS_MESSAGE = MediaType.parse("application/dns-message");
   private final OkHttpClient client;
   private final HttpUrl url;
   private final boolean includeIPv6;
+  private final boolean post;
 
   public DnsOverHttps(OkHttpClient client, HttpUrl url,
       @Nullable Dns bootstrapDns, boolean includeIPv6, String method) {
     this.client = bootstrapDns != null ? client.newBuilder().dns(bootstrapDns).build() : client;
     this.url = url;
     this.includeIPv6 = includeIPv6;
-    if (!method.equals("GET")) {
-      throw new UnsupportedOperationException("Only GET Supported");
+    if (!method.equals("GET") && !method.equals("POST")) {
+      throw new UnsupportedOperationException("Only GET and POST Supported");
     }
+    this.post = method.equals("POST");
   }
 
   public HttpUrl getUrl() {
@@ -56,7 +61,7 @@ public class DnsOverHttps implements Dns {
     try {
       //System.out.println("Host: " + hostname);
 
-      String query = DnsRecordCodec.encodeQuery(hostname, includeIPv6);
+      ByteString query = DnsRecordCodec.encodeQuery(hostname, includeIPv6);
 
       Request request = buildRequest(query);
       Response response = client.newCall(request).execute();
@@ -95,12 +100,24 @@ public class DnsOverHttps implements Dns {
     }
   }
 
-  private Request buildRequest(String query) {
-    HttpUrl requestUrl = url.newBuilder().addQueryParameter("dns", query).build();
+  private Request buildRequest(ByteString query) {
+    Request.Builder builder;
+
+    if (post) {
+      builder = new Request.Builder().url(url);
+
+      builder.post(RequestBody.create(DNS_MESSAGE, query));
+    } else {
+      String encoded = query.base64Url().replace("=", "");
+
+      //System.out.println("Query: " + encoded);
+
+      HttpUrl requestUrl = url.newBuilder().addQueryParameter("dns", encoded).build();
+
+      builder = new Request.Builder().url(requestUrl);
+    }
 
     //System.out.println("URL: " + requestUrl);
-
-    Request.Builder builder = new Request.Builder().url(requestUrl);
 
     builder.header("Accept", "application/dns-message");
 

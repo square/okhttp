@@ -24,8 +24,6 @@ import java.util.Arrays;
 import java.util.List;
 import okhttp3.Cache;
 import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.Response;
 
 public class TestDohMain {
   public static void main(String[] args) throws IOException {
@@ -44,7 +42,7 @@ public class TestDohMain {
       for (DnsOverHttps dns : dnsProviders) {
         System.out.println("Testing " + dns.getUrl());
 
-        for (String host: names) {
+        for (String host : names) {
           System.out.print(host + ": ");
           System.out.flush();
 

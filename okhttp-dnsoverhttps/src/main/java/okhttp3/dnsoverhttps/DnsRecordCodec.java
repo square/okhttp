@@ -38,7 +38,7 @@ class DnsRecordCodec {
   private DnsRecordCodec() {
   }
 
-  public static String encodeQuery(String host, boolean includeIPv6) {
+  public static ByteString encodeQuery(String host, boolean includeIPv6) {
     Buffer buf = new Buffer();
 
     buf.writeShort(0); // query id
@@ -66,11 +66,7 @@ class DnsRecordCodec {
       buf.writeShort(1); // CLASS_IN
     }
 
-    String encoded = buf.readByteString().base64Url().replace("=", "");
-
-    //System.out.println("Query: " + encoded);
-
-    return encoded;
+    return buf.readByteString();
   }
 
   public static List<InetAddress> decodeAnswers(String hostname, ByteString byteString)
