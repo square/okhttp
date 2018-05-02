@@ -36,7 +36,8 @@ public class TestDohMain {
 
     try {
       System.out.println("uncached\n********\n");
-      runBatch(bootstrapClient, names);
+      List<DnsOverHttps> dnsProviders = DohProviders.providers(bootstrapClient, false, false);
+      runBatch(bootstrapClient, dnsProviders, names);
 
       Cache dnsCache =
           new Cache(new File("./target/TestDohMain.cache." + System.currentTimeMillis()),
@@ -44,10 +45,13 @@ public class TestDohMain {
 
       System.out.println("cached first run\n****************\n");
       bootstrapClient = bootstrapClient.newBuilder().cache(dnsCache).build();
-      runBatch(bootstrapClient, names);
+      dnsProviders = DohProviders.providers(bootstrapClient, true, true);
+      runBatch(bootstrapClient, dnsProviders, names);
 
       System.out.println("cached second run\n*****************\n");
-      runBatch(bootstrapClient, names);
+      names = Arrays.asList("google.com", "graph.facebook.com");
+      dnsProviders = DohProviders.providers(bootstrapClient, true, true);
+      runBatch(bootstrapClient, dnsProviders, names);
     } finally {
       bootstrapClient.connectionPool().evictAll();
       bootstrapClient.dispatcher().executorService().shutdownNow();
@@ -58,10 +62,9 @@ public class TestDohMain {
     }
   }
 
-  private static void runBatch(OkHttpClient bootstrapClient, List<String> names) {
+  private static void runBatch(OkHttpClient bootstrapClient, List<DnsOverHttps> dnsProviders,
+      List<String> names) {
     long time = System.currentTimeMillis();
-
-    List<DnsOverHttps> dnsProviders = DohProviders.providers(bootstrapClient);
 
     for (DnsOverHttps dns : dnsProviders) {
       System.out.println("Testing " + dns.getUrl());

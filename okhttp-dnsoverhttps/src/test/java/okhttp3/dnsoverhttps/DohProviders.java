@@ -17,7 +17,7 @@ package okhttp3.dnsoverhttps;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.List;
 import okhttp3.HttpUrl;
 import okhttp3.OkHttpClient;
@@ -90,12 +90,25 @@ public class DohProviders {
         false, "GET", DNS_MESSAGE);
   }
 
-  public static List<DnsOverHttps> providers(OkHttpClient client) {
-    // buildCryptoSx(client) 521 - server down
-    // buildChantra(client) 400
-    return Arrays.asList(buildGoogle(client), buildGooglePost(client),
-        buildCloudflare(client), buildCloudflarePost(client), buildCleanBrowsing(client),
-        buildSecureDns(client));
+  public static List<DnsOverHttps> providers(OkHttpClient client, boolean http2Only,
+      boolean workingOnly) {
+
+    List<DnsOverHttps> result = new ArrayList<>();
+
+    result.add(buildGoogle(client));
+    result.add(buildGooglePost(client));
+    result.add(buildCloudflare(client));
+    result.add(buildCloudflarePost(client));
+    result.add(buildCleanBrowsing(client));
+    if (!http2Only) {
+      result.add(buildSecureDns(client));
+    }
+    if (!workingOnly) {
+      result.add(buildCryptoSx(client)); // 521 - server down
+      result.add(buildChantra(client)); // 400
+    }
+
+    return result;
   }
 
   private static HttpUrl parseUrl(String s) {

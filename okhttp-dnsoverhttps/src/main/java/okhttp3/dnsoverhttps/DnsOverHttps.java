@@ -24,6 +24,7 @@ import okhttp3.Dns;
 import okhttp3.HttpUrl;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
+import okhttp3.Protocol;
 import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
@@ -70,9 +71,9 @@ public class DnsOverHttps implements Dns {
       Response response = client.newCall(request).execute();
 
       // TODO reenable (currently noisy with test servers)
-      //if (response.protocol() != Protocol.HTTP_2) {
-      //  Platform.get().log(Platform.WARN, "Incorrect protocol: " + response.protocol(), null);
-      //}
+      if (response.cacheResponse() == null && response.protocol() != Protocol.HTTP_2) {
+        Platform.get().log(Platform.WARN, "Incorrect protocol: " + response.protocol(), null);
+      }
 
       // TODO remove (temporary info only currently)
       if (client.cache() != null && !post && response.cacheResponse() == null) {
