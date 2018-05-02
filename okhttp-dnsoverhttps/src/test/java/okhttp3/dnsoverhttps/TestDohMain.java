@@ -44,12 +44,12 @@ public class TestDohMain {
               10 * 1024 * 1024);
 
       System.out.println("cached first run\n****************\n");
+      names = Arrays.asList("google.com", "graph.facebook.com");
       bootstrapClient = bootstrapClient.newBuilder().cache(dnsCache).build();
       dnsProviders = DohProviders.providers(bootstrapClient, true, true, true);
       runBatch(bootstrapClient, dnsProviders, names);
 
       System.out.println("cached second run\n*****************\n");
-      names = Arrays.asList("google.com", "graph.facebook.com");
       dnsProviders = DohProviders.providers(bootstrapClient, true, true, true);
       runBatch(bootstrapClient, dnsProviders, names);
     } finally {
