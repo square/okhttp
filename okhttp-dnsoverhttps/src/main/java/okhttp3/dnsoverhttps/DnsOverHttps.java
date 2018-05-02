@@ -36,14 +36,16 @@ import okio.ByteString;
  * Implementation of https://tools.ietf.org/html/draft-ietf-doh-dns-over-https-07
  */
 public class DnsOverHttps implements Dns {
-  private static final MediaType DNS_MESSAGE = MediaType.parse("application/dns-message");
+  public static final MediaType DNS_MESSAGE = MediaType.parse("application/dns-message");
+  public static final MediaType UDPWIREFORMAT = MediaType.parse("application/dns-udpwireformat");
   private final OkHttpClient client;
   private final HttpUrl url;
   private final boolean includeIPv6;
   private final boolean post;
+  private final MediaType contentType;
 
   public DnsOverHttps(OkHttpClient client, HttpUrl url,
-      @Nullable Dns bootstrapDns, boolean includeIPv6, String method) {
+      @Nullable Dns bootstrapDns, boolean includeIPv6, String method, MediaType contentType) {
     this.client = bootstrapDns != null ? client.newBuilder().dns(bootstrapDns).build() : client;
     this.url = url;
     this.includeIPv6 = includeIPv6;
@@ -51,6 +53,7 @@ public class DnsOverHttps implements Dns {
       throw new UnsupportedOperationException("Only GET and POST Supported");
     }
     this.post = method.equals("POST");
+    this.contentType = contentType;
   }
 
   public HttpUrl getUrl() {
@@ -106,7 +109,7 @@ public class DnsOverHttps implements Dns {
     if (post) {
       builder = new Request.Builder().url(url);
 
-      builder.post(RequestBody.create(DNS_MESSAGE, query));
+      builder.post(RequestBody.create(contentType, query));
     } else {
       String encoded = query.base64Url().replace("=", "");
 
@@ -119,7 +122,7 @@ public class DnsOverHttps implements Dns {
 
     //System.out.println("URL: " + requestUrl);
 
-    builder.header("Accept", "application/dns-message");
+    builder.header("Accept", contentType.toString());
 
     return builder.build();
   }

@@ -29,39 +29,25 @@ public class TestDohMain {
   public static void main(String[] args) throws IOException {
     Security.insertProviderAt(new org.conscrypt.OpenSSLProvider(), 1);
 
-    Cache dnsCache = new Cache(new File("./target/TestDohMain.cache"), 10 * 1024 * 1024);
     OkHttpClient bootstrapClient = new OkHttpClient.Builder()
-        .cache(dnsCache)
         .build();
 
     List<String> names = Arrays.asList("google.com", "graph.facebook.com", "sdflkhfsdlkjdf.ee");
 
     try {
-      List<DnsOverHttps> dnsProviders = DohProviders.providers(bootstrapClient);
+      System.out.println("uncached\n********\n");
+      runBatch(bootstrapClient, names);
 
-      for (DnsOverHttps dns : dnsProviders) {
-        System.out.println("Testing " + dns.getUrl());
+      Cache dnsCache =
+          new Cache(new File("./target/TestDohMain.cache." + System.currentTimeMillis()),
+              10 * 1024 * 1024);
 
-        for (String host : names) {
-          System.out.print(host + ": ");
-          System.out.flush();
+      System.out.println("cached first run\n****************\n");
+      bootstrapClient = bootstrapClient.newBuilder().cache(dnsCache).build();
+      runBatch(bootstrapClient, names);
 
-          try {
-            List<InetAddress> results = dns.lookup(host);
-            System.out.println(results);
-          } catch (UnknownHostException uhe) {
-            Throwable e = uhe;
-
-            while (e != null) {
-              System.out.println(e.toString());
-
-              e = e.getCause();
-            }
-          }
-        }
-
-        System.out.println();
-      }
+      System.out.println("cached second run\n*****************\n");
+      runBatch(bootstrapClient, names);
     } finally {
       bootstrapClient.connectionPool().evictAll();
       bootstrapClient.dispatcher().executorService().shutdownNow();
@@ -69,6 +55,34 @@ public class TestDohMain {
       if (cache != null) {
         cache.close();
       }
+    }
+  }
+
+  private static void runBatch(OkHttpClient bootstrapClient, List<String> names) {
+    List<DnsOverHttps> dnsProviders = DohProviders.providers(bootstrapClient);
+
+    for (DnsOverHttps dns : dnsProviders) {
+      System.out.println("Testing " + dns.getUrl());
+
+      for (String host : names) {
+        System.out.print(host + ": ");
+        System.out.flush();
+
+        try {
+          List<InetAddress> results = dns.lookup(host);
+          System.out.println(results);
+        } catch (UnknownHostException uhe) {
+          Throwable e = uhe;
+
+          while (e != null) {
+            System.out.println(e.toString());
+
+            e = e.getCause();
+          }
+        }
+      }
+
+      System.out.println();
     }
   }
 }
