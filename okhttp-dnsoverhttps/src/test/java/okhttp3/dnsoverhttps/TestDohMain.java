@@ -36,7 +36,7 @@ public class TestDohMain {
 
     try {
       System.out.println("uncached\n********\n");
-      List<DnsOverHttps> dnsProviders = DohProviders.providers(bootstrapClient, false, false);
+      List<DnsOverHttps> dnsProviders = DohProviders.providers(bootstrapClient, false, false, false);
       runBatch(bootstrapClient, dnsProviders, names);
 
       Cache dnsCache =
@@ -45,12 +45,12 @@ public class TestDohMain {
 
       System.out.println("cached first run\n****************\n");
       bootstrapClient = bootstrapClient.newBuilder().cache(dnsCache).build();
-      dnsProviders = DohProviders.providers(bootstrapClient, true, true);
+      dnsProviders = DohProviders.providers(bootstrapClient, true, true, true);
       runBatch(bootstrapClient, dnsProviders, names);
 
       System.out.println("cached second run\n*****************\n");
       names = Arrays.asList("google.com", "graph.facebook.com");
-      dnsProviders = DohProviders.providers(bootstrapClient, true, true);
+      dnsProviders = DohProviders.providers(bootstrapClient, true, true, true);
       runBatch(bootstrapClient, dnsProviders, names);
     } finally {
       bootstrapClient.connectionPool().evictAll();

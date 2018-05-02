@@ -91,14 +91,18 @@ public class DohProviders {
   }
 
   public static List<DnsOverHttps> providers(OkHttpClient client, boolean http2Only,
-      boolean workingOnly) {
+      boolean workingOnly, boolean getOnly) {
 
     List<DnsOverHttps> result = new ArrayList<>();
 
     result.add(buildGoogle(client));
-    result.add(buildGooglePost(client));
+    if (!getOnly) {
+      result.add(buildGooglePost(client));
+    }
     result.add(buildCloudflare(client));
-    result.add(buildCloudflarePost(client));
+    if (!getOnly) {
+      result.add(buildCloudflarePost(client));
+    }
     result.add(buildCleanBrowsing(client));
     if (!http2Only) {
       result.add(buildSecureDns(client));

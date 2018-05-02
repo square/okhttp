@@ -61,6 +61,10 @@ public class DnsOverHttps implements Dns {
     return url;
   }
 
+  public boolean isPost() {
+    return post;
+  }
+
   @Override public List<InetAddress> lookup(String hostname) throws UnknownHostException {
     try {
       //System.out.println("Host: " + hostname);
