@@ -75,8 +75,8 @@ public class DnsOverHttps implements Dns {
       //}
 
       // TODO remove (temporary info only currently)
-      if (response.cacheResponse() != null) {
-        Platform.get().log(Platform.INFO, "DNS used cache: " + hostname, null);
+      if (client.cache() != null && !post && response.cacheResponse() == null) {
+        Platform.get().log(Platform.INFO, "DNS missed cache: " + hostname, null);
       }
 
       try {

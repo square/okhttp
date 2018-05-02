@@ -59,6 +59,8 @@ public class TestDohMain {
   }
 
   private static void runBatch(OkHttpClient bootstrapClient, List<String> names) {
+    long time = System.currentTimeMillis();
+
     List<DnsOverHttps> dnsProviders = DohProviders.providers(bootstrapClient);
 
     for (DnsOverHttps dns : dnsProviders) {
@@ -84,5 +86,9 @@ public class TestDohMain {
 
       System.out.println();
     }
+
+    time = System.currentTimeMillis() - time;
+
+    System.out.println("Time: " + (((double) time) / 1000) + " seconds\n");
   }
 }
