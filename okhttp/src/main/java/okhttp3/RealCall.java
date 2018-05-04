@@ -18,6 +18,7 @@ package okhttp3;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+
 import okhttp3.internal.NamedRunnable;
 import okhttp3.internal.cache.CacheInterceptor;
 import okhttp3.internal.connection.ConnectInterceptor;
@@ -56,6 +57,7 @@ final class RealCall implements Call {
 
   static RealCall newRealCall(OkHttpClient client, Request originalRequest, boolean forWebSocket) {
     // Safely publish the Call instance to the EventListener.
+    client = client.disableProxyCaseNoProxyListContainsHost(originalRequest.url.host);
     RealCall call = new RealCall(client, originalRequest, forWebSocket);
     call.eventListener = client.eventListenerFactory().create(call);
     return call;
