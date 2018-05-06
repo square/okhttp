@@ -131,7 +131,7 @@ class DnsRecordCodec {
     int length = in.readByte();
 
     if (length < 0) {
-      // compressed name pointer, first two bits are 0
+      // compressed name pointer, first two bits are 1
       // drop second byte of compression offset
       in.skip(1);
     } else {
