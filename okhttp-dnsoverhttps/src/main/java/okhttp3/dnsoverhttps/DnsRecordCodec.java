@@ -20,6 +20,7 @@ import java.io.EOFException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import okio.Buffer;
@@ -31,8 +32,9 @@ import okio.ByteString;
 class DnsRecordCodec {
   private static final byte SERVFAIL = 2;
   private static final byte NXDOMAIN = 3;
-  private static final int TYPE_A = 1;
-  private static final int TYPE_AAAA = 28;
+  private static final int TYPE_A = 0x0001;
+  private static final int TYPE_AAAA = 0x001c;
+  private static final int TYPE_PTR = 0x000c;
   private static final Charset ASCII = Charset.forName("ASCII");
 
   private DnsRecordCodec() {
@@ -107,9 +109,6 @@ class DnsRecordCodec {
     for (int i = 0; i < answerCount; i++) {
       consumeName(buf); // name
 
-      // TODO explain why this is needed
-      buf.skip(1);
-
       int type = buf.readShort() & 0xffff;
       buf.readShort(); // class
       final long ttl = buf.readInt() & 0xffffffffL; // ttl
@@ -128,13 +127,18 @@ class DnsRecordCodec {
   }
 
   private static void consumeName(Buffer in) throws EOFException {
-    // TODO this code has signedness bugs and needs a rework
+    // 0 - 63 bytes
     int length = in.readByte();
 
-    while (length > 0) {
-      // skip each part of the domain name
-      in.skip(length);
-      length = in.readByte();
+    if (length < 0) {
+      // compressed name pointer, first two bits are 0
+      // drop second byte of compression offset
+      in.skip(1);
+    } else {
+      while (length > 0) {
+        // skip each part of the domain name
+        length = in.readByte();
+      }
     }
   }
 }
