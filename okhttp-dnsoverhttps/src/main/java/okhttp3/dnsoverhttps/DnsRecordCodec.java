@@ -137,6 +137,7 @@ class DnsRecordCodec {
     } else {
       while (length > 0) {
         // skip each part of the domain name
+        in.skip(length);
         length = in.readByte();
       }
     }
