@@ -58,12 +58,12 @@ class DnsRecordCodec {
     nameBuf.writeByte(0); // end
 
     nameBuf.copyTo(buf, 0, nameBuf.size());
-    buf.writeShort(1); // A
+    buf.writeShort(TYPE_A);
     buf.writeShort(1); // CLASS_IN
 
     if (includeIPv6) {
       nameBuf.copyTo(buf, 0, nameBuf.size());
-      buf.writeShort(0x001c); // AAAA
+      buf.writeShort(TYPE_AAAA);
       buf.writeShort(1); // CLASS_IN
     }
 
