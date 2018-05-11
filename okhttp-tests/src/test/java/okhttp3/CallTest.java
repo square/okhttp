@@ -1187,6 +1187,25 @@ public final class CallTest {
     }
   }
 
+  @Test public void httpsCallsFailWhenProtocolIsH2PriorKnowledge() throws Exception {
+    client = client.newBuilder()
+        .protocols(Collections.singletonList(Protocol.H2_PRIOR_KNOWLEDGE))
+        .build();
+
+    server.useHttps(sslClient.socketFactory, false);
+    server.enqueue(new MockResponse());
+
+    Call call = client.newCall(new Request.Builder()
+        .url(server.url("/"))
+        .build());
+    try {
+      call.execute();
+      fail();
+    } catch (UnknownServiceException expected) {
+      assertEquals("H2_PRIOR_KNOWLEDGE cannot be used with HTTPS", expected.getMessage());
+    }
+  }
+
   @Test public void setFollowSslRedirectsFalse() throws Exception {
     enableTls();
     server.enqueue(new MockResponse()

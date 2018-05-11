@@ -15,9 +15,8 @@
  */
 package okhttp3;
 
-import org.junit.Test;
-
 import java.io.IOException;
+import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
 
@@ -28,7 +27,7 @@ public class ProtocolTest {
     assertEquals(Protocol.HTTP_1_1, Protocol.get("http/1.1"));
     assertEquals(Protocol.SPDY_3, Protocol.get("spdy/3.1"));
     assertEquals(Protocol.HTTP_2, Protocol.get("h2"));
-    assertEquals(Protocol.H2C, Protocol.get("h2c"));
+    assertEquals(Protocol.H2_PRIOR_KNOWLEDGE, Protocol.get("h2_prior_knowledge"));
     assertEquals(Protocol.QUIC, Protocol.get("quic"));
   }
 
@@ -43,7 +42,7 @@ public class ProtocolTest {
     assertEquals("http/1.1", Protocol.HTTP_1_1.toString());
     assertEquals("spdy/3.1", Protocol.SPDY_3.toString());
     assertEquals("h2", Protocol.HTTP_2.toString());
-    assertEquals("h2c", Protocol.H2C.toString());
+    assertEquals("h2_prior_knowledge", Protocol.H2_PRIOR_KNOWLEDGE.toString());
     assertEquals("quic", Protocol.QUIC.toString());
   }
 }
