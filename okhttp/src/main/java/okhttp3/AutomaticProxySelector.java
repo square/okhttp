@@ -1,20 +1,14 @@
 package okhttp3;
 
-import sun.net.spi.DefaultProxySelector;
-
 import java.io.IOException;
 import java.net.Proxy;
+import java.net.ProxySelector;
 import java.net.SocketAddress;
 import java.net.URI;
 import java.util.Collections;
 import java.util.List;
 
-public class AutomaticProxySelector extends DefaultProxySelector {
-
-    public AutomaticProxySelector(List<String> noProxyForHosts, List<Proxy> proxies) {
-        this.noProxyForHosts = noProxyForHosts;
-        this.proxies = proxies;
-    }
+public class AutomaticProxySelector extends ProxySelector {
 
     private List<String> noProxyForHosts;
     private List<Proxy> proxies;
@@ -43,5 +37,13 @@ public class AutomaticProxySelector extends DefaultProxySelector {
             }
         }
         return false;
+    }
+
+    public void setNoProxyForHosts(List<String> noProxyForHosts) {
+        this.noProxyForHosts = noProxyForHosts;
+    }
+
+    public void setProxies(List<Proxy> proxies) {
+        this.proxies = proxies;
     }
 }

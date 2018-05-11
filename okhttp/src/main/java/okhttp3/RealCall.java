@@ -57,7 +57,6 @@ final class RealCall implements Call {
 
   static RealCall newRealCall(OkHttpClient client, Request originalRequest, boolean forWebSocket) {
     // Safely publish the Call instance to the EventListener.
-    client = client.disableProxyCaseNoProxyListContainsHost(originalRequest.url.host);
     RealCall call = new RealCall(client, originalRequest, forWebSocket);
     call.eventListener = client.eventListenerFactory().create(call);
     return call;
