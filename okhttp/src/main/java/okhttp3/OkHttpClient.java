@@ -216,6 +216,7 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
   final Authenticator authenticator;
   final ConnectionPool connectionPool;
   final Dns dns;
+  final @Nullable PingPayloadProvider pingPayloadProvider;
   final boolean followSslRedirects;
   final boolean followRedirects;
   final boolean retryOnConnectionFailure;
@@ -274,6 +275,7 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
     this.readTimeout = builder.readTimeout;
     this.writeTimeout = builder.writeTimeout;
     this.pingInterval = builder.pingInterval;
+    this.pingPayloadProvider = builder.pingPayloadProvider;
 
     if (interceptors.contains(null)) {
       throw new IllegalStateException("Null interceptor: " + interceptors);
@@ -327,6 +329,10 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
   /** Web socket ping interval (in milliseconds). */
   public int pingIntervalMillis() {
     return pingInterval;
+  }
+
+  public @Nullable PingPayloadProvider getPingPayloadProvider() {
+    return pingPayloadProvider;
   }
 
   public Proxy proxy() {
@@ -438,7 +444,8 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
    * Uses {@code request} to connect a new web socket.
    */
   @Override public WebSocket newWebSocket(Request request, WebSocketListener listener) {
-    RealWebSocket webSocket = new RealWebSocket(request, listener, new Random(), pingInterval);
+    RealWebSocket webSocket = new RealWebSocket(request, listener, new Random(), pingInterval,
+            pingPayloadProvider);
     webSocket.connect(this);
     return webSocket;
   }
@@ -468,6 +475,7 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
     Authenticator authenticator;
     ConnectionPool connectionPool;
     Dns dns;
+    @Nullable PingPayloadProvider pingPayloadProvider;
     boolean followSslRedirects;
     boolean followRedirects;
     boolean retryOnConnectionFailure;
@@ -527,6 +535,7 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
       this.readTimeout = okHttpClient.readTimeout;
       this.writeTimeout = okHttpClient.writeTimeout;
       this.pingInterval = okHttpClient.pingInterval;
+      this.pingPayloadProvider = okHttpClient.pingPayloadProvider;
     }
 
     /**
@@ -586,6 +595,15 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
      */
     public Builder pingInterval(long interval, TimeUnit unit) {
       pingInterval = checkDuration("interval", interval, unit);
+      return this;
+    }
+
+    /**
+     * Sets the ping payload provider. This will allow to configure the payload of the ping
+     * messages.
+     */
+    public Builder pingPayloadProvider(@Nullable PingPayloadProvider pingPayloadProvider) {
+      this.pingPayloadProvider = pingPayloadProvider;
       return this;
     }
 
