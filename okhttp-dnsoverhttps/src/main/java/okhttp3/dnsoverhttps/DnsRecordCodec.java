@@ -53,7 +53,9 @@ class DnsRecordCodec {
     final String[] labels = host.split("\\.");
     for (String label : labels) {
       long utf8ByteCount = Utf8.size(label);
-      if (utf8ByteCount != label.length()) throw new IllegalArgumentException("non-ascii hostname: " + host);
+      if (utf8ByteCount != label.length()) {
+        throw new IllegalArgumentException("non-ascii hostname: " + host);
+      }
       nameBuf.writeByte((byte) utf8ByteCount);
       nameBuf.writeUtf8(label);
     }
