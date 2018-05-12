@@ -37,6 +37,7 @@ import okhttp3.Request;
 import okhttp3.Response;
 import okhttp3.WebSocket;
 import okhttp3.WebSocketListener;
+import okhttp3.PingPayloadProvider;
 import okhttp3.internal.Internal;
 import okhttp3.internal.Util;
 import okhttp3.internal.connection.StreamAllocation;
@@ -74,6 +75,7 @@ public final class RealWebSocket implements WebSocket, WebSocketReader.FrameCall
   final WebSocketListener listener;
   private final Random random;
   private final long pingIntervalMillis;
+  private final PingPayloadProvider pingPayloadProvider;
   private final String key;
 
   /** Non-null for client web sockets. These can be canceled. */
@@ -140,7 +142,7 @@ public final class RealWebSocket implements WebSocket, WebSocketReader.FrameCall
   private boolean awaitingPong;
 
   public RealWebSocket(Request request, WebSocketListener listener, Random random,
-      long pingIntervalMillis) {
+      long pingIntervalMillis, @Nullable PingPayloadProvider pingPayloadProvider) {
     if (!"GET".equals(request.method())) {
       throw new IllegalArgumentException("Request must be GET: " + request.method());
     }
@@ -148,6 +150,11 @@ public final class RealWebSocket implements WebSocket, WebSocketReader.FrameCall
     this.listener = listener;
     this.random = random;
     this.pingIntervalMillis = pingIntervalMillis;
+    if (pingPayloadProvider == null) {
+      this.pingPayloadProvider = PingPayloadProvider.EMPTY;
+    } else {
+      this.pingPayloadProvider = pingPayloadProvider;
+    }
 
     byte[] nonce = new byte[16];
     random.nextBytes(nonce);
@@ -327,11 +334,8 @@ public final class RealWebSocket implements WebSocket, WebSocketReader.FrameCall
   }
 
   @Override public synchronized void onReadPing(ByteString payload) {
-    // Don't respond to pings after we've failed or sent the close frame.
-    if (failed || (enqueuedClose && messageAndCloseQueue.isEmpty())) return;
-
-    pongQueue.add(payload);
-    runWriter();
+    // Queue a pong response for a received ping using the ping's payload.
+    pong(payload);
     receivedPingCount++;
   }
 
@@ -549,7 +553,7 @@ public final class RealWebSocket implements WebSocket, WebSocketReader.FrameCall
     }
 
     try {
-      writer.writePing(ByteString.EMPTY);
+      writer.writePing(pingPayloadProvider.getPayload());
     } catch (IOException e) {
       failWebSocket(e, null);
     }

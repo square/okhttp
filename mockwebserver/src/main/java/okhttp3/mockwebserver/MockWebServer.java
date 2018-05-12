@@ -682,7 +682,7 @@ public final class MockWebServer extends ExternalResource implements Closeable {
       }
     };
     RealWebSocket webSocket = new RealWebSocket(fancyRequest,
-        response.getWebSocketListener(), new SecureRandom(), 0);
+        response.getWebSocketListener(), new SecureRandom(), 0, null);
     response.getWebSocketListener().onOpen(webSocket, fancyResponse);
     String name = "MockWebServer WebSocket " + request.getPath();
     webSocket.initReaderAndWriter(name, streams);
