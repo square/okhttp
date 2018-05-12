@@ -1,4 +1,6 @@
 /*
+ * Copyright (C) 2014 Square, Inc.
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -19,6 +21,13 @@ import okio.ByteString;
  * Provides payload data to be sent with the ping message.
  */
 public interface PingPayloadProvider {
+
+    PingPayloadProvider EMPTY = new PingPayloadProvider() {
+        @java.lang.Override
+        public ByteString getPayload() {
+            return ByteString.EMPTY;
+        }
+    };
+
     ByteString getPayload();
 }
-

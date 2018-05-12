@@ -150,13 +150,8 @@ public final class RealWebSocket implements WebSocket, WebSocketReader.FrameCall
     this.listener = listener;
     this.random = random;
     this.pingIntervalMillis = pingIntervalMillis;
-    if(pingPayloadProvider == null) {
-      this.pingPayloadProvider = new PingPayloadProvider() {
-        @Override
-        public ByteString getPayload() {
-          return ByteString.EMPTY;
-        }
-      };
+    if (pingPayloadProvider == null) {
+      this.pingPayloadProvider = PingPayloadProvider.EMPTY;
     } else {
       this.pingPayloadProvider = pingPayloadProvider;
     }
