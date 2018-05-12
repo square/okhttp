@@ -1,17 +1,16 @@
 /*
- * Copyright (C) 2014 Square, Inc.
+ * Copyright 2016 The Netty Project
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * The Netty Project licenses this file to you under the Apache License, version 2.0 (the
+ * "License"); you may not use this file except in compliance with the License. You may obtain a
+ * copy of the License at:
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Unless required by applicable law or agreed to in writing, software distributed under the License
+ * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the License for the specific language governing permissions and limitations under
+ * the License.
  */
 
 package okhttp3.dnsoverhttps;
@@ -24,6 +23,7 @@ import java.util.ArrayList;
 import java.util.List;
 import okio.Buffer;
 import okio.ByteString;
+import okio.Utf8;
 
 /**
  * Trivial Dns Encoder/Decoder, basically ripped from Netty full implementation.
@@ -52,8 +52,10 @@ class DnsRecordCodec {
     Buffer nameBuf = new Buffer();
     final String[] labels = host.split("\\.");
     for (String label : labels) {
-      nameBuf.writeByte(label.length());
-      nameBuf.writeString(label, ASCII);
+      long utf8ByteCount = Utf8.size(label);
+      if (utf8ByteCount != label.length()) throw new IllegalArgumentException("non-ascii hostname: " + host);
+      nameBuf.writeByte((byte) utf8ByteCount);
+      nameBuf.writeUtf8(label);
     }
     nameBuf.writeByte(0); // end
 
@@ -97,13 +99,13 @@ class DnsRecordCodec {
     buf.readShort(); // additional record count
 
     for (int i = 0; i < questionCount; i++) {
-      consumeName(buf); // name
+      skipName(buf); // name
       buf.readShort(); // type
       buf.readShort(); // class
     }
 
     for (int i = 0; i < answerCount; i++) {
-      consumeName(buf); // name
+      skipName(buf); // name
 
       int type = buf.readShort() & 0xffff;
       buf.readShort(); // class
@@ -122,7 +124,7 @@ class DnsRecordCodec {
     return result;
   }
 
-  private static void consumeName(Buffer in) throws EOFException {
+  private static void skipName(Buffer in) throws EOFException {
     // 0 - 63 bytes
     int length = in.readByte();
 
