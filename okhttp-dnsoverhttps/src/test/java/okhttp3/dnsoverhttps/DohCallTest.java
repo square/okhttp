@@ -120,7 +120,7 @@ public class DohCallTest {
     try {
       return InetAddress.getByName(host);
     } catch (UnknownHostException e) {
-      // unlikely
+      // impossible for IP addresses
       throw new RuntimeException(e);
     }
   }

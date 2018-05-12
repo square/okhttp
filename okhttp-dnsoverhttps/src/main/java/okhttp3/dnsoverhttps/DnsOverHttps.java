@@ -67,21 +67,13 @@ public class DnsOverHttps implements Dns {
 
   @Override public List<InetAddress> lookup(String hostname) throws UnknownHostException {
     try {
-      //System.out.println("Host: " + hostname);
-
       ByteString query = DnsRecordCodec.encodeQuery(hostname, includeIPv6);
 
       Request request = buildRequest(query);
       Response response = client.newCall(request).execute();
 
-      // TODO reenable (currently noisy with test servers)
       if (response.cacheResponse() == null && response.protocol() != Protocol.HTTP_2) {
         Platform.get().log(Platform.WARN, "Incorrect protocol: " + response.protocol(), null);
-      }
-
-      // TODO remove (temporary info only currently)
-      if (client.cache() != null && !post && response.cacheResponse() == null) {
-        Platform.get().log(Platform.INFO, "DNS missed cache: " + hostname, null);
       }
 
       try {
@@ -90,8 +82,6 @@ public class DnsOverHttps implements Dns {
         }
 
         ByteString responseBytes = response.body().source().readByteString();
-
-        //System.out.println("Response: " + responseBytes.hex());
 
         List<InetAddress> results = DnsRecordCodec.decodeAnswers(hostname, responseBytes);
 
@@ -112,20 +102,13 @@ public class DnsOverHttps implements Dns {
     Request.Builder builder;
 
     if (post) {
-      builder = new Request.Builder().url(url);
-
-      builder.post(RequestBody.create(contentType, query));
+      builder = new Request.Builder().url(url).post(RequestBody.create(contentType, query));
     } else {
       String encoded = query.base64Url().replace("=", "");
-
-      //System.out.println("Query: " + encoded);
-
       HttpUrl requestUrl = url.newBuilder().addQueryParameter("dns", encoded).build();
 
       builder = new Request.Builder().url(requestUrl);
     }
-
-    //System.out.println("URL: " + requestUrl);
 
     builder.header("Accept", contentType.toString());
 

@@ -72,8 +72,6 @@ class DnsRecordCodec {
 
   public static List<InetAddress> decodeAnswers(String hostname, ByteString byteString)
       throws Exception {
-    //System.out.println("Response: " + byteString.hex());
-
     List<InetAddress> result = new ArrayList<>();
 
     Buffer buf = new Buffer();
@@ -87,7 +85,6 @@ class DnsRecordCodec {
 
     byte responseCode = (byte) (flags & 0xf);
 
-    //System.out.println("Code: " + responseCode);
     if (responseCode == NXDOMAIN) {
       throw new UnknownHostException(hostname + ": NXDOMAIN");
     } else if (responseCode == SERVFAIL) {

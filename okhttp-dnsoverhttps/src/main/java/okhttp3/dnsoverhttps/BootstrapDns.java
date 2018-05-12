@@ -28,7 +28,7 @@ import okhttp3.Dns;
  *
  * Returns hardcoded results for the known host.
  */
-public class BootstrapDns implements Dns {
+public final class BootstrapDns implements Dns {
   private final String dnsHost;
   private final List<InetAddress> dnsServers;
 
