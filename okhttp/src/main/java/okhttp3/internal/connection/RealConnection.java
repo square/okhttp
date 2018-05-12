@@ -146,6 +146,11 @@ public final class RealConnection extends Http2Connection.Listener implements Co
         throw new RouteException(new UnknownServiceException(
             "CLEARTEXT communication to " + host + " not permitted by network security policy"));
       }
+    } else {
+      if (route.address().protocols().contains(Protocol.H2_PRIOR_KNOWLEDGE)) {
+        throw new RouteException(new UnknownServiceException(
+            "H2_PRIOR_KNOWLEDGE cannot be used with HTTPS"));
+      }
     }
 
     while (true) {
@@ -261,9 +266,9 @@ public final class RealConnection extends Http2Connection.Listener implements Co
   private void establishProtocol(ConnectionSpecSelector connectionSpecSelector,
       int pingIntervalMillis, Call call, EventListener eventListener) throws IOException {
     if (route.address().sslSocketFactory() == null) {
-      if (route.address().protocols().contains(Protocol.H2C)) {
+      if (route.address().protocols().contains(Protocol.H2_PRIOR_KNOWLEDGE)) {
         socket = rawSocket;
-        protocol = Protocol.H2C;
+        protocol = Protocol.H2_PRIOR_KNOWLEDGE;
         startHttp2(pingIntervalMillis);
         return;
       }
