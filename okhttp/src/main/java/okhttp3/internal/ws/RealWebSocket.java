@@ -15,7 +15,6 @@
  */
 package okhttp3.internal.ws;
 
-import java.io.Closeable;
 import java.io.IOException;
 import java.net.ProtocolException;
 import java.net.SocketTimeoutException;
@@ -35,13 +34,13 @@ import okhttp3.OkHttpClient;
 import okhttp3.Protocol;
 import okhttp3.Request;
 import okhttp3.Response;
+import okhttp3.Streams;
 import okhttp3.WebSocket;
 import okhttp3.WebSocketListener;
 import okhttp3.internal.Internal;
 import okhttp3.internal.Util;
 import okhttp3.internal.connection.StreamAllocation;
 import okio.BufferedSink;
-import okio.BufferedSource;
 import okio.ByteString;
 import okio.Okio;
 
@@ -74,7 +73,6 @@ public final class RealWebSocket implements WebSocket, WebSocketReader.FrameCall
   final WebSocketListener listener;
   private final Random random;
   private final long pingIntervalMillis;
-  private final String key;
 
   /** Non-null for client web sockets. These can be canceled. */
   private Call call;
@@ -149,9 +147,6 @@ public final class RealWebSocket implements WebSocket, WebSocketReader.FrameCall
     this.random = random;
     this.pingIntervalMillis = pingIntervalMillis;
 
-    byte[] nonce = new byte[16];
-    random.nextBytes(nonce);
-    this.key = ByteString.of(nonce).base64();
 
     this.writerRunnable = new Runnable() {
       @Override public void run() {
@@ -177,16 +172,12 @@ public final class RealWebSocket implements WebSocket, WebSocketReader.FrameCall
     call.cancel();
   }
 
+  // TODO move externally
   public void connect(OkHttpClient client) {
-    client = client.newBuilder()
-        .eventListener(EventListener.NONE)
-        .protocols(ONLY_HTTP1)
-        .build();
+    client = client.newBuilder().eventListener(EventListener.NONE).protocols(ONLY_HTTP1).build();
     final Request request = originalRequest.newBuilder()
         .header("Upgrade", "websocket")
         .header("Connection", "Upgrade")
-        .header("Sec-WebSocket-Key", key)
-        .header("Sec-WebSocket-Version", "13")
         .build();
     call = Internal.instance.newWebSocketCall(client, request);
     call.enqueue(new Callback() {
@@ -225,13 +216,16 @@ public final class RealWebSocket implements WebSocket, WebSocketReader.FrameCall
   void checkResponse(Response response) throws ProtocolException {
     if (response.code() != 101) {
       throw new ProtocolException("Expected HTTP 101 response but was '"
-          + response.code() + " " + response.message() + "'");
+          + response.code()
+          + " "
+          + response.message()
+          + "'");
     }
 
     String headerConnection = response.header("Connection");
     if (!"Upgrade".equalsIgnoreCase(headerConnection)) {
-      throw new ProtocolException("Expected 'Connection' header value 'Upgrade' but was '"
-          + headerConnection + "'");
+      throw new ProtocolException(
+          "Expected 'Connection' header value 'Upgrade' but was '" + headerConnection + "'");
     }
 
     String headerUpgrade = response.header("Upgrade");
@@ -240,13 +234,7 @@ public final class RealWebSocket implements WebSocket, WebSocketReader.FrameCall
           "Expected 'Upgrade' header value 'websocket' but was '" + headerUpgrade + "'");
     }
 
-    String headerAccept = response.header("Sec-WebSocket-Accept");
-    String acceptExpected = ByteString.encodeUtf8(key + WebSocketProtocol.ACCEPT_MAGIC)
-        .sha1().base64();
-    if (!acceptExpected.equals(headerAccept)) {
-      throw new ProtocolException("Expected 'Sec-WebSocket-Accept' header value '"
-          + acceptExpected + "' but was '" + headerAccept + "'");
-    }
+    // TODO call upgradeHandler.complete
   }
 
   public void initReaderAndWriter(String name, Streams streams) throws IOException {
@@ -255,8 +243,8 @@ public final class RealWebSocket implements WebSocket, WebSocketReader.FrameCall
       this.writer = new WebSocketWriter(streams.client, streams.sink, random);
       this.executor = new ScheduledThreadPoolExecutor(1, Util.threadFactory(name, false));
       if (pingIntervalMillis != 0) {
-        executor.scheduleAtFixedRate(
-            new PingRunnable(), pingIntervalMillis, pingIntervalMillis, MILLISECONDS);
+        executor.scheduleAtFixedRate(new PingRunnable(), pingIntervalMillis, pingIntervalMillis,
+            MILLISECONDS);
       }
       if (!messageAndCloseQueue.isEmpty()) {
         runWriter(); // Send messages that were enqueued before we were connected.
@@ -491,17 +479,15 @@ public final class RealWebSocket implements WebSocket, WebSocketReader.FrameCall
     try {
       if (pong != null) {
         writer.writePong(pong);
-
       } else if (messageOrClose instanceof Message) {
         ByteString data = ((Message) messageOrClose).data;
-        BufferedSink sink = Okio.buffer(writer.newMessageSink(
-            ((Message) messageOrClose).formatOpcode, data.size()));
+        BufferedSink sink = Okio.buffer(
+            writer.newMessageSink(((Message) messageOrClose).formatOpcode, data.size()));
         sink.write(data);
         sink.close();
         synchronized (this) {
           queueSize -= data.size();
         }
-
       } else if (messageOrClose instanceof Close) {
         Close close = (Close) messageOrClose;
         writer.writeClose(close.code, close.reason);
@@ -510,7 +496,6 @@ public final class RealWebSocket implements WebSocket, WebSocketReader.FrameCall
         if (streamsToClose != null) {
           listener.onClosed(this, receivedCloseCode, receivedCloseReason);
         }
-
       } else {
         throw new AssertionError();
       }
@@ -542,9 +527,10 @@ public final class RealWebSocket implements WebSocket, WebSocketReader.FrameCall
     }
 
     if (failedPing != -1) {
-      failWebSocket(new SocketTimeoutException("sent ping but didn't receive pong within "
-          + pingIntervalMillis + "ms (after " + (failedPing - 1) + " successful ping/pongs)"),
-          null);
+      failWebSocket(new SocketTimeoutException(
+          "sent ping but didn't receive pong within " + pingIntervalMillis + "ms (after " + (
+              failedPing
+                  - 1) + " successful ping/pongs)"), null);
       return;
     }
 
@@ -592,18 +578,6 @@ public final class RealWebSocket implements WebSocket, WebSocketReader.FrameCall
       this.code = code;
       this.reason = reason;
       this.cancelAfterCloseMillis = cancelAfterCloseMillis;
-    }
-  }
-
-  public abstract static class Streams implements Closeable {
-    public final boolean client;
-    public final BufferedSource source;
-    public final BufferedSink sink;
-
-    public Streams(boolean client, BufferedSource source, BufferedSink sink) {
-      this.client = client;
-      this.source = source;
-      this.sink = sink;
     }
   }
 
