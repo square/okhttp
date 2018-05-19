@@ -20,6 +20,7 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.List;
 import javax.annotation.Nullable;
+import okhttp3.CacheControl;
 import okhttp3.Dns;
 import okhttp3.HttpUrl;
 import okhttp3.MediaType;
@@ -45,8 +46,8 @@ public class DnsOverHttps implements Dns {
   private final boolean post;
   private final MediaType contentType;
 
-  public DnsOverHttps(OkHttpClient client, HttpUrl url,
-      @Nullable Dns bootstrapDns, boolean includeIPv6, String method, MediaType contentType) {
+  public DnsOverHttps(OkHttpClient client, HttpUrl url, @Nullable Dns bootstrapDns,
+      boolean includeIPv6, String method, MediaType contentType) {
     this.client = bootstrapDns != null ? client.newBuilder().dns(bootstrapDns).build() : client;
     this.url = url;
     this.includeIPv6 = includeIPv6;
@@ -70,25 +71,10 @@ public class DnsOverHttps implements Dns {
       ByteString query = DnsRecordCodec.encodeQuery(hostname, includeIPv6);
 
       Request request = buildRequest(query);
-      Response response = client.newCall(request).execute();
 
-      if (response.cacheResponse() == null && response.protocol() != Protocol.HTTP_2) {
-        Platform.get().log(Platform.WARN, "Incorrect protocol: " + response.protocol(), null);
-      }
+      Response response = executeRequest(request);
 
-      try {
-        if (!response.isSuccessful()) {
-          throw new IOException("response: " + response.code() + " " + response.message());
-        }
-
-        ByteString responseBytes = response.body().source().readByteString();
-
-        List<InetAddress> results = DnsRecordCodec.decodeAnswers(hostname, responseBytes);
-
-        return results;
-      } finally {
-        response.close();
-      }
+      return readResponse(hostname, response);
     } catch (UnknownHostException uhe) {
       throw uhe;
     } catch (Exception e) {
@@ -98,16 +84,53 @@ public class DnsOverHttps implements Dns {
     }
   }
 
+  private Response executeRequest(Request request) throws IOException {
+    // cached request
+    if (!post && client.cache() != null) {
+      Request cacheRequest = request.newBuilder().cacheControl(CacheControl.FORCE_CACHE).build();
+
+      Response response = client.newCall(cacheRequest).execute();
+
+      if (response.isSuccessful()) {
+        return response;
+      }
+    }
+
+    return client.newCall(request).execute();
+  }
+
+  private List<InetAddress> readResponse(String hostname, Response response) throws Exception {
+    if (response.cacheResponse() == null && response.protocol() != Protocol.HTTP_2) {
+      Platform.get().log(Platform.WARN, "Incorrect protocol: " + response.protocol(), null);
+    }
+
+    try {
+      if (!response.isSuccessful()) {
+        throw new IOException("response: " + response.code() + " " + response.message());
+      }
+
+      ByteString responseBytes = response.body().source().readByteString();
+
+      List<InetAddress> results = DnsRecordCodec.decodeAnswers(hostname, responseBytes);
+
+      return results;
+    } finally {
+      response.close();
+    }
+  }
+
   private Request buildRequest(ByteString query) {
     Request.Builder builder;
 
+    Request.Builder requestBuilder = new Request.Builder();
+
     if (post) {
-      builder = new Request.Builder().url(url).post(RequestBody.create(contentType, query));
+      builder = requestBuilder.url(url).post(RequestBody.create(contentType, query));
     } else {
       String encoded = query.base64Url().replace("=", "");
       HttpUrl requestUrl = url.newBuilder().addQueryParameter("dns", encoded).build();
 
-      builder = new Request.Builder().url(requestUrl);
+      builder = requestBuilder.url(requestUrl);
     }
 
     builder.header("Accept", contentType.toString());

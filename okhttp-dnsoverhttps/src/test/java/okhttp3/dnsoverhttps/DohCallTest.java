@@ -15,14 +15,17 @@
  */
 package okhttp3.dnsoverhttps;
 
+import java.io.File;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.Arrays;
 import java.util.List;
+import okhttp3.Cache;
 import okhttp3.Dns;
 import okhttp3.HttpUrl;
 import okhttp3.OkHttpClient;
 import okhttp3.Protocol;
+import okhttp3.Request;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import okhttp3.mockwebserver.RecordedRequest;
@@ -102,6 +105,30 @@ public class DohCallTest {
     assertEquals("GET", recordedRequest.getMethod());
     assertEquals("/lookup?ct&dns=AAABAAACAAAAAAAABmdvb2dsZQNjb20AAAEAAQZnb29nbGUDY29t"
         + "AAAcAAE", recordedRequest.getPath());
+  }
+
+  @Test public void usesCache() throws Exception {
+    Cache cache = new Cache(new File("./target/DohCallTest.cache"), 100 * 1024);
+    OkHttpClient cachedClient = bootstrapClient.newBuilder().cache(cache).build();
+    DnsOverHttps cachedDns = buildLocalhost(cachedClient);
+
+    server.enqueue(dnsResponse(
+        "0000818000010003000000000567726170680866616365626f6f6b03636f6d0000010001c00c00050001"
+            + "00000a6d000603617069c012c0300005000100000cde000c04737461720463313072c012c04200010"
+            + "0010000003b00049df00112")
+        .setHeader("cache-control", "private, max-age=298"));
+
+    List<InetAddress> result = cachedDns.lookup("google.com");
+
+    assertEquals(singletonList(address("157.240.1.18")), result);
+
+    RecordedRequest recordedRequest = server.takeRequest();
+    assertEquals("GET", recordedRequest.getMethod());
+    assertEquals("/lookup?ct&dns=AAABAAACAAAAAAAABmdvb2dsZQNjb20AAAEAAQZnb29nbGUDY29t"
+        + "AAAcAAE", recordedRequest.getPath());
+
+    result = cachedDns.lookup("google.com");
+    assertEquals(singletonList(address("157.240.1.18")), result);
   }
 
   private MockResponse dnsResponse(String s) {
