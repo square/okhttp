@@ -35,7 +35,12 @@ import okio.ByteString;
 /**
  * DNS over HTTPS implementation.
  *
- * Implementation of https://tools.ietf.org/html/draft-ietf-doh-dns-over-https-07
+ * Implementation of https://tools.ietf.org/html/draft-ietf-doh-dns-over-https-08
+ *
+ * <blockquote>A DNS API client encodes a single DNS query into an HTTP request
+ * using either the HTTP GET or POST method and the other requirements
+ * of this section.  The DNS API server defines the URI used by the
+ * request through the use of a URI Template.</blockquote>
  */
 public class DnsOverHttps implements Dns {
   public static final MediaType DNS_MESSAGE = MediaType.parse("application/dns-message");
@@ -71,7 +76,6 @@ public class DnsOverHttps implements Dns {
       ByteString query = DnsRecordCodec.encodeQuery(hostname, includeIPv6);
 
       Request request = buildRequest(query);
-
       Response response = executeRequest(request);
 
       return readResponse(hostname, response);
@@ -122,7 +126,7 @@ public class DnsOverHttps implements Dns {
   private Request buildRequest(ByteString query) {
     Request.Builder builder;
 
-    Request.Builder requestBuilder = new Request.Builder();
+    Request.Builder requestBuilder = new Request.Builder().header("Accept", contentType.toString());
 
     if (post) {
       builder = requestBuilder.url(url).post(RequestBody.create(contentType, query));
@@ -132,8 +136,6 @@ public class DnsOverHttps implements Dns {
 
       builder = requestBuilder.url(requestUrl);
     }
-
-    builder.header("Accept", contentType.toString());
 
     return builder.build();
   }

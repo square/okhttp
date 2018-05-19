@@ -115,7 +115,7 @@ public class DohProviders {
     return result;
   }
 
-  private static HttpUrl parseUrl(String s) {
+  static HttpUrl parseUrl(String s) {
     HttpUrl url = HttpUrl.parse(s);
 
     if (url == null) {
