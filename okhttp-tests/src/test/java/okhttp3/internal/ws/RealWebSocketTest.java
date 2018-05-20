@@ -24,6 +24,7 @@ import java.util.concurrent.TimeUnit;
 import okhttp3.Protocol;
 import okhttp3.Request;
 import okhttp3.Response;
+import okhttp3.Streams;
 import okio.ByteString;
 import okio.Okio;
 import okio.Pipe;
@@ -343,7 +344,7 @@ public final class RealWebSocketTest {
   }
 
   /** One peer's streams, listener, and web socket in the test. */
-  private static class TestStreams extends RealWebSocket.Streams {
+  private static class TestStreams extends Streams {
     private final String name;
     private final WebSocketRecorder listener;
     private RealWebSocket webSocket;

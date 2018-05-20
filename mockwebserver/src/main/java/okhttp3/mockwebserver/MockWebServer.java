@@ -57,6 +57,7 @@ import okhttp3.HttpUrl;
 import okhttp3.Protocol;
 import okhttp3.Request;
 import okhttp3.Response;
+import okhttp3.Streams;
 import okhttp3.internal.Internal;
 import okhttp3.internal.NamedRunnable;
 import okhttp3.internal.Util;
@@ -676,7 +677,7 @@ public final class MockWebServer extends ExternalResource implements Closeable {
         .build();
 
     final CountDownLatch connectionClose = new CountDownLatch(1);
-    RealWebSocket.Streams streams = new RealWebSocket.Streams(false, source, sink) {
+    Streams streams = new Streams(false, source, sink) {
       @Override public void close() {
         connectionClose.countDown();
       }

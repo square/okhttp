@@ -53,8 +53,6 @@ import static okhttp3.internal.ws.WebSocketProtocol.OPCODE_TEXT;
 import static okhttp3.internal.ws.WebSocketProtocol.validateCloseCode;
 
 public final class RealWebSocket implements WebSocket, WebSocketReader.FrameCallback {
-  private static final List<Protocol> ONLY_HTTP1 = Collections.singletonList(Protocol.HTTP_1_1);
-
   /**
    * The maximum number of bytes to enqueue. Rather than enqueueing beyond this limit we tear down
    * the web socket! It's possible that we're writing faster than the peer can read.
@@ -147,7 +145,6 @@ public final class RealWebSocket implements WebSocket, WebSocketReader.FrameCall
     this.random = random;
     this.pingIntervalMillis = pingIntervalMillis;
 
-
     this.writerRunnable = new Runnable() {
       @Override public void run() {
         try {
@@ -170,71 +167,6 @@ public final class RealWebSocket implements WebSocket, WebSocketReader.FrameCall
 
   @Override public void cancel() {
     call.cancel();
-  }
-
-  // TODO move externally
-  public void connect(OkHttpClient client) {
-    client = client.newBuilder().eventListener(EventListener.NONE).protocols(ONLY_HTTP1).build();
-    final Request request = originalRequest.newBuilder()
-        .header("Upgrade", "websocket")
-        .header("Connection", "Upgrade")
-        .build();
-    call = Internal.instance.newWebSocketCall(client, request);
-    call.enqueue(new Callback() {
-      @Override public void onResponse(Call call, Response response) {
-        try {
-          checkResponse(response);
-        } catch (ProtocolException e) {
-          failWebSocket(e, response);
-          closeQuietly(response);
-          return;
-        }
-
-        // Promote the HTTP streams into web socket streams.
-        StreamAllocation streamAllocation = Internal.instance.streamAllocation(call);
-        streamAllocation.noNewStreams(); // Prevent connection pooling!
-        Streams streams = streamAllocation.connection().newWebSocketStreams(streamAllocation);
-
-        // Process all web socket messages.
-        try {
-          listener.onOpen(RealWebSocket.this, response);
-          String name = "OkHttp WebSocket " + request.url().redact();
-          initReaderAndWriter(name, streams);
-          streamAllocation.connection().socket().setSoTimeout(0);
-          loopReader();
-        } catch (Exception e) {
-          failWebSocket(e, null);
-        }
-      }
-
-      @Override public void onFailure(Call call, IOException e) {
-        failWebSocket(e, null);
-      }
-    });
-  }
-
-  void checkResponse(Response response) throws ProtocolException {
-    if (response.code() != 101) {
-      throw new ProtocolException("Expected HTTP 101 response but was '"
-          + response.code()
-          + " "
-          + response.message()
-          + "'");
-    }
-
-    String headerConnection = response.header("Connection");
-    if (!"Upgrade".equalsIgnoreCase(headerConnection)) {
-      throw new ProtocolException(
-          "Expected 'Connection' header value 'Upgrade' but was '" + headerConnection + "'");
-    }
-
-    String headerUpgrade = response.header("Upgrade");
-    if (!"websocket".equalsIgnoreCase(headerUpgrade)) {
-      throw new ProtocolException(
-          "Expected 'Upgrade' header value 'websocket' but was '" + headerUpgrade + "'");
-    }
-
-    // TODO call upgradeHandler.complete
   }
 
   public void initReaderAndWriter(String name, Streams streams) throws IOException {

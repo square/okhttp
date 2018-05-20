@@ -703,9 +703,8 @@ public final class WebSocketHttpTest {
   }
 
   private RealWebSocket newWebSocket(Request request) {
-    RealWebSocket webSocket = new RealWebSocket(
-        request, clientListener, random, client.pingIntervalMillis());
-    webSocket.connect(client);
-    return webSocket;
+    WebsocketUpgradeHandler handler =
+        new WebsocketUpgradeHandler(request, clientListener, random, client.pingIntervalMillis());
+    return (RealWebSocket) handler.connect(client);
   }
 }

@@ -49,6 +49,7 @@ import okhttp3.Protocol;
 import okhttp3.Request;
 import okhttp3.Response;
 import okhttp3.Route;
+import okhttp3.Streams;
 import okhttp3.internal.Internal;
 import okhttp3.internal.Util;
 import okhttp3.internal.Version;
@@ -507,8 +508,8 @@ public final class RealConnection extends Http2Connection.Listener implements Co
     }
   }
 
-  public RealWebSocket.Streams newWebSocketStreams(final StreamAllocation streamAllocation) {
-    return new RealWebSocket.Streams(true, source, sink) {
+  public Streams newWebSocketStreams(final StreamAllocation streamAllocation) {
+    return new Streams(true, source, sink) {
       @Override public void close() throws IOException {
         streamAllocation.streamFinished(true, streamAllocation.codec(), -1L, null);
       }
