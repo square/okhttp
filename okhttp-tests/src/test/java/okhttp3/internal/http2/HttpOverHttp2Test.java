@@ -20,7 +20,6 @@ import java.io.InputStream;
 import java.net.Authenticator;
 import java.net.HttpURLConnection;
 import java.net.SocketTimeoutException;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
@@ -65,7 +64,6 @@ import okhttp3.mockwebserver.SocketPolicy;
 import okhttp3.mockwebserver.internal.tls.SslClient;
 import okio.Buffer;
 import okio.BufferedSink;
-import okio.BufferedSource;
 import okio.GzipSink;
 import okio.Okio;
 import org.junit.After;
@@ -98,7 +96,7 @@ public final class HttpOverHttp2Test {
 
   @Parameters(name = "{0}")
   public static Collection<Protocol> data() {
-    return Arrays.asList(Protocol.H2C, Protocol.HTTP_2);
+    return Arrays.asList(Protocol.H2_PRIOR_KNOWLEDGE, Protocol.HTTP_2);
   }
 
   @Rule public final TemporaryFolder tempDir = new TemporaryFolder();
@@ -112,14 +110,14 @@ public final class HttpOverHttp2Test {
   private Protocol protocol;
 
   public HttpOverHttp2Test(Protocol protocol) {
-    this.client = protocol == Protocol.HTTP_2 ? buildHttp2Client() : buildH2cClient();
+    this.client = protocol == Protocol.HTTP_2 ? buildHttp2Client() : buildH2PriorKnowledgeClient();
     this.scheme = protocol == Protocol.HTTP_2 ? "https" : "http";
     this.protocol = protocol;
   }
 
-  private static OkHttpClient buildH2cClient() {
+  private static OkHttpClient buildH2PriorKnowledgeClient() {
     return defaultClient().newBuilder()
-        .protocols(Arrays.asList(Protocol.H2C))
+        .protocols(Arrays.asList(Protocol.H2_PRIOR_KNOWLEDGE))
         .build();
   }
 
@@ -133,8 +131,8 @@ public final class HttpOverHttp2Test {
   }
 
   @Before public void setUp() throws Exception {
-    if (protocol == Protocol.H2C) {
-      server.setProtocols(Arrays.asList(Protocol.H2C));
+    if (protocol == Protocol.H2_PRIOR_KNOWLEDGE) {
+      server.setProtocols(Arrays.asList(Protocol.H2_PRIOR_KNOWLEDGE));
     } else {
       server.useHttps(sslClient.socketFactory, false);
     }
@@ -167,6 +165,7 @@ public final class HttpOverHttp2Test {
     assertEquals("ABCDE", response.body().string());
     assertEquals(200, response.code());
     assertEquals("", response.message());
+    assertEquals(protocol, response.protocol());
 
     RecordedRequest request = server.takeRequest();
     assertEquals("GET /foo HTTP/1.1", request.getRequestLine());
@@ -1324,7 +1323,7 @@ public final class HttpOverHttp2Test {
     assertEquals("privateobject.com", recordedRequest.getHeader(":authority"));
   }
 
-  public Buffer gzip(String bytes) throws IOException {
+  private Buffer gzip(String bytes) throws IOException {
     Buffer bytesOut = new Buffer();
     BufferedSink sink = Okio.buffer(new GzipSink(bytesOut));
     sink.writeUtf8(bytes);
@@ -1336,7 +1335,7 @@ public final class HttpOverHttp2Test {
     String path;
     CountDownLatch countDownLatch;
 
-    public AsyncRequest(String path, CountDownLatch countDownLatch) {
+    AsyncRequest(String path, CountDownLatch countDownLatch) {
       this.path = path;
       this.countDownLatch = countDownLatch;
     }
@@ -1352,30 +1351,6 @@ public final class HttpOverHttp2Test {
       } catch (Exception e) {
         throw new RuntimeException(e);
       }
-    }
-  }
-
-  static final class RecordingHandler extends BaseTestHandler {
-    int headerFrameCount;
-    final List<Integer> dataFrames = new ArrayList<>();
-
-    @Override public void settings(boolean clearPrevious, Settings settings) {
-    }
-
-    @Override public void ackSettings() {
-    }
-
-    @Override public void windowUpdate(int streamId, long windowSizeIncrement) {
-    }
-
-    @Override public void data(boolean inFinished, int streamId, BufferedSource source, int length)
-        throws IOException {
-      dataFrames.add(length);
-    }
-
-    @Override public void headers(boolean inFinished, int streamId, int associatedStreamId,
-        List<Header> headerBlock) {
-      headerFrameCount++;
     }
   }
 }

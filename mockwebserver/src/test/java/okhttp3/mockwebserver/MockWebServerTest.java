@@ -458,29 +458,31 @@ public final class MockWebServerTest {
     assertEquals("request", request.getBody().readUtf8());
   }
 
-  @Test public void testH2CServerFallback() {
+  @Test public void testH2PriorKnowledgeServerFallback() {
     try {
-      server.setProtocols(Arrays.asList(Protocol.H2C, Protocol.HTTP_1_1));
-      fail("When H2C is specified, no other protocol can be specified");
+      server.setProtocols(Arrays.asList(Protocol.H2_PRIOR_KNOWLEDGE, Protocol.HTTP_1_1));
+      fail();
     } catch (IllegalArgumentException expected) {
-      assertEquals("protocols containing h2c cannot use other protocols: [h2c, http/1.1]", expected.getMessage());
+      assertEquals("protocols containing h2_prior_knowledge cannot use other protocols: "
+              + "[h2_prior_knowledge, http/1.1]", expected.getMessage());
     }
   }
 
-  @Test public void testH2CServerDuplicates() {
+  @Test public void testH2PriorKnowledgeServerDuplicates() {
     try {
       // Treating this use case as user error
-      server.setProtocols(Arrays.asList(Protocol.H2C, Protocol.H2C));
-      fail("When H2C is specified, no other protocol can be specified");
+      server.setProtocols(Arrays.asList(Protocol.H2_PRIOR_KNOWLEDGE, Protocol.H2_PRIOR_KNOWLEDGE));
+      fail();
     } catch (IllegalArgumentException expected) {
-      assertEquals("protocols containing h2c cannot use other protocols: [h2c, h2c]", expected.getMessage());
+      assertEquals("protocols containing h2_prior_knowledge cannot use other protocols: "
+          + "[h2_prior_knowledge, h2_prior_knowledge]", expected.getMessage());
     }
   }
 
-  @Test public void testMockWebServerH2CProtocol() {
-    server.setProtocols(Arrays.asList(Protocol.H2C));
+  @Test public void testMockWebServerH2PriorKnowledgeProtocol() {
+    server.setProtocols(Arrays.asList(Protocol.H2_PRIOR_KNOWLEDGE));
 
     assertEquals(1, server.protocols().size());
-    assertEquals(Protocol.H2C, server.protocols().get(0));
+    assertEquals(Protocol.H2_PRIOR_KNOWLEDGE, server.protocols().get(0));
   }
 }

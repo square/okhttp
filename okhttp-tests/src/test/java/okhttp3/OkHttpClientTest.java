@@ -170,34 +170,33 @@ public final class OkHttpClientTest {
     }
   }
 
-  @Test public void testH2COkHttpClientConstructionFallback() {
-    // fallbacks are not allowed when using h2c prior knowledge
+  @Test public void testH2PriorKnowledgeOkHttpClientConstructionFallback() {
     try {
       new OkHttpClient.Builder()
-              .protocols(Arrays.asList(Protocol.H2C, Protocol.HTTP_1_1));
-      fail("When H2C is specified, no other protocol can be specified");
+          .protocols(Arrays.asList(Protocol.H2_PRIOR_KNOWLEDGE, Protocol.HTTP_1_1));
+      fail();
     } catch (IllegalArgumentException expected) {
-      assertEquals("protocols containing h2c cannot use other protocols: [h2c, http/1.1]", expected.getMessage());
+      assertEquals("protocols containing h2_prior_knowledge cannot use other protocols: "
+          + "[h2_prior_knowledge, http/1.1]", expected.getMessage());
     }
   }
 
-  @Test public void testH2COkHttpClientConstructionDuplicates() {
-    // Treating this use case as user error
+  @Test public void testH2PriorKnowledgeOkHttpClientConstructionDuplicates() {
     try {
       new OkHttpClient.Builder()
-              .protocols(Arrays.asList(Protocol.H2C, Protocol.H2C));
-      fail("When H2C is specified, no other protocol can be specified");
+          .protocols(Arrays.asList(Protocol.H2_PRIOR_KNOWLEDGE, Protocol.H2_PRIOR_KNOWLEDGE));
+      fail();
     } catch (IllegalArgumentException expected) {
-      assertEquals("protocols containing h2c cannot use other protocols: [h2c, h2c]", expected.getMessage());
+      assertEquals("protocols containing h2_prior_knowledge cannot use other protocols: "
+          + "[h2_prior_knowledge, h2_prior_knowledge]", expected.getMessage());
     }
   }
 
-  @Test public void testH2COkHttpClientConstructionSuccess() {
+  @Test public void testH2PriorKnowledgeOkHttpClientConstructionSuccess() {
     OkHttpClient okHttpClient = new OkHttpClient.Builder()
-            .protocols(Arrays.asList(Protocol.H2C))
-            .build();
-
+        .protocols(Arrays.asList(Protocol.H2_PRIOR_KNOWLEDGE))
+        .build();
     assertEquals(1, okHttpClient.protocols().size());
-    assertEquals(Protocol.H2C, okHttpClient.protocols().get(0));
+    assertEquals(Protocol.H2_PRIOR_KNOWLEDGE, okHttpClient.protocols().get(0));
   }
 }

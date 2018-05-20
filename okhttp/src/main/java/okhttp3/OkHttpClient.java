@@ -834,7 +834,9 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
      *
      * <ul>
      *     <li><a href="http://www.w3.org/Protocols/rfc2616/rfc2616.html">http/1.1</a>
-     *     <li><a href="http://tools.ietf.org/html/draft-ietf-httpbis-http2-17">h2</a>
+     *     <li><a href="https://tools.ietf.org/html/rfc7540">h2</a>
+     *     <li><a href="https://tools.ietf.org/html/rfc7540#section-3.4">h2 with prior knowledge
+     *         (cleartext only)</a>
      * </ul>
      *
      * <p><strong>This is an evolving set.</strong> Future releases include support for transitional
@@ -842,27 +844,30 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
      *
      * <p>If multiple protocols are specified, <a
      * href="http://tools.ietf.org/html/draft-ietf-tls-applayerprotoneg">ALPN</a> will be used to
-     * negotiate a transport.
+     * negotiate a transport. Protocol negotiation is only attempted for HTTPS URLs.
      *
      * <p>{@link Protocol#HTTP_1_0} is not supported in this set. Requests are initiated with {@code
-     * HTTP/1.1} only. If the server responds with {@code HTTP/1.0}, that will be exposed by {@link
+     * HTTP/1.1}. If the server responds with {@code HTTP/1.0}, that will be exposed by {@link
      * Response#protocol()}.
      *
-     * @param protocols the protocols to use, in order of preference. The list must contain {@link
-     * Protocol#HTTP_1_1}. It should not contain null or {@link Protocol#HTTP_1_0}. If you use
-     * {@link Protocol#H2C}, then it should be the only specified protocol in the list.
+     * @param protocols the protocols to use, in order of preference. If the list contains {@link
+     *     Protocol#H2_PRIOR_KNOWLEDGE} then that must be the only protocol and HTTPS URLs will not
+     *     be supported. Otherwise the list must contain {@link Protocol#HTTP_1_1}. The list must
+     *     not contain null or {@link Protocol#HTTP_1_0}.
      */
     public Builder protocols(List<Protocol> protocols) {
       // Create a private copy of the list.
       protocols = new ArrayList<>(protocols);
 
-      if (protocols.contains(Protocol.H2C) && protocols.size() > 1) {
-        // when using h2c prior knowledge, no other protocol should be supported.
-        throw new IllegalArgumentException("protocols containing h2c cannot use other protocols: "
-                + protocols);
-      } else if (!protocols.contains(Protocol.H2C) && !protocols.contains(Protocol.HTTP_1_1)) {
-        // Validate that the list has everything we require and nothing we forbid.
-        throw new IllegalArgumentException("protocols doesn't contain http/1.1: " + protocols);
+      // Validate that the list has everything we require and nothing we forbid.
+      if (!protocols.contains(Protocol.H2_PRIOR_KNOWLEDGE)
+          && !protocols.contains(Protocol.HTTP_1_1)) {
+        throw new IllegalArgumentException(
+            "protocols must contain h2_prior_knowledge or http/1.1: " + protocols);
+      }
+      if (protocols.contains(Protocol.H2_PRIOR_KNOWLEDGE) && protocols.size() > 1) {
+        throw new IllegalArgumentException(
+            "protocols containing h2_prior_knowledge cannot use other protocols: " + protocols);
       }
       if (protocols.contains(Protocol.HTTP_1_0)) {
         throw new IllegalArgumentException("protocols must not contain http/1.0: " + protocols);
