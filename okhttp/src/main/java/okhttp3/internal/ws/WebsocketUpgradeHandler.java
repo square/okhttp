@@ -77,10 +77,10 @@ public class WebsocketUpgradeHandler implements UpgradeHandler<WebSocket> {
 
   public WebSocket connect(OkHttpClient client) {
     client = client.newBuilder().eventListener(EventListener.NONE).protocols(ONLY_HTTP1).build();
-    final Request request = originalRequest.newBuilder()
+    final Request request = addUpgradeHeaders(originalRequest.newBuilder()
         .header("Upgrade", "websocket")
         .header("Connection", "Upgrade")
-        .build();
+        .build());
     Call call = Internal.instance.newWebSocketCall(client, request);
     call.enqueue(new Callback() {
       @Override public void onResponse(Call call, Response response) {
