@@ -12,8 +12,6 @@ import okhttp3.OkHttpClient;
 import okhttp3.Protocol;
 import okhttp3.Request;
 import okhttp3.Response;
-import okhttp3.Streams;
-import okhttp3.UpgradeHandler;
 import okhttp3.WebSocket;
 import okhttp3.WebSocketListener;
 import okhttp3.internal.Internal;

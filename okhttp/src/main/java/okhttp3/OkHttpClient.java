@@ -47,7 +47,6 @@ import okhttp3.internal.connection.StreamAllocation;
 import okhttp3.internal.platform.Platform;
 import okhttp3.internal.tls.CertificateChainCleaner;
 import okhttp3.internal.tls.OkHostnameVerifier;
-import okhttp3.internal.ws.RealWebSocket;
 import okhttp3.internal.ws.WebsocketUpgradeHandler;
 import okio.Sink;
 import okio.Source;
@@ -439,12 +438,9 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
    * Uses {@code request} to connect a new web socket.
    */
   @Override public WebSocket newWebSocket(Request request, WebSocketListener listener) {
-    WebsocketUpgradeHandler upgradeHandler = new WebsocketUpgradeHandler(request, listener, new Random(), pingInterval);
+    WebsocketUpgradeHandler upgradeHandler =
+        new WebsocketUpgradeHandler(request, listener, new Random(), pingInterval);
 
-    return upgrade(request, upgradeHandler);
-  }
-
-  private <T> T upgrade(Request request, UpgradeHandler<T> upgradeHandler) {
     return upgradeHandler.connect(this);
   }
 

@@ -1,6 +1,9 @@
-package okhttp3;
+package okhttp3.internal.ws;
 
 import java.io.IOException;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
 
 /**
  * https://datatracker.ietf.org/doc/draft-ietf-httpbis-h2-websockets/?include_text=1
