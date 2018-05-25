@@ -21,7 +21,9 @@ import okhttp3.Request;
 import okhttp3.Response;
 
 /**
- * https://datatracker.ietf.org/doc/draft-ietf-httpbis-h2-websockets/?include_text=1
+ * Implementation of a specific protocol implemented as a HTTP Upgrade.
+ *
+ * @link https://datatracker.ietf.org/doc/draft-ietf-httpbis-h2-websockets/?include_text=1
  */
 public interface UpgradeHandler<T> {
   T connect(OkHttpClient client);
@@ -31,6 +33,8 @@ public interface UpgradeHandler<T> {
   boolean supportsHttp2();
 
   /**
+   * HTTP Upgrade Protocol Registry Token.
+   *
    * https://www.iana.org/assignments/http-upgrade-tokens/http-upgrade-tokens.xhtml
    */
   String connectProtocol();
