@@ -191,7 +191,7 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
         return ((RealCall) call).streamAllocation();
       }
 
-      @Override public Call newWebSocketCall(OkHttpClient client, Request originalRequest) {
+      @Override public Call newStreamsCall(OkHttpClient client, Request originalRequest) {
         return RealCall.newRealCall(client, originalRequest, true);
       }
     };

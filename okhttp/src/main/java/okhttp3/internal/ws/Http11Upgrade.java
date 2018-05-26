@@ -34,7 +34,7 @@ public class Http11Upgrade {
 
     Request upgradeRequest = upgradeRequest(request, upgradeHandler);
 
-    Call call = Internal.instance.newWebSocketCall(client, upgradeRequest);
+    Call call = Internal.instance.newStreamsCall(client, upgradeRequest);
     call.enqueue(new Callback() {
       @Override public void onResponse(Call call, Response response) {
         try {

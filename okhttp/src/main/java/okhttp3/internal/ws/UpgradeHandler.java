@@ -15,7 +15,6 @@
  */
 package okhttp3.internal.ws;
 
-import java.io.IOException;
 import java.net.ProtocolException;
 import javax.annotation.Nullable;
 import okhttp3.Protocol;

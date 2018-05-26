@@ -77,5 +77,5 @@ public abstract class Internal {
 
   public abstract StreamAllocation streamAllocation(Call call);
 
-  public abstract Call newWebSocketCall(OkHttpClient client, Request request);
+  public abstract Call newStreamsCall(OkHttpClient client, Request request);
 }

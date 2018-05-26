@@ -65,14 +65,14 @@ public final class RetryAndFollowUpInterceptor implements Interceptor {
   private static final int MAX_FOLLOW_UPS = 20;
 
   private final OkHttpClient client;
-  private final boolean forWebSocket;
+  private final boolean forStreams;
   private volatile StreamAllocation streamAllocation;
   private Object callStackTrace;
   private volatile boolean canceled;
 
-  public RetryAndFollowUpInterceptor(OkHttpClient client, boolean forWebSocket) {
+  public RetryAndFollowUpInterceptor(OkHttpClient client, boolean forStreams) {
     this.client = client;
-    this.forWebSocket = forWebSocket;
+    this.forStreams = forStreams;
   }
 
   /**
@@ -164,7 +164,7 @@ public final class RetryAndFollowUpInterceptor implements Interceptor {
       }
 
       if (followUp == null) {
-        if (!forWebSocket) {
+        if (!forStreams) {
           streamAllocation.release();
         }
         return response;
