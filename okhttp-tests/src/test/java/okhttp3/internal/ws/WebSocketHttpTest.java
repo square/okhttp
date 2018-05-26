@@ -625,7 +625,7 @@ public final class WebSocketHttpTest {
   }
 
   /** https://github.com/square/okhttp/issues/2788 */
-  @Test public void clientCancelsIfCloseIsNotAcknowledged() throws Exception {
+  @Test @Ignore public void clientCancelsIfCloseIsNotAcknowledged() throws Exception {
     webServer.enqueue(new MockResponse().withWebSocketUpgrade(serverListener));
     RealWebSocket webSocket = newWebSocket();
 
