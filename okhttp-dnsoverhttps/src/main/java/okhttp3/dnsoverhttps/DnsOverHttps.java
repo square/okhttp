@@ -35,7 +35,7 @@ import okio.ByteString;
 /**
  * DNS over HTTPS implementation.
  *
- * Implementation of https://tools.ietf.org/html/draft-ietf-doh-dns-over-https-08
+ * Implementation of https://tools.ietf.org/html/draft-ietf-doh-dns-over-https-09
  *
  * <blockquote>A DNS API client encodes a single DNS query into an HTTP request
  * using either the HTTP GET or POST method and the other requirements
