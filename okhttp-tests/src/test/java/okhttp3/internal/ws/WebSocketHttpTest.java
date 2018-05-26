@@ -705,6 +705,8 @@ public final class WebSocketHttpTest {
   private RealWebSocket newWebSocket(Request request) {
     WebsocketUpgradeHandler handler =
         new WebsocketUpgradeHandler(request, clientListener, random, client.pingIntervalMillis());
-    return (RealWebSocket) handler.connect(client);
+    Http11Upgrade upgrade = new Http11Upgrade();
+    upgrade.connect(client, request, handler);
+    return (RealWebSocket) handler.result();
   }
 }

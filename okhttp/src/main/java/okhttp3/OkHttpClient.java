@@ -47,6 +47,7 @@ import okhttp3.internal.connection.StreamAllocation;
 import okhttp3.internal.platform.Platform;
 import okhttp3.internal.tls.CertificateChainCleaner;
 import okhttp3.internal.tls.OkHostnameVerifier;
+import okhttp3.internal.ws.Http11Upgrade;
 import okhttp3.internal.ws.WebsocketUpgradeHandler;
 import okio.Sink;
 import okio.Source;
@@ -441,7 +442,8 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
     WebsocketUpgradeHandler upgradeHandler =
         new WebsocketUpgradeHandler(request, listener, new Random(), pingInterval);
 
-    return upgradeHandler.connect(this);
+    Http11Upgrade upgrade = new Http11Upgrade();
+    return upgrade.connect(this, request, upgradeHandler);
   }
 
   public Builder newBuilder() {

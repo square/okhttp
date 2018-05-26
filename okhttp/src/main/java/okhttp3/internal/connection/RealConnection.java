@@ -507,7 +507,7 @@ public final class RealConnection extends Http2Connection.Listener implements Co
     }
   }
 
-  public Streams newWebSocketStreams(final StreamAllocation streamAllocation) {
+  public Streams newStreams(final StreamAllocation streamAllocation) {
     return new Streams(true, source, sink) {
       @Override public void close() throws IOException {
         streamAllocation.streamFinished(true, streamAllocation.codec(), -1L, null);

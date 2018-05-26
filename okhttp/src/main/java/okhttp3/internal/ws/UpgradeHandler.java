@@ -16,7 +16,9 @@
 package okhttp3.internal.ws;
 
 import java.io.IOException;
-import okhttp3.OkHttpClient;
+import java.net.ProtocolException;
+import javax.annotation.Nullable;
+import okhttp3.Protocol;
 import okhttp3.Request;
 import okhttp3.Response;
 
@@ -26,20 +28,22 @@ import okhttp3.Response;
  * @link https://datatracker.ietf.org/doc/draft-ietf-httpbis-h2-websockets/?include_text=1
  */
 public interface UpgradeHandler<T> {
-  T connect(OkHttpClient client);
+  void process(Streams streams, Response response);
 
-  boolean supportsHttp11();
-
-  boolean supportsHttp2();
+  boolean supportsProtocol(Protocol protocol);
 
   /**
    * HTTP Upgrade Protocol Registry Token.
    *
    * https://www.iana.org/assignments/http-upgrade-tokens/http-upgrade-tokens.xhtml
    */
-  String connectProtocol();
+  String upgradeProtocolToken();
 
   Request addUpgradeHeaders(Request upgradeRequest);
 
-  void failConnect(Response response, IOException e) throws IOException;
+  void failConnect(@Nullable Response response, Exception e);
+
+  void checkResponse(Response response) throws ProtocolException;
+
+  T result();
 }
