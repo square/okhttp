@@ -174,7 +174,7 @@ public final class Dispatcher {
   private int runningCallsForHost(AsyncCall call) {
     int result = 0;
     for (AsyncCall c : runningAsyncCalls) {
-      if (c.get().forWebSocket) continue;
+      if (c.get().forStreams) continue;
       if (c.host().equals(call.host())) result++;
     }
     return result;

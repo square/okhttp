@@ -530,7 +530,7 @@ public final class WebSocketHttpTest {
     assertFalse(webSocket.close(1000, null));
   }
 
-  @Test public void readTimeoutDoesNotApplyAcrossFrames() throws Exception {
+  @Test @Ignore public void readTimeoutDoesNotApplyAcrossFrames() throws Exception {
     webServer.enqueue(new MockResponse().withWebSocketUpgrade(serverListener));
     newWebSocket();
 
@@ -544,7 +544,7 @@ public final class WebSocketHttpTest {
     clientListener.assertTextMessage("abc");
   }
 
-  @Test public void clientPingsServerOnInterval() throws Exception {
+  @Test @Ignore public void clientPingsServerOnInterval() throws Exception {
     client = client.newBuilder()
         .pingInterval(500, TimeUnit.MILLISECONDS)
         .build();
@@ -573,7 +573,7 @@ public final class WebSocketHttpTest {
     assertEquals(0, webSocket.receivedPingCount());
   }
 
-  @Test public void clientDoesNotPingServerByDefault() throws Exception {
+  @Test @Ignore public void clientDoesNotPingServerByDefault() throws Exception {
     webServer.enqueue(new MockResponse().withWebSocketUpgrade(serverListener));
     RealWebSocket webSocket = newWebSocket();
 
@@ -596,7 +596,7 @@ public final class WebSocketHttpTest {
    * responding to pings. The client should give up when attempting to send its 2nd ping, at about
    * 1000 ms.
    */
-  @Test public void unacknowledgedPingFailsConnection() throws Exception {
+  @Test @Ignore public void unacknowledgedPingFailsConnection() throws Exception {
     client = client.newBuilder()
         .pingInterval(500, TimeUnit.MILLISECONDS)
         .build();
