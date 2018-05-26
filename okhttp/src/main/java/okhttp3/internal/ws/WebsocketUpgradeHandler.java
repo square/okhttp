@@ -1,9 +1,7 @@
 package okhttp3.internal.ws;
 
-import java.io.IOException;
 import java.net.ProtocolException;
 import java.util.Random;
-import okhttp3.OkHttpClient;
 import okhttp3.Protocol;
 import okhttp3.Request;
 import okhttp3.Response;
@@ -11,8 +9,9 @@ import okhttp3.WebSocket;
 import okhttp3.WebSocketListener;
 import okio.ByteString;
 
-import static okhttp3.internal.Util.closeQuietly;
-
+/**
+ * Implementation of Websocket upgrade and connection establishment.
+ */
 public class WebsocketUpgradeHandler implements UpgradeHandler<WebSocket> {
   private final RealWebSocket webSocket;
   private final Request originalRequest;
@@ -78,6 +77,6 @@ public class WebsocketUpgradeHandler implements UpgradeHandler<WebSocket> {
   }
 
   @Override public void failConnect(Response response, Exception e) {
-    listener.onFailure(webSocket, e, response);
+    webSocket.failWebSocket(e, response);
   }
 }

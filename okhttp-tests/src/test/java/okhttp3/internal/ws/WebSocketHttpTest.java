@@ -505,7 +505,7 @@ public final class WebSocketHttpTest {
     WebSocket webSocket = newWebSocket();
 
     clientListener.assertFailure(SocketTimeoutException.class, "timeout", "Read timed out");
-    assertFalse(webSocket.close(1000, null));
+    assertFalse("websocket wasn't previously closed", webSocket.close(1000, null));
   }
 
   /**

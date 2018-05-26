@@ -2,6 +2,7 @@ package okhttp3.internal.ws;
 
 import java.io.IOException;
 import java.net.ProtocolException;
+import java.net.SocketException;
 import java.util.Collections;
 import java.util.List;
 import okhttp3.Call;
@@ -16,8 +17,55 @@ import okhttp3.internal.connection.StreamAllocation;
 
 import static okhttp3.internal.Util.closeQuietly;
 
+/**
+ * Implementation of a generic HTTP/1.1 Upgrade.  Establishes a bi-directional stream as a new
+ * HTTP/1.1 connection and passes onto the UpgradeHandler to complete processing.
+ */
 public class Http11Upgrade {
   private static final List<Protocol> ONLY_HTTP1 = Collections.singletonList(Protocol.HTTP_1_1);
+
+  public <T> T connect(OkHttpClient client, Request request,
+      final UpgradeHandler<T> upgradeHandler) {
+    if (!upgradeHandler.supportsProtocol(Protocol.HTTP_1_1)) {
+      throw new IllegalStateException("upgrade requires HTTP/1.1 support");
+    }
+
+    client = client.newBuilder().eventListener(EventListener.NONE).protocols(ONLY_HTTP1).build();
+
+    Request upgradeRequest = upgradeRequest(request, upgradeHandler);
+
+    Call call = Internal.instance.newWebSocketCall(client, upgradeRequest);
+    call.enqueue(new Callback() {
+      @Override public void onResponse(Call call, Response response) {
+        try {
+          checkResponse(response, upgradeHandler);
+          Streams streams = buildStreams(call);
+
+          upgradeHandler.process(streams, response);
+        } catch (Exception e) {
+          upgradeHandler.failConnect(response, e);
+          closeQuietly(response);
+        }
+      }
+
+      @Override public void onFailure(Call call, IOException e) {
+        upgradeHandler.failConnect(null, e);
+      }
+    });
+
+    return upgradeHandler.result();
+  }
+
+  private Streams buildStreams(Call call) throws SocketException {
+    // Promote the HTTP streams into (web socket) streams.
+    StreamAllocation streamAllocation = Internal.instance.streamAllocation(call);
+    streamAllocation.noNewStreams(); // Prevent connection pooling!
+    Streams streams = streamAllocation.connection().newStreams(streamAllocation);
+
+    // Process all (web socket) messages.
+
+    return streams;
+  }
 
   void checkResponse(Response response, UpgradeHandler<?> upgradeHandler) throws ProtocolException {
     if (response.code() != 101) {
@@ -47,46 +95,11 @@ public class Http11Upgrade {
     upgradeHandler.checkResponse(response);
   }
 
-  public <T> T connect(OkHttpClient client, Request request,
-      final UpgradeHandler<T> upgradeHandler) {
-    if (!upgradeHandler.supportsProtocol(Protocol.HTTP_1_1)) {
-      throw new IllegalStateException();
-    }
-
-    client = client.newBuilder().eventListener(EventListener.NONE).protocols(ONLY_HTTP1).build();
-    request = upgradeHandler.addUpgradeHeaders(request).newBuilder()
+  private <T> Request upgradeRequest(Request request, UpgradeHandler<T> upgradeHandler) {
+    return upgradeHandler.addUpgradeHeaders(request)
+        .newBuilder()
         .header("Upgrade", upgradeHandler.upgradeProtocolToken())
         .header("Connection", "Upgrade")
         .build();
-    Call call = Internal.instance.newWebSocketCall(client, request);
-    call.enqueue(new Callback() {
-      @Override public void onResponse(Call call, Response response) {
-        try {
-          checkResponse(response, upgradeHandler);
-        } catch (ProtocolException e) {
-          closeQuietly(response);
-          return;
-        }
-
-        // Promote the HTTP streams into (web socket) streams.
-        StreamAllocation streamAllocation = Internal.instance.streamAllocation(call);
-        streamAllocation.noNewStreams(); // Prevent connection pooling!
-        Streams streams = streamAllocation.connection().newStreams(streamAllocation);
-
-        // Process all (web socket) messages.
-        try {
-          streamAllocation.connection().socket().setSoTimeout(0);
-          upgradeHandler.process(streams, response);
-        } catch (Exception e) {
-          upgradeHandler.failConnect(response, e);
-        }
-      }
-
-      @Override public void onFailure(Call call, IOException e) {
-        upgradeHandler.failConnect(null, e);
-      }
-    });
-
-    return upgradeHandler.result();
   }
 }
