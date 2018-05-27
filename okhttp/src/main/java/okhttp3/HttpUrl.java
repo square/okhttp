@@ -915,10 +915,16 @@ public final class HttpUrl {
    * Returns a new {@code HttpUrl} representing {@code url} if it is a well-formed HTTP or HTTPS
    * URL, or throws an exception if it isn't.
    *
+   * @param url string for check URL format
+   * @return instance of {@link HttpUrl}
+   *
    * @throws MalformedURLException if there was a non-host related URL issue
    * @throws UnknownHostException if the host was invalid
+   * @throws IllegalArgumentException if URL not specified
    */
-  static HttpUrl getChecked(String url) throws MalformedURLException, UnknownHostException {
+  public static HttpUrl getChecked(String url)
+          throws MalformedURLException, UnknownHostException, IllegalArgumentException {
+    if (url == null || url.isEmpty()) throw new IllegalArgumentException("URL must be specified.");
     Builder builder = new Builder();
     Builder.ParseResult result = builder.parse(null, url);
     switch (result) {

@@ -15,6 +15,9 @@
  */
 package okhttp3;
 
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
+import java.net.URLEncoder;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
@@ -29,6 +32,7 @@ import org.junit.Test;
 
 import static java.util.Collections.singletonList;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.fail;
 
@@ -1328,8 +1332,11 @@ public final class HttpUrlTest {
   }
 
   @Test public void fromJavaNetUrl_checked() throws Exception {
-    HttpUrl httpUrl = HttpUrl.getChecked("http://username:password@host/path?query#fragment");
-    assertEquals("http://username:password@host/path?query#fragment", httpUrl.toString());
+    String namePass = "us.er-name:p@a!s s#w$o^r&d*";
+    String encodedNamePass = URLEncoder.encode(namePass, "UTF-8");
+    String url = "http://" + encodedNamePass + "@host/path?query#fragment";
+    HttpUrl httpUrl = HttpUrl.getChecked(url);
+    assertEquals(url, httpUrl.toString());
   }
 
   @Test public void fromJavaNetUrlUnsupportedScheme_checked() throws Exception {
@@ -1345,6 +1352,24 @@ public final class HttpUrlTest {
       HttpUrl.getChecked("http://hostw ithspace/");
       fail();
     } catch (UnknownHostException expected) {
+    }
+  }
+
+  @Test public void getCheckedEmptyURL() throws Exception {
+    try {
+      HttpUrl.getChecked("");
+      fail();
+    } catch (IllegalArgumentException e) {
+      assertEquals("URL must be specified.", e.getMessage());
+    }
+  }
+
+  @Test public void getCheckedNullURL() throws Exception {
+    try {
+      HttpUrl.getChecked(null);
+      fail();
+    } catch (IllegalArgumentException e) {
+      assertEquals("URL must be specified.", e.getMessage());
     }
   }
 
