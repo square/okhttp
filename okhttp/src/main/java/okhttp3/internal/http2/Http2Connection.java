@@ -200,6 +200,14 @@ public final class Http2Connection implements Closeable {
     return peerSettings.getMaxConcurrentStreams(Integer.MAX_VALUE);
   }
 
+  synchronized void updateConnectionFlowControl(long read) {
+    unacknowledgedBytesRead += read;
+    if (unacknowledgedBytesRead >= okHttpSettings.getInitialWindowSize() / 2) {
+      writeWindowUpdateLater(0, unacknowledgedBytesRead);
+      unacknowledgedBytesRead = 0;
+    }
+  }
+
   /**
    * Returns a new server-initiated stream.
    *
@@ -622,6 +630,7 @@ public final class Http2Connection implements Closeable {
       Http2Stream dataStream = getStream(streamId);
       if (dataStream == null) {
         writeSynResetLater(streamId, ErrorCode.PROTOCOL_ERROR);
+        updateConnectionFlowControl(length);
         source.skip(length);
         return;
       }
