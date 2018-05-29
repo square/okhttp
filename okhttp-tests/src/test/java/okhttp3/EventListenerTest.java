@@ -152,7 +152,7 @@ public final class EventListenerTest {
   }
 
   @Test public void failedCallEventSequence() throws IOException {
-    server.enqueue(new MockResponse().setBodyDelay(2, TimeUnit.SECONDS));
+    server.enqueue(new MockResponse().setHeadersDelay(2, TimeUnit.SECONDS));
 
     client = client.newBuilder().readTimeout(250, TimeUnit.MILLISECONDS).build();
 

@@ -704,7 +704,7 @@ public final class MockWebServer extends ExternalResource implements Closeable {
 
   private void writeHttpResponse(Socket socket, BufferedSink sink, MockResponse response)
       throws IOException {
-    sleepIfDelayed(response.getBodyDelay(TimeUnit.MILLISECONDS));
+    sleepIfDelayed(response.getHeadersDelay(TimeUnit.MILLISECONDS));
     sink.writeUtf8(response.getStatus());
     sink.writeUtf8("\r\n");
 
