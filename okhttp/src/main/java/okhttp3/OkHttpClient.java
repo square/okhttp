@@ -15,29 +15,6 @@
  */
 package okhttp3;
 
-import java.net.MalformedURLException;
-import java.net.Proxy;
-import java.net.ProxySelector;
-import java.net.Socket;
-import java.net.UnknownHostException;
-import java.security.GeneralSecurityException;
-import java.security.KeyStore;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Random;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.TimeUnit;
-import javax.annotation.Nullable;
-import javax.net.SocketFactory;
-import javax.net.ssl.HostnameVerifier;
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLSocket;
-import javax.net.ssl.SSLSocketFactory;
-import javax.net.ssl.TrustManager;
-import javax.net.ssl.TrustManagerFactory;
-import javax.net.ssl.X509TrustManager;
 import okhttp3.internal.Internal;
 import okhttp3.internal.Util;
 import okhttp3.internal.cache.InternalCache;
@@ -50,6 +27,30 @@ import okhttp3.internal.tls.OkHostnameVerifier;
 import okhttp3.internal.ws.RealWebSocket;
 import okio.Sink;
 import okio.Source;
+
+import javax.annotation.Nullable;
+import javax.net.SocketFactory;
+import javax.net.ssl.SSLSocket;
+import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.SSLSocketFactory;
+import javax.net.ssl.X509TrustManager;
+import javax.net.ssl.TrustManagerFactory;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.SSLContext;
+import java.net.MalformedURLException;
+import java.net.Socket;
+import java.net.Proxy;
+import java.net.UnknownHostException;
+import java.net.ProxySelector;
+import java.security.GeneralSecurityException;
+import java.security.KeyStore;
+import java.util.Collections;
+import java.util.List;
+import java.util.Arrays;
+import java.util.ArrayList;
+import java.util.Random;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.ExecutorService;
 
 import static okhttp3.internal.Util.assertionError;
 import static okhttp3.internal.Util.checkDuration;
@@ -198,6 +199,7 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
 
   final Dispatcher dispatcher;
   final @Nullable Proxy proxy;
+  final @Nullable List<String> noProxyForHosts;
   final List<Protocol> protocols;
   final List<ConnectionSpec> connectionSpecs;
   final List<Interceptor> interceptors;
@@ -230,17 +232,31 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
 
   OkHttpClient(Builder builder) {
     this.dispatcher = builder.dispatcher;
-    this.proxy = builder.proxy;
     this.protocols = builder.protocols;
     this.connectionSpecs = builder.connectionSpecs;
     this.interceptors = Util.immutableList(builder.interceptors);
     this.networkInterceptors = Util.immutableList(builder.networkInterceptors);
     this.eventListenerFactory = builder.eventListenerFactory;
-    this.proxySelector = builder.proxySelector;
     this.cookieJar = builder.cookieJar;
     this.cache = builder.cache;
     this.internalCache = builder.internalCache;
     this.socketFactory = builder.socketFactory;
+
+    if (builder.proxy != null
+            && builder.noProxyForHosts != null
+            && builder.proxySelector.equals(ProxySelector.getDefault())) {
+      AutomaticProxySelector automaticProxySelector = new AutomaticProxySelector();
+      automaticProxySelector.setNoProxyForHosts(builder.noProxyForHosts);
+      automaticProxySelector.setProxies(Collections.singletonList(builder.proxy));
+
+      this.proxySelector = automaticProxySelector;
+      this.proxy = null;
+      this.noProxyForHosts = builder.noProxyForHosts;
+    } else {
+      this.proxy = builder.proxy;
+      this.proxySelector = builder.proxySelector;
+      this.noProxyForHosts = builder.noProxyForHosts;
+    }
 
     boolean isTLS = false;
     for (ConnectionSpec spec : connectionSpecs) {
@@ -331,6 +347,10 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
 
   public Proxy proxy() {
     return proxy;
+  }
+
+  public List<String> noProxyForHosts() {
+    return noProxyForHosts;
   }
 
   public ProxySelector proxySelector() {
@@ -447,9 +467,11 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
     return new Builder(this);
   }
 
-  public static final class Builder {
+    public static final class Builder {
     Dispatcher dispatcher;
     @Nullable Proxy proxy;
+    @Nullable Proxy defaultProxy;
+    @Nullable List<String> noProxyForHosts = new ArrayList<>();
     List<Protocol> protocols;
     List<ConnectionSpec> connectionSpecs;
     final List<Interceptor> interceptors = new ArrayList<>();
@@ -502,6 +524,7 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
     Builder(OkHttpClient okHttpClient) {
       this.dispatcher = okHttpClient.dispatcher;
       this.proxy = okHttpClient.proxy;
+      this.noProxyForHosts = okHttpClient.noProxyForHosts;
       this.protocols = okHttpClient.protocols;
       this.connectionSpecs = okHttpClient.connectionSpecs;
       this.interceptors.addAll(okHttpClient.interceptors);
@@ -527,6 +550,10 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
       this.readTimeout = okHttpClient.readTimeout;
       this.writeTimeout = okHttpClient.writeTimeout;
       this.pingInterval = okHttpClient.pingInterval;
+    }
+
+    public Builder client(OkHttpClient client) {
+      return new Builder(client);
     }
 
     /**
@@ -596,6 +623,27 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
      */
     public Builder proxy(@Nullable Proxy proxy) {
       this.proxy = proxy;
+      this.defaultProxy = proxy;
+      return this;
+    }
+
+    public Builder proxyOff() {
+      this.proxy = Proxy.NO_PROXY;
+      return this;
+    }
+
+    public Builder proxyOn() {
+      this.proxy = defaultProxy;
+      return this;
+    }
+
+    /**
+     * Defines a host list that will not use the HTTP proxy when it is in a connection
+     * with a defined proxy. This takes precedence over {@link #proxy}, which is only honored
+     * when this proxy is not null ().       
+     */
+    public Builder noProxyHosts(@Nullable List<String> noProxyForHosts) {
+      this.noProxyForHosts = noProxyForHosts;
       return this;
     }
 
@@ -948,5 +996,6 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
     public OkHttpClient build() {
       return new OkHttpClient(this);
     }
+
   }
 }
