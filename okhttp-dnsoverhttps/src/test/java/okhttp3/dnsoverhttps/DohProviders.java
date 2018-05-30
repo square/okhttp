@@ -22,7 +22,6 @@ import java.util.List;
 import okhttp3.HttpUrl;
 import okhttp3.OkHttpClient;
 
-import static okhttp3.dnsoverhttps.DnsOverHttps.DNS_MESSAGE;
 import static okhttp3.dnsoverhttps.DnsOverHttps.UDPWIREFORMAT;
 
 /**
@@ -37,8 +36,11 @@ public class DohProviders {
     BootstrapDns bootstrapDns = new BootstrapDns("dns.google.com", getByIp("216.58.204.78"),
         getByIp("2a00:1450:4009:814:0:0:0:200e"));
 
-    return new DnsOverHttps(bootstrapClient, url, bootstrapDns, true, "GET",
-        UDPWIREFORMAT);
+    return new DnsOverHttps.Builder().client(bootstrapClient)
+        .url(url)
+        .bootstrapDns(bootstrapDns)
+        .contentType(UDPWIREFORMAT)
+        .build();
   }
 
   static DnsOverHttps buildGooglePost(OkHttpClient bootstrapClient) {
@@ -47,47 +49,65 @@ public class DohProviders {
     BootstrapDns bootstrapDns = new BootstrapDns("dns.google.com", getByIp("216.58.204.78"),
         getByIp("2a00:1450:4009:814:0:0:0:200e"));
 
-    return new DnsOverHttps(bootstrapClient, url, bootstrapDns, true, "POST",
-        UDPWIREFORMAT);
+    return new DnsOverHttps.Builder().client(bootstrapClient)
+        .url(url)
+        .bootstrapDns(bootstrapDns)
+        .post(true)
+        .contentType(UDPWIREFORMAT)
+        .build();
   }
 
   static DnsOverHttps buildCloudflare(OkHttpClient bootstrapClient) {
     HttpUrl url = parseUrl("https://cloudflare-dns.com/dns-query?ct=application/dns-udpwireformat");
 
-    BootstrapDns bootstrapDns = new BootstrapDns("cloudflare-dns.com", getByIp("104.16.111.25"),
-        getByIp("104.16.112.25"),
-        getByIp("2400:cb00:2048:1:0:0:6810:7019"),
-        getByIp("2400:cb00:2048:1:0:0:6810:6f19"));
+    BootstrapDns bootstrapDns =
+        new BootstrapDns("cloudflare-dns.com", getByIp("104.16.111.25"), getByIp("104.16.112.25"),
+            getByIp("2400:cb00:2048:1:0:0:6810:7019"), getByIp("2400:cb00:2048:1:0:0:6810:6f19"));
 
-    return new DnsOverHttps(bootstrapClient, url, bootstrapDns, false, "GET", DNS_MESSAGE);
+    return new DnsOverHttps.Builder().client(bootstrapClient)
+        .url(url)
+        .bootstrapDns(bootstrapDns)
+        .includeIPv6(false)
+        .build();
   }
 
   static DnsOverHttps buildCloudflarePost(OkHttpClient bootstrapClient) {
     HttpUrl url = parseUrl("https://dns.cloudflare.com/.well-known/dns-query");
 
-    return new DnsOverHttps(bootstrapClient, url, null, false, "POST",
-        UDPWIREFORMAT);
+    return new DnsOverHttps.Builder().client(bootstrapClient)
+        .url(url)
+        .includeIPv6(false)
+        .post(true)
+        .contentType(UDPWIREFORMAT)
+        .build();
   }
 
   static DnsOverHttps buildCleanBrowsing(OkHttpClient bootstrapClient) {
-    return new DnsOverHttps(bootstrapClient,
-        parseUrl("https://doh.cleanbrowsing.org/doh/family-filter"), null, false, "GET",
-        DNS_MESSAGE);
+    return new DnsOverHttps.Builder().client(bootstrapClient)
+        .url(parseUrl("https://doh.cleanbrowsing.org/doh/family-filter"))
+        .includeIPv6(false)
+        .build();
   }
 
   static DnsOverHttps buildChantra(OkHttpClient bootstrapClient) {
-    return new DnsOverHttps(bootstrapClient, parseUrl("https://dns.dnsoverhttps.net/dns-query"),
-        null, false, "GET", DNS_MESSAGE);
+    return new DnsOverHttps.Builder().client(bootstrapClient)
+        .url(parseUrl("https://dns.dnsoverhttps.net/dns-query"))
+        .includeIPv6(false)
+        .build();
   }
 
   static DnsOverHttps buildCryptoSx(OkHttpClient bootstrapClient) {
-    return new DnsOverHttps(bootstrapClient, parseUrl("https://doh.crypto.sx/dns-query"), null,
-        false, "GET", DNS_MESSAGE);
+    return new DnsOverHttps.Builder().client(bootstrapClient)
+        .url(parseUrl("https://doh.crypto.sx/dns-query"))
+        .includeIPv6(false)
+        .build();
   }
 
   static DnsOverHttps buildSecureDns(OkHttpClient bootstrapClient) {
-    return new DnsOverHttps(bootstrapClient, parseUrl("https://doh.securedns.eu/dns-query"), null,
-        false, "GET", DNS_MESSAGE);
+    return new DnsOverHttps.Builder().client(bootstrapClient)
+        .url(parseUrl("https://doh.securedns.eu/dns-query"))
+        .includeIPv6(false)
+        .build();
   }
 
   public static List<DnsOverHttps> providers(OkHttpClient client, boolean http2Only,

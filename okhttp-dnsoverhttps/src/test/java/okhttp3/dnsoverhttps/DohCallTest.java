@@ -25,7 +25,6 @@ import okhttp3.Dns;
 import okhttp3.HttpUrl;
 import okhttp3.OkHttpClient;
 import okhttp3.Protocol;
-import okhttp3.Request;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import okhttp3.mockwebserver.RecordedRequest;
@@ -37,7 +36,6 @@ import org.junit.Rule;
 import org.junit.Test;
 
 import static java.util.Collections.singletonList;
-import static okhttp3.dnsoverhttps.DnsOverHttps.DNS_MESSAGE;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
@@ -140,7 +138,7 @@ public class DohCallTest {
 
   DnsOverHttps buildLocalhost(OkHttpClient bootstrapClient) {
     HttpUrl url = server.url("/lookup?ct");
-    return new DnsOverHttps(bootstrapClient, url, null, true, "GET", DNS_MESSAGE);
+    return new DnsOverHttps.Builder().client(bootstrapClient).url(url).build();
   }
 
   private static InetAddress address(String host) {

@@ -51,16 +51,20 @@ public class DnsOverHttps implements Dns {
   private final boolean post;
   private final MediaType contentType;
 
-  public DnsOverHttps(OkHttpClient client, HttpUrl url, @Nullable Dns bootstrapDns,
-      boolean includeIPv6, String method, MediaType contentType) {
-    this.client = bootstrapDns != null ? client.newBuilder().dns(bootstrapDns).build() : client;
-    this.url = url;
-    this.includeIPv6 = includeIPv6;
-    if (!method.equals("GET") && !method.equals("POST")) {
-      throw new UnsupportedOperationException("Only GET and POST Supported");
+  DnsOverHttps(Builder builder) {
+    if (builder.client == null) {
+      throw new NullPointerException("client not set");
     }
-    this.post = method.equals("POST");
-    this.contentType = contentType;
+
+    if (builder.url == null) {
+      throw new NullPointerException("url not set");
+    }
+
+    this.client = builder.bootstrapDns != null ? builder.client.newBuilder().dns(builder.bootstrapDns).build() : builder.client;
+    this.url = builder.url;
+    this.includeIPv6 = builder.includeIPv6;
+    this.post = builder.post;
+    this.contentType = builder.contentType;
   }
 
   public HttpUrl getUrl() {
@@ -124,19 +128,60 @@ public class DnsOverHttps implements Dns {
   }
 
   private Request buildRequest(ByteString query) {
-    Request.Builder builder;
-
     Request.Builder requestBuilder = new Request.Builder().header("Accept", contentType.toString());
 
     if (post) {
-      builder = requestBuilder.url(url).post(RequestBody.create(contentType, query));
+      requestBuilder = requestBuilder.url(url).post(RequestBody.create(contentType, query));
     } else {
       String encoded = query.base64Url().replace("=", "");
       HttpUrl requestUrl = url.newBuilder().addQueryParameter("dns", encoded).build();
 
-      builder = requestBuilder.url(requestUrl);
+      requestBuilder = requestBuilder.url(requestUrl);
     }
 
-    return builder.build();
+    return requestBuilder.build();
+  }
+
+  public static final class Builder {
+    @Nullable OkHttpClient client = null;
+    @Nullable HttpUrl url = null;
+    boolean includeIPv6 = true;
+    boolean post = false;
+    MediaType contentType = DNS_MESSAGE;
+    @Nullable Dns bootstrapDns = null;
+
+    public DnsOverHttps build() {
+      return new DnsOverHttps(this);
+    }
+
+    public Builder client(OkHttpClient client) {
+      this.client = client;
+      return this;
+    }
+
+    public Builder url(HttpUrl url) {
+      this.url = url;
+      return this;
+    }
+
+    public Builder includeIPv6(boolean includeIPv6) {
+      this.includeIPv6 = includeIPv6;
+      return this;
+    }
+
+    public Builder post(boolean post) {
+      this.post = post;
+      return this;
+    }
+
+    public Builder contentType(MediaType contentType) {
+      this.contentType = contentType;
+      return this;
+    }
+
+    public Builder bootstrapDns(@Nullable Dns bootstrapDns) {
+      this.bootstrapDns = bootstrapDns;
+      return this;
+    }
   }
 }

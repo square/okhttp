@@ -34,14 +34,14 @@ public class TestDohMain {
   public static void main(String[] args) throws IOException {
     Security.insertProviderAt(new org.conscrypt.OpenSSLProvider(), 1);
 
-    OkHttpClient bootstrapClient = new OkHttpClient.Builder()
-        .build();
+    OkHttpClient bootstrapClient = new OkHttpClient.Builder().build();
 
     List<String> names = Arrays.asList("google.com", "graph.facebook.com", "sdflkhfsdlkjdf.ee");
 
     try {
       System.out.println("uncached\n********\n");
-      List<DnsOverHttps> dnsProviders = DohProviders.providers(bootstrapClient, false, false, false);
+      List<DnsOverHttps> dnsProviders =
+          DohProviders.providers(bootstrapClient, false, false, false);
       runBatch(dnsProviders, names);
 
       Cache dnsCache =
@@ -52,7 +52,11 @@ public class TestDohMain {
 
       HttpUrl url = parseUrl("https://dns.cloudflare.com/.not-so-well-known/run-dmc-query");
       List<DnsOverHttps> badProviders = Collections.singletonList(
-          new DnsOverHttps(bootstrapClient, url, null, false, "POST", UDPWIREFORMAT));
+          new DnsOverHttps.Builder().client(bootstrapClient)
+              .url(url)
+              .post(true)
+              .contentType(UDPWIREFORMAT)
+              .build());
       runBatch(badProviders, names);
 
       System.out.println("cached first run\n****************\n");
