@@ -334,6 +334,39 @@ public final class HttpOverHttp2Test {
     assertEquals("abc", response2.body().string());
   }
 
+  @Test public void connectionWindowUpdateOnClose() throws Exception {
+    server.enqueue(new MockResponse()
+        .setBody(new Buffer().write(new byte[Http2Connection.OKHTTP_CLIENT_WINDOW_SIZE + 1])));
+    server.enqueue(new MockResponse()
+        .setBody("abc"));
+
+    Call call1 = client.newCall(new Request.Builder()
+        .url(server.url("/"))
+        .build());
+    Response response1 = call1.execute();
+
+    // Wait until the server has completely filled the stream and connection flow-control windows.
+    int expectedFrameCount = Http2Connection.OKHTTP_CLIENT_WINDOW_SIZE / 16384;
+    int dataFrameCount = 0;
+    while (dataFrameCount < expectedFrameCount) {
+      String log = http2Handler.take();
+      if (log.equals("FINE: << 0x00000003 16384 DATA          ")) {
+        dataFrameCount++;
+      }
+    }
+
+    // Cancel the call and close the response body. This should discard the buffered data and update
+    // the connnection flow-control window.
+    call1.cancel();
+    response1.close();
+
+    Call call2 = client.newCall(new Request.Builder()
+        .url(server.url("/"))
+        .build());
+    Response response2 = call2.execute();
+    assertEquals("abc", response2.body().string());
+  }
+
   /** https://github.com/square/okhttp/issues/373 */
   @Test @Ignore public void synchronousRequest() throws Exception {
     server.enqueue(new MockResponse().setBody("A"));
