@@ -192,6 +192,39 @@ public final class Http2ConnectionTest {
     assertTrue(Arrays.equals("fghi".getBytes("UTF-8"), data2.data));
   }
 
+  /**
+   * Confirm that we account for discarded data frames. It's possible that data frames are in-flight
+   * just prior to us canceling a stream.
+   */
+  @Test public void discardedDataFramesAreCounted() throws Exception {
+    // Write the mocking script.
+    peer.sendFrame().settings(new Settings());
+    peer.acceptFrame(); // ACK
+    peer.acceptFrame(); // SYN_STREAM 3
+    peer.sendFrame().headers(3, headerEntries("a", "apple"));
+    peer.sendFrame().data(false, 3, data(1024), 1024);
+    peer.acceptFrame(); // RST_STREAM
+    peer.sendFrame().data(true, 3, data(1024), 1024);
+    peer.acceptFrame(); // RST_STREAM
+    peer.play();
+
+    Http2Connection connection = connect(peer);
+    Http2Stream stream1 = connection.newStream(headerEntries("b", "bark"), false);
+    Source source = stream1.getSource();
+    Buffer buffer = new Buffer();
+    while (buffer.size() != 1024) source.read(buffer, 1024);
+    stream1.close(ErrorCode.CANCEL);
+
+    InFrame frame1 = peer.takeFrame();
+    assertEquals(Http2.TYPE_HEADERS, frame1.type);
+    InFrame frame2 = peer.takeFrame();
+    assertEquals(Http2.TYPE_RST_STREAM, frame2.type);
+    InFrame frame3 = peer.takeFrame();
+    assertEquals(Http2.TYPE_RST_STREAM, frame3.type);
+
+    assertEquals(2048, connection.unacknowledgedBytesRead);
+  }
+
   @Test public void receiveGoAwayHttp2() throws Exception {
     // write the mocking script
     peer.sendFrame().settings(new Settings());
