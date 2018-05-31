@@ -55,24 +55,37 @@ public class DnsOverHttps implements Dns {
     if (builder.client == null) {
       throw new NullPointerException("client not set");
     }
-
     if (builder.url == null) {
       throw new NullPointerException("url not set");
     }
 
-    this.client = builder.bootstrapDns != null ? builder.client.newBuilder().dns(builder.bootstrapDns).build() : builder.client;
+    this.client =
+        builder.bootstrapDns != null ? builder.client.newBuilder().dns(builder.bootstrapDns).build()
+            : builder.client;
     this.url = builder.url;
     this.includeIPv6 = builder.includeIPv6;
     this.post = builder.post;
     this.contentType = builder.contentType;
   }
 
-  public HttpUrl getUrl() {
+  public HttpUrl url() {
     return url;
   }
 
-  public boolean isPost() {
+  public boolean post() {
     return post;
+  }
+
+  public boolean includeIPv6() {
+    return includeIPv6;
+  }
+
+  public MediaType contentType() {
+    return contentType;
+  }
+
+  public OkHttpClient client() {
+    return client;
   }
 
   @Override public List<InetAddress> lookup(String hostname) throws UnknownHostException {

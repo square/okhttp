@@ -82,7 +82,7 @@ public class TestDohMain {
     long time = System.currentTimeMillis();
 
     for (DnsOverHttps dns : dnsProviders) {
-      System.out.println("Testing " + dns.getUrl());
+      System.out.println("Testing " + dns.url());
 
       for (String host : names) {
         System.out.print(host + ": ");
