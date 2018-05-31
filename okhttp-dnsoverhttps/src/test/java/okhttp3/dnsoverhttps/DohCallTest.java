@@ -105,6 +105,15 @@ public class DohCallTest {
         + "AAAcAAE", recordedRequest.getPath());
   }
 
+  // TODO GET preferred order - with tests to confirm this
+  // 1. successful fresh cached GET response
+  // 2. unsuccessful (404, 500) fresh cached GET response
+  // 3. successful network response
+  // 4. successful stale cached GET response
+  // 5. unsuccessful response
+
+  // TODO how closely to follow POST rules on caching?
+
   @Test public void usesCache() throws Exception {
     Cache cache = new Cache(new File("./target/DohCallTest.cache"), 100 * 1024);
     OkHttpClient cachedClient = bootstrapClient.newBuilder().cache(cache).build();

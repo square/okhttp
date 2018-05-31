@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 import okhttp3.CacheControl;
 import okhttp3.Dns;
@@ -108,7 +109,10 @@ public class DnsOverHttps implements Dns {
   private Response executeRequest(Request request) throws IOException {
     // cached request
     if (!post && client.cache() != null) {
-      Request cacheRequest = request.newBuilder().cacheControl(CacheControl.FORCE_CACHE).build();
+      CacheControl cacheControl = new CacheControl.Builder()
+          .maxStale(Integer.MAX_VALUE, TimeUnit.SECONDS)
+          .build();
+      Request cacheRequest = request.newBuilder().cacheControl(cacheControl).build();
 
       Response response = client.newCall(cacheRequest).execute();
 
