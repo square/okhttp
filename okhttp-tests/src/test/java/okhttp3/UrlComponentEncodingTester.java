@@ -230,7 +230,7 @@ class UrlComponentEncodingTester {
   private void testParseAlreadyEncoded(int codePoint, Encoding encoding, Component component) {
     String encoded = encoding.encode(codePoint);
     String urlString = component.urlString(encoded);
-    HttpUrl url = HttpUrl.parse(urlString);
+    HttpUrl url = HttpUrl.get(urlString);
     if (!component.encodedValue(url).equals(encoded)) {
       fail(Util.format("Encoding %s %#x using %s", component, codePoint, encoding));
     }
@@ -238,7 +238,7 @@ class UrlComponentEncodingTester {
 
   private void testEncodeAndDecode(int codePoint, Component component) {
     String expected = Encoding.IDENTITY.encode(codePoint);
-    HttpUrl.Builder builder = HttpUrl.parse("http://host/").newBuilder();
+    HttpUrl.Builder builder = HttpUrl.get("http://host/").newBuilder();
     component.set(builder, expected);
     HttpUrl url = builder.build();
     String actual = component.get(url);
@@ -252,7 +252,7 @@ class UrlComponentEncodingTester {
     if (encoding != Encoding.PERCENT) return;
     String identity = Encoding.IDENTITY.encode(codePoint);
     String urlString = component.urlString(identity);
-    HttpUrl url = HttpUrl.parse(urlString);
+    HttpUrl url = HttpUrl.get(urlString);
 
     String s = component.encodedValue(url);
     if (!s.equals(encoded)) {
@@ -262,16 +262,16 @@ class UrlComponentEncodingTester {
 
   private void testToUrl(int codePoint, Encoding encoding, Component component) {
     String encoded = encoding.encode(codePoint);
-    HttpUrl httpUrl = HttpUrl.parse(component.urlString(encoded));
+    HttpUrl httpUrl = HttpUrl.get(component.urlString(encoded));
     URL javaNetUrl = httpUrl.url();
-    if (!javaNetUrl.toString().equals(javaNetUrl.toString())) {
+    if (!javaNetUrl.toString().equals(httpUrl.toString())) {
       fail(Util.format("Encoding %s %#x using %s", component, codePoint, encoding));
     }
   }
 
   private void testFromUrl(int codePoint, Encoding encoding, Component component) {
     String encoded = encoding.encode(codePoint);
-    HttpUrl httpUrl = HttpUrl.parse(component.urlString(encoded));
+    HttpUrl httpUrl = HttpUrl.get(component.urlString(encoded));
     HttpUrl toAndFromJavaNetUrl = HttpUrl.get(httpUrl.url());
     if (!toAndFromJavaNetUrl.equals(httpUrl)) {
       fail(Util.format("Encoding %s %#x using %s", component, codePoint, encoding));
@@ -282,7 +282,7 @@ class UrlComponentEncodingTester {
       int codePoint, Encoding encoding, Component component, boolean uriEscaped) {
     String string = new String(new int[] {codePoint}, 0, 1);
     String encoded = encoding.encode(codePoint);
-    HttpUrl httpUrl = HttpUrl.parse(component.urlString(encoded));
+    HttpUrl httpUrl = HttpUrl.get(component.urlString(encoded));
     URI uri = httpUrl.uri();
     HttpUrl toAndFromUri = HttpUrl.get(uri);
     if (uriEscaped) {

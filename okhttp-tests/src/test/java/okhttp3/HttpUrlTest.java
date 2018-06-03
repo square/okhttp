@@ -15,13 +15,9 @@
  */
 package okhttp3;
 
-import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
 import java.net.URLEncoder;
-import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
-import java.net.UnknownHostException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashSet;
@@ -32,7 +28,6 @@ import org.junit.Test;
 
 import static java.util.Collections.singletonList;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.fail;
 
@@ -1304,60 +1299,62 @@ public final class HttpUrlTest {
     assertEquals(new URI("http://host/%25"), HttpUrl.parse("http://host/%").uri());
   }
 
-  @Test public void fromJavaNetUrl() throws Exception {
+  @Test public void parseFromJavaNetUrl() throws Exception {
     URL javaNetUrl = new URL("http://username:password@host/path?query#fragment");
-    HttpUrl httpUrl = HttpUrl.get(javaNetUrl);
-    assertEquals("http://username:password@host/path?query#fragment", httpUrl.toString());
+    HttpUrl httpUrl = HttpUrl.parse(javaNetUrl);
+    assertEquals("http://username:password@host/path?query#fragment", String.valueOf(httpUrl));
   }
 
-  @Test public void fromJavaNetUrlUnsupportedScheme() throws Exception {
+  @Test public void parseFromJavaNetUrlUnsupportedScheme() throws Exception {
     URL javaNetUrl = new URL("mailto:user@example.com");
-    assertEquals(null, HttpUrl.get(javaNetUrl));
+    assertNull(HttpUrl.parse(javaNetUrl));
   }
 
-  @Test public void fromUri() throws Exception {
+  @Test public void parseFromUri() throws Exception {
     URI uri = new URI("http://username:password@host/path?query#fragment");
-    HttpUrl httpUrl = HttpUrl.get(uri);
-    assertEquals("http://username:password@host/path?query#fragment", httpUrl.toString());
+    HttpUrl httpUrl = HttpUrl.parse(uri);
+    assertEquals("http://username:password@host/path?query#fragment", String.valueOf(httpUrl));
   }
 
-  @Test public void fromUriUnsupportedScheme() throws Exception {
+  @Test public void parseFromUriUnsupportedScheme() throws Exception {
     URI uri = new URI("mailto:user@example.com");
-    assertEquals(null, HttpUrl.get(uri));
+    assertNull(HttpUrl.parse(uri));
   }
 
-  @Test public void fromUriPartial() throws Exception {
+  @Test public void parseFromUriPartial() throws Exception {
     URI uri = new URI("/path");
-    assertEquals(null, HttpUrl.get(uri));
+    assertNull(HttpUrl.parse(uri));
   }
 
-  @Test public void fromJavaNetUrl_checked() throws Exception {
+  @Test public void getFromJavaNetUrl_checked() throws Exception {
     String namePass = "us.er-name:p@a!s s#w$o^r&d*";
     String encodedNamePass = URLEncoder.encode(namePass, "UTF-8");
     String url = "http://" + encodedNamePass + "@host/path?query#fragment";
-    HttpUrl httpUrl = HttpUrl.getChecked(url);
+    HttpUrl httpUrl = HttpUrl.get(url);
     assertEquals(url, httpUrl.toString());
   }
 
-  @Test public void fromJavaNetUrlUnsupportedScheme_checked() throws Exception {
+  @Test public void getFromJavaNetUrlUnsupportedScheme_checked() throws Exception {
     try {
-      HttpUrl.getChecked("mailto:user@example.com");
+      HttpUrl.get("mailto:user@example.com");
       fail();
-    } catch (MalformedURLException e) {
+    } catch (IllegalArgumentException e) {
+      assertEquals("Invalid URL: UNSUPPORTED_SCHEME for mailto:user@example.com", e.getMessage());
     }
   }
 
-  @Test public void fromJavaNetUrlBadHost_checked() throws Exception {
+  @Test public void getFromJavaNetUrlBadHost_checked() throws Exception {
     try {
-      HttpUrl.getChecked("http://hostw ithspace/");
+      HttpUrl.get("http://hostw ithspace/");
       fail();
-    } catch (UnknownHostException expected) {
+    } catch (IllegalArgumentException e) {
+      assertEquals("Invalid URL: INVALID_HOST for http://hostw ithspace/", e.getMessage());
     }
   }
 
   @Test public void getCheckedEmptyURL() throws Exception {
     try {
-      HttpUrl.getChecked("");
+      HttpUrl.get("");
       fail();
     } catch (IllegalArgumentException e) {
       assertEquals("URL must be specified.", e.getMessage());
@@ -1366,7 +1363,7 @@ public final class HttpUrlTest {
 
   @Test public void getCheckedNullURL() throws Exception {
     try {
-      HttpUrl.getChecked(null);
+      HttpUrl.get(null);
       fail();
     } catch (IllegalArgumentException e) {
       assertEquals("URL must be specified.", e.getMessage());

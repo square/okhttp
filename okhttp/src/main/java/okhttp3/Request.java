@@ -151,9 +151,7 @@ public final class Request {
      * https}.
      */
     public Builder url(URL url) {
-      if (url == null) throw new NullPointerException("url == null");
       HttpUrl parsed = HttpUrl.get(url);
-      if (parsed == null) throw new IllegalArgumentException("unexpected url: " + url);
       return url(parsed);
     }
 

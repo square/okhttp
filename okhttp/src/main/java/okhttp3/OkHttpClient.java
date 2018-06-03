@@ -15,11 +15,9 @@
  */
 package okhttp3;
 
-import java.net.MalformedURLException;
 import java.net.Proxy;
 import java.net.ProxySelector;
 import java.net.Socket;
-import java.net.UnknownHostException;
 import java.security.GeneralSecurityException;
 import java.security.KeyStore;
 import java.util.ArrayList;
@@ -181,9 +179,8 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
         tlsConfiguration.apply(sslSocket, isFallback);
       }
 
-      @Override public HttpUrl getHttpUrlChecked(String url)
-          throws MalformedURLException, UnknownHostException {
-        return HttpUrl.getChecked(url);
+      @Override public HttpUrl getHttpUrlChecked(String url) {
+        return HttpUrl.get(url);
       }
 
       @Override public StreamAllocation streamAllocation(Call call) {

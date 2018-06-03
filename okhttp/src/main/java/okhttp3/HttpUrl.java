@@ -20,7 +20,6 @@ import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.net.UnknownHostException;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -32,6 +31,7 @@ import okhttp3.internal.Util;
 import okhttp3.internal.publicsuffix.PublicSuffixDatabase;
 import okio.Buffer;
 
+import static okhttp3.HttpUrl.Builder.ParseResult.SUCCESS;
 import static okhttp3.internal.Util.decodeHexDigit;
 import static okhttp3.internal.Util.delimiterOffset;
 import static okhttp3.internal.Util.skipLeadingAsciiWhitespace;
@@ -894,54 +894,39 @@ public final class HttpUrl {
   }
 
   /**
-   * Returns a new {@code HttpUrl} representing {@code url} if it is a well-formed HTTP or HTTPS
-   * URL, or null if it isn't.
+   * Returns a new {@code HttpUrl} parsed from the string value of the {@code object} if it is a
+   * well-formed HTTP or HTTPS URL, or null if it isn't.
+   *
+   * @param object for check URL format
+   * @return instance of {@link HttpUrl} or {@code null} in the case of a parse error
    */
-  public static @Nullable HttpUrl parse(String url) {
+  public static @Nullable HttpUrl parse(Object object) {
     Builder builder = new Builder();
-    Builder.ParseResult result = builder.parse(null, url);
+    Builder.ParseResult result = builder.parse(null, String.valueOf(object));
     return result == Builder.ParseResult.SUCCESS ? builder.build() : null;
   }
 
   /**
-   * Returns an {@link HttpUrl} for {@code url} if its protocol is {@code http} or {@code https}, or
-   * null if it has any other protocol.
-   */
-  public static @Nullable HttpUrl get(URL url) {
-    return parse(url.toString());
-  }
-
-  /**
-   * Returns a new {@code HttpUrl} representing {@code url} if it is a well-formed HTTP or HTTPS
-   * URL, or throws an exception if it isn't.
+   * Returns a new {@code HttpUrl} parsed from the string value of the {@code object} if it is a
+   * well-formed HTTP or HTTPS URL, or throws an exception if it isn't.
    *
-   * @param url string for check URL format
+   * @param object for check URL format
    * @return instance of {@link HttpUrl}
    *
-   * @throws MalformedURLException if there was a non-host related URL issue
-   * @throws UnknownHostException if the host was invalid
-   * @throws IllegalArgumentException if URL not specified
+   * @throws IllegalArgumentException if invalid URL specified
    */
-  public static HttpUrl getChecked(String url)
-          throws MalformedURLException, UnknownHostException, IllegalArgumentException {
-    if (url == null || url.isEmpty()) throw new IllegalArgumentException("URL must be specified.");
+  public static HttpUrl get(Object object) throws IllegalArgumentException {
+    String url = String.valueOf(object);
+    if (object == null || url.isEmpty()) {
+      throw new IllegalArgumentException("URL must be specified.");
+    }
     Builder builder = new Builder();
     Builder.ParseResult result = builder.parse(null, url);
-    switch (result) {
-      case SUCCESS:
-        return builder.build();
-      case INVALID_HOST:
-        throw new UnknownHostException("Invalid host: " + url);
-      case UNSUPPORTED_SCHEME:
-      case MISSING_SCHEME:
-      case INVALID_PORT:
-      default:
-        throw new MalformedURLException("Invalid URL: " + result + " for " + url);
+    if (Builder.ParseResult.SUCCESS.equals(result)) {
+      return builder.build();
+    } else {
+      throw new IllegalArgumentException("Invalid URL: " + result + " for " + url);
     }
-  }
-
-  public static @Nullable HttpUrl get(URI uri) {
-    return parse(uri.toString());
   }
 
   @Override public boolean equals(@Nullable Object other) {
@@ -1446,7 +1431,7 @@ public final class HttpUrl {
             input, pos + 1, limit, FRAGMENT_ENCODE_SET, true, false, false, false, null);
       }
 
-      return ParseResult.SUCCESS;
+      return SUCCESS;
     }
 
     private void resolvePath(String input, int pos, int limit) {

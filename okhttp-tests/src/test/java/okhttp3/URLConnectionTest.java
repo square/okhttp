@@ -3529,7 +3529,7 @@ public final class URLConnectionTest {
     try {
       urlConnection.getInputStream();
       fail();
-    } catch (UnknownHostException expected) {
+    } catch (IllegalArgumentException expected) {
     }
   }
 
@@ -3542,7 +3542,7 @@ public final class URLConnectionTest {
       // This test is to check that a NullPointerException is not thrown.
       urlConnection.getInputStream();
       fail(); // the RI makes a bogus proxy request for "GET http://and roid.com/ HTTP/1.1"
-    } catch (UnknownHostException expected) {
+    } catch (IllegalArgumentException expected) {
     }
   }
 
@@ -3551,7 +3551,7 @@ public final class URLConnectionTest {
     try {
       urlConnection.getInputStream();
       fail();
-    } catch (UnknownHostException expected) {
+    } catch (IllegalArgumentException expected) {
     }
   }
 
@@ -3570,7 +3570,7 @@ public final class URLConnectionTest {
     try {
       urlConnection.getInputStream();
       fail();
-    } catch (UnknownHostException expected) {
+    } catch (IllegalArgumentException expected) {
     }
   }
 
