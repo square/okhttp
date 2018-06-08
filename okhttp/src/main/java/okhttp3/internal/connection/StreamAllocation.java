@@ -428,12 +428,18 @@ public final class StreamAllocation {
     synchronized (connectionPool) {
       if (e instanceof StreamResetException) {
         StreamResetException streamResetException = (StreamResetException) e;
-        if (streamResetException.errorCode == ErrorCode.REFUSED_STREAM) {
+        boolean refusedStream = streamResetException.errorCode == ErrorCode.REFUSED_STREAM;
+        if (refusedStream) {
           refusedStreamCount++;
         }
-        // On HTTP/2 stream errors, retry REFUSED_STREAM errors once on the same connection. All
-        // other errors must be retried on a new connection.
-        if (streamResetException.errorCode != ErrorCode.REFUSED_STREAM || refusedStreamCount > 1) {
+        // On HTTP/2 stream errors, retry REFUSED_STREAM errors once on the same connection and
+        // retry CANCEL errors. All other errors must be retried on a new connection.
+        boolean refusedTooManyTimes = refusedStreamCount > 1 && refusedStream;
+        boolean cancelledStream = streamResetException.errorCode == ErrorCode.CANCEL;
+        boolean reuseConnection = refusedStream || cancelledStream;
+        // Retry on new connection if its not an error where we can reuse or we've already failed
+        // once from a REFUSED_STREAM
+        if (!reuseConnection || refusedTooManyTimes) {
           noNewStreams = true;
           route = null;
         }
