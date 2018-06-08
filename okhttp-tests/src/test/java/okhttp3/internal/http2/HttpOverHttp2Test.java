@@ -819,6 +819,70 @@ public final class HttpOverHttp2Test {
     assertEquals(0, server.takeRequest().getSequenceNumber()); // New connection.
   }
 
+  @Test public void recoverFromCancelReusesConnection() throws Exception {
+    server.enqueue(new MockResponse()
+        .setBodyDelay(10, TimeUnit.SECONDS)
+        .setBody("abc"));
+    server.enqueue(new MockResponse()
+        .setBody("def"));
+
+    client = client.newBuilder()
+        .dns(new DoubleInetAddressDns())
+        .build();
+
+    callAndCancel(0);
+
+    // Make a second request to ensure the connection is reused.
+    Call call = client.newCall(new Request.Builder()
+        .url(server.url("/"))
+        .build());
+    Response response = call.execute();
+    assertEquals("def", response.body().string());
+    assertEquals(1, server.takeRequest().getSequenceNumber());
+  }
+
+  @Test public void recoverFromMultipleCancelReusesConnection() throws Exception {
+    server.enqueue(new MockResponse()
+            .setBodyDelay(10, TimeUnit.SECONDS)
+            .setBody("abc"));
+    server.enqueue(new MockResponse()
+            .setBodyDelay(10, TimeUnit.SECONDS)
+            .setBody("def"));
+    server.enqueue(new MockResponse()
+            .setBody("ghi"));
+
+    client = client.newBuilder()
+            .dns(new DoubleInetAddressDns())
+            .build();
+
+    callAndCancel(0);
+    callAndCancel(1);
+
+    // Make a third request to ensure the connection is reused.
+    Call call = client.newCall(new Request.Builder()
+            .url(server.url("/"))
+            .build());
+    Response response = call.execute();
+    assertEquals("ghi", response.body().string());
+    assertEquals(2, server.takeRequest().getSequenceNumber());
+  }
+
+  /** Make a call and canceling it as soon as it's accepted by the server. */
+  private void callAndCancel(int expectedSequenceNumber) throws InterruptedException {
+    Call call = client.newCall(new Request.Builder()
+        .url(server.url("/"))
+        .build());
+    call.enqueue(new Callback() {
+      @Override public void onFailure(Call call1, IOException e) {
+      }
+
+      @Override public void onResponse(Call call1, Response response) {
+      }
+    });
+    assertEquals(expectedSequenceNumber, server.takeRequest().getSequenceNumber());
+    call.cancel();
+  }
+
   @Test public void noRecoveryFromRefusedStreamWithRetryDisabled() throws Exception {
     noRecoveryFromErrorWithRetryDisabled(ErrorCode.REFUSED_STREAM);
   }
@@ -854,7 +918,7 @@ public final class HttpOverHttp2Test {
         .setResponseCode(401));
     server.enqueue(new MockResponse()
         .setSocketPolicy(SocketPolicy.RESET_STREAM_AT_START)
-        .setHttp2ErrorCode(ErrorCode.CANCEL.httpCode));
+        .setHttp2ErrorCode(ErrorCode.INTERNAL_ERROR.httpCode));
     server.enqueue(new MockResponse()
         .setBody("DEF"));
     server.enqueue(new MockResponse()
