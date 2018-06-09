@@ -30,7 +30,7 @@ final class BootstrapDns implements Dns {
   private final String dnsHostname;
   private final List<InetAddress> dnsServers;
 
-  public BootstrapDns(String dnsHostname, List<InetAddress> dnsServers) {
+  BootstrapDns(String dnsHostname, List<InetAddress> dnsServers) {
     this.dnsHostname = dnsHostname;
     this.dnsServers = dnsServers;
   }
