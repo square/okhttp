@@ -63,12 +63,14 @@ public final class PublicSuffixDatabase {
 
   /**
    * Returns the effective top-level domain plus one (eTLD+1) by referencing the public suffix list.
-   * Returns null if the domain is a public suffix.
+   * Returns null if the domain is a public suffix or a private address.
    *
    * <p>Here are some examples: <pre>{@code
    * assertEquals("google.com", getEffectiveTldPlusOne("google.com"));
    * assertEquals("google.com", getEffectiveTldPlusOne("www.google.com"));
    * assertNull(getEffectiveTldPlusOne("com"));
+   * assertNull(getEffectiveTldPlusOne("localhost"));
+   * assertNull(getEffectiveTldPlusOne("mymacbook"));
    * }</pre>
    *
    * @param domain A canonicalized domain. An International Domain Name (IDN) should be punycode

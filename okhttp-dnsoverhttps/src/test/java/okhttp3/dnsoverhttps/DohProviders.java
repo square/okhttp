@@ -33,12 +33,10 @@ public class DohProviders {
   static DnsOverHttps buildGoogle(OkHttpClient bootstrapClient) {
     HttpUrl url = parseUrl("https://dns.google.com/experimental?ct=" + UDPWIREFORMAT);
 
-    BootstrapDns bootstrapDns = new BootstrapDns("dns.google.com", getByIp("216.58.204.78"),
-        getByIp("2a00:1450:4009:814:0:0:0:200e"));
-
     return new DnsOverHttps.Builder().client(bootstrapClient)
         .url(url)
-        .bootstrapDns(bootstrapDns)
+        .dnsFallbackStrategy(new DefaultDnsFallbackStrategy(false, "dns.google.com", getByIp("216.58.204.78"),
+            getByIp("2a00:1450:4009:814:0:0:0:200e")))
         .contentType(UDPWIREFORMAT)
         .build();
   }
@@ -46,12 +44,10 @@ public class DohProviders {
   static DnsOverHttps buildGooglePost(OkHttpClient bootstrapClient) {
     HttpUrl url = parseUrl("https://dns.google.com/experimental");
 
-    BootstrapDns bootstrapDns = new BootstrapDns("dns.google.com", getByIp("216.58.204.78"),
-        getByIp("2a00:1450:4009:814:0:0:0:200e"));
-
     return new DnsOverHttps.Builder().client(bootstrapClient)
         .url(url)
-        .bootstrapDns(bootstrapDns)
+        .dnsFallbackStrategy(new DefaultDnsFallbackStrategy(false, "dns.google.com", getByIp("216.58.204.78"),
+            getByIp("2a00:1450:4009:814:0:0:0:200e")))
         .post(true)
         .contentType(UDPWIREFORMAT)
         .build();
@@ -60,13 +56,10 @@ public class DohProviders {
   static DnsOverHttps buildCloudflare(OkHttpClient bootstrapClient) {
     HttpUrl url = parseUrl("https://cloudflare-dns.com/dns-query?ct=application/dns-udpwireformat");
 
-    BootstrapDns bootstrapDns =
-        new BootstrapDns("cloudflare-dns.com", getByIp("104.16.111.25"), getByIp("104.16.112.25"),
-            getByIp("2400:cb00:2048:1:0:0:6810:7019"), getByIp("2400:cb00:2048:1:0:0:6810:6f19"));
-
     return new DnsOverHttps.Builder().client(bootstrapClient)
         .url(url)
-        .bootstrapDns(bootstrapDns)
+        .dnsFallbackStrategy(new DefaultDnsFallbackStrategy(false, "cloudflare-dns.com", getByIp("104.16.111.25"), getByIp("104.16.112.25"),
+            getByIp("2400:cb00:2048:1:0:0:6810:7019"), getByIp("2400:cb00:2048:1:0:0:6810:6f19")))
         .includeIPv6(false)
         .build();
   }

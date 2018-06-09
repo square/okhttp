@@ -147,7 +147,8 @@ public class DohCallTest {
 
   DnsOverHttps buildLocalhost(OkHttpClient bootstrapClient) {
     HttpUrl url = server.url("/lookup?ct");
-    return new DnsOverHttps.Builder().client(bootstrapClient).url(url).build();
+    DnsFallbackStrategy fallback = new DefaultDnsFallbackStrategy();
+    return new DnsOverHttps.Builder().client(bootstrapClient).dnsFallbackStrategy(fallback).url(url).build();
   }
 
   private static InetAddress address(String host) {

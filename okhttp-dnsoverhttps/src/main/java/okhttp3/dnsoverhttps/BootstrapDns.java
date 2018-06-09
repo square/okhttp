@@ -18,9 +18,11 @@ package okhttp3.dnsoverhttps;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import javax.annotation.Nullable;
 import okhttp3.Dns;
 
 /**
@@ -28,20 +30,47 @@ import okhttp3.Dns;
  *
  * Returns hardcoded results for the known host.
  */
-public final class BootstrapDns implements Dns {
+final class BootstrapDns implements Dns {
   private final String dnsHost;
-  private final List<InetAddress> dnsServers;
+  private final @Nullable List<InetAddress> dnsServers;
+  private final @Nullable Dns systemDns;
 
-  public BootstrapDns(String dnsHost, InetAddress... dnsServers) {
+  public BootstrapDns(@Nullable Dns systemDns, String dnsHost, @Nullable List<InetAddress> dnsServers) {
+    this.systemDns = systemDns;
     this.dnsHost = dnsHost;
-    this.dnsServers = Collections.unmodifiableList(Arrays.asList(dnsServers));
+    if (dnsServers != null && !dnsServers.isEmpty()) {
+      this.dnsServers = dnsServers;
+    } else {
+      this.dnsServers = null;
+    }
+
+    if (this.systemDns == null && this.dnsServers == null) {
+      throw new IllegalStateException("No configured system DNS source");
+    }
   }
 
   @Override public List<InetAddress> lookup(String hostname) throws UnknownHostException {
-    if (hostname.equals(dnsHost)) {
+    if (!hostname.equals(dnsHost)) {
+      throw new UnknownHostException("BootstrapDns used for external lookup: " + hostname);
+    }
+
+    if (systemDns == null) {
       return dnsServers;
     }
 
-    throw new UnknownHostException(hostname);
+    if (dnsServers == null) {
+      return systemDns.lookup(hostname);
+    }
+
+    List<InetAddress> addresses = new ArrayList<>();
+
+    addresses.addAll(dnsServers);
+    try {
+      addresses.addAll(systemDns.lookup(hostname));
+    } catch (UnknownHostException uhe) {
+      // ignored as we default to hardcoded addresses
+    }
+
+    return addresses;
   }
 }
