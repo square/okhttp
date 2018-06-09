@@ -41,7 +41,7 @@ public interface DnsFallbackStrategy {
 
   /**
    * Simple DNS over HTTPS only strategy.  Likely to have issues for internal network addresses
-   * unlessthe DNS over HTTPS server is hosted locally.
+   * unless the DNS over HTTPS server is hosted locally.
    */
   DnsFallbackStrategy NO_FALLBACK = new DnsFallbackStrategy() {
     @Override public List<DnsSource> sources(String host) {

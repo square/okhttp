@@ -79,7 +79,7 @@ public class DnsOverHttps implements Dns {
     List<InetAddress> hosts = builder.bootstrapDnsHosts;
 
     if (hosts != null) {
-      return new BootstrapDns(hosts);
+      return new BootstrapDns(builder.url.host(), hosts);
     } else {
       return builder.systemDns;
     }

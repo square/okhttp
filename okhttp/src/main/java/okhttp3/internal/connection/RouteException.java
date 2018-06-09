@@ -16,8 +16,6 @@
 package okhttp3.internal.connection;
 
 import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 
 import static okhttp3.internal.Util.addSuppressedIfPossible;
 

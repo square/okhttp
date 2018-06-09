@@ -27,13 +27,20 @@ import okhttp3.Dns;
  * Returns hardcoded results for the known host.
  */
 final class BootstrapDns implements Dns {
+  private final String dnsHostname;
   private final List<InetAddress> dnsServers;
 
-  public BootstrapDns(List<InetAddress> dnsServers) {
+  public BootstrapDns(String dnsHostname, List<InetAddress> dnsServers) {
+    this.dnsHostname = dnsHostname;
     this.dnsServers = dnsServers;
   }
 
   @Override public List<InetAddress> lookup(String hostname) throws UnknownHostException {
+    if (!this.dnsHostname.equals(hostname)) {
+      throw new UnknownHostException(
+          "BootstrapDns called for " + hostname + " instead of " + dnsHostname);
+    }
+
     return dnsServers;
   }
 }
