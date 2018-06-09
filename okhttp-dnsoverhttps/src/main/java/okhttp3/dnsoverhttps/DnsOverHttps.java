@@ -18,6 +18,7 @@ package okhttp3.dnsoverhttps;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
@@ -31,7 +32,10 @@ import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
 import okhttp3.internal.platform.Platform;
+import okhttp3.internal.publicsuffix.PublicSuffixDatabase;
 import okio.ByteString;
+
+import static okhttp3.internal.Util.addSuppressedIfPossible;
 
 /**
  * DNS over HTTPS implementation.
@@ -72,23 +76,13 @@ public class DnsOverHttps implements Dns {
   }
 
   private static Dns buildBootstrapClient(Builder builder) {
-    List<DnsFallbackStrategy.DnsSource> bootstrapDns =
-        builder.dnsFallbackStrategy.sources(builder.url.host());
+    List<InetAddress> hosts = builder.bootstrapDnsHosts;
 
-    Dns systemDns = null;
-    @Nullable List<InetAddress> bootstrapHosts = null;
-
-    for (DnsFallbackStrategy.DnsSource dnsSource: bootstrapDns) {
-      if (dnsSource instanceof DnsFallbackStrategy.SystemDns) {
-        systemDns = builder.systemDns;
-      } else if (dnsSource instanceof DnsFallbackStrategy.HardcodedResponse) {
-        bootstrapHosts = ((DnsFallbackStrategy.HardcodedResponse) dnsSource).dnsHostResponse;
-      }
+    if (hosts != null) {
+      return new BootstrapDns(hosts);
+    } else {
+      return builder.systemDns;
     }
-
-    System.out.println(bootstrapDns);
-
-    return new BootstrapDns(systemDns, builder.url.host(), bootstrapHosts);
   }
 
   public HttpUrl url() {
@@ -120,30 +114,31 @@ public class DnsOverHttps implements Dns {
   }
 
   @Override public List<InetAddress> lookup(String hostname) throws UnknownHostException {
-    List<DnsFallbackStrategy.DnsSource> x = dnsFallbackStrategy.sources(hostname);
     @Nullable UnknownHostException firstUhe = null;
 
-    for (DnsFallbackStrategy.DnsSource source: x) {
-      System.out.println(source);
+    List<DnsFallbackStrategy.DnsSource> sources = dnsFallbackStrategy.sources(hostname);
+    for (DnsFallbackStrategy.DnsSource source : sources) {
       try {
-        if (source instanceof DnsFallbackStrategy.HardcodedResponse) {
-          return ((DnsFallbackStrategy.HardcodedResponse) source).dnsHostResponse;
-        } else if (source instanceof DnsFallbackStrategy.SystemDns) {
-          return systemDns.lookup(hostname);
-        } else {
-          return lookupHttps(hostname);
+        switch (source) {
+          case DNS_OVER_HTTP:
+            return lookupHttps(hostname);
+          case SYSTEM_DNS:
+            return systemDns.lookup(hostname);
         }
       } catch (UnknownHostException uhe) {
         if (firstUhe == null) {
           firstUhe = uhe;
         } else {
-          // TODO safe call
-          firstUhe.addSuppressed(uhe);
+          addSuppressedIfPossible(firstUhe, uhe);
         }
       }
     }
 
-    return lookupHttps(hostname);
+    if (firstUhe == null) {
+      throw new UnknownHostException("No lookup sources for host " + hostname);
+    }
+
+    throw firstUhe;
   }
 
   private List<InetAddress> lookupHttps(String hostname) throws UnknownHostException {
@@ -215,14 +210,19 @@ public class DnsOverHttps implements Dns {
     return requestBuilder.build();
   }
 
+  static boolean isPrivateHost(String host) {
+    return PublicSuffixDatabase.get().getEffectiveTldPlusOne(host) == null;
+  }
+
   public static final class Builder {
     @Nullable OkHttpClient client = null;
     @Nullable HttpUrl url = null;
     boolean includeIPv6 = true;
     boolean post = false;
     MediaType contentType = DNS_MESSAGE;
-    DnsFallbackStrategy dnsFallbackStrategy = new DefaultDnsFallbackStrategy();
+    DnsFallbackStrategy dnsFallbackStrategy = DnsFallbackStrategy.DEFAULT;
     Dns systemDns = Dns.SYSTEM;
+    @Nullable List<InetAddress> bootstrapDnsHosts = null;
 
     public DnsOverHttps build() {
       return new DnsOverHttps(this);
@@ -256,6 +256,15 @@ public class DnsOverHttps implements Dns {
     public Builder dnsFallbackStrategy(DnsFallbackStrategy dnsFallbackStrategy) {
       this.dnsFallbackStrategy = dnsFallbackStrategy;
       return this;
+    }
+
+    public Builder bootstrapDnsHosts(@Nullable List<InetAddress> bootstrapDnsHosts) {
+      this.bootstrapDnsHosts = bootstrapDnsHosts;
+      return this;
+    }
+
+    public Builder bootstrapDnsHosts(@Nullable InetAddress... bootstrapDnsHosts) {
+      return bootstrapDnsHosts(Arrays.asList(bootstrapDnsHosts));
     }
 
     public Builder systemDns(Dns systemDns) {

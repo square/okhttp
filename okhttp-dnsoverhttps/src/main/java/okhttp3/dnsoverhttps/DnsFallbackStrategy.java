@@ -15,73 +15,42 @@
  */
 package okhttp3.dnsoverhttps;
 
-import java.net.InetAddress;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
+import static okhttp3.dnsoverhttps.DnsOverHttps.isPrivateHost;
+
+/**
+ * A strategy for handling DNS lookup failures for DNS over HTTPS.
+ */
 public interface DnsFallbackStrategy {
-  interface DnsSource {
-  }
-
-  class DnsOverHttps implements DnsSource {
-    public static final DnsOverHttps instance = new DnsOverHttps();
-
-    private DnsOverHttps() {
-    }
-
-    @Override public int hashCode() {
-      return 1;
-    }
-
-    @Override public boolean equals(Object obj) {
-      return obj instanceof DnsOverHttps;
-    }
-
-    @Override public String toString() {
-      return "DnsOverHttps";
-    }
-  }
-
-  class SystemDns implements DnsSource {
-    public static final SystemDns instance = new SystemDns();
-
-    private SystemDns() {
-    }
-
-    @Override public int hashCode() {
-      return 2;
-    }
-
-    @Override public boolean equals(Object obj) {
-      return obj instanceof SystemDns;
-    }
-
-    @Override public String toString() {
-      return "SystemDns";
-    }
-  }
-
-  class HardcodedResponse implements DnsSource {
-    public final List<InetAddress> dnsHostResponse;
-
-    public HardcodedResponse(List<InetAddress> dnsHostResponse) {
-      this.dnsHostResponse = dnsHostResponse;
-    }
-
-    @Override public int hashCode() {
-      return dnsHostResponse.hashCode();
-    }
-
-    @Override public boolean equals(Object obj) {
-      if (!(obj instanceof HardcodedResponse)) {
-        return false;
+  /**
+   * Default fallback strategy that uses System DNS only for private network addresses,
+   * and otherwise tries DNS over HTTPS for public addresses, but fallback to System DNS.
+   */
+  DnsFallbackStrategy DEFAULT = new DnsFallbackStrategy() {
+    @Override public List<DnsSource> sources(String host) {
+      if (isPrivateHost(host)) {
+        return Collections.singletonList(DnsSource.SYSTEM_DNS);
+      } else {
+        return Arrays.asList(DnsSource.DNS_OVER_HTTP, DnsSource.SYSTEM_DNS);
       }
-
-      return ((HardcodedResponse) obj).dnsHostResponse.equals(dnsHostResponse);
     }
+  };
 
-    @Override public String toString() {
-      return "HardcodedResponse{" + dnsHostResponse + "}";
+  /**
+   * Simple DNS over HTTPS only strategy.  Likely to have issues for internal network addresses
+   * unlessthe DNS over HTTPS server is hosted locally.
+   */
+  DnsFallbackStrategy NO_FALLBACK = new DnsFallbackStrategy() {
+    @Override public List<DnsSource> sources(String host) {
+      return Collections.singletonList(DnsSource.DNS_OVER_HTTP);
     }
+  };
+
+  enum DnsSource {
+    DNS_OVER_HTTP, SYSTEM_DNS;
   }
 
   List<DnsSource> sources(String host);

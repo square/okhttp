@@ -39,7 +39,7 @@ import static java.util.Collections.singletonList;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
-public class DohCallTest {
+public class DnsOverHttpsTest {
   @Rule public final MockWebServer server = new MockWebServer();
 
   private final OkHttpClient bootstrapClient =
@@ -93,9 +93,10 @@ public class DohCallTest {
             + "4c01b5adb12c100000e10000003840012750000000e10"));
 
     try {
-      List<InetAddress> result = dns.lookup("google.com");
+      dns.lookup("google.com");
       fail();
     } catch (UnknownHostException uhe) {
+      uhe.printStackTrace();
       assertEquals("google.com: NXDOMAIN", uhe.getMessage());
     }
 
@@ -115,7 +116,7 @@ public class DohCallTest {
   // TODO how closely to follow POST rules on caching?
 
   @Test public void usesCache() throws Exception {
-    Cache cache = new Cache(new File("./target/DohCallTest.cache"), 100 * 1024);
+    Cache cache = new Cache(new File("./target/DnsOverHttpsTest.cache"), 100 * 1024);
     OkHttpClient cachedClient = bootstrapClient.newBuilder().cache(cache).build();
     DnsOverHttps cachedDns = buildLocalhost(cachedClient);
 
@@ -147,8 +148,7 @@ public class DohCallTest {
 
   DnsOverHttps buildLocalhost(OkHttpClient bootstrapClient) {
     HttpUrl url = server.url("/lookup?ct");
-    DnsFallbackStrategy fallback = new DefaultDnsFallbackStrategy();
-    return new DnsOverHttps.Builder().client(bootstrapClient).dnsFallbackStrategy(fallback).url(url).build();
+    return new DnsOverHttps.Builder().client(bootstrapClient).dnsFallbackStrategy(DnsFallbackStrategy.NO_FALLBACK).url(url).build();
   }
 
   private static InetAddress address(String host) {
