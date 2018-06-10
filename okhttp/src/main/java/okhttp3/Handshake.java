@@ -15,6 +15,7 @@
  */
 package okhttp3;
 
+import java.io.IOException;
 import java.security.Principal;
 import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
@@ -46,13 +47,14 @@ public final class Handshake {
     this.localCertificates = localCertificates;
   }
 
-  public static Handshake get(SSLSession session) {
+  public static Handshake get(SSLSession session) throws IOException {
     String cipherSuiteString = session.getCipherSuite();
     if (cipherSuiteString == null) throw new IllegalStateException("cipherSuite == null");
     CipherSuite cipherSuite = CipherSuite.forJavaName(cipherSuiteString);
 
     String tlsVersionString = session.getProtocol();
     if (tlsVersionString == null) throw new IllegalStateException("tlsVersion == null");
+    if ("NONE".equals(tlsVersionString)) throw new IOException("tlsVersion == NONE");
     TlsVersion tlsVersion = TlsVersion.forJavaName(tlsVersionString);
 
     Certificate[] peerCertificates;
