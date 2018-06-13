@@ -30,7 +30,7 @@ final class Event {
   }
 
   @Override public String toString() {
-    return "Event{id='" + id + "', name='" + type + "', data='" + data + "'}";
+    return "Event{id='" + id + "', type='" + type + "', data='" + data + "'}";
   }
 
   @Override public boolean equals(Object o) {
