@@ -16,6 +16,7 @@
 package okhttp3;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -225,6 +226,120 @@ public final class HeadersTest {
       Headers.of(Collections.singletonMap("User-Agent", "Square\u0000OkHttp"));
       fail();
     } catch (IllegalArgumentException expected) {
+    }
+  }
+
+  @Test public void fromMultimapCreatesHeaders() {
+    Headers original = new Headers.Builder()
+        .add("User-Agent", "OkHttp")
+        .add("custom-name", "value-1")
+        .add("custom-name", "value-2")
+        .build();
+    Headers recreated = Headers.fromMultimap(original.toMultimap());
+    assertEquals(Collections.singletonList("OkHttp"), recreated.values("User-Agent"));
+    assertEquals(Arrays.asList("value-1", "value-2"), recreated.values("custom-name"));
+    assertEquals(3, recreated.size());
+  }
+
+  @Test public void fromMultimapThrowsOnNullValueList() {
+    try {
+      List<String> userAgentList = null;
+      Headers.fromMultimap(
+          Collections.singletonMap("User-Agent", userAgentList));
+      fail();
+    } catch (NullPointerException e) {
+      assertEquals("Header value list cannot be null for header name: User-Agent",
+          e.getMessage());
+    }
+  }
+
+  @Test public void fromMultimapThrowsOnNullValue() {
+    try {
+      String userAgent = null;
+      Headers.fromMultimap(
+          Collections.singletonMap("User-Agent", Collections.singletonList(userAgent)));
+      fail();
+    } catch (NullPointerException e) {
+      assertEquals("Header value cannot be null for header name: User-Agent",
+          e.getMessage());
+    }
+  }
+
+  @Test public void fromMultimapThrowsOnEmptyName() {
+    try {
+      Headers.fromMultimap(Collections.singletonMap("", Collections.<String>emptyList()));
+      fail();
+    } catch (IllegalArgumentException e) {
+      assertEquals("Unexpected header name: ", e.getMessage());
+    }
+  }
+
+  @Test public void fromMultimapThrowsOnBlankName() {
+    try {
+      Headers.fromMultimap(Collections.singletonMap(" ", Collections.<String>emptyList()));
+      fail();
+    } catch (IllegalArgumentException e) {
+      assertEquals("Unexpected header name: ", e.getMessage());
+    }
+  }
+
+  @Test public void fromMultimapAcceptsEmptyValuesList() {
+    Headers headers = Headers.fromMultimap(
+        Collections.singletonMap("User-Agent", Collections.<String>emptyList()));
+    assertEquals(0, headers.size());
+  }
+
+  @Test public void fromMultimapAcceptsEmptyValue() {
+    Headers headers = Headers.fromMultimap(
+        Collections.singletonMap("User-Agent", Collections.singletonList("")));
+    assertEquals("", headers.value(0));
+  }
+
+  @Test public void fromMultimapTrimsKey() {
+    Headers headers = Headers.fromMultimap(
+        Collections.singletonMap(" User-Agent ", Collections.singletonList("OkHttp")));
+    assertEquals("User-Agent", headers.name(0));
+  }
+
+  @Test public void fromMultimapTrimsValue() {
+    Headers headers = Headers.fromMultimap(
+        Collections.singletonMap("User-Agent", Collections.singletonList(" OkHttp ")));
+    assertEquals("OkHttp", headers.value(0));
+  }
+
+  @Test public void fromMultimapMakesDefensiveCopies() {
+    Map<String, List<String>> namesAndValues = new LinkedHashMap<>();
+    List<String> userAgentValues = new ArrayList<>();
+    userAgentValues.add("OkHttp");
+    userAgentValues.add("Square-OkHttp");
+    namesAndValues.put("User-Agent", userAgentValues);
+
+    Headers headers = Headers.fromMultimap(namesAndValues);
+    userAgentValues.add("Chrome");
+    assertEquals(Arrays.asList("OkHttp", "Square-OkHttp"), headers.values("User-Agent"));
+
+    namesAndValues.put("User-Agent", Collections.singletonList("Chrome"));
+    assertEquals(Arrays.asList("OkHttp", "Square-OkHttp"), headers.values("User-Agent"));
+  }
+
+  @Test public void fromMultimapRejectsNullCharInName() {
+    try {
+      Headers.fromMultimap(
+          Collections.singletonMap("User-\u0000Agent", Collections.singletonList("OkHttp")));
+      fail();
+    } catch (IllegalArgumentException e) {
+      assertEquals("Unexpected header name: User-\u0000Agent", e.getMessage());
+    }
+  }
+
+  @Test public void fromMultimapRejectsNullCharInValue() {
+    try {
+      Headers.fromMultimap(
+          Collections.singletonMap("User-Agent", Collections.singletonList("Square\u0000OkHttp")));
+      fail();
+    } catch (IllegalArgumentException e) {
+      assertEquals(
+          "Unexpected header value: Square\u0000OkHttp for name: User-Agent", e.getMessage());
     }
   }
 

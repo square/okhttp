@@ -234,7 +234,6 @@ public final class Headers {
   public static Headers of(Map<String, String> headers) {
     if (headers == null) throw new NullPointerException("headers == null");
 
-    // Make a defensive copy and clean it up.
     String[] namesAndValues = new String[headers.size() * 2];
     int i = 0;
     for (Map.Entry<String, String> header : headers.entrySet()) {
@@ -252,6 +251,46 @@ public final class Headers {
     }
 
     return new Headers(namesAndValues);
+  }
+
+  /**
+   * Returns headers for the header names and values in the {@link Map}.
+   */
+  public static Headers fromMultimap(Map<String, List<String>> headers) {
+    if (headers == null) throw new NullPointerException("headers == null");
+
+    List<String> namesAndValues = new ArrayList<>(headers.size() * 2);
+    for (Map.Entry<String, List<String>> header : headers.entrySet()) {
+      String name = header.getKey();
+      if (name == null) {
+        throw new NullPointerException("Header name cannot be null.");
+      }
+      name = name.trim();
+      if (name.isEmpty() || name.indexOf('\0') != -1) {
+        throw new IllegalArgumentException("Unexpected header name: " + name);
+      }
+      List<String> values = header.getValue();
+      if (values == null) {
+        throw new NullPointerException(
+            "Header value list cannot be null for header name: " + name);
+      }
+      for (int i = 0, size = values.size(); i < size; i++) {
+        String value = values.get(i);
+        if (value == null) {
+          throw new NullPointerException(
+              "Header value cannot be null for header name: " + name);
+        }
+        value = value.trim();
+        if (value.indexOf('\0') != -1) {
+          throw new IllegalArgumentException(
+              "Unexpected header value: " + value + " for name: " + name);
+        }
+        namesAndValues.add(name);
+        namesAndValues.add(value);
+      }
+    }
+
+    return new Headers(namesAndValues.toArray(new String[namesAndValues.size()]));
   }
 
   public static final class Builder {
