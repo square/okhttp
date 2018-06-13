@@ -2,12 +2,16 @@ package okhttp3.internal.sse;
 
 import java.io.IOException;
 import javax.annotation.Nullable;
+import okio.Buffer;
 import okio.BufferedSource;
 import okio.ByteString;
 
 public final class ServerSentEventReader {
   private static final ByteString CRLF = ByteString.encodeUtf8("\r\n");
-  private static final byte COLON = (byte) ':';
+  private static final ByteString DATA = ByteString.encodeUtf8("data");
+  private static final ByteString ID = ByteString.encodeUtf8("id");
+  private static final ByteString EVENT = ByteString.encodeUtf8("event");
+  private static final ByteString RETRY = ByteString.encodeUtf8("retry");
 
   public interface Callback {
     void onEvent(@Nullable String id, @Nullable String type, String data);
@@ -36,96 +40,119 @@ public final class ServerSentEventReader {
   boolean processNextEvent() throws IOException {
     String id = lastId;
     String type = null;
-    StringBuilder data = null;
+    Buffer data = new Buffer();
 
     while (true) {
-      long crlf = source.indexOfElement(CRLF);
-      if (crlf == -1L) {
+      long lineEnd = source.indexOfElement(CRLF);
+      if (lineEnd == -1L) {
         return false;
       }
 
-      if (crlf == 0L) {
-        skipCrAndOrLf();
+      switch (source.buffer().getByte(0)) {
+        case '\r':
+        case '\n':
+          completeEvent(id, type, data);
+          return true;
 
-        if (data != null) {
-          lastId = id;
-          callback.onEvent(id, type, data.toString());
-        }
+        case 'd':
+          if (isKey(DATA)) {
+            parseData(data, lineEnd);
+            continue;
+          }
+          break;
 
-        return true;
+        case 'e':
+          if (isKey(EVENT)) {
+            type = parseEvent(lineEnd);
+            continue;
+          }
+          break;
+
+        case 'i':
+          if (isKey(ID)) {
+            id = parseId(lineEnd);
+            continue;
+          }
+          break;
+
+        case 'r':
+          if (isKey(RETRY)) {
+            parseRetry(lineEnd);
+            continue;
+          }
+          break;
       }
 
-      long colon = source.indexOf(COLON, 0, crlf);
-      if (colon == 0L) {
-        // Comment line. Skip in its entirety.
-        source.skip(crlf);
-        skipCrAndOrLf();
-        continue;
-      }
-
-      String fieldName;
-      String fieldValue;
-      if (colon == -1L) {
-        fieldName = source.readUtf8(crlf);
-        fieldValue = "";
-      } else {
-        fieldName = source.readUtf8(colon);
-        crlf -= colon;
-
-        source.skip(1L);
-        crlf--;
-
-        // No need to request(1) before checking for the optional space because we've buffered
-        // enough to see the line ending which is at worst the next byte.
-        if (source.buffer().getByte(0) == ' ') {
-          source.skip(1L);
-          crlf--;
-        }
-
-        fieldValue = source.readUtf8(crlf);
-      }
+      source.skip(lineEnd);
       skipCrAndOrLf();
-
-      switch (fieldName) {
-        case "data":
-          if (data == null) {
-            data = new StringBuilder();
-          } else {
-            data.append('\n');
-          }
-          data.append(fieldValue);
-          break;
-
-        case "id":
-          if (fieldValue.isEmpty()) {
-            fieldValue = null;
-          }
-          id = fieldValue;
-          break;
-
-        case "event":
-          if (fieldValue.isEmpty()) {
-            fieldValue = null;
-          }
-          type = fieldValue;
-          break;
-
-        case "retry":
-          long timeMs;
-          try {
-            timeMs = Long.parseLong(fieldValue);
-          } catch (NumberFormatException ignored) {
-            break;
-          }
-          callback.onRetryChange(timeMs);
-          break;
-
-        default:
-          source.skip(crlf);
-          skipCrAndOrLf();
-          break;
-      }
     }
+  }
+
+  private void completeEvent(String id, String type, Buffer data) throws IOException {
+    skipCrAndOrLf();
+
+    if (data.size() != 0L) {
+      lastId = id;
+      data.skip(1L); // Leading newline.
+      callback.onEvent(id, type, data.readUtf8());
+    }
+  }
+
+  private void parseData(Buffer data, long end) throws IOException {
+    data.writeByte('\n');
+    end -= skipNameAndDivider(4L);
+    source.readFully(data, end);
+    skipCrAndOrLf();
+  }
+
+  private String parseEvent(long end) throws IOException {
+    String type = null;
+    end -= skipNameAndDivider(5L);
+    if (end != 0L) {
+      type = source.readUtf8(end);
+    }
+    skipCrAndOrLf();
+    return type;
+  }
+
+  private String parseId(long end) throws IOException {
+    String id;
+    end -= skipNameAndDivider(2L);
+    if (end != 0L) {
+      id = source.readUtf8(end);
+    } else {
+      id = null;
+    }
+    skipCrAndOrLf();
+    return id;
+  }
+
+  private void parseRetry(long end) throws IOException {
+    end -= skipNameAndDivider(5L);
+    String retryString = source.readUtf8(end);
+    long retryMs = -1L;
+    try {
+      retryMs = Long.parseLong(retryString);
+    } catch (NumberFormatException ignored) {
+    }
+    if (retryMs != -1L) {
+      callback.onRetryChange(retryMs);
+    }
+    skipCrAndOrLf();
+  }
+
+  /**
+   * Returns true if the first bytes of {@link #source} are {@code key} followed by a colon or
+   * a newline.
+   */
+  private boolean isKey(ByteString key) throws IOException {
+    if (source.rangeEquals(0, key)) {
+      byte nextByte = source.buffer().getByte(key.size());
+      return nextByte == ':'
+          || nextByte == '\r'
+          || nextByte == '\n';
+    }
+    return false;
   }
 
   /** Consumes {@code \r}, {@code \r\n}, or {@code \n} from {@link #source}. */
@@ -135,5 +162,25 @@ public final class ServerSentEventReader {
         && source.buffer().getByte(0) == '\n') {
       source.skip(1);
     }
+  }
+
+  /**
+   * Consumes the field name of the specified length and the optional colon and its optional
+   * trailing space. Returns the number of bytes skipped.
+   */
+  private long skipNameAndDivider(long length) throws IOException {
+    source.skip(length);
+
+    if (source.buffer().getByte(0) == ':') {
+      source.skip(1L);
+      length++;
+
+      if (source.buffer().getByte(0) == ' ') {
+        source.skip(1);
+        length++;
+      }
+    }
+
+    return length;
   }
 }
