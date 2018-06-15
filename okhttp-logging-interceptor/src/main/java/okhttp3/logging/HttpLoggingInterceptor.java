@@ -102,6 +102,8 @@ public final class HttpLoggingInterceptor implements Interceptor {
     BODY
   }
 
+  public static final long LOG_LIMITATION_NONE = -1;
+
   public interface Logger {
     void log(String message);
 
@@ -125,6 +127,9 @@ public final class HttpLoggingInterceptor implements Interceptor {
 
   private volatile Level level = Level.NONE;
 
+  private volatile long requestBodyLogMax = LOG_LIMITATION_NONE;
+  private volatile long responseBodyLogMax = LOG_LIMITATION_NONE;
+
   /** Change the level at which this interceptor logs. */
   public HttpLoggingInterceptor setLevel(Level level) {
     if (level == null) throw new NullPointerException("level == null. Use Level.NONE instead.");
@@ -134,6 +139,34 @@ public final class HttpLoggingInterceptor implements Interceptor {
 
   public Level getLevel() {
     return level;
+  }
+
+  /** Change the limitation of request body logs size. */
+  public HttpLoggingInterceptor setRequestBodyLogMax(long requestBodyLogMax) {
+    if (requestBodyLogMax < 0) {
+      this.requestBodyLogMax = LOG_LIMITATION_NONE;
+    } else {
+      this.requestBodyLogMax = requestBodyLogMax;
+    }
+    return this;
+  }
+
+  /** Change the limitation of response body logs size. */
+  public HttpLoggingInterceptor setResponseBodyLogMax(long responseBodyLogMax) {
+    if (responseBodyLogMax < 0) {
+      this.responseBodyLogMax = LOG_LIMITATION_NONE;
+    } else {
+      this.responseBodyLogMax = responseBodyLogMax;
+    }
+    return this;
+  }
+
+  public long getRequestBodyLogMax() {
+    return requestBodyLogMax;
+  }
+
+  public long getResponseBodyLogMax() {
+    return responseBodyLogMax;
   }
 
   @Override public Response intercept(Chain chain) throws IOException {
