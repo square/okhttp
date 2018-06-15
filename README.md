@@ -45,19 +45,14 @@ or Gradle:
 testImplementation 'com.squareup.okhttp3:mockwebserver:3.10.0'
 ```
 
-ProGuard
---------
+R8 / ProGuard
+-------------
 
-If you are using ProGuard you might need to add the following options:
+If you are using R8 or ProGuard add the options from
+[this file](https://github.com/square/okhttp/blob/master/okhttp/src/main/resources/META-INF/proguard/okhttp3.pro).
 
-```
--dontwarn okhttp3.**
--dontwarn okio.**
--dontwarn javax.annotation.**
--dontwarn org.conscrypt.**
-# A resource is loaded with a relative path so the package of this class must be preserved.
--keepnames class okhttp3.internal.publicsuffix.PublicSuffixDatabase
-```
+You might also need rules for Okio which is a dependency of this library.
+
 
 License
 -------
