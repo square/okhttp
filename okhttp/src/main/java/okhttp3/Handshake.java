@@ -50,6 +50,7 @@ public final class Handshake {
   public static Handshake get(SSLSession session) throws IOException {
     String cipherSuiteString = session.getCipherSuite();
     if (cipherSuiteString == null) throw new IllegalStateException("cipherSuite == null");
+    if ("SSL_NULL_WITH_NULL_NULL".equals(cipherSuiteString)) throw new IOException("cipherSuite == SSL_NULL_WITH_NULL_NULL");
     CipherSuite cipherSuite = CipherSuite.forJavaName(cipherSuiteString);
 
     String tlsVersionString = session.getProtocol();
