@@ -53,9 +53,6 @@ public class DnsOverHttpsTest {
     server.setProtocols(bootstrapClient.protocols());
   }
 
-  @After public void tearDown() {
-  }
-
   @Test public void getOne() throws Exception {
     server.enqueue(dnsResponse(
         "0000818000010003000000000567726170680866616365626f6f6b03636f6d0000010001c00c00050001"
@@ -108,7 +105,7 @@ public class DnsOverHttpsTest {
         + "AAAcAAE", recordedRequest.getPath());
   }
 
-  @Test public void failOnExcessiveResponse() throws Exception {
+  @Test public void failOnExcessiveResponse() {
     char[] array = new char[128 * 1024 + 2];
     Arrays.fill(array, '0');
     server.enqueue(dnsResponse(new String(array)));
@@ -124,7 +121,7 @@ public class DnsOverHttpsTest {
     }
   }
 
-  @Test public void failOnBadResponse() throws Exception {
+  @Test public void failOnBadResponse() {
     server.enqueue(dnsResponse("00"));
 
     try {
@@ -177,7 +174,7 @@ public class DnsOverHttpsTest {
         .addHeader("content-length", s.length() / 2);
   }
 
-  DnsOverHttps buildLocalhost(OkHttpClient bootstrapClient) {
+  private DnsOverHttps buildLocalhost(OkHttpClient bootstrapClient) {
     HttpUrl url = server.url("/lookup?ct");
     return new DnsOverHttps.Builder().client(bootstrapClient).dnsFallbackStrategy(DnsFallbackStrategy.NO_FALLBACK).url(url).build();
   }

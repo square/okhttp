@@ -27,7 +27,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
 public class DnsRecordCodecTest {
-  @Test public void testGoogleDotComEncoding() throws Exception {
+  @Test public void testGoogleDotComEncoding() {
     String encoded = encodeQuery("google.com", false);
 
     assertEquals("AAABAAABAAAAAAAABmdvb2dsZQNjb20AAAEAAQ", encoded);
@@ -37,7 +37,7 @@ public class DnsRecordCodecTest {
     return DnsRecordCodec.encodeQuery(host, includeIpv6).base64Url().replace("=", "");
   }
 
-  @Test public void testGoogleDotComEncodingWithIPv6() throws Exception {
+  @Test public void testGoogleDotComEncodingWithIPv6() {
     String encoded = encodeQuery("google.com", true);
 
     assertEquals("AAABAAACAAAAAAAABmdvb2dsZQNjb20AAAEAAQZnb29nbGUDY29tAAAcAAE", encoded);

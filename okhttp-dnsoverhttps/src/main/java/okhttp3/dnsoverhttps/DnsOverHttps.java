@@ -190,7 +190,11 @@ public class DnsOverHttps implements Dns {
       ResponseBody body = response.body();
 
       if (body.contentLength() > MAX_RESPONSE_SIZE) {
-        throw new IOException("response size exceeds limit (" + MAX_RESPONSE_SIZE + " bytes): " + body.contentLength() + " bytes");
+        throw new IOException("response size exceeds limit ("
+            + MAX_RESPONSE_SIZE
+            + " bytes): "
+            + body.contentLength()
+            + " bytes");
       }
 
       ByteString responseBytes = body.source().readByteString();
@@ -269,7 +273,7 @@ public class DnsOverHttps implements Dns {
       return this;
     }
 
-    public Builder bootstrapDnsHosts(@Nullable InetAddress... bootstrapDnsHosts) {
+    public Builder bootstrapDnsHosts(InetAddress... bootstrapDnsHosts) {
       return bootstrapDnsHosts(Arrays.asList(bootstrapDnsHosts));
     }
 
