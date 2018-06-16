@@ -16,6 +16,7 @@
 package okhttp3.dnsoverhttps;
 
 import java.io.File;
+import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.Arrays;
@@ -37,6 +38,7 @@ import org.junit.Test;
 
 import static java.util.Collections.singletonList;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 public class DnsOverHttpsTest {
@@ -104,6 +106,35 @@ public class DnsOverHttpsTest {
     assertEquals("GET", recordedRequest.getMethod());
     assertEquals("/lookup?ct&dns=AAABAAACAAAAAAAABmdvb2dsZQNjb20AAAEAAQZnb29nbGUDY29t"
         + "AAAcAAE", recordedRequest.getPath());
+  }
+
+  @Test public void failOnExcessiveResponse() throws Exception {
+    char[] array = new char[128 * 1024 + 2];
+    Arrays.fill(array, '0');
+    server.enqueue(dnsResponse(new String(array)));
+
+    try {
+      dns.lookup("google.com");
+      fail();
+    } catch (IOException ioe) {
+      assertEquals("google.com", ioe.getMessage());
+      Throwable cause = ioe.getCause();
+      assertTrue(cause instanceof IOException);
+      assertEquals("response size exceeds limit (65536 bytes): 65537 bytes", cause.getMessage());
+    }
+  }
+
+  @Test public void failOnBadResponse() throws Exception {
+    server.enqueue(dnsResponse("00"));
+
+    try {
+      dns.lookup("google.com");
+      fail();
+    } catch (IOException ioe) {
+      assertEquals("google.com", ioe.getMessage());
+      Throwable cause = ioe.getCause();
+      assertTrue(cause instanceof RuntimeException);
+    }
   }
 
   // TODO GET preferred order - with tests to confirm this

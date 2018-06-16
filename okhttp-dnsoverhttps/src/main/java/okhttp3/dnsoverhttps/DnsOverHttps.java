@@ -31,6 +31,7 @@ import okhttp3.Protocol;
 import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
+import okhttp3.ResponseBody;
 import okhttp3.internal.platform.Platform;
 import okhttp3.internal.publicsuffix.PublicSuffixDatabase;
 import okio.ByteString;
@@ -40,7 +41,7 @@ import static okhttp3.internal.Util.addSuppressedIfPossible;
 /**
  * DNS over HTTPS implementation.
  *
- * Implementation of https://tools.ietf.org/html/draft-ietf-doh-dns-over-https-09
+ * Implementation of https://tools.ietf.org/html/draft-ietf-doh-dns-over-https-11
  *
  * <blockquote>A DNS API client encodes a single DNS query into an HTTP request
  * using either the HTTP GET or POST method and the other requirements
@@ -50,6 +51,7 @@ import static okhttp3.internal.Util.addSuppressedIfPossible;
 public class DnsOverHttps implements Dns {
   public static final MediaType DNS_MESSAGE = MediaType.parse("application/dns-message");
   public static final MediaType UDPWIREFORMAT = MediaType.parse("application/dns-udpwireformat");
+  public static final int MAX_RESPONSE_SIZE = 64 * 1024;
   private final OkHttpClient client;
   private final HttpUrl url;
   private final boolean includeIPv6;
@@ -185,11 +187,15 @@ public class DnsOverHttps implements Dns {
         throw new IOException("response: " + response.code() + " " + response.message());
       }
 
-      ByteString responseBytes = response.body().source().readByteString();
+      ResponseBody body = response.body();
 
-      List<InetAddress> results = DnsRecordCodec.decodeAnswers(hostname, responseBytes);
+      if (body.contentLength() > MAX_RESPONSE_SIZE) {
+        throw new IOException("response size exceeds limit (" + MAX_RESPONSE_SIZE + " bytes): " + body.contentLength() + " bytes");
+      }
 
-      return results;
+      ByteString responseBytes = body.source().readByteString();
+
+      return DnsRecordCodec.decodeAnswers(hostname, responseBytes);
     } finally {
       response.close();
     }
