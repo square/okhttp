@@ -317,7 +317,7 @@ public final class MockWebServerTest {
         break;
       }
     }
-    assertEquals(512f, i, 10f); // Halfway +/- 1%
+    assertEquals(512f, i, 20f); // Halfway +/- 2%
   }
 
   @Test public void disconnectResponseHalfway() throws IOException {
