@@ -47,6 +47,12 @@ import static okhttp3.internal.Util.addSuppressedIfPossible;
  * using either the HTTP GET or POST method and the other requirements
  * of this section.  The DNS API server defines the URI used by the
  * request through the use of a URI Template.</blockquote>
+ *
+ * <h3>Warning: This is a non-final API.</h3>
+ *
+ * <p><strong>As of OkHttp 3.11, this feature is an unstable preview: the API is subject to change,
+ * and the implementation is incomplete. We expect that OkHttp 3.12 or 3.13 will finalize this API.
+ * Until then, expect API and behavior changes when you update your OkHttp dependency.</strong>
  */
 public class DnsOverHttps implements Dns {
   public static final MediaType DNS_MESSAGE = MediaType.parse("application/dns-message");
