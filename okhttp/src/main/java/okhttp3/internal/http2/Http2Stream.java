@@ -358,15 +358,7 @@ public final class Http2Stream {
 
       if (read != -1) {
         // Update connection.unacknowledgedBytesRead outside the stream lock.
-        synchronized (connection) { // Multiple application threads may hit this section.
-          connection.unacknowledgedBytesRead += read;
-          if (connection.unacknowledgedBytesRead
-              >= connection.okHttpSettings.getInitialWindowSize() / 2) {
-            connection.writeWindowUpdateLater(0, connection.unacknowledgedBytesRead);
-            connection.unacknowledgedBytesRead = 0;
-          }
-        }
-
+        updateConnectionFlowControl(read);
         return read;
       }
 
@@ -379,6 +371,11 @@ public final class Http2Stream {
       }
 
       return -1; // This source is exhausted.
+    }
+
+    private void updateConnectionFlowControl(long read) {
+      assert (!Thread.holdsLock(Http2Stream.this));
+      connection.updateConnectionFlowControl(read);
     }
 
     /** Returns once the source is either readable or finished. */
@@ -438,10 +435,15 @@ public final class Http2Stream {
     }
 
     @Override public void close() throws IOException {
+      long bytesDiscarded;
       synchronized (Http2Stream.this) {
         closed = true;
+        bytesDiscarded = readBuffer.size();
         readBuffer.clear();
         Http2Stream.this.notifyAll();
+      }
+      if (bytesDiscarded > 0) {
+        updateConnectionFlowControl(bytesDiscarded);
       }
       cancelStreamIfNecessary();
     }

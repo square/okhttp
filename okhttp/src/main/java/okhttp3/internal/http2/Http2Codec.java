@@ -85,7 +85,6 @@ public final class Http2Codec implements HttpCodec {
       ENCODING,
       UPGRADE);
 
-  private final OkHttpClient client;
   private final Interceptor.Chain chain;
   final StreamAllocation streamAllocation;
   private final Http2Connection connection;
@@ -94,12 +93,12 @@ public final class Http2Codec implements HttpCodec {
 
   public Http2Codec(OkHttpClient client, Interceptor.Chain chain, StreamAllocation streamAllocation,
       Http2Connection connection) {
-    this.client = client;
     this.chain = chain;
     this.streamAllocation = streamAllocation;
     this.connection = connection;
-
-    protocol = client.protocols().contains(Protocol.H2C) ? Protocol.H2C : Protocol.HTTP_2;
+    this.protocol = client.protocols().contains(Protocol.H2_PRIOR_KNOWLEDGE)
+        ? Protocol.H2_PRIOR_KNOWLEDGE
+        : Protocol.HTTP_2;
   }
 
   @Override public Sink createRequestBody(Request request, long contentLength) {

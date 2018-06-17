@@ -443,6 +443,11 @@ public final class HttpUrlTest {
     assertEquals(null, HttpUrl.parse("http://[::1%2544]"));
   }
 
+  @Test public void hostIpv6AddressTooManyLeadingZeros() throws Exception {
+    // Guava's been buggy on this case. https://github.com/google/guava/issues/3116
+    assertEquals(null, HttpUrl.parse("http://[2001:db8:0:0:1:0:0:00001]"));
+  }
+
   @Test public void hostIpv6WithIpv4Suffix() throws Exception {
     assertEquals("::1:ffff:ffff", HttpUrl.parse("http://[::1:255.255.255.255]/").host());
     assertEquals("::1:0:0", HttpUrl.parse("http://[0:0:0:0:0:1:0.0.0.0]/").host());
