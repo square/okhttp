@@ -20,6 +20,7 @@
     <module>simple-client</module>
     <module>slack</module>
     <module>static-server</module>
+    <module>unixdomainsockets</module>
   </modules>
 
   <build>
