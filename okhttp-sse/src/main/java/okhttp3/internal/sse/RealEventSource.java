@@ -22,6 +22,7 @@ import okhttp3.Callback;
 import okhttp3.EventListener;
 import okhttp3.EventSource;
 import okhttp3.EventSourceListener;
+import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
@@ -54,6 +55,17 @@ public final class RealEventSource
     BufferedSource source = response.body().source();
     ServerSentEventReader reader = new ServerSentEventReader(source, this);
 
+    if (!response.isSuccessful()) {
+      listener.onFailure(this, null, response);
+      return;
+    }
+
+    MediaType contentType = response.body().contentType();
+    if (!isEventStream(contentType)) {
+      listener.onFailure(this, new IllegalStateException("Invalid content-type: " + contentType), response);
+      return;
+    }
+
     response = response.newBuilder()
         .body(Util.EMPTY_RESPONSE)
         .build();
@@ -68,6 +80,11 @@ public final class RealEventSource
     }
 
     listener.onClosed(this);
+  }
+
+  private boolean isEventStream(@Nullable MediaType contentType) {
+    return contentType != null && contentType.type().equals("text") && contentType.subtype()
+        .equals("event-stream");
   }
 
   @Override public void onFailure(Call call, IOException e) {

@@ -43,6 +43,7 @@ public abstract class EventSourceListener {
    * Invoked when an event source has been closed due to an error reading from or writing to the
    * network. Incoming events may have been lost. No further calls to this listener will be made.
    */
-  public void onFailure(EventSource eventSource, Throwable t, @Nullable Response response) {
+  public void onFailure(EventSource eventSource, @Nullable Throwable t,
+      @Nullable Response response) {
   }
 }
