@@ -307,7 +307,11 @@ public final class HttpLoggingInterceptor implements Interceptor {
 
         if (contentLength != 0) {
           logger.log("");
-          logger.log(buffer.clone().readString(charset));
+          if (buffer.size() <= getResponseBodyLogMax()) {
+            logger.log(buffer.clone().readString(charset));
+          } else {
+            logger.log("Too large to output logs. Current limitation is " + getResponseBodyLogMax());
+          }
         }
 
         if (gzippedLength != null) {
