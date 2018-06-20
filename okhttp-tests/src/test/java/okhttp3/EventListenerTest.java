@@ -43,10 +43,10 @@ import okhttp3.RecordingEventListener.SecureConnectStart;
 import okhttp3.internal.DoubleInetAddressDns;
 import okhttp3.internal.RecordingOkAuthenticator;
 import okhttp3.internal.SingleInetAddressDns;
-import okhttp3.mockwebserver.internal.tls.SslClient;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import okhttp3.mockwebserver.SocketPolicy;
+import okhttp3.mockwebserver.internal.tls.SslClient;
 import okio.Buffer;
 import okio.BufferedSink;
 import org.hamcrest.BaseMatcher;
@@ -85,7 +85,7 @@ public final class EventListenerTest {
   private OkHttpClient client;
   private SocksProxy socksProxy;
 
-  @Before public void setUp() throws IOException {
+  @Before public void setUp() {
     client = defaultClient().newBuilder()
         .dns(singleDns)
         .eventListener(listener)
@@ -134,7 +134,7 @@ public final class EventListenerTest {
         completionLatch.countDown();
       }
 
-      @Override public void onResponse(Call call, Response response) throws IOException {
+      @Override public void onResponse(Call call, Response response) {
         response.close();
         completionLatch.countDown();
       }
@@ -151,7 +151,7 @@ public final class EventListenerTest {
     assertEquals(expectedEvents, listener.recordedEventTypes());
   }
 
-  @Test public void failedCallEventSequence() throws IOException {
+  @Test public void failedCallEventSequence() {
     server.enqueue(new MockResponse().setHeadersDelay(2, TimeUnit.SECONDS));
 
     client = client.newBuilder().readTimeout(250, TimeUnit.MILLISECONDS).build();
@@ -172,7 +172,38 @@ public final class EventListenerTest {
     assertEquals(expectedEvents, listener.recordedEventTypes());
   }
 
-  @Test public void canceledCallEventSequence() throws IOException {
+  @Test public void failedDribbledCallEventSequence() throws IOException {
+    server.enqueue(new MockResponse().setBody("0123456789")
+        .throttleBody(2, 100, TimeUnit.MILLISECONDS)
+        .setSocketPolicy(SocketPolicy.DISCONNECT_DURING_RESPONSE_BODY));
+
+    client = client.newBuilder()
+        .protocols(Collections.singletonList(Protocol.HTTP_1_1))
+        .readTimeout(250, TimeUnit.MILLISECONDS)
+        .build();
+
+    Call call = client.newCall(new Request.Builder()
+        .url(server.url("/"))
+        .build());
+
+    Response response = call.execute();
+    try {
+      response.body.string();
+      fail();
+    } catch (IOException expected) {
+      assertThat(expected.getMessage(), equalTo("unexpected end of stream"));
+    }
+
+    List<String> expectedEvents = Arrays.asList("CallStart", "DnsStart", "DnsEnd",
+        "ConnectStart", "ConnectEnd", "ConnectionAcquired", "RequestHeadersStart",
+        "RequestHeadersEnd", "ResponseHeadersStart", "ResponseHeadersEnd", "ResponseBodyStart",
+        "ResponseBodyEnd", "ConnectionReleased", "CallFailed");
+    assertEquals(expectedEvents, listener.recordedEventTypes());
+    ResponseBodyEnd bodyEnd = listener.removeUpToEvent(ResponseBodyEnd.class);
+    assertEquals(5, bodyEnd.bytesRead);
+  }
+
+  @Test public void canceledCallEventSequence() {
     Call call = client.newCall(new Request.Builder()
         .url(server.url("/"))
         .build());
@@ -446,7 +477,7 @@ public final class EventListenerTest {
 
   @Test public void emptyDnsLookup() {
     Dns emptyDns = new Dns() {
-      @Override public List<InetAddress> lookup(String hostname) throws UnknownHostException {
+      @Override public List<InetAddress> lookup(String hostname) {
         return Collections.emptyList();
       }
     };
@@ -934,14 +965,14 @@ public final class EventListenerTest {
     requestBodyFail();
   }
 
-  private void requestBodyFail() throws IOException {
+  private void requestBodyFail() {
     // Stream a 8 MiB body so the disconnect will happen before the server has read everything.
     RequestBody requestBody = new RequestBody() {
       @Override public MediaType contentType() {
         return MediaType.parse("text/plain");
       }
 
-      @Override public long contentLength() throws IOException {
+      @Override public long contentLength() {
         return 1024 * 8192;
       }
 
