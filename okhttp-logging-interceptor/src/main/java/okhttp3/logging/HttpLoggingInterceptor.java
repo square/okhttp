@@ -230,7 +230,7 @@ public final class HttpLoggingInterceptor implements Interceptor {
 
         logger.log("");
         if (isPlaintext(buffer)) {
-          if (buffer.size() <= getRequestBodyLogMax() && getRequestBodyLogMax() > 0) {
+          if (buffer.size() <= getRequestBodyLogMax() || getRequestBodyLogMax() < 0) {
             logger.log(buffer.readString(charset));
           } else {
             logger.log("Too large to output logs. Current limitation is " + getRequestBodyLogMax());
@@ -307,7 +307,7 @@ public final class HttpLoggingInterceptor implements Interceptor {
 
         if (contentLength != 0) {
           logger.log("");
-          if (buffer.size() <= getResponseBodyLogMax() && getResponseBodyLogMax() > 0) {
+          if (buffer.size() <= getResponseBodyLogMax() || getResponseBodyLogMax() < 0) {
             logger.log(buffer.clone().readString(charset));
           } else {
             logger.log("Too large to output logs. Current limitation is " + getResponseBodyLogMax());
