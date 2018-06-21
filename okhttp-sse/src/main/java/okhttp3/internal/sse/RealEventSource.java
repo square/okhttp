@@ -20,13 +20,13 @@ import javax.annotation.Nullable;
 import okhttp3.Call;
 import okhttp3.Callback;
 import okhttp3.EventListener;
-import okhttp3.EventSource;
-import okhttp3.EventSourceListener;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
 import okhttp3.internal.Util;
+import okhttp3.sse.EventSource;
+import okhttp3.sse.EventSourceListener;
 import okio.BufferedSource;
 
 public final class RealEventSource
@@ -51,38 +51,41 @@ public final class RealEventSource
   }
 
   @Override public void onResponse(Call call, Response response) {
-    //noinspection ConstantConditions main body is never null
-    BufferedSource source = response.body().source();
-    ServerSentEventReader reader = new ServerSentEventReader(source, this);
-
-    if (!response.isSuccessful()) {
-      listener.onFailure(this, null, response);
-      return;
-    }
-
-    MediaType contentType = response.body().contentType();
-    if (!isEventStream(contentType)) {
-      listener.onFailure(this, new IllegalStateException("Invalid content-type: " + contentType), response);
-      return;
-    }
-
-    response = response.newBuilder()
-        .body(Util.EMPTY_RESPONSE)
-        .build();
-
     try {
-      listener.onOpen(this, response);
-      while (reader.processNextEvent()) {
-      }
-    } catch (Exception e) {
-      listener.onFailure(this, e, response);
-      return;
-    }
+      //noinspection ConstantConditions main body is never null
+      BufferedSource source = response.body().source();
+      ServerSentEventReader reader = new ServerSentEventReader(source, this);
 
-    listener.onClosed(this);
+      if (!response.isSuccessful()) {
+        listener.onFailure(this, null, response);
+        return;
+      }
+
+      MediaType contentType = response.body().contentType();
+      if (!isEventStream(contentType)) {
+        listener.onFailure(this,
+            new IllegalStateException("Invalid content-type: " + contentType), response);
+        return;
+      }
+
+      response = response.newBuilder().body(Util.EMPTY_RESPONSE).build();
+
+      try {
+        listener.onOpen(this, response);
+        while (reader.processNextEvent()) {
+        }
+      } catch (Exception e) {
+        listener.onFailure(this, e, response);
+        return;
+      }
+
+      listener.onClosed(this);
+    } finally {
+      response.close();
+    }
   }
 
-  private boolean isEventStream(@Nullable MediaType contentType) {
+  private static boolean isEventStream(@Nullable MediaType contentType) {
     return contentType != null && contentType.type().equals("text") && contentType.subtype()
         .equals("event-stream");
   }

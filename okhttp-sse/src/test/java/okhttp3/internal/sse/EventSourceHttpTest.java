@@ -15,15 +15,17 @@
  */
 package okhttp3.internal.sse;
 
-import okhttp3.EventSource;
-import okhttp3.EventSources;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
+import okhttp3.sse.EventSource;
+import okhttp3.sse.EventSources;
 import org.junit.After;
 import org.junit.Rule;
 import org.junit.Test;
+
+import static org.junit.Assert.assertEquals;
 
 public final class EventSourceHttpTest {
   @Rule public final MockWebServer server = new MockWebServer();
@@ -38,12 +40,33 @@ public final class EventSourceHttpTest {
   @Test public void event() {
     server.enqueue(new MockResponse().setBody(""
         + "data: hey\n"
-        + "\n"));
+        + "\n").setHeader("content-type", "text/event-stream"));
 
     EventSource source = newEventSource();
+
+    assertEquals("/", source.request().url().encodedPath());
+
     listener.assertOpen();
     listener.assertEvent(null, null, "hey");
     listener.assertClose();
+  }
+
+  @Test public void badContentType() {
+    server.enqueue(new MockResponse().setBody(""
+        + "data: hey\n"
+        + "\n").setHeader("content-type", "text/plain"));
+
+    EventSource source = newEventSource();
+    listener.assertFailure("Invalid content-type: text/plain");
+  }
+
+  @Test public void badResponseCode() {
+    server.enqueue(new MockResponse().setBody(""
+        + "data: hey\n"
+        + "\n").setHeader("content-type", "text/event-stream").setResponseCode(401));
+
+    EventSource source = newEventSource();
+    listener.assertFailure(null);
   }
 
   private EventSource newEventSource() {

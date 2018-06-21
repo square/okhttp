@@ -13,8 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package okhttp3;
+package okhttp3.sse;
 
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
 import okhttp3.internal.sse.RealEventSource;
 
 public final class EventSources {

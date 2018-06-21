@@ -19,13 +19,14 @@ import java.io.IOException;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingDeque;
 import javax.annotation.Nullable;
-import okhttp3.EventSource;
-import okhttp3.EventSourceListener;
+import okhttp3.sse.EventSource;
+import okhttp3.sse.EventSourceListener;
 import okhttp3.Response;
 import okhttp3.internal.platform.Platform;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 public final class EventSourceRecorder extends EventSourceListener {
@@ -86,6 +87,18 @@ public final class EventSourceRecorder extends EventSourceListener {
     Object event = nextEvent();
     if (!(event instanceof Closed)) {
       throw new AssertionError("Expected Open but was " + event);
+    }
+  }
+
+  public void assertFailure(@Nullable String message) {
+    Object event = nextEvent();
+    if (!(event instanceof Failure)) {
+      throw new AssertionError("Expected Failure but was " + event);
+    }
+    if (message != null) {
+      assertEquals(message, ((Failure) event).t.getMessage());
+    } else {
+      assertNull(((Failure) event).t);
     }
   }
 

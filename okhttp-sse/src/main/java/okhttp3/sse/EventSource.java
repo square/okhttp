@@ -13,7 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package okhttp3;
+package okhttp3.sse;
+
+import okhttp3.Request;
 
 public interface EventSource {
   /** Returns the original request that initiated this event source. */
