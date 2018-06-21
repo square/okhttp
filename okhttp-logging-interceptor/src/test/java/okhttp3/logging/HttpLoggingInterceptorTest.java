@@ -76,14 +76,9 @@ public final class HttpLoggingInterceptorTest {
     applicationInterceptor.setLevel(level);
   }
 
-  private void setRequestBodyLogMax(long requestBodyLogMax) {
-    networkInterceptor.setRequestBodyLogMax(requestBodyLogMax);
-    applicationInterceptor.setRequestBodyLogMax(requestBodyLogMax);
-  }
-
-  private void setResponseBodyLogMax(long responseBodyLogMax) {
-    networkInterceptor.setResponseBodyLogMax(responseBodyLogMax);
-    applicationInterceptor.setResponseBodyLogMax(responseBodyLogMax);
+  private void setBodyLogMax(long bodyLogMax) {
+    networkInterceptor.setBodyLogMax(bodyLogMax);
+    applicationInterceptor.setBodyLogMax(bodyLogMax);
   }
 
   @Before public void setUp() {
@@ -753,9 +748,21 @@ public final class HttpLoggingInterceptorTest {
         .assertNoMoreLogs();
   }
 
-  @Test public void requestBodyLogLimitation() throws Exception {
+  @Test public void bodyLogMaxMinimumValue() throws Exception {
+    setBodyLogMax(-2);
+    assertEquals(HttpLoggingInterceptor.LOG_LIMITATION_NONE, applicationInterceptor.getBodyLogMax());
+    assertEquals(HttpLoggingInterceptor.LOG_LIMITATION_NONE, networkInterceptor.getBodyLogMax());
+  }
+
+  @Test public void setBodyLogMax() throws Exception {
+    setBodyLogMax(5000);
+    assertEquals(5000, applicationInterceptor.getBodyLogMax());
+    assertEquals(5000, networkInterceptor.getBodyLogMax());
+  }
+
+  @Test public void logBodyLimitation() throws Exception {
     setLevel(Level.BODY);
-    setRequestBodyLogMax(1);
+    setBodyLogMax(1);
 
     server.enqueue(new MockResponse());
     Request request = request().post(RequestBody.create(PLAIN, "Hello?")).build();
@@ -788,48 +795,6 @@ public final class HttpLoggingInterceptorTest {
             .assertLogMatch("<-- 200 OK " + url + " \\(\\d+ms\\)")
             .assertLogEqual("Content-Length: 0")
             .assertLogEqual("<-- END HTTP (0-byte body)")
-            .assertNoMoreLogs();
-  }
-
-  @Test public void responseBodyLogLimitation() throws Exception {
-    setLevel(Level.BODY);
-    setResponseBodyLogMax(1);
-
-    server.enqueue(new MockResponse().setBody("Excellent!"));
-    Request request = request().post(RequestBody.create(PLAIN, "What's up?")).build();
-    Response response = client.newCall(request).execute();
-    response.body().close();
-
-    applicationLogs
-            .assertLogEqual("--> POST " + url)
-            .assertLogEqual("Content-Type: text/plain; charset=utf-8")
-            .assertLogEqual("Content-Length: 10")
-            .assertLogEqual("")
-            .assertLogEqual("What's up?")
-            .assertLogEqual("--> END POST (10-byte body)")
-            .assertLogMatch("<-- 200 OK " + url + " \\(\\d+ms\\)")
-            .assertLogEqual("Content-Length: 10")
-            .assertLogEqual("")
-            .assertLogEqual("Too large to output logs. Current limitation is 1")
-            .assertLogEqual("<-- END HTTP (10-byte body)")
-            .assertNoMoreLogs();
-
-    networkLogs
-            .assertLogEqual("--> POST " + url + " http/1.1")
-            .assertLogEqual("Content-Type: text/plain; charset=utf-8")
-            .assertLogEqual("Content-Length: 10")
-            .assertLogEqual("Host: " + host)
-            .assertLogEqual("Connection: Keep-Alive")
-            .assertLogEqual("Accept-Encoding: gzip")
-            .assertLogMatch("User-Agent: okhttp/.+")
-            .assertLogEqual("")
-            .assertLogEqual("What's up?")
-            .assertLogEqual("--> END POST (10-byte body)")
-            .assertLogMatch("<-- 200 OK " + url + " \\(\\d+ms\\)")
-            .assertLogEqual("Content-Length: 10")
-            .assertLogEqual("")
-            .assertLogEqual("Too large to output logs. Current limitation is 1")
-            .assertLogEqual("<-- END HTTP (10-byte body)")
             .assertNoMoreLogs();
   }
 
