@@ -127,8 +127,7 @@ public final class HttpLoggingInterceptor implements Interceptor {
 
   private volatile Level level = Level.NONE;
 
-  private volatile long requestBodyLogMax = LOG_LIMITATION_NONE;
-  private volatile long responseBodyLogMax = LOG_LIMITATION_NONE;
+  private volatile long bodyLogMax = LOG_LIMITATION_NONE;
 
   /** Change the level at which this interceptor logs. */
   public HttpLoggingInterceptor setLevel(Level level) {
@@ -141,32 +140,18 @@ public final class HttpLoggingInterceptor implements Interceptor {
     return level;
   }
 
-  /** Change the limitation of request body logs size. */
-  public HttpLoggingInterceptor setRequestBodyLogMax(long requestBodyLogMax) {
-    if (requestBodyLogMax < 0) {
-      this.requestBodyLogMax = LOG_LIMITATION_NONE;
+  /** Change the limitation of response and request body logs size. */
+  public HttpLoggingInterceptor setBodyLogMax(long bodyLogMax) {
+    if (bodyLogMax < 0) {
+      this.bodyLogMax = LOG_LIMITATION_NONE;
     } else {
-      this.requestBodyLogMax = requestBodyLogMax;
+      this.bodyLogMax = bodyLogMax;
     }
     return this;
   }
 
-  /** Change the limitation of response body logs size. */
-  public HttpLoggingInterceptor setResponseBodyLogMax(long responseBodyLogMax) {
-    if (responseBodyLogMax < 0) {
-      this.responseBodyLogMax = LOG_LIMITATION_NONE;
-    } else {
-      this.responseBodyLogMax = responseBodyLogMax;
-    }
-    return this;
-  }
-
-  public long getRequestBodyLogMax() {
-    return requestBodyLogMax;
-  }
-
-  public long getResponseBodyLogMax() {
-    return responseBodyLogMax;
+  public long getBodyLogMax() {
+    return bodyLogMax;
   }
 
   @Override public Response intercept(Chain chain) throws IOException {
@@ -230,11 +215,11 @@ public final class HttpLoggingInterceptor implements Interceptor {
 
         logger.log("");
         if (isPlaintext(buffer)) {
-          if (buffer.size() <= getRequestBodyLogMax() || getRequestBodyLogMax() < 0) {
+          if (buffer.size() <= getBodyLogMax() || getBodyLogMax() < 0) {
             logger.log(buffer.readString(charset));
           } else {
             logger.log("Too large to output logs. "
-                    + "Current limitation is " + getRequestBodyLogMax());
+                    + "Current limitation is " + getBodyLogMax());
           }
           logger.log("--> END " + request.method()
               + " (" + requestBody.contentLength() + "-byte body)");
@@ -308,11 +293,11 @@ public final class HttpLoggingInterceptor implements Interceptor {
 
         if (contentLength != 0) {
           logger.log("");
-          if (buffer.size() <= getResponseBodyLogMax() || getResponseBodyLogMax() < 0) {
+          if (buffer.size() <= getBodyLogMax() || getBodyLogMax() < 0) {
             logger.log(buffer.clone().readString(charset));
           } else {
             logger.log("Too large to output logs. "
-                    + "Current limitation is " + getResponseBodyLogMax());
+                    + "Current limitation is " + getBodyLogMax());
           }
         }
 
