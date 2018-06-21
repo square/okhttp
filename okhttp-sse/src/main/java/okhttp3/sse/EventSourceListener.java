@@ -13,9 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package okhttp3;
+package okhttp3.sse;
 
 import javax.annotation.Nullable;
+import okhttp3.Response;
 
 public abstract class EventSourceListener {
   /**
@@ -43,6 +44,7 @@ public abstract class EventSourceListener {
    * Invoked when an event source has been closed due to an error reading from or writing to the
    * network. Incoming events may have been lost. No further calls to this listener will be made.
    */
-  public void onFailure(EventSource eventSource, Throwable t, @Nullable Response response) {
+  public void onFailure(EventSource eventSource, @Nullable Throwable t,
+      @Nullable Response response) {
   }
 }
