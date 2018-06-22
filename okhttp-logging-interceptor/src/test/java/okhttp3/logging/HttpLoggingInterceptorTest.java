@@ -749,9 +749,14 @@ public final class HttpLoggingInterceptorTest {
   }
 
   @Test public void bodyLogMaxMinimumValue() throws Exception {
-    setBodyLogMax(-2);
-    assertEquals(HttpLoggingInterceptor.LOG_LIMITATION_NONE, applicationInterceptor.getBodyLogMax());
-    assertEquals(HttpLoggingInterceptor.LOG_LIMITATION_NONE, networkInterceptor.getBodyLogMax());
+    try {
+      setBodyLogMax(-2);
+      fail();
+    } catch (IllegalArgumentException e) {
+      assertEquals("bodyLogMax should be over -1", e.getMessage());
+      assertEquals(HttpLoggingInterceptor.LOG_LIMITATION_NONE, applicationInterceptor.getBodyLogMax());
+      assertEquals(HttpLoggingInterceptor.LOG_LIMITATION_NONE, networkInterceptor.getBodyLogMax());
+    }
   }
 
   @Test public void setBodyLogMax() throws Exception {

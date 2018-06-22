@@ -142,11 +142,8 @@ public final class HttpLoggingInterceptor implements Interceptor {
 
   /** Change the limitation of response and request body logs size. */
   public HttpLoggingInterceptor setBodyLogMax(long bodyLogMax) {
-    if (bodyLogMax < 0) {
-      this.bodyLogMax = LOG_LIMITATION_NONE;
-    } else {
-      this.bodyLogMax = bodyLogMax;
-    }
+    if (bodyLogMax < 0) throw new IllegalArgumentException("bodyLogMax should be over -1");
+    this.bodyLogMax = bodyLogMax;
     return this;
   }
 
