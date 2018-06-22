@@ -215,7 +215,11 @@ public final class HttpLoggingInterceptor implements Interceptor {
           if (buffer.size() <= getBodyLogMax() || getBodyLogMax() < 0) {
             logger.log(buffer.readString(charset));
           } else {
-            logger.log(buffer.readString(getBodyLogMax(), charset));
+            byte[] bytes = new byte[(int) getBodyLogMax()];
+            for (int i = 0; i < getBodyLogMax(); i++) {
+              bytes[i] = buffer.getByte(i);
+            }
+            logger.log(new String(bytes, charset));
           }
           logger.log("--> END " + request.method()
               + " (" + requestBody.contentLength() + "-byte body)");
@@ -292,7 +296,11 @@ public final class HttpLoggingInterceptor implements Interceptor {
           if (buffer.size() <= getBodyLogMax() || getBodyLogMax() < 0) {
             logger.log(buffer.clone().readString(charset));
           } else {
-            logger.log(buffer.clone().readString(getBodyLogMax(), charset));
+            byte[] bytes = new byte[(int) getBodyLogMax()];
+            for (int i = 0; i < getBodyLogMax(); i++) {
+              bytes[i] = buffer.getByte(i);
+            }
+            logger.log(new String(bytes, charset));
           }
         }
 
