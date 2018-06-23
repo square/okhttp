@@ -24,10 +24,10 @@ import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
+import okhttp3.ResponseBody;
 import okhttp3.internal.Util;
 import okhttp3.sse.EventSource;
 import okhttp3.sse.EventSourceListener;
-import okio.BufferedSource;
 
 public final class RealEventSource
     implements EventSource, ServerSentEventReader.Callback, Callback {
@@ -56,24 +56,25 @@ public final class RealEventSource
 
   public void processResponse(Response response) {
     try {
-      //noinspection ConstantConditions main body is never null
-      BufferedSource source = response.body().source();
-      ServerSentEventReader reader = new ServerSentEventReader(source, this);
-
       if (!response.isSuccessful()) {
         listener.onFailure(this, null, response);
         return;
       }
 
-      MediaType contentType = response.body().contentType();
+      ResponseBody body = response.body();
+
+      //noinspection ConstantConditions main body is never null
+      MediaType contentType = body.contentType();
       if (!isEventStream(contentType)) {
         listener.onFailure(this,
             new IllegalStateException("Invalid content-type: " + contentType), response);
         return;
       }
 
+      // Replace the body with an empty one so the callbacks can't see real data.
       response = response.newBuilder().body(Util.EMPTY_RESPONSE).build();
 
+      ServerSentEventReader reader = new ServerSentEventReader(body.source(), this);
       try {
         listener.onOpen(this, response);
         while (reader.processNextEvent()) {
