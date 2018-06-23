@@ -36,8 +36,6 @@ import okhttp3.internal.platform.Platform;
 import okhttp3.internal.publicsuffix.PublicSuffixDatabase;
 import okio.ByteString;
 
-import static okhttp3.internal.Util.addSuppressedIfPossible;
-
 /**
  * DNS over HTTPS implementation.
  *
@@ -63,8 +61,8 @@ public class DnsOverHttps implements Dns {
   private final boolean includeIPv6;
   private final boolean post;
   private final MediaType contentType;
-  private final DnsFallbackStrategy dnsFallbackStrategy;
-  private final Dns systemDns;
+  private final boolean resolvePrivateAddresses;
+  private final boolean resolvePublicAddresses;
 
   DnsOverHttps(Builder builder) {
     if (builder.client == null) {
@@ -78,9 +76,9 @@ public class DnsOverHttps implements Dns {
     this.includeIPv6 = builder.includeIPv6;
     this.post = builder.post;
     this.contentType = builder.contentType;
-    this.dnsFallbackStrategy = builder.dnsFallbackStrategy;
+    this.resolvePrivateAddresses = builder.resolvePrivateAddresses;
+    this.resolvePublicAddresses = builder.resolvePublicAddresses;
     this.client = builder.client.newBuilder().dns(buildBootstrapClient(builder)).build();
-    this.systemDns = builder.systemDns;
   }
 
   private static Dns buildBootstrapClient(Builder builder) {
@@ -113,40 +111,30 @@ public class DnsOverHttps implements Dns {
     return client;
   }
 
-  public DnsFallbackStrategy dnsFallbackStrategy() {
-    return dnsFallbackStrategy;
+  public boolean resolvePrivateAddresses() {
+    return resolvePrivateAddresses;
   }
 
-  public Dns systemDns() {
-    return systemDns;
+  public boolean resolvePublicAddresses() {
+    return resolvePublicAddresses;
   }
 
   @Override public List<InetAddress> lookup(String hostname) throws UnknownHostException {
-    @Nullable UnknownHostException firstUhe = null;
+    UnknownHostException firstUhe = null;
 
-    List<DnsFallbackStrategy.DnsSource> sources = dnsFallbackStrategy.sources(hostname);
-    for (DnsFallbackStrategy.DnsSource source : sources) {
-      try {
-        switch (source) {
-          case DNS_OVER_HTTP:
-            return lookupHttps(hostname);
-          case SYSTEM_DNS:
-            return systemDns.lookup(hostname);
-        }
-      } catch (UnknownHostException uhe) {
-        if (firstUhe == null) {
-          firstUhe = uhe;
-        } else {
-          addSuppressedIfPossible(firstUhe, uhe);
-        }
+    if (!resolvePrivateAddresses || !resolvePublicAddresses) {
+      boolean privateHost = isPrivateHost(hostname);
+
+      if (privateHost && !resolvePrivateAddresses) {
+        throw new UnknownHostException("private hosts not resolved");
+      }
+
+      if (!privateHost && !resolvePublicAddresses) {
+        throw new UnknownHostException("public hosts not resolved");
       }
     }
 
-    if (firstUhe == null) {
-      throw new UnknownHostException("No lookup sources for host " + hostname);
-    }
-
-    throw firstUhe;
+    return lookupHttps(hostname);
   }
 
   private List<InetAddress> lookupHttps(String hostname) throws UnknownHostException {
@@ -236,9 +224,10 @@ public class DnsOverHttps implements Dns {
     boolean includeIPv6 = true;
     boolean post = false;
     MediaType contentType = DNS_MESSAGE;
-    DnsFallbackStrategy dnsFallbackStrategy = DnsFallbackStrategy.DEFAULT;
     Dns systemDns = Dns.SYSTEM;
     @Nullable List<InetAddress> bootstrapDnsHosts = null;
+    boolean resolvePrivateAddresses = false;
+    boolean resolvePublicAddresses = true;
 
     public DnsOverHttps build() {
       return new DnsOverHttps(this);
@@ -269,8 +258,13 @@ public class DnsOverHttps implements Dns {
       return this;
     }
 
-    public Builder dnsFallbackStrategy(DnsFallbackStrategy dnsFallbackStrategy) {
-      this.dnsFallbackStrategy = dnsFallbackStrategy;
+    public Builder resolvePrivateAddresses(boolean resolvePrivateAddresses) {
+      this.resolvePrivateAddresses = resolvePrivateAddresses;
+      return this;
+    }
+
+    public Builder resolvePublicAddresses(boolean resolvePublicAddresses) {
+      this.resolvePublicAddresses = resolvePublicAddresses;
       return this;
     }
 

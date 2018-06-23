@@ -52,18 +52,6 @@
     <plugins>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-javadoc-plugin</artifactId>
-        <version>2.10.4</version>
-        <configuration>
-          <links>
-            <link>http://square.github.io/okhttp/javadoc/</link>
-            <link>http://hc.apache.org/httpcomponents-client-4.3.x/httpclient/apidocs/</link>
-            <link>https://hc.apache.org/httpcomponents-core-4.3.x/httpcore/apidocs/</link>
-          </links>
-        </configuration>
-      </plugin>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-jar-plugin</artifactId>
         <version>3.0.2</version>
         <configuration>

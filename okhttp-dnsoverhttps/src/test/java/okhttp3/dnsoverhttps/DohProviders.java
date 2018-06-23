@@ -33,7 +33,6 @@ public class DohProviders {
   static DnsOverHttps buildGoogle(OkHttpClient bootstrapClient) {
     return new DnsOverHttps.Builder().client(bootstrapClient)
         .url(parseUrl("https://dns.google.com/experimental?ct=" + UDPWIREFORMAT))
-        .dnsFallbackStrategy(DnsFallbackStrategy.NO_FALLBACK)
         .bootstrapDnsHosts(getByIp("216.58.204.78"), getByIp("2a00:1450:4009:814:0:0:0:200e"))
         .contentType(UDPWIREFORMAT)
         .build();
@@ -43,7 +42,6 @@ public class DohProviders {
 
     return new DnsOverHttps.Builder().client(bootstrapClient)
         .url(parseUrl("https://dns.google.com/experimental"))
-        .dnsFallbackStrategy(DnsFallbackStrategy.NO_FALLBACK)
         .bootstrapDnsHosts(getByIp("216.58.204.78"), getByIp("2a00:1450:4009:814:0:0:0:200e"))
         .post(true)
         .contentType(UDPWIREFORMAT)
@@ -54,7 +52,6 @@ public class DohProviders {
 
     return new DnsOverHttps.Builder().client(bootstrapClient)
         .url(parseUrl("https://cloudflare-dns.com/dns-query?ct=application/dns-udpwireformat"))
-        .dnsFallbackStrategy(DnsFallbackStrategy.NO_FALLBACK)
         .bootstrapDnsHosts(getByIp("104.16.111.25"), getByIp("104.16.112.25"),
             getByIp("2400:cb00:2048:1:0:0:6810:7019"), getByIp("2400:cb00:2048:1:0:0:6810:6f19"))
         .includeIPv6(false)
@@ -65,7 +62,6 @@ public class DohProviders {
 
     return new DnsOverHttps.Builder().client(bootstrapClient)
         .url(parseUrl("https://dns.cloudflare.com/.well-known/dns-query"))
-        .dnsFallbackStrategy(DnsFallbackStrategy.NO_FALLBACK)
         .includeIPv6(false)
         .post(true)
         .contentType(UDPWIREFORMAT)
@@ -75,7 +71,6 @@ public class DohProviders {
   static DnsOverHttps buildCleanBrowsing(OkHttpClient bootstrapClient) {
     return new DnsOverHttps.Builder().client(bootstrapClient)
         .url(parseUrl("https://doh.cleanbrowsing.org/doh/family-filter"))
-        .dnsFallbackStrategy(DnsFallbackStrategy.NO_FALLBACK)
         .includeIPv6(false)
         .build();
   }
@@ -83,7 +78,6 @@ public class DohProviders {
   static DnsOverHttps buildChantra(OkHttpClient bootstrapClient) {
     return new DnsOverHttps.Builder().client(bootstrapClient)
         .url(parseUrl("https://dns.dnsoverhttps.net/dns-query"))
-        .dnsFallbackStrategy(DnsFallbackStrategy.NO_FALLBACK)
         .includeIPv6(false)
         .build();
   }
@@ -91,15 +85,6 @@ public class DohProviders {
   static DnsOverHttps buildCryptoSx(OkHttpClient bootstrapClient) {
     return new DnsOverHttps.Builder().client(bootstrapClient)
         .url(parseUrl("https://doh.crypto.sx/dns-query"))
-        .dnsFallbackStrategy(DnsFallbackStrategy.NO_FALLBACK)
-        .includeIPv6(false)
-        .build();
-  }
-
-  static DnsOverHttps buildSecureDns(OkHttpClient bootstrapClient) {
-    return new DnsOverHttps.Builder().client(bootstrapClient)
-        .url(parseUrl("https://doh.securedns.eu/dns-query"))
-        .dnsFallbackStrategy(DnsFallbackStrategy.NO_FALLBACK)
         .includeIPv6(false)
         .build();
   }
@@ -118,9 +103,6 @@ public class DohProviders {
       result.add(buildCloudflarePost(client));
     }
     result.add(buildCleanBrowsing(client));
-    if (!http2Only) {
-      result.add(buildSecureDns(client));
-    }
     if (!workingOnly) {
       result.add(buildCryptoSx(client)); // 521 - server down
       result.add(buildChantra(client)); // 400

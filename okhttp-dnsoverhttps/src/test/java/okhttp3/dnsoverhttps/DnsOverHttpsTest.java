@@ -31,7 +31,6 @@ import okhttp3.mockwebserver.MockWebServer;
 import okhttp3.mockwebserver.RecordedRequest;
 import okio.Buffer;
 import okio.ByteString;
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -176,7 +175,7 @@ public class DnsOverHttpsTest {
 
   private DnsOverHttps buildLocalhost(OkHttpClient bootstrapClient) {
     HttpUrl url = server.url("/lookup?ct");
-    return new DnsOverHttps.Builder().client(bootstrapClient).dnsFallbackStrategy(DnsFallbackStrategy.NO_FALLBACK).url(url).build();
+    return new DnsOverHttps.Builder().client(bootstrapClient).resolvePrivateAddresses(true).url(url).build();
   }
 
   private static InetAddress address(String host) {
