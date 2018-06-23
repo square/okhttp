@@ -294,7 +294,7 @@ public final class MockWebServerTest {
     in.close();
   }
 
-  @Test public void disconnectRequestHalfway() throws IOException {
+  @Test public void disconnectRequestHalfway() throws IOException, InterruptedException {
     server.enqueue(new MockResponse().setSocketPolicy(SocketPolicy.DISCONNECT_DURING_REQUEST_BODY));
     // Limit the size of the request body that the server holds in memory to an arbitrary
     // 3.5 MBytes so this test can pass on devices with little memory.
@@ -313,11 +313,15 @@ public final class MockWebServerTest {
       try {
         out.write(data);
         out.flush();
+        if (i == 513) {
+          // pause slightly after half way to make result more predictable
+          Thread.sleep(100);
+        }
       } catch (IOException e) {
         break;
       }
     }
-    assertEquals(512f, i, 20f); // Halfway +/- 2%
+    assertEquals(512f, i, 5f); // Halfway +/- 0.5%
   }
 
   @Test public void disconnectResponseHalfway() throws IOException {

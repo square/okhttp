@@ -53,6 +53,7 @@
     <guava.version>16.0</guava.version>
     <java.version>1.7</java.version>
     <moshi.version>1.1.0</moshi.version>
+    <jnr-unixsocket.version>0.19</jnr-unixsocket.version>
     <okio.version>1.14.0</okio.version>
 
     <!-- Test Dependencies -->
@@ -128,6 +129,11 @@
         <groupId>com.squareup.moshi</groupId>
         <artifactId>moshi</artifactId>
         <version>${moshi.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.github.jnr</groupId>
+        <artifactId>jnr-unixsocket</artifactId>
+        <version>${jnr-unixsocket.version}</version>
       </dependency>
     </dependencies>
   </dependencyManagement>
@@ -346,7 +352,7 @@
         <dependency>
           <groupId>org.conscrypt</groupId>
           <artifactId>conscrypt-openjdk-uber</artifactId>
-          <version>1.1.0</version>
+          <version>1.1.3</version>
         </dependency>
       </dependencies>
     </profile>

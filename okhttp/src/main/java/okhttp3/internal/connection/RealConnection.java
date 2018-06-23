@@ -318,9 +318,6 @@ public final class RealConnection extends Http2Connection.Listener implements Co
       sslSocket.startHandshake();
       // block for session establishment
       SSLSession sslSocketSession = sslSocket.getSession();
-      if (!isValid(sslSocketSession)) {
-        throw new IOException("a valid ssl session was not established");
-      }
       Handshake unverifiedHandshake = Handshake.get(sslSocketSession);
 
       // Verify that the socket's certificates are acceptable for the target host.
@@ -359,12 +356,6 @@ public final class RealConnection extends Http2Connection.Listener implements Co
         closeQuietly(sslSocket);
       }
     }
-  }
-
-  private boolean isValid(SSLSession sslSocketSession) {
-    // don't use SslSocket.getSession since for failed results it returns SSL_NULL_WITH_NULL_NULL
-    return !"NONE".equals(sslSocketSession.getProtocol()) && !"SSL_NULL_WITH_NULL_NULL".equals(
-        sslSocketSession.getCipherSuite());
   }
 
   /**
