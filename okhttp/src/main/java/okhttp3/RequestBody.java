@@ -15,15 +15,16 @@
  */
 package okhttp3;
 
-import java.io.File;
-import java.io.IOException;
-import java.nio.charset.Charset;
-import javax.annotation.Nullable;
 import okhttp3.internal.Util;
 import okio.BufferedSink;
 import okio.ByteString;
 import okio.Okio;
 import okio.Source;
+
+import javax.annotation.Nullable;
+import java.io.File;
+import java.io.IOException;
+import java.nio.charset.Charset;
 
 public abstract class RequestBody {
   /** Returns the Content-Type header for this body. */
@@ -39,6 +40,9 @@ public abstract class RequestBody {
 
   /** Writes the content of this request to {@code sink}. */
   public abstract void writeTo(BufferedSink sink) throws IOException;
+
+  /** Writes the content of this request to {@code sink} until {@code byteCount}. */
+  public abstract void writeTo(BufferedSink sink, long byteCount) throws IOException;
 
   /**
    * Returns a new request body that transmits {@code content}. If {@code contentType} is non-null
