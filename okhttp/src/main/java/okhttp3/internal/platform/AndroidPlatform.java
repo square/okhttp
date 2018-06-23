@@ -23,12 +23,14 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.InetSocketAddress;
 import java.net.Socket;
+import java.security.NoSuchAlgorithmException;
 import java.security.Security;
 import java.security.cert.Certificate;
 import java.security.cert.TrustAnchor;
 import java.security.cert.X509Certificate;
 import java.util.List;
 import javax.annotation.Nullable;
+import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLPeerUnverifiedException;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
@@ -425,6 +427,15 @@ class AndroidPlatform extends Platform {
     @Override
     public int hashCode() {
       return trustManager.hashCode() + 31 * findByIssuerAndSignatureMethod.hashCode();
+    }
+  }
+
+  @Override public SSLContext getSSLContext() {
+    // Override Platform to keep the existing Android behaviour for now
+    try {
+      return SSLContext.getInstance("TLS");
+    } catch (NoSuchAlgorithmException e) {
+      throw new IllegalStateException("No TLS provider", e);
     }
   }
 }
