@@ -51,6 +51,10 @@ public final class RealEventSource
   }
 
   @Override public void onResponse(Call call, Response response) {
+    processResponse(response);
+  }
+
+  public void processResponse(Response response) {
     try {
       //noinspection ConstantConditions main body is never null
       BufferedSource source = response.body().source();
