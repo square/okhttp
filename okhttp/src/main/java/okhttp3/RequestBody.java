@@ -76,6 +76,14 @@ public abstract class RequestBody {
       @Override public void writeTo(BufferedSink sink) throws IOException {
         sink.write(content);
       }
+
+      @Override public void writeTo(BufferedSink sink, long byteCount) throws IOException {
+        byte[] contentBytes = new byte[((int) byteCount)];
+        for (int i = 0; i < byteCount; i++) {
+          contentBytes[i] = content.getByte(i);
+        }
+        sink.write(contentBytes);
+      }
     };
   }
 
@@ -101,6 +109,13 @@ public abstract class RequestBody {
       @Override public void writeTo(BufferedSink sink) throws IOException {
         sink.write(content, offset, byteCount);
       }
+
+      @Override
+      public void writeTo(BufferedSink sink, long byteCount) throws IOException {
+        byte[] contentBytes = new byte[((int) byteCount)];
+        System.arraycopy(content, 0, contentBytes, 0, (int) byteCount);
+        sink.write(contentBytes);
+      }
     };
   }
 
@@ -122,6 +137,16 @@ public abstract class RequestBody {
         try {
           source = Okio.source(file);
           sink.writeAll(source);
+        } finally {
+          Util.closeQuietly(source);
+        }
+      }
+
+      @Override public void writeTo(BufferedSink sink, long byteCount) throws IOException {
+        Source source = null;
+        try {
+          source = Okio.source(file);
+          sink.write(source, byteCount);
         } finally {
           Util.closeQuietly(source);
         }
