@@ -265,6 +265,17 @@ public class Platform {
   }
 
   public SSLContext getSSLContext() {
+    // v 1.7 unpaid version requires optin to TLSv1.2
+    // https://github.com/square/okhttp/issues/4086
+    String jvmVersion = System.getProperty("java.specification.version");
+    if ("1.7".equals(jvmVersion)) {
+      try {
+        return SSLContext.getInstance("TLSv1.2");
+      } catch (NoSuchAlgorithmException e) {
+        // drop back to TLS
+      }
+    }
+
     try {
       return SSLContext.getInstance("TLS");
     } catch (NoSuchAlgorithmException e) {
