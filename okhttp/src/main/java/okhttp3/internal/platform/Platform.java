@@ -267,15 +267,20 @@ public class Platform {
   }
 
   public SSLContext getSSLContext() {
-    try {
-      // JDK 1.7 (public version) only support > TLSv1 with named protocols
-      return SSLContext.getInstance("TLSv1.2");
-    } catch (NoSuchAlgorithmException e) {
+    String jvmVersion = System.getProperty("java.specification.version");
+    if ("1.7".equals(jvmVersion)) {
       try {
-        return SSLContext.getInstance("TLS");
-      } catch (NoSuchAlgorithmException e2) {
-        throw new IllegalStateException("No TLS provider", e);
+        // JDK 1.7 (public version) only support > TLSv1 with named protocols
+        return SSLContext.getInstance("TLSv1.2");
+      } catch (NoSuchAlgorithmException e) {
+        // fallback to TLS
       }
+    }
+
+    try {
+      return SSLContext.getInstance("TLS");
+    } catch (NoSuchAlgorithmException e) {
+      throw new IllegalStateException("No TLS provider", e);
     }
   }
 

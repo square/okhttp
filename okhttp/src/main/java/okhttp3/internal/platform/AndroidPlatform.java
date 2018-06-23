@@ -431,7 +431,14 @@ class AndroidPlatform extends Platform {
   }
 
   @Override public SSLContext getSSLContext() {
-    // Override Platform to keep the existing Android behaviour for now
+    if (Build.VERSION.SDK_INT >= 16 && Build.VERSION.SDK_INT < 22) {
+      try {
+        return SSLContext.getInstance("TLSv1.2");
+      } catch (NoSuchAlgorithmException e) {
+        // fallback to TLS
+      }
+    }
+
     try {
       return SSLContext.getInstance("TLS");
     } catch (NoSuchAlgorithmException e) {

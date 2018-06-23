@@ -98,13 +98,4 @@ final class Jdk9Platform extends Platform {
 
     return null;
   }
-
-  @Override public SSLContext getSSLContext() {
-    // Override Platform to keep the existing behaviour for now on newer Platforms
-    try {
-      return SSLContext.getInstance("TLS");
-    } catch (NoSuchAlgorithmException e) {
-      throw new IllegalStateException("No TLS provider", e);
-    }
-  }
 }
