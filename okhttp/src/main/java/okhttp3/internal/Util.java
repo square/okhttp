@@ -18,6 +18,8 @@ package okhttp3.internal;
 import java.io.Closeable;
 import java.io.IOException;
 import java.io.InterruptedIOException;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.net.IDN;
 import java.net.InetAddress;
 import java.net.ServerSocket;
@@ -72,6 +74,27 @@ public final class Util {
       return a.compareTo(b);
     }
   };
+
+  private static final Method addSuppressedExceptionMethod;
+
+  static {
+    Method m;
+    try {
+      m = Throwable.class.getDeclaredMethod("addSuppressed", Throwable.class);
+    } catch (Exception e) {
+      m = null;
+    }
+    addSuppressedExceptionMethod = m;
+  }
+
+  public static void addSuppressedIfPossible(Throwable e, Throwable suppressed) {
+    if (addSuppressedExceptionMethod != null) {
+      try {
+        addSuppressedExceptionMethod.invoke(e, suppressed);
+      } catch (InvocationTargetException | IllegalAccessException ignored) {
+      }
+    }
+  }
 
   /**
    * Quick and dirty pattern to differentiate IP addresses from hostnames. This is an approximation

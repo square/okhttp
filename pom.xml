@@ -31,6 +31,8 @@
 
     <module>okhttp-logging-interceptor</module>
 
+    <module>okhttp-dnsoverhttps</module>
+
     <module>okcurl</module>
     <module>mockwebserver</module>
     <module>samples</module>
