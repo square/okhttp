@@ -43,6 +43,7 @@ import okhttp3.RecordingEventListener.SecureConnectStart;
 import okhttp3.internal.DoubleInetAddressDns;
 import okhttp3.internal.RecordingOkAuthenticator;
 import okhttp3.internal.SingleInetAddressDns;
+import okhttp3.logging.HttpLoggingInterceptor;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import okhttp3.mockwebserver.SocketPolicy;
@@ -1038,6 +1039,27 @@ public final class EventListenerTest {
   @Test public void requestBodySuccessEmpty() throws IOException {
     requestBodySuccess(RequestBody.create(MediaType.parse("text/plain"), ""), equalTo(0L),
         equalTo(19L));
+  }
+
+  @Test public void successfulCallEventSequenceWithListener() throws IOException {
+    server.enqueue(new MockResponse().setBody("abc"));
+
+    client = client.newBuilder().addNetworkInterceptor(new HttpLoggingInterceptor().setLevel(
+        HttpLoggingInterceptor.Level.BODY)).build();
+
+    Call call = client.newCall(new Request.Builder()
+        .url(server.url("/"))
+        .build());
+    Response response = call.execute();
+    assertEquals(200, response.code());
+    assertEquals("abc", response.body().string());
+    response.body().close();
+
+    List<String> expectedEvents = Arrays.asList("CallStart", "DnsStart", "DnsEnd",
+        "ConnectStart", "ConnectEnd", "ConnectionAcquired", "RequestHeadersStart",
+        "RequestHeadersEnd", "ResponseHeadersStart", "ResponseHeadersEnd", "ResponseBodyStart",
+        "ResponseBodyEnd", "ConnectionReleased", "CallEnd");
+    assertEquals(expectedEvents, listener.recordedEventTypes());
   }
 
   private void requestBodySuccess(RequestBody body, Matcher<Long> requestBodyBytes,
