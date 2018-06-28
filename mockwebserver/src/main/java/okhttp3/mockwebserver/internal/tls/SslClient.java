@@ -35,6 +35,7 @@ import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
 import javax.net.ssl.X509TrustManager;
 import okhttp3.internal.platform.Platform;
+import okhttp3.mockwebserver.HeldCertificate;
 
 /**
  * Combines an SSL socket factory and trust manager, a pairing enough for OkHttp or MockWebServer to
@@ -60,17 +61,17 @@ public final class SslClient {
     try {
       // Generate a self-signed cert for the server to serve and the client to trust.
       HeldCertificate heldCertificate = new HeldCertificate.Builder()
-          .serialNumber("1")
-          .commonName(InetAddress.getByName("localhost").getCanonicalHostName())
+          .commonName("localhost")
+          .addSubjectAlternativeName(InetAddress.getByName("localhost").getCanonicalHostName())
           .build();
 
       localhost = new Builder()
-          .certificateChain(heldCertificate.keyPair, heldCertificate.certificate)
-          .addTrustedCertificate(heldCertificate.certificate)
+          .certificateChain(heldCertificate.keyPair(), heldCertificate.certificate())
+          .addTrustedCertificate(heldCertificate.certificate())
           .build();
 
       return localhost;
-    } catch (GeneralSecurityException | UnknownHostException e) {
+    } catch (UnknownHostException e) {
       throw new RuntimeException(e);
     }
   }
@@ -90,9 +91,9 @@ public final class SslClient {
     public Builder certificateChain(HeldCertificate localCert, HeldCertificate... chain) {
       X509Certificate[] certificates = new X509Certificate[chain.length];
       for (int i = 0; i < chain.length; i++) {
-        certificates[i] = chain[i].certificate;
+        certificates[i] = chain[i].certificate();
       }
-      return certificateChain(localCert.keyPair, localCert.certificate, certificates);
+      return certificateChain(localCert.keyPair(), localCert.certificate(), certificates);
     }
 
     public Builder certificateChain(KeyPair keyPair, X509Certificate keyCert,

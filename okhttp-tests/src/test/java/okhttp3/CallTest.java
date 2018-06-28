@@ -65,7 +65,7 @@ import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import okhttp3.mockwebserver.RecordedRequest;
 import okhttp3.mockwebserver.SocketPolicy;
-import okhttp3.mockwebserver.internal.tls.HeldCertificate;
+import okhttp3.mockwebserver.HeldCertificate;
 import okhttp3.mockwebserver.internal.tls.SslClient;
 import okio.Buffer;
 import okio.BufferedSink;
@@ -3212,11 +3212,11 @@ public final class CallTest {
     // Create a certificate with an IP address in the subject alt name.
     HeldCertificate heldCertificate = new HeldCertificate.Builder()
         .commonName("example.com")
-        .subjectAlternativeName(localIpAddress)
+        .addSubjectAlternativeName(localIpAddress)
         .build();
     SslClient sslClient = new SslClient.Builder()
-        .certificateChain(heldCertificate.keyPair, heldCertificate.certificate)
-        .addTrustedCertificate(heldCertificate.certificate)
+        .certificateChain(heldCertificate.keyPair(), heldCertificate.certificate())
+        .addTrustedCertificate(heldCertificate.certificate())
         .build();
 
     // Use that certificate on the server and trust it on the client.

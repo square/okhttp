@@ -32,7 +32,7 @@ import okhttp3.Request;
 import okhttp3.Response;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
-import okhttp3.mockwebserver.internal.tls.HeldCertificate;
+import okhttp3.mockwebserver.HeldCertificate;
 import okhttp3.mockwebserver.internal.tls.SslClient;
 import org.junit.Before;
 import org.junit.Rule;
@@ -61,45 +61,45 @@ public final class ClientAuthTest {
   @Before
   public void setUp() throws GeneralSecurityException {
     serverRootCa = new HeldCertificate.Builder()
-        .serialNumber("1")
-        .ca(3)
+        .serialNumber(1L)
+        .certificateAuthority(3)
         .commonName("root")
-        .subjectAlternativeName("root_ca.com")
+        .addSubjectAlternativeName("root_ca.com")
         .build();
     serverIntermediateCa = new HeldCertificate.Builder()
         .issuedBy(serverRootCa)
-        .ca(2)
-        .serialNumber("2")
+        .certificateAuthority(2)
+        .serialNumber(2L)
         .commonName("intermediate_ca")
-        .subjectAlternativeName("intermediate_ca.com")
+        .addSubjectAlternativeName("intermediate_ca.com")
         .build();
 
     serverCert = new HeldCertificate.Builder()
         .issuedBy(serverIntermediateCa)
-        .serialNumber("3")
+        .serialNumber(3L)
         .commonName("Local Host")
-        .subjectAlternativeName(server.getHostName())
+        .addSubjectAlternativeName(server.getHostName())
         .build();
 
     clientRootCa = new HeldCertificate.Builder()
-        .serialNumber("1")
-        .ca(13)
+        .serialNumber(1L)
+        .certificateAuthority(13)
         .commonName("root")
-        .subjectAlternativeName("root_ca.com")
+        .addSubjectAlternativeName("root_ca.com")
         .build();
     clientIntermediateCa = new HeldCertificate.Builder()
         .issuedBy(serverRootCa)
-        .ca(12)
-        .serialNumber("2")
+        .certificateAuthority(12)
+        .serialNumber(2L)
         .commonName("intermediate_ca")
-        .subjectAlternativeName("intermediate_ca.com")
+        .addSubjectAlternativeName("intermediate_ca.com")
         .build();
 
     clientCert = new HeldCertificate.Builder()
         .issuedBy(clientIntermediateCa)
-        .serialNumber("4")
+        .serialNumber(4L)
         .commonName("Jethro Willis")
-        .subjectAlternativeName("jethrowillis.com")
+        .addSubjectAlternativeName("jethrowillis.com")
         .build();
   }
 
@@ -185,9 +185,9 @@ public final class ClientAuthTest {
   @Test public void commonNameIsNotTrusted() throws Exception {
     serverCert = new HeldCertificate.Builder()
         .issuedBy(serverIntermediateCa)
-        .serialNumber("3")
+        .serialNumber(3L)
         .commonName(server.getHostName())
-        .subjectAlternativeName("different-host.com")
+        .addSubjectAlternativeName("different-host.com")
         .build();
 
     OkHttpClient client = buildClient(clientCert, clientIntermediateCa);
@@ -207,7 +207,7 @@ public final class ClientAuthTest {
 
   @Test public void invalidClientAuthFails() throws Throwable {
     HeldCertificate clientCert2 = new HeldCertificate.Builder()
-        .serialNumber("4")
+        .serialNumber(4L)
         .commonName("Jethro Willis")
         .build();
 
@@ -231,7 +231,7 @@ public final class ClientAuthTest {
 
   public OkHttpClient buildClient(HeldCertificate cert, HeldCertificate... chain) {
     SslClient.Builder sslClientBuilder = new SslClient.Builder()
-        .addTrustedCertificate(serverRootCa.certificate);
+        .addTrustedCertificate(serverRootCa.certificate());
 
     if (cert != null) {
       sslClientBuilder.certificateChain(cert, chain);
@@ -247,8 +247,8 @@ public final class ClientAuthTest {
     // The test uses JDK default SSL Context instead of the Platform provided one
     // as Conscrypt seems to have some differences, we only want to test client side here.
     SslClient serverSslClient = new SslClient.Builder()
-        .addTrustedCertificate(serverRootCa.certificate)
-        .addTrustedCertificate(clientRootCa.certificate)
+        .addTrustedCertificate(serverRootCa.certificate())
+        .addTrustedCertificate(clientRootCa.certificate())
         .certificateChain(serverCert, serverIntermediateCa)
         .sslContext(getSslContext())
         .build();

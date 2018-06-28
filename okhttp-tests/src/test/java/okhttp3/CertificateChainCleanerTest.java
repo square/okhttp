@@ -23,7 +23,7 @@ import java.util.List;
 import javax.net.ssl.SSLPeerUnverifiedException;
 import javax.net.ssl.X509TrustManager;
 import okhttp3.internal.tls.CertificateChainCleaner;
-import okhttp3.mockwebserver.internal.tls.HeldCertificate;
+import okhttp3.mockwebserver.HeldCertificate;
 import okhttp3.mockwebserver.internal.tls.SslClient;
 import org.junit.Test;
 
@@ -33,14 +33,14 @@ import static org.junit.Assert.fail;
 public final class CertificateChainCleanerTest {
   @Test public void equalsFromCertificate() throws Exception {
     HeldCertificate rootA = new HeldCertificate.Builder()
-        .serialNumber("1")
+        .serialNumber(1L)
         .build();
     HeldCertificate rootB = new HeldCertificate.Builder()
-        .serialNumber("2")
+        .serialNumber(2L)
         .build();
     assertEquals(
-        CertificateChainCleaner.get(rootA.certificate, rootB.certificate),
-        CertificateChainCleaner.get(rootB.certificate, rootA.certificate));
+        CertificateChainCleaner.get(rootA.certificate(), rootB.certificate()),
+        CertificateChainCleaner.get(rootB.certificate(), rootA.certificate()));
   }
 
   @Test public void equalsFromTrustManager() throws Exception {
@@ -53,15 +53,15 @@ public final class CertificateChainCleanerTest {
 
   @Test public void normalizeSingleSelfSignedCertificate() throws Exception {
     HeldCertificate root = new HeldCertificate.Builder()
-        .serialNumber("1")
+        .serialNumber(1L)
         .build();
-    CertificateChainCleaner cleaner = CertificateChainCleaner.get(root.certificate);
+    CertificateChainCleaner cleaner = CertificateChainCleaner.get(root.certificate());
     assertEquals(list(root), cleaner.clean(list(root), "hostname"));
   }
 
   @Test public void normalizeUnknownSelfSignedCertificate() throws Exception {
     HeldCertificate root = new HeldCertificate.Builder()
-        .serialNumber("1")
+        .serialNumber(1L)
         .build();
     CertificateChainCleaner cleaner = CertificateChainCleaner.get();
 
@@ -74,123 +74,123 @@ public final class CertificateChainCleanerTest {
 
   @Test public void orderedChainOfCertificatesWithRoot() throws Exception {
     HeldCertificate root = new HeldCertificate.Builder()
-        .serialNumber("1")
+        .serialNumber(1L)
         .build();
     HeldCertificate certA = new HeldCertificate.Builder()
-        .serialNumber("2")
+        .serialNumber(2L)
         .issuedBy(root)
         .build();
     HeldCertificate certB = new HeldCertificate.Builder()
-        .serialNumber("3")
+        .serialNumber(3L)
         .issuedBy(certA)
         .build();
 
-    CertificateChainCleaner cleaner = CertificateChainCleaner.get(root.certificate);
+    CertificateChainCleaner cleaner = CertificateChainCleaner.get(root.certificate());
     assertEquals(list(certB, certA, root), cleaner.clean(list(certB, certA, root), "hostname"));
   }
 
   @Test public void orderedChainOfCertificatesWithoutRoot() throws Exception {
     HeldCertificate root = new HeldCertificate.Builder()
-        .serialNumber("1")
+        .serialNumber(1L)
         .build();
     HeldCertificate certA = new HeldCertificate.Builder()
-        .serialNumber("2")
+        .serialNumber(2L)
         .issuedBy(root)
         .build();
     HeldCertificate certB = new HeldCertificate.Builder()
-        .serialNumber("3")
+        .serialNumber(3L)
         .issuedBy(certA)
         .build();
 
-    CertificateChainCleaner cleaner = CertificateChainCleaner.get(root.certificate);
+    CertificateChainCleaner cleaner = CertificateChainCleaner.get(root.certificate());
     assertEquals(list(certB, certA, root),
         cleaner.clean(list(certB, certA), "hostname")); // Root is added!
   }
 
   @Test public void unorderedChainOfCertificatesWithRoot() throws Exception {
     HeldCertificate root = new HeldCertificate.Builder()
-        .serialNumber("1")
+        .serialNumber(1L)
         .build();
     HeldCertificate certA = new HeldCertificate.Builder()
-        .serialNumber("2")
+        .serialNumber(2L)
         .issuedBy(root)
         .build();
     HeldCertificate certB = new HeldCertificate.Builder()
-        .serialNumber("3")
+        .serialNumber(3L)
         .issuedBy(certA)
         .build();
     HeldCertificate certC = new HeldCertificate.Builder()
-        .serialNumber("4")
+        .serialNumber(4L)
         .issuedBy(certB)
         .build();
 
-    CertificateChainCleaner cleaner = CertificateChainCleaner.get(root.certificate);
+    CertificateChainCleaner cleaner = CertificateChainCleaner.get(root.certificate());
     assertEquals(list(certC, certB, certA, root),
         cleaner.clean(list(certC, certA, root, certB), "hostname"));
   }
 
   @Test public void unorderedChainOfCertificatesWithoutRoot() throws Exception {
     HeldCertificate root = new HeldCertificate.Builder()
-        .serialNumber("1")
+        .serialNumber(1L)
         .build();
     HeldCertificate certA = new HeldCertificate.Builder()
-        .serialNumber("2")
+        .serialNumber(2L)
         .issuedBy(root)
         .build();
     HeldCertificate certB = new HeldCertificate.Builder()
-        .serialNumber("3")
+        .serialNumber(3L)
         .issuedBy(certA)
         .build();
     HeldCertificate certC = new HeldCertificate.Builder()
-        .serialNumber("4")
+        .serialNumber(4L)
         .issuedBy(certB)
         .build();
 
-    CertificateChainCleaner cleaner = CertificateChainCleaner.get(root.certificate);
+    CertificateChainCleaner cleaner = CertificateChainCleaner.get(root.certificate());
     assertEquals(list(certC, certB, certA, root),
         cleaner.clean(list(certC, certA, certB), "hostname"));
   }
 
   @Test public void unrelatedCertificatesAreOmitted() throws Exception {
     HeldCertificate root = new HeldCertificate.Builder()
-        .serialNumber("1")
+        .serialNumber(1L)
         .build();
     HeldCertificate certA = new HeldCertificate.Builder()
-        .serialNumber("2")
+        .serialNumber(2L)
         .issuedBy(root)
         .build();
     HeldCertificate certB = new HeldCertificate.Builder()
-        .serialNumber("3")
+        .serialNumber(3L)
         .issuedBy(certA)
         .build();
     HeldCertificate certUnnecessary = new HeldCertificate.Builder()
-        .serialNumber("4")
+        .serialNumber(4L)
         .build();
 
-    CertificateChainCleaner cleaner = CertificateChainCleaner.get(root.certificate);
+    CertificateChainCleaner cleaner = CertificateChainCleaner.get(root.certificate());
     assertEquals(list(certB, certA, root),
         cleaner.clean(list(certB, certUnnecessary, certA, root), "hostname"));
   }
 
   @Test public void chainGoesAllTheWayToSelfSignedRoot() throws Exception {
     HeldCertificate selfSigned = new HeldCertificate.Builder()
-        .serialNumber("1")
+        .serialNumber(1L)
         .build();
     HeldCertificate trusted = new HeldCertificate.Builder()
-        .serialNumber("2")
+        .serialNumber(2L)
         .issuedBy(selfSigned)
         .build();
     HeldCertificate certA = new HeldCertificate.Builder()
-        .serialNumber("3")
+        .serialNumber(3L)
         .issuedBy(trusted)
         .build();
     HeldCertificate certB = new HeldCertificate.Builder()
-        .serialNumber("4")
+        .serialNumber(4L)
         .issuedBy(certA)
         .build();
 
     CertificateChainCleaner cleaner = CertificateChainCleaner.get(
-        selfSigned.certificate, trusted.certificate);
+        selfSigned.certificate(), trusted.certificate());
     assertEquals(list(certB, certA, trusted, selfSigned),
         cleaner.clean(list(certB, certA), "hostname"));
     assertEquals(list(certB, certA, trusted, selfSigned),
@@ -201,22 +201,22 @@ public final class CertificateChainCleanerTest {
 
   @Test public void trustedRootNotSelfSigned() throws Exception {
     HeldCertificate unknownSigner = new HeldCertificate.Builder()
-        .serialNumber("1")
+        .serialNumber(1L)
         .build();
     HeldCertificate trusted = new HeldCertificate.Builder()
         .issuedBy(unknownSigner)
-        .serialNumber("2")
+        .serialNumber(2L)
         .build();
     HeldCertificate intermediateCa = new HeldCertificate.Builder()
         .issuedBy(trusted)
-        .serialNumber("3")
+        .serialNumber(3L)
         .build();
     HeldCertificate certificate = new HeldCertificate.Builder()
         .issuedBy(intermediateCa)
-        .serialNumber("4")
+        .serialNumber(4L)
         .build();
 
-    CertificateChainCleaner cleaner = CertificateChainCleaner.get(trusted.certificate);
+    CertificateChainCleaner cleaner = CertificateChainCleaner.get(trusted.certificate());
     assertEquals(list(certificate, intermediateCa, trusted),
         cleaner.clean(list(certificate, intermediateCa), "hostname"));
     assertEquals(list(certificate, intermediateCa, trusted),
@@ -227,10 +227,10 @@ public final class CertificateChainCleanerTest {
     List<HeldCertificate> heldCertificates = chainOfLength(10);
     List<Certificate> certificates = new ArrayList<>();
     for (HeldCertificate heldCertificate : heldCertificates) {
-      certificates.add(heldCertificate.certificate);
+      certificates.add(heldCertificate.certificate());
     }
 
-    X509Certificate root = heldCertificates.get(heldCertificates.size() - 1).certificate;
+    X509Certificate root = heldCertificates.get(heldCertificates.size() - 1).certificate();
     CertificateChainCleaner cleaner = CertificateChainCleaner.get(root);
     assertEquals(certificates, cleaner.clean(certificates, "hostname"));
     assertEquals(certificates, cleaner.clean(certificates.subList(0, 9), "hostname"));
@@ -240,10 +240,10 @@ public final class CertificateChainCleanerTest {
     List<HeldCertificate> heldCertificates = chainOfLength(11);
     List<Certificate> certificates = new ArrayList<>();
     for (HeldCertificate heldCertificate : heldCertificates) {
-      certificates.add(heldCertificate.certificate);
+      certificates.add(heldCertificate.certificate());
     }
 
-    X509Certificate root = heldCertificates.get(heldCertificates.size() - 1).certificate;
+    X509Certificate root = heldCertificates.get(heldCertificates.size() - 1).certificate();
     CertificateChainCleaner cleaner = CertificateChainCleaner.get(root);
     try {
       cleaner.clean(certificates, "hostname");
@@ -258,7 +258,7 @@ public final class CertificateChainCleanerTest {
     for (int i = 1; i <= length; i++) {
       result.add(0, new HeldCertificate.Builder()
           .issuedBy(!result.isEmpty() ? result.get(0) : null)
-          .serialNumber(Integer.toString(i))
+          .serialNumber(i)
           .build());
     }
     return result;
@@ -267,7 +267,7 @@ public final class CertificateChainCleanerTest {
   private List<Certificate> list(HeldCertificate... heldCertificates) {
     List<Certificate> result = new ArrayList<>();
     for (HeldCertificate heldCertificate : heldCertificates) {
-      result.add(heldCertificate.certificate);
+      result.add(heldCertificate.certificate());
     }
     return result;
   }
