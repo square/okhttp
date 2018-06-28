@@ -26,10 +26,10 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLSession;
-import okhttp3.mockwebserver.internal.tls.HeldCertificate;
-import okhttp3.mockwebserver.internal.tls.SslClient;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
+import okhttp3.mockwebserver.HeldCertificate;
+import okhttp3.mockwebserver.internal.tls.SslClient;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Rule;
@@ -51,18 +51,18 @@ public final class ConnectionCoalescingTest {
 
   @Before public void setUp() throws Exception {
     rootCa = new HeldCertificate.Builder()
-        .serialNumber("1")
-        .ca(3)
+        .serialNumber(1L)
+        .certificateAuthority(3)
         .commonName("root")
         .build();
     certificate = new HeldCertificate.Builder()
         .issuedBy(rootCa)
-        .serialNumber("2")
+        .serialNumber(2L)
         .commonName(server.getHostName())
-        .subjectAlternativeName(server.getHostName())
-        .subjectAlternativeName("san.com")
-        .subjectAlternativeName("*.wildcard.com")
-        .subjectAlternativeName("differentdns.com")
+        .addSubjectAlternativeName(server.getHostName())
+        .addSubjectAlternativeName("san.com")
+        .addSubjectAlternativeName("*.wildcard.com")
+        .addSubjectAlternativeName("differentdns.com")
         .build();
 
     serverIps = Dns.SYSTEM.lookup(server.getHostName());
@@ -74,7 +74,7 @@ public final class ConnectionCoalescingTest {
     dns.set("differentdns.com", Collections.<InetAddress>emptyList());
 
     SslClient sslClient = new SslClient.Builder()
-        .addTrustedCertificate(rootCa.certificate)
+        .addTrustedCertificate(rootCa.certificate())
         .build();
 
     client = new OkHttpClient.Builder().dns(dns)
@@ -180,7 +180,7 @@ public final class ConnectionCoalescingTest {
   /** Can still coalesce when pinning is used if pins match. */
   @Test public void coalescesWhenCertificatePinsMatch() throws Exception {
     CertificatePinner pinner = new CertificatePinner.Builder()
-        .add("san.com", "sha1/" + CertificatePinner.sha1(certificate.certificate).base64())
+        .add("san.com", "sha1/" + CertificatePinner.sha1(certificate.certificate()).base64())
         .build();
     client = client.newBuilder().certificatePinner(pinner).build();
 

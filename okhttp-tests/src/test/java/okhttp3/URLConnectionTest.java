@@ -2443,8 +2443,7 @@ public final class URLConnectionTest {
     assertContent("GHI", urlFactory.open(url));
 
     assertEquals(Arrays.asList("verify " + server.getHostName()), hostnameVerifier.calls);
-    assertEquals(Arrays.asList("checkServerTrusted [CN=" + server.getHostName() + " 1]"),
-        trustManager.calls);
+    assertEquals(Arrays.asList("checkServerTrusted [CN=localhost 1]"), trustManager.calls);
   }
 
   @Test public void getClientRequestTimeout() throws Exception {
