@@ -47,6 +47,13 @@ public class DohProviders {
         .build();
   }
 
+  static DnsOverHttps buildCloudflareIp(OkHttpClient bootstrapClient) {
+    return new DnsOverHttps.Builder().client(bootstrapClient)
+        .url(parseUrl("https://1.1.1.1/dns-query"))
+        .includeIPv6(false)
+        .build();
+  }
+
   static DnsOverHttps buildCloudflare(OkHttpClient bootstrapClient) {
     return new DnsOverHttps.Builder().client(bootstrapClient)
         .url(parseUrl("https://cloudflare-dns.com/dns-query"))
@@ -61,6 +68,7 @@ public class DohProviders {
         .bootstrapDnsHosts(getByIp("104.16.111.25"), getByIp("104.16.112.25"),
             getByIp("2400:cb00:2048:1:0:0:6810:7019"), getByIp("2400:cb00:2048:1:0:0:6810:6f19"))
         .includeIPv6(false)
+        .post(true)
         .build();
   }
 
@@ -95,6 +103,7 @@ public class DohProviders {
       result.add(buildGooglePost(client));
     }
     result.add(buildCloudflare(client));
+    result.add(buildCloudflareIp(client));
     if (!getOnly) {
       result.add(buildCloudflarePost(client));
     }
