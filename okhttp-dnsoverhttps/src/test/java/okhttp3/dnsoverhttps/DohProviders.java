@@ -39,7 +39,6 @@ public class DohProviders {
   }
 
   static DnsOverHttps buildGooglePost(OkHttpClient bootstrapClient) {
-
     return new DnsOverHttps.Builder().client(bootstrapClient)
         .url(parseUrl("https://dns.google.com/experimental"))
         .bootstrapDnsHosts(getByIp("216.58.204.78"), getByIp("2a00:1450:4009:814:0:0:0:200e"))
@@ -48,23 +47,28 @@ public class DohProviders {
         .build();
   }
 
-  static DnsOverHttps buildCloudflare(OkHttpClient bootstrapClient) {
-
+  static DnsOverHttps buildCloudflareIp(OkHttpClient bootstrapClient) {
     return new DnsOverHttps.Builder().client(bootstrapClient)
-        .url(parseUrl("https://cloudflare-dns.com/dns-query?ct=application/dns-udpwireformat"))
-        .bootstrapDnsHosts(getByIp("104.16.111.25"), getByIp("104.16.112.25"),
-            getByIp("2400:cb00:2048:1:0:0:6810:7019"), getByIp("2400:cb00:2048:1:0:0:6810:6f19"))
+        .url(parseUrl("https://1.1.1.1/dns-query"))
+        .includeIPv6(false)
+        .build();
+  }
+
+  static DnsOverHttps buildCloudflare(OkHttpClient bootstrapClient) {
+    return new DnsOverHttps.Builder().client(bootstrapClient)
+        .url(parseUrl("https://cloudflare-dns.com/dns-query"))
+        .bootstrapDnsHosts(getByIp("1.1.1.1"))
         .includeIPv6(false)
         .build();
   }
 
   static DnsOverHttps buildCloudflarePost(OkHttpClient bootstrapClient) {
-
     return new DnsOverHttps.Builder().client(bootstrapClient)
-        .url(parseUrl("https://dns.cloudflare.com/.well-known/dns-query"))
+        .url(parseUrl("https://cloudflare-dns.com/dns-query?ct=application/dns-udpwireformat"))
+        .bootstrapDnsHosts(getByIp("104.16.111.25"), getByIp("104.16.112.25"),
+            getByIp("2400:cb00:2048:1:0:0:6810:7019"), getByIp("2400:cb00:2048:1:0:0:6810:6f19"))
         .includeIPv6(false)
         .post(true)
-        .contentType(UDPWIREFORMAT)
         .build();
   }
 
@@ -99,6 +103,7 @@ public class DohProviders {
       result.add(buildGooglePost(client));
     }
     result.add(buildCloudflare(client));
+    result.add(buildCloudflareIp(client));
     if (!getOnly) {
       result.add(buildCloudflarePost(client));
     }
