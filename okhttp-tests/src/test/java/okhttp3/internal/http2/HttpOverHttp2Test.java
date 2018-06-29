@@ -773,6 +773,47 @@ public final class HttpOverHttp2Test {
     assertEquals(1, server.takeRequest().getSequenceNumber()); // Reused connection.
   }
 
+  @Test public void recoverFromCancelReusesConnection() throws Exception {
+    // Set up two responses
+    server.enqueue(new MockResponse()
+            .setBodyDelay(10, TimeUnit.SECONDS)
+            .setBody("abc"));
+    server.enqueue(new MockResponse()
+            .setBody("def"));
+
+    client = client.newBuilder()
+            .dns(new DoubleInetAddressDns())
+            .build();
+
+    Call call1 = client.newCall(new Request.Builder()
+            .url(server.url("/"))
+            .build());
+    // Use async handler so that we can cancel before receiving the body
+    // We don't really care about the response since we'll cancel immediately,
+    // so we don't do anything on callback
+    Callback callback = new Callback() {
+      @Override
+      public void onFailure(Call call, IOException e) {}
+      @Override
+      public void onResponse(Call call, Response response) {}
+    };
+    call1.enqueue(callback);
+    // Wait for the server to receive the request
+    assertEquals(0, server.takeRequest().getSequenceNumber());
+    // Cancel the request
+    call1.cancel();
+
+    // Make a second request to ensure the connection is reused
+    Call call2 = client.newCall(new Request.Builder()
+            .url(server.url("/"))
+            .build());
+    Response response2 = call2.execute();
+    // Check the response body is the second request
+    assertEquals("def", response2.body().string());
+    // Ensure its the same connection using the sequence number
+    assertEquals(1, server.takeRequest().getSequenceNumber());
+  }
+
   @Test public void recoverFromOneInternalErrorRequiresNewConnection() throws Exception {
     server.enqueue(new MockResponse()
         .setSocketPolicy(SocketPolicy.RESET_STREAM_AT_START)
@@ -819,6 +860,53 @@ public final class HttpOverHttp2Test {
     assertEquals(0, server.takeRequest().getSequenceNumber()); // New connection.
   }
 
+  @Test public void recoverFromMultipleCancelReusesConnection() throws Exception {
+    // Set up three responses
+    server.enqueue(new MockResponse()
+            .setBodyDelay(10, TimeUnit.SECONDS)
+            .setBody("abc"));
+    server.enqueue(new MockResponse()
+            .setBodyDelay(10, TimeUnit.SECONDS)
+            .setBody("def"));
+    server.enqueue(new MockResponse()
+            .setBody("ghi"));
+
+    client = client.newBuilder()
+            .dns(new DoubleInetAddressDns())
+            .build();
+
+    // Run two requests and cancel them immediately
+    for (int i = 0; i < 2; i++) {
+      Call call = client.newCall(new Request.Builder()
+              .url(server.url("/"))
+              .build());
+      // Use async handler so that we can cancel before receiving the body
+      // We don't really care about the response since we'll cancel immediately,
+      // so we don't do anything on callback
+      Callback callback = new Callback() {
+        @Override
+        public void onFailure(Call call, IOException e) {}
+        @Override
+        public void onResponse(Call call, Response response) {}
+      };
+      call.enqueue(callback);
+      // Wait for the server to receive the request
+      assertEquals(i, server.takeRequest().getSequenceNumber());
+      // Cancel the request
+      call.cancel();
+    }
+
+    // Make a third request to ensure the connection is reused
+    Call call2 = client.newCall(new Request.Builder()
+            .url(server.url("/"))
+            .build());
+    Response response2 = call2.execute();
+    // Check the response body is the third request
+    assertEquals("ghi", response2.body().string());
+    // Ensure its the same connection using the sequence number
+    assertEquals(2, server.takeRequest().getSequenceNumber());
+  }
+
   @Test public void noRecoveryFromRefusedStreamWithRetryDisabled() throws Exception {
     noRecoveryFromErrorWithRetryDisabled(ErrorCode.REFUSED_STREAM);
   }
@@ -854,7 +942,7 @@ public final class HttpOverHttp2Test {
         .setResponseCode(401));
     server.enqueue(new MockResponse()
         .setSocketPolicy(SocketPolicy.RESET_STREAM_AT_START)
-        .setHttp2ErrorCode(ErrorCode.CANCEL.httpCode));
+        .setHttp2ErrorCode(ErrorCode.INTERNAL_ERROR.httpCode));
     server.enqueue(new MockResponse()
         .setBody("DEF"));
     server.enqueue(new MockResponse()
