@@ -99,6 +99,10 @@ public final class RequestBodyCompression {
           body.writeTo(gzipSink);
           gzipSink.close();
         }
+
+        @Override public void writeTo(BufferedSink sink, long byteCount) throws IOException {
+          writeTo(sink);
+        }
       };
     }
   }

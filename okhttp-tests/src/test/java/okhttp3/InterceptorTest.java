@@ -879,6 +879,13 @@ public final class InterceptorTest {
         original.writeTo(bufferedSink);
         bufferedSink.emit();
       }
+
+      @Override public void writeTo(BufferedSink sink, long byteCount) throws IOException {
+        Sink uppercase = uppercase(sink);
+        BufferedSink bufferedSink = Okio.buffer(uppercase);
+        original.writeTo(bufferedSink, byteCount);
+        bufferedSink.emit();
+      }
     };
   }
 

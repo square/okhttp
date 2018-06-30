@@ -39,4 +39,8 @@ final class StreamedRequestBody extends OutputStreamRequestBody implements Unrep
       sink.write(buffer, buffer.size());
     }
   }
+
+  @Override public void writeTo(BufferedSink sink, long byteCount) throws IOException {
+    writeTo(sink);
+  }
 }

@@ -114,6 +114,11 @@ public final class MultipartBody extends RequestBody {
     writeOrCountBytes(sink, false);
   }
 
+  @Override public void writeTo(BufferedSink sink, long byteCount) throws IOException {
+    // FIXME: Is there are better way to handle limitation for MultipartBody?
+    writeTo(sink);
+  }
+
   /**
    * Either writes this request to {@code sink} or measures its content length. We have one method
    * do double-duty to make sure the counting and content are consistent, particularly when it comes

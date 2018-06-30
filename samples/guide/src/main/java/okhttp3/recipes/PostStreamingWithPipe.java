@@ -97,6 +97,10 @@ public final class PostStreamingWithPipe {
     @Override public void writeTo(BufferedSink sink) throws IOException {
       sink.writeAll(pipe.source());
     }
+
+    @Override public void writeTo(BufferedSink sink, long byteCount) throws IOException {
+      sink.write(pipe.source(), byteCount);
+    }
   }
 
   public static void main(String... args) throws Exception {

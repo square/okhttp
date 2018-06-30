@@ -951,6 +951,10 @@ public final class EventListenerTest {
           sink.flush();
         }
       }
+
+      @Override public void writeTo(BufferedSink sink, long byteCount) throws IOException {
+        writeTo(sink);
+      }
     };
 
     server.enqueue(new MockResponse()
@@ -998,6 +1002,10 @@ public final class EventListenerTest {
       @Override public void writeTo(BufferedSink sink) throws IOException {
         sink.write(new byte[8192]);
         sink.flush();
+      }
+
+      @Override public void writeTo(BufferedSink sink, long byteCount) throws IOException {
+        writeTo(sink);
       }
     };
 

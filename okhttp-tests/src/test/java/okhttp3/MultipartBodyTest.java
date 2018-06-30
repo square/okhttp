@@ -16,6 +16,8 @@
 package okhttp3;
 
 import java.io.IOException;
+
+import okhttp3.internal.Util;
 import okio.Buffer;
 import okio.BufferedSink;
 import org.junit.Test;
@@ -205,6 +207,10 @@ public final class MultipartBodyTest {
 
       @Override public void writeTo(BufferedSink sink) throws IOException {
         sink.writeUtf8(body);
+      }
+
+      @Override public void writeTo(BufferedSink sink, long byteCount) throws IOException {
+        sink.writeUtf8(body, 0, (int) byteCount);
       }
     }
 

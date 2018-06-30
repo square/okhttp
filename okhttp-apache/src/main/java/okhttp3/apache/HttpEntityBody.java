@@ -38,4 +38,14 @@ final class HttpEntityBody extends RequestBody {
   @Override public void writeTo(BufferedSink sink) throws IOException {
     entity.writeTo(sink.outputStream());
   }
+
+  @Override public void writeTo(BufferedSink sink, long byteCount) throws IOException {
+    byte[] bytes = new byte[(int) byteCount];
+    int i = entity.getContent().read(bytes, 0, (int) byteCount);
+    if (i == bytes.length) {
+      sink.write(bytes);
+    } else {
+      entity.writeTo(sink.outputStream());
+    }
+  }
 }

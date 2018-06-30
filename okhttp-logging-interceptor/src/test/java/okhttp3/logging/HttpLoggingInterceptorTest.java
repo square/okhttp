@@ -304,6 +304,11 @@ public final class HttpLoggingInterceptorTest {
       @Override public void writeTo(BufferedSink sink) throws IOException {
         sink.writeUtf8("Hi!");
       }
+
+      @Override public void writeTo(BufferedSink sink, long byteCount) throws IOException {
+        String src = "Hi!";
+        sink.writeUtf8("Hi!", 0, (int) Math.min(src.length(), byteCount));
+      }
     };
     Response response = client.newCall(request().post(body).build()).execute();
     response.body().close();

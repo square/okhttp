@@ -43,6 +43,10 @@ public final class PostStreaming {
         }
       }
 
+      @Override public void writeTo(BufferedSink sink, long byteCount) throws IOException {
+        writeTo(sink);
+      }
+
       private String factor(int n) {
         for (int i = 2; i < n; i++) {
           int x = n / i;

@@ -944,6 +944,10 @@ public final class CallTest {
         sink.writeUtf8("abc");
         sink.timeout().deadline(5, TimeUnit.SECONDS);
       }
+
+      @Override public void writeTo(BufferedSink sink, long byteCount) throws IOException {
+        writeTo(sink);
+      }
     };
     Request request1 = new Request.Builder()
         .url(server.url("/"))
@@ -961,6 +965,10 @@ public final class CallTest {
       @Override public void writeTo(BufferedSink sink) throws IOException {
         assertFalse(sink.timeout().hasDeadline());
         sink.writeUtf8("def");
+      }
+
+      @Override public void writeTo(BufferedSink sink, long byteCount) throws IOException {
+        writeTo(sink);
       }
     };
     Request request2 = new Request.Builder()
@@ -2648,6 +2656,11 @@ public final class CallTest {
         sink.writeUtf8("def");
         sink.flush();
       }
+
+      @Override
+      public void writeTo(BufferedSink sink, long byteCount) throws IOException {
+        writeTo(sink);
+      }
     };
     Call call = client.newCall(new Request.Builder()
         .url(server.url("/"))
@@ -3076,6 +3089,13 @@ public final class CallTest {
           sink.write(buffer, 0, (int) Math.min(size - count, writeSize));
         }
       }
+
+      @Override
+      public void writeTo(BufferedSink sink, long byteCount) throws IOException {
+        for (int count = 0; count < size; count += writeSize) {
+          sink.write(buffer, 0, (int) Math.min(size - count, Math.min(byteCount, writeSize)));
+        }
+      }
     };
   }
 
@@ -3254,6 +3274,10 @@ public final class CallTest {
       }
 
       @Override public void writeTo(BufferedSink sink) throws IOException {
+        throw new IOException("write body fail!");
+      }
+
+      @Override public void writeTo(BufferedSink sink, long byteCount) throws IOException {
         throw new IOException("write body fail!");
       }
     };

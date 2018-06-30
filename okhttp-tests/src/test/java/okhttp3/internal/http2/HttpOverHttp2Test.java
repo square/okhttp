@@ -200,6 +200,10 @@ public final class HttpOverHttp2Test {
           @Override public void writeTo(BufferedSink sink) throws IOException {
             sink.write(postBytes);
           }
+
+          @Override public void writeTo(BufferedSink sink, long byteCount) throws IOException {
+            sink.write(postBytes, 0, (int) Math.min(postBytes.length, byteCount));
+          }
         })
         .build());
 
@@ -230,6 +234,10 @@ public final class HttpOverHttp2Test {
 
           @Override public void writeTo(BufferedSink sink) throws IOException {
             sink.write(postBytes);
+          }
+
+          @Override public void writeTo(BufferedSink sink, long byteCount) throws IOException {
+            sink.write(postBytes, 0, (int) Math.min(postBytes.length, byteCount));
           }
         })
         .build());
@@ -263,6 +271,12 @@ public final class HttpOverHttp2Test {
             sink.write(postBytes);  // push bytes into the stream's buffer
             sink.flush(); // Http2Connection.writeData subject to write window
             sink.close(); // Http2Connection.writeData empty frame
+          }
+
+          @Override public void writeTo(BufferedSink sink, long byteCount) throws IOException {
+            sink.write(postBytes, 0, (int) Math.min(postBytes.length, byteCount));
+            sink.flush();
+            sink.close();
           }
         })
         .build());
