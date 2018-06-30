@@ -124,8 +124,8 @@ public class Platform {
     return null;
   }
 
-  public void connectSocket(Socket socket, InetSocketAddress address,
-      int connectTimeout) throws IOException {
+  public void connectSocket(Socket socket, InetSocketAddress address, int connectTimeout)
+      throws IOException {
     socket.connect(address, connectTimeout);
   }
 
@@ -176,8 +176,10 @@ public class Platform {
     X509TrustManager trustManager = trustManager(sslSocketFactory);
 
     if (trustManager == null) {
-      throw new IllegalStateException("Unable to extract the trust manager on " + Platform.get()
-          + ", sslSocketFactory is " + sslSocketFactory.getClass());
+      throw new IllegalStateException("Unable to extract the trust manager on "
+          + Platform.get()
+          + ", sslSocketFactory is "
+          + sslSocketFactory.getClass());
     }
 
     return buildCertificateChainCleaner(trustManager);
@@ -265,6 +267,16 @@ public class Platform {
   }
 
   public SSLContext getSSLContext() {
+    String jvmVersion = System.getProperty("java.specification.version");
+    if ("1.7".equals(jvmVersion)) {
+      try {
+        // JDK 1.7 (public version) only support > TLSv1 with named protocols
+        return SSLContext.getInstance("TLSv1.2");
+      } catch (NoSuchAlgorithmException e) {
+        // fallback to TLS
+      }
+    }
+
     try {
       return SSLContext.getInstance("TLS");
     } catch (NoSuchAlgorithmException e) {
