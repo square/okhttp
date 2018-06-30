@@ -76,9 +76,9 @@ public final class HttpLoggingInterceptorTest {
     applicationInterceptor.setLevel(level);
   }
 
-  private void setBodyLogMax(long bodyLogMax) {
-    networkInterceptor.setBodyLogMax(bodyLogMax);
-    applicationInterceptor.setBodyLogMax(bodyLogMax);
+  private void setMaxBodyLength(long maxBodyLength) {
+    networkInterceptor.setMaxBodyLength(maxBodyLength);
+    applicationInterceptor.setMaxBodyLength(maxBodyLength);
   }
 
   @Before public void setUp() {
@@ -753,26 +753,31 @@ public final class HttpLoggingInterceptorTest {
         .assertNoMoreLogs();
   }
 
-  @Test public void bodyLogMaxMinimumValue() throws Exception {
+  @Test public void bodyLengthMaxMinimumValue() throws Exception {
     try {
-      setBodyLogMax(-2);
+      setMaxBodyLength(-2);
       fail();
     } catch (IllegalArgumentException e) {
       assertEquals("bodyLogMax should be over -1", e.getMessage());
-      assertEquals(HttpLoggingInterceptor.LOG_LIMITATION_NONE, applicationInterceptor.getBodyLogMax());
-      assertEquals(HttpLoggingInterceptor.LOG_LIMITATION_NONE, networkInterceptor.getBodyLogMax());
+      assertEquals(Long.MAX_VALUE, applicationInterceptor.getMaxBodyLength());
+      assertEquals(Long.MAX_VALUE, networkInterceptor.getMaxBodyLength());
     }
   }
 
-  @Test public void setBodyLogMax() throws Exception {
-    setBodyLogMax(5000);
-    assertEquals(5000, applicationInterceptor.getBodyLogMax());
-    assertEquals(5000, networkInterceptor.getBodyLogMax());
+  @Test public void defaultBodyLength() throws Exception {
+    assertEquals(Long.MAX_VALUE, applicationInterceptor.getMaxBodyLength());
+    assertEquals(Long.MAX_VALUE, networkInterceptor.getMaxBodyLength());
   }
 
-  @Test public void logBodyLimitation() throws Exception {
+  @Test public void setMaxBodyLength() throws Exception {
+    setMaxBodyLength(5000);
+    assertEquals(5000, applicationInterceptor.getMaxBodyLength());
+    assertEquals(5000, networkInterceptor.getMaxBodyLength());
+  }
+
+  @Test public void bodyLengthLimitation() throws Exception {
     setLevel(Level.BODY);
-    setBodyLogMax(1);
+    setMaxBodyLength(1);
 
     server.enqueue(new MockResponse());
     Request request = request().post(RequestBody.create(PLAIN, "Hello?")).build();

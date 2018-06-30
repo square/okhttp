@@ -102,8 +102,6 @@ public final class HttpLoggingInterceptor implements Interceptor {
     BODY
   }
 
-  public static final long LOG_LIMITATION_NONE = -1;
-
   public interface Logger {
     void log(String message);
 
@@ -127,7 +125,7 @@ public final class HttpLoggingInterceptor implements Interceptor {
 
   private volatile Level level = Level.NONE;
 
-  private volatile long bodyLogMax = LOG_LIMITATION_NONE;
+  private volatile long maxBodyLength = Long.MAX_VALUE;
 
   /** Change the level at which this interceptor logs. */
   public HttpLoggingInterceptor setLevel(Level level) {
@@ -140,15 +138,15 @@ public final class HttpLoggingInterceptor implements Interceptor {
     return level;
   }
 
-  /** Change the limitation of response and request body logs size. */
-  public HttpLoggingInterceptor setBodyLogMax(long bodyLogMax) {
-    if (bodyLogMax < 0) throw new IllegalArgumentException("bodyLogMax should be over -1");
-    this.bodyLogMax = bodyLogMax;
+  /** Change the limitation of response and request body size. */
+  public HttpLoggingInterceptor setMaxBodyLength(long maxBodyLength) {
+    if (maxBodyLength < 0) throw new IllegalArgumentException("bodyLogMax should be over -1");
+    this.maxBodyLength = maxBodyLength;
     return this;
   }
 
-  public long getBodyLogMax() {
-    return bodyLogMax;
+  public long getMaxBodyLength() {
+    return maxBodyLength;
   }
 
   @Override public Response intercept(Chain chain) throws IOException {
@@ -202,7 +200,7 @@ public final class HttpLoggingInterceptor implements Interceptor {
         logger.log("--> END " + request.method() + " (encoded body omitted)");
       } else {
         Buffer buffer = new Buffer();
-        requestBody.writeTo(buffer);
+        requestBody.writeTo(buffer, Math.min(getMaxBodyLength(), requestBody.contentLength()));
 
         Charset charset = UTF8;
         MediaType contentType = requestBody.contentType();
@@ -212,15 +210,7 @@ public final class HttpLoggingInterceptor implements Interceptor {
 
         logger.log("");
         if (isPlaintext(buffer)) {
-          if (buffer.size() <= getBodyLogMax() || getBodyLogMax() < 0) {
-            logger.log(buffer.readString(charset));
-          } else {
-            byte[] bytes = new byte[(int) getBodyLogMax()];
-            for (int i = 0; i < getBodyLogMax(); i++) {
-              bytes[i] = buffer.getByte(i);
-            }
-            logger.log(new String(bytes, charset));
-          }
+          logger.log(buffer.readString(charset));
           logger.log("--> END " + request.method()
               + " (" + requestBody.contentLength() + "-byte body)");
         } else {
@@ -261,7 +251,7 @@ public final class HttpLoggingInterceptor implements Interceptor {
         logger.log("<-- END HTTP (encoded body omitted)");
       } else {
         BufferedSource source = responseBody.source();
-        source.request(Long.MAX_VALUE); // Buffer the entire body.
+        source.request(maxBodyLength); // Buffer the entire body.
         Buffer buffer = source.buffer();
 
         Long gzippedLength = null;
@@ -293,15 +283,7 @@ public final class HttpLoggingInterceptor implements Interceptor {
 
         if (contentLength != 0) {
           logger.log("");
-          if (buffer.size() <= getBodyLogMax() || getBodyLogMax() < 0) {
-            logger.log(buffer.clone().readString(charset));
-          } else {
-            byte[] bytes = new byte[(int) getBodyLogMax()];
-            for (int i = 0; i < getBodyLogMax(); i++) {
-              bytes[i] = buffer.getByte(i);
-            }
-            logger.log(new String(bytes, charset));
-          }
+          logger.log(buffer.clone().readString(charset));
         }
 
         if (gzippedLength != null) {
