@@ -30,7 +30,7 @@ import static okhttp3.internal.Util.assertionError;
 /**
  * OpenJDK 9+.
  */
-final class Jdk9Platform extends Platform {
+class Jdk9Platform extends Platform {
   final Method setProtocolMethod;
   final Method getProtocolMethod;
 

@@ -390,13 +390,14 @@ public final class CipherSuite {
   // public static final CipherSuite TLS_ECDHE_ECDSA_WITH_AES_256_CCM_8 = of("TLS_ECDHE_ECDSA_WITH_AES_256_CCM_8", 0xc0af);
   public static final CipherSuite TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256 = of("TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256", 0xcca8);
   public static final CipherSuite TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256 = of("TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256", 0xcca9);
-  // public static final CipherSuite TLS_DHE_RSA_WITH_CHACHA20_POLY1305_SHA256 = of("TLS_DHE_RSA_WITH_CHACHA20_POLY1305_SHA256", 0xccaa);
+   public static final CipherSuite TLS_DHE_RSA_WITH_CHACHA20_POLY1305_SHA256 = of("TLS_DHE_RSA_WITH_CHACHA20_POLY1305_SHA256", 0xccaa);
   // public static final CipherSuite TLS_PSK_WITH_CHACHA20_POLY1305_SHA256 = of("TLS_PSK_WITH_CHACHA20_POLY1305_SHA256", 0xccab);
    public static final CipherSuite TLS_ECDHE_PSK_WITH_CHACHA20_POLY1305_SHA256 = of("TLS_ECDHE_PSK_WITH_CHACHA20_POLY1305_SHA256", 0xccac);
   // public static final CipherSuite TLS_DHE_PSK_WITH_CHACHA20_POLY1305_SHA256 = of("TLS_DHE_PSK_WITH_CHACHA20_POLY1305_SHA256", 0xccad);
   // public static final CipherSuite TLS_RSA_PSK_WITH_CHACHA20_POLY1305_SHA256 = of("TLS_RSA_PSK_WITH_CHACHA20_POLY1305_SHA256", 0xccae);
 
   //https://boringssl.googlesource.com/boringssl/+/cfc120eb229f264f125c97de79a578d68692f7c1/ssl/test/runner/cipher_suites.go
+  // http://hg.openjdk.java.net/jdk/jdk11/rev/68fa3d4026ea
   public static final CipherSuite TLS_AES_128_GCM_SHA256 = of("TLS_AES_128_GCM_SHA256", 0x1301);
   public static final CipherSuite TLS_AES_256_GCM_SHA384 = of("TLS_AES_256_GCM_SHA384", 0x1302);
   public static final CipherSuite TLS_RSA_PSK_WITH_CHACHA20_POLY1305_SHA256 = of("TLS_CHACHA20_POLY1305_SHA256", 0x1303);

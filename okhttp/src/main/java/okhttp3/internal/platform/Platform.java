@@ -212,6 +212,12 @@ public class Platform {
       }
     }
 
+    Platform jdk11 = Jdk11Platform.buildIfSupported();
+
+    if (jdk11 != null) {
+      return jdk11;
+    }
+
     Platform jdk9 = Jdk9Platform.buildIfSupported();
 
     if (jdk9 != null) {
