@@ -54,6 +54,11 @@ public final class ConnectionSpec {
   // All of these suites are available on Android 7.0; earlier releases support a subset of these
   // suites. https://github.com/square/okhttp/issues/1972
   private static final CipherSuite[] APPROVED_CIPHER_SUITES = new CipherSuite[] {
+      // TLS 1.3
+      CipherSuite.TLS_AES_128_GCM_SHA256,
+      CipherSuite.TLS_AES_256_GCM_SHA384,
+      CipherSuite.TLS_RSA_PSK_WITH_CHACHA20_POLY1305_SHA256,
+
       CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
       CipherSuite.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
       CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,
@@ -72,6 +77,13 @@ public final class ConnectionSpec {
       CipherSuite.TLS_RSA_WITH_AES_256_CBC_SHA,
       CipherSuite.TLS_RSA_WITH_3DES_EDE_CBC_SHA,
   };
+
+  /** A secure TLS connection assuming a modern client platform and server. */
+  public static final ConnectionSpec TLS_13 = new Builder(true)
+      .cipherSuites(RESTRICTED_CIPHER_SUITES)
+      .tlsVersions(TlsVersion.TLS_1_3)
+      .supportsTlsExtensions(true)
+      .build();
 
   /** A secure TLS connection assuming a modern client platform and server. */
   public static final ConnectionSpec RESTRICTED_TLS = new Builder(true)
