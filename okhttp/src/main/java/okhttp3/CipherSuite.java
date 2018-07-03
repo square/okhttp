@@ -400,7 +400,9 @@ public final class CipherSuite {
   // http://hg.openjdk.java.net/jdk/jdk11/rev/68fa3d4026ea
   public static final CipherSuite TLS_AES_128_GCM_SHA256 = of("TLS_AES_128_GCM_SHA256", 0x1301);
   public static final CipherSuite TLS_AES_256_GCM_SHA384 = of("TLS_AES_256_GCM_SHA384", 0x1302);
-  public static final CipherSuite TLS_RSA_PSK_WITH_CHACHA20_POLY1305_SHA256 = of("TLS_CHACHA20_POLY1305_SHA256", 0x1303);
+  //public static final CipherSuite TLS_CHACHA20_POLY1305_SHA256 = of("TLS_CHACHA20_POLY1305_SHA256", 0x1303);
+  //public static final CipherSuite TLS_AES_128_GCM_SHA256 = of("TLS_AES_128_CCM_SHA256", 0x1304);
+  //public static final CipherSuite TLS_AES_256_GCM_8_SHA256 = of("TLS_AES_256_CCM_8_SHA256", 0x1305);
 
   final String javaName;
 

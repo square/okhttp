@@ -50,14 +50,16 @@ public final class ConnectionSpec {
       CipherSuite.TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256
   };
 
+  // TLS 1.3
+  private static final CipherSuite[] TLS13_CIPHER_SUITES = new CipherSuite[] {
+      CipherSuite.TLS_AES_128_GCM_SHA256,
+      CipherSuite.TLS_AES_256_GCM_SHA384
+  };
+
   // This is nearly equal to the cipher suites supported in Chrome 51, current as of 2016-05-25.
   // All of these suites are available on Android 7.0; earlier releases support a subset of these
   // suites. https://github.com/square/okhttp/issues/1972
   private static final CipherSuite[] APPROVED_CIPHER_SUITES = new CipherSuite[] {
-      // TLS 1.3
-      CipherSuite.TLS_AES_128_GCM_SHA256,
-      CipherSuite.TLS_AES_256_GCM_SHA384,
-      CipherSuite.TLS_RSA_PSK_WITH_CHACHA20_POLY1305_SHA256,
 
       CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
       CipherSuite.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
@@ -80,7 +82,7 @@ public final class ConnectionSpec {
 
   /** A secure TLS connection assuming a modern client platform and server. */
   public static final ConnectionSpec TLS_13 = new Builder(true)
-      .cipherSuites(RESTRICTED_CIPHER_SUITES)
+      .cipherSuites(TLS13_CIPHER_SUITES)
       .tlsVersions(TlsVersion.TLS_1_3)
       .supportsTlsExtensions(true)
       .build();

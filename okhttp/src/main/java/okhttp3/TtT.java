@@ -5,12 +5,16 @@ import java.util.Collections;
 import okhttp3.internal.platform.Platform;
 
 public class TtT {
-  public static void main(String[] args) throws IOException {
-    ConnectionSpec modernTls = new ConnectionSpec.Builder(ConnectionSpec.MODERN_TLS).tlsVersions(TlsVersion.TLS_1_3).build();
-    OkHttpClient client = new OkHttpClient.Builder().connectionSpecs(
-        Collections.singletonList(modernTls)).build();
+  public static void main(String[] args)
+      throws IOException, ClassNotFoundException, NoSuchFieldException, IllegalAccessException {
+    String spec28 = Integer.toString(0x7f00 | 28, 16);
+    System.setProperty("jdk.tls13.version", spec28);
 
-    Request request = new Request.Builder().url("https://www.howsmyssl.com/a/check").build();
+    System.setProperty("javax.net.debug", "ssl:handshake:verbose");
+    OkHttpClient client = new OkHttpClient.Builder().connectionSpecs(
+        Collections.singletonList(ConnectionSpec.TLS_13)).build();
+
+    Request request = new Request.Builder().url("https://enabled.tls13.com").build();
 
     Response response = client.newCall(request).execute();
 
