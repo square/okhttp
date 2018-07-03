@@ -2,9 +2,11 @@ package okhttp3;
 
 import java.io.IOException;
 import java.util.Collections;
-import okhttp3.internal.platform.Platform;
 
 public class TestTls13Request {
+  private TestTls13Request() {
+  }
+
   public static void main(String[] args) throws IOException {
     String spec28 = Integer.toString(0x7f00 | 28, 16);
     System.setProperty("jdk.tls13.version", spec28);
