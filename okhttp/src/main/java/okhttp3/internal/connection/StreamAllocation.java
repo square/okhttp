@@ -352,6 +352,7 @@ public final class StreamAllocation {
     closeQuietly(socket);
     if (releasedConnection != null) {
       eventListener.connectionReleased(call, releasedConnection);
+      eventListener.callEnd(call);
     }
   }
 
