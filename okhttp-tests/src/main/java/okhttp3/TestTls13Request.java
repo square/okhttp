@@ -22,8 +22,12 @@ public class TestTls13Request {
         new OkHttpClient.Builder().connectionSpecs(Collections.singletonList(ConnectionSpec.TLS_13))
             .build();
 
-    System.out.println("Running tests using " + Platform.get().getClass().getSimpleName());
+    System.out.println("Running tests using "
+        + Platform.get().getClass().getSimpleName()
+        + " "
+        + System.getProperty("java.vm.version"));
 
+    // Allow for TLS_CHACHA20_POLY1305_SHA256 cipher suite
     if (Conscrypt.isAvailable()) {
       Security.addProvider(new OpenSSLProvider());
     }

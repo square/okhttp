@@ -52,9 +52,9 @@ public final class ConnectionSpec {
 
   // TLS 1.3
   private static final CipherSuite[] TLS13_CIPHER_SUITES = new CipherSuite[] {
-      CipherSuite.TLS_CHACHA20_POLY1305_SHA256,
       CipherSuite.TLS_AES_128_GCM_SHA256,
       CipherSuite.TLS_AES_256_GCM_SHA384,
+      CipherSuite.TLS_CHACHA20_POLY1305_SHA256,
       CipherSuite.TLS_AES_128_CCM_SHA256,
       CipherSuite.TLS_AES_256_CCM_8_SHA256
   };
