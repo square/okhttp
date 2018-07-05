@@ -96,21 +96,20 @@ public final class CipherSuite {
   public static final CipherSuite TLS_DH_anon_EXPORT_WITH_DES40_CBC_SHA = of("SSL_DH_anon_EXPORT_WITH_DES40_CBC_SHA", 0x0019);
   public static final CipherSuite TLS_DH_anon_WITH_DES_CBC_SHA = of("SSL_DH_anon_WITH_DES_CBC_SHA", 0x001a);
   public static final CipherSuite TLS_DH_anon_WITH_3DES_EDE_CBC_SHA = of("SSL_DH_anon_WITH_3DES_EDE_CBC_SHA", 0x001b);
-  // Removed in JDK 11, http://openjdk.java.net/jeps/332
-  //public static final CipherSuite TLS_KRB5_WITH_DES_CBC_SHA = of("TLS_KRB5_WITH_DES_CBC_SHA", 0x001e);
-  //public static final CipherSuite TLS_KRB5_WITH_3DES_EDE_CBC_SHA = of("TLS_KRB5_WITH_3DES_EDE_CBC_SHA", 0x001f);
-  //public static final CipherSuite TLS_KRB5_WITH_RC4_128_SHA = of("TLS_KRB5_WITH_RC4_128_SHA", 0x0020);
+  public static final CipherSuite TLS_KRB5_WITH_DES_CBC_SHA = of("TLS_KRB5_WITH_DES_CBC_SHA", 0x001e);
+  public static final CipherSuite TLS_KRB5_WITH_3DES_EDE_CBC_SHA = of("TLS_KRB5_WITH_3DES_EDE_CBC_SHA", 0x001f);
+  public static final CipherSuite TLS_KRB5_WITH_RC4_128_SHA = of("TLS_KRB5_WITH_RC4_128_SHA", 0x0020);
   // public static final CipherSuite TLS_KRB5_WITH_IDEA_CBC_SHA = of("TLS_KRB5_WITH_IDEA_CBC_SHA", 0x0021);
-  //public static final CipherSuite TLS_KRB5_WITH_DES_CBC_MD5 = of("TLS_KRB5_WITH_DES_CBC_MD5", 0x0022);
-  //public static final CipherSuite TLS_KRB5_WITH_3DES_EDE_CBC_MD5 = of("TLS_KRB5_WITH_3DES_EDE_CBC_MD5", 0x0023);
-  //public static final CipherSuite TLS_KRB5_WITH_RC4_128_MD5 = of("TLS_KRB5_WITH_RC4_128_MD5", 0x0024);
+  public static final CipherSuite TLS_KRB5_WITH_DES_CBC_MD5 = of("TLS_KRB5_WITH_DES_CBC_MD5", 0x0022);
+  public static final CipherSuite TLS_KRB5_WITH_3DES_EDE_CBC_MD5 = of("TLS_KRB5_WITH_3DES_EDE_CBC_MD5", 0x0023);
+  public static final CipherSuite TLS_KRB5_WITH_RC4_128_MD5 = of("TLS_KRB5_WITH_RC4_128_MD5", 0x0024);
   // public static final CipherSuite TLS_KRB5_WITH_IDEA_CBC_MD5 = of("TLS_KRB5_WITH_IDEA_CBC_MD5", 0x0025);
-  //public static final CipherSuite TLS_KRB5_EXPORT_WITH_DES_CBC_40_SHA = of("TLS_KRB5_EXPORT_WITH_DES_CBC_40_SHA", 0x0026);
+  public static final CipherSuite TLS_KRB5_EXPORT_WITH_DES_CBC_40_SHA = of("TLS_KRB5_EXPORT_WITH_DES_CBC_40_SHA", 0x0026);
   // public static final CipherSuite TLS_KRB5_EXPORT_WITH_RC2_CBC_40_SHA = of("TLS_KRB5_EXPORT_WITH_RC2_CBC_40_SHA", 0x0027);
-  //public static final CipherSuite TLS_KRB5_EXPORT_WITH_RC4_40_SHA = of("TLS_KRB5_EXPORT_WITH_RC4_40_SHA", 0x0028);
-  //public static final CipherSuite TLS_KRB5_EXPORT_WITH_DES_CBC_40_MD5 = of("TLS_KRB5_EXPORT_WITH_DES_CBC_40_MD5", 0x0029);
+  public static final CipherSuite TLS_KRB5_EXPORT_WITH_RC4_40_SHA = of("TLS_KRB5_EXPORT_WITH_RC4_40_SHA", 0x0028);
+  public static final CipherSuite TLS_KRB5_EXPORT_WITH_DES_CBC_40_MD5 = of("TLS_KRB5_EXPORT_WITH_DES_CBC_40_MD5", 0x0029);
   // public static final CipherSuite TLS_KRB5_EXPORT_WITH_RC2_CBC_40_MD5 = of("TLS_KRB5_EXPORT_WITH_RC2_CBC_40_MD5", 0x002a);
-  //public static final CipherSuite TLS_KRB5_EXPORT_WITH_RC4_40_MD5 = of("TLS_KRB5_EXPORT_WITH_RC4_40_MD5", 0x002b);
+  public static final CipherSuite TLS_KRB5_EXPORT_WITH_RC4_40_MD5 = of("TLS_KRB5_EXPORT_WITH_RC4_40_MD5", 0x002b);
   // public static final CipherSuite TLS_PSK_WITH_NULL_SHA = of("TLS_PSK_WITH_NULL_SHA", 0x002c);
   // public static final CipherSuite TLS_DHE_PSK_WITH_NULL_SHA = of("TLS_DHE_PSK_WITH_NULL_SHA", 0x002d);
   // public static final CipherSuite TLS_RSA_PSK_WITH_NULL_SHA = of("TLS_RSA_PSK_WITH_NULL_SHA", 0x002e);
@@ -396,13 +395,12 @@ public final class CipherSuite {
   // public static final CipherSuite TLS_DHE_PSK_WITH_CHACHA20_POLY1305_SHA256 = of("TLS_DHE_PSK_WITH_CHACHA20_POLY1305_SHA256", 0xccad);
   // public static final CipherSuite TLS_RSA_PSK_WITH_CHACHA20_POLY1305_SHA256 = of("TLS_RSA_PSK_WITH_CHACHA20_POLY1305_SHA256", 0xccae);
 
-  //https://boringssl.googlesource.com/boringssl/+/cfc120eb229f264f125c97de79a578d68692f7c1/ssl/test/runner/cipher_suites.go
-  // http://hg.openjdk.java.net/jdk/jdk11/rev/68fa3d4026ea
+  // TLS 1.3 https://tools.ietf.org/html/draft-ietf-tls-tls13-28
   public static final CipherSuite TLS_AES_128_GCM_SHA256 = of("TLS_AES_128_GCM_SHA256", 0x1301);
   public static final CipherSuite TLS_AES_256_GCM_SHA384 = of("TLS_AES_256_GCM_SHA384", 0x1302);
-  //public static final CipherSuite TLS_CHACHA20_POLY1305_SHA256 = of("TLS_CHACHA20_POLY1305_SHA256", 0x1303);
-  //public static final CipherSuite TLS_AES_128_GCM_SHA256 = of("TLS_AES_128_CCM_SHA256", 0x1304);
-  //public static final CipherSuite TLS_AES_256_GCM_8_SHA256 = of("TLS_AES_256_CCM_8_SHA256", 0x1305);
+  public static final CipherSuite TLS_CHACHA20_POLY1305_SHA256 = of("TLS_CHACHA20_POLY1305_SHA256", 0x1303);
+  public static final CipherSuite TLS_AES_128_CCM_SHA256 = of("TLS_AES_128_CCM_SHA256", 0x1304);
+  public static final CipherSuite TLS_AES_256_CCM_8_SHA256 = of("TLS_AES_256_CCM_8_SHA256", 0x1305);
 
   final String javaName;
 
