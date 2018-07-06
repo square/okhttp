@@ -63,7 +63,6 @@ public final class ConnectionSpec {
   // All of these suites are available on Android 7.0; earlier releases support a subset of these
   // suites. https://github.com/square/okhttp/issues/1972
   private static final CipherSuite[] APPROVED_CIPHER_SUITES = new CipherSuite[] {
-
       CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
       CipherSuite.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
       CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,
