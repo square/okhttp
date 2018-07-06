@@ -774,7 +774,7 @@ public final class CacheTest {
 
   private RequestBody requestBodyOrNull(String requestMethod) {
     return (requestMethod.equals("POST") || requestMethod.equals("PUT"))
-        ? RequestBody.create(MediaType.parse("text/plain"), "foo")
+        ? RequestBody.create(MediaType.get("text/plain"), "foo")
         : null;
   }
 
@@ -862,7 +862,7 @@ public final class CacheTest {
 
     Request request = new Request.Builder()
         .url(url)
-        .put(RequestBody.create(MediaType.parse("text/plain"), "foo"))
+        .put(RequestBody.create(MediaType.get("text/plain"), "foo"))
         .build();
     Response invalidate = client.newCall(request).execute();
     assertEquals("", invalidate.body().string());

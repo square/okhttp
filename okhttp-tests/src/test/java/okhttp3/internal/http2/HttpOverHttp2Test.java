@@ -194,7 +194,7 @@ public final class HttpOverHttp2Test {
         .url(server.url("/foo"))
         .post(new RequestBody() {
           @Override public MediaType contentType() {
-            return MediaType.parse("text/plain; charset=utf-8");
+            return MediaType.get("text/plain; charset=utf-8");
           }
 
           @Override public void writeTo(BufferedSink sink) throws IOException {
@@ -221,7 +221,7 @@ public final class HttpOverHttp2Test {
         .url(server.url("/foo"))
         .post(new RequestBody() {
           @Override public MediaType contentType() {
-            return MediaType.parse("text/plain; charset=utf-8");
+            return MediaType.get("text/plain; charset=utf-8");
           }
 
           @Override public long contentLength() throws IOException {
@@ -252,7 +252,7 @@ public final class HttpOverHttp2Test {
         .url(server.url("/foo"))
         .post(new RequestBody() {
           @Override public MediaType contentType() {
-            return MediaType.parse("text/plain; charset=utf-8");
+            return MediaType.get("text/plain; charset=utf-8");
           }
 
           @Override public long contentLength() throws IOException {

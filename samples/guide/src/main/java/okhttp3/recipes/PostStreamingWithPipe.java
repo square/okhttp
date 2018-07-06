@@ -27,7 +27,7 @@ import okio.Pipe;
 
 public final class PostStreamingWithPipe {
   public static final MediaType MEDIA_TYPE_MARKDOWN
-      = MediaType.parse("text/x-markdown; charset=utf-8");
+      = MediaType.get("text/x-markdown; charset=utf-8");
 
   private final OkHttpClient client = new OkHttpClient();
 
