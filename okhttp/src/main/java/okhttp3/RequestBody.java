@@ -129,7 +129,9 @@ public abstract class RequestBody {
 
   /** Returns a new request body that transmits the content of {@code stream}. */
   public static RequestBody create(final @Nullable MediaType contentType, final InputStream stream) {
-      return new StreamingRequestBody(contentType, Okio.source(stream));
+    if (stream == null) throw new NullPointerException("content == null");
+
+    return new StreamingRequestBody(contentType, Okio.source(stream));
   }
 
   private static final class StreamingRequestBody extends RequestBody implements UnrepeatableRequestBody {
@@ -146,7 +148,11 @@ public abstract class RequestBody {
     }
 
     @Override public void writeTo(BufferedSink sink) throws IOException {
-      sink.writeAll(source);
+      try {
+        sink.writeAll(source);
+      } finally {
+        Util.closeQuietly(source);
+      }
     }
   }
 }
