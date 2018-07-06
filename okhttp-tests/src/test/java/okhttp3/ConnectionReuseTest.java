@@ -191,7 +191,7 @@ public final class ConnectionReuseTest {
 
     Request requestB = new Request.Builder()
         .url(server.url("/"))
-        .post(RequestBody.create(MediaType.parse("text/plain"), "b"))
+        .post(RequestBody.create(MediaType.get("text/plain"), "b"))
         .build();
     Response responseB = client.newCall(requestB).execute();
     assertEquals("b", responseB.body().string());

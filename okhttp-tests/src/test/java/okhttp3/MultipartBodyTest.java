@@ -129,13 +129,13 @@ public final class MultipartBodyTest {
                 .addPart(
                     Headers.of("Content-Disposition", "file; filename=\"file1.txt\""),
                     RequestBody.create(
-                        MediaType.parse("text/plain"), "... contents of file1.txt ..."))
+                        MediaType.get("text/plain"), "... contents of file1.txt ..."))
                 .addPart(
                     Headers.of(
                         "Content-Disposition", "file; filename=\"file2.gif\"",
                         "Content-Transfer-Encoding", "binary"),
                     RequestBody.create(
-                        MediaType.parse("image/gif"),
+                        MediaType.get("image/gif"),
                         "... contents of file2.gif ...".getBytes(UTF_8)))
                 .build())
         .build();
@@ -180,7 +180,7 @@ public final class MultipartBodyTest {
     MultipartBody body = new MultipartBody.Builder("AaB03x")
         .setType(MultipartBody.FORM)
         .addFormDataPart("field with spaces", "filename with spaces.txt",
-            RequestBody.create(MediaType.parse("text/plain; charset=utf-8"), "okay"))
+            RequestBody.create(MediaType.get("text/plain; charset=utf-8"), "okay"))
         .addFormDataPart("field with \"", "\"")
         .addFormDataPart("field with %22", "%22")
         .addFormDataPart("field with \u0391", "Alpha")

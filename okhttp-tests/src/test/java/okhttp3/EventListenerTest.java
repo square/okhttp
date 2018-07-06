@@ -970,7 +970,7 @@ public final class EventListenerTest {
     // Stream a 8 MiB body so the disconnect will happen before the server has read everything.
     RequestBody requestBody = new RequestBody() {
       @Override public MediaType contentType() {
-        return MediaType.parse("text/plain");
+        return MediaType.get("text/plain");
       }
 
       @Override public long contentLength() {
@@ -1005,26 +1005,26 @@ public final class EventListenerTest {
   @Test public void requestBodySuccessHttp1OverHttps() throws IOException {
     enableTlsWithTunnel(false);
     server.setProtocols(Arrays.asList(Protocol.HTTP_1_1));
-    requestBodySuccess(RequestBody.create(MediaType.parse("text/plain"), "Hello"), equalTo(5L),
+    requestBodySuccess(RequestBody.create(MediaType.get("text/plain"), "Hello"), equalTo(5L),
         equalTo(19L));
   }
 
   @Test public void requestBodySuccessHttp2OverHttps() throws IOException {
     enableTlsWithTunnel(false);
     server.setProtocols(Arrays.asList(Protocol.HTTP_2, Protocol.HTTP_1_1));
-    requestBodySuccess(RequestBody.create(MediaType.parse("text/plain"), "Hello"), equalTo(5L),
+    requestBodySuccess(RequestBody.create(MediaType.get("text/plain"), "Hello"), equalTo(5L),
         equalTo(19L));
   }
 
   @Test public void requestBodySuccessHttp() throws IOException {
-    requestBodySuccess(RequestBody.create(MediaType.parse("text/plain"), "Hello"), equalTo(5L),
+    requestBodySuccess(RequestBody.create(MediaType.get("text/plain"), "Hello"), equalTo(5L),
         equalTo(19L));
   }
 
   @Test public void requestBodySuccessStreaming() throws IOException {
     RequestBody requestBody = new RequestBody() {
       @Override public MediaType contentType() {
-        return MediaType.parse("text/plain");
+        return MediaType.get("text/plain");
       }
 
       @Override public void writeTo(BufferedSink sink) throws IOException {
@@ -1037,7 +1037,7 @@ public final class EventListenerTest {
   }
 
   @Test public void requestBodySuccessEmpty() throws IOException {
-    requestBodySuccess(RequestBody.create(MediaType.parse("text/plain"), ""), equalTo(0L),
+    requestBodySuccess(RequestBody.create(MediaType.get("text/plain"), ""), equalTo(0L),
         equalTo(19L));
   }
 
