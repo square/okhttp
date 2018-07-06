@@ -153,7 +153,7 @@ public final class CallTest {
       requestBuilder.url("ftp://hostname/path");
       fail();
     } catch (IllegalArgumentException expected) {
-      assertEquals(expected.getMessage(), "unexpected url: ftp://hostname/path");
+      assertEquals("Expected URL scheme 'http' or 'https' but was 'ftp'", expected.getMessage());
     }
   }
 
@@ -163,7 +163,7 @@ public final class CallTest {
       requestBuilder.url("http://localhost:65536/");
       fail();
     } catch (IllegalArgumentException expected) {
-      assertEquals(expected.getMessage(), "unexpected url: http://localhost:65536/");
+      assertEquals("Invalid URL port: \"65536\"", expected.getMessage());
     }
   }
 
@@ -2982,7 +2982,7 @@ public final class CallTest {
   @Ignore // This may fail in DNS lookup, which we don't have timeouts for.
   @Test public void invalidHost() throws Exception {
     Request request = new Request.Builder()
-        .url(HttpUrl.parse("http://1234.1.1.1/"))
+        .url(HttpUrl.get("http://1234.1.1.1/"))
         .build();
 
     executeSynchronously(request)

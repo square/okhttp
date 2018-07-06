@@ -28,7 +28,6 @@ import okhttp3.HttpUrl;
 import okhttp3.OkHttpClient;
 
 import static okhttp3.dnsoverhttps.DnsOverHttps.UDPWIREFORMAT;
-import static okhttp3.dnsoverhttps.DohProviders.parseUrl;
 
 public class TestDohMain {
   public static void main(String[] args) throws IOException {
@@ -50,7 +49,7 @@ public class TestDohMain {
 
       System.out.println("Bad targets\n***********\n");
 
-      HttpUrl url = parseUrl("https://dns.cloudflare.com/.not-so-well-known/run-dmc-query");
+      HttpUrl url = HttpUrl.get("https://dns.cloudflare.com/.not-so-well-known/run-dmc-query");
       List<DnsOverHttps> badProviders = Collections.singletonList(
           new DnsOverHttps.Builder().client(bootstrapClient)
               .url(url)

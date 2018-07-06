@@ -148,7 +148,7 @@ public final class InterceptorTest {
         String sameHost = address.url().host();
         int differentPort = address.url().port() + 1;
         return chain.proceed(chain.request().newBuilder()
-            .url(HttpUrl.parse("http://" + sameHost + ":" + differentPort + "/"))
+            .url("http://" + sameHost + ":" + differentPort + "/")
             .build());
       }
     };
