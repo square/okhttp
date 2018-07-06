@@ -307,6 +307,7 @@ public final class Http2Connection implements Closeable {
             Http2Connection.this.wait(); // Wait until we receive a WINDOW_UPDATE.
           }
         } catch (InterruptedException e) {
+          Thread.currentThread().interrupt(); // Retain interrupted status.
           throw new InterruptedIOException();
         }
 
@@ -395,13 +396,13 @@ public final class Http2Connection implements Closeable {
   }
 
   /** For testing: sends a ping and waits for a pong. */
-  void writePingAndAwaitPong() throws IOException, InterruptedException {
+  void writePingAndAwaitPong() throws InterruptedException {
     writePing(false, 0x4f4b6f6b /* "OKok" */, 0xf09f8da9 /* donut */);
     awaitPong();
   }
 
   /** For testing: waits until {@code requiredPongCount} pings have been received from the peer. */
-  synchronized void awaitPong() throws IOException, InterruptedException {
+  synchronized void awaitPong() throws InterruptedException {
     while (awaitingPong) {
       wait();
     }

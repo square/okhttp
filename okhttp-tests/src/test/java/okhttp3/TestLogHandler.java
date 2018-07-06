@@ -50,7 +50,7 @@ public final class TestLogHandler extends Handler {
     return list;
   }
 
-  public String take() throws InterruptedException {
+  public String take() throws Exception {
     String message = logs.poll(10, TimeUnit.SECONDS);
     if (message == null) {
       throw new AssertionError("Timed out waiting for log message.");

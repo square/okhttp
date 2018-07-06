@@ -294,7 +294,7 @@ public final class MockWebServerTest {
     in.close();
   }
 
-  @Test public void disconnectRequestHalfway() throws IOException, InterruptedException {
+  @Test public void disconnectRequestHalfway() throws Exception {
     server.enqueue(new MockResponse().setSocketPolicy(SocketPolicy.DISCONNECT_DURING_REQUEST_BODY));
     // Limit the size of the request body that the server holds in memory to an arbitrary
     // 3.5 MBytes so this test can pass on devices with little memory.

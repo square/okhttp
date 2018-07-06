@@ -114,6 +114,7 @@ public final class PublicSuffixDatabase {
       try {
         readCompleteLatch.await();
       } catch (InterruptedException ignored) {
+        Thread.currentThread().interrupt(); // Retain interrupted status.
       }
     }
 
@@ -299,7 +300,7 @@ public final class PublicSuffixDatabase {
       }
     } finally {
       if (interrupted) {
-        Thread.currentThread().interrupt();
+        Thread.currentThread().interrupt(); // Retain interrupted status.
       }
     }
   }

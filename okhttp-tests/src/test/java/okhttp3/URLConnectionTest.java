@@ -121,7 +121,7 @@ public final class URLConnectionTest {
   private HttpURLConnection connection;
   private Cache cache;
 
-  @Before public void setUp() throws Exception {
+  @Before public void setUp() {
     server.setProtocolNegotiationEnabled(false);
     urlFactory = new OkUrlFactory(defaultClient());
   }
@@ -140,7 +140,7 @@ public final class URLConnectionTest {
     }
   }
 
-  @Test public void requestHeaders() throws IOException, InterruptedException {
+  @Test public void requestHeaders() throws Exception {
     server.enqueue(new MockResponse());
 
     connection = urlFactory.open(server.url("/").url());
@@ -201,14 +201,14 @@ public final class URLConnectionTest {
     }
   }
 
-  @Test public void getRequestPropertyReturnsLastValue() throws Exception {
+  @Test public void getRequestPropertyReturnsLastValue() {
     connection = urlFactory.open(server.url("/").url());
     connection.addRequestProperty("A", "value1");
     connection.addRequestProperty("A", "value2");
     assertEquals("value2", connection.getRequestProperty("A"));
   }
 
-  @Test public void responseHeaders() throws IOException, InterruptedException {
+  @Test public void responseHeaders() throws Exception {
     server.enqueue(new MockResponse().setStatus("HTTP/1.0 200 Fantastic")
         .addHeader("A: c")
         .addHeader("B: d")
@@ -242,7 +242,7 @@ public final class URLConnectionTest {
     connection.getInputStream().close();
   }
 
-  @Test public void serverSendsInvalidResponseHeaders() throws Exception {
+  @Test public void serverSendsInvalidResponseHeaders() {
     server.enqueue(new MockResponse().setStatus("HTP/1.1 200 OK"));
 
     connection = urlFactory.open(server.url("/").url());
@@ -253,7 +253,7 @@ public final class URLConnectionTest {
     }
   }
 
-  @Test public void serverSendsInvalidCodeTooLarge() throws Exception {
+  @Test public void serverSendsInvalidCodeTooLarge() {
     server.enqueue(new MockResponse().setStatus("HTTP/1.1 2147483648 OK"));
 
     connection = urlFactory.open(server.url("/").url());
@@ -264,7 +264,7 @@ public final class URLConnectionTest {
     }
   }
 
-  @Test public void serverSendsInvalidCodeNotANumber() throws Exception {
+  @Test public void serverSendsInvalidCodeNotANumber() {
     server.enqueue(new MockResponse().setStatus("HTTP/1.1 00a OK"));
 
     connection = urlFactory.open(server.url("/").url());
@@ -275,7 +275,7 @@ public final class URLConnectionTest {
     }
   }
 
-  @Test public void serverSendsUnnecessaryWhitespace() throws Exception {
+  @Test public void serverSendsUnnecessaryWhitespace() {
     server.enqueue(new MockResponse().setStatus(" HTTP/1.1 2147483648 OK"));
 
     connection = urlFactory.open(server.url("/").url());
@@ -766,7 +766,7 @@ public final class URLConnectionTest {
    *
    * http://code.google.com/p/android/issues/detail?id=13178
    */
-  @Test public void connectViaHttpsToUntrustedServer() throws IOException, InterruptedException {
+  @Test public void connectViaHttpsToUntrustedServer() throws Exception {
     server.useHttps(sslClient.socketFactory, false);
     server.enqueue(new MockResponse()); // unused
 
@@ -1024,7 +1024,7 @@ public final class URLConnectionTest {
     assertEquals("android.com:443", connect.getHeader("Host"));
   }
 
-  private void initResponseCache() throws IOException {
+  private void initResponseCache() {
     cache = new Cache(tempDir.getRoot(), Integer.MAX_VALUE);
     urlFactory.setClient(urlFactory.client().newBuilder()
         .cache(cache)
@@ -1032,8 +1032,7 @@ public final class URLConnectionTest {
   }
 
   /** Test which headers are sent unencrypted to the HTTP proxy. */
-  @Test public void proxyConnectIncludesProxyHeadersOnly()
-      throws IOException, InterruptedException {
+  @Test public void proxyConnectIncludesProxyHeadersOnly() throws Exception {
     RecordingHostnameVerifier hostnameVerifier = new RecordingHostnameVerifier();
 
     server.useHttps(sslClient.socketFactory, true);
@@ -1332,7 +1331,7 @@ public final class URLConnectionTest {
    * This test checks whether connections are gzipped by default. This behavior in not required by
    * the API, so a failure of this test does not imply a bug in the implementation.
    */
-  @Test public void gzipEncodingEnabledByDefault() throws IOException, InterruptedException {
+  @Test public void gzipEncodingEnabledByDefault() throws Exception {
     server.enqueue(new MockResponse()
         .setBody(gzip("ABCABCABC"))
         .addHeader("Content-Encoding: gzip"));
@@ -1518,7 +1517,7 @@ public final class URLConnectionTest {
     assertEquals(0, server.takeRequest().getSequenceNumber()); // Connection is not pooled.
   }
 
-  @Test public void setChunkedStreamingMode() throws IOException, InterruptedException {
+  @Test public void setChunkedStreamingMode() throws Exception {
     server.enqueue(new MockResponse());
 
     String body = "ABCDEFGHIJKLMNOPQ";
@@ -2044,7 +2043,7 @@ public final class URLConnectionTest {
     }
   }
 
-  @Test public void redirectedOnHttps() throws IOException, InterruptedException {
+  @Test public void redirectedOnHttps() throws Exception {
     server.useHttps(sslClient.socketFactory, false);
     server.enqueue(new MockResponse().setResponseCode(HttpURLConnection.HTTP_MOVED_TEMP)
         .addHeader("Location: /foo")
@@ -2066,7 +2065,7 @@ public final class URLConnectionTest {
     assertEquals("Expected connection reuse", 1, retry.getSequenceNumber());
   }
 
-  @Test public void notRedirectedFromHttpsToHttp() throws IOException, InterruptedException {
+  @Test public void notRedirectedFromHttpsToHttp() throws Exception {
     server.useHttps(sslClient.socketFactory, false);
     server.enqueue(new MockResponse().setResponseCode(HttpURLConnection.HTTP_MOVED_TEMP)
         .addHeader("Location: http://anyhost/foo")
@@ -2081,7 +2080,7 @@ public final class URLConnectionTest {
     assertEquals("This page has moved!", readAscii(connection.getInputStream(), Integer.MAX_VALUE));
   }
 
-  @Test public void notRedirectedFromHttpToHttps() throws IOException, InterruptedException {
+  @Test public void notRedirectedFromHttpToHttps() throws Exception {
     server.enqueue(new MockResponse().setResponseCode(HttpURLConnection.HTTP_MOVED_TEMP)
         .addHeader("Location: https://anyhost/foo")
         .setBody("This page has moved!"));
@@ -2559,7 +2558,7 @@ public final class URLConnectionTest {
     }
   }
 
-  @Test public void setChunkedEncodingAsRequestProperty() throws IOException, InterruptedException {
+  @Test public void setChunkedEncodingAsRequestProperty() throws Exception {
     server.enqueue(new MockResponse());
 
     connection = urlFactory.open(server.url("/").url());
@@ -2572,7 +2571,7 @@ public final class URLConnectionTest {
     assertEquals("ABC", request.getBody().readUtf8());
   }
 
-  @Test public void connectionCloseInRequest() throws IOException, InterruptedException {
+  @Test public void connectionCloseInRequest() throws Exception {
     server.enqueue(new MockResponse()); // server doesn't honor the connection: close header!
     server.enqueue(new MockResponse());
 
@@ -2588,7 +2587,7 @@ public final class URLConnectionTest {
         server.takeRequest().getSequenceNumber());
   }
 
-  @Test public void connectionCloseInResponse() throws IOException, InterruptedException {
+  @Test public void connectionCloseInResponse() throws Exception {
     server.enqueue(new MockResponse().addHeader("Connection: close"));
     server.enqueue(new MockResponse());
 
@@ -2603,7 +2602,7 @@ public final class URLConnectionTest {
         server.takeRequest().getSequenceNumber());
   }
 
-  @Test public void connectionCloseWithRedirect() throws IOException, InterruptedException {
+  @Test public void connectionCloseWithRedirect() throws Exception {
     MockResponse response = new MockResponse()
         .setResponseCode(HttpURLConnection.HTTP_MOVED_TEMP)
         .addHeader("Location: /foo")
@@ -2642,7 +2641,7 @@ public final class URLConnectionTest {
     assertEquals(0, server.takeRequest().getSequenceNumber());
   }
 
-  @Test public void responseCodeDisagreesWithHeaders() throws IOException, InterruptedException {
+  @Test public void responseCodeDisagreesWithHeaders() throws Exception {
     server.enqueue(new MockResponse()
         .setResponseCode(HttpURLConnection.HTTP_NO_CONTENT)
         .setBody("This body is not allowed!"));
@@ -3274,14 +3273,14 @@ public final class URLConnectionTest {
     assertContent("A", connection);
   }
 
-  @Test public void http10SelectedProtocol() throws Exception {
+  @Test public void http10SelectedProtocol() {
     server.enqueue(new MockResponse().setStatus("HTTP/1.0 200 OK"));
     connection = urlFactory.open(server.url("/").url());
     List<String> protocolValues = connection.getHeaderFields().get(SELECTED_PROTOCOL);
     assertEquals(Arrays.asList("http/1.0"), protocolValues);
   }
 
-  @Test public void http11SelectedProtocol() throws Exception {
+  @Test public void http11SelectedProtocol() {
     server.enqueue(new MockResponse().setStatus("HTTP/1.1 200 OK"));
     connection = urlFactory.open(server.url("/").url());
     List<String> protocolValues = connection.getHeaderFields().get(SELECTED_PROTOCOL);
@@ -3289,7 +3288,7 @@ public final class URLConnectionTest {
   }
 
   /** For example, empty Protobuf RPC messages end up as a zero-length POST. */
-  @Test public void zeroLengthPost() throws IOException, InterruptedException {
+  @Test public void zeroLengthPost() throws Exception {
     zeroLengthPayload("POST");
   }
 
@@ -3299,7 +3298,7 @@ public final class URLConnectionTest {
   }
 
   /** For example, creating an Amazon S3 bucket ends up as a zero-length POST. */
-  @Test public void zeroLengthPut() throws IOException, InterruptedException {
+  @Test public void zeroLengthPut() throws Exception {
     zeroLengthPayload("PUT");
   }
 
@@ -3308,8 +3307,7 @@ public final class URLConnectionTest {
     zeroLengthPut();
   }
 
-  private void zeroLengthPayload(String method)
-      throws IOException, InterruptedException {
+  private void zeroLengthPayload(String method) throws Exception {
     server.enqueue(new MockResponse());
     connection = urlFactory.open(server.url("/").url());
     connection.setRequestProperty("Content-Length", "0");
@@ -3345,7 +3343,7 @@ public final class URLConnectionTest {
     assertContent("A", urlFactory.open(server.url("/").url()));
   }
 
-  @Test public void setProtocolsWithoutHttp11() throws Exception {
+  @Test public void setProtocolsWithoutHttp11() {
     try {
       new OkHttpClient.Builder().protocols(Arrays.asList(Protocol.HTTP_2));
       fail();
@@ -3353,7 +3351,7 @@ public final class URLConnectionTest {
     }
   }
 
-  @Test public void setProtocolsWithNull() throws Exception {
+  @Test public void setProtocolsWithNull() {
     try {
       new OkHttpClient.Builder().protocols(Arrays.asList(Protocol.HTTP_1_1, null));
       fail();
