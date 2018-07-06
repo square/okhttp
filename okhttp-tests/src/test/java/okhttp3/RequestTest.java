@@ -120,21 +120,21 @@ public final class RequestTest {
   @Test public void uninitializedURI() throws Exception {
     Request request = new Request.Builder().url("http://localhost/api").build();
     assertEquals(new URI("http://localhost/api"), request.url().uri());
-    assertEquals(HttpUrl.parse("http://localhost/api"), request.url());
+    assertEquals(HttpUrl.get("http://localhost/api"), request.url());
   }
 
   @Test public void newBuilderUrlResetsUrl() throws Exception {
     Request requestWithoutCache = new Request.Builder().url("http://localhost/api").build();
     Request builtRequestWithoutCache =
         requestWithoutCache.newBuilder().url("http://localhost/api/foo").build();
-    assertEquals(HttpUrl.parse("http://localhost/api/foo"), builtRequestWithoutCache.url());
+    assertEquals(HttpUrl.get("http://localhost/api/foo"), builtRequestWithoutCache.url());
 
     Request requestWithCache = new Request.Builder().url("http://localhost/api").build();
     // cache url object
     requestWithCache.url();
     Request builtRequestWithCache = requestWithCache.newBuilder().url(
         "http://localhost/api/foo").build();
-    assertEquals(HttpUrl.parse("http://localhost/api/foo"), builtRequestWithCache.url());
+    assertEquals(HttpUrl.get("http://localhost/api/foo"), builtRequestWithCache.url());
   }
 
   @Test public void cacheControl() throws Exception {

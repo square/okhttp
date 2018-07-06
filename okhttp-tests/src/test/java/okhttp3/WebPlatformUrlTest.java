@@ -98,7 +98,7 @@ public final class WebPlatformUrlTest {
     if (testData.base.equals("about:blank")) {
       url = HttpUrl.parse(testData.input);
     } else {
-      HttpUrl baseUrl = HttpUrl.parse(testData.base);
+      HttpUrl baseUrl = HttpUrl.get(testData.base);
       url = baseUrl.resolve(testData.input);
     }
 

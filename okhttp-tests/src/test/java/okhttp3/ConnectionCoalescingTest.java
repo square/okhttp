@@ -319,7 +319,7 @@ public final class ConnectionCoalescingTest {
   }
 
   private Response execute(String url) throws IOException {
-    return execute(HttpUrl.parse(url));
+    return execute(HttpUrl.get(url));
   }
 
   private Response execute(HttpUrl url) throws IOException {

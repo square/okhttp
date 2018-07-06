@@ -140,7 +140,7 @@ public final class Crawler {
         .build();
 
     Crawler crawler = new Crawler(client);
-    crawler.queue.add(HttpUrl.parse(args[1]));
+    crawler.queue.add(HttpUrl.get(args[1]));
     crawler.parallelDrainQueue(threadCount);
   }
 }
