@@ -87,6 +87,10 @@ public final class SslClient {
      * Configure the certificate chain to use when serving HTTPS responses. The first certificate is
      * the server's certificate, further certificates are included in the handshake so the client
      * can build a trusted path to a CA certificate.
+     *
+     * <p>The chain should include all intermediate certificates but does not need the root
+     * certificate that we expect to be known by the remote peer. The peer already has that
+     * certificate so transmitting it is unnecessary.
      */
     public Builder certificateChain(HeldCertificate localCert, HeldCertificate... chain) {
       X509Certificate[] certificates = new X509Certificate[chain.length];
