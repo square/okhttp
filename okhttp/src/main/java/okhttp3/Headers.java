@@ -292,7 +292,7 @@ public final class Headers {
     }
 
     /**
-     * Adds all headers from an existing collection. Does validation of header names and values.
+     * Adds all headers from an existing collection.
      */
     public Builder addAll(Headers headers) {
       int size = headers.size();
