@@ -297,7 +297,7 @@ public final class Headers {
     public Builder addAll(Headers headers) {
       int size = headers.size();
       for (int i = 0; i < size; i++) {
-        add(headers.name(i), headers.value(i));
+        addLenient(headers.name(i), headers.value(i));
       }
 
       return this;
