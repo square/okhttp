@@ -45,7 +45,7 @@ public class ConscryptTest {
   private OkHttpClient buildClient() {
     ConnectionSpec spec = new ConnectionSpec.Builder(true)
         .cipherSuites(MANDATORY_CIPHER_SUITES) // Check we are using strong ciphers
-        .tlsVersions(TlsVersion.TLS_1_3, TlsVersion.TLS_1_2) // and modern TLS
+        .tlsVersions(TlsVersion.TLS_1_2) // and modern TLS
         .supportsTlsExtensions(true)
         .build();
 
