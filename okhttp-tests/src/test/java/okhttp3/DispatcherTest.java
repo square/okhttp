@@ -225,7 +225,7 @@ public final class DispatcherTest {
     assertFalse(a4.isCanceled());
   }
 
-  @Test public void idleCallbackInvokedWhenIdle() throws InterruptedException {
+  @Test public void idleCallbackInvokedWhenIdle() throws Exception {
     final AtomicBoolean idle = new AtomicBoolean();
     dispatcher.setIdleCallback(new Runnable() {
       @Override public void run() {
@@ -329,8 +329,7 @@ public final class DispatcherTest {
       throw new UnsupportedOperationException();
     }
 
-    @Override public boolean awaitTermination(long timeout, TimeUnit unit)
-        throws InterruptedException {
+    @Override public boolean awaitTermination(long timeout, TimeUnit unit) {
       throw new UnsupportedOperationException();
     }
   }

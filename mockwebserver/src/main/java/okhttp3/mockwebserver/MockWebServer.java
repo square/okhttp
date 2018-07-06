@@ -19,7 +19,6 @@ package okhttp3.mockwebserver;
 
 import java.io.Closeable;
 import java.io.IOException;
-import java.io.InterruptedIOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.ProtocolException;
@@ -692,7 +691,8 @@ public final class MockWebServer extends ExternalResource implements Closeable {
       // Even if messages are no longer being read we need to wait for the connection close signal.
       try {
         connectionClose.await();
-      } catch (InterruptedException ignored) {
+      } catch (InterruptedException e) {
+        throw new AssertionError(e);
       }
 
     } catch (IOException e) {
@@ -781,7 +781,7 @@ public final class MockWebServer extends ExternalResource implements Closeable {
         try {
           Thread.sleep(periodDelayMs);
         } catch (InterruptedException e) {
-          throw new AssertionError();
+          throw new AssertionError(e);
         }
       }
     }
@@ -863,7 +863,7 @@ public final class MockWebServer extends ExternalResource implements Closeable {
           stream.close(ErrorCode.fromHttp2(peekedResponse.getHttp2ErrorCode()));
           return;
         } catch (InterruptedException e) {
-          throw new InterruptedIOException();
+          throw new AssertionError(e);
         }
       }
 

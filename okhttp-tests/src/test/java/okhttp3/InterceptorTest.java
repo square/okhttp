@@ -944,7 +944,7 @@ public final class InterceptorTest {
       });
     }
 
-    public Exception takeException() throws InterruptedException {
+    public Exception takeException() throws Exception {
       return exceptions.take();
     }
   }

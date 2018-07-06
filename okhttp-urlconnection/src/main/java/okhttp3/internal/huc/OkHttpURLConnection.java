@@ -132,6 +132,7 @@ public final class OkHttpURLConnection extends HttpURLConnection implements Call
           throw propagate(callFailure);
         }
       } catch (InterruptedException e) {
+        Thread.currentThread().interrupt(); // Retain interrupted status.
         throw new InterruptedIOException();
       }
     }
@@ -445,6 +446,7 @@ public final class OkHttpURLConnection extends HttpURLConnection implements Call
             lock.wait(); // Wait until the response is returned or the call fails.
           }
         } catch (InterruptedException e) {
+          Thread.currentThread().interrupt(); // Retain interrupted status.
           throw new InterruptedIOException();
         }
       }
@@ -634,6 +636,7 @@ public final class OkHttpURLConnection extends HttpURLConnection implements Call
             lock.wait(); // Wait until proceed() is called.
           }
         } catch (InterruptedException e) {
+          Thread.currentThread().interrupt(); // Retain interrupted status.
           throw new InterruptedIOException();
         }
       }

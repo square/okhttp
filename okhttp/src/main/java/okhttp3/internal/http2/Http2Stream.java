@@ -587,6 +587,7 @@ public final class Http2Stream {
     try {
       wait();
     } catch (InterruptedException e) {
+      Thread.currentThread().interrupt(); // Retain interrupted status.
       throw new InterruptedIOException();
     }
   }
