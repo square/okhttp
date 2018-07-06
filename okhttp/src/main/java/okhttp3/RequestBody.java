@@ -128,13 +128,15 @@ public abstract class RequestBody {
   }
 
   /** Returns a new request body that transmits the content of {@code stream}. */
-  public static RequestBody create(final @Nullable MediaType contentType, final InputStream stream) {
+  public static RequestBody create(
+          final @Nullable MediaType contentType, final InputStream stream) {
     if (stream == null) throw new NullPointerException("content == null");
 
     return new StreamingRequestBody(contentType, Okio.source(stream));
   }
 
-  private static final class StreamingRequestBody extends RequestBody implements UnrepeatableRequestBody {
+  private static final class StreamingRequestBody extends RequestBody
+          implements UnrepeatableRequestBody {
     private final MediaType contentType;
     private final Source source;
 
