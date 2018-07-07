@@ -82,8 +82,12 @@ public final class ConnectionSpec {
       CipherSuite.TLS_RSA_WITH_3DES_EDE_CBC_SHA,
   };
 
-  /** A TLS 1.3 only Connection Spec for testing. */
-  public static final ConnectionSpec TLS_13 = new Builder(true)
+  /**
+   * A TLS 1.3 only Connection Spec for testing. This will be eventually be exposed
+   * as part of MODERN_TLS or folded into the default OkHttp client once published and
+   * available in JDK11.
+   */
+  static final ConnectionSpec TLS_13 = new Builder(true)
       .cipherSuites(TLS13_CIPHER_SUITES)
       .tlsVersions(TlsVersion.TLS_1_3)
       .supportsTlsExtensions(true)
