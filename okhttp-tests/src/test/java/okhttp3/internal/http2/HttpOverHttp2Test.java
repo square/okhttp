@@ -313,15 +313,7 @@ public final class HttpOverHttp2Test {
         .build());
     Response response1 = call1.execute();
 
-    // Wait until the server has completely filled the stream and connection flow-control windows.
-    int expectedFrameCount = Http2Connection.OKHTTP_CLIENT_WINDOW_SIZE / 16384;
-    int dataFrameCount = 0;
-    while (dataFrameCount < expectedFrameCount) {
-      String log = http2Handler.take();
-      if (log.equals("FINE: << 0x00000003 16384 DATA          ")) {
-        dataFrameCount++;
-      }
-    }
+    waitForDataFrames(Http2Connection.OKHTTP_CLIENT_WINDOW_SIZE);
 
     // Cancel the call and discard what we've buffered for the response body. This should free up
     // the connection flow-control window so new requests can proceed.
@@ -336,6 +328,18 @@ public final class HttpOverHttp2Test {
     assertEquals("abc", response2.body().string());
   }
 
+  /** Wait for the client to receive {@code dataLength} DATA frames. */
+  private void waitForDataFrames(int dataLength) throws Exception {
+    int expectedFrameCount = dataLength / 16384;
+    int dataFrameCount = 0;
+    while (dataFrameCount < expectedFrameCount) {
+      String log = http2Handler.take();
+      if (log.equals("FINE: << 0x00000003 16384 DATA          ")) {
+        dataFrameCount++;
+      }
+    }
+  }
+
   @Test public void connectionWindowUpdateOnClose() throws Exception {
     server.enqueue(new MockResponse()
         .setBody(new Buffer().write(new byte[Http2Connection.OKHTTP_CLIENT_WINDOW_SIZE + 1])));
@@ -347,15 +351,7 @@ public final class HttpOverHttp2Test {
         .build());
     Response response1 = call1.execute();
 
-    // Wait until the server has completely filled the stream and connection flow-control windows.
-    int expectedFrameCount = Http2Connection.OKHTTP_CLIENT_WINDOW_SIZE / 16384;
-    int dataFrameCount = 0;
-    while (dataFrameCount < expectedFrameCount) {
-      String log = http2Handler.take();
-      if (log.equals("FINE: << 0x00000003 16384 DATA          ")) {
-        dataFrameCount++;
-      }
-    }
+    waitForDataFrames(Http2Connection.OKHTTP_CLIENT_WINDOW_SIZE);
 
     // Cancel the call and close the response body. This should discard the buffered data and update
     // the connnection flow-control window.
@@ -366,6 +362,38 @@ public final class HttpOverHttp2Test {
         .url(server.url("/"))
         .build());
     Response response2 = call2.execute();
+    assertEquals("abc", response2.body().string());
+  }
+
+  @Test public void concurrentRequestWithEmptyFlowControlWindow() throws Exception {
+    server.enqueue(new MockResponse()
+        .setBody(new Buffer().write(new byte[Http2Connection.OKHTTP_CLIENT_WINDOW_SIZE])));
+    server.enqueue(new MockResponse()
+        .setBody("abc"));
+
+    Call call1 = client.newCall(new Request.Builder()
+        .url(server.url("/"))
+        .build());
+    Response response1 = call1.execute();
+
+    waitForDataFrames(Http2Connection.OKHTTP_CLIENT_WINDOW_SIZE);
+
+    assertEquals(Http2Connection.OKHTTP_CLIENT_WINDOW_SIZE, response1.body().contentLength());
+    int read = response1.body().source().read(new byte[8192]);
+    assertEquals(8192, read);
+
+    // Make a second call that should transmit the response headers. The response body won't be
+    // transmitted until the flow-control window is updated from the first request.
+    Call call2 = client.newCall(new Request.Builder()
+        .url(server.url("/"))
+        .build());
+    Response response2 = call2.execute();
+    assertEquals(200, response2.code());
+
+    // Close the response body. This should discard the buffered data and update the connection
+    // flow-control window.
+    response1.close();
+
     assertEquals("abc", response2.body().string());
   }
 
