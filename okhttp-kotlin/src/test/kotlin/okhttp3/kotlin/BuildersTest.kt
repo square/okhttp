@@ -52,6 +52,6 @@ class BuildersTest {
         val postRequest = request("https://google.com/") {
             method("POST", RequestBody.create(MediaType.parse("text.plain"), ""))
         }
-        assertEquals("https://google.com/?q=2", request2.url().toString())
+        assertEquals("https://google.com/?q=2", postRequest.url().toString())
     }
 }
