@@ -40,7 +40,6 @@ import okhttp3.HttpUrl;
 import okhttp3.Protocol;
 import okhttp3.RecordingHostnameVerifier;
 import okhttp3.internal.Util;
-import okhttp3.mockwebserver.internal.tls.SslClient;
 import org.junit.After;
 import org.junit.Rule;
 import org.junit.Test;
@@ -49,6 +48,7 @@ import org.junit.runners.model.Statement;
 
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
+import static okhttp3.mockwebserver.internal.tls.TlsUtil.localhost;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
@@ -496,13 +496,13 @@ public final class MockWebServerTest {
   }
 
   @Test public void https() throws Exception {
-    SslClient sslClient = SslClient.localhost();
-    server.useHttps(sslClient.socketFactory, false);
+    TlsNode tlsNode = localhost();
+    server.useHttps(tlsNode.sslSocketFactory(), false);
     server.enqueue(new MockResponse().setBody("abc"));
 
     HttpUrl url = server.url("/");
     HttpsURLConnection connection = (HttpsURLConnection) url.url().openConnection();
-    connection.setSSLSocketFactory(sslClient.socketFactory);
+    connection.setSSLSocketFactory(tlsNode.sslSocketFactory());
     connection.setHostnameVerifier(new RecordingHostnameVerifier());
 
     assertEquals(HttpURLConnection.HTTP_OK, connection.getResponseCode());
@@ -531,26 +531,26 @@ public final class MockWebServerTest {
         .issuedBy(serverCa)
         .addSubjectAlternativeName(server.getHostName())
         .build();
-    SslClient serverSsl = new SslClient.Builder()
+    TlsNode serverTlsNode = new TlsNode.Builder()
         .addTrustedCertificate(clientCa.certificate())
-        .certificateChain(serverCertificate)
+        .heldCertificate(serverCertificate)
         .build();
 
-    server.useHttps(serverSsl.socketFactory, false);
+    server.useHttps(serverTlsNode.sslSocketFactory(), false);
     server.enqueue(new MockResponse().setBody("abc"));
     server.requestClientAuth();
 
     HeldCertificate clientCertificate = new HeldCertificate.Builder()
         .issuedBy(clientCa)
         .build();
-    SslClient clientSsl = new SslClient.Builder()
+    TlsNode clientTlsNode = new TlsNode.Builder()
         .addTrustedCertificate(serverCa.certificate())
-        .certificateChain(clientCertificate)
+        .heldCertificate(clientCertificate)
         .build();
 
     HttpUrl url = server.url("/");
     HttpsURLConnection connection = (HttpsURLConnection) url.url().openConnection();
-    connection.setSSLSocketFactory(clientSsl.socketFactory);
+    connection.setSSLSocketFactory(clientTlsNode.sslSocketFactory());
     connection.setHostnameVerifier(new RecordingHostnameVerifier());
 
     assertEquals(HttpURLConnection.HTTP_OK, connection.getResponseCode());

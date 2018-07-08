@@ -76,7 +76,7 @@ import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import okhttp3.mockwebserver.RecordedRequest;
 import okhttp3.mockwebserver.SocketPolicy;
-import okhttp3.mockwebserver.internal.tls.SslClient;
+import okhttp3.mockwebserver.TlsNode;
 import okio.Buffer;
 import okio.BufferedSink;
 import okio.GzipSink;
@@ -102,6 +102,7 @@ import static okhttp3.mockwebserver.SocketPolicy.FAIL_HANDSHAKE;
 import static okhttp3.mockwebserver.SocketPolicy.SHUTDOWN_INPUT_AT_END;
 import static okhttp3.mockwebserver.SocketPolicy.SHUTDOWN_OUTPUT_AT_END;
 import static okhttp3.mockwebserver.SocketPolicy.UPGRADE_TO_SSL_AT_END;
+import static okhttp3.mockwebserver.internal.tls.TlsUtil.localhost;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -116,7 +117,7 @@ public final class URLConnectionTest {
   @Rule public final MockWebServer server2 = new MockWebServer();
   @Rule public final TemporaryFolder tempDir = new TemporaryFolder();
 
-  private SslClient sslClient = SslClient.localhost();
+  private TlsNode tlsNode = localhost();
   private OkUrlFactory urlFactory;
   private HttpURLConnection connection;
   private Cache cache;
@@ -554,11 +555,11 @@ public final class URLConnectionTest {
   }
 
   @Test public void connectViaHttps() throws Exception {
-    server.useHttps(sslClient.socketFactory, false);
+    server.useHttps(tlsNode.sslSocketFactory(), false);
     server.enqueue(new MockResponse().setBody("this response comes via HTTPS"));
 
     urlFactory.setClient(urlFactory.client().newBuilder()
-        .sslSocketFactory(sslClient.socketFactory, sslClient.trustManager)
+        .sslSocketFactory(tlsNode.sslSocketFactory(), tlsNode.trustManager())
         .hostnameVerifier(new RecordingHostnameVerifier())
         .build());
     connection = urlFactory.open(server.url("/foo").url());
@@ -570,11 +571,11 @@ public final class URLConnectionTest {
   }
 
   @Test public void inspectHandshakeThroughoutRequestLifecycle() throws Exception {
-    server.useHttps(sslClient.socketFactory, false);
+    server.useHttps(tlsNode.sslSocketFactory(), false);
     server.enqueue(new MockResponse());
 
     urlFactory.setClient(urlFactory.client().newBuilder()
-        .sslSocketFactory(sslClient.socketFactory, sslClient.trustManager)
+        .sslSocketFactory(tlsNode.sslSocketFactory(), tlsNode.trustManager())
         .hostnameVerifier(new RecordingHostnameVerifier())
         .build());
 
@@ -610,12 +611,12 @@ public final class URLConnectionTest {
   }
 
   private void connectViaHttpsReusingConnections(boolean rebuildClient) throws Exception {
-    server.useHttps(sslClient.socketFactory, false);
+    server.useHttps(tlsNode.sslSocketFactory(), false);
     server.enqueue(new MockResponse().setBody("this response comes via HTTPS"));
     server.enqueue(new MockResponse().setBody("another response via HTTPS"));
 
     // The pool will only reuse sockets if the SSL socket factories are the same.
-    SSLSocketFactory clientSocketFactory = sslClient.socketFactory;
+    SSLSocketFactory clientSocketFactory = tlsNode.sslSocketFactory();
     RecordingHostnameVerifier hostnameVerifier = new RecordingHostnameVerifier();
 
     CookieJar cookieJar = new JavaNetCookieJar(new CookieManager());
@@ -625,7 +626,7 @@ public final class URLConnectionTest {
         .cache(cache)
         .connectionPool(connectionPool)
         .cookieJar(cookieJar)
-        .sslSocketFactory(clientSocketFactory, sslClient.trustManager)
+        .sslSocketFactory(clientSocketFactory, tlsNode.trustManager())
         .hostnameVerifier(hostnameVerifier)
         .build());
     connection = urlFactory.open(server.url("/").url());
@@ -636,7 +637,7 @@ public final class URLConnectionTest {
           .cache(cache)
           .connectionPool(connectionPool)
           .cookieJar(cookieJar)
-          .sslSocketFactory(clientSocketFactory, sslClient.trustManager)
+          .sslSocketFactory(clientSocketFactory, tlsNode.trustManager())
           .hostnameVerifier(hostnameVerifier)
           .build());
     }
@@ -649,13 +650,13 @@ public final class URLConnectionTest {
   }
 
   @Test public void connectViaHttpsReusingConnectionsDifferentFactories() throws Exception {
-    server.useHttps(sslClient.socketFactory, false);
+    server.useHttps(tlsNode.sslSocketFactory(), false);
     server.enqueue(new MockResponse().setBody("this response comes via HTTPS"));
     server.enqueue(new MockResponse().setBody("another response via HTTPS"));
 
     // install a custom SSL socket factory so the server can be authorized
     urlFactory.setClient(urlFactory.client().newBuilder()
-        .sslSocketFactory(sslClient.socketFactory, sslClient.trustManager)
+        .sslSocketFactory(tlsNode.sslSocketFactory(), tlsNode.trustManager())
         .hostnameVerifier(new RecordingHostnameVerifier())
         .build());
     HttpURLConnection connection1 = urlFactory.open(server.url("/").url());
@@ -684,14 +685,14 @@ public final class URLConnectionTest {
   // TODO(jwilson): tests below this marker need to be migrated to OkHttp's request/response API.
 
   @Test public void connectViaHttpsWithSSLFallback() throws Exception {
-    server.useHttps(sslClient.socketFactory, false);
+    server.useHttps(tlsNode.sslSocketFactory(), false);
     server.enqueue(new MockResponse().setSocketPolicy(FAIL_HANDSHAKE));
     server.enqueue(new MockResponse().setBody("this response comes via SSL"));
 
     urlFactory.setClient(urlFactory.client().newBuilder()
         .hostnameVerifier(new RecordingHostnameVerifier())
         .connectionSpecs(Arrays.asList(ConnectionSpec.MODERN_TLS, ConnectionSpec.COMPATIBLE_TLS))
-        .sslSocketFactory(suppressTlsFallbackClientSocketFactory(), sslClient.trustManager)
+        .sslSocketFactory(suppressTlsFallbackClientSocketFactory(), tlsNode.trustManager())
         .build());
     connection = urlFactory.open(server.url("/foo").url());
 
@@ -706,7 +707,7 @@ public final class URLConnectionTest {
   }
 
   @Test public void connectViaHttpsWithSSLFallbackFailuresRecorded() throws Exception {
-    server.useHttps(sslClient.socketFactory, false);
+    server.useHttps(tlsNode.sslSocketFactory(), false);
     server.enqueue(new MockResponse().setSocketPolicy(FAIL_HANDSHAKE));
     server.enqueue(new MockResponse().setSocketPolicy(FAIL_HANDSHAKE));
 
@@ -714,7 +715,7 @@ public final class URLConnectionTest {
         .dns(new SingleInetAddressDns())
         .connectionSpecs(Arrays.asList(ConnectionSpec.MODERN_TLS, ConnectionSpec.COMPATIBLE_TLS))
         .hostnameVerifier(new RecordingHostnameVerifier())
-        .sslSocketFactory(suppressTlsFallbackClientSocketFactory(), sslClient.trustManager)
+        .sslSocketFactory(suppressTlsFallbackClientSocketFactory(), tlsNode.trustManager())
         .build());
     connection = urlFactory.open(server.url("/foo").url());
 
@@ -733,7 +734,7 @@ public final class URLConnectionTest {
    * https://github.com/square/okhttp/issues/515
    */
   @Test public void sslFallbackNotUsedWhenRecycledConnectionFails() throws Exception {
-    server.useHttps(sslClient.socketFactory, false);
+    server.useHttps(tlsNode.sslSocketFactory(), false);
     server.enqueue(new MockResponse()
         .setBody("abc")
         .setSocketPolicy(DISCONNECT_AT_END));
@@ -741,7 +742,7 @@ public final class URLConnectionTest {
 
     urlFactory.setClient(urlFactory.client().newBuilder()
         .hostnameVerifier(new RecordingHostnameVerifier())
-        .sslSocketFactory(suppressTlsFallbackClientSocketFactory(), sslClient.trustManager)
+        .sslSocketFactory(suppressTlsFallbackClientSocketFactory(), tlsNode.trustManager())
         .build());
 
     assertContent("abc", urlFactory.open(server.url("/").url()));
@@ -767,7 +768,7 @@ public final class URLConnectionTest {
    * http://code.google.com/p/android/issues/detail?id=13178
    */
   @Test public void connectViaHttpsToUntrustedServer() throws Exception {
-    server.useHttps(sslClient.socketFactory, false);
+    server.useHttps(tlsNode.sslSocketFactory(), false);
     server.enqueue(new MockResponse()); // unused
 
     connection = urlFactory.open(server.url("/foo").url());
@@ -849,9 +850,9 @@ public final class URLConnectionTest {
     };
 
     if (useHttps) {
-      server.useHttps(sslClient.socketFactory, false);
+      server.useHttps(tlsNode.sslSocketFactory(), false);
       urlFactory.setClient(urlFactory.client().newBuilder()
-          .sslSocketFactory(sslClient.socketFactory, sslClient.trustManager)
+          .sslSocketFactory(tlsNode.sslSocketFactory(), tlsNode.trustManager())
           .hostnameVerifier(new RecordingHostnameVerifier())
           .build());
     }
@@ -929,12 +930,12 @@ public final class URLConnectionTest {
   }
 
   private void testConnectViaDirectProxyToHttps(ProxyConfig proxyConfig) throws Exception {
-    server.useHttps(sslClient.socketFactory, false);
+    server.useHttps(tlsNode.sslSocketFactory(), false);
     server.enqueue(new MockResponse().setBody("this response comes via HTTPS"));
 
     URL url = server.url("/foo").url();
     urlFactory.setClient(urlFactory.client().newBuilder()
-        .sslSocketFactory(sslClient.socketFactory, sslClient.trustManager)
+        .sslSocketFactory(tlsNode.sslSocketFactory(), tlsNode.trustManager())
         .hostnameVerifier(new RecordingHostnameVerifier())
         .build());
     connection = proxyConfig.connect(server, urlFactory, url);
@@ -968,14 +969,14 @@ public final class URLConnectionTest {
   private void testConnectViaHttpProxyToHttps(ProxyConfig proxyConfig) throws Exception {
     RecordingHostnameVerifier hostnameVerifier = new RecordingHostnameVerifier();
 
-    server.useHttps(sslClient.socketFactory, true);
+    server.useHttps(tlsNode.sslSocketFactory(), true);
     server.enqueue(
         new MockResponse().setSocketPolicy(UPGRADE_TO_SSL_AT_END).clearHeaders());
     server.enqueue(new MockResponse().setBody("this response comes via a secure proxy"));
 
     URL url = new URL("https://android.com/foo");
     urlFactory.setClient(urlFactory.client().newBuilder()
-        .sslSocketFactory(sslClient.socketFactory, sslClient.trustManager)
+        .sslSocketFactory(tlsNode.sslSocketFactory(), tlsNode.trustManager())
         .hostnameVerifier(hostnameVerifier)
         .build());
     connection = proxyConfig.connect(server, urlFactory, url);
@@ -997,7 +998,7 @@ public final class URLConnectionTest {
   @Test public void connectViaHttpProxyToHttpsUsingBadProxyAndHttpResponseCache() throws Exception {
     initResponseCache();
 
-    server.useHttps(sslClient.socketFactory, true);
+    server.useHttps(tlsNode.sslSocketFactory(), true);
     // The inclusion of a body in the response to a CONNECT is key to reproducing b/6754912.
     MockResponse badProxyResponse = new MockResponse()
         .setSocketPolicy(UPGRADE_TO_SSL_AT_END)
@@ -1009,7 +1010,7 @@ public final class URLConnectionTest {
     // failure to fail permanently.
     urlFactory.setClient(urlFactory.client().newBuilder()
         .dns(new SingleInetAddressDns())
-        .sslSocketFactory(sslClient.socketFactory, sslClient.trustManager)
+        .sslSocketFactory(tlsNode.sslSocketFactory(), tlsNode.trustManager())
         .connectionSpecs(Util.immutableList(ConnectionSpec.MODERN_TLS))
         .hostnameVerifier(new RecordingHostnameVerifier())
         .proxy(server.toProxyAddress())
@@ -1035,14 +1036,14 @@ public final class URLConnectionTest {
   @Test public void proxyConnectIncludesProxyHeadersOnly() throws Exception {
     RecordingHostnameVerifier hostnameVerifier = new RecordingHostnameVerifier();
 
-    server.useHttps(sslClient.socketFactory, true);
+    server.useHttps(tlsNode.sslSocketFactory(), true);
     server.enqueue(
         new MockResponse().setSocketPolicy(UPGRADE_TO_SSL_AT_END).clearHeaders());
     server.enqueue(new MockResponse().setBody("encrypted response from the origin server"));
 
     urlFactory.setClient(urlFactory.client().newBuilder()
         .proxy(server.toProxyAddress())
-        .sslSocketFactory(sslClient.socketFactory, sslClient.trustManager)
+        .sslSocketFactory(tlsNode.sslSocketFactory(), tlsNode.trustManager())
         .hostnameVerifier(hostnameVerifier)
         .build());
 
@@ -1067,7 +1068,7 @@ public final class URLConnectionTest {
 
   @Test public void proxyAuthenticateOnConnect() throws Exception {
     Authenticator.setDefault(new RecordingAuthenticator());
-    server.useHttps(sslClient.socketFactory, true);
+    server.useHttps(tlsNode.sslSocketFactory(), true);
     server.enqueue(new MockResponse().setResponseCode(407)
         .addHeader("Proxy-Authenticate: Basic realm=\"localhost\""));
     server.enqueue(
@@ -1077,7 +1078,7 @@ public final class URLConnectionTest {
     urlFactory.setClient(urlFactory.client().newBuilder()
         .proxyAuthenticator(new JavaNetAuthenticator())
         .proxy(server.toProxyAddress())
-        .sslSocketFactory(sslClient.socketFactory, sslClient.trustManager)
+        .sslSocketFactory(tlsNode.sslSocketFactory(), tlsNode.trustManager())
         .hostnameVerifier(new RecordingHostnameVerifier())
         .build());
 
@@ -1102,14 +1103,14 @@ public final class URLConnectionTest {
   // Don't disconnect after building a tunnel with CONNECT
   // http://code.google.com/p/android/issues/detail?id=37221
   @Test public void proxyWithConnectionClose() throws IOException {
-    server.useHttps(sslClient.socketFactory, true);
+    server.useHttps(tlsNode.sslSocketFactory(), true);
     server.enqueue(
         new MockResponse().setSocketPolicy(UPGRADE_TO_SSL_AT_END).clearHeaders());
     server.enqueue(new MockResponse().setBody("this response comes via a proxy"));
 
     urlFactory.setClient(urlFactory.client().newBuilder()
         .proxy(server.toProxyAddress())
-        .sslSocketFactory(sslClient.socketFactory, sslClient.trustManager)
+        .sslSocketFactory(tlsNode.sslSocketFactory(), tlsNode.trustManager())
         .hostnameVerifier(new RecordingHostnameVerifier())
         .build());
 
@@ -1121,7 +1122,7 @@ public final class URLConnectionTest {
   }
 
   @Test public void proxyWithConnectionReuse() throws IOException {
-    SSLSocketFactory socketFactory = sslClient.socketFactory;
+    SSLSocketFactory socketFactory = tlsNode.sslSocketFactory();
     RecordingHostnameVerifier hostnameVerifier = new RecordingHostnameVerifier();
 
     server.useHttps(socketFactory, true);
@@ -1132,7 +1133,7 @@ public final class URLConnectionTest {
 
     urlFactory.setClient(urlFactory.client().newBuilder()
         .proxy(server.toProxyAddress())
-        .sslSocketFactory(socketFactory, sslClient.trustManager)
+        .sslSocketFactory(socketFactory, tlsNode.trustManager())
         .hostnameVerifier(hostnameVerifier)
         .build());
     URL url = new URL("https://android.com/foo");
@@ -1397,11 +1398,11 @@ public final class URLConnectionTest {
   private void testClientConfiguredGzipContentEncodingAndConnectionReuse(TransferKind transferKind,
       boolean tls) throws Exception {
     if (tls) {
-      SSLSocketFactory socketFactory = sslClient.socketFactory;
+      SSLSocketFactory socketFactory = tlsNode.sslSocketFactory();
       RecordingHostnameVerifier hostnameVerifier = new RecordingHostnameVerifier();
       server.useHttps(socketFactory, false);
       urlFactory.setClient(urlFactory.client().newBuilder()
-          .sslSocketFactory(socketFactory, sslClient.trustManager)
+          .sslSocketFactory(socketFactory, tlsNode.trustManager())
           .hostnameVerifier(hostnameVerifier)
           .build());
     }
@@ -1828,11 +1829,11 @@ public final class URLConnectionTest {
    * http://code.google.com/p/android/issues/detail?id=12860
    */
   private void testSecureStreamingPost(StreamingMode streamingMode) throws Exception {
-    server.useHttps(sslClient.socketFactory, false);
+    server.useHttps(tlsNode.sslSocketFactory(), false);
     server.enqueue(new MockResponse().setBody("Success!"));
 
     urlFactory.setClient(urlFactory.client().newBuilder()
-        .sslSocketFactory(sslClient.socketFactory, sslClient.trustManager)
+        .sslSocketFactory(tlsNode.sslSocketFactory(), tlsNode.trustManager())
         .hostnameVerifier(new RecordingHostnameVerifier())
         .build());
     connection = urlFactory.open(server.url("/").url());
@@ -2044,14 +2045,14 @@ public final class URLConnectionTest {
   }
 
   @Test public void redirectedOnHttps() throws Exception {
-    server.useHttps(sslClient.socketFactory, false);
+    server.useHttps(tlsNode.sslSocketFactory(), false);
     server.enqueue(new MockResponse().setResponseCode(HttpURLConnection.HTTP_MOVED_TEMP)
         .addHeader("Location: /foo")
         .setBody("This page has moved!"));
     server.enqueue(new MockResponse().setBody("This is the new location!"));
 
     urlFactory.setClient(urlFactory.client().newBuilder()
-        .sslSocketFactory(sslClient.socketFactory, sslClient.trustManager)
+        .sslSocketFactory(tlsNode.sslSocketFactory(), tlsNode.trustManager())
         .hostnameVerifier(new RecordingHostnameVerifier())
         .build());
     connection = urlFactory.open(server.url("/").url());
@@ -2066,14 +2067,14 @@ public final class URLConnectionTest {
   }
 
   @Test public void notRedirectedFromHttpsToHttp() throws Exception {
-    server.useHttps(sslClient.socketFactory, false);
+    server.useHttps(tlsNode.sslSocketFactory(), false);
     server.enqueue(new MockResponse().setResponseCode(HttpURLConnection.HTTP_MOVED_TEMP)
         .addHeader("Location: http://anyhost/foo")
         .setBody("This page has moved!"));
 
     urlFactory.setClient(urlFactory.client().newBuilder()
         .followSslRedirects(false)
-        .sslSocketFactory(sslClient.socketFactory, sslClient.trustManager)
+        .sslSocketFactory(tlsNode.sslSocketFactory(), tlsNode.trustManager())
         .hostnameVerifier(new RecordingHostnameVerifier())
         .build());
     connection = urlFactory.open(server.url("/").url());
@@ -2095,13 +2096,13 @@ public final class URLConnectionTest {
   @Test public void redirectedFromHttpsToHttpFollowingProtocolRedirects() throws Exception {
     server2.enqueue(new MockResponse().setBody("This is insecure HTTP!"));
 
-    server.useHttps(sslClient.socketFactory, false);
+    server.useHttps(tlsNode.sslSocketFactory(), false);
     server.enqueue(new MockResponse().setResponseCode(HttpURLConnection.HTTP_MOVED_TEMP)
         .addHeader("Location: " + server2.url("/").url())
         .setBody("This page has moved!"));
 
     urlFactory.setClient(urlFactory.client().newBuilder()
-        .sslSocketFactory(sslClient.socketFactory, sslClient.trustManager)
+        .sslSocketFactory(tlsNode.sslSocketFactory(), tlsNode.trustManager())
         .hostnameVerifier(new RecordingHostnameVerifier())
         .followSslRedirects(true)
         .build());
@@ -2115,7 +2116,7 @@ public final class URLConnectionTest {
   }
 
   @Test public void redirectedFromHttpToHttpsFollowingProtocolRedirects() throws Exception {
-    server2.useHttps(sslClient.socketFactory, false);
+    server2.useHttps(tlsNode.sslSocketFactory(), false);
     server2.enqueue(new MockResponse().setBody("This is secure HTTPS!"));
 
     server.enqueue(new MockResponse().setResponseCode(HttpURLConnection.HTTP_MOVED_TEMP)
@@ -2123,7 +2124,7 @@ public final class URLConnectionTest {
         .setBody("This page has moved!"));
 
     urlFactory.setClient(urlFactory.client().newBuilder()
-        .sslSocketFactory(sslClient.socketFactory, sslClient.trustManager)
+        .sslSocketFactory(tlsNode.sslSocketFactory(), tlsNode.trustManager())
         .hostnameVerifier(new RecordingHostnameVerifier())
         .followSslRedirects(true)
         .build());
@@ -2142,11 +2143,11 @@ public final class URLConnectionTest {
 
   private void redirectToAnotherOriginServer(boolean https) throws Exception {
     if (https) {
-      server.useHttps(sslClient.socketFactory, false);
-      server2.useHttps(sslClient.socketFactory, false);
+      server.useHttps(tlsNode.sslSocketFactory(), false);
+      server2.useHttps(tlsNode.sslSocketFactory(), false);
       server2.setProtocolNegotiationEnabled(false);
       urlFactory.setClient(urlFactory.client().newBuilder()
-          .sslSocketFactory(sslClient.socketFactory, sslClient.trustManager)
+          .sslSocketFactory(tlsNode.sslSocketFactory(), tlsNode.trustManager())
           .hostnameVerifier(new RecordingHostnameVerifier())
           .build());
     }
@@ -2423,7 +2424,7 @@ public final class URLConnectionTest {
 
   @Test public void httpsWithCustomTrustManager() throws Exception {
     RecordingHostnameVerifier hostnameVerifier = new RecordingHostnameVerifier();
-    RecordingTrustManager trustManager = new RecordingTrustManager(sslClient.trustManager);
+    RecordingTrustManager trustManager = new RecordingTrustManager(tlsNode.trustManager());
     SSLContext sslContext = Platform.get().getSSLContext();
     sslContext.init(null, new TrustManager[] { trustManager }, null);
 
@@ -2431,7 +2432,7 @@ public final class URLConnectionTest {
         .hostnameVerifier(hostnameVerifier)
         .sslSocketFactory(sslContext.getSocketFactory(), trustManager)
         .build());
-    server.useHttps(sslClient.socketFactory, false);
+    server.useHttps(tlsNode.sslSocketFactory(), false);
     server.enqueue(new MockResponse().setBody("ABC"));
     server.enqueue(new MockResponse().setBody("DEF"));
     server.enqueue(new MockResponse().setBody("GHI"));
@@ -3381,12 +3382,12 @@ public final class URLConnectionTest {
   }
 
   @Test public void testNoSslFallback() throws Exception {
-    server.useHttps(sslClient.socketFactory, false /* tunnelProxy */);
+    server.useHttps(tlsNode.sslSocketFactory(), false /* tunnelProxy */);
     server.enqueue(new MockResponse().setSocketPolicy(FAIL_HANDSHAKE));
     server.enqueue(new MockResponse().setBody("Response that would have needed fallbacks"));
 
     HttpsURLConnection connection = (HttpsURLConnection) server.url("/").url().openConnection();
-    connection.setSSLSocketFactory(sslClient.socketFactory);
+    connection.setSSLSocketFactory(tlsNode.sslSocketFactory());
     try {
       connection.getInputStream();
       fail();
@@ -3427,7 +3428,7 @@ public final class URLConnectionTest {
   }
 
   @Test public void nullSSLSocketFactory_throws() throws Exception {
-    server.useHttps(sslClient.socketFactory, false /* tunnelProxy */);
+    server.useHttps(tlsNode.sslSocketFactory(), false /* tunnelProxy */);
     HttpsURLConnection connection = (HttpsURLConnection) server.url("/").url().openConnection();
     try {
       connection.setSSLSocketFactory(null);
@@ -3583,7 +3584,7 @@ public final class URLConnectionTest {
     URL url = server.url("/").url();
     HttpsURLConnection connection = (HttpsURLConnection) urlFactory.open(url);
     try {
-      connection.setSSLSocketFactory(sslClient.socketFactory);
+      connection.setSSLSocketFactory(tlsNode.sslSocketFactory());
       fail();
     } catch (UnsupportedOperationException expected) {
     }
@@ -3866,11 +3867,11 @@ public final class URLConnectionTest {
    */
   private void enableProtocol(Protocol protocol) {
     urlFactory.setClient(urlFactory.client().newBuilder()
-        .sslSocketFactory(sslClient.socketFactory, sslClient.trustManager)
+        .sslSocketFactory(tlsNode.sslSocketFactory(), tlsNode.trustManager())
         .hostnameVerifier(new RecordingHostnameVerifier())
         .protocols(Arrays.asList(protocol, Protocol.HTTP_1_1))
         .build());
-    server.useHttps(sslClient.socketFactory, false);
+    server.useHttps(tlsNode.sslSocketFactory(), false);
     server.setProtocolNegotiationEnabled(true);
     server.setProtocols(urlFactory.client().protocols());
   }
@@ -3881,7 +3882,7 @@ public final class URLConnectionTest {
    * for details.
    */
   private FallbackTestClientSocketFactory suppressTlsFallbackClientSocketFactory() {
-    return new FallbackTestClientSocketFactory(sslClient.socketFactory);
+    return new FallbackTestClientSocketFactory(tlsNode.sslSocketFactory());
   }
 
   private String getPlatform() {

@@ -20,7 +20,7 @@ import okhttp3.internal.io.InMemoryFileSystem;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import okhttp3.mockwebserver.RecordedRequest;
-import okhttp3.mockwebserver.internal.tls.SslClient;
+import okhttp3.mockwebserver.TlsNode;
 import okio.BufferedSource;
 import org.junit.After;
 import org.junit.Before;
@@ -28,6 +28,7 @@ import org.junit.Rule;
 import org.junit.Test;
 
 import static java.nio.charset.StandardCharsets.US_ASCII;
+import static okhttp3.mockwebserver.internal.tls.TlsUtil.localhost;
 import static okio.Okio.buffer;
 import static okio.Okio.source;
 import static org.junit.Assert.assertEquals;
@@ -187,10 +188,10 @@ public class OkUrlFactoryTest {
         .setBody("Blocked!"));
     final URL blockedURL = cleartextServer.url("/").url();
 
-    SslClient contextBuilder = SslClient.localhost();
-    server.useHttps(contextBuilder.socketFactory, false);
+    TlsNode tlsNode = localhost();
+    server.useHttps(tlsNode.sslSocketFactory(), false);
     factory.setClient(factory.client().newBuilder()
-        .sslSocketFactory(contextBuilder.socketFactory, contextBuilder.trustManager)
+        .sslSocketFactory(tlsNode.sslSocketFactory(), tlsNode.trustManager())
         .followSslRedirects(true)
         .build());
     factory.setUrlFilter(new URLFilter() {

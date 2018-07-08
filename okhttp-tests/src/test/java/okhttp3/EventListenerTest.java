@@ -47,7 +47,7 @@ import okhttp3.logging.HttpLoggingInterceptor;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import okhttp3.mockwebserver.SocketPolicy;
-import okhttp3.mockwebserver.internal.tls.SslClient;
+import okhttp3.mockwebserver.TlsNode;
 import okio.Buffer;
 import okio.BufferedSink;
 import org.hamcrest.BaseMatcher;
@@ -62,6 +62,7 @@ import org.junit.Test;
 
 import static java.util.Arrays.asList;
 import static okhttp3.TestUtil.defaultClient;
+import static okhttp3.mockwebserver.internal.tls.TlsUtil.localhost;
 import static org.hamcrest.CoreMatchers.any;
 import static org.hamcrest.CoreMatchers.either;
 import static org.hamcrest.CoreMatchers.equalTo;
@@ -81,7 +82,7 @@ public final class EventListenerTest {
 
   private final SingleInetAddressDns singleDns = new SingleInetAddressDns();
   private final RecordingEventListener listener = new RecordingEventListener();
-  private final SslClient sslClient = SslClient.localhost();
+  private final TlsNode tlsNode = localhost();
 
   private OkHttpClient client;
   private SocksProxy socksProxy;
@@ -1079,9 +1080,9 @@ public final class EventListenerTest {
 
   private void enableTlsWithTunnel(boolean tunnelProxy) {
     client = client.newBuilder()
-        .sslSocketFactory(sslClient.socketFactory, sslClient.trustManager)
+        .sslSocketFactory(tlsNode.sslSocketFactory(), tlsNode.trustManager())
         .hostnameVerifier(new RecordingHostnameVerifier())
         .build();
-    server.useHttps(sslClient.socketFactory, tunnelProxy);
+    server.useHttps(tlsNode.sslSocketFactory(), tunnelProxy);
   }
 }

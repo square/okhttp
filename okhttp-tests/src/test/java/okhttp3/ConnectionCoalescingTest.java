@@ -26,10 +26,10 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLSession;
+import okhttp3.mockwebserver.HeldCertificate;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
-import okhttp3.mockwebserver.HeldCertificate;
-import okhttp3.mockwebserver.internal.tls.SslClient;
+import okhttp3.mockwebserver.TlsNode;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Rule;
@@ -73,18 +73,18 @@ public final class ConnectionCoalescingTest {
     dns.set("www.wildcard.com", serverIps);
     dns.set("differentdns.com", Collections.<InetAddress>emptyList());
 
-    SslClient sslClient = new SslClient.Builder()
+    TlsNode tlsNode = new TlsNode.Builder()
         .addTrustedCertificate(rootCa.certificate())
         .build();
 
     client = new OkHttpClient.Builder().dns(dns)
-        .sslSocketFactory(sslClient.socketFactory, sslClient.trustManager)
+        .sslSocketFactory(tlsNode.sslSocketFactory(), tlsNode.trustManager())
         .build();
 
-    SslClient serverSslClient = new SslClient.Builder()
-        .certificateChain(certificate, rootCa)
+    TlsNode serverTlsNode = new TlsNode.Builder()
+        .heldCertificate(certificate)
         .build();
-    server.useHttps(serverSslClient.socketFactory, false);
+    server.useHttps(serverTlsNode.sslSocketFactory(), false);
 
     url = server.url("/robots.txt");
   }

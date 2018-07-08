@@ -24,7 +24,7 @@ import javax.net.ssl.SSLPeerUnverifiedException;
 import javax.net.ssl.X509TrustManager;
 import okhttp3.internal.tls.CertificateChainCleaner;
 import okhttp3.mockwebserver.HeldCertificate;
-import okhttp3.mockwebserver.internal.tls.SslClient;
+import okhttp3.mockwebserver.TlsNode;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
@@ -44,8 +44,8 @@ public final class CertificateChainCleanerTest {
   }
 
   @Test public void equalsFromTrustManager() throws Exception {
-    SslClient client = new SslClient.Builder().build();
-    X509TrustManager x509TrustManager = client.trustManager;
+    TlsNode tlsNode = new TlsNode.Builder().build();
+    X509TrustManager x509TrustManager = tlsNode.trustManager();
     assertEquals(
         CertificateChainCleaner.get(x509TrustManager),
         CertificateChainCleaner.get(x509TrustManager));
