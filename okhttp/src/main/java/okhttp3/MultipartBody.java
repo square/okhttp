@@ -32,34 +32,34 @@ public final class MultipartBody extends RequestBody {
    * need to be bundled in a particular order. Any "multipart" subtypes that an implementation does
    * not recognize must be treated as being of subtype "mixed".
    */
-  public static final MediaType MIXED = MediaType.parse("multipart/mixed");
+  public static final MediaType MIXED = MediaType.get("multipart/mixed");
 
   /**
    * The "multipart/alternative" type is syntactically identical to "multipart/mixed", but the
    * semantics are different. In particular, each of the body parts is an "alternative" version of
    * the same information.
    */
-  public static final MediaType ALTERNATIVE = MediaType.parse("multipart/alternative");
+  public static final MediaType ALTERNATIVE = MediaType.get("multipart/alternative");
 
   /**
    * This type is syntactically identical to "multipart/mixed", but the semantics are different. In
    * particular, in a digest, the default {@code Content-Type} value for a body part is changed from
    * "text/plain" to "message/rfc822".
    */
-  public static final MediaType DIGEST = MediaType.parse("multipart/digest");
+  public static final MediaType DIGEST = MediaType.get("multipart/digest");
 
   /**
    * This type is syntactically identical to "multipart/mixed", but the semantics are different. In
    * particular, in a parallel entity, the order of body parts is not significant.
    */
-  public static final MediaType PARALLEL = MediaType.parse("multipart/parallel");
+  public static final MediaType PARALLEL = MediaType.get("multipart/parallel");
 
   /**
    * The media-type multipart/form-data follows the rules of all multipart MIME data streams as
    * outlined in RFC 2046. In forms, there are a series of fields to be supplied by the user who
    * fills out the form. Each field has a name. Within a given form, the names are unique.
    */
-  public static final MediaType FORM = MediaType.parse("multipart/form-data");
+  public static final MediaType FORM = MediaType.get("multipart/form-data");
 
   private static final byte[] COLONSPACE = {':', ' '};
   private static final byte[] CRLF = {'\r', '\n'};
@@ -74,7 +74,7 @@ public final class MultipartBody extends RequestBody {
   MultipartBody(ByteString boundary, MediaType type, List<Part> parts) {
     this.boundary = boundary;
     this.originalType = type;
-    this.contentType = MediaType.parse(type + "; boundary=" + boundary.utf8());
+    this.contentType = MediaType.get(type + "; boundary=" + boundary.utf8());
     this.parts = Util.immutableList(parts);
   }
 

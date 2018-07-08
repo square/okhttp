@@ -53,7 +53,7 @@ import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeThat;
 
 public final class HttpLoggingInterceptorTest {
-  private static final MediaType PLAIN = MediaType.parse("text/plain; charset=utf-8");
+  private static final MediaType PLAIN = MediaType.get("text/plain; charset=utf-8");
 
   @Rule public final MockWebServer server = new MockWebServer();
 

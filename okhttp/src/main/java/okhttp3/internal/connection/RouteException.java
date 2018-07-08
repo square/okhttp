@@ -24,11 +24,17 @@ import static okhttp3.internal.Util.addSuppressedIfPossible;
  * have been made with alternative protocols, none of which were successful.
  */
 public final class RouteException extends RuntimeException {
+  private IOException firstException;
   private IOException lastException;
 
   public RouteException(IOException cause) {
     super(cause);
+    firstException = cause;
     lastException = cause;
+  }
+
+  public IOException getFirstConnectException() {
+    return firstException;
   }
 
   public IOException getLastConnectException() {
@@ -36,7 +42,7 @@ public final class RouteException extends RuntimeException {
   }
 
   public void addConnectException(IOException e) {
-    addSuppressedIfPossible(e, lastException);
+    addSuppressedIfPossible(firstException, e);
     lastException = e;
   }
 }

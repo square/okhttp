@@ -153,7 +153,7 @@ public final class CallTest {
       requestBuilder.url("ftp://hostname/path");
       fail();
     } catch (IllegalArgumentException expected) {
-      assertEquals(expected.getMessage(), "unexpected url: ftp://hostname/path");
+      assertEquals("Expected URL scheme 'http' or 'https' but was 'ftp'", expected.getMessage());
     }
   }
 
@@ -163,7 +163,7 @@ public final class CallTest {
       requestBuilder.url("http://localhost:65536/");
       fail();
     } catch (IllegalArgumentException expected) {
-      assertEquals(expected.getMessage(), "unexpected url: http://localhost:65536/");
+      assertEquals("Invalid URL port: \"65536\"", expected.getMessage());
     }
   }
 
@@ -206,7 +206,7 @@ public final class CallTest {
     server.enqueue(new MockResponse());
 
     try {
-      new Request.Builder().method("GET", RequestBody.create(MediaType.parse("text/plain"), "abc"));
+      new Request.Builder().method("GET", RequestBody.create(MediaType.get("text/plain"), "abc"));
       fail();
     } catch (IllegalArgumentException expected) {
     }
@@ -300,7 +300,7 @@ public final class CallTest {
 
     Request request = new Request.Builder()
         .url(server.url("/"))
-        .post(RequestBody.create(MediaType.parse("text/plain"), "def"))
+        .post(RequestBody.create(MediaType.get("text/plain"), "def"))
         .build();
 
     executeSynchronously(request)
@@ -501,7 +501,7 @@ public final class CallTest {
 
     Request request = new Request.Builder()
         .url(server.url("/"))
-        .method("DELETE", RequestBody.create(MediaType.parse("text/plain"), "def"))
+        .method("DELETE", RequestBody.create(MediaType.get("text/plain"), "def"))
         .build();
 
     executeSynchronously(request)
@@ -518,7 +518,7 @@ public final class CallTest {
 
     Request request = new Request.Builder()
         .url(server.url("/"))
-        .put(RequestBody.create(MediaType.parse("text/plain"), "def"))
+        .put(RequestBody.create(MediaType.get("text/plain"), "def"))
         .build();
 
     executeSynchronously(request)
@@ -547,7 +547,7 @@ public final class CallTest {
 
     Request request = new Request.Builder()
         .url(server.url("/"))
-        .patch(RequestBody.create(MediaType.parse("text/plain"), "def"))
+        .patch(RequestBody.create(MediaType.get("text/plain"), "def"))
         .build();
 
     executeSynchronously(request)
@@ -576,7 +576,7 @@ public final class CallTest {
 
     Request request = new Request.Builder()
         .url(server.url("/"))
-        .method("CUSTOM", RequestBody.create(MediaType.parse("text/plain"), "def"))
+        .method("CUSTOM", RequestBody.create(MediaType.get("text/plain"), "def"))
         .build();
 
     executeSynchronously(request)
@@ -937,7 +937,7 @@ public final class CallTest {
     // Call 1: set a deadline on the request body.
     RequestBody requestBody1 = new RequestBody() {
       @Override public MediaType contentType() {
-        return MediaType.parse("text/plain");
+        return MediaType.get("text/plain");
       }
 
       @Override public void writeTo(BufferedSink sink) throws IOException {
@@ -955,7 +955,7 @@ public final class CallTest {
     // Call 2: check for the absence of a deadline on the request body.
     RequestBody requestBody2 = new RequestBody() {
       @Override public MediaType contentType() {
-        return MediaType.parse("text/plain");
+        return MediaType.get("text/plain");
       }
 
       @Override public void writeTo(BufferedSink sink) throws IOException {
@@ -1272,7 +1272,7 @@ public final class CallTest {
 
     Request request = new Request.Builder()
         .url(server.url("/"))
-        .post(RequestBody.create(MediaType.parse("text/plain"), "def"))
+        .post(RequestBody.create(MediaType.get("text/plain"), "def"))
         .build();
     client.newCall(request).enqueue(callback);
 
@@ -1298,7 +1298,7 @@ public final class CallTest {
 
     Request request2 = new Request.Builder()
         .url(server.url("/"))
-        .post(RequestBody.create(MediaType.parse("text/plain"), "body!"))
+        .post(RequestBody.create(MediaType.get("text/plain"), "body!"))
         .build();
     Response response2 = client.newCall(request2).execute();
     assertEquals("def", response2.body().string());
@@ -1614,7 +1614,7 @@ public final class CallTest {
 
     Response response = client.newCall(new Request.Builder()
         .url(server.url("/page1"))
-        .post(RequestBody.create(MediaType.parse("text/plain"), "Request Body"))
+        .post(RequestBody.create(MediaType.get("text/plain"), "Request Body"))
         .build()).execute();
     assertEquals("Page 2", response.body().string());
 
@@ -1668,7 +1668,7 @@ public final class CallTest {
 
     Request request = new Request.Builder()
         .url(server.url("/"))
-        .post(RequestBody.create(MediaType.parse("text/plain"), "Hello"))
+        .post(RequestBody.create(MediaType.get("text/plain"), "Hello"))
         .build();
     Response response = client.newCall(request).execute();
 
@@ -1777,7 +1777,7 @@ public final class CallTest {
     // when
     Response response = client.newCall(new Request.Builder()
         .url(server.url("/page1"))
-        .method("PROPFIND", RequestBody.create(MediaType.parse("text/plain"), "Request Body"))
+        .method("PROPFIND", RequestBody.create(MediaType.get("text/plain"), "Request Body"))
         .build()).execute();
 
     // then
@@ -2408,7 +2408,7 @@ public final class CallTest {
     Request request = new Request.Builder()
         .url(server.url("/"))
         .header("Expect", "100-continue")
-        .post(RequestBody.create(MediaType.parse("text/plain"), "abc"))
+        .post(RequestBody.create(MediaType.get("text/plain"), "abc"))
         .build();
 
     executeSynchronously(request)
@@ -2424,7 +2424,7 @@ public final class CallTest {
     Request request = new Request.Builder()
         .url(server.url("/"))
         .header("Expect", "100-continue")
-        .post(RequestBody.create(MediaType.parse("text/plain"), ""))
+        .post(RequestBody.create(MediaType.get("text/plain"), ""))
         .build();
 
     executeSynchronously(request)
@@ -2448,7 +2448,7 @@ public final class CallTest {
     Request request = new Request.Builder()
         .url(server.url("/"))
         .header("Expect", "100-continue")
-        .post(RequestBody.create(MediaType.parse("text/plain"), "abc"))
+        .post(RequestBody.create(MediaType.get("text/plain"), "abc"))
         .build();
 
     Call call = client.newCall(request);
@@ -2473,7 +2473,7 @@ public final class CallTest {
 
     Request request = new Request.Builder()
         .url(server.url("/"))
-        .post(RequestBody.create(MediaType.parse("text/plain"), "abc"))
+        .post(RequestBody.create(MediaType.get("text/plain"), "abc"))
         .build();
 
     executeSynchronously(request)
@@ -2499,7 +2499,7 @@ public final class CallTest {
 
     Request request = new Request.Builder()
         .url(server.url("/"))
-        .post(RequestBody.create(MediaType.parse("text/plain"), "abc"))
+        .post(RequestBody.create(MediaType.get("text/plain"), "abc"))
         .build();
 
     Call call = client.newCall(request);
@@ -2526,7 +2526,7 @@ public final class CallTest {
     executeSynchronously(new Request.Builder()
         .url(server.url("/"))
         .header("Expect", "100-continue")
-        .post(RequestBody.create(MediaType.parse("text/plain"), "abc"))
+        .post(RequestBody.create(MediaType.get("text/plain"), "abc"))
         .build());
     executeSynchronously(new Request.Builder()
         .url(server.url("/"))
@@ -2548,7 +2548,7 @@ public final class CallTest {
     executeSynchronously(new Request.Builder()
         .url(server.url("/"))
         .header("Expect", "100-continue")
-        .post(RequestBody.create(MediaType.parse("text/plain"), "abc"))
+        .post(RequestBody.create(MediaType.get("text/plain"), "abc"))
         .build());
     executeSynchronously(new Request.Builder()
         .url(server.url("/"))
@@ -2567,7 +2567,7 @@ public final class CallTest {
     executeSynchronously(new Request.Builder()
         .url(server.url("/"))
         .header("Expect", "100-continue")
-        .post(RequestBody.create(MediaType.parse("text/plain"), "abc"))
+        .post(RequestBody.create(MediaType.get("text/plain"), "abc"))
         .build());
     executeSynchronously(new Request.Builder()
         .url(server.url("/"))
@@ -2972,7 +2972,7 @@ public final class CallTest {
 
     Request request = new Request.Builder()
         .url(server.url("/"))
-        .post(RequestBody.create(MediaType.parse("text/plain"), "abc"))
+        .post(RequestBody.create(MediaType.get("text/plain"), "abc"))
         .build();
 
     executeSynchronously(request);
@@ -2982,7 +2982,7 @@ public final class CallTest {
   @Ignore // This may fail in DNS lookup, which we don't have timeouts for.
   @Test public void invalidHost() throws Exception {
     Request request = new Request.Builder()
-        .url(HttpUrl.parse("http://1234.1.1.1/"))
+        .url(HttpUrl.get("http://1234.1.1.1/"))
         .build();
 
     executeSynchronously(request)
@@ -3064,7 +3064,7 @@ public final class CallTest {
 
     return new RequestBody() {
       @Override public MediaType contentType() {
-        return MediaType.parse("text/plain; charset=utf-8");
+        return MediaType.get("text/plain; charset=utf-8");
       }
 
       @Override public long contentLength() throws IOException {

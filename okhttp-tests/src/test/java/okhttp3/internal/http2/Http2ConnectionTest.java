@@ -1572,7 +1572,7 @@ public final class Http2ConnectionTest {
    * creates more work for the watchdog and waits for that work to be executed. When it is, we know
    * work that preceded this call is complete.
    */
-  private void awaitWatchdogIdle() throws InterruptedException {
+  private void awaitWatchdogIdle() throws Exception {
     final CountDownLatch latch = new CountDownLatch(1);
     AsyncTimeout watchdogJob = new AsyncTimeout() {
       @Override protected void timedOut() {
@@ -1642,7 +1642,7 @@ public final class Http2ConnectionTest {
   private static class RecordingPushObserver implements PushObserver {
     final List<Object> events = new ArrayList<>();
 
-    public synchronized Object takeEvent() throws InterruptedException {
+    public synchronized Object takeEvent() throws Exception {
       while (events.isEmpty()) {
         wait();
       }

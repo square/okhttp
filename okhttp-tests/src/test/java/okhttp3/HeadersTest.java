@@ -343,6 +343,20 @@ public final class HeadersTest {
     assertEquals("A: a\nB: bb\n", headers.toString());
   }
 
+  @Test public void headersAddAll() {
+    Headers sourceHeaders = new Headers.Builder()
+        .add("A", "aa")
+        .add("a", "aa")
+        .add("B", "bb")
+        .build();
+    Headers headers = new Headers.Builder()
+        .add("A", "a")
+        .addAll(sourceHeaders)
+        .add("C", "c")
+        .build();
+    assertEquals("A: a\nA: aa\na: aa\nB: bb\nC: c\n", headers.toString());
+  }
+
   /** See https://github.com/square/okhttp/issues/2780. */
   @Test public void testDigestChallenges() {
     // Strict RFC 2617 header.

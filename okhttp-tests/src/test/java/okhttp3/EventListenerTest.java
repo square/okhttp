@@ -43,6 +43,7 @@ import okhttp3.RecordingEventListener.SecureConnectStart;
 import okhttp3.internal.DoubleInetAddressDns;
 import okhttp3.internal.RecordingOkAuthenticator;
 import okhttp3.internal.SingleInetAddressDns;
+import okhttp3.logging.HttpLoggingInterceptor;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import okhttp3.mockwebserver.SocketPolicy;
@@ -969,7 +970,7 @@ public final class EventListenerTest {
     // Stream a 8 MiB body so the disconnect will happen before the server has read everything.
     RequestBody requestBody = new RequestBody() {
       @Override public MediaType contentType() {
-        return MediaType.parse("text/plain");
+        return MediaType.get("text/plain");
       }
 
       @Override public long contentLength() {
@@ -1004,26 +1005,26 @@ public final class EventListenerTest {
   @Test public void requestBodySuccessHttp1OverHttps() throws IOException {
     enableTlsWithTunnel(false);
     server.setProtocols(Arrays.asList(Protocol.HTTP_1_1));
-    requestBodySuccess(RequestBody.create(MediaType.parse("text/plain"), "Hello"), equalTo(5L),
+    requestBodySuccess(RequestBody.create(MediaType.get("text/plain"), "Hello"), equalTo(5L),
         equalTo(19L));
   }
 
   @Test public void requestBodySuccessHttp2OverHttps() throws IOException {
     enableTlsWithTunnel(false);
     server.setProtocols(Arrays.asList(Protocol.HTTP_2, Protocol.HTTP_1_1));
-    requestBodySuccess(RequestBody.create(MediaType.parse("text/plain"), "Hello"), equalTo(5L),
+    requestBodySuccess(RequestBody.create(MediaType.get("text/plain"), "Hello"), equalTo(5L),
         equalTo(19L));
   }
 
   @Test public void requestBodySuccessHttp() throws IOException {
-    requestBodySuccess(RequestBody.create(MediaType.parse("text/plain"), "Hello"), equalTo(5L),
+    requestBodySuccess(RequestBody.create(MediaType.get("text/plain"), "Hello"), equalTo(5L),
         equalTo(19L));
   }
 
   @Test public void requestBodySuccessStreaming() throws IOException {
     RequestBody requestBody = new RequestBody() {
       @Override public MediaType contentType() {
-        return MediaType.parse("text/plain");
+        return MediaType.get("text/plain");
       }
 
       @Override public void writeTo(BufferedSink sink) throws IOException {
@@ -1036,8 +1037,29 @@ public final class EventListenerTest {
   }
 
   @Test public void requestBodySuccessEmpty() throws IOException {
-    requestBodySuccess(RequestBody.create(MediaType.parse("text/plain"), ""), equalTo(0L),
+    requestBodySuccess(RequestBody.create(MediaType.get("text/plain"), ""), equalTo(0L),
         equalTo(19L));
+  }
+
+  @Test public void successfulCallEventSequenceWithListener() throws IOException {
+    server.enqueue(new MockResponse().setBody("abc"));
+
+    client = client.newBuilder().addNetworkInterceptor(new HttpLoggingInterceptor().setLevel(
+        HttpLoggingInterceptor.Level.BODY)).build();
+
+    Call call = client.newCall(new Request.Builder()
+        .url(server.url("/"))
+        .build());
+    Response response = call.execute();
+    assertEquals(200, response.code());
+    assertEquals("abc", response.body().string());
+    response.body().close();
+
+    List<String> expectedEvents = Arrays.asList("CallStart", "DnsStart", "DnsEnd",
+        "ConnectStart", "ConnectEnd", "ConnectionAcquired", "RequestHeadersStart",
+        "RequestHeadersEnd", "ResponseHeadersStart", "ResponseHeadersEnd", "ResponseBodyStart",
+        "ResponseBodyEnd", "ConnectionReleased", "CallEnd");
+    assertEquals(expectedEvents, listener.recordedEventTypes());
   }
 
   private void requestBodySuccess(RequestBody body, Matcher<Long> requestBodyBytes,

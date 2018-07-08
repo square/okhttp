@@ -194,7 +194,7 @@ public final class HttpOverHttp2Test {
         .url(server.url("/foo"))
         .post(new RequestBody() {
           @Override public MediaType contentType() {
-            return MediaType.parse("text/plain; charset=utf-8");
+            return MediaType.get("text/plain; charset=utf-8");
           }
 
           @Override public void writeTo(BufferedSink sink) throws IOException {
@@ -221,7 +221,7 @@ public final class HttpOverHttp2Test {
         .url(server.url("/foo"))
         .post(new RequestBody() {
           @Override public MediaType contentType() {
-            return MediaType.parse("text/plain; charset=utf-8");
+            return MediaType.get("text/plain; charset=utf-8");
           }
 
           @Override public long contentLength() throws IOException {
@@ -252,7 +252,7 @@ public final class HttpOverHttp2Test {
         .url(server.url("/foo"))
         .post(new RequestBody() {
           @Override public MediaType contentType() {
-            return MediaType.parse("text/plain; charset=utf-8");
+            return MediaType.get("text/plain; charset=utf-8");
           }
 
           @Override public long contentLength() throws IOException {
@@ -868,7 +868,7 @@ public final class HttpOverHttp2Test {
   }
 
   /** Make a call and canceling it as soon as it's accepted by the server. */
-  private void callAndCancel(int expectedSequenceNumber) throws InterruptedException {
+  private void callAndCancel(int expectedSequenceNumber) throws Exception {
     Call call = client.newCall(new Request.Builder()
         .url(server.url("/"))
         .build());
@@ -913,7 +913,7 @@ public final class HttpOverHttp2Test {
     }
   }
 
-  @Test public void recoverFromConnectionNoNewStreamsOnFollowUp() throws InterruptedException {
+  @Test public void recoverFromConnectionNoNewStreamsOnFollowUp() throws Exception {
     server.enqueue(new MockResponse()
         .setResponseCode(401));
     server.enqueue(new MockResponse()

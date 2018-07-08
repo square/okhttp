@@ -4,7 +4,9 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
 import java.net.URL;
+import java.net.UnknownHostException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -256,6 +258,26 @@ public class OkUrlFactoryTest {
     } while (skipped != 0);
     RecordedRequest recordedRequest = server.takeRequest();
     assertEquals(expected, recordedRequest.getHeader("User-Agent"));
+  }
+
+  @Test public void javaNetUrlMalformedUrl() throws Exception {
+    server.enqueue(new MockResponse());
+    HttpURLConnection connection = factory.open(new URL("http://example.com:-1"));
+    try {
+      connection.getInputStream();
+      fail();
+    } catch (MalformedURLException expected) {
+    }
+  }
+
+  @Test public void javaNetUrlBadHost() throws Exception {
+    server.enqueue(new MockResponse());
+    HttpURLConnection connection = factory.open(new URL("http://hostw ithspace/"));
+    try {
+      connection.getInputStream();
+      fail();
+    } catch (UnknownHostException expected) {
+    }
   }
 
   private void assertResponseBody(HttpURLConnection connection, String expected) throws Exception {

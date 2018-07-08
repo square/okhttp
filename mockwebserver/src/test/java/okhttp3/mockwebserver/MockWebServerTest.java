@@ -33,10 +33,14 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import javax.net.ssl.HttpsURLConnection;
+import okhttp3.Handshake;
 import okhttp3.Headers;
 import okhttp3.HttpUrl;
 import okhttp3.Protocol;
+import okhttp3.RecordingHostnameVerifier;
 import okhttp3.internal.Util;
+import okhttp3.mockwebserver.internal.tls.SslClient;
 import org.junit.After;
 import org.junit.Rule;
 import org.junit.Test;
@@ -48,6 +52,7 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -294,7 +299,7 @@ public final class MockWebServerTest {
     in.close();
   }
 
-  @Test public void disconnectRequestHalfway() throws IOException, InterruptedException {
+  @Test public void disconnectRequestHalfway() throws Exception {
     server.enqueue(new MockResponse().setSocketPolicy(SocketPolicy.DISCONNECT_DURING_REQUEST_BODY));
     // Limit the size of the request body that the server holds in memory to an arbitrary
     // 3.5 MBytes so this test can pass on devices with little memory.
@@ -488,5 +493,78 @@ public final class MockWebServerTest {
 
     assertEquals(1, server.protocols().size());
     assertEquals(Protocol.H2_PRIOR_KNOWLEDGE, server.protocols().get(0));
+  }
+
+  @Test public void https() throws Exception {
+    SslClient sslClient = SslClient.localhost();
+    server.useHttps(sslClient.socketFactory, false);
+    server.enqueue(new MockResponse().setBody("abc"));
+
+    HttpUrl url = server.url("/");
+    HttpsURLConnection connection = (HttpsURLConnection) url.url().openConnection();
+    connection.setSSLSocketFactory(sslClient.socketFactory);
+    connection.setHostnameVerifier(new RecordingHostnameVerifier());
+
+    assertEquals(HttpURLConnection.HTTP_OK, connection.getResponseCode());
+    BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+    assertEquals("abc", reader.readLine());
+
+    RecordedRequest request = server.takeRequest();
+    assertEquals("https", request.getRequestUrl().scheme());
+    Handshake handshake = request.getHandshake();
+    assertNotNull(handshake.tlsVersion());
+    assertNotNull(handshake.cipherSuite());
+    assertNotNull(handshake.localPrincipal());
+    assertEquals(1, handshake.localCertificates().size());
+    assertNull(handshake.peerPrincipal());
+    assertEquals(0, handshake.peerCertificates().size());
+  }
+
+  @Test public void httpsWithClientAuth() throws Exception {
+    HeldCertificate clientCa = new HeldCertificate.Builder()
+        .certificateAuthority(0)
+        .build();
+    HeldCertificate serverCa = new HeldCertificate.Builder()
+        .certificateAuthority(0)
+        .build();
+    HeldCertificate serverCertificate = new HeldCertificate.Builder()
+        .issuedBy(serverCa)
+        .addSubjectAlternativeName(server.getHostName())
+        .build();
+    SslClient serverSsl = new SslClient.Builder()
+        .addTrustedCertificate(clientCa.certificate())
+        .certificateChain(serverCertificate)
+        .build();
+
+    server.useHttps(serverSsl.socketFactory, false);
+    server.enqueue(new MockResponse().setBody("abc"));
+    server.requestClientAuth();
+
+    HeldCertificate clientCertificate = new HeldCertificate.Builder()
+        .issuedBy(clientCa)
+        .build();
+    SslClient clientSsl = new SslClient.Builder()
+        .addTrustedCertificate(serverCa.certificate())
+        .certificateChain(clientCertificate)
+        .build();
+
+    HttpUrl url = server.url("/");
+    HttpsURLConnection connection = (HttpsURLConnection) url.url().openConnection();
+    connection.setSSLSocketFactory(clientSsl.socketFactory);
+    connection.setHostnameVerifier(new RecordingHostnameVerifier());
+
+    assertEquals(HttpURLConnection.HTTP_OK, connection.getResponseCode());
+    BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+    assertEquals("abc", reader.readLine());
+
+    RecordedRequest request = server.takeRequest();
+    assertEquals("https", request.getRequestUrl().scheme());
+    Handshake handshake = request.getHandshake();
+    assertNotNull(handshake.tlsVersion());
+    assertNotNull(handshake.cipherSuite());
+    assertNotNull(handshake.localPrincipal());
+    assertEquals(1, handshake.localCertificates().size());
+    assertNotNull(handshake.peerPrincipal());
+    assertEquals(1, handshake.peerCertificates().size());
   }
 }

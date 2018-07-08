@@ -100,7 +100,7 @@ public final class MockHttp2Peer implements Closeable {
     return writer;
   }
 
-  public InFrame takeFrame() throws InterruptedException {
+  public InFrame takeFrame() throws Exception {
     return inFrames.take();
   }
 

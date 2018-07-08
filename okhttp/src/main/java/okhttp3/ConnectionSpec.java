@@ -76,14 +76,14 @@ public final class ConnectionSpec {
   /** A secure TLS connection assuming a modern client platform and server. */
   public static final ConnectionSpec RESTRICTED_TLS = new Builder(true)
       .cipherSuites(RESTRICTED_CIPHER_SUITES)
-      .tlsVersions(TlsVersion.TLS_1_3, TlsVersion.TLS_1_2)
+      .tlsVersions(TlsVersion.TLS_1_2)
       .supportsTlsExtensions(true)
       .build();
 
   /** A modern TLS connection with extensions like SNI and ALPN available. */
   public static final ConnectionSpec MODERN_TLS = new Builder(true)
       .cipherSuites(APPROVED_CIPHER_SUITES)
-      .tlsVersions(TlsVersion.TLS_1_3, TlsVersion.TLS_1_2, TlsVersion.TLS_1_1, TlsVersion.TLS_1_0)
+      .tlsVersions(TlsVersion.TLS_1_2, TlsVersion.TLS_1_1, TlsVersion.TLS_1_0)
       .supportsTlsExtensions(true)
       .build();
 

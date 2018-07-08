@@ -23,10 +23,12 @@ import java.io.InterruptedIOException;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.InetSocketAddress;
+import java.net.MalformedURLException;
 import java.net.ProtocolException;
 import java.net.Proxy;
 import java.net.SocketPermission;
 import java.net.URL;
+import java.net.UnknownHostException;
 import java.security.Permission;
 import java.util.Arrays;
 import java.util.Collections;
@@ -132,6 +134,7 @@ public final class OkHttpURLConnection extends HttpURLConnection implements Call
           throw propagate(callFailure);
         }
       } catch (InterruptedException e) {
+        Thread.currentThread().interrupt(); // Retain interrupted status.
         throw new InterruptedIOException();
       }
     }
@@ -369,8 +372,22 @@ public final class OkHttpURLConnection extends HttpURLConnection implements Call
       requestBody.timeout().timeout(client.writeTimeoutMillis(), TimeUnit.MILLISECONDS);
     }
 
+    HttpUrl url;
+    try {
+      url = HttpUrl.get(getURL().toString());
+    } catch (IllegalArgumentException e) {
+      if (Internal.instance.isInvalidHttpUrlHost(e)) {
+        UnknownHostException unknownHost = new UnknownHostException();
+        unknownHost.initCause(e);
+        throw unknownHost;
+      }
+      MalformedURLException malformedUrl = new MalformedURLException();
+      malformedUrl.initCause(e);
+      throw malformedUrl;
+    }
+
     Request request = new Request.Builder()
-        .url(Internal.instance.getHttpUrlChecked(getURL().toString()))
+        .url(url)
         .headers(requestHeaders.build())
         .method(method, requestBody)
         .build();
@@ -445,6 +462,7 @@ public final class OkHttpURLConnection extends HttpURLConnection implements Call
             lock.wait(); // Wait until the response is returned or the call fails.
           }
         } catch (InterruptedException e) {
+          Thread.currentThread().interrupt(); // Retain interrupted status.
           throw new InterruptedIOException();
         }
       }
@@ -634,6 +652,7 @@ public final class OkHttpURLConnection extends HttpURLConnection implements Call
             lock.wait(); // Wait until proceed() is called.
           }
         } catch (InterruptedException e) {
+          Thread.currentThread().interrupt(); // Retain interrupted status.
           throw new InterruptedIOException();
         }
       }

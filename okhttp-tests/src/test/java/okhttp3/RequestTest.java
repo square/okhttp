@@ -31,7 +31,7 @@ import static org.junit.Assert.fail;
 
 public final class RequestTest {
   @Test public void string() throws Exception {
-    MediaType contentType = MediaType.parse("text/plain; charset=utf-8");
+    MediaType contentType = MediaType.get("text/plain; charset=utf-8");
     RequestBody body = RequestBody.create(contentType, "abc".getBytes(Util.UTF_8));
     assertEquals(contentType, body.contentType());
     assertEquals(3, body.contentLength());
@@ -40,15 +40,15 @@ public final class RequestTest {
   }
 
   @Test public void stringWithDefaultCharsetAdded() throws Exception {
-    MediaType contentType = MediaType.parse("text/plain");
+    MediaType contentType = MediaType.get("text/plain");
     RequestBody body = RequestBody.create(contentType, "\u0800");
-    assertEquals(MediaType.parse("text/plain; charset=utf-8"), body.contentType());
+    assertEquals(MediaType.get("text/plain; charset=utf-8"), body.contentType());
     assertEquals(3, body.contentLength());
     assertEquals("e0a080", bodyToHex(body));
   }
 
   @Test public void stringWithNonDefaultCharsetSpecified() throws Exception {
-    MediaType contentType = MediaType.parse("text/plain; charset=utf-16be");
+    MediaType contentType = MediaType.get("text/plain; charset=utf-16be");
     RequestBody body = RequestBody.create(contentType, "\u0800");
     assertEquals(contentType, body.contentType());
     assertEquals(2, body.contentLength());
@@ -56,7 +56,7 @@ public final class RequestTest {
   }
 
   @Test public void byteArray() throws Exception {
-    MediaType contentType = MediaType.parse("text/plain");
+    MediaType contentType = MediaType.get("text/plain");
     RequestBody body = RequestBody.create(contentType, "abc".getBytes(Util.UTF_8));
     assertEquals(contentType, body.contentType());
     assertEquals(3, body.contentLength());
@@ -65,7 +65,7 @@ public final class RequestTest {
   }
 
   @Test public void byteArrayRange() throws Exception {
-    MediaType contentType = MediaType.parse("text/plain");
+    MediaType contentType = MediaType.get("text/plain");
     RequestBody body = RequestBody.create(contentType, ".abcd".getBytes(Util.UTF_8), 1, 3);
     assertEquals(contentType, body.contentType());
     assertEquals(3, body.contentLength());
@@ -79,7 +79,7 @@ public final class RequestTest {
     writer.write("abc");
     writer.close();
 
-    MediaType contentType = MediaType.parse("text/plain");
+    MediaType contentType = MediaType.get("text/plain");
     RequestBody body = RequestBody.create(contentType, file);
     assertEquals(contentType, body.contentType());
     assertEquals(3, body.contentLength());
@@ -89,7 +89,7 @@ public final class RequestTest {
 
   /** Common verbs used for apis such as GitHub, AWS, and Google Cloud. */
   @Test public void crudVerbs() throws IOException {
-    MediaType contentType = MediaType.parse("application/json");
+    MediaType contentType = MediaType.get("application/json");
     RequestBody body = RequestBody.create(contentType, "{}");
 
     Request get = new Request.Builder().url("http://localhost/api").get().build();
@@ -120,21 +120,21 @@ public final class RequestTest {
   @Test public void uninitializedURI() throws Exception {
     Request request = new Request.Builder().url("http://localhost/api").build();
     assertEquals(new URI("http://localhost/api"), request.url().uri());
-    assertEquals(HttpUrl.parse("http://localhost/api"), request.url());
+    assertEquals(HttpUrl.get("http://localhost/api"), request.url());
   }
 
   @Test public void newBuilderUrlResetsUrl() throws Exception {
     Request requestWithoutCache = new Request.Builder().url("http://localhost/api").build();
     Request builtRequestWithoutCache =
         requestWithoutCache.newBuilder().url("http://localhost/api/foo").build();
-    assertEquals(HttpUrl.parse("http://localhost/api/foo"), builtRequestWithoutCache.url());
+    assertEquals(HttpUrl.get("http://localhost/api/foo"), builtRequestWithoutCache.url());
 
     Request requestWithCache = new Request.Builder().url("http://localhost/api").build();
     // cache url object
     requestWithCache.url();
     Request builtRequestWithCache = requestWithCache.newBuilder().url(
         "http://localhost/api/foo").build();
-    assertEquals(HttpUrl.parse("http://localhost/api/foo"), builtRequestWithCache.url());
+    assertEquals(HttpUrl.get("http://localhost/api/foo"), builtRequestWithCache.url());
   }
 
   @Test public void cacheControl() throws Exception {

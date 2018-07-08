@@ -128,7 +128,7 @@ public final class RetryAndFollowUpInterceptor implements Interceptor {
       } catch (RouteException e) {
         // The attempt to connect via a route failed. The request will not have been sent.
         if (!recover(e.getLastConnectException(), streamAllocation, false, request)) {
-          throw e.getLastConnectException();
+          throw e.getFirstConnectException();
         }
         releaseConnection = false;
         continue;

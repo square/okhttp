@@ -139,9 +139,7 @@ public final class Request {
         url = "https:" + url.substring(4);
       }
 
-      HttpUrl parsed = HttpUrl.parse(url);
-      if (parsed == null) throw new IllegalArgumentException("unexpected url: " + url);
-      return url(parsed);
+      return url(HttpUrl.get(url));
     }
 
     /**
@@ -152,9 +150,7 @@ public final class Request {
      */
     public Builder url(URL url) {
       if (url == null) throw new NullPointerException("url == null");
-      HttpUrl parsed = HttpUrl.get(url);
-      if (parsed == null) throw new IllegalArgumentException("unexpected url: " + url);
-      return url(parsed);
+      return url(HttpUrl.get(url.toString()));
     }
 
     /**

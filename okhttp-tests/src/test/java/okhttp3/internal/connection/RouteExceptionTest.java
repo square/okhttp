@@ -18,6 +18,7 @@ package okhttp3.internal.connection;
 import java.io.IOException;
 import org.junit.Test;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertSame;
 
 public class RouteExceptionTest {
@@ -25,6 +26,7 @@ public class RouteExceptionTest {
   @Test public void getConnectionIOException_single() {
     IOException firstException = new IOException();
     RouteException re = new RouteException(firstException);
+    assertSame(firstException, re.getFirstConnectException());
     assertSame(firstException, re.getLastConnectException());
   }
 
@@ -36,12 +38,13 @@ public class RouteExceptionTest {
     re.addConnectException(secondException);
     re.addConnectException(thirdException);
 
-    IOException connectionIOException = re.getLastConnectException();
-    assertSame(thirdException, connectionIOException);
-    Throwable[] thirdSuppressedExceptions = thirdException.getSuppressed();
-    assertSame(secondException, thirdSuppressedExceptions[0]);
+    IOException connectionIOException = re.getFirstConnectException();
+    assertSame(firstException, connectionIOException);
+    Throwable[] suppressedExceptions = connectionIOException.getSuppressed();
+    assertEquals(2, suppressedExceptions.length);
+    assertSame(secondException, suppressedExceptions[0]);
+    assertSame(thirdException, suppressedExceptions[1]);
 
-    Throwable[] secondSuppressedException = secondException.getSuppressed();
-    assertSame(firstException, secondSuppressedException[0]);
+    assertSame(thirdException, re.getLastConnectException());
   }
 }

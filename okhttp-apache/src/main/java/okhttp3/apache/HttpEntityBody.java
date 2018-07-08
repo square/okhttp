@@ -8,7 +8,7 @@ import org.apache.http.HttpEntity;
 
 /** Adapts an {@link HttpEntity} to OkHttp's {@link RequestBody}. */
 final class HttpEntityBody extends RequestBody {
-  private static final MediaType DEFAULT_MEDIA_TYPE = MediaType.parse("application/octet-stream");
+  private static final MediaType DEFAULT_MEDIA_TYPE = MediaType.get("application/octet-stream");
 
   private final HttpEntity entity;
   private final MediaType mediaType;

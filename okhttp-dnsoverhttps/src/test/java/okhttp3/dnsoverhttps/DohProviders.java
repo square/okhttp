@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014 Square, Inc.
+ * Copyright (C) 2018 Square, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,7 +32,7 @@ import static okhttp3.dnsoverhttps.DnsOverHttps.UDPWIREFORMAT;
 public class DohProviders {
   static DnsOverHttps buildGoogle(OkHttpClient bootstrapClient) {
     return new DnsOverHttps.Builder().client(bootstrapClient)
-        .url(parseUrl("https://dns.google.com/experimental?ct=" + UDPWIREFORMAT))
+        .url(HttpUrl.get("https://dns.google.com/experimental?ct=" + UDPWIREFORMAT))
         .bootstrapDnsHosts(getByIp("216.58.204.78"), getByIp("2a00:1450:4009:814:0:0:0:200e"))
         .contentType(UDPWIREFORMAT)
         .build();
@@ -40,7 +40,7 @@ public class DohProviders {
 
   static DnsOverHttps buildGooglePost(OkHttpClient bootstrapClient) {
     return new DnsOverHttps.Builder().client(bootstrapClient)
-        .url(parseUrl("https://dns.google.com/experimental"))
+        .url(HttpUrl.get("https://dns.google.com/experimental"))
         .bootstrapDnsHosts(getByIp("216.58.204.78"), getByIp("2a00:1450:4009:814:0:0:0:200e"))
         .post(true)
         .contentType(UDPWIREFORMAT)
@@ -49,14 +49,14 @@ public class DohProviders {
 
   static DnsOverHttps buildCloudflareIp(OkHttpClient bootstrapClient) {
     return new DnsOverHttps.Builder().client(bootstrapClient)
-        .url(parseUrl("https://1.1.1.1/dns-query"))
+        .url(HttpUrl.get("https://1.1.1.1/dns-query"))
         .includeIPv6(false)
         .build();
   }
 
   static DnsOverHttps buildCloudflare(OkHttpClient bootstrapClient) {
     return new DnsOverHttps.Builder().client(bootstrapClient)
-        .url(parseUrl("https://cloudflare-dns.com/dns-query"))
+        .url(HttpUrl.get("https://cloudflare-dns.com/dns-query"))
         .bootstrapDnsHosts(getByIp("1.1.1.1"))
         .includeIPv6(false)
         .build();
@@ -64,7 +64,7 @@ public class DohProviders {
 
   static DnsOverHttps buildCloudflarePost(OkHttpClient bootstrapClient) {
     return new DnsOverHttps.Builder().client(bootstrapClient)
-        .url(parseUrl("https://cloudflare-dns.com/dns-query?ct=application/dns-udpwireformat"))
+        .url(HttpUrl.get("https://cloudflare-dns.com/dns-query?ct=application/dns-udpwireformat"))
         .bootstrapDnsHosts(getByIp("104.16.111.25"), getByIp("104.16.112.25"),
             getByIp("2400:cb00:2048:1:0:0:6810:7019"), getByIp("2400:cb00:2048:1:0:0:6810:6f19"))
         .includeIPv6(false)
@@ -74,21 +74,21 @@ public class DohProviders {
 
   static DnsOverHttps buildCleanBrowsing(OkHttpClient bootstrapClient) {
     return new DnsOverHttps.Builder().client(bootstrapClient)
-        .url(parseUrl("https://doh.cleanbrowsing.org/doh/family-filter"))
+        .url(HttpUrl.get("https://doh.cleanbrowsing.org/doh/family-filter"))
         .includeIPv6(false)
         .build();
   }
 
   static DnsOverHttps buildChantra(OkHttpClient bootstrapClient) {
     return new DnsOverHttps.Builder().client(bootstrapClient)
-        .url(parseUrl("https://dns.dnsoverhttps.net/dns-query"))
+        .url(HttpUrl.get("https://dns.dnsoverhttps.net/dns-query"))
         .includeIPv6(false)
         .build();
   }
 
   static DnsOverHttps buildCryptoSx(OkHttpClient bootstrapClient) {
     return new DnsOverHttps.Builder().client(bootstrapClient)
-        .url(parseUrl("https://doh.crypto.sx/dns-query"))
+        .url(HttpUrl.get("https://doh.crypto.sx/dns-query"))
         .includeIPv6(false)
         .build();
   }
@@ -114,16 +114,6 @@ public class DohProviders {
     }
 
     return result;
-  }
-
-  static HttpUrl parseUrl(String s) {
-    HttpUrl url = HttpUrl.parse(s);
-
-    if (url == null) {
-      throw new NullPointerException("unable to parse url");
-    }
-
-    return url;
   }
 
   private static InetAddress getByIp(String host) {

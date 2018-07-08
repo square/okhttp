@@ -283,10 +283,24 @@ public final class Headers {
       return add(line.substring(0, index).trim(), line.substring(index + 1));
     }
 
-    /** Add a field with the specified value. */
+    /**
+     * Add a header with the specified name and value. Does validation of header names and values.
+     */
     public Builder add(String name, String value) {
       checkNameAndValue(name, value);
       return addLenient(name, value);
+    }
+
+    /**
+     * Adds all headers from an existing collection.
+     */
+    public Builder addAll(Headers headers) {
+      int size = headers.size();
+      for (int i = 0; i < size; i++) {
+        addLenient(headers.name(i), headers.value(i));
+      }
+
+      return this;
     }
 
     /**
