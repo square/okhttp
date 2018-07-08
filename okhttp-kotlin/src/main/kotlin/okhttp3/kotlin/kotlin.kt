@@ -15,6 +15,9 @@ fun client(init: OkHttpClient.Builder.() -> Unit = {}) = OkHttpClient.Builder().
 fun OkHttpClient.rebuild(init: OkHttpClient.Builder.() -> Unit = {}) = newBuilder().apply(
         init).build()
 
-fun url(init: HttpUrl.Builder.() -> Unit = {}) = HttpUrl.Builder().apply(init).build()
+fun url(url: String? = null, init: HttpUrl.Builder.() -> Unit = {}): HttpUrl {
+    val builder = if (url != null) HttpUrl.get(url).newBuilder() else HttpUrl.Builder()
+    return builder.apply(init).build()
+}
 
 fun HttpUrl.rebuild(init: HttpUrl.Builder.() -> Unit = {}) = newBuilder().apply(init).build()

@@ -52,6 +52,30 @@ class BuildersTest {
         val postRequest = request("https://google.com/") {
             method("POST", RequestBody.create(MediaType.parse("text.plain"), ""))
         }
-        assertEquals("https://google.com/?q=2", postRequest.url().toString())
+        assertEquals("https://google.com/", postRequest.url().toString())
+    }
+
+    @Test
+    fun `test url builder apis`() {
+        val url1 = url("https://google.com/")
+        assertEquals("https://google.com/", url1.toString())
+
+        val url2 = url {
+            scheme("https")
+            host("google.com")
+        }
+        assertEquals("https://google.com/", url2.toString())
+
+        val url3 = url {
+            scheme("https")
+            host("google.com")
+            query("q=3")
+        }
+        assertEquals("https://google.com/?q=3", url3.toString())
+
+        val url4 = url1.rebuild {
+            query("q=4")
+        }
+        assertEquals("https://google.com/?q=4", url4.toString())
     }
 }
