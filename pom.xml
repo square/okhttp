@@ -33,6 +33,8 @@
 
     <module>okhttp-dnsoverhttps</module>
 
+    <module>okhttp-kotlin</module>
+
     <module>okcurl</module>
     <module>mockwebserver</module>
     <module>samples</module>
