@@ -17,9 +17,11 @@ package okhttp3;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.charset.Charset;
 import javax.annotation.Nullable;
 import okhttp3.internal.Util;
+import okhttp3.internal.http.UnrepeatableRequestBody;
 import okio.BufferedSink;
 import okio.ByteString;
 import okio.Okio;
@@ -123,5 +125,36 @@ public abstract class RequestBody {
         }
       }
     };
+  }
+
+  /** Returns a new request body that transmits the content of {@code stream}. */
+  public static RequestBody create(
+          final @Nullable MediaType contentType, final InputStream stream) {
+    if (stream == null) throw new NullPointerException("content == null");
+
+    return new StreamingRequestBody(contentType, Okio.source(stream));
+  }
+
+  private static final class StreamingRequestBody extends RequestBody
+          implements UnrepeatableRequestBody {
+    private final MediaType contentType;
+    private final Source source;
+
+    private StreamingRequestBody(MediaType contentType, Source source) {
+      this.contentType = contentType;
+      this.source = source;
+    }
+
+    @Override public MediaType contentType() {
+      return contentType;
+    }
+
+    @Override public void writeTo(BufferedSink sink) throws IOException {
+      try {
+        sink.writeAll(source);
+      } finally {
+        Util.closeQuietly(source);
+      }
+    }
   }
 }
