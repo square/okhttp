@@ -47,7 +47,7 @@ import okhttp3.logging.HttpLoggingInterceptor;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import okhttp3.mockwebserver.SocketPolicy;
-import okhttp3.mockwebserver.TlsNode;
+import okhttp3.tls.TlsNode;
 import okio.Buffer;
 import okio.BufferedSink;
 import org.hamcrest.BaseMatcher;
@@ -62,7 +62,7 @@ import org.junit.Test;
 
 import static java.util.Arrays.asList;
 import static okhttp3.TestUtil.defaultClient;
-import static okhttp3.mockwebserver.internal.tls.TlsUtil.localhost;
+import static okhttp3.tls.internal.TlsUtil.localhost;
 import static org.hamcrest.CoreMatchers.any;
 import static org.hamcrest.CoreMatchers.either;
 import static org.hamcrest.CoreMatchers.equalTo;

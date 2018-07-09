@@ -23,8 +23,8 @@ import java.util.List;
 import javax.net.ssl.SSLPeerUnverifiedException;
 import javax.net.ssl.X509TrustManager;
 import okhttp3.internal.tls.CertificateChainCleaner;
-import okhttp3.mockwebserver.HeldCertificate;
-import okhttp3.mockwebserver.TlsNode;
+import okhttp3.tls.HeldCertificate;
+import okhttp3.tls.TlsNode;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;

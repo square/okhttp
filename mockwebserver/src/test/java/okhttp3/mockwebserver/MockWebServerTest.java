@@ -40,6 +40,8 @@ import okhttp3.HttpUrl;
 import okhttp3.Protocol;
 import okhttp3.RecordingHostnameVerifier;
 import okhttp3.internal.Util;
+import okhttp3.tls.HeldCertificate;
+import okhttp3.tls.TlsNode;
 import org.junit.After;
 import org.junit.Rule;
 import org.junit.Test;
@@ -48,7 +50,7 @@ import org.junit.runners.model.Statement;
 
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
-import static okhttp3.mockwebserver.internal.tls.TlsUtil.localhost;
+import static okhttp3.tls.internal.TlsUtil.localhost;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;

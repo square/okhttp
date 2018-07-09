@@ -33,18 +33,18 @@ import okhttp3.Call;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
-import okhttp3.mockwebserver.HeldCertificate;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
-import okhttp3.mockwebserver.TlsNode;
+import okhttp3.tls.HeldCertificate;
+import okhttp3.tls.TlsNode;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 
 import static okhttp3.TestUtil.defaultClient;
 import static okhttp3.internal.platform.PlatformTest.getPlatform;
-import static okhttp3.mockwebserver.internal.tls.TlsUtil.newKeyManager;
-import static okhttp3.mockwebserver.internal.tls.TlsUtil.newTrustManager;
+import static okhttp3.tls.internal.TlsUtil.newKeyManager;
+import static okhttp3.tls.internal.TlsUtil.newTrustManager;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 

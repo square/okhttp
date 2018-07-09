@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package okhttp3.mockwebserver;
+package okhttp3.tls;
 
 import java.security.GeneralSecurityException;
 import java.security.SecureRandom;
@@ -28,8 +28,8 @@ import javax.net.ssl.X509KeyManager;
 import javax.net.ssl.X509TrustManager;
 import okhttp3.internal.platform.Platform;
 
-import static okhttp3.mockwebserver.internal.tls.TlsUtil.newKeyManager;
-import static okhttp3.mockwebserver.internal.tls.TlsUtil.newTrustManager;
+import static okhttp3.tls.internal.TlsUtil.newKeyManager;
+import static okhttp3.tls.internal.TlsUtil.newTrustManager;
 
 /**
  * Certificates to identify which peers to trust and also to earn the trust of those peers in kind.

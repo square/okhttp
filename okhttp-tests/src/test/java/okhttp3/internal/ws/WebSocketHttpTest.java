@@ -39,7 +39,7 @@ import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import okhttp3.mockwebserver.RecordedRequest;
 import okhttp3.mockwebserver.SocketPolicy;
-import okhttp3.mockwebserver.TlsNode;
+import okhttp3.tls.TlsNode;
 import okio.Buffer;
 import okio.ByteString;
 import org.junit.After;
@@ -49,7 +49,7 @@ import org.junit.Test;
 
 import static okhttp3.TestUtil.defaultClient;
 import static okhttp3.TestUtil.repeat;
-import static okhttp3.mockwebserver.internal.tls.TlsUtil.localhost;
+import static okhttp3.tls.internal.TlsUtil.localhost;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
