@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package okhttp3.mockwebserver.internal.tls;
+package okhttp3.tls.internal;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -31,8 +31,8 @@ import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
 import javax.net.ssl.X509KeyManager;
 import javax.net.ssl.X509TrustManager;
-import okhttp3.mockwebserver.HeldCertificate;
-import okhttp3.mockwebserver.TlsNode;
+import okhttp3.tls.HeldCertificate;
+import okhttp3.tls.TlsNode;
 
 public final class TlsUtil {
   public static final char[] password = "password".toCharArray();

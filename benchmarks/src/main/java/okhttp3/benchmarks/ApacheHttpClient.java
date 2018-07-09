@@ -20,7 +20,7 @@ import java.io.InputStream;
 import java.util.concurrent.TimeUnit;
 import java.util.zip.GZIPInputStream;
 import okhttp3.HttpUrl;
-import okhttp3.mockwebserver.TlsNode;
+import okhttp3.tls.TlsNode;
 import org.apache.http.Header;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
@@ -31,7 +31,7 @@ import org.apache.http.conn.ssl.SSLSocketFactory;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.impl.conn.PoolingClientConnectionManager;
 
-import static okhttp3.mockwebserver.internal.tls.TlsUtil.localhost;
+import static okhttp3.tls.internal.TlsUtil.localhost;
 
 /** Benchmark Apache HTTP client. */
 class ApacheHttpClient extends SynchronousHttpClient {

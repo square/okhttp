@@ -20,7 +20,7 @@ import okhttp3.internal.io.InMemoryFileSystem;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import okhttp3.mockwebserver.RecordedRequest;
-import okhttp3.mockwebserver.TlsNode;
+import okhttp3.tls.TlsNode;
 import okio.BufferedSource;
 import org.junit.After;
 import org.junit.Before;
@@ -28,7 +28,7 @@ import org.junit.Rule;
 import org.junit.Test;
 
 import static java.nio.charset.StandardCharsets.US_ASCII;
-import static okhttp3.mockwebserver.internal.tls.TlsUtil.localhost;
+import static okhttp3.tls.internal.TlsUtil.localhost;
 import static okio.Okio.buffer;
 import static okio.Okio.source;
 import static org.junit.Assert.assertEquals;

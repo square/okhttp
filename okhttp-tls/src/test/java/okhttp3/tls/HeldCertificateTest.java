@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package okhttp3.mockwebserver;
+package okhttp3.tls;
 
 import java.math.BigInteger;
 import java.security.KeyFactory;

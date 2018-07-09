@@ -27,6 +27,7 @@
     <module>okhttp-apache</module>
     <module>okhttp-sse</module>
     <module>okhttp-testing-support</module>
+    <module>okhttp-tls</module>
     <module>okhttp-urlconnection</module>
 
     <module>okhttp-logging-interceptor</module>

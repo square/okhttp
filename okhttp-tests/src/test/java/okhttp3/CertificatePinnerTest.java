@@ -20,7 +20,7 @@ import java.util.Collections;
 import java.util.List;
 import javax.net.ssl.SSLPeerUnverifiedException;
 import okhttp3.CertificatePinner.Pin;
-import okhttp3.mockwebserver.HeldCertificate;
+import okhttp3.tls.HeldCertificate;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;

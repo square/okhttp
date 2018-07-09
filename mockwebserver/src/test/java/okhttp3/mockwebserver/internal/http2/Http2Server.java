@@ -39,7 +39,7 @@ import okio.Okio;
 import okio.Source;
 
 import static okhttp3.internal.platform.Platform.INFO;
-import static okhttp3.mockwebserver.internal.tls.TlsUtil.localhost;
+import static okhttp3.tls.internal.TlsUtil.localhost;
 
 /** A basic HTTP/2 server that serves the contents of a local directory. */
 public final class Http2Server extends Http2Connection.Listener {

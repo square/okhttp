@@ -39,12 +39,12 @@ import okhttp3.Protocol;
 import okhttp3.Route;
 import okhttp3.internal.Util;
 import okhttp3.internal.http.RecordingProxySelector;
-import okhttp3.mockwebserver.TlsNode;
+import okhttp3.tls.TlsNode;
 import org.junit.Before;
 import org.junit.Test;
 
 import static java.net.Proxy.NO_PROXY;
-import static okhttp3.mockwebserver.internal.tls.TlsUtil.localhost;
+import static okhttp3.tls.internal.TlsUtil.localhost;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertSame;

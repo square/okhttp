@@ -31,9 +31,9 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
 import okhttp3.ResponseBody;
-import okhttp3.mockwebserver.TlsNode;
+import okhttp3.tls.TlsNode;
 
-import static okhttp3.mockwebserver.internal.tls.TlsUtil.localhost;
+import static okhttp3.tls.internal.TlsUtil.localhost;
 
 class OkHttpAsync implements HttpClient {
   private static final boolean VERBOSE = false;

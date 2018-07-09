@@ -25,9 +25,9 @@ import okhttp3.HttpUrl;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.ResponseBody;
-import okhttp3.mockwebserver.TlsNode;
+import okhttp3.tls.TlsNode;
 
-import static okhttp3.mockwebserver.internal.tls.TlsUtil.localhost;
+import static okhttp3.tls.internal.TlsUtil.localhost;
 
 class OkHttp extends SynchronousHttpClient {
   private static final boolean VERBOSE = false;

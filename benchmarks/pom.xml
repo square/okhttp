@@ -36,12 +36,13 @@
     </dependency>
     <dependency>
       <groupId>${project.groupId}</groupId>
-      <artifactId>mockwebserver</artifactId>
+      <artifactId>okhttp-tls</artifactId>
       <version>${project.version}</version>
     </dependency>
     <dependency>
-      <groupId>org.bouncycastle</groupId>
-      <artifactId>bcprov-jdk15on</artifactId>
+      <groupId>${project.groupId}</groupId>
+      <artifactId>mockwebserver</artifactId>
+      <version>${project.version}</version>
     </dependency>
     <dependency>
       <groupId>org.apache.httpcomponents</groupId>

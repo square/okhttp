@@ -25,10 +25,10 @@ import javax.net.ssl.SSLSocket;
 import okhttp3.ConnectionSpec;
 import okhttp3.TlsVersion;
 import okhttp3.internal.Internal;
-import okhttp3.mockwebserver.TlsNode;
+import okhttp3.tls.TlsNode;
 import org.junit.Test;
 
-import static okhttp3.mockwebserver.internal.tls.TlsUtil.localhost;
+import static okhttp3.tls.internal.TlsUtil.localhost;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;

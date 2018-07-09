@@ -9,8 +9,8 @@
     <version>3.11.0-SNAPSHOT</version>
   </parent>
 
-  <artifactId>mockwebserver</artifactId>
-  <name>MockWebServer</name>
+  <artifactId>okhttp-tls</artifactId>
+  <name>OkHttp Transport Layer Security (TLS)</name>
 
   <dependencies>
     <dependency>
@@ -19,20 +19,25 @@
       <version>${project.version}</version>
     </dependency>
     <dependency>
+      <groupId>com.google.code.findbugs</groupId>
+      <artifactId>jsr305</artifactId>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.bouncycastle</groupId>
+      <artifactId>bcprov-jdk15on</artifactId>
+    </dependency>
+    <dependency>
       <groupId>${project.groupId}</groupId>
       <artifactId>okhttp-testing-support</artifactId>
       <version>${project.version}</version>
       <scope>test</scope>
     </dependency>
-    <dependency>
-      <groupId>${project.groupId}</groupId>
-      <artifactId>okhttp-tls</artifactId>
-      <version>${project.version}</version>
-      <scope>test</scope>
-    </dependency>
+
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
+      <scope>test</scope>
     </dependency>
   </dependencies>
 
@@ -45,27 +50,8 @@
         <configuration>
           <links>
             <link>http://square.github.io/okhttp/javadoc/</link>
-            <link>http://square.github.io/okio/</link>
           </links>
         </configuration>
-      </plugin>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-assembly-plugin</artifactId>
-        <version>3.0.0</version>
-        <configuration>
-          <descriptorRefs>
-            <descriptorRef>jar-with-dependencies</descriptorRef>
-          </descriptorRefs>
-        </configuration>
-        <executions>
-          <execution>
-            <phase>package</phase>
-            <goals>
-              <goal>single</goal>
-            </goals>
-          </execution>
-        </executions>
       </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
@@ -74,7 +60,7 @@
         <configuration>
           <archive>
             <manifestEntries>
-              <Automatic-Module-Name>okhttp3.mockwebserver</Automatic-Module-Name>
+              <Automatic-Module-Name>okhttp3.tls</Automatic-Module-Name>
             </manifestEntries>
           </archive>
         </configuration>
