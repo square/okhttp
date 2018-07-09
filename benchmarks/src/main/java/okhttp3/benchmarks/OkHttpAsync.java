@@ -31,7 +31,9 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
 import okhttp3.ResponseBody;
-import okhttp3.mockwebserver.internal.tls.SslClient;
+import okhttp3.mockwebserver.TlsNode;
+
+import static okhttp3.mockwebserver.internal.tls.TlsUtil.localhost;
 
 class OkHttpAsync implements HttpClient {
   private static final boolean VERBOSE = false;
@@ -54,15 +56,15 @@ class OkHttpAsync implements HttpClient {
         .build();
 
     if (benchmark.tls) {
-      SslClient sslClient = SslClient.localhost();
-      SSLSocketFactory socketFactory = sslClient.socketFactory;
+      TlsNode tlsNode = localhost();
+      SSLSocketFactory socketFactory = tlsNode.sslSocketFactory();
       HostnameVerifier hostnameVerifier = new HostnameVerifier() {
         @Override public boolean verify(String s, SSLSession session) {
           return true;
         }
       };
       client = client.newBuilder()
-          .sslSocketFactory(socketFactory, sslClient.trustManager)
+          .sslSocketFactory(socketFactory, tlsNode.trustManager())
           .hostnameVerifier(hostnameVerifier)
           .build();
     }

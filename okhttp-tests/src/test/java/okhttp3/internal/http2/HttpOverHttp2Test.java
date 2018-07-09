@@ -61,7 +61,7 @@ import okhttp3.mockwebserver.PushPromise;
 import okhttp3.mockwebserver.QueueDispatcher;
 import okhttp3.mockwebserver.RecordedRequest;
 import okhttp3.mockwebserver.SocketPolicy;
-import okhttp3.mockwebserver.internal.tls.SslClient;
+import okhttp3.mockwebserver.TlsNode;
 import okio.Buffer;
 import okio.BufferedSink;
 import okio.GzipSink;
@@ -79,6 +79,7 @@ import org.junit.runners.Parameterized.Parameters;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static okhttp3.TestUtil.defaultClient;
+import static okhttp3.mockwebserver.internal.tls.TlsUtil.localhost;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
@@ -92,7 +93,7 @@ import static org.junit.Assume.assumeTrue;
 @RunWith(Parameterized.class)
 public final class HttpOverHttp2Test {
   private static final Logger http2Logger = Logger.getLogger(Http2.class.getName());
-  private static final SslClient sslClient = SslClient.localhost();
+  private static final TlsNode tlsNode = localhost();
 
   @Parameters(name = "{0}")
   public static Collection<Protocol> data() {
@@ -125,7 +126,7 @@ public final class HttpOverHttp2Test {
     return defaultClient().newBuilder()
         .protocols(Arrays.asList(Protocol.HTTP_2, Protocol.HTTP_1_1))
         .dns(new SingleInetAddressDns())
-        .sslSocketFactory(sslClient.socketFactory, sslClient.trustManager)
+        .sslSocketFactory(tlsNode.sslSocketFactory(), tlsNode.trustManager())
         .hostnameVerifier(new RecordingHostnameVerifier())
         .build();
   }
@@ -134,7 +135,7 @@ public final class HttpOverHttp2Test {
     if (protocol == Protocol.H2_PRIOR_KNOWLEDGE) {
       server.setProtocols(Arrays.asList(Protocol.H2_PRIOR_KNOWLEDGE));
     } else {
-      server.useHttps(sslClient.socketFactory, false);
+      server.useHttps(tlsNode.sslSocketFactory(), false);
     }
 
     cache = new Cache(tempDir.getRoot(), Integer.MAX_VALUE);
@@ -1313,7 +1314,7 @@ public final class HttpOverHttp2Test {
   @Test public void concurrentHttp2ConnectionsDeduplicated() throws Exception {
     assumeTrue(protocol == Protocol.HTTP_2);
 
-    server.useHttps(sslClient.socketFactory, true);
+    server.useHttps(tlsNode.sslSocketFactory(), true);
 
     // Force a fresh connection pool for the test.
     client.connectionPool().evictAll();
