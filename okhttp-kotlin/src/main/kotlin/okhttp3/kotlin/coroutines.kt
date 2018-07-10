@@ -8,20 +8,20 @@ import okhttp3.Response
 import java.io.IOException
 
 suspend fun OkHttpClient.execute(request: Request): Response {
-    val call = this.newCall(request)
-    return call.await()
+  val call = this.newCall(request)
+  return call.await()
 }
 
 suspend fun Call.await(): Response {
-    return kotlinx.coroutines.experimental.suspendCancellableCoroutine { c ->
-        enqueue(object : Callback {
-            override fun onFailure(call: Call, e: IOException) {
-                c.resumeWithException(e)
-            }
+  return kotlinx.coroutines.experimental.suspendCancellableCoroutine { c ->
+    enqueue(object : Callback {
+      override fun onFailure(call: Call, e: IOException) {
+        c.resumeWithException(e)
+      }
 
-            override fun onResponse(call: Call, response: Response) {
-                c.resume(response)
-            }
-        })
-    }
+      override fun onResponse(call: Call, response: Response) {
+        c.resume(response)
+      }
+    })
+  }
 }
