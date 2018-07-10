@@ -1,5 +1,7 @@
 package okhttp3.kotlin
 
+import kotlinx.coroutines.experimental.JobCancellationException
+import kotlinx.coroutines.experimental.suspendCancellableCoroutine
 import okhttp3.Call
 import okhttp3.Callback
 import okhttp3.OkHttpClient
@@ -13,14 +15,23 @@ suspend fun OkHttpClient.execute(request: Request): Response {
 }
 
 suspend fun Call.await(): Response {
-  return kotlinx.coroutines.experimental.suspendCancellableCoroutine { c ->
+  return suspendCancellableCoroutine { cont ->
+    cont.invokeOnCompletion(onCancelling = true) {
+      if (!cont.isCompleted && it is JobCancellationException) {
+          cancel()
+      }
+    }
     enqueue(object : Callback {
       override fun onFailure(call: Call, e: IOException) {
-        c.resumeWithException(e)
+        if (!cont.isCancelled) {
+          cont.resumeWithException(e)
+        }
       }
 
       override fun onResponse(call: Call, response: Response) {
-        c.resume(response)
+        if (!cont.isCancelled) {
+          cont.resume(response)
+        }
       }
     })
   }
