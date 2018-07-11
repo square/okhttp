@@ -1086,8 +1086,8 @@ public final class CallTest {
     client = client.newBuilder()
         .hostnameVerifier(new RecordingHostnameVerifier())
         .dns(new SingleInetAddressDns())
-        // opt-in to fallback to COMPATIBLE_TLS
-        .connectionSpecs(Arrays.asList(ConnectionSpec.MODERN_TLS, ConnectionSpec.COMPATIBLE_TLS))
+        // Attempt RESTRICTED_TLS then fall back to MODERN_TLS.
+        .connectionSpecs(Arrays.asList(ConnectionSpec.RESTRICTED_TLS, ConnectionSpec.MODERN_TLS))
         .sslSocketFactory(suppressTlsFallbackClientSocketFactory(), tlsNode.trustManager())
         .build();
 
@@ -1110,8 +1110,8 @@ public final class CallTest {
         new RecordingSSLSocketFactory(tlsNode.sslSocketFactory());
     client = client.newBuilder()
         .sslSocketFactory(clientSocketFactory, tlsNode.trustManager())
-        // opt-in to fallback to COMPATIBLE_TLS
-        .connectionSpecs(Arrays.asList(ConnectionSpec.MODERN_TLS, ConnectionSpec.COMPATIBLE_TLS))
+        // Attempt RESTRICTED_TLS then fall back to MODERN_TLS.
+        .connectionSpecs(Arrays.asList(ConnectionSpec.RESTRICTED_TLS, ConnectionSpec.MODERN_TLS))
         .hostnameVerifier(new RecordingHostnameVerifier())
         .dns(new SingleInetAddressDns())
         .build();
@@ -1137,7 +1137,8 @@ public final class CallTest {
 
     client = client.newBuilder()
         .hostnameVerifier(new RecordingHostnameVerifier())
-        .connectionSpecs(Arrays.asList(ConnectionSpec.MODERN_TLS, ConnectionSpec.COMPATIBLE_TLS))
+        // Attempt RESTRICTED_TLS then fall back to MODERN_TLS.
+        .connectionSpecs(Arrays.asList(ConnectionSpec.RESTRICTED_TLS, ConnectionSpec.MODERN_TLS))
         .sslSocketFactory(suppressTlsFallbackClientSocketFactory(), tlsNode.trustManager())
         .build();
 

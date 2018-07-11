@@ -691,7 +691,8 @@ public final class URLConnectionTest {
 
     urlFactory.setClient(urlFactory.client().newBuilder()
         .hostnameVerifier(new RecordingHostnameVerifier())
-        .connectionSpecs(Arrays.asList(ConnectionSpec.MODERN_TLS, ConnectionSpec.COMPATIBLE_TLS))
+        // Attempt RESTRICTED_TLS then fall back to MODERN_TLS.
+        .connectionSpecs(Arrays.asList(ConnectionSpec.RESTRICTED_TLS, ConnectionSpec.MODERN_TLS))
         .sslSocketFactory(suppressTlsFallbackClientSocketFactory(), tlsNode.trustManager())
         .build());
     connection = urlFactory.open(server.url("/foo").url());
@@ -703,7 +704,7 @@ public final class URLConnectionTest {
 
     RecordedRequest fallbackRequest = server.takeRequest();
     assertEquals("GET /foo HTTP/1.1", fallbackRequest.getRequestLine());
-    assertEquals(TlsVersion.TLS_1_0, fallbackRequest.getTlsVersion());
+    assertEquals(TlsVersion.TLS_1_2, fallbackRequest.getTlsVersion());
   }
 
   @Test public void connectViaHttpsWithSSLFallbackFailuresRecorded() throws Exception {

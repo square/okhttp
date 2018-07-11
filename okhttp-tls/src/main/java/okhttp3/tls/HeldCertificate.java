@@ -26,6 +26,7 @@ import java.security.SecureRandom;
 import java.security.Security;
 import java.security.cert.CertificateEncodingException;
 import java.security.cert.X509Certificate;
+import java.security.interfaces.RSAPrivateKey;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -113,9 +114,6 @@ import static okhttp3.internal.Util.verifyAsIpAddress;
  * <p>This roles are reversed for client authentication. In that case the client has a private key
  * and a chain of certificates. The server uses a set of trusted root certificates to authenticate
  * the client. Subject alternative names are not used for client authentication.
- *
- * <p>This class is intended to be used for testing. It uses small keys (1024 bit RSA) because they
- * are quick to generate.
  */
 public final class HeldCertificate {
   private final X509Certificate certificate;
@@ -153,8 +151,8 @@ public final class HeldCertificate {
   }
 
   /**
-   * Returns the RSA private key encoded in <a href="https://tools.ietf.org/html/rfc8017">PKCS
-   * #1</a> <a href="https://tools.ietf.org/html/rfc7468">PEM format</a>.
+   * Returns the RSA private key encoded in <a href="https://tools.ietf.org/html/rfc5208">PKCS
+   * #8</a> <a href="https://tools.ietf.org/html/rfc7468">PEM format</a>.
    */
   public String privateKeyPkcs8Pem() {
     StringBuilder result = new StringBuilder();
@@ -165,10 +163,13 @@ public final class HeldCertificate {
   }
 
   /**
-   * Returns the RSA private key encoded in <a href="https://tools.ietf.org/html/rfc5208">PKCS
-   * #8</a> <a href="https://tools.ietf.org/html/rfc7468">PEM format</a>.
+   * Returns the RSA private key encoded in <a href="https://tools.ietf.org/html/rfc8017">PKCS
+   * #1</a> <a href="https://tools.ietf.org/html/rfc7468">PEM format</a>.
    */
   public String privateKeyPkcs1Pem() {
+    if (!(keyPair.getPrivate() instanceof RSAPrivateKey)) {
+      throw new IllegalStateException("PKCS1 only supports RSA keys");
+    }
     StringBuilder result = new StringBuilder();
     result.append("-----BEGIN RSA PRIVATE KEY-----\n");
     encodeBase64Lines(result, pkcs1Bytes());
@@ -192,7 +193,7 @@ public final class HeldCertificate {
     }
   }
 
-  /** Build a held certificate with reasonable defaults for testing. */
+  /** Build a held certificate with reasonable defaults. */
   public static final class Builder {
     private static final long DEFAULT_DURATION_MILLIS = 1000L * 60 * 60 * 24; // 24 hours.
 
@@ -209,6 +210,12 @@ public final class HeldCertificate {
     private KeyPair keyPair;
     private HeldCertificate issuedBy;
     private int maxIntermediateCas;
+    private String keyAlgorithm;
+    private int keySize;
+
+    public Builder() {
+      ecdsa256();
+    }
 
     /**
      * Sets the certificate to be valid in {@code [notBefore..notAfter]}. Both endpoints are
@@ -308,6 +315,29 @@ public final class HeldCertificate {
       return this;
     }
 
+    /**
+     * Configure the certificate to generate a 256-bit ECDSA key, which provides about 128 bits of
+     * security. ECDSA keys are noticeably faster than RSA keys.
+     *
+     * <p>This is the default configuration and has been since this API was introduced in OkHttp
+     * 3.11.0. Note that the default may change in future releases.
+     */
+    public Builder ecdsa256() {
+      keyAlgorithm = "ECDSA";
+      keySize = 256;
+      return this;
+    }
+
+    /**
+     * Configure the certificate to generate a 2048-bit RSA key, which provides about 112 bits of
+     * security. RSA keys are interoperable with very old clients that don't support ECDSA.
+     */
+    public Builder rsa2048() {
+      keyAlgorithm = "RSA";
+      keySize = 2048;
+      return this;
+    }
+
     public HeldCertificate build() {
       // Subject, public & private keys for this certificate.
       KeyPair heldKeyPair = keyPair != null
@@ -338,7 +368,9 @@ public final class HeldCertificate {
       generator.setNotAfter(new Date(notAfter));
       generator.setSubjectDN(subject);
       generator.setPublicKey(heldKeyPair.getPublic());
-      generator.setSignatureAlgorithm("SHA256WithRSAEncryption");
+      generator.setSignatureAlgorithm(signedByKeyPair.getPrivate() instanceof RSAPrivateKey
+          ? "SHA256WithRSAEncryption"
+          : "SHA256withECDSA");
 
       if (maxIntermediateCas > 0) {
         generator.addExtension(X509Extensions.BasicConstraints, true,
@@ -382,8 +414,8 @@ public final class HeldCertificate {
 
     private KeyPair generateKeyPair() {
       try {
-        KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("RSA", "BC");
-        keyPairGenerator.initialize(1024, new SecureRandom());
+        KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance(keyAlgorithm, "BC");
+        keyPairGenerator.initialize(keySize, new SecureRandom());
         return keyPairGenerator.generateKeyPair();
       } catch (GeneralSecurityException e) {
         throw new AssertionError(e);
