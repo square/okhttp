@@ -32,7 +32,7 @@ import okhttp3.mockwebserver.Dispatcher;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import okhttp3.mockwebserver.RecordedRequest;
-import okhttp3.tls.TlsNode;
+import okhttp3.tls.HandshakeCertificates;
 import okio.Buffer;
 import okio.GzipSink;
 
@@ -162,8 +162,8 @@ public class Benchmark extends com.google.caliper.Benchmark {
     MockWebServer server = new MockWebServer();
 
     if (tls) {
-      TlsNode tlsNode = localhost();
-      server.useHttps(tlsNode.sslSocketFactory(), false);
+      HandshakeCertificates handshakeCertificates = localhost();
+      server.useHttps(handshakeCertificates.sslSocketFactory(), false);
       server.setProtocols(protocols);
     }
 

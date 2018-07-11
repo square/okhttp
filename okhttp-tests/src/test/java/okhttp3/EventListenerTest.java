@@ -47,7 +47,7 @@ import okhttp3.logging.HttpLoggingInterceptor;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import okhttp3.mockwebserver.SocketPolicy;
-import okhttp3.tls.TlsNode;
+import okhttp3.tls.HandshakeCertificates;
 import okio.Buffer;
 import okio.BufferedSink;
 import org.hamcrest.BaseMatcher;
@@ -82,7 +82,7 @@ public final class EventListenerTest {
 
   private final SingleInetAddressDns singleDns = new SingleInetAddressDns();
   private final RecordingEventListener listener = new RecordingEventListener();
-  private final TlsNode tlsNode = localhost();
+  private final HandshakeCertificates handshakeCertificates = localhost();
 
   private OkHttpClient client;
   private SocksProxy socksProxy;
@@ -1080,9 +1080,10 @@ public final class EventListenerTest {
 
   private void enableTlsWithTunnel(boolean tunnelProxy) {
     client = client.newBuilder()
-        .sslSocketFactory(tlsNode.sslSocketFactory(), tlsNode.trustManager())
+        .sslSocketFactory(
+            handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager())
         .hostnameVerifier(new RecordingHostnameVerifier())
         .build();
-    server.useHttps(tlsNode.sslSocketFactory(), tunnelProxy);
+    server.useHttps(handshakeCertificates.sslSocketFactory(), tunnelProxy);
   }
 }

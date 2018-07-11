@@ -41,7 +41,7 @@ import okhttp3.Protocol;
 import okhttp3.RecordingHostnameVerifier;
 import okhttp3.internal.Util;
 import okhttp3.tls.HeldCertificate;
-import okhttp3.tls.TlsNode;
+import okhttp3.tls.HandshakeCertificates;
 import org.junit.After;
 import org.junit.Rule;
 import org.junit.Test;
@@ -498,13 +498,13 @@ public final class MockWebServerTest {
   }
 
   @Test public void https() throws Exception {
-    TlsNode tlsNode = localhost();
-    server.useHttps(tlsNode.sslSocketFactory(), false);
+    HandshakeCertificates handshakeCertificates = localhost();
+    server.useHttps(handshakeCertificates.sslSocketFactory(), false);
     server.enqueue(new MockResponse().setBody("abc"));
 
     HttpUrl url = server.url("/");
     HttpsURLConnection connection = (HttpsURLConnection) url.url().openConnection();
-    connection.setSSLSocketFactory(tlsNode.sslSocketFactory());
+    connection.setSSLSocketFactory(handshakeCertificates.sslSocketFactory());
     connection.setHostnameVerifier(new RecordingHostnameVerifier());
 
     assertEquals(HttpURLConnection.HTTP_OK, connection.getResponseCode());
@@ -533,26 +533,26 @@ public final class MockWebServerTest {
         .issuedBy(serverCa)
         .addSubjectAlternativeName(server.getHostName())
         .build();
-    TlsNode serverTlsNode = new TlsNode.Builder()
+    HandshakeCertificates serverHandshakeCertificates = new HandshakeCertificates.Builder()
         .addTrustedCertificate(clientCa.certificate())
         .heldCertificate(serverCertificate)
         .build();
 
-    server.useHttps(serverTlsNode.sslSocketFactory(), false);
+    server.useHttps(serverHandshakeCertificates.sslSocketFactory(), false);
     server.enqueue(new MockResponse().setBody("abc"));
     server.requestClientAuth();
 
     HeldCertificate clientCertificate = new HeldCertificate.Builder()
         .issuedBy(clientCa)
         .build();
-    TlsNode clientTlsNode = new TlsNode.Builder()
+    HandshakeCertificates clientHandshakeCertificates = new HandshakeCertificates.Builder()
         .addTrustedCertificate(serverCa.certificate())
         .heldCertificate(clientCertificate)
         .build();
 
     HttpUrl url = server.url("/");
     HttpsURLConnection connection = (HttpsURLConnection) url.url().openConnection();
-    connection.setSSLSocketFactory(clientTlsNode.sslSocketFactory());
+    connection.setSSLSocketFactory(clientHandshakeCertificates.sslSocketFactory());
     connection.setHostnameVerifier(new RecordingHostnameVerifier());
 
     assertEquals(HttpURLConnection.HTTP_OK, connection.getResponseCode());

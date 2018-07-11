@@ -39,7 +39,7 @@ import okhttp3.Protocol;
 import okhttp3.Route;
 import okhttp3.internal.Util;
 import okhttp3.internal.http.RecordingProxySelector;
-import okhttp3.tls.TlsNode;
+import okhttp3.tls.HandshakeCertificates;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -69,8 +69,8 @@ public final class RouteSelectorTest {
   private int uriPort = 1003;
 
   private SocketFactory socketFactory;
-  private final TlsNode tlsNode = localhost();
-  private final SSLSocketFactory sslSocketFactory = tlsNode.sslSocketFactory();
+  private final HandshakeCertificates handshakeCertificates = localhost();
+  private final SSLSocketFactory sslSocketFactory = handshakeCertificates.sslSocketFactory();
   private HostnameVerifier hostnameVerifier;
 
   private final Authenticator authenticator = Authenticator.NONE;

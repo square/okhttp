@@ -38,7 +38,7 @@ import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import okhttp3.mockwebserver.SocketPolicy;
 import okhttp3.tls.HeldCertificate;
-import okhttp3.tls.TlsNode;
+import okhttp3.tls.HandshakeCertificates;
 import org.junit.Rule;
 import org.junit.Test;
 
@@ -74,19 +74,20 @@ public final class CertificatePinnerChainValidationTest {
     CertificatePinner certificatePinner = new CertificatePinner.Builder()
         .add(server.getHostName(), CertificatePinner.pin(rootCa.certificate()))
         .build();
-    TlsNode tlsNode = new TlsNode.Builder()
+    HandshakeCertificates handshakeCertificates = new HandshakeCertificates.Builder()
         .addTrustedCertificate(rootCa.certificate())
         .build();
     OkHttpClient client = defaultClient().newBuilder()
-        .sslSocketFactory(tlsNode.sslSocketFactory(), tlsNode.trustManager())
+        .sslSocketFactory(
+            handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager())
         .hostnameVerifier(new RecordingHostnameVerifier())
         .certificatePinner(certificatePinner)
         .build();
 
-    TlsNode serverTlsNode = new TlsNode.Builder()
+    HandshakeCertificates serverHandshakeCertificates = new HandshakeCertificates.Builder()
         .heldCertificate(certificate, intermediateCa.certificate())
         .build();
-    server.useHttps(serverTlsNode.sslSocketFactory(), false);
+    server.useHttps(serverHandshakeCertificates.sslSocketFactory(), false);
 
     // The request should complete successfully.
     server.enqueue(new MockResponse()
@@ -130,19 +131,20 @@ public final class CertificatePinnerChainValidationTest {
     CertificatePinner certificatePinner = new CertificatePinner.Builder()
         .add(server.getHostName(), CertificatePinner.pin(intermediateCa.certificate()))
         .build();
-    TlsNode tlsNode = new TlsNode.Builder()
+    HandshakeCertificates handshakeCertificates = new HandshakeCertificates.Builder()
         .addTrustedCertificate(rootCa.certificate())
         .build();
     OkHttpClient client = defaultClient().newBuilder()
-        .sslSocketFactory(tlsNode.sslSocketFactory(), tlsNode.trustManager())
+        .sslSocketFactory(
+            handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager())
         .hostnameVerifier(new RecordingHostnameVerifier())
         .certificatePinner(certificatePinner)
         .build();
 
-    TlsNode serverTlsNode = new TlsNode.Builder()
+    HandshakeCertificates serverHandshakeCertificates = new HandshakeCertificates.Builder()
         .heldCertificate(certificate, intermediateCa.certificate())
         .build();
-    server.useHttps(serverTlsNode.sslSocketFactory(), false);
+    server.useHttps(serverHandshakeCertificates.sslSocketFactory(), false);
 
     // The request should complete successfully.
     server.enqueue(new MockResponse()
@@ -195,12 +197,12 @@ public final class CertificatePinnerChainValidationTest {
     CertificatePinner certificatePinner = new CertificatePinner.Builder()
         .add(server.getHostName(), CertificatePinner.pin(goodCertificate.certificate()))
         .build();
-    TlsNode tlsNode = new TlsNode.Builder()
+    HandshakeCertificates handshakeCertificates = new HandshakeCertificates.Builder()
         .addTrustedCertificate(rootCa.certificate())
         .build();
     OkHttpClient client = defaultClient().newBuilder()
-        .sslSocketFactory(tlsNode.sslSocketFactory(),
-            tlsNode.trustManager())
+        .sslSocketFactory(
+            handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager())
         .hostnameVerifier(new RecordingHostnameVerifier())
         .certificatePinner(certificatePinner)
         .build();
@@ -270,12 +272,13 @@ public final class CertificatePinnerChainValidationTest {
     CertificatePinner certificatePinner = new CertificatePinner.Builder()
         .add(server.getHostName(), CertificatePinner.pin(goodIntermediateCa.certificate()))
         .build();
-    TlsNode tlsNode = new TlsNode.Builder()
+    HandshakeCertificates handshakeCertificates = new HandshakeCertificates.Builder()
         .addTrustedCertificate(rootCa.certificate())
         .addTrustedCertificate(compromisedRootCa.certificate())
         .build();
     OkHttpClient client = defaultClient().newBuilder()
-        .sslSocketFactory(tlsNode.sslSocketFactory(), tlsNode.trustManager())
+        .sslSocketFactory(
+            handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager())
         .hostnameVerifier(new RecordingHostnameVerifier())
         .certificatePinner(certificatePinner)
         .build();

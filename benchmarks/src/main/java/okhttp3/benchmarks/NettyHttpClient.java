@@ -44,7 +44,7 @@ import java.util.Deque;
 import java.util.concurrent.TimeUnit;
 import javax.net.ssl.SSLEngine;
 import okhttp3.HttpUrl;
-import okhttp3.tls.TlsNode;
+import okhttp3.tls.HandshakeCertificates;
 
 import static okhttp3.tls.internal.TlsUtil.localhost;
 
@@ -66,12 +66,12 @@ class NettyHttpClient implements HttpClient {
     this.targetBacklog = benchmark.targetBacklog;
 
     ChannelInitializer<SocketChannel> channelInitializer = new ChannelInitializer<SocketChannel>() {
-      @Override public void initChannel(SocketChannel channel) throws Exception {
+      @Override public void initChannel(SocketChannel channel) {
         ChannelPipeline pipeline = channel.pipeline();
 
         if (benchmark.tls) {
-          TlsNode tlsNode = localhost();
-          SSLEngine engine = tlsNode.sslContext().createSSLEngine();
+          HandshakeCertificates handshakeCertificates = localhost();
+          SSLEngine engine = handshakeCertificates.sslContext().createSSLEngine();
           engine.setUseClientMode(true);
           pipeline.addLast("ssl", new SslHandler(engine));
         }
@@ -154,7 +154,7 @@ class NettyHttpClient implements HttpClient {
     }
 
     @Override protected void channelRead0(
-        ChannelHandlerContext context, HttpObject message) throws Exception {
+        ChannelHandlerContext context, HttpObject message) {
       if (message instanceof HttpResponse) {
         receive((HttpResponse) message);
       }
