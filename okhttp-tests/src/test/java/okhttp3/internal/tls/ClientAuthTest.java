@@ -47,6 +47,7 @@ import static okhttp3.internal.platform.PlatformTest.getPlatform;
 import static okhttp3.tls.internal.TlsUtil.newKeyManager;
 import static okhttp3.tls.internal.TlsUtil.newTrustManager;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 public final class ClientAuthTest {
@@ -183,9 +184,6 @@ public final class ClientAuthTest {
       fail();
     } catch (SSLHandshakeException expected) {
     } catch (SSLException expected) {
-      // javax.net.ssl.SSLException: readRecord
-      assertTrue(getPlatform().equals("jdk9"));
-
       String jvmVersion = System.getProperty("java.specification.version");
       assertTrue(jvmVersion.equals("11"));
     } catch (SocketException expected) {
