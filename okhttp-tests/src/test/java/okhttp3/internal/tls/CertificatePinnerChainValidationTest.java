@@ -57,12 +57,12 @@ public final class CertificatePinnerChainValidationTest {
   @Test public void pinRootNotPresentInChain() throws Exception {
     HeldCertificate rootCa = new HeldCertificate.Builder()
         .serialNumber(1L)
-        .certificateAuthority(3)
+        .certificateAuthority(1)
         .commonName("root")
         .build();
     HeldCertificate intermediateCa = new HeldCertificate.Builder()
         .issuedBy(rootCa)
-        .certificateAuthority(2)
+        .certificateAuthority(0)
         .serialNumber(2L)
         .commonName("intermediate_ca")
         .build();
@@ -113,12 +113,12 @@ public final class CertificatePinnerChainValidationTest {
   @Test public void pinIntermediatePresentInChain() throws Exception {
     HeldCertificate rootCa = new HeldCertificate.Builder()
         .serialNumber(1L)
-        .certificateAuthority(3)
+        .certificateAuthority(1)
         .commonName("root")
         .build();
     HeldCertificate intermediateCa = new HeldCertificate.Builder()
         .issuedBy(rootCa)
-        .certificateAuthority(2)
+        .certificateAuthority(0)
         .serialNumber(2L)
         .commonName("intermediate_ca")
         .build();
@@ -174,7 +174,7 @@ public final class CertificatePinnerChainValidationTest {
     // Start with a trusted root CA certificate.
     HeldCertificate rootCa = new HeldCertificate.Builder()
         .serialNumber(1L)
-        .certificateAuthority(3)
+        .certificateAuthority(1)
         .commonName("root")
         .build();
 
@@ -183,7 +183,7 @@ public final class CertificatePinnerChainValidationTest {
     // certificate.
     HeldCertificate goodIntermediateCa = new HeldCertificate.Builder()
         .issuedBy(rootCa)
-        .certificateAuthority(2)
+        .certificateAuthority(0)
         .serialNumber(2L)
         .commonName("good_intermediate_ca")
         .build();
@@ -211,7 +211,7 @@ public final class CertificatePinnerChainValidationTest {
     // chain, we may trick the certificate pinner into accepting the rouge certificate.
     HeldCertificate compromisedIntermediateCa = new HeldCertificate.Builder()
         .issuedBy(rootCa)
-        .certificateAuthority(2)
+        .certificateAuthority(0)
         .serialNumber(4L)
         .commonName("bad_intermediate_ca")
         .build();
@@ -249,12 +249,12 @@ public final class CertificatePinnerChainValidationTest {
     // Start with two root CA certificates, one is good and the other is compromised.
     HeldCertificate rootCa = new HeldCertificate.Builder()
         .serialNumber(1L)
-        .certificateAuthority(3)
+        .certificateAuthority(1)
         .commonName("root")
         .build();
     HeldCertificate compromisedRootCa = new HeldCertificate.Builder()
         .serialNumber(2L)
-        .certificateAuthority(3)
+        .certificateAuthority(1)
         .commonName("compromised_root")
         .build();
 
@@ -263,7 +263,7 @@ public final class CertificatePinnerChainValidationTest {
     // certificate.
     HeldCertificate goodIntermediateCa = new HeldCertificate.Builder()
         .issuedBy(rootCa)
-        .certificateAuthority(2)
+        .certificateAuthority(0)
         .serialNumber(3L)
         .commonName("intermediate_ca")
         .build();
@@ -286,7 +286,7 @@ public final class CertificatePinnerChainValidationTest {
     // different set of certificates than the SSL verifier.
     HeldCertificate compromisedIntermediateCa = new HeldCertificate.Builder()
         .issuedBy(compromisedRootCa)
-        .certificateAuthority(2)
+        .certificateAuthority(0)
         .serialNumber(4L)
         .commonName("intermediate_ca")
         .build();

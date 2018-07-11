@@ -62,13 +62,13 @@ public final class ClientAuthTest {
   public void setUp() {
     serverRootCa = new HeldCertificate.Builder()
         .serialNumber(1L)
-        .certificateAuthority(3)
+        .certificateAuthority(1)
         .commonName("root")
         .addSubjectAlternativeName("root_ca.com")
         .build();
     serverIntermediateCa = new HeldCertificate.Builder()
         .issuedBy(serverRootCa)
-        .certificateAuthority(2)
+        .certificateAuthority(0)
         .serialNumber(2L)
         .commonName("intermediate_ca")
         .addSubjectAlternativeName("intermediate_ca.com")
@@ -83,13 +83,13 @@ public final class ClientAuthTest {
 
     clientRootCa = new HeldCertificate.Builder()
         .serialNumber(1L)
-        .certificateAuthority(13)
+        .certificateAuthority(1)
         .commonName("root")
         .addSubjectAlternativeName("root_ca.com")
         .build();
     clientIntermediateCa = new HeldCertificate.Builder()
         .issuedBy(serverRootCa)
-        .certificateAuthority(12)
+        .certificateAuthority(0)
         .serialNumber(2L)
         .commonName("intermediate_ca")
         .addSubjectAlternativeName("intermediate_ca.com")
