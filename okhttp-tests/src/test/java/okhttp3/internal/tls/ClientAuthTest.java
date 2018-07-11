@@ -22,6 +22,7 @@ import java.security.cert.X509Certificate;
 import java.util.Arrays;
 import javax.net.ssl.KeyManager;
 import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLException;
 import javax.net.ssl.SSLHandshakeException;
 import javax.net.ssl.SSLPeerUnverifiedException;
 import javax.net.ssl.SSLSocketFactory;
@@ -181,6 +182,12 @@ public final class ClientAuthTest {
       call.execute();
       fail();
     } catch (SSLHandshakeException expected) {
+    } catch (SSLException expected) {
+      // javax.net.ssl.SSLException: readRecord
+      assertTrue(getPlatform().equals("jdk9"));
+
+      String jvmVersion = System.getProperty("java.specification.version");
+      assertTrue(jvmVersion.equals("11"));
     } catch (SocketException expected) {
       assertEquals("jdk9", getPlatform());
     }
@@ -229,6 +236,12 @@ public final class ClientAuthTest {
       call.execute();
       fail();
     } catch (SSLHandshakeException expected) {
+    } catch (SSLException expected) {
+      // javax.net.ssl.SSLException: readRecord
+      assertTrue(getPlatform().equals("jdk9"));
+
+      String jvmVersion = System.getProperty("java.specification.version");
+      assertTrue(jvmVersion.equals("11"));
     } catch (SocketException expected) {
       assertEquals("jdk9", getPlatform());
     }

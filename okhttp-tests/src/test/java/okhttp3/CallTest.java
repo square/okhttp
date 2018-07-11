@@ -48,6 +48,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.logging.SimpleFormatter;
+import javax.net.ssl.SSLException;
 import javax.net.ssl.SSLHandshakeException;
 import javax.net.ssl.SSLPeerUnverifiedException;
 import javax.net.ssl.SSLProtocolException;
@@ -1072,6 +1073,7 @@ public final class CallTest {
     server.enqueue(new MockResponse().setBody("response that will never be received"));
     RecordedResponse response = executeSynchronously("/");
     response.assertFailure(
+            SSLException.class, // JDK 11 response to the FAIL_HANDSHAKE
             SSLProtocolException.class, // RI response to the FAIL_HANDSHAKE
             SSLHandshakeException.class // Android's response to the FAIL_HANDSHAKE
     );
@@ -1168,6 +1170,8 @@ public final class CallTest {
       // RI response to the FAIL_HANDSHAKE
     } catch (SSLHandshakeException expected) {
       // Android's response to the FAIL_HANDSHAKE
+    } catch (SSLException expected) {
+      // JDK 11 response to the FAIL_HANDSHAKE
     }
   }
 
