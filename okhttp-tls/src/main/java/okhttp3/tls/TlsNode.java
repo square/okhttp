@@ -16,6 +16,7 @@
 package okhttp3.tls;
 
 import java.security.GeneralSecurityException;
+import java.security.KeyManagementException;
 import java.security.SecureRandom;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
@@ -73,27 +74,38 @@ import static okhttp3.tls.internal.TlsUtil.newTrustManager;
  * </ul>
  */
 public final class TlsNode {
-  private final SSLContext sslContext;
+  private final X509KeyManager keyManager;
   private final X509TrustManager trustManager;
 
-  private TlsNode(SSLContext sslContext, X509TrustManager trustManager) {
-    this.sslContext = sslContext;
+  private TlsNode(X509KeyManager keyManager, X509TrustManager trustManager) {
+    this.keyManager = keyManager;
     this.trustManager = trustManager;
   }
 
-  public SSLSocketFactory sslSocketFactory() {
-    return sslContext.getSocketFactory();
+  public X509KeyManager keyManager() {
+    return keyManager;
   }
 
   public X509TrustManager trustManager() {
     return trustManager;
   }
 
-  public SSLContext sslContext() {
-    return sslContext;
+  public SSLSocketFactory sslSocketFactory() {
+    return sslContext().getSocketFactory();
   }
 
-  public static class Builder {
+  public SSLContext sslContext() {
+    try {
+      SSLContext sslContext = Platform.get().getSSLContext();
+      sslContext.init(new KeyManager[] { keyManager }, new TrustManager[] { trustManager },
+          new SecureRandom());
+      return sslContext;
+    } catch (KeyManagementException e) {
+      throw new AssertionError(e);
+    }
+  }
+
+  public static final class Builder {
     private HeldCertificate heldCertificate;
     private X509Certificate[] intermediates;
 
@@ -128,12 +140,7 @@ public final class TlsNode {
       try {
         X509KeyManager keyManager = newKeyManager(null, heldCertificate, intermediates);
         X509TrustManager trustManager = newTrustManager(null, trustedCertificates);
-
-        SSLContext sslContext = Platform.get().getSSLContext();
-        sslContext.init(new KeyManager[] { keyManager }, new TrustManager[] { trustManager },
-            new SecureRandom());
-
-        return new TlsNode(sslContext, trustManager);
+        return new TlsNode(keyManager, trustManager);
       } catch (GeneralSecurityException gse) {
         throw new AssertionError(gse);
       }
