@@ -55,6 +55,7 @@
     <moshi.version>1.1.0</moshi.version>
     <jnr-unixsocket.version>0.19</jnr-unixsocket.version>
     <okio.version>1.14.0</okio.version>
+    <conscrypt.version>1.1.4</conscrypt.version>
 
     <!-- Test Dependencies -->
     <junit.version>4.12</junit.version>
@@ -134,6 +135,11 @@
         <groupId>com.github.jnr</groupId>
         <artifactId>jnr-unixsocket</artifactId>
         <version>${jnr-unixsocket.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.conscrypt</groupId>
+        <artifactId>conscrypt-openjdk-uber</artifactId>
+        <version>${conscrypt.version}</version>
       </dependency>
     </dependencies>
   </dependencyManagement>
@@ -352,7 +358,6 @@
         <dependency>
           <groupId>org.conscrypt</groupId>
           <artifactId>conscrypt-openjdk-uber</artifactId>
-          <version>1.1.4</version>
         </dependency>
       </dependencies>
     </profile>
