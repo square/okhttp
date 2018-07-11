@@ -52,7 +52,7 @@ public final class ConnectionCoalescingTest {
   @Before public void setUp() throws Exception {
     rootCa = new HeldCertificate.Builder()
         .serialNumber(1L)
-        .certificateAuthority(3)
+        .certificateAuthority(0)
         .commonName("root")
         .build();
     certificate = new HeldCertificate.Builder()

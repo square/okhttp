@@ -209,7 +209,7 @@ public final class HeldCertificate {
     private BigInteger serialNumber;
     private KeyPair keyPair;
     private HeldCertificate issuedBy;
-    private int maxIntermediateCas;
+    private int maxIntermediateCas = -1;
     private String keyAlgorithm;
     private int keySize;
 
@@ -309,8 +309,16 @@ public final class HeldCertificate {
     /**
      * Set this certificate to be a signing certificate, with up to {@code maxIntermediateCas}
      * intermediate signing certificates beneath it.
+     *
+     * <p>By default this certificate cannot not sign other certificates. Set this to 0 so this
+     * certificate can sign other certificates (but those certificates cannot themselves sign
+     * certificates). Set this to 1 so this certificate can sign intermediate certificates that can
+     * themselves sign certificates. Add one for each additional layer of intermediates to permit.
      */
     public Builder certificateAuthority(int maxIntermediateCas) {
+      if (maxIntermediateCas < 0) {
+        throw new IllegalArgumentException("maxIntermediateCas < 0: " + maxIntermediateCas);
+      }
       this.maxIntermediateCas = maxIntermediateCas;
       return this;
     }
@@ -372,7 +380,7 @@ public final class HeldCertificate {
           ? "SHA256WithRSAEncryption"
           : "SHA256withECDSA");
 
-      if (maxIntermediateCas > 0) {
+      if (maxIntermediateCas != -1) {
         generator.addExtension(X509Extensions.BasicConstraints, true,
             new BasicConstraints(maxIntermediateCas));
       }
