@@ -47,7 +47,6 @@
     <dependency>
       <groupId>org.conscrypt</groupId>
       <artifactId>conscrypt-openjdk-uber</artifactId>
-      <version>1.0.1</version>
     </dependency>
 
     <dependency>
