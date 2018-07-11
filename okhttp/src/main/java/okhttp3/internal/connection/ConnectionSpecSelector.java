@@ -124,7 +124,9 @@ public final class ConnectionSpecSelector {
 
     // On Android, SSLProtocolExceptions can be caused by TLS_FALLBACK_SCSV failures, which means we
     // retry those when we probably should not.
-    return (e instanceof SSLHandshakeException || e instanceof SSLProtocolException || e instanceof SSLException);
+    return (e instanceof SSLHandshakeException
+        || e instanceof SSLProtocolException
+        || e instanceof SSLException);
   }
 
   /**
