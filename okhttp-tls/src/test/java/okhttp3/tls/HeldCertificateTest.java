@@ -35,7 +35,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
-public class HeldCertificateTest {
+public final class HeldCertificateTest {
   @Test public void defaultCertificate() throws CertificateParsingException {
     long now = System.currentTimeMillis();
     HeldCertificate heldCertificate = new HeldCertificate.Builder().build();
