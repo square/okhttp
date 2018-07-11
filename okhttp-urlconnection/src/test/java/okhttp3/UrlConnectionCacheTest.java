@@ -85,7 +85,7 @@ public final class UrlConnectionCacheTest {
   private Cache cache;
   private final CookieManager cookieManager = new CookieManager();
 
-  @Before public void setUp() throws Exception {
+  @Before public void setUp() {
     server.setProtocolNegotiationEnabled(false);
     cache = new Cache(new File("/cache/"), Integer.MAX_VALUE, fileSystem);
     urlFactory = new OkUrlFactory(new OkHttpClient.Builder()
@@ -99,7 +99,7 @@ public final class UrlConnectionCacheTest {
     cache.delete();
   }
 
-  @Test public void responseCacheAccessWithOkHttpMember() throws IOException {
+  @Test public void responseCacheAccessWithOkHttpMember() {
     assertSame(cache, urlFactory.client().cache());
   }
 
@@ -264,7 +264,8 @@ public final class UrlConnectionCacheTest {
     assumeFalse(getPlatform().equals("jdk9"));
 
     server.useHttps(tlsNode.sslSocketFactory(), false);
-    server.enqueue(new MockResponse().addHeader("Last-Modified: " + formatDate(-1, TimeUnit.HOURS))
+    server.enqueue(new MockResponse()
+        .addHeader("Last-Modified: " + formatDate(-1, TimeUnit.HOURS))
         .addHeader("Expires: " + formatDate(1, TimeUnit.HOURS))
         .setBody("ABC"));
 
@@ -413,7 +414,7 @@ public final class UrlConnectionCacheTest {
     testServerPrematureDisconnect(TransferKind.CHUNKED);
   }
 
-  @Test public void serverDisconnectsPrematurelyWithNoLengthHeaders() throws IOException {
+  @Test public void serverDisconnectsPrematurelyWithNoLengthHeaders() {
     // Intentionally empty. This case doesn't make sense because there's no
     // such thing as a premature disconnect when the disconnect itself
     // indicates the end of the data stream.
@@ -1806,8 +1807,7 @@ public final class UrlConnectionCacheTest {
 
   enum TransferKind {
     CHUNKED() {
-      @Override void setBody(MockResponse response, Buffer content, int chunkSize)
-          throws IOException {
+      @Override void setBody(MockResponse response, Buffer content, int chunkSize) {
         response.setChunkedBody(content, chunkSize);
       }
     },
