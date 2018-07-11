@@ -125,6 +125,9 @@ public final class HttpLoggingInterceptor implements Interceptor {
 
   private volatile Level level = Level.NONE;
 
+  /** set to false to skip multipart body. */
+  private boolean showMultipartLog = true;
+
   /** Change the level at which this interceptor logs. */
   public HttpLoggingInterceptor setLevel(Level level) {
     if (level == null) throw new NullPointerException("level == null. Use Level.NONE instead.");
@@ -134,6 +137,15 @@ public final class HttpLoggingInterceptor implements Interceptor {
 
   public Level getLevel() {
     return level;
+  }
+
+
+  public boolean isShowMultipartLog() {
+    return showMultipartLog;
+  }
+
+  public void setShowMultipartLog(boolean showMultipartLogging) {
+    this.showMultipartLog = showMultipartLogging;
   }
 
   @Override public Response intercept(Chain chain) throws IOException {
@@ -197,7 +209,11 @@ public final class HttpLoggingInterceptor implements Interceptor {
 
         logger.log("");
         if (isPlaintext(buffer)) {
-          logger.log(buffer.readString(charset));
+          if (showMultipartLog)
+            logger.log(buffer.readString(charset));
+          else
+            logger.log(String.valueOf("Multipart length transmitted->"+buffer.readString(charset).length()));
+
           logger.log("--> END " + request.method()
               + " (" + requestBody.contentLength() + "-byte body)");
         } else {
