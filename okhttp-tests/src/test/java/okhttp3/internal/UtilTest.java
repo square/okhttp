@@ -15,17 +15,34 @@
   */
 package okhttp3.internal;
 
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertSame;
+import static org.junit.Assert.fail;
 
-public class UtilTest {
-  @Test
-  public void testAssertionError() {
+ public class UtilTest {
+  @Test public void testAssertionError() {
     NullPointerException nullPointerException = new NullPointerException();
     AssertionError ae = Util.assertionError("npe", nullPointerException);
     assertSame(nullPointerException, ae.getCause());
     assertEquals("npe", ae.getMessage());
+  }
+
+  @Test public void immutableMap() {
+    Map<String, String> map = new LinkedHashMap<>();
+    map.put("a", "A");
+    Map<String, String> immutableCopy = Util.immutableMap(map);
+    assertEquals(immutableCopy, Collections.singletonMap("a", "A"));
+    map.clear();
+    assertEquals(immutableCopy, Collections.singletonMap("a", "A"));
+    try {
+      immutableCopy.clear();
+      fail();
+    } catch (UnsupportedOperationException expected) {
+    }
   }
 }

@@ -30,8 +30,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.TimeZone;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
@@ -213,6 +215,13 @@ public final class Util {
   /** Returns an immutable copy of {@code list}. */
   public static <T> List<T> immutableList(List<T> list) {
     return Collections.unmodifiableList(new ArrayList<>(list));
+  }
+
+  /** Returns an immutable copy of {@code map}. */
+  public static <K, V> Map<K, V> immutableMap(Map<K, V> map) {
+    return map.isEmpty()
+        ? Collections.<K, V>emptyMap()
+        : Collections.unmodifiableMap(new LinkedHashMap<>(map));
   }
 
   /** Returns an immutable list containing {@code elements}. */
