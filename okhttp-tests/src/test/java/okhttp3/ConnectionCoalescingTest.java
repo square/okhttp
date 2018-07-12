@@ -29,7 +29,7 @@ import javax.net.ssl.SSLSession;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import okhttp3.tls.HeldCertificate;
-import okhttp3.tls.TlsNode;
+import okhttp3.tls.HandshakeCertificates;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Rule;
@@ -73,18 +73,19 @@ public final class ConnectionCoalescingTest {
     dns.set("www.wildcard.com", serverIps);
     dns.set("differentdns.com", Collections.<InetAddress>emptyList());
 
-    TlsNode tlsNode = new TlsNode.Builder()
+    HandshakeCertificates handshakeCertificates = new HandshakeCertificates.Builder()
         .addTrustedCertificate(rootCa.certificate())
         .build();
 
     client = new OkHttpClient.Builder().dns(dns)
-        .sslSocketFactory(tlsNode.sslSocketFactory(), tlsNode.trustManager())
+        .sslSocketFactory(
+            handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager())
         .build();
 
-    TlsNode serverTlsNode = new TlsNode.Builder()
+    HandshakeCertificates serverHandshakeCertificates = new HandshakeCertificates.Builder()
         .heldCertificate(certificate)
         .build();
-    server.useHttps(serverTlsNode.sslSocketFactory(), false);
+    server.useHttps(serverHandshakeCertificates.sslSocketFactory(), false);
 
     url = server.url("/robots.txt");
   }

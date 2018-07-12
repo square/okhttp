@@ -61,7 +61,7 @@ import okhttp3.mockwebserver.PushPromise;
 import okhttp3.mockwebserver.QueueDispatcher;
 import okhttp3.mockwebserver.RecordedRequest;
 import okhttp3.mockwebserver.SocketPolicy;
-import okhttp3.tls.TlsNode;
+import okhttp3.tls.HandshakeCertificates;
 import okio.Buffer;
 import okio.BufferedSink;
 import okio.GzipSink;
@@ -93,7 +93,7 @@ import static org.junit.Assume.assumeTrue;
 @RunWith(Parameterized.class)
 public final class HttpOverHttp2Test {
   private static final Logger http2Logger = Logger.getLogger(Http2.class.getName());
-  private static final TlsNode tlsNode = localhost();
+  private static final HandshakeCertificates handshakeCertificates = localhost();
 
   @Parameters(name = "{0}")
   public static Collection<Protocol> data() {
@@ -126,16 +126,17 @@ public final class HttpOverHttp2Test {
     return defaultClient().newBuilder()
         .protocols(Arrays.asList(Protocol.HTTP_2, Protocol.HTTP_1_1))
         .dns(new SingleInetAddressDns())
-        .sslSocketFactory(tlsNode.sslSocketFactory(), tlsNode.trustManager())
+        .sslSocketFactory(
+            handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager())
         .hostnameVerifier(new RecordingHostnameVerifier())
         .build();
   }
 
-  @Before public void setUp() throws Exception {
+  @Before public void setUp() {
     if (protocol == Protocol.H2_PRIOR_KNOWLEDGE) {
       server.setProtocols(Arrays.asList(Protocol.H2_PRIOR_KNOWLEDGE));
     } else {
-      server.useHttps(tlsNode.sslSocketFactory(), false);
+      server.useHttps(handshakeCertificates.sslSocketFactory(), false);
     }
 
     cache = new Cache(tempDir.getRoot(), Integer.MAX_VALUE);
@@ -145,7 +146,7 @@ public final class HttpOverHttp2Test {
     http2Logger.setLevel(Level.FINE);
   }
 
-  @After public void tearDown() throws Exception {
+  @After public void tearDown() {
     Authenticator.setDefault(null);
     http2Logger.removeHandler(http2Handler);
     http2Logger.setLevel(previousLevel);
@@ -225,7 +226,7 @@ public final class HttpOverHttp2Test {
             return MediaType.get("text/plain; charset=utf-8");
           }
 
-          @Override public long contentLength() throws IOException {
+          @Override public long contentLength() {
             return postBytes.length;
           }
 
@@ -256,7 +257,7 @@ public final class HttpOverHttp2Test {
             return MediaType.get("text/plain; charset=utf-8");
           }
 
-          @Override public long contentLength() throws IOException {
+          @Override public long contentLength() {
             return postBytes.length;
           }
 
@@ -1314,7 +1315,7 @@ public final class HttpOverHttp2Test {
   @Test public void concurrentHttp2ConnectionsDeduplicated() throws Exception {
     assumeTrue(protocol == Protocol.HTTP_2);
 
-    server.useHttps(tlsNode.sslSocketFactory(), true);
+    server.useHttps(handshakeCertificates.sslSocketFactory(), true);
 
     // Force a fresh connection pool for the test.
     client.connectionPool().evictAll();

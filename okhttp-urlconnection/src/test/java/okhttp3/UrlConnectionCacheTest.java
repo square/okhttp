@@ -47,7 +47,7 @@ import okhttp3.internal.platform.Platform;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import okhttp3.mockwebserver.RecordedRequest;
-import okhttp3.tls.TlsNode;
+import okhttp3.tls.HandshakeCertificates;
 import okio.Buffer;
 import okio.BufferedSink;
 import okio.GzipSink;
@@ -80,7 +80,7 @@ public final class UrlConnectionCacheTest {
   @Rule public MockWebServer server2 = new MockWebServer();
   @Rule public InMemoryFileSystem fileSystem = new InMemoryFileSystem();
 
-  private final TlsNode tlsNode = localhost();
+  private final HandshakeCertificates handshakeCertificates = localhost();
   private OkUrlFactory urlFactory = new OkUrlFactory(new OkHttpClient());
   private Cache cache;
   private final CookieManager cookieManager = new CookieManager();
@@ -263,14 +263,14 @@ public final class UrlConnectionCacheTest {
   @Test public void secureResponseCaching() throws IOException {
     assumeFalse(getPlatform().equals("jdk9"));
 
-    server.useHttps(tlsNode.sslSocketFactory(), false);
+    server.useHttps(handshakeCertificates.sslSocketFactory(), false);
     server.enqueue(new MockResponse()
         .addHeader("Last-Modified: " + formatDate(-1, TimeUnit.HOURS))
         .addHeader("Expires: " + formatDate(1, TimeUnit.HOURS))
         .setBody("ABC"));
 
     HttpsURLConnection c1 = (HttpsURLConnection) urlFactory.open(server.url("/").url());
-    c1.setSSLSocketFactory(tlsNode.sslSocketFactory());
+    c1.setSSLSocketFactory(handshakeCertificates.sslSocketFactory());
     c1.setHostnameVerifier(NULL_HOSTNAME_VERIFIER);
     assertEquals("ABC", readAscii(c1));
 
@@ -282,7 +282,7 @@ public final class UrlConnectionCacheTest {
     Principal localPrincipal = c1.getLocalPrincipal();
 
     HttpsURLConnection c2 = (HttpsURLConnection) urlFactory.open(server.url("/").url()); // cached!
-    c2.setSSLSocketFactory(tlsNode.sslSocketFactory());
+    c2.setSSLSocketFactory(handshakeCertificates.sslSocketFactory());
     c2.setHostnameVerifier(NULL_HOSTNAME_VERIFIER);
     assertEquals("ABC", readAscii(c2));
 
@@ -342,7 +342,7 @@ public final class UrlConnectionCacheTest {
   }
 
   @Test public void secureResponseCachingAndRedirects() throws IOException {
-    server.useHttps(tlsNode.sslSocketFactory(), false);
+    server.useHttps(handshakeCertificates.sslSocketFactory(), false);
     server.enqueue(new MockResponse().addHeader("Last-Modified: " + formatDate(-1, TimeUnit.HOURS))
         .addHeader("Expires: " + formatDate(1, TimeUnit.HOURS))
         .setResponseCode(HttpURLConnection.HTTP_MOVED_PERM)
@@ -353,7 +353,8 @@ public final class UrlConnectionCacheTest {
     server.enqueue(new MockResponse().setBody("DEF"));
 
     urlFactory.setClient(urlFactory.client().newBuilder()
-        .sslSocketFactory(tlsNode.sslSocketFactory(), tlsNode.trustManager())
+        .sslSocketFactory(
+            handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager())
         .hostnameVerifier(NULL_HOSTNAME_VERIFIER)
         .build());
 
@@ -379,7 +380,7 @@ public final class UrlConnectionCacheTest {
    * https://github.com/square/okhttp/issues/214
    */
   @Test public void secureResponseCachingAndProtocolRedirects() throws IOException {
-    server2.useHttps(tlsNode.sslSocketFactory(), false);
+    server2.useHttps(handshakeCertificates.sslSocketFactory(), false);
     server2.enqueue(new MockResponse().addHeader("Last-Modified: " + formatDate(-1, TimeUnit.HOURS))
         .addHeader("Expires: " + formatDate(1, TimeUnit.HOURS))
         .setBody("ABC"));
@@ -391,7 +392,8 @@ public final class UrlConnectionCacheTest {
         .addHeader("Location: " + server2.url("/").url()));
 
     urlFactory.setClient(urlFactory.client().newBuilder()
-        .sslSocketFactory(tlsNode.sslSocketFactory(), tlsNode.trustManager())
+        .sslSocketFactory(
+            handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager())
         .hostnameVerifier(NULL_HOSTNAME_VERIFIER)
         .build());
 
@@ -1409,7 +1411,7 @@ public final class UrlConnectionCacheTest {
   @Test public void varyAndHttps() throws Exception {
     assumeFalse(getPlatform().equals("jdk9"));
 
-    server.useHttps(tlsNode.sslSocketFactory(), false);
+    server.useHttps(handshakeCertificates.sslSocketFactory(), false);
     server.enqueue(new MockResponse().addHeader("Cache-Control: max-age=60")
         .addHeader("Vary: Accept-Language")
         .setBody("A"));
@@ -1417,13 +1419,13 @@ public final class UrlConnectionCacheTest {
 
     URL url = server.url("/").url();
     HttpsURLConnection connection1 = (HttpsURLConnection) urlFactory.open(url);
-    connection1.setSSLSocketFactory(tlsNode.sslSocketFactory());
+    connection1.setSSLSocketFactory(handshakeCertificates.sslSocketFactory());
     connection1.setHostnameVerifier(NULL_HOSTNAME_VERIFIER);
     connection1.addRequestProperty("Accept-Language", "en-US");
     assertEquals("A", readAscii(connection1));
 
     HttpsURLConnection connection2 = (HttpsURLConnection) urlFactory.open(url);
-    connection2.setSSLSocketFactory(tlsNode.sslSocketFactory());
+    connection2.setSSLSocketFactory(handshakeCertificates.sslSocketFactory());
     connection2.setHostnameVerifier(NULL_HOSTNAME_VERIFIER);
     connection2.addRequestProperty("Accept-Language", "en-US");
     assertEquals("A", readAscii(connection2));

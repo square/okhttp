@@ -22,7 +22,7 @@ import javax.net.ssl.SSLException;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import okhttp3.mockwebserver.SocketPolicy;
-import okhttp3.tls.TlsNode;
+import okhttp3.tls.HandshakeCertificates;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestRule;
@@ -38,7 +38,7 @@ public final class ConnectionReuseTest {
   @Rule public final TestRule timeout = new Timeout(30_000);
   @Rule public final MockWebServer server = new MockWebServer();
 
-  private TlsNode tlsNode = localhost();
+  private HandshakeCertificates handshakeCertificates = localhost();
   private OkHttpClient client = defaultClient();
 
   @Test public void connectionsAreReused() throws Exception {
@@ -252,9 +252,10 @@ public final class ConnectionReuseTest {
     response.body().close();
 
     // This client shares a connection pool but has a different SSL socket factory.
-    TlsNode tlsNode2 = new TlsNode.Builder().build();
+    HandshakeCertificates handshakeCertificates2 = new HandshakeCertificates.Builder().build();
     OkHttpClient anotherClient = client.newBuilder()
-        .sslSocketFactory(tlsNode2.sslSocketFactory(), tlsNode2.trustManager())
+        .sslSocketFactory(
+            handshakeCertificates2.sslSocketFactory(), handshakeCertificates2.trustManager())
         .build();
 
     // This client fails to connect because the new SSL socket factory refuses.
@@ -338,11 +339,12 @@ public final class ConnectionReuseTest {
 
   private void enableHttpsAndAlpn(Protocol... protocols) {
     client = client.newBuilder()
-        .sslSocketFactory(tlsNode.sslSocketFactory(), tlsNode.trustManager())
+        .sslSocketFactory(
+            handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager())
         .hostnameVerifier(new RecordingHostnameVerifier())
         .protocols(Arrays.asList(protocols))
         .build();
-    server.useHttps(tlsNode.sslSocketFactory(), false);
+    server.useHttps(handshakeCertificates.sslSocketFactory(), false);
     server.setProtocols(client.protocols());
   }
 

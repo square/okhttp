@@ -41,7 +41,7 @@ import okhttp3.internal.platform.Platform;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import okhttp3.mockwebserver.RecordedRequest;
-import okhttp3.tls.TlsNode;
+import okhttp3.tls.HandshakeCertificates;
 import okio.Buffer;
 import okio.BufferedSink;
 import okio.BufferedSource;
@@ -73,7 +73,7 @@ public final class CacheTest {
   @Rule public MockWebServer server2 = new MockWebServer();
   @Rule public InMemoryFileSystem fileSystem = new InMemoryFileSystem();
 
-  private final TlsNode tlsNode = localhost();
+  private final HandshakeCertificates handshakeCertificates = localhost();
   private OkHttpClient client;
   private Cache cache;
   private final CookieManager cookieManager = new CookieManager();
@@ -254,14 +254,15 @@ public final class CacheTest {
   }
 
   @Test public void secureResponseCaching() throws IOException {
-    server.useHttps(tlsNode.sslSocketFactory(), false);
+    server.useHttps(handshakeCertificates.sslSocketFactory(), false);
     server.enqueue(new MockResponse()
         .addHeader("Last-Modified: " + formatDate(-1, TimeUnit.HOURS))
         .addHeader("Expires: " + formatDate(1, TimeUnit.HOURS))
         .setBody("ABC"));
 
     client = client.newBuilder()
-        .sslSocketFactory(tlsNode.sslSocketFactory(), tlsNode.trustManager())
+        .sslSocketFactory(
+            handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager())
         .hostnameVerifier(NULL_HOSTNAME_VERIFIER)
         .build();
 
@@ -350,7 +351,7 @@ public final class CacheTest {
   }
 
   @Test public void secureResponseCachingAndRedirects() throws IOException {
-    server.useHttps(tlsNode.sslSocketFactory(), false);
+    server.useHttps(handshakeCertificates.sslSocketFactory(), false);
     server.enqueue(new MockResponse()
         .addHeader("Last-Modified: " + formatDate(-1, TimeUnit.HOURS))
         .addHeader("Expires: " + formatDate(1, TimeUnit.HOURS))
@@ -364,7 +365,8 @@ public final class CacheTest {
         .setBody("DEF"));
 
     client = client.newBuilder()
-        .sslSocketFactory(tlsNode.sslSocketFactory(), tlsNode.trustManager())
+        .sslSocketFactory(
+            handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager())
         .hostnameVerifier(NULL_HOSTNAME_VERIFIER)
         .build();
 
@@ -390,7 +392,7 @@ public final class CacheTest {
    * https://github.com/square/okhttp/issues/214
    */
   @Test public void secureResponseCachingAndProtocolRedirects() throws IOException {
-    server2.useHttps(tlsNode.sslSocketFactory(), false);
+    server2.useHttps(handshakeCertificates.sslSocketFactory(), false);
     server2.enqueue(new MockResponse()
         .addHeader("Last-Modified: " + formatDate(-1, TimeUnit.HOURS))
         .addHeader("Expires: " + formatDate(1, TimeUnit.HOURS))
@@ -405,7 +407,8 @@ public final class CacheTest {
         .addHeader("Location: " + server2.url("/")));
 
     client = client.newBuilder()
-        .sslSocketFactory(tlsNode.sslSocketFactory(), tlsNode.trustManager())
+        .sslSocketFactory(
+            handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager())
         .hostnameVerifier(NULL_HOSTNAME_VERIFIER)
         .build();
 
@@ -1757,7 +1760,7 @@ public final class CacheTest {
   }
 
   @Test public void varyAndHttps() throws Exception {
-    server.useHttps(tlsNode.sslSocketFactory(), false);
+    server.useHttps(handshakeCertificates.sslSocketFactory(), false);
     server.enqueue(new MockResponse()
         .addHeader("Cache-Control: max-age=60")
         .addHeader("Vary: Accept-Language")
@@ -1766,7 +1769,8 @@ public final class CacheTest {
         .setBody("B"));
 
     client = client.newBuilder()
-        .sslSocketFactory(tlsNode.sslSocketFactory(), tlsNode.trustManager())
+        .sslSocketFactory(
+            handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager())
         .hostnameVerifier(NULL_HOSTNAME_VERIFIER)
         .build();
 

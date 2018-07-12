@@ -36,7 +36,7 @@ import okhttp3.Response;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import okhttp3.tls.HeldCertificate;
-import okhttp3.tls.TlsNode;
+import okhttp3.tls.HandshakeCertificates;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -236,16 +236,17 @@ public final class ClientAuthTest {
 
   private OkHttpClient buildClient(
       HeldCertificate heldCertificate, X509Certificate... intermediates) {
-    TlsNode.Builder tlsNodeBuilder = new TlsNode.Builder()
+    HandshakeCertificates.Builder builder = new HandshakeCertificates.Builder()
         .addTrustedCertificate(serverRootCa.certificate());
 
     if (heldCertificate != null) {
-      tlsNodeBuilder.heldCertificate(heldCertificate, intermediates);
+      builder.heldCertificate(heldCertificate, intermediates);
     }
 
-    TlsNode tlsNode = tlsNodeBuilder.build();
+    HandshakeCertificates handshakeCertificates = builder.build();
     return defaultClient().newBuilder()
-        .sslSocketFactory(tlsNode.sslSocketFactory(), tlsNode.trustManager())
+        .sslSocketFactory(
+            handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager())
         .build();
   }
 

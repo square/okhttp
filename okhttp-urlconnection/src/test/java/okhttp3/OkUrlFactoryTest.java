@@ -20,7 +20,7 @@ import okhttp3.internal.io.InMemoryFileSystem;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import okhttp3.mockwebserver.RecordedRequest;
-import okhttp3.tls.TlsNode;
+import okhttp3.tls.HandshakeCertificates;
 import okio.BufferedSource;
 import org.junit.After;
 import org.junit.Before;
@@ -41,7 +41,7 @@ public class OkUrlFactoryTest {
   private OkUrlFactory factory;
   private Cache cache;
 
-  @Before public void setUp() throws IOException {
+  @Before public void setUp() {
     cache = new Cache(new File("/cache/"), 10 * 1024 * 1024, fileSystem);
     OkHttpClient client = new OkHttpClient.Builder()
         .cache(cache)
@@ -57,7 +57,7 @@ public class OkUrlFactoryTest {
    * Response code 407 should only come from proxy servers. Android's client throws if it is sent by
    * an origin server.
    */
-  @Test public void originServerSends407() throws Exception {
+  @Test public void originServerSends407() {
     server.enqueue(new MockResponse().setResponseCode(407));
 
     HttpURLConnection conn = factory.open(server.url("/").url());
@@ -182,16 +182,17 @@ public class OkUrlFactoryTest {
   }
 
   @Test
-  public void testURLFilterRedirect() throws Exception {
+  public void testURLFilterRedirect() {
     MockWebServer cleartextServer = new MockWebServer();
     cleartextServer.enqueue(new MockResponse()
         .setBody("Blocked!"));
     final URL blockedURL = cleartextServer.url("/").url();
 
-    TlsNode tlsNode = localhost();
-    server.useHttps(tlsNode.sslSocketFactory(), false);
+    HandshakeCertificates handshakeCertificates = localhost();
+    server.useHttps(handshakeCertificates.sslSocketFactory(), false);
     factory.setClient(factory.client().newBuilder()
-        .sslSocketFactory(tlsNode.sslSocketFactory(), tlsNode.trustManager())
+        .sslSocketFactory(
+            handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager())
         .followSslRedirects(true)
         .build());
     factory.setUrlFilter(new URLFilter() {

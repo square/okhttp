@@ -39,7 +39,7 @@ import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import okhttp3.mockwebserver.RecordedRequest;
 import okhttp3.mockwebserver.SocketPolicy;
-import okhttp3.tls.TlsNode;
+import okhttp3.tls.HandshakeCertificates;
 import okio.Buffer;
 import okio.ByteString;
 import org.junit.After;
@@ -60,7 +60,7 @@ import static org.junit.Assert.fail;
 public final class WebSocketHttpTest {
   @Rule public final MockWebServer webServer = new MockWebServer();
 
-  private final TlsNode tlsNode = localhost();
+  private final HandshakeCertificates handshakeCertificates = localhost();
   private final WebSocketRecorder clientListener = new WebSocketRecorder("client");
   private final WebSocketRecorder serverListener = new WebSocketRecorder("server");
   private final Random random = new Random(0);
@@ -480,9 +480,10 @@ public final class WebSocketHttpTest {
   }
 
   @Test public void wssScheme() {
-    webServer.useHttps(tlsNode.sslSocketFactory(), false);
+    webServer.useHttps(handshakeCertificates.sslSocketFactory(), false);
     client = client.newBuilder()
-        .sslSocketFactory(tlsNode.sslSocketFactory(), tlsNode.trustManager())
+        .sslSocketFactory(
+            handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager())
         .hostnameVerifier(new RecordingHostnameVerifier())
         .build();
 
@@ -490,9 +491,10 @@ public final class WebSocketHttpTest {
   }
 
   @Test public void httpsScheme() {
-    webServer.useHttps(tlsNode.sslSocketFactory(), false);
+    webServer.useHttps(handshakeCertificates.sslSocketFactory(), false);
     client = client.newBuilder()
-        .sslSocketFactory(tlsNode.sslSocketFactory(), tlsNode.trustManager())
+        .sslSocketFactory(
+            handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager())
         .hostnameVerifier(new RecordingHostnameVerifier())
         .build();
 

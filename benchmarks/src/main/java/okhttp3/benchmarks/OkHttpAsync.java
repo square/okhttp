@@ -31,7 +31,7 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
 import okhttp3.ResponseBody;
-import okhttp3.tls.TlsNode;
+import okhttp3.tls.HandshakeCertificates;
 
 import static okhttp3.tls.internal.TlsUtil.localhost;
 
@@ -56,15 +56,15 @@ class OkHttpAsync implements HttpClient {
         .build();
 
     if (benchmark.tls) {
-      TlsNode tlsNode = localhost();
-      SSLSocketFactory socketFactory = tlsNode.sslSocketFactory();
+      HandshakeCertificates handshakeCertificates = localhost();
+      SSLSocketFactory socketFactory = handshakeCertificates.sslSocketFactory();
       HostnameVerifier hostnameVerifier = new HostnameVerifier() {
         @Override public boolean verify(String s, SSLSession session) {
           return true;
         }
       };
       client = client.newBuilder()
-          .sslSocketFactory(socketFactory, tlsNode.trustManager())
+          .sslSocketFactory(socketFactory, handshakeCertificates.trustManager())
           .hostnameVerifier(hostnameVerifier)
           .build();
     }

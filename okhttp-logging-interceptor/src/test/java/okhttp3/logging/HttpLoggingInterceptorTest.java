@@ -35,7 +35,7 @@ import okhttp3.ResponseBody;
 import okhttp3.logging.HttpLoggingInterceptor.Level;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
-import okhttp3.tls.TlsNode;
+import okhttp3.tls.HandshakeCertificates;
 import okio.Buffer;
 import okio.BufferedSink;
 import okio.ByteString;
@@ -58,7 +58,7 @@ public final class HttpLoggingInterceptorTest {
 
   @Rule public final MockWebServer server = new MockWebServer();
 
-  private TlsNode tlsNode = localhost();
+  private HandshakeCertificates handshakeCertificates = localhost();
   private HostnameVerifier hostnameVerifier = new RecordingHostnameVerifier();
   private OkHttpClient client;
   private String host;
@@ -81,7 +81,8 @@ public final class HttpLoggingInterceptorTest {
     client = new OkHttpClient.Builder()
         .addNetworkInterceptor(networkInterceptor)
         .addInterceptor(applicationInterceptor)
-        .sslSocketFactory(tlsNode.sslSocketFactory(), tlsNode.trustManager())
+        .sslSocketFactory(
+            handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager())
         .hostnameVerifier(hostnameVerifier)
         .build();
 
@@ -724,7 +725,7 @@ public final class HttpLoggingInterceptorTest {
   }
 
   @Test public void http2() throws Exception {
-    server.useHttps(tlsNode.sslSocketFactory(), false);
+    server.useHttps(handshakeCertificates.sslSocketFactory(), false);
     url = server.url("/");
 
     setLevel(Level.BASIC);

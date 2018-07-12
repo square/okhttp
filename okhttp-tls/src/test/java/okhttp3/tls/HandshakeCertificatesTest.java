@@ -38,7 +38,7 @@ import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
 
-public final class TlsNodeTest {
+public final class HandshakeCertificatesTest {
   private ExecutorService executorService;
   private ServerSocket serverSocket;
 
@@ -74,12 +74,12 @@ public final class TlsNodeTest {
         .issuedBy(serverIntermediate)
         .build();
 
-    TlsNode server = new TlsNode.Builder()
+    HandshakeCertificates server = new HandshakeCertificates.Builder()
         .addTrustedCertificate(clientRoot.certificate())
         .heldCertificate(serverCertificate, serverIntermediate.certificate())
         .build();
 
-    TlsNode client = new TlsNode.Builder()
+    HandshakeCertificates client = new HandshakeCertificates.Builder()
         .addTrustedCertificate(serverRoot.certificate())
         .heldCertificate(clientCertificate, clientIntermediate.certificate())
         .build();
@@ -114,13 +114,13 @@ public final class TlsNodeTest {
         .issuedBy(intermediate)
         .build();
 
-    TlsNode tlsNode = new TlsNode.Builder()
+    HandshakeCertificates handshakeCertificates = new HandshakeCertificates.Builder()
         .heldCertificate(certificate, intermediate.certificate())
         .build();
     assertPrivateKeysEquals(certificate.keyPair().getPrivate(),
-        tlsNode.keyManager().getPrivateKey("private"));
+        handshakeCertificates.keyManager().getPrivateKey("private"));
     assertEquals(Arrays.asList(certificate.certificate(), intermediate.certificate()),
-        Arrays.asList(tlsNode.keyManager().getCertificateChain("private")));
+        Arrays.asList(handshakeCertificates.keyManager().getCertificateChain("private")));
   }
 
   private InetSocketAddress startTlsServer() throws IOException {
@@ -131,7 +131,7 @@ public final class TlsNodeTest {
     return new InetSocketAddress(serverAddress, serverSocket.getLocalPort());
   }
 
-  private Future<Handshake> doServerHandshake(final TlsNode server) {
+  private Future<Handshake> doServerHandshake(final HandshakeCertificates server) {
     return executorService.submit(new Callable<Handshake>() {
       @Override public Handshake call() throws Exception {
         Socket rawSocket = null;
@@ -154,7 +154,7 @@ public final class TlsNodeTest {
   }
 
   private Future<Handshake> doClientHandshake(
-      final TlsNode client, final InetSocketAddress serverAddress) {
+      final HandshakeCertificates client, final InetSocketAddress serverAddress) {
     return executorService.submit(new Callable<Handshake>() {
       @Override public Handshake call() throws Exception {
         Socket rawSocket = SocketFactory.getDefault().createSocket();

@@ -37,7 +37,7 @@ import okhttp3.internal.Internal;
 import okhttp3.internal.cache.InternalCache;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
-import okhttp3.tls.TlsNode;
+import okhttp3.tls.HandshakeCertificates;
 import okio.Buffer;
 import org.junit.After;
 import org.junit.Before;
@@ -59,7 +59,7 @@ import static org.junit.Assert.assertTrue;
  * </ul>
  */
 public class CacheAdapterTest {
-  private TlsNode tlsNode = localhost();
+  private HandshakeCertificates handshakeCertificates = localhost();
   private HostnameVerifier hostnameVerifier = new RecordingHostnameVerifier();
   private MockWebServer server;
   private OkHttpClient client;
@@ -124,7 +124,8 @@ public class CacheAdapterTest {
     };
     setInternalCache(new CacheAdapter(responseCache));
     client = client.newBuilder()
-        .sslSocketFactory(tlsNode.sslSocketFactory(), tlsNode.trustManager())
+        .sslSocketFactory(
+            handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager())
         .hostnameVerifier(hostnameVerifier)
         .build();
 
@@ -254,7 +255,8 @@ public class CacheAdapterTest {
     };
     setInternalCache(new CacheAdapter(responseCache));
     client = client.newBuilder()
-        .sslSocketFactory(tlsNode.sslSocketFactory(), tlsNode.trustManager())
+        .sslSocketFactory(
+            handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager())
         .hostnameVerifier(hostnameVerifier)
         .build();
 
@@ -282,7 +284,7 @@ public class CacheAdapterTest {
   }
 
   private URL configureHttpsServer(MockResponse mockResponse) throws Exception {
-    server.useHttps(tlsNode.sslSocketFactory(), false /* tunnelProxy */);
+    server.useHttps(handshakeCertificates.sslSocketFactory(), false /* tunnelProxy */);
     server.enqueue(mockResponse);
     server.start();
     return server.url("/").url();

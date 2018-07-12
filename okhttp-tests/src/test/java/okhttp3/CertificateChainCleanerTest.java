@@ -15,7 +15,6 @@
  */
 package okhttp3;
 
-import java.security.GeneralSecurityException;
 import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
@@ -23,15 +22,15 @@ import java.util.List;
 import javax.net.ssl.SSLPeerUnverifiedException;
 import javax.net.ssl.X509TrustManager;
 import okhttp3.internal.tls.CertificateChainCleaner;
+import okhttp3.tls.HandshakeCertificates;
 import okhttp3.tls.HeldCertificate;
-import okhttp3.tls.TlsNode;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
 public final class CertificateChainCleanerTest {
-  @Test public void equalsFromCertificate() throws Exception {
+  @Test public void equalsFromCertificate() {
     HeldCertificate rootA = new HeldCertificate.Builder()
         .serialNumber(1L)
         .build();
@@ -43,9 +42,9 @@ public final class CertificateChainCleanerTest {
         CertificateChainCleaner.get(rootB.certificate(), rootA.certificate()));
   }
 
-  @Test public void equalsFromTrustManager() throws Exception {
-    TlsNode tlsNode = new TlsNode.Builder().build();
-    X509TrustManager x509TrustManager = tlsNode.trustManager();
+  @Test public void equalsFromTrustManager() {
+    HandshakeCertificates handshakeCertificates = new HandshakeCertificates.Builder().build();
+    X509TrustManager x509TrustManager = handshakeCertificates.trustManager();
     assertEquals(
         CertificateChainCleaner.get(x509TrustManager),
         CertificateChainCleaner.get(x509TrustManager));
@@ -59,7 +58,7 @@ public final class CertificateChainCleanerTest {
     assertEquals(list(root), cleaner.clean(list(root), "hostname"));
   }
 
-  @Test public void normalizeUnknownSelfSignedCertificate() throws Exception {
+  @Test public void normalizeUnknownSelfSignedCertificate() {
     HeldCertificate root = new HeldCertificate.Builder()
         .serialNumber(1L)
         .build();
@@ -236,7 +235,7 @@ public final class CertificateChainCleanerTest {
     assertEquals(certificates, cleaner.clean(certificates.subList(0, 9), "hostname"));
   }
 
-  @Test public void chainTooLong() throws Exception {
+  @Test public void chainTooLong() {
     List<HeldCertificate> heldCertificates = chainOfLength(11);
     List<Certificate> certificates = new ArrayList<>();
     for (HeldCertificate heldCertificate : heldCertificates) {
@@ -253,7 +252,7 @@ public final class CertificateChainCleanerTest {
   }
 
   /** Returns a chain starting at the leaf certificate and progressing to the root. */
-  private List<HeldCertificate> chainOfLength(int length) throws GeneralSecurityException {
+  private List<HeldCertificate> chainOfLength(int length) {
     List<HeldCertificate> result = new ArrayList<>();
     for (int i = 1; i <= length; i++) {
       result.add(0, new HeldCertificate.Builder()

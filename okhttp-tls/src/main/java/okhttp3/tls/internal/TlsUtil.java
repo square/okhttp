@@ -32,17 +32,17 @@ import javax.net.ssl.TrustManagerFactory;
 import javax.net.ssl.X509KeyManager;
 import javax.net.ssl.X509TrustManager;
 import okhttp3.tls.HeldCertificate;
-import okhttp3.tls.TlsNode;
+import okhttp3.tls.HandshakeCertificates;
 
 public final class TlsUtil {
   public static final char[] password = "password".toCharArray();
-  private static TlsNode localhost; // Lazily initialized.
+  private static HandshakeCertificates localhost; // Lazily initialized.
 
   private TlsUtil() {
   }
 
   /** Returns an SSL client for this host's localhost address. */
-  public static synchronized TlsNode localhost() {
+  public static synchronized HandshakeCertificates localhost() {
     if (localhost != null) return localhost;
 
     try {
@@ -52,7 +52,7 @@ public final class TlsUtil {
           .addSubjectAlternativeName(InetAddress.getByName("localhost").getCanonicalHostName())
           .build();
 
-      localhost = new TlsNode.Builder()
+      localhost = new HandshakeCertificates.Builder()
           .heldCertificate(heldCertificate)
           .addTrustedCertificate(heldCertificate.certificate())
           .build();
