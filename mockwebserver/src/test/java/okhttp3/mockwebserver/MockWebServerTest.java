@@ -530,7 +530,7 @@ public final class MockWebServerTest {
         .certificateAuthority(0)
         .build();
     HeldCertificate serverCertificate = new HeldCertificate.Builder()
-        .issuedBy(serverCa)
+        .signedBy(serverCa)
         .addSubjectAlternativeName(server.getHostName())
         .build();
     HandshakeCertificates serverHandshakeCertificates = new HandshakeCertificates.Builder()
@@ -543,7 +543,7 @@ public final class MockWebServerTest {
     server.requestClientAuth();
 
     HeldCertificate clientCertificate = new HeldCertificate.Builder()
-        .issuedBy(clientCa)
+        .signedBy(clientCa)
         .build();
     HandshakeCertificates clientHandshakeCertificates = new HandshakeCertificates.Builder()
         .addTrustedCertificate(serverCa.certificate())

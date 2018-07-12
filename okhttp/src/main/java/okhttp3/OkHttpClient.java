@@ -19,9 +19,7 @@ import java.net.Proxy;
 import java.net.ProxySelector;
 import java.net.Socket;
 import java.security.GeneralSecurityException;
-import java.security.KeyStore;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Random;
@@ -34,7 +32,6 @@ import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.TrustManager;
-import javax.net.ssl.TrustManagerFactory;
 import javax.net.ssl.X509TrustManager;
 import okhttp3.internal.Internal;
 import okhttp3.internal.Util;
@@ -248,8 +245,8 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
       this.sslSocketFactory = builder.sslSocketFactory;
       this.certificateChainCleaner = builder.certificateChainCleaner;
     } else {
-      X509TrustManager trustManager = systemDefaultTrustManager();
-      this.sslSocketFactory = systemDefaultSslSocketFactory(trustManager);
+      X509TrustManager trustManager = Util.platformTrustManager();
+      this.sslSocketFactory = newSslSocketFactory(trustManager);
       this.certificateChainCleaner = CertificateChainCleaner.get(trustManager);
     }
 
@@ -280,23 +277,7 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
     }
   }
 
-  private X509TrustManager systemDefaultTrustManager() {
-    try {
-      TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance(
-          TrustManagerFactory.getDefaultAlgorithm());
-      trustManagerFactory.init((KeyStore) null);
-      TrustManager[] trustManagers = trustManagerFactory.getTrustManagers();
-      if (trustManagers.length != 1 || !(trustManagers[0] instanceof X509TrustManager)) {
-        throw new IllegalStateException("Unexpected default trust managers:"
-            + Arrays.toString(trustManagers));
-      }
-      return (X509TrustManager) trustManagers[0];
-    } catch (GeneralSecurityException e) {
-      throw assertionError("No System TLS", e); // The system has no TLS. Just give up.
-    }
-  }
-
-  private SSLSocketFactory systemDefaultSslSocketFactory(X509TrustManager trustManager) {
+  private static SSLSocketFactory newSslSocketFactory(X509TrustManager trustManager) {
     try {
       SSLContext sslContext = Platform.get().getSSLContext();
       sslContext.init(null, new TrustManager[] { trustManager }, null);

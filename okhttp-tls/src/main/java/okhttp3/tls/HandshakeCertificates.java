@@ -20,6 +20,7 @@ import java.security.KeyManagementException;
 import java.security.SecureRandom;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import javax.net.ssl.KeyManager;
 import javax.net.ssl.SSLContext;
@@ -27,6 +28,8 @@ import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509KeyManager;
 import javax.net.ssl.X509TrustManager;
+import okhttp3.CertificatePinner;
+import okhttp3.internal.Util;
 import okhttp3.internal.platform.Platform;
 
 import static okhttp3.tls.internal.TlsUtil.newKeyManager;
@@ -134,6 +137,24 @@ public final class HandshakeCertificates {
      */
     public Builder addTrustedCertificate(X509Certificate certificate) {
       this.trustedCertificates.add(certificate);
+      return this;
+    }
+
+    /**
+     * Add all of the host platform's trusted root certificates. This set varies by platform
+     * (Android vs. Java), by platform release (Android 4.4 vs. Android 9), and with user
+     * customizations.
+     *
+     * <p>Most TLS clients that connect to hosts on the public Internet should call this method.
+     * Otherwise it is necessary to manually prepare a comprehensive set of trusted roots.
+     *
+     * <p>If the host platform is compromised or misconfigured this may contain untrustworthy root
+     * certificates. Applications that connect to a known set of servers may be able to mitigate
+     * this problem with {@linkplain CertificatePinner certificate pinning}.
+     */
+    public Builder addPlatformTrustedCertificates() {
+      X509TrustManager platformTrustManager = Util.platformTrustManager();
+      Collections.addAll(trustedCertificates, platformTrustManager.getAcceptedIssuers());
       return this;
     }
 

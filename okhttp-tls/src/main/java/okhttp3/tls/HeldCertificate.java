@@ -208,7 +208,7 @@ public final class HeldCertificate {
     private final List<String> altNames = new ArrayList<>();
     private BigInteger serialNumber;
     private KeyPair keyPair;
-    private HeldCertificate issuedBy;
+    private HeldCertificate signedBy;
     private int maxIntermediateCas = -1;
     private String keyAlgorithm;
     private int keySize;
@@ -298,11 +298,11 @@ public final class HeldCertificate {
     }
 
     /**
-     * Set the certificate that will sign this certificate. If unset the certificate will be
+     * Set the certificate that will issue this certificate. If unset the certificate will be
      * self-signed.
      */
-    public Builder issuedBy(HeldCertificate issuedBy) {
-      this.issuedBy = issuedBy;
+    public Builder signedBy(HeldCertificate signedBy) {
+      this.signedBy = signedBy;
       return this;
     }
 
@@ -357,9 +357,9 @@ public final class HeldCertificate {
       // Subject, public & private keys for this certificate's signer. It may be self signed!
       KeyPair signedByKeyPair;
       X500Principal signedByPrincipal;
-      if (issuedBy != null) {
-        signedByKeyPair = issuedBy.keyPair;
-        signedByPrincipal = issuedBy.certificate.getSubjectX500Principal();
+      if (signedBy != null) {
+        signedByKeyPair = signedBy.keyPair;
+        signedByPrincipal = signedBy.certificate.getSubjectX500Principal();
       } else {
         signedByKeyPair = heldKeyPair;
         signedByPrincipal = subject;

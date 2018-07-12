@@ -61,13 +61,13 @@ public final class CertificatePinnerChainValidationTest {
         .commonName("root")
         .build();
     HeldCertificate intermediateCa = new HeldCertificate.Builder()
-        .issuedBy(rootCa)
+        .signedBy(rootCa)
         .certificateAuthority(0)
         .serialNumber(2L)
         .commonName("intermediate_ca")
         .build();
     HeldCertificate certificate = new HeldCertificate.Builder()
-        .issuedBy(intermediateCa)
+        .signedBy(intermediateCa)
         .serialNumber(3L)
         .commonName(server.getHostName())
         .build();
@@ -118,13 +118,13 @@ public final class CertificatePinnerChainValidationTest {
         .commonName("root")
         .build();
     HeldCertificate intermediateCa = new HeldCertificate.Builder()
-        .issuedBy(rootCa)
+        .signedBy(rootCa)
         .certificateAuthority(0)
         .serialNumber(2L)
         .commonName("intermediate_ca")
         .build();
     HeldCertificate certificate = new HeldCertificate.Builder()
-        .issuedBy(intermediateCa)
+        .signedBy(intermediateCa)
         .serialNumber(3L)
         .commonName(server.getHostName())
         .build();
@@ -184,13 +184,13 @@ public final class CertificatePinnerChainValidationTest {
     // SSL context for an HTTP client under attack. It includes the trusted CA and a pinned
     // certificate.
     HeldCertificate goodIntermediateCa = new HeldCertificate.Builder()
-        .issuedBy(rootCa)
+        .signedBy(rootCa)
         .certificateAuthority(0)
         .serialNumber(2L)
         .commonName("good_intermediate_ca")
         .build();
     HeldCertificate goodCertificate = new HeldCertificate.Builder()
-        .issuedBy(goodIntermediateCa)
+        .signedBy(goodIntermediateCa)
         .serialNumber(3L)
         .commonName(server.getHostName())
         .build();
@@ -212,14 +212,14 @@ public final class CertificatePinnerChainValidationTest {
     // trusted good certificate above. The attack is that by including the good certificate in the
     // chain, we may trick the certificate pinner into accepting the rouge certificate.
     HeldCertificate compromisedIntermediateCa = new HeldCertificate.Builder()
-        .issuedBy(rootCa)
+        .signedBy(rootCa)
         .certificateAuthority(0)
         .serialNumber(4L)
         .commonName("bad_intermediate_ca")
         .build();
     HeldCertificate rogueCertificate = new HeldCertificate.Builder()
         .serialNumber(5L)
-        .issuedBy(compromisedIntermediateCa)
+        .signedBy(compromisedIntermediateCa)
         .commonName(server.getHostName())
         .build();
 
@@ -264,7 +264,7 @@ public final class CertificatePinnerChainValidationTest {
     // SSL context for an HTTP client under attack. It includes the trusted CA and a pinned
     // certificate.
     HeldCertificate goodIntermediateCa = new HeldCertificate.Builder()
-        .issuedBy(rootCa)
+        .signedBy(rootCa)
         .certificateAuthority(0)
         .serialNumber(3L)
         .commonName("intermediate_ca")
@@ -288,14 +288,14 @@ public final class CertificatePinnerChainValidationTest {
     // serves the good CAs certificate in the chain, which means the certificate pinner sees a
     // different set of certificates than the SSL verifier.
     HeldCertificate compromisedIntermediateCa = new HeldCertificate.Builder()
-        .issuedBy(compromisedRootCa)
+        .signedBy(compromisedRootCa)
         .certificateAuthority(0)
         .serialNumber(4L)
         .commonName("intermediate_ca")
         .build();
     HeldCertificate rogueCertificate = new HeldCertificate.Builder()
         .serialNumber(5L)
-        .issuedBy(compromisedIntermediateCa)
+        .signedBy(compromisedIntermediateCa)
         .commonName(server.getHostName())
         .build();
 
