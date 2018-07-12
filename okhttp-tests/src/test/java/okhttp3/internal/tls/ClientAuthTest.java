@@ -185,7 +185,7 @@ public final class ClientAuthTest {
     } catch (SSLHandshakeException expected) {
     } catch (SSLException expected) {
       String jvmVersion = System.getProperty("java.specification.version");
-      assertTrue(jvmVersion.equals("11"));
+      assertEquals("11", jvmVersion);
     } catch (SocketException expected) {
       assertEquals("jdk9", getPlatform());
     }
@@ -236,10 +236,8 @@ public final class ClientAuthTest {
     } catch (SSLHandshakeException expected) {
     } catch (SSLException expected) {
       // javax.net.ssl.SSLException: readRecord
-      assertTrue(getPlatform().equals("jdk9"));
-
       String jvmVersion = System.getProperty("java.specification.version");
-      assertTrue(jvmVersion.equals("11"));
+      assertEquals("11", jvmVersion);
     } catch (SocketException expected) {
       assertEquals("jdk9", getPlatform());
     }
