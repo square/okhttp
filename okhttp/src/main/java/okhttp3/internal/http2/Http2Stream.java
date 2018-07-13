@@ -173,16 +173,27 @@ public final class Http2Stream {
       throw new NullPointerException("responseHeaders == null");
     }
     boolean outFinished = false;
+    boolean flushHeaders = false;
     synchronized (this) {
       this.hasResponseHeaders = true;
       if (!out) {
         this.sink.finished = true;
+        flushHeaders = true;
         outFinished = true;
       }
     }
+
+    // Only DATA frames are subject to flow-control. Transmit the HEADER frame if the connection
+    // flow-control window is fully depleted.
+    if (!flushHeaders) {
+      synchronized (connection) {
+        flushHeaders = connection.bytesLeftInWriteWindow == 0L;
+      }
+    }
+
     connection.writeSynReply(id, outFinished, responseHeaders);
 
-    if (outFinished) {
+    if (flushHeaders) {
       connection.flush();
     }
   }
