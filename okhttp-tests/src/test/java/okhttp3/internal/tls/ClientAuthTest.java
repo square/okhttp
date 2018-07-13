@@ -67,7 +67,7 @@ public final class ClientAuthTest {
         .addSubjectAlternativeName("root_ca.com")
         .build();
     serverIntermediateCa = new HeldCertificate.Builder()
-        .issuedBy(serverRootCa)
+        .signedBy(serverRootCa)
         .certificateAuthority(0)
         .serialNumber(2L)
         .commonName("intermediate_ca")
@@ -75,7 +75,7 @@ public final class ClientAuthTest {
         .build();
 
     serverCert = new HeldCertificate.Builder()
-        .issuedBy(serverIntermediateCa)
+        .signedBy(serverIntermediateCa)
         .serialNumber(3L)
         .commonName("Local Host")
         .addSubjectAlternativeName(server.getHostName())
@@ -88,7 +88,7 @@ public final class ClientAuthTest {
         .addSubjectAlternativeName("root_ca.com")
         .build();
     clientIntermediateCa = new HeldCertificate.Builder()
-        .issuedBy(serverRootCa)
+        .signedBy(serverRootCa)
         .certificateAuthority(0)
         .serialNumber(2L)
         .commonName("intermediate_ca")
@@ -96,7 +96,7 @@ public final class ClientAuthTest {
         .build();
 
     clientCert = new HeldCertificate.Builder()
-        .issuedBy(clientIntermediateCa)
+        .signedBy(clientIntermediateCa)
         .serialNumber(4L)
         .commonName("Jethro Willis")
         .addSubjectAlternativeName("jethrowillis.com")
@@ -188,7 +188,7 @@ public final class ClientAuthTest {
 
   @Test public void commonNameIsNotTrusted() throws Exception {
     serverCert = new HeldCertificate.Builder()
-        .issuedBy(serverIntermediateCa)
+        .signedBy(serverIntermediateCa)
         .serialNumber(3L)
         .commonName(server.getHostName())
         .addSubjectAlternativeName("different-host.com")

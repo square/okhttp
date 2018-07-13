@@ -21,7 +21,10 @@ import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.security.PrivateKey;
+import java.security.cert.X509Certificate;
 import java.util.Arrays;
+import java.util.LinkedHashSet;
+import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -37,6 +40,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 public final class HandshakeCertificatesTest {
   private ExecutorService executorService;
@@ -57,10 +61,10 @@ public final class HandshakeCertificatesTest {
         .build();
     HeldCertificate clientIntermediate = new HeldCertificate.Builder()
         .certificateAuthority(0)
-        .issuedBy(clientRoot)
+        .signedBy(clientRoot)
         .build();
     HeldCertificate clientCertificate = new HeldCertificate.Builder()
-        .issuedBy(clientIntermediate)
+        .signedBy(clientIntermediate)
         .build();
 
     HeldCertificate serverRoot = new HeldCertificate.Builder()
@@ -68,10 +72,10 @@ public final class HandshakeCertificatesTest {
         .build();
     HeldCertificate serverIntermediate = new HeldCertificate.Builder()
         .certificateAuthority(0)
-        .issuedBy(serverRoot)
+        .signedBy(serverRoot)
         .build();
     HeldCertificate serverCertificate = new HeldCertificate.Builder()
-        .issuedBy(serverIntermediate)
+        .signedBy(serverIntermediate)
         .build();
 
     HandshakeCertificates server = new HandshakeCertificates.Builder()
@@ -108,10 +112,10 @@ public final class HandshakeCertificatesTest {
         .build();
     HeldCertificate intermediate = new HeldCertificate.Builder()
         .certificateAuthority(0)
-        .issuedBy(root)
+        .signedBy(root)
         .build();
     HeldCertificate certificate = new HeldCertificate.Builder()
-        .issuedBy(intermediate)
+        .signedBy(intermediate)
         .build();
 
     HandshakeCertificates handshakeCertificates = new HandshakeCertificates.Builder()
@@ -121,6 +125,20 @@ public final class HandshakeCertificatesTest {
         handshakeCertificates.keyManager().getPrivateKey("private"));
     assertEquals(Arrays.asList(certificate.certificate(), intermediate.certificate()),
         Arrays.asList(handshakeCertificates.keyManager().getCertificateChain("private")));
+  }
+
+  @Test public void platformTrustedCertificates() {
+    HandshakeCertificates handshakeCertificates = new HandshakeCertificates.Builder()
+        .addPlatformTrustedCertificates()
+        .build();
+    Set<String> names = new LinkedHashSet<>();
+    for (X509Certificate certificate : handshakeCertificates.trustManager().getAcceptedIssuers()) {
+      // Abbreviate a long name like "CN=Entrust Root Certification Authority - G2, OU=..."
+      String name = certificate.getSubjectDN().getName();
+      names.add(name.substring(0, name.indexOf(" ")));
+    }
+    // It's safe to assume all platforms will have a major Internet certificate issuer.
+    assertTrue(names.toString(), names.contains("CN=Entrust"));
   }
 
   private InetSocketAddress startTlsServer() throws IOException {

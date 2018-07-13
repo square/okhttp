@@ -202,7 +202,7 @@ public final class HeldCertificateTest {
     HeldCertificate leaf = new HeldCertificate.Builder()
         .certificateAuthority(0)
         .ecdsa256()
-        .issuedBy(root)
+        .signedBy(root)
         .build();
 
     assertEquals("SHA256WITHRSA", root.certificate().getSigAlgName());
@@ -217,7 +217,7 @@ public final class HeldCertificateTest {
     HeldCertificate leaf = new HeldCertificate.Builder()
         .certificateAuthority(0)
         .rsa2048()
-        .issuedBy(root)
+        .signedBy(root)
         .build();
 
     assertEquals("SHA256WITHECDSA", root.certificate().getSigAlgName());

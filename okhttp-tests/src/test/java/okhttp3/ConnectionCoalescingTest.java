@@ -56,7 +56,7 @@ public final class ConnectionCoalescingTest {
         .commonName("root")
         .build();
     certificate = new HeldCertificate.Builder()
-        .issuedBy(rootCa)
+        .signedBy(rootCa)
         .serialNumber(2L)
         .commonName(server.getHostName())
         .addSubjectAlternativeName(server.getHostName())

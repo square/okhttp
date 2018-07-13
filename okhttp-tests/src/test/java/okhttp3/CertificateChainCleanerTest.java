@@ -77,11 +77,11 @@ public final class CertificateChainCleanerTest {
         .build();
     HeldCertificate certA = new HeldCertificate.Builder()
         .serialNumber(2L)
-        .issuedBy(root)
+        .signedBy(root)
         .build();
     HeldCertificate certB = new HeldCertificate.Builder()
         .serialNumber(3L)
-        .issuedBy(certA)
+        .signedBy(certA)
         .build();
 
     CertificateChainCleaner cleaner = CertificateChainCleaner.get(root.certificate());
@@ -94,11 +94,11 @@ public final class CertificateChainCleanerTest {
         .build();
     HeldCertificate certA = new HeldCertificate.Builder()
         .serialNumber(2L)
-        .issuedBy(root)
+        .signedBy(root)
         .build();
     HeldCertificate certB = new HeldCertificate.Builder()
         .serialNumber(3L)
-        .issuedBy(certA)
+        .signedBy(certA)
         .build();
 
     CertificateChainCleaner cleaner = CertificateChainCleaner.get(root.certificate());
@@ -112,15 +112,15 @@ public final class CertificateChainCleanerTest {
         .build();
     HeldCertificate certA = new HeldCertificate.Builder()
         .serialNumber(2L)
-        .issuedBy(root)
+        .signedBy(root)
         .build();
     HeldCertificate certB = new HeldCertificate.Builder()
         .serialNumber(3L)
-        .issuedBy(certA)
+        .signedBy(certA)
         .build();
     HeldCertificate certC = new HeldCertificate.Builder()
         .serialNumber(4L)
-        .issuedBy(certB)
+        .signedBy(certB)
         .build();
 
     CertificateChainCleaner cleaner = CertificateChainCleaner.get(root.certificate());
@@ -134,15 +134,15 @@ public final class CertificateChainCleanerTest {
         .build();
     HeldCertificate certA = new HeldCertificate.Builder()
         .serialNumber(2L)
-        .issuedBy(root)
+        .signedBy(root)
         .build();
     HeldCertificate certB = new HeldCertificate.Builder()
         .serialNumber(3L)
-        .issuedBy(certA)
+        .signedBy(certA)
         .build();
     HeldCertificate certC = new HeldCertificate.Builder()
         .serialNumber(4L)
-        .issuedBy(certB)
+        .signedBy(certB)
         .build();
 
     CertificateChainCleaner cleaner = CertificateChainCleaner.get(root.certificate());
@@ -156,11 +156,11 @@ public final class CertificateChainCleanerTest {
         .build();
     HeldCertificate certA = new HeldCertificate.Builder()
         .serialNumber(2L)
-        .issuedBy(root)
+        .signedBy(root)
         .build();
     HeldCertificate certB = new HeldCertificate.Builder()
         .serialNumber(3L)
-        .issuedBy(certA)
+        .signedBy(certA)
         .build();
     HeldCertificate certUnnecessary = new HeldCertificate.Builder()
         .serialNumber(4L)
@@ -177,15 +177,15 @@ public final class CertificateChainCleanerTest {
         .build();
     HeldCertificate trusted = new HeldCertificate.Builder()
         .serialNumber(2L)
-        .issuedBy(selfSigned)
+        .signedBy(selfSigned)
         .build();
     HeldCertificate certA = new HeldCertificate.Builder()
         .serialNumber(3L)
-        .issuedBy(trusted)
+        .signedBy(trusted)
         .build();
     HeldCertificate certB = new HeldCertificate.Builder()
         .serialNumber(4L)
-        .issuedBy(certA)
+        .signedBy(certA)
         .build();
 
     CertificateChainCleaner cleaner = CertificateChainCleaner.get(
@@ -203,15 +203,15 @@ public final class CertificateChainCleanerTest {
         .serialNumber(1L)
         .build();
     HeldCertificate trusted = new HeldCertificate.Builder()
-        .issuedBy(unknownSigner)
+        .signedBy(unknownSigner)
         .serialNumber(2L)
         .build();
     HeldCertificate intermediateCa = new HeldCertificate.Builder()
-        .issuedBy(trusted)
+        .signedBy(trusted)
         .serialNumber(3L)
         .build();
     HeldCertificate certificate = new HeldCertificate.Builder()
-        .issuedBy(intermediateCa)
+        .signedBy(intermediateCa)
         .serialNumber(4L)
         .build();
 
@@ -256,7 +256,7 @@ public final class CertificateChainCleanerTest {
     List<HeldCertificate> result = new ArrayList<>();
     for (int i = 1; i <= length; i++) {
       result.add(0, new HeldCertificate.Builder()
-          .issuedBy(!result.isEmpty() ? result.get(0) : null)
+          .signedBy(!result.isEmpty() ? result.get(0) : null)
           .serialNumber(i)
           .build());
     }
