@@ -3415,6 +3415,9 @@ public final class URLConnectionTest {
       // RI response to the FAIL_HANDSHAKE
     } catch (SSLHandshakeException expected) {
       // Android's response to the FAIL_HANDSHAKE
+    } catch (SSLException expected) {
+      // JDK 1.9 response to the FAIL_HANDSHAKE
+      // javax.net.ssl.SSLException: Unexpected handshake message: client_hello
     } catch (SocketException expected) {
       // Conscrypt's response to the FAIL_HANDSHAKE
     }
