@@ -43,7 +43,8 @@ With a server that holds a certificate and a client that trusts it we have enoug
 handshake. The best part of this example is that we don't need to make our test code insecure with a
 a fake `HostnameVerifier` or `X509TrustManager`.
 
-### Certificate Authorities
+Certificate Authorities
+-----------------------
 
 The above example uses a self-signed certificate. This is convenient for testing but not
 representative of real-world HTTPS deployment. To get closer to that we can use `HeldCertificate`
@@ -90,7 +91,8 @@ OkHttpClient client = new OkHttpClient.Builder()
     .build();
 ```
 
-### Client Authentication
+Client Authentication
+---------------------
 
 The above scenario is representative of most TLS set ups: the client uses certificates to validate
 the identity of a server. The converse is also possible. Here we create a server that authenticates
@@ -143,7 +145,8 @@ System.out.println(recordedRequest.getHandshake().peerPrincipal());
 This handshake is successful because each party has prearranged to trust the root certificate that
 signs the other party's chain.
 
-### Well-Known Certificate Authorities
+Well-Known Certificate Authorities
+----------------------------------
 
 In these examples we've prearranged which root certificates to trust. But for regular HTTPS on the
 Internet this set of trusted root certificates is usually provided by default by the host platform.
@@ -162,7 +165,8 @@ OkHttpClient client = new OkHttpClient.Builder()
     .build();
 ```
 
-### PEM files
+PEM files
+---------
 
 You can encode a `HeldCertificate` in PEM format:
 
@@ -199,7 +203,8 @@ OdHOim9+
 -----END PRIVATE KEY-----
 ```
 
-### Recommendations
+Recommendations
+---------------
 
 Typically servers need a held certificate plus a chain of intermediates. Servers only need the
 private key for their own certificate. The chain served by a server doesn't need the root
@@ -218,9 +223,22 @@ form of wildcards `*.example.com` where the `*` must be first and doesn't match 
 By default certificates use fast and secure 256-bit ECDSA keys. For interoperability with very old
 clients use `HeldCertificate.Builder.rsa2048()`.
 
+Download
+--------
 
+Get via Maven:
+```xml
+<dependency>
+  <groupId>com.squareup.okhttp3</groupId>
+  <artifactId>okhttp-tls</artifactId>
+  <version>(insert latest version)</version>
+</dependency>
+```
 
-
+or via Gradle
+```groovy
+implementation 'com.squareup.okhttp3:okhttp-tls:(insert latest version)'
+```
 
  [held_certificate]: http://square.github.io/okhttp/3.x/okhttp-tls/okhttp3/tls/HeldCertificate.html
  [held_certificate_builder]: http://square.github.io/okhttp/3.x/okhttp-tls/okhttp3/tls/HeldCertificate.Builder.html
