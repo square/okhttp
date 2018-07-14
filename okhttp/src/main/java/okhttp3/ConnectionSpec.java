@@ -50,6 +50,15 @@ public final class ConnectionSpec {
       CipherSuite.TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256
   };
 
+  // TLS 1.3
+  private static final CipherSuite[] TLS13_CIPHER_SUITES = new CipherSuite[] {
+      CipherSuite.TLS_AES_128_GCM_SHA256,
+      CipherSuite.TLS_AES_256_GCM_SHA384,
+      CipherSuite.TLS_CHACHA20_POLY1305_SHA256,
+      CipherSuite.TLS_AES_128_CCM_SHA256,
+      CipherSuite.TLS_AES_256_CCM_8_SHA256
+  };
+
   // This is nearly equal to the cipher suites supported in Chrome 51, current as of 2016-05-25.
   // All of these suites are available on Android 7.0; earlier releases support a subset of these
   // suites. https://github.com/square/okhttp/issues/1972
@@ -72,6 +81,17 @@ public final class ConnectionSpec {
       CipherSuite.TLS_RSA_WITH_AES_256_CBC_SHA,
       CipherSuite.TLS_RSA_WITH_3DES_EDE_CBC_SHA,
   };
+
+  /**
+   * A TLS 1.3 only Connection Spec for testing. This will be eventually be exposed
+   * as part of MODERN_TLS or folded into the default OkHttp client once published and
+   * available in JDK11.
+   */
+  static final ConnectionSpec TLS_13 = new Builder(true)
+      .cipherSuites(TLS13_CIPHER_SUITES)
+      .tlsVersions(TlsVersion.TLS_1_3)
+      .supportsTlsExtensions(true)
+      .build();
 
   /** A secure TLS connection assuming a modern client platform and server. */
   public static final ConnectionSpec RESTRICTED_TLS = new Builder(true)
