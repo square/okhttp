@@ -97,7 +97,11 @@ final class RealCall implements Call {
     }
     captureCallStackTrace();
     eventListener.callStart(this);
-    client.dispatcher().enqueue(new AsyncCall(responseCallback));
+    try {
+		client.dispatcher().enqueue(new AsyncCall(responseCallback));
+	} catch (Exception e) {
+		responseCallback.onFailure(RealCall.this, new IOException(e.getMessage()));
+	}
   }
 
   @Override public void cancel() {
