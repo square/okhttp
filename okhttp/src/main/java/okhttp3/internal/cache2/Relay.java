@@ -123,11 +123,13 @@ final class Relay {
    */
   public static Relay edit(
       File file, Source upstream, ByteString metadata, long bufferMaxSize) throws IOException {
-    RandomAccessFile randomAccessFile = new RandomAccessFile(file, "rw");
+    //RandomAccessFile randomAccessFile = new RandomAccessFile(file, "rw");
+    //Relay result = new Relay(randomAccessFile, upstream, 0L, metadata, bufferMaxSize);
+    RandomAccessFile randomAccessFile = null;
     Relay result = new Relay(randomAccessFile, upstream, 0L, metadata, bufferMaxSize);
 
     // Write a dirty header. That way if we crash we won't attempt to recover this.
-    randomAccessFile.setLength(0L);
+    //randomAccessFile.setLength(0L);
     result.writeHeader(PREFIX_DIRTY, -1L, -1L);
 
     return result;
