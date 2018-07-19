@@ -93,7 +93,7 @@ class AndroidPlatform extends Platform {
     }
   }
 
-  @Override protected X509TrustManager trustManager(SSLSocketFactory sslSocketFactory) {
+  @Override protected @Nullable X509TrustManager trustManager(SSLSocketFactory sslSocketFactory) {
     Object context = readFieldOrNull(sslSocketFactory, sslParametersClass, "sslParameters");
     if (context == null) {
       // If that didn't work, try the Google Play Services SSL provider before giving up. This
@@ -138,7 +138,7 @@ class AndroidPlatform extends Platform {
     return alpnResult != null ? new String(alpnResult, Util.UTF_8) : null;
   }
 
-  @Override public void log(int level, String message, Throwable t) {
+  @Override public void log(int level, String message, @Nullable Throwable t) {
     int logLevel = level == WARN ? Log.WARN : Log.DEBUG;
     if (t != null) message = message + '\n' + Log.getStackTraceString(t);
 
