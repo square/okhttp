@@ -45,6 +45,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -3264,12 +3265,15 @@ public final class CallTest {
   }
 
   @Test public void postWithFileNotFound() throws Exception {
+    final AtomicInteger called = new AtomicInteger(0);
+
     RequestBody body = new RequestBody() {
       @Nullable @Override public MediaType contentType() {
         return MediaType.get("application/octet-stream");
       }
 
       @Override public void writeTo(BufferedSink sink) throws IOException {
+        called.incrementAndGet();
         throw new FileNotFoundException();
       }
     };
@@ -3281,6 +3285,8 @@ public final class CallTest {
 
     executeSynchronously(request)
         .assertFailure(FileNotFoundException.class);
+
+    assertEquals(1L, called.get());
   }
 
   private void makeFailingCall() {
