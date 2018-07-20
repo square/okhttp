@@ -202,8 +202,8 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
   final @Nullable Cache cache;
   final @Nullable InternalCache internalCache;
   final SocketFactory socketFactory;
-  final @Nullable SSLSocketFactory sslSocketFactory;
-  final @Nullable CertificateChainCleaner certificateChainCleaner;
+  final SSLSocketFactory sslSocketFactory;
+  final CertificateChainCleaner certificateChainCleaner;
   final HostnameVerifier hostnameVerifier;
   final CertificatePinner certificatePinner;
   final Authenticator proxyAuthenticator;
@@ -307,7 +307,7 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
     return pingInterval;
   }
 
-  public Proxy proxy() {
+  public @Nullable Proxy proxy() {
     return proxy;
   }
 
@@ -586,6 +586,7 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
      * be used.
      */
     public Builder proxySelector(ProxySelector proxySelector) {
+      if (proxySelector == null) throw new NullPointerException("proxySelector == null");
       this.proxySelector = proxySelector;
       return this;
     }
