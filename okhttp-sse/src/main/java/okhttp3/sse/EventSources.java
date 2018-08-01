@@ -17,6 +17,7 @@ package okhttp3.sse;
 
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
+import okhttp3.Response;
 import okhttp3.internal.sse.RealEventSource;
 
 public final class EventSources {
@@ -28,6 +29,11 @@ public final class EventSources {
         return eventSource;
       }
     };
+  }
+
+  public static void processResponse(Response response, EventSourceListener listener) {
+    RealEventSource eventSource = new RealEventSource(response.request(), listener);
+    eventSource.processResponse(response);
   }
 
   private EventSources() {

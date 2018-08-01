@@ -23,12 +23,14 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.InetSocketAddress;
 import java.net.Socket;
+import java.security.NoSuchAlgorithmException;
 import java.security.Security;
 import java.security.cert.Certificate;
 import java.security.cert.TrustAnchor;
 import java.security.cert.X509Certificate;
 import java.util.List;
 import javax.annotation.Nullable;
+import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLPeerUnverifiedException;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
@@ -91,7 +93,7 @@ class AndroidPlatform extends Platform {
     }
   }
 
-  @Override protected X509TrustManager trustManager(SSLSocketFactory sslSocketFactory) {
+  @Override protected @Nullable X509TrustManager trustManager(SSLSocketFactory sslSocketFactory) {
     Object context = readFieldOrNull(sslSocketFactory, sslParametersClass, "sslParameters");
     if (context == null) {
       // If that didn't work, try the Google Play Services SSL provider before giving up. This
@@ -136,7 +138,7 @@ class AndroidPlatform extends Platform {
     return alpnResult != null ? new String(alpnResult, Util.UTF_8) : null;
   }
 
-  @Override public void log(int level, String message, Throwable t) {
+  @Override public void log(int level, String message, @Nullable Throwable t) {
     int logLevel = level == WARN ? Log.WARN : Log.DEBUG;
     if (t != null) message = message + '\n' + Log.getStackTraceString(t);
 
@@ -425,6 +427,22 @@ class AndroidPlatform extends Platform {
     @Override
     public int hashCode() {
       return trustManager.hashCode() + 31 * findByIssuerAndSignatureMethod.hashCode();
+    }
+  }
+
+  @Override public SSLContext getSSLContext() {
+    if (Build.VERSION.SDK_INT >= 16 && Build.VERSION.SDK_INT < 22) {
+      try {
+        return SSLContext.getInstance("TLSv1.2");
+      } catch (NoSuchAlgorithmException e) {
+        // fallback to TLS
+      }
+    }
+
+    try {
+      return SSLContext.getInstance("TLS");
+    } catch (NoSuchAlgorithmException e) {
+      throw new IllegalStateException("No TLS provider", e);
     }
   }
 }

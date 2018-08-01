@@ -11,7 +11,7 @@
 
   <groupId>com.squareup.okhttp3</groupId>
   <artifactId>parent</artifactId>
-  <version>3.11.0-SNAPSHOT</version>
+  <version>3.12.0-SNAPSHOT</version>
   <packaging>pom</packaging>
 
   <name>OkHttp (Parent)</name>
@@ -27,9 +27,12 @@
     <module>okhttp-apache</module>
     <module>okhttp-sse</module>
     <module>okhttp-testing-support</module>
+    <module>okhttp-tls</module>
     <module>okhttp-urlconnection</module>
 
     <module>okhttp-logging-interceptor</module>
+
+    <module>okhttp-dnsoverhttps</module>
 
     <module>okcurl</module>
     <module>mockwebserver</module>
@@ -53,6 +56,7 @@
     <moshi.version>1.1.0</moshi.version>
     <jnr-unixsocket.version>0.19</jnr-unixsocket.version>
     <okio.version>1.14.0</okio.version>
+    <conscrypt.version>1.1.4</conscrypt.version>
 
     <!-- Test Dependencies -->
     <junit.version>4.12</junit.version>
@@ -132,6 +136,11 @@
         <groupId>com.github.jnr</groupId>
         <artifactId>jnr-unixsocket</artifactId>
         <version>${jnr-unixsocket.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.conscrypt</groupId>
+        <artifactId>conscrypt-openjdk-uber</artifactId>
+        <version>${conscrypt.version}</version>
       </dependency>
     </dependencies>
   </dependencyManagement>
@@ -350,7 +359,6 @@
         <dependency>
           <groupId>org.conscrypt</groupId>
           <artifactId>conscrypt-openjdk-uber</artifactId>
-          <version>1.1.3</version>
         </dependency>
       </dependencies>
     </profile>
@@ -640,6 +648,15 @@
       <id>alpn-when-jdk8_172</id>
       <activation>
         <jdk>1.8.0_172</jdk>
+      </activation>
+      <properties>
+        <alpn.jdk8.version>8.1.12.v20180117</alpn.jdk8.version>
+      </properties>
+    </profile>
+    <profile>
+      <id>alpn-when-jdk8_181</id>
+      <activation>
+        <jdk>1.8.0_181</jdk>
       </activation>
       <properties>
         <alpn.jdk8.version>8.1.12.v20180117</alpn.jdk8.version>

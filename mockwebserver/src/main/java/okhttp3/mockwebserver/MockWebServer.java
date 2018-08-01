@@ -19,7 +19,6 @@ package okhttp3.mockwebserver;
 
 import java.io.Closeable;
 import java.io.IOException;
-import java.io.InterruptedIOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.ProtocolException;
@@ -103,6 +102,10 @@ public final class MockWebServer extends ExternalResource implements Closeable {
     Internal.initializeInstanceForTests();
   }
 
+  private static final int CLIENT_AUTH_NONE = 0;
+  private static final int CLIENT_AUTH_REQUESTED = 1;
+  private static final int CLIENT_AUTH_REQUIRED = 2;
+
   private static final X509TrustManager UNTRUSTED_TRUST_MANAGER = new X509TrustManager() {
     @Override public void checkClientTrusted(X509Certificate[] chain, String authType)
         throws CertificateException {
@@ -133,6 +136,7 @@ public final class MockWebServer extends ExternalResource implements Closeable {
   private SSLSocketFactory sslSocketFactory;
   private ExecutorService executor;
   private boolean tunnelProxy;
+  private int clientAuth = CLIENT_AUTH_NONE;
   private Dispatcher dispatcher = new QueueDispatcher();
 
   private int port = -1;
@@ -240,6 +244,36 @@ public final class MockWebServer extends ExternalResource implements Closeable {
   public void useHttps(SSLSocketFactory sslSocketFactory, boolean tunnelProxy) {
     this.sslSocketFactory = sslSocketFactory;
     this.tunnelProxy = tunnelProxy;
+  }
+
+  /**
+   * Configure the server to not perform SSL authentication of the client. This leaves
+   * authentication to another layer such as in an HTTP cookie or header. This is the default and
+   * most common configuration.
+   */
+  public void noClientAuth() {
+    this.clientAuth = CLIENT_AUTH_NONE;
+  }
+
+  /**
+   * Configure the server to {@linkplain SSLSocket#setWantClientAuth want client auth}. If the
+   * client presents a certificate that is {@linkplain TrustManager trusted} the handshake will
+   * proceed normally. The connection will also proceed normally if the client presents no
+   * certificate at all! But if the client presents an untrusted certificate the handshake will fail
+   * and no connection will be established.
+   */
+  public void requestClientAuth() {
+    this.clientAuth = CLIENT_AUTH_REQUESTED;
+  }
+
+  /**
+   * Configure the server to {@linkplain SSLSocket#setNeedClientAuth need client auth}. If the
+   * client presents a certificate that is {@linkplain TrustManager trusted} the handshake will
+   * proceed normally. If the client presents an untrusted certificate or no certificate at all the
+   * handshake will fail and no connection will be established.
+   */
+  public void requireClientAuth() {
+    this.clientAuth = CLIENT_AUTH_REQUIRED;
   }
 
   /**
@@ -432,6 +466,11 @@ public final class MockWebServer extends ExternalResource implements Closeable {
               raw.getPort(), true);
           SSLSocket sslSocket = (SSLSocket) socket;
           sslSocket.setUseClientMode(false);
+          if (clientAuth == CLIENT_AUTH_REQUIRED) {
+            sslSocket.setNeedClientAuth(true);
+          } else if (clientAuth == CLIENT_AUTH_REQUESTED) {
+            sslSocket.setWantClientAuth(true);
+          }
           openClientSockets.add(socket);
 
           if (protocolNegotiationEnabled) {
@@ -692,7 +731,8 @@ public final class MockWebServer extends ExternalResource implements Closeable {
       // Even if messages are no longer being read we need to wait for the connection close signal.
       try {
         connectionClose.await();
-      } catch (InterruptedException ignored) {
+      } catch (InterruptedException e) {
+        throw new AssertionError(e);
       }
 
     } catch (IOException e) {
@@ -781,7 +821,7 @@ public final class MockWebServer extends ExternalResource implements Closeable {
         try {
           Thread.sleep(periodDelayMs);
         } catch (InterruptedException e) {
-          throw new AssertionError();
+          throw new AssertionError(e);
         }
       }
     }
@@ -863,7 +903,7 @@ public final class MockWebServer extends ExternalResource implements Closeable {
           stream.close(ErrorCode.fromHttp2(peekedResponse.getHttp2ErrorCode()));
           return;
         } catch (InterruptedException e) {
-          throw new InterruptedIOException();
+          throw new AssertionError(e);
         }
       }
 

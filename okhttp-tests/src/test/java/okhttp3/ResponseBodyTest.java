@@ -396,8 +396,8 @@ public final class ResponseBodyTest {
   }
 
   static ResponseBody body(String hex, String charset) {
-    MediaType mediaType = charset == null ? null : MediaType.parse("any/thing; charset=" + charset);
-    return ResponseBody.create(mediaType, ByteString.decodeHex(hex).toByteArray());
+    MediaType mediaType = charset == null ? null : MediaType.get("any/thing; charset=" + charset);
+    return ResponseBody.create(mediaType, ByteString.decodeHex(hex));
   }
 
   static String exhaust(Reader reader) throws IOException {

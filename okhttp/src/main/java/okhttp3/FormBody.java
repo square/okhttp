@@ -28,8 +28,7 @@ import static okhttp3.HttpUrl.FORM_ENCODE_SET;
 import static okhttp3.HttpUrl.percentDecode;
 
 public final class FormBody extends RequestBody {
-  private static final MediaType CONTENT_TYPE =
-      MediaType.parse("application/x-www-form-urlencoded");
+  private static final MediaType CONTENT_TYPE = MediaType.get("application/x-www-form-urlencoded");
 
   private final List<String> encodedNames;
   private final List<String> encodedValues;

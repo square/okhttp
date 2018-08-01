@@ -40,7 +40,7 @@ public class ConscryptPlatform extends Platform {
     return new OpenSSLProvider();
   }
 
-  @Override public X509TrustManager trustManager(SSLSocketFactory sslSocketFactory) {
+  @Override public @Nullable X509TrustManager trustManager(SSLSocketFactory sslSocketFactory) {
     if (!Conscrypt.isConscrypt(sslSocketFactory)) {
       return super.trustManager(sslSocketFactory);
     }

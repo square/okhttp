@@ -32,10 +32,10 @@ import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
 import okhttp3.ResponseBody;
-import okhttp3.mockwebserver.internal.tls.SslClient;
 import okhttp3.logging.HttpLoggingInterceptor.Level;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
+import okhttp3.tls.HandshakeCertificates;
 import okio.Buffer;
 import okio.BufferedSink;
 import okio.ByteString;
@@ -44,6 +44,7 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 
+import static okhttp3.tls.internal.TlsUtil.localhost;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -53,11 +54,11 @@ import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeThat;
 
 public final class HttpLoggingInterceptorTest {
-  private static final MediaType PLAIN = MediaType.parse("text/plain; charset=utf-8");
+  private static final MediaType PLAIN = MediaType.get("text/plain; charset=utf-8");
 
   @Rule public final MockWebServer server = new MockWebServer();
 
-  private SslClient sslClient = SslClient.localhost();
+  private HandshakeCertificates handshakeCertificates = localhost();
   private HostnameVerifier hostnameVerifier = new RecordingHostnameVerifier();
   private OkHttpClient client;
   private String host;
@@ -80,7 +81,8 @@ public final class HttpLoggingInterceptorTest {
     client = new OkHttpClient.Builder()
         .addNetworkInterceptor(networkInterceptor)
         .addInterceptor(applicationInterceptor)
-        .sslSocketFactory(sslClient.socketFactory, sslClient.trustManager)
+        .sslSocketFactory(
+            handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager())
         .hostnameVerifier(hostnameVerifier)
         .build();
 
@@ -723,7 +725,7 @@ public final class HttpLoggingInterceptorTest {
   }
 
   @Test public void http2() throws Exception {
-    server.useHttps(sslClient.socketFactory, false);
+    server.useHttps(handshakeCertificates.sslSocketFactory(), false);
     url = server.url("/");
 
     setLevel(Level.BASIC);

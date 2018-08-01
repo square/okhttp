@@ -38,7 +38,7 @@ import okio.ByteString;
  * http://localhost:53203/oauth/}, passing the same port to this class’ constructor.
  */
 public final class SlackApi {
-  private final HttpUrl baseUrl = HttpUrl.parse("https://slack.com/api/");
+  private final HttpUrl baseUrl = HttpUrl.get("https://slack.com/api/");
   private final OkHttpClient httpClient;
   private final Moshi moshi;
 
@@ -120,7 +120,7 @@ public final class SlackApi {
     @FromJson HttpUrl urlFromJson(String urlString) {
       if (urlString.startsWith("wss:")) urlString = "https:" + urlString.substring(4);
       if (urlString.startsWith("ws:")) urlString = "http:" + urlString.substring(3);
-      return HttpUrl.parse(urlString);
+      return HttpUrl.get(urlString);
     }
   }
 }

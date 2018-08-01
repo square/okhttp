@@ -89,7 +89,7 @@ public class Platform {
     return "OkHttp";
   }
 
-  protected X509TrustManager trustManager(SSLSocketFactory sslSocketFactory) {
+  protected @Nullable X509TrustManager trustManager(SSLSocketFactory sslSocketFactory) {
     // Attempt to get the trust manager from an OpenJDK socket factory. We attempt this on all
     // platforms in order to support Robolectric, which mixes classes from both Android and the
     // Oracle JDK. Note that we don't support HTTP/2 or other nice features on Robolectric.
@@ -108,7 +108,7 @@ public class Platform {
    *
    * @param hostname non-null for client-side handshakes; null for server-side handshakes.
    */
-  public void configureTlsExtensions(SSLSocket sslSocket, String hostname,
+  public void configureTlsExtensions(SSLSocket sslSocket, @Nullable String hostname,
       List<Protocol> protocols) {
   }
 
@@ -124,12 +124,12 @@ public class Platform {
     return null;
   }
 
-  public void connectSocket(Socket socket, InetSocketAddress address,
-      int connectTimeout) throws IOException {
+  public void connectSocket(Socket socket, InetSocketAddress address, int connectTimeout)
+      throws IOException {
     socket.connect(address, connectTimeout);
   }
 
-  public void log(int level, String message, Throwable t) {
+  public void log(int level, String message, @Nullable Throwable t) {
     Level logLevel = level == WARN ? Level.WARNING : Level.INFO;
     logger.log(logLevel, message, t);
   }
@@ -176,8 +176,10 @@ public class Platform {
     X509TrustManager trustManager = trustManager(sslSocketFactory);
 
     if (trustManager == null) {
-      throw new IllegalStateException("Unable to extract the trust manager on " + Platform.get()
-          + ", sslSocketFactory is " + sslSocketFactory.getClass());
+      throw new IllegalStateException("Unable to extract the trust manager on "
+          + Platform.get()
+          + ", sslSocketFactory is "
+          + sslSocketFactory.getClass());
     }
 
     return buildCertificateChainCleaner(trustManager);
@@ -241,7 +243,7 @@ public class Platform {
     return result.readByteArray();
   }
 
-  static <T> T readFieldOrNull(Object instance, Class<T> fieldType, String fieldName) {
+  static @Nullable <T> T readFieldOrNull(Object instance, Class<T> fieldType, String fieldName) {
     for (Class<?> c = instance.getClass(); c != Object.class; c = c.getSuperclass()) {
       try {
         Field field = c.getDeclaredField(fieldName);
@@ -265,6 +267,16 @@ public class Platform {
   }
 
   public SSLContext getSSLContext() {
+    String jvmVersion = System.getProperty("java.specification.version");
+    if ("1.7".equals(jvmVersion)) {
+      try {
+        // JDK 1.7 (public version) only support > TLSv1 with named protocols
+        return SSLContext.getInstance("TLSv1.2");
+      } catch (NoSuchAlgorithmException e) {
+        // fallback to TLS
+      }
+    }
+
     try {
       return SSLContext.getInstance("TLS");
     } catch (NoSuchAlgorithmException e) {

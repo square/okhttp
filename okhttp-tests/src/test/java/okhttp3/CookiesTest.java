@@ -276,7 +276,7 @@ public class CookiesTest {
     CookieManager cookieManager = new CookieManager(null, ACCEPT_ORIGINAL_SERVER);
     JavaNetCookieJar cookieJar = new JavaNetCookieJar(cookieManager);
 
-    HttpUrl url = HttpUrl.parse("https://www.squareup.com/");
+    HttpUrl url = HttpUrl.get("https://www.squareup.com/");
     cookieJar.saveFromResponse(url, Arrays.asList(
         Cookie.parse(url, "a=android; Domain=squareup.com")));
     List<Cookie> actualCookies = cookieJar.loadForRequest(url);
@@ -289,7 +289,7 @@ public class CookiesTest {
     CookieManager cookieManager = new CookieManager(null, ACCEPT_ORIGINAL_SERVER);
     JavaNetCookieJar cookieJar = new JavaNetCookieJar(cookieManager);
 
-    HttpUrl url = HttpUrl.parse("https://www.squareup.com/");
+    HttpUrl url = HttpUrl.get("https://www.squareup.com/");
     cookieJar.saveFromResponse(url, Arrays.asList(
         Cookie.parse(url, "a=android; Domain=.squareup.com")));
     List<Cookie> actualCookies = cookieJar.loadForRequest(url);
@@ -302,7 +302,7 @@ public class CookiesTest {
     CookieManager cookieManager = new CookieManager(null, ACCEPT_ORIGINAL_SERVER);
     JavaNetCookieJar cookieJar = new JavaNetCookieJar(cookieManager);
 
-    HttpUrl url = HttpUrl.parse("https://squareup.com/");
+    HttpUrl url = HttpUrl.get("https://squareup.com/");
     cookieJar.saveFromResponse(url, Arrays.asList(
         Cookie.parse(url, "a=android; Domain=squareup.com")));
     List<Cookie> actualCookies = cookieJar.loadForRequest(url);
@@ -315,11 +315,11 @@ public class CookiesTest {
     CookieManager cookieManager = new CookieManager(null, ACCEPT_ORIGINAL_SERVER);
     JavaNetCookieJar cookieJar = new JavaNetCookieJar(cookieManager);
 
-    HttpUrl url1 = HttpUrl.parse("https://api.squareup.com/");
+    HttpUrl url1 = HttpUrl.get("https://api.squareup.com/");
     cookieJar.saveFromResponse(url1, Arrays.asList(
         Cookie.parse(url1, "a=android; Domain=api.squareup.com")));
 
-    HttpUrl url2 = HttpUrl.parse("https://www.squareup.com/");
+    HttpUrl url2 = HttpUrl.get("https://www.squareup.com/");
     List<Cookie> actualCookies = cookieJar.loadForRequest(url2);
     assertEquals(Collections.<Cookie>emptyList(), actualCookies);
   }

@@ -34,12 +34,12 @@ import okhttp3.internal.http2.Header;
 import okhttp3.internal.http2.Http2Connection;
 import okhttp3.internal.http2.Http2Stream;
 import okhttp3.internal.platform.Platform;
-import okhttp3.mockwebserver.internal.tls.SslClient;
 import okio.BufferedSink;
 import okio.Okio;
 import okio.Source;
 
 import static okhttp3.internal.platform.Platform.INFO;
+import static okhttp3.tls.internal.TlsUtil.localhost;
 
 /** A basic HTTP/2 server that serves the contents of a local directory. */
 public final class Http2Server extends Http2Connection.Listener {
@@ -185,7 +185,7 @@ public final class Http2Server extends Http2Connection.Listener {
     }
 
     Http2Server server = new Http2Server(new File(args[0]),
-        SslClient.localhost().sslContext.getSocketFactory());
+        localhost().sslContext().getSocketFactory());
     server.run();
   }
 }

@@ -48,7 +48,7 @@ public class CipherSuiteTest {
 
   @Test public void instancesAreInterned() {
     assertSame(forJavaName("TestCipherSuite"), forJavaName("TestCipherSuite"));
-    assertSame(CipherSuite.TLS_KRB5_WITH_DES_CBC_MD5,
+    assertSame(TLS_KRB5_WITH_DES_CBC_MD5,
         forJavaName(TLS_KRB5_WITH_DES_CBC_MD5.javaName()));
   }
 

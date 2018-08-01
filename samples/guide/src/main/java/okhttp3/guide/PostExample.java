@@ -8,8 +8,7 @@ import okhttp3.RequestBody;
 import okhttp3.Response;
 
 public class PostExample {
-  public static final MediaType JSON
-      = MediaType.parse("application/json; charset=utf-8");
+  public static final MediaType JSON = MediaType.get("application/json; charset=utf-8");
 
   OkHttpClient client = new OkHttpClient();
 

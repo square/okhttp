@@ -6,7 +6,7 @@
   <parent>
     <groupId>com.squareup.okhttp3</groupId>
     <artifactId>parent</artifactId>
-    <version>3.11.0-SNAPSHOT</version>
+    <version>3.12.0-SNAPSHOT</version>
   </parent>
 
   <artifactId>okhttp-android-support</artifactId>
@@ -24,6 +24,12 @@
     <dependency>
       <groupId>${project.groupId}</groupId>
       <artifactId>okhttp-testing-support</artifactId>
+      <version>${project.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>${project.groupId}</groupId>
+      <artifactId>okhttp-tls</artifactId>
       <version>${project.version}</version>
       <scope>test</scope>
     </dependency>
