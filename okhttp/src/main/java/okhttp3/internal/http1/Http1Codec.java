@@ -196,6 +196,9 @@ public final class Http1Codec implements HttpCodec {
 
       if (expectContinue && statusLine.code == HTTP_CONTINUE) {
         return null;
+      } else if (statusLine.code == HTTP_CONTINUE) {
+        state = STATE_READ_RESPONSE_HEADERS;
+        return responseBuilder;
       }
 
       state = STATE_OPEN_RESPONSE_BODY;

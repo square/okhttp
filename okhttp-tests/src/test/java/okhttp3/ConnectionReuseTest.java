@@ -15,22 +15,21 @@
  */
 package okhttp3;
 
-import java.io.Closeable;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
 import javax.net.ssl.SSLException;
-import okhttp3.internal.tls.SslClient;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import okhttp3.mockwebserver.SocketPolicy;
+import okhttp3.tls.HandshakeCertificates;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestRule;
 import org.junit.rules.Timeout;
 
 import static okhttp3.TestUtil.defaultClient;
+import static okhttp3.tls.internal.TlsUtil.localhost;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -39,7 +38,7 @@ public final class ConnectionReuseTest {
   @Rule public final TestRule timeout = new Timeout(30_000);
   @Rule public final MockWebServer server = new MockWebServer();
 
-  private SslClient sslClient = SslClient.localhost();
+  private HandshakeCertificates handshakeCertificates = localhost();
   private OkHttpClient client = defaultClient();
 
   @Test public void connectionsAreReused() throws Exception {
@@ -193,7 +192,7 @@ public final class ConnectionReuseTest {
 
     Request requestB = new Request.Builder()
         .url(server.url("/"))
-        .post(RequestBody.create(MediaType.parse("text/plain"), "b"))
+        .post(RequestBody.create(MediaType.get("text/plain"), "b"))
         .build();
     Response responseB = client.newCall(requestB).execute();
     assertEquals("b", responseB.body().string());
@@ -253,9 +252,10 @@ public final class ConnectionReuseTest {
     response.body().close();
 
     // This client shares a connection pool but has a different SSL socket factory.
-    SslClient sslClient2 = new SslClient.Builder().build();
+    HandshakeCertificates handshakeCertificates2 = new HandshakeCertificates.Builder().build();
     OkHttpClient anotherClient = client.newBuilder()
-        .sslSocketFactory(sslClient2.socketFactory, sslClient2.trustManager)
+        .sslSocketFactory(
+            handshakeCertificates2.sslSocketFactory(), handshakeCertificates2.trustManager())
         .build();
 
     // This client fails to connect because the new SSL socket factory refuses.
@@ -339,11 +339,12 @@ public final class ConnectionReuseTest {
 
   private void enableHttpsAndAlpn(Protocol... protocols) {
     client = client.newBuilder()
-        .sslSocketFactory(sslClient.socketFactory, sslClient.trustManager)
+        .sslSocketFactory(
+            handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager())
         .hostnameVerifier(new RecordingHostnameVerifier())
         .protocols(Arrays.asList(protocols))
         .build();
-    server.useHttps(sslClient.socketFactory, false);
+    server.useHttps(handshakeCertificates.sslSocketFactory(), false);
     server.setProtocols(client.protocols());
   }
 

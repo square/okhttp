@@ -39,7 +39,7 @@ public final class RequestBodyCompression {
    * https://console.developers.google.com/project
    */
   public static final String GOOGLE_API_KEY = "AIzaSyAx2WZYe0My0i-uGurpvraYJxO7XNbwiGs";
-  public static final MediaType MEDIA_TYPE_JSON = MediaType.parse("application/json");
+  public static final MediaType MEDIA_TYPE_JSON = MediaType.get("application/json");
 
   private final OkHttpClient client = new OkHttpClient.Builder()
       .addInterceptor(new GzipRequestInterceptor())

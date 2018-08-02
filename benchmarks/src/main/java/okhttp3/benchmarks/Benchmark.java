@@ -28,13 +28,15 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import okhttp3.HttpUrl;
 import okhttp3.Protocol;
-import okhttp3.internal.tls.SslClient;
 import okhttp3.mockwebserver.Dispatcher;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import okhttp3.mockwebserver.RecordedRequest;
+import okhttp3.tls.HandshakeCertificates;
 import okio.Buffer;
 import okio.GzipSink;
+
+import static okhttp3.tls.internal.TlsUtil.localhost;
 
 /**
  * This benchmark is fake, but may be useful for certain relative comparisons. It uses a local
@@ -160,8 +162,8 @@ public class Benchmark extends com.google.caliper.Benchmark {
     MockWebServer server = new MockWebServer();
 
     if (tls) {
-      SslClient sslClient = SslClient.localhost();
-      server.useHttps(sslClient.socketFactory, false);
+      HandshakeCertificates handshakeCertificates = localhost();
+      server.useHttps(handshakeCertificates.sslSocketFactory(), false);
       server.setProtocols(protocols);
     }
 

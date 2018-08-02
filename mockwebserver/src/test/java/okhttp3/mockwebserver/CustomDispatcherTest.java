@@ -39,7 +39,7 @@ public class CustomDispatcherTest {
     final List<RecordedRequest> requestsMade = new ArrayList<>();
     final Dispatcher dispatcher = new Dispatcher() {
       @Override
-      public MockResponse dispatch(RecordedRequest request) throws InterruptedException {
+      public MockResponse dispatch(RecordedRequest request) {
         requestsMade.add(request);
         return new MockResponse();
       }

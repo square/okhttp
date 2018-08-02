@@ -31,7 +31,9 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
 import okhttp3.ResponseBody;
-import okhttp3.internal.tls.SslClient;
+import okhttp3.tls.HandshakeCertificates;
+
+import static okhttp3.tls.internal.TlsUtil.localhost;
 
 class OkHttpAsync implements HttpClient {
   private static final boolean VERBOSE = false;
@@ -54,15 +56,15 @@ class OkHttpAsync implements HttpClient {
         .build();
 
     if (benchmark.tls) {
-      SslClient sslClient = SslClient.localhost();
-      SSLSocketFactory socketFactory = sslClient.socketFactory;
+      HandshakeCertificates handshakeCertificates = localhost();
+      SSLSocketFactory socketFactory = handshakeCertificates.sslSocketFactory();
       HostnameVerifier hostnameVerifier = new HostnameVerifier() {
         @Override public boolean verify(String s, SSLSession session) {
           return true;
         }
       };
       client = client.newBuilder()
-          .sslSocketFactory(socketFactory, sslClient.trustManager)
+          .sslSocketFactory(socketFactory, handshakeCertificates.trustManager())
           .hostnameVerifier(hostnameVerifier)
           .build();
     }

@@ -53,7 +53,7 @@ public final class TestUtil {
    * https://android.googlesource.com/platform/libcore/+/master/support/src/test/java/libcore/
    * java/lang/ref/FinalizationTester.java
    */
-  public static void awaitGarbageCollection() throws InterruptedException {
+  public static void awaitGarbageCollection() throws Exception {
     Runtime.getRuntime().gc();
     Thread.sleep(100);
     System.runFinalization();

@@ -174,15 +174,19 @@ public final class WebSocketWriterTest {
   }
 
   @Test public void serverBinaryMessage() throws IOException {
+    ByteString data = ByteString.decodeHex(""
+        + "60b420bb3851d9d47acb933dbe70399bf6c92da33af01d4fb7"
+        + "70e98c0325f41d3ebaf8986da712c82bcd4d554bf0b54023c2");
+
     BufferedSink sink = Okio.buffer(serverWriter.newMessageSink(OPCODE_BINARY, -1));
 
-    sink.write(binaryData(50)).flush();
+    sink.write(data).flush();
     assertData("0232");
-    assertData(binaryData(50));
+    assertData(data);
 
-    sink.write(binaryData(50)).flush();
+    sink.write(data).flush();
     assertData("0032");
-    assertData(binaryData(50));
+    assertData(data);
 
     sink.close();
     assertData("8000");
@@ -229,28 +233,25 @@ public final class WebSocketWriterTest {
   }
 
   @Test public void clientBinary() throws IOException {
-    byte[] maskKey1 = new byte[4];
-    random.nextBytes(maskKey1);
-    byte[] maskKey2 = new byte[4];
-    random.nextBytes(maskKey2);
-
-    random.setSeed(0); // Reset the seed so real data matches.
+    ByteString data = ByteString.decodeHex(""
+        + "60b420bb3851d9d47acb933dbe70399bf6c92da33af01d4fb7"
+        + "70e98c0325f41d3ebaf8986da712c82bcd4d554bf0b54023c2");
 
     BufferedSink sink = Okio.buffer(clientWriter.newMessageSink(OPCODE_BINARY, -1));
 
-    byte[] part1 = binaryData(50);
-    sink.write(part1).flush();
-    toggleMask(part1, 50, maskKey1, 0);
+    sink.write(data).flush();
     assertData("02b2");
-    assertData(maskKey1);
-    assertData(part1);
+    assertData("60b420bb");
+    assertData(""
+        + "0000000058e5f96f1a7fb386dec41920967d0d185a443df4d7"
+        + "c4c9376391d4a65e0ed8230d1332734b796dee2b4495fb4376");
 
-    byte[] part2 = binaryData(50);
-    sink.write(part2).close();
-    toggleMask(part2, 50, maskKey2, 0);
+    sink.write(data).close();
     assertData("80b2");
-    assertData(maskKey2);
-    assertData(part2);
+    assertData("3851d9d4");
+    assertData(""
+        + "58e5f96f00000000429a4ae98621e04fce98f47702a1c49b8f"
+        + "2130583b742dc906eb214c55f6cb1c139c948173a16c941b93");
   }
 
   @Test public void serverEmptyClose() throws IOException {
@@ -385,7 +386,10 @@ public final class WebSocketWriterTest {
   }
 
   private void assertData(String hex) throws EOFException {
-    ByteString expected = ByteString.decodeHex(hex);
+    assertData(ByteString.decodeHex(hex));
+  }
+
+  private void assertData(ByteString expected) throws EOFException {
     ByteString actual = data.readByteString(expected.size());
     assertEquals(expected, actual);
   }

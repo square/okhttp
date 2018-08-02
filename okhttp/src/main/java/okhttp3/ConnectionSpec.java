@@ -40,6 +40,25 @@ import static okhttp3.internal.Util.nonEmptyIntersection;
  */
 public final class ConnectionSpec {
 
+  // Most secure but generally supported list.
+  private static final CipherSuite[] RESTRICTED_CIPHER_SUITES = new CipherSuite[] {
+      CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
+      CipherSuite.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
+      CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,
+      CipherSuite.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
+      CipherSuite.TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256,
+      CipherSuite.TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256
+  };
+
+  // TLS 1.3
+  private static final CipherSuite[] TLS13_CIPHER_SUITES = new CipherSuite[] {
+      CipherSuite.TLS_AES_128_GCM_SHA256,
+      CipherSuite.TLS_AES_256_GCM_SHA384,
+      CipherSuite.TLS_CHACHA20_POLY1305_SHA256,
+      CipherSuite.TLS_AES_128_CCM_SHA256,
+      CipherSuite.TLS_AES_256_CCM_8_SHA256
+  };
+
   // This is nearly equal to the cipher suites supported in Chrome 51, current as of 2016-05-25.
   // All of these suites are available on Android 7.0; earlier releases support a subset of these
   // suites. https://github.com/square/okhttp/issues/1972
@@ -54,9 +73,7 @@ public final class ConnectionSpec {
       // Note that the following cipher suites are all on HTTP/2's bad cipher suites list. We'll
       // continue to include them until better suites are commonly available. For example, none
       // of the better cipher suites listed above shipped with Android 4.4 or Java 7.
-      CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA,
       CipherSuite.TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA,
-      CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA,
       CipherSuite.TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA,
       CipherSuite.TLS_RSA_WITH_AES_128_GCM_SHA256,
       CipherSuite.TLS_RSA_WITH_AES_256_GCM_SHA384,
@@ -65,10 +82,28 @@ public final class ConnectionSpec {
       CipherSuite.TLS_RSA_WITH_3DES_EDE_CBC_SHA,
   };
 
+  /**
+   * A TLS 1.3 only Connection Spec for testing. This will be eventually be exposed
+   * as part of MODERN_TLS or folded into the default OkHttp client once published and
+   * available in JDK11.
+   */
+  static final ConnectionSpec TLS_13 = new Builder(true)
+      .cipherSuites(TLS13_CIPHER_SUITES)
+      .tlsVersions(TlsVersion.TLS_1_3)
+      .supportsTlsExtensions(true)
+      .build();
+
+  /** A secure TLS connection assuming a modern client platform and server. */
+  public static final ConnectionSpec RESTRICTED_TLS = new Builder(true)
+      .cipherSuites(RESTRICTED_CIPHER_SUITES)
+      .tlsVersions(TlsVersion.TLS_1_2)
+      .supportsTlsExtensions(true)
+      .build();
+
   /** A modern TLS connection with extensions like SNI and ALPN available. */
   public static final ConnectionSpec MODERN_TLS = new Builder(true)
       .cipherSuites(APPROVED_CIPHER_SUITES)
-      .tlsVersions(TlsVersion.TLS_1_3, TlsVersion.TLS_1_2, TlsVersion.TLS_1_1, TlsVersion.TLS_1_0)
+      .tlsVersions(TlsVersion.TLS_1_2, TlsVersion.TLS_1_1, TlsVersion.TLS_1_0)
       .supportsTlsExtensions(true)
       .build();
 

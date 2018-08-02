@@ -173,16 +173,27 @@ public final class Http2Stream {
       throw new NullPointerException("responseHeaders == null");
     }
     boolean outFinished = false;
+    boolean flushHeaders = false;
     synchronized (this) {
       this.hasResponseHeaders = true;
       if (!out) {
         this.sink.finished = true;
+        flushHeaders = true;
         outFinished = true;
       }
     }
+
+    // Only DATA frames are subject to flow-control. Transmit the HEADER frame if the connection
+    // flow-control window is fully depleted.
+    if (!flushHeaders) {
+      synchronized (connection) {
+        flushHeaders = connection.bytesLeftInWriteWindow == 0L;
+      }
+    }
+
     connection.writeSynReply(id, outFinished, responseHeaders);
 
-    if (outFinished) {
+    if (flushHeaders) {
       connection.flush();
     }
   }
@@ -332,35 +343,50 @@ public final class Http2Stream {
     @Override public long read(Buffer sink, long byteCount) throws IOException {
       if (byteCount < 0) throw new IllegalArgumentException("byteCount < 0: " + byteCount);
 
-      long read;
+      long read = -1;
+      ErrorCode errorCode;
       synchronized (Http2Stream.this) {
         waitUntilReadable();
-        checkNotClosed();
-        if (readBuffer.size() == 0) return -1; // This source is exhausted.
+        if (closed) {
+          throw new IOException("stream closed");
+        }
+        errorCode = Http2Stream.this.errorCode;
 
-        // Move bytes from the read buffer into the caller's buffer.
-        read = readBuffer.read(sink, Math.min(byteCount, readBuffer.size()));
+        if (readBuffer.size() > 0) {
+          // Move bytes from the read buffer into the caller's buffer.
+          read = readBuffer.read(sink, Math.min(byteCount, readBuffer.size()));
+          unacknowledgedBytesRead += read;
+        }
 
-        // Flow control: notify the peer that we're ready for more data!
-        unacknowledgedBytesRead += read;
-        if (unacknowledgedBytesRead
-            >= connection.okHttpSettings.getInitialWindowSize() / 2) {
+        if (errorCode == null
+            && unacknowledgedBytesRead >= connection.okHttpSettings.getInitialWindowSize() / 2) {
+          // Flow control: notify the peer that we're ready for more data! Only send a WINDOW_UPDATE
+          // if the stream isn't in error.
           connection.writeWindowUpdateLater(id, unacknowledgedBytesRead);
           unacknowledgedBytesRead = 0;
         }
       }
 
-      // Update connection.unacknowledgedBytesRead outside the stream lock.
-      synchronized (connection) { // Multiple application threads may hit this section.
-        connection.unacknowledgedBytesRead += read;
-        if (connection.unacknowledgedBytesRead
-            >= connection.okHttpSettings.getInitialWindowSize() / 2) {
-          connection.writeWindowUpdateLater(0, connection.unacknowledgedBytesRead);
-          connection.unacknowledgedBytesRead = 0;
-        }
+      if (read != -1) {
+        // Update connection.unacknowledgedBytesRead outside the stream lock.
+        updateConnectionFlowControl(read);
+        return read;
       }
 
-      return read;
+      if (errorCode != null) {
+        // We defer throwing the exception until now so that we can refill the connection
+        // flow-control window. This is necessary because we don't transmit window updates until the
+        // application reads the data. If we throw this prior to updating the connection
+        // flow-control window, we risk having it go to 0 preventing the server from sending data.
+        throw new StreamResetException(errorCode);
+      }
+
+      return -1; // This source is exhausted.
+    }
+
+    private void updateConnectionFlowControl(long read) {
+      assert (!Thread.holdsLock(Http2Stream.this));
+      connection.updateConnectionFlowControl(read);
     }
 
     /** Returns once the source is either readable or finished. */
@@ -420,21 +446,17 @@ public final class Http2Stream {
     }
 
     @Override public void close() throws IOException {
+      long bytesDiscarded;
       synchronized (Http2Stream.this) {
         closed = true;
+        bytesDiscarded = readBuffer.size();
         readBuffer.clear();
         Http2Stream.this.notifyAll();
       }
+      if (bytesDiscarded > 0) {
+        updateConnectionFlowControl(bytesDiscarded);
+      }
       cancelStreamIfNecessary();
-    }
-
-    private void checkNotClosed() throws IOException {
-      if (closed) {
-        throw new IOException("stream closed");
-      }
-      if (errorCode != null) {
-        throw new StreamResetException(errorCode);
-      }
     }
   }
 
@@ -576,6 +598,7 @@ public final class Http2Stream {
     try {
       wait();
     } catch (InterruptedException e) {
+      Thread.currentThread().interrupt(); // Retain interrupted status.
       throw new InterruptedIOException();
     }
   }

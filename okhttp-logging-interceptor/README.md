@@ -42,7 +42,7 @@ Get via Maven:
 
 or via Gradle 
 ```groovy
-compile 'com.squareup.okhttp3:logging-interceptor:(insert latest version)'
+implementation 'com.squareup.okhttp3:logging-interceptor:(insert latest version)'
 ```
 
 

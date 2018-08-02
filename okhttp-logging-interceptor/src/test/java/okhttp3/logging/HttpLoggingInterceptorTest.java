@@ -31,10 +31,11 @@ import okhttp3.RecordingHostnameVerifier;
 import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
-import okhttp3.internal.tls.SslClient;
+import okhttp3.ResponseBody;
 import okhttp3.logging.HttpLoggingInterceptor.Level;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
+import okhttp3.tls.HandshakeCertificates;
 import okio.Buffer;
 import okio.BufferedSink;
 import okio.ByteString;
@@ -43,6 +44,7 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 
+import static okhttp3.tls.internal.TlsUtil.localhost;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -52,11 +54,11 @@ import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeThat;
 
 public final class HttpLoggingInterceptorTest {
-  private static final MediaType PLAIN = MediaType.parse("text/plain; charset=utf-8");
+  private static final MediaType PLAIN = MediaType.get("text/plain; charset=utf-8");
 
   @Rule public final MockWebServer server = new MockWebServer();
 
-  private SslClient sslClient = SslClient.localhost();
+  private HandshakeCertificates handshakeCertificates = localhost();
   private HostnameVerifier hostnameVerifier = new RecordingHostnameVerifier();
   private OkHttpClient client;
   private String host;
@@ -79,7 +81,8 @@ public final class HttpLoggingInterceptorTest {
     client = new OkHttpClient.Builder()
         .addNetworkInterceptor(networkInterceptor)
         .addInterceptor(applicationInterceptor)
-        .sslSocketFactory(sslClient.socketFactory, sslClient.trustManager)
+        .sslSocketFactory(
+            handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager())
         .hostnameVerifier(hostnameVerifier)
         .build();
 
@@ -532,7 +535,7 @@ public final class HttpLoggingInterceptorTest {
         .assertNoMoreLogs();
   }
 
-  @Test public void bodyResponseNotIdentityEncoded() throws IOException {
+  @Test public void bodyResponseGzipEncoded() throws IOException {
     setLevel(Level.BODY);
 
     server.enqueue(new MockResponse()
@@ -541,7 +544,10 @@ public final class HttpLoggingInterceptorTest {
         .setBody(new Buffer().write(ByteString.decodeBase64(
             "H4sIAAAAAAAAAPNIzcnJ11HwQKIAdyO+9hMAAAA="))));
     Response response = client.newCall(request().build()).execute();
-    response.body().close();
+
+    ResponseBody responseBody = response.body();
+    assertEquals("Expected response body to be valid","Hello, Hello, Hello", responseBody.string());
+    responseBody.close();
 
     networkLogs
         .assertLogEqual("--> GET " + url + " http/1.1")
@@ -554,7 +560,9 @@ public final class HttpLoggingInterceptorTest {
         .assertLogEqual("Content-Encoding: gzip")
         .assertLogEqual("Content-Type: text/plain; charset=utf-8")
         .assertLogMatch("Content-Length: \\d+")
-        .assertLogEqual("<-- END HTTP (encoded body omitted)")
+        .assertLogEqual("")
+        .assertLogEqual("Hello, Hello, Hello")
+        .assertLogEqual("<-- END HTTP (19-byte, 29-gzipped-byte body)")
         .assertNoMoreLogs();
 
     applicationLogs
@@ -567,6 +575,43 @@ public final class HttpLoggingInterceptorTest {
         .assertLogEqual("<-- END HTTP (19-byte body)")
         .assertNoMoreLogs();
   }
+
+  @Test public void bodyResponseUnknownEncoded() throws IOException {
+      setLevel(Level.BODY);
+
+      server.enqueue(new MockResponse()
+          // It's invalid to return this if not requested, but the server might anyway
+          .setHeader("Content-Encoding", "br")
+          .setHeader("Content-Type", PLAIN)
+          .setBody(new Buffer().write(ByteString.decodeBase64(
+              "iwmASGVsbG8sIEhlbGxvLCBIZWxsbwoD"))));
+      Response response = client.newCall(request().build()).execute();
+      response.body().close();
+
+      networkLogs
+          .assertLogEqual("--> GET " + url + " http/1.1")
+          .assertLogEqual("Host: " + host)
+          .assertLogEqual("Connection: Keep-Alive")
+          .assertLogEqual("Accept-Encoding: gzip")
+          .assertLogMatch("User-Agent: okhttp/.+")
+          .assertLogEqual("--> END GET")
+          .assertLogMatch("<-- 200 OK " + url + " \\(\\d+ms\\)")
+          .assertLogEqual("Content-Encoding: br")
+          .assertLogEqual("Content-Type: text/plain; charset=utf-8")
+          .assertLogMatch("Content-Length: \\d+")
+          .assertLogEqual("<-- END HTTP (encoded body omitted)")
+          .assertNoMoreLogs();
+
+      applicationLogs
+          .assertLogEqual("--> GET " + url)
+          .assertLogEqual("--> END GET")
+          .assertLogMatch("<-- 200 OK " + url + " \\(\\d+ms\\)")
+          .assertLogEqual("Content-Encoding: br")
+          .assertLogEqual("Content-Type: text/plain; charset=utf-8")
+          .assertLogMatch("Content-Length: \\d+")
+          .assertLogEqual("<-- END HTTP (encoded body omitted)")
+          .assertNoMoreLogs();
+    }
 
   @Test public void bodyGetMalformedCharset() throws IOException {
     setLevel(Level.BODY);
@@ -680,7 +725,7 @@ public final class HttpLoggingInterceptorTest {
   }
 
   @Test public void http2() throws Exception {
-    server.useHttps(sslClient.socketFactory, false);
+    server.useHttps(handshakeCertificates.sslSocketFactory(), false);
     url = server.url("/");
 
     setLevel(Level.BASIC);

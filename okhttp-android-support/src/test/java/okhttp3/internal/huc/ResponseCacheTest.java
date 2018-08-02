@@ -26,13 +26,11 @@ import java.io.OutputStream;
 import java.net.CacheRequest;
 import java.net.CacheResponse;
 import java.net.CookieManager;
-import java.net.HttpCookie;
 import java.net.HttpURLConnection;
 import java.net.ProtocolException;
 import java.net.ResponseCache;
 import java.net.SecureCacheResponse;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.nio.charset.StandardCharsets;
@@ -40,7 +38,6 @@ import java.security.Principal;
 import java.security.cert.Certificate;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.LinkedHashMap;
@@ -63,11 +60,11 @@ import okhttp3.OkUrlFactory;
 import okhttp3.RecordingHostnameVerifier;
 import okhttp3.internal.Internal;
 import okhttp3.internal.cache.InternalCache;
-import okhttp3.internal.tls.SslClient;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import okhttp3.mockwebserver.RecordedRequest;
 import okhttp3.mockwebserver.SocketPolicy;
+import okhttp3.tls.HandshakeCertificates;
 import okio.Buffer;
 import okio.BufferedSink;
 import okio.GzipSink;
@@ -78,6 +75,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
+import static okhttp3.tls.internal.TlsUtil.localhost;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -96,7 +94,7 @@ public final class ResponseCacheTest {
   @Rule public MockWebServer server2 = new MockWebServer();
 
   private HostnameVerifier hostnameVerifier = new RecordingHostnameVerifier();
-  private SslClient sslClient = SslClient.localhost();
+  private HandshakeCertificates handshakeCertificates = localhost();
   private ResponseCache cache;
   private CookieManager cookieManager;
   private OkUrlFactory urlFactory;
@@ -111,7 +109,7 @@ public final class ResponseCacheTest {
     cookieManager = new CookieManager();
   }
 
-  @After public void tearDown() throws Exception {
+  @After public void tearDown() {
     ResponseCache.setDefault(null);
   }
 
@@ -272,14 +270,14 @@ public final class ResponseCacheTest {
   @Test public void secureResponseCaching() throws IOException {
     assumeFalse(getPlatform().equals("jdk9"));
 
-    server.useHttps(sslClient.socketFactory, false);
+    server.useHttps(handshakeCertificates.sslSocketFactory(), false);
     server.enqueue(new MockResponse()
         .addHeader("Last-Modified: " + formatDate(-1, TimeUnit.HOURS))
         .addHeader("Expires: " + formatDate(1, TimeUnit.HOURS))
         .setBody("ABC"));
 
     HttpsURLConnection c1 = (HttpsURLConnection) openConnection(server.url("/").url());
-    c1.setSSLSocketFactory(sslClient.socketFactory);
+    c1.setSSLSocketFactory(handshakeCertificates.sslSocketFactory());
     c1.setHostnameVerifier(hostnameVerifier);
     assertEquals("ABC", readAscii(c1));
 
@@ -291,7 +289,7 @@ public final class ResponseCacheTest {
     Principal localPrincipal = c1.getLocalPrincipal();
 
     HttpsURLConnection c2 = (HttpsURLConnection) openConnection(server.url("/").url()); // cached!
-    c2.setSSLSocketFactory(sslClient.socketFactory);
+    c2.setSSLSocketFactory(handshakeCertificates.sslSocketFactory());
     c2.setHostnameVerifier(hostnameVerifier);
     assertEquals("ABC", readAscii(c2));
 
@@ -350,7 +348,7 @@ public final class ResponseCacheTest {
   }
 
   @Test public void secureResponseCachingAndRedirects() throws IOException {
-    server.useHttps(sslClient.socketFactory, false);
+    server.useHttps(handshakeCertificates.sslSocketFactory(), false);
     server.enqueue(new MockResponse()
         .addHeader("Last-Modified: " + formatDate(-1, TimeUnit.HOURS))
         .addHeader("Expires: " + formatDate(1, TimeUnit.HOURS))
@@ -364,7 +362,8 @@ public final class ResponseCacheTest {
         .setBody("DEF"));
 
     urlFactory.setClient(urlFactory.client().newBuilder()
-        .sslSocketFactory(sslClient.socketFactory, sslClient.trustManager)
+        .sslSocketFactory(
+            handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager())
         .hostnameVerifier(hostnameVerifier)
         .build());
 
@@ -388,7 +387,7 @@ public final class ResponseCacheTest {
    * https://github.com/square/okhttp/issues/214
    */
   @Test public void secureResponseCachingAndProtocolRedirects() throws IOException {
-    server2.useHttps(sslClient.socketFactory, false);
+    server2.useHttps(handshakeCertificates.sslSocketFactory(), false);
     server2.enqueue(new MockResponse()
         .addHeader("Last-Modified: " + formatDate(-1, TimeUnit.HOURS))
         .addHeader("Expires: " + formatDate(1, TimeUnit.HOURS))
@@ -403,7 +402,8 @@ public final class ResponseCacheTest {
         .addHeader("Location: " + server2.url("/").url()));
 
     urlFactory.setClient(urlFactory.client().newBuilder()
-        .sslSocketFactory(sslClient.socketFactory, sslClient.trustManager)
+        .sslSocketFactory(
+            handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager())
         .hostnameVerifier(hostnameVerifier)
         .build());
 
@@ -480,7 +480,7 @@ public final class ResponseCacheTest {
     testServerPrematureDisconnect(TransferKind.CHUNKED);
   }
 
-  @Test public void serverDisconnectsPrematurelyWithNoLengthHeaders() throws IOException {
+  @Test public void serverDisconnectsPrematurelyWithNoLengthHeaders() {
     // Intentionally empty. This case doesn't make sense because there's no
     // such thing as a premature disconnect when the disconnect itself
     // indicates the end of the data stream.
@@ -1196,7 +1196,7 @@ public final class ResponseCacheTest {
     Date lastModifiedDate = new Date(System.currentTimeMillis() + TimeUnit.HOURS.toMillis(-1));
     Date servedDate = new Date(System.currentTimeMillis() + TimeUnit.HOURS.toMillis(-2));
     DateFormat dateFormat = new SimpleDateFormat("EEE dd-MMM-yyyy HH:mm:ss z", Locale.US);
-    dateFormat.setTimeZone(TimeZone.getTimeZone("EDT"));
+    dateFormat.setTimeZone(TimeZone.getTimeZone("America/New_York"));
     String lastModifiedString = dateFormat.format(lastModifiedDate);
     String servedString = dateFormat.format(servedDate);
 
@@ -1466,7 +1466,7 @@ public final class ResponseCacheTest {
   }
 
   @Test public void varyAndHttps() throws Exception {
-    server.useHttps(sslClient.socketFactory, false);
+    server.useHttps(handshakeCertificates.sslSocketFactory(), false);
     server.enqueue(new MockResponse()
         .addHeader("Cache-Control: max-age=60")
         .addHeader("Vary: Accept-Language")
@@ -1475,7 +1475,8 @@ public final class ResponseCacheTest {
         .setBody("B"));
 
     urlFactory.setClient(urlFactory.client().newBuilder()
-        .sslSocketFactory(sslClient.socketFactory, sslClient.trustManager)
+        .sslSocketFactory(
+            handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager())
         .hostnameVerifier(hostnameVerifier)
         .build());
 
@@ -1561,14 +1562,6 @@ public final class ResponseCacheTest {
     URLConnection connection2 = openConnection(server.url("/").url());
     assertEquals("A", readAscii(connection2));
     assertEquals("299 test danger", connection2.getHeaderField("Warning"));
-  }
-
-  public void assertCookies(URL url, String... expectedCookies) throws Exception {
-    List<String> actualCookies = new ArrayList<>();
-    for (HttpCookie cookie : cookieManager.getCookieStore().get(url.toURI())) {
-      actualCookies.add(cookie.toString());
-    }
-    assertEquals(Arrays.asList(expectedCookies), actualCookies);
   }
 
   @Test public void doNotCachePartialResponse() throws Exception {
@@ -1674,7 +1667,7 @@ public final class ResponseCacheTest {
     assertEquals("A", readAscii(connection));
   }
 
-  @Test public void emptyResponseHeaderNameFromCacheIsLenient() throws Exception {
+  @Test public void emptyResponseHeaderNameFromCacheIsLenient() {
     Headers.Builder headers = new Headers.Builder()
         .add("Cache-Control: max-age=120");
     Internal.instance.addLenient(headers, ": A");
@@ -1769,8 +1762,7 @@ public final class ResponseCacheTest {
 
   enum TransferKind {
     CHUNKED() {
-      @Override void setBody(MockResponse response, Buffer content, int chunkSize)
-          throws IOException {
+      @Override void setBody(MockResponse response, Buffer content, int chunkSize) {
         response.setChunkedBody(content, chunkSize);
       }
     },
@@ -1795,7 +1787,7 @@ public final class ResponseCacheTest {
   }
 
   /** Returns a gzipped copy of {@code bytes}. */
-  public Buffer gzip(String data) throws IOException {
+  private Buffer gzip(String data) throws IOException {
     Buffer result = new Buffer();
     BufferedSink sink = Okio.buffer(new GzipSink(result));
     sink.writeUtf8(data);
@@ -1898,7 +1890,7 @@ public final class ResponseCacheTest {
             aborted.set(true);
           }
 
-          @Override public OutputStream getBody() throws IOException {
+          @Override public OutputStream getBody() {
             return null;
           }
         };
@@ -1924,10 +1916,9 @@ public final class ResponseCacheTest {
     setInternalCache(new CacheAdapter(new AbstractResponseCache() {
       @Override
       public CacheResponse get(URI uri, String requestMethod,
-          Map<String, List<String>> requestHeaders)
-          throws IOException {
+          Map<String, List<String>> requestHeaders) {
         return new CacheResponse() {
-          @Override public Map<String, List<String>> getHeaders() throws IOException {
+          @Override public Map<String, List<String>> getHeaders() {
             String contentType = "text/plain";
             Map<String, List<String>> headers = new LinkedHashMap<>();
             headers.put("Content-Length", Arrays.asList(Integer.toString(cachedContent.length)));
@@ -1939,7 +1930,7 @@ public final class ResponseCacheTest {
             return headers;
           }
 
-          @Override public InputStream getBody() throws IOException {
+          @Override public InputStream getBody() {
             return new ByteArrayInputStream(cachedContent);
           }
         };
@@ -1988,32 +1979,32 @@ public final class ResponseCacheTest {
   @Test public void cacheReturnsInsecureResponseForSecureRequest() throws IOException {
     assumeFalse(getPlatform().equals("jdk9"));
 
-    server.useHttps(sslClient.socketFactory, false);
+    server.useHttps(handshakeCertificates.sslSocketFactory(), false);
     server.enqueue(new MockResponse().setBody("ABC"));
     server.enqueue(new MockResponse().setBody("DEF"));
 
     AndroidInternal.setResponseCache(urlFactory, new InsecureResponseCache(cache));
 
     HttpsURLConnection connection1 = (HttpsURLConnection) openConnection(server.url("/").url());
-    connection1.setSSLSocketFactory(sslClient.socketFactory);
+    connection1.setSSLSocketFactory(handshakeCertificates.sslSocketFactory());
     connection1.setHostnameVerifier(hostnameVerifier);
     assertEquals("ABC", readAscii(connection1));
 
     // Not cached!
     HttpsURLConnection connection2 = (HttpsURLConnection) openConnection(server.url("/").url());
-    connection2.setSSLSocketFactory(sslClient.socketFactory);
+    connection2.setSSLSocketFactory(handshakeCertificates.sslSocketFactory());
     connection2.setHostnameVerifier(hostnameVerifier);
     assertEquals("DEF", readAscii(connection2));
   }
 
-  @Test public void responseCacheRequestHeaders() throws IOException, URISyntaxException {
+  @Test public void responseCacheRequestHeaders() throws IOException {
     server.enqueue(new MockResponse()
         .setBody("ABC"));
 
     final AtomicReference<Map<String, List<String>>> requestHeadersRef = new AtomicReference<>();
     setInternalCache(new CacheAdapter(new AbstractResponseCache() {
       @Override public CacheResponse get(URI uri, String requestMethod,
-          Map<String, List<String>> requestHeaders) throws IOException {
+          Map<String, List<String>> requestHeaders) {
         requestHeadersRef.set(requestHeaders);
         return null;
       }

@@ -32,7 +32,7 @@ public interface Call extends Cloneable {
    * <p>To avoid leaking resources callers should close the {@link Response} which in turn will
    * close the underlying {@link ResponseBody}.
    *
-   * <pre>@{code
+   * <pre>{@code
    *
    *   // ensure the response (and underlying response body) is closed
    *   try (Response response = client.newCall(request).execute()) {

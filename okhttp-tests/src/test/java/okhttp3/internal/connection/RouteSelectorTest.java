@@ -23,7 +23,6 @@ import java.net.ProxySelector;
 import java.net.SocketAddress;
 import java.net.URI;
 import java.net.UnknownHostException;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -40,11 +39,12 @@ import okhttp3.Protocol;
 import okhttp3.Route;
 import okhttp3.internal.Util;
 import okhttp3.internal.http.RecordingProxySelector;
-import okhttp3.internal.tls.SslClient;
+import okhttp3.tls.HandshakeCertificates;
 import org.junit.Before;
 import org.junit.Test;
 
 import static java.net.Proxy.NO_PROXY;
+import static okhttp3.tls.internal.TlsUtil.localhost;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertSame;
@@ -69,8 +69,8 @@ public final class RouteSelectorTest {
   private int uriPort = 1003;
 
   private SocketFactory socketFactory;
-  private final SslClient sslClient = SslClient.localhost();
-  private final SSLSocketFactory sslSocketFactory = sslClient.socketFactory;
+  private final HandshakeCertificates handshakeCertificates = localhost();
+  private final SSLSocketFactory sslSocketFactory = handshakeCertificates.sslSocketFactory();
   private HostnameVerifier hostnameVerifier;
 
   private final Authenticator authenticator = Authenticator.NONE;

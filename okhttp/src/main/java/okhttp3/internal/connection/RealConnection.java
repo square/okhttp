@@ -31,6 +31,7 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 import javax.net.ssl.SSLPeerUnverifiedException;
+import javax.net.ssl.SSLSession;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
 import okhttp3.Address;
@@ -127,7 +128,8 @@ public final class RealConnection extends Http2Connection.Listener implements Co
   }
 
   public void connect(int connectTimeout, int readTimeout, int writeTimeout,
-      boolean connectionRetryEnabled, Call call, EventListener eventListener) {
+      int pingIntervalMillis, boolean connectionRetryEnabled, Call call,
+      EventListener eventListener) {
     if (protocol != null) throw new IllegalStateException("already connected");
 
     RouteException routeException = null;
@@ -144,6 +146,11 @@ public final class RealConnection extends Http2Connection.Listener implements Co
         throw new RouteException(new UnknownServiceException(
             "CLEARTEXT communication to " + host + " not permitted by network security policy"));
       }
+    } else {
+      if (route.address().protocols().contains(Protocol.H2_PRIOR_KNOWLEDGE)) {
+        throw new RouteException(new UnknownServiceException(
+            "H2_PRIOR_KNOWLEDGE cannot be used with HTTPS"));
+      }
     }
 
     while (true) {
@@ -157,7 +164,7 @@ public final class RealConnection extends Http2Connection.Listener implements Co
         } else {
           connectSocket(connectTimeout, readTimeout, call, eventListener);
         }
-        establishProtocol(connectionSpecSelector, call, eventListener);
+        establishProtocol(connectionSpecSelector, pingIntervalMillis, call, eventListener);
         eventListener.connectEnd(call, route.socketAddress(), route.proxy(), protocol);
         break;
       } catch (IOException e) {
@@ -256,11 +263,18 @@ public final class RealConnection extends Http2Connection.Listener implements Co
     }
   }
 
-  private void establishProtocol(ConnectionSpecSelector connectionSpecSelector, Call call,
-      EventListener eventListener) throws IOException {
+  private void establishProtocol(ConnectionSpecSelector connectionSpecSelector,
+      int pingIntervalMillis, Call call, EventListener eventListener) throws IOException {
     if (route.address().sslSocketFactory() == null) {
-      protocol = Protocol.HTTP_1_1;
+      if (route.address().protocols().contains(Protocol.H2_PRIOR_KNOWLEDGE)) {
+        socket = rawSocket;
+        protocol = Protocol.H2_PRIOR_KNOWLEDGE;
+        startHttp2(pingIntervalMillis);
+        return;
+      }
+
       socket = rawSocket;
+      protocol = Protocol.HTTP_1_1;
       return;
     }
 
@@ -269,13 +283,18 @@ public final class RealConnection extends Http2Connection.Listener implements Co
     eventListener.secureConnectEnd(call, handshake);
 
     if (protocol == Protocol.HTTP_2) {
-      socket.setSoTimeout(0); // HTTP/2 connection timeouts are set per-stream.
-      http2Connection = new Http2Connection.Builder(true)
-          .socket(socket, route.address().url().host(), source, sink)
-          .listener(this)
-          .build();
-      http2Connection.start();
+      startHttp2(pingIntervalMillis);
     }
+  }
+
+  private void startHttp2(int pingIntervalMillis) throws IOException {
+    socket.setSoTimeout(0); // HTTP/2 connection timeouts are set per-stream.
+    http2Connection = new Http2Connection.Builder(true)
+            .socket(socket, route.address().url().host(), source, sink)
+            .listener(this)
+            .pingIntervalMillis(pingIntervalMillis)
+            .build();
+    http2Connection.start();
   }
 
   private void connectTls(ConnectionSpecSelector connectionSpecSelector, Call call) throws IOException {
@@ -303,10 +322,12 @@ public final class RealConnection extends Http2Connection.Listener implements Co
 
       // Force handshake. This can throw!
       sslSocket.startHandshake();
-      Handshake unverifiedHandshake = Handshake.get(sslSocket.getSession());
+      // block for session establishment
+      SSLSession sslSocketSession = sslSocket.getSession();
+      Handshake unverifiedHandshake = Handshake.get(sslSocketSession);
 
       // Verify that the socket's certificates are acceptable for the target host.
-      if (!address.hostnameVerifier().verify(address.url().host(), sslSocket.getSession())) {
+      if (!address.hostnameVerifier().verify(address.url().host(), sslSocketSession)) {
         X509Certificate cert = (X509Certificate) unverifiedHandshake.peerCertificates().get(0);
         throw new SSLPeerUnverifiedException("Hostname " + address.url().host() + " not verified:"
             + "\n    certificate: " + CertificatePinner.pin(cert)

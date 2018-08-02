@@ -6,7 +6,7 @@
   <parent>
     <groupId>com.squareup.okhttp3</groupId>
     <artifactId>parent</artifactId>
-    <version>3.10.0-SNAPSHOT</version>
+    <version>3.12.0-SNAPSHOT</version>
   </parent>
 
   <groupId>com.squareup.okhttp3.sample</groupId>
@@ -20,6 +20,7 @@
     <module>simple-client</module>
     <module>slack</module>
     <module>static-server</module>
+    <module>unixdomainsockets</module>
   </modules>
 
   <build>

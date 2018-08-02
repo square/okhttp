@@ -59,7 +59,26 @@ public enum Protocol {
    * that enforce this may send an exception message including the string {@code
    * INADEQUATE_SECURITY}.
    */
-  HTTP_2("h2");
+  HTTP_2("h2"),
+
+  /**
+   * Cleartext HTTP/2 with no "upgrade" round trip. This option requires the client to have prior
+   * knowledge that the server supports cleartext HTTP/2.
+   *
+   * @see <a href="https://tools.ietf.org/html/rfc7540#section-3.4">Starting HTTP/2 with Prior
+   * Knowledge</a>
+   */
+  H2_PRIOR_KNOWLEDGE("h2_prior_knowledge"),
+
+  /**
+   * QUIC (Quick UDP Internet Connection) is a new multiplexed and secure transport atop UDP,
+   * designed from the ground up and optimized for HTTP/2 semantics.
+   * HTTP/1.1 semantics are layered on HTTP/2.
+   *
+   * <p>QUIC is not natively supported by OkHttp, but provided to allow a theoretical
+   * interceptor that provides support.
+   */
+  QUIC("quic");
 
   private final String protocol;
 
@@ -76,14 +95,19 @@ public enum Protocol {
     // Unroll the loop over values() to save an allocation.
     if (protocol.equals(HTTP_1_0.protocol)) return HTTP_1_0;
     if (protocol.equals(HTTP_1_1.protocol)) return HTTP_1_1;
+    if (protocol.equals(H2_PRIOR_KNOWLEDGE.protocol)) return H2_PRIOR_KNOWLEDGE;
     if (protocol.equals(HTTP_2.protocol)) return HTTP_2;
     if (protocol.equals(SPDY_3.protocol)) return SPDY_3;
+    if (protocol.equals(QUIC.protocol)) return QUIC;
     throw new IOException("Unexpected protocol: " + protocol);
   }
 
   /**
    * Returns the string used to identify this protocol for ALPN, like "http/1.1", "spdy/3.1" or
    * "h2".
+   *
+   * @see <a href="https://www.iana.org/assignments/tls-extensiontype-values">IANA
+   * tls-extensiontype-values</a>
    */
   @Override public String toString() {
     return protocol;

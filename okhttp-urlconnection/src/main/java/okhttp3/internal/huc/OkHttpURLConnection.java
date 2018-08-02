@@ -23,10 +23,12 @@ import java.io.InterruptedIOException;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.InetSocketAddress;
+import java.net.MalformedURLException;
 import java.net.ProtocolException;
 import java.net.Proxy;
 import java.net.SocketPermission;
 import java.net.URL;
+import java.net.UnknownHostException;
 import java.security.Permission;
 import java.util.Arrays;
 import java.util.Collections;
@@ -50,13 +52,13 @@ import okhttp3.Response;
 import okhttp3.internal.Internal;
 import okhttp3.internal.JavaNetHeaders;
 import okhttp3.internal.URLFilter;
-import okhttp3.internal.Util;
 import okhttp3.internal.Version;
 import okhttp3.internal.http.HttpDate;
 import okhttp3.internal.http.HttpHeaders;
 import okhttp3.internal.http.HttpMethod;
 import okhttp3.internal.http.StatusLine;
 import okhttp3.internal.platform.Platform;
+import okio.Buffer;
 
 import static okhttp3.internal.platform.Platform.WARN;
 
@@ -132,6 +134,7 @@ public final class OkHttpURLConnection extends HttpURLConnection implements Call
           throw propagate(callFailure);
         }
       } catch (InterruptedException e) {
+        Thread.currentThread().interrupt(); // Retain interrupted status.
         throw new InterruptedIOException();
       }
     }
@@ -369,8 +372,22 @@ public final class OkHttpURLConnection extends HttpURLConnection implements Call
       requestBody.timeout().timeout(client.writeTimeoutMillis(), TimeUnit.MILLISECONDS);
     }
 
+    HttpUrl url;
+    try {
+      url = HttpUrl.get(getURL().toString());
+    } catch (IllegalArgumentException e) {
+      if (Internal.instance.isInvalidHttpUrlHost(e)) {
+        UnknownHostException unknownHost = new UnknownHostException();
+        unknownHost.initCause(e);
+        throw unknownHost;
+      }
+      MalformedURLException malformedUrl = new MalformedURLException();
+      malformedUrl.initCause(e);
+      throw malformedUrl;
+    }
+
     Request request = new Request.Builder()
-        .url(Internal.instance.getHttpUrlChecked(getURL().toString()))
+        .url(url)
         .headers(requestHeaders.build())
         .method(method, requestBody)
         .build();
@@ -398,7 +415,25 @@ public final class OkHttpURLConnection extends HttpURLConnection implements Call
 
   private String defaultUserAgent() {
     String agent = System.getProperty("http.agent");
-    return agent != null ? Util.toHumanReadableAscii(agent) : Version.userAgent();
+    return agent != null ? toHumanReadableAscii(agent) : Version.userAgent();
+  }
+
+  /** Returns {@code s} with control characters and non-ASCII characters replaced with '?'. */
+  private static String toHumanReadableAscii(String s) {
+    for (int i = 0, length = s.length(), c; i < length; i += Character.charCount(c)) {
+      c = s.codePointAt(i);
+      if (c > '\u001f' && c < '\u007f') continue;
+
+      Buffer buffer = new Buffer();
+      buffer.writeUtf8(s, 0, i);
+      buffer.writeUtf8CodePoint('?');
+      for (int j = i + Character.charCount(c); j < length; j += Character.charCount(c)) {
+        c = s.codePointAt(j);
+        buffer.writeUtf8CodePoint(c > '\u001f' && c < '\u007f' ? c : '?');
+      }
+      return buffer.readUtf8();
+    }
+    return s;
   }
 
   /**
@@ -427,6 +462,7 @@ public final class OkHttpURLConnection extends HttpURLConnection implements Call
             lock.wait(); // Wait until the response is returned or the call fails.
           }
         } catch (InterruptedException e) {
+          Thread.currentThread().interrupt(); // Retain interrupted status.
           throw new InterruptedIOException();
         }
       }
@@ -616,6 +652,7 @@ public final class OkHttpURLConnection extends HttpURLConnection implements Call
             lock.wait(); // Wait until proceed() is called.
           }
         } catch (InterruptedException e) {
+          Thread.currentThread().interrupt(); // Retain interrupted status.
           throw new InterruptedIOException();
         }
       }

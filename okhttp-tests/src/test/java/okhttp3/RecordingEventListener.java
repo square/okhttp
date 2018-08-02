@@ -105,8 +105,8 @@ public final class RecordingEventListener extends EventListener {
     logEvent(new ConnectEnd(call, inetSocketAddress, proxy, protocol));
   }
 
-  @Override public void connectFailed(Call call, InetSocketAddress inetSocketAddress,
-      @Nullable Proxy proxy, @Nullable Protocol protocol, @Nullable IOException ioe) {
+  @Override public void connectFailed(Call call, InetSocketAddress inetSocketAddress, Proxy proxy,
+      @Nullable Protocol protocol, IOException ioe) {
     logEvent(new ConnectFailed(call, inetSocketAddress, proxy, protocol, ioe));
   }
 

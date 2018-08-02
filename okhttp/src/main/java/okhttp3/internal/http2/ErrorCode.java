@@ -28,7 +28,17 @@ public enum ErrorCode {
 
   REFUSED_STREAM(7),
 
-  CANCEL(8);
+  CANCEL(8),
+
+  COMPRESSION_ERROR(9),
+
+  CONNECT_ERROR(0xa),
+
+  ENHANCE_YOUR_CALM(0xb),
+
+  INADEQUATE_SECURITY(0xc),
+
+  HTTP_1_1_REQUIRED(0xd);
 
   public final int httpCode;
 

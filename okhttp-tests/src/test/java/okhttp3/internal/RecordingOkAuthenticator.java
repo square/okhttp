@@ -16,7 +16,6 @@
 package okhttp3.internal;
 
 import java.io.IOException;
-import java.net.Proxy;
 import java.util.ArrayList;
 import java.util.List;
 import okhttp3.Authenticator;
@@ -26,7 +25,7 @@ import okhttp3.Route;
 
 public final class RecordingOkAuthenticator implements Authenticator {
   public final List<Response> responses = new ArrayList<>();
-  public final List<Proxy> proxies = new ArrayList<>();
+  public final List<Route> routes = new ArrayList<>();
   public final String credential;
 
   public RecordingOkAuthenticator(String credential) {
@@ -38,14 +37,19 @@ public final class RecordingOkAuthenticator implements Authenticator {
     return responses.get(0);
   }
 
-  public Proxy onlyProxy() {
-    if (proxies.size() != 1) throw new IllegalStateException();
-    return proxies.get(0);
+  public Route onlyRoute() {
+    if (routes.size() != 1) throw new IllegalStateException();
+    return routes.get(0);
   }
 
   @Override public Request authenticate(Route route, Response response) throws IOException {
+    if (route == null) throw new NullPointerException("route == null");
+    if (response == null) throw new NullPointerException("response == null");
+
     responses.add(response);
-    proxies.add(route.proxy());
+    routes.add(route);
+
+    if (credential == null) return null;
     String header = response.code() == 407 ? "Proxy-Authorization" : "Authorization";
     return response.request().newBuilder()
         .addHeader(header, credential)

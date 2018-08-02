@@ -254,7 +254,7 @@ final class Http2Reader implements Closeable {
     if (length % 6 != 0) throw ioException("TYPE_SETTINGS length %% 6 != 0: %s", length);
     Settings settings = new Settings();
     for (int i = 0; i < length; i += 6) {
-      short id = source.readShort();
+      int id = source.readShort() & 0xFFFF;
       int value = source.readInt();
 
       switch (id) {

@@ -660,7 +660,7 @@ public class JavaApiConverterTest {
   }
 
   private static RequestBody createRequestBody(String bodyText) {
-    return RequestBody.create(MediaType.parse("text/plain"), bodyText);
+    return RequestBody.create(MediaType.get("text/plain"), bodyText);
   }
 
   private static ResponseBody createResponseBody(String bodyText) {
@@ -668,7 +668,7 @@ public class JavaApiConverterTest {
     final long contentLength = source.size();
     return new ResponseBody() {
       @Override public MediaType contentType() {
-        return MediaType.parse("text/plain; charset=utf-8");
+        return MediaType.get("text/plain; charset=utf-8");
       }
 
       @Override public long contentLength() {

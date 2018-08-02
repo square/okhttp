@@ -20,7 +20,6 @@ import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.net.UnknownHostException;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -281,7 +280,8 @@ import static okhttp3.internal.Util.verifyAsIpAddress;
  * {@code java.net.URL} it's possible to create an awkward URL like {@code http:/} with scheme and
  * path but no hostname. Building APIs that consume such malformed values is difficult!
  *
- * <p>This class has a modern API. It avoids punitive checked exceptions: {@link #parse parse()}
+ * <p>This class has a modern API. It avoids punitive checked exceptions: {@link #get get()}
+ * throws {@link IllegalArgumentException} on invalid input or {@link #parse parse()}
  * returns null if the input is an invalid URL. You can even be explicit about whether each
  * component has been encoded already.
  */
@@ -293,7 +293,8 @@ public final class HttpUrl {
   static final String PATH_SEGMENT_ENCODE_SET = " \"<>^`{}|/\\?#";
   static final String PATH_SEGMENT_ENCODE_SET_URI = "[]";
   static final String QUERY_ENCODE_SET = " \"'<>#";
-  static final String QUERY_COMPONENT_ENCODE_SET = " \"'<>#&=";
+  static final String QUERY_COMPONENT_REENCODE_SET = " \"'<>#&=";
+  static final String QUERY_COMPONENT_ENCODE_SET = " !\"#$&'(),/:;<=>?@[]\\^`{|}~";
   static final String QUERY_COMPONENT_ENCODE_SET_URI = "\\^`{|}";
   static final String FORM_ENCODE_SET = " \"':;<=>@[]^`{}|/\\?#&!$(),~";
   static final String FRAGMENT_ENCODE_SET = "";
@@ -887,9 +888,11 @@ public final class HttpUrl {
    * or null if the resulting URL is not well-formed.
    */
   public @Nullable Builder newBuilder(String link) {
-    Builder builder = new Builder();
-    Builder.ParseResult result = builder.parse(this, link);
-    return result == Builder.ParseResult.SUCCESS ? builder : null;
+    try {
+      return new Builder().parse(this, link);
+    } catch (IllegalArgumentException ignored) {
+      return null;
+    }
   }
 
   /**
@@ -897,9 +900,20 @@ public final class HttpUrl {
    * URL, or null if it isn't.
    */
   public static @Nullable HttpUrl parse(String url) {
-    Builder builder = new Builder();
-    Builder.ParseResult result = builder.parse(null, url);
-    return result == Builder.ParseResult.SUCCESS ? builder.build() : null;
+    try {
+      return get(url);
+    } catch (IllegalArgumentException ignored) {
+      return null;
+    }
+  }
+
+  /**
+   * Returns a new {@code HttpUrl} representing {@code url}.
+   *
+   * @throws IllegalArgumentException If {@code url} is not a well-formed HTTP or HTTPS URL.
+   */
+  public static HttpUrl get(String url) {
+    return new Builder().parse(null, url).build();
   }
 
   /**
@@ -908,29 +922,6 @@ public final class HttpUrl {
    */
   public static @Nullable HttpUrl get(URL url) {
     return parse(url.toString());
-  }
-
-  /**
-   * Returns a new {@code HttpUrl} representing {@code url} if it is a well-formed HTTP or HTTPS
-   * URL, or throws an exception if it isn't.
-   *
-   * @throws MalformedURLException if there was a non-host related URL issue
-   * @throws UnknownHostException if the host was invalid
-   */
-  static HttpUrl getChecked(String url) throws MalformedURLException, UnknownHostException {
-    Builder builder = new Builder();
-    Builder.ParseResult result = builder.parse(null, url);
-    switch (result) {
-      case SUCCESS:
-        return builder.build();
-      case INVALID_HOST:
-        throw new UnknownHostException("Invalid host: " + url);
-      case UNSUPPORTED_SCHEME:
-      case MISSING_SCHEME:
-      case INVALID_PORT:
-      default:
-        throw new MalformedURLException("Invalid URL: " + result + " for " + url);
-    }
   }
 
   public static @Nullable HttpUrl get(URI uri) {
@@ -1170,9 +1161,9 @@ public final class HttpUrl {
       if (encodedName == null) throw new NullPointerException("encodedName == null");
       if (encodedQueryNamesAndValues == null) encodedQueryNamesAndValues = new ArrayList<>();
       encodedQueryNamesAndValues.add(
-          canonicalize(encodedName, QUERY_COMPONENT_ENCODE_SET, true, false, true, true));
+          canonicalize(encodedName, QUERY_COMPONENT_REENCODE_SET, true, false, true, true));
       encodedQueryNamesAndValues.add(encodedValue != null
-          ? canonicalize(encodedValue, QUERY_COMPONENT_ENCODE_SET, true, false, true, true)
+          ? canonicalize(encodedValue, QUERY_COMPONENT_REENCODE_SET, true, false, true, true)
           : null);
       return this;
     }
@@ -1202,7 +1193,7 @@ public final class HttpUrl {
       if (encodedName == null) throw new NullPointerException("encodedName == null");
       if (encodedQueryNamesAndValues == null) return this;
       removeAllCanonicalQueryParameters(
-          canonicalize(encodedName, QUERY_COMPONENT_ENCODE_SET, true, false, true, true));
+          canonicalize(encodedName, QUERY_COMPONENT_REENCODE_SET, true, false, true, true));
       return this;
     }
 
@@ -1309,15 +1300,9 @@ public final class HttpUrl {
       return result.toString();
     }
 
-    enum ParseResult {
-      SUCCESS,
-      MISSING_SCHEME,
-      UNSUPPORTED_SCHEME,
-      INVALID_PORT,
-      INVALID_HOST,
-    }
+    static final String INVALID_HOST = "Invalid URL host";
 
-    ParseResult parse(@Nullable HttpUrl base, String input) {
+    Builder parse(@Nullable HttpUrl base, String input) {
       int pos = skipLeadingAsciiWhitespace(input, 0, input.length());
       int limit = skipTrailingAsciiWhitespace(input, pos, input.length());
 
@@ -1331,12 +1316,14 @@ public final class HttpUrl {
           this.scheme = "http";
           pos += "http:".length();
         } else {
-          return ParseResult.UNSUPPORTED_SCHEME; // Not an HTTP scheme.
+          throw new IllegalArgumentException("Expected URL scheme 'http' or 'https' but was '"
+              + input.substring(0, schemeDelimiterOffset) + "'");
         }
       } else if (base != null) {
         this.scheme = base.scheme;
       } else {
-        return ParseResult.MISSING_SCHEME; // No scheme.
+        throw new IllegalArgumentException(
+            "Expected URL scheme 'http' or 'https' but no colon was found");
       }
 
       // Authority.
@@ -1395,14 +1382,20 @@ public final class HttpUrl {
               // Host info precedes.
               int portColonOffset = portColonOffset(input, pos, componentDelimiterOffset);
               if (portColonOffset + 1 < componentDelimiterOffset) {
-                this.host = canonicalizeHost(input, pos, portColonOffset);
-                this.port = parsePort(input, portColonOffset + 1, componentDelimiterOffset);
-                if (this.port == -1) return ParseResult.INVALID_PORT; // Invalid port.
+                host = canonicalizeHost(input, pos, portColonOffset);
+                port = parsePort(input, portColonOffset + 1, componentDelimiterOffset);
+                if (port == -1) {
+                  throw new IllegalArgumentException("Invalid URL port: \""
+                      + input.substring(portColonOffset + 1, componentDelimiterOffset) + '"');
+                }
               } else {
-                this.host = canonicalizeHost(input, pos, portColonOffset);
-                this.port = defaultPort(this.scheme);
+                host = canonicalizeHost(input, pos, portColonOffset);
+                port = defaultPort(scheme);
               }
-              if (this.host == null) return ParseResult.INVALID_HOST; // Invalid host.
+              if (host == null) {
+                throw new IllegalArgumentException(
+                    INVALID_HOST + ": \"" + input.substring(pos, portColonOffset) + '"');
+              }
               pos = componentDelimiterOffset;
               break authority;
           }
@@ -1439,7 +1432,7 @@ public final class HttpUrl {
             input, pos + 1, limit, FRAGMENT_ENCODE_SET, true, false, false, false, null);
       }
 
-      return ParseResult.SUCCESS;
+      return this;
     }
 
     private void resolvePath(String input, int pos, int limit) {

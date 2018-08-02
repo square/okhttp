@@ -15,7 +15,6 @@
  */
 package okhttp3.internal.ws;
 
-import java.io.EOFException;
 import java.io.IOException;
 import java.net.ProtocolException;
 import java.util.concurrent.TimeUnit;
@@ -67,13 +66,14 @@ final class WebSocketReader {
   // Stateful data about the current frame.
   int opcode;
   long frameLength;
-  long frameBytesRead;
   boolean isFinalFrame;
   boolean isControlFrame;
-  boolean isMasked;
 
-  final byte[] maskKey = new byte[4];
-  final byte[] maskBuffer = new byte[8192];
+  private final Buffer controlFrameBuffer = new Buffer();
+  private final Buffer messageFrameBuffer = new Buffer();
+
+  private final byte[] maskKey;
+  private final Buffer.UnsafeCursor maskCursor;
 
   WebSocketReader(boolean isClient, BufferedSource source, FrameCallback frameCallback) {
     if (source == null) throw new NullPointerException("source == null");
@@ -81,6 +81,10 @@ final class WebSocketReader {
     this.isClient = isClient;
     this.source = source;
     this.frameCallback = frameCallback;
+
+    // Masks are only a concern for server writers.
+    maskKey = isClient ? null : new byte[4];
+    maskCursor = isClient ? null : new Buffer.UnsafeCursor();
   }
 
   /**
@@ -134,7 +138,7 @@ final class WebSocketReader {
 
     int b1 = source.readByte() & 0xff;
 
-    isMasked = (b1 & B1_FLAG_MASK) != 0;
+    boolean isMasked = (b1 & B1_FLAG_MASK) != 0;
     if (isMasked == isClient) {
       // Masked payloads must be read on the server. Unmasked payloads must be read on the client.
       throw new ProtocolException(isClient
@@ -153,7 +157,6 @@ final class WebSocketReader {
             "Frame length 0x" + Long.toHexString(frameLength) + " > 0x7FFFFFFFFFFFFFFF");
       }
     }
-    frameBytesRead = 0;
 
     if (isControlFrame && frameLength > PAYLOAD_BYTE_MAX) {
       throw new ProtocolException("Control frame must be less than " + PAYLOAD_BYTE_MAX + "B.");
@@ -166,38 +169,33 @@ final class WebSocketReader {
   }
 
   private void readControlFrame() throws IOException {
-    Buffer buffer = new Buffer();
-    if (frameBytesRead < frameLength) {
-      if (isClient) {
-        source.readFully(buffer, frameLength);
-      } else {
-        while (frameBytesRead < frameLength) {
-          int toRead = (int) Math.min(frameLength - frameBytesRead, maskBuffer.length);
-          int read = source.read(maskBuffer, 0, toRead);
-          if (read == -1) throw new EOFException();
-          toggleMask(maskBuffer, read, maskKey, frameBytesRead);
-          buffer.write(maskBuffer, 0, read);
-          frameBytesRead += read;
-        }
+    if (frameLength > 0) {
+      source.readFully(controlFrameBuffer, frameLength);
+
+      if (!isClient) {
+        controlFrameBuffer.readAndWriteUnsafe(maskCursor);
+        maskCursor.seek(0);
+        toggleMask(maskCursor, maskKey);
+        maskCursor.close();
       }
     }
 
     switch (opcode) {
       case OPCODE_CONTROL_PING:
-        frameCallback.onReadPing(buffer.readByteString());
+        frameCallback.onReadPing(controlFrameBuffer.readByteString());
         break;
       case OPCODE_CONTROL_PONG:
-        frameCallback.onReadPong(buffer.readByteString());
+        frameCallback.onReadPong(controlFrameBuffer.readByteString());
         break;
       case OPCODE_CONTROL_CLOSE:
         int code = CLOSE_NO_STATUS_CODE;
         String reason = "";
-        long bufferSize = buffer.size();
+        long bufferSize = controlFrameBuffer.size();
         if (bufferSize == 1) {
           throw new ProtocolException("Malformed close payload length of 1.");
         } else if (bufferSize != 0) {
-          code = buffer.readShort();
-          reason = buffer.readUtf8();
+          code = controlFrameBuffer.readShort();
+          reason = controlFrameBuffer.readUtf8();
           String codeExceptionMessage = WebSocketProtocol.closeCodeExceptionMessage(code);
           if (codeExceptionMessage != null) throw new ProtocolException(codeExceptionMessage);
         }
@@ -215,18 +213,17 @@ final class WebSocketReader {
       throw new ProtocolException("Unknown opcode: " + toHexString(opcode));
     }
 
-    Buffer message = new Buffer();
-    readMessage(message);
+    readMessage();
 
     if (opcode == OPCODE_TEXT) {
-      frameCallback.onReadMessage(message.readUtf8());
+      frameCallback.onReadMessage(messageFrameBuffer.readUtf8());
     } else {
-      frameCallback.onReadMessage(message.readByteString());
+      frameCallback.onReadMessage(messageFrameBuffer.readByteString());
     }
   }
 
   /** Read headers and process any control frames until we reach a non-control frame. */
-  void readUntilNonControlFrame() throws IOException {
+  private void readUntilNonControlFrame() throws IOException {
     while (!closed) {
       readHeader();
       if (!isControlFrame) {
@@ -241,37 +238,27 @@ final class WebSocketReader {
    * fragments will be processed. If the message payload is masked this will unmask as it's being
    * processed.
    */
-  private void readMessage(Buffer sink) throws IOException {
+  private void readMessage() throws IOException {
     while (true) {
       if (closed) throw new IOException("closed");
 
-      if (frameBytesRead == frameLength) {
-        if (isFinalFrame) return; // We are exhausted and have no continuations.
+      if (frameLength > 0) {
+        source.readFully(messageFrameBuffer, frameLength);
 
-        readUntilNonControlFrame();
-        if (opcode != OPCODE_CONTINUATION) {
-          throw new ProtocolException("Expected continuation opcode. Got: " + toHexString(opcode));
-        }
-        if (isFinalFrame && frameLength == 0) {
-          return; // Fast-path for empty final frame.
+        if (!isClient) {
+          messageFrameBuffer.readAndWriteUnsafe(maskCursor);
+          maskCursor.seek(messageFrameBuffer.size() - frameLength);
+          toggleMask(maskCursor, maskKey);
+          maskCursor.close();
         }
       }
 
-      long toRead = frameLength - frameBytesRead;
+      if (isFinalFrame) break; // We are exhausted and have no continuations.
 
-      long read;
-      if (isMasked) {
-        toRead = Math.min(toRead, maskBuffer.length);
-        read = source.read(maskBuffer, 0, (int) toRead);
-        if (read == -1) throw new EOFException();
-        toggleMask(maskBuffer, read, maskKey, frameBytesRead);
-        sink.write(maskBuffer, 0, (int) read);
-      } else {
-        read = source.read(sink, toRead);
-        if (read == -1) throw new EOFException();
+      readUntilNonControlFrame();
+      if (opcode != OPCODE_CONTINUATION) {
+        throw new ProtocolException("Expected continuation opcode. Got: " + toHexString(opcode));
       }
-
-      frameBytesRead += read;
     }
   }
 }

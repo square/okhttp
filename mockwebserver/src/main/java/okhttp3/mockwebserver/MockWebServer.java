@@ -19,7 +19,6 @@ package okhttp3.mockwebserver;
 
 import java.io.Closeable;
 import java.io.IOException;
-import java.io.InterruptedIOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.ProtocolException;
@@ -79,6 +78,7 @@ import okio.Timeout;
 import org.junit.rules.ExternalResource;
 
 import static okhttp3.internal.Util.closeQuietly;
+import static okhttp3.mockwebserver.SocketPolicy.CONTINUE_ALWAYS;
 import static okhttp3.mockwebserver.SocketPolicy.DISCONNECT_AFTER_REQUEST;
 import static okhttp3.mockwebserver.SocketPolicy.DISCONNECT_AT_END;
 import static okhttp3.mockwebserver.SocketPolicy.DISCONNECT_AT_START;
@@ -90,6 +90,7 @@ import static okhttp3.mockwebserver.SocketPolicy.NO_RESPONSE;
 import static okhttp3.mockwebserver.SocketPolicy.RESET_STREAM_AT_START;
 import static okhttp3.mockwebserver.SocketPolicy.SHUTDOWN_INPUT_AT_END;
 import static okhttp3.mockwebserver.SocketPolicy.SHUTDOWN_OUTPUT_AT_END;
+import static okhttp3.mockwebserver.SocketPolicy.STALL_SOCKET_AT_START;
 import static okhttp3.mockwebserver.SocketPolicy.UPGRADE_TO_SSL_AT_END;
 
 /**
@@ -100,6 +101,10 @@ public final class MockWebServer extends ExternalResource implements Closeable {
   static {
     Internal.initializeInstanceForTests();
   }
+
+  private static final int CLIENT_AUTH_NONE = 0;
+  private static final int CLIENT_AUTH_REQUESTED = 1;
+  private static final int CLIENT_AUTH_REQUIRED = 2;
 
   private static final X509TrustManager UNTRUSTED_TRUST_MANAGER = new X509TrustManager() {
     @Override public void checkClientTrusted(X509Certificate[] chain, String authType)
@@ -131,6 +136,7 @@ public final class MockWebServer extends ExternalResource implements Closeable {
   private SSLSocketFactory sslSocketFactory;
   private ExecutorService executor;
   private boolean tunnelProxy;
+  private int clientAuth = CLIENT_AUTH_NONE;
   private Dispatcher dispatcher = new QueueDispatcher();
 
   private int port = -1;
@@ -212,13 +218,22 @@ public final class MockWebServer extends ExternalResource implements Closeable {
    */
   public void setProtocols(List<Protocol> protocols) {
     protocols = Util.immutableList(protocols);
-    if (!protocols.contains(Protocol.HTTP_1_1)) {
+    if (protocols.contains(Protocol.H2_PRIOR_KNOWLEDGE) && protocols.size() > 1) {
+      // when using h2_prior_knowledge, no other protocol should be supported.
+      throw new IllegalArgumentException(
+          "protocols containing h2_prior_knowledge cannot use other protocols: " + protocols);
+    } else if (!protocols.contains(Protocol.H2_PRIOR_KNOWLEDGE)
+        && !protocols.contains(Protocol.HTTP_1_1)) {
       throw new IllegalArgumentException("protocols doesn't contain http/1.1: " + protocols);
     }
     if (protocols.contains(null)) {
       throw new IllegalArgumentException("protocols must not contain null");
     }
     this.protocols = protocols;
+  }
+
+  public List<Protocol> protocols() {
+    return protocols;
   }
 
   /**
@@ -229,6 +244,36 @@ public final class MockWebServer extends ExternalResource implements Closeable {
   public void useHttps(SSLSocketFactory sslSocketFactory, boolean tunnelProxy) {
     this.sslSocketFactory = sslSocketFactory;
     this.tunnelProxy = tunnelProxy;
+  }
+
+  /**
+   * Configure the server to not perform SSL authentication of the client. This leaves
+   * authentication to another layer such as in an HTTP cookie or header. This is the default and
+   * most common configuration.
+   */
+  public void noClientAuth() {
+    this.clientAuth = CLIENT_AUTH_NONE;
+  }
+
+  /**
+   * Configure the server to {@linkplain SSLSocket#setWantClientAuth want client auth}. If the
+   * client presents a certificate that is {@linkplain TrustManager trusted} the handshake will
+   * proceed normally. The connection will also proceed normally if the client presents no
+   * certificate at all! But if the client presents an untrusted certificate the handshake will fail
+   * and no connection will be established.
+   */
+  public void requestClientAuth() {
+    this.clientAuth = CLIENT_AUTH_REQUESTED;
+  }
+
+  /**
+   * Configure the server to {@linkplain SSLSocket#setNeedClientAuth need client auth}. If the
+   * client presents a certificate that is {@linkplain TrustManager trusted} the handshake will
+   * proceed normally. If the client presents an untrusted certificate or no certificate at all the
+   * handshake will fail and no connection will be established.
+   */
+  public void requireClientAuth() {
+    this.clientAuth = CLIENT_AUTH_REQUIRED;
   }
 
   /**
@@ -405,13 +450,13 @@ public final class MockWebServer extends ExternalResource implements Closeable {
       }
 
       public void processConnection() throws Exception {
+        SocketPolicy socketPolicy = dispatcher.peek().getSocketPolicy();
         Protocol protocol = Protocol.HTTP_1_1;
         Socket socket;
         if (sslSocketFactory != null) {
           if (tunnelProxy) {
             createTunnel();
           }
-          SocketPolicy socketPolicy = dispatcher.peek().getSocketPolicy();
           if (socketPolicy == FAIL_HANDSHAKE) {
             dispatchBookkeepingRequest(sequenceNumber, raw);
             processHandshakeFailure(raw);
@@ -421,6 +466,11 @@ public final class MockWebServer extends ExternalResource implements Closeable {
               raw.getPort(), true);
           SSLSocket sslSocket = (SSLSocket) socket;
           sslSocket.setUseClientMode(false);
+          if (clientAuth == CLIENT_AUTH_REQUIRED) {
+            sslSocket.setNeedClientAuth(true);
+          } else if (clientAuth == CLIENT_AUTH_REQUESTED) {
+            sslSocket.setWantClientAuth(true);
+          }
           openClientSockets.add(socket);
 
           if (protocolNegotiationEnabled) {
@@ -434,11 +484,18 @@ public final class MockWebServer extends ExternalResource implements Closeable {
             protocol = protocolString != null ? Protocol.get(protocolString) : Protocol.HTTP_1_1;
           }
           openClientSockets.remove(raw);
+        } else if (protocols.contains(Protocol.H2_PRIOR_KNOWLEDGE)) {
+          socket = raw;
+          protocol = Protocol.H2_PRIOR_KNOWLEDGE;
         } else {
           socket = raw;
         }
 
-        if (protocol == Protocol.HTTP_2) {
+        if (socketPolicy == STALL_SOCKET_AT_START) {
+          return; // Ignore the socket until the server is shut down!
+        }
+
+        if (protocol == Protocol.HTTP_2 || protocol == Protocol.H2_PRIOR_KNOWLEDGE) {
           Http2SocketHandler http2SocketHandler = new Http2SocketHandler(socket, protocol);
           Http2Connection connection = new Http2Connection.Builder(false)
               .socket(socket)
@@ -597,7 +654,8 @@ public final class MockWebServer extends ExternalResource implements Closeable {
       }
     }
 
-    if (expectContinue && dispatcher.peek().getSocketPolicy() == EXPECT_CONTINUE) {
+    final SocketPolicy socketPolicy = dispatcher.peek().getSocketPolicy();
+    if (expectContinue && socketPolicy == EXPECT_CONTINUE || socketPolicy == CONTINUE_ALWAYS) {
       sink.writeUtf8("HTTP/1.1 100 Continue\r\n");
       sink.writeUtf8("Content-Length: 0\r\n");
       sink.writeUtf8("\r\n");
@@ -663,17 +721,18 @@ public final class MockWebServer extends ExternalResource implements Closeable {
       }
     };
     RealWebSocket webSocket = new RealWebSocket(fancyRequest,
-        response.getWebSocketListener(), new SecureRandom());
+        response.getWebSocketListener(), new SecureRandom(), 0);
     response.getWebSocketListener().onOpen(webSocket, fancyResponse);
     String name = "MockWebServer WebSocket " + request.getPath();
-    webSocket.initReaderAndWriter(name, 0, streams);
+    webSocket.initReaderAndWriter(name, streams);
     try {
       webSocket.loopReader();
 
       // Even if messages are no longer being read we need to wait for the connection close signal.
       try {
         connectionClose.await();
-      } catch (InterruptedException ignored) {
+      } catch (InterruptedException e) {
+        throw new AssertionError(e);
       }
 
     } catch (IOException e) {
@@ -685,7 +744,7 @@ public final class MockWebServer extends ExternalResource implements Closeable {
 
   private void writeHttpResponse(Socket socket, BufferedSink sink, MockResponse response)
       throws IOException {
-    sleepIfDelayed(response.getBodyDelay(TimeUnit.MILLISECONDS));
+    sleepIfDelayed(response.getHeadersDelay(TimeUnit.MILLISECONDS));
     sink.writeUtf8(response.getStatus());
     sink.writeUtf8("\r\n");
 
@@ -762,7 +821,7 @@ public final class MockWebServer extends ExternalResource implements Closeable {
         try {
           Thread.sleep(periodDelayMs);
         } catch (InterruptedException e) {
-          throw new AssertionError();
+          throw new AssertionError(e);
         }
       }
     }
@@ -844,7 +903,7 @@ public final class MockWebServer extends ExternalResource implements Closeable {
           stream.close(ErrorCode.fromHttp2(peekedResponse.getHttp2ErrorCode()));
           return;
         } catch (InterruptedException e) {
-          throw new InterruptedIOException();
+          throw new AssertionError(e);
         }
       }
 
@@ -887,7 +946,7 @@ public final class MockWebServer extends ExternalResource implements Closeable {
           method = value;
         } else if (name.equals(Header.TARGET_PATH)) {
           path = value;
-        } else if (protocol == Protocol.HTTP_2) {
+        } else if (protocol == Protocol.HTTP_2 || protocol == Protocol.H2_PRIOR_KNOWLEDGE) {
           httpHeaders.add(name.utf8(), value);
         } else {
           throw new IllegalStateException();
