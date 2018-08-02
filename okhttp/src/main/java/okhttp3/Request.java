@@ -33,7 +33,9 @@ public final class Request {
   final String method;
   final Headers headers;
   final @Nullable RequestBody body;
+  final String sni;
   final Map<Class<?>, Object> tags;
+
 
   private volatile CacheControl cacheControl; // Lazily initialized.
 
@@ -42,6 +44,7 @@ public final class Request {
     this.method = builder.method;
     this.headers = builder.headers.build();
     this.body = builder.body;
+    this.sni = builder.sni;
     this.tags = Util.immutableMap(builder.tags);
   }
 
@@ -115,9 +118,14 @@ public final class Request {
         + tags
         + '}';
   }
+  
+  public String sni() {
+    return sni;
+  }
 
   public static class Builder {
-    HttpUrl url;
+    String sni;
+	HttpUrl url;
     String method;
     Headers.Builder headers;
     RequestBody body;
@@ -291,6 +299,11 @@ public final class Request {
     public Request build() {
       if (url == null) throw new IllegalStateException("url == null");
       return new Request(this);
+    }
+      
+    public Builder sni(String sni) {
+      this.sni = sni;
+      return this;
     }
   }
 }

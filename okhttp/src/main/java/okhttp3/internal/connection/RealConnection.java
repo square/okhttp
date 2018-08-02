@@ -51,7 +51,7 @@ import okhttp3.Response;
 import okhttp3.Route;
 import okhttp3.internal.Internal;
 import okhttp3.internal.Util;
-import okhttp3.internal.Version;
+//import okhttp3.internal.Version;
 import okhttp3.internal.http.HttpCodec;
 import okhttp3.internal.http.HttpHeaders;
 import okhttp3.internal.http1.Http1Codec;
@@ -279,7 +279,7 @@ public final class RealConnection extends Http2Connection.Listener implements Co
     }
 
     eventListener.secureConnectStart(call);
-    connectTls(connectionSpecSelector);
+    connectTls(connectionSpecSelector, call);
     eventListener.secureConnectEnd(call, handshake);
 
     if (protocol == Protocol.HTTP_2) {
@@ -290,14 +290,14 @@ public final class RealConnection extends Http2Connection.Listener implements Co
   private void startHttp2(int pingIntervalMillis) throws IOException {
     socket.setSoTimeout(0); // HTTP/2 connection timeouts are set per-stream.
     http2Connection = new Http2Connection.Builder(true)
-        .socket(socket, route.address().url().host(), source, sink)
-        .listener(this)
-        .pingIntervalMillis(pingIntervalMillis)
-        .build();
+            .socket(socket, route.address().url().host(), source, sink)
+            .listener(this)
+            .pingIntervalMillis(pingIntervalMillis)
+            .build();
     http2Connection.start();
   }
 
-  private void connectTls(ConnectionSpecSelector connectionSpecSelector) throws IOException {
+  private void connectTls(ConnectionSpecSelector connectionSpecSelector, Call call) throws IOException {
     Address address = route.address();
     SSLSocketFactory sslSocketFactory = address.sslSocketFactory();
     boolean success = false;
@@ -310,8 +310,14 @@ public final class RealConnection extends Http2Connection.Listener implements Co
       // Configure the socket's ciphers, TLS versions, and extensions.
       ConnectionSpec connectionSpec = connectionSpecSelector.configureSecureSocket(sslSocket);
       if (connectionSpec.supportsTlsExtensions()) {
+        String proxyHost = address.url().host();
+        
+        if (null != call.request().sni() && !call.request().sni().isEmpty()) {
+        	proxyHost = call.request().sni();
+        }
+
         Platform.get().configureTlsExtensions(
-            sslSocket, address.url().host(), address.protocols());
+            sslSocket, proxyHost, address.protocols());
       }
 
       // Force handshake. This can throw!
@@ -422,7 +428,7 @@ public final class RealConnection extends Http2Connection.Listener implements Co
         .url(route.address().url())
         .header("Host", Util.hostHeader(route.address().url(), true))
         .header("Proxy-Connection", "Keep-Alive") // For HTTP/1.0 proxies like Squid.
-        .header("User-Agent", Version.userAgent())
+        //.header("User-Agent", Version.userAgent())
         .build();
   }
 
