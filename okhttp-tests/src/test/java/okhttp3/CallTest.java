@@ -16,6 +16,7 @@
 package okhttp3;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InterruptedIOException;
@@ -44,10 +45,12 @@ import java.util.concurrent.Future;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.logging.SimpleFormatter;
+import javax.annotation.Nullable;
 import javax.net.ssl.SSLException;
 import javax.net.ssl.SSLHandshakeException;
 import javax.net.ssl.SSLPeerUnverifiedException;
@@ -66,8 +69,8 @@ import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import okhttp3.mockwebserver.RecordedRequest;
 import okhttp3.mockwebserver.SocketPolicy;
-import okhttp3.tls.HeldCertificate;
 import okhttp3.tls.HandshakeCertificates;
+import okhttp3.tls.HeldCertificate;
 import okio.Buffer;
 import okio.BufferedSink;
 import okio.BufferedSource;
@@ -84,7 +87,6 @@ import org.junit.rules.Timeout;
 import static java.net.CookiePolicy.ACCEPT_ORIGINAL_SERVER;
 import static okhttp3.TestUtil.awaitGarbageCollection;
 import static okhttp3.TestUtil.defaultClient;
-import static okhttp3.internal.platform.PlatformTest.getPlatform;
 import static okhttp3.tls.internal.TlsUtil.localhost;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
@@ -3260,6 +3262,31 @@ public final class CallTest {
     // Confirm that the IP address was used in the host header.
     RecordedRequest recordedRequest = server.takeRequest();
     assertEquals(localIpAddress + ":" + server.getPort(), recordedRequest.getHeader("Host"));
+  }
+
+  @Test public void postWithFileNotFound() throws Exception {
+    final AtomicInteger called = new AtomicInteger(0);
+
+    RequestBody body = new RequestBody() {
+      @Nullable @Override public MediaType contentType() {
+        return MediaType.get("application/octet-stream");
+      }
+
+      @Override public void writeTo(BufferedSink sink) throws IOException {
+        called.incrementAndGet();
+        throw new FileNotFoundException();
+      }
+    };
+
+    Request request = new Request.Builder()
+        .url(server.url("/"))
+        .post(body)
+        .build();
+
+    executeSynchronously(request)
+        .assertFailure(FileNotFoundException.class);
+
+    assertEquals(1L, called.get());
   }
 
   private void makeFailingCall() {
