@@ -115,6 +115,11 @@ public final class ConnectionPool {
     return connections.size();
   }
 
+  /** Returns connections to get sub RealConnection info. */
+  public final synchronized Deque<RealConnection> connections() {
+    return new ArrayDeque<RealConnection>(connections);
+  }
+
   /**
    * Returns a recycled connection to {@code address}, or null if no such connection exists. The
    * route is null if the address has not yet been routed.
