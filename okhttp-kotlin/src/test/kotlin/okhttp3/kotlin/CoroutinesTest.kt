@@ -1,8 +1,8 @@
 package okhttp3.kotlin
 
-import kotlinx.coroutines.experimental.async
-import kotlinx.coroutines.experimental.cancelAndJoin
-import kotlinx.coroutines.experimental.runBlocking
+import kotlinx.coroutines.async
+import kotlinx.coroutines.cancelAndJoin
+import kotlinx.coroutines.runBlocking
 import org.junit.Test
 import java.util.concurrent.TimeUnit.MILLISECONDS
 import kotlin.test.assertEquals
