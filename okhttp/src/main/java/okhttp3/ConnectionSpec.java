@@ -83,11 +83,11 @@ public final class ConnectionSpec {
   };
 
   /**
-   * A TLS 1.3 only Connection Spec for testing. This will be eventually be exposed
+   * A TLS 1.3 only Connection Spec. This will be eventually be exposed
    * as part of MODERN_TLS or folded into the default OkHttp client once published and
-   * available in JDK11.
+   * available in JDK11 or Conscrypt.
    */
-  static final ConnectionSpec TLS_13 = new Builder(true)
+  public static final ConnectionSpec TLS_13 = new Builder(true)
       .cipherSuites(TLS13_CIPHER_SUITES)
       .tlsVersions(TlsVersion.TLS_1_3)
       .supportsTlsExtensions(true)
