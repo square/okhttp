@@ -57,7 +57,9 @@ public class TestTls13Request {
             "https://tls13.cloudflare.com", "https://www.allizom.org/robots.txt",
             "https://tls13.crypto.mozilla.org/", "https://tls.ctf.network/robots.txt",
             "https://rustls.jbp.io/", "https://h2o.examp1e.net", "https://mew.org/",
-            "https://tls13.baishancloud.com/", "https://tls13.akamai.io/", "https://swifttls.org/");
+            "https://tls13.baishancloud.com/", "https://tls13.akamai.io/", "https://swifttls.org/",
+            "https://www.googleapis.com/robots.txt", "https://graph.facebook.com/robots.txt",
+            "https://api.twitter.com/robots.txt", "https://connect.squareup.com/robots.txt");
 
     System.out.println("TLS1.3 only");
     testClient(urls, buildClient(TLS_13));
