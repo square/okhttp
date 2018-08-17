@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.lang.reflect.Field;
 import java.net.InetSocketAddress;
 import java.net.Socket;
+import java.security.AccessControlException;
 import java.security.NoSuchAlgorithmException;
 import java.security.Security;
 import java.util.ArrayList;
@@ -38,6 +39,8 @@ import okhttp3.internal.tls.BasicTrustRootIndex;
 import okhttp3.internal.tls.CertificateChainCleaner;
 import okhttp3.internal.tls.TrustRootIndex;
 import okio.Buffer;
+
+import static okhttp3.internal.Util.getProperty;
 
 /**
  * Access to platform-specific features.
@@ -187,7 +190,7 @@ public class Platform {
 
   public static boolean isConscryptPreferred() {
     // mainly to allow tests to run cleanly
-    if ("conscrypt".equals(System.getProperty("okhttp.platform"))) {
+    if ("conscrypt".equals(getProperty("okhttp.platform"))) {
       return true;
     }
 
@@ -267,7 +270,7 @@ public class Platform {
   }
 
   public SSLContext getSSLContext() {
-    String jvmVersion = System.getProperty("java.specification.version");
+    String jvmVersion = getProperty("java.specification.version");
     if ("1.7".equals(jvmVersion)) {
       try {
         // JDK 1.7 (public version) only support > TLSv1 with named protocols
