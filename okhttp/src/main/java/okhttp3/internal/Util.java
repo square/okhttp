@@ -678,8 +678,7 @@ public final class Util {
     try {
       return System.getProperty(name);
     } catch (AccessControlException ace) {
-      throw ace;
-      //return null;
+      return null;
     }
   }
 }
