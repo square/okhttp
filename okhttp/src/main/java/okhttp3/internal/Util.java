@@ -26,6 +26,7 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.UnknownHostException;
 import java.nio.charset.Charset;
+import java.security.AccessControlException;
 import java.security.GeneralSecurityException;
 import java.security.KeyStore;
 import java.util.ArrayList;
@@ -670,6 +671,14 @@ public final class Util {
       return (X509TrustManager) trustManagers[0];
     } catch (GeneralSecurityException e) {
       throw assertionError("No System TLS", e); // The system has no TLS. Just give up.
+    }
+  }
+
+  public static String getProperty(String name) {
+    try {
+      return System.getProperty(name);
+    } catch (AccessControlException ace) {
+      return null;
     }
   }
 }
