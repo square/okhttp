@@ -106,8 +106,8 @@ public class DohProviders {
     if (!workingOnly) {
       //result.add(buildCleanBrowsing(client)); // timeouts
       result.add(buildCryptoSx(client)); // 521 - server down
-      result.add(buildChantra(client)); // 400
     }
+    result.add(buildChantra(client));
 
     return result;
   }
