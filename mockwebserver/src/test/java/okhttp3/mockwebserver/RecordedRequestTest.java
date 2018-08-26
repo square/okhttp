@@ -27,7 +27,7 @@ public class RecordedRequestTest {
       return inetAddress;
     }
 
-    @Override public int getPort() {
+    @Override public int getLocalPort() {
       return port;
     }
   }
