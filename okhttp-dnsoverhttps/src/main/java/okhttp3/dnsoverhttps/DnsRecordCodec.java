@@ -91,7 +91,6 @@ class DnsRecordCodec {
 
     final int questionCount = buf.readShort() & 0xffff;
     final int answerCount = buf.readShort() & 0xffff;
-    //System.out.println(answerCount);
     buf.readShort(); // authority record count
     buf.readShort(); // additional record count
 
@@ -108,8 +107,6 @@ class DnsRecordCodec {
       buf.readShort(); // class
       final long ttl = buf.readInt() & 0xffffffffL; // ttl
       final int length = buf.readShort() & 0xffff;
-
-      //System.out.println(type);
 
       if (type == TYPE_A || type == TYPE_AAAA) {
         byte[] bytes = new byte[length];
