@@ -39,7 +39,7 @@ import okio.ByteString;
 /**
  * DNS over HTTPS implementation.
  *
- * Implementation of https://tools.ietf.org/html/draft-ietf-doh-dns-over-https-11
+ * Implementation of https://tools.ietf.org/html/draft-ietf-doh-dns-over-https-13
  *
  * <blockquote>A DNS API client encodes a single DNS query into an HTTP request
  * using either the HTTP GET or POST method and the other requirements
@@ -54,13 +54,11 @@ import okio.ByteString;
  */
 public class DnsOverHttps implements Dns {
   public static final MediaType DNS_MESSAGE = MediaType.get("application/dns-message");
-  public static final MediaType UDPWIREFORMAT = MediaType.get("application/dns-udpwireformat");
   public static final int MAX_RESPONSE_SIZE = 64 * 1024;
   private final OkHttpClient client;
   private final HttpUrl url;
   private final boolean includeIPv6;
   private final boolean post;
-  private final MediaType contentType;
   private final boolean resolvePrivateAddresses;
   private final boolean resolvePublicAddresses;
 
@@ -75,7 +73,6 @@ public class DnsOverHttps implements Dns {
     this.url = builder.url;
     this.includeIPv6 = builder.includeIPv6;
     this.post = builder.post;
-    this.contentType = builder.contentType;
     this.resolvePrivateAddresses = builder.resolvePrivateAddresses;
     this.resolvePublicAddresses = builder.resolvePublicAddresses;
     this.client = builder.client.newBuilder().dns(buildBootstrapClient(builder)).build();
@@ -101,10 +98,6 @@ public class DnsOverHttps implements Dns {
 
   public boolean includeIPv6() {
     return includeIPv6;
-  }
-
-  public MediaType contentType() {
-    return contentType;
   }
 
   public OkHttpClient client() {
@@ -200,10 +193,10 @@ public class DnsOverHttps implements Dns {
   }
 
   private Request buildRequest(ByteString query) {
-    Request.Builder requestBuilder = new Request.Builder().header("Accept", contentType.toString());
+    Request.Builder requestBuilder = new Request.Builder().header("Accept", DNS_MESSAGE.toString());
 
     if (post) {
-      requestBuilder = requestBuilder.url(url).post(RequestBody.create(contentType, query));
+      requestBuilder = requestBuilder.url(url).post(RequestBody.create(DNS_MESSAGE, query));
     } else {
       String encoded = query.base64Url().replace("=", "");
       HttpUrl requestUrl = url.newBuilder().addQueryParameter("dns", encoded).build();

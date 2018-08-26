@@ -27,8 +27,6 @@ import okhttp3.Cache;
 import okhttp3.HttpUrl;
 import okhttp3.OkHttpClient;
 
-import static okhttp3.dnsoverhttps.DnsOverHttps.UDPWIREFORMAT;
-
 public class TestDohMain {
   public static void main(String[] args) throws IOException {
     Security.insertProviderAt(new org.conscrypt.OpenSSLProvider(), 1);
@@ -51,11 +49,7 @@ public class TestDohMain {
 
       HttpUrl url = HttpUrl.get("https://dns.cloudflare.com/.not-so-well-known/run-dmc-query");
       List<DnsOverHttps> badProviders = Collections.singletonList(
-          new DnsOverHttps.Builder().client(bootstrapClient)
-              .url(url)
-              .post(true)
-              .contentType(UDPWIREFORMAT)
-              .build());
+          new DnsOverHttps.Builder().client(bootstrapClient).url(url).post(true).build());
       runBatch(badProviders, names);
 
       System.out.println("cached first run\n****************\n");
