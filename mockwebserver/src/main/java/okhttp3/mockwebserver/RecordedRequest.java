@@ -17,6 +17,8 @@
 package okhttp3.mockwebserver;
 
 import java.io.IOException;
+import java.net.Inet6Address;
+import java.net.InetAddress;
 import java.net.Socket;
 import java.util.List;
 import javax.net.ssl.SSLSocket;
@@ -64,9 +66,15 @@ public final class RecordedRequest {
       this.path = requestLine.substring(methodEnd + 1, pathEnd);
 
       String scheme = socket instanceof SSLSocket ? "https" : "http";
-      String hostname = socket.getInetAddress().getHostName();
+      InetAddress inetAddress = socket.getInetAddress();
+
+      String hostname = inetAddress.getHostName();
+      if (inetAddress instanceof Inet6Address) {
+        hostname = "[" + hostname + "]";
+      }
+
       int port = socket.getLocalPort();
-      this.requestUrl = HttpUrl.parse(String.format("%s://%s:%s%s", scheme, hostname, port, path));
+      this.requestUrl = HttpUrl.get(String.format("%s://%s:%s%s", scheme, hostname, port, path));
     } else {
       this.requestUrl = null;
       this.method = null;
