@@ -16,13 +16,17 @@
 package okhttp3.dnsoverhttps;
 
 import java.io.IOException;
+import java.io.InterruptedIOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.CountDownLatch;
 import javax.annotation.Nullable;
 import okhttp3.CacheControl;
+import okhttp3.Call;
+import okhttp3.Callback;
 import okhttp3.Dns;
 import okhttp3.HttpUrl;
 import okhttp3.MediaType;
@@ -113,8 +117,6 @@ public class DnsOverHttps implements Dns {
   }
 
   @Override public List<InetAddress> lookup(String hostname) throws UnknownHostException {
-    UnknownHostException firstUhe = null;
-
     if (!resolvePrivateAddresses || !resolvePublicAddresses) {
       boolean privateHost = isPrivateHost(hostname);
 
@@ -131,37 +133,130 @@ public class DnsOverHttps implements Dns {
   }
 
   private List<InetAddress> lookupHttps(String hostname) throws UnknownHostException {
-    try {
-      ByteString query = DnsRecordCodec.encodeQuery(hostname, includeIPv6);
+    List<Call> networkRequests = new ArrayList<>(2);
+    List<Response> responses = new ArrayList<>(2);
+    List<IOException> failures = new ArrayList<>(2);
 
-      Request request = buildRequest(query);
-      Response response = executeRequest(request);
+    Request ipv4Request = buildRequest(hostname, DnsRecordCodec.TYPE_A);
+    Response ipv4Response = getCacheOnlyResponse(ipv4Request);
 
-      return readResponse(hostname, response);
-    } catch (UnknownHostException uhe) {
-      throw uhe;
-    } catch (Exception e) {
-      UnknownHostException unknownHostException = new UnknownHostException(hostname);
-      unknownHostException.initCause(e);
-      throw unknownHostException;
+    // TODO Optimise for synchronous unmerged case when IPv4 only
+
+    if (ipv4Response != null) {
+      responses.add(ipv4Response);
+    } else {
+      networkRequests.add(client.newCall(ipv4Request));
     }
-  }
 
-  private Response executeRequest(Request request) throws IOException {
-    // cached request
-    if (!post && client.cache() != null) {
-      CacheControl cacheControl =
-          new CacheControl.Builder().maxStale(Integer.MAX_VALUE, TimeUnit.SECONDS).build();
-      Request cacheRequest = request.newBuilder().cacheControl(cacheControl).build();
+    if (includeIPv6) {
+      Request ipv6Request = buildRequest(hostname, DnsRecordCodec.TYPE_AAAA);
+      // cached IPv4 request
+      Response ipv6Response = getCacheOnlyResponse(ipv6Request);
 
-      Response response = client.newCall(cacheRequest).execute();
-
-      if (response.isSuccessful()) {
-        return response;
+      if (ipv6Response != null) {
+        responses.add(ipv6Response);
+      } else {
+        networkRequests.add(client.newCall(ipv6Request));
       }
     }
 
-    return client.newCall(request).execute();
+    executeRequests(networkRequests, responses, failures);
+
+    return readResponses(hostname, responses, failures);
+  }
+
+  private void executeRequests(List<Call> networkRequests, final List<Response> responses,
+      final List<IOException> failures) {
+    final CountDownLatch latch = new CountDownLatch(networkRequests.size());
+
+    for (Call call : networkRequests) {
+      call.enqueue(new Callback() {
+        @Override public void onFailure(Call call, IOException e) {
+          synchronized (failures) {
+            failures.add(e);
+          }
+          latch.countDown();
+        }
+
+        @Override public void onResponse(Call call, Response response) throws IOException {
+          synchronized (responses) {
+            responses.add(response);
+          }
+          latch.countDown();
+        }
+      });
+    }
+
+    try {
+      latch.await();
+    } catch (InterruptedException e) {
+      InterruptedIOException interruptedIOException = new InterruptedIOException();
+      interruptedIOException.initCause(e);
+      failures.add(interruptedIOException);
+    }
+  }
+
+  private List<InetAddress> readResponses(String hostname, List<Response> responses,
+      List<IOException> failures) throws UnknownHostException {
+    ArrayList<InetAddress> results = new ArrayList<>();
+
+    for (Response response : responses) {
+      try {
+        results.addAll(readResponse(hostname, response));
+      } catch (UnknownHostException uhe) {
+        failures.add(uhe);
+      } catch (Exception e) {
+        UnknownHostException unknownHostException = new UnknownHostException(hostname);
+        unknownHostException.initCause(e);
+        failures.add(unknownHostException);
+      }
+    }
+
+    if (!results.isEmpty()) {
+      return results;
+    }
+
+    return throwBestFailure(hostname, failures);
+  }
+
+  private List<InetAddress> throwBestFailure(String hostname, List<IOException> failures)
+      throws UnknownHostException {
+    if (failures.size() == 0) {
+      throw new UnknownHostException(hostname);
+    }
+
+    IOException failure = failures.get(0);
+
+    if (failure instanceof UnknownHostException) {
+      throw (UnknownHostException) failure;
+    }
+
+    UnknownHostException unknownHostException = new UnknownHostException(hostname);
+    unknownHostException.initCause(failure);
+
+    for (int i = 1; i < failures.size(); i++) {
+      unknownHostException.addSuppressed(failures.get(i));
+    }
+
+    throw unknownHostException;
+  }
+
+  private @Nullable Response getCacheOnlyResponse(Request request) {
+    if (!post && client.cache() != null) {
+      try {
+        Request cacheRequest = request.newBuilder().cacheControl(CacheControl.FORCE_CACHE).build();
+
+        Response cacheResponse = client.newCall(cacheRequest).execute();
+
+        if (cacheResponse.code() != 504) {
+          return cacheResponse;
+        }
+      } catch (IOException ioe) {
+        // ignore cache failure and fallback to network
+      }
+    }
+
+    return null;
   }
 
   private List<InetAddress> readResponse(String hostname, Response response) throws Exception {
@@ -192,8 +287,10 @@ public class DnsOverHttps implements Dns {
     }
   }
 
-  private Request buildRequest(ByteString query) {
+  private Request buildRequest(String hostname, int type) {
     Request.Builder requestBuilder = new Request.Builder().header("Accept", DNS_MESSAGE.toString());
+
+    ByteString query = DnsRecordCodec.encodeQuery(hostname, type);
 
     if (post) {
       requestBuilder = requestBuilder.url(url).post(RequestBody.create(DNS_MESSAGE, query));

@@ -31,20 +31,20 @@ import okio.Utf8;
 class DnsRecordCodec {
   private static final byte SERVFAIL = 2;
   private static final byte NXDOMAIN = 3;
-  private static final int TYPE_A = 0x0001;
-  private static final int TYPE_AAAA = 0x001c;
+  public static final int TYPE_A = 0x0001;
+  public static final int TYPE_AAAA = 0x001c;
   private static final int TYPE_PTR = 0x000c;
   private static final Charset ASCII = Charset.forName("ASCII");
 
   private DnsRecordCodec() {
   }
 
-  public static ByteString encodeQuery(String host, boolean includeIPv6) {
+  public static ByteString encodeQuery(String host, int type) {
     Buffer buf = new Buffer();
 
     buf.writeShort(0); // query id
     buf.writeShort(256); // flags with recursion
-    buf.writeShort(includeIPv6 ? 2 : 1); // question count
+    buf.writeShort(1); // question count
     buf.writeShort(0); // answerCount
     buf.writeShort(0); // authorityResourceCount
     buf.writeShort(0); // additional
@@ -62,14 +62,8 @@ class DnsRecordCodec {
     nameBuf.writeByte(0); // end
 
     nameBuf.copyTo(buf, 0, nameBuf.size());
-    buf.writeShort(TYPE_A);
+    buf.writeShort(type);
     buf.writeShort(1); // CLASS_IN
-
-    if (includeIPv6) {
-      nameBuf.copyTo(buf, 0, nameBuf.size());
-      buf.writeShort(TYPE_AAAA);
-      buf.writeShort(1); // CLASS_IN
-    }
 
     return buf.readByteString();
   }
@@ -97,6 +91,7 @@ class DnsRecordCodec {
 
     final int questionCount = buf.readShort() & 0xffff;
     final int answerCount = buf.readShort() & 0xffff;
+    //System.out.println(answerCount);
     buf.readShort(); // authority record count
     buf.readShort(); // additional record count
 
@@ -113,6 +108,8 @@ class DnsRecordCodec {
       buf.readShort(); // class
       final long ttl = buf.readInt() & 0xffffffffL; // ttl
       final int length = buf.readShort() & 0xffff;
+
+      //System.out.println(type);
 
       if (type == TYPE_A || type == TYPE_AAAA) {
         byte[] bytes = new byte[length];
