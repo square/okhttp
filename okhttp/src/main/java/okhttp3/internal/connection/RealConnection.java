@@ -25,6 +25,7 @@ import java.net.Socket;
 import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.net.UnknownServiceException;
+import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.List;
@@ -320,9 +321,15 @@ public final class RealConnection extends Http2Connection.Listener implements Co
       SSLSession sslSocketSession = sslSocket.getSession();
       Handshake unverifiedHandshake = Handshake.get(sslSocketSession);
 
+      List<Certificate> peerCertificates = unverifiedHandshake.peerCertificates();
+
       // Verify that the socket's certificates are acceptable for the target host.
       if (!address.hostnameVerifier().verify(address.url().host(), sslSocketSession)) {
-        X509Certificate cert = (X509Certificate) unverifiedHandshake.peerCertificates().get(0);
+        if (peerCertificates.isEmpty()) {
+          throw new SSLPeerUnverifiedException("Hostname " + address.url().host() + " not verified, no certificates provided");
+        }
+
+        X509Certificate cert = (X509Certificate) peerCertificates.get(0);
         throw new SSLPeerUnverifiedException("Hostname " + address.url().host() + " not verified:"
             + "\n    certificate: " + CertificatePinner.pin(cert)
             + "\n    DN: " + cert.getSubjectDN().getName()
@@ -331,7 +338,7 @@ public final class RealConnection extends Http2Connection.Listener implements Co
 
       // Check that the certificate pinner is satisfied by the certificates presented.
       address.certificatePinner().check(address.url().host(),
-          unverifiedHandshake.peerCertificates());
+          peerCertificates);
 
       // Success! Save the handshake and the ALPN protocol.
       String maybeProtocol = connectionSpec.supportsTlsExtensions()
