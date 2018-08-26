@@ -36,6 +36,7 @@ import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
 import okhttp3.ResponseBody;
+import okhttp3.internal.Util;
 import okhttp3.internal.platform.Platform;
 import okhttp3.internal.publicsuffix.PublicSuffixDatabase;
 import okio.ByteString;
@@ -226,7 +227,7 @@ public class DnsOverHttps implements Dns {
     unknownHostException.initCause(failure);
 
     for (int i = 1; i < failures.size(); i++) {
-      unknownHostException.addSuppressed(failures.get(i));
+      Util.addSuppressedIfPossible(unknownHostException, failures.get(i));
     }
 
     throw unknownHostException;
