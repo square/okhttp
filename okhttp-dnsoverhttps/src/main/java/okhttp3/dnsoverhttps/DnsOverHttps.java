@@ -16,7 +16,6 @@
 package okhttp3.dnsoverhttps;
 
 import java.io.IOException;
-import java.io.InterruptedIOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
