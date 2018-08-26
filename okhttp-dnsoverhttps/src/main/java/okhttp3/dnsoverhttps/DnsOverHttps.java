@@ -304,11 +304,13 @@ public class DnsOverHttps implements Dns {
     @Nullable HttpUrl url = null;
     boolean includeIPv6 = true;
     boolean post = false;
-    MediaType contentType = DNS_MESSAGE;
     Dns systemDns = Dns.SYSTEM;
     @Nullable List<InetAddress> bootstrapDnsHosts = null;
     boolean resolvePrivateAddresses = false;
     boolean resolvePublicAddresses = true;
+
+    public Builder() {
+    }
 
     public DnsOverHttps build() {
       return new DnsOverHttps(this);
@@ -331,11 +333,6 @@ public class DnsOverHttps implements Dns {
 
     public Builder post(boolean post) {
       this.post = post;
-      return this;
-    }
-
-    public Builder contentType(MediaType contentType) {
-      this.contentType = contentType;
       return this;
     }
 
