@@ -116,5 +116,10 @@ public enum SocketPolicy {
    * Transmit a {@code HTTP/1.1 100 Continue} response before reading the HTTP request body even
    * if the client does not send the header {@code Expect: 100-continue} in its request.
    */
-  CONTINUE_ALWAYS
+  CONTINUE_ALWAYS,
+
+  /**
+   * Unconditionally transmit three 1XX interim responses before reading the request.
+   */
+  MULTIPLE_1XX
 }

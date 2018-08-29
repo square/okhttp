@@ -78,6 +78,7 @@ import okio.Timeout;
 import org.junit.rules.ExternalResource;
 
 import static okhttp3.internal.Util.closeQuietly;
+import static okhttp3.mockwebserver.SocketPolicy.MULTIPLE_1XX;
 import static okhttp3.mockwebserver.SocketPolicy.CONTINUE_ALWAYS;
 import static okhttp3.mockwebserver.SocketPolicy.DISCONNECT_AFTER_REQUEST;
 import static okhttp3.mockwebserver.SocketPolicy.DISCONNECT_AT_END;
@@ -657,6 +658,23 @@ public final class MockWebServer extends ExternalResource implements Closeable {
     final SocketPolicy socketPolicy = dispatcher.peek().getSocketPolicy();
     if (expectContinue && socketPolicy == EXPECT_CONTINUE || socketPolicy == CONTINUE_ALWAYS) {
       sink.writeUtf8("HTTP/1.1 100 Continue\r\n");
+      sink.writeUtf8("Content-Length: 0\r\n");
+      sink.writeUtf8("\r\n");
+      sink.flush();
+    }
+
+    if (socketPolicy == MULTIPLE_1XX) {
+      sink.writeUtf8("HTTP/1.1 100 Continue\r\n");
+      sink.writeUtf8("Content-Length: 0\r\n");
+      sink.writeUtf8("\r\n");
+      sink.flush();
+
+      sink.writeUtf8("HTTP/1.1 101 Switching Protocols\r\n");
+      sink.writeUtf8("Content-Length: 0\r\n");
+      sink.writeUtf8("\r\n");
+      sink.flush();
+
+      sink.writeUtf8("HTTP/1.1 102 Processing\r\n");
       sink.writeUtf8("Content-Length: 0\r\n");
       sink.writeUtf8("\r\n");
       sink.flush();

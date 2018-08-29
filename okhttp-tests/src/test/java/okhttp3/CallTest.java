@@ -3289,6 +3289,28 @@ public final class CallTest {
     assertEquals(1L, called.get());
   }
 
+  @Test public void serverRespondsWithMultipleUnsolicited1XXResponses() throws Exception {
+    server.enqueue(new MockResponse()
+        .setSocketPolicy(SocketPolicy.MULTIPLE_1XX));
+
+    Request request = new Request.Builder()
+        .url(server.url("/"))
+        .post(RequestBody.create(MediaType.get("text/plain"), "abc"))
+        .build();
+
+    executeSynchronously(request)
+        .assertCode(200)
+        .assertSuccessful();
+
+    RecordedRequest recordedRequest = server.takeRequest();
+    assertEquals("abc", recordedRequest.getBody().readUtf8());
+  }
+
+  @Test public void serverRespondsWithMultipleUnsolicited1XXResponses_HTTP2() throws Exception {
+    enableProtocol(Protocol.HTTP_2);
+    serverRespondsWithMultipleUnsolicited1XXResponses();
+  }
+
   private void makeFailingCall() {
     RequestBody requestBody = new RequestBody() {
       @Override public MediaType contentType() {
