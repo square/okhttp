@@ -96,8 +96,8 @@ public final class CallServerInterceptor implements Interceptor {
         .build();
 
     int code = response.code();
-    if (code == 100) {
-      // server sent a 100-continue even though we did not request one.
+    while (!forWebSocket && code >= 100 && code < 200) {
+      // server sent a 1xx response even though we did not request one.
       // try again to read the actual response
       responseBuilder = httpCodec.readResponseHeaders(false);
 
