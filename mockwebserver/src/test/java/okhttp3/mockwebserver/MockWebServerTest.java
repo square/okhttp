@@ -51,12 +51,15 @@ import org.junit.runners.model.Statement;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static okhttp3.tls.internal.TlsUtil.localhost;
+import static org.hamcrest.CoreMatchers.containsString;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.junit.internal.matchers.ThrowableMessageMatcher.hasMessage;
 
 public final class MockWebServerTest {
   @Rule public final MockWebServer server = new MockWebServer();
@@ -450,6 +453,24 @@ public final class MockWebServerTest {
     assertEquals(server.getPort(), requestUrl.port());
     assertEquals("/a/deep/path", requestUrl.encodedPath());
     assertEquals("foo bar", requestUrl.queryParameter("key"));
+  }
+
+  @Test public void shutdownServerAfterRequest() throws Exception {
+    server.enqueue(new MockResponse().setSocketPolicy(SocketPolicy.SHUTDOWN_SERVER_AFTER_RESPONSE));
+
+    URL url = server.url("/").url();
+
+    HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+    assertEquals(HttpURLConnection.HTTP_OK, connection.getResponseCode());
+
+    HttpURLConnection refusedConnection = (HttpURLConnection) url.openConnection();
+
+    try {
+      refusedConnection.getResponseCode();
+      fail("Second connection should be refused");
+    } catch (ConnectException e ) {
+      assertThat(e, hasMessage(containsString("refused")));
+    }
   }
 
   @Test public void http100Continue() throws Exception {

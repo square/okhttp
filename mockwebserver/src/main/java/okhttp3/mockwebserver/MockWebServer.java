@@ -88,6 +88,7 @@ import static okhttp3.mockwebserver.SocketPolicy.EXPECT_CONTINUE;
 import static okhttp3.mockwebserver.SocketPolicy.FAIL_HANDSHAKE;
 import static okhttp3.mockwebserver.SocketPolicy.NO_RESPONSE;
 import static okhttp3.mockwebserver.SocketPolicy.RESET_STREAM_AT_START;
+import static okhttp3.mockwebserver.SocketPolicy.SHUTDOWN_SERVER_AFTER_RESPONSE;
 import static okhttp3.mockwebserver.SocketPolicy.SHUTDOWN_INPUT_AT_END;
 import static okhttp3.mockwebserver.SocketPolicy.SHUTDOWN_OUTPUT_AT_END;
 import static okhttp3.mockwebserver.SocketPolicy.STALL_SOCKET_AT_START;
@@ -589,6 +590,8 @@ public final class MockWebServer extends ExternalResource implements Closeable {
           socket.shutdownInput();
         } else if (response.getSocketPolicy() == SHUTDOWN_OUTPUT_AT_END) {
           socket.shutdownOutput();
+        } else if (response.getSocketPolicy() == SHUTDOWN_SERVER_AFTER_RESPONSE) {
+          shutdown();
         }
 
         sequenceNumber++;
