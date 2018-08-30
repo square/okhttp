@@ -51,15 +51,12 @@ import org.junit.runners.model.Statement;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static okhttp3.tls.internal.TlsUtil.localhost;
-import static org.hamcrest.CoreMatchers.containsString;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
-import static org.junit.internal.matchers.ThrowableMessageMatcher.hasMessage;
 
 public final class MockWebServerTest {
   @Rule public final MockWebServer server = new MockWebServer();
@@ -469,7 +466,7 @@ public final class MockWebServerTest {
       refusedConnection.getResponseCode();
       fail("Second connection should be refused");
     } catch (ConnectException e ) {
-      assertThat(e, hasMessage(containsString("refused")));
+      assertTrue(e.getMessage().contains("refused"));
     }
   }
 
