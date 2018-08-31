@@ -63,7 +63,11 @@ public final class RecordedRequest {
       int methodEnd = requestLine.indexOf(' ');
       int pathEnd = requestLine.indexOf(' ', methodEnd + 1);
       this.method = requestLine.substring(0, methodEnd);
-      this.path = requestLine.substring(methodEnd + 1, pathEnd);
+      if (this.method.equals("CONNECT")) {
+        this.path = "/";
+      } else {
+        this.path = requestLine.substring(methodEnd + 1, pathEnd);
+      }
 
       String scheme = socket instanceof SSLSocket ? "https" : "http";
       InetAddress inetAddress = socket.getInetAddress();
