@@ -40,7 +40,7 @@ public class RecordedRequestTest {
         new RecordedRequest("GET / HTTP/1.1", headers, Collections.<Integer>emptyList(), 0,
             new Buffer(), 0, socket);
 
-    assertEquals(HttpUrl.get("http://127.0.0.1:80"), request.getRequestUrl());
+    assertEquals("http://127.0.0.1/", request.getRequestUrl().toString());
   }
 
   @Test public void testIPv6() throws UnknownHostException {
@@ -51,6 +51,6 @@ public class RecordedRequestTest {
         new RecordedRequest("GET / HTTP/1.1", headers, Collections.<Integer>emptyList(), 0,
             new Buffer(), 0, socket);
 
-    assertEquals(HttpUrl.get("http://[0:0:0:0:0:0:0:1]:80"), request.getRequestUrl());
+    assertEquals("http://[::1]/", request.getRequestUrl().toString());
   }
 }
