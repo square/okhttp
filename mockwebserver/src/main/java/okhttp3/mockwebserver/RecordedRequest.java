@@ -79,7 +79,8 @@ public final class RecordedRequest {
 
       int localPort = socket.getLocalPort();
       // Allow null in failure case to allow for testing bad requests
-      this.requestUrl = HttpUrl.parse(String.format("%s://%s:%s%s", scheme, hostname, localPort, path));
+      this.requestUrl =
+          HttpUrl.parse(String.format("%s://%s:%s%s", scheme, hostname, localPort, path));
     } else {
       this.requestUrl = null;
       this.method = null;
