@@ -44,7 +44,7 @@ public class RecordedRequestTest {
   }
 
   @Test public void testIPv6() throws UnknownHostException {
-    Socket socket = new FakeSocket(InetAddress.getByAddress("0:0:0:0:0:0:0:1",
+    Socket socket = new FakeSocket(InetAddress.getByAddress("::1",
         new byte[] { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 }), 80);
 
     RecordedRequest request =

@@ -78,7 +78,7 @@ public final class RecordedRequest {
       }
 
       int port = socket.getLocalPort();
-      this.requestUrl = HttpUrl.get(String.format("%s://%s:%s%s", scheme, hostname, port, path));
+      this.requestUrl = HttpUrl.parse(String.format("%s://%s:%s%s", scheme, hostname, port, path));
     } else {
       this.requestUrl = null;
       this.method = null;
