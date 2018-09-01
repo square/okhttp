@@ -70,16 +70,16 @@ public final class RecordedRequest {
       this.path = path;
 
       String scheme = socket instanceof SSLSocket ? "https" : "http";
-      InetAddress inetAddress = socket.getInetAddress();
+      InetAddress inetAddress = socket.getLocalAddress();
 
       String hostname = inetAddress.getHostName();
       if (inetAddress instanceof Inet6Address) {
         hostname = "[" + hostname + "]";
       }
 
-      int port = socket.getLocalPort();
+      int localPort = socket.getLocalPort();
       // Allow null in failure case to allow for testing bad requests
-      this.requestUrl = HttpUrl.parse(String.format("%s://%s:%s%s", scheme, hostname, port, path));
+      this.requestUrl = HttpUrl.parse(String.format("%s://%s:%s%s", scheme, hostname, localPort, path));
     } else {
       this.requestUrl = null;
       this.method = null;
