@@ -65,7 +65,7 @@ public final class RecordedRequest {
       this.method = requestLine.substring(0, methodEnd);
       String path = requestLine.substring(methodEnd + 1, pathEnd);
       if (!path.startsWith("/")) {
-        path = "/";
+        path = "/" + path;
       }
       this.path = path;
 

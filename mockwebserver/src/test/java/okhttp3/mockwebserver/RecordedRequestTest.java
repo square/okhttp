@@ -24,7 +24,6 @@ import java.net.UnknownHostException;
 import java.util.Collections;
 import java.util.Random;
 import okhttp3.Headers;
-import okhttp3.HttpUrl;
 import okio.Buffer;
 import org.junit.Test;
 
@@ -69,6 +68,16 @@ public class RecordedRequestTest {
     @Override public int getPort() {
       return remotePort;
     }
+  }
+
+  @Test public void testIPv4Proxy() throws UnknownHostException {
+    Socket socket =
+        new FakeSocket(InetAddress.getByAddress("127.0.0.1", new byte[] { 127, 0, 0, 1 }), 80);
+
+    RecordedRequest request = new RecordedRequest("CONNECT android.com:443 HTTP/1.1", headers,
+        Collections.<Integer>emptyList(), 0, new Buffer(), 0, socket);
+
+    assertEquals("http://127.0.0.1/android.com:443", request.getRequestUrl().toString());
   }
 
   @Test public void testIPv4() throws UnknownHostException {
