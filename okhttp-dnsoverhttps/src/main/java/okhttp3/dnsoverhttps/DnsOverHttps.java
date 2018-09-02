@@ -134,36 +134,38 @@ public class DnsOverHttps implements Dns {
 
   private List<InetAddress> lookupHttps(String hostname) throws UnknownHostException {
     List<Call> networkRequests = new ArrayList<>(2);
-    List<Response> responses = new ArrayList<>(2);
     List<Exception> failures = new ArrayList<>(2);
+    List<InetAddress> results = new ArrayList<>(5);
 
-    // TODO Optimise for synchronous unmerged case when IPv4 only
-
-    buildRequest(hostname, networkRequests, responses, DnsRecordCodec.TYPE_A);
+    buildRequest(hostname, networkRequests, results, failures, DnsRecordCodec.TYPE_A);
 
     if (includeIPv6) {
-      buildRequest(hostname, networkRequests, responses, DnsRecordCodec.TYPE_AAAA);
+      buildRequest(hostname, networkRequests, results, failures, DnsRecordCodec.TYPE_AAAA);
     }
 
-    executeRequests(networkRequests, responses, failures);
+    executeRequests(hostname, networkRequests, results, failures);
 
-    return readResponses(hostname, responses, failures);
+    if (!results.isEmpty()) {
+      return results;
+    }
+
+    return throwBestFailure(hostname, failures);
   }
 
-  private void buildRequest(String hostname, List<Call> networkRequests, List<Response> responses,
-      int type) {
-    Request ipv4Request = buildRequest(hostname, type);
-    Response ipv4Response = getCacheOnlyResponse(ipv4Request);
+  private void buildRequest(String hostname, List<Call> networkRequests, List<InetAddress> results,
+      List<Exception> failures, int type) {
+    Request request = buildRequest(hostname, type);
+    Response response = getCacheOnlyResponse(request);
 
-    if (ipv4Response != null) {
-      responses.add(ipv4Response);
+    if (response != null) {
+      processResponse(response, hostname, results, failures);
     } else {
-      networkRequests.add(client.newCall(ipv4Request));
+      networkRequests.add(client.newCall(request));
     }
   }
 
-  private void executeRequests(List<Call> networkRequests, final List<Response> responses,
-      final List<Exception> failures) {
+  private void executeRequests(final String hostname, List<Call> networkRequests,
+      final List<InetAddress> responses, final List<Exception> failures) {
     final CountDownLatch latch = new CountDownLatch(networkRequests.size());
 
     for (Call call : networkRequests) {
@@ -175,10 +177,8 @@ public class DnsOverHttps implements Dns {
           latch.countDown();
         }
 
-        @Override public void onResponse(Call call, Response response) throws IOException {
-          synchronized (responses) {
-            responses.add(response);
-          }
+        @Override public void onResponse(Call call, Response response) {
+          processResponse(response, hostname, responses, failures);
           latch.countDown();
         }
       });
@@ -191,23 +191,18 @@ public class DnsOverHttps implements Dns {
     }
   }
 
-  private List<InetAddress> readResponses(String hostname, List<Response> responses,
-      List<Exception> failures) throws UnknownHostException {
-    ArrayList<InetAddress> results = new ArrayList<>();
-
-    for (Response response : responses) {
-      try {
-        results.addAll(readResponse(hostname, response));
-      } catch (Exception e) {
+  private void processResponse(Response response, String hostname, List<InetAddress> results,
+      List<Exception> failures) {
+    try {
+      List<InetAddress> addresses = readResponse(hostname, response);
+      synchronized (results) {
+        results.addAll(addresses);
+      }
+    } catch (Exception e) {
+      synchronized (failures) {
         failures.add(e);
       }
     }
-
-    if (!results.isEmpty()) {
-      return results;
-    }
-
-    return throwBestFailure(hostname, failures);
   }
 
   private List<InetAddress> throwBestFailure(String hostname, List<Exception> failures)
@@ -243,7 +238,8 @@ public class DnsOverHttps implements Dns {
           return cacheResponse;
         }
       } catch (IOException ioe) {
-        // ignore cache failure and fallback to network
+        // Failures are ignored as we can fallback to the network
+        // and hopefully repopulate the cache.
       }
     }
 

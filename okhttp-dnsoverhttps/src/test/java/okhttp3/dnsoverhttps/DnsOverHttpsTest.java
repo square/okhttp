@@ -20,6 +20,8 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.Arrays;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import okhttp3.Cache;
 import okhttp3.Dns;
@@ -82,18 +84,20 @@ public class DnsOverHttpsTest {
 
     List<InetAddress> result = dns.lookup("google.com");
 
-    assertEquals(asList(address("157.240.1.18"), address("2a03:2880:f029:11:face:b00c:0:2")),
-        result);
+    assertEquals(2, result.size());
+    assertTrue(result.contains(address("157.240.1.18")));
+    assertTrue(result.contains(address("2a03:2880:f029:11:face:b00c:0:2")));
 
-    RecordedRequest recordedRequestIpv4 = server.takeRequest();
-    assertEquals("GET", recordedRequestIpv4.getMethod());
-    assertEquals("/lookup?ct&dns=AAABAAABAAAAAAAABmdvb2dsZQNjb20AAAEAAQ",
-        recordedRequestIpv4.getPath());
+    RecordedRequest request1 = server.takeRequest();
+    assertEquals("GET", request1.getMethod());
 
-    RecordedRequest recordedRequestIpv6 = server.takeRequest();
-    assertEquals("GET", recordedRequestIpv6.getMethod());
-    assertEquals("/lookup?ct&dns=AAABAAABAAAAAAAABmdvb2dsZQNjb20AABwAAQ",
-        recordedRequestIpv6.getPath());
+    RecordedRequest request2 = server.takeRequest();
+    assertEquals("GET", request2.getMethod());
+
+    assertEquals(new HashSet<>(
+            Arrays.asList("/lookup?ct&dns=AAABAAABAAAAAAAABmdvb2dsZQNjb20AAAEAAQ",
+                "/lookup?ct&dns=AAABAAABAAAAAAAABmdvb2dsZQNjb20AABwAAQ")),
+        new LinkedHashSet<>(Arrays.asList(request1.getPath(), request2.getPath())));
   }
 
   @Test public void failure() throws Exception {
