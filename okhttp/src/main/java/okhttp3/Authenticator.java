@@ -75,7 +75,7 @@ public interface Authenticator {
    * available.  It may also not be provided when an Authenticator is re-used manually in
    * an application interceptor, e.g. implementing client specific retries.
    *
-   * @param route The route for evaluating whether to use a proxy.
+   * @param route The route for evaluating how to respond to a challenge e.g. via intranet.
    * @param response The response containing the auth challenges to respond to.
    */
   @Nullable Request authenticate(@Nullable Route route, Response response) throws IOException;
