@@ -15,59 +15,89 @@
  */
 package okhttp3;
 
-import java.io.IOException;
 import java.net.Authenticator.RequestorType;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.PasswordAuthentication;
 import java.net.Proxy;
-import java.util.List;
+import java.net.URL;
+import java.net.UnknownHostException;
+import java.nio.charset.Charset;
+
+import static java.net.Authenticator.RequestorType.PROXY;
+import static java.net.Authenticator.RequestorType.SERVER;
+import static java.net.Authenticator.requestPasswordAuthentication;
+import static okhttp3.internal.Util.ISO_8859_1;
+import static okhttp3.internal.Util.UTF_8;
 
 /**
- * Adapts {@link java.net.Authenticator} to {@link Authenticator}. Configure OkHttp to use {@link
- * java.net.Authenticator} with {@link OkHttpClient.Builder#authenticator} or {@link
- * OkHttpClient.Builder#proxyAuthenticator(Authenticator)}.
+ * Adapts {@link java.net.Authenticator} to {@link Authenticator} for {@code Basic} auth.
+ * Configure OkHttp to use {@link java.net.Authenticator} with
+ * {@link OkHttpClient.Builder#authenticator} or
+ * {@link OkHttpClient.Builder#proxyAuthenticator(Authenticator)}.
  */
 public final class JavaNetAuthenticator implements Authenticator {
-  @Override public Request authenticate(Route route, Response response) throws IOException {
-    List<Challenge> challenges = response.challenges();
+  @Override
+  public Request authenticate(Route route, Response response) throws UnknownHostException {
     Request request = response.request();
-    HttpUrl url = request.url();
-    boolean proxyAuthorization = response.code() == 407;
+    HttpUrl requestUrl = request.url();
     Proxy proxy = route.proxy();
+    String host;
+    InetAddress addr;
+    int port;
+    String protocol = requestUrl.scheme();
+    URL url = requestUrl.url();
+    RequestorType requestorType;
+    String authorizationHeaderName;
 
-    for (int i = 0, size = challenges.size(); i < size; i++) {
-      Challenge challenge = challenges.get(i);
-      if (!"Basic".equalsIgnoreCase(challenge.scheme())) continue;
-
-      PasswordAuthentication auth;
-      if (proxyAuthorization) {
-        InetSocketAddress proxyAddress = (InetSocketAddress) proxy.address();
-        auth = java.net.Authenticator.requestPasswordAuthentication(
-            proxyAddress.getHostName(), getConnectToInetAddress(proxy, url), proxyAddress.getPort(),
-            url.scheme(), challenge.realm(), challenge.scheme(), url.url(),
-            RequestorType.PROXY);
-      } else {
-        auth = java.net.Authenticator.requestPasswordAuthentication(
-            url.host(), getConnectToInetAddress(proxy, url), url.port(), url.scheme(),
-            challenge.realm(), challenge.scheme(), url.url(), RequestorType.SERVER);
-      }
-
-      if (auth != null) {
-        String credential = Credentials.basic(
-            auth.getUserName(), new String(auth.getPassword()), challenge.charset());
-        return request.newBuilder()
-            .header(proxyAuthorization ? "Proxy-Authorization" : "Authorization", credential)
-            .build();
-      }
+    if (response.code() == 407) {
+      InetSocketAddress proxyAddress = (InetSocketAddress) proxy.address();
+      host = proxyAddress.getHostName();
+      addr = proxyAddress.getAddress();
+      port = proxyAddress.getPort();
+      requestorType = PROXY;
+      authorizationHeaderName = "Proxy-Authorization";
+    } else {
+      host = requestUrl.host();
+      addr = InetAddress.getByName(host);
+      port = requestUrl.port();
+      requestorType = SERVER;
+      authorizationHeaderName = "Authorization";
     }
 
-    return null; // No challenges were satisfied!
-  }
+challengeLoop:
+    for (Challenge challenge : response.challenges()) {
+      // only basic auth is supported
+      String scheme = challenge.scheme();
+      if (!"basic".equals(scheme)) continue;
 
-  private InetAddress getConnectToInetAddress(Proxy proxy, HttpUrl url) throws IOException {
-    return (proxy != null && proxy.type() != Proxy.Type.DIRECT)
-        ? ((InetSocketAddress) proxy.address()).getAddress()
-        : InetAddress.getByName(url.host());
+      // for basic auth realm is mandatory
+      String realm = challenge.realm();
+      if (realm == null) continue;
+
+      // for basic auth only the default ISO_8859_1 and an explicit UTF_8 charset are valid
+      Charset charset = challenge.charset();
+      if (!(ISO_8859_1.equals(charset) || UTF_8.equals(charset))) continue;
+
+      PasswordAuthentication auth = requestPasswordAuthentication(
+              host, addr, port, protocol, realm, scheme, url, requestorType);
+
+      // no credentials for this challenge, try next if more challenges are left
+      if (auth == null) continue;
+
+      String credentials = Credentials.basic(
+              auth.getUserName(), String.valueOf(auth.getPassword()), charset);
+
+      for (String authorizationHeaderValue : request.headers(authorizationHeaderName)) {
+        // previous request already had these credentials,
+        // obviously they do not work, try next if more challenges are left
+        if (credentials.equals(authorizationHeaderValue)) continue challengeLoop;
+      }
+
+      return request.newBuilder().header(authorizationHeaderName, credentials).build();
+    }
+
+    // no challenges could be satisfied
+    return null;
   }
 }

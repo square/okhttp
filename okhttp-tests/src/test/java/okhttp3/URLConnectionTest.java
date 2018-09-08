@@ -1560,10 +1560,9 @@ public final class URLConnectionTest {
   }
 
   private void testAuthenticateWithStreamingPost(StreamingMode streamingMode) throws Exception {
-    MockResponse pleaseAuthenticate = new MockResponse().setResponseCode(401)
+    server.enqueue(new MockResponse().setResponseCode(401)
         .addHeader("WWW-Authenticate: Basic realm=\"protected area\"")
-        .setBody("Please authenticate.");
-    server.enqueue(pleaseAuthenticate);
+        .setBody("Please authenticate."));
 
     Authenticator.setDefault(new RecordingAuthenticator());
     urlFactory.setClient(urlFactory.client().newBuilder()
@@ -1694,11 +1693,10 @@ public final class URLConnectionTest {
     int responseCode = proxy ? 407 : 401;
     RecordingAuthenticator authenticator = new RecordingAuthenticator(null);
     Authenticator.setDefault(authenticator);
-    MockResponse pleaseAuthenticate = new MockResponse()
+    server.enqueue(new MockResponse()
         .setResponseCode(responseCode)
         .addHeader(authHeader)
-        .setBody("Please authenticate.");
-    server.enqueue(pleaseAuthenticate);
+        .setBody("Please authenticate."));
 
     if (proxy) {
       urlFactory.setClient(urlFactory.client().newBuilder()
@@ -1881,14 +1879,11 @@ public final class URLConnectionTest {
   }
 
   @Test public void authenticateWithPost() throws Exception {
-    MockResponse pleaseAuthenticate = new MockResponse().setResponseCode(401)
+    // fail auth once...
+    server.enqueue(new MockResponse().setResponseCode(401)
         .addHeader("WWW-Authenticate: Basic realm=\"protected area\"")
-        .setBody("Please authenticate.");
-    // fail auth three times...
-    server.enqueue(pleaseAuthenticate);
-    server.enqueue(pleaseAuthenticate);
-    server.enqueue(pleaseAuthenticate);
-    // ...then succeed the fourth time
+        .setBody("Please authenticate."));
+    // ...then succeed the second time
     server.enqueue(new MockResponse().setBody("Successful auth!"));
 
     Authenticator.setDefault(new RecordingAuthenticator());
@@ -1907,25 +1902,20 @@ public final class URLConnectionTest {
     RecordedRequest request = server.takeRequest();
     assertNull(request.getHeader("Authorization"));
 
-    // ...but the three requests that follow include an authorization header
-    for (int i = 0; i < 3; i++) {
-      request = server.takeRequest();
-      assertEquals("POST / HTTP/1.1", request.getRequestLine());
-      assertEquals("Basic " + RecordingAuthenticator.BASE_64_CREDENTIALS,
-          request.getHeader("Authorization"));
-      assertEquals("ABCD", request.getBody().readUtf8());
-    }
+    // ...but the second request that follows includes an authorization header
+    request = server.takeRequest();
+    assertEquals("POST / HTTP/1.1", request.getRequestLine());
+    assertEquals("Basic " + RecordingAuthenticator.BASE_64_CREDENTIALS,
+        request.getHeader("Authorization"));
+    assertEquals("ABCD", request.getBody().readUtf8());
   }
 
   @Test public void authenticateWithGet() throws Exception {
-    MockResponse pleaseAuthenticate = new MockResponse().setResponseCode(401)
+    // fail auth once...
+    server.enqueue(new MockResponse().setResponseCode(401)
         .addHeader("WWW-Authenticate: Basic realm=\"protected area\"")
-        .setBody("Please authenticate.");
-    // fail auth three times...
-    server.enqueue(pleaseAuthenticate);
-    server.enqueue(pleaseAuthenticate);
-    server.enqueue(pleaseAuthenticate);
-    // ...then succeed the fourth time
+        .setBody("Please authenticate."));
+    // ...then succeed the second time
     server.enqueue(new MockResponse().setBody("Successful auth!"));
 
     Authenticator.setDefault(new RecordingAuthenticator());
@@ -1939,13 +1929,11 @@ public final class URLConnectionTest {
     RecordedRequest request = server.takeRequest();
     assertNull(request.getHeader("Authorization"));
 
-    // ...but the three requests that follow requests include an authorization header
-    for (int i = 0; i < 3; i++) {
-      request = server.takeRequest();
-      assertEquals("GET / HTTP/1.1", request.getRequestLine());
-      assertEquals("Basic " + RecordingAuthenticator.BASE_64_CREDENTIALS,
-          request.getHeader("Authorization"));
-    }
+    // ...but the second request that follows includes an authorization header
+    request = server.takeRequest();
+    assertEquals("GET / HTTP/1.1", request.getRequestLine());
+    assertEquals("Basic " + RecordingAuthenticator.BASE_64_CREDENTIALS,
+        request.getHeader("Authorization"));
   }
 
   @Test public void authenticateWithCharset() throws Exception {
@@ -1981,14 +1969,11 @@ public final class URLConnectionTest {
 
   /** https://code.google.com/p/android/issues/detail?id=74026 */
   @Test public void authenticateWithGetAndTransparentGzip() throws Exception {
-    MockResponse pleaseAuthenticate = new MockResponse().setResponseCode(401)
+    // fail auth once...
+    server.enqueue(new MockResponse().setResponseCode(401)
         .addHeader("WWW-Authenticate: Basic realm=\"protected area\"")
-        .setBody("Please authenticate.");
-    // fail auth three times...
-    server.enqueue(pleaseAuthenticate);
-    server.enqueue(pleaseAuthenticate);
-    server.enqueue(pleaseAuthenticate);
-    // ...then succeed the fourth time
+        .setBody("Please authenticate."));
+    // ...then succeed the second time
     MockResponse successfulResponse = new MockResponse()
         .addHeader("Content-Encoding", "gzip")
         .setBody(gzip("Successful auth!"));
@@ -2005,13 +1990,11 @@ public final class URLConnectionTest {
     RecordedRequest request = server.takeRequest();
     assertNull(request.getHeader("Authorization"));
 
-    // ...but the three requests that follow requests include an authorization header
-    for (int i = 0; i < 3; i++) {
-      request = server.takeRequest();
-      assertEquals("GET / HTTP/1.1", request.getRequestLine());
-      assertEquals("Basic " + RecordingAuthenticator.BASE_64_CREDENTIALS,
-          request.getHeader("Authorization"));
-    }
+    // ...but the second request that follows includes an authorization header
+    request = server.takeRequest();
+    assertEquals("GET / HTTP/1.1", request.getRequestLine());
+    assertEquals("Basic " + RecordingAuthenticator.BASE_64_CREDENTIALS,
+        request.getHeader("Authorization"));
   }
 
   /** https://github.com/square/okhttp/issues/342 */
@@ -3179,10 +3162,9 @@ public final class URLConnectionTest {
   }
 
   @Test public void customBasicAuthenticator() throws Exception {
-    MockResponse pleaseAuthenticate = new MockResponse().setResponseCode(401)
+    server.enqueue(new MockResponse().setResponseCode(401)
         .addHeader("WWW-Authenticate: Basic realm=\"protected area\"")
-        .setBody("Please authenticate.");
-    server.enqueue(pleaseAuthenticate);
+        .setBody("Please authenticate."));
     server.enqueue(new MockResponse().setBody("A"));
 
     String credential = Credentials.basic("jesse", "peanutbutter");
@@ -3202,10 +3184,9 @@ public final class URLConnectionTest {
   }
 
   @Test public void customTokenAuthenticator() throws Exception {
-    MockResponse pleaseAuthenticate = new MockResponse().setResponseCode(401)
+    server.enqueue(new MockResponse().setResponseCode(401)
         .addHeader("WWW-Authenticate: Bearer realm=\"oauthed\"")
-        .setBody("Please authenticate.");
-    server.enqueue(pleaseAuthenticate);
+        .setBody("Please authenticate."));
     server.enqueue(new MockResponse().setBody("A"));
 
     RecordingOkAuthenticator authenticator = new RecordingOkAuthenticator("oauthed abc123");
