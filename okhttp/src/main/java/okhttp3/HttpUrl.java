@@ -15,7 +15,6 @@
  */
 package okhttp3;
 
-import java.io.EOFException;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.MalformedURLException;
@@ -1718,7 +1717,8 @@ public final class HttpUrl {
             || codePoint == 0x7f
             || codePoint >= 0x80 && asciiOnly
             || encodeSet.indexOf(codePoint) != -1
-            || codePoint == '%' && (!alreadyEncoded || strict && !percentEncoded(input, i, limit))) {
+            || codePoint == '%' && (!alreadyEncoded || strict && !percentEncoded(input, i,
+            limit))) {
           // Percent encode this character.
           if (encodedCharBuffer == null) {
             encodedCharBuffer = new Buffer();
@@ -1742,7 +1742,7 @@ public final class HttpUrl {
         }
       }
     } catch (IOException e) {
-      throw new AssertionError("threw IOException: ", e);
+      throw Util.assertionError("threw IOException", e);
     }
   }
 
