@@ -15,6 +15,8 @@
  */
 package okhttp3;
 
+import java.io.EOFException;
+import java.io.IOException;
 import java.net.InetAddress;
 import java.net.MalformedURLException;
 import java.net.URI;
@@ -1699,42 +1701,48 @@ public final class HttpUrl {
   static void canonicalize(Buffer out, String input, int pos, int limit, String encodeSet,
       boolean alreadyEncoded, boolean strict, boolean plusIsSpace, boolean asciiOnly,
       Charset charset) {
-    Buffer encodedCharBuffer = null; // Lazily allocated.
-    int codePoint;
-    for (int i = pos; i < limit; i += Character.charCount(codePoint)) {
-      codePoint = input.codePointAt(i);
-      if (alreadyEncoded
-          && (codePoint == '\t' || codePoint == '\n' || codePoint == '\f' || codePoint == '\r')) {
-        // Skip this character.
-      } else if (codePoint == '+' && plusIsSpace) {
-        // Encode '+' as '%2B' since we permit ' ' to be encoded as either '+' or '%20'.
-        out.writeUtf8(alreadyEncoded ? "+" : "%2B");
-      } else if (codePoint < 0x20
-          || codePoint == 0x7f
-          || codePoint >= 0x80 && asciiOnly
-          || encodeSet.indexOf(codePoint) != -1
-          || codePoint == '%' && (!alreadyEncoded || strict && !percentEncoded(input, i, limit))) {
-        // Percent encode this character.
-        if (encodedCharBuffer == null) {
-          encodedCharBuffer = new Buffer();
-        }
+    try {
+      Buffer encodedCharBuffer = null; // Lazily allocated.
+      int codePoint;
+      for (int i = pos; i < limit; i += Character.charCount(codePoint)) {
+        codePoint = input.codePointAt(i);
+        if (alreadyEncoded && (codePoint == '\t'
+            || codePoint == '\n'
+            || codePoint == '\f'
+            || codePoint == '\r')) {
+          // Skip this character.
+        } else if (codePoint == '+' && plusIsSpace) {
+          // Encode '+' as '%2B' since we permit ' ' to be encoded as either '+' or '%20'.
+          out.writeUtf8(alreadyEncoded ? "+" : "%2B");
+        } else if (codePoint < 0x20
+            || codePoint == 0x7f
+            || codePoint >= 0x80 && asciiOnly
+            || encodeSet.indexOf(codePoint) != -1
+            || codePoint == '%' && (!alreadyEncoded || strict && !percentEncoded(input, i, limit))) {
+          // Percent encode this character.
+          if (encodedCharBuffer == null) {
+            encodedCharBuffer = new Buffer();
+          }
 
-        if (charset == null || charset.equals(Util.UTF_8)) {
-          encodedCharBuffer.writeUtf8CodePoint(codePoint);
+          if (charset == null || charset.equals(Util.UTF_8)) {
+            encodedCharBuffer.writeUtf8CodePoint(codePoint);
+          } else {
+            encodedCharBuffer.writeString(input, i, i + Character.charCount(codePoint), charset);
+          }
+
+          while (!encodedCharBuffer.exhausted()) {
+            int b = encodedCharBuffer.readByte() & 0xff;
+            out.writeByte('%');
+            out.writeByte(HEX_DIGITS[(b >> 4) & 0xf]);
+            out.writeByte(HEX_DIGITS[b & 0xf]);
+          }
         } else {
-          encodedCharBuffer.writeString(input, i, i + Character.charCount(codePoint), charset);
+          // This character doesn't need encoding. Just copy it over.
+          out.writeUtf8CodePoint(codePoint);
         }
-
-        while (!encodedCharBuffer.exhausted()) {
-          int b = encodedCharBuffer.readByte() & 0xff;
-          out.writeByte('%');
-          out.writeByte(HEX_DIGITS[(b >> 4) & 0xf]);
-          out.writeByte(HEX_DIGITS[b & 0xf]);
-        }
-      } else {
-        // This character doesn't need encoding. Just copy it over.
-        out.writeUtf8CodePoint(codePoint);
       }
+    } catch (IOException e) {
+      throw new AssertionError("threw IOException: ", e);
     }
   }
 
