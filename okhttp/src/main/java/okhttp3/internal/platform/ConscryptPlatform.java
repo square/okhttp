@@ -15,6 +15,7 @@
  */
 package okhttp3.internal.platform;
 
+import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 import java.security.Provider;
 import java.util.List;
@@ -33,17 +34,18 @@ import org.conscrypt.OpenSSLProvider;
  * Requires org.conscrypt:conscrypt-openjdk-uber on the classpath.
  */
 public class ConscryptPlatform extends Platform {
-  private ConscryptPlatform() {
+  public ConscryptPlatform() {
   }
 
-  private Provider getProvider() {
-    return new OpenSSLProvider();
+  public Provider getProvider() {
+    return Conscrypt.newProviderBuilder().provideTrustManager().build();
   }
 
   @Override public @Nullable X509TrustManager trustManager(SSLSocketFactory sslSocketFactory) {
     if (!Conscrypt.isConscrypt(sslSocketFactory)) {
       return super.trustManager(sslSocketFactory);
     }
+
 
     try {
       // org.conscrypt.SSLParametersImpl
@@ -88,25 +90,19 @@ public class ConscryptPlatform extends Platform {
 
   @Override public SSLContext getSSLContext() {
     try {
-      return SSLContext.getInstance("TLS", getProvider());
+      return SSLContext.getInstance("TLSv1.3", getProvider());
+      //return SSLContext.getInstance("TLS", getProvider());
     } catch (NoSuchAlgorithmException e) {
       throw new IllegalStateException("No TLS provider", e);
     }
   }
 
-  public static Platform buildIfSupported() {
-    try {
-      // trigger early exception over a fatal error
-      Class.forName("org.conscrypt.ConscryptEngineSocket");
-
-      if (!Conscrypt.isAvailable()) {
-        return null;
-      }
-
-      return new ConscryptPlatform();
-    } catch (ClassNotFoundException e) {
+  public static ConscryptPlatform buildIfSupported() {
+    if (!Conscrypt.isAvailable()) {
       return null;
     }
+
+    return new ConscryptPlatform();
   }
 
   @Override

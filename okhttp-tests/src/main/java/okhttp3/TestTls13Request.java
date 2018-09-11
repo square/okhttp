@@ -1,9 +1,16 @@
 package okhttp3;
 
 import java.io.IOException;
+import java.security.KeyManagementException;
 import java.security.Security;
 import java.util.Arrays;
 import java.util.List;
+import javax.net.SocketFactory;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLSocketFactory;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509TrustManager;
+import okhttp3.internal.platform.ConscryptPlatform;
 import okhttp3.internal.platform.Platform;
 import org.conscrypt.Conscrypt;
 import org.conscrypt.OpenSSLProvider;
@@ -15,8 +22,8 @@ public class TestTls13Request {
       CipherSuite.TLS_AES_128_GCM_SHA256,
       CipherSuite.TLS_AES_256_GCM_SHA384,
       CipherSuite.TLS_CHACHA20_POLY1305_SHA256,
-      CipherSuite.TLS_AES_128_CCM_SHA256,
-      CipherSuite.TLS_AES_256_CCM_8_SHA256
+      //CipherSuite.TLS_AES_128_CCM_SHA256,
+      //CipherSuite.TLS_AES_256_CCM_8_SHA256
   };
 
   /**
@@ -31,25 +38,21 @@ public class TestTls13Request {
       .build();
 
 
-  private static final ConnectionSpec TLS_12 =
-      new ConnectionSpec.Builder(ConnectionSpec.RESTRICTED_TLS).tlsVersions(TlsVersion.TLS_1_2)
-          .build();
+  //private static final ConnectionSpec TLS_12 =
+  //    new ConnectionSpec.Builder(ConnectionSpec.RESTRICTED_TLS).tlsVersions(TlsVersion.TLS_1_2)
+  //        .build();
 
   private TestTls13Request() {
   }
 
-  public static void main(String[] args) {
+  public static void main(String[] args) throws KeyManagementException {
     //System.setProperty("javax.net.debug", "ssl:handshake:verbose");
+    Security.insertProviderAt(ConscryptPlatform.buildIfSupported().getProvider(), 1);
 
     System.out.println("Running tests using "
         + Platform.get().getClass().getSimpleName()
         + " "
         + System.getProperty("java.vm.version"));
-
-    // Allow for TLS_CHACHA20_POLY1305_SHA256 cipher suite
-    if (Conscrypt.isAvailable()) {
-      Security.addProvider(new OpenSSLProvider());
-    }
 
     // https://github.com/tlswg/tls13-spec/wiki/Implementations
     List<String> urls =
@@ -61,12 +64,12 @@ public class TestTls13Request {
             "https://www.googleapis.com/robots.txt", "https://graph.facebook.com/robots.txt",
             "https://api.twitter.com/robots.txt", "https://connect.squareup.com/robots.txt");
 
-    System.out.println("TLS1.3 only");
-    testClient(urls, buildClient(TLS_13));
+    //System.out.println("TLS1.3 only");
+    //testClient(urls, buildClient(TLS_13));
 
-    System.out.println("\nTLS1.3 then fallback");
-    testClient(urls, buildClient(TLS_13, TLS_12));
-
+    //System.out.println("\nTLS1.3 then fallback");
+    //testClient(urls, buildClient(TLS_13, TLS_12));
+    //
     System.out.println("\nTLS1.3+TLS1.2");
     testClient(urls, buildClient(ConnectionSpec.RESTRICTED_TLS));
   }
@@ -82,13 +85,19 @@ public class TestTls13Request {
     }
   }
 
-  private static OkHttpClient buildClient(ConnectionSpec... specs) {
-    return new OkHttpClient.Builder().connectionSpecs(Arrays.asList(specs)).build();
+  private static OkHttpClient buildClient(ConnectionSpec... specs) throws KeyManagementException {
+    X509TrustManager tm = Conscrypt.getDefaultX509TrustManager();
+    SSLContext sslContext = new ConscryptPlatform().getSSLContext();
+    sslContext.init(null, new TrustManager[] {tm}, null);
+    SSLSocketFactory sslSocketFactory = sslContext.getSocketFactory();
+    return new OkHttpClient.Builder().connectionSpecs(Arrays.asList(specs)).sslSocketFactory(sslSocketFactory, tm).build();
   }
 
   private static void sendRequest(OkHttpClient client, String url) {
     System.out.printf("%-40s ", url);
     System.out.flush();
+
+    System.out.println(Platform.get());
 
     Request request = new Request.Builder().url(url).build();
 
@@ -109,6 +118,7 @@ public class TestTls13Request {
           + "b");
     } catch (IOException ioe) {
       System.out.println(ioe.toString());
+      //ioe.printStackTrace();
     } finally {
       if (response != null) {
         response.close();
