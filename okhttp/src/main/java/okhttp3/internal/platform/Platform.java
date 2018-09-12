@@ -290,4 +290,8 @@ public class Platform {
 
   public void configureSslSocketFactory(SSLSocketFactory socketFactory) {
   }
+
+  @Override public String toString() {
+    return getClass().getSimpleName();
+  }
 }
