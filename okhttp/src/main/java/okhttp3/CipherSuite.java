@@ -395,8 +395,7 @@ public final class CipherSuite {
   // public static final CipherSuite TLS_DHE_PSK_WITH_CHACHA20_POLY1305_SHA256 = of("TLS_DHE_PSK_WITH_CHACHA20_POLY1305_SHA256", 0xccad);
   // public static final CipherSuite TLS_RSA_PSK_WITH_CHACHA20_POLY1305_SHA256 = of("TLS_RSA_PSK_WITH_CHACHA20_POLY1305_SHA256", 0xccae);
 
-  // TLS 1.3 https://tools.ietf.org/html/draft-ietf-tls-tls13-28
-  // Documentation only ids will be updated once assigned by IANA.
+  // TLS 1.3 https://tools.ietf.org/html/rfc8446
   public static final CipherSuite TLS_AES_128_GCM_SHA256 = of("TLS_AES_128_GCM_SHA256", 0x1301);
   public static final CipherSuite TLS_AES_256_GCM_SHA384 = of("TLS_AES_256_GCM_SHA384", 0x1302);
   public static final CipherSuite TLS_CHACHA20_POLY1305_SHA256 = of("TLS_CHACHA20_POLY1305_SHA256", 0x1303);
