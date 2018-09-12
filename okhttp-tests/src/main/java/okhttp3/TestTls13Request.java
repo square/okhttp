@@ -81,12 +81,8 @@ public class TestTls13Request {
     }
   }
 
-  private static OkHttpClient buildClient(ConnectionSpec... specs) throws KeyManagementException {
-    X509TrustManager tm = Conscrypt.getDefaultX509TrustManager();
-    SSLContext sslContext = new ConscryptPlatform().getSSLContext();
-    sslContext.init(null, new TrustManager[] {tm}, null);
-    SSLSocketFactory sslSocketFactory = sslContext.getSocketFactory();
-    return new OkHttpClient.Builder().connectionSpecs(Arrays.asList(specs)).sslSocketFactory(sslSocketFactory, tm).build();
+  private static OkHttpClient buildClient(ConnectionSpec... specs) {
+    return new OkHttpClient.Builder().connectionSpecs(Arrays.asList(specs)).build();
   }
 
   private static void sendRequest(OkHttpClient client, String url) {
@@ -114,7 +110,6 @@ public class TestTls13Request {
           + "b");
     } catch (IOException ioe) {
       System.out.println(ioe.toString());
-      //ioe.printStackTrace();
     } finally {
       if (response != null) {
         response.close();
