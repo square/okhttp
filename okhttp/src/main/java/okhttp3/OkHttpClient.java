@@ -36,6 +36,7 @@ import javax.net.ssl.X509TrustManager;
 import okhttp3.internal.Internal;
 import okhttp3.internal.Util;
 import okhttp3.internal.cache.InternalCache;
+import okhttp3.internal.proxy.NullProxySelector;
 import okhttp3.internal.connection.RealConnection;
 import okhttp3.internal.connection.RouteDatabase;
 import okhttp3.internal.connection.StreamAllocation;
@@ -460,6 +461,9 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
       connectionSpecs = DEFAULT_CONNECTION_SPECS;
       eventListenerFactory = EventListener.factory(EventListener.NONE);
       proxySelector = ProxySelector.getDefault();
+      if (proxySelector == null) {
+        proxySelector = new NullProxySelector();
+      }
       cookieJar = CookieJar.NO_COOKIES;
       socketFactory = SocketFactory.getDefault();
       hostnameVerifier = OkHostnameVerifier.INSTANCE;

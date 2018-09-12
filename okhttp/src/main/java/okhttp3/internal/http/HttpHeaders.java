@@ -17,7 +17,9 @@ package okhttp3.internal.http;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.regex.Matcher;
@@ -29,19 +31,52 @@ import okhttp3.Headers;
 import okhttp3.HttpUrl;
 import okhttp3.Request;
 import okhttp3.Response;
-import okhttp3.internal.Util;
 
 import static java.net.HttpURLConnection.HTTP_NOT_MODIFIED;
 import static java.net.HttpURLConnection.HTTP_NO_CONTENT;
+import static java.util.Locale.US;
 import static okhttp3.internal.Util.equal;
 import static okhttp3.internal.http.StatusLine.HTTP_CONTINUE;
 
 /** Headers and utilities for internal use by OkHttp. */
 public final class HttpHeaders {
-  private static final String TOKEN = "([^ \"=]*)";
-  private static final String QUOTED_STRING = "\"([^\"]*)\"";
-  private static final Pattern PARAMETER
-      = Pattern.compile(" +" + TOKEN + "=(:?" + QUOTED_STRING + "|" + TOKEN + ") *(:?,|$)");
+  // regexes according to RFC 7235
+  private static final String TOKEN_PATTERN_PART = "[!#$%&'*+.^_`|~\\p{Alnum}-]+";
+  private static final String TOKEN68_PATTERN_PART = "[\\p{Alnum}._~+/-]+=*";
+  private static final String OWS_PATTERN_PART = "[ \\t]*";
+  private static final String QUOTED_PAIR_PATTERN_PART = "\\\\([\\t \\p{Graph}\\x80-\\xFF])";
+  private static final String QUOTED_STRING_PATTERN_PART =
+          "\"(?:[\\t \\x21\\x23-\\x5B\\x5D-\\x7E\\x80-\\xFF]|" + QUOTED_PAIR_PATTERN_PART + ")*\"";
+  private static final String AUTH_PARAM_PATTERN_PART = TOKEN_PATTERN_PART + OWS_PATTERN_PART + '='
+          + OWS_PATTERN_PART + "(?:" + TOKEN_PATTERN_PART + '|' + QUOTED_STRING_PATTERN_PART + ')';
+  private static final String CHALLENGE_PATTERN_PART = TOKEN_PATTERN_PART + "(?: +(?:"
+          + TOKEN68_PATTERN_PART + "|(?:,|" + AUTH_PARAM_PATTERN_PART + ")(?:" + OWS_PATTERN_PART
+          + ",(?:" + OWS_PATTERN_PART + AUTH_PARAM_PATTERN_PART + ")?)*)?)?";
+  private static final String AUTHENTICATION_HEADER_VALUE_SPLIT_PATTERN_PART =
+          "(?:" + OWS_PATTERN_PART + ',' + OWS_PATTERN_PART + ")+";
+
+  private static final Pattern AUTHENTICATION_HEADER_VALUE_PATTERN = Pattern.compile("^(?:,"
+          + OWS_PATTERN_PART + ")*" + CHALLENGE_PATTERN_PART + "(?:" + OWS_PATTERN_PART + ",(?:"
+          + OWS_PATTERN_PART + CHALLENGE_PATTERN_PART + ")?)*$");
+  private static final Pattern AUTH_SCHEME_PATTERN =
+          Pattern.compile('^' + TOKEN_PATTERN_PART + '$');
+  private static final Pattern AUTH_SCHEME_AND_TOKEN68_PATTERN =
+          Pattern.compile('^' + TOKEN_PATTERN_PART + " +" + TOKEN68_PATTERN_PART + '$');
+  private static final Pattern AUTH_SCHEME_AND_PARAM_PATTERN =
+          Pattern.compile('^' + TOKEN_PATTERN_PART + " +" + AUTH_PARAM_PATTERN_PART + '$');
+  private static final Pattern AUTH_PARAM_PATTERN =
+          Pattern.compile('^' + AUTH_PARAM_PATTERN_PART + '$');
+  private static final Pattern TOKEN_PATTERN = Pattern.compile('^' + TOKEN_PATTERN_PART + '$');
+  private static final Pattern QUOTED_PAIR_PATTERN = Pattern.compile(QUOTED_PAIR_PATTERN_PART);
+
+  private static final Pattern AUTHENTICATION_HEADER_VALUE_SPLIT_PATTERN =
+          Pattern.compile(AUTHENTICATION_HEADER_VALUE_SPLIT_PATTERN_PART);
+  private static final Pattern WHITESPACE_SPLIT_PATTERN = Pattern.compile(" +");
+  private static final Pattern AUTH_PARAM_SPLIT_PATTERN =
+          Pattern.compile(OWS_PATTERN_PART + '=' + OWS_PATTERN_PART);
+  private static final Pattern QUOTED_STRING_AUTH_PARAM_AT_END_PATTERN =
+          Pattern.compile(TOKEN_PATTERN_PART + OWS_PATTERN_PART + '=' + OWS_PATTERN_PART
+                  + QUOTED_STRING_PATTERN_PART + '$');
 
   private HttpHeaders() {
   }
@@ -144,53 +179,102 @@ public final class HttpHeaders {
   }
 
   /**
-   * Parse RFC 7617 challenges, also wrong ordered ones.
-   * This API is only interested in the scheme name and realm.
+   * Parse RFC 7235 challenges.
    */
   public static List<Challenge> parseChallenges(Headers responseHeaders, String challengeHeader) {
-    // auth-scheme = token
-    // auth-param  = token "=" ( token | quoted-string )
-    // challenge   = auth-scheme 1*SP 1#auth-param
-    // realm       = "realm" "=" realm-value
-    // realm-value = quoted-string
     List<Challenge> challenges = new ArrayList<>();
     List<String> authenticationHeaders = responseHeaders.values(challengeHeader);
+headerLoop:
     for (String header : authenticationHeaders) {
-      int index = header.indexOf(' ');
-      if (index == -1) continue;
-
-      String scheme = header.substring(0, index);
-      String realm = null;
-      String charset = null;
-
-      Matcher matcher = PARAMETER.matcher(header);
-      for (int i = index; matcher.find(i); i = matcher.end()) {
-        if (header.regionMatches(true, matcher.start(1), "realm", 0, 5)) {
-          realm = matcher.group(3);
-        } else if (header.regionMatches(true, matcher.start(1), "charset", 0, 7)) {
-          charset = matcher.group(3);
-        }
-
-        if (realm != null && charset != null) {
-          break;
-        }
+      // ignore invalid header value
+      if (!AUTHENTICATION_HEADER_VALUE_PATTERN.matcher(header).matches()) {
+        continue;
       }
 
-      // "realm" is required.
-      if (realm == null) continue;
+      // needed to properly abort if a header is invalid due to repeated auth param names
+      List<Challenge> headerChallenges = new ArrayList<>();
 
-      Challenge challenge = new Challenge(scheme, realm);
+      String[] challengeParts = AUTHENTICATION_HEADER_VALUE_SPLIT_PATTERN.split(header);
+      String authScheme = null;
+      Map<String, String> authParams = new LinkedHashMap<>();
+      for (int i = 0, j = challengeParts.length; i < j; i++) {
+        String challengePart = challengeParts[i];
 
-      // If a charset is provided, RFC 7617 says it must be "UTF-8".
-      if (charset != null) {
-        if (charset.equalsIgnoreCase("UTF-8")) {
-          challenge = challenge.withCharset(Util.UTF_8);
-        } else {
+        // skip empty parts that can occur as first and last element
+        if (challengePart.isEmpty()) {
           continue;
         }
-      }
 
-      challenges.add(challenge);
+        String newAuthScheme = null;
+        String authParam = null;
+        if (AUTH_SCHEME_PATTERN.matcher(challengePart).matches()) {
+          newAuthScheme = challengePart;
+        } else if (AUTH_SCHEME_AND_TOKEN68_PATTERN.matcher(challengePart).matches()) {
+          String[] authSchemeAndToken68 = WHITESPACE_SPLIT_PATTERN.split(challengePart, 2);
+          newAuthScheme = authSchemeAndToken68[0];
+          if (authParams.put(null, authSchemeAndToken68[1]) != null) {
+            // if the regex is correct, this must not happen
+            throw new AssertionError();
+          }
+        } else if (AUTH_SCHEME_AND_PARAM_PATTERN.matcher(challengePart).matches()) {
+          String[] authSchemeAndParam = WHITESPACE_SPLIT_PATTERN.split(challengePart, 2);
+          newAuthScheme = authSchemeAndParam[0];
+          authParam = authSchemeAndParam[1];
+        } else if (AUTH_PARAM_PATTERN.matcher(challengePart).matches()) {
+          authParam = challengePart;
+        } else {
+          // comma in quoted string part got split wrongly
+          StringBuilder patternBuilder = new StringBuilder();
+          patternBuilder.append('^').append(Pattern.quote(challengeParts[0]));
+          for (int i2 = 1; i2 < i; i2++) {
+            patternBuilder
+                    .append(AUTHENTICATION_HEADER_VALUE_SPLIT_PATTERN_PART)
+                    .append(Pattern.quote(challengeParts[i2]));
+          }
+          // if the algorithm has a flaw, the loop will crash with an ArrayIndexOutOfBoundsException
+          // if this happens, the algorithm or overall regex has to be fixed, not the array access
+          Matcher quotedStringAuthParamAtEndMatcher;
+          do {
+            patternBuilder
+                    .append(AUTHENTICATION_HEADER_VALUE_SPLIT_PATTERN_PART)
+                    .append(Pattern.quote(challengeParts[i++]));
+            Matcher matcher = Pattern.compile(patternBuilder.toString()).matcher(header);
+            if (!matcher.find()) {
+              // if the algorithm is flawless, this must not happen
+              throw new AssertionError();
+            }
+            quotedStringAuthParamAtEndMatcher =
+                    QUOTED_STRING_AUTH_PARAM_AT_END_PATTERN.matcher(matcher.group());
+          } while (!quotedStringAuthParamAtEndMatcher.find());
+          authParam = quotedStringAuthParamAtEndMatcher.group();
+        }
+
+        if (newAuthScheme != null) {
+          if (authScheme != null) {
+            headerChallenges.add(new Challenge(authScheme, authParams));
+            authParams.clear();
+          }
+          authScheme = newAuthScheme;
+        }
+
+        if (authParam != null) {
+          String[] authParamPair = AUTH_PARAM_SPLIT_PATTERN.split(authParam, 2);
+          // lower-case to easily check for multiple occurrences
+          String authParamKey = authParamPair[0].toLowerCase(US);
+          String authParamValue = authParamPair[1];
+          if (!TOKEN_PATTERN.matcher(authParamValue).matches()) {
+            authParamValue = authParamValue.substring(1, authParamValue.length() - 1);
+            authParamValue = QUOTED_PAIR_PATTERN.matcher(authParamValue).replaceAll("$1");
+          }
+          if (authParams.put(authParamKey, authParamValue) != null) {
+            // ignore invalid header value
+            // auth param keys must not occur multiple times within one challenge
+            continue headerLoop;
+          }
+        }
+      }
+      headerChallenges.add(new Challenge(authScheme, authParams));
+      challenges.addAll(headerChallenges);
     }
     return challenges;
   }

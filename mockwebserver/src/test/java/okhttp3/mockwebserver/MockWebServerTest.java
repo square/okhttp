@@ -452,6 +452,24 @@ public final class MockWebServerTest {
     assertEquals("foo bar", requestUrl.queryParameter("key"));
   }
 
+  @Test public void shutdownServerAfterRequest() throws Exception {
+    server.enqueue(new MockResponse().setSocketPolicy(SocketPolicy.SHUTDOWN_SERVER_AFTER_RESPONSE));
+
+    URL url = server.url("/").url();
+
+    HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+    assertEquals(HttpURLConnection.HTTP_OK, connection.getResponseCode());
+
+    HttpURLConnection refusedConnection = (HttpURLConnection) url.openConnection();
+
+    try {
+      refusedConnection.getResponseCode();
+      fail("Second connection should be refused");
+    } catch (ConnectException e ) {
+      assertTrue(e.getMessage().contains("refused"));
+    }
+  }
+
   @Test public void http100Continue() throws Exception {
     server.enqueue(new MockResponse().setBody("response"));
 
