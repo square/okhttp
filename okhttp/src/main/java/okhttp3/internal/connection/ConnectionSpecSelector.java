@@ -54,27 +54,27 @@ public final class ConnectionSpecSelector {
    * @throws IOException if the socket does not support any of the TLS modes available
    */
   public ConnectionSpec configureSecureSocket(SSLSocket sslSocket) throws IOException {
-    ConnectionSpec tlsConfiguration = connectionSpecs.get(0);
-    //for (int i = nextModeIndex, size = connectionSpecs.size(); i < size; i++) {
-    //  ConnectionSpec connectionSpec = connectionSpecs.get(i);
-    //  if (connectionSpec.isCompatible(sslSocket)) {
-    //    tlsConfiguration = connectionSpec;
-    //    nextModeIndex = i + 1;
-    //    break;
-    //  }
-    //}
-    //
-    //if (tlsConfiguration == null) {
-    //  // This may be the first time a connection has been attempted and the socket does not support
-    //  // any the required protocols, or it may be a retry (but this socket supports fewer
-    //  // protocols than was suggested by a prior socket).
-    //  throw new UnknownServiceException(
-    //      "Unable to find acceptable protocols. isFallback=" + isFallback
-    //          + ", modes=" + connectionSpecs
-    //          + ", supported protocols=" + Arrays.toString(sslSocket.getEnabledProtocols()));
-    //}
-    //
-    //isFallbackPossible = isFallbackPossible(sslSocket);
+    ConnectionSpec tlsConfiguration = null;
+    for (int i = nextModeIndex, size = connectionSpecs.size(); i < size; i++) {
+      ConnectionSpec connectionSpec = connectionSpecs.get(i);
+      if (connectionSpec.isCompatible(sslSocket)) {
+        tlsConfiguration = connectionSpec;
+        nextModeIndex = i + 1;
+        break;
+      }
+    }
+
+    if (tlsConfiguration == null) {
+      // This may be the first time a connection has been attempted and the socket does not support
+      // any the required protocols, or it may be a retry (but this socket supports fewer
+      // protocols than was suggested by a prior socket).
+      throw new UnknownServiceException(
+          "Unable to find acceptable protocols. isFallback=" + isFallback
+              + ", modes=" + connectionSpecs
+              + ", supported protocols=" + Arrays.toString(sslSocket.getEnabledProtocols()));
+    }
+
+    isFallbackPossible = isFallbackPossible(sslSocket);
 
     Internal.instance.apply(tlsConfiguration, sslSocket, false);
 

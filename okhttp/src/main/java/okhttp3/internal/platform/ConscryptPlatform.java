@@ -15,7 +15,6 @@
  */
 package okhttp3.internal.platform;
 
-import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 import java.security.Provider;
 import java.util.List;
@@ -26,7 +25,6 @@ import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.X509TrustManager;
 import okhttp3.Protocol;
 import org.conscrypt.Conscrypt;
-import org.conscrypt.OpenSSLProvider;
 
 /**
  * Platform using Conscrypt (conscrypt.org) if installed as the first Security Provider.
@@ -91,7 +89,6 @@ public class ConscryptPlatform extends Platform {
   @Override public SSLContext getSSLContext() {
     try {
       return SSLContext.getInstance("TLSv1.3", getProvider());
-      //return SSLContext.getInstance("TLS", getProvider());
     } catch (NoSuchAlgorithmException e) {
       throw new IllegalStateException("No TLS provider", e);
     }

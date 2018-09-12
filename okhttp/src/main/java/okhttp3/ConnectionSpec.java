@@ -46,8 +46,8 @@ public final class ConnectionSpec {
       CipherSuite.TLS_AES_128_GCM_SHA256,
       CipherSuite.TLS_AES_256_GCM_SHA384,
       CipherSuite.TLS_CHACHA20_POLY1305_SHA256,
-      //CipherSuite.TLS_AES_128_CCM_SHA256,
-      //CipherSuite.TLS_AES_256_CCM_8_SHA256,=
+      CipherSuite.TLS_AES_128_CCM_SHA256,
+      CipherSuite.TLS_AES_256_CCM_8_SHA256,
 
       CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
       CipherSuite.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
@@ -65,8 +65,8 @@ public final class ConnectionSpec {
       CipherSuite.TLS_AES_128_GCM_SHA256,
       CipherSuite.TLS_AES_256_GCM_SHA384,
       CipherSuite.TLS_CHACHA20_POLY1305_SHA256,
-      //CipherSuite.TLS_AES_128_CCM_SHA256,
-      //CipherSuite.TLS_AES_256_CCM_8_SHA256,
+      CipherSuite.TLS_AES_128_CCM_SHA256,
+      CipherSuite.TLS_AES_256_CCM_8_SHA256,
 
       CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
       CipherSuite.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
@@ -164,18 +164,22 @@ public final class ConnectionSpec {
    * sslSocket}.
    */
   private ConnectionSpec supportedSpec(SSLSocket sslSocket, boolean isFallback) {
-    String[] cipherSuitesIntersection = cipherSuites;
-    String[] tlsVersionsIntersection = tlsVersions;
+    String[] cipherSuitesIntersection = cipherSuites != null
+        ? intersect(CipherSuite.ORDER_BY_NAME, sslSocket.getEnabledCipherSuites(), cipherSuites)
+        : sslSocket.getEnabledCipherSuites();
+    String[] tlsVersionsIntersection = tlsVersions != null
+        ? intersect(Util.NATURAL_ORDER, sslSocket.getEnabledProtocols(), tlsVersions)
+        : sslSocket.getEnabledProtocols();
 
-    //// In accordance with https://tools.ietf.org/html/draft-ietf-tls-downgrade-scsv-00
-    //// the SCSV cipher is added to signal that a protocol fallback has taken place.
-    //String[] supportedCipherSuites = sslSocket.getSupportedCipherSuites();
-    //int indexOfFallbackScsv = indexOf(
-    //    CipherSuite.ORDER_BY_NAME, supportedCipherSuites, "TLS_FALLBACK_SCSV");
-    //if (isFallback && indexOfFallbackScsv != -1) {
-    //  cipherSuitesIntersection = concat(
-    //      cipherSuitesIntersection, supportedCipherSuites[indexOfFallbackScsv]);
-    //}
+    // In accordance with https://tools.ietf.org/html/draft-ietf-tls-downgrade-scsv-00
+    // the SCSV cipher is added to signal that a protocol fallback has taken place.
+    String[] supportedCipherSuites = sslSocket.getSupportedCipherSuites();
+    int indexOfFallbackScsv = indexOf(
+        CipherSuite.ORDER_BY_NAME, supportedCipherSuites, "TLS_FALLBACK_SCSV");
+    if (isFallback && indexOfFallbackScsv != -1) {
+      cipherSuitesIntersection = concat(
+          cipherSuitesIntersection, supportedCipherSuites[indexOfFallbackScsv]);
+    }
 
     return new Builder(this)
         .cipherSuites(cipherSuitesIntersection)
