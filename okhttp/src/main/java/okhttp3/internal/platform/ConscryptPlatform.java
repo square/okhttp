@@ -32,10 +32,10 @@ import org.conscrypt.Conscrypt;
  * Requires org.conscrypt:conscrypt-openjdk-uber on the classpath.
  */
 public class ConscryptPlatform extends Platform {
-  public ConscryptPlatform() {
+  ConscryptPlatform() {
   }
 
-  public Provider getProvider() {
+  private Provider getProvider() {
     return Conscrypt.newProviderBuilder().provideTrustManager().build();
   }
 
@@ -43,7 +43,6 @@ public class ConscryptPlatform extends Platform {
     if (!Conscrypt.isConscrypt(sslSocketFactory)) {
       return super.trustManager(sslSocketFactory);
     }
-
 
     try {
       // org.conscrypt.SSLParametersImpl

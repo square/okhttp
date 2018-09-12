@@ -5,13 +5,8 @@ import java.security.KeyManagementException;
 import java.security.Security;
 import java.util.Arrays;
 import java.util.List;
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLSocketFactory;
-import javax.net.ssl.TrustManager;
-import javax.net.ssl.X509TrustManager;
 import okhttp3.internal.platform.ConscryptPlatform;
 import okhttp3.internal.platform.Platform;
-import org.conscrypt.Conscrypt;
 
 public class TestTls13Request {
 
