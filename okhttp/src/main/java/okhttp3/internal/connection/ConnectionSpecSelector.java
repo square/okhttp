@@ -76,7 +76,7 @@ public final class ConnectionSpecSelector {
 
     isFallbackPossible = isFallbackPossible(sslSocket);
 
-    Internal.instance.apply(tlsConfiguration, sslSocket, false);
+    Internal.instance.apply(tlsConfiguration, sslSocket, isFallback);
 
     return tlsConfiguration;
   }

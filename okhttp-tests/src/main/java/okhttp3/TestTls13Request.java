@@ -7,6 +7,7 @@ import java.util.Arrays;
 import java.util.List;
 import okhttp3.internal.platform.ConscryptPlatform;
 import okhttp3.internal.platform.Platform;
+import org.conscrypt.Conscrypt;
 
 public class TestTls13Request {
 
@@ -40,7 +41,7 @@ public class TestTls13Request {
 
   public static void main(String[] args) throws KeyManagementException {
     //System.setProperty("javax.net.debug", "ssl:handshake:verbose");
-    Security.insertProviderAt(ConscryptPlatform.buildIfSupported().getProvider(), 1);
+    Security.insertProviderAt(Conscrypt.newProviderBuilder().provideTrustManager().build(), 1);
 
     System.out.println(
         "Running tests using " + Platform.get() + " " + System.getProperty("java.vm.version"));

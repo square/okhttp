@@ -32,7 +32,7 @@ import org.conscrypt.Conscrypt;
  * Requires org.conscrypt:conscrypt-openjdk-uber on the classpath.
  */
 public class ConscryptPlatform extends Platform {
-  ConscryptPlatform() {
+  private ConscryptPlatform() {
   }
 
   private Provider getProvider() {
