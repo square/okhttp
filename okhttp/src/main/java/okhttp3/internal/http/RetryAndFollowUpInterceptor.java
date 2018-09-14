@@ -295,12 +295,6 @@ public final class RetryAndFollowUpInterceptor implements Interceptor {
 
       case HTTP_PERM_REDIRECT:
       case HTTP_TEMP_REDIRECT:
-        // "If the 307 or 308 status code is received in response to a request other than GET
-        // or HEAD, the user agent MUST NOT automatically redirect the request"
-        if (!method.equals("GET") && !method.equals("HEAD")) {
-          return null;
-        }
-        // fall-through
       case HTTP_MULT_CHOICE:
       case HTTP_MOVED_PERM:
       case HTTP_MOVED_TEMP:
@@ -322,8 +316,11 @@ public final class RetryAndFollowUpInterceptor implements Interceptor {
         // Most redirects don't include a request body.
         Request.Builder requestBuilder = userResponse.request().newBuilder();
         if (HttpMethod.permitsRequestBody(method)) {
-          final boolean maintainBody = HttpMethod.redirectsWithBody(method);
-          if (HttpMethod.redirectsToGet(method)) {
+          final boolean maintainBody = HttpMethod.redirectsWithBody(method)
+                                               || responseCode == HTTP_PERM_REDIRECT
+                                               || responseCode == HTTP_TEMP_REDIRECT;
+          if (HttpMethod.redirectsToGet(method)
+                      && responseCode != HTTP_PERM_REDIRECT && responseCode != HTTP_TEMP_REDIRECT) {
             requestBuilder.method("GET", null);
           } else {
             RequestBody requestBody = maintainBody ? userResponse.request().body() : null;
