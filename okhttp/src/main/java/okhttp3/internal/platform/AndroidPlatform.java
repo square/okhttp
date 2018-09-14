@@ -431,7 +431,7 @@ class AndroidPlatform extends Platform {
   }
 
   @Override public SSLContext getSSLContext() {
-    boolean tryTls12 = true;
+    boolean tryTls12;
     try {
       tryTls12 = (Build.VERSION.SDK_INT >= 16 && Build.VERSION.SDK_INT < 22);
     } catch (NoClassDefFoundError e) {
