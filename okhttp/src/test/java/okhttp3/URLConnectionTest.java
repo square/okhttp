@@ -2396,17 +2396,8 @@ public final class URLConnectionTest {
       assertThat(responseString).isEqualTo("Page 2");
     } else if (method.equals("HEAD")) {
       assertThat(responseString).isEqualTo("");
-    } else {
-      // Methods other than GET/HEAD shouldn't follow the redirect.
-      if (method.equals("POST")) {
-        assertThat(page1.getBody().readUtf8()).isEqualTo("ABCD");
-      }
-      assertThat(server.getRequestCount()).isEqualTo(1);
-      assertThat(responseString).isEqualTo("This page has moved!");
-      return;
     }
 
-    // GET/HEAD requests should have followed the redirect with the same method.
     assertThat(server.getRequestCount()).isEqualTo(2);
     RecordedRequest page2 = server.takeRequest();
     assertThat(page2.getRequestLine()).isEqualTo((method + " /page2 HTTP/1.1"));

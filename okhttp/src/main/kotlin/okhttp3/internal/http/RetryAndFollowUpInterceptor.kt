@@ -222,16 +222,7 @@ class RetryAndFollowUpInterceptor(private val client: OkHttpClient) : Intercepto
 
       HTTP_UNAUTHORIZED -> return client.authenticator.authenticate(route, userResponse)
 
-      HTTP_PERM_REDIRECT, HTTP_TEMP_REDIRECT -> {
-        // "If the 307 or 308 status code is received in response to a request other than GET
-        // or HEAD, the user agent MUST NOT automatically redirect the request"
-        if (method != "GET" && method != "HEAD") {
-          return null
-        }
-        return buildRedirectRequest(userResponse, method)
-      }
-
-      HTTP_MULT_CHOICE, HTTP_MOVED_PERM, HTTP_MOVED_TEMP, HTTP_SEE_OTHER -> {
+      HTTP_PERM_REDIRECT, HTTP_TEMP_REDIRECT, HTTP_MULT_CHOICE, HTTP_MOVED_PERM, HTTP_MOVED_TEMP, HTTP_SEE_OTHER -> {
         return buildRedirectRequest(userResponse, method)
       }
 
@@ -312,8 +303,11 @@ class RetryAndFollowUpInterceptor(private val client: OkHttpClient) : Intercepto
     // Most redirects don't include a request body.
     val requestBuilder = userResponse.request.newBuilder()
     if (HttpMethod.permitsRequestBody(method)) {
-      val maintainBody = HttpMethod.redirectsWithBody(method)
-      if (HttpMethod.redirectsToGet(method)) {
+      val responseCode = userResponse.code
+      val maintainBody = HttpMethod.redirectsWithBody(method) ||
+          responseCode == HTTP_PERM_REDIRECT ||
+          responseCode == HTTP_TEMP_REDIRECT
+      if (HttpMethod.redirectsToGet(method) && responseCode != HTTP_PERM_REDIRECT && responseCode != HTTP_TEMP_REDIRECT) {
         requestBuilder.method("GET", null)
       } else {
         val requestBody = if (maintainBody) userResponse.request.body else null
