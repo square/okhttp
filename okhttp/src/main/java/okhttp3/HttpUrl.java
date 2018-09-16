@@ -26,6 +26,7 @@ import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.regex.Pattern;
 import javax.annotation.Nullable;
 import okhttp3.internal.Util;
 import okhttp3.internal.publicsuffix.PublicSuffixDatabase;
@@ -288,6 +289,8 @@ import static okhttp3.internal.Util.verifyAsIpAddress;
 public final class HttpUrl {
   private static final char[] HEX_DIGITS =
       {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'};
+  private static final Pattern FORBIDDEN_CHARACTER_PATTERN =
+          Pattern.compile("[\\u0000-\\u001F\\u007F-\\u009F\\p{javaWhitespace}]");
   static final String USERNAME_ENCODE_SET = " \"':;<=>@[]^`{}|/\\?#";
   static final String PASSWORD_ENCODE_SET = " \"':;<=>@[]^`{}|/\\?#";
   static final String PATH_SEGMENT_ENCODE_SET = " \"<>^`{}|/\\?#";
@@ -380,7 +383,7 @@ public final class HttpUrl {
     } catch (URISyntaxException e) {
       // Unlikely edge case: the URI has a forbidden character in the fragment. Strip it & retry.
       try {
-        String stripped = uri.replaceAll("[\\u0000-\\u001F\\u007F-\\u009F\\p{javaWhitespace}]", "");
+        String stripped = FORBIDDEN_CHARACTER_PATTERN.matcher(uri).replaceAll("");
         return URI.create(stripped);
       } catch (Exception e1) {
         throw new RuntimeException(e); // Unexpected!
