@@ -1,11 +1,9 @@
 package okhttp3;
 
 import java.io.IOException;
-import java.security.KeyManagementException;
 import java.security.Security;
 import java.util.Arrays;
 import java.util.List;
-import okhttp3.internal.platform.ConscryptPlatform;
 import okhttp3.internal.platform.Platform;
 import org.conscrypt.Conscrypt;
 
@@ -39,7 +37,7 @@ public class TestTls13Request {
   private TestTls13Request() {
   }
 
-  public static void main(String[] args) throws KeyManagementException {
+  public static void main(String[] args) {
     //System.setProperty("javax.net.debug", "ssl:handshake:verbose");
     Security.insertProviderAt(Conscrypt.newProviderBuilder().provideTrustManager().build(), 1);
 

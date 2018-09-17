@@ -19,8 +19,7 @@
     </dependency>
     <dependency>
       <groupId>org.conscrypt</groupId>
-      <artifactId>conscrypt-openjdk</artifactId>
-      <classifier>osx-x86_64</classifier>
+      <artifactId>conscrypt-openjdk-uber</artifactId>
       <scope>provided</scope>
     </dependency>
     <dependency>

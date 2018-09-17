@@ -89,16 +89,28 @@ public class ConscryptPlatform extends Platform {
     try {
       return SSLContext.getInstance("TLSv1.3", getProvider());
     } catch (NoSuchAlgorithmException e) {
-      throw new IllegalStateException("No TLS provider", e);
+      try {
+        // Allow for Conscrypt 1.2
+        return SSLContext.getInstance("TLS", getProvider());
+      } catch (NoSuchAlgorithmException e2) {
+        throw new IllegalStateException("No TLS provider", e);
+      }
     }
   }
 
   public static ConscryptPlatform buildIfSupported() {
-    if (!Conscrypt.isAvailable()) {
+    try {
+      // Trigger an early exception over a fatal error, prefer a RuntimeException over Error.
+      Class.forName("org.conscrypt.Conscrypt");
+
+      if (!Conscrypt.isAvailable()) {
+        return null;
+      }
+
+      return new ConscryptPlatform();
+    } catch (ClassNotFoundException e) {
       return null;
     }
-
-    return new ConscryptPlatform();
   }
 
   @Override
