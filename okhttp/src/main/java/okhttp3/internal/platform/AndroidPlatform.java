@@ -431,7 +431,16 @@ class AndroidPlatform extends Platform {
   }
 
   @Override public SSLContext getSSLContext() {
-    if (Build.VERSION.SDK_INT >= 16 && Build.VERSION.SDK_INT < 22) {
+    boolean tryTls12;
+    try {
+      tryTls12 = (Build.VERSION.SDK_INT >= 16 && Build.VERSION.SDK_INT < 22);
+    } catch (NoClassDefFoundError e) {
+      // Not a real Android runtime; probably RoboVM or MoE
+      // Try to load TLS 1.2 explicitly.
+      tryTls12 = true;
+    }
+
+    if (tryTls12) {
       try {
         return SSLContext.getInstance("TLSv1.2");
       } catch (NoSuchAlgorithmException e) {
