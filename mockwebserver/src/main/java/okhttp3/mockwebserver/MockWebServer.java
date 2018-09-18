@@ -669,11 +669,6 @@ public final class MockWebServer extends ExternalResource implements Closeable {
       sink.writeUtf8("\r\n");
       sink.flush();
 
-      sink.writeUtf8("HTTP/1.1 101 Switching Protocols\r\n");
-      sink.writeUtf8("Content-Length: 0\r\n");
-      sink.writeUtf8("\r\n");
-      sink.flush();
-
       sink.writeUtf8("HTTP/1.1 102 Processing\r\n");
       sink.writeUtf8("Content-Length: 0\r\n");
       sink.writeUtf8("\r\n");

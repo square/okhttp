@@ -102,7 +102,7 @@ public final class CacheTest {
 
     // We can't test 100 because it's not really a response.
     // assertCached(false, 100);
-    // assertCached(false, 101);
+    assertCached(false, 101);
     // assertCached(false, 102);
     assertCached(true, 200);
     assertCached(false, 201);
