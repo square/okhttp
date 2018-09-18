@@ -6,7 +6,6 @@ import java.util.Arrays;
 import java.util.List;
 import okhttp3.internal.platform.Platform;
 import org.conscrypt.Conscrypt;
-import org.conscrypt.OpenSSLProvider;
 
 public class TestTls13Request {
 
@@ -40,16 +39,10 @@ public class TestTls13Request {
 
   public static void main(String[] args) {
     //System.setProperty("javax.net.debug", "ssl:handshake:verbose");
+    Security.insertProviderAt(Conscrypt.newProviderBuilder().provideTrustManager().build(), 1);
 
-    System.out.println("Running tests using "
-        + Platform.get().getClass().getSimpleName()
-        + " "
-        + System.getProperty("java.vm.version"));
-
-    // Allow for TLS_CHACHA20_POLY1305_SHA256 cipher suite
-    if (Conscrypt.isAvailable()) {
-      Security.addProvider(new OpenSSLProvider());
-    }
+    System.out.println(
+        "Running tests using " + Platform.get() + " " + System.getProperty("java.vm.version"));
 
     // https://github.com/tlswg/tls13-spec/wiki/Implementations
     List<String> urls =
@@ -61,14 +54,14 @@ public class TestTls13Request {
             "https://www.googleapis.com/robots.txt", "https://graph.facebook.com/robots.txt",
             "https://api.twitter.com/robots.txt", "https://connect.squareup.com/robots.txt");
 
-    System.out.println("TLS1.3 only");
+    System.out.println("TLS1.3+TLS1.2");
+    testClient(urls, buildClient(ConnectionSpec.RESTRICTED_TLS));
+
+    System.out.println("\nTLS1.3 only");
     testClient(urls, buildClient(TLS_13));
 
     System.out.println("\nTLS1.3 then fallback");
     testClient(urls, buildClient(TLS_13, TLS_12));
-
-    System.out.println("\nTLS1.3+TLS1.2");
-    testClient(urls, buildClient(ConnectionSpec.RESTRICTED_TLS));
   }
 
   private static void testClient(List<String> urls, OkHttpClient client) {
@@ -89,6 +82,8 @@ public class TestTls13Request {
   private static void sendRequest(OkHttpClient client, String url) {
     System.out.printf("%-40s ", url);
     System.out.flush();
+
+    System.out.println(Platform.get());
 
     Request request = new Request.Builder().url(url).build();
 
