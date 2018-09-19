@@ -214,6 +214,7 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
   final boolean followSslRedirects;
   final boolean followRedirects;
   final boolean retryOnConnectionFailure;
+  final boolean tryToResolveForSocksProxies;
   final int connectTimeout;
   final int readTimeout;
   final int writeTimeout;
@@ -265,6 +266,7 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
     this.followSslRedirects = builder.followSslRedirects;
     this.followRedirects = builder.followRedirects;
     this.retryOnConnectionFailure = builder.retryOnConnectionFailure;
+    this.tryToResolveForSocksProxies = builder.tryToResolveForSocksProxies;
     this.connectTimeout = builder.connectTimeout;
     this.readTimeout = builder.readTimeout;
     this.writeTimeout = builder.writeTimeout;
@@ -372,6 +374,10 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
     return retryOnConnectionFailure;
   }
 
+  public boolean tryToResolveForSocksProxies() {
+    return tryToResolveForSocksProxies;
+  }
+
   public Dispatcher dispatcher() {
     return dispatcher;
   }
@@ -450,6 +456,7 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
     boolean followSslRedirects;
     boolean followRedirects;
     boolean retryOnConnectionFailure;
+    boolean tryToResolveForSocksProxies;
     int connectTimeout;
     int readTimeout;
     int writeTimeout;
@@ -475,6 +482,7 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
       followSslRedirects = true;
       followRedirects = true;
       retryOnConnectionFailure = true;
+      tryToResolveForSocksProxies = false;
       connectTimeout = 10_000;
       readTimeout = 10_000;
       writeTimeout = 10_000;
@@ -505,6 +513,7 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
       this.followSslRedirects = okHttpClient.followSslRedirects;
       this.followRedirects = okHttpClient.followRedirects;
       this.retryOnConnectionFailure = okHttpClient.retryOnConnectionFailure;
+      this.tryToResolveForSocksProxies = okHttpClient.tryToResolveForSocksProxies;
       this.connectTimeout = okHttpClient.connectTimeout;
       this.readTimeout = okHttpClient.readTimeout;
       this.writeTimeout = okHttpClient.writeTimeout;
@@ -795,6 +804,23 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
      */
     public Builder retryOnConnectionFailure(boolean retryOnConnectionFailure) {
       this.retryOnConnectionFailure = retryOnConnectionFailure;
+      return this;
+    }
+
+    /**
+     * Configure this client to try to resolve destination addresses when using SOCKS proxies. By
+     * default, this client does not try to resolve the addresses due to security considerations.
+     * SOCKS4a and SOCKS5 proxies also work with the hostname as long as the proxy can resolve it
+     * and so the hostname like {@code whistleblowing.onion} will not leak to the local DNS server.
+     *
+     * <p>You need to set this option to {@code true} if you either want to use a SOCKS5 proxy that
+     * cannot resolve the hostname but you can locally, or if you want to use a SOCKS4 proxy. SOCKS4
+     * cannot work with an unresolved hostname (unlike SOCKS4a and SOCKS5). But as the official API
+     * does not provide a way to get the concrete SOCKS version used, this option has to be set
+     * manually and cannot be activated automatically when SOCKS4 is used.
+     */
+    public Builder tryToResolveForSocksProxies(boolean tryToResolveForSocksProxies) {
+      this.tryToResolveForSocksProxies = tryToResolveForSocksProxies;
       return this;
     }
 

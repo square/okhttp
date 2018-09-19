@@ -70,7 +70,7 @@ public final class RouteSelector {
     return hasNextProxy() || !postponedRoutes.isEmpty();
   }
 
-  public Selection next() throws IOException {
+  public Selection next(boolean tryToResolveForSocksProxies) throws IOException {
     if (!hasNext()) {
       throw new NoSuchElementException();
     }
@@ -81,7 +81,7 @@ public final class RouteSelector {
       // Postponed routes are always tried last. For example, if we have 2 proxies and all the
       // routes for proxy1 should be postponed, we'll move to proxy2. Only after we've exhausted
       // all the good routes will we attempt the postponed routes.
-      Proxy proxy = nextProxy();
+      Proxy proxy = nextProxy(tryToResolveForSocksProxies);
       for (int i = 0, size = inetSocketAddresses.size(); i < size; i++) {
         Route route = new Route(address, proxy, inetSocketAddresses.get(i));
         if (routeDatabase.shouldPostpone(route)) {
@@ -140,18 +140,19 @@ public final class RouteSelector {
   }
 
   /** Returns the next proxy to try. May be PROXY.NO_PROXY but never null. */
-  private Proxy nextProxy() throws IOException {
+  private Proxy nextProxy(boolean tryToResolveForSocksProxies) throws IOException {
     if (!hasNextProxy()) {
       throw new SocketException("No route to " + address.url().host()
           + "; exhausted proxy configurations: " + proxies);
     }
     Proxy result = proxies.get(nextProxyIndex++);
-    resetNextInetSocketAddress(result);
+    resetNextInetSocketAddress(result, tryToResolveForSocksProxies);
     return result;
   }
 
   /** Prepares the socket addresses to attempt for the current proxy or host. */
-  private void resetNextInetSocketAddress(Proxy proxy) throws IOException {
+  private void resetNextInetSocketAddress(Proxy proxy,
+      boolean tryToResolveForSocksProxies) throws IOException {
     // Clear the addresses. Necessary if getAllByName() below throws!
     inetSocketAddresses = new ArrayList<>();
 
@@ -176,15 +177,31 @@ public final class RouteSelector {
           + "; port is out of range");
     }
 
-    if (proxy.type() == Proxy.Type.SOCKS) {
+    if (!tryToResolveForSocksProxies && (proxy.type() == Proxy.Type.SOCKS)) {
       inetSocketAddresses.add(InetSocketAddress.createUnresolved(socketHost, socketPort));
     } else {
       eventListener.dnsStart(call, socketHost);
 
       // Try each address for best behavior in mixed IPv4/IPv6 environments.
-      List<InetAddress> addresses = address.dns().lookup(socketHost);
-      if (addresses.isEmpty()) {
-        throw new UnknownHostException(address.dns() + " returned no addresses for " + socketHost);
+      List<InetAddress> addresses = null;
+      UnknownHostException uhe = null;
+      try {
+        addresses = address.dns().lookup(socketHost);
+      } catch (UnknownHostException e) {
+        uhe = e;
+      }
+      if ((addresses == null) || addresses.isEmpty()) {
+        // if it is SOCKS4, there will be an UnknownHostException later
+        // if it is SOCKS4a or SOCKS5, it works also with unresolved addresses
+        if (proxy.type() == Proxy.Type.SOCKS) {
+          inetSocketAddresses.add(InetSocketAddress.createUnresolved(socketHost, socketPort));
+          return;
+        } else if (uhe == null) {
+          throw new UnknownHostException(
+              address.dns() + " returned no addresses for " + socketHost);
+        } else {
+          throw uhe;
+        }
       }
 
       eventListener.dnsEnd(call, socketHost, addresses);

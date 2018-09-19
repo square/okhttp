@@ -109,10 +109,12 @@ public final class StreamAllocation {
     int writeTimeout = chain.writeTimeoutMillis();
     int pingIntervalMillis = client.pingIntervalMillis();
     boolean connectionRetryEnabled = client.retryOnConnectionFailure();
+    boolean tryToResolveForSocksProxies = client.tryToResolveForSocksProxies();
 
     try {
       RealConnection resultConnection = findHealthyConnection(connectTimeout, readTimeout,
-          writeTimeout, pingIntervalMillis, connectionRetryEnabled, doExtensiveHealthChecks);
+          writeTimeout, pingIntervalMillis, connectionRetryEnabled, tryToResolveForSocksProxies,
+          doExtensiveHealthChecks);
       HttpCodec resultCodec = resultConnection.newCodec(client, chain, this);
 
       synchronized (connectionPool) {
@@ -130,10 +132,10 @@ public final class StreamAllocation {
    */
   private RealConnection findHealthyConnection(int connectTimeout, int readTimeout,
       int writeTimeout, int pingIntervalMillis, boolean connectionRetryEnabled,
-      boolean doExtensiveHealthChecks) throws IOException {
+      boolean tryToResolveForSocksProxies, boolean doExtensiveHealthChecks) throws IOException {
     while (true) {
       RealConnection candidate = findConnection(connectTimeout, readTimeout, writeTimeout,
-          pingIntervalMillis, connectionRetryEnabled);
+          pingIntervalMillis, connectionRetryEnabled, tryToResolveForSocksProxies);
 
       // If this is a brand new connection, we can skip the extensive health checks.
       synchronized (connectionPool) {
@@ -158,7 +160,8 @@ public final class StreamAllocation {
    * then the pool, finally building a new connection.
    */
   private RealConnection findConnection(int connectTimeout, int readTimeout, int writeTimeout,
-      int pingIntervalMillis, boolean connectionRetryEnabled) throws IOException {
+      int pingIntervalMillis, boolean connectionRetryEnabled,
+      boolean tryToResolveForSocksProxies) throws IOException {
     boolean foundPooledConnection = false;
     RealConnection result = null;
     Route selectedRoute = null;
@@ -211,7 +214,7 @@ public final class StreamAllocation {
     boolean newRouteSelection = false;
     if (selectedRoute == null && (routeSelection == null || !routeSelection.hasNext())) {
       newRouteSelection = true;
-      routeSelection = routeSelector.next();
+      routeSelection = routeSelector.next(tryToResolveForSocksProxies);
     }
 
     synchronized (connectionPool) {
