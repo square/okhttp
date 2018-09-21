@@ -159,6 +159,7 @@ public final class HttpLoggingInterceptor implements Interceptor {
       requestStartMessage += " (" + requestBody.contentLength() + "-byte body)";
     }
     logger.log(requestStartMessage);
+    logger.log("Request date : " + new Date());
 
     if (logHeaders) {
       if (hasRequestBody) {
