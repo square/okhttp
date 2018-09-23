@@ -57,6 +57,6 @@ final class BufferedRequestBody extends OutputStreamRequestBody {
   }
 
   @Override public void writeTo(BufferedSink sink) throws IOException {
-    buffer.copyTo(sink.buffer(), 0, buffer.size());
+    buffer.copyTo(sink.getBuffer(), 0, buffer.size());
   }
 }

@@ -84,7 +84,7 @@ public final class FormBody extends RequestBody {
     if (countBytes) {
       buffer = new Buffer();
     } else {
-      buffer = sink.buffer();
+      buffer = sink.getBuffer();
     }
 
     for (int i = 0, size = encodedNames.size(); i < size; i++) {

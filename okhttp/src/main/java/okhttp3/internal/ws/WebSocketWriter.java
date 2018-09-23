@@ -63,7 +63,7 @@ final class WebSocketWriter {
     if (random == null) throw new NullPointerException("random == null");
     this.isClient = isClient;
     this.sink = sink;
-    this.sinkBuffer = sink.buffer();
+    this.sinkBuffer = sink.getBuffer();
     this.random = random;
 
     // Masks are only a concern for client writers.

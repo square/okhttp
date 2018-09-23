@@ -188,7 +188,7 @@ public final class CacheInterceptor implements Interceptor {
           return -1;
         }
 
-        sink.copyTo(cacheBody.buffer(), sink.size() - bytesRead, bytesRead);
+        sink.copyTo(cacheBody.getBuffer(), sink.size() - bytesRead, bytesRead);
         cacheBody.emitCompleteSegments();
         return bytesRead;
       }
