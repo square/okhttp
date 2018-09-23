@@ -19,6 +19,7 @@ import java.io.EOFException;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.LinkedHashSet;
+import java.util.Locale;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import okhttp3.Connection;
@@ -135,7 +136,7 @@ public final class HttpLoggingInterceptor implements Interceptor {
     }
 
     public Builder redactHeader(String name) {
-      headersToRedact.add(name.toLowerCase());
+      headersToRedact.add(name.toLowerCase(Locale.US));
       return this;
     }
 
@@ -323,7 +324,7 @@ public final class HttpLoggingInterceptor implements Interceptor {
 
   private void logHeader(Headers headers, int i) {
     String value =
-        headersToRedact.contains(headers.name(i).toLowerCase()) ? "<redacted>" : headers.value(i);
+        headersToRedact.contains(headers.name(i).toLowerCase(Locale.US)) ? "<redacted>" : headers.value(i);
     logger.log(headers.name(i) + ": " + value);
   }
 
