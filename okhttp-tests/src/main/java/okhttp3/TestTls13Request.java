@@ -6,61 +6,62 @@ import java.util.Arrays;
 import java.util.List;
 import okhttp3.internal.platform.Platform;
 import org.conscrypt.Conscrypt;
-import org.conscrypt.OpenSSLProvider;
 
 public class TestTls13Request {
+
+  // TLS 1.3
+  private static final CipherSuite[] TLS13_CIPHER_SUITES = new CipherSuite[] {
+      CipherSuite.TLS_AES_128_GCM_SHA256,
+      CipherSuite.TLS_AES_256_GCM_SHA384,
+      CipherSuite.TLS_CHACHA20_POLY1305_SHA256,
+      CipherSuite.TLS_AES_128_CCM_SHA256,
+      CipherSuite.TLS_AES_256_CCM_8_SHA256
+  };
+
+  /**
+   * A TLS 1.3 only Connection Spec. This will be eventually be exposed
+   * as part of MODERN_TLS or folded into the default OkHttp client once published and
+   * available in JDK11 or Conscrypt.
+   */
+  private static final ConnectionSpec TLS_13 = new ConnectionSpec.Builder(true)
+      .cipherSuites(TLS13_CIPHER_SUITES)
+      .tlsVersions(TlsVersion.TLS_1_3)
+      .supportsTlsExtensions(true)
+      .build();
+
+
+  private static final ConnectionSpec TLS_12 =
+      new ConnectionSpec.Builder(ConnectionSpec.RESTRICTED_TLS).tlsVersions(TlsVersion.TLS_1_2)
+          .build();
+
   private TestTls13Request() {
   }
 
   public static void main(String[] args) {
-    String spec28 = Integer.toString(0x7f00 | 28, 16);
-    System.setProperty("jdk.tls13.version", spec28);
-
     //System.setProperty("javax.net.debug", "ssl:handshake:verbose");
+    Security.insertProviderAt(Conscrypt.newProviderBuilder().provideTrustManager().build(), 1);
 
-    System.out.println("Running tests using "
-        + Platform.get().getClass().getSimpleName()
-        + " "
-        + System.getProperty("java.vm.version"));
-
-    // Allow for TLS_CHACHA20_POLY1305_SHA256 cipher suite
-    if (Conscrypt.isAvailable()) {
-      Security.addProvider(new OpenSSLProvider());
-    }
+    System.out.println(
+        "Running tests using " + Platform.get() + " " + System.getProperty("java.vm.version"));
 
     // https://github.com/tlswg/tls13-spec/wiki/Implementations
     List<String> urls =
         Arrays.asList("https://enabled.tls13.com", "https://www.howsmyssl.com/a/check",
             "https://tls13.cloudflare.com", "https://www.allizom.org/robots.txt",
-            "https://tls13.crypto.mozilla.org/", "https://tls.ctf.network/",
+            "https://tls13.crypto.mozilla.org/", "https://tls.ctf.network/robots.txt",
             "https://rustls.jbp.io/", "https://h2o.examp1e.net", "https://mew.org/",
-            "https://tls13.baishancloud.com/", "https://tls13.akamai.io/", "https://swifttls.org/");
-
-    System.out.println("TLS1.3 only");
-    testClient(urls, buildClient(ConnectionSpec.TLS_13));
-
-    System.out.println("TLS1.3 then fallback");
-    testClient(urls, buildClient(ConnectionSpec.TLS_13, ConnectionSpec.RESTRICTED_TLS));
+            "https://tls13.baishancloud.com/", "https://tls13.akamai.io/", "https://swifttls.org/",
+            "https://www.googleapis.com/robots.txt", "https://graph.facebook.com/robots.txt",
+            "https://api.twitter.com/robots.txt", "https://connect.squareup.com/robots.txt");
 
     System.out.println("TLS1.3+TLS1.2");
-    testClient(urls, buildClient(merge(ConnectionSpec.TLS_13, ConnectionSpec.RESTRICTED_TLS)));
-  }
+    testClient(urls, buildClient(ConnectionSpec.RESTRICTED_TLS));
 
-  private static ConnectionSpec merge(ConnectionSpec first, ConnectionSpec second) {
-    String[] versions = concat(first.tlsVersions, second.tlsVersions);
-    String[] cipherSuites = concat(first.cipherSuites, second.cipherSuites);
+    System.out.println("\nTLS1.3 only");
+    testClient(urls, buildClient(TLS_13));
 
-    return new ConnectionSpec.Builder(true).tlsVersions(versions)
-        .cipherSuites(cipherSuites)
-        .supportsTlsExtensions(true)
-        .build();
-  }
-
-  private static String[] concat(String[] first, String[] second) {
-    String[] result = new String[first.length + second.length];
-    System.arraycopy(first, 0, result, 0, first.length);
-    System.arraycopy(second, 0, result, first.length, second.length);
-    return result;
+    System.out.println("\nTLS1.3 then fallback");
+    testClient(urls, buildClient(TLS_13, TLS_12));
   }
 
   private static void testClient(List<String> urls, OkHttpClient client) {
@@ -81,6 +82,8 @@ public class TestTls13Request {
   private static void sendRequest(OkHttpClient client, String url) {
     System.out.printf("%-40s ", url);
     System.out.flush();
+
+    System.out.println(Platform.get());
 
     Request request = new Request.Builder().url(url).build();
 

@@ -88,6 +88,8 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
+import static java.util.Collections.singletonMap;
+import static java.util.Locale.US;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 import static okhttp3.TestUtil.defaultClient;
@@ -1669,7 +1671,7 @@ public final class URLConnectionTest {
     assertTrue(call, call.contains("type=" + Authenticator.RequestorType.SERVER));
     assertTrue(call, call.contains("prompt=Bar"));
     assertTrue(call, call.contains("protocol=http"));
-    assertTrue(call, call.toLowerCase().contains("scheme=basic")); // lowercase for the RI.
+    assertTrue(call, call.toLowerCase(US).contains("scheme=basic")); // lowercase for the RI.
   }
 
   @Test public void allAttributesSetInProxyAuthenticationCallbacks() throws Exception {
@@ -1684,7 +1686,7 @@ public final class URLConnectionTest {
     assertTrue(call, call.contains("type=" + Authenticator.RequestorType.PROXY));
     assertTrue(call, call.contains("prompt=Bar"));
     assertTrue(call, call.contains("protocol=http"));
-    assertTrue(call, call.toLowerCase().contains("scheme=basic")); // lowercase for the RI.
+    assertTrue(call, call.toLowerCase(US).contains("scheme=basic")); // lowercase for the RI.
   }
 
   private List<String> authCallsForHeader(String authHeader) throws IOException {
@@ -3196,7 +3198,7 @@ public final class URLConnectionTest {
     assertEquals(Proxy.NO_PROXY, authenticator.onlyRoute().proxy());
     Response response = authenticator.onlyResponse();
     assertEquals("/private", response.request().url().url().getPath());
-    assertEquals(Arrays.asList(new Challenge("Basic", "protected area")), response.challenges());
+    assertEquals(Arrays.asList(new Challenge("Basic", singletonMap("realm", "protected area"))), response.challenges());
   }
 
   @Test public void customTokenAuthenticator() throws Exception {
@@ -3217,7 +3219,7 @@ public final class URLConnectionTest {
 
     Response response = authenticator.onlyResponse();
     assertEquals("/private", response.request().url().url().getPath());
-    assertEquals(Arrays.asList(new Challenge("Bearer", "oauthed")), response.challenges());
+    assertEquals(Arrays.asList(new Challenge("Bearer", singletonMap("realm", "oauthed"))), response.challenges());
   }
 
   @Test public void authenticateCallsTrackedAsRedirects() throws Exception {

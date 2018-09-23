@@ -32,4 +32,9 @@ public class PlatformTest {
   public static String getPlatform() {
     return System.getProperty("okhttp.platform", "platform");
   }
+
+  @Test
+  public void testToStringIsClassname() {
+    assertEquals("Platform", new Platform().toString());
+  }
 }

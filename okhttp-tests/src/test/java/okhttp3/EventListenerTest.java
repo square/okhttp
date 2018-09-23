@@ -911,7 +911,6 @@ public final class EventListenerTest {
     assertNotNull(callFailed.ioe);
   }
 
-  @Ignore("the CallEnd event is omitted")
   @Test public void emptyResponseBody() throws IOException {
     server.enqueue(new MockResponse()
         .setBody("")
