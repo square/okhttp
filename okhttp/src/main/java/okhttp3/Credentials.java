@@ -16,6 +16,7 @@
 package okhttp3;
 
 import java.nio.charset.Charset;
+import javax.annotation.Nonnull;
 import okio.ByteString;
 
 import static okhttp3.internal.Util.ISO_8859_1;
@@ -26,11 +27,11 @@ public final class Credentials {
   }
 
   /** Returns an auth credential for the Basic scheme. */
-  public static String basic(String username, String password) {
+  public static @Nonnull String basic(String username, String password) {
     return basic(username, password, ISO_8859_1);
   }
 
-  public static String basic(String username, String password, Charset charset) {
+  public static @Nonnull String basic(String username, String password, Charset charset) {
     String usernameAndPassword = username + ":" + password;
     String encoded = ByteString.encodeString(usernameAndPassword, charset).base64();
     return "Basic " + encoded;
