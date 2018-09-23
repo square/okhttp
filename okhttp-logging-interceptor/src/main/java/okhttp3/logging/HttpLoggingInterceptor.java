@@ -125,8 +125,9 @@ public final class HttpLoggingInterceptor implements Interceptor {
   }
 
   public static class Builder {
-    private Set<String> headersToRedact = new LinkedHashSet();
     private Logger logger = Logger.DEFAULT;
+    private Set<String> headersToRedact = new LinkedHashSet();
+    private Level level = Level.NONE;
 
     public Builder logger(Logger logger) {
       this.logger = logger;
@@ -138,6 +139,11 @@ public final class HttpLoggingInterceptor implements Interceptor {
       return this;
     }
 
+    public Builder level(Level level) {
+      this.level = level;
+      return this;
+    }
+
     public HttpLoggingInterceptor build() {
       return new HttpLoggingInterceptor(this);
     }
@@ -146,6 +152,7 @@ public final class HttpLoggingInterceptor implements Interceptor {
   public HttpLoggingInterceptor(Builder builder) {
     this.headersToRedact = builder.headersToRedact;
     this.logger = builder.logger;
+    this.level = builder.level;
   }
 
   private final Logger logger;

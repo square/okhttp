@@ -751,14 +751,14 @@ public final class HttpLoggingInterceptorTest {
         new HttpLoggingInterceptor.Builder()
             .redactHeader("sEnSiTiVe")
             .logger(networkLogs)
-            .build()
-            .setLevel(Level.HEADERS);
+            .level(Level.HEADERS)
+            .build();
     HttpLoggingInterceptor applicationInterceptor =
         new HttpLoggingInterceptor.Builder()
             .redactHeader("sEnSiTiVe")
             .logger(applicationLogs)
-            .build()
-            .setLevel(Level.HEADERS);
+            .level(Level.HEADERS)
+            .build();
 
     client =
         new OkHttpClient.Builder()
