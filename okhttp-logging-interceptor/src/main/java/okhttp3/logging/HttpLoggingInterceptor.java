@@ -18,6 +18,8 @@ package okhttp3.logging;
 import java.io.EOFException;
 import java.io.IOException;
 import java.nio.charset.Charset;
+import java.util.LinkedHashSet;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import okhttp3.Connection;
 import okhttp3.Headers;
@@ -119,9 +121,36 @@ public final class HttpLoggingInterceptor implements Interceptor {
 
   public HttpLoggingInterceptor(Logger logger) {
     this.logger = logger;
+    this.headersToRedact = new LinkedHashSet();
+  }
+
+  public static class Builder {
+    private Set<String> headersToRedact = new LinkedHashSet();
+    private Logger logger = Logger.DEFAULT;
+
+    public Builder logger(Logger logger) {
+      this.logger = logger;
+      return this;
+    }
+
+    public Builder redactHeader(String name) {
+      headersToRedact.add(name.toLowerCase());
+      return this;
+    }
+
+    public HttpLoggingInterceptor build() {
+      return new HttpLoggingInterceptor(this);
+    }
+  }
+
+  public HttpLoggingInterceptor(Builder builder) {
+    this.headersToRedact = builder.headersToRedact;
+    this.logger = builder.logger;
   }
 
   private final Logger logger;
+
+  private final Set<String> headersToRedact;
 
   private volatile Level level = Level.NONE;
 
@@ -177,7 +206,7 @@ public final class HttpLoggingInterceptor implements Interceptor {
         String name = headers.name(i);
         // Skip headers from the request body as they are explicitly logged above.
         if (!"Content-Type".equalsIgnoreCase(name) && !"Content-Length".equalsIgnoreCase(name)) {
-          logger.log(name + ": " + headers.value(i));
+          logHeader(headers, i);
         }
       }
 
@@ -229,7 +258,7 @@ public final class HttpLoggingInterceptor implements Interceptor {
     if (logHeaders) {
       Headers headers = response.headers();
       for (int i = 0, count = headers.size(); i < count; i++) {
-        logger.log(headers.name(i) + ": " + headers.value(i));
+        logHeader(headers, i);
       }
 
       if (!logBody || !HttpHeaders.hasBody(response)) {
@@ -283,6 +312,12 @@ public final class HttpLoggingInterceptor implements Interceptor {
     }
 
     return response;
+  }
+
+  private void logHeader(Headers headers, int i) {
+    String value =
+        headersToRedact.contains(headers.name(i).toLowerCase()) ? "<redacted>" : headers.value(i);
+    logger.log(headers.name(i) + ": " + value);
   }
 
   /**

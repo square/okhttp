@@ -745,6 +745,68 @@ public final class HttpLoggingInterceptorTest {
         .assertNoMoreLogs();
   }
 
+  @Test
+  public void headersAreRedacted() throws Exception {
+    HttpLoggingInterceptor networkInterceptor =
+        new HttpLoggingInterceptor.Builder()
+            .redactHeader("sEnSiTiVe")
+            .logger(networkLogs)
+            .build()
+            .setLevel(Level.HEADERS);
+    HttpLoggingInterceptor applicationInterceptor =
+        new HttpLoggingInterceptor.Builder()
+            .redactHeader("sEnSiTiVe")
+            .logger(applicationLogs)
+            .build()
+            .setLevel(Level.HEADERS);
+
+    client =
+        new OkHttpClient.Builder()
+            .addNetworkInterceptor(networkInterceptor)
+            .addInterceptor(applicationInterceptor)
+            .build();
+
+    server.enqueue(
+        new MockResponse().addHeader("SeNsItIvE", "Value").addHeader("Not-Sensitive", "Value"));
+    Response response =
+        client
+            .newCall(
+                request()
+                    .addHeader("SeNsItIvE", "Value")
+                    .addHeader("Not-Sensitive", "Value")
+                    .build())
+            .execute();
+    response.body().close();
+
+    applicationLogs
+        .assertLogEqual("--> GET " + url)
+        .assertLogEqual("SeNsItIvE: <redacted>")
+        .assertLogEqual("Not-Sensitive: Value")
+        .assertLogEqual("--> END GET")
+        .assertLogMatch("<-- 200 OK " + url + " \\(\\d+ms\\)")
+        .assertLogEqual("Content-Length: 0")
+        .assertLogEqual("SeNsItIvE: <redacted>")
+        .assertLogEqual("Not-Sensitive: Value")
+        .assertLogEqual("<-- END HTTP")
+        .assertNoMoreLogs();
+
+    networkLogs
+        .assertLogEqual("--> GET " + url + " http/1.1")
+        .assertLogEqual("SeNsItIvE: <redacted>")
+        .assertLogEqual("Not-Sensitive: Value")
+        .assertLogEqual("Host: " + host)
+        .assertLogEqual("Connection: Keep-Alive")
+        .assertLogEqual("Accept-Encoding: gzip")
+        .assertLogMatch("User-Agent: okhttp/.+")
+        .assertLogEqual("--> END GET")
+        .assertLogMatch("<-- 200 OK " + url + " \\(\\d+ms\\)")
+        .assertLogEqual("Content-Length: 0")
+        .assertLogEqual("SeNsItIvE: <redacted>")
+        .assertLogEqual("Not-Sensitive: Value")
+        .assertLogEqual("<-- END HTTP")
+        .assertNoMoreLogs();
+  }
+
   private Request.Builder request() {
     return new Request.Builder().url(url);
   }
