@@ -749,10 +749,12 @@ public final class HttpLoggingInterceptorTest {
   @Test
   public void headersAreRedacted() throws Exception {
     HttpLoggingInterceptor networkInterceptor =
-        new HttpLoggingInterceptor(networkLogs, Arrays.asList("sEnSiTiVe")).setLevel(Level.HEADERS);
+        new HttpLoggingInterceptor(networkLogs).setLevel(Level.HEADERS);
+    networkInterceptor.redactHeader("sEnSiTiVe");
+
     HttpLoggingInterceptor applicationInterceptor =
-        new HttpLoggingInterceptor(applicationLogs, Arrays.asList("sEnSiTiVe"))
-            .setLevel(Level.HEADERS);
+        new HttpLoggingInterceptor(applicationLogs).setLevel(Level.HEADERS);
+    applicationInterceptor.redactHeader("sEnSiTiVe");
 
     client =
         new OkHttpClient.Builder()

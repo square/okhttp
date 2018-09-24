@@ -19,7 +19,6 @@ import java.io.EOFException;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.Collections;
-import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.TimeUnit;
@@ -122,18 +121,19 @@ public final class HttpLoggingInterceptor implements Interceptor {
   }
 
   public HttpLoggingInterceptor(Logger logger) {
-    this(logger, Collections.<String>emptyList());
-  }
-
-  public HttpLoggingInterceptor(Logger logger, List<String> headersToRedact) {
-    this.headersToRedact = new TreeSet(String.CASE_INSENSITIVE_ORDER);
-    this.headersToRedact.addAll(headersToRedact);
     this.logger = logger;
   }
 
   private final Logger logger;
 
-  private final Set<String> headersToRedact;
+  private volatile Set<String> headersToRedact = Collections.emptySet();
+
+  public void redactHeader(String name) {
+    Set<String> newHeadersToRedact = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
+    newHeadersToRedact.addAll(headersToRedact);
+    newHeadersToRedact.add(name);
+    headersToRedact = newHeadersToRedact;
+  }
 
   private volatile Level level = Level.NONE;
 
