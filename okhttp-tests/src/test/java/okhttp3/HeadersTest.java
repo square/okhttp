@@ -313,6 +313,46 @@ public final class HeadersTest {
     }
   }
 
+  @Test public void varargFactoryRejectsUnicodeInHeaderName() {
+    try {
+      Headers.of("héader1", "value1");
+      fail("Should have complained about invalid value");
+    } catch (IllegalArgumentException expected) {
+      assertEquals("Unexpected char 0xe9 at 1 in header name: héader1",
+          expected.getMessage());
+    }
+  }
+
+  @Test public void varargFactoryRejectsUnicodeInHeaderValue() {
+    try {
+      Headers.of("header1", "valué1");
+      fail("Should have complained about invalid value");
+    } catch (IllegalArgumentException expected) {
+      assertEquals("Unexpected char 0xe9 at 4 in header1 value: valué1",
+          expected.getMessage());
+    }
+  }
+
+  @Test public void mapFactoryRejectsUnicodeInHeaderName() {
+    try {
+      Headers.of(singletonMap("héader1", "value1"));
+      fail("Should have complained about invalid value");
+    } catch (IllegalArgumentException expected) {
+      assertEquals("Unexpected char 0xe9 at 1 in header name: héader1",
+          expected.getMessage());
+    }
+  }
+
+  @Test public void mapFactoryRejectsUnicodeInHeaderValue() {
+    try {
+      Headers.of(singletonMap("header1", "valué1"));
+      fail("Should have complained about invalid value");
+    } catch (IllegalArgumentException expected) {
+      assertEquals("Unexpected char 0xe9 at 4 in header1 value: valué1",
+          expected.getMessage());
+    }
+  }
+
   @Test public void headersEquals() {
     Headers headers1 = new Headers.Builder()
         .add("Connection", "close")

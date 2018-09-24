@@ -171,7 +171,7 @@ public final class MultipartBodyTest {
         + "\r\n"
         + "%22\r\n"
         + "--AaB03x\r\n"
-        + "Content-Disposition: form-data; name=\"field with \u0391\"\r\n"
+        + "Content-Disposition: form-data; name=\"field with \u007e\"\r\n"
         + "Content-Length: 5\r\n"
         + "\r\n"
         + "Alpha\r\n"
@@ -183,7 +183,7 @@ public final class MultipartBodyTest {
             RequestBody.create(MediaType.get("text/plain; charset=utf-8"), "okay"))
         .addFormDataPart("field with \"", "\"")
         .addFormDataPart("field with %22", "%22")
-        .addFormDataPart("field with \u0391", "Alpha")
+        .addFormDataPart("field with \u007e", "Alpha")
         .build();
 
     Buffer buffer = new Buffer();
