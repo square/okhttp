@@ -780,19 +780,19 @@ public final class HttpLoggingInterceptorTest {
 
     applicationLogs
         .assertLogEqual("--> GET " + url)
-        .assertLogEqual("SeNsItIvE: <redacted>")
+        .assertLogEqual("SeNsItIvE: ██")
         .assertLogEqual("Not-Sensitive: Value")
         .assertLogEqual("--> END GET")
         .assertLogMatch("<-- 200 OK " + url + " \\(\\d+ms\\)")
         .assertLogEqual("Content-Length: 0")
-        .assertLogEqual("SeNsItIvE: <redacted>")
+        .assertLogEqual("SeNsItIvE: ██")
         .assertLogEqual("Not-Sensitive: Value")
         .assertLogEqual("<-- END HTTP")
         .assertNoMoreLogs();
 
     networkLogs
         .assertLogEqual("--> GET " + url + " http/1.1")
-        .assertLogEqual("SeNsItIvE: <redacted>")
+        .assertLogEqual("SeNsItIvE: ██")
         .assertLogEqual("Not-Sensitive: Value")
         .assertLogEqual("Host: " + host)
         .assertLogEqual("Connection: Keep-Alive")
@@ -801,7 +801,7 @@ public final class HttpLoggingInterceptorTest {
         .assertLogEqual("--> END GET")
         .assertLogMatch("<-- 200 OK " + url + " \\(\\d+ms\\)")
         .assertLogEqual("Content-Length: 0")
-        .assertLogEqual("SeNsItIvE: <redacted>")
+        .assertLogEqual("SeNsItIvE: ██")
         .assertLogEqual("Not-Sensitive: Value")
         .assertLogEqual("<-- END HTTP")
         .assertNoMoreLogs();

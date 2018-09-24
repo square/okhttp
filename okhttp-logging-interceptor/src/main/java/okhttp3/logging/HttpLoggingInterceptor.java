@@ -324,9 +324,7 @@ public final class HttpLoggingInterceptor implements Interceptor {
 
   private void logHeader(Headers headers, int i) {
     String value =
-        headersToRedact.contains(headers.name(i).toLowerCase(Locale.US))
-            ? "<redacted>"
-            : headers.value(i);
+        headersToRedact.contains(headers.name(i).toLowerCase(Locale.US)) ? "██" : headers.value(i);
     logger.log(headers.name(i) + ": " + value);
   }
 
