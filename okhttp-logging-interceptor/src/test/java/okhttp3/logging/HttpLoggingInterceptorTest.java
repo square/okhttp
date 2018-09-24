@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.regex.Pattern;
 import javax.net.ssl.HostnameVerifier;
@@ -748,17 +749,10 @@ public final class HttpLoggingInterceptorTest {
   @Test
   public void headersAreRedacted() throws Exception {
     HttpLoggingInterceptor networkInterceptor =
-        new HttpLoggingInterceptor.Builder()
-            .redactHeader("sEnSiTiVe")
-            .logger(networkLogs)
-            .level(Level.HEADERS)
-            .build();
+        new HttpLoggingInterceptor(networkLogs, Arrays.asList("sEnSiTiVe")).setLevel(Level.HEADERS);
     HttpLoggingInterceptor applicationInterceptor =
-        new HttpLoggingInterceptor.Builder()
-            .redactHeader("sEnSiTiVe")
-            .logger(applicationLogs)
-            .level(Level.HEADERS)
-            .build();
+        new HttpLoggingInterceptor(applicationLogs, Arrays.asList("sEnSiTiVe"))
+            .setLevel(Level.HEADERS);
 
     client =
         new OkHttpClient.Builder()

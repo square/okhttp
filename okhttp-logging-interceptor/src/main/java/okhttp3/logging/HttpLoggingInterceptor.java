@@ -18,9 +18,10 @@ package okhttp3.logging;
 import java.io.EOFException;
 import java.io.IOException;
 import java.nio.charset.Charset;
-import java.util.LinkedHashSet;
-import java.util.Locale;
+import java.util.Collections;
+import java.util.List;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.concurrent.TimeUnit;
 import okhttp3.Connection;
 import okhttp3.Headers;
@@ -121,39 +122,13 @@ public final class HttpLoggingInterceptor implements Interceptor {
   }
 
   public HttpLoggingInterceptor(Logger logger) {
+    this(logger, Collections.<String>emptyList());
+  }
+
+  public HttpLoggingInterceptor(Logger logger, List<String> headersToRedact) {
+    this.headersToRedact = new TreeSet(String.CASE_INSENSITIVE_ORDER);
+    this.headersToRedact.addAll(headersToRedact);
     this.logger = logger;
-    this.headersToRedact = new LinkedHashSet();
-  }
-
-  public static class Builder {
-    private Logger logger = Logger.DEFAULT;
-    private Set<String> headersToRedact = new LinkedHashSet();
-    private Level level = Level.NONE;
-
-    public Builder logger(Logger logger) {
-      this.logger = logger;
-      return this;
-    }
-
-    public Builder redactHeader(String name) {
-      headersToRedact.add(name.toLowerCase(Locale.US));
-      return this;
-    }
-
-    public Builder level(Level level) {
-      this.level = level;
-      return this;
-    }
-
-    public HttpLoggingInterceptor build() {
-      return new HttpLoggingInterceptor(this);
-    }
-  }
-
-  public HttpLoggingInterceptor(Builder builder) {
-    this.headersToRedact = builder.headersToRedact;
-    this.logger = builder.logger;
-    this.level = builder.level;
   }
 
   private final Logger logger;
@@ -323,8 +298,7 @@ public final class HttpLoggingInterceptor implements Interceptor {
   }
 
   private void logHeader(Headers headers, int i) {
-    String value =
-        headersToRedact.contains(headers.name(i).toLowerCase(Locale.US)) ? "██" : headers.value(i);
+    String value = headersToRedact.contains(headers.name(i)) ? "██" : headers.value(i);
     logger.log(headers.name(i) + ": " + value);
   }
 
