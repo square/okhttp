@@ -220,9 +220,7 @@ public final class Headers {
     for (int i = 0; i < namesAndValues.length; i += 2) {
       String name = namesAndValues[i];
       String value = namesAndValues[i + 1];
-      if (name.length() == 0 || name.indexOf('\0') != -1 || value.indexOf('\0') != -1) {
-        throw new IllegalArgumentException("Unexpected header: " + name + ": " + value);
-      }
+      checkNameAndValue(name, value);
     }
 
     return new Headers(namesAndValues);
@@ -243,15 +241,33 @@ public final class Headers {
       }
       String name = header.getKey().trim();
       String value = header.getValue().trim();
-      if (name.length() == 0 || name.indexOf('\0') != -1 || value.indexOf('\0') != -1) {
-        throw new IllegalArgumentException("Unexpected header: " + name + ": " + value);
-      }
+      checkNameAndValue(name, value);
       namesAndValues[i] = name;
       namesAndValues[i + 1] = value;
       i += 2;
     }
 
     return new Headers(namesAndValues);
+  }
+
+  static void checkNameAndValue(String name, String value) {
+    if (name == null) throw new NullPointerException("name == null");
+    if (name.isEmpty()) throw new IllegalArgumentException("name is empty");
+    for (int i = 0, length = name.length(); i < length; i++) {
+      char c = name.charAt(i);
+      if (c <= '\u0020' || c >= '\u007f') {
+        throw new IllegalArgumentException(Util.format(
+            "Unexpected char %#04x at %d in header name: %s", (int) c, i, name));
+      }
+    }
+    if (value == null) throw new NullPointerException("value for name " + name + " == null");
+    for (int i = 0, length = value.length(); i < length; i++) {
+      char c = value.charAt(i);
+      if ((c <= '\u001f' && c != '\t') || c >= '\u007f') {
+        throw new IllegalArgumentException(Util.format(
+            "Unexpected char %#04x at %d in %s value: %s", (int) c, i, name, value));
+      }
+    }
   }
 
   public static final class Builder {
@@ -333,26 +349,6 @@ public final class Headers {
       removeAll(name);
       addLenient(name, value);
       return this;
-    }
-
-    private void checkNameAndValue(String name, String value) {
-      if (name == null) throw new NullPointerException("name == null");
-      if (name.isEmpty()) throw new IllegalArgumentException("name is empty");
-      for (int i = 0, length = name.length(); i < length; i++) {
-        char c = name.charAt(i);
-        if (c <= '\u0020' || c >= '\u007f') {
-          throw new IllegalArgumentException(Util.format(
-              "Unexpected char %#04x at %d in header name: %s", (int) c, i, name));
-        }
-      }
-      if (value == null) throw new NullPointerException("value for name " + name + " == null");
-      for (int i = 0, length = value.length(); i < length; i++) {
-        char c = value.charAt(i);
-        if ((c <= '\u001f' && c != '\t') || c >= '\u007f') {
-          throw new IllegalArgumentException(Util.format(
-              "Unexpected char %#04x at %d in %s value: %s", (int) c, i, name, value));
-        }
-      }
     }
 
     /** Equivalent to {@code build().get(name)}, but potentially faster. */
