@@ -28,6 +28,7 @@ import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509KeyManager;
 import javax.net.ssl.X509TrustManager;
+import jdk.internal.jline.internal.Nullable;
 import okhttp3.CertificatePinner;
 import okhttp3.internal.Util;
 import okhttp3.internal.platform.Platform;
@@ -110,8 +111,8 @@ public final class HandshakeCertificates {
   }
 
   public static final class Builder {
-    private HeldCertificate heldCertificate;
-    private X509Certificate[] intermediates;
+    private @Nullable HeldCertificate heldCertificate;
+    private @Nullable X509Certificate[] intermediates;
 
     private final List<X509Certificate> trustedCertificates = new ArrayList<>();
 
