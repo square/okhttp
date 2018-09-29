@@ -204,18 +204,6 @@ public final class Headers {
    * arguments, and they must alternate between header names and values.
    */
   public static Headers of(String... namesAndValues) {
-    return of(true, namesAndValues);
-  }
-
-  /**
-   * Returns headers for the alternating header names and values, allowing non-ASCII values. There
-   * must be an even number of arguments, and they must alternate between header names and values.
-   */
-  public static Headers ofNonAscii(String... namesAndValues) {
-    return of(false, namesAndValues);
-  }
-
-  private static Headers of(boolean checkValues, String... namesAndValues) {
     if (namesAndValues == null) throw new NullPointerException("namesAndValues == null");
     if (namesAndValues.length % 2 != 0) {
       throw new IllegalArgumentException("Expected alternating header names and values");
@@ -233,9 +221,7 @@ public final class Headers {
       String name = namesAndValues[i];
       String value = namesAndValues[i + 1];
       checkName(name);
-      if (checkValues) {
-        checkValue(value, name);
-      }
+      checkValue(value, name);
     }
 
     return new Headers(namesAndValues);
@@ -245,17 +231,6 @@ public final class Headers {
    * Returns headers for the header names and values in the {@link Map}.
    */
   public static Headers of(Map<String, String> headers) {
-    return of(true, headers);
-  }
-
-  /**
-   * Returns headers for the header names and values in the {@link Map}, allowing non-ASCII values.
-   */
-  public static Headers ofNonAscii(Map<String, String> headers) {
-    return of(false, headers);
-  }
-
-  private static Headers of(boolean checkValues, Map<String, String> headers) {
     if (headers == null) throw new NullPointerException("headers == null");
 
     // Make a defensive copy and clean it up.
@@ -268,9 +243,7 @@ public final class Headers {
       String name = header.getKey().trim();
       String value = header.getValue().trim();
       checkName(name);
-      if (checkValues) {
-        checkValue(value, name);
-      }
+      checkValue(value, name);
       namesAndValues[i] = name;
       namesAndValues[i + 1] = value;
       i += 2;
@@ -337,6 +310,15 @@ public final class Headers {
     public Builder add(String name, String value) {
       checkName(name);
       checkValue(value, name);
+      return addLenient(name, value);
+    }
+
+    /**
+     * Add a header with the specified name and value. Does validation of header names, allowing
+     * non-ASCII values.
+     */
+    public Builder addUnsafeNonAscii(String name, String value) {
+      checkName(name);
       return addLenient(name, value);
     }
 

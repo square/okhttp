@@ -121,6 +121,25 @@ public final class HeadersTest {
     }
   }
 
+  @Test public void addUnsafeNonAsciiRejectsUnicodeName() {
+    try {
+      Headers headers = new Headers.Builder()
+          .addUnsafeNonAscii("héader1", "value1")
+          .build();
+      fail("Should have complained about invalid value");
+    } catch (IllegalArgumentException expected) {
+      assertEquals("Unexpected char 0xe9 at 1 in header name: héader1",
+          expected.getMessage());
+    }
+  }
+
+  @Test public void addUnsafeNonAsciiAcceptsUnicodeValue() {
+    Headers headers = new Headers.Builder()
+        .addUnsafeNonAscii("header1", "valué1")
+        .build();
+    assertEquals("header1: valué1\n", headers.toString());
+  }
+
   @Test public void ofThrowsOddNumberOfHeaders() {
     try {
       Headers.of("User-Agent", "OkHttp", "Content-Length");
@@ -351,36 +370,6 @@ public final class HeadersTest {
       assertEquals("Unexpected char 0xe9 at 4 in header1 value: valué1",
           expected.getMessage());
     }
-  }
-
-  @Test public void varargNonAsciiFactoryRejectsUnicodeInHeaderName() {
-    try {
-      Headers.ofNonAscii("héader1", "value1");
-      fail("Should have complained about invalid value");
-    } catch (IllegalArgumentException expected) {
-      assertEquals("Unexpected char 0xe9 at 1 in header name: héader1",
-          expected.getMessage());
-    }
-  }
-
-  @Test public void varargNonAsciiFactoryAcceptsUnicodeInHeaderValue() {
-    Headers headers = Headers.ofNonAscii("header1", "valué1");
-    assertEquals("header1: valué1\n", headers.toString());
-  }
-
-  @Test public void mapNonAsciiFactoryRejectsUnicodeInHeaderName() {
-    try {
-      Headers.ofNonAscii(singletonMap("héader1", "value1"));
-      fail("Should have complained about invalid value");
-    } catch (IllegalArgumentException expected) {
-      assertEquals("Unexpected char 0xe9 at 1 in header name: héader1",
-          expected.getMessage());
-    }
-  }
-
-  @Test public void mapNonAsciiFactoryAcceptsUnicodeInHeaderValue() {
-    Headers headers = Headers.ofNonAscii(singletonMap("header1", "valué1"));
-    assertEquals("header1: valué1\n", headers.toString());
   }
 
   @Test public void headersEquals() {
