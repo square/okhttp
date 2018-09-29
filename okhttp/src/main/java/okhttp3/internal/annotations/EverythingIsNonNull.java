@@ -24,8 +24,7 @@ import javax.annotation.Nonnull;
 import javax.annotation.meta.TypeQualifierDefault;
 
 /**
- * Extends {@code ParametersAreNonnullByDefault} to also apply to Method results,
- * local variables and fields.
+ * Extends {@code ParametersAreNonnullByDefault} to also apply to Method results and fields.
  *
  * @see javax.annotation.ParametersAreNonnullByDefault
  */
