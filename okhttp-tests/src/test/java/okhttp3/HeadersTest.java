@@ -353,6 +353,36 @@ public final class HeadersTest {
     }
   }
 
+  @Test public void varargNonAsciiFactoryRejectsUnicodeInHeaderName() {
+    try {
+      Headers.ofNonAscii("héader1", "value1");
+      fail("Should have complained about invalid value");
+    } catch (IllegalArgumentException expected) {
+      assertEquals("Unexpected char 0xe9 at 1 in header name: héader1",
+          expected.getMessage());
+    }
+  }
+
+  @Test public void varargNonAsciiFactoryAcceptsUnicodeInHeaderValue() {
+    Headers headers = Headers.ofNonAscii("header1", "valué1");
+    assertEquals("header1: valué1\n", headers.toString());
+  }
+
+  @Test public void mapNonAsciiFactoryRejectsUnicodeInHeaderName() {
+    try {
+      Headers.ofNonAscii(singletonMap("héader1", "value1"));
+      fail("Should have complained about invalid value");
+    } catch (IllegalArgumentException expected) {
+      assertEquals("Unexpected char 0xe9 at 1 in header name: héader1",
+          expected.getMessage());
+    }
+  }
+
+  @Test public void mapNonAsciiFactoryAcceptsUnicodeInHeaderValue() {
+    Headers headers = Headers.ofNonAscii(singletonMap("header1", "valué1"));
+    assertEquals("header1: valué1\n", headers.toString());
+  }
+
   @Test public void headersEquals() {
     Headers headers1 = new Headers.Builder()
         .add("Connection", "close")
