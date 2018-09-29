@@ -34,7 +34,6 @@ import javax.annotation.meta.TypeQualifierDefault;
 @TypeQualifierDefault({
     ElementType.FIELD,
     ElementType.METHOD,
-    ElementType.LOCAL_VARIABLE,
     ElementType.PARAMETER
 })
 @Retention(RetentionPolicy.RUNTIME)
