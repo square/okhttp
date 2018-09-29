@@ -1,13 +1,7 @@
 language: java
 
 jdk:
-  - oraclejdk8
-#  - openjdk11
-
-addons:
-  apt:
-    packages:
-      - oracle-java8-installer # Updates JDK 8 to the latest available.
+  - openjdk11
 
 script: mvn test javadoc:jar source:jar -B
 
