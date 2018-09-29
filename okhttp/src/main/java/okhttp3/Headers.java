@@ -220,7 +220,8 @@ public final class Headers {
     for (int i = 0; i < namesAndValues.length; i += 2) {
       String name = namesAndValues[i];
       String value = namesAndValues[i + 1];
-      checkNameAndValue(name, value);
+      checkName(name);
+      checkValue(value, name);
     }
 
     return new Headers(namesAndValues);
@@ -241,7 +242,8 @@ public final class Headers {
       }
       String name = header.getKey().trim();
       String value = header.getValue().trim();
-      checkNameAndValue(name, value);
+      checkName(name);
+      checkValue(value, name);
       namesAndValues[i] = name;
       namesAndValues[i + 1] = value;
       i += 2;
@@ -250,7 +252,7 @@ public final class Headers {
     return new Headers(namesAndValues);
   }
 
-  static void checkNameAndValue(String name, String value) {
+  static void checkName(String name) {
     if (name == null) throw new NullPointerException("name == null");
     if (name.isEmpty()) throw new IllegalArgumentException("name is empty");
     for (int i = 0, length = name.length(); i < length; i++) {
@@ -260,6 +262,9 @@ public final class Headers {
             "Unexpected char %#04x at %d in header name: %s", (int) c, i, name));
       }
     }
+  }
+
+  static void checkValue(String value, String name) {
     if (value == null) throw new NullPointerException("value for name " + name + " == null");
     for (int i = 0, length = value.length(); i < length; i++) {
       char c = value.charAt(i);
@@ -303,7 +308,17 @@ public final class Headers {
      * Add a header with the specified name and value. Does validation of header names and values.
      */
     public Builder add(String name, String value) {
-      checkNameAndValue(name, value);
+      checkName(name);
+      checkValue(value, name);
+      return addLenient(name, value);
+    }
+
+    /**
+     * Add a header with the specified name and value. Does validation of header names, allowing
+     * non-ASCII values.
+     */
+    public Builder addUnsafeNonAscii(String name, String value) {
+      checkName(name);
       return addLenient(name, value);
     }
 
@@ -345,7 +360,8 @@ public final class Headers {
      * found, the existing values are replaced.
      */
     public Builder set(String name, String value) {
-      checkNameAndValue(name, value);
+      checkName(name);
+      checkValue(value, name);
       removeAll(name);
       addLenient(name, value);
       return this;
