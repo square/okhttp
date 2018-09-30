@@ -1,5 +1,3 @@
 /** An OkHttp interceptor which logs HTTP request and response data. */
-@EverythingIsNonNull
+@okhttp3.internal.annotations.EverythingIsNonNull
 package okhttp3.logging;
-
-import okhttp3.internal.annotations.EverythingIsNonNull;
