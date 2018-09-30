@@ -18,6 +18,7 @@ package okhttp3;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import javax.annotation.Nullable;
 import okhttp3.internal.NamedRunnable;
 import okhttp3.internal.cache.CacheInterceptor;
 import okhttp3.internal.connection.ConnectInterceptor;
@@ -38,7 +39,7 @@ final class RealCall implements Call {
    * There is a cycle between the {@link Call} and {@link EventListener} that makes this awkward.
    * This will be set after we create the call instance then create the event listener instance.
    */
-  private EventListener eventListener;
+  private @Nullable EventListener eventListener;
 
   /** The application's original request unadulterated by redirects or auth headers. */
   final Request originalRequest;

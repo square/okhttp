@@ -102,7 +102,7 @@ import static okhttp3.internal.Util.UTF_8;
  */
 public abstract class ResponseBody implements Closeable {
   /** Multiple calls to {@link #charStream()} must return the same instance. */
-  private Reader reader;
+  private @Nullable Reader reader;
 
   public abstract @Nullable MediaType contentType();
 
@@ -241,7 +241,7 @@ public abstract class ResponseBody implements Closeable {
     private final Charset charset;
 
     private boolean closed;
-    private Reader delegate;
+    private @Nullable Reader delegate;
 
     BomAwareReader(BufferedSource source, Charset charset) {
       this.source = source;

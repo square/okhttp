@@ -54,7 +54,7 @@ public final class Response implements Closeable {
   final long sentRequestAtMillis;
   final long receivedResponseAtMillis;
 
-  private volatile CacheControl cacheControl; // Lazily initialized.
+  private volatile @Nullable CacheControl cacheControl; // Lazily initialized.
 
   Response(Builder builder) {
     this.request = builder.request;
@@ -302,16 +302,16 @@ public final class Response implements Closeable {
   }
 
   public static class Builder {
-    Request request;
-    Protocol protocol;
+    @Nullable Request request;
+    @Nullable Protocol protocol;
     int code = -1;
     String message;
     @Nullable Handshake handshake;
     Headers.Builder headers;
-    ResponseBody body;
-    Response networkResponse;
-    Response cacheResponse;
-    Response priorResponse;
+    @Nullable ResponseBody body;
+    @Nullable Response networkResponse;
+    @Nullable Response cacheResponse;
+    @Nullable Response priorResponse;
     long sentRequestAtMillis;
     long receivedResponseAtMillis;
 

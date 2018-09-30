@@ -1,3 +1,3 @@
 /** Support for server-sent events. */
-@javax.annotation.ParametersAreNonnullByDefault
+@okhttp3.internal.annotations.EverythingIsNonNull
 package okhttp3.sse;

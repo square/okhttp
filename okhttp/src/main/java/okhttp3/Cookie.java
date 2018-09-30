@@ -458,10 +458,10 @@ public final class Cookie {
    * #domain() domain} values must all be set before calling {@link #build}.
    */
   public static final class Builder {
-    String name;
-    String value;
+    @Nullable String name;
+    @Nullable String value;
     long expiresAt = HttpDate.MAX_DATE;
-    String domain;
+    @Nullable String domain;
     String path = "/";
     boolean secure;
     boolean httpOnly;

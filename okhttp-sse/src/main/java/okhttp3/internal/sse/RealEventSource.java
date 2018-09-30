@@ -35,7 +35,7 @@ public final class RealEventSource
   private final Request request;
   private final EventSourceListener listener;
 
-  private Call call;
+  private @Nullable Call call;
 
   public RealEventSource(Request request, EventSourceListener listener) {
     this.request = request;
