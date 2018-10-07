@@ -269,8 +269,13 @@ public final class Headers {
     for (int i = 0, length = value.length(); i < length; i++) {
       char c = value.charAt(i);
       if ((c <= '\u001f' && c != '\t') || c >= '\u007f') {
-        throw new IllegalArgumentException(Util.format(
-            "Unexpected char %#04x at %d in %s value: %s", (int) c, i, name, value));
+        if(c == '\u0131'){
+			    value = value.replace('\u0131', '\u0069');
+		    }
+		    else{
+			    throw new IllegalArgumentException(Util.format(
+				    "Unexpected char %#04x at %d in %s value: %s", (int) c, i, name, value));
+		    }
       }
     }
   }
