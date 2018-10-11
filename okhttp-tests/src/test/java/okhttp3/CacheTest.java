@@ -2522,6 +2522,10 @@ public final class CacheTest {
     return server.takeRequest(); // conditional get
   }
 
+  /**
+   * No cache control directive is specified and therefore no cached response
+   * should be used.
+   */
   @Test public void immutableOnlyCacheControlNotCached() throws Exception {
     server.enqueue(new MockResponse()
             .addHeader("Cache-Control", "immutable")
@@ -2533,68 +2537,26 @@ public final class CacheTest {
     assertEquals("A", get(url).body().string());
     assertEquals("B", get(url).body().string());
   }
-
-  @Test public void immutableDoesNotSendIfModifiedSinceCacheCondition() throws Exception {
-    server.enqueue(new MockResponse()
-            .addHeader("Date:" + formatDate(0, TimeUnit.HOURS))
-            .addHeader("Last-Modified:" + formatDate(-1,TimeUnit.DAYS))
+  /**
+   * No cache control directive is specified in the header. The default response freshness has expired.
+   * The server should be conditional requested for the content again.
+   */
+  @Test public void conditionalRequestSentWhenImmutableAndNoCacheLifetimeSet() throws Exception {
+    String lastModified = formatDate(-1,TimeUnit.DAYS);
+    MockResponse response = new MockResponse()
+            .addHeader("Date:" + formatDate(-3, TimeUnit.HOURS))
+            .addHeader("Last-Modified:" + lastModified)
             .addHeader("Cache-Control", "immutable")
-            .setBody("A"));
-    server.enqueue(new MockResponse().setBody("B"));
+            .setBody("A");
+    server.enqueue(response);
+    server.enqueue(response.setBody("B"));
 
     HttpUrl url = server.url("/");
     assertEquals("A", get(url).body().string());
     assertEquals("B", get(url).body().string());
 
-    server.takeRequest();
     assertNull(server.takeRequest().getHeader("If-Modified-Since"));
-  }
-  
-  @Test public void immutableDoesNotSendIfNoneMatchCacheCondition() throws Exception {
-    server.enqueue(new MockResponse()
-            .addHeader("Date:" + formatDate(0, TimeUnit.HOURS))
-            .addHeader("ETag: v1")
-            .addHeader("Cache-Control", "immutable")
-            .setBody("A"));
-    server.enqueue(new MockResponse().setBody("B"));
-
-    HttpUrl url = server.url("/");
-    assertEquals("A", get(url).body().string());
-    assertEquals("B", get(url).body().string());
-
-    server.takeRequest();
-    assertNull(server.takeRequest().getHeader("If-None-Match"));
-  }
-
-@Test public void immutableMaxAgeCacheControlRespectsFreshness() throws Exception {
-    server.enqueue(new MockResponse()
-            .addHeader("Date:" + formatDate(0, TimeUnit.HOURS))
-            .addHeader("Last-Modified:" + formatDate(-1,TimeUnit.DAYS))
-            .addHeader("Cache-Control", "max-age=60, immutable")
-            .setBody("A"));
-    server.enqueue(new MockResponse()
-            .setBody("B"));
-
-    HttpUrl url = server.url("/");
-    assertEquals("A", get(url).body().string());
-    assertEquals("A", get(url).body().string());
-  }
-
-  @Test public void immutableMaxAgeCacheControlDoesNotSendCacheConditionWhenStale() throws Exception {
-    server.enqueue(new MockResponse()
-            .addHeader("Date:" + formatDate(-1, TimeUnit.HOURS))
-            .addHeader("Last-Modified:" + formatDate(-1,TimeUnit.DAYS))
-            .addHeader("Cache-Control", "max-age=30, immutable")
-            .setBody("A"));
-    server.enqueue(new MockResponse()
-            .setBody("B"));
-
-    HttpUrl url = server.url("/");
-    assertEquals("A", get(url).body().string());
-    assertEquals("B", get(url).body().string());
-
-    server.takeRequest();
-    assertNull(server.takeRequest().getHeader("If-None-Match"));
+    assertEquals(lastModified,server.takeRequest().getHeader("If-Modified-Since"));
   }
 
   private void assertFullyCached(MockResponse response) throws Exception {
