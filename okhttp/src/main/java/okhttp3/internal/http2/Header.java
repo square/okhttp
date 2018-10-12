@@ -15,6 +15,7 @@
  */
 package okhttp3.internal.http2;
 
+import java.util.List;
 import okhttp3.internal.Util;
 import okio.ByteString;
 
@@ -67,5 +68,10 @@ public final class Header {
 
   @Override public String toString() {
     return Util.format("%s: %s", name.utf8(), value.utf8());
+  }
+
+  // TODO(jwilson): move this to Headers?
+  interface Listener {
+    void onHeaders(List<Header> headers);
   }
 }
