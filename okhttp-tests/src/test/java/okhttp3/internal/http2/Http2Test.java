@@ -17,8 +17,8 @@ package okhttp3.internal.http2;
 
 import java.io.IOException;
 import java.util.Arrays;
-import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
+import okhttp3.Headers;
 import okhttp3.internal.Util;
 import okio.Buffer;
 import okio.BufferedSink;
@@ -28,7 +28,6 @@ import okio.GzipSink;
 import okio.Okio;
 import org.junit.Test;
 
-import static okhttp3.TestUtil.headerEntries;
 import static okhttp3.internal.http2.Http2.FLAG_COMPRESSED;
 import static okhttp3.internal.http2.Http2.FLAG_END_HEADERS;
 import static okhttp3.internal.http2.Http2.FLAG_END_STREAM;
@@ -56,7 +55,7 @@ public final class Http2Test {
   }
 
   @Test public void onlyOneLiteralHeadersFrame() throws IOException {
-    final List<Header> sentHeaders = headerEntries("name", "value");
+    final Headers sentHeaders = Headers.of("name", "value");
 
     Buffer headerBytes = literalHeaders(sentHeaders);
     writeMedium(frame, (int) headerBytes.size());
@@ -69,7 +68,7 @@ public final class Http2Test {
 
     reader.nextFrame(false, new BaseTestHandler() {
       @Override public void headers(boolean inFinished, int streamId,
-          int associatedStreamId, List<Header> headerBlock) {
+          int associatedStreamId, Headers headerBlock) {
         assertTrue(inFinished);
         assertEquals(expectedStreamId, streamId);
         assertEquals(-1, associatedStreamId);
@@ -79,7 +78,7 @@ public final class Http2Test {
   }
 
   @Test public void headersWithPriority() throws IOException {
-    final List<Header> sentHeaders = headerEntries("name", "value");
+    final Headers sentHeaders = Headers.of("name", "value");
 
     Buffer headerBytes = literalHeaders(sentHeaders);
     writeMedium(frame, (int) (headerBytes.size() + 5));
@@ -99,7 +98,7 @@ public final class Http2Test {
       }
 
       @Override public void headers(boolean inFinished, int streamId,
-          int associatedStreamId, List<Header> nameValueBlock) {
+          int associatedStreamId, Headers nameValueBlock) {
         assertFalse(inFinished);
         assertEquals(expectedStreamId, streamId);
         assertEquals(-1, associatedStreamId);
@@ -110,7 +109,7 @@ public final class Http2Test {
 
   /** Headers are compressed, then framed. */
   @Test public void headersFrameThenContinuation() throws IOException {
-    final List<Header> sentHeaders = largeHeaders();
+    final Headers sentHeaders = largeHeaders();
 
     Buffer headerBlock = literalHeaders(sentHeaders);
 
@@ -133,7 +132,7 @@ public final class Http2Test {
     // Reading the above frames should result in a concatenated headerBlock.
     reader.nextFrame(false, new BaseTestHandler() {
       @Override public void headers(boolean inFinished, int streamId,
-          int associatedStreamId, List<Header> headerBlock) {
+          int associatedStreamId, Headers headerBlock) {
         assertFalse(inFinished);
         assertEquals(expectedStreamId, streamId);
         assertEquals(-1, associatedStreamId);
@@ -145,11 +144,11 @@ public final class Http2Test {
   @Test public void pushPromise() throws IOException {
     final int expectedPromisedStreamId = 11;
 
-    final List<Header> pushPromise = Arrays.asList(
-        new Header(Header.TARGET_METHOD, "GET"),
-        new Header(Header.TARGET_SCHEME, "https"),
-        new Header(Header.TARGET_AUTHORITY, "squareup.com"),
-        new Header(Header.TARGET_PATH, "/")
+    final Headers pushPromise = Headers.of(
+        Http2.TARGET_METHOD, "GET",
+        Http2.TARGET_SCHEME, "https",
+        Http2.TARGET_AUTHORITY, "squareup.com",
+        Http2.TARGET_PATH, "/"
     );
 
     // Write the push promise frame, specifying the associated stream ID.
@@ -165,7 +164,7 @@ public final class Http2Test {
 
     reader.nextFrame(false, new BaseTestHandler() {
       @Override
-      public void pushPromise(int streamId, int promisedStreamId, List<Header> headerBlock) {
+      public void pushPromise(int streamId, int promisedStreamId, Headers headerBlock) {
         assertEquals(expectedStreamId, streamId);
         assertEquals(expectedPromisedStreamId, promisedStreamId);
         assertEquals(pushPromise, headerBlock);
@@ -176,7 +175,7 @@ public final class Http2Test {
   /** Headers are compressed, then framed. */
   @Test public void pushPromiseThenContinuation() throws IOException {
     final int expectedPromisedStreamId = 11;
-    final List<Header> pushPromise = largeHeaders();
+    final Headers pushPromise = largeHeaders();
 
     // Decoding the first header will cross frame boundaries.
     Buffer headerBlock = literalHeaders(pushPromise);
@@ -201,7 +200,7 @@ public final class Http2Test {
     // Reading the above frames should result in a concatenated headerBlock.
     reader.nextFrame(false, new BaseTestHandler() {
       @Override
-      public void pushPromise(int streamId, int promisedStreamId, List<Header> headerBlock) {
+      public void pushPromise(int streamId, int promisedStreamId, Headers headerBlock) {
         assertEquals(expectedStreamId, streamId);
         assertEquals(expectedPromisedStreamId, promisedStreamId);
         assertEquals(pushPromise, headerBlock);
@@ -487,7 +486,7 @@ public final class Http2Test {
     byte[] padding = new byte[paddingLength];
     Arrays.fill(padding, (byte) 0);
 
-    Buffer headerBlock = literalHeaders(headerEntries("foo", "barrr", "baz", "qux"));
+    Buffer headerBlock = literalHeaders(Headers.of("foo", "barrr", "baz", "qux"));
     writeMedium(frame, (int) headerBlock.size() + paddingLength + 1);
     frame.writeByte(Http2.TYPE_HEADERS);
     frame.writeByte(FLAG_END_HEADERS | FLAG_PADDED);
@@ -501,7 +500,7 @@ public final class Http2Test {
   }
 
   @Test public void readPaddedHeadersFrameZeroPadding() throws IOException {
-    Buffer headerBlock = literalHeaders(headerEntries("foo", "barrr", "baz", "qux"));
+    Buffer headerBlock = literalHeaders(Headers.of("foo", "barrr", "baz", "qux"));
     writeMedium(frame, (int) headerBlock.size() + 1);
     frame.writeByte(Http2.TYPE_HEADERS);
     frame.writeByte(FLAG_END_HEADERS | FLAG_PADDED);
@@ -519,7 +518,7 @@ public final class Http2Test {
     Arrays.fill(padding, (byte) 0);
 
     // Decoding the first header will cross frame boundaries.
-    Buffer headerBlock = literalHeaders(headerEntries("foo", "barrr", "baz", "qux"));
+    Buffer headerBlock = literalHeaders(Headers.of("foo", "barrr", "baz", "qux"));
 
     // Write the first headers frame.
     writeMedium(frame, (int) (headerBlock.size() / 2) + paddingLength + 1);
@@ -672,19 +671,19 @@ public final class Http2Test {
     }
   }
 
-  private Buffer literalHeaders(List<Header> sentHeaders) throws IOException {
+  private Buffer literalHeaders(Headers sentHeaders) throws IOException {
     Buffer out = new Buffer();
     new Hpack.Writer(out).writeHeaders(sentHeaders);
     return out;
   }
 
-  private Buffer sendHeaderFrames(boolean outFinished, List<Header> headers) throws IOException {
+  private Buffer sendHeaderFrames(boolean outFinished, Headers headers) throws IOException {
     Buffer out = new Buffer();
     new Http2Writer(out, true).headers(outFinished, expectedStreamId, headers);
     return out;
   }
 
-  private Buffer sendPushPromiseFrames(int streamId, List<Header> headers) throws IOException {
+  private Buffer sendPushPromiseFrames(int streamId, Headers headers) throws IOException {
     Buffer out = new Buffer();
     new Http2Writer(out, true).pushPromise(expectedStreamId, streamId, headers);
     return out;
@@ -719,11 +718,11 @@ public final class Http2Test {
   private Http2Reader.Handler assertHeaderBlock() {
     return new BaseTestHandler() {
       @Override public void headers(boolean inFinished, int streamId,
-          int associatedStreamId, List<Header> headerBlock) {
+          int associatedStreamId, Headers headerBlock) {
         assertFalse(inFinished);
         assertEquals(expectedStreamId, streamId);
         assertEquals(-1, associatedStreamId);
-        assertEquals(headerEntries("foo", "barrr", "baz", "qux"), headerBlock);
+        assertEquals(Headers.of("foo", "barrr", "baz", "qux"), headerBlock);
       }
     };
   }
@@ -750,14 +749,14 @@ public final class Http2Test {
   }
 
   /** Create a sufficiently large header set to overflow INITIAL_MAX_FRAME_SIZE bytes. */
-  private static List<Header> largeHeaders() {
+  private static Headers largeHeaders() {
     String[] nameValues = new String[32];
-    char[] chars = new char[512];
+    char[] chars = new char[1024];
     for (int i = 0; i < nameValues.length; ) {
-      Arrays.fill(chars, (char) i);
+      Arrays.fill(chars, (char) ('a' + i % 26));
       nameValues[i++] = nameValues[i++] = String.valueOf(chars);
     }
-    return headerEntries(nameValues);
+    return Headers.of(nameValues);
   }
 
   private static void writeMedium(BufferedSink sink, int i) throws IOException {

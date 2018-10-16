@@ -16,7 +16,7 @@
 package okhttp3.internal.http2;
 
 import java.io.IOException;
-import java.util.List;
+import okhttp3.Headers;
 import okhttp3.Protocol;
 import okio.BufferedSource;
 
@@ -46,7 +46,7 @@ public interface PushObserver {
    * @param requestHeaders minimally includes {@code :method}, {@code :scheme}, {@code :authority},
    * and {@code :path}.
    */
-  boolean onRequest(int streamId, List<Header> requestHeaders);
+  boolean onRequest(int streamId, Headers requestHeaders);
 
   /**
    * The response headers corresponding to a pushed request.  When {@code last} is true, there are
@@ -56,7 +56,7 @@ public interface PushObserver {
    * @param responseHeaders minimally includes {@code :status}.
    * @param last when true, there is no response data.
    */
-  boolean onHeaders(int streamId, List<Header> responseHeaders, boolean last);
+  boolean onHeaders(int streamId, Headers responseHeaders, boolean last);
 
   /**
    * A chunk of response data corresponding to a pushed request.  This data must either be read or
@@ -75,11 +75,11 @@ public interface PushObserver {
 
   PushObserver CANCEL = new PushObserver() {
 
-    @Override public boolean onRequest(int streamId, List<Header> requestHeaders) {
+    @Override public boolean onRequest(int streamId, Headers requestHeaders) {
       return true;
     }
 
-    @Override public boolean onHeaders(int streamId, List<Header> responseHeaders, boolean last) {
+    @Override public boolean onHeaders(int streamId, Headers responseHeaders, boolean last) {
       return true;
     }
 

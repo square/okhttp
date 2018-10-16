@@ -1,11 +1,8 @@
 package okhttp3;
 
 import java.net.InetSocketAddress;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 import okhttp3.internal.SingleInetAddressDns;
-import okhttp3.internal.http2.Header;
 
 public final class TestUtil {
   public static final InetSocketAddress UNREACHABLE_ADDRESS
@@ -32,14 +29,6 @@ public final class TestUtil {
         .dispatcher(dispatcher)
         .dns(new SingleInetAddressDns()) // Prevent unexpected fallback addresses.
         .build();
-  }
-
-  public static List<Header> headerEntries(String... elements) {
-    List<Header> result = new ArrayList<>(elements.length / 2);
-    for (int i = 0; i < elements.length; i += 2) {
-      result.add(new Header(elements[i], elements[i + 1]));
-    }
-    return result;
   }
 
   public static String repeat(char c, int count) {

@@ -1011,6 +1011,8 @@ public final class HttpOverHttp2Test {
     assertEquals(2, server.takeRequest().getSequenceNumber());
   }
 
+  // TODO(oldergod) delete?
+  @Ignore("We don't allow non ascii header's name or value to be set as headers.")
   @Test public void nonAsciiResponseHeader() throws Exception {
     server.enqueue(new MockResponse()
         .addHeaderLenient("Alpha", "α")

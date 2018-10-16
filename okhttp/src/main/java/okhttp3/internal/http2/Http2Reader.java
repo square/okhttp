@@ -17,8 +17,8 @@ package okhttp3.internal.http2;
 
 import java.io.Closeable;
 import java.io.IOException;
-import java.util.List;
 import java.util.logging.Logger;
+import okhttp3.Headers;
 import okio.Buffer;
 import okio.BufferedSource;
 import okio.ByteString;
@@ -179,12 +179,12 @@ final class Http2Reader implements Closeable {
 
     length = lengthWithoutPadding(length, flags, padding);
 
-    List<Header> headerBlock = readHeaderBlock(length, padding, flags, streamId);
+    Headers headerBlock = readHeaderBlock(length, padding, flags, streamId);
 
     handler.headers(endStream, streamId, -1, headerBlock);
   }
 
-  private List<Header> readHeaderBlock(int length, short padding, byte flags, int streamId)
+  private Headers readHeaderBlock(int length, short padding, byte flags, int streamId)
       throws IOException {
     continuation.length = continuation.left = length;
     continuation.padding = padding;
@@ -298,7 +298,7 @@ final class Http2Reader implements Closeable {
     int promisedStreamId = source.readInt() & 0x7fffffff;
     length -= 4; // account for above read.
     length = lengthWithoutPadding(length, flags, padding);
-    List<Header> headerBlock = readHeaderBlock(length, padding, flags, streamId);
+    Headers headerBlock = readHeaderBlock(length, padding, flags, streamId);
     handler.pushPromise(streamId, promisedStreamId, headerBlock);
   }
 
@@ -422,8 +422,7 @@ final class Http2Reader implements Closeable {
      * @param streamId the stream owning these headers.
      * @param associatedStreamId the stream that triggered the sender to create this stream.
      */
-    void headers(boolean inFinished, int streamId, int associatedStreamId,
-        List<Header> headerBlock);
+    void headers(boolean inFinished, int streamId, int associatedStreamId, Headers headerBlock);
 
     void rstStream(int streamId, ErrorCode errorCode);
 
@@ -479,8 +478,7 @@ final class Http2Reader implements Closeable {
      * @param requestHeaders minimally includes {@code :method}, {@code :scheme}, {@code
      * :authority}, and (@code :path}.
      */
-    void pushPromise(int streamId, int promisedStreamId, List<Header> requestHeaders)
-        throws IOException;
+    void pushPromise(int streamId, int promisedStreamId, Headers requestHeaders) throws IOException;
 
     /**
      * HTTP/2 only. Expresses that resources for the connection or a client- initiated stream are

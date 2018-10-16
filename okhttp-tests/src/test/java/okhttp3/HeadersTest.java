@@ -16,7 +16,6 @@
 package okhttp3;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -24,7 +23,6 @@ import java.util.List;
 import java.util.Map;
 import okhttp3.internal.Internal;
 import okhttp3.internal.http.HttpHeaders;
-import okhttp3.internal.http2.Header;
 import okhttp3.internal.http2.Http2Codec;
 import org.junit.Test;
 
@@ -32,7 +30,6 @@ import static java.util.Collections.emptyList;
 import static java.util.Collections.emptyMap;
 import static java.util.Collections.singletonList;
 import static java.util.Collections.singletonMap;
-import static okhttp3.TestUtil.headerEntries;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
@@ -45,25 +42,25 @@ public final class HeadersTest {
   }
 
   @Test public void readNameValueBlockDropsForbiddenHeadersHttp2() throws IOException {
-    List<Header> headerBlock = headerEntries(
+    List<Headers> headersBlock = Arrays.asList(Headers.of(
         ":status", "200 OK",
         ":version", "HTTP/1.1",
-        "connection", "close");
+        "connection", "close"));
+
     Request request = new Request.Builder().url("http://square.com/").build();
-    Response response = Http2Codec.readHttp2HeadersList(headerBlock, Protocol.HTTP_2).request(request).build();
-    Headers headers = response.headers();
-    assertEquals(1, headers.size());
-    assertEquals(":version", headers.name(0));
-    assertEquals("HTTP/1.1", headers.value(0));
+    Response response =
+        Http2Codec.readHttp2HeadersList(headersBlock, Protocol.HTTP_2).request(request).build();
+    Headers responseHeaders = response.headers();
+    assertEquals(1, responseHeaders.size());
+    assertEquals(":version", responseHeaders.name(0));
+    assertEquals("HTTP/1.1", responseHeaders.value(0));
   }
 
   @Test public void readNameValueBlockDropsHeadersUpTo100Continue() throws IOException {
-    List<Header> firstHeaderBlock = headerEntries(":status", "100 Continue", "a", "albatross");
-    List<Header> secondHeaderBlock = headerEntries(":status", "200 OK", "b", "balicassiao");
-    List<Header> headerBlock = new ArrayList<>();
-    headerBlock.addAll(firstHeaderBlock);
-    headerBlock.add(null);
-    headerBlock.addAll(secondHeaderBlock);
+    List<Headers> headerBlock = Arrays.asList(
+        Headers.of(":status", "100 Continue", "a", "albatross"),
+        Headers.of(":status", "200 OK", "b", "balicassiao")
+    );
 
     Request request = new Request.Builder().url("http://square.com/").build();
     Response response =
@@ -81,7 +78,7 @@ public final class HeadersTest {
         .header("Upgrade", "websocket")
         .header("Host", "square.com")
         .build();
-    List<Header> expected = headerEntries(
+    Headers expected = Headers.of(
         ":method", "GET",
         ":path", "/",
         ":authority", "square.com",

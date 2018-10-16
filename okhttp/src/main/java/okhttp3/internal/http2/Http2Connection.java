@@ -22,7 +22,6 @@ import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
@@ -33,6 +32,7 @@ import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import okhttp3.Headers;
 import okhttp3.Protocol;
 import okhttp3.internal.NamedRunnable;
 import okhttp3.internal.Util;
@@ -215,7 +215,7 @@ public final class Http2Connection implements Closeable {
    * @param out true to create an output stream that we can use to send data to the remote peer.
    * Corresponds to {@code FLAG_FIN}.
    */
-  public Http2Stream pushStream(int associatedStreamId, List<Header> requestHeaders, boolean out)
+  public Http2Stream pushStream(int associatedStreamId, Headers requestHeaders, boolean out)
       throws IOException {
     if (client) throw new IllegalStateException("Client cannot push requests.");
     return newStream(associatedStreamId, requestHeaders, out);
@@ -226,12 +226,12 @@ public final class Http2Connection implements Closeable {
    * @param out true to create an output stream that we can use to send data to the remote peer.
    * Corresponds to {@code FLAG_FIN}.
    */
-  public Http2Stream newStream(List<Header> requestHeaders, boolean out) throws IOException {
+  public Http2Stream newStream(Headers requestHeaders, boolean out) throws IOException {
     return newStream(0, requestHeaders, out);
   }
 
   private Http2Stream newStream(
-      int associatedStreamId, List<Header> requestHeaders, boolean out) throws IOException {
+      int associatedStreamId, Headers requestHeaders, boolean out) throws IOException {
     boolean outFinished = !out;
     boolean inFinished = false;
     boolean flushHeaders;
@@ -270,8 +270,7 @@ public final class Http2Connection implements Closeable {
     return stream;
   }
 
-  void writeSynReply(int streamId, boolean outFinished, List<Header> alternating)
-      throws IOException {
+  void writeSynReply(int streamId, boolean outFinished, Headers alternating) throws IOException {
     writer.synReply(outFinished, streamId, alternating);
   }
 
@@ -642,7 +641,7 @@ public final class Http2Connection implements Closeable {
     }
 
     @Override public void headers(boolean inFinished, int streamId, int associatedStreamId,
-        List<Header> headerBlock) {
+        Headers headerBlock) {
       if (pushedStream(streamId)) {
         pushHeadersLater(streamId, headerBlock, inFinished);
         return;
@@ -810,7 +809,7 @@ public final class Http2Connection implements Closeable {
     }
 
     @Override
-    public void pushPromise(int streamId, int promisedStreamId, List<Header> requestHeaders) {
+    public void pushPromise(int streamId, int promisedStreamId, Headers requestHeaders) {
       pushRequestLater(promisedStreamId, requestHeaders);
     }
 
@@ -828,7 +827,7 @@ public final class Http2Connection implements Closeable {
   // Guarded by this.
   final Set<Integer> currentPushRequests = new LinkedHashSet<>();
 
-  void pushRequestLater(final int streamId, final List<Header> requestHeaders) {
+  void pushRequestLater(final int streamId, final Headers requestHeaders) {
     synchronized (this) {
       if (currentPushRequests.contains(streamId)) {
         writeSynResetLater(streamId, ErrorCode.PROTOCOL_ERROR);
@@ -856,7 +855,7 @@ public final class Http2Connection implements Closeable {
     }
   }
 
-  void pushHeadersLater(final int streamId, final List<Header> requestHeaders,
+  void pushHeadersLater(final int streamId, final Headers requestHeaders,
       final boolean inFinished) {
     try {
       pushExecutorExecute(new NamedRunnable("OkHttp %s Push Headers[%s]", hostname, streamId) {

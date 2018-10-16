@@ -16,7 +16,7 @@
 package okhttp3.internal.http2;
 
 import java.io.IOException;
-import java.util.List;
+import okhttp3.Headers;
 import okio.BufferedSource;
 import okio.ByteString;
 
@@ -29,7 +29,7 @@ class BaseTestHandler implements Http2Reader.Handler {
   }
 
   @Override public void headers(boolean inFinished, int streamId, int associatedStreamId,
-      List<Header> headerBlock) {
+      Headers headerBlock) {
     fail();
   }
 
@@ -63,7 +63,7 @@ class BaseTestHandler implements Http2Reader.Handler {
   }
 
   @Override
-  public void pushPromise(int streamId, int associatedStreamId, List<Header> headerBlock) {
+  public void pushPromise(int streamId, int associatedStreamId, Headers headerBlock) {
     fail();
   }
 

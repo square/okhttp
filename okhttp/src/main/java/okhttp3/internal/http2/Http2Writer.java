@@ -17,8 +17,8 @@ package okhttp3.internal.http2;
 
 import java.io.Closeable;
 import java.io.IOException;
-import java.util.List;
 import java.util.logging.Logger;
+import okhttp3.Headers;
 import okio.Buffer;
 import okio.BufferedSink;
 
@@ -100,8 +100,8 @@ final class Http2Writer implements Closeable {
    * @param requestHeaders minimally includes {@code :method}, {@code :scheme}, {@code :authority},
    * and {@code :path}.
    */
-  public synchronized void pushPromise(int streamId, int promisedStreamId,
-      List<Header> requestHeaders) throws IOException {
+  public synchronized void pushPromise(int streamId, int promisedStreamId, Headers requestHeaders)
+      throws IOException {
     if (closed) throw new IOException("closed");
     hpackWriter.writeHeaders(requestHeaders);
 
@@ -121,20 +121,19 @@ final class Http2Writer implements Closeable {
     sink.flush();
   }
 
-  public synchronized void synStream(boolean outFinished, int streamId,
-      int associatedStreamId, List<Header> headerBlock) throws IOException {
+  public synchronized void synStream(boolean outFinished, int streamId, int associatedStreamId,
+      Headers headerBlock) throws IOException {
     if (closed) throw new IOException("closed");
     headers(outFinished, streamId, headerBlock);
   }
 
-  public synchronized void synReply(boolean outFinished, int streamId,
-      List<Header> headerBlock) throws IOException {
-    if (closed) throw new IOException("closed");
-    headers(outFinished, streamId, headerBlock);
-  }
-
-  public synchronized void headers(int streamId, List<Header> headerBlock)
+  public synchronized void synReply(boolean outFinished, int streamId, Headers headerBlock)
       throws IOException {
+    if (closed) throw new IOException("closed");
+    headers(outFinished, streamId, headerBlock);
+  }
+
+  public synchronized void headers(int streamId, Headers headerBlock) throws IOException {
     if (closed) throw new IOException("closed");
     headers(false, streamId, headerBlock);
   }
@@ -294,7 +293,7 @@ final class Http2Writer implements Closeable {
     }
   }
 
-  void headers(boolean outFinished, int streamId, List<Header> headerBlock) throws IOException {
+  void headers(boolean outFinished, int streamId, Headers headerBlock) throws IOException {
     if (closed) throw new IOException("closed");
     hpackWriter.writeHeaders(headerBlock);
 

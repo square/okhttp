@@ -61,6 +61,14 @@ public final class Http2 {
       "CONTINUATION"
   };
 
+  // Special header names defined in HTTP/2 spec.
+  public static final String PSEUDO_PREFIX = ":";
+  public static final String RESPONSE_STATUS = ":status";
+  public static final String TARGET_METHOD = ":method";
+  public static final String TARGET_PATH = ":path";
+  public static final String TARGET_SCHEME = ":scheme";
+  public static final String TARGET_AUTHORITY = ":authority";
+
   /**
    * Lookup table for valid flags for DATA, HEADERS, CONTINUATION. Invalid combinations are
    * represented in binary.

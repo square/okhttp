@@ -61,7 +61,7 @@ import okhttp3.internal.NamedRunnable;
 import okhttp3.internal.Util;
 import okhttp3.internal.http.HttpMethod;
 import okhttp3.internal.http2.ErrorCode;
-import okhttp3.internal.http2.Header;
+import okhttp3.internal.http2.Http2;
 import okhttp3.internal.http2.Http2Connection;
 import okhttp3.internal.http2.Http2Stream;
 import okhttp3.internal.http2.Settings;
@@ -71,7 +71,6 @@ import okhttp3.internal.ws.WebSocketProtocol;
 import okio.Buffer;
 import okio.BufferedSink;
 import okio.BufferedSource;
-import okio.ByteString;
 import okio.Okio;
 import okio.Sink;
 import okio.Timeout;
@@ -88,9 +87,9 @@ import static okhttp3.mockwebserver.SocketPolicy.EXPECT_CONTINUE;
 import static okhttp3.mockwebserver.SocketPolicy.FAIL_HANDSHAKE;
 import static okhttp3.mockwebserver.SocketPolicy.NO_RESPONSE;
 import static okhttp3.mockwebserver.SocketPolicy.RESET_STREAM_AT_START;
-import static okhttp3.mockwebserver.SocketPolicy.SHUTDOWN_SERVER_AFTER_RESPONSE;
 import static okhttp3.mockwebserver.SocketPolicy.SHUTDOWN_INPUT_AT_END;
 import static okhttp3.mockwebserver.SocketPolicy.SHUTDOWN_OUTPUT_AT_END;
+import static okhttp3.mockwebserver.SocketPolicy.SHUTDOWN_SERVER_AFTER_RESPONSE;
 import static okhttp3.mockwebserver.SocketPolicy.STALL_SOCKET_AT_START;
 import static okhttp3.mockwebserver.SocketPolicy.UPGRADE_TO_SSL_AT_END;
 
@@ -937,24 +936,24 @@ public final class MockWebServer extends ExternalResource implements Closeable {
     }
 
     private RecordedRequest readRequest(Http2Stream stream) throws IOException {
-      List<Header> streamHeaders = stream.takeHeaders();
+      Headers streamHeaders = Headers.flattenList(stream.takeHeaders());
       Headers.Builder httpHeaders = new Headers.Builder();
       String method = "<:method omitted>";
       String path = "<:path omitted>";
       boolean readBody = true;
       for (int i = 0, size = streamHeaders.size(); i < size; i++) {
-        ByteString name = streamHeaders.get(i).name;
-        String value = streamHeaders.get(i).value.utf8();
-        if (name.equals(Header.TARGET_METHOD)) {
+        String name = streamHeaders.name(i);
+        String value = streamHeaders.value(i);
+        if (name.equals(Http2.TARGET_METHOD)) {
           method = value;
-        } else if (name.equals(Header.TARGET_PATH)) {
+        } else if (name.equals(Http2.TARGET_PATH)) {
           path = value;
         } else if (protocol == Protocol.HTTP_2 || protocol == Protocol.H2_PRIOR_KNOWLEDGE) {
-          httpHeaders.add(name.utf8(), value);
+          httpHeaders.add(name, value);
         } else {
           throw new IllegalStateException();
         }
-        if (name.utf8().equals("expect") && value.equalsIgnoreCase("100-continue")) {
+        if (name.equals("expect") && value.equalsIgnoreCase("100-continue")) {
           // Don't read the body unless we've invited the client to send it.
           readBody = false;
         }
@@ -963,8 +962,7 @@ public final class MockWebServer extends ExternalResource implements Closeable {
 
       MockResponse peek = dispatcher.peek();
       if (!readBody && peek.getSocketPolicy() == EXPECT_CONTINUE) {
-        stream.writeHeaders(Collections.singletonList(
-            new Header(Header.RESPONSE_STATUS, ByteString.encodeUtf8("100 Continue"))), true);
+        stream.writeHeaders(Headers.of(Http2.RESPONSE_STATUS, "100 Continue"), true);
         stream.getConnection().flush();
         readBody = true;
       }
@@ -993,23 +991,23 @@ public final class MockWebServer extends ExternalResource implements Closeable {
       if (response.getSocketPolicy() == NO_RESPONSE) {
         return;
       }
-      List<Header> http2Headers = new ArrayList<>();
+      Headers.Builder http2Headers = new Headers.Builder();
       String[] statusParts = response.getStatus().split(" ", 3);
       if (statusParts.length < 2) {
         throw new AssertionError("Unexpected status: " + response.getStatus());
       }
       // TODO: constants for well-known header names.
-      http2Headers.add(new Header(Header.RESPONSE_STATUS, statusParts[1]));
+      http2Headers.add(Http2.RESPONSE_STATUS, statusParts[1]);
       Headers headers = response.getHeaders();
       for (int i = 0, size = headers.size(); i < size; i++) {
-        http2Headers.add(new Header(headers.name(i), headers.value(i)));
+        http2Headers.add(headers.name(i), headers.value(i));
       }
 
       sleepIfDelayed(response.getHeadersDelay(TimeUnit.MILLISECONDS));
 
       Buffer body = response.getBody();
       boolean closeStreamAfterHeaders = body != null || !response.getPushPromises().isEmpty();
-      stream.writeHeaders(http2Headers, closeStreamAfterHeaders);
+      stream.writeHeaders(http2Headers.build(), closeStreamAfterHeaders);
       pushPromises(stream, response.getPushPromises());
       if (body != null) {
         BufferedSink sink = Okio.buffer(stream.getSink());
@@ -1023,13 +1021,13 @@ public final class MockWebServer extends ExternalResource implements Closeable {
 
     private void pushPromises(Http2Stream stream, List<PushPromise> promises) throws IOException {
       for (PushPromise pushPromise : promises) {
-        List<Header> pushedHeaders = new ArrayList<>();
-        pushedHeaders.add(new Header(Header.TARGET_AUTHORITY, url(pushPromise.path()).host()));
-        pushedHeaders.add(new Header(Header.TARGET_METHOD, pushPromise.method()));
-        pushedHeaders.add(new Header(Header.TARGET_PATH, pushPromise.path()));
+        Headers.Builder pushedHeaders = new Headers.Builder();
+        pushedHeaders.add(Http2.TARGET_AUTHORITY, url(pushPromise.path()).host());
+        pushedHeaders.add(Http2.TARGET_METHOD, pushPromise.method());
+        pushedHeaders.add(Http2.TARGET_PATH, pushPromise.path());
         Headers pushPromiseHeaders = pushPromise.headers();
         for (int i = 0, size = pushPromiseHeaders.size(); i < size; i++) {
-          pushedHeaders.add(new Header(pushPromiseHeaders.name(i), pushPromiseHeaders.value(i)));
+          pushedHeaders.add(pushPromiseHeaders.name(i), pushPromiseHeaders.value(i));
         }
         String requestLine = pushPromise.method() + ' ' + pushPromise.path() + " HTTP/1.1";
         List<Integer> chunkSizes = Collections.emptyList(); // No chunked encoding for HTTP/2.
@@ -1037,7 +1035,7 @@ public final class MockWebServer extends ExternalResource implements Closeable {
             new Buffer(), sequenceNumber.getAndIncrement(), socket));
         boolean hasBody = pushPromise.response().getBody() != null;
         Http2Stream pushedStream =
-            stream.getConnection().pushStream(stream.getId(), pushedHeaders, hasBody);
+            stream.getConnection().pushStream(stream.getId(), pushedHeaders.build(), hasBody);
         writeResponse(pushedStream, pushPromise.response());
       }
     }

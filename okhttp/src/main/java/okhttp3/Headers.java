@@ -275,6 +275,22 @@ public final class Headers {
     }
   }
 
+  // TODO(oldergod) move it inside okhttp3.internal.http2 ?
+  public interface Listener {
+    void onHeaders(List<Headers> headers);
+  }
+
+  //// TODO(oldergod) maybe delete me? maybe not
+  public static Headers flattenList(List<Headers> headersBlocks) {
+    Builder builder = new Builder();
+    for (Headers headers : headersBlocks) {
+      if (headers == null) throw new NullPointerException("headers == null");
+
+      builder.addAll(headers);
+    }
+    return builder.build();
+  }
+
   public static final class Builder {
     final List<String> namesAndValues = new ArrayList<>(20);
 
@@ -375,6 +391,12 @@ public final class Headers {
         }
       }
       return null;
+    }
+
+    // TODO(oldergod) check with jwilson
+    public Builder clear() {
+      namesAndValues.clear();
+      return this;
     }
 
     public Headers build() {
