@@ -19,6 +19,7 @@ import java.net.Proxy;
 import java.net.ProxySelector;
 import java.net.Socket;
 import java.security.GeneralSecurityException;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -46,6 +47,7 @@ import okhttp3.internal.tls.OkHostnameVerifier;
 import okhttp3.internal.ws.RealWebSocket;
 import okio.Sink;
 import okio.Source;
+import org.codehaus.mojo.animal_sniffer.IgnoreJRERequirement;
 
 import static okhttp3.internal.Util.assertionError;
 import static okhttp3.internal.Util.checkDuration;
@@ -525,6 +527,20 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
     }
 
     /**
+     * Sets the default connect timeout for new connections. A value of 0 means no timeout,
+     * otherwise values must be between 1 and {@link Integer#MAX_VALUE} when converted to
+     * milliseconds.
+     *
+     * <p>The connectTimeout is applied when connecting a TCP socket to the target host.
+     * The default value is 10 seconds.
+     */
+    @IgnoreJRERequirement
+    public Builder connectTimeout(Duration duration) {
+      connectTimeout = checkDuration("timeout", duration.toMillis(), TimeUnit.MILLISECONDS);
+      return this;
+    }
+
+    /**
      * Sets the default read timeout for new connections. A value of 0 means no timeout, otherwise
      * values must be between 1 and {@link Integer#MAX_VALUE} when converted to milliseconds.
      *
@@ -536,6 +552,22 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
      */
     public Builder readTimeout(long timeout, TimeUnit unit) {
       readTimeout = checkDuration("timeout", timeout, unit);
+      return this;
+    }
+
+    /**
+     * Sets the default read timeout for new connections. A value of 0 means no timeout, otherwise
+     * values must be between 1 and {@link Integer#MAX_VALUE} when converted to milliseconds.
+     *
+     * <p>The read timeout is applied to both the TCP socket and for individual read IO operations
+     * including on {@link Source} of the {@link Response}. The default value is 10 seconds.
+     *
+     * @see Socket#setSoTimeout(int)
+     * @see Source#timeout()
+     */
+    @IgnoreJRERequirement
+    public Builder readTimeout(Duration duration) {
+      readTimeout = checkDuration("timeout", duration.toMillis(), TimeUnit.MILLISECONDS);
       return this;
     }
 
@@ -554,6 +586,21 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
     }
 
     /**
+     * Sets the default write timeout for new connections. A value of 0 means no timeout, otherwise
+     * values must be between 1 and {@link Integer#MAX_VALUE} when converted to milliseconds.
+     *
+     * <p>The write timeout is applied for individual write IO operations.
+     * The default value is 10 seconds.
+     *
+     * @see Sink#timeout()
+     */
+    @IgnoreJRERequirement
+    public Builder writeTimeout(Duration duration) {
+      writeTimeout = checkDuration("timeout", duration.toMillis(), TimeUnit.MILLISECONDS);
+      return this;
+    }
+
+    /**
      * Sets the interval between HTTP/2 and web socket pings initiated by this client. Use this to
      * automatically send ping frames until either the connection fails or it is closed. This keeps
      * the connection alive and may detect connectivity failures.
@@ -568,6 +615,25 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
      */
     public Builder pingInterval(long interval, TimeUnit unit) {
       pingInterval = checkDuration("interval", interval, unit);
+      return this;
+    }
+
+    /**
+     * Sets the interval between HTTP/2 and web socket pings initiated by this client. Use this to
+     * automatically send ping frames until either the connection fails or it is closed. This keeps
+     * the connection alive and may detect connectivity failures.
+     *
+     * <p>If the server does not respond to each ping with a pong within {@code interval}, this
+     * client will assume that connectivity has been lost. When this happens on a web socket the
+     * connection is canceled and its listener is {@linkplain WebSocketListener#onFailure notified
+     * of the failure}. When it happens on an HTTP/2 connection the connection is closed and any
+     * calls it is carrying {@linkplain java.io.IOException will fail with an IOException}.
+     *
+     * <p>The default value of 0 disables client-initiated pings.
+     */
+    @IgnoreJRERequirement
+    public Builder pingInterval(Duration duration) {
+      pingInterval = checkDuration("timeout", duration.toMillis(), TimeUnit.MILLISECONDS);
       return this;
     }
 
