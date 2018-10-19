@@ -29,7 +29,7 @@ import okio.Okio;
 import okio.Source;
 
 /**
- * Read and write HPACK v10.
+ * Read and write HPACK.
  *
  * https://tools.ietf.org/html/rfc7541
  *
