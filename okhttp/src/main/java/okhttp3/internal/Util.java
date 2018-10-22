@@ -44,9 +44,11 @@ import javax.annotation.Nullable;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
 import javax.net.ssl.X509TrustManager;
+import okhttp3.Headers;
 import okhttp3.HttpUrl;
 import okhttp3.RequestBody;
 import okhttp3.ResponseBody;
+import okhttp3.internal.http2.Header;
 import okio.Buffer;
 import okio.BufferedSource;
 import okio.ByteString;
@@ -671,5 +673,13 @@ public final class Util {
     } catch (GeneralSecurityException e) {
       throw assertionError("No System TLS", e); // The system has no TLS. Just give up.
     }
+  }
+
+  public static Headers toHeaders(List<Header> headerBlock) {
+    Headers.Builder builder = new Headers.Builder();
+    for (Header header : headerBlock) {
+      Internal.instance.addLenient(builder, header.name.utf8(), header.value.utf8());
+    }
+    return builder.build();
   }
 }

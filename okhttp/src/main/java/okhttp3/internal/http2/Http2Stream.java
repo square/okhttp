@@ -19,9 +19,13 @@ import java.io.EOFException;
 import java.io.IOException;
 import java.io.InterruptedIOException;
 import java.net.SocketTimeoutException;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Deque;
 import java.util.List;
 import javax.annotation.Nullable;
+import okhttp3.Headers;
+import okhttp3.internal.Util;
 import okio.AsyncTimeout;
 import okio.Buffer;
 import okio.BufferedSource;
@@ -56,8 +60,7 @@ public final class Http2Stream {
    * Received headers yet to be {@linkplain #takeHeaders taken}, or {@linkplain FramingSource#read
    * read}.
    */
-  // TODO(jwilson): List<Header> -> Headers?
-  private List<Header> headers;
+  private final Deque<Headers> headersQueue = new ArrayDeque<>();
   private Header.Listener headersListener;
 
   /** True if response headers have been sent or received. */
@@ -76,7 +79,7 @@ public final class Http2Stream {
   ErrorCode errorCode = null;
 
   Http2Stream(int id, Http2Connection connection, boolean outFinished, boolean inFinished,
-      @Nullable List<Header> headers) {
+      @Nullable Headers headers) {
     if (connection == null) throw new NullPointerException("connection == null");
 
     this.id = id;
@@ -87,7 +90,9 @@ public final class Http2Stream {
     this.sink = new FramingSink();
     this.source.finished = inFinished;
     this.sink.finished = outFinished;
-    this.headers = headers;
+    if (headers != null) {
+      headersQueue.add(headers);
+    }
 
     if (isLocallyInitiated() && headers != null) {
       throw new IllegalStateException("locally-initiated streams shouldn't have headers yet");
@@ -138,19 +143,17 @@ public final class Http2Stream {
    * have been received. If the returned list contains multiple blocks of headers the blocks will be
    * delimited by 'null'.
    */
-  public synchronized List<Header> takeHeaders() throws IOException {
+  public synchronized Headers takeHeaders() throws IOException {
     readTimeout.enter();
     try {
-      while (headers == null && errorCode == null) {
+      while (headersQueue.isEmpty() && errorCode == null) {
         waitForIo();
       }
     } finally {
       readTimeout.exitAndThrowIfTimedOut();
     }
-    List<Header> result = headers;
-    if (result != null) {
-      headers = null;
-      return result;
+    if (!headersQueue.isEmpty()) {
+      return headersQueue.removeFirst();
     }
     throw new StreamResetException(errorCode);
   }
@@ -274,20 +277,12 @@ public final class Http2Stream {
    */
   void receiveHeaders(List<Header> headers) {
     assert (!Thread.holdsLock(Http2Stream.this));
-    boolean open = true;
+    boolean open;
     synchronized (this) {
       hasResponseHeaders = true;
-      if (this.headers == null) {
-        this.headers = headers;
-        open = isOpen();
-        notifyAll();
-      } else {
-        List<Header> newHeaders = new ArrayList<>();
-        newHeaders.addAll(this.headers);
-        newHeaders.add(null); // Delimit separate blocks of headers with null.
-        newHeaders.addAll(headers);
-        this.headers = newHeaders;
-      }
+      headersQueue.add(Util.toHeaders(headers));
+      open = isOpen();
+      notifyAll();
     }
     if (!open) {
       connection.removeStream(id);
@@ -321,7 +316,7 @@ public final class Http2Stream {
 
   public synchronized void setHeadersListener(Header.Listener headersListener) {
     this.headersListener = headersListener;
-    if (headers != null && headersListener != null) {
+    if (!headersQueue.isEmpty() && headersListener != null) {
       notifyAll(); // We now have somewhere to deliver headers!
     }
   }
@@ -358,7 +353,7 @@ public final class Http2Stream {
       if (byteCount < 0) throw new IllegalArgumentException("byteCount < 0: " + byteCount);
 
       while (true) {
-        List<Header> headersToDeliver = null;
+        Headers headersToDeliver = null;
         Header.Listener headersListenerToNotify = null;
         long readBytesDelivered = -1;
         ErrorCode errorCodeToDeliver = null;
@@ -376,11 +371,10 @@ public final class Http2Stream {
             if (closed) {
               throw new IOException("stream closed");
 
-            } else if (headers != null && headersListener != null) {
+            } else if (!headersQueue.isEmpty() && headersListener != null) {
               // Prepare to deliver headers.
-              headersToDeliver = headers;
+              headersToDeliver = headersQueue.removeFirst();
               headersListenerToNotify = headersListener;
-              headers = null;
 
             } else if (readBuffer.size() > 0) {
               // Prepare to read bytes. Start by moving them to the caller's buffer.
@@ -481,16 +475,16 @@ public final class Http2Stream {
 
     @Override public void close() throws IOException {
       long bytesDiscarded;
-      List<Header> headersToDeliver = null;
+      List<Headers> headersToDeliver = null;
       Header.Listener headersListenerToNotify = null;
       synchronized (Http2Stream.this) {
         closed = true;
         bytesDiscarded = readBuffer.size();
         readBuffer.clear();
-        if (headers != null && headersListener != null) {
-          headersToDeliver = headers;
+        if (!headersQueue.isEmpty() && headersListener != null) {
+          headersToDeliver = new ArrayList<>(headersQueue);
+          headersQueue.clear();
           headersListenerToNotify = headersListener;
-          headers = null;
         }
         Http2Stream.this.notifyAll(); // TODO(jwilson): Unnecessary?
       }
@@ -499,7 +493,9 @@ public final class Http2Stream {
       }
       cancelStreamIfNecessary();
       if (headersListenerToNotify != null) {
-        headersListenerToNotify.onHeaders(headersToDeliver);
+        for (Headers headers : headersToDeliver) {
+          headersListenerToNotify.onHeaders(headers);
+        }
       }
     }
   }
