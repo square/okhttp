@@ -518,7 +518,12 @@ public final class Http2Connection implements Closeable {
         writer.windowUpdate(0, windowSize - Settings.DEFAULT_INITIAL_WINDOW_SIZE);
       }
     }
-    new Thread(readerRunnable).start(); // Not a daemon thread.
+    new Thread(
+            readerRunnable,
+            String.format(
+                    "OkHttp Http2Connection@%s",
+                    Integer.toHexString(readerRunnable.hashCode()))
+    ).start(); // Not a daemon thread.
   }
 
   /** Merges {@code settings} into this peer's settings and sends them to the remote peer. */
