@@ -40,6 +40,11 @@ public final class CheckHandshake {
       }
       return chain.proceed(chain.request());
     }
+
+	@Override
+	public void cleanup() {
+		
+	}
   };
 
   private final OkHttpClient client = new OkHttpClient.Builder()

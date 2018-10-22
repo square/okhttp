@@ -92,6 +92,10 @@ public final class OkHttpClientTest {
       @Override public Response intercept(Chain chain) throws IOException {
         return chain.proceed(chain.request());
       }
+
+	@Override
+	public void cleanup() {
+	}
     };
     OkHttpClient original = defaultClient();
     original.newBuilder()

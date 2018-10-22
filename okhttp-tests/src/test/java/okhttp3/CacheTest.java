@@ -2225,6 +2225,10 @@ public final class CacheTest {
             ifNoneMatch.compareAndSet(null, chain.request().header("If-None-Match"));
             return chain.proceed(chain.request());
           }
+
+		@Override
+		public void cleanup() {
+		}
         }).build();
 
     // Confirm the value is cached and intercepted.
@@ -2247,6 +2251,10 @@ public final class CacheTest {
           @Override public Response intercept(Chain chain) throws IOException {
             throw new AssertionError();
           }
+
+		@Override
+		public void cleanup() {
+		}
         }).build();
     assertEquals("A", get(url).body().string());
   }

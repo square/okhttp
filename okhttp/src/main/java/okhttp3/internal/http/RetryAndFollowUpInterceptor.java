@@ -415,4 +415,8 @@ public final class RetryAndFollowUpInterceptor implements Interceptor {
         && url.port() == followUp.port()
         && url.scheme().equals(followUp.scheme());
   }
+
+@Override
+public void cleanup() {
+}
 }

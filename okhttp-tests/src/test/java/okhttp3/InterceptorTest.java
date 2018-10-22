@@ -75,6 +75,10 @@ public final class InterceptorTest {
           @Override public Response intercept(Chain chain) throws IOException {
             return interceptorResponse;
           }
+
+		@Override
+		public void cleanup() {
+		}
         }).build();
 
     Response response = client.newCall(request).execute();
@@ -94,6 +98,10 @@ public final class InterceptorTest {
             .body(ResponseBody.create(MediaType.get("text/plain; charset=utf-8"), "abc"))
             .build();
       }
+
+	@Override
+	public void cleanup() {
+	}
     };
     client = client.newBuilder()
         .addNetworkInterceptor(interceptor)
@@ -121,6 +129,10 @@ public final class InterceptorTest {
         chain.proceed(chain.request());
         return chain.proceed(chain.request());
       }
+
+	@Override
+	public void cleanup() {
+	}
     };
     client = client.newBuilder()
         .addNetworkInterceptor(interceptor)
@@ -151,6 +163,10 @@ public final class InterceptorTest {
             .url("http://" + sameHost + ":" + differentPort + "/")
             .build());
       }
+
+	@Override
+	public void cleanup() {
+	}
     };
     client = client.newBuilder()
         .addNetworkInterceptor(interceptor)
@@ -178,6 +194,10 @@ public final class InterceptorTest {
         assertNotNull(connection);
         return chain.proceed(chain.request());
       }
+
+	@Override
+	public void cleanup() {
+	}
     };
     client = client.newBuilder()
         .addNetworkInterceptor(interceptor)
@@ -208,6 +228,10 @@ public final class InterceptorTest {
         assertEquals("gzip", networkResponse.header("Content-Encoding"));
         return networkResponse;
       }
+
+	@Override
+	public void cleanup() {
+	}
     };
     client = client.newBuilder()
         .addNetworkInterceptor(interceptor)
@@ -242,6 +266,10 @@ public final class InterceptorTest {
             .header("Content-Length", Long.toString(body.contentLength()))
             .build());
       }
+
+	@Override
+	public void cleanup() {
+	}
     };
     client = client.newBuilder()
         .addNetworkInterceptor(interceptor)
@@ -278,6 +306,10 @@ public final class InterceptorTest {
             .addHeader("OkHttp-Intercepted", "yep")
             .build());
       }
+
+	@Override
+	public void cleanup() {
+	}
     });
 
     Request request = new Request.Builder()
@@ -316,6 +348,10 @@ public final class InterceptorTest {
             .addHeader("OkHttp-Intercepted", "yep")
             .build();
       }
+
+	@Override
+	public void cleanup() {
+	}
     });
 
     Request request = new Request.Builder()
@@ -349,6 +385,10 @@ public final class InterceptorTest {
             .addHeader("Response-Interceptor", "Donut") // 4. Added last.
             .build();
       }
+
+	@Override
+	public void cleanup() {
+	}
     });
     addInterceptor(network, new Interceptor() {
       @Override public Response intercept(Chain chain) throws IOException {
@@ -360,6 +400,10 @@ public final class InterceptorTest {
             .addHeader("Response-Interceptor", "Cupcake") // 3. Added third.
             .build();
       }
+
+	@Override
+	public void cleanup() {
+	}
     });
 
     Request request = new Request.Builder()
@@ -393,6 +437,10 @@ public final class InterceptorTest {
             .addHeader("OkHttp-Intercepted", "yep")
             .build();
       }
+
+	@Override
+	public void cleanup() {
+	}
     });
 
     Request request = new Request.Builder()
@@ -416,6 +464,10 @@ public final class InterceptorTest {
             response1.body().close();
             return chain.proceed(chain.request());
           }
+
+		@Override
+		public void cleanup() {
+		}
         }).build();
 
     Request request = new Request.Builder()
@@ -444,6 +496,10 @@ public final class InterceptorTest {
 
             return chain.proceed(chain.request());
           }
+
+		@Override
+		public void cleanup() {
+		}
         }).build();
 
     Request requestB = new Request.Builder()
@@ -477,6 +533,10 @@ public final class InterceptorTest {
 
             return chain.proceed(chain.request());
           }
+
+		@Override
+		public void cleanup() {
+		}
         }).build();
 
     Request requestB = new Request.Builder()
@@ -504,6 +564,10 @@ public final class InterceptorTest {
       @Override public Response intercept(Chain chain) throws IOException {
         throw new RuntimeException("boom!");
       }
+
+	@Override
+	public void cleanup() {
+	}
     });
 
     Request request = new Request.Builder()
@@ -527,6 +591,10 @@ public final class InterceptorTest {
             .header("User-Agent", "intercepted request")
             .build());
       }
+
+	@Override
+	public void cleanup() {
+	}
     };
 
     client = client.newBuilder()
@@ -561,6 +629,10 @@ public final class InterceptorTest {
       @Override public Response intercept(Chain chain) throws IOException {
         throw new RuntimeException("boom!");
       }
+
+	@Override
+	public void cleanup() {
+	}
     });
 
     ExceptionCatchingExecutor executor = new ExceptionCatchingExecutor();
@@ -584,6 +656,10 @@ public final class InterceptorTest {
         chain.proceed(chain.request());
         return null;
       }
+
+	@Override
+	public void cleanup() {
+	}
     };
     client = client.newBuilder()
         .addInterceptor(interceptor)
@@ -613,6 +689,10 @@ public final class InterceptorTest {
         chain.proceed(chain.request());
         return null;
       }
+
+	@Override
+	public void cleanup() {
+	}
     };
     client = client.newBuilder()
         .addNetworkInterceptor(interceptor)
@@ -645,6 +725,10 @@ public final class InterceptorTest {
         assertNotNull(chain.connection());
         return response;
       }
+
+	@Override
+	public void cleanup() {
+	}
     };
 
     client = client.newBuilder()
@@ -666,6 +750,10 @@ public final class InterceptorTest {
       @Override public Response intercept(Chain chain) throws IOException {
         return chain.proceed(chain.request()).newBuilder().body(null).build();
       }
+
+	@Override
+	public void cleanup() {
+	}
     };
     client = client.newBuilder()
         .addInterceptor(interceptor)
@@ -690,6 +778,10 @@ public final class InterceptorTest {
       @Override public Response intercept(Chain chain) throws IOException {
         return chain.proceed(chain.request()).newBuilder().body(null).build();
       }
+
+	@Override
+	public void cleanup() {
+	}
     };
     client = client.newBuilder()
         .addNetworkInterceptor(interceptor)
@@ -717,6 +809,10 @@ public final class InterceptorTest {
 
         return chainB.proceed(chainA.request());
       }
+
+	@Override
+	public void cleanup() {
+	}
     };
 
     Interceptor interceptor2 = new Interceptor() {
@@ -724,6 +820,10 @@ public final class InterceptorTest {
         assertEquals(100, chain.connectTimeoutMillis());
         return chain.proceed(chain.request());
       }
+
+	@Override
+	public void cleanup() {
+	}
     };
 
     client = client.newBuilder()
@@ -754,6 +854,10 @@ public final class InterceptorTest {
 
         return chainB.proceed(chainA.request());
       }
+
+	@Override
+	public void cleanup() {
+	}
     };
 
     Interceptor interceptor2 = new Interceptor() {
@@ -761,6 +865,10 @@ public final class InterceptorTest {
         assertEquals(100, chain.readTimeoutMillis());
         return chain.proceed(chain.request());
       }
+
+	@Override
+	public void cleanup() {
+	}
     };
 
     client = client.newBuilder()
@@ -796,6 +904,10 @@ public final class InterceptorTest {
 
         return chainB.proceed(chainA.request());
       }
+
+	@Override
+	public void cleanup() {
+	}
     };
 
     Interceptor interceptor2 = new Interceptor() {
@@ -803,6 +915,10 @@ public final class InterceptorTest {
         assertEquals(100, chain.writeTimeoutMillis());
         return chain.proceed(chain.request());
       }
+
+	@Override
+	public void cleanup() {
+	}
     };
 
     client = client.newBuilder()
@@ -843,6 +959,10 @@ public final class InterceptorTest {
 
         return chain.proceed(chain.request());
       }
+
+	@Override
+	public void cleanup() {
+	}
     };
 
     client = client.newBuilder()

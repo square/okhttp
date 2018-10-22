@@ -26,6 +26,7 @@ import javax.annotation.Nullable;
  */
 public interface Interceptor {
   Response intercept(Chain chain) throws IOException;
+  void cleanup();
 
   interface Chain {
     Request request();
@@ -51,5 +52,6 @@ public interface Interceptor {
     int writeTimeoutMillis();
 
     Chain withWriteTimeout(int timeout, TimeUnit unit);
+    
   }
 }

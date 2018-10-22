@@ -32,6 +32,11 @@ public final class RewriteResponseCacheControl {
           .header("Cache-Control", "max-age=60")
           .build();
     }
+
+	@Override
+	public void cleanup() {
+		
+	}
   };
 
   private final OkHttpClient client;

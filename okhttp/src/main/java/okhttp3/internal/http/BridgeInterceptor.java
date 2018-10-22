@@ -125,4 +125,8 @@ public final class BridgeInterceptor implements Interceptor {
     }
     return cookieHeader.toString();
   }
+
+@Override
+public void cleanup() {
+}
 }

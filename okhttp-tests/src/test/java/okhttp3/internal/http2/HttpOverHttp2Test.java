@@ -1295,6 +1295,10 @@ public final class HttpOverHttp2Test {
             }
             return chain.proceed(chain.request());
           }
+
+		@Override
+		public void cleanup() {
+		}
         })
         .build();
 
@@ -1434,6 +1438,10 @@ public final class HttpOverHttp2Test {
                 .build();
             return chain.proceed(request);
           }
+
+		@Override
+		public void cleanup() {
+		}
         })
         .build();
 

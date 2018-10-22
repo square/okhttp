@@ -308,6 +308,10 @@ public final class ConnectionReuseTest {
             .body(ResponseBody.create(null, "unrelated response body!"))
             .build();
       }
+
+	@Override
+	public void cleanup() {
+	}
     }).build();
 
     server.enqueue(new MockResponse()

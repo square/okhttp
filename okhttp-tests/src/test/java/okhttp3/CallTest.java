@@ -927,6 +927,10 @@ public final class CallTest {
           @Override public Response intercept(Chain chain) throws IOException {
             throw new IOException();
           }
+
+		@Override
+		public void cleanup() {
+		}
         })
         .build();
     Request request = new Request.Builder().url(server.url("/")).build();
@@ -2075,6 +2079,10 @@ public final class CallTest {
             }
             return chain.proceed(chain.request());
           }
+
+		@Override
+		public void cleanup() {
+		}
         })
         .build();
 
@@ -2275,6 +2283,10 @@ public final class CallTest {
             chain.proceed(chain.request());
             throw new AssertionError(); // We expect an exception.
           }
+
+		@Override
+		public void cleanup() {
+		}
         }).build();
 
     Call call = client.newCall(new Request.Builder().url(server.url("/a")).build());
@@ -2888,6 +2900,10 @@ public final class CallTest {
         protocolRef.set(chain.connection().protocol());
         return chain.proceed(chain.request());
       }
+
+	@Override
+	public void cleanup() {
+	}
     };
     client = client.newBuilder()
         .addNetworkInterceptor(interceptor)

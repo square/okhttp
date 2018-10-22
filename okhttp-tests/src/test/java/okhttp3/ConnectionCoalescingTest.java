@@ -134,6 +134,10 @@ public final class ConnectionCoalescingTest {
             connection.set(chain.connection());
             return chain.proceed(chain.request());
           }
+
+		@Override
+		public void cleanup() {
+		}
         })
         .build();
     dns.set("san.com", Dns.SYSTEM.lookup(server.getHostName()).subList(0, 1));
@@ -292,6 +296,10 @@ public final class ConnectionCoalescingTest {
       @Override public Response intercept(Chain chain) throws IOException {
         return chain.proceed(chain.request());
       }
+
+	@Override
+	public void cleanup() {
+	}
     }).build();
 
     server.enqueue(new MockResponse().setResponseCode(200));

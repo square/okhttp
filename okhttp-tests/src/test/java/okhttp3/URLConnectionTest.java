@@ -3537,6 +3537,10 @@ public final class URLConnectionTest {
       @Override public Response intercept(Chain chain) {
         throw new AssertionError();
       }
+
+	@Override
+	public void cleanup() {
+	}
     };
     urlFactory.setClient(urlFactory.client().newBuilder()
         .addInterceptor(interceptor)

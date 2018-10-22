@@ -150,4 +150,8 @@ public final class CallServerInterceptor implements Interceptor {
       successfulCount += byteCount;
     }
   }
+
+@Override
+public void cleanup() {
+}
 }

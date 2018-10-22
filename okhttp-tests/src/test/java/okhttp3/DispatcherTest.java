@@ -178,6 +178,10 @@ public final class DispatcherTest {
                 }
                 throw new IOException();
               }
+
+			@Override
+			public void cleanup() {
+			}
             })
         .build();
 
@@ -251,6 +255,10 @@ public final class DispatcherTest {
             }
             return chain.proceed(chain.request());
           }
+
+		@Override
+		public void cleanup() {
+		}
         })
         .build();
 

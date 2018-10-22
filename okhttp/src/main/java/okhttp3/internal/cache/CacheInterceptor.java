@@ -264,4 +264,9 @@ public final class CacheInterceptor implements Interceptor {
         || "Content-Encoding".equalsIgnoreCase(fieldName)
         || "Content-Type".equalsIgnoreCase(fieldName);
   }
+
+@Override
+public void cleanup() {
+	
+}
 }

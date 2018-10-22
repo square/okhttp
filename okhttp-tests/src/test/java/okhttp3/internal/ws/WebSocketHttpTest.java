@@ -73,6 +73,10 @@ public final class WebSocketHttpTest {
           assertNotNull(response.body()); // Ensure application interceptors never see a null body.
           return response;
         }
+
+		@Override
+		public void cleanup() {
+		}
       })
       .build();
 
@@ -362,6 +366,10 @@ public final class WebSocketHttpTest {
             interceptedCount.incrementAndGet();
             return response;
           }
+
+		@Override
+		public void cleanup() {
+		}
         }).build();
 
     webServer.enqueue(new MockResponse().withWebSocketUpgrade(serverListener));
@@ -381,6 +389,10 @@ public final class WebSocketHttpTest {
           @Override public Response intercept(Chain chain) {
             throw new AssertionError(); // Network interceptors don't execute.
           }
+
+		@Override
+		public void cleanup() {
+		}
         }).build();
 
     webServer.enqueue(new MockResponse().withWebSocketUpgrade(serverListener));

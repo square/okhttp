@@ -50,6 +50,11 @@ public final class LoggingInterceptors {
           request.url(), (t2 - t1) / 1e6d, response.headers()));
       return response;
     }
+
+	@Override
+	public void cleanup() {
+		
+	}
   }
 
   public static void main(String... args) throws Exception {

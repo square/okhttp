@@ -68,6 +68,7 @@ public final class Progress {
                 .body(new ProgressResponseBody(originalResponse.body(), progressListener))
                 .build();
           }
+          @Override public void cleanup() {}
         })
         .build();
 
