@@ -45,7 +45,7 @@ public final class HeadersTest {
   }
 
   @Test public void readNameValueBlockDropsForbiddenHeadersHttp2() throws IOException {
-    List<Header> headerBlock = headerEntries(
+    Headers headerBlock = Headers.of(
         ":status", "200 OK",
         ":version", "HTTP/1.1",
         "connection", "close");
@@ -55,23 +55,6 @@ public final class HeadersTest {
     assertEquals(1, headers.size());
     assertEquals(":version", headers.name(0));
     assertEquals("HTTP/1.1", headers.value(0));
-  }
-
-  @Test public void readNameValueBlockDropsHeadersUpTo100Continue() throws IOException {
-    List<Header> firstHeaderBlock = headerEntries(":status", "100 Continue", "a", "albatross");
-    List<Header> secondHeaderBlock = headerEntries(":status", "200 OK", "b", "balicassiao");
-    List<Header> headerBlock = new ArrayList<>();
-    headerBlock.addAll(firstHeaderBlock);
-    headerBlock.add(null);
-    headerBlock.addAll(secondHeaderBlock);
-
-    Request request = new Request.Builder().url("http://square.com/").build();
-    Response response =
-        Http2Codec.readHttp2HeadersList(headerBlock, Protocol.HTTP_2).request(request).build();
-    Headers headers = response.headers();
-    assertEquals(1, headers.size());
-    assertEquals("b", headers.name(0));
-    assertEquals("balicassiao", headers.value(0));
   }
 
   @Test public void http2HeadersListDropsForbiddenHeadersHttp2() {

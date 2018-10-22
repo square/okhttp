@@ -28,6 +28,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
+import okhttp3.Headers;
 import okhttp3.Protocol;
 import okhttp3.internal.Util;
 import okhttp3.internal.http2.Header;
@@ -95,11 +96,11 @@ public final class Http2Server extends Http2Connection.Listener {
 
   @Override public void onStream(Http2Stream stream) throws IOException {
     try {
-      List<Header> requestHeaders = stream.takeHeaders();
+      Headers requestHeaders = stream.takeHeaders();
       String path = null;
       for (int i = 0, size = requestHeaders.size(); i < size; i++) {
-        if (requestHeaders.get(i).name.equals(Header.TARGET_PATH)) {
-          path = requestHeaders.get(i).value.utf8();
+        if (requestHeaders.name(i).equals(Header.TARGET_PATH_UTF8)) {
+          path = requestHeaders.value(i);
           break;
         }
       }

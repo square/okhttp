@@ -25,6 +25,7 @@ import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import okhttp3.Headers;
 import okhttp3.internal.Util;
 import okhttp3.internal.http2.MockHttp2Peer.InFrame;
 import okio.AsyncTimeout;
@@ -303,7 +304,7 @@ public final class Http2ConnectionTest {
     connection.okHttpSettings.set(INITIAL_WINDOW_SIZE, windowSize);
     Http2Stream stream = connection.newStream(headerEntries("b", "banana"), false);
     assertEquals(0, stream.unacknowledgedBytesRead);
-    assertEquals(headerEntries("a", "android"), stream.takeHeaders());
+    assertEquals(Headers.of("a", "android"), stream.takeHeaders());
     Source in = stream.getSource();
     Buffer buffer = new Buffer();
     buffer.writeAll(in);
@@ -525,7 +526,7 @@ public final class Http2ConnectionTest {
     BufferedSink out = Okio.buffer(stream.getSink());
     out.writeUtf8("c3po");
     out.close();
-    assertEquals(headerEntries("a", "android"), stream.takeHeaders());
+    assertEquals(Headers.of("a", "android"), stream.takeHeaders());
     assertStreamData("robot", stream.getSource());
     connection.writePingAndAwaitPong();
     assertEquals(0, connection.openStreamCount());
@@ -542,19 +543,16 @@ public final class Http2ConnectionTest {
   }
 
   static final class RecordingHeadersListener implements Header.Listener {
-    final ArrayDeque<Header> receivedHeaders = new ArrayDeque<>();
+    final ArrayDeque<Headers> receivedHeaders = new ArrayDeque<>();
 
-    @Override public void onHeaders(List<Header> headers) {
-      for (Header header : headers) {
-        if (header == null) continue; // TODO: deliver Headers, not List<Header>
-        receivedHeaders.add(header);
-      }
+    @Override public void onHeaders(Headers headers) {
+      receivedHeaders.add(headers);
     }
 
-    public List<Header> takeAll() {
-      List<Header> result = new ArrayList<>();
-      for (Header header; (header = receivedHeaders.poll()) != null; ) {
-        result.add(header);
+    public List<Headers> takeAll() {
+      List<Headers> result = new ArrayList<>();
+      for (Headers headers; (headers = receivedHeaders.poll()) != null; ) {
+        result.add(headers);
       }
       return result;
     }
@@ -578,7 +576,8 @@ public final class Http2ConnectionTest {
     Http2Stream stream = connection.newStream(headerEntries(), false);
     stream.setHeadersListener(headersListener);
     assertStreamData("robotcyborg", stream.getSource());
-    assertEquals(headerEntries("a", "android", "b", "banana"), headersListener.takeAll());
+    assertEquals(Arrays.asList(Headers.of("a", "android"), Headers.of("b", "banana")),
+        headersListener.takeAll());
     connection.writePingAndAwaitPong();
     assertEquals(0, connection.openStreamCount());
   }
@@ -605,11 +604,11 @@ public final class Http2ConnectionTest {
     BufferedSource source = Okio.buffer(stream.getSource());
 
     assertStreamPrefix("robot", source);
-    assertEquals(headerEntries("a", "android"), headersListener.takeAll());
+    assertEquals(Arrays.asList(Headers.of("a", "android")), headersListener.takeAll());
     connection.writePingAndAwaitPong();
 
     assertStreamPrefix("cyborg", source);
-    assertEquals(headerEntries("b", "banana"), headersListener.takeAll());
+    assertEquals(Arrays.asList(Headers.of("b", "banana")), headersListener.takeAll());
     connection.writePingAndAwaitPong();
 
     assertEquals(0, connection.openStreamCount());
@@ -634,10 +633,10 @@ public final class Http2ConnectionTest {
     BufferedSource source = Okio.buffer(stream.getSource());
 
     assertStreamPrefix("robot", source);
-    assertEquals(headerEntries("a", "android"), headersListener.takeAll());
+    assertEquals(Arrays.asList(Headers.of("a", "android")), headersListener.takeAll());
     connection.writePingAndAwaitPong();
     source.close();
-    assertEquals(headerEntries("b", "banana"), headersListener.takeAll());
+    assertEquals(Arrays.asList(Headers.of("b", "banana")), headersListener.takeAll());
 
     assertEquals(0, connection.openStreamCount());
   }
@@ -1065,7 +1064,7 @@ public final class Http2ConnectionTest {
     // play it back
     Http2Connection connection = connect(peer);
     Http2Stream stream = connection.newStream(headerEntries("c", "cola"), false);
-    assertEquals(headerEntries("a", "android"), stream.takeHeaders());
+    assertEquals(Headers.of("a", "android"), stream.takeHeaders());
     connection.writePingAndAwaitPong(); // Ensure that the 2nd SYN REPLY has been received.
 
     // verify the peer received what was expected
@@ -1091,7 +1090,7 @@ public final class Http2ConnectionTest {
     // play it back
     Http2Connection connection = connect(peer);
     Http2Stream stream = connection.newStream(headerEntries("b", "banana"), false);
-    assertEquals(headerEntries("a", "android"), stream.takeHeaders());
+    assertEquals(Headers.of("a", "android"), stream.takeHeaders());
     assertStreamData("robot", stream.getSource());
 
     // verify the peer received what was expected
@@ -1124,7 +1123,7 @@ public final class Http2ConnectionTest {
     // play it back
     Http2Connection connection = connect(peer);
     Http2Stream stream = connection.newStream(headerEntries("a", "android"), false);
-    assertEquals(headerEntries("b", "banana"), stream.takeHeaders());
+    assertEquals(Headers.of("b", "banana"), stream.takeHeaders());
 
     // verify the peer received what was expected
     InFrame synStream = peer.takeFrame();
@@ -1480,8 +1479,8 @@ public final class Http2ConnectionTest {
     Http2Connection connection = connect(peer);
     Http2Stream stream = connection.newStream(headerEntries("b", "banana"), true);
     connection.writePingAndAwaitPong(); // Ensure that the HEADERS has been received.
-    assertEquals(Arrays.asList(new Header("a", "android"), null, new Header("c", "c3po")),
-        stream.takeHeaders());
+    assertEquals(Headers.of("a", "android"), stream.takeHeaders());
+    assertEquals(Headers.of("c", "c3po"), stream.takeHeaders());
 
     // verify the peer received what was expected
     InFrame synStream = peer.takeFrame();
@@ -1505,9 +1504,9 @@ public final class Http2ConnectionTest {
     Http2Connection connection = connect(peer);
     Http2Stream stream = connection.newStream(headerEntries("b", "banana"), true);
     stream.getConnection().flush();
-    assertEquals(headerEntries("a", "android"), stream.takeHeaders());
+    assertEquals(Headers.of("a", "android"), stream.takeHeaders());
     connection.writePingAndAwaitPong();
-    assertEquals(headerEntries("c", "cola"), stream.takeHeaders());
+    assertEquals(Headers.of("c", "cola"), stream.takeHeaders());
 
     // verify the peer received what was expected
     assertEquals(Http2.TYPE_HEADERS, peer.takeFrame().type);
@@ -1539,7 +1538,7 @@ public final class Http2ConnectionTest {
     connection.okHttpSettings.set(INITIAL_WINDOW_SIZE, windowSize);
     Http2Stream stream = connection.newStream(headerEntries("b", "banana"), false);
     assertEquals(0, stream.unacknowledgedBytesRead);
-    assertEquals(headerEntries("a", "android"), stream.takeHeaders());
+    assertEquals(Headers.of("a", "android"), stream.takeHeaders());
     Source in = stream.getSource();
     Buffer buffer = new Buffer();
     buffer.writeAll(in);
@@ -1617,7 +1616,7 @@ public final class Http2ConnectionTest {
     // play it back
     Http2Connection connection = connect(peer);
     Http2Stream stream = connection.newStream(headerEntries("b", "banana"), false);
-    assertEquals(headerEntries("a", "android"), stream.takeHeaders());
+    assertEquals(Headers.of("a", "android"), stream.takeHeaders());
     Source in = stream.getSource();
     try {
       Okio.buffer(in).readByteString(101);

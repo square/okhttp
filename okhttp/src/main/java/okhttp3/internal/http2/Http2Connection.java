@@ -33,6 +33,7 @@ import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import okhttp3.Headers;
 import okhttp3.Protocol;
 import okhttp3.internal.NamedRunnable;
 import okhttp3.internal.Util;
@@ -662,8 +663,9 @@ public final class Http2Connection implements Closeable {
           if (streamId % 2 == nextStreamId % 2) return;
 
           // Create a stream.
+          Headers headers = Util.toHeaders(headerBlock);
           final Http2Stream newStream = new Http2Stream(streamId, Http2Connection.this,
-              false, inFinished, headerBlock);
+              false, inFinished, headers);
           lastGoodStreamId = streamId;
           streams.put(streamId, newStream);
           listenerExecutor.execute(new NamedRunnable("OkHttp %s stream %d", hostname, streamId) {
