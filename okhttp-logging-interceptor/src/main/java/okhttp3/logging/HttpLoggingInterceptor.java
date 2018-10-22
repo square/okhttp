@@ -333,8 +333,7 @@ public final class HttpLoggingInterceptor implements Interceptor {
         && !contentEncoding.equalsIgnoreCase("gzip");
   }
 
-@Override
-public void cleanup() {
-	
-}
+  @Override
+  public void cleanup() {
+  }
 }

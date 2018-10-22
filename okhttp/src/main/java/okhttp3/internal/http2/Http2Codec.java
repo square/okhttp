@@ -104,7 +104,7 @@ public final class Http2Codec implements HttpCodec {
         ? Protocol.H2_PRIOR_KNOWLEDGE
         : Protocol.HTTP_2;
   }
-  @Override public void cleanup(){
+  @Override public void cleanup() {
     streamAllocation.release();
   }
 

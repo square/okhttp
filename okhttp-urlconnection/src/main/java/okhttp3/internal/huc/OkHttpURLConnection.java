@@ -603,9 +603,8 @@ public final class OkHttpURLConnection extends HttpURLConnection implements Call
         }
       }
 
-	@Override
-	public void cleanup() {
-	}
+      @Override
+      public void cleanup() { }
     };
 
     UnexpectedException(Throwable cause) {
@@ -677,8 +676,8 @@ public final class OkHttpURLConnection extends HttpURLConnection implements Call
       return response;
     }
 
-	@Override
-	public void cleanup() {
-	}
+    @Override
+    public void cleanup() {
+    }
   }
 }

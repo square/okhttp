@@ -266,5 +266,5 @@ public final class CacheInterceptor implements Interceptor {
   }
 
   @Override
-  public void cleanup() {}
+  public void cleanup() { }
 }

@@ -52,6 +52,6 @@ public interface Interceptor {
     int writeTimeoutMillis();
 
     Chain withWriteTimeout(int timeout, TimeUnit unit);
-    
+
   }
 }

@@ -94,7 +94,7 @@ public final class Http1Codec implements HttpCodec {
     this.sink = sink;
   }
 
-  @Override public void cleanup(){
+  @Override public void cleanup() {
     streamAllocation.release();
   }
 
