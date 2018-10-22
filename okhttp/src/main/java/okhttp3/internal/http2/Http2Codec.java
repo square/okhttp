@@ -104,6 +104,9 @@ public final class Http2Codec implements HttpCodec {
         ? Protocol.H2_PRIOR_KNOWLEDGE
         : Protocol.HTTP_2;
   }
+  @Override public void cleanup(){
+    streamAllocation.release();
+	}
 
   @Override public Sink createRequestBody(Request request, long contentLength) {
     return stream.getSink();

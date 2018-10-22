@@ -58,4 +58,6 @@ public interface HttpCodec {
    * That may happen later by the connection pool thread.
    */
   void cancel();
+
+  void cleanup();
 }

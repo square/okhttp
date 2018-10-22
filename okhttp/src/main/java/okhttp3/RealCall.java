@@ -198,6 +198,12 @@ final class RealCall implements Call {
         originalRequest, this, eventListener, client.connectTimeoutMillis(),
         client.readTimeoutMillis(), client.writeTimeoutMillis());
 
-    return chain.proceed(originalRequest);
+    Response response =  chain.proceed(originalRequest);
+    for(Interceptor i : interceptors) {
+    	if(i instanceof ConnectInterceptor) {
+    		((ConnectInterceptor)i).cleanup();
+    	}
+    }
+    return response;
   }
 }
