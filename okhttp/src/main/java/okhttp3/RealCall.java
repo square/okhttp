@@ -200,11 +200,11 @@ final class RealCall implements Call {
         client.readTimeoutMillis(), client.writeTimeoutMillis());
 
     try {
-    	return chain.proceed(originalRequest);
-    }finally {
-    	for(Interceptor i : interceptors) {
-    		i.cleanup();
-    	}
+      return chain.proceed(originalRequest);
+    } finally {
+      for (Interceptor i : interceptors) {
+        i.cleanup();
+      }
     }
   }
 }

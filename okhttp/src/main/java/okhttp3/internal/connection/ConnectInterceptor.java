@@ -46,7 +46,7 @@ public final class ConnectInterceptor implements Interceptor {
     return realChain.proceed(request, streamAllocation, httpCodec, connection);
   }
   public void cleanup() {
-	  if(httpCodec != null)
-		  httpCodec.cleanup(); 
+    if (httpCodec != null)
+      httpCodec.cleanup();
   }
 }

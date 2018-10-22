@@ -106,7 +106,7 @@ public final class Http2Codec implements HttpCodec {
   }
   @Override public void cleanup(){
     streamAllocation.release();
-	}
+  }
 
   @Override public Sink createRequestBody(Request request, long contentLength) {
     return stream.getSink();

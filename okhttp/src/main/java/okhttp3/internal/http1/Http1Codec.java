@@ -95,7 +95,7 @@ public final class Http1Codec implements HttpCodec {
   }
 
   @Override public void cleanup(){
-	streamAllocation.release();
+    streamAllocation.release();
   }
 
   @Override public Sink createRequestBody(Request request, long contentLength) {
