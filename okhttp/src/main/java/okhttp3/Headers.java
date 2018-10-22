@@ -17,6 +17,12 @@
 
 package okhttp3;
 
+import okhttp3.internal.Util;
+import okhttp3.internal.http.HttpDate;
+
+import javax.annotation.Nullable;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -25,11 +31,9 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.TimeZone;
 import java.util.TreeMap;
 import java.util.TreeSet;
-import javax.annotation.Nullable;
-import okhttp3.internal.Util;
-import okhttp3.internal.http.HttpDate;
 
 /**
  * The header fields of a single HTTP message. Values are uninterpreted strings; use {@code Request}
@@ -276,6 +280,8 @@ public final class Headers {
   }
 
   public static final class Builder {
+    final static TimeZone GMT = TimeZone.getTimeZone("GMT");
+    final static String DATE_HEADER_NAME = "Date";
     final List<String> namesAndValues = new ArrayList<>(20);
 
     /**
@@ -331,6 +337,17 @@ public final class Headers {
         addLenient(headers.name(i), headers.value(i));
       }
 
+      return this;
+    }
+
+    /**
+     * Add a Date header with the current time based on
+     * https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Date
+     */
+    public Builder withDate() {
+      final DateFormat format = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss 'GMT'", Locale.US);
+      format.setTimeZone(GMT);
+      add(DATE_HEADER_NAME, format.format(new Date()));
       return this;
     }
 

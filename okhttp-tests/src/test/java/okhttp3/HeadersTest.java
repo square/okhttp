@@ -18,7 +18,9 @@ package okhttp3;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.Collections;
+import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -810,5 +812,15 @@ public final class HeadersTest {
         .add("ghi", "jkl")
         .build()
         .byteCount());
+  }
+
+  @Test public void withDate() {
+    Date lowerBound = new Date();
+    Calendar calendar = Calendar.getInstance(Headers.Builder.GMT);
+    calendar.add(Calendar.SECOND, 1);
+    Date upperBound = calendar.getTime();
+    Headers headers = new Headers.Builder().withDate().build();
+    Date actual = headers.getDate("Date");
+    assertTrue(actual.after(lowerBound) || actual.before(upperBound));
   }
 }
