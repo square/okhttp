@@ -24,6 +24,8 @@ import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.TimeZone;
+
 import okhttp3.internal.Internal;
 import okhttp3.internal.http.HttpHeaders;
 import okhttp3.internal.http2.Header;
@@ -816,7 +818,7 @@ public final class HeadersTest {
 
   @Test public void withDate() {
     Date lowerBound = new Date();
-    Calendar calendar = Calendar.getInstance(Headers.Builder.GMT);
+    Calendar calendar = Calendar.getInstance(TimeZone.getTimeZone("GMT"));
     calendar.add(Calendar.SECOND, 1);
     Date upperBound = calendar.getTime();
     Headers headers = new Headers.Builder().withDate().build();

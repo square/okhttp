@@ -280,8 +280,7 @@ public final class Headers {
   }
 
   public static final class Builder {
-    final static TimeZone GMT = TimeZone.getTimeZone("GMT");
-    final static String DATE_HEADER_NAME = "Date";
+    final TimeZone gmt = TimeZone.getTimeZone("GMT");
     final List<String> namesAndValues = new ArrayList<>(20);
 
     /**
@@ -342,12 +341,12 @@ public final class Headers {
 
     /**
      * Add a Date header with the current time based on
-     * https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Date
+     * https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Date .
      */
     public Builder withDate() {
       final DateFormat format = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss 'GMT'", Locale.US);
-      format.setTimeZone(GMT);
-      add(DATE_HEADER_NAME, format.format(new Date()));
+      format.setTimeZone(gmt);
+      add("Date", format.format(new Date()));
       return this;
     }
 
