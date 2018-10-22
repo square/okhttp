@@ -33,10 +33,9 @@ public final class RewriteResponseCacheControl {
           .build();
     }
 
-	@Override
-	public void cleanup() {
-		
-	}
+    @Override
+    public void cleanup() {
+    }
   };
 
   private final OkHttpClient client;

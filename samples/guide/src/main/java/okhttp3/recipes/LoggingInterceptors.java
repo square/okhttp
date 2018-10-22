@@ -51,10 +51,7 @@ public final class LoggingInterceptors {
       return response;
     }
 
-	@Override
-	public void cleanup() {
-		
-	}
+    @Override public void cleanup() { }
   }
 
   public static void main(String... args) throws Exception {

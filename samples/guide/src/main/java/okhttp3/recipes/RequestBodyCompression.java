@@ -102,8 +102,8 @@ public final class RequestBodyCompression {
       };
     }
 
-	@Override
-	public void cleanup() {
-	}
+    @Override
+    public void cleanup() {
+    }
   }
 }
