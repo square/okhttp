@@ -15,22 +15,19 @@
  */
 package okhttp3;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Calendar;
-import java.util.Collections;
-import java.util.Date;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.TimeZone;
-
 import okhttp3.internal.Internal;
 import okhttp3.internal.http.HttpHeaders;
 import okhttp3.internal.http2.Header;
 import okhttp3.internal.http2.Http2Codec;
 import org.junit.Test;
+
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Date;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
 import static java.util.Collections.emptyList;
 import static java.util.Collections.emptyMap;
@@ -816,13 +813,44 @@ public final class HeadersTest {
         .byteCount());
   }
 
-  @Test public void withDate() {
-    Date lowerBound = new Date();
-    Calendar calendar = Calendar.getInstance(TimeZone.getTimeZone("GMT"));
-    calendar.add(Calendar.SECOND, 1);
-    Date upperBound = calendar.getTime();
-    Headers headers = new Headers.Builder().withDate().build();
-    Date actual = headers.getDate("Date");
-    assertTrue(actual.after(lowerBound) || actual.before(upperBound));
+  @Test public void addDate() {
+    Date expected = new Date(0);
+    Headers headers = new Headers.Builder()
+            .add("testDate", expected)
+            .build();
+    assertEquals("Thu, 01 Jan 1970 00:00:00 GMT", headers.get("testDate"));
+  }
+
+  @Test public void addDateNull() {
+    try {
+      Headers headers = new Headers.Builder()
+              .add("testDate", (Date) null)
+              .build();
+      fail("Should have complained about null value");
+    } catch (NullPointerException expected) {
+      assertEquals("value for name testDate == null",
+              expected.getMessage());
+    }
+  }
+
+  @Test public void setDate() {
+    Date expected = new Date(1000);
+    Headers headers = new Headers.Builder()
+            .add("testDate", new Date(0))
+            .set("testDate", expected)
+            .build();
+    assertEquals("Thu, 01 Jan 1970 00:00:01 GMT", headers.get("testDate"));
+  }
+
+  @Test public void setDateNull() {
+    try {
+      Headers headers = new Headers.Builder()
+              .set("testDate", (Date) null)
+              .build();
+      fail("Should have complained about null value");
+    } catch (NullPointerException expected) {
+      assertEquals("value for name testDate == null",
+              expected.getMessage());
+    }
   }
 }

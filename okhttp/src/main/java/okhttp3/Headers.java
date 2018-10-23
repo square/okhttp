@@ -21,8 +21,6 @@ import okhttp3.internal.Util;
 import okhttp3.internal.http.HttpDate;
 
 import javax.annotation.Nullable;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -340,13 +338,24 @@ public final class Headers {
     }
 
     /**
-     * Add a Date header with the current time based on
-     * https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Date .
+     * Add a header with the specified name and formated Date.
+     * Does validation of header names and values.
      */
-    public Builder withDate() {
-      final DateFormat format = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss 'GMT'", Locale.US);
-      format.setTimeZone(gmt);
-      add("Date", format.format(new Date()));
+    public Builder add(String name, Date value) {
+      if (value == null) throw new NullPointerException("value for name " + name + " == null");
+      String strValue = HttpDate.format(value);
+      add(name, strValue);
+      return this;
+    }
+
+    /**
+     * Set a field with the specified date. If the field is not found, it is added. If the field is
+     * found, the existing values are replaced.
+     */
+    public Builder set(String name, Date value) {
+      if (value == null) throw new NullPointerException("value for name " + name + " == null");
+      String strValue = HttpDate.format(value);
+      set(name, strValue);
       return this;
     }
 
