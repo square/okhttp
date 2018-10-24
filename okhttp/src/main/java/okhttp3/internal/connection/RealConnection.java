@@ -18,13 +18,7 @@ package okhttp3.internal.connection;
 
 import java.io.IOException;
 import java.lang.ref.Reference;
-import java.net.ConnectException;
-import java.net.ProtocolException;
-import java.net.Proxy;
-import java.net.Socket;
-import java.net.SocketException;
-import java.net.SocketTimeoutException;
-import java.net.UnknownServiceException;
+import java.net.*;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.List;
@@ -34,21 +28,8 @@ import javax.net.ssl.SSLPeerUnverifiedException;
 import javax.net.ssl.SSLSession;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
-import okhttp3.Address;
-import okhttp3.Call;
-import okhttp3.CertificatePinner;
-import okhttp3.Connection;
-import okhttp3.ConnectionPool;
-import okhttp3.ConnectionSpec;
-import okhttp3.EventListener;
-import okhttp3.Handshake;
-import okhttp3.HttpUrl;
-import okhttp3.Interceptor;
-import okhttp3.OkHttpClient;
-import okhttp3.Protocol;
-import okhttp3.Request;
-import okhttp3.Response;
-import okhttp3.Route;
+
+import okhttp3.*;
 import okhttp3.internal.Internal;
 import okhttp3.internal.Util;
 import okhttp3.internal.Version;
@@ -211,7 +192,7 @@ public final class RealConnection extends Http2Connection.Listener implements Co
    */
   private void connectTunnel(int connectTimeout, int readTimeout, int writeTimeout, Call call,
       EventListener eventListener) throws IOException {
-    Request tunnelRequest = createTunnelRequest();
+    Request tunnelRequest = createTunnelRequest(call);
     HttpUrl url = tunnelRequest.url();
     for (int i = 0; i < MAX_TUNNEL_ATTEMPTS; i++) {
       connectSocket(connectTimeout, readTimeout, call, eventListener);
@@ -417,13 +398,19 @@ public final class RealConnection extends Http2Connection.Listener implements Co
    * is sent unencrypted to the proxy server, so tunnels include only the minimum set of headers.
    * This avoids sending potentially sensitive data like HTTP cookies to the proxy unencrypted.
    */
-  private Request createTunnelRequest() {
-    return new Request.Builder()
-        .url(route.address().url())
-        .header("Host", Util.hostHeader(route.address().url(), true))
-        .header("Proxy-Connection", "Keep-Alive") // For HTTP/1.0 proxies like Squid.
-        .header("User-Agent", Version.userAgent())
-        .build();
+  private Request createTunnelRequest(Call call) {
+      Request.Builder builder = new Request.Builder()
+              .url(route.address().url())
+              .header("Host", Util.hostHeader(route.address().url(), true))
+              .header("Proxy-Connection", "Keep-Alive") // For HTTP/1.0 proxies like Squid.
+              .header("User-Agent", Version.userAgent());
+//            .header("Proxy-Authorization","Basic OFNqajllOjRjNjlxVg==");
+      //https://github.com/square/okhttp/issues/3787
+      String value = call.request().header("Proxy-Authorization");
+      if (value != null) {
+          builder.header("Proxy-Authorization", value);
+      }
+      return builder.build();
   }
 
   /**
