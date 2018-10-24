@@ -336,7 +336,7 @@ public final class Headers {
     }
 
     /**
-     * Add a header with the specified name and formated Date.
+     * Add a header with the specified name and formatted Date.
      * Does validation of header names and values.
      */
     public Builder add(String name, Date value) {
