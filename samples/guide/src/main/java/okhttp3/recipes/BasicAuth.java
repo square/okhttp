@@ -13,7 +13,8 @@ public class BasicAuth {
 
     public BasicAuth() {
         client = new OkHttpClient.Builder()
-                .addInterceptor(new BasicAuthInterceptor("jesse", "password1"))
+                .addInterceptor(
+                        new BasicAuthInterceptor("publicobject.com", "jesse", "password1"))
                 .build();
     }
 
@@ -37,17 +38,21 @@ public class BasicAuth {
 class BasicAuthInterceptor implements Interceptor {
 
     private final String credentials;
+    private final String host;
 
-    BasicAuthInterceptor(String username, String password) {
+    BasicAuthInterceptor(String host, String username, String password) {
         this.credentials = Credentials.basic(username, password);
+        this.host = host;
     }
 
     @Override
     public Response intercept(Chain chain) throws IOException {
         Request request = chain.request();
-        Request newRequest = request.newBuilder()
-                .header("Authorization", credentials)
-                .build();
-        return chain.proceed(newRequest);
+        if (request.url().host().equals(host)) {
+            request = request.newBuilder()
+                    .header("Authorization", credentials)
+                    .build();
+        }
+        return chain.proceed(request);
     }
 }
