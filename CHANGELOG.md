@@ -1,6 +1,14 @@
 Change Log
 ==========
 
+## Version 3.11.1
+
+_2018-10-24_
+
+* **Fix proxy https auth bug.**
+
+    `RealConnection.createTunnelRequest(Call call)`
+
 ## Version 3.11.0
 
 _2018-07-12_
