@@ -29,7 +29,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
-import java.util.TimeZone;
 import java.util.TreeMap;
 import java.util.TreeSet;
 
@@ -278,7 +277,6 @@ public final class Headers {
   }
 
   public static final class Builder {
-    final TimeZone gmt = TimeZone.getTimeZone("GMT");
     final List<String> namesAndValues = new ArrayList<>(20);
 
     /**
@@ -343,8 +341,7 @@ public final class Headers {
      */
     public Builder add(String name, Date value) {
       if (value == null) throw new NullPointerException("value for name " + name + " == null");
-      String strValue = HttpDate.format(value);
-      add(name, strValue);
+      add(name, HttpDate.format(value));
       return this;
     }
 
@@ -354,8 +351,7 @@ public final class Headers {
      */
     public Builder set(String name, Date value) {
       if (value == null) throw new NullPointerException("value for name " + name + " == null");
-      String strValue = HttpDate.format(value);
-      set(name, strValue);
+      set(name, HttpDate.format(value));
       return this;
     }
 
