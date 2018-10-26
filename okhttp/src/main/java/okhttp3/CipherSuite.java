@@ -415,8 +415,10 @@ public final class CipherSuite {
 
       if (result == null) {
         result = new CipherSuite(javaName);
-        INSTANCES.put(javaName, result);
       }
+
+      // add the new cipher suite, or a confirmed alias
+      INSTANCES.put(javaName, result);
     }
     return result;
   }
