@@ -1257,6 +1257,9 @@ public final class HttpUrl {
     }
 
     @Override public String toString() {
+      if (scheme == null) throw new IllegalStateException("scheme == null");
+      if (host == null) throw new IllegalStateException("host == null");
+
       StringBuilder result = new StringBuilder();
       result.append(scheme);
       result.append("://");

@@ -772,6 +772,18 @@ public final class HttpUrlTest {
     } catch (IllegalStateException expected) {
       assertEquals("scheme == null", expected.getMessage());
     }
+    try {
+      new HttpUrl.Builder().scheme("http").toString();
+      fail();
+    } catch (IllegalStateException expected) {
+      assertEquals("host == null", expected.getMessage());
+    }
+    try {
+      new HttpUrl.Builder().host("host").toString();
+      fail();
+    } catch (IllegalStateException expected) {
+      assertEquals("scheme == null", expected.getMessage());
+    }
   }
 
   @Test public void minimalUrlComposition() throws Exception {
