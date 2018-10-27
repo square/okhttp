@@ -197,6 +197,7 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
   final int readTimeout;
   final int writeTimeout;
   final int pingInterval;
+  final int pongTimeout;
 
   public OkHttpClient() {
     this(new Builder());
@@ -249,6 +250,7 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
     this.readTimeout = builder.readTimeout;
     this.writeTimeout = builder.writeTimeout;
     this.pingInterval = builder.pingInterval;
+    this.pongTimeout = builder.pongTimeout;
 
     if (interceptors.contains(null)) {
       throw new IllegalStateException("Null interceptor: " + interceptors);
@@ -294,6 +296,16 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
   /** Web socket and HTTP/2 ping interval (in milliseconds). By default pings are not sent. */
   public int pingIntervalMillis() {
     return pingInterval;
+  }
+
+  /**
+   * Web socket custom pong timeout (in milliseconds).
+   * The connection will fail if pongTimeoutMillis passed since last ping.
+   * Must be less than {@link #pingIntervalMillis()}.
+   * Has no effect if {@link #pingIntervalMillis()} is not set.
+   */
+  public int pongTimeoutMillis() {
+    return pongTimeout;
   }
 
   public @Nullable Proxy proxy() {
@@ -405,7 +417,8 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
    * Uses {@code request} to connect a new web socket.
    */
   @Override public WebSocket newWebSocket(Request request, WebSocketListener listener) {
-    RealWebSocket webSocket = new RealWebSocket(request, listener, new Random(), pingInterval);
+    RealWebSocket webSocket = new RealWebSocket(request, listener, new Random(),
+        pingInterval, pongTimeout);
     webSocket.connect(this);
     return webSocket;
   }
@@ -443,6 +456,7 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
     int readTimeout;
     int writeTimeout;
     int pingInterval;
+    int pongTimeout;
 
     public Builder() {
       dispatcher = new Dispatcher();
@@ -469,6 +483,7 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
       readTimeout = 10_000;
       writeTimeout = 10_000;
       pingInterval = 0;
+      pongTimeout = 0;
     }
 
     Builder(OkHttpClient okHttpClient) {
@@ -500,6 +515,7 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
       this.readTimeout = okHttpClient.readTimeout;
       this.writeTimeout = okHttpClient.writeTimeout;
       this.pingInterval = okHttpClient.pingInterval;
+      this.pongTimeout = okHttpClient.pongTimeout;
     }
 
     /**
@@ -654,6 +670,21 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
     @IgnoreJRERequirement
     public Builder pingInterval(Duration duration) {
       pingInterval = checkDuration("timeout", duration.toMillis(), TimeUnit.MILLISECONDS);
+      return this;
+    }
+
+    //TODO: javadoc
+    //TODO: add timeout support for http/2
+    public Builder pongTimeout(long timeout, TimeUnit unit) {
+      pongTimeout = checkDuration("pong-timeout", timeout, unit);
+      return this;
+    }
+
+    //TODO: javadoc
+    //TODO: add timeout support for http/2
+    @IgnoreJRERequirement
+    public Builder pongTimeout(Duration duration) {
+      pongTimeout = checkDuration("pong-timeout", duration.toMillis(), TimeUnit.MILLISECONDS);
       return this;
     }
 

@@ -74,6 +74,7 @@ public final class RealWebSocket implements WebSocket, WebSocketReader.FrameCall
   final WebSocketListener listener;
   private final Random random;
   private final long pingIntervalMillis;
+  private final long pongTimeoutMillis;
   private final String key;
 
   /** Non-null for client web sockets. These can be canceled. */
@@ -81,6 +82,13 @@ public final class RealWebSocket implements WebSocket, WebSocketReader.FrameCall
 
   /** This runnable processes the outgoing queues. Call {@link #runWriter()} to after enqueueing. */
   private final Runnable writerRunnable;
+
+  /**
+   * This runnable fails the connection
+   * if {@link #pongTimeoutMillis} is set
+   * and a pong is not received within {@link #pongTimeoutMillis}
+   */
+  private ScheduledFuture<?> pongTimeoutFuture;
 
   /** Null until this web socket is connected. Only accessed by the reader thread. */
   private WebSocketReader reader;
@@ -140,7 +148,7 @@ public final class RealWebSocket implements WebSocket, WebSocketReader.FrameCall
   private boolean awaitingPong;
 
   public RealWebSocket(Request request, WebSocketListener listener, Random random,
-      long pingIntervalMillis) {
+      long pingIntervalMillis, long pongTimeoutMillis) {
     if (!"GET".equals(request.method())) {
       throw new IllegalArgumentException("Request must be GET: " + request.method());
     }
@@ -148,6 +156,12 @@ public final class RealWebSocket implements WebSocket, WebSocketReader.FrameCall
     this.listener = listener;
     this.random = random;
     this.pingIntervalMillis = pingIntervalMillis;
+
+    if (pongTimeoutMillis < pingIntervalMillis) {
+      this.pongTimeoutMillis = pongTimeoutMillis;
+    } else {
+      this.pongTimeoutMillis = 0;
+    }
 
     byte[] nonce = new byte[16];
     random.nextBytes(nonce);
@@ -339,6 +353,9 @@ public final class RealWebSocket implements WebSocket, WebSocketReader.FrameCall
     // This API doesn't expose pings.
     receivedPongCount++;
     awaitingPong = false;
+    synchronized (this) {
+      if (pongTimeoutFuture != null) pongTimeoutFuture.cancel(false);
+    }
   }
 
   @Override public void onReadClose(int code, String reason) {
@@ -530,6 +547,18 @@ public final class RealWebSocket implements WebSocket, WebSocketReader.FrameCall
     }
   }
 
+  private final class PongTimeoutRunnable implements Runnable {
+    PongTimeoutRunnable() {
+    }
+
+    @Override public void run() {
+      failWebSocket(new SocketTimeoutException("sent ping but didn't receive pong within "
+              + (pongTimeoutMillis != 0 ? pongTimeoutMillis : pingIntervalMillis)
+              + "ms (after " + (sentPingCount - 1) + " successful ping/pongs)"),
+          null);
+    }
+  }
+
   void writePingFrame() {
     WebSocketWriter writer;
     int failedPing;
@@ -542,10 +571,13 @@ public final class RealWebSocket implements WebSocket, WebSocketReader.FrameCall
     }
 
     if (failedPing != -1) {
-      failWebSocket(new SocketTimeoutException("sent ping but didn't receive pong within "
-          + pingIntervalMillis + "ms (after " + (failedPing - 1) + " successful ping/pongs)"),
-          null);
+      new PongTimeoutRunnable().run();
       return;
+    }
+
+    if (pongTimeoutMillis != 0) {
+      pongTimeoutFuture = executor.schedule(
+          new PongTimeoutRunnable(), pongTimeoutMillis, TimeUnit.MILLISECONDS);
     }
 
     try {
@@ -563,6 +595,7 @@ public final class RealWebSocket implements WebSocket, WebSocketReader.FrameCall
       streamsToClose = this.streams;
       this.streams = null;
       if (cancelFuture != null) cancelFuture.cancel(false);
+      if (pongTimeoutFuture != null) pongTimeoutFuture.cancel(false);
       if (executor != null) executor.shutdown();
     }
 
