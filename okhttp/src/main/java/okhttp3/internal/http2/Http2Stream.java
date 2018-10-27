@@ -316,9 +316,6 @@ public final class Http2Stream {
 
   public synchronized void setHeadersListener(Header.Listener headersListener) {
     this.headersListener = headersListener;
-    if (!headersQueue.isEmpty() && headersListener != null) {
-      notifyAll(); // We now have somewhere to deliver headers!
-    }
   }
 
   /**

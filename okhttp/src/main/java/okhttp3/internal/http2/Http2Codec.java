@@ -112,11 +112,22 @@ public final class Http2Codec implements HttpCodec {
   @Override public void writeRequestHeaders(Request request) throws IOException {
     if (stream != null) return;
 
-    boolean hasRequestBody = request.body() != null;
+    boolean hasRequestBody = request.body() != null || request.isDuplex();
     List<Header> requestHeaders = http2HeadersList(request);
     stream = connection.newStream(requestHeaders, hasRequestBody);
     stream.readTimeout().timeout(chain.readTimeoutMillis(), TimeUnit.MILLISECONDS);
     stream.writeTimeout().timeout(chain.writeTimeoutMillis(), TimeUnit.MILLISECONDS);
+  }
+
+  /** Write more headers for the request. */
+  public void writeRequestHeaders(List<Header> headers) throws IOException {
+    if (stream == null) throw new IllegalStateException("stream == null");
+    stream.writeHeaders(headers, true);
+  }
+
+  public void setHeadersListener(Header.Listener headersListener) {
+    if (stream == null) throw new IllegalStateException("stream == null");
+    stream.setHeadersListener(headersListener);
   }
 
   @Override public void flushRequest() throws IOException {

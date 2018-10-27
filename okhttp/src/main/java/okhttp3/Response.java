@@ -21,6 +21,8 @@ import java.util.Collections;
 import java.util.List;
 import javax.annotation.Nullable;
 import okhttp3.internal.http.HttpHeaders;
+import okhttp3.internal.http2.Header;
+import okhttp3.internal.http2.Http2Codec;
 import okio.Buffer;
 import okio.BufferedSource;
 
@@ -46,13 +48,15 @@ public final class Response implements Closeable {
   final int code;
   final String message;
   final @Nullable Handshake handshake;
-  final Headers headers;
+  @Nullable Headers headers;
   final @Nullable ResponseBody body;
   final @Nullable Response networkResponse;
   final @Nullable Response cacheResponse;
   final @Nullable Response priorResponse;
   final long sentRequestAtMillis;
   final long receivedResponseAtMillis;
+  final HttpSink httpSink;
+  final @Nullable Http2Codec http2Codec;
 
   private volatile @Nullable CacheControl cacheControl; // Lazily initialized.
 
@@ -69,6 +73,8 @@ public final class Response implements Closeable {
     this.priorResponse = builder.priorResponse;
     this.sentRequestAtMillis = builder.sentRequestAtMillis;
     this.receivedResponseAtMillis = builder.receivedResponseAtMillis;
+    this.httpSink = builder.httpSink;
+    this.http2Codec = builder.http2Codec;
   }
 
   /**
@@ -134,6 +140,14 @@ public final class Response implements Closeable {
 
   public Headers headers() {
     return headers;
+  }
+
+  /**
+   * Should work for any trailers actually right?
+   */
+  public synchronized void headersListener(Header.Listener listener) {
+    if (http2Codec == null) throw new IllegalStateException("http2Codec == null");
+    http2Codec.setHeadersListener(listener);
   }
 
   /**
@@ -301,11 +315,15 @@ public final class Response implements Closeable {
         + '}';
   }
 
+  public HttpSink httpSink() {
+    return httpSink;
+  }
+
   public static class Builder {
     @Nullable Request request;
     @Nullable Protocol protocol;
     int code = -1;
-    String message;
+    @Nullable String message;
     @Nullable Handshake handshake;
     Headers.Builder headers;
     @Nullable ResponseBody body;
@@ -314,6 +332,8 @@ public final class Response implements Closeable {
     @Nullable Response priorResponse;
     long sentRequestAtMillis;
     long receivedResponseAtMillis;
+    @Nullable HttpSink httpSink;
+    @Nullable Http2Codec http2Codec;
 
     public Builder() {
       headers = new Headers.Builder();
@@ -332,6 +352,8 @@ public final class Response implements Closeable {
       this.priorResponse = response.priorResponse;
       this.sentRequestAtMillis = response.sentRequestAtMillis;
       this.receivedResponseAtMillis = response.receivedResponseAtMillis;
+      this.httpSink = response.httpSink;
+      this.http2Codec = response.http2Codec;
     }
 
     public Builder request(Request request) {
@@ -436,6 +458,16 @@ public final class Response implements Closeable {
 
     public Builder receivedResponseAtMillis(long receivedResponseAtMillis) {
       this.receivedResponseAtMillis = receivedResponseAtMillis;
+      return this;
+    }
+
+    public Builder httpSink(@Nullable HttpSink httpSink) {
+      this.httpSink = httpSink;
+      return this;
+    }
+
+    Builder http2Codec(@Nullable Http2Codec http2Codec) {
+      this.http2Codec = http2Codec;
       return this;
     }
 

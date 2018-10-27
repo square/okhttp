@@ -30,6 +30,7 @@ import okhttp3.internal.cache.InternalCache;
 import okhttp3.internal.connection.RealConnection;
 import okhttp3.internal.connection.RouteDatabase;
 import okhttp3.internal.connection.StreamAllocation;
+import okhttp3.internal.http2.Http2Codec;
 
 /**
  * Escalate internal APIs in {@code okhttp3} so they can be used from OkHttp's implementation
@@ -74,4 +75,6 @@ public abstract class Internal {
   public abstract StreamAllocation streamAllocation(Call call);
 
   public abstract Call newWebSocketCall(OkHttpClient client, Request request);
+
+  public abstract void setHttp2Codec(Response.Builder builder, Http2Codec http2Codec);
 }

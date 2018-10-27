@@ -79,7 +79,7 @@ public final class Header {
   }
 
   // TODO(jwilson): move this to Headers?
-  interface Listener {
+  public interface Listener {
     void onHeaders(Headers headers);
   }
 }

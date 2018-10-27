@@ -37,11 +37,12 @@ import javax.net.ssl.X509TrustManager;
 import okhttp3.internal.Internal;
 import okhttp3.internal.Util;
 import okhttp3.internal.cache.InternalCache;
-import okhttp3.internal.proxy.NullProxySelector;
 import okhttp3.internal.connection.RealConnection;
 import okhttp3.internal.connection.RouteDatabase;
 import okhttp3.internal.connection.StreamAllocation;
+import okhttp3.internal.http2.Http2Codec;
 import okhttp3.internal.platform.Platform;
+import okhttp3.internal.proxy.NullProxySelector;
 import okhttp3.internal.tls.CertificateChainCleaner;
 import okhttp3.internal.tls.OkHostnameVerifier;
 import okhttp3.internal.ws.RealWebSocket;
@@ -189,6 +190,10 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
 
       @Override public Call newWebSocketCall(OkHttpClient client, Request originalRequest) {
         return RealCall.newRealCall(client, originalRequest, true);
+      }
+
+      @Override public void setHttp2Codec(Response.Builder builder, Http2Codec http2Codec) {
+        builder.http2Codec(http2Codec);
       }
     };
   }
