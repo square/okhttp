@@ -48,6 +48,7 @@ import okhttp3.internal.Util;
 import okhttp3.internal.http.StatusLine;
 import okhttp3.internal.http2.Http2;
 import okhttp3.internal.platform.Platform;
+import okhttp3.logging.CallLogger;
 import okio.BufferedSource;
 import okio.Okio;
 import okio.Sink;
@@ -121,6 +122,9 @@ public class Main extends HelpOption implements Runnable {
   @Option(name = {"-V", "--version"}, description = "Show version number and quit")
   public boolean version;
 
+  @Option(name = {"-v", "--verbose"}, description = "Makes curl verbose during the operation")
+  public boolean verbose;
+
   @Arguments(title = "url", description = "Remote resource URL")
   public String url;
 
@@ -183,6 +187,15 @@ public class Main extends HelpOption implements Runnable {
       SSLSocketFactory sslSocketFactory = createInsecureSslSocketFactory(trustManager);
       builder.sslSocketFactory(sslSocketFactory, trustManager);
       builder.hostnameVerifier(createInsecureHostnameVerifier());
+    }
+    if (verbose) {
+      CallLogger.Logger logger = new CallLogger.Logger() {
+        @Override public void log(String message) {
+          System.out.println(message);
+        }
+      };
+      CallLogger callLogger = new CallLogger(logger).setLevel(CallLogger.Level.BODY);
+      builder.eventListenerFactory(callLogger.eventListenerFactory());
     }
     return builder.build();
   }
