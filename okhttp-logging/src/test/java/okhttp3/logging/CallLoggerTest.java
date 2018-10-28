@@ -66,22 +66,16 @@ public final class CallLoggerTest {
   private HttpUrl url;
 
   private final LogRecorder networkLogs = new LogRecorder();
-  private final CallLogger networkInterceptor =
+  private final CallLogger callLogger =
       new CallLogger(networkLogs);
 
-  private final LogRecorder applicationLogs = new LogRecorder();
-  private final CallLogger applicationInterceptor =
-      new CallLogger(applicationLogs);
-
   private void setLevel(Level level) {
-    networkInterceptor.setLevel(level);
-    applicationInterceptor.setLevel(level);
+    callLogger.setLevel(level);
   }
 
   @Before public void setUp() {
     client = new OkHttpClient.Builder()
-        .addNetworkInterceptor(networkInterceptor)
-        .addInterceptor(applicationInterceptor)
+        .eventListenerFactory(callLogger.eventListenerFactory())
         .sslSocketFactory(
             handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager())
         .hostnameVerifier(hostnameVerifier)
@@ -93,17 +87,17 @@ public final class CallLoggerTest {
 
   @Test public void levelGetter() {
     // The default is NONE.
-    Assert.assertEquals(Level.NONE, applicationInterceptor.getLevel());
+    Assert.assertEquals(Level.NONE, callLogger.getLevel());
 
     for (Level level : Level.values()) {
-      applicationInterceptor.setLevel(level);
-      assertEquals(level, applicationInterceptor.getLevel());
+      callLogger.setLevel(level);
+      assertEquals(level, callLogger.getLevel());
     }
   }
 
   @Test public void setLevelShouldPreventNullValue() {
     try {
-      applicationInterceptor.setLevel(null);
+      callLogger.setLevel(null);
       fail();
     } catch (NullPointerException expected) {
       assertEquals("level == null. Use Level.NONE instead.", expected.getMessage());
@@ -112,7 +106,7 @@ public final class CallLoggerTest {
 
   @Test public void setLevelShouldReturnSameInstanceOfInterceptor() {
     for (Level level : Level.values()) {
-      assertSame(applicationInterceptor, applicationInterceptor.setLevel(level));
+      assertSame(callLogger, callLogger.setLevel(level));
     }
   }
 
@@ -120,7 +114,6 @@ public final class CallLoggerTest {
     server.enqueue(new MockResponse());
     client.newCall(request().build()).execute();
 
-    applicationLogs.assertNoMoreLogs();
     networkLogs.assertNoMoreLogs();
   }
 
@@ -129,11 +122,6 @@ public final class CallLoggerTest {
 
     server.enqueue(new MockResponse());
     client.newCall(request().build()).execute();
-
-    applicationLogs
-        .assertLogEqual("--> GET " + url)
-        .assertLogMatch("<-- 200 OK " + url + " \\(\\d+ms, 0-byte body\\)")
-        .assertNoMoreLogs();
 
     networkLogs
         .assertLogEqual("--> GET " + url + " http/1.1")
@@ -146,11 +134,6 @@ public final class CallLoggerTest {
 
     server.enqueue(new MockResponse());
     client.newCall(request().post(RequestBody.create(PLAIN, "Hi?")).build()).execute();
-
-    applicationLogs
-        .assertLogEqual("--> POST " + url + " (3-byte body)")
-        .assertLogMatch("<-- 200 OK " + url + " \\(\\d+ms, 0-byte body\\)")
-        .assertNoMoreLogs();
 
     networkLogs
         .assertLogEqual("--> POST " + url + " http/1.1 (3-byte body)")
@@ -167,11 +150,6 @@ public final class CallLoggerTest {
     Response response = client.newCall(request().build()).execute();
     response.body().close();
 
-    applicationLogs
-        .assertLogEqual("--> GET " + url)
-        .assertLogMatch("<-- 200 OK " + url + " \\(\\d+ms, 6-byte body\\)")
-        .assertNoMoreLogs();
-
     networkLogs
         .assertLogEqual("--> GET " + url + " http/1.1")
         .assertLogMatch("<-- 200 OK " + url + " \\(\\d+ms, 6-byte body\\)")
@@ -187,14 +165,9 @@ public final class CallLoggerTest {
     Response response = client.newCall(request().build()).execute();
     response.body().close();
 
-    applicationLogs
-        .assertLogEqual("--> GET " + url)
-        .assertLogMatch("<-- 200 OK " + url + " \\(\\d+ms, unknown-length body\\)")
-        .assertNoMoreLogs();
-
     networkLogs
         .assertLogEqual("--> GET " + url + " http/1.1")
-        .assertLogMatch("<-- 200 OK " + url + " \\(\\d+ms, unknown-length body\\)")
+        .assertLogMatch("<-- 200 OK " + url + " \\(\\d+ms, 6-byte body\\)")
         .assertNoMoreLogs();
   }
 
@@ -205,14 +178,6 @@ public final class CallLoggerTest {
     Response response = client.newCall(request().build()).execute();
     response.body().close();
 
-    applicationLogs
-        .assertLogEqual("--> GET " + url)
-        .assertLogEqual("--> END GET")
-        .assertLogMatch("<-- 200 OK " + url + " \\(\\d+ms\\)")
-        .assertLogEqual("Content-Length: 0")
-        .assertLogEqual("<-- END HTTP")
-        .assertNoMoreLogs();
-
     networkLogs
         .assertLogEqual("--> GET " + url + " http/1.1")
         .assertLogEqual("Host: " + host)
@@ -222,7 +187,7 @@ public final class CallLoggerTest {
         .assertLogEqual("--> END GET")
         .assertLogMatch("<-- 200 OK " + url + " \\(\\d+ms\\)")
         .assertLogEqual("Content-Length: 0")
-        .assertLogEqual("<-- END HTTP")
+        .assertLogEqual("<-- END HTTP (0-byte body)")
         .assertNoMoreLogs();
   }
 
@@ -234,16 +199,6 @@ public final class CallLoggerTest {
     Response response = client.newCall(request).execute();
     response.body().close();
 
-    applicationLogs
-        .assertLogEqual("--> POST " + url)
-        .assertLogEqual("Content-Type: text/plain; charset=utf-8")
-        .assertLogEqual("Content-Length: 3")
-        .assertLogEqual("--> END POST")
-        .assertLogMatch("<-- 200 OK " + url + " \\(\\d+ms\\)")
-        .assertLogEqual("Content-Length: 0")
-        .assertLogEqual("<-- END HTTP")
-        .assertNoMoreLogs();
-
     networkLogs
         .assertLogEqual("--> POST " + url + " http/1.1")
         .assertLogEqual("Content-Type: text/plain; charset=utf-8")
@@ -255,7 +210,7 @@ public final class CallLoggerTest {
         .assertLogEqual("--> END POST")
         .assertLogMatch("<-- 200 OK " + url + " \\(\\d+ms\\)")
         .assertLogEqual("Content-Length: 0")
-        .assertLogEqual("<-- END HTTP")
+        .assertLogEqual("<-- END HTTP (0-byte body)")
         .assertNoMoreLogs();
   }
 
@@ -267,15 +222,6 @@ public final class CallLoggerTest {
     Response response = client.newCall(request).execute();
     response.body().close();
 
-    applicationLogs
-        .assertLogEqual("--> POST " + url)
-        .assertLogEqual("Content-Length: 3")
-        .assertLogEqual("--> END POST")
-        .assertLogMatch("<-- 200 OK " + url + " \\(\\d+ms\\)")
-        .assertLogEqual("Content-Length: 0")
-        .assertLogEqual("<-- END HTTP")
-        .assertNoMoreLogs();
-
     networkLogs
         .assertLogEqual("--> POST " + url + " http/1.1")
         .assertLogEqual("Content-Length: 3")
@@ -286,7 +232,7 @@ public final class CallLoggerTest {
         .assertLogEqual("--> END POST")
         .assertLogMatch("<-- 200 OK " + url + " \\(\\d+ms\\)")
         .assertLogEqual("Content-Length: 0")
-        .assertLogEqual("<-- END HTTP")
+        .assertLogEqual("<-- END HTTP (0-byte body)")
         .assertNoMoreLogs();
   }
 
@@ -306,15 +252,6 @@ public final class CallLoggerTest {
     Response response = client.newCall(request().post(body).build()).execute();
     response.body().close();
 
-    applicationLogs
-        .assertLogEqual("--> POST " + url)
-        .assertLogEqual("Content-Type: text/plain; charset=utf-8")
-        .assertLogEqual("--> END POST")
-        .assertLogMatch("<-- 200 OK " + url + " \\(\\d+ms\\)")
-        .assertLogEqual("Content-Length: 0")
-        .assertLogEqual("<-- END HTTP")
-        .assertNoMoreLogs();
-
     networkLogs
         .assertLogEqual("--> POST " + url + " http/1.1")
         .assertLogEqual("Content-Type: text/plain; charset=utf-8")
@@ -326,7 +263,7 @@ public final class CallLoggerTest {
         .assertLogEqual("--> END POST")
         .assertLogMatch("<-- 200 OK " + url + " \\(\\d+ms\\)")
         .assertLogEqual("Content-Length: 0")
-        .assertLogEqual("<-- END HTTP")
+        .assertLogEqual("<-- END HTTP (0-byte body)")
         .assertNoMoreLogs();
   }
 
@@ -339,15 +276,6 @@ public final class CallLoggerTest {
     Response response = client.newCall(request().build()).execute();
     response.body().close();
 
-    applicationLogs
-        .assertLogEqual("--> GET " + url)
-        .assertLogEqual("--> END GET")
-        .assertLogMatch("<-- 200 OK " + url + " \\(\\d+ms\\)")
-        .assertLogEqual("Content-Length: 6")
-        .assertLogEqual("Content-Type: text/plain; charset=utf-8")
-        .assertLogEqual("<-- END HTTP")
-        .assertNoMoreLogs();
-
     networkLogs
         .assertLogEqual("--> GET " + url + " http/1.1")
         .assertLogEqual("Host: " + host)
@@ -358,7 +286,7 @@ public final class CallLoggerTest {
         .assertLogMatch("<-- 200 OK " + url + " \\(\\d+ms\\)")
         .assertLogEqual("Content-Length: 6")
         .assertLogEqual("Content-Type: text/plain; charset=utf-8")
-        .assertLogEqual("<-- END HTTP")
+        .assertLogEqual("<-- END HTTP (6-byte body)")
         .assertNoMoreLogs();
   }
 
@@ -368,14 +296,6 @@ public final class CallLoggerTest {
     server.enqueue(new MockResponse());
     Response response = client.newCall(request().build()).execute();
     response.body().close();
-
-    applicationLogs
-        .assertLogEqual("--> GET " + url)
-        .assertLogEqual("--> END GET")
-        .assertLogMatch("<-- 200 OK " + url + " \\(\\d+ms\\)")
-        .assertLogEqual("Content-Length: 0")
-        .assertLogEqual("<-- END HTTP (0-byte body)")
-        .assertNoMoreLogs();
 
     networkLogs
         .assertLogEqual("--> GET " + url + " http/1.1")
@@ -406,14 +326,6 @@ public final class CallLoggerTest {
     Response response = client.newCall(request().build()).execute();
     response.body().close();
 
-    applicationLogs
-        .assertLogEqual("--> GET " + url)
-        .assertLogEqual("--> END GET")
-        .assertLogMatch("<-- " + code + " No Content " + url + " \\(\\d+ms\\)")
-        .assertLogEqual("Content-Length: 0")
-        .assertLogEqual("<-- END HTTP (0-byte body)")
-        .assertNoMoreLogs();
-
     networkLogs
         .assertLogEqual("--> GET " + url + " http/1.1")
         .assertLogEqual("Host: " + host)
@@ -434,18 +346,6 @@ public final class CallLoggerTest {
     Request request = request().post(RequestBody.create(PLAIN, "Hi?")).build();
     Response response = client.newCall(request).execute();
     response.body().close();
-
-    applicationLogs
-        .assertLogEqual("--> POST " + url)
-        .assertLogEqual("Content-Type: text/plain; charset=utf-8")
-        .assertLogEqual("Content-Length: 3")
-        .assertLogEqual("")
-        .assertLogEqual("Hi?")
-        .assertLogEqual("--> END POST (3-byte body)")
-        .assertLogMatch("<-- 200 OK " + url + " \\(\\d+ms\\)")
-        .assertLogEqual("Content-Length: 0")
-        .assertLogEqual("<-- END HTTP (0-byte body)")
-        .assertNoMoreLogs();
 
     networkLogs
         .assertLogEqual("--> POST " + url + " http/1.1")
@@ -473,17 +373,6 @@ public final class CallLoggerTest {
     Response response = client.newCall(request().build()).execute();
     response.body().close();
 
-    applicationLogs
-        .assertLogEqual("--> GET " + url)
-        .assertLogEqual("--> END GET")
-        .assertLogMatch("<-- 200 OK " + url + " \\(\\d+ms\\)")
-        .assertLogEqual("Content-Length: 6")
-        .assertLogEqual("Content-Type: text/plain; charset=utf-8")
-        .assertLogEqual("")
-        .assertLogEqual("Hello!")
-        .assertLogEqual("<-- END HTTP (6-byte body)")
-        .assertNoMoreLogs();
-
     networkLogs
         .assertLogEqual("--> GET " + url + " http/1.1")
         .assertLogEqual("Host: " + host)
@@ -494,8 +383,6 @@ public final class CallLoggerTest {
         .assertLogMatch("<-- 200 OK " + url + " \\(\\d+ms\\)")
         .assertLogEqual("Content-Length: 6")
         .assertLogEqual("Content-Type: text/plain; charset=utf-8")
-        .assertLogEqual("")
-        .assertLogEqual("Hello!")
         .assertLogEqual("<-- END HTTP (6-byte body)")
         .assertNoMoreLogs();
   }
@@ -509,17 +396,6 @@ public final class CallLoggerTest {
     Response response = client.newCall(request().build()).execute();
     response.body().close();
 
-    applicationLogs
-        .assertLogEqual("--> GET " + url)
-        .assertLogEqual("--> END GET")
-        .assertLogMatch("<-- 200 OK " + url + " \\(\\d+ms\\)")
-        .assertLogEqual("Transfer-encoding: chunked")
-        .assertLogEqual("Content-Type: text/plain; charset=utf-8")
-        .assertLogEqual("")
-        .assertLogEqual("Hello!")
-        .assertLogEqual("<-- END HTTP (6-byte body)")
-        .assertNoMoreLogs();
-
     networkLogs
         .assertLogEqual("--> GET " + url + " http/1.1")
         .assertLogEqual("Host: " + host)
@@ -530,8 +406,6 @@ public final class CallLoggerTest {
         .assertLogMatch("<-- 200 OK " + url + " \\(\\d+ms\\)")
         .assertLogEqual("Transfer-encoding: chunked")
         .assertLogEqual("Content-Type: text/plain; charset=utf-8")
-        .assertLogEqual("")
-        .assertLogEqual("Hello!")
         .assertLogEqual("<-- END HTTP (6-byte body)")
         .assertNoMoreLogs();
   }
@@ -561,19 +435,7 @@ public final class CallLoggerTest {
         .assertLogEqual("Content-Encoding: gzip")
         .assertLogEqual("Content-Type: text/plain; charset=utf-8")
         .assertLogMatch("Content-Length: \\d+")
-        .assertLogEqual("")
-        .assertLogEqual("Hello, Hello, Hello")
-        .assertLogEqual("<-- END HTTP (19-byte, 29-gzipped-byte body)")
-        .assertNoMoreLogs();
-
-    applicationLogs
-        .assertLogEqual("--> GET " + url)
-        .assertLogEqual("--> END GET")
-        .assertLogMatch("<-- 200 OK " + url + " \\(\\d+ms\\)")
-        .assertLogEqual("Content-Type: text/plain; charset=utf-8")
-        .assertLogEqual("")
-        .assertLogEqual("Hello, Hello, Hello")
-        .assertLogEqual("<-- END HTTP (19-byte body)")
+        .assertLogEqual("<-- END HTTP (29-byte body)")
         .assertNoMoreLogs();
   }
 
@@ -600,17 +462,7 @@ public final class CallLoggerTest {
           .assertLogEqual("Content-Encoding: br")
           .assertLogEqual("Content-Type: text/plain; charset=utf-8")
           .assertLogMatch("Content-Length: \\d+")
-          .assertLogEqual("<-- END HTTP (encoded body omitted)")
-          .assertNoMoreLogs();
-
-      applicationLogs
-          .assertLogEqual("--> GET " + url)
-          .assertLogEqual("--> END GET")
-          .assertLogMatch("<-- 200 OK " + url + " \\(\\d+ms\\)")
-          .assertLogEqual("Content-Encoding: br")
-          .assertLogEqual("Content-Type: text/plain; charset=utf-8")
-          .assertLogMatch("Content-Length: \\d+")
-          .assertLogEqual("<-- END HTTP (encoded body omitted)")
+          .assertLogEqual("<-- END HTTP (24-byte body)")
           .assertNoMoreLogs();
     }
 
@@ -633,19 +485,6 @@ public final class CallLoggerTest {
         .assertLogMatch("<-- 200 OK " + url + " \\(\\d+ms\\)")
         .assertLogEqual("Content-Type: text/html; charset=0")
         .assertLogMatch("Content-Length: \\d+")
-        .assertLogMatch("")
-        .assertLogEqual("Body with unknown charset")
-        .assertLogEqual("<-- END HTTP (25-byte body)")
-        .assertNoMoreLogs();
-
-    applicationLogs
-        .assertLogEqual("--> GET " + url)
-        .assertLogEqual("--> END GET")
-        .assertLogMatch("<-- 200 OK " + url + " \\(\\d+ms\\)")
-        .assertLogEqual("Content-Type: text/html; charset=0")
-        .assertLogMatch("Content-Length: \\d+")
-        .assertLogEqual("")
-        .assertLogEqual("Body with unknown charset")
         .assertLogEqual("<-- END HTTP (25-byte body)")
         .assertNoMoreLogs();
   }
@@ -677,16 +516,6 @@ public final class CallLoggerTest {
     Response response = client.newCall(request().build()).execute();
     response.body().close();
 
-    applicationLogs
-        .assertLogEqual("--> GET " + url)
-        .assertLogEqual("--> END GET")
-        .assertLogMatch("<-- 200 OK " + url + " \\(\\d+ms\\)")
-        .assertLogEqual("Content-Length: 9")
-        .assertLogEqual("Content-Type: image/png; charset=utf-8")
-        .assertLogEqual("")
-        .assertLogEqual("<-- END HTTP (binary 9-byte body omitted)")
-        .assertNoMoreLogs();
-
     networkLogs
         .assertLogEqual("--> GET " + url + " http/1.1")
         .assertLogEqual("Host: " + host)
@@ -697,8 +526,7 @@ public final class CallLoggerTest {
         .assertLogMatch("<-- 200 OK " + url + " \\(\\d+ms\\)")
         .assertLogEqual("Content-Length: 9")
         .assertLogEqual("Content-Type: image/png; charset=utf-8")
-        .assertLogEqual("")
-        .assertLogEqual("<-- END HTTP (binary 9-byte body omitted)")
+        .assertLogEqual("<-- END HTTP (9-byte body)")
         .assertNoMoreLogs();
   }
 
@@ -710,7 +538,7 @@ public final class CallLoggerTest {
             throw new UnknownHostException("reason");
           }
         })
-        .addInterceptor(applicationInterceptor)
+        .eventListenerFactory(callLogger.eventListenerFactory())
         .build();
 
     try {
@@ -719,8 +547,7 @@ public final class CallLoggerTest {
     } catch (UnknownHostException expected) {
     }
 
-    applicationLogs
-        .assertLogEqual("--> GET " + url)
+    networkLogs
         .assertLogEqual("<-- HTTP FAILED: java.net.UnknownHostException: reason")
         .assertNoMoreLogs();
   }
@@ -734,11 +561,7 @@ public final class CallLoggerTest {
     server.enqueue(new MockResponse());
     Response response = client.newCall(request().build()).execute();
     assumeThat(response.protocol(), equalTo(Protocol.HTTP_2));
-
-    applicationLogs
-        .assertLogEqual("--> GET " + url)
-        .assertLogMatch("<-- 200 " + url + " \\(\\d+ms, 0-byte body\\)")
-        .assertNoMoreLogs();
+    response.body().bytes();
 
     networkLogs
         .assertLogEqual("--> GET " + url + " h2")
@@ -748,18 +571,13 @@ public final class CallLoggerTest {
 
   @Test
   public void headersAreRedacted() throws Exception {
-    CallLogger networkInterceptor =
+    CallLogger callLogger =
         new CallLogger(networkLogs).setLevel(Level.HEADERS);
-    networkInterceptor.redactHeader("sEnSiTiVe");
-
-    CallLogger applicationInterceptor =
-        new CallLogger(applicationLogs).setLevel(Level.HEADERS);
-    applicationInterceptor.redactHeader("sEnSiTiVe");
+    callLogger.redactHeader("sEnSiTiVe");
 
     client =
         new OkHttpClient.Builder()
-            .addNetworkInterceptor(networkInterceptor)
-            .addInterceptor(applicationInterceptor)
+            .eventListenerFactory(callLogger.eventListenerFactory())
             .build();
 
     server.enqueue(
@@ -774,18 +592,6 @@ public final class CallLoggerTest {
             .execute();
     response.body().close();
 
-    applicationLogs
-        .assertLogEqual("--> GET " + url)
-        .assertLogEqual("SeNsItIvE: ██")
-        .assertLogEqual("Not-Sensitive: Value")
-        .assertLogEqual("--> END GET")
-        .assertLogMatch("<-- 200 OK " + url + " \\(\\d+ms\\)")
-        .assertLogEqual("Content-Length: 0")
-        .assertLogEqual("SeNsItIvE: ██")
-        .assertLogEqual("Not-Sensitive: Value")
-        .assertLogEqual("<-- END HTTP")
-        .assertNoMoreLogs();
-
     networkLogs
         .assertLogEqual("--> GET " + url + " http/1.1")
         .assertLogEqual("SeNsItIvE: ██")
@@ -799,7 +605,7 @@ public final class CallLoggerTest {
         .assertLogEqual("Content-Length: 0")
         .assertLogEqual("SeNsItIvE: ██")
         .assertLogEqual("Not-Sensitive: Value")
-        .assertLogEqual("<-- END HTTP")
+        .assertLogEqual("<-- END HTTP (0-byte body)")
         .assertNoMoreLogs();
   }
 
