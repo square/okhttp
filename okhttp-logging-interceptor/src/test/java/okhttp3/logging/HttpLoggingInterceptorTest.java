@@ -59,8 +59,8 @@ public final class HttpLoggingInterceptorTest {
 
   @Rule public final MockWebServer server = new MockWebServer();
 
-  private HandshakeCertificates handshakeCertificates = localhost();
-  private HostnameVerifier hostnameVerifier = new RecordingHostnameVerifier();
+  private final HandshakeCertificates handshakeCertificates = localhost();
+  private final HostnameVerifier hostnameVerifier = new RecordingHostnameVerifier();
   private OkHttpClient client;
   private String host;
   private HttpUrl url;
@@ -650,7 +650,7 @@ public final class HttpLoggingInterceptorTest {
         .assertNoMoreLogs();
   }
 
-  @Test public void isPlaintext() throws IOException {
+  @Test public void isPlaintext() {
     assertTrue(HttpLoggingInterceptor.isPlaintext(new Buffer()));
     assertTrue(HttpLoggingInterceptor.isPlaintext(new Buffer().writeUtf8("abc")));
     assertTrue(HttpLoggingInterceptor.isPlaintext(new Buffer().writeUtf8("new\r\nlines")));
