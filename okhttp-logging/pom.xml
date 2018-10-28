@@ -9,8 +9,8 @@
     <version>3.12.0-SNAPSHOT</version>
   </parent>
 
-  <artifactId>logging-interceptor</artifactId>
-  <name>OkHttp Logging Interceptor</name>
+  <artifactId>logging</artifactId>
+  <name>OkHttp Logging</name>
 
   <dependencies>
     <dependency>

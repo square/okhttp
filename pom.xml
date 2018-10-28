@@ -30,7 +30,7 @@
     <module>okhttp-tls</module>
     <module>okhttp-urlconnection</module>
 
-    <module>okhttp-logging-interceptor</module>
+    <module>okhttp-logging</module>
 
     <module>okhttp-dnsoverhttps</module>
 
