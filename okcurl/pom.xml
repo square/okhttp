@@ -20,6 +20,11 @@
     </dependency>
     <dependency>
       <groupId>${project.groupId}</groupId>
+      <artifactId>logging</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>${project.groupId}</groupId>
       <artifactId>okhttp-testing-support</artifactId>
       <version>${project.version}</version>
       <scope>test</scope>
@@ -37,12 +42,6 @@
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
       <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>com.squareup.okhttp3</groupId>
-      <artifactId>logging-interceptor</artifactId>
-      <version>3.12.0-SNAPSHOT</version>
-      <scope>compile</scope>
     </dependency>
   </dependencies>
 
