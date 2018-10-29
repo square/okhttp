@@ -63,16 +63,6 @@
           </archive>
         </configuration>
       </plugin>
-      <plugin>
-        <!-- Fails on Throwable.addSuppressed() in try-with-resources block. -->
-        <groupId>org.codehaus.mojo</groupId>
-        <artifactId>animal-sniffer-maven-plugin</artifactId>
-        <executions>
-          <execution>
-            <phase>none</phase>
-          </execution>
-        </executions>
-      </plugin>
     </plugins>
   </build>
 </project>
