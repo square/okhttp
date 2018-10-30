@@ -112,11 +112,4 @@ public class ConscryptPlatform extends Platform {
       return null;
     }
   }
-
-  @Override
-  public void configureSslSocketFactory(SSLSocketFactory socketFactory) {
-    if (Conscrypt.isConscrypt(socketFactory)) {
-      Conscrypt.setUseEngineSocket(socketFactory, true);
-    }
-  }
 }
