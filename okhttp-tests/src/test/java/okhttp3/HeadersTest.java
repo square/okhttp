@@ -16,9 +16,9 @@
 package okhttp3;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -810,5 +810,44 @@ public final class HeadersTest {
         .add("ghi", "jkl")
         .build()
         .byteCount());
+  }
+
+  @Test public void addDate() {
+    Date expected = new Date(0);
+    Headers headers = new Headers.Builder()
+        .add("testDate", expected)
+        .build();
+    assertEquals("Thu, 01 Jan 1970 00:00:00 GMT", headers.get("testDate"));
+  }
+
+  @Test public void addDateNull() {
+    try {
+      new Headers.Builder()
+          .add("testDate", (Date) null)
+          .build();
+      fail();
+    } catch (NullPointerException expected) {
+      assertEquals("value for name testDate == null", expected.getMessage());
+    }
+  }
+
+  @Test public void setDate() {
+    Date expected = new Date(1000);
+    Headers headers = new Headers.Builder()
+        .add("testDate", new Date(0))
+        .set("testDate", expected)
+        .build();
+    assertEquals("Thu, 01 Jan 1970 00:00:01 GMT", headers.get("testDate"));
+  }
+
+  @Test public void setDateNull() {
+    try {
+      new Headers.Builder()
+          .set("testDate", (Date) null)
+          .build();
+      fail();
+    } catch (NullPointerException expected) {
+      assertEquals("value for name testDate == null", expected.getMessage());
+    }
   }
 }
