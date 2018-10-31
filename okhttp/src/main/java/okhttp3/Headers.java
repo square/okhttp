@@ -335,6 +335,26 @@ public final class Headers {
     }
 
     /**
+     * Add a header with the specified name and formatted Date.
+     * Does validation of header names and values.
+     */
+    public Builder add(String name, Date value) {
+      if (value == null) throw new NullPointerException("value for name " + name + " == null");
+      add(name, HttpDate.format(value));
+      return this;
+    }
+
+    /**
+     * Set a field with the specified date. If the field is not found, it is added. If the field is
+     * found, the existing values are replaced.
+     */
+    public Builder set(String name, Date value) {
+      if (value == null) throw new NullPointerException("value for name " + name + " == null");
+      set(name, HttpDate.format(value));
+      return this;
+    }
+
+    /**
      * Add a field with the specified value without any validation. Only appropriate for headers
      * from the remote peer or cache.
      */
