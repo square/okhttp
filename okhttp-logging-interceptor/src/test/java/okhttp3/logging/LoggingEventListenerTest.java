@@ -74,7 +74,7 @@ public final class LoggingEventListenerTest {
     response.body().bytes();
 
     logRecorder
-        .assertLogMatch("callStart: Request\\{method=GET, url=http://localhost:.+, tags=\\{\\}\\}")
+        .assertLogMatch("callStart: Request\\{method=GET, url=" + url + ", tags=\\{\\}\\}")
         .assertLogMatch("dnsStart: localhost")
         .assertLogMatch("dnsEnd: \\[.+\\]")
         .assertLogMatch("connectStart: localhost/.+ DIRECT")
@@ -99,20 +99,20 @@ public final class LoggingEventListenerTest {
     client.newCall(request().post(RequestBody.create(PLAIN, "Hello!")).build()).execute();
 
     logRecorder
-        .assertLogMatch("callStart: Request\\{method=POST, url=http://localhost:.+, tags=\\{\\}\\}")
+        .assertLogMatch("callStart: Request\\{method=POST, url=" + url +", tags=\\{\\}\\}")
         .assertLogMatch("dnsStart: localhost")
         .assertLogMatch("dnsEnd: \\[.+\\]")
-        .assertLogMatch("connectStart: localhost/.+ DIRECT")
+        .assertLogMatch("connectStart: .+ DIRECT")
         .assertLogMatch("connectEnd: http/1.1")
         .assertLogMatch(
-            "connectionAcquired: Connection\\{localhost:.+, proxy=DIRECT hostAddress=localhost/.+ cipherSuite=none protocol=http/1\\.1\\}")
+            "connectionAcquired: Connection\\{.+, proxy=DIRECT hostAddress=localhost/.+ cipherSuite=none protocol=http/1\\.1\\}")
         .assertLogMatch("requestHeadersStart")
         .assertLogMatch("requestHeadersEnd")
         .assertLogMatch("requestBodyStart")
         .assertLogMatch("requestBodyEnd: byteCount=6")
         .assertLogMatch("responseHeadersStart")
         .assertLogMatch(
-            "responseHeadersEnd: Response\\{protocol=http/1\\.1, code=200, message=OK, url=http://localhost.+}")
+            "responseHeadersEnd: Response\\{protocol=http/1\\.1, code=200, message=OK, url=" + url + "}")
         .assertLogMatch("responseBodyStart")
         .assertLogMatch("responseBodyEnd: byteCount=0")
         .assertLogMatch("connectionReleased")
@@ -131,15 +131,15 @@ public final class LoggingEventListenerTest {
     response.body().bytes();
 
     logRecorder
-        .assertLogMatch("callStart: Request\\{method=GET, url=https://localhost:.+, tags=\\{\\}\\}")
+        .assertLogMatch("callStart: Request\\{method=GET, url=" + url + ", tags=\\{\\}\\}")
         .assertLogMatch("dnsStart: localhost")
         .assertLogMatch("dnsEnd: \\[.+\\]")
-        .assertLogMatch("connectStart: localhost/.+ DIRECT")
+        .assertLogMatch("connectStart: .+ DIRECT")
         .assertLogMatch("secureConnectStart")
         .assertLogMatch("secureConnectEnd")
         .assertLogMatch("connectEnd: h2")
         .assertLogMatch(
-            "connectionAcquired: Connection\\{localhost:.+, proxy=DIRECT hostAddress=localhost/.+ cipherSuite=TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384 protocol=h2\\}")
+            "connectionAcquired: Connection\\{.+, proxy=DIRECT hostAddress=localhost/.+ cipherSuite=TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384 protocol=h2\\}")
         .assertLogMatch("requestHeadersStart")
         .assertLogMatch("requestHeadersEnd")
         .assertLogMatch("responseHeadersStart")
@@ -173,7 +173,7 @@ public final class LoggingEventListenerTest {
     }
 
     logRecorder
-        .assertLogMatch("callStart: Request\\{method=GET, url=http://localhost:.+, tags=\\{\\}\\}")
+        .assertLogMatch("callStart: Request\\{method=GET, url=" + url + ", tags=\\{\\}\\}")
         .assertLogMatch("dnsStart: localhost")
         .assertLogMatch("callFailed: java.net.UnknownHostException: reason")
         .assertNoMoreLogs();
@@ -192,10 +192,10 @@ public final class LoggingEventListenerTest {
     }
 
     logRecorder
-        .assertLogMatch("callStart: Request\\{method=GET, url=https://localhost:.+, tags=\\{\\}\\}")
+        .assertLogMatch("callStart: Request\\{method=GET, url=" + url + ", tags=\\{\\}\\}")
         .assertLogMatch("dnsStart: localhost")
         .assertLogMatch("dnsEnd: \\[.+\\]")
-        .assertLogMatch("connectStart: localhost/.+ DIRECT")
+        .assertLogMatch("connectStart: .+ DIRECT")
         .assertLogMatch("secureConnectStart")
         .assertLogMatch(
             "connectFailed: null javax\\.net\\.ssl\\.SSLProtocolException: Handshake message sequence violation, 1")
