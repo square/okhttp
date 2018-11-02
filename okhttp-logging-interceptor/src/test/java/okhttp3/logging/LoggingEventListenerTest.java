@@ -61,6 +61,7 @@ public final class LoggingEventListenerTest {
             .eventListenerFactory(loggingEventListenerFactory)
             .sslSocketFactory(
                 handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager())
+            .retryOnConnectionFailure(false)
             .build();
 
     url = server.url("/");
@@ -215,13 +216,8 @@ public final class LoggingEventListenerTest {
         .assertLogMatch("secureConnectStart")
         .assertLogMatch(
             "connectFailed: null javax\\.net\\.ssl\\.SSLProtocolException: Handshake message sequence violation, 1")
-        .assertLogMatch("connectStart: " + url.host() + "/.+ DIRECT")
         .assertLogMatch(
-            "connectFailed: null java.net.ConnectException: Failed to connect to "
-                + url.host()
-                + "/.+")
-        .assertLogMatch(
-            "callFailed: java.net.ConnectException: Failed to connect to " + url.host() + "/.+")
+            "callFailed: javax.net.ssl.SSLProtocolException: Handshake message sequence violation, 1")
         .assertNoMoreLogs();
   }
 
