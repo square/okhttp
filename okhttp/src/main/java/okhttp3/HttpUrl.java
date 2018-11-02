@@ -1257,11 +1257,10 @@ public final class HttpUrl {
     }
 
     @Override public String toString() {
-      if (scheme == null) throw new IllegalStateException("scheme == null");
-      if (host == null) throw new IllegalStateException("host == null");
-
       StringBuilder result = new StringBuilder();
-      result.append(scheme);
+      if (scheme != null) {
+        result.append(scheme);
+      }
       result.append("://");
 
       if (!encodedUsername.isEmpty() || !encodedPassword.isEmpty()) {
@@ -1273,19 +1272,23 @@ public final class HttpUrl {
         result.append('@');
       }
 
-      if (host.indexOf(':') != -1) {
-        // Host is an IPv6 address.
-        result.append('[');
-        result.append(host);
-        result.append(']');
-      } else {
-        result.append(host);
+      if (host != null) {
+        if (host.indexOf(':') != -1) {
+          // Host is an IPv6 address.
+          result.append('[');
+          result.append(host);
+          result.append(']');
+        } else {
+          result.append(host);
+        }
       }
 
-      int effectivePort = effectivePort();
-      if (effectivePort != defaultPort(scheme)) {
-        result.append(':');
-        result.append(effectivePort);
+      if (port != -1 || scheme != null) {
+        int effectivePort = effectivePort();
+        if (scheme == null || effectivePort != defaultPort(scheme)) {
+          result.append(':');
+          result.append(effectivePort);
+        }
       }
 
       pathSegmentsToString(result, encodedPathSegments);
