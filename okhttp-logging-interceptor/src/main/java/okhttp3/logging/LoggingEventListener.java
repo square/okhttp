@@ -26,6 +26,7 @@ import okhttp3.Call;
 import okhttp3.Connection;
 import okhttp3.EventListener;
 import okhttp3.Handshake;
+import okhttp3.OkHttpClient;
 import okhttp3.Protocol;
 import okhttp3.Request;
 import okhttp3.Response;
@@ -34,8 +35,8 @@ import okhttp3.internal.platform.Platform;
 import static okhttp3.internal.platform.Platform.INFO;
 
 /**
- * An OkHttp EventListener, which logs call events. Can be applied as an {@linkplain
- * OkHttpClient#eventListenerFactory() event listener factory}.
+ * An OkHttp EventListener, which logs call events. Can be applied as an
+ * {@linkplain OkHttpClient#eventListenerFactory() event listener factory}.
  *
  * <p>The format of the logs created by this class should not be considered stable and may change
  * slightly between releases. If you need a stable logging format, use your own event listener.
