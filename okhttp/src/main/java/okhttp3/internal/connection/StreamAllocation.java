@@ -317,8 +317,10 @@ public final class StreamAllocation {
     }
 
     if (e != null) {
+      e = Internal.instance.timeoutExit(call, e);
       eventListener.callFailed(call, e);
     } else if (callEnd) {
+      Internal.instance.timeoutExit(call, null);
       eventListener.callEnd(call);
     }
   }
@@ -351,6 +353,7 @@ public final class StreamAllocation {
     }
     closeQuietly(socket);
     if (releasedConnection != null) {
+      Internal.instance.timeoutExit(call, null);
       eventListener.connectionReleased(call, releasedConnection);
       eventListener.callEnd(call);
     }
