@@ -26,6 +26,7 @@ import okhttp3.internal.Internal;
 import okhttp3.internal.http.HttpHeaders;
 import okhttp3.internal.http2.Header;
 import okhttp3.internal.http2.Http2Codec;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import static java.util.Collections.emptyList;
@@ -718,7 +719,9 @@ public final class HeadersTest {
         .add("WWW-Authenticate", "Digest,,,, Basic ,,,realm=\"my\\\\\\\\\"r\\ealm\"")
         .build();
 
-    assertEquals(emptyList(), HttpHeaders.parseChallenges(headers, "WWW-Authenticate"));
+    assertEquals(Arrays.asList(
+        new Challenge("Digest", Collections.<String, String>emptyMap())),
+        HttpHeaders.parseChallenges(headers, "WWW-Authenticate"));
   }
 
   @Test public void unescapedDoubleQuoteInQuotedString() {
@@ -726,15 +729,20 @@ public final class HeadersTest {
         .add("WWW-Authenticate", "Digest,,,, Basic ,,,realm=\"my\"realm\"")
         .build();
 
-    assertEquals(emptyList(), HttpHeaders.parseChallenges(headers, "WWW-Authenticate"));
+    assertEquals(Arrays.asList(
+        new Challenge("Digest", Collections.<String, String>emptyMap())),
+        HttpHeaders.parseChallenges(headers, "WWW-Authenticate"));
   }
 
+  @Ignore("TODO(jwilson): reject parameters that use invalid characters")
   @Test public void doubleQuoteInToken() {
     Headers headers = new Headers.Builder()
         .add("WWW-Authenticate", "Digest,,,, Basic ,,,realm=my\"realm")
         .build();
 
-    assertEquals(emptyList(), HttpHeaders.parseChallenges(headers, "WWW-Authenticate"));
+    assertEquals(Arrays.asList(
+        new Challenge("Digest", Collections.<String, String>emptyMap())),
+        HttpHeaders.parseChallenges(headers, "WWW-Authenticate"));
   }
 
   @Test public void token68InsteadOfAuthParams() {
@@ -752,7 +760,9 @@ public final class HeadersTest {
         .add("WWW-Authenticate", "Other abc==, realm=myrealm")
         .build();
 
-    assertEquals(emptyList(), HttpHeaders.parseChallenges(headers, "WWW-Authenticate"));
+    assertEquals(Arrays.asList(
+        new Challenge("Other", singletonMap((String) null, "abc=="))),
+        HttpHeaders.parseChallenges(headers, "WWW-Authenticate"));
   }
 
   @Test public void repeatedAuthParamKey() {
