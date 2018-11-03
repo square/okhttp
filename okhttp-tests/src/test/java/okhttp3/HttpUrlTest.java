@@ -779,9 +779,9 @@ public final class HttpUrlTest {
   @Test public void incompleteBuilderToString() {
     assertEquals("https:///path",
         new HttpUrl.Builder().scheme("https").encodedPath("/path").toString());
-    assertEquals("://host.com/path",
+    assertEquals("//host.com/path",
         new HttpUrl.Builder().host("host.com").encodedPath("/path").toString());
-    assertEquals("://host.com:8080/path",
+    assertEquals("//host.com:8080/path",
         new HttpUrl.Builder().host("host.com").encodedPath("/path").port(8080).toString());
   }
 

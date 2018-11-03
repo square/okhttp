@@ -1260,8 +1260,10 @@ public final class HttpUrl {
       StringBuilder result = new StringBuilder();
       if (scheme != null) {
         result.append(scheme);
+        result.append("://");
+      } else {
+        result.append("//");
       }
-      result.append("://");
 
       if (!encodedUsername.isEmpty() || !encodedPassword.isEmpty()) {
         result.append(encodedUsername);
