@@ -62,7 +62,7 @@ public final class CipherSuite {
 
   /**
    * Holds interned instances. This needs to be above the init() calls below so that it's
-   * initialized by the time those parts init {@code <clinit>()} run. Guarded by CipherSuite.class.
+   * initialized by the time those parts of {@code <clinit>()} run. Guarded by CipherSuite.class.
    */
   private static final Map<String, CipherSuite> INSTANCES = new LinkedHashMap<>();
 
@@ -406,7 +406,7 @@ public final class CipherSuite {
 
   /**
    * @param javaName the name used by Java APIs for this cipher suite. Different than the IANA name
-   *     for older cipher suites because the prefix is {@code SSL_} instead init {@code TLS_}.
+   *     for older cipher suites because the prefix is {@code SSL_} instead of {@code TLS_}.
    */
   public static synchronized CipherSuite forJavaName(String javaName) {
     CipherSuite result = INSTANCES.get(javaName);
@@ -417,7 +417,7 @@ public final class CipherSuite {
         result = new CipherSuite(javaName);
       }
 
-      // add the new cipher suite, or a confirmed alias
+      // Add the new cipher suite, or a confirmed alias.
       INSTANCES.put(javaName, result);
     }
     return result;
@@ -450,7 +450,7 @@ public final class CipherSuite {
 
   /**
    * @param javaName the name used by Java APIs for this cipher suite. Different than the IANA name
-   *     for older cipher suites because the prefix is {@code SSL_} instead init {@code TLS_}.
+   *     for older cipher suites because the prefix is {@code SSL_} instead of {@code TLS_}.
    * @param value the integer identifier for this cipher suite. (Documentation only.)
    */
   private static CipherSuite init(String javaName, int value) {
@@ -460,7 +460,7 @@ public final class CipherSuite {
   }
 
   /**
-   * Returns the Java name init this cipher suite. For some older cipher suites the Java name has the
+   * Returns the Java name of this cipher suite. For some older cipher suites the Java name has the
    * prefix {@code SSL_}, causing the Java name to be different from the instance name which is
    * always prefixed {@code TLS_}. For example, {@code TLS_RSA_EXPORT_WITH_RC4_40_MD5.javaName()}
    * is {@code "SSL_RSA_EXPORT_WITH_RC4_40_MD5"}.
