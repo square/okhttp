@@ -430,7 +430,7 @@ public final class HeadersTest {
         .build();
     List<Challenge> challenges = HttpHeaders.parseChallenges(headers, "WWW-Authenticate");
     assertEquals(1, challenges.size());
-    assertEquals("digest", challenges.get(0).scheme());
+    assertEquals("Digest", challenges.get(0).scheme());
     assertEquals("myrealm", challenges.get(0).realm());
     Map<String, String> expectedAuthParams = new LinkedHashMap<>();
     expectedAuthParams.put("realm", "myrealm");
@@ -447,7 +447,7 @@ public final class HeadersTest {
         .build();
     List<Challenge> challenges = HttpHeaders.parseChallenges(headers, "WWW-Authenticate");
     assertEquals(1, challenges.size());
-    assertEquals("digest", challenges.get(0).scheme());
+    assertEquals("Digest", challenges.get(0).scheme());
     assertEquals("myrealm", challenges.get(0).realm());
     Map<String, String> expectedAuthParams = new LinkedHashMap<>();
     expectedAuthParams.put("realm", "myrealm");
@@ -464,7 +464,7 @@ public final class HeadersTest {
         .build();
     List<Challenge> challenges = HttpHeaders.parseChallenges(headers, "WWW-Authenticate");
     assertEquals(1, challenges.size());
-    assertEquals("digest", challenges.get(0).scheme());
+    assertEquals("Digest", challenges.get(0).scheme());
     assertEquals("myrealm", challenges.get(0).realm());
     Map<String, String> expectedAuthParams = new LinkedHashMap<>();
     expectedAuthParams.put("realm", "myrealm");
@@ -481,7 +481,7 @@ public final class HeadersTest {
         .build();
     List<Challenge> challenges = HttpHeaders.parseChallenges(headers, "WWW-Authenticate");
     assertEquals(1, challenges.size());
-    assertEquals("digest", challenges.get(0).scheme());
+    assertEquals("Digest", challenges.get(0).scheme());
     assertNull(challenges.get(0).realm());
     Map<String, String> expectedAuthParams = new LinkedHashMap<>();
     expectedAuthParams.put("underrealm", "myrealm");
@@ -498,7 +498,7 @@ public final class HeadersTest {
         .build();
     List<Challenge> challenges = HttpHeaders.parseChallenges(headers, "WWW-Authenticate");
     assertEquals(1, challenges.size());
-    assertEquals("digest", challenges.get(0).scheme());
+    assertEquals("Digest", challenges.get(0).scheme());
     assertEquals("myrealm", challenges.get(0).realm());
     Map<String, String> expectedAuthParams = new LinkedHashMap<>();
     expectedAuthParams.put("realm", "myrealm");
@@ -515,7 +515,7 @@ public final class HeadersTest {
         .build();
     List<Challenge> challenges = HttpHeaders.parseChallenges(headers, "WWW-Authenticate");
     assertEquals(1, challenges.size());
-    assertEquals("digest", challenges.get(0).scheme());
+    assertEquals("Digest", challenges.get(0).scheme());
     assertEquals("myrealm", challenges.get(0).realm());
     Map<String, String> expectedAuthParams = new LinkedHashMap<>();
     expectedAuthParams.put("realm", "myrealm");
@@ -532,7 +532,7 @@ public final class HeadersTest {
         .build();
     List<Challenge> challenges = HttpHeaders.parseChallenges(headers, "WWW-Authenticate");
     assertEquals(1, challenges.size());
-    assertEquals("digest", challenges.get(0).scheme());
+    assertEquals("DiGeSt", challenges.get(0).scheme());
     assertEquals("myrealm", challenges.get(0).realm());
     Map<String, String> expectedAuthParams = new LinkedHashMap<>();
     expectedAuthParams.put("realm", "myrealm");
@@ -550,7 +550,7 @@ public final class HeadersTest {
         .build();
     List<Challenge> challenges = HttpHeaders.parseChallenges(headers, "WWW-Authenticate");
     assertEquals(1, challenges.size());
-    assertEquals("digest", challenges.get(0).scheme());
+    assertEquals("DIgEsT", challenges.get(0).scheme());
     assertEquals("myrealm", challenges.get(0).realm());
     Map<String, String> expectedAuthParams = new LinkedHashMap<>();
     expectedAuthParams.put("realm", "myrealm");
@@ -565,7 +565,7 @@ public final class HeadersTest {
         .add("WWW-Authenticate", "Digest realm=myrealm").build();
     List<Challenge> challenges = HttpHeaders.parseChallenges(headers, "WWW-Authenticate");
     assertEquals(1, challenges.size());
-    assertEquals("digest", challenges.get(0).scheme());
+    assertEquals("Digest", challenges.get(0).scheme());
     assertEquals("myrealm", challenges.get(0).realm());
     assertEquals(singletonMap("realm", "myrealm"), challenges.get(0).authParams());
   }
@@ -576,7 +576,7 @@ public final class HeadersTest {
         .add("WWW-Authenticate", "Digest").build();
     List<Challenge> challenges = HttpHeaders.parseChallenges(headers, "WWW-Authenticate");
     assertEquals(1, challenges.size());
-    assertEquals("digest", challenges.get(0).scheme());
+    assertEquals("Digest", challenges.get(0).scheme());
     assertNull(challenges.get(0).realm());
     assertEquals(emptyMap(), challenges.get(0).authParams());
   }
