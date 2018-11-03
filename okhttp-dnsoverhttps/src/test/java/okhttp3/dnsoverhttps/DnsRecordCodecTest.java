@@ -22,24 +22,26 @@ import java.util.List;
 import okio.ByteString;
 import org.junit.Test;
 
+import static okhttp3.dnsoverhttps.DnsRecordCodec.TYPE_A;
+import static okhttp3.dnsoverhttps.DnsRecordCodec.TYPE_AAAA;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
 public class DnsRecordCodecTest {
   @Test public void testGoogleDotComEncoding() {
-    String encoded = encodeQuery("google.com", false);
+    String encoded = encodeQuery("google.com", TYPE_A);
 
     assertEquals("AAABAAABAAAAAAAABmdvb2dsZQNjb20AAAEAAQ", encoded);
   }
 
-  private String encodeQuery(String host, boolean includeIpv6) {
-    return DnsRecordCodec.encodeQuery(host, includeIpv6).base64Url().replace("=", "");
+  private String encodeQuery(String host, int type) {
+    return DnsRecordCodec.encodeQuery(host, type).base64Url().replace("=", "");
   }
 
   @Test public void testGoogleDotComEncodingWithIPv6() {
-    String encoded = encodeQuery("google.com", true);
+    String encoded = encodeQuery("google.com", TYPE_AAAA);
 
-    assertEquals("AAABAAACAAAAAAAABmdvb2dsZQNjb20AAAEAAQZnb29nbGUDY29tAAAcAAE", encoded);
+    assertEquals("AAABAAABAAAAAAAABmdvb2dsZQNjb20AABwAAQ", encoded);
   }
 
   @Test public void testGoogleDotComDecodingFromCloudflare() throws Exception {

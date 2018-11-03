@@ -16,67 +16,93 @@
 package okhttp3;
 
 import java.nio.charset.Charset;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Map.Entry;
 import javax.annotation.Nullable;
 
+import static java.util.Collections.singletonMap;
+import static java.util.Collections.unmodifiableMap;
+import static java.util.Locale.US;
 import static okhttp3.internal.Util.ISO_8859_1;
 
-/** An RFC 7617 challenge. */
+/** An RFC 7235 challenge. */
 public final class Challenge {
   private final String scheme;
-  private final String realm;
-  private final Charset charset;
+  private final Map<String, String> authParams;
 
-  public Challenge(String scheme, String realm) {
-    this(scheme, realm, ISO_8859_1);
+  public Challenge(String scheme, Map<String, String> authParams) {
+    if (scheme == null) throw new NullPointerException("scheme == null");
+    if (authParams == null) throw new NullPointerException("authParams == null");
+    this.scheme = scheme.toLowerCase(US);
+    Map<String, String> newAuthParams = new LinkedHashMap<>();
+    for (Entry<String, String> authParam : authParams.entrySet()) {
+      String key = (authParam.getKey() == null) ? null : authParam.getKey().toLowerCase(US);
+      newAuthParams.put(key, authParam.getValue());
+    }
+    this.authParams = unmodifiableMap(newAuthParams);
   }
 
-  private Challenge(String scheme, String realm, Charset charset) {
+  public Challenge(String scheme, String realm) {
     if (scheme == null) throw new NullPointerException("scheme == null");
     if (realm == null) throw new NullPointerException("realm == null");
-    if (charset == null) throw new NullPointerException("charset == null");
-    this.scheme = scheme;
-    this.realm = realm;
-    this.charset = charset;
+    this.scheme = scheme.toLowerCase(US);
+    this.authParams = singletonMap("realm", realm);
   }
 
   /** Returns a copy of this charset that expects a credential encoded with {@code charset}. */
   public Challenge withCharset(Charset charset) {
-    return new Challenge(scheme, realm, charset);
+    if (charset == null) throw new NullPointerException("charset == null");
+    Map<String, String> authParams = new LinkedHashMap<>(this.authParams);
+    authParams.put("charset", charset.name());
+    return new Challenge(scheme, authParams);
   }
 
-  /** Returns the authentication scheme, like {@code Basic}. */
+  /** Returns the authentication scheme in lowercase, like {@code basic}. */
   public String scheme() {
     return scheme;
   }
 
-  /** Returns the protection space. */
-  public String realm() {
-    return realm;
+  /**
+   * Returns the auth params, including {@code realm} and {@code charset} if present,
+   * but as {@code String}s. The keys are all lowercase, as the auth param names
+   * are to be treated case insensitively anyway.
+   */
+  public Map<String, String> authParams() {
+    return authParams;
   }
 
-  /** Returns the charset that should be used to encode the credential. */
+  /** Returns the protection space. */
+  public String realm() {
+    return authParams.get("realm");
+  }
+
+  /** Returns the charset that should be used to encode the credentials. */
   public Charset charset() {
-    return charset;
+    String charset = authParams.get("charset");
+    if (charset != null) {
+      try {
+        return Charset.forName(charset);
+      } catch (Exception ignore) {
+      }
+    }
+    return ISO_8859_1;
   }
 
   @Override public boolean equals(@Nullable Object other) {
     return other instanceof Challenge
         && ((Challenge) other).scheme.equals(scheme)
-        && ((Challenge) other).realm.equals(realm)
-        && ((Challenge) other).charset.equals(charset);
+        && ((Challenge) other).authParams.equals(authParams);
   }
 
   @Override public int hashCode() {
     int result = 29;
-    result = 31 * result + realm.hashCode();
     result = 31 * result + scheme.hashCode();
-    result = 31 * result + charset.hashCode();
+    result = 31 * result + authParams.hashCode();
     return result;
   }
 
   @Override public String toString() {
-    return scheme
-        + " realm=\"" + realm + "\""
-        + " charset=\"" + charset + "\"";
+    return scheme + " authParams=" + authParams;
   }
 }

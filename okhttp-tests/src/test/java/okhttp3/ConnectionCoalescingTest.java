@@ -28,8 +28,8 @@ import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLSession;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
-import okhttp3.mockwebserver.HeldCertificate;
-import okhttp3.mockwebserver.internal.tls.SslClient;
+import okhttp3.tls.HeldCertificate;
+import okhttp3.tls.HandshakeCertificates;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Rule;
@@ -52,11 +52,11 @@ public final class ConnectionCoalescingTest {
   @Before public void setUp() throws Exception {
     rootCa = new HeldCertificate.Builder()
         .serialNumber(1L)
-        .certificateAuthority(3)
+        .certificateAuthority(0)
         .commonName("root")
         .build();
     certificate = new HeldCertificate.Builder()
-        .issuedBy(rootCa)
+        .signedBy(rootCa)
         .serialNumber(2L)
         .commonName(server.getHostName())
         .addSubjectAlternativeName(server.getHostName())
@@ -73,18 +73,19 @@ public final class ConnectionCoalescingTest {
     dns.set("www.wildcard.com", serverIps);
     dns.set("differentdns.com", Collections.<InetAddress>emptyList());
 
-    SslClient sslClient = new SslClient.Builder()
+    HandshakeCertificates handshakeCertificates = new HandshakeCertificates.Builder()
         .addTrustedCertificate(rootCa.certificate())
         .build();
 
     client = new OkHttpClient.Builder().dns(dns)
-        .sslSocketFactory(sslClient.socketFactory, sslClient.trustManager)
+        .sslSocketFactory(
+            handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager())
         .build();
 
-    SslClient serverSslClient = new SslClient.Builder()
-        .certificateChain(certificate, rootCa)
+    HandshakeCertificates serverHandshakeCertificates = new HandshakeCertificates.Builder()
+        .heldCertificate(certificate)
         .build();
-    server.useHttps(serverSslClient.socketFactory, false);
+    server.useHttps(serverHandshakeCertificates.sslSocketFactory(), false);
 
     url = server.url("/robots.txt");
   }

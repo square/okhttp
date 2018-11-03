@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package okhttp3.mockwebserver;
+package okhttp3.tls;
 
 import java.math.BigInteger;
 import java.security.KeyFactory;
@@ -35,7 +35,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
-public class HeldCertificateTest {
+public final class HeldCertificateTest {
   @Test public void defaultCertificate() throws CertificateParsingException {
     long now = System.currentTimeMillis();
     HeldCertificate heldCertificate = new HeldCertificate.Builder().build();
@@ -142,6 +142,7 @@ public class HeldCertificateTest {
         .keyPair(publicKey, privateKey)
         .commonName("cash.app")
         .validityInterval(0L, 1_000L)
+        .rsa2048()
         .build();
 
     assertEquals(heldCertificate.certificatePem(), ""
@@ -191,5 +192,35 @@ public class HeldCertificateTest {
         + "LidU7mIE65swMM5/RNhS4aFjez/MwxFNOHaxc9VgCwYPXCLOtdf7AVovdyG0XWgb\n"
         + "UXH+NyxKwboE\n"
         + "-----END PRIVATE KEY-----\n");
+  }
+
+  @Test public void ecdsaSignedByRsa() {
+    HeldCertificate root = new HeldCertificate.Builder()
+        .certificateAuthority(0)
+        .rsa2048()
+        .build();
+    HeldCertificate leaf = new HeldCertificate.Builder()
+        .certificateAuthority(0)
+        .ecdsa256()
+        .signedBy(root)
+        .build();
+
+    assertEquals("SHA256WITHRSA", root.certificate().getSigAlgName());
+    assertEquals("SHA256WITHRSA", leaf.certificate().getSigAlgName());
+  }
+
+  @Test public void rsaSignedByEcdsa() {
+    HeldCertificate root = new HeldCertificate.Builder()
+        .certificateAuthority(0)
+        .ecdsa256()
+        .build();
+    HeldCertificate leaf = new HeldCertificate.Builder()
+        .certificateAuthority(0)
+        .rsa2048()
+        .signedBy(root)
+        .build();
+
+    assertEquals("SHA256WITHECDSA", root.certificate().getSigAlgName());
+    assertEquals("SHA256WITHECDSA", leaf.certificate().getSigAlgName());
   }
 }

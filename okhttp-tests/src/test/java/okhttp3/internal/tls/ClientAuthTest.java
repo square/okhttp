@@ -16,27 +16,38 @@
 package okhttp3.internal.tls;
 
 import java.net.SocketException;
-import java.security.NoSuchAlgorithmException;
+import java.security.GeneralSecurityException;
+import java.security.SecureRandom;
+import java.security.cert.X509Certificate;
+import java.util.Arrays;
+import javax.net.ssl.KeyManager;
 import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLException;
 import javax.net.ssl.SSLHandshakeException;
 import javax.net.ssl.SSLPeerUnverifiedException;
 import javax.net.ssl.SSLSocketFactory;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509KeyManager;
+import javax.net.ssl.X509TrustManager;
 import javax.security.auth.x500.X500Principal;
 import okhttp3.Call;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
-import okhttp3.mockwebserver.HeldCertificate;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
-import okhttp3.mockwebserver.internal.tls.SslClient;
+import okhttp3.tls.HeldCertificate;
+import okhttp3.tls.HandshakeCertificates;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 
 import static okhttp3.TestUtil.defaultClient;
 import static okhttp3.internal.platform.PlatformTest.getPlatform;
+import static okhttp3.tls.internal.TlsUtil.newKeyManager;
+import static okhttp3.tls.internal.TlsUtil.newTrustManager;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 public final class ClientAuthTest {
@@ -53,20 +64,20 @@ public final class ClientAuthTest {
   public void setUp() {
     serverRootCa = new HeldCertificate.Builder()
         .serialNumber(1L)
-        .certificateAuthority(3)
+        .certificateAuthority(1)
         .commonName("root")
         .addSubjectAlternativeName("root_ca.com")
         .build();
     serverIntermediateCa = new HeldCertificate.Builder()
-        .issuedBy(serverRootCa)
-        .certificateAuthority(2)
+        .signedBy(serverRootCa)
+        .certificateAuthority(0)
         .serialNumber(2L)
         .commonName("intermediate_ca")
         .addSubjectAlternativeName("intermediate_ca.com")
         .build();
 
     serverCert = new HeldCertificate.Builder()
-        .issuedBy(serverIntermediateCa)
+        .signedBy(serverIntermediateCa)
         .serialNumber(3L)
         .commonName("Local Host")
         .addSubjectAlternativeName(server.getHostName())
@@ -74,20 +85,20 @@ public final class ClientAuthTest {
 
     clientRootCa = new HeldCertificate.Builder()
         .serialNumber(1L)
-        .certificateAuthority(13)
+        .certificateAuthority(1)
         .commonName("root")
         .addSubjectAlternativeName("root_ca.com")
         .build();
     clientIntermediateCa = new HeldCertificate.Builder()
-        .issuedBy(serverRootCa)
-        .certificateAuthority(12)
+        .signedBy(serverRootCa)
+        .certificateAuthority(0)
         .serialNumber(2L)
         .commonName("intermediate_ca")
         .addSubjectAlternativeName("intermediate_ca.com")
         .build();
 
     clientCert = new HeldCertificate.Builder()
-        .issuedBy(clientIntermediateCa)
+        .signedBy(clientIntermediateCa)
         .serialNumber(4L)
         .commonName("Jethro Willis")
         .addSubjectAlternativeName("jethrowillis.com")
@@ -95,7 +106,7 @@ public final class ClientAuthTest {
   }
 
   @Test public void clientAuthForWants() throws Exception {
-    OkHttpClient client = buildClient(clientCert, clientIntermediateCa);
+    OkHttpClient client = buildClient(clientCert, clientIntermediateCa.certificate());
 
     SSLSocketFactory socketFactory = buildServerSslSocketFactory();
 
@@ -111,7 +122,7 @@ public final class ClientAuthTest {
   }
 
   @Test public void clientAuthForNeeds() throws Exception {
-    OkHttpClient client = buildClient(clientCert, clientIntermediateCa);
+    OkHttpClient client = buildClient(clientCert, clientIntermediateCa.certificate());
 
     SSLSocketFactory socketFactory = buildServerSslSocketFactory();
 
@@ -127,7 +138,7 @@ public final class ClientAuthTest {
   }
 
   @Test public void clientAuthSkippedForNone() throws Exception {
-    OkHttpClient client = buildClient(clientCert, clientIntermediateCa);
+    OkHttpClient client = buildClient(clientCert, clientIntermediateCa.certificate());
 
     SSLSocketFactory socketFactory = buildServerSslSocketFactory();
 
@@ -143,7 +154,7 @@ public final class ClientAuthTest {
   }
 
   @Test public void missingClientAuthSkippedForWantsOnly() throws Exception {
-    OkHttpClient client = buildClient(null, clientIntermediateCa);
+    OkHttpClient client = buildClient(null, clientIntermediateCa.certificate());
 
     SSLSocketFactory socketFactory = buildServerSslSocketFactory();
 
@@ -159,7 +170,7 @@ public final class ClientAuthTest {
   }
 
   @Test public void missingClientAuthFailsForNeeds() throws Exception {
-    OkHttpClient client = buildClient(null, clientIntermediateCa);
+    OkHttpClient client = buildClient(null, clientIntermediateCa.certificate());
 
     SSLSocketFactory socketFactory = buildServerSslSocketFactory();
 
@@ -172,6 +183,9 @@ public final class ClientAuthTest {
       call.execute();
       fail();
     } catch (SSLHandshakeException expected) {
+    } catch (SSLException expected) {
+      String jvmVersion = System.getProperty("java.specification.version");
+      assertEquals("11", jvmVersion);
     } catch (SocketException expected) {
       assertEquals("jdk9", getPlatform());
     }
@@ -179,13 +193,13 @@ public final class ClientAuthTest {
 
   @Test public void commonNameIsNotTrusted() throws Exception {
     serverCert = new HeldCertificate.Builder()
-        .issuedBy(serverIntermediateCa)
+        .signedBy(serverIntermediateCa)
         .serialNumber(3L)
         .commonName(server.getHostName())
         .addSubjectAlternativeName("different-host.com")
         .build();
 
-    OkHttpClient client = buildClient(clientCert, clientIntermediateCa);
+    OkHttpClient client = buildClient(clientCert, clientIntermediateCa.certificate());
 
     SSLSocketFactory socketFactory = buildServerSslSocketFactory();
 
@@ -220,42 +234,45 @@ public final class ClientAuthTest {
       call.execute();
       fail();
     } catch (SSLHandshakeException expected) {
+    } catch (SSLException expected) {
+      // javax.net.ssl.SSLException: readRecord
+      String jvmVersion = System.getProperty("java.specification.version");
+      assertEquals("11", jvmVersion);
     } catch (SocketException expected) {
       assertEquals("jdk9", getPlatform());
     }
   }
 
-  private OkHttpClient buildClient(HeldCertificate cert, HeldCertificate... chain) {
-    SslClient.Builder sslClientBuilder = new SslClient.Builder()
+  private OkHttpClient buildClient(
+      HeldCertificate heldCertificate, X509Certificate... intermediates) {
+    HandshakeCertificates.Builder builder = new HandshakeCertificates.Builder()
         .addTrustedCertificate(serverRootCa.certificate());
 
-    if (cert != null) {
-      sslClientBuilder.certificateChain(cert, chain);
+    if (heldCertificate != null) {
+      builder.heldCertificate(heldCertificate, intermediates);
     }
 
-    SslClient sslClient = sslClientBuilder.build();
+    HandshakeCertificates handshakeCertificates = builder.build();
     return defaultClient().newBuilder()
-        .sslSocketFactory(sslClient.socketFactory, sslClient.trustManager)
+        .sslSocketFactory(
+            handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager())
         .build();
   }
 
   private SSLSocketFactory buildServerSslSocketFactory() {
     // The test uses JDK default SSL Context instead of the Platform provided one
     // as Conscrypt seems to have some differences, we only want to test client side here.
-    SslClient serverSslClient = new SslClient.Builder()
-        .addTrustedCertificate(serverRootCa.certificate())
-        .addTrustedCertificate(clientRootCa.certificate())
-        .certificateChain(serverCert, serverIntermediateCa)
-        .sslContext(getSslContext())
-        .build();
-    return serverSslClient.socketFactory;
-  }
-
-  private SSLContext getSslContext() {
     try {
-      return SSLContext.getInstance("TLS");
-    } catch (NoSuchAlgorithmException e) {
-      throw new IllegalStateException("unable to build JDK default SSLContext");
+      X509KeyManager keyManager = newKeyManager(
+          null, serverCert, serverIntermediateCa.certificate());
+      X509TrustManager trustManager = newTrustManager(
+          null, Arrays.asList(serverRootCa.certificate(), clientRootCa.certificate()));
+      SSLContext sslContext = SSLContext.getInstance("TLS");
+      sslContext.init(new KeyManager[] {keyManager}, new TrustManager[] {trustManager},
+          new SecureRandom());
+      return sslContext.getSocketFactory();
+    } catch (GeneralSecurityException e) {
+      throw new AssertionError(e);
     }
   }
 }

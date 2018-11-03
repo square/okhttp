@@ -18,11 +18,14 @@ package okhttp3.dnsoverhttps;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.CountDownLatch;
 import javax.annotation.Nullable;
 import okhttp3.CacheControl;
+import okhttp3.Call;
+import okhttp3.Callback;
 import okhttp3.Dns;
 import okhttp3.HttpUrl;
 import okhttp3.MediaType;
@@ -32,6 +35,7 @@ import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
 import okhttp3.ResponseBody;
+import okhttp3.internal.Util;
 import okhttp3.internal.platform.Platform;
 import okhttp3.internal.publicsuffix.PublicSuffixDatabase;
 import okio.ByteString;
@@ -39,7 +43,7 @@ import okio.ByteString;
 /**
  * DNS over HTTPS implementation.
  *
- * Implementation of https://tools.ietf.org/html/draft-ietf-doh-dns-over-https-11
+ * Implementation of https://tools.ietf.org/html/draft-ietf-doh-dns-over-https-13
  *
  * <blockquote>A DNS API client encodes a single DNS query into an HTTP request
  * using either the HTTP GET or POST method and the other requirements
@@ -54,13 +58,11 @@ import okio.ByteString;
  */
 public class DnsOverHttps implements Dns {
   public static final MediaType DNS_MESSAGE = MediaType.get("application/dns-message");
-  public static final MediaType UDPWIREFORMAT = MediaType.get("application/dns-udpwireformat");
   public static final int MAX_RESPONSE_SIZE = 64 * 1024;
   private final OkHttpClient client;
   private final HttpUrl url;
   private final boolean includeIPv6;
   private final boolean post;
-  private final MediaType contentType;
   private final boolean resolvePrivateAddresses;
   private final boolean resolvePublicAddresses;
 
@@ -75,7 +77,6 @@ public class DnsOverHttps implements Dns {
     this.url = builder.url;
     this.includeIPv6 = builder.includeIPv6;
     this.post = builder.post;
-    this.contentType = builder.contentType;
     this.resolvePrivateAddresses = builder.resolvePrivateAddresses;
     this.resolvePublicAddresses = builder.resolvePublicAddresses;
     this.client = builder.client.newBuilder().dns(buildBootstrapClient(builder)).build();
@@ -103,10 +104,6 @@ public class DnsOverHttps implements Dns {
     return includeIPv6;
   }
 
-  public MediaType contentType() {
-    return contentType;
-  }
-
   public OkHttpClient client() {
     return client;
   }
@@ -120,8 +117,6 @@ public class DnsOverHttps implements Dns {
   }
 
   @Override public List<InetAddress> lookup(String hostname) throws UnknownHostException {
-    UnknownHostException firstUhe = null;
-
     if (!resolvePrivateAddresses || !resolvePublicAddresses) {
       boolean privateHost = isPrivateHost(hostname);
 
@@ -138,37 +133,117 @@ public class DnsOverHttps implements Dns {
   }
 
   private List<InetAddress> lookupHttps(String hostname) throws UnknownHostException {
-    try {
-      ByteString query = DnsRecordCodec.encodeQuery(hostname, includeIPv6);
+    List<Call> networkRequests = new ArrayList<>(2);
+    List<Exception> failures = new ArrayList<>(2);
+    List<InetAddress> results = new ArrayList<>(5);
 
-      Request request = buildRequest(query);
-      Response response = executeRequest(request);
+    buildRequest(hostname, networkRequests, results, failures, DnsRecordCodec.TYPE_A);
 
-      return readResponse(hostname, response);
-    } catch (UnknownHostException uhe) {
-      throw uhe;
-    } catch (Exception e) {
-      UnknownHostException unknownHostException = new UnknownHostException(hostname);
-      unknownHostException.initCause(e);
-      throw unknownHostException;
+    if (includeIPv6) {
+      buildRequest(hostname, networkRequests, results, failures, DnsRecordCodec.TYPE_AAAA);
+    }
+
+    executeRequests(hostname, networkRequests, results, failures);
+
+    if (!results.isEmpty()) {
+      return results;
+    }
+
+    return throwBestFailure(hostname, failures);
+  }
+
+  private void buildRequest(String hostname, List<Call> networkRequests, List<InetAddress> results,
+      List<Exception> failures, int type) {
+    Request request = buildRequest(hostname, type);
+    Response response = getCacheOnlyResponse(request);
+
+    if (response != null) {
+      processResponse(response, hostname, results, failures);
+    } else {
+      networkRequests.add(client.newCall(request));
     }
   }
 
-  private Response executeRequest(Request request) throws IOException {
-    // cached request
+  private void executeRequests(final String hostname, List<Call> networkRequests,
+      final List<InetAddress> responses, final List<Exception> failures) {
+    final CountDownLatch latch = new CountDownLatch(networkRequests.size());
+
+    for (Call call : networkRequests) {
+      call.enqueue(new Callback() {
+        @Override public void onFailure(Call call, IOException e) {
+          synchronized (failures) {
+            failures.add(e);
+          }
+          latch.countDown();
+        }
+
+        @Override public void onResponse(Call call, Response response) {
+          processResponse(response, hostname, responses, failures);
+          latch.countDown();
+        }
+      });
+    }
+
+    try {
+      latch.await();
+    } catch (InterruptedException e) {
+      failures.add(e);
+    }
+  }
+
+  private void processResponse(Response response, String hostname, List<InetAddress> results,
+      List<Exception> failures) {
+    try {
+      List<InetAddress> addresses = readResponse(hostname, response);
+      synchronized (results) {
+        results.addAll(addresses);
+      }
+    } catch (Exception e) {
+      synchronized (failures) {
+        failures.add(e);
+      }
+    }
+  }
+
+  private List<InetAddress> throwBestFailure(String hostname, List<Exception> failures)
+      throws UnknownHostException {
+    if (failures.size() == 0) {
+      throw new UnknownHostException(hostname);
+    }
+
+    Exception failure = failures.get(0);
+
+    if (failure instanceof UnknownHostException) {
+      throw (UnknownHostException) failure;
+    }
+
+    UnknownHostException unknownHostException = new UnknownHostException(hostname);
+    unknownHostException.initCause(failure);
+
+    for (int i = 1; i < failures.size(); i++) {
+      Util.addSuppressedIfPossible(unknownHostException, failures.get(i));
+    }
+
+    throw unknownHostException;
+  }
+
+  private @Nullable Response getCacheOnlyResponse(Request request) {
     if (!post && client.cache() != null) {
-      CacheControl cacheControl =
-          new CacheControl.Builder().maxStale(Integer.MAX_VALUE, TimeUnit.SECONDS).build();
-      Request cacheRequest = request.newBuilder().cacheControl(cacheControl).build();
+      try {
+        Request cacheRequest = request.newBuilder().cacheControl(CacheControl.FORCE_CACHE).build();
 
-      Response response = client.newCall(cacheRequest).execute();
+        Response cacheResponse = client.newCall(cacheRequest).execute();
 
-      if (response.isSuccessful()) {
-        return response;
+        if (cacheResponse.code() != 504) {
+          return cacheResponse;
+        }
+      } catch (IOException ioe) {
+        // Failures are ignored as we can fallback to the network
+        // and hopefully repopulate the cache.
       }
     }
 
-    return client.newCall(request).execute();
+    return null;
   }
 
   private List<InetAddress> readResponse(String hostname, Response response) throws Exception {
@@ -199,11 +274,13 @@ public class DnsOverHttps implements Dns {
     }
   }
 
-  private Request buildRequest(ByteString query) {
-    Request.Builder requestBuilder = new Request.Builder().header("Accept", contentType.toString());
+  private Request buildRequest(String hostname, int type) {
+    Request.Builder requestBuilder = new Request.Builder().header("Accept", DNS_MESSAGE.toString());
+
+    ByteString query = DnsRecordCodec.encodeQuery(hostname, type);
 
     if (post) {
-      requestBuilder = requestBuilder.url(url).post(RequestBody.create(contentType, query));
+      requestBuilder = requestBuilder.url(url).post(RequestBody.create(DNS_MESSAGE, query));
     } else {
       String encoded = query.base64Url().replace("=", "");
       HttpUrl requestUrl = url.newBuilder().addQueryParameter("dns", encoded).build();
@@ -223,11 +300,13 @@ public class DnsOverHttps implements Dns {
     @Nullable HttpUrl url = null;
     boolean includeIPv6 = true;
     boolean post = false;
-    MediaType contentType = DNS_MESSAGE;
     Dns systemDns = Dns.SYSTEM;
     @Nullable List<InetAddress> bootstrapDnsHosts = null;
     boolean resolvePrivateAddresses = false;
     boolean resolvePublicAddresses = true;
+
+    public Builder() {
+    }
 
     public DnsOverHttps build() {
       return new DnsOverHttps(this);
@@ -250,11 +329,6 @@ public class DnsOverHttps implements Dns {
 
     public Builder post(boolean post) {
       this.post = post;
-      return this;
-    }
-
-    public Builder contentType(MediaType contentType) {
-      this.contentType = contentType;
       return this;
     }
 

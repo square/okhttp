@@ -61,7 +61,7 @@ import okhttp3.mockwebserver.PushPromise;
 import okhttp3.mockwebserver.QueueDispatcher;
 import okhttp3.mockwebserver.RecordedRequest;
 import okhttp3.mockwebserver.SocketPolicy;
-import okhttp3.mockwebserver.internal.tls.SslClient;
+import okhttp3.tls.HandshakeCertificates;
 import okio.Buffer;
 import okio.BufferedSink;
 import okio.GzipSink;
@@ -79,6 +79,7 @@ import org.junit.runners.Parameterized.Parameters;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static okhttp3.TestUtil.defaultClient;
+import static okhttp3.tls.internal.TlsUtil.localhost;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
@@ -88,11 +89,11 @@ import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeTrue;
 
-/** Test how SPDY interacts with HTTP/2 features. */
+/** Test how HTTP/2 interacts with HTTP features. */
 @RunWith(Parameterized.class)
 public final class HttpOverHttp2Test {
   private static final Logger http2Logger = Logger.getLogger(Http2.class.getName());
-  private static final SslClient sslClient = SslClient.localhost();
+  private static final HandshakeCertificates handshakeCertificates = localhost();
 
   @Parameters(name = "{0}")
   public static Collection<Protocol> data() {
@@ -125,16 +126,17 @@ public final class HttpOverHttp2Test {
     return defaultClient().newBuilder()
         .protocols(Arrays.asList(Protocol.HTTP_2, Protocol.HTTP_1_1))
         .dns(new SingleInetAddressDns())
-        .sslSocketFactory(sslClient.socketFactory, sslClient.trustManager)
+        .sslSocketFactory(
+            handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager())
         .hostnameVerifier(new RecordingHostnameVerifier())
         .build();
   }
 
-  @Before public void setUp() throws Exception {
+  @Before public void setUp() {
     if (protocol == Protocol.H2_PRIOR_KNOWLEDGE) {
       server.setProtocols(Arrays.asList(Protocol.H2_PRIOR_KNOWLEDGE));
     } else {
-      server.useHttps(sslClient.socketFactory, false);
+      server.useHttps(handshakeCertificates.sslSocketFactory(), false);
     }
 
     cache = new Cache(tempDir.getRoot(), Integer.MAX_VALUE);
@@ -144,7 +146,7 @@ public final class HttpOverHttp2Test {
     http2Logger.setLevel(Level.FINE);
   }
 
-  @After public void tearDown() throws Exception {
+  @After public void tearDown() {
     Authenticator.setDefault(null);
     http2Logger.removeHandler(http2Handler);
     http2Logger.setLevel(previousLevel);
@@ -224,7 +226,7 @@ public final class HttpOverHttp2Test {
             return MediaType.get("text/plain; charset=utf-8");
           }
 
-          @Override public long contentLength() throws IOException {
+          @Override public long contentLength() {
             return postBytes.length;
           }
 
@@ -255,7 +257,7 @@ public final class HttpOverHttp2Test {
             return MediaType.get("text/plain; charset=utf-8");
           }
 
-          @Override public long contentLength() throws IOException {
+          @Override public long contentLength() {
             return postBytes.length;
           }
 
@@ -311,15 +313,7 @@ public final class HttpOverHttp2Test {
         .build());
     Response response1 = call1.execute();
 
-    // Wait until the server has completely filled the stream and connection flow-control windows.
-    int expectedFrameCount = Http2Connection.OKHTTP_CLIENT_WINDOW_SIZE / 16384;
-    int dataFrameCount = 0;
-    while (dataFrameCount < expectedFrameCount) {
-      String log = http2Handler.take();
-      if (log.equals("FINE: << 0x00000003 16384 DATA          ")) {
-        dataFrameCount++;
-      }
-    }
+    waitForDataFrames(Http2Connection.OKHTTP_CLIENT_WINDOW_SIZE);
 
     // Cancel the call and discard what we've buffered for the response body. This should free up
     // the connection flow-control window so new requests can proceed.
@@ -334,6 +328,18 @@ public final class HttpOverHttp2Test {
     assertEquals("abc", response2.body().string());
   }
 
+  /** Wait for the client to receive {@code dataLength} DATA frames. */
+  private void waitForDataFrames(int dataLength) throws Exception {
+    int expectedFrameCount = dataLength / 16384;
+    int dataFrameCount = 0;
+    while (dataFrameCount < expectedFrameCount) {
+      String log = http2Handler.take();
+      if (log.equals("FINE: << 0x00000003 16384 DATA          ")) {
+        dataFrameCount++;
+      }
+    }
+  }
+
   @Test public void connectionWindowUpdateOnClose() throws Exception {
     server.enqueue(new MockResponse()
         .setBody(new Buffer().write(new byte[Http2Connection.OKHTTP_CLIENT_WINDOW_SIZE + 1])));
@@ -345,15 +351,7 @@ public final class HttpOverHttp2Test {
         .build());
     Response response1 = call1.execute();
 
-    // Wait until the server has completely filled the stream and connection flow-control windows.
-    int expectedFrameCount = Http2Connection.OKHTTP_CLIENT_WINDOW_SIZE / 16384;
-    int dataFrameCount = 0;
-    while (dataFrameCount < expectedFrameCount) {
-      String log = http2Handler.take();
-      if (log.equals("FINE: << 0x00000003 16384 DATA          ")) {
-        dataFrameCount++;
-      }
-    }
+    waitForDataFrames(Http2Connection.OKHTTP_CLIENT_WINDOW_SIZE);
 
     // Cancel the call and close the response body. This should discard the buffered data and update
     // the connnection flow-control window.
@@ -364,6 +362,38 @@ public final class HttpOverHttp2Test {
         .url(server.url("/"))
         .build());
     Response response2 = call2.execute();
+    assertEquals("abc", response2.body().string());
+  }
+
+  @Test public void concurrentRequestWithEmptyFlowControlWindow() throws Exception {
+    server.enqueue(new MockResponse()
+        .setBody(new Buffer().write(new byte[Http2Connection.OKHTTP_CLIENT_WINDOW_SIZE])));
+    server.enqueue(new MockResponse()
+        .setBody("abc"));
+
+    Call call1 = client.newCall(new Request.Builder()
+        .url(server.url("/"))
+        .build());
+    Response response1 = call1.execute();
+
+    waitForDataFrames(Http2Connection.OKHTTP_CLIENT_WINDOW_SIZE);
+
+    assertEquals(Http2Connection.OKHTTP_CLIENT_WINDOW_SIZE, response1.body().contentLength());
+    int read = response1.body().source().read(new byte[8192]);
+    assertEquals(8192, read);
+
+    // Make a second call that should transmit the response headers. The response body won't be
+    // transmitted until the flow-control window is updated from the first request.
+    Call call2 = client.newCall(new Request.Builder()
+        .url(server.url("/"))
+        .build());
+    Response response2 = call2.execute();
+    assertEquals(200, response2.code());
+
+    // Close the response body. This should discard the buffered data and update the connection
+    // flow-control window.
+    response1.close();
+
     assertEquals("abc", response2.body().string());
   }
 
@@ -1313,7 +1343,7 @@ public final class HttpOverHttp2Test {
   @Test public void concurrentHttp2ConnectionsDeduplicated() throws Exception {
     assumeTrue(protocol == Protocol.HTTP_2);
 
-    server.useHttps(sslClient.socketFactory, true);
+    server.useHttps(handshakeCertificates.sslSocketFactory(), true);
 
     // Force a fresh connection pool for the test.
     client.connectionPool().evictAll();

@@ -33,6 +33,7 @@ import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import okhttp3.Headers;
 import okhttp3.Protocol;
 import okhttp3.internal.NamedRunnable;
 import okhttp3.internal.Util;
@@ -248,7 +249,7 @@ public final class Http2Connection implements Closeable {
         }
         streamId = nextStreamId;
         nextStreamId += 2;
-        stream = new Http2Stream(streamId, this, outFinished, inFinished, requestHeaders);
+        stream = new Http2Stream(streamId, this, outFinished, inFinished, null);
         flushHeaders = !out || bytesLeftInWriteWindow == 0L || stream.bytesLeftInWriteWindow == 0L;
         if (stream.isOpen()) {
           streams.put(streamId, stream);
@@ -662,8 +663,9 @@ public final class Http2Connection implements Closeable {
           if (streamId % 2 == nextStreamId % 2) return;
 
           // Create a stream.
+          Headers headers = Util.toHeaders(headerBlock);
           final Http2Stream newStream = new Http2Stream(streamId, Http2Connection.this,
-              false, inFinished, headerBlock);
+              false, inFinished, headers);
           lastGoodStreamId = streamId;
           streams.put(streamId, newStream);
           listenerExecutor.execute(new NamedRunnable("OkHttp %s stream %d", hostname, streamId) {
@@ -931,7 +933,7 @@ public final class Http2Connection implements Closeable {
 
     /**
      * Handle a new stream from this connection's peer. Implementations should respond by either
-     * {@linkplain Http2Stream#sendResponseHeaders replying to the stream} or {@linkplain
+     * {@linkplain Http2Stream#writeHeaders replying to the stream} or {@linkplain
      * Http2Stream#close closing it}. This response does not need to be synchronous.
      */
     public abstract void onStream(Http2Stream stream) throws IOException;

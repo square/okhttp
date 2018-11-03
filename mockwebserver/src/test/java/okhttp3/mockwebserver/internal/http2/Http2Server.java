@@ -28,18 +28,19 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
+import okhttp3.Headers;
 import okhttp3.Protocol;
 import okhttp3.internal.Util;
 import okhttp3.internal.http2.Header;
 import okhttp3.internal.http2.Http2Connection;
 import okhttp3.internal.http2.Http2Stream;
 import okhttp3.internal.platform.Platform;
-import okhttp3.mockwebserver.internal.tls.SslClient;
 import okio.BufferedSink;
 import okio.Okio;
 import okio.Source;
 
 import static okhttp3.internal.platform.Platform.INFO;
+import static okhttp3.tls.internal.TlsUtil.localhost;
 
 /** A basic HTTP/2 server that serves the contents of a local directory. */
 public final class Http2Server extends Http2Connection.Listener {
@@ -95,11 +96,11 @@ public final class Http2Server extends Http2Connection.Listener {
 
   @Override public void onStream(Http2Stream stream) throws IOException {
     try {
-      List<Header> requestHeaders = stream.getRequestHeaders();
+      Headers requestHeaders = stream.takeHeaders();
       String path = null;
       for (int i = 0, size = requestHeaders.size(); i < size; i++) {
-        if (requestHeaders.get(i).name.equals(Header.TARGET_PATH)) {
-          path = requestHeaders.get(i).value.utf8();
+        if (requestHeaders.name(i).equals(Header.TARGET_PATH_UTF8)) {
+          path = requestHeaders.value(i);
           break;
         }
       }
@@ -129,7 +130,7 @@ public final class Http2Server extends Http2Connection.Listener {
         new Header(":version", "HTTP/1.1"),
         new Header("content-type", "text/plain")
     );
-    stream.sendResponseHeaders(responseHeaders, true);
+    stream.writeHeaders(responseHeaders, true);
     BufferedSink out = Okio.buffer(stream.getSink());
     out.writeUtf8("Not found: " + path);
     out.close();
@@ -141,7 +142,7 @@ public final class Http2Server extends Http2Connection.Listener {
         new Header(":version", "HTTP/1.1"),
         new Header("content-type", "text/html; charset=UTF-8")
     );
-    stream.sendResponseHeaders(responseHeaders, true);
+    stream.writeHeaders(responseHeaders, true);
     BufferedSink out = Okio.buffer(stream.getSink());
     for (File file : files) {
       String target = file.isDirectory() ? (file.getName() + "/") : file.getName();
@@ -156,7 +157,7 @@ public final class Http2Server extends Http2Connection.Listener {
         new Header(":version", "HTTP/1.1"),
         new Header("content-type", contentType(file))
     );
-    stream.sendResponseHeaders(responseHeaders, true);
+    stream.writeHeaders(responseHeaders, true);
     Source source = Okio.source(file);
     try {
       BufferedSink out = Okio.buffer(stream.getSink());
@@ -185,7 +186,7 @@ public final class Http2Server extends Http2Connection.Listener {
     }
 
     Http2Server server = new Http2Server(new File(args[0]),
-        SslClient.localhost().sslContext.getSocketFactory());
+        localhost().sslContext().getSocketFactory());
     server.run();
   }
 }

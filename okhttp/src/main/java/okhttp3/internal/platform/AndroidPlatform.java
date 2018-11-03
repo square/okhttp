@@ -93,7 +93,7 @@ class AndroidPlatform extends Platform {
     }
   }
 
-  @Override protected X509TrustManager trustManager(SSLSocketFactory sslSocketFactory) {
+  @Override protected @Nullable X509TrustManager trustManager(SSLSocketFactory sslSocketFactory) {
     Object context = readFieldOrNull(sslSocketFactory, sslParametersClass, "sslParameters");
     if (context == null) {
       // If that didn't work, try the Google Play Services SSL provider before giving up. This
@@ -138,7 +138,7 @@ class AndroidPlatform extends Platform {
     return alpnResult != null ? new String(alpnResult, Util.UTF_8) : null;
   }
 
-  @Override public void log(int level, String message, Throwable t) {
+  @Override public void log(int level, String message, @Nullable Throwable t) {
     int logLevel = level == WARN ? Log.WARN : Log.DEBUG;
     if (t != null) message = message + '\n' + Log.getStackTraceString(t);
 
@@ -431,7 +431,16 @@ class AndroidPlatform extends Platform {
   }
 
   @Override public SSLContext getSSLContext() {
-    if (Build.VERSION.SDK_INT >= 16 && Build.VERSION.SDK_INT < 22) {
+    boolean tryTls12;
+    try {
+      tryTls12 = (Build.VERSION.SDK_INT >= 16 && Build.VERSION.SDK_INT < 22);
+    } catch (NoClassDefFoundError e) {
+      // Not a real Android runtime; probably RoboVM or MoE
+      // Try to load TLS 1.2 explicitly.
+      tryTls12 = true;
+    }
+
+    if (tryTls12) {
       try {
         return SSLContext.getInstance("TLSv1.2");
       } catch (NoSuchAlgorithmException e) {

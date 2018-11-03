@@ -40,7 +40,8 @@ import okhttp3.HttpUrl;
 import okhttp3.Protocol;
 import okhttp3.RecordingHostnameVerifier;
 import okhttp3.internal.Util;
-import okhttp3.mockwebserver.internal.tls.SslClient;
+import okhttp3.tls.HeldCertificate;
+import okhttp3.tls.HandshakeCertificates;
 import org.junit.After;
 import org.junit.Rule;
 import org.junit.Test;
@@ -49,6 +50,7 @@ import org.junit.runners.model.Statement;
 
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
+import static okhttp3.tls.internal.TlsUtil.localhost;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
@@ -450,6 +452,24 @@ public final class MockWebServerTest {
     assertEquals("foo bar", requestUrl.queryParameter("key"));
   }
 
+  @Test public void shutdownServerAfterRequest() throws Exception {
+    server.enqueue(new MockResponse().setSocketPolicy(SocketPolicy.SHUTDOWN_SERVER_AFTER_RESPONSE));
+
+    URL url = server.url("/").url();
+
+    HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+    assertEquals(HttpURLConnection.HTTP_OK, connection.getResponseCode());
+
+    HttpURLConnection refusedConnection = (HttpURLConnection) url.openConnection();
+
+    try {
+      refusedConnection.getResponseCode();
+      fail("Second connection should be refused");
+    } catch (ConnectException e ) {
+      assertTrue(e.getMessage().contains("refused"));
+    }
+  }
+
   @Test public void http100Continue() throws Exception {
     server.enqueue(new MockResponse().setBody("response"));
 
@@ -496,13 +516,13 @@ public final class MockWebServerTest {
   }
 
   @Test public void https() throws Exception {
-    SslClient sslClient = SslClient.localhost();
-    server.useHttps(sslClient.socketFactory, false);
+    HandshakeCertificates handshakeCertificates = localhost();
+    server.useHttps(handshakeCertificates.sslSocketFactory(), false);
     server.enqueue(new MockResponse().setBody("abc"));
 
     HttpUrl url = server.url("/");
     HttpsURLConnection connection = (HttpsURLConnection) url.url().openConnection();
-    connection.setSSLSocketFactory(sslClient.socketFactory);
+    connection.setSSLSocketFactory(handshakeCertificates.sslSocketFactory());
     connection.setHostnameVerifier(new RecordingHostnameVerifier());
 
     assertEquals(HttpURLConnection.HTTP_OK, connection.getResponseCode());
@@ -528,29 +548,29 @@ public final class MockWebServerTest {
         .certificateAuthority(0)
         .build();
     HeldCertificate serverCertificate = new HeldCertificate.Builder()
-        .issuedBy(serverCa)
+        .signedBy(serverCa)
         .addSubjectAlternativeName(server.getHostName())
         .build();
-    SslClient serverSsl = new SslClient.Builder()
+    HandshakeCertificates serverHandshakeCertificates = new HandshakeCertificates.Builder()
         .addTrustedCertificate(clientCa.certificate())
-        .certificateChain(serverCertificate)
+        .heldCertificate(serverCertificate)
         .build();
 
-    server.useHttps(serverSsl.socketFactory, false);
+    server.useHttps(serverHandshakeCertificates.sslSocketFactory(), false);
     server.enqueue(new MockResponse().setBody("abc"));
     server.requestClientAuth();
 
     HeldCertificate clientCertificate = new HeldCertificate.Builder()
-        .issuedBy(clientCa)
+        .signedBy(clientCa)
         .build();
-    SslClient clientSsl = new SslClient.Builder()
+    HandshakeCertificates clientHandshakeCertificates = new HandshakeCertificates.Builder()
         .addTrustedCertificate(serverCa.certificate())
-        .certificateChain(clientCertificate)
+        .heldCertificate(clientCertificate)
         .build();
 
     HttpUrl url = server.url("/");
     HttpsURLConnection connection = (HttpsURLConnection) url.url().openConnection();
-    connection.setSSLSocketFactory(clientSsl.socketFactory);
+    connection.setSSLSocketFactory(clientHandshakeCertificates.sslSocketFactory());
     connection.setHostnameVerifier(new RecordingHostnameVerifier());
 
     assertEquals(HttpURLConnection.HTTP_OK, connection.getResponseCode());

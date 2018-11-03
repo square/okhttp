@@ -62,7 +62,7 @@ import javax.annotation.Nullable;
 public interface Authenticator {
   /** An authenticator that knows no credentials and makes no attempt to authenticate. */
   Authenticator NONE = new Authenticator() {
-    @Override public Request authenticate(Route route, Response response) {
+    @Override public Request authenticate(@Nullable Route route, Response response) {
       return null;
     }
   };
@@ -70,6 +70,13 @@ public interface Authenticator {
   /**
    * Returns a request that includes a credential to satisfy an authentication challenge in {@code
    * response}. Returns null if the challenge cannot be satisfied.
+   *
+   * The route is best effort, it currently may not always be provided even when logically
+   * available.  It may also not be provided when an Authenticator is re-used manually in
+   * an application interceptor, e.g. implementing client specific retries.
+   *
+   * @param route The route for evaluating how to respond to a challenge e.g. via intranet.
+   * @param response The response containing the auth challenges to respond to.
    */
-  @Nullable Request authenticate(Route route, Response response) throws IOException;
+  @Nullable Request authenticate(@Nullable Route route, Response response) throws IOException;
 }

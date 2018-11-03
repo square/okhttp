@@ -39,4 +39,9 @@ public class Jdk9PlatformTest {
     assertEquals("getApplicationProtocol", platform.getProtocolMethod.getName());
     assertEquals("setApplicationProtocols", platform.setProtocolMethod.getName());
   }
+
+  @Test
+  public void testToStringIsClassname() {
+    assertEquals("Jdk9Platform", new Jdk9Platform(null, null).toString());
+  }
 }

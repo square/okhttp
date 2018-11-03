@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.regex.Pattern;
 import javax.net.ssl.HostnameVerifier;
@@ -32,10 +33,10 @@ import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
 import okhttp3.ResponseBody;
-import okhttp3.mockwebserver.internal.tls.SslClient;
 import okhttp3.logging.HttpLoggingInterceptor.Level;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
+import okhttp3.tls.HandshakeCertificates;
 import okio.Buffer;
 import okio.BufferedSink;
 import okio.ByteString;
@@ -44,6 +45,7 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 
+import static okhttp3.tls.internal.TlsUtil.localhost;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -57,7 +59,7 @@ public final class HttpLoggingInterceptorTest {
 
   @Rule public final MockWebServer server = new MockWebServer();
 
-  private SslClient sslClient = SslClient.localhost();
+  private HandshakeCertificates handshakeCertificates = localhost();
   private HostnameVerifier hostnameVerifier = new RecordingHostnameVerifier();
   private OkHttpClient client;
   private String host;
@@ -80,7 +82,8 @@ public final class HttpLoggingInterceptorTest {
     client = new OkHttpClient.Builder()
         .addNetworkInterceptor(networkInterceptor)
         .addInterceptor(applicationInterceptor)
-        .sslSocketFactory(sslClient.socketFactory, sslClient.trustManager)
+        .sslSocketFactory(
+            handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager())
         .hostnameVerifier(hostnameVerifier)
         .build();
 
@@ -723,7 +726,7 @@ public final class HttpLoggingInterceptorTest {
   }
 
   @Test public void http2() throws Exception {
-    server.useHttps(sslClient.socketFactory, false);
+    server.useHttps(handshakeCertificates.sslSocketFactory(), false);
     url = server.url("/");
 
     setLevel(Level.BASIC);
@@ -740,6 +743,63 @@ public final class HttpLoggingInterceptorTest {
     networkLogs
         .assertLogEqual("--> GET " + url + " h2")
         .assertLogMatch("<-- 200 " + url + " \\(\\d+ms, 0-byte body\\)")
+        .assertNoMoreLogs();
+  }
+
+  @Test
+  public void headersAreRedacted() throws Exception {
+    HttpLoggingInterceptor networkInterceptor =
+        new HttpLoggingInterceptor(networkLogs).setLevel(Level.HEADERS);
+    networkInterceptor.redactHeader("sEnSiTiVe");
+
+    HttpLoggingInterceptor applicationInterceptor =
+        new HttpLoggingInterceptor(applicationLogs).setLevel(Level.HEADERS);
+    applicationInterceptor.redactHeader("sEnSiTiVe");
+
+    client =
+        new OkHttpClient.Builder()
+            .addNetworkInterceptor(networkInterceptor)
+            .addInterceptor(applicationInterceptor)
+            .build();
+
+    server.enqueue(
+        new MockResponse().addHeader("SeNsItIvE", "Value").addHeader("Not-Sensitive", "Value"));
+    Response response =
+        client
+            .newCall(
+                request()
+                    .addHeader("SeNsItIvE", "Value")
+                    .addHeader("Not-Sensitive", "Value")
+                    .build())
+            .execute();
+    response.body().close();
+
+    applicationLogs
+        .assertLogEqual("--> GET " + url)
+        .assertLogEqual("SeNsItIvE: ██")
+        .assertLogEqual("Not-Sensitive: Value")
+        .assertLogEqual("--> END GET")
+        .assertLogMatch("<-- 200 OK " + url + " \\(\\d+ms\\)")
+        .assertLogEqual("Content-Length: 0")
+        .assertLogEqual("SeNsItIvE: ██")
+        .assertLogEqual("Not-Sensitive: Value")
+        .assertLogEqual("<-- END HTTP")
+        .assertNoMoreLogs();
+
+    networkLogs
+        .assertLogEqual("--> GET " + url + " http/1.1")
+        .assertLogEqual("SeNsItIvE: ██")
+        .assertLogEqual("Not-Sensitive: Value")
+        .assertLogEqual("Host: " + host)
+        .assertLogEqual("Connection: Keep-Alive")
+        .assertLogEqual("Accept-Encoding: gzip")
+        .assertLogMatch("User-Agent: okhttp/.+")
+        .assertLogEqual("--> END GET")
+        .assertLogMatch("<-- 200 OK " + url + " \\(\\d+ms\\)")
+        .assertLogEqual("Content-Length: 0")
+        .assertLogEqual("SeNsItIvE: ██")
+        .assertLogEqual("Not-Sensitive: Value")
+        .assertLogEqual("<-- END HTTP")
         .assertNoMoreLogs();
   }
 

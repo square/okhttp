@@ -93,9 +93,7 @@ public final class ThreadInterruptTest {
       }
       fail("Expected thread to be interrupted");
     } catch (InterruptedIOException expected) {
-      // TODO(jwilson): test that we're interrupted once Okio retains interrupted state.
-      //     https://github.com/square/okhttp/issues/3107
-      if (false) assertTrue(Thread.interrupted());
+      assertTrue(Thread.interrupted());
     }
 
     connection.disconnect();
@@ -119,9 +117,7 @@ public final class ThreadInterruptTest {
       }
       fail("Expected thread to be interrupted");
     } catch (InterruptedIOException expected) {
-      // TODO(jwilson): test that we're interrupted once Okio retains interrupted state.
-      //     https://github.com/square/okhttp/issues/3107
-      if (false) assertTrue(Thread.interrupted());
+      assertTrue(Thread.interrupted());
     }
 
     responseBody.close();

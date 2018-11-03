@@ -102,7 +102,7 @@ public abstract class RequestBody {
 
   /** Returns a new request body that transmits the content of {@code file}. */
   public static RequestBody create(final @Nullable MediaType contentType, final File file) {
-    if (file == null) throw new NullPointerException("content == null");
+    if (file == null) throw new NullPointerException("file == null");
 
     return new RequestBody() {
       @Override public @Nullable MediaType contentType() {

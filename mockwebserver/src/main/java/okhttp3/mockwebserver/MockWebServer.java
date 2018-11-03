@@ -90,6 +90,7 @@ import static okhttp3.mockwebserver.SocketPolicy.NO_RESPONSE;
 import static okhttp3.mockwebserver.SocketPolicy.RESET_STREAM_AT_START;
 import static okhttp3.mockwebserver.SocketPolicy.SHUTDOWN_INPUT_AT_END;
 import static okhttp3.mockwebserver.SocketPolicy.SHUTDOWN_OUTPUT_AT_END;
+import static okhttp3.mockwebserver.SocketPolicy.SHUTDOWN_SERVER_AFTER_RESPONSE;
 import static okhttp3.mockwebserver.SocketPolicy.STALL_SOCKET_AT_START;
 import static okhttp3.mockwebserver.SocketPolicy.UPGRADE_TO_SSL_AT_END;
 
@@ -589,6 +590,8 @@ public final class MockWebServer extends ExternalResource implements Closeable {
           socket.shutdownInput();
         } else if (response.getSocketPolicy() == SHUTDOWN_OUTPUT_AT_END) {
           socket.shutdownOutput();
+        } else if (response.getSocketPolicy() == SHUTDOWN_SERVER_AFTER_RESPONSE) {
+          shutdown();
         }
 
         sequenceNumber++;
@@ -934,24 +937,24 @@ public final class MockWebServer extends ExternalResource implements Closeable {
     }
 
     private RecordedRequest readRequest(Http2Stream stream) throws IOException {
-      List<Header> streamHeaders = stream.getRequestHeaders();
+      Headers streamHeaders = stream.takeHeaders();
       Headers.Builder httpHeaders = new Headers.Builder();
       String method = "<:method omitted>";
       String path = "<:path omitted>";
       boolean readBody = true;
       for (int i = 0, size = streamHeaders.size(); i < size; i++) {
-        ByteString name = streamHeaders.get(i).name;
-        String value = streamHeaders.get(i).value.utf8();
-        if (name.equals(Header.TARGET_METHOD)) {
+        String name = streamHeaders.name(i);
+        String value = streamHeaders.value(i);
+        if (name.equals(Header.TARGET_METHOD_UTF8)) {
           method = value;
-        } else if (name.equals(Header.TARGET_PATH)) {
+        } else if (name.equals(Header.TARGET_PATH_UTF8)) {
           path = value;
         } else if (protocol == Protocol.HTTP_2 || protocol == Protocol.H2_PRIOR_KNOWLEDGE) {
-          httpHeaders.add(name.utf8(), value);
+          httpHeaders.add(name, value);
         } else {
           throw new IllegalStateException();
         }
-        if (name.utf8().equals("expect") && value.equalsIgnoreCase("100-continue")) {
+        if (name.equals("expect") && value.equalsIgnoreCase("100-continue")) {
           // Don't read the body unless we've invited the client to send it.
           readBody = false;
         }
@@ -960,7 +963,7 @@ public final class MockWebServer extends ExternalResource implements Closeable {
 
       MockResponse peek = dispatcher.peek();
       if (!readBody && peek.getSocketPolicy() == EXPECT_CONTINUE) {
-        stream.sendResponseHeaders(Collections.singletonList(
+        stream.writeHeaders(Collections.singletonList(
             new Header(Header.RESPONSE_STATUS, ByteString.encodeUtf8("100 Continue"))), true);
         stream.getConnection().flush();
         readBody = true;
@@ -1006,7 +1009,7 @@ public final class MockWebServer extends ExternalResource implements Closeable {
 
       Buffer body = response.getBody();
       boolean closeStreamAfterHeaders = body != null || !response.getPushPromises().isEmpty();
-      stream.sendResponseHeaders(http2Headers, closeStreamAfterHeaders);
+      stream.writeHeaders(http2Headers, closeStreamAfterHeaders);
       pushPromises(stream, response.getPushPromises());
       if (body != null) {
         BufferedSink sink = Okio.buffer(stream.getSink());
