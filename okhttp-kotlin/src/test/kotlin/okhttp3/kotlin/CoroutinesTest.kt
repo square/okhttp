@@ -25,13 +25,14 @@ class CoroutinesTest {
   fun `test async`() {
     val request = request("https://httpbin.org/delay/1")
     val client = client()
-    val job1 = async {
-      client.execute(request)
-    }
-    val job2 = async {
-      client.execute(request)
-    }
     runBlocking {
+      val job1 = async {
+        client.execute(request)
+      }
+      val job2 = async {
+        client.execute(request)
+      }
+
       val response1 = job1.await()
       val response2 = job2.await()
 
@@ -44,10 +45,11 @@ class CoroutinesTest {
   fun `test cancel`() {
     val request = request("https://httpbin.org/delay/5")
     val client = client()
-    val response = async {
-      client.execute(request)
-    }
     runBlocking {
+      val response = async {
+        client.execute(request)
+      }
+
       response.cancelAndJoin()
     }
   }
