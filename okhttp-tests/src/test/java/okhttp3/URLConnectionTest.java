@@ -3198,7 +3198,7 @@ public final class URLConnectionTest {
     assertEquals(Proxy.NO_PROXY, authenticator.onlyRoute().proxy());
     Response response = authenticator.onlyResponse();
     assertEquals("/private", response.request().url().url().getPath());
-    assertEquals(Arrays.asList(new Challenge("Basic", singletonMap("realm", "protected area"))), response.challenges());
+    assertEquals(Arrays.asList(new Challenge("Basic", "protected area")), response.challenges());
   }
 
   @Test public void customTokenAuthenticator() throws Exception {
@@ -3219,7 +3219,7 @@ public final class URLConnectionTest {
 
     Response response = authenticator.onlyResponse();
     assertEquals("/private", response.request().url().url().getPath());
-    assertEquals(Arrays.asList(new Challenge("Bearer", singletonMap("realm", "oauthed"))), response.challenges());
+    assertEquals(Arrays.asList(new Challenge("Bearer", "oauthed")), response.challenges());
   }
 
   @Test public void authenticateCallsTrackedAsRedirects() throws Exception {
