@@ -15,6 +15,7 @@
  */
 package okhttp3;
 
+import java.io.IOException;
 import java.net.Proxy;
 import java.net.ProxySelector;
 import java.net.Socket;
@@ -37,11 +38,11 @@ import javax.net.ssl.X509TrustManager;
 import okhttp3.internal.Internal;
 import okhttp3.internal.Util;
 import okhttp3.internal.cache.InternalCache;
-import okhttp3.internal.proxy.NullProxySelector;
 import okhttp3.internal.connection.RealConnection;
 import okhttp3.internal.connection.RouteDatabase;
 import okhttp3.internal.connection.StreamAllocation;
 import okhttp3.internal.platform.Platform;
+import okhttp3.internal.proxy.NullProxySelector;
 import okhttp3.internal.tls.CertificateChainCleaner;
 import okhttp3.internal.tls.OkHostnameVerifier;
 import okhttp3.internal.ws.RealWebSocket;
@@ -185,6 +186,10 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
 
       @Override public StreamAllocation streamAllocation(Call call) {
         return ((RealCall) call).streamAllocation();
+      }
+
+      @Override public @Nullable IOException timeoutExit(Call call, @Nullable IOException e) {
+        return ((RealCall) call).timeoutExit(e);
       }
 
       @Override public Call newWebSocketCall(OkHttpClient client, Request originalRequest) {

@@ -16,6 +16,7 @@
 package okhttp3;
 
 import java.io.IOException;
+import java.io.InterruptedIOException;
 import java.util.ArrayList;
 import java.util.List;
 import javax.annotation.Nullable;
@@ -28,12 +29,15 @@ import okhttp3.internal.http.CallServerInterceptor;
 import okhttp3.internal.http.RealInterceptorChain;
 import okhttp3.internal.http.RetryAndFollowUpInterceptor;
 import okhttp3.internal.platform.Platform;
+import okio.AsyncTimeout;
+import okio.Timeout;
 
 import static okhttp3.internal.platform.Platform.INFO;
 
 final class RealCall implements Call {
   final OkHttpClient client;
   final RetryAndFollowUpInterceptor retryAndFollowUpInterceptor;
+  final AsyncTimeout timeout;
 
   /**
    * There is a cycle between the {@link Call} and {@link EventListener} that makes this awkward.
@@ -53,6 +57,11 @@ final class RealCall implements Call {
     this.originalRequest = originalRequest;
     this.forWebSocket = forWebSocket;
     this.retryAndFollowUpInterceptor = new RetryAndFollowUpInterceptor(client, forWebSocket);
+    this.timeout = new AsyncTimeout() {
+      @Override protected void timedOut() {
+        cancel();
+      }
+    };
   }
 
   static RealCall newRealCall(OkHttpClient client, Request originalRequest, boolean forWebSocket) {
@@ -72,6 +81,7 @@ final class RealCall implements Call {
       executed = true;
     }
     captureCallStackTrace();
+    timeout.enter();
     eventListener.callStart(this);
     try {
       client.dispatcher().executed(this);
@@ -79,11 +89,22 @@ final class RealCall implements Call {
       if (result == null) throw new IOException("Canceled");
       return result;
     } catch (IOException e) {
+      e = timeoutExit(e);
       eventListener.callFailed(this, e);
       throw e;
     } finally {
       client.dispatcher().finished(this);
     }
+  }
+
+  @Nullable IOException timeoutExit(@Nullable IOException cause) {
+    if (!timeout.exit()) return cause;
+
+    InterruptedIOException e = new InterruptedIOException("timeout");
+    if (cause != null) {
+      e.initCause(cause);
+    }
+    return e;
   }
 
   private void captureCallStackTrace() {
@@ -103,6 +124,10 @@ final class RealCall implements Call {
 
   @Override public void cancel() {
     retryAndFollowUpInterceptor.cancel();
+  }
+
+  @Override public Timeout timeout() {
+    return timeout;
   }
 
   @Override public synchronized boolean isExecuted() {
@@ -144,6 +169,7 @@ final class RealCall implements Call {
 
     @Override protected void execute() {
       boolean signalledCallback = false;
+      timeout.enter();
       try {
         Response response = getResponseWithInterceptorChain();
         if (retryAndFollowUpInterceptor.isCanceled()) {
@@ -154,6 +180,7 @@ final class RealCall implements Call {
           responseCallback.onResponse(RealCall.this, response);
         }
       } catch (IOException e) {
+        e = timeoutExit(e);
         if (signalledCallback) {
           // Do not signal the callback twice!
           Platform.get().log(INFO, "Callback failure for " + toLoggableString(), e);

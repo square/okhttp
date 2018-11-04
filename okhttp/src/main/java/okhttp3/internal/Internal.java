@@ -15,7 +15,9 @@
  */
 package okhttp3.internal;
 
+import java.io.IOException;
 import java.net.Socket;
+import javax.annotation.Nullable;
 import javax.net.ssl.SSLSocket;
 import okhttp3.Address;
 import okhttp3.Call;
@@ -72,6 +74,8 @@ public abstract class Internal {
   public abstract boolean isInvalidHttpUrlHost(IllegalArgumentException e);
 
   public abstract StreamAllocation streamAllocation(Call call);
+
+  public abstract @Nullable IOException timeoutExit(Call call, @Nullable IOException e);
 
   public abstract Call newWebSocketCall(OkHttpClient client, Request request);
 }
