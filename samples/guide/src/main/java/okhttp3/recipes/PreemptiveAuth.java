@@ -1,11 +1,11 @@
 /*
- * Copyright (C) 2014 Square, Inc.
+ * Copyright (C) 2018 Square, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *    http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -24,50 +24,50 @@ import okhttp3.Response;
 import java.io.IOException;
 
 public class PreemptiveAuth {
-    private final OkHttpClient client;
+  private final OkHttpClient client;
 
-    public PreemptiveAuth() {
-        client = new OkHttpClient.Builder()
-                .addInterceptor(
-                        new BasicAuthInterceptor("publicobject.com", "jesse", "password1"))
-                .build();
+  public PreemptiveAuth() {
+    client = new OkHttpClient.Builder()
+        .addInterceptor(
+            new BasicAuthInterceptor("publicobject.com", "jesse", "password1"))
+        .build();
+  }
+
+  public void run() throws Exception {
+    Request request = new Request.Builder()
+        .url("https://publicobject.com/secrets/hellosecret.txt")
+        .build();
+
+    try (Response response = client.newCall(request).execute()) {
+      if (!response.isSuccessful()) throw new IOException("Unexpected code " + response);
+
+      System.out.println(response.body().string());
     }
+  }
 
-    public void run() throws Exception {
-        Request request = new Request.Builder()
-                .url("https://publicobject.com/secrets/hellosecret.txt")
-                .build();
+  public static void main(String... args) throws Exception {
+    new PreemptiveAuth().run();
+  }
 
-        try (Response response = client.newCall(request).execute()) {
-            if (!response.isSuccessful()) throw new IOException("Unexpected code " + response);
-
-            System.out.println(response.body().string());
-        }
-    }
-
-    public static void main(String... args) throws Exception {
-        new PreemptiveAuth().run();
-    }
-}
-
-class BasicAuthInterceptor implements Interceptor {
-
+  class BasicAuthInterceptor implements Interceptor {
     private final String credentials;
     private final String host;
 
     BasicAuthInterceptor(String host, String username, String password) {
-        this.credentials = Credentials.basic(username, password);
-        this.host = host;
+      this.credentials = Credentials.basic(username, password);
+      this.host = host;
     }
 
     @Override
     public Response intercept(Chain chain) throws IOException {
-        Request request = chain.request();
-        if (request.url().host().equals(host)) {
-            request = request.newBuilder()
-                    .header("Authorization", credentials)
-                    .build();
-        }
-        return chain.proceed(request);
+      Request request = chain.request();
+      if (request.url().host().equals(host)) {
+        request = request.newBuilder()
+            .header("Authorization", credentials)
+            .build();
+      }
+      return chain.proceed(request);
     }
+  }
+
 }
