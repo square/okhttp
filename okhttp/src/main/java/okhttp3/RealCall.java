@@ -19,6 +19,8 @@ import java.io.IOException;
 import java.io.InterruptedIOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.RejectedExecutionException;
 import javax.annotation.Nullable;
 import okhttp3.internal.NamedRunnable;
 import okhttp3.internal.cache.CacheInterceptor;
@@ -165,6 +167,28 @@ final class RealCall implements Call {
 
     RealCall get() {
       return RealCall.this;
+    }
+
+    /**
+     * Attempt to enqueue this async call on {@code executorService}. This will attempt to clean up
+     * if the executor has been shut down by reporting the call as failed.
+     */
+    void executeOn(ExecutorService executorService) {
+      assert (!Thread.holdsLock(client.dispatcher()));
+      boolean success = false;
+      try {
+        executorService.execute(this);
+        success = true;
+      } catch (RejectedExecutionException e) {
+        InterruptedIOException ioException = new InterruptedIOException("executor rejected");
+        ioException.initCause(e);
+        eventListener.callFailed(RealCall.this, ioException);
+        responseCallback.onFailure(RealCall.this, ioException);
+      } finally {
+        if (!success) {
+          client.dispatcher().finished(this); // This call is no longer running!
+        }
+      }
     }
 
     @Override protected void execute() {
