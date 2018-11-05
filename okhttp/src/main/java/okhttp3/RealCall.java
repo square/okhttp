@@ -34,6 +34,7 @@ import okhttp3.internal.platform.Platform;
 import okio.AsyncTimeout;
 import okio.Timeout;
 
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static okhttp3.internal.platform.Platform.INFO;
 
 final class RealCall implements Call {
@@ -64,6 +65,7 @@ final class RealCall implements Call {
         cancel();
       }
     };
+    this.timeout.timeout(client.callTimeoutMillis(), MILLISECONDS);
   }
 
   static RealCall newRealCall(OkHttpClient client, Request originalRequest, boolean forWebSocket) {

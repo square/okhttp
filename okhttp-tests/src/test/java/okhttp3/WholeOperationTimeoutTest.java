@@ -28,6 +28,7 @@ import org.junit.Rule;
 import org.junit.Test;
 
 import static okhttp3.TestUtil.defaultClient;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
@@ -40,6 +41,27 @@ public final class WholeOperationTimeoutTest {
   @Rule public final MockWebServer server = new MockWebServer();
 
   private OkHttpClient client = defaultClient();
+
+  @Test public void defaultConfigIsNoTimeout() throws Exception {
+    Request request = new Request.Builder()
+        .url(server.url("/"))
+        .build();
+    Call call = client.newCall(request);
+    assertEquals(0, call.timeout().timeoutNanos());
+  }
+
+  @Test public void configureClientDefault() throws Exception {
+    Request request = new Request.Builder()
+        .url(server.url("/"))
+        .build();
+
+    OkHttpClient timeoutClient = client.newBuilder()
+        .callTimeout(456, TimeUnit.MILLISECONDS)
+        .build();
+
+    Call call = timeoutClient.newCall(request);
+    assertEquals(TimeUnit.MILLISECONDS.toNanos(456), call.timeout().timeoutNanos());
+  }
 
   @Test public void timeoutWritingRequest() throws Exception {
     server.enqueue(new MockResponse());
