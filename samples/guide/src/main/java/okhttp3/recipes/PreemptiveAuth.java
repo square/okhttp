@@ -15,15 +15,14 @@
  */
 package okhttp3.recipes;
 
+import java.io.IOException;
 import okhttp3.Credentials;
 import okhttp3.Interceptor;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
 
-import java.io.IOException;
-
-public class PreemptiveAuth {
+public final class PreemptiveAuth {
   private final OkHttpClient client;
 
   public PreemptiveAuth() {
@@ -49,7 +48,7 @@ public class PreemptiveAuth {
     new PreemptiveAuth().run();
   }
 
-  class BasicAuthInterceptor implements Interceptor {
+  static final class BasicAuthInterceptor implements Interceptor {
     private final String credentials;
     private final String host;
 
@@ -58,8 +57,7 @@ public class PreemptiveAuth {
       this.host = host;
     }
 
-    @Override
-    public Response intercept(Chain chain) throws IOException {
+    @Override public Response intercept(Chain chain) throws IOException {
       Request request = chain.request();
       if (request.url().host().equals(host)) {
         request = request.newBuilder()
@@ -69,5 +67,4 @@ public class PreemptiveAuth {
       return chain.proceed(request);
     }
   }
-
 }
