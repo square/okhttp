@@ -677,6 +677,24 @@ public final class WebSocketHttpTest {
     assertEquals(Collections.emptyList(), listener.recordedEventTypes());
   }
 
+  @Test public void callTimeoutIsNotApplied() throws Exception {
+    client = client.newBuilder()
+        .callTimeout(100, TimeUnit.MILLISECONDS)
+        .build();
+
+    webServer.enqueue(new MockResponse()
+        .withWebSocketUpgrade(serverListener));
+    newWebSocket();
+
+    clientListener.assertOpen();
+    WebSocket server = serverListener.assertOpen();
+
+    Thread.sleep(500);
+
+    server.send("Hello, WebSockets!");
+    clientListener.assertTextMessage("Hello, WebSockets!");
+  }
+
   private MockResponse upgradeResponse(RecordedRequest request) {
     String key = request.getHeader("Sec-WebSocket-Key");
     return new MockResponse()

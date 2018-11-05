@@ -42,7 +42,6 @@ import okhttp3.RecordingEventListener.SecureConnectEnd;
 import okhttp3.RecordingEventListener.SecureConnectStart;
 import okhttp3.internal.DoubleInetAddressDns;
 import okhttp3.internal.RecordingOkAuthenticator;
-import okhttp3.internal.SingleInetAddressDns;
 import okhttp3.logging.HttpLoggingInterceptor;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
@@ -80,7 +79,6 @@ public final class EventListenerTest {
   public static final Matcher<Response> anyResponse = CoreMatchers.any(Response.class);
   @Rule public final MockWebServer server = new MockWebServer();
 
-  private final SingleInetAddressDns singleDns = new SingleInetAddressDns();
   private final RecordingEventListener listener = new RecordingEventListener();
   private final HandshakeCertificates handshakeCertificates = localhost();
 
@@ -89,7 +87,6 @@ public final class EventListenerTest {
 
   @Before public void setUp() {
     client = defaultClient().newBuilder()
-        .dns(singleDns)
         .eventListener(listener)
         .build();
 
@@ -437,8 +434,8 @@ public final class EventListenerTest {
     server.enqueue(new MockResponse());
 
     FakeDns dns = new FakeDns();
-    dns.set("fakeurl", singleDns.lookup(server.getHostName()));
-    dns.set("www.fakeurl", singleDns.lookup(server.getHostName()));
+    dns.set("fakeurl", client.dns().lookup(server.getHostName()));
+    dns.set("www.fakeurl", client.dns().lookup(server.getHostName()));
 
     client = client.newBuilder()
         .dns(dns)
@@ -513,7 +510,7 @@ public final class EventListenerTest {
     assertEquals(200, response.code());
     response.body().close();
 
-    InetAddress address = singleDns.lookup(server.getHostName()).get(0);
+    InetAddress address = client.dns().lookup(server.getHostName()).get(0);
     InetSocketAddress expectedAddress = new InetSocketAddress(address, server.getPort());
 
     ConnectStart connectStart = listener.removeUpToEvent(ConnectStart.class);
@@ -541,7 +538,7 @@ public final class EventListenerTest {
     } catch (IOException expected) {
     }
 
-    InetAddress address = singleDns.lookup(server.getHostName()).get(0);
+    InetAddress address = client.dns().lookup(server.getHostName()).get(0);
     InetSocketAddress expectedAddress = new InetSocketAddress(address, server.getPort());
 
     ConnectStart connectStart = listener.removeUpToEvent(ConnectStart.class);
@@ -593,7 +590,7 @@ public final class EventListenerTest {
     assertEquals(200, response.code());
     response.body().close();
 
-    InetAddress address = singleDns.lookup(server.getHostName()).get(0);
+    InetAddress address = client.dns().lookup(server.getHostName()).get(0);
     InetSocketAddress expectedAddress = new InetSocketAddress(address, server.getPort());
 
     ConnectStart connectStart = listener.removeUpToEvent(ConnectStart.class);

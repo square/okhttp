@@ -59,7 +59,6 @@ import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
 import okhttp3.internal.DoubleInetAddressDns;
 import okhttp3.internal.RecordingOkAuthenticator;
-import okhttp3.internal.SingleInetAddressDns;
 import okhttp3.internal.Util;
 import okhttp3.internal.Version;
 import okhttp3.internal.http.RecordingProxySelector;
@@ -1090,7 +1089,6 @@ public final class CallTest {
 
     client = client.newBuilder()
         .hostnameVerifier(new RecordingHostnameVerifier())
-        .dns(new SingleInetAddressDns())
         // Attempt RESTRICTED_TLS then fall back to MODERN_TLS.
         .connectionSpecs(Arrays.asList(ConnectionSpec.RESTRICTED_TLS, ConnectionSpec.MODERN_TLS))
         .sslSocketFactory(
@@ -1119,7 +1117,6 @@ public final class CallTest {
         // Attempt RESTRICTED_TLS then fall back to MODERN_TLS.
         .connectionSpecs(Arrays.asList(ConnectionSpec.RESTRICTED_TLS, ConnectionSpec.MODERN_TLS))
         .hostnameVerifier(new RecordingHostnameVerifier())
-        .dns(new SingleInetAddressDns())
         .build();
 
     Request request = new Request.Builder().url(server.url("/")).build();
@@ -1161,7 +1158,6 @@ public final class CallTest {
     client = client.newBuilder()
         .connectionSpecs(Arrays.asList(ConnectionSpec.MODERN_TLS, ConnectionSpec.CLEARTEXT))
         .hostnameVerifier(new RecordingHostnameVerifier())
-        .dns(new SingleInetAddressDns())
         .sslSocketFactory(
             suppressTlsFallbackClientSocketFactory(), handshakeCertificates.trustManager())
         .build();
