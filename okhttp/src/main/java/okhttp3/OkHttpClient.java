@@ -532,7 +532,7 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
      * Sets the default timeout for complete calls. A value of 0 means no timeout, otherwise values
      * must be between 1 and {@link Integer#MAX_VALUE} when converted to milliseconds.
      *
-     * <p>The call timeout is spans the entire call: resolving DNS, connecting, writing the request
+     * <p>The call timeout spans the entire call: resolving DNS, connecting, writing the request
      * body, server processing, and reading the response body. If the call requires redirects or
      * retries all must complete within one timeout period.
      */
