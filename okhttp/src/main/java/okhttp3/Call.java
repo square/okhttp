@@ -82,8 +82,11 @@ public interface Call extends Cloneable {
   boolean isCanceled();
 
   /**
-   * Returns a timeout that applies to the entire call: writing the request, server processing,
-   * and reading the response.
+   * Returns a timeout that spans the entire call: resolving DNS, connecting, writing the request
+   * body, server processing, and reading the response body. If the call requires redirects or
+   * retries all must complete within one timeout period.
+   *
+   * <p>Configure the client's default timeout with {@link OkHttpClient.Builder#callTimeout}.
    */
   Timeout timeout();
 
