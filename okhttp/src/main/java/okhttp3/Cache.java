@@ -385,7 +385,7 @@ public final class Cache implements Closeable, Flushable {
     return cache.size();
   }
 
-  /** Size of the cache (in bytes). */
+  /** Max size of the cache (in bytes). */
   public long maxSize() {
     return cache.getMaxSize();
   }
