@@ -175,6 +175,12 @@ public final class Cache implements Closeable, Flushable {
   private int hitCount;
   private int requestCount;
 
+  /**
+   * Create a cache which will reside in {@code directory}.
+   *
+   * @param directory a writable directory
+   * @param maxSize the maximum number of bytes this cache should use to store
+   */
   public Cache(File directory, long maxSize) {
     this(directory, maxSize, FileSystem.SYSTEM);
   }
@@ -379,6 +385,7 @@ public final class Cache implements Closeable, Flushable {
     return cache.size();
   }
 
+  /** Size of the cache (in bytes). */
   public long maxSize() {
     return cache.getMaxSize();
   }
