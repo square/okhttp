@@ -432,7 +432,7 @@ public final class HttpOverHttp2Test {
 
     String credential = Credentials.basic("username", "password");
     client = client.newBuilder()
-        .authenticator(new RecordingOkAuthenticator(credential))
+        .authenticator(new RecordingOkAuthenticator(credential, "Basic"))
         .build();
 
     Call call = client.newCall(new Request.Builder()

@@ -1613,7 +1613,7 @@ public final class URLConnectionTest {
 
     String credential = Credentials.basic("jesse", "secret");
     urlFactory.setClient(urlFactory.client().newBuilder()
-        .authenticator(new RecordingOkAuthenticator(credential))
+        .authenticator(new RecordingOkAuthenticator(credential, null))
         .build());
 
     connection = urlFactory.open(server.url("/").url());
@@ -2232,7 +2232,7 @@ public final class URLConnectionTest {
         .addHeader("Location: " + server2.url("/b").url()));
 
     urlFactory.setClient(urlFactory.client().newBuilder()
-        .authenticator(new RecordingOkAuthenticator(Credentials.basic("jesse", "secret")))
+        .authenticator(new RecordingOkAuthenticator(Credentials.basic("jesse", "secret"), null))
         .build());
     assertContent("Page 2", urlFactory.open(server.url("/a").url()));
 
@@ -3179,7 +3179,7 @@ public final class URLConnectionTest {
     server.enqueue(new MockResponse().setBody("A"));
 
     String credential = Credentials.basic("jesse", "peanutbutter");
-    RecordingOkAuthenticator authenticator = new RecordingOkAuthenticator(credential);
+    RecordingOkAuthenticator authenticator = new RecordingOkAuthenticator(credential, null);
     urlFactory.setClient(urlFactory.client().newBuilder()
         .authenticator(authenticator)
         .build());
@@ -3201,7 +3201,8 @@ public final class URLConnectionTest {
     server.enqueue(pleaseAuthenticate);
     server.enqueue(new MockResponse().setBody("A"));
 
-    RecordingOkAuthenticator authenticator = new RecordingOkAuthenticator("oauthed abc123");
+    RecordingOkAuthenticator authenticator
+        = new RecordingOkAuthenticator("oauthed abc123", "Bearer");
     urlFactory.setClient(urlFactory.client().newBuilder()
         .authenticator(authenticator)
         .build());
@@ -3225,7 +3226,7 @@ public final class URLConnectionTest {
     server.enqueue(new MockResponse().setBody("c"));
 
     RecordingOkAuthenticator authenticator = new RecordingOkAuthenticator(
-        Credentials.basic("jesse", "peanutbutter"));
+        Credentials.basic("jesse", "peanutbutter"), "Basic");
     urlFactory.setClient(urlFactory.client().newBuilder()
         .authenticator(authenticator)
         .build());
@@ -3246,7 +3247,7 @@ public final class URLConnectionTest {
 
     String credential = Credentials.basic("jesse", "peanutbutter");
     urlFactory.setClient(urlFactory.client().newBuilder()
-        .authenticator(new RecordingOkAuthenticator(credential))
+        .authenticator(new RecordingOkAuthenticator(credential, null))
         .build());
 
     connection = urlFactory.open(server.url("/0").url());
@@ -3260,7 +3261,7 @@ public final class URLConnectionTest {
 
     String credential = Credentials.basic("jesse", "peanutbutter");
     urlFactory.setClient(urlFactory.client().newBuilder()
-        .authenticator(new RecordingOkAuthenticator(credential))
+        .authenticator(new RecordingOkAuthenticator(credential, null))
         .build());
 
     connection = urlFactory.open(server.url("/").url());
