@@ -47,6 +47,7 @@ public final class RealEventSource
         .eventListener(EventListener.NONE)
         .build();
     call = client.newCall(request);
+    call.timeout().clearTimeout();
     call.enqueue(this);
   }
 
