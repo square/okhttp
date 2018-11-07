@@ -401,7 +401,7 @@ public final class HeldCertificate {
 
       try {
         X509Certificate certificate = generator.generateX509Certificate(
-            signedByKeyPair.getPrivate(), "BC");
+            signedByKeyPair.getPrivate());
         return new HeldCertificate(heldKeyPair, certificate);
       } catch (GeneralSecurityException e) {
         throw new AssertionError(e);
@@ -423,7 +423,7 @@ public final class HeldCertificate {
 
     private KeyPair generateKeyPair() {
       try {
-        KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance(keyAlgorithm, "BC");
+        KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance(keyAlgorithm);
         keyPairGenerator.initialize(keySize, new SecureRandom());
         return keyPairGenerator.generateKeyPair();
       } catch (GeneralSecurityException e) {
