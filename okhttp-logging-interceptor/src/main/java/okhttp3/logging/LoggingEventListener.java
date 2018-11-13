@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015 Square, Inc.
+ * Copyright (C) 2018 Square, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,10 +42,10 @@ import static okhttp3.internal.platform.Platform.INFO;
  * slightly between releases. If you need a stable logging format, use your own event listener.
  */
 public final class LoggingEventListener extends EventListener {
-  private final Logger logger;
+  private final HttpLoggingInterceptor.Logger logger;
   private long startNs;
 
-  private LoggingEventListener(Logger logger) {
+  private LoggingEventListener(HttpLoggingInterceptor.Logger logger) {
     this.logger = logger;
   }
 
@@ -159,40 +159,17 @@ public final class LoggingEventListener extends EventListener {
 
   private void logWithTime(String message) {
     long timeMs = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startNs);
-    logger.log("[t=" + timeMs + "] " + message);
-  }
-
-  public interface Logger {
-    /** A {@link Logger} that outputs appropriately for the current platform. */
-    Logger DEFAULT =
-        new Logger() {
-          @Override
-          public void log(String message) {
-            Platform.get().log(INFO, message, null);
-          }
-        };
-
-    /** A {@link Logger} that outputs to the standard output stream. */
-    Logger STDOUT = new Logger() {
-      @Override
-      public void log(String message) {
-          System.out.println(message);
-      }
-    };
-
-    void log(String message);
+    logger.log("[" + timeMs + " ms] " + message);
   }
 
   public static class Factory implements EventListener.Factory {
-    public static final Factory STDOUT = new Factory(Logger.STDOUT);
-
-    private final Logger logger;
+    private final HttpLoggingInterceptor.Logger logger;
 
     public Factory() {
-      this(Logger.DEFAULT);
+      this(HttpLoggingInterceptor.Logger.DEFAULT);
     }
 
-    public Factory(Logger logger) {
+    public Factory(HttpLoggingInterceptor.Logger logger) {
       this.logger = logger;
     }
 

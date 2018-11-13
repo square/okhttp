@@ -48,6 +48,7 @@ import okhttp3.internal.Util;
 import okhttp3.internal.http.StatusLine;
 import okhttp3.internal.http2.Http2;
 import okhttp3.internal.platform.Platform;
+import okhttp3.logging.HttpLoggingInterceptor;
 import okhttp3.logging.LoggingEventListener;
 import okio.BufferedSource;
 import okio.Okio;
@@ -191,7 +192,14 @@ public class Main extends HelpOption implements Runnable {
       builder.hostnameVerifier(createInsecureHostnameVerifier());
     }
     if (verbose) {
-      builder.eventListenerFactory(LoggingEventListener.Factory.STDOUT);
+      HttpLoggingInterceptor.Logger logger =
+          new HttpLoggingInterceptor.Logger() {
+            @Override
+            public void log(String message) {
+              System.out.println(message);
+            }
+          };
+      builder.eventListenerFactory(new LoggingEventListener.Factory(logger));
     }
     return builder.build();
   }

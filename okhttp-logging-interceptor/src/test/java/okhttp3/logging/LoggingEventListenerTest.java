@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015 Square, Inc.
+ * Copyright (C) 2018 Square, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,9 +18,7 @@ package okhttp3.logging;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.regex.Pattern;
 import okhttp3.Dns;
 import okhttp3.HttpUrl;
 import okhttp3.MediaType;
@@ -37,9 +35,7 @@ import org.junit.Rule;
 import org.junit.Test;
 
 import static okhttp3.tls.internal.TlsUtil.localhost;
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 public final class LoggingEventListenerTest {
@@ -225,27 +221,9 @@ public final class LoggingEventListenerTest {
     return new Request.Builder().url(url);
   }
 
-  private static class LogRecorder implements LoggingEventListener.Logger {
-    private final List<String> logs = new ArrayList<>();
-    private int index;
-
+  private static class LogRecorder extends HttpLoggingInterceptorTest.LogRecorder {
     LogRecorder assertLogMatch(String pattern) {
-      pattern = "\\[t=\\d+] " + pattern;
-      assertTrue("No more messages found", index < logs.size());
-      String actual = logs.get(index++);
-      assertTrue(
-          "<" + actual + "> did not match pattern <" + pattern + ">",
-          Pattern.matches(pattern, actual));
-      return this;
-    }
-
-    void assertNoMoreLogs() {
-      assertEquals("More messages remain: " + logs.subList(index, logs.size()), index, logs.size());
-    }
-
-    @Override
-    public void log(String message) {
-      logs.add(message);
+      return (LogRecorder) super.assertLogMatch("\\[\\d+ ms] " + pattern);
     }
   }
 }
