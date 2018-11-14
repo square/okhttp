@@ -807,7 +807,7 @@ public final class HttpLoggingInterceptorTest {
     return new Request.Builder().url(url);
   }
 
-  private static class LogRecorder implements HttpLoggingInterceptor.Logger {
+  static class LogRecorder implements HttpLoggingInterceptor.Logger {
     private final List<String> logs = new ArrayList<>();
     private int index;
 
