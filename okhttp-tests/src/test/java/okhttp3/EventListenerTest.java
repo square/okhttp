@@ -648,7 +648,7 @@ public final class EventListenerTest {
 
     client = client.newBuilder()
         .proxy(server.toProxyAddress())
-        .proxyAuthenticator(new RecordingOkAuthenticator("password"))
+        .proxyAuthenticator(new RecordingOkAuthenticator("password", "Basic"))
         .build();
 
     Call call = client.newCall(new Request.Builder()
