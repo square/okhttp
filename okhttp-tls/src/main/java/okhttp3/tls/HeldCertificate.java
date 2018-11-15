@@ -332,7 +332,7 @@ public final class HeldCertificate {
      * 3.11.0. Note that the default may change in future releases.
      */
     public Builder ecdsa256() {
-      keyAlgorithm = "ECDSA";
+      keyAlgorithm = "EC";
       keySize = 256;
       return this;
     }
