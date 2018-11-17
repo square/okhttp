@@ -6,17 +6,10 @@ An HTTP & HTTP/2 client for Android and Java applications. For more information 
 Download
 --------
 
-Download [the latest JAR][3] or grab via Maven:
-```xml
-<dependency>
-  <groupId>com.squareup.okhttp3</groupId>
-  <artifactId>okhttp</artifactId>
-  <version>3.11.0</version>
-</dependency>
-```
-or Gradle:
-```groovy
-implementation 'com.squareup.okhttp3:okhttp:3.11.0'
+Download [the latest JAR][3] or configure this dependency:
+
+```kotlin
+implementation("com.squareup.okhttp3:okhttp:3.12.0")
 ```
 
 Snapshots of the development version are available in [Sonatype's `snapshots` repository][snap].
@@ -31,18 +24,9 @@ MockWebServer coupling with OkHttp is essential for proper testing of HTTP/2 so 
 
 ### Download
 
-Download [the latest JAR][4] or grab via Maven:
+Download [the latest JAR][4] or configure this dependency:
 ```xml
-<dependency>
-  <groupId>com.squareup.okhttp3</groupId>
-  <artifactId>mockwebserver</artifactId>
-  <version>3.11.0</version>
-  <scope>test</scope>
-</dependency>
-```
-or Gradle:
-```groovy
-testImplementation 'com.squareup.okhttp3:mockwebserver:3.11.0'
+testImplementation("com.squareup.okhttp3:mockwebserver:3.12.0")
 ```
 
 R8 / ProGuard
