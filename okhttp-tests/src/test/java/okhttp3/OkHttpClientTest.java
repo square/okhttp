@@ -22,6 +22,7 @@ import java.net.ProxySelector;
 import java.net.ResponseCache;
 import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
+import javax.net.ssl.SSLSocketFactory;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import org.junit.After;
@@ -229,5 +230,14 @@ public final class OkHttpClientTest {
     Request request = new Request.Builder().url(server.url("/")).build();
     Response response = client.newCall(request).execute();
     assertEquals("abc", response.body().string());
+  }
+
+  @Test public void sslSocketFactorySetAsSocketFactory() throws Exception {
+    OkHttpClient.Builder builder = new OkHttpClient.Builder();
+    try {
+      builder.socketFactory(SSLSocketFactory.getDefault());
+      fail();
+    } catch (IllegalArgumentException expected) {
+    }
   }
 }

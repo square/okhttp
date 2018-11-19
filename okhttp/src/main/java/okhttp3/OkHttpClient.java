@@ -749,6 +749,9 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
      */
     public Builder socketFactory(SocketFactory socketFactory) {
       if (socketFactory == null) throw new NullPointerException("socketFactory == null");
+      if (socketFactory instanceof SSLSocketFactory) {
+        throw new IllegalArgumentException("socketFactory instanceof SSLSocketFactory");
+      }
       this.socketFactory = socketFactory;
       return this;
     }
