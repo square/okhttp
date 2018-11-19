@@ -145,7 +145,11 @@ public final class LoggingEventListenerTest {
         .assertLogMatch("dnsEnd: \\[.+\\]")
         .assertLogMatch("connectStart: " + url.host() + "/.+ DIRECT")
         .assertLogMatch("secureConnectStart")
-        .assertLogMatch("secureConnectEnd")
+        .assertLogMatch("secureConnectEnd: Handshake\\{"
+            + "tlsVersion=TLS_1_2 "
+            + "cipherSuite=TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384 "
+            + "peerCertificates=\\[CN=localhost\\] "
+            + "localCertificates=\\[\\]}")
         .assertLogMatch("connectEnd: h2")
         .assertLogMatch(
             "connectionAcquired: Connection\\{"
