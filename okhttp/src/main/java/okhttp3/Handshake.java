@@ -158,7 +158,7 @@ public final class Handshake {
   private List<String> names(List<Certificate> certificates) {
     ArrayList<String> strings = new ArrayList<>();
 
-    for (Certificate cert: certificates) {
+    for (Certificate cert : certificates) {
       if (cert instanceof X509Certificate) {
         strings.add(String.valueOf(((X509Certificate) cert).getSubjectDN()));
       } else {
