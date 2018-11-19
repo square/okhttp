@@ -148,21 +148,11 @@ public final class Response implements Closeable {
    * applications should set a modest limit on {@code byteCount}, such as 1 MiB.
    */
   public ResponseBody peekBody(long byteCount) throws IOException {
-    BufferedSource source = body.source();
-    source.request(byteCount);
-    Buffer copy = source.buffer().clone();
-
-    // There may be more than byteCount bytes in source.buffer(). If there is, return a prefix.
-    Buffer result;
-    if (copy.size() > byteCount) {
-      result = new Buffer();
-      result.write(copy, byteCount);
-      copy.clear();
-    } else {
-      result = copy;
-    }
-
-    return ResponseBody.create(body.contentType(), result.size(), result);
+    BufferedSource peeked = body.source().peek();
+    Buffer buffer = new Buffer();
+    peeked.request(byteCount);
+    buffer.write(peeked, Math.min(byteCount, peeked.getBuffer().size()));
+    return ResponseBody.create(body.contentType(), buffer.size(), buffer);
   }
 
   /**
