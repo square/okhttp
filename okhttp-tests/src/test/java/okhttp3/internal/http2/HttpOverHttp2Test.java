@@ -41,8 +41,8 @@ import okhttp3.Interceptor;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import okhttp3.Protocol;
-import okhttp3.RecordingCookieJar;
-import okhttp3.RecordingHostnameVerifier;
+import testingsupport.RecordingCookieJar;
+import testingsupport.RecordingHostnameVerifier;
 import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
@@ -51,6 +51,7 @@ import okhttp3.TestLogHandler;
 import okhttp3.TestUtil;
 import okhttp3.internal.DoubleInetAddressDns;
 import okhttp3.internal.RecordingOkAuthenticator;
+import okhttp3.internal.SingleInetAddressDns;
 import okhttp3.internal.Util;
 import okhttp3.internal.connection.RealConnection;
 import okhttp3.mockwebserver.Dispatcher;
@@ -60,7 +61,7 @@ import okhttp3.mockwebserver.PushPromise;
 import okhttp3.mockwebserver.QueueDispatcher;
 import okhttp3.mockwebserver.RecordedRequest;
 import okhttp3.mockwebserver.SocketPolicy;
-import okhttp3.tls.HandshakeCertificates;
+import tls.HandshakeCertificates;
 import okio.Buffer;
 import okio.BufferedSink;
 import okio.GzipSink;
@@ -78,7 +79,7 @@ import org.junit.runners.Parameterized.Parameters;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static okhttp3.TestUtil.defaultClient;
-import static okhttp3.tls.internal.TlsUtil.localhost;
+import static tls.internal.TlsUtil.localhost;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
@@ -124,6 +125,7 @@ public final class HttpOverHttp2Test {
   private static OkHttpClient buildHttp2Client() {
     return defaultClient().newBuilder()
         .protocols(Arrays.asList(Protocol.HTTP_2, Protocol.HTTP_1_1))
+        .dns(new SingleInetAddressDns())
         .sslSocketFactory(
             handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager())
         .hostnameVerifier(new RecordingHostnameVerifier())
@@ -432,7 +434,7 @@ public final class HttpOverHttp2Test {
 
     String credential = Credentials.basic("username", "password");
     client = client.newBuilder()
-        .authenticator(new RecordingOkAuthenticator(credential, "Basic"))
+        .authenticator(new RecordingOkAuthenticator(credential))
         .build();
 
     Call call = client.newCall(new Request.Builder()

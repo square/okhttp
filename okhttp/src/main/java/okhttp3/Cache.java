@@ -140,7 +140,7 @@ public final class Cache implements Closeable, Flushable {
   private static final int ENTRY_BODY = 1;
   private static final int ENTRY_COUNT = 2;
 
-  final InternalCache internalCache = new InternalCache() {
+  public final InternalCache internalCache = new InternalCache() {
     @Override public Response get(Request request) throws IOException {
       return Cache.this.get(request);
     }
@@ -175,14 +175,11 @@ public final class Cache implements Closeable, Flushable {
   private int hitCount;
   private int requestCount;
 
-  /**
-   * Create a cache of at most {@code maxSize} bytes in {@code directory}.
-   */
   public Cache(File directory, long maxSize) {
     this(directory, maxSize, FileSystem.SYSTEM);
   }
 
-  Cache(File directory, long maxSize, FileSystem fileSystem) {
+  public Cache(File directory, long maxSize, FileSystem fileSystem) {
     this.cache = DiskLruCache.create(fileSystem, directory, VERSION, ENTRY_COUNT, maxSize);
   }
 
@@ -190,7 +187,8 @@ public final class Cache implements Closeable, Flushable {
     return ByteString.encodeUtf8(url.toString()).md5().hex();
   }
 
-  @Nullable Response get(Request request) {
+  @Nullable
+  public Response get(Request request) {
     String key = key(request.url());
     DiskLruCache.Snapshot snapshot;
     Entry entry;
@@ -382,7 +380,6 @@ public final class Cache implements Closeable, Flushable {
     return cache.size();
   }
 
-  /** Max size of the cache (in bytes). */
   public long maxSize() {
     return cache.getMaxSize();
   }

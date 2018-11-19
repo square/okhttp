@@ -6,7 +6,7 @@
   <parent>
     <groupId>com.squareup.okhttp3</groupId>
     <artifactId>parent</artifactId>
-    <version>3.13.0-SNAPSHOT</version>
+    <version>3.12.0-SNAPSHOT</version>
   </parent>
 
   <artifactId>okhttp-tls</artifactId>
@@ -31,9 +31,8 @@
       <groupId>${project.groupId}</groupId>
       <artifactId>okhttp-testing-support</artifactId>
       <version>${project.version}</version>
-      <scope>test</scope>
+      <!--<scope>compile</scope>-->
     </dependency>
-
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
@@ -48,7 +47,6 @@
         <artifactId>maven-javadoc-plugin</artifactId>
         <version>2.10.4</version>
         <configuration>
-          <excludePackageNames>okhttp3.tls.internal:okhttp3.tls.internal.*</excludePackageNames>
           <links>
             <link>http://square.github.io/okhttp/javadoc/</link>
           </links>

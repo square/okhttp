@@ -254,7 +254,7 @@ public final class CertificatePinner {
     return ByteString.of(x509Certificate.getPublicKey().getEncoded()).sha256();
   }
 
-  static final class Pin {
+  public static final class Pin {
     private static final String WILDCARD = "*.";
     /** A hostname like {@code example.com} or a pattern like {@code *.example.com}. */
     final String pattern;

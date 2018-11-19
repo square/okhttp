@@ -1,0 +1,3 @@
+module sse {
+    requires okhttp;
+}

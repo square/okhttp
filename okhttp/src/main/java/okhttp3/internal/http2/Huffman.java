@@ -30,7 +30,7 @@ import okio.ByteString;
  *     <li>{@code com.twitter.hpack.HpackUtil}</li>
  * </ul>
  */
-class Huffman {
+public class Huffman {
 
   // Appendix C: Huffman Codes
   // http://tools.ietf.org/html/draft-ietf-httpbis-header-compression-12#appendix-B
@@ -88,7 +88,7 @@ class Huffman {
     buildTree();
   }
 
-  void encode(ByteString data, BufferedSink sink) throws IOException {
+  public void encode(ByteString data, BufferedSink sink) throws IOException {
     long current = 0;
     int n = 0;
 
@@ -114,7 +114,7 @@ class Huffman {
     }
   }
 
-  int encodedLength(ByteString bytes) {
+  public int encodedLength(ByteString bytes) {
     long len = 0;
 
     for (int i = 0; i < bytes.size(); i++) {
@@ -125,7 +125,7 @@ class Huffman {
     return (int) ((len + 7) >> 3);
   }
 
-  byte[] decode(byte[] buf) {
+  public byte[] decode(byte[] buf) {
     ByteArrayOutputStream baos = new ByteArrayOutputStream();
     Node node = root;
     int current = 0;

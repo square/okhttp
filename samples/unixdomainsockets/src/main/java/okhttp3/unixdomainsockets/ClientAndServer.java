@@ -19,8 +19,8 @@ import java.io.File;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
-import okhttp3.mockwebserver.MockResponse;
-import okhttp3.mockwebserver.MockWebServer;
+import mockwebserver.MockResponse;
+import mockwebserver.MockWebServer;
 
 /**
  * Create UNIX domain sockets for MockWebServer and OkHttp and connect 'em together. Note that we

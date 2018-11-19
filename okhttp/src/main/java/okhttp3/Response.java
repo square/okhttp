@@ -43,11 +43,11 @@ import static okhttp3.internal.http.StatusLine.HTTP_TEMP_REDIRECT;
 public final class Response implements Closeable {
   final Request request;
   final Protocol protocol;
-  final int code;
+  public final int code;
   final String message;
   final @Nullable Handshake handshake;
   final Headers headers;
-  final @Nullable ResponseBody body;
+  public final @Nullable ResponseBody body;
   final @Nullable Response networkResponse;
   final @Nullable Response cacheResponse;
   final @Nullable Response priorResponse;

@@ -33,10 +33,10 @@ import okio.Okio;
  *       each {@code FileOperator} should not be.
  * </ul>
  */
-final class FileOperator {
+public final class FileOperator {
   private final FileChannel fileChannel;
 
-  FileOperator(FileChannel fileChannel) {
+  public FileOperator(FileChannel fileChannel) {
     this.fileChannel = fileChannel;
   }
 

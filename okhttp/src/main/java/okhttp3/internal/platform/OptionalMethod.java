@@ -26,7 +26,7 @@ import java.lang.reflect.Modifier;
  *
  * @param <T> the type of the object the method might be on, typically an interface or base class
  */
-class OptionalMethod<T> {
+public class OptionalMethod<T> {
 
   /** The return type of the method. null means "don't care". */
   private final Class<?> returnType;
@@ -42,7 +42,7 @@ class OptionalMethod<T> {
    * @param methodName the name of the method
    * @param methodParams the method parameter types
    */
-  OptionalMethod(Class<?> returnType, String methodName, Class... methodParams) {
+  public OptionalMethod(Class<?> returnType, String methodName, Class... methodParams) {
     this.returnType = returnType;
     this.methodName = methodName;
     this.methodParams = methodParams;

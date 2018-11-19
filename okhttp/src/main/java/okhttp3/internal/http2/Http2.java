@@ -27,15 +27,15 @@ public final class Http2 {
   /** The initial max frame size, applied independently writing to, or reading from the peer. */
   static final int INITIAL_MAX_FRAME_SIZE = 0x4000; // 16384
 
-  static final byte TYPE_DATA = 0x0;
-  static final byte TYPE_HEADERS = 0x1;
+  public static final byte TYPE_DATA = 0x0;
+  public static final byte TYPE_HEADERS = 0x1;
   static final byte TYPE_PRIORITY = 0x2;
-  static final byte TYPE_RST_STREAM = 0x3;
-  static final byte TYPE_SETTINGS = 0x4;
-  static final byte TYPE_PUSH_PROMISE = 0x5;
-  static final byte TYPE_PING = 0x6;
-  static final byte TYPE_GOAWAY = 0x7;
-  static final byte TYPE_WINDOW_UPDATE = 0x8;
+  public static final byte TYPE_RST_STREAM = 0x3;
+  public static final byte TYPE_SETTINGS = 0x4;
+  public static final byte TYPE_PUSH_PROMISE = 0x5;
+  public static final byte TYPE_PING = 0x6;
+  public static final byte TYPE_GOAWAY = 0x7;
+  public static final byte TYPE_WINDOW_UPDATE = 0x8;
   static final byte TYPE_CONTINUATION = 0x9;
 
   static final byte FLAG_NONE = 0x0;

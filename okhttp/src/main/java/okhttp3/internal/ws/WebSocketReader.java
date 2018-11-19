@@ -48,7 +48,7 @@ import static okhttp3.internal.ws.WebSocketProtocol.toggleMask;
  *
  * <p>This class is not thread safe.
  */
-final class WebSocketReader {
+public final class WebSocketReader {
   public interface FrameCallback {
     void onReadMessage(String text) throws IOException;
     void onReadMessage(ByteString bytes) throws IOException;
@@ -75,7 +75,7 @@ final class WebSocketReader {
   private final byte[] maskKey;
   private final Buffer.UnsafeCursor maskCursor;
 
-  WebSocketReader(boolean isClient, BufferedSource source, FrameCallback frameCallback) {
+  public WebSocketReader(boolean isClient, BufferedSource source, FrameCallback frameCallback) {
     if (source == null) throw new NullPointerException("source == null");
     if (frameCallback == null) throw new NullPointerException("frameCallback == null");
     this.isClient = isClient;
@@ -97,7 +97,7 @@ final class WebSocketReader {
    *         control frame will result in a corresponding call to {@link FrameCallback}.
    * </ul>
    */
-  void processNextFrame() throws IOException {
+  public void processNextFrame() throws IOException {
     readHeader();
     if (isControlFrame) {
       readControlFrame();

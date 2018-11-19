@@ -198,7 +198,7 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
     };
   }
 
-  final Dispatcher dispatcher;
+  public final Dispatcher dispatcher;
   final @Nullable Proxy proxy;
   final List<Protocol> protocols;
   final List<ConnectionSpec> connectionSpecs;
@@ -216,12 +216,11 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
   final CertificatePinner certificatePinner;
   final Authenticator proxyAuthenticator;
   final Authenticator authenticator;
-  final ConnectionPool connectionPool;
+  public final ConnectionPool connectionPool;
   final Dns dns;
   final boolean followSslRedirects;
   final boolean followRedirects;
   final boolean retryOnConnectionFailure;
-  final int callTimeout;
   final int connectTimeout;
   final int readTimeout;
   final int writeTimeout;
@@ -273,7 +272,6 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
     this.followSslRedirects = builder.followSslRedirects;
     this.followRedirects = builder.followRedirects;
     this.retryOnConnectionFailure = builder.retryOnConnectionFailure;
-    this.callTimeout = builder.callTimeout;
     this.connectTimeout = builder.connectTimeout;
     this.readTimeout = builder.readTimeout;
     this.writeTimeout = builder.writeTimeout;
@@ -295,11 +293,6 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
     } catch (GeneralSecurityException e) {
       throw assertionError("No System TLS", e); // The system has no TLS. Just give up.
     }
-  }
-
-  /** Default call timeout (in milliseconds). */
-  public int callTimeoutMillis() {
-    return callTimeout;
   }
 
   /** Default connect timeout (in milliseconds). */
@@ -464,7 +457,6 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
     boolean followSslRedirects;
     boolean followRedirects;
     boolean retryOnConnectionFailure;
-    int callTimeout;
     int connectTimeout;
     int readTimeout;
     int writeTimeout;
@@ -490,7 +482,6 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
       followSslRedirects = true;
       followRedirects = true;
       retryOnConnectionFailure = true;
-      callTimeout = 0;
       connectTimeout = 10_000;
       readTimeout = 10_000;
       writeTimeout = 10_000;
@@ -521,7 +512,6 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
       this.followSslRedirects = okHttpClient.followSslRedirects;
       this.followRedirects = okHttpClient.followRedirects;
       this.retryOnConnectionFailure = okHttpClient.retryOnConnectionFailure;
-      this.callTimeout = okHttpClient.callTimeout;
       this.connectTimeout = okHttpClient.connectTimeout;
       this.readTimeout = okHttpClient.readTimeout;
       this.writeTimeout = okHttpClient.writeTimeout;
@@ -529,38 +519,11 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
     }
 
     /**
-     * Sets the default timeout for complete calls. A value of 0 means no timeout, otherwise values
-     * must be between 1 and {@link Integer#MAX_VALUE} when converted to milliseconds.
-     *
-     * <p>The call timeout spans the entire call: resolving DNS, connecting, writing the request
-     * body, server processing, and reading the response body. If the call requires redirects or
-     * retries all must complete within one timeout period.
-     */
-    public Builder callTimeout(long timeout, TimeUnit unit) {
-      callTimeout = checkDuration("timeout", timeout, unit);
-      return this;
-    }
-
-    /**
-     * Sets the default timeout for complete calls. A value of 0 means no timeout, otherwise values
-     * must be between 1 and {@link Integer#MAX_VALUE} when converted to milliseconds.
-     *
-     * <p>The call timeout spans the entire call: resolving DNS, connecting, writing the request
-     * body, server processing, and reading the response body. If the call requires redirects or
-     * retries all must complete within one timeout period.
-     */
-    @IgnoreJRERequirement
-    public Builder callTimeout(Duration duration) {
-      callTimeout = checkDuration("timeout", duration.toMillis(), TimeUnit.MILLISECONDS);
-      return this;
-    }
-
-    /**
      * Sets the default connect timeout for new connections. A value of 0 means no timeout,
      * otherwise values must be between 1 and {@link Integer#MAX_VALUE} when converted to
      * milliseconds.
      *
-     * <p>The connect timeout is applied when connecting a TCP socket to the target host.
+     * <p>The connectTimeout is applied when connecting a TCP socket to the target host.
      * The default value is 10 seconds.
      */
     public Builder connectTimeout(long timeout, TimeUnit unit) {
@@ -573,7 +536,7 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
      * otherwise values must be between 1 and {@link Integer#MAX_VALUE} when converted to
      * milliseconds.
      *
-     * <p>The connect timeout is applied when connecting a TCP socket to the target host.
+     * <p>The connectTimeout is applied when connecting a TCP socket to the target host.
      * The default value is 10 seconds.
      */
     @IgnoreJRERequirement
@@ -716,7 +679,7 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
     }
 
     /** Sets the response cache to be used to read and write cached responses. */
-    void setInternalCache(@Nullable InternalCache internalCache) {
+    public void setInternalCache(@Nullable InternalCache internalCache) {
       this.internalCache = internalCache;
       this.cache = null;
     }

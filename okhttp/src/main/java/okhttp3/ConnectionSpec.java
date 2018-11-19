@@ -262,7 +262,7 @@ public final class ConnectionSpec {
     @Nullable String[] tlsVersions;
     boolean supportsTlsExtensions;
 
-    Builder(boolean tls) {
+    public Builder(boolean tls) {
       this.tls = tls;
     }
 

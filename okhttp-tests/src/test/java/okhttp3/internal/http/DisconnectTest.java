@@ -27,7 +27,7 @@ import javax.net.SocketFactory;
 import okhttp3.DelegatingServerSocketFactory;
 import okhttp3.DelegatingSocketFactory;
 import okhttp3.OkHttpClient;
-import okhttp3.OkUrlFactory;
+import urlconnection.OkUrlFactory;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import okio.Buffer;

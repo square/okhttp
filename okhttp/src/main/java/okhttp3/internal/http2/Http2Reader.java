@@ -56,7 +56,7 @@ import static okio.ByteString.EMPTY;
  * size setting} to the peer. Hence, we expect all frames to have a max length of {@link
  * Http2#INITIAL_MAX_FRAME_SIZE}.
  */
-final class Http2Reader implements Closeable {
+public final class Http2Reader implements Closeable {
   static final Logger logger = Logger.getLogger(Http2.class.getName());
 
   private final BufferedSource source;
@@ -67,7 +67,7 @@ final class Http2Reader implements Closeable {
   final Hpack.Reader hpackReader;
 
   /** Creates a frame reader with max header table size of 4096. */
-  Http2Reader(BufferedSource source, boolean client) {
+  public Http2Reader(BufferedSource source, boolean client) {
     this.source = source;
     this.client = client;
     this.continuation = new ContinuationSource(this.source);
@@ -410,7 +410,7 @@ final class Http2Reader implements Closeable {
     return (short) (length - padding);
   }
 
-  interface Handler {
+  public interface Handler {
     void data(boolean inFinished, int streamId, BufferedSource source, int length)
         throws IOException;
 

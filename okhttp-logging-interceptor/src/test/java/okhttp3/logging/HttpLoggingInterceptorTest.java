@@ -19,7 +19,6 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.regex.Pattern;
 import javax.net.ssl.HostnameVerifier;
@@ -28,15 +27,15 @@ import okhttp3.HttpUrl;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import okhttp3.Protocol;
-import okhttp3.RecordingHostnameVerifier;
+import testingsupport.RecordingHostnameVerifier;
 import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
 import okhttp3.ResponseBody;
 import okhttp3.logging.HttpLoggingInterceptor.Level;
-import okhttp3.mockwebserver.MockResponse;
-import okhttp3.mockwebserver.MockWebServer;
-import okhttp3.tls.HandshakeCertificates;
+import mockwebserver.MockResponse;
+import mockwebserver.MockWebServer;
+import tls.HandshakeCertificates;
 import okio.Buffer;
 import okio.BufferedSink;
 import okio.ByteString;
@@ -45,7 +44,7 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 
-import static okhttp3.tls.internal.TlsUtil.localhost;
+import static tls.internal.TlsUtil.localhost;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -59,8 +58,8 @@ public final class HttpLoggingInterceptorTest {
 
   @Rule public final MockWebServer server = new MockWebServer();
 
-  private final HandshakeCertificates handshakeCertificates = localhost();
-  private final HostnameVerifier hostnameVerifier = new RecordingHostnameVerifier();
+  private HandshakeCertificates handshakeCertificates = localhost();
+  private HostnameVerifier hostnameVerifier = new RecordingHostnameVerifier();
   private OkHttpClient client;
   private String host;
   private HttpUrl url;
@@ -650,7 +649,7 @@ public final class HttpLoggingInterceptorTest {
         .assertNoMoreLogs();
   }
 
-  @Test public void isPlaintext() {
+  @Test public void isPlaintext() throws IOException {
     assertTrue(HttpLoggingInterceptor.isPlaintext(new Buffer()));
     assertTrue(HttpLoggingInterceptor.isPlaintext(new Buffer().writeUtf8("abc")));
     assertTrue(HttpLoggingInterceptor.isPlaintext(new Buffer().writeUtf8("new\r\nlines")));
@@ -807,7 +806,7 @@ public final class HttpLoggingInterceptorTest {
     return new Request.Builder().url(url);
   }
 
-  static class LogRecorder implements HttpLoggingInterceptor.Logger {
+  private static class LogRecorder implements HttpLoggingInterceptor.Logger {
     private final List<String> logs = new ArrayList<>();
     private int index;
 

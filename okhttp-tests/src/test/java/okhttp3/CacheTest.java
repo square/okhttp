@@ -36,12 +36,13 @@ import java.util.concurrent.atomic.AtomicReference;
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLSession;
 import okhttp3.internal.Internal;
-import okhttp3.internal.io.InMemoryFileSystem;
+import testingsupport.RecordingCookieJar;
+import testingsupport.internal.io.InMemoryFileSystem;
 import okhttp3.internal.platform.Platform;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import okhttp3.mockwebserver.RecordedRequest;
-import okhttp3.tls.HandshakeCertificates;
+import tls.HandshakeCertificates;
 import okio.Buffer;
 import okio.BufferedSink;
 import okio.BufferedSource;
@@ -51,10 +52,11 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+import urlconnection.JavaNetCookieJar;
 
 import static okhttp3.TestUtil.defaultClient;
 import static okhttp3.mockwebserver.SocketPolicy.DISCONNECT_AT_END;
-import static okhttp3.tls.internal.TlsUtil.localhost;
+import static tls.internal.TlsUtil.localhost;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -2524,7 +2526,7 @@ public final class CacheTest {
 
   @Test public void immutableIsCached() throws Exception {
     server.enqueue(new MockResponse()
-        .addHeader("Cache-Control", "immutable, max-age=10")
+        .addHeader("Cache-Control", "immutable")
         .setBody("A"));
     server.enqueue(new MockResponse()
         .setBody("B"));
@@ -2538,7 +2540,7 @@ public final class CacheTest {
     server.enqueue(new MockResponse()
         .setBody("A"));
     server.enqueue(new MockResponse()
-        .addHeader("Cache-Control", "immutable, max-age=10")
+        .addHeader("Cache-Control", "immutable")
         .setBody("B"));
     server.enqueue(new MockResponse()
         .setBody("C"));
@@ -2547,19 +2549,6 @@ public final class CacheTest {
     assertEquals("A", get(url).body().string());
     assertEquals("B", get(url).body().string());
     assertEquals("B", get(url).body().string());
-  }
-
-  @Test public void immutableIsNotCachedBeyondFreshnessLifetime() throws Exception {
-    //      last modified: 115 seconds ago
-    //             served:  15 seconds ago
-    //   default lifetime: (115 - 15) / 10 = 10 seconds
-    //            expires:  10 seconds from served date = 5 seconds ago
-    String lastModifiedDate = formatDate(-115, TimeUnit.SECONDS);
-    RecordedRequest conditionalRequest = assertConditionallyCached(new MockResponse()
-        .addHeader("Cache-Control: immutable")
-        .addHeader("Last-Modified: " + lastModifiedDate)
-        .addHeader("Date: " + formatDate(-15, TimeUnit.SECONDS)));
-    assertEquals(lastModifiedDate, conditionalRequest.getHeader("If-Modified-Since"));
   }
 
   private void assertFullyCached(MockResponse response) throws Exception {

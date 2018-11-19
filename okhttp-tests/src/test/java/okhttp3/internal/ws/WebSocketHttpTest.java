@@ -17,10 +17,8 @@ package okhttp3.internal.ws;
 
 import java.io.EOFException;
 import java.io.IOException;
-import java.net.HttpURLConnection;
 import java.net.ProtocolException;
 import java.net.SocketTimeoutException;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Random;
 import java.util.concurrent.CountDownLatch;
@@ -29,9 +27,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Logger;
 import okhttp3.Interceptor;
 import okhttp3.OkHttpClient;
-import okhttp3.Protocol;
 import okhttp3.RecordingEventListener;
-import okhttp3.RecordingHostnameVerifier;
+import testingsupport.RecordingHostnameVerifier;
 import okhttp3.Request;
 import okhttp3.Response;
 import okhttp3.TestLogHandler;
@@ -42,7 +39,7 @@ import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import okhttp3.mockwebserver.RecordedRequest;
 import okhttp3.mockwebserver.SocketPolicy;
-import okhttp3.tls.HandshakeCertificates;
+import tls.HandshakeCertificates;
 import okio.Buffer;
 import okio.ByteString;
 import org.junit.After;
@@ -52,7 +49,7 @@ import org.junit.Test;
 
 import static okhttp3.TestUtil.defaultClient;
 import static okhttp3.TestUtil.repeat;
-import static okhttp3.tls.internal.TlsUtil.localhost;
+import static tls.internal.TlsUtil.localhost;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -678,53 +675,6 @@ public final class WebSocketHttpTest {
     serverListener.assertClosed(1000, "");
 
     assertEquals(Collections.emptyList(), listener.recordedEventTypes());
-  }
-
-  @Test public void callTimeoutIsNotApplied() throws Exception {
-    client = client.newBuilder()
-        .callTimeout(100, TimeUnit.MILLISECONDS)
-        .build();
-
-    webServer.enqueue(new MockResponse()
-        .withWebSocketUpgrade(serverListener));
-    newWebSocket();
-
-    clientListener.assertOpen();
-    WebSocket server = serverListener.assertOpen();
-
-    Thread.sleep(500);
-
-    server.send("Hello, WebSockets!");
-    clientListener.assertTextMessage("Hello, WebSockets!");
-  }
-
-  /**
-   * We had a bug where web socket connections were leaked if the HTTP connection upgrade was not
-   * successful. This test confirms that connections are released back to the connection pool!
-   * https://github.com/square/okhttp/issues/4258
-   */
-  @Test public void webSocketConnectionIsReleased() throws Exception {
-    // This test assumes HTTP/1.1 pooling semantics.
-    client = client.newBuilder()
-        .protocols(Arrays.asList(Protocol.HTTP_1_1))
-        .build();
-
-    webServer.enqueue(new MockResponse()
-        .setResponseCode(HttpURLConnection.HTTP_NOT_FOUND)
-        .setBody("not found!"));
-    webServer.enqueue(new MockResponse());
-
-    newWebSocket();
-    clientListener.assertFailure();
-
-    Request regularRequest = new Request.Builder()
-        .url(webServer.url("/"))
-        .build();
-    Response response = client.newCall(regularRequest).execute();
-    response.close();
-
-    assertEquals(0, webServer.takeRequest().getSequenceNumber());
-    assertEquals(1, webServer.takeRequest().getSequenceNumber());
   }
 
   private MockResponse upgradeResponse(RecordedRequest request) {

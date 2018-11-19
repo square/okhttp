@@ -28,12 +28,13 @@ import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLSession;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
-import okhttp3.tls.HeldCertificate;
-import okhttp3.tls.HandshakeCertificates;
+import tls.HeldCertificate;
+import tls.HandshakeCertificates;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
+import testingsupport.FakeDns;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;

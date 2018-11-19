@@ -53,7 +53,6 @@ public final class OkHttpClientTest {
 
   @Test public void durationDefaults() {
     OkHttpClient client = defaultClient();
-    assertEquals(0, client.callTimeoutMillis());
     assertEquals(10_000, client.connectTimeoutMillis());
     assertEquals(10_000, client.readTimeoutMillis());
     assertEquals(10_000, client.writeTimeoutMillis());
@@ -62,10 +61,6 @@ public final class OkHttpClientTest {
 
   @Test public void timeoutValidRange() {
     OkHttpClient.Builder builder = new OkHttpClient.Builder();
-    try {
-      builder.callTimeout(1, TimeUnit.NANOSECONDS);
-    } catch (IllegalArgumentException ignored) {
-    }
     try {
       builder.connectTimeout(1, TimeUnit.NANOSECONDS);
     } catch (IllegalArgumentException ignored) {
@@ -76,10 +71,6 @@ public final class OkHttpClientTest {
     }
     try {
       builder.readTimeout(1, TimeUnit.NANOSECONDS);
-    } catch (IllegalArgumentException ignored) {
-    }
-    try {
-      builder.callTimeout(365, TimeUnit.DAYS);
     } catch (IllegalArgumentException ignored) {
     }
     try {

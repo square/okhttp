@@ -164,7 +164,9 @@ public final class RetryAndFollowUpInterceptor implements Interceptor {
       }
 
       if (followUp == null) {
-        streamAllocation.release();
+        if (!forWebSocket) {
+          streamAllocation.release();
+        }
         return response;
       }
 

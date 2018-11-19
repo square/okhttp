@@ -547,7 +547,7 @@ public final class Cookie {
    *     necessary for {@code example.com} to match {@code www.example.com} under RFC 2965. This
    *     extra dot is ignored by more recent specifications.
    */
-  String toString(boolean forObsoleteRfc2965) {
+  public String toString(boolean forObsoleteRfc2965) {
     StringBuilder result = new StringBuilder();
     result.append(name);
     result.append('=');

@@ -32,6 +32,7 @@ import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import okhttp3.mockwebserver.RecordedRequest;
 import org.junit.Test;
+import urlconnection.JavaNetCookieJar;
 
 import static java.net.CookiePolicy.ACCEPT_ORIGINAL_SERVER;
 import static okhttp3.TestUtil.defaultClient;

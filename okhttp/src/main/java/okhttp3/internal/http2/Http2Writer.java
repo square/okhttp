@@ -43,7 +43,7 @@ import static okhttp3.internal.http2.Http2.frameLog;
 import static okhttp3.internal.http2.Http2.illegalArgument;
 
 /** Writes HTTP/2 transport frames. */
-final class Http2Writer implements Closeable {
+public final class Http2Writer implements Closeable {
   private static final Logger logger = Logger.getLogger(Http2.class.getName());
 
   private final BufferedSink sink;
@@ -54,7 +54,7 @@ final class Http2Writer implements Closeable {
 
   final Hpack.Writer hpackWriter;
 
-  Http2Writer(BufferedSink sink, boolean client) {
+  public Http2Writer(BufferedSink sink, boolean client) {
     this.sink = sink;
     this.client = client;
     this.hpackBuffer = new Buffer();

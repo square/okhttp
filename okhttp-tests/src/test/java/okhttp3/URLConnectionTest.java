@@ -67,15 +67,19 @@ import okhttp3.internal.DoubleInetAddressDns;
 import okhttp3.internal.Internal;
 import okhttp3.internal.RecordingAuthenticator;
 import okhttp3.internal.RecordingOkAuthenticator;
+import okhttp3.internal.SingleInetAddressDns;
 import okhttp3.internal.Util;
 import okhttp3.internal.Version;
-import okhttp3.internal.huc.OkHttpURLConnection;
+import urlconnection.JavaNetAuthenticator;
+import urlconnection.JavaNetCookieJar;
+import urlconnection.OkUrlFactory;
+import urlconnection.internal.huc.OkHttpURLConnection;
 import okhttp3.internal.platform.Platform;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import okhttp3.mockwebserver.RecordedRequest;
 import okhttp3.mockwebserver.SocketPolicy;
-import okhttp3.tls.HandshakeCertificates;
+import tls.HandshakeCertificates;
 import okio.Buffer;
 import okio.BufferedSink;
 import okio.GzipSink;
@@ -86,6 +90,9 @@ import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+import testingsupport.FakeDns;
+import testingsupport.FakeProxySelector;
+import testingsupport.RecordingHostnameVerifier;
 
 import static java.util.Locale.US;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
@@ -94,7 +101,7 @@ import static okhttp3.TestUtil.defaultClient;
 import static okhttp3.internal.Util.UTF_8;
 import static okhttp3.internal.http.StatusLine.HTTP_PERM_REDIRECT;
 import static okhttp3.internal.http.StatusLine.HTTP_TEMP_REDIRECT;
-import static okhttp3.internal.huc.OkHttpURLConnection.SELECTED_PROTOCOL;
+import static urlconnection.internal.huc.OkHttpURLConnection.SELECTED_PROTOCOL;
 import static okhttp3.mockwebserver.SocketPolicy.DISCONNECT_AFTER_REQUEST;
 import static okhttp3.mockwebserver.SocketPolicy.DISCONNECT_AT_END;
 import static okhttp3.mockwebserver.SocketPolicy.DISCONNECT_AT_START;
@@ -102,7 +109,7 @@ import static okhttp3.mockwebserver.SocketPolicy.FAIL_HANDSHAKE;
 import static okhttp3.mockwebserver.SocketPolicy.SHUTDOWN_INPUT_AT_END;
 import static okhttp3.mockwebserver.SocketPolicy.SHUTDOWN_OUTPUT_AT_END;
 import static okhttp3.mockwebserver.SocketPolicy.UPGRADE_TO_SSL_AT_END;
-import static okhttp3.tls.internal.TlsUtil.localhost;
+import static tls.internal.TlsUtil.localhost;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -717,6 +724,7 @@ public final class URLConnectionTest {
     server.enqueue(new MockResponse().setSocketPolicy(FAIL_HANDSHAKE));
 
     urlFactory.setClient(urlFactory.client().newBuilder()
+        .dns(new SingleInetAddressDns())
         .connectionSpecs(Arrays.asList(ConnectionSpec.MODERN_TLS, ConnectionSpec.COMPATIBLE_TLS))
         .hostnameVerifier(new RecordingHostnameVerifier())
         .sslSocketFactory(
@@ -1018,6 +1026,7 @@ public final class URLConnectionTest {
     // Configure a single IP address for the host and a single configuration, so we only need one
     // failure to fail permanently.
     urlFactory.setClient(urlFactory.client().newBuilder()
+        .dns(new SingleInetAddressDns())
         .sslSocketFactory(
             handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager())
         .connectionSpecs(Util.immutableList(ConnectionSpec.MODERN_TLS))
@@ -1613,7 +1622,7 @@ public final class URLConnectionTest {
 
     String credential = Credentials.basic("jesse", "secret");
     urlFactory.setClient(urlFactory.client().newBuilder()
-        .authenticator(new RecordingOkAuthenticator(credential, null))
+        .authenticator(new RecordingOkAuthenticator(credential))
         .build());
 
     connection = urlFactory.open(server.url("/").url());
@@ -2232,7 +2241,7 @@ public final class URLConnectionTest {
         .addHeader("Location: " + server2.url("/b").url()));
 
     urlFactory.setClient(urlFactory.client().newBuilder()
-        .authenticator(new RecordingOkAuthenticator(Credentials.basic("jesse", "secret"), null))
+        .authenticator(new RecordingOkAuthenticator(Credentials.basic("jesse", "secret")))
         .build());
     assertContent("Page 2", urlFactory.open(server.url("/a").url()));
 
@@ -2644,6 +2653,9 @@ public final class URLConnectionTest {
    * https://code.google.com/p/android/issues/detail?id=41576
    */
   @Test public void sameConnectionRedirectAndReuse() throws Exception {
+    urlFactory.setClient(urlFactory.client().newBuilder()
+        .dns(new SingleInetAddressDns())
+        .build());
     server.enqueue(new MockResponse()
         .setResponseCode(HttpURLConnection.HTTP_MOVED_TEMP)
         .setSocketPolicy(SHUTDOWN_INPUT_AT_END)
@@ -3179,7 +3191,7 @@ public final class URLConnectionTest {
     server.enqueue(new MockResponse().setBody("A"));
 
     String credential = Credentials.basic("jesse", "peanutbutter");
-    RecordingOkAuthenticator authenticator = new RecordingOkAuthenticator(credential, null);
+    RecordingOkAuthenticator authenticator = new RecordingOkAuthenticator(credential);
     urlFactory.setClient(urlFactory.client().newBuilder()
         .authenticator(authenticator)
         .build());
@@ -3201,8 +3213,7 @@ public final class URLConnectionTest {
     server.enqueue(pleaseAuthenticate);
     server.enqueue(new MockResponse().setBody("A"));
 
-    RecordingOkAuthenticator authenticator
-        = new RecordingOkAuthenticator("oauthed abc123", "Bearer");
+    RecordingOkAuthenticator authenticator = new RecordingOkAuthenticator("oauthed abc123");
     urlFactory.setClient(urlFactory.client().newBuilder()
         .authenticator(authenticator)
         .build());
@@ -3226,7 +3237,7 @@ public final class URLConnectionTest {
     server.enqueue(new MockResponse().setBody("c"));
 
     RecordingOkAuthenticator authenticator = new RecordingOkAuthenticator(
-        Credentials.basic("jesse", "peanutbutter"), "Basic");
+        Credentials.basic("jesse", "peanutbutter"));
     urlFactory.setClient(urlFactory.client().newBuilder()
         .authenticator(authenticator)
         .build());
@@ -3247,7 +3258,7 @@ public final class URLConnectionTest {
 
     String credential = Credentials.basic("jesse", "peanutbutter");
     urlFactory.setClient(urlFactory.client().newBuilder()
-        .authenticator(new RecordingOkAuthenticator(credential, null))
+        .authenticator(new RecordingOkAuthenticator(credential))
         .build());
 
     connection = urlFactory.open(server.url("/0").url());
@@ -3261,7 +3272,7 @@ public final class URLConnectionTest {
 
     String credential = Credentials.basic("jesse", "peanutbutter");
     urlFactory.setClient(urlFactory.client().newBuilder()
-        .authenticator(new RecordingOkAuthenticator(credential, null))
+        .authenticator(new RecordingOkAuthenticator(credential))
         .build());
 
     connection = urlFactory.open(server.url("/").url());
