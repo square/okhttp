@@ -28,9 +28,10 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import okhttp3.mockwebserver.MockResponse;
-import okhttp3.mockwebserver.MockWebServer;
-import okhttp3.mockwebserver.RecordedRequest;
+
+import mockwebserver.MockResponse;
+import mockwebserver.MockWebServer;
+import mockwebserver.RecordedRequest;
 import org.junit.Test;
 import urlconnection.JavaNetCookieJar;
 

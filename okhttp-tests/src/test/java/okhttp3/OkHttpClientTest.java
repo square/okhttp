@@ -22,13 +22,13 @@ import java.net.ProxySelector;
 import java.net.ResponseCache;
 import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
-import okhttp3.mockwebserver.MockResponse;
-import okhttp3.mockwebserver.MockWebServer;
+
+import mockwebserver.MockResponse;
+import mockwebserver.MockWebServer;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import static okhttp3.TestUtil.defaultClient;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertSame;
@@ -52,7 +52,7 @@ public final class OkHttpClientTest {
   }
 
   @Test public void durationDefaults() {
-    OkHttpClient client = defaultClient();
+    OkHttpClient client = TestUtil.defaultClient();
     assertEquals(10_000, client.connectTimeoutMillis());
     assertEquals(10_000, client.readTimeoutMillis());
     assertEquals(10_000, client.writeTimeoutMillis());
@@ -93,7 +93,7 @@ public final class OkHttpClientTest {
         return chain.proceed(chain.request());
       }
     };
-    OkHttpClient original = defaultClient();
+    OkHttpClient original = TestUtil.defaultClient();
     original.newBuilder()
         .addInterceptor(interceptor)
         .addNetworkInterceptor(interceptor)
@@ -107,7 +107,7 @@ public final class OkHttpClientTest {
    * clients.
    */
   @Test public void cloneSharesStatefulInstances() throws Exception {
-    OkHttpClient client = defaultClient();
+    OkHttpClient client = TestUtil.defaultClient();
 
     // Values should be non-null.
     OkHttpClient a = client.newBuilder().build();
@@ -214,7 +214,7 @@ public final class OkHttpClientTest {
 
     ProxySelector.setDefault(null);
 
-    OkHttpClient client = defaultClient().newBuilder()
+    OkHttpClient client = TestUtil.defaultClient().newBuilder()
         .build();
 
     Request request = new Request.Builder().url(server.url("/")).build();

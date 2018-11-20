@@ -35,13 +35,14 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLSession;
+
 import okhttp3.internal.Internal;
 import testingsupport.RecordingCookieJar;
 import testingsupport.internal.io.InMemoryFileSystem;
 import okhttp3.internal.platform.Platform;
-import okhttp3.mockwebserver.MockResponse;
-import okhttp3.mockwebserver.MockWebServer;
-import okhttp3.mockwebserver.RecordedRequest;
+import mockwebserver.MockResponse;
+import mockwebserver.MockWebServer;
+import mockwebserver.RecordedRequest;
 import tls.HandshakeCertificates;
 import okio.Buffer;
 import okio.BufferedSink;
@@ -54,8 +55,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import urlconnection.JavaNetCookieJar;
 
-import static okhttp3.TestUtil.defaultClient;
-import static okhttp3.mockwebserver.SocketPolicy.DISCONNECT_AT_END;
+import static mockwebserver.SocketPolicy.DISCONNECT_AT_END;
 import static tls.internal.TlsUtil.localhost;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -83,7 +83,7 @@ public final class CacheTest {
   @Before public void setUp() throws Exception {
     server.setProtocolNegotiationEnabled(false);
     cache = new Cache(new File("/cache/"), Integer.MAX_VALUE, fileSystem);
-    client = defaultClient().newBuilder()
+    client = TestUtil.defaultClient().newBuilder()
         .cache(cache)
         .cookieJar(new JavaNetCookieJar(cookieManager))
         .build();

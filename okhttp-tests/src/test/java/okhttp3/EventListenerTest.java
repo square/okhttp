@@ -26,6 +26,7 @@ import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
+
 import okhttp3.RecordingEventListener.CallEnd;
 import okhttp3.RecordingEventListener.CallFailed;
 import okhttp3.RecordingEventListener.ConnectEnd;
@@ -44,9 +45,9 @@ import okhttp3.internal.DoubleInetAddressDns;
 import okhttp3.internal.RecordingOkAuthenticator;
 import okhttp3.internal.SingleInetAddressDns;
 import okhttp3.logging.HttpLoggingInterceptor;
-import okhttp3.mockwebserver.MockResponse;
-import okhttp3.mockwebserver.MockWebServer;
-import okhttp3.mockwebserver.SocketPolicy;
+import mockwebserver.MockResponse;
+import mockwebserver.MockWebServer;
+import mockwebserver.SocketPolicy;
 import tls.HandshakeCertificates;
 import okio.Buffer;
 import okio.BufferedSink;
@@ -63,7 +64,6 @@ import testingsupport.FakeDns;
 import testingsupport.RecordingHostnameVerifier;
 
 import static java.util.Arrays.asList;
-import static okhttp3.TestUtil.defaultClient;
 import static tls.internal.TlsUtil.localhost;
 import static org.hamcrest.CoreMatchers.any;
 import static org.hamcrest.CoreMatchers.either;
@@ -90,7 +90,7 @@ public final class EventListenerTest {
   private SocksProxy socksProxy;
 
   @Before public void setUp() {
-    client = defaultClient().newBuilder()
+    client = TestUtil.defaultClient().newBuilder()
         .dns(singleDns)
         .eventListener(listener)
         .build();

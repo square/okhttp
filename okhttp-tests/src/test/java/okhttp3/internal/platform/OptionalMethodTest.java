@@ -19,6 +19,7 @@ package okhttp3.internal.platform;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
+
 import org.junit.Ignore;
 import org.junit.Test;
 

@@ -63,6 +63,7 @@ import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
 import javax.net.ssl.X509TrustManager;
+
 import okhttp3.internal.DoubleInetAddressDns;
 import okhttp3.internal.Internal;
 import okhttp3.internal.RecordingAuthenticator;
@@ -75,10 +76,10 @@ import urlconnection.JavaNetCookieJar;
 import urlconnection.OkUrlFactory;
 import urlconnection.internal.huc.OkHttpURLConnection;
 import okhttp3.internal.platform.Platform;
-import okhttp3.mockwebserver.MockResponse;
-import okhttp3.mockwebserver.MockWebServer;
-import okhttp3.mockwebserver.RecordedRequest;
-import okhttp3.mockwebserver.SocketPolicy;
+import mockwebserver.MockResponse;
+import mockwebserver.MockWebServer;
+import mockwebserver.RecordedRequest;
+import mockwebserver.SocketPolicy;
 import tls.HandshakeCertificates;
 import okio.Buffer;
 import okio.BufferedSink;
@@ -97,18 +98,17 @@ import testingsupport.RecordingHostnameVerifier;
 import static java.util.Locale.US;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
-import static okhttp3.TestUtil.defaultClient;
 import static okhttp3.internal.Util.UTF_8;
 import static okhttp3.internal.http.StatusLine.HTTP_PERM_REDIRECT;
 import static okhttp3.internal.http.StatusLine.HTTP_TEMP_REDIRECT;
 import static urlconnection.internal.huc.OkHttpURLConnection.SELECTED_PROTOCOL;
-import static okhttp3.mockwebserver.SocketPolicy.DISCONNECT_AFTER_REQUEST;
-import static okhttp3.mockwebserver.SocketPolicy.DISCONNECT_AT_END;
-import static okhttp3.mockwebserver.SocketPolicy.DISCONNECT_AT_START;
-import static okhttp3.mockwebserver.SocketPolicy.FAIL_HANDSHAKE;
-import static okhttp3.mockwebserver.SocketPolicy.SHUTDOWN_INPUT_AT_END;
-import static okhttp3.mockwebserver.SocketPolicy.SHUTDOWN_OUTPUT_AT_END;
-import static okhttp3.mockwebserver.SocketPolicy.UPGRADE_TO_SSL_AT_END;
+import static mockwebserver.SocketPolicy.DISCONNECT_AFTER_REQUEST;
+import static mockwebserver.SocketPolicy.DISCONNECT_AT_END;
+import static mockwebserver.SocketPolicy.DISCONNECT_AT_START;
+import static mockwebserver.SocketPolicy.FAIL_HANDSHAKE;
+import static mockwebserver.SocketPolicy.SHUTDOWN_INPUT_AT_END;
+import static mockwebserver.SocketPolicy.SHUTDOWN_OUTPUT_AT_END;
+import static mockwebserver.SocketPolicy.UPGRADE_TO_SSL_AT_END;
 import static tls.internal.TlsUtil.localhost;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -131,7 +131,7 @@ public final class URLConnectionTest {
 
   @Before public void setUp() {
     server.setProtocolNegotiationEnabled(false);
-    urlFactory = new OkUrlFactory(defaultClient());
+    urlFactory = new OkUrlFactory(TestUtil.defaultClient());
   }
 
   @After public void tearDown() throws Exception {
@@ -342,7 +342,7 @@ public final class URLConnectionTest {
     server.enqueue(new MockResponse()
         .setSocketPolicy(SocketPolicy.DISCONNECT_AFTER_REQUEST));
 
-    urlFactory = new OkUrlFactory(defaultClient().newBuilder()
+    urlFactory = new OkUrlFactory(TestUtil.defaultClient().newBuilder()
         .dns(new DoubleInetAddressDns())
         .build());
     HttpURLConnection connection = urlFactory.open(server.url("/").url());

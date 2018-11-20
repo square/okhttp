@@ -18,6 +18,7 @@ package okhttp3;
 import java.net.Proxy;
 import java.util.List;
 import javax.net.SocketFactory;
+
 import okhttp3.internal.Util;
 import okhttp3.internal.http.RecordingProxySelector;
 import org.junit.Test;

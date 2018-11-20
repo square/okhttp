@@ -17,7 +17,9 @@ package okhttp3.internal.http;
 
 import java.util.Date;
 import java.util.TimeZone;
+
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -43,7 +45,7 @@ public class HttpDateTest {
 
   @Test public void parseStandardFormats() throws Exception {
     // RFC 822, updated by RFC 1123 with GMT.
-    assertEquals(0L, HttpDate.parse("Thu, 01 Jan 1970 00:00:00 GMT").getTime());
+    Assert.assertEquals(0L, HttpDate.parse("Thu, 01 Jan 1970 00:00:00 GMT").getTime());
     assertEquals(1402057830000L, HttpDate.parse("Fri, 06 Jun 2014 12:30:30 GMT").getTime());
 
     // RFC 850, obsoleted by RFC 1036 with GMT.

@@ -26,8 +26,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLSession;
-import okhttp3.mockwebserver.MockResponse;
-import okhttp3.mockwebserver.MockWebServer;
+
+import mockwebserver.MockResponse;
+import mockwebserver.MockWebServer;
 import tls.HeldCertificate;
 import tls.HandshakeCertificates;
 import org.junit.Before;

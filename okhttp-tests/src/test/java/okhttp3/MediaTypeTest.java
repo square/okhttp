@@ -19,6 +19,7 @@ package okhttp3;
 import java.nio.charset.Charset;
 import java.util.Arrays;
 import java.util.Collection;
+
 import okhttp3.internal.Util;
 import org.junit.Test;
 import org.junit.runner.RunWith;

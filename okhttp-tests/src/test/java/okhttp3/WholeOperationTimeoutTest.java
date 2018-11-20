@@ -21,13 +21,13 @@ import java.net.HttpURLConnection;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
-import okhttp3.mockwebserver.MockResponse;
-import okhttp3.mockwebserver.MockWebServer;
+
+import mockwebserver.MockResponse;
+import mockwebserver.MockWebServer;
 import okio.BufferedSink;
 import org.junit.Rule;
 import org.junit.Test;
 
-import static okhttp3.TestUtil.defaultClient;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
@@ -39,7 +39,7 @@ public final class WholeOperationTimeoutTest {
 
   @Rule public final MockWebServer server = new MockWebServer();
 
-  private OkHttpClient client = defaultClient();
+  private OkHttpClient client = TestUtil.defaultClient();
 
   @Test public void timeoutWritingRequest() throws Exception {
     server.enqueue(new MockResponse());

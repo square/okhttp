@@ -57,6 +57,7 @@ import javax.net.ssl.SSLPeerUnverifiedException;
 import javax.net.ssl.SSLProtocolException;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
+
 import okhttp3.internal.DoubleInetAddressDns;
 import okhttp3.internal.RecordingOkAuthenticator;
 import okhttp3.internal.SingleInetAddressDns;
@@ -68,11 +69,11 @@ import testingsupport.FakeProxySelector;
 import testingsupport.RecordingCookieJar;
 import testingsupport.RecordingHostnameVerifier;
 import testingsupport.internal.io.InMemoryFileSystem;
-import okhttp3.mockwebserver.Dispatcher;
-import okhttp3.mockwebserver.MockResponse;
-import okhttp3.mockwebserver.MockWebServer;
-import okhttp3.mockwebserver.RecordedRequest;
-import okhttp3.mockwebserver.SocketPolicy;
+import mockwebserver.Dispatcher;
+import mockwebserver.MockResponse;
+import mockwebserver.MockWebServer;
+import mockwebserver.RecordedRequest;
+import mockwebserver.SocketPolicy;
 import tls.HandshakeCertificates;
 import tls.HeldCertificate;
 import okio.Buffer;
@@ -90,8 +91,6 @@ import org.junit.rules.Timeout;
 import urlconnection.JavaNetCookieJar;
 
 import static java.net.CookiePolicy.ACCEPT_ORIGINAL_SERVER;
-import static okhttp3.TestUtil.awaitGarbageCollection;
-import static okhttp3.TestUtil.defaultClient;
 import static tls.internal.TlsUtil.localhost;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
@@ -109,7 +108,7 @@ public final class CallTest {
   @Rule public final InMemoryFileSystem fileSystem = new InMemoryFileSystem();
 
   private HandshakeCertificates handshakeCertificates = localhost();
-  private OkHttpClient client = defaultClient();
+  private OkHttpClient client = TestUtil.defaultClient();
   private RecordingCallback callback = new RecordingCallback();
   private TestLogHandler logHandler = new TestLogHandler();
   private Cache cache = new Cache(new File("/cache/"), Integer.MAX_VALUE, fileSystem);
@@ -927,7 +926,7 @@ public final class CallTest {
 
   /** https://github.com/square/okhttp/issues/1801 */
   @Test public void asyncCallEngineInitialized() throws Exception {
-    OkHttpClient c = defaultClient().newBuilder()
+    OkHttpClient c = TestUtil.defaultClient().newBuilder()
         .addInterceptor(new Interceptor() {
           @Override public Response intercept(Chain chain) throws IOException {
             throw new IOException();
@@ -3117,7 +3116,7 @@ public final class CallTest {
     server.enqueue(new MockResponse()
         .setBody("This gets leaked."));
 
-    client = defaultClient().newBuilder()
+    client = TestUtil.defaultClient().newBuilder()
         .connectionPool(new ConnectionPool(0, 10, TimeUnit.MILLISECONDS))
         .build();
 
@@ -3130,13 +3129,13 @@ public final class CallTest {
     logHandler.setFormatter(new SimpleFormatter());
     try {
       client.newCall(request).execute(); // Ignore the response so it gets leaked then GC'd.
-      awaitGarbageCollection();
+      TestUtil.awaitGarbageCollection();
 
       String message = logHandler.take();
       assertTrue(message.contains("A connection to " + server.url("/") + " was leaked."
           + " Did you forget to close a response body?"));
       assertTrue(message.contains("okhttp3.RealCall.execute("));
-      assertTrue(message.contains("okhttp3.CallTest.leakedResponseBodyLogsStackTrace("));
+      assertTrue(message.contains("CallTest.leakedResponseBodyLogsStackTrace("));
     } finally {
       logger.setLevel(original);
     }
@@ -3146,7 +3145,7 @@ public final class CallTest {
     server.enqueue(new MockResponse()
         .setBody("This gets leaked."));
 
-    client = defaultClient().newBuilder()
+    client = TestUtil.defaultClient().newBuilder()
         .connectionPool(new ConnectionPool(0, 10, TimeUnit.MILLISECONDS))
         .build();
 
@@ -3173,13 +3172,13 @@ public final class CallTest {
       // There's some flakiness when triggering a GC for objects in a separate thread. Adding a
       // small delay appears to ensure the objects will get GC'd.
       Thread.sleep(200);
-      awaitGarbageCollection();
+      TestUtil.awaitGarbageCollection();
 
       String message = logHandler.take();
       assertTrue(message.contains("A connection to " + server.url("/") + " was leaked."
           + " Did you forget to close a response body?"));
       assertTrue(message.contains("okhttp3.RealCall.enqueue("));
-      assertTrue(message.contains("okhttp3.CallTest.asyncLeakedResponseBodyLogsStackTrace("));
+      assertTrue(message.contains("CallTest.asyncLeakedResponseBodyLogsStackTrace("));
     } finally {
       logger.setLevel(original);
     }

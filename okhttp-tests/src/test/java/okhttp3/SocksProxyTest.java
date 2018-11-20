@@ -22,13 +22,13 @@ import java.net.SocketAddress;
 import java.net.URI;
 import java.util.Collections;
 import java.util.List;
-import okhttp3.mockwebserver.MockResponse;
-import okhttp3.mockwebserver.MockWebServer;
+
+import mockwebserver.MockResponse;
+import mockwebserver.MockWebServer;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import static okhttp3.TestUtil.defaultClient;
 import static org.junit.Assert.assertEquals;
 
 public final class SocksProxyTest {
@@ -49,7 +49,7 @@ public final class SocksProxyTest {
     server.enqueue(new MockResponse().setBody("abc"));
     server.enqueue(new MockResponse().setBody("def"));
 
-    OkHttpClient client = defaultClient().newBuilder()
+    OkHttpClient client = TestUtil.defaultClient().newBuilder()
         .proxy(socksProxy.proxy())
         .build();
 
@@ -78,7 +78,7 @@ public final class SocksProxyTest {
       }
     };
 
-    OkHttpClient client = defaultClient().newBuilder()
+    OkHttpClient client = TestUtil.defaultClient().newBuilder()
         .proxySelector(proxySelector)
         .build();
 
@@ -93,7 +93,7 @@ public final class SocksProxyTest {
     // This testcase will fail if the target is resolved locally instead of through the proxy.
     server.enqueue(new MockResponse().setBody("abc"));
 
-    OkHttpClient client = defaultClient().newBuilder()
+    OkHttpClient client = TestUtil.defaultClient().newBuilder()
         .proxy(socksProxy.proxy())
         .build();
 

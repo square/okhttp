@@ -34,8 +34,10 @@ import okhttp3.Call;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
-import okhttp3.mockwebserver.MockResponse;
-import okhttp3.mockwebserver.MockWebServer;
+import mockwebserver.MockResponse;
+import mockwebserver.MockWebServer;
+import okhttp3.internal.platform.PlatformTest;
+import org.junit.Assert;
 import tls.HeldCertificate;
 import tls.HandshakeCertificates;
 import org.junit.Before;
@@ -43,7 +45,6 @@ import org.junit.Rule;
 import org.junit.Test;
 
 import static okhttp3.TestUtil.defaultClient;
-import static okhttp3.internal.platform.PlatformTest.getPlatform;
 import static tls.internal.TlsUtil.newKeyManager;
 import static tls.internal.TlsUtil.newTrustManager;
 import static org.junit.Assert.assertEquals;
@@ -187,7 +188,7 @@ public final class ClientAuthTest {
       String jvmVersion = System.getProperty("java.specification.version");
       assertEquals("11", jvmVersion);
     } catch (SocketException expected) {
-      assertEquals("jdk9", getPlatform());
+      Assert.assertEquals("jdk9", PlatformTest.getPlatform());
     }
   }
 
@@ -239,7 +240,7 @@ public final class ClientAuthTest {
       String jvmVersion = System.getProperty("java.specification.version");
       assertEquals("11", jvmVersion);
     } catch (SocketException expected) {
-      assertEquals("jdk9", getPlatform());
+      Assert.assertEquals("jdk9", PlatformTest.getPlatform());
     }
   }
 

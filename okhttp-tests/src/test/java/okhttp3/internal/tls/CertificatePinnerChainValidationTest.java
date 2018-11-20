@@ -30,20 +30,20 @@ import javax.net.ssl.X509TrustManager;
 import okhttp3.Call;
 import okhttp3.CertificatePinner;
 import okhttp3.OkHttpClient;
+import okhttp3.internal.platform.PlatformTest;
 import testingsupport.RecordingHostnameVerifier;
 import okhttp3.Request;
 import okhttp3.Response;
 import okhttp3.internal.platform.Platform;
-import okhttp3.mockwebserver.MockResponse;
-import okhttp3.mockwebserver.MockWebServer;
-import okhttp3.mockwebserver.SocketPolicy;
+import mockwebserver.MockResponse;
+import mockwebserver.MockWebServer;
+import mockwebserver.SocketPolicy;
 import tls.HeldCertificate;
 import tls.HandshakeCertificates;
 import org.junit.Rule;
 import org.junit.Test;
 
 import static okhttp3.TestUtil.defaultClient;
-import static okhttp3.internal.platform.PlatformTest.getPlatform;
 import static tls.internal.TlsUtil.newKeyManager;
 import static tls.internal.TlsUtil.newTrustManager;
 import static org.junit.Assert.assertEquals;
@@ -333,7 +333,7 @@ public final class CertificatePinnerChainValidationTest {
     // at sun.security.pkcs12.PKCS12KeyStore.setKeyEntry
     // http://openjdk.java.net/jeps/229
     // http://hg.openjdk.java.net/jdk9/jdk9/jdk/file/2c1c21d11e58/src/share/classes/sun/security/pkcs12/PKCS12KeyStore.java#l596
-    String keystoreType = getPlatform().equals("jdk9") ? "JKS" : null;
+    String keystoreType = PlatformTest.getPlatform().equals("jdk9") ? "JKS" : null;
     X509KeyManager x509KeyManager = newKeyManager(keystoreType, heldCertificate, intermediates);
     X509TrustManager trustManager = newTrustManager(
         keystoreType, Collections.<X509Certificate>emptyList());

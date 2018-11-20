@@ -17,14 +17,13 @@ package okhttp3.internal.platform;
 
 import org.junit.Test;
 
-import static okhttp3.internal.platform.PlatformTest.getPlatform;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assume.assumeTrue;
 
 public class JdkWithJettyBootPlatformTest {
   @Test
   public void testBuildsWithJettyBoot() {
-    assumeTrue(getPlatform().equals("jdk-with-jetty-boot"));
+    assumeTrue(PlatformTest.getPlatform().equals("jdk-with-jetty-boot"));
 
     assertNotNull(JdkWithJettyBootPlatform.buildIfSupported());
   }

@@ -16,6 +16,7 @@
 package okhttp3;
 
 import javax.annotation.Nullable;
+
 import okio.ByteString;
 
 public final class RecordingWebSocketListener extends WebSocketListener {

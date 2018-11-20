@@ -19,6 +19,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import javax.net.ssl.SSLPeerUnverifiedException;
+
 import okhttp3.CertificatePinner.Pin;
 import tls.HeldCertificate;
 import org.junit.Test;

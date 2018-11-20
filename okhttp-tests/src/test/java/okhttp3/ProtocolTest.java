@@ -16,6 +16,8 @@
 package okhttp3;
 
 import java.io.IOException;
+
+import org.junit.Assert;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
@@ -23,7 +25,7 @@ import static org.junit.Assert.assertEquals;
 public class ProtocolTest {
   @Test
   public void testGetKnown() throws IOException {
-    assertEquals(Protocol.HTTP_1_0, Protocol.get("http/1.0"));
+    Assert.assertEquals(Protocol.HTTP_1_0, Protocol.get("http/1.0"));
     assertEquals(Protocol.HTTP_1_1, Protocol.get("http/1.1"));
     assertEquals(Protocol.SPDY_3, Protocol.get("spdy/3.1"));
     assertEquals(Protocol.HTTP_2, Protocol.get("h2"));

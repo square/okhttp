@@ -19,9 +19,10 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
 import javax.net.ssl.SSLException;
-import okhttp3.mockwebserver.MockResponse;
-import okhttp3.mockwebserver.MockWebServer;
-import okhttp3.mockwebserver.SocketPolicy;
+
+import mockwebserver.MockResponse;
+import mockwebserver.MockWebServer;
+import mockwebserver.SocketPolicy;
 import tls.HandshakeCertificates;
 import org.junit.Rule;
 import org.junit.Test;
@@ -29,7 +30,6 @@ import org.junit.rules.TestRule;
 import org.junit.rules.Timeout;
 import testingsupport.RecordingHostnameVerifier;
 
-import static okhttp3.TestUtil.defaultClient;
 import static tls.internal.TlsUtil.localhost;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -40,7 +40,7 @@ public final class ConnectionReuseTest {
   @Rule public final MockWebServer server = new MockWebServer();
 
   private HandshakeCertificates handshakeCertificates = localhost();
-  private OkHttpClient client = defaultClient();
+  private OkHttpClient client = TestUtil.defaultClient();
 
   @Test public void connectionsAreReused() throws Exception {
     server.enqueue(new MockResponse().setBody("a"));

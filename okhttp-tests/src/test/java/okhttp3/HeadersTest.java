@@ -22,6 +22,7 @@ import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+
 import okhttp3.internal.Internal;
 import okhttp3.internal.http.HttpHeaders;
 import okhttp3.internal.http2.Header;
@@ -33,7 +34,6 @@ import static java.util.Collections.emptyList;
 import static java.util.Collections.emptyMap;
 import static java.util.Collections.singletonList;
 import static java.util.Collections.singletonMap;
-import static okhttp3.TestUtil.headerEntries;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
@@ -65,7 +65,7 @@ public final class HeadersTest {
         .header("Upgrade", "websocket")
         .header("Host", "square.com")
         .build();
-    List<Header> expected = headerEntries(
+    List<Header> expected = TestUtil.headerEntries(
         ":method", "GET",
         ":path", "/",
         ":authority", "square.com",

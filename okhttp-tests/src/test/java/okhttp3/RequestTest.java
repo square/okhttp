@@ -22,8 +22,10 @@ import java.net.URI;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.UUID;
+
 import okhttp3.internal.Util;
 import okio.Buffer;
+import org.junit.Assert;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
@@ -122,7 +124,7 @@ public final class RequestTest {
   @Test public void uninitializedURI() throws Exception {
     Request request = new Request.Builder().url("http://localhost/api").build();
     assertEquals(new URI("http://localhost/api"), request.url().uri());
-    assertEquals(HttpUrl.get("http://localhost/api"), request.url());
+    Assert.assertEquals(HttpUrl.get("http://localhost/api"), request.url());
   }
 
   @Test public void newBuilderUrlResetsUrl() {

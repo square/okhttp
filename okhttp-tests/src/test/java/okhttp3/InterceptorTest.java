@@ -25,10 +25,11 @@ import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
-import okhttp3.mockwebserver.MockResponse;
-import okhttp3.mockwebserver.MockWebServer;
-import okhttp3.mockwebserver.RecordedRequest;
-import okhttp3.mockwebserver.SocketPolicy;
+
+import mockwebserver.MockResponse;
+import mockwebserver.MockWebServer;
+import mockwebserver.RecordedRequest;
+import mockwebserver.SocketPolicy;
 import okio.Buffer;
 import okio.BufferedSink;
 import okio.ForwardingSink;
@@ -40,7 +41,6 @@ import okio.Source;
 import org.junit.Rule;
 import org.junit.Test;
 
-import static okhttp3.TestUtil.defaultClient;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -52,7 +52,7 @@ import static org.junit.Assert.fail;
 public final class InterceptorTest {
   @Rule public MockWebServer server = new MockWebServer();
 
-  private OkHttpClient client = defaultClient();
+  private OkHttpClient client = TestUtil.defaultClient();
   private RecordingCallback callback = new RecordingCallback();
 
   @Test public void applicationInterceptorsCanShortCircuitResponses() throws Exception {
