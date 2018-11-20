@@ -75,7 +75,7 @@ public final class LoggingEventListener extends EventListener {
 
   @Override
   public void secureConnectEnd(Call call, @Nullable Handshake handshake) {
-    logWithTime("secureConnectEnd");
+    logWithTime("secureConnectEnd: " + handshake);
   }
 
   @Override
