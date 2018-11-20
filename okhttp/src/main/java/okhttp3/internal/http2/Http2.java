@@ -25,7 +25,7 @@ public final class Http2 {
       = ByteString.encodeUtf8("PRI * HTTP/2.0\r\n\r\nSM\r\n\r\n");
 
   /** The initial max frame size, applied independently writing to, or reading from the peer. */
-  static final int INITIAL_MAX_FRAME_SIZE = 0x4000; // 16384
+  public static final int INITIAL_MAX_FRAME_SIZE = 0x4000; // 16384
 
   public static final byte TYPE_DATA = 0x0;
   public static final byte TYPE_HEADERS = 0x1;
@@ -36,15 +36,15 @@ public final class Http2 {
   public static final byte TYPE_PING = 0x6;
   public static final byte TYPE_GOAWAY = 0x7;
   public static final byte TYPE_WINDOW_UPDATE = 0x8;
-  static final byte TYPE_CONTINUATION = 0x9;
+  public static final byte TYPE_CONTINUATION = 0x9;
 
-  static final byte FLAG_NONE = 0x0;
+  public static final byte FLAG_NONE = 0x0;
   static final byte FLAG_ACK = 0x1; // Used for settings and ping.
-  static final byte FLAG_END_STREAM = 0x1; // Used for headers and data.
-  static final byte FLAG_END_HEADERS = 0x4; // Used for headers and continuation.
-  static final byte FLAG_END_PUSH_PROMISE = 0x4;
+  public static final byte FLAG_END_STREAM = 0x1; // Used for headers and data.
+  public static final byte FLAG_END_HEADERS = 0x4; // Used for headers and continuation.
+  public static final byte FLAG_END_PUSH_PROMISE = 0x4;
   static final byte FLAG_PADDED = 0x8; // Used for headers and data.
-  static final byte FLAG_PRIORITY = 0x20; // Used for headers.
+  public static final byte FLAG_PRIORITY = 0x20; // Used for headers.
   static final byte FLAG_COMPRESSED = 0x20; // Used for data.
 
   /** Lookup table for valid frame types. */

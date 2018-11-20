@@ -83,13 +83,13 @@ public final class Settings {
   }
 
   /** Returns -1 if unset. */
-  int getHeaderTableSize() {
+  public int getHeaderTableSize() {
     int bit = 1 << HEADER_TABLE_SIZE;
     return (bit & set) != 0 ? values[HEADER_TABLE_SIZE] : -1;
   }
 
   // TODO: honor this setting.
-  boolean getEnablePush(boolean defaultValue) {
+  public boolean getEnablePush(boolean defaultValue) {
     int bit = 1 << ENABLE_PUSH;
     return ((bit & set) != 0 ? values[ENABLE_PUSH] : defaultValue ? 1 : 0) == 1;
   }

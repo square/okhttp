@@ -1,5 +1,5 @@
 module mockwebserver {
-    requires okhttp;
+    requires transitive okhttp;
     requires junit;
     exports mockwebserver to junit, guide, slack, staticserver, unixdomainsockets, benchmarks;
 }

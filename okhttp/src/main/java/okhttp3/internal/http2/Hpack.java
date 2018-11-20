@@ -38,7 +38,7 @@ import okio.Source;
  * entries are added to the array, starting in the last position moving forward.  When the array
  * fills, it is doubled.
  */
-final class Hpack {
+public final class Hpack {
   private static final int PREFIX_4_BITS = 0x0f;
   private static final int PREFIX_5_BITS = 0x1f;
   private static final int PREFIX_6_BITS = 0x3f;
@@ -112,7 +112,7 @@ final class Hpack {
   }
 
   // http://tools.ietf.org/html/draft-ietf-httpbis-header-compression-12#section-3.1
-  static final class Reader {
+  public static final class Reader {
 
     private final List<Header> headerList = new ArrayList<>();
     private final BufferedSource source;
@@ -124,7 +124,7 @@ final class Hpack {
     Header[] dynamicTable = new Header[8];
     // Array is populated back to front, so new entries always have lowest index.
     int nextHeaderIndex = dynamicTable.length - 1;
-    int headerCount = 0;
+    public int headerCount = 0;
     int dynamicTableByteCount = 0;
 
     Reader(int headerTableSizeSetting, Source source) {
@@ -180,7 +180,7 @@ final class Hpack {
      * Read {@code byteCount} bytes of headers from the source stream. This implementation does not
      * propagate the never indexed flag of a header.
      */
-    void readHeaders() throws IOException {
+    public void readHeaders() throws IOException {
       while (!source.exhausted()) {
         int b = source.readByte() & 0xff;
         if (b == 0x80) { // 10000000
@@ -363,7 +363,7 @@ final class Hpack {
     return Collections.unmodifiableMap(result);
   }
 
-  static final class Writer {
+  public static final class Writer {
     private static final int SETTINGS_HEADER_TABLE_SIZE = 4096;
 
     /**
@@ -457,7 +457,7 @@ final class Hpack {
 
     /** This does not use "never indexed" semantics for sensitive headers. */
     // http://tools.ietf.org/html/draft-ietf-httpbis-header-compression-12#section-6.2.3
-    void writeHeaders(List<Header> headerBlock) throws IOException {
+    public void writeHeaders(List<Header> headerBlock) throws IOException {
       if (emitDynamicTableSizeUpdate) {
         if (smallestHeaderTableSizeSetting < maxDynamicTableByteCount) {
           // Multiple dynamic table size updates!
