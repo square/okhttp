@@ -192,7 +192,7 @@ public final class Headers {
 
   private static String get(String[] namesAndValues, String name) {
     for (int i = namesAndValues.length - 2; i >= 0; i -= 2) {
-      if (name.equalsIgnoreCase(namesAndValues[i])) {
+      if (namesAndValues[i].equalsIgnoreCase(name)) {
         return namesAndValues[i + 1];
       }
     }
