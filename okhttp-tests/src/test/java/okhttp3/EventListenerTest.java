@@ -36,6 +36,7 @@ import okhttp3.RecordingEventListener.ConnectionAcquired;
 import okhttp3.RecordingEventListener.DnsEnd;
 import okhttp3.RecordingEventListener.DnsStart;
 import okhttp3.RecordingEventListener.RequestBodyEnd;
+import okhttp3.RecordingEventListener.RequestHeadersStart;
 import okhttp3.RecordingEventListener.RequestHeadersEnd;
 import okhttp3.RecordingEventListener.ResponseBodyEnd;
 import okhttp3.RecordingEventListener.ResponseHeadersEnd;
@@ -1124,5 +1125,29 @@ public final class EventListenerTest {
         "ResponseHeadersEnd", "ResponseBodyStart", "ResponseBodyEnd", "ConnectionReleased",
         "CallEnd");
     assertEquals(expectedEvents, listener.recordedEventTypes());
+  }
+
+  @Ignore("Header added by interceptor is not seen by EventListener.")
+  @Test
+  public void requestModifiedByInterceptor() throws IOException {
+    server.enqueue(new MockResponse());
+
+    client
+        .newBuilder()
+        .interceptors.add(
+            new Interceptor() {
+              @Override
+              public Response intercept(Chain chain) throws IOException {
+                Request modifiedRequest =
+                    chain.request().newBuilder().header("Added-By-Interceptor", "foo").build();
+                return chain.proceed(modifiedRequest);
+              }
+            });
+
+    Call call = client.newCall(new Request.Builder().url(server.url("/")).build());
+    Response response = call.execute();
+
+    RequestHeadersStart requestHeadersStart = listener.removeUpToEvent(RequestHeadersStart.class);
+    assertEquals("foo", requestHeadersStart.call.request().headers.get("Added-By-Interceptor"));
   }
 }
