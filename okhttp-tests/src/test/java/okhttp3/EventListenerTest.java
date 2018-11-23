@@ -16,6 +16,7 @@
 package okhttp3;
 
 import java.io.IOException;
+import java.net.HttpURLConnection;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.Proxy;
@@ -1081,5 +1082,47 @@ public final class EventListenerTest {
         .hostnameVerifier(new RecordingHostnameVerifier())
         .build();
     server.useHttps(handshakeCertificates.sslSocketFactory(), tunnelProxy);
+  }
+
+  @Test public void redirectUsingSameConnectionEventSequence() throws IOException {
+    server.enqueue(
+        new MockResponse()
+            .setResponseCode(HttpURLConnection.HTTP_MOVED_TEMP)
+            .addHeader("Location: /foo"));
+    server.enqueue(new MockResponse());
+
+    Call call = client.newCall(new Request.Builder().url(server.url("/")).build());
+    Response response = call.execute();
+
+    List<String> expectedEvents = Arrays.asList("CallStart", "DnsStart", "DnsEnd",
+        "ConnectStart", "ConnectEnd", "ConnectionAcquired", "RequestHeadersStart",
+        "RequestHeadersEnd", "ResponseHeadersStart", "ResponseHeadersEnd", "ResponseBodyStart",
+        "ResponseBodyEnd", "RequestHeadersStart", "RequestHeadersEnd", "ResponseHeadersStart",
+        "ResponseHeadersEnd", "ResponseBodyStart", "ResponseBodyEnd", "ConnectionReleased",
+        "CallEnd");
+    assertEquals(expectedEvents, listener.recordedEventTypes());
+  }
+
+  @Ignore("CallEnd emitted twice")
+  @Test
+  public void redirectUsingNewConnectionEventSequence() throws IOException {
+    MockWebServer otherServer = new MockWebServer();
+    server.enqueue(
+        new MockResponse()
+            .setResponseCode(HttpURLConnection.HTTP_MOVED_TEMP)
+            .addHeader("Location: " + otherServer.url("/foo")));
+    otherServer.enqueue(new MockResponse());
+
+    Call call = client.newCall(new Request.Builder().url(server.url("/")).build());
+    Response response = call.execute();
+
+    List<String> expectedEvents = Arrays.asList("CallStart", "DnsStart", "DnsEnd",
+        "ConnectStart", "ConnectEnd", "ConnectionAcquired", "RequestHeadersStart",
+        "RequestHeadersEnd", "ResponseHeadersStart", "ResponseHeadersEnd", "ResponseBodyStart",
+        "ResponseBodyEnd", "ConnectionReleased", "DnsStart", "DnsEnd", "ConnectStart", "ConnectEnd",
+        "ConnectionAcquired", "RequestHeadersStart", "RequestHeadersEnd", "ResponseHeadersStart",
+        "ResponseHeadersEnd", "ResponseBodyStart", "ResponseBodyEnd", "ConnectionReleased",
+        "CallEnd");
+    assertEquals(expectedEvents, listener.recordedEventTypes());
   }
 }
