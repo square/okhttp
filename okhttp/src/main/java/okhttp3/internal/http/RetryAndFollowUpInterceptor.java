@@ -15,6 +15,7 @@
  */
 package okhttp3.internal.http;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InterruptedIOException;
 import java.net.HttpRetryException;
@@ -224,7 +225,7 @@ public final class RetryAndFollowUpInterceptor implements Interceptor {
     if (!client.retryOnConnectionFailure()) return false;
 
     // We can't send the request body again.
-    if (requestSendStarted && userRequest.body() instanceof UnrepeatableRequestBody) return false;
+    if (requestSendStarted && requestIsUnrepeatable(e, userRequest)) return false;
 
     // This exception is fatal.
     if (!isRecoverable(e, requestSendStarted)) return false;
@@ -234,6 +235,11 @@ public final class RetryAndFollowUpInterceptor implements Interceptor {
 
     // For failure recovery, use the same route selector with a new connection.
     return true;
+  }
+
+  private boolean requestIsUnrepeatable(IOException e, Request userRequest) {
+    return userRequest.body() instanceof UnrepeatableRequestBody
+        || e instanceof FileNotFoundException;
   }
 
   private boolean isRecoverable(IOException e, boolean requestSendStarted) {

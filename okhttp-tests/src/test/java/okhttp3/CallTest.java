@@ -3376,6 +3376,10 @@ public final class CallTest {
         .post(body)
         .build();
 
+    client = client.newBuilder()
+        .dns(new DoubleInetAddressDns())
+        .build();
+
     executeSynchronously(request)
         .assertFailure(FileNotFoundException.class);
 
