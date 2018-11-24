@@ -1132,9 +1132,8 @@ public final class EventListenerTest {
   public void requestModifiedByInterceptor() throws IOException {
     server.enqueue(new MockResponse());
 
-    client
-        .newBuilder()
-        .interceptors.add(
+    client = client.newBuilder()
+        .addInterceptor(
             new Interceptor() {
               @Override
               public Response intercept(Chain chain) throws IOException {
@@ -1142,7 +1141,8 @@ public final class EventListenerTest {
                     chain.request().newBuilder().header("Added-By-Interceptor", "foo").build();
                 return chain.proceed(modifiedRequest);
               }
-            });
+            })
+        .build();
 
     Call call = client.newCall(new Request.Builder().url(server.url("/")).build());
     Response response = call.execute();
