@@ -15,7 +15,7 @@
  */
 package okhttp3.benchmarks;
 
-enum Client {
+public enum Client {
   OkHttp {
     @Override HttpClient create() {
       return new OkHttp();

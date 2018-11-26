@@ -14,9 +14,14 @@
 
   <dependencies>
     <dependency>
-      <groupId>com.google.caliper</groupId>
-      <artifactId>caliper</artifactId>
-      <version>1.0-beta-1</version>
+      <groupId>org.openjdk.jmh</groupId>
+      <artifactId>jmh-core</artifactId>
+      <version>1.20</version>
+    </dependency>
+    <dependency>
+      <groupId>org.openjdk.jmh</groupId>
+      <artifactId>jmh-generator-annprocess</artifactId>
+      <version>1.20</version>
     </dependency>
     <!-- caliper needs to be updated to be compatible with guava 16 -->
     <dependency>

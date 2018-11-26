@@ -243,7 +243,7 @@
           <failsOnError>true</failsOnError>
           <configLocation>checkstyle.xml</configLocation>
           <consoleOutput>true</consoleOutput>
-          <excludes>**/CipherSuite.java</excludes>
+          <excludes>**/CipherSuite.java,**/benchmarks/generated/*</excludes>
         </configuration>
         <executions>
           <execution>

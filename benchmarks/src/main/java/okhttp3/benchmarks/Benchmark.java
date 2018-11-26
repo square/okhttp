@@ -15,9 +15,6 @@
  */
 package okhttp3.benchmarks;
 
-import com.google.caliper.Param;
-import com.google.caliper.model.ArbitraryMeasurement;
-import com.google.caliper.runner.CaliperMain;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -35,6 +32,20 @@ import okhttp3.mockwebserver.RecordedRequest;
 import okhttp3.tls.HandshakeCertificates;
 import okio.Buffer;
 import okio.GzipSink;
+import org.openjdk.jmh.annotations.BenchmarkMode;
+import org.openjdk.jmh.annotations.Fork;
+import org.openjdk.jmh.annotations.Measurement;
+import org.openjdk.jmh.annotations.Mode;
+import org.openjdk.jmh.annotations.OutputTimeUnit;
+import org.openjdk.jmh.annotations.Param;
+import org.openjdk.jmh.annotations.Scope;
+import org.openjdk.jmh.annotations.Setup;
+import org.openjdk.jmh.annotations.State;
+import org.openjdk.jmh.annotations.TearDown;
+import org.openjdk.jmh.annotations.Warmup;
+import org.openjdk.jmh.runner.Runner;
+import org.openjdk.jmh.runner.options.Options;
+import org.openjdk.jmh.runner.options.OptionsBuilder;
 
 import static okhttp3.tls.internal.TlsUtil.localhost;
 
@@ -43,9 +54,14 @@ import static okhttp3.tls.internal.TlsUtil.localhost;
  * connection to a MockWebServer to measure how many identical requests per second can be carried
  * over a fixed number of threads.
  */
-public class Benchmark extends com.google.caliper.Benchmark {
-  private static final int NUM_REPORTS = 10;
-  private static final boolean VERBOSE = false;
+
+@State(Scope.Benchmark)
+@Fork(1)
+@Warmup(iterations = 10, time = 100, timeUnit = TimeUnit.MILLISECONDS)
+@Measurement(iterations = 10, time = 100, timeUnit = TimeUnit.MILLISECONDS)
+@BenchmarkMode({Mode.Throughput})
+@OutputTimeUnit(TimeUnit.MILLISECONDS)
+public class Benchmark {
 
   private final Random random = new Random(0);
 
@@ -63,15 +79,15 @@ public class Benchmark extends com.google.caliper.Benchmark {
 
   /** True to use TLS. */
   // TODO: compare different ciphers?
-  @Param
+  @Param({"false", "true"})
   boolean tls;
 
   /** True to use gzip content-encoding for the response body. */
-  @Param
+  @Param({"false", "true"})
   boolean gzip;
 
   /** Don't combine chunked with HTTP_2; that's not allowed. */
-  @Param
+  @Param({"false", "true"})
   boolean chunked;
 
   /** The size of the HTTP response body, in uncompressed bytes. */
@@ -82,61 +98,47 @@ public class Benchmark extends com.google.caliper.Benchmark {
   @Param({"0", "20"})
   int headerCount;
 
+  HttpClient httpClient;
+  MockWebServer server;
+  HttpUrl url;
+
   /** Which ALPN protocols are in use. Only useful with TLS. */
   List<Protocol> protocols = Arrays.asList(Protocol.HTTP_1_1);
 
-  public static void main(String[] args) {
-    List<String> allArgs = new ArrayList<>();
-    allArgs.add("--instrument");
-    allArgs.add("arbitrary");
-    allArgs.addAll(Arrays.asList(args));
+  public static void main(String[] args) throws Exception {
+    Options opt = new OptionsBuilder()
+            .include(Benchmark.class.getSimpleName())
+            .build();
 
-    CaliperMain.main(Benchmark.class, allArgs.toArray(new String[allArgs.size()]));
+    new Runner(opt).run();
   }
 
-  @ArbitraryMeasurement(description = "requests per second")
-  public double run() throws Exception {
-    if (VERBOSE) System.out.println(toString());
-    HttpClient httpClient = client.create();
-
-    // Prepare the client & server
+  @Setup(org.openjdk.jmh.annotations.Level.Trial)
+  public void init() throws Exception {
+    httpClient = client.create();
     httpClient.prepare(this);
-    MockWebServer server = startServer();
-    HttpUrl url = server.url("/");
+    server = startServer();
+    url = server.url("/");
+  }
 
-    int requestCount = 0;
-    long reportStart = System.nanoTime();
-    long reportPeriod = TimeUnit.SECONDS.toNanos(1);
-    int reports = 0;
-    double best = 0.0;
+  @TearDown(org.openjdk.jmh.annotations.Level.Trial)
+  public void dispose() throws Exception {
+    //Waiting for consuming
+    Thread.sleep(500);
 
-    // Run until we've printed enough reports.
-    while (reports < NUM_REPORTS) {
-      // Print a report if we haven't recently.
-      long now = System.nanoTime();
-      double reportDuration = now - reportStart;
-      if (reportDuration > reportPeriod) {
-        double requestsPerSecond = requestCount / reportDuration * TimeUnit.SECONDS.toNanos(1);
-        if (VERBOSE) {
-          System.out.println(String.format("Requests per second: %.1f", requestsPerSecond));
-        }
-        best = Math.max(best, requestsPerSecond);
-        requestCount = 0;
-        reportStart = now;
-        reports++;
-      }
+    httpClient.cleanUp();
+    server.shutdown();
+  }
 
-      // Fill the job queue with work.
-      while (httpClient.acceptingJobs()) {
-        httpClient.enqueue(url);
-        requestCount++;
-      }
-
-      // The job queue is full. Take a break.
+  @org.openjdk.jmh.annotations.Benchmark
+  public void run() throws Exception {
+    // The job queue is full. Take a break.
+    while (!httpClient.acceptingJobs()) {
       sleep(1);
     }
 
-    return best;
+    // Fill the job queue with work.
+    httpClient.enqueue(url);
   }
 
   @Override public String toString() {
@@ -158,8 +160,8 @@ public class Benchmark extends com.google.caliper.Benchmark {
   }
 
   private MockWebServer startServer() throws IOException {
-    Logger.getLogger(MockWebServer.class.getName()).setLevel(Level.WARNING);
     MockWebServer server = new MockWebServer();
+    Logger.getLogger(MockWebServer.class.getName()).setLevel(Level.WARNING);
 
     if (tls) {
       HandshakeCertificates handshakeCertificates = localhost();

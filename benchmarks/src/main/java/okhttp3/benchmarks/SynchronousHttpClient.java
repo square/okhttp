@@ -41,6 +41,10 @@ abstract class SynchronousHttpClient implements HttpClient {
     return executor.getQueue().size() < targetBacklog;
   }
 
+  @Override public void cleanUp() {
+    executor.shutdown();
+  }
+
   static long readAllAndClose(InputStream in) throws IOException {
     byte[] buffer = new byte[1024];
     long total = 0;

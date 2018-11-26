@@ -24,4 +24,6 @@ interface HttpClient {
   void enqueue(HttpUrl url) throws Exception;
 
   boolean acceptingJobs();
+
+  void cleanUp();
 }

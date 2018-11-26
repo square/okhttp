@@ -23,6 +23,7 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.ChannelPipeline;
+import io.netty.channel.EventLoopGroup;
 import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
@@ -60,6 +61,7 @@ class NettyHttpClient implements HttpClient {
   private int concurrencyLevel;
   private int targetBacklog;
   private Bootstrap bootstrap;
+  private EventLoopGroup group;
 
   @Override public void prepare(final Benchmark benchmark) {
     this.concurrencyLevel = benchmark.concurrencyLevel;
@@ -83,7 +85,8 @@ class NettyHttpClient implements HttpClient {
     };
 
     bootstrap = new Bootstrap();
-    bootstrap.group(new NioEventLoopGroup(concurrencyLevel))
+    group = new NioEventLoopGroup(concurrencyLevel);
+    bootstrap.group(group)
         .option(ChannelOption.ALLOCATOR, PooledByteBufAllocator.DEFAULT)
         .channel(NioSocketChannel.class)
         .handler(channelInitializer);
@@ -113,6 +116,10 @@ class NettyHttpClient implements HttpClient {
     return backlog.size() < targetBacklog || hasFreeChannels();
   }
 
+  @Override public void cleanUp() {
+    group.shutdownGracefully();
+  }
+
   private boolean hasFreeChannels() {
     int activeChannels = totalChannels - freeChannels.size();
     return activeChannels < concurrencyLevel;
@@ -121,11 +128,12 @@ class NettyHttpClient implements HttpClient {
   private void release(HttpChannel httpChannel) {
     HttpUrl url;
     synchronized (this) {
-      url = backlog.pop();
-      if (url == null) {
+      if (backlog.isEmpty()) {
         // There were no URLs in the backlog. Pool this channel for later.
         freeChannels.push(httpChannel);
         return;
+      } else {
+        url = backlog.pop();
       }
     }
 

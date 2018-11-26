@@ -16,6 +16,7 @@
 package okhttp3.benchmarks;
 
 import java.io.IOException;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -44,15 +45,17 @@ class OkHttpAsync implements HttpClient {
   private Callback callback;
   private int concurrencyLevel;
   private int targetBacklog;
+  private ExecutorService executor;
 
   @Override public void prepare(final Benchmark benchmark) {
     concurrencyLevel = benchmark.concurrencyLevel;
     targetBacklog = benchmark.targetBacklog;
 
+    executor = new ThreadPoolExecutor(benchmark.concurrencyLevel,
+            benchmark.concurrencyLevel, 60, TimeUnit.SECONDS, new LinkedBlockingQueue<Runnable>());
     client = new OkHttpClient.Builder()
         .protocols(benchmark.protocols)
-        .dispatcher(new Dispatcher(new ThreadPoolExecutor(benchmark.concurrencyLevel,
-            benchmark.concurrencyLevel, 60, TimeUnit.SECONDS, new LinkedBlockingQueue<Runnable>())))
+        .dispatcher(new Dispatcher(executor))
         .build();
 
     if (benchmark.tls) {
@@ -95,5 +98,9 @@ class OkHttpAsync implements HttpClient {
 
   @Override public synchronized boolean acceptingJobs() {
     return requestsInFlight.get() < (concurrencyLevel + targetBacklog);
+  }
+
+  @Override public void cleanUp() {
+    executor.shutdown();
   }
 }
