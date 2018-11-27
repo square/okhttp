@@ -310,6 +310,7 @@ public final class Headers {
     public Builder add(String name, String value) {
       checkName(name);
       checkValue(value, name);
+      removeAll(name);
       return addLenient(name, value);
     }
 
