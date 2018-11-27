@@ -192,7 +192,7 @@ public final class Headers {
 
   private static String get(String[] namesAndValues, String name) {
     for (int i = namesAndValues.length - 2; i >= 0; i -= 2) {
-      if (namesAndValues[i].equalsIgnoreCase(name)) {
+      if (name.equalsIgnoreCase(namesAndValues[i])) {
         return namesAndValues[i + 1];
       }
     }
@@ -310,6 +310,7 @@ public final class Headers {
     public Builder add(String name, String value) {
       checkName(name);
       checkValue(value, name);
+      removeAll(name);
       return addLenient(name, value);
     }
 
