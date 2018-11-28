@@ -28,6 +28,7 @@ import java.util.List;
 import java.util.NoSuchElementException;
 import okhttp3.Address;
 import okhttp3.Call;
+import okhttp3.Dns;
 import okhttp3.EventListener;
 import okhttp3.HttpUrl;
 import okhttp3.Route;
@@ -162,7 +163,10 @@ final class RouteSelector {
           + "; port is out of range");
     }
 
-    if (proxy.type() == Proxy.Type.SOCKS) {
+    if (proxy.type() == Proxy.Type.SOCKS && Dns.SYSTEM.equals(address.dns())) {
+      // SOCKS 5 supports DNS resolution at the proxy, and the caller hasn't overridden
+      // this behavior.  Callers who want SOCKS 4 compatibility on older Java implementations
+      // should set a custom Dns object in OkHttpClient.Builder.
       inetSocketAddresses.add(InetSocketAddress.createUnresolved(socketHost, socketPort));
     } else {
       eventListener.dnsStart(call, socketHost);
