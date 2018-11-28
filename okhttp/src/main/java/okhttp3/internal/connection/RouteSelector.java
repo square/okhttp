@@ -31,6 +31,7 @@ import okhttp3.Call;
 import okhttp3.EventListener;
 import okhttp3.HttpUrl;
 import okhttp3.Route;
+import okhttp3.internal.platform.Platform;
 import okhttp3.internal.Util;
 
 /**
@@ -176,7 +177,8 @@ public final class RouteSelector {
           + "; port is out of range");
     }
 
-    if (proxy.type() == Proxy.Type.SOCKS) {
+    if (proxy.type() == Proxy.Type.SOCKS && Platform.get().getSocksVersion() >= 5) {
+      // SOCKS 5 supports DNS resolution at the proxy.
       inetSocketAddresses.add(InetSocketAddress.createUnresolved(socketHost, socketPort));
     } else {
       eventListener.dnsStart(call, socketHost);

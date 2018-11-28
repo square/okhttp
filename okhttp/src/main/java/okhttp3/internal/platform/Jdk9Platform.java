@@ -82,6 +82,12 @@ final class Jdk9Platform extends Platform {
         "clientBuilder.sslSocketFactory(SSLSocketFactory) not supported on JDK 9+");
   }
 
+  @Override public int getSocksVersion() {
+    // This setting controls the default SOCKS version.  See
+    // https://docs.oracle.com/javase/9/docs/api/java/net/doc-files/net-properties.html
+    return Integer.parseInt(System.getProperty("socksProxyVersion", "5"));
+  }
+
   public static Jdk9Platform buildIfSupported() {
     // Find JDK 9 new methods
     try {

@@ -291,6 +291,12 @@ public class Platform {
   public void configureSslSocketFactory(SSLSocketFactory socketFactory) {
   }
 
+  public int getSocksVersion() {
+    // On JDK 7 and 8, SOCKS 5 is the only supported version.
+    // See https://bugs.openjdk.java.net/browse/JDK-8129444
+    return 5;
+  }
+
   @Override public String toString() {
     return getClass().getSimpleName();
   }

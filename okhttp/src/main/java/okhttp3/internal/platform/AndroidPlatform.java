@@ -454,4 +454,12 @@ class AndroidPlatform extends Platform {
       throw new IllegalStateException("No TLS provider", e);
     }
   }
+
+  @Override public int getSocksVersion() {
+    if (Build.VERSION.SDK_INT <= 23) {
+      // Android API 23 and lower only support SOCKS 4, not SOCKS 5.
+      return 4;
+    }
+    return super.getSocksVersion();
+  }
 }
