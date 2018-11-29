@@ -16,6 +16,7 @@
 package okhttp3.internal.http;
 
 import java.io.EOFException;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -166,17 +167,22 @@ public final class HttpHeaders {
    * }</pre>
    */
   public static List<Challenge> parseChallenges(Headers responseHeaders, String headerName) {
-    List<Challenge> result = new ArrayList<>();
-    for (int h = 0; h < responseHeaders.size(); h++) {
-      if (headerName.equalsIgnoreCase(responseHeaders.name(h))) {
-        Buffer header = new Buffer().writeUtf8(responseHeaders.value(h));
-        parseChallengeHeader(result, header);
+    try {
+      List<Challenge> result = new ArrayList<>();
+      for (int h = 0; h < responseHeaders.size(); h++) {
+        if (headerName.equalsIgnoreCase(responseHeaders.name(h))) {
+          Buffer header = new Buffer().writeUtf8(responseHeaders.value(h));
+          parseChallengeHeader(result, header);
+        }
       }
+      return result;
+    } catch (IOException ioe) {
+      throw new AssertionError(ioe);
     }
-    return result;
   }
 
-  private static void parseChallengeHeader(List<Challenge> result, Buffer header) {
+  private static void parseChallengeHeader(List<Challenge> result, Buffer header)
+      throws IOException {
     String peek = null;
 
     while (true) {
@@ -236,7 +242,7 @@ public final class HttpHeaders {
   }
 
   /** Returns true if any commas were skipped. */
-  private static boolean skipWhitespaceAndCommas(Buffer buffer) {
+  private static boolean skipWhitespaceAndCommas(Buffer buffer) throws IOException {
     boolean commaFound = false;
     while (!buffer.exhausted()) {
       byte b = buffer.getByte(0);
@@ -252,7 +258,7 @@ public final class HttpHeaders {
     return commaFound;
   }
 
-  private static int skipAll(Buffer buffer, byte b) {
+  private static int skipAll(Buffer buffer, byte b) throws IOException {
     int count = 0;
     while (!buffer.exhausted() && buffer.getByte(0) == b) {
       count++;
@@ -266,7 +272,7 @@ public final class HttpHeaders {
    * each sequence. Returns the unescaped string, or null if the buffer isn't prefixed with a
    * double-quoted string.
    */
-  private static String readQuotedString(Buffer buffer) {
+  private static String readQuotedString(Buffer buffer) throws IOException {
     if (buffer.readByte() != '\"') throw new IllegalArgumentException();
     Buffer result = new Buffer();
     while (true) {
