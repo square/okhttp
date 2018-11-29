@@ -1,6 +1,7 @@
 package okhttp3;
 
 import java.io.IOException;
+import java.io.InterruptedIOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -10,6 +11,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.AbstractExecutorService;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import okhttp3.RealCall.AsyncCall;
@@ -28,13 +30,16 @@ public final class DispatcherTest {
   RecordingCallback callback = new RecordingCallback();
   RecordingWebSocketListener webSocketListener = new RecordingWebSocketListener();
   Dispatcher dispatcher = new Dispatcher(executor);
+  RecordingEventListener listener = new RecordingEventListener();
   OkHttpClient client = defaultClient().newBuilder()
       .dispatcher(dispatcher)
+      .eventListener(listener)
       .build();
 
   @Before public void setUp() throws Exception {
     dispatcher.setMaxRequests(20);
     dispatcher.setMaxRequestsPerHost(10);
+    listener.forbidLock(dispatcher);
   }
 
   @Test public void maxRequestsZero() throws Exception {
@@ -264,6 +269,54 @@ public final class DispatcherTest {
     assertTrue(idle.get());
   }
 
+  @Test public void executionRejectedImmediately() throws Exception {
+    Request request = newRequest("http://a/1");
+    executor.shutdown();
+    client.newCall(request).enqueue(callback);
+    callback.await(request.url()).assertFailure(InterruptedIOException.class);
+    assertEquals(Arrays.asList("CallStart", "CallFailed"), listener.recordedEventTypes());
+  }
+
+  @Test public void executionRejectedAfterMaxRequestsChange() throws Exception {
+    Request request1 = newRequest("http://a/1");
+    Request request2 = newRequest("http://a/2");
+    dispatcher.setMaxRequests(1);
+    client.newCall(request1).enqueue(callback);
+    executor.shutdown();
+    client.newCall(request2).enqueue(callback);
+    dispatcher.setMaxRequests(2); // Trigger promotion.
+    callback.await(request2.url()).assertFailure(InterruptedIOException.class);
+
+    assertEquals(Arrays.asList("CallStart", "CallStart", "CallFailed"),
+        listener.recordedEventTypes());
+  }
+
+  @Test public void executionRejectedAfterMaxRequestsPerHostChange() throws Exception {
+    Request request1 = newRequest("http://a/1");
+    Request request2 = newRequest("http://a/2");
+    dispatcher.setMaxRequestsPerHost(1);
+    client.newCall(request1).enqueue(callback);
+    executor.shutdown();
+    client.newCall(request2).enqueue(callback);
+    dispatcher.setMaxRequestsPerHost(2); // Trigger promotion.
+    callback.await(request2.url()).assertFailure(InterruptedIOException.class);
+    assertEquals(Arrays.asList("CallStart", "CallStart", "CallFailed"),
+        listener.recordedEventTypes());
+  }
+
+  @Test public void executionRejectedAfterPrecedingCallFinishes() throws Exception {
+    Request request1 = newRequest("http://a/1");
+    Request request2 = newRequest("http://a/2");
+    dispatcher.setMaxRequests(1);
+    client.newCall(request1).enqueue(callback);
+    executor.shutdown();
+    client.newCall(request2).enqueue(callback);
+    executor.finishJob("http://a/1"); // Trigger promotion.
+    callback.await(request2.url()).assertFailure(InterruptedIOException.class);
+    assertEquals(Arrays.asList("CallStart", "CallStart", "CallFailed"),
+        listener.recordedEventTypes());
+  }
+
   private <T> Set<T> set(T... values) {
     return set(Arrays.asList(values));
   }
@@ -287,9 +340,11 @@ public final class DispatcherTest {
   }
 
   class RecordingExecutor extends AbstractExecutorService {
+    private boolean shutdown;
     private List<AsyncCall> calls = new ArrayList<>();
 
     @Override public void execute(Runnable command) {
+      if (shutdown) throw new RejectedExecutionException();
       calls.add((AsyncCall) command);
     }
 
@@ -314,7 +369,7 @@ public final class DispatcherTest {
     }
 
     @Override public void shutdown() {
-      throw new UnsupportedOperationException();
+      shutdown = true;
     }
 
     @Override public List<Runnable> shutdownNow() {

@@ -220,9 +220,8 @@ public final class Headers {
     for (int i = 0; i < namesAndValues.length; i += 2) {
       String name = namesAndValues[i];
       String value = namesAndValues[i + 1];
-      if (name.length() == 0 || name.indexOf('\0') != -1 || value.indexOf('\0') != -1) {
-        throw new IllegalArgumentException("Unexpected header: " + name + ": " + value);
-      }
+      checkName(name);
+      checkValue(value, name);
     }
 
     return new Headers(namesAndValues);
@@ -243,15 +242,37 @@ public final class Headers {
       }
       String name = header.getKey().trim();
       String value = header.getValue().trim();
-      if (name.length() == 0 || name.indexOf('\0') != -1 || value.indexOf('\0') != -1) {
-        throw new IllegalArgumentException("Unexpected header: " + name + ": " + value);
-      }
+      checkName(name);
+      checkValue(value, name);
       namesAndValues[i] = name;
       namesAndValues[i + 1] = value;
       i += 2;
     }
 
     return new Headers(namesAndValues);
+  }
+
+  static void checkName(String name) {
+    if (name == null) throw new NullPointerException("name == null");
+    if (name.isEmpty()) throw new IllegalArgumentException("name is empty");
+    for (int i = 0, length = name.length(); i < length; i++) {
+      char c = name.charAt(i);
+      if (c <= '\u0020' || c >= '\u007f') {
+        throw new IllegalArgumentException(Util.format(
+            "Unexpected char %#04x at %d in header name: %s", (int) c, i, name));
+      }
+    }
+  }
+
+  static void checkValue(String value, String name) {
+    if (value == null) throw new NullPointerException("value for name " + name + " == null");
+    for (int i = 0, length = value.length(); i < length; i++) {
+      char c = value.charAt(i);
+      if ((c <= '\u001f' && c != '\t') || c >= '\u007f') {
+        throw new IllegalArgumentException(Util.format(
+            "Unexpected char %#04x at %d in %s value: %s", (int) c, i, name, value));
+      }
+    }
   }
 
   public static final class Builder {
@@ -287,7 +308,17 @@ public final class Headers {
      * Add a header with the specified name and value. Does validation of header names and values.
      */
     public Builder add(String name, String value) {
-      checkNameAndValue(name, value);
+      checkName(name);
+      checkValue(value, name);
+      return addLenient(name, value);
+    }
+
+    /**
+     * Add a header with the specified name and value. Does validation of header names, allowing
+     * non-ASCII values.
+     */
+    public Builder addUnsafeNonAscii(String name, String value) {
+      checkName(name);
       return addLenient(name, value);
     }
 
@@ -300,6 +331,26 @@ public final class Headers {
         addLenient(headers.name(i), headers.value(i));
       }
 
+      return this;
+    }
+
+    /**
+     * Add a header with the specified name and formatted Date.
+     * Does validation of header names and values.
+     */
+    public Builder add(String name, Date value) {
+      if (value == null) throw new NullPointerException("value for name " + name + " == null");
+      add(name, HttpDate.format(value));
+      return this;
+    }
+
+    /**
+     * Set a field with the specified date. If the field is not found, it is added. If the field is
+     * found, the existing values are replaced.
+     */
+    public Builder set(String name, Date value) {
+      if (value == null) throw new NullPointerException("value for name " + name + " == null");
+      set(name, HttpDate.format(value));
       return this;
     }
 
@@ -329,30 +380,11 @@ public final class Headers {
      * found, the existing values are replaced.
      */
     public Builder set(String name, String value) {
-      checkNameAndValue(name, value);
+      checkName(name);
+      checkValue(value, name);
       removeAll(name);
       addLenient(name, value);
       return this;
-    }
-
-    private void checkNameAndValue(String name, String value) {
-      if (name == null) throw new NullPointerException("name == null");
-      if (name.isEmpty()) throw new IllegalArgumentException("name is empty");
-      for (int i = 0, length = name.length(); i < length; i++) {
-        char c = name.charAt(i);
-        if (c <= '\u0020' || c >= '\u007f') {
-          throw new IllegalArgumentException(Util.format(
-              "Unexpected char %#04x at %d in header name: %s", (int) c, i, name));
-        }
-      }
-      if (value == null) throw new NullPointerException("value for name " + name + " == null");
-      for (int i = 0, length = value.length(); i < length; i++) {
-        char c = value.charAt(i);
-        if ((c <= '\u001f' && c != '\t') || c >= '\u007f') {
-          throw new IllegalArgumentException(Util.format(
-              "Unexpected char %#04x at %d in %s value: %s", (int) c, i, name, value));
-        }
-      }
     }
 
     /** Equivalent to {@code build().get(name)}, but potentially faster. */

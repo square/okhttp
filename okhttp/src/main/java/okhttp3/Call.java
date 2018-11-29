@@ -16,6 +16,7 @@
 package okhttp3;
 
 import java.io.IOException;
+import okio.Timeout;
 
 /**
  * A call is a request that has been prepared for execution. A call can be canceled. As this object
@@ -79,6 +80,15 @@ public interface Call extends Cloneable {
   boolean isExecuted();
 
   boolean isCanceled();
+
+  /**
+   * Returns a timeout that spans the entire call: resolving DNS, connecting, writing the request
+   * body, server processing, and reading the response body. If the call requires redirects or
+   * retries all must complete within one timeout period.
+   *
+   * <p>Configure the client's default timeout with {@link OkHttpClient.Builder#callTimeout}.
+   */
+  Timeout timeout();
 
   /**
    * Create a new, identical call to this one which can be enqueued or executed even if this call

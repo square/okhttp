@@ -32,6 +32,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
+import javax.annotation.Nullable;
 import javax.security.auth.x500.X500Principal;
 import okio.ByteString;
 import org.bouncycastle.asn1.ASN1Encodable;
@@ -203,14 +204,14 @@ public final class HeldCertificate {
 
     private long notBefore = -1L;
     private long notAfter = -1L;
-    private String cn;
-    private String ou;
+    private @Nullable String cn;
+    private @Nullable String ou;
     private final List<String> altNames = new ArrayList<>();
-    private BigInteger serialNumber;
-    private KeyPair keyPair;
-    private HeldCertificate signedBy;
+    private @Nullable BigInteger serialNumber;
+    private @Nullable KeyPair keyPair;
+    private @Nullable HeldCertificate signedBy;
     private int maxIntermediateCas = -1;
-    private String keyAlgorithm;
+    private @Nullable String keyAlgorithm;
     private int keySize;
 
     public Builder() {
@@ -331,7 +332,7 @@ public final class HeldCertificate {
      * 3.11.0. Note that the default may change in future releases.
      */
     public Builder ecdsa256() {
-      keyAlgorithm = "ECDSA";
+      keyAlgorithm = "EC";
       keySize = 256;
       return this;
     }
@@ -400,7 +401,7 @@ public final class HeldCertificate {
 
       try {
         X509Certificate certificate = generator.generateX509Certificate(
-            signedByKeyPair.getPrivate(), "BC");
+            signedByKeyPair.getPrivate());
         return new HeldCertificate(heldKeyPair, certificate);
       } catch (GeneralSecurityException e) {
         throw new AssertionError(e);
@@ -422,7 +423,7 @@ public final class HeldCertificate {
 
     private KeyPair generateKeyPair() {
       try {
-        KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance(keyAlgorithm, "BC");
+        KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance(keyAlgorithm);
         keyPairGenerator.initialize(keySize, new SecureRandom());
         return keyPairGenerator.generateKeyPair();
       } catch (GeneralSecurityException e) {

@@ -59,7 +59,6 @@ import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
 import okhttp3.internal.DoubleInetAddressDns;
 import okhttp3.internal.RecordingOkAuthenticator;
-import okhttp3.internal.SingleInetAddressDns;
 import okhttp3.internal.Util;
 import okhttp3.internal.Version;
 import okhttp3.internal.http.RecordingProxySelector;
@@ -398,7 +397,7 @@ public final class CallTest {
 
     String credential = Credentials.basic("jesse", "secret");
     client = client.newBuilder()
-        .authenticator(new RecordingOkAuthenticator(credential))
+        .authenticator(new RecordingOkAuthenticator(credential, null))
         .build();
 
     Response response = client.newCall(request).execute();
@@ -424,7 +423,7 @@ public final class CallTest {
 
     String credential = Credentials.basic("jesse", "secret");
     client = client.newBuilder()
-        .authenticator(new RecordingOkAuthenticator(credential))
+        .authenticator(new RecordingOkAuthenticator(credential, null))
         .build();
 
     executeSynchronously("/")
@@ -439,7 +438,7 @@ public final class CallTest {
 
     String credential = Credentials.basic("jesse", "secret");
     client = client.newBuilder()
-        .authenticator(new RecordingOkAuthenticator(credential))
+        .authenticator(new RecordingOkAuthenticator(credential, null))
         .build();
 
     try {
@@ -460,7 +459,7 @@ public final class CallTest {
         .setResponseCode(401)
         .setSocketPolicy(SocketPolicy.DISCONNECT_AT_END));
 
-    RecordingOkAuthenticator authenticator = new RecordingOkAuthenticator(null);
+    RecordingOkAuthenticator authenticator = new RecordingOkAuthenticator(null, null);
 
     client = client.newBuilder()
         .authenticator(authenticator)
@@ -1090,7 +1089,6 @@ public final class CallTest {
 
     client = client.newBuilder()
         .hostnameVerifier(new RecordingHostnameVerifier())
-        .dns(new SingleInetAddressDns())
         // Attempt RESTRICTED_TLS then fall back to MODERN_TLS.
         .connectionSpecs(Arrays.asList(ConnectionSpec.RESTRICTED_TLS, ConnectionSpec.MODERN_TLS))
         .sslSocketFactory(
@@ -1119,7 +1117,6 @@ public final class CallTest {
         // Attempt RESTRICTED_TLS then fall back to MODERN_TLS.
         .connectionSpecs(Arrays.asList(ConnectionSpec.RESTRICTED_TLS, ConnectionSpec.MODERN_TLS))
         .hostnameVerifier(new RecordingHostnameVerifier())
-        .dns(new SingleInetAddressDns())
         .build();
 
     Request request = new Request.Builder().url(server.url("/")).build();
@@ -1161,7 +1158,6 @@ public final class CallTest {
     client = client.newBuilder()
         .connectionSpecs(Arrays.asList(ConnectionSpec.MODERN_TLS, ConnectionSpec.CLEARTEXT))
         .hostnameVerifier(new RecordingHostnameVerifier())
-        .dns(new SingleInetAddressDns())
         .sslSocketFactory(
             suppressTlsFallbackClientSocketFactory(), handshakeCertificates.trustManager())
         .build();
@@ -1882,7 +1878,7 @@ public final class CallTest {
         .addHeader("Location: " + server2.url("/b")));
 
     client = client.newBuilder()
-        .authenticator(new RecordingOkAuthenticator(Credentials.basic("jesse", "secret")))
+        .authenticator(new RecordingOkAuthenticator(Credentials.basic("jesse", "secret"), null))
         .build();
 
     Request request = new Request.Builder().url(server.url("/a")).build();
@@ -2320,7 +2316,7 @@ public final class CallTest {
         .setBody(gzip("abcabcabc"))
         .addHeader("Content-Encoding: gzip"));
     client = client.newBuilder()
-        .authenticator(new RecordingOkAuthenticator("password"))
+        .authenticator(new RecordingOkAuthenticator("password", null))
         .build();
 
     executeSynchronously("/").assertBody("abcabcabc");
@@ -2724,7 +2720,7 @@ public final class CallTest {
         .sslSocketFactory(
             handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager())
         .proxy(server.toProxyAddress())
-        .proxyAuthenticator(new RecordingOkAuthenticator("password"))
+        .proxyAuthenticator(new RecordingOkAuthenticator("password", "Basic"))
         .hostnameVerifier(new RecordingHostnameVerifier())
         .build();
 
@@ -2757,7 +2753,7 @@ public final class CallTest {
 
     client = client.newBuilder()
         .proxy(server.toProxyAddress())
-        .proxyAuthenticator(new RecordingOkAuthenticator("password"))
+        .proxyAuthenticator(new RecordingOkAuthenticator("password", "Basic"))
         .build();
 
     Request request = new Request.Builder()
@@ -2796,7 +2792,7 @@ public final class CallTest {
         .sslSocketFactory(
             handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager())
         .proxy(server.toProxyAddress())
-        .proxyAuthenticator(new RecordingOkAuthenticator("password"))
+        .proxyAuthenticator(new RecordingOkAuthenticator("password", "Basic"))
         .hostnameVerifier(new RecordingHostnameVerifier())
         .build();
 
@@ -2830,7 +2826,7 @@ public final class CallTest {
         .sslSocketFactory(
             handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager())
         .proxy(server.toProxyAddress())
-        .proxyAuthenticator(new RecordingOkAuthenticator("password"))
+        .proxyAuthenticator(new RecordingOkAuthenticator("password", "Basic"))
         .hostnameVerifier(new RecordingHostnameVerifier())
         .build();
 
@@ -2849,7 +2845,7 @@ public final class CallTest {
    * We used to have that behavior but it is problematic because unrelated requests end up sharing
    * credentials. Worse, that approach leaks proxy credentials to the origin server.
    */
-  @Test public void noProactiveProxyAuthorization() throws Exception {
+  @Test public void noPreemptiveProxyAuthorization() throws Exception {
     server.useHttps(handshakeCertificates.sslSocketFactory(), true);
     server.enqueue(new MockResponse()
         .setSocketPolicy(SocketPolicy.UPGRADE_TO_SSL_AT_END)
@@ -2871,11 +2867,107 @@ public final class CallTest {
     Response response = client.newCall(request).execute();
     assertEquals("response body", response.body().string());
 
+    RecordedRequest connect1 = server.takeRequest();
+    assertNull(connect1.getHeader("Proxy-Authorization"));
+
+    RecordedRequest connect2 = server.takeRequest();
+    assertEquals("password", connect2.getHeader("Proxy-Authorization"));
+  }
+
+  /** Confirm that we can send authentication information without being prompted first. */
+  @Test public void preemptiveProxyAuthentication() throws Exception {
+    server.useHttps(handshakeCertificates.sslSocketFactory(), true);
+    server.enqueue(new MockResponse()
+        .setSocketPolicy(SocketPolicy.UPGRADE_TO_SSL_AT_END)
+        .clearHeaders());
+    server.enqueue(new MockResponse()
+        .setBody("encrypted response from the origin server"));
+
+    final String credential = Credentials.basic("jesse", "password1");
+
+    client = client.newBuilder()
+        .sslSocketFactory(
+            handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager())
+        .proxy(server.toProxyAddress())
+        .hostnameVerifier(new RecordingHostnameVerifier())
+        .proxyAuthenticator(new Authenticator() {
+          @Override public Request authenticate(Route route, Response response) {
+            assertEquals("CONNECT", response.request().method());
+            assertEquals(HttpURLConnection.HTTP_PROXY_AUTH, response.code());
+            assertEquals("android.com", response.request().url().host());
+
+            List<Challenge> challenges = response.challenges();
+            assertEquals("OkHttp-Preemptive", challenges.get(0).scheme());
+
+            return response.request().newBuilder()
+                .header("Proxy-Authorization", credential)
+                .build();
+          }
+        })
+        .build();
+
+    Request request = new Request.Builder()
+        .url("https://android.com/foo")
+        .build();
+
+    executeSynchronously(request).assertSuccessful();
+
     RecordedRequest connect = server.takeRequest();
-    assertNull(connect.getHeader("Proxy-Authorization"));
+    assertEquals("CONNECT", connect.getMethod());
+    assertEquals(credential, connect.getHeader("Proxy-Authorization"));
+    assertEquals("/", connect.getPath());
 
     RecordedRequest get = server.takeRequest();
-    assertEquals("password", get.getHeader("Proxy-Authorization"));
+    assertEquals("GET", get.getMethod());
+    assertNull(get.getHeader("Proxy-Authorization"));
+    assertEquals("/foo", get.getPath());
+  }
+
+  @Test public void preemptiveThenReactiveProxyAuthentication() throws Exception {
+    server.useHttps(handshakeCertificates.sslSocketFactory(), true);
+    server.enqueue(new MockResponse()
+        .setResponseCode(HttpURLConnection.HTTP_PROXY_AUTH)
+        .addHeader("Proxy-Authenticate", "Basic realm=\"localhost\"")
+        .setBody("proxy auth required"));
+    server.enqueue(new MockResponse()
+        .setSocketPolicy(SocketPolicy.UPGRADE_TO_SSL_AT_END)
+        .clearHeaders());
+    server.enqueue(new MockResponse());
+
+    final List<String> challengeSchemes = new ArrayList<>();
+    final String credential = Credentials.basic("jesse", "password1");
+
+    client = client.newBuilder()
+        .sslSocketFactory(
+            handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager())
+        .proxy(server.toProxyAddress())
+        .hostnameVerifier(new RecordingHostnameVerifier())
+        .proxyAuthenticator(new Authenticator() {
+          @Override public Request authenticate(Route route, Response response) {
+            List<Challenge> challenges = response.challenges();
+            challengeSchemes.add(challenges.get(0).scheme());
+            return response.request().newBuilder()
+                .header("Proxy-Authorization", credential)
+                .build();
+          }
+        })
+        .build();
+
+    Request request = new Request.Builder()
+        .url("https://android.com/foo")
+        .build();
+
+    executeSynchronously(request).assertSuccessful();
+
+    RecordedRequest connect1 = server.takeRequest();
+    assertEquals("CONNECT", connect1.getMethod());
+    assertEquals(credential, connect1.getHeader("Proxy-Authorization"));
+
+    RecordedRequest connect2 = server.takeRequest();
+    assertEquals("CONNECT", connect2.getMethod());
+    assertEquals(credential, connect2.getHeader("Proxy-Authorization"));
+
+    assertEquals(Arrays.asList("OkHttp-Preemptive", "Basic"), challengeSchemes);
   }
 
   @Test public void interceptorGetsHttp2() throws Exception {
@@ -3281,6 +3373,10 @@ public final class CallTest {
     Request request = new Request.Builder()
         .url(server.url("/"))
         .post(body)
+        .build();
+
+    client = client.newBuilder()
+        .dns(new DoubleInetAddressDns())
         .build();
 
     executeSynchronously(request)

@@ -15,10 +15,8 @@
  */
 package okhttp3;
 
-import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
-import java.net.UnknownHostException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -772,6 +770,19 @@ public final class HttpUrlTest {
     } catch (IllegalStateException expected) {
       assertEquals("scheme == null", expected.getMessage());
     }
+  }
+
+  @Test public void builderToString() {
+    assertEquals("https://host.com/path", parse("https://host.com/path").newBuilder().toString());
+  }
+
+  @Test public void incompleteBuilderToString() {
+    assertEquals("https:///path",
+        new HttpUrl.Builder().scheme("https").encodedPath("/path").toString());
+    assertEquals("//host.com/path",
+        new HttpUrl.Builder().host("host.com").encodedPath("/path").toString());
+    assertEquals("//host.com:8080/path",
+        new HttpUrl.Builder().host("host.com").encodedPath("/path").port(8080).toString());
   }
 
   @Test public void minimalUrlComposition() throws Exception {

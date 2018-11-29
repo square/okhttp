@@ -15,10 +15,12 @@
  */
 package okhttp3;
 
+import java.io.IOException;
 import java.net.Proxy;
 import java.net.ProxySelector;
 import java.net.Socket;
 import java.security.GeneralSecurityException;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -36,16 +38,17 @@ import javax.net.ssl.X509TrustManager;
 import okhttp3.internal.Internal;
 import okhttp3.internal.Util;
 import okhttp3.internal.cache.InternalCache;
-import okhttp3.internal.proxy.NullProxySelector;
 import okhttp3.internal.connection.RealConnection;
 import okhttp3.internal.connection.RouteDatabase;
 import okhttp3.internal.connection.StreamAllocation;
 import okhttp3.internal.platform.Platform;
+import okhttp3.internal.proxy.NullProxySelector;
 import okhttp3.internal.tls.CertificateChainCleaner;
 import okhttp3.internal.tls.OkHostnameVerifier;
 import okhttp3.internal.ws.RealWebSocket;
 import okio.Sink;
 import okio.Source;
+import org.codehaus.mojo.animal_sniffer.IgnoreJRERequirement;
 
 import static okhttp3.internal.Util.assertionError;
 import static okhttp3.internal.Util.checkDuration;
@@ -185,6 +188,10 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
         return ((RealCall) call).streamAllocation();
       }
 
+      @Override public @Nullable IOException timeoutExit(Call call, @Nullable IOException e) {
+        return ((RealCall) call).timeoutExit(e);
+      }
+
       @Override public Call newWebSocketCall(OkHttpClient client, Request originalRequest) {
         return RealCall.newRealCall(client, originalRequest, true);
       }
@@ -214,6 +221,7 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
   final boolean followSslRedirects;
   final boolean followRedirects;
   final boolean retryOnConnectionFailure;
+  final int callTimeout;
   final int connectTimeout;
   final int readTimeout;
   final int writeTimeout;
@@ -265,6 +273,7 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
     this.followSslRedirects = builder.followSslRedirects;
     this.followRedirects = builder.followRedirects;
     this.retryOnConnectionFailure = builder.retryOnConnectionFailure;
+    this.callTimeout = builder.callTimeout;
     this.connectTimeout = builder.connectTimeout;
     this.readTimeout = builder.readTimeout;
     this.writeTimeout = builder.writeTimeout;
@@ -286,6 +295,11 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
     } catch (GeneralSecurityException e) {
       throw assertionError("No System TLS", e); // The system has no TLS. Just give up.
     }
+  }
+
+  /** Default call timeout (in milliseconds). */
+  public int callTimeoutMillis() {
+    return callTimeout;
   }
 
   /** Default connect timeout (in milliseconds). */
@@ -450,6 +464,7 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
     boolean followSslRedirects;
     boolean followRedirects;
     boolean retryOnConnectionFailure;
+    int callTimeout;
     int connectTimeout;
     int readTimeout;
     int writeTimeout;
@@ -475,6 +490,7 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
       followSslRedirects = true;
       followRedirects = true;
       retryOnConnectionFailure = true;
+      callTimeout = 0;
       connectTimeout = 10_000;
       readTimeout = 10_000;
       writeTimeout = 10_000;
@@ -505,6 +521,7 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
       this.followSslRedirects = okHttpClient.followSslRedirects;
       this.followRedirects = okHttpClient.followRedirects;
       this.retryOnConnectionFailure = okHttpClient.retryOnConnectionFailure;
+      this.callTimeout = okHttpClient.callTimeout;
       this.connectTimeout = okHttpClient.connectTimeout;
       this.readTimeout = okHttpClient.readTimeout;
       this.writeTimeout = okHttpClient.writeTimeout;
@@ -512,15 +529,56 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
     }
 
     /**
+     * Sets the default timeout for complete calls. A value of 0 means no timeout, otherwise values
+     * must be between 1 and {@link Integer#MAX_VALUE} when converted to milliseconds.
+     *
+     * <p>The call timeout spans the entire call: resolving DNS, connecting, writing the request
+     * body, server processing, and reading the response body. If the call requires redirects or
+     * retries all must complete within one timeout period.
+     */
+    public Builder callTimeout(long timeout, TimeUnit unit) {
+      callTimeout = checkDuration("timeout", timeout, unit);
+      return this;
+    }
+
+    /**
+     * Sets the default timeout for complete calls. A value of 0 means no timeout, otherwise values
+     * must be between 1 and {@link Integer#MAX_VALUE} when converted to milliseconds.
+     *
+     * <p>The call timeout spans the entire call: resolving DNS, connecting, writing the request
+     * body, server processing, and reading the response body. If the call requires redirects or
+     * retries all must complete within one timeout period.
+     */
+    @IgnoreJRERequirement
+    public Builder callTimeout(Duration duration) {
+      callTimeout = checkDuration("timeout", duration.toMillis(), TimeUnit.MILLISECONDS);
+      return this;
+    }
+
+    /**
      * Sets the default connect timeout for new connections. A value of 0 means no timeout,
      * otherwise values must be between 1 and {@link Integer#MAX_VALUE} when converted to
      * milliseconds.
      *
-     * <p>The connectTimeout is applied when connecting a TCP socket to the target host.
+     * <p>The connect timeout is applied when connecting a TCP socket to the target host.
      * The default value is 10 seconds.
      */
     public Builder connectTimeout(long timeout, TimeUnit unit) {
       connectTimeout = checkDuration("timeout", timeout, unit);
+      return this;
+    }
+
+    /**
+     * Sets the default connect timeout for new connections. A value of 0 means no timeout,
+     * otherwise values must be between 1 and {@link Integer#MAX_VALUE} when converted to
+     * milliseconds.
+     *
+     * <p>The connect timeout is applied when connecting a TCP socket to the target host.
+     * The default value is 10 seconds.
+     */
+    @IgnoreJRERequirement
+    public Builder connectTimeout(Duration duration) {
+      connectTimeout = checkDuration("timeout", duration.toMillis(), TimeUnit.MILLISECONDS);
       return this;
     }
 
@@ -540,6 +598,22 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
     }
 
     /**
+     * Sets the default read timeout for new connections. A value of 0 means no timeout, otherwise
+     * values must be between 1 and {@link Integer#MAX_VALUE} when converted to milliseconds.
+     *
+     * <p>The read timeout is applied to both the TCP socket and for individual read IO operations
+     * including on {@link Source} of the {@link Response}. The default value is 10 seconds.
+     *
+     * @see Socket#setSoTimeout(int)
+     * @see Source#timeout()
+     */
+    @IgnoreJRERequirement
+    public Builder readTimeout(Duration duration) {
+      readTimeout = checkDuration("timeout", duration.toMillis(), TimeUnit.MILLISECONDS);
+      return this;
+    }
+
+    /**
      * Sets the default write timeout for new connections. A value of 0 means no timeout, otherwise
      * values must be between 1 and {@link Integer#MAX_VALUE} when converted to milliseconds.
      *
@@ -550,6 +624,21 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
      */
     public Builder writeTimeout(long timeout, TimeUnit unit) {
       writeTimeout = checkDuration("timeout", timeout, unit);
+      return this;
+    }
+
+    /**
+     * Sets the default write timeout for new connections. A value of 0 means no timeout, otherwise
+     * values must be between 1 and {@link Integer#MAX_VALUE} when converted to milliseconds.
+     *
+     * <p>The write timeout is applied for individual write IO operations.
+     * The default value is 10 seconds.
+     *
+     * @see Sink#timeout()
+     */
+    @IgnoreJRERequirement
+    public Builder writeTimeout(Duration duration) {
+      writeTimeout = checkDuration("timeout", duration.toMillis(), TimeUnit.MILLISECONDS);
       return this;
     }
 
@@ -568,6 +657,25 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
      */
     public Builder pingInterval(long interval, TimeUnit unit) {
       pingInterval = checkDuration("interval", interval, unit);
+      return this;
+    }
+
+    /**
+     * Sets the interval between HTTP/2 and web socket pings initiated by this client. Use this to
+     * automatically send ping frames until either the connection fails or it is closed. This keeps
+     * the connection alive and may detect connectivity failures.
+     *
+     * <p>If the server does not respond to each ping with a pong within {@code interval}, this
+     * client will assume that connectivity has been lost. When this happens on a web socket the
+     * connection is canceled and its listener is {@linkplain WebSocketListener#onFailure notified
+     * of the failure}. When it happens on an HTTP/2 connection the connection is closed and any
+     * calls it is carrying {@linkplain java.io.IOException will fail with an IOException}.
+     *
+     * <p>The default value of 0 disables client-initiated pings.
+     */
+    @IgnoreJRERequirement
+    public Builder pingInterval(Duration duration) {
+      pingInterval = checkDuration("timeout", duration.toMillis(), TimeUnit.MILLISECONDS);
       return this;
     }
 
@@ -641,6 +749,9 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
      */
     public Builder socketFactory(SocketFactory socketFactory) {
       if (socketFactory == null) throw new NullPointerException("socketFactory == null");
+      if (socketFactory instanceof SSLSocketFactory) {
+        throw new IllegalArgumentException("socketFactory instanceof SSLSocketFactory");
+      }
       this.socketFactory = socketFactory;
       return this;
     }

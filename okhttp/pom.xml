@@ -6,7 +6,7 @@
   <parent>
     <groupId>com.squareup.okhttp3</groupId>
     <artifactId>parent</artifactId>
-    <version>3.12.0-SNAPSHOT</version>
+    <version>3.13.0-SNAPSHOT</version>
   </parent>
 
   <artifactId>okhttp</artifactId>
@@ -30,6 +30,12 @@
     <dependency>
       <groupId>com.google.code.findbugs</groupId>
       <artifactId>jsr305</artifactId>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.codehaus.mojo</groupId>
+      <artifactId>animal-sniffer-annotations</artifactId>
+      <version>1.17</version>
       <scope>provided</scope>
     </dependency>
   </dependencies>

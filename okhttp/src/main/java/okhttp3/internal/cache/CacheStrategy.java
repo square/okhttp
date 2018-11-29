@@ -205,9 +205,6 @@ public final class CacheStrategy {
       }
 
       CacheControl responseCaching = cacheResponse.cacheControl();
-      if (responseCaching.immutable()) {
-        return new CacheStrategy(null, cacheResponse);
-      }
 
       long ageMillis = cacheResponseAge();
       long freshMillis = computeFreshnessLifetime();

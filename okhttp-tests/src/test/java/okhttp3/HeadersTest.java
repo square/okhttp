@@ -18,6 +18,7 @@ package okhttp3;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -25,6 +26,7 @@ import okhttp3.internal.Internal;
 import okhttp3.internal.http.HttpHeaders;
 import okhttp3.internal.http2.Header;
 import okhttp3.internal.http2.Http2Codec;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import static java.util.Collections.emptyList;
@@ -44,7 +46,7 @@ public final class HeadersTest {
   }
 
   @Test public void readNameValueBlockDropsForbiddenHeadersHttp2() throws IOException {
-    List<Header> headerBlock = headerEntries(
+    Headers headerBlock = Headers.of(
         ":status", "200 OK",
         ":version", "HTTP/1.1",
         "connection", "close");
@@ -119,6 +121,25 @@ public final class HeadersTest {
       fail();
     } catch (IllegalArgumentException expected) {
     }
+  }
+
+  @Test public void addUnsafeNonAsciiRejectsUnicodeName() {
+    try {
+      Headers headers = new Headers.Builder()
+          .addUnsafeNonAscii("héader1", "value1")
+          .build();
+      fail("Should have complained about invalid value");
+    } catch (IllegalArgumentException expected) {
+      assertEquals("Unexpected char 0xe9 at 1 in header name: héader1",
+          expected.getMessage());
+    }
+  }
+
+  @Test public void addUnsafeNonAsciiAcceptsUnicodeValue() {
+    Headers headers = new Headers.Builder()
+        .addUnsafeNonAscii("header1", "valué1")
+        .build();
+    assertEquals("header1: valué1\n", headers.toString());
   }
 
   @Test public void ofThrowsOddNumberOfHeaders() {
@@ -313,6 +334,46 @@ public final class HeadersTest {
     }
   }
 
+  @Test public void varargFactoryRejectsUnicodeInHeaderName() {
+    try {
+      Headers.of("héader1", "value1");
+      fail("Should have complained about invalid value");
+    } catch (IllegalArgumentException expected) {
+      assertEquals("Unexpected char 0xe9 at 1 in header name: héader1",
+          expected.getMessage());
+    }
+  }
+
+  @Test public void varargFactoryRejectsUnicodeInHeaderValue() {
+    try {
+      Headers.of("header1", "valué1");
+      fail("Should have complained about invalid value");
+    } catch (IllegalArgumentException expected) {
+      assertEquals("Unexpected char 0xe9 at 4 in header1 value: valué1",
+          expected.getMessage());
+    }
+  }
+
+  @Test public void mapFactoryRejectsUnicodeInHeaderName() {
+    try {
+      Headers.of(singletonMap("héader1", "value1"));
+      fail("Should have complained about invalid value");
+    } catch (IllegalArgumentException expected) {
+      assertEquals("Unexpected char 0xe9 at 1 in header name: héader1",
+          expected.getMessage());
+    }
+  }
+
+  @Test public void mapFactoryRejectsUnicodeInHeaderValue() {
+    try {
+      Headers.of(singletonMap("header1", "valué1"));
+      fail("Should have complained about invalid value");
+    } catch (IllegalArgumentException expected) {
+      assertEquals("Unexpected char 0xe9 at 4 in header1 value: valué1",
+          expected.getMessage());
+    }
+  }
+
   @Test public void headersEquals() {
     Headers headers1 = new Headers.Builder()
         .add("Connection", "close")
@@ -369,7 +430,7 @@ public final class HeadersTest {
         .build();
     List<Challenge> challenges = HttpHeaders.parseChallenges(headers, "WWW-Authenticate");
     assertEquals(1, challenges.size());
-    assertEquals("digest", challenges.get(0).scheme());
+    assertEquals("Digest", challenges.get(0).scheme());
     assertEquals("myrealm", challenges.get(0).realm());
     Map<String, String> expectedAuthParams = new LinkedHashMap<>();
     expectedAuthParams.put("realm", "myrealm");
@@ -386,7 +447,7 @@ public final class HeadersTest {
         .build();
     List<Challenge> challenges = HttpHeaders.parseChallenges(headers, "WWW-Authenticate");
     assertEquals(1, challenges.size());
-    assertEquals("digest", challenges.get(0).scheme());
+    assertEquals("Digest", challenges.get(0).scheme());
     assertEquals("myrealm", challenges.get(0).realm());
     Map<String, String> expectedAuthParams = new LinkedHashMap<>();
     expectedAuthParams.put("realm", "myrealm");
@@ -403,7 +464,7 @@ public final class HeadersTest {
         .build();
     List<Challenge> challenges = HttpHeaders.parseChallenges(headers, "WWW-Authenticate");
     assertEquals(1, challenges.size());
-    assertEquals("digest", challenges.get(0).scheme());
+    assertEquals("Digest", challenges.get(0).scheme());
     assertEquals("myrealm", challenges.get(0).realm());
     Map<String, String> expectedAuthParams = new LinkedHashMap<>();
     expectedAuthParams.put("realm", "myrealm");
@@ -420,7 +481,7 @@ public final class HeadersTest {
         .build();
     List<Challenge> challenges = HttpHeaders.parseChallenges(headers, "WWW-Authenticate");
     assertEquals(1, challenges.size());
-    assertEquals("digest", challenges.get(0).scheme());
+    assertEquals("Digest", challenges.get(0).scheme());
     assertNull(challenges.get(0).realm());
     Map<String, String> expectedAuthParams = new LinkedHashMap<>();
     expectedAuthParams.put("underrealm", "myrealm");
@@ -437,7 +498,7 @@ public final class HeadersTest {
         .build();
     List<Challenge> challenges = HttpHeaders.parseChallenges(headers, "WWW-Authenticate");
     assertEquals(1, challenges.size());
-    assertEquals("digest", challenges.get(0).scheme());
+    assertEquals("Digest", challenges.get(0).scheme());
     assertEquals("myrealm", challenges.get(0).realm());
     Map<String, String> expectedAuthParams = new LinkedHashMap<>();
     expectedAuthParams.put("realm", "myrealm");
@@ -454,7 +515,7 @@ public final class HeadersTest {
         .build();
     List<Challenge> challenges = HttpHeaders.parseChallenges(headers, "WWW-Authenticate");
     assertEquals(1, challenges.size());
-    assertEquals("digest", challenges.get(0).scheme());
+    assertEquals("Digest", challenges.get(0).scheme());
     assertEquals("myrealm", challenges.get(0).realm());
     Map<String, String> expectedAuthParams = new LinkedHashMap<>();
     expectedAuthParams.put("realm", "myrealm");
@@ -471,7 +532,7 @@ public final class HeadersTest {
         .build();
     List<Challenge> challenges = HttpHeaders.parseChallenges(headers, "WWW-Authenticate");
     assertEquals(1, challenges.size());
-    assertEquals("digest", challenges.get(0).scheme());
+    assertEquals("DiGeSt", challenges.get(0).scheme());
     assertEquals("myrealm", challenges.get(0).realm());
     Map<String, String> expectedAuthParams = new LinkedHashMap<>();
     expectedAuthParams.put("realm", "myrealm");
@@ -489,7 +550,7 @@ public final class HeadersTest {
         .build();
     List<Challenge> challenges = HttpHeaders.parseChallenges(headers, "WWW-Authenticate");
     assertEquals(1, challenges.size());
-    assertEquals("digest", challenges.get(0).scheme());
+    assertEquals("DIgEsT", challenges.get(0).scheme());
     assertEquals("myrealm", challenges.get(0).realm());
     Map<String, String> expectedAuthParams = new LinkedHashMap<>();
     expectedAuthParams.put("realm", "myrealm");
@@ -504,7 +565,7 @@ public final class HeadersTest {
         .add("WWW-Authenticate", "Digest realm=myrealm").build();
     List<Challenge> challenges = HttpHeaders.parseChallenges(headers, "WWW-Authenticate");
     assertEquals(1, challenges.size());
-    assertEquals("digest", challenges.get(0).scheme());
+    assertEquals("Digest", challenges.get(0).scheme());
     assertEquals("myrealm", challenges.get(0).realm());
     assertEquals(singletonMap("realm", "myrealm"), challenges.get(0).authParams());
   }
@@ -515,7 +576,7 @@ public final class HeadersTest {
         .add("WWW-Authenticate", "Digest").build();
     List<Challenge> challenges = HttpHeaders.parseChallenges(headers, "WWW-Authenticate");
     assertEquals(1, challenges.size());
-    assertEquals("digest", challenges.get(0).scheme());
+    assertEquals("Digest", challenges.get(0).scheme());
     assertNull(challenges.get(0).realm());
     assertEquals(emptyMap(), challenges.get(0).authParams());
   }
@@ -658,7 +719,9 @@ public final class HeadersTest {
         .add("WWW-Authenticate", "Digest,,,, Basic ,,,realm=\"my\\\\\\\\\"r\\ealm\"")
         .build();
 
-    assertEquals(emptyList(), HttpHeaders.parseChallenges(headers, "WWW-Authenticate"));
+    assertEquals(Arrays.asList(
+        new Challenge("Digest", Collections.<String, String>emptyMap())),
+        HttpHeaders.parseChallenges(headers, "WWW-Authenticate"));
   }
 
   @Test public void unescapedDoubleQuoteInQuotedString() {
@@ -666,15 +729,20 @@ public final class HeadersTest {
         .add("WWW-Authenticate", "Digest,,,, Basic ,,,realm=\"my\"realm\"")
         .build();
 
-    assertEquals(emptyList(), HttpHeaders.parseChallenges(headers, "WWW-Authenticate"));
+    assertEquals(Arrays.asList(
+        new Challenge("Digest", Collections.<String, String>emptyMap())),
+        HttpHeaders.parseChallenges(headers, "WWW-Authenticate"));
   }
 
+  @Ignore("TODO(jwilson): reject parameters that use invalid characters")
   @Test public void doubleQuoteInToken() {
     Headers headers = new Headers.Builder()
         .add("WWW-Authenticate", "Digest,,,, Basic ,,,realm=my\"realm")
         .build();
 
-    assertEquals(emptyList(), HttpHeaders.parseChallenges(headers, "WWW-Authenticate"));
+    assertEquals(Arrays.asList(
+        new Challenge("Digest", Collections.<String, String>emptyMap())),
+        HttpHeaders.parseChallenges(headers, "WWW-Authenticate"));
   }
 
   @Test public void token68InsteadOfAuthParams() {
@@ -692,7 +760,9 @@ public final class HeadersTest {
         .add("WWW-Authenticate", "Other abc==, realm=myrealm")
         .build();
 
-    assertEquals(emptyList(), HttpHeaders.parseChallenges(headers, "WWW-Authenticate"));
+    assertEquals(Arrays.asList(
+        new Challenge("Other", singletonMap((String) null, "abc=="))),
+        HttpHeaders.parseChallenges(headers, "WWW-Authenticate"));
   }
 
   @Test public void repeatedAuthParamKey() {
@@ -750,5 +820,44 @@ public final class HeadersTest {
         .add("ghi", "jkl")
         .build()
         .byteCount());
+  }
+
+  @Test public void addDate() {
+    Date expected = new Date(0);
+    Headers headers = new Headers.Builder()
+        .add("testDate", expected)
+        .build();
+    assertEquals("Thu, 01 Jan 1970 00:00:00 GMT", headers.get("testDate"));
+  }
+
+  @Test public void addDateNull() {
+    try {
+      new Headers.Builder()
+          .add("testDate", (Date) null)
+          .build();
+      fail();
+    } catch (NullPointerException expected) {
+      assertEquals("value for name testDate == null", expected.getMessage());
+    }
+  }
+
+  @Test public void setDate() {
+    Date expected = new Date(1000);
+    Headers headers = new Headers.Builder()
+        .add("testDate", new Date(0))
+        .set("testDate", expected)
+        .build();
+    assertEquals("Thu, 01 Jan 1970 00:00:01 GMT", headers.get("testDate"));
+  }
+
+  @Test public void setDateNull() {
+    try {
+      new Headers.Builder()
+          .set("testDate", (Date) null)
+          .build();
+      fail();
+    } catch (NullPointerException expected) {
+      assertEquals("value for name testDate == null", expected.getMessage());
+    }
   }
 }

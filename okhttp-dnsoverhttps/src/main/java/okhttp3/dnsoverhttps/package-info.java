@@ -1,3 +1,3 @@
 /** A DNS over HTTPS implementation for OkHttp. */
-@javax.annotation.ParametersAreNonnullByDefault
+@okhttp3.internal.annotations.EverythingIsNonNull
 package okhttp3.dnsoverhttps;

@@ -54,7 +54,7 @@ public final class Response implements Closeable {
   final long sentRequestAtMillis;
   final long receivedResponseAtMillis;
 
-  private volatile CacheControl cacheControl; // Lazily initialized.
+  private volatile @Nullable CacheControl cacheControl; // Lazily initialized.
 
   Response(Builder builder) {
     this.request = builder.request;
@@ -148,21 +148,11 @@ public final class Response implements Closeable {
    * applications should set a modest limit on {@code byteCount}, such as 1 MiB.
    */
   public ResponseBody peekBody(long byteCount) throws IOException {
-    BufferedSource source = body.source();
-    source.request(byteCount);
-    Buffer copy = source.buffer().clone();
-
-    // There may be more than byteCount bytes in source.buffer(). If there is, return a prefix.
-    Buffer result;
-    if (copy.size() > byteCount) {
-      result = new Buffer();
-      result.write(copy, byteCount);
-      copy.clear();
-    } else {
-      result = copy;
-    }
-
-    return ResponseBody.create(body.contentType(), result.size(), result);
+    BufferedSource peeked = body.source().peek();
+    Buffer buffer = new Buffer();
+    peeked.request(byteCount);
+    buffer.write(peeked, Math.min(byteCount, peeked.getBuffer().size()));
+    return ResponseBody.create(body.contentType(), buffer.size(), buffer);
   }
 
   /**
@@ -225,16 +215,15 @@ public final class Response implements Closeable {
   }
 
   /**
-   * Returns the RFC 7235 authorization challenges appropriate for this response's code.
-   * If the response code is 401 unauthorized, this returns the "WWW-Authenticate" challenges.
-   * If the response code is 407 proxy unauthorized, this returns the "Proxy-Authenticate"
-   * challenges. Otherwise this returns an empty list of challenges.
-   * <p>
-   * If a challenge uses the {@code token68} variant instead of auth params,
-   * there is exactly one auth param in the challenge at key {@code null}.
-   * Invalid headers and challenges are ignored.
-   * No semantic validation is done, for example that {@code Basic} auth must have a
-   * {@code realm} auth param, this is up to the caller that interprets these challenges.
+   * Returns the RFC 7235 authorization challenges appropriate for this response's code. If the
+   * response code is 401 unauthorized, this returns the "WWW-Authenticate" challenges. If the
+   * response code is 407 proxy unauthorized, this returns the "Proxy-Authenticate" challenges.
+   * Otherwise this returns an empty list of challenges.
+   *
+   * <p>If a challenge uses the {@code token68} variant instead of auth params, there is exactly one
+   * auth param in the challenge at key {@code null}. Invalid headers and challenges are ignored.
+   * No semantic validation is done, for example that {@code Basic} auth must have a {@code realm}
+   * auth param, this is up to the caller that interprets these challenges.
    */
   public List<Challenge> challenges() {
     String responseField;
@@ -302,16 +291,16 @@ public final class Response implements Closeable {
   }
 
   public static class Builder {
-    Request request;
-    Protocol protocol;
+    @Nullable Request request;
+    @Nullable Protocol protocol;
     int code = -1;
     String message;
     @Nullable Handshake handshake;
     Headers.Builder headers;
-    ResponseBody body;
-    Response networkResponse;
-    Response cacheResponse;
-    Response priorResponse;
+    @Nullable ResponseBody body;
+    @Nullable Response networkResponse;
+    @Nullable Response cacheResponse;
+    @Nullable Response priorResponse;
     long sentRequestAtMillis;
     long receivedResponseAtMillis;
 

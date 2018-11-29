@@ -35,7 +35,7 @@ public final class Request {
   final @Nullable RequestBody body;
   final Map<Class<?>, Object> tags;
 
-  private volatile CacheControl cacheControl; // Lazily initialized.
+  private volatile @Nullable CacheControl cacheControl; // Lazily initialized.
 
   Request(Builder builder) {
     this.url = builder.url;
@@ -117,10 +117,10 @@ public final class Request {
   }
 
   public static class Builder {
-    HttpUrl url;
+    @Nullable HttpUrl url;
     String method;
     Headers.Builder headers;
-    RequestBody body;
+    @Nullable RequestBody body;
 
     /** A mutable map of tags, or an immutable empty map if we don't have any. */
     Map<Class<?>, Object> tags = Collections.emptyMap();
