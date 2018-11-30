@@ -26,6 +26,7 @@ import java.util.List;
 import javax.annotation.Nullable;
 import okhttp3.Headers;
 import okhttp3.internal.Util;
+import okhttp3.internal.duplex.HeadersListener;
 import okio.AsyncTimeout;
 import okio.Buffer;
 import okio.BufferedSource;
@@ -61,7 +62,7 @@ public final class Http2Stream {
    * read}.
    */
   private final Deque<Headers> headersQueue = new ArrayDeque<>();
-  private Header.Listener headersListener;
+  private HeadersListener headersListener;
 
   /** True if response headers have been sent or received. */
   private boolean hasResponseHeaders;
@@ -314,11 +315,8 @@ public final class Http2Stream {
     }
   }
 
-  public synchronized void setHeadersListener(Header.Listener headersListener) {
+  public synchronized void setHeadersListener(HeadersListener headersListener) {
     this.headersListener = headersListener;
-    if (!headersQueue.isEmpty() && headersListener != null) {
-      notifyAll(); // We now have somewhere to deliver headers!
-    }
   }
 
   /**
@@ -354,7 +352,7 @@ public final class Http2Stream {
 
       while (true) {
         Headers headersToDeliver = null;
-        Header.Listener headersListenerToNotify = null;
+        HeadersListener headersListenerToNotify = null;
         long readBytesDelivered = -1;
         ErrorCode errorCodeToDeliver = null;
 
@@ -476,7 +474,7 @@ public final class Http2Stream {
     @Override public void close() throws IOException {
       long bytesDiscarded;
       List<Headers> headersToDeliver = null;
-      Header.Listener headersListenerToNotify = null;
+      HeadersListener headersListenerToNotify = null;
       synchronized (Http2Stream.this) {
         closed = true;
         bytesDiscarded = readBuffer.size();

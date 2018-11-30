@@ -32,6 +32,8 @@ import okhttp3.internal.cache.InternalCache;
 import okhttp3.internal.connection.RealConnection;
 import okhttp3.internal.connection.RouteDatabase;
 import okhttp3.internal.connection.StreamAllocation;
+import okhttp3.internal.duplex.HttpSink;
+import okhttp3.internal.http2.Http2Codec;
 
 /**
  * Escalate internal APIs in {@code okhttp3} so they can be used from OkHttp's implementation
@@ -78,4 +80,12 @@ public abstract class Internal {
   public abstract @Nullable IOException timeoutExit(Call call, @Nullable IOException e);
 
   public abstract Call newWebSocketCall(OkHttpClient client, Request request);
+
+  public abstract void setHttp2Codec(Response.Builder builder, Http2Codec http2Codec);
+
+  public abstract void httpSink(Response.Builder responseBuilder, HttpSink httpSink);
+
+  public abstract HttpSink httpSink(Response response);
+
+  public abstract boolean isDuplex(Request request);
 }
