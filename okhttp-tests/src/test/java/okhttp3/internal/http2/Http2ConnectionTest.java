@@ -18,7 +18,6 @@ package okhttp3.internal.http2;
 import java.io.IOException;
 import java.io.InterruptedIOException;
 import java.net.Socket;
-import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -26,6 +25,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import okhttp3.Headers;
+import okhttp3.internal.RecordingHeadersListener;
 import okhttp3.internal.Util;
 import okhttp3.internal.http2.MockHttp2Peer.InFrame;
 import okio.AsyncTimeout;
@@ -540,22 +540,6 @@ public final class Http2ConnectionTest {
     assertEquals(headerEntries("b", "banana"), synStream.headerBlock);
     InFrame requestData = peer.takeFrame();
     assertTrue(Arrays.equals("c3po".getBytes("UTF-8"), requestData.data));
-  }
-
-  static final class RecordingHeadersListener implements Header.Listener {
-    final ArrayDeque<Headers> receivedHeaders = new ArrayDeque<>();
-
-    @Override public void onHeaders(Headers headers) {
-      receivedHeaders.add(headers);
-    }
-
-    public List<Headers> takeAll() {
-      List<Headers> result = new ArrayList<>();
-      for (Headers headers; (headers = receivedHeaders.poll()) != null; ) {
-        result.add(headers);
-      }
-      return result;
-    }
   }
 
   @Test public void clientReadsHeadersDataHeadersData() throws Exception {

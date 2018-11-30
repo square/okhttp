@@ -59,6 +59,9 @@ import okhttp3.Response;
 import okhttp3.internal.Internal;
 import okhttp3.internal.NamedRunnable;
 import okhttp3.internal.Util;
+import okhttp3.internal.duplex.HeadersListener;
+import okhttp3.internal.duplex.HttpSink;
+import okhttp3.internal.duplex.MwsDuplexAccess;
 import okhttp3.internal.http.HttpMethod;
 import okhttp3.internal.http2.ErrorCode;
 import okhttp3.internal.http2.Header;
@@ -68,6 +71,7 @@ import okhttp3.internal.http2.Settings;
 import okhttp3.internal.platform.Platform;
 import okhttp3.internal.ws.RealWebSocket;
 import okhttp3.internal.ws.WebSocketProtocol;
+import okhttp3.mockwebserver.internal.duplex.DuplexResponseBody;
 import okio.Buffer;
 import okio.BufferedSink;
 import okio.BufferedSource;
@@ -101,6 +105,12 @@ import static okhttp3.mockwebserver.SocketPolicy.UPGRADE_TO_SSL_AT_END;
 public final class MockWebServer extends ExternalResource implements Closeable {
   static {
     Internal.initializeInstanceForTests();
+    MwsDuplexAccess.instance = new MwsDuplexAccess() {
+      @Override public void setBody(
+          MockResponse mockResponse, DuplexResponseBody duplexResponseBody) {
+        mockResponse.setBody(duplexResponseBody);
+      }
+    };
   }
 
   private static final int CLIENT_AUTH_NONE = 0;
@@ -924,7 +934,7 @@ public final class MockWebServer extends ExternalResource implements Closeable {
         socket.close();
         return;
       }
-      writeResponse(stream, response);
+      writeResponse(stream, request, response);
       if (logger.isLoggable(Level.INFO)) {
         logger.info(MockWebServer.this + " received request: " + request
             + " and responded: " + response + " protocol is " + protocol.toString());
@@ -962,7 +972,9 @@ public final class MockWebServer extends ExternalResource implements Closeable {
       Headers headers = httpHeaders.build();
 
       MockResponse peek = dispatcher.peek();
-      if (!readBody && peek.getSocketPolicy() == EXPECT_CONTINUE) {
+      if (peek.isDuplex()) {
+        readBody = false;
+      } else if (!readBody && peek.getSocketPolicy() == EXPECT_CONTINUE) {
         stream.writeHeaders(Collections.singletonList(
             new Header(Header.RESPONSE_STATUS, ByteString.encodeUtf8("100 Continue"))), true);
         stream.getConnection().flush();
@@ -984,7 +996,8 @@ public final class MockWebServer extends ExternalResource implements Closeable {
           sequenceNumber.getAndIncrement(), socket);
     }
 
-    private void writeResponse(Http2Stream stream, MockResponse response) throws IOException {
+    private void writeResponse(final Http2Stream stream,
+        final RecordedRequest request, final MockResponse response) throws IOException {
       Settings settings = response.getSettings();
       if (settings != null) {
         stream.getConnection().setSettings(settings);
@@ -1008,20 +1021,46 @@ public final class MockWebServer extends ExternalResource implements Closeable {
       sleepIfDelayed(response.getHeadersDelay(TimeUnit.MILLISECONDS));
 
       Buffer body = response.getBody();
-      boolean closeStreamAfterHeaders = body != null || !response.getPushPromises().isEmpty();
-      stream.writeHeaders(http2Headers, closeStreamAfterHeaders);
-      pushPromises(stream, response.getPushPromises());
+      boolean hasResponseBody = body != null
+          || !response.getPushPromises().isEmpty()
+          || response.isDuplex();
+      stream.writeHeaders(http2Headers, hasResponseBody);
+      pushPromises(stream, request, response.getPushPromises());
       if (body != null) {
         BufferedSink sink = Okio.buffer(stream.getSink());
         sleepIfDelayed(response.getBodyDelay(TimeUnit.MILLISECONDS));
         throttledTransfer(response, socket, body, sink, body.size(), false);
         sink.close();
-      } else if (closeStreamAfterHeaders) {
+      } else if (response.isDuplex()) {
+        final BufferedSink sink = Okio.buffer(stream.getSink());
+        final BufferedSource source = Okio.buffer(stream.getSource());
+        final DuplexResponseBody duplexResponseBody = response.getDuplexResponseBody();
+        HeadersListener headersListener =
+            duplexResponseBody.onRequest(request, source, new HttpSink() {
+              @Override public BufferedSink sink() {
+                return sink;
+              }
+
+              @Override public void headers(Headers headers) throws IOException {
+                List<Header> headerList = new ArrayList<>(headers.size() / 2);
+                for (int i = 0, size = headers.size(); i < size; i++) {
+                  headerList.add(new Header(headers.name(i), headers.value(i)));
+                }
+                stream.writeHeaders(headerList, true);
+              }
+
+              @Override public void close() throws IOException {
+                sink.close();
+              }
+            });
+        stream.setHeadersListener(headersListener);
+      } else if (hasResponseBody) {
         stream.close(ErrorCode.NO_ERROR);
       }
     }
 
-    private void pushPromises(Http2Stream stream, List<PushPromise> promises) throws IOException {
+    private void pushPromises(Http2Stream stream, RecordedRequest request,
+        List<PushPromise> promises) throws IOException {
       for (PushPromise pushPromise : promises) {
         List<Header> pushedHeaders = new ArrayList<>();
         pushedHeaders.add(new Header(Header.TARGET_AUTHORITY, url(pushPromise.path()).host()));
@@ -1038,7 +1077,7 @@ public final class MockWebServer extends ExternalResource implements Closeable {
         boolean hasBody = pushPromise.response().getBody() != null;
         Http2Stream pushedStream =
             stream.getConnection().pushStream(stream.getId(), pushedHeaders, hasBody);
-        writeResponse(pushedStream, pushPromise.response());
+        writeResponse(pushedStream, request, pushPromise.response());
       }
     }
   }

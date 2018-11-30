@@ -31,6 +31,7 @@ import okhttp3.ResponseBody;
 import okhttp3.internal.Internal;
 import okhttp3.internal.Util;
 import okhttp3.internal.connection.StreamAllocation;
+import okhttp3.internal.duplex.HeadersListener;
 import okhttp3.internal.http.HttpCodec;
 import okhttp3.internal.http.HttpHeaders;
 import okhttp3.internal.http.RealResponseBody;
@@ -112,11 +113,22 @@ public final class Http2Codec implements HttpCodec {
   @Override public void writeRequestHeaders(Request request) throws IOException {
     if (stream != null) return;
 
-    boolean hasRequestBody = request.body() != null;
+    boolean hasRequestBody = request.body() != null || Internal.instance.isDuplex(request);
     List<Header> requestHeaders = http2HeadersList(request);
     stream = connection.newStream(requestHeaders, hasRequestBody);
     stream.readTimeout().timeout(chain.readTimeoutMillis(), TimeUnit.MILLISECONDS);
     stream.writeTimeout().timeout(chain.writeTimeoutMillis(), TimeUnit.MILLISECONDS);
+  }
+
+  /** Write more headers for the request. */
+  public void writeRequestHeaders(List<Header> headers) throws IOException {
+    if (stream == null) throw new IllegalStateException("stream == null");
+    stream.writeHeaders(headers, true);
+  }
+
+  public void setHeadersListener(HeadersListener headersListener) {
+    if (stream == null) throw new IllegalStateException("stream == null");
+    stream.setHeadersListener(headersListener);
   }
 
   @Override public void flushRequest() throws IOException {

@@ -24,6 +24,7 @@ import okhttp3.EventListener;
 import okhttp3.Interceptor;
 import okhttp3.Request;
 import okhttp3.Response;
+import okhttp3.internal.Internal;
 import okhttp3.internal.connection.RealConnection;
 import okhttp3.internal.connection.StreamAllocation;
 
@@ -160,6 +161,11 @@ public final class RealInterceptorChain implements Interceptor.Chain {
     if (response.body() == null) {
       throw new IllegalStateException(
           "interceptor " + interceptor + " returned a response with no body");
+    }
+
+    if (Internal.instance.isDuplex(request) && Internal.instance.httpSink(response) == null) {
+      throw new IllegalStateException(
+          "interceptor " + interceptor + " returned a response with no httpSink");
     }
 
     return response;

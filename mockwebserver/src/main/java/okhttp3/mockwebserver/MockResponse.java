@@ -22,6 +22,7 @@ import okhttp3.Headers;
 import okhttp3.WebSocketListener;
 import okhttp3.internal.Internal;
 import okhttp3.internal.http2.Settings;
+import okhttp3.mockwebserver.internal.duplex.DuplexResponseBody;
 import okio.Buffer;
 
 /** A scripted response to be replayed by the mock web server. */
@@ -49,6 +50,7 @@ public final class MockResponse implements Cloneable {
   private List<PushPromise> promises = new ArrayList<>();
   private Settings settings;
   private WebSocketListener webSocketListener;
+  private DuplexResponseBody duplexResponseBody;
 
   /** Creates a new mock response with an empty body. */
   public MockResponse() {
@@ -155,6 +157,14 @@ public final class MockResponse implements Cloneable {
     return this;
   }
 
+  boolean isDuplex() {
+    return duplexResponseBody != null;
+  }
+
+  DuplexResponseBody getDuplexResponseBody() {
+    return duplexResponseBody;
+  }
+
   /** Returns a copy of the raw HTTP payload. */
   public Buffer getBody() {
     return body != null ? body.clone() : null;
@@ -169,6 +179,11 @@ public final class MockResponse implements Cloneable {
   /** Sets the response body to the UTF-8 encoded bytes of {@code body}. */
   public MockResponse setBody(String body) {
     return setBody(new Buffer().writeUtf8(body));
+  }
+
+  MockResponse setBody(DuplexResponseBody duplexResponseBody) {
+    this.duplexResponseBody = duplexResponseBody;
+    return this;
   }
 
   /**
