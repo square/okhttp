@@ -23,6 +23,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.InetSocketAddress;
 import java.net.Socket;
+import java.net.UnknownHostException;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.Certificate;
 import java.security.cert.TrustAnchor;
@@ -77,6 +78,16 @@ class AndroidPlatform extends Platform {
       // see https://issuetracker.google.com/issues/63649622
       if (Build.VERSION.SDK_INT == 26) {
         throw new IOException("Exception in connect", e);
+      } else {
+        throw e;
+      }
+    } catch (UnknownHostException e) {
+      if (address.isUnresolved() && Build.VERSION.SDK_INT <= 23) {
+        IOException ioException = new IOException(
+            "Android M and older throw this exception when a SOCKS proxy is enabled. "
+            + "To resolve this problem, set a custom Dns in OkHttpClient.Builder.");
+        ioException.initCause(e);
+        throw ioException;
       } else {
         throw e;
       }
