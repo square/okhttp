@@ -41,6 +41,7 @@ import okhttp3.internal.cache.InternalCache;
 import okhttp3.internal.connection.RealConnection;
 import okhttp3.internal.connection.RouteDatabase;
 import okhttp3.internal.connection.StreamAllocation;
+import okhttp3.internal.duplex.HeadersListener;
 import okhttp3.internal.duplex.HttpSink;
 import okhttp3.internal.http2.Http2Codec;
 import okhttp3.internal.platform.Platform;
@@ -198,6 +199,10 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
         return RealCall.newRealCall(client, originalRequest, true);
       }
 
+      @Override public void duplex(Request.Builder requestBuilder, String method) {
+        requestBuilder.duplex(method);
+      }
+
       @Override public void setHttp2Codec(Response.Builder builder, Http2Codec http2Codec) {
         builder.http2Codec(http2Codec);
       }
@@ -212,6 +217,10 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
 
       @Override public boolean isDuplex(Request request) {
         return request.isDuplex();
+      }
+
+      @Override public void headersListener(Response response, HeadersListener headersListener) {
+        response.headersListener(headersListener);
       }
     };
   }
