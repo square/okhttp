@@ -22,6 +22,7 @@ import java.net.URLConnection;
 import java.net.URLStreamHandler;
 import java.net.URLStreamHandlerFactory;
 import okhttp3.internal.URLFilter;
+import okhttp3.internal.annotations.EverythingIsNonNull;
 import okhttp3.internal.huc.OkHttpURLConnection;
 import okhttp3.internal.huc.OkHttpsURLConnection;
 
@@ -30,6 +31,7 @@ import okhttp3.internal.huc.OkHttpsURLConnection;
  * upcoming release. Applications that need this should either downgrade to the system's built-in
  * {@link HttpURLConnection} or upgrade to OkHttp's Request/Response API.
  */
+@EverythingIsNonNull
 public final class OkUrlFactory implements URLStreamHandlerFactory, Cloneable {
   private OkHttpClient client;
   private URLFilter urlFilter;
