@@ -32,7 +32,11 @@ import org.conscrypt.Conscrypt;
  * Requires org.conscrypt:conscrypt-openjdk-uber on the classpath.
  */
 public class ConscryptPlatform extends Platform {
-  // Default disabled
+  // Default disabled. Conscrypt restricts ciphers allowed for use with TLSv1.3 which can result in
+  // unexpected behavior documented here:
+  // https://github.com/google/conscrypt/blob/master/CAPABILITIES.md#cipher-suites
+  // The Conscrypt provided trust manager applies a default HostnameVerifier
+  // which may cause additional unexpected behavior.
   private final boolean enableTls13 = Boolean.getBoolean("okhttp.platform.conscrypt.tls13");
 
   private ConscryptPlatform() {
