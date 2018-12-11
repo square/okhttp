@@ -32,11 +32,18 @@ import org.conscrypt.Conscrypt;
  * Requires org.conscrypt:conscrypt-openjdk-uber on the classpath.
  */
 public class ConscryptPlatform extends Platform {
+  // Default disabled
+  private final boolean enableTls13 = Boolean.getBoolean("okhttp.platform.conscrypt.tls13");
+
   private ConscryptPlatform() {
   }
 
   private Provider getProvider() {
-    return Conscrypt.newProviderBuilder().provideTrustManager().build();
+    if (enableTls13) {
+      return Conscrypt.newProviderBuilder().provideTrustManager().build();
+    } else {
+      return Conscrypt.newProvider();
+    }
   }
 
   @Override public @Nullable X509TrustManager trustManager(SSLSocketFactory sslSocketFactory) {
@@ -86,15 +93,18 @@ public class ConscryptPlatform extends Platform {
   }
 
   @Override public SSLContext getSSLContext() {
-    try {
-      return SSLContext.getInstance("TLSv1.3", getProvider());
-    } catch (NoSuchAlgorithmException e) {
+    if (enableTls13) {
       try {
-        // Allow for Conscrypt 1.2
-        return SSLContext.getInstance("TLS", getProvider());
-      } catch (NoSuchAlgorithmException e2) {
-        throw new IllegalStateException("No TLS provider", e);
+        return SSLContext.getInstance("TLSv1.3", getProvider());
+      } catch (NoSuchAlgorithmException ignored) {
+        // fall through to
       }
+    }
+    try {
+      // Allow for Conscrypt 1.2
+      return SSLContext.getInstance("TLS", getProvider());
+    } catch (NoSuchAlgorithmException e) {
+      throw new IllegalStateException("No TLS provider", e);
     }
   }
 

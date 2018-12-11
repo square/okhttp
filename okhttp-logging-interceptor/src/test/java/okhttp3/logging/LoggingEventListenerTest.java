@@ -26,6 +26,7 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
+import okhttp3.internal.platform.Platform;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import okhttp3.mockwebserver.SocketPolicy;
@@ -37,6 +38,7 @@ import org.junit.Test;
 import static okhttp3.tls.internal.TlsUtil.localhost;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.fail;
+import static org.junit.Assume.assumeFalse;
 
 public final class LoggingEventListenerTest {
   private static final MediaType PLAIN = MediaType.get("text/plain");
@@ -131,6 +133,7 @@ public final class LoggingEventListenerTest {
 
   @Test
   public void secureGet() throws Exception {
+    assumeFalse(Platform.isConscryptPreferred()); // Conscrypt may use different ciphers
     server.useHttps(handshakeCertificates.sslSocketFactory(), false);
     url = server.url("/");
 
@@ -198,6 +201,7 @@ public final class LoggingEventListenerTest {
 
   @Test
   public void connectFail() {
+    assumeFalse(Platform.isConscryptPreferred()); // Conscrypt may produce different exception messages
     server.useHttps(handshakeCertificates.sslSocketFactory(), false);
     server.enqueue(new MockResponse().setSocketPolicy(SocketPolicy.FAIL_HANDSHAKE));
     url = server.url("/");
