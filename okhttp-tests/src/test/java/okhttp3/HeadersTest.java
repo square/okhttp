@@ -64,12 +64,26 @@ public final class HeadersTest {
         .header("Connection", "upgrade")
         .header("Upgrade", "websocket")
         .header("Host", "square.com")
+        .header("TE", "gzip")
         .build();
     List<Header> expected = headerEntries(
         ":method", "GET",
         ":path", "/",
         ":authority", "square.com",
         ":scheme", "http");
+    assertEquals(expected, Http2Codec.http2HeadersList(request));
+  }
+
+  @Test public void http2HeadersListDontDropTeIfTrailersHttp2() {
+    Request request = new Request.Builder()
+        .url("http://square.com/")
+        .header("TE", "trailers")
+        .build();
+    List<Header> expected = headerEntries(
+        ":method", "GET",
+        ":path", "/",
+        ":scheme", "http",
+        "te", "trailers");
     assertEquals(expected, Http2Codec.http2HeadersList(request));
   }
 
