@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.lang.reflect.Field;
 import java.net.InetSocketAddress;
 import java.net.Socket;
+import java.security.AccessControlException;
 import java.security.NoSuchAlgorithmException;
 import java.security.Security;
 import java.util.ArrayList;
@@ -75,10 +76,10 @@ import okio.Buffer;
  * <p>Supported on Android 6.0+ via {@code NetworkSecurityPolicy}.
  */
 public class Platform {
+  private static final Logger logger = Logger.getLogger(OkHttpClient.class.getName());
   private static final Platform PLATFORM = findPlatform();
   public static final int INFO = 4;
   public static final int WARN = 5;
-  private static final Logger logger = Logger.getLogger(OkHttpClient.class.getName());
 
   public static Platform get() {
     return PLATFORM;
@@ -187,8 +188,12 @@ public class Platform {
 
   public static boolean isConscryptPreferred() {
     // mainly to allow tests to run cleanly
-    if ("conscrypt".equals(System.getProperty("okhttp.platform"))) {
-      return true;
+    try {
+      if ("conscrypt".equals(System.getProperty("okhttp.platform"))) {
+        return true;
+      }
+    } catch (AccessControlException ex) {
+      logger.log(Level.WARNING, "Cannot read the okhttp.platform property", ex);
     }
 
     // check if Provider manually installed
