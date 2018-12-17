@@ -162,7 +162,8 @@ public final class Http2Codec implements HttpCodec {
     for (int i = 0, size = headers.size(); i < size; i++) {
       // header names must be lowercase.
       ByteString name = ByteString.encodeUtf8(headers.name(i).toLowerCase(Locale.US));
-      if (!HTTP_2_SKIPPED_REQUEST_HEADERS.contains(name.utf8())) {
+      if (!HTTP_2_SKIPPED_REQUEST_HEADERS.contains(name.utf8())
+          || name.utf8().equals(TE) && headers.value(i).equals("trailers")) {
         result.add(new Header(name, headers.value(i)));
       }
     }
