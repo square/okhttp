@@ -37,7 +37,6 @@ import okhttp3.internal.http.RealResponseBody;
 import okhttp3.internal.http.RequestLine;
 import okhttp3.internal.http.StatusLine;
 import okio.Buffer;
-import okio.ByteString;
 import okio.ForwardingSource;
 import okio.Okio;
 import okio.Sink;
@@ -155,9 +154,9 @@ public final class Http2Codec implements HttpCodec {
 
     for (int i = 0, size = headers.size(); i < size; i++) {
       // header names must be lowercase.
-      ByteString name = ByteString.encodeUtf8(headers.name(i).toLowerCase(Locale.US));
-      if (!HTTP_2_SKIPPED_REQUEST_HEADERS.contains(name.utf8())
-          || name.utf8().equals(TE) && headers.value(i).equals("trailers")) {
+      String name = headers.name(i).toLowerCase(Locale.US);
+      if (!HTTP_2_SKIPPED_REQUEST_HEADERS.contains(name)
+          || name.equals(TE) && headers.value(i).equals("trailers")) {
         result.add(new Header(name, headers.value(i)));
       }
     }
