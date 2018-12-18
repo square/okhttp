@@ -16,14 +16,13 @@
 package okhttp3.mockwebserver.internal.duplex;
 
 import java.io.IOException;
-import okhttp3.internal.duplex.HeadersListener;
-import okhttp3.internal.duplex.HttpSink;
 import okhttp3.mockwebserver.RecordedRequest;
+import okio.BufferedSink;
 import okio.BufferedSource;
 
 public interface DuplexResponseBody {
-  HeadersListener onRequest(
+  void onRequest(
       RecordedRequest request,
       BufferedSource requestBodySource,
-      HttpSink responseBodySink) throws IOException;
+      BufferedSink responseBodySink) throws IOException;
 }
