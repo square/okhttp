@@ -31,6 +31,7 @@ public final class MockResponse implements Cloneable {
 
   private String status;
   private Headers.Builder headers = new Headers.Builder();
+  private Headers.Builder trailers = new Headers.Builder();
 
   private Buffer body;
 
@@ -100,6 +101,10 @@ public final class MockResponse implements Cloneable {
     return headers.build();
   }
 
+  public Headers getTrailers() {
+    return trailers.build();
+  }
+
   /**
    * Removes all HTTP headers including any "Content-Length" and "Transfer-encoding" headers that
    * were added by default.
@@ -145,9 +150,15 @@ public final class MockResponse implements Cloneable {
     return addHeader(name, value);
   }
 
-  /** Replaces all headers with those specified in {@code headers}. */
+  /** Replaces all headers with those specified. */
   public MockResponse setHeaders(Headers headers) {
     this.headers = headers.newBuilder();
+    return this;
+  }
+
+  /** Replaces all trailers with those specified. */
+  public MockResponse setTrailers(Headers trailers) {
+    this.trailers = trailers.newBuilder();
     return this;
   }
 
