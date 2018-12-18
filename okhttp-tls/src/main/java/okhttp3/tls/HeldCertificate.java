@@ -400,8 +400,7 @@ public final class HeldCertificate {
       }
 
       try {
-        X509Certificate certificate = generator.generateX509Certificate(
-            signedByKeyPair.getPrivate());
+        X509Certificate certificate = generator.generate(signedByKeyPair.getPrivate());
         return new HeldCertificate(heldKeyPair, certificate);
       } catch (GeneralSecurityException e) {
         throw new AssertionError(e);
