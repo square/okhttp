@@ -29,6 +29,7 @@ import java.net.Proxy;
 import java.net.SocketPermission;
 import java.net.URL;
 import java.net.UnknownHostException;
+import java.security.AccessControlException;
 import java.security.Permission;
 import java.util.Arrays;
 import java.util.Collections;
@@ -414,7 +415,13 @@ public final class OkHttpURLConnection extends HttpURLConnection implements Call
   }
 
   private String defaultUserAgent() {
-    String agent = System.getProperty("http.agent");
+    String agent = null;
+    try {
+      agent = System.getProperty("http.agent");
+    } catch (AccessControlException ex) {
+      Platform.get().log(WARN, "Cannot read the http.agent property", ex);
+    }
+
     return agent != null ? toHumanReadableAscii(agent) : Version.userAgent();
   }
 
