@@ -17,9 +17,6 @@ package okhttp3.internal.http;
 
 import java.io.IOException;
 import java.net.ProtocolException;
-import java.util.ArrayList;
-import java.util.List;
-import okhttp3.Headers;
 import okhttp3.Interceptor;
 import okhttp3.Request;
 import okhttp3.Response;
@@ -27,9 +24,6 @@ import okhttp3.internal.Internal;
 import okhttp3.internal.Util;
 import okhttp3.internal.connection.RealConnection;
 import okhttp3.internal.connection.StreamAllocation;
-import okhttp3.internal.duplex.HttpSink;
-import okhttp3.internal.http2.Header;
-import okhttp3.internal.http2.Http2Codec;
 import okio.Buffer;
 import okio.BufferedSink;
 import okio.ForwardingSink;
@@ -57,7 +51,7 @@ public final class CallServerInterceptor implements Interceptor {
     httpCodec.writeRequestHeaders(request);
     realChain.eventListener().requestHeadersEnd(realChain.call(), request);
 
-    HttpSink httpSink = null;
+    BufferedSink requestBodySink = null;
     Response.Builder responseBuilder = null;
     if (HttpMethod.permitsRequestBody(request.method())
         && (request.body() != null || Internal.instance.isDuplex(request))) {
@@ -75,26 +69,7 @@ public final class CallServerInterceptor implements Interceptor {
           // Prepare a duplex body so that the application can send a request body later.
           final CountingSink requestBodyOut =
               new CountingSink(httpCodec.createRequestBody(request, -1L));
-          final BufferedSink bufferedRequestBody = Okio.buffer(requestBodyOut);
-          httpSink = new HttpSink() {
-            @Override public BufferedSink sink() {
-              return bufferedRequestBody;
-            }
-
-            @Override public void headers(Headers headers) throws IOException {
-              List<Header> headerBlock = new ArrayList<>(headers.size() / 2);
-              for (int i = 0, size = headers.size(); i < size; i++) {
-                headerBlock.add(new Header(headers.name(i), headers.value(i)));
-              }
-              ((Http2Codec) httpCodec).writeRequestHeaders(headerBlock);
-            }
-
-            @Override public void close() throws IOException {
-              bufferedRequestBody.close();
-              realChain.eventListener()
-                  .requestBodyEnd(realChain.call(), requestBodyOut.successfulCount);
-            }
-          };
+          requestBodySink = Okio.buffer(requestBodyOut);
         } else {
           // Write the request body if the "Expect: 100-continue" expectation was met.
           realChain.eventListener().requestBodyStart(realChain.call());
@@ -132,7 +107,7 @@ public final class CallServerInterceptor implements Interceptor {
         .handshake(streamAllocation.connection().handshake())
         .sentRequestAtMillis(sentRequestMillis)
         .receivedResponseAtMillis(System.currentTimeMillis());
-    Internal.instance.httpSinkAndCodec(responseBuilder, httpSink, httpCodec);
+    Internal.instance.sinkAndCodec(responseBuilder, requestBodySink, httpCodec);
     Response response = responseBuilder.build();
 
     int code = response.code();
@@ -146,7 +121,7 @@ public final class CallServerInterceptor implements Interceptor {
           .handshake(streamAllocation.connection().handshake())
           .sentRequestAtMillis(sentRequestMillis)
           .receivedResponseAtMillis(System.currentTimeMillis());
-      Internal.instance.httpSinkAndCodec(responseBuilder, httpSink, httpCodec);
+      Internal.instance.sinkAndCodec(responseBuilder, requestBodySink, httpCodec);
       response = responseBuilder.build();
 
       code = response.code();

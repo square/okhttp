@@ -59,7 +59,6 @@ import okhttp3.Response;
 import okhttp3.internal.Internal;
 import okhttp3.internal.NamedRunnable;
 import okhttp3.internal.Util;
-import okhttp3.internal.duplex.HttpSink;
 import okhttp3.internal.duplex.MwsDuplexAccess;
 import okhttp3.internal.http.HttpMethod;
 import okhttp3.internal.http2.ErrorCode;
@@ -1041,23 +1040,7 @@ public final class MockWebServer extends ExternalResource implements Closeable {
         final BufferedSink sink = Okio.buffer(stream.getSink());
         final BufferedSource source = Okio.buffer(stream.getSource());
         final DuplexResponseBody duplexResponseBody = response.getDuplexResponseBody();
-            duplexResponseBody.onRequest(request, source, new HttpSink() {
-              @Override public BufferedSink sink() {
-                return sink;
-              }
-
-              @Override public void headers(Headers headers) throws IOException {
-                List<Header> headerList = new ArrayList<>(headers.size() / 2);
-                for (int i = 0, size = headers.size(); i < size; i++) {
-                  headerList.add(new Header(headers.name(i), headers.value(i)));
-                }
-                stream.writeHeaders(headerList, true);
-              }
-
-              @Override public void close() throws IOException {
-                sink.close();
-              }
-            });
+        duplexResponseBody.onRequest(request, source, sink);
       } else if (hasResponseBody) {
         stream.close(ErrorCode.NO_ERROR);
       }

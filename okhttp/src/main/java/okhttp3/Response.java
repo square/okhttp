@@ -20,10 +20,10 @@ import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 import javax.annotation.Nullable;
-import okhttp3.internal.duplex.HttpSink;
 import okhttp3.internal.http.HttpCodec;
 import okhttp3.internal.http.HttpHeaders;
 import okio.Buffer;
+import okio.BufferedSink;
 import okio.BufferedSource;
 
 import static java.net.HttpURLConnection.HTTP_MOVED_PERM;
@@ -55,7 +55,7 @@ public final class Response implements Closeable {
   final @Nullable Response priorResponse;
   final long sentRequestAtMillis;
   final long receivedResponseAtMillis;
-  final HttpSink httpSink;
+  final BufferedSink sink;
   final @Nullable HttpCodec httpCodec;
 
   private volatile @Nullable CacheControl cacheControl; // Lazily initialized.
@@ -73,7 +73,7 @@ public final class Response implements Closeable {
     this.priorResponse = builder.priorResponse;
     this.sentRequestAtMillis = builder.sentRequestAtMillis;
     this.receivedResponseAtMillis = builder.receivedResponseAtMillis;
-    this.httpSink = builder.httpSink;
+    this.sink = builder.sink;
     this.httpCodec = builder.httpCodec;
   }
 
@@ -304,8 +304,8 @@ public final class Response implements Closeable {
         + '}';
   }
 
-  HttpSink httpSink() {
-    return httpSink;
+  BufferedSink sink() {
+    return sink;
   }
 
   public static class Builder {
@@ -321,7 +321,7 @@ public final class Response implements Closeable {
     @Nullable Response priorResponse;
     long sentRequestAtMillis;
     long receivedResponseAtMillis;
-    @Nullable HttpSink httpSink;
+    @Nullable BufferedSink sink;
     @Nullable HttpCodec httpCodec;
 
     public Builder() {
@@ -341,7 +341,7 @@ public final class Response implements Closeable {
       this.priorResponse = response.priorResponse;
       this.sentRequestAtMillis = response.sentRequestAtMillis;
       this.receivedResponseAtMillis = response.receivedResponseAtMillis;
-      this.httpSink = response.httpSink;
+      this.sink = response.sink;
       this.httpCodec = response.httpCodec;
     }
 
@@ -450,8 +450,8 @@ public final class Response implements Closeable {
       return this;
     }
 
-    void httpSinkAndCodec(HttpSink httpSink, HttpCodec httpCodec) {
-      this.httpSink = httpSink;
+    void sinkAndCodec(BufferedSink sink, HttpCodec httpCodec) {
+      this.sink = sink;
       this.httpCodec = httpCodec;
     }
 

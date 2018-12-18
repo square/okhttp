@@ -41,13 +41,13 @@ import okhttp3.internal.cache.InternalCache;
 import okhttp3.internal.connection.RealConnection;
 import okhttp3.internal.connection.RouteDatabase;
 import okhttp3.internal.connection.StreamAllocation;
-import okhttp3.internal.duplex.HttpSink;
 import okhttp3.internal.http.HttpCodec;
 import okhttp3.internal.platform.Platform;
 import okhttp3.internal.proxy.NullProxySelector;
 import okhttp3.internal.tls.CertificateChainCleaner;
 import okhttp3.internal.tls.OkHostnameVerifier;
 import okhttp3.internal.ws.RealWebSocket;
+import okio.BufferedSink;
 import okio.Sink;
 import okio.Source;
 import org.codehaus.mojo.animal_sniffer.IgnoreJRERequirement;
@@ -202,13 +202,13 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
         requestBuilder.duplex(method);
       }
 
-      @Override public void httpSinkAndCodec(Response.Builder responseBuilder, HttpSink httpSink,
-          HttpCodec httpCodec) {
-        responseBuilder.httpSinkAndCodec(httpSink, httpCodec);
+      @Override public void sinkAndCodec(
+          Response.Builder responseBuilder, BufferedSink sink, HttpCodec httpCodec) {
+        responseBuilder.sinkAndCodec(sink, httpCodec);
       }
 
-      @Override public HttpSink httpSink(Response response) {
-        return response.httpSink();
+      @Override public BufferedSink sink(Response response) {
+        return response.sink();
       }
 
       @Override public boolean isDuplex(Request request) {
