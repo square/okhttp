@@ -132,7 +132,7 @@ public final class CallServerInterceptor implements Interceptor {
         .handshake(streamAllocation.connection().handshake())
         .sentRequestAtMillis(sentRequestMillis)
         .receivedResponseAtMillis(System.currentTimeMillis());
-    Internal.instance.httpSink(responseBuilder, httpSink);
+    Internal.instance.httpSinkAndCodec(responseBuilder, httpSink, httpCodec);
     Response response = responseBuilder.build();
 
     int code = response.code();
@@ -146,16 +146,10 @@ public final class CallServerInterceptor implements Interceptor {
           .handshake(streamAllocation.connection().handshake())
           .sentRequestAtMillis(sentRequestMillis)
           .receivedResponseAtMillis(System.currentTimeMillis());
-      Internal.instance.httpSink(responseBuilder, httpSink);
+      Internal.instance.httpSinkAndCodec(responseBuilder, httpSink, httpCodec);
       response = responseBuilder.build();
 
       code = response.code();
-    }
-
-    if (Internal.instance.isDuplex(request)) {
-      Response.Builder builder = response.newBuilder();
-      Internal.instance.setHttp2Codec(builder, (Http2Codec) httpCodec);
-      response = builder.build();
     }
 
     realChain.eventListener()

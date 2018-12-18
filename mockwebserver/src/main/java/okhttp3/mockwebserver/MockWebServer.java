@@ -59,7 +59,6 @@ import okhttp3.Response;
 import okhttp3.internal.Internal;
 import okhttp3.internal.NamedRunnable;
 import okhttp3.internal.Util;
-import okhttp3.internal.duplex.HeadersListener;
 import okhttp3.internal.duplex.HttpSink;
 import okhttp3.internal.duplex.MwsDuplexAccess;
 import okhttp3.internal.http.HttpMethod;
@@ -1017,6 +1016,7 @@ public final class MockWebServer extends ExternalResource implements Closeable {
       for (int i = 0, size = headers.size(); i < size; i++) {
         http2Headers.add(new Header(headers.name(i), headers.value(i)));
       }
+      Headers trailers = response.getTrailers();
 
       sleepIfDelayed(response.getHeadersDelay(TimeUnit.MILLISECONDS));
 
@@ -1024,7 +1024,13 @@ public final class MockWebServer extends ExternalResource implements Closeable {
       boolean hasResponseBody = body != null
           || !response.getPushPromises().isEmpty()
           || response.isDuplex();
+      if (!hasResponseBody && trailers.size() > 0) {
+        throw new IllegalStateException("unsupported: no body and non-empty trailers " + trailers);
+      }
       stream.writeHeaders(http2Headers, hasResponseBody);
+      if (trailers.size() > 0) {
+        stream.enqueueTrailers(trailers);
+      }
       pushPromises(stream, request, response.getPushPromises());
       if (body != null) {
         BufferedSink sink = Okio.buffer(stream.getSink());
@@ -1035,7 +1041,6 @@ public final class MockWebServer extends ExternalResource implements Closeable {
         final BufferedSink sink = Okio.buffer(stream.getSink());
         final BufferedSource source = Okio.buffer(stream.getSource());
         final DuplexResponseBody duplexResponseBody = response.getDuplexResponseBody();
-        HeadersListener headersListener =
             duplexResponseBody.onRequest(request, source, new HttpSink() {
               @Override public BufferedSink sink() {
                 return sink;
@@ -1053,7 +1058,6 @@ public final class MockWebServer extends ExternalResource implements Closeable {
                 sink.close();
               }
             });
-        stream.setHeadersListener(headersListener);
       } else if (hasResponseBody) {
         stream.close(ErrorCode.NO_ERROR);
       }

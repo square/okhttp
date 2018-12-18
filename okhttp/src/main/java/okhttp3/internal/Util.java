@@ -58,6 +58,7 @@ import okio.Source;
 public final class Util {
   public static final byte[] EMPTY_BYTE_ARRAY = new byte[0];
   public static final String[] EMPTY_STRING_ARRAY = new String[0];
+  public static final Headers EMPTY_HEADERS = Headers.of();
 
   public static final ResponseBody EMPTY_RESPONSE = ResponseBody.create(null, EMPTY_BYTE_ARRAY);
   public static final RequestBody EMPTY_REQUEST = RequestBody.create(null, EMPTY_BYTE_ARRAY);
@@ -681,5 +682,13 @@ public final class Util {
       Internal.instance.addLenient(builder, header.name.utf8(), header.value.utf8());
     }
     return builder.build();
+  }
+
+  public static List<Header> toHeaderBlock(Headers headers) {
+    List<Header> result = new ArrayList<>();
+    for (int i = 0; i < headers.size(); i++) {
+      result.add(new Header(headers.name(i), headers.value(i)));
+    }
+    return result;
   }
 }

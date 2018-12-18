@@ -256,7 +256,7 @@ public final class Http2Connection implements Closeable {
         }
       }
       if (associatedStreamId == 0) {
-        writer.synStream(outFinished, streamId, associatedStreamId, requestHeaders);
+        writer.headers(outFinished, streamId, requestHeaders);
       } else if (client) {
         throw new IllegalArgumentException("client streams shouldn't have associated stream IDs");
       } else { // HTTP/2 has a PUSH_PROMISE frame.
@@ -271,9 +271,9 @@ public final class Http2Connection implements Closeable {
     return stream;
   }
 
-  void writeSynReply(int streamId, boolean outFinished, List<Header> alternating)
+  void writeHeaders(int streamId, boolean outFinished, List<Header> alternating)
       throws IOException {
-    writer.synReply(outFinished, streamId, alternating);
+    writer.headers(outFinished, streamId, alternating);
   }
 
   /**
@@ -638,7 +638,7 @@ public final class Http2Connection implements Closeable {
       }
       dataStream.receiveData(source, length);
       if (inFinished) {
-        dataStream.receiveFin();
+        dataStream.receiveHeaders(Util.EMPTY_HEADERS, true);
       }
     }
 
@@ -686,8 +686,7 @@ public final class Http2Connection implements Closeable {
       }
 
       // Update an existing stream.
-      stream.receiveHeaders(headerBlock);
-      if (inFinished) stream.receiveFin();
+      stream.receiveHeaders(Util.toHeaders(headerBlock), inFinished);
     }
 
     @Override public void rstStream(int streamId, ErrorCode errorCode) {
