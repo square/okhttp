@@ -272,7 +272,13 @@ public class Platform {
   }
 
   public SSLContext getSSLContext() {
-    String jvmVersion = System.getProperty("java.specification.version");
+    String jvmVersion = null;
+    try {
+      jvmVersion = System.getProperty("java.specification.version");
+    } catch (AccessControlException ex) {
+      logger.log(Level.WARNING, "Cannot read the java.specification.version property", ex);
+    }
+
     if ("1.7".equals(jvmVersion)) {
       try {
         // JDK 1.7 (public version) only support > TLSv1 with named protocols
