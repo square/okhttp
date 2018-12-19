@@ -16,6 +16,8 @@
 package okhttp3;
 
 import java.io.IOException;
+import java.net.ServerSocket;
+import java.net.Socket;
 import java.net.SocketTimeoutException;
 import java.util.Arrays;
 import java.util.Locale;
@@ -726,15 +728,24 @@ public final class InterceptorTest {
       }
     };
 
+    ServerSocket serverSocket = new ServerSocket(0, 1);
+    // Fill backlog queue with this request so subsequent requests will be blocked.
+    new Socket().connect(serverSocket.getLocalSocketAddress());
+
     client = client.newBuilder()
         .connectTimeout(5, TimeUnit.SECONDS)
         .addInterceptor(interceptor1)
         .addInterceptor(interceptor2)
         .build();
 
-    Request request1 = new Request.Builder()
-        .url("http://" + TestUtil.UNREACHABLE_ADDRESS)
-        .build();
+    Request request1 =
+        new Request.Builder()
+            .url(
+                "http://"
+                    + serverSocket.getInetAddress().getCanonicalHostName()
+                    + ":"
+                    + serverSocket.getLocalPort())
+            .build();
     Call call = client.newCall(request1);
 
     try {
@@ -742,6 +753,8 @@ public final class InterceptorTest {
       fail();
     } catch (SocketTimeoutException expected) {
     }
+
+    serverSocket.close();
   }
 
   @Test public void chainWithReadTimeout() throws Exception {
