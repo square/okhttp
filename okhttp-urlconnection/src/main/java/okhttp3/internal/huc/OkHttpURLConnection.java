@@ -29,7 +29,6 @@ import java.net.Proxy;
 import java.net.SocketPermission;
 import java.net.URL;
 import java.net.UnknownHostException;
-import java.security.AccessControlException;
 import java.security.Permission;
 import java.util.Arrays;
 import java.util.Collections;
@@ -53,6 +52,7 @@ import okhttp3.Response;
 import okhttp3.internal.Internal;
 import okhttp3.internal.JavaNetHeaders;
 import okhttp3.internal.URLFilter;
+import okhttp3.internal.Util;
 import okhttp3.internal.Version;
 import okhttp3.internal.http.HttpDate;
 import okhttp3.internal.http.HttpHeaders;
@@ -415,13 +415,7 @@ public final class OkHttpURLConnection extends HttpURLConnection implements Call
   }
 
   private String defaultUserAgent() {
-    String agent = null;
-    try {
-      agent = System.getProperty("http.agent");
-    } catch (AccessControlException ex) {
-      Platform.get().log(WARN, "Cannot read the http.agent property", ex);
-    }
-
+    String agent = Util.getSystemProperty("http.agent", null);
     return agent != null ? toHumanReadableAscii(agent) : Version.userAgent();
   }
 
