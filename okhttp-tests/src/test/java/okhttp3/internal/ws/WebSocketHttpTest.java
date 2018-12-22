@@ -376,6 +376,8 @@ public final class WebSocketHttpTest {
 
     WebSocket server = serverListener.assertOpen();
     server.close(1000, null);
+    clientListener.assertClosing(1000, "");
+    clientListener.assertClosed(1000, "");
   }
 
   @Test public void webSocketAndNetworkInterceptors() {
