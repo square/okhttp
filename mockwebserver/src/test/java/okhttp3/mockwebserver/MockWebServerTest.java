@@ -37,8 +37,11 @@ import javax.net.ssl.HttpsURLConnection;
 import okhttp3.Handshake;
 import okhttp3.Headers;
 import okhttp3.HttpUrl;
+import okhttp3.OkHttpClient;
 import okhttp3.Protocol;
 import okhttp3.RecordingHostnameVerifier;
+import okhttp3.Request;
+import okhttp3.Response;
 import okhttp3.internal.Util;
 import okhttp3.tls.HeldCertificate;
 import okhttp3.tls.HandshakeCertificates;
@@ -586,5 +589,25 @@ public final class MockWebServerTest {
     assertEquals(1, handshake.localCertificates().size());
     assertNotNull(handshake.peerPrincipal());
     assertEquals(1, handshake.peerCertificates().size());
+  }
+
+  @Test
+  public void http2() throws IOException {
+    HandshakeCertificates handshakeCertificates = localhost();
+
+    server.useHttps(handshakeCertificates.sslSocketFactory(), false);
+    server.enqueue(new MockResponse().setBody("hello world"));
+
+    OkHttpClient client =
+        new OkHttpClient.Builder()
+            .sslSocketFactory(
+                handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager())
+            .protocols(Arrays.asList(Protocol.HTTP_2, Protocol.HTTP_1_1))
+            .build();
+    Request request = new Request.Builder().url(server.url("/")).build();
+    Response response = client.newCall(request).execute();
+
+    assertEquals(Protocol.HTTP_2, response.protocol());
+    assertEquals("hello world", response.body().string());
   }
 }
