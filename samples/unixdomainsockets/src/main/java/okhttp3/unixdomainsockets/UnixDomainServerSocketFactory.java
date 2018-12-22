@@ -22,6 +22,7 @@ import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketAddress;
+import java.net.SocketException;
 import javax.net.ServerSocketFactory;
 import jnr.unixsocket.UnixServerSocketChannel;
 import jnr.unixsocket.UnixSocket;
@@ -82,13 +83,23 @@ public final class UnixDomainServerSocketFactory extends ServerSocketFactory {
     }
 
     @Override public Socket accept() throws IOException {
-      UnixSocketChannel socketChannel = serverSocketChannel.accept();
+      try {
+        UnixSocketChannel socketChannel = serverSocketChannel.accept();
 
-      return new UnixSocket(socketChannel) {
-        @Override public InetAddress getInetAddress() {
-          return endpoint.getAddress(); // TODO(jwilson): fake the remote address?
-        }
-      };
+        return new UnixSocket(socketChannel) {
+          @Override public InetAddress getInetAddress() {
+            return endpoint.getAddress(); // TODO(jwilson): fake the remote address?
+          }
+        };
+      } catch (IOException e) {
+        // On OS X, if close() is called while accept() is blocking, errno is set to ECONNABORTED.
+        // UnixServerSocketChannel.accept() propagates this as an IOException. This is incompatible
+        // with java.net.ServerSocket, which throws a SocketException in the same scenario. Callers
+        // may expect a SocketException in case of a clean shutdown, and incorrectly report an error
+        // if an IOException is thrown instead.
+        // To prevent this, we try to detect this scenario and throw a SocketException.
+        throw serverSocketChannel.isOpen() ? e : new SocketException(e.getMessage());
+      }
     }
 
     @Override public void close() throws IOException {
