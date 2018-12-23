@@ -326,8 +326,7 @@ public final class Headers {
      * Adds all headers from an existing collection.
      */
     public Builder addAll(Headers headers) {
-      int size = headers.size();
-      for (int i = 0; i < size; i++) {
+      for (int i = 0, size = headers.size(); i < size; i++) {
         addLenient(headers.name(i), headers.value(i));
       }
 
