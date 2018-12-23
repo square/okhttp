@@ -67,7 +67,6 @@ import okhttp3.internal.DoubleInetAddressDns;
 import okhttp3.internal.Internal;
 import okhttp3.internal.RecordingAuthenticator;
 import okhttp3.internal.RecordingOkAuthenticator;
-import okhttp3.internal.SingleInetAddressDns;
 import okhttp3.internal.Util;
 import okhttp3.internal.Version;
 import okhttp3.internal.huc.OkHttpURLConnection;
@@ -88,7 +87,6 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
-import static java.util.Collections.singletonMap;
 import static java.util.Locale.US;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
@@ -719,7 +717,6 @@ public final class URLConnectionTest {
     server.enqueue(new MockResponse().setSocketPolicy(FAIL_HANDSHAKE));
 
     urlFactory.setClient(urlFactory.client().newBuilder()
-        .dns(new SingleInetAddressDns())
         .connectionSpecs(Arrays.asList(ConnectionSpec.MODERN_TLS, ConnectionSpec.COMPATIBLE_TLS))
         .hostnameVerifier(new RecordingHostnameVerifier())
         .sslSocketFactory(
@@ -1021,7 +1018,6 @@ public final class URLConnectionTest {
     // Configure a single IP address for the host and a single configuration, so we only need one
     // failure to fail permanently.
     urlFactory.setClient(urlFactory.client().newBuilder()
-        .dns(new SingleInetAddressDns())
         .sslSocketFactory(
             handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager())
         .connectionSpecs(Util.immutableList(ConnectionSpec.MODERN_TLS))
@@ -1617,7 +1613,7 @@ public final class URLConnectionTest {
 
     String credential = Credentials.basic("jesse", "secret");
     urlFactory.setClient(urlFactory.client().newBuilder()
-        .authenticator(new RecordingOkAuthenticator(credential))
+        .authenticator(new RecordingOkAuthenticator(credential, null))
         .build());
 
     connection = urlFactory.open(server.url("/").url());
@@ -2236,7 +2232,7 @@ public final class URLConnectionTest {
         .addHeader("Location: " + server2.url("/b").url()));
 
     urlFactory.setClient(urlFactory.client().newBuilder()
-        .authenticator(new RecordingOkAuthenticator(Credentials.basic("jesse", "secret")))
+        .authenticator(new RecordingOkAuthenticator(Credentials.basic("jesse", "secret"), null))
         .build());
     assertContent("Page 2", urlFactory.open(server.url("/a").url()));
 
@@ -2648,9 +2644,6 @@ public final class URLConnectionTest {
    * https://code.google.com/p/android/issues/detail?id=41576
    */
   @Test public void sameConnectionRedirectAndReuse() throws Exception {
-    urlFactory.setClient(urlFactory.client().newBuilder()
-        .dns(new SingleInetAddressDns())
-        .build());
     server.enqueue(new MockResponse()
         .setResponseCode(HttpURLConnection.HTTP_MOVED_TEMP)
         .setSocketPolicy(SHUTDOWN_INPUT_AT_END)
@@ -3186,7 +3179,7 @@ public final class URLConnectionTest {
     server.enqueue(new MockResponse().setBody("A"));
 
     String credential = Credentials.basic("jesse", "peanutbutter");
-    RecordingOkAuthenticator authenticator = new RecordingOkAuthenticator(credential);
+    RecordingOkAuthenticator authenticator = new RecordingOkAuthenticator(credential, null);
     urlFactory.setClient(urlFactory.client().newBuilder()
         .authenticator(authenticator)
         .build());
@@ -3198,7 +3191,7 @@ public final class URLConnectionTest {
     assertEquals(Proxy.NO_PROXY, authenticator.onlyRoute().proxy());
     Response response = authenticator.onlyResponse();
     assertEquals("/private", response.request().url().url().getPath());
-    assertEquals(Arrays.asList(new Challenge("Basic", singletonMap("realm", "protected area"))), response.challenges());
+    assertEquals(Arrays.asList(new Challenge("Basic", "protected area")), response.challenges());
   }
 
   @Test public void customTokenAuthenticator() throws Exception {
@@ -3208,7 +3201,8 @@ public final class URLConnectionTest {
     server.enqueue(pleaseAuthenticate);
     server.enqueue(new MockResponse().setBody("A"));
 
-    RecordingOkAuthenticator authenticator = new RecordingOkAuthenticator("oauthed abc123");
+    RecordingOkAuthenticator authenticator
+        = new RecordingOkAuthenticator("oauthed abc123", "Bearer");
     urlFactory.setClient(urlFactory.client().newBuilder()
         .authenticator(authenticator)
         .build());
@@ -3219,7 +3213,7 @@ public final class URLConnectionTest {
 
     Response response = authenticator.onlyResponse();
     assertEquals("/private", response.request().url().url().getPath());
-    assertEquals(Arrays.asList(new Challenge("Bearer", singletonMap("realm", "oauthed"))), response.challenges());
+    assertEquals(Arrays.asList(new Challenge("Bearer", "oauthed")), response.challenges());
   }
 
   @Test public void authenticateCallsTrackedAsRedirects() throws Exception {
@@ -3232,7 +3226,7 @@ public final class URLConnectionTest {
     server.enqueue(new MockResponse().setBody("c"));
 
     RecordingOkAuthenticator authenticator = new RecordingOkAuthenticator(
-        Credentials.basic("jesse", "peanutbutter"));
+        Credentials.basic("jesse", "peanutbutter"), "Basic");
     urlFactory.setClient(urlFactory.client().newBuilder()
         .authenticator(authenticator)
         .build());
@@ -3253,7 +3247,7 @@ public final class URLConnectionTest {
 
     String credential = Credentials.basic("jesse", "peanutbutter");
     urlFactory.setClient(urlFactory.client().newBuilder()
-        .authenticator(new RecordingOkAuthenticator(credential))
+        .authenticator(new RecordingOkAuthenticator(credential, null))
         .build());
 
     connection = urlFactory.open(server.url("/0").url());
@@ -3267,7 +3261,7 @@ public final class URLConnectionTest {
 
     String credential = Credentials.basic("jesse", "peanutbutter");
     urlFactory.setClient(urlFactory.client().newBuilder()
-        .authenticator(new RecordingOkAuthenticator(credential))
+        .authenticator(new RecordingOkAuthenticator(credential, null))
         .build());
 
     connection = urlFactory.open(server.url("/").url());

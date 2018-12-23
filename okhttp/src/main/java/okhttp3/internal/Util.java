@@ -26,6 +26,7 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.UnknownHostException;
 import java.nio.charset.Charset;
+import java.security.AccessControlException;
 import java.security.GeneralSecurityException;
 import java.security.KeyStore;
 import java.util.ArrayList;
@@ -44,9 +45,11 @@ import javax.annotation.Nullable;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
 import javax.net.ssl.X509TrustManager;
+import okhttp3.Headers;
 import okhttp3.HttpUrl;
 import okhttp3.RequestBody;
 import okhttp3.ResponseBody;
+import okhttp3.internal.http2.Header;
 import okio.Buffer;
 import okio.BufferedSource;
 import okio.ByteString;
@@ -56,6 +59,7 @@ import okio.Source;
 public final class Util {
   public static final byte[] EMPTY_BYTE_ARRAY = new byte[0];
   public static final String[] EMPTY_STRING_ARRAY = new String[0];
+  public static final Headers EMPTY_HEADERS = Headers.of();
 
   public static final ResponseBody EMPTY_RESPONSE = ResponseBody.create(null, EMPTY_BYTE_ARRAY);
   public static final RequestBody EMPTY_REQUEST = RequestBody.create(null, EMPTY_BYTE_ARRAY);
@@ -671,5 +675,35 @@ public final class Util {
     } catch (GeneralSecurityException e) {
       throw assertionError("No System TLS", e); // The system has no TLS. Just give up.
     }
+  }
+
+  public static Headers toHeaders(List<Header> headerBlock) {
+    Headers.Builder builder = new Headers.Builder();
+    for (Header header : headerBlock) {
+      Internal.instance.addLenient(builder, header.name.utf8(), header.value.utf8());
+    }
+    return builder.build();
+  }
+
+  public static List<Header> toHeaderBlock(Headers headers) {
+    List<Header> result = new ArrayList<>();
+    for (int i = 0; i < headers.size(); i++) {
+      result.add(new Header(headers.name(i), headers.value(i)));
+    }
+    return result;
+  }
+
+  /**
+   * Returns the system property, or defaultValue if the system property is null or
+   * cannot be read (e.g. because of security policy restrictions).
+   */
+  public static String getSystemProperty(String key, @Nullable String defaultValue) {
+    final String value;
+    try {
+      value = System.getProperty(key);
+    } catch (AccessControlException ex) {
+      return defaultValue;
+    }
+    return value != null ? value : defaultValue;
   }
 }

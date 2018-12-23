@@ -326,7 +326,7 @@ public final class HttpLoggingInterceptor implements Interceptor {
     }
   }
 
-  private boolean bodyHasUnknownEncoding(Headers headers) {
+  private static boolean bodyHasUnknownEncoding(Headers headers) {
     String contentEncoding = headers.get("Content-Encoding");
     return contentEncoding != null
         && !contentEncoding.equalsIgnoreCase("identity")

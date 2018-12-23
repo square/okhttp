@@ -49,7 +49,7 @@ public final class EventSourceRecorder extends EventSourceListener {
   }
 
   @Override
-  public void onFailure(EventSource eventSource, Throwable t, @Nullable Response response) {
+  public void onFailure(EventSource eventSource, @Nullable Throwable t, @Nullable Response response) {
     Platform.get().log(Platform.INFO, "[ES] onFailure", t);
     events.add(new Failure(t, response));
   }

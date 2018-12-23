@@ -16,6 +16,7 @@
 package okhttp3;
 
 import java.io.IOException;
+import java.net.HttpURLConnection;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.Proxy;
@@ -42,7 +43,6 @@ import okhttp3.RecordingEventListener.SecureConnectEnd;
 import okhttp3.RecordingEventListener.SecureConnectStart;
 import okhttp3.internal.DoubleInetAddressDns;
 import okhttp3.internal.RecordingOkAuthenticator;
-import okhttp3.internal.SingleInetAddressDns;
 import okhttp3.logging.HttpLoggingInterceptor;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
@@ -80,7 +80,6 @@ public final class EventListenerTest {
   public static final Matcher<Response> anyResponse = CoreMatchers.any(Response.class);
   @Rule public final MockWebServer server = new MockWebServer();
 
-  private final SingleInetAddressDns singleDns = new SingleInetAddressDns();
   private final RecordingEventListener listener = new RecordingEventListener();
   private final HandshakeCertificates handshakeCertificates = localhost();
 
@@ -89,7 +88,6 @@ public final class EventListenerTest {
 
   @Before public void setUp() {
     client = defaultClient().newBuilder()
-        .dns(singleDns)
         .eventListener(listener)
         .build();
 
@@ -437,8 +435,8 @@ public final class EventListenerTest {
     server.enqueue(new MockResponse());
 
     FakeDns dns = new FakeDns();
-    dns.set("fakeurl", singleDns.lookup(server.getHostName()));
-    dns.set("www.fakeurl", singleDns.lookup(server.getHostName()));
+    dns.set("fakeurl", client.dns().lookup(server.getHostName()));
+    dns.set("www.fakeurl", client.dns().lookup(server.getHostName()));
 
     client = client.newBuilder()
         .dns(dns)
@@ -513,7 +511,7 @@ public final class EventListenerTest {
     assertEquals(200, response.code());
     response.body().close();
 
-    InetAddress address = singleDns.lookup(server.getHostName()).get(0);
+    InetAddress address = client.dns().lookup(server.getHostName()).get(0);
     InetSocketAddress expectedAddress = new InetSocketAddress(address, server.getPort());
 
     ConnectStart connectStart = listener.removeUpToEvent(ConnectStart.class);
@@ -541,7 +539,7 @@ public final class EventListenerTest {
     } catch (IOException expected) {
     }
 
-    InetAddress address = singleDns.lookup(server.getHostName()).get(0);
+    InetAddress address = client.dns().lookup(server.getHostName()).get(0);
     InetSocketAddress expectedAddress = new InetSocketAddress(address, server.getPort());
 
     ConnectStart connectStart = listener.removeUpToEvent(ConnectStart.class);
@@ -593,7 +591,7 @@ public final class EventListenerTest {
     assertEquals(200, response.code());
     response.body().close();
 
-    InetAddress address = singleDns.lookup(server.getHostName()).get(0);
+    InetAddress address = client.dns().lookup(server.getHostName()).get(0);
     InetSocketAddress expectedAddress = new InetSocketAddress(address, server.getPort());
 
     ConnectStart connectStart = listener.removeUpToEvent(ConnectStart.class);
@@ -651,7 +649,7 @@ public final class EventListenerTest {
 
     client = client.newBuilder()
         .proxy(server.toProxyAddress())
-        .proxyAuthenticator(new RecordingOkAuthenticator("password"))
+        .proxyAuthenticator(new RecordingOkAuthenticator("password", "Basic"))
         .build();
 
     Call call = client.newCall(new Request.Builder()
@@ -1084,5 +1082,47 @@ public final class EventListenerTest {
         .hostnameVerifier(new RecordingHostnameVerifier())
         .build();
     server.useHttps(handshakeCertificates.sslSocketFactory(), tunnelProxy);
+  }
+
+  @Test public void redirectUsingSameConnectionEventSequence() throws IOException {
+    server.enqueue(
+        new MockResponse()
+            .setResponseCode(HttpURLConnection.HTTP_MOVED_TEMP)
+            .addHeader("Location: /foo"));
+    server.enqueue(new MockResponse());
+
+    Call call = client.newCall(new Request.Builder().url(server.url("/")).build());
+    Response response = call.execute();
+
+    List<String> expectedEvents = Arrays.asList("CallStart", "DnsStart", "DnsEnd",
+        "ConnectStart", "ConnectEnd", "ConnectionAcquired", "RequestHeadersStart",
+        "RequestHeadersEnd", "ResponseHeadersStart", "ResponseHeadersEnd", "ResponseBodyStart",
+        "ResponseBodyEnd", "RequestHeadersStart", "RequestHeadersEnd", "ResponseHeadersStart",
+        "ResponseHeadersEnd", "ResponseBodyStart", "ResponseBodyEnd", "ConnectionReleased",
+        "CallEnd");
+    assertEquals(expectedEvents, listener.recordedEventTypes());
+  }
+
+  @Ignore("CallEnd emitted twice")
+  @Test
+  public void redirectUsingNewConnectionEventSequence() throws IOException {
+    MockWebServer otherServer = new MockWebServer();
+    server.enqueue(
+        new MockResponse()
+            .setResponseCode(HttpURLConnection.HTTP_MOVED_TEMP)
+            .addHeader("Location: " + otherServer.url("/foo")));
+    otherServer.enqueue(new MockResponse());
+
+    Call call = client.newCall(new Request.Builder().url(server.url("/")).build());
+    Response response = call.execute();
+
+    List<String> expectedEvents = Arrays.asList("CallStart", "DnsStart", "DnsEnd",
+        "ConnectStart", "ConnectEnd", "ConnectionAcquired", "RequestHeadersStart",
+        "RequestHeadersEnd", "ResponseHeadersStart", "ResponseHeadersEnd", "ResponseBodyStart",
+        "ResponseBodyEnd", "ConnectionReleased", "DnsStart", "DnsEnd", "ConnectStart", "ConnectEnd",
+        "ConnectionAcquired", "RequestHeadersStart", "RequestHeadersEnd", "ResponseHeadersStart",
+        "ResponseHeadersEnd", "ResponseBodyStart", "ResponseBodyEnd", "ConnectionReleased",
+        "CallEnd");
+    assertEquals(expectedEvents, listener.recordedEventTypes());
   }
 }

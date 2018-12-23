@@ -2524,7 +2524,7 @@ public final class CacheTest {
 
   @Test public void immutableIsCached() throws Exception {
     server.enqueue(new MockResponse()
-        .addHeader("Cache-Control", "immutable")
+        .addHeader("Cache-Control", "immutable, max-age=10")
         .setBody("A"));
     server.enqueue(new MockResponse()
         .setBody("B"));
@@ -2538,7 +2538,7 @@ public final class CacheTest {
     server.enqueue(new MockResponse()
         .setBody("A"));
     server.enqueue(new MockResponse()
-        .addHeader("Cache-Control", "immutable")
+        .addHeader("Cache-Control", "immutable, max-age=10")
         .setBody("B"));
     server.enqueue(new MockResponse()
         .setBody("C"));
@@ -2547,6 +2547,19 @@ public final class CacheTest {
     assertEquals("A", get(url).body().string());
     assertEquals("B", get(url).body().string());
     assertEquals("B", get(url).body().string());
+  }
+
+  @Test public void immutableIsNotCachedBeyondFreshnessLifetime() throws Exception {
+    //      last modified: 115 seconds ago
+    //             served:  15 seconds ago
+    //   default lifetime: (115 - 15) / 10 = 10 seconds
+    //            expires:  10 seconds from served date = 5 seconds ago
+    String lastModifiedDate = formatDate(-115, TimeUnit.SECONDS);
+    RecordedRequest conditionalRequest = assertConditionallyCached(new MockResponse()
+        .addHeader("Cache-Control: immutable")
+        .addHeader("Last-Modified: " + lastModifiedDate)
+        .addHeader("Date: " + formatDate(-15, TimeUnit.SECONDS)));
+    assertEquals(lastModifiedDate, conditionalRequest.getHeader("If-Modified-Since"));
   }
 
   private void assertFullyCached(MockResponse response) throws Exception {

@@ -75,12 +75,14 @@ public final class Dispatcher {
    * <p>If more than {@code maxRequests} requests are in flight when this is invoked, those requests
    * will remain in flight.
    */
-  public synchronized void setMaxRequests(int maxRequests) {
+  public void setMaxRequests(int maxRequests) {
     if (maxRequests < 1) {
       throw new IllegalArgumentException("max < 1: " + maxRequests);
     }
-    this.maxRequests = maxRequests;
-    promoteCalls();
+    synchronized (this) {
+      this.maxRequests = maxRequests;
+    }
+    promoteAndExecute();
   }
 
   public synchronized int getMaxRequests() {
@@ -98,12 +100,14 @@ public final class Dispatcher {
    *
    * <p>WebSocket connections to hosts <b>do not</b> count against this limit.
    */
-  public synchronized void setMaxRequestsPerHost(int maxRequestsPerHost) {
+  public void setMaxRequestsPerHost(int maxRequestsPerHost) {
     if (maxRequestsPerHost < 1) {
       throw new IllegalArgumentException("max < 1: " + maxRequestsPerHost);
     }
-    this.maxRequestsPerHost = maxRequestsPerHost;
-    promoteCalls();
+    synchronized (this) {
+      this.maxRequestsPerHost = maxRequestsPerHost;
+    }
+    promoteAndExecute();
   }
 
   public synchronized int getMaxRequestsPerHost() {
@@ -126,13 +130,11 @@ public final class Dispatcher {
     this.idleCallback = idleCallback;
   }
 
-  synchronized void enqueue(AsyncCall call) {
-    if (runningAsyncCalls.size() < maxRequests && runningCallsForHost(call) < maxRequestsPerHost) {
-      runningAsyncCalls.add(call);
-      executorService().execute(call);
-    } else {
+  void enqueue(AsyncCall call) {
+    synchronized (this) {
       readyAsyncCalls.add(call);
     }
+    promoteAndExecute();
   }
 
   /**
@@ -153,21 +155,38 @@ public final class Dispatcher {
     }
   }
 
-  private void promoteCalls() {
-    if (runningAsyncCalls.size() >= maxRequests) return; // Already running max capacity.
-    if (readyAsyncCalls.isEmpty()) return; // No ready calls to promote.
+  /**
+   * Promotes eligible calls from {@link #readyAsyncCalls} to {@link #runningAsyncCalls} and runs
+   * them on the executor service. Must not be called with synchronization because executing calls
+   * can call into user code.
+   *
+   * @return true if the dispatcher is currently running calls.
+   */
+  private boolean promoteAndExecute() {
+    assert (!Thread.holdsLock(this));
 
-    for (Iterator<AsyncCall> i = readyAsyncCalls.iterator(); i.hasNext(); ) {
-      AsyncCall call = i.next();
+    List<AsyncCall> executableCalls = new ArrayList<>();
+    boolean isRunning;
+    synchronized (this) {
+      for (Iterator<AsyncCall> i = readyAsyncCalls.iterator(); i.hasNext(); ) {
+        AsyncCall asyncCall = i.next();
 
-      if (runningCallsForHost(call) < maxRequestsPerHost) {
+        if (runningAsyncCalls.size() >= maxRequests) break; // Max capacity.
+        if (runningCallsForHost(asyncCall) >= maxRequestsPerHost) continue; // Host max capacity.
+
         i.remove();
-        runningAsyncCalls.add(call);
-        executorService().execute(call);
+        executableCalls.add(asyncCall);
+        runningAsyncCalls.add(asyncCall);
       }
-
-      if (runningAsyncCalls.size() >= maxRequests) return; // Reached max capacity.
+      isRunning = runningCallsCount() > 0;
     }
+
+    for (int i = 0, size = executableCalls.size(); i < size; i++) {
+      AsyncCall asyncCall = executableCalls.get(i);
+      asyncCall.executeOn(executorService());
+    }
+
+    return isRunning;
   }
 
   /** Returns the number of running calls that share a host with {@code call}. */
@@ -187,25 +206,24 @@ public final class Dispatcher {
 
   /** Used by {@code AsyncCall#run} to signal completion. */
   void finished(AsyncCall call) {
-    finished(runningAsyncCalls, call, true);
+    finished(runningAsyncCalls, call);
   }
 
   /** Used by {@code Call#execute} to signal completion. */
   void finished(RealCall call) {
-    finished(runningSyncCalls, call, false);
+    finished(runningSyncCalls, call);
   }
 
-  private <T> void finished(Deque<T> calls, T call, boolean promoteCalls) {
-    int runningCallsCount;
+  private <T> void finished(Deque<T> calls, T call) {
     Runnable idleCallback;
     synchronized (this) {
       if (!calls.remove(call)) throw new AssertionError("Call wasn't in-flight!");
-      if (promoteCalls) promoteCalls();
-      runningCallsCount = runningCallsCount();
       idleCallback = this.idleCallback;
     }
 
-    if (runningCallsCount == 0 && idleCallback != null) {
+    boolean isRunning = promoteAndExecute();
+
+    if (!isRunning && idleCallback != null) {
       idleCallback.run();
     }
   }

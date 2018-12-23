@@ -189,6 +189,7 @@ public final class RealWebSocket implements WebSocket, WebSocketReader.FrameCall
         .header("Sec-WebSocket-Version", "13")
         .build();
     call = Internal.instance.newWebSocketCall(client, request);
+    call.timeout().clearTimeout();
     call.enqueue(new Callback() {
       @Override public void onResponse(Call call, Response response) {
         try {

@@ -51,7 +51,6 @@ import okhttp3.TestLogHandler;
 import okhttp3.TestUtil;
 import okhttp3.internal.DoubleInetAddressDns;
 import okhttp3.internal.RecordingOkAuthenticator;
-import okhttp3.internal.SingleInetAddressDns;
 import okhttp3.internal.Util;
 import okhttp3.internal.connection.RealConnection;
 import okhttp3.mockwebserver.Dispatcher;
@@ -89,7 +88,7 @@ import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeTrue;
 
-/** Test how SPDY interacts with HTTP/2 features. */
+/** Test how HTTP/2 interacts with HTTP features. */
 @RunWith(Parameterized.class)
 public final class HttpOverHttp2Test {
   private static final Logger http2Logger = Logger.getLogger(Http2.class.getName());
@@ -125,7 +124,6 @@ public final class HttpOverHttp2Test {
   private static OkHttpClient buildHttp2Client() {
     return defaultClient().newBuilder()
         .protocols(Arrays.asList(Protocol.HTTP_2, Protocol.HTTP_1_1))
-        .dns(new SingleInetAddressDns())
         .sslSocketFactory(
             handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager())
         .hostnameVerifier(new RecordingHostnameVerifier())
@@ -434,7 +432,7 @@ public final class HttpOverHttp2Test {
 
     String credential = Credentials.basic("username", "password");
     client = client.newBuilder()
-        .authenticator(new RecordingOkAuthenticator(credential))
+        .authenticator(new RecordingOkAuthenticator(credential, "Basic"))
         .build();
 
     Call call = client.newCall(new Request.Builder()

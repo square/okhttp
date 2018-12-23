@@ -1,6 +1,56 @@
 Change Log
 ==========
 
+## Version 3.12.0
+
+_2018-11-16_
+
+ *  **OkHttp now supports TLS 1.3.** This requires either Conscrypt or Java 11+.
+
+ *  **Proxy authenticators are now asked for preemptive authentication.** OkHttp will now request
+    authentication credentials before creating TLS tunnels through HTTP proxies (HTTP `CONNECT`).
+    Authenticators should identify preemptive authentications by the presence of a challenge whose
+    scheme is "OkHttp-Preemptive".
+
+ *  **OkHttp now offers full-operation timeouts.** This sets a limit on how long the entire call may
+    take and covers resolving DNS, connecting, writing the request body, server processing, and
+    reading the full response body. If a call requires redirects or retries all must complete within
+    one timeout period.
+
+    Use `OkHttpClient.Builder.callTimeout()` to specify the default duration and `Call.timeout()` to
+    specify the timeout of an individual call.
+
+ *  New: Return values and fields are now non-null unless otherwise annotated.
+ *  New: `LoggingEventListener` makes it easy to get basic visibility into a call's performance.
+    This class is in the `logging-interceptor` artifact.
+ *  New: `Headers.Builder.addUnsafeNonAscii()` allows non-ASCII values to be added without an
+    immediate exception.
+ *  New: Headers can be redacted in `HttpLoggingInterceptor`.
+ *  New: `Headers.Builder` now accepts dates.
+ *  New: OkHttp now accepts `java.time.Duration` for timeouts on Java 8+ and Android 26+.
+ *  New: `Challenge` includes all authentication parameters.
+ *  New: Upgrade to BouncyCastle 1.60, Conscrypt 1.4.0, and Okio 1.15.0. We don't yet require
+    Kotlin-friendly Okio 2.x but OkHttp works fine with that series.
+
+    ```kotlin
+    implementation("org.bouncycastle:bcprov-jdk15on:1.60")
+    implementation("org.conscrypt:conscrypt-openjdk-uber:1.4.0")
+    implementation("com.squareup.okio:okio:1.15.0")
+    ```
+
+ *  Fix: Handle dispatcher executor shutdowns gracefully. When there aren't any threads to carry a
+    call its callback now gets a `RejectedExecutionException`.
+ *  Fix: Don't permanently cache responses with `Cache-Control: immutable`. We misunderstood the
+    original `immutable` proposal!
+ *  Fix: Change `Authenticator`'s `Route` parameter to be nullable. This was marked as non-null but
+    could be called with null in some cases.
+ *  Fix: Don't create malformed URLs when `MockWebServer` is reached via an IPv6 address.
+ *  Fix: Don't crash if the system default authenticator is null.
+ *  Fix: Don't crash generating elliptic curve certificates on Android.
+ *  Fix: Don't crash doing platform detection on RoboVM.
+ *  Fix: Don't leak socket connections when web socket upgrades fail.
+
+
 ## Version 3.11.0
 
 _2018-07-12_

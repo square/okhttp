@@ -52,9 +52,6 @@ public final class HeldCertificateTest {
     long durationMillis = TimeUnit.MINUTES.toMillis(60 * 24);
     assertEquals((double) now, certificate.getNotBefore().getTime(), deltaMillis);
     assertEquals((double) now + durationMillis, certificate.getNotAfter().getTime(), deltaMillis);
-
-    System.out.println(ByteString.of(heldCertificate.keyPair().getPublic().getEncoded()).base64());
-    System.out.println(ByteString.of(heldCertificate.keyPair().getPrivate().getEncoded()).base64());
   }
 
   @Test public void customInterval() {

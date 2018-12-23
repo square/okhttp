@@ -34,7 +34,7 @@ public final class Challenge {
   public Challenge(String scheme, Map<String, String> authParams) {
     if (scheme == null) throw new NullPointerException("scheme == null");
     if (authParams == null) throw new NullPointerException("authParams == null");
-    this.scheme = scheme.toLowerCase(US);
+    this.scheme = scheme;
     Map<String, String> newAuthParams = new LinkedHashMap<>();
     for (Entry<String, String> authParam : authParams.entrySet()) {
       String key = (authParam.getKey() == null) ? null : authParam.getKey().toLowerCase(US);
@@ -46,7 +46,7 @@ public final class Challenge {
   public Challenge(String scheme, String realm) {
     if (scheme == null) throw new NullPointerException("scheme == null");
     if (realm == null) throw new NullPointerException("realm == null");
-    this.scheme = scheme.toLowerCase(US);
+    this.scheme = scheme;
     this.authParams = singletonMap("realm", realm);
   }
 
@@ -58,15 +58,14 @@ public final class Challenge {
     return new Challenge(scheme, authParams);
   }
 
-  /** Returns the authentication scheme in lowercase, like {@code basic}. */
+  /** Returns the authentication scheme, like {@code Basic}. */
   public String scheme() {
     return scheme;
   }
 
   /**
-   * Returns the auth params, including {@code realm} and {@code charset} if present,
-   * but as {@code String}s. The keys are all lowercase, as the auth param names
-   * are to be treated case insensitively anyway.
+   * Returns the auth params, including {@code realm} and {@code charset} if present, but as
+   * strings. The map's keys are lowercase and should be treated case-insensitively.
    */
   public Map<String, String> authParams() {
     return authParams;

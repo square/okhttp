@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.security.Principal;
 import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import javax.annotation.Nullable;
@@ -139,5 +140,32 @@ public final class Handshake {
     result = 31 * result + peerCertificates.hashCode();
     result = 31 * result + localCertificates.hashCode();
     return result;
+  }
+
+  @Override public String toString() {
+    return "Handshake{"
+        + "tlsVersion="
+        + tlsVersion
+        + " cipherSuite="
+        + cipherSuite
+        + " peerCertificates="
+        + names(peerCertificates)
+        + " localCertificates="
+        + names(localCertificates)
+        + '}';
+  }
+
+  private List<String> names(List<Certificate> certificates) {
+    ArrayList<String> strings = new ArrayList<>();
+
+    for (Certificate cert : certificates) {
+      if (cert instanceof X509Certificate) {
+        strings.add(String.valueOf(((X509Certificate) cert).getSubjectDN()));
+      } else {
+        strings.add(cert.getType());
+      }
+    }
+
+    return strings;
   }
 }

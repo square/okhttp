@@ -33,15 +33,17 @@ public final class Request {
   final String method;
   final Headers headers;
   final @Nullable RequestBody body;
+  final boolean duplex;
   final Map<Class<?>, Object> tags;
 
-  private volatile CacheControl cacheControl; // Lazily initialized.
+  private volatile @Nullable CacheControl cacheControl; // Lazily initialized.
 
   Request(Builder builder) {
     this.url = builder.url;
     this.method = builder.method;
     this.headers = builder.headers.build();
     this.body = builder.body;
+    this.duplex = builder.duplex;
     this.tags = Util.immutableMap(builder.tags);
   }
 
@@ -67,6 +69,10 @@ public final class Request {
 
   public @Nullable RequestBody body() {
     return body;
+  }
+
+  boolean isDuplex() {
+    return duplex;
   }
 
   /**
@@ -117,10 +123,11 @@ public final class Request {
   }
 
   public static class Builder {
-    HttpUrl url;
+    @Nullable HttpUrl url;
     String method;
     Headers.Builder headers;
-    RequestBody body;
+    @Nullable RequestBody body;
+    boolean duplex;
 
     /** A mutable map of tags, or an immutable empty map if we don't have any. */
     Map<Class<?>, Object> tags = Collections.emptyMap();
@@ -134,6 +141,7 @@ public final class Request {
       this.url = request.url;
       this.method = request.method;
       this.body = request.body;
+      this.duplex = request.duplex;
       this.tags = request.tags.isEmpty()
           ? Collections.<Class<?>, Object>emptyMap()
           : new LinkedHashMap<>(request.tags);
@@ -259,6 +267,19 @@ public final class Request {
       }
       this.method = method;
       this.body = body;
+      this.duplex = false;
+      return this;
+    }
+
+    Builder duplex(String method) {
+      if (method == null) throw new NullPointerException("method == null");
+      if (method.length() == 0) throw new IllegalArgumentException("method.length() == 0");
+      if (!HttpMethod.permitsRequestBody(method)) {
+        throw new IllegalArgumentException("method " + method + " must not have a request body.");
+      }
+      this.method = method;
+      this.body = null;
+      this.duplex = true;
       return this;
     }
 

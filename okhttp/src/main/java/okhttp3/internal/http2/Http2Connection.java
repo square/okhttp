@@ -33,6 +33,7 @@ import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import okhttp3.Headers;
 import okhttp3.Protocol;
 import okhttp3.internal.NamedRunnable;
 import okhttp3.internal.Util;
@@ -248,14 +249,14 @@ public final class Http2Connection implements Closeable {
         }
         streamId = nextStreamId;
         nextStreamId += 2;
-        stream = new Http2Stream(streamId, this, outFinished, inFinished, requestHeaders);
+        stream = new Http2Stream(streamId, this, outFinished, inFinished, null);
         flushHeaders = !out || bytesLeftInWriteWindow == 0L || stream.bytesLeftInWriteWindow == 0L;
         if (stream.isOpen()) {
           streams.put(streamId, stream);
         }
       }
       if (associatedStreamId == 0) {
-        writer.synStream(outFinished, streamId, associatedStreamId, requestHeaders);
+        writer.headers(outFinished, streamId, requestHeaders);
       } else if (client) {
         throw new IllegalArgumentException("client streams shouldn't have associated stream IDs");
       } else { // HTTP/2 has a PUSH_PROMISE frame.
@@ -270,9 +271,9 @@ public final class Http2Connection implements Closeable {
     return stream;
   }
 
-  void writeSynReply(int streamId, boolean outFinished, List<Header> alternating)
+  void writeHeaders(int streamId, boolean outFinished, List<Header> alternating)
       throws IOException {
-    writer.synReply(outFinished, streamId, alternating);
+    writer.headers(outFinished, streamId, alternating);
   }
 
   /**
@@ -637,7 +638,7 @@ public final class Http2Connection implements Closeable {
       }
       dataStream.receiveData(source, length);
       if (inFinished) {
-        dataStream.receiveFin();
+        dataStream.receiveHeaders(Util.EMPTY_HEADERS, true);
       }
     }
 
@@ -662,8 +663,9 @@ public final class Http2Connection implements Closeable {
           if (streamId % 2 == nextStreamId % 2) return;
 
           // Create a stream.
+          Headers headers = Util.toHeaders(headerBlock);
           final Http2Stream newStream = new Http2Stream(streamId, Http2Connection.this,
-              false, inFinished, headerBlock);
+              false, inFinished, headers);
           lastGoodStreamId = streamId;
           streams.put(streamId, newStream);
           listenerExecutor.execute(new NamedRunnable("OkHttp %s stream %d", hostname, streamId) {
@@ -684,8 +686,7 @@ public final class Http2Connection implements Closeable {
       }
 
       // Update an existing stream.
-      stream.receiveHeaders(headerBlock);
-      if (inFinished) stream.receiveFin();
+      stream.receiveHeaders(Util.toHeaders(headerBlock), inFinished);
     }
 
     @Override public void rstStream(int streamId, ErrorCode errorCode) {
@@ -931,7 +932,7 @@ public final class Http2Connection implements Closeable {
 
     /**
      * Handle a new stream from this connection's peer. Implementations should respond by either
-     * {@linkplain Http2Stream#sendResponseHeaders replying to the stream} or {@linkplain
+     * {@linkplain Http2Stream#writeHeaders replying to the stream} or {@linkplain
      * Http2Stream#close closing it}. This response does not need to be synchronous.
      */
     public abstract void onStream(Http2Stream stream) throws IOException;

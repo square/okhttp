@@ -20,8 +20,10 @@ import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 import javax.annotation.Nullable;
+import okhttp3.internal.http.HttpCodec;
 import okhttp3.internal.http.HttpHeaders;
 import okio.Buffer;
+import okio.BufferedSink;
 import okio.BufferedSource;
 
 import static java.net.HttpURLConnection.HTTP_MOVED_PERM;
@@ -53,8 +55,10 @@ public final class Response implements Closeable {
   final @Nullable Response priorResponse;
   final long sentRequestAtMillis;
   final long receivedResponseAtMillis;
+  final BufferedSink sink;
+  final @Nullable HttpCodec httpCodec;
 
-  private volatile CacheControl cacheControl; // Lazily initialized.
+  private volatile @Nullable CacheControl cacheControl; // Lazily initialized.
 
   Response(Builder builder) {
     this.request = builder.request;
@@ -69,6 +73,8 @@ public final class Response implements Closeable {
     this.priorResponse = builder.priorResponse;
     this.sentRequestAtMillis = builder.sentRequestAtMillis;
     this.receivedResponseAtMillis = builder.receivedResponseAtMillis;
+    this.sink = builder.sink;
+    this.httpCodec = builder.httpCodec;
   }
 
   /**
@@ -137,6 +143,14 @@ public final class Response implements Closeable {
   }
 
   /**
+   * Returns the trailers after the HTTP response, which may be empty. It is an error to call this
+   * before the entire HTTP response body has been consumed.
+   */
+  public Headers trailers() throws IOException {
+    return httpCodec.trailers();
+  }
+
+  /**
    * Peeks up to {@code byteCount} bytes from the response body and returns them as a new response
    * body. If fewer than {@code byteCount} bytes are in the response body, the full response body is
    * returned. If more than {@code byteCount} bytes are in the response body, the returned value
@@ -148,21 +162,11 @@ public final class Response implements Closeable {
    * applications should set a modest limit on {@code byteCount}, such as 1 MiB.
    */
   public ResponseBody peekBody(long byteCount) throws IOException {
-    BufferedSource source = body.source();
-    source.request(byteCount);
-    Buffer copy = source.buffer().clone();
-
-    // There may be more than byteCount bytes in source.buffer(). If there is, return a prefix.
-    Buffer result;
-    if (copy.size() > byteCount) {
-      result = new Buffer();
-      result.write(copy, byteCount);
-      copy.clear();
-    } else {
-      result = copy;
-    }
-
-    return ResponseBody.create(body.contentType(), result.size(), result);
+    BufferedSource peeked = body.source().peek();
+    Buffer buffer = new Buffer();
+    peeked.request(byteCount);
+    buffer.write(peeked, Math.min(byteCount, peeked.getBuffer().size()));
+    return ResponseBody.create(body.contentType(), buffer.size(), buffer);
   }
 
   /**
@@ -225,16 +229,15 @@ public final class Response implements Closeable {
   }
 
   /**
-   * Returns the RFC 7235 authorization challenges appropriate for this response's code.
-   * If the response code is 401 unauthorized, this returns the "WWW-Authenticate" challenges.
-   * If the response code is 407 proxy unauthorized, this returns the "Proxy-Authenticate"
-   * challenges. Otherwise this returns an empty list of challenges.
-   * <p>
-   * If a challenge uses the {@code token68} variant instead of auth params,
-   * there is exactly one auth param in the challenge at key {@code null}.
-   * Invalid headers and challenges are ignored.
-   * No semantic validation is done, for example that {@code Basic} auth must have a
-   * {@code realm} auth param, this is up to the caller that interprets these challenges.
+   * Returns the RFC 7235 authorization challenges appropriate for this response's code. If the
+   * response code is 401 unauthorized, this returns the "WWW-Authenticate" challenges. If the
+   * response code is 407 proxy unauthorized, this returns the "Proxy-Authenticate" challenges.
+   * Otherwise this returns an empty list of challenges.
+   *
+   * <p>If a challenge uses the {@code token68} variant instead of auth params, there is exactly one
+   * auth param in the challenge at key {@code null}. Invalid headers and challenges are ignored.
+   * No semantic validation is done, for example that {@code Basic} auth must have a {@code realm}
+   * auth param, this is up to the caller that interprets these challenges.
    */
   public List<Challenge> challenges() {
     String responseField;
@@ -301,19 +304,25 @@ public final class Response implements Closeable {
         + '}';
   }
 
+  BufferedSink sink() {
+    return sink;
+  }
+
   public static class Builder {
-    Request request;
-    Protocol protocol;
+    @Nullable Request request;
+    @Nullable Protocol protocol;
     int code = -1;
     String message;
     @Nullable Handshake handshake;
     Headers.Builder headers;
-    ResponseBody body;
-    Response networkResponse;
-    Response cacheResponse;
-    Response priorResponse;
+    @Nullable ResponseBody body;
+    @Nullable Response networkResponse;
+    @Nullable Response cacheResponse;
+    @Nullable Response priorResponse;
     long sentRequestAtMillis;
     long receivedResponseAtMillis;
+    @Nullable BufferedSink sink;
+    @Nullable HttpCodec httpCodec;
 
     public Builder() {
       headers = new Headers.Builder();
@@ -332,6 +341,8 @@ public final class Response implements Closeable {
       this.priorResponse = response.priorResponse;
       this.sentRequestAtMillis = response.sentRequestAtMillis;
       this.receivedResponseAtMillis = response.receivedResponseAtMillis;
+      this.sink = response.sink;
+      this.httpCodec = response.httpCodec;
     }
 
     public Builder request(Request request) {
@@ -437,6 +448,11 @@ public final class Response implements Closeable {
     public Builder receivedResponseAtMillis(long receivedResponseAtMillis) {
       this.receivedResponseAtMillis = receivedResponseAtMillis;
       return this;
+    }
+
+    void sinkAndCodec(BufferedSink sink, HttpCodec httpCodec) {
+      this.sink = sink;
+      this.httpCodec = httpCodec;
     }
 
     public Response build() {
