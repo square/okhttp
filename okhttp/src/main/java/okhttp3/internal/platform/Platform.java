@@ -33,6 +33,7 @@ import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.X509TrustManager;
 import okhttp3.OkHttpClient;
 import okhttp3.Protocol;
+import okhttp3.internal.Util;
 import okhttp3.internal.tls.BasicCertificateChainCleaner;
 import okhttp3.internal.tls.BasicTrustRootIndex;
 import okhttp3.internal.tls.CertificateChainCleaner;
@@ -187,7 +188,7 @@ public class Platform {
 
   public static boolean isConscryptPreferred() {
     // mainly to allow tests to run cleanly
-    if ("conscrypt".equals(System.getProperty("okhttp.platform"))) {
+    if ("conscrypt".equals(Util.getSystemProperty("okhttp.platform", null))) {
       return true;
     }
 
@@ -267,7 +268,7 @@ public class Platform {
   }
 
   public SSLContext getSSLContext() {
-    String jvmVersion = System.getProperty("java.specification.version");
+    String jvmVersion = Util.getSystemProperty("java.specification.version", null);
     if ("1.7".equals(jvmVersion)) {
       try {
         // JDK 1.7 (public version) only support > TLSv1 with named protocols
