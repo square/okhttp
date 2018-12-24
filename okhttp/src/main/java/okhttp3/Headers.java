@@ -364,11 +364,10 @@ public final class Headers {
     }
 
     public Builder removeAll(String name) {
-      for (int i = 0; i < namesAndValues.size(); i += 2) {
+      for (int i = namesAndValues.size() - 2; i >= 0; i -= 2) {
         if (name.equalsIgnoreCase(namesAndValues.get(i))) {
-          namesAndValues.remove(i); // name
-          namesAndValues.remove(i); // value
-          i -= 2;
+          namesAndValues.remove(i); //name
+          namesAndValues.remove(i); //value
         }
       }
       return this;
