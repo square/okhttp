@@ -24,7 +24,6 @@ import java.net.Socket;
 import java.net.SocketAddress;
 import javax.net.ServerSocketFactory;
 import jnr.unixsocket.UnixServerSocketChannel;
-import jnr.unixsocket.UnixSocket;
 import jnr.unixsocket.UnixSocketAddress;
 import jnr.unixsocket.UnixSocketChannel;
 
@@ -82,13 +81,8 @@ public final class UnixDomainServerSocketFactory extends ServerSocketFactory {
     }
 
     @Override public Socket accept() throws IOException {
-      UnixSocketChannel socketChannel = serverSocketChannel.accept();
-
-      return new UnixSocket(socketChannel) {
-        @Override public InetAddress getInetAddress() {
-          return endpoint.getAddress(); // TODO(jwilson): fake the remote address?
-        }
-      };
+      UnixSocketChannel channel = serverSocketChannel.accept();
+      return new BlockingUnixSocket(path, channel, endpoint);
     }
 
     @Override public void close() throws IOException {
