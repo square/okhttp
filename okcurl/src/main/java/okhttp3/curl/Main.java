@@ -24,6 +24,7 @@ import io.airlift.airline.SingleCommand;
 import java.io.IOException;
 import java.io.InputStream;
 import java.security.cert.X509Certificate;
+import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
 import java.util.logging.ConsoleHandler;
@@ -106,6 +107,11 @@ public class Main extends HelpOption implements Runnable {
 
   @Option(name = {"-L", "--location"}, description = "Follow redirects")
   public boolean followRedirects;
+
+  @Option(
+      name = {"--http2-prior-knowledge"},
+      description = "Use HTTP/2 without HTTP/1.1 Upgrade")
+  public boolean http2PriorKnowledge;
 
   @Option(name = {"-k", "--insecure"},
       description = "Allow connections to SSL sites without certs")
@@ -190,6 +196,9 @@ public class Main extends HelpOption implements Runnable {
       SSLSocketFactory sslSocketFactory = createInsecureSslSocketFactory(trustManager);
       builder.sslSocketFactory(sslSocketFactory, trustManager);
       builder.hostnameVerifier(createInsecureHostnameVerifier());
+    }
+    if (http2PriorKnowledge) {
+      builder.protocols(Collections.singletonList(Protocol.H2_PRIOR_KNOWLEDGE));
     }
     if (verbose) {
       HttpLoggingInterceptor.Logger logger =
