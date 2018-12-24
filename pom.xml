@@ -38,7 +38,6 @@
     <module>mockwebserver</module>
     <module>bom</module>
     <module>samples</module>
-    <module>benchmarks</module>
   </modules>
 
   <properties>
