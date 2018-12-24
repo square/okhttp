@@ -104,6 +104,11 @@ public class Main extends HelpOption implements Runnable {
   @Option(name = "--read-timeout", description = "Maximum time allowed for reading data (seconds)")
   public int readTimeout = DEFAULT_TIMEOUT;
 
+  @Option(
+      name = "--call-timeout",
+      description = "Maximum time allowed for the entire call (seconds)")
+  public int callTimeout = DEFAULT_TIMEOUT;
+
   @Option(name = {"-L", "--location"}, description = "Follow redirects")
   public boolean followRedirects;
 
@@ -184,6 +189,9 @@ public class Main extends HelpOption implements Runnable {
     }
     if (readTimeout != DEFAULT_TIMEOUT) {
       builder.readTimeout(readTimeout, SECONDS);
+    }
+    if (callTimeout != DEFAULT_TIMEOUT) {
+      builder.callTimeout(callTimeout, SECONDS);
     }
     if (allowInsecure) {
       X509TrustManager trustManager = createInsecureTrustManager();
