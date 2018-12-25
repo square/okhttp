@@ -469,12 +469,14 @@ public final class URLConnectionTest {
     assertContent("This comes after a busted connection", connection2);
 
     // Check that a fresh connection was created, either immediately or after attempting reuse.
+    // We know that a fresh connection was created if the server recorded a request with sequence
+    // number 0. Since the client may have attempted to reuse the broken connection just before
+    // creating a fresh connection, the server may have recorded 2 requests at this point. The order
+    // of recording is non-deterministic.
     RecordedRequest requestAfter = server.takeRequest();
-    if (server.getRequestCount() == 3) {
-      requestAfter = server.takeRequest(); // The failure consumed a response.
-    }
-    // sequence number 0 means the HTTP socket connection was not reused
-    assertEquals(0, requestAfter.getSequenceNumber());
+    assertTrue(
+        requestAfter.getSequenceNumber() == 0
+            || server.getRequestCount() == 3 && server.takeRequest().getSequenceNumber() == 0);
   }
 
   enum WriteKind {BYTE_BY_BYTE, SMALL_BUFFERS, LARGE_BUFFERS}
