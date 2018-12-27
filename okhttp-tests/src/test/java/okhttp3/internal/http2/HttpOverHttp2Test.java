@@ -352,7 +352,7 @@ public final class HttpOverHttp2Test {
     waitForDataFrames(Http2Connection.OKHTTP_CLIENT_WINDOW_SIZE);
 
     // Cancel the call and close the response body. This should discard the buffered data and update
-    // the connnection flow-control window.
+    // the connection flow-control window.
     call1.cancel();
     response1.close();
 
