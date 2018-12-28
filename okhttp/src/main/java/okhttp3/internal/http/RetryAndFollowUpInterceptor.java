@@ -117,7 +117,7 @@ public final class RetryAndFollowUpInterceptor implements Interceptor {
     Response priorResponse = null;
     while (true) {
       if (canceled) {
-        streamAllocation.release();
+        streamAllocation.release(true);
         throw new IOException("Canceled");
       }
 
@@ -143,7 +143,7 @@ public final class RetryAndFollowUpInterceptor implements Interceptor {
         // We're throwing an unchecked exception. Release any resources.
         if (releaseConnection) {
           streamAllocation.streamFailed(null);
-          streamAllocation.release();
+          streamAllocation.release(true);
         }
       }
 
@@ -160,29 +160,29 @@ public final class RetryAndFollowUpInterceptor implements Interceptor {
       try {
         followUp = followUpRequest(response, streamAllocation.route());
       } catch (IOException e) {
-        streamAllocation.release();
+        streamAllocation.release(true);
         throw e;
       }
 
       if (followUp == null) {
-        streamAllocation.release();
+        streamAllocation.release(true);
         return response;
       }
 
       closeQuietly(response.body());
 
       if (++followUpCount > MAX_FOLLOW_UPS) {
-        streamAllocation.release();
+        streamAllocation.release(true);
         throw new ProtocolException("Too many follow-up requests: " + followUpCount);
       }
 
       if (followUp.body() instanceof UnrepeatableRequestBody) {
-        streamAllocation.release();
+        streamAllocation.release(true);
         throw new HttpRetryException("Cannot retry streamed HTTP body", response.code());
       }
 
       if (!sameConnection(response, followUp.url())) {
-        streamAllocation.release();
+        streamAllocation.release(false);
         streamAllocation = new StreamAllocation(client.connectionPool(),
             createAddress(followUp.url()), call, eventListener, callStackTrace);
         this.streamAllocation = streamAllocation;
