@@ -844,6 +844,14 @@ public final class MockWebServer extends ExternalResource implements Closeable {
   }
 
   /**
+   * Returns the dispatcher used to respond to HTTP requests. The default dispatcher is a {@link
+   * QueueDispatcher} but other dispatchers can be configured.
+   */
+  public Dispatcher getDispatcher() {
+    return dispatcher;
+  }
+
+  /**
    * Sets the dispatcher used to match incoming requests to mock responses. The default dispatcher
    * simply serves a fixed sequence of responses from a {@link #enqueue(MockResponse) queue}; custom
    * dispatchers can vary the response based on timing or the content of the request.
