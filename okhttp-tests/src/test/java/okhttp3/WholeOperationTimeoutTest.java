@@ -257,8 +257,6 @@ public final class WholeOperationTimeoutTest {
     }
   }
 
-  @Ignore(
-      "timeout.exit() is called when the first connection is released but timeout.enter() is not called again")
   @Test
   public void timeoutFollowingRedirectOnNewConnection() throws Exception {
     MockWebServer otherServer = new MockWebServer();

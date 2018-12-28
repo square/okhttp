@@ -343,7 +343,7 @@ public final class StreamAllocation {
     return connection;
   }
 
-  public void release() {
+  public void release(boolean callEnd) {
     Socket socket;
     Connection releasedConnection;
     synchronized (connectionPool) {
@@ -353,9 +353,13 @@ public final class StreamAllocation {
     }
     closeQuietly(socket);
     if (releasedConnection != null) {
-      Internal.instance.timeoutExit(call, null);
+      if (callEnd) {
+        Internal.instance.timeoutExit(call, null);
+      }
       eventListener.connectionReleased(call, releasedConnection);
-      eventListener.callEnd(call);
+      if (callEnd) {
+        eventListener.callEnd(call);
+      }
     }
   }
 

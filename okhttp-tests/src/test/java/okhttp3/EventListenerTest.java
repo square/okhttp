@@ -1103,7 +1103,6 @@ public final class EventListenerTest {
     assertEquals(expectedEvents, listener.recordedEventTypes());
   }
 
-  @Ignore("CallEnd emitted twice")
   @Test
   public void redirectUsingNewConnectionEventSequence() throws IOException {
     MockWebServer otherServer = new MockWebServer();
