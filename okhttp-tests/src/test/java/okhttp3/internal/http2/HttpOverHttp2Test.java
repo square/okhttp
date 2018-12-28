@@ -752,8 +752,6 @@ public final class HttpOverHttp2Test {
     cookieJar.assertResponseCookies("a=b; path=/");
   }
 
-  /** https://github.com/square/okhttp/issues/1191 */
-  @Ignore // TODO: recover gracefully when a connection is shutdown.
   @Test public void cancelWithStreamNotCompleted() throws Exception {
     // Ensure that the (shared) connection pool is in a consistent state.
     client.connectionPool().evictAll();
