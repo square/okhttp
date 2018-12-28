@@ -16,6 +16,7 @@
 package okhttp3;
 
 import java.io.IOException;
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
@@ -837,11 +838,12 @@ public final class HeadersTest {
   }
 
   @Test public void addDate() {
-    Date expected = new Date(0);
+    Date expected = new Date(0L);
     Headers headers = new Headers.Builder()
         .add("testDate", expected)
         .build();
     assertEquals("Thu, 01 Jan 1970 00:00:00 GMT", headers.get("testDate"));
+    assertEquals(new Date(0L), headers.getDate("testDate"));
   }
 
   @Test public void addDateNull() {
@@ -855,13 +857,34 @@ public final class HeadersTest {
     }
   }
 
+  @Test public void addInstant() {
+    Instant expected = Instant.ofEpochMilli(0L);
+    Headers headers = new Headers.Builder()
+        .add("Test-Instant", expected)
+        .build();
+    assertEquals("Thu, 01 Jan 1970 00:00:00 GMT", headers.get("Test-Instant"));
+    assertEquals(expected, headers.getInstant("Test-Instant"));
+  }
+
+  @Test public void addInstantNull() {
+    try {
+      new Headers.Builder()
+          .add("Test-Instant", (Instant) null)
+          .build();
+      fail();
+    } catch (NullPointerException expected) {
+      assertEquals("value for name Test-Instant == null", expected.getMessage());
+    }
+  }
+
   @Test public void setDate() {
     Date expected = new Date(1000);
     Headers headers = new Headers.Builder()
-        .add("testDate", new Date(0))
+        .add("testDate", new Date(0L))
         .set("testDate", expected)
         .build();
     assertEquals("Thu, 01 Jan 1970 00:00:01 GMT", headers.get("testDate"));
+    assertEquals(expected, headers.getDate("testDate"));
   }
 
   @Test public void setDateNull() {
@@ -872,6 +895,27 @@ public final class HeadersTest {
       fail();
     } catch (NullPointerException expected) {
       assertEquals("value for name testDate == null", expected.getMessage());
+    }
+  }
+
+  @Test public void setInstant() {
+    Instant expected = Instant.ofEpochMilli(1000L);
+    Headers headers = new Headers.Builder()
+        .add("Test-Instant", Instant.ofEpochMilli(0L))
+        .set("Test-Instant", expected)
+        .build();
+    assertEquals("Thu, 01 Jan 1970 00:00:01 GMT", headers.get("Test-Instant"));
+    assertEquals(expected, headers.getInstant("Test-Instant"));
+  }
+
+  @Test public void setInstantNull() {
+    try {
+      new Headers.Builder()
+          .set("Test-Instant", (Instant) null)
+          .build();
+      fail();
+    } catch (NullPointerException expected) {
+      assertEquals("value for name Test-Instant == null", expected.getMessage());
     }
   }
 }

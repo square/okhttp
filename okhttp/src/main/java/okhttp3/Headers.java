@@ -17,6 +17,7 @@
 
 package okhttp3;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -30,6 +31,7 @@ import java.util.TreeSet;
 import javax.annotation.Nullable;
 import okhttp3.internal.Util;
 import okhttp3.internal.http.HttpDate;
+import org.codehaus.mojo.animal_sniffer.IgnoreJRERequirement;
 
 /**
  * The header fields of a single HTTP message. Values are uninterpreted strings; use {@code Request}
@@ -70,6 +72,16 @@ public final class Headers {
   public @Nullable Date getDate(String name) {
     String value = get(name);
     return value != null ? HttpDate.parse(value) : null;
+  }
+
+  /**
+   * Returns the last value corresponding to the specified field parsed as an HTTP date, or null if
+   * either the field is absent or cannot be parsed as a date.
+   */
+  @IgnoreJRERequirement
+  public @Nullable Instant getInstant(String name) {
+    Date value = getDate(name);
+    return value != null ? value.toInstant() : null;
   }
 
   /** Returns the number of field values. */
@@ -334,13 +346,23 @@ public final class Headers {
     }
 
     /**
-     * Add a header with the specified name and formatted Date.
-     * Does validation of header names and values.
+     * Add a header with the specified name and formatted date. Does validation of header names and
+     * value.
      */
     public Builder add(String name, Date value) {
       if (value == null) throw new NullPointerException("value for name " + name + " == null");
       add(name, HttpDate.format(value));
       return this;
+    }
+
+    /**
+     * Add a header with the specified name and formatted instant. Does validation of header names
+     * and value.
+     */
+    @IgnoreJRERequirement
+    public Builder add(String name, Instant value) {
+      if (value == null) throw new NullPointerException("value for name " + name + " == null");
+      return add(name, new Date(value.toEpochMilli()));
     }
 
     /**
@@ -351,6 +373,16 @@ public final class Headers {
       if (value == null) throw new NullPointerException("value for name " + name + " == null");
       set(name, HttpDate.format(value));
       return this;
+    }
+
+    /**
+     * Set a field with the specified instant. If the field is not found, it is added. If the field
+     * is found, the existing values are replaced.
+     */
+    @IgnoreJRERequirement
+    public Builder set(String name, Instant value) {
+      if (value == null) throw new NullPointerException("value for name " + name + " == null");
+      return set(name, new Date(value.toEpochMilli()));
     }
 
     /**
