@@ -44,19 +44,19 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
     <!-- Compilation -->
-    <airlift.version>0.7</airlift.version>
+    <airlift.version>0.8</airlift.version>
     <!-- ALPN library targeted to Java 7 -->
     <alpn.jdk7.version>7.1.2.v20141202</alpn.jdk7.version>
     <android.version>4.1.1.4</android.version>
-    <animal.sniffer.version>1.15</animal.sniffer.version>
-    <apache.http.version>4.2.6</apache.http.version>
+    <animal.sniffer.version>1.17</animal.sniffer.version>
+    <apache.http.version>4.5.6</apache.http.version>
     <bouncycastle.version>1.60</bouncycastle.version>
-    <guava.version>16.0</guava.version>
+    <guava.version>27.0.1-jre</guava.version>
     <java.version>1.7</java.version>
-    <moshi.version>1.1.0</moshi.version>
-    <jnr-unixsocket.version>0.19</jnr-unixsocket.version>
+    <moshi.version>1.8.0</moshi.version>
+    <jnr-unixsocket.version>0.21</jnr-unixsocket.version>
     <okio.version>1.16.0</okio.version>
-    <conscrypt.version>1.4.0</conscrypt.version>
+    <conscrypt.version>1.4.2</conscrypt.version>
 
     <!-- Test Dependencies -->
     <junit.version>4.12</junit.version>
@@ -151,7 +151,7 @@
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-compiler-plugin</artifactId>
-          <version>3.7.0</version>
+          <version>3.8.0</version>
           <configuration>
             <compilerId>javac-with-errorprone</compilerId>
             <forceJavacCompilerUse>true</forceJavacCompilerUse>
@@ -162,12 +162,12 @@
             <dependency>
               <groupId>org.codehaus.plexus</groupId>
               <artifactId>plexus-compiler-javac-errorprone</artifactId>
-              <version>2.8.4</version>
+              <version>2.8.5</version>
             </dependency>
             <dependency>
               <groupId>com.google.errorprone</groupId>
               <artifactId>error_prone_core</artifactId>
-              <version>2.3.1</version>
+              <version>2.3.2</version>
             </dependency>
           </dependencies>
         </plugin>
@@ -175,7 +175,7 @@
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-surefire-plugin</artifactId>
-          <version>2.21.0</version>
+          <version>2.22.1</version>
           <configuration>
             <systemPropertyVariables>
               <okhttp.platform>${okhttp.platform}</okhttp.platform>
@@ -197,7 +197,7 @@
             <dependency>
               <groupId>org.apache.maven.surefire</groupId>
               <artifactId>surefire-junit47</artifactId>
-              <version>2.21.0</version>
+              <version>2.22.1</version>
             </dependency>
           </dependencies>
         </plugin>
@@ -205,7 +205,7 @@
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-javadoc-plugin</artifactId>
-          <version>2.10.4</version>
+          <version>3.0.1</version>
         </plugin>
       </plugins>
     </pluginManagement>
@@ -214,12 +214,12 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-release-plugin</artifactId>
-        <version>2.4.2</version>
+        <version>2.5.3</version>
         <dependencies>
           <dependency>
             <groupId>org.apache.maven.scm</groupId>
             <artifactId>maven-scm-provider-gitexe</artifactId>
-            <version>1.9</version>
+            <version>1.11.1</version>
           </dependency>
         </dependencies>
         <configuration>
@@ -230,12 +230,12 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-checkstyle-plugin</artifactId>
-        <version>2.17</version>
+        <version>3.0.0</version>
         <dependencies>
           <dependency>
             <groupId>com.puppycrawl.tools</groupId>
             <artifactId>checkstyle</artifactId>
-            <version>7.7</version>
+            <version>8.15</version>
           </dependency>
         </dependencies>
         <configuration>
