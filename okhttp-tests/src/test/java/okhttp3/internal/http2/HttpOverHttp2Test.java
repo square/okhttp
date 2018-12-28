@@ -150,6 +150,7 @@ public final class HttpOverHttp2Test {
     http2Logger.setLevel(previousLevel);
 
     client.connectionPool().evictAll();
+    assertEquals(0, client.connectionPool().connectionCount());
   }
 
   @Test public void get() throws Exception {
