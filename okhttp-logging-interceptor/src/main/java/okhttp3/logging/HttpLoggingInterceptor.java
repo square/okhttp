@@ -230,7 +230,8 @@ public final class HttpLoggingInterceptor implements Interceptor {
     long tookMs = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startNs);
 
     ResponseBody responseBody = response.body();
-    long contentLength = responseBody.contentLength();
+    boolean hasResponseBody = HttpHeaders.hasBody(response) && responseBody != null;
+    long contentLength = hasResponseBody ? responseBody.contentLength() : -1;
     String bodySize = contentLength != -1 ? contentLength + "-byte" : "unknown-length";
     logger.log("<-- "
         + response.code()
@@ -244,7 +245,7 @@ public final class HttpLoggingInterceptor implements Interceptor {
         logHeader(headers, i);
       }
 
-      if (!logBody || !HttpHeaders.hasBody(response)) {
+      if (!logBody || !hasResponseBody) {
         logger.log("<-- END HTTP");
       } else if (bodyHasUnknownEncoding(response.headers())) {
         logger.log("<-- END HTTP (encoded body omitted)");
