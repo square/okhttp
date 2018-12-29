@@ -42,16 +42,16 @@ public final class HttpUrlTest {
         new Object[] { false }
     );
   }
-  
+
   @Parameterized.Parameter
   public boolean useGet;
-  
+
   HttpUrl parse(String url) {
     return useGet
         ? HttpUrl.get(url)
         : HttpUrl.parse(url);
   }
-  
+
   @Test public void parseTrimsAsciiWhitespace() throws Exception {
     HttpUrl expected = parse("http://host/");
     assertEquals(expected, parse("http://host/\f\n\t \r")); // Leading.
@@ -554,10 +554,11 @@ public final class HttpUrlTest {
     assertEquals("1::", parse("http://[1:0:0:0:0:0:0:0]/").host());
     assertEquals("::1", parse("http://[0:0:0:0:0:0:0:1]/").host());
     assertEquals("::", parse("http://[0:0:0:0:0:0:0:0]/").host());
+    assertEquals("192.168.1.254", parse("http://[::ffff:c0a8:1fe]/").host());
   }
 
   /** The builder permits square braces but does not require them. */
-  @Test public void hostIPv6Builder() throws Exception {
+  @Test public void hostIpv6Builder() throws Exception {
     HttpUrl base = parse("http://example.com/");
     assertEquals("http://[::1]/", base.newBuilder().host("[::1]").build().toString());
     assertEquals("http://[::1]/", base.newBuilder().host("[::0001]").build().toString());
