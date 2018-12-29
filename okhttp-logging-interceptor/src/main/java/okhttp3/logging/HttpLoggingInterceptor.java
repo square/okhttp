@@ -230,7 +230,7 @@ public final class HttpLoggingInterceptor implements Interceptor {
     long tookMs = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startNs);
 
     ResponseBody responseBody = response.body();
-    long contentLength = responseBody.contentLength();
+    long contentLength = responseBody != null ? responseBody.contentLength() : -1;
     String bodySize = contentLength != -1 ? contentLength + "-byte" : "unknown-length";
     logger.log("<-- "
         + response.code()
