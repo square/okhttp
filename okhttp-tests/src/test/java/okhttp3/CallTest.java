@@ -2093,6 +2093,40 @@ public final class CallTest {
     callback.await(server.url("/")).assertFailure("Canceled", "Socket closed");
   }
 
+  @Test
+  public void cancelWhileRequestHeadersAreSent() throws Exception {
+    server.enqueue(new MockResponse().setBody("A"));
+
+    EventListener listener =
+        new EventListener() {
+          @Override
+          public void requestHeadersStart(Call call) {
+            try {
+              // Cancel call from another thread to avoid reentrance.
+              cancelLater(call, 0).join();
+            } catch (InterruptedException e) {
+              throw new AssertionError();
+            }
+          }
+        };
+    client = client.newBuilder().eventListener(listener).build();
+
+    Call call = client.newCall(new Request.Builder().url(server.url("/a")).build());
+    try {
+      call.execute();
+      fail();
+    } catch (IOException expected) {
+    }
+  }
+
+  @Ignore(
+      "Canceling an HTTP/2 request while request headers are sent has no effect. The request completes successfully and the response can be read.")
+  @Test
+  public void cancelWhileRequestHeadersAreSent_HTTP_2() throws Exception {
+    enableProtocol(Protocol.HTTP_2);
+    cancelWhileRequestHeadersAreSent();
+  }
+
   @Test public void cancelBeforeBodyIsRead() throws Exception {
     server.enqueue(new MockResponse().setBody("def").throttleBody(1, 750, TimeUnit.MILLISECONDS));
 
@@ -3517,8 +3551,8 @@ public final class CallTest {
     return result;
   }
 
-  private void cancelLater(final Call call, final long delay) {
-    new Thread("canceler") {
+  private Thread cancelLater(final Call call, final long delay) {
+    Thread thread = new Thread("canceler") {
       @Override public void run() {
         try {
           Thread.sleep(delay);
@@ -3527,7 +3561,9 @@ public final class CallTest {
         }
         call.cancel();
       }
-    }.start();
+    };
+    thread.start();
+    return thread;
   }
 
   private static class RecordingSSLSocketFactory extends DelegatingSSLSocketFactory {
