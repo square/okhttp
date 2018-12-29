@@ -28,9 +28,11 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import okhttp3.internal.Util;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import okhttp3.mockwebserver.RecordedRequest;
+import org.junit.Rule;
 import org.junit.Test;
 
 import static java.net.CookiePolicy.ACCEPT_ORIGINAL_SERVER;
@@ -42,6 +44,7 @@ import static org.junit.Assert.fail;
 
 /** Derived from Android's CookiesTest. */
 public class CookiesTest {
+  @Rule public final MockWebServer server = new MockWebServer();
   private OkHttpClient client = defaultClient();
 
   @Test
@@ -50,8 +53,6 @@ public class CookiesTest {
     client = client.newBuilder()
         .cookieJar(new JavaNetCookieJar(cookieManager))
         .build();
-    MockWebServer server = new MockWebServer();
-    server.start();
 
     HttpUrl urlWithIpAddress = urlWithIpAddress(server, "/path/foo");
     server.enqueue(new MockResponse().addHeader("Set-Cookie: a=android; "
@@ -80,8 +81,6 @@ public class CookiesTest {
     client = client.newBuilder()
         .cookieJar(new JavaNetCookieJar(cookieManager))
         .build();
-    MockWebServer server = new MockWebServer();
-    server.start();
 
     HttpUrl urlWithIpAddress = urlWithIpAddress(server, "/path/foo");
     server.enqueue(new MockResponse().addHeader("Set-Cookie: a=android; "
@@ -110,8 +109,6 @@ public class CookiesTest {
     client = client.newBuilder()
         .cookieJar(new JavaNetCookieJar(cookieManager))
         .build();
-    MockWebServer server = new MockWebServer();
-    server.start();
 
     HttpUrl urlWithIpAddress = urlWithIpAddress(server, "/path/foo");
     server.enqueue(new MockResponse().addHeader("Set-Cookie: a=\"android\"; "
@@ -137,9 +134,7 @@ public class CookiesTest {
   }
 
   @Test public void testSendingCookiesFromStore() throws Exception {
-    MockWebServer server = new MockWebServer();
     server.enqueue(new MockResponse());
-    server.start();
     HttpUrl serverUrl = urlWithIpAddress(server, "/");
 
     CookieManager cookieManager = new CookieManager(null, ACCEPT_ORIGINAL_SERVER);
@@ -162,9 +157,7 @@ public class CookiesTest {
   }
 
   @Test public void cookieHandlerLikeAndroid() throws Exception {
-    final MockWebServer server = new MockWebServer();
     server.enqueue(new MockResponse());
-    server.start();
     final HttpUrl serverUrl = urlWithIpAddress(server, "/");
 
     CookieHandler androidCookieHandler = new CookieHandler() {
@@ -190,12 +183,10 @@ public class CookiesTest {
   }
 
   @Test public void receiveAndSendMultipleCookies() throws Exception {
-    MockWebServer server = new MockWebServer();
     server.enqueue(new MockResponse()
         .addHeader("Set-Cookie", "a=android")
         .addHeader("Set-Cookie", "b=banana"));
     server.enqueue(new MockResponse());
-    server.start();
 
     CookieManager cookieManager = new CookieManager(null, ACCEPT_ORIGINAL_SERVER);
     client = client.newBuilder()
@@ -248,6 +239,8 @@ public class CookiesTest {
   }
 
   @Test public void testCookiesSentIgnoresCase() throws Exception {
+    server.enqueue(new MockResponse());
+
     client = client.newBuilder()
         .cookieJar(new JavaNetCookieJar(new CookieManager() {
           @Override public Map<String, List<String>> get(URI uri,
@@ -259,10 +252,6 @@ public class CookiesTest {
           }
         }))
         .build();
-
-    MockWebServer server = new MockWebServer();
-    server.enqueue(new MockResponse());
-    server.start();
 
     get(server.url("/"));
 
@@ -322,6 +311,166 @@ public class CookiesTest {
     HttpUrl url2 = HttpUrl.get("https://www.squareup.com/");
     List<Cookie> actualCookies = cookieJar.loadForRequest(url2);
     assertEquals(Collections.<Cookie>emptyList(), actualCookies);
+  }
+
+  /** https://github.com/square/okhttp/issues/4282 */
+  @Test public void combineCookiesFromStoreAndHeaders() throws Exception {
+    server.enqueue(new MockResponse()
+        .setBody("abc"));
+    HttpUrl serverUrl = urlWithIpAddress(server, "/");
+
+    CookieManager cookieManager = new CookieManager(null, ACCEPT_ORIGINAL_SERVER);
+    HttpCookie cookieA = new HttpCookie("a", "android");
+    cookieA.setDomain(serverUrl.host());
+    cookieA.setPath("/");
+    cookieManager.getCookieStore().add(serverUrl.uri(), cookieA);
+    client = client.newBuilder()
+        .cookieJar(new JavaNetCookieJar(cookieManager))
+        .build();
+
+    Call call = client.newCall(new Request.Builder()
+        .url(serverUrl)
+        .header("Cookie", "b=banana")
+        .build());
+    Response response = call.execute();
+    assertEquals("abc", response.body().string());
+
+    RecordedRequest request = server.takeRequest();
+    assertEquals("b=banana; a=android", request.getHeader("Cookie"));
+  }
+
+  @Test public void parseRequestCookies() {
+    HttpUrl url = HttpUrl.get("https://squareup.com/");
+    List<Cookie> cookies = Util.parseRequestCookies(url, "a=android");
+    assertEquals(1, cookies.size());
+    Cookie cookie = cookies.get(0);
+    assertEquals("a", cookie.name());
+    assertEquals("android", cookie.value());
+    assertEquals("squareup.com", cookie.domain());
+  }
+
+  @Test public void parseRequestCookiesMultiple() {
+    HttpUrl url = HttpUrl.get("https://squareup.com/");
+    List<Cookie> cookies = Util.parseRequestCookies(url, "a=android;b=banana");
+    assertEquals(2, cookies.size());
+
+    Cookie cookieA = cookies.get(0);
+    assertEquals("a", cookieA.name());
+    assertEquals("android", cookieA.value());
+    assertEquals("squareup.com", cookieA.domain());
+
+    Cookie cookieB = cookies.get(1);
+    assertEquals("b", cookieB.name());
+    assertEquals("banana", cookieB.value());
+    assertEquals("squareup.com", cookieB.domain());
+  }
+
+  @Test public void parseRequestCookiesWhitespaceTrimmed() {
+    HttpUrl url = HttpUrl.get("https://squareup.com/");
+    List<Cookie> cookies = Util.parseRequestCookies(url, " a  =   android    ;  b =  banana  ");
+    assertEquals(2, cookies.size());
+
+    Cookie cookieA = cookies.get(0);
+    assertEquals("a", cookieA.name());
+    assertEquals("android", cookieA.value());
+
+    Cookie cookieB = cookies.get(1);
+    assertEquals("b", cookieB.name());
+    assertEquals("banana", cookieB.value());
+  }
+
+  @Test public void parseRequestCookiesCommaDelimiter() {
+    HttpUrl url = HttpUrl.get("https://squareup.com/");
+    List<Cookie> cookies = Util.parseRequestCookies(url, "a=android,b=banana");
+    assertEquals(2, cookies.size());
+
+    Cookie cookieA = cookies.get(0);
+    assertEquals("a", cookieA.name());
+    assertEquals("android", cookieA.value());
+
+    Cookie cookieB = cookies.get(1);
+    assertEquals("b", cookieB.name());
+    assertEquals("banana", cookieB.value());
+  }
+
+  @Test public void parseRequestCookiesEmptyCookie() {
+    HttpUrl url = HttpUrl.get("https://squareup.com/");
+    List<Cookie> cookies = Util.parseRequestCookies(url, "a=android;;b=banana");
+    assertEquals(2, cookies.size());
+
+    Cookie cookieA = cookies.get(0);
+    assertEquals("a", cookieA.name());
+    assertEquals("android", cookieA.value());
+
+    Cookie cookieB = cookies.get(1);
+    assertEquals("b", cookieB.name());
+    assertEquals("banana", cookieB.value());
+  }
+
+  @Test public void parseRequestCookiesEmptyName() {
+    HttpUrl url = HttpUrl.get("https://squareup.com/");
+    List<Cookie> cookies = Util.parseRequestCookies(url, "a=android;=unused;b=banana");
+    assertEquals(2, cookies.size());
+
+    Cookie cookieA = cookies.get(0);
+    assertEquals("a", cookieA.name());
+    assertEquals("android", cookieA.value());
+
+    Cookie cookieB = cookies.get(1);
+    assertEquals("b", cookieB.name());
+    assertEquals("banana", cookieB.value());
+  }
+
+  @Test public void parseRequestCookiesNameOnly() {
+    HttpUrl url = HttpUrl.get("https://squareup.com/");
+    List<Cookie> cookies = Util.parseRequestCookies(url, "a=android;c;b=banana");
+    assertEquals(3, cookies.size());
+
+    Cookie cookieA = cookies.get(0);
+    assertEquals("a", cookieA.name());
+    assertEquals("android", cookieA.value());
+
+    Cookie cookieC = cookies.get(1);
+    assertEquals("c", cookieC.name());
+    assertEquals("", cookieC.value());
+
+    Cookie cookieB = cookies.get(2);
+    assertEquals("b", cookieB.name());
+    assertEquals("banana", cookieB.value());
+  }
+
+  @Test public void parseRequestCookiesEmptyValue() {
+    HttpUrl url = HttpUrl.get("https://squareup.com/");
+    List<Cookie> cookies = Util.parseRequestCookies(url, "a=android;c=;b=banana");
+    assertEquals(3, cookies.size());
+
+    Cookie cookieA = cookies.get(0);
+    assertEquals("a", cookieA.name());
+    assertEquals("android", cookieA.value());
+
+    Cookie cookieC = cookies.get(1);
+    assertEquals("c", cookieC.name());
+    assertEquals("", cookieC.value());
+
+    Cookie cookieB = cookies.get(2);
+    assertEquals("b", cookieB.name());
+    assertEquals("banana", cookieB.value());
+  }
+
+  @Test public void parseRequestCookiesQuotedValue() {
+    HttpUrl url = HttpUrl.get("https://squareup.com/");
+    List<Cookie> cookies = Util.parseRequestCookies(url, "a=\"android\"");
+    assertEquals(1, cookies.size());
+
+    Cookie cookieA = cookies.get(0);
+    assertEquals("a", cookieA.name());
+    assertEquals("android", cookieA.value());
+  }
+
+  @Test public void parseRequestCookiesDollarNameIsDropped() {
+    HttpUrl url = HttpUrl.get("https://squareup.com/");
+    List<Cookie> cookies = Util.parseRequestCookies(url, "$a=android");
+    assertEquals(0, cookies.size());
   }
 
   private HttpUrl urlWithIpAddress(MockWebServer server, String path) throws Exception {

@@ -26,10 +26,12 @@ import okhttp3.MediaType;
 import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
+import okhttp3.internal.Util;
 import okhttp3.internal.Version;
 import okio.GzipSource;
 import okio.Okio;
 
+import static okhttp3.internal.Util.concat;
 import static okhttp3.internal.Util.hostHeader;
 
 /**
@@ -81,9 +83,12 @@ public final class BridgeInterceptor implements Interceptor {
       requestBuilder.header("Accept-Encoding", "gzip");
     }
 
-    List<Cookie> cookies = cookieJar.loadForRequest(userRequest.url());
-    if (!cookies.isEmpty()) {
-      requestBuilder.header("Cookie", cookieHeader(cookies));
+    List<Cookie> cookieJarCookies = cookieJar.loadForRequest(userRequest.url());
+    if (!cookieJarCookies.isEmpty()) {
+      // Concatenate cookies from the cookie jar and the user's request. If a cookie is in both the
+      // request and the cookie jar we send both! Well-behaved calling code shouldn't do this.
+      List<Cookie> requestCookies = Util.parseRequestCookies(userRequest);
+      requestBuilder.header("Cookie", cookieHeader(concat(requestCookies, cookieJarCookies)));
     }
 
     if (userRequest.header("User-Agent") == null) {
@@ -115,14 +120,14 @@ public final class BridgeInterceptor implements Interceptor {
 
   /** Returns a 'Cookie' HTTP request header with all cookies, like {@code a=b; c=d}. */
   private String cookieHeader(List<Cookie> cookies) {
-    StringBuilder cookieHeader = new StringBuilder();
+    StringBuilder result = new StringBuilder();
     for (int i = 0, size = cookies.size(); i < size; i++) {
       if (i > 0) {
-        cookieHeader.append("; ");
+        result.append("; ");
       }
       Cookie cookie = cookies.get(i);
-      cookieHeader.append(cookie.name()).append('=').append(cookie.value());
+      result.append(cookie.name()).append('=').append(cookie.value());
     }
-    return cookieHeader.toString();
+    return result.toString();
   }
 }

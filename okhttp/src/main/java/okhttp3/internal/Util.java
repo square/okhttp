@@ -45,8 +45,10 @@ import javax.annotation.Nullable;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
 import javax.net.ssl.X509TrustManager;
+import okhttp3.Cookie;
 import okhttp3.Headers;
 import okhttp3.HttpUrl;
+import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.ResponseBody;
 import okhttp3.internal.http2.Header;
@@ -705,5 +707,57 @@ public final class Util {
       return defaultValue;
     }
     return value != null ? value : defaultValue;
+  }
+
+  public static List<Cookie> parseRequestCookies(Request request) {
+    List<Cookie> result = null; // Lazily initialized.
+    Headers headers = request.headers();
+    for (int i = 0, size = headers.size(); i < size; i++) {
+      if (!headers.name(i).equalsIgnoreCase("Cookie")) continue;
+      if (result == null) result = new ArrayList<>();
+      result.addAll(parseRequestCookies(request.url(), headers.value(i)));
+    }
+    return result != null
+        ? Collections.unmodifiableList(result)
+        : Collections.<Cookie>emptyList();
+  }
+
+  /**
+   * Decode a 'Cookie' request header as specified by RFC 6265, Section 5.4. This is different from
+   * {@link Cookie#parse} which accepts a 'Set-Cookie' response header.
+   */
+  public static List<Cookie> parseRequestCookies(HttpUrl url, String header) {
+    List<Cookie> result = new ArrayList<>();
+    for (int pos = 0, limit = header.length(), pairEnd; pos < limit; pos = pairEnd + 1) {
+      pairEnd = delimiterOffset(header, pos, limit, ";,");
+      int equalsSign = delimiterOffset(header, pos, pairEnd, '=');
+      String name = trimSubstring(header, pos, equalsSign);
+      if (name.startsWith("$")) continue;
+      if (name.isEmpty()) continue;
+
+      // We have either name=value or just a name.
+      String value = equalsSign < pairEnd
+          ? trimSubstring(header, equalsSign + 1, pairEnd)
+          : "";
+
+      // If the value is "quoted", drop the quotes.
+      if (value.startsWith("\"") && value.endsWith("\"")) {
+        value = value.substring(1, value.length() - 1);
+      }
+
+      result.add(new Cookie.Builder()
+          .name(name)
+          .value(value)
+          .domain(url.host())
+          .build());
+    }
+    return result;
+  }
+
+  public static <T> List<T> concat(List<T> a, List<T> b) {
+    List<T> result = new ArrayList<>();
+    result.addAll(a);
+    result.addAll(b);
+    return Collections.unmodifiableList(result);
   }
 }
