@@ -82,7 +82,7 @@ public class RecordedRequestTest {
     assertEquals("http://127.0.0.1/", request.getRequestUrl().toString());
   }
 
-  @Test public void testIPv6() throws UnknownHostException {
+  @Test public void testIpv6() throws UnknownHostException {
     Socket socket = new FakeSocket(InetAddress.getByAddress("::1",
         new byte[] { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 }), 80);
 

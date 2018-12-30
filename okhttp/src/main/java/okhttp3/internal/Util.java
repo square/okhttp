@@ -407,6 +407,7 @@ public final class Util {
       if (inetAddress == null) return null;
       byte[] address = inetAddress.getAddress();
       if (address.length == 16) return inet6AddressToAscii(address);
+      if (address.length == 4) return inetAddress.getHostAddress(); // An IPv4-mapped IPv6 address.
       throw new AssertionError("Invalid IPv6 address: '" + host + "'");
     }
 
