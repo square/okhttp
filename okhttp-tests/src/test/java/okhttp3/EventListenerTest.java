@@ -928,6 +928,25 @@ public final class EventListenerTest {
     assertEquals(expectedEvents, listener.recordedEventTypes());
   }
 
+  @Ignore("CallEnd not emitted")
+  @Test public void emptyResponseBodyConnectionClose() throws IOException {
+    server.enqueue(new MockResponse()
+        .addHeader("Connection", "close")
+        .setBody(""));
+
+    Call call = client.newCall(new Request.Builder()
+        .url(server.url("/"))
+        .build());
+    Response response = call.execute();
+    response.body().close();
+
+    List<String> expectedEvents = Arrays.asList("CallStart", "DnsStart", "DnsEnd",
+        "ConnectStart", "ConnectEnd", "ConnectionAcquired", "RequestHeadersStart",
+        "RequestHeadersEnd", "ResponseHeadersStart", "ResponseHeadersEnd", "ResponseBodyStart",
+        "ResponseBodyEnd", "ConnectionReleased", "CallEnd");
+    assertEquals(expectedEvents, listener.recordedEventTypes());
+  }
+
   @Ignore("this reports CallFailed not CallEnd")
   @Test public void responseBodyClosedClosedWithoutReadingAllData() throws IOException {
     server.enqueue(new MockResponse()
