@@ -93,6 +93,7 @@ public final class Http2Codec implements HttpCodec {
   private final Http2Connection connection;
   private Http2Stream stream;
   private final Protocol protocol;
+  private volatile boolean canceled;
 
   public Http2Codec(OkHttpClient client, Interceptor.Chain chain, StreamAllocation streamAllocation,
       Http2Connection connection) {
@@ -114,6 +115,12 @@ public final class Http2Codec implements HttpCodec {
     boolean hasRequestBody = request.body() != null || Internal.instance.isDuplex(request);
     List<Header> requestHeaders = http2HeadersList(request);
     stream = connection.newStream(requestHeaders, hasRequestBody);
+    // We may have been asked to cancel while creating the new stream and sending the request
+    // headers, but there was still no stream to close.
+    if (canceled) {
+      stream.closeLater(ErrorCode.CANCEL);
+      throw new IOException("Canceled");
+    }
     stream.readTimeout().timeout(chain.readTimeoutMillis(), TimeUnit.MILLISECONDS);
     stream.writeTimeout().timeout(chain.writeTimeoutMillis(), TimeUnit.MILLISECONDS);
   }
@@ -199,6 +206,7 @@ public final class Http2Codec implements HttpCodec {
   }
 
   @Override public void cancel() {
+    canceled = true;
     if (stream != null) stream.closeLater(ErrorCode.CANCEL);
   }
 
