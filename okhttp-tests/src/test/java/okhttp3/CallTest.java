@@ -2119,8 +2119,6 @@ public final class CallTest {
     }
   }
 
-  @Ignore(
-      "Canceling an HTTP/2 request while request headers are sent has no effect. The request completes successfully and the response can be read.")
   @Test
   public void cancelWhileRequestHeadersAreSent_HTTP_2() throws Exception {
     enableProtocol(Protocol.HTTP_2);
