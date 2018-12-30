@@ -534,6 +534,10 @@ public final class HttpUrlTest {
         "Invalid URL host: \"[0:0:0:0:0:1:255.255.255]\"");
   }
 
+  @Test public void hostIpv6Malformed() throws Exception {
+    assertInvalid("http://[::g]/", "Invalid URL host: \"[::g]\"");
+  }
+
   @Test public void hostIpv6CanonicalForm() throws Exception {
     assertEquals("abcd:ef01:2345:6789:abcd:ef01:2345:6789",
         parse("http://[abcd:ef01:2345:6789:abcd:ef01:2345:6789]/").host());
