@@ -896,8 +896,10 @@ public final class HttpOverHttp2Test {
     Call call = client.newCall(new Request.Builder()
         .url(server.url("/"))
         .build());
+    final CountDownLatch latch = new CountDownLatch(1);
     call.enqueue(new Callback() {
       @Override public void onFailure(Call call1, IOException e) {
+        latch.countDown();
       }
 
       @Override public void onResponse(Call call1, Response response) {
@@ -905,6 +907,7 @@ public final class HttpOverHttp2Test {
     });
     assertEquals(expectedSequenceNumber, server.takeRequest().getSequenceNumber());
     call.cancel();
+    latch.await();
   }
 
   @Test public void noRecoveryFromRefusedStreamWithRetryDisabled() throws Exception {
