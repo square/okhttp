@@ -37,6 +37,12 @@ import static okhttp3.internal.Util.nonEmptyIntersection;
  *
  * <p>Use {@link Builder#allEnabledTlsVersions()} and {@link Builder#allEnabledCipherSuites} to
  * defer all feature selection to the underlying SSL socket.
+ *
+ * <p>The configuration of each spec changes with each OkHttp release. This is annoying: upgrading
+ * your OkHttp library can break connectivity to certain web servers! But it’s a necessary annoyance
+ * because the TLS ecosystem is dynamic and staying up to date is necessary to stay secure. See
+ * <a href="https://github.com/square/okhttp/wiki/TLS-Configuration-History">OkHttp's TLS
+ * Configuration History</a> to track these changes.
  */
 public final class ConnectionSpec {
 
@@ -87,24 +93,31 @@ public final class ConnectionSpec {
       CipherSuite.TLS_RSA_WITH_3DES_EDE_CBC_SHA,
   };
 
-  /** A secure TLS connection assuming a modern client platform and server. */
+  /** A secure TLS connection that requires a recent client platform and a recent server. */
   public static final ConnectionSpec RESTRICTED_TLS = new Builder(true)
       .cipherSuites(RESTRICTED_CIPHER_SUITES)
       .tlsVersions(TlsVersion.TLS_1_3, TlsVersion.TLS_1_2)
       .supportsTlsExtensions(true)
       .build();
 
-  /** A modern TLS connection with extensions like SNI and ALPN available. */
+  /**
+   * A modern TLS configuration that works on most client platforms and can connect to most servers.
+   * This is OkHttp's default configuration.
+   */
   public static final ConnectionSpec MODERN_TLS = new Builder(true)
       .cipherSuites(APPROVED_CIPHER_SUITES)
-      .tlsVersions(TlsVersion.TLS_1_3, TlsVersion.TLS_1_2, TlsVersion.TLS_1_1, TlsVersion.TLS_1_0)
+      .tlsVersions(TlsVersion.TLS_1_3, TlsVersion.TLS_1_2)
       .supportsTlsExtensions(true)
       .build();
 
-  /** A backwards-compatible fallback connection for interop with obsolete servers. */
+  /**
+   * A backwards-compatible fallback configuration that works on obsolete client platforms and can
+   * connect to obsolete servers. When possible, prefer to upgrade your client platform or server
+   * rather than using this configuration.
+   */
   public static final ConnectionSpec COMPATIBLE_TLS = new Builder(true)
       .cipherSuites(APPROVED_CIPHER_SUITES)
-      .tlsVersions(TlsVersion.TLS_1_0)
+      .tlsVersions(TlsVersion.TLS_1_3, TlsVersion.TLS_1_2, TlsVersion.TLS_1_1, TlsVersion.TLS_1_0)
       .supportsTlsExtensions(true)
       .build();
 
@@ -328,6 +341,11 @@ public final class ConnectionSpec {
       return this;
     }
 
+    /**
+     * @deprecated since OkHttp 3.13 all TLS-connections are expected to support TLS extensions.
+     *     In a future release setting this to true will be unnecessary and setting it to false will
+     *     have no effect.
+     */
     public Builder supportsTlsExtensions(boolean supportsTlsExtensions) {
       if (!tls) throw new IllegalStateException("no TLS extensions for cleartext connections");
       this.supportsTlsExtensions = supportsTlsExtensions;
