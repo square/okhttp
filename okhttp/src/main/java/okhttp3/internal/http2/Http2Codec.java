@@ -91,7 +91,7 @@ public final class Http2Codec implements HttpCodec {
   private final Interceptor.Chain chain;
   final StreamAllocation streamAllocation;
   private final Http2Connection connection;
-  private Http2Stream stream;
+  private volatile Http2Stream stream;
   private final Protocol protocol;
   private volatile boolean canceled;
 
