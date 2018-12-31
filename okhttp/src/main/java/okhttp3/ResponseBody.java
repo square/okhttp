@@ -149,10 +149,15 @@ public abstract class ResponseBody implements Closeable {
   }
 
   /**
-   * Returns the response as a character stream decoded with the charset of the Content-Type header.
-   * If that header is either absent or lacks a charset, this will attempt to decode the response
-   * body in accordance to <a href="https://en.wikipedia.org/wiki/Byte_order_mark">its BOM</a> or
-   * UTF-8.
+   * Returns the response as a character stream.
+   *
+   * <p>If the response starts with a <a href="https://en.wikipedia.org/wiki/Byte_order_mark">Byte
+   * Order Mark (BOM)</a>, it is consumed and used to determine the charset of the response bytes.
+   *
+   * <p>Otherwise if the response has a Content-Type header that specifies a charset, that is used
+   * to determine the charset of the response bytes.
+   *
+   * <p>Otherwise the response bytes are decoded as UTF-8.
    */
   public final Reader charStream() {
     Reader r = reader;
@@ -160,10 +165,15 @@ public abstract class ResponseBody implements Closeable {
   }
 
   /**
-   * Returns the response as a string decoded with the charset of the Content-Type header. If that
-   * header is either absent or lacks a charset, this will attempt to decode the response body in
-   * accordance to <a href="https://en.wikipedia.org/wiki/Byte_order_mark">its BOM</a> or UTF-8.
-   * Closes {@link ResponseBody} automatically.
+   * Returns the response as a string.
+   *
+   * <p>If the response starts with a <a href="https://en.wikipedia.org/wiki/Byte_order_mark">Byte
+   * Order Mark (BOM)</a>, it is consumed and used to determine the charset of the response bytes.
+   *
+   * <p>Otherwise if the response has a Content-Type header that specifies a charset, that is used
+   * to determine the charset of the response bytes.
+   *
+   * <p>Otherwise the response bytes are decoded as UTF-8.
    *
    * <p>This method loads entire response body into memory. If the response body is very large this
    * may trigger an {@link OutOfMemoryError}. Prefer to stream the response body if this is a
