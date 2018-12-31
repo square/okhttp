@@ -105,12 +105,7 @@ public final class ConnectionPool {
     return total;
   }
 
-  /**
-   * Returns total number of connections in the pool. Note that prior to OkHttp 2.7 this included
-   * only idle connections and HTTP/2 connections. Since OkHttp 2.7 this includes all connections,
-   * both active and inactive. Use {@link #idleConnectionCount()} to count connections not currently
-   * in use.
-   */
+  /** Returns total number of connections in the pool. */
   public synchronized int connectionCount() {
     return connections.size();
   }
