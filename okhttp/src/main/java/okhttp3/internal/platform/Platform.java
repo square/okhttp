@@ -47,7 +47,7 @@ import okio.Buffer;
  *
  * <p>Supported on Android 2.3+.
  *
- * Supported on OpenJDK 7+
+ * <p>Supported on OpenJDK 7+
  *
  * <h3>Session Tickets</h3>
  *
@@ -62,9 +62,9 @@ import okio.Buffer;
  * <p>Supported on Android 5.0+. The APIs were present in Android 4.4, but that implementation was
  * unstable.
  *
- * Supported on OpenJDK 7 and 8 (via the JettyALPN-boot library).
+ * <p>Supported on OpenJDK 8 via the JettyALPN-boot library.
  *
- * Supported on OpenJDK 9 via SSLParameters and SSLSocket features.
+ * <p>Supported on OpenJDK 9+ via SSLParameters and SSLSocket features.
  *
  * <h3>Trust Manager Extraction</h3>
  *
@@ -268,16 +268,6 @@ public class Platform {
   }
 
   public SSLContext getSSLContext() {
-    String jvmVersion = Util.getSystemProperty("java.specification.version", null);
-    if ("1.7".equals(jvmVersion)) {
-      try {
-        // JDK 1.7 (public version) only support > TLSv1 with named protocols
-        return SSLContext.getInstance("TLSv1.2");
-      } catch (NoSuchAlgorithmException e) {
-        // fallback to TLS
-      }
-    }
-
     try {
       return SSLContext.getInstance("TLS");
     } catch (NoSuchAlgorithmException e) {

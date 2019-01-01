@@ -576,7 +576,6 @@ public final class HttpUrlTest {
     assertEquals("0.0.0.0", parse("http://0.0.0.0/").host());
   }
 
-  @Ignore("java.net.IDN strips trailing trailing dots on Java 7, but not on Java 8.")
   @Test public void hostWithTrailingDot() throws Exception {
     assertEquals("host.", parse("http://host./").host());
   }

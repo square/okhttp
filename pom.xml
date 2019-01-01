@@ -45,14 +45,12 @@
 
     <!-- Compilation -->
     <airlift.version>0.8</airlift.version>
-    <!-- ALPN library targeted to Java 7 -->
-    <alpn.jdk7.version>7.1.2.v20141202</alpn.jdk7.version>
     <android.version>4.1.1.4</android.version>
     <animal.sniffer.version>1.17</animal.sniffer.version>
     <apache.http.version>4.5.6</apache.http.version>
     <bouncycastle.version>1.60</bouncycastle.version>
     <guava.version>27.0.1-jre</guava.version>
-    <java.version>1.7</java.version>
+    <java.version>1.8</java.version>
     <moshi.version>1.8.0</moshi.version>
     <jnr-unixsocket.version>0.21</jnr-unixsocket.version>
     <okio.version>1.16.0</okio.version>
@@ -259,56 +257,39 @@
         <version>${animal.sniffer.version}</version>
         <executions>
           <execution>
+            <id>sniff-java18</id>
             <phase>test</phase>
             <goals>
               <goal>check</goal>
             </goals>
+            <configuration>
+              <signature>
+                <groupId>org.codehaus.mojo.signature</groupId>
+                <artifactId>java18</artifactId>
+                <version>1.0</version>
+              </signature>
+            </configuration>
+          </execution>
+          <execution>
+            <id>sniff-android5</id>
+            <phase>test</phase>
+            <goals>
+              <goal>check</goal>
+            </goals>
+            <configuration>
+              <signature>
+                <groupId>net.sf.androidscents.signature</groupId>
+                <artifactId>android-api-level-21</artifactId>
+                <version>5.0.1_r2</version>
+              </signature>
+            </configuration>
           </execution>
         </executions>
-        <configuration>
-          <signature>
-            <groupId>org.codehaus.mojo.signature</groupId>
-            <artifactId>java16</artifactId>
-            <version>1.1</version>
-          </signature>
-        </configuration>
       </plugin>
     </plugins>
   </build>
 
   <profiles>
-    <profile>
-      <id>alpn-when-jdk7</id>
-      <activation>
-        <jdk>1.7</jdk>
-      </activation>
-      <properties>
-        <bootclasspathPrefix>
-          ${settings.localRepository}/org/mortbay/jetty/alpn/alpn-boot/${alpn.jdk7.version}/alpn-boot-${alpn.jdk7.version}.jar
-        </bootclasspathPrefix>
-        <okhttp.platform>jdk-with-jetty-boot</okhttp.platform>
-      </properties>
-      <build>
-        <pluginManagement>
-          <plugins>
-            <plugin>
-              <groupId>org.apache.maven.plugins</groupId>
-              <artifactId>maven-surefire-plugin</artifactId>
-              <configuration>
-                <argLine>-Xbootclasspath/p:${bootclasspathPrefix} -Xms512m -Xmx512m</argLine>
-              </configuration>
-              <dependencies>
-                <dependency>
-                  <groupId>org.mortbay.jetty.alpn</groupId>
-                  <artifactId>alpn-boot</artifactId>
-                  <version>${alpn.jdk7.version}</version>
-                </dependency>
-              </dependencies>
-            </plugin>
-          </plugins>
-        </pluginManagement>
-      </build>
-    </profile>
     <profile>
       <id>alpn-when-jdk8</id>
       <activation>
