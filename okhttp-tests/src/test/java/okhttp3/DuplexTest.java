@@ -75,20 +75,20 @@ public final class DuplexTest {
         .duplex("POST")
         .build());
 
-    Response response = call.execute();
+    try (Response response = call.execute()) {
+      assertEquals(Headers.of("h1", "v1", "h2", "v2"), response.headers());
 
-    assertEquals(Headers.of("h1", "v1", "h2", "v2"), response.headers());
+      latchParty.step(2);
+      BufferedSource source = response.body().source();
+      assertEquals("ok", source.readUtf8(2));
 
-    latchParty.step(2);
-    BufferedSource source = response.body().source();
-    assertEquals("ok", source.readUtf8(2));
+      latchParty.step(4);
+      assertEquals("taco", source.readUtf8(4));
 
-    latchParty.step(4);
-    assertEquals("taco", source.readUtf8(4));
-
-    latchParty.step(6);
-    assertTrue(source.exhausted());
-    assertEquals(Headers.of("trailers", "boom"), response.trailers());
+      latchParty.step(6);
+      assertTrue(source.exhausted());
+      assertEquals(Headers.of("trailers", "boom"), response.trailers());
+    }
   }
 
   @Test public void serverReadsHeadersData() throws IOException {
@@ -114,17 +114,18 @@ public final class DuplexTest {
         .duplex("POST")
         .build());
 
-    Response response = call.execute();
-    BufferedSink sink = response.sink();
-    sink.writeUtf8("hey\n");
-    sink.writeUtf8("whats going on\n");
-    sink.close();
+    try (Response response = call.execute()) {
+      BufferedSink sink = response.sink();
+      sink.writeUtf8("hey\n");
+      sink.writeUtf8("whats going on\n");
+      sink.close();
 
-    // check what the server received
-    BufferedSource requestBodySource = requestBodySourceRef.get();
-    assertEquals("hey", requestBodySource.readUtf8Line());
-    assertEquals("whats going on", requestBodySource.readUtf8Line());
-    assertTrue(requestBodySource.exhausted());
+      // check what the server received
+      BufferedSource requestBodySource = requestBodySourceRef.get();
+      assertEquals("hey", requestBodySource.readUtf8Line());
+      assertEquals("whats going on", requestBodySource.readUtf8Line());
+      assertTrue(requestBodySource.exhausted());
+    }
   }
 
   // TODO(oldergod) write tests for headers discarded with 100 Continue
