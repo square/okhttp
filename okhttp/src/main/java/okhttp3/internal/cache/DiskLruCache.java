@@ -267,7 +267,7 @@ public final class DiskLruCache implements Closeable, Flushable {
 
     // Use a single background thread to evict entries.
     Executor executor = new ThreadPoolExecutor(0, 1, 60L, TimeUnit.SECONDS,
-        new LinkedBlockingQueue<Runnable>(), Util.threadFactory("OkHttp DiskLruCache", true));
+        new LinkedBlockingQueue<>(), Util.threadFactory("OkHttp DiskLruCache", true));
 
     return new DiskLruCache(fileSystem, directory, appVersion, valueCount, maxSize, executor);
   }

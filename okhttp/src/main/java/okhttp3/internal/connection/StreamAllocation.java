@@ -57,14 +57,14 @@ import static okhttp3.internal.Util.closeQuietly;
  * connections. This class has APIs to release each of the above resources:
  *
  * <ul>
- *     <li>{@link #noNewStreams()} prevents the connection from being used for new streams in the
+ *     <li>{@link #noNewStreams} prevents the connection from being used for new streams in the
  *         future. Use this after a {@code Connection: close} header, or when the connection may be
  *         inconsistent.
- *     <li>{@link #streamFinished streamFinished()} releases the active stream from this allocation.
+ *     <li>{@link #streamFinished streamFinished} releases the active stream from this allocation.
  *         Note that only one stream may be active at a given time, so it is necessary to call
  *         {@link #streamFinished streamFinished()} before creating a subsequent stream with {@link
  *         #newStream newStream()}.
- *     <li>{@link #release()} removes the call's hold on the connection. Note that this won't
+ *     <li>{@link #release} removes the call's hold on the connection. Note that this won't
  *         immediately free the connection if there is a stream still lingering. That happens when a
  *         call is complete but its response body has yet to be fully consumed.
  * </ul>
@@ -185,7 +185,7 @@ public final class StreamAllocation {
 
       if (result == null) {
         // Attempt to get a connection from the pool.
-        Internal.instance.get(connectionPool, address, this, null);
+        Internal.instance.acquire(connectionPool, address, this, null);
         if (connection != null) {
           foundPooledConnection = true;
           result = connection;
@@ -223,7 +223,7 @@ public final class StreamAllocation {
         List<Route> routes = routeSelection.getAll();
         for (int i = 0, size = routes.size(); i < size; i++) {
           Route route = routes.get(i);
-          Internal.instance.get(connectionPool, address, this, route);
+          Internal.instance.acquire(connectionPool, address, this, route);
           if (connection != null) {
             foundPooledConnection = true;
             result = connection;

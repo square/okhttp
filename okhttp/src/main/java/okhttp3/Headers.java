@@ -202,7 +202,7 @@ public final class Headers {
     return result;
   }
 
-  private static String get(String[] namesAndValues, String name) {
+  private static @Nullable String get(String[] namesAndValues, String name) {
     for (int i = namesAndValues.length - 2; i >= 0; i -= 2) {
       if (name.equalsIgnoreCase(namesAndValues[i])) {
         return namesAndValues[i + 1];
@@ -419,7 +419,7 @@ public final class Headers {
     }
 
     /** Equivalent to {@code build().get(name)}, but potentially faster. */
-    public String get(String name) {
+    public @Nullable String get(String name) {
       for (int i = namesAndValues.size() - 2; i >= 0; i -= 2) {
         if (name.equalsIgnoreCase(namesAndValues.get(i))) {
           return namesAndValues.get(i + 1);

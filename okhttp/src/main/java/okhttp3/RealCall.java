@@ -59,7 +59,7 @@ final class RealCall implements Call {
     this.client = client;
     this.originalRequest = originalRequest;
     this.forWebSocket = forWebSocket;
-    this.retryAndFollowUpInterceptor = new RetryAndFollowUpInterceptor(client, forWebSocket);
+    this.retryAndFollowUpInterceptor = new RetryAndFollowUpInterceptor(client);
     this.timeout = new AsyncTimeout() {
       @Override protected void timedOut() {
         cancel();

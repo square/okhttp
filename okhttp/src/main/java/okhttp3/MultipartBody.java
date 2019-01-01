@@ -199,7 +199,7 @@ public final class MultipartBody extends RequestBody {
    * want to have a good chance of things working, please avoid double-quotes, newlines, percent
    * signs, and the like in your field names.
    */
-  static StringBuilder appendQuotedString(StringBuilder target, String key) {
+  static void appendQuotedString(StringBuilder target, String key) {
     target.append('"');
     for (int i = 0, len = key.length(); i < len; i++) {
       char ch = key.charAt(i);
@@ -219,7 +219,6 @@ public final class MultipartBody extends RequestBody {
       }
     }
     target.append('"');
-    return target;
   }
 
   public static final class Part {

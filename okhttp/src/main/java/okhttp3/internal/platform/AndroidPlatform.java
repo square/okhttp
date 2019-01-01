@@ -40,7 +40,7 @@ import okhttp3.internal.tls.CertificateChainCleaner;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static okhttp3.internal.Util.assertionError;
 
-/** Android 2.3 or better. */
+/** Android 5+. */
 class AndroidPlatform extends Platform {
   private static final int MAX_LOG_LENGTH = 4000;
 

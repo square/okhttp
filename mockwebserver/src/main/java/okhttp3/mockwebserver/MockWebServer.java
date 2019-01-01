@@ -135,9 +135,9 @@ public final class MockWebServer extends ExternalResource implements Closeable {
   private final BlockingQueue<RecordedRequest> requestQueue = new LinkedBlockingQueue<>();
 
   private final Set<Socket> openClientSockets =
-      Collections.newSetFromMap(new ConcurrentHashMap<Socket, Boolean>());
+      Collections.newSetFromMap(new ConcurrentHashMap<>());
   private final Set<Http2Connection> openConnections =
-      Collections.newSetFromMap(new ConcurrentHashMap<Http2Connection, Boolean>());
+      Collections.newSetFromMap(new ConcurrentHashMap<>());
   private final AtomicInteger requestCount = new AtomicInteger();
   private long bodyLimit = Long.MAX_VALUE;
   private ServerSocketFactory serverSocketFactory = ServerSocketFactory.getDefault();

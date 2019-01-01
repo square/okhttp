@@ -26,7 +26,6 @@ import org.junit.runners.Parameterized;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 /**
@@ -60,7 +59,7 @@ public class MediaTypeTest {
     assertEquals("plain", mediaType.subtype());
     assertEquals("UTF-8", mediaType.charset().name());
     assertEquals("text/plain;boundary=foo;charset=utf-8", mediaType.toString());
-    assertTrue(mediaType.equals(parse("text/plain;boundary=foo;charset=utf-8")));
+    assertEquals(mediaType, parse("text/plain;boundary=foo;charset=utf-8"));
     assertEquals(mediaType.hashCode(),
         parse("text/plain;boundary=foo;charset=utf-8").hashCode());
   }

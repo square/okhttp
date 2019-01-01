@@ -141,11 +141,11 @@ public final class Cache implements Closeable, Flushable {
   private static final int ENTRY_COUNT = 2;
 
   final InternalCache internalCache = new InternalCache() {
-    @Override public Response get(Request request) throws IOException {
+    @Override public @Nullable Response get(Request request) throws IOException {
       return Cache.this.get(request);
     }
 
-    @Override public CacheRequest put(Response response) throws IOException {
+    @Override public @Nullable CacheRequest put(Response response) throws IOException {
       return Cache.this.put(response);
     }
 

@@ -22,6 +22,7 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.TreeSet;
 import okhttp3.Challenge;
@@ -36,7 +37,6 @@ import okio.ByteString;
 
 import static java.net.HttpURLConnection.HTTP_NOT_MODIFIED;
 import static java.net.HttpURLConnection.HTTP_NO_CONTENT;
-import static okhttp3.internal.Util.equal;
 import static okhttp3.internal.http.StatusLine.HTTP_CONTINUE;
 
 /** Headers and utilities for internal use by OkHttp. */
@@ -71,7 +71,7 @@ public final class HttpHeaders {
   public static boolean varyMatches(
       Response cachedResponse, Headers cachedRequest, Request newRequest) {
     for (String field : varyFields(cachedResponse)) {
-      if (!equal(cachedRequest.values(field), newRequest.headers(field))) return false;
+      if (!Objects.equals(cachedRequest.values(field), newRequest.headers(field))) return false;
     }
     return true;
   }
