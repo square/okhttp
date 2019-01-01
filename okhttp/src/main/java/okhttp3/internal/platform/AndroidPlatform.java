@@ -37,6 +37,7 @@ import okhttp3.Protocol;
 import okhttp3.internal.Util;
 import okhttp3.internal.tls.CertificateChainCleaner;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static okhttp3.internal.Util.assertionError;
 
 /** Android 2.3 or better. */
@@ -68,19 +69,11 @@ class AndroidPlatform extends Platform {
     } catch (AssertionError e) {
       if (Util.isAndroidGetsocknameError(e)) throw new IOException(e);
       throw e;
-    } catch (SecurityException e) {
-      // Before android 4.3, socket.connect could throw a SecurityException
-      // if opening a socket resulted in an EACCES error.
-      IOException ioException = new IOException("Exception in connect");
-      ioException.initCause(e);
-      throw ioException;
     } catch (ClassCastException e) {
       // On android 8.0, socket.connect throws a ClassCastException due to a bug
       // see https://issuetracker.google.com/issues/63649622
       if (Build.VERSION.SDK_INT == 26) {
-        IOException ioException = new IOException("Exception in connect");
-        ioException.initCause(e);
-        throw ioException;
+        throw new IOException("Exception in connect", e);
       } else {
         throw e;
       }
@@ -129,7 +122,7 @@ class AndroidPlatform extends Platform {
     if (!getAlpnSelectedProtocol.isSupported(socket)) return null;
 
     byte[] alpnResult = (byte[]) getAlpnSelectedProtocol.invokeWithoutCheckedException(socket);
-    return alpnResult != null ? new String(alpnResult, Util.UTF_8) : null;
+    return alpnResult != null ? new String(alpnResult, UTF_8) : null;
   }
 
   @Override public void log(int level, String message, @Nullable Throwable t) {

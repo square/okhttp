@@ -75,6 +75,7 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static okhttp3.TestUtil.defaultClient;
@@ -188,7 +189,7 @@ public final class HttpOverHttp2Test {
   }
 
   @Test public void noDefaultContentLengthOnStreamingPost() throws Exception {
-    final byte[] postBytes = "FGHIJ".getBytes(Util.UTF_8);
+    final byte[] postBytes = "FGHIJ".getBytes(UTF_8);
 
     server.enqueue(new MockResponse().setBody("ABCDE"));
 
@@ -215,7 +216,7 @@ public final class HttpOverHttp2Test {
   }
 
   @Test public void userSuppliedContentLengthHeader() throws Exception {
-    final byte[] postBytes = "FGHIJ".getBytes(Util.UTF_8);
+    final byte[] postBytes = "FGHIJ".getBytes(UTF_8);
 
     server.enqueue(new MockResponse().setBody("ABCDE"));
 
@@ -246,7 +247,7 @@ public final class HttpOverHttp2Test {
   }
 
   @Test public void closeAfterFlush() throws Exception {
-    final byte[] postBytes = "FGHIJ".getBytes(Util.UTF_8);
+    final byte[] postBytes = "FGHIJ".getBytes(UTF_8);
 
     server.enqueue(new MockResponse().setBody("ABCDE"));
 

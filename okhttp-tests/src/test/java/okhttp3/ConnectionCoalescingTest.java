@@ -71,7 +71,7 @@ public final class ConnectionCoalescingTest {
     dns.set("san.com", serverIps);
     dns.set("nonsan.com", serverIps);
     dns.set("www.wildcard.com", serverIps);
-    dns.set("differentdns.com", Collections.<InetAddress>emptyList());
+    dns.set("differentdns.com", Collections.emptyList());
 
     HandshakeCertificates handshakeCertificates = new HandshakeCertificates.Builder()
         .addTrustedCertificate(rootCa.certificate())

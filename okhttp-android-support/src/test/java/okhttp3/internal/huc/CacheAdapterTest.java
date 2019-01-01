@@ -23,7 +23,6 @@ import java.net.ResponseCache;
 import java.net.URI;
 import java.net.URL;
 import java.net.URLConnection;
-import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -43,6 +42,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static okhttp3.tls.internal.TlsUtil.localhost;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
@@ -137,7 +137,7 @@ public class CacheAdapterTest {
 
   @Test public void put_httpGet() throws Exception {
     final String statusLine = "HTTP/1.1 200 Fantastic";
-    final byte[] response = "ResponseString".getBytes(StandardCharsets.UTF_8);
+    final byte[] response = "ResponseString".getBytes(UTF_8);
     final URL serverUrl = configureServer(
         new MockResponse()
             .setStatus(statusLine)

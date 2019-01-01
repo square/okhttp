@@ -55,6 +55,10 @@ import okio.BufferedSource;
 import okio.ByteString;
 import okio.Source;
 
+import static java.nio.charset.StandardCharsets.UTF_16BE;
+import static java.nio.charset.StandardCharsets.UTF_16LE;
+import static java.nio.charset.StandardCharsets.UTF_8;
+
 /** Junk drawer of utility methods. */
 public final class Util {
   public static final byte[] EMPTY_BYTE_ARRAY = new byte[0];
@@ -70,10 +74,6 @@ public final class Util {
   private static final ByteString UTF_32_BE_BOM = ByteString.decodeHex("0000ffff");
   private static final ByteString UTF_32_LE_BOM = ByteString.decodeHex("ffff0000");
 
-  public static final Charset UTF_8 = Charset.forName("UTF-8");
-  public static final Charset ISO_8859_1 = Charset.forName("ISO-8859-1");
-  private static final Charset UTF_16_BE = Charset.forName("UTF-16BE");
-  private static final Charset UTF_16_LE = Charset.forName("UTF-16LE");
   private static final Charset UTF_32_BE = Charset.forName("UTF-32BE");
   private static final Charset UTF_32_LE = Charset.forName("UTF-32LE");
 
@@ -229,7 +229,7 @@ public final class Util {
   /** Returns an immutable copy of {@code map}. */
   public static <K, V> Map<K, V> immutableMap(Map<K, V> map) {
     return map.isEmpty()
-        ? Collections.<K, V>emptyMap()
+        ? Collections.emptyMap()
         : Collections.unmodifiableMap(new LinkedHashMap<>(map));
   }
 
@@ -477,11 +477,11 @@ public final class Util {
     }
     if (source.rangeEquals(0, UTF_16_BE_BOM)) {
       source.skip(UTF_16_BE_BOM.size());
-      return UTF_16_BE;
+      return UTF_16BE;
     }
     if (source.rangeEquals(0, UTF_16_LE_BOM)) {
       source.skip(UTF_16_LE_BOM.size());
-      return UTF_16_LE;
+      return UTF_16LE;
     }
     if (source.rangeEquals(0, UTF_32_BE_BOM)) {
       source.skip(UTF_32_BE_BOM.size());

@@ -119,7 +119,7 @@ public final class Headers {
     }
     return result != null
         ? Collections.unmodifiableList(result)
-        : Collections.<String>emptyList();
+        : Collections.emptyList();
   }
 
   /**
