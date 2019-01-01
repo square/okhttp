@@ -15,6 +15,7 @@
  */
 package okhttp3.internal.sse;
 
+import java.util.Objects;
 import javax.annotation.Nullable;
 
 final class Event {
@@ -37,8 +38,8 @@ final class Event {
     if (this == o) return true;
     if (!(o instanceof Event)) return false;
     Event other = (Event) o;
-    return (id != null ? id.equals(other.id) : other.id == null)
-        && (type != null ? type.equals(other.type) : other.type == null)
+    return Objects.equals(id, other.id)
+        && Objects.equals(type, other.type)
         && data.equals(other.data);
   }
 

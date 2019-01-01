@@ -41,8 +41,7 @@ import org.jsoup.nodes.Element;
  */
 public final class Crawler {
   private final OkHttpClient client;
-  private final Set<HttpUrl> fetchedUrls = Collections.synchronizedSet(
-      new LinkedHashSet<HttpUrl>());
+  private final Set<HttpUrl> fetchedUrls = Collections.synchronizedSet(new LinkedHashSet<>());
   private final LinkedBlockingQueue<HttpUrl> queue = new LinkedBlockingQueue<>();
   private final ConcurrentHashMap<String, AtomicInteger> hostnames = new ConcurrentHashMap<>();
 

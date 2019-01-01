@@ -49,7 +49,7 @@ public final class ConnectionPool {
    */
   private static final Executor executor = new ThreadPoolExecutor(0 /* corePoolSize */,
       Integer.MAX_VALUE /* maximumPoolSize */, 60L /* keepAliveTime */, TimeUnit.SECONDS,
-      new SynchronousQueue<Runnable>(), Util.threadFactory("OkHttp ConnectionPool", true));
+      new SynchronousQueue<>(), Util.threadFactory("OkHttp ConnectionPool", true));
 
   /** The maximum number of idle connections for each address. */
   private final int maxIdleConnections;
@@ -111,18 +111,17 @@ public final class ConnectionPool {
   }
 
   /**
-   * Returns a recycled connection to {@code address}, or null if no such connection exists. The
-   * route is null if the address has not yet been routed.
+   * Acquires a recycled connection to {@code address} for {@code streamAllocation}. If non-null
+   * {@code route} is the resolved route for a connection.
    */
-  @Nullable RealConnection get(Address address, StreamAllocation streamAllocation, Route route) {
+  void acquire(Address address, StreamAllocation streamAllocation, @Nullable Route route) {
     assert (Thread.holdsLock(this));
     for (RealConnection connection : connections) {
       if (connection.isEligible(address, route)) {
         streamAllocation.acquire(connection, true);
-        return connection;
+        return;
       }
     }
-    return null;
   }
 
   /**

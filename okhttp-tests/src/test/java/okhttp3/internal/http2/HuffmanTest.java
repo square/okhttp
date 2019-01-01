@@ -16,14 +16,13 @@
 package okhttp3.internal.http2;
 
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.Random;
 import okio.Buffer;
 import okio.ByteString;
 import org.junit.Test;
 
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 
 /** Original version of this class was lifted from {@code com.twitter.hpack.HuffmanTest}. */
 public final class HuffmanTest {
@@ -45,6 +44,6 @@ public final class HuffmanTest {
     assertEquals(buffer.size(), Huffman.get().encodedLength(data));
 
     byte[] decodedBytes = Huffman.get().decode(buffer.readByteArray());
-    assertTrue(Arrays.equals(data.toByteArray(), decodedBytes));
+    assertArrayEquals(data.toByteArray(), decodedBytes);
   }
 }

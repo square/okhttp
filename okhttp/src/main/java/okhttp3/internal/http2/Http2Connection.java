@@ -80,7 +80,7 @@ public final class Http2Connection implements Closeable {
    * threads because listeners are not required to return promptly.
    */
   private static final ExecutorService listenerExecutor = new ThreadPoolExecutor(0,
-      Integer.MAX_VALUE, 60, TimeUnit.SECONDS, new SynchronousQueue<Runnable>(),
+      Integer.MAX_VALUE, 60, TimeUnit.SECONDS, new SynchronousQueue<>(),
       Util.threadFactory("OkHttp Http2Connection", true));
 
   /** True if this peer initiated the connection. */
@@ -164,8 +164,7 @@ public final class Http2Connection implements Closeable {
     }
 
     // Like newSingleThreadExecutor, except lazy creates the thread.
-    pushExecutor = new ThreadPoolExecutor(0, 1, 60, TimeUnit.SECONDS,
-        new LinkedBlockingQueue<Runnable>(),
+    pushExecutor = new ThreadPoolExecutor(0, 1, 60, TimeUnit.SECONDS, new LinkedBlockingQueue<>(),
         Util.threadFactory(Util.format("OkHttp %s Push Observer", connectionName), true));
     peerSettings.set(Settings.INITIAL_WINDOW_SIZE, DEFAULT_INITIAL_WINDOW_SIZE);
     peerSettings.set(Settings.MAX_FRAME_SIZE, Http2.INITIAL_MAX_FRAME_SIZE);

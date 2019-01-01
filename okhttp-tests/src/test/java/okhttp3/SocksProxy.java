@@ -61,8 +61,7 @@ public final class SocksProxy {
 
   private ServerSocket serverSocket;
   private AtomicInteger connectionCount = new AtomicInteger();
-  private final Set<Socket> openSockets =
-      Collections.newSetFromMap(new ConcurrentHashMap<Socket, Boolean>());
+  private final Set<Socket> openSockets = Collections.newSetFromMap(new ConcurrentHashMap<>());
 
   public void play() throws IOException {
     serverSocket = new ServerSocket(0);

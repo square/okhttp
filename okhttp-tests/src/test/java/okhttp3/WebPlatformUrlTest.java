@@ -46,7 +46,7 @@ public final class WebPlatformUrlTest {
     }
   }
 
-  @Parameter(0)
+  @Parameter
   public WebPlatformUrlTestData testData;
 
   private static final List<String> HTTP_URL_SCHEMES

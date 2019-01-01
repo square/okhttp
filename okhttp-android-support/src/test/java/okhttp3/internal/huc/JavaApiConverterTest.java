@@ -399,7 +399,7 @@ public class JavaApiConverterTest {
     }
 
     // Check retrieval of headers by index.
-    assertEquals(null, httpUrlConnection.getHeaderFieldKey(0));
+    assertNull(httpUrlConnection.getHeaderFieldKey(0));
     assertEquals("HTTP/1.1 200 Fantastic", httpUrlConnection.getHeaderField(0));
     // After header zero there may be additional entries provided at the beginning or end by the
     // implementation. It's probably important that the relative ordering of the headers is

@@ -18,13 +18,12 @@ package okhttp3;
 import java.net.Proxy;
 import java.net.ProxySelector;
 import java.util.List;
+import java.util.Objects;
 import javax.annotation.Nullable;
 import javax.net.SocketFactory;
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLSocketFactory;
 import okhttp3.internal.Util;
-
-import static okhttp3.internal.Util.equal;
 
 /**
  * A specification for a connection to an origin server. For simple connections, this is the
@@ -178,10 +177,10 @@ public final class Address {
         && this.protocols.equals(that.protocols)
         && this.connectionSpecs.equals(that.connectionSpecs)
         && this.proxySelector.equals(that.proxySelector)
-        && equal(this.proxy, that.proxy)
-        && equal(this.sslSocketFactory, that.sslSocketFactory)
-        && equal(this.hostnameVerifier, that.hostnameVerifier)
-        && equal(this.certificatePinner, that.certificatePinner)
+        && Objects.equals(this.proxy, that.proxy)
+        && Objects.equals(this.sslSocketFactory, that.sslSocketFactory)
+        && Objects.equals(this.hostnameVerifier, that.hostnameVerifier)
+        && Objects.equals(this.certificatePinner, that.certificatePinner)
         && this.url().port() == that.url().port();
   }
 

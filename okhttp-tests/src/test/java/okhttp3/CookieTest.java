@@ -79,20 +79,20 @@ public final class CookieTest {
   }
 
   @Test public void invalidCharacters() throws Exception {
-    assertEquals(null, Cookie.parse(url, "a\u0000b=cd"));
-    assertEquals(null, Cookie.parse(url, "ab=c\u0000d"));
-    assertEquals(null, Cookie.parse(url, "a\u0001b=cd"));
-    assertEquals(null, Cookie.parse(url, "ab=c\u0001d"));
-    assertEquals(null, Cookie.parse(url, "a\u0009b=cd"));
-    assertEquals(null, Cookie.parse(url, "ab=c\u0009d"));
-    assertEquals(null, Cookie.parse(url, "a\u001fb=cd"));
-    assertEquals(null, Cookie.parse(url, "ab=c\u001fd"));
-    assertEquals(null, Cookie.parse(url, "a\u007fb=cd"));
-    assertEquals(null, Cookie.parse(url, "ab=c\u007fd"));
-    assertEquals(null, Cookie.parse(url, "a\u0080b=cd"));
-    assertEquals(null, Cookie.parse(url, "ab=c\u0080d"));
-    assertEquals(null, Cookie.parse(url, "a\u00ffb=cd"));
-    assertEquals(null, Cookie.parse(url, "ab=c\u00ffd"));
+    assertNull(Cookie.parse(url, "a\u0000b=cd"));
+    assertNull(Cookie.parse(url, "ab=c\u0000d"));
+    assertNull(Cookie.parse(url, "a\u0001b=cd"));
+    assertNull(Cookie.parse(url, "ab=c\u0001d"));
+    assertNull(Cookie.parse(url, "a\u0009b=cd"));
+    assertNull(Cookie.parse(url, "ab=c\u0009d"));
+    assertNull(Cookie.parse(url, "a\u001fb=cd"));
+    assertNull(Cookie.parse(url, "ab=c\u001fd"));
+    assertNull(Cookie.parse(url, "a\u007fb=cd"));
+    assertNull(Cookie.parse(url, "ab=c\u007fd"));
+    assertNull(Cookie.parse(url, "a\u0080b=cd"));
+    assertNull(Cookie.parse(url, "ab=c\u0080d"));
+    assertNull(Cookie.parse(url, "a\u00ffb=cd"));
+    assertNull(Cookie.parse(url, "ab=c\u00ffd"));
   }
 
   @Test public void maxAge() throws Exception {

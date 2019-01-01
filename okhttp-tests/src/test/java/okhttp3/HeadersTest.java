@@ -36,9 +36,8 @@ import static java.util.Collections.singletonList;
 import static java.util.Collections.singletonMap;
 import static okhttp3.TestUtil.headerEntries;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 public final class HeadersTest {
@@ -398,7 +397,7 @@ public final class HeadersTest {
         .add("Connection", "close")
         .add("Transfer-Encoding", "chunked")
         .build();
-    assertTrue(headers1.equals(headers2));
+    assertEquals(headers1, headers2);
     assertEquals(headers1.hashCode(), headers2.hashCode());
   }
 
@@ -411,8 +410,8 @@ public final class HeadersTest {
         .add("Connection", "keep-alive")
         .add("Transfer-Encoding", "chunked")
         .build();
-    assertFalse(headers1.equals(headers2));
-    assertFalse(headers1.hashCode() == headers2.hashCode());
+    assertNotEquals(headers1, headers2);
+    assertNotEquals(headers1.hashCode(), headers2.hashCode());
   }
 
   @Test public void headersToString() {

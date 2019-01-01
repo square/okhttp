@@ -129,11 +129,6 @@ public final class Util {
     }
   }
 
-  /** Returns true if two possibly-null objects are equal. */
-  public static boolean equal(Object a, Object b) {
-    return a == b || (a != null && a.equals(b));
-  }
-
   /**
    * Closes {@code closeable}, ignoring any checked exceptions. Does nothing if {@code closeable} is
    * null.
@@ -234,6 +229,7 @@ public final class Util {
   }
 
   /** Returns an immutable list containing {@code elements}. */
+  @SafeVarargs
   public static <T> List<T> immutableList(T... elements) {
     return Collections.unmodifiableList(Arrays.asList(elements.clone()));
   }
@@ -252,7 +248,6 @@ public final class Util {
    * Returns an array containing only elements found in {@code first} and also in {@code
    * second}. The returned elements are in the same order as in {@code first}.
    */
-  @SuppressWarnings("unchecked")
   public static String[] intersect(
       Comparator<? super String> comparator, String[] first, String[] second) {
     List<String> result = new ArrayList<>();

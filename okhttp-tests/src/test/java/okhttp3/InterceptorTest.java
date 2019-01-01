@@ -942,7 +942,7 @@ public final class InterceptorTest {
     private final BlockingQueue<Exception> exceptions = new LinkedBlockingQueue<>();
 
     public ExceptionCatchingExecutor() {
-      super(1, 1, 0, TimeUnit.SECONDS, new SynchronousQueue<Runnable>());
+      super(1, 1, 0, TimeUnit.SECONDS, new SynchronousQueue<>());
     }
 
     @Override public void execute(final Runnable runnable) {

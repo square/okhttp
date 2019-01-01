@@ -25,7 +25,6 @@ import java.util.List;
 import javax.net.ssl.SSLException;
 import javax.net.ssl.SSLHandshakeException;
 import javax.net.ssl.SSLPeerUnverifiedException;
-import javax.net.ssl.SSLProtocolException;
 import javax.net.ssl.SSLSocket;
 import okhttp3.ConnectionSpec;
 import okhttp3.internal.Internal;
@@ -111,8 +110,7 @@ public final class ConnectionSpecSelector {
     // Look for known client-side or negotiation errors that are unlikely to be fixed by trying
     // again with a different connection spec.
     if (e instanceof SSLHandshakeException) {
-      // If the problem was a CertificateException from the X509TrustManager,
-      // do not retry.
+      // If the problem was a CertificateException from the X509TrustManager, do not retry.
       if (e.getCause() instanceof CertificateException) {
         return false;
       }
@@ -122,11 +120,8 @@ public final class ConnectionSpecSelector {
       return false;
     }
 
-    // On Android, SSLProtocolExceptions can be caused by TLS_FALLBACK_SCSV failures, which means we
-    // retry those when we probably should not.
-    return (e instanceof SSLHandshakeException
-        || e instanceof SSLProtocolException
-        || e instanceof SSLException);
+    // Retry for all other SSL failures.
+    return e instanceof SSLException;
   }
 
   /**

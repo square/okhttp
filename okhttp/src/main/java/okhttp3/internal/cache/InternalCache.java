@@ -16,6 +16,7 @@
 package okhttp3.internal.cache;
 
 import java.io.IOException;
+import javax.annotation.Nullable;
 import okhttp3.Request;
 import okhttp3.Response;
 
@@ -24,9 +25,9 @@ import okhttp3.Response;
  * okhttp3.Cache}.
  */
 public interface InternalCache {
-  Response get(Request request) throws IOException;
+  @Nullable Response get(Request request) throws IOException;
 
-  CacheRequest put(Response response) throws IOException;
+  @Nullable CacheRequest put(Response response) throws IOException;
 
   /**
    * Remove any cache entries for the supplied {@code request}. This is invoked when the client
