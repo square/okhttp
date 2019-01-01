@@ -28,6 +28,7 @@ import okhttp3.internal.Util;
 import org.junit.Ignore;
 import org.junit.Test;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -544,7 +545,7 @@ public final class HostnameVerifierTest {
 
   private X509Certificate certificate(String certificate) throws Exception {
     return (X509Certificate) CertificateFactory.getInstance("X.509").generateCertificate(
-        new ByteArrayInputStream(certificate.getBytes(Util.UTF_8)));
+        new ByteArrayInputStream(certificate.getBytes(UTF_8)));
   }
 
   private SSLSession session(String certificate) throws Exception {

@@ -87,11 +87,12 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
+import static java.nio.charset.StandardCharsets.US_ASCII;
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Locale.US;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 import static okhttp3.TestUtil.defaultClient;
-import static okhttp3.internal.Util.UTF_8;
 import static okhttp3.internal.http.StatusLine.HTTP_PERM_REDIRECT;
 import static okhttp3.internal.http.StatusLine.HTTP_TEMP_REDIRECT;
 import static okhttp3.internal.huc.OkHttpURLConnection.SELECTED_PROTOCOL;
@@ -325,7 +326,7 @@ public final class URLConnectionTest {
     connection = urlFactory.open(server.url("/def").url());
     connection.setDoOutput(true);
     transferKind.setForRequest(connection, 4);
-    connection.getOutputStream().write("body".getBytes("UTF-8"));
+    connection.getOutputStream().write("body".getBytes(UTF_8));
     assertContent("abc", connection);
 
     assertEquals("body", server.takeRequest().getBody().readUtf8());
@@ -342,7 +343,7 @@ public final class URLConnectionTest {
     connection.setDoOutput(true);
     connection.setChunkedStreamingMode(100);
     OutputStream os = connection.getOutputStream();
-    os.write("OutputStream is no fun.".getBytes("UTF-8"));
+    os.write("OutputStream is no fun.".getBytes(UTF_8));
     os.close();
 
     try {
@@ -1540,7 +1541,7 @@ public final class URLConnectionTest {
     connection.setChunkedStreamingMode(0); // OkHttp does not honor specific chunk sizes.
     connection.setDoOutput(true);
     OutputStream outputStream = connection.getOutputStream();
-    outputStream.write(body.getBytes("US-ASCII"));
+    outputStream.write(body.getBytes(US_ASCII));
     assertEquals(200, connection.getResponseCode());
     connection.getInputStream().close();
 
@@ -1621,7 +1622,7 @@ public final class URLConnectionTest {
     connection = urlFactory.open(server.url("/").url());
     connection.setDoOutput(true);
     OutputStream outputStream = connection.getOutputStream();
-    outputStream.write(body.getBytes("UTF-8"));
+    outputStream.write(body.getBytes(UTF_8));
     outputStream.close();
     assertEquals(200, connection.getResponseCode());
     connection.getInputStream().close();
@@ -2304,7 +2305,7 @@ public final class URLConnectionTest {
     connection.addRequestProperty("Content-Type", "text/plain; charset=utf-8");
     connection.addRequestProperty("Transfer-Encoding", "identity");
     OutputStream outputStream = connection.getOutputStream();
-    outputStream.write("ABCD".getBytes("UTF-8"));
+    outputStream.write("ABCD".getBytes(UTF_8));
     outputStream.close();
     assertEquals("Page 2", readAscii(connection.getInputStream(), Integer.MAX_VALUE));
 
@@ -2489,7 +2490,7 @@ public final class URLConnectionTest {
 
     HttpURLConnection connection = urlFactory.open(server.url("/").url());
     connection.setRequestMethod("POST");
-    connection.getOutputStream().write("Hello".getBytes("UTF-8"));
+    connection.getOutputStream().write("Hello".getBytes(UTF_8));
 
     assertEquals(200, connection.getResponseCode());
     assertEquals("Body", readAscii(connection.getInputStream(), Integer.MAX_VALUE));
@@ -2507,7 +2508,7 @@ public final class URLConnectionTest {
     HttpURLConnection connection = urlFactory.open(server.url("/").url());
     connection.setRequestMethod("POST");
     connection.setChunkedStreamingMode(0);
-    connection.getOutputStream().write("Hello".getBytes("UTF-8"));
+    connection.getOutputStream().write("Hello".getBytes(UTF_8));
 
     assertEquals(408, connection.getResponseCode());
     assertEquals(1, server.getRequestCount());
@@ -2585,7 +2586,7 @@ public final class URLConnectionTest {
     connection = urlFactory.open(server.url("/").url());
     connection.setRequestProperty("Transfer-encoding", "chunked");
     connection.setDoOutput(true);
-    connection.getOutputStream().write("ABC".getBytes("UTF-8"));
+    connection.getOutputStream().write("ABC".getBytes(UTF_8));
     assertEquals(200, connection.getResponseCode());
 
     RecordedRequest request = server.takeRequest();
@@ -2705,7 +2706,7 @@ public final class URLConnectionTest {
 
     connection = urlFactory.open(server.url("/").url());
     connection.setDoOutput(true);
-    byte[] upload = "def".getBytes("UTF-8");
+    byte[] upload = "def".getBytes(UTF_8);
 
     if (transferKind == TransferKind.CHUNKED) {
       connection.setChunkedStreamingMode(0);
@@ -2719,7 +2720,7 @@ public final class URLConnectionTest {
 
     out.flush(); // Dubious but permitted.
     try {
-      out.write("ghi".getBytes("UTF-8"));
+      out.write("ghi".getBytes(UTF_8));
       fail();
     } catch (IOException expected) {
     }

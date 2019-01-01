@@ -27,7 +27,7 @@ import okio.Buffer;
 import okio.BufferedSource;
 import okio.ByteString;
 
-import static okhttp3.internal.Util.UTF_8;
+import static java.nio.charset.StandardCharsets.UTF_8;
 
 /**
  * A one-shot stream from the origin server to the client application with the raw bytes of the

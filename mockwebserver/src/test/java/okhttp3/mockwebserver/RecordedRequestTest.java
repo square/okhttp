@@ -18,13 +18,10 @@ package okhttp3.mockwebserver;
 
 import java.net.Inet4Address;
 import java.net.InetAddress;
-import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.UnknownHostException;
 import java.util.Collections;
-import java.util.Random;
 import okhttp3.Headers;
-import okhttp3.HttpUrl;
 import okio.Buffer;
 import org.junit.Test;
 
@@ -75,9 +72,8 @@ public class RecordedRequestTest {
     Socket socket =
         new FakeSocket(InetAddress.getByAddress("127.0.0.1", new byte[] { 127, 0, 0, 1 }), 80);
 
-    RecordedRequest request =
-        new RecordedRequest("GET / HTTP/1.1", headers, Collections.<Integer>emptyList(), 0,
-            new Buffer(), 0, socket);
+    RecordedRequest request = new RecordedRequest("GET / HTTP/1.1", headers,
+        Collections.emptyList(), 0, new Buffer(), 0, socket);
 
     assertEquals("http://127.0.0.1/", request.getRequestUrl().toString());
   }
@@ -86,9 +82,8 @@ public class RecordedRequestTest {
     Socket socket = new FakeSocket(InetAddress.getByAddress("::1",
         new byte[] { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 }), 80);
 
-    RecordedRequest request =
-        new RecordedRequest("GET / HTTP/1.1", headers, Collections.<Integer>emptyList(), 0,
-            new Buffer(), 0, socket);
+    RecordedRequest request = new RecordedRequest("GET / HTTP/1.1", headers,
+        Collections.emptyList(), 0, new Buffer(), 0, socket);
 
     assertEquals("http://[::1]/", request.getRequestUrl().toString());
   }
@@ -97,9 +92,8 @@ public class RecordedRequestTest {
     Socket socket =
         new FakeSocket(InetAddress.getByAddress("127.0.0.1", new byte[] { 127, 0, 0, 1 }), 80);
 
-    RecordedRequest request =
-        new RecordedRequest("GET / HTTP/1.1", headers, Collections.<Integer>emptyList(), 0,
-            new Buffer(), 0, socket);
+    RecordedRequest request = new RecordedRequest("GET / HTTP/1.1", headers,
+        Collections.emptyList(), 0, new Buffer(), 0, socket);
 
     assertEquals("http://127.0.0.1/", request.getRequestUrl().toString());
   }

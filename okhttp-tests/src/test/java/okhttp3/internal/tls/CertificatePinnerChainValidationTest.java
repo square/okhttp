@@ -37,8 +37,8 @@ import okhttp3.internal.platform.Platform;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import okhttp3.mockwebserver.SocketPolicy;
-import okhttp3.tls.HeldCertificate;
 import okhttp3.tls.HandshakeCertificates;
+import okhttp3.tls.HeldCertificate;
 import org.junit.Rule;
 import org.junit.Test;
 
@@ -335,8 +335,7 @@ public final class CertificatePinnerChainValidationTest {
     // http://hg.openjdk.java.net/jdk9/jdk9/jdk/file/2c1c21d11e58/src/share/classes/sun/security/pkcs12/PKCS12KeyStore.java#l596
     String keystoreType = getPlatform().equals("jdk9") ? "JKS" : null;
     X509KeyManager x509KeyManager = newKeyManager(keystoreType, heldCertificate, intermediates);
-    X509TrustManager trustManager = newTrustManager(
-        keystoreType, Collections.<X509Certificate>emptyList());
+    X509TrustManager trustManager = newTrustManager(keystoreType, Collections.emptyList());
     SSLContext sslContext = Platform.get().getSSLContext();
     sslContext.init(new KeyManager[] { x509KeyManager }, new TrustManager[] { trustManager },
         new SecureRandom());

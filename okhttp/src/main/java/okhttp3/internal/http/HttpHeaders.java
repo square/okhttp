@@ -194,7 +194,7 @@ public final class HttpHeaders {
       peek = readToken(header);
       if (peek == null) {
         if (!header.exhausted()) return; // Expected a token; got something else.
-        result.add(new Challenge(schemeName, Collections.<String, String>emptyMap()));
+        result.add(new Challenge(schemeName, Collections.emptyMap()));
         return;
       }
 
@@ -204,7 +204,7 @@ public final class HttpHeaders {
       // It's a token68 because there isn't a value after it.
       if (!commaPrefixed && (commaSuffixed || header.exhausted())) {
         result.add(new Challenge(schemeName, Collections.singletonMap(
-            (String) null, peek + repeat('=', eqCount))));
+            null, peek + repeat('=', eqCount))));
         peek = null;
         continue;
       }

@@ -42,6 +42,7 @@ import org.junit.Test;
 import org.junit.rules.TestRule;
 import org.junit.rules.Timeout;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static okhttp3.TestUtil.headerEntries;
 import static okhttp3.TestUtil.repeat;
 import static okhttp3.internal.Internal.initializeInstanceForTests;
@@ -194,11 +195,11 @@ public final class Http2ConnectionTest {
     InFrame data1 = peer.takeFrame();
     assertEquals(Http2.TYPE_DATA, data1.type);
     assertEquals(3, data1.streamId);
-    assertTrue(Arrays.equals("abcde".getBytes("UTF-8"), data1.data));
+    assertTrue(Arrays.equals("abcde".getBytes(UTF_8), data1.data));
     InFrame data2 = peer.takeFrame();
     assertEquals(Http2.TYPE_DATA, data2.type);
     assertEquals(3, data2.streamId);
-    assertTrue(Arrays.equals("fghi".getBytes("UTF-8"), data2.data));
+    assertTrue(Arrays.equals("fghi".getBytes(UTF_8), data2.data));
   }
 
   /**
@@ -282,7 +283,7 @@ public final class Http2ConnectionTest {
     InFrame data1 = peer.takeFrame();
     assertEquals(Http2.TYPE_DATA, data1.type);
     assertEquals(3, data1.streamId);
-    assertTrue(Arrays.equals("abcdef".getBytes("UTF-8"), data1.data));
+    assertTrue(Arrays.equals("abcdef".getBytes(UTF_8), data1.data));
   }
 
   @Test public void readSendsWindowUpdateHttp2() throws Exception {
@@ -545,7 +546,7 @@ public final class Http2ConnectionTest {
     assertEquals(-1, synStream.associatedStreamId);
     assertEquals(headerEntries("b", "banana"), synStream.headerBlock);
     InFrame requestData = peer.takeFrame();
-    assertTrue(Arrays.equals("c3po".getBytes("UTF-8"), requestData.data));
+    assertTrue(Arrays.equals("c3po".getBytes(UTF_8), requestData.data));
   }
 
   @Test public void serverFinishesStreamWithHeaders() throws Exception {
@@ -633,7 +634,7 @@ public final class Http2ConnectionTest {
     InFrame data1 = peer.takeFrame();
     assertEquals(Http2.TYPE_DATA, data1.type);
     assertEquals(3, data1.streamId);
-    assertTrue(Arrays.equals("abcdefghi".getBytes("UTF-8"), data1.data));
+    assertTrue(Arrays.equals("abcdefghi".getBytes(UTF_8), data1.data));
     assertEquals(false, data1.inFinished);
     InFrame headers2 = peer.takeFrame();
     assertEquals(Http2.TYPE_HEADERS, headers2.type);
@@ -764,7 +765,7 @@ public final class Http2ConnectionTest {
     assertEquals(-1, synStream.associatedStreamId);
     assertEquals(headerEntries("b", "banana"), synStream.headerBlock);
     InFrame requestData = peer.takeFrame();
-    assertTrue(Arrays.equals("c3po".getBytes("UTF-8"), requestData.data));
+    assertTrue(Arrays.equals("c3po".getBytes(UTF_8), requestData.data));
 
     InFrame nextFrame = peer.takeFrame();
     assertEquals(headerEntries("e", "elephant"), nextFrame.headerBlock);
@@ -1107,7 +1108,7 @@ public final class Http2ConnectionTest {
     assertFalse(synStream.outFinished);
     InFrame data = peer.takeFrame();
     assertEquals(Http2.TYPE_DATA, data.type);
-    assertTrue(Arrays.equals("square".getBytes("UTF-8"), data.data));
+    assertTrue(Arrays.equals("square".getBytes(UTF_8), data.data));
     InFrame fin = peer.takeFrame();
     assertEquals(Http2.TYPE_DATA, fin.type);
     assertTrue(fin.inFinished);
@@ -1303,7 +1304,7 @@ public final class Http2ConnectionTest {
     InFrame data1 = peer.takeFrame();
     assertEquals(Http2.TYPE_DATA, data1.type);
     assertEquals(3, data1.streamId);
-    assertTrue(Arrays.equals("abcdef".getBytes("UTF-8"), data1.data));
+    assertTrue(Arrays.equals("abcdef".getBytes(UTF_8), data1.data));
   }
 
   @Test public void sendGoAway() throws Exception {
@@ -1553,7 +1554,7 @@ public final class Http2ConnectionTest {
     assertEquals(Http2.TYPE_HEADERS, peer.takeFrame().type);
     InFrame data = peer.takeFrame();
     assertEquals(Http2.TYPE_DATA, data.type);
-    assertTrue(Arrays.equals("abcdefghij".getBytes("UTF-8"), data.data));
+    assertTrue(Arrays.equals("abcdefghij".getBytes(UTF_8), data.data));
     assertTrue(data.inFinished);
   }
 

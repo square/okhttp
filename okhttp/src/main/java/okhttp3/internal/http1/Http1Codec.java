@@ -209,9 +209,7 @@ public final class Http1Codec implements HttpCodec {
       return responseBuilder;
     } catch (EOFException e) {
       // Provide more context if the server ends the stream before sending a response.
-      IOException exception = new IOException("unexpected end of stream on " + streamAllocation);
-      exception.initCause(e);
-      throw exception;
+      throw new IOException("unexpected end of stream on " + streamAllocation, e);
     }
   }
 

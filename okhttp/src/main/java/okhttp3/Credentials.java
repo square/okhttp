@@ -18,7 +18,7 @@ package okhttp3;
 import java.nio.charset.Charset;
 import okio.ByteString;
 
-import static okhttp3.internal.Util.ISO_8859_1;
+import static java.nio.charset.StandardCharsets.ISO_8859_1;
 
 /** Factory for HTTP authorization credentials. */
 public final class Credentials {

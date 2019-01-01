@@ -78,7 +78,7 @@ public final class JavaNetCookieJar implements CookieJar {
 
     return cookies != null
         ? Collections.unmodifiableList(cookies)
-        : Collections.<Cookie>emptyList();
+        : Collections.emptyList();
   }
 
   /**

@@ -27,7 +27,6 @@ import java.net.ProtocolException;
 import java.net.SocketTimeoutException;
 import java.net.URL;
 import java.net.URLConnection;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -40,14 +39,15 @@ import okhttp3.HttpUrl;
 import okhttp3.Protocol;
 import okhttp3.RecordingHostnameVerifier;
 import okhttp3.internal.Util;
-import okhttp3.tls.HeldCertificate;
 import okhttp3.tls.HandshakeCertificates;
+import okhttp3.tls.HeldCertificate;
 import org.junit.After;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static okhttp3.tls.internal.TlsUtil.localhost;
@@ -248,7 +248,7 @@ public final class MockWebServerTest {
     long startNanos = System.nanoTime();
     URLConnection connection = server.url("/").url().openConnection();
     connection.setDoOutput(true);
-    connection.getOutputStream().write("ABCDEF".getBytes("UTF-8"));
+    connection.getOutputStream().write("ABCDEF".getBytes(UTF_8));
     InputStream in = connection.getInputStream();
     assertEquals(-1, in.read());
     long elapsedNanos = System.nanoTime() - startNanos;
@@ -477,7 +477,7 @@ public final class MockWebServerTest {
     HttpURLConnection connection = (HttpURLConnection) url.openConnection();
     connection.setDoOutput(true);
     connection.setRequestProperty("Expect", "100-Continue");
-    connection.getOutputStream().write("request".getBytes(StandardCharsets.UTF_8));
+    connection.getOutputStream().write("request".getBytes(UTF_8));
 
     InputStream in = connection.getInputStream();
     BufferedReader reader = new BufferedReader(new InputStreamReader(in));
