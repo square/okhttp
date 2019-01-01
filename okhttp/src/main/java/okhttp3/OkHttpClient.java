@@ -316,27 +316,30 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
     }
   }
 
-  /** Default call timeout (in milliseconds). */
+  /**
+   * Default call timeout (in milliseconds). By default there is no timeout for complete calls, but
+   * there is for the connect, write, and read actions within a call.
+   */
   public int callTimeoutMillis() {
     return callTimeout;
   }
 
-  /** Default connect timeout (in milliseconds). */
+  /** Default connect timeout (in milliseconds). The default is 10 seconds. */
   public int connectTimeoutMillis() {
     return connectTimeout;
   }
 
-  /** Default read timeout (in milliseconds). */
+  /** Default read timeout (in milliseconds). The default is 10 seconds. */
   public int readTimeoutMillis() {
     return readTimeout;
   }
 
-  /** Default write timeout (in milliseconds). */
+  /** Default write timeout (in milliseconds). The default is 10 seconds. */
   public int writeTimeoutMillis() {
     return writeTimeout;
   }
 
-  /** Web socket ping interval (in milliseconds). */
+  /** Web socket and HTTP/2 ping interval (in milliseconds). By default pings are not sent. */
   public int pingIntervalMillis() {
     return pingInterval;
   }
@@ -554,6 +557,8 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
      * <p>The call timeout spans the entire call: resolving DNS, connecting, writing the request
      * body, server processing, and reading the response body. If the call requires redirects or
      * retries all must complete within one timeout period.
+     *
+     * <p>The default value is 0 which imposes no timeout.
      */
     public Builder callTimeout(long timeout, TimeUnit unit) {
       callTimeout = checkDuration("timeout", timeout, unit);
@@ -567,6 +572,8 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
      * <p>The call timeout spans the entire call: resolving DNS, connecting, writing the request
      * body, server processing, and reading the response body. If the call requires redirects or
      * retries all must complete within one timeout period.
+     *
+     * <p>The default value is 0 which imposes no timeout.
      */
     @IgnoreJRERequirement
     public Builder callTimeout(Duration duration) {
