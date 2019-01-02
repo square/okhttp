@@ -103,8 +103,18 @@ public final class CallServerInterceptor implements Interceptor {
               new CountingSink(httpCodec.createRequestBody(request, contentLength));
           BufferedSink bufferedRequestBody = Okio.buffer(requestBodyOut);
 
-          request.body().writeTo(bufferedRequestBody);
-          bufferedRequestBody.close();
+          // if the requestBody is a file, this can throw an IOException
+          // which further up by the retry interceptor gets treated as a server
+          // IOException and assumes the socket is closed.
+          // We mitigate this by catching here, ensuring a close,
+          // and throwing
+          try {
+            request.body().writeTo(bufferedRequestBody);
+          } catch (IOException e) {
+            throw new ClientIOException();
+          } finally {
+            bufferedRequestBody.close();
+          }
           realChain.eventListener()
               .requestBodyEnd(realChain.call(), requestBodyOut.successfulCount);
         }
