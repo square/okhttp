@@ -144,7 +144,7 @@ public final class CertificatePinner {
   }
 
   @Override public int hashCode() {
-    int result = certificateChainCleaner != null ? certificateChainCleaner.hashCode() : 0;
+    int result = Objects.hashCode(certificateChainCleaner);
     result = 31 * result + pins.hashCode();
     return result;
   }
