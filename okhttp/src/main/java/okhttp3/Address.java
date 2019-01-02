@@ -164,10 +164,10 @@ public final class Address {
     result = 31 * result + protocols.hashCode();
     result = 31 * result + connectionSpecs.hashCode();
     result = 31 * result + proxySelector.hashCode();
-    result = 31 * result + (proxy != null ? proxy.hashCode() : 0);
-    result = 31 * result + (sslSocketFactory != null ? sslSocketFactory.hashCode() : 0);
-    result = 31 * result + (hostnameVerifier != null ? hostnameVerifier.hashCode() : 0);
-    result = 31 * result + (certificatePinner != null ? certificatePinner.hashCode() : 0);
+    result = 31 * result + Objects.hashCode(proxy);
+    result = 31 * result + Objects.hashCode(sslSocketFactory);
+    result = 31 * result + Objects.hashCode(hostnameVerifier);
+    result = 31 * result + Objects.hashCode(certificatePinner);
     return result;
   }
 
