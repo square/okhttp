@@ -116,12 +116,8 @@ public abstract class RequestBody {
       }
 
       @Override public void writeTo(BufferedSink sink) throws IOException {
-        Source source = null;
-        try {
-          source = Okio.source(file);
+        try (Source source = Okio.source(file)) {
           sink.writeAll(source);
-        } finally {
-          Util.closeQuietly(source);
         }
       }
     };

@@ -131,12 +131,9 @@ public abstract class ResponseBody implements Closeable {
       throw new IOException("Cannot buffer entire body for content length: " + contentLength);
     }
 
-    BufferedSource source = source();
     byte[] bytes;
-    try {
+    try (BufferedSource source = source()) {
       bytes = source.readByteArray();
-    } finally {
-      Util.closeQuietly(source);
     }
     if (contentLength != -1 && contentLength != bytes.length) {
       throw new IOException("Content-Length ("
@@ -180,12 +177,9 @@ public abstract class ResponseBody implements Closeable {
    * possibility for your response.
    */
   public final String string() throws IOException {
-    BufferedSource source = source();
-    try {
+    try (BufferedSource source = source()) {
       Charset charset = Util.bomAwareCharset(source, charset());
       return source.readString(charset);
-    } finally {
-      Util.closeQuietly(source);
     }
   }
 

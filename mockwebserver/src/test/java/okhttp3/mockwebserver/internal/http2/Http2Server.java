@@ -158,13 +158,8 @@ public final class Http2Server extends Http2Connection.Listener {
         new Header("content-type", contentType(file))
     );
     stream.writeHeaders(responseHeaders, true);
-    Source source = Okio.source(file);
-    try {
-      BufferedSink out = Okio.buffer(stream.getSink());
-      out.writeAll(source);
-      out.close();
-    } finally {
-      Util.closeQuietly(source);
+    try (Source source = Okio.source(file); BufferedSink sink = Okio.buffer(stream.getSink())) {
+      sink.writeAll(source);
     }
   }
 

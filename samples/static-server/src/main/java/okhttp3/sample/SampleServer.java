@@ -11,7 +11,6 @@ import java.security.SecureRandom;
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManagerFactory;
-import okhttp3.internal.Util;
 import okhttp3.mockwebserver.Dispatcher;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
@@ -119,11 +118,8 @@ public class SampleServer extends Dispatcher {
   private static SSLContext sslContext(String keystoreFile, String password)
       throws GeneralSecurityException, IOException {
     KeyStore keystore = KeyStore.getInstance(KeyStore.getDefaultType());
-    InputStream in = new FileInputStream(keystoreFile);
-    try {
+    try (InputStream in = new FileInputStream(keystoreFile)) {
       keystore.load(in, password.toCharArray());
-    } finally {
-      Util.closeQuietly(in);
     }
     KeyManagerFactory keyManagerFactory =
         KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
