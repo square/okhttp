@@ -53,6 +53,7 @@ import okhttp3.internal.http2.Header;
 import okio.Buffer;
 import okio.BufferedSource;
 import okio.ByteString;
+import okio.Options;
 import okio.Source;
 
 import static java.nio.charset.StandardCharsets.UTF_16BE;
@@ -68,14 +69,17 @@ public final class Util {
   public static final ResponseBody EMPTY_RESPONSE = ResponseBody.create(null, EMPTY_BYTE_ARRAY);
   public static final RequestBody EMPTY_REQUEST = RequestBody.create(null, EMPTY_BYTE_ARRAY);
 
-  private static final ByteString UTF_8_BOM = ByteString.decodeHex("efbbbf");
-  private static final ByteString UTF_16_BE_BOM = ByteString.decodeHex("feff");
-  private static final ByteString UTF_16_LE_BOM = ByteString.decodeHex("fffe");
-  private static final ByteString UTF_32_BE_BOM = ByteString.decodeHex("0000ffff");
-  private static final ByteString UTF_32_LE_BOM = ByteString.decodeHex("ffff0000");
+  /** Byte order marks. */
+  private static final Options UNICODE_BOMS = Options.of(
+      ByteString.decodeHex("efbbbf"),   // UTF-8
+      ByteString.decodeHex("feff"),     // UTF-16BE
+      ByteString.decodeHex("fffe"),     // UTF-16LE
+      ByteString.decodeHex("0000ffff"), // UTF-32BE
+      ByteString.decodeHex("ffff0000")  // UTF-32LE
+  );
 
-  private static final Charset UTF_32_BE = Charset.forName("UTF-32BE");
-  private static final Charset UTF_32_LE = Charset.forName("UTF-32LE");
+  private static final Charset UTF_32BE = Charset.forName("UTF-32BE");
+  private static final Charset UTF_32LE = Charset.forName("UTF-32LE");
 
   /** GMT and UTC are equivalent for our purposes. */
   public static final TimeZone UTC = TimeZone.getTimeZone("GMT");
@@ -466,27 +470,15 @@ public final class Util {
   }
 
   public static Charset bomAwareCharset(BufferedSource source, Charset charset) throws IOException {
-    if (source.rangeEquals(0, UTF_8_BOM)) {
-      source.skip(UTF_8_BOM.size());
-      return UTF_8;
+    switch (source.select(UNICODE_BOMS)) {
+      case 0: return UTF_8;
+      case 1: return UTF_16BE;
+      case 2: return UTF_16LE;
+      case 3: return UTF_32BE;
+      case 4: return UTF_32LE;
+      case -1: return charset;
+      default: throw new AssertionError();
     }
-    if (source.rangeEquals(0, UTF_16_BE_BOM)) {
-      source.skip(UTF_16_BE_BOM.size());
-      return UTF_16BE;
-    }
-    if (source.rangeEquals(0, UTF_16_LE_BOM)) {
-      source.skip(UTF_16_LE_BOM.size());
-      return UTF_16LE;
-    }
-    if (source.rangeEquals(0, UTF_32_BE_BOM)) {
-      source.skip(UTF_32_BE_BOM.size());
-      return UTF_32_BE;
-    }
-    if (source.rangeEquals(0, UTF_32_LE_BOM)) {
-      source.skip(UTF_32_LE_BOM.size());
-      return UTF_32_LE;
-    }
-    return charset;
   }
 
   public static int checkDuration(String name, long duration, TimeUnit unit) {
