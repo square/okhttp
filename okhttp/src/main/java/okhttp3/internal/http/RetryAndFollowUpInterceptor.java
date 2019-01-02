@@ -221,6 +221,9 @@ public final class RetryAndFollowUpInterceptor implements Interceptor {
       boolean requestSendStarted, Request userRequest) {
     streamAllocation.streamFailed(e);
 
+    // The client threw an IO exception (failed file read, for example)
+    if (e instanceof ClientIOException) return false;
+
     // The application layer has forbidden retries.
     if (!client.retryOnConnectionFailure()) return false;
 
