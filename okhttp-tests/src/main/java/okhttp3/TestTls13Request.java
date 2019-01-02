@@ -26,7 +26,6 @@ public class TestTls13Request {
   private static final ConnectionSpec TLS_13 = new ConnectionSpec.Builder(true)
       .cipherSuites(TLS13_CIPHER_SUITES)
       .tlsVersions(TlsVersion.TLS_1_3)
-      .supportsTlsExtensions(true)
       .build();
 
 
@@ -87,10 +86,7 @@ public class TestTls13Request {
 
     Request request = new Request.Builder().url(url).build();
 
-    Response response = null;
-    try {
-      response = client.newCall(request).execute();
-
+    try (Response response = client.newCall(request).execute()) {
       Handshake handshake = response.handshake();
       System.out.println(handshake.tlsVersion()
           + " "
@@ -104,10 +100,6 @@ public class TestTls13Request {
           + "b");
     } catch (IOException ioe) {
       System.out.println(ioe.toString());
-    } finally {
-      if (response != null) {
-        response.close();
-      }
     }
   }
 }

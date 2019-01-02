@@ -273,8 +273,7 @@ public final class DiskLruCache implements Closeable, Flushable {
   }
 
   private void readJournal() throws IOException {
-    BufferedSource source = Okio.buffer(fileSystem.source(journalFile));
-    try {
+    try (BufferedSource source = Okio.buffer(fileSystem.source(journalFile))) {
       String magic = source.readUtf8LineStrict();
       String version = source.readUtf8LineStrict();
       String appVersionString = source.readUtf8LineStrict();
@@ -306,8 +305,6 @@ public final class DiskLruCache implements Closeable, Flushable {
       } else {
         journalWriter = newJournalWriter();
       }
-    } finally {
-      Util.closeQuietly(source);
     }
   }
 
@@ -393,8 +390,7 @@ public final class DiskLruCache implements Closeable, Flushable {
       journalWriter.close();
     }
 
-    BufferedSink writer = Okio.buffer(fileSystem.sink(journalFileTmp));
-    try {
+    try (BufferedSink writer = Okio.buffer(fileSystem.sink(journalFileTmp))) {
       writer.writeUtf8(MAGIC).writeByte('\n');
       writer.writeUtf8(VERSION_1).writeByte('\n');
       writer.writeDecimalLong(appVersion).writeByte('\n');
@@ -413,8 +409,6 @@ public final class DiskLruCache implements Closeable, Flushable {
           writer.writeByte('\n');
         }
       }
-    } finally {
-      writer.close();
     }
 
     if (fileSystem.exists(journalFile)) {

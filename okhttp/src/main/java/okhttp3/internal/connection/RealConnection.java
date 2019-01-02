@@ -400,7 +400,7 @@ public final class RealConnection extends Http2Connection.Listener implements Co
           // that happens, then we will have buffered bytes that are needed by the SSLSocket!
           // This check is imperfect: it doesn't tell us whether a handshake will succeed, just
           // that it will almost certainly fail because the proxy has sent unexpected data.
-          if (!source.buffer().exhausted() || !sink.buffer().exhausted()) {
+          if (!source.getBuffer().exhausted() || !sink.buffer().exhausted()) {
             throw new IOException("TLS tunnel buffered too many bytes!");
           }
           return null;

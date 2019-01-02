@@ -27,7 +27,6 @@ import okio.GzipSource;
 import okio.Okio;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
-import static okhttp3.internal.Util.closeQuietly;
 
 /**
  * A database of public suffixes provided by
@@ -313,8 +312,7 @@ public final class PublicSuffixDatabase {
     InputStream resource = PublicSuffixDatabase.class.getResourceAsStream(PUBLIC_SUFFIX_RESOURCE);
     if (resource == null) return;
 
-    BufferedSource bufferedSource = Okio.buffer(new GzipSource(Okio.source(resource)));
-    try {
+    try (BufferedSource bufferedSource = Okio.buffer(new GzipSource(Okio.source(resource)))) {
       int totalBytes = bufferedSource.readInt();
       publicSuffixListBytes = new byte[totalBytes];
       bufferedSource.readFully(publicSuffixListBytes);
@@ -322,8 +320,6 @@ public final class PublicSuffixDatabase {
       int totalExceptionBytes = bufferedSource.readInt();
       publicSuffixExceptionListBytes = new byte[totalExceptionBytes];
       bufferedSource.readFully(publicSuffixExceptionListBytes);
-    } finally {
-      closeQuietly(bufferedSource);
     }
 
     synchronized (this) {

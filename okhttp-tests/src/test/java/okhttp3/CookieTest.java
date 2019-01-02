@@ -27,6 +27,7 @@ import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
@@ -523,7 +524,7 @@ public final class CookieTest {
         .hostOnlyDomain("example.com")
         .secure()
         .build();
-    assertEquals(true, cookie.secure());
+    assertTrue(cookie.secure());
   }
 
   @Test public void builderHttpOnly() throws Exception {
@@ -533,7 +534,7 @@ public final class CookieTest {
         .hostOnlyDomain("example.com")
         .httpOnly()
         .build();
-    assertEquals(true, cookie.httpOnly());
+    assertTrue(cookie.httpOnly());
   }
 
   @Test public void builderIpv6() throws Exception {
@@ -563,11 +564,11 @@ public final class CookieTest {
           assertEquals(cookieA.hashCode(), cookieB.hashCode());
           assertEquals(cookieA, cookieB);
         } else {
-          assertFalse(cookieA.hashCode() == cookieB.hashCode());
-          assertFalse(cookieA.equals(cookieB));
+          assertNotEquals(cookieA.hashCode(), cookieB.hashCode());
+          assertNotEquals(cookieA, cookieB);
         }
       }
-      assertFalse(cookieA.equals(null));
+      assertNotEquals(null, cookieA);
     }
   }
 

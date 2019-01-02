@@ -169,7 +169,7 @@ public class Main extends HelpOption implements Runnable {
       Sink out = Okio.sink(System.out);
       BufferedSource source = response.body().source();
       while (!source.exhausted()) {
-        out.write(source.buffer(), source.buffer().size());
+        out.write(source.getBuffer(), source.getBuffer().size());
         out.flush();
       }
 

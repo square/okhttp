@@ -339,16 +339,13 @@ public final class Cache implements Closeable, Flushable {
 
         canRemove = false; // Prevent delegate.remove() on the wrong item!
         while (delegate.hasNext()) {
-          DiskLruCache.Snapshot snapshot = delegate.next();
-          try {
+          try (DiskLruCache.Snapshot snapshot = delegate.next()) {
             BufferedSource metadata = Okio.buffer(snapshot.getSource(ENTRY_METADATA));
             nextUrl = metadata.readUtf8LineStrict();
             return true;
           } catch (IOException ignored) {
             // We couldn't read the metadata for this snapshot; possibly because the host filesystem
             // has disappeared! Skip it.
-          } finally {
-            snapshot.close();
           }
         }
 

@@ -35,7 +35,6 @@ import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import okhttp3.Headers;
-import okhttp3.Protocol;
 import okhttp3.internal.NamedRunnable;
 import okhttp3.internal.Util;
 import okhttp3.internal.platform.Platform;
@@ -173,11 +172,6 @@ public final class Http2Connection implements Closeable {
     writer = new Http2Writer(builder.sink, client);
 
     readerRunnable = new ReaderRunnable(new Http2Reader(builder.source, client));
-  }
-
-  /** The protocol as selected using ALPN. */
-  public Protocol getProtocol() {
-    return Protocol.HTTP_2;
   }
 
   /**

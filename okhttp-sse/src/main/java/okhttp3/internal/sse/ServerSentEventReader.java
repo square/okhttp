@@ -63,7 +63,7 @@ public final class ServerSentEventReader {
         return false;
       }
 
-      switch (source.buffer().getByte(0)) {
+      switch (source.getBuffer().getByte(0)) {
         case '\r':
         case '\n':
           completeEvent(id, type, data);
@@ -162,7 +162,7 @@ public final class ServerSentEventReader {
    */
   private boolean isKey(ByteString key) throws IOException {
     if (source.rangeEquals(0, key)) {
-      byte nextByte = source.buffer().getByte(key.size());
+      byte nextByte = source.getBuffer().getByte(key.size());
       return nextByte == ':'
           || nextByte == '\r'
           || nextByte == '\n';
@@ -174,7 +174,7 @@ public final class ServerSentEventReader {
   private void skipCrAndOrLf() throws IOException {
     if ((source.readByte() & 0xff) == '\r'
         && source.request(1)
-        && source.buffer().getByte(0) == '\n') {
+        && source.getBuffer().getByte(0) == '\n') {
       source.skip(1);
     }
   }
@@ -186,11 +186,11 @@ public final class ServerSentEventReader {
   private long skipNameAndDivider(long length) throws IOException {
     source.skip(length);
 
-    if (source.buffer().getByte(0) == ':') {
+    if (source.getBuffer().getByte(0) == ':') {
       source.skip(1L);
       length++;
 
-      if (source.buffer().getByte(0) == ' ') {
+      if (source.getBuffer().getByte(0) == ' ') {
         source.skip(1);
         length++;
       }
