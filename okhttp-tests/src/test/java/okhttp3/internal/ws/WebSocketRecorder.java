@@ -86,7 +86,7 @@ public final class WebSocketRecorder extends WebSocketListener {
   }
 
   @Override public void onClosing(WebSocket webSocket, int code, String reason) {
-    Platform.get().log(Platform.INFO, "[WS " + name + "] onClose " + code, null);
+    Platform.get().log(Platform.INFO, "[WS " + name + "] onClosing " + code, null);
 
     WebSocketListener delegate = this.delegate;
     if (delegate != null) {
@@ -98,7 +98,7 @@ public final class WebSocketRecorder extends WebSocketListener {
   }
 
   @Override public void onClosed(WebSocket webSocket, int code, String reason) {
-    Platform.get().log(Platform.INFO, "[WS " + name + "] onClose " + code, null);
+    Platform.get().log(Platform.INFO, "[WS " + name + "] onClosed " + code, null);
 
     WebSocketListener delegate = this.delegate;
     if (delegate != null) {
