@@ -163,7 +163,7 @@ public final class RealInterceptorChain implements Interceptor.Chain {
           "interceptor " + interceptor + " returned a response with no body");
     }
 
-    if (Internal.instance.isDuplex(request) && Internal.instance.httpSink(response) == null) {
+    if (Internal.instance.isDuplex(request) && Internal.instance.sink(response) == null) {
       throw new IllegalStateException(
           "interceptor " + interceptor + " returned a response with no httpSink");
     }

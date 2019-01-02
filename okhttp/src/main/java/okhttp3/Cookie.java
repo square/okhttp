@@ -450,7 +450,7 @@ public final class Cookie {
 
     return cookies != null
         ? Collections.unmodifiableList(cookies)
-        : Collections.<Cookie>emptyList();
+        : Collections.emptyList();
   }
 
   /**

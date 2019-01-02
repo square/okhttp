@@ -22,6 +22,7 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.TreeSet;
 import okhttp3.Challenge;
@@ -36,7 +37,6 @@ import okio.ByteString;
 
 import static java.net.HttpURLConnection.HTTP_NOT_MODIFIED;
 import static java.net.HttpURLConnection.HTTP_NO_CONTENT;
-import static okhttp3.internal.Util.equal;
 import static okhttp3.internal.http.StatusLine.HTTP_CONTINUE;
 
 /** Headers and utilities for internal use by OkHttp. */
@@ -71,7 +71,7 @@ public final class HttpHeaders {
   public static boolean varyMatches(
       Response cachedResponse, Headers cachedRequest, Request newRequest) {
     for (String field : varyFields(cachedResponse)) {
-      if (!equal(cachedRequest.values(field), newRequest.headers(field))) return false;
+      if (!Objects.equals(cachedRequest.values(field), newRequest.headers(field))) return false;
     }
     return true;
   }
@@ -194,7 +194,7 @@ public final class HttpHeaders {
       peek = readToken(header);
       if (peek == null) {
         if (!header.exhausted()) return; // Expected a token; got something else.
-        result.add(new Challenge(schemeName, Collections.<String, String>emptyMap()));
+        result.add(new Challenge(schemeName, Collections.emptyMap()));
         return;
       }
 
@@ -204,7 +204,7 @@ public final class HttpHeaders {
       // It's a token68 because there isn't a value after it.
       if (!commaPrefixed && (commaSuffixed || header.exhausted())) {
         result.add(new Challenge(schemeName, Collections.singletonMap(
-            (String) null, peek + repeat('=', eqCount))));
+            null, peek + repeat('=', eqCount))));
         peek = null;
         continue;
       }

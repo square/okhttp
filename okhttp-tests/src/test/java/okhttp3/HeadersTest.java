@@ -16,6 +16,7 @@
 package okhttp3;
 
 import java.io.IOException;
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
@@ -35,9 +36,8 @@ import static java.util.Collections.singletonList;
 import static java.util.Collections.singletonMap;
 import static okhttp3.TestUtil.headerEntries;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 public final class HeadersTest {
@@ -64,12 +64,26 @@ public final class HeadersTest {
         .header("Connection", "upgrade")
         .header("Upgrade", "websocket")
         .header("Host", "square.com")
+        .header("TE", "gzip")
         .build();
     List<Header> expected = headerEntries(
         ":method", "GET",
         ":path", "/",
         ":authority", "square.com",
         ":scheme", "http");
+    assertEquals(expected, Http2Codec.http2HeadersList(request));
+  }
+
+  @Test public void http2HeadersListDontDropTeIfTrailersHttp2() {
+    Request request = new Request.Builder()
+        .url("http://square.com/")
+        .header("TE", "trailers")
+        .build();
+    List<Header> expected = headerEntries(
+        ":method", "GET",
+        ":path", "/",
+        ":scheme", "http",
+        "te", "trailers");
     assertEquals(expected, Http2Codec.http2HeadersList(request));
   }
 
@@ -191,7 +205,7 @@ public final class HeadersTest {
 
   @Test public void ofMapThrowsOnNull() {
     try {
-      Headers.of(Collections.<String, String>singletonMap("User-Agent", null));
+      Headers.of(Collections.singletonMap("User-Agent", null));
       fail();
     } catch (IllegalArgumentException expected) {
     }
@@ -383,7 +397,7 @@ public final class HeadersTest {
         .add("Connection", "close")
         .add("Transfer-Encoding", "chunked")
         .build();
-    assertTrue(headers1.equals(headers2));
+    assertEquals(headers1, headers2);
     assertEquals(headers1.hashCode(), headers2.hashCode());
   }
 
@@ -396,8 +410,8 @@ public final class HeadersTest {
         .add("Connection", "keep-alive")
         .add("Transfer-Encoding", "chunked")
         .build();
-    assertFalse(headers1.equals(headers2));
-    assertFalse(headers1.hashCode() == headers2.hashCode());
+    assertNotEquals(headers1, headers2);
+    assertNotEquals(headers1.hashCode(), headers2.hashCode());
   }
 
   @Test public void headersToString() {
@@ -634,7 +648,7 @@ public final class HeadersTest {
         .build();
     assertEquals(Arrays.asList(
         new Challenge("Basic", singletonMap("realm", "myrealm")),
-        new Challenge("Digest", Collections.<String, String>emptyMap())),
+        new Challenge("Digest", Collections.emptyMap())),
         HttpHeaders.parseChallenges(headers, "WWW-Authenticate"));
   }
 
@@ -653,7 +667,7 @@ public final class HeadersTest {
         .add("WWW-Authenticate", "Digest, Basic ,,realm=\"myrealm\"")
         .build();
     assertEquals(Arrays.asList(
-        new Challenge("Digest", Collections.<String, String>emptyMap()),
+        new Challenge("Digest", Collections.emptyMap()),
         new Challenge("Basic", singletonMap("realm", "myrealm"))),
         HttpHeaders.parseChallenges(headers, "WWW-Authenticate"));
   }
@@ -663,7 +677,7 @@ public final class HeadersTest {
         .add("WWW-Authenticate", "Digest,Basic realm=\"myrealm\"")
         .build();
     assertEquals(Arrays.asList(
-        new Challenge("Digest", Collections.<String, String>emptyMap()),
+        new Challenge("Digest", Collections.emptyMap()),
         new Challenge("Basic", singletonMap("realm", "myrealm"))),
         HttpHeaders.parseChallenges(headers, "WWW-Authenticate"));
   }
@@ -673,7 +687,7 @@ public final class HeadersTest {
         .add("WWW-Authenticate", "Digest,,,, Basic ,,realm=\"myrealm\"")
         .build();
     assertEquals(Arrays.asList(
-        new Challenge("Digest", Collections.<String, String>emptyMap()),
+        new Challenge("Digest", Collections.emptyMap()),
         new Challenge("Basic", singletonMap("realm", "myrealm"))),
         HttpHeaders.parseChallenges(headers, "WWW-Authenticate"));
   }
@@ -687,7 +701,7 @@ public final class HeadersTest {
     expectedAuthParams.put("realm", "myrealm");
     expectedAuthParams.put("foo", "bar");
     assertEquals(Arrays.asList(
-        new Challenge("Digest", Collections.<String, String>emptyMap()),
+        new Challenge("Digest", Collections.emptyMap()),
         new Challenge("Basic", expectedAuthParams)),
         HttpHeaders.parseChallenges(headers, "WWW-Authenticate"));
   }
@@ -698,7 +712,7 @@ public final class HeadersTest {
         .build();
 
     assertEquals(Arrays.asList(
-        new Challenge("Digest", Collections.<String, String>emptyMap()),
+        new Challenge("Digest", Collections.emptyMap()),
         new Challenge("Basic", singletonMap("realm", "my\\\"realm"))),
         HttpHeaders.parseChallenges(headers, "WWW-Authenticate"));
   }
@@ -709,7 +723,7 @@ public final class HeadersTest {
         .build();
 
     assertEquals(Arrays.asList(
-        new Challenge("Digest", Collections.<String, String>emptyMap()),
+        new Challenge("Digest", Collections.emptyMap()),
         new Challenge("Basic", singletonMap("realm", "my, realm,"))),
         HttpHeaders.parseChallenges(headers, "WWW-Authenticate"));
   }
@@ -720,7 +734,7 @@ public final class HeadersTest {
         .build();
 
     assertEquals(Arrays.asList(
-        new Challenge("Digest", Collections.<String, String>emptyMap())),
+        new Challenge("Digest", Collections.emptyMap())),
         HttpHeaders.parseChallenges(headers, "WWW-Authenticate"));
   }
 
@@ -730,7 +744,7 @@ public final class HeadersTest {
         .build();
 
     assertEquals(Arrays.asList(
-        new Challenge("Digest", Collections.<String, String>emptyMap())),
+        new Challenge("Digest", Collections.emptyMap())),
         HttpHeaders.parseChallenges(headers, "WWW-Authenticate"));
   }
 
@@ -741,7 +755,7 @@ public final class HeadersTest {
         .build();
 
     assertEquals(Arrays.asList(
-        new Challenge("Digest", Collections.<String, String>emptyMap())),
+        new Challenge("Digest", Collections.emptyMap())),
         HttpHeaders.parseChallenges(headers, "WWW-Authenticate"));
   }
 
@@ -751,7 +765,7 @@ public final class HeadersTest {
         .build();
 
     assertEquals(singletonList(
-        new Challenge("Other", singletonMap(((String) null), "abc=="))),
+        new Challenge("Other", singletonMap(null, "abc=="))),
         HttpHeaders.parseChallenges(headers, "WWW-Authenticate"));
   }
 
@@ -761,7 +775,7 @@ public final class HeadersTest {
         .build();
 
     assertEquals(Arrays.asList(
-        new Challenge("Other", singletonMap((String) null, "abc=="))),
+        new Challenge("Other", singletonMap(null, "abc=="))),
         HttpHeaders.parseChallenges(headers, "WWW-Authenticate"));
   }
 
@@ -780,7 +794,7 @@ public final class HeadersTest {
         .build();
 
     assertEquals(Arrays.asList(
-        new Challenge("Digest", Collections.<String, String>emptyMap()),
+        new Challenge("Digest", Collections.emptyMap()),
         new Challenge("Basic", singletonMap("realm", "myrealm"))),
         HttpHeaders.parseChallenges(headers, "WWW-Authenticate"));
   }
@@ -793,7 +807,7 @@ public final class HeadersTest {
 
     assertEquals(Arrays.asList(
         new Challenge("Basic", singletonMap("realm", "myrealm")),
-        new Challenge("Digest", Collections.<String, String>emptyMap())),
+        new Challenge("Digest", Collections.emptyMap())),
         HttpHeaders.parseChallenges(headers, "WWW-Authenticate"));
   }
 
@@ -823,11 +837,12 @@ public final class HeadersTest {
   }
 
   @Test public void addDate() {
-    Date expected = new Date(0);
+    Date expected = new Date(0L);
     Headers headers = new Headers.Builder()
         .add("testDate", expected)
         .build();
     assertEquals("Thu, 01 Jan 1970 00:00:00 GMT", headers.get("testDate"));
+    assertEquals(new Date(0L), headers.getDate("testDate"));
   }
 
   @Test public void addDateNull() {
@@ -841,13 +856,34 @@ public final class HeadersTest {
     }
   }
 
+  @Test public void addInstant() {
+    Instant expected = Instant.ofEpochMilli(0L);
+    Headers headers = new Headers.Builder()
+        .add("Test-Instant", expected)
+        .build();
+    assertEquals("Thu, 01 Jan 1970 00:00:00 GMT", headers.get("Test-Instant"));
+    assertEquals(expected, headers.getInstant("Test-Instant"));
+  }
+
+  @Test public void addInstantNull() {
+    try {
+      new Headers.Builder()
+          .add("Test-Instant", (Instant) null)
+          .build();
+      fail();
+    } catch (NullPointerException expected) {
+      assertEquals("value for name Test-Instant == null", expected.getMessage());
+    }
+  }
+
   @Test public void setDate() {
     Date expected = new Date(1000);
     Headers headers = new Headers.Builder()
-        .add("testDate", new Date(0))
+        .add("testDate", new Date(0L))
         .set("testDate", expected)
         .build();
     assertEquals("Thu, 01 Jan 1970 00:00:01 GMT", headers.get("testDate"));
+    assertEquals(expected, headers.getDate("testDate"));
   }
 
   @Test public void setDateNull() {
@@ -858,6 +894,27 @@ public final class HeadersTest {
       fail();
     } catch (NullPointerException expected) {
       assertEquals("value for name testDate == null", expected.getMessage());
+    }
+  }
+
+  @Test public void setInstant() {
+    Instant expected = Instant.ofEpochMilli(1000L);
+    Headers headers = new Headers.Builder()
+        .add("Test-Instant", Instant.ofEpochMilli(0L))
+        .set("Test-Instant", expected)
+        .build();
+    assertEquals("Thu, 01 Jan 1970 00:00:01 GMT", headers.get("Test-Instant"));
+    assertEquals(expected, headers.getInstant("Test-Instant"));
+  }
+
+  @Test public void setInstantNull() {
+    try {
+      new Headers.Builder()
+          .set("Test-Instant", (Instant) null)
+          .build();
+      fail();
+    } catch (NullPointerException expected) {
+      assertEquals("value for name Test-Instant == null", expected.getMessage());
     }
   }
 }

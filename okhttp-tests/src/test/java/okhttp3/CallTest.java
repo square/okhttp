@@ -84,6 +84,7 @@ import org.junit.rules.TestRule;
 import org.junit.rules.Timeout;
 
 import static java.net.CookiePolicy.ACCEPT_ORIGINAL_SERVER;
+import static okhttp3.CipherSuite.TLS_DH_anon_WITH_AES_128_GCM_SHA256;
 import static okhttp3.TestUtil.awaitGarbageCollection;
 import static okhttp3.TestUtil.defaultClient;
 import static okhttp3.tls.internal.TlsUtil.localhost;
@@ -344,7 +345,7 @@ public final class CallTest {
     assertEquals("POST", recordedRequest.getMethod());
     assertEquals(0, recordedRequest.getBody().size());
     assertEquals("0", recordedRequest.getHeader("Content-Length"));
-    assertEquals(null, recordedRequest.getHeader("Content-Type"));
+    assertNull(recordedRequest.getHeader("Content-Type"));
   }
 
   @Test public void postZerolength_HTTPS() throws Exception {
@@ -487,7 +488,7 @@ public final class CallTest {
     assertEquals("DELETE", recordedRequest.getMethod());
     assertEquals(0, recordedRequest.getBody().size());
     assertEquals("0", recordedRequest.getHeader("Content-Length"));
-    assertEquals(null, recordedRequest.getHeader("Content-Type"));
+    assertNull(recordedRequest.getHeader("Content-Type"));
   }
 
   @Test public void delete_HTTPS() throws Exception {
@@ -605,7 +606,7 @@ public final class CallTest {
     executeSynchronously(request).assertCode(200);
 
     RecordedRequest recordedRequest = server.takeRequest();
-    assertEquals(null, recordedRequest.getHeader("Content-Type"));
+    assertNull(recordedRequest.getHeader("Content-Type"));
     assertEquals("3", recordedRequest.getHeader("Content-Length"));
     assertEquals("abc", recordedRequest.getBody().readUtf8());
   }
@@ -1178,6 +1179,96 @@ public final class CallTest {
       String jvmVersion = System.getProperty("java.specification.version");
       assertEquals("11", jvmVersion);
     }
+  }
+
+  /**
+   * When the server doesn't present any certificates we fail the TLS handshake. This test requires
+   * that the client and server are each configured with a cipher suite that permits the server to
+   * be unauthenticated.
+   */
+  @Test public void tlsSuccessWithNoPeerCertificates() throws Exception {
+    server.enqueue(new MockResponse()
+        .setBody("abc"));
+
+    // The _anon_ cipher suites don't require server certificates.
+    CipherSuite cipherSuite = TLS_DH_anon_WITH_AES_128_GCM_SHA256;
+
+    HandshakeCertificates clientCertificates = new HandshakeCertificates.Builder()
+        .build();
+    client = client.newBuilder()
+        .sslSocketFactory(
+            socketFactoryWithCipherSuite(clientCertificates.sslSocketFactory(), cipherSuite),
+            clientCertificates.trustManager())
+        .connectionSpecs(Arrays.asList(new ConnectionSpec.Builder(ConnectionSpec.MODERN_TLS)
+            .cipherSuites(cipherSuite)
+            .build()))
+        .hostnameVerifier(new RecordingHostnameVerifier())
+        .build();
+
+    HandshakeCertificates serverCertificates = new HandshakeCertificates.Builder()
+        .build();
+    server.useHttps(socketFactoryWithCipherSuite(
+        serverCertificates.sslSocketFactory(), cipherSuite), false);
+
+    Call call = client.newCall(new Request.Builder()
+        .url(server.url("/"))
+        .build());
+    Response response = call.execute();
+    assertEquals("abc", response.body().string());
+    assertNull(response.handshake().peerPrincipal());
+    assertEquals(Collections.emptyList(), response.handshake().peerCertificates());
+    assertEquals(cipherSuite, response.handshake().cipherSuite());
+  }
+
+  @Test public void tlsHostnameVerificationFailure() throws Exception {
+    server.enqueue(new MockResponse());
+
+    HeldCertificate serverCertificate = new HeldCertificate.Builder()
+        .commonName("localhost") // Unusued for hostname verification.
+        .addSubjectAlternativeName("wronghostname")
+        .build();
+
+    HandshakeCertificates serverCertificates = new HandshakeCertificates.Builder()
+        .heldCertificate(serverCertificate)
+        .build();
+
+    HandshakeCertificates clientCertificates = new HandshakeCertificates.Builder()
+        .addTrustedCertificate(serverCertificate.certificate())
+        .build();
+
+    client = client.newBuilder()
+        .sslSocketFactory(clientCertificates.sslSocketFactory(), clientCertificates.trustManager())
+        .build();
+    server.useHttps(serverCertificates.sslSocketFactory(), false);
+
+    executeSynchronously("/")
+        .assertFailureMatches("(?s)Hostname localhost not verified.*");
+  }
+
+  @Test public void tlsHostnameVerificationFailureNoPeerCertificates() throws Exception {
+    server.enqueue(new MockResponse());
+
+    // The _anon_ cipher suites don't require server certificates.
+    CipherSuite cipherSuite = TLS_DH_anon_WITH_AES_128_GCM_SHA256;
+
+    HandshakeCertificates clientCertificates = new HandshakeCertificates.Builder()
+        .build();
+    client = client.newBuilder()
+        .sslSocketFactory(
+            socketFactoryWithCipherSuite(clientCertificates.sslSocketFactory(), cipherSuite),
+            clientCertificates.trustManager())
+        .connectionSpecs(Arrays.asList(new ConnectionSpec.Builder(ConnectionSpec.MODERN_TLS)
+            .cipherSuites(cipherSuite)
+            .build()))
+        .build();
+
+    HandshakeCertificates serverCertificates = new HandshakeCertificates.Builder()
+        .build();
+    server.useHttps(socketFactoryWithCipherSuite(
+        serverCertificates.sslSocketFactory(), cipherSuite), false);
+
+    executeSynchronously("/")
+        .assertFailure("Hostname localhost not verified (no certificates)");
   }
 
   @Test public void cleartextCallsFailWhenCleartextIsDisabled() throws Exception {
@@ -2091,6 +2182,38 @@ public final class CallTest {
     call.enqueue(callback);
     client.dispatcher().cancelAll();
     callback.await(server.url("/")).assertFailure("Canceled", "Socket closed");
+  }
+
+  @Test
+  public void cancelWhileRequestHeadersAreSent() throws Exception {
+    server.enqueue(new MockResponse().setBody("A"));
+
+    EventListener listener =
+        new EventListener() {
+          @Override
+          public void requestHeadersStart(Call call) {
+            try {
+              // Cancel call from another thread to avoid reentrance.
+              cancelLater(call, 0).join();
+            } catch (InterruptedException e) {
+              throw new AssertionError();
+            }
+          }
+        };
+    client = client.newBuilder().eventListener(listener).build();
+
+    Call call = client.newCall(new Request.Builder().url(server.url("/a")).build());
+    try {
+      call.execute();
+      fail();
+    } catch (IOException expected) {
+    }
+  }
+
+  @Test
+  public void cancelWhileRequestHeadersAreSent_HTTP_2() throws Exception {
+    enableProtocol(Protocol.HTTP_2);
+    cancelWhileRequestHeadersAreSent();
   }
 
   @Test public void cancelBeforeBodyIsRead() throws Exception {
@@ -3385,6 +3508,60 @@ public final class CallTest {
     assertEquals(1L, called.get());
   }
 
+  // Coming soon
+  @Test @Ignore public void clientReadsHeadersDataTrailersHttp1ChunkedTransferEncoding() throws IOException {
+    MockResponse mockResponse = new MockResponse()
+        .clearHeaders()
+        .addHeader("h1", "v1")
+        .addHeader("h2", "v2")
+        .setChunkedBody("HelloBonjour", 1024)
+        .setTrailers(Headers.of("trailers", "boom"));
+    server.enqueue(mockResponse);
+
+    Call call = client.newCall(new Request.Builder()
+        .url(server.url("/"))
+        .build());
+
+    Response response = call.execute();
+    BufferedSource source = response.body().source();
+
+    assertEquals("v1", response.header("h1"));
+    assertEquals("v2", response.header("h2"));
+
+    assertEquals("Hello", source.readUtf8(5));
+    assertEquals("Bonjour", source.readUtf8(7));
+
+    assertTrue(source.exhausted());
+    assertEquals(Headers.of("trailers", "boom"), response.trailers());
+  }
+
+  @Test public void clientReadsHeadersDataTrailersHttp2() throws IOException {
+    MockResponse mockResponse = new MockResponse()
+        .clearHeaders()
+        .addHeader("h1", "v1")
+        .addHeader("h2", "v2")
+        .setBody("HelloBonjour")
+        .setTrailers(Headers.of("trailers", "boom"));
+    server.enqueue(mockResponse);
+    enableProtocol(Protocol.HTTP_2);
+
+    Call call = client.newCall(new Request.Builder()
+        .url(server.url("/"))
+        .build());
+
+    Response response = call.execute();
+    BufferedSource source = response.body().source();
+
+    assertEquals("v1", response.header("h1"));
+    assertEquals("v2", response.header("h2"));
+
+    assertEquals("Hello", source.readUtf8(5));
+    assertEquals("Bonjour", source.readUtf8(7));
+
+    assertTrue(source.exhausted());
+    assertEquals(Headers.of("trailers", "boom"), response.trailers());
+  }
+
   private void makeFailingCall() {
     RequestBody requestBody = new RequestBody() {
       @Override public MediaType contentType() {
@@ -3463,8 +3640,8 @@ public final class CallTest {
     return result;
   }
 
-  private void cancelLater(final Call call, final long delay) {
-    new Thread("canceler") {
+  private Thread cancelLater(final Call call, final long delay) {
+    Thread thread = new Thread("canceler") {
       @Override public void run() {
         try {
           Thread.sleep(delay);
@@ -3473,7 +3650,19 @@ public final class CallTest {
         }
         call.cancel();
       }
-    }.start();
+    };
+    thread.start();
+    return thread;
+  }
+
+  private SSLSocketFactory socketFactoryWithCipherSuite(
+      final SSLSocketFactory sslSocketFactory, final CipherSuite cipherSuite) {
+    return new DelegatingSSLSocketFactory(sslSocketFactory) {
+      @Override protected SSLSocket configureSocket(SSLSocket sslSocket) throws IOException {
+        sslSocket.setEnabledCipherSuites(new String[] { cipherSuite.javaName() });
+        return super.configureSocket(sslSocket);
+      }
+    };
   }
 
   private static class RecordingSSLSocketFactory extends DelegatingSSLSocketFactory {

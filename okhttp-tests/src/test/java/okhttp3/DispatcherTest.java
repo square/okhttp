@@ -317,7 +317,8 @@ public final class DispatcherTest {
         listener.recordedEventTypes());
   }
 
-  private <T> Set<T> set(T... values) {
+  @SafeVarargs
+  private final <T> Set<T> set(T... values) {
     return set(Arrays.asList(values));
   }
 

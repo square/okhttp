@@ -20,11 +20,10 @@ import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 import javax.annotation.Nullable;
-import okhttp3.internal.duplex.HeadersListener;
-import okhttp3.internal.duplex.HttpSink;
+import okhttp3.internal.http.HttpCodec;
 import okhttp3.internal.http.HttpHeaders;
-import okhttp3.internal.http2.Http2Codec;
 import okio.Buffer;
+import okio.BufferedSink;
 import okio.BufferedSource;
 
 import static java.net.HttpURLConnection.HTTP_MOVED_PERM;
@@ -56,8 +55,8 @@ public final class Response implements Closeable {
   final @Nullable Response priorResponse;
   final long sentRequestAtMillis;
   final long receivedResponseAtMillis;
-  final HttpSink httpSink;
-  final @Nullable Http2Codec http2Codec;
+  final BufferedSink sink;
+  final @Nullable HttpCodec httpCodec;
 
   private volatile @Nullable CacheControl cacheControl; // Lazily initialized.
 
@@ -74,8 +73,8 @@ public final class Response implements Closeable {
     this.priorResponse = builder.priorResponse;
     this.sentRequestAtMillis = builder.sentRequestAtMillis;
     this.receivedResponseAtMillis = builder.receivedResponseAtMillis;
-    this.httpSink = builder.httpSink;
-    this.http2Codec = builder.http2Codec;
+    this.sink = builder.sink;
+    this.httpCodec = builder.httpCodec;
   }
 
   /**
@@ -144,11 +143,11 @@ public final class Response implements Closeable {
   }
 
   /**
-   * Should work for any trailers actually right?
+   * Returns the trailers after the HTTP response, which may be empty. It is an error to call this
+   * before the entire HTTP response body has been consumed.
    */
-  void headersListener(HeadersListener listener) {
-    if (http2Codec == null) throw new IllegalStateException("http2Codec == null");
-    http2Codec.setHeadersListener(listener);
+  public Headers trailers() throws IOException {
+    return httpCodec.trailers();
   }
 
   /**
@@ -305,8 +304,8 @@ public final class Response implements Closeable {
         + '}';
   }
 
-  HttpSink httpSink() {
-    return httpSink;
+  BufferedSink sink() {
+    return sink;
   }
 
   public static class Builder {
@@ -322,8 +321,8 @@ public final class Response implements Closeable {
     @Nullable Response priorResponse;
     long sentRequestAtMillis;
     long receivedResponseAtMillis;
-    @Nullable HttpSink httpSink;
-    @Nullable Http2Codec http2Codec;
+    @Nullable BufferedSink sink;
+    @Nullable HttpCodec httpCodec;
 
     public Builder() {
       headers = new Headers.Builder();
@@ -342,8 +341,8 @@ public final class Response implements Closeable {
       this.priorResponse = response.priorResponse;
       this.sentRequestAtMillis = response.sentRequestAtMillis;
       this.receivedResponseAtMillis = response.receivedResponseAtMillis;
-      this.httpSink = response.httpSink;
-      this.http2Codec = response.http2Codec;
+      this.sink = response.sink;
+      this.httpCodec = response.httpCodec;
     }
 
     public Builder request(Request request) {
@@ -451,14 +450,9 @@ public final class Response implements Closeable {
       return this;
     }
 
-    Builder httpSink(@Nullable HttpSink httpSink) {
-      this.httpSink = httpSink;
-      return this;
-    }
-
-    Builder http2Codec(@Nullable Http2Codec http2Codec) {
-      this.http2Codec = http2Codec;
-      return this;
+    void sinkAndCodec(BufferedSink sink, HttpCodec httpCodec) {
+      this.sink = sink;
+      this.httpCodec = httpCodec;
     }
 
     public Response build() {

@@ -141,11 +141,11 @@ public final class Cache implements Closeable, Flushable {
   private static final int ENTRY_COUNT = 2;
 
   final InternalCache internalCache = new InternalCache() {
-    @Override public Response get(Request request) throws IOException {
+    @Override public @Nullable Response get(Request request) throws IOException {
       return Cache.this.get(request);
     }
 
-    @Override public CacheRequest put(Response response) throws IOException {
+    @Override public @Nullable CacheRequest put(Response response) throws IOException {
       return Cache.this.put(response);
     }
 
@@ -339,16 +339,13 @@ public final class Cache implements Closeable, Flushable {
 
         canRemove = false; // Prevent delegate.remove() on the wrong item!
         while (delegate.hasNext()) {
-          DiskLruCache.Snapshot snapshot = delegate.next();
-          try {
+          try (DiskLruCache.Snapshot snapshot = delegate.next()) {
             BufferedSource metadata = Okio.buffer(snapshot.getSource(ENTRY_METADATA));
             nextUrl = metadata.readUtf8LineStrict();
             return true;
           } catch (IOException ignored) {
             // We couldn't read the metadata for this snapshot; possibly because the host filesystem
             // has disappeared! Skip it.
-          } finally {
-            snapshot.close();
           }
         }
 

@@ -68,7 +68,7 @@ public final class JavaNetAuthenticator implements Authenticator {
   }
 
   private InetAddress getConnectToInetAddress(Proxy proxy, HttpUrl url) throws IOException {
-    return (proxy != null && proxy.type() != Proxy.Type.DIRECT)
+    return proxy.type() != Proxy.Type.DIRECT
         ? ((InetSocketAddress) proxy.address()).getAddress()
         : InetAddress.getByName(url.host());
   }

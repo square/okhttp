@@ -52,6 +52,7 @@ import okhttp3.Response;
 import okhttp3.internal.Internal;
 import okhttp3.internal.JavaNetHeaders;
 import okhttp3.internal.URLFilter;
+import okhttp3.internal.Util;
 import okhttp3.internal.Version;
 import okhttp3.internal.http.HttpDate;
 import okhttp3.internal.http.HttpHeaders;
@@ -414,7 +415,7 @@ public final class OkHttpURLConnection extends HttpURLConnection implements Call
   }
 
   private String defaultUserAgent() {
-    String agent = System.getProperty("http.agent");
+    String agent = Util.getSystemProperty("http.agent", null);
     return agent != null ? toHumanReadableAscii(agent) : Version.userAgent();
   }
 

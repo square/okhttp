@@ -32,9 +32,8 @@ import okhttp3.internal.cache.InternalCache;
 import okhttp3.internal.connection.RealConnection;
 import okhttp3.internal.connection.RouteDatabase;
 import okhttp3.internal.connection.StreamAllocation;
-import okhttp3.internal.duplex.HeadersListener;
-import okhttp3.internal.duplex.HttpSink;
-import okhttp3.internal.http2.Http2Codec;
+import okhttp3.internal.http.HttpCodec;
+import okio.BufferedSink;
 
 /**
  * Escalate internal APIs in {@code okhttp3} so they can be used from OkHttp's implementation
@@ -55,12 +54,12 @@ public abstract class Internal {
 
   public abstract void setCache(OkHttpClient.Builder builder, InternalCache internalCache);
 
-  public abstract RealConnection get(ConnectionPool pool, Address address,
-      StreamAllocation streamAllocation, Route route);
+  public abstract void acquire(ConnectionPool pool, Address address,
+      StreamAllocation streamAllocation, @Nullable Route route);
 
   public abstract boolean equalsNonHost(Address a, Address b);
 
-  public abstract Socket deduplicate(
+  public abstract @Nullable Socket deduplicate(
       ConnectionPool pool, Address address, StreamAllocation streamAllocation);
 
   public abstract void put(ConnectionPool pool, RealConnection connection);
@@ -84,13 +83,10 @@ public abstract class Internal {
 
   public abstract void duplex(Request.Builder requestBuilder, String method);
 
-  public abstract void setHttp2Codec(Response.Builder builder, Http2Codec http2Codec);
+  public abstract void sinkAndCodec(
+      Response.Builder responseBuilder, BufferedSink sink, HttpCodec httpCodec);
 
-  public abstract void httpSink(Response.Builder responseBuilder, HttpSink httpSink);
-
-  public abstract HttpSink httpSink(Response response);
+  public abstract BufferedSink sink(Response response);
 
   public abstract boolean isDuplex(Request request);
-
-  public abstract void headersListener(Response response, HeadersListener headersListener);
 }

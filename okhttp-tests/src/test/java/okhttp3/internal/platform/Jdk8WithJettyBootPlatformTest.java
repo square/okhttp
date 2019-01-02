@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014 Square, Inc.
+ * Copyright (C) 2016 Square, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,15 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package okhttp3.benchmarks;
+package okhttp3.internal.platform;
 
-import okhttp3.HttpUrl;
+import org.junit.Test;
 
-/** An HTTP client to benchmark. */
-interface HttpClient {
-  void prepare(Benchmark benchmark);
+import static okhttp3.internal.platform.PlatformTest.getPlatform;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assume.assumeTrue;
 
-  void enqueue(HttpUrl url) throws Exception;
+public class Jdk8WithJettyBootPlatformTest {
+  @Test
+  public void testBuildsWithJettyBoot() {
+    assumeTrue(getPlatform().equals("jdk-with-jetty-boot"));
 
-  boolean acceptingJobs();
+    assertNotNull(Jdk8WithJettyBootPlatform.buildIfSupported());
+  }
 }

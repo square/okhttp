@@ -25,14 +25,16 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.util.List;
 import java.util.Map;
+import javax.annotation.Nullable;
 
 public class AbstractResponseCache extends ResponseCache {
-  @Override public CacheResponse get(URI uri, String requestMethod,
+  @Override public @Nullable CacheResponse get(URI uri, String requestMethod,
       Map<String, List<String>> requestHeaders) throws IOException {
     return null;
   }
 
-  @Override public CacheRequest put(URI uri, URLConnection connection) throws IOException {
+  @Override public @Nullable CacheRequest put(
+      URI uri, URLConnection connection) throws IOException {
     return null;
   }
 

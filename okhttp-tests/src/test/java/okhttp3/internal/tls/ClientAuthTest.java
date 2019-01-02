@@ -36,8 +36,8 @@ import okhttp3.Request;
 import okhttp3.Response;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
-import okhttp3.tls.HeldCertificate;
 import okhttp3.tls.HandshakeCertificates;
+import okhttp3.tls.HeldCertificate;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -47,7 +47,7 @@ import static okhttp3.internal.platform.PlatformTest.getPlatform;
 import static okhttp3.tls.internal.TlsUtil.newKeyManager;
 import static okhttp3.tls.internal.TlsUtil.newTrustManager;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.fail;
 
 public final class ClientAuthTest {
@@ -149,7 +149,7 @@ public final class ClientAuthTest {
     Call call = client.newCall(new Request.Builder().url(server.url("/")).build());
     Response response = call.execute();
     assertEquals(new X500Principal("CN=Local Host"), response.handshake().peerPrincipal());
-    assertEquals(null, response.handshake().localPrincipal());
+    assertNull(response.handshake().localPrincipal());
     assertEquals("abc", response.body().string());
   }
 
@@ -165,7 +165,7 @@ public final class ClientAuthTest {
     Call call = client.newCall(new Request.Builder().url(server.url("/")).build());
     Response response = call.execute();
     assertEquals(new X500Principal("CN=Local Host"), response.handshake().peerPrincipal());
-    assertEquals(null, response.handshake().localPrincipal());
+    assertNull(response.handshake().localPrincipal());
     assertEquals("abc", response.body().string());
   }
 

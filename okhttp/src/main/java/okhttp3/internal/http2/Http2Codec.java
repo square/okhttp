@@ -31,14 +31,12 @@ import okhttp3.ResponseBody;
 import okhttp3.internal.Internal;
 import okhttp3.internal.Util;
 import okhttp3.internal.connection.StreamAllocation;
-import okhttp3.internal.duplex.HeadersListener;
 import okhttp3.internal.http.HttpCodec;
 import okhttp3.internal.http.HttpHeaders;
 import okhttp3.internal.http.RealResponseBody;
 import okhttp3.internal.http.RequestLine;
 import okhttp3.internal.http.StatusLine;
 import okio.Buffer;
-import okio.ByteString;
 import okio.ForwardingSource;
 import okio.Okio;
 import okio.Sink;
@@ -93,8 +91,9 @@ public final class Http2Codec implements HttpCodec {
   private final Interceptor.Chain chain;
   final StreamAllocation streamAllocation;
   private final Http2Connection connection;
-  private Http2Stream stream;
+  private volatile Http2Stream stream;
   private final Protocol protocol;
+  private volatile boolean canceled;
 
   public Http2Codec(OkHttpClient client, Interceptor.Chain chain, StreamAllocation streamAllocation,
       Http2Connection connection) {
@@ -116,6 +115,12 @@ public final class Http2Codec implements HttpCodec {
     boolean hasRequestBody = request.body() != null || Internal.instance.isDuplex(request);
     List<Header> requestHeaders = http2HeadersList(request);
     stream = connection.newStream(requestHeaders, hasRequestBody);
+    // We may have been asked to cancel while creating the new stream and sending the request
+    // headers, but there was still no stream to close.
+    if (canceled) {
+      stream.closeLater(ErrorCode.CANCEL);
+      throw new IOException("Canceled");
+    }
     stream.readTimeout().timeout(chain.readTimeoutMillis(), TimeUnit.MILLISECONDS);
     stream.writeTimeout().timeout(chain.writeTimeoutMillis(), TimeUnit.MILLISECONDS);
   }
@@ -124,11 +129,6 @@ public final class Http2Codec implements HttpCodec {
   public void writeRequestHeaders(List<Header> headers) throws IOException {
     if (stream == null) throw new IllegalStateException("stream == null");
     stream.writeHeaders(headers, true);
-  }
-
-  public void setHeadersListener(HeadersListener headersListener) {
-    if (stream == null) throw new IllegalStateException("stream == null");
-    stream.setHeadersListener(headersListener);
   }
 
   @Override public void flushRequest() throws IOException {
@@ -161,8 +161,9 @@ public final class Http2Codec implements HttpCodec {
 
     for (int i = 0, size = headers.size(); i < size; i++) {
       // header names must be lowercase.
-      ByteString name = ByteString.encodeUtf8(headers.name(i).toLowerCase(Locale.US));
-      if (!HTTP_2_SKIPPED_REQUEST_HEADERS.contains(name.utf8())) {
+      String name = headers.name(i).toLowerCase(Locale.US);
+      if (!HTTP_2_SKIPPED_REQUEST_HEADERS.contains(name)
+          || name.equals(TE) && headers.value(i).equals("trailers")) {
         result.add(new Header(name, headers.value(i)));
       }
     }
@@ -200,7 +201,12 @@ public final class Http2Codec implements HttpCodec {
     return new RealResponseBody(contentType, contentLength, Okio.buffer(source));
   }
 
+  @Override public Headers trailers() throws IOException {
+    return stream.trailers();
+  }
+
   @Override public void cancel() {
+    canceled = true;
     if (stream != null) stream.closeLater(ErrorCode.CANCEL);
   }
 

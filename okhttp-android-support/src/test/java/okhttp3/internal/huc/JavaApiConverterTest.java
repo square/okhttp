@@ -23,7 +23,6 @@ import java.net.CacheResponse;
 import java.net.HttpURLConnection;
 import java.net.SecureCacheResponse;
 import java.net.URI;
-import java.nio.charset.StandardCharsets;
 import java.security.Principal;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
@@ -49,7 +48,6 @@ import okhttp3.Response;
 import okhttp3.ResponseBody;
 import okhttp3.TlsVersion;
 import okhttp3.internal.Internal;
-import okhttp3.internal.Util;
 import okhttp3.mockwebserver.MockWebServer;
 import okio.Buffer;
 import okio.BufferedSource;
@@ -57,6 +55,7 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -114,7 +113,7 @@ public class JavaApiConverterTest {
       }
 
       @Override public InputStream getBody() throws IOException {
-        return new ByteArrayInputStream("HelloWorld".getBytes(StandardCharsets.UTF_8));
+        return new ByteArrayInputStream("HelloWorld".getBytes(UTF_8));
       }
     };
 
@@ -160,9 +159,9 @@ public class JavaApiConverterTest {
   @Test public void createOkResponseForCacheGet_secure() throws Exception {
     final String statusLine = "HTTP/1.1 200 Fantastic";
     final Principal localPrincipal = LOCAL_CERT.getSubjectX500Principal();
-    final List<Certificate> localCertificates = Arrays.<Certificate>asList(LOCAL_CERT);
+    final List<Certificate> localCertificates = Arrays.asList(LOCAL_CERT);
     final Principal serverPrincipal = SERVER_CERT.getSubjectX500Principal();
-    final List<Certificate> serverCertificates = Arrays.<Certificate>asList(SERVER_CERT);
+    final List<Certificate> serverCertificates = Arrays.asList(SERVER_CERT);
     URI uri = new URI("https://foo/bar");
     Request request = new Request.Builder().url(uri.toURL()).build();
     SecureCacheResponse cacheResponse = new SecureCacheResponse() {
@@ -174,7 +173,7 @@ public class JavaApiConverterTest {
       }
 
       @Override public InputStream getBody() throws IOException {
-        return new ByteArrayInputStream("HelloWorld".getBytes(StandardCharsets.UTF_8));
+        return new ByteArrayInputStream("HelloWorld".getBytes(UTF_8));
       }
 
       @Override public String getCipherSuite() {
@@ -400,7 +399,7 @@ public class JavaApiConverterTest {
     }
 
     // Check retrieval of headers by index.
-    assertEquals(null, httpUrlConnection.getHeaderFieldKey(0));
+    assertNull(httpUrlConnection.getHeaderFieldKey(0));
     assertEquals("HTTP/1.1 200 Fantastic", httpUrlConnection.getHeaderField(0));
     // After header zero there may be additional entries provided at the beginning or end by the
     // implementation. It's probably important that the relative ordering of the headers is
@@ -466,7 +465,7 @@ public class JavaApiConverterTest {
         .url("https://secure/request")
         .build();
     Handshake handshake = Handshake.get(TlsVersion.SSL_3_0, CipherSuite.TLS_RSA_WITH_NULL_MD5,
-        Arrays.<Certificate>asList(SERVER_CERT), Arrays.<Certificate>asList(LOCAL_CERT));
+        Arrays.asList(SERVER_CERT), Arrays.asList(LOCAL_CERT));
     Response okResponse = createArbitraryOkResponse(okRequest).newBuilder()
         .handshake(handshake)
         .build();
@@ -556,7 +555,7 @@ public class JavaApiConverterTest {
             .build();
     ResponseBody responseBody = createResponseBody("ResponseBody");
     Handshake handshake = Handshake.get(TlsVersion.SSL_3_0, CipherSuite.TLS_RSA_WITH_NULL_MD5,
-        Arrays.<Certificate>asList(SERVER_CERT), Arrays.<Certificate>asList(LOCAL_CERT));
+        Arrays.asList(SERVER_CERT), Arrays.asList(LOCAL_CERT));
     Response okResponse = createArbitraryOkResponse(okRequest).newBuilder()
         .protocol(Protocol.HTTP_1_1)
         .code(200)
@@ -612,7 +611,7 @@ public class JavaApiConverterTest {
     assertEquals("StatusLine", JavaApiConverter.extractStatusLine(javaResponseHeaders));
 
     try {
-      JavaApiConverter.extractStatusLine(Collections.<String, List<String>>emptyMap());
+      JavaApiConverter.extractStatusLine(Collections.emptyMap());
       fail();
     } catch (IOException expected) {
     }
@@ -626,7 +625,7 @@ public class JavaApiConverterTest {
   private static X509Certificate certificate(String certificate) {
     try {
       return (X509Certificate) CertificateFactory.getInstance("X.509").generateCertificate(
-          new ByteArrayInputStream(certificate.getBytes(Util.UTF_8)));
+          new ByteArrayInputStream(certificate.getBytes(UTF_8)));
     } catch (CertificateException e) {
       fail();
       return null;

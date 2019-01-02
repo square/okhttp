@@ -25,19 +25,15 @@ import javax.net.ssl.SSLSocket;
 import okhttp3.Protocol;
 import okhttp3.internal.Util;
 
-import static okhttp3.internal.Util.assertionError;
-
-/**
- * OpenJDK 7 or OpenJDK 8 with {@code org.mortbay.jetty.alpn/alpn-boot} in the boot class path.
- */
-class JdkWithJettyBootPlatform extends Platform {
+/** OpenJDK 8 with {@code org.mortbay.jetty.alpn:alpn-boot} in the boot class path. */
+class Jdk8WithJettyBootPlatform extends Platform {
   private final Method putMethod;
   private final Method getMethod;
   private final Method removeMethod;
   private final Class<?> clientProviderClass;
   private final Class<?> serverProviderClass;
 
-  JdkWithJettyBootPlatform(Method putMethod, Method getMethod, Method removeMethod,
+  Jdk8WithJettyBootPlatform(Method putMethod, Method getMethod, Method removeMethod,
       Class<?> clientProviderClass, Class<?> serverProviderClass) {
     this.putMethod = putMethod;
     this.getMethod = getMethod;
@@ -51,11 +47,11 @@ class JdkWithJettyBootPlatform extends Platform {
     List<String> names = alpnProtocolNames(protocols);
 
     try {
-      Object provider = Proxy.newProxyInstance(Platform.class.getClassLoader(),
-          new Class[] {clientProviderClass, serverProviderClass}, new JettyNegoProvider(names));
-      putMethod.invoke(null, sslSocket, provider);
+      Object alpnProvider = Proxy.newProxyInstance(Platform.class.getClassLoader(),
+          new Class[] {clientProviderClass, serverProviderClass}, new AlpnProvider(names));
+      putMethod.invoke(null, sslSocket, alpnProvider);
     } catch (InvocationTargetException | IllegalAccessException e) {
-      throw assertionError("unable to set alpn", e);
+      throw new AssertionError("failed to set ALPN", e);
     }
   }
 
@@ -63,14 +59,14 @@ class JdkWithJettyBootPlatform extends Platform {
     try {
       removeMethod.invoke(null, sslSocket);
     } catch (IllegalAccessException | InvocationTargetException e) {
-      throw assertionError("unable to remove alpn", e);
+      throw new AssertionError("failed to remove ALPN", e);
     }
   }
 
   @Override public @Nullable String getSelectedProtocol(SSLSocket socket) {
     try {
-      JettyNegoProvider provider =
-          (JettyNegoProvider) Proxy.getInvocationHandler(getMethod.invoke(null, socket));
+      AlpnProvider provider =
+          (AlpnProvider) Proxy.getInvocationHandler(getMethod.invoke(null, socket));
       if (!provider.unsupported && provider.selected == null) {
         Platform.get().log(INFO, "ALPN callback dropped: HTTP/2 is disabled. "
             + "Is alpn-boot on the boot class path?", null);
@@ -78,22 +74,22 @@ class JdkWithJettyBootPlatform extends Platform {
       }
       return provider.unsupported ? null : provider.selected;
     } catch (InvocationTargetException | IllegalAccessException e) {
-      throw assertionError("unable to get selected protocol", e);
+      throw new AssertionError("failed to get ALPN selected protocol", e);
     }
   }
 
   public static Platform buildIfSupported() {
     // Find Jetty's ALPN extension for OpenJDK.
     try {
-      String negoClassName = "org.eclipse.jetty.alpn.ALPN";
-      Class<?> negoClass = Class.forName(negoClassName);
-      Class<?> providerClass = Class.forName(negoClassName + "$Provider");
-      Class<?> clientProviderClass = Class.forName(negoClassName + "$ClientProvider");
-      Class<?> serverProviderClass = Class.forName(negoClassName + "$ServerProvider");
-      Method putMethod = negoClass.getMethod("put", SSLSocket.class, providerClass);
-      Method getMethod = negoClass.getMethod("get", SSLSocket.class);
-      Method removeMethod = negoClass.getMethod("remove", SSLSocket.class);
-      return new JdkWithJettyBootPlatform(
+      String alpnClassName = "org.eclipse.jetty.alpn.ALPN";
+      Class<?> alpnClass = Class.forName(alpnClassName);
+      Class<?> providerClass = Class.forName(alpnClassName + "$Provider");
+      Class<?> clientProviderClass = Class.forName(alpnClassName + "$ClientProvider");
+      Class<?> serverProviderClass = Class.forName(alpnClassName + "$ServerProvider");
+      Method putMethod = alpnClass.getMethod("put", SSLSocket.class, providerClass);
+      Method getMethod = alpnClass.getMethod("get", SSLSocket.class);
+      Method removeMethod = alpnClass.getMethod("remove", SSLSocket.class);
+      return new Jdk8WithJettyBootPlatform(
           putMethod, getMethod, removeMethod, clientProviderClass, serverProviderClass);
     } catch (ClassNotFoundException | NoSuchMethodException ignored) {
     }
@@ -105,7 +101,7 @@ class JdkWithJettyBootPlatform extends Platform {
    * Handle the methods of ALPN's ClientProvider and ServerProvider without a compile-time
    * dependency on those interfaces.
    */
-  private static class JettyNegoProvider implements InvocationHandler {
+  private static class AlpnProvider implements InvocationHandler {
     /** This peer's supported protocols. */
     private final List<String> protocols;
     /** Set when remote peer notifies ALPN is unsupported. */
@@ -113,7 +109,7 @@ class JdkWithJettyBootPlatform extends Platform {
     /** The protocol the server selected. */
     String selected;
 
-    JettyNegoProvider(List<String> protocols) {
+    AlpnProvider(List<String> protocols) {
       this.protocols = protocols;
     }
 
@@ -132,11 +128,12 @@ class JdkWithJettyBootPlatform extends Platform {
         return protocols; // Client advertises these protocols.
       } else if ((methodName.equals("selectProtocol") || methodName.equals("select"))
           && String.class == returnType && args.length == 1 && args[0] instanceof List) {
-        List<String> peerProtocols = (List) args[0];
+        List<?> peerProtocols = (List) args[0];
         // Pick the first known protocol the peer advertises.
         for (int i = 0, size = peerProtocols.size(); i < size; i++) {
-          if (protocols.contains(peerProtocols.get(i))) {
-            return selected = peerProtocols.get(i);
+          String protocol = (String) peerProtocols.get(i);
+          if (protocols.contains(protocol)) {
+            return selected = protocol;
           }
         }
         return selected = protocols.get(0); // On no intersection, try peer's first protocol.

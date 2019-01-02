@@ -89,9 +89,7 @@ class OptionalMethod<T> {
       if (targetException instanceof RuntimeException) {
         throw (RuntimeException) targetException;
       }
-      AssertionError error = new AssertionError("Unexpected exception");
-      error.initCause(targetException);
-      throw error;
+      throw new AssertionError("Unexpected exception", targetException);
     }
   }
 
@@ -111,9 +109,7 @@ class OptionalMethod<T> {
       return m.invoke(target, args);
     } catch (IllegalAccessException e) {
       // Method should be public: we checked.
-      AssertionError error = new AssertionError("Unexpectedly could not call: " + m);
-      error.initCause(e);
-      throw error;
+      throw new AssertionError("Unexpectedly could not call: " + m, e);
     }
   }
 
@@ -132,9 +128,7 @@ class OptionalMethod<T> {
       if (targetException instanceof RuntimeException) {
         throw (RuntimeException) targetException;
       }
-      AssertionError error = new AssertionError("Unexpected exception");
-      error.initCause(targetException);
-      throw error;
+      throw new AssertionError("Unexpected exception", targetException);
     }
   }
 

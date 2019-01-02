@@ -75,6 +75,7 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static okhttp3.TestUtil.defaultClient;
@@ -149,7 +150,9 @@ public final class HttpOverHttp2Test {
     http2Logger.removeHandler(http2Handler);
     http2Logger.setLevel(previousLevel);
 
+    // Ensure a fresh connection pool for the next test.
     client.connectionPool().evictAll();
+    assertEquals(0, client.connectionPool().connectionCount());
   }
 
   @Test public void get() throws Exception {
@@ -186,7 +189,7 @@ public final class HttpOverHttp2Test {
   }
 
   @Test public void noDefaultContentLengthOnStreamingPost() throws Exception {
-    final byte[] postBytes = "FGHIJ".getBytes(Util.UTF_8);
+    final byte[] postBytes = "FGHIJ".getBytes(UTF_8);
 
     server.enqueue(new MockResponse().setBody("ABCDE"));
 
@@ -213,7 +216,7 @@ public final class HttpOverHttp2Test {
   }
 
   @Test public void userSuppliedContentLengthHeader() throws Exception {
-    final byte[] postBytes = "FGHIJ".getBytes(Util.UTF_8);
+    final byte[] postBytes = "FGHIJ".getBytes(UTF_8);
 
     server.enqueue(new MockResponse().setBody("ABCDE"));
 
@@ -244,7 +247,7 @@ public final class HttpOverHttp2Test {
   }
 
   @Test public void closeAfterFlush() throws Exception {
-    final byte[] postBytes = "FGHIJ".getBytes(Util.UTF_8);
+    final byte[] postBytes = "FGHIJ".getBytes(UTF_8);
 
     server.enqueue(new MockResponse().setBody("ABCDE"));
 
@@ -352,7 +355,7 @@ public final class HttpOverHttp2Test {
     waitForDataFrames(Http2Connection.OKHTTP_CLIENT_WINDOW_SIZE);
 
     // Cancel the call and close the response body. This should discard the buffered data and update
-    // the connnection flow-control window.
+    // the connection flow-control window.
     call1.cancel();
     response1.close();
 
@@ -752,13 +755,7 @@ public final class HttpOverHttp2Test {
     cookieJar.assertResponseCookies("a=b; path=/");
   }
 
-  /** https://github.com/square/okhttp/issues/1191 */
-  @Ignore // TODO: recover gracefully when a connection is shutdown.
   @Test public void cancelWithStreamNotCompleted() throws Exception {
-    // Ensure that the (shared) connection pool is in a consistent state.
-    client.connectionPool().evictAll();
-    assertEquals(0, client.connectionPool().connectionCount());
-
     server.enqueue(new MockResponse()
         .setBody("abc"));
     server.enqueue(new MockResponse()
@@ -900,8 +897,10 @@ public final class HttpOverHttp2Test {
     Call call = client.newCall(new Request.Builder()
         .url(server.url("/"))
         .build());
+    final CountDownLatch latch = new CountDownLatch(1);
     call.enqueue(new Callback() {
       @Override public void onFailure(Call call1, IOException e) {
+        latch.countDown();
       }
 
       @Override public void onResponse(Call call1, Response response) {
@@ -909,6 +908,7 @@ public final class HttpOverHttp2Test {
     });
     assertEquals(expectedSequenceNumber, server.takeRequest().getSequenceNumber());
     call.cancel();
+    latch.await();
   }
 
   @Test public void noRecoveryFromRefusedStreamWithRetryDisabled() throws Exception {
@@ -1342,9 +1342,6 @@ public final class HttpOverHttp2Test {
     assumeTrue(protocol == Protocol.HTTP_2);
 
     server.useHttps(handshakeCertificates.sslSocketFactory(), true);
-
-    // Force a fresh connection pool for the test.
-    client.connectionPool().evictAll();
 
     final QueueDispatcher queueDispatcher = new QueueDispatcher();
     queueDispatcher.enqueueResponse(new MockResponse()

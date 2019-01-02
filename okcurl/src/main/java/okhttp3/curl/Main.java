@@ -104,6 +104,11 @@ public class Main extends HelpOption implements Runnable {
   @Option(name = "--read-timeout", description = "Maximum time allowed for reading data (seconds)")
   public int readTimeout = DEFAULT_TIMEOUT;
 
+  @Option(
+      name = "--call-timeout",
+      description = "Maximum time allowed for the entire call (seconds)")
+  public int callTimeout = DEFAULT_TIMEOUT;
+
   @Option(name = {"-L", "--location"}, description = "Follow redirects")
   public boolean followRedirects;
 
@@ -164,7 +169,7 @@ public class Main extends HelpOption implements Runnable {
       Sink out = Okio.sink(System.out);
       BufferedSource source = response.body().source();
       while (!source.exhausted()) {
-        out.write(source.buffer(), source.buffer().size());
+        out.write(source.getBuffer(), source.getBuffer().size());
         out.flush();
       }
 
@@ -184,6 +189,9 @@ public class Main extends HelpOption implements Runnable {
     }
     if (readTimeout != DEFAULT_TIMEOUT) {
       builder.readTimeout(readTimeout, SECONDS);
+    }
+    if (callTimeout != DEFAULT_TIMEOUT) {
+      builder.callTimeout(callTimeout, SECONDS);
     }
     if (allowInsecure) {
       X509TrustManager trustManager = createInsecureTrustManager();

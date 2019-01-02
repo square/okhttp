@@ -21,6 +21,7 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.net.URLStreamHandler;
 import java.net.URLStreamHandlerFactory;
+import javax.annotation.Nullable;
 import okhttp3.internal.URLFilter;
 import okhttp3.internal.annotations.EverythingIsNonNull;
 import okhttp3.internal.huc.OkHttpURLConnection;
@@ -65,7 +66,7 @@ public final class OkUrlFactory implements URLStreamHandlerFactory, Cloneable {
     return open(url, client.proxy());
   }
 
-  HttpURLConnection open(URL url, Proxy proxy) {
+  HttpURLConnection open(URL url, @Nullable Proxy proxy) {
     String protocol = url.getProtocol();
     OkHttpClient copy = client.newBuilder()
         .proxy(proxy)

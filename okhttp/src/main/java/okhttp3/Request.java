@@ -143,7 +143,7 @@ public final class Request {
       this.body = request.body;
       this.duplex = request.duplex;
       this.tags = request.tags.isEmpty()
-          ? Collections.<Class<?>, Object>emptyMap()
+          ? Collections.emptyMap()
           : new LinkedHashMap<>(request.tags);
       this.headers = request.headers.newBuilder();
     }
