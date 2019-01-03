@@ -26,6 +26,7 @@ import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.Map;
 import javax.annotation.Nullable;
 import okhttp3.internal.Util;
 import okhttp3.internal.publicsuffix.PublicSuffixDatabase;
@@ -1153,6 +1154,14 @@ public final class HttpUrl {
       encodedQueryNamesAndValues.add(value != null
           ? canonicalize(value, QUERY_COMPONENT_ENCODE_SET, false, false, true, true)
           : null);
+      return this;
+    }
+
+    /** Encodes query parameters using UTF-8 and adds them to this URL's query string. */
+    public Builder addQueryParameters(Map<String, String> parameters) {
+      for (Map.Entry<String, String> entry : parameters.entrySet()) {
+        addQueryParameter(entry.getKey(), entry.getValue())
+      }
       return this;
     }
 
