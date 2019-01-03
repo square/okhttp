@@ -207,9 +207,9 @@ public final class RealWebSocket implements WebSocket, WebSocketReader.FrameCall
 
         // Process all web socket messages.
         try {
-          listener.onOpen(RealWebSocket.this, response);
           String name = "OkHttp WebSocket " + request.url().redact();
           initReaderAndWriter(name, streams);
+          listener.onOpen(RealWebSocket.this, response);
           streamAllocation.connection().socket().setSoTimeout(0);
           loopReader();
         } catch (Exception e) {
