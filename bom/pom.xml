@@ -53,7 +53,7 @@
       </dependency>
       <dependency>
         <groupId>${project.groupId}</groupId>
-        <artifactId>okhttp-logging-interceptor</artifactId>
+        <artifactId>logging-interceptor</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
