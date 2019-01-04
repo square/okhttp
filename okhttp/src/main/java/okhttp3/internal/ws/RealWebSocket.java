@@ -192,16 +192,18 @@ public final class RealWebSocket implements WebSocket, WebSocketReader.FrameCall
     call.timeout().clearTimeout();
     call.enqueue(new Callback() {
       @Override public void onResponse(Call call, Response response) {
+        StreamAllocation streamAllocation = Internal.instance.streamAllocation(call);
+
         try {
           checkResponse(response);
         } catch (ProtocolException e) {
           failWebSocket(e, response);
           closeQuietly(response);
+          streamAllocation.streamFailed(e);
           return;
         }
 
         // Promote the HTTP streams into web socket streams.
-        StreamAllocation streamAllocation = Internal.instance.streamAllocation(call);
         streamAllocation.noNewStreams(); // Prevent connection pooling!
         Streams streams = streamAllocation.connection().newWebSocketStreams(streamAllocation);
 
