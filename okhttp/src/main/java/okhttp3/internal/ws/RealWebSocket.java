@@ -567,6 +567,11 @@ public final class RealWebSocket implements WebSocket, WebSocketReader.FrameCall
       if (executor != null) executor.shutdown();
     }
 
+    if (listener == null) {
+      closeQuietly(streamsToClose);
+      return;
+    }
+
     try {
       listener.onFailure(this, e, response);
     } finally {
