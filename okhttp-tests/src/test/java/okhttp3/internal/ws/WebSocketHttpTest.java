@@ -170,8 +170,6 @@ public final class WebSocketHttpTest {
     serverListener.assertOpen();
     serverListener.assertExhausted();
     clientListener.assertFailure(e);
-
-    // TODO: fix connection leak
   }
 
   @Ignore("AsyncCall currently lets runtime exceptions propagate.")
