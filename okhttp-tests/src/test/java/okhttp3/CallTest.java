@@ -117,6 +117,10 @@ public final class CallTest {
   @After public void tearDown() throws Exception {
     cache.delete();
     logger.removeHandler(logHandler);
+
+    // Ensure the test has released all connections.
+    client.connectionPool().evictAll();
+    assertEquals(0, client.connectionPool().connectionCount());
   }
 
   @Test public void get() throws Exception {
@@ -670,6 +674,8 @@ public final class CallTest {
     }
 
     assertEquals("SyncApiTest", server.takeRequest().getHeader("User-Agent"));
+
+    callback.await(request.url()).assertSuccessful();
   }
 
   @Test public void legalToExecuteTwiceCloning() throws Exception {
@@ -1671,7 +1677,6 @@ public final class CallTest {
         .assertBody("A");
 
     // Attempt conditional cache validation and a DNS miss.
-    client.connectionPool().evictAll();
     client = client.newBuilder()
         .dns(new FakeDns())
         .build();
@@ -3399,7 +3404,6 @@ public final class CallTest {
     server.enqueue(new MockResponse()
         .setResponseCode(401));
 
-    client.connectionPool().evictAll();
     client = client.newBuilder()
         .authenticator(new Authenticator() {
           @Override public Request authenticate(Route route, Response response) throws IOException {
@@ -3422,7 +3426,6 @@ public final class CallTest {
     server.enqueue(new MockResponse()
         .setResponseCode(407));
 
-    client.connectionPool().evictAll();
     client = client.newBuilder()
         .proxyAuthenticator(new Authenticator() {
           @Override public Request authenticate(Route route, Response response) throws IOException {
@@ -3549,17 +3552,18 @@ public final class CallTest {
         .url(server.url("/"))
         .build());
 
-    Response response = call.execute();
-    BufferedSource source = response.body().source();
+    try (Response response = call.execute()) {
+      BufferedSource source = response.body().source();
 
-    assertEquals("v1", response.header("h1"));
-    assertEquals("v2", response.header("h2"));
+      assertEquals("v1", response.header("h1"));
+      assertEquals("v2", response.header("h2"));
 
-    assertEquals("Hello", source.readUtf8(5));
-    assertEquals("Bonjour", source.readUtf8(7));
+      assertEquals("Hello", source.readUtf8(5));
+      assertEquals("Bonjour", source.readUtf8(7));
 
-    assertTrue(source.exhausted());
-    assertEquals(Headers.of("trailers", "boom"), response.trailers());
+      assertTrue(source.exhausted());
+      assertEquals(Headers.of("trailers", "boom"), response.trailers());
+    }
   }
 
   private void makeFailingCall() {
