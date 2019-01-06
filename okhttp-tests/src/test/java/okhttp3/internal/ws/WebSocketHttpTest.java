@@ -257,15 +257,10 @@ public final class WebSocketHttpTest {
     webServer.enqueue(new MockResponse().withWebSocketUpgrade(serverListener));
     newWebSocket();
 
-    clientListener.assertOpen();
+    WebSocket webSocket = clientListener.assertOpen();
     WebSocket server = serverListener.assertOpen();
 
-    server.close(1001, "bye");
-    clientListener.assertClosing(1001, "bye");
-    clientListener.assertExhausted();
-    serverListener.assertExhausted();
-
-    // TODO: fix connection leak
+    closeWebSockets(webSocket, server);
   }
 
   @Test public void non101RetainsBody() throws IOException {
