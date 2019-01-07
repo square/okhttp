@@ -405,8 +405,6 @@ public final class WebSocketHttpTest {
 
     WebSocket webSocket = newWebSocket();
     clientListener.assertOpen();
-    webSocket.close(1000, null);
-
     WebSocket server = serverListener.assertOpen();
 
     closeWebSockets(webSocket, server);
