@@ -25,9 +25,10 @@ import javax.net.ssl.SSLSocket;
 import okhttp3.ConnectionSpec;
 import okhttp3.TlsVersion;
 import okhttp3.internal.Internal;
-import okhttp3.mockwebserver.internal.tls.SslClient;
+import okhttp3.tls.HandshakeCertificates;
 import org.junit.Test;
 
+import static okhttp3.tls.internal.TlsUtil.localhost;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -40,7 +41,7 @@ public class ConnectionSpecSelectorTest {
   public static final SSLHandshakeException RETRYABLE_EXCEPTION = new SSLHandshakeException(
       "Simulated handshake exception");
 
-  private SslClient sslClient = SslClient.localhost();
+  private HandshakeCertificates handshakeCertificates = localhost();
 
   @Test
   public void nonRetryableIOException() throws Exception {
@@ -74,7 +75,8 @@ public class ConnectionSpecSelectorTest {
   public void retryableSSLHandshakeException() throws Exception {
     ConnectionSpecSelector connectionSpecSelector =
         createConnectionSpecSelector(ConnectionSpec.MODERN_TLS, ConnectionSpec.COMPATIBLE_TLS);
-    SSLSocket socket = createSocketWithEnabledProtocols(TlsVersion.TLS_1_1, TlsVersion.TLS_1_0);
+    SSLSocket socket = createSocketWithEnabledProtocols(
+        TlsVersion.TLS_1_2, TlsVersion.TLS_1_1, TlsVersion.TLS_1_0);
     connectionSpecSelector.configureSecureSocket(socket);
 
     boolean retry = connectionSpecSelector.connectionFailed(RETRYABLE_EXCEPTION);
@@ -84,20 +86,21 @@ public class ConnectionSpecSelectorTest {
 
   @Test
   public void someFallbacksSupported() throws Exception {
-    ConnectionSpec sslV3 =
-        new ConnectionSpec.Builder(ConnectionSpec.MODERN_TLS)
-            .tlsVersions(TlsVersion.SSL_3_0)
-            .build();
+    ConnectionSpec sslV3 = new ConnectionSpec.Builder(ConnectionSpec.MODERN_TLS)
+        .tlsVersions(TlsVersion.SSL_3_0)
+        .build();
 
     ConnectionSpecSelector connectionSpecSelector = createConnectionSpecSelector(
         ConnectionSpec.MODERN_TLS, ConnectionSpec.COMPATIBLE_TLS, sslV3);
 
-    TlsVersion[] enabledSocketTlsVersions = {TlsVersion.TLS_1_1, TlsVersion.TLS_1_0};
+    TlsVersion[] enabledSocketTlsVersions = {
+        TlsVersion.TLS_1_2, TlsVersion.TLS_1_1, TlsVersion.TLS_1_0
+    };
     SSLSocket socket = createSocketWithEnabledProtocols(enabledSocketTlsVersions);
 
     // MODERN_TLS is used here.
     connectionSpecSelector.configureSecureSocket(socket);
-    assertEnabledProtocols(socket, TlsVersion.TLS_1_1, TlsVersion.TLS_1_0);
+    assertEnabledProtocols(socket, TlsVersion.TLS_1_2);
 
     boolean retry = connectionSpecSelector.connectionFailed(RETRYABLE_EXCEPTION);
     assertTrue(retry);
@@ -106,7 +109,7 @@ public class ConnectionSpecSelectorTest {
     // COMPATIBLE_TLS is used here.
     socket = createSocketWithEnabledProtocols(enabledSocketTlsVersions);
     connectionSpecSelector.configureSecureSocket(socket);
-    assertEnabledProtocols(socket, TlsVersion.TLS_1_0);
+    assertEnabledProtocols(socket, TlsVersion.TLS_1_2, TlsVersion.TLS_1_1, TlsVersion.TLS_1_0);
 
     retry = connectionSpecSelector.connectionFailed(RETRYABLE_EXCEPTION);
     assertFalse(retry);
@@ -121,7 +124,7 @@ public class ConnectionSpecSelectorTest {
   }
 
   private SSLSocket createSocketWithEnabledProtocols(TlsVersion... tlsVersions) throws IOException {
-    SSLSocket socket = (SSLSocket) sslClient.socketFactory.createSocket();
+    SSLSocket socket = (SSLSocket) handshakeCertificates.sslSocketFactory().createSocket();
     socket.setEnabledProtocols(javaNames(tlsVersions));
     return socket;
   }

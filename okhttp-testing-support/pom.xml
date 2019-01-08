@@ -6,7 +6,7 @@
   <parent>
     <groupId>com.squareup.okhttp3</groupId>
     <artifactId>parent</artifactId>
-    <version>3.11.0-SNAPSHOT</version>
+    <version>3.13.0-SNAPSHOT</version>
   </parent>
 
   <artifactId>okhttp-testing-support</artifactId>
@@ -35,7 +35,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-jar-plugin</artifactId>
-        <version>3.0.2</version>
+        <version>3.1.1</version>
         <configuration>
           <archive>
             <manifestEntries>

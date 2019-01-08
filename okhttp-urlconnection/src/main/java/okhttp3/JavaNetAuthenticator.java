@@ -22,12 +22,14 @@ import java.net.InetSocketAddress;
 import java.net.PasswordAuthentication;
 import java.net.Proxy;
 import java.util.List;
+import okhttp3.internal.annotations.EverythingIsNonNull;
 
 /**
  * Adapts {@link java.net.Authenticator} to {@link Authenticator}. Configure OkHttp to use {@link
  * java.net.Authenticator} with {@link OkHttpClient.Builder#authenticator} or {@link
  * OkHttpClient.Builder#proxyAuthenticator(Authenticator)}.
  */
+@EverythingIsNonNull
 public final class JavaNetAuthenticator implements Authenticator {
   @Override public Request authenticate(Route route, Response response) throws IOException {
     List<Challenge> challenges = response.challenges();
@@ -66,7 +68,7 @@ public final class JavaNetAuthenticator implements Authenticator {
   }
 
   private InetAddress getConnectToInetAddress(Proxy proxy, HttpUrl url) throws IOException {
-    return (proxy != null && proxy.type() != Proxy.Type.DIRECT)
+    return proxy.type() != Proxy.Type.DIRECT
         ? ((InetSocketAddress) proxy.address()).getAddress()
         : InetAddress.getByName(url.host());
   }

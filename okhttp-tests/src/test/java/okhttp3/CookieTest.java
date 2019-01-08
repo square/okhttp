@@ -27,13 +27,14 @@ import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 public final class CookieTest {
-  HttpUrl url = HttpUrl.parse("https://example.com/");
+  HttpUrl url = HttpUrl.get("https://example.com/");
 
   @Test public void simpleCookie() throws Exception {
     Cookie cookie = Cookie.parse(url, "SID=31d4d96e407aad42");
@@ -79,20 +80,20 @@ public final class CookieTest {
   }
 
   @Test public void invalidCharacters() throws Exception {
-    assertEquals(null, Cookie.parse(url, "a\u0000b=cd"));
-    assertEquals(null, Cookie.parse(url, "ab=c\u0000d"));
-    assertEquals(null, Cookie.parse(url, "a\u0001b=cd"));
-    assertEquals(null, Cookie.parse(url, "ab=c\u0001d"));
-    assertEquals(null, Cookie.parse(url, "a\u0009b=cd"));
-    assertEquals(null, Cookie.parse(url, "ab=c\u0009d"));
-    assertEquals(null, Cookie.parse(url, "a\u001fb=cd"));
-    assertEquals(null, Cookie.parse(url, "ab=c\u001fd"));
-    assertEquals(null, Cookie.parse(url, "a\u007fb=cd"));
-    assertEquals(null, Cookie.parse(url, "ab=c\u007fd"));
-    assertEquals(null, Cookie.parse(url, "a\u0080b=cd"));
-    assertEquals(null, Cookie.parse(url, "ab=c\u0080d"));
-    assertEquals(null, Cookie.parse(url, "a\u00ffb=cd"));
-    assertEquals(null, Cookie.parse(url, "ab=c\u00ffd"));
+    assertNull(Cookie.parse(url, "a\u0000b=cd"));
+    assertNull(Cookie.parse(url, "ab=c\u0000d"));
+    assertNull(Cookie.parse(url, "a\u0001b=cd"));
+    assertNull(Cookie.parse(url, "ab=c\u0001d"));
+    assertNull(Cookie.parse(url, "a\u0009b=cd"));
+    assertNull(Cookie.parse(url, "ab=c\u0009d"));
+    assertNull(Cookie.parse(url, "a\u001fb=cd"));
+    assertNull(Cookie.parse(url, "ab=c\u001fd"));
+    assertNull(Cookie.parse(url, "a\u007fb=cd"));
+    assertNull(Cookie.parse(url, "ab=c\u007fd"));
+    assertNull(Cookie.parse(url, "a\u0080b=cd"));
+    assertNull(Cookie.parse(url, "ab=c\u0080d"));
+    assertNull(Cookie.parse(url, "a\u00ffb=cd"));
+    assertNull(Cookie.parse(url, "ab=c\u00ffd"));
   }
 
   @Test public void maxAge() throws Exception {
@@ -216,83 +217,83 @@ public final class CookieTest {
 
   @Test public void domainMatches() throws Exception {
     Cookie cookie = Cookie.parse(url, "a=b; domain=example.com");
-    assertTrue(cookie.matches(HttpUrl.parse("http://example.com")));
-    assertTrue(cookie.matches(HttpUrl.parse("http://www.example.com")));
-    assertFalse(cookie.matches(HttpUrl.parse("http://square.com")));
+    assertTrue(cookie.matches(HttpUrl.get("http://example.com")));
+    assertTrue(cookie.matches(HttpUrl.get("http://www.example.com")));
+    assertFalse(cookie.matches(HttpUrl.get("http://square.com")));
   }
 
   /** If no domain is present, match only the origin domain. */
   @Test public void domainMatchesNoDomain() throws Exception {
     Cookie cookie = Cookie.parse(url, "a=b");
-    assertTrue(cookie.matches(HttpUrl.parse("http://example.com")));
-    assertFalse(cookie.matches(HttpUrl.parse("http://www.example.com")));
-    assertFalse(cookie.matches(HttpUrl.parse("http://square.com")));
+    assertTrue(cookie.matches(HttpUrl.get("http://example.com")));
+    assertFalse(cookie.matches(HttpUrl.get("http://www.example.com")));
+    assertFalse(cookie.matches(HttpUrl.get("http://square.com")));
   }
 
   /** Ignore an optional leading `.` in the domain. */
   @Test public void domainMatchesIgnoresLeadingDot() throws Exception {
     Cookie cookie = Cookie.parse(url, "a=b; domain=.example.com");
-    assertTrue(cookie.matches(HttpUrl.parse("http://example.com")));
-    assertTrue(cookie.matches(HttpUrl.parse("http://www.example.com")));
-    assertFalse(cookie.matches(HttpUrl.parse("http://square.com")));
+    assertTrue(cookie.matches(HttpUrl.get("http://example.com")));
+    assertTrue(cookie.matches(HttpUrl.get("http://www.example.com")));
+    assertFalse(cookie.matches(HttpUrl.get("http://square.com")));
   }
 
   /** Ignore the entire attribute if the domain ends with `.`. */
   @Test public void domainIgnoredWithTrailingDot() throws Exception {
     Cookie cookie = Cookie.parse(url, "a=b; domain=example.com.");
-    assertTrue(cookie.matches(HttpUrl.parse("http://example.com")));
-    assertFalse(cookie.matches(HttpUrl.parse("http://www.example.com")));
-    assertFalse(cookie.matches(HttpUrl.parse("http://square.com")));
+    assertTrue(cookie.matches(HttpUrl.get("http://example.com")));
+    assertFalse(cookie.matches(HttpUrl.get("http://www.example.com")));
+    assertFalse(cookie.matches(HttpUrl.get("http://square.com")));
   }
 
   @Test public void idnDomainMatches() throws Exception {
-    Cookie cookie = Cookie.parse(HttpUrl.parse("http://☃.net/"), "a=b; domain=☃.net");
-    assertTrue(cookie.matches(HttpUrl.parse("http://☃.net/")));
-    assertTrue(cookie.matches(HttpUrl.parse("http://xn--n3h.net/")));
-    assertTrue(cookie.matches(HttpUrl.parse("http://www.☃.net/")));
-    assertTrue(cookie.matches(HttpUrl.parse("http://www.xn--n3h.net/")));
+    Cookie cookie = Cookie.parse(HttpUrl.get("http://☃.net/"), "a=b; domain=☃.net");
+    assertTrue(cookie.matches(HttpUrl.get("http://☃.net/")));
+    assertTrue(cookie.matches(HttpUrl.get("http://xn--n3h.net/")));
+    assertTrue(cookie.matches(HttpUrl.get("http://www.☃.net/")));
+    assertTrue(cookie.matches(HttpUrl.get("http://www.xn--n3h.net/")));
   }
 
   @Test public void punycodeDomainMatches() throws Exception {
-    Cookie cookie = Cookie.parse(HttpUrl.parse("http://xn--n3h.net/"), "a=b; domain=xn--n3h.net");
-    assertTrue(cookie.matches(HttpUrl.parse("http://☃.net/")));
-    assertTrue(cookie.matches(HttpUrl.parse("http://xn--n3h.net/")));
-    assertTrue(cookie.matches(HttpUrl.parse("http://www.☃.net/")));
-    assertTrue(cookie.matches(HttpUrl.parse("http://www.xn--n3h.net/")));
+    Cookie cookie = Cookie.parse(HttpUrl.get("http://xn--n3h.net/"), "a=b; domain=xn--n3h.net");
+    assertTrue(cookie.matches(HttpUrl.get("http://☃.net/")));
+    assertTrue(cookie.matches(HttpUrl.get("http://xn--n3h.net/")));
+    assertTrue(cookie.matches(HttpUrl.get("http://www.☃.net/")));
+    assertTrue(cookie.matches(HttpUrl.get("http://www.xn--n3h.net/")));
   }
 
   @Test public void domainMatchesIpAddress() throws Exception {
-    HttpUrl urlWithIp = HttpUrl.parse("http://123.45.234.56/");
+    HttpUrl urlWithIp = HttpUrl.get("http://123.45.234.56/");
     assertNull(Cookie.parse(urlWithIp, "a=b; domain=234.56"));
     assertEquals("123.45.234.56", Cookie.parse(urlWithIp, "a=b; domain=123.45.234.56").domain());
   }
 
   @Test public void domainMatchesIpv6Address() throws Exception {
-    Cookie cookie = Cookie.parse(HttpUrl.parse("http://[::1]/"), "a=b; domain=::1");
+    Cookie cookie = Cookie.parse(HttpUrl.get("http://[::1]/"), "a=b; domain=::1");
     assertEquals("::1", cookie.domain());
-    assertTrue(cookie.matches(HttpUrl.parse("http://[::1]/")));
+    assertTrue(cookie.matches(HttpUrl.get("http://[::1]/")));
   }
 
   @Test public void domainMatchesIpv6AddressWithCompression() throws Exception {
-    Cookie cookie = Cookie.parse(HttpUrl.parse("http://[0001:0000::]/"), "a=b; domain=0001:0000::");
+    Cookie cookie = Cookie.parse(HttpUrl.get("http://[0001:0000::]/"), "a=b; domain=0001:0000::");
     assertEquals("1::", cookie.domain());
-    assertTrue(cookie.matches(HttpUrl.parse("http://[1::]/")));
+    assertTrue(cookie.matches(HttpUrl.get("http://[1::]/")));
   }
 
   @Test public void domainMatchesIpv6AddressWithIpv4Suffix() throws Exception {
     Cookie cookie = Cookie.parse(
-        HttpUrl.parse("http://[::1:ffff:ffff]/"), "a=b; domain=::1:255.255.255.255");
+        HttpUrl.get("http://[::1:ffff:ffff]/"), "a=b; domain=::1:255.255.255.255");
     assertEquals("::1:ffff:ffff", cookie.domain());
-    assertTrue(cookie.matches(HttpUrl.parse("http://[::1:ffff:ffff]/")));
+    assertTrue(cookie.matches(HttpUrl.get("http://[::1:ffff:ffff]/")));
   }
 
   @Test public void ipv6AddressDoesntMatch() throws Exception {
-    Cookie cookie = Cookie.parse(HttpUrl.parse("http://[::1]/"), "a=b; domain=::2");
+    Cookie cookie = Cookie.parse(HttpUrl.get("http://[::1]/"), "a=b; domain=::2");
     assertNull(cookie);
   }
 
   @Test public void ipv6AddressMalformed() throws Exception {
-    Cookie cookie = Cookie.parse(HttpUrl.parse("http://[::1]/"), "a=b; domain=::2::2");
+    Cookie cookie = Cookie.parse(HttpUrl.get("http://[::1]/"), "a=b; domain=::2::2");
     assertEquals("::1", cookie.domain());
   }
 
@@ -302,16 +303,16 @@ public final class CookieTest {
    * present in the public suffix list.
    */
   @Test public void domainIsPublicSuffix() {
-    HttpUrl ascii = HttpUrl.parse("https://foo1.foo.bar.elb.amazonaws.com");
+    HttpUrl ascii = HttpUrl.get("https://foo1.foo.bar.elb.amazonaws.com");
     assertNotNull(Cookie.parse(ascii, "a=b; domain=foo.bar.elb.amazonaws.com"));
     assertNull(Cookie.parse(ascii, "a=b; domain=bar.elb.amazonaws.com"));
     assertNull(Cookie.parse(ascii, "a=b; domain=com"));
 
-    HttpUrl unicode = HttpUrl.parse("https://長.長.長崎.jp");
+    HttpUrl unicode = HttpUrl.get("https://長.長.長崎.jp");
     assertNotNull(Cookie.parse(unicode, "a=b; domain=長.長崎.jp"));
     assertNull(Cookie.parse(unicode, "a=b; domain=長崎.jp"));
 
-    HttpUrl punycode = HttpUrl.parse("https://xn--ue5a.xn--ue5a.xn--8ltr62k.jp");
+    HttpUrl punycode = HttpUrl.get("https://xn--ue5a.xn--ue5a.xn--8ltr62k.jp");
     assertNotNull(Cookie.parse(punycode, "a=b; domain=xn--ue5a.xn--8ltr62k.jp"));
     assertNull(Cookie.parse(punycode, "a=b; domain=xn--8ltr62k.jp"));
   }
@@ -322,23 +323,23 @@ public final class CookieTest {
   }
 
   @Test public void defaultPath() throws Exception {
-    assertEquals("/foo", Cookie.parse(HttpUrl.parse("http://example.com/foo/bar"), "a=b").path());
-    assertEquals("/foo", Cookie.parse(HttpUrl.parse("http://example.com/foo/"), "a=b").path());
-    assertEquals("/", Cookie.parse(HttpUrl.parse("http://example.com/foo"), "a=b").path());
-    assertEquals("/", Cookie.parse(HttpUrl.parse("http://example.com/"), "a=b").path());
+    assertEquals("/foo", Cookie.parse(HttpUrl.get("http://example.com/foo/bar"), "a=b").path());
+    assertEquals("/foo", Cookie.parse(HttpUrl.get("http://example.com/foo/"), "a=b").path());
+    assertEquals("/", Cookie.parse(HttpUrl.get("http://example.com/foo"), "a=b").path());
+    assertEquals("/", Cookie.parse(HttpUrl.get("http://example.com/"), "a=b").path());
   }
 
   @Test public void defaultPathIsUsedIfPathDoesntHaveLeadingSlash() throws Exception {
-    assertEquals("/foo", Cookie.parse(HttpUrl.parse("http://example.com/foo/bar"),
+    assertEquals("/foo", Cookie.parse(HttpUrl.get("http://example.com/foo/bar"),
         "a=b; path=quux").path());
-    assertEquals("/foo", Cookie.parse(HttpUrl.parse("http://example.com/foo/bar"),
+    assertEquals("/foo", Cookie.parse(HttpUrl.get("http://example.com/foo/bar"),
         "a=b; path=").path());
   }
 
   @Test public void pathAttributeDoesntNeedToMatch() throws Exception {
-    assertEquals("/quux", Cookie.parse(HttpUrl.parse("http://example.com/"),
+    assertEquals("/quux", Cookie.parse(HttpUrl.get("http://example.com/"),
         "a=b; path=/quux").path());
-    assertEquals("/quux", Cookie.parse(HttpUrl.parse("http://example.com/foo/bar"),
+    assertEquals("/quux", Cookie.parse(HttpUrl.get("http://example.com/foo/bar"),
         "a=b; path=/quux").path());
   }
 
@@ -523,7 +524,7 @@ public final class CookieTest {
         .hostOnlyDomain("example.com")
         .secure()
         .build();
-    assertEquals(true, cookie.secure());
+    assertTrue(cookie.secure());
   }
 
   @Test public void builderHttpOnly() throws Exception {
@@ -533,7 +534,7 @@ public final class CookieTest {
         .hostOnlyDomain("example.com")
         .httpOnly()
         .build();
-    assertEquals(true, cookie.httpOnly());
+    assertTrue(cookie.httpOnly());
   }
 
   @Test public void builderIpv6() throws Exception {
@@ -563,11 +564,11 @@ public final class CookieTest {
           assertEquals(cookieA.hashCode(), cookieB.hashCode());
           assertEquals(cookieA, cookieB);
         } else {
-          assertFalse(cookieA.hashCode() == cookieB.hashCode());
-          assertFalse(cookieA.equals(cookieB));
+          assertNotEquals(cookieA.hashCode(), cookieB.hashCode());
+          assertNotEquals(cookieA, cookieB);
         }
       }
-      assertFalse(cookieA.equals(null));
+      assertNotEquals(null, cookieA);
     }
   }
 

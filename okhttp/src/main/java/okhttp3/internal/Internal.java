@@ -15,16 +15,15 @@
  */
 package okhttp3.internal;
 
-import java.net.MalformedURLException;
+import java.io.IOException;
 import java.net.Socket;
-import java.net.UnknownHostException;
+import javax.annotation.Nullable;
 import javax.net.ssl.SSLSocket;
 import okhttp3.Address;
 import okhttp3.Call;
 import okhttp3.ConnectionPool;
 import okhttp3.ConnectionSpec;
 import okhttp3.Headers;
-import okhttp3.HttpUrl;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
@@ -33,6 +32,8 @@ import okhttp3.internal.cache.InternalCache;
 import okhttp3.internal.connection.RealConnection;
 import okhttp3.internal.connection.RouteDatabase;
 import okhttp3.internal.connection.StreamAllocation;
+import okhttp3.internal.http.HttpCodec;
+import okio.BufferedSink;
 
 /**
  * Escalate internal APIs in {@code okhttp3} so they can be used from OkHttp's implementation
@@ -53,12 +54,12 @@ public abstract class Internal {
 
   public abstract void setCache(OkHttpClient.Builder builder, InternalCache internalCache);
 
-  public abstract RealConnection get(ConnectionPool pool, Address address,
-      StreamAllocation streamAllocation, Route route);
+  public abstract void acquire(ConnectionPool pool, Address address,
+      StreamAllocation streamAllocation, @Nullable Route route);
 
   public abstract boolean equalsNonHost(Address a, Address b);
 
-  public abstract Socket deduplicate(
+  public abstract @Nullable Socket deduplicate(
       ConnectionPool pool, Address address, StreamAllocation streamAllocation);
 
   public abstract void put(ConnectionPool pool, RealConnection connection);
@@ -72,10 +73,20 @@ public abstract class Internal {
   public abstract void apply(ConnectionSpec tlsConfiguration, SSLSocket sslSocket,
       boolean isFallback);
 
-  public abstract HttpUrl getHttpUrlChecked(String url)
-      throws MalformedURLException, UnknownHostException;
+  public abstract boolean isInvalidHttpUrlHost(IllegalArgumentException e);
 
   public abstract StreamAllocation streamAllocation(Call call);
 
+  public abstract @Nullable IOException timeoutExit(Call call, @Nullable IOException e);
+
   public abstract Call newWebSocketCall(OkHttpClient client, Request request);
+
+  public abstract void duplex(Request.Builder requestBuilder, String method);
+
+  public abstract void sinkAndCodec(
+      Response.Builder responseBuilder, BufferedSink sink, HttpCodec httpCodec);
+
+  public abstract BufferedSink sink(Response response);
+
+  public abstract boolean isDuplex(Request request);
 }

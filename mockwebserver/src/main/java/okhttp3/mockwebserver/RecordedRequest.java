@@ -16,9 +16,13 @@
 
 package okhttp3.mockwebserver;
 
+import java.io.IOException;
+import java.net.Inet6Address;
+import java.net.InetAddress;
 import java.net.Socket;
 import java.util.List;
 import javax.net.ssl.SSLSocket;
+import okhttp3.Handshake;
 import okhttp3.Headers;
 import okhttp3.HttpUrl;
 import okhttp3.TlsVersion;
@@ -30,11 +34,11 @@ public final class RecordedRequest {
   private final String method;
   private final String path;
   private final Headers headers;
+  private final Handshake handshake;
   private final List<Integer> chunkSizes;
   private final long bodySize;
   private final Buffer body;
   private final int sequenceNumber;
-  private final TlsVersion tlsVersion;
   private final HttpUrl requestUrl;
 
   public RecordedRequest(String requestLine, Headers headers, List<Integer> chunkSizes,
@@ -45,20 +49,38 @@ public final class RecordedRequest {
     this.bodySize = bodySize;
     this.body = body;
     this.sequenceNumber = sequenceNumber;
-    this.tlsVersion = socket instanceof SSLSocket
-        ? TlsVersion.forJavaName(((SSLSocket) socket).getSession().getProtocol())
-        : null;
+    if (socket instanceof SSLSocket) {
+      try {
+        this.handshake = Handshake.get(((SSLSocket) socket).getSession());
+      } catch (IOException e) {
+        throw new IllegalArgumentException(e);
+      }
+    } else {
+      this.handshake = null;
+    }
 
     if (requestLine != null) {
       int methodEnd = requestLine.indexOf(' ');
       int pathEnd = requestLine.indexOf(' ', methodEnd + 1);
       this.method = requestLine.substring(0, methodEnd);
-      this.path = requestLine.substring(methodEnd + 1, pathEnd);
+      String path = requestLine.substring(methodEnd + 1, pathEnd);
+      if (!path.startsWith("/")) {
+        path = "/";
+      }
+      this.path = path;
 
       String scheme = socket instanceof SSLSocket ? "https" : "http";
-      String hostname = socket.getInetAddress().getHostName();
-      int port = socket.getLocalPort();
-      this.requestUrl = HttpUrl.parse(String.format("%s://%s:%s%s", scheme, hostname, port, path));
+      InetAddress inetAddress = socket.getLocalAddress();
+
+      String hostname = inetAddress.getHostName();
+      if (inetAddress instanceof Inet6Address) {
+        hostname = "[" + hostname + "]";
+      }
+
+      int localPort = socket.getLocalPort();
+      // Allow null in failure case to allow for testing bad requests
+      this.requestUrl =
+          HttpUrl.parse(String.format("%s://%s:%s%s", scheme, hostname, localPort, path));
     } else {
       this.requestUrl = null;
       this.method = null;
@@ -128,7 +150,15 @@ public final class RecordedRequest {
 
   /** Returns the connection's TLS version or null if the connection doesn't use SSL. */
   public TlsVersion getTlsVersion() {
-    return tlsVersion;
+    return handshake != null ? handshake.tlsVersion() : null;
+  }
+
+  /**
+   * Returns the TLS handshake of the connection that carried this request, or null if the request
+   * was received without TLS.
+   */
+  public Handshake getHandshake() {
+    return handshake;
   }
 
   @Override public String toString() {

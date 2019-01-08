@@ -20,7 +20,6 @@ import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.net.UnknownHostException;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -32,6 +31,7 @@ import okhttp3.internal.Util;
 import okhttp3.internal.publicsuffix.PublicSuffixDatabase;
 import okio.Buffer;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static okhttp3.internal.Util.decodeHexDigit;
 import static okhttp3.internal.Util.delimiterOffset;
 import static okhttp3.internal.Util.skipLeadingAsciiWhitespace;
@@ -281,7 +281,8 @@ import static okhttp3.internal.Util.verifyAsIpAddress;
  * {@code java.net.URL} it's possible to create an awkward URL like {@code http:/} with scheme and
  * path but no hostname. Building APIs that consume such malformed values is difficult!
  *
- * <p>This class has a modern API. It avoids punitive checked exceptions: {@link #parse parse()}
+ * <p>This class has a modern API. It avoids punitive checked exceptions: {@link #get get()}
+ * throws {@link IllegalArgumentException} on invalid input or {@link #parse parse()}
  * returns null if the input is an invalid URL. You can even be explicit about whether each
  * component has been encoded already.
  */
@@ -888,9 +889,11 @@ public final class HttpUrl {
    * or null if the resulting URL is not well-formed.
    */
   public @Nullable Builder newBuilder(String link) {
-    Builder builder = new Builder();
-    Builder.ParseResult result = builder.parse(this, link);
-    return result == Builder.ParseResult.SUCCESS ? builder : null;
+    try {
+      return new Builder().parse(this, link);
+    } catch (IllegalArgumentException ignored) {
+      return null;
+    }
   }
 
   /**
@@ -898,9 +901,20 @@ public final class HttpUrl {
    * URL, or null if it isn't.
    */
   public static @Nullable HttpUrl parse(String url) {
-    Builder builder = new Builder();
-    Builder.ParseResult result = builder.parse(null, url);
-    return result == Builder.ParseResult.SUCCESS ? builder.build() : null;
+    try {
+      return get(url);
+    } catch (IllegalArgumentException ignored) {
+      return null;
+    }
+  }
+
+  /**
+   * Returns a new {@code HttpUrl} representing {@code url}.
+   *
+   * @throws IllegalArgumentException If {@code url} is not a well-formed HTTP or HTTPS URL.
+   */
+  public static HttpUrl get(String url) {
+    return new Builder().parse(null, url).build();
   }
 
   /**
@@ -909,29 +923,6 @@ public final class HttpUrl {
    */
   public static @Nullable HttpUrl get(URL url) {
     return parse(url.toString());
-  }
-
-  /**
-   * Returns a new {@code HttpUrl} representing {@code url} if it is a well-formed HTTP or HTTPS
-   * URL, or throws an exception if it isn't.
-   *
-   * @throws MalformedURLException if there was a non-host related URL issue
-   * @throws UnknownHostException if the host was invalid
-   */
-  static HttpUrl getChecked(String url) throws MalformedURLException, UnknownHostException {
-    Builder builder = new Builder();
-    Builder.ParseResult result = builder.parse(null, url);
-    switch (result) {
-      case SUCCESS:
-        return builder.build();
-      case INVALID_HOST:
-        throw new UnknownHostException("Invalid host: " + url);
-      case UNSUPPORTED_SCHEME:
-      case MISSING_SCHEME:
-      case INVALID_PORT:
-      default:
-        throw new MalformedURLException("Invalid URL: " + result + " for " + url);
-    }
   }
 
   public static @Nullable HttpUrl get(URI uri) {
@@ -1097,9 +1088,8 @@ public final class HttpUrl {
 
     public Builder setPathSegment(int index, String pathSegment) {
       if (pathSegment == null) throw new NullPointerException("pathSegment == null");
-      String canonicalPathSegment = canonicalize(
-          pathSegment, 0, pathSegment.length(), PATH_SEGMENT_ENCODE_SET, false, false, false, true,
-              null);
+      String canonicalPathSegment = canonicalize(pathSegment, 0, pathSegment.length(),
+          PATH_SEGMENT_ENCODE_SET, false, false, false, true, null);
       if (isDot(canonicalPathSegment) || isDotDot(canonicalPathSegment)) {
         throw new IllegalArgumentException("unexpected path segment: " + pathSegment);
       }
@@ -1111,9 +1101,8 @@ public final class HttpUrl {
       if (encodedPathSegment == null) {
         throw new NullPointerException("encodedPathSegment == null");
       }
-      String canonicalPathSegment = canonicalize(encodedPathSegment,
-          0, encodedPathSegment.length(), PATH_SEGMENT_ENCODE_SET, true, false, false, true,
-          null);
+      String canonicalPathSegment = canonicalize(encodedPathSegment, 0, encodedPathSegment.length(),
+          PATH_SEGMENT_ENCODE_SET, true, false, false, true, null);
       encodedPathSegments.set(index, canonicalPathSegment);
       if (isDot(canonicalPathSegment) || isDotDot(canonicalPathSegment)) {
         throw new IllegalArgumentException("unexpected path segment: " + encodedPathSegment);
@@ -1268,8 +1257,12 @@ public final class HttpUrl {
 
     @Override public String toString() {
       StringBuilder result = new StringBuilder();
-      result.append(scheme);
-      result.append("://");
+      if (scheme != null) {
+        result.append(scheme);
+        result.append("://");
+      } else {
+        result.append("//");
+      }
 
       if (!encodedUsername.isEmpty() || !encodedPassword.isEmpty()) {
         result.append(encodedUsername);
@@ -1280,19 +1273,23 @@ public final class HttpUrl {
         result.append('@');
       }
 
-      if (host.indexOf(':') != -1) {
-        // Host is an IPv6 address.
-        result.append('[');
-        result.append(host);
-        result.append(']');
-      } else {
-        result.append(host);
+      if (host != null) {
+        if (host.indexOf(':') != -1) {
+          // Host is an IPv6 address.
+          result.append('[');
+          result.append(host);
+          result.append(']');
+        } else {
+          result.append(host);
+        }
       }
 
-      int effectivePort = effectivePort();
-      if (effectivePort != defaultPort(scheme)) {
-        result.append(':');
-        result.append(effectivePort);
+      if (port != -1 || scheme != null) {
+        int effectivePort = effectivePort();
+        if (scheme == null || effectivePort != defaultPort(scheme)) {
+          result.append(':');
+          result.append(effectivePort);
+        }
       }
 
       pathSegmentsToString(result, encodedPathSegments);
@@ -1310,15 +1307,9 @@ public final class HttpUrl {
       return result.toString();
     }
 
-    enum ParseResult {
-      SUCCESS,
-      MISSING_SCHEME,
-      UNSUPPORTED_SCHEME,
-      INVALID_PORT,
-      INVALID_HOST,
-    }
+    static final String INVALID_HOST = "Invalid URL host";
 
-    ParseResult parse(@Nullable HttpUrl base, String input) {
+    Builder parse(@Nullable HttpUrl base, String input) {
       int pos = skipLeadingAsciiWhitespace(input, 0, input.length());
       int limit = skipTrailingAsciiWhitespace(input, pos, input.length());
 
@@ -1332,12 +1323,14 @@ public final class HttpUrl {
           this.scheme = "http";
           pos += "http:".length();
         } else {
-          return ParseResult.UNSUPPORTED_SCHEME; // Not an HTTP scheme.
+          throw new IllegalArgumentException("Expected URL scheme 'http' or 'https' but was '"
+              + input.substring(0, schemeDelimiterOffset) + "'");
         }
       } else if (base != null) {
         this.scheme = base.scheme;
       } else {
-        return ParseResult.MISSING_SCHEME; // No scheme.
+        throw new IllegalArgumentException(
+            "Expected URL scheme 'http' or 'https' but no colon was found");
       }
 
       // Authority.
@@ -1367,9 +1360,8 @@ public final class HttpUrl {
               if (!hasPassword) {
                 int passwordColonOffset = delimiterOffset(
                     input, pos, componentDelimiterOffset, ':');
-                String canonicalUsername = canonicalize(
-                    input, pos, passwordColonOffset, USERNAME_ENCODE_SET, true, false, false, true,
-                    null);
+                String canonicalUsername = canonicalize(input, pos, passwordColonOffset,
+                    USERNAME_ENCODE_SET, true, false, false, true, null);
                 this.encodedUsername = hasUsername
                     ? this.encodedUsername + "%40" + canonicalUsername
                     : canonicalUsername;
@@ -1382,8 +1374,7 @@ public final class HttpUrl {
                 hasUsername = true;
               } else {
                 this.encodedPassword = this.encodedPassword + "%40" + canonicalize(input, pos,
-                    componentDelimiterOffset, PASSWORD_ENCODE_SET, true, false, false, true,
-                    null);
+                    componentDelimiterOffset, PASSWORD_ENCODE_SET, true, false, false, true, null);
               }
               pos = componentDelimiterOffset + 1;
               break;
@@ -1396,14 +1387,20 @@ public final class HttpUrl {
               // Host info precedes.
               int portColonOffset = portColonOffset(input, pos, componentDelimiterOffset);
               if (portColonOffset + 1 < componentDelimiterOffset) {
-                this.host = canonicalizeHost(input, pos, portColonOffset);
-                this.port = parsePort(input, portColonOffset + 1, componentDelimiterOffset);
-                if (this.port == -1) return ParseResult.INVALID_PORT; // Invalid port.
+                host = canonicalizeHost(input, pos, portColonOffset);
+                port = parsePort(input, portColonOffset + 1, componentDelimiterOffset);
+                if (port == -1) {
+                  throw new IllegalArgumentException("Invalid URL port: \""
+                      + input.substring(portColonOffset + 1, componentDelimiterOffset) + '"');
+                }
               } else {
-                this.host = canonicalizeHost(input, pos, portColonOffset);
-                this.port = defaultPort(this.scheme);
+                host = canonicalizeHost(input, pos, portColonOffset);
+                port = defaultPort(scheme);
               }
-              if (this.host == null) return ParseResult.INVALID_HOST; // Invalid host.
+              if (host == null) {
+                throw new IllegalArgumentException(
+                    INVALID_HOST + ": \"" + input.substring(pos, portColonOffset) + '"');
+              }
               pos = componentDelimiterOffset;
               break authority;
           }
@@ -1440,7 +1437,7 @@ public final class HttpUrl {
             input, pos + 1, limit, FRAGMENT_ENCODE_SET, true, false, false, false, null);
       }
 
-      return ParseResult.SUCCESS;
+      return this;
     }
 
     private void resolvePath(String input, int pos, int limit) {
@@ -1585,7 +1582,7 @@ public final class HttpUrl {
       return limit; // No colon.
     }
 
-    private static String canonicalizeHost(String input, int pos, int limit) {
+    private static @Nullable String canonicalizeHost(String input, int pos, int limit) {
       // Start by percent decoding the host. The WHATWG spec suggests doing this only after we've
       // checked for IPv6 square braces. But Chrome does it first, and that's more lenient.
       String percentDecoded = percentDecode(input, pos, limit, false);
@@ -1681,7 +1678,7 @@ public final class HttpUrl {
    */
   static String canonicalize(String input, int pos, int limit, String encodeSet,
       boolean alreadyEncoded, boolean strict, boolean plusIsSpace, boolean asciiOnly,
-      Charset charset) {
+      @Nullable Charset charset) {
     int codePoint;
     for (int i = pos; i < limit; i += Character.charCount(codePoint)) {
       codePoint = input.codePointAt(i);
@@ -1706,7 +1703,7 @@ public final class HttpUrl {
 
   static void canonicalize(Buffer out, String input, int pos, int limit, String encodeSet,
       boolean alreadyEncoded, boolean strict, boolean plusIsSpace, boolean asciiOnly,
-      Charset charset) {
+      @Nullable Charset charset) {
     Buffer encodedCharBuffer = null; // Lazily allocated.
     int codePoint;
     for (int i = pos; i < limit; i += Character.charCount(codePoint)) {
@@ -1727,7 +1724,7 @@ public final class HttpUrl {
           encodedCharBuffer = new Buffer();
         }
 
-        if (charset == null || charset.equals(Util.UTF_8)) {
+        if (charset == null || charset.equals(UTF_8)) {
           encodedCharBuffer.writeUtf8CodePoint(codePoint);
         } else {
           encodedCharBuffer.writeString(input, i, i + Character.charCount(codePoint), charset);
@@ -1747,10 +1744,9 @@ public final class HttpUrl {
   }
 
   static String canonicalize(String input, String encodeSet, boolean alreadyEncoded, boolean strict,
-      boolean plusIsSpace, boolean asciiOnly, Charset charset) {
-    return canonicalize(
-        input, 0, input.length(), encodeSet, alreadyEncoded, strict, plusIsSpace, asciiOnly,
-            charset);
+      boolean plusIsSpace, boolean asciiOnly, @Nullable Charset charset) {
+    return canonicalize(input, 0, input.length(), encodeSet, alreadyEncoded, strict, plusIsSpace,
+        asciiOnly, charset);
   }
 
   static String canonicalize(String input, String encodeSet, boolean alreadyEncoded, boolean strict,

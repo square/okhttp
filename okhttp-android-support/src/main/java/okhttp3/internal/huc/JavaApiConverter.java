@@ -878,7 +878,7 @@ public final class JavaApiConverter {
   }
 
   private static <T> List<T> nullSafeImmutableList(T[] elements) {
-    return elements == null ? Collections.<T>emptyList() : Util.immutableList(elements);
+    return elements == null ? Collections.emptyList() : Util.immutableList(elements);
   }
 
   private static long stringToLong(String s) {

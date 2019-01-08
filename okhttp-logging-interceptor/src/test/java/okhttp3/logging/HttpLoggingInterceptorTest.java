@@ -32,10 +32,10 @@ import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
 import okhttp3.ResponseBody;
-import okhttp3.mockwebserver.internal.tls.SslClient;
 import okhttp3.logging.HttpLoggingInterceptor.Level;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
+import okhttp3.tls.HandshakeCertificates;
 import okio.Buffer;
 import okio.BufferedSink;
 import okio.ByteString;
@@ -44,6 +44,7 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 
+import static okhttp3.tls.internal.TlsUtil.localhost;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -53,12 +54,12 @@ import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeThat;
 
 public final class HttpLoggingInterceptorTest {
-  private static final MediaType PLAIN = MediaType.parse("text/plain; charset=utf-8");
+  private static final MediaType PLAIN = MediaType.get("text/plain; charset=utf-8");
 
   @Rule public final MockWebServer server = new MockWebServer();
 
-  private SslClient sslClient = SslClient.localhost();
-  private HostnameVerifier hostnameVerifier = new RecordingHostnameVerifier();
+  private final HandshakeCertificates handshakeCertificates = localhost();
+  private final HostnameVerifier hostnameVerifier = new RecordingHostnameVerifier();
   private OkHttpClient client;
   private String host;
   private HttpUrl url;
@@ -80,7 +81,8 @@ public final class HttpLoggingInterceptorTest {
     client = new OkHttpClient.Builder()
         .addNetworkInterceptor(networkInterceptor)
         .addInterceptor(applicationInterceptor)
-        .sslSocketFactory(sslClient.socketFactory, sslClient.trustManager)
+        .sslSocketFactory(
+            handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager())
         .hostnameVerifier(hostnameVerifier)
         .build();
 
@@ -647,7 +649,7 @@ public final class HttpLoggingInterceptorTest {
         .assertNoMoreLogs();
   }
 
-  @Test public void isPlaintext() throws IOException {
+  @Test public void isPlaintext() {
     assertTrue(HttpLoggingInterceptor.isPlaintext(new Buffer()));
     assertTrue(HttpLoggingInterceptor.isPlaintext(new Buffer().writeUtf8("abc")));
     assertTrue(HttpLoggingInterceptor.isPlaintext(new Buffer().writeUtf8("new\r\nlines")));
@@ -723,7 +725,7 @@ public final class HttpLoggingInterceptorTest {
   }
 
   @Test public void http2() throws Exception {
-    server.useHttps(sslClient.socketFactory, false);
+    server.useHttps(handshakeCertificates.sslSocketFactory(), false);
     url = server.url("/");
 
     setLevel(Level.BASIC);
@@ -743,11 +745,68 @@ public final class HttpLoggingInterceptorTest {
         .assertNoMoreLogs();
   }
 
+  @Test
+  public void headersAreRedacted() throws Exception {
+    HttpLoggingInterceptor networkInterceptor =
+        new HttpLoggingInterceptor(networkLogs).setLevel(Level.HEADERS);
+    networkInterceptor.redactHeader("sEnSiTiVe");
+
+    HttpLoggingInterceptor applicationInterceptor =
+        new HttpLoggingInterceptor(applicationLogs).setLevel(Level.HEADERS);
+    applicationInterceptor.redactHeader("sEnSiTiVe");
+
+    client =
+        new OkHttpClient.Builder()
+            .addNetworkInterceptor(networkInterceptor)
+            .addInterceptor(applicationInterceptor)
+            .build();
+
+    server.enqueue(
+        new MockResponse().addHeader("SeNsItIvE", "Value").addHeader("Not-Sensitive", "Value"));
+    Response response =
+        client
+            .newCall(
+                request()
+                    .addHeader("SeNsItIvE", "Value")
+                    .addHeader("Not-Sensitive", "Value")
+                    .build())
+            .execute();
+    response.body().close();
+
+    applicationLogs
+        .assertLogEqual("--> GET " + url)
+        .assertLogEqual("SeNsItIvE: ██")
+        .assertLogEqual("Not-Sensitive: Value")
+        .assertLogEqual("--> END GET")
+        .assertLogMatch("<-- 200 OK " + url + " \\(\\d+ms\\)")
+        .assertLogEqual("Content-Length: 0")
+        .assertLogEqual("SeNsItIvE: ██")
+        .assertLogEqual("Not-Sensitive: Value")
+        .assertLogEqual("<-- END HTTP")
+        .assertNoMoreLogs();
+
+    networkLogs
+        .assertLogEqual("--> GET " + url + " http/1.1")
+        .assertLogEqual("SeNsItIvE: ██")
+        .assertLogEqual("Not-Sensitive: Value")
+        .assertLogEqual("Host: " + host)
+        .assertLogEqual("Connection: Keep-Alive")
+        .assertLogEqual("Accept-Encoding: gzip")
+        .assertLogMatch("User-Agent: okhttp/.+")
+        .assertLogEqual("--> END GET")
+        .assertLogMatch("<-- 200 OK " + url + " \\(\\d+ms\\)")
+        .assertLogEqual("Content-Length: 0")
+        .assertLogEqual("SeNsItIvE: ██")
+        .assertLogEqual("Not-Sensitive: Value")
+        .assertLogEqual("<-- END HTTP")
+        .assertNoMoreLogs();
+  }
+
   private Request.Builder request() {
     return new Request.Builder().url(url);
   }
 
-  private static class LogRecorder implements HttpLoggingInterceptor.Logger {
+  static class LogRecorder implements HttpLoggingInterceptor.Logger {
     private final List<String> logs = new ArrayList<>();
     private int index;
 
@@ -767,7 +826,7 @@ public final class HttpLoggingInterceptorTest {
     }
 
     void assertNoMoreLogs() {
-      assertTrue("More messages remain: " + logs.subList(index, logs.size()), index == logs.size());
+      assertEquals("More messages remain: " + logs.subList(index, logs.size()), index, logs.size());
     }
 
     @Override public void log(String message) {

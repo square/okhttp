@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import okhttp3.internal.annotations.EverythingIsNonNull;
 import okhttp3.internal.platform.Platform;
 
 import static okhttp3.internal.Util.delimiterOffset;
@@ -29,6 +30,7 @@ import static okhttp3.internal.Util.trimSubstring;
 import static okhttp3.internal.platform.Platform.WARN;
 
 /** A cookie jar that delegates to a {@link java.net.CookieHandler}. */
+@EverythingIsNonNull
 public final class JavaNetCookieJar implements CookieJar {
   private final CookieHandler cookieHandler;
 
@@ -76,7 +78,7 @@ public final class JavaNetCookieJar implements CookieJar {
 
     return cookies != null
         ? Collections.unmodifiableList(cookies)
-        : Collections.<Cookie>emptyList();
+        : Collections.emptyList();
   }
 
   /**

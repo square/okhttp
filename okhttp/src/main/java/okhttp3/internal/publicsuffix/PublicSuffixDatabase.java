@@ -21,13 +21,12 @@ import java.io.InterruptedIOException;
 import java.net.IDN;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicBoolean;
-import okhttp3.internal.Util;
 import okhttp3.internal.platform.Platform;
 import okio.BufferedSource;
 import okio.GzipSource;
 import okio.Okio;
 
-import static okhttp3.internal.Util.closeQuietly;
+import static java.nio.charset.StandardCharsets.UTF_8;
 
 /**
  * A database of public suffixes provided by
@@ -63,12 +62,14 @@ public final class PublicSuffixDatabase {
 
   /**
    * Returns the effective top-level domain plus one (eTLD+1) by referencing the public suffix list.
-   * Returns null if the domain is a public suffix.
+   * Returns null if the domain is a public suffix or a private address.
    *
    * <p>Here are some examples: <pre>{@code
    * assertEquals("google.com", getEffectiveTldPlusOne("google.com"));
    * assertEquals("google.com", getEffectiveTldPlusOne("www.google.com"));
    * assertNull(getEffectiveTldPlusOne("com"));
+   * assertNull(getEffectiveTldPlusOne("localhost"));
+   * assertNull(getEffectiveTldPlusOne("mymacbook"));
    * }</pre>
    *
    * @param domain A canonicalized domain. An International Domain Name (IDN) should be punycode
@@ -112,6 +113,7 @@ public final class PublicSuffixDatabase {
       try {
         readCompleteLatch.await();
       } catch (InterruptedException ignored) {
+        Thread.currentThread().interrupt(); // Retain interrupted status.
       }
     }
 
@@ -125,7 +127,7 @@ public final class PublicSuffixDatabase {
     // Break apart the domain into UTF-8 labels, i.e. foo.bar.com turns into [foo, bar, com].
     byte[][] domainLabelsUtf8Bytes = new byte[domainLabels.length][];
     for (int i = 0; i < domainLabels.length; i++) {
-      domainLabelsUtf8Bytes[i] = domainLabels[i].getBytes(Util.UTF_8);
+      domainLabelsUtf8Bytes[i] = domainLabels[i].getBytes(UTF_8);
     }
 
     // Start by looking for exact matches. We start at the leftmost label. For example, foo.bar.com
@@ -268,7 +270,7 @@ public final class PublicSuffixDatabase {
           low = mid + end + 1;
         } else {
           // Found a match.
-          match = new String(bytesToSearch, mid, publicSuffixLength, Util.UTF_8);
+          match = new String(bytesToSearch, mid, publicSuffixLength, UTF_8);
           break;
         }
       }
@@ -289,6 +291,7 @@ public final class PublicSuffixDatabase {
           readTheList();
           return;
         } catch (InterruptedIOException e) {
+          Thread.interrupted(); // Temporarily clear the interrupted state.
           interrupted = true;
         } catch (IOException e) {
           Platform.get().log(Platform.WARN, "Failed to read public suffix list", e);
@@ -297,7 +300,7 @@ public final class PublicSuffixDatabase {
       }
     } finally {
       if (interrupted) {
-        Thread.currentThread().interrupt();
+        Thread.currentThread().interrupt(); // Retain interrupted status.
       }
     }
   }
@@ -309,8 +312,7 @@ public final class PublicSuffixDatabase {
     InputStream resource = PublicSuffixDatabase.class.getResourceAsStream(PUBLIC_SUFFIX_RESOURCE);
     if (resource == null) return;
 
-    BufferedSource bufferedSource = Okio.buffer(new GzipSource(Okio.source(resource)));
-    try {
+    try (BufferedSource bufferedSource = Okio.buffer(new GzipSource(Okio.source(resource)))) {
       int totalBytes = bufferedSource.readInt();
       publicSuffixListBytes = new byte[totalBytes];
       bufferedSource.readFully(publicSuffixListBytes);
@@ -318,8 +320,6 @@ public final class PublicSuffixDatabase {
       int totalExceptionBytes = bufferedSource.readInt();
       publicSuffixExceptionListBytes = new byte[totalExceptionBytes];
       bufferedSource.readFully(publicSuffixExceptionListBytes);
-    } finally {
-      closeQuietly(bufferedSource);
     }
 
     synchronized (this) {

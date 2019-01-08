@@ -36,6 +36,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import static okhttp3.TestUtil.defaultClient;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 public final class ThreadInterruptTest {
@@ -92,6 +93,7 @@ public final class ThreadInterruptTest {
       }
       fail("Expected thread to be interrupted");
     } catch (InterruptedIOException expected) {
+      assertTrue(Thread.interrupted());
     }
 
     connection.disconnect();
@@ -115,6 +117,7 @@ public final class ThreadInterruptTest {
       }
       fail("Expected thread to be interrupted");
     } catch (InterruptedIOException expected) {
+      assertTrue(Thread.interrupted());
     }
 
     responseBody.close();
@@ -128,7 +131,7 @@ public final class ThreadInterruptTest {
           sleep(delayMillis);
           toInterrupt.interrupt();
         } catch (InterruptedException e) {
-          throw new RuntimeException(e);
+          throw new AssertionError(e);
         }
       }
     };

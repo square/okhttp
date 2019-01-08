@@ -57,14 +57,14 @@ import static okhttp3.internal.Util.closeQuietly;
  * connections. This class has APIs to release each of the above resources:
  *
  * <ul>
- *     <li>{@link #noNewStreams()} prevents the connection from being used for new streams in the
+ *     <li>{@link #noNewStreams} prevents the connection from being used for new streams in the
  *         future. Use this after a {@code Connection: close} header, or when the connection may be
  *         inconsistent.
- *     <li>{@link #streamFinished streamFinished()} releases the active stream from this allocation.
+ *     <li>{@link #streamFinished streamFinished} releases the active stream from this allocation.
  *         Note that only one stream may be active at a given time, so it is necessary to call
  *         {@link #streamFinished streamFinished()} before creating a subsequent stream with {@link
  *         #newStream newStream()}.
- *     <li>{@link #release()} removes the call's hold on the connection. Note that this won't
+ *     <li>{@link #release} removes the call's hold on the connection. Note that this won't
  *         immediately free the connection if there is a stream still lingering. That happens when a
  *         call is complete but its response body has yet to be fully consumed.
  * </ul>
@@ -185,7 +185,7 @@ public final class StreamAllocation {
 
       if (result == null) {
         // Attempt to get a connection from the pool.
-        Internal.instance.get(connectionPool, address, this, null);
+        Internal.instance.acquire(connectionPool, address, this, null);
         if (connection != null) {
           foundPooledConnection = true;
           result = connection;
@@ -223,7 +223,7 @@ public final class StreamAllocation {
         List<Route> routes = routeSelection.getAll();
         for (int i = 0, size = routes.size(); i < size; i++) {
           Route route = routes.get(i);
-          Internal.instance.get(connectionPool, address, this, route);
+          Internal.instance.acquire(connectionPool, address, this, route);
           if (connection != null) {
             foundPooledConnection = true;
             result = connection;
@@ -317,8 +317,10 @@ public final class StreamAllocation {
     }
 
     if (e != null) {
+      e = Internal.instance.timeoutExit(call, e);
       eventListener.callFailed(call, e);
     } else if (callEnd) {
+      Internal.instance.timeoutExit(call, null);
       eventListener.callEnd(call);
     }
   }
@@ -341,7 +343,7 @@ public final class StreamAllocation {
     return connection;
   }
 
-  public void release() {
+  public void release(boolean callEnd) {
     Socket socket;
     Connection releasedConnection;
     synchronized (connectionPool) {
@@ -351,7 +353,13 @@ public final class StreamAllocation {
     }
     closeQuietly(socket);
     if (releasedConnection != null) {
+      if (callEnd) {
+        Internal.instance.timeoutExit(call, null);
+      }
       eventListener.connectionReleased(call, releasedConnection);
+      if (callEnd) {
+        eventListener.callEnd(call);
+      }
     }
   }
 
@@ -427,13 +435,16 @@ public final class StreamAllocation {
 
     synchronized (connectionPool) {
       if (e instanceof StreamResetException) {
-        StreamResetException streamResetException = (StreamResetException) e;
-        if (streamResetException.errorCode == ErrorCode.REFUSED_STREAM) {
+        ErrorCode errorCode = ((StreamResetException) e).errorCode;
+        if (errorCode == ErrorCode.REFUSED_STREAM) {
+          // Retry REFUSED_STREAM errors once on the same connection.
           refusedStreamCount++;
-        }
-        // On HTTP/2 stream errors, retry REFUSED_STREAM errors once on the same connection. All
-        // other errors must be retried on a new connection.
-        if (streamResetException.errorCode != ErrorCode.REFUSED_STREAM || refusedStreamCount > 1) {
+          if (refusedStreamCount > 1) {
+            noNewStreams = true;
+            route = null;
+          }
+        } else if (errorCode != ErrorCode.CANCEL) {
+          // Keep the connection for CANCEL errors. Everything else wants a fresh connection.
           noNewStreams = true;
           route = null;
         }

@@ -19,7 +19,6 @@ package okhttp3.mockwebserver;
 
 import java.io.Closeable;
 import java.io.IOException;
-import java.io.InterruptedIOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.ProtocolException;
@@ -60,6 +59,7 @@ import okhttp3.Response;
 import okhttp3.internal.Internal;
 import okhttp3.internal.NamedRunnable;
 import okhttp3.internal.Util;
+import okhttp3.internal.duplex.MwsDuplexAccess;
 import okhttp3.internal.http.HttpMethod;
 import okhttp3.internal.http2.ErrorCode;
 import okhttp3.internal.http2.Header;
@@ -69,6 +69,7 @@ import okhttp3.internal.http2.Settings;
 import okhttp3.internal.platform.Platform;
 import okhttp3.internal.ws.RealWebSocket;
 import okhttp3.internal.ws.WebSocketProtocol;
+import okhttp3.mockwebserver.internal.duplex.DuplexResponseBody;
 import okio.Buffer;
 import okio.BufferedSink;
 import okio.BufferedSource;
@@ -91,6 +92,7 @@ import static okhttp3.mockwebserver.SocketPolicy.NO_RESPONSE;
 import static okhttp3.mockwebserver.SocketPolicy.RESET_STREAM_AT_START;
 import static okhttp3.mockwebserver.SocketPolicy.SHUTDOWN_INPUT_AT_END;
 import static okhttp3.mockwebserver.SocketPolicy.SHUTDOWN_OUTPUT_AT_END;
+import static okhttp3.mockwebserver.SocketPolicy.SHUTDOWN_SERVER_AFTER_RESPONSE;
 import static okhttp3.mockwebserver.SocketPolicy.STALL_SOCKET_AT_START;
 import static okhttp3.mockwebserver.SocketPolicy.UPGRADE_TO_SSL_AT_END;
 
@@ -101,7 +103,17 @@ import static okhttp3.mockwebserver.SocketPolicy.UPGRADE_TO_SSL_AT_END;
 public final class MockWebServer extends ExternalResource implements Closeable {
   static {
     Internal.initializeInstanceForTests();
+    MwsDuplexAccess.instance = new MwsDuplexAccess() {
+      @Override public void setBody(
+          MockResponse mockResponse, DuplexResponseBody duplexResponseBody) {
+        mockResponse.setBody(duplexResponseBody);
+      }
+    };
   }
+
+  private static final int CLIENT_AUTH_NONE = 0;
+  private static final int CLIENT_AUTH_REQUESTED = 1;
+  private static final int CLIENT_AUTH_REQUIRED = 2;
 
   private static final X509TrustManager UNTRUSTED_TRUST_MANAGER = new X509TrustManager() {
     @Override public void checkClientTrusted(X509Certificate[] chain, String authType)
@@ -123,9 +135,9 @@ public final class MockWebServer extends ExternalResource implements Closeable {
   private final BlockingQueue<RecordedRequest> requestQueue = new LinkedBlockingQueue<>();
 
   private final Set<Socket> openClientSockets =
-      Collections.newSetFromMap(new ConcurrentHashMap<Socket, Boolean>());
+      Collections.newSetFromMap(new ConcurrentHashMap<>());
   private final Set<Http2Connection> openConnections =
-      Collections.newSetFromMap(new ConcurrentHashMap<Http2Connection, Boolean>());
+      Collections.newSetFromMap(new ConcurrentHashMap<>());
   private final AtomicInteger requestCount = new AtomicInteger();
   private long bodyLimit = Long.MAX_VALUE;
   private ServerSocketFactory serverSocketFactory = ServerSocketFactory.getDefault();
@@ -133,6 +145,7 @@ public final class MockWebServer extends ExternalResource implements Closeable {
   private SSLSocketFactory sslSocketFactory;
   private ExecutorService executor;
   private boolean tunnelProxy;
+  private int clientAuth = CLIENT_AUTH_NONE;
   private Dispatcher dispatcher = new QueueDispatcher();
 
   private int port = -1;
@@ -214,11 +227,12 @@ public final class MockWebServer extends ExternalResource implements Closeable {
    */
   public void setProtocols(List<Protocol> protocols) {
     protocols = Util.immutableList(protocols);
-    if (protocols.contains(Protocol.H2C) && protocols.size() > 1) {
-      // when using h2c prior knowledge, no other protocol should be supported.
-      throw new IllegalArgumentException("protocols containing h2c cannot use other protocols: "
-              + protocols);
-    } else if (!protocols.contains(Protocol.H2C) && !protocols.contains(Protocol.HTTP_1_1)) {
+    if (protocols.contains(Protocol.H2_PRIOR_KNOWLEDGE) && protocols.size() > 1) {
+      // when using h2_prior_knowledge, no other protocol should be supported.
+      throw new IllegalArgumentException(
+          "protocols containing h2_prior_knowledge cannot use other protocols: " + protocols);
+    } else if (!protocols.contains(Protocol.H2_PRIOR_KNOWLEDGE)
+        && !protocols.contains(Protocol.HTTP_1_1)) {
       throw new IllegalArgumentException("protocols doesn't contain http/1.1: " + protocols);
     }
     if (protocols.contains(null)) {
@@ -239,6 +253,36 @@ public final class MockWebServer extends ExternalResource implements Closeable {
   public void useHttps(SSLSocketFactory sslSocketFactory, boolean tunnelProxy) {
     this.sslSocketFactory = sslSocketFactory;
     this.tunnelProxy = tunnelProxy;
+  }
+
+  /**
+   * Configure the server to not perform SSL authentication of the client. This leaves
+   * authentication to another layer such as in an HTTP cookie or header. This is the default and
+   * most common configuration.
+   */
+  public void noClientAuth() {
+    this.clientAuth = CLIENT_AUTH_NONE;
+  }
+
+  /**
+   * Configure the server to {@linkplain SSLSocket#setWantClientAuth want client auth}. If the
+   * client presents a certificate that is {@linkplain TrustManager trusted} the handshake will
+   * proceed normally. The connection will also proceed normally if the client presents no
+   * certificate at all! But if the client presents an untrusted certificate the handshake will fail
+   * and no connection will be established.
+   */
+  public void requestClientAuth() {
+    this.clientAuth = CLIENT_AUTH_REQUESTED;
+  }
+
+  /**
+   * Configure the server to {@linkplain SSLSocket#setNeedClientAuth need client auth}. If the
+   * client presents a certificate that is {@linkplain TrustManager trusted} the handshake will
+   * proceed normally. If the client presents an untrusted certificate or no certificate at all the
+   * handshake will fail and no connection will be established.
+   */
+  public void requireClientAuth() {
+    this.clientAuth = CLIENT_AUTH_REQUIRED;
   }
 
   /**
@@ -431,6 +475,11 @@ public final class MockWebServer extends ExternalResource implements Closeable {
               raw.getPort(), true);
           SSLSocket sslSocket = (SSLSocket) socket;
           sslSocket.setUseClientMode(false);
+          if (clientAuth == CLIENT_AUTH_REQUIRED) {
+            sslSocket.setNeedClientAuth(true);
+          } else if (clientAuth == CLIENT_AUTH_REQUESTED) {
+            sslSocket.setWantClientAuth(true);
+          }
           openClientSockets.add(socket);
 
           if (protocolNegotiationEnabled) {
@@ -444,9 +493,9 @@ public final class MockWebServer extends ExternalResource implements Closeable {
             protocol = protocolString != null ? Protocol.get(protocolString) : Protocol.HTTP_1_1;
           }
           openClientSockets.remove(raw);
-        } else if (protocols.contains(Protocol.H2C)) {
+        } else if (protocols.contains(Protocol.H2_PRIOR_KNOWLEDGE)) {
           socket = raw;
-          protocol = Protocol.H2C;
+          protocol = Protocol.H2_PRIOR_KNOWLEDGE;
         } else {
           socket = raw;
         }
@@ -455,7 +504,7 @@ public final class MockWebServer extends ExternalResource implements Closeable {
           return; // Ignore the socket until the server is shut down!
         }
 
-        if (protocol == Protocol.HTTP_2 || protocol == Protocol.H2C) {
+        if (protocol == Protocol.HTTP_2 || protocol == Protocol.H2_PRIOR_KNOWLEDGE) {
           Http2SocketHandler http2SocketHandler = new Http2SocketHandler(socket, protocol);
           Http2Connection connection = new Http2Connection.Builder(false)
               .socket(socket)
@@ -549,6 +598,8 @@ public final class MockWebServer extends ExternalResource implements Closeable {
           socket.shutdownInput();
         } else if (response.getSocketPolicy() == SHUTDOWN_OUTPUT_AT_END) {
           socket.shutdownOutput();
+        } else if (response.getSocketPolicy() == SHUTDOWN_SERVER_AFTER_RESPONSE) {
+          shutdown();
         }
 
         sequenceNumber++;
@@ -691,7 +742,8 @@ public final class MockWebServer extends ExternalResource implements Closeable {
       // Even if messages are no longer being read we need to wait for the connection close signal.
       try {
         connectionClose.await();
-      } catch (InterruptedException ignored) {
+      } catch (InterruptedException e) {
+        throw new AssertionError(e);
       }
 
     } catch (IOException e) {
@@ -703,7 +755,7 @@ public final class MockWebServer extends ExternalResource implements Closeable {
 
   private void writeHttpResponse(Socket socket, BufferedSink sink, MockResponse response)
       throws IOException {
-    sleepIfDelayed(response.getBodyDelay(TimeUnit.MILLISECONDS));
+    sleepIfDelayed(response.getHeadersDelay(TimeUnit.MILLISECONDS));
     sink.writeUtf8(response.getStatus());
     sink.writeUtf8("\r\n");
 
@@ -780,7 +832,7 @@ public final class MockWebServer extends ExternalResource implements Closeable {
         try {
           Thread.sleep(periodDelayMs);
         } catch (InterruptedException e) {
-          throw new AssertionError();
+          throw new AssertionError(e);
         }
       }
     }
@@ -789,6 +841,14 @@ public final class MockWebServer extends ExternalResource implements Closeable {
   private void readEmptyLine(BufferedSource source) throws IOException {
     String line = source.readUtf8LineStrict();
     if (line.length() != 0) throw new IllegalStateException("Expected empty but was: " + line);
+  }
+
+  /**
+   * Returns the dispatcher used to respond to HTTP requests. The default dispatcher is a {@link
+   * QueueDispatcher} but other dispatchers can be configured.
+   */
+  public Dispatcher getDispatcher() {
+    return dispatcher;
   }
 
   /**
@@ -862,7 +922,7 @@ public final class MockWebServer extends ExternalResource implements Closeable {
           stream.close(ErrorCode.fromHttp2(peekedResponse.getHttp2ErrorCode()));
           return;
         } catch (InterruptedException e) {
-          throw new InterruptedIOException();
+          throw new AssertionError(e);
         }
       }
 
@@ -880,7 +940,7 @@ public final class MockWebServer extends ExternalResource implements Closeable {
         socket.close();
         return;
       }
-      writeResponse(stream, response);
+      writeResponse(stream, request, response);
       if (logger.isLoggable(Level.INFO)) {
         logger.info(MockWebServer.this + " received request: " + request
             + " and responded: " + response + " protocol is " + protocol.toString());
@@ -893,24 +953,24 @@ public final class MockWebServer extends ExternalResource implements Closeable {
     }
 
     private RecordedRequest readRequest(Http2Stream stream) throws IOException {
-      List<Header> streamHeaders = stream.getRequestHeaders();
+      Headers streamHeaders = stream.takeHeaders();
       Headers.Builder httpHeaders = new Headers.Builder();
       String method = "<:method omitted>";
       String path = "<:path omitted>";
       boolean readBody = true;
       for (int i = 0, size = streamHeaders.size(); i < size; i++) {
-        ByteString name = streamHeaders.get(i).name;
-        String value = streamHeaders.get(i).value.utf8();
-        if (name.equals(Header.TARGET_METHOD)) {
+        String name = streamHeaders.name(i);
+        String value = streamHeaders.value(i);
+        if (name.equals(Header.TARGET_METHOD_UTF8)) {
           method = value;
-        } else if (name.equals(Header.TARGET_PATH)) {
+        } else if (name.equals(Header.TARGET_PATH_UTF8)) {
           path = value;
-        } else if (protocol == Protocol.HTTP_2 || protocol == Protocol.H2C) {
-          httpHeaders.add(name.utf8(), value);
+        } else if (protocol == Protocol.HTTP_2 || protocol == Protocol.H2_PRIOR_KNOWLEDGE) {
+          httpHeaders.add(name, value);
         } else {
           throw new IllegalStateException();
         }
-        if (name.utf8().equals("expect") && value.equalsIgnoreCase("100-continue")) {
+        if (name.equals("expect") && value.equalsIgnoreCase("100-continue")) {
           // Don't read the body unless we've invited the client to send it.
           readBody = false;
         }
@@ -918,8 +978,10 @@ public final class MockWebServer extends ExternalResource implements Closeable {
       Headers headers = httpHeaders.build();
 
       MockResponse peek = dispatcher.peek();
-      if (!readBody && peek.getSocketPolicy() == EXPECT_CONTINUE) {
-        stream.sendResponseHeaders(Collections.singletonList(
+      if (peek.isDuplex()) {
+        readBody = false;
+      } else if (!readBody && peek.getSocketPolicy() == EXPECT_CONTINUE) {
+        stream.writeHeaders(Collections.singletonList(
             new Header(Header.RESPONSE_STATUS, ByteString.encodeUtf8("100 Continue"))), true);
         stream.getConnection().flush();
         readBody = true;
@@ -940,7 +1002,8 @@ public final class MockWebServer extends ExternalResource implements Closeable {
           sequenceNumber.getAndIncrement(), socket);
     }
 
-    private void writeResponse(Http2Stream stream, MockResponse response) throws IOException {
+    private void writeResponse(final Http2Stream stream,
+        final RecordedRequest request, final MockResponse response) throws IOException {
       Settings settings = response.getSettings();
       if (settings != null) {
         stream.getConnection().setSettings(settings);
@@ -960,24 +1023,39 @@ public final class MockWebServer extends ExternalResource implements Closeable {
       for (int i = 0, size = headers.size(); i < size; i++) {
         http2Headers.add(new Header(headers.name(i), headers.value(i)));
       }
+      Headers trailers = response.getTrailers();
 
       sleepIfDelayed(response.getHeadersDelay(TimeUnit.MILLISECONDS));
 
       Buffer body = response.getBody();
-      boolean closeStreamAfterHeaders = body != null || !response.getPushPromises().isEmpty();
-      stream.sendResponseHeaders(http2Headers, closeStreamAfterHeaders);
-      pushPromises(stream, response.getPushPromises());
+      boolean hasResponseBody = body != null
+          || !response.getPushPromises().isEmpty()
+          || response.isDuplex();
+      if (!hasResponseBody && trailers.size() > 0) {
+        throw new IllegalStateException("unsupported: no body and non-empty trailers " + trailers);
+      }
+      stream.writeHeaders(http2Headers, hasResponseBody);
+      if (trailers.size() > 0) {
+        stream.enqueueTrailers(trailers);
+      }
+      pushPromises(stream, request, response.getPushPromises());
       if (body != null) {
         BufferedSink sink = Okio.buffer(stream.getSink());
         sleepIfDelayed(response.getBodyDelay(TimeUnit.MILLISECONDS));
         throttledTransfer(response, socket, body, sink, body.size(), false);
         sink.close();
-      } else if (closeStreamAfterHeaders) {
+      } else if (response.isDuplex()) {
+        final BufferedSink sink = Okio.buffer(stream.getSink());
+        final BufferedSource source = Okio.buffer(stream.getSource());
+        final DuplexResponseBody duplexResponseBody = response.getDuplexResponseBody();
+        duplexResponseBody.onRequest(request, source, sink);
+      } else if (hasResponseBody) {
         stream.close(ErrorCode.NO_ERROR);
       }
     }
 
-    private void pushPromises(Http2Stream stream, List<PushPromise> promises) throws IOException {
+    private void pushPromises(Http2Stream stream, RecordedRequest request,
+        List<PushPromise> promises) throws IOException {
       for (PushPromise pushPromise : promises) {
         List<Header> pushedHeaders = new ArrayList<>();
         pushedHeaders.add(new Header(Header.TARGET_AUTHORITY, url(pushPromise.path()).host()));
@@ -994,7 +1072,7 @@ public final class MockWebServer extends ExternalResource implements Closeable {
         boolean hasBody = pushPromise.response().getBody() != null;
         Http2Stream pushedStream =
             stream.getConnection().pushStream(stream.getId(), pushedHeaders, hasBody);
-        writeResponse(pushedStream, pushPromise.response());
+        writeResponse(pushedStream, request, pushPromise.response());
       }
     }
   }

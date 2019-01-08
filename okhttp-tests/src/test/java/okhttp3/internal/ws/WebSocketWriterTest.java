@@ -36,7 +36,6 @@ import static okhttp3.internal.ws.WebSocketProtocol.OPCODE_BINARY;
 import static okhttp3.internal.ws.WebSocketProtocol.OPCODE_TEXT;
 import static okhttp3.internal.ws.WebSocketProtocol.PAYLOAD_BYTE_MAX;
 import static okhttp3.internal.ws.WebSocketProtocol.PAYLOAD_SHORT_MAX;
-import static okhttp3.internal.ws.WebSocketProtocol.toggleMask;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;

@@ -36,6 +36,7 @@ import org.junit.Test;
 import static java.net.CookiePolicy.ACCEPT_ORIGINAL_SERVER;
 import static okhttp3.TestUtil.defaultClient;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -66,12 +67,12 @@ public class CookiesTest {
     HttpCookie cookie = cookies.get(0);
     assertEquals("a", cookie.getName());
     assertEquals("android", cookie.getValue());
-    assertEquals(null, cookie.getComment());
-    assertEquals(null, cookie.getCommentURL());
-    assertEquals(false, cookie.getDiscard());
+    assertNull(cookie.getComment());
+    assertNull(cookie.getCommentURL());
+    assertFalse(cookie.getDiscard());
     assertTrue(cookie.getMaxAge() > 100000000000L);
     assertEquals("/path", cookie.getPath());
-    assertEquals(true, cookie.getSecure());
+    assertTrue(cookie.getSecure());
     assertEquals(0, cookie.getVersion());
   }
 
@@ -98,11 +99,11 @@ public class CookiesTest {
     HttpCookie cookie = cookies.get(0);
     assertEquals("a", cookie.getName());
     assertEquals("android", cookie.getValue());
-    assertEquals(null, cookie.getCommentURL());
-    assertEquals(false, cookie.getDiscard());
+    assertNull(cookie.getCommentURL());
+    assertFalse(cookie.getDiscard());
     assertEquals(60.0, cookie.getMaxAge(), 1.0); // Converting to a fixed date can cause rounding!
     assertEquals("/path", cookie.getPath());
-    assertEquals(true, cookie.getSecure());
+    assertTrue(cookie.getSecure());
   }
 
   @Test public void testQuotedAttributeValues() throws Exception {
@@ -133,7 +134,7 @@ public class CookiesTest {
     assertEquals("android", cookie.getValue());
     assertEquals(60.0, cookie.getMaxAge(), 1.0); // Converting to a fixed date can cause rounding!
     assertEquals("/path", cookie.getPath());
-    assertEquals(true, cookie.getSecure());
+    assertTrue(cookie.getSecure());
   }
 
   @Test public void testSendingCookiesFromStore() throws Exception {
@@ -276,7 +277,7 @@ public class CookiesTest {
     CookieManager cookieManager = new CookieManager(null, ACCEPT_ORIGINAL_SERVER);
     JavaNetCookieJar cookieJar = new JavaNetCookieJar(cookieManager);
 
-    HttpUrl url = HttpUrl.parse("https://www.squareup.com/");
+    HttpUrl url = HttpUrl.get("https://www.squareup.com/");
     cookieJar.saveFromResponse(url, Arrays.asList(
         Cookie.parse(url, "a=android; Domain=squareup.com")));
     List<Cookie> actualCookies = cookieJar.loadForRequest(url);
@@ -289,7 +290,7 @@ public class CookiesTest {
     CookieManager cookieManager = new CookieManager(null, ACCEPT_ORIGINAL_SERVER);
     JavaNetCookieJar cookieJar = new JavaNetCookieJar(cookieManager);
 
-    HttpUrl url = HttpUrl.parse("https://www.squareup.com/");
+    HttpUrl url = HttpUrl.get("https://www.squareup.com/");
     cookieJar.saveFromResponse(url, Arrays.asList(
         Cookie.parse(url, "a=android; Domain=.squareup.com")));
     List<Cookie> actualCookies = cookieJar.loadForRequest(url);
@@ -302,7 +303,7 @@ public class CookiesTest {
     CookieManager cookieManager = new CookieManager(null, ACCEPT_ORIGINAL_SERVER);
     JavaNetCookieJar cookieJar = new JavaNetCookieJar(cookieManager);
 
-    HttpUrl url = HttpUrl.parse("https://squareup.com/");
+    HttpUrl url = HttpUrl.get("https://squareup.com/");
     cookieJar.saveFromResponse(url, Arrays.asList(
         Cookie.parse(url, "a=android; Domain=squareup.com")));
     List<Cookie> actualCookies = cookieJar.loadForRequest(url);
@@ -315,11 +316,11 @@ public class CookiesTest {
     CookieManager cookieManager = new CookieManager(null, ACCEPT_ORIGINAL_SERVER);
     JavaNetCookieJar cookieJar = new JavaNetCookieJar(cookieManager);
 
-    HttpUrl url1 = HttpUrl.parse("https://api.squareup.com/");
+    HttpUrl url1 = HttpUrl.get("https://api.squareup.com/");
     cookieJar.saveFromResponse(url1, Arrays.asList(
         Cookie.parse(url1, "a=android; Domain=api.squareup.com")));
 
-    HttpUrl url2 = HttpUrl.parse("https://www.squareup.com/");
+    HttpUrl url2 = HttpUrl.get("https://www.squareup.com/");
     List<Cookie> actualCookies = cookieJar.loadForRequest(url2);
     assertEquals(Collections.<Cookie>emptyList(), actualCookies);
   }

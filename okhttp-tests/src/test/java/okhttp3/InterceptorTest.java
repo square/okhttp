@@ -16,6 +16,8 @@
 package okhttp3;
 
 import java.io.IOException;
+import java.net.ServerSocket;
+import java.net.Socket;
 import java.net.SocketTimeoutException;
 import java.util.Arrays;
 import java.util.Locale;
@@ -67,7 +69,7 @@ public final class InterceptorTest {
         .protocol(Protocol.HTTP_1_1)
         .code(200)
         .message("Intercepted!")
-        .body(ResponseBody.create(MediaType.parse("text/plain; charset=utf-8"), "abc"))
+        .body(ResponseBody.create(MediaType.get("text/plain; charset=utf-8"), "abc"))
         .build();
 
     client = client.newBuilder()
@@ -91,7 +93,7 @@ public final class InterceptorTest {
             .protocol(Protocol.HTTP_1_1)
             .code(200)
             .message("Intercepted!")
-            .body(ResponseBody.create(MediaType.parse("text/plain; charset=utf-8"), "abc"))
+            .body(ResponseBody.create(MediaType.get("text/plain; charset=utf-8"), "abc"))
             .build();
       }
     };
@@ -148,7 +150,7 @@ public final class InterceptorTest {
         String sameHost = address.url().host();
         int differentPort = address.url().port() + 1;
         return chain.proceed(chain.request().newBuilder()
-            .url(HttpUrl.parse("http://" + sameHost + ":" + differentPort + "/"))
+            .url("http://" + sameHost + ":" + differentPort + "/")
             .build());
       }
     };
@@ -234,7 +236,7 @@ public final class InterceptorTest {
     Interceptor interceptor = new Interceptor() {
       @Override public Response intercept(Chain chain) throws IOException {
         Request originalRequest = chain.request();
-        MediaType mediaType = MediaType.parse("text/plain");
+        MediaType mediaType = MediaType.get("text/plain");
         RequestBody body = RequestBody.create(mediaType, "abc");
         return chain.proceed(originalRequest.newBuilder()
             .method("POST", body)
@@ -283,7 +285,7 @@ public final class InterceptorTest {
     Request request = new Request.Builder()
         .url(server.url("/"))
         .addHeader("Original-Header", "foo")
-        .method("PUT", RequestBody.create(MediaType.parse("text/plain"), "abc"))
+        .method("PUT", RequestBody.create(MediaType.get("text/plain"), "abc"))
         .build();
 
     client.newCall(request).execute();
@@ -726,15 +728,24 @@ public final class InterceptorTest {
       }
     };
 
+    ServerSocket serverSocket = new ServerSocket(0, 1);
+    // Fill backlog queue with this request so subsequent requests will be blocked.
+    new Socket().connect(serverSocket.getLocalSocketAddress());
+
     client = client.newBuilder()
         .connectTimeout(5, TimeUnit.SECONDS)
         .addInterceptor(interceptor1)
         .addInterceptor(interceptor2)
         .build();
 
-    Request request1 = new Request.Builder()
-        .url("http://" + TestUtil.UNREACHABLE_ADDRESS)
-        .build();
+    Request request1 =
+        new Request.Builder()
+            .url(
+                "http://"
+                    + serverSocket.getInetAddress().getCanonicalHostName()
+                    + ":"
+                    + serverSocket.getLocalPort())
+            .build();
     Call call = client.newCall(request1);
 
     try {
@@ -742,6 +753,8 @@ public final class InterceptorTest {
       fail();
     } catch (SocketTimeoutException expected) {
     }
+
+    serverSocket.close();
   }
 
   @Test public void chainWithReadTimeout() throws Exception {
@@ -818,7 +831,7 @@ public final class InterceptorTest {
     byte[] data = new byte[2 * 1024 * 1024]; // 2 MiB.
     Request request1 = new Request.Builder()
         .url(server.url("/"))
-        .post(RequestBody.create(MediaType.parse("text/plain"), data))
+        .post(RequestBody.create(MediaType.get("text/plain"), data))
         .build();
     Call call = client.newCall(request1);
 
@@ -929,7 +942,7 @@ public final class InterceptorTest {
     private final BlockingQueue<Exception> exceptions = new LinkedBlockingQueue<>();
 
     public ExceptionCatchingExecutor() {
-      super(1, 1, 0, TimeUnit.SECONDS, new SynchronousQueue<Runnable>());
+      super(1, 1, 0, TimeUnit.SECONDS, new SynchronousQueue<>());
     }
 
     @Override public void execute(final Runnable runnable) {
@@ -944,7 +957,7 @@ public final class InterceptorTest {
       });
     }
 
-    public Exception takeException() throws InterruptedException {
+    public Exception takeException() throws Exception {
       return exceptions.take();
     }
   }

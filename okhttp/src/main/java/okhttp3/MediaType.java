@@ -45,12 +45,15 @@ public final class MediaType {
   }
 
   /**
-   * Returns a media type for {@code string}, or null if {@code string} is not a well-formed media
-   * type.
+   * Returns a media type for {@code string}.
+   *
+   * @throws IllegalArgumentException if {@code string} is not a well-formed media type.
    */
-  public static @Nullable MediaType parse(String string) {
+  public static MediaType get(String string) {
     Matcher typeSubtype = TYPE_SUBTYPE.matcher(string);
-    if (!typeSubtype.lookingAt()) return null;
+    if (!typeSubtype.lookingAt()) {
+      throw new IllegalArgumentException("No subtype found for: \"" + string + '"');
+    }
     String type = typeSubtype.group(1).toLowerCase(Locale.US);
     String subtype = typeSubtype.group(2).toLowerCase(Locale.US);
 
@@ -58,7 +61,13 @@ public final class MediaType {
     Matcher parameter = PARAMETER.matcher(string);
     for (int s = typeSubtype.end(); s < string.length(); s = parameter.end()) {
       parameter.region(s, string.length());
-      if (!parameter.lookingAt()) return null; // This is not a well-formed media type.
+      if (!parameter.lookingAt()) {
+        throw new IllegalArgumentException("Parameter is not formatted correctly: \""
+            + string.substring(s)
+            + "\" for: \""
+            + string
+            + '"');
+      }
 
       String name = parameter.group(1);
       if (name == null || !name.equalsIgnoreCase("charset")) continue;
@@ -74,12 +83,30 @@ public final class MediaType {
         charsetParameter = parameter.group(3);
       }
       if (charset != null && !charsetParameter.equalsIgnoreCase(charset)) {
-        return null; // Multiple different charsets!
+        throw new IllegalArgumentException("Multiple charsets defined: \""
+            + charset
+            + "\" and: \""
+            + charsetParameter
+            + "\" for: \""
+            + string
+            + '"');
       }
       charset = charsetParameter;
     }
 
     return new MediaType(string, type, subtype, charset);
+  }
+
+  /**
+   * Returns a media type for {@code string}, or null if {@code string} is not a well-formed media
+   * type.
+   */
+  public static @Nullable MediaType parse(String string) {
+    try {
+      return get(string);
+    } catch (IllegalArgumentException ignored) {
+      return null;
+    }
   }
 
   /**

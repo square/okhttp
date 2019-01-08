@@ -6,7 +6,7 @@
   <parent>
     <groupId>com.squareup.okhttp3.sample</groupId>
     <artifactId>sample-parent</artifactId>
-    <version>3.11.0-SNAPSHOT</version>
+    <version>3.13.0-SNAPSHOT</version>
   </parent>
 
   <artifactId>static-server</artifactId>
@@ -26,7 +26,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-shade-plugin</artifactId>
-        <version>2.1</version>
+        <version>3.2.1</version>
         <configuration>
           <shadedArtifactAttached>true</shadedArtifactAttached>
           <shadedClassifierName>shaded</shadedClassifierName>

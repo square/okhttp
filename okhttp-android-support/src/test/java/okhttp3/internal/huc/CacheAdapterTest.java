@@ -23,7 +23,6 @@ import java.net.ResponseCache;
 import java.net.URI;
 import java.net.URL;
 import java.net.URLConnection;
-import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -35,14 +34,16 @@ import okhttp3.OkUrlFactory;
 import okhttp3.RecordingHostnameVerifier;
 import okhttp3.internal.Internal;
 import okhttp3.internal.cache.InternalCache;
-import okhttp3.mockwebserver.internal.tls.SslClient;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
+import okhttp3.tls.HandshakeCertificates;
 import okio.Buffer;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
+import static okhttp3.tls.internal.TlsUtil.localhost;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -58,7 +59,7 @@ import static org.junit.Assert.assertTrue;
  * </ul>
  */
 public class CacheAdapterTest {
-  private SslClient sslClient = SslClient.localhost();
+  private HandshakeCertificates handshakeCertificates = localhost();
   private HostnameVerifier hostnameVerifier = new RecordingHostnameVerifier();
   private MockWebServer server;
   private OkHttpClient client;
@@ -123,7 +124,8 @@ public class CacheAdapterTest {
     };
     setInternalCache(new CacheAdapter(responseCache));
     client = client.newBuilder()
-        .sslSocketFactory(sslClient.socketFactory, sslClient.trustManager)
+        .sslSocketFactory(
+            handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager())
         .hostnameVerifier(hostnameVerifier)
         .build();
 
@@ -135,7 +137,7 @@ public class CacheAdapterTest {
 
   @Test public void put_httpGet() throws Exception {
     final String statusLine = "HTTP/1.1 200 Fantastic";
-    final byte[] response = "ResponseString".getBytes(StandardCharsets.UTF_8);
+    final byte[] response = "ResponseString".getBytes(UTF_8);
     final URL serverUrl = configureServer(
         new MockResponse()
             .setStatus(statusLine)
@@ -253,7 +255,8 @@ public class CacheAdapterTest {
     };
     setInternalCache(new CacheAdapter(responseCache));
     client = client.newBuilder()
-        .sslSocketFactory(sslClient.socketFactory, sslClient.trustManager)
+        .sslSocketFactory(
+            handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager())
         .hostnameVerifier(hostnameVerifier)
         .build();
 
@@ -281,7 +284,7 @@ public class CacheAdapterTest {
   }
 
   private URL configureHttpsServer(MockResponse mockResponse) throws Exception {
-    server.useHttps(sslClient.socketFactory, false /* tunnelProxy */);
+    server.useHttps(handshakeCertificates.sslSocketFactory(), false /* tunnelProxy */);
     server.enqueue(mockResponse);
     server.start();
     return server.url("/").url();
