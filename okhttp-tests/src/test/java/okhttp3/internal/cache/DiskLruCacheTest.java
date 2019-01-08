@@ -1649,13 +1649,13 @@ public final class DiskLruCacheTest {
     assertNull(creator.newSource(0));
     assertNull(creator.newSource(1));
 
-    Iterator<DiskLruCache.Snapshot> si = cache.snapshots();
-    assertFalse(si.hasNext()); // entry still is being created/edited
+    Iterator<DiskLruCache.Snapshot> snapshotWhileEditing = cache.snapshots();
+    assertFalse(snapshotWhileEditing.hasNext()); // entry still is being created/edited
     creator.commit();
 
-    Iterator<DiskLruCache.Snapshot> si2 = cache.snapshots();
+    Iterator<DiskLruCache.Snapshot> snapshotAfterCommit = cache.snapshots();
 
-    assertTrue("Entry has been removed during creation.", si2.hasNext());
+    assertTrue("Entry has been removed during creation.", snapshotAfterCommit.hasNext());
   }
 
   private void assertJournalEquals(String... expectedBodyLines) throws Exception {
