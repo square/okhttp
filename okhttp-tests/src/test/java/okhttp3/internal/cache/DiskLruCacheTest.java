@@ -1641,6 +1641,23 @@ public final class DiskLruCacheTest {
     assertAbsent("k1");
   }
 
+  @Test public void dontRemoveUnfinishedEntryWhenCreatingSnapshot() throws Exception {
+    DiskLruCache.Editor creator = cache.edit("k1");
+    setString(creator, 0, "ABC");
+    setString(creator, 1, "DE");
+
+    assertNull(creator.newSource(0));
+    assertNull(creator.newSource(1));
+
+    Iterator<DiskLruCache.Snapshot> si = cache.snapshots();
+    assertFalse(si.hasNext()); // entry still is being created/edited
+    creator.commit();
+
+    Iterator<DiskLruCache.Snapshot> si2 = cache.snapshots();
+
+    assertTrue("Entry has been removed during creation.", si2.hasNext());
+  }
+
   private void assertJournalEquals(String... expectedBodyLines) throws Exception {
     List<String> expectedLines = new ArrayList<>();
     expectedLines.add(MAGIC);
