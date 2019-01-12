@@ -27,7 +27,6 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Logger;
-import okhttp3.Interceptor;
 import okhttp3.OkHttpClient;
 import okhttp3.Protocol;
 import okhttp3.RecordingEventListener;
@@ -70,12 +69,10 @@ public final class WebSocketHttpTest {
   private OkHttpClient client = defaultClient().newBuilder()
       .writeTimeout(500, TimeUnit.MILLISECONDS)
       .readTimeout(500, TimeUnit.MILLISECONDS)
-      .addInterceptor(new Interceptor() {
-        @Override public Response intercept(Chain chain) throws IOException {
-          Response response = chain.proceed(chain.request());
-          assertNotNull(response.body()); // Ensure application interceptors never see a null body.
-          return response;
-        }
+      .addInterceptor(chain -> {
+        Response response = chain.proceed(chain.request());
+        assertNotNull(response.body()); // Ensure application interceptors never see a null body.
+        return response;
       })
       .build();
 
@@ -369,16 +366,15 @@ public final class WebSocketHttpTest {
     final AtomicInteger interceptedCount = new AtomicInteger();
 
     client = client.newBuilder()
-        .addInterceptor(new Interceptor() {
-          @Override public Response intercept(Chain chain) throws IOException {
-            assertNull(chain.request().body());
-            Response response = chain.proceed(chain.request());
-            assertEquals("Upgrade", response.header("Connection"));
-            assertTrue(response.body().source().exhausted());
-            interceptedCount.incrementAndGet();
-            return response;
-          }
-        }).build();
+        .addInterceptor(chain -> {
+          assertNull(chain.request().body());
+          Response response = chain.proceed(chain.request());
+          assertEquals("Upgrade", response.header("Connection"));
+          assertTrue(response.body().source().exhausted());
+          interceptedCount.incrementAndGet();
+          return response;
+        })
+        .build();
 
     webServer.enqueue(new MockResponse().withWebSocketUpgrade(serverListener));
 
@@ -395,11 +391,10 @@ public final class WebSocketHttpTest {
 
   @Test public void webSocketAndNetworkInterceptors() {
     client = client.newBuilder()
-        .addNetworkInterceptor(new Interceptor() {
-          @Override public Response intercept(Chain chain) {
-            throw new AssertionError(); // Network interceptors don't execute.
-          }
-        }).build();
+        .addNetworkInterceptor(chain -> {
+          throw new AssertionError(); // Network interceptors don't execute.
+        })
+        .build();
 
     webServer.enqueue(new MockResponse().withWebSocketUpgrade(serverListener));
 

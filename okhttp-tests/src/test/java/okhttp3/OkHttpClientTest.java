@@ -15,7 +15,6 @@
  */
 package okhttp3;
 
-import java.io.IOException;
 import java.net.CookieHandler;
 import java.net.CookieManager;
 import java.net.ProxySelector;
@@ -98,11 +97,7 @@ public final class OkHttpClientTest {
   }
 
   @Test public void clonedInterceptorsListsAreIndependent() throws Exception {
-    Interceptor interceptor = new Interceptor() {
-      @Override public Response intercept(Chain chain) throws IOException {
-        return chain.proceed(chain.request());
-      }
-    };
+    Interceptor interceptor = chain -> chain.proceed(chain.request());
     OkHttpClient original = defaultClient();
     original.newBuilder()
         .addInterceptor(interceptor)

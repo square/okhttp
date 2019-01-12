@@ -46,7 +46,6 @@ import okhttp3.RecordingHostnameVerifier;
 import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
-import okhttp3.Route;
 import okhttp3.TestLogHandler;
 import okhttp3.TestUtil;
 import okhttp3.internal.DoubleInetAddressDns;
@@ -189,7 +188,7 @@ public final class HttpOverHttp2Test {
   }
 
   @Test public void noDefaultContentLengthOnStreamingPost() throws Exception {
-    final byte[] postBytes = "FGHIJ".getBytes(UTF_8);
+    byte[] postBytes = "FGHIJ".getBytes(UTF_8);
 
     server.enqueue(new MockResponse().setBody("ABCDE"));
 
@@ -216,7 +215,7 @@ public final class HttpOverHttp2Test {
   }
 
   @Test public void userSuppliedContentLengthHeader() throws Exception {
-    final byte[] postBytes = "FGHIJ".getBytes(UTF_8);
+    byte[] postBytes = "FGHIJ".getBytes(UTF_8);
 
     server.enqueue(new MockResponse().setBody("ABCDE"));
 
@@ -247,7 +246,7 @@ public final class HttpOverHttp2Test {
   }
 
   @Test public void closeAfterFlush() throws Exception {
-    final byte[] postBytes = "FGHIJ".getBytes(UTF_8);
+    byte[] postBytes = "FGHIJ".getBytes(UTF_8);
 
     server.enqueue(new MockResponse().setBody("ABCDE"));
 
@@ -897,7 +896,7 @@ public final class HttpOverHttp2Test {
     Call call = client.newCall(new Request.Builder()
         .url(server.url("/"))
         .build());
-    final CountDownLatch latch = new CountDownLatch(1);
+    CountDownLatch latch = new CountDownLatch(1);
     call.enqueue(new Callback() {
       @Override public void onFailure(Call call1, IOException e) {
         latch.countDown();
@@ -955,18 +954,16 @@ public final class HttpOverHttp2Test {
     server.enqueue(new MockResponse()
         .setBody("ABC"));
 
-    final CountDownLatch latch = new CountDownLatch(1);
-    final BlockingQueue<String> responses = new SynchronousQueue<>();
-    okhttp3.Authenticator authenticator = new okhttp3.Authenticator() {
-      @Override public Request authenticate(Route route, Response response) throws IOException {
-        responses.offer(response.body().string());
-        try {
-          latch.await();
-        } catch (InterruptedException e) {
-          throw new AssertionError();
-        }
-        return response.request();
+    CountDownLatch latch = new CountDownLatch(1);
+    BlockingQueue<String> responses = new SynchronousQueue<>();
+    okhttp3.Authenticator authenticator = (route, response) -> {
+      responses.offer(response.body().string());
+      try {
+        latch.await();
+      } catch (InterruptedException e) {
+        throw new AssertionError();
       }
+      return response.request();
     };
 
     OkHttpClient blockingAuthClient = client.newBuilder()
@@ -1314,7 +1311,7 @@ public final class HttpOverHttp2Test {
         .setSocketPolicy(SocketPolicy.DISCONNECT_AT_END)
         .setBody("DEF"));
 
-    final BlockingQueue<String> bodies = new SynchronousQueue<>();
+    BlockingQueue<String> bodies = new SynchronousQueue<>();
     Callback callback = new Callback() {
       @Override public void onResponse(Call call, Response response) throws IOException {
         bodies.add(response.body().string());
@@ -1343,7 +1340,7 @@ public final class HttpOverHttp2Test {
 
     server.useHttps(handshakeCertificates.sslSocketFactory(), true);
 
-    final QueueDispatcher queueDispatcher = new QueueDispatcher();
+    QueueDispatcher queueDispatcher = new QueueDispatcher();
     queueDispatcher.enqueueResponse(new MockResponse()
         .setSocketPolicy(SocketPolicy.UPGRADE_TO_SSL_AT_END)
         .clearHeaders());

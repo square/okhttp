@@ -3530,11 +3530,7 @@ public final class URLConnectionTest {
   }
 
   @Test public void interceptorsNotInvoked() throws Exception {
-    Interceptor interceptor = new Interceptor() {
-      @Override public Response intercept(Chain chain) {
-        throw new AssertionError();
-      }
-    };
+    Interceptor interceptor = chain -> { throw new AssertionError(); };
     urlFactory.setClient(urlFactory.client().newBuilder()
         .addInterceptor(interceptor)
         .addNetworkInterceptor(interceptor)
@@ -3615,11 +3611,7 @@ public final class URLConnectionTest {
   /** Confirm that runtime exceptions thrown inside of OkHttp propagate to the caller. */
   @Test public void unexpectedExceptionSync() throws Exception {
     urlFactory.setClient(urlFactory.client().newBuilder()
-        .dns(new Dns() {
-          @Override public List<InetAddress> lookup(String hostname) {
-            throw new RuntimeException("boom!");
-          }
-        })
+        .dns(hostname -> { throw new RuntimeException("boom!"); })
         .build());
 
     server.enqueue(new MockResponse());
@@ -3636,11 +3628,7 @@ public final class URLConnectionTest {
   /** Confirm that runtime exceptions thrown inside of OkHttp propagate to the caller. */
   @Test public void unexpectedExceptionAsync() throws Exception {
     urlFactory.setClient(urlFactory.client().newBuilder()
-        .dns(new Dns() {
-          @Override public List<InetAddress> lookup(String hostname) {
-            throw new RuntimeException("boom!");
-          }
-        })
+        .dns(hostname -> { throw new RuntimeException("boom!"); })
         .build());
 
     server.enqueue(new MockResponse());

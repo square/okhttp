@@ -84,11 +84,7 @@ public final class Util {
   /** GMT and UTC are equivalent for our purposes. */
   public static final TimeZone UTC = TimeZone.getTimeZone("GMT");
 
-  public static final Comparator<String> NATURAL_ORDER = new Comparator<String>() {
-    @Override public int compare(String a, String b) {
-      return a.compareTo(b);
-    }
-  };
+  public static final Comparator<String> NATURAL_ORDER = String::compareTo;
 
   private static final Method addSuppressedExceptionMethod;
 
@@ -238,13 +234,11 @@ public final class Util {
     return Collections.unmodifiableList(Arrays.asList(elements.clone()));
   }
 
-  public static ThreadFactory threadFactory(final String name, final boolean daemon) {
-    return new ThreadFactory() {
-      @Override public Thread newThread(Runnable runnable) {
-        Thread result = new Thread(runnable, name);
-        result.setDaemon(daemon);
-        return result;
-      }
+  public static ThreadFactory threadFactory(String name, boolean daemon) {
+    return runnable -> {
+      Thread result = new Thread(runnable, name);
+      result.setDaemon(daemon);
+      return result;
     };
   }
 
@@ -676,7 +670,7 @@ public final class Util {
    * cannot be read (e.g. because of security policy restrictions).
    */
   public static String getSystemProperty(String key, @Nullable String defaultValue) {
-    final String value;
+    String value;
     try {
       value = System.getProperty(key);
     } catch (AccessControlException ex) {

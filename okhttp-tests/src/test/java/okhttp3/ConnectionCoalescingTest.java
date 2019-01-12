@@ -25,11 +25,10 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import javax.net.ssl.HostnameVerifier;
-import javax.net.ssl.SSLSession;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
-import okhttp3.tls.HeldCertificate;
 import okhttp3.tls.HandshakeCertificates;
+import okhttp3.tls.HeldCertificate;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Rule;
@@ -127,13 +126,11 @@ public final class ConnectionCoalescingTest {
     server.enqueue(new MockResponse().setResponseCode(200));
     server.enqueue(new MockResponse().setResponseCode(200));
 
-    final AtomicReference<Connection> connection = new AtomicReference<>();
+    AtomicReference<Connection> connection = new AtomicReference<>();
     client = client.newBuilder()
-        .addNetworkInterceptor(new Interceptor() {
-          @Override public Response intercept(Chain chain) throws IOException {
-            connection.set(chain.connection());
-            return chain.proceed(chain.request());
-          }
+        .addNetworkInterceptor(chain -> {
+          connection.set(chain.connection());
+          return chain.proceed(chain.request());
         })
         .build();
     dns.set("san.com", Dns.SYSTEM.lookup(server.getHostName()).subList(0, 1));
@@ -222,11 +219,7 @@ public final class ConnectionCoalescingTest {
    * verification is a black box.
    */
   @Test public void skipsWhenHostnameVerifierUsed() throws Exception {
-    HostnameVerifier verifier = new HostnameVerifier() {
-      @Override public boolean verify(String s, SSLSession sslSession) {
-        return true;
-      }
-    };
+    HostnameVerifier verifier = (name, session) -> true;
     client = client.newBuilder().hostnameVerifier(verifier).build();
 
     server.enqueue(new MockResponse().setResponseCode(200));
@@ -249,7 +242,7 @@ public final class ConnectionCoalescingTest {
     server.enqueue(new MockResponse().setResponseCode(200));
     server.enqueue(new MockResponse().setResponseCode(200));
 
-    final AtomicInteger connectCount = new AtomicInteger();
+    AtomicInteger connectCount = new AtomicInteger();
     EventListener listener = new EventListener() {
       @Override public void connectStart(Call call, InetSocketAddress inetSocketAddress,
           Proxy proxy) {
@@ -288,11 +281,9 @@ public final class ConnectionCoalescingTest {
 
   /** Network interceptors check for changes to target. */
   @Test public void worksWithNetworkInterceptors() throws Exception {
-    client = client.newBuilder().addNetworkInterceptor(new Interceptor() {
-      @Override public Response intercept(Chain chain) throws IOException {
-        return chain.proceed(chain.request());
-      }
-    }).build();
+    client = client.newBuilder()
+        .addNetworkInterceptor(chain -> chain.proceed(chain.request()))
+        .build();
 
     server.enqueue(new MockResponse().setResponseCode(200));
     server.enqueue(new MockResponse().setResponseCode(200));

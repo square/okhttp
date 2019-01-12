@@ -37,7 +37,6 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -929,11 +928,7 @@ public final class CallTest {
   /** https://github.com/square/okhttp/issues/1801 */
   @Test public void asyncCallEngineInitialized() throws Exception {
     OkHttpClient c = defaultClient().newBuilder()
-        .addInterceptor(new Interceptor() {
-          @Override public Response intercept(Chain chain) throws IOException {
-            throw new IOException();
-          }
-        })
+        .addInterceptor(chain -> { throw new IOException(); })
         .build();
     Request request = new Request.Builder().url(server.url("/")).build();
     c.newCall(request).enqueue(callback);
@@ -2158,15 +2153,13 @@ public final class CallTest {
     server.enqueue(new MockResponse());
     final CountDownLatch latch = new CountDownLatch(1);
     client = client.newBuilder()
-        .addNetworkInterceptor(new Interceptor() {
-          @Override public Response intercept(Chain chain) throws IOException {
-            try {
-              latch.await();
-            } catch (InterruptedException e) {
-              throw new AssertionError(e);
-            }
-            return chain.proceed(chain.request());
+        .addNetworkInterceptor(chain -> {
+          try {
+            latch.await();
+          } catch (InterruptedException e) {
+            throw new AssertionError(e);
           }
+          return chain.proceed(chain.request());
         })
         .build();
 
@@ -2226,11 +2219,7 @@ public final class CallTest {
 
     final Call call = client.newCall(new Request.Builder().url(server.url("/a")).build());
     ExecutorService executor = Executors.newSingleThreadExecutor();
-    Future<Response> result = executor.submit(new Callable<Response>() {
-      @Override public Response call() throws Exception {
-        return call.execute();
-      }
-    });
+    Future<Response> result = executor.submit(call::execute);
 
     Thread.sleep(100); // wait for it to go in flight.
 
@@ -2394,12 +2383,11 @@ public final class CallTest {
 
   @Test public void cancelWithInterceptor() throws Exception {
     client = client.newBuilder()
-        .addInterceptor(new Interceptor() {
-          @Override public Response intercept(Chain chain) throws IOException {
-            chain.proceed(chain.request());
-            throw new AssertionError(); // We expect an exception.
-          }
-        }).build();
+        .addInterceptor(chain -> {
+          chain.proceed(chain.request());
+          throw new AssertionError(); // We expect an exception.
+        })
+        .build();
 
     Call call = client.newCall(new Request.Builder().url(server.url("/a")).build());
     call.cancel();
@@ -3018,19 +3006,17 @@ public final class CallTest {
             handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager())
         .proxy(server.toProxyAddress())
         .hostnameVerifier(new RecordingHostnameVerifier())
-        .proxyAuthenticator(new Authenticator() {
-          @Override public Request authenticate(Route route, Response response) {
-            assertEquals("CONNECT", response.request().method());
-            assertEquals(HttpURLConnection.HTTP_PROXY_AUTH, response.code());
-            assertEquals("android.com", response.request().url().host());
+        .proxyAuthenticator((route, response) -> {
+          assertEquals("CONNECT", response.request().method());
+          assertEquals(HttpURLConnection.HTTP_PROXY_AUTH, response.code());
+          assertEquals("android.com", response.request().url().host());
 
-            List<Challenge> challenges = response.challenges();
-            assertEquals("OkHttp-Preemptive", challenges.get(0).scheme());
+          List<Challenge> challenges = response.challenges();
+          assertEquals("OkHttp-Preemptive", challenges.get(0).scheme());
 
-            return response.request().newBuilder()
-                .header("Proxy-Authorization", credential)
-                .build();
-          }
+          return response.request().newBuilder()
+              .header("Proxy-Authorization", credential)
+              .build();
         })
         .build();
 
@@ -3070,14 +3056,12 @@ public final class CallTest {
             handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager())
         .proxy(server.toProxyAddress())
         .hostnameVerifier(new RecordingHostnameVerifier())
-        .proxyAuthenticator(new Authenticator() {
-          @Override public Request authenticate(Route route, Response response) {
-            List<Challenge> challenges = response.challenges();
-            challengeSchemes.add(challenges.get(0).scheme());
-            return response.request().newBuilder()
-                .header("Proxy-Authorization", credential)
-                .build();
-          }
+        .proxyAuthenticator((route, response) -> {
+          List<Challenge> challenges = response.challenges();
+          challengeSchemes.add(challenges.get(0).scheme());
+          return response.request().newBuilder()
+              .header("Proxy-Authorization", credential)
+              .build();
         })
         .build();
 
@@ -3103,11 +3087,9 @@ public final class CallTest {
 
     // Capture the protocol as it is observed by the interceptor.
     final AtomicReference<Protocol> protocolRef = new AtomicReference<>();
-    Interceptor interceptor = new Interceptor() {
-      @Override public Response intercept(Chain chain) throws IOException {
-        protocolRef.set(chain.connection().protocol());
-        return chain.proceed(chain.request());
-      }
+    Interceptor interceptor = chain -> {
+      protocolRef.set(chain.connection().protocol());
+      return chain.proceed(chain.request());
     };
     client = client.newBuilder()
         .addNetworkInterceptor(interceptor)
@@ -3405,11 +3387,7 @@ public final class CallTest {
         .setResponseCode(401));
 
     client = client.newBuilder()
-        .authenticator(new Authenticator() {
-          @Override public Request authenticate(Route route, Response response) throws IOException {
-            throw new IOException("IOException!");
-          }
-        })
+        .authenticator((route, response) -> { throw new IOException("IOException!"); })
         .build();
 
     Request request = new Request.Builder()
@@ -3427,11 +3405,7 @@ public final class CallTest {
         .setResponseCode(407));
 
     client = client.newBuilder()
-        .proxyAuthenticator(new Authenticator() {
-          @Override public Request authenticate(Route route, Response response) throws IOException {
-            throw new IOException("IOException!");
-          }
-        })
+        .proxyAuthenticator((route, response) -> { throw new IOException("IOException!"); })
         .build();
 
     Request request = new Request.Builder()

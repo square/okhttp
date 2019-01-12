@@ -595,13 +595,11 @@ public final class OkHttpURLConnection extends HttpURLConnection implements Call
   }
 
   static final class UnexpectedException extends IOException {
-    static final Interceptor INTERCEPTOR = new Interceptor() {
-      @Override public Response intercept(Chain chain) throws IOException {
-        try {
-          return chain.proceed(chain.request());
-        } catch (Error | RuntimeException e) {
-          throw new UnexpectedException(e);
-        }
+    static final Interceptor INTERCEPTOR = chain -> {
+      try {
+        return chain.proceed(chain.request());
+      } catch (Error | RuntimeException e) {
+        throw new UnexpectedException(e);
       }
     };
 

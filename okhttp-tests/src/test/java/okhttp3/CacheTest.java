@@ -34,7 +34,6 @@ import java.util.TimeZone;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import javax.net.ssl.HostnameVerifier;
-import javax.net.ssl.SSLSession;
 import okhttp3.internal.Internal;
 import okhttp3.internal.io.InMemoryFileSystem;
 import okhttp3.internal.platform.Platform;
@@ -63,11 +62,7 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 public final class CacheTest {
-  private static final HostnameVerifier NULL_HOSTNAME_VERIFIER = new HostnameVerifier() {
-    @Override public boolean verify(String s, SSLSession sslSession) {
-      return true;
-    }
-  };
+  private static final HostnameVerifier NULL_HOSTNAME_VERIFIER = (name, session) -> true;
 
   @Rule public MockWebServer server = new MockWebServer();
   @Rule public MockWebServer server2 = new MockWebServer();
@@ -2220,12 +2215,11 @@ public final class CacheTest {
 
     final AtomicReference<String> ifNoneMatch = new AtomicReference<>();
     client = client.newBuilder()
-        .addNetworkInterceptor(new Interceptor() {
-          @Override public Response intercept(Chain chain) throws IOException {
-            ifNoneMatch.compareAndSet(null, chain.request().header("If-None-Match"));
-            return chain.proceed(chain.request());
-          }
-        }).build();
+        .addNetworkInterceptor(chain -> {
+          ifNoneMatch.compareAndSet(null, chain.request().header("If-None-Match"));
+          return chain.proceed(chain.request());
+        })
+        .build();
 
     // Confirm the value is cached and intercepted.
     assertEquals("A", get(url).body().string());
@@ -2243,11 +2237,8 @@ public final class CacheTest {
 
     // Confirm the interceptor isn't exercised.
     client = client.newBuilder()
-        .addNetworkInterceptor(new Interceptor() {
-          @Override public Response intercept(Chain chain) throws IOException {
-            throw new AssertionError();
-          }
-        }).build();
+        .addNetworkInterceptor(chain -> { throw new AssertionError(); })
+        .build();
     assertEquals("A", get(url).body().string());
   }
 

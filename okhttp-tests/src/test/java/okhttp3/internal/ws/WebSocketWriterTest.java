@@ -28,7 +28,6 @@ import okio.Sink;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestRule;
-import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
 
 import static okhttp3.TestUtil.repeat;
@@ -48,14 +47,10 @@ public final class WebSocketWriterTest {
    * Check all data as verified inside of the test. We do this in a rule instead of @After so that
    * exceptions thrown from the test do not cause this check to fail.
    */
-  @Rule public final TestRule noDataLeftBehind = new TestRule() {
-    @Override public Statement apply(final Statement base, Description description) {
-      return new Statement() {
-        @Override public void evaluate() throws Throwable {
-          base.evaluate();
-          assertEquals("Data not empty", "", data.readByteString().hex());
-        }
-      };
+  @Rule public final TestRule noDataLeftBehind = (base, description) -> new Statement() {
+    @Override public void evaluate() throws Throwable {
+      base.evaluate();
+      assertEquals("Data not empty", "", data.readByteString().hex());
     }
   };
 

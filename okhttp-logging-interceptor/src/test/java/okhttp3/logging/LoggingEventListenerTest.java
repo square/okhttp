@@ -16,10 +16,7 @@
 package okhttp3.logging;
 
 import java.io.IOException;
-import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.util.List;
-import okhttp3.Dns;
 import okhttp3.HttpUrl;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
@@ -171,17 +168,10 @@ public final class LoggingEventListenerTest {
 
   @Test
   public void dnsFail() throws IOException {
-    client =
-        new OkHttpClient.Builder()
-            .dns(
-                new Dns() {
-                  @Override
-                  public List<InetAddress> lookup(String hostname) throws UnknownHostException {
-                    throw new UnknownHostException("reason");
-                  }
-                })
-            .eventListenerFactory(loggingEventListenerFactory)
-            .build();
+    client = new OkHttpClient.Builder()
+        .dns(hostname -> { throw new UnknownHostException("reason"); })
+        .eventListenerFactory(loggingEventListenerFactory)
+        .build();
 
     try {
       client.newCall(request().build()).execute();

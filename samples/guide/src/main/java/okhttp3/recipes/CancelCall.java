@@ -37,12 +37,10 @@ public class CancelCall {
     final Call call = client.newCall(request);
 
     // Schedule a job to cancel the call in 1 second.
-    executor.schedule(new Runnable() {
-      @Override public void run() {
-        System.out.printf("%.2f Canceling call.%n", (System.nanoTime() - startNanos) / 1e9f);
-        call.cancel();
-        System.out.printf("%.2f Canceled call.%n", (System.nanoTime() - startNanos) / 1e9f);
-      }
+    executor.schedule(() -> {
+      System.out.printf("%.2f Canceling call.%n", (System.nanoTime() - startNanos) / 1e9f);
+      call.cancel();
+      System.out.printf("%.2f Canceled call.%n", (System.nanoTime() - startNanos) / 1e9f);
     }, 1, TimeUnit.SECONDS);
 
     System.out.printf("%.2f Executing call.%n", (System.nanoTime() - startNanos) / 1e9f);

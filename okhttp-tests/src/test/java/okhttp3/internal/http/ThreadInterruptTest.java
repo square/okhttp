@@ -123,18 +123,16 @@ public final class ThreadInterruptTest {
     responseBody.close();
   }
 
-  private void interruptLater(final int delayMillis) {
-    final Thread toInterrupt = Thread.currentThread();
-    Thread interruptingCow = new Thread() {
-      @Override public void run() {
-        try {
-          sleep(delayMillis);
-          toInterrupt.interrupt();
-        } catch (InterruptedException e) {
-          throw new AssertionError(e);
-        }
+  private void interruptLater(int delayMillis) {
+    Thread toInterrupt = Thread.currentThread();
+    Thread interruptingCow = new Thread(() -> {
+      try {
+        Thread.sleep(delayMillis);
+        toInterrupt.interrupt();
+      } catch (InterruptedException e) {
+        throw new AssertionError(e);
       }
-    };
+    });
     interruptingCow.start();
   }
 }
