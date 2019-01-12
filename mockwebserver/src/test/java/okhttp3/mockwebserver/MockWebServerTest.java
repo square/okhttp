@@ -165,15 +165,13 @@ public final class MockWebServerTest {
    * response is ready.
    */
   @Test public void dispatchBlocksWaitingForEnqueue() throws Exception {
-    new Thread() {
-      @Override public void run() {
-        try {
-          Thread.sleep(1000);
-        } catch (InterruptedException ignored) {
-        }
-        server.enqueue(new MockResponse().setBody("enqueued in the background"));
+    new Thread(() -> {
+      try {
+        Thread.sleep(1000);
+      } catch (InterruptedException ignored) {
       }
-    }.start();
+      server.enqueue(new MockResponse().setBody("enqueued in the background"));
+    }).start();
 
     URLConnection connection = server.url("/").url().openConnection();
     InputStream in = connection.getInputStream();

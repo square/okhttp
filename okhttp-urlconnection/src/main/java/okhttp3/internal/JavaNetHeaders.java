@@ -27,18 +27,16 @@ public final class JavaNetHeaders {
   private JavaNetHeaders() {
   }
 
-  private static final Comparator<String> FIELD_NAME_COMPARATOR = new Comparator<String>() {
+  private static final Comparator<String> FIELD_NAME_COMPARATOR = (a, b) -> {
     // @FindBugsSuppressWarnings("ES_COMPARING_PARAMETER_STRING_WITH_EQ")
-    @Override public int compare(String a, String b) {
-      if (a == b) {
-        return 0;
-      } else if (a == null) {
-        return -1;
-      } else if (b == null) {
-        return 1;
-      } else {
-        return String.CASE_INSENSITIVE_ORDER.compare(a, b);
-      }
+    if (a == b) {
+      return 0;
+    } else if (a == null) {
+      return -1;
+    } else if (b == null) {
+      return 1;
+    } else {
+      return String.CASE_INSENSITIVE_ORDER.compare(a, b);
     }
   };
 

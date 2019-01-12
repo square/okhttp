@@ -83,16 +83,14 @@ public class CustomDispatcherTest {
     assertEquals(200, secondResponseCode.get()); // (Still done).
   }
 
-  private Thread buildRequestThread(final String path, final AtomicInteger responseCode) {
-    return new Thread(new Runnable() {
-      @Override public void run() {
-        final URL url = mockWebServer.url(path).url();
-        final HttpURLConnection conn;
-        try {
-          conn = (HttpURLConnection) url.openConnection();
-          responseCode.set(conn.getResponseCode()); // Force the connection to hit the "server".
-        } catch (IOException e) {
-        }
+  private Thread buildRequestThread(String path, AtomicInteger responseCode) {
+    return new Thread(() -> {
+      URL url = mockWebServer.url(path).url();
+      HttpURLConnection conn;
+      try {
+        conn = (HttpURLConnection) url.openConnection();
+        responseCode.set(conn.getResponseCode()); // Force the connection to hit the "server".
+      } catch (IOException ignored) {
       }
     });
   }

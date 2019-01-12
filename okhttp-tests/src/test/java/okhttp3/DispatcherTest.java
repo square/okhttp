@@ -169,21 +169,18 @@ public final class DispatcherTest {
   }
 
   @Test public void synchronousCallAccessors() throws Exception {
-    final CountDownLatch ready = new CountDownLatch(2);
-    final CountDownLatch waiting = new CountDownLatch(1);
+    CountDownLatch ready = new CountDownLatch(2);
+    CountDownLatch waiting = new CountDownLatch(1);
     client = client.newBuilder()
-        .addInterceptor(
-            new Interceptor() {
-              @Override public Response intercept(Chain chain) throws IOException {
-                try {
-                  ready.countDown();
-                  waiting.await();
-                } catch (InterruptedException e) {
-                  throw new AssertionError();
-                }
-                throw new IOException();
-              }
-            })
+        .addInterceptor(chain -> {
+          try {
+            ready.countDown();
+            waiting.await();
+          } catch (InterruptedException e) {
+            throw new AssertionError();
+          }
+          throw new IOException();
+        })
         .build();
 
     Call a1 = client.newCall(newRequest("http://a/1"));
@@ -231,31 +228,25 @@ public final class DispatcherTest {
   }
 
   @Test public void idleCallbackInvokedWhenIdle() throws Exception {
-    final AtomicBoolean idle = new AtomicBoolean();
-    dispatcher.setIdleCallback(new Runnable() {
-      @Override public void run() {
-        idle.set(true);
-      }
-    });
+    AtomicBoolean idle = new AtomicBoolean();
+    dispatcher.setIdleCallback(() -> idle.set(true));
 
     client.newCall(newRequest("http://a/1")).enqueue(callback);
     client.newCall(newRequest("http://a/2")).enqueue(callback);
     executor.finishJob("http://a/1");
     assertFalse(idle.get());
 
-    final CountDownLatch ready = new CountDownLatch(1);
-    final CountDownLatch proceed = new CountDownLatch(1);
+    CountDownLatch ready = new CountDownLatch(1);
+    CountDownLatch proceed = new CountDownLatch(1);
     client = client.newBuilder()
-        .addInterceptor(new Interceptor() {
-          @Override public Response intercept(Chain chain) throws IOException {
-            ready.countDown();
-            try {
-              proceed.await(5, SECONDS);
-            } catch (InterruptedException e) {
-              throw new RuntimeException(e);
-            }
-            return chain.proceed(chain.request());
+        .addInterceptor(chain -> {
+          ready.countDown();
+          try {
+            proceed.await(5, SECONDS);
+          } catch (InterruptedException e) {
+            throw new RuntimeException(e);
           }
+          return chain.proceed(chain.request());
         })
         .build();
 
@@ -326,16 +317,14 @@ public final class DispatcherTest {
     return new LinkedHashSet<>(list);
   }
 
-  private Thread makeSynchronousCall(final Call call) {
-    Thread thread = new Thread() {
-      @Override public void run() {
-        try {
-          call.execute();
-          throw new AssertionError();
-        } catch (IOException expected) {
-        }
+  private Thread makeSynchronousCall(Call call) {
+    Thread thread = new Thread(() -> {
+      try {
+        call.execute();
+        throw new AssertionError();
+      } catch (IOException expected) {
       }
-    };
+    });
     thread.start();
     return thread;
   }

@@ -97,11 +97,7 @@ import javax.annotation.Nullable;
  */
 public interface Authenticator {
   /** An authenticator that knows no credentials and makes no attempt to authenticate. */
-  Authenticator NONE = new Authenticator() {
-    @Override public Request authenticate(@Nullable Route route, Response response) {
-      return null;
-    }
-  };
+  Authenticator NONE = (route, response) -> null;
 
   /**
    * Returns a request that includes a credential to satisfy an authentication challenge in {@code

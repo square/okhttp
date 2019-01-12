@@ -16,13 +16,11 @@
 package okhttp3.logging;
 
 import java.io.IOException;
-import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
 import javax.net.ssl.HostnameVerifier;
-import okhttp3.Dns;
 import okhttp3.HttpUrl;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
@@ -704,11 +702,7 @@ public final class HttpLoggingInterceptorTest {
   @Test public void connectFail() throws IOException {
     setLevel(Level.BASIC);
     client = new OkHttpClient.Builder()
-        .dns(new Dns() {
-          @Override public List<InetAddress> lookup(String hostname) throws UnknownHostException {
-            throw new UnknownHostException("reason");
-          }
-        })
+        .dns(hostname -> { throw new UnknownHostException("reason"); })
         .addInterceptor(applicationInterceptor)
         .build();
 

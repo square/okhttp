@@ -40,7 +40,6 @@ import java.util.TimeZone;
 import java.util.concurrent.TimeUnit;
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.HttpsURLConnection;
-import javax.net.ssl.SSLSession;
 import okhttp3.internal.Internal;
 import okhttp3.internal.io.InMemoryFileSystem;
 import okhttp3.internal.platform.Platform;
@@ -70,11 +69,7 @@ import static org.junit.Assume.assumeFalse;
 
 /** Test caching with {@link OkUrlFactory}. */
 public final class UrlConnectionCacheTest {
-  private static final HostnameVerifier NULL_HOSTNAME_VERIFIER = new HostnameVerifier() {
-    @Override public boolean verify(String s, SSLSession sslSession) {
-      return true;
-    }
-  };
+  private static final HostnameVerifier NULL_HOSTNAME_VERIFIER = (name, session) -> true;
 
   @Rule public MockWebServer server = new MockWebServer();
   @Rule public MockWebServer server2 = new MockWebServer();

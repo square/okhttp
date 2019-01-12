@@ -476,11 +476,7 @@ public final class EventListenerTest {
   }
 
   @Test public void emptyDnsLookup() {
-    Dns emptyDns = new Dns() {
-      @Override public List<InetAddress> lookup(String hostname) {
-        return Collections.emptyList();
-      }
-    };
+    Dns emptyDns = hostname -> Collections.emptyList();
 
     client = client.newBuilder()
         .dns(emptyDns)

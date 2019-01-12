@@ -153,14 +153,12 @@ public final class RealWebSocket implements WebSocket, WebSocketReader.FrameCall
     random.nextBytes(nonce);
     this.key = ByteString.of(nonce).base64();
 
-    this.writerRunnable = new Runnable() {
-      @Override public void run() {
-        try {
-          while (writeOneFrame()) {
-          }
-        } catch (IOException e) {
-          failWebSocket(e, null);
+    this.writerRunnable = () -> {
+      try {
+        while (writeOneFrame()) {
         }
+      } catch (IOException e) {
+        failWebSocket(e, null);
       }
     };
   }

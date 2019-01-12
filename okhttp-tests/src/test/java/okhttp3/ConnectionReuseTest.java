@@ -15,7 +15,6 @@
  */
 package okhttp3;
 
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
 import javax.net.ssl.SSLException;
@@ -305,17 +304,13 @@ public final class ConnectionReuseTest {
         // Since this test knowingly leaks a connection, avoid using the default shared connection
         // pool, which should remain clean for subsequent tests.
         .connectionPool(new ConnectionPool())
-        .addNetworkInterceptor(
-            new Interceptor() {
-              @Override
-              public Response intercept(Chain chain) throws IOException {
-                Response response = chain.proceed(chain.request());
-                return response
-                    .newBuilder()
-                    .body(ResponseBody.create(null, "unrelated response body!"))
-                    .build();
-              }
-            })
+        .addNetworkInterceptor(chain -> {
+          Response response = chain.proceed(chain.request());
+          return response
+              .newBuilder()
+              .body(ResponseBody.create(null, "unrelated response body!"))
+              .build();
+        })
         .build();
 
     server.enqueue(new MockResponse()

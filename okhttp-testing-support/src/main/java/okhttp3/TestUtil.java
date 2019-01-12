@@ -17,7 +17,6 @@ package okhttp3;
 
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
-import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -32,11 +31,9 @@ public final class TestUtil {
    * A network that resolves only one IP address per host. Use this when testing route selection
    * fallbacks to prevent the host machine's various IP addresses from interfering.
    */
-  private static final Dns SINGLE_INET_ADDRESS_DNS = new Dns() {
-    @Override public List<InetAddress> lookup(String hostname) throws UnknownHostException {
-      List<InetAddress> addresses = Dns.SYSTEM.lookup(hostname);
-      return Collections.singletonList(addresses.get(0));
-    }
+  private static final Dns SINGLE_INET_ADDRESS_DNS = hostname -> {
+    List<InetAddress> addresses = Dns.SYSTEM.lookup(hostname);
+    return Collections.singletonList(addresses.get(0));
   };
 
   private TestUtil() {

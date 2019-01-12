@@ -54,19 +54,17 @@ public final class ConnectionPool {
   /** The maximum number of idle connections for each address. */
   private final int maxIdleConnections;
   private final long keepAliveDurationNs;
-  private final Runnable cleanupRunnable = new Runnable() {
-    @Override public void run() {
-      while (true) {
-        long waitNanos = cleanup(System.nanoTime());
-        if (waitNanos == -1) return;
-        if (waitNanos > 0) {
-          long waitMillis = waitNanos / 1000000L;
-          waitNanos -= (waitMillis * 1000000L);
-          synchronized (ConnectionPool.this) {
-            try {
-              ConnectionPool.this.wait(waitMillis, (int) waitNanos);
-            } catch (InterruptedException ignored) {
-            }
+  private final Runnable cleanupRunnable = () -> {
+    while (true) {
+      long waitNanos = cleanup(System.nanoTime());
+      if (waitNanos == -1) return;
+      if (waitNanos > 0) {
+        long waitMillis = waitNanos / 1000000L;
+        waitNanos -= (waitMillis * 1000000L);
+        synchronized (ConnectionPool.this) {
+          try {
+            ConnectionPool.this.wait(waitMillis, (int) waitNanos);
+          } catch (InterruptedException ignored) {
           }
         }
       }
