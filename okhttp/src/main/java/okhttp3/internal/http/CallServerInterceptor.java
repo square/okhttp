@@ -17,6 +17,7 @@ package okhttp3.internal.http;
 
 import java.io.IOException;
 import java.net.ProtocolException;
+import okhttp3.Call;
 import okhttp3.Interceptor;
 import okhttp3.Request;
 import okhttp3.Response;
@@ -24,6 +25,7 @@ import okhttp3.internal.Internal;
 import okhttp3.internal.Util;
 import okhttp3.internal.connection.RealConnection;
 import okhttp3.internal.connection.StreamAllocation;
+import okhttp3.internal.duplex.DuplexRequestBody;
 import okio.Buffer;
 import okio.BufferedSink;
 import okio.ForwardingSink;
@@ -40,6 +42,7 @@ public final class CallServerInterceptor implements Interceptor {
 
   @Override public Response intercept(Chain chain) throws IOException {
     final RealInterceptorChain realChain = (RealInterceptorChain) chain;
+    Call call = realChain.call();
     final HttpCodec httpCodec = realChain.httpStream();
     StreamAllocation streamAllocation = realChain.streamAllocation();
     RealConnection connection = (RealConnection) realChain.connection();
@@ -47,32 +50,30 @@ public final class CallServerInterceptor implements Interceptor {
 
     long sentRequestMillis = System.currentTimeMillis();
 
-    realChain.eventListener().requestHeadersStart(realChain.call());
+    realChain.eventListener().requestHeadersStart(call);
     httpCodec.writeRequestHeaders(request);
-    realChain.eventListener().requestHeadersEnd(realChain.call(), request);
+    realChain.eventListener().requestHeadersEnd(call, request);
 
-    BufferedSink requestBodySink = null;
     Response.Builder responseBuilder = null;
-    if (HttpMethod.permitsRequestBody(request.method())
-        && (request.body() != null || Internal.instance.isDuplex(request))) {
+    if (HttpMethod.permitsRequestBody(request.method()) && request.body() != null) {
       // If there's a "Expect: 100-continue" header on the request, wait for a "HTTP/1.1 100
       // Continue" response before transmitting the request body. If we don't get that, return
       // what we did get (such as a 4xx response) without ever transmitting the request body.
       if ("100-continue".equalsIgnoreCase(request.header("Expect"))) {
         httpCodec.flushRequest();
-        realChain.eventListener().responseHeadersStart(realChain.call());
+        realChain.eventListener().responseHeadersStart(call);
         responseBuilder = httpCodec.readResponseHeaders(true);
       }
 
       if (responseBuilder == null) {
-        if (Internal.instance.isDuplex(request)) {
+        if (request.body() instanceof DuplexRequestBody) {
           // Prepare a duplex body so that the application can send a request body later.
-          final CountingSink requestBodyOut =
-              new CountingSink(httpCodec.createRequestBody(request, -1L));
-          requestBodySink = Okio.buffer(requestBodyOut);
+          httpCodec.flushRequest();
+          CountingSink requestBodyOut = new CountingSink(httpCodec.createRequestBody(request, -1L));
+          ((DuplexRequestBody) request.body()).foldSink(requestBodyOut);
         } else {
           // Write the request body if the "Expect: 100-continue" expectation was met.
-          realChain.eventListener().requestBodyStart(realChain.call());
+          realChain.eventListener().requestBodyStart(call);
           long contentLength = request.body().contentLength();
           CountingSink requestBodyOut =
               new CountingSink(httpCodec.createRequestBody(request, contentLength));
@@ -80,8 +81,7 @@ public final class CallServerInterceptor implements Interceptor {
 
           request.body().writeTo(bufferedRequestBody);
           bufferedRequestBody.close();
-          realChain.eventListener()
-              .requestBodyEnd(realChain.call(), requestBodyOut.successfulCount);
+          realChain.eventListener().requestBodyEnd(call, requestBodyOut.successfulCount);
         }
       } else if (!connection.isMultiplexed()) {
         // If the "Expect: 100-continue" expectation wasn't met, prevent the HTTP/1 connection
@@ -91,14 +91,12 @@ public final class CallServerInterceptor implements Interceptor {
       }
     }
 
-    if (Internal.instance.isDuplex(request)) {
-      httpCodec.flushRequest();
-    } else {
+    if (!(request.body() instanceof DuplexRequestBody)) {
       httpCodec.finishRequest();
     }
 
     if (responseBuilder == null) {
-      realChain.eventListener().responseHeadersStart(realChain.call());
+      realChain.eventListener().responseHeadersStart(call);
       responseBuilder = httpCodec.readResponseHeaders(false);
     }
 
@@ -107,7 +105,7 @@ public final class CallServerInterceptor implements Interceptor {
         .handshake(streamAllocation.connection().handshake())
         .sentRequestAtMillis(sentRequestMillis)
         .receivedResponseAtMillis(System.currentTimeMillis());
-    Internal.instance.sinkAndCodec(responseBuilder, requestBodySink, httpCodec);
+    Internal.instance.initCodec(responseBuilder, httpCodec);
     Response response = responseBuilder.build();
 
     int code = response.code();
@@ -121,14 +119,13 @@ public final class CallServerInterceptor implements Interceptor {
           .handshake(streamAllocation.connection().handshake())
           .sentRequestAtMillis(sentRequestMillis)
           .receivedResponseAtMillis(System.currentTimeMillis());
-      Internal.instance.sinkAndCodec(responseBuilder, requestBodySink, httpCodec);
+      Internal.instance.initCodec(responseBuilder, httpCodec);
       response = responseBuilder.build();
 
       code = response.code();
     }
 
-    realChain.eventListener()
-            .responseHeadersEnd(realChain.call(), response);
+    realChain.eventListener().responseHeadersEnd(call, response);
 
     if (forWebSocket && code == 101) {
       // Connection is upgrading, but we need to ensure interceptors see a non-null response body.

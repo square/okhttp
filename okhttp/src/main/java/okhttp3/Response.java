@@ -23,7 +23,6 @@ import javax.annotation.Nullable;
 import okhttp3.internal.http.HttpCodec;
 import okhttp3.internal.http.HttpHeaders;
 import okio.Buffer;
-import okio.BufferedSink;
 import okio.BufferedSource;
 
 import static java.net.HttpURLConnection.HTTP_MOVED_PERM;
@@ -55,7 +54,6 @@ public final class Response implements Closeable {
   final @Nullable Response priorResponse;
   final long sentRequestAtMillis;
   final long receivedResponseAtMillis;
-  final BufferedSink sink;
   final @Nullable HttpCodec httpCodec;
 
   private volatile @Nullable CacheControl cacheControl; // Lazily initialized.
@@ -73,7 +71,6 @@ public final class Response implements Closeable {
     this.priorResponse = builder.priorResponse;
     this.sentRequestAtMillis = builder.sentRequestAtMillis;
     this.receivedResponseAtMillis = builder.receivedResponseAtMillis;
-    this.sink = builder.sink;
     this.httpCodec = builder.httpCodec;
   }
 
@@ -304,10 +301,6 @@ public final class Response implements Closeable {
         + '}';
   }
 
-  BufferedSink sink() {
-    return sink;
-  }
-
   public static class Builder {
     @Nullable Request request;
     @Nullable Protocol protocol;
@@ -321,7 +314,6 @@ public final class Response implements Closeable {
     @Nullable Response priorResponse;
     long sentRequestAtMillis;
     long receivedResponseAtMillis;
-    @Nullable BufferedSink sink;
     @Nullable HttpCodec httpCodec;
 
     public Builder() {
@@ -341,7 +333,6 @@ public final class Response implements Closeable {
       this.priorResponse = response.priorResponse;
       this.sentRequestAtMillis = response.sentRequestAtMillis;
       this.receivedResponseAtMillis = response.receivedResponseAtMillis;
-      this.sink = response.sink;
       this.httpCodec = response.httpCodec;
     }
 
@@ -450,8 +441,7 @@ public final class Response implements Closeable {
       return this;
     }
 
-    void sinkAndCodec(BufferedSink sink, HttpCodec httpCodec) {
-      this.sink = sink;
+    void initCodec(HttpCodec httpCodec) {
       this.httpCodec = httpCodec;
     }
 
