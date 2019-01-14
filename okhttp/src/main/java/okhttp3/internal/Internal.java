@@ -33,7 +33,6 @@ import okhttp3.internal.connection.RealConnection;
 import okhttp3.internal.connection.RouteDatabase;
 import okhttp3.internal.connection.StreamAllocation;
 import okhttp3.internal.http.HttpCodec;
-import okio.BufferedSink;
 
 /**
  * Escalate internal APIs in {@code okhttp3} so they can be used from OkHttp's implementation
@@ -81,12 +80,6 @@ public abstract class Internal {
 
   public abstract Call newWebSocketCall(OkHttpClient client, Request request);
 
-  public abstract void duplex(Request.Builder requestBuilder, String method);
-
-  public abstract void sinkAndCodec(
-      Response.Builder responseBuilder, BufferedSink sink, HttpCodec httpCodec);
-
-  public abstract BufferedSink sink(Response response);
-
-  public abstract boolean isDuplex(Request request);
+  public abstract void initCodec(
+      Response.Builder responseBuilder, HttpCodec httpCodec);
 }

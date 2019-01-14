@@ -112,7 +112,7 @@ public final class Http2Codec implements HttpCodec {
   @Override public void writeRequestHeaders(Request request) throws IOException {
     if (stream != null) return;
 
-    boolean hasRequestBody = request.body() != null || Internal.instance.isDuplex(request);
+    boolean hasRequestBody = request.body() != null;
     List<Header> requestHeaders = http2HeadersList(request);
     stream = connection.newStream(requestHeaders, hasRequestBody);
     // We may have been asked to cancel while creating the new stream and sending the request
