@@ -37,6 +37,7 @@ public abstract class WebSocketListener {
   /**
    * Invoked when the remote peer has indicated that no more incoming messages will be
    * transmitted.
+   * @param code See {@link #WebSocketStatusCode}
    */
   public void onClosing(WebSocket webSocket, int code, String reason) {
   }
@@ -44,6 +45,7 @@ public abstract class WebSocketListener {
   /**
    * Invoked when both peers have indicated that no more messages will be transmitted and the
    * connection has been successfully released. No further calls to this listener will be made.
+   * @param code See {@link #WebSocketStatusCode}
    */
   public void onClosed(WebSocket webSocket, int code, String reason) {
   }

@@ -98,8 +98,7 @@ public interface WebSocket {
    * <p>This returns true if a graceful shutdown was initiated by this call. It returns false and if
    * a graceful shutdown was already underway or if the web socket is already closed or canceled.
    *
-   * @param code Status code as defined by <a
-   * href="http://tools.ietf.org/html/rfc6455#section-7.4">Section 7.4 of RFC 6455</a>.
+   * @param code See {@link #WebSocketStatusCode}
    * @param reason Reason for shutting down or {@code null}.
    * @throws IllegalArgumentException if code is invalid.
    */
