@@ -759,7 +759,19 @@ public final class MockWebServer extends ExternalResource implements Closeable {
     sink.writeUtf8(response.getStatus());
     sink.writeUtf8("\r\n");
 
-    Headers headers = response.getHeaders();
+    writeHeaders(sink, response.getHeaders());
+
+    Buffer body = response.getBody();
+    if (body == null) return;
+    sleepIfDelayed(response.getBodyDelay(TimeUnit.MILLISECONDS));
+    throttledTransfer(response, socket, body, sink, body.size(), false);
+
+    if ("chunked".equalsIgnoreCase(response.getHeaders().get("Transfer-Encoding"))) {
+      writeHeaders(sink, response.getTrailers());
+    }
+  }
+
+  private void writeHeaders(BufferedSink sink, Headers headers) throws IOException {
     for (int i = 0, size = headers.size(); i < size; i++) {
       sink.writeUtf8(headers.name(i));
       sink.writeUtf8(": ");
@@ -768,11 +780,6 @@ public final class MockWebServer extends ExternalResource implements Closeable {
     }
     sink.writeUtf8("\r\n");
     sink.flush();
-
-    Buffer body = response.getBody();
-    if (body == null) return;
-    sleepIfDelayed(response.getBodyDelay(TimeUnit.MILLISECONDS));
-    throttledTransfer(response, socket, body, sink, body.size(), false);
   }
 
   private void sleepIfDelayed(long delayMs) {

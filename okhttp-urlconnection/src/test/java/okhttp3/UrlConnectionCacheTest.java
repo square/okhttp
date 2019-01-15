@@ -16,12 +16,10 @@
 
 package okhttp3;
 
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.CookieManager;
 import java.net.HttpURLConnection;
@@ -49,6 +47,7 @@ import okhttp3.mockwebserver.RecordedRequest;
 import okhttp3.tls.HandshakeCertificates;
 import okio.Buffer;
 import okio.BufferedSink;
+import okio.BufferedSource;
 import okio.GzipSink;
 import okio.Okio;
 import org.junit.After;
@@ -423,15 +422,15 @@ public final class UrlConnectionCacheTest {
     server.enqueue(truncateViolently(response, 16));
     server.enqueue(new MockResponse().setBody("Request #2"));
 
-    BufferedReader reader = new BufferedReader(
-        new InputStreamReader(urlFactory.open(server.url("/").url()).getInputStream()));
-    assertEquals("ABCDE", reader.readLine());
+    BufferedSource source = Okio.buffer(Okio.source(
+        urlFactory.open(server.url("/").url()).getInputStream()));
+    assertEquals("ABCDE\n", source.readUtf8(6));
     try {
-      reader.readLine();
+      source.readUtf8(21);
       fail("This implementation silently ignored a truncated HTTP body.");
     } catch (IOException expected) {
     } finally {
-      reader.close();
+      source.close();
     }
 
     assertEquals(1, cache.writeAbortCount());

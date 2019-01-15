@@ -3485,8 +3485,7 @@ public final class CallTest {
     assertEquals(1L, called.get());
   }
 
-  // Coming soon
-  @Test @Ignore public void clientReadsHeadersDataTrailersHttp1ChunkedTransferEncoding() throws IOException {
+  @Test public void clientReadsHeadersDataTrailersHttp1ChunkedTransferEncoding() throws Exception {
     MockResponse mockResponse = new MockResponse()
         .clearHeaders()
         .addHeader("h1", "v1")

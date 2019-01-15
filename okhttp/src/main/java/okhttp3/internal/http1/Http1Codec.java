@@ -86,6 +86,12 @@ public final class Http1Codec implements HttpCodec {
   int state = STATE_IDLE;
   private long headerLimit = HEADER_LIMIT;
 
+  /**
+   * Received trailers. Null unless the response body uses chunked transfer-encoding and includes
+   * trailers. Undefined until the end of the response body.
+   */
+  private Headers trailers;
+
   public Http1Codec(OkHttpClient client, StreamAllocation streamAllocation, BufferedSource source,
       BufferedSink sink) {
     this.client = client;
@@ -154,7 +160,10 @@ public final class Http1Codec implements HttpCodec {
   }
 
   @Override public Headers trailers() throws IOException {
-    throw new AssertionError("TODO");
+    if (state != STATE_CLOSED) {
+      throw new IllegalStateException("too early; can't read the trailers yet");
+    }
+    return trailers != null ? trailers : Util.EMPTY_HEADERS;
   }
 
   /** Returns true if this connection is closed. */
@@ -479,7 +488,8 @@ public final class Http1Codec implements HttpCodec {
       }
       if (bytesRemainingInChunk == 0L) {
         hasMoreChunks = false;
-        HttpHeaders.receiveHeaders(client.cookieJar(), url, readHeaders());
+        trailers = readHeaders();
+        HttpHeaders.receiveHeaders(client.cookieJar(), url, trailers);
         endOfInput(true, null);
       }
     }

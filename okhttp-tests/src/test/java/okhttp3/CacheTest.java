@@ -519,7 +519,7 @@ public final class CacheTest {
     BufferedSource bodySource = get(server.url("/")).body().source();
     assertEquals("ABCDE", bodySource.readUtf8Line());
     try {
-      bodySource.readUtf8Line();
+      bodySource.readUtf8(21);
       fail("This implementation silently ignored a truncated HTTP body.");
     } catch (IOException expected) {
     } finally {
@@ -2577,18 +2577,17 @@ public final class CacheTest {
   }
 
   enum TransferKind {
-    CHUNKED() {
-      @Override void setBody(MockResponse response, Buffer content, int chunkSize)
-          throws IOException {
+    CHUNKED {
+      @Override void setBody(MockResponse response, Buffer content, int chunkSize) {
         response.setChunkedBody(content, chunkSize);
       }
     },
-    FIXED_LENGTH() {
+    FIXED_LENGTH {
       @Override void setBody(MockResponse response, Buffer content, int chunkSize) {
         response.setBody(content);
       }
     },
-    END_OF_STREAM() {
+    END_OF_STREAM {
       @Override void setBody(MockResponse response, Buffer content, int chunkSize) {
         response.setBody(content);
         response.setSocketPolicy(DISCONNECT_AT_END);

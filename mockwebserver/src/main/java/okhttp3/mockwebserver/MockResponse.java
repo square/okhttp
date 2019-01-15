@@ -212,7 +212,7 @@ public final class MockResponse implements Cloneable {
       bytesOut.write(body, chunkSize);
       bytesOut.writeUtf8("\r\n");
     }
-    bytesOut.writeUtf8("0\r\n\r\n"); // Last chunk + empty trailer + CRLF.
+    bytesOut.writeUtf8("0\r\n"); // Last chunk. Trailers follow!
 
     this.body = bytesOut;
     return this;
