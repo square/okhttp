@@ -16,12 +16,10 @@
 
 package okhttp3.internal.huc;
 
-import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.CacheRequest;
 import java.net.CacheResponse;
@@ -67,6 +65,7 @@ import okhttp3.mockwebserver.SocketPolicy;
 import okhttp3.tls.HandshakeCertificates;
 import okio.Buffer;
 import okio.BufferedSink;
+import okio.BufferedSource;
 import okio.GzipSink;
 import okio.Okio;
 import org.junit.After;
@@ -493,15 +492,15 @@ public final class ResponseCacheTest {
     server.enqueue(new MockResponse()
         .setBody("Request #2"));
 
-    BufferedReader reader = new BufferedReader(
-        new InputStreamReader(openConnection(server.url("/").url()).getInputStream()));
-    assertEquals("ABCDE", reader.readLine());
+    BufferedSource bodySource = Okio.buffer(Okio.source(
+        openConnection(server.url("/").url()).getInputStream()));
+    assertEquals("ABCDE\n", bodySource.readUtf8(6));
     try {
-      reader.readLine();
+      bodySource.readUtf8(21);
       fail("This implementation silently ignored a truncated HTTP body.");
     } catch (IOException expected) {
     } finally {
-      reader.close();
+      bodySource.close();
     }
 
     URLConnection connection = openConnection(server.url("/").url());
@@ -1761,17 +1760,17 @@ public final class ResponseCacheTest {
   }
 
   enum TransferKind {
-    CHUNKED() {
+    CHUNKED {
       @Override void setBody(MockResponse response, Buffer content, int chunkSize) {
         response.setChunkedBody(content, chunkSize);
       }
     },
-    FIXED_LENGTH() {
+    FIXED_LENGTH {
       @Override void setBody(MockResponse response, Buffer content, int chunkSize) {
         response.setBody(content);
       }
     },
-    END_OF_STREAM() {
+    END_OF_STREAM {
       @Override void setBody(MockResponse response, Buffer content, int chunkSize) {
         response.setBody(content);
         response.setSocketPolicy(SocketPolicy.DISCONNECT_AT_END);
