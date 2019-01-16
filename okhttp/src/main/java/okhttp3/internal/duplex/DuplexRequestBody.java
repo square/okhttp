@@ -73,17 +73,7 @@ public final class DuplexRequestBody extends RequestBody implements Callback {
   }
 
   public void foldSink(Sink requestBodyOut) throws IOException {
-    // TODO: replace with okio Pipe#fold when released
-    Thread thread = new Thread("duplex folder thingy") {
-      @Override public void run() {
-        try (BufferedSink requestBody = Okio.buffer(requestBodyOut)) {
-          requestBody.writeAll(pipe.source());
-        } catch (IOException e) {
-          e.printStackTrace(); // TODO: actual fold should fix this.
-        }
-      }
-    };
-    thread.start();
+    pipe.fold(requestBodyOut);
   }
 
   @Override public synchronized void onFailure(Call call, IOException e) {
