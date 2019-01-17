@@ -698,7 +698,7 @@ public final class Http2ConnectionTest {
     connection.writePingAndAwaitPong();
     Http2Stream stream = connection.newStream(headerEntries("a", "android"), true);
     // finish the stream
-    stream.writeHeaders(headerEntries("b", "berserk"), false);
+    stream.writeHeaders(headerEntries("b", "berserk"), true, false);
     try {
       stream.enqueueTrailers(Headers.of("trailers", "boom"));
       fail();
@@ -754,7 +754,7 @@ public final class Http2ConnectionTest {
     BufferedSink out = Okio.buffer(stream.getSink());
     out.writeUtf8("c3po");
     out.close();
-    stream.writeHeaders(headerEntries("e", "elephant"), true);
+    stream.writeHeaders(headerEntries("e", "elephant"), false, false);
     connection.writePingAndAwaitPong();
     assertEquals(0, connection.openStreamCount());
 

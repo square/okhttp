@@ -125,12 +125,6 @@ public final class Http2Codec implements HttpCodec {
     stream.writeTimeout().timeout(chain.writeTimeoutMillis(), TimeUnit.MILLISECONDS);
   }
 
-  /** Write more headers for the request. */
-  public void writeRequestHeaders(List<Header> headers) throws IOException {
-    if (stream == null) throw new IllegalStateException("stream == null");
-    stream.writeHeaders(headers, true);
-  }
-
   @Override public void flushRequest() throws IOException {
     connection.flush();
   }

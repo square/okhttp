@@ -181,22 +181,21 @@ public final class Http2Stream {
   /**
    * Sends a reply to an incoming stream.
    *
-   * @param out true to create an output stream that we can use to send data to the remote peer.
-   * Corresponds to {@code FLAG_FIN}.
+   * @param outFinished true to eagerly finish the output stream to send data to the remote peer.
+   *     Corresponds to {@code FLAG_FIN}.
+   * @param flushHeaders true to force flush the response headers. This should be true unless the
+   *     response body exists and will be written immediately.
    */
-  public void writeHeaders(List<Header> responseHeaders, boolean out) throws IOException {
+  public void writeHeaders(List<Header> responseHeaders, boolean outFinished, boolean flushHeaders)
+      throws IOException {
     assert (!Thread.holdsLock(Http2Stream.this));
     if (responseHeaders == null) {
       throw new NullPointerException("headers == null");
     }
-    boolean outFinished = false;
-    boolean flushHeaders = false;
     synchronized (this) {
       this.hasResponseHeaders = true;
-      if (!out) {
+      if (outFinished) {
         this.sink.finished = true;
-        flushHeaders = true;
-        outFinished = true;
       }
     }
 
@@ -240,7 +239,7 @@ public final class Http2Stream {
    * Returns a sink that can be used to write data to the peer.
    *
    * @throws IllegalStateException if this stream was initiated by the peer and a {@link
-   * #writeHeaders} has not yet been sent.
+   *     #writeHeaders} has not yet been sent.
    */
   public Sink getSink() {
     synchronized (this) {

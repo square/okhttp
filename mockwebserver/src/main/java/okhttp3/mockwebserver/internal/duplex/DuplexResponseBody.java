@@ -21,8 +21,6 @@ import okio.BufferedSink;
 import okio.BufferedSource;
 
 public interface DuplexResponseBody {
-  void onRequest(
-      RecordedRequest request,
-      BufferedSource requestBodySource,
-      BufferedSink responseBodySink) throws IOException;
+  void onRequest(RecordedRequest request, BufferedSource requestBody, BufferedSink responseBody)
+      throws IOException;
 }

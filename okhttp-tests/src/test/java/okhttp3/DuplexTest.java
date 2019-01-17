@@ -37,6 +37,7 @@ import static junit.framework.TestCase.assertTrue;
 import static okhttp3.TestUtil.defaultClient;
 import static okhttp3.tls.internal.TlsUtil.localhost;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 
 public final class DuplexTest {
   @Rule public final TestRule timeout = new Timeout(30_000, TimeUnit.MILLISECONDS);
@@ -44,6 +45,114 @@ public final class DuplexTest {
 
   private HandshakeCertificates handshakeCertificates = localhost();
   private OkHttpClient client = defaultClient();
+
+  @Test public void trueDuplexClientWritesFirst() throws IOException {
+    MockResponse mockResponse = new MockResponse();
+    mockResponse.clearHeaders();
+    MwsDuplexAccess.instance.setBody(mockResponse, new DuplexResponseBody() {
+      @Override public void onRequest(RecordedRequest request,
+          BufferedSource requestBody, BufferedSink responseBody) throws IOException {
+
+        assertEquals("request A", requestBody.readUtf8Line());
+        responseBody.writeUtf8("response B\n");
+        responseBody.flush();
+
+        assertEquals("request C", requestBody.readUtf8Line());
+        responseBody.writeUtf8("response D\n");
+        responseBody.flush();
+
+        assertEquals("request E", requestBody.readUtf8Line());
+        responseBody.writeUtf8("response F\n");
+        responseBody.flush();
+
+        assertNull(requestBody.readUtf8Line());
+        requestBody.close();
+        responseBody.close();
+      }
+    });
+    server.enqueue(mockResponse);
+    enableProtocol(Protocol.HTTP_2);
+
+    DuplexRequestBody duplexRequestBody = new DuplexRequestBody(null, 128);
+
+    Call call = client.newCall(new Request.Builder()
+        .url(server.url("/"))
+        .post(duplexRequestBody)
+        .build());
+
+    BufferedSink requestBody = duplexRequestBody.createSink(call);
+    requestBody.writeUtf8("request A\n");
+    requestBody.flush();
+
+    try (Response response = duplexRequestBody.awaitExecute()) {
+      BufferedSource responseBody = response.body().source();
+      assertEquals("response B", responseBody.readUtf8Line());
+
+      requestBody.writeUtf8("request C\n");
+      requestBody.flush();
+      assertEquals("response D", responseBody.readUtf8Line());
+
+      requestBody.writeUtf8("request E\n");
+      requestBody.flush();
+      assertEquals("response F", responseBody.readUtf8Line());
+
+      requestBody.close();
+      assertNull(responseBody.readUtf8Line());
+    }
+  }
+
+  @Test public void trueDuplexServerWritesFirst() throws IOException {
+    MockResponse mockResponse = new MockResponse();
+    mockResponse.clearHeaders();
+    MwsDuplexAccess.instance.setBody(mockResponse, new DuplexResponseBody() {
+      @Override public void onRequest(RecordedRequest request,
+          BufferedSource requestBody, BufferedSink responseBody) throws IOException {
+        responseBody.writeUtf8("response A\n");
+        responseBody.flush();
+        assertEquals("request B", requestBody.readUtf8Line());
+
+        responseBody.writeUtf8("response C\n");
+        responseBody.flush();
+        assertEquals("request D", requestBody.readUtf8Line());
+
+        responseBody.writeUtf8("response E\n");
+        responseBody.flush();
+        assertEquals("request F", requestBody.readUtf8Line());
+
+        responseBody.close();
+      }
+    });
+    server.enqueue(mockResponse);
+    enableProtocol(Protocol.HTTP_2);
+
+    DuplexRequestBody duplexRequestBody = new DuplexRequestBody(null, 128);
+
+    Call call = client.newCall(new Request.Builder()
+        .url(server.url("/"))
+        .post(duplexRequestBody)
+        .build());
+
+    BufferedSink requestBody = duplexRequestBody.createSink(call);
+
+    try (Response response = duplexRequestBody.awaitExecute()) {
+      BufferedSource responseBody = response.body().source();
+
+      assertEquals("response A", responseBody.readUtf8Line());
+      requestBody.writeUtf8("request B\n");
+      requestBody.flush();
+
+      assertEquals("response C", responseBody.readUtf8Line());
+      requestBody.writeUtf8("request D\n");
+      requestBody.flush();
+
+      assertEquals("response E", responseBody.readUtf8Line());
+      requestBody.writeUtf8("request F\n");
+      requestBody.flush();
+
+      assertNull(responseBody.readUtf8Line());
+      requestBody.close();
+    }
+  }
 
   @Test public void clientReadsHeadersDataTrailers() throws IOException {
     final LatchParty latchParty = new LatchParty();
@@ -54,18 +163,18 @@ public final class DuplexTest {
         .setTrailers(Headers.of("trailers", "boom"));
     MwsDuplexAccess.instance.setBody(mockResponse, new DuplexResponseBody() {
       @Override public void onRequest(RecordedRequest request,
-          BufferedSource requestBodySource, BufferedSink responseBodySink) throws IOException {
+          BufferedSource requestBody, BufferedSink responseBody) throws IOException {
 
         latchParty.step(1);
-        responseBodySink.writeUtf8("ok");
-        responseBodySink.flush();
+        responseBody.writeUtf8("ok");
+        responseBody.flush();
 
         latchParty.step(3);
-        responseBodySink.writeUtf8("taco");
-        responseBodySink.flush();
+        responseBody.writeUtf8("taco");
+        responseBody.flush();
 
         latchParty.step(5);
-        responseBodySink.close();
+        responseBody.close();
       }
     });
     server.enqueue(mockResponse);
@@ -79,14 +188,14 @@ public final class DuplexTest {
       assertEquals(Headers.of("h1", "v1", "h2", "v2"), response.headers());
 
       latchParty.step(2);
-      BufferedSource source = response.body().source();
-      assertEquals("ok", source.readUtf8(2));
+      BufferedSource responseBody = response.body().source();
+      assertEquals("ok", responseBody.readUtf8(2));
 
       latchParty.step(4);
-      assertEquals("taco", source.readUtf8(4));
+      assertEquals("taco", responseBody.readUtf8(4));
 
       latchParty.step(6);
-      assertTrue(source.exhausted());
+      assertTrue(responseBody.exhausted());
       assertEquals(Headers.of("trailers", "boom"), response.trailers());
     }
   }
@@ -100,10 +209,10 @@ public final class DuplexTest {
         .addHeader("h2", "v2");
     MwsDuplexAccess.instance.setBody(mockResponse, new DuplexResponseBody() {
       @Override public void onRequest(RecordedRequest request,
-          BufferedSource requestBodySource, BufferedSink responseBodySink) throws IOException {
-        responseBodySink.close();
+          BufferedSource requestBody, BufferedSink responseBody) throws IOException {
+        responseBody.close();
 
-        requestBodySourceRef.set(requestBodySource);
+        requestBodySourceRef.set(requestBody);
       }
     });
     server.enqueue(mockResponse);
@@ -123,10 +232,10 @@ public final class DuplexTest {
       sink.close();
 
       // check what the server received
-      BufferedSource requestBodySource = requestBodySourceRef.get();
-      assertEquals("hey", requestBodySource.readUtf8Line());
-      assertEquals("whats going on", requestBodySource.readUtf8Line());
-      assertTrue(requestBodySource.exhausted());
+      BufferedSource requestBody = requestBodySourceRef.get();
+      assertEquals("hey", requestBody.readUtf8Line());
+      assertEquals("whats going on", requestBody.readUtf8Line());
+      assertTrue(requestBody.exhausted());
     }
   }
 
