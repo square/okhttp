@@ -130,7 +130,7 @@ public final class Http2Server extends Http2Connection.Listener {
         new Header(":version", "HTTP/1.1"),
         new Header("content-type", "text/plain")
     );
-    stream.writeHeaders(responseHeaders, true);
+    stream.writeHeaders(responseHeaders, false, false);
     BufferedSink out = Okio.buffer(stream.getSink());
     out.writeUtf8("Not found: " + path);
     out.close();
@@ -142,7 +142,7 @@ public final class Http2Server extends Http2Connection.Listener {
         new Header(":version", "HTTP/1.1"),
         new Header("content-type", "text/html; charset=UTF-8")
     );
-    stream.writeHeaders(responseHeaders, true);
+    stream.writeHeaders(responseHeaders, false, false);
     BufferedSink out = Okio.buffer(stream.getSink());
     for (File file : files) {
       String target = file.isDirectory() ? (file.getName() + "/") : file.getName();
@@ -157,7 +157,7 @@ public final class Http2Server extends Http2Connection.Listener {
         new Header(":version", "HTTP/1.1"),
         new Header("content-type", contentType(file))
     );
-    stream.writeHeaders(responseHeaders, true);
+    stream.writeHeaders(responseHeaders, false, false);
     try (Source source = Okio.source(file); BufferedSink sink = Okio.buffer(stream.getSink())) {
       sink.writeAll(source);
     }

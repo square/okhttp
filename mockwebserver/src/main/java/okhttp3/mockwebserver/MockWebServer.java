@@ -988,8 +988,9 @@ public final class MockWebServer extends ExternalResource implements Closeable {
       if (peek.isDuplex()) {
         readBody = false;
       } else if (!readBody && peek.getSocketPolicy() == EXPECT_CONTINUE) {
-        stream.writeHeaders(Collections.singletonList(
-            new Header(Header.RESPONSE_STATUS, ByteString.encodeUtf8("100 Continue"))), true);
+        List<Header> continueHeaders = Collections.singletonList(
+            new Header(Header.RESPONSE_STATUS, ByteString.encodeUtf8("100 Continue")));
+        stream.writeHeaders(continueHeaders, false, true);
         stream.getConnection().flush();
         readBody = true;
       }
@@ -1035,13 +1036,14 @@ public final class MockWebServer extends ExternalResource implements Closeable {
       sleepIfDelayed(response.getHeadersDelay(TimeUnit.MILLISECONDS));
 
       Buffer body = response.getBody();
-      boolean hasResponseBody = body != null
-          || !response.getPushPromises().isEmpty()
-          || response.isDuplex();
-      if (!hasResponseBody && trailers.size() > 0) {
+      boolean outFinished = body == null
+          && response.getPushPromises().isEmpty()
+          && !response.isDuplex();
+      boolean flushHeaders = body == null;
+      if (outFinished && trailers.size() > 0) {
         throw new IllegalStateException("unsupported: no body and non-empty trailers " + trailers);
       }
-      stream.writeHeaders(http2Headers, hasResponseBody);
+      stream.writeHeaders(http2Headers, outFinished, flushHeaders);
       if (trailers.size() > 0) {
         stream.enqueueTrailers(trailers);
       }
@@ -1052,11 +1054,11 @@ public final class MockWebServer extends ExternalResource implements Closeable {
         throttledTransfer(response, socket, body, sink, body.size(), false);
         sink.close();
       } else if (response.isDuplex()) {
-        final BufferedSink sink = Okio.buffer(stream.getSink());
-        final BufferedSource source = Okio.buffer(stream.getSource());
-        final DuplexResponseBody duplexResponseBody = response.getDuplexResponseBody();
+        BufferedSink sink = Okio.buffer(stream.getSink());
+        BufferedSource source = Okio.buffer(stream.getSource());
+        DuplexResponseBody duplexResponseBody = response.getDuplexResponseBody();
         duplexResponseBody.onRequest(request, source, sink);
-      } else if (hasResponseBody) {
+      } else if (!outFinished) {
         stream.close(ErrorCode.NO_ERROR);
       }
     }
