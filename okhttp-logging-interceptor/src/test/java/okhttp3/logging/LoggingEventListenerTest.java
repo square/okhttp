@@ -17,9 +17,11 @@ package okhttp3.logging;
 
 import java.io.IOException;
 import java.net.UnknownHostException;
+import java.util.Arrays;
 import okhttp3.HttpUrl;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
+import okhttp3.Protocol;
 import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
@@ -31,6 +33,8 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 
+import static java.util.Arrays.*;
+import static okhttp3.Protocol.*;
 import static okhttp3.tls.internal.TlsUtil.localhost;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.fail;
@@ -143,8 +147,8 @@ public final class LoggingEventListenerTest {
         .assertLogMatch("connectStart: " + url.host() + "/.+ DIRECT")
         .assertLogMatch("secureConnectStart")
         .assertLogMatch("secureConnectEnd: Handshake\\{"
-            + "tlsVersion=TLS_1_2 "
-            + "cipherSuite=TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384 "
+            + "tlsVersion=TLS_1_[23] "
+            + "cipherSuite=(?:TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384|TLS_AES_128_GCM_SHA256) "
             + "peerCertificates=\\[CN=localhost\\] "
             + "localCertificates=\\[\\]}")
         .assertLogMatch("connectEnd: h2")
@@ -189,6 +193,7 @@ public final class LoggingEventListenerTest {
   @Test
   public void connectFail() {
     server.useHttps(handshakeCertificates.sslSocketFactory(), false);
+    server.setProtocols(asList(HTTP_2, HTTP_1_1));
     server.enqueue(new MockResponse().setSocketPolicy(SocketPolicy.FAIL_HANDSHAKE));
     url = server.url("/");
 
@@ -205,9 +210,9 @@ public final class LoggingEventListenerTest {
         .assertLogMatch("connectStart: " + url.host() + "/.+ DIRECT")
         .assertLogMatch("secureConnectStart")
         .assertLogMatch(
-            "connectFailed: null javax\\.net\\.ssl\\.SSLProtocolException: Handshake message sequence violation, 1")
+            "connectFailed: null javax\\.net\\.ssl\\.SSLProtocolException: (?:Unexpected handshake message: client_hello|Handshake message sequence violation, 1)")
         .assertLogMatch(
-            "callFailed: javax.net.ssl.SSLProtocolException: Handshake message sequence violation, 1")
+            "callFailed: javax\\.net\\.ssl\\.SSLProtocolException: (?:Unexpected handshake message: client_hello|Handshake message sequence violation, 1)")
         .assertNoMoreLogs();
   }
 
