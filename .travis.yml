@@ -2,8 +2,8 @@ language: java
 
 jdk:
   - oraclejdk8
+  - openjdk8
   - openjdk11
-  - openjdk12
 
 before_install:
   - mvn -N io.takari:maven:wrapper -Dmaven=3.6.0
