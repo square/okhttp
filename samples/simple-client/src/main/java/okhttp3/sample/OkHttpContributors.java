@@ -4,7 +4,6 @@ import com.squareup.moshi.JsonAdapter;
 import com.squareup.moshi.Moshi;
 import com.squareup.moshi.Types;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -37,11 +36,7 @@ public class OkHttpContributors {
       List<Contributor> contributors = CONTRIBUTORS_JSON_ADAPTER.fromJson(body.source());
 
       // Sort list by the most contributions.
-      Collections.sort(contributors, new Comparator<Contributor>() {
-        @Override public int compare(Contributor c1, Contributor c2) {
-          return c2.contributions - c1.contributions;
-        }
-      });
+      Collections.sort(contributors, (c1, c2) -> c2.contributions - c1.contributions);
 
       // Output list of contributors.
       for (Contributor contributor : contributors) {

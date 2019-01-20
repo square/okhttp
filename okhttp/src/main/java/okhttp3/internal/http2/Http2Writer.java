@@ -121,24 +121,6 @@ final class Http2Writer implements Closeable {
     sink.flush();
   }
 
-  public synchronized void synStream(boolean outFinished, int streamId,
-      int associatedStreamId, List<Header> headerBlock) throws IOException {
-    if (closed) throw new IOException("closed");
-    headers(outFinished, streamId, headerBlock);
-  }
-
-  public synchronized void synReply(boolean outFinished, int streamId,
-      List<Header> headerBlock) throws IOException {
-    if (closed) throw new IOException("closed");
-    headers(outFinished, streamId, headerBlock);
-  }
-
-  public synchronized void headers(int streamId, List<Header> headerBlock)
-      throws IOException {
-    if (closed) throw new IOException("closed");
-    headers(false, streamId, headerBlock);
-  }
-
   public synchronized void rstStream(int streamId, ErrorCode errorCode)
       throws IOException {
     if (closed) throw new IOException("closed");
@@ -294,7 +276,8 @@ final class Http2Writer implements Closeable {
     }
   }
 
-  void headers(boolean outFinished, int streamId, List<Header> headerBlock) throws IOException {
+  public synchronized void headers(
+      boolean outFinished, int streamId, List<Header> headerBlock) throws IOException {
     if (closed) throw new IOException("closed");
     hpackWriter.writeHeaders(headerBlock);
 

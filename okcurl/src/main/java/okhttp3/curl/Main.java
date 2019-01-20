@@ -33,7 +33,6 @@ import java.util.logging.Logger;
 import java.util.logging.SimpleFormatter;
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLSession;
 import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
@@ -48,6 +47,8 @@ import okhttp3.internal.Util;
 import okhttp3.internal.http.StatusLine;
 import okhttp3.internal.http2.Http2;
 import okhttp3.internal.platform.Platform;
+import okhttp3.logging.HttpLoggingInterceptor;
+import okhttp3.logging.LoggingEventListener;
 import okio.BufferedSource;
 import okio.Okio;
 import okio.Sink;
@@ -102,6 +103,11 @@ public class Main extends HelpOption implements Runnable {
   @Option(name = "--read-timeout", description = "Maximum time allowed for reading data (seconds)")
   public int readTimeout = DEFAULT_TIMEOUT;
 
+  @Option(
+      name = "--call-timeout",
+      description = "Maximum time allowed for the entire call (seconds)")
+  public int callTimeout = DEFAULT_TIMEOUT;
+
   @Option(name = {"-L", "--location"}, description = "Follow redirects")
   public boolean followRedirects;
 
@@ -120,6 +126,11 @@ public class Main extends HelpOption implements Runnable {
 
   @Option(name = {"-V", "--version"}, description = "Show version number and quit")
   public boolean version;
+
+  @Option(
+      name = {"-v", "--verbose"},
+      description = "Makes " + NAME + " verbose during the operation")
+  public boolean verbose;
 
   @Arguments(title = "url", description = "Remote resource URL")
   public String url;
@@ -157,7 +168,7 @@ public class Main extends HelpOption implements Runnable {
       Sink out = Okio.sink(System.out);
       BufferedSource source = response.body().source();
       while (!source.exhausted()) {
-        out.write(source.buffer(), source.buffer().size());
+        out.write(source.getBuffer(), source.getBuffer().size());
         out.flush();
       }
 
@@ -178,11 +189,18 @@ public class Main extends HelpOption implements Runnable {
     if (readTimeout != DEFAULT_TIMEOUT) {
       builder.readTimeout(readTimeout, SECONDS);
     }
+    if (callTimeout != DEFAULT_TIMEOUT) {
+      builder.callTimeout(callTimeout, SECONDS);
+    }
     if (allowInsecure) {
       X509TrustManager trustManager = createInsecureTrustManager();
       SSLSocketFactory sslSocketFactory = createInsecureSslSocketFactory(trustManager);
       builder.sslSocketFactory(sslSocketFactory, trustManager);
       builder.hostnameVerifier(createInsecureHostnameVerifier());
+    }
+    if (verbose) {
+      HttpLoggingInterceptor.Logger logger = System.out::println;
+      builder.eventListenerFactory(new LoggingEventListener.Factory(logger));
     }
     return builder.build();
   }
@@ -267,11 +285,7 @@ public class Main extends HelpOption implements Runnable {
   }
 
   private static HostnameVerifier createInsecureHostnameVerifier() {
-    return new HostnameVerifier() {
-      @Override public boolean verify(String s, SSLSession sslSession) {
-        return true;
-      }
-    };
+    return (name, session) -> true;
   }
 
   private static void enableHttp2FrameLogging() {

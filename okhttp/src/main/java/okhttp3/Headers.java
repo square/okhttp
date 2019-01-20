@@ -17,6 +17,7 @@
 
 package okhttp3;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -30,6 +31,7 @@ import java.util.TreeSet;
 import javax.annotation.Nullable;
 import okhttp3.internal.Util;
 import okhttp3.internal.http.HttpDate;
+import org.codehaus.mojo.animal_sniffer.IgnoreJRERequirement;
 
 /**
  * The header fields of a single HTTP message. Values are uninterpreted strings; use {@code Request}
@@ -72,6 +74,16 @@ public final class Headers {
     return value != null ? HttpDate.parse(value) : null;
   }
 
+  /**
+   * Returns the last value corresponding to the specified field parsed as an HTTP date, or null if
+   * either the field is absent or cannot be parsed as a date.
+   */
+  @IgnoreJRERequirement
+  public @Nullable Instant getInstant(String name) {
+    Date value = getDate(name);
+    return value != null ? value.toInstant() : null;
+  }
+
   /** Returns the number of field values. */
   public int size() {
     return namesAndValues.length / 2;
@@ -107,7 +119,7 @@ public final class Headers {
     }
     return result != null
         ? Collections.unmodifiableList(result)
-        : Collections.<String>emptyList();
+        : Collections.emptyList();
   }
 
   /**
@@ -190,7 +202,7 @@ public final class Headers {
     return result;
   }
 
-  private static String get(String[] namesAndValues, String name) {
+  private static @Nullable String get(String[] namesAndValues, String name) {
     for (int i = namesAndValues.length - 2; i >= 0; i -= 2) {
       if (name.equalsIgnoreCase(namesAndValues[i])) {
         return namesAndValues[i + 1];
@@ -220,7 +232,8 @@ public final class Headers {
     for (int i = 0; i < namesAndValues.length; i += 2) {
       String name = namesAndValues[i];
       String value = namesAndValues[i + 1];
-      checkNameAndValue(name, value);
+      checkName(name);
+      checkValue(value, name);
     }
 
     return new Headers(namesAndValues);
@@ -241,7 +254,8 @@ public final class Headers {
       }
       String name = header.getKey().trim();
       String value = header.getValue().trim();
-      checkNameAndValue(name, value);
+      checkName(name);
+      checkValue(value, name);
       namesAndValues[i] = name;
       namesAndValues[i + 1] = value;
       i += 2;
@@ -250,7 +264,7 @@ public final class Headers {
     return new Headers(namesAndValues);
   }
 
-  static void checkNameAndValue(String name, String value) {
+  static void checkName(String name) {
     if (name == null) throw new NullPointerException("name == null");
     if (name.isEmpty()) throw new IllegalArgumentException("name is empty");
     for (int i = 0, length = name.length(); i < length; i++) {
@@ -260,6 +274,9 @@ public final class Headers {
             "Unexpected char %#04x at %d in header name: %s", (int) c, i, name));
       }
     }
+  }
+
+  static void checkValue(String value, String name) {
     if (value == null) throw new NullPointerException("value for name " + name + " == null");
     for (int i = 0, length = value.length(); i < length; i++) {
       char c = value.charAt(i);
@@ -303,7 +320,17 @@ public final class Headers {
      * Add a header with the specified name and value. Does validation of header names and values.
      */
     public Builder add(String name, String value) {
-      checkNameAndValue(name, value);
+      checkName(name);
+      checkValue(value, name);
+      return addLenient(name, value);
+    }
+
+    /**
+     * Add a header with the specified name and value. Does validation of header names, allowing
+     * non-ASCII values.
+     */
+    public Builder addUnsafeNonAscii(String name, String value) {
+      checkName(name);
       return addLenient(name, value);
     }
 
@@ -311,12 +338,51 @@ public final class Headers {
      * Adds all headers from an existing collection.
      */
     public Builder addAll(Headers headers) {
-      int size = headers.size();
-      for (int i = 0; i < size; i++) {
+      for (int i = 0, size = headers.size(); i < size; i++) {
         addLenient(headers.name(i), headers.value(i));
       }
 
       return this;
+    }
+
+    /**
+     * Add a header with the specified name and formatted date. Does validation of header names and
+     * value.
+     */
+    public Builder add(String name, Date value) {
+      if (value == null) throw new NullPointerException("value for name " + name + " == null");
+      add(name, HttpDate.format(value));
+      return this;
+    }
+
+    /**
+     * Add a header with the specified name and formatted instant. Does validation of header names
+     * and value.
+     */
+    @IgnoreJRERequirement
+    public Builder add(String name, Instant value) {
+      if (value == null) throw new NullPointerException("value for name " + name + " == null");
+      return add(name, new Date(value.toEpochMilli()));
+    }
+
+    /**
+     * Set a field with the specified date. If the field is not found, it is added. If the field is
+     * found, the existing values are replaced.
+     */
+    public Builder set(String name, Date value) {
+      if (value == null) throw new NullPointerException("value for name " + name + " == null");
+      set(name, HttpDate.format(value));
+      return this;
+    }
+
+    /**
+     * Set a field with the specified instant. If the field is not found, it is added. If the field
+     * is found, the existing values are replaced.
+     */
+    @IgnoreJRERequirement
+    public Builder set(String name, Instant value) {
+      if (value == null) throw new NullPointerException("value for name " + name + " == null");
+      return set(name, new Date(value.toEpochMilli()));
     }
 
     /**
@@ -345,14 +411,15 @@ public final class Headers {
      * found, the existing values are replaced.
      */
     public Builder set(String name, String value) {
-      checkNameAndValue(name, value);
+      checkName(name);
+      checkValue(value, name);
       removeAll(name);
       addLenient(name, value);
       return this;
     }
 
     /** Equivalent to {@code build().get(name)}, but potentially faster. */
-    public String get(String name) {
+    public @Nullable String get(String name) {
       for (int i = namesAndValues.size() - 2; i >= 0; i -= 2) {
         if (name.equalsIgnoreCase(namesAndValues.get(i))) {
           return namesAndValues.get(i + 1);

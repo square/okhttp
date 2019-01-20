@@ -134,7 +134,6 @@ abstract class DelegatingHttpsURLConnection extends HttpsURLConnection {
     return delegate.getContent();
   }
 
-  @SuppressWarnings("unchecked") // Spec does not generify
   @Override public Object getContent(Class[] types) throws IOException {
     return delegate.getContent(types);
   }
@@ -147,7 +146,7 @@ abstract class DelegatingHttpsURLConnection extends HttpsURLConnection {
     return delegate.getContentLength();
   }
 
-  @IgnoreJRERequirement // Should only be invoked on Java 7+.
+  @IgnoreJRERequirement // Should only be invoked on Java 8+ or Android API 24+.
   @Override public long getContentLengthLong() {
     return delegate.getContentLengthLong();
   }
@@ -196,7 +195,7 @@ abstract class DelegatingHttpsURLConnection extends HttpsURLConnection {
     return delegate.getHeaderField(key);
   }
 
-  @IgnoreJRERequirement // Should only be invoked on Java 7+.
+  @IgnoreJRERequirement // Should only be invoked on Java 8+ or Android API 24+.
   @Override public long getHeaderFieldLong(String field, long defaultValue) {
     return delegate.getHeaderFieldLong(field, defaultValue);
   }
@@ -261,7 +260,7 @@ abstract class DelegatingHttpsURLConnection extends HttpsURLConnection {
     delegate.setDoOutput(newValue);
   }
 
-  @IgnoreJRERequirement // Should only be invoked on Java 7+.
+  @IgnoreJRERequirement // Should only be invoked on Java 8+ or Android API 24+.
   @Override public void setFixedLengthStreamingMode(long contentLength) {
     delegate.setFixedLengthStreamingMode(contentLength);
   }

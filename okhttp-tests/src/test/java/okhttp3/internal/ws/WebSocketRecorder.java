@@ -17,6 +17,7 @@ package okhttp3.internal.ws;
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Objects;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
@@ -24,7 +25,6 @@ import javax.annotation.Nullable;
 import okhttp3.Response;
 import okhttp3.WebSocket;
 import okhttp3.WebSocketListener;
-import okhttp3.internal.Util;
 import okhttp3.internal.platform.Platform;
 import okio.ByteString;
 
@@ -86,7 +86,7 @@ public final class WebSocketRecorder extends WebSocketListener {
   }
 
   @Override public void onClosing(WebSocket webSocket, int code, String reason) {
-    Platform.get().log(Platform.INFO, "[WS " + name + "] onClose " + code, null);
+    Platform.get().log(Platform.INFO, "[WS " + name + "] onClosing " + code, null);
 
     WebSocketListener delegate = this.delegate;
     if (delegate != null) {
@@ -98,7 +98,7 @@ public final class WebSocketRecorder extends WebSocketListener {
   }
 
   @Override public void onClosed(WebSocket webSocket, int code, String reason) {
-    Platform.get().log(Platform.INFO, "[WS " + name + "] onClose " + code, null);
+    Platform.get().log(Platform.INFO, "[WS " + name + "] onClosed " + code, null);
 
     WebSocketListener delegate = this.delegate;
     if (delegate != null) {
@@ -309,8 +309,8 @@ public final class WebSocketRecorder extends WebSocketListener {
 
     @Override public boolean equals(Object other) {
       return other instanceof Message
-          && Util.equal(((Message) other).bytes, bytes)
-          && Util.equal(((Message) other).string, string);
+          && Objects.equals(((Message) other).bytes, bytes)
+          && Objects.equals(((Message) other).string, string);
     }
   }
 

@@ -110,14 +110,12 @@ public final class MockHttp2Peer implements Closeable {
     serverSocket.setReuseAddress(false);
     serverSocket.bind(new InetSocketAddress("localhost", 0), 1);
     port = serverSocket.getLocalPort();
-    executor.execute(new Runnable() {
-      @Override public void run() {
-        try {
-          readAndWriteFrames();
-        } catch (IOException e) {
-          Util.closeQuietly(MockHttp2Peer.this);
-          logger.info(MockHttp2Peer.this + " done: " + e.getMessage());
-        }
+    executor.execute(() -> {
+      try {
+        readAndWriteFrames();
+      } catch (IOException e) {
+        Util.closeQuietly(MockHttp2Peer.this);
+        logger.info(MockHttp2Peer.this + " done: " + e.getMessage());
       }
     });
   }

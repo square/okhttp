@@ -24,8 +24,7 @@ import okhttp3.tls.HeldCertificate;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.fail;
 
 public final class CertificatePinnerTest {
@@ -87,9 +86,9 @@ public final class CertificatePinnerTest {
         .build();
     String keypairBCertificate2Pin = CertificatePinner.pin(heldCertificateB2.certificate());
 
-    assertTrue(certA1Sha256Pin.equals(keypairACertificate2Pin));
-    assertTrue(certB1Sha256Pin.equals(keypairBCertificate2Pin));
-    assertFalse(certA1Sha256Pin.equals(certB1Sha256Pin));
+    assertEquals(certA1Sha256Pin, keypairACertificate2Pin);
+    assertEquals(certB1Sha256Pin, keypairBCertificate2Pin);
+    assertNotEquals(certA1Sha256Pin, certB1Sha256Pin);
   }
 
   @Test public void successfulCheck() throws Exception {

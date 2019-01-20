@@ -46,7 +46,7 @@ public final class WebPlatformUrlTest {
     }
   }
 
-  @Parameter(0)
+  @Parameter
   public WebPlatformUrlTestData testData;
 
   private static final List<String> HTTP_URL_SCHEMES
@@ -58,8 +58,6 @@ public final class WebPlatformUrlTest {
       "Parsing: <http://f:\n/c> against <http://example.org/foo/bar>",
       "Parsing: <http://f:999999/c> against <http://example.org/foo/bar>",
       "Parsing: <http://192.0x00A80001> against <about:blank>",
-      // This test fails on Java 7 but passes on Java 8. See HttpUrlTest.hostWithTrailingDot().
-      "Parsing: <http://%30%78%63%30%2e%30%32%35%30.01%2e> against <http://other.com/>",
       "Parsing: <http://%30%78%63%30%2e%30%32%35%30.01> against <http://other.com/>",
       "Parsing: <http://192.168.0.257> against <http://other.com/>",
       "Parsing: <http://０Ｘｃ０．０２５０．０１> against <http://other.com/>"

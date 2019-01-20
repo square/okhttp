@@ -22,11 +22,19 @@ import okio.ByteString;
 public final class Header {
   // Special header names defined in HTTP/2 spec.
   public static final ByteString PSEUDO_PREFIX = ByteString.encodeUtf8(":");
-  public static final ByteString RESPONSE_STATUS = ByteString.encodeUtf8(":status");
-  public static final ByteString TARGET_METHOD = ByteString.encodeUtf8(":method");
-  public static final ByteString TARGET_PATH = ByteString.encodeUtf8(":path");
-  public static final ByteString TARGET_SCHEME = ByteString.encodeUtf8(":scheme");
-  public static final ByteString TARGET_AUTHORITY = ByteString.encodeUtf8(":authority");
+
+  public static final String RESPONSE_STATUS_UTF8 = ":status";
+  public static final String TARGET_METHOD_UTF8 = ":method";
+  public static final String TARGET_PATH_UTF8 = ":path";
+  public static final String TARGET_SCHEME_UTF8 = ":scheme";
+  public static final String TARGET_AUTHORITY_UTF8 = ":authority";
+
+  public static final ByteString RESPONSE_STATUS = ByteString.encodeUtf8(RESPONSE_STATUS_UTF8);
+  public static final ByteString TARGET_METHOD = ByteString.encodeUtf8(TARGET_METHOD_UTF8);
+  public static final ByteString TARGET_PATH = ByteString.encodeUtf8(TARGET_PATH_UTF8);
+  public static final ByteString TARGET_SCHEME = ByteString.encodeUtf8(TARGET_SCHEME_UTF8);
+  public static final ByteString TARGET_AUTHORITY = ByteString.encodeUtf8(TARGET_AUTHORITY_UTF8);
+
 
   /** Name in case-insensitive ASCII encoding. */
   public final ByteString name;

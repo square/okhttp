@@ -27,6 +27,7 @@ import okio.ForwardingSource;
 import okio.Okio;
 import org.junit.Test;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -256,7 +257,7 @@ public final class ResponseBodyTest {
     assertEquals(0xef, bytes[0] & 0xff);
     assertEquals(0xbb, bytes[1] & 0xff);
     assertEquals(0xbf, bytes[2] & 0xff);
-    assertEquals("hello", new String(bytes, 3, 5, "UTF-8"));
+    assertEquals("hello", new String(bytes, 3, 5, UTF_8));
   }
 
   @Test public void bytesClosesUnderlyingSource() throws IOException {
@@ -340,7 +341,7 @@ public final class ResponseBodyTest {
     assertEquals(0xef, bytes.read());
     assertEquals(0xbb, bytes.read());
     assertEquals(0xbf, bytes.read());
-    assertEquals("hello", exhaust(new InputStreamReader(bytes, "utf-8")));
+    assertEquals("hello", exhaust(new InputStreamReader(bytes, UTF_8)));
   }
 
   @Test public void byteStreamClosesUnderlyingSource() throws IOException {

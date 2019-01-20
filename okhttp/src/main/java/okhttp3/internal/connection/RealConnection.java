@@ -19,12 +19,14 @@ package okhttp3.internal.connection;
 import java.io.IOException;
 import java.lang.ref.Reference;
 import java.net.ConnectException;
+import java.net.HttpURLConnection;
 import java.net.ProtocolException;
 import java.net.Proxy;
 import java.net.Socket;
 import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.net.UnknownServiceException;
+import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.List;
@@ -322,11 +324,18 @@ public final class RealConnection extends Http2Connection.Listener implements Co
 
       // Verify that the socket's certificates are acceptable for the target host.
       if (!address.hostnameVerifier().verify(address.url().host(), sslSocketSession)) {
-        X509Certificate cert = (X509Certificate) unverifiedHandshake.peerCertificates().get(0);
-        throw new SSLPeerUnverifiedException("Hostname " + address.url().host() + " not verified:"
-            + "\n    certificate: " + CertificatePinner.pin(cert)
-            + "\n    DN: " + cert.getSubjectDN().getName()
-            + "\n    subjectAltNames: " + OkHostnameVerifier.allSubjectAltNames(cert));
+        List<Certificate> peerCertificates = unverifiedHandshake.peerCertificates();
+        if (!peerCertificates.isEmpty()) {
+          X509Certificate cert = (X509Certificate) peerCertificates.get(0);
+          throw new SSLPeerUnverifiedException(
+              "Hostname " + address.url().host() + " not verified:"
+                  + "\n    certificate: " + CertificatePinner.pin(cert)
+                  + "\n    DN: " + cert.getSubjectDN().getName()
+                  + "\n    subjectAltNames: " + OkHostnameVerifier.allSubjectAltNames(cert));
+        } else {
+          throw new SSLPeerUnverifiedException(
+              "Hostname " + address.url().host() + " not verified (no certificates)");
+        }
       }
 
       // Check that the certificate pinner is satisfied by the certificates presented.
@@ -391,7 +400,7 @@ public final class RealConnection extends Http2Connection.Listener implements Co
           // that happens, then we will have buffered bytes that are needed by the SSLSocket!
           // This check is imperfect: it doesn't tell us whether a handshake will succeed, just
           // that it will almost certainly fail because the proxy has sent unexpected data.
-          if (!source.buffer().exhausted() || !sink.buffer().exhausted()) {
+          if (!source.getBuffer().exhausted() || !sink.buffer().exhausted()) {
             throw new IOException("TLS tunnel buffered too many bytes!");
           }
           return null;
@@ -416,14 +425,37 @@ public final class RealConnection extends Http2Connection.Listener implements Co
    * Returns a request that creates a TLS tunnel via an HTTP proxy. Everything in the tunnel request
    * is sent unencrypted to the proxy server, so tunnels include only the minimum set of headers.
    * This avoids sending potentially sensitive data like HTTP cookies to the proxy unencrypted.
+   *
+   * <p>In order to support preemptive authentication we pass a fake “Auth Failed” response to the
+   * authenticator. This gives the authenticator the option to customize the CONNECT request. It can
+   * decline to do so by returning null, in which case OkHttp will use it as-is
    */
-  private Request createTunnelRequest() {
-    return new Request.Builder()
+  private Request createTunnelRequest() throws IOException {
+    Request proxyConnectRequest = new Request.Builder()
         .url(route.address().url())
+        .method("CONNECT", null)
         .header("Host", Util.hostHeader(route.address().url(), true))
         .header("Proxy-Connection", "Keep-Alive") // For HTTP/1.0 proxies like Squid.
         .header("User-Agent", Version.userAgent())
         .build();
+
+    Response fakeAuthChallengeResponse = new Response.Builder()
+        .request(proxyConnectRequest)
+        .protocol(Protocol.HTTP_1_1)
+        .code(HttpURLConnection.HTTP_PROXY_AUTH)
+        .message("Preemptive Authenticate")
+        .body(Util.EMPTY_RESPONSE)
+        .sentRequestAtMillis(-1L)
+        .receivedResponseAtMillis(-1L)
+        .header("Proxy-Authenticate", "OkHttp-Preemptive")
+        .build();
+
+    Request authenticatedRequest = route.address().proxyAuthenticator()
+        .authenticate(route, fakeAuthChallengeResponse);
+
+    return authenticatedRequest != null
+        ? authenticatedRequest
+        : proxyConnectRequest;
   }
 
   /**

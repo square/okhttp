@@ -67,7 +67,6 @@ import okhttp3.internal.DoubleInetAddressDns;
 import okhttp3.internal.Internal;
 import okhttp3.internal.RecordingAuthenticator;
 import okhttp3.internal.RecordingOkAuthenticator;
-import okhttp3.internal.SingleInetAddressDns;
 import okhttp3.internal.Util;
 import okhttp3.internal.Version;
 import okhttp3.internal.huc.OkHttpURLConnection;
@@ -88,12 +87,12 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
-import static java.util.Collections.singletonMap;
+import static java.nio.charset.StandardCharsets.US_ASCII;
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Locale.US;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 import static okhttp3.TestUtil.defaultClient;
-import static okhttp3.internal.Util.UTF_8;
 import static okhttp3.internal.http.StatusLine.HTTP_PERM_REDIRECT;
 import static okhttp3.internal.http.StatusLine.HTTP_TEMP_REDIRECT;
 import static okhttp3.internal.huc.OkHttpURLConnection.SELECTED_PROTOCOL;
@@ -327,7 +326,7 @@ public final class URLConnectionTest {
     connection = urlFactory.open(server.url("/def").url());
     connection.setDoOutput(true);
     transferKind.setForRequest(connection, 4);
-    connection.getOutputStream().write("body".getBytes("UTF-8"));
+    connection.getOutputStream().write("body".getBytes(UTF_8));
     assertContent("abc", connection);
 
     assertEquals("body", server.takeRequest().getBody().readUtf8());
@@ -344,7 +343,7 @@ public final class URLConnectionTest {
     connection.setDoOutput(true);
     connection.setChunkedStreamingMode(100);
     OutputStream os = connection.getOutputStream();
-    os.write("OutputStream is no fun.".getBytes("UTF-8"));
+    os.write("OutputStream is no fun.".getBytes(UTF_8));
     os.close();
 
     try {
@@ -471,12 +470,14 @@ public final class URLConnectionTest {
     assertContent("This comes after a busted connection", connection2);
 
     // Check that a fresh connection was created, either immediately or after attempting reuse.
+    // We know that a fresh connection was created if the server recorded a request with sequence
+    // number 0. Since the client may have attempted to reuse the broken connection just before
+    // creating a fresh connection, the server may have recorded 2 requests at this point. The order
+    // of recording is non-deterministic.
     RecordedRequest requestAfter = server.takeRequest();
-    if (server.getRequestCount() == 3) {
-      requestAfter = server.takeRequest(); // The failure consumed a response.
-    }
-    // sequence number 0 means the HTTP socket connection was not reused
-    assertEquals(0, requestAfter.getSequenceNumber());
+    assertTrue(
+        requestAfter.getSequenceNumber() == 0
+            || server.getRequestCount() == 3 && server.takeRequest().getSequenceNumber() == 0);
   }
 
   enum WriteKind {BYTE_BY_BYTE, SMALL_BUFFERS, LARGE_BUFFERS}
@@ -719,7 +720,6 @@ public final class URLConnectionTest {
     server.enqueue(new MockResponse().setSocketPolicy(FAIL_HANDSHAKE));
 
     urlFactory.setClient(urlFactory.client().newBuilder()
-        .dns(new SingleInetAddressDns())
         .connectionSpecs(Arrays.asList(ConnectionSpec.MODERN_TLS, ConnectionSpec.COMPATIBLE_TLS))
         .hostnameVerifier(new RecordingHostnameVerifier())
         .sslSocketFactory(
@@ -910,11 +910,11 @@ public final class URLConnectionTest {
 
   @Test public void contentDisagreesWithChunkedHeaderBodyTooShort() throws IOException {
     MockResponse mockResponse = new MockResponse();
-    mockResponse.setChunkedBody("abcde", 5);
+    mockResponse.setChunkedBody("abcdefg", 5);
 
     Buffer truncatedBody = new Buffer();
     Buffer fullBody = mockResponse.getBody();
-    truncatedBody.write(fullBody, fullBody.indexOf((byte) 'e'));
+    truncatedBody.write(fullBody, 4);
     mockResponse.setBody(truncatedBody);
 
     mockResponse.clearHeaders();
@@ -924,9 +924,9 @@ public final class URLConnectionTest {
     server.enqueue(mockResponse);
 
     try {
-      readAscii(urlFactory.open(server.url("/").url()).getInputStream(), 5);
+      readAscii(urlFactory.open(server.url("/").url()).getInputStream(), 7);
       fail();
-    } catch (ProtocolException expected) {
+    } catch (IOException expected) {
     }
   }
 
@@ -1021,7 +1021,6 @@ public final class URLConnectionTest {
     // Configure a single IP address for the host and a single configuration, so we only need one
     // failure to fail permanently.
     urlFactory.setClient(urlFactory.client().newBuilder()
-        .dns(new SingleInetAddressDns())
         .sslSocketFactory(
             handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager())
         .connectionSpecs(Util.immutableList(ConnectionSpec.MODERN_TLS))
@@ -1542,7 +1541,7 @@ public final class URLConnectionTest {
     connection.setChunkedStreamingMode(0); // OkHttp does not honor specific chunk sizes.
     connection.setDoOutput(true);
     OutputStream outputStream = connection.getOutputStream();
-    outputStream.write(body.getBytes("US-ASCII"));
+    outputStream.write(body.getBytes(US_ASCII));
     assertEquals(200, connection.getResponseCode());
     connection.getInputStream().close();
 
@@ -1617,13 +1616,13 @@ public final class URLConnectionTest {
 
     String credential = Credentials.basic("jesse", "secret");
     urlFactory.setClient(urlFactory.client().newBuilder()
-        .authenticator(new RecordingOkAuthenticator(credential))
+        .authenticator(new RecordingOkAuthenticator(credential, null))
         .build());
 
     connection = urlFactory.open(server.url("/").url());
     connection.setDoOutput(true);
     OutputStream outputStream = connection.getOutputStream();
-    outputStream.write(body.getBytes("UTF-8"));
+    outputStream.write(body.getBytes(UTF_8));
     outputStream.close();
     assertEquals(200, connection.getResponseCode());
     connection.getInputStream().close();
@@ -2236,7 +2235,7 @@ public final class URLConnectionTest {
         .addHeader("Location: " + server2.url("/b").url()));
 
     urlFactory.setClient(urlFactory.client().newBuilder()
-        .authenticator(new RecordingOkAuthenticator(Credentials.basic("jesse", "secret")))
+        .authenticator(new RecordingOkAuthenticator(Credentials.basic("jesse", "secret"), null))
         .build());
     assertContent("Page 2", urlFactory.open(server.url("/a").url()));
 
@@ -2306,7 +2305,7 @@ public final class URLConnectionTest {
     connection.addRequestProperty("Content-Type", "text/plain; charset=utf-8");
     connection.addRequestProperty("Transfer-Encoding", "identity");
     OutputStream outputStream = connection.getOutputStream();
-    outputStream.write("ABCD".getBytes("UTF-8"));
+    outputStream.write("ABCD".getBytes(UTF_8));
     outputStream.close();
     assertEquals("Page 2", readAscii(connection.getInputStream(), Integer.MAX_VALUE));
 
@@ -2491,7 +2490,7 @@ public final class URLConnectionTest {
 
     HttpURLConnection connection = urlFactory.open(server.url("/").url());
     connection.setRequestMethod("POST");
-    connection.getOutputStream().write("Hello".getBytes("UTF-8"));
+    connection.getOutputStream().write("Hello".getBytes(UTF_8));
 
     assertEquals(200, connection.getResponseCode());
     assertEquals("Body", readAscii(connection.getInputStream(), Integer.MAX_VALUE));
@@ -2509,7 +2508,7 @@ public final class URLConnectionTest {
     HttpURLConnection connection = urlFactory.open(server.url("/").url());
     connection.setRequestMethod("POST");
     connection.setChunkedStreamingMode(0);
-    connection.getOutputStream().write("Hello".getBytes("UTF-8"));
+    connection.getOutputStream().write("Hello".getBytes(UTF_8));
 
     assertEquals(408, connection.getResponseCode());
     assertEquals(1, server.getRequestCount());
@@ -2587,7 +2586,7 @@ public final class URLConnectionTest {
     connection = urlFactory.open(server.url("/").url());
     connection.setRequestProperty("Transfer-encoding", "chunked");
     connection.setDoOutput(true);
-    connection.getOutputStream().write("ABC".getBytes("UTF-8"));
+    connection.getOutputStream().write("ABC".getBytes(UTF_8));
     assertEquals(200, connection.getResponseCode());
 
     RecordedRequest request = server.takeRequest();
@@ -2648,9 +2647,6 @@ public final class URLConnectionTest {
    * https://code.google.com/p/android/issues/detail?id=41576
    */
   @Test public void sameConnectionRedirectAndReuse() throws Exception {
-    urlFactory.setClient(urlFactory.client().newBuilder()
-        .dns(new SingleInetAddressDns())
-        .build());
     server.enqueue(new MockResponse()
         .setResponseCode(HttpURLConnection.HTTP_MOVED_TEMP)
         .setSocketPolicy(SHUTDOWN_INPUT_AT_END)
@@ -2710,7 +2706,7 @@ public final class URLConnectionTest {
 
     connection = urlFactory.open(server.url("/").url());
     connection.setDoOutput(true);
-    byte[] upload = "def".getBytes("UTF-8");
+    byte[] upload = "def".getBytes(UTF_8);
 
     if (transferKind == TransferKind.CHUNKED) {
       connection.setChunkedStreamingMode(0);
@@ -2724,7 +2720,7 @@ public final class URLConnectionTest {
 
     out.flush(); // Dubious but permitted.
     try {
-      out.write("ghi".getBytes("UTF-8"));
+      out.write("ghi".getBytes(UTF_8));
       fail();
     } catch (IOException expected) {
     }
@@ -3186,7 +3182,7 @@ public final class URLConnectionTest {
     server.enqueue(new MockResponse().setBody("A"));
 
     String credential = Credentials.basic("jesse", "peanutbutter");
-    RecordingOkAuthenticator authenticator = new RecordingOkAuthenticator(credential);
+    RecordingOkAuthenticator authenticator = new RecordingOkAuthenticator(credential, null);
     urlFactory.setClient(urlFactory.client().newBuilder()
         .authenticator(authenticator)
         .build());
@@ -3198,7 +3194,7 @@ public final class URLConnectionTest {
     assertEquals(Proxy.NO_PROXY, authenticator.onlyRoute().proxy());
     Response response = authenticator.onlyResponse();
     assertEquals("/private", response.request().url().url().getPath());
-    assertEquals(Arrays.asList(new Challenge("Basic", singletonMap("realm", "protected area"))), response.challenges());
+    assertEquals(Arrays.asList(new Challenge("Basic", "protected area")), response.challenges());
   }
 
   @Test public void customTokenAuthenticator() throws Exception {
@@ -3208,7 +3204,8 @@ public final class URLConnectionTest {
     server.enqueue(pleaseAuthenticate);
     server.enqueue(new MockResponse().setBody("A"));
 
-    RecordingOkAuthenticator authenticator = new RecordingOkAuthenticator("oauthed abc123");
+    RecordingOkAuthenticator authenticator
+        = new RecordingOkAuthenticator("oauthed abc123", "Bearer");
     urlFactory.setClient(urlFactory.client().newBuilder()
         .authenticator(authenticator)
         .build());
@@ -3219,7 +3216,7 @@ public final class URLConnectionTest {
 
     Response response = authenticator.onlyResponse();
     assertEquals("/private", response.request().url().url().getPath());
-    assertEquals(Arrays.asList(new Challenge("Bearer", singletonMap("realm", "oauthed"))), response.challenges());
+    assertEquals(Arrays.asList(new Challenge("Bearer", "oauthed")), response.challenges());
   }
 
   @Test public void authenticateCallsTrackedAsRedirects() throws Exception {
@@ -3232,7 +3229,7 @@ public final class URLConnectionTest {
     server.enqueue(new MockResponse().setBody("c"));
 
     RecordingOkAuthenticator authenticator = new RecordingOkAuthenticator(
-        Credentials.basic("jesse", "peanutbutter"));
+        Credentials.basic("jesse", "peanutbutter"), "Basic");
     urlFactory.setClient(urlFactory.client().newBuilder()
         .authenticator(authenticator)
         .build());
@@ -3253,7 +3250,7 @@ public final class URLConnectionTest {
 
     String credential = Credentials.basic("jesse", "peanutbutter");
     urlFactory.setClient(urlFactory.client().newBuilder()
-        .authenticator(new RecordingOkAuthenticator(credential))
+        .authenticator(new RecordingOkAuthenticator(credential, null))
         .build());
 
     connection = urlFactory.open(server.url("/0").url());
@@ -3267,7 +3264,7 @@ public final class URLConnectionTest {
 
     String credential = Credentials.basic("jesse", "peanutbutter");
     urlFactory.setClient(urlFactory.client().newBuilder()
-        .authenticator(new RecordingOkAuthenticator(credential))
+        .authenticator(new RecordingOkAuthenticator(credential, null))
         .build());
 
     connection = urlFactory.open(server.url("/").url());
@@ -3533,11 +3530,7 @@ public final class URLConnectionTest {
   }
 
   @Test public void interceptorsNotInvoked() throws Exception {
-    Interceptor interceptor = new Interceptor() {
-      @Override public Response intercept(Chain chain) {
-        throw new AssertionError();
-      }
-    };
+    Interceptor interceptor = chain -> { throw new AssertionError(); };
     urlFactory.setClient(urlFactory.client().newBuilder()
         .addInterceptor(interceptor)
         .addNetworkInterceptor(interceptor)
@@ -3618,11 +3611,7 @@ public final class URLConnectionTest {
   /** Confirm that runtime exceptions thrown inside of OkHttp propagate to the caller. */
   @Test public void unexpectedExceptionSync() throws Exception {
     urlFactory.setClient(urlFactory.client().newBuilder()
-        .dns(new Dns() {
-          @Override public List<InetAddress> lookup(String hostname) {
-            throw new RuntimeException("boom!");
-          }
-        })
+        .dns(hostname -> { throw new RuntimeException("boom!"); })
         .build());
 
     server.enqueue(new MockResponse());
@@ -3639,11 +3628,7 @@ public final class URLConnectionTest {
   /** Confirm that runtime exceptions thrown inside of OkHttp propagate to the caller. */
   @Test public void unexpectedExceptionAsync() throws Exception {
     urlFactory.setClient(urlFactory.client().newBuilder()
-        .dns(new Dns() {
-          @Override public List<InetAddress> lookup(String hostname) {
-            throw new RuntimeException("boom!");
-          }
-        })
+        .dns(hostname -> { throw new RuntimeException("boom!"); })
         .build());
 
     server.enqueue(new MockResponse());
@@ -3758,7 +3743,7 @@ public final class URLConnectionTest {
   }
 
   enum TransferKind {
-    CHUNKED() {
+    CHUNKED {
       @Override void setBody(MockResponse response, Buffer content, int chunkSize) {
         response.setChunkedBody(content, chunkSize);
       }
@@ -3767,7 +3752,7 @@ public final class URLConnectionTest {
         connection.setChunkedStreamingMode(5);
       }
     },
-    FIXED_LENGTH() {
+    FIXED_LENGTH {
       @Override void setBody(MockResponse response, Buffer content, int chunkSize) {
         response.setBody(content);
       }
@@ -3776,7 +3761,7 @@ public final class URLConnectionTest {
         connection.setFixedLengthStreamingMode(contentLength);
       }
     },
-    END_OF_STREAM() {
+    END_OF_STREAM {
       @Override void setBody(MockResponse response, Buffer content, int chunkSize) {
         response.setBody(content);
         response.setSocketPolicy(DISCONNECT_AT_END);

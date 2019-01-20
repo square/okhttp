@@ -39,13 +39,10 @@ public final class SlackClient {
       sessionFactory.start();
     }
 
-    HttpUrl authorizeUrl = sessionFactory.newAuthorizeUrl(scopes, team,
-        new OAuthSessionFactory.Listener() {
-          @Override public void sessionGranted(OAuthSession session) {
-            initOauthSession(session);
-            System.out.printf("session granted: %s\n", session);
-          }
-        });
+    HttpUrl authorizeUrl = sessionFactory.newAuthorizeUrl(scopes, team, session -> {
+      initOauthSession(session);
+      System.out.printf("session granted: %s\n", session);
+    });
 
     System.out.printf("open this URL in a browser: %s\n", authorizeUrl);
   }

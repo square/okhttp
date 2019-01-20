@@ -22,6 +22,7 @@ import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import javax.annotation.Nullable;
 import javax.net.ssl.KeyManager;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocketFactory;
@@ -110,8 +111,8 @@ public final class HandshakeCertificates {
   }
 
   public static final class Builder {
-    private HeldCertificate heldCertificate;
-    private X509Certificate[] intermediates;
+    private @Nullable HeldCertificate heldCertificate;
+    private @Nullable X509Certificate[] intermediates;
 
     private final List<X509Certificate> trustedCertificates = new ArrayList<>();
 

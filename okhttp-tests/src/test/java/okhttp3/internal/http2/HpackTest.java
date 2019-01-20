@@ -26,6 +26,7 @@ import org.junit.Test;
 import static okhttp3.TestUtil.headerEntries;
 import static okio.ByteString.decodeHex;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.fail;
 
 public final class HpackTest {
@@ -384,7 +385,7 @@ public final class HpackTest {
     assertEquals(0, hpackReader.headerCount);
     assertEquals(0, hpackReader.dynamicTableByteCount);
 
-    assertEquals(null, hpackReader.dynamicTable[readerHeaderTableLength() - 1]);
+    assertNull(hpackReader.dynamicTable[readerHeaderTableLength() - 1]);
 
     assertEquals(headerEntries(":method", "GET"), hpackReader.getAndResetHeaderList());
   }

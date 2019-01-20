@@ -37,32 +37,35 @@ import okhttp3.internal.http.RealResponseBody;
 import okhttp3.internal.http.RequestLine;
 import okhttp3.internal.http.StatusLine;
 import okio.Buffer;
-import okio.ByteString;
 import okio.ForwardingSource;
 import okio.Okio;
 import okio.Sink;
 import okio.Source;
 
 import static okhttp3.internal.http.StatusLine.HTTP_CONTINUE;
-import static okhttp3.internal.http2.Header.RESPONSE_STATUS;
+import static okhttp3.internal.http2.Header.RESPONSE_STATUS_UTF8;
 import static okhttp3.internal.http2.Header.TARGET_AUTHORITY;
+import static okhttp3.internal.http2.Header.TARGET_AUTHORITY_UTF8;
 import static okhttp3.internal.http2.Header.TARGET_METHOD;
+import static okhttp3.internal.http2.Header.TARGET_METHOD_UTF8;
 import static okhttp3.internal.http2.Header.TARGET_PATH;
+import static okhttp3.internal.http2.Header.TARGET_PATH_UTF8;
 import static okhttp3.internal.http2.Header.TARGET_SCHEME;
+import static okhttp3.internal.http2.Header.TARGET_SCHEME_UTF8;
 
 /** Encode requests and responses using HTTP/2 frames. */
 public final class Http2Codec implements HttpCodec {
-  private static final ByteString CONNECTION = ByteString.encodeUtf8("connection");
-  private static final ByteString HOST = ByteString.encodeUtf8("host");
-  private static final ByteString KEEP_ALIVE = ByteString.encodeUtf8("keep-alive");
-  private static final ByteString PROXY_CONNECTION = ByteString.encodeUtf8("proxy-connection");
-  private static final ByteString TRANSFER_ENCODING = ByteString.encodeUtf8("transfer-encoding");
-  private static final ByteString TE = ByteString.encodeUtf8("te");
-  private static final ByteString ENCODING = ByteString.encodeUtf8("encoding");
-  private static final ByteString UPGRADE = ByteString.encodeUtf8("upgrade");
+  private static final String CONNECTION = "connection";
+  private static final String HOST = "host";
+  private static final String KEEP_ALIVE = "keep-alive";
+  private static final String PROXY_CONNECTION = "proxy-connection";
+  private static final String TRANSFER_ENCODING = "transfer-encoding";
+  private static final String TE = "te";
+  private static final String ENCODING = "encoding";
+  private static final String UPGRADE = "upgrade";
 
   /** See http://tools.ietf.org/html/draft-ietf-httpbis-http2-09#section-8.1.3. */
-  private static final List<ByteString> HTTP_2_SKIPPED_REQUEST_HEADERS = Util.immutableList(
+  private static final List<String> HTTP_2_SKIPPED_REQUEST_HEADERS = Util.immutableList(
       CONNECTION,
       HOST,
       KEEP_ALIVE,
@@ -71,11 +74,11 @@ public final class Http2Codec implements HttpCodec {
       TRANSFER_ENCODING,
       ENCODING,
       UPGRADE,
-      TARGET_METHOD,
-      TARGET_PATH,
-      TARGET_SCHEME,
-      TARGET_AUTHORITY);
-  private static final List<ByteString> HTTP_2_SKIPPED_RESPONSE_HEADERS = Util.immutableList(
+      TARGET_METHOD_UTF8,
+      TARGET_PATH_UTF8,
+      TARGET_SCHEME_UTF8,
+      TARGET_AUTHORITY_UTF8);
+  private static final List<String> HTTP_2_SKIPPED_RESPONSE_HEADERS = Util.immutableList(
       CONNECTION,
       HOST,
       KEEP_ALIVE,
@@ -88,8 +91,9 @@ public final class Http2Codec implements HttpCodec {
   private final Interceptor.Chain chain;
   final StreamAllocation streamAllocation;
   private final Http2Connection connection;
-  private Http2Stream stream;
+  private volatile Http2Stream stream;
   private final Protocol protocol;
+  private volatile boolean canceled;
 
   public Http2Codec(OkHttpClient client, Interceptor.Chain chain, StreamAllocation streamAllocation,
       Http2Connection connection) {
@@ -111,6 +115,12 @@ public final class Http2Codec implements HttpCodec {
     boolean hasRequestBody = request.body() != null;
     List<Header> requestHeaders = http2HeadersList(request);
     stream = connection.newStream(requestHeaders, hasRequestBody);
+    // We may have been asked to cancel while creating the new stream and sending the request
+    // headers, but there was still no stream to close.
+    if (canceled) {
+      stream.closeLater(ErrorCode.CANCEL);
+      throw new IOException("Canceled");
+    }
     stream.readTimeout().timeout(chain.readTimeoutMillis(), TimeUnit.MILLISECONDS);
     stream.writeTimeout().timeout(chain.writeTimeoutMillis(), TimeUnit.MILLISECONDS);
   }
@@ -124,7 +134,7 @@ public final class Http2Codec implements HttpCodec {
   }
 
   @Override public Response.Builder readResponseHeaders(boolean expectContinue) throws IOException {
-    List<Header> headers = stream.takeResponseHeaders();
+    Headers headers = stream.takeHeaders();
     Response.Builder responseBuilder = readHttp2HeadersList(headers, protocol);
     if (expectContinue && Internal.instance.code(responseBuilder) == HTTP_CONTINUE) {
       return null;
@@ -145,8 +155,9 @@ public final class Http2Codec implements HttpCodec {
 
     for (int i = 0, size = headers.size(); i < size; i++) {
       // header names must be lowercase.
-      ByteString name = ByteString.encodeUtf8(headers.name(i).toLowerCase(Locale.US));
-      if (!HTTP_2_SKIPPED_REQUEST_HEADERS.contains(name)) {
+      String name = headers.name(i).toLowerCase(Locale.US);
+      if (!HTTP_2_SKIPPED_REQUEST_HEADERS.contains(name)
+          || name.equals(TE) && headers.value(i).equals("trailers")) {
         result.add(new Header(name, headers.value(i)));
       }
     }
@@ -154,29 +165,17 @@ public final class Http2Codec implements HttpCodec {
   }
 
   /** Returns headers for a name value block containing an HTTP/2 response. */
-  public static Response.Builder readHttp2HeadersList(List<Header> headerBlock,
+  public static Response.Builder readHttp2HeadersList(Headers headerBlock,
       Protocol protocol) throws IOException {
     StatusLine statusLine = null;
     Headers.Builder headersBuilder = new Headers.Builder();
     for (int i = 0, size = headerBlock.size(); i < size; i++) {
-      Header header = headerBlock.get(i);
-
-      // If there were multiple header blocks they will be delimited by nulls. Discard existing
-      // header blocks if the existing header block is a '100 Continue' intermediate response.
-      if (header == null) {
-        if (statusLine != null && statusLine.code == HTTP_CONTINUE) {
-          statusLine = null;
-          headersBuilder = new Headers.Builder();
-        }
-        continue;
-      }
-
-      ByteString name = header.name;
-      String value = header.value.utf8();
-      if (name.equals(RESPONSE_STATUS)) {
+      String name = headerBlock.name(i);
+      String value = headerBlock.value(i);
+      if (name.equals(RESPONSE_STATUS_UTF8)) {
         statusLine = StatusLine.parse("HTTP/1.1 " + value);
       } else if (!HTTP_2_SKIPPED_RESPONSE_HEADERS.contains(name)) {
-        Internal.instance.addLenient(headersBuilder, name.utf8(), value);
+        Internal.instance.addLenient(headersBuilder, name, value);
       }
     }
     if (statusLine == null) throw new ProtocolException("Expected ':status' header not present");
@@ -196,7 +195,12 @@ public final class Http2Codec implements HttpCodec {
     return new RealResponseBody(contentType, contentLength, Okio.buffer(source));
   }
 
+  @Override public Headers trailers() throws IOException {
+    return stream.trailers();
+  }
+
   @Override public void cancel() {
+    canceled = true;
     if (stream != null) stream.closeLater(ErrorCode.CANCEL);
   }
 

@@ -15,10 +15,8 @@
  */
 package okhttp3;
 
-import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
-import java.net.UnknownHostException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -44,16 +42,16 @@ public final class HttpUrlTest {
         new Object[] { false }
     );
   }
-  
+
   @Parameterized.Parameter
   public boolean useGet;
-  
+
   HttpUrl parse(String url) {
     return useGet
         ? HttpUrl.get(url)
         : HttpUrl.parse(url);
   }
-  
+
   @Test public void parseTrimsAsciiWhitespace() throws Exception {
     HttpUrl expected = parse("http://host/");
     assertEquals(expected, parse("http://host/\f\n\t \r")); // Leading.
@@ -140,10 +138,10 @@ public final class HttpUrlTest {
     assertEquals(parse("http://host/a/b?query"), base.newBuilder("?query").build());
     assertEquals(parse("http://host/a/b#fragment"), base.newBuilder("#fragment").build());
     assertEquals(parse("http://host/a/b"), base.newBuilder("").build());
-    assertEquals(null, base.newBuilder("ftp://b"));
-    assertEquals(null, base.newBuilder("ht+tp://b"));
-    assertEquals(null, base.newBuilder("ht-tp://b"));
-    assertEquals(null, base.newBuilder("ht.tp://b"));
+    assertNull(base.newBuilder("ftp://b"));
+    assertNull(base.newBuilder("ht+tp://b"));
+    assertNull(base.newBuilder("ht-tp://b"));
+    assertNull(base.newBuilder("ht.tp://b"));
   }
 
   @Test public void redactedUrl() {
@@ -168,10 +166,10 @@ public final class HttpUrlTest {
 
   @Test public void resolveUnsupportedScheme() throws Exception {
     HttpUrl base = parse("http://a/");
-    assertEquals(null, base.resolve("ftp://b"));
-    assertEquals(null, base.resolve("ht+tp://b"));
-    assertEquals(null, base.resolve("ht-tp://b"));
-    assertEquals(null, base.resolve("ht.tp://b"));
+    assertNull(base.resolve("ftp://b"));
+    assertNull(base.resolve("ht+tp://b"));
+    assertNull(base.resolve("ht-tp://b"));
+    assertNull(base.resolve("ht.tp://b"));
   }
 
   @Test public void resolveSchemeLikePath() throws Exception {
@@ -185,7 +183,7 @@ public final class HttpUrlTest {
   /** https://tools.ietf.org/html/rfc3986#section-5.4.1 */
   @Test public void rfc3886NormalExamples() {
     HttpUrl url = parse("http://a/b/c/d;p?q");
-    assertEquals(null, url.resolve("g:h")); // No 'g:' scheme in HttpUrl.
+    assertNull(url.resolve("g:h")); // No 'g:' scheme in HttpUrl.
     assertEquals(parse("http://a/b/c/g"), url.resolve("g"));
     assertEquals(parse("http://a/b/c/g"), url.resolve("./g"));
     assertEquals(parse("http://a/b/c/g/"), url.resolve("g/"));
@@ -536,6 +534,10 @@ public final class HttpUrlTest {
         "Invalid URL host: \"[0:0:0:0:0:1:255.255.255]\"");
   }
 
+  @Test public void hostIpv6Malformed() throws Exception {
+    assertInvalid("http://[::g]/", "Invalid URL host: \"[::g]\"");
+  }
+
   @Test public void hostIpv6CanonicalForm() throws Exception {
     assertEquals("abcd:ef01:2345:6789:abcd:ef01:2345:6789",
         parse("http://[abcd:ef01:2345:6789:abcd:ef01:2345:6789]/").host());
@@ -556,10 +558,11 @@ public final class HttpUrlTest {
     assertEquals("1::", parse("http://[1:0:0:0:0:0:0:0]/").host());
     assertEquals("::1", parse("http://[0:0:0:0:0:0:0:1]/").host());
     assertEquals("::", parse("http://[0:0:0:0:0:0:0:0]/").host());
+    assertEquals("192.168.1.254", parse("http://[::ffff:c0a8:1fe]/").host());
   }
 
   /** The builder permits square braces but does not require them. */
-  @Test public void hostIPv6Builder() throws Exception {
+  @Test public void hostIpv6Builder() throws Exception {
     HttpUrl base = parse("http://example.com/");
     assertEquals("http://[::1]/", base.newBuilder().host("[::1]").build().toString());
     assertEquals("http://[::1]/", base.newBuilder().host("[::0001]").build().toString());
@@ -573,7 +576,6 @@ public final class HttpUrlTest {
     assertEquals("0.0.0.0", parse("http://0.0.0.0/").host());
   }
 
-  @Ignore("java.net.IDN strips trailing trailing dots on Java 7, but not on Java 8.")
   @Test public void hostWithTrailingDot() throws Exception {
     assertEquals("host.", parse("http://host./").host());
   }
@@ -774,6 +776,19 @@ public final class HttpUrlTest {
     }
   }
 
+  @Test public void builderToString() {
+    assertEquals("https://host.com/path", parse("https://host.com/path").newBuilder().toString());
+  }
+
+  @Test public void incompleteBuilderToString() {
+    assertEquals("https:///path",
+        new HttpUrl.Builder().scheme("https").encodedPath("/path").toString());
+    assertEquals("//host.com/path",
+        new HttpUrl.Builder().host("host.com").encodedPath("/path").toString());
+    assertEquals("//host.com:8080/path",
+        new HttpUrl.Builder().host("host.com").encodedPath("/path").port(8080).toString());
+  }
+
   @Test public void minimalUrlComposition() throws Exception {
     HttpUrl url = new HttpUrl.Builder().scheme("http").host("host").build();
     assertEquals("http://host/", url.toString());
@@ -783,8 +798,8 @@ public final class HttpUrlTest {
     assertEquals("host", url.host());
     assertEquals(80, url.port());
     assertEquals("/", url.encodedPath());
-    assertEquals(null, url.query());
-    assertEquals(null, url.fragment());
+    assertNull(url.query());
+    assertNull(url.fragment());
   }
 
   @Test public void fullUrlComposition() throws Exception {
@@ -1357,7 +1372,7 @@ public final class HttpUrlTest {
 
   @Test public void fromJavaNetUrlUnsupportedScheme() throws Exception {
     URL javaNetUrl = new URL("mailto:user@example.com");
-    assertEquals(null, HttpUrl.get(javaNetUrl));
+    assertNull(HttpUrl.get(javaNetUrl));
   }
 
   @Test public void fromUri() throws Exception {
@@ -1368,12 +1383,12 @@ public final class HttpUrlTest {
 
   @Test public void fromUriUnsupportedScheme() throws Exception {
     URI uri = new URI("mailto:user@example.com");
-    assertEquals(null, HttpUrl.get(uri));
+    assertNull(HttpUrl.get(uri));
   }
 
   @Test public void fromUriPartial() throws Exception {
     URI uri = new URI("/path");
-    assertEquals(null, HttpUrl.get(uri));
+    assertNull(HttpUrl.get(uri));
   }
 
   @Test public void composeQueryWithComponents() throws Exception {
@@ -1403,7 +1418,7 @@ public final class HttpUrlTest {
         .removeAllQueryParameters("a+=& b")
         .build();
     assertEquals("http://host/", url.toString());
-    assertEquals(null, url.queryParameter("a+=& b"));
+    assertNull(url.queryParameter("a+=& b"));
   }
 
   @Test public void composeQueryRemoveEncodedQueryParameter() throws Exception {
@@ -1412,7 +1427,7 @@ public final class HttpUrlTest {
         .removeAllEncodedQueryParameters("a+=& b")
         .build();
     assertEquals("http://host/", url.toString());
-    assertEquals(null, url.queryParameter("a =& b"));
+    assertNull(url.queryParameter("a =& b"));
   }
 
   @Test public void composeQuerySetQueryParameter() throws Exception {
@@ -1458,7 +1473,7 @@ public final class HttpUrlTest {
         .build();
     assertEquals(1, url.querySize());
     assertEquals("", url.queryParameterName(0));
-    assertEquals(null, url.queryParameterValue(0));
+    assertNull(url.queryParameterValue(0));
   }
 
   @Test public void ampersandQueryIsTwoNameValuePairsWithEmptyKeys() throws Exception {
@@ -1467,9 +1482,9 @@ public final class HttpUrlTest {
         .build();
     assertEquals(2, url.querySize());
     assertEquals("", url.queryParameterName(0));
-    assertEquals(null, url.queryParameterValue(0));
+    assertNull(url.queryParameterValue(0));
     assertEquals("", url.queryParameterName(1));
-    assertEquals(null, url.queryParameterValue(1));
+    assertNull(url.queryParameterValue(1));
   }
 
   @Test public void removeAllDoesNotRemoveQueryIfNoParametersWereRemoved() throws Exception {
@@ -1485,9 +1500,9 @@ public final class HttpUrlTest {
     assertEquals(3, url.querySize());
     assertEquals(new LinkedHashSet<>(Arrays.asList("foo", "bar", "baz")),
         url.queryParameterNames());
-    assertEquals(null, url.queryParameterValue(0));
-    assertEquals(null, url.queryParameterValue(1));
-    assertEquals(null, url.queryParameterValue(2));
+    assertNull(url.queryParameterValue(0));
+    assertNull(url.queryParameterValue(1));
+    assertNull(url.queryParameterValue(2));
     assertEquals(singletonList((String) null), url.queryParameterValues("foo"));
     assertEquals(singletonList((String) null), url.queryParameterValues("bar"));
     assertEquals(singletonList((String) null), url.queryParameterValues("baz"));
@@ -1570,8 +1585,8 @@ public final class HttpUrlTest {
         .fragment(null)
         .build();
     assertEquals("http://host/", url.toString());
-    assertEquals(null, url.fragment());
-    assertEquals(null, url.encodedFragment());
+    assertNull(url.fragment());
+    assertNull(url.encodedFragment());
   }
 
   @Test public void clearEncodedFragment() throws Exception {
@@ -1580,8 +1595,8 @@ public final class HttpUrlTest {
         .encodedFragment(null)
         .build();
     assertEquals("http://host/", url.toString());
-    assertEquals(null, url.fragment());
-    assertEquals(null, url.encodedFragment());
+    assertNull(url.fragment());
+    assertNull(url.encodedFragment());
   }
 
   @Test public void topPrivateDomain() {
