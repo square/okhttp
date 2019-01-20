@@ -117,17 +117,15 @@ public final class DisconnectTest {
     responseBody.close();
   }
 
-  private void disconnectLater(final HttpURLConnection connection, final int delayMillis) {
-    Thread interruptingCow = new Thread() {
-      @Override public void run() {
-        try {
-          sleep(delayMillis);
-          connection.disconnect();
-        } catch (InterruptedException e) {
-          throw new RuntimeException(e);
-        }
+  private void disconnectLater(HttpURLConnection connection, int delayMillis) {
+    Thread interruptingCow = new Thread(() -> {
+      try {
+        Thread.sleep(delayMillis);
+        connection.disconnect();
+      } catch (InterruptedException e) {
+        throw new RuntimeException(e);
       }
-    };
+    });
     interruptingCow.start();
   }
 }

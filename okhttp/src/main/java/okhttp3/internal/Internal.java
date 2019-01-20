@@ -32,6 +32,7 @@ import okhttp3.internal.cache.InternalCache;
 import okhttp3.internal.connection.RealConnection;
 import okhttp3.internal.connection.RouteDatabase;
 import okhttp3.internal.connection.StreamAllocation;
+import okhttp3.internal.http.HttpCodec;
 
 /**
  * Escalate internal APIs in {@code okhttp3} so they can be used from OkHttp's implementation
@@ -52,12 +53,12 @@ public abstract class Internal {
 
   public abstract void setCache(OkHttpClient.Builder builder, InternalCache internalCache);
 
-  public abstract RealConnection get(ConnectionPool pool, Address address,
-      StreamAllocation streamAllocation, Route route);
+  public abstract void acquire(ConnectionPool pool, Address address,
+      StreamAllocation streamAllocation, @Nullable Route route);
 
   public abstract boolean equalsNonHost(Address a, Address b);
 
-  public abstract Socket deduplicate(
+  public abstract @Nullable Socket deduplicate(
       ConnectionPool pool, Address address, StreamAllocation streamAllocation);
 
   public abstract void put(ConnectionPool pool, RealConnection connection);
@@ -78,4 +79,7 @@ public abstract class Internal {
   public abstract @Nullable IOException timeoutExit(Call call, @Nullable IOException e);
 
   public abstract Call newWebSocketCall(OkHttpClient client, Request request);
+
+  public abstract void initCodec(
+      Response.Builder responseBuilder, HttpCodec httpCodec);
 }

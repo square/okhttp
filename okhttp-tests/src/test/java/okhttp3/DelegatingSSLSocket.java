@@ -320,6 +320,7 @@ public abstract class DelegatingSSLSocket extends SSLSocket {
     }
   }
 
+  @SuppressWarnings("unchecked") // Using reflection to delegate.
   public <T> T getOption(SocketOption<T> name) throws IOException {
     try {
       return (T) SSLSocket.class.getMethod("getOption", SocketOption.class).invoke(delegate, name);
@@ -328,6 +329,7 @@ public abstract class DelegatingSSLSocket extends SSLSocket {
     }
   }
 
+  @SuppressWarnings("unchecked") // Using reflection to delegate.
   public Set<SocketOption<?>> supportedOptions() {
     try {
       return (Set<SocketOption<?>>) SSLSocket.class.getMethod("supportedOptions").invoke(delegate);

@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 import javax.annotation.Nullable;
+import okhttp3.internal.http.HttpCodec;
 import okhttp3.internal.http.HttpHeaders;
 import okio.Buffer;
 import okio.BufferedSource;
@@ -53,6 +54,7 @@ public final class Response implements Closeable {
   final @Nullable Response priorResponse;
   final long sentRequestAtMillis;
   final long receivedResponseAtMillis;
+  final @Nullable HttpCodec httpCodec;
 
   private volatile @Nullable CacheControl cacheControl; // Lazily initialized.
 
@@ -69,6 +71,7 @@ public final class Response implements Closeable {
     this.priorResponse = builder.priorResponse;
     this.sentRequestAtMillis = builder.sentRequestAtMillis;
     this.receivedResponseAtMillis = builder.receivedResponseAtMillis;
+    this.httpCodec = builder.httpCodec;
   }
 
   /**
@@ -134,6 +137,14 @@ public final class Response implements Closeable {
 
   public Headers headers() {
     return headers;
+  }
+
+  /**
+   * Returns the trailers after the HTTP response, which may be empty. It is an error to call this
+   * before the entire HTTP response body has been consumed.
+   */
+  public Headers trailers() throws IOException {
+    return httpCodec.trailers();
   }
 
   /**
@@ -303,6 +314,7 @@ public final class Response implements Closeable {
     @Nullable Response priorResponse;
     long sentRequestAtMillis;
     long receivedResponseAtMillis;
+    @Nullable HttpCodec httpCodec;
 
     public Builder() {
       headers = new Headers.Builder();
@@ -321,6 +333,7 @@ public final class Response implements Closeable {
       this.priorResponse = response.priorResponse;
       this.sentRequestAtMillis = response.sentRequestAtMillis;
       this.receivedResponseAtMillis = response.receivedResponseAtMillis;
+      this.httpCodec = response.httpCodec;
     }
 
     public Builder request(Request request) {
@@ -426,6 +439,10 @@ public final class Response implements Closeable {
     public Builder receivedResponseAtMillis(long receivedResponseAtMillis) {
       this.receivedResponseAtMillis = receivedResponseAtMillis;
       return this;
+    }
+
+    void initCodec(HttpCodec httpCodec) {
+      this.httpCodec = httpCodec;
     }
 
     public Response build() {

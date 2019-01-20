@@ -25,13 +25,11 @@ import okhttp3.Response;
 
 public final class RewriteResponseCacheControl {
   /** Dangerous interceptor that rewrites the server's cache-control header. */
-  private static final Interceptor REWRITE_CACHE_CONTROL_INTERCEPTOR = new Interceptor() {
-    @Override public Response intercept(Chain chain) throws IOException {
-      Response originalResponse = chain.proceed(chain.request());
-      return originalResponse.newBuilder()
-          .header("Cache-Control", "max-age=60")
-          .build();
-    }
+  private static final Interceptor REWRITE_CACHE_CONTROL_INTERCEPTOR = chain -> {
+    Response originalResponse = chain.proceed(chain.request());
+    return originalResponse.newBuilder()
+        .header("Cache-Control", "max-age=60")
+        .build();
   };
 
   private final OkHttpClient client;

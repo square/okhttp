@@ -46,18 +46,16 @@ public final class CipherSuite {
    * the "TLS_" or "SSL_" prefix which is not consistent across platforms. In particular some IBM
    * JVMs use the "SSL_" prefix everywhere whereas Oracle JVMs mix "TLS_" and "SSL_".
    */
-  static final Comparator<String> ORDER_BY_NAME = new Comparator<String>() {
-    @Override public int compare(String a, String b) {
-      for (int i = 4, limit = Math.min(a.length(), b.length()); i < limit; i++) {
-        char charA = a.charAt(i);
-        char charB = b.charAt(i);
-        if (charA != charB) return charA < charB ? -1 : 1;
-      }
-      int lengthA = a.length();
-      int lengthB = b.length();
-      if (lengthA != lengthB) return lengthA < lengthB ? -1 : 1;
-      return 0;
+  static final Comparator<String> ORDER_BY_NAME = (a, b) -> {
+    for (int i = 4, limit = Math.min(a.length(), b.length()); i < limit; i++) {
+      char charA = a.charAt(i);
+      char charB = b.charAt(i);
+      if (charA != charB) return charA < charB ? -1 : 1;
     }
+    int lengthA = a.length();
+    int lengthB = b.length();
+    if (lengthA != lengthB) return lengthA < lengthB ? -1 : 1;
+    return 0;
   };
 
   /**

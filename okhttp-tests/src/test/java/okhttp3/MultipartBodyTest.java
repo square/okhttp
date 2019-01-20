@@ -20,7 +20,7 @@ import okio.Buffer;
 import okio.BufferedSink;
 import org.junit.Test;
 
-import static okhttp3.internal.Util.UTF_8;
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 

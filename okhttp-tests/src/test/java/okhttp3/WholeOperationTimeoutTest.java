@@ -256,6 +256,29 @@ public final class WholeOperationTimeoutTest {
     }
   }
 
+  @Test
+  public void timeoutFollowingRedirectOnNewConnection() throws Exception {
+    MockWebServer otherServer = new MockWebServer();
+
+    server.enqueue(
+        new MockResponse()
+            .setResponseCode(HttpURLConnection.HTTP_MOVED_TEMP)
+            .setHeader("Location", otherServer.url("/")));
+
+    otherServer.enqueue(new MockResponse().setHeadersDelay(500, TimeUnit.MILLISECONDS));
+
+    Request request = new Request.Builder().url(server.url("/")).build();
+
+    Call call = client.newCall(request);
+    call.timeout().timeout(250, TimeUnit.MILLISECONDS);
+    try {
+      Response response = call.execute();
+      fail();
+    } catch (IOException e) {
+      assertTrue(call.isCanceled());
+    }
+  }
+
   @Test public void noTimeout() throws Exception {
     server.enqueue(new MockResponse()
         .setHeadersDelay(250, TimeUnit.MILLISECONDS)

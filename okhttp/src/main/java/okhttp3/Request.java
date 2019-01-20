@@ -135,7 +135,7 @@ public final class Request {
       this.method = request.method;
       this.body = request.body;
       this.tags = request.tags.isEmpty()
-          ? Collections.<Class<?>, Object>emptyMap()
+          ? Collections.emptyMap()
           : new LinkedHashMap<>(request.tags);
       this.headers = request.headers.newBuilder();
     }

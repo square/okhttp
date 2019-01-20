@@ -16,12 +16,10 @@
 
 package okhttp3;
 
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.CookieManager;
 import java.net.HttpURLConnection;
@@ -40,7 +38,6 @@ import java.util.TimeZone;
 import java.util.concurrent.TimeUnit;
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.HttpsURLConnection;
-import javax.net.ssl.SSLSession;
 import okhttp3.internal.Internal;
 import okhttp3.internal.io.InMemoryFileSystem;
 import okhttp3.internal.platform.Platform;
@@ -50,6 +47,7 @@ import okhttp3.mockwebserver.RecordedRequest;
 import okhttp3.tls.HandshakeCertificates;
 import okio.Buffer;
 import okio.BufferedSink;
+import okio.BufferedSource;
 import okio.GzipSink;
 import okio.Okio;
 import org.junit.After;
@@ -70,11 +68,7 @@ import static org.junit.Assume.assumeFalse;
 
 /** Test caching with {@link OkUrlFactory}. */
 public final class UrlConnectionCacheTest {
-  private static final HostnameVerifier NULL_HOSTNAME_VERIFIER = new HostnameVerifier() {
-    @Override public boolean verify(String s, SSLSession sslSession) {
-      return true;
-    }
-  };
+  private static final HostnameVerifier NULL_HOSTNAME_VERIFIER = (name, session) -> true;
 
   @Rule public MockWebServer server = new MockWebServer();
   @Rule public MockWebServer server2 = new MockWebServer();
@@ -428,15 +422,15 @@ public final class UrlConnectionCacheTest {
     server.enqueue(truncateViolently(response, 16));
     server.enqueue(new MockResponse().setBody("Request #2"));
 
-    BufferedReader reader = new BufferedReader(
-        new InputStreamReader(urlFactory.open(server.url("/").url()).getInputStream()));
-    assertEquals("ABCDE", reader.readLine());
+    BufferedSource source = Okio.buffer(Okio.source(
+        urlFactory.open(server.url("/").url()).getInputStream()));
+    assertEquals("ABCDE\n", source.readUtf8(6));
     try {
-      reader.readLine();
+      source.readUtf8(21);
       fail("This implementation silently ignored a truncated HTTP body.");
     } catch (IOException expected) {
     } finally {
-      reader.close();
+      source.close();
     }
 
     assertEquals(1, cache.writeAbortCount());
@@ -1501,7 +1495,7 @@ public final class UrlConnectionCacheTest {
 
     URLConnection connection2 = urlFactory.open(server.url("/").url());
     assertEquals("A", readAscii(connection2));
-    assertEquals(null, connection2.getHeaderField("Warning"));
+    assertNull(connection2.getHeaderField("Warning"));
   }
 
   @Test public void getHeadersRetainsCached200LevelWarnings() throws Exception {
@@ -1539,7 +1533,7 @@ public final class UrlConnectionCacheTest {
     // cache miss; seed the cache
     HttpURLConnection connection1 = urlFactory.open(server.url("/a").url());
     assertEquals("A", readAscii(connection1));
-    assertEquals(null, connection1.getHeaderField("Allow"));
+    assertNull(connection1.getHeaderField("Allow"));
 
     // conditional cache hit; update the cache
     HttpURLConnection connection2 = urlFactory.open(server.url("/a").url());

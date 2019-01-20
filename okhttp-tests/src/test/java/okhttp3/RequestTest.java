@@ -22,10 +22,10 @@ import java.net.URI;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.UUID;
-import okhttp3.internal.Util;
 import okio.Buffer;
 import org.junit.Test;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
@@ -34,7 +34,7 @@ import static org.junit.Assert.fail;
 public final class RequestTest {
   @Test public void string() throws Exception {
     MediaType contentType = MediaType.get("text/plain; charset=utf-8");
-    RequestBody body = RequestBody.create(contentType, "abc".getBytes(Util.UTF_8));
+    RequestBody body = RequestBody.create(contentType, "abc".getBytes(UTF_8));
     assertEquals(contentType, body.contentType());
     assertEquals(3, body.contentLength());
     assertEquals("616263", bodyToHex(body));
@@ -59,7 +59,7 @@ public final class RequestTest {
 
   @Test public void byteArray() throws Exception {
     MediaType contentType = MediaType.get("text/plain");
-    RequestBody body = RequestBody.create(contentType, "abc".getBytes(Util.UTF_8));
+    RequestBody body = RequestBody.create(contentType, "abc".getBytes(UTF_8));
     assertEquals(contentType, body.contentType());
     assertEquals(3, body.contentLength());
     assertEquals("616263", bodyToHex(body));
@@ -68,7 +68,7 @@ public final class RequestTest {
 
   @Test public void byteArrayRange() throws Exception {
     MediaType contentType = MediaType.get("text/plain");
-    RequestBody body = RequestBody.create(contentType, ".abcd".getBytes(Util.UTF_8), 1, 3);
+    RequestBody body = RequestBody.create(contentType, ".abcd".getBytes(UTF_8), 1, 3);
     assertEquals(contentType, body.contentType());
     assertEquals(3, body.contentLength());
     assertEquals("616263", bodyToHex(body));

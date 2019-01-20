@@ -21,10 +21,10 @@ import java.util.Map;
 import java.util.Map.Entry;
 import javax.annotation.Nullable;
 
+import static java.nio.charset.StandardCharsets.ISO_8859_1;
 import static java.util.Collections.singletonMap;
 import static java.util.Collections.unmodifiableMap;
 import static java.util.Locale.US;
-import static okhttp3.internal.Util.ISO_8859_1;
 
 /** An RFC 7235 challenge. */
 public final class Challenge {

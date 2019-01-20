@@ -18,7 +18,6 @@ package okhttp3.internal.http2;
 import java.io.IOException;
 import java.io.InterruptedIOException;
 import java.net.Socket;
-import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -37,14 +36,18 @@ import okio.Sink;
 import okio.Source;
 import okio.Utf8;
 import org.junit.After;
+import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestRule;
 import org.junit.rules.Timeout;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static okhttp3.TestUtil.headerEntries;
 import static okhttp3.TestUtil.repeat;
+import static okhttp3.internal.Internal.initializeInstanceForTests;
 import static okhttp3.internal.Util.EMPTY_BYTE_ARRAY;
+import static okhttp3.internal.Util.EMPTY_HEADERS;
 import static okhttp3.internal.http2.Http2Connection.Listener.REFUSE_INCOMING_STREAMS;
 import static okhttp3.internal.http2.Settings.DEFAULT_INITIAL_WINDOW_SIZE;
 import static okhttp3.internal.http2.Settings.ENABLE_PUSH;
@@ -52,6 +55,7 @@ import static okhttp3.internal.http2.Settings.HEADER_TABLE_SIZE;
 import static okhttp3.internal.http2.Settings.INITIAL_WINDOW_SIZE;
 import static okhttp3.internal.http2.Settings.MAX_CONCURRENT_STREAMS;
 import static okhttp3.internal.http2.Settings.MAX_FRAME_SIZE;
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -61,6 +65,10 @@ public final class Http2ConnectionTest {
   private final MockHttp2Peer peer = new MockHttp2Peer();
 
   @Rule public final TestRule timeout = new Timeout(5_000);
+
+  @Before public void setup() {
+    initializeInstanceForTests();
+  }
 
   @After public void tearDown() throws Exception {
     peer.close();
@@ -188,11 +196,11 @@ public final class Http2ConnectionTest {
     InFrame data1 = peer.takeFrame();
     assertEquals(Http2.TYPE_DATA, data1.type);
     assertEquals(3, data1.streamId);
-    assertTrue(Arrays.equals("abcde".getBytes("UTF-8"), data1.data));
+    assertArrayEquals("abcde".getBytes(UTF_8), data1.data);
     InFrame data2 = peer.takeFrame();
     assertEquals(Http2.TYPE_DATA, data2.type);
     assertEquals(3, data2.streamId);
-    assertTrue(Arrays.equals("fghi".getBytes("UTF-8"), data2.data));
+    assertArrayEquals("fghi".getBytes(UTF_8), data2.data);
   }
 
   /**
@@ -204,7 +212,7 @@ public final class Http2ConnectionTest {
     peer.sendFrame().settings(new Settings());
     peer.acceptFrame(); // ACK
     peer.acceptFrame(); // SYN_STREAM 3
-    peer.sendFrame().headers(3, headerEntries("a", "apple"));
+    peer.sendFrame().headers(false, 3, headerEntries("a", "apple"));
     peer.sendFrame().data(false, 3, data(1024), 1024);
     peer.acceptFrame(); // RST_STREAM
     peer.sendFrame().data(true, 3, data(1024), 1024);
@@ -276,7 +284,7 @@ public final class Http2ConnectionTest {
     InFrame data1 = peer.takeFrame();
     assertEquals(Http2.TYPE_DATA, data1.type);
     assertEquals(3, data1.streamId);
-    assertTrue(Arrays.equals("abcdef".getBytes("UTF-8"), data1.data));
+    assertArrayEquals("abcdef".getBytes(UTF_8), data1.data);
   }
 
   @Test public void readSendsWindowUpdateHttp2() throws Exception {
@@ -287,7 +295,7 @@ public final class Http2ConnectionTest {
     peer.sendFrame().settings(new Settings());
     peer.acceptFrame(); // ACK
     peer.acceptFrame(); // SYN_STREAM
-    peer.sendFrame().synReply(false, 3, headerEntries("a", "android"));
+    peer.sendFrame().headers(false, 3, headerEntries("a", "android"));
     for (int i = 0; i < 3; i++) {
       // Send frames of summing to size 50, which is windowUpdateThreshold.
       peer.sendFrame().data(false, 3, data(24), 24);
@@ -331,7 +339,7 @@ public final class Http2ConnectionTest {
     peer.sendFrame().settings(new Settings());
     peer.acceptFrame(); // ACK
     peer.acceptFrame(); // SYN_STREAM
-    peer.sendFrame().synReply(false, 3, headerEntries("a", "android"));
+    peer.sendFrame().headers(false, 3, headerEntries("a", "android"));
     peer.sendFrame().data(true, 3, data(0), 0);
     peer.play();
 
@@ -352,7 +360,7 @@ public final class Http2ConnectionTest {
     peer.acceptFrame(); // ACK
     peer.acceptFrame(); // SYN_STREAM
     peer.acceptFrame(); // DATA
-    peer.sendFrame().synReply(false, 3, headerEntries("a", "android"));
+    peer.sendFrame().headers(false, 3, headerEntries("a", "android"));
     peer.play();
 
     // Play it back.
@@ -377,7 +385,7 @@ public final class Http2ConnectionTest {
     peer.sendFrame().settings(new Settings());
     peer.acceptFrame(); // ACK
     peer.acceptFrame(); // SYN_STREAM
-    peer.sendFrame().synReply(false, 3, headerEntries("a", "android"));
+    peer.sendFrame().headers(false, 3, headerEntries("a", "android"));
     peer.acceptFrame(); // DATA
     peer.acceptFrame(); // DATA
     peer.play();
@@ -403,7 +411,7 @@ public final class Http2ConnectionTest {
     peer.sendFrame().settings(new Settings());
     peer.acceptFrame(); // ACK
     peer.acceptFrame(); // SYN_STREAM
-    peer.sendFrame().synReply(false, 3, headerEntries("a", "android"));
+    peer.sendFrame().headers(false, 3, headerEntries("a", "android"));
     final List<Header> expectedRequestHeaders = Arrays.asList(
         new Header(Header.TARGET_METHOD, "GET"),
         new Header(Header.TARGET_SCHEME, "https"),
@@ -414,7 +422,7 @@ public final class Http2ConnectionTest {
     final List<Header> expectedResponseHeaders = Arrays.asList(
         new Header(Header.RESPONSE_STATUS, "200")
     );
-    peer.sendFrame().synReply(true, 2, expectedResponseHeaders);
+    peer.sendFrame().headers(true, 2, expectedResponseHeaders);
     peer.sendFrame().data(true, 3, data(0), 0);
     peer.play();
 
@@ -461,7 +469,7 @@ public final class Http2ConnectionTest {
         new Header(Header.TARGET_AUTHORITY, "squareup.com"),
         new Header(Header.TARGET_PATH, "/cached")
     ));
-    peer.sendFrame().synReply(true, 2, Arrays.asList(
+    peer.sendFrame().headers(true, 2, Arrays.asList(
         new Header(Header.RESPONSE_STATUS, "200")
     ));
     peer.acceptFrame(); // RST_STREAM
@@ -514,7 +522,7 @@ public final class Http2ConnectionTest {
     peer.acceptFrame(); // ACK
     peer.acceptFrame(); // SYN_STREAM
     peer.acceptFrame(); // DATA
-    peer.sendFrame().synReply(false, 3, headerEntries("a", "android"));
+    peer.sendFrame().headers(false, 3, headerEntries("a", "android"));
     peer.sendFrame().data(true, 3, new Buffer().writeUtf8("robot"), 5);
     peer.acceptFrame(); // PING
     peer.sendFrame().ping(true, 1, 0); // PING
@@ -539,106 +547,193 @@ public final class Http2ConnectionTest {
     assertEquals(-1, synStream.associatedStreamId);
     assertEquals(headerEntries("b", "banana"), synStream.headerBlock);
     InFrame requestData = peer.takeFrame();
-    assertTrue(Arrays.equals("c3po".getBytes("UTF-8"), requestData.data));
+    assertArrayEquals("c3po".getBytes(UTF_8), requestData.data);
   }
 
-  static final class RecordingHeadersListener implements Header.Listener {
-    final ArrayDeque<Headers> receivedHeaders = new ArrayDeque<>();
+  @Test public void serverFinishesStreamWithHeaders() throws Exception {
+    // write the mocking script
+    peer.sendFrame().settings(new Settings());
+    peer.acceptFrame(); // ACK
+    peer.acceptFrame(); // SYN_STREAM
+    peer.acceptFrame(); // PING
+    peer.sendFrame().headers(true, 3, headerEntries("headers", "bam"));
+    peer.sendFrame().ping(true, 1, 0); // PONG
+    peer.play();
 
-    @Override public void onHeaders(Headers headers) {
-      receivedHeaders.add(headers);
+    // play it back
+    Http2Connection connection = connect(peer);
+    Http2Stream stream = connection.newStream(headerEntries("a", "artichaut"), false);
+    connection.writePingAndAwaitPong();
+    assertEquals(Headers.of("headers", "bam"), stream.takeHeaders());
+    assertEquals(EMPTY_HEADERS, stream.trailers());
+    assertEquals(0, connection.openStreamCount());
+
+    // verify the peer received what was expected
+    InFrame synStream = peer.takeFrame();
+    assertEquals(Http2.TYPE_HEADERS, synStream.type);
+    assertFalse(synStream.outFinished);
+    assertEquals(3, synStream.streamId);
+    assertEquals(-1, synStream.associatedStreamId);
+    assertEquals(headerEntries("a", "artichaut"), synStream.headerBlock);
+  }
+
+  @Test public void serverWritesTrailersAndClientReadsTrailers() throws Exception {
+    // write the mocking script
+    peer.sendFrame().settings(new Settings());
+    peer.acceptFrame(); // ACK
+    peer.acceptFrame(); // SYN_STREAM
+    peer.sendFrame().headers(false, 3, headerEntries("headers", "bam"));
+    peer.acceptFrame(); // PING
+    peer.sendFrame().headers(true, 3, headerEntries("trailers", "boom"));
+    peer.sendFrame().ping(true, 1, 0); // PONG
+    peer.play();
+
+    // play it back
+    Http2Connection connection = connect(peer);
+    Http2Stream stream = connection.newStream(headerEntries("a", "artichaut"), false);
+    assertEquals(Headers.of("headers", "bam"), stream.takeHeaders());
+    connection.writePingAndAwaitPong();
+    assertEquals(Headers.of("trailers", "boom"), stream.trailers());
+    assertEquals(0, connection.openStreamCount());
+
+    // verify the peer received what was expected
+    InFrame synStream = peer.takeFrame();
+    assertEquals(Http2.TYPE_HEADERS, synStream.type);
+    assertFalse(synStream.outFinished);
+    assertEquals(3, synStream.streamId);
+    assertEquals(-1, synStream.associatedStreamId);
+    assertEquals(headerEntries("a", "artichaut"), synStream.headerBlock);
+  }
+
+  @Test public void serverWritesTrailersWithData() throws Exception {
+    // We buffer some outbound data and headers and confirm that the END_STREAM flag comes with the
+    // headers (and not with the data).
+
+    // write the mocking script for the client
+    peer.setClient(true);
+
+    // Write the mocking script.
+    peer.sendFrame().settings(new Settings());
+    peer.sendFrame().headers(true, 3, headerEntries("client", "abc"));
+    peer.acceptFrame(); // ACK
+    peer.acceptFrame(); // HEADERS STREAM 3
+    peer.acceptFrame(); // DATA STREAM 3 "abcde"
+    peer.acceptFrame(); // HEADERS STREAM 3
+    peer.play();
+
+    // Play it back.
+    Http2Connection connection = connect(peer);
+    Http2Stream stream = connection.newStream(headerEntries("a", "android"), true);
+    stream.enqueueTrailers(Headers.of("foo", "bar"));
+    BufferedSink sink = Okio.buffer(stream.getSink());
+    sink.writeUtf8("abcdefghi");
+    sink.close();
+
+    // Verify the peer received what was expected.
+    InFrame headers1 = peer.takeFrame();
+    assertEquals(Http2.TYPE_HEADERS, headers1.type);
+    InFrame data1 = peer.takeFrame();
+    assertEquals(Http2.TYPE_DATA, data1.type);
+    assertEquals(3, data1.streamId);
+    assertArrayEquals("abcdefghi".getBytes(UTF_8), data1.data);
+    assertFalse(data1.inFinished);
+    InFrame headers2 = peer.takeFrame();
+    assertEquals(Http2.TYPE_HEADERS, headers2.type);
+    assertTrue(headers2.inFinished);
+  }
+
+  @Test public void clientCannotReadTrailersWithoutExhaustingStream() throws Exception {
+    // write the mocking script
+    peer.sendFrame().settings(new Settings());
+    peer.acceptFrame(); // ACK
+    peer.acceptFrame(); // SYN_STREAM
+    peer.sendFrame().data(false, 3, new Buffer().writeUtf8("robot"), 5);
+    peer.sendFrame().headers(true, 3, headerEntries("trailers", "boom"));
+    peer.acceptFrame(); // PING
+    peer.sendFrame().ping(true, 1, 0); // PONG
+    peer.play();
+
+    // play it back
+    Http2Connection connection = connect(peer);
+    Http2Stream stream = connection.newStream(headerEntries("a", "artichaut"), true);
+    connection.writePingAndAwaitPong();
+    try {
+      stream.trailers();
+      fail();
+    } catch (IllegalStateException expected) {
     }
+  }
 
-    public List<Headers> takeAll() {
-      List<Headers> result = new ArrayList<>();
-      for (Headers headers; (headers = receivedHeaders.poll()) != null; ) {
-        result.add(headers);
-      }
-      return result;
+  @Test public void clientCannotReadTrailersIfTheStreamFailed() throws Exception {
+    // write the mocking script
+    peer.sendFrame().settings(new Settings());
+    peer.acceptFrame(); // ACK
+    peer.acceptFrame(); // SYN_STREAM
+    peer.sendFrame().rstStream(3, ErrorCode.PROTOCOL_ERROR);
+    peer.acceptFrame(); // PING
+    peer.sendFrame().ping(true, 1, 0); // PONG
+    peer.play();
+
+    // play it back
+    Http2Connection connection = connect(peer);
+    Http2Stream stream = connection.newStream(headerEntries("a", "artichaut"), true);
+    connection.writePingAndAwaitPong();
+    try {
+      stream.trailers();
+      fail();
+    } catch (StreamResetException expected) {
     }
   }
 
-  @Test public void clientReadsHeadersDataHeadersData() throws Exception {
+  @Test public void serverCannotEnqueueTrailersAfterFinishingTheStream() throws Exception {
+    peer.setClient(true);
     peer.sendFrame().settings(new Settings());
     peer.acceptFrame(); // ACK
-    peer.acceptFrame(); // SYN_STREAM
-    peer.sendFrame().synReply(false, 3, headerEntries("a", "android"));
-    peer.sendFrame().data(false, 3, new Buffer().writeUtf8("robot"), 5);
-    peer.sendFrame().synReply(false, 3, headerEntries("b", "banana"));
-    peer.sendFrame().data(true, 3, new Buffer().writeUtf8("cyborg"), 6);
     peer.acceptFrame(); // PING
-    peer.sendFrame().ping(true, 1, 0); // PONG
+    peer.sendFrame().ping(true, 1, 0);
     peer.play();
 
-    RecordingHeadersListener headersListener = new RecordingHeadersListener();
-
+    // Play it back.
     Http2Connection connection = connect(peer);
-    Http2Stream stream = connection.newStream(headerEntries(), false);
-    stream.setHeadersListener(headersListener);
-    assertStreamData("robotcyborg", stream.getSource());
-    assertEquals(Arrays.asList(Headers.of("a", "android"), Headers.of("b", "banana")),
-        headersListener.takeAll());
     connection.writePingAndAwaitPong();
-    assertEquals(0, connection.openStreamCount());
+    Http2Stream stream = connection.newStream(headerEntries("a", "android"), true);
+    // finish the stream
+    stream.writeHeaders(headerEntries("b", "berserk"), true, false);
+    try {
+      stream.enqueueTrailers(Headers.of("trailers", "boom"));
+      fail();
+    } catch (IllegalStateException expected) {
+    }
   }
 
-  @Test public void clientReadsHeadersDataPingPongHeadersData() throws Exception {
+  @Test public void noTrailersFrameYieldsEmptyTrailers() throws Exception {
+    // write the mocking script
     peer.sendFrame().settings(new Settings());
     peer.acceptFrame(); // ACK
     peer.acceptFrame(); // SYN_STREAM
-    peer.sendFrame().synReply(false, 3, headerEntries("a", "android"));
-    peer.sendFrame().data(false, 3, new Buffer().writeUtf8("robot"), 5);
-    peer.acceptFrame(); // PING
-    peer.sendFrame().ping(true, 1, 0); // PONG
-    peer.sendFrame().synReply(false, 3, headerEntries("b", "banana"));
-    peer.sendFrame().data(true, 3, new Buffer().writeUtf8("cyborg"), 6);
+    peer.sendFrame().headers(false, 3, headerEntries("headers", "bam"));
+    peer.sendFrame().data(true, 3, new Buffer().writeUtf8("robot"), 5);
     peer.acceptFrame(); // PING
     peer.sendFrame().ping(true, 1, 0); // PONG
     peer.play();
 
-    RecordingHeadersListener headersListener = new RecordingHeadersListener();
-
+    // play it back
     Http2Connection connection = connect(peer);
-    Http2Stream stream = connection.newStream(headerEntries(), false);
-    stream.setHeadersListener(headersListener);
+    Http2Stream stream = connection.newStream(headerEntries("a", "artichaut"), false);
     BufferedSource source = Okio.buffer(stream.getSource());
-
-    assertStreamPrefix("robot", source);
-    assertEquals(Arrays.asList(Headers.of("a", "android")), headersListener.takeAll());
     connection.writePingAndAwaitPong();
-
-    assertStreamPrefix("cyborg", source);
-    assertEquals(Arrays.asList(Headers.of("b", "banana")), headersListener.takeAll());
-    connection.writePingAndAwaitPong();
-
+    assertEquals(Headers.of("headers", "bam"), stream.takeHeaders());
+    assertEquals("robot", source.readUtf8(5));
+    assertEquals(EMPTY_HEADERS, stream.trailers());
     assertEquals(0, connection.openStreamCount());
-  }
 
-  @Test public void clientReadsHeadersDataHeadersClose() throws Exception {
-    peer.sendFrame().settings(new Settings());
-    peer.acceptFrame(); // ACK
-    peer.acceptFrame(); // SYN_STREAM
-    peer.sendFrame().synReply(false, 3, headerEntries("a", "android"));
-    peer.sendFrame().data(false, 3, new Buffer().writeUtf8("robot"), 5);
-    peer.acceptFrame(); // PING
-    peer.sendFrame().synReply(false, 3, headerEntries("b", "banana"));
-    peer.sendFrame().ping(true, 1, 0); // PONG
-    peer.play();
-
-    RecordingHeadersListener headersListener = new RecordingHeadersListener();
-
-    Http2Connection connection = connect(peer);
-    Http2Stream stream = connection.newStream(headerEntries(), false);
-    stream.setHeadersListener(headersListener);
-    BufferedSource source = Okio.buffer(stream.getSource());
-
-    assertStreamPrefix("robot", source);
-    assertEquals(Arrays.asList(Headers.of("a", "android")), headersListener.takeAll());
-    connection.writePingAndAwaitPong();
-    source.close();
-    assertEquals(Arrays.asList(Headers.of("b", "banana")), headersListener.takeAll());
-
-    assertEquals(0, connection.openStreamCount());
+    // verify the peer received what was expected
+    InFrame synStream = peer.takeFrame();
+    assertEquals(Http2.TYPE_HEADERS, synStream.type);
+    assertFalse(synStream.outFinished);
+    assertEquals(3, synStream.streamId);
+    assertEquals(-1, synStream.associatedStreamId);
+    assertEquals(headerEntries("a", "artichaut"), synStream.headerBlock);
   }
 
   @Test public void serverReadsHeadersDataHeaders() throws Exception {
@@ -648,7 +743,7 @@ public final class Http2ConnectionTest {
     peer.acceptFrame(); // SYN_STREAM
     peer.acceptFrame(); // DATA
     peer.acceptFrame(); // HEADERS
-    peer.sendFrame().synReply(true, 3, headerEntries("a", "android"));
+    peer.sendFrame().headers(true, 3, headerEntries("a", "android"));
     peer.acceptFrame(); // PING
     peer.sendFrame().ping(true, 1, 0); // PING
     peer.play();
@@ -659,7 +754,7 @@ public final class Http2ConnectionTest {
     BufferedSink out = Okio.buffer(stream.getSink());
     out.writeUtf8("c3po");
     out.close();
-    stream.writeHeaders(headerEntries("e", "elephant"), true);
+    stream.writeHeaders(headerEntries("e", "elephant"), false, false);
     connection.writePingAndAwaitPong();
     assertEquals(0, connection.openStreamCount());
 
@@ -671,7 +766,7 @@ public final class Http2ConnectionTest {
     assertEquals(-1, synStream.associatedStreamId);
     assertEquals(headerEntries("b", "banana"), synStream.headerBlock);
     InFrame requestData = peer.takeFrame();
-    assertTrue(Arrays.equals("c3po".getBytes("UTF-8"), requestData.data));
+    assertArrayEquals("c3po".getBytes(UTF_8), requestData.data);
 
     InFrame nextFrame = peer.takeFrame();
     assertEquals(headerEntries("e", "elephant"), nextFrame.headerBlock);
@@ -683,7 +778,7 @@ public final class Http2ConnectionTest {
     peer.acceptFrame(); // ACK
     peer.acceptFrame(); // SYN_STREAM
     peer.acceptFrame(); // PING
-    peer.sendFrame().synReply(true, 3, headerEntries("a", "android"));
+    peer.sendFrame().headers(true, 3, headerEntries("a", "android"));
     peer.sendFrame().ping(true, 1, 0);
     peer.play();
 
@@ -883,7 +978,7 @@ public final class Http2ConnectionTest {
     // write the mocking script
     peer.sendFrame().settings(new Settings());
     peer.acceptFrame(); // ACK
-    peer.sendFrame().synReply(false, 41, headerEntries("a", "android"));
+    peer.sendFrame().headers(false, 41, headerEntries("a", "android"));
     peer.sendFrame().ping(false, 2, 0);
     peer.acceptFrame(); // PING
     peer.play();
@@ -1014,7 +1109,7 @@ public final class Http2ConnectionTest {
     assertFalse(synStream.outFinished);
     InFrame data = peer.takeFrame();
     assertEquals(Http2.TYPE_DATA, data.type);
-    assertTrue(Arrays.equals("square".getBytes("UTF-8"), data.data));
+    assertArrayEquals("square".getBytes(UTF_8), data.data);
     InFrame fin = peer.takeFrame();
     assertEquals(Http2.TYPE_DATA, fin.type);
     assertTrue(fin.inFinished);
@@ -1029,7 +1124,7 @@ public final class Http2ConnectionTest {
     peer.sendFrame().settings(new Settings());
     peer.acceptFrame(); // ACK
     peer.acceptFrame(); // SYN_STREAM
-    peer.sendFrame().synReply(false, 3, headerEntries("b", "banana"));
+    peer.sendFrame().headers(false, 3, headerEntries("b", "banana"));
     peer.sendFrame().data(true, 3, new Buffer().writeUtf8("square"), 6);
     peer.acceptFrame(); // PING
     peer.sendFrame().ping(true, 1, 0);
@@ -1055,9 +1150,9 @@ public final class Http2ConnectionTest {
     peer.sendFrame().settings(new Settings());
     peer.acceptFrame(); // ACK
     peer.acceptFrame(); // SYN_STREAM
-    peer.sendFrame().synReply(false, 3, headerEntries("a", "android"));
+    peer.sendFrame().headers(false, 3, headerEntries("a", "android"));
     peer.acceptFrame(); // PING
-    peer.sendFrame().synReply(false, 3, headerEntries("b", "banana"));
+    peer.sendFrame().headers(false, 3, headerEntries("b", "banana"));
     peer.sendFrame().ping(true, 1, 0);
     peer.play();
 
@@ -1079,7 +1174,7 @@ public final class Http2ConnectionTest {
     peer.sendFrame().settings(new Settings());
     peer.acceptFrame(); // ACK
     peer.acceptFrame(); // SYN_STREAM
-    peer.sendFrame().synReply(false, 3, headerEntries("a", "android"));
+    peer.sendFrame().headers(false, 3, headerEntries("a", "android"));
     peer.sendFrame().data(true, 3, new Buffer().writeUtf8("robot"), 5);
     peer.sendFrame().data(true, 3, new Buffer().writeUtf8("c3po"), 4);
     peer.acceptFrame(); // RST_STREAM
@@ -1110,7 +1205,7 @@ public final class Http2ConnectionTest {
     peer.sendFrame().settings(new Settings());
     peer.acceptFrame(); // ACK
     peer.acceptFrame(); // SYN_STREAM
-    peer.sendFrame().synReply(false, 3, headerEntries("b", "banana"));
+    peer.sendFrame().headers(false, 3, headerEntries("b", "banana"));
     peer.sendFrame().data(false, 3, new Buffer().write(new byte[dataLength]), dataLength);
     peer.sendFrame().data(false, 3, new Buffer().write(new byte[dataLength]), dataLength);
     peer.sendFrame().data(false, 3, new Buffer().write(new byte[dataLength]), dataLength);
@@ -1210,7 +1305,7 @@ public final class Http2ConnectionTest {
     InFrame data1 = peer.takeFrame();
     assertEquals(Http2.TYPE_DATA, data1.type);
     assertEquals(3, data1.streamId);
-    assertTrue(Arrays.equals("abcdef".getBytes("UTF-8"), data1.data));
+    assertArrayEquals("abcdef".getBytes(UTF_8), data1.data);
   }
 
   @Test public void sendGoAway() throws Exception {
@@ -1220,7 +1315,7 @@ public final class Http2ConnectionTest {
     peer.acceptFrame(); // SYN_STREAM 1
     peer.acceptFrame(); // GOAWAY
     peer.acceptFrame(); // PING
-    peer.sendFrame().synStream(false, 2, 0, headerEntries("b", "b")); // Should be ignored!
+    peer.sendFrame().headers(false, 2, headerEntries("b", "b")); // Should be ignored!
     peer.sendFrame().ping(true, 1, 0);
     peer.play();
 
@@ -1326,7 +1421,7 @@ public final class Http2ConnectionTest {
     peer.sendFrame().settings(new Settings());
     peer.acceptFrame(); // ACK
     peer.acceptFrame(); // SYN_STREAM
-    peer.sendFrame().synReply(false, 3, headerEntries("a", "android"));
+    peer.sendFrame().headers(false, 3, headerEntries("a", "android"));
     peer.acceptFrame(); // RST_STREAM
     peer.play();
 
@@ -1361,7 +1456,7 @@ public final class Http2ConnectionTest {
     peer.acceptFrame(); // PING
     peer.sendFrame().ping(true, 1, 0);
     peer.acceptFrame(); // SYN_STREAM
-    peer.sendFrame().synReply(false, 3, headerEntries("a", "android"));
+    peer.sendFrame().headers(false, 3, headerEntries("a", "android"));
     peer.acceptFrame(); // DATA
     peer.acceptFrame(); // RST_STREAM
     peer.play();
@@ -1403,7 +1498,7 @@ public final class Http2ConnectionTest {
     peer.acceptFrame(); // PING
     peer.sendFrame().ping(true, 1, 0);
     peer.acceptFrame(); // SYN_STREAM
-    peer.sendFrame().synReply(false, 3, headerEntries("a", "android"));
+    peer.sendFrame().headers(false, 3, headerEntries("a", "android"));
     peer.acceptFrame(); // PING
     peer.sendFrame().ping(true, 3, 0);
     peer.acceptFrame(); // DATA
@@ -1442,7 +1537,7 @@ public final class Http2ConnectionTest {
     peer.sendFrame().settings(new Settings());
     peer.acceptFrame(); // ACK
     peer.acceptFrame(); // SYN_STREAM
-    peer.sendFrame().synReply(false, 3, headerEntries("a", "android"));
+    peer.sendFrame().headers(false, 3, headerEntries("a", "android"));
     peer.acceptFrame(); // DATA
     peer.play();
 
@@ -1460,7 +1555,7 @@ public final class Http2ConnectionTest {
     assertEquals(Http2.TYPE_HEADERS, peer.takeFrame().type);
     InFrame data = peer.takeFrame();
     assertEquals(Http2.TYPE_DATA, data.type);
-    assertTrue(Arrays.equals("abcdefghij".getBytes("UTF-8"), data.data));
+    assertArrayEquals("abcdefghij".getBytes(UTF_8), data.data);
     assertTrue(data.inFinished);
   }
 
@@ -1470,8 +1565,8 @@ public final class Http2ConnectionTest {
     peer.acceptFrame(); // ACK
     peer.acceptFrame(); // SYN_STREAM
     peer.acceptFrame(); // PING
-    peer.sendFrame().synReply(false, 3, headerEntries("a", "android"));
-    peer.sendFrame().headers(3, headerEntries("c", "c3po"));
+    peer.sendFrame().headers(false, 3, headerEntries("a", "android"));
+    peer.sendFrame().headers(false, 3, headerEntries("c", "c3po"));
     peer.sendFrame().ping(true, 1, 0);
     peer.play();
 
@@ -1494,10 +1589,10 @@ public final class Http2ConnectionTest {
     peer.sendFrame().settings(new Settings());
     peer.acceptFrame(); // ACK
     peer.acceptFrame(); // SYN_STREAM
-    peer.sendFrame().synReply(false, 3, headerEntries("a", "android"));
+    peer.sendFrame().headers(false, 3, headerEntries("a", "android"));
     peer.acceptFrame(); // PING
-    peer.sendFrame().ping(true, 1, 0); // PING
-    peer.sendFrame().synReply(true, 3, headerEntries("c", "cola"));
+    peer.sendFrame().headers(true, 3, headerEntries("c", "cola"));
+    peer.sendFrame().ping(true, 1, 0); // PONG
     peer.play();
 
     // play it back
@@ -1506,7 +1601,7 @@ public final class Http2ConnectionTest {
     stream.getConnection().flush();
     assertEquals(Headers.of("a", "android"), stream.takeHeaders());
     connection.writePingAndAwaitPong();
-    assertEquals(Headers.of("c", "cola"), stream.takeHeaders());
+    assertEquals(Headers.of("c", "cola"), stream.trailers());
 
     // verify the peer received what was expected
     assertEquals(Http2.TYPE_HEADERS, peer.takeFrame().type);
@@ -1521,7 +1616,7 @@ public final class Http2ConnectionTest {
     peer.sendFrame().settings(new Settings());
     peer.acceptFrame(); // ACK
     peer.acceptFrame(); // SYN_STREAM
-    peer.sendFrame().synReply(false, 3, headerEntries("a", "android"));
+    peer.sendFrame().headers(false, 3, headerEntries("a", "android"));
     for (int i = 0; i < 3; i++) {
       // Send frames of summing to size 50, which is windowUpdateThreshold.
       peer.sendFrame().data(false, 3, data(24), 24);
@@ -1565,7 +1660,7 @@ public final class Http2ConnectionTest {
     peer.sendFrame().settings(new Settings());
     peer.acceptFrame(); // ACK
     peer.acceptFrame(); // SYN_STREAM
-    peer.sendFrame().synReply(false, 3, headerEntries("a", "android"));
+    peer.sendFrame().headers(false, 3, headerEntries("a", "android"));
     peer.sendFrame().data(true, 3, data(0), 0);
     peer.play();
 
@@ -1586,7 +1681,7 @@ public final class Http2ConnectionTest {
     peer.acceptFrame(); // ACK
     peer.acceptFrame(); // SYN_STREAM
     peer.acceptFrame(); // DATA
-    peer.sendFrame().synReply(false, 3, headerEntries("a", "android"));
+    peer.sendFrame().headers(false, 3, headerEntries("a", "android"));
     peer.play();
 
     // Play it back.
@@ -1608,7 +1703,7 @@ public final class Http2ConnectionTest {
     peer.sendFrame().settings(new Settings());
     peer.acceptFrame(); // ACK
     peer.acceptFrame(); // SYN_STREAM
-    peer.sendFrame().synReply(false, 3, headerEntries("a", "android"));
+    peer.sendFrame().headers(false, 3, headerEntries("a", "android"));
     peer.sendFrame().data(false, 3, data(1024), 1024);
     peer.truncateLastFrame(8 + 100);
     peer.play();
@@ -1671,7 +1766,7 @@ public final class Http2ConnectionTest {
   @Test public void remoteOmitsInitialSettings() throws Exception {
     // Write the mocking script. Note no SETTINGS frame is sent or acknowledged.
     peer.acceptFrame(); // SYN_STREAM
-    peer.sendFrame().synReply(false, 3, headerEntries("a", "android"));
+    peer.sendFrame().headers(false, 3, headerEntries("a", "android"));
     peer.acceptFrame(); // GOAWAY
     peer.play();
 

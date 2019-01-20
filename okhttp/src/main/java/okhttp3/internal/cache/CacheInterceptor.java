@@ -17,6 +17,7 @@
 package okhttp3.internal.cache;
 
 import java.io.IOException;
+import javax.annotation.Nullable;
 import okhttp3.Headers;
 import okhttp3.Interceptor;
 import okhttp3.Protocol;
@@ -43,9 +44,9 @@ import static okhttp3.internal.Util.discard;
 
 /** Serves requests from the cache and writes responses to the cache. */
 public final class CacheInterceptor implements Interceptor {
-  final InternalCache cache;
+  final @Nullable InternalCache cache;
 
-  public CacheInterceptor(InternalCache cache) {
+  public CacheInterceptor(@Nullable InternalCache cache) {
     this.cache = cache;
   }
 

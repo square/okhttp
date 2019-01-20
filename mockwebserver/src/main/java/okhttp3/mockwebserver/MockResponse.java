@@ -22,6 +22,7 @@ import okhttp3.Headers;
 import okhttp3.WebSocketListener;
 import okhttp3.internal.Internal;
 import okhttp3.internal.http2.Settings;
+import okhttp3.mockwebserver.internal.duplex.DuplexResponseBody;
 import okio.Buffer;
 
 /** A scripted response to be replayed by the mock web server. */
@@ -30,6 +31,7 @@ public final class MockResponse implements Cloneable {
 
   private String status;
   private Headers.Builder headers = new Headers.Builder();
+  private Headers.Builder trailers = new Headers.Builder();
 
   private Buffer body;
 
@@ -49,6 +51,7 @@ public final class MockResponse implements Cloneable {
   private List<PushPromise> promises = new ArrayList<>();
   private Settings settings;
   private WebSocketListener webSocketListener;
+  private DuplexResponseBody duplexResponseBody;
 
   /** Creates a new mock response with an empty body. */
   public MockResponse() {
@@ -98,6 +101,10 @@ public final class MockResponse implements Cloneable {
     return headers.build();
   }
 
+  public Headers getTrailers() {
+    return trailers.build();
+  }
+
   /**
    * Removes all HTTP headers including any "Content-Length" and "Transfer-encoding" headers that
    * were added by default.
@@ -143,9 +150,15 @@ public final class MockResponse implements Cloneable {
     return addHeader(name, value);
   }
 
-  /** Replaces all headers with those specified in {@code headers}. */
+  /** Replaces all headers with those specified. */
   public MockResponse setHeaders(Headers headers) {
     this.headers = headers.newBuilder();
+    return this;
+  }
+
+  /** Replaces all trailers with those specified. */
+  public MockResponse setTrailers(Headers trailers) {
+    this.trailers = trailers.newBuilder();
     return this;
   }
 
@@ -153,6 +166,14 @@ public final class MockResponse implements Cloneable {
   public MockResponse removeHeader(String name) {
     headers.removeAll(name);
     return this;
+  }
+
+  boolean isDuplex() {
+    return duplexResponseBody != null;
+  }
+
+  DuplexResponseBody getDuplexResponseBody() {
+    return duplexResponseBody;
   }
 
   /** Returns a copy of the raw HTTP payload. */
@@ -171,6 +192,11 @@ public final class MockResponse implements Cloneable {
     return setBody(new Buffer().writeUtf8(body));
   }
 
+  MockResponse setBody(DuplexResponseBody duplexResponseBody) {
+    this.duplexResponseBody = duplexResponseBody;
+    return this;
+  }
+
   /**
    * Sets the response body to {@code body}, chunked every {@code maxChunkSize} bytes.
    */
@@ -186,7 +212,7 @@ public final class MockResponse implements Cloneable {
       bytesOut.write(body, chunkSize);
       bytesOut.writeUtf8("\r\n");
     }
-    bytesOut.writeUtf8("0\r\n\r\n"); // Last chunk + empty trailer + CRLF.
+    bytesOut.writeUtf8("0\r\n"); // Last chunk. Trailers follow!
 
     this.body = bytesOut;
     return this;

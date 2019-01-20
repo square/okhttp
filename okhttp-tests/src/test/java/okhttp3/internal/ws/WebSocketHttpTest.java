@@ -27,7 +27,6 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Logger;
-import okhttp3.Interceptor;
 import okhttp3.OkHttpClient;
 import okhttp3.Protocol;
 import okhttp3.RecordingEventListener;
@@ -70,17 +69,17 @@ public final class WebSocketHttpTest {
   private OkHttpClient client = defaultClient().newBuilder()
       .writeTimeout(500, TimeUnit.MILLISECONDS)
       .readTimeout(500, TimeUnit.MILLISECONDS)
-      .addInterceptor(new Interceptor() {
-        @Override public Response intercept(Chain chain) throws IOException {
-          Response response = chain.proceed(chain.request());
-          assertNotNull(response.body()); // Ensure application interceptors never see a null body.
-          return response;
-        }
+      .addInterceptor(chain -> {
+        Response response = chain.proceed(chain.request());
+        assertNotNull(response.body()); // Ensure application interceptors never see a null body.
+        return response;
       })
       .build();
 
   @After public void tearDown() {
     clientListener.assertExhausted();
+
+    // TODO: assert all connections are released once leaks are fixed
   }
 
   @Test public void textMessage() {
@@ -88,10 +87,12 @@ public final class WebSocketHttpTest {
     WebSocket webSocket = newWebSocket();
 
     clientListener.assertOpen();
-    serverListener.assertOpen();
+    WebSocket server = serverListener.assertOpen();
 
     webSocket.send("Hello, WebSockets!");
     serverListener.assertTextMessage("Hello, WebSockets!");
+
+    closeWebSockets(webSocket, server);
   }
 
   @Test public void binaryMessage() {
@@ -99,10 +100,12 @@ public final class WebSocketHttpTest {
     WebSocket webSocket = newWebSocket();
 
     clientListener.assertOpen();
-    serverListener.assertOpen();
+    WebSocket server = serverListener.assertOpen();
 
     webSocket.send(ByteString.encodeUtf8("Hello!"));
     serverListener.assertBinaryMessage(ByteString.of(new byte[] {'H', 'e', 'l', 'l', 'o', '!'}));
+
+    closeWebSockets(webSocket, server);
   }
 
   @Test public void nullStringThrows() {
@@ -110,12 +113,15 @@ public final class WebSocketHttpTest {
     WebSocket webSocket = newWebSocket();
 
     clientListener.assertOpen();
+    WebSocket server = serverListener.assertOpen();
     try {
       webSocket.send((String) null);
       fail();
     } catch (NullPointerException e) {
       assertEquals("text == null", e.getMessage());
     }
+
+    closeWebSockets(webSocket, server);
   }
 
   @Test public void nullByteStringThrows() {
@@ -123,23 +129,28 @@ public final class WebSocketHttpTest {
     WebSocket webSocket = newWebSocket();
 
     clientListener.assertOpen();
+    WebSocket server = serverListener.assertOpen();
     try {
       webSocket.send((ByteString) null);
       fail();
     } catch (NullPointerException e) {
       assertEquals("bytes == null", e.getMessage());
     }
+
+    closeWebSockets(webSocket, server);
   }
 
   @Test public void serverMessage() {
     webServer.enqueue(new MockResponse().withWebSocketUpgrade(serverListener));
-    newWebSocket();
+    WebSocket webSocket = newWebSocket();
 
     clientListener.assertOpen();
     WebSocket server = serverListener.assertOpen();
 
     server.send("Hello, WebSockets!");
     clientListener.assertTextMessage("Hello, WebSockets!");
+
+    closeWebSockets(webSocket, server);
   }
 
   @Test public void throwingOnOpenFailsImmediately() {
@@ -243,13 +254,10 @@ public final class WebSocketHttpTest {
     webServer.enqueue(new MockResponse().withWebSocketUpgrade(serverListener));
     newWebSocket();
 
-    clientListener.assertOpen();
+    WebSocket webSocket = clientListener.assertOpen();
     WebSocket server = serverListener.assertOpen();
 
-    server.close(1001, "bye");
-    clientListener.assertClosing(1001, "bye");
-    clientListener.assertExhausted();
-    serverListener.assertExhausted();
+    closeWebSockets(webSocket, server);
   }
 
   @Test public void non101RetainsBody() throws IOException {
@@ -281,6 +289,8 @@ public final class WebSocketHttpTest {
 
     server.send("def");
     clientListener.assertTextMessage("def");
+
+    closeWebSockets(webSocket, server);
   }
 
   @Test public void missingConnectionHeader() throws IOException {
@@ -356,16 +366,15 @@ public final class WebSocketHttpTest {
     final AtomicInteger interceptedCount = new AtomicInteger();
 
     client = client.newBuilder()
-        .addInterceptor(new Interceptor() {
-          @Override public Response intercept(Chain chain) throws IOException {
-            assertNull(chain.request().body());
-            Response response = chain.proceed(chain.request());
-            assertEquals("Upgrade", response.header("Connection"));
-            assertTrue(response.body().source().exhausted());
-            interceptedCount.incrementAndGet();
-            return response;
-          }
-        }).build();
+        .addInterceptor(chain -> {
+          assertNull(chain.request().body());
+          Response response = chain.proceed(chain.request());
+          assertEquals("Upgrade", response.header("Connection"));
+          assertTrue(response.body().source().exhausted());
+          interceptedCount.incrementAndGet();
+          return response;
+        })
+        .build();
 
     webServer.enqueue(new MockResponse().withWebSocketUpgrade(serverListener));
 
@@ -376,24 +385,24 @@ public final class WebSocketHttpTest {
 
     WebSocket server = serverListener.assertOpen();
     server.close(1000, null);
+    clientListener.assertClosing(1000, "");
+    clientListener.assertClosed(1000, "");
   }
 
   @Test public void webSocketAndNetworkInterceptors() {
     client = client.newBuilder()
-        .addNetworkInterceptor(new Interceptor() {
-          @Override public Response intercept(Chain chain) {
-            throw new AssertionError(); // Network interceptors don't execute.
-          }
-        }).build();
+        .addNetworkInterceptor(chain -> {
+          throw new AssertionError(); // Network interceptors don't execute.
+        })
+        .build();
 
     webServer.enqueue(new MockResponse().withWebSocketUpgrade(serverListener));
 
     WebSocket webSocket = newWebSocket();
     clientListener.assertOpen();
-    webSocket.close(1000, null);
-
     WebSocket server = serverListener.assertOpen();
-    server.close(1000, null);
+
+    closeWebSockets(webSocket, server);
   }
 
   @Test public void overflowOutgoingQueue() {
@@ -538,7 +547,7 @@ public final class WebSocketHttpTest {
 
   @Test public void readTimeoutDoesNotApplyAcrossFrames() throws Exception {
     webServer.enqueue(new MockResponse().withWebSocketUpgrade(serverListener));
-    newWebSocket();
+    WebSocket webSocket = newWebSocket();
 
     clientListener.assertOpen();
     WebSocket server = serverListener.assertOpen();
@@ -548,6 +557,8 @@ public final class WebSocketHttpTest {
 
     server.send("abc");
     clientListener.assertTextMessage("abc");
+
+    closeWebSockets(webSocket, server);
   }
 
   @Test public void clientPingsServerOnInterval() throws Exception {
@@ -577,6 +588,8 @@ public final class WebSocketHttpTest {
     // The server has never pinged the client.
     assertEquals(0, server.receivedPongCount());
     assertEquals(0, webSocket.receivedPingCount());
+
+    closeWebSockets(webSocket, server);
   }
 
   @Test public void clientDoesNotPingServerByDefault() throws Exception {
@@ -595,6 +608,8 @@ public final class WebSocketHttpTest {
     assertEquals(0, server.sentPingCount());
     assertEquals(0, server.receivedPingCount());
     assertEquals(0, server.receivedPongCount());
+
+    closeWebSockets(webSocket, server);
   }
 
   /**
@@ -687,7 +702,7 @@ public final class WebSocketHttpTest {
 
     webServer.enqueue(new MockResponse()
         .withWebSocketUpgrade(serverListener));
-    newWebSocket();
+    WebSocket webSocket = newWebSocket();
 
     clientListener.assertOpen();
     WebSocket server = serverListener.assertOpen();
@@ -696,6 +711,8 @@ public final class WebSocketHttpTest {
 
     server.send("Hello, WebSockets!");
     clientListener.assertTextMessage("Hello, WebSockets!");
+
+    closeWebSockets(webSocket, server);
   }
 
   /**
@@ -745,10 +762,12 @@ public final class WebSocketHttpTest {
 
     RealWebSocket webSocket = newWebSocket(request);
     clientListener.assertOpen();
-    serverListener.assertOpen();
+    WebSocket server = serverListener.assertOpen();
 
     webSocket.send("abc");
     serverListener.assertTextMessage("abc");
+
+    closeWebSockets(webSocket, server);
   }
 
   private RealWebSocket newWebSocket() {
@@ -760,5 +779,16 @@ public final class WebSocketHttpTest {
         request, clientListener, random, client.pingIntervalMillis());
     webSocket.connect(client);
     return webSocket;
+  }
+
+  private void closeWebSockets(WebSocket webSocket, WebSocket server) {
+    server.close(1001, "");
+    clientListener.assertClosing(1001, "");
+    webSocket.close(1000, "");
+    serverListener.assertClosing(1000, "");
+    clientListener.assertClosed(1001, "");
+    serverListener.assertClosed(1000, "");
+    clientListener.assertExhausted();
+    serverListener.assertExhausted();
   }
 }

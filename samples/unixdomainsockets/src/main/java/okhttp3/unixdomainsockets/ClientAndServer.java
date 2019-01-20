@@ -16,7 +16,9 @@
 package okhttp3.unixdomainsockets;
 
 import java.io.File;
+import java.util.Collections;
 import okhttp3.OkHttpClient;
+import okhttp3.Protocol;
 import okhttp3.Request;
 import okhttp3.Response;
 import okhttp3.mockwebserver.MockResponse;
@@ -33,11 +35,13 @@ public class ClientAndServer {
 
     MockWebServer server = new MockWebServer();
     server.setServerSocketFactory(new UnixDomainServerSocketFactory(socketFile));
+    server.setProtocols(Collections.singletonList(Protocol.H2_PRIOR_KNOWLEDGE));
     server.enqueue(new MockResponse().setBody("hello"));
     server.start();
 
     OkHttpClient client = new OkHttpClient.Builder()
         .socketFactory(new UnixDomainSocketFactory(socketFile))
+        .protocols(Collections.singletonList(Protocol.H2_PRIOR_KNOWLEDGE))
         .build();
 
     Request request = new Request.Builder()

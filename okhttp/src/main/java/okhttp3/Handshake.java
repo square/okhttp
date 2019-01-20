@@ -69,12 +69,12 @@ public final class Handshake {
     }
     List<Certificate> peerCertificatesList = peerCertificates != null
         ? Util.immutableList(peerCertificates)
-        : Collections.<Certificate>emptyList();
+        : Collections.emptyList();
 
     Certificate[] localCertificates = session.getLocalCertificates();
     List<Certificate> localCertificatesList = localCertificates != null
         ? Util.immutableList(localCertificates)
-        : Collections.<Certificate>emptyList();
+        : Collections.emptyList();
 
     return new Handshake(tlsVersion, cipherSuite, peerCertificatesList, localCertificatesList);
   }

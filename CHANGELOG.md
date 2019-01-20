@@ -1,6 +1,13 @@
 Change Log
 ==========
 
+## Version 3.12.1
+
+_2018-12-23_
+
+ *  Fix: Remove overlapping `package-info.java`. This caused issues with some build tools.
+
+
 ## Version 3.12.0
 
 _2018-11-16_

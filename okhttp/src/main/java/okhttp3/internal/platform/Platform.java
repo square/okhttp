@@ -33,10 +33,9 @@ import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.X509TrustManager;
 import okhttp3.OkHttpClient;
 import okhttp3.Protocol;
+import okhttp3.internal.Util;
 import okhttp3.internal.tls.BasicCertificateChainCleaner;
-import okhttp3.internal.tls.BasicTrustRootIndex;
 import okhttp3.internal.tls.CertificateChainCleaner;
-import okhttp3.internal.tls.TrustRootIndex;
 import okio.Buffer;
 
 /**
@@ -46,7 +45,7 @@ import okio.Buffer;
  *
  * <p>Supported on Android 2.3+.
  *
- * Supported on OpenJDK 7+
+ * <p>Supported on OpenJDK 7+
  *
  * <h3>Session Tickets</h3>
  *
@@ -61,9 +60,9 @@ import okio.Buffer;
  * <p>Supported on Android 5.0+. The APIs were present in Android 4.4, but that implementation was
  * unstable.
  *
- * Supported on OpenJDK 7 and 8 (via the JettyALPN-boot library).
+ * <p>Supported on OpenJDK 8 via the JettyALPN-boot library.
  *
- * Supported on OpenJDK 9 via SSLParameters and SSLSocket features.
+ * <p>Supported on OpenJDK 9+ via SSLParameters and SSLSocket features.
  *
  * <h3>Trust Manager Extraction</h3>
  *
@@ -169,7 +168,7 @@ public class Platform {
   }
 
   public CertificateChainCleaner buildCertificateChainCleaner(X509TrustManager trustManager) {
-    return new BasicCertificateChainCleaner(buildTrustRootIndex(trustManager));
+    return new BasicCertificateChainCleaner(trustManager.getAcceptedIssuers());
   }
 
   public CertificateChainCleaner buildCertificateChainCleaner(SSLSocketFactory sslSocketFactory) {
@@ -187,7 +186,7 @@ public class Platform {
 
   public static boolean isConscryptPreferred() {
     // mainly to allow tests to run cleanly
-    if ("conscrypt".equals(System.getProperty("okhttp.platform"))) {
+    if ("conscrypt".equals(Util.getSystemProperty("okhttp.platform", null))) {
       return true;
     }
 
@@ -218,7 +217,7 @@ public class Platform {
       return jdk9;
     }
 
-    Platform jdkWithJettyBoot = JdkWithJettyBootPlatform.buildIfSupported();
+    Platform jdkWithJettyBoot = Jdk8WithJettyBootPlatform.buildIfSupported();
 
     if (jdkWithJettyBoot != null) {
       return jdkWithJettyBoot;
@@ -249,7 +248,7 @@ public class Platform {
         Field field = c.getDeclaredField(fieldName);
         field.setAccessible(true);
         Object value = field.get(instance);
-        if (value == null || !fieldType.isInstance(value)) return null;
+        if (!fieldType.isInstance(value)) return null;
         return fieldType.cast(value);
       } catch (NoSuchFieldException ignored) {
       } catch (IllegalAccessException e) {
@@ -267,25 +266,11 @@ public class Platform {
   }
 
   public SSLContext getSSLContext() {
-    String jvmVersion = System.getProperty("java.specification.version");
-    if ("1.7".equals(jvmVersion)) {
-      try {
-        // JDK 1.7 (public version) only support > TLSv1 with named protocols
-        return SSLContext.getInstance("TLSv1.2");
-      } catch (NoSuchAlgorithmException e) {
-        // fallback to TLS
-      }
-    }
-
     try {
       return SSLContext.getInstance("TLS");
     } catch (NoSuchAlgorithmException e) {
       throw new IllegalStateException("No TLS provider", e);
     }
-  }
-
-  public TrustRootIndex buildTrustRootIndex(X509TrustManager trustManager) {
-    return new BasicTrustRootIndex(trustManager.getAcceptedIssuers());
   }
 
   public void configureSslSocketFactory(SSLSocketFactory socketFactory) {

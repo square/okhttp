@@ -53,12 +53,8 @@ public abstract class EventListener {
   public static final EventListener NONE = new EventListener() {
   };
 
-  static EventListener.Factory factory(final EventListener listener) {
-    return new EventListener.Factory() {
-      public EventListener create(Call call) {
-        return listener;
-      }
-    };
+  static EventListener.Factory factory(EventListener listener) {
+    return call -> listener;
   }
 
   /**

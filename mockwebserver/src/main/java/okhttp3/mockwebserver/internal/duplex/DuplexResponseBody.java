@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014 Square, Inc.
+ * Copyright (C) 2018 Square, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,15 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package okhttp3.benchmarks;
+package okhttp3.mockwebserver.internal.duplex;
 
-import okhttp3.HttpUrl;
+import java.io.IOException;
+import okhttp3.mockwebserver.RecordedRequest;
+import okio.BufferedSink;
+import okio.BufferedSource;
 
-/** An HTTP client to benchmark. */
-interface HttpClient {
-  void prepare(Benchmark benchmark);
-
-  void enqueue(HttpUrl url) throws Exception;
-
-  boolean acceptingJobs();
+public interface DuplexResponseBody {
+  void onRequest(RecordedRequest request, BufferedSource requestBody, BufferedSink responseBody)
+      throws IOException;
 }

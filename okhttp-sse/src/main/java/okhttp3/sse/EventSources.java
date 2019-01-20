@@ -16,18 +16,15 @@
 package okhttp3.sse;
 
 import okhttp3.OkHttpClient;
-import okhttp3.Request;
 import okhttp3.Response;
 import okhttp3.internal.sse.RealEventSource;
 
 public final class EventSources {
   public static EventSource.Factory createFactory(final OkHttpClient client) {
-    return new EventSource.Factory() {
-      @Override public EventSource newEventSource(Request request, EventSourceListener listener) {
-        RealEventSource eventSource = new RealEventSource(request, listener);
-        eventSource.connect(client);
-        return eventSource;
-      }
+    return (request, listener) -> {
+      RealEventSource eventSource = new RealEventSource(request, listener);
+      eventSource.connect(client);
+      return eventSource;
     };
   }
 

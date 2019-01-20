@@ -38,24 +38,22 @@ public class InstallUncaughtExceptionHandlerListener extends RunListener {
   @Override public void testRunStarted(Description description) {
     System.err.println("Installing aggressive uncaught exception handler");
     oldDefaultUncaughtExceptionHandler = Thread.getDefaultUncaughtExceptionHandler();
-    Thread.setDefaultUncaughtExceptionHandler(new Thread.UncaughtExceptionHandler() {
-      @Override public void uncaughtException(Thread thread, Throwable throwable) {
-        StringWriter errorText = new StringWriter(256);
-        errorText.append("Uncaught exception in OkHttp thread \"");
-        errorText.append(thread.getName());
-        errorText.append("\"\n");
-        throwable.printStackTrace(new PrintWriter(errorText));
+    Thread.setDefaultUncaughtExceptionHandler((thread, throwable) -> {
+      StringWriter errorText = new StringWriter(256);
+      errorText.append("Uncaught exception in OkHttp thread \"");
+      errorText.append(thread.getName());
+      errorText.append("\"\n");
+      throwable.printStackTrace(new PrintWriter(errorText));
+      errorText.append("\n");
+      if (lastTestStarted != null) {
+        errorText.append("Last test to start was: ");
+        errorText.append(lastTestStarted.getDisplayName());
         errorText.append("\n");
-        if (lastTestStarted != null) {
-          errorText.append("Last test to start was: ");
-          errorText.append(lastTestStarted.getDisplayName());
-          errorText.append("\n");
-        }
-        System.err.print(errorText.toString());
+      }
+      System.err.print(errorText.toString());
 
-        synchronized (exceptions) {
-          exceptions.put(throwable, lastTestStarted.getDisplayName());
-        }
+      synchronized (exceptions) {
+        exceptions.put(throwable, lastTestStarted.getDisplayName());
       }
     });
   }

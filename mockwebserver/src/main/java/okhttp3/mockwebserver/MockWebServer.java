@@ -59,6 +59,7 @@ import okhttp3.Response;
 import okhttp3.internal.Internal;
 import okhttp3.internal.NamedRunnable;
 import okhttp3.internal.Util;
+import okhttp3.internal.duplex.MwsDuplexAccess;
 import okhttp3.internal.http.HttpMethod;
 import okhttp3.internal.http2.ErrorCode;
 import okhttp3.internal.http2.Header;
@@ -68,6 +69,7 @@ import okhttp3.internal.http2.Settings;
 import okhttp3.internal.platform.Platform;
 import okhttp3.internal.ws.RealWebSocket;
 import okhttp3.internal.ws.WebSocketProtocol;
+import okhttp3.mockwebserver.internal.duplex.DuplexResponseBody;
 import okio.Buffer;
 import okio.BufferedSink;
 import okio.BufferedSource;
@@ -101,6 +103,12 @@ import static okhttp3.mockwebserver.SocketPolicy.UPGRADE_TO_SSL_AT_END;
 public final class MockWebServer extends ExternalResource implements Closeable {
   static {
     Internal.initializeInstanceForTests();
+    MwsDuplexAccess.instance = new MwsDuplexAccess() {
+      @Override public void setBody(
+          MockResponse mockResponse, DuplexResponseBody duplexResponseBody) {
+        mockResponse.setBody(duplexResponseBody);
+      }
+    };
   }
 
   private static final int CLIENT_AUTH_NONE = 0;
@@ -127,9 +135,9 @@ public final class MockWebServer extends ExternalResource implements Closeable {
   private final BlockingQueue<RecordedRequest> requestQueue = new LinkedBlockingQueue<>();
 
   private final Set<Socket> openClientSockets =
-      Collections.newSetFromMap(new ConcurrentHashMap<Socket, Boolean>());
+      Collections.newSetFromMap(new ConcurrentHashMap<>());
   private final Set<Http2Connection> openConnections =
-      Collections.newSetFromMap(new ConcurrentHashMap<Http2Connection, Boolean>());
+      Collections.newSetFromMap(new ConcurrentHashMap<>());
   private final AtomicInteger requestCount = new AtomicInteger();
   private long bodyLimit = Long.MAX_VALUE;
   private ServerSocketFactory serverSocketFactory = ServerSocketFactory.getDefault();
@@ -751,7 +759,19 @@ public final class MockWebServer extends ExternalResource implements Closeable {
     sink.writeUtf8(response.getStatus());
     sink.writeUtf8("\r\n");
 
-    Headers headers = response.getHeaders();
+    writeHeaders(sink, response.getHeaders());
+
+    Buffer body = response.getBody();
+    if (body == null) return;
+    sleepIfDelayed(response.getBodyDelay(TimeUnit.MILLISECONDS));
+    throttledTransfer(response, socket, body, sink, body.size(), false);
+
+    if ("chunked".equalsIgnoreCase(response.getHeaders().get("Transfer-Encoding"))) {
+      writeHeaders(sink, response.getTrailers());
+    }
+  }
+
+  private void writeHeaders(BufferedSink sink, Headers headers) throws IOException {
     for (int i = 0, size = headers.size(); i < size; i++) {
       sink.writeUtf8(headers.name(i));
       sink.writeUtf8(": ");
@@ -760,11 +780,6 @@ public final class MockWebServer extends ExternalResource implements Closeable {
     }
     sink.writeUtf8("\r\n");
     sink.flush();
-
-    Buffer body = response.getBody();
-    if (body == null) return;
-    sleepIfDelayed(response.getBodyDelay(TimeUnit.MILLISECONDS));
-    throttledTransfer(response, socket, body, sink, body.size(), false);
   }
 
   private void sleepIfDelayed(long delayMs) {
@@ -833,6 +848,14 @@ public final class MockWebServer extends ExternalResource implements Closeable {
   private void readEmptyLine(BufferedSource source) throws IOException {
     String line = source.readUtf8LineStrict();
     if (line.length() != 0) throw new IllegalStateException("Expected empty but was: " + line);
+  }
+
+  /**
+   * Returns the dispatcher used to respond to HTTP requests. The default dispatcher is a {@link
+   * QueueDispatcher} but other dispatchers can be configured.
+   */
+  public Dispatcher getDispatcher() {
+    return dispatcher;
   }
 
   /**
@@ -924,7 +947,7 @@ public final class MockWebServer extends ExternalResource implements Closeable {
         socket.close();
         return;
       }
-      writeResponse(stream, response);
+      writeResponse(stream, request, response);
       if (logger.isLoggable(Level.INFO)) {
         logger.info(MockWebServer.this + " received request: " + request
             + " and responded: " + response + " protocol is " + protocol.toString());
@@ -962,9 +985,12 @@ public final class MockWebServer extends ExternalResource implements Closeable {
       Headers headers = httpHeaders.build();
 
       MockResponse peek = dispatcher.peek();
-      if (!readBody && peek.getSocketPolicy() == EXPECT_CONTINUE) {
-        stream.writeHeaders(Collections.singletonList(
-            new Header(Header.RESPONSE_STATUS, ByteString.encodeUtf8("100 Continue"))), true);
+      if (peek.isDuplex()) {
+        readBody = false;
+      } else if (!readBody && peek.getSocketPolicy() == EXPECT_CONTINUE) {
+        List<Header> continueHeaders = Collections.singletonList(
+            new Header(Header.RESPONSE_STATUS, ByteString.encodeUtf8("100 Continue")));
+        stream.writeHeaders(continueHeaders, false, true);
         stream.getConnection().flush();
         readBody = true;
       }
@@ -984,7 +1010,8 @@ public final class MockWebServer extends ExternalResource implements Closeable {
           sequenceNumber.getAndIncrement(), socket);
     }
 
-    private void writeResponse(Http2Stream stream, MockResponse response) throws IOException {
+    private void writeResponse(final Http2Stream stream,
+        final RecordedRequest request, final MockResponse response) throws IOException {
       Settings settings = response.getSettings();
       if (settings != null) {
         stream.getConnection().setSettings(settings);
@@ -1004,24 +1031,40 @@ public final class MockWebServer extends ExternalResource implements Closeable {
       for (int i = 0, size = headers.size(); i < size; i++) {
         http2Headers.add(new Header(headers.name(i), headers.value(i)));
       }
+      Headers trailers = response.getTrailers();
 
       sleepIfDelayed(response.getHeadersDelay(TimeUnit.MILLISECONDS));
 
       Buffer body = response.getBody();
-      boolean closeStreamAfterHeaders = body != null || !response.getPushPromises().isEmpty();
-      stream.writeHeaders(http2Headers, closeStreamAfterHeaders);
-      pushPromises(stream, response.getPushPromises());
+      boolean outFinished = body == null
+          && response.getPushPromises().isEmpty()
+          && !response.isDuplex();
+      boolean flushHeaders = body == null;
+      if (outFinished && trailers.size() > 0) {
+        throw new IllegalStateException("unsupported: no body and non-empty trailers " + trailers);
+      }
+      stream.writeHeaders(http2Headers, outFinished, flushHeaders);
+      if (trailers.size() > 0) {
+        stream.enqueueTrailers(trailers);
+      }
+      pushPromises(stream, request, response.getPushPromises());
       if (body != null) {
         BufferedSink sink = Okio.buffer(stream.getSink());
         sleepIfDelayed(response.getBodyDelay(TimeUnit.MILLISECONDS));
         throttledTransfer(response, socket, body, sink, body.size(), false);
         sink.close();
-      } else if (closeStreamAfterHeaders) {
+      } else if (response.isDuplex()) {
+        BufferedSink sink = Okio.buffer(stream.getSink());
+        BufferedSource source = Okio.buffer(stream.getSource());
+        DuplexResponseBody duplexResponseBody = response.getDuplexResponseBody();
+        duplexResponseBody.onRequest(request, source, sink);
+      } else if (!outFinished) {
         stream.close(ErrorCode.NO_ERROR);
       }
     }
 
-    private void pushPromises(Http2Stream stream, List<PushPromise> promises) throws IOException {
+    private void pushPromises(Http2Stream stream, RecordedRequest request,
+        List<PushPromise> promises) throws IOException {
       for (PushPromise pushPromise : promises) {
         List<Header> pushedHeaders = new ArrayList<>();
         pushedHeaders.add(new Header(Header.TARGET_AUTHORITY, url(pushPromise.path()).host()));
@@ -1038,7 +1081,7 @@ public final class MockWebServer extends ExternalResource implements Closeable {
         boolean hasBody = pushPromise.response().getBody() != null;
         Http2Stream pushedStream =
             stream.getConnection().pushStream(stream.getId(), pushedHeaders, hasBody);
-        writeResponse(pushedStream, pushPromise.response());
+        writeResponse(pushedStream, request, pushPromise.response());
       }
     }
   }

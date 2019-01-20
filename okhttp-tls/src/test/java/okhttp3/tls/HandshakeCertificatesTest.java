@@ -25,7 +25,6 @@ import java.security.cert.X509Certificate;
 import java.util.Arrays;
 import java.util.LinkedHashSet;
 import java.util.Set;
-import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -33,12 +32,12 @@ import javax.net.ServerSocketFactory;
 import javax.net.SocketFactory;
 import javax.net.ssl.SSLSocket;
 import okhttp3.Handshake;
-import okhttp3.internal.Util;
 import okio.ByteString;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import static okhttp3.internal.Util.closeQuietly;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
@@ -52,7 +51,7 @@ public final class HandshakeCertificatesTest {
 
   @After public void tearDown() {
     executorService.shutdown();
-    Util.closeQuietly(serverSocket);
+    closeQuietly(serverSocket);
   }
 
   @Test public void clientAndServer() throws Exception {
@@ -149,45 +148,39 @@ public final class HandshakeCertificatesTest {
     return new InetSocketAddress(serverAddress, serverSocket.getLocalPort());
   }
 
-  private Future<Handshake> doServerHandshake(final HandshakeCertificates server) {
-    return executorService.submit(new Callable<Handshake>() {
-      @Override public Handshake call() throws Exception {
-        Socket rawSocket = null;
-        SSLSocket sslSocket = null;
-        try {
-          rawSocket = serverSocket.accept();
-          sslSocket = (SSLSocket) server.sslSocketFactory().createSocket(rawSocket,
-              rawSocket.getInetAddress().getHostAddress(), rawSocket.getPort(),
-              true /* autoClose */);
-          sslSocket.setUseClientMode(false);
-          sslSocket.setWantClientAuth(true);
-          sslSocket.startHandshake();
-          return Handshake.get(sslSocket.getSession());
-        } finally {
-          Util.closeQuietly(rawSocket);
-          Util.closeQuietly(sslSocket);
-        }
+  private Future<Handshake> doServerHandshake(HandshakeCertificates server) {
+    return executorService.submit(() -> {
+      Socket rawSocket = null;
+      SSLSocket sslSocket = null;
+      try {
+        rawSocket = serverSocket.accept();
+        sslSocket = (SSLSocket) server.sslSocketFactory().createSocket(rawSocket,
+            rawSocket.getInetAddress().getHostAddress(), rawSocket.getPort(), true /* autoClose */);
+        sslSocket.setUseClientMode(false);
+        sslSocket.setWantClientAuth(true);
+        sslSocket.startHandshake();
+        return Handshake.get(sslSocket.getSession());
+      } finally {
+        closeQuietly(rawSocket);
+        closeQuietly(sslSocket);
       }
     });
   }
 
   private Future<Handshake> doClientHandshake(
-      final HandshakeCertificates client, final InetSocketAddress serverAddress) {
-    return executorService.submit(new Callable<Handshake>() {
-      @Override public Handshake call() throws Exception {
-        Socket rawSocket = SocketFactory.getDefault().createSocket();
-        rawSocket.connect(serverAddress);
-        SSLSocket sslSocket = null;
-        try {
-          sslSocket = (SSLSocket) client.sslSocketFactory().createSocket(rawSocket,
-              rawSocket.getInetAddress().getHostAddress(), rawSocket.getPort(),
-              true /* autoClose */);
-          sslSocket.startHandshake();
-          return Handshake.get(sslSocket.getSession());
-        } finally {
-          Util.closeQuietly(rawSocket);
-          Util.closeQuietly(sslSocket);
-        }
+      HandshakeCertificates client, InetSocketAddress serverAddress) {
+    return executorService.submit(() -> {
+      Socket rawSocket = SocketFactory.getDefault().createSocket();
+      rawSocket.connect(serverAddress);
+      SSLSocket sslSocket = null;
+      try {
+        sslSocket = (SSLSocket) client.sslSocketFactory().createSocket(rawSocket,
+            rawSocket.getInetAddress().getHostAddress(), rawSocket.getPort(), true /* autoClose */);
+        sslSocket.startHandshake();
+        return Handshake.get(sslSocket.getSession());
+      } finally {
+        closeQuietly(rawSocket);
+        closeQuietly(sslSocket);
       }
     });
   }
