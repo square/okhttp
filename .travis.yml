@@ -2,10 +2,14 @@ language: java
 
 jdk:
   - oraclejdk8
-  - openjdk8
   - openjdk11
+  - openjdk12
 
-script: mvn test javadoc:jar source:jar -B
+before_install:
+  - mvn -N io.takari:maven:wrapper -Dmaven=3.6.0
+  - echo "MAVEN_OPTS='-Dmaven.repo.local=$HOME/.m2/repository -Xmx1g -Dorg.slf4j.simpleLogger.showDateTime=true -Dorg.slf4j.simpleLogger.dateTimeFormat=HH:mm:ss:SSS'" > ~/.mavenrc
+
+script: ./mvnw test javadoc:jar source:jar -B
 
 after_success:
   - .buildscript/deploy_snapshot.sh
