@@ -146,16 +146,16 @@
   <build>
     <pluginManagement>
       <plugins>
-        <!--<plugin>-->
-          <!--<groupId>org.apache.maven.plugins</groupId>-->
-          <!--<artifactId>maven-compiler-plugin</artifactId>-->
-          <!--<version>3.8.0</version>-->
-          <!--<configuration>-->
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-compiler-plugin</artifactId>
+          <version>3.8.0</version>
+          <configuration>
             <!--<compilerId>javac-with-errorprone</compilerId>-->
             <!--<forceJavacCompilerUse>true</forceJavacCompilerUse>-->
-            <!--<source>${java.version}</source>-->
-            <!--<target>${java.version}</target>-->
-          <!--</configuration>-->
+            <source>${java.version}</source>
+            <target>${java.version}</target>
+          </configuration>
           <!--<dependencies>-->
             <!--<dependency>-->
               <!--<groupId>org.codehaus.plexus</groupId>-->
@@ -168,7 +168,7 @@
               <!--<version>2.3.2</version>-->
             <!--</dependency>-->
           <!--</dependencies>-->
-        <!--</plugin>-->
+        </plugin>
 
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
