@@ -322,6 +322,7 @@
             <version>3.0.1</version>
             <configuration>
               <failOnError>false</failOnError>
+              <doclint>false</doclint>
             </configuration>
           </plugin>
         </plugins>
@@ -363,6 +364,24 @@
       <id>jdk9</id>
       <activation>
         <jdk>9</jdk>
+      </activation>
+      <properties>
+        <okhttp.platform>jdk9</okhttp.platform>
+      </properties>
+    </profile>
+    <profile>
+      <id>jdk10</id>
+      <activation>
+        <jdk>10</jdk>
+      </activation>
+      <properties>
+        <okhttp.platform>jdk9</okhttp.platform>
+      </properties>
+    </profile>
+    <profile>
+      <id>jdk11</id>
+      <activation>
+        <jdk>11</jdk>
       </activation>
       <properties>
         <okhttp.platform>jdk9</okhttp.platform>
