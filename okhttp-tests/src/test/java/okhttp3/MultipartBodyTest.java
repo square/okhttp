@@ -188,6 +188,10 @@ public final class MultipartBodyTest {
     Buffer buffer = new Buffer();
     body.writeTo(buffer);
     assertEquals(expected, buffer.readUtf8());
+    assertEquals(489, body.contentLength());
+    assertEquals("form-data; name=\"name1\"; filename=\"value.txt\"", body.part(0).headers.value(0));
+    assertEquals("form-data; name=\"name2\"; filename=\"零壱弐参.txt\"", body.part(1).headers.value(0));
+    assertEquals("form-data; name=\"name3\"; filename=\"Star Fox 零.txt\"", body.part(2).headers.value(0));
   }
 
   @Test public void stringEscapingIsWeird() throws Exception {
