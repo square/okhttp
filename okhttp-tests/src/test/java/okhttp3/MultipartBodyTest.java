@@ -102,7 +102,7 @@ public final class MultipartBodyTest {
         + "--AaB03x\r\n"
         + "Content-Disposition: form-data; name=\"files\"\r\n"
         + "Content-Type: multipart/mixed; boundary=BbC04y\r\n"
-        + "Content-Length: 343\r\n"
+        + "Content-Length: 337\r\n"
         + "\r\n"
         + "--BbC04y\r\n"
         + "Content-Disposition: file; filename=\"file1.txt\"\r\n"
@@ -111,12 +111,12 @@ public final class MultipartBodyTest {
         + "\r\n"
         + "... contents of file1.txt ...\r\n"
         + "--BbC04y\r\n"
-        + "Content-Disposition: file; filename=\"file2€.gif\"\r\n"
+        + "Content-Disposition: file; filename=\"file2.gif\"\r\n"
         + "Content-Transfer-Encoding: binary\r\n"
         + "Content-Type: image/gif\r\n"
-        + "Content-Length: 32\r\n"
+        + "Content-Length: 29\r\n"
         + "\r\n"
-        + "... contents of file2€.gif ...\r\n"
+        + "... contents of file2.gif ...\r\n"
         + "--BbC04y--\r\n"
         + "\r\n"
         + "--AaB03x--\r\n";
@@ -131,13 +131,12 @@ public final class MultipartBodyTest {
                     RequestBody.create(
                         MediaType.get("text/plain"), "... contents of file1.txt ..."))
                 .addPart(
-                    new Headers.Builder()
-                        .addUnsafeNonAscii("Content-Disposition", "file; filename=\"file2€.gif\"")
-                        .add("Content-Transfer-Encoding", "binary")
-                        .build(),
+                    Headers.of(
+                        "Content-Disposition", "file; filename=\"file2.gif\"",
+                        "Content-Transfer-Encoding", "binary"),
                     RequestBody.create(
                         MediaType.get("image/gif"),
-                        "... contents of file2€.gif ...".getBytes(UTF_8)))
+                        "... contents of file2.gif ...".getBytes(UTF_8)))
                 .build())
         .build();
 
@@ -145,7 +144,7 @@ public final class MultipartBodyTest {
     assertEquals(MultipartBody.FORM, body.type());
     assertEquals("multipart/form-data; boundary=AaB03x", body.contentType().toString());
     assertEquals(2, body.parts().size());
-    assertEquals(574, body.contentLength());
+    assertEquals(568, body.contentLength());
 
     Buffer buffer = new Buffer();
     body.writeTo(buffer);
