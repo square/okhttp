@@ -153,6 +153,44 @@ public final class MultipartBodyTest {
     assertEquals(expected, buffer.readUtf8());
   }
 
+  @Test public void acceptAsciiAndUtf8CharsForFilename() throws Exception {
+    String expected = ""
+        + "--AaB03x\r\n"
+        + "Content-Disposition: form-data; name=\"name1\"; filename=\"value.txt\"\r\n"
+        + "Content-Type: text/plain; charset=utf-8\r\n"
+        + "Content-Length: 5\r\n"
+        + "\r\n"
+        + "ASCII\r\n"
+        + "--AaB03x\r\n"
+        + "Content-Disposition: form-data; name=\"name2\"; filename=\"零壱弐参.txt\"\r\n"
+        + "Content-Type: text/plain; charset=utf-8\r\n"
+        + "Content-Length: 5\r\n"
+        + "\r\n"
+        + "UTF-8\r\n"
+        + "--AaB03x\r\n"
+        + "Content-Disposition: form-data; name=\"name3\"; filename=\"Star Fox 零.txt\"\r\n"
+        + "Content-Type: text/plain; charset=utf-8\r\n"
+        + "Content-Length: 26\r\n"
+        + "\r\n"
+        + "Mixture of ASCII and UTF-8\r\n"
+        + "--AaB03x--\r\n";
+
+    MultipartBody body = new MultipartBody.Builder("AaB03x")
+        .setType(MultipartBody.FORM)
+        .addFormDataPart("name1", "value.txt",
+            RequestBody.create(MediaType.get("text/plain; charset=utf-8"), "ASCII"))
+        .addFormDataPart("name2", "零壱弐参.txt",
+            RequestBody.create(MediaType.get("text/plain; charset=utf-8"), "UTF-8"))
+        .addFormDataPart("name3", "Star Fox 零.txt",
+            RequestBody.create(MediaType.get("text/plain; charset=utf-8"),
+                "Mixture of ASCII and UTF-8"))
+        .build();
+
+    Buffer buffer = new Buffer();
+    body.writeTo(buffer);
+    assertEquals(expected, buffer.readUtf8());
+  }
+
   @Test public void stringEscapingIsWeird() throws Exception {
     String expected = ""
         + "--AaB03x\r\n"
