@@ -152,7 +152,7 @@ public final class MultipartBodyTest {
     assertEquals(expected, buffer.readUtf8());
   }
 
-  @Test public void acceptAsciiAndUtf8CharsForFilename() throws Exception {
+  @Test public void acceptsAsciiAndUtf8CharsForFilename() throws Exception {
     String expected = ""
         + "--AaB03x\r\n"
         + "Content-Disposition: form-data; name=\"name1\"; filename=\"value.txt\"\r\n"
