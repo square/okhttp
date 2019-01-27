@@ -162,28 +162,35 @@ public final class MultipartBodyTest {
         + "\r\n"
         + "ASCII\r\n"
         + "--AaB03x\r\n"
-        + "Content-Disposition: form-data; name=\"name2\"; filename=\"零壱弐参.txt\"\r\n"
+        + "Content-Disposition: form-data; name=\"name2\"; filename=\"零壱弐参.txt\"; filename*=utf-8''%E9%9B%B6%E5%A3%B1%E5%BC%90%E5%8F%82.txt\r\n"
         + "Content-Type: text/plain; charset=utf-8\r\n"
         + "Content-Length: 5\r\n"
         + "\r\n"
         + "UTF-8\r\n"
         + "--AaB03x\r\n"
-        + "Content-Disposition: form-data; name=\"name3\"; filename=\"Star Fox 零.txt\"\r\n"
+        + "Content-Disposition: form-data; name=\"name3\"; filename=\"Star Fox 零.txt\"; filename*=utf-8''Star%20Fox%20%E9%9B%B6.txt\r\n"
         + "Content-Type: text/plain; charset=utf-8\r\n"
         + "Content-Length: 26\r\n"
         + "\r\n"
         + "Mixture of ASCII and UTF-8\r\n"
+        + "--AaB03x\r\n"
+        + "Content-Disposition: form-data; name=\"name4\"; filename*=utf-8''Star%20Fox%20%E9%9B%B6.txt\r\n"
+        + "Content-Type: text/plain; charset=utf-8\r\n"
+        + "Content-Length: 14\r\n"
+        + "\r\n"
+        + "filename* only\r\n"
         + "--AaB03x--\r\n";
 
     MultipartBody body = new MultipartBody.Builder("AaB03x")
         .setType(MultipartBody.FORM)
         .addFormDataPart("name1", "value.txt",
             RequestBody.create(MediaType.get("text/plain; charset=utf-8"), "ASCII"))
-        .addFormDataPart("name2", "零壱弐参.txt",
+        .addFormDataPart("name2", "零壱弐参.txt", "utf-8''%E9%9B%B6%E5%A3%B1%E5%BC%90%E5%8F%82.txt",
             RequestBody.create(MediaType.get("text/plain; charset=utf-8"), "UTF-8"))
-        .addFormDataPart("name3", "Star Fox 零.txt",
-            RequestBody.create(MediaType.get("text/plain; charset=utf-8"),
-                "Mixture of ASCII and UTF-8"))
+        .addFormDataPart("name3", "Star Fox 零.txt", "utf-8''Star%20Fox%20%E9%9B%B6.txt",
+            RequestBody.create(MediaType.get("text/plain; charset=utf-8"), "Mixture of ASCII and UTF-8"))
+        .addFormDataPart("name4", null, "utf-8''Star%20Fox%20%E9%9B%B6.txt",
+            RequestBody.create(MediaType.get("text/plain; charset=utf-8"), "filename* only"))
         .build();
 
     Buffer buffer = new Buffer();

@@ -244,6 +244,11 @@ public final class MultipartBody extends RequestBody {
     }
 
     public static Part createFormData(String name, @Nullable String filename, RequestBody body) {
+      return createFormData(name, filename, null, body);
+    }
+
+    public static Part createFormData(String name, @Nullable String filename,
+        @Nullable String filenameAsterisk, RequestBody body) {
       if (name == null) {
         throw new NullPointerException("name == null");
       }
@@ -253,6 +258,12 @@ public final class MultipartBody extends RequestBody {
       if (filename != null) {
         disposition.append("; filename=");
         appendQuotedString(disposition, filename);
+      }
+
+      if (filenameAsterisk != null) {
+        disposition.append("; filename*=");
+        // RFC5987 allows the user to set filename* without quotations.
+        disposition.append(filenameAsterisk);
       }
 
       Headers headers = new Headers.Builder()
@@ -324,6 +335,12 @@ public final class MultipartBody extends RequestBody {
     /** Add a form data part to the body. */
     public Builder addFormDataPart(String name, @Nullable String filename, RequestBody body) {
       return addPart(Part.createFormData(name, filename, body));
+    }
+
+    /** Add a form data part to the body. */
+    public Builder addFormDataPart(String name, @Nullable String filename,
+        @Nullable String filenameAsterisk, RequestBody body) {
+      return addPart(Part.createFormData(name, filename, filenameAsterisk, body));
     }
 
     /** Add a part to the body. */
