@@ -80,11 +80,11 @@ public final class DuplexTest {
         .post(duplexRequestBody)
         .build());
 
-    BufferedSink requestBody = duplexRequestBody.createSink(call);
+    BufferedSink requestBody = duplexRequestBody.createSink();
     requestBody.writeUtf8("request A\n");
     requestBody.flush();
 
-    try (Response response = duplexRequestBody.awaitExecute()) {
+    try (Response response = call.execute()) {
       BufferedSource responseBody = response.body().source();
       assertEquals("response B", responseBody.readUtf8Line());
 
@@ -132,9 +132,9 @@ public final class DuplexTest {
         .post(duplexRequestBody)
         .build());
 
-    BufferedSink requestBody = duplexRequestBody.createSink(call);
+    BufferedSink requestBody = duplexRequestBody.createSink();
 
-    try (Response response = duplexRequestBody.awaitExecute()) {
+    try (Response response = call.execute()) {
       BufferedSource responseBody = response.body().source();
 
       assertEquals("response A", responseBody.readUtf8Line());
@@ -224,7 +224,7 @@ public final class DuplexTest {
         .build();
     Call call = client.newCall(request);
 
-    BufferedSink sink = ((DuplexRequestBody) request.body).createSink(call);
+    BufferedSink sink = ((DuplexRequestBody) request.body).createSink();
     sink.writeUtf8("hey\n");
 
     try (Response response = call.execute()) {
