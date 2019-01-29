@@ -46,12 +46,10 @@ import okhttp3.RecordingHostnameVerifier;
 import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
-import okhttp3.Route;
 import okhttp3.TestLogHandler;
 import okhttp3.TestUtil;
 import okhttp3.internal.DoubleInetAddressDns;
 import okhttp3.internal.RecordingOkAuthenticator;
-import okhttp3.internal.SingleInetAddressDns;
 import okhttp3.internal.Util;
 import okhttp3.internal.connection.RealConnection;
 import okhttp3.mockwebserver.Dispatcher;
@@ -76,6 +74,7 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static okhttp3.TestUtil.defaultClient;
@@ -89,7 +88,7 @@ import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeTrue;
 
-/** Test how SPDY interacts with HTTP/2 features. */
+/** Test how HTTP/2 interacts with HTTP features. */
 @RunWith(Parameterized.class)
 public final class HttpOverHttp2Test {
   private static final Logger http2Logger = Logger.getLogger(Http2.class.getName());
@@ -125,7 +124,6 @@ public final class HttpOverHttp2Test {
   private static OkHttpClient buildHttp2Client() {
     return defaultClient().newBuilder()
         .protocols(Arrays.asList(Protocol.HTTP_2, Protocol.HTTP_1_1))
-        .dns(new SingleInetAddressDns())
         .sslSocketFactory(
             handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager())
         .hostnameVerifier(new RecordingHostnameVerifier())
@@ -151,7 +149,9 @@ public final class HttpOverHttp2Test {
     http2Logger.removeHandler(http2Handler);
     http2Logger.setLevel(previousLevel);
 
+    // Ensure a fresh connection pool for the next test.
     client.connectionPool().evictAll();
+    assertEquals(0, client.connectionPool().connectionCount());
   }
 
   @Test public void get() throws Exception {
@@ -188,7 +188,7 @@ public final class HttpOverHttp2Test {
   }
 
   @Test public void noDefaultContentLengthOnStreamingPost() throws Exception {
-    final byte[] postBytes = "FGHIJ".getBytes(Util.UTF_8);
+    byte[] postBytes = "FGHIJ".getBytes(UTF_8);
 
     server.enqueue(new MockResponse().setBody("ABCDE"));
 
@@ -215,7 +215,7 @@ public final class HttpOverHttp2Test {
   }
 
   @Test public void userSuppliedContentLengthHeader() throws Exception {
-    final byte[] postBytes = "FGHIJ".getBytes(Util.UTF_8);
+    byte[] postBytes = "FGHIJ".getBytes(UTF_8);
 
     server.enqueue(new MockResponse().setBody("ABCDE"));
 
@@ -246,7 +246,7 @@ public final class HttpOverHttp2Test {
   }
 
   @Test public void closeAfterFlush() throws Exception {
-    final byte[] postBytes = "FGHIJ".getBytes(Util.UTF_8);
+    byte[] postBytes = "FGHIJ".getBytes(UTF_8);
 
     server.enqueue(new MockResponse().setBody("ABCDE"));
 
@@ -354,7 +354,7 @@ public final class HttpOverHttp2Test {
     waitForDataFrames(Http2Connection.OKHTTP_CLIENT_WINDOW_SIZE);
 
     // Cancel the call and close the response body. This should discard the buffered data and update
-    // the connnection flow-control window.
+    // the connection flow-control window.
     call1.cancel();
     response1.close();
 
@@ -434,7 +434,7 @@ public final class HttpOverHttp2Test {
 
     String credential = Credentials.basic("username", "password");
     client = client.newBuilder()
-        .authenticator(new RecordingOkAuthenticator(credential))
+        .authenticator(new RecordingOkAuthenticator(credential, "Basic"))
         .build();
 
     Call call = client.newCall(new Request.Builder()
@@ -754,13 +754,7 @@ public final class HttpOverHttp2Test {
     cookieJar.assertResponseCookies("a=b; path=/");
   }
 
-  /** https://github.com/square/okhttp/issues/1191 */
-  @Ignore // TODO: recover gracefully when a connection is shutdown.
   @Test public void cancelWithStreamNotCompleted() throws Exception {
-    // Ensure that the (shared) connection pool is in a consistent state.
-    client.connectionPool().evictAll();
-    assertEquals(0, client.connectionPool().connectionCount());
-
     server.enqueue(new MockResponse()
         .setBody("abc"));
     server.enqueue(new MockResponse()
@@ -902,8 +896,10 @@ public final class HttpOverHttp2Test {
     Call call = client.newCall(new Request.Builder()
         .url(server.url("/"))
         .build());
+    CountDownLatch latch = new CountDownLatch(1);
     call.enqueue(new Callback() {
       @Override public void onFailure(Call call1, IOException e) {
+        latch.countDown();
       }
 
       @Override public void onResponse(Call call1, Response response) {
@@ -911,6 +907,7 @@ public final class HttpOverHttp2Test {
     });
     assertEquals(expectedSequenceNumber, server.takeRequest().getSequenceNumber());
     call.cancel();
+    latch.await();
   }
 
   @Test public void noRecoveryFromRefusedStreamWithRetryDisabled() throws Exception {
@@ -957,18 +954,16 @@ public final class HttpOverHttp2Test {
     server.enqueue(new MockResponse()
         .setBody("ABC"));
 
-    final CountDownLatch latch = new CountDownLatch(1);
-    final BlockingQueue<String> responses = new SynchronousQueue<>();
-    okhttp3.Authenticator authenticator = new okhttp3.Authenticator() {
-      @Override public Request authenticate(Route route, Response response) throws IOException {
-        responses.offer(response.body().string());
-        try {
-          latch.await();
-        } catch (InterruptedException e) {
-          throw new AssertionError();
-        }
-        return response.request();
+    CountDownLatch latch = new CountDownLatch(1);
+    BlockingQueue<String> responses = new SynchronousQueue<>();
+    okhttp3.Authenticator authenticator = (route, response) -> {
+      responses.offer(response.body().string());
+      try {
+        latch.await();
+      } catch (InterruptedException e) {
+        throw new AssertionError();
       }
+      return response.request();
     };
 
     OkHttpClient blockingAuthClient = client.newBuilder()
@@ -1316,7 +1311,7 @@ public final class HttpOverHttp2Test {
         .setSocketPolicy(SocketPolicy.DISCONNECT_AT_END)
         .setBody("DEF"));
 
-    final BlockingQueue<String> bodies = new SynchronousQueue<>();
+    BlockingQueue<String> bodies = new SynchronousQueue<>();
     Callback callback = new Callback() {
       @Override public void onResponse(Call call, Response response) throws IOException {
         bodies.add(response.body().string());
@@ -1345,10 +1340,7 @@ public final class HttpOverHttp2Test {
 
     server.useHttps(handshakeCertificates.sslSocketFactory(), true);
 
-    // Force a fresh connection pool for the test.
-    client.connectionPool().evictAll();
-
-    final QueueDispatcher queueDispatcher = new QueueDispatcher();
+    QueueDispatcher queueDispatcher = new QueueDispatcher();
     queueDispatcher.enqueueResponse(new MockResponse()
         .setSocketPolicy(SocketPolicy.UPGRADE_TO_SSL_AT_END)
         .clearHeaders());

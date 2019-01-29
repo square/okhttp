@@ -26,6 +26,7 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.UnknownHostException;
 import java.nio.charset.Charset;
+import java.security.AccessControlException;
 import java.security.GeneralSecurityException;
 import java.security.KeyStore;
 import java.util.ArrayList;
@@ -44,43 +45,46 @@ import javax.annotation.Nullable;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
 import javax.net.ssl.X509TrustManager;
+import okhttp3.Headers;
 import okhttp3.HttpUrl;
 import okhttp3.RequestBody;
 import okhttp3.ResponseBody;
+import okhttp3.internal.http2.Header;
 import okio.Buffer;
 import okio.BufferedSource;
 import okio.ByteString;
+import okio.Options;
 import okio.Source;
+
+import static java.nio.charset.StandardCharsets.UTF_16BE;
+import static java.nio.charset.StandardCharsets.UTF_16LE;
+import static java.nio.charset.StandardCharsets.UTF_8;
 
 /** Junk drawer of utility methods. */
 public final class Util {
   public static final byte[] EMPTY_BYTE_ARRAY = new byte[0];
   public static final String[] EMPTY_STRING_ARRAY = new String[0];
+  public static final Headers EMPTY_HEADERS = Headers.of();
 
   public static final ResponseBody EMPTY_RESPONSE = ResponseBody.create(null, EMPTY_BYTE_ARRAY);
   public static final RequestBody EMPTY_REQUEST = RequestBody.create(null, EMPTY_BYTE_ARRAY);
 
-  private static final ByteString UTF_8_BOM = ByteString.decodeHex("efbbbf");
-  private static final ByteString UTF_16_BE_BOM = ByteString.decodeHex("feff");
-  private static final ByteString UTF_16_LE_BOM = ByteString.decodeHex("fffe");
-  private static final ByteString UTF_32_BE_BOM = ByteString.decodeHex("0000ffff");
-  private static final ByteString UTF_32_LE_BOM = ByteString.decodeHex("ffff0000");
+  /** Byte order marks. */
+  private static final Options UNICODE_BOMS = Options.of(
+      ByteString.decodeHex("efbbbf"),   // UTF-8
+      ByteString.decodeHex("feff"),     // UTF-16BE
+      ByteString.decodeHex("fffe"),     // UTF-16LE
+      ByteString.decodeHex("0000ffff"), // UTF-32BE
+      ByteString.decodeHex("ffff0000")  // UTF-32LE
+  );
 
-  public static final Charset UTF_8 = Charset.forName("UTF-8");
-  public static final Charset ISO_8859_1 = Charset.forName("ISO-8859-1");
-  private static final Charset UTF_16_BE = Charset.forName("UTF-16BE");
-  private static final Charset UTF_16_LE = Charset.forName("UTF-16LE");
-  private static final Charset UTF_32_BE = Charset.forName("UTF-32BE");
-  private static final Charset UTF_32_LE = Charset.forName("UTF-32LE");
+  private static final Charset UTF_32BE = Charset.forName("UTF-32BE");
+  private static final Charset UTF_32LE = Charset.forName("UTF-32LE");
 
   /** GMT and UTC are equivalent for our purposes. */
   public static final TimeZone UTC = TimeZone.getTimeZone("GMT");
 
-  public static final Comparator<String> NATURAL_ORDER = new Comparator<String>() {
-    @Override public int compare(String a, String b) {
-      return a.compareTo(b);
-    }
-  };
+  public static final Comparator<String> NATURAL_ORDER = String::compareTo;
 
   private static final Method addSuppressedExceptionMethod;
 
@@ -123,11 +127,6 @@ public final class Util {
     if ((offset | count) < 0 || offset > arrayLength || arrayLength - offset < count) {
       throw new ArrayIndexOutOfBoundsException();
     }
-  }
-
-  /** Returns true if two possibly-null objects are equal. */
-  public static boolean equal(Object a, Object b) {
-    return a == b || (a != null && a.equals(b));
   }
 
   /**
@@ -225,22 +224,21 @@ public final class Util {
   /** Returns an immutable copy of {@code map}. */
   public static <K, V> Map<K, V> immutableMap(Map<K, V> map) {
     return map.isEmpty()
-        ? Collections.<K, V>emptyMap()
+        ? Collections.emptyMap()
         : Collections.unmodifiableMap(new LinkedHashMap<>(map));
   }
 
   /** Returns an immutable list containing {@code elements}. */
+  @SafeVarargs
   public static <T> List<T> immutableList(T... elements) {
     return Collections.unmodifiableList(Arrays.asList(elements.clone()));
   }
 
-  public static ThreadFactory threadFactory(final String name, final boolean daemon) {
-    return new ThreadFactory() {
-      @Override public Thread newThread(Runnable runnable) {
-        Thread result = new Thread(runnable, name);
-        result.setDaemon(daemon);
-        return result;
-      }
+  public static ThreadFactory threadFactory(String name, boolean daemon) {
+    return runnable -> {
+      Thread result = new Thread(runnable, name);
+      result.setDaemon(daemon);
+      return result;
     };
   }
 
@@ -248,7 +246,6 @@ public final class Util {
    * Returns an array containing only elements found in {@code first} and also in {@code
    * second}. The returned elements are in the same order as in {@code first}.
    */
-  @SuppressWarnings("unchecked")
   public static String[] intersect(
       Comparator<? super String> comparator, String[] first, String[] second) {
     List<String> result = new ArrayList<>();
@@ -403,6 +400,7 @@ public final class Util {
       if (inetAddress == null) return null;
       byte[] address = inetAddress.getAddress();
       if (address.length == 16) return inet6AddressToAscii(address);
+      if (address.length == 4) return inetAddress.getHostAddress(); // An IPv4-mapped IPv6 address.
       throw new AssertionError("Invalid IPv6 address: '" + host + "'");
     }
 
@@ -466,27 +464,15 @@ public final class Util {
   }
 
   public static Charset bomAwareCharset(BufferedSource source, Charset charset) throws IOException {
-    if (source.rangeEquals(0, UTF_8_BOM)) {
-      source.skip(UTF_8_BOM.size());
-      return UTF_8;
+    switch (source.select(UNICODE_BOMS)) {
+      case 0: return UTF_8;
+      case 1: return UTF_16BE;
+      case 2: return UTF_16LE;
+      case 3: return UTF_32BE;
+      case 4: return UTF_32LE;
+      case -1: return charset;
+      default: throw new AssertionError();
     }
-    if (source.rangeEquals(0, UTF_16_BE_BOM)) {
-      source.skip(UTF_16_BE_BOM.size());
-      return UTF_16_BE;
-    }
-    if (source.rangeEquals(0, UTF_16_LE_BOM)) {
-      source.skip(UTF_16_LE_BOM.size());
-      return UTF_16_LE;
-    }
-    if (source.rangeEquals(0, UTF_32_BE_BOM)) {
-      source.skip(UTF_32_BE_BOM.size());
-      return UTF_32_BE;
-    }
-    if (source.rangeEquals(0, UTF_32_LE_BOM)) {
-      source.skip(UTF_32_LE_BOM.size());
-      return UTF_32_LE;
-    }
-    return charset;
   }
 
   public static int checkDuration(String name, long duration, TimeUnit unit) {
@@ -496,16 +482,6 @@ public final class Util {
     if (millis > Integer.MAX_VALUE) throw new IllegalArgumentException(name + " too large.");
     if (millis == 0 && duration > 0) throw new IllegalArgumentException(name + " too small.");
     return (int) millis;
-  }
-
-  public static AssertionError assertionError(String message, Exception e) {
-    AssertionError assertionError = new AssertionError(message);
-    try {
-      assertionError.initCause(e);
-    } catch (IllegalStateException ise) {
-      // ignored, shouldn't happen
-    }
-    return assertionError;
   }
 
   public static int decodeHexDigit(char c) {
@@ -669,7 +645,37 @@ public final class Util {
       }
       return (X509TrustManager) trustManagers[0];
     } catch (GeneralSecurityException e) {
-      throw assertionError("No System TLS", e); // The system has no TLS. Just give up.
+      throw new AssertionError("No System TLS", e); // The system has no TLS. Just give up.
     }
+  }
+
+  public static Headers toHeaders(List<Header> headerBlock) {
+    Headers.Builder builder = new Headers.Builder();
+    for (Header header : headerBlock) {
+      Internal.instance.addLenient(builder, header.name.utf8(), header.value.utf8());
+    }
+    return builder.build();
+  }
+
+  public static List<Header> toHeaderBlock(Headers headers) {
+    List<Header> result = new ArrayList<>();
+    for (int i = 0; i < headers.size(); i++) {
+      result.add(new Header(headers.name(i), headers.value(i)));
+    }
+    return result;
+  }
+
+  /**
+   * Returns the system property, or defaultValue if the system property is null or
+   * cannot be read (e.g. because of security policy restrictions).
+   */
+  public static String getSystemProperty(String key, @Nullable String defaultValue) {
+    String value;
+    try {
+      value = System.getProperty(key);
+    } catch (AccessControlException ex) {
+      return defaultValue;
+    }
+    return value != null ? value : defaultValue;
   }
 }

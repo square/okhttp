@@ -227,14 +227,12 @@ public final class RelayTest {
 
   /** Returns a callable that reads all of source, closes it, and returns the bytes. */
   private Callable<ByteString> sourceReader(final Source source) {
-    return new Callable<ByteString>() {
-      @Override public ByteString call() throws Exception {
-        Buffer buffer = new Buffer();
-        while (source.read(buffer, 16384) != -1) {
-        }
-        source.close();
-        return buffer.readByteString();
+    return () -> {
+      Buffer buffer = new Buffer();
+      while (source.read(buffer, 16384) != -1) {
       }
+      source.close();
+      return buffer.readByteString();
     };
   }
 

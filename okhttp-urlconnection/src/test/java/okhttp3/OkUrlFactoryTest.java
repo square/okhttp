@@ -14,7 +14,6 @@ import java.util.Locale;
 import java.util.TimeZone;
 import java.util.concurrent.TimeUnit;
 import javax.net.ssl.HttpsURLConnection;
-import okhttp3.internal.URLFilter;
 import okhttp3.internal.huc.OkHttpURLConnection;
 import okhttp3.internal.io.InMemoryFileSystem;
 import okhttp3.mockwebserver.MockResponse;
@@ -162,13 +161,8 @@ public class OkUrlFactoryTest {
     server.enqueue(new MockResponse()
         .setBody("B"));
     final URL blockedURL = server.url("/a").url();
-    factory.setUrlFilter(new URLFilter() {
-      @Override
-      public void checkURLPermitted(URL url) throws IOException {
-        if (blockedURL.equals(url)) {
-          throw new IOException("Blocked");
-        }
-      }
+    factory.setUrlFilter(url -> {
+      if (blockedURL.equals(url)) throw new IOException("Blocked");
     });
     try {
       HttpURLConnection connection = factory.open(server.url("/a").url());
@@ -195,13 +189,8 @@ public class OkUrlFactoryTest {
             handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager())
         .followSslRedirects(true)
         .build());
-    factory.setUrlFilter(new URLFilter() {
-      @Override
-      public void checkURLPermitted(URL url) throws IOException {
-        if (blockedURL.equals(url)) {
-          throw new IOException("Blocked");
-        }
-      }
+    factory.setUrlFilter(url -> {
+      if (blockedURL.equals(url)) throw new IOException("Blocked");
     });
 
     server.enqueue(new MockResponse()

@@ -33,17 +33,15 @@ public interface Dns {
    * A DNS that uses {@link InetAddress#getAllByName} to ask the underlying operating system to
    * lookup IP addresses. Most custom {@link Dns} implementations should delegate to this instance.
    */
-  Dns SYSTEM = new Dns() {
-    @Override public List<InetAddress> lookup(String hostname) throws UnknownHostException {
-      if (hostname == null) throw new UnknownHostException("hostname == null");
-      try {
-        return Arrays.asList(InetAddress.getAllByName(hostname));
-      } catch (NullPointerException e) {
-        UnknownHostException unknownHostException =
-            new UnknownHostException("Broken system behaviour for dns lookup of " + hostname);
-        unknownHostException.initCause(e);
-        throw unknownHostException;
-      }
+  Dns SYSTEM = hostname -> {
+    if (hostname == null) throw new UnknownHostException("hostname == null");
+    try {
+      return Arrays.asList(InetAddress.getAllByName(hostname));
+    } catch (NullPointerException e) {
+      UnknownHostException unknownHostException =
+          new UnknownHostException("Broken system behaviour for dns lookup of " + hostname);
+      unknownHostException.initCause(e);
+      throw unknownHostException;
     }
   };
 

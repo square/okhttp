@@ -32,6 +32,11 @@ package okhttp3.mockwebserver;
 public enum SocketPolicy {
 
   /**
+   * Shutdown {@link MockWebServer} after writing response.
+   */
+  SHUTDOWN_SERVER_AFTER_RESPONSE,
+
+  /**
    * Keep the socket open after the response. This is the default HTTP/1.1 behavior.
    */
   KEEP_OPEN,

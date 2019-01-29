@@ -34,7 +34,6 @@ import java.util.TimeZone;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import javax.net.ssl.HostnameVerifier;
-import javax.net.ssl.SSLSession;
 import okhttp3.internal.Internal;
 import okhttp3.internal.io.InMemoryFileSystem;
 import okhttp3.internal.platform.Platform;
@@ -63,11 +62,7 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 public final class CacheTest {
-  private static final HostnameVerifier NULL_HOSTNAME_VERIFIER = new HostnameVerifier() {
-    @Override public boolean verify(String s, SSLSession sslSession) {
-      return true;
-    }
-  };
+  private static final HostnameVerifier NULL_HOSTNAME_VERIFIER = (name, session) -> true;
 
   @Rule public MockWebServer server = new MockWebServer();
   @Rule public MockWebServer server2 = new MockWebServer();
@@ -524,7 +519,7 @@ public final class CacheTest {
     BufferedSource bodySource = get(server.url("/")).body().source();
     assertEquals("ABCDE", bodySource.readUtf8Line());
     try {
-      bodySource.readUtf8Line();
+      bodySource.readUtf8(21);
       fail("This implementation silently ignored a truncated HTTP body.");
     } catch (IOException expected) {
     } finally {
@@ -1865,7 +1860,7 @@ public final class CacheTest {
 
     Response response2 = get(server.url("/"));
     assertEquals("A", response2.body().string());
-    assertEquals(null, response2.header("Warning"));
+    assertNull(response2.header("Warning"));
   }
 
   @Test public void getHeadersRetainsCached200LevelWarnings() throws Exception {
@@ -1910,7 +1905,7 @@ public final class CacheTest {
     long t0 = System.currentTimeMillis();
     Response response1 = get(server.url("/a"));
     assertEquals("A", response1.body().string());
-    assertEquals(null, response1.header("Allow"));
+    assertNull(response1.header("Allow"));
     assertEquals(0, response1.receivedResponseAtMillis() - t0, 250.0);
 
     // A conditional cache hit updates the cache.
@@ -2220,12 +2215,11 @@ public final class CacheTest {
 
     final AtomicReference<String> ifNoneMatch = new AtomicReference<>();
     client = client.newBuilder()
-        .addNetworkInterceptor(new Interceptor() {
-          @Override public Response intercept(Chain chain) throws IOException {
-            ifNoneMatch.compareAndSet(null, chain.request().header("If-None-Match"));
-            return chain.proceed(chain.request());
-          }
-        }).build();
+        .addNetworkInterceptor(chain -> {
+          ifNoneMatch.compareAndSet(null, chain.request().header("If-None-Match"));
+          return chain.proceed(chain.request());
+        })
+        .build();
 
     // Confirm the value is cached and intercepted.
     assertEquals("A", get(url).body().string());
@@ -2243,11 +2237,8 @@ public final class CacheTest {
 
     // Confirm the interceptor isn't exercised.
     client = client.newBuilder()
-        .addNetworkInterceptor(new Interceptor() {
-          @Override public Response intercept(Chain chain) throws IOException {
-            throw new AssertionError();
-          }
-        }).build();
+        .addNetworkInterceptor(chain -> { throw new AssertionError(); })
+        .build();
     assertEquals("A", get(url).body().string());
   }
 
@@ -2397,7 +2388,7 @@ public final class CacheTest {
     assertEquals("B", get(url).body().string());
     assertEquals("B", get(url).body().string());
 
-    assertEquals(null, server.takeRequest().getHeader("If-None-Match"));
+    assertNull(server.takeRequest().getHeader("If-None-Match"));
     assertEquals("v1", server.takeRequest().getHeader("If-None-Match"));
     assertEquals("v1", server.takeRequest().getHeader("If-None-Match"));
     assertEquals("v2", server.takeRequest().getHeader("If-None-Match"));
@@ -2443,7 +2434,7 @@ public final class CacheTest {
     Response response2 = get(server.url("/"));
     assertEquals("abcd", response2.body().string());
 
-    assertEquals(null, server.takeRequest().getHeader("If-None-Match"));
+    assertNull(server.takeRequest().getHeader("If-None-Match"));
     assertEquals("α", server.takeRequest().getHeader("If-None-Match"));
   }
 
@@ -2524,7 +2515,7 @@ public final class CacheTest {
 
   @Test public void immutableIsCached() throws Exception {
     server.enqueue(new MockResponse()
-        .addHeader("Cache-Control", "immutable")
+        .addHeader("Cache-Control", "immutable, max-age=10")
         .setBody("A"));
     server.enqueue(new MockResponse()
         .setBody("B"));
@@ -2538,7 +2529,7 @@ public final class CacheTest {
     server.enqueue(new MockResponse()
         .setBody("A"));
     server.enqueue(new MockResponse()
-        .addHeader("Cache-Control", "immutable")
+        .addHeader("Cache-Control", "immutable, max-age=10")
         .setBody("B"));
     server.enqueue(new MockResponse()
         .setBody("C"));
@@ -2547,6 +2538,19 @@ public final class CacheTest {
     assertEquals("A", get(url).body().string());
     assertEquals("B", get(url).body().string());
     assertEquals("B", get(url).body().string());
+  }
+
+  @Test public void immutableIsNotCachedBeyondFreshnessLifetime() throws Exception {
+    //      last modified: 115 seconds ago
+    //             served:  15 seconds ago
+    //   default lifetime: (115 - 15) / 10 = 10 seconds
+    //            expires:  10 seconds from served date = 5 seconds ago
+    String lastModifiedDate = formatDate(-115, TimeUnit.SECONDS);
+    RecordedRequest conditionalRequest = assertConditionallyCached(new MockResponse()
+        .addHeader("Cache-Control: immutable")
+        .addHeader("Last-Modified: " + lastModifiedDate)
+        .addHeader("Date: " + formatDate(-15, TimeUnit.SECONDS)));
+    assertEquals(lastModifiedDate, conditionalRequest.getHeader("If-Modified-Since"));
   }
 
   private void assertFullyCached(MockResponse response) throws Exception {
@@ -2573,18 +2577,17 @@ public final class CacheTest {
   }
 
   enum TransferKind {
-    CHUNKED() {
-      @Override void setBody(MockResponse response, Buffer content, int chunkSize)
-          throws IOException {
+    CHUNKED {
+      @Override void setBody(MockResponse response, Buffer content, int chunkSize) {
         response.setChunkedBody(content, chunkSize);
       }
     },
-    FIXED_LENGTH() {
+    FIXED_LENGTH {
       @Override void setBody(MockResponse response, Buffer content, int chunkSize) {
         response.setBody(content);
       }
     },
-    END_OF_STREAM() {
+    END_OF_STREAM {
       @Override void setBody(MockResponse response, Buffer content, int chunkSize) {
         response.setBody(content);
         response.setSocketPolicy(DISCONNECT_AT_END);

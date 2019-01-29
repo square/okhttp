@@ -17,6 +17,7 @@ package okhttp3;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import javax.annotation.Nullable;
 import javax.net.ssl.SSLSocket;
 import okhttp3.internal.Util;
@@ -37,11 +38,24 @@ import static okhttp3.internal.Util.nonEmptyIntersection;
  *
  * <p>Use {@link Builder#allEnabledTlsVersions()} and {@link Builder#allEnabledCipherSuites} to
  * defer all feature selection to the underlying SSL socket.
+ *
+ * <p>The configuration of each spec changes with each OkHttp release. This is annoying: upgrading
+ * your OkHttp library can break connectivity to certain web servers! But it’s a necessary annoyance
+ * because the TLS ecosystem is dynamic and staying up to date is necessary to stay secure. See
+ * <a href="https://github.com/square/okhttp/wiki/TLS-Configuration-History">OkHttp's TLS
+ * Configuration History</a> to track these changes.
  */
 public final class ConnectionSpec {
 
   // Most secure but generally supported list.
   private static final CipherSuite[] RESTRICTED_CIPHER_SUITES = new CipherSuite[] {
+      // TLSv1.3
+      CipherSuite.TLS_AES_128_GCM_SHA256,
+      CipherSuite.TLS_AES_256_GCM_SHA384,
+      CipherSuite.TLS_CHACHA20_POLY1305_SHA256,
+      CipherSuite.TLS_AES_128_CCM_SHA256,
+      CipherSuite.TLS_AES_256_CCM_8_SHA256,
+
       CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
       CipherSuite.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
       CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,
@@ -50,19 +64,17 @@ public final class ConnectionSpec {
       CipherSuite.TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256
   };
 
-  // TLS 1.3
-  private static final CipherSuite[] TLS13_CIPHER_SUITES = new CipherSuite[] {
-      CipherSuite.TLS_AES_128_GCM_SHA256,
-      CipherSuite.TLS_AES_256_GCM_SHA384,
-      CipherSuite.TLS_CHACHA20_POLY1305_SHA256,
-      CipherSuite.TLS_AES_128_CCM_SHA256,
-      CipherSuite.TLS_AES_256_CCM_8_SHA256
-  };
-
   // This is nearly equal to the cipher suites supported in Chrome 51, current as of 2016-05-25.
   // All of these suites are available on Android 7.0; earlier releases support a subset of these
   // suites. https://github.com/square/okhttp/issues/1972
   private static final CipherSuite[] APPROVED_CIPHER_SUITES = new CipherSuite[] {
+      // TLSv1.3
+      CipherSuite.TLS_AES_128_GCM_SHA256,
+      CipherSuite.TLS_AES_256_GCM_SHA384,
+      CipherSuite.TLS_CHACHA20_POLY1305_SHA256,
+      CipherSuite.TLS_AES_128_CCM_SHA256,
+      CipherSuite.TLS_AES_256_CCM_8_SHA256,
+
       CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
       CipherSuite.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
       CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,
@@ -82,34 +94,31 @@ public final class ConnectionSpec {
       CipherSuite.TLS_RSA_WITH_3DES_EDE_CBC_SHA,
   };
 
-  /**
-   * A TLS 1.3 only Connection Spec for testing. This will be eventually be exposed
-   * as part of MODERN_TLS or folded into the default OkHttp client once published and
-   * available in JDK11.
-   */
-  static final ConnectionSpec TLS_13 = new Builder(true)
-      .cipherSuites(TLS13_CIPHER_SUITES)
-      .tlsVersions(TlsVersion.TLS_1_3)
-      .supportsTlsExtensions(true)
-      .build();
-
-  /** A secure TLS connection assuming a modern client platform and server. */
+  /** A secure TLS connection that requires a recent client platform and a recent server. */
   public static final ConnectionSpec RESTRICTED_TLS = new Builder(true)
       .cipherSuites(RESTRICTED_CIPHER_SUITES)
-      .tlsVersions(TlsVersion.TLS_1_2)
+      .tlsVersions(TlsVersion.TLS_1_3, TlsVersion.TLS_1_2)
       .supportsTlsExtensions(true)
       .build();
 
-  /** A modern TLS connection with extensions like SNI and ALPN available. */
+  /**
+   * A modern TLS configuration that works on most client platforms and can connect to most servers.
+   * This is OkHttp's default configuration.
+   */
   public static final ConnectionSpec MODERN_TLS = new Builder(true)
       .cipherSuites(APPROVED_CIPHER_SUITES)
-      .tlsVersions(TlsVersion.TLS_1_2, TlsVersion.TLS_1_1, TlsVersion.TLS_1_0)
+      .tlsVersions(TlsVersion.TLS_1_3, TlsVersion.TLS_1_2)
       .supportsTlsExtensions(true)
       .build();
 
-  /** A backwards-compatible fallback connection for interop with obsolete servers. */
-  public static final ConnectionSpec COMPATIBLE_TLS = new Builder(MODERN_TLS)
-      .tlsVersions(TlsVersion.TLS_1_0)
+  /**
+   * A backwards-compatible fallback configuration that works on obsolete client platforms and can
+   * connect to obsolete servers. When possible, prefer to upgrade your client platform or server
+   * rather than using this configuration.
+   */
+  public static final ConnectionSpec COMPATIBLE_TLS = new Builder(true)
+      .cipherSuites(APPROVED_CIPHER_SUITES)
+      .tlsVersions(TlsVersion.TLS_1_3, TlsVersion.TLS_1_2, TlsVersion.TLS_1_1, TlsVersion.TLS_1_0)
       .supportsTlsExtensions(true)
       .build();
 
@@ -252,11 +261,9 @@ public final class ConnectionSpec {
       return "ConnectionSpec()";
     }
 
-    String cipherSuitesString = cipherSuites != null ? cipherSuites().toString() : "[all enabled]";
-    String tlsVersionsString = tlsVersions != null ? tlsVersions().toString() : "[all enabled]";
     return "ConnectionSpec("
-        + "cipherSuites=" + cipherSuitesString
-        + ", tlsVersions=" + tlsVersionsString
+        + "cipherSuites=" + Objects.toString(cipherSuites(), "[all enabled]")
+        + ", tlsVersions=" + Objects.toString(tlsVersions(), "[all enabled]")
         + ", supportsTlsExtensions=" + supportsTlsExtensions
         + ")";
   }
@@ -333,6 +340,11 @@ public final class ConnectionSpec {
       return this;
     }
 
+    /**
+     * @deprecated since OkHttp 3.13 all TLS-connections are expected to support TLS extensions.
+     *     In a future release setting this to true will be unnecessary and setting it to false will
+     *     have no effect.
+     */
     public Builder supportsTlsExtensions(boolean supportsTlsExtensions) {
       if (!tls) throw new IllegalStateException("no TLS extensions for cleartext connections");
       this.supportsTlsExtensions = supportsTlsExtensions;

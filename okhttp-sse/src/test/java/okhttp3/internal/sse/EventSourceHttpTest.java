@@ -15,6 +15,7 @@
  */
 package okhttp3.internal.sse;
 
+import java.util.concurrent.TimeUnit;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.mockwebserver.MockResponse;
@@ -25,13 +26,14 @@ import org.junit.After;
 import org.junit.Rule;
 import org.junit.Test;
 
+import static okhttp3.TestUtil.defaultClient;
 import static org.junit.Assert.assertEquals;
 
 public final class EventSourceHttpTest {
   @Rule public final MockWebServer server = new MockWebServer();
 
   private final EventSourceRecorder listener = new EventSourceRecorder();
-  private final EventSource.Factory factory = EventSources.createFactory(new OkHttpClient());
+  private OkHttpClient client = defaultClient();
 
   @After public void after() {
     listener.assertExhausted();
@@ -69,10 +71,30 @@ public final class EventSourceHttpTest {
     listener.assertFailure(null);
   }
 
+  @Test public void callTimeoutIsNotApplied() throws Exception {
+    client = client.newBuilder()
+        .callTimeout(100, TimeUnit.MILLISECONDS)
+        .build();
+
+    server.enqueue(new MockResponse()
+        .setBodyDelay(500, TimeUnit.MILLISECONDS)
+        .setHeader("content-type", "text/event-stream")
+        .setBody("data: hey\n\n"));
+
+    EventSource source = newEventSource();
+
+    assertEquals("/", source.request().url().encodedPath());
+
+    listener.assertOpen();
+    listener.assertEvent(null, null, "hey");
+    listener.assertClose();
+  }
+
   private EventSource newEventSource() {
     Request request = new Request.Builder()
         .url(server.url("/"))
         .build();
+    EventSource.Factory factory = EventSources.createFactory(client);
     return factory.newEventSource(request, listener);
   }
 }

@@ -27,7 +27,7 @@ import okio.Buffer;
 import okio.BufferedSource;
 import okio.ByteString;
 
-import static okhttp3.internal.Util.UTF_8;
+import static java.nio.charset.StandardCharsets.UTF_8;
 
 /**
  * A one-shot stream from the origin server to the client application with the raw bytes of the
@@ -102,7 +102,7 @@ import static okhttp3.internal.Util.UTF_8;
  */
 public abstract class ResponseBody implements Closeable {
   /** Multiple calls to {@link #charStream()} must return the same instance. */
-  private Reader reader;
+  private @Nullable Reader reader;
 
   public abstract @Nullable MediaType contentType();
 
@@ -131,12 +131,9 @@ public abstract class ResponseBody implements Closeable {
       throw new IOException("Cannot buffer entire body for content length: " + contentLength);
     }
 
-    BufferedSource source = source();
     byte[] bytes;
-    try {
+    try (BufferedSource source = source()) {
       bytes = source.readByteArray();
-    } finally {
-      Util.closeQuietly(source);
     }
     if (contentLength != -1 && contentLength != bytes.length) {
       throw new IOException("Content-Length ("
@@ -149,10 +146,15 @@ public abstract class ResponseBody implements Closeable {
   }
 
   /**
-   * Returns the response as a character stream decoded with the charset of the Content-Type header.
-   * If that header is either absent or lacks a charset, this will attempt to decode the response
-   * body in accordance to <a href="https://en.wikipedia.org/wiki/Byte_order_mark">its BOM</a> or
-   * UTF-8.
+   * Returns the response as a character stream.
+   *
+   * <p>If the response starts with a <a href="https://en.wikipedia.org/wiki/Byte_order_mark">Byte
+   * Order Mark (BOM)</a>, it is consumed and used to determine the charset of the response bytes.
+   *
+   * <p>Otherwise if the response has a Content-Type header that specifies a charset, that is used
+   * to determine the charset of the response bytes.
+   *
+   * <p>Otherwise the response bytes are decoded as UTF-8.
    */
   public final Reader charStream() {
     Reader r = reader;
@@ -160,22 +162,24 @@ public abstract class ResponseBody implements Closeable {
   }
 
   /**
-   * Returns the response as a string decoded with the charset of the Content-Type header. If that
-   * header is either absent or lacks a charset, this will attempt to decode the response body in
-   * accordance to <a href="https://en.wikipedia.org/wiki/Byte_order_mark">its BOM</a> or UTF-8.
-   * Closes {@link ResponseBody} automatically.
+   * Returns the response as a string.
+   *
+   * <p>If the response starts with a <a href="https://en.wikipedia.org/wiki/Byte_order_mark">Byte
+   * Order Mark (BOM)</a>, it is consumed and used to determine the charset of the response bytes.
+   *
+   * <p>Otherwise if the response has a Content-Type header that specifies a charset, that is used
+   * to determine the charset of the response bytes.
+   *
+   * <p>Otherwise the response bytes are decoded as UTF-8.
    *
    * <p>This method loads entire response body into memory. If the response body is very large this
    * may trigger an {@link OutOfMemoryError}. Prefer to stream the response body if this is a
    * possibility for your response.
    */
   public final String string() throws IOException {
-    BufferedSource source = source();
-    try {
+    try (BufferedSource source = source()) {
       Charset charset = Util.bomAwareCharset(source, charset());
       return source.readString(charset);
-    } finally {
-      Util.closeQuietly(source);
     }
   }
 
@@ -241,7 +245,7 @@ public abstract class ResponseBody implements Closeable {
     private final Charset charset;
 
     private boolean closed;
-    private Reader delegate;
+    private @Nullable Reader delegate;
 
     BomAwareReader(BufferedSource source, Charset charset) {
       this.source = source;

@@ -93,9 +93,7 @@ public final class ThreadInterruptTest {
       }
       fail("Expected thread to be interrupted");
     } catch (InterruptedIOException expected) {
-      // TODO(jwilson): test that we're interrupted once Okio retains interrupted state.
-      //     https://github.com/square/okhttp/issues/3107
-      if (false) assertTrue(Thread.interrupted());
+      assertTrue(Thread.interrupted());
     }
 
     connection.disconnect();
@@ -119,26 +117,22 @@ public final class ThreadInterruptTest {
       }
       fail("Expected thread to be interrupted");
     } catch (InterruptedIOException expected) {
-      // TODO(jwilson): test that we're interrupted once Okio retains interrupted state.
-      //     https://github.com/square/okhttp/issues/3107
-      if (false) assertTrue(Thread.interrupted());
+      assertTrue(Thread.interrupted());
     }
 
     responseBody.close();
   }
 
-  private void interruptLater(final int delayMillis) {
-    final Thread toInterrupt = Thread.currentThread();
-    Thread interruptingCow = new Thread() {
-      @Override public void run() {
-        try {
-          sleep(delayMillis);
-          toInterrupt.interrupt();
-        } catch (InterruptedException e) {
-          throw new AssertionError(e);
-        }
+  private void interruptLater(int delayMillis) {
+    Thread toInterrupt = Thread.currentThread();
+    Thread interruptingCow = new Thread(() -> {
+      try {
+        Thread.sleep(delayMillis);
+        toInterrupt.interrupt();
+      } catch (InterruptedException e) {
+        throw new AssertionError(e);
       }
-    };
+    });
     interruptingCow.start();
   }
 }

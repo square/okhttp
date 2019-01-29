@@ -15,6 +15,7 @@
  */
 package okhttp3.internal.http;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InterruptedIOException;
 import java.net.HttpRetryException;
@@ -65,14 +66,12 @@ public final class RetryAndFollowUpInterceptor implements Interceptor {
   private static final int MAX_FOLLOW_UPS = 20;
 
   private final OkHttpClient client;
-  private final boolean forWebSocket;
   private volatile StreamAllocation streamAllocation;
   private Object callStackTrace;
   private volatile boolean canceled;
 
-  public RetryAndFollowUpInterceptor(OkHttpClient client, boolean forWebSocket) {
+  public RetryAndFollowUpInterceptor(OkHttpClient client) {
     this.client = client;
-    this.forWebSocket = forWebSocket;
   }
 
   /**
@@ -116,7 +115,7 @@ public final class RetryAndFollowUpInterceptor implements Interceptor {
     Response priorResponse = null;
     while (true) {
       if (canceled) {
-        streamAllocation.release();
+        streamAllocation.release(true);
         throw new IOException("Canceled");
       }
 
@@ -142,7 +141,7 @@ public final class RetryAndFollowUpInterceptor implements Interceptor {
         // We're throwing an unchecked exception. Release any resources.
         if (releaseConnection) {
           streamAllocation.streamFailed(null);
-          streamAllocation.release();
+          streamAllocation.release(true);
         }
       }
 
@@ -159,31 +158,29 @@ public final class RetryAndFollowUpInterceptor implements Interceptor {
       try {
         followUp = followUpRequest(response, streamAllocation.route());
       } catch (IOException e) {
-        streamAllocation.release();
+        streamAllocation.release(true);
         throw e;
       }
 
       if (followUp == null) {
-        if (!forWebSocket) {
-          streamAllocation.release();
-        }
+        streamAllocation.release(true);
         return response;
       }
 
       closeQuietly(response.body());
 
       if (++followUpCount > MAX_FOLLOW_UPS) {
-        streamAllocation.release();
+        streamAllocation.release(true);
         throw new ProtocolException("Too many follow-up requests: " + followUpCount);
       }
 
       if (followUp.body() instanceof UnrepeatableRequestBody) {
-        streamAllocation.release();
+        streamAllocation.release(true);
         throw new HttpRetryException("Cannot retry streamed HTTP body", response.code());
       }
 
       if (!sameConnection(response, followUp.url())) {
-        streamAllocation.release();
+        streamAllocation.release(false);
         streamAllocation = new StreamAllocation(client.connectionPool(),
             createAddress(followUp.url()), call, eventListener, callStackTrace);
         this.streamAllocation = streamAllocation;
@@ -226,7 +223,7 @@ public final class RetryAndFollowUpInterceptor implements Interceptor {
     if (!client.retryOnConnectionFailure()) return false;
 
     // We can't send the request body again.
-    if (requestSendStarted && userRequest.body() instanceof UnrepeatableRequestBody) return false;
+    if (requestSendStarted && requestIsUnrepeatable(e, userRequest)) return false;
 
     // This exception is fatal.
     if (!isRecoverable(e, requestSendStarted)) return false;
@@ -236,6 +233,11 @@ public final class RetryAndFollowUpInterceptor implements Interceptor {
 
     // For failure recovery, use the same route selector with a new connection.
     return true;
+  }
+
+  private boolean requestIsUnrepeatable(IOException e, Request userRequest) {
+    return userRequest.body() instanceof UnrepeatableRequestBody
+        || e instanceof FileNotFoundException;
   }
 
   private boolean isRecoverable(IOException e, boolean requestSendStarted) {

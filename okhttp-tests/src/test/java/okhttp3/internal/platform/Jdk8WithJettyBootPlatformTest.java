@@ -13,11 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package okhttp3.internal.tls;
+package okhttp3.internal.platform;
 
-import java.security.cert.X509Certificate;
+import org.junit.Test;
 
-public interface TrustRootIndex {
-  /** Returns the trusted CA certificate that signed {@code cert}. */
-  X509Certificate findByIssuerAndSignature(X509Certificate cert);
+import static okhttp3.internal.platform.PlatformTest.getPlatform;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assume.assumeTrue;
+
+public class Jdk8WithJettyBootPlatformTest {
+  @Test
+  public void testBuildsWithJettyBoot() {
+    assumeTrue(getPlatform().equals("jdk-with-jetty-boot"));
+
+    assertNotNull(Jdk8WithJettyBootPlatform.buildIfSupported());
+  }
 }
