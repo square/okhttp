@@ -15,19 +15,15 @@
  */
 package okhttp3;
 
-import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Deque;
-import java.util.Iterator;
-import java.util.List;
+import okhttp3.RealCall.AsyncCall;
+import okhttp3.internal.Util;
+
+import javax.annotation.Nullable;
+import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-import javax.annotation.Nullable;
-import okhttp3.RealCall.AsyncCall;
-import okhttp3.internal.Util;
 
 /**
  * Policy on when async requests are executed.
@@ -162,41 +158,40 @@ public final class Dispatcher {
    *
    * @return true if the dispatcher is currently running calls.
    */
-  private boolean promoteAndExecute() {
+  private void promoteAndExecute() {
     assert (!Thread.holdsLock(this));
 
     List<AsyncCall> executableCalls = new ArrayList<>();
-    boolean isRunning;
+
     synchronized (this) {
-      for (Iterator<AsyncCall> i = readyAsyncCalls.iterator(); i.hasNext(); ) {
-        AsyncCall asyncCall = i.next();
-
-        if (runningAsyncCalls.size() >= maxRequests) break; // Max capacity.
-        if (runningCallsForHost(asyncCall) >= maxRequestsPerHost) continue; // Host max capacity.
-
-        i.remove();
-        executableCalls.add(asyncCall);
-        runningAsyncCalls.add(asyncCall);
+      Map<String, Integer> callsPerHost = new HashMap<>();
+      for (AsyncCall c : runningAsyncCalls) {
+        if (!c.get().forWebSocket) {
+          String host = c.host();
+          callsPerHost.put(host, callsPerHost.containsKey(host) ? callsPerHost.get(host) + 1 : 1);
+        }
       }
-      isRunning = runningCallsCount() > 0;
+
+      Iterator<AsyncCall> iterator = readyAsyncCalls.iterator();
+      while (iterator.hasNext() && runningAsyncCalls.size() < maxRequests) {
+        AsyncCall asyncCall = iterator.next();
+
+        String host = asyncCall.host();
+        int runningCallsForHost = callsPerHost.containsKey(host) ? callsPerHost.get(host) : 0;
+
+        if (runningCallsForHost < maxRequestsPerHost) {
+          iterator.remove();
+          executableCalls.add(asyncCall);
+          runningAsyncCalls.add(asyncCall);
+          callsPerHost.put(host, runningCallsForHost + 1);
+        }
+      }
     }
 
     for (int i = 0, size = executableCalls.size(); i < size; i++) {
       AsyncCall asyncCall = executableCalls.get(i);
       asyncCall.executeOn(executorService());
     }
-
-    return isRunning;
-  }
-
-  /** Returns the number of running calls that share a host with {@code call}. */
-  private int runningCallsForHost(AsyncCall call) {
-    int result = 0;
-    for (AsyncCall c : runningAsyncCalls) {
-      if (c.get().forWebSocket) continue;
-      if (c.host().equals(call.host())) result++;
-    }
-    return result;
   }
 
   /** Used by {@code Call#execute} to signal it is in-flight. */
@@ -221,9 +216,9 @@ public final class Dispatcher {
       idleCallback = this.idleCallback;
     }
 
-    boolean isRunning = promoteAndExecute();
+    promoteAndExecute();
 
-    if (!isRunning && idleCallback != null) {
+    if (runningCallsCount() == 0 && idleCallback != null) {
       idleCallback.run();
     }
   }
