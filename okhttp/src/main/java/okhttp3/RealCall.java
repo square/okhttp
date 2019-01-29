@@ -26,7 +26,6 @@ import okhttp3.internal.NamedRunnable;
 import okhttp3.internal.cache.CacheInterceptor;
 import okhttp3.internal.connection.ConnectInterceptor;
 import okhttp3.internal.connection.StreamAllocation;
-import okhttp3.internal.duplex.DuplexRequestBody;
 import okhttp3.internal.http.BridgeInterceptor;
 import okhttp3.internal.http.CallServerInterceptor;
 import okhttp3.internal.http.RealInterceptorChain;
@@ -81,10 +80,6 @@ final class RealCall implements Call {
   }
 
   @Override public Response execute() throws IOException {
-    if (originalRequest.body instanceof DuplexRequestBody) {
-      DuplexRequestBody duplexRequestBody = (DuplexRequestBody) originalRequest.body;
-      return duplexRequestBody.awaitExecute();
-    }
     synchronized (this) {
       if (executed) throw new IllegalStateException("Already Executed");
       executed = true;
