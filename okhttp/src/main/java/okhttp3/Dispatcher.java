@@ -49,6 +49,9 @@ public final class Dispatcher {
   /** Running synchronous calls. Includes canceled calls that haven't finished yet. */
   private final Deque<RealCall> runningSyncCalls = new ArrayDeque<>();
 
+  /** Number of running sync and async calls to each host, excluding websockets. */
+  private final Map<String, Integer> callsPerHost = new HashMap<>();
+
   public Dispatcher(ExecutorService executorService) {
     this.executorService = executorService;
   }
@@ -144,10 +147,12 @@ public final class Dispatcher {
 
     for (AsyncCall call : runningAsyncCalls) {
       call.get().cancel();
+      decrementCallPerHost(call.host(), call.get().forWebSocket);
     }
 
     for (RealCall call : runningSyncCalls) {
       call.cancel();
+      decrementCallPerHost(call.originalRequest.url.host, call.forWebSocket);
     }
   }
 
@@ -164,26 +169,18 @@ public final class Dispatcher {
     List<AsyncCall> executableCalls = new ArrayList<>();
 
     synchronized (this) {
-      Map<String, Integer> callsPerHost = new HashMap<>();
-      for (AsyncCall c : runningAsyncCalls) {
-        if (!c.get().forWebSocket) {
-          String host = c.host();
-          callsPerHost.put(host, callsPerHost.containsKey(host) ? callsPerHost.get(host) + 1 : 1);
-        }
-      }
-
       Iterator<AsyncCall> iterator = readyAsyncCalls.iterator();
       while (iterator.hasNext() && runningAsyncCalls.size() < maxRequests) {
         AsyncCall asyncCall = iterator.next();
 
         String host = asyncCall.host();
-        int runningCallsForHost = callsPerHost.containsKey(host) ? callsPerHost.get(host) : 0;
+        Integer runningCallsForHost = callsPerHost.get(host);
 
-        if (runningCallsForHost < maxRequestsPerHost) {
+        if (runningCallsForHost == null || runningCallsForHost < maxRequestsPerHost) {
           iterator.remove();
           executableCalls.add(asyncCall);
           runningAsyncCalls.add(asyncCall);
-          callsPerHost.put(host, runningCallsForHost + 1);
+          incrementCallPerHost(host, asyncCall.get().forWebSocket);
         }
       }
     }
@@ -197,22 +194,24 @@ public final class Dispatcher {
   /** Used by {@code Call#execute} to signal it is in-flight. */
   synchronized void executed(RealCall call) {
     runningSyncCalls.add(call);
+    incrementCallPerHost(call.originalRequest.url.host, call.forWebSocket);
   }
 
   /** Used by {@code AsyncCall#run} to signal completion. */
   void finished(AsyncCall call) {
-    finished(runningAsyncCalls, call);
+    finished(runningAsyncCalls, call, call.host(), call.get().forWebSocket);
   }
 
   /** Used by {@code Call#execute} to signal completion. */
   void finished(RealCall call) {
-    finished(runningSyncCalls, call);
+    finished(runningSyncCalls, call, call.originalRequest.url.host, call.forWebSocket);
   }
 
-  private <T> void finished(Deque<T> calls, T call) {
+  private <T> void finished(Deque<T> calls, T call, String host, boolean forWebSocket) {
     Runnable idleCallback;
     synchronized (this) {
       if (!calls.remove(call)) throw new AssertionError("Call wasn't in-flight!");
+      decrementCallPerHost(host, forWebSocket);
       idleCallback = this.idleCallback;
     }
 
@@ -220,6 +219,20 @@ public final class Dispatcher {
 
     if (runningCallsCount() == 0 && idleCallback != null) {
       idleCallback.run();
+    }
+  }
+
+  private void incrementCallPerHost(String host, boolean forWebSocket) {
+    if (!forWebSocket) {
+      Integer integer = callsPerHost.get(host);
+      callsPerHost.put(host, integer == null ? 1 : integer + 1);
+    }
+  }
+
+  private void decrementCallPerHost(String host, boolean forWebSocket) {
+    if (!forWebSocket) {
+      Integer integer = callsPerHost.get(host);
+      callsPerHost.put(host, integer == 1 ? null : integer - 1);
     }
   }
 
