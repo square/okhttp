@@ -15,16 +15,20 @@
  */
 package okhttp3;
 
-import okhttp3.RealCall.AsyncCall;
-import okhttp3.internal.Util;
-
-import javax.annotation.Nullable;
-import javax.annotation.concurrent.GuardedBy;
-import java.util.*;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Deque;
+import java.util.Iterator;
+import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import javax.annotation.Nullable;
+import javax.annotation.concurrent.GuardedBy;
+import okhttp3.RealCall.AsyncCall;
+import okhttp3.internal.Util;
 
 /**
  * Policy on when async requests are executed.

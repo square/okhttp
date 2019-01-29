@@ -1,7 +1,12 @@
 package okhttp3;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Deque;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import javax.annotation.concurrent.NotThreadSafe;
-import java.util.*;
 
 /**
  * Tracks in-flight calls and accumulates statistics about number of calls per host, for use
