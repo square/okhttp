@@ -138,6 +138,18 @@ public final class DispatcherTest {
     executor.assertJobs("http://a/1");
   }
 
+  @Test public void enqueuedCallsStillRespectMaxCallsPerHost() throws Exception {
+    dispatcher.setMaxRequests(1);
+    dispatcher.setMaxRequestsPerHost(1);
+    client.newCall(newRequest("http://a/1")).enqueue(callback);
+    client.newCall(newRequest("http://b/1")).enqueue(callback);
+    client.newCall(newRequest("http://b/2")).enqueue(callback);
+    client.newCall(newRequest("http://b/3")).enqueue(callback);
+    dispatcher.setMaxRequests(3);
+    executor.finishJob("http://a/1");
+    executor.assertJobs("http://b/1");
+  }
+
   @Test public void cancelingRunningJobTakesNoEffectUntilJobFinishes() throws Exception {
     dispatcher.setMaxRequests(1);
     Call c1 = client.newCall(newRequest("http://a/1", "tag1"));

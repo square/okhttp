@@ -137,15 +137,21 @@ public final class Dispatcher {
       // Mutate the AsyncCall so that it shares the AtomicInteger of an existing running call to
       // the same host.
       if (!call.get().forWebSocket) {
-        for (AsyncCall existingCall : runningAsyncCalls) {
-          if (call.host().equals(existingCall.host())) {
-            call.reuseCallsPerHostFrom(existingCall);
-            break;
-          }
-        }
+        AsyncCall existingCall = findExistingCallWithHost(call.host());
+        if (existingCall != null) call.reuseCallsPerHostFrom(existingCall);
       }
     }
     promoteAndExecute();
+  }
+
+  @Nullable private AsyncCall findExistingCallWithHost(String host) {
+    for (AsyncCall existingCall : runningAsyncCalls) {
+      if (existingCall.host().equals(host)) return existingCall;
+    }
+    for (AsyncCall existingCall : readyAsyncCalls) {
+      if (existingCall.host().equals(host)) return existingCall;
+    }
+    return null;
   }
 
   /**
