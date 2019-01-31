@@ -21,6 +21,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.atomic.AtomicInteger;
 import javax.annotation.Nullable;
 import okhttp3.internal.NamedRunnable;
 import okhttp3.internal.cache.CacheInterceptor;
@@ -153,10 +154,19 @@ final class RealCall implements Call {
 
   final class AsyncCall extends NamedRunnable {
     private final Callback responseCallback;
+    private volatile AtomicInteger callsPerHost = new AtomicInteger(0);
 
     AsyncCall(Callback responseCallback) {
       super("OkHttp %s", redactedUrl());
       this.responseCallback = responseCallback;
+    }
+
+    AtomicInteger callsPerHost() {
+      return callsPerHost;
+    }
+
+    void reuseCallsPerHostFrom(AsyncCall other) {
+      this.callsPerHost = other.callsPerHost;
     }
 
     String host() {
