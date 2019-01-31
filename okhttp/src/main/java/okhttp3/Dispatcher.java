@@ -26,7 +26,6 @@ import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
-import javax.annotation.concurrent.GuardedBy;
 import okhttp3.RealCall.AsyncCall;
 import okhttp3.internal.Util;
 
@@ -48,10 +47,11 @@ public final class Dispatcher {
   /** Ready async calls in the order they'll be run. */
   private final Deque<AsyncCall> readyAsyncCalls = new ArrayDeque<>();
 
-  @GuardedBy("this")
-  private final RunningCalls running = new RunningCalls(
-          new ArrayDeque<AsyncCall>(),
-          new ArrayDeque<RealCall>());
+  /** Running asynchronous calls. Includes canceled calls that haven't finished yet. */
+  private final Deque<AsyncCall> runningAsyncCalls = new ArrayDeque<>();
+
+  /** Running synchronous calls. Includes canceled calls that haven't finished yet. */
+  private final Deque<RealCall> runningSyncCalls = new ArrayDeque<>();
 
   public Dispatcher(ExecutorService executorService) {
     this.executorService = executorService;
@@ -146,69 +146,84 @@ public final class Dispatcher {
       call.get().cancel();
     }
 
-    running.cancelAll();
+    for (AsyncCall call : runningAsyncCalls) {
+      call.get().cancel();
+    }
+
+    for (RealCall call : runningSyncCalls) {
+      call.cancel();
+    }
   }
 
   /**
-   * Promotes eligible calls from {@link #readyAsyncCalls} to {@link #running} and runs
+   * Promotes eligible calls from {@link #readyAsyncCalls} to {@link #runningAsyncCalls} and runs
    * them on the executor service. Must not be called with synchronization because executing calls
    * can call into user code.
    *
    * @return true if the dispatcher is currently running calls.
    */
-  private void promoteAndExecute() {
+  private boolean promoteAndExecute() {
     assert (!Thread.holdsLock(this));
 
     List<AsyncCall> executableCalls = new ArrayList<>();
-
+    boolean isRunning;
     synchronized (this) {
-      Iterator<AsyncCall> iterator = readyAsyncCalls.iterator();
-      while (iterator.hasNext() && running.count() < maxRequests) {
-        AsyncCall asyncCall = iterator.next();
+      for (Iterator<AsyncCall> i = readyAsyncCalls.iterator(); i.hasNext(); ) {
+        AsyncCall asyncCall = i.next();
 
-        if (running.callsPerHost(asyncCall.host()) < maxRequestsPerHost) {
-          iterator.remove();
-          executableCalls.add(asyncCall);
-          running.addAsyncCall(asyncCall);
-        }
+        if (runningAsyncCalls.size() >= maxRequests) break; // Max capacity.
+        if (runningCallsForHost(asyncCall) >= maxRequestsPerHost) continue; // Host max capacity.
+
+        i.remove();
+        executableCalls.add(asyncCall);
+        runningAsyncCalls.add(asyncCall);
       }
+      isRunning = runningCallsCount() > 0;
     }
 
     for (int i = 0, size = executableCalls.size(); i < size; i++) {
       AsyncCall asyncCall = executableCalls.get(i);
       asyncCall.executeOn(executorService());
     }
+
+    return isRunning;
+  }
+
+  /** Returns the number of running calls that share a host with {@code call}. */
+  private int runningCallsForHost(AsyncCall call) {
+    int result = 0;
+    for (AsyncCall c : runningAsyncCalls) {
+      if (c.get().forWebSocket) continue;
+      if (c.host().equals(call.host())) result++;
+    }
+    return result;
   }
 
   /** Used by {@code Call#execute} to signal it is in-flight. */
   synchronized void executed(RealCall call) {
-    running.addSyncCall(call);
+    runningSyncCalls.add(call);
   }
 
   /** Used by {@code AsyncCall#run} to signal completion. */
   void finished(AsyncCall call) {
-    Runnable idleCallback;
-    synchronized (this) {
-      running.finishAsyncCall(call);
-      idleCallback = this.idleCallback;
-    }
-    promoteAndExecute();
-
-    if (runningCallsCount() == 0 && idleCallback != null) {
-      idleCallback.run();
-    }
+    finished(runningAsyncCalls, call);
   }
 
   /** Used by {@code Call#execute} to signal completion. */
   void finished(RealCall call) {
+    finished(runningSyncCalls, call);
+  }
+
+  private <T> void finished(Deque<T> calls, T call) {
     Runnable idleCallback;
     synchronized (this) {
-      running.finishSyncCall(call);
+      if (!calls.remove(call)) throw new AssertionError("Call wasn't in-flight!");
       idleCallback = this.idleCallback;
     }
-    promoteAndExecute();
 
-    if (runningCallsCount() == 0 && idleCallback != null) {
+    boolean isRunning = promoteAndExecute();
+
+    if (!isRunning && idleCallback != null) {
       idleCallback.run();
     }
   }
@@ -224,7 +239,12 @@ public final class Dispatcher {
 
   /** Returns a snapshot of the calls currently being executed. */
   public synchronized List<Call> runningCalls() {
-    return running.runningCalls();
+    List<Call> result = new ArrayList<>();
+    result.addAll(runningSyncCalls);
+    for (AsyncCall asyncCall : runningAsyncCalls) {
+      result.add(asyncCall.get());
+    }
+    return Collections.unmodifiableList(result);
   }
 
   public synchronized int queuedCallsCount() {
@@ -232,6 +252,6 @@ public final class Dispatcher {
   }
 
   public synchronized int runningCallsCount() {
-    return running.count();
+    return runningAsyncCalls.size() + runningSyncCalls.size();
   }
 }
