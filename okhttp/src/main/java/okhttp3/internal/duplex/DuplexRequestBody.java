@@ -15,62 +15,37 @@
  */
 package okhttp3.internal.duplex;
 
-import java.io.IOException;
-import javax.annotation.Nullable;
-import okhttp3.MediaType;
 import okhttp3.RequestBody;
-import okio.BufferedSink;
-import okio.Okio;
-import okio.Pipe;
+import okhttp3.ResponseBody;
 import okio.Sink;
 
 /**
- * Duplex request bodies are special. They are called differently and they yield different
- * interaction patterns over the network.
+ * A request body that is special in how it is <strong>transmitted</strong> on the network and in
+ * the <strong>API contract</strong> between OkHttp and the application.
  *
- * <p>Rather than writing the body contents via the {@link #writeTo} callback, callers stream
- * request bodies by writing to the {@link #createSink sink}. Callers stream out the entire request
- * body and then {@link Sink#close close} it to signal the end of the request stream. The {@code
- * maxBufferSize} controls how many outbound bytes may be enqueued without blocking: large values
- * allow writing without blocking; small values limit a call’s memory consumption. 64 KiB is a
- * reasonable size for most applications.
+ * <h3>Duplex Transmission</h3>
  *
- * <p>Calls with duplex bodies may receive HTTP responses before the HTTP request body has
- * completed streaming. Interleaving of request and response data is why this mechanism is called
- * duplex. Though any call may be initiated as a duplex call, only web servers that are specially
+ * <p>With regular HTTP calls the request always completes sending before the response may begin
+ * receiving. With duplex the request and response may be interleaved! That is, request body bytes
+ * may be sent after response headers or body bytes have been received.
+ *
+ * <p>Though any call may be initiated as a duplex call, only web servers that are specially
  * designed for this nonstandard interaction will use it. As of 2019-01, the only widely-used
  * implementation of this pattern is gRPC.
  *
- * <p>Duplex calls are only supported for HTTP/2 connections. Calls to HTTP/1 servers will fail
- * before the HTTP request is transmitted.
+ * <p>Because the encoding of interleaved data is not well-defined for HTTP/1, duplex request bodies
+ * may only be used with HTTP/2. Calls to HTTP/1 servers will fail before the HTTP request is
+ * transmitted.
  *
- * <p>Duplex calls may not be used with OkHttp interceptors that log, compress, encrypt, or
- * otherwise access the request body. This includes OkHttp’s
- * {@code okhttp3.logging.HttpLoggingInterceptor logging interceptor}.
+ * <p>Duplex APIs</p>
+ *
+ * <p>With regular request bodies it is not legal to write bytes to the sink passed to {@link
+ * RequestBody#writeTo} after that method returns. For duplex sinks that condition is lifted. Such
+ * writes occur on an application-provided thread and may occur concurrently with reads of the
+ * {@link ResponseBody}.
+ *
+ * <p>Signal the end of a duplex request body by calling {@link Sink#close()}.
  */
-public final class DuplexRequestBody extends RequestBody {
-  private final Pipe pipe;
-  private final @Nullable MediaType contentType;
-
-  // TODO(jwilson/oldergod): include content-length? Callers might know it!
-  public DuplexRequestBody(@Nullable MediaType contentType, long pipeMaxBufferSize) {
-    this.pipe = new Pipe(pipeMaxBufferSize);
-    this.contentType = contentType;
-  }
-
-  public BufferedSink createSink() {
-    return Okio.buffer(pipe.sink());
-  }
-
-  public void foldSink(Sink requestBodyOut) throws IOException {
-    pipe.fold(requestBodyOut);
-  }
-
-  @Override public @Nullable MediaType contentType() {
-    return contentType;
-  }
-
-  @Override public void writeTo(BufferedSink sink) {
-    throw new UnsupportedOperationException();
-  }
+public interface DuplexRequestBody {
+  // TODO(jwilson): replace this internal marker interface with a public isDuplex() method?
 }
