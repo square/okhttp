@@ -19,8 +19,8 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
-import okhttp3.internal.duplex.DuplexRequestBody;
 import okhttp3.internal.duplex.MwsDuplexAccess;
+import okhttp3.internal.duplex.PipeDuplexRequestBody;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import okhttp3.mockwebserver.RecordedRequest;
@@ -73,7 +73,7 @@ public final class DuplexTest {
     server.enqueue(mockResponse);
     enableProtocol(Protocol.HTTP_2);
 
-    DuplexRequestBody duplexRequestBody = new DuplexRequestBody(null, 128);
+    PipeDuplexRequestBody duplexRequestBody = new PipeDuplexRequestBody(null, 128);
 
     Call call = client.newCall(new Request.Builder()
         .url(server.url("/"))
@@ -125,7 +125,7 @@ public final class DuplexTest {
     server.enqueue(mockResponse);
     enableProtocol(Protocol.HTTP_2);
 
-    DuplexRequestBody duplexRequestBody = new DuplexRequestBody(null, 128);
+    PipeDuplexRequestBody duplexRequestBody = new PipeDuplexRequestBody(null, 128);
 
     Call call = client.newCall(new Request.Builder()
         .url(server.url("/"))
@@ -220,11 +220,11 @@ public final class DuplexTest {
 
     Request request = new Request.Builder()
         .url(server.url("/"))
-        .method("POST", new DuplexRequestBody(null, 1024L))
+        .method("POST", new PipeDuplexRequestBody(null, 1024L))
         .build();
     Call call = client.newCall(request);
 
-    BufferedSink sink = ((DuplexRequestBody) request.body).createSink();
+    BufferedSink sink = ((PipeDuplexRequestBody) request.body).createSink();
     sink.writeUtf8("hey\n");
 
     try (Response response = call.execute()) {
