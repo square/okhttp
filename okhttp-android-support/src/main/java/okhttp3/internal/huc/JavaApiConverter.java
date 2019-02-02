@@ -167,7 +167,7 @@ public final class JavaApiConverter {
     }
     Set<String> varyFields = HttpHeaders.varyFields(responseHeaders);
     if (varyFields.isEmpty()) {
-      return new Headers.Builder().build();
+      return Util.EMPTY_HEADERS;
     }
 
     // This probably indicates another HTTP stack is trying to use the shared ResponseCache.
@@ -213,7 +213,7 @@ public final class JavaApiConverter {
     Headers varyHeaders;
     if (HttpHeaders.hasVaryAll(responseHeaders)) {
       // "*" means that this will be treated as uncacheable anyway.
-      varyHeaders = new Headers.Builder().build();
+      varyHeaders = Util.EMPTY_HEADERS;
     } else {
       varyHeaders = HttpHeaders.varyHeaders(request.headers(), responseHeaders);
     }

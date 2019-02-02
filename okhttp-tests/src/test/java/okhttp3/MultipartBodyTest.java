@@ -271,4 +271,25 @@ public final class MultipartBodyTest {
     assertEquals(Headers.of("Foo", "Bar"), part1.headers());
     assertEquals("Baz", part1Buffer.readUtf8());
   }
+
+  @Test public void nonAsciiFilename() throws Exception {
+    String expected = ""
+        + "--AaB03x\r\n"
+        + "Content-Disposition: form-data; name=\"attachment\"; filename=\"resumé.pdf\"\r\n"
+        + "Content-Type: application/pdf; charset=utf-8\r\n"
+        + "Content-Length: 17\r\n"
+        + "\r\n"
+        + "Jesse’s Resumé\r\n"
+        + "--AaB03x--\r\n";
+
+    MultipartBody body = new MultipartBody.Builder("AaB03x")
+        .setType(MultipartBody.FORM)
+        .addFormDataPart("attachment", "resumé.pdf",
+            RequestBody.create(MediaType.parse("application/pdf"), "Jesse’s Resumé"))
+        .build();
+
+    Buffer buffer = new Buffer();
+    body.writeTo(buffer);
+    assertEquals(expected, buffer.readUtf8());
+  }
 }
