@@ -225,8 +225,9 @@ public final class CacheInterceptor implements Interceptor {
       if ("Warning".equalsIgnoreCase(fieldName) && value.startsWith("1")) {
         continue; // Drop 100-level freshness warnings.
       }
-      if (isContentSpecificHeader(fieldName) || !isEndToEnd(fieldName)
-              || networkHeaders.get(fieldName) == null) {
+      if (isContentSpecificHeader(fieldName)
+          || !isEndToEnd(fieldName)
+          || networkHeaders.get(fieldName) == null) {
         Internal.instance.addLenient(result, fieldName, value);
       }
     }

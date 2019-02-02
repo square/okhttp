@@ -24,6 +24,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import okhttp3.internal.Internal;
+import okhttp3.internal.Util;
 import okhttp3.internal.http.HttpHeaders;
 import okhttp3.internal.http2.Header;
 import okhttp3.internal.http2.Http2Codec;
@@ -824,7 +825,7 @@ public final class HeadersTest {
   }
 
   @Test public void byteCount() {
-    assertEquals(0L, new Headers.Builder().build().byteCount());
+    assertEquals(0L, Util.EMPTY_HEADERS.byteCount());
     assertEquals(10L, new Headers.Builder()
         .add("abc", "def")
         .build()
