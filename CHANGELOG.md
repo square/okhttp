@@ -3,7 +3,7 @@ Change Log
 
 ## Version 3.13.0
 
-_2018-02-02_
+_2018-02-04_
 
  *  **This release bumps our minimum requirements to Java 8+ or Android 5+.** Cutting off old
     devices is a serious change and we don't do it lightly! [This post][require_android_5] explains
