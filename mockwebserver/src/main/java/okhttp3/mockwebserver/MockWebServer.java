@@ -1049,15 +1049,16 @@ public final class MockWebServer extends ExternalResource implements Closeable {
       }
       pushPromises(stream, request, response.getPushPromises());
       if (body != null) {
-        BufferedSink sink = Okio.buffer(stream.getSink());
-        sleepIfDelayed(response.getBodyDelay(TimeUnit.MILLISECONDS));
-        throttledTransfer(response, socket, body, sink, body.size(), false);
-        sink.close();
+        try (BufferedSink sink = Okio.buffer(stream.getSink())) {
+          sleepIfDelayed(response.getBodyDelay(TimeUnit.MILLISECONDS));
+          throttledTransfer(response, socket, body, sink, body.size(), false);
+        }
       } else if (response.isDuplex()) {
-        BufferedSink sink = Okio.buffer(stream.getSink());
-        BufferedSource source = Okio.buffer(stream.getSource());
-        DuplexResponseBody duplexResponseBody = response.getDuplexResponseBody();
-        duplexResponseBody.onRequest(request, source, sink);
+        try (BufferedSink sink = Okio.buffer(stream.getSink());
+             BufferedSource source = Okio.buffer(stream.getSource())) {
+          DuplexResponseBody duplexResponseBody = response.getDuplexResponseBody();
+          duplexResponseBody.onRequest(request, source, sink);
+        }
       } else if (!outFinished) {
         stream.close(ErrorCode.NO_ERROR);
       }
