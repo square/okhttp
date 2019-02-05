@@ -36,7 +36,6 @@
 
     <module>okcurl</module>
     <module>mockwebserver</module>
-    <module>bom</module>
     <module>samples</module>
   </modules>
 
