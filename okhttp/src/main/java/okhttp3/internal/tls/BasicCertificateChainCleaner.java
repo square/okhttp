@@ -16,20 +16,14 @@
 package okhttp3.internal.tls;
 
 import java.security.GeneralSecurityException;
-import java.security.PublicKey;
 import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
 import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 import javax.net.ssl.SSLPeerUnverifiedException;
-import javax.security.auth.x500.X500Principal;
 
 /**
  * A certificate chain cleaner that uses a set of trusted root certificates to build the trusted
@@ -44,20 +38,10 @@ public final class BasicCertificateChainCleaner extends CertificateChainCleaner 
   /** The maximum number of signers in a chain. We use 9 for consistency with OpenSSL. */
   private static final int MAX_SIGNERS = 9;
 
-  /** A simple index that of trusted root certificates that have been loaded into memory. */
-  private final Map<X500Principal, Set<X509Certificate>> subjectToCaCerts;
+  private final TrustRootIndex trustRootIndex;
 
-  public BasicCertificateChainCleaner(X509Certificate... caCerts) {
-    subjectToCaCerts = new LinkedHashMap<>();
-    for (X509Certificate caCert : caCerts) {
-      X500Principal subject = caCert.getSubjectX500Principal();
-      Set<X509Certificate> subjectCaCerts = subjectToCaCerts.get(subject);
-      if (subjectCaCerts == null) {
-        subjectCaCerts = new LinkedHashSet<>(1);
-        subjectToCaCerts.put(subject, subjectCaCerts);
-      }
-      subjectCaCerts.add(caCert);
-    }
+  public BasicCertificateChainCleaner(TrustRootIndex trustRootIndex) {
+    this.trustRootIndex = trustRootIndex;
   }
 
   /**
@@ -81,7 +65,7 @@ public final class BasicCertificateChainCleaner extends CertificateChainCleaner 
       // If this cert has been signed by a trusted cert, use that. Add the trusted certificate to
       // the end of the chain unless it's already present. (That would happen if the first
       // certificate in the chain is itself a self-signed and trusted CA certificate.)
-      X509Certificate trustedCert = findByIssuerAndSignature(toVerify);
+      X509Certificate trustedCert = trustRootIndex.findByIssuerAndSignature(toVerify);
       if (trustedCert != null) {
         if (result.size() > 1 || !toVerify.equals(trustedCert)) {
           result.add(trustedCert);
@@ -128,31 +112,13 @@ public final class BasicCertificateChainCleaner extends CertificateChainCleaner 
     }
   }
 
-  /** Returns the trusted CA certificate that signed {@code cert}. */
-  private X509Certificate findByIssuerAndSignature(X509Certificate cert) {
-    X500Principal issuer = cert.getIssuerX500Principal();
-    Set<X509Certificate> subjectCaCerts = subjectToCaCerts.get(issuer);
-    if (subjectCaCerts == null) return null;
-
-    for (X509Certificate caCert : subjectCaCerts) {
-      PublicKey publicKey = caCert.getPublicKey();
-      try {
-        cert.verify(publicKey);
-        return caCert;
-      } catch (Exception ignored) {
-      }
-    }
-
-    return null;
-  }
-
   @Override public int hashCode() {
-    return subjectToCaCerts.hashCode();
+    return trustRootIndex.hashCode();
   }
 
   @Override public boolean equals(Object other) {
     if (other == this) return true;
     return other instanceof BasicCertificateChainCleaner
-        && ((BasicCertificateChainCleaner) other).subjectToCaCerts.equals(subjectToCaCerts);
+        && ((BasicCertificateChainCleaner) other).trustRootIndex.equals(trustRootIndex);
   }
 }

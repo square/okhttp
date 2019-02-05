@@ -35,7 +35,9 @@ import okhttp3.OkHttpClient;
 import okhttp3.Protocol;
 import okhttp3.internal.Util;
 import okhttp3.internal.tls.BasicCertificateChainCleaner;
+import okhttp3.internal.tls.BasicTrustRootIndex;
 import okhttp3.internal.tls.CertificateChainCleaner;
+import okhttp3.internal.tls.TrustRootIndex;
 import okio.Buffer;
 
 /**
@@ -168,7 +170,7 @@ public class Platform {
   }
 
   public CertificateChainCleaner buildCertificateChainCleaner(X509TrustManager trustManager) {
-    return new BasicCertificateChainCleaner(trustManager.getAcceptedIssuers());
+    return new BasicCertificateChainCleaner(buildTrustRootIndex(trustManager));
   }
 
   public CertificateChainCleaner buildCertificateChainCleaner(SSLSocketFactory sslSocketFactory) {
@@ -271,6 +273,10 @@ public class Platform {
     } catch (NoSuchAlgorithmException e) {
       throw new IllegalStateException("No TLS provider", e);
     }
+  }
+
+  public TrustRootIndex buildTrustRootIndex(X509TrustManager trustManager) {
+    return new BasicTrustRootIndex(trustManager.getAcceptedIssuers());
   }
 
   public void configureSslSocketFactory(SSLSocketFactory socketFactory) {
