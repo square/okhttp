@@ -1,6 +1,15 @@
 Change Log
 ==========
 
+## Version 3.13.1
+
+_2019-02-05_
+
+ *  Fix: Don't crash when using a custom `X509TrustManager` or `SSLSocket` on Android. When we
+    removed obsolete code for Android 4.4 we inadvertently also removed support for custom
+    subclasses. We've restored that support!
+
+
 ## Version 3.13.0
 
 _2019-02-04_
