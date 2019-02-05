@@ -1652,4 +1652,4 @@ Initial release.
  [conscrypt]: https://github.com/google/conscrypt/
  [conscrypt_dependency]: https://github.com/google/conscrypt/#download
  [https_server_sample]: https://github.com/square/okhttp/blob/master/samples/guide/src/main/java/okhttp3/recipes/HttpsServer.java
- [require_android_5]: https://medium.com/square-corner-blog/okhttp-3-13-requires-android-5-XXXXXXXXXXXX
+ [require_android_5]: https://medium.com/square-corner-blog/okhttp-3-13-requires-android-5-818bb78d07ce
