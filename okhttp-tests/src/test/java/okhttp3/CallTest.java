@@ -1191,7 +1191,7 @@ public final class CallTest {
    * be unauthenticated.
    */
   @Test public void tlsSuccessWithNoPeerCertificates() throws Exception {
-    // TODO github issue link
+    // TODO https://github.com/square/okhttp/issues/4598
     // No appropriate protocol (protocol is disabled or cipher suites are inappropriate)
     assumeFalse(getJvmSpecVersion().equals("11"));
 
@@ -1256,7 +1256,7 @@ public final class CallTest {
   @Test public void tlsHostnameVerificationFailureNoPeerCertificates() throws Exception {
     server.enqueue(new MockResponse());
 
-    // TODO github issue link
+    // TODO https://github.com/square/okhttp/issues/4598
     // No appropriate protocol (protocol is disabled or cipher suites are inappropriate)
     assumeFalse(getJvmSpecVersion().equals("11"));
 
@@ -1336,7 +1336,7 @@ public final class CallTest {
   }
 
   @Test public void matchingPinnedCertificate() throws Exception {
-    // TODO github issue link
+    // TODO https://github.com/square/okhttp/issues/4598
 //    java.util.NoSuchElementException
 //    at java.base/java.util.ArrayDeque.removeFirst(ArrayDeque.java:363)
 //    at okhttp3.internal.tls.BasicCertificateChainCleaner.clean(BasicCertificateChainCleaner.java:58)

@@ -57,7 +57,7 @@ public final class CertificatePinnerChainValidationTest {
 
   /** The pinner should pull the root certificate from the trust manager. */
   @Test public void pinRootNotPresentInChain() throws Exception {
-    // TODO github issue link
+    // TODO https://github.com/square/okhttp/issues/4598
 //    java.util.NoSuchElementException
 //    at java.base/java.util.ArrayDeque.removeFirst(ArrayDeque.java:363)
 //    at okhttp3.internal.tls.BasicCertificateChainCleaner.clean(BasicCertificateChainCleaner.java:58)
@@ -121,7 +121,7 @@ public final class CertificatePinnerChainValidationTest {
 
   /** The pinner should accept an intermediate from the server's chain. */
   @Test public void pinIntermediatePresentInChain() throws Exception {
-    // TODO github issue link
+    // TODO https://github.com/square/okhttp/issues/4598
 //    java.util.NoSuchElementException
 //    at java.base/java.util.ArrayDeque.removeFirst(ArrayDeque.java:363)
 //    at okhttp3.internal.tls.BasicCertificateChainCleaner.clean(BasicCertificateChainCleaner.java:58)
