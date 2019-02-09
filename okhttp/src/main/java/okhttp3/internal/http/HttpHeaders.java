@@ -16,7 +16,6 @@
 package okhttp3.internal.http;
 
 import java.io.EOFException;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -38,6 +37,7 @@ import okio.ByteString;
 
 import static java.net.HttpURLConnection.HTTP_NOT_MODIFIED;
 import static java.net.HttpURLConnection.HTTP_NO_CONTENT;
+import static okhttp3.internal.Util.readIOSafeByte;
 import static okhttp3.internal.http.StatusLine.HTTP_CONTINUE;
 
 /** Headers and utilities for internal use by OkHttp. */
@@ -167,22 +167,17 @@ public final class HttpHeaders {
    * }</pre>
    */
   public static List<Challenge> parseChallenges(Headers responseHeaders, String headerName) {
-    try {
-      List<Challenge> result = new ArrayList<>();
-      for (int h = 0; h < responseHeaders.size(); h++) {
-        if (headerName.equalsIgnoreCase(responseHeaders.name(h))) {
-          Buffer header = new Buffer().writeUtf8(responseHeaders.value(h));
-          parseChallengeHeader(result, header);
-        }
+    List<Challenge> result = new ArrayList<>();
+    for (int h = 0; h < responseHeaders.size(); h++) {
+      if (headerName.equalsIgnoreCase(responseHeaders.name(h))) {
+        Buffer header = new Buffer().writeUtf8(responseHeaders.value(h));
+        parseChallengeHeader(result, header);
       }
-      return result;
-    } catch (IOException ioe) {
-      throw new AssertionError(ioe);
     }
+    return result;
   }
 
-  private static void parseChallengeHeader(List<Challenge> result, Buffer header)
-      throws IOException {
+  private static void parseChallengeHeader(List<Challenge> result, Buffer header) {
     String peek = null;
 
     while (true) {
@@ -242,15 +237,15 @@ public final class HttpHeaders {
   }
 
   /** Returns true if any commas were skipped. */
-  private static boolean skipWhitespaceAndCommas(Buffer buffer) throws IOException {
+  private static boolean skipWhitespaceAndCommas(Buffer buffer) {
     boolean commaFound = false;
     while (!buffer.exhausted()) {
       byte b = buffer.getByte(0);
       if (b == ',') {
-        buffer.readByte(); // Consume ','.
+        readIOSafeByte(buffer); // Consume ','.
         commaFound = true;
       } else if (b == ' ' || b == '\t') {
-        buffer.readByte(); // Consume space or tab.
+        readIOSafeByte(buffer); // Consume space or tab.
       } else {
         break;
       }
@@ -258,11 +253,11 @@ public final class HttpHeaders {
     return commaFound;
   }
 
-  private static int skipAll(Buffer buffer, byte b) throws IOException {
+  private static int skipAll(Buffer buffer, byte b) {
     int count = 0;
     while (!buffer.exhausted() && buffer.getByte(0) == b) {
       count++;
-      buffer.readByte();
+      readIOSafeByte(buffer);
     }
     return count;
   }
@@ -272,8 +267,8 @@ public final class HttpHeaders {
    * each sequence. Returns the unescaped string, or null if the buffer isn't prefixed with a
    * double-quoted string.
    */
-  private static String readQuotedString(Buffer buffer) throws IOException {
-    if (buffer.readByte() != '\"') throw new IllegalArgumentException();
+  private static String readQuotedString(Buffer buffer) {
+    if (readIOSafeByte(buffer) != '\"') throw new IllegalArgumentException();
     Buffer result = new Buffer();
     while (true) {
       long i = buffer.indexOfElement(QUOTED_STRING_DELIMITERS);
@@ -281,13 +276,13 @@ public final class HttpHeaders {
 
       if (buffer.getByte(i) == '"') {
         result.write(buffer, i);
-        buffer.readByte(); // Consume '"'.
+        readIOSafeByte(buffer); // Consume '"'.
         return result.readUtf8();
       }
 
       if (buffer.size() == i + 1L) return null; // Dangling escape.
       result.write(buffer, i);
-      buffer.readByte(); // Consume '\'.
+      readIOSafeByte(buffer); // Consume '\'.
       result.write(buffer, 1L); // The escaped character.
     }
   }

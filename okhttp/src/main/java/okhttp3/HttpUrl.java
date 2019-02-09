@@ -34,6 +34,7 @@ import okio.Buffer;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static okhttp3.internal.Util.decodeHexDigit;
 import static okhttp3.internal.Util.delimiterOffset;
+import static okhttp3.internal.Util.readIOSafeByte;
 import static okhttp3.internal.Util.skipLeadingAsciiWhitespace;
 import static okhttp3.internal.Util.skipTrailingAsciiWhitespace;
 import static okhttp3.internal.Util.verifyAsIpAddress;
@@ -1731,7 +1732,7 @@ public final class HttpUrl {
         }
 
         while (!encodedCharBuffer.exhausted()) {
-          int b = encodedCharBuffer.readByte() & 0xff;
+          int b = readIOSafeByte(encodedCharBuffer) & 0xff;
           out.writeByte('%');
           out.writeByte(HEX_DIGITS[(b >> 4) & 0xf]);
           out.writeByte(HEX_DIGITS[b & 0xf]);
