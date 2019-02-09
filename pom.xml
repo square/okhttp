@@ -150,23 +150,9 @@
           <artifactId>maven-compiler-plugin</artifactId>
           <version>3.8.0</version>
           <configuration>
-            <compilerId>javac-with-errorprone</compilerId>
-            <forceJavacCompilerUse>true</forceJavacCompilerUse>
             <source>${java.version}</source>
             <target>${java.version}</target>
           </configuration>
-          <dependencies>
-            <dependency>
-              <groupId>org.codehaus.plexus</groupId>
-              <artifactId>plexus-compiler-javac-errorprone</artifactId>
-              <version>2.8.5</version>
-            </dependency>
-            <dependency>
-              <groupId>com.google.errorprone</groupId>
-              <artifactId>error_prone_core</artifactId>
-              <version>2.3.2</version>
-            </dependency>
-          </dependencies>
         </plugin>
 
         <plugin>
@@ -203,6 +189,10 @@
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-javadoc-plugin</artifactId>
           <version>3.0.1</version>
+          <configuration>
+            <failOnError>false</failOnError>
+            <doclint>none</doclint>
+          </configuration>
         </plugin>
       </plugins>
     </pluginManagement>
@@ -283,6 +273,57 @@
 
   <profiles>
     <profile>
+      <id>errorprone</id>
+      <activation>
+        <jdk>1.8</jdk>
+      </activation>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-compiler-plugin</artifactId>
+            <version>3.8.0</version>
+            <configuration>
+              <compilerId>javac-with-errorprone</compilerId>
+              <forceJavacCompilerUse>true</forceJavacCompilerUse>
+              <source>${java.version}</source>
+              <target>${java.version}</target>
+            </configuration>
+            <dependencies>
+              <dependency>
+                <groupId>org.codehaus.plexus</groupId>
+                <artifactId>plexus-compiler-javac-errorprone</artifactId>
+                <version>2.8.5</version>
+              </dependency>
+              <dependency>
+                <groupId>com.google.errorprone</groupId>
+                <artifactId>error_prone_core</artifactId>
+                <version>2.3.2</version>
+              </dependency>
+            </dependencies>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+    <profile>
+      <id>javadoc-lenient</id>
+      <!-- MJAVADOC-555 Fixed in upcoming JDK builds -->
+      <activation>
+        <jdk>11</jdk>
+      </activation>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-javadoc-plugin</artifactId>
+            <configuration>
+              <skip>true</skip>
+            </configuration>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+    <profile>
       <id>alpn-when-jdk8</id>
       <activation>
         <jdk>1.8</jdk>
@@ -318,6 +359,33 @@
       <id>jdk9</id>
       <activation>
         <jdk>9</jdk>
+      </activation>
+      <properties>
+        <okhttp.platform>jdk9</okhttp.platform>
+      </properties>
+    </profile>
+    <profile>
+      <id>jdk10</id>
+      <activation>
+        <jdk>10</jdk>
+      </activation>
+      <properties>
+        <okhttp.platform>jdk9</okhttp.platform>
+      </properties>
+    </profile>
+    <profile>
+      <id>jdk11</id>
+      <activation>
+        <jdk>11</jdk>
+      </activation>
+      <properties>
+        <okhttp.platform>jdk9</okhttp.platform>
+      </properties>
+    </profile>
+    <profile>
+      <id>jdk12</id>
+      <activation>
+        <jdk>12</jdk>
       </activation>
       <properties>
         <okhttp.platform>jdk9</okhttp.platform>

@@ -2,14 +2,19 @@ language: java
 
 jdk:
   - oraclejdk8
-#  - openjdk11
+  - openjdk8
+  - openjdk11
 
-addons:
-  apt:
-    packages:
-      - oracle-java8-installer # Updates JDK 8 to the latest available.
+before_install:
+  - mvn -N io.takari:maven:wrapper -Dmaven=3.6.0
+  - echo "MAVEN_OPTS='-Dmaven.repo.local=$HOME/.m2/repository -Xmx1g -Dorg.slf4j.simpleLogger.showDateTime=true -Dorg.slf4j.simpleLogger.dateTimeFormat=HH:mm:ss:SSS'" > ~/.mavenrc
 
-script: mvn test javadoc:jar source:jar -B
+install:
+  - ./mvnw dependency:resolve -B
+
+script:
+  - ./mvnw test -B
+  - ./mvnw javadoc:jar source:jar -B
 
 after_success:
   - .buildscript/deploy_snapshot.sh

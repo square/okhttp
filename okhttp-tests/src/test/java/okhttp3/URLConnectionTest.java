@@ -104,10 +104,13 @@ import static okhttp3.mockwebserver.SocketPolicy.SHUTDOWN_INPUT_AT_END;
 import static okhttp3.mockwebserver.SocketPolicy.SHUTDOWN_OUTPUT_AT_END;
 import static okhttp3.mockwebserver.SocketPolicy.UPGRADE_TO_SSL_AT_END;
 import static okhttp3.tls.internal.TlsUtil.localhost;
+import static org.hamcrest.CoreMatchers.either;
+import static org.hamcrest.CoreMatchers.equalTo;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeTrue;
@@ -711,7 +714,8 @@ public final class URLConnectionTest {
 
     RecordedRequest fallbackRequest = server.takeRequest();
     assertEquals("GET /foo HTTP/1.1", fallbackRequest.getRequestLine());
-    assertEquals(TlsVersion.TLS_1_2, fallbackRequest.getTlsVersion());
+    assertThat(fallbackRequest.getTlsVersion(),
+        either(equalTo(TlsVersion.TLS_1_2)).or(equalTo(TlsVersion.TLS_1_3)));
   }
 
   @Test public void connectViaHttpsWithSSLFallbackFailuresRecorded() {
@@ -762,7 +766,8 @@ public final class URLConnectionTest {
     assertContent("def", urlFactory.open(server.url("/").url()));
 
     Set<TlsVersion> tlsVersions =
-        EnumSet.of(TlsVersion.TLS_1_0, TlsVersion.TLS_1_2); // v1.2 on OpenJDK 8.
+        EnumSet.of(TlsVersion.TLS_1_0, TlsVersion.TLS_1_2,
+            TlsVersion.TLS_1_3); // v1.2 on OpenJDK 8.
 
     RecordedRequest request1 = server.takeRequest();
     assertTrue(tlsVersions.contains(request1.getTlsVersion()));
@@ -1180,7 +1185,9 @@ public final class URLConnectionTest {
   @Test public void disconnectDuringConnect_cookieJar() {
     final AtomicReference<HttpURLConnection> connectionHolder = new AtomicReference<>();
     class DisconnectingCookieJar implements CookieJar {
-      @Override public void saveFromResponse(HttpUrl url, List<Cookie> cookies) { }
+      @Override public void saveFromResponse(HttpUrl url, List<Cookie> cookies) {
+      }
+
       @Override
       public List<Cookie> loadForRequest(HttpUrl url) {
         connectionHolder.get().disconnect();
@@ -1188,8 +1195,8 @@ public final class URLConnectionTest {
       }
     }
     OkHttpClient client = new okhttp3.OkHttpClient.Builder()
-            .cookieJar(new DisconnectingCookieJar())
-            .build();
+        .cookieJar(new DisconnectingCookieJar())
+        .build();
 
     URL url = server.url("path that should never be accessed").url();
     HttpURLConnection connection = new OkHttpURLConnection(url, client);
@@ -1406,8 +1413,7 @@ public final class URLConnectionTest {
 
   /**
    * Test a bug where gzip input streams weren't exhausting the input stream, which corrupted the
-   * request that followed or prevented connection reuse.
-   * http://code.google.com/p/android/issues/detail?id=7059
+   * request that followed or prevented connection reuse. http://code.google.com/p/android/issues/detail?id=7059
    * http://code.google.com/p/android/issues/detail?id=38817
    */
   private void testClientConfiguredGzipContentEncodingAndConnectionReuse(TransferKind transferKind,
@@ -2445,9 +2451,10 @@ public final class URLConnectionTest {
 
   @Test public void httpsWithCustomTrustManager() throws Exception {
     RecordingHostnameVerifier hostnameVerifier = new RecordingHostnameVerifier();
-    RecordingTrustManager trustManager = new RecordingTrustManager(handshakeCertificates.trustManager());
+    RecordingTrustManager trustManager =
+        new RecordingTrustManager(handshakeCertificates.trustManager());
     SSLContext sslContext = Platform.get().getSSLContext();
-    sslContext.init(null, new TrustManager[] { trustManager }, null);
+    sslContext.init(null, new TrustManager[] {trustManager}, null);
 
     urlFactory.setClient(urlFactory.client().newBuilder()
         .hostnameVerifier(hostnameVerifier)
@@ -2643,8 +2650,7 @@ public final class URLConnectionTest {
   }
 
   /**
-   * Retry redirects if the socket is closed.
-   * https://code.google.com/p/android/issues/detail?id=41576
+   * Retry redirects if the socket is closed. https://code.google.com/p/android/issues/detail?id=41576
    */
   @Test public void sameConnectionRedirectAndReuse() throws Exception {
     server.enqueue(new MockResponse()
@@ -3530,7 +3536,9 @@ public final class URLConnectionTest {
   }
 
   @Test public void interceptorsNotInvoked() throws Exception {
-    Interceptor interceptor = chain -> { throw new AssertionError(); };
+    Interceptor interceptor = chain -> {
+      throw new AssertionError();
+    };
     urlFactory.setClient(urlFactory.client().newBuilder()
         .addInterceptor(interceptor)
         .addNetworkInterceptor(interceptor)
@@ -3611,7 +3619,9 @@ public final class URLConnectionTest {
   /** Confirm that runtime exceptions thrown inside of OkHttp propagate to the caller. */
   @Test public void unexpectedExceptionSync() throws Exception {
     urlFactory.setClient(urlFactory.client().newBuilder()
-        .dns(hostname -> { throw new RuntimeException("boom!"); })
+        .dns(hostname -> {
+          throw new RuntimeException("boom!");
+        })
         .build());
 
     server.enqueue(new MockResponse());
@@ -3628,7 +3638,9 @@ public final class URLConnectionTest {
   /** Confirm that runtime exceptions thrown inside of OkHttp propagate to the caller. */
   @Test public void unexpectedExceptionAsync() throws Exception {
     urlFactory.setClient(urlFactory.client().newBuilder()
-        .dns(hostname -> { throw new RuntimeException("boom!"); })
+        .dns(hostname -> {
+          throw new RuntimeException("boom!");
+        })
         .build());
 
     server.enqueue(new MockResponse());
@@ -3680,7 +3692,7 @@ public final class URLConnectionTest {
     Thread.sleep(500);
 
     OutputStream os = connection1.getOutputStream();
-    os.write(new byte[] { '1', '2', '3' });
+    os.write(new byte[] {'1', '2', '3'});
     os.close();
     assertContent("def", connection1);
 

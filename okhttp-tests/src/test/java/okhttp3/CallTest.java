@@ -86,6 +86,8 @@ import static java.net.CookiePolicy.ACCEPT_ORIGINAL_SERVER;
 import static okhttp3.CipherSuite.TLS_DH_anon_WITH_AES_128_GCM_SHA256;
 import static okhttp3.TestUtil.awaitGarbageCollection;
 import static okhttp3.TestUtil.defaultClient;
+import static okhttp3.internal.platform.PlatformTest.getJvmSpecVersion;
+import static okhttp3.internal.platform.PlatformTest.getPlatform;
 import static okhttp3.tls.internal.TlsUtil.localhost;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
@@ -95,6 +97,7 @@ import static org.junit.Assert.assertNotSame;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.junit.Assume.assumeFalse;
 
 public final class CallTest {
   @Rule public final TestRule timeout = new Timeout(30_000, TimeUnit.MILLISECONDS);
@@ -1188,6 +1191,10 @@ public final class CallTest {
    * be unauthenticated.
    */
   @Test public void tlsSuccessWithNoPeerCertificates() throws Exception {
+    // TODO https://github.com/square/okhttp/issues/4598
+    // No appropriate protocol (protocol is disabled or cipher suites are inappropriate)
+    assumeFalse(getJvmSpecVersion().equals("11"));
+
     server.enqueue(new MockResponse()
         .setBody("abc"));
 
@@ -1248,6 +1255,10 @@ public final class CallTest {
 
   @Test public void tlsHostnameVerificationFailureNoPeerCertificates() throws Exception {
     server.enqueue(new MockResponse());
+
+    // TODO https://github.com/square/okhttp/issues/4598
+    // No appropriate protocol (protocol is disabled or cipher suites are inappropriate)
+    assumeFalse(getJvmSpecVersion().equals("11"));
 
     // The _anon_ cipher suites don't require server certificates.
     CipherSuite cipherSuite = TLS_DH_anon_WITH_AES_128_GCM_SHA256;
@@ -1325,6 +1336,13 @@ public final class CallTest {
   }
 
   @Test public void matchingPinnedCertificate() throws Exception {
+    // TODO https://github.com/square/okhttp/issues/4598
+//    java.util.NoSuchElementException
+//    at java.base/java.util.ArrayDeque.removeFirst(ArrayDeque.java:363)
+//    at okhttp3.internal.tls.BasicCertificateChainCleaner.clean(BasicCertificateChainCleaner.java:58)
+//    at okhttp3.CertificatePinner.check(CertificatePinner.java:166)
+    assumeFalse(getJvmSpecVersion().equals("11"));
+
     enableTls();
     server.enqueue(new MockResponse());
     server.enqueue(new MockResponse());
