@@ -220,7 +220,7 @@ public final class ClientAuthTest {
   @Test public void invalidClientAuthFails() throws Throwable {
     // TODO github issue link
     // StreamReset stream was reset: PROT...
-//    assumeFalse(getJvmSpecVersion().equals("11"));
+    assumeFalse(getJvmSpecVersion().equals("11"));
 
     HeldCertificate clientCert2 = new HeldCertificate.Builder()
         .serialNumber(4L)

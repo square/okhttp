@@ -17,11 +17,9 @@ package okhttp3.logging;
 
 import java.io.IOException;
 import java.net.UnknownHostException;
-import java.util.Arrays;
 import okhttp3.HttpUrl;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
-import okhttp3.Protocol;
 import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
@@ -33,8 +31,9 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 
-import static java.util.Arrays.*;
-import static okhttp3.Protocol.*;
+import static java.util.Arrays.asList;
+import static okhttp3.Protocol.HTTP_1_1;
+import static okhttp3.Protocol.HTTP_2;
 import static okhttp3.tls.internal.TlsUtil.localhost;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.fail;
