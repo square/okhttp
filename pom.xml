@@ -383,6 +383,15 @@
       </properties>
     </profile>
     <profile>
+      <id>jdk12</id>
+      <activation>
+        <jdk>12</jdk>
+      </activation>
+      <properties>
+        <okhttp.platform>jdk9</okhttp.platform>
+      </properties>
+    </profile>
+    <profile>
       <id>conscrypt</id>
       <properties>
         <okhttp.platform>conscrypt</okhttp.platform>
