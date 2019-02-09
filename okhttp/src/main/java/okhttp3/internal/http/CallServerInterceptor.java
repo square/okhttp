@@ -70,7 +70,8 @@ public final class CallServerInterceptor implements Interceptor {
           // Prepare a duplex body so that the application can send a request body later.
           httpCodec.flushRequest();
           CountingSink requestBodyOut = new CountingSink(httpCodec.createRequestBody(request, -1L));
-          ((DuplexRequestBody) request.body()).foldSink(requestBodyOut);
+          BufferedSink bufferedRequestBody = Okio.buffer(requestBodyOut);
+          request.body().writeTo(bufferedRequestBody);
         } else {
           // Write the request body if the "Expect: 100-continue" expectation was met.
           realChain.eventListener().requestBodyStart(call);

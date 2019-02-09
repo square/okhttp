@@ -1,6 +1,60 @@
 Change Log
 ==========
 
+## Version 3.13.1
+
+_2019-02-05_
+
+ *  Fix: Don't crash when using a custom `X509TrustManager` or `SSLSocket` on Android. When we
+    removed obsolete code for Android 4.4 we inadvertently also removed support for custom
+    subclasses. We've restored that support!
+
+
+## Version 3.13.0
+
+_2019-02-04_
+
+ *  **This release bumps our minimum requirements to Java 8+ or Android 5+.** Cutting off old
+    devices is a serious change and we don't do it lightly! [This post][require_android_5] explains
+    why we're doing this and how to upgrade.
+
+    The OkHttp 3.12.x branch will be our long-term branch for Android 2.3+ (API level 9+) and Java
+    7+. These platforms lack support for TLS 1.2 and should not be used. But because upgrading is
+    difficult we will backport critical fixes to the 3.12.x branch through December 31, 2020.
+
+ *  **TLSv1 and TLSv1.1 are no longer enabled by default.** Major web browsers are working towards
+    removing these versions altogether in early 2020. If your servers aren't ready yet you can
+    configure OkHttp 3.13 to allow TLSv1 and TLSv1.1 connections:
+
+    ```
+    OkHttpClient client = new OkHttpClient.Builder()
+        .connectionSpecs(Arrays.asList(ConnectionSpec.COMPATIBLE_TLS))
+        .build();
+    ```
+
+ *  New: You can now access HTTP trailers with `Response.trailers()`. This method may only be called
+    after the entire HTTP response body has been read.
+
+ *  New: Upgrade to Okio 1.17.3. If you're on Kotlin-friendly Okio 2.x this release requires 2.2.2
+    or newer.
+
+    ```kotlin
+    implementation("com.squareup.okio:okio:1.17.3")
+    ```
+
+ *  Fix: Don't miss cancels when sending HTTP/2 request headers.
+ *  Fix: Don't miss whole operation timeouts when calls redirect.
+ *  Fix: Don't leak connections if web sockets have malformed responses or if `onOpen()` throws.
+ *  Fix: Don't retry when request bodies fail due to `FileNotFoundException`.
+ *  Fix: Don't crash when URLs have IPv4-mapped IPv6 addresses.
+ *  Fix: Don't crash when building `HandshakeCertificates` on Android API 28.
+ *  Fix: Permit multipart file names to contain non-ASCII characters.
+ *  New: API to get MockWebServer's dispatcher.
+ *  New: API to access headers as `java.time.Instant`.
+ *  New: Fail fast if a `SSLSocketFactory` is used as a `SocketFactory`.
+ *  New: Log the TLS handshake in `LoggingEventListener`.
+
+
 ## Version 3.12.1
 
 _2018-12-23_
@@ -1607,3 +1661,4 @@ Initial release.
  [conscrypt]: https://github.com/google/conscrypt/
  [conscrypt_dependency]: https://github.com/google/conscrypt/#download
  [https_server_sample]: https://github.com/square/okhttp/blob/master/samples/guide/src/main/java/okhttp3/recipes/HttpsServer.java
+ [require_android_5]: https://medium.com/square-corner-blog/okhttp-3-13-requires-android-5-818bb78d07ce

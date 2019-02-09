@@ -22,13 +22,14 @@ import java.net.Socket;
 import java.net.UnknownHostException;
 import java.util.Collections;
 import okhttp3.Headers;
+import okhttp3.internal.Util;
 import okio.Buffer;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
 
 public class RecordedRequestTest {
-  Headers headers = new Headers.Builder().build();
+  Headers headers = Util.EMPTY_HEADERS;
 
   private class FakeSocket extends Socket {
     private final InetAddress localAddress;

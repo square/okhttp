@@ -21,12 +21,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.atomic.AtomicInteger;
 import javax.annotation.Nullable;
 import okhttp3.internal.NamedRunnable;
 import okhttp3.internal.cache.CacheInterceptor;
 import okhttp3.internal.connection.ConnectInterceptor;
 import okhttp3.internal.connection.StreamAllocation;
-import okhttp3.internal.duplex.DuplexRequestBody;
 import okhttp3.internal.http.BridgeInterceptor;
 import okhttp3.internal.http.CallServerInterceptor;
 import okhttp3.internal.http.RealInterceptorChain;
@@ -81,10 +81,6 @@ final class RealCall implements Call {
   }
 
   @Override public Response execute() throws IOException {
-    if (originalRequest.body instanceof DuplexRequestBody) {
-      DuplexRequestBody duplexRequestBody = (DuplexRequestBody) originalRequest.body;
-      return duplexRequestBody.awaitExecute();
-    }
     synchronized (this) {
       if (executed) throw new IllegalStateException("Already Executed");
       executed = true;
@@ -158,10 +154,19 @@ final class RealCall implements Call {
 
   final class AsyncCall extends NamedRunnable {
     private final Callback responseCallback;
+    private volatile AtomicInteger callsPerHost = new AtomicInteger(0);
 
     AsyncCall(Callback responseCallback) {
       super("OkHttp %s", redactedUrl());
       this.responseCallback = responseCallback;
+    }
+
+    AtomicInteger callsPerHost() {
+      return callsPerHost;
+    }
+
+    void reuseCallsPerHostFrom(AsyncCall other) {
+      this.callsPerHost = other.callsPerHost;
     }
 
     String host() {
