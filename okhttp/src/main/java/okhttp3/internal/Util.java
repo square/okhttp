@@ -692,7 +692,7 @@ public final class Util {
     try {
       return buffer.readByte();
     } catch (EOFException eofe) {
-      throw new AssertionError("unexpected eod of stream", eofe);
+      throw new AssertionError("unexpected end of stream", eofe);
     }
   }
 }
