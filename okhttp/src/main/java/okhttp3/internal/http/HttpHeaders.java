@@ -38,6 +38,7 @@ import okio.ByteString;
 import static java.net.HttpURLConnection.HTTP_NOT_MODIFIED;
 import static java.net.HttpURLConnection.HTTP_NO_CONTENT;
 import static okhttp3.internal.Util.readIOSafeByte;
+import static okhttp3.internal.Util.EMPTY_HEADERS;
 import static okhttp3.internal.http.StatusLine.HTTP_CONTINUE;
 
 /** Headers and utilities for internal use by OkHttp. */
@@ -133,7 +134,7 @@ public final class HttpHeaders {
    */
   public static Headers varyHeaders(Headers requestHeaders, Headers responseHeaders) {
     Set<String> varyFields = varyFields(responseHeaders);
-    if (varyFields.isEmpty()) return new Headers.Builder().build();
+    if (varyFields.isEmpty()) return EMPTY_HEADERS;
 
     Headers.Builder result = new Headers.Builder();
     for (int i = 0, size = requestHeaders.size(); i < size; i++) {

@@ -11,7 +11,7 @@
 
   <groupId>com.squareup.okhttp3</groupId>
   <artifactId>parent</artifactId>
-  <version>3.13.0-SNAPSHOT</version>
+  <version>3.14.0-SNAPSHOT</version>
   <packaging>pom</packaging>
 
   <name>OkHttp (Parent)</name>
@@ -36,7 +36,6 @@
 
     <module>okcurl</module>
     <module>mockwebserver</module>
-    <module>bom</module>
     <module>samples</module>
   </modules>
 
@@ -213,13 +212,6 @@
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-release-plugin</artifactId>
         <version>2.5.3</version>
-        <dependencies>
-          <dependency>
-            <groupId>org.apache.maven.scm</groupId>
-            <artifactId>maven-scm-provider-gitexe</artifactId>
-            <version>1.11.1</version>
-          </dependency>
-        </dependencies>
         <configuration>
           <autoVersionSubmodules>true</autoVersionSubmodules>
         </configuration>

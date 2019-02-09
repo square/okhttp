@@ -255,7 +255,11 @@ public final class MultipartBody extends RequestBody {
         appendQuotedString(disposition, filename);
       }
 
-      return create(Headers.of("Content-Disposition", disposition.toString()), body);
+      Headers headers = new Headers.Builder()
+          .addUnsafeNonAscii("Content-Disposition", disposition.toString())
+          .build();
+
+      return create(headers, body);
     }
 
     final @Nullable Headers headers;

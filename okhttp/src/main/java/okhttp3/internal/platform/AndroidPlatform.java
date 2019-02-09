@@ -25,6 +25,7 @@ import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.Certificate;
+import java.security.cert.TrustAnchor;
 import java.security.cert.X509Certificate;
 import java.util.List;
 import javax.annotation.Nullable;
@@ -35,7 +36,9 @@ import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.X509TrustManager;
 import okhttp3.Protocol;
 import okhttp3.internal.Util;
+import okhttp3.internal.tls.BasicTrustRootIndex;
 import okhttp3.internal.tls.CertificateChainCleaner;
+import okhttp3.internal.tls.TrustRootIndex;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
@@ -44,6 +47,7 @@ class AndroidPlatform extends Platform {
   private static final int MAX_LOG_LENGTH = 4000;
 
   private final Class<?> sslParametersClass;
+  private final Class<?> sslSocketClass;
   private final Method setUseSessionTickets;
   private final Method setHostname;
   private final Method getAlpnSelectedProtocol;
@@ -51,9 +55,10 @@ class AndroidPlatform extends Platform {
 
   private final CloseGuard closeGuard = CloseGuard.get();
 
-  AndroidPlatform(Class<?> sslParametersClass, Method setUseSessionTickets, Method setHostname,
-      Method getAlpnSelectedProtocol, Method setAlpnProtocols) {
+  AndroidPlatform(Class<?> sslParametersClass, Class<?> sslSocketClass, Method setUseSessionTickets,
+      Method setHostname, Method getAlpnSelectedProtocol, Method setAlpnProtocols) {
     this.sslParametersClass = sslParametersClass;
+    this.sslSocketClass = sslSocketClass;
     this.setUseSessionTickets = setUseSessionTickets;
     this.setHostname = setHostname;
     this.getAlpnSelectedProtocol = getAlpnSelectedProtocol;
@@ -102,6 +107,9 @@ class AndroidPlatform extends Platform {
 
   @Override public void configureTlsExtensions(
       SSLSocket sslSocket, String hostname, List<Protocol> protocols) {
+    if (!sslSocketClass.isInstance(sslSocket)) {
+      return; // No TLS extensions if the socket class is custom.
+    }
     try {
       // Enable SNI and session tickets.
       if (hostname != null) {
@@ -118,6 +126,9 @@ class AndroidPlatform extends Platform {
   }
 
   @Override public @Nullable String getSelectedProtocol(SSLSocket socket) {
+    if (!sslSocketClass.isInstance(socket)) {
+      return null; // No TLS extensions if the socket class is custom.
+    }
     try {
       byte[] alpnResult = (byte[]) getAlpnSelectedProtocol.invoke(socket);
       return alpnResult != null ? new String(alpnResult, UTF_8) : null;
@@ -198,7 +209,7 @@ class AndroidPlatform extends Platform {
           "checkServerTrusted", X509Certificate[].class, String.class, String.class);
       return new AndroidCertificateChainCleaner(extensions, checkServerTrusted);
     } catch (Exception e) {
-      throw new AssertionError(e);
+      return super.buildCertificateChainCleaner(trustManager);
     }
   }
 
@@ -219,13 +230,26 @@ class AndroidPlatform extends Platform {
         Method setHostname = sslSocketClass.getMethod("setHostname", String.class);
         Method getAlpnSelectedProtocol = sslSocketClass.getMethod("getAlpnSelectedProtocol");
         Method setAlpnProtocols = sslSocketClass.getMethod("setAlpnProtocols", byte[].class);
-        return new AndroidPlatform(sslParametersClass, setUseSessionTickets, setHostname,
-            getAlpnSelectedProtocol, setAlpnProtocols);
+        return new AndroidPlatform(sslParametersClass, sslSocketClass, setUseSessionTickets,
+            setHostname, getAlpnSelectedProtocol, setAlpnProtocols);
       } catch (NoSuchMethodException ignored) {
       }
     }
     throw new IllegalStateException(
         "Expected Android API level 21+ but was " + Build.VERSION.SDK_INT);
+  }
+
+  @Override public TrustRootIndex buildTrustRootIndex(X509TrustManager trustManager) {
+    try {
+      // From org.conscrypt.TrustManagerImpl, we want the method with this signature:
+      // private TrustAnchor findTrustAnchorByIssuerAndSignature(X509Certificate lastCert);
+      Method method = trustManager.getClass().getDeclaredMethod(
+          "findTrustAnchorByIssuerAndSignature", X509Certificate.class);
+      method.setAccessible(true);
+      return new CustomTrustRootIndex(trustManager, method);
+    } catch (NoSuchMethodException e) {
+      return super.buildTrustRootIndex(trustManager);
+    }
   }
 
   /**
@@ -323,6 +347,53 @@ class AndroidPlatform extends Platform {
         warnIfOpenMethod = null;
       }
       return new CloseGuard(getMethod, openMethod, warnIfOpenMethod);
+    }
+  }
+
+  /**
+   * A trust manager for Android applications that customize the trust manager.
+   *
+   * <p>This class exploits knowledge of Android implementation details. This class is potentially
+   * much faster to initialize than {@link BasicTrustRootIndex} because it doesn't need to load and
+   * index trusted CA certificates.
+   */
+  static final class CustomTrustRootIndex implements TrustRootIndex {
+    private final X509TrustManager trustManager;
+    private final Method findByIssuerAndSignatureMethod;
+
+    CustomTrustRootIndex(X509TrustManager trustManager, Method findByIssuerAndSignatureMethod) {
+      this.findByIssuerAndSignatureMethod = findByIssuerAndSignatureMethod;
+      this.trustManager = trustManager;
+    }
+
+    @Override public X509Certificate findByIssuerAndSignature(X509Certificate cert) {
+      try {
+        TrustAnchor trustAnchor = (TrustAnchor) findByIssuerAndSignatureMethod.invoke(
+            trustManager, cert);
+        return trustAnchor != null
+            ? trustAnchor.getTrustedCert()
+            : null;
+      } catch (IllegalAccessException e) {
+        throw new AssertionError("unable to get issues and signature", e);
+      } catch (InvocationTargetException e) {
+        return null;
+      }
+    }
+
+    @Override public boolean equals(Object obj) {
+      if (obj == this) {
+        return true;
+      }
+      if (!(obj instanceof CustomTrustRootIndex)) {
+        return false;
+      }
+      CustomTrustRootIndex that = (CustomTrustRootIndex) obj;
+      return trustManager.equals(that.trustManager)
+          && findByIssuerAndSignatureMethod.equals(that.findByIssuerAndSignatureMethod);
+    }
+
+    @Override public int hashCode() {
+      return trustManager.hashCode() + 31 * findByIssuerAndSignatureMethod.hashCode();
     }
   }
 

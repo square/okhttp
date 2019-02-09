@@ -133,8 +133,25 @@ public final class Dispatcher {
   void enqueue(AsyncCall call) {
     synchronized (this) {
       readyAsyncCalls.add(call);
+
+      // Mutate the AsyncCall so that it shares the AtomicInteger of an existing running call to
+      // the same host.
+      if (!call.get().forWebSocket) {
+        AsyncCall existingCall = findExistingCallWithHost(call.host());
+        if (existingCall != null) call.reuseCallsPerHostFrom(existingCall);
+      }
     }
     promoteAndExecute();
+  }
+
+  @Nullable private AsyncCall findExistingCallWithHost(String host) {
+    for (AsyncCall existingCall : runningAsyncCalls) {
+      if (existingCall.host().equals(host)) return existingCall;
+    }
+    for (AsyncCall existingCall : readyAsyncCalls) {
+      if (existingCall.host().equals(host)) return existingCall;
+    }
+    return null;
   }
 
   /**
@@ -172,9 +189,10 @@ public final class Dispatcher {
         AsyncCall asyncCall = i.next();
 
         if (runningAsyncCalls.size() >= maxRequests) break; // Max capacity.
-        if (runningCallsForHost(asyncCall) >= maxRequestsPerHost) continue; // Host max capacity.
+        if (asyncCall.callsPerHost().get() >= maxRequestsPerHost) continue; // Host max capacity.
 
         i.remove();
+        asyncCall.callsPerHost().incrementAndGet();
         executableCalls.add(asyncCall);
         runningAsyncCalls.add(asyncCall);
       }
@@ -189,16 +207,6 @@ public final class Dispatcher {
     return isRunning;
   }
 
-  /** Returns the number of running calls that share a host with {@code call}. */
-  private int runningCallsForHost(AsyncCall call) {
-    int result = 0;
-    for (AsyncCall c : runningAsyncCalls) {
-      if (c.get().forWebSocket) continue;
-      if (c.host().equals(call.host())) result++;
-    }
-    return result;
-  }
-
   /** Used by {@code Call#execute} to signal it is in-flight. */
   synchronized void executed(RealCall call) {
     runningSyncCalls.add(call);
@@ -206,6 +214,7 @@ public final class Dispatcher {
 
   /** Used by {@code AsyncCall#run} to signal completion. */
   void finished(AsyncCall call) {
+    call.callsPerHost().decrementAndGet();
     finished(runningAsyncCalls, call);
   }
 
