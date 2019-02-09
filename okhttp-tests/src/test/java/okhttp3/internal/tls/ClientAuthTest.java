@@ -172,6 +172,10 @@ public final class ClientAuthTest {
   }
 
   @Test public void missingClientAuthFailsForNeeds() throws Exception {
+    // TODO https://github.com/square/okhttp/issues/4598
+    // StreamReset stream was reset: PROT...
+    assumeFalse(getJvmSpecVersion().equals("11"));
+
     OkHttpClient client = buildClient(null, clientIntermediateCa.certificate());
 
     SSLSocketFactory socketFactory = buildServerSslSocketFactory();
@@ -218,7 +222,7 @@ public final class ClientAuthTest {
   }
 
   @Test public void invalidClientAuthFails() throws Throwable {
-    // TODO github issue link
+    // TODO https://github.com/square/okhttp/issues/4598
     // StreamReset stream was reset: PROT...
     assumeFalse(getJvmSpecVersion().equals("11"));
 
