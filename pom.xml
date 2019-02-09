@@ -189,6 +189,10 @@
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-javadoc-plugin</artifactId>
           <version>3.0.1</version>
+          <configuration>
+            <failOnError>false</failOnError>
+            <doclint>none</doclint>
+          </configuration>
         </plugin>
       </plugins>
     </pluginManagement>
@@ -303,6 +307,7 @@
     </profile>
     <profile>
       <id>javadoc-lenient</id>
+      <!-- MJAVADOC-555 Fixed in upcoming JDK builds -->
       <activation>
         <jdk>11</jdk>
       </activation>
@@ -311,10 +316,8 @@
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-javadoc-plugin</artifactId>
-            <version>3.0.1</version>
             <configuration>
-              <failOnError>false</failOnError>
-              <doclint>false</doclint>
+              <skip>true</skip>
             </configuration>
           </plugin>
         </plugins>

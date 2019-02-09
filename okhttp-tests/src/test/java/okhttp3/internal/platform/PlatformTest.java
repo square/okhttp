@@ -33,6 +33,10 @@ public class PlatformTest {
     return System.getProperty("okhttp.platform", "platform");
   }
 
+  public static String getJvmSpecVersion() {
+    return System.getProperty("java.specification.version", "unknown");
+  }
+
   @Test
   public void testToStringIsClassname() {
     assertEquals("Platform", new Platform().toString());

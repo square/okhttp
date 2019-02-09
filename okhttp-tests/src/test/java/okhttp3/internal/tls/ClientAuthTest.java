@@ -43,12 +43,14 @@ import org.junit.Rule;
 import org.junit.Test;
 
 import static okhttp3.TestUtil.defaultClient;
+import static okhttp3.internal.platform.PlatformTest.getJvmSpecVersion;
 import static okhttp3.internal.platform.PlatformTest.getPlatform;
 import static okhttp3.tls.internal.TlsUtil.newKeyManager;
 import static okhttp3.tls.internal.TlsUtil.newTrustManager;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.fail;
+import static org.junit.Assume.assumeFalse;
 
 public final class ClientAuthTest {
   @Rule public final MockWebServer server = new MockWebServer();
@@ -216,6 +218,10 @@ public final class ClientAuthTest {
   }
 
   @Test public void invalidClientAuthFails() throws Throwable {
+    // TODO github issue link
+    // StreamReset stream was reset: PROT...
+//    assumeFalse(getJvmSpecVersion().equals("11"));
+
     HeldCertificate clientCert2 = new HeldCertificate.Builder()
         .serialNumber(4L)
         .commonName("Jethro Willis")

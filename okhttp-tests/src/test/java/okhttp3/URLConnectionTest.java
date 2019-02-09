@@ -104,12 +104,9 @@ import static okhttp3.mockwebserver.SocketPolicy.SHUTDOWN_INPUT_AT_END;
 import static okhttp3.mockwebserver.SocketPolicy.SHUTDOWN_OUTPUT_AT_END;
 import static okhttp3.mockwebserver.SocketPolicy.UPGRADE_TO_SSL_AT_END;
 import static okhttp3.tls.internal.TlsUtil.localhost;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.hamcrest.CoreMatchers.either;
+import static org.hamcrest.CoreMatchers.equalTo;
+import static org.junit.Assert.*;
 import static org.junit.Assume.assumeTrue;
 
 /** Android's URLConnectionTest. */
@@ -711,7 +708,7 @@ public final class URLConnectionTest {
 
     RecordedRequest fallbackRequest = server.takeRequest();
     assertEquals("GET /foo HTTP/1.1", fallbackRequest.getRequestLine());
-    assertEquals(TlsVersion.TLS_1_2, fallbackRequest.getTlsVersion());
+    assertThat(fallbackRequest.getTlsVersion(), either(equalTo(TlsVersion.TLS_1_2)).or(equalTo(TlsVersion.TLS_1_3)));
   }
 
   @Test public void connectViaHttpsWithSSLFallbackFailuresRecorded() {
@@ -762,7 +759,7 @@ public final class URLConnectionTest {
     assertContent("def", urlFactory.open(server.url("/").url()));
 
     Set<TlsVersion> tlsVersions =
-        EnumSet.of(TlsVersion.TLS_1_0, TlsVersion.TLS_1_2); // v1.2 on OpenJDK 8.
+        EnumSet.of(TlsVersion.TLS_1_0, TlsVersion.TLS_1_2, TlsVersion.TLS_1_3); // v1.2 on OpenJDK 8.
 
     RecordedRequest request1 = server.takeRequest();
     assertTrue(tlsVersions.contains(request1.getTlsVersion()));
