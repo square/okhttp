@@ -289,6 +289,14 @@ public final class Response implements Closeable {
     body.close();
   }
 
+  /**
+   * Gets the family of status code for this response.
+   * @return family of status code
+   */
+  public StatusFamily statusFamily() {
+    return StatusFamily.family(code);
+  }
+
   @Override public String toString() {
     return "Response{protocol="
         + protocol
@@ -300,6 +308,53 @@ public final class Response implements Closeable {
         + request.url()
         + '}';
   }
+
+
+  /**
+   * Enum for status code class (family).
+   * It is intended to provide convenient method for switch-case branching on status class (family),
+   * instead of HTTP code calculations within client code.
+   */
+  public enum StatusFamily {
+    /** 1xx HTTP status codes. */
+    INFORMATIONAL,
+    /** 2xx HTTP status codes. */
+    SUCCESSFUL,
+    /** 3xx HTTP status codes. */
+    REDIRECTION,
+    /** 4xx HTTP status codes. */
+    CLIENT_ERROR,
+    /** 5xx HTTP status codes. */
+    SERVER_ERROR,
+    /** All other unrecognized HTTP status codes. */
+    OTHER;
+
+    /**
+     * Gets the family of particular http status code.
+     * @param httpCode http status code to check
+     * @return family of HTTP status
+     */
+    public static StatusFamily family(int httpCode) {
+      if (httpCode >= 200 && httpCode < 300) return SUCCESSFUL;
+      if (httpCode >= 400 && httpCode < 500) return CLIENT_ERROR;
+      if (httpCode >= 500 && httpCode < 600) return SERVER_ERROR;
+      if (httpCode >= 300 && httpCode < 400) return SERVER_ERROR;
+      if (httpCode >= 100 && httpCode < 200) return INFORMATIONAL;
+      return OTHER;
+    }
+
+    /**
+     * Checks if specified {@code httpCode} belongs to specified {@code family}.
+     * @param httpCode HTTP status code to check
+     * @param family family to check
+     * @return {@code true} if {@code httpCode} belongs to specified {@code family},
+     *         {@code false} otherwise.
+     */
+    public static boolean isFamily(int httpCode, StatusFamily family) {
+      return family(httpCode) == family;
+    }
+  }
+
 
   public static class Builder {
     @Nullable Request request;

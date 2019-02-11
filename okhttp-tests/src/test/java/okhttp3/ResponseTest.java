@@ -23,8 +23,7 @@ import okio.Source;
 import okio.Timeout;
 import org.junit.Test;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
+import static org.junit.Assert.*;
 
 public final class ResponseTest {
   @Test public void peekShorterThanResponse() throws Exception {
@@ -59,6 +58,14 @@ public final class ResponseTest {
     assertEquals("abcdef", response.body().string());
     assertEquals("abcd", p1.string());
     assertEquals("ab", p2.string());
+  }
+
+  @Test public void statusCodeFamilyIsOk() {
+    Response response = newResponse(responseBody("abcdef"));
+    assertEquals(Response.StatusFamily.SUCCESSFUL, response.statusFamily());
+    assertEquals(Response.StatusFamily.SUCCESSFUL, Response.StatusFamily.family(response.code()));
+    assertTrue(Response.StatusFamily.isFamily(response.code(), Response.StatusFamily.SUCCESSFUL));
+    assertFalse(Response.StatusFamily.isFamily(response.code(), Response.StatusFamily.CLIENT_ERROR));
   }
 
   /**
