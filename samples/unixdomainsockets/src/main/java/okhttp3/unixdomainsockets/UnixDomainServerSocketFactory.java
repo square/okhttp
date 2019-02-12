@@ -22,6 +22,8 @@ import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketAddress;
+import java.net.SocketException;
+import java.nio.channels.ClosedChannelException;
 import javax.net.ServerSocketFactory;
 import jnr.unixsocket.UnixServerSocketChannel;
 import jnr.unixsocket.UnixSocketAddress;
@@ -35,25 +37,21 @@ public final class UnixDomainServerSocketFactory extends ServerSocketFactory {
     this.path = path;
   }
 
-  private ServerSocket createUnixDomainSocket() throws IOException {
+  @Override public ServerSocket createServerSocket() throws IOException {
     return new UnixDomainServerSocket();
   }
 
-  @Override public ServerSocket createServerSocket() throws IOException {
-    return createUnixDomainSocket();
-  }
-
   @Override public ServerSocket createServerSocket(int port) throws IOException {
-    return createUnixDomainSocket();
+    return createServerSocket();
   }
 
   @Override public ServerSocket createServerSocket(int port, int backlog) throws IOException {
-    return createUnixDomainSocket();
+    return createServerSocket();
   }
 
   @Override public ServerSocket createServerSocket(
       int port, int backlog, InetAddress inetAddress) throws IOException {
-    return createUnixDomainSocket();
+    return createServerSocket();
   }
 
   final class UnixDomainServerSocket extends ServerSocket {
@@ -81,8 +79,14 @@ public final class UnixDomainServerSocketFactory extends ServerSocketFactory {
     }
 
     @Override public Socket accept() throws IOException {
-      UnixSocketChannel channel = serverSocketChannel.accept();
-      return new BlockingUnixSocket(path, channel, endpoint);
+      try {
+        UnixSocketChannel channel = serverSocketChannel.accept();
+        return new TunnelingUnixSocket(path, channel, endpoint);
+      } catch (ClosedChannelException e) {
+        SocketException exception = new SocketException();
+        exception.initCause(e);
+        throw exception;
+      }
     }
 
     @Override public void close() throws IOException {
