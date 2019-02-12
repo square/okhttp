@@ -51,7 +51,7 @@
     <guava.version>27.0.1-jre</guava.version>
     <java.version>1.8</java.version>
     <moshi.version>1.8.0</moshi.version>
-    <jnr-unixsocket.version>0.21</jnr-unixsocket.version>
+    <jnr-unixsocket.version>0.22</jnr-unixsocket.version>
     <okio.version>1.17.2</okio.version>
     <conscrypt.version>1.4.2</conscrypt.version>
 
