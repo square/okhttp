@@ -17,14 +17,12 @@ package okhttp3.internal.http;
 
 import java.io.IOException;
 import java.net.ProtocolException;
-import okhttp3.Call;
 import okhttp3.Interceptor;
 import okhttp3.Request;
 import okhttp3.Response;
 import okhttp3.internal.Internal;
+import okhttp3.internal.Transmitter;
 import okhttp3.internal.Util;
-import okhttp3.internal.connection.RealConnection;
-import okhttp3.internal.connection.StreamAllocation;
 import okhttp3.internal.duplex.DuplexRequestBody;
 import okio.Buffer;
 import okio.BufferedSink;
@@ -41,18 +39,13 @@ public final class CallServerInterceptor implements Interceptor {
   }
 
   @Override public Response intercept(Chain chain) throws IOException {
-    final RealInterceptorChain realChain = (RealInterceptorChain) chain;
-    Call call = realChain.call();
-    final HttpCodec httpCodec = realChain.httpStream();
-    StreamAllocation streamAllocation = realChain.streamAllocation();
-    RealConnection connection = (RealConnection) realChain.connection();
+    RealInterceptorChain realChain = (RealInterceptorChain) chain;
+    Transmitter transmitter = realChain.transmitter();
     Request request = realChain.request();
 
     long sentRequestMillis = System.currentTimeMillis();
 
-    realChain.eventListener().requestHeadersStart(call);
-    httpCodec.writeRequestHeaders(request);
-    realChain.eventListener().requestHeadersEnd(call, request);
+    transmitter.writeRequestHeaders(request);
 
     Response.Builder responseBuilder = null;
     if (HttpMethod.permitsRequestBody(request.method()) && request.body() != null) {
@@ -60,73 +53,70 @@ public final class CallServerInterceptor implements Interceptor {
       // Continue" response before transmitting the request body. If we don't get that, return
       // what we did get (such as a 4xx response) without ever transmitting the request body.
       if ("100-continue".equalsIgnoreCase(request.header("Expect"))) {
-        httpCodec.flushRequest();
-        realChain.eventListener().responseHeadersStart(call);
-        responseBuilder = httpCodec.readResponseHeaders(true);
+        transmitter.flushRequest();
+        responseBuilder = transmitter.readResponseHeaders(true);
       }
 
       if (responseBuilder == null) {
         if (request.body() instanceof DuplexRequestBody) {
           // Prepare a duplex body so that the application can send a request body later.
-          httpCodec.flushRequest();
-          CountingSink requestBodyOut = new CountingSink(httpCodec.createRequestBody(request, -1L));
+          transmitter.flushRequest();
+          CountingSink requestBodyOut = new CountingSink(transmitter.createRequestBody(request, -1L));
           BufferedSink bufferedRequestBody = Okio.buffer(requestBodyOut);
           request.body().writeTo(bufferedRequestBody);
         } else {
           // Write the request body if the "Expect: 100-continue" expectation was met.
-          realChain.eventListener().requestBodyStart(call);
           long contentLength = request.body().contentLength();
           CountingSink requestBodyOut =
-              new CountingSink(httpCodec.createRequestBody(request, contentLength));
+              new CountingSink(transmitter.createRequestBody(request, contentLength));
           BufferedSink bufferedRequestBody = Okio.buffer(requestBodyOut);
 
           request.body().writeTo(bufferedRequestBody);
           bufferedRequestBody.close();
-          realChain.eventListener().requestBodyEnd(call, requestBodyOut.successfulCount);
+          transmitter.requestBodyEnd(requestBodyOut.successfulCount);
         }
-      } else if (!connection.isMultiplexed()) {
+      } else if (!transmitter.isConnectionMultiplexed()) {
         // If the "Expect: 100-continue" expectation wasn't met, prevent the HTTP/1 connection
         // from being reused. Otherwise we're still obligated to transmit the request body to
         // leave the connection in a consistent state.
-        streamAllocation.noNewStreams();
+        transmitter.noNewStreams();
       }
     }
 
     if (!(request.body() instanceof DuplexRequestBody)) {
-      httpCodec.finishRequest();
+      transmitter.finishRequest();
     }
 
     if (responseBuilder == null) {
-      realChain.eventListener().responseHeadersStart(call);
-      responseBuilder = httpCodec.readResponseHeaders(false);
+      responseBuilder = transmitter.readResponseHeaders(false);
     }
 
     responseBuilder
         .request(request)
-        .handshake(streamAllocation.connection().handshake())
+        .handshake(transmitter.handshake())
         .sentRequestAtMillis(sentRequestMillis)
         .receivedResponseAtMillis(System.currentTimeMillis());
-    Internal.instance.initCodec(responseBuilder, httpCodec);
+    Internal.instance.initDeferredTrailers(responseBuilder, transmitter.deferredTrailers());
     Response response = responseBuilder.build();
 
     int code = response.code();
     if (code == 100) {
       // server sent a 100-continue even though we did not request one.
       // try again to read the actual response
-      responseBuilder = httpCodec.readResponseHeaders(false);
+      responseBuilder = transmitter.readResponseHeaders(false);
 
       responseBuilder
           .request(request)
-          .handshake(streamAllocation.connection().handshake())
+          .handshake(transmitter.handshake())
           .sentRequestAtMillis(sentRequestMillis)
           .receivedResponseAtMillis(System.currentTimeMillis());
-      Internal.instance.initCodec(responseBuilder, httpCodec);
+      Internal.instance.initDeferredTrailers(responseBuilder, transmitter.deferredTrailers());
       response = responseBuilder.build();
 
       code = response.code();
     }
 
-    realChain.eventListener().responseHeadersEnd(call, response);
+    transmitter.responseHeadersEnd(response);
 
     if (forWebSocket && code == 101) {
       // Connection is upgrading, but we need to ensure interceptors see a non-null response body.
@@ -135,13 +125,13 @@ public final class CallServerInterceptor implements Interceptor {
           .build();
     } else {
       response = response.newBuilder()
-          .body(httpCodec.openResponseBody(response))
+          .body(transmitter.openResponseBody(response))
           .build();
     }
 
     if ("close".equalsIgnoreCase(response.request().header("Connection"))
         || "close".equalsIgnoreCase(response.header("Connection"))) {
-      streamAllocation.noNewStreams();
+      transmitter.noNewStreams();
     }
 
     if ((code == 204 || code == 205) && response.body().contentLength() > 0) {

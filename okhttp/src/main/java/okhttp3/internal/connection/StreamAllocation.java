@@ -20,6 +20,7 @@ import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
 import java.net.Socket;
 import java.util.List;
+import javax.annotation.Nullable;
 import okhttp3.Address;
 import okhttp3.Call;
 import okhttp3.Connection;
@@ -428,7 +429,7 @@ public final class StreamAllocation {
     }
   }
 
-  public void streamFailed(IOException e) {
+  public void streamFailed(@Nullable IOException e) {
     Socket socket;
     Connection releasedConnection;
     boolean noNewStreams = false;
