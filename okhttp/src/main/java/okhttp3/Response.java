@@ -20,7 +20,7 @@ import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 import javax.annotation.Nullable;
-import okhttp3.internal.http.HttpCodec;
+import okhttp3.internal.DeferredTrailers;
 import okhttp3.internal.http.HttpHeaders;
 import okio.Buffer;
 import okio.BufferedSource;
@@ -54,7 +54,7 @@ public final class Response implements Closeable {
   final @Nullable Response priorResponse;
   final long sentRequestAtMillis;
   final long receivedResponseAtMillis;
-  final @Nullable HttpCodec httpCodec;
+  final @Nullable DeferredTrailers deferredTrailers;
 
   private volatile @Nullable CacheControl cacheControl; // Lazily initialized.
 
@@ -71,7 +71,7 @@ public final class Response implements Closeable {
     this.priorResponse = builder.priorResponse;
     this.sentRequestAtMillis = builder.sentRequestAtMillis;
     this.receivedResponseAtMillis = builder.receivedResponseAtMillis;
-    this.httpCodec = builder.httpCodec;
+    this.deferredTrailers = builder.deferredTrailers;
   }
 
   /**
@@ -144,7 +144,7 @@ public final class Response implements Closeable {
    * before the entire HTTP response body has been consumed.
    */
   public Headers trailers() throws IOException {
-    return httpCodec.trailers();
+    return deferredTrailers.trailers();
   }
 
   /**
@@ -314,7 +314,7 @@ public final class Response implements Closeable {
     @Nullable Response priorResponse;
     long sentRequestAtMillis;
     long receivedResponseAtMillis;
-    @Nullable HttpCodec httpCodec;
+    @Nullable DeferredTrailers deferredTrailers;
 
     public Builder() {
       headers = new Headers.Builder();
@@ -333,7 +333,7 @@ public final class Response implements Closeable {
       this.priorResponse = response.priorResponse;
       this.sentRequestAtMillis = response.sentRequestAtMillis;
       this.receivedResponseAtMillis = response.receivedResponseAtMillis;
-      this.httpCodec = response.httpCodec;
+      this.deferredTrailers = response.deferredTrailers;
     }
 
     public Builder request(Request request) {
@@ -441,8 +441,8 @@ public final class Response implements Closeable {
       return this;
     }
 
-    void initCodec(HttpCodec httpCodec) {
-      this.httpCodec = httpCodec;
+    void initDeferredTrailers(DeferredTrailers deferredTrailers) {
+      this.deferredTrailers = deferredTrailers;
     }
 
     public Response build() {

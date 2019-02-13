@@ -188,7 +188,6 @@ public final class Http2Codec implements HttpCodec {
   }
 
   @Override public ResponseBody openResponseBody(Response response) throws IOException {
-    streamAllocation.eventListener.responseBodyStart(streamAllocation.call);
     String contentType = response.header("Content-Type");
     long contentLength = HttpHeaders.contentLength(response);
     Source source = new StreamFinishingSource(stream.getSource());

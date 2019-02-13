@@ -144,7 +144,7 @@ public class Platform {
    * should be used specifically for {@link java.io.Closeable} objects and in conjunction with
    * {@link #logCloseableLeak(String, Object)}.
    */
-  public Object getStackTraceForCloseable(String closer) {
+  public @Nullable Object getStackTraceForCloseable(String closer) {
     if (logger.isLoggable(Level.FINE)) {
       return new Throwable(closer); // These are expensive to allocate.
     }

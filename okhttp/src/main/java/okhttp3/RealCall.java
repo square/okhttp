@@ -24,9 +24,9 @@ import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.atomic.AtomicInteger;
 import javax.annotation.Nullable;
 import okhttp3.internal.NamedRunnable;
+import okhttp3.internal.Transmitter;
 import okhttp3.internal.cache.CacheInterceptor;
 import okhttp3.internal.connection.ConnectInterceptor;
-import okhttp3.internal.connection.StreamAllocation;
 import okhttp3.internal.http.BridgeInterceptor;
 import okhttp3.internal.http.CallServerInterceptor;
 import okhttp3.internal.http.RealInterceptorChain;
@@ -40,14 +40,13 @@ import static okhttp3.internal.platform.Platform.INFO;
 
 final class RealCall implements Call {
   final OkHttpClient client;
-  final RetryAndFollowUpInterceptor retryAndFollowUpInterceptor;
   final AsyncTimeout timeout;
 
   /**
-   * There is a cycle between the {@link Call} and {@link EventListener} that makes this awkward.
-   * This will be set after we create the call instance then create the event listener instance.
+   * There is a cycle between the {@link Call} and {@link Transmitter} that makes this awkward.
+   * This is set after immediately after creating the call instance.
    */
-  private @Nullable EventListener eventListener;
+  private Transmitter transmitter;
 
   /** The application's original request unadulterated by redirects or auth headers. */
   final Request originalRequest;
@@ -60,7 +59,6 @@ final class RealCall implements Call {
     this.client = client;
     this.originalRequest = originalRequest;
     this.forWebSocket = forWebSocket;
-    this.retryAndFollowUpInterceptor = new RetryAndFollowUpInterceptor(client);
     this.timeout = new AsyncTimeout() {
       @Override protected void timedOut() {
         cancel();
@@ -72,7 +70,7 @@ final class RealCall implements Call {
   static RealCall newRealCall(OkHttpClient client, Request originalRequest, boolean forWebSocket) {
     // Safely publish the Call instance to the EventListener.
     RealCall call = new RealCall(client, originalRequest, forWebSocket);
-    call.eventListener = client.eventListenerFactory().create(call);
+    call.transmitter = new Transmitter(client, call);
     return call;
   }
 
@@ -87,7 +85,7 @@ final class RealCall implements Call {
     }
     captureCallStackTrace();
     timeout.enter();
-    eventListener.callStart(this);
+    transmitter.callStart();
     try {
       client.dispatcher().executed(this);
       Response result = getResponseWithInterceptorChain();
@@ -95,7 +93,7 @@ final class RealCall implements Call {
       return result;
     } catch (IOException e) {
       e = timeoutExit(e);
-      eventListener.callFailed(this, e);
+      transmitter.callFailed(e);
       throw e;
     } finally {
       client.dispatcher().finished(this);
@@ -113,8 +111,8 @@ final class RealCall implements Call {
   }
 
   private void captureCallStackTrace() {
-    Object callStackTrace = Platform.get().getStackTraceForCloseable("response.body().close()");
-    retryAndFollowUpInterceptor.setCallStackTrace(callStackTrace);
+    transmitter.setCallStackTrace(
+        Platform.get().getStackTraceForCloseable("response.body().close()"));
   }
 
   @Override public void enqueue(Callback responseCallback) {
@@ -123,12 +121,12 @@ final class RealCall implements Call {
       executed = true;
     }
     captureCallStackTrace();
-    eventListener.callStart(this);
+    transmitter.callStart();
     client.dispatcher().enqueue(new AsyncCall(responseCallback));
   }
 
   @Override public void cancel() {
-    retryAndFollowUpInterceptor.cancel();
+    transmitter.cancel();
   }
 
   @Override public Timeout timeout() {
@@ -140,7 +138,7 @@ final class RealCall implements Call {
   }
 
   @Override public boolean isCanceled() {
-    return retryAndFollowUpInterceptor.isCanceled();
+    return transmitter.isCanceled();
   }
 
   @SuppressWarnings("CloneDoesntCallSuperClone") // We are a final type & this saves clearing state.
@@ -148,8 +146,8 @@ final class RealCall implements Call {
     return RealCall.newRealCall(client, originalRequest, forWebSocket);
   }
 
-  StreamAllocation streamAllocation() {
-    return retryAndFollowUpInterceptor.streamAllocation();
+  Transmitter transmitter() {
+    return transmitter;
   }
 
   final class AsyncCall extends NamedRunnable {
@@ -194,7 +192,7 @@ final class RealCall implements Call {
       } catch (RejectedExecutionException e) {
         InterruptedIOException ioException = new InterruptedIOException("executor rejected");
         ioException.initCause(e);
-        eventListener.callFailed(RealCall.this, ioException);
+        transmitter.callFailed(ioException);
         responseCallback.onFailure(RealCall.this, ioException);
       } finally {
         if (!success) {
@@ -208,7 +206,7 @@ final class RealCall implements Call {
       timeout.enter();
       try {
         Response response = getResponseWithInterceptorChain();
-        if (retryAndFollowUpInterceptor.isCanceled()) {
+        if (transmitter.isCanceled()) {
           signalledCallback = true;
           responseCallback.onFailure(RealCall.this, new IOException("Canceled"));
         } else {
@@ -221,7 +219,7 @@ final class RealCall implements Call {
           // Do not signal the callback twice!
           Platform.get().log(INFO, "Callback failure for " + toLoggableString(), e);
         } else {
-          eventListener.callFailed(RealCall.this, e);
+          transmitter.callFailed(e);
           responseCallback.onFailure(RealCall.this, e);
         }
       } finally {
@@ -248,7 +246,7 @@ final class RealCall implements Call {
     // Build a full stack of interceptors.
     List<Interceptor> interceptors = new ArrayList<>();
     interceptors.addAll(client.interceptors());
-    interceptors.add(retryAndFollowUpInterceptor);
+    interceptors.add(new RetryAndFollowUpInterceptor(client));
     interceptors.add(new BridgeInterceptor(client.cookieJar()));
     interceptors.add(new CacheInterceptor(client.internalCache()));
     interceptors.add(new ConnectInterceptor(client));
@@ -257,8 +255,8 @@ final class RealCall implements Call {
     }
     interceptors.add(new CallServerInterceptor(forWebSocket));
 
-    Interceptor.Chain chain = new RealInterceptorChain(interceptors, null, null, null, 0,
-        originalRequest, this, eventListener, client.connectTimeoutMillis(),
+    Interceptor.Chain chain = new RealInterceptorChain(interceptors, transmitter, null, 0,
+        originalRequest, this, client.connectTimeoutMillis(),
         client.readTimeoutMillis(), client.writeTimeoutMillis());
 
     return chain.proceed(originalRequest);

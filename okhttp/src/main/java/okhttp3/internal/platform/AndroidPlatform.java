@@ -153,7 +153,7 @@ class AndroidPlatform extends Platform {
     }
   }
 
-  @Override public Object getStackTraceForCloseable(String closer) {
+  @Override public @Nullable Object getStackTraceForCloseable(String closer) {
     return closeGuard.createAndOpen(closer);
   }
 

@@ -23,14 +23,8 @@ import java.net.ProtocolException;
 import java.net.Proxy;
 import java.net.SocketTimeoutException;
 import java.security.cert.CertificateException;
-import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLHandshakeException;
 import javax.net.ssl.SSLPeerUnverifiedException;
-import javax.net.ssl.SSLSocketFactory;
-import okhttp3.Address;
-import okhttp3.Call;
-import okhttp3.CertificatePinner;
-import okhttp3.EventListener;
 import okhttp3.HttpUrl;
 import okhttp3.Interceptor;
 import okhttp3.OkHttpClient;
@@ -38,8 +32,8 @@ import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
 import okhttp3.Route;
+import okhttp3.internal.Transmitter;
 import okhttp3.internal.connection.RouteException;
-import okhttp3.internal.connection.StreamAllocation;
 import okhttp3.internal.http2.ConnectionShutdownException;
 
 import static java.net.HttpURLConnection.HTTP_CLIENT_TIMEOUT;
@@ -66,67 +60,34 @@ public final class RetryAndFollowUpInterceptor implements Interceptor {
   private static final int MAX_FOLLOW_UPS = 20;
 
   private final OkHttpClient client;
-  private volatile StreamAllocation streamAllocation;
-  private Object callStackTrace;
-  private volatile boolean canceled;
 
   public RetryAndFollowUpInterceptor(OkHttpClient client) {
     this.client = client;
   }
 
-  /**
-   * Immediately closes the socket connection if it's currently held. Use this to interrupt an
-   * in-flight request from any thread. It's the caller's responsibility to close the request body
-   * and response body streams; otherwise resources may be leaked.
-   *
-   * <p>This method is safe to be called concurrently, but provides limited guarantees. If a
-   * transport layer connection has been established (such as a HTTP/2 stream) that is terminated.
-   * Otherwise if a socket connection is being established, that is terminated.
-   */
-  public void cancel() {
-    canceled = true;
-    StreamAllocation streamAllocation = this.streamAllocation;
-    if (streamAllocation != null) streamAllocation.cancel();
-  }
-
-  public boolean isCanceled() {
-    return canceled;
-  }
-
-  public void setCallStackTrace(Object callStackTrace) {
-    this.callStackTrace = callStackTrace;
-  }
-
-  public StreamAllocation streamAllocation() {
-    return streamAllocation;
-  }
-
   @Override public Response intercept(Chain chain) throws IOException {
     Request request = chain.request();
     RealInterceptorChain realChain = (RealInterceptorChain) chain;
-    Call call = realChain.call();
-    EventListener eventListener = realChain.eventListener();
+    Transmitter transmitter = realChain.transmitter();
 
-    StreamAllocation streamAllocation = new StreamAllocation(client.connectionPool(),
-        createAddress(request.url()), call, eventListener, callStackTrace);
-    this.streamAllocation = streamAllocation;
+    transmitter.newStreamAllocation(request);
 
     int followUpCount = 0;
     Response priorResponse = null;
     while (true) {
-      if (canceled) {
-        streamAllocation.release(true);
+      if (transmitter.isCanceled()) {
+        transmitter.releaseStreamAllocation(true);
         throw new IOException("Canceled");
       }
 
       Response response;
       boolean releaseConnection = true;
       try {
-        response = realChain.proceed(request, streamAllocation, null, null);
+        response = realChain.proceed(request, transmitter, null);
         releaseConnection = false;
       } catch (RouteException e) {
         // The attempt to connect via a route failed. The request will not have been sent.
-        if (!recover(e.getLastConnectException(), streamAllocation, false, request)) {
+        if (!recover(e.getLastConnectException(), transmitter, false, request)) {
           throw e.getFirstConnectException();
         }
         releaseConnection = false;
@@ -134,14 +95,14 @@ public final class RetryAndFollowUpInterceptor implements Interceptor {
       } catch (IOException e) {
         // An attempt to communicate with a server failed. The request may have been sent.
         boolean requestSendStarted = !(e instanceof ConnectionShutdownException);
-        if (!recover(e, streamAllocation, requestSendStarted, request)) throw e;
+        if (!recover(e, transmitter, requestSendStarted, request)) throw e;
         releaseConnection = false;
         continue;
       } finally {
         // We're throwing an unchecked exception. Release any resources.
         if (releaseConnection) {
-          streamAllocation.streamFailed(null);
-          streamAllocation.release(true);
+          transmitter.streamFailed(null);
+          transmitter.releaseStreamAllocation(true);
         }
       }
 
@@ -156,35 +117,33 @@ public final class RetryAndFollowUpInterceptor implements Interceptor {
 
       Request followUp;
       try {
-        followUp = followUpRequest(response, streamAllocation.route());
+        followUp = followUpRequest(response, transmitter.route());
       } catch (IOException e) {
-        streamAllocation.release(true);
+        transmitter.releaseStreamAllocation(true);
         throw e;
       }
 
       if (followUp == null) {
-        streamAllocation.release(true);
+        transmitter.releaseStreamAllocation(true);
         return response;
       }
 
       closeQuietly(response.body());
 
       if (++followUpCount > MAX_FOLLOW_UPS) {
-        streamAllocation.release(true);
+        transmitter.releaseStreamAllocation(true);
         throw new ProtocolException("Too many follow-up requests: " + followUpCount);
       }
 
       if (followUp.body() instanceof UnrepeatableRequestBody) {
-        streamAllocation.release(true);
+        transmitter.releaseStreamAllocation(true);
         throw new HttpRetryException("Cannot retry streamed HTTP body", response.code());
       }
 
       if (!sameConnection(response, followUp.url())) {
-        streamAllocation.release(false);
-        streamAllocation = new StreamAllocation(client.connectionPool(),
-            createAddress(followUp.url()), call, eventListener, callStackTrace);
-        this.streamAllocation = streamAllocation;
-      } else if (streamAllocation.codec() != null) {
+        transmitter.releaseStreamAllocation(false);
+        transmitter.newStreamAllocation(followUp);
+      } else if (transmitter.hasCodec()) {
         throw new IllegalStateException("Closing the body of " + response
             + " didn't close its backing stream. Bad interceptor?");
       }
@@ -194,30 +153,15 @@ public final class RetryAndFollowUpInterceptor implements Interceptor {
     }
   }
 
-  private Address createAddress(HttpUrl url) {
-    SSLSocketFactory sslSocketFactory = null;
-    HostnameVerifier hostnameVerifier = null;
-    CertificatePinner certificatePinner = null;
-    if (url.isHttps()) {
-      sslSocketFactory = client.sslSocketFactory();
-      hostnameVerifier = client.hostnameVerifier();
-      certificatePinner = client.certificatePinner();
-    }
-
-    return new Address(url.host(), url.port(), client.dns(), client.socketFactory(),
-        sslSocketFactory, hostnameVerifier, certificatePinner, client.proxyAuthenticator(),
-        client.proxy(), client.protocols(), client.connectionSpecs(), client.proxySelector());
-  }
-
   /**
    * Report and attempt to recover from a failure to communicate with a server. Returns true if
    * {@code e} is recoverable, or false if the failure is permanent. Requests with a body can only
    * be recovered if the body is buffered or if the failure occurred before the request has been
    * sent.
    */
-  private boolean recover(IOException e, StreamAllocation streamAllocation,
+  private boolean recover(IOException e, Transmitter transmitter,
       boolean requestSendStarted, Request userRequest) {
-    streamAllocation.streamFailed(e);
+    transmitter.streamFailed(e);
 
     // The application layer has forbidden retries.
     if (!client.retryOnConnectionFailure()) return false;
@@ -229,7 +173,7 @@ public final class RetryAndFollowUpInterceptor implements Interceptor {
     if (!isRecoverable(e, requestSendStarted)) return false;
 
     // No more routes to attempt.
-    if (!streamAllocation.hasMoreRoutes()) return false;
+    if (!transmitter.hasMoreRoutes()) return false;
 
     // For failure recovery, use the same route selector with a new connection.
     return true;

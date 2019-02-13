@@ -38,8 +38,8 @@ import okhttp3.Response;
 import okhttp3.WebSocket;
 import okhttp3.WebSocketListener;
 import okhttp3.internal.Internal;
+import okhttp3.internal.Transmitter;
 import okhttp3.internal.Util;
-import okhttp3.internal.connection.StreamAllocation;
 import okio.BufferedSink;
 import okio.BufferedSource;
 import okio.ByteString;
@@ -190,27 +190,27 @@ public final class RealWebSocket implements WebSocket, WebSocketReader.FrameCall
     call.timeout().clearTimeout();
     call.enqueue(new Callback() {
       @Override public void onResponse(Call call, Response response) {
-        StreamAllocation streamAllocation = Internal.instance.streamAllocation(call);
+        Transmitter transmitter = Internal.instance.transmitter(call);
 
         try {
           checkResponse(response);
         } catch (ProtocolException e) {
           failWebSocket(e, response);
           closeQuietly(response);
-          streamAllocation.streamFailed(e);
+          transmitter.streamFailed(e);
           return;
         }
 
         // Promote the HTTP streams into web socket streams.
-        streamAllocation.noNewStreams(); // Prevent connection pooling!
-        Streams streams = streamAllocation.connection().newWebSocketStreams(streamAllocation);
+        transmitter.noNewStreams(); // Prevent connection pooling!
+        Streams streams = transmitter.newWebSocketStreams();
 
         // Process all web socket messages.
         try {
           String name = "OkHttp WebSocket " + request.url().redact();
           initReaderAndWriter(name, streams);
           listener.onOpen(RealWebSocket.this, response);
-          streamAllocation.connection().socket().setSoTimeout(0);
+          transmitter.socketTimeout(0);
           loopReader();
         } catch (Exception e) {
           failWebSocket(e, null);
