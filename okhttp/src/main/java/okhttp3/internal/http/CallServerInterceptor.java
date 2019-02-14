@@ -24,11 +24,8 @@ import okhttp3.internal.Internal;
 import okhttp3.internal.Transmitter;
 import okhttp3.internal.Util;
 import okhttp3.internal.duplex.DuplexRequestBody;
-import okio.Buffer;
 import okio.BufferedSink;
-import okio.ForwardingSink;
 import okio.Okio;
-import okio.Sink;
 
 /** This is the last interceptor in the chain. It makes a network call to the server. */
 public final class CallServerInterceptor implements Interceptor {
@@ -61,19 +58,13 @@ public final class CallServerInterceptor implements Interceptor {
         if (request.body() instanceof DuplexRequestBody) {
           // Prepare a duplex body so that the application can send a request body later.
           transmitter.flushRequest();
-          CountingSink requestBodyOut = new CountingSink(transmitter.createRequestBody(request, -1L));
-          BufferedSink bufferedRequestBody = Okio.buffer(requestBodyOut);
+          BufferedSink bufferedRequestBody = Okio.buffer(transmitter.createRequestBody(request));
           request.body().writeTo(bufferedRequestBody);
         } else {
           // Write the request body if the "Expect: 100-continue" expectation was met.
-          long contentLength = request.body().contentLength();
-          CountingSink requestBodyOut =
-              new CountingSink(transmitter.createRequestBody(request, contentLength));
-          BufferedSink bufferedRequestBody = Okio.buffer(requestBodyOut);
-
+          BufferedSink bufferedRequestBody = Okio.buffer(transmitter.createRequestBody(request));
           request.body().writeTo(bufferedRequestBody);
           bufferedRequestBody.close();
-          transmitter.requestBodyEnd(requestBodyOut.successfulCount);
         }
       } else if (!transmitter.isConnectionMultiplexed()) {
         // If the "Expect: 100-continue" expectation wasn't met, prevent the HTTP/1 connection
@@ -140,18 +131,5 @@ public final class CallServerInterceptor implements Interceptor {
     }
 
     return response;
-  }
-
-  static final class CountingSink extends ForwardingSink {
-    long successfulCount;
-
-    CountingSink(Sink delegate) {
-      super(delegate);
-    }
-
-    @Override public void write(Buffer source, long byteCount) throws IOException {
-      super.write(source, byteCount);
-      successfulCount += byteCount;
-    }
   }
 }

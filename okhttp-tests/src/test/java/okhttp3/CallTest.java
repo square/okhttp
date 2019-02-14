@@ -87,7 +87,6 @@ import static okhttp3.CipherSuite.TLS_DH_anon_WITH_AES_128_GCM_SHA256;
 import static okhttp3.TestUtil.awaitGarbageCollection;
 import static okhttp3.TestUtil.defaultClient;
 import static okhttp3.internal.platform.PlatformTest.getJvmSpecVersion;
-import static okhttp3.internal.platform.PlatformTest.getPlatform;
 import static okhttp3.tls.internal.TlsUtil.localhost;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
@@ -1065,8 +1064,7 @@ public final class CallTest {
     executeSynchronously("/")
         .assertFailure(IOException.class)
         .assertFailureMatches("stream was reset: CANCEL",
-            "unexpected end of stream on Connection.*"
-                + server.getHostName() + ":" + server.getPort() + ".*");
+            "unexpected end of stream on " + server.url("/").redact());
   }
 
   @Test public void recoverWhenRetryOnConnectionFailureIsFalse_HTTP2() throws Exception {
@@ -2117,7 +2115,7 @@ public final class CallTest {
         .setBody("I'm not even supposed to be here today."));
 
     executeSynchronously("/")
-        .assertFailureMatches(".*unexpected end of stream on Connection.*");
+        .assertFailureMatches(".*unexpected end of stream on " + server.url("/").redact());
   }
 
   private String stringFill(char fillChar, int length) {

@@ -31,7 +31,6 @@ import okhttp3.Route;
 import okhttp3.internal.cache.InternalCache;
 import okhttp3.internal.connection.RealConnection;
 import okhttp3.internal.connection.RouteDatabase;
-import okhttp3.internal.connection.StreamAllocation;
 
 /**
  * Escalate internal APIs in {@code okhttp3} so they can be used from OkHttp's implementation
@@ -53,12 +52,12 @@ public abstract class Internal {
   public abstract void setCache(OkHttpClient.Builder builder, InternalCache internalCache);
 
   public abstract void acquire(ConnectionPool pool, Address address,
-      StreamAllocation streamAllocation, @Nullable Route route);
+      Transmitter transmitter, @Nullable Route route);
 
   public abstract boolean equalsNonHost(Address a, Address b);
 
   public abstract @Nullable Socket deduplicate(
-      ConnectionPool pool, Address address, StreamAllocation streamAllocation);
+      ConnectionPool pool, Address address, Transmitter transmitter);
 
   public abstract void put(ConnectionPool pool, RealConnection connection);
 

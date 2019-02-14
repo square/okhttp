@@ -16,6 +16,9 @@
 package okhttp3.internal;
 
 import java.io.IOException;
+import java.lang.ref.WeakReference;
+import java.net.ProtocolException;
+import java.net.Socket;
 import java.net.SocketException;
 import javax.annotation.Nullable;
 import javax.net.ssl.HostnameVerifier;
@@ -37,6 +40,8 @@ import okhttp3.internal.connection.RealConnection;
 import okhttp3.internal.connection.StreamAllocation;
 import okhttp3.internal.http.HttpCodec;
 import okhttp3.internal.ws.RealWebSocket;
+import okio.Buffer;
+import okio.ForwardingSink;
 import okio.Sink;
 
 /**
@@ -64,8 +69,12 @@ public final class Transmitter {
   }
 
   public void newStreamAllocation(Request request) {
-    this.streamAllocation = new StreamAllocation(client.connectionPool(),
-        createAddress(request.url()), call, eventListener, callStackTrace);
+    newStreamAllocation(createAddress(request.url()));
+  }
+
+  public void newStreamAllocation(Address address) {
+    this.streamAllocation = new StreamAllocation(this, client.connectionPool(),
+        address, call, eventListener, callStackTrace);
   }
 
   private Address createAddress(HttpUrl url) {
@@ -111,7 +120,7 @@ public final class Transmitter {
   }
 
   public RealWebSocket.Streams newWebSocketStreams() {
-    return streamAllocation.connection().newWebSocketStreams(streamAllocation);
+    return streamAllocation.connection().newWebSocketStreams(this);
   }
 
   public void socketTimeout(int timeout) throws SocketException {
@@ -162,13 +171,11 @@ public final class Transmitter {
     eventListener.requestHeadersEnd(call, request);
   }
 
-  public Sink createRequestBody(Request request, long contentLength) {
+  public Sink createRequestBody(Request request) throws IOException {
     eventListener.requestBodyStart(call);
-    return streamAllocation.codec().createRequestBody(request, contentLength);
-  }
-
-  public void requestBodyEnd(long byteCount) {
-    eventListener.requestBodyEnd(call, byteCount);
+    Sink rawRequestBody = streamAllocation.codec()
+        .createRequestBody(request, request.body().contentLength());
+    return new RequestBodySink(rawRequestBody, request.body().contentLength());
   }
 
   public void flushRequest() throws IOException {
@@ -205,5 +212,74 @@ public final class Transmitter {
 
   public boolean supportsUrl(HttpUrl url) {
     return streamAllocation.connection().supportsUrl(url);
+  }
+
+  public void acquire(RealConnection connection, boolean reportedAcquired) {
+    streamAllocation.acquire(connection, reportedAcquired);
+  }
+
+  public RealConnection connection() {
+    return streamAllocation.connection();
+  }
+
+  public Socket releaseAndAcquire(RealConnection newConnection) {
+    return streamAllocation.releaseAndAcquire(newConnection);
+  }
+
+  public void streamFinished(boolean noNewStreams, long bytesRead, IOException e) {
+    if (streamAllocation != null) {
+      streamAllocation.streamFinished(noNewStreams, streamAllocation.codec(), bytesRead, e);
+    }
+  }
+
+  @Override public String toString() {
+    return call.request().url().redact();
+  }
+
+  /** A request body that fires events when it completes. */
+  private final class RequestBodySink extends ForwardingSink {
+    private boolean closed;
+    private long bytesReceived;
+
+    /** The exact number of bytes to be written, or -1L if that is unknown. */
+    private long bytesExpected;
+
+    RequestBodySink(Sink delegate, long bytesExpected) {
+      super(delegate);
+      this.bytesExpected = bytesExpected;
+    }
+
+    @Override public void write(Buffer source, long byteCount) throws IOException {
+      if (closed) throw new IllegalStateException("closed");
+      if (bytesExpected != -1L && bytesReceived + byteCount > bytesExpected) {
+        throw new ProtocolException("expected " + bytesExpected
+            + " bytes but received " + (bytesReceived + byteCount));
+      }
+      super.write(source, byteCount);
+      this.bytesReceived += byteCount;
+    }
+
+    @Override public void close() throws IOException {
+      if (closed) return;
+      closed = true;
+      if (bytesExpected != -1L && bytesReceived != bytesExpected) {
+        throw new ProtocolException("unexpected end of stream");
+      }
+      eventListener.requestBodyEnd(call, bytesReceived);
+      super.close();
+    }
+  }
+
+  public static final class TransmitterReference extends WeakReference<Transmitter> {
+    /**
+     * Captures the stack trace at the time the Call is executed or enqueued. This is helpful for
+     * identifying the origin of connection leaks.
+     */
+    public final Object callStackTrace;
+
+    public TransmitterReference(Transmitter referent, Object callStackTrace) {
+      super(referent);
+      this.callStackTrace = callStackTrace;
+    }
   }
 }
