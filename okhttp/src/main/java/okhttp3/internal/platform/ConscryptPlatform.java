@@ -89,9 +89,14 @@ public class ConscryptPlatform extends Platform {
 
   @Override public SSLContext getSSLContext() {
     try {
-      return SSLContext.getInstance("TLS", getProvider());
+      return SSLContext.getInstance("TLSv1.3", getProvider());
     } catch (NoSuchAlgorithmException e) {
-      throw new IllegalStateException("No TLS provider", e);
+      try {
+        // Allow for Conscrypt 1.2
+        return SSLContext.getInstance("TLS", getProvider());
+      } catch (NoSuchAlgorithmException e2) {
+        throw new IllegalStateException("No TLS provider", e);
+      }
     }
   }
 
