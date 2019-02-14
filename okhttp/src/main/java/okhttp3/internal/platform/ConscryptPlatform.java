@@ -35,7 +35,9 @@ public class ConscryptPlatform extends Platform {
   private ConscryptPlatform() {
   }
 
-  private Provider getProvider() {
+  @SuppressWarnings("deprecation") private Provider getProvider() {
+    // defaults to true, but allow for older versions of conscrypt if still compatible
+    // new form with boolean is only present in >= 2.0.0
     return Conscrypt.newProviderBuilder().provideTrustManager().build();
   }
 
@@ -87,14 +89,9 @@ public class ConscryptPlatform extends Platform {
 
   @Override public SSLContext getSSLContext() {
     try {
-      return SSLContext.getInstance("TLSv1.3", getProvider());
+      return SSLContext.getInstance("TLS", getProvider());
     } catch (NoSuchAlgorithmException e) {
-      try {
-        // Allow for Conscrypt 1.2
-        return SSLContext.getInstance("TLS", getProvider());
-      } catch (NoSuchAlgorithmException e2) {
-        throw new IllegalStateException("No TLS provider", e);
-      }
+      throw new IllegalStateException("No TLS provider", e);
     }
   }
 
