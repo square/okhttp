@@ -1161,31 +1161,28 @@ public final class URLConnectionTest {
     assertContent("response 2", urlFactory.open(url));
   }
 
-    @Test public void proxySelectorHttpWithConnectionReuse() throws IOException {
-        server.enqueue(new MockResponse().setBody("response 1"));
-        server.enqueue(new MockResponse().setResponseCode(407));
+  @Test public void proxySelectorHttpWithConnectionReuse() throws IOException {
+    server.enqueue(new MockResponse().setBody("response 1"));
+    server.enqueue(new MockResponse().setResponseCode(407));
 
-        urlFactory.setClient(urlFactory.client().newBuilder()
-            .proxySelector(new ProxySelector() {
-                @Override
-                public List<Proxy> select(URI uri) {
-                    List<Proxy> list = new ArrayList<Proxy>();
-                    list.add(server.toProxyAddress());
-                    return list;
-                }
+    urlFactory.setClient(urlFactory.client().newBuilder()
+        .proxySelector(new ProxySelector() {
+            @Override
+            public List<Proxy> select(URI uri) {
+                List<Proxy> list = new ArrayList<Proxy>();
+                list.add(server.toProxyAddress());
+                return list;
+            }
 
-                @Override
-                public void connectFailed(URI uri, SocketAddress socketAddress, IOException e) {
+            @Override
+            public void connectFailed(URI uri, SocketAddress socketAddress, IOException e) {
 
-                }
-            })
-            .build());
-        URL url = new URL("http://android.com/foo");
-        assertContent("response 1", urlFactory.open(url));
-        assertEquals(407, urlFactory.open(url).getResponseCode());
-    }
-
-    
+            }
+        }).build());
+    URL url = new URL("http://android.com/foo");
+    assertContent("response 1", urlFactory.open(url));
+    assertEquals(407, urlFactory.open(url).getResponseCode());
+  }
 
   @Test public void disconnectedConnection() throws IOException {
     server.enqueue(new MockResponse()
