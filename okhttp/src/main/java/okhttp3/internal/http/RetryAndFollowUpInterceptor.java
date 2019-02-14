@@ -280,9 +280,7 @@ public final class RetryAndFollowUpInterceptor implements Interceptor {
     final String method = userResponse.request().method();
     switch (responseCode) {
       case HTTP_PROXY_AUTH:
-        Proxy selectedProxy = route != null
-            ? route.proxy()
-            : client.proxy();
+        Proxy selectedProxy = route.proxy();
         if (selectedProxy.type() != Proxy.Type.HTTP) {
           throw new ProtocolException("Received HTTP_PROXY_AUTH (407) code while not using proxy");
         }
