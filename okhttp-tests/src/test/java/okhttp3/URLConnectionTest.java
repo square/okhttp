@@ -1161,6 +1161,27 @@ public final class URLConnectionTest {
     assertContent("response 2", urlFactory.open(url));
   }
 
+  @Test public void proxySelectorHttpWithConnectionReuse() throws IOException {
+    server.enqueue(new MockResponse()
+        .setBody("response 1"));
+    server.enqueue(new MockResponse()
+        .setResponseCode(407));
+
+    urlFactory.setClient(urlFactory.client().newBuilder()
+        .proxySelector(new ProxySelector() {
+          @Override public List<Proxy> select(URI uri) {
+            return Collections.singletonList(server.toProxyAddress());
+          }
+
+          @Override public void connectFailed(
+              URI uri, SocketAddress socketAddress, IOException e) {
+          }
+        }).build());
+    URL url = new URL("http://android.com/foo");
+    assertContent("response 1", urlFactory.open(url));
+    assertEquals(407, urlFactory.open(url).getResponseCode());
+  }
+
   @Test public void disconnectedConnection() throws IOException {
     server.enqueue(new MockResponse()
         .throttleBody(2, 100, TimeUnit.MILLISECONDS)
