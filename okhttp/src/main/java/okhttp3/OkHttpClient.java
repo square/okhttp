@@ -42,7 +42,6 @@ import okhttp3.internal.Util;
 import okhttp3.internal.cache.InternalCache;
 import okhttp3.internal.connection.RealConnection;
 import okhttp3.internal.connection.RouteDatabase;
-import okhttp3.internal.connection.StreamAllocation;
 import okhttp3.internal.platform.Platform;
 import okhttp3.internal.proxy.NullProxySelector;
 import okhttp3.internal.tls.CertificateChainCleaner;
@@ -151,8 +150,8 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
       }
 
       @Override public void acquire(ConnectionPool pool, Address address,
-          StreamAllocation streamAllocation, @Nullable Route route) {
-        pool.acquire(address, streamAllocation, route);
+          Transmitter transmitter, @Nullable Route route) {
+        pool.acquire(address, transmitter, route);
       }
 
       @Override public boolean equalsNonHost(Address a, Address b) {
@@ -160,8 +159,8 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
       }
 
       @Override public @Nullable Socket deduplicate(
-          ConnectionPool pool, Address address, StreamAllocation streamAllocation) {
-        return pool.deduplicate(address, streamAllocation);
+          ConnectionPool pool, Address address, Transmitter transmitter) {
+        return pool.deduplicate(address, transmitter);
       }
 
       @Override public void put(ConnectionPool pool, RealConnection connection) {

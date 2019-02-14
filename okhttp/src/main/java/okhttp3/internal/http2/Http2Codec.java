@@ -29,8 +29,8 @@ import okhttp3.Request;
 import okhttp3.Response;
 import okhttp3.ResponseBody;
 import okhttp3.internal.Internal;
+import okhttp3.internal.Transmitter;
 import okhttp3.internal.Util;
-import okhttp3.internal.connection.StreamAllocation;
 import okhttp3.internal.http.HttpCodec;
 import okhttp3.internal.http.HttpHeaders;
 import okhttp3.internal.http.RealResponseBody;
@@ -89,16 +89,16 @@ public final class Http2Codec implements HttpCodec {
       UPGRADE);
 
   private final Interceptor.Chain chain;
-  final StreamAllocation streamAllocation;
+  private final Transmitter transmitter;
   private final Http2Connection connection;
   private volatile Http2Stream stream;
   private final Protocol protocol;
   private volatile boolean canceled;
 
-  public Http2Codec(OkHttpClient client, Interceptor.Chain chain, StreamAllocation streamAllocation,
+  public Http2Codec(OkHttpClient client, Interceptor.Chain chain, Transmitter transmitter,
       Http2Connection connection) {
     this.chain = chain;
-    this.streamAllocation = streamAllocation;
+    this.transmitter = transmitter;
     this.connection = connection;
     this.protocol = client.protocols().contains(Protocol.H2_PRIOR_KNOWLEDGE)
         ? Protocol.H2_PRIOR_KNOWLEDGE
@@ -232,7 +232,7 @@ public final class Http2Codec implements HttpCodec {
     private void endOfInput(IOException e) {
       if (completed) return;
       completed = true;
-      streamAllocation.streamFinished(false, Http2Codec.this, bytesRead, e);
+      transmitter.streamFinished(false, bytesRead, e);
     }
   }
 }

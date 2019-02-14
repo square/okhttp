@@ -24,8 +24,8 @@ import java.util.concurrent.TimeUnit;
 import javax.net.SocketFactory;
 import okhttp3.internal.Internal;
 import okhttp3.internal.RecordingOkAuthenticator;
+import okhttp3.internal.Transmitter;
 import okhttp3.internal.connection.RealConnection;
-import okhttp3.internal.connection.StreamAllocation;
 import org.junit.Test;
 
 import static okhttp3.TestUtil.awaitGarbageCollection;
@@ -83,9 +83,13 @@ public final class ConnectionPoolTest {
 
     RealConnection c1 = newConnection(pool, routeA1, 50L);
     synchronized (pool) {
-      StreamAllocation streamAllocation = new StreamAllocation(pool, addressA, null,
-          EventListener.NONE, null);
-      streamAllocation.acquire(c1, true);
+      OkHttpClient client = new OkHttpClient.Builder()
+          .connectionPool(pool)
+          .build();
+      Call call = client.newCall(newRequest(addressA));
+      Transmitter transmitter = new Transmitter(client, call);
+      transmitter.newStreamAllocation(addressA);
+      transmitter.acquire(c1, true);
     }
 
     // Running at time 50, the pool returns that nothing can be evicted until time 150.
@@ -169,7 +173,7 @@ public final class ConnectionPoolTest {
 
     awaitGarbageCollection();
     assertEquals(0L, pool.cleanup(100L));
-    assertEquals(Collections.emptyList(), c1.allocations);
+    assertEquals(Collections.emptyList(), c1.transmitters);
 
     assertTrue(c1.noNewStreams); // Can't allocate once a leak has been detected.
   }
@@ -177,9 +181,13 @@ public final class ConnectionPoolTest {
   /** Use a helper method so there's no hidden reference remaining on the stack. */
   private void allocateAndLeakAllocation(ConnectionPool pool, RealConnection connection) {
     synchronized (pool) {
-      StreamAllocation leak = new StreamAllocation(pool, connection.route().address(), null,
-          EventListener.NONE, null);
-      leak.acquire(connection, true);
+      OkHttpClient client = new OkHttpClient.Builder()
+          .connectionPool(pool)
+          .build();
+      Call call = client.newCall(newRequest(connection.route().address()));
+      Transmitter transmitter = new Transmitter(client, call);
+      transmitter.newStreamAllocation(call.request());
+      transmitter.acquire(connection, true);
     }
   }
 
@@ -200,5 +208,11 @@ public final class ConnectionPoolTest {
   private Route newRoute(Address address) {
     return new Route(address, Proxy.NO_PROXY,
         InetSocketAddress.createUnresolved(address.url().host(), address.url().port()));
+  }
+
+  private Request newRequest(Address address) {
+    return new Request.Builder()
+        .url(address.url)
+        .build();
   }
 }

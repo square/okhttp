@@ -17,7 +17,6 @@ package okhttp3.internal.connection;
 
 import java.io.IOException;
 import java.lang.ref.Reference;
-import java.lang.ref.WeakReference;
 import java.net.Socket;
 import java.util.List;
 import javax.annotation.Nullable;
@@ -30,6 +29,8 @@ import okhttp3.Interceptor;
 import okhttp3.OkHttpClient;
 import okhttp3.Route;
 import okhttp3.internal.Internal;
+import okhttp3.internal.Transmitter;
+import okhttp3.internal.Transmitter.TransmitterReference;
 import okhttp3.internal.Util;
 import okhttp3.internal.http.HttpCodec;
 import okhttp3.internal.http2.ConnectionShutdownException;
@@ -76,6 +77,7 @@ import static okhttp3.internal.Util.closeQuietly;
  * then canceling may break the entire connection.
  */
 public final class StreamAllocation {
+  public final Transmitter transmitter;
   public final Address address;
   private RouteSelector.Selection routeSelection;
   private Route route;
@@ -93,8 +95,9 @@ public final class StreamAllocation {
   private boolean canceled;
   private HttpCodec codec;
 
-  public StreamAllocation(ConnectionPool connectionPool, Address address, Call call,
-      EventListener eventListener, Object callStackTrace) {
+  public StreamAllocation(Transmitter transmitter, ConnectionPool connectionPool, Address address,
+      Call call, EventListener eventListener, Object callStackTrace) {
+    this.transmitter = transmitter;
     this.connectionPool = connectionPool;
     this.address = address;
     this.call = call;
@@ -114,7 +117,7 @@ public final class StreamAllocation {
     try {
       RealConnection resultConnection = findHealthyConnection(connectTimeout, readTimeout,
           writeTimeout, pingIntervalMillis, connectionRetryEnabled, doExtensiveHealthChecks);
-      HttpCodec resultCodec = resultConnection.newCodec(client, chain, this);
+      HttpCodec resultCodec = resultConnection.newCodec(client, chain, transmitter);
 
       synchronized (connectionPool) {
         codec = resultCodec;
@@ -186,7 +189,7 @@ public final class StreamAllocation {
 
       if (result == null) {
         // Attempt to get a connection from the pool.
-        Internal.instance.acquire(connectionPool, address, this, null);
+        Internal.instance.acquire(connectionPool, address, transmitter, null);
         if (connection != null) {
           foundPooledConnection = true;
           result = connection;
@@ -224,7 +227,7 @@ public final class StreamAllocation {
         List<Route> routes = routeSelection.getAll();
         for (int i = 0, size = routes.size(); i < size; i++) {
           Route route = routes.get(i);
-          Internal.instance.acquire(connectionPool, address, this, route);
+          Internal.instance.acquire(connectionPool, address, transmitter, route);
           if (connection != null) {
             foundPooledConnection = true;
             result = connection;
@@ -269,7 +272,7 @@ public final class StreamAllocation {
       // If another multiplexed connection to the same address was created concurrently, then
       // release this connection and acquire that one.
       if (result.isMultiplexed()) {
-        socket = Internal.instance.deduplicate(connectionPool, address, this);
+        socket = Internal.instance.deduplicate(connectionPool, address, transmitter);
         result = connection;
       }
     }
@@ -402,7 +405,7 @@ public final class StreamAllocation {
       }
       if (this.codec == null && (this.released || connection.noNewStreams)) {
         release(connection);
-        if (connection.allocations.isEmpty()) {
+        if (connection.transmitters.isEmpty()) {
           connection.idleAtNanos = System.nanoTime();
           if (Internal.instance.connectionBecameIdle(connectionPool, connection)) {
             socket = connection.socket();
@@ -482,15 +485,15 @@ public final class StreamAllocation {
 
     this.connection = connection;
     this.reportedAcquired = reportedAcquired;
-    connection.allocations.add(new StreamAllocationReference(this, callStackTrace));
+    connection.transmitters.add(new TransmitterReference(transmitter, callStackTrace));
   }
 
   /** Remove this allocation from the connection's list of allocations. */
   private void release(RealConnection connection) {
-    for (int i = 0, size = connection.allocations.size(); i < size; i++) {
-      Reference<StreamAllocation> reference = connection.allocations.get(i);
-      if (reference.get() == this) {
-        connection.allocations.remove(i);
+    for (int i = 0, size = connection.transmitters.size(); i < size; i++) {
+      Reference<Transmitter> reference = connection.transmitters.get(i);
+      if (reference.get() == transmitter) {
+        connection.transmitters.remove(i);
         return;
       }
     }
@@ -507,15 +510,15 @@ public final class StreamAllocation {
    */
   public Socket releaseAndAcquire(RealConnection newConnection) {
     assert (Thread.holdsLock(connectionPool));
-    if (codec != null || connection.allocations.size() != 1) throw new IllegalStateException();
+    if (codec != null || connection.transmitters.size() != 1) throw new IllegalStateException();
 
     // Release the old connection.
-    Reference<StreamAllocation> onlyAllocation = connection.allocations.get(0);
+    Reference<Transmitter> onlyAllocation = connection.transmitters.get(0);
     Socket socket = deallocate(true, false, false);
 
     // Acquire the new connection.
     this.connection = newConnection;
-    newConnection.allocations.add(onlyAllocation);
+    newConnection.transmitters.add(onlyAllocation);
 
     return socket;
   }
@@ -529,18 +532,5 @@ public final class StreamAllocation {
   @Override public String toString() {
     RealConnection connection = connection();
     return connection != null ? connection.toString() : address.toString();
-  }
-
-  public static final class StreamAllocationReference extends WeakReference<StreamAllocation> {
-    /**
-     * Captures the stack trace at the time the Call is executed or enqueued. This is helpful for
-     * identifying the origin of connection leaks.
-     */
-    public final Object callStackTrace;
-
-    StreamAllocationReference(StreamAllocation referent, Object callStackTrace) {
-      super(referent);
-      this.callStackTrace = callStackTrace;
-    }
   }
 }

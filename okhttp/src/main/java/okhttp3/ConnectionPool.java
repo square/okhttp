@@ -28,10 +28,11 @@ import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
+import okhttp3.internal.Transmitter;
+import okhttp3.internal.Transmitter.TransmitterReference;
 import okhttp3.internal.Util;
 import okhttp3.internal.connection.RealConnection;
 import okhttp3.internal.connection.RouteDatabase;
-import okhttp3.internal.connection.StreamAllocation;
 import okhttp3.internal.platform.Platform;
 
 import static okhttp3.internal.Util.closeQuietly;
@@ -98,7 +99,7 @@ public final class ConnectionPool {
   public synchronized int idleConnectionCount() {
     int total = 0;
     for (RealConnection connection : connections) {
-      if (connection.allocations.isEmpty()) total++;
+      if (connection.transmitters.isEmpty()) total++;
     }
     return total;
   }
@@ -112,11 +113,11 @@ public final class ConnectionPool {
    * Acquires a recycled connection to {@code address} for {@code streamAllocation}. If non-null
    * {@code route} is the resolved route for a connection.
    */
-  void acquire(Address address, StreamAllocation streamAllocation, @Nullable Route route) {
+  void acquire(Address address, Transmitter transmitter, @Nullable Route route) {
     assert (Thread.holdsLock(this));
     for (RealConnection connection : connections) {
       if (connection.isEligible(address, route)) {
-        streamAllocation.acquire(connection, true);
+        transmitter.acquire(connection, true);
         return;
       }
     }
@@ -126,13 +127,13 @@ public final class ConnectionPool {
    * Replaces the connection held by {@code streamAllocation} with a shared connection if possible.
    * This recovers when multiple multiplexed connections are created concurrently.
    */
-  @Nullable Socket deduplicate(Address address, StreamAllocation streamAllocation) {
+  @Nullable Socket deduplicate(Address address, Transmitter transmitter) {
     assert (Thread.holdsLock(this));
     for (RealConnection connection : connections) {
       if (connection.isEligible(address, null)
           && connection.isMultiplexed()
-          && connection != streamAllocation.connection()) {
-        return streamAllocation.releaseAndAcquire(connection);
+          && connection != transmitter.connection()) {
+        return transmitter.releaseAndAcquire(connection);
       }
     }
     return null;
@@ -168,7 +169,7 @@ public final class ConnectionPool {
     synchronized (this) {
       for (Iterator<RealConnection> i = connections.iterator(); i.hasNext(); ) {
         RealConnection connection = i.next();
-        if (connection.allocations.isEmpty()) {
+        if (connection.transmitters.isEmpty()) {
           connection.noNewStreams = true;
           evictedConnections.add(connection);
           i.remove();
@@ -240,27 +241,26 @@ public final class ConnectionPool {
   }
 
   /**
-   * Prunes any leaked allocations and then returns the number of remaining live allocations on
-   * {@code connection}. Allocations are leaked if the connection is tracking them but the
+   * Prunes any leaked transmitters and then returns the number of remaining live transmitters on
+   * {@code connection}. Transmitters are leaked if the connection is tracking them but the
    * application code has abandoned them. Leak detection is imprecise and relies on garbage
    * collection.
    */
   private int pruneAndGetAllocationCount(RealConnection connection, long now) {
-    List<Reference<StreamAllocation>> references = connection.allocations;
+    List<Reference<Transmitter>> references = connection.transmitters;
     for (int i = 0; i < references.size(); ) {
-      Reference<StreamAllocation> reference = references.get(i);
+      Reference<Transmitter> reference = references.get(i);
 
       if (reference.get() != null) {
         i++;
         continue;
       }
 
-      // We've discovered a leaked allocation. This is an application bug.
-      StreamAllocation.StreamAllocationReference streamAllocRef =
-          (StreamAllocation.StreamAllocationReference) reference;
+      // We've discovered a leaked transmitter. This is an application bug.
+      TransmitterReference transmitterRef = (TransmitterReference) reference;
       String message = "A connection to " + connection.route().address().url()
           + " was leaked. Did you forget to close a response body?";
-      Platform.get().logCloseableLeak(message, streamAllocRef.callStackTrace);
+      Platform.get().logCloseableLeak(message, transmitterRef.callStackTrace);
 
       references.remove(i);
       connection.noNewStreams = true;

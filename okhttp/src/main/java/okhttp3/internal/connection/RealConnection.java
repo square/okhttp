@@ -52,6 +52,7 @@ import okhttp3.Request;
 import okhttp3.Response;
 import okhttp3.Route;
 import okhttp3.internal.Internal;
+import okhttp3.internal.Transmitter;
 import okhttp3.internal.Util;
 import okhttp3.internal.Version;
 import okhttp3.internal.http.HttpCodec;
@@ -110,8 +111,8 @@ public final class RealConnection extends Http2Connection.Listener implements Co
    */
   public int allocationLimit = 1;
 
-  /** Current streams carried by this connection. */
-  public final List<Reference<StreamAllocation>> allocations = new ArrayList<>();
+  /** Current calls carried by this connection. */
+  public final List<Reference<Transmitter>> transmitters = new ArrayList<>();
 
   /** Nanotime timestamp when {@code allocations.size()} reached zero. */
   public long idleAtNanos = Long.MAX_VALUE;
@@ -464,7 +465,7 @@ public final class RealConnection extends Http2Connection.Listener implements Co
    */
   public boolean isEligible(Address address, @Nullable Route route) {
     // If this connection is not accepting new streams, we're done.
-    if (allocations.size() >= allocationLimit || noNewStreams) return false;
+    if (transmitters.size() >= allocationLimit || noNewStreams) return false;
 
     // If the non-host fields of the address don't overlap, we're done.
     if (!Internal.instance.equalsNonHost(this.route.address(), address)) return false;
@@ -519,21 +520,21 @@ public final class RealConnection extends Http2Connection.Listener implements Co
   }
 
   public HttpCodec newCodec(OkHttpClient client, Interceptor.Chain chain,
-      StreamAllocation streamAllocation) throws SocketException {
+      Transmitter transmitter) throws SocketException {
     if (http2Connection != null) {
-      return new Http2Codec(client, chain, streamAllocation, http2Connection);
+      return new Http2Codec(client, chain, transmitter, http2Connection);
     } else {
       socket.setSoTimeout(chain.readTimeoutMillis());
       source.timeout().timeout(chain.readTimeoutMillis(), MILLISECONDS);
       sink.timeout().timeout(chain.writeTimeoutMillis(), MILLISECONDS);
-      return new Http1Codec(client, streamAllocation, source, sink);
+      return new Http1Codec(client, transmitter, source, sink);
     }
   }
 
-  public RealWebSocket.Streams newWebSocketStreams(final StreamAllocation streamAllocation) {
+  public RealWebSocket.Streams newWebSocketStreams(Transmitter transmitter) {
     return new RealWebSocket.Streams(true, source, sink) {
       @Override public void close() throws IOException {
-        streamAllocation.streamFinished(true, streamAllocation.codec(), -1L, null);
+        transmitter.streamFinished(true, -1L, null);
       }
     };
   }
