@@ -374,7 +374,7 @@
                 <forkCount>1</forkCount>
                 <reuseForks>false</reuseForks>
                 <includes>
-                  <include>okhttp-tests/src/test/java/okhttp3/internal/platform/Jdk8WithJettyBootPlatformTest.java</include>
+                  <include>okhttp3/internal/platform/Jdk8WithJettyBootPlatformTest.java</include>
                 </includes>
               </configuration>
             </plugin>
