@@ -82,10 +82,10 @@ class Jdk8WithJettyBootPlatform extends Platform {
     // Find Jetty's ALPN extension for OpenJDK.
     try {
       String alpnClassName = "org.eclipse.jetty.alpn.ALPN";
-      Class<?> alpnClass = Class.forName(alpnClassName);
-      Class<?> providerClass = Class.forName(alpnClassName + "$Provider");
-      Class<?> clientProviderClass = Class.forName(alpnClassName + "$ClientProvider");
-      Class<?> serverProviderClass = Class.forName(alpnClassName + "$ServerProvider");
+      Class<?> alpnClass = Class.forName(alpnClassName, true, null);
+      Class<?> providerClass = Class.forName(alpnClassName + "$Provider", true, null);
+      Class<?> clientProviderClass = Class.forName(alpnClassName + "$ClientProvider", true, null);
+      Class<?> serverProviderClass = Class.forName(alpnClassName + "$ServerProvider", true, null);
       Method putMethod = alpnClass.getMethod("put", SSLSocket.class, providerClass);
       Method getMethod = alpnClass.getMethod("get", SSLSocket.class);
       Method removeMethod = alpnClass.getMethod("remove", SSLSocket.class);
