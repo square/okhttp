@@ -66,6 +66,18 @@
       <version>${project.version}</version>
       <scope>test</scope>
     </dependency>
+    <dependency>
+      <groupId>org.eclipse.jetty</groupId>
+      <artifactId>jetty-alpn-openjdk8-server</artifactId>
+      <version>9.4.12.v20180830</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.eclipse.jetty.alpn</groupId>
+      <artifactId>alpn-api</artifactId>
+      <version>1.1.3.v20160715</version>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
 
   <build>

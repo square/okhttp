@@ -15,17 +15,33 @@
  */
 package okhttp3.internal.platform;
 
-import org.junit.Test;
-
 import static okhttp3.internal.platform.PlatformTest.getPlatform;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assume.assumeTrue;
 
+import org.eclipse.jetty.alpn.openjdk8.server.OpenJDK8ServerALPNProcessor;
+import org.junit.Before;
+import org.junit.Test;
+
 public class Jdk8WithJettyBootPlatformTest {
+  @Before
+  public void before() {
+    assumeTrue(getPlatform().equals("jdk-with-jetty-boot"));
+  }
   @Test
   public void testBuildsWithJettyBoot() {
-    assumeTrue(getPlatform().equals("jdk-with-jetty-boot"));
-
     assertNotNull(Jdk8WithJettyBootPlatform.buildIfSupported());
+  }
+
+  /**
+   * For this test, it's imperative that {@code org.eclipse.jetty.alpn:alpn-api} is on the classpath.
+   */
+  @Test
+  public void testJettyDoesNotFailAfterBuilding() throws ClassNotFoundException {
+    assertNotNull(Jdk8WithJettyBootPlatform.buildIfSupported());
+    new OpenJDK8ServerALPNProcessor().init();
+
+    // Just to double check, but doing this afterwards so as to not influence the test
+    assertNotNull(Class.forName("org.eclipse.jetty.alpn.ALPN").getClassLoader());
   }
 }
