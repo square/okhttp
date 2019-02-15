@@ -259,6 +259,10 @@ final class RealCall implements Call {
         originalRequest, this, client.connectTimeoutMillis(),
         client.readTimeoutMillis(), client.writeTimeoutMillis());
 
-    return chain.proceed(originalRequest);
+    try {
+      return chain.proceed(originalRequest);
+    } finally {
+      transmitter.noMoreStreamsOnCall();
+    }
   }
 }

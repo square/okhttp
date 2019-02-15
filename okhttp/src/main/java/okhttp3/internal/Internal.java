@@ -51,8 +51,8 @@ public abstract class Internal {
 
   public abstract void setCache(OkHttpClient.Builder builder, InternalCache internalCache);
 
-  public abstract void acquire(ConnectionPool pool, Address address,
-      Transmitter transmitter, @Nullable Route route);
+  public abstract boolean transmitterAcquirePooledConnection(
+      ConnectionPool pool, Address address, Transmitter transmitter, @Nullable Route route);
 
   public abstract boolean equalsNonHost(Address a, Address b);
 

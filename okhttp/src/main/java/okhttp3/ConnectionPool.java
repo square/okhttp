@@ -110,17 +110,20 @@ public final class ConnectionPool {
   }
 
   /**
-   * Acquires a recycled connection to {@code address} for {@code streamAllocation}. If non-null
-   * {@code route} is the resolved route for a connection.
+   * Attempts to acquire a recycled connection to {@code address} for {@code transmitter}. If
+   * non-null {@code route} is the resolved route for a connection. Returns true if a connection was
+   * acquired.
    */
-  void acquire(Address address, Transmitter transmitter, @Nullable Route route) {
+  boolean transmitterAcquirePooledConnection(
+      Address address, Transmitter transmitter, @Nullable Route route) {
     assert (Thread.holdsLock(this));
     for (RealConnection connection : connections) {
       if (connection.isEligible(address, route)) {
-        transmitter.acquire(connection, true);
-        return;
+        transmitter.acquireConnection(connection, true);
+        return true;
       }
     }
+    return false;
   }
 
   /**
