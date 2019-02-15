@@ -16,7 +16,6 @@
 package okhttp3.internal;
 
 import java.io.IOException;
-import java.net.Socket;
 import javax.annotation.Nullable;
 import javax.net.ssl.SSLSocket;
 import okhttp3.Address;
@@ -27,10 +26,8 @@ import okhttp3.Headers;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
-import okhttp3.Route;
 import okhttp3.internal.cache.InternalCache;
-import okhttp3.internal.connection.RealConnection;
-import okhttp3.internal.connection.RouteDatabase;
+import okhttp3.internal.connection.RealConnectionPool;
 
 /**
  * Escalate internal APIs in {@code okhttp3} so they can be used from OkHttp's implementation
@@ -51,19 +48,9 @@ public abstract class Internal {
 
   public abstract void setCache(OkHttpClient.Builder builder, InternalCache internalCache);
 
-  public abstract boolean transmitterAcquirePooledConnection(
-      ConnectionPool pool, Address address, Transmitter transmitter, @Nullable Route route);
+  public abstract RealConnectionPool realConnectionPool(ConnectionPool connectionPool);
 
   public abstract boolean equalsNonHost(Address a, Address b);
-
-  public abstract @Nullable Socket deduplicate(
-      ConnectionPool pool, Address address, Transmitter transmitter);
-
-  public abstract void put(ConnectionPool pool, RealConnection connection);
-
-  public abstract boolean connectionBecameIdle(ConnectionPool pool, RealConnection connection);
-
-  public abstract RouteDatabase routeDatabase(ConnectionPool connectionPool);
 
   public abstract int code(Response.Builder responseBuilder);
 

@@ -40,7 +40,6 @@ import okhttp3.Address;
 import okhttp3.Call;
 import okhttp3.CertificatePinner;
 import okhttp3.Connection;
-import okhttp3.ConnectionPool;
 import okhttp3.ConnectionSpec;
 import okhttp3.EventListener;
 import okhttp3.Handshake;
@@ -79,7 +78,7 @@ public final class RealConnection extends Http2Connection.Listener implements Co
   private static final String NPE_THROW_WITH_NULL = "throw with null exception";
   private static final int MAX_TUNNEL_ATTEMPTS = 21;
 
-  private final ConnectionPool connectionPool;
+  private final RealConnectionPool connectionPool;
   private final Route route;
 
   // The fields below are initialized by connect() and never reassigned.
@@ -117,13 +116,13 @@ public final class RealConnection extends Http2Connection.Listener implements Co
   /** Nanotime timestamp when {@code allocations.size()} reached zero. */
   public long idleAtNanos = Long.MAX_VALUE;
 
-  public RealConnection(ConnectionPool connectionPool, Route route) {
+  public RealConnection(RealConnectionPool connectionPool, Route route) {
     this.connectionPool = connectionPool;
     this.route = route;
   }
 
   public static RealConnection testConnection(
-      ConnectionPool connectionPool, Route route, Socket socket, long idleAtNanos) {
+      RealConnectionPool connectionPool, Route route, Socket socket, long idleAtNanos) {
     RealConnection result = new RealConnection(connectionPool, route);
     result.socket = socket;
     result.idleAtNanos = idleAtNanos;
