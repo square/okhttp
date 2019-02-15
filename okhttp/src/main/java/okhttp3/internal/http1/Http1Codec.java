@@ -79,6 +79,10 @@ public final class Http1Codec implements HttpCodec {
 
   /** The client that configures this stream. May be null for HTTPS proxy tunnels. */
   final OkHttpClient client;
+
+  /** The connection that carries this stream. */
+  final RealConnection realConnection;
+
   /** The transmitter that owns this codec. May be null for HTTPS proxy tunnels. */
   final @Nullable Transmitter transmitter;
 
@@ -93,9 +97,10 @@ public final class Http1Codec implements HttpCodec {
    */
   private Headers trailers;
 
-  public Http1Codec(OkHttpClient client, @Nullable Transmitter transmitter, BufferedSource source,
-      BufferedSink sink) {
+  public Http1Codec(OkHttpClient client, RealConnection realConnection,
+      @Nullable Transmitter transmitter, BufferedSource source, BufferedSink sink) {
     this.client = client;
+    this.realConnection = realConnection;
     this.transmitter = transmitter;
     this.source = source;
     this.sink = sink;
@@ -117,8 +122,7 @@ public final class Http1Codec implements HttpCodec {
   }
 
   @Override public void cancel() {
-    RealConnection connection = transmitter.connection();
-    if (connection != null) connection.cancel();
+    if (realConnection != null) realConnection.cancel();
   }
 
   /**
@@ -133,7 +137,7 @@ public final class Http1Codec implements HttpCodec {
    */
   @Override public void writeRequestHeaders(Request request) throws IOException {
     String requestLine = RequestLine.get(
-        request, transmitter.connection().route().proxy().type());
+        request, realConnection.route().proxy().type());
     writeRequest(request.headers(), requestLine);
   }
 
@@ -266,7 +270,7 @@ public final class Http1Codec implements HttpCodec {
     if (state != STATE_OPEN_RESPONSE_BODY) throw new IllegalStateException("state: " + state);
     if (transmitter == null) throw new IllegalStateException("transmitter == null");
     state = STATE_READING_RESPONSE_BODY;
-    transmitter.noNewStreams();
+    realConnection.noNewStreams();
     return new UnknownLengthSource();
   }
 
@@ -366,7 +370,8 @@ public final class Http1Codec implements HttpCodec {
         }
         return read;
       } catch (IOException e) {
-        endOfInput(false, e);
+        realConnection.noNewStreams();
+        responseBodyComplete(e);
         throw e;
       }
     }
@@ -375,7 +380,7 @@ public final class Http1Codec implements HttpCodec {
      * Closes the cache entry and makes the socket available for reuse. This should be invoked when
      * the end of the body has been reached.
      */
-    protected final void endOfInput(boolean reuseConnection, IOException e) throws IOException {
+    protected final void responseBodyComplete(IOException e) throws IOException {
       if (state == STATE_CLOSED) return;
       if (state != STATE_READING_RESPONSE_BODY) throw new IllegalStateException("state: " + state);
 
@@ -383,7 +388,7 @@ public final class Http1Codec implements HttpCodec {
 
       state = STATE_CLOSED;
       if (transmitter != null) {
-        transmitter.streamFinished(!reuseConnection, bytesRead, e);
+        transmitter.responseBodyComplete(bytesRead, e);
       }
     }
   }
@@ -395,7 +400,7 @@ public final class Http1Codec implements HttpCodec {
     FixedLengthSource(long length) throws IOException {
       bytesRemaining = length;
       if (bytesRemaining == 0) {
-        endOfInput(true, null);
+        responseBodyComplete(null);
       }
     }
 
@@ -406,14 +411,15 @@ public final class Http1Codec implements HttpCodec {
 
       long read = super.read(sink, Math.min(bytesRemaining, byteCount));
       if (read == -1) {
+        realConnection.noNewStreams();
         ProtocolException e = new ProtocolException("unexpected end of stream");
-        endOfInput(false, e); // The server didn't supply the promised content length.
+        responseBodyComplete(e); // The server didn't supply the promised content length.
         throw e;
       }
 
       bytesRemaining -= read;
       if (bytesRemaining == 0) {
-        endOfInput(true, null);
+        responseBodyComplete(null);
       }
       return read;
     }
@@ -422,7 +428,8 @@ public final class Http1Codec implements HttpCodec {
       if (closed) return;
 
       if (bytesRemaining != 0 && !Util.discard(this, DISCARD_STREAM_TIMEOUT_MILLIS, MILLISECONDS)) {
-        endOfInput(false, null);
+        realConnection.noNewStreams();
+        responseBodyComplete(null);
       }
 
       closed = true;
@@ -452,8 +459,9 @@ public final class Http1Codec implements HttpCodec {
 
       long read = super.read(sink, Math.min(byteCount, bytesRemainingInChunk));
       if (read == -1) {
+        realConnection.noNewStreams();
         ProtocolException e = new ProtocolException("unexpected end of stream");
-        endOfInput(false, e); // The server didn't supply the promised chunk length.
+        responseBodyComplete(e); // The server didn't supply the promised chunk length.
         throw e;
       }
       bytesRemainingInChunk -= read;
@@ -479,14 +487,15 @@ public final class Http1Codec implements HttpCodec {
         hasMoreChunks = false;
         trailers = readHeaders();
         HttpHeaders.receiveHeaders(client.cookieJar(), url, trailers);
-        endOfInput(true, null);
+        responseBodyComplete(null);
       }
     }
 
     @Override public void close() throws IOException {
       if (closed) return;
       if (hasMoreChunks && !Util.discard(this, DISCARD_STREAM_TIMEOUT_MILLIS, MILLISECONDS)) {
-        endOfInput(false, null);
+        realConnection.noNewStreams();
+        responseBodyComplete(null);
       }
       closed = true;
     }
@@ -508,7 +517,7 @@ public final class Http1Codec implements HttpCodec {
       long read = super.read(sink, byteCount);
       if (read == -1) {
         inputExhausted = true;
-        endOfInput(true, null);
+        responseBodyComplete(null);
         return -1;
       }
       return read;
@@ -517,7 +526,8 @@ public final class Http1Codec implements HttpCodec {
     @Override public void close() throws IOException {
       if (closed) return;
       if (!inputExhausted) {
-        endOfInput(false, null);
+        realConnection.noNewStreams();
+        responseBodyComplete(null);
       }
       closed = true;
     }

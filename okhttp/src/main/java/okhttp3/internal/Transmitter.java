@@ -37,6 +37,7 @@ import okhttp3.Response;
 import okhttp3.ResponseBody;
 import okhttp3.Route;
 import okhttp3.internal.connection.RealConnection;
+import okhttp3.internal.connection.RealConnectionPool;
 import okhttp3.internal.connection.StreamAllocation;
 import okhttp3.internal.http.HttpCodec;
 import okhttp3.internal.ws.RealWebSocket;
@@ -52,6 +53,7 @@ import static okhttp3.internal.Util.sameConnection;
  */
 public final class Transmitter {
   public final OkHttpClient client;
+  public final RealConnectionPool connectionPool;
   public final Call call;
   public final EventListener eventListener;
 
@@ -63,6 +65,7 @@ public final class Transmitter {
 
   public Transmitter(OkHttpClient client, Call call) {
     this.client = client;
+    this.connectionPool = Internal.instance.realConnectionPool(client.connectionPool());
     this.call = call;
     this.eventListener = client.eventListenerFactory().create(call);
   }
@@ -130,8 +133,8 @@ public final class Transmitter {
     streamAllocation.streamFailed(e);
   }
 
-  public void noNewStreams() {
-    streamAllocation.noNewStreamsOnConnection();
+  public void noNewStreamsOnConnection() {
+    connection().noNewStreams();
   }
 
   public RealWebSocket.Streams newWebSocketStreams() {
@@ -243,9 +246,9 @@ public final class Transmitter {
     return streamAllocation.releaseAndAcquire(newConnection);
   }
 
-  public void streamFinished(boolean noNewStreams, long bytesRead, IOException e) {
+  public void responseBodyComplete(long bytesRead, IOException e) {
     if (streamAllocation != null) {
-      streamAllocation.streamFinished(noNewStreams, streamAllocation.codec(), bytesRead, e);
+      streamAllocation.responseBodyComplete(bytesRead, e);
     }
   }
 

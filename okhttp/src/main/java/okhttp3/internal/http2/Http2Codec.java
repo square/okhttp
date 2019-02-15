@@ -232,7 +232,7 @@ public final class Http2Codec implements HttpCodec {
     private void endOfInput(IOException e) {
       if (completed) return;
       completed = true;
-      transmitter.streamFinished(false, bytesRead, e);
+      transmitter.responseBodyComplete(bytesRead, e);
     }
   }
 }
