@@ -23,7 +23,6 @@ import javax.annotation.Nullable;
 import okhttp3.Address;
 import okhttp3.Call;
 import okhttp3.Connection;
-import okhttp3.ConnectionPool;
 import okhttp3.EventListener;
 import okhttp3.Interceptor;
 import okhttp3.OkHttpClient;
@@ -82,7 +81,7 @@ public final class StreamAllocation {
   public final Address address;
   private RouteSelector.Selection routeSelection;
   private Route route;
-  private final ConnectionPool connectionPool;
+  private final RealConnectionPool connectionPool;
   public final Call call;
   public final EventListener eventListener;
   private final Object callStackTrace;
@@ -96,8 +95,8 @@ public final class StreamAllocation {
   private boolean canceled;
   private HttpCodec codec;
 
-  public StreamAllocation(Transmitter transmitter, ConnectionPool connectionPool, Address address,
-      Call call, EventListener eventListener, Object callStackTrace) {
+  public StreamAllocation(Transmitter transmitter, RealConnectionPool connectionPool,
+      Address address, Call call, EventListener eventListener, Object callStackTrace) {
     this.transmitter = transmitter;
     this.connectionPool = connectionPool;
     this.address = address;
@@ -190,8 +189,7 @@ public final class StreamAllocation {
 
       if (result == null) {
         // Attempt to get a connection from the pool.
-        if (Internal.instance.transmitterAcquirePooledConnection(
-            connectionPool, address, transmitter, null)) {
+        if (connectionPool.transmitterAcquirePooledConnection(address, transmitter, null)) {
           foundPooledConnection = true;
           result = connection;
         } else {
@@ -228,8 +226,7 @@ public final class StreamAllocation {
         List<Route> routes = routeSelection.getAll();
         for (int i = 0, size = routes.size(); i < size; i++) {
           Route route = routes.get(i);
-          if (Internal.instance.transmitterAcquirePooledConnection(
-              connectionPool, address, transmitter, route)) {
+          if (connectionPool.transmitterAcquirePooledConnection(address, transmitter, route)) {
             foundPooledConnection = true;
             result = connection;
             this.route = route;
@@ -268,12 +265,12 @@ public final class StreamAllocation {
       reportedAcquired = true;
 
       // Pool the connection.
-      Internal.instance.put(connectionPool, result);
+      connectionPool.put(result);
 
       // If another multiplexed connection to the same address was created concurrently, then
       // release this connection and acquire that one.
       if (result.isMultiplexed()) {
-        socket = Internal.instance.deduplicate(connectionPool, address, transmitter);
+        socket = connectionPool.deduplicate(address, transmitter);
         result = connection;
       }
     }
@@ -337,7 +334,7 @@ public final class StreamAllocation {
   }
 
   private RouteDatabase routeDatabase() {
-    return Internal.instance.routeDatabase(connectionPool);
+    return connectionPool.routeDatabase;
   }
 
   public Route route() {
@@ -503,7 +500,7 @@ public final class StreamAllocation {
 
     if (released.transmitters.isEmpty()) {
       released.idleAtNanos = System.nanoTime();
-      if (Internal.instance.connectionBecameIdle(connectionPool, released)) {
+      if (connectionPool.connectionBecameIdle(released)) {
         return released.socket();
       }
     }

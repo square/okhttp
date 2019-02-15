@@ -87,8 +87,9 @@ public final class Transmitter {
     }
 
     this.request = request;
-    this.streamAllocation = new StreamAllocation(this, client.connectionPool(),
-        createAddress(request.url()), call, eventListener, callStackTrace);
+    this.streamAllocation = new StreamAllocation(this,
+        Internal.instance.realConnectionPool(client.connectionPool()), createAddress(request.url()),
+        call, eventListener, callStackTrace);
   }
 
   private Address createAddress(HttpUrl url) {

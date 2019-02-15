@@ -40,8 +40,7 @@ import okhttp3.internal.Internal;
 import okhttp3.internal.Transmitter;
 import okhttp3.internal.Util;
 import okhttp3.internal.cache.InternalCache;
-import okhttp3.internal.connection.RealConnection;
-import okhttp3.internal.connection.RouteDatabase;
+import okhttp3.internal.connection.RealConnectionPool;
 import okhttp3.internal.platform.Platform;
 import okhttp3.internal.proxy.NullProxySelector;
 import okhttp3.internal.tls.CertificateChainCleaner;
@@ -144,31 +143,12 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
         builder.setInternalCache(internalCache);
       }
 
-      @Override public boolean connectionBecameIdle(
-          ConnectionPool pool, RealConnection connection) {
-        return pool.connectionBecameIdle(connection);
-      }
-
-      @Override public boolean transmitterAcquirePooledConnection(
-          ConnectionPool pool, Address address, Transmitter transmitter, @Nullable Route route) {
-        return pool.transmitterAcquirePooledConnection(address, transmitter, route);
+      @Override public RealConnectionPool realConnectionPool(ConnectionPool connectionPool) {
+        return connectionPool.delegate;
       }
 
       @Override public boolean equalsNonHost(Address a, Address b) {
         return a.equalsNonHost(b);
-      }
-
-      @Override public @Nullable Socket deduplicate(
-          ConnectionPool pool, Address address, Transmitter transmitter) {
-        return pool.deduplicate(address, transmitter);
-      }
-
-      @Override public void put(ConnectionPool pool, RealConnection connection) {
-        pool.put(connection);
-      }
-
-      @Override public RouteDatabase routeDatabase(ConnectionPool connectionPool) {
-        return connectionPool.routeDatabase;
       }
 
       @Override public int code(Response.Builder responseBuilder) {

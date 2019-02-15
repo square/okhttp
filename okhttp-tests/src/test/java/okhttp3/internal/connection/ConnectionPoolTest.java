@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package okhttp3;
+package okhttp3.internal.connection;
 
 import java.net.InetSocketAddress;
 import java.net.Proxy;
@@ -22,10 +22,16 @@ import java.net.Socket;
 import java.util.Collections;
 import java.util.concurrent.TimeUnit;
 import javax.net.SocketFactory;
+import okhttp3.Address;
+import okhttp3.Call;
+import okhttp3.ConnectionPool;
+import okhttp3.Dns;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Route;
 import okhttp3.internal.Internal;
 import okhttp3.internal.RecordingOkAuthenticator;
 import okhttp3.internal.Transmitter;
-import okhttp3.internal.connection.RealConnection;
 import org.junit.Test;
 
 import static okhttp3.TestUtil.awaitGarbageCollection;
@@ -46,7 +52,7 @@ public final class ConnectionPoolTest {
   }
 
   @Test public void connectionsEvictedWhenIdleLongEnough() throws Exception {
-    ConnectionPool pool = new ConnectionPool(Integer.MAX_VALUE, 100L, TimeUnit.NANOSECONDS);
+    RealConnectionPool pool = new RealConnectionPool(Integer.MAX_VALUE, 100L, TimeUnit.NANOSECONDS);
     pool.cleanupRunning = true; // Prevent the cleanup runnable from being started.
 
     RealConnection c1 = newConnection(pool, routeA1, 50L);
@@ -78,13 +84,14 @@ public final class ConnectionPoolTest {
   }
 
   @Test public void inUseConnectionsNotEvicted() throws Exception {
-    ConnectionPool pool = new ConnectionPool(Integer.MAX_VALUE, 100L, TimeUnit.NANOSECONDS);
+    ConnectionPool poolApi = new ConnectionPool(Integer.MAX_VALUE, 100L, TimeUnit.NANOSECONDS);
+    RealConnectionPool pool = Internal.instance.realConnectionPool(poolApi);
     pool.cleanupRunning = true; // Prevent the cleanup runnable from being started.
 
     RealConnection c1 = newConnection(pool, routeA1, 50L);
     synchronized (pool) {
       OkHttpClient client = new OkHttpClient.Builder()
-          .connectionPool(pool)
+          .connectionPool(poolApi)
           .build();
       Call call = client.newCall(newRequest(addressA));
       Transmitter transmitter = new Transmitter(client, call);
@@ -109,7 +116,7 @@ public final class ConnectionPoolTest {
   }
 
   @Test public void cleanupPrioritizesEarliestEviction() throws Exception {
-    ConnectionPool pool = new ConnectionPool(Integer.MAX_VALUE, 100L, TimeUnit.NANOSECONDS);
+    RealConnectionPool pool = new RealConnectionPool(Integer.MAX_VALUE, 100L, TimeUnit.NANOSECONDS);
     pool.cleanupRunning = true; // Prevent the cleanup runnable from being started.
 
     RealConnection c1 = newConnection(pool, routeA1, 75L);
@@ -141,7 +148,7 @@ public final class ConnectionPoolTest {
   }
 
   @Test public void oldestConnectionsEvictedIfIdleLimitExceeded() throws Exception {
-    ConnectionPool pool = new ConnectionPool(2, 100L, TimeUnit.NANOSECONDS);
+    RealConnectionPool pool = new RealConnectionPool(2, 100L, TimeUnit.NANOSECONDS);
     pool.cleanupRunning = true; // Prevent the cleanup runnable from being started.
 
     RealConnection c1 = newConnection(pool, routeA1, 50L);
@@ -165,11 +172,12 @@ public final class ConnectionPoolTest {
   }
 
   @Test public void leakedAllocation() throws Exception {
-    ConnectionPool pool = new ConnectionPool(2, 100L, TimeUnit.NANOSECONDS);
+    ConnectionPool poolApi = new ConnectionPool(Integer.MAX_VALUE, 100L, TimeUnit.NANOSECONDS);
+    RealConnectionPool pool = Internal.instance.realConnectionPool(poolApi);
     pool.cleanupRunning = true; // Prevent the cleanup runnable from being started.
 
     RealConnection c1 = newConnection(pool, routeA1, 0L);
-    allocateAndLeakAllocation(pool, c1);
+    allocateAndLeakAllocation(poolApi, c1);
 
     awaitGarbageCollection();
     assertEquals(0L, pool.cleanup(100L));
@@ -180,7 +188,7 @@ public final class ConnectionPoolTest {
 
   /** Use a helper method so there's no hidden reference remaining on the stack. */
   private void allocateAndLeakAllocation(ConnectionPool pool, RealConnection connection) {
-    synchronized (pool) {
+    synchronized (Internal.instance.realConnectionPool(pool)) {
       OkHttpClient client = new OkHttpClient.Builder()
           .connectionPool(pool)
           .build();
@@ -191,7 +199,7 @@ public final class ConnectionPoolTest {
     }
   }
 
-  private RealConnection newConnection(ConnectionPool pool, Route route, long idleAtNanos) {
+  private RealConnection newConnection(RealConnectionPool pool, Route route, long idleAtNanos) {
     RealConnection result = RealConnection.testConnection(pool, route, new Socket(), idleAtNanos);
     synchronized (pool) {
       pool.put(result);
@@ -212,7 +220,7 @@ public final class ConnectionPoolTest {
 
   private Request newRequest(Address address) {
     return new Request.Builder()
-        .url(address.url)
+        .url(address.url())
         .build();
   }
 }
