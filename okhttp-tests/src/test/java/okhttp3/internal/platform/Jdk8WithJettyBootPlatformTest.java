@@ -28,6 +28,7 @@ public class Jdk8WithJettyBootPlatformTest {
   public void before() {
     assumeTrue(getPlatform().equals("jdk-with-jetty-boot"));
   }
+
   @Test
   public void testBuildsWithJettyBoot() {
     assertNotNull(Jdk8WithJettyBootPlatform.buildIfSupported());
