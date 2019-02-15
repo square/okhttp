@@ -678,4 +678,11 @@ public final class Util {
     }
     return value != null ? value : defaultValue;
   }
+
+  /** Returns true if an HTTP request for {@code a} and {@code b} can reuse a connection. */
+  public static boolean sameConnection(HttpUrl a, HttpUrl b) {
+    return a.host().equals(b.host())
+        && a.port() == b.port()
+        && a.scheme().equals(b.scheme());
+  }
 }

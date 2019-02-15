@@ -1139,4 +1139,33 @@ public final class EventListenerTest {
         "CallEnd");
     assertEquals(expectedEvents, listener.recordedEventTypes());
   }
+
+  @Test public void applicationInterceptorProceedsMultipleTimes() throws Exception {
+    server.enqueue(new MockResponse().setBody("a"));
+    server.enqueue(new MockResponse().setBody("b"));
+
+    client = client.newBuilder()
+        .addInterceptor(chain -> {
+          try (Response a = chain.proceed(chain.request())) {
+            assertEquals("a", a.body().string());
+          }
+          return chain.proceed(chain.request());
+        })
+        .build();
+
+    Call call = client.newCall(new Request.Builder().url(server.url("/")).build());
+    Response response = call.execute();
+    assertEquals("b", response.body().string());
+
+    List<String> expectedEvents = Arrays.asList("CallStart", "DnsStart", "DnsEnd",
+        "ConnectStart", "ConnectEnd", "ConnectionAcquired", "RequestHeadersStart",
+        "RequestHeadersEnd", "ResponseHeadersStart", "ResponseHeadersEnd", "ResponseBodyStart",
+        "ResponseBodyEnd", "RequestHeadersStart", "RequestHeadersEnd", "ResponseHeadersStart",
+        "ResponseHeadersEnd", "ResponseBodyStart", "ResponseBodyEnd", "ConnectionReleased",
+        "CallEnd");
+    assertEquals(expectedEvents, listener.recordedEventTypes());
+
+    assertEquals(0, server.takeRequest().getSequenceNumber());
+    assertEquals(1, server.takeRequest().getSequenceNumber());
+  }
 }

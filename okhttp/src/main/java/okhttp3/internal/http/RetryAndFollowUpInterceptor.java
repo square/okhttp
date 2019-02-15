@@ -45,6 +45,7 @@ import static java.net.HttpURLConnection.HTTP_SEE_OTHER;
 import static java.net.HttpURLConnection.HTTP_UNAUTHORIZED;
 import static java.net.HttpURLConnection.HTTP_UNAVAILABLE;
 import static okhttp3.internal.Util.closeQuietly;
+import static okhttp3.internal.Util.sameConnection;
 import static okhttp3.internal.http.StatusLine.HTTP_PERM_REDIRECT;
 import static okhttp3.internal.http.StatusLine.HTTP_TEMP_REDIRECT;
 
@@ -70,13 +71,12 @@ public final class RetryAndFollowUpInterceptor implements Interceptor {
     RealInterceptorChain realChain = (RealInterceptorChain) chain;
     Transmitter transmitter = realChain.transmitter();
 
-    transmitter.newStreamAllocation(request);
-
     int followUpCount = 0;
     Response priorResponse = null;
     while (true) {
+      transmitter.prepareToConnect(request);
+
       if (transmitter.isCanceled()) {
-        transmitter.releaseStreamAllocation(true);
         throw new IOException("Canceled");
       }
 
@@ -102,7 +102,6 @@ public final class RetryAndFollowUpInterceptor implements Interceptor {
         // We're throwing an unchecked exception. Release any resources.
         if (releaseConnection) {
           transmitter.streamFailed(null);
-          transmitter.releaseStreamAllocation(true);
         }
       }
 
@@ -119,33 +118,26 @@ public final class RetryAndFollowUpInterceptor implements Interceptor {
       try {
         followUp = followUpRequest(response, transmitter.route());
       } catch (IOException e) {
-        transmitter.releaseStreamAllocation(true);
         throw e;
       }
 
       if (followUp == null) {
-        transmitter.releaseStreamAllocation(true);
         return response;
       }
 
       closeQuietly(response.body());
 
+      if (transmitter.hasCodec()) {
+        throw new IllegalStateException("Closing the body of " + response
+            + " didn't close its backing stream. Bad interceptor?");
+      }
+
       if (++followUpCount > MAX_FOLLOW_UPS) {
-        transmitter.releaseStreamAllocation(true);
         throw new ProtocolException("Too many follow-up requests: " + followUpCount);
       }
 
       if (followUp.body() instanceof UnrepeatableRequestBody) {
-        transmitter.releaseStreamAllocation(true);
         throw new HttpRetryException("Cannot retry streamed HTTP body", response.code());
-      }
-
-      if (!sameConnection(response, followUp.url())) {
-        transmitter.releaseStreamAllocation(false);
-        transmitter.newStreamAllocation(followUp);
-      } else if (transmitter.hasCodec()) {
-        throw new IllegalStateException("Closing the body of " + response
-            + " didn't close its backing stream. Bad interceptor?");
       }
 
       request = followUp;
@@ -285,7 +277,7 @@ public final class RetryAndFollowUpInterceptor implements Interceptor {
         // When redirecting across hosts, drop all authentication headers. This
         // is potentially annoying to the application layer since they have no
         // way to retain them.
-        if (!sameConnection(userResponse, url)) {
+        if (!sameConnection(userResponse.request().url(), url)) {
           requestBuilder.removeHeader("Authorization");
         }
 
@@ -349,16 +341,5 @@ public final class RetryAndFollowUpInterceptor implements Interceptor {
     }
 
     return Integer.MAX_VALUE;
-  }
-
-  /**
-   * Returns true if an HTTP request for {@code followUp} can reuse the connection used by this
-   * engine.
-   */
-  private boolean sameConnection(Response response, HttpUrl followUp) {
-    HttpUrl url = response.request().url();
-    return url.host().equals(followUp.host())
-        && url.port() == followUp.port()
-        && url.scheme().equals(followUp.scheme());
   }
 }

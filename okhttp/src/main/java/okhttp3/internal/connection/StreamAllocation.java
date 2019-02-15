@@ -50,25 +50,26 @@ import static okhttp3.internal.Util.closeQuietly;
  *         connections. Each connection has its own allocation limit, which defines how many
  *         concurrent streams that connection can carry. HTTP/1.x connections can carry 1 stream
  *         at a time, HTTP/2 typically carry multiple.
- *     <li><strong>Calls:</strong> a logical sequence of streams, typically an initial request and
- *         its follow up requests. We prefer to keep all streams of a single call on the same
- *         connection for better behavior and locality.
+ *     <li><strong>Transmitters:</strong> a logical sequence of streams, typically an initial
+ *         request and its follow up requests. We prefer to keep all streams of a single {@link
+ *         Call} on the same connection for better behavior and locality.
  * </ul>
  *
- * <p>Instances of this class act on behalf of the call, using one or more streams over one or more
- * connections. This class has APIs to release each of the above resources:
+ * <p>Instances of this class act on behalf of a single transmitter, using one or more streams over
+ * one or more connections. This class has APIs to release each of the above resources:
  *
  * <ul>
- *     <li>{@link #noNewStreams} prevents the connection from being used for new streams in the
- *         future. Use this after a {@code Connection: close} header, or when the connection may be
- *         inconsistent.
+ *     <li>{@link #noNewStreamsOnConnection} prevents the connection from being used for new streams
+ *         in the future. Use this after a {@code Connection: close} header, or when the connection
+ *         may be inconsistent.
  *     <li>{@link #streamFinished streamFinished} releases the active stream from this allocation.
  *         Note that only one stream may be active at a given time, so it is necessary to call
  *         {@link #streamFinished streamFinished()} before creating a subsequent stream with {@link
  *         #newStream newStream()}.
- *     <li>{@link #release} removes the call's hold on the connection. Note that this won't
- *         immediately free the connection if there is a stream still lingering. That happens when a
- *         call is complete but its response body has yet to be fully consumed.
+ *     <li>{@link #transmitterReleaseConnection} removes the transmitter's hold on the connection.
+ *         Note that this won't immediately free the connection if there is a stream still
+ *         lingering. That happens when a call is complete but its response body has yet to be fully
+ *         consumed.
  * </ul>
  *
  * <p>This class supports {@linkplain #cancel asynchronous canceling}. This is intended to have the
@@ -149,7 +150,7 @@ public final class StreamAllocation {
       // Do a (potentially slow) check to confirm that the pooled connection is still good. If it
       // isn't, take it out of the pool and start again.
       if (!candidate.isHealthy(doExtensiveHealthChecks)) {
-        noNewStreams();
+        noNewStreamsOnConnection();
         continue;
       }
 
@@ -189,8 +190,8 @@ public final class StreamAllocation {
 
       if (result == null) {
         // Attempt to get a connection from the pool.
-        Internal.instance.acquire(connectionPool, address, transmitter, null);
-        if (connection != null) {
+        if (Internal.instance.transmitterAcquirePooledConnection(
+            connectionPool, address, transmitter, null)) {
           foundPooledConnection = true;
           result = connection;
         } else {
@@ -227,8 +228,8 @@ public final class StreamAllocation {
         List<Route> routes = routeSelection.getAll();
         for (int i = 0, size = routes.size(); i < size; i++) {
           Route route = routes.get(i);
-          Internal.instance.acquire(connectionPool, address, transmitter, route);
-          if (connection != null) {
+          if (Internal.instance.transmitterAcquirePooledConnection(
+              connectionPool, address, transmitter, route)) {
             foundPooledConnection = true;
             result = connection;
             this.route = route;
@@ -247,7 +248,7 @@ public final class StreamAllocation {
         route = selectedRoute;
         refusedStreamCount = 0;
         result = new RealConnection(connectionPool, selectedRoute);
-        acquire(result, false);
+        transmitterAcquireConnection(result, false);
       }
     }
 
@@ -347,7 +348,7 @@ public final class StreamAllocation {
     return connection;
   }
 
-  public void release(boolean callEnd) {
+  public void transmitterReleaseConnection(boolean callEnd) {
     Socket socket;
     Connection releasedConnection;
     synchronized (connectionPool) {
@@ -368,7 +369,7 @@ public final class StreamAllocation {
   }
 
   /** Forbid new streams from being created on the connection that hosts this allocation. */
-  public void noNewStreams() {
+  public void noNewStreamsOnConnection() {
     Socket socket;
     Connection releasedConnection;
     synchronized (connectionPool) {
@@ -398,23 +399,15 @@ public final class StreamAllocation {
     if (released) {
       this.released = true;
     }
-    Socket socket = null;
     if (connection != null) {
       if (noNewStreams) {
         connection.noNewStreams = true;
       }
       if (this.codec == null && (this.released || connection.noNewStreams)) {
-        release(connection);
-        if (connection.transmitters.isEmpty()) {
-          connection.idleAtNanos = System.nanoTime();
-          if (Internal.instance.connectionBecameIdle(connectionPool, connection)) {
-            socket = connection.socket();
-          }
-        }
-        connection = null;
+        return transmitterReleaseConnection();
       }
     }
-    return socket;
+    return null;
   }
 
   public void cancel() {
@@ -476,10 +469,10 @@ public final class StreamAllocation {
   }
 
   /**
-   * Use this allocation to hold {@code connection}. Each call to this must be paired with a call to
-   * {@link #release} on the same connection.
+   * Use this allocation to hold {@code connection}. Each use of this must be paired with a call to
+   * {@link #transmitterReleaseConnection} on the same connection.
    */
-  public void acquire(RealConnection connection, boolean reportedAcquired) {
+  public void transmitterAcquireConnection(RealConnection connection, boolean reportedAcquired) {
     assert (Thread.holdsLock(connectionPool));
     if (this.connection != null) throw new IllegalStateException();
 
@@ -488,16 +481,34 @@ public final class StreamAllocation {
     connection.transmitters.add(new TransmitterReference(transmitter, callStackTrace));
   }
 
-  /** Remove this allocation from the connection's list of allocations. */
-  private void release(RealConnection connection) {
+  /**
+   * Remove the transmitter from the connection's list of allocations. Returns a socket that the
+   * caller should close.
+   */
+  private @Nullable Socket transmitterReleaseConnection() {
+    int index = -1;
     for (int i = 0, size = connection.transmitters.size(); i < size; i++) {
       Reference<Transmitter> reference = connection.transmitters.get(i);
       if (reference.get() == transmitter) {
-        connection.transmitters.remove(i);
-        return;
+        index = i;
+        break;
       }
     }
-    throw new IllegalStateException();
+
+    if (index == -1) throw new IllegalStateException();
+
+    RealConnection released = this.connection;
+    released.transmitters.remove(index);
+    this.connection = null;
+
+    if (released.transmitters.isEmpty()) {
+      released.idleAtNanos = System.nanoTime();
+      if (Internal.instance.connectionBecameIdle(connectionPool, released)) {
+        return released.socket();
+      }
+    }
+
+    return null;
   }
 
   /**

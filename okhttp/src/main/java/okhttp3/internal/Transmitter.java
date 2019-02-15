@@ -44,6 +44,8 @@ import okio.Buffer;
 import okio.ForwardingSink;
 import okio.Sink;
 
+import static okhttp3.internal.Util.sameConnection;
+
 /**
  * Bridge between OkHttp's application and network layers. This class exposes high-level application
  * layer primitives: connections, requests, responses, and streams.
@@ -55,6 +57,7 @@ public final class Transmitter {
 
   private @Nullable Object callStackTrace;
 
+  private Request request;
   private volatile boolean canceled;
   private volatile StreamAllocation streamAllocation;
 
@@ -68,13 +71,24 @@ public final class Transmitter {
     this.callStackTrace = callStackTrace;
   }
 
-  public void newStreamAllocation(Request request) {
-    newStreamAllocation(createAddress(request.url()));
-  }
+  /**
+   * Prepare to create a stream to carry {@code request}. This prefers to use the existing
+   * connection if it exists.
+   */
+  public void prepareToConnect(Request request) {
+    if (this.request != null) {
+      if (sameConnection(this.request.url(), request.url())) {
+        return; // Already ready.
+      }
+      if (streamAllocation != null) {
+        streamAllocation.transmitterReleaseConnection(false);
+        streamAllocation = null;
+      }
+    }
 
-  public void newStreamAllocation(Address address) {
+    this.request = request;
     this.streamAllocation = new StreamAllocation(this, client.connectionPool(),
-        address, call, eventListener, callStackTrace);
+        createAddress(request.url()), call, eventListener, callStackTrace);
   }
 
   private Address createAddress(HttpUrl url) {
@@ -116,7 +130,7 @@ public final class Transmitter {
   }
 
   public void noNewStreams() {
-    streamAllocation.noNewStreams();
+    streamAllocation.noNewStreamsOnConnection();
   }
 
   public RealWebSocket.Streams newWebSocketStreams() {
@@ -141,8 +155,10 @@ public final class Transmitter {
     return streamAllocation.connection().isMultiplexed();
   }
 
-  public void releaseStreamAllocation(boolean callEnd) {
-    streamAllocation.release(callEnd);
+  public void noMoreStreamsOnCall() {
+    if (streamAllocation != null) {
+      streamAllocation.transmitterReleaseConnection(true);
+    }
   }
 
   public boolean hasMoreRoutes() {
@@ -214,8 +230,8 @@ public final class Transmitter {
     return streamAllocation.connection().supportsUrl(url);
   }
 
-  public void acquire(RealConnection connection, boolean reportedAcquired) {
-    streamAllocation.acquire(connection, reportedAcquired);
+  public void acquireConnection(RealConnection connection, boolean reportedAcquired) {
+    streamAllocation.transmitterAcquireConnection(connection, reportedAcquired);
   }
 
   public RealConnection connection() {

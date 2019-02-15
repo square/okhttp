@@ -149,9 +149,9 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
         return pool.connectionBecameIdle(connection);
       }
 
-      @Override public void acquire(ConnectionPool pool, Address address,
-          Transmitter transmitter, @Nullable Route route) {
-        pool.acquire(address, transmitter, route);
+      @Override public boolean transmitterAcquirePooledConnection(
+          ConnectionPool pool, Address address, Transmitter transmitter, @Nullable Route route) {
+        return pool.transmitterAcquirePooledConnection(address, transmitter, route);
       }
 
       @Override public boolean equalsNonHost(Address a, Address b) {
