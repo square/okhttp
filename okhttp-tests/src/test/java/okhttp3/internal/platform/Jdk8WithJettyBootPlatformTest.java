@@ -15,18 +15,23 @@
  */
 package okhttp3.internal.platform;
 
-import static okhttp3.internal.platform.PlatformTest.getPlatform;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assume.assumeTrue;
-
+import com.ea.agentloader.AgentLoader;
 import org.eclipse.jetty.alpn.openjdk8.server.OpenJDK8ServerALPNProcessor;
 import org.junit.Before;
 import org.junit.Test;
 
+import static okhttp3.internal.platform.PlatformTest.getPlatform;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assume.assumeTrue;
+
 public class Jdk8WithJettyBootPlatformTest {
+
+  private static final boolean isDynamicJettyBootPlatform = getPlatform().equals("jdk-with-jetty-boot-dynamic");
+  private static final boolean isJettyBootPlatform = getPlatform().equals("jdk-with-jetty-boot");
+
   @Before
   public void before() {
-    assumeTrue(getPlatform().equals("jdk-with-jetty-boot"));
+    assumeTrue(isJettyBootPlatform || isDynamicJettyBootPlatform);
   }
 
   @Test
@@ -40,9 +45,15 @@ public class Jdk8WithJettyBootPlatformTest {
   @Test
   public void testJettyDoesNotFailAfterBuilding() throws ClassNotFoundException {
     assertNotNull(Jdk8WithJettyBootPlatform.buildIfSupported());
+    // only now load the agent
+    if (isDynamicJettyBootPlatform) {
+      AgentLoader.loadAgentClass(Http2Agent.class.getName(), "");
+    }
     new OpenJDK8ServerALPNProcessor().init();
 
-    // Just to double check, but doing this afterwards so as to not influence the test
-    assertNotNull(Class.forName("org.eclipse.jetty.alpn.ALPN").getClassLoader());
+    if (isDynamicJettyBootPlatform) {
+      // Just to double check, but doing this afterwards so as to not influence the test
+      assertNotNull(Class.forName("org.eclipse.jetty.alpn.ALPN").getClassLoader());
+    }
   }
 }

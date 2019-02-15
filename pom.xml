@@ -356,6 +356,33 @@
       </build>
     </profile>
     <profile>
+      <id>alpn-when-jdk8-loaded-dynamically</id>
+      <activation>
+        <jdk>1.8</jdk>
+      </activation>
+      <properties>
+        <okhttp.platform>jdk-with-jetty-boot-dynamic</okhttp.platform>
+      </properties>
+      <build>
+        <pluginManagement>
+          <plugins>
+            <plugin>
+              <groupId>org.apache.maven.plugins</groupId>
+              <artifactId>maven-surefire-plugin</artifactId>
+              <configuration>
+                <argLine>-Xms512m -Xmx512m</argLine>
+                <forkCount>1</forkCount>
+                <reuseForks>false</reuseForks>
+                <includes>
+                  <include>okhttp-tests/src/test/java/okhttp3/internal/platform/Jdk8WithJettyBootPlatformTest.java</include>
+                </includes>
+              </configuration>
+            </plugin>
+          </plugins>
+        </pluginManagement>
+      </build>
+    </profile>
+    <profile>
       <id>jdk9</id>
       <activation>
         <jdk>9</jdk>
