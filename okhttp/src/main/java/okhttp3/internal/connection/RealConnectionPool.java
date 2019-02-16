@@ -16,7 +16,9 @@
  */
 package okhttp3.internal.connection;
 
+import java.io.IOException;
 import java.lang.ref.Reference;
+import java.net.Proxy;
 import java.net.Socket;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -259,5 +261,17 @@ public final class RealConnectionPool {
     }
 
     return references.size();
+  }
+
+  /** Track a bad route in the route database. Other routes will be attempted first. */
+  public void connectFailed(Route failedRoute, IOException failure) {
+    // Tell the proxy selector when we fail to connect on a fresh connection.
+    if (failedRoute.proxy().type() != Proxy.Type.DIRECT) {
+      Address address = failedRoute.address();
+      address.proxySelector().connectFailed(
+          address.url().uri(), failedRoute.proxy().address(), failure);
+    }
+
+    routeDatabase.failed(failedRoute);
   }
 }

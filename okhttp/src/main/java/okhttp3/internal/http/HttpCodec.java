@@ -19,6 +19,7 @@ import java.io.IOException;
 import okhttp3.Headers;
 import okhttp3.Request;
 import okhttp3.Response;
+import okhttp3.internal.connection.RealConnection;
 import okio.Sink;
 import okio.Source;
 
@@ -30,6 +31,9 @@ public interface HttpCodec {
    * connection.
    */
   int DISCARD_STREAM_TIMEOUT_MILLIS = 100;
+
+  /** Returns the connection that carries this codec. */
+  RealConnection connection();
 
   /** Returns an output stream where the request body can be streamed. */
   Sink createRequestBody(Request request, long contentLength);

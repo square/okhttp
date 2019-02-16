@@ -98,6 +98,10 @@ public final class Http1Codec implements HttpCodec {
     this.sink = sink;
   }
 
+  @Override public RealConnection connection() {
+    return realConnection;
+  }
+
   @Override public Sink createRequestBody(Request request, long contentLength) {
     if ("chunked".equalsIgnoreCase(request.header("Transfer-Encoding"))) {
       // Stream a request body of unknown length.

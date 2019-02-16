@@ -105,20 +105,6 @@ public final class RouteSelector {
     return new Selection(routes);
   }
 
-  /**
-   * Clients should invoke this method when they encounter a connectivity failure on a connection
-   * returned by this route selector.
-   */
-  public void connectFailed(Route failedRoute, IOException failure) {
-    if (failedRoute.proxy().type() != Proxy.Type.DIRECT && address.proxySelector() != null) {
-      // Tell the proxy selector when we fail to connect on a fresh connection.
-      address.proxySelector().connectFailed(
-          address.url().uri(), failedRoute.proxy().address(), failure);
-    }
-
-    routeDatabase.failed(failedRoute);
-  }
-
   /** Prepares the proxy servers to try. */
   private void resetNextProxy(HttpUrl url, Proxy proxy) {
     if (proxy != null) {

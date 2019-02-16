@@ -74,7 +74,7 @@ public final class Transmitter {
     this.eventListener = client.eventListenerFactory().create(call);
   }
 
-  public void setCallStackTrace(@Nullable Object callStackTrace) {
+  public void initCallStackTrace(@Nullable Object callStackTrace) {
     this.callStackTrace = callStackTrace;
   }
 
@@ -133,8 +133,8 @@ public final class Transmitter {
     return canceled;
   }
 
-  public void streamFailed(@Nullable IOException e) {
-    streamAllocation.streamFailed(e);
+  public void releaseStreamForException() {
+    streamAllocation.releaseStreamForException();
   }
 
   public void noNewStreamsOnConnection() {
@@ -169,8 +169,8 @@ public final class Transmitter {
     }
   }
 
-  public boolean hasMoreRoutes() {
-    return streamAllocation.hasMoreRoutes();
+  public boolean canRetry() {
+    return streamAllocation.canRetry();
   }
 
   public Route route() {
@@ -190,29 +190,49 @@ public final class Transmitter {
   }
 
   public void writeRequestHeaders(Request request) throws IOException {
-    eventListener.requestHeadersStart(call);
-    streamAllocation.codec().writeRequestHeaders(request);
-    eventListener.requestHeadersEnd(call, request);
+    try {
+      eventListener.requestHeadersStart(call);
+      streamAllocation.codec().writeRequestHeaders(request);
+      eventListener.requestHeadersEnd(call, request);
+    } catch (IOException e) {
+      streamAllocation.streamFailed(e);
+      throw e;
+    }
   }
 
   public Sink createRequestBody(Request request) throws IOException {
+    long contentLength = request.body().contentLength();
     eventListener.requestBodyStart(call);
-    Sink rawRequestBody = streamAllocation.codec()
-        .createRequestBody(request, request.body().contentLength());
-    return new RequestBodySink(rawRequestBody, request.body().contentLength());
+    Sink rawRequestBody = streamAllocation.codec().createRequestBody(request, contentLength);
+    return new RequestBodySink(rawRequestBody, contentLength);
   }
 
   public void flushRequest() throws IOException {
-    streamAllocation.codec().flushRequest();
+    try {
+      streamAllocation.codec().flushRequest();
+    } catch (IOException e) {
+      streamAllocation.streamFailed(e);
+      throw e;
+    }
   }
 
   public void finishRequest() throws IOException {
-    streamAllocation.codec().finishRequest();
+    try {
+      streamAllocation.codec().finishRequest();
+    } catch (IOException e) {
+      streamAllocation.streamFailed(e);
+      throw e;
+    }
   }
 
   public Response.Builder readResponseHeaders(boolean expectContinue) throws IOException {
-    eventListener.responseHeadersStart(call);
-    return streamAllocation.codec().readResponseHeaders(expectContinue);
+    try {
+      eventListener.responseHeadersStart(call);
+      return streamAllocation.codec().readResponseHeaders(expectContinue);
+    } catch (IOException e) {
+      streamAllocation.streamFailed(e);
+      throw e;
+    }
   }
 
   public void responseHeadersEnd(Response response) {
@@ -220,13 +240,18 @@ public final class Transmitter {
   }
 
   public ResponseBody openResponseBody(Response response) throws IOException {
-    streamAllocation.eventListener.responseBodyStart(streamAllocation.call);
-    String contentType = response.header("Content-Type");
-    HttpCodec codec = streamAllocation.codec();
-    long contentLength = codec.reportedContentLength(response);
-    Source rawSource = codec.openResponseBodySource(response);
-    ResponseBodySource source = new ResponseBodySource(rawSource, contentLength);
-    return new RealResponseBody(contentType, contentLength, Okio.buffer(source));
+    try {
+      streamAllocation.eventListener.responseBodyStart(streamAllocation.call);
+      String contentType = response.header("Content-Type");
+      HttpCodec codec = streamAllocation.codec();
+      long contentLength = codec.reportedContentLength(response);
+      Source rawSource = codec.openResponseBodySource(response);
+      ResponseBodySource source = new ResponseBodySource(rawSource, contentLength);
+      return new RealResponseBody(contentType, contentLength, Okio.buffer(source));
+    } catch (IOException e) {
+      streamAllocation.streamFailed(e);
+      throw e;
+    }
   }
 
   public DeferredTrailers deferredTrailers() {
@@ -256,6 +281,9 @@ public final class Transmitter {
   }
 
   public void responseBodyComplete(long bytesRead, IOException e) {
+    if (e != null) {
+      streamAllocation.streamFailed(e);
+    }
     if (streamAllocation != null) {
       streamAllocation.responseBodyComplete(bytesRead, e);
     }
@@ -279,8 +307,22 @@ public final class Transmitter {
         throw new ProtocolException("expected " + contentLength
             + " bytes but received " + (bytesReceived + byteCount));
       }
-      super.write(source, byteCount);
-      this.bytesReceived += byteCount;
+      try {
+        super.write(source, byteCount);
+        this.bytesReceived += byteCount;
+      } catch (IOException e) {
+        streamAllocation.streamFailed(e);
+        throw e;
+      }
+    }
+
+    @Override public void flush() throws IOException {
+      try {
+        super.flush();
+      } catch (IOException e) {
+        streamAllocation.streamFailed(e);
+        throw e;
+      }
     }
 
     @Override public void close() throws IOException {
@@ -290,7 +332,12 @@ public final class Transmitter {
         throw new ProtocolException("unexpected end of stream");
       }
       eventListener.requestBodyEnd(call, bytesReceived);
-      super.close();
+      try {
+        super.close();
+      } catch (IOException e) {
+        streamAllocation.streamFailed(e);
+        throw e;
+      }
     }
   }
 

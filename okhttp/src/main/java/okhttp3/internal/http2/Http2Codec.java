@@ -29,6 +29,7 @@ import okhttp3.Request;
 import okhttp3.Response;
 import okhttp3.internal.Internal;
 import okhttp3.internal.Util;
+import okhttp3.internal.connection.RealConnection;
 import okhttp3.internal.http.HttpCodec;
 import okhttp3.internal.http.HttpHeaders;
 import okhttp3.internal.http.RequestLine;
@@ -83,17 +84,24 @@ public final class Http2Codec implements HttpCodec {
       UPGRADE);
 
   private final Interceptor.Chain chain;
+  private final RealConnection realConnection;
   private final Http2Connection connection;
   private volatile Http2Stream stream;
   private final Protocol protocol;
   private volatile boolean canceled;
 
-  public Http2Codec(OkHttpClient client, Interceptor.Chain chain, Http2Connection connection) {
+  public Http2Codec(OkHttpClient client, RealConnection realConnection, Interceptor.Chain chain,
+      Http2Connection connection) {
+    this.realConnection = realConnection;
     this.chain = chain;
     this.connection = connection;
     this.protocol = client.protocols().contains(Protocol.H2_PRIOR_KNOWLEDGE)
         ? Protocol.H2_PRIOR_KNOWLEDGE
         : Protocol.HTTP_2;
+  }
+
+  @Override public RealConnection connection() {
+    return realConnection;
   }
 
   @Override public Sink createRequestBody(Request request, long contentLength) {
