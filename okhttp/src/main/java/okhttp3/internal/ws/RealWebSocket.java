@@ -197,7 +197,6 @@ public final class RealWebSocket implements WebSocket, WebSocketReader.FrameCall
         } catch (ProtocolException e) {
           failWebSocket(e, response);
           closeQuietly(response);
-          transmitter.streamFailed(e);
           return;
         }
 

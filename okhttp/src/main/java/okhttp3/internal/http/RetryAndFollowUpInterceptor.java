@@ -86,17 +86,17 @@ public final class RetryAndFollowUpInterceptor implements Interceptor {
         response = realChain.proceed(request, transmitter, null);
         releaseConnection = false;
       } catch (RouteException e) {
+        releaseConnection = false;
         // The attempt to connect via a route failed. The request will not have been sent.
         if (!recover(e.getLastConnectException(), transmitter, false, request)) {
           throw e.getFirstConnectException();
         }
-        releaseConnection = false;
         continue;
       } catch (IOException e) {
         // An attempt to communicate with a server failed. The request may have been sent.
         boolean requestSendStarted = !(e instanceof ConnectionShutdownException);
-        if (!recover(e, transmitter, requestSendStarted, request)) throw e;
         releaseConnection = false;
+        if (!recover(e, transmitter, requestSendStarted, request)) throw e;
         continue;
       } finally {
         // We're throwing an unchecked exception. Release any resources.

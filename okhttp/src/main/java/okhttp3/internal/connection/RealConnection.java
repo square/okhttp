@@ -106,6 +106,7 @@ public final class RealConnection extends Http2Connection.Listener implements Co
   public boolean noNewStreams;
 
   public int successCount;
+  public int refusedStreamCount;
 
   /**
    * The maximum number of concurrent streams that can be carried by this connection. If {@code

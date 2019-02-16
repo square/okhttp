@@ -78,16 +78,15 @@ import static okhttp3.internal.Util.closeQuietly;
 public final class StreamAllocation {
   public final Transmitter transmitter;
   public final Address address;
-  private RouteSelector.Selection routeSelection;
-  private Route route;
   private final RealConnectionPool connectionPool;
   public final Call call;
   public final EventListener eventListener;
   private final Object callStackTrace;
+  private RouteSelector.Selection routeSelection;
+  private Route route;
 
   // State guarded by connectionPool.
   private final RouteSelector routeSelector;
-  private int refusedStreamCount;
   private RealConnection connection;
   private boolean reportedAcquired;
   private boolean released;
@@ -165,7 +164,7 @@ public final class StreamAllocation {
     boolean foundPooledConnection = false;
     RealConnection result = null;
     Route selectedRoute = null;
-    Connection releasedConnection;
+    RealConnection releasedConnection;
     Socket toClose;
     synchronized (connectionPool) {
       if (released) throw new IllegalStateException("released");
@@ -174,13 +173,17 @@ public final class StreamAllocation {
 
       // Attempt to use an already-allocated connection. We need to be careful here because our
       // already-allocated connection may have been restricted from creating new streams.
-      releasedConnection = this.connection;
-      toClose = releaseIfNoNewStreams();
-      if (this.connection != null) {
+      releasedConnection = connection;
+      toClose = connection != null && connection.noNewStreams
+          ? transmitterReleaseConnection()
+          : null;
+
+      if (connection != null) {
         // We had an already-allocated connection and it's good.
-        result = this.connection;
+        result = connection;
         releasedConnection = null;
       }
+
       if (!reportedAcquired) {
         // If the connection was never reported acquired, don't report it as released!
         releasedConnection = null;
@@ -242,7 +245,6 @@ public final class StreamAllocation {
         // Create a connection and assign it to this allocation immediately. This makes it possible
         // for an asynchronous cancel() to interrupt the handshake we're about to do.
         route = selectedRoute;
-        refusedStreamCount = 0;
         result = new RealConnection(connectionPool, selectedRoute);
         transmitterAcquireConnection(result, false);
       }
@@ -279,21 +281,6 @@ public final class StreamAllocation {
     return result;
   }
 
-  /**
-   * Releases the currently held connection and returns a socket to close if the held connection
-   * restricts new streams from being created. With HTTP/2 multiple requests share the same
-   * connection so it's possible that our connection is restricted from creating new streams during
-   * a follow-up request.
-   */
-  private Socket releaseIfNoNewStreams() {
-    assert (Thread.holdsLock(connectionPool));
-    RealConnection allocatedConnection = this.connection;
-    if (allocatedConnection != null && allocatedConnection.noNewStreams) {
-      return deallocate(false, true);
-    }
-    return null;
-  }
-
   public void responseBodyComplete(long bytesRead, IOException e) {
     eventListener.responseBodyEnd(call, bytesRead);
 
@@ -303,8 +290,11 @@ public final class StreamAllocation {
     synchronized (connectionPool) {
       if (codec == null) throw new IllegalStateException("codec == null");
       connection.successCount++;
+      this.codec = null;
       releasedConnection = connection;
-      socket = deallocate(false, true);
+      socket = this.released
+          ? transmitterReleaseConnection()
+          : null;
       if (connection != null) releasedConnection = null;
       callEnd = this.released;
     }
@@ -347,8 +337,11 @@ public final class StreamAllocation {
     Connection releasedConnection;
     synchronized (connectionPool) {
       releasedConnection = connection;
-      socket = deallocate(true, false);
-      if (connection != null) releasedConnection = null;
+      this.released = true;
+      socket = connection != null && this.codec == null
+          ? transmitterReleaseConnection()
+          : null;
+      if (connection != null || !reportedAcquired) releasedConnection = null;
     }
     closeQuietly(socket);
     if (releasedConnection != null) {
@@ -360,30 +353,6 @@ public final class StreamAllocation {
         eventListener.callEnd(call);
       }
     }
-  }
-
-  /**
-   * Releases resources held by this allocation. If sufficient resources are allocated, the
-   * connection will be detached or closed. Callers must be synchronized on the connection pool.
-   *
-   * <p>Returns a closeable that the caller should pass to {@link Util#closeQuietly} upon completion
-   * of the synchronized block. (We don't do I/O while synchronized on the connection pool.)
-   */
-  private Socket deallocate(boolean released, boolean streamFinished) {
-    assert (Thread.holdsLock(connectionPool));
-
-    if (streamFinished) {
-      this.codec = null;
-    }
-    if (released) {
-      this.released = true;
-    }
-    if (connection != null) {
-      if (this.codec == null && (this.released || connection.noNewStreams)) {
-        return transmitterReleaseConnection();
-      }
-    }
-    return null;
   }
 
   public void cancel() {
@@ -402,16 +371,15 @@ public final class StreamAllocation {
   }
 
   public void streamFailed(@Nullable IOException e) {
-    Socket socket;
-    Connection releasedConnection;
-
     synchronized (connectionPool) {
+      if (released) throw new IllegalStateException();
+
       if (e instanceof StreamResetException) {
         ErrorCode errorCode = ((StreamResetException) e).errorCode;
         if (errorCode == ErrorCode.REFUSED_STREAM) {
           // Retry REFUSED_STREAM errors once on the same connection.
-          refusedStreamCount++;
-          if (refusedStreamCount > 1) {
+          connection.refusedStreamCount++;
+          if (connection.refusedStreamCount > 1) {
             connection.noNewStreams = true;
             route = null;
           }
@@ -432,14 +400,8 @@ public final class StreamAllocation {
           route = null;
         }
       }
-      releasedConnection = connection;
-      socket = deallocate(false, true);
-      if (connection != null || !reportedAcquired) releasedConnection = null;
-    }
 
-    closeQuietly(socket);
-    if (releasedConnection != null) {
-      eventListener.connectionReleased(call, releasedConnection);
+      this.codec = null;
     }
   }
 
