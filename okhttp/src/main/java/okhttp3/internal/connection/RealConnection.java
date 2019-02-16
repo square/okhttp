@@ -78,7 +78,7 @@ public final class RealConnection extends Http2Connection.Listener implements Co
   private static final String NPE_THROW_WITH_NULL = "throw with null exception";
   private static final int MAX_TUNNEL_ATTEMPTS = 21;
 
-  private final RealConnectionPool connectionPool;
+  public final RealConnectionPool connectionPool;
   private final Route route;
 
   // The fields below are initialized by connect() and never reassigned.
@@ -99,7 +99,10 @@ public final class RealConnection extends Http2Connection.Listener implements Co
 
   // The fields below track connection state and are guarded by connectionPool.
 
-  /** If true, no new streams can be created on this connection. Once true this is always true. */
+  /**
+   * If true, no new streams can be created on this connection. Once true this is always true.
+   * Guarded by {@link #connectionPool}.
+   */
   public boolean noNewStreams;
 
   public int successCount;
@@ -119,6 +122,14 @@ public final class RealConnection extends Http2Connection.Listener implements Co
   public RealConnection(RealConnectionPool connectionPool, Route route) {
     this.connectionPool = connectionPool;
     this.route = route;
+  }
+
+  /** Prevent further streams from being created on this connection. */
+  public void noNewStreams() {
+    assert (!Thread.holdsLock(connectionPool));
+    synchronized (connectionPool) {
+      noNewStreams = true;
+    }
   }
 
   public static RealConnection testConnection(
@@ -376,7 +387,7 @@ public final class RealConnection extends Http2Connection.Listener implements Co
     // Make an SSL Tunnel on the first message pair of each SSL + proxy connection.
     String requestLine = "CONNECT " + Util.hostHeader(url, true) + " HTTP/1.1";
     while (true) {
-      Http1Codec tunnelConnection = new Http1Codec(null, null, source, sink);
+      Http1Codec tunnelConnection = new Http1Codec(null, this, null, source, sink);
       source.timeout().timeout(readTimeout, MILLISECONDS);
       sink.timeout().timeout(writeTimeout, MILLISECONDS);
       tunnelConnection.writeRequest(tunnelRequest.headers(), requestLine);
@@ -526,14 +537,14 @@ public final class RealConnection extends Http2Connection.Listener implements Co
       socket.setSoTimeout(chain.readTimeoutMillis());
       source.timeout().timeout(chain.readTimeoutMillis(), MILLISECONDS);
       sink.timeout().timeout(chain.writeTimeoutMillis(), MILLISECONDS);
-      return new Http1Codec(client, transmitter, source, sink);
+      return new Http1Codec(client, this, transmitter, source, sink);
     }
   }
 
   public RealWebSocket.Streams newWebSocketStreams(Transmitter transmitter) {
     return new RealWebSocket.Streams(true, source, sink) {
       @Override public void close() throws IOException {
-        transmitter.streamFinished(true, -1L, null);
+        transmitter.responseBodyComplete(-1L, null);
       }
     };
   }

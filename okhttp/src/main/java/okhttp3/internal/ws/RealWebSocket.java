@@ -202,7 +202,7 @@ public final class RealWebSocket implements WebSocket, WebSocketReader.FrameCall
         }
 
         // Promote the HTTP streams into web socket streams.
-        transmitter.noNewStreams(); // Prevent connection pooling!
+        transmitter.noNewStreamsOnConnection();
         Streams streams = transmitter.newWebSocketStreams();
 
         // Process all web socket messages.

@@ -70,7 +70,7 @@ public final class CallServerInterceptor implements Interceptor {
         // If the "Expect: 100-continue" expectation wasn't met, prevent the HTTP/1 connection
         // from being reused. Otherwise we're still obligated to transmit the request body to
         // leave the connection in a consistent state.
-        transmitter.noNewStreams();
+        transmitter.noNewStreamsOnConnection();
       }
     }
 
@@ -122,7 +122,7 @@ public final class CallServerInterceptor implements Interceptor {
 
     if ("close".equalsIgnoreCase(response.request().header("Connection"))
         || "close".equalsIgnoreCase(response.header("Connection"))) {
-      transmitter.noNewStreams();
+      transmitter.noNewStreamsOnConnection();
     }
 
     if ((code == 204 || code == 205) && response.body().contentLength() > 0) {
