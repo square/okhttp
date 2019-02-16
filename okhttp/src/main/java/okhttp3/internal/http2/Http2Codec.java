@@ -27,18 +27,12 @@ import okhttp3.OkHttpClient;
 import okhttp3.Protocol;
 import okhttp3.Request;
 import okhttp3.Response;
-import okhttp3.ResponseBody;
 import okhttp3.internal.Internal;
-import okhttp3.internal.Transmitter;
 import okhttp3.internal.Util;
 import okhttp3.internal.http.HttpCodec;
 import okhttp3.internal.http.HttpHeaders;
-import okhttp3.internal.http.RealResponseBody;
 import okhttp3.internal.http.RequestLine;
 import okhttp3.internal.http.StatusLine;
-import okio.Buffer;
-import okio.ForwardingSource;
-import okio.Okio;
 import okio.Sink;
 import okio.Source;
 
@@ -89,16 +83,13 @@ public final class Http2Codec implements HttpCodec {
       UPGRADE);
 
   private final Interceptor.Chain chain;
-  private final Transmitter transmitter;
   private final Http2Connection connection;
   private volatile Http2Stream stream;
   private final Protocol protocol;
   private volatile boolean canceled;
 
-  public Http2Codec(OkHttpClient client, Interceptor.Chain chain, Transmitter transmitter,
-      Http2Connection connection) {
+  public Http2Codec(OkHttpClient client, Interceptor.Chain chain, Http2Connection connection) {
     this.chain = chain;
-    this.transmitter = transmitter;
     this.connection = connection;
     this.protocol = client.protocols().contains(Protocol.H2_PRIOR_KNOWLEDGE)
         ? Protocol.H2_PRIOR_KNOWLEDGE
@@ -187,11 +178,12 @@ public final class Http2Codec implements HttpCodec {
         .headers(headersBuilder.build());
   }
 
-  @Override public ResponseBody openResponseBody(Response response) throws IOException {
-    String contentType = response.header("Content-Type");
-    long contentLength = HttpHeaders.contentLength(response);
-    Source source = new StreamFinishingSource(stream.getSource());
-    return new RealResponseBody(contentType, contentLength, Okio.buffer(source));
+  @Override public long reportedContentLength(Response response) {
+    return HttpHeaders.contentLength(response);
+  }
+
+  @Override public Source openResponseBodySource(Response response) {
+    return stream.getSource();
   }
 
   @Override public Headers trailers() throws IOException {
@@ -201,38 +193,5 @@ public final class Http2Codec implements HttpCodec {
   @Override public void cancel() {
     canceled = true;
     if (stream != null) stream.closeLater(ErrorCode.CANCEL);
-  }
-
-  class StreamFinishingSource extends ForwardingSource {
-    boolean completed = false;
-    long bytesRead = 0;
-
-    StreamFinishingSource(Source delegate) {
-      super(delegate);
-    }
-
-    @Override public long read(Buffer sink, long byteCount) throws IOException {
-      try {
-        long read = delegate().read(sink, byteCount);
-        if (read > 0) {
-          bytesRead += read;
-        }
-        return read;
-      } catch (IOException e) {
-        endOfInput(e);
-        throw e;
-      }
-    }
-
-    @Override public void close() throws IOException {
-      super.close();
-      endOfInput(null);
-    }
-
-    private void endOfInput(IOException e) {
-      if (completed) return;
-      completed = true;
-      transmitter.responseBodyComplete(bytesRead, e);
-    }
   }
 }

@@ -388,7 +388,7 @@ public final class RealConnection extends Http2Connection.Listener implements Co
     // Make an SSL Tunnel on the first message pair of each SSL + proxy connection.
     String requestLine = "CONNECT " + Util.hostHeader(url, true) + " HTTP/1.1";
     while (true) {
-      Http1Codec tunnelConnection = new Http1Codec(null, this, null, source, sink);
+      Http1Codec tunnelConnection = new Http1Codec(null, null, source, sink);
       source.timeout().timeout(readTimeout, MILLISECONDS);
       sink.timeout().timeout(writeTimeout, MILLISECONDS);
       tunnelConnection.writeRequest(tunnelRequest.headers(), requestLine);
@@ -396,15 +396,7 @@ public final class RealConnection extends Http2Connection.Listener implements Co
       Response response = tunnelConnection.readResponseHeaders(false)
           .request(tunnelRequest)
           .build();
-      // The response body from a CONNECT should be empty, but if it is not then we should consume
-      // it before proceeding.
-      long contentLength = HttpHeaders.contentLength(response);
-      if (contentLength == -1L) {
-        contentLength = 0L;
-      }
-      Source body = tunnelConnection.newFixedLengthSource(contentLength);
-      Util.skipAll(body, Integer.MAX_VALUE, TimeUnit.MILLISECONDS);
-      body.close();
+      tunnelConnection.skipConnectBody(response);
 
       switch (response.code()) {
         case HTTP_OK:
@@ -530,15 +522,14 @@ public final class RealConnection extends Http2Connection.Listener implements Co
     return true; // Success. The URL is supported.
   }
 
-  public HttpCodec newCodec(OkHttpClient client, Interceptor.Chain chain,
-      Transmitter transmitter) throws SocketException {
+  public HttpCodec newCodec(OkHttpClient client, Interceptor.Chain chain) throws SocketException {
     if (http2Connection != null) {
-      return new Http2Codec(client, chain, transmitter, http2Connection);
+      return new Http2Codec(client, chain, http2Connection);
     } else {
       socket.setSoTimeout(chain.readTimeoutMillis());
       source.timeout().timeout(chain.readTimeoutMillis(), MILLISECONDS);
       sink.timeout().timeout(chain.writeTimeoutMillis(), MILLISECONDS);
-      return new Http1Codec(client, this, transmitter, source, sink);
+      return new Http1Codec(client, this, source, sink);
     }
   }
 

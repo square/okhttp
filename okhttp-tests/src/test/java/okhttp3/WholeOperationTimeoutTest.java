@@ -272,7 +272,7 @@ public final class WholeOperationTimeoutTest {
     Call call = client.newCall(request);
     call.timeout().timeout(250, TimeUnit.MILLISECONDS);
     try {
-      Response response = call.execute();
+      call.execute();
       fail();
     } catch (IOException e) {
       assertTrue(call.isCanceled());

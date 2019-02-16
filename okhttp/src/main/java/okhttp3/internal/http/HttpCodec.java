@@ -19,8 +19,8 @@ import java.io.IOException;
 import okhttp3.Headers;
 import okhttp3.Request;
 import okhttp3.Response;
-import okhttp3.ResponseBody;
 import okio.Sink;
+import okio.Source;
 
 /** Encodes HTTP requests and decodes HTTP responses. */
 public interface HttpCodec {
@@ -51,8 +51,9 @@ public interface HttpCodec {
    */
   Response.Builder readResponseHeaders(boolean expectContinue) throws IOException;
 
-  /** Returns a stream that reads the response body. */
-  ResponseBody openResponseBody(Response response) throws IOException;
+  long reportedContentLength(Response response) throws IOException;
+
+  Source openResponseBodySource(Response response) throws IOException;
 
   /** Returns the trailers after the HTTP response. May be empty. */
   Headers trailers() throws IOException;

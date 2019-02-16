@@ -115,7 +115,7 @@ public final class StreamAllocation {
     try {
       RealConnection resultConnection = findHealthyConnection(connectTimeout, readTimeout,
           writeTimeout, pingIntervalMillis, connectionRetryEnabled, doExtensiveHealthChecks);
-      HttpCodec resultCodec = resultConnection.newCodec(client, chain, transmitter);
+      HttpCodec resultCodec = resultConnection.newCodec(client, chain);
 
       synchronized (connectionPool) {
         codec = resultCodec;
@@ -303,11 +303,12 @@ public final class StreamAllocation {
       eventListener.connectionReleased(call, releasedConnection);
     }
 
-    if (e != null) {
+    if (callEnd) {
       e = Internal.instance.timeoutExit(call, e);
+    }
+    if (e != null) {
       eventListener.callFailed(call, e);
     } else if (callEnd) {
-      Internal.instance.timeoutExit(call, null);
       eventListener.callEnd(call);
     }
   }
