@@ -40,10 +40,14 @@ import okhttp3.internal.connection.RealConnection;
 import okhttp3.internal.connection.RealConnectionPool;
 import okhttp3.internal.connection.StreamAllocation;
 import okhttp3.internal.http.HttpCodec;
+import okhttp3.internal.http.RealResponseBody;
 import okhttp3.internal.ws.RealWebSocket;
 import okio.Buffer;
 import okio.ForwardingSink;
+import okio.ForwardingSource;
+import okio.Okio;
 import okio.Sink;
+import okio.Source;
 
 import static okhttp3.internal.Util.sameConnection;
 
@@ -217,7 +221,12 @@ public final class Transmitter {
 
   public ResponseBody openResponseBody(Response response) throws IOException {
     streamAllocation.eventListener.responseBodyStart(streamAllocation.call);
-    return streamAllocation.codec().openResponseBody(response);
+    String contentType = response.header("Content-Type");
+    HttpCodec codec = streamAllocation.codec();
+    long contentLength = codec.reportedContentLength(response);
+    Source rawSource = codec.openResponseBodySource(response);
+    ResponseBodySource source = new ResponseBodySource(rawSource, contentLength);
+    return new RealResponseBody(contentType, contentLength, Okio.buffer(source));
   }
 
   public DeferredTrailers deferredTrailers() {
@@ -252,27 +261,22 @@ public final class Transmitter {
     }
   }
 
-  @Override public String toString() {
-    return call.request().url().redact();
-  }
-
   /** A request body that fires events when it completes. */
   private final class RequestBodySink extends ForwardingSink {
-    private boolean closed;
-    private long bytesReceived;
-
     /** The exact number of bytes to be written, or -1L if that is unknown. */
-    private long bytesExpected;
+    private long contentLength;
+    private long bytesReceived;
+    private boolean closed;
 
-    RequestBodySink(Sink delegate, long bytesExpected) {
+    RequestBodySink(Sink delegate, long contentLength) {
       super(delegate);
-      this.bytesExpected = bytesExpected;
+      this.contentLength = contentLength;
     }
 
     @Override public void write(Buffer source, long byteCount) throws IOException {
       if (closed) throw new IllegalStateException("closed");
-      if (bytesExpected != -1L && bytesReceived + byteCount > bytesExpected) {
-        throw new ProtocolException("expected " + bytesExpected
+      if (contentLength != -1L && bytesReceived + byteCount > contentLength) {
+        throw new ProtocolException("expected " + contentLength
             + " bytes but received " + (bytesReceived + byteCount));
       }
       super.write(source, byteCount);
@@ -282,11 +286,68 @@ public final class Transmitter {
     @Override public void close() throws IOException {
       if (closed) return;
       closed = true;
-      if (bytesExpected != -1L && bytesReceived != bytesExpected) {
+      if (contentLength != -1L && bytesReceived != contentLength) {
         throw new ProtocolException("unexpected end of stream");
       }
       eventListener.requestBodyEnd(call, bytesReceived);
       super.close();
+    }
+  }
+
+  /** A response body that fires events when it completes. */
+  final class ResponseBodySource extends ForwardingSource {
+    private long contentLength;
+    private long bytesReceived;
+    private boolean completed;
+    private boolean closed;
+
+    ResponseBodySource(Source delegate, long contentLength) {
+      super(delegate);
+      this.contentLength = contentLength;
+
+      if (contentLength == 0L) {
+        complete(null);
+      }
+    }
+
+    @Override public long read(Buffer sink, long byteCount) throws IOException {
+      if (closed) throw new IllegalStateException("closed");
+      try {
+        long read = delegate().read(sink, byteCount);
+        if (read == -1L) {
+          complete(null);
+          return -1L;
+        }
+
+        long newBytesReceived = bytesReceived + read;
+        if (contentLength != -1L && newBytesReceived > contentLength) {
+          throw new ProtocolException("expected " + contentLength
+              + " bytes but received " + newBytesReceived);
+        }
+
+        bytesReceived = newBytesReceived;
+        if (newBytesReceived == contentLength) {
+          complete(null);
+        }
+
+        return read;
+      } catch (IOException e) {
+        complete(e);
+        throw e;
+      }
+    }
+
+    @Override public void close() throws IOException {
+      if (closed) return;
+      closed = true;
+      super.close();
+      complete(null);
+    }
+
+    void complete(IOException e) {
+      if (completed) return;
+      completed = true;
+      responseBodyComplete(bytesReceived, e);
     }
   }
 
