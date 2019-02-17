@@ -96,7 +96,7 @@ public final class ConnectionPoolTest {
       Call call = client.newCall(newRequest(addressA));
       Transmitter transmitter = new Transmitter(client, call);
       transmitter.prepareToConnect(call.request());
-      transmitter.acquireConnection(c1, true);
+      transmitter.acquireConnection(c1);
     }
 
     // Running at time 50, the pool returns that nothing can be evicted until time 150.
@@ -195,7 +195,7 @@ public final class ConnectionPoolTest {
       Call call = client.newCall(newRequest(connection.route().address()));
       Transmitter transmitter = new Transmitter(client, call);
       transmitter.prepareToConnect(call.request());
-      transmitter.acquireConnection(connection, true);
+      transmitter.acquireConnection(connection);
     }
   }
 
