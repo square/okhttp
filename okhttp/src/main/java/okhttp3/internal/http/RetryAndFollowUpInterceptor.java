@@ -81,12 +81,11 @@ public final class RetryAndFollowUpInterceptor implements Interceptor {
       }
 
       Response response;
-      boolean releaseConnection = true;
+      boolean success = false;
       try {
         response = realChain.proceed(request, transmitter, null);
-        releaseConnection = false;
+        success = true;
       } catch (RouteException e) {
-        releaseConnection = false;
         // The attempt to connect via a route failed. The request will not have been sent.
         if (!recover(e.getLastConnectException(), transmitter, false, request)) {
           throw e.getFirstConnectException();
@@ -95,13 +94,12 @@ public final class RetryAndFollowUpInterceptor implements Interceptor {
       } catch (IOException e) {
         // An attempt to communicate with a server failed. The request may have been sent.
         boolean requestSendStarted = !(e instanceof ConnectionShutdownException);
-        releaseConnection = false;
         if (!recover(e, transmitter, requestSendStarted, request)) throw e;
         continue;
       } finally {
-        // We're throwing an unchecked exception. Release any resources.
-        if (releaseConnection) {
-          transmitter.streamFailed(null);
+        // The network call threw an exception. Release any resources.
+        if (!success) {
+          transmitter.releaseStreamForException();
         }
       }
 
@@ -153,8 +151,6 @@ public final class RetryAndFollowUpInterceptor implements Interceptor {
    */
   private boolean recover(IOException e, Transmitter transmitter,
       boolean requestSendStarted, Request userRequest) {
-    transmitter.streamFailed(e);
-
     // The application layer has forbidden retries.
     if (!client.retryOnConnectionFailure()) return false;
 
@@ -165,7 +161,7 @@ public final class RetryAndFollowUpInterceptor implements Interceptor {
     if (!isRecoverable(e, requestSendStarted)) return false;
 
     // No more routes to attempt.
-    if (!transmitter.hasMoreRoutes()) return false;
+    if (!transmitter.canRetry()) return false;
 
     // For failure recovery, use the same route selector with a new connection.
     return true;

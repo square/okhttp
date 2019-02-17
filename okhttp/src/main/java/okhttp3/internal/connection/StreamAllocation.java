@@ -32,9 +32,6 @@ import okhttp3.internal.Transmitter;
 import okhttp3.internal.Transmitter.TransmitterReference;
 import okhttp3.internal.Util;
 import okhttp3.internal.http.HttpCodec;
-import okhttp3.internal.http2.ConnectionShutdownException;
-import okhttp3.internal.http2.ErrorCode;
-import okhttp3.internal.http2.StreamResetException;
 
 import static okhttp3.internal.Util.closeQuietly;
 
@@ -82,8 +79,8 @@ public final class StreamAllocation {
   public final Call call;
   public final EventListener eventListener;
   private final Object callStackTrace;
+
   private RouteSelector.Selection routeSelection;
-  private Route route;
 
   // State guarded by connectionPool.
   private final RouteSelector routeSelector;
@@ -91,6 +88,7 @@ public final class StreamAllocation {
   private boolean reportedAcquired;
   private boolean released;
   private boolean canceled;
+  private boolean hasStreamFailure;
   private HttpCodec codec;
 
   public StreamAllocation(Transmitter transmitter, RealConnectionPool connectionPool,
@@ -100,7 +98,8 @@ public final class StreamAllocation {
     this.address = address;
     this.call = call;
     this.eventListener = eventListener;
-    this.routeSelector = new RouteSelector(address, routeDatabase(), call, eventListener);
+    this.routeSelector = new RouteSelector(
+        address, connectionPool.routeDatabase, call, eventListener);
     this.callStackTrace = callStackTrace;
   }
 
@@ -121,7 +120,11 @@ public final class StreamAllocation {
         codec = resultCodec;
         return resultCodec;
       }
+    } catch (RouteException e) {
+      streamFailed(e.getLastConnectException());
+      throw e;
     } catch (IOException e) {
+      streamFailed(e);
       throw new RouteException(e);
     }
   }
@@ -171,6 +174,10 @@ public final class StreamAllocation {
       if (codec != null) throw new IllegalStateException("codec != null");
       if (canceled) throw new IOException("Canceled");
 
+      Route previousRoute = retryCurrentRoute()
+          ? connection.route()
+          : null;
+
       // Attempt to use an already-allocated connection. We need to be careful here because our
       // already-allocated connection may have been restricted from creating new streams.
       releasedConnection = connection;
@@ -195,7 +202,7 @@ public final class StreamAllocation {
           foundPooledConnection = true;
           result = connection;
         } else {
-          selectedRoute = route;
+          selectedRoute = previousRoute;
         }
       }
     }
@@ -231,7 +238,6 @@ public final class StreamAllocation {
           if (connectionPool.transmitterAcquirePooledConnection(address, transmitter, route)) {
             foundPooledConnection = true;
             result = connection;
-            this.route = route;
             break;
           }
         }
@@ -244,7 +250,7 @@ public final class StreamAllocation {
 
         // Create a connection and assign it to this allocation immediately. This makes it possible
         // for an asynchronous cancel() to interrupt the handshake we're about to do.
-        route = selectedRoute;
+        hasStreamFailure = false;
         result = new RealConnection(connectionPool, selectedRoute);
         transmitterAcquireConnection(result, false);
       }
@@ -259,7 +265,7 @@ public final class StreamAllocation {
     // Do TCP + TLS handshakes. This is a blocking operation.
     result.connect(connectTimeout, readTimeout, writeTimeout, pingIntervalMillis,
         connectionRetryEnabled, call, eventListener);
-    routeDatabase().connected(result.route());
+    connectionPool.routeDatabase.connected(result.route());
 
     Socket socket = null;
     synchronized (connectionPool) {
@@ -319,12 +325,10 @@ public final class StreamAllocation {
     }
   }
 
-  private RouteDatabase routeDatabase() {
-    return connectionPool.routeDatabase;
-  }
-
   public Route route() {
-    return route;
+    synchronized (connectionPool) {
+      return connection != null ? connection.route() : null;
+    }
   }
 
   public RealConnection connection() {
@@ -371,38 +375,19 @@ public final class StreamAllocation {
     }
   }
 
-  public void streamFailed(@Nullable IOException e) {
+  public void releaseStreamForException() {
     synchronized (connectionPool) {
       if (released) throw new IllegalStateException();
-
-      if (e instanceof StreamResetException) {
-        ErrorCode errorCode = ((StreamResetException) e).errorCode;
-        if (errorCode == ErrorCode.REFUSED_STREAM) {
-          // Retry REFUSED_STREAM errors once on the same connection.
-          connection.refusedStreamCount++;
-          if (connection.refusedStreamCount > 1) {
-            connection.noNewStreams = true;
-            route = null;
-          }
-        } else if (errorCode != ErrorCode.CANCEL) {
-          // Keep the connection for CANCEL errors. Everything else wants a fresh connection.
-          connection.noNewStreams = true;
-          route = null;
-        }
-      } else if (connection != null
-          && (!connection.isMultiplexed() || e instanceof ConnectionShutdownException)) {
-        connection.noNewStreams = true;
-
-        // If this route hasn't completed a call, avoid it for new connections.
-        if (connection.successCount == 0) {
-          if (route != null && e != null) {
-            routeSelector.connectFailed(route, e);
-          }
-          route = null;
-        }
-      }
-
       this.codec = null;
+    }
+  }
+
+  public void streamFailed(IOException e) {
+    synchronized (connectionPool) {
+      hasStreamFailure = true;
+      if (connection != null) {
+        connection.trackFailure(e);
+      }
     }
   }
 
@@ -473,10 +458,26 @@ public final class StreamAllocation {
     return socket;
   }
 
-  public boolean hasMoreRoutes() {
-    return route != null
-        || (routeSelection != null && routeSelection.hasNext())
-        || routeSelector.hasNext();
+  public boolean canRetry() {
+    synchronized (connectionPool) {
+      // Don't try if the failure wasn't our fault!
+      if (!hasStreamFailure) return false;
+
+      return retryCurrentRoute()
+          || (routeSelection != null && routeSelection.hasNext())
+          || routeSelector.hasNext();
+    }
+  }
+
+  /**
+   * Return true if the route used for the current connection should be retried, even if the
+   * connection itself is unhealthy. The biggest gotcha here is that we shouldn't reuse routes from
+   * coalesced connections.
+   */
+  private boolean retryCurrentRoute() {
+    return connection != null
+        && connection.routeFailureCount == 0
+        && Util.sameConnection(connection.route().address().url(), address.url());
   }
 
   @Override public String toString() {

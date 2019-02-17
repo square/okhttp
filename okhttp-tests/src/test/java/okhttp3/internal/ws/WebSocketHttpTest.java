@@ -165,6 +165,7 @@ public final class WebSocketHttpTest {
     newWebSocket();
 
     serverListener.assertOpen();
+    serverListener.assertFailure(EOFException.class);
     serverListener.assertExhausted();
     clientListener.assertFailure(e);
   }

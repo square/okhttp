@@ -111,7 +111,7 @@ final class RealCall implements Call {
   }
 
   private void captureCallStackTrace() {
-    transmitter.setCallStackTrace(
+    transmitter.initCallStackTrace(
         Platform.get().getStackTraceForCloseable("response.body().close()"));
   }
 

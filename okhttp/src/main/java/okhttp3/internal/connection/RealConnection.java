@@ -30,7 +30,6 @@ import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 import javax.net.ssl.SSLPeerUnverifiedException;
 import javax.net.ssl.SSLSession;
@@ -55,19 +54,19 @@ import okhttp3.internal.Transmitter;
 import okhttp3.internal.Util;
 import okhttp3.internal.Version;
 import okhttp3.internal.http.HttpCodec;
-import okhttp3.internal.http.HttpHeaders;
 import okhttp3.internal.http1.Http1Codec;
+import okhttp3.internal.http2.ConnectionShutdownException;
 import okhttp3.internal.http2.ErrorCode;
 import okhttp3.internal.http2.Http2Codec;
 import okhttp3.internal.http2.Http2Connection;
 import okhttp3.internal.http2.Http2Stream;
+import okhttp3.internal.http2.StreamResetException;
 import okhttp3.internal.platform.Platform;
 import okhttp3.internal.tls.OkHostnameVerifier;
 import okhttp3.internal.ws.RealWebSocket;
 import okio.BufferedSink;
 import okio.BufferedSource;
 import okio.Okio;
-import okio.Source;
 
 import static java.net.HttpURLConnection.HTTP_OK;
 import static java.net.HttpURLConnection.HTTP_PROXY_AUTH;
@@ -104,6 +103,12 @@ public final class RealConnection extends Http2Connection.Listener implements Co
    * Guarded by {@link #connectionPool}.
    */
   public boolean noNewStreams;
+
+  /**
+   * The number of times there was a problem establishing a stream that could be due to route
+   * chosen. Guarded by {@link #connectionPool}.
+   */
+  public int routeFailureCount;
 
   public int successCount;
   public int refusedStreamCount;
@@ -524,7 +529,7 @@ public final class RealConnection extends Http2Connection.Listener implements Co
 
   public HttpCodec newCodec(OkHttpClient client, Interceptor.Chain chain) throws SocketException {
     if (http2Connection != null) {
-      return new Http2Codec(client, chain, http2Connection);
+      return new Http2Codec(client, this, chain, http2Connection);
     } else {
       socket.setSoTimeout(chain.readTimeoutMillis());
       source.timeout().timeout(chain.readTimeoutMillis(), MILLISECONDS);
@@ -534,6 +539,7 @@ public final class RealConnection extends Http2Connection.Listener implements Co
   }
 
   public RealWebSocket.Streams newWebSocketStreams(Transmitter transmitter) {
+    noNewStreams();
     return new RealWebSocket.Streams(true, source, sink) {
       @Override public void close() throws IOException {
         transmitter.responseBodyComplete(-1L, null);
@@ -608,6 +614,40 @@ public final class RealConnection extends Http2Connection.Listener implements Co
    */
   public boolean isMultiplexed() {
     return http2Connection != null;
+  }
+
+  /**
+   * Track a failure using this connection. This may prevent both the connection and its route from
+   * being used for future streams.
+   */
+  void trackFailure(@Nullable IOException e) {
+    assert (Thread.holdsLock(connectionPool));
+
+    if (e instanceof StreamResetException) {
+      ErrorCode errorCode = ((StreamResetException) e).errorCode;
+      if (errorCode == ErrorCode.REFUSED_STREAM) {
+        // Retry REFUSED_STREAM errors once on the same connection.
+        refusedStreamCount++;
+        if (refusedStreamCount > 1) {
+          noNewStreams = true;
+          routeFailureCount++;
+        }
+      } else if (errorCode != ErrorCode.CANCEL) {
+        // Keep the connection for CANCEL errors. Everything else wants a fresh connection.
+        noNewStreams = true;
+        routeFailureCount++;
+      }
+    } else if (!isMultiplexed() || e instanceof ConnectionShutdownException) {
+      noNewStreams = true;
+
+      // If this route hasn't completed a call, avoid it for new connections.
+      if (successCount == 0) {
+        if (e != null) {
+          connectionPool.connectFailed(route, e);
+        }
+        routeFailureCount++;
+      }
+    }
   }
 
   @Override public Protocol protocol() {
