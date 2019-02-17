@@ -83,18 +83,11 @@ final class RealCall implements Call {
       if (executed) throw new IllegalStateException("Already Executed");
       executed = true;
     }
-    captureCallStackTrace();
     timeout.enter();
     transmitter.callStart();
     try {
       client.dispatcher().executed(this);
-      Response result = getResponseWithInterceptorChain();
-      if (result == null) throw new IOException("Canceled");
-      return result;
-    } catch (IOException e) {
-      e = timeoutExit(e);
-      transmitter.callFailed(e);
-      throw e;
+      return getResponseWithInterceptorChain();
     } finally {
       client.dispatcher().finished(this);
     }
@@ -110,17 +103,11 @@ final class RealCall implements Call {
     return e;
   }
 
-  private void captureCallStackTrace() {
-    transmitter.initCallStackTrace(
-        Platform.get().getStackTraceForCloseable("response.body().close()"));
-  }
-
   @Override public void enqueue(Callback responseCallback) {
     synchronized (this) {
       if (executed) throw new IllegalStateException("Already Executed");
       executed = true;
     }
-    captureCallStackTrace();
     transmitter.callStart();
     client.dispatcher().enqueue(new AsyncCall(responseCallback));
   }
@@ -144,10 +131,6 @@ final class RealCall implements Call {
   @SuppressWarnings("CloneDoesntCallSuperClone") // We are a final type & this saves clearing state.
   @Override public RealCall clone() {
     return RealCall.newRealCall(client, originalRequest, forWebSocket);
-  }
-
-  Transmitter transmitter() {
-    return transmitter;
   }
 
   final class AsyncCall extends NamedRunnable {
@@ -192,7 +175,7 @@ final class RealCall implements Call {
       } catch (RejectedExecutionException e) {
         InterruptedIOException ioException = new InterruptedIOException("executor rejected");
         ioException.initCause(e);
-        transmitter.callFailed(ioException);
+        transmitter.noMoreExchanges(ioException);
         responseCallback.onFailure(RealCall.this, ioException);
       } finally {
         if (!success) {
@@ -206,20 +189,14 @@ final class RealCall implements Call {
       timeout.enter();
       try {
         Response response = getResponseWithInterceptorChain();
-        if (transmitter.isCanceled()) {
-          signalledCallback = true;
-          responseCallback.onFailure(RealCall.this, new IOException("Canceled"));
-        } else {
-          signalledCallback = true;
-          responseCallback.onResponse(RealCall.this, response);
-        }
+        if (transmitter.isCanceled()) throw new IOException("Canceled");
+        signalledCallback = true;
+        responseCallback.onResponse(RealCall.this, response);
       } catch (IOException e) {
-        e = timeoutExit(e);
         if (signalledCallback) {
           // Do not signal the callback twice!
           Platform.get().log(INFO, "Callback failure for " + toLoggableString(), e);
         } else {
-          transmitter.callFailed(e);
           responseCallback.onFailure(RealCall.this, e);
         }
       } finally {
@@ -259,10 +236,14 @@ final class RealCall implements Call {
         originalRequest, this, client.connectTimeoutMillis(),
         client.readTimeoutMillis(), client.writeTimeoutMillis());
 
+    IOException ioException = null;
     try {
       return chain.proceed(originalRequest);
+    } catch (IOException e) {
+      ioException = e;
+      throw e;
     } finally {
-      transmitter.noMoreStreamsOnCall();
+      transmitter.noMoreExchanges(ioException);
     }
   }
 }

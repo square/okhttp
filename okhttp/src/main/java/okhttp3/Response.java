@@ -20,7 +20,7 @@ import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 import javax.annotation.Nullable;
-import okhttp3.internal.DeferredTrailers;
+import okhttp3.internal.connection.Exchange;
 import okhttp3.internal.http.HttpHeaders;
 import okio.Buffer;
 import okio.BufferedSource;
@@ -54,7 +54,7 @@ public final class Response implements Closeable {
   final @Nullable Response priorResponse;
   final long sentRequestAtMillis;
   final long receivedResponseAtMillis;
-  final @Nullable DeferredTrailers deferredTrailers;
+  final @Nullable Exchange exchange;
 
   private volatile @Nullable CacheControl cacheControl; // Lazily initialized.
 
@@ -71,7 +71,7 @@ public final class Response implements Closeable {
     this.priorResponse = builder.priorResponse;
     this.sentRequestAtMillis = builder.sentRequestAtMillis;
     this.receivedResponseAtMillis = builder.receivedResponseAtMillis;
-    this.deferredTrailers = builder.deferredTrailers;
+    this.exchange = builder.exchange;
   }
 
   /**
@@ -144,7 +144,8 @@ public final class Response implements Closeable {
    * before the entire HTTP response body has been consumed.
    */
   public Headers trailers() throws IOException {
-    return deferredTrailers.trailers();
+    if (exchange == null) throw new IllegalStateException("trailers not available");
+    return exchange.trailers();
   }
 
   /**
@@ -314,7 +315,7 @@ public final class Response implements Closeable {
     @Nullable Response priorResponse;
     long sentRequestAtMillis;
     long receivedResponseAtMillis;
-    @Nullable DeferredTrailers deferredTrailers;
+    @Nullable Exchange exchange;
 
     public Builder() {
       headers = new Headers.Builder();
@@ -333,7 +334,7 @@ public final class Response implements Closeable {
       this.priorResponse = response.priorResponse;
       this.sentRequestAtMillis = response.sentRequestAtMillis;
       this.receivedResponseAtMillis = response.receivedResponseAtMillis;
-      this.deferredTrailers = response.deferredTrailers;
+      this.exchange = response.exchange;
     }
 
     public Builder request(Request request) {
@@ -441,8 +442,8 @@ public final class Response implements Closeable {
       return this;
     }
 
-    void initDeferredTrailers(DeferredTrailers deferredTrailers) {
-      this.deferredTrailers = deferredTrailers;
+    void initExchange(Exchange deferredTrailers) {
+      this.exchange = deferredTrailers;
     }
 
     public Response build() {

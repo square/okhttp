@@ -35,11 +35,10 @@ import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
-import okhttp3.internal.DeferredTrailers;
 import okhttp3.internal.Internal;
-import okhttp3.internal.Transmitter;
 import okhttp3.internal.Util;
 import okhttp3.internal.cache.InternalCache;
+import okhttp3.internal.connection.Exchange;
 import okhttp3.internal.connection.RealConnectionPool;
 import okhttp3.internal.platform.Platform;
 import okhttp3.internal.proxy.NullProxySelector;
@@ -164,10 +163,6 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
         return e.getMessage().startsWith(HttpUrl.Builder.INVALID_HOST);
       }
 
-      @Override public Transmitter transmitter(Call call) {
-        return ((RealCall) call).transmitter();
-      }
-
       @Override public @Nullable IOException timeoutExit(Call call, @Nullable IOException e) {
         return ((RealCall) call).timeoutExit(e);
       }
@@ -176,9 +171,13 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
         return RealCall.newRealCall(client, originalRequest, true);
       }
 
-      @Override public void initDeferredTrailers(
-          Response.Builder responseBuilder, DeferredTrailers deferredTrailers) {
-        responseBuilder.initDeferredTrailers(deferredTrailers);
+      @Override public void initExchange(
+          Response.Builder responseBuilder, Exchange exchange) {
+        responseBuilder.initExchange(exchange);
+      }
+
+      @Override public @Nullable Exchange exchange(Response response) {
+        return response.exchange;
       }
     };
   }

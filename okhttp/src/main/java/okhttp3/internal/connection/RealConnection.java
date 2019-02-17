@@ -99,10 +99,10 @@ public final class RealConnection extends Http2Connection.Listener implements Co
   // The fields below track connection state and are guarded by connectionPool.
 
   /**
-   * If true, no new streams can be created on this connection. Once true this is always true.
+   * If true, no new exchanges can be created on this connection. Once true this is always true.
    * Guarded by {@link #connectionPool}.
    */
-  public boolean noNewStreams;
+  public boolean noNewExchanges;
 
   /**
    * The number of times there was a problem establishing a stream that could be due to route
@@ -130,11 +130,11 @@ public final class RealConnection extends Http2Connection.Listener implements Co
     this.route = route;
   }
 
-  /** Prevent further streams from being created on this connection. */
-  public void noNewStreams() {
+  /** Prevent further exchanges from being created on this connection. */
+  public void noNewExchanges() {
     assert (!Thread.holdsLock(connectionPool));
     synchronized (connectionPool) {
-      noNewStreams = true;
+      noNewExchanges = true;
     }
   }
 
@@ -472,8 +472,8 @@ public final class RealConnection extends Http2Connection.Listener implements Co
    * {@code route} is the resolved route for a connection.
    */
   public boolean isEligible(Address address, @Nullable List<Route> routes) {
-    // If this connection is not accepting new streams, we're done.
-    if (transmitters.size() >= allocationLimit || noNewStreams) return false;
+    // If this connection is not accepting new exchanges, we're done.
+    if (transmitters.size() >= allocationLimit || noNewExchanges) return false;
 
     // If the non-host fields of the address don't overlap, we're done.
     if (!Internal.instance.equalsNonHost(this.route.address(), address)) return false;
@@ -548,11 +548,12 @@ public final class RealConnection extends Http2Connection.Listener implements Co
     }
   }
 
-  public RealWebSocket.Streams newWebSocketStreams(Transmitter transmitter) {
-    noNewStreams();
+  public RealWebSocket.Streams newWebSocketStreams(Exchange exchange) throws SocketException {
+    socket.setSoTimeout(0);
+    noNewExchanges();
     return new RealWebSocket.Streams(true, source, sink) {
       @Override public void close() throws IOException {
-        transmitter.responseBodyComplete(-1L, null);
+        exchange.responseBodyComplete(-1L, null);
       }
     };
   }
@@ -628,34 +629,35 @@ public final class RealConnection extends Http2Connection.Listener implements Co
 
   /**
    * Track a failure using this connection. This may prevent both the connection and its route from
-   * being used for future streams.
+   * being used for future exchanges.
    */
   void trackFailure(@Nullable IOException e) {
-    assert (Thread.holdsLock(connectionPool));
-
-    if (e instanceof StreamResetException) {
-      ErrorCode errorCode = ((StreamResetException) e).errorCode;
-      if (errorCode == ErrorCode.REFUSED_STREAM) {
-        // Retry REFUSED_STREAM errors once on the same connection.
-        refusedStreamCount++;
-        if (refusedStreamCount > 1) {
-          noNewStreams = true;
+    assert (!Thread.holdsLock(connectionPool));
+    synchronized (connectionPool) {
+      if (e instanceof StreamResetException) {
+        ErrorCode errorCode = ((StreamResetException) e).errorCode;
+        if (errorCode == ErrorCode.REFUSED_STREAM) {
+          // Retry REFUSED_STREAM errors once on the same connection.
+          refusedStreamCount++;
+          if (refusedStreamCount > 1) {
+            noNewExchanges = true;
+            routeFailureCount++;
+          }
+        } else if (errorCode != ErrorCode.CANCEL) {
+          // Keep the connection for CANCEL errors. Everything else wants a fresh connection.
+          noNewExchanges = true;
           routeFailureCount++;
         }
-      } else if (errorCode != ErrorCode.CANCEL) {
-        // Keep the connection for CANCEL errors. Everything else wants a fresh connection.
-        noNewStreams = true;
-        routeFailureCount++;
-      }
-    } else if (!isMultiplexed() || e instanceof ConnectionShutdownException) {
-      noNewStreams = true;
+      } else if (!isMultiplexed() || e instanceof ConnectionShutdownException) {
+        noNewExchanges = true;
 
-      // If this route hasn't completed a call, avoid it for new connections.
-      if (successCount == 0) {
-        if (e != null) {
-          connectionPool.connectFailed(route, e);
+        // If this route hasn't completed a call, avoid it for new connections.
+        if (successCount == 0) {
+          if (e != null) {
+            connectionPool.connectFailed(route, e);
+          }
+          routeFailureCount++;
         }
-        routeFailureCount++;
       }
     }
   }
