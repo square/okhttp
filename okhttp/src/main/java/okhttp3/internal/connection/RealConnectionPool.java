@@ -19,7 +19,6 @@ package okhttp3.internal.connection;
 import java.io.IOException;
 import java.lang.ref.Reference;
 import java.net.Proxy;
-import java.net.Socket;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
@@ -96,36 +95,23 @@ public final class RealConnectionPool {
   }
 
   /**
-   * Attempts to acquire a recycled connection to {@code address} for {@code transmitter}. If
-   * non-null {@code route} is the resolved route for a connection. Returns true if a connection was
-   * acquired.
+   * Attempts to acquire a recycled connection to {@code address} for {@code transmitter}. Returns
+   * true if a connection was acquired.
+   *
+   * <p>If {@code routes} is non-null these are the resolved routes (ie. IP addresses) for the
+   * connection. This is used to coalesce related domains to the same HTTP/2 connection, such as
+   * {@code square.com} and {@code square.ca}.
    */
-  boolean transmitterAcquirePooledConnection(
-      Address address, Transmitter transmitter, @Nullable Route route) {
+  boolean transmitterAcquirePooledConnection(Address address, Transmitter transmitter,
+      @Nullable List<Route> routes, boolean requireMultiplexed) {
     assert (Thread.holdsLock(this));
     for (RealConnection connection : connections) {
-      if (connection.isEligible(address, route)) {
-        transmitter.acquireConnection(connection, true);
-        return true;
-      }
+      if (requireMultiplexed && !connection.isMultiplexed()) continue;
+      if (!connection.isEligible(address, routes)) continue;
+      transmitter.acquireConnection(connection);
+      return true;
     }
     return false;
-  }
-
-  /**
-   * Replaces the connection held by {@code streamAllocation} with a shared connection if possible.
-   * This recovers when multiple multiplexed connections are created concurrently.
-   */
-  @Nullable Socket deduplicate(Address address, Transmitter transmitter) {
-    assert (Thread.holdsLock(this));
-    for (RealConnection connection : connections) {
-      if (connection.isEligible(address, null)
-          && connection.isMultiplexed()
-          && connection != transmitter.connection()) {
-        return transmitter.releaseAndAcquire(connection);
-      }
-    }
-    return null;
   }
 
   void put(RealConnection connection) {

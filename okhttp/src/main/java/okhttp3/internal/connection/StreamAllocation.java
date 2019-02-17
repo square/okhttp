@@ -84,8 +84,8 @@ public final class StreamAllocation {
 
   // State guarded by connectionPool.
   private final RouteSelector routeSelector;
+  private RealConnection connectingConnection;
   private RealConnection connection;
-  private boolean reportedAcquired;
   private boolean released;
   private boolean canceled;
   private boolean hasStreamFailure;
@@ -191,14 +191,9 @@ public final class StreamAllocation {
         releasedConnection = null;
       }
 
-      if (!reportedAcquired) {
-        // If the connection was never reported acquired, don't report it as released!
-        releasedConnection = null;
-      }
-
       if (result == null) {
         // Attempt to get a connection from the pool.
-        if (connectionPool.transmitterAcquirePooledConnection(address, transmitter, null)) {
+        if (connectionPool.transmitterAcquirePooledConnection(address, transmitter, null, false)) {
           foundPooledConnection = true;
           result = connection;
         } else {
@@ -226,20 +221,17 @@ public final class StreamAllocation {
       routeSelection = routeSelector.next();
     }
 
+    List<Route> routes = null;
     synchronized (connectionPool) {
       if (canceled) throw new IOException("Canceled");
 
       if (newRouteSelection) {
         // Now that we have a set of IP addresses, make another attempt at getting a connection from
         // the pool. This could match due to connection coalescing.
-        List<Route> routes = routeSelection.getAll();
-        for (int i = 0, size = routes.size(); i < size; i++) {
-          Route route = routes.get(i);
-          if (connectionPool.transmitterAcquirePooledConnection(address, transmitter, route)) {
-            foundPooledConnection = true;
-            result = connection;
-            break;
-          }
+        routes = routeSelection.getAll();
+        if (connectionPool.transmitterAcquirePooledConnection(address, transmitter, routes, false)) {
+          foundPooledConnection = true;
+          result = connection;
         }
       }
 
@@ -252,7 +244,7 @@ public final class StreamAllocation {
         // for an asynchronous cancel() to interrupt the handshake we're about to do.
         hasStreamFailure = false;
         result = new RealConnection(connectionPool, selectedRoute);
-        transmitterAcquireConnection(result, false);
+        connectingConnection = result;
       }
     }
 
@@ -269,16 +261,17 @@ public final class StreamAllocation {
 
     Socket socket = null;
     synchronized (connectionPool) {
-      reportedAcquired = true;
-
-      // Pool the connection.
-      connectionPool.put(result);
-
-      // If another multiplexed connection to the same address was created concurrently, then
-      // release this connection and acquire that one.
-      if (result.isMultiplexed()) {
-        socket = connectionPool.deduplicate(address, transmitter);
+      connectingConnection = null;
+      // Last attempt at connection coalescing, which only occurs if we attempted multiple
+      // concurrent connections to the same host.
+      if (connectionPool.transmitterAcquirePooledConnection(address, transmitter, routes, true)) {
+        // We lost the race! Close the connection we created and return the pooled connection.
+        result.noNewStreams = true;
+        socket = result.socket();
         result = connection;
+      } else {
+        connectionPool.put(result);
+        transmitterAcquireConnection(result);
       }
     }
     closeQuietly(socket);
@@ -346,7 +339,7 @@ public final class StreamAllocation {
       socket = connection != null && this.codec == null
           ? transmitterReleaseConnection()
           : null;
-      if (connection != null || !reportedAcquired) releasedConnection = null;
+      if (connection != null) releasedConnection = null;
     }
     closeQuietly(socket);
     if (releasedConnection != null) {
@@ -366,7 +359,7 @@ public final class StreamAllocation {
     synchronized (connectionPool) {
       canceled = true;
       codecToCancel = codec;
-      connectionToCancel = connection;
+      connectionToCancel = connectingConnection != null ? connectingConnection : connection;
     }
     if (codecToCancel != null) {
       codecToCancel.cancel();
@@ -395,12 +388,11 @@ public final class StreamAllocation {
    * Use this allocation to hold {@code connection}. Each use of this must be paired with a call to
    * {@link #transmitterReleaseConnection} on the same connection.
    */
-  public void transmitterAcquireConnection(RealConnection connection, boolean reportedAcquired) {
+  public void transmitterAcquireConnection(RealConnection connection) {
     assert (Thread.holdsLock(connectionPool));
     if (this.connection != null) throw new IllegalStateException();
 
     this.connection = connection;
-    this.reportedAcquired = reportedAcquired;
     connection.transmitters.add(new TransmitterReference(transmitter, callStackTrace));
   }
 
@@ -432,30 +424,6 @@ public final class StreamAllocation {
     }
 
     return null;
-  }
-
-  /**
-   * Release the connection held by this connection and acquire {@code newConnection} instead. It is
-   * only safe to call this if the held connection is newly connected but duplicated by {@code
-   * newConnection}. Typically this occurs when concurrently connecting to an HTTP/2 webserver.
-   *
-   * <p>Returns a closeable that the caller should pass to {@link Util#closeQuietly} upon completion
-   * of the synchronized block. (We don't do I/O while synchronized on the connection pool.)
-   */
-  public Socket releaseAndAcquire(RealConnection newConnection) {
-    assert (Thread.holdsLock(connectionPool));
-    if (codec != null || connection.transmitters.size() != 1) throw new IllegalStateException();
-
-    // Release the old connection.
-    connection.noNewStreams = true;
-    Reference<Transmitter> onlyAllocation = connection.transmitters.get(0);
-    Socket socket = transmitterReleaseConnection();
-
-    // Acquire the new connection.
-    this.connection = newConnection;
-    newConnection.transmitters.add(onlyAllocation);
-
-    return socket;
   }
 
   public boolean canRetry() {

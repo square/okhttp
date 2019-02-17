@@ -18,7 +18,6 @@ package okhttp3.internal;
 import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.net.ProtocolException;
-import java.net.Socket;
 import java.net.SocketException;
 import javax.annotation.Nullable;
 import javax.net.ssl.HostnameVerifier;
@@ -268,16 +267,12 @@ public final class Transmitter {
     return streamAllocation.connection().supportsUrl(url);
   }
 
-  public void acquireConnection(RealConnection connection, boolean reportedAcquired) {
-    streamAllocation.transmitterAcquireConnection(connection, reportedAcquired);
+  public void acquireConnection(RealConnection connection) {
+    streamAllocation.transmitterAcquireConnection(connection);
   }
 
   public RealConnection connection() {
     return streamAllocation.connection();
-  }
-
-  public Socket releaseAndAcquire(RealConnection newConnection) {
-    return streamAllocation.releaseAndAcquire(newConnection);
   }
 
   public void responseBodyComplete(long bytesRead, IOException e) {

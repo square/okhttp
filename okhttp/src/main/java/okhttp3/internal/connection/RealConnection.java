@@ -471,7 +471,7 @@ public final class RealConnection extends Http2Connection.Listener implements Co
    * Returns true if this connection can carry a stream allocation to {@code address}. If non-null
    * {@code route} is the resolved route for a connection.
    */
-  public boolean isEligible(Address address, @Nullable Route route) {
+  public boolean isEligible(Address address, @Nullable List<Route> routes) {
     // If this connection is not accepting new streams, we're done.
     if (transmitters.size() >= allocationLimit || noNewStreams) return false;
 
@@ -494,13 +494,10 @@ public final class RealConnection extends Http2Connection.Listener implements Co
     // 2. The routes must share an IP address. This requires us to have a DNS address for both
     // hosts, which only happens after route planning. We can't coalesce connections that use a
     // proxy, since proxies don't tell us the origin server's IP address.
-    if (route == null) return false;
-    if (route.proxy().type() != Proxy.Type.DIRECT) return false;
-    if (this.route.proxy().type() != Proxy.Type.DIRECT) return false;
-    if (!this.route.socketAddress().equals(route.socketAddress())) return false;
+    if (routes == null || !routeMatchesAny(routes)) return false;
 
     // 3. This connection's server certificate's must cover the new host.
-    if (route.address().hostnameVerifier() != OkHostnameVerifier.INSTANCE) return false;
+    if (address.hostnameVerifier() != OkHostnameVerifier.INSTANCE) return false;
     if (!supportsUrl(address.url())) return false;
 
     // 4. Certificate pinning must match the host.
@@ -511,6 +508,19 @@ public final class RealConnection extends Http2Connection.Listener implements Co
     }
 
     return true; // The caller's address can be carried by this connection.
+  }
+
+  /** Returns true if this connection's route has the same address as any of {@code routes}. */
+  private boolean routeMatchesAny(List<Route> candidates) {
+    for (int i = 0, size = candidates.size(); i < size; i++) {
+      Route candidate = candidates.get(i);
+      if (candidate.proxy().type() == Proxy.Type.DIRECT
+          && route.proxy().type() == Proxy.Type.DIRECT
+          && route.socketAddress().equals(candidate.socketAddress())) {
+        return true;
+      }
+    }
+    return false;
   }
 
   public boolean supportsUrl(HttpUrl url) {
