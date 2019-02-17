@@ -2202,18 +2202,16 @@ public final class CallTest {
   public void cancelWhileRequestHeadersAreSent() throws Exception {
     server.enqueue(new MockResponse().setBody("A"));
 
-    EventListener listener =
-        new EventListener() {
-          @Override
-          public void requestHeadersStart(Call call) {
-            try {
-              // Cancel call from another thread to avoid reentrance.
-              cancelLater(call, 0).join();
-            } catch (InterruptedException e) {
-              throw new AssertionError();
-            }
-          }
-        };
+    EventListener listener = new EventListener() {
+      @Override public void requestHeadersStart(Call call) {
+        try {
+          // Cancel call from another thread to avoid reentrance.
+          cancelLater(call, 0).join();
+        } catch (InterruptedException e) {
+          throw new AssertionError();
+        }
+      }
+    };
     client = client.newBuilder().eventListener(listener).build();
 
     Call call = client.newCall(new Request.Builder().url(server.url("/a")).build());
