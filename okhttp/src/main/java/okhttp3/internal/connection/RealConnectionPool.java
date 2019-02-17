@@ -108,7 +108,7 @@ public final class RealConnectionPool {
     for (RealConnection connection : connections) {
       if (requireMultiplexed && !connection.isMultiplexed()) continue;
       if (!connection.isEligible(address, routes)) continue;
-      transmitter.acquireConnection(connection);
+      transmitter.acquireConnectionNoEvents(connection);
       return true;
     }
     return false;
@@ -127,9 +127,9 @@ public final class RealConnectionPool {
    * Notify this pool that {@code connection} has become idle. Returns true if the connection has
    * been removed from the pool and should be closed.
    */
-  boolean connectionBecameIdle(RealConnection connection) {
+  public boolean connectionBecameIdle(RealConnection connection) {
     assert (Thread.holdsLock(this));
-    if (connection.noNewStreams || maxIdleConnections == 0) {
+    if (connection.noNewExchanges || maxIdleConnections == 0) {
       connections.remove(connection);
       return true;
     } else {
@@ -144,7 +144,7 @@ public final class RealConnectionPool {
       for (Iterator<RealConnection> i = connections.iterator(); i.hasNext(); ) {
         RealConnection connection = i.next();
         if (connection.transmitters.isEmpty()) {
-          connection.noNewStreams = true;
+          connection.noNewExchanges = true;
           evictedConnections.add(connection);
           i.remove();
         }
@@ -237,7 +237,7 @@ public final class RealConnectionPool {
       Platform.get().logCloseableLeak(message, transmitterRef.callStackTrace);
 
       references.remove(i);
-      connection.noNewStreams = true;
+      connection.noNewExchanges = true;
 
       // If this was the last allocation, the connection is eligible for immediate eviction.
       if (references.isEmpty()) {

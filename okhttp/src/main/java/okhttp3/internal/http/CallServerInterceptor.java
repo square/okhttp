@@ -20,9 +20,8 @@ import java.net.ProtocolException;
 import okhttp3.Interceptor;
 import okhttp3.Request;
 import okhttp3.Response;
-import okhttp3.internal.Internal;
-import okhttp3.internal.Transmitter;
 import okhttp3.internal.Util;
+import okhttp3.internal.connection.Exchange;
 import okhttp3.internal.duplex.DuplexRequestBody;
 import okio.BufferedSink;
 import okio.Okio;
@@ -37,12 +36,12 @@ public final class CallServerInterceptor implements Interceptor {
 
   @Override public Response intercept(Chain chain) throws IOException {
     RealInterceptorChain realChain = (RealInterceptorChain) chain;
-    Transmitter transmitter = realChain.transmitter();
+    Exchange exchange = realChain.exchange();
     Request request = realChain.request();
 
     long sentRequestMillis = System.currentTimeMillis();
 
-    transmitter.writeRequestHeaders(request);
+    exchange.writeRequestHeaders(request);
 
     Response.Builder responseBuilder = null;
     if (HttpMethod.permitsRequestBody(request.method()) && request.body() != null) {
@@ -50,64 +49,60 @@ public final class CallServerInterceptor implements Interceptor {
       // Continue" response before transmitting the request body. If we don't get that, return
       // what we did get (such as a 4xx response) without ever transmitting the request body.
       if ("100-continue".equalsIgnoreCase(request.header("Expect"))) {
-        transmitter.flushRequest();
-        responseBuilder = transmitter.readResponseHeaders(true);
+        exchange.flushRequest();
+        responseBuilder = exchange.readResponseHeaders(true);
       }
 
       if (responseBuilder == null) {
         if (request.body() instanceof DuplexRequestBody) {
           // Prepare a duplex body so that the application can send a request body later.
-          transmitter.flushRequest();
-          BufferedSink bufferedRequestBody = Okio.buffer(transmitter.createRequestBody(request));
+          exchange.flushRequest();
+          BufferedSink bufferedRequestBody = Okio.buffer(exchange.createRequestBody(request));
           request.body().writeTo(bufferedRequestBody);
         } else {
           // Write the request body if the "Expect: 100-continue" expectation was met.
-          BufferedSink bufferedRequestBody = Okio.buffer(transmitter.createRequestBody(request));
+          BufferedSink bufferedRequestBody = Okio.buffer(exchange.createRequestBody(request));
           request.body().writeTo(bufferedRequestBody);
           bufferedRequestBody.close();
         }
-      } else if (!transmitter.isConnectionMultiplexed()) {
+      } else if (!exchange.connection().isMultiplexed()) {
         // If the "Expect: 100-continue" expectation wasn't met, prevent the HTTP/1 connection
         // from being reused. Otherwise we're still obligated to transmit the request body to
         // leave the connection in a consistent state.
-        transmitter.noNewStreamsOnConnection();
+        exchange.noNewExchangesOnConnection();
       }
     }
 
     if (!(request.body() instanceof DuplexRequestBody)) {
-      transmitter.finishRequest();
+      exchange.finishRequest();
     }
 
     if (responseBuilder == null) {
-      responseBuilder = transmitter.readResponseHeaders(false);
+      responseBuilder = exchange.readResponseHeaders(false);
     }
 
-    responseBuilder
+    Response response = responseBuilder
         .request(request)
-        .handshake(transmitter.handshake())
+        .handshake(exchange.connection().handshake())
         .sentRequestAtMillis(sentRequestMillis)
-        .receivedResponseAtMillis(System.currentTimeMillis());
-    Internal.instance.initDeferredTrailers(responseBuilder, transmitter.deferredTrailers());
-    Response response = responseBuilder.build();
+        .receivedResponseAtMillis(System.currentTimeMillis())
+        .build();
 
     int code = response.code();
     if (code == 100) {
       // server sent a 100-continue even though we did not request one.
       // try again to read the actual response
-      responseBuilder = transmitter.readResponseHeaders(false);
-
-      responseBuilder
+      response = exchange.readResponseHeaders(false)
           .request(request)
-          .handshake(transmitter.handshake())
+          .handshake(exchange.connection().handshake())
           .sentRequestAtMillis(sentRequestMillis)
-          .receivedResponseAtMillis(System.currentTimeMillis());
-      Internal.instance.initDeferredTrailers(responseBuilder, transmitter.deferredTrailers());
-      response = responseBuilder.build();
+          .receivedResponseAtMillis(System.currentTimeMillis())
+          .build();
 
       code = response.code();
     }
 
-    transmitter.responseHeadersEnd(response);
+    exchange.responseHeadersEnd(response);
 
     if (forWebSocket && code == 101) {
       // Connection is upgrading, but we need to ensure interceptors see a non-null response body.
@@ -116,13 +111,13 @@ public final class CallServerInterceptor implements Interceptor {
           .build();
     } else {
       response = response.newBuilder()
-          .body(transmitter.openResponseBody(response))
+          .body(exchange.openResponseBody(response))
           .build();
     }
 
     if ("close".equalsIgnoreCase(response.request().header("Connection"))
         || "close".equalsIgnoreCase(response.header("Connection"))) {
-      transmitter.noNewStreamsOnConnection();
+      exchange.noNewExchangesOnConnection();
     }
 
     if ((code == 204 || code == 205) && response.body().contentLength() > 0) {

@@ -38,8 +38,8 @@ import okhttp3.Response;
 import okhttp3.WebSocket;
 import okhttp3.WebSocketListener;
 import okhttp3.internal.Internal;
-import okhttp3.internal.Transmitter;
 import okhttp3.internal.Util;
+import okhttp3.internal.connection.Exchange;
 import okio.BufferedSink;
 import okio.BufferedSource;
 import okio.ByteString;
@@ -190,25 +190,20 @@ public final class RealWebSocket implements WebSocket, WebSocketReader.FrameCall
     call.timeout().clearTimeout();
     call.enqueue(new Callback() {
       @Override public void onResponse(Call call, Response response) {
-        Transmitter transmitter = Internal.instance.transmitter(call);
-
+        Streams streams;
         try {
-          checkResponse(response);
-        } catch (ProtocolException e) {
+          streams = extractStreamsFromResponse(response);
+        } catch (IOException e) {
           failWebSocket(e, response);
           closeQuietly(response);
           return;
         }
-
-        // Promote the HTTP streams into web socket streams.
-        Streams streams = transmitter.newWebSocketStreams();
 
         // Process all web socket messages.
         try {
           String name = "OkHttp WebSocket " + request.url().redact();
           initReaderAndWriter(name, streams);
           listener.onOpen(RealWebSocket.this, response);
-          transmitter.socketTimeout(0);
           loopReader();
         } catch (Exception e) {
           failWebSocket(e, null);
@@ -221,7 +216,7 @@ public final class RealWebSocket implements WebSocket, WebSocketReader.FrameCall
     });
   }
 
-  void checkResponse(Response response) throws ProtocolException {
+  Streams extractStreamsFromResponse(Response response) throws IOException {
     if (response.code() != 101) {
       throw new ProtocolException("Expected HTTP 101 response but was '"
           + response.code() + " " + response.message() + "'");
@@ -246,6 +241,12 @@ public final class RealWebSocket implements WebSocket, WebSocketReader.FrameCall
       throw new ProtocolException("Expected 'Sec-WebSocket-Accept' header value '"
           + acceptExpected + "' but was '" + headerAccept + "'");
     }
+
+    Exchange exchange = Internal.instance.exchange(response);
+    if (exchange == null) {
+      throw new ProtocolException("Web Socket exchange missing: bad interceptor?");
+    }
+    return exchange.newWebSocketStreams();
   }
 
   public void initReaderAndWriter(String name, Streams streams) throws IOException {

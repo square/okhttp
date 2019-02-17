@@ -273,7 +273,7 @@ public final class Http1Codec implements HttpCodec {
   private Source newUnknownLengthSource() {
     if (state != STATE_OPEN_RESPONSE_BODY) throw new IllegalStateException("state: " + state);
     state = STATE_READING_RESPONSE_BODY;
-    realConnection.noNewStreams();
+    realConnection.noNewExchanges();
     return new UnknownLengthSource();
   }
 
@@ -380,7 +380,7 @@ public final class Http1Codec implements HttpCodec {
       try {
         return source.read(sink, byteCount);
       } catch (IOException e) {
-        realConnection.noNewStreams();
+        realConnection.noNewExchanges();
         responseBodyComplete();
         throw e;
       }
@@ -418,7 +418,7 @@ public final class Http1Codec implements HttpCodec {
 
       long read = super.read(sink, Math.min(bytesRemaining, byteCount));
       if (read == -1) {
-        realConnection.noNewStreams(); // The server didn't supply the promised content length.
+        realConnection.noNewExchanges(); // The server didn't supply the promised content length.
         ProtocolException e = new ProtocolException("unexpected end of stream");
         responseBodyComplete();
         throw e;
@@ -435,7 +435,7 @@ public final class Http1Codec implements HttpCodec {
       if (closed) return;
 
       if (bytesRemaining != 0 && !Util.discard(this, DISCARD_STREAM_TIMEOUT_MILLIS, MILLISECONDS)) {
-        realConnection.noNewStreams(); // Unread bytes remain on the stream.
+        realConnection.noNewExchanges(); // Unread bytes remain on the stream.
         responseBodyComplete();
       }
 
@@ -466,7 +466,7 @@ public final class Http1Codec implements HttpCodec {
 
       long read = super.read(sink, Math.min(byteCount, bytesRemainingInChunk));
       if (read == -1) {
-        realConnection.noNewStreams(); // The server didn't supply the promised chunk length.
+        realConnection.noNewExchanges(); // The server didn't supply the promised chunk length.
         ProtocolException e = new ProtocolException("unexpected end of stream");
         responseBodyComplete();
         throw e;
@@ -501,7 +501,7 @@ public final class Http1Codec implements HttpCodec {
     @Override public void close() throws IOException {
       if (closed) return;
       if (hasMoreChunks && !Util.discard(this, DISCARD_STREAM_TIMEOUT_MILLIS, MILLISECONDS)) {
-        realConnection.noNewStreams(); // Unread bytes remain on the stream.
+        realConnection.noNewExchanges(); // Unread bytes remain on the stream.
         responseBodyComplete();
       }
       closed = true;

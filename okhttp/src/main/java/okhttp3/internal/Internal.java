@@ -27,6 +27,7 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
 import okhttp3.internal.cache.InternalCache;
+import okhttp3.internal.connection.Exchange;
 import okhttp3.internal.connection.RealConnectionPool;
 
 /**
@@ -59,12 +60,12 @@ public abstract class Internal {
 
   public abstract boolean isInvalidHttpUrlHost(IllegalArgumentException e);
 
-  public abstract Transmitter transmitter(Call call);
-
   public abstract @Nullable IOException timeoutExit(Call call, @Nullable IOException e);
 
   public abstract Call newWebSocketCall(OkHttpClient client, Request request);
 
-  public abstract void initDeferredTrailers(
-      Response.Builder responseBuilder, DeferredTrailers deferredTrailers);
+  public abstract void initExchange(
+      Response.Builder responseBuilder, Exchange exchange);
+
+  public abstract @Nullable Exchange exchange(Response response);
 }

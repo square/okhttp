@@ -16,55 +16,56 @@
 package okhttp3.internal;
 
 import java.io.IOException;
+import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
-import java.net.ProtocolException;
-import java.net.SocketException;
+import java.net.Socket;
 import javax.annotation.Nullable;
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLSocketFactory;
 import okhttp3.Address;
 import okhttp3.Call;
 import okhttp3.CertificatePinner;
+import okhttp3.Connection;
 import okhttp3.EventListener;
-import okhttp3.Handshake;
-import okhttp3.Headers;
 import okhttp3.HttpUrl;
 import okhttp3.Interceptor;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
-import okhttp3.Response;
-import okhttp3.ResponseBody;
-import okhttp3.Route;
+import okhttp3.internal.connection.Exchange;
+import okhttp3.internal.connection.ExchangeFinder;
 import okhttp3.internal.connection.RealConnection;
 import okhttp3.internal.connection.RealConnectionPool;
-import okhttp3.internal.connection.StreamAllocation;
 import okhttp3.internal.http.HttpCodec;
-import okhttp3.internal.http.RealResponseBody;
-import okhttp3.internal.ws.RealWebSocket;
-import okio.Buffer;
-import okio.ForwardingSink;
-import okio.ForwardingSource;
-import okio.Okio;
-import okio.Sink;
-import okio.Source;
+import okhttp3.internal.platform.Platform;
 
+import static okhttp3.internal.Util.closeQuietly;
 import static okhttp3.internal.Util.sameConnection;
 
 /**
  * Bridge between OkHttp's application and network layers. This class exposes high-level application
  * layer primitives: connections, requests, responses, and streams.
+ *
+ * <p>This class supports {@linkplain #cancel asynchronous canceling}. This is intended to have the
+ * smallest blast radius possible. If an HTTP/2 stream is active, canceling will cancel that stream
+ * but not the other streams sharing its connection. But if the TLS handshake is still in progress
+ * then canceling may break the entire connection.
  */
 public final class Transmitter {
-  public final OkHttpClient client;
-  public final RealConnectionPool connectionPool;
-  public final Call call;
-  public final EventListener eventListener;
+  private final OkHttpClient client;
+  private final RealConnectionPool connectionPool;
+  private final Call call;
+  private final EventListener eventListener;
 
   private @Nullable Object callStackTrace;
 
   private Request request;
-  private volatile boolean canceled;
-  private volatile StreamAllocation streamAllocation;
+  private ExchangeFinder exchangeFinder;
+
+  // Guarded by connectionPool.
+  public RealConnection connection;
+  private Exchange exchange;
+  private boolean canceled;
+  private boolean noMoreExchanges;
 
   public Transmitter(OkHttpClient client, Call call) {
     this.client = client;
@@ -73,8 +74,9 @@ public final class Transmitter {
     this.eventListener = client.eventListenerFactory().create(call);
   }
 
-  public void initCallStackTrace(@Nullable Object callStackTrace) {
-    this.callStackTrace = callStackTrace;
+  public void callStart() {
+    this.callStackTrace = Platform.get().getStackTraceForCloseable("response.body().close()");
+    eventListener.callStart(call);
   }
 
   /**
@@ -83,19 +85,18 @@ public final class Transmitter {
    */
   public void prepareToConnect(Request request) {
     if (this.request != null) {
-      if (sameConnection(this.request.url(), request.url())) {
-        return; // Already ready.
-      }
-      if (streamAllocation != null) {
-        streamAllocation.transmitterReleaseConnection(false);
-        streamAllocation = null;
+      if (sameConnection(this.request.url(), request.url())) return; // Already ready.
+      if (exchange != null) throw new IllegalStateException();
+
+      if (exchangeFinder != null) {
+        maybeReleaseConnection(null, true);
+        exchangeFinder = null;
       }
     }
 
     this.request = request;
-    this.streamAllocation = new StreamAllocation(this,
-        Internal.instance.realConnectionPool(client.connectionPool()), createAddress(request.url()),
-        call, eventListener, callStackTrace);
+    this.exchangeFinder = new ExchangeFinder(this, connectionPool, createAddress(request.url()),
+        call, eventListener);
   }
 
   private Address createAddress(HttpUrl url) {
@@ -113,6 +114,132 @@ public final class Transmitter {
         client.proxy(), client.protocols(), client.connectionSpecs(), client.proxySelector());
   }
 
+  /** Returns a new exchange to carry a new request and response. */
+  public Exchange newExchange(Interceptor.Chain chain, boolean doExtensiveHealthChecks) {
+    synchronized (connectionPool) {
+      if (noMoreExchanges) throw new IllegalStateException("released");
+      if (exchange != null) throw new IllegalStateException("exchange != null");
+    }
+
+    HttpCodec httpCodec = exchangeFinder.find(client, chain, doExtensiveHealthChecks);
+    Exchange result = new Exchange(this, call, eventListener, exchangeFinder, httpCodec);
+
+    synchronized (connectionPool) {
+      this.exchange = result;
+      return result;
+    }
+  }
+
+  public void acquireConnectionNoEvents(RealConnection connection) {
+    assert (Thread.holdsLock(connectionPool));
+
+    if (this.connection != null) throw new IllegalStateException();
+    this.connection = connection;
+    connection.transmitters.add(new TransmitterReference(this, callStackTrace));
+  }
+
+  /**
+   * Remove the transmitter from the connection's list of allocations. Returns a socket that the
+   * caller should close.
+   */
+  public @Nullable Socket releaseConnectionNoEvents() {
+    assert (Thread.holdsLock(connectionPool));
+
+    int index = -1;
+    for (int i = 0, size = this.connection.transmitters.size(); i < size; i++) {
+      Reference<Transmitter> reference = this.connection.transmitters.get(i);
+      if (reference.get() == this) {
+        index = i;
+        break;
+      }
+    }
+
+    if (index == -1) throw new IllegalStateException();
+
+    RealConnection released = this.connection;
+    released.transmitters.remove(index);
+    this.connection = null;
+
+    if (released.transmitters.isEmpty()) {
+      released.idleAtNanos = System.nanoTime();
+      if (connectionPool.connectionBecameIdle(released)) {
+        return released.socket();
+      }
+    }
+
+    return null;
+  }
+
+  public void exchangeDoneDueToException() {
+    synchronized (connectionPool) {
+      if (noMoreExchanges) throw new IllegalStateException();
+      exchange = null;
+    }
+  }
+
+  public void exchangeDone(@Nullable IOException e) {
+    synchronized (connectionPool) {
+      if (exchange == null) throw new IllegalStateException("exchange == null");
+      exchange.connection().successCount++;
+      exchange = null;
+    }
+    maybeReleaseConnection(e, false);
+  }
+
+  public void noMoreExchanges(IOException e) {
+    synchronized (connectionPool) {
+      noMoreExchanges = true;
+    }
+    maybeReleaseConnection(e, false);
+  }
+
+  /**
+   * Release the connection if it is no longer needed. This is called after each exchange completes
+   * and after the call signals that no more exchanges are expected.
+   *
+   * @param force true to release the connection even if more exchanges are expected for the call.
+   */
+  private void maybeReleaseConnection(@Nullable IOException e, boolean force) {
+    Socket socket;
+    Connection releasedConnection;
+    boolean callEnd;
+    synchronized (connectionPool) {
+      if (force && exchange != null) {
+        throw new IllegalStateException("cannot release connection while it is in use");
+      }
+      releasedConnection = this.connection;
+      socket = this.connection != null && exchange == null && (force || noMoreExchanges)
+          ? releaseConnectionNoEvents()
+          : null;
+      if (this.connection != null) releasedConnection = null;
+      callEnd = noMoreExchanges && exchange == null;
+    }
+    closeQuietly(socket);
+
+    if (releasedConnection != null) {
+      eventListener.connectionReleased(call, releasedConnection);
+    }
+
+    if (callEnd) {
+      e = Internal.instance.timeoutExit(call, e);
+      if (e != null) {
+        eventListener.callFailed(call, e);
+      } else {
+        eventListener.callEnd(call);
+      }
+    }
+  }
+
+  public boolean canRetry() {
+    return exchangeFinder.canRetry();
+  }
+
+  public boolean hasExchange() {
+    synchronized (connectionPool) {
+      return exchange != null;
+    }
+  }
+
   /**
    * Immediately closes the socket connection if it's currently held. Use this to interrupt an
    * in-flight request from any thread. It's the caller's responsibility to close the request body
@@ -123,273 +250,25 @@ public final class Transmitter {
    * Otherwise if a socket connection is being established, that is terminated.
    */
   public void cancel() {
-    canceled = true;
-    StreamAllocation streamAllocation = this.streamAllocation;
-    if (streamAllocation != null) streamAllocation.cancel();
+    Exchange exchangeToCancel;
+    RealConnection connectionToCancel;
+    synchronized (connectionPool) {
+      canceled = true;
+      exchangeToCancel = exchange;
+      connectionToCancel = exchangeFinder != null && exchangeFinder.connectingConnection() != null
+          ? exchangeFinder.connectingConnection()
+          : connection;
+    }
+    if (exchangeToCancel != null) {
+      exchangeToCancel.cancel();
+    } else if (connectionToCancel != null) {
+      connectionToCancel.cancel();
+    }
   }
 
   public boolean isCanceled() {
-    return canceled;
-  }
-
-  public void releaseStreamForException() {
-    streamAllocation.releaseStreamForException();
-  }
-
-  public void noNewStreamsOnConnection() {
-    connection().noNewStreams();
-  }
-
-  public RealWebSocket.Streams newWebSocketStreams() {
-    return streamAllocation.connection().newWebSocketStreams(this);
-  }
-
-  public void socketTimeout(int timeout) throws SocketException {
-    streamAllocation.connection().socket().setSoTimeout(timeout);
-  }
-
-  /** Returns the connection that carries the allocated stream. */
-  public RealConnection newStream(Interceptor.Chain chain, boolean doExtensiveHealthChecks) {
-    streamAllocation.newStream(client, chain, doExtensiveHealthChecks);
-    return streamAllocation.connection();
-  }
-
-  public Handshake handshake() {
-    return streamAllocation.connection().handshake();
-  }
-
-  public boolean isConnectionMultiplexed() {
-    return streamAllocation.connection().isMultiplexed();
-  }
-
-  public void noMoreStreamsOnCall() {
-    if (streamAllocation != null) {
-      streamAllocation.transmitterReleaseConnection(true);
-    }
-  }
-
-  public boolean canRetry() {
-    return streamAllocation.canRetry();
-  }
-
-  public Route route() {
-    return streamAllocation.route();
-  }
-
-  public boolean hasCodec() {
-    return streamAllocation != null && streamAllocation.codec() != null;
-  }
-
-  public void callStart() {
-    eventListener.callStart(call);
-  }
-
-  public void callFailed(IOException e) {
-    eventListener.callFailed(call, e);
-  }
-
-  public void writeRequestHeaders(Request request) throws IOException {
-    try {
-      eventListener.requestHeadersStart(call);
-      streamAllocation.codec().writeRequestHeaders(request);
-      eventListener.requestHeadersEnd(call, request);
-    } catch (IOException e) {
-      streamAllocation.streamFailed(e);
-      throw e;
-    }
-  }
-
-  public Sink createRequestBody(Request request) throws IOException {
-    long contentLength = request.body().contentLength();
-    eventListener.requestBodyStart(call);
-    Sink rawRequestBody = streamAllocation.codec().createRequestBody(request, contentLength);
-    return new RequestBodySink(rawRequestBody, contentLength);
-  }
-
-  public void flushRequest() throws IOException {
-    try {
-      streamAllocation.codec().flushRequest();
-    } catch (IOException e) {
-      streamAllocation.streamFailed(e);
-      throw e;
-    }
-  }
-
-  public void finishRequest() throws IOException {
-    try {
-      streamAllocation.codec().finishRequest();
-    } catch (IOException e) {
-      streamAllocation.streamFailed(e);
-      throw e;
-    }
-  }
-
-  public Response.Builder readResponseHeaders(boolean expectContinue) throws IOException {
-    try {
-      eventListener.responseHeadersStart(call);
-      return streamAllocation.codec().readResponseHeaders(expectContinue);
-    } catch (IOException e) {
-      streamAllocation.streamFailed(e);
-      throw e;
-    }
-  }
-
-  public void responseHeadersEnd(Response response) {
-    eventListener.responseHeadersEnd(call, response);
-  }
-
-  public ResponseBody openResponseBody(Response response) throws IOException {
-    try {
-      streamAllocation.eventListener.responseBodyStart(streamAllocation.call);
-      String contentType = response.header("Content-Type");
-      HttpCodec codec = streamAllocation.codec();
-      long contentLength = codec.reportedContentLength(response);
-      Source rawSource = codec.openResponseBodySource(response);
-      ResponseBodySource source = new ResponseBodySource(rawSource, contentLength);
-      return new RealResponseBody(contentType, contentLength, Okio.buffer(source));
-    } catch (IOException e) {
-      streamAllocation.streamFailed(e);
-      throw e;
-    }
-  }
-
-  public DeferredTrailers deferredTrailers() {
-    return new DeferredTrailers() {
-      HttpCodec codec = streamAllocation.codec();
-
-      @Override public Headers trailers() throws IOException {
-        return codec.trailers();
-      }
-    };
-  }
-
-  public boolean supportsUrl(HttpUrl url) {
-    return streamAllocation.connection().supportsUrl(url);
-  }
-
-  public void acquireConnection(RealConnection connection) {
-    streamAllocation.transmitterAcquireConnection(connection);
-  }
-
-  public RealConnection connection() {
-    return streamAllocation.connection();
-  }
-
-  public void responseBodyComplete(long bytesRead, IOException e) {
-    if (e != null) {
-      streamAllocation.streamFailed(e);
-    }
-    if (streamAllocation != null) {
-      streamAllocation.responseBodyComplete(bytesRead, e);
-    }
-  }
-
-  /** A request body that fires events when it completes. */
-  private final class RequestBodySink extends ForwardingSink {
-    /** The exact number of bytes to be written, or -1L if that is unknown. */
-    private long contentLength;
-    private long bytesReceived;
-    private boolean closed;
-
-    RequestBodySink(Sink delegate, long contentLength) {
-      super(delegate);
-      this.contentLength = contentLength;
-    }
-
-    @Override public void write(Buffer source, long byteCount) throws IOException {
-      if (closed) throw new IllegalStateException("closed");
-      if (contentLength != -1L && bytesReceived + byteCount > contentLength) {
-        throw new ProtocolException("expected " + contentLength
-            + " bytes but received " + (bytesReceived + byteCount));
-      }
-      try {
-        super.write(source, byteCount);
-        this.bytesReceived += byteCount;
-      } catch (IOException e) {
-        streamAllocation.streamFailed(e);
-        throw e;
-      }
-    }
-
-    @Override public void flush() throws IOException {
-      try {
-        super.flush();
-      } catch (IOException e) {
-        streamAllocation.streamFailed(e);
-        throw e;
-      }
-    }
-
-    @Override public void close() throws IOException {
-      if (closed) return;
-      closed = true;
-      if (contentLength != -1L && bytesReceived != contentLength) {
-        throw new ProtocolException("unexpected end of stream");
-      }
-      eventListener.requestBodyEnd(call, bytesReceived);
-      try {
-        super.close();
-      } catch (IOException e) {
-        streamAllocation.streamFailed(e);
-        throw e;
-      }
-    }
-  }
-
-  /** A response body that fires events when it completes. */
-  final class ResponseBodySource extends ForwardingSource {
-    private long contentLength;
-    private long bytesReceived;
-    private boolean completed;
-    private boolean closed;
-
-    ResponseBodySource(Source delegate, long contentLength) {
-      super(delegate);
-      this.contentLength = contentLength;
-
-      if (contentLength == 0L) {
-        complete(null);
-      }
-    }
-
-    @Override public long read(Buffer sink, long byteCount) throws IOException {
-      if (closed) throw new IllegalStateException("closed");
-      try {
-        long read = delegate().read(sink, byteCount);
-        if (read == -1L) {
-          complete(null);
-          return -1L;
-        }
-
-        long newBytesReceived = bytesReceived + read;
-        if (contentLength != -1L && newBytesReceived > contentLength) {
-          throw new ProtocolException("expected " + contentLength
-              + " bytes but received " + newBytesReceived);
-        }
-
-        bytesReceived = newBytesReceived;
-        if (newBytesReceived == contentLength) {
-          complete(null);
-        }
-
-        return read;
-      } catch (IOException e) {
-        complete(e);
-        throw e;
-      }
-    }
-
-    @Override public void close() throws IOException {
-      if (closed) return;
-      closed = true;
-      super.close();
-      complete(null);
-    }
-
-    void complete(IOException e) {
-      if (completed) return;
-      completed = true;
-      responseBodyComplete(bytesReceived, e);
+    synchronized (connectionPool) {
+      return canceled;
     }
   }
 
