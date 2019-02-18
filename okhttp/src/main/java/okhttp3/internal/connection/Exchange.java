@@ -97,10 +97,12 @@ public final class Exchange {
     }
   }
 
-  public @Nullable Response.Builder readResponseHeaders(
-      boolean expectContinue) throws IOException {
+  public void responseHeadersStart() {
+    eventListener.responseHeadersStart(call);
+  }
+
+  public @Nullable Response.Builder readResponseHeaders(boolean expectContinue) throws IOException {
     try {
-      eventListener.responseHeadersStart(call);
       Response.Builder result = codec.readResponseHeaders(expectContinue);
       if (result != null) {
         Internal.instance.initExchange(result, this);

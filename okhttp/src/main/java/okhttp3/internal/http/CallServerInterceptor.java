@@ -43,6 +43,7 @@ public final class CallServerInterceptor implements Interceptor {
 
     exchange.writeRequestHeaders(request);
 
+    boolean responseHeadersStarted = false;
     Response.Builder responseBuilder = null;
     if (HttpMethod.permitsRequestBody(request.method()) && request.body() != null) {
       // If there's a "Expect: 100-continue" header on the request, wait for a "HTTP/1.1 100
@@ -50,6 +51,8 @@ public final class CallServerInterceptor implements Interceptor {
       // what we did get (such as a 4xx response) without ever transmitting the request body.
       if ("100-continue".equalsIgnoreCase(request.header("Expect"))) {
         exchange.flushRequest();
+        responseHeadersStarted = true;
+        exchange.responseHeadersStart();
         responseBuilder = exchange.readResponseHeaders(true);
       }
 
@@ -75,6 +78,10 @@ public final class CallServerInterceptor implements Interceptor {
 
     if (!(request.body() instanceof DuplexRequestBody)) {
       exchange.finishRequest();
+    }
+
+    if (!responseHeadersStarted) {
+      exchange.responseHeadersStart();
     }
 
     if (responseBuilder == null) {

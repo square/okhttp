@@ -1186,4 +1186,25 @@ public final class EventListenerTest {
     List<String> expectedEvents = Arrays.asList("CallStart", "CallEnd");
     assertEquals(expectedEvents, listener.recordedEventTypes());
   }
+
+  /** Response headers start, then the entire request body, then response headers end. */
+  @Test public void expectContinueStartsResponseHeadersEarly() throws Exception {
+    server.enqueue(new MockResponse()
+        .setSocketPolicy(SocketPolicy.EXPECT_CONTINUE));
+
+    Request request = new Request.Builder()
+        .url(server.url("/"))
+        .header("Expect", "100-continue")
+        .post(RequestBody.create(MediaType.get("text/plain"), "abc"))
+        .build();
+
+    Call call = client.newCall(request);
+    call.execute();
+
+    List<String> expectedEvents = Arrays.asList("CallStart", "DnsStart", "DnsEnd", "ConnectStart",
+        "ConnectEnd", "ConnectionAcquired", "RequestHeadersStart", "RequestHeadersEnd",
+        "ResponseHeadersStart", "RequestBodyStart", "RequestBodyEnd", "ResponseHeadersEnd",
+        "ResponseBodyStart", "ResponseBodyEnd", "ConnectionReleased", "CallEnd");
+    assertEquals(expectedEvents, listener.recordedEventTypes());
+  }
 }
