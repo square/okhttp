@@ -244,8 +244,8 @@ public final class ConnectionCoalescingTest {
 
     AtomicInteger connectCount = new AtomicInteger();
     EventListener listener = new EventListener() {
-      @Override public void connectStart(Call call, InetSocketAddress inetSocketAddress,
-          Proxy proxy) {
+      @Override public void connectStart(
+          Call call, InetSocketAddress inetSocketAddress, Proxy proxy) {
         connectCount.getAndIncrement();
       }
     };

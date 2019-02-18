@@ -57,7 +57,6 @@ import org.hamcrest.Description;
 import org.hamcrest.Matcher;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 
@@ -152,8 +151,6 @@ public final class EventListenerTest {
     assertEquals(expectedEvents, listener.recordedEventTypes());
   }
 
-  /** We incorrectly report a CallEnd event with the CallFailed event. */
-  @Ignore
   @Test public void failedCallEventSequence() {
     server.enqueue(new MockResponse().setHeadersDelay(2, TimeUnit.SECONDS));
 
@@ -927,7 +924,6 @@ public final class EventListenerTest {
     assertEquals(expectedEvents, listener.recordedEventTypes());
   }
 
-  @Ignore("CallEnd not emitted")
   @Test public void emptyResponseBodyConnectionClose() throws IOException {
     server.enqueue(new MockResponse()
         .addHeader("Connection", "close")
@@ -946,7 +942,6 @@ public final class EventListenerTest {
     assertEquals(expectedEvents, listener.recordedEventTypes());
   }
 
-  @Ignore("this reports CallFailed not CallEnd")
   @Test public void responseBodyClosedClosedWithoutReadingAllData() throws IOException {
     server.enqueue(new MockResponse()
         .setBody("abc")
@@ -1060,9 +1055,10 @@ public final class EventListenerTest {
   @Test public void successfulCallEventSequenceWithListener() throws IOException {
     server.enqueue(new MockResponse().setBody("abc"));
 
-    client = client.newBuilder().addNetworkInterceptor(new HttpLoggingInterceptor().setLevel(
-        HttpLoggingInterceptor.Level.BODY)).build();
-
+    client = client.newBuilder()
+        .addNetworkInterceptor(new HttpLoggingInterceptor()
+            .setLevel(HttpLoggingInterceptor.Level.BODY))
+        .build();
     Call call = client.newCall(new Request.Builder()
         .url(server.url("/"))
         .build());
@@ -1110,7 +1106,7 @@ public final class EventListenerTest {
     server.enqueue(new MockResponse());
 
     Call call = client.newCall(new Request.Builder().url(server.url("/")).build());
-    Response response = call.execute();
+    call.execute();
 
     List<String> expectedEvents = Arrays.asList("CallStart", "DnsStart", "DnsEnd",
         "ConnectStart", "ConnectEnd", "ConnectionAcquired", "RequestHeadersStart",
@@ -1170,5 +1166,24 @@ public final class EventListenerTest {
 
     assertEquals(0, server.takeRequest().getSequenceNumber());
     assertEquals(1, server.takeRequest().getSequenceNumber());
+  }
+
+  @Test public void applicationInterceptorShortCircuit() throws Exception {
+    client = client.newBuilder()
+        .addInterceptor(chain -> new Response.Builder()
+            .request(chain.request())
+            .protocol(Protocol.HTTP_1_1)
+            .code(200)
+            .message("OK")
+            .body(ResponseBody.create(null, "a"))
+            .build())
+        .build();
+
+    Call call = client.newCall(new Request.Builder().url(server.url("/")).build());
+    Response response = call.execute();
+    assertEquals("a", response.body().string());
+
+    List<String> expectedEvents = Arrays.asList("CallStart", "CallEnd");
+    assertEquals(expectedEvents, listener.recordedEventTypes());
   }
 }
