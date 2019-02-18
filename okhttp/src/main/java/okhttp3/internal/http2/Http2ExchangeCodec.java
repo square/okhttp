@@ -30,7 +30,7 @@ import okhttp3.Response;
 import okhttp3.internal.Internal;
 import okhttp3.internal.Util;
 import okhttp3.internal.connection.RealConnection;
-import okhttp3.internal.http.HttpCodec;
+import okhttp3.internal.http.ExchangeCodec;
 import okhttp3.internal.http.HttpHeaders;
 import okhttp3.internal.http.RequestLine;
 import okhttp3.internal.http.StatusLine;
@@ -49,7 +49,7 @@ import static okhttp3.internal.http2.Header.TARGET_SCHEME;
 import static okhttp3.internal.http2.Header.TARGET_SCHEME_UTF8;
 
 /** Encode requests and responses using HTTP/2 frames. */
-public final class Http2Codec implements HttpCodec {
+public final class Http2ExchangeCodec implements ExchangeCodec {
   private static final String CONNECTION = "connection";
   private static final String HOST = "host";
   private static final String KEEP_ALIVE = "keep-alive";
@@ -90,8 +90,8 @@ public final class Http2Codec implements HttpCodec {
   private final Protocol protocol;
   private volatile boolean canceled;
 
-  public Http2Codec(OkHttpClient client, RealConnection realConnection, Interceptor.Chain chain,
-      Http2Connection connection) {
+  public Http2ExchangeCodec(OkHttpClient client, RealConnection realConnection,
+      Interceptor.Chain chain, Http2Connection connection) {
     this.realConnection = realConnection;
     this.chain = chain;
     this.connection = connection;

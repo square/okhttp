@@ -27,7 +27,7 @@ import okhttp3.Response;
 import okhttp3.internal.Internal;
 import okhttp3.internal.Util;
 import okhttp3.internal.connection.RealConnection;
-import okhttp3.internal.http.HttpCodec;
+import okhttp3.internal.http.ExchangeCodec;
 import okhttp3.internal.http.HttpHeaders;
 import okhttp3.internal.http.RequestLine;
 import okhttp3.internal.http.StatusLine;
@@ -63,7 +63,7 @@ import static okhttp3.internal.http.StatusLine.HTTP_CONTINUE;
  * Exchanges that do not have a response body can call {@link #newFixedLengthSource(long)
  * newFixedLengthSource(0)} and may skip reading and closing that source.
  */
-public final class Http1Codec implements HttpCodec {
+public final class Http1ExchangeCodec implements ExchangeCodec {
   private static final int STATE_IDLE = 0; // Idle connections are ready to write request headers.
   private static final int STATE_OPEN_REQUEST_BODY = 1;
   private static final int STATE_WRITING_REQUEST_BODY = 2;
@@ -74,14 +74,14 @@ public final class Http1Codec implements HttpCodec {
   private static final int HEADER_LIMIT = 256 * 1024;
 
   /** The client that configures this stream. May be null for HTTPS proxy tunnels. */
-  final OkHttpClient client;
+  private final OkHttpClient client;
 
   /** The connection that carries this stream. */
-  final RealConnection realConnection;
+  private final RealConnection realConnection;
 
-  final BufferedSource source;
-  final BufferedSink sink;
-  int state = STATE_IDLE;
+  private final BufferedSource source;
+  private final BufferedSink sink;
+  private int state = STATE_IDLE;
   private long headerLimit = HEADER_LIMIT;
 
   /**
@@ -90,7 +90,7 @@ public final class Http1Codec implements HttpCodec {
    */
   private Headers trailers;
 
-  public Http1Codec(OkHttpClient client, RealConnection realConnection, BufferedSource source,
+  public Http1ExchangeCodec(OkHttpClient client, RealConnection realConnection, BufferedSource source,
       BufferedSink sink) {
     this.client = client;
     this.realConnection = realConnection;
@@ -237,7 +237,7 @@ public final class Http1Codec implements HttpCodec {
   }
 
   /** Reads headers or trailers. */
-  public Headers readHeaders() throws IOException {
+  private Headers readHeaders() throws IOException {
     Headers.Builder headers = new Headers.Builder();
     // parse the result headers until the first blank line
     for (String line; (line = readHeaderLine()).length() != 0; ) {
@@ -282,7 +282,7 @@ public final class Http1Codec implements HttpCodec {
    * to the default configuration. Use this to avoid unexpected sharing of timeouts between pooled
    * connections.
    */
-  void detachTimeout(ForwardingTimeout timeout) {
+  private void detachTimeout(ForwardingTimeout timeout) {
     Timeout oldDelegate = timeout.delegate();
     timeout.setDelegate(Timeout.NONE);
     oldDelegate.clearDeadline();
@@ -390,7 +390,7 @@ public final class Http1Codec implements HttpCodec {
      * Closes the cache entry and makes the socket available for reuse. This should be invoked when
      * the end of the body has been reached.
      */
-    protected final void responseBodyComplete() {
+    final void responseBodyComplete() {
       if (state == STATE_CLOSED) return;
       if (state != STATE_READING_RESPONSE_BODY) throw new IllegalStateException("state: " + state);
 

@@ -31,9 +31,8 @@ import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 import okhttp3.Address;
 import okhttp3.Route;
-import okhttp3.internal.Transmitter;
-import okhttp3.internal.Transmitter.TransmitterReference;
 import okhttp3.internal.Util;
+import okhttp3.internal.connection.Transmitter.TransmitterReference;
 import okhttp3.internal.platform.Platform;
 
 import static okhttp3.internal.Util.closeQuietly;
@@ -127,7 +126,7 @@ public final class RealConnectionPool {
    * Notify this pool that {@code connection} has become idle. Returns true if the connection has
    * been removed from the pool and should be closed.
    */
-  public boolean connectionBecameIdle(RealConnection connection) {
+  boolean connectionBecameIdle(RealConnection connection) {
     assert (Thread.holdsLock(this));
     if (connection.noNewExchanges || maxIdleConnections == 0) {
       connections.remove(connection);

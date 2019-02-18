@@ -26,8 +26,7 @@ import okhttp3.Request;
 import okhttp3.Response;
 import okhttp3.ResponseBody;
 import okhttp3.internal.Internal;
-import okhttp3.internal.Transmitter;
-import okhttp3.internal.http.HttpCodec;
+import okhttp3.internal.http.ExchangeCodec;
 import okhttp3.internal.http.RealResponseBody;
 import okhttp3.internal.ws.RealWebSocket;
 import okio.Buffer;
@@ -39,17 +38,17 @@ import okio.Source;
 
 /**
  * Transmits a single HTTP request and a response pair. This layers connection management and events
- * on {@link HttpCodec}, which handles the actual I/O.
+ * on {@link ExchangeCodec}, which handles the actual I/O.
  */
 public final class Exchange {
   final Transmitter transmitter;
   final Call call;
   final EventListener eventListener;
   final ExchangeFinder finder;
-  final HttpCodec codec;
+  final ExchangeCodec codec;
 
   public Exchange(Transmitter transmitter, Call call, EventListener eventListener,
-      ExchangeFinder finder, HttpCodec codec) {
+      ExchangeFinder finder, ExchangeCodec codec) {
     this.transmitter = transmitter;
     this.call = call;
     this.eventListener = eventListener;

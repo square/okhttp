@@ -24,7 +24,7 @@ import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.atomic.AtomicInteger;
 import javax.annotation.Nullable;
 import okhttp3.internal.NamedRunnable;
-import okhttp3.internal.Transmitter;
+import okhttp3.internal.connection.Transmitter;
 import okhttp3.internal.cache.CacheInterceptor;
 import okhttp3.internal.connection.ConnectInterceptor;
 import okhttp3.internal.http.BridgeInterceptor;

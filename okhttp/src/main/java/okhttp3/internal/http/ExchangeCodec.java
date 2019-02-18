@@ -25,7 +25,7 @@ import okio.Sink;
 import okio.Source;
 
 /** Encodes HTTP requests and decodes HTTP responses. */
-public interface HttpCodec {
+public interface ExchangeCodec {
   /**
    * The timeout to use while discarding a stream of input data. Since this is used for connection
    * reuse, this timeout should be significantly less than the time it takes to establish a new

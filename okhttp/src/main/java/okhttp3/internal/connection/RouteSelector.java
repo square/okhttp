@@ -37,7 +37,7 @@ import okhttp3.internal.Util;
  * Selects routes to connect to an origin server. Each connection requires a choice of proxy server,
  * IP address, and TLS mode. Connections may also be recycled.
  */
-public final class RouteSelector {
+final class RouteSelector {
   private final Address address;
   private final RouteDatabase routeDatabase;
   private final Call call;
