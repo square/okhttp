@@ -140,7 +140,7 @@ public final class MockWebServer extends ExternalResource implements Closeable {
       Collections.newSetFromMap(new ConcurrentHashMap<>());
   private final AtomicInteger requestCount = new AtomicInteger();
   private long bodyLimit = Long.MAX_VALUE;
-  private ServerSocketFactory serverSocketFactory = ServerSocketFactory.getDefault();
+  private ServerSocketFactory serverSocketFactory;
   private ServerSocket serverSocket;
   private SSLSocketFactory sslSocketFactory;
   private ExecutorService executor;
@@ -366,7 +366,12 @@ public final class MockWebServer extends ExternalResource implements Closeable {
 
     executor = Executors.newCachedThreadPool(Util.threadFactory("MockWebServer", false));
     this.inetSocketAddress = inetSocketAddress;
+
+    if (serverSocketFactory == null) {
+      serverSocketFactory = ServerSocketFactory.getDefault();
+    }
     serverSocket = serverSocketFactory.createServerSocket();
+
     // Reuse if the user specified a port
     serverSocket.setReuseAddress(inetSocketAddress.getPort() != 0);
     serverSocket.bind(inetSocketAddress, 50);
