@@ -12,15 +12,17 @@ import javax.annotation.Nullable;
 final class AsyncDns implements Dns {
 
   private final ExecutorService executor;
+  private final Dns dns;
 
   AsyncDns(Builder builder) {
     this.executor = builder.executor;
+    this.dns = builder.dns;
   }
 
   public CompletableFuture<List<InetAddress>> lookupAsync(String hostName) {
     return CompletableFuture.supplyAsync(() -> {
       try {
-        return Dns.SYSTEM.lookup(hostName);
+        return dns.lookup(hostName);
       } catch (UnknownHostException e) {
         throw new CompletionException(e);
       }
@@ -44,6 +46,7 @@ final class AsyncDns implements Dns {
 
   public static final class Builder {
     @Nullable ExecutorService executor = null;
+    Dns dns = Dns.SYSTEM;
 
     public AsyncDns build() {
       return new AsyncDns(this);
@@ -51,6 +54,11 @@ final class AsyncDns implements Dns {
 
     public Builder executor(ExecutorService executor) {
       this.executor = executor;
+      return this;
+    }
+
+    public Builder dns(Dns dns) {
+      this.dns = dns;
       return this;
     }
   }
