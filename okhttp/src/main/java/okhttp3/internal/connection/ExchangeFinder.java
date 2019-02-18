@@ -24,9 +24,8 @@ import okhttp3.EventListener;
 import okhttp3.Interceptor;
 import okhttp3.OkHttpClient;
 import okhttp3.Route;
-import okhttp3.internal.Transmitter;
 import okhttp3.internal.Util;
-import okhttp3.internal.http.HttpCodec;
+import okhttp3.internal.http.ExchangeCodec;
 
 import static okhttp3.internal.Util.closeQuietly;
 
@@ -51,7 +50,7 @@ import static okhttp3.internal.Util.closeQuietly;
  *
  * <p>It is possible to cancel the finding process.
  */
-public final class ExchangeFinder {
+final class ExchangeFinder {
   private final Transmitter transmitter;
   private final Address address;
   private final RealConnectionPool connectionPool;
@@ -65,7 +64,7 @@ public final class ExchangeFinder {
   private RealConnection connectingConnection;
   private boolean hasStreamFailure;
 
-  public ExchangeFinder(Transmitter transmitter, RealConnectionPool connectionPool,
+  ExchangeFinder(Transmitter transmitter, RealConnectionPool connectionPool,
       Address address, Call call, EventListener eventListener) {
     this.transmitter = transmitter;
     this.connectionPool = connectionPool;
@@ -76,7 +75,7 @@ public final class ExchangeFinder {
         address, connectionPool.routeDatabase, call, eventListener);
   }
 
-  public HttpCodec find(
+  public ExchangeCodec find(
       OkHttpClient client, Interceptor.Chain chain, boolean doExtensiveHealthChecks) {
     int connectTimeout = chain.connectTimeoutMillis();
     int readTimeout = chain.readTimeoutMillis();
@@ -246,19 +245,19 @@ public final class ExchangeFinder {
     return result;
   }
 
-  public RealConnection connectingConnection() {
+  RealConnection connectingConnection() {
     assert (Thread.holdsLock(connectionPool));
     return connectingConnection;
   }
 
-  public void trackFailure() {
+  void trackFailure() {
     assert (!Thread.holdsLock(connectionPool));
     synchronized (connectionPool) {
       hasStreamFailure = true; // Permit retries.
     }
   }
 
-  public boolean canRetry() {
+  boolean canRetry() {
     synchronized (connectionPool) {
       // Don't try if the failure wasn't our fault!
       if (!hasStreamFailure) return false;

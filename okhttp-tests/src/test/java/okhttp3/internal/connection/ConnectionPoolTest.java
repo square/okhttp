@@ -31,7 +31,6 @@ import okhttp3.Request;
 import okhttp3.Route;
 import okhttp3.internal.Internal;
 import okhttp3.internal.RecordingOkAuthenticator;
-import okhttp3.internal.Transmitter;
 import org.junit.Test;
 
 import static okhttp3.TestUtil.awaitGarbageCollection;

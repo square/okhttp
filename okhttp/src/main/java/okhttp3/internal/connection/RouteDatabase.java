@@ -25,7 +25,7 @@ import okhttp3.Route;
  * a specific IP address or proxy server, that failure is remembered and alternate routes are
  * preferred.
  */
-public final class RouteDatabase {
+final class RouteDatabase {
   private final Set<Route> failedRoutes = new LinkedHashSet<>();
 
   /** Records a failure connecting to {@code failedRoute}. */

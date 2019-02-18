@@ -27,7 +27,7 @@ public final class RouteException extends RuntimeException {
   private IOException firstException;
   private IOException lastException;
 
-  public RouteException(IOException cause) {
+  RouteException(IOException cause) {
     super(cause);
     firstException = cause;
     lastException = cause;
@@ -41,7 +41,7 @@ public final class RouteException extends RuntimeException {
     return lastException;
   }
 
-  public void addConnectException(IOException e) {
+  void addConnectException(IOException e) {
     addSuppressedIfPossible(firstException, e);
     lastException = e;
   }

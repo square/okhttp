@@ -27,7 +27,7 @@ import okhttp3.internal.Internal;
 import okhttp3.internal.Util;
 import okhttp3.internal.http.HttpHeaders;
 import okhttp3.internal.http2.Header;
-import okhttp3.internal.http2.Http2Codec;
+import okhttp3.internal.http2.Http2ExchangeCodec;
 import org.junit.Ignore;
 import org.junit.Test;
 
@@ -52,7 +52,7 @@ public final class HeadersTest {
         ":version", "HTTP/1.1",
         "connection", "close");
     Request request = new Request.Builder().url("http://square.com/").build();
-    Response response = Http2Codec.readHttp2HeadersList(headerBlock, Protocol.HTTP_2).request(request).build();
+    Response response = Http2ExchangeCodec.readHttp2HeadersList(headerBlock, Protocol.HTTP_2).request(request).build();
     Headers headers = response.headers();
     assertEquals(1, headers.size());
     assertEquals(":version", headers.name(0));
@@ -72,7 +72,7 @@ public final class HeadersTest {
         ":path", "/",
         ":authority", "square.com",
         ":scheme", "http");
-    assertEquals(expected, Http2Codec.http2HeadersList(request));
+    assertEquals(expected, Http2ExchangeCodec.http2HeadersList(request));
   }
 
   @Test public void http2HeadersListDontDropTeIfTrailersHttp2() {
@@ -85,7 +85,7 @@ public final class HeadersTest {
         ":path", "/",
         ":scheme", "http",
         "te", "trailers");
-    assertEquals(expected, Http2Codec.http2HeadersList(request));
+    assertEquals(expected, Http2ExchangeCodec.http2HeadersList(request));
   }
 
   @Test public void ofTrims() {

@@ -24,8 +24,8 @@ import okhttp3.Connection;
 import okhttp3.Interceptor;
 import okhttp3.Request;
 import okhttp3.Response;
-import okhttp3.internal.Transmitter;
 import okhttp3.internal.connection.Exchange;
+import okhttp3.internal.connection.Transmitter;
 
 import static okhttp3.internal.Util.checkDuration;
 

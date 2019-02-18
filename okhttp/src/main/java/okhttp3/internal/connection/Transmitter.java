@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package okhttp3.internal;
+package okhttp3.internal.connection;
 
 import java.io.IOException;
 import java.lang.ref.Reference;
@@ -31,11 +31,8 @@ import okhttp3.HttpUrl;
 import okhttp3.Interceptor;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
-import okhttp3.internal.connection.Exchange;
-import okhttp3.internal.connection.ExchangeFinder;
-import okhttp3.internal.connection.RealConnection;
-import okhttp3.internal.connection.RealConnectionPool;
-import okhttp3.internal.http.HttpCodec;
+import okhttp3.internal.Internal;
+import okhttp3.internal.http.ExchangeCodec;
 import okhttp3.internal.platform.Platform;
 
 import static okhttp3.internal.Util.closeQuietly;
@@ -115,14 +112,14 @@ public final class Transmitter {
   }
 
   /** Returns a new exchange to carry a new request and response. */
-  public Exchange newExchange(Interceptor.Chain chain, boolean doExtensiveHealthChecks) {
+  Exchange newExchange(Interceptor.Chain chain, boolean doExtensiveHealthChecks) {
     synchronized (connectionPool) {
       if (noMoreExchanges) throw new IllegalStateException("released");
       if (exchange != null) throw new IllegalStateException("exchange != null");
     }
 
-    HttpCodec httpCodec = exchangeFinder.find(client, chain, doExtensiveHealthChecks);
-    Exchange result = new Exchange(this, call, eventListener, exchangeFinder, httpCodec);
+    ExchangeCodec codec = exchangeFinder.find(client, chain, doExtensiveHealthChecks);
+    Exchange result = new Exchange(this, call, eventListener, exchangeFinder, codec);
 
     synchronized (connectionPool) {
       this.exchange = result;
@@ -130,7 +127,7 @@ public final class Transmitter {
     }
   }
 
-  public void acquireConnectionNoEvents(RealConnection connection) {
+  void acquireConnectionNoEvents(RealConnection connection) {
     assert (Thread.holdsLock(connectionPool));
 
     if (this.connection != null) throw new IllegalStateException();
@@ -142,7 +139,7 @@ public final class Transmitter {
    * Remove the transmitter from the connection's list of allocations. Returns a socket that the
    * caller should close.
    */
-  public @Nullable Socket releaseConnectionNoEvents() {
+  @Nullable Socket releaseConnectionNoEvents() {
     assert (Thread.holdsLock(connectionPool));
 
     int index = -1;
@@ -177,7 +174,7 @@ public final class Transmitter {
     }
   }
 
-  public void exchangeDone(@Nullable IOException e) {
+  void exchangeDone(@Nullable IOException e) {
     synchronized (connectionPool) {
       if (exchange == null) throw new IllegalStateException("exchange == null");
       exchange.connection().successCount++;
@@ -272,14 +269,14 @@ public final class Transmitter {
     }
   }
 
-  public static final class TransmitterReference extends WeakReference<Transmitter> {
+  static final class TransmitterReference extends WeakReference<Transmitter> {
     /**
      * Captures the stack trace at the time the Call is executed or enqueued. This is helpful for
      * identifying the origin of connection leaks.
      */
-    public final Object callStackTrace;
+    final Object callStackTrace;
 
-    public TransmitterReference(Transmitter referent, Object callStackTrace) {
+    TransmitterReference(Transmitter referent, Object callStackTrace) {
       super(referent);
       this.callStackTrace = callStackTrace;
     }
