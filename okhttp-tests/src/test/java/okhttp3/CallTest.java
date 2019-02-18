@@ -3553,6 +3553,30 @@ public final class CallTest {
     }
   }
 
+  @Test public void requestBodyThrowsUnrelatedToNetwork() throws Exception {
+    server.enqueue(new MockResponse());
+
+    Request request = new Request.Builder()
+        .url(server.url("/"))
+        .post(new RequestBody() {
+          @Override public @Nullable MediaType contentType() {
+            return null;
+          }
+
+          @Override public void writeTo(BufferedSink sink) throws IOException {
+            throw new IOException("boom");
+          }
+        })
+        .build();
+
+    executeSynchronously(request).assertFailure("boom");
+  }
+
+  @Test public void requestBodyThrowsUnrelatedToNetwork_HTTP2() throws Exception {
+    enableProtocol(Protocol.HTTP_2);
+    requestBodyThrowsUnrelatedToNetwork();
+  }
+
   private void makeFailingCall() {
     RequestBody requestBody = new RequestBody() {
       @Override public MediaType contentType() {
