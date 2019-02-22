@@ -60,7 +60,9 @@ public final class Transmitter {
 
   // Guarded by connectionPool.
   public RealConnection connection;
-  private Exchange exchange;
+  private @Nullable Exchange exchange;
+  private boolean exchangeRequestDone;
+  private boolean exchangeResponseDone;
   private boolean canceled;
   private boolean noMoreExchanges;
 
@@ -123,6 +125,8 @@ public final class Transmitter {
 
     synchronized (connectionPool) {
       this.exchange = result;
+      this.exchangeRequestDone = false;
+      this.exchangeResponseDone = false;
       return result;
     }
   }
@@ -174,13 +178,27 @@ public final class Transmitter {
     }
   }
 
-  void exchangeDone(@Nullable IOException e) {
+  void exchangeMessageDone(
+      Exchange exchange, boolean requestDone, boolean responseDone, @Nullable IOException e) {
+    boolean exchangeDone = false;
     synchronized (connectionPool) {
-      if (exchange == null) throw new IllegalStateException("exchange == null");
-      exchange.connection().successCount++;
-      exchange = null;
+      if (this.exchange == null) throw new IllegalStateException();
+      if (this.exchange != exchange) throw new IllegalStateException();
+      if (requestDone) {
+        this.exchangeRequestDone = true;
+      }
+      if (responseDone) {
+        this.exchangeResponseDone = true;
+      }
+      if (exchangeRequestDone && exchangeResponseDone) {
+        exchangeDone = true;
+        this.exchange.connection().successCount++;
+        this.exchange = null;
+      }
     }
-    maybeReleaseConnection(e, false);
+    if (exchangeDone) {
+      maybeReleaseConnection(e, false);
+    }
   }
 
   public void noMoreExchanges(IOException e) {
