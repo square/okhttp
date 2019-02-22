@@ -27,6 +27,7 @@ import okhttp3.Response;
 import okhttp3.internal.Internal;
 import okhttp3.internal.Util;
 import okhttp3.internal.connection.RealConnection;
+import okhttp3.internal.duplex.DuplexRequestBody;
 import okhttp3.internal.http.ExchangeCodec;
 import okhttp3.internal.http.HttpHeaders;
 import okhttp3.internal.http.RequestLine;
@@ -102,7 +103,11 @@ public final class Http1ExchangeCodec implements ExchangeCodec {
     return realConnection;
   }
 
-  @Override public Sink createRequestBody(Request request, long contentLength) {
+  @Override public Sink createRequestBody(Request request, long contentLength) throws IOException {
+    if (request.body() instanceof DuplexRequestBody) {
+      throw new ProtocolException("Duplex connections are not supported for HTTP1");
+    }
+
     if ("chunked".equalsIgnoreCase(request.header("Transfer-Encoding"))) {
       // Stream a request body of unknown length.
       return newChunkedSink();

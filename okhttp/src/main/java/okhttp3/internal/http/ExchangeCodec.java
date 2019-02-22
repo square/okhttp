@@ -37,7 +37,7 @@ public interface ExchangeCodec {
   RealConnection connection();
 
   /** Returns an output stream where the request body can be streamed. */
-  Sink createRequestBody(Request request, long contentLength);
+  Sink createRequestBody(Request request, long contentLength) throws IOException;
 
   /** This should update the HTTP engine's sentRequestMillis field. */
   void writeRequestHeaders(Request request) throws IOException;
