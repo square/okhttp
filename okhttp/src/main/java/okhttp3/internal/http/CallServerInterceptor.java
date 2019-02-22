@@ -68,12 +68,17 @@ public final class CallServerInterceptor implements Interceptor {
           request.body().writeTo(bufferedRequestBody);
           bufferedRequestBody.close();
         }
-      } else if (!exchange.connection().isMultiplexed()) {
-        // If the "Expect: 100-continue" expectation wasn't met, prevent the HTTP/1 connection
-        // from being reused. Otherwise we're still obligated to transmit the request body to
-        // leave the connection in a consistent state.
-        exchange.noNewExchangesOnConnection();
+      } else {
+        exchange.noRequestBody();
+        if (!exchange.connection().isMultiplexed()) {
+          // If the "Expect: 100-continue" expectation wasn't met, prevent the HTTP/1 connection
+          // from being reused. Otherwise we're still obligated to transmit the request body to
+          // leave the connection in a consistent state.
+          exchange.noNewExchangesOnConnection();
+        }
       }
+    } else {
+      exchange.noRequestBody();
     }
 
     if (!(request.body() instanceof DuplexRequestBody)) {

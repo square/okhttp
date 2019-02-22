@@ -16,6 +16,7 @@
 package okhttp3;
 
 import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 import okhttp3.internal.duplex.AsyncRequestBody;
 import okhttp3.internal.duplex.MwsDuplexAccess;
@@ -40,8 +41,12 @@ public final class DuplexTest {
   @Rule public final TestRule timeout = new Timeout(30_000, TimeUnit.MILLISECONDS);
   @Rule public final MockWebServer server = new MockWebServer();
 
+  private final RecordingEventListener listener = new RecordingEventListener();
   private HandshakeCertificates handshakeCertificates = localhost();
-  private OkHttpClient client = defaultClient();
+  private OkHttpClient client = defaultClient()
+      .newBuilder()
+      .eventListener(listener)
+      .build();
 
   @Test public void trueDuplexClientWritesFirst() throws Exception {
     enableProtocol(Protocol.HTTP_2);
@@ -184,6 +189,41 @@ public final class DuplexTest {
   }
 
   // TODO(oldergod) write tests for headers discarded with 100 Continue
+
+
+  @Test public void requestBodyEndsAfterResponseBody() throws Exception {
+    enableProtocol(Protocol.HTTP_2);
+    MockDuplexResponseBody mockDuplexResponseBody = enqueueResponseWithBody(
+        new MockResponse()
+            .clearHeaders(),
+        new MockDuplexResponseBody()
+            .exhaustResponse()
+            .receiveRequest("request A\n")
+            .exhaustRequest());
+
+    Call call = client.newCall(new Request.Builder()
+        .url(server.url("/"))
+        .post(new AsyncRequestBody())
+        .build());
+
+    try (Response response = call.execute()) {
+      BufferedSource responseBody = response.body().source();
+      assertTrue(responseBody.exhausted());
+
+      BufferedSink requestBody = ((AsyncRequestBody) call.request().body()).takeSink();
+      requestBody.writeUtf8("request A\n");
+      requestBody.close();
+    }
+
+    mockDuplexResponseBody.awaitSuccess();
+
+    List<String> expectedEvents = Arrays.asList("CallStart", "DnsStart", "DnsEnd", "ConnectStart",
+        "SecureConnectStart", "SecureConnectEnd", "ConnectEnd", "ConnectionAcquired",
+        "RequestHeadersStart", "RequestHeadersEnd", "RequestBodyStart", "ResponseHeadersStart",
+        "ResponseHeadersEnd", "ResponseBodyStart", "ResponseBodyEnd", "RequestBodyEnd",
+        "ConnectionReleased", "CallEnd");
+    assertEquals(expectedEvents, listener.recordedEventTypes());
+  }
 
   private MockDuplexResponseBody enqueueResponseWithBody(
       MockResponse response, MockDuplexResponseBody body) {

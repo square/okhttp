@@ -555,7 +555,7 @@ public final class RealConnection extends Http2Connection.Listener implements Co
     noNewExchanges();
     return new RealWebSocket.Streams(true, source, sink) {
       @Override public void close() throws IOException {
-        exchange.responseBodyComplete(-1L, null);
+        exchange.bodyComplete(-1L, true, true, null);
       }
     };
   }

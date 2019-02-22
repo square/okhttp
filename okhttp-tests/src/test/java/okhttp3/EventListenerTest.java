@@ -985,12 +985,12 @@ public final class EventListenerTest {
       }
 
       @Override public long contentLength() {
-        return 1024 * 8192;
+        return 1024 * 1024 * 256;
       }
 
       @Override public void writeTo(BufferedSink sink) throws IOException {
         for (int i = 0; i < 1024; i++) {
-          sink.write(new byte[8192]);
+          sink.write(new byte[1024 * 256]);
           sink.flush();
         }
       }
@@ -1011,6 +1011,49 @@ public final class EventListenerTest {
 
     CallFailed callFailed = listener.removeUpToEvent(CallFailed.class);
     assertNotNull(callFailed.ioe);
+  }
+
+  @Test public void requestBodyMultipleFailuresReportedOnlyOnce() {
+    RequestBody requestBody = new RequestBody() {
+      @Override public MediaType contentType() {
+        return MediaType.get("text/plain");
+      }
+
+      @Override public long contentLength() {
+        return 1024 * 1024 * 256;
+      }
+
+      @Override public void writeTo(BufferedSink sink) throws IOException {
+        int failureCount = 0;
+        for (int i = 0; i < 1024; i++) {
+          try {
+            sink.write(new byte[1024 * 256]);
+            sink.flush();
+          } catch (IOException e) {
+            failureCount++;
+            if (failureCount == 3) throw e;
+          }
+        }
+      }
+    };
+
+    server.enqueue(new MockResponse()
+        .setSocketPolicy(SocketPolicy.DISCONNECT_DURING_REQUEST_BODY));
+
+    Call call = client.newCall(new Request.Builder()
+        .url(server.url("/"))
+        .post(requestBody)
+        .build());
+    try {
+      call.execute();
+      fail();
+    } catch (IOException expected) {
+    }
+
+    List<String> expectedEvents = Arrays.asList("CallStart", "DnsStart", "DnsEnd", "ConnectStart",
+        "ConnectEnd", "ConnectionAcquired", "RequestHeadersStart", "RequestHeadersEnd",
+        "RequestBodyStart", "RequestBodyEnd", "ConnectionReleased", "CallFailed");
+    assertEquals(expectedEvents, listener.recordedEventTypes());
   }
 
   @Test public void requestBodySuccessHttp1OverHttps() throws IOException {
