@@ -24,6 +24,7 @@ import okhttp3.internal.duplex.AsyncRequestBody;
 import okhttp3.internal.duplex.MwsDuplexAccess;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
+import okhttp3.mockwebserver.SocketPolicy;
 import okhttp3.mockwebserver.internal.duplex.MockDuplexResponseBody;
 import okhttp3.tls.HandshakeCertificates;
 import okio.BufferedSink;
@@ -203,9 +204,6 @@ public final class DuplexTest {
     mockDuplexResponseBody.awaitSuccess();
   }
 
-  // TODO(oldergod) write tests for headers discarded with 100 Continue
-
-
   @Test public void requestBodyEndsAfterResponseBody() throws Exception {
     enableProtocol(Protocol.HTTP_2);
     MockDuplexResponseBody mockDuplexResponseBody = enqueueResponseWithBody(
@@ -238,6 +236,39 @@ public final class DuplexTest {
         "ResponseHeadersEnd", "ResponseBodyStart", "ResponseBodyEnd", "RequestBodyEnd",
         "ConnectionReleased", "CallEnd");
     assertEquals(expectedEvents, listener.recordedEventTypes());
+  }
+
+  @Test public void duplexWith100Continue() throws Exception {
+    enableProtocol(Protocol.HTTP_2);
+
+    MockDuplexResponseBody mockDuplexResponseBody = enqueueResponseWithBody(
+        new MockResponse()
+            .clearHeaders()
+            .setSocketPolicy(SocketPolicy.EXPECT_CONTINUE),
+        new MockDuplexResponseBody()
+            .receiveRequest("request body\n")
+            .sendResponse("response body\n")
+            .exhaustRequest());
+
+    Call call = client.newCall(new Request.Builder()
+        .url(server.url("/"))
+        .header("Expect", "100-continue")
+        .post(new AsyncRequestBody())
+        .build());
+
+    try (Response response = call.execute()) {
+      BufferedSink requestBody = ((AsyncRequestBody) call.request().body()).takeSink();
+      requestBody.writeUtf8("request body\n");
+      requestBody.flush();
+
+      BufferedSource responseBody = response.body().source();
+      assertEquals("response body", responseBody.readUtf8Line());
+
+      requestBody.close();
+      assertNull(responseBody.readUtf8Line());
+    }
+
+    mockDuplexResponseBody.awaitSuccess();
   }
 
   private MockDuplexResponseBody enqueueResponseWithBody(

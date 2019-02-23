@@ -990,9 +990,7 @@ public final class MockWebServer extends ExternalResource implements Closeable {
       Headers headers = httpHeaders.build();
 
       MockResponse peek = dispatcher.peek();
-      if (peek.isDuplex()) {
-        readBody = false;
-      } else if (!readBody && peek.getSocketPolicy() == EXPECT_CONTINUE) {
+      if (!readBody && peek.getSocketPolicy() == EXPECT_CONTINUE) {
         List<Header> continueHeaders = Collections.singletonList(
             new Header(Header.RESPONSE_STATUS, ByteString.encodeUtf8("100 Continue")));
         stream.writeHeaders(continueHeaders, false, true);
@@ -1001,7 +999,7 @@ public final class MockWebServer extends ExternalResource implements Closeable {
       }
 
       Buffer body = new Buffer();
-      if (readBody) {
+      if (readBody && !peek.isDuplex()) {
         String contentLengthString = headers.get("content-length");
         long byteCount = contentLengthString != null
             ? Long.parseLong(contentLengthString)
