@@ -35,7 +35,9 @@ public class ConscryptPlatform extends Platform {
   private ConscryptPlatform() {
   }
 
-  private Provider getProvider() {
+  @SuppressWarnings("deprecation") private Provider getProvider() {
+    // defaults to true, but allow for older versions of conscrypt if still compatible
+    // new form with boolean is only present in >= 2.0.0
     return Conscrypt.newProviderBuilder().provideTrustManager().build();
   }
 

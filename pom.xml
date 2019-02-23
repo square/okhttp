@@ -53,7 +53,7 @@
     <moshi.version>1.8.0</moshi.version>
     <jnr-unixsocket.version>0.22</jnr-unixsocket.version>
     <okio.version>1.17.2</okio.version>
-    <conscrypt.version>1.4.2</conscrypt.version>
+    <conscrypt.version>2.0.0</conscrypt.version>
 
     <!-- Test Dependencies -->
     <junit.version>4.12</junit.version>
