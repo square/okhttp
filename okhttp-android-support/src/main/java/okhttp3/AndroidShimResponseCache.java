@@ -58,7 +58,7 @@ public class AndroidShimResponseCache extends ResponseCache {
   @Override public CacheResponse get(URI uri, String requestMethod,
       Map<String, List<String>> requestHeaders) throws IOException {
     Request okRequest = JavaApiConverter.createOkRequest(uri, requestMethod, requestHeaders);
-    Response okResponse = delegate.internalCache.get(okRequest);
+    Response okResponse = delegate.internalCache().get(okRequest);
     if (okResponse == null) {
       return null;
     }
@@ -73,7 +73,7 @@ public class AndroidShimResponseCache extends ResponseCache {
       return null;
     }
     okhttp3.internal.cache.CacheRequest okCacheRequest =
-        delegate.internalCache.put(okResponse);
+        delegate.internalCache().put(okResponse);
     if (okCacheRequest == null) {
       return null;
     }

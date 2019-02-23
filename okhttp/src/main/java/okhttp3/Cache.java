@@ -134,7 +134,7 @@ import okio.Source;
  * caching directives. It even offers convenient constants {@link CacheControl#FORCE_NETWORK} and
  * {@link CacheControl#FORCE_CACHE} that address the use cases above.
  */
-public final class Cache implements Closeable, Flushable {
+public final class Cache extends CacheProvider {
   private static final int VERSION = 201105;
   private static final int ENTRY_METADATA = 0;
   private static final int ENTRY_BODY = 1;
@@ -165,6 +165,11 @@ public final class Cache implements Closeable, Flushable {
       Cache.this.trackResponse(cacheStrategy);
     }
   };
+
+  @Override
+  public InternalCache internalCache() {
+    return internalCache;
+  }
 
   final DiskLruCache cache;
 
@@ -221,6 +226,7 @@ public final class Cache implements Closeable, Flushable {
     return response;
   }
 
+  @Override
   @Nullable CacheRequest put(Response response) {
     String requestMethod = response.request().method();
 
@@ -306,27 +312,17 @@ public final class Cache implements Closeable, Flushable {
    * Closes the cache and deletes all of its stored values. This will delete all files in the cache
    * directory including files that weren't created by the cache.
    */
+  @Override
   public void delete() throws IOException {
     cache.delete();
   }
 
-  /**
-   * Deletes all values stored in the cache. In-flight writes to the cache will complete normally,
-   * but the corresponding responses will not be stored.
-   */
+  @Override
   public void evictAll() throws IOException {
     cache.evictAll();
   }
 
-  /**
-   * Returns an iterator over the URLs in this cache. This iterator doesn't throw {@code
-   * ConcurrentModificationException}, but if new responses are added while iterating, their URLs
-   * will not be returned. If existing responses are evicted during iteration, they will be absent
-   * (unless they were already returned).
-   *
-   * <p>The iterator supports {@linkplain Iterator#remove}. Removing a URL from the iterator evicts
-   * the corresponding response from the cache. Use this to evict selected responses.
-   */
+  @Override
   public Iterator<String> urls() throws IOException {
     return new Iterator<String>() {
       final Iterator<DiskLruCache.Snapshot> delegate = cache.snapshots();
@@ -367,19 +363,22 @@ public final class Cache implements Closeable, Flushable {
     };
   }
 
+  @Override
   public synchronized int writeAbortCount() {
     return writeAbortCount;
   }
 
+  @Override
   public synchronized int writeSuccessCount() {
     return writeSuccessCount;
   }
 
+  @Override
   public long size() throws IOException {
     return cache.size();
   }
 
-  /** Max size of the cache (in bytes). */
+  @Override
   public long maxSize() {
     return cache.getMaxSize();
   }
@@ -416,14 +415,17 @@ public final class Cache implements Closeable, Flushable {
     hitCount++;
   }
 
+  @Override
   public synchronized int networkCount() {
     return networkCount;
   }
 
+  @Override
   public synchronized int hitCount() {
     return hitCount;
   }
 
+  @Override
   public synchronized int requestCount() {
     return requestCount;
   }

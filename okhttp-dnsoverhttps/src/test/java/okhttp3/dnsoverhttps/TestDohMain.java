@@ -24,6 +24,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import okhttp3.Cache;
+import okhttp3.CacheProvider;
 import okhttp3.HttpUrl;
 import okhttp3.OkHttpClient;
 
@@ -64,7 +65,7 @@ public class TestDohMain {
     } finally {
       bootstrapClient.connectionPool().evictAll();
       bootstrapClient.dispatcher().executorService().shutdownNow();
-      Cache cache = bootstrapClient.cache();
+      CacheProvider cache = bootstrapClient.cache();
       if (cache != null) {
         cache.close();
       }

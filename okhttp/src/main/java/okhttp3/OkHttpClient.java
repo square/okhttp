@@ -191,7 +191,7 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
   final EventListener.Factory eventListenerFactory;
   final ProxySelector proxySelector;
   final CookieJar cookieJar;
-  final @Nullable Cache cache;
+  final @Nullable CacheProvider cache;
   final @Nullable InternalCache internalCache;
   final SocketFactory socketFactory;
   final SSLSocketFactory sslSocketFactory;
@@ -321,12 +321,12 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
     return cookieJar;
   }
 
-  public @Nullable Cache cache() {
+  public @Nullable CacheProvider cache() {
     return cache;
   }
 
   @Nullable InternalCache internalCache() {
-    return cache != null ? cache.internalCache : internalCache;
+    return cache != null ? cache.internalCache() : internalCache;
   }
 
   public Dns dns() {
@@ -437,7 +437,7 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
     EventListener.Factory eventListenerFactory;
     ProxySelector proxySelector;
     CookieJar cookieJar;
-    @Nullable Cache cache;
+    @Nullable CacheProvider cache;
     @Nullable InternalCache internalCache;
     SocketFactory socketFactory;
     @Nullable SSLSocketFactory sslSocketFactory;
@@ -713,7 +713,7 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
     }
 
     /** Sets the response cache to be used to read and write cached responses. */
-    public Builder cache(@Nullable Cache cache) {
+    public Builder cache(@Nullable CacheProvider cache) {
       this.cache = cache;
       this.internalCache = null;
       return this;
