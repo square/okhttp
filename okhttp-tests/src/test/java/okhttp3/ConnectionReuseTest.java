@@ -15,9 +15,12 @@
  */
 package okhttp3;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 import javax.net.ssl.SSLException;
+import okhttp3.internal.Util;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import okhttp3.mockwebserver.SocketPolicy;
@@ -30,7 +33,6 @@ import org.junit.rules.Timeout;
 import static okhttp3.TestUtil.defaultClient;
 import static okhttp3.tls.internal.TlsUtil.localhost;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 public final class ConnectionReuseTest {
@@ -300,12 +302,15 @@ public final class ConnectionReuseTest {
    * https://github.com/square/okhttp/issues/2409
    */
   @Test public void connectionsAreNotReusedIfNetworkInterceptorInterferes() throws Exception {
+    List<Response> responsesNotClosed = new ArrayList<>();
+
     client = client.newBuilder()
         // Since this test knowingly leaks a connection, avoid using the default shared connection
         // pool, which should remain clean for subsequent tests.
         .connectionPool(new ConnectionPool())
         .addNetworkInterceptor(chain -> {
           Response response = chain.proceed(chain.request());
+          responsesNotClosed.add(response);
           return response
               .newBuilder()
               .body(ResponseBody.create(null, "unrelated response body!"))
@@ -324,11 +329,15 @@ public final class ConnectionReuseTest {
         .url(server.url("/"))
         .build();
     Call call = client.newCall(request);
-    try {
-      call.execute();
-      fail();
-    } catch (IllegalStateException expected) {
-      assertTrue(expected.getMessage().startsWith("Closing the body of"));
+    try (Response response = call.execute()) {
+      assertEquals("unrelated response body!", response.body().string());
+    }
+
+    assertEquals(0, server.takeRequest().getSequenceNumber());
+    assertEquals(0, server.takeRequest().getSequenceNumber()); // No connection reuse.
+
+    for (Response response : responsesNotClosed) {
+      Util.closeQuietly(response);
     }
   }
 

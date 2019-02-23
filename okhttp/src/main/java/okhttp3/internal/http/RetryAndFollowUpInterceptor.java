@@ -115,24 +115,17 @@ public final class RetryAndFollowUpInterceptor implements Interceptor {
             .build();
       }
 
-      Request followUp;
-      try {
-        Exchange exchange = Internal.instance.exchange(response);
-        Route route = exchange != null ? exchange.connection().route() : null;
-        followUp = followUpRequest(response, route);
-      } catch (IOException e) {
-        throw e;
-      }
+      Exchange exchange = Internal.instance.exchange(response);
+      Route route = exchange != null ? exchange.connection().route() : null;
+      Request followUp = followUpRequest(response, route);
 
       if (followUp == null) {
         return response;
       }
 
       closeQuietly(response.body());
-
       if (transmitter.hasExchange()) {
-        throw new IllegalStateException("Closing the body of " + response
-            + " didn't close its backing stream. Bad interceptor?");
+        exchange.detachWithViolence();
       }
 
       if (++followUpCount > MAX_FOLLOW_UPS) {
