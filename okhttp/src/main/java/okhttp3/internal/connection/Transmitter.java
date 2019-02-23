@@ -182,15 +182,19 @@ public final class Transmitter {
       Exchange exchange, boolean requestDone, boolean responseDone, @Nullable IOException e) {
     boolean exchangeDone = false;
     synchronized (connectionPool) {
-      if (this.exchange == null) throw new IllegalStateException();
-      if (this.exchange != exchange) throw new IllegalStateException();
+      if (exchange != this.exchange) {
+        return; // This exchange was detached violently!
+      }
+      boolean changed = false;
       if (requestDone) {
+        if (!exchangeRequestDone) changed = true;
         this.exchangeRequestDone = true;
       }
       if (responseDone) {
+        if (!exchangeResponseDone) changed = true;
         this.exchangeResponseDone = true;
       }
-      if (exchangeRequestDone && exchangeResponseDone) {
+      if (exchangeRequestDone && exchangeResponseDone && changed) {
         exchangeDone = true;
         this.exchange.connection().successCount++;
         this.exchange = null;

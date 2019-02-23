@@ -27,6 +27,7 @@ import okio.Utf8;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 /**
  * A scriptable request/response conversation. Create the script by calling methods like {@link
@@ -46,6 +47,17 @@ public final class MockDuplexResponseBody implements DuplexResponseBody {
   public MockDuplexResponseBody exhaustRequest() {
     actions.add((request, requestBody, responseBody) -> {
       assertTrue(requestBody.exhausted());
+    });
+    return this;
+  }
+
+  public MockDuplexResponseBody requestIOException() {
+    actions.add((request, requestBody, responseBody) -> {
+      try {
+        requestBody.exhausted();
+        fail();
+      } catch (IOException expected) {
+      }
     });
     return this;
   }
