@@ -125,6 +125,11 @@ public final class LoggingEventListener extends EventListener {
   }
 
   @Override
+  public void requestFailed(Call call, IOException ioe) {
+    logWithTime("requestFailed: " + ioe);
+  }
+
+  @Override
   public void responseHeadersStart(Call call) {
     logWithTime("responseHeadersStart");
   }
@@ -142,6 +147,11 @@ public final class LoggingEventListener extends EventListener {
   @Override
   public void responseBodyEnd(Call call, long byteCount) {
     logWithTime("responseBodyEnd: byteCount=" + byteCount);
+  }
+
+  @Override
+  public void responseFailed(Call call, IOException ioe) {
+    logWithTime("responseFailed: " + ioe);
   }
 
   @Override

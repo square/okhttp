@@ -38,6 +38,7 @@ import okhttp3.RecordingEventListener.DnsStart;
 import okhttp3.RecordingEventListener.RequestBodyEnd;
 import okhttp3.RecordingEventListener.RequestHeadersEnd;
 import okhttp3.RecordingEventListener.ResponseBodyEnd;
+import okhttp3.RecordingEventListener.ResponseFailed;
 import okhttp3.RecordingEventListener.ResponseHeadersEnd;
 import okhttp3.RecordingEventListener.SecureConnectEnd;
 import okhttp3.RecordingEventListener.SecureConnectStart;
@@ -168,7 +169,8 @@ public final class EventListenerTest {
 
     List<String> expectedEvents = Arrays.asList("CallStart", "DnsStart", "DnsEnd",
         "ConnectStart", "ConnectEnd", "ConnectionAcquired", "RequestHeadersStart",
-        "RequestHeadersEnd", "ResponseHeadersStart", "ConnectionReleased", "CallFailed");
+        "RequestHeadersEnd", "ResponseHeadersStart", "ResponseFailed", "ConnectionReleased",
+        "CallFailed");
     assertEquals(expectedEvents, listener.recordedEventTypes());
   }
 
@@ -197,10 +199,10 @@ public final class EventListenerTest {
     List<String> expectedEvents = Arrays.asList("CallStart", "DnsStart", "DnsEnd",
         "ConnectStart", "ConnectEnd", "ConnectionAcquired", "RequestHeadersStart",
         "RequestHeadersEnd", "ResponseHeadersStart", "ResponseHeadersEnd", "ResponseBodyStart",
-        "ResponseBodyEnd", "ConnectionReleased", "CallFailed");
+        "ResponseFailed", "ConnectionReleased", "CallFailed");
     assertEquals(expectedEvents, listener.recordedEventTypes());
-    ResponseBodyEnd bodyEnd = listener.removeUpToEvent(ResponseBodyEnd.class);
-    assertEquals(5, bodyEnd.bytesRead);
+    ResponseFailed responseFailed = listener.removeUpToEvent(ResponseFailed.class);
+    assertEquals("unexpected end of stream", responseFailed.ioe.getMessage());
   }
 
   @Test public void canceledCallEventSequence() {
@@ -1052,7 +1054,7 @@ public final class EventListenerTest {
 
     List<String> expectedEvents = Arrays.asList("CallStart", "DnsStart", "DnsEnd", "ConnectStart",
         "ConnectEnd", "ConnectionAcquired", "RequestHeadersStart", "RequestHeadersEnd",
-        "RequestBodyStart", "RequestBodyEnd", "ConnectionReleased", "CallFailed");
+        "RequestBodyStart", "RequestFailed", "ConnectionReleased", "CallFailed");
     assertEquals(expectedEvents, listener.recordedEventTypes());
   }
 

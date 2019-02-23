@@ -46,7 +46,7 @@ import javax.annotation.Nullable;
  * events.
  *
  * <p>All event methods must execute fast, without external locking, cannot throw exceptions,
- * attempt to mutate the event parameters, or be reentrant back into the client.
+ * attempt to mutate the event parameters, or be re-entrant back into the client.
  * Any IO - writing to files or network should be done asynchronously.
  */
 public abstract class EventListener {
@@ -211,6 +211,15 @@ public abstract class EventListener {
   }
 
   /**
+   * Invoked when a request fails to be written.
+   *
+   * <p>This method is invoked after {@link #requestHeadersStart} or {@link #requestBodyStart}. Note
+   * that request failures do not necessarily fail the entire call.
+   */
+  public void requestFailed(Call call, IOException ioe) {
+  }
+
+  /**
    * Invoked just prior to receiving response headers.
    *
    * <p>The connection is implicit, and will generally relate to the last
@@ -254,6 +263,15 @@ public abstract class EventListener {
    * <p>This method is always invoked after {@link #requestBodyStart(Call)}.
    */
   public void responseBodyEnd(Call call, long byteCount) {
+  }
+
+  /**
+   * Invoked when a response fails to be read.
+   *
+   * <p>This method is invoked after {@link #responseHeadersStart} or {@link #responseBodyStart}.
+   * Note that response failures do not necessarily fail the entire call.
+   */
+  public void responseFailed(Call call, IOException ioe) {
   }
 
   /**
