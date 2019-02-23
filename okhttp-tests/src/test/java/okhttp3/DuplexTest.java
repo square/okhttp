@@ -15,6 +15,8 @@
  */
 package okhttp3;
 
+import java.io.IOException;
+import java.net.ProtocolException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -36,6 +38,7 @@ import static okhttp3.TestUtil.defaultClient;
 import static okhttp3.tls.internal.TlsUtil.localhost;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.fail;
 
 public final class DuplexTest {
   @Rule public final TestRule timeout = new Timeout(30_000, TimeUnit.MILLISECONDS);
@@ -47,6 +50,18 @@ public final class DuplexTest {
       .newBuilder()
       .eventListener(listener)
       .build();
+
+  @Test public void http1DoesntSupportDuplex() throws IOException {
+    Call call = client.newCall(new Request.Builder()
+        .url(server.url("/"))
+        .post(new AsyncRequestBody())
+        .build());
+    try {
+      call.execute();
+      fail();
+    } catch (ProtocolException expected) {
+    }
+  }
 
   @Test public void trueDuplexClientWritesFirst() throws Exception {
     enableProtocol(Protocol.HTTP_2);
