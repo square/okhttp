@@ -105,7 +105,7 @@ public final class Http1ExchangeCodec implements ExchangeCodec {
 
   @Override public Sink createRequestBody(Request request, long contentLength) throws IOException {
     if (request.body() instanceof DuplexRequestBody) {
-      throw new ProtocolException("Duplex connections are not supported for HTTP1");
+      throw new ProtocolException("Duplex connections are not supported for HTTP/1");
     }
 
     if ("chunked".equalsIgnoreCase(request.header("Transfer-Encoding"))) {
