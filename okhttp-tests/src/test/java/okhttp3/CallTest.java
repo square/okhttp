@@ -76,6 +76,7 @@ import okhttp3.tls.HeldCertificate;
 import okio.Buffer;
 import okio.BufferedSink;
 import okio.BufferedSource;
+import okio.ForwardingSource;
 import okio.GzipSink;
 import okio.Okio;
 import org.junit.After;
@@ -3593,6 +3594,35 @@ public final class CallTest {
   @Test public void requestBodyThrowsUnrelatedToNetwork_HTTP2() throws Exception {
     enableProtocol(Protocol.HTTP_2);
     requestBodyThrowsUnrelatedToNetwork();
+  }
+
+  /** https://github.com/square/okhttp/issues/4583 */
+  @Test public void lateCancelCallsOnFailure() throws Exception {
+    server.enqueue(new MockResponse()
+        .setBody("abc"));
+
+    AtomicBoolean closed = new AtomicBoolean();
+
+    client = client.newBuilder()
+        .addInterceptor(new Interceptor() {
+          @Override public Response intercept(Chain chain) throws IOException {
+            Response response = chain.proceed(chain.request());
+            chain.call().cancel(); // Cancel after we have the response.
+            ForwardingSource closeTrackingSource = new ForwardingSource(response.body().source()) {
+              @Override public void close() throws IOException {
+                closed.set(true);
+                super.close();
+              }
+            };
+            return response.newBuilder()
+                .body(ResponseBody.create(null, -1L, Okio.buffer(closeTrackingSource)))
+                .build();
+          }
+        })
+        .build();
+
+    executeSynchronously("/").assertFailure("Canceled");
+    assertTrue(closed.get());
   }
 
   private void makeFailingCall() {

@@ -24,9 +24,9 @@ import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.atomic.AtomicInteger;
 import javax.annotation.Nullable;
 import okhttp3.internal.NamedRunnable;
-import okhttp3.internal.connection.Transmitter;
 import okhttp3.internal.cache.CacheInterceptor;
 import okhttp3.internal.connection.ConnectInterceptor;
+import okhttp3.internal.connection.Transmitter;
 import okhttp3.internal.http.BridgeInterceptor;
 import okhttp3.internal.http.CallServerInterceptor;
 import okhttp3.internal.http.RealInterceptorChain;
@@ -36,6 +36,7 @@ import okio.AsyncTimeout;
 import okio.Timeout;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static okhttp3.internal.Util.closeQuietly;
 import static okhttp3.internal.platform.Platform.INFO;
 
 final class RealCall implements Call {
@@ -189,7 +190,6 @@ final class RealCall implements Call {
       timeout.enter();
       try {
         Response response = getResponseWithInterceptorChain();
-        if (transmitter.isCanceled()) throw new IOException("Canceled");
         signalledCallback = true;
         responseCallback.onResponse(RealCall.this, response);
       } catch (IOException e) {
@@ -238,7 +238,12 @@ final class RealCall implements Call {
 
     IOException ioException = null;
     try {
-      return chain.proceed(originalRequest);
+      Response response = chain.proceed(originalRequest);
+      if (transmitter.isCanceled()) {
+        closeQuietly(response);
+        throw new IOException("Canceled");
+      }
+      return response;
     } catch (IOException e) {
       ioException = e;
       throw e;
