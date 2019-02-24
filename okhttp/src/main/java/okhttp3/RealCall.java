@@ -35,6 +35,7 @@ import okio.AsyncTimeout;
 import okio.Timeout;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static okhttp3.internal.Util.closeQuietly;
 import static okhttp3.internal.platform.Platform.INFO;
 
 final class RealCall implements Call {
@@ -198,13 +199,8 @@ final class RealCall implements Call {
       timeout.enter();
       try {
         Response response = getResponseWithInterceptorChain();
-        if (retryAndFollowUpInterceptor.isCanceled()) {
-          signalledCallback = true;
-          responseCallback.onFailure(RealCall.this, new IOException("Canceled"));
-        } else {
-          signalledCallback = true;
-          responseCallback.onResponse(RealCall.this, response);
-        }
+        signalledCallback = true;
+        responseCallback.onResponse(RealCall.this, response);
       } catch (IOException e) {
         e = timeoutExit(e);
         if (signalledCallback) {
@@ -251,6 +247,11 @@ final class RealCall implements Call {
         originalRequest, this, eventListener, client.connectTimeoutMillis(),
         client.readTimeoutMillis(), client.writeTimeoutMillis());
 
-    return chain.proceed(originalRequest);
+    Response response = chain.proceed(originalRequest);
+    if (retryAndFollowUpInterceptor.isCanceled()) {
+      closeQuietly(response);
+      throw new IOException("Canceled");
+    }
+    return response;
   }
 }
