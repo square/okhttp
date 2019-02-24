@@ -56,6 +56,10 @@ import javax.net.ssl.SSLPeerUnverifiedException;
 import javax.net.ssl.SSLProtocolException;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
+import okhttp3.RecordingEventListener.CallEnd;
+import okhttp3.RecordingEventListener.ConnectionAcquired;
+import okhttp3.RecordingEventListener.ConnectionReleased;
+import okhttp3.RecordingEventListener.ResponseFailed;
 import okhttp3.internal.DoubleInetAddressDns;
 import okhttp3.internal.RecordingOkAuthenticator;
 import okhttp3.internal.Util;
@@ -104,8 +108,11 @@ public final class CallTest {
   @Rule public final MockWebServer server2 = new MockWebServer();
   @Rule public final InMemoryFileSystem fileSystem = new InMemoryFileSystem();
 
+  private final RecordingEventListener listener = new RecordingEventListener();
   private HandshakeCertificates handshakeCertificates = localhost();
-  private OkHttpClient client = defaultClient();
+  private OkHttpClient client = defaultClient().newBuilder()
+      .eventListener(listener)
+      .build();
   private RecordingCallback callback = new RecordingCallback();
   private TestLogHandler logHandler = new TestLogHandler();
   private Cache cache = new Cache(new File("/cache/"), Integer.MAX_VALUE, fileSystem);
@@ -1041,6 +1048,17 @@ public final class CallTest {
 
     executeSynchronously("/").assertBody("seed connection pool");
     executeSynchronously("/").assertBody("retry success");
+
+    // The call that seeds the connection pool.
+    listener.removeUpToEvent(CallEnd.class);
+
+    // The ResponseFailed event is not necessarily fatal!
+    listener.removeUpToEvent(ConnectionAcquired.class);
+    listener.removeUpToEvent(ResponseFailed.class);
+    listener.removeUpToEvent(ConnectionReleased.class);
+    listener.removeUpToEvent(ConnectionAcquired.class);
+    listener.removeUpToEvent(ConnectionReleased.class);
+    listener.removeUpToEvent(CallEnd.class);
   }
 
   @Test public void recoverWhenRetryOnConnectionFailureIsTrue_HTTP2() throws Exception {

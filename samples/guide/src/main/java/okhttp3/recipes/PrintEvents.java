@@ -156,6 +156,10 @@ public final class PrintEvents {
       printEvent("requestBodyEnd");
     }
 
+    @Override public void requestFailed(Call call, IOException ioe) {
+      printEvent("requestFailed");
+    }
+
     @Override public void responseHeadersStart(Call call) {
       printEvent("responseHeadersStart");
     }
@@ -170,6 +174,10 @@ public final class PrintEvents {
 
     @Override public void responseBodyEnd(Call call, long byteCount) {
       printEvent("responseBodyEnd");
+    }
+
+    @Override public void responseFailed(Call call, IOException ioe) {
+      printEvent("responseFailed");
     }
 
     @Override public void callEnd(Call call) {

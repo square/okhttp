@@ -19,18 +19,18 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.Proxy;
-import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Deque;
 import java.util.List;
+import java.util.concurrent.ConcurrentLinkedDeque;
 import javax.annotation.Nullable;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 public final class RecordingEventListener extends EventListener {
-  final Deque<CallEvent> eventSequence = new ArrayDeque<>();
+  final Deque<CallEvent> eventSequence = new ConcurrentLinkedDeque<>();
 
   final List<Object> forbiddenLocks = new ArrayList<>();
 
@@ -138,6 +138,10 @@ public final class RecordingEventListener extends EventListener {
     logEvent(new RequestBodyEnd(call, byteCount));
   }
 
+  @Override public void requestFailed(Call call, IOException ioe) {
+    logEvent(new RequestFailed(call, ioe));
+  }
+
   @Override public void responseHeadersStart(Call call) {
     logEvent(new ResponseHeadersStart(call));
   }
@@ -152,6 +156,10 @@ public final class RecordingEventListener extends EventListener {
 
   @Override public void responseBodyEnd(Call call, long byteCount) {
     logEvent(new ResponseBodyEnd(call, byteCount));
+  }
+
+  @Override public void responseFailed(Call call, IOException ioe) {
+    logEvent(new ResponseFailed(call, ioe));
   }
 
   @Override public void callEnd(Call call) {
@@ -374,6 +382,15 @@ public final class RecordingEventListener extends EventListener {
     }
   }
 
+  static final class RequestFailed extends CallEvent {
+    final IOException ioe;
+
+    RequestFailed(Call call, IOException ioe) {
+      super(call, ioe);
+      this.ioe = ioe;
+    }
+  }
+
   static final class ResponseHeadersStart extends CallEvent {
     ResponseHeadersStart(Call call) {
       super(call);
@@ -409,6 +426,15 @@ public final class RecordingEventListener extends EventListener {
 
     @Override public @Nullable CallEvent closes() {
       return new ResponseBodyStart(call);
+    }
+  }
+
+  static final class ResponseFailed extends CallEvent {
+    final IOException ioe;
+
+    ResponseFailed(Call call, IOException ioe) {
+      super(call, ioe);
+      this.ioe = ioe;
     }
   }
 }

@@ -66,6 +66,7 @@ public final class Exchange {
       codec.writeRequestHeaders(request);
       eventListener.requestHeadersEnd(call, request);
     } catch (IOException e) {
+      eventListener.requestFailed(call, e);
       trackFailure(e);
       throw e;
     }
@@ -82,6 +83,7 @@ public final class Exchange {
     try {
       codec.flushRequest();
     } catch (IOException e) {
+      eventListener.requestFailed(call, e);
       trackFailure(e);
       throw e;
     }
@@ -91,6 +93,7 @@ public final class Exchange {
     try {
       codec.finishRequest();
     } catch (IOException e) {
+      eventListener.requestFailed(call, e);
       trackFailure(e);
       throw e;
     }
@@ -108,6 +111,7 @@ public final class Exchange {
       }
       return result;
     } catch (IOException e) {
+      eventListener.responseFailed(call, e);
       trackFailure(e);
       throw e;
     }
@@ -126,6 +130,7 @@ public final class Exchange {
       ResponseBodySource source = new ResponseBodySource(rawSource, contentLength);
       return new RealResponseBody(contentType, contentLength, Okio.buffer(source));
     } catch (IOException e) {
+      eventListener.responseFailed(call, e);
       trackFailure(e);
       throw e;
     }
@@ -167,10 +172,18 @@ public final class Exchange {
       trackFailure(e);
     }
     if (requestDone) {
-      eventListener.requestBodyEnd(call, bytesRead);
+      if (e != null) {
+        eventListener.requestFailed(call, e);
+      } else {
+        eventListener.requestBodyEnd(call, bytesRead);
+      }
     }
     if (responseDone) {
-      eventListener.responseBodyEnd(call, bytesRead);
+      if (e != null) {
+        eventListener.responseFailed(call, e);
+      } else {
+        eventListener.responseBodyEnd(call, bytesRead);
+      }
     }
     transmitter.exchangeMessageDone(this, requestDone, responseDone, e);
   }

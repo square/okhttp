@@ -319,7 +319,7 @@ public final class DuplexTest {
         "RequestHeadersStart", "RequestHeadersEnd", "RequestBodyStart", "ResponseHeadersStart",
         "ResponseHeadersEnd", "ResponseBodyStart", "ResponseBodyEnd", "RequestHeadersStart",
         "RequestHeadersEnd", "ResponseHeadersStart", "ResponseHeadersEnd", "ResponseBodyStart",
-        "ResponseBodyEnd", "ConnectionReleased", "CallEnd", "RequestBodyEnd");
+        "ResponseBodyEnd", "ConnectionReleased", "CallEnd", "RequestFailed");
     assertEquals(expectedEvents, listener.recordedEventTypes());
   }
 
