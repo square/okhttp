@@ -496,6 +496,7 @@ public final class MockWebServer extends ExternalResource implements Closeable {
           if (protocolNegotiationEnabled) {
             String protocolString = Platform.get().getSelectedProtocol(sslSocket);
             protocol = protocolString != null ? Protocol.get(protocolString) : Protocol.HTTP_1_1;
+            Platform.get().afterHandshake(sslSocket);
           }
           openClientSockets.remove(raw);
         } else if (protocols.contains(Protocol.H2_PRIOR_KNOWLEDGE)) {
