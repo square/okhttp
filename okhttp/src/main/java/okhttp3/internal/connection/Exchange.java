@@ -166,7 +166,7 @@ public final class Exchange {
     codec.connection().trackFailure(e);
   }
 
-  void bodyComplete(
+  @Nullable IOException bodyComplete(
       long bytesRead, boolean responseDone, boolean requestDone, @Nullable IOException e) {
     if (e != null) {
       trackFailure(e);
@@ -185,7 +185,7 @@ public final class Exchange {
         eventListener.responseBodyEnd(call, bytesRead);
       }
     }
-    transmitter.exchangeMessageDone(this, requestDone, responseDone, e);
+    return transmitter.exchangeMessageDone(this, requestDone, responseDone, e);
   }
 
   public void noRequestBody() {
@@ -215,8 +215,7 @@ public final class Exchange {
         super.write(source, byteCount);
         this.bytesReceived += byteCount;
       } catch (IOException e) {
-        complete(e);
-        throw e;
+        throw complete(e);
       }
     }
 
@@ -224,8 +223,7 @@ public final class Exchange {
       try {
         super.flush();
       } catch (IOException e) {
-        complete(e);
-        throw e;
+        throw complete(e);
       }
     }
 
@@ -235,14 +233,18 @@ public final class Exchange {
       if (contentLength != -1L && bytesReceived != contentLength) {
         throw new ProtocolException("unexpected end of stream");
       }
-      super.close();
-      complete(null);
+      try {
+        super.close();
+        complete(null);
+      } catch (IOException e) {
+        throw complete(e);
+      }
     }
 
-    private void complete(@Nullable IOException e) {
-      if (completed) return;
+    private @Nullable IOException complete(@Nullable IOException e) {
+      if (completed) return e;
       completed = true;
-      bodyComplete(bytesReceived, false, true, e);
+      return bodyComplete(bytesReceived, false, true, e);
     }
   }
 
@@ -284,22 +286,25 @@ public final class Exchange {
 
         return read;
       } catch (IOException e) {
-        complete(e);
-        throw e;
+        throw complete(e);
       }
     }
 
     @Override public void close() throws IOException {
       if (closed) return;
       closed = true;
-      super.close();
-      complete(null);
+      try {
+        super.close();
+        complete(null);
+      } catch (IOException e) {
+        throw complete(e);
+      }
     }
 
-    void complete(@Nullable IOException e) {
-      if (completed) return;
+    @Nullable IOException complete(@Nullable IOException e) {
+      if (completed) return e;
       completed = true;
-      bodyComplete(bytesReceived, true, false, e);
+      return bodyComplete(bytesReceived, true, false, e);
     }
   }
 }

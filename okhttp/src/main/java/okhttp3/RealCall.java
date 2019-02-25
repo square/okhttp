@@ -236,7 +236,7 @@ final class RealCall implements Call {
         originalRequest, this, client.connectTimeoutMillis(),
         client.readTimeoutMillis(), client.writeTimeoutMillis());
 
-    IOException ioException = null;
+    boolean calledNoMoreExchanges = false;
     try {
       Response response = chain.proceed(originalRequest);
       if (transmitter.isCanceled()) {
@@ -245,10 +245,12 @@ final class RealCall implements Call {
       }
       return response;
     } catch (IOException e) {
-      ioException = e;
-      throw e;
+      calledNoMoreExchanges = true;
+      throw transmitter.noMoreExchanges(e);
     } finally {
-      transmitter.noMoreExchanges(ioException);
+      if (!calledNoMoreExchanges) {
+        transmitter.noMoreExchanges(null);
+      }
     }
   }
 }
