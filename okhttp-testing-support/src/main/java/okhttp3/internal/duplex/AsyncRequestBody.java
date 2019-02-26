@@ -26,7 +26,7 @@ import okio.BufferedSink;
 import static junit.framework.TestCase.assertTrue;
 
 /** A duplex request body that keeps the provided sinks so they can be written to later. */
-public final class AsyncRequestBody extends RequestBody implements DuplexRequestBody {
+public final class AsyncRequestBody extends RequestBody {
   private final BlockingQueue<BufferedSink> requestBodySinks = new LinkedBlockingQueue<>();
 
   @Override public @Nullable MediaType contentType() {
@@ -35,6 +35,10 @@ public final class AsyncRequestBody extends RequestBody implements DuplexRequest
 
   @Override public void writeTo(BufferedSink sink) {
     requestBodySinks.add(sink);
+  }
+
+  @Override public boolean isDuplex() {
+    return true;
   }
 
   public BufferedSink takeSink() throws InterruptedException {
