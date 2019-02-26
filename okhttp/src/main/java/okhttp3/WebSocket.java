@@ -95,7 +95,7 @@ public interface WebSocket {
    * be transmitted before the close message is sent but subsequent calls to {@link #send} will
    * return false and their messages will not be enqueued.
    *
-   * <p>This returns true if a graceful shutdown was initiated by this call. It returns false and if
+   * <p>This returns true if a graceful shutdown was initiated by this call. It returns false if
    * a graceful shutdown was already underway or if the web socket is already closed or canceled.
    *
    * @param code Status code as defined by <a
