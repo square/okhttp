@@ -77,6 +77,17 @@ public final class MockDuplexResponseBody implements DuplexResponseBody {
     return this;
   }
 
+  public MockDuplexResponseBody sleep(long duration, TimeUnit unit) {
+    actions.add((request, requestBody, responseBody) -> {
+      try {
+        Thread.sleep(unit.toMillis(duration));
+      } catch (InterruptedException e) {
+        throw new AssertionError(e);
+      }
+    });
+    return this;
+  }
+
   @Override public void onRequest(RecordedRequest request, BufferedSource requestBody,
       BufferedSink responseBody) {
     FutureTask<Void> futureTask = new FutureTask<>(() -> {

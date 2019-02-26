@@ -16,6 +16,7 @@
 package okhttp3.internal.connection;
 
 import java.io.IOException;
+import java.io.InterruptedIOException;
 import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
 import java.net.Socket;
@@ -34,7 +35,10 @@ import okhttp3.Request;
 import okhttp3.internal.Internal;
 import okhttp3.internal.http.ExchangeCodec;
 import okhttp3.internal.platform.Platform;
+import okio.AsyncTimeout;
+import okio.Timeout;
 
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static okhttp3.internal.Util.closeQuietly;
 import static okhttp3.internal.Util.sameConnection;
 
@@ -52,6 +56,11 @@ public final class Transmitter {
   private final RealConnectionPool connectionPool;
   private final Call call;
   private final EventListener eventListener;
+  private final AsyncTimeout timeout = new AsyncTimeout() {
+    @Override protected void timedOut() {
+      cancel();
+    }
+  };
 
   private @Nullable Object callStackTrace;
 
@@ -64,6 +73,7 @@ public final class Transmitter {
   private boolean exchangeRequestDone;
   private boolean exchangeResponseDone;
   private boolean canceled;
+  private boolean timeoutEarlyExit;
   private boolean noMoreExchanges;
 
   public Transmitter(OkHttpClient client, Call call) {
@@ -71,6 +81,35 @@ public final class Transmitter {
     this.connectionPool = Internal.instance.realConnectionPool(client.connectionPool());
     this.call = call;
     this.eventListener = client.eventListenerFactory().create(call);
+    this.timeout.timeout(client.callTimeoutMillis(), MILLISECONDS);
+  }
+
+  public Timeout timeout() {
+    return timeout;
+  }
+
+  public void timeoutEnter() {
+    timeout.enter();
+  }
+
+  /**
+   * Stops applying the timeout before the call is entirely complete. This is used for WebSockets
+   * and duplex calls where the timeout only applies to the initial setup.
+   */
+  public void timeoutEarlyExit() {
+    if (timeoutEarlyExit) throw new IllegalStateException();
+    timeoutEarlyExit = true;
+    timeout.exit();
+  }
+
+  private @Nullable IOException timeoutExit(@Nullable IOException cause) {
+    if (timeoutEarlyExit) return cause;
+    if (!timeout.exit()) return cause;
+
+    InterruptedIOException e = new InterruptedIOException("timeout");
+    if (cause != null) e.initCause(cause);
+
+    return e;
   }
 
   public void callStart() {
@@ -253,7 +292,7 @@ public final class Transmitter {
 
     if (callEnd) {
       boolean callFailed = (e != null);
-      e = Internal.instance.timeoutExit(call, e);
+      e = timeoutExit(e);
       if (callFailed) {
         eventListener.callFailed(call, e);
       } else {

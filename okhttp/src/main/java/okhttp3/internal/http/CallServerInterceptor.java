@@ -60,11 +60,13 @@ public final class CallServerInterceptor implements Interceptor {
         if (request.body() instanceof DuplexRequestBody) {
           // Prepare a duplex body so that the application can send a request body later.
           exchange.flushRequest();
-          BufferedSink bufferedRequestBody = Okio.buffer(exchange.createRequestBody(request));
+          BufferedSink bufferedRequestBody = Okio.buffer(
+              exchange.createRequestBody(request, true));
           request.body().writeTo(bufferedRequestBody);
         } else {
           // Write the request body if the "Expect: 100-continue" expectation was met.
-          BufferedSink bufferedRequestBody = Okio.buffer(exchange.createRequestBody(request));
+          BufferedSink bufferedRequestBody = Okio.buffer(
+              exchange.createRequestBody(request, false));
           request.body().writeTo(bufferedRequestBody);
           bufferedRequestBody.close();
         }

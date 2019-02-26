@@ -383,6 +383,65 @@ public final class DuplexTest {
     ((AsyncRequestBody) call.request().body()).assertNoMoreSinks();
   }
 
+  @Test public void fullCallTimeoutAppliesToSetup() throws Exception {
+    enableProtocol(Protocol.HTTP_2);
+
+    server.enqueue(new MockResponse()
+        .setHeadersDelay(500, TimeUnit.MILLISECONDS));
+
+    Request request = new Request.Builder()
+        .url(server.url("/"))
+        .post(new AsyncRequestBody())
+        .build();
+
+    Call call = client.newCall(request);
+    call.timeout().timeout(250, TimeUnit.MILLISECONDS);
+    try {
+      call.execute();
+      fail();
+    } catch (IOException e) {
+      assertEquals("timeout", e.getMessage());
+      assertTrue(call.isCanceled());
+    }
+  }
+
+  @Test public void fullCallTimeoutDoesNotApplyOnceConnected() throws Exception {
+    enableProtocol(Protocol.HTTP_2);
+
+    MockDuplexResponseBody mockDuplexResponseBody = enqueueResponseWithBody(
+        new MockResponse()
+            .clearHeaders(),
+        new MockDuplexResponseBody()
+            .sendResponse("response A\n")
+            .sleep(750, TimeUnit.MILLISECONDS)
+            .sendResponse("response B\n")
+            .receiveRequest("request C\n")
+            .exhaustResponse()
+            .exhaustRequest());
+
+    Request request = new Request.Builder()
+        .url(server.url("/"))
+        .post(new AsyncRequestBody())
+        .build();
+
+    Call call = client.newCall(request);
+    call.timeout().timeout(500, TimeUnit.MILLISECONDS); // Long enough for the first TLS handshake.
+
+    try (Response response = call.execute()) {
+      BufferedSink requestBody = ((AsyncRequestBody) call.request().body()).takeSink();
+
+      BufferedSource responseBody = response.body().source();
+      assertEquals("response A", responseBody.readUtf8Line());
+      assertEquals("response B", responseBody.readUtf8Line());
+
+      requestBody.writeUtf8("request C\n");
+      requestBody.close();
+      assertNull(responseBody.readUtf8Line());
+    }
+
+    mockDuplexResponseBody.awaitSuccess();
+  }
+
   private MockDuplexResponseBody enqueueResponseWithBody(
       MockResponse response, MockDuplexResponseBody body) {
     MwsDuplexAccess.instance.setBody(response, body);

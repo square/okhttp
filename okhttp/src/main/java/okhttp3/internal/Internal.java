@@ -60,8 +60,6 @@ public abstract class Internal {
 
   public abstract boolean isInvalidHttpUrlHost(IllegalArgumentException e);
 
-  public abstract @Nullable IOException timeoutExit(Call call, @Nullable IOException e);
-
   public abstract Call newWebSocketCall(OkHttpClient client, Request request);
 
   public abstract void initExchange(

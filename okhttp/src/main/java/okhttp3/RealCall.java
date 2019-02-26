@@ -22,7 +22,6 @@ import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.atomic.AtomicInteger;
-import javax.annotation.Nullable;
 import okhttp3.internal.NamedRunnable;
 import okhttp3.internal.cache.CacheInterceptor;
 import okhttp3.internal.connection.ConnectInterceptor;
@@ -32,16 +31,13 @@ import okhttp3.internal.http.CallServerInterceptor;
 import okhttp3.internal.http.RealInterceptorChain;
 import okhttp3.internal.http.RetryAndFollowUpInterceptor;
 import okhttp3.internal.platform.Platform;
-import okio.AsyncTimeout;
 import okio.Timeout;
 
-import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static okhttp3.internal.Util.closeQuietly;
 import static okhttp3.internal.platform.Platform.INFO;
 
 final class RealCall implements Call {
   final OkHttpClient client;
-  final AsyncTimeout timeout;
 
   /**
    * There is a cycle between the {@link Call} and {@link Transmitter} that makes this awkward.
@@ -60,12 +56,6 @@ final class RealCall implements Call {
     this.client = client;
     this.originalRequest = originalRequest;
     this.forWebSocket = forWebSocket;
-    this.timeout = new AsyncTimeout() {
-      @Override protected void timedOut() {
-        cancel();
-      }
-    };
-    this.timeout.timeout(client.callTimeoutMillis(), MILLISECONDS);
   }
 
   static RealCall newRealCall(OkHttpClient client, Request originalRequest, boolean forWebSocket) {
@@ -84,7 +74,7 @@ final class RealCall implements Call {
       if (executed) throw new IllegalStateException("Already Executed");
       executed = true;
     }
-    timeout.enter();
+    transmitter.timeoutEnter();
     transmitter.callStart();
     try {
       client.dispatcher().executed(this);
@@ -92,16 +82,6 @@ final class RealCall implements Call {
     } finally {
       client.dispatcher().finished(this);
     }
-  }
-
-  @Nullable IOException timeoutExit(@Nullable IOException cause) {
-    if (!timeout.exit()) return cause;
-
-    InterruptedIOException e = new InterruptedIOException("timeout");
-    if (cause != null) {
-      e.initCause(cause);
-    }
-    return e;
   }
 
   @Override public void enqueue(Callback responseCallback) {
@@ -118,7 +98,7 @@ final class RealCall implements Call {
   }
 
   @Override public Timeout timeout() {
-    return timeout;
+    return transmitter.timeout();
   }
 
   @Override public synchronized boolean isExecuted() {
@@ -187,7 +167,7 @@ final class RealCall implements Call {
 
     @Override protected void execute() {
       boolean signalledCallback = false;
-      timeout.enter();
+      transmitter.timeoutEnter();
       try {
         Response response = getResponseWithInterceptorChain();
         signalledCallback = true;

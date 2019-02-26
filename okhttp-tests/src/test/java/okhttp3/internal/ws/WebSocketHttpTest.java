@@ -17,6 +17,7 @@ package okhttp3.internal.ws;
 
 import java.io.EOFException;
 import java.io.IOException;
+import java.io.InterruptedIOException;
 import java.net.HttpURLConnection;
 import java.net.ProtocolException;
 import java.net.SocketTimeoutException;
@@ -696,7 +697,21 @@ public final class WebSocketHttpTest {
     assertEquals(Collections.emptyList(), listener.recordedEventTypes());
   }
 
-  @Test public void callTimeoutIsNotApplied() throws Exception {
+  @Test public void callTimeoutAppliesToSetup() throws Exception {
+    webServer.enqueue(new MockResponse()
+        .setHeadersDelay(500, TimeUnit.MILLISECONDS));
+
+    client = client.newBuilder()
+        .readTimeout(0, TimeUnit.MILLISECONDS)
+        .writeTimeout(0, TimeUnit.MILLISECONDS)
+        .callTimeout(100, TimeUnit.MILLISECONDS)
+        .build();
+
+    newWebSocket();
+    clientListener.assertFailure(InterruptedIOException.class, "timeout");
+  }
+
+  @Test public void callTimeoutDoesNotApplyOnceConnected() throws Exception {
     client = client.newBuilder()
         .callTimeout(100, TimeUnit.MILLISECONDS)
         .build();
