@@ -15,7 +15,6 @@
  */
 package okhttp3;
 
-import java.io.IOException;
 import java.net.Proxy;
 import java.net.ProxySelector;
 import java.net.Socket;
@@ -161,10 +160,6 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
 
       @Override public boolean isInvalidHttpUrlHost(IllegalArgumentException e) {
         return e.getMessage().startsWith(HttpUrl.Builder.INVALID_HOST);
-      }
-
-      @Override public @Nullable IOException timeoutExit(Call call, @Nullable IOException e) {
-        return ((RealCall) call).timeoutExit(e);
       }
 
       @Override public Call newWebSocketCall(OkHttpClient client, Request originalRequest) {

@@ -120,6 +120,9 @@ public final class RetryAndFollowUpInterceptor implements Interceptor {
       Request followUp = followUpRequest(response, route);
 
       if (followUp == null) {
+        if (exchange != null && exchange.isDuplex()) {
+          transmitter.timeoutEarlyExit();
+        }
         return response;
       }
 
