@@ -178,12 +178,20 @@ public final class Transmitter {
     }
   }
 
-  void exchangeMessageDone(
+  /**
+   * Releases resources held with the request or response of {@code exchange}. This should be called
+   * when the request completes normally or when it fails due to an exception, in which case {@code
+   * e} should be non-null.
+   *
+   * <p>If the exchange was canceled or timed out, this will wrap {@code e} in an exception that
+   * provides that additional context. Otherwise {@code e} is returned as-is.
+   */
+  @Nullable IOException exchangeMessageDone(
       Exchange exchange, boolean requestDone, boolean responseDone, @Nullable IOException e) {
     boolean exchangeDone = false;
     synchronized (connectionPool) {
       if (exchange != this.exchange) {
-        return; // This exchange was detached violently!
+        return e; // This exchange was detached violently!
       }
       boolean changed = false;
       if (requestDone) {
@@ -201,24 +209,28 @@ public final class Transmitter {
       }
     }
     if (exchangeDone) {
-      maybeReleaseConnection(e, false);
+      e = maybeReleaseConnection(e, false);
     }
+    return e;
   }
 
-  public void noMoreExchanges(IOException e) {
+  public @Nullable IOException noMoreExchanges(@Nullable IOException e) {
     synchronized (connectionPool) {
       noMoreExchanges = true;
     }
-    maybeReleaseConnection(e, false);
+    return maybeReleaseConnection(e, false);
   }
 
   /**
    * Release the connection if it is no longer needed. This is called after each exchange completes
    * and after the call signals that no more exchanges are expected.
    *
+   * <p>If the transmitter was canceled or timed out, this will wrap {@code e} in an exception that
+   * provides that additional context. Otherwise {@code e} is returned as-is.
+   *
    * @param force true to release the connection even if more exchanges are expected for the call.
    */
-  private void maybeReleaseConnection(@Nullable IOException e, boolean force) {
+  private @Nullable IOException maybeReleaseConnection(@Nullable IOException e, boolean force) {
     Socket socket;
     Connection releasedConnection;
     boolean callEnd;
@@ -240,13 +252,15 @@ public final class Transmitter {
     }
 
     if (callEnd) {
+      boolean callFailed = (e != null);
       e = Internal.instance.timeoutExit(call, e);
-      if (e != null) {
+      if (callFailed) {
         eventListener.callFailed(call, e);
       } else {
         eventListener.callEnd(call);
       }
     }
+    return e;
   }
 
   public boolean canRetry() {
