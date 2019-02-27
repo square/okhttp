@@ -193,6 +193,8 @@ public final class HttpLoggingInterceptor implements Interceptor {
         logger.log("--> END " + request.method());
       } else if (bodyHasUnknownEncoding(request.headers())) {
         logger.log("--> END " + request.method() + " (encoded body omitted)");
+      } else if (requestBody.isDuplex()) {
+        logger.log("--> END " + request.method() + " (duplex request body omitted)");
       } else {
         Buffer buffer = new Buffer();
         requestBody.writeTo(buffer);
