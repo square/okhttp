@@ -20,6 +20,7 @@ import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
+import javax.annotation.Nullable;
 import javax.net.ssl.HostnameVerifier;
 import okhttp3.HttpUrl;
 import okhttp3.MediaType;
@@ -793,6 +794,49 @@ public final class HttpLoggingInterceptorTest {
         .assertLogEqual("SeNsItIvE: ██")
         .assertLogEqual("Not-Sensitive: Value")
         .assertLogEqual("<-- END HTTP")
+        .assertNoMoreLogs();
+  }
+
+  @Test public void duplexRequestsAreNotLogged() throws Exception {
+    server.useHttps(handshakeCertificates.sslSocketFactory(), false); // HTTP/2
+    url = server.url("/");
+
+    setLevel(Level.BODY);
+
+    server.enqueue(new MockResponse()
+        .setBody("Hello response!"));
+
+    RequestBody asyncRequestBody = new RequestBody() {
+      @Override public @Nullable MediaType contentType() {
+        return null;
+      }
+
+      @Override public void writeTo(BufferedSink sink) throws IOException {
+        sink.writeUtf8("Hello request!");
+        sink.close();
+      }
+
+      @Override public boolean isDuplex() {
+        return true;
+      }
+    };
+
+    Request request = request()
+        .post(asyncRequestBody)
+        .build();
+    Response response = client.newCall(request).execute();
+    assumeThat(response.protocol(), equalTo(Protocol.HTTP_2));
+
+    assertEquals("Hello response!", response.body().string());
+
+    applicationLogs
+        .assertLogEqual("--> POST " + url)
+        .assertLogEqual("--> END POST (duplex request body omitted)")
+        .assertLogMatch("<-- 200 " + url + " \\(\\d+ms\\)")
+        .assertLogEqual("content-length: 15")
+        .assertLogEqual("")
+        .assertLogEqual("Hello response!")
+        .assertLogEqual("<-- END HTTP (15-byte body)")
         .assertNoMoreLogs();
   }
 
