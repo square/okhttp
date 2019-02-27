@@ -44,7 +44,8 @@ public abstract class RequestBody {
 
   /**
    * A duplex request body is special in how it is <strong>transmitted</strong> on the network and
-   * in the <strong>API contract</strong> between OkHttp and the application.
+   * in the <strong>API contract</strong> between OkHttp and the application. This method returns
+   * false unless it overridden by a subclass.
    *
    * <h3>Duplex Transmission</h3>
    *
@@ -54,19 +55,22 @@ public abstract class RequestBody {
    *
    * <p>Though any call may be initiated as a duplex call, only web servers that are specially
    * designed for this nonstandard interaction will use it. As of 2019-01, the only widely-used
-   * implementation of this pattern is gRPC.
+   * implementation of this pattern is <a
+   * href="https://github.com/grpc/grpc/blob/master/doc/PROTOCOL-HTTP2.md">gRPC</a>.
    *
-   * <p>Because the encoding of interleaved data is not well-defined for HTTP/1, duplex request bodies
-   * may only be used with HTTP/2. Calls to HTTP/1 servers will fail before the HTTP request is
-   * transmitted.
+   * <p>Because the encoding of interleaved data is not well-defined for HTTP/1, duplex request
+   * bodies may only be used with HTTP/2. Calls to HTTP/1 servers will fail before the HTTP request
+   * is transmitted. If you cannot ensure that your client and server both support HTTP/2, do not
+   * use this feature.
    *
    * <p>Duplex APIs</p>
    *
    * <p>With regular request bodies it is not legal to write bytes to the sink passed to {@link
-   * RequestBody#writeTo} after that method returns. For duplex sinks that condition is lifted. Such
-   * writes occur on an application-provided thread and may occur concurrently with reads of the
-   * {@link ResponseBody}. For duplex request bodies, {@link #writeTo} should return quickly,
-   * possibly by handing off the provided request body to another thread to perform writing.
+   * RequestBody#writeTo} after that method returns. For duplex requests bodies that condition is
+   * lifted. Such writes occur on an application-provided thread and may occur concurrently with
+   * reads of the {@link ResponseBody}. For duplex request bodies, {@link #writeTo} should return
+   * quickly, possibly by handing off the provided request body to another thread to perform
+   * writing.
    */
   public boolean isDuplex() {
     return false;
