@@ -53,7 +53,7 @@ final class RouteSelector {
   /* State for negotiating failed routes */
   private final List<Route> postponedRoutes = new ArrayList<>();
 
-  public RouteSelector(Address address, RouteDatabase routeDatabase, Call call,
+  RouteSelector(Address address, RouteDatabase routeDatabase, Call call,
       EventListener eventListener) {
     this.address = address;
     this.routeDatabase = routeDatabase;

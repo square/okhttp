@@ -226,7 +226,7 @@ public final class Exchange {
 
   /** A response body that fires events when it completes. */
   final class ResponseBodySource extends ForwardingSource {
-    final private long contentLength;
+    private final long contentLength;
     private long bytesReceived;
     private boolean completed;
     private boolean closed;
