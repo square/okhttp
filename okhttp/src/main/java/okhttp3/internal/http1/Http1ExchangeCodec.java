@@ -90,8 +90,8 @@ public final class Http1ExchangeCodec implements ExchangeCodec {
    */
   private Headers trailers;
 
-  public Http1ExchangeCodec(OkHttpClient client, RealConnection realConnection, BufferedSource source,
-      BufferedSink sink) {
+  public Http1ExchangeCodec(OkHttpClient client, RealConnection realConnection,
+      BufferedSource source, BufferedSink sink) {
     this.client = client;
     this.realConnection = realConnection;
     this.source = source;
