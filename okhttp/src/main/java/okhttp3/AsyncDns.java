@@ -9,7 +9,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import javax.annotation.Nullable;
 
-final class AsyncDns implements Dns {
+public final class AsyncDns implements Dns {
 
   private final ExecutorService executor;
   private final Dns dns;

@@ -21,12 +21,12 @@ import java.net.InetSocketAddress;
 import java.net.Proxy;
 import java.net.SocketAddress;
 import java.net.SocketException;
-import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.NoSuchElementException;
 import okhttp3.Address;
+import okhttp3.AsyncDns;
 import okhttp3.Call;
 import okhttp3.EventListener;
 import okhttp3.HttpUrl;
@@ -47,11 +47,7 @@ public final class RouteSelector {
   private List<Proxy> proxies = Collections.emptyList();
   private int nextProxyIndex;
 
-  /* State for negotiating the next socket address to use. */
-  private List<InetSocketAddress> inetSocketAddresses = Collections.emptyList();
-
-  /* State for negotiating failed routes */
-  private final List<Route> postponedRoutes = new ArrayList<>();
+  private final RouteState routeState;
 
   public RouteSelector(Address address, RouteDatabase routeDatabase, Call call,
       EventListener eventListener) {
@@ -60,6 +56,9 @@ public final class RouteSelector {
     this.call = call;
     this.eventListener = eventListener;
 
+    routeState = address.dns() instanceof AsyncDns
+        ? new AsyncRouteState(address)
+        : new SyncRouteState(address);
     resetNextProxy(address.url(), address.proxy());
   }
 
@@ -67,7 +66,7 @@ public final class RouteSelector {
    * Returns true if there's another set of routes to attempt. Every address has at least one route.
    */
   public boolean hasNext() {
-    return hasNextProxy() || !postponedRoutes.isEmpty();
+    return hasNextProxy() || routeState.hasPostponedRoutes();
   }
 
   public Selection next() throws IOException {
@@ -76,33 +75,25 @@ public final class RouteSelector {
     }
 
     // Compute the next set of routes to attempt.
-    List<Route> routes = new ArrayList<>();
+    routeState.initComputedRoutes();
     while (hasNextProxy()) {
       // Postponed routes are always tried last. For example, if we have 2 proxies and all the
       // routes for proxy1 should be postponed, we'll move to proxy2. Only after we've exhausted
       // all the good routes will we attempt the postponed routes.
       Proxy proxy = nextProxy();
-      for (int i = 0, size = inetSocketAddresses.size(); i < size; i++) {
-        Route route = new Route(address, proxy, inetSocketAddresses.get(i));
-        if (routeDatabase.shouldPostpone(route)) {
-          postponedRoutes.add(route);
-        } else {
-          routes.add(route);
-        }
-      }
+      routeState.computeRoutes(proxy, routeDatabase);
 
-      if (!routes.isEmpty()) {
+      if (routeState.hasComputedRoutes()) {
         break;
       }
     }
 
-    if (routes.isEmpty()) {
+    if (!routeState.hasComputedRoutes()) {
       // We've exhausted all Proxies so fallback to the postponed routes.
-      routes.addAll(postponedRoutes);
-      postponedRoutes.clear();
+      routeState.addPostponedRoutes();
     }
 
-    return new Selection(routes);
+    return routeState.getComputedRouteSelection();
   }
 
   /**
@@ -153,7 +144,7 @@ public final class RouteSelector {
   /** Prepares the socket addresses to attempt for the current proxy or host. */
   private void resetNextInetSocketAddress(Proxy proxy) throws IOException {
     // Clear the addresses. Necessary if getAllByName() below throws!
-    inetSocketAddresses = new ArrayList<>();
+    routeState.resetAddresses();
 
     String socketHost;
     int socketPort;
@@ -177,22 +168,9 @@ public final class RouteSelector {
     }
 
     if (proxy.type() == Proxy.Type.SOCKS) {
-      inetSocketAddresses.add(InetSocketAddress.createUnresolved(socketHost, socketPort));
+      routeState.addUnresolvedAddress(socketHost, socketPort);
     } else {
-      eventListener.dnsStart(call, socketHost);
-
-      // Try each address for best behavior in mixed IPv4/IPv6 environments.
-      List<InetAddress> addresses = address.dns().lookup(socketHost);
-      if (addresses.isEmpty()) {
-        throw new UnknownHostException(address.dns() + " returned no addresses for " + socketHost);
-      }
-
-      eventListener.dnsEnd(call, socketHost, addresses);
-
-      for (int i = 0, size = addresses.size(); i < size; i++) {
-        InetAddress inetAddress = addresses.get(i);
-        inetSocketAddresses.add(new InetSocketAddress(inetAddress, socketPort));
-      }
+      routeState.addAddresses(socketHost, socketPort, call, eventListener);
     }
   }
 

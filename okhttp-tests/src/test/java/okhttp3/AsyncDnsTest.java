@@ -40,24 +40,6 @@ public class AsyncDnsTest {
     assertEquals(Arrays.asList(address("2.3.4.5"), address("3.4.5.6")), result);
   }
 
-  //@Test public void cancel() {
-  //  MockDnsCache.when("cancel.do").thenAnswer(() -> {
-  //    try {
-  //      Thread.sleep(2000);
-  //    } catch (InterruptedException e) {
-  //      Thread.currentThread().interrupt();
-  //    }
-  //    return null;
-  //  });
-  //
-  //  final AsyncDns dns = new AsyncDns.Builder().executor(executor).build();
-  //  final CompletableFuture<List<InetAddress>> future = dns.lookupAsync("cancel.do");
-  //  if (!future.isDone())
-  //    future.cancel(true);
-  //  else
-  //    fail("Should not be done");
-  //}
-
   @Test(expected = TimeoutException.class) public void timeout() throws Exception {
     MockDnsCache.when("timeout.do").thenAnswer(() -> {
       try {

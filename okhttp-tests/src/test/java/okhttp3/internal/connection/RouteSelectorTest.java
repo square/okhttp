@@ -33,6 +33,7 @@ import javax.net.ssl.SSLSocketFactory;
 import okhttp3.Address;
 import okhttp3.Authenticator;
 import okhttp3.ConnectionSpec;
+import okhttp3.Dns;
 import okhttp3.EventListener;
 import okhttp3.FakeDns;
 import okhttp3.Protocol;
@@ -51,7 +52,7 @@ import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-public final class RouteSelectorTest {
+public class RouteSelectorTest {
   public final List<ConnectionSpec> connectionSpecs = Util.immutableList(
       ConnectionSpec.MODERN_TLS,
       ConnectionSpec.COMPATIBLE_TLS,
@@ -75,7 +76,7 @@ public final class RouteSelectorTest {
 
   private final Authenticator authenticator = Authenticator.NONE;
   private final List<Protocol> protocols = Arrays.asList(Protocol.HTTP_1_1);
-  private final FakeDns dns = new FakeDns();
+  protected final FakeDns dns = new FakeDns();
   private final RecordingProxySelector proxySelector = new RecordingProxySelector();
   private RouteDatabase routeDatabase = new RouteDatabase();
 
@@ -449,12 +450,17 @@ public final class RouteSelectorTest {
 
   /** Returns an address that's without an SSL socket factory or hostname verifier. */
   private Address httpAddress() {
-    return new Address(uriHost, uriPort, dns, socketFactory, null, null, null, authenticator, null,
+    return new Address(uriHost, uriPort, getTestDns(), socketFactory, null, null, null, authenticator, null,
         protocols, connectionSpecs, proxySelector);
   }
 
   private Address httpsAddress() {
-    return new Address(uriHost, uriPort, dns, socketFactory, sslSocketFactory,
+    return new Address(uriHost, uriPort, getTestDns(), socketFactory, sslSocketFactory,
         hostnameVerifier, null, authenticator, null, protocols, connectionSpecs, proxySelector);
   }
+
+  protected Dns getTestDns() {
+    return dns;
+  }
+
 }
