@@ -62,7 +62,6 @@ import org.junit.Rule;
 import org.junit.Test;
 
 import static java.util.Arrays.asList;
-import static okhttp3.TestUtil.defaultClient;
 import static okhttp3.tls.internal.TlsUtil.localhost;
 import static org.hamcrest.CoreMatchers.any;
 import static org.hamcrest.CoreMatchers.either;
@@ -80,15 +79,16 @@ import static org.junit.Assume.assumeThat;
 public final class EventListenerTest {
   public static final Matcher<Response> anyResponse = CoreMatchers.any(Response.class);
   @Rule public final MockWebServer server = new MockWebServer();
+  @Rule public final OkHttpClientTestingRule clientTestingRule = new OkHttpClientTestingRule();
 
   private final RecordingEventListener listener = new RecordingEventListener();
   private final HandshakeCertificates handshakeCertificates = localhost();
 
-  private OkHttpClient client;
+  private OkHttpClient client = clientTestingRule.client;
   private SocksProxy socksProxy;
 
   @Before public void setUp() {
-    client = defaultClient().newBuilder()
+    client = clientTestingRule.client.newBuilder()
         .eventListener(listener)
         .build();
 
@@ -100,8 +100,6 @@ public final class EventListenerTest {
     if (socksProxy != null) {
       socksProxy.shutdown();
     }
-
-    TestUtil.ensureAllConnectionsReleased(client);
   }
 
   @Test public void successfulCallEventSequence() throws IOException {

@@ -38,7 +38,6 @@ import org.junit.rules.TestRule;
 import org.junit.rules.Timeout;
 
 import static junit.framework.TestCase.assertTrue;
-import static okhttp3.TestUtil.defaultClient;
 import static okhttp3.tls.internal.TlsUtil.localhost;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
@@ -47,18 +46,14 @@ import static org.junit.Assert.fail;
 public final class DuplexTest {
   @Rule public final TestRule timeout = new Timeout(30_000, TimeUnit.MILLISECONDS);
   @Rule public final MockWebServer server = new MockWebServer();
+  @Rule public OkHttpClientTestingRule clientTestingRule = new OkHttpClientTestingRule();
 
   private final RecordingEventListener listener = new RecordingEventListener();
   private HandshakeCertificates handshakeCertificates = localhost();
-  private OkHttpClient client = defaultClient()
+  private OkHttpClient client = clientTestingRule.client
       .newBuilder()
       .eventListener(listener)
       .build();
-
-  @After
-  public void tearDown() {
-    TestUtil.ensureAllConnectionsReleased(client);
-  }
 
   @Test public void http1DoesntSupportDuplex() throws IOException {
     Call call = client.newCall(new Request.Builder()

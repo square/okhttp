@@ -90,7 +90,6 @@ import org.junit.rules.Timeout;
 import static java.net.CookiePolicy.ACCEPT_ORIGINAL_SERVER;
 import static okhttp3.CipherSuite.TLS_DH_anon_WITH_AES_128_GCM_SHA256;
 import static okhttp3.TestUtil.awaitGarbageCollection;
-import static okhttp3.TestUtil.defaultClient;
 import static okhttp3.internal.platform.PlatformTest.getJvmSpecVersion;
 import static okhttp3.tls.internal.TlsUtil.localhost;
 import static org.junit.Assert.assertArrayEquals;
@@ -108,10 +107,11 @@ public final class CallTest {
   @Rule public final MockWebServer server = new MockWebServer();
   @Rule public final MockWebServer server2 = new MockWebServer();
   @Rule public final InMemoryFileSystem fileSystem = new InMemoryFileSystem();
+  @Rule public final OkHttpClientTestingRule clientTestingRule = new OkHttpClientTestingRule();
 
   private final RecordingEventListener listener = new RecordingEventListener();
   private HandshakeCertificates handshakeCertificates = localhost();
-  private OkHttpClient client = defaultClient().newBuilder()
+  private OkHttpClient client = clientTestingRule.client.newBuilder()
       .eventListener(listener)
       .build();
   private RecordingCallback callback = new RecordingCallback();
@@ -126,8 +126,6 @@ public final class CallTest {
   @After public void tearDown() throws Exception {
     cache.delete();
     logger.removeHandler(logHandler);
-
-    TestUtil.ensureAllConnectionsReleased(client);
   }
 
   @Test public void get() throws Exception {
@@ -935,7 +933,7 @@ public final class CallTest {
 
   /** https://github.com/square/okhttp/issues/1801 */
   @Test public void asyncCallEngineInitialized() throws Exception {
-    OkHttpClient c = defaultClient().newBuilder()
+    OkHttpClient c = clientTestingRule.client.newBuilder()
         .addInterceptor(chain -> { throw new IOException(); })
         .build();
     Request request = new Request.Builder().url(server.url("/")).build();
@@ -3370,7 +3368,7 @@ public final class CallTest {
     server.enqueue(new MockResponse()
         .setBody("This gets leaked."));
 
-    client = defaultClient().newBuilder()
+    client = clientTestingRule.client.newBuilder()
         .connectionPool(new ConnectionPool(0, 10, TimeUnit.MILLISECONDS))
         .build();
 
@@ -3399,7 +3397,7 @@ public final class CallTest {
     server.enqueue(new MockResponse()
         .setBody("This gets leaked."));
 
-    client = defaultClient().newBuilder()
+    client = clientTestingRule.client.newBuilder()
         .connectionPool(new ConnectionPool(0, 10, TimeUnit.MILLISECONDS))
         .build();
 

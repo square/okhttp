@@ -40,6 +40,7 @@ import static org.junit.Assert.fail;
 
 public final class ConnectionCoalescingTest {
   @Rule public final MockWebServer server = new MockWebServer();
+  @Rule public final OkHttpClientTestingRule clientTestingRule = new OkHttpClientTestingRule();
 
   private OkHttpClient client;
 
@@ -81,6 +82,7 @@ public final class ConnectionCoalescingTest {
         .sslSocketFactory(
             handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager())
         .build();
+    clientTestingRule.client = client;
 
     HandshakeCertificates serverHandshakeCertificates = new HandshakeCertificates.Builder()
         .heldCertificate(certificate)
@@ -88,11 +90,6 @@ public final class ConnectionCoalescingTest {
     server.useHttps(serverHandshakeCertificates.sslSocketFactory(), false);
 
     url = server.url("/robots.txt");
-  }
-
-  @After
-  public void tearDown() {
-    TestUtil.ensureAllConnectionsReleased(client);
   }
 
   /**

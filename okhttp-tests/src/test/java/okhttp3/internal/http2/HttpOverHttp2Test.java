@@ -40,6 +40,7 @@ import okhttp3.Headers;
 import okhttp3.Interceptor;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
+import okhttp3.OkHttpClientTestingRule;
 import okhttp3.Protocol;
 import okhttp3.RecordingCookieJar;
 import okhttp3.RecordingHostnameVerifier;
@@ -77,7 +78,6 @@ import org.junit.runners.Parameterized.Parameters;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
-import static okhttp3.TestUtil.defaultClient;
 import static okhttp3.tls.internal.TlsUtil.localhost;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.junit.Assert.assertArrayEquals;
@@ -101,6 +101,7 @@ public final class HttpOverHttp2Test {
 
   @Rule public final TemporaryFolder tempDir = new TemporaryFolder();
   @Rule public final MockWebServer server = new MockWebServer();
+  @Rule public final OkHttpClientTestingRule clientTestingRule = new OkHttpClientTestingRule();
 
   private OkHttpClient client;
   private Cache cache;
@@ -115,14 +116,14 @@ public final class HttpOverHttp2Test {
     this.protocol = protocol;
   }
 
-  private static OkHttpClient buildH2PriorKnowledgeClient() {
-    return defaultClient().newBuilder()
+  private OkHttpClient buildH2PriorKnowledgeClient() {
+    return clientTestingRule.client.newBuilder()
         .protocols(Arrays.asList(Protocol.H2_PRIOR_KNOWLEDGE))
         .build();
   }
 
-  private static OkHttpClient buildHttp2Client() {
-    return defaultClient().newBuilder()
+  private OkHttpClient buildHttp2Client() {
+    return clientTestingRule.client.newBuilder()
         .protocols(Arrays.asList(Protocol.HTTP_2, Protocol.HTTP_1_1))
         .sslSocketFactory(
             handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager())
@@ -148,8 +149,6 @@ public final class HttpOverHttp2Test {
     Authenticator.setDefault(null);
     http2Logger.removeHandler(http2Handler);
     http2Logger.setLevel(previousLevel);
-
-    TestUtil.ensureAllConnectionsReleased(client);
   }
 
   @Test public void get() throws Exception {

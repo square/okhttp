@@ -28,6 +28,7 @@ import okhttp3.DelegatingServerSocketFactory;
 import okhttp3.DelegatingSocketFactory;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
+import okhttp3.OkHttpClientTestingRule;
 import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
@@ -36,12 +37,13 @@ import okhttp3.mockwebserver.MockWebServer;
 import okio.Buffer;
 import okio.BufferedSink;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 
-import static okhttp3.TestUtil.defaultClient;
 import static org.junit.Assert.fail;
 
 public final class CancelTest {
+  @Rule public final OkHttpClientTestingRule clientTestingRule = new OkHttpClientTestingRule();
 
   // The size of the socket buffers in bytes.
   private static final int SOCKET_BUFFER_SIZE = 256 * 1024;
@@ -61,7 +63,7 @@ public final class CancelTest {
             return serverSocket;
           }
         });
-    client = defaultClient().newBuilder()
+    client = clientTestingRule.client.newBuilder()
         .socketFactory(new DelegatingSocketFactory(SocketFactory.getDefault()) {
           @Override protected Socket configureSocket(Socket socket) throws IOException {
             socket.setSendBufferSize(SOCKET_BUFFER_SIZE);
