@@ -1902,6 +1902,71 @@ public final class CallTest {
     assertEquals("Body", response.body().string());
   }
 
+  @Test public void canRetryNormalRequestBody() throws Exception {
+    server.enqueue(new MockResponse()
+        .setResponseCode(503)
+        .setHeader("Retry-After", "0")
+        .setBody("please retry"));
+    server.enqueue(new MockResponse()
+        .setBody("thank you for retrying"));
+
+    Request request = new Request.Builder()
+        .url(server.url("/"))
+        .post(new RequestBody() {
+          int attempt = 0;
+
+          @Override public @Nullable MediaType contentType() {
+            return null;
+          }
+
+          @Override public void writeTo(BufferedSink sink) throws IOException {
+            sink.writeUtf8("attempt " + (attempt++));
+          }
+        })
+        .build();
+    Response response = client.newCall(request).execute();
+    assertEquals(200, response.code());
+    assertEquals("thank you for retrying", response.body().string());
+
+    assertEquals("attempt 0", server.takeRequest().getBody().readUtf8());
+    assertEquals("attempt 1", server.takeRequest().getBody().readUtf8());
+    assertEquals(2, server.getRequestCount());
+  }
+
+  @Test public void cannotRetryOneShotRequestBody() throws Exception {
+    server.enqueue(new MockResponse()
+        .setResponseCode(503)
+        .setHeader("Retry-After", "0")
+        .setBody("please retry"));
+    server.enqueue(new MockResponse()
+        .setBody("thank you for retrying"));
+
+    Request request = new Request.Builder()
+        .url(server.url("/"))
+        .post(new RequestBody() {
+          int attempt = 0;
+
+          @Override public @Nullable MediaType contentType() {
+            return null;
+          }
+
+          @Override public void writeTo(BufferedSink sink) throws IOException {
+            sink.writeUtf8("attempt " + (attempt++));
+          }
+
+          @Override public boolean isOneShot() {
+            return true;
+          }
+        })
+        .build();
+    Response response = client.newCall(request).execute();
+    assertEquals(503, response.code());
+    assertEquals("please retry", response.body().string());
+
+    assertEquals("attempt 0", server.takeRequest().getBody().readUtf8());
+    assertEquals(1, server.getRequestCount());
+  }
+
   @Test public void propfindRedirectsToPropfindAndMaintainsRequestBody() throws Exception {
     // given
     server.enqueue(new MockResponse()
