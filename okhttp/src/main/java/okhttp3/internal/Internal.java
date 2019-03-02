@@ -15,7 +15,6 @@
  */
 package okhttp3.internal;
 
-import java.io.IOException;
 import javax.annotation.Nullable;
 import javax.net.ssl.SSLSocket;
 import okhttp3.Address;
@@ -26,7 +25,6 @@ import okhttp3.Headers;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
-import okhttp3.internal.cache.InternalCache;
 import okhttp3.internal.connection.Exchange;
 import okhttp3.internal.connection.RealConnectionPool;
 
@@ -47,8 +45,6 @@ public abstract class Internal {
 
   public abstract void addLenient(Headers.Builder builder, String name, String value);
 
-  public abstract void setCache(OkHttpClient.Builder builder, InternalCache internalCache);
-
   public abstract RealConnectionPool realConnectionPool(ConnectionPool connectionPool);
 
   public abstract boolean equalsNonHost(Address a, Address b);
@@ -57,8 +53,6 @@ public abstract class Internal {
 
   public abstract void apply(ConnectionSpec tlsConfiguration, SSLSocket sslSocket,
       boolean isFallback);
-
-  public abstract boolean isInvalidHttpUrlHost(IllegalArgumentException e);
 
   public abstract Call newWebSocketCall(OkHttpClient client, Request request);
 

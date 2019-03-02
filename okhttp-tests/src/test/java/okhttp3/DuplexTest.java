@@ -78,7 +78,8 @@ public final class DuplexTest {
             .sendResponse("response D\n")
             .receiveRequest("request E\n")
             .sendResponse("response F\n")
-            .exhaustRequest());
+            .exhaustRequest()
+            .exhaustResponse());
 
     Call call = client.newCall(new Request.Builder()
         .url(server.url("/"))
@@ -119,7 +120,9 @@ public final class DuplexTest {
             .sendResponse("response C\n")
             .receiveRequest("request D\n")
             .sendResponse("response E\n")
-            .receiveRequest("request F\n"));
+            .receiveRequest("request F\n")
+            .exhaustResponse()
+            .exhaustRequest());
 
     Call call = client.newCall(new Request.Builder()
         .url(server.url("/"))
