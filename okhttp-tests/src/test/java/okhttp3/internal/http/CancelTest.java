@@ -17,27 +17,31 @@ package okhttp3.internal.http;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
-import java.net.HttpURLConnection;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.concurrent.TimeUnit;
+import javax.annotation.Nullable;
 import javax.net.ServerSocketFactory;
 import javax.net.SocketFactory;
+import okhttp3.Call;
 import okhttp3.DelegatingServerSocketFactory;
 import okhttp3.DelegatingSocketFactory;
+import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
-import okhttp3.OkUrlFactory;
+import okhttp3.Request;
+import okhttp3.RequestBody;
+import okhttp3.Response;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import okio.Buffer;
+import okio.BufferedSink;
 import org.junit.Before;
 import org.junit.Test;
 
 import static okhttp3.TestUtil.defaultClient;
 import static org.junit.Assert.fail;
 
-public final class DisconnectTest {
+public final class CancelTest {
 
   // The size of the socket buffers in bytes.
   private static final int SOCKET_BUFFER_SIZE = 256 * 1024;
@@ -68,44 +72,51 @@ public final class DisconnectTest {
         .build();
   }
 
-  @Test public void interruptWritingRequestBody() throws Exception {
-    int requestBodySize = 2 * 1024 * 1024; // 2 MiB
-
-    server.enqueue(new MockResponse()
-        .throttleBody(64 * 1024, 125, TimeUnit.MILLISECONDS)); // 500 Kbps
+  @Test public void cancelWritingRequestBody() throws Exception {
+    server.enqueue(new MockResponse());
     server.start();
 
-    HttpURLConnection connection = new OkUrlFactory(client).open(server.url("/").url());
-    disconnectLater(connection, 500);
+    Call call = client.newCall(new Request.Builder()
+        .url(server.url("/"))
+        .post(new RequestBody() {
+          @Override public @Nullable MediaType contentType() {
+            return null;
+          }
 
-    connection.setDoOutput(true);
-    connection.setFixedLengthStreamingMode(requestBodySize);
-    OutputStream requestBody = connection.getOutputStream();
-    byte[] buffer = new byte[1024];
+          @Override public void writeTo(BufferedSink sink) throws IOException {
+            for (int i = 0; i < 10; i++) {
+              sink.writeByte(0);
+              sink.flush();
+              sleep(100);
+            }
+            fail("Expected connection to be closed");
+          }
+        })
+        .build());
+
+    cancelLater(call, 500);
     try {
-      for (int i = 0; i < requestBodySize; i += buffer.length) {
-        requestBody.write(buffer);
-        requestBody.flush();
-      }
-      fail("Expected connection to be closed");
+      call.execute();
+      fail();
     } catch (IOException expected) {
     }
-
-    connection.disconnect();
   }
 
-  @Test public void interruptReadingResponseBody() throws Exception {
-    int responseBodySize = 2 * 1024 * 1024; // 2 MiB
+  @Test public void cancelReadingResponseBody() throws Exception {
+    int responseBodySize = 8 * 1024 * 1024; // 8 MiB.
 
     server.enqueue(new MockResponse()
         .setBody(new Buffer().write(new byte[responseBodySize]))
         .throttleBody(64 * 1024, 125, TimeUnit.MILLISECONDS)); // 500 Kbps
     server.start();
 
-    HttpURLConnection connection = new OkUrlFactory(client).open(server.url("/").url());
-    disconnectLater(connection, 500);
+    Call call = client.newCall(new Request.Builder()
+        .url(server.url("/"))
+        .build());
 
-    InputStream responseBody = connection.getInputStream();
+    Response response = call.execute();
+    cancelLater(call, 500);
+    InputStream responseBody = response.body().byteStream();
     byte[] buffer = new byte[1024];
     try {
       while (responseBody.read(buffer) != -1) {
@@ -117,14 +128,18 @@ public final class DisconnectTest {
     responseBody.close();
   }
 
-  private void disconnectLater(HttpURLConnection connection, int delayMillis) {
+  private void sleep(int delayMillis) {
+    try {
+      Thread.sleep(delayMillis);
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+    }
+  }
+
+  private void cancelLater(Call call, int delayMillis) {
     Thread interruptingCow = new Thread(() -> {
-      try {
-        Thread.sleep(delayMillis);
-        connection.disconnect();
-      } catch (InterruptedException e) {
-        throw new RuntimeException(e);
-      }
+      sleep(delayMillis);
+      call.cancel();
     });
     interruptingCow.start();
   }

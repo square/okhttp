@@ -17,26 +17,29 @@ package okhttp3.internal.http;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InterruptedIOException;
-import java.io.OutputStream;
-import java.net.HttpURLConnection;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.concurrent.TimeUnit;
+import javax.annotation.Nullable;
 import javax.net.ServerSocketFactory;
 import javax.net.SocketFactory;
+import okhttp3.Call;
 import okhttp3.DelegatingServerSocketFactory;
 import okhttp3.DelegatingSocketFactory;
+import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
-import okhttp3.OkUrlFactory;
+import okhttp3.Request;
+import okhttp3.RequestBody;
+import okhttp3.Response;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import okio.Buffer;
+import okio.BufferedSink;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
 import static okhttp3.TestUtil.defaultClient;
-import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 public final class ThreadInterruptTest {
@@ -72,66 +75,79 @@ public final class ThreadInterruptTest {
         .build();
   }
 
-  @Test public void interruptWritingRequestBody() throws Exception {
-    int requestBodySize = 2 * 1024 * 1024; // 2 MiB
+  @After public void tearDown() throws Exception {
+    Thread.interrupted(); // Clear interrupted state.
+  }
 
-    server.enqueue(new MockResponse()
-        .throttleBody(64 * 1024, 125, TimeUnit.MILLISECONDS)); // 500 Kbps
+  @Test public void interruptWritingRequestBody() throws Exception {
+    server.enqueue(new MockResponse());
     server.start();
 
+    Call call = client.newCall(new Request.Builder()
+        .url(server.url("/"))
+        .post(new RequestBody() {
+          @Override public @Nullable MediaType contentType() {
+            return null;
+          }
+
+          @Override public void writeTo(BufferedSink sink) throws IOException {
+            for (int i = 0; i < 10; i++) {
+              sink.writeByte(0);
+              sink.flush();
+              sleep(100);
+            }
+            fail("Expected connection to be closed");
+          }
+        })
+        .build());
+
     interruptLater(500);
-
-    HttpURLConnection connection = new OkUrlFactory(client).open(server.url("/").url());
-    connection.setDoOutput(true);
-    connection.setFixedLengthStreamingMode(requestBodySize);
-    OutputStream requestBody = connection.getOutputStream();
-    byte[] buffer = new byte[1024];
     try {
-      for (int i = 0; i < requestBodySize; i += buffer.length) {
-        requestBody.write(buffer);
-        requestBody.flush();
-      }
-      fail("Expected thread to be interrupted");
-    } catch (InterruptedIOException expected) {
-      assertTrue(Thread.interrupted());
+      call.execute();
+      fail();
+    } catch (IOException expected) {
     }
-
-    connection.disconnect();
   }
 
   @Test public void interruptReadingResponseBody() throws Exception {
-    int responseBodySize = 2 * 1024 * 1024; // 2 MiB
+    int responseBodySize = 8 * 1024 * 1024; // 8 MiB.
 
     server.enqueue(new MockResponse()
         .setBody(new Buffer().write(new byte[responseBodySize]))
         .throttleBody(64 * 1024, 125, TimeUnit.MILLISECONDS)); // 500 Kbps
     server.start();
 
-    interruptLater(500);
+    Call call = client.newCall(new Request.Builder()
+        .url(server.url("/"))
+        .build());
 
-    HttpURLConnection connection = new OkUrlFactory(client).open(server.url("/").url());
-    InputStream responseBody = connection.getInputStream();
+    Response response = call.execute();
+    interruptLater(500);
+    InputStream responseBody = response.body().byteStream();
     byte[] buffer = new byte[1024];
     try {
       while (responseBody.read(buffer) != -1) {
       }
-      fail("Expected thread to be interrupted");
-    } catch (InterruptedIOException expected) {
-      assertTrue(Thread.interrupted());
+      fail("Expected connection to be interrupted");
+    } catch (IOException expected) {
     }
 
     responseBody.close();
   }
 
+  private void sleep(int delayMillis) {
+    try {
+      Thread.sleep(delayMillis);
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+    }
+  }
+
   private void interruptLater(int delayMillis) {
     Thread toInterrupt = Thread.currentThread();
     Thread interruptingCow = new Thread(() -> {
-      try {
-        Thread.sleep(delayMillis);
-        toInterrupt.interrupt();
-      } catch (InterruptedException e) {
-        throw new AssertionError(e);
-      }
+      sleep(delayMillis);
+      toInterrupt.interrupt();
     });
     interruptingCow.start();
   }
