@@ -85,6 +85,7 @@ public final class CacheTest {
   @After public void tearDown() throws Exception {
     ResponseCache.setDefault(null);
     cache.delete();
+    TestUtil.ensureAllConnectionsReleased(client);
   }
 
   /**
@@ -1101,9 +1102,7 @@ public final class CacheTest {
   }
 
   @Test public void conditionalCacheHitIsNotDoublePooled() throws Exception {
-    // Ensure that the (shared) connection pool is in a consistent state.
-    client.connectionPool().evictAll();
-    assertEquals(0, client.connectionPool().idleConnectionCount());
+    TestUtil.ensureAllConnectionsReleased(client);
 
     server.enqueue(new MockResponse()
         .addHeader("ETag: v1")

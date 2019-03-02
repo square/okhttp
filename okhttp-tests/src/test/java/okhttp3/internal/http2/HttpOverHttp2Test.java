@@ -149,9 +149,7 @@ public final class HttpOverHttp2Test {
     http2Logger.removeHandler(http2Handler);
     http2Logger.setLevel(previousLevel);
 
-    // Ensure a fresh connection pool for the next test.
-    client.connectionPool().evictAll();
-    assertEquals(0, client.connectionPool().connectionCount());
+    TestUtil.ensureAllConnectionsReleased(client);
   }
 
   @Test public void get() throws Exception {

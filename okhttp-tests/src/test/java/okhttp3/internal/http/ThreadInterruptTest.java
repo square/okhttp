@@ -31,6 +31,7 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
+import okhttp3.TestUtil;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import okio.Buffer;
@@ -77,6 +78,7 @@ public final class ThreadInterruptTest {
 
   @After public void tearDown() throws Exception {
     Thread.interrupted(); // Clear interrupted state.
+    TestUtil.ensureAllConnectionsReleased(client);
   }
 
   @Test public void interruptWritingRequestBody() throws Exception {

@@ -25,6 +25,7 @@ import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import okhttp3.mockwebserver.SocketPolicy;
 import okhttp3.tls.HandshakeCertificates;
+import org.junit.After;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestRule;
@@ -41,6 +42,11 @@ public final class ConnectionReuseTest {
 
   private HandshakeCertificates handshakeCertificates = localhost();
   private OkHttpClient client = defaultClient();
+
+  @After
+  public void tearDown() {
+    TestUtil.ensureAllConnectionsReleased(client);
+  }
 
   @Test public void connectionsAreReused() throws Exception {
     server.enqueue(new MockResponse().setBody("a"));

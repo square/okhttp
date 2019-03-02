@@ -24,6 +24,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import okio.BufferedSink;
+import org.junit.After;
 import org.junit.Rule;
 import org.junit.Test;
 
@@ -41,6 +42,11 @@ public final class WholeOperationTimeoutTest {
   @Rule public final MockWebServer server = new MockWebServer();
 
   private OkHttpClient client = defaultClient();
+
+  @After
+  public void tearDown() {
+    TestUtil.ensureAllConnectionsReleased(client);
+  }
 
   @Test public void defaultConfigIsNoTimeout() throws Exception {
     Request request = new Request.Builder()

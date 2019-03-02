@@ -23,6 +23,8 @@ import java.util.Collections;
 import java.util.List;
 import okhttp3.internal.http2.Header;
 
+import static org.junit.Assert.assertEquals;
+
 public final class TestUtil {
   public static final InetSocketAddress UNREACHABLE_ADDRESS
       = new InetSocketAddress("198.51.100.1", 8080);
@@ -82,5 +84,10 @@ public final class TestUtil {
     Runtime.getRuntime().gc();
     Thread.sleep(100);
     System.runFinalization();
+  }
+
+  public static void ensureAllConnectionsReleased(OkHttpClient client) {
+    client.connectionPool().evictAll();
+    assertEquals(0, client.connectionPool().idleConnectionCount());
   }
 }
