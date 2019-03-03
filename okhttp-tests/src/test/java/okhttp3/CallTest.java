@@ -1200,49 +1200,6 @@ public final class CallTest {
     }
   }
 
-  /**
-   * When the server doesn't present any certificates we fail the TLS handshake. This test requires
-   * that the client and server are each configured with a cipher suite that permits the server to
-   * be unauthenticated.
-   */
-  @Test public void tlsSuccessWithNoPeerCertificates() throws Exception {
-    // TODO https://github.com/square/okhttp/issues/4598
-    // No appropriate protocol (protocol is disabled or cipher suites are inappropriate)
-    assumeFalse(getJvmSpecVersion().equals("11"));
-
-    server.enqueue(new MockResponse()
-        .setBody("abc"));
-
-    // The _anon_ cipher suites don't require server certificates.
-    CipherSuite cipherSuite = TLS_DH_anon_WITH_AES_128_GCM_SHA256;
-
-    HandshakeCertificates clientCertificates = new HandshakeCertificates.Builder()
-        .build();
-    client = client.newBuilder()
-        .sslSocketFactory(
-            socketFactoryWithCipherSuite(clientCertificates.sslSocketFactory(), cipherSuite),
-            clientCertificates.trustManager())
-        .connectionSpecs(Arrays.asList(new ConnectionSpec.Builder(ConnectionSpec.MODERN_TLS)
-            .cipherSuites(cipherSuite)
-            .build()))
-        .hostnameVerifier(new RecordingHostnameVerifier())
-        .build();
-
-    HandshakeCertificates serverCertificates = new HandshakeCertificates.Builder()
-        .build();
-    server.useHttps(socketFactoryWithCipherSuite(
-        serverCertificates.sslSocketFactory(), cipherSuite), false);
-
-    Call call = client.newCall(new Request.Builder()
-        .url(server.url("/"))
-        .build());
-    Response response = call.execute();
-    assertEquals("abc", response.body().string());
-    assertNull(response.handshake().peerPrincipal());
-    assertEquals(Collections.emptyList(), response.handshake().peerCertificates());
-    assertEquals(cipherSuite, response.handshake().cipherSuite());
-  }
-
   @Test public void tlsHostnameVerificationFailure() throws Exception {
     server.enqueue(new MockResponse());
 
@@ -1268,14 +1225,17 @@ public final class CallTest {
         .assertFailureMatches("(?s)Hostname localhost not verified.*");
   }
 
-  @Test public void tlsHostnameVerificationFailureNoPeerCertificates() throws Exception {
+  /**
+   * Anonymous cipher suites were disabled in OpenJDK because they're rarely used and permit
+   * man-in-the-middle attacks. https://bugs.openjdk.java.net/browse/JDK-8212823
+   */
+  @Test public void anonCipherSuiteUnsupported() throws Exception {
+    // The _anon_ suites became unsupported in "1.8.0_201" and "11.0.2".
+    assumeFalse(System.getProperty("java.version", "unknown").matches("1\\.8\\.0_1\\d\\d"));
+    assumeFalse(System.getProperty("java.version", "unknown").matches("11"));
+
     server.enqueue(new MockResponse());
 
-    // TODO https://github.com/square/okhttp/issues/4598
-    // No appropriate protocol (protocol is disabled or cipher suites are inappropriate)
-    assumeFalse(getJvmSpecVersion().equals("11"));
-
-    // The _anon_ cipher suites don't require server certificates.
     CipherSuite cipherSuite = TLS_DH_anon_WITH_AES_128_GCM_SHA256;
 
     HandshakeCertificates clientCertificates = new HandshakeCertificates.Builder()
@@ -1295,7 +1255,7 @@ public final class CallTest {
         serverCertificates.sslSocketFactory(), cipherSuite), false);
 
     executeSynchronously("/")
-        .assertFailure("Hostname localhost not verified (no certificates)");
+        .assertFailure(SSLHandshakeException.class);
   }
 
   @Test public void cleartextCallsFailWhenCleartextIsDisabled() throws Exception {
