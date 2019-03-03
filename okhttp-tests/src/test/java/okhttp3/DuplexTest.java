@@ -31,6 +31,7 @@ import okhttp3.mockwebserver.internal.duplex.MockDuplexResponseBody;
 import okhttp3.tls.HandshakeCertificates;
 import okio.BufferedSink;
 import okio.BufferedSource;
+import org.junit.After;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestRule;
@@ -53,6 +54,11 @@ public final class DuplexTest {
       .newBuilder()
       .eventListener(listener)
       .build();
+
+  @After
+  public void tearDown() {
+    TestUtil.ensureAllConnectionsReleased(client);
+  }
 
   @Test public void http1DoesntSupportDuplex() throws IOException {
     Call call = client.newCall(new Request.Builder()

@@ -127,9 +127,7 @@ public final class CallTest {
     cache.delete();
     logger.removeHandler(logHandler);
 
-    // Ensure the test has released all connections.
-    client.connectionPool().evictAll();
-    assertEquals(0, client.connectionPool().connectionCount());
+    TestUtil.ensureAllConnectionsReleased(client);
   }
 
   @Test public void get() throws Exception {

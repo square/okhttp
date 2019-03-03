@@ -23,6 +23,7 @@ import java.util.Arrays;
 import okhttp3.internal.platform.ConscryptPlatform;
 import okhttp3.internal.platform.Platform;
 import org.conscrypt.OpenSSLProvider;
+import org.junit.After;
 import org.junit.Assume;
 import org.junit.Test;
 
@@ -41,6 +42,11 @@ public class ConscryptTest {
   };
 
   private OkHttpClient client = buildClient();
+
+  @After
+  public void tearDown() {
+    TestUtil.ensureAllConnectionsReleased(client);
+  }
 
   private OkHttpClient buildClient() {
     ConnectionSpec spec = new ConnectionSpec.Builder(true)

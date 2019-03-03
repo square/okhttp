@@ -31,6 +31,7 @@ import java.util.Map;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import okhttp3.mockwebserver.RecordedRequest;
+import org.junit.After;
 import org.junit.Test;
 
 import static java.net.CookiePolicy.ACCEPT_ORIGINAL_SERVER;
@@ -44,6 +45,11 @@ import static org.junit.Assert.fail;
 /** Derived from Android's CookiesTest. */
 public class CookiesTest {
   private OkHttpClient client = defaultClient();
+
+  @After
+  public void tearDown() {
+    TestUtil.ensureAllConnectionsReleased(client);
+  }
 
   @Test
   public void testNetscapeResponse() throws Exception {

@@ -15,6 +15,7 @@ import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import okhttp3.RealCall.AsyncCall;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -40,6 +41,11 @@ public final class DispatcherTest {
     dispatcher.setMaxRequests(20);
     dispatcher.setMaxRequestsPerHost(10);
     listener.forbidLock(dispatcher);
+  }
+
+  @After
+  public void tearDown() {
+    TestUtil.ensureAllConnectionsReleased(client);
   }
 
   @Test public void maxRequestsZero() throws Exception {

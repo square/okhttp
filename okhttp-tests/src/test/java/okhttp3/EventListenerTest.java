@@ -100,6 +100,8 @@ public final class EventListenerTest {
     if (socksProxy != null) {
       socksProxy.shutdown();
     }
+
+    TestUtil.ensureAllConnectionsReleased(client);
   }
 
   @Test public void successfulCallEventSequence() throws IOException {

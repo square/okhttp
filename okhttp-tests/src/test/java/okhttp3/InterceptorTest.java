@@ -39,6 +39,7 @@ import okio.GzipSink;
 import okio.Okio;
 import okio.Sink;
 import okio.Source;
+import org.junit.After;
 import org.junit.Rule;
 import org.junit.Test;
 
@@ -56,6 +57,11 @@ public final class InterceptorTest {
 
   private OkHttpClient client = defaultClient();
   private RecordingCallback callback = new RecordingCallback();
+
+  @After
+  public void tearDown() {
+    TestUtil.ensureAllConnectionsReleased(client);
+  }
 
   @Test public void applicationInterceptorsCanShortCircuitResponses() throws Exception {
     server.shutdown(); // Accept no connections.
