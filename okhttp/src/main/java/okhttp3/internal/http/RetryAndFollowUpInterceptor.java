@@ -18,7 +18,6 @@ package okhttp3.internal.http;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InterruptedIOException;
-import java.net.HttpRetryException;
 import java.net.ProtocolException;
 import java.net.Proxy;
 import java.net.SocketTimeoutException;
@@ -126,6 +125,11 @@ public final class RetryAndFollowUpInterceptor implements Interceptor {
         return response;
       }
 
+      RequestBody followUpBody = followUp.body();
+      if (followUpBody != null && followUpBody.isOneShot()) {
+        return response;
+      }
+
       closeQuietly(response.body());
       if (transmitter.hasExchange()) {
         exchange.detachWithViolence();
@@ -133,10 +137,6 @@ public final class RetryAndFollowUpInterceptor implements Interceptor {
 
       if (++followUpCount > MAX_FOLLOW_UPS) {
         throw new ProtocolException("Too many follow-up requests: " + followUpCount);
-      }
-
-      if (followUp.body() instanceof UnrepeatableRequestBody) {
-        throw new HttpRetryException("Cannot retry streamed HTTP body", response.code());
       }
 
       request = followUp;
@@ -156,7 +156,7 @@ public final class RetryAndFollowUpInterceptor implements Interceptor {
     if (!client.retryOnConnectionFailure()) return false;
 
     // We can't send the request body again.
-    if (requestSendStarted && requestIsUnrepeatable(e, userRequest)) return false;
+    if (requestSendStarted && requestIsOneShot(e, userRequest)) return false;
 
     // This exception is fatal.
     if (!isRecoverable(e, requestSendStarted)) return false;
@@ -168,8 +168,9 @@ public final class RetryAndFollowUpInterceptor implements Interceptor {
     return true;
   }
 
-  private boolean requestIsUnrepeatable(IOException e, Request userRequest) {
-    return userRequest.body() instanceof UnrepeatableRequestBody
+  private boolean requestIsOneShot(IOException e, Request userRequest) {
+    RequestBody requestBody = userRequest.body();
+    return (requestBody != null && requestBody.isOneShot())
         || e instanceof FileNotFoundException;
   }
 
@@ -289,7 +290,8 @@ public final class RetryAndFollowUpInterceptor implements Interceptor {
           return null;
         }
 
-        if (userResponse.request().body() instanceof UnrepeatableRequestBody) {
+        RequestBody requestBody = userResponse.request().body();
+        if (requestBody != null && requestBody.isOneShot()) {
           return null;
         }
 
