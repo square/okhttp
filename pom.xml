@@ -22,7 +22,6 @@
     <module>okhttp</module>
     <module>okhttp-tests</module>
 
-    <module>okhttp-apache</module>
     <module>okhttp-sse</module>
     <module>okhttp-testing-support</module>
     <module>okhttp-tls</module>
@@ -44,7 +43,6 @@
     <airlift.version>0.8</airlift.version>
     <android.version>4.1.1.4</android.version>
     <animal.sniffer.version>1.17</animal.sniffer.version>
-    <apache.http.version>4.5.6</apache.http.version>
     <bouncycastle.version>1.60</bouncycastle.version>
     <guava.version>27.0.1-jre</guava.version>
     <java.version>1.8</java.version>
@@ -101,11 +99,6 @@
         <groupId>org.bouncycastle</groupId>
         <artifactId>bcprov-jdk15on</artifactId>
         <version>${bouncycastle.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.apache.httpcomponents</groupId>
-        <artifactId>httpclient</artifactId>
-        <version>${apache.http.version}</version>
       </dependency>
       <dependency>
         <groupId>io.airlift</groupId>
