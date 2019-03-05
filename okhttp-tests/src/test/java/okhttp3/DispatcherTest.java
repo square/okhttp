@@ -33,10 +33,11 @@ public final class DispatcherTest {
   RecordingWebSocketListener webSocketListener = new RecordingWebSocketListener();
   Dispatcher dispatcher = new Dispatcher(executor);
   RecordingEventListener listener = new RecordingEventListener();
-  OkHttpClient client = clientTestRule.client.newBuilder()
-      .dispatcher(dispatcher)
-      .eventListener(listener)
-      .build();
+  OkHttpClient client = clientTestRule.build(builder -> {
+    builder
+        .dispatcher(dispatcher)
+        .eventListener(listener);
+  });
 
   @Before public void setUp() throws Exception {
     dispatcher.setMaxRequests(20);
@@ -185,8 +186,8 @@ public final class DispatcherTest {
   @Test public void synchronousCallAccessors() throws Exception {
     CountDownLatch ready = new CountDownLatch(2);
     CountDownLatch waiting = new CountDownLatch(1);
-    client = client.newBuilder()
-        .addInterceptor(chain -> {
+    OkHttpClient client = clientTestRule.build(builder -> {
+      builder.addInterceptor(chain -> {
           try {
             ready.countDown();
             waiting.await();
@@ -194,8 +195,8 @@ public final class DispatcherTest {
             throw new AssertionError();
           }
           throw new IOException();
-        })
-        .build();
+        });
+    });
 
     Call a1 = client.newCall(newRequest("http://a/1"));
     Call a2 = client.newCall(newRequest("http://a/2"));
@@ -252,8 +253,8 @@ public final class DispatcherTest {
 
     CountDownLatch ready = new CountDownLatch(1);
     CountDownLatch proceed = new CountDownLatch(1);
-    client = client.newBuilder()
-        .addInterceptor(chain -> {
+    OkHttpClient client = clientTestRule.build(builder -> {
+      builder.addInterceptor(chain -> {
           ready.countDown();
           try {
             proceed.await(5, SECONDS);
@@ -261,8 +262,8 @@ public final class DispatcherTest {
             throw new RuntimeException(e);
           }
           return chain.proceed(chain.request());
-        })
-        .build();
+        });
+    });
 
     Thread t1 = makeSynchronousCall(client.newCall(newRequest("http://a/3")));
     ready.await(5, SECONDS);

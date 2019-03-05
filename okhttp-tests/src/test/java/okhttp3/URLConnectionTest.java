@@ -291,11 +291,12 @@ public final class URLConnectionTest {
         .setBody("abc"));
 
     // Use a misconfigured proxy to guarantee that the request is retried.
-    client = client.newBuilder()
-        .proxySelector(new FakeProxySelector()
-            .addProxy(server2.toProxyAddress())
-            .addProxy(Proxy.NO_PROXY))
-        .build();
+    client = clientTestRule.build(builder -> {
+      builder
+          .proxySelector(new FakeProxySelector()
+          .addProxy(server2.toProxyAddress())
+          .addProxy(Proxy.NO_PROXY));
+    });
     server2.shutdown();
 
     Request request = new Request.Builder()
@@ -374,9 +375,9 @@ public final class URLConnectionTest {
 
   @Test public void invalidHost() throws Exception {
     // Note that 1234.1.1.1 is an invalid host in a URI, but URL isn't as strict.
-    client = client.newBuilder()
-        .dns(new FakeDns())
-        .build();
+    client = clientTestRule.build(builder -> {
+      builder.dns(new FakeDns());
+    });
     try {
       getResponse(new Request.Builder()
           .url(HttpUrl.get("http://1234.1.1.1/index.html"))
@@ -493,11 +494,12 @@ public final class URLConnectionTest {
     server.enqueue(new MockResponse()
         .setBody("this response comes via HTTPS"));
 
-    client = client.newBuilder()
-        .sslSocketFactory(
-            handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager())
-        .hostnameVerifier(new RecordingHostnameVerifier())
-        .build();
+    client = clientTestRule.build(builder -> {
+      builder
+          .sslSocketFactory(
+              handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager())
+          .hostnameVerifier(new RecordingHostnameVerifier());
+    });
 
     Response response = getResponse(newRequest("/foo"));
     assertContent("this response comes via HTTPS", response);
@@ -528,24 +530,26 @@ public final class URLConnectionTest {
     CookieJar cookieJar = new JavaNetCookieJar(new CookieManager());
     ConnectionPool connectionPool = new ConnectionPool();
 
-    client = new OkHttpClient.Builder()
-        .cache(cache)
-        .connectionPool(connectionPool)
-        .cookieJar(cookieJar)
-        .sslSocketFactory(clientSocketFactory, handshakeCertificates.trustManager())
-        .hostnameVerifier(hostnameVerifier)
-        .build();
-    Response response1 = getResponse(newRequest("/"));
-    assertContent("this response comes via HTTPS", response1);
-
-    if (rebuildClient) {
-      client = new OkHttpClient.Builder()
+    client = clientTestRule.build(builder -> {
+      builder
           .cache(cache)
           .connectionPool(connectionPool)
           .cookieJar(cookieJar)
           .sslSocketFactory(clientSocketFactory, handshakeCertificates.trustManager())
-          .hostnameVerifier(hostnameVerifier)
-          .build();
+          .hostnameVerifier(hostnameVerifier);
+    });
+    Response response1 = getResponse(newRequest("/"));
+    assertContent("this response comes via HTTPS", response1);
+
+    if (rebuildClient) {
+      client = clientTestRule.build(builder -> {
+        builder
+            .cache(cache)
+            .connectionPool(connectionPool)
+            .cookieJar(cookieJar)
+            .sslSocketFactory(clientSocketFactory, handshakeCertificates.trustManager())
+            .hostnameVerifier(hostnameVerifier);
+      });
     }
 
     Response response2 = getResponse(newRequest("/"));
@@ -563,11 +567,12 @@ public final class URLConnectionTest {
         .setBody("another response via HTTPS"));
 
     // install a custom SSL socket factory so the server can be authorized
-    client = client.newBuilder()
-        .sslSocketFactory(
-            handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager())
-        .hostnameVerifier(new RecordingHostnameVerifier())
-        .build();
+    client = clientTestRule.build(builder -> {
+      builder
+          .sslSocketFactory(
+              handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager())
+          .hostnameVerifier(new RecordingHostnameVerifier());
+    });
     Response response1 = getResponse(newRequest("/"));
     assertContent("this response comes via HTTPS", response1);
 
@@ -580,9 +585,9 @@ public final class URLConnectionTest {
     trustManagerFactory.init((KeyStore) null);
     X509TrustManager trustManager = (X509TrustManager) trustManagerFactory.getTrustManagers()[0];
 
-    client = client.newBuilder()
-        .sslSocketFactory(sslSocketFactory2, trustManager)
-        .build();
+    client = clientTestRule.build(builder -> {
+      builder.sslSocketFactory(sslSocketFactory2, trustManager);
+    });
     try {
       getResponse(newRequest("/"));
       fail("without an SSL socket factory, the connection should fail");
@@ -599,13 +604,14 @@ public final class URLConnectionTest {
     server.enqueue(new MockResponse()
         .setBody("this response comes via SSL"));
 
-    client = client.newBuilder()
-        .hostnameVerifier(new RecordingHostnameVerifier())
-        // Attempt RESTRICTED_TLS then fall back to MODERN_TLS.
-        .connectionSpecs(Arrays.asList(ConnectionSpec.RESTRICTED_TLS, ConnectionSpec.MODERN_TLS))
-        .sslSocketFactory(
-            suppressTlsFallbackClientSocketFactory(), handshakeCertificates.trustManager())
-        .build();
+    client = clientTestRule.build(builder -> {
+      builder
+          .hostnameVerifier(new RecordingHostnameVerifier())
+           // Attempt RESTRICTED_TLS then fall back to MODERN_TLS.
+          .connectionSpecs(Arrays.asList(ConnectionSpec.RESTRICTED_TLS, ConnectionSpec.MODERN_TLS))
+          .sslSocketFactory(
+              suppressTlsFallbackClientSocketFactory(), handshakeCertificates.trustManager());
+    });
     Response response = getResponse(newRequest("/foo"));
 
     assertContent("this response comes via SSL", response);
@@ -626,13 +632,13 @@ public final class URLConnectionTest {
     server.enqueue(new MockResponse()
         .setSocketPolicy(FAIL_HANDSHAKE));
 
-    client = client.newBuilder()
-        .connectionSpecs(Arrays.asList(ConnectionSpec.MODERN_TLS, ConnectionSpec.COMPATIBLE_TLS))
-        .hostnameVerifier(new RecordingHostnameVerifier())
-        .sslSocketFactory(
-            suppressTlsFallbackClientSocketFactory(), handshakeCertificates.trustManager())
-        .build();
-
+    client = clientTestRule.build(builder -> {
+      builder
+          .connectionSpecs(Arrays.asList(ConnectionSpec.MODERN_TLS, ConnectionSpec.COMPATIBLE_TLS))
+          .hostnameVerifier(new RecordingHostnameVerifier())
+          .sslSocketFactory(
+              suppressTlsFallbackClientSocketFactory(), handshakeCertificates.trustManager());
+    });
     try {
       getResponse(newRequest("/foo"));
       fail();
@@ -655,11 +661,12 @@ public final class URLConnectionTest {
     server.enqueue(new MockResponse()
         .setBody("def"));
 
-    client = client.newBuilder()
-        .hostnameVerifier(new RecordingHostnameVerifier())
-        .sslSocketFactory(
-            suppressTlsFallbackClientSocketFactory(), handshakeCertificates.trustManager())
-        .build();
+    client = clientTestRule.build(builder -> {
+      builder
+          .hostnameVerifier(new RecordingHostnameVerifier())
+          .sslSocketFactory(
+              suppressTlsFallbackClientSocketFactory(), handshakeCertificates.trustManager());
+    });
 
     assertContent("abc", getResponse(newRequest("/")));
 
@@ -770,28 +777,29 @@ public final class URLConnectionTest {
 
     if (useHttps) {
       server.useHttps(handshakeCertificates.sslSocketFactory(), false);
-      client = client.newBuilder()
-          .sslSocketFactory(
-              handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager())
-          .hostnameVerifier(new RecordingHostnameVerifier())
-          .build();
+      client = clientTestRule.build(builder -> {
+        builder
+            .sslSocketFactory(
+                handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager())
+            .hostnameVerifier(new RecordingHostnameVerifier());
+      });
     }
 
     server.enqueue(new MockResponse()
         .setStatus("HTTP/1.1 200 OK"));
 
-    client = client.newBuilder()
-        .socketFactory(uselessSocketFactory)
-        .build();
+    client = clientTestRule.build(builder -> {
+      builder.socketFactory(uselessSocketFactory);
+    });
     try {
       getResponse(newRequest("/"));
       fail();
     } catch (IllegalArgumentException expected) {
     }
 
-    client = client.newBuilder()
-        .socketFactory(SocketFactory.getDefault())
-        .build();
+    client = clientTestRule.build(builder -> {
+      builder.socketFactory(SocketFactory.getDefault());
+    });
     Response response = getResponse(newRequest("/"));
     assertEquals(200, response.code());
   }
@@ -856,11 +864,12 @@ public final class URLConnectionTest {
         .setBody("this response comes via HTTPS"));
 
     HttpUrl url = server.url("/foo");
-    client = client.newBuilder()
-        .sslSocketFactory(
-            handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager())
-        .hostnameVerifier(new RecordingHostnameVerifier())
-        .build();
+    client = clientTestRule.build(builder -> {
+      builder
+          .sslSocketFactory(
+              handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager())
+          .hostnameVerifier(new RecordingHostnameVerifier());
+    });
     Call call = proxyConfig.connect(server, client, url);
 
     assertContent("this response comes via HTTPS", call.execute());
@@ -900,11 +909,12 @@ public final class URLConnectionTest {
         .setBody("this response comes via a secure proxy"));
 
     HttpUrl url = HttpUrl.parse("https://android.com/foo");
-    client = client.newBuilder()
-        .sslSocketFactory(
-            handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager())
-        .hostnameVerifier(hostnameVerifier)
-        .build();
+    client = clientTestRule.build(builder -> {
+      builder
+          .sslSocketFactory(
+              handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager())
+          .hostnameVerifier(hostnameVerifier);
+    });
     Call call = proxyConfig.connect(server, client, url);
 
     assertContent("this response comes via a secure proxy", call.execute());
@@ -935,13 +945,14 @@ public final class URLConnectionTest {
 
     // Configure a single IP address for the host and a single configuration, so we only need one
     // failure to fail permanently.
-    client = client.newBuilder()
-        .sslSocketFactory(
-            handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager())
-        .connectionSpecs(Util.immutableList(ConnectionSpec.MODERN_TLS))
-        .hostnameVerifier(new RecordingHostnameVerifier())
-        .proxy(server.toProxyAddress())
-        .build();
+    client = clientTestRule.build(builder -> {
+      builder
+          .sslSocketFactory(
+              handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager())
+          .connectionSpecs(Util.immutableList(ConnectionSpec.MODERN_TLS))
+          .hostnameVerifier(new RecordingHostnameVerifier())
+          .proxy(server.toProxyAddress());
+    });
 
     Response response = getResponse(new Request.Builder()
         .url(HttpUrl.get("https://android.com/foo"))
@@ -955,9 +966,9 @@ public final class URLConnectionTest {
 
   private void initResponseCache() {
     cache = new Cache(tempDir.getRoot(), Integer.MAX_VALUE);
-    client = client.newBuilder()
-        .cache(cache)
-        .build();
+    client = clientTestRule.build(builder -> {
+      builder.cache(cache);
+    });
   }
 
   /** Test which headers are sent unencrypted to the HTTP proxy. */
@@ -971,12 +982,13 @@ public final class URLConnectionTest {
     server.enqueue(new MockResponse()
         .setBody("encrypted response from the origin server"));
 
-    client = client.newBuilder()
-        .proxy(server.toProxyAddress())
-        .sslSocketFactory(
-            handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager())
-        .hostnameVerifier(hostnameVerifier)
-        .build();
+    client = clientTestRule.build(builder -> {
+      builder
+          .proxy(server.toProxyAddress())
+          .sslSocketFactory(
+              handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager())
+          .hostnameVerifier(hostnameVerifier);
+    });
 
     Response response = getResponse(new Request.Builder()
         .url(HttpUrl.get("https://android.com/foo"))
@@ -1010,13 +1022,14 @@ public final class URLConnectionTest {
     server.enqueue(new MockResponse()
         .setBody("A"));
 
-    client = client.newBuilder()
-        .proxyAuthenticator(new JavaNetAuthenticator())
-        .proxy(server.toProxyAddress())
-        .sslSocketFactory(
-            handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager())
-        .hostnameVerifier(new RecordingHostnameVerifier())
-        .build();
+    client = clientTestRule.build(builder -> {
+      builder
+          .proxyAuthenticator(new JavaNetAuthenticator())
+          .proxy(server.toProxyAddress())
+          .sslSocketFactory(
+              handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager())
+          .hostnameVerifier(new RecordingHostnameVerifier());
+    });
 
     Response response = getResponse(new Request.Builder()
         .url(HttpUrl.parse("https://android.com/foo"))
@@ -1047,12 +1060,13 @@ public final class URLConnectionTest {
     server.enqueue(new MockResponse()
         .setBody("this response comes via a proxy"));
 
-    client = client.newBuilder()
-        .proxy(server.toProxyAddress())
-        .sslSocketFactory(
-            handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager())
-        .hostnameVerifier(new RecordingHostnameVerifier())
-        .build();
+    client = clientTestRule.build(builder -> {
+      builder
+          .proxy(server.toProxyAddress())
+          .sslSocketFactory(
+              handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager())
+          .hostnameVerifier(new RecordingHostnameVerifier());
+    });
 
     Response response = getResponse(new Request.Builder()
         .url("https://android.com/foo")
@@ -1075,11 +1089,12 @@ public final class URLConnectionTest {
     server.enqueue(new MockResponse()
         .setBody("response 2"));
 
-    client = client.newBuilder()
-        .proxy(server.toProxyAddress())
-        .sslSocketFactory(socketFactory, handshakeCertificates.trustManager())
-        .hostnameVerifier(hostnameVerifier)
-        .build();
+    client = clientTestRule.build(builder -> {
+      builder
+          .proxy(server.toProxyAddress())
+          .sslSocketFactory(socketFactory, handshakeCertificates.trustManager())
+          .hostnameVerifier(hostnameVerifier);
+    });
 
     assertContent("response 1", getResponse(newRequest(HttpUrl.get("https://android.com/foo"))));
     assertContent("response 2", getResponse(newRequest(HttpUrl.get("https://android.com/foo"))));
@@ -1091,16 +1106,18 @@ public final class URLConnectionTest {
     server.enqueue(new MockResponse()
         .setResponseCode(407));
 
-    client = client.newBuilder()
-        .proxySelector(new ProxySelector() {
-          @Override public List<Proxy> select(URI uri) {
-            return Collections.singletonList(server.toProxyAddress());
-          }
+    client = clientTestRule.build(builder -> {
+      builder
+          .proxySelector(new ProxySelector() {
+              @Override public List<Proxy> select(URI uri) {
+                return Collections.singletonList(server.toProxyAddress());
+              }
 
-          @Override public void connectFailed(
-              URI uri, SocketAddress socketAddress, IOException e) {
-          }
-        }).build();
+              @Override public void connectFailed(
+                  URI uri, SocketAddress socketAddress, IOException e) {
+              }
+          });
+    });
     HttpUrl url = HttpUrl.get("http://android.com/foo");
     assertContent("response 1", getResponse(newRequest(url)));
     assertEquals(407, getResponse(newRequest(url)).code());
@@ -1140,9 +1157,9 @@ public final class URLConnectionTest {
         return Collections.emptyList();
       }
     }
-    client = client.newBuilder()
-        .cookieJar(new DisconnectingCookieJar())
-        .build();
+    client = clientTestRule.build(builder -> {
+      builder.cookieJar(new DisconnectingCookieJar());
+    });
 
     Call call = client.newCall(newRequest("/"));
     callReference.set(call);
@@ -1372,10 +1389,11 @@ public final class URLConnectionTest {
       SSLSocketFactory socketFactory = handshakeCertificates.sslSocketFactory();
       RecordingHostnameVerifier hostnameVerifier = new RecordingHostnameVerifier();
       server.useHttps(socketFactory, false);
-      client = client.newBuilder()
-          .sslSocketFactory(socketFactory, handshakeCertificates.trustManager())
-          .hostnameVerifier(hostnameVerifier)
-          .build();
+      client = clientTestRule.build(builder -> {
+        builder
+            .sslSocketFactory(socketFactory, handshakeCertificates.trustManager())
+            .hostnameVerifier(hostnameVerifier);
+      });
     }
 
     MockResponse responseOne = new MockResponse()
@@ -1527,9 +1545,9 @@ public final class URLConnectionTest {
         .setBody("Authenticated!"));
 
     Authenticator.setDefault(new RecordingAuthenticator());
-    client = client.newBuilder()
-        .authenticator(new JavaNetAuthenticator())
-        .build();
+    client = clientTestRule.build(builder -> {
+      builder.authenticator(new JavaNetAuthenticator());
+    });
     Request request = new Request.Builder()
         .url(server.url("/"))
         .post(streamingMode.newRequestBody("ABCD"))
@@ -1569,9 +1587,9 @@ public final class URLConnectionTest {
     server.enqueue(new MockResponse());
 
     String credential = Credentials.basic("jesse", "secret");
-    client = client.newBuilder()
-        .authenticator(new RecordingOkAuthenticator(credential, null))
-        .build();
+    client = clientTestRule.build(builder -> {
+      builder.authenticator(new RecordingOkAuthenticator(credential, null));
+    });
 
     Response response = getResponse(new Request.Builder()
         .url(server.url("/"))
@@ -1653,15 +1671,16 @@ public final class URLConnectionTest {
 
     Response response;
     if (proxy) {
-      client = client.newBuilder()
-          .proxy(server.toProxyAddress())
-          .proxyAuthenticator(new JavaNetAuthenticator())
-          .build();
+      client = clientTestRule.build(builder -> {
+        builder
+            .proxy(server.toProxyAddress())
+            .proxyAuthenticator(new JavaNetAuthenticator());
+      });
       response = getResponse(newRequest(HttpUrl.get("http://android.com/")));
     } else {
-      client = client.newBuilder()
-          .authenticator(new JavaNetAuthenticator())
-          .build();
+      client = clientTestRule.build(builder -> {
+        builder.authenticator(new JavaNetAuthenticator());
+      });
       response = getResponse(newRequest("/"));
     }
     assertEquals(responseCode, response.code());
@@ -1786,11 +1805,12 @@ public final class URLConnectionTest {
     server.enqueue(new MockResponse()
         .setBody("Success!"));
 
-    client = client.newBuilder()
-        .sslSocketFactory(
-            handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager())
-        .hostnameVerifier(new RecordingHostnameVerifier())
-        .build();
+    client = clientTestRule.build(builder -> {
+      builder
+          .sslSocketFactory(
+              handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager())
+          .hostnameVerifier(new RecordingHostnameVerifier());
+    });
     Response response = getResponse(new Request.Builder()
         .url(server.url("/"))
         .post(streamingMode.newRequestBody("ABCD"))
@@ -1821,9 +1841,9 @@ public final class URLConnectionTest {
         .setBody("Successful auth!"));
 
     Authenticator.setDefault(new RecordingAuthenticator());
-    client = client.newBuilder()
-        .authenticator(new JavaNetAuthenticator())
-        .build();
+    client = clientTestRule.build(builder -> {
+      builder.authenticator(new JavaNetAuthenticator());
+    });
     Response response = getResponse(new Request.Builder()
         .url(server.url("/"))
         .post(RequestBody.create(null, "ABCD"))
@@ -1858,9 +1878,9 @@ public final class URLConnectionTest {
         .setBody("Successful auth!"));
 
     Authenticator.setDefault(new RecordingAuthenticator());
-    client = client.newBuilder()
-        .authenticator(new JavaNetAuthenticator())
-        .build();
+    client = clientTestRule.build(builder -> {
+      builder.authenticator(new JavaNetAuthenticator());
+    });
     Response response = getResponse(newRequest("/"));
     assertEquals("Successful auth!", readAscii(response.body().byteStream(), Integer.MAX_VALUE));
 
@@ -1891,9 +1911,9 @@ public final class URLConnectionTest {
 
     Authenticator.setDefault(new RecordingAuthenticator(
         new PasswordAuthentication("username", "mötorhead".toCharArray())));
-    client = client.newBuilder()
-        .authenticator(new JavaNetAuthenticator())
-        .build();
+    client = clientTestRule.build(builder -> {
+      builder.authenticator(new JavaNetAuthenticator());
+    });
     Response response = getResponse(newRequest("/"));
     assertEquals("Successful auth!", readAscii(response.body().byteStream(), Integer.MAX_VALUE));
 
@@ -1927,9 +1947,9 @@ public final class URLConnectionTest {
     server.enqueue(successfulResponse);
 
     Authenticator.setDefault(new RecordingAuthenticator());
-    client = client.newBuilder()
-        .authenticator(new JavaNetAuthenticator())
-        .build();
+    client = clientTestRule.build(builder -> {
+      builder.authenticator(new JavaNetAuthenticator());
+    });
     Response response = getResponse(newRequest("/"));
     assertEquals("Successful auth!", readAscii(response.body().byteStream(), Integer.MAX_VALUE));
 
@@ -1956,9 +1976,9 @@ public final class URLConnectionTest {
         .setBody("Successful auth!"));
 
     Authenticator.setDefault(new RecordingAuthenticator());
-    client = client.newBuilder()
-        .authenticator(new JavaNetAuthenticator())
-        .build();
+    client = clientTestRule.build(builder -> {
+      builder.authenticator(new JavaNetAuthenticator());
+    });
     Response response = getResponse(newRequest("/"));
     assertEquals("Successful auth!", readAscii(response.body().byteStream(), Integer.MAX_VALUE));
   }
@@ -2006,11 +2026,12 @@ public final class URLConnectionTest {
     server.enqueue(new MockResponse()
         .setBody("This is the new location!"));
 
-    client = client.newBuilder()
-        .sslSocketFactory(
-            handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager())
-        .hostnameVerifier(new RecordingHostnameVerifier())
-        .build();
+    client = clientTestRule.build(builder -> {
+      builder
+          .sslSocketFactory(
+              handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager())
+          .hostnameVerifier(new RecordingHostnameVerifier());
+    });
     Response response = getResponse(newRequest("/"));
     assertEquals("This is the new location!",
         readAscii(response.body().byteStream(), Integer.MAX_VALUE));
@@ -2029,12 +2050,13 @@ public final class URLConnectionTest {
         .addHeader("Location: http://anyhost/foo")
         .setBody("This page has moved!"));
 
-    client = client.newBuilder()
-        .followSslRedirects(false)
-        .sslSocketFactory(
-            handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager())
-        .hostnameVerifier(new RecordingHostnameVerifier())
-        .build();
+    client = clientTestRule.build(builder -> {
+      builder
+          .followSslRedirects(false)
+          .sslSocketFactory(
+              handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager())
+          .hostnameVerifier(new RecordingHostnameVerifier());
+    });
     Response response = getResponse(newRequest("/"));
     assertEquals("This page has moved!",
         readAscii(response.body().byteStream(), Integer.MAX_VALUE));
@@ -2046,9 +2068,9 @@ public final class URLConnectionTest {
         .addHeader("Location: https://anyhost/foo")
         .setBody("This page has moved!"));
 
-    client = client.newBuilder()
-        .followSslRedirects(false)
-        .build();
+    client = clientTestRule.build(builder -> {
+      builder.followSslRedirects(false);
+    });
     Response response = getResponse(newRequest("/"));
     assertEquals("This page has moved!",
         readAscii(response.body().byteStream(), Integer.MAX_VALUE));
@@ -2064,12 +2086,13 @@ public final class URLConnectionTest {
         .addHeader("Location: " + server2.url("/").url())
         .setBody("This page has moved!"));
 
-    client = client.newBuilder()
-        .sslSocketFactory(
-            handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager())
-        .hostnameVerifier(new RecordingHostnameVerifier())
-        .followSslRedirects(true)
-        .build();
+    client = clientTestRule.build(builder -> {
+      builder
+          .sslSocketFactory(
+              handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager())
+          .hostnameVerifier(new RecordingHostnameVerifier())
+          .followSslRedirects(true);
+    });
     Response response = getResponse(newRequest("/"));
     assertContent("This is insecure HTTP!", response);
     assertNull(response.handshake());
@@ -2085,12 +2108,13 @@ public final class URLConnectionTest {
         .addHeader("Location: " + server2.url("/").url())
         .setBody("This page has moved!"));
 
-    client = client.newBuilder()
-        .sslSocketFactory(
-            handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager())
-        .hostnameVerifier(new RecordingHostnameVerifier())
-        .followSslRedirects(true)
-        .build();
+    client = clientTestRule.build(builder -> {
+      builder
+          .sslSocketFactory(
+              handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager())
+          .hostnameVerifier(new RecordingHostnameVerifier())
+          .followSslRedirects(true);
+    });
     Response response = getResponse(newRequest("/"));
     assertContent("This is secure HTTPS!", response);
   }
@@ -2108,11 +2132,12 @@ public final class URLConnectionTest {
       server.useHttps(handshakeCertificates.sslSocketFactory(), false);
       server2.useHttps(handshakeCertificates.sslSocketFactory(), false);
       server2.setProtocolNegotiationEnabled(false);
-      client = client.newBuilder()
-          .sslSocketFactory(
-              handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager())
-          .hostnameVerifier(new RecordingHostnameVerifier())
-          .build();
+      client = clientTestRule.build(builder -> {
+        builder
+            .sslSocketFactory(
+                handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager())
+            .hostnameVerifier(new RecordingHostnameVerifier());
+      });
     }
 
     server2.enqueue(new MockResponse()
@@ -2145,21 +2170,22 @@ public final class URLConnectionTest {
 
   @Test public void redirectWithProxySelector() throws Exception {
     final List<URI> proxySelectionRequests = new ArrayList<>();
-    client = client.newBuilder()
-        .proxySelector(new ProxySelector() {
-          @Override public List<Proxy> select(URI uri) {
-            proxySelectionRequests.add(uri);
-            MockWebServer proxyServer = (uri.getPort() == server.getPort())
-                ? server
-                : server2;
-            return Arrays.asList(proxyServer.toProxyAddress());
-          }
+    client = clientTestRule.build(builder -> {
+      builder
+          .proxySelector(new ProxySelector() {
+            @Override public List<Proxy> select(URI uri) {
+              proxySelectionRequests.add(uri);
+              MockWebServer proxyServer = (uri.getPort() == server.getPort())
+                  ? server
+                  : server2;
+              return Arrays.asList(proxyServer.toProxyAddress());
+            }
 
-          @Override public void connectFailed(URI uri, SocketAddress address, IOException failure) {
-            throw new AssertionError();
-          }
-        })
-        .build();
+            @Override public void connectFailed(URI uri, SocketAddress address, IOException failure) {
+              throw new AssertionError();
+            }
+          });
+    });
 
     server2.enqueue(new MockResponse()
         .setBody("This is the 2nd server!"));
@@ -2185,9 +2211,9 @@ public final class URLConnectionTest {
         .setResponseCode(302)
         .addHeader("Location: " + server2.url("/b")));
 
-    client = client.newBuilder()
-        .authenticator(new RecordingOkAuthenticator(Credentials.basic("jesse", "secret"), null))
-        .build();
+    client = clientTestRule.build(builder -> {
+      builder.authenticator(new RecordingOkAuthenticator(Credentials.basic("jesse", "secret"), null));
+    });
     assertContent("Page 2", getResponse(newRequest("/a")));
 
     RecordedRequest redirectRequest = server2.takeRequest();
@@ -2399,10 +2425,11 @@ public final class URLConnectionTest {
     SSLContext sslContext = Platform.get().getSSLContext();
     sslContext.init(null, new TrustManager[] {trustManager}, null);
 
-    client = client.newBuilder()
-        .hostnameVerifier(hostnameVerifier)
-        .sslSocketFactory(sslContext.getSocketFactory(), trustManager)
-        .build();
+    client = clientTestRule.build(builder -> {
+      builder
+          .hostnameVerifier(hostnameVerifier)
+          .sslSocketFactory(sslContext.getSocketFactory(), trustManager);
+    });
     server.useHttps(handshakeCertificates.sslSocketFactory(), false);
     server.enqueue(new MockResponse()
         .setBody("ABC"));
@@ -2510,16 +2537,17 @@ public final class URLConnectionTest {
             return serverSocket;
           }
         });
-    client = client.newBuilder()
-        .socketFactory(new DelegatingSocketFactory(SocketFactory.getDefault()) {
-          @Override protected Socket configureSocket(Socket socket) throws IOException {
-            socket.setReceiveBufferSize(SOCKET_BUFFER_SIZE);
-            socket.setSendBufferSize(SOCKET_BUFFER_SIZE);
-            return socket;
-          }
-        })
-        .writeTimeout(500, TimeUnit.MILLISECONDS)
-        .build();
+    client = clientTestRule.build(builder -> {
+      builder
+          .socketFactory(new DelegatingSocketFactory(SocketFactory.getDefault()) {
+            @Override protected Socket configureSocket(Socket socket) throws IOException {
+              socket.setReceiveBufferSize(SOCKET_BUFFER_SIZE);
+              socket.setSendBufferSize(SOCKET_BUFFER_SIZE);
+              return socket;
+            }
+          })
+          .writeTimeout(500, TimeUnit.MILLISECONDS);
+    });
 
     server.start();
     server.enqueue(new MockResponse()
@@ -2711,9 +2739,9 @@ public final class URLConnectionTest {
   }
 
   @Test public void dnsFailureThrowsIOException() {
-    client = client.newBuilder()
-        .dns(new FakeDns())
-        .build();
+    client = clientTestRule.build(builder -> {
+      builder.dns(new FakeDns());
+    });
     try {
       getResponse(newRequest(HttpUrl.get("http://host.unlikelytld")));
       fail();
@@ -3140,9 +3168,9 @@ public final class URLConnectionTest {
 
     String credential = Credentials.basic("jesse", "peanutbutter");
     RecordingOkAuthenticator authenticator = new RecordingOkAuthenticator(credential, null);
-    client = client.newBuilder()
-        .authenticator(authenticator)
-        .build();
+    client = clientTestRule.build(builder -> {
+      builder.authenticator(authenticator);
+    });
     assertContent("A", getResponse(newRequest("/private")));
 
     assertNull(server.takeRequest().getHeader("Authorization"));
@@ -3164,9 +3192,9 @@ public final class URLConnectionTest {
 
     RecordingOkAuthenticator authenticator
         = new RecordingOkAuthenticator("oauthed abc123", "Bearer");
-    client = client.newBuilder()
-        .authenticator(authenticator)
-        .build();
+    client = clientTestRule.build(builder -> {
+      builder.authenticator(authenticator);
+    });
     assertContent("A", getResponse(newRequest("/private")));
 
     assertNull(server.takeRequest().getHeader("Authorization"));
@@ -3189,9 +3217,9 @@ public final class URLConnectionTest {
 
     RecordingOkAuthenticator authenticator = new RecordingOkAuthenticator(
         Credentials.basic("jesse", "peanutbutter"), "Basic");
-    client = client.newBuilder()
-        .authenticator(authenticator)
-        .build();
+    client = clientTestRule.build(builder -> {
+      builder.authenticator(authenticator);
+    });
     assertContent("c", getResponse(newRequest("/a")));
 
     Response challengeResponse = authenticator.responses.get(0);
@@ -3210,9 +3238,9 @@ public final class URLConnectionTest {
         .setBody("Success!"));
 
     String credential = Credentials.basic("jesse", "peanutbutter");
-    client = client.newBuilder()
-        .authenticator(new RecordingOkAuthenticator(credential, null))
-        .build();
+    client = clientTestRule.build(builder -> {
+      builder.authenticator(new RecordingOkAuthenticator(credential, null));
+    });
 
     Response response = getResponse(newRequest("/0"));
     assertContent("Success!", response);
@@ -3225,9 +3253,9 @@ public final class URLConnectionTest {
     }
 
     String credential = Credentials.basic("jesse", "peanutbutter");
-    client = client.newBuilder()
-        .authenticator(new RecordingOkAuthenticator(credential, null))
-        .build();
+    client = clientTestRule.build(builder -> {
+      builder.authenticator(new RecordingOkAuthenticator(credential, null));
+    });
 
     try {
       getResponse(newRequest("/"));
@@ -3245,9 +3273,9 @@ public final class URLConnectionTest {
     enableProtocol(protocol);
     server.enqueue(new MockResponse()
         .setBody("A"));
-    client = client.newBuilder()
-        .protocols(Arrays.asList(protocol, Protocol.HTTP_1_1))
-        .build();
+    client = clientTestRule.build(builder -> {
+      builder.protocols(Arrays.asList(protocol, Protocol.HTTP_1_1));
+    });
     Response response = getResponse(newRequest("/"));
     assertEquals(protocol, response.protocol());
     assertContent("A", response);
@@ -3304,9 +3332,9 @@ public final class URLConnectionTest {
   @Test public void setProtocols() throws Exception {
     server.enqueue(new MockResponse()
         .setBody("A"));
-    client = client.newBuilder()
-        .protocols(Arrays.asList(Protocol.HTTP_1_1))
-        .build();
+    client = clientTestRule.build(builder -> {
+      builder.protocols(Arrays.asList(Protocol.HTTP_1_1));
+    });
     assertContent("A", getResponse(newRequest("/")));
   }
 
@@ -3368,10 +3396,10 @@ public final class URLConnectionTest {
     server.enqueue(new MockResponse()
         .setBody("Response that would have needed fallbacks"));
 
-    client = client.newBuilder()
-        .sslSocketFactory(
-            handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager())
-        .build();
+    client = clientTestRule.build(builder -> {
+      builder.sslSocketFactory(
+          handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager());
+    });
     try {
       getResponse(newRequest("/"));
       fail();
@@ -3530,11 +3558,12 @@ public final class URLConnectionTest {
 
   /** Confirm that runtime exceptions thrown inside of OkHttp propagate to the caller. */
   @Test public void unexpectedExceptionSync() throws Exception {
-    client = client.newBuilder()
-        .dns(hostname -> {
-          throw new RuntimeException("boom!");
-        })
-        .build();
+    client = clientTestRule.build(builder -> {
+      builder
+          .dns(hostname -> {
+            throw new RuntimeException("boom!");
+          });
+    });
 
     server.enqueue(new MockResponse());
 
@@ -3581,9 +3610,9 @@ public final class URLConnectionTest {
         .setSocketPolicy(SocketPolicy.DISCONNECT_AT_END));
 
     Authenticator.setDefault(new RecordingAuthenticator(null));
-    client = client.newBuilder()
-        .authenticator(new JavaNetAuthenticator())
-        .build();
+    client = clientTestRule.build(builder -> {
+      builder.authenticator(new JavaNetAuthenticator());
+    });
     Response response = getResponse(newRequest("/"));
     assertEquals(401, response.code());
   }
@@ -3775,12 +3804,13 @@ public final class URLConnectionTest {
    * -Xbootclasspath/p:/tmp/alpn-boot-8.0.0.v20140317}
    */
   private void enableProtocol(Protocol protocol) {
-    client = client.newBuilder()
-        .sslSocketFactory(
-            handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager())
-        .hostnameVerifier(new RecordingHostnameVerifier())
-        .protocols(Arrays.asList(protocol, Protocol.HTTP_1_1))
-        .build();
+    client = clientTestRule.build(builder -> {
+      builder
+          .sslSocketFactory(
+              handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager())
+          .hostnameVerifier(new RecordingHostnameVerifier())
+          .protocols(Arrays.asList(protocol, Protocol.HTTP_1_1));
+    });
     server.useHttps(handshakeCertificates.sslSocketFactory(), false);
     server.setProtocolNegotiationEnabled(true);
     server.setProtocols(client.protocols());

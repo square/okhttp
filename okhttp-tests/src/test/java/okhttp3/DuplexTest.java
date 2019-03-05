@@ -49,10 +49,9 @@ public final class DuplexTest {
 
   private final RecordingEventListener listener = new RecordingEventListener();
   private HandshakeCertificates handshakeCertificates = localhost();
-  private OkHttpClient client = clientTestRule.client
-      .newBuilder()
-      .eventListener(listener)
-      .build();
+  private OkHttpClient client = clientTestRule.build(builder -> {
+    builder.eventListener(listener);
+  });
 
   @Test public void http1DoesntSupportDuplex() throws IOException {
     Call call = client.newCall(new Request.Builder()
@@ -334,9 +333,9 @@ public final class DuplexTest {
     enableProtocol(Protocol.HTTP_2);
 
     String credential = Credentials.basic("jesse", "secret");
-    client = client.newBuilder()
-        .authenticator(new RecordingOkAuthenticator(credential, null))
-        .build();
+    OkHttpClient client = clientTestRule.build(builder -> {
+      builder.authenticator(new RecordingOkAuthenticator(credential, null));
+    });
 
     MockDuplexResponseBody mockResponseBody1 = enqueueResponseWithBody(
         new MockResponse()
@@ -456,10 +455,11 @@ public final class DuplexTest {
             .exhaustRequest()
             .exhaustResponse());
 
-    client = client.newBuilder()
-        .addInterceptor(new UppercaseRequestInterceptor())
-        .addInterceptor(new UppercaseResponseInterceptor())
-        .build();
+    OkHttpClient client = clientTestRule.build(builder -> {
+      builder
+          .addInterceptor(new UppercaseRequestInterceptor())
+          .addInterceptor(new UppercaseResponseInterceptor());
+    });
 
     Call call = client.newCall(new Request.Builder()
         .url(server.url("/"))
@@ -494,18 +494,20 @@ public final class DuplexTest {
    */
   private void enableProtocol(Protocol protocol) {
     enableTls();
-    client = client.newBuilder()
-        .protocols(Arrays.asList(protocol, Protocol.HTTP_1_1))
-        .build();
+    client = clientTestRule.build(builder -> {
+      builder
+          .protocols(Arrays.asList(protocol, Protocol.HTTP_1_1));
+    });
     server.setProtocols(client.protocols());
   }
 
   private void enableTls() {
-    client = client.newBuilder()
-        .sslSocketFactory(
-            handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager())
-        .hostnameVerifier(new RecordingHostnameVerifier())
-        .build();
+    client = clientTestRule.build(builder -> {
+      builder
+          .sslSocketFactory(
+              handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager())
+          .hostnameVerifier(new RecordingHostnameVerifier());
+    });
     server.useHttps(handshakeCertificates.sslSocketFactory(), false);
   }
 }

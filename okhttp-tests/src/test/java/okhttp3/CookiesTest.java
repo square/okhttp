@@ -50,9 +50,11 @@ public class CookiesTest {
   @Test
   public void testNetscapeResponse() throws Exception {
     CookieManager cookieManager = new CookieManager(null, ACCEPT_ORIGINAL_SERVER);
-    client = client.newBuilder()
+    client = clientTestRule.build(builder -> {
+      builder
         .cookieJar(new JavaNetCookieJar(cookieManager))
         .build();
+    });
     MockWebServer server = new MockWebServer();
     server.start();
 
@@ -80,9 +82,9 @@ public class CookiesTest {
 
   @Test public void testRfc2109Response() throws Exception {
     CookieManager cookieManager = new CookieManager(null, ACCEPT_ORIGINAL_SERVER);
-    client = client.newBuilder()
-        .cookieJar(new JavaNetCookieJar(cookieManager))
-        .build();
+    client = clientTestRule.build(builder -> {
+      builder.cookieJar(new JavaNetCookieJar(cookieManager));
+    });
     MockWebServer server = new MockWebServer();
     server.start();
 
@@ -110,9 +112,9 @@ public class CookiesTest {
 
   @Test public void testQuotedAttributeValues() throws Exception {
     CookieManager cookieManager = new CookieManager(null, ACCEPT_ORIGINAL_SERVER);
-    client = client.newBuilder()
-        .cookieJar(new JavaNetCookieJar(cookieManager))
-        .build();
+    client = clientTestRule.build(builder -> {
+      builder.cookieJar(new JavaNetCookieJar(cookieManager));
+    });
     MockWebServer server = new MockWebServer();
     server.start();
 
@@ -154,9 +156,9 @@ public class CookiesTest {
     cookieB.setDomain(serverUrl.host());
     cookieB.setPath("/");
     cookieManager.getCookieStore().add(serverUrl.uri(), cookieB);
-    client = client.newBuilder()
-        .cookieJar(new JavaNetCookieJar(cookieManager))
-        .build();
+    client = clientTestRule.build(builder -> {
+      builder.cookieJar(new JavaNetCookieJar(cookieManager));
+    });
 
     get(serverUrl);
     RecordedRequest request = server.takeRequest();
@@ -182,9 +184,9 @@ public class CookiesTest {
       }
     };
 
-    client = client.newBuilder()
-        .cookieJar(new JavaNetCookieJar(androidCookieHandler))
-        .build();
+    client = clientTestRule.build(builder -> {
+      builder.cookieJar(new JavaNetCookieJar(androidCookieHandler));
+    });
 
     get(serverUrl);
     RecordedRequest request = server.takeRequest();
@@ -201,9 +203,9 @@ public class CookiesTest {
     server.start();
 
     CookieManager cookieManager = new CookieManager(null, ACCEPT_ORIGINAL_SERVER);
-    client = client.newBuilder()
-        .cookieJar(new JavaNetCookieJar(cookieManager))
-        .build();
+    client = clientTestRule.build(builder -> {
+      builder.cookieJar(new JavaNetCookieJar(cookieManager));
+    });
 
     get(urlWithIpAddress(server, "/"));
     RecordedRequest request1 = server.takeRequest();
@@ -234,9 +236,9 @@ public class CookiesTest {
     String portList = Integer.toString(redirectSource.getPort());
     cookie.setPortlist(portList);
     cookieManager.getCookieStore().add(redirectSourceUrl.uri(), cookie);
-    client = client.newBuilder()
-        .cookieJar(new JavaNetCookieJar(cookieManager))
-        .build();
+    client = clientTestRule.build(builder -> {
+      builder.cookieJar(new JavaNetCookieJar(cookieManager));
+    });
 
     get(redirectSourceUrl);
     RecordedRequest request = redirectSource.takeRequest();
@@ -251,17 +253,17 @@ public class CookiesTest {
   }
 
   @Test public void testCookiesSentIgnoresCase() throws Exception {
-    client = client.newBuilder()
-        .cookieJar(new JavaNetCookieJar(new CookieManager() {
+    client = clientTestRule.build(builder -> {
+      builder.cookieJar(new JavaNetCookieJar(new CookieManager() {
           @Override public Map<String, List<String>> get(URI uri,
               Map<String, List<String>> requestHeaders) throws IOException {
-            Map<String, List<String>> result = new LinkedHashMap<>();
-            result.put("COOKIE", Collections.singletonList("Bar=bar"));
-            result.put("cooKIE2", Collections.singletonList("Baz=baz"));
-            return result;
-          }
-        }))
-        .build();
+          Map<String, List<String>> result = new LinkedHashMap<>();
+          result.put("COOKIE", Collections.singletonList("Bar=bar"));
+          result.put("cooKIE2", Collections.singletonList("Baz=baz"));
+          return result;
+        }
+      }));
+    });
 
     MockWebServer server = new MockWebServer();
     server.enqueue(new MockResponse());

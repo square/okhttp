@@ -117,18 +117,19 @@ public final class HttpOverHttp2Test {
   }
 
   private OkHttpClient buildH2PriorKnowledgeClient() {
-    return clientTestRule.client.newBuilder()
-        .protocols(Arrays.asList(Protocol.H2_PRIOR_KNOWLEDGE))
-        .build();
+    return clientTestRule.build(builder -> {
+      builder.protocols(Arrays.asList(Protocol.H2_PRIOR_KNOWLEDGE));
+    });
   }
 
   private OkHttpClient buildHttp2Client() {
-    return clientTestRule.client.newBuilder()
-        .protocols(Arrays.asList(Protocol.HTTP_2, Protocol.HTTP_1_1))
-        .sslSocketFactory(
-            handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager())
-        .hostnameVerifier(new RecordingHostnameVerifier())
-        .build();
+    return clientTestRule.build(builder -> {
+      builder
+          .protocols(Arrays.asList(Protocol.HTTP_2, Protocol.HTTP_1_1))
+          .sslSocketFactory(
+              handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager())
+          .hostnameVerifier(new RecordingHostnameVerifier());
+    });
   }
 
   @Before public void setUp() {

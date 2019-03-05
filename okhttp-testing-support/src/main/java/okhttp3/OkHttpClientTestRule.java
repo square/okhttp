@@ -29,6 +29,13 @@ public class OkHttpClientTestRule implements TestRule {
     return statement(base);
   }
 
+  public OkHttpClient build(BuildCallback buildCallback) {
+    OkHttpClient.Builder builder = client.newBuilder();
+    buildCallback.customizeBuilder(builder);
+    client = builder.build();
+    return client;
+  }
+
   private Statement statement(final Statement base) {
     return new Statement() {
       public void evaluate() throws Throwable {
@@ -39,5 +46,9 @@ public class OkHttpClientTestRule implements TestRule {
         }
       }
     };
+  }
+
+  public interface BuildCallback {
+    void customizeBuilder(OkHttpClient.Builder builder);
   }
 }

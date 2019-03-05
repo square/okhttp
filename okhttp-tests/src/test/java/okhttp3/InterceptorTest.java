@@ -72,9 +72,9 @@ public final class InterceptorTest {
         .body(ResponseBody.create(MediaType.get("text/plain; charset=utf-8"), "abc"))
         .build();
 
-    client = client.newBuilder()
-        .addInterceptor(chain -> interceptorResponse)
-        .build();
+    client = clientTestRule.build(builder -> {
+      builder.addInterceptor(chain -> interceptorResponse);
+    });
 
     Response response = client.newCall(request).execute();
     assertSame(interceptorResponse, response);
@@ -90,9 +90,9 @@ public final class InterceptorTest {
         .message("Intercepted!")
         .body(ResponseBody.create(MediaType.get("text/plain; charset=utf-8"), "abc"))
         .build();
-    client = client.newBuilder()
-        .addNetworkInterceptor(interceptor)
-        .build();
+    client = clientTestRule.build(builder -> {
+      builder.addNetworkInterceptor(interceptor);
+    });
 
     Request request = new Request.Builder()
         .url(server.url("/"))
@@ -115,9 +115,9 @@ public final class InterceptorTest {
       chain.proceed(chain.request());
       return chain.proceed(chain.request());
     };
-    client = client.newBuilder()
-        .addNetworkInterceptor(interceptor)
-        .build();
+    client = clientTestRule.build(builder -> {
+      builder.addNetworkInterceptor(interceptor);
+    });
 
     Request request = new Request.Builder()
         .url(server.url("/"))
@@ -143,9 +143,9 @@ public final class InterceptorTest {
           .url("http://" + sameHost + ":" + differentPort + "/")
           .build());
     };
-    client = client.newBuilder()
-        .addNetworkInterceptor(interceptor)
-        .build();
+    client = clientTestRule.build(builder -> {
+      builder.addNetworkInterceptor(interceptor);
+    });
 
     Request request = new Request.Builder()
         .url(server.url("/"))
@@ -168,9 +168,9 @@ public final class InterceptorTest {
       assertNotNull(connection);
       return chain.proceed(chain.request());
     };
-    client = client.newBuilder()
-        .addNetworkInterceptor(interceptor)
-        .build();
+    client = clientTestRule.build(builder -> {
+      builder.addNetworkInterceptor(interceptor);
+    });
 
     Request request = new Request.Builder()
         .url(server.url("/"))
@@ -196,9 +196,9 @@ public final class InterceptorTest {
       assertEquals("gzip", networkResponse.header("Content-Encoding"));
       return networkResponse;
     };
-    client = client.newBuilder()
-        .addNetworkInterceptor(interceptor)
-        .build();
+    client = clientTestRule.build(builder -> {
+      builder.addNetworkInterceptor(interceptor);
+    });
 
     Request request = new Request.Builder()
         .url(server.url("/"))
@@ -228,9 +228,9 @@ public final class InterceptorTest {
           .header("Content-Length", Long.toString(body.contentLength()))
           .build());
     };
-    client = client.newBuilder()
-        .addNetworkInterceptor(interceptor)
-        .build();
+    client = clientTestRule.build(builder -> {
+      builder.addNetworkInterceptor(interceptor);
+    });
 
     Request request = new Request.Builder()
         .url(server.url("/"))
@@ -384,13 +384,14 @@ public final class InterceptorTest {
     server.enqueue(new MockResponse().setBody("a"));
     server.enqueue(new MockResponse().setBody("b"));
 
-    client = client.newBuilder()
-        .addInterceptor(chain -> {
-          Response response1 = chain.proceed(chain.request());
-          response1.body().close();
-          return chain.proceed(chain.request());
-        })
-        .build();
+    client = clientTestRule.build(builder -> {
+      builder
+          .addInterceptor(chain -> {
+            Response response1 = chain.proceed(chain.request());
+            response1.body().close();
+            return chain.proceed(chain.request());
+          });
+    });
 
     Request request = new Request.Builder()
         .url(server.url("/"))
@@ -405,19 +406,20 @@ public final class InterceptorTest {
     server.enqueue(new MockResponse().setBody("a")); // Fetched by interceptor.
     server.enqueue(new MockResponse().setBody("b")); // Fetched directly.
 
-    client = client.newBuilder()
-        .addInterceptor(chain -> {
-          if (chain.request().url().encodedPath().equals("/b")) {
-            Request requestA = new Request.Builder()
-                .url(server.url("/a"))
-                .build();
-            Response responseA = client.newCall(requestA).execute();
-            assertEquals("a", responseA.body().string());
-          }
+    client = clientTestRule.build(builder -> {
+      builder
+          .addInterceptor(chain -> {
+            if (chain.request().url().encodedPath().equals("/b")) {
+              Request requestA = new Request.Builder()
+                  .url(server.url("/a"))
+                  .build();
+              Response responseA = client.newCall(requestA).execute();
+              assertEquals("a", responseA.body().string());
+            }
 
-          return chain.proceed(chain.request());
-        })
-        .build();
+            return chain.proceed(chain.request());
+          });
+    });
 
     Request requestB = new Request.Builder()
         .url(server.url("/b"))
@@ -431,25 +433,26 @@ public final class InterceptorTest {
     server.enqueue(new MockResponse().setBody("a")); // Fetched by interceptor.
     server.enqueue(new MockResponse().setBody("b")); // Fetched directly.
 
-    client = client.newBuilder()
-        .addInterceptor(chain -> {
-          if (chain.request().url().encodedPath().equals("/b")) {
-            Request requestA = new Request.Builder()
-                .url(server.url("/a"))
-                .build();
+    client = clientTestRule.build(builder -> {
+      builder
+          .addInterceptor(chain -> {
+            if (chain.request().url().encodedPath().equals("/b")) {
+              Request requestA = new Request.Builder()
+                  .url(server.url("/a"))
+                  .build();
 
-            try {
-              RecordingCallback callbackA = new RecordingCallback();
-              client.newCall(requestA).enqueue(callbackA);
-              callbackA.await(requestA.url()).assertBody("a");
-            } catch (Exception e) {
-              throw new RuntimeException(e);
+              try {
+                RecordingCallback callbackA = new RecordingCallback();
+                client.newCall(requestA).enqueue(callbackA);
+                callbackA.await(requestA.url()).assertBody("a");
+              } catch (Exception e) {
+                throw new RuntimeException(e);
+              }
             }
-          }
 
-          return chain.proceed(chain.request());
-        })
-        .build();
+            return chain.proceed(chain.request());
+          });
+    });
 
     Request requestB = new Request.Builder()
         .url(server.url("/b"))
@@ -497,9 +500,9 @@ public final class InterceptorTest {
       return chain.proceed(modifiedRequest);
     };
 
-    client = client.newBuilder()
-        .addNetworkInterceptor(modifyHeaderInterceptor)
-        .build();
+    client = clientTestRule.build(builder -> {
+      builder.addNetworkInterceptor(modifyHeaderInterceptor);
+    });
 
     Request request = new Request.Builder()
         .url(server.url("/"))
@@ -528,9 +531,9 @@ public final class InterceptorTest {
     addInterceptor(network, chain -> { throw new RuntimeException("boom!"); });
 
     ExceptionCatchingExecutor executor = new ExceptionCatchingExecutor();
-    client = client.newBuilder()
-        .dispatcher(new Dispatcher(executor))
-        .build();
+    client = clientTestRule.build(builder -> {
+      builder.dispatcher(new Dispatcher(executor));
+    });
 
     Request request = new Request.Builder()
         .url(server.url("/"))
@@ -547,14 +550,14 @@ public final class InterceptorTest {
       chain.proceed(chain.request());
       return null;
     };
-    client = client.newBuilder()
-        .addInterceptor(interceptor)
-        .build();
+    client = clientTestRule.build(builder -> {
+      builder.addInterceptor(interceptor);
+    });
 
     ExceptionCatchingExecutor executor = new ExceptionCatchingExecutor();
-    client = client.newBuilder()
-        .dispatcher(new Dispatcher(executor))
-        .build();
+    client = clientTestRule.build(builder -> {
+      builder.dispatcher(new Dispatcher(executor));
+    });
 
     Request request = new Request.Builder()
         .url(server.url("/"))
@@ -574,14 +577,14 @@ public final class InterceptorTest {
       chain.proceed(chain.request());
       return null;
     };
-    client = client.newBuilder()
-        .addNetworkInterceptor(interceptor)
-        .build();
+    client = clientTestRule.build(builder -> {
+      builder.addNetworkInterceptor(interceptor);
+    });
 
     ExceptionCatchingExecutor executor = new ExceptionCatchingExecutor();
-    client = client.newBuilder()
-        .dispatcher(new Dispatcher(executor))
-        .build();
+    client = clientTestRule.build(builder -> {
+      builder.dispatcher(new Dispatcher(executor));
+    });
 
     Request request = new Request.Builder()
         .url(server.url("/"))
@@ -605,9 +608,9 @@ public final class InterceptorTest {
       return response;
     };
 
-    client = client.newBuilder()
-        .addNetworkInterceptor(interceptor)
-        .build();
+    client = clientTestRule.build(builder -> {
+      builder.addNetworkInterceptor(interceptor);
+    });
 
     Request request = new Request.Builder()
         .url(server.url("/"))
@@ -626,9 +629,9 @@ public final class InterceptorTest {
           .body(null)
           .build();
     };
-    client = client.newBuilder()
-        .addInterceptor(interceptor)
-        .build();
+    client = clientTestRule.build(builder -> {
+      builder.addInterceptor(interceptor);
+    });
 
     Request request = new Request.Builder()
         .url(server.url("/"))
@@ -651,9 +654,9 @@ public final class InterceptorTest {
           .body(null)
           .build();
     };
-    client = client.newBuilder()
-        .addNetworkInterceptor(interceptor)
-        .build();
+    client = clientTestRule.build(builder -> {
+      builder.addNetworkInterceptor(interceptor);
+    });
 
     Request request = new Request.Builder()
         .url(server.url("/"))
@@ -686,11 +689,12 @@ public final class InterceptorTest {
     // Fill backlog queue with this request so subsequent requests will be blocked.
     new Socket().connect(serverSocket.getLocalSocketAddress());
 
-    client = client.newBuilder()
-        .connectTimeout(5, TimeUnit.SECONDS)
-        .addInterceptor(interceptor1)
-        .addInterceptor(interceptor2)
-        .build();
+    client = clientTestRule.build(builder -> {
+      builder
+          .connectTimeout(5, TimeUnit.SECONDS)
+          .addInterceptor(interceptor1)
+          .addInterceptor(interceptor2);
+    });
 
     Request request1 =
         new Request.Builder()
@@ -726,11 +730,12 @@ public final class InterceptorTest {
       return chain.proceed(chain.request());
     };
 
-    client = client.newBuilder()
-        .readTimeout(5, TimeUnit.SECONDS)
-        .addInterceptor(interceptor1)
-        .addInterceptor(interceptor2)
-        .build();
+    client = clientTestRule.build(builder -> {
+      builder
+          .readTimeout(5, TimeUnit.SECONDS)
+          .addInterceptor(interceptor1)
+          .addInterceptor(interceptor2);
+    });
 
     server.enqueue(new MockResponse()
         .setBody("abc")
@@ -764,11 +769,12 @@ public final class InterceptorTest {
       return chain.proceed(chain.request());
     };
 
-    client = client.newBuilder()
-        .writeTimeout(5, TimeUnit.SECONDS)
-        .addInterceptor(interceptor1)
-        .addInterceptor(interceptor2)
-        .build();
+    client = clientTestRule.build(builder -> {
+      builder
+          .writeTimeout(5, TimeUnit.SECONDS)
+          .addInterceptor(interceptor1)
+          .addInterceptor(interceptor2);
+    });
 
     server.enqueue(new MockResponse()
         .setBody("abc")
@@ -802,9 +808,9 @@ public final class InterceptorTest {
       return chain.proceed(chain.request());
     };
 
-    client = client.newBuilder()
-        .addInterceptor(interceptor)
-        .build();
+    client = clientTestRule.build(builder -> {
+      builder.addInterceptor(interceptor);
+    });
 
     Request request = new Request.Builder()
         .url(server.url("/"))
@@ -872,13 +878,13 @@ public final class InterceptorTest {
   }
 
   private void addInterceptor(boolean network, Interceptor interceptor) {
-    OkHttpClient.Builder builder = client.newBuilder();
-    if (network) {
-      builder.addNetworkInterceptor(interceptor);
-    } else {
-      builder.addInterceptor(interceptor);
-    }
-    client = builder.build();
+    client = clientTestRule.build(builder -> {
+      if (network) {
+        builder.addNetworkInterceptor(interceptor);
+      } else {
+        builder.addInterceptor(interceptor);
+      }
+    });
   }
 
   /** Catches exceptions that are otherwise headed for the uncaught exception handler. */

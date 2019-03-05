@@ -106,9 +106,9 @@ public final class ConnectionReuseTest {
   }
 
   @Test public void connectionsAreNotReusedIfPoolIsSizeZero() throws Exception {
-    client = client.newBuilder()
-        .connectionPool(new ConnectionPool(0, 5, TimeUnit.SECONDS))
-        .build();
+    client = clientTestRule.build(builder -> {
+      builder.connectionPool(new ConnectionPool(0, 5, TimeUnit.SECONDS));
+    });
     server.enqueue(new MockResponse().setBody("a"));
     server.enqueue(new MockResponse().setBody("b"));
 
@@ -119,9 +119,9 @@ public final class ConnectionReuseTest {
   }
 
   @Test public void connectionsReusedWithRedirectEvenIfPoolIsSizeZero() throws Exception {
-    client = client.newBuilder()
-        .connectionPool(new ConnectionPool(0, 5, TimeUnit.SECONDS))
-        .build();
+    client = clientTestRule.build(builder -> {
+      builder.connectionPool(new ConnectionPool(0, 5, TimeUnit.SECONDS));
+    });
     server.enqueue(new MockResponse()
         .setResponseCode(301)
         .addHeader("Location: /b")
@@ -138,9 +138,9 @@ public final class ConnectionReuseTest {
   }
 
   @Test public void connectionsNotReusedWithRedirectIfDiscardingResponseIsSlow() throws Exception {
-    client = client.newBuilder()
-        .connectionPool(new ConnectionPool(0, 5, TimeUnit.SECONDS))
-        .build();
+    client = clientTestRule.build(builder -> {
+      builder.connectionPool(new ConnectionPool(0, 5, TimeUnit.SECONDS));
+    });
     server.enqueue(new MockResponse()
         .setResponseCode(301)
         .addHeader("Location: /b")
@@ -220,9 +220,9 @@ public final class ConnectionReuseTest {
     server.enqueue(new MockResponse().setBody("a"));
     server.enqueue(new MockResponse().setBody("b"));
 
-    client = client.newBuilder()
-        .connectionPool(new ConnectionPool(5, 250, TimeUnit.MILLISECONDS))
-        .build();
+    client = clientTestRule.build(builder -> {
+      builder.connectionPool(new ConnectionPool(5, 250, TimeUnit.MILLISECONDS));
+    });
     Request request = new Request.Builder()
         .url(server.url("/"))
         .build();
@@ -254,10 +254,10 @@ public final class ConnectionReuseTest {
 
     // This client shares a connection pool but has a different SSL socket factory.
     HandshakeCertificates handshakeCertificates2 = new HandshakeCertificates.Builder().build();
-    OkHttpClient anotherClient = client.newBuilder()
-        .sslSocketFactory(
-            handshakeCertificates2.sslSocketFactory(), handshakeCertificates2.trustManager())
-        .build();
+    OkHttpClient anotherClient = clientTestRule.build(builder -> {
+      builder.sslSocketFactory(
+          handshakeCertificates2.sslSocketFactory(), handshakeCertificates2.trustManager());
+    });
 
     // This client fails to connect because the new SSL socket factory refuses.
     try {
@@ -280,9 +280,9 @@ public final class ConnectionReuseTest {
     response1.body().close();
 
     // This client shares a connection pool but has a different SSL socket factory.
-    OkHttpClient anotherClient = client.newBuilder()
-        .hostnameVerifier(new RecordingHostnameVerifier())
-        .build();
+    OkHttpClient anotherClient = clientTestRule.build(builder -> {
+      builder.hostnameVerifier(new RecordingHostnameVerifier());
+    });
 
     Response response2 = anotherClient.newCall(request).execute();
     response2.body().close();
@@ -304,19 +304,20 @@ public final class ConnectionReuseTest {
   @Test public void connectionsAreNotReusedIfNetworkInterceptorInterferes() throws Exception {
     List<Response> responsesNotClosed = new ArrayList<>();
 
-    client = client.newBuilder()
-        // Since this test knowingly leaks a connection, avoid using the default shared connection
-        // pool, which should remain clean for subsequent tests.
-        .connectionPool(new ConnectionPool())
-        .addNetworkInterceptor(chain -> {
-          Response response = chain.proceed(chain.request());
-          responsesNotClosed.add(response);
-          return response
-              .newBuilder()
-              .body(ResponseBody.create(null, "unrelated response body!"))
-              .build();
-        })
-        .build();
+    client = clientTestRule.build(builder -> {
+      builder
+          // Since this test knowingly leaks a connection, avoid using the default shared connection
+          // pool, which should remain clean for subsequent tests.
+          .connectionPool(new ConnectionPool())
+          .addNetworkInterceptor(chain -> {
+            Response response = chain.proceed(chain.request());
+            responsesNotClosed.add(response);
+            return response
+                .newBuilder()
+                .body(ResponseBody.create(null, "unrelated response body!"))
+                .build();
+          });
+    });
 
     server.enqueue(new MockResponse()
         .setResponseCode(301)
@@ -350,12 +351,13 @@ public final class ConnectionReuseTest {
   }
 
   private void enableHttpsAndAlpn(Protocol... protocols) {
-    client = client.newBuilder()
-        .sslSocketFactory(
-            handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager())
-        .hostnameVerifier(new RecordingHostnameVerifier())
-        .protocols(Arrays.asList(protocols))
-        .build();
+    client = clientTestRule.build(builder -> {
+      builder
+          .sslSocketFactory(
+              handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager())
+          .hostnameVerifier(new RecordingHostnameVerifier())
+          .protocols(Arrays.asList(protocols));
+    });
     server.useHttps(handshakeCertificates.sslSocketFactory(), false);
     server.setProtocols(client.protocols());
   }

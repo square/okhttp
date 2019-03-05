@@ -88,9 +88,9 @@ public final class EventListenerTest {
   private SocksProxy socksProxy;
 
   @Before public void setUp() {
-    client = clientTestRule.client.newBuilder()
-        .eventListener(listener)
-        .build();
+    client = clientTestRule.build(builder -> {
+      builder.eventListener(listener);
+    });
 
     listener.forbidLock(Internal.instance.realConnectionPool(client.connectionPool()));
     listener.forbidLock(client.dispatcher());
@@ -155,7 +155,7 @@ public final class EventListenerTest {
   @Test public void failedCallEventSequence() {
     server.enqueue(new MockResponse().setHeadersDelay(2, TimeUnit.SECONDS));
 
-    client = client.newBuilder().readTimeout(250, TimeUnit.MILLISECONDS).build();
+    client = clientTestRule.build(builder -> { builder.readTimeout(250, TimeUnit.MILLISECONDS); });
 
     Call call = client.newCall(new Request.Builder()
         .url(server.url("/"))
@@ -179,10 +179,11 @@ public final class EventListenerTest {
         .throttleBody(2, 100, TimeUnit.MILLISECONDS)
         .setSocketPolicy(SocketPolicy.DISCONNECT_DURING_RESPONSE_BODY));
 
-    client = client.newBuilder()
-        .protocols(Collections.singletonList(Protocol.HTTP_1_1))
-        .readTimeout(250, TimeUnit.MILLISECONDS)
-        .build();
+    client = clientTestRule.build(builder -> {
+      builder
+          .protocols(Collections.singletonList(Protocol.HTTP_1_1))
+          .readTimeout(250, TimeUnit.MILLISECONDS);
+    });
 
     Call call = client.newCall(new Request.Builder()
         .url(server.url("/"))
@@ -440,9 +441,9 @@ public final class EventListenerTest {
     dns.set("fakeurl", client.dns().lookup(server.getHostName()));
     dns.set("www.fakeurl", client.dns().lookup(server.getHostName()));
 
-    client = client.newBuilder()
-        .dns(dns)
-        .build();
+    client = clientTestRule.build(builder -> {
+      builder.dns(dns);
+    });
 
     Call call = client.newCall(new Request.Builder()
         .url("http://fakeurl:" + server.getPort())
@@ -458,9 +459,9 @@ public final class EventListenerTest {
   }
 
   @Test public void failedDnsLookup() {
-    client = client.newBuilder()
-        .dns(new FakeDns())
-        .build();
+    client = clientTestRule.build(builder -> {
+      builder.dns(new FakeDns());
+    });
     Call call = client.newCall(new Request.Builder()
         .url("http://fakeurl/")
         .build());
@@ -480,9 +481,9 @@ public final class EventListenerTest {
   @Test public void emptyDnsLookup() {
     Dns emptyDns = hostname -> Collections.emptyList();
 
-    client = client.newBuilder()
-        .dns(emptyDns)
-        .build();
+    client = clientTestRule.build(builder -> {
+      builder.dns(emptyDns);
+    });
     Call call = client.newCall(new Request.Builder()
         .url("http://fakeurl/")
         .build());
@@ -558,9 +559,9 @@ public final class EventListenerTest {
         .setSocketPolicy(SocketPolicy.FAIL_HANDSHAKE));
     server.enqueue(new MockResponse());
 
-    client = client.newBuilder()
-        .dns(new DoubleInetAddressDns())
-        .build();
+    client = clientTestRule.build(builder -> {
+      builder.dns(new DoubleInetAddressDns());
+    });
 
     Call call = client.newCall(new Request.Builder()
         .url(server.url("/"))
@@ -578,9 +579,9 @@ public final class EventListenerTest {
   @Test public void successfulHttpProxyConnect() throws IOException {
     server.enqueue(new MockResponse());
 
-    client = client.newBuilder()
-        .proxy(server.toProxyAddress())
-        .build();
+    client = clientTestRule.build(builder -> {
+      builder.proxy(server.toProxyAddress());
+    });
 
     Call call = client.newCall(new Request.Builder()
         .url("http://www.fakeurl")
@@ -610,9 +611,9 @@ public final class EventListenerTest {
     socksProxy.play();
     Proxy proxy = socksProxy.proxy();
 
-    client = client.newBuilder()
-        .proxy(proxy)
-        .build();
+    client = clientTestRule.build(builder -> {
+      builder.proxy(proxy);
+    });
 
     Call call = client.newCall(new Request.Builder()
         .url("http://" + SocksProxy.HOSTNAME_THAT_ONLY_THE_PROXY_KNOWS + ":" + server.getPort())
@@ -645,10 +646,11 @@ public final class EventListenerTest {
         .setSocketPolicy(SocketPolicy.UPGRADE_TO_SSL_AT_END));
     server.enqueue(new MockResponse());
 
-    client = client.newBuilder()
-        .proxy(server.toProxyAddress())
-        .proxyAuthenticator(new RecordingOkAuthenticator("password", "Basic"))
-        .build();
+    client = clientTestRule.build(builder -> {
+      builder
+          .proxy(server.toProxyAddress())
+          .proxyAuthenticator(new RecordingOkAuthenticator("password", "Basic"));
+    });
 
     Call call = client.newCall(new Request.Builder()
         .url(server.url("/"))
@@ -713,9 +715,9 @@ public final class EventListenerTest {
         .setSocketPolicy(SocketPolicy.UPGRADE_TO_SSL_AT_END));
     server.enqueue(new MockResponse());
 
-    client = client.newBuilder()
-        .proxy(server.toProxyAddress())
-        .build();
+    client = clientTestRule.build(builder -> {
+      builder.proxy(server.toProxyAddress());
+    });
 
     Call call = client.newCall(new Request.Builder()
         .url(server.url("/"))
@@ -738,9 +740,9 @@ public final class EventListenerTest {
         .setSocketPolicy(SocketPolicy.FAIL_HANDSHAKE));
     server.enqueue(new MockResponse());
 
-    client = client.newBuilder()
-        .dns(new DoubleInetAddressDns())
-        .build();
+    client = clientTestRule.build(builder -> {
+      builder.dns(new DoubleInetAddressDns());
+    });
 
     Call call = client.newCall(new Request.Builder()
         .url(server.url("/"))
@@ -761,9 +763,9 @@ public final class EventListenerTest {
     server.enqueue(new MockResponse());
     server.enqueue(new MockResponse());
 
-    client = client.newBuilder()
-        .dns(new DoubleInetAddressDns())
-        .build();
+    client = clientTestRule.build(builder -> {
+      builder.dns(new DoubleInetAddressDns());
+    });
 
     // Seed the pool.
     Call call1 = client.newCall(new Request.Builder()
@@ -1100,10 +1102,11 @@ public final class EventListenerTest {
   @Test public void successfulCallEventSequenceWithListener() throws IOException {
     server.enqueue(new MockResponse().setBody("abc"));
 
-    client = client.newBuilder()
-        .addNetworkInterceptor(new HttpLoggingInterceptor()
-            .setLevel(HttpLoggingInterceptor.Level.BODY))
-        .build();
+    client = clientTestRule.build(builder -> {
+      builder
+          .addNetworkInterceptor(new HttpLoggingInterceptor()
+              .setLevel(HttpLoggingInterceptor.Level.BODY));
+    });
     Call call = client.newCall(new Request.Builder()
         .url(server.url("/"))
         .build());
@@ -1135,11 +1138,12 @@ public final class EventListenerTest {
   }
 
   private void enableTlsWithTunnel(boolean tunnelProxy) {
-    client = client.newBuilder()
-        .sslSocketFactory(
-            handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager())
-        .hostnameVerifier(new RecordingHostnameVerifier())
-        .build();
+    client = clientTestRule.build(builder -> {
+      builder
+          .sslSocketFactory(
+              handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager())
+          .hostnameVerifier(new RecordingHostnameVerifier());
+    });
     server.useHttps(handshakeCertificates.sslSocketFactory(), tunnelProxy);
   }
 
@@ -1188,14 +1192,14 @@ public final class EventListenerTest {
     server.enqueue(new MockResponse().setBody("a"));
     server.enqueue(new MockResponse().setBody("b"));
 
-    client = client.newBuilder()
-        .addInterceptor(chain -> {
-          try (Response a = chain.proceed(chain.request())) {
-            assertEquals("a", a.body().string());
-          }
-          return chain.proceed(chain.request());
-        })
-        .build();
+    client = clientTestRule.build(builder -> {
+      builder.addInterceptor(chain -> {
+        try (Response a = chain.proceed(chain.request())) {
+          assertEquals("a", a.body().string());
+        }
+        return chain.proceed(chain.request());
+      });
+    });
 
     Call call = client.newCall(new Request.Builder().url(server.url("/")).build());
     Response response = call.execute();
@@ -1214,15 +1218,15 @@ public final class EventListenerTest {
   }
 
   @Test public void applicationInterceptorShortCircuit() throws Exception {
-    client = client.newBuilder()
-        .addInterceptor(chain -> new Response.Builder()
-            .request(chain.request())
-            .protocol(Protocol.HTTP_1_1)
-            .code(200)
-            .message("OK")
-            .body(ResponseBody.create(null, "a"))
-            .build())
-        .build();
+    client = clientTestRule.build(builder -> {
+      builder.addInterceptor(chain -> new Response.Builder()
+          .request(chain.request())
+          .protocol(Protocol.HTTP_1_1)
+          .code(200)
+          .message("OK")
+          .body(ResponseBody.create(null, "a"))
+          .build());
+    });
 
     Call call = client.newCall(new Request.Builder().url(server.url("/")).build());
     Response response = call.execute();

@@ -129,12 +129,12 @@ public final class ConnectionCoalescingTest {
     server.enqueue(new MockResponse().setResponseCode(200));
 
     AtomicReference<Connection> connection = new AtomicReference<>();
-    client = client.newBuilder()
-        .addNetworkInterceptor(chain -> {
+    client = clientTestRule.build(builder -> {
+      builder.addNetworkInterceptor(chain -> {
           connection.set(chain.connection());
           return chain.proceed(chain.request());
-        })
-        .build();
+      });
+    });
     dns.set("san.com", Dns.SYSTEM.lookup(server.getHostName()).subList(0, 1));
 
     assert200Http2Response(execute(url), server.getHostName());
@@ -182,7 +182,9 @@ public final class ConnectionCoalescingTest {
     CertificatePinner pinner = new CertificatePinner.Builder()
         .add("san.com", "sha1/" + CertificatePinner.sha1(certificate.certificate()).base64())
         .build();
-    client = client.newBuilder().certificatePinner(pinner).build();
+    client = clientTestRule.build(builder -> {
+      builder.certificatePinner(pinner);
+    });
 
     server.enqueue(new MockResponse().setResponseCode(200));
     server.enqueue(new MockResponse().setResponseCode(200));
@@ -201,7 +203,9 @@ public final class ConnectionCoalescingTest {
     CertificatePinner pinner = new CertificatePinner.Builder()
         .add("san.com", "sha1/afwiKY3RxoMmLkuRW1l7QsPZTJPwDS2pdDROQjXw8ig=")
         .build();
-    client = client.newBuilder().certificatePinner(pinner).build();
+    client = clientTestRule.build(builder -> {
+      builder.certificatePinner(pinner).build();
+    });
 
     server.enqueue(new MockResponse().setResponseCode(200));
 
@@ -222,7 +226,9 @@ public final class ConnectionCoalescingTest {
    */
   @Test public void skipsWhenHostnameVerifierUsed() throws Exception {
     HostnameVerifier verifier = (name, session) -> true;
-    client = client.newBuilder().hostnameVerifier(verifier).build();
+    client = clientTestRule.build(builder -> {
+      builder.hostnameVerifier(verifier).build();
+    });
 
     server.enqueue(new MockResponse().setResponseCode(200));
     server.enqueue(new MockResponse().setResponseCode(200));
@@ -251,9 +257,9 @@ public final class ConnectionCoalescingTest {
         connectCount.getAndIncrement();
       }
     };
-    client = client.newBuilder()
-        .eventListener(listener)
-        .build();
+    client = clientTestRule.build(builder -> {
+      builder.eventListener(listener);
+    });
 
     assert200Http2Response(execute(url), server.getHostName());
 
@@ -283,9 +289,9 @@ public final class ConnectionCoalescingTest {
 
   /** Network interceptors check for changes to target. */
   @Test public void worksWithNetworkInterceptors() throws Exception {
-    client = client.newBuilder()
-        .addNetworkInterceptor(chain -> chain.proceed(chain.request()))
-        .build();
+    client = clientTestRule.build(builder -> {
+      builder.addNetworkInterceptor(chain -> chain.proceed(chain.request()));
+    });
 
     server.enqueue(new MockResponse().setResponseCode(200));
     server.enqueue(new MockResponse().setResponseCode(200));

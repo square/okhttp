@@ -73,9 +73,9 @@ public final class EventSourceHttpTest {
   }
 
   @Test public void callTimeoutIsNotApplied() throws Exception {
-    client = client.newBuilder()
-        .callTimeout(100, TimeUnit.MILLISECONDS)
-        .build();
+    client = clientTestRule.build(builder -> {
+      builder.callTimeout(100, TimeUnit.MILLISECONDS);
+    });
 
     server.enqueue(new MockResponse()
         .setBodyDelay(500, TimeUnit.MILLISECONDS)

@@ -63,15 +63,15 @@ public final class CancelTest {
             return serverSocket;
           }
         });
-    client = clientTestRule.client.newBuilder()
-        .socketFactory(new DelegatingSocketFactory(SocketFactory.getDefault()) {
-          @Override protected Socket configureSocket(Socket socket) throws IOException {
-            socket.setSendBufferSize(SOCKET_BUFFER_SIZE);
-            socket.setReceiveBufferSize(SOCKET_BUFFER_SIZE);
-            return socket;
-          }
-        })
-        .build();
+    client = clientTestRule.build(builder -> {
+      builder.socketFactory(new DelegatingSocketFactory(SocketFactory.getDefault()) {
+        @Override protected Socket configureSocket(Socket socket) throws IOException {
+          socket.setSendBufferSize(SOCKET_BUFFER_SIZE);
+          socket.setReceiveBufferSize(SOCKET_BUFFER_SIZE);
+          return socket;
+        }
+      });
+    });
   }
 
   @Test public void cancelWritingRequestBody() throws Exception {

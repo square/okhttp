@@ -55,9 +55,9 @@ public final class WholeOperationTimeoutTest {
         .url(server.url("/"))
         .build();
 
-    OkHttpClient timeoutClient = client.newBuilder()
-        .callTimeout(456, TimeUnit.MILLISECONDS)
-        .build();
+    OkHttpClient timeoutClient = clientTestRule.build(builder -> {
+      builder.callTimeout(456, TimeUnit.MILLISECONDS);
+    });
 
     Call call = timeoutClient.newCall(request);
     assertEquals(TimeUnit.MILLISECONDS.toNanos(456), call.timeout().timeoutNanos());

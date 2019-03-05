@@ -76,10 +76,11 @@ public final class CacheTest {
   @Before public void setUp() throws Exception {
     server.setProtocolNegotiationEnabled(false);
     cache = new Cache(new File("/cache/"), Integer.MAX_VALUE, fileSystem);
-    client = clientTestRule.client.newBuilder()
-        .cache(cache)
-        .cookieJar(new JavaNetCookieJar(cookieManager))
-        .build();
+    client = clientTestRule.build(builder -> {
+      builder
+          .cache(cache)
+          .cookieJar(new JavaNetCookieJar(cookieManager));
+    });
   }
 
   @After public void tearDown() throws Exception {
@@ -255,11 +256,12 @@ public final class CacheTest {
         .addHeader("Expires: " + formatDate(1, TimeUnit.HOURS))
         .setBody("ABC"));
 
-    client = client.newBuilder()
-        .sslSocketFactory(
-            handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager())
-        .hostnameVerifier(NULL_HOSTNAME_VERIFIER)
-        .build();
+    client = clientTestRule.build(builder -> {
+      builder
+          .sslSocketFactory(
+              handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager())
+          .hostnameVerifier(NULL_HOSTNAME_VERIFIER);
+    });
 
     Request request = new Request.Builder().url(server.url("/")).build();
     Response response1 = client.newCall(request).execute();
@@ -359,11 +361,12 @@ public final class CacheTest {
     server.enqueue(new MockResponse()
         .setBody("DEF"));
 
-    client = client.newBuilder()
-        .sslSocketFactory(
-            handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager())
-        .hostnameVerifier(NULL_HOSTNAME_VERIFIER)
-        .build();
+    client = clientTestRule.build(builder -> {
+      builder
+          .sslSocketFactory(
+              handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager())
+          .hostnameVerifier(NULL_HOSTNAME_VERIFIER);
+    });
 
     Response response1 = get(server.url("/"));
     assertEquals("ABC", response1.body().string());
@@ -401,11 +404,12 @@ public final class CacheTest {
         .setResponseCode(HttpURLConnection.HTTP_MOVED_PERM)
         .addHeader("Location: " + server2.url("/")));
 
-    client = client.newBuilder()
-        .sslSocketFactory(
-            handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager())
-        .hostnameVerifier(NULL_HOSTNAME_VERIFIER)
-        .build();
+    client = clientTestRule.build(builder -> {
+      builder
+          .sslSocketFactory(
+              handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager())
+          .hostnameVerifier(NULL_HOSTNAME_VERIFIER);
+    });
 
     Response response1 = get(server.url("/"));
     assertEquals("ABC", response1.body().string());
@@ -1761,11 +1765,12 @@ public final class CacheTest {
     server.enqueue(new MockResponse()
         .setBody("B"));
 
-    client = client.newBuilder()
-        .sslSocketFactory(
-            handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager())
-        .hostnameVerifier(NULL_HOSTNAME_VERIFIER)
-        .build();
+    client = clientTestRule.build(builder -> {
+      builder
+          .sslSocketFactory(
+              handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager())
+          .hostnameVerifier(NULL_HOSTNAME_VERIFIER);
+    });
 
     HttpUrl url = server.url("/");
     Request request1 = new Request.Builder()
@@ -1785,9 +1790,9 @@ public final class CacheTest {
 
   @Test public void cachePlusCookies() throws Exception {
     RecordingCookieJar cookieJar = new RecordingCookieJar();
-    client = client.newBuilder()
-        .cookieJar(cookieJar)
-        .build();
+    client = clientTestRule.build(builder -> {
+      builder.cookieJar(cookieJar);
+    });
 
     server.enqueue(new MockResponse()
         .addHeader("Set-Cookie: a=FIRST")
@@ -2040,9 +2045,9 @@ public final class CacheTest {
     writeFile(cache.directory(), urlKey + ".1", entryBody);
     writeFile(cache.directory(), "journal", journalBody);
     cache = new Cache(cache.directory(), Integer.MAX_VALUE, fileSystem);
-    client = client.newBuilder()
-        .cache(cache)
-        .build();
+    client = clientTestRule.build(builder -> {
+      builder.cache(cache);
+    });
 
     Response response = get(url);
     assertEquals(entryBody, response.body().string());
@@ -2090,9 +2095,9 @@ public final class CacheTest {
     writeFile(cache.directory(), "journal", journalBody);
     cache.close();
     cache = new Cache(cache.directory(), Integer.MAX_VALUE, fileSystem);
-    client = client.newBuilder()
-        .cache(cache)
-        .build();
+    client = clientTestRule.build(builder -> {
+      builder.cache(cache);
+    });
 
     Response response = get(url);
     assertEquals(entryBody, response.body().string());
@@ -2140,9 +2145,9 @@ public final class CacheTest {
     writeFile(cache.directory(), "journal", journalBody);
     cache.close();
     cache = new Cache(cache.directory(), Integer.MAX_VALUE, fileSystem);
-    client = client.newBuilder()
-        .cache(cache)
-        .build();
+    client = clientTestRule.build(builder -> {
+      builder.cache(cache);
+    });
 
     Response response = get(url);
     assertEquals(entryBody, response.body().string());
@@ -2177,9 +2182,9 @@ public final class CacheTest {
     writeFile(cache.directory(), "journal", journalBody);
     cache.close();
     cache = new Cache(cache.directory(), Integer.MAX_VALUE, fileSystem);
-    client = client.newBuilder()
-        .cache(cache)
-        .build();
+    client = clientTestRule.build(builder -> {
+      builder.cache(cache);
+    });
 
     Response response = get(url);
     assertEquals(entryBody, response.body().string());
@@ -2212,12 +2217,12 @@ public final class CacheTest {
     assertEquals("A", get(url).body().string());
 
     final AtomicReference<String> ifNoneMatch = new AtomicReference<>();
-    client = client.newBuilder()
-        .addNetworkInterceptor(chain -> {
-          ifNoneMatch.compareAndSet(null, chain.request().header("If-None-Match"));
-          return chain.proceed(chain.request());
-        })
-        .build();
+    client = clientTestRule.build(builder -> {
+      builder.addNetworkInterceptor(chain -> {
+        ifNoneMatch.compareAndSet(null, chain.request().header("If-None-Match"));
+        return chain.proceed(chain.request());
+      });
+     });
 
     // Confirm the value is cached and intercepted.
     assertEquals("A", get(url).body().string());
@@ -2234,9 +2239,9 @@ public final class CacheTest {
     assertEquals("A", get(url).body().string());
 
     // Confirm the interceptor isn't exercised.
-    client = client.newBuilder()
-        .addNetworkInterceptor(chain -> { throw new AssertionError(); })
-        .build();
+    client = clientTestRule.build(builder -> {
+      builder.addNetworkInterceptor(chain -> { throw new AssertionError(); });
+    });
     assertEquals("A", get(url).body().string());
   }
 
