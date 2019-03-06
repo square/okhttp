@@ -31,7 +31,6 @@ import org.junit.Test;
 import org.junit.rules.TestRule;
 import org.junit.rules.Timeout;
 
-import static okhttp3.TestUtil.defaultClient;
 import static okhttp3.tls.internal.TlsUtil.localhost;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
@@ -39,14 +38,10 @@ import static org.junit.Assert.fail;
 public final class ConnectionReuseTest {
   @Rule public final TestRule timeout = new Timeout(30_000);
   @Rule public final MockWebServer server = new MockWebServer();
+  @Rule public final OkHttpClientTestingRule clientTestingRule = new OkHttpClientTestingRule();
 
   private HandshakeCertificates handshakeCertificates = localhost();
-  private OkHttpClient client = defaultClient();
-
-  @After
-  public void tearDown() {
-    TestUtil.ensureAllConnectionsReleased(client);
-  }
+  private OkHttpClient client = clientTestingRule.client;
 
   @Test public void connectionsAreReused() throws Exception {
     server.enqueue(new MockResponse().setBody("a"));

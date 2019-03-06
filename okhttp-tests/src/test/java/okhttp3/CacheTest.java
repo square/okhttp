@@ -51,7 +51,6 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 
-import static okhttp3.TestUtil.defaultClient;
 import static okhttp3.mockwebserver.SocketPolicy.DISCONNECT_AT_END;
 import static okhttp3.tls.internal.TlsUtil.localhost;
 import static org.junit.Assert.assertEquals;
@@ -67,6 +66,7 @@ public final class CacheTest {
   @Rule public MockWebServer server = new MockWebServer();
   @Rule public MockWebServer server2 = new MockWebServer();
   @Rule public InMemoryFileSystem fileSystem = new InMemoryFileSystem();
+  @Rule public final OkHttpClientTestingRule clientTestingRule = new OkHttpClientTestingRule();
 
   private final HandshakeCertificates handshakeCertificates = localhost();
   private OkHttpClient client;
@@ -76,7 +76,7 @@ public final class CacheTest {
   @Before public void setUp() throws Exception {
     server.setProtocolNegotiationEnabled(false);
     cache = new Cache(new File("/cache/"), Integer.MAX_VALUE, fileSystem);
-    client = defaultClient().newBuilder()
+    client = clientTestingRule.client.newBuilder()
         .cache(cache)
         .cookieJar(new JavaNetCookieJar(cookieManager))
         .build();
@@ -85,7 +85,6 @@ public final class CacheTest {
   @After public void tearDown() throws Exception {
     ResponseCache.setDefault(null);
     cache.delete();
-    TestUtil.ensureAllConnectionsReleased(client);
   }
 
   /**

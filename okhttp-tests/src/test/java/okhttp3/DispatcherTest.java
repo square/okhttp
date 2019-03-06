@@ -17,22 +17,24 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import okhttp3.RealCall.AsyncCall;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
-import static okhttp3.TestUtil.defaultClient;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 public final class DispatcherTest {
+  @Rule public final OkHttpClientTestingRule clientTestingRule = new OkHttpClientTestingRule();
+
   RecordingExecutor executor = new RecordingExecutor();
   RecordingCallback callback = new RecordingCallback();
   RecordingWebSocketListener webSocketListener = new RecordingWebSocketListener();
   Dispatcher dispatcher = new Dispatcher(executor);
   RecordingEventListener listener = new RecordingEventListener();
-  OkHttpClient client = defaultClient().newBuilder()
+  OkHttpClient client = clientTestingRule.client.newBuilder()
       .dispatcher(dispatcher)
       .eventListener(listener)
       .build();
@@ -41,11 +43,6 @@ public final class DispatcherTest {
     dispatcher.setMaxRequests(20);
     dispatcher.setMaxRequestsPerHost(10);
     listener.forbidLock(dispatcher);
-  }
-
-  @After
-  public void tearDown() {
-    TestUtil.ensureAllConnectionsReleased(client);
   }
 
   @Test public void maxRequestsZero() throws Exception {

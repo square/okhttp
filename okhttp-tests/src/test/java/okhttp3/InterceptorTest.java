@@ -43,7 +43,6 @@ import org.junit.After;
 import org.junit.Rule;
 import org.junit.Test;
 
-import static okhttp3.TestUtil.defaultClient;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -54,14 +53,10 @@ import static org.junit.Assert.fail;
 
 public final class InterceptorTest {
   @Rule public MockWebServer server = new MockWebServer();
+  @Rule public final OkHttpClientTestingRule clientTestingRule = new OkHttpClientTestingRule();
 
-  private OkHttpClient client = defaultClient();
+  private OkHttpClient client = clientTestingRule.client;
   private RecordingCallback callback = new RecordingCallback();
-
-  @After
-  public void tearDown() {
-    TestUtil.ensureAllConnectionsReleased(client);
-  }
 
   @Test public void applicationInterceptorsCanShortCircuitResponses() throws Exception {
     server.shutdown(); // Accept no connections.

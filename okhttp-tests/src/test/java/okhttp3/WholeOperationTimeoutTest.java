@@ -28,7 +28,6 @@ import org.junit.After;
 import org.junit.Rule;
 import org.junit.Test;
 
-import static okhttp3.TestUtil.defaultClient;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -40,13 +39,9 @@ public final class WholeOperationTimeoutTest {
   private static final String BIG_ENOUGH_BODY = TestUtil.repeat('a', 64 * 1024);
 
   @Rule public final MockWebServer server = new MockWebServer();
+  @Rule public final OkHttpClientTestingRule clientTestingRule = new OkHttpClientTestingRule();
 
-  private OkHttpClient client = defaultClient();
-
-  @After
-  public void tearDown() {
-    TestUtil.ensureAllConnectionsReleased(client);
-  }
+  private OkHttpClient client = clientTestingRule.client;
 
   @Test public void defaultConfigIsNoTimeout() throws Exception {
     Request request = new Request.Builder()
