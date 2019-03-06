@@ -147,7 +147,7 @@ public final class LoggingEventListenerTest {
         .assertLogMatch("secureConnectStart")
         .assertLogMatch("secureConnectEnd: Handshake\\{"
             + "tlsVersion=TLS_1_[23] "
-            + "cipherSuite=(?:TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384|TLS_AES_128_GCM_SHA256) "
+            + "cipherSuite=TLS_.* "
             + "peerCertificates=\\[CN=localhost\\] "
             + "localCertificates=\\[\\]}")
         .assertLogMatch("connectEnd: h2")
