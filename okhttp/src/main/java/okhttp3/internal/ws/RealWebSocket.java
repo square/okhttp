@@ -189,12 +189,15 @@ public final class RealWebSocket implements WebSocket, WebSocketReader.FrameCall
     call = Internal.instance.newWebSocketCall(client, request);
     call.enqueue(new Callback() {
       @Override public void onResponse(Call call, Response response) {
+        Exchange exchange = Internal.instance.exchange(response);
         Streams streams;
         try {
-          streams = extractStreamsFromResponse(response);
+          checkUpgradeSuccess(response, exchange);
+          streams = exchange.newWebSocketStreams();
         } catch (IOException e) {
           failWebSocket(e, response);
           closeQuietly(response);
+          if (exchange != null) exchange.webSocketUpgradeFailed();
           return;
         }
 
@@ -215,7 +218,7 @@ public final class RealWebSocket implements WebSocket, WebSocketReader.FrameCall
     });
   }
 
-  Streams extractStreamsFromResponse(Response response) throws IOException {
+  void checkUpgradeSuccess(Response response, @Nullable Exchange exchange) throws IOException {
     if (response.code() != 101) {
       throw new ProtocolException("Expected HTTP 101 response but was '"
           + response.code() + " " + response.message() + "'");
@@ -241,11 +244,9 @@ public final class RealWebSocket implements WebSocket, WebSocketReader.FrameCall
           + acceptExpected + "' but was '" + headerAccept + "'");
     }
 
-    Exchange exchange = Internal.instance.exchange(response);
     if (exchange == null) {
       throw new ProtocolException("Web Socket exchange missing: bad interceptor?");
     }
-    return exchange.newWebSocketStreams();
   }
 
   public void initReaderAndWriter(String name, Streams streams) throws IOException {

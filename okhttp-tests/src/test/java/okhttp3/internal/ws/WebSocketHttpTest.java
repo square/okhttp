@@ -51,6 +51,7 @@ import org.junit.Rule;
 import org.junit.Test;
 
 import static okhttp3.TestUtil.defaultClient;
+import static okhttp3.TestUtil.ensureAllConnectionsReleased;
 import static okhttp3.TestUtil.repeat;
 import static okhttp3.tls.internal.TlsUtil.localhost;
 import static org.junit.Assert.assertEquals;
@@ -304,6 +305,8 @@ public final class WebSocketHttpTest {
 
     clientListener.assertFailure(101, null, ProtocolException.class,
         "Expected 'Connection' header value 'Upgrade' but was 'null'");
+
+    ensureAllConnectionsReleased(client);
   }
 
   @Test public void wrongConnectionHeader() throws IOException {

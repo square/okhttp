@@ -152,6 +152,10 @@ public final class Exchange {
     return codec.connection().newWebSocketStreams(this);
   }
 
+  public void webSocketUpgradeFailed() {
+    bodyComplete(-1L, true, true, null);
+  }
+
   public void noNewExchangesOnConnection() {
     codec.connection().noNewExchanges();
   }
