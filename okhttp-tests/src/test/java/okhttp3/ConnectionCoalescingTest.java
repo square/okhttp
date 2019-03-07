@@ -29,7 +29,6 @@ import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import okhttp3.tls.HandshakeCertificates;
 import okhttp3.tls.HeldCertificate;
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Rule;
@@ -40,7 +39,7 @@ import static org.junit.Assert.fail;
 
 public final class ConnectionCoalescingTest {
   @Rule public final MockWebServer server = new MockWebServer();
-  @Rule public final OkHttpClientTestingRule clientTestingRule = new OkHttpClientTestingRule();
+  @Rule public final OkHttpClientTestRule clientTestRule = new OkHttpClientTestRule();
 
   private OkHttpClient client;
 
@@ -82,7 +81,7 @@ public final class ConnectionCoalescingTest {
         .sslSocketFactory(
             handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager())
         .build();
-    clientTestingRule.client = client;
+    clientTestRule.client = client;
 
     HandshakeCertificates serverHandshakeCertificates = new HandshakeCertificates.Builder()
         .heldCertificate(certificate)

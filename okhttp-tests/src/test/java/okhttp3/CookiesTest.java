@@ -31,7 +31,6 @@ import java.util.Map;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import okhttp3.mockwebserver.RecordedRequest;
-import org.junit.After;
 import org.junit.Rule;
 import org.junit.Test;
 
@@ -44,9 +43,9 @@ import static org.junit.Assert.fail;
 
 /** Derived from Android's CookiesTest. */
 public class CookiesTest {
-  @Rule public final OkHttpClientTestingRule clientTestingRule = new OkHttpClientTestingRule();
+  @Rule public final OkHttpClientTestRule clientTestRule = new OkHttpClientTestRule();
 
-  private OkHttpClient client = clientTestingRule.client;
+  private OkHttpClient client = clientTestRule.client;
 
   @Test
   public void testNetscapeResponse() throws Exception {

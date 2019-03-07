@@ -66,7 +66,7 @@ public final class CacheTest {
   @Rule public MockWebServer server = new MockWebServer();
   @Rule public MockWebServer server2 = new MockWebServer();
   @Rule public InMemoryFileSystem fileSystem = new InMemoryFileSystem();
-  @Rule public final OkHttpClientTestingRule clientTestingRule = new OkHttpClientTestingRule();
+  @Rule public final OkHttpClientTestRule clientTestRule = new OkHttpClientTestRule();
 
   private final HandshakeCertificates handshakeCertificates = localhost();
   private OkHttpClient client;
@@ -76,7 +76,7 @@ public final class CacheTest {
   @Before public void setUp() throws Exception {
     server.setProtocolNegotiationEnabled(false);
     cache = new Cache(new File("/cache/"), Integer.MAX_VALUE, fileSystem);
-    client = clientTestingRule.client.newBuilder()
+    client = clientTestRule.client.newBuilder()
         .cache(cache)
         .cookieJar(new JavaNetCookieJar(cookieManager))
         .build();
