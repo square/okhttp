@@ -17,7 +17,7 @@ package okhttp3.internal.sse;
 
 import java.util.concurrent.TimeUnit;
 import okhttp3.OkHttpClient;
-import okhttp3.OkHttpClientTestingRule;
+import okhttp3.OkHttpClientTestRule;
 import okhttp3.Request;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
@@ -31,10 +31,10 @@ import static org.junit.Assert.assertEquals;
 
 public final class EventSourceHttpTest {
   @Rule public final MockWebServer server = new MockWebServer();
-  @Rule public final OkHttpClientTestingRule clientTestingRule = new OkHttpClientTestingRule();
+  @Rule public final OkHttpClientTestRule clientTestRule = new OkHttpClientTestRule();
 
   private final EventSourceRecorder listener = new EventSourceRecorder();
-  private OkHttpClient client = clientTestingRule.client;
+  private OkHttpClient client = clientTestRule.client;
 
   @After public void after() {
     listener.assertExhausted();

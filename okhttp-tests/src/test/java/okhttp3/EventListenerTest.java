@@ -79,16 +79,16 @@ import static org.junit.Assume.assumeThat;
 public final class EventListenerTest {
   public static final Matcher<Response> anyResponse = CoreMatchers.any(Response.class);
   @Rule public final MockWebServer server = new MockWebServer();
-  @Rule public final OkHttpClientTestingRule clientTestingRule = new OkHttpClientTestingRule();
+  @Rule public final OkHttpClientTestRule clientTestRule = new OkHttpClientTestRule();
 
   private final RecordingEventListener listener = new RecordingEventListener();
   private final HandshakeCertificates handshakeCertificates = localhost();
 
-  private OkHttpClient client = clientTestingRule.client;
+  private OkHttpClient client = clientTestRule.client;
   private SocksProxy socksProxy;
 
   @Before public void setUp() {
-    client = clientTestingRule.client.newBuilder()
+    client = clientTestRule.client.newBuilder()
         .eventListener(listener)
         .build();
 

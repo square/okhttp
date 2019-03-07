@@ -107,11 +107,11 @@ public final class CallTest {
   @Rule public final MockWebServer server = new MockWebServer();
   @Rule public final MockWebServer server2 = new MockWebServer();
   @Rule public final InMemoryFileSystem fileSystem = new InMemoryFileSystem();
-  @Rule public final OkHttpClientTestingRule clientTestingRule = new OkHttpClientTestingRule();
+  @Rule public final OkHttpClientTestRule clientTestRule = new OkHttpClientTestRule();
 
   private final RecordingEventListener listener = new RecordingEventListener();
   private HandshakeCertificates handshakeCertificates = localhost();
-  private OkHttpClient client = clientTestingRule.client.newBuilder()
+  private OkHttpClient client = clientTestRule.client.newBuilder()
       .eventListener(listener)
       .build();
   private RecordingCallback callback = new RecordingCallback();
@@ -933,7 +933,7 @@ public final class CallTest {
 
   /** https://github.com/square/okhttp/issues/1801 */
   @Test public void asyncCallEngineInitialized() throws Exception {
-    OkHttpClient c = clientTestingRule.client.newBuilder()
+    OkHttpClient c = clientTestRule.client.newBuilder()
         .addInterceptor(chain -> { throw new IOException(); })
         .build();
     Request request = new Request.Builder().url(server.url("/")).build();
@@ -3368,7 +3368,7 @@ public final class CallTest {
     server.enqueue(new MockResponse()
         .setBody("This gets leaked."));
 
-    client = clientTestingRule.client.newBuilder()
+    client = clientTestRule.client.newBuilder()
         .connectionPool(new ConnectionPool(0, 10, TimeUnit.MILLISECONDS))
         .build();
 
@@ -3397,7 +3397,7 @@ public final class CallTest {
     server.enqueue(new MockResponse()
         .setBody("This gets leaked."));
 
-    client = clientTestingRule.client.newBuilder()
+    client = clientTestRule.client.newBuilder()
         .connectionPool(new ConnectionPool(0, 10, TimeUnit.MILLISECONDS))
         .build();
 

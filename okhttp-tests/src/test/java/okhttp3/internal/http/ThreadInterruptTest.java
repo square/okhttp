@@ -28,11 +28,10 @@ import okhttp3.DelegatingServerSocketFactory;
 import okhttp3.DelegatingSocketFactory;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
-import okhttp3.OkHttpClientTestingRule;
+import okhttp3.OkHttpClientTestRule;
 import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
-import okhttp3.TestUtil;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import okio.Buffer;
@@ -45,13 +44,13 @@ import org.junit.Test;
 import static org.junit.Assert.fail;
 
 public final class ThreadInterruptTest {
-  @Rule public final OkHttpClientTestingRule clientTestingRule = new OkHttpClientTestingRule();
+  @Rule public final OkHttpClientTestRule clientTestRule = new OkHttpClientTestRule();
 
   // The size of the socket buffers in bytes.
   private static final int SOCKET_BUFFER_SIZE = 256 * 1024;
 
   private MockWebServer server;
-  private OkHttpClient client = clientTestingRule.client;
+  private OkHttpClient client = clientTestRule.client;
 
   @Before public void setUp() throws Exception {
     // Sockets on some platforms can have large buffers that mean writes do not block when
@@ -66,7 +65,7 @@ public final class ThreadInterruptTest {
             return serverSocket;
           }
         });
-    client = clientTestingRule.client.newBuilder()
+    client = clientTestRule.client.newBuilder()
         .socketFactory(new DelegatingSocketFactory(SocketFactory.getDefault()) {
           @Override
           protected Socket configureSocket(Socket socket) throws IOException {

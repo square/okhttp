@@ -31,7 +31,6 @@ import okhttp3.mockwebserver.internal.duplex.MockDuplexResponseBody;
 import okhttp3.tls.HandshakeCertificates;
 import okio.BufferedSink;
 import okio.BufferedSource;
-import org.junit.After;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestRule;
@@ -46,11 +45,11 @@ import static org.junit.Assert.fail;
 public final class DuplexTest {
   @Rule public final TestRule timeout = new Timeout(30_000, TimeUnit.MILLISECONDS);
   @Rule public final MockWebServer server = new MockWebServer();
-  @Rule public OkHttpClientTestingRule clientTestingRule = new OkHttpClientTestingRule();
+  @Rule public OkHttpClientTestRule clientTestRule = new OkHttpClientTestRule();
 
   private final RecordingEventListener listener = new RecordingEventListener();
   private HandshakeCertificates handshakeCertificates = localhost();
-  private OkHttpClient client = clientTestingRule.client
+  private OkHttpClient client = clientTestRule.client
       .newBuilder()
       .eventListener(listener)
       .build();

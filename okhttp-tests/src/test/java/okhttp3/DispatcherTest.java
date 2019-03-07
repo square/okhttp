@@ -15,7 +15,6 @@ import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import okhttp3.RealCall.AsyncCall;
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -27,14 +26,14 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 public final class DispatcherTest {
-  @Rule public final OkHttpClientTestingRule clientTestingRule = new OkHttpClientTestingRule();
+  @Rule public final OkHttpClientTestRule clientTestRule = new OkHttpClientTestRule();
 
   RecordingExecutor executor = new RecordingExecutor();
   RecordingCallback callback = new RecordingCallback();
   RecordingWebSocketListener webSocketListener = new RecordingWebSocketListener();
   Dispatcher dispatcher = new Dispatcher(executor);
   RecordingEventListener listener = new RecordingEventListener();
-  OkHttpClient client = clientTestingRule.client.newBuilder()
+  OkHttpClient client = clientTestRule.client.newBuilder()
       .dispatcher(dispatcher)
       .eventListener(listener)
       .build();
