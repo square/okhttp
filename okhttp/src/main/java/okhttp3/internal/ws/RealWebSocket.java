@@ -195,9 +195,9 @@ public final class RealWebSocket implements WebSocket, WebSocketReader.FrameCall
           checkUpgradeSuccess(response, exchange);
           streams = exchange.newWebSocketStreams();
         } catch (IOException e) {
+          if (exchange != null) exchange.webSocketUpgradeFailed();
           failWebSocket(e, response);
           closeQuietly(response);
-          if (exchange != null) exchange.webSocketUpgradeFailed();
           return;
         }
 
