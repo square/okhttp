@@ -147,6 +147,10 @@ public final class Exchange {
     return codec.trailers();
   }
 
+  public void timeoutEarlyExit() {
+    transmitter.timeoutEarlyExit();
+  }
+
   public RealWebSocket.Streams newWebSocketStreams() throws SocketException {
     transmitter.timeoutEarlyExit();
     return codec.connection().newWebSocketStreams(this);
