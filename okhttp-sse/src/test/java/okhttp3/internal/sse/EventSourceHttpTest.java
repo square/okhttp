@@ -72,9 +72,9 @@ public final class EventSourceHttpTest {
     listener.assertFailure(null);
   }
 
-  @Test public void callTimeoutIsNotApplied() throws Exception {
+  @Test public void fullCallTimeoutDoesNotApplyOnceConnected() throws Exception {
     client = client.newBuilder()
-        .callTimeout(100, TimeUnit.MILLISECONDS)
+        .callTimeout(250, TimeUnit.MILLISECONDS)
         .build();
 
     server.enqueue(new MockResponse()
@@ -89,6 +89,20 @@ public final class EventSourceHttpTest {
     listener.assertOpen();
     listener.assertEvent(null, null, "hey");
     listener.assertClose();
+  }
+
+  @Test public void fullCallTimeoutAppliesToSetup() throws Exception {
+    client = client.newBuilder()
+        .callTimeout(250, TimeUnit.MILLISECONDS)
+        .build();
+
+    server.enqueue(new MockResponse()
+        .setHeadersDelay(500, TimeUnit.MILLISECONDS)
+        .setHeader("content-type", "text/event-stream")
+        .setBody("data: hey\n\n"));
+
+    newEventSource();
+    listener.assertFailure("timeout");
   }
 
   private EventSource newEventSource() {
