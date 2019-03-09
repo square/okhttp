@@ -71,6 +71,7 @@ import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+import org.junit.rules.Timeout;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
@@ -102,6 +103,7 @@ public final class HttpOverHttp2Test {
   @Rule public final TemporaryFolder tempDir = new TemporaryFolder();
   @Rule public final MockWebServer server = new MockWebServer();
   @Rule public final OkHttpClientTestRule clientTestRule = new OkHttpClientTestRule();
+  @Rule public final Timeout timeout = new Timeout(5, SECONDS);
 
   private OkHttpClient client;
   private Cache cache;
