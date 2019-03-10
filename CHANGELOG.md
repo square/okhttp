@@ -1,6 +1,78 @@
 Change Log
 ==========
 
+## Version 3.14.0
+
+_RELEASE TBD_
+
+ *  **This release deletes the long-deprecated `OkUrlFactory` and `OkApacheClient` APIs.** These
+    facades hide OkHttp's implementation behind another client's API. If you still need this please
+    copy and paste [ObsoleteUrlFactory.java][obsolete_url_factory] or
+    [ObsoleteApacheClient.java][obsolete_apache_client] into your project.
+
+ *  **OkHttp now supports duplex calls over HTTP/2.** With normal HTTP calls the request must finish
+    before the response starts. With duplex, request and response bodies are transmitted
+    simultaneously. This can be used to implement interactive conversations within a single HTTP
+    call.
+
+    Create duplex calls by overriding the new `RequestBody.isDuplex()` method to return true.
+    This simple option dramatically changes the behavior of the request body and of the entire
+    call.
+
+    The `RequestBody.writeTo()` method may now retain a reference to the provided sink and
+    hand it off to another thread to write to it after `writeTo` returns.
+
+    The `EventListener` may now see requests and responses interleaved in ways not previously
+    permitted. For example, a listener may receive `responseHeadersStart()` followed by
+    `requestBodyEnd()`, both on the same call. Such events may be triggered by different threads
+    even for a single call.
+
+    Interceptors that rewrite or replace the request body may now inadvertently interfere with
+    duplex request bodies. Such interceptors should check `RequestBody.isDuplex()` and avoid
+    accessing the request body when it is.
+
+    Duplex calls require HTTP/2. If HTTP/1 is established instead the duplex call will fail. The
+    most common use of duplex calls is [gRPC][grpc_http2].
+
+ *  New: Prevent OkHttp from retransmitting a request body by overriding `RequestBody.isOneShot()`.
+    This is most useful when writing the request body is destructive.
+
+ *  New: We've added `requestFailed()` and `responseFailed()` methods to `EventListener`. These
+    are called instead of `requestBodyEnd()` and `responseBodyEnd()` in some failure situations.
+    They may also be fired in cases where no event was published previously. In this release we did
+    an internal rewrite of our event code to fix problems where events were lost or unbalanced.
+
+ *  Fix: Don't leak a connection when a call is canceled immediately preceding the `onFailure()`
+    callback.
+
+ *  Fix: Apply call timeouts when connecting duplex calls, web sockets, and server-sent events.
+    Once the streams are established no further timeout is enforced.
+
+ *  Fix: Retain the `Route` when a connection is reused on a redirect or other follow-up. This was
+    causing some `Authenticator` calls to see a null route when non-null was expected.
+
+ *  Fix: Use the correct key size in the name of `TLS_AES_128_CCM_8_SHA256` which is a TLS 1.3
+    cipher suite. We accidentally specified a key size of 256, preventing that cipher suite from
+    being selected for any TLS handshakes. We didn't notice because this cipher suite isn't
+    supported on Android, Java, or Conscrypt.
+
+    We removed this cipher suite and `TLS_AES_128_CCM_SHA256` from the restricted, modern, and
+    compatible sets of cipher suites. These two cipher suites aren't enabled by default in either
+    Firefox or Chrome.
+
+    See our [TLS Configuration History][tls_configuration_history] tracker for a log of all changes
+    to OkHttp's default TLS options.
+
+ *  New: Upgrade to Conscrypt 2.0.0. OkHttp works with other versions of Conscrypt but this is the
+    version we're testing against.
+
+    ```kotlin
+    implementation("org.conscrypt:conscrypt-openjdk-uber:2.0.0")
+    ```
+
+ *  New: Update the embedded public suffixes list.
+
+
 ## Version 3.13.1
 
 _2019-02-05_
@@ -1662,3 +1734,7 @@ Initial release.
  [conscrypt_dependency]: https://github.com/google/conscrypt/#download
  [https_server_sample]: https://github.com/square/okhttp/blob/master/samples/guide/src/main/java/okhttp3/recipes/HttpsServer.java
  [require_android_5]: https://medium.com/square-corner-blog/okhttp-3-13-requires-android-5-818bb78d07ce
+ [obsolete_apache_client]: https://gist.github.com/swankjesse/09721f72039e3a46cf50f94323deb82d
+ [obsolete_url_factory]: https://gist.github.com/swankjesse/dd91c0a8854e1559b00f5fc9c7bfae70
+ [tls_configuration_history]: https://github.com/square/okhttp/wiki/TLS-Configuration-History
+ [grpc_http2]: https://github.com/grpc/grpc/blob/master/doc/PROTOCOL-HTTP2.md
