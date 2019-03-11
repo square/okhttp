@@ -607,7 +607,7 @@ public final class RealConnection extends Http2Connection.Listener implements Co
 
   /** Refuse incoming streams. */
   @Override public void onStream(Http2Stream stream) throws IOException {
-    stream.close(ErrorCode.REFUSED_STREAM);
+    stream.close(ErrorCode.REFUSED_STREAM, null);
   }
 
   /** When settings are received, adjust the allocation limit. */

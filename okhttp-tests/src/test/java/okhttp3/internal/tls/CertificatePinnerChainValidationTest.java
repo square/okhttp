@@ -57,11 +57,7 @@ public final class CertificatePinnerChainValidationTest {
 
   /** The pinner should pull the root certificate from the trust manager. */
   @Test public void pinRootNotPresentInChain() throws Exception {
-    // TODO https://github.com/square/okhttp/issues/4598
-//    java.util.NoSuchElementException
-//    at java.base/java.util.ArrayDeque.removeFirst(ArrayDeque.java:363)
-//    at okhttp3.internal.tls.BasicCertificateChainCleaner.clean(BasicCertificateChainCleaner.java:58)
-//    at okhttp3.CertificatePinner.check(CertificatePinner.java:166)
+    // TODO https://github.com/square/okhttp/issues/4703
     assumeFalse(getJvmSpecVersion().equals("11"));
 
     HeldCertificate rootCa = new HeldCertificate.Builder()
@@ -121,11 +117,7 @@ public final class CertificatePinnerChainValidationTest {
 
   /** The pinner should accept an intermediate from the server's chain. */
   @Test public void pinIntermediatePresentInChain() throws Exception {
-    // TODO https://github.com/square/okhttp/issues/4598
-//    java.util.NoSuchElementException
-//    at java.base/java.util.ArrayDeque.removeFirst(ArrayDeque.java:363)
-//    at okhttp3.internal.tls.BasicCertificateChainCleaner.clean(BasicCertificateChainCleaner.java:58)
-//    at okhttp3.CertificatePinner.check(CertificatePinner.java:166)
+    // TODO https://github.com/square/okhttp/issues/4703
     assumeFalse(getJvmSpecVersion().equals("11"));
 
     HeldCertificate rootCa = new HeldCertificate.Builder()
