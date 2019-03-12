@@ -16,6 +16,7 @@
 package okhttp3.internal.http2;
 
 import java.io.Closeable;
+import java.io.EOFException;
 import java.io.IOException;
 import java.util.List;
 import java.util.logging.Logger;
@@ -93,7 +94,7 @@ final class Http2Reader implements Closeable {
   public boolean nextFrame(boolean requireSettings, Handler handler) throws IOException {
     try {
       source.require(9); // Frame header size
-    } catch (IOException e) {
+    } catch (EOFException e) {
       return false; // This might be a normal socket close.
     }
 

@@ -932,7 +932,7 @@ public final class MockWebServer extends ExternalResource implements Closeable {
       if (peekedResponse.getSocketPolicy() == RESET_STREAM_AT_START) {
         try {
           dispatchBookkeepingRequest(sequenceNumber.getAndIncrement(), socket);
-          stream.close(ErrorCode.fromHttp2(peekedResponse.getHttp2ErrorCode()));
+          stream.close(ErrorCode.fromHttp2(peekedResponse.getHttp2ErrorCode()), null);
           return;
         } catch (InterruptedException e) {
           throw new AssertionError(e);
@@ -1064,7 +1064,7 @@ public final class MockWebServer extends ExternalResource implements Closeable {
           duplexResponseBody.onRequest(request, source, sink);
         }
       } else if (!outFinished) {
-        stream.close(ErrorCode.NO_ERROR);
+        stream.close(ErrorCode.NO_ERROR, null);
       }
     }
 

@@ -15,6 +15,7 @@
  */
 package okhttp3.internal.http2;
 
+import java.io.EOFException;
 import java.io.IOException;
 import java.io.InterruptedIOException;
 import java.net.Socket;
@@ -64,7 +65,7 @@ import static org.junit.Assert.fail;
 public final class Http2ConnectionTest {
   private final MockHttp2Peer peer = new MockHttp2Peer();
 
-  @Rule public final TestRule timeout = new Timeout(5_000);
+  @Rule public final TestRule timeout = new Timeout(5_000, TimeUnit.MILLISECONDS);
 
   @Before public void setup() {
     initializeInstanceForTests();
@@ -224,7 +225,7 @@ public final class Http2ConnectionTest {
     Source source = stream1.getSource();
     Buffer buffer = new Buffer();
     while (buffer.size() != 1024) source.read(buffer, 1024);
-    stream1.close(ErrorCode.CANCEL);
+    stream1.close(ErrorCode.CANCEL, null);
 
     InFrame frame1 = peer.takeFrame();
     assertEquals(Http2.TYPE_HEADERS, frame1.type);
@@ -1716,8 +1717,7 @@ public final class Http2ConnectionTest {
     try {
       Okio.buffer(in).readByteString(101);
       fail();
-    } catch (IOException expected) {
-      assertEquals("stream was reset: PROTOCOL_ERROR", expected.getMessage());
+    } catch (EOFException expected) {
     }
   }
 
@@ -1780,7 +1780,7 @@ public final class Http2ConnectionTest {
       stream.takeHeaders();
       fail();
     } catch (IOException expected) {
-      assertEquals("stream was reset: PROTOCOL_ERROR", expected.getMessage());
+      assertEquals("Expected a SETTINGS frame but was 1", expected.getMessage());
     }
 
     // verify the peer received what was expected

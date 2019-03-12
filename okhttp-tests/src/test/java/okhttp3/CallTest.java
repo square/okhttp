@@ -1309,11 +1309,7 @@ public final class CallTest {
   }
 
   @Test public void matchingPinnedCertificate() throws Exception {
-    // TODO https://github.com/square/okhttp/issues/4598
-//    java.util.NoSuchElementException
-//    at java.base/java.util.ArrayDeque.removeFirst(ArrayDeque.java:363)
-//    at okhttp3.internal.tls.BasicCertificateChainCleaner.clean(BasicCertificateChainCleaner.java:58)
-//    at okhttp3.CertificatePinner.check(CertificatePinner.java:166)
+    // TODO https://github.com/square/okhttp/issues/4703
     assumeFalse(getJvmSpecVersion().equals("11"));
 
     enableTls();

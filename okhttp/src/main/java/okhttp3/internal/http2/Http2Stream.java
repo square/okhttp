@@ -74,7 +74,10 @@ public final class Http2Stream {
    * close this stream (such as both peers closing it near-simultaneously) then this is the first
    * reason known to this peer.
    */
-  ErrorCode errorCode = null;
+  @Nullable ErrorCode errorCode;
+
+  /** The exception that explains {@code errorCode}. Null if no exception was provided. */
+  @Nullable IOException errorException;
 
   Http2Stream(int id, Http2Connection connection, boolean outFinished, boolean inFinished,
       @Nullable Headers headers) {
@@ -153,7 +156,7 @@ public final class Http2Stream {
     if (!headersQueue.isEmpty()) {
       return headersQueue.removeFirst();
     }
-    throw new StreamResetException(errorCode);
+    throw errorException != null ? errorException : new StreamResetException(errorCode);
   }
 
   /**
@@ -162,7 +165,7 @@ public final class Http2Stream {
    */
   public synchronized Headers trailers() throws IOException {
     if (errorCode != null) {
-      throw new StreamResetException(errorCode);
+      throw errorException != null ? errorException : new StreamResetException(errorCode);
     }
     if (!source.finished || !source.receiveBuffer.exhausted() || !source.readBuffer.exhausted()) {
       throw new IllegalStateException("too early; can't read the trailers yet");
@@ -254,8 +257,8 @@ public final class Http2Stream {
    * Abnormally terminate this stream. This blocks until the {@code RST_STREAM} frame has been
    * transmitted.
    */
-  public void close(ErrorCode rstStatusCode) throws IOException {
-    if (!closeInternal(rstStatusCode)) {
+  public void close(ErrorCode rstStatusCode, @Nullable IOException errorException) throws IOException {
+    if (!closeInternal(rstStatusCode, errorException)) {
       return; // Already closed.
     }
     connection.writeSynReset(id, rstStatusCode);
@@ -266,14 +269,14 @@ public final class Http2Stream {
    * immediately.
    */
   public void closeLater(ErrorCode errorCode) {
-    if (!closeInternal(errorCode)) {
+    if (!closeInternal(errorCode, null)) {
       return; // Already closed.
     }
     connection.writeSynResetLater(id, errorCode);
   }
 
   /** Returns true if this stream was closed. */
-  private boolean closeInternal(ErrorCode errorCode) {
+  private boolean closeInternal(ErrorCode errorCode, @Nullable IOException errorException) {
     assert (!Thread.holdsLock(this));
     synchronized (this) {
       if (this.errorCode != null) {
@@ -283,6 +286,7 @@ public final class Http2Stream {
         return false;
       }
       this.errorCode = errorCode;
+      this.errorException = errorException;
       notifyAll();
     }
     connection.removeStream(id);
@@ -365,7 +369,7 @@ public final class Http2Stream {
 
       while (true) {
         long readBytesDelivered = -1;
-        ErrorCode errorCodeToDeliver = null;
+        IOException errorExceptionToDeliver = null;
 
         // 1. Decide what to do in a synchronized block.
 
@@ -374,7 +378,9 @@ public final class Http2Stream {
           try {
             if (errorCode != null) {
               // Prepare to deliver an error.
-              errorCodeToDeliver = errorCode;
+              errorExceptionToDeliver = errorException != null
+                  ? errorException
+                  : new StreamResetException(errorCode);
             }
 
             if (closed) {
@@ -385,7 +391,7 @@ public final class Http2Stream {
               readBytesDelivered = readBuffer.read(sink, Math.min(byteCount, readBuffer.size()));
               unacknowledgedBytesRead += readBytesDelivered;
 
-              if (errorCodeToDeliver == null
+              if (errorExceptionToDeliver == null
                   && unacknowledgedBytesRead
                   >= connection.okHttpSettings.getInitialWindowSize() / 2) {
                 // Flow control: notify the peer that we're ready for more data! Only send a
@@ -393,7 +399,7 @@ public final class Http2Stream {
                 connection.writeWindowUpdateLater(id, unacknowledgedBytesRead);
                 unacknowledgedBytesRead = 0;
               }
-            } else if (!finished && errorCodeToDeliver == null) {
+            } else if (!finished && errorExceptionToDeliver == null) {
               // Nothing to do. Wait until that changes then try again.
               waitForIo();
               continue;
@@ -411,12 +417,12 @@ public final class Http2Stream {
           return readBytesDelivered;
         }
 
-        if (errorCodeToDeliver != null) {
+        if (errorExceptionToDeliver != null) {
           // We defer throwing the exception until now so that we can refill the connection
           // flow-control window. This is necessary because we don't transmit window updates until
           // the application reads the data. If we throw this prior to updating the connection
           // flow-control window, we risk having it go to 0 preventing the server from sending data.
-          throw new StreamResetException(errorCodeToDeliver);
+          throw errorExceptionToDeliver;
         }
 
         return -1; // This source is exhausted.
@@ -500,7 +506,7 @@ public final class Http2Stream {
       // is safe because the input stream is closed (we won't use any
       // further bytes) and the output stream is either finished or closed
       // (so RSTing both streams doesn't cause harm).
-      Http2Stream.this.close(ErrorCode.CANCEL);
+      Http2Stream.this.close(ErrorCode.CANCEL, null);
     } else if (!open) {
       connection.removeStream(id);
     }
@@ -625,7 +631,7 @@ public final class Http2Stream {
     } else if (sink.finished) {
       throw new IOException("stream finished");
     } else if (errorCode != null) {
-      throw new StreamResetException(errorCode);
+      throw errorException != null ? errorException : new StreamResetException(errorCode);
     }
   }
 
