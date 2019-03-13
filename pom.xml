@@ -26,6 +26,7 @@
     <module>okhttp-testing-support</module>
     <module>okhttp-tls</module>
     <module>okhttp-urlconnection</module>
+    <module>okhttp-hpacktests</module>
 
     <module>okhttp-logging-interceptor</module>
 
@@ -53,6 +54,7 @@
 
     <!-- Test Dependencies -->
     <junit.version>4.12</junit.version>
+    <assertj.version>3.11.0</assertj.version>
 
     <!-- platform test mode -->
     <okhttp.platform>platform</okhttp.platform>
@@ -129,6 +131,11 @@
         <groupId>org.conscrypt</groupId>
         <artifactId>conscrypt-openjdk-uber</artifactId>
         <version>${conscrypt.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.assertj</groupId>
+        <artifactId>assertj-core</artifactId>
+        <version>${assertj.version}</version>
       </dependency>
     </dependencies>
   </dependencyManagement>
