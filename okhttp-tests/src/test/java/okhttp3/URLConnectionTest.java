@@ -2533,9 +2533,9 @@ public final class URLConnectionTest {
     Response response = getResponse(newRequest("/"));
     BufferedSource in = response.body().source();
     in.timeout().timeout(1000, MILLISECONDS);
-    Assertions.assertThat(in.readByte()).isEqualTo('A');
-    Assertions.assertThat(in.readByte()).isEqualTo('B');
-    Assertions.assertThat(in.readByte()).isEqualTo('C');
+    Assertions.assertThat(in.readByte()).isEqualTo((byte) 'A');
+    Assertions.assertThat(in.readByte()).isEqualTo((byte) 'B');
+    Assertions.assertThat(in.readByte()).isEqualTo((byte) 'C');
     try {
       in.readByte(); // If Content-Length was accurate, this would return -1 immediately.
       fail();

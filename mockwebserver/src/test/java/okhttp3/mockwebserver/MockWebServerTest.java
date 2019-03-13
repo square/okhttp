@@ -60,7 +60,7 @@ public final class MockWebServerTest {
 
   @Test public void defaultMockResponse() {
     MockResponse response = new MockResponse();
-    assertThat(headersToList(response)).isEqualTo(Arrays.asList("Content-Length: 0"));
+    assertThat(headersToList(response)).containsExactly("Content-Length: 0");
     assertThat(response.getStatus()).isEqualTo("HTTP/1.1 200 OK");
   }
 
@@ -78,19 +78,19 @@ public final class MockWebServerTest {
       MockResponse response = new MockResponse().setResponseCode(i);
       String expectedReason = reasons[i / 100];
       assertThat(response.getStatus()).isEqualTo(("HTTP/1.1 " + i + " " + expectedReason));
-      assertThat(headersToList(response)).isEqualTo(Arrays.asList("Content-Length: 0"));
+      assertThat(headersToList(response)).containsExactly("Content-Length: 0");
     }
   }
 
   @Test public void setStatusControlsWholeStatusLine() {
     MockResponse response = new MockResponse().setStatus("HTTP/1.1 202 That'll do pig");
-    assertThat(headersToList(response)).isEqualTo(Arrays.asList("Content-Length: 0"));
+    assertThat(headersToList(response)).containsExactly("Content-Length: 0");
     assertThat(response.getStatus()).isEqualTo("HTTP/1.1 202 That'll do pig");
   }
 
   @Test public void setBodyAdjustsHeaders() throws IOException {
     MockResponse response = new MockResponse().setBody("ABC");
-    assertThat(headersToList(response)).isEqualTo(Arrays.asList("Content-Length: 3"));
+    assertThat(headersToList(response)).containsExactly("Content-Length: 3");
     assertThat(response.getBody().readUtf8()).isEqualTo("ABC");
   }
 
@@ -99,8 +99,7 @@ public final class MockWebServerTest {
         .clearHeaders()
         .addHeader("Cookie: s=square")
         .addHeader("Cookie", "a=android");
-    assertThat(headersToList(response)).isEqualTo(
-        Arrays.asList("Cookie: s=square", "Cookie: a=android"));
+    assertThat(headersToList(response)).containsExactly("Cookie: s=square", "Cookie: a=android");
   }
 
   @Test public void mockResponseSetHeader() {
@@ -110,8 +109,7 @@ public final class MockWebServerTest {
         .addHeader("Cookie: a=android")
         .addHeader("Cookies: delicious");
     response.setHeader("cookie", "r=robot");
-    assertThat(headersToList(response)).isEqualTo(
-        Arrays.asList("Cookies: delicious", "cookie: r=robot"));
+    assertThat(headersToList(response)).containsExactly("Cookies: delicious", "cookie: r=robot");
   }
 
   @Test public void mockResponseSetHeaders() {
@@ -122,7 +120,7 @@ public final class MockWebServerTest {
 
     response.setHeaders(new Headers.Builder().add("Cookie", "a=android").build());
 
-    assertThat(headersToList(response)).isEqualTo(Arrays.asList("Cookie: a=android"));
+    assertThat(headersToList(response)).containsExactly("Cookie: a=android");
   }
 
   @Test public void regularResponse() throws Exception {
@@ -397,7 +395,7 @@ public final class MockWebServerTest {
 
   @Test public void differentInstancesGetDifferentPorts() throws IOException {
     MockWebServer other = new MockWebServer();
-    assertThat(other.getPort()).isNotEqualTo((long) server.getPort());
+    assertThat(other.getPort()).isNotEqualTo(server.getPort());
     other.shutdown();
   }
 

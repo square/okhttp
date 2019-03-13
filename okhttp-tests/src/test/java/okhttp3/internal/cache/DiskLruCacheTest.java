@@ -326,8 +326,8 @@ public final class DiskLruCacheTest {
 
     DiskLruCache.Snapshot snapshot1 = cache.get("k1");
     BufferedSource inV1 = Okio.buffer(snapshot1.getSource(0));
-    assertThat(inV1.readByte()).isEqualTo('A');
-    assertThat(inV1.readByte()).isEqualTo('A');
+    assertThat(inV1.readByte()).isEqualTo((byte) 'A');
+    assertThat(inV1.readByte()).isEqualTo((byte) 'A');
 
     DiskLruCache.Editor v1Updater = cache.edit("k1");
     setString(v1Updater, 0, "CCcc");
@@ -339,8 +339,8 @@ public final class DiskLruCacheTest {
     assertSnapshotValue(snapshot2, 1, "DDdd");
     snapshot2.close();
 
-    assertThat(inV1.readByte()).isEqualTo('a');
-    assertThat(inV1.readByte()).isEqualTo('a');
+    assertThat(inV1.readByte()).isEqualTo((byte) 'a');
+    assertThat(inV1.readByte()).isEqualTo((byte) 'a');
     assertSnapshotValue(snapshot1, 1, "BBbb");
     snapshot1.close();
   }

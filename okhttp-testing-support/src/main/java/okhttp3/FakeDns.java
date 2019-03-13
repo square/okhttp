@@ -18,13 +18,11 @@ package okhttp3;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.assertEquals;
 
 public final class FakeDns implements Dns {
   private final Map<String, List<InetAddress>> hostAddresses = new LinkedHashMap<>();
@@ -57,7 +55,7 @@ public final class FakeDns implements Dns {
   }
 
   public void assertRequests(String... expectedHosts) {
-    Assertions.assertThat(requestedHosts).isEqualTo(Arrays.asList(expectedHosts));
+    assertThat(requestedHosts).containsExactly(expectedHosts);
     requestedHosts.clear();
   }
 

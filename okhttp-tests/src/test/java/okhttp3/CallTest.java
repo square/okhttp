@@ -846,7 +846,7 @@ public final class CallTest {
     Request request = new Request.Builder().url(server.url("/b")).build();
     Response response = client.newCall(request).execute();
     BufferedSource bodySource = response.body().source();
-    assertThat(bodySource.readByte()).isEqualTo('d');
+    assertThat(bodySource.readByte()).isEqualTo((byte) 'd');
 
     // The second byte of this request will be delayed by 750ms so we should time out after 250ms.
     long startNanos = System.nanoTime();

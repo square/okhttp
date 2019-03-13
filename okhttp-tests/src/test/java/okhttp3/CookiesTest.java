@@ -324,7 +324,7 @@ public class CookiesTest {
 
     HttpUrl url2 = HttpUrl.get("https://www.squareup.com/");
     List<Cookie> actualCookies = cookieJar.loadForRequest(url2);
-    assertThat(actualCookies).isEqualTo(Collections.<Cookie>emptyList());
+    assertThat(actualCookies).isEmpty();
   }
 
   private HttpUrl urlWithIpAddress(MockWebServer server, String path) throws Exception {

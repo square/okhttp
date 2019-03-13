@@ -190,7 +190,7 @@ public final class ServerSentEventIteratorTest {
     Buffer buffer = new Buffer().writeUtf8(source);
     ServerSentEventReader reader = new ServerSentEventReader(buffer, callback);
     while (reader.processNextEvent());
-    assertThat(buffer.size()).overridingErrorMessage("Unconsumed buffer: " + buffer.readUtf8()).isEqualTo(
-        (long) 0);
+    assertThat(buffer.size()).overridingErrorMessage("Unconsumed buffer: " + buffer.readUtf8())
+        .isEqualTo(0);
   }
 }

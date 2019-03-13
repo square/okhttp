@@ -60,9 +60,8 @@ public final class ConnectionSpecTest {
         .tlsVersions(TlsVersion.TLS_1_2)
         .supportsTlsExtensions(true)
         .build();
-    assertThat(tlsSpec.cipherSuites()).isEqualTo(
-        Arrays.asList(CipherSuite.TLS_RSA_WITH_RC4_128_MD5));
-    assertThat(tlsSpec.tlsVersions()).isEqualTo(Arrays.asList(TlsVersion.TLS_1_2));
+    assertThat(tlsSpec.cipherSuites()).containsExactly(CipherSuite.TLS_RSA_WITH_RC4_128_MD5);
+    assertThat(tlsSpec.tlsVersions()).containsExactly(TlsVersion.TLS_1_2);
     assertThat(tlsSpec.supportsTlsExtensions()).isTrue();
   }
 
@@ -72,7 +71,7 @@ public final class ConnectionSpecTest {
         .supportsTlsExtensions(true)
         .build();
     assertThat(tlsSpec.cipherSuites()).isNull();
-    assertThat(tlsSpec.tlsVersions()).isEqualTo(Arrays.asList(TlsVersion.TLS_1_2));
+    assertThat(tlsSpec.tlsVersions()).containsExactly(TlsVersion.TLS_1_2);
     assertThat(tlsSpec.supportsTlsExtensions()).isTrue();
   }
 
@@ -211,9 +210,9 @@ public final class ConnectionSpecTest {
     });
 
     tlsSpec.apply(sslSocket, false);
-    assertThat(Arrays.asList(sslSocket.getEnabledCipherSuites())).isEqualTo(Arrays.asList(
+    assertThat(Arrays.asList(sslSocket.getEnabledCipherSuites())).containsExactly(
         CipherSuite.TLS_RSA_WITH_RC4_128_SHA.javaName,
-        CipherSuite.TLS_RSA_WITH_RC4_128_MD5.javaName));
+        CipherSuite.TLS_RSA_WITH_RC4_128_MD5.javaName);
   }
 
   @Test public void allEnabledTlsVersions() throws Exception {
@@ -229,8 +228,8 @@ public final class ConnectionSpecTest {
     });
 
     tlsSpec.apply(sslSocket, false);
-    assertThat(Arrays.asList(sslSocket.getEnabledProtocols())).isEqualTo(
-        Arrays.asList(TlsVersion.SSL_3_0.javaName(), TlsVersion.TLS_1_1.javaName()));
+    assertThat(Arrays.asList(sslSocket.getEnabledProtocols())).containsExactly(
+        TlsVersion.SSL_3_0.javaName(), TlsVersion.TLS_1_1.javaName());
   }
 
   @Test public void tls_missingTlsVersion() throws Exception {

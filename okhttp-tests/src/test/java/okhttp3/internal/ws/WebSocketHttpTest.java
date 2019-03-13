@@ -699,7 +699,7 @@ public final class WebSocketHttpTest {
     clientListener.assertClosed(1000, "");
     serverListener.assertClosed(1000, "");
 
-    assertThat(listener.recordedEventTypes()).isEqualTo(Collections.emptyList());
+    assertThat(listener.recordedEventTypes()).isEmpty();
   }
 
   @Test public void callTimeoutAppliesToSetup() throws Exception {

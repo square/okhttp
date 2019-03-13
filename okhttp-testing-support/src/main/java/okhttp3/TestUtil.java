@@ -24,7 +24,6 @@ import java.util.List;
 import okhttp3.internal.http2.Header;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.assertEquals;
 
 public final class TestUtil {
   public static final InetSocketAddress UNREACHABLE_ADDRESS
@@ -89,6 +88,6 @@ public final class TestUtil {
 
   public static void ensureAllConnectionsReleased(OkHttpClient client) {
     client.connectionPool().evictAll();
-    Assertions.assertThat(client.connectionPool().idleConnectionCount()).isEqualTo(0);
+    assertThat(client.connectionPool().idleConnectionCount()).isEqualTo(0);
   }
 }

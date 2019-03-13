@@ -407,7 +407,7 @@ public final class Http2Test {
         assertThat(length).isEqualTo(Http2.INITIAL_MAX_FRAME_SIZE);
         ByteString data = source.readByteString(length);
         for (byte b : data.toByteArray()) {
-          assertThat(b).isEqualTo(2);
+          assertThat(b).isEqualTo((byte) 2);
         }
       }
     });
@@ -746,7 +746,7 @@ public final class Http2Test {
         assertThat(length).isEqualTo(1123);
         ByteString data = source.readByteString(length);
         for (byte b : data.toByteArray()) {
-          assertThat(b).isEqualTo(2);
+          assertThat(b).isEqualTo((byte) 2);
         }
       }
     };

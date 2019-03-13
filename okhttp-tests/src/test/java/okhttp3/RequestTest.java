@@ -19,8 +19,6 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.net.URI;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.UUID;
 import okio.Buffer;
 import org.junit.Test;
@@ -148,7 +146,7 @@ public final class RequestTest {
         .cacheControl(new CacheControl.Builder().noCache().build())
         .url("https://square.com")
         .build();
-    assertThat(request.headers("Cache-Control")).isEqualTo(Arrays.asList("no-cache"));
+    assertThat(request.headers("Cache-Control")).containsExactly("no-cache");
   }
 
   @Test public void emptyCacheControlClearsAllCacheControlHeaders() {
@@ -157,7 +155,7 @@ public final class RequestTest {
         .cacheControl(new CacheControl.Builder().build())
         .url("https://square.com")
         .build();
-    assertThat(request.headers("Cache-Control")).isEqualTo(Collections.<String>emptyList());
+    assertThat(request.headers("Cache-Control")).isEmpty();
   }
 
   @Test public void headerAcceptsPermittedCharacters() {

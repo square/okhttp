@@ -17,7 +17,6 @@ package okhttp3.dnsoverhttps;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.util.Collections;
 import java.util.List;
 import okio.ByteString;
 import org.junit.Test;
@@ -48,24 +47,21 @@ public class DnsRecordCodecTest {
     List<InetAddress> encoded = DnsRecordCodec.decodeAnswers("test.com", ByteString.decodeHex(
         "00008180000100010000000006676f6f676c6503636f6d0000010001c00c00010001000000430004d83ad54e"));
 
-    assertThat(encoded).isEqualTo(
-        Collections.singletonList(InetAddress.getByName("216.58.213.78")));
+    assertThat(encoded).containsExactly(InetAddress.getByName("216.58.213.78"));
   }
 
   @Test public void testGoogleDotComDecodingFromGoogle() throws Exception {
     List<InetAddress> decoded = DnsRecordCodec.decodeAnswers("test.com", ByteString.decodeHex(
         "0000818000010003000000000567726170680866616365626f6f6b03636f6d0000010001c00c0005000100000a6d000603617069c012c0300005000100000cde000c04737461720463313072c012c042000100010000003b00049df00112"));
 
-    assertThat(decoded).isEqualTo(
-        Collections.singletonList(InetAddress.getByName("157.240.1.18")));
+    assertThat(decoded).containsExactly(InetAddress.getByName("157.240.1.18"));
   }
 
   @Test public void testGoogleDotComDecodingFromGoogleIPv6() throws Exception {
     List<InetAddress> decoded = DnsRecordCodec.decodeAnswers("test.com", ByteString.decodeHex(
         "0000818000010003000000000567726170680866616365626f6f6b03636f6d00001c0001c00c0005000100000a1b000603617069c012c0300005000100000b1f000c04737461720463313072c012c042001c00010000003b00102a032880f0290011faceb00c00000002"));
 
-    assertThat(decoded).isEqualTo(
-        Collections.singletonList(InetAddress.getByName("2a03:2880:f029:11:face:b00c:0:2")));
+    assertThat(decoded).containsExactly(InetAddress.getByName("2a03:2880:f029:11:face:b00c:0:2"));
   }
 
   @Test public void testGoogleDotComDecodingNxdomainFailure() throws Exception {

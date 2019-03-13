@@ -178,7 +178,7 @@ public final class ConnectionPoolTest {
 
     awaitGarbageCollection();
     assertThat(pool.cleanup(100L)).isEqualTo(0L);
-    assertThat(c1.transmitters).isEqualTo(Collections.emptyList());
+    assertThat(c1.transmitters).isEmpty();
 
     // Can't allocate once a leak has been detected.
     assertThat(c1.noNewExchanges).isTrue();

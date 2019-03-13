@@ -130,8 +130,7 @@ public class DnsOverHttpsTest {
     } catch (IOException ioe) {
       assertThat(ioe.getMessage()).isEqualTo("google.com");
       Throwable cause = ioe.getCause();
-      boolean condition = cause instanceof IOException;
-      assertThat(condition).isTrue();
+      assertThat(cause instanceof IOException).isTrue();
       assertThat(cause.getMessage()).isEqualTo(
           "response size exceeds limit (65536 bytes): 65537 bytes");
     }
@@ -172,7 +171,7 @@ public class DnsOverHttpsTest {
 
     List<InetAddress> result = cachedDns.lookup("google.com");
 
-    assertThat(result).isEqualTo(singletonList(address("157.240.1.18")));
+    assertThat(result).containsExactly(address("157.240.1.18"));
 
     RecordedRequest recordedRequest = server.takeRequest();
     assertThat(recordedRequest.getMethod()).isEqualTo("GET");
