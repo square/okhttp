@@ -257,7 +257,8 @@ public final class Http2Stream {
    * Abnormally terminate this stream. This blocks until the {@code RST_STREAM} frame has been
    * transmitted.
    */
-  public void close(ErrorCode rstStatusCode, @Nullable IOException errorException) throws IOException {
+  public void close(ErrorCode rstStatusCode, @Nullable IOException errorException)
+      throws IOException {
     if (!closeInternal(rstStatusCode, errorException)) {
       return; // Already closed.
     }
