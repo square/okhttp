@@ -29,9 +29,7 @@ import org.junit.Ignore;
 import org.junit.Test;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Tests for our hostname verifier. Most of these tests are from AOSP, which itself includes tests
@@ -42,7 +40,7 @@ public final class HostnameVerifierTest {
 
   @Test public void verify() throws Exception {
     FakeSSLSession session = new FakeSSLSession();
-    assertFalse(verifier.verify("localhost", session));
+    assertThat(verifier.verify("localhost", session)).isFalse();
   }
 
   @Test public void verifyCn() throws Exception {
@@ -73,9 +71,9 @@ public final class HostnameVerifierTest {
         + "HwlNrAu8jlZ2UqSgskSWlhYdMTAP9CPHiUv9N7FcT58Itv/I4fKREINQYjDpvQcx\n"
         + "SaTYb9dr5sB4WLNglk7zxDtM80H518VvihTcP7FHL+Gn6g4j5fkI98+S\n"
         + "-----END CERTIFICATE-----\n");
-    assertFalse(verifier.verify("foo.com", session));
-    assertFalse(verifier.verify("a.foo.com", session));
-    assertFalse(verifier.verify("bar.com", session));
+    assertThat(verifier.verify("foo.com", session)).isFalse();
+    assertThat(verifier.verify("a.foo.com", session)).isFalse();
+    assertThat(verifier.verify("bar.com", session)).isFalse();
   }
 
   @Test public void verifyNonAsciiCn() throws Exception {
@@ -106,8 +104,8 @@ public final class HostnameVerifierTest {
         + "9BsO7qe46hidgn39hKh1WjKK2VcL/3YRsC4wUi0PBtFW6ScMCuMhgIRXSPU55Rae\n"
         + "UIlOdPjjr1SUNWGId1rD7W16Scpwnknn310FNxFMHVI0GTGFkNdkilNCFJcIoRA=\n"
         + "-----END CERTIFICATE-----\n");
-    assertFalse(verifier.verify("\u82b1\u5b50.co.jp", session));
-    assertFalse(verifier.verify("a.\u82b1\u5b50.co.jp", session));
+    assertThat(verifier.verify("\u82b1\u5b50.co.jp", session)).isFalse();
+    assertThat(verifier.verify("a.\u82b1\u5b50.co.jp", session)).isFalse();
   }
 
   @Test public void verifySubjectAlt() throws Exception {
@@ -139,10 +137,10 @@ public final class HostnameVerifierTest {
         + "2xq+8bc6HojdtbCyug/fvBZvZqQXSmU8m8IVcMmWMz0ZQO8ee3QkBHMZfCy7P/kr\n"
         + "VbWx/uETImUu+NZg22ewEw==\n"
         + "-----END CERTIFICATE-----\n");
-    assertFalse(verifier.verify("foo.com", session));
-    assertFalse(verifier.verify("a.foo.com", session));
-    assertTrue(verifier.verify("bar.com", session));
-    assertFalse(verifier.verify("a.bar.com", session));
+    assertThat(verifier.verify("foo.com", session)).isFalse();
+    assertThat(verifier.verify("a.foo.com", session)).isFalse();
+    assertThat(verifier.verify("bar.com", session)).isTrue();
+    assertThat(verifier.verify("a.bar.com", session)).isFalse();
   }
 
   /**
@@ -180,8 +178,8 @@ public final class HostnameVerifierTest {
         + "sWIKHYrmhCIRshUNohGXv50m2o+1w9oWmQ6Dkq7lCjfXfUB4wIbggJjpyEtbNqBt\n"
         + "j4MC2x5rfsLKKqToKmNE7pFEgqwe8//Aar1b+Qj+\n"
         + "-----END CERTIFICATE-----\n");
-    assertTrue(verifier.verify("foo.com", session));
-    assertFalse(verifier.verify("a.foo.com", session));
+    assertThat(verifier.verify("foo.com", session)).isTrue();
+    assertThat(verifier.verify("a.foo.com", session)).isFalse();
     // these checks test alternative subjects. The test data contains an
     // alternative subject starting with a japanese kanji character. This is
     // not supported by Android because the underlying implementation from
@@ -220,10 +218,10 @@ public final class HostnameVerifierTest {
         + "qAVqixM+J0qJmQStgAc53i2aTMvAQu3A3snvH/PHTBo+5UL72n9S1kZyNCsVf1Qo\n"
         + "n8jKTiRriEM+fMFlcgQP284EBFzYHyCXFb9O/hMjK2+6mY9euMB1U1aFFzM/Bg==\n"
         + "-----END CERTIFICATE-----\n");
-    assertTrue(verifier.verify("foo.com", session));
-    assertFalse(verifier.verify("a.foo.com", session));
-    assertTrue(verifier.verify("foo.com", session));
-    assertFalse(verifier.verify("a.foo.com", session));
+    assertThat(verifier.verify("foo.com", session)).isTrue();
+    assertThat(verifier.verify("a.foo.com", session)).isFalse();
+    assertThat(verifier.verify("foo.com", session)).isTrue();
+    assertThat(verifier.verify("a.foo.com", session)).isFalse();
   }
 
   @Test public void verifyMultipleCn() throws Exception {
@@ -255,12 +253,12 @@ public final class HostnameVerifierTest {
         + "SpQFCfo02NO0uNRDPUdJx2huycdNb+AXHaO7eXevDLJ+QnqImIzxWiY6zLOdzjjI\n"
         + "VBMkLHmnP7SjGSQ3XA4ByrQOxfOUTyLyE7NuemhHppuQPxE=\n"
         + "-----END CERTIFICATE-----\n");
-    assertFalse(verifier.verify("foo.com", session));
-    assertFalse(verifier.verify("a.foo.com", session));
-    assertFalse(verifier.verify("bar.com", session));
-    assertFalse(verifier.verify("a.bar.com", session));
-    assertFalse(verifier.verify("\u82b1\u5b50.co.jp", session));
-    assertFalse(verifier.verify("a.\u82b1\u5b50.co.jp", session));
+    assertThat(verifier.verify("foo.com", session)).isFalse();
+    assertThat(verifier.verify("a.foo.com", session)).isFalse();
+    assertThat(verifier.verify("bar.com", session)).isFalse();
+    assertThat(verifier.verify("a.bar.com", session)).isFalse();
+    assertThat(verifier.verify("\u82b1\u5b50.co.jp", session)).isFalse();
+    assertThat(verifier.verify("a.\u82b1\u5b50.co.jp", session)).isFalse();
   }
 
   @Test public void verifyWilcardCn() throws Exception {
@@ -291,10 +289,10 @@ public final class HostnameVerifierTest {
         + "G9Z6tyMbmfRY+dLSh3a9JwoEcBUso6EWYBakLbq4nG/nvYdYvG9ehrnLVwZFL82e\n"
         + "l3Q/RK95bnA6cuRClGusLad0e6bjkBzx/VQ3VarDEpAkTLUGVAa0CLXtnyc=\n"
         + "-----END CERTIFICATE-----\n");
-    assertFalse(verifier.verify("foo.com", session));
-    assertFalse(verifier.verify("www.foo.com", session));
-    assertFalse(verifier.verify("\u82b1\u5b50.foo.com", session));
-    assertFalse(verifier.verify("a.b.foo.com", session));
+    assertThat(verifier.verify("foo.com", session)).isFalse();
+    assertThat(verifier.verify("www.foo.com", session)).isFalse();
+    assertThat(verifier.verify("\u82b1\u5b50.foo.com", session)).isFalse();
+    assertThat(verifier.verify("a.b.foo.com", session)).isFalse();
   }
 
   @Test public void verifyWilcardCnOnTld() throws Exception {
@@ -326,8 +324,8 @@ public final class HostnameVerifierTest {
         + "UGPLEUDzRHMPHLnSqT1n5UU5UDRytbjJPXzF+l/+WZIsanefWLsxnkgAuZe/oMMF\n"
         + "EJMryEzOjg4Tfuc5qM0EXoPcQ/JlheaxZ40p2IyHqbsWV4MRYuFH4bkM\n"
         + "-----END CERTIFICATE-----\n");
-    assertFalse(verifier.verify("foo.co.jp", session));
-    assertFalse(verifier.verify("\u82b1\u5b50.co.jp", session));
+    assertThat(verifier.verify("foo.co.jp", session)).isFalse();
+    assertThat(verifier.verify("\u82b1\u5b50.co.jp", session)).isFalse();
   }
 
   /**
@@ -366,10 +364,10 @@ public final class HostnameVerifierTest {
         + "pgJsDbJtZfHnV1nd3M6zOtQPm1TIQpNmMMMd/DPrGcUQerD3\n"
         + "-----END CERTIFICATE-----\n");
     // try the foo.com variations
-    assertTrue(verifier.verify("foo.com", session));
-    assertTrue(verifier.verify("www.foo.com", session));
-    assertTrue(verifier.verify("\u82b1\u5b50.foo.com", session));
-    assertFalse(verifier.verify("a.b.foo.com", session));
+    assertThat(verifier.verify("foo.com", session)).isTrue();
+    assertThat(verifier.verify("www.foo.com", session)).isTrue();
+    assertThat(verifier.verify("\u82b1\u5b50.foo.com", session)).isTrue();
+    assertThat(verifier.verify("a.b.foo.com", session)).isFalse();
     // these checks test alternative subjects. The test data contains an
     // alternative subject starting with a japanese kanji character. This is
     // not supported by Android because the underlying implementation from
@@ -405,15 +403,16 @@ public final class HostnameVerifierTest {
         + "DCzOCv9Ma6Lv5o5jcYWVxvBSTsnt22hsJpWD1K7iY9lbkLwl0ivn73pG2evsAn9G\n"
         + "X8YKH52fnHsCrhSD\n"
         + "-----END CERTIFICATE-----");
-    assertEquals(new X500Principal("CN=localhost"), certificate.getSubjectX500Principal());
+    assertThat(certificate.getSubjectX500Principal()).isEqualTo(
+        new X500Principal("CN=localhost"));
 
     FakeSSLSession session = new FakeSSLSession(certificate);
-    assertTrue(verifier.verify("localhost", session));
-    assertTrue(verifier.verify("localhost.localdomain", session));
-    assertFalse(verifier.verify("local.host", session));
+    assertThat(verifier.verify("localhost", session)).isTrue();
+    assertThat(verifier.verify("localhost.localdomain", session)).isTrue();
+    assertThat(verifier.verify("local.host", session)).isFalse();
 
-    assertTrue(verifier.verify("127.0.0.1", session));
-    assertFalse(verifier.verify("127.0.0.2", session));
+    assertThat(verifier.verify("127.0.0.1", session)).isTrue();
+    assertThat(verifier.verify("127.0.0.2", session)).isFalse();
   }
 
   @Test public void wildcardsCannotMatchIpAddresses() throws Exception {
@@ -430,7 +429,7 @@ public final class HostnameVerifierTest {
         + "BQUAA0EAk9i88xdjWoewqvE+iMC9tD2obMchgFDaHH0ogxxiRaIKeEly3g0uGxIt\n"
         + "fl2WRY8hb4x+zRrwsFaLEpdEvqcjOQ==\n"
         + "-----END CERTIFICATE-----");
-    assertFalse(verifier.verify("127.0.0.1", session));
+    assertThat(verifier.verify("127.0.0.1", session)).isFalse();
   }
 
   /**
@@ -452,7 +451,7 @@ public final class HostnameVerifierTest {
         + "U6LFxmZr31lFyis2/T68PpjAppc0DpNQuA2m/Y7oTHBDi55Fw6HVHCw3lucuWZ5d\n"
         + "qUYo4ES548JdpQtcLrW2sA==\n"
         + "-----END CERTIFICATE-----");
-    assertFalse(verifier.verify("google.com", session));
+    assertThat(verifier.verify("google.com", session)).isFalse();
   }
 
   @Test public void subjectAltName() throws Exception {
@@ -478,11 +477,11 @@ public final class HostnameVerifierTest {
         + "DQYJKoZIhvcNAQEFBQADQQBXpZZPOY2Dy1lGG81JTr8L4or9jpKacD7n51eS8iqI\n"
         + "oTznPNuXHU5bFN0AAGX2ij47f/EahqTpo5RdS95P4sVm\n"
         + "-----END CERTIFICATE-----");
-    assertFalse(verifier.verify("foo.com", session));
-    assertTrue(verifier.verify("bar.com", session));
-    assertTrue(verifier.verify("baz.com", session));
-    assertFalse(verifier.verify("a.foo.com", session));
-    assertFalse(verifier.verify("quux.com", session));
+    assertThat(verifier.verify("foo.com", session)).isFalse();
+    assertThat(verifier.verify("bar.com", session)).isTrue();
+    assertThat(verifier.verify("baz.com", session)).isTrue();
+    assertThat(verifier.verify("a.foo.com", session)).isFalse();
+    assertThat(verifier.verify("quux.com", session)).isFalse();
   }
 
   @Test public void subjectAltNameWithWildcard() throws Exception {
@@ -508,39 +507,39 @@ public final class HostnameVerifierTest {
         + "bTANBgkqhkiG9w0BAQUFAANBAB8yrSl8zqy07i0SNYx2B/FnvQY734pxioaqFWfO\n"
         + "Bqo1ZZl/9aPHEWIwBrxYNVB0SGu/kkbt/vxqOjzzrkXukmI=\n"
         + "-----END CERTIFICATE-----");
-    assertFalse(verifier.verify("foo.com", session));
-    assertTrue(verifier.verify("bar.com", session));
-    assertTrue(verifier.verify("a.baz.com", session));
-    assertFalse(verifier.verify("baz.com", session));
-    assertFalse(verifier.verify("a.foo.com", session));
-    assertFalse(verifier.verify("a.bar.com", session));
-    assertFalse(verifier.verify("quux.com", session));
+    assertThat(verifier.verify("foo.com", session)).isFalse();
+    assertThat(verifier.verify("bar.com", session)).isTrue();
+    assertThat(verifier.verify("a.baz.com", session)).isTrue();
+    assertThat(verifier.verify("baz.com", session)).isFalse();
+    assertThat(verifier.verify("a.foo.com", session)).isFalse();
+    assertThat(verifier.verify("a.bar.com", session)).isFalse();
+    assertThat(verifier.verify("quux.com", session)).isFalse();
   }
 
   @Test public void verifyAsIpAddress() {
     // IPv4
-    assertTrue(Util.verifyAsIpAddress("127.0.0.1"));
-    assertTrue(Util.verifyAsIpAddress("1.2.3.4"));
+    assertThat(Util.verifyAsIpAddress("127.0.0.1")).isTrue();
+    assertThat(Util.verifyAsIpAddress("1.2.3.4")).isTrue();
 
     // IPv6
-    assertTrue(Util.verifyAsIpAddress("::1"));
-    assertTrue(Util.verifyAsIpAddress("2001:db8::1"));
-    assertTrue(Util.verifyAsIpAddress("::192.168.0.1"));
-    assertTrue(Util.verifyAsIpAddress("::ffff:192.168.0.1"));
-    assertTrue(Util.verifyAsIpAddress("FEDC:BA98:7654:3210:FEDC:BA98:7654:3210"));
-    assertTrue(Util.verifyAsIpAddress("1080:0:0:0:8:800:200C:417A"));
-    assertTrue(Util.verifyAsIpAddress("1080::8:800:200C:417A"));
-    assertTrue(Util.verifyAsIpAddress("FF01::101"));
-    assertTrue(Util.verifyAsIpAddress("0:0:0:0:0:0:13.1.68.3"));
-    assertTrue(Util.verifyAsIpAddress("0:0:0:0:0:FFFF:129.144.52.38"));
-    assertTrue(Util.verifyAsIpAddress("::13.1.68.3"));
-    assertTrue(Util.verifyAsIpAddress("::FFFF:129.144.52.38"));
+    assertThat(Util.verifyAsIpAddress("::1")).isTrue();
+    assertThat(Util.verifyAsIpAddress("2001:db8::1")).isTrue();
+    assertThat(Util.verifyAsIpAddress("::192.168.0.1")).isTrue();
+    assertThat(Util.verifyAsIpAddress("::ffff:192.168.0.1")).isTrue();
+    assertThat(Util.verifyAsIpAddress("FEDC:BA98:7654:3210:FEDC:BA98:7654:3210")).isTrue();
+    assertThat(Util.verifyAsIpAddress("1080:0:0:0:8:800:200C:417A")).isTrue();
+    assertThat(Util.verifyAsIpAddress("1080::8:800:200C:417A")).isTrue();
+    assertThat(Util.verifyAsIpAddress("FF01::101")).isTrue();
+    assertThat(Util.verifyAsIpAddress("0:0:0:0:0:0:13.1.68.3")).isTrue();
+    assertThat(Util.verifyAsIpAddress("0:0:0:0:0:FFFF:129.144.52.38")).isTrue();
+    assertThat(Util.verifyAsIpAddress("::13.1.68.3")).isTrue();
+    assertThat(Util.verifyAsIpAddress("::FFFF:129.144.52.38")).isTrue();
 
     // Hostnames
-    assertFalse(Util.verifyAsIpAddress("go"));
-    assertFalse(Util.verifyAsIpAddress("localhost"));
-    assertFalse(Util.verifyAsIpAddress("squareup.com"));
-    assertFalse(Util.verifyAsIpAddress("www.nintendo.co.jp"));
+    assertThat(Util.verifyAsIpAddress("go")).isFalse();
+    assertThat(Util.verifyAsIpAddress("localhost")).isFalse();
+    assertThat(Util.verifyAsIpAddress("squareup.com")).isFalse();
+    assertThat(Util.verifyAsIpAddress("www.nintendo.co.jp")).isFalse();
   }
 
   private X509Certificate certificate(String certificate) throws Exception {

@@ -29,7 +29,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import static okhttp3.TestUtil.defaultClient;
-import static org.junit.Assert.assertEquals;
+import static org.assertj.core.api.Assertions.assertThat;
 
 public final class SocksProxyTest {
   private final SocksProxy socksProxy = new SocksProxy();
@@ -55,14 +55,14 @@ public final class SocksProxyTest {
 
     Request request1 = new Request.Builder().url(server.url("/")).build();
     Response response1 = client.newCall(request1).execute();
-    assertEquals("abc", response1.body().string());
+    assertThat(response1.body().string()).isEqualTo("abc");
 
     Request request2 = new Request.Builder().url(server.url("/")).build();
     Response response2 = client.newCall(request2).execute();
-    assertEquals("def", response2.body().string());
+    assertThat(response2.body().string()).isEqualTo("def");
 
     // The HTTP calls should share a single connection.
-    assertEquals(1, socksProxy.connectionCount());
+    assertThat(socksProxy.connectionCount()).isEqualTo(1);
   }
 
   @Test public void proxySelector() throws Exception {
@@ -84,9 +84,9 @@ public final class SocksProxyTest {
 
     Request request = new Request.Builder().url(server.url("/")).build();
     Response response = client.newCall(request).execute();
-    assertEquals("abc", response.body().string());
+    assertThat(response.body().string()).isEqualTo("abc");
 
-    assertEquals(1, socksProxy.connectionCount());
+    assertThat(socksProxy.connectionCount()).isEqualTo(1);
   }
 
   @Test public void checkRemoteDNSResolve() throws Exception {
@@ -104,8 +104,8 @@ public final class SocksProxyTest {
 
     Request request = new Request.Builder().url(url).build();
     Response response1 = client.newCall(request).execute();
-    assertEquals("abc", response1.body().string());
+    assertThat(response1.body().string()).isEqualTo("abc");
 
-    assertEquals(1, socksProxy.connectionCount());
+    assertThat(socksProxy.connectionCount()).isEqualTo(1);
   }
 }

@@ -25,8 +25,7 @@ import okio.BufferedSink;
 import okio.BufferedSource;
 import okio.Utf8;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.fail;
 
 /**
@@ -39,14 +38,15 @@ public final class MockDuplexResponseBody implements DuplexResponseBody {
 
   public MockDuplexResponseBody receiveRequest(String expected) {
     actions.add((request, requestBody, responseBody) -> {
-      assertEquals(expected, requestBody.readUtf8(Utf8.size(expected)));
+      Assertions.assertThat(requestBody.readUtf8(Utf8.size(expected))).isEqualTo(
+          (Object) expected);
     });
     return this;
   }
 
   public MockDuplexResponseBody exhaustRequest() {
     actions.add((request, requestBody, responseBody) -> {
-      assertTrue(requestBody.exhausted());
+      Assertions.assertThat(requestBody.exhausted()).isTrue();
     });
     return this;
   }

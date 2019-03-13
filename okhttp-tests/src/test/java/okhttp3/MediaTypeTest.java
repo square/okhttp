@@ -24,8 +24,7 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.fail;
 
 /**
@@ -55,13 +54,13 @@ public class MediaTypeTest {
 
   @Test public void testParse() throws Exception {
     MediaType mediaType = parse("text/plain;boundary=foo;charset=utf-8");
-    assertEquals("text", mediaType.type());
-    assertEquals("plain", mediaType.subtype());
-    assertEquals("UTF-8", mediaType.charset().name());
-    assertEquals("text/plain;boundary=foo;charset=utf-8", mediaType.toString());
-    assertEquals(mediaType, parse("text/plain;boundary=foo;charset=utf-8"));
-    assertEquals(mediaType.hashCode(),
-        parse("text/plain;boundary=foo;charset=utf-8").hashCode());
+    assertThat(mediaType.type()).isEqualTo("text");
+    assertThat(mediaType.subtype()).isEqualTo("plain");
+    assertThat(mediaType.charset().name()).isEqualTo("UTF-8");
+    assertThat(mediaType.toString()).isEqualTo("text/plain;boundary=foo;charset=utf-8");
+    assertThat(parse("text/plain;boundary=foo;charset=utf-8")).isEqualTo(mediaType);
+    assertThat(parse("text/plain;boundary=foo;charset=utf-8").hashCode()).isEqualTo(
+        (long) mediaType.hashCode());
   }
 
   @Test public void testValidParse() throws Exception {
@@ -119,36 +118,36 @@ public class MediaTypeTest {
 
   @Test public void testDoubleQuotesAreSpecial() throws Exception {
     MediaType mediaType = parse("text/plain;a=\";charset=utf-8;b=\"");
-    assertNull(mediaType.charset());
+    assertThat(mediaType.charset()).isNull();
   }
 
   @Test public void testSingleQuotesAreNotSpecial() throws Exception {
     MediaType mediaType = parse("text/plain;a=';charset=utf-8;b='");
-    assertEquals("UTF-8", mediaType.charset().name());
+    assertThat(mediaType.charset().name()).isEqualTo("UTF-8");
   }
 
   @Test public void testParseWithSpecialCharacters() throws Exception {
     MediaType mediaType = parse("!#$%&'*+-.{|}~/!#$%&'*+-.{|}~; !#$%&'*+-.{|}~=!#$%&'*+-.{|}~");
-    assertEquals("!#$%&'*+-.{|}~", mediaType.type());
-    assertEquals("!#$%&'*+-.{|}~", mediaType.subtype());
+    assertThat(mediaType.type()).isEqualTo("!#$%&'*+-.{|}~");
+    assertThat(mediaType.subtype()).isEqualTo("!#$%&'*+-.{|}~");
   }
 
   @Test public void testCharsetIsOneOfManyParameters() throws Exception {
     MediaType mediaType = parse("text/plain;a=1;b=2;charset=utf-8;c=3");
-    assertEquals("text", mediaType.type());
-    assertEquals("plain", mediaType.subtype());
-    assertEquals("UTF-8", mediaType.charset().name());
+    assertThat(mediaType.type()).isEqualTo("text");
+    assertThat(mediaType.subtype()).isEqualTo("plain");
+    assertThat(mediaType.charset().name()).isEqualTo("UTF-8");
   }
 
   @Test public void testCharsetAndQuoting() throws Exception {
     MediaType mediaType = parse(
         "text/plain;a=\";charset=us-ascii\";charset=\"utf-8\";b=\"iso-8859-1\"");
-    assertEquals("UTF-8", mediaType.charset().name());
+    assertThat(mediaType.charset().name()).isEqualTo("UTF-8");
   }
 
   @Test public void testDuplicatedCharsets() {
     MediaType mediaType = parse("text/plain; charset=utf-8; charset=UTF-8");
-    assertEquals("UTF-8", mediaType.charset().name());
+    assertThat(mediaType.charset().name()).isEqualTo("UTF-8");
   }
 
   @Test public void testMultipleCharsets() {
@@ -158,12 +157,12 @@ public class MediaTypeTest {
 
   @Test public void testIllegalCharsetName() {
     MediaType mediaType = parse("text/plain; charset=\"!@#$%^&*()\"");
-    assertNull(mediaType.charset());
+    assertThat(mediaType.charset()).isNull();
   }
 
   @Test public void testUnsupportedCharset() {
     MediaType mediaType = parse("text/plain; charset=utf-wtf");
-    assertNull(mediaType.charset());
+    assertThat(mediaType.charset()).isNull();
   }
 
   /**
@@ -172,39 +171,39 @@ public class MediaTypeTest {
    */
   @Test public void testCharsetNameIsSingleQuoted() throws Exception {
     MediaType mediaType = parse("text/plain;charset='utf-8'");
-    assertEquals("UTF-8", mediaType.charset().name());
+    assertThat(mediaType.charset().name()).isEqualTo("UTF-8");
   }
 
   @Test public void testCharsetNameIsDoubleQuotedAndSingleQuoted() throws Exception {
     MediaType mediaType = parse("text/plain;charset=\"'utf-8'\"");
-    assertNull(mediaType.charset());
+    assertThat(mediaType.charset()).isNull();
   }
 
   @Test public void testCharsetNameIsDoubleQuotedSingleQuote() throws Exception {
     MediaType mediaType = parse("text/plain;charset=\"'\"");
-    assertNull(mediaType.charset());
+    assertThat(mediaType.charset()).isNull();
   }
 
   @Test public void testDefaultCharset() throws Exception {
     MediaType noCharset = parse("text/plain");
-    assertEquals("UTF-8", noCharset.charset(UTF_8).name());
-    assertEquals("US-ASCII", noCharset.charset(Charset.forName("US-ASCII")).name());
+    assertThat(noCharset.charset(UTF_8).name()).isEqualTo("UTF-8");
+    assertThat(noCharset.charset(Charset.forName("US-ASCII")).name()).isEqualTo("US-ASCII");
 
     MediaType charset = parse("text/plain; charset=iso-8859-1");
-    assertEquals("ISO-8859-1", charset.charset(UTF_8).name());
-    assertEquals("ISO-8859-1", charset.charset(Charset.forName("US-ASCII")).name());
+    assertThat(charset.charset(UTF_8).name()).isEqualTo("ISO-8859-1");
+    assertThat(charset.charset(Charset.forName("US-ASCII")).name()).isEqualTo("ISO-8859-1");
   }
 
   @Test public void testParseDanglingSemicolon() throws Exception {
     MediaType mediaType = parse("text/plain;");
-    assertEquals("text", mediaType.type());
-    assertEquals("plain", mediaType.subtype());
-    assertNull(mediaType.charset());
-    assertEquals("text/plain;", mediaType.toString());
+    assertThat(mediaType.type()).isEqualTo("text");
+    assertThat(mediaType.subtype()).isEqualTo("plain");
+    assertThat(mediaType.charset()).isNull();
+    assertThat(mediaType.toString()).isEqualTo("text/plain;");
   }
 
   private void assertMediaType(String string) {
-    assertEquals(string, parse(string).toString());
+    assertThat(parse(string).toString()).isEqualTo(string);
   }
 
   private void assertInvalid(String string, String exceptionMessage) {
@@ -213,10 +212,10 @@ public class MediaTypeTest {
         parse(string);
         fail("Expected get of \"" + string + "\" to throw with: " + exceptionMessage);
       } catch (IllegalArgumentException e) {
-        assertEquals(exceptionMessage, e.getMessage());
+        assertThat(e.getMessage()).isEqualTo(exceptionMessage);
       }
     } else {
-      assertNull(string, parse(string));
+      assertThat(parse(string)).overridingErrorMessage(string).isNull();
     }
   }
 }

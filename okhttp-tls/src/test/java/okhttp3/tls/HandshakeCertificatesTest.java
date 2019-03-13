@@ -38,8 +38,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import static okhttp3.internal.Util.closeQuietly;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.assertj.core.api.Assertions.assertThat;
 
 public final class HandshakeCertificatesTest {
   private ExecutorService executorService;
@@ -92,17 +91,16 @@ public final class HandshakeCertificatesTest {
     Future<Handshake> clientHandshakeFuture = doClientHandshake(client, serverAddress);
 
     Handshake serverHandshake = serverHandshakeFuture.get();
-    assertEquals(serverHandshake.peerCertificates(),
-        Arrays.asList(clientCertificate.certificate(), clientIntermediate.certificate()));
-    assertEquals(serverHandshake.localCertificates(),
-        Arrays.asList(serverCertificate.certificate(), serverIntermediate.certificate()));
+    assertThat(Arrays.asList(clientCertificate.certificate(), clientIntermediate.certificate())).isEqualTo(
+        serverHandshake.peerCertificates());
+    assertThat(Arrays.asList(serverCertificate.certificate(), serverIntermediate.certificate())).isEqualTo(
+        serverHandshake.localCertificates());
 
     Handshake clientHandshake = clientHandshakeFuture.get();
-    assertEquals(clientHandshake.peerCertificates(),
-        Arrays.asList(serverCertificate.certificate(), serverIntermediate.certificate()));
-    assertEquals(clientHandshake.localCertificates(),
-        Arrays.asList(clientCertificate.certificate(), clientIntermediate.certificate()));
-
+    assertThat(Arrays.asList(serverCertificate.certificate(), serverIntermediate.certificate())).isEqualTo(
+        clientHandshake.peerCertificates());
+    assertThat(Arrays.asList(clientCertificate.certificate(), clientIntermediate.certificate())).isEqualTo(
+        clientHandshake.localCertificates());
   }
 
   @Test public void keyManager() {
@@ -122,8 +120,8 @@ public final class HandshakeCertificatesTest {
         .build();
     assertPrivateKeysEquals(certificate.keyPair().getPrivate(),
         handshakeCertificates.keyManager().getPrivateKey("private"));
-    assertEquals(Arrays.asList(certificate.certificate(), intermediate.certificate()),
-        Arrays.asList(handshakeCertificates.keyManager().getCertificateChain("private")));
+    assertThat(Arrays.asList(handshakeCertificates.keyManager().getCertificateChain("private"))).isEqualTo(
+        Arrays.asList(certificate.certificate(), intermediate.certificate()));
   }
 
   @Test public void platformTrustedCertificates() {
@@ -137,7 +135,7 @@ public final class HandshakeCertificatesTest {
       names.add(name.substring(0, name.indexOf(" ")));
     }
     // It's safe to assume all platforms will have a major Internet certificate issuer.
-    assertTrue(names.toString(), names.contains("CN=Entrust"));
+    assertThat(names.contains("CN=Entrust")).overridingErrorMessage(names.toString()).isTrue();
   }
 
   private InetSocketAddress startTlsServer() throws IOException {
@@ -186,6 +184,7 @@ public final class HandshakeCertificatesTest {
   }
 
   private void assertPrivateKeysEquals(PrivateKey expected, PrivateKey actual) {
-    assertEquals(ByteString.of(expected.getEncoded()), ByteString.of(actual.getEncoded()));
+    assertThat(ByteString.of(actual.getEncoded())).isEqualTo(
+        ByteString.of(expected.getEncoded()));
   }
 }

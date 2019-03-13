@@ -54,11 +54,8 @@ import static okhttp3.TestUtil.defaultClient;
 import static okhttp3.TestUtil.ensureAllConnectionsReleased;
 import static okhttp3.TestUtil.repeat;
 import static okhttp3.tls.internal.TlsUtil.localhost;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.data.Offset.offset;
 import static org.junit.Assert.fail;
 
 public final class WebSocketHttpTest {
@@ -73,7 +70,8 @@ public final class WebSocketHttpTest {
       .readTimeout(500, TimeUnit.MILLISECONDS)
       .addInterceptor(chain -> {
         Response response = chain.proceed(chain.request());
-        assertNotNull(response.body()); // Ensure application interceptors never see a null body.
+        // Ensure application interceptors never see a null body.
+        assertThat(response.body()).isNotNull();
         return response;
       })
       .build();
@@ -120,7 +118,7 @@ public final class WebSocketHttpTest {
       webSocket.send((String) null);
       fail();
     } catch (NullPointerException e) {
-      assertEquals("text == null", e.getMessage());
+      assertThat(e.getMessage()).isEqualTo("text == null");
     }
 
     closeWebSockets(webSocket, server);
@@ -136,7 +134,7 @@ public final class WebSocketHttpTest {
       webSocket.send((ByteString) null);
       fail();
     } catch (NullPointerException e) {
-      assertEquals("bytes == null", e.getMessage());
+      assertThat(e.getMessage()).isEqualTo("bytes == null");
     }
 
     closeWebSockets(webSocket, server);
@@ -189,7 +187,7 @@ public final class WebSocketHttpTest {
 
     newWebSocket();
 
-    assertEquals("", logs.take());
+    assertThat(logs.take()).isEqualTo("");
     logger.removeHandler(logs);
   }
 
@@ -372,10 +370,10 @@ public final class WebSocketHttpTest {
 
     client = client.newBuilder()
         .addInterceptor(chain -> {
-          assertNull(chain.request().body());
+          assertThat(chain.request().body()).isNull();
           Response response = chain.proceed(chain.request());
-          assertEquals("Upgrade", response.header("Connection"));
-          assertTrue(response.body().source().exhausted());
+          assertThat(response.header("Connection")).isEqualTo("Upgrade");
+          assertThat(response.body().source().exhausted()).isTrue();
           interceptedCount.incrementAndGet();
           return response;
         })
@@ -385,7 +383,7 @@ public final class WebSocketHttpTest {
 
     WebSocket webSocket = newWebSocket();
     clientListener.assertOpen();
-    assertEquals(1, interceptedCount.get());
+    assertThat(interceptedCount.get()).isEqualTo(1);
     webSocket.close(1000, null);
 
     WebSocket server = serverListener.assertOpen();
@@ -425,8 +423,9 @@ public final class WebSocketHttpTest {
 
       messageCount++;
       long queueSize = webSocket.queueSize();
-      assertTrue(queueSize >= 0 && queueSize <= messageCount * message.size());
-      assertTrue(messageCount < 32); // Expect to fail before enqueueing 32 MiB.
+      assertThat(queueSize >= 0 && queueSize <= messageCount * message.size()).isTrue();
+      // Expect to fail before enqueueing 32 MiB.
+      assertThat(messageCount < 32).isTrue();
     }
 
     // Confirm all sent messages were received, followed by a client-initiated close.
@@ -475,7 +474,7 @@ public final class WebSocketHttpTest {
       webSocket.close(1000, reason);
       fail();
     } catch (IllegalArgumentException expected) {
-      assertEquals("reason.size() > 123: " + reason, expected.getMessage());
+      assertThat(expected.getMessage()).isEqualTo(("reason.size() > 123: " + reason));
     }
 
     webSocket.close(1000, null);
@@ -525,7 +524,7 @@ public final class WebSocketHttpTest {
     WebSocket webSocket = newWebSocket();
 
     clientListener.assertFailure(SocketTimeoutException.class, "timeout", "Read timed out");
-    assertFalse(webSocket.close(1000, null));
+    assertThat(webSocket.close(1000, null)).isFalse();
   }
 
   /**
@@ -547,7 +546,7 @@ public final class WebSocketHttpTest {
     clientListener.assertOpen();
 
     clientListener.assertFailure(SocketTimeoutException.class, "timeout", "Read timed out");
-    assertFalse(webSocket.close(1000, null));
+    assertThat(webSocket.close(1000, null)).isFalse();
   }
 
   @Test public void readTimeoutDoesNotApplyAcrossFrames() throws Exception {
@@ -583,16 +582,17 @@ public final class WebSocketHttpTest {
     }
 
     long elapsedUntilPong3 = System.nanoTime() - startNanos;
-    assertEquals(1500, TimeUnit.NANOSECONDS.toMillis(elapsedUntilPong3), 250d);
+    assertThat((double) TimeUnit.NANOSECONDS.toMillis(elapsedUntilPong3)).isCloseTo((double) 1500, offset(
+        250d));
 
     // The client pinged the server 3 times, and it has ponged back 3 times.
-    assertEquals(3, webSocket.sentPingCount());
-    assertEquals(3, server.receivedPingCount());
-    assertEquals(3, webSocket.receivedPongCount());
+    assertThat(webSocket.sentPingCount()).isEqualTo(3);
+    assertThat(server.receivedPingCount()).isEqualTo(3);
+    assertThat(webSocket.receivedPongCount()).isEqualTo(3);
 
     // The server has never pinged the client.
-    assertEquals(0, server.receivedPongCount());
-    assertEquals(0, webSocket.receivedPingCount());
+    assertThat(server.receivedPongCount()).isEqualTo(0);
+    assertThat(webSocket.receivedPingCount()).isEqualTo(0);
 
     closeWebSockets(webSocket, server);
   }
@@ -607,12 +607,12 @@ public final class WebSocketHttpTest {
     Thread.sleep(1000);
 
     // No pings and no pongs.
-    assertEquals(0, webSocket.sentPingCount());
-    assertEquals(0, webSocket.receivedPingCount());
-    assertEquals(0, webSocket.receivedPongCount());
-    assertEquals(0, server.sentPingCount());
-    assertEquals(0, server.receivedPingCount());
-    assertEquals(0, server.receivedPongCount());
+    assertThat(webSocket.sentPingCount()).isEqualTo(0);
+    assertThat(webSocket.receivedPingCount()).isEqualTo(0);
+    assertThat(webSocket.receivedPongCount()).isEqualTo(0);
+    assertThat(server.sentPingCount()).isEqualTo(0);
+    assertThat(server.receivedPingCount()).isEqualTo(0);
+    assertThat(server.receivedPongCount()).isEqualTo(0);
 
     closeWebSockets(webSocket, server);
   }
@@ -647,7 +647,8 @@ public final class WebSocketHttpTest {
     latch.countDown();
 
     long elapsedUntilFailure = System.nanoTime() - openAtNanos;
-    assertEquals(1000, TimeUnit.NANOSECONDS.toMillis(elapsedUntilFailure), 250d);
+    assertThat((double) TimeUnit.NANOSECONDS.toMillis(elapsedUntilFailure)).isCloseTo((double) 1000, offset(
+        250d));
   }
 
   /** https://github.com/square/okhttp/issues/2788 */
@@ -666,7 +667,8 @@ public final class WebSocketHttpTest {
     // Confirm that the hard cancel occurred after 500 ms.
     clientListener.assertFailure();
     long elapsedUntilFailure = System.nanoTime() - closeAtNanos;
-    assertEquals(500, TimeUnit.NANOSECONDS.toMillis(elapsedUntilFailure), 250d);
+    assertThat((double) TimeUnit.NANOSECONDS.toMillis(elapsedUntilFailure)).isCloseTo((double) 500, offset(
+        250d));
 
     // Close the server and confirm it saw what we expected.
     server.close(1000, null);
@@ -697,7 +699,7 @@ public final class WebSocketHttpTest {
     clientListener.assertClosed(1000, "");
     serverListener.assertClosed(1000, "");
 
-    assertEquals(Collections.emptyList(), listener.recordedEventTypes());
+    assertThat(listener.recordedEventTypes()).isEqualTo(Collections.emptyList());
   }
 
   @Test public void callTimeoutAppliesToSetup() throws Exception {
@@ -759,8 +761,8 @@ public final class WebSocketHttpTest {
     Response response = client.newCall(regularRequest).execute();
     response.close();
 
-    assertEquals(0, webServer.takeRequest().getSequenceNumber());
-    assertEquals(1, webServer.takeRequest().getSequenceNumber());
+    assertThat(webServer.takeRequest().getSequenceNumber()).isEqualTo(0);
+    assertThat(webServer.takeRequest().getSequenceNumber()).isEqualTo(1);
   }
 
   private MockResponse upgradeResponse(RecordedRequest request) {

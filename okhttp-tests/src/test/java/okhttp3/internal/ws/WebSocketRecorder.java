@@ -28,10 +28,7 @@ import okhttp3.WebSocketListener;
 import okhttp3.internal.platform.Platform;
 import okio.ByteString;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertSame;
-import static org.junit.Assert.assertTrue;
+import static org.assertj.core.api.Assertions.assertThat;
 
 public final class WebSocketRecorder extends WebSocketListener {
   private final String name;
@@ -135,36 +132,36 @@ public final class WebSocketRecorder extends WebSocketListener {
 
   public void assertTextMessage(String payload) {
     Object actual = nextEvent();
-    assertEquals(new Message(payload), actual);
+    assertThat(actual).isEqualTo(new Message(payload));
   }
 
   public void assertBinaryMessage(ByteString payload) {
     Object actual = nextEvent();
-    assertEquals(new Message(payload), actual);
+    assertThat(actual).isEqualTo(new Message(payload));
   }
 
   public void assertPing(ByteString payload) {
     Object actual = nextEvent();
-    assertEquals(new Ping(payload), actual);
+    assertThat(actual).isEqualTo(new Ping(payload));
   }
 
   public void assertPong(ByteString payload) {
     Object actual = nextEvent();
-    assertEquals(new Pong(payload), actual);
+    assertThat(actual).isEqualTo(new Pong(payload));
   }
 
   public void assertClosing(int code, String reason) {
     Object actual = nextEvent();
-    assertEquals(new Closing(code, reason), actual);
+    assertThat(actual).isEqualTo(new Closing(code, reason));
   }
 
   public void assertClosed(int code, String reason) {
     Object actual = nextEvent();
-    assertEquals(new Closed(code, reason), actual);
+    assertThat(actual).isEqualTo(new Closed(code, reason));
   }
 
   public void assertExhausted() {
-    assertTrue("Remaining events: " + events, events.isEmpty());
+    assertThat(events.isEmpty()).overridingErrorMessage("Remaining events: " + events).isTrue();
   }
 
   public WebSocket assertOpen() {
@@ -181,8 +178,8 @@ public final class WebSocketRecorder extends WebSocketListener {
       throw new AssertionError("Expected Failure but was " + event);
     }
     Failure failure = (Failure) event;
-    assertNull(failure.response);
-    assertSame(t, failure.t);
+    assertThat(failure.response).isNull();
+    assertThat(failure.t).isSameAs(t);
   }
 
   public void assertFailure(Class<? extends IOException> cls, String... messages) {
@@ -191,10 +188,11 @@ public final class WebSocketRecorder extends WebSocketListener {
       throw new AssertionError("Expected Failure but was " + event);
     }
     Failure failure = (Failure) event;
-    assertNull(failure.response);
-    assertEquals(cls, failure.t.getClass());
+    assertThat(failure.response).isNull();
+    assertThat(failure.t.getClass()).isEqualTo(cls);
     if (messages.length > 0) {
-      assertTrue(failure.t.getMessage(), Arrays.asList(messages).contains(failure.t.getMessage()));
+      assertThat(Arrays.asList(messages).contains(failure.t.getMessage())).overridingErrorMessage(
+          failure.t.getMessage()).isTrue();
     }
   }
 
@@ -212,12 +210,12 @@ public final class WebSocketRecorder extends WebSocketListener {
       throw new AssertionError("Expected Failure but was " + event);
     }
     Failure failure = (Failure) event;
-    assertEquals(code, failure.response.code());
+    assertThat(failure.response.code()).isEqualTo(code);
     if (body != null) {
-      assertEquals(body, failure.responseBody);
+      assertThat(failure.responseBody).isEqualTo(body);
     }
-    assertEquals(cls, failure.t.getClass());
-    assertEquals(message, failure.t.getMessage());
+    assertThat(failure.t.getClass()).isEqualTo(cls);
+    assertThat(failure.t.getMessage()).isEqualTo(message);
   }
 
   /** Expose this recorder as a frame callback and shim in "ping" events. */

@@ -38,11 +38,6 @@
       <version>1.17</version>
       <scope>provided</scope>
     </dependency>
-    <!-- TODO: remove this -->
-    <dependency>
-      <groupId>org.assertj</groupId>
-      <artifactId>assertj-core</artifactId>
-    </dependency>
   </dependencies>
 
   <build>

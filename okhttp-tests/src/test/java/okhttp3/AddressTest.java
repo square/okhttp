@@ -22,8 +22,7 @@ import okhttp3.internal.Util;
 import okhttp3.internal.http.RecordingProxySelector;
 import org.junit.Test;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
+import static org.assertj.core.api.Assertions.assertThat;
 
 public final class AddressTest {
   private Dns dns = Dns.SYSTEM;
@@ -38,8 +37,8 @@ public final class AddressTest {
         authenticator, null, protocols, connectionSpecs, proxySelector);
     Address b = new Address("square.com", 80, dns, socketFactory, null, null, null,
         authenticator, null, protocols, connectionSpecs, proxySelector);
-    assertEquals(a, b);
-    assertEquals(a.hashCode(), b.hashCode());
+    assertThat(b).isEqualTo(a);
+    assertThat(b.hashCode()).isEqualTo(a.hashCode());
   }
 
   @Test public void differentProxySelectorsAreDifferent() throws Exception {
@@ -47,19 +46,20 @@ public final class AddressTest {
         authenticator, null, protocols, connectionSpecs, new RecordingProxySelector());
     Address b = new Address("square.com", 80, dns, socketFactory, null, null, null,
         authenticator, null, protocols, connectionSpecs, new RecordingProxySelector());
-    assertNotEquals(a, b);
+    assertThat(b).isNotEqualTo(a);
   }
 
   @Test public void addressToString() throws Exception {
     Address address = new Address("square.com", 80, dns, socketFactory, null, null, null,
         authenticator, null, protocols, connectionSpecs, proxySelector);
-    assertEquals("Address{square.com:80, proxySelector=RecordingProxySelector}",
-        address.toString());
+    assertThat(address.toString()).isEqualTo(
+        "Address{square.com:80, proxySelector=RecordingProxySelector}");
   }
 
   @Test public void addressWithProxyToString() throws Exception {
     Address address = new Address("square.com", 80, dns, socketFactory, null, null, null,
         authenticator, Proxy.NO_PROXY, protocols, connectionSpecs, proxySelector);
-    assertEquals("Address{square.com:80, proxy=" + Proxy.NO_PROXY + "}", address.toString());
+    assertThat(address.toString()).isEqualTo(
+        "Address{square.com:80, proxy=" + Proxy.NO_PROXY + "}");
   }
 }

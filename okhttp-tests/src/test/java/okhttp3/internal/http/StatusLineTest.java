@@ -20,7 +20,7 @@ import java.net.ProtocolException;
 import okhttp3.Protocol;
 import org.junit.Test;
 
-import static org.junit.Assert.assertEquals;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.fail;
 
 public final class StatusLineTest {
@@ -29,18 +29,18 @@ public final class StatusLineTest {
     int version = 1;
     int code = 200;
     StatusLine statusLine = StatusLine.parse("HTTP/1." + version + " " + code + " " + message);
-    assertEquals(message, statusLine.message);
-    assertEquals(Protocol.HTTP_1_1, statusLine.protocol);
-    assertEquals(code, statusLine.code);
+    assertThat(statusLine.message).isEqualTo(message);
+    assertThat(statusLine.protocol).isEqualTo(Protocol.HTTP_1_1);
+    assertThat(statusLine.code).isEqualTo(code);
   }
 
   @Test public void emptyMessage() throws IOException {
     int version = 1;
     int code = 503;
     StatusLine statusLine = StatusLine.parse("HTTP/1." + version + " " + code + " ");
-    assertEquals("", statusLine.message);
-    assertEquals(Protocol.HTTP_1_1, statusLine.protocol);
-    assertEquals(code, statusLine.code);
+    assertThat(statusLine.message).isEqualTo("");
+    assertThat(statusLine.protocol).isEqualTo(Protocol.HTTP_1_1);
+    assertThat(statusLine.code).isEqualTo(code);
   }
 
   /**
@@ -51,17 +51,17 @@ public final class StatusLineTest {
     int version = 1;
     int code = 503;
     StatusLine statusLine = StatusLine.parse("HTTP/1." + version + " " + code);
-    assertEquals("", statusLine.message);
-    assertEquals(Protocol.HTTP_1_1, statusLine.protocol);
-    assertEquals(code, statusLine.code);
+    assertThat(statusLine.message).isEqualTo("");
+    assertThat(statusLine.protocol).isEqualTo(Protocol.HTTP_1_1);
+    assertThat(statusLine.code).isEqualTo(code);
   }
 
   // https://github.com/square/okhttp/issues/386
   @Test public void shoutcast() throws IOException {
     StatusLine statusLine = StatusLine.parse("ICY 200 OK");
-    assertEquals("OK", statusLine.message);
-    assertEquals(Protocol.HTTP_1_0, statusLine.protocol);
-    assertEquals(200, statusLine.code);
+    assertThat(statusLine.message).isEqualTo("OK");
+    assertThat(statusLine.protocol).isEqualTo(Protocol.HTTP_1_0);
+    assertThat(statusLine.code).isEqualTo(200);
   }
 
   @Test public void missingProtocol() throws IOException {

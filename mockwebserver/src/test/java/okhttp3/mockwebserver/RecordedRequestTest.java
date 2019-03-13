@@ -26,7 +26,7 @@ import okhttp3.internal.Util;
 import okio.Buffer;
 import org.junit.Test;
 
-import static org.junit.Assert.assertEquals;
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class RecordedRequestTest {
   Headers headers = Util.EMPTY_HEADERS;
@@ -76,7 +76,7 @@ public class RecordedRequestTest {
     RecordedRequest request = new RecordedRequest("GET / HTTP/1.1", headers,
         Collections.emptyList(), 0, new Buffer(), 0, socket);
 
-    assertEquals("http://127.0.0.1/", request.getRequestUrl().toString());
+    assertThat(request.getRequestUrl().toString()).isEqualTo("http://127.0.0.1/");
   }
 
   @Test public void testIpv6() throws UnknownHostException {
@@ -86,7 +86,7 @@ public class RecordedRequestTest {
     RecordedRequest request = new RecordedRequest("GET / HTTP/1.1", headers,
         Collections.emptyList(), 0, new Buffer(), 0, socket);
 
-    assertEquals("http://[::1]/", request.getRequestUrl().toString());
+    assertThat(request.getRequestUrl().toString()).isEqualTo("http://[::1]/");
   }
 
   @Test public void testUsesLocal() throws UnknownHostException {
@@ -96,6 +96,6 @@ public class RecordedRequestTest {
     RecordedRequest request = new RecordedRequest("GET / HTTP/1.1", headers,
         Collections.emptyList(), 0, new Buffer(), 0, socket);
 
-    assertEquals("http://127.0.0.1/", request.getRequestUrl().toString());
+    assertThat(request.getRequestUrl().toString()).isEqualTo("http://127.0.0.1/");
   }
 }

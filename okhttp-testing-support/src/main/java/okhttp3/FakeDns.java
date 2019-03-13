@@ -23,6 +23,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertEquals;
 
 public final class FakeDns implements Dns {
@@ -56,7 +57,7 @@ public final class FakeDns implements Dns {
   }
 
   public void assertRequests(String... expectedHosts) {
-    assertEquals(Arrays.asList(expectedHosts), requestedHosts);
+    Assertions.assertThat(requestedHosts).isEqualTo(Arrays.asList(expectedHosts));
     requestedHosts.clear();
   }
 

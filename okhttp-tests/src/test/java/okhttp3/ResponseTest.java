@@ -23,27 +23,27 @@ import okio.Source;
 import okio.Timeout;
 import org.junit.Test;
 
-import static org.junit.Assert.assertEquals;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.fail;
 
 public final class ResponseTest {
   @Test public void peekShorterThanResponse() throws Exception {
     Response response = newResponse(responseBody("abcdef"));
     ResponseBody peekedBody = response.peekBody(3);
-    assertEquals("abc", peekedBody.string());
-    assertEquals("abcdef", response.body().string());
+    assertThat(peekedBody.string()).isEqualTo("abc");
+    assertThat(response.body().string()).isEqualTo("abcdef");
   }
 
   @Test public void peekLongerThanResponse() throws Exception {
     Response response = newResponse(responseBody("abc"));
     ResponseBody peekedBody = response.peekBody(6);
-    assertEquals("abc", peekedBody.string());
-    assertEquals("abc", response.body().string());
+    assertThat(peekedBody.string()).isEqualTo("abc");
+    assertThat(response.body().string()).isEqualTo("abc");
   }
 
   @Test public void peekAfterReadingResponse() throws Exception {
     Response response = newResponse(responseBody("abc"));
-    assertEquals("abc", response.body().string());
+    assertThat(response.body().string()).isEqualTo("abc");
 
     try {
       response.peekBody(3);
@@ -56,9 +56,9 @@ public final class ResponseTest {
     Response response = newResponse(responseBody("abcdef"));
     ResponseBody p1 = response.peekBody(4);
     ResponseBody p2 = response.peekBody(2);
-    assertEquals("abcdef", response.body().string());
-    assertEquals("abcd", p1.string());
-    assertEquals("ab", p2.string());
+    assertThat(response.body().string()).isEqualTo("abcdef");
+    assertThat(p1.string()).isEqualTo("abcd");
+    assertThat(p2.string()).isEqualTo("ab");
   }
 
   /**

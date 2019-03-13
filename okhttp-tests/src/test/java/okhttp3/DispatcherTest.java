@@ -20,9 +20,7 @@ import org.junit.Rule;
 import org.junit.Test;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.fail;
 
 public final class DispatcherTest {
@@ -176,10 +174,10 @@ public final class DispatcherTest {
     a3.enqueue(callback);
     a4.enqueue(callback);
     a5.enqueue(callback);
-    assertEquals(3, dispatcher.runningCallsCount());
-    assertEquals(2, dispatcher.queuedCallsCount());
-    assertEquals(set(a1, a2, a3), set(dispatcher.runningCalls()));
-    assertEquals(set(a4, a5), set(dispatcher.queuedCalls()));
+    assertThat(dispatcher.runningCallsCount()).isEqualTo(3);
+    assertThat(dispatcher.queuedCallsCount()).isEqualTo(2);
+    assertThat(set(dispatcher.runningCalls())).isEqualTo(set(a1, a2, a3));
+    assertThat(set(dispatcher.queuedCalls())).isEqualTo(set(a4, a5));
   }
 
   @Test public void synchronousCallAccessors() throws Exception {
@@ -206,16 +204,16 @@ public final class DispatcherTest {
 
     // We created 4 calls and started 2 of them. That's 2 running calls and 0 queued.
     ready.await();
-    assertEquals(2, dispatcher.runningCallsCount());
-    assertEquals(0, dispatcher.queuedCallsCount());
-    assertEquals(set(a1, a2), set(dispatcher.runningCalls()));
-    assertEquals(Collections.emptyList(), dispatcher.queuedCalls());
+    assertThat(dispatcher.runningCallsCount()).isEqualTo(2);
+    assertThat(dispatcher.queuedCallsCount()).isEqualTo(0);
+    assertThat(set(dispatcher.runningCalls())).isEqualTo(set(a1, a2));
+    assertThat(dispatcher.queuedCalls()).isEqualTo(Collections.emptyList());
 
     // Cancel some calls. That doesn't impact running or queued.
     a2.cancel();
     a3.cancel();
-    assertEquals(set(a1, a2), set(dispatcher.runningCalls()));
-    assertEquals(Collections.emptyList(), dispatcher.queuedCalls());
+    assertThat(set(dispatcher.runningCalls())).isEqualTo(set(a1, a2));
+    assertThat(dispatcher.queuedCalls()).isEqualTo(Collections.emptyList());
 
     // Let the calls finish.
     waiting.countDown();
@@ -223,22 +221,22 @@ public final class DispatcherTest {
     t2.join();
 
     // Now we should have 0 running calls and 0 queued calls.
-    assertEquals(0, dispatcher.runningCallsCount());
-    assertEquals(0, dispatcher.queuedCallsCount());
-    assertEquals(Collections.emptyList(), dispatcher.runningCalls());
-    assertEquals(Collections.emptyList(), dispatcher.queuedCalls());
+    assertThat(dispatcher.runningCallsCount()).isEqualTo(0);
+    assertThat(dispatcher.queuedCallsCount()).isEqualTo(0);
+    assertThat(dispatcher.runningCalls()).isEqualTo(Collections.emptyList());
+    assertThat(dispatcher.queuedCalls()).isEqualTo(Collections.emptyList());
 
-    assertTrue(a1.isExecuted());
-    assertFalse(a1.isCanceled());
+    assertThat(a1.isExecuted()).isTrue();
+    assertThat(a1.isCanceled()).isFalse();
 
-    assertTrue(a2.isExecuted());
-    assertTrue(a2.isCanceled());
+    assertThat(a2.isExecuted()).isTrue();
+    assertThat(a2.isCanceled()).isTrue();
 
-    assertFalse(a3.isExecuted());
-    assertTrue(a3.isCanceled());
+    assertThat(a3.isExecuted()).isFalse();
+    assertThat(a3.isCanceled()).isTrue();
 
-    assertFalse(a4.isExecuted());
-    assertFalse(a4.isCanceled());
+    assertThat(a4.isExecuted()).isFalse();
+    assertThat(a4.isCanceled()).isFalse();
   }
 
   @Test public void idleCallbackInvokedWhenIdle() throws Exception {
@@ -248,7 +246,7 @@ public final class DispatcherTest {
     client.newCall(newRequest("http://a/1")).enqueue(callback);
     client.newCall(newRequest("http://a/2")).enqueue(callback);
     executor.finishJob("http://a/1");
-    assertFalse(idle.get());
+    assertThat(idle.get()).isFalse();
 
     CountDownLatch ready = new CountDownLatch(1);
     CountDownLatch proceed = new CountDownLatch(1);
@@ -267,11 +265,11 @@ public final class DispatcherTest {
     Thread t1 = makeSynchronousCall(client.newCall(newRequest("http://a/3")));
     ready.await(5, SECONDS);
     executor.finishJob("http://a/2");
-    assertFalse(idle.get());
+    assertThat(idle.get()).isFalse();
 
     proceed.countDown();
     t1.join();
-    assertTrue(idle.get());
+    assertThat(idle.get()).isTrue();
   }
 
   @Test public void executionRejectedImmediately() throws Exception {
@@ -279,7 +277,8 @@ public final class DispatcherTest {
     executor.shutdown();
     client.newCall(request).enqueue(callback);
     callback.await(request.url()).assertFailure(InterruptedIOException.class);
-    assertEquals(Arrays.asList("CallStart", "CallFailed"), listener.recordedEventTypes());
+    assertThat(listener.recordedEventTypes()).isEqualTo(
+        Arrays.asList("CallStart", "CallFailed"));
   }
 
   @Test public void executionRejectedAfterMaxRequestsChange() throws Exception {
@@ -292,8 +291,8 @@ public final class DispatcherTest {
     dispatcher.setMaxRequests(2); // Trigger promotion.
     callback.await(request2.url()).assertFailure(InterruptedIOException.class);
 
-    assertEquals(Arrays.asList("CallStart", "CallStart", "CallFailed"),
-        listener.recordedEventTypes());
+    assertThat(listener.recordedEventTypes()).isEqualTo(
+        Arrays.asList("CallStart", "CallStart", "CallFailed"));
   }
 
   @Test public void executionRejectedAfterMaxRequestsPerHostChange() throws Exception {
@@ -305,8 +304,8 @@ public final class DispatcherTest {
     client.newCall(request2).enqueue(callback);
     dispatcher.setMaxRequestsPerHost(2); // Trigger promotion.
     callback.await(request2.url()).assertFailure(InterruptedIOException.class);
-    assertEquals(Arrays.asList("CallStart", "CallStart", "CallFailed"),
-        listener.recordedEventTypes());
+    assertThat(listener.recordedEventTypes()).isEqualTo(
+        Arrays.asList("CallStart", "CallStart", "CallFailed"));
   }
 
   @Test public void executionRejectedAfterPrecedingCallFinishes() throws Exception {
@@ -318,8 +317,8 @@ public final class DispatcherTest {
     client.newCall(request2).enqueue(callback);
     executor.finishJob("http://a/1"); // Trigger promotion.
     callback.await(request2.url()).assertFailure(InterruptedIOException.class);
-    assertEquals(Arrays.asList("CallStart", "CallStart", "CallFailed"),
-        listener.recordedEventTypes());
+    assertThat(listener.recordedEventTypes()).isEqualTo(
+        Arrays.asList("CallStart", "CallStart", "CallFailed"));
   }
 
   @SafeVarargs
@@ -357,7 +356,7 @@ public final class DispatcherTest {
       for (AsyncCall call : calls) {
         actualUrls.add(call.request().url().toString());
       }
-      assertEquals(Arrays.asList(expectedUrls), actualUrls);
+      assertThat(actualUrls).isEqualTo(Arrays.asList(expectedUrls));
     }
 
     public void finishJob(String url) {

@@ -18,8 +18,7 @@ package okhttp3.internal.platform;
 import org.junit.Test;
 
 import static okhttp3.internal.platform.PlatformTest.getPlatform;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assume.assumeTrue;
 
 public class Jdk9PlatformTest {
@@ -27,7 +26,7 @@ public class Jdk9PlatformTest {
   public void buildsWhenJdk9() {
     assumeTrue(getPlatform().equals("jdk9"));
 
-    assertNotNull(Jdk9Platform.buildIfSupported());
+    assertThat(Jdk9Platform.buildIfSupported()).isNotNull();
   }
 
   @Test
@@ -36,12 +35,12 @@ public class Jdk9PlatformTest {
 
     Jdk9Platform platform = Jdk9Platform.buildIfSupported();
 
-    assertEquals("getApplicationProtocol", platform.getProtocolMethod.getName());
-    assertEquals("setApplicationProtocols", platform.setProtocolMethod.getName());
+    assertThat(platform.getProtocolMethod.getName()).isEqualTo("getApplicationProtocol");
+    assertThat(platform.setProtocolMethod.getName()).isEqualTo("setApplicationProtocols");
   }
 
   @Test
   public void testToStringIsClassname() {
-    assertEquals("Jdk9Platform", new Jdk9Platform(null, null).toString());
+    assertThat(new Jdk9Platform(null, null).toString()).isEqualTo("Jdk9Platform");
   }
 }

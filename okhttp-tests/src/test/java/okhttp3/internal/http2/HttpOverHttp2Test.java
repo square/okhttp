@@ -65,6 +65,7 @@ import okio.Buffer;
 import okio.BufferedSink;
 import okio.GzipSink;
 import okio.Okio;
+import org.assertj.core.api.Assertions;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Ignore;
@@ -80,11 +81,9 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static okhttp3.tls.internal.TlsUtil.localhost;
+import static org.assertj.core.data.Offset.offset;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeTrue;
@@ -163,15 +162,16 @@ public final class HttpOverHttp2Test {
         .build());
     Response response = call.execute();
 
-    assertEquals("ABCDE", response.body().string());
-    assertEquals(200, response.code());
-    assertEquals("", response.message());
-    assertEquals(protocol, response.protocol());
+    Assertions.assertThat(response.body().string()).isEqualTo("ABCDE");
+    Assertions.assertThat(response.code()).isEqualTo(200);
+    Assertions.assertThat(response.message()).isEqualTo("");
+    Assertions.assertThat(response.protocol()).isEqualTo(protocol);
 
     RecordedRequest request = server.takeRequest();
-    assertEquals("GET /foo HTTP/1.1", request.getRequestLine());
-    assertEquals(scheme, request.getHeader(":scheme"));
-    assertEquals(server.getHostName() + ":" + server.getPort(), request.getHeader(":authority"));
+    Assertions.assertThat(request.getRequestLine()).isEqualTo("GET /foo HTTP/1.1");
+    Assertions.assertThat(request.getHeader(":scheme")).isEqualTo(scheme);
+    Assertions.assertThat(request.getHeader(":authority")).isEqualTo(
+        (server.getHostName() + ":" + server.getPort()));
   }
 
   @Test public void emptyResponse() throws IOException {
@@ -182,7 +182,7 @@ public final class HttpOverHttp2Test {
         .build());
     Response response = call.execute();
 
-    assertEquals(-1, response.body().byteStream().read());
+    Assertions.assertThat(response.body().byteStream().read()).isEqualTo(-1);
     response.body().close();
   }
 
@@ -205,12 +205,12 @@ public final class HttpOverHttp2Test {
         .build());
 
     Response response = call.execute();
-    assertEquals("ABCDE", response.body().string());
+    Assertions.assertThat(response.body().string()).isEqualTo("ABCDE");
 
     RecordedRequest request = server.takeRequest();
-    assertEquals("POST /foo HTTP/1.1", request.getRequestLine());
+    Assertions.assertThat(request.getRequestLine()).isEqualTo("POST /foo HTTP/1.1");
     assertArrayEquals(postBytes, request.getBody().readByteArray());
-    assertNull(request.getHeader("Content-Length"));
+    Assertions.assertThat(request.getHeader("Content-Length")).isNull();
   }
 
   @Test public void userSuppliedContentLengthHeader() throws Exception {
@@ -236,12 +236,13 @@ public final class HttpOverHttp2Test {
         .build());
 
     Response response = call.execute();
-    assertEquals("ABCDE", response.body().string());
+    Assertions.assertThat(response.body().string()).isEqualTo("ABCDE");
 
     RecordedRequest request = server.takeRequest();
-    assertEquals("POST /foo HTTP/1.1", request.getRequestLine());
+    Assertions.assertThat(request.getRequestLine()).isEqualTo("POST /foo HTTP/1.1");
     assertArrayEquals(postBytes, request.getBody().readByteArray());
-    assertEquals(postBytes.length, Integer.parseInt(request.getHeader("Content-Length")));
+    Assertions.assertThat(Integer.parseInt(request.getHeader("Content-Length"))).isEqualTo(
+        (long) postBytes.length);
   }
 
   @Test public void closeAfterFlush() throws Exception {
@@ -269,12 +270,13 @@ public final class HttpOverHttp2Test {
         .build());
 
     Response response = call.execute();
-    assertEquals("ABCDE", response.body().string());
+    Assertions.assertThat(response.body().string()).isEqualTo("ABCDE");
 
     RecordedRequest request = server.takeRequest();
-    assertEquals("POST /foo HTTP/1.1", request.getRequestLine());
+    Assertions.assertThat(request.getRequestLine()).isEqualTo("POST /foo HTTP/1.1");
     assertArrayEquals(postBytes, request.getBody().readByteArray());
-    assertEquals(postBytes.length, Integer.parseInt(request.getHeader("Content-Length")));
+    Assertions.assertThat(Integer.parseInt(request.getHeader("Content-Length"))).isEqualTo(
+        (long) postBytes.length);
   }
 
   @Test public void connectionReuse() throws Exception {
@@ -290,12 +292,12 @@ public final class HttpOverHttp2Test {
     Response response1 = call1.execute();
     Response response2 = call2.execute();
 
-    assertEquals("ABC", response1.body().source().readUtf8(3));
-    assertEquals("GHI", response2.body().source().readUtf8(3));
-    assertEquals("DEF", response1.body().source().readUtf8(3));
-    assertEquals("JKL", response2.body().source().readUtf8(3));
-    assertEquals(0, server.takeRequest().getSequenceNumber());
-    assertEquals(1, server.takeRequest().getSequenceNumber());
+    Assertions.assertThat(response1.body().source().readUtf8(3)).isEqualTo("ABC");
+    Assertions.assertThat(response2.body().source().readUtf8(3)).isEqualTo("GHI");
+    Assertions.assertThat(response1.body().source().readUtf8(3)).isEqualTo("DEF");
+    Assertions.assertThat(response2.body().source().readUtf8(3)).isEqualTo("JKL");
+    Assertions.assertThat(server.takeRequest().getSequenceNumber()).isEqualTo(0);
+    Assertions.assertThat(server.takeRequest().getSequenceNumber()).isEqualTo(1);
 
     response1.close();
     response2.close();
@@ -317,14 +319,14 @@ public final class HttpOverHttp2Test {
     // Cancel the call and discard what we've buffered for the response body. This should free up
     // the connection flow-control window so new requests can proceed.
     call1.cancel();
-    assertFalse("Call should not have completed successfully.",
-        Util.discard(response1.body().source(), 1, TimeUnit.SECONDS));
+    Assertions.assertThat(Util.discard(response1.body().source(), 1, TimeUnit.SECONDS)).overridingErrorMessage(
+        "Call should not have completed successfully.").isFalse();
 
     Call call2 = client.newCall(new Request.Builder()
         .url(server.url("/"))
         .build());
     Response response2 = call2.execute();
-    assertEquals("abc", response2.body().string());
+    Assertions.assertThat(response2.body().string()).isEqualTo("abc");
   }
 
   /** Wait for the client to receive {@code dataLength} DATA frames. */
@@ -361,7 +363,7 @@ public final class HttpOverHttp2Test {
         .url(server.url("/"))
         .build());
     Response response2 = call2.execute();
-    assertEquals("abc", response2.body().string());
+    Assertions.assertThat(response2.body().string()).isEqualTo("abc");
   }
 
   @Test public void concurrentRequestWithEmptyFlowControlWindow() throws Exception {
@@ -377,9 +379,10 @@ public final class HttpOverHttp2Test {
 
     waitForDataFrames(Http2Connection.OKHTTP_CLIENT_WINDOW_SIZE);
 
-    assertEquals(Http2Connection.OKHTTP_CLIENT_WINDOW_SIZE, response1.body().contentLength());
+    Assertions.assertThat(response1.body().contentLength()).isEqualTo(
+        (long) Http2Connection.OKHTTP_CLIENT_WINDOW_SIZE);
     int read = response1.body().source().read(new byte[8192]);
-    assertEquals(8192, read);
+    Assertions.assertThat(read).isEqualTo(8192);
 
     // Make a second call that should transmit the response headers. The response body won't be
     // transmitted until the flow-control window is updated from the first request.
@@ -387,13 +390,13 @@ public final class HttpOverHttp2Test {
         .url(server.url("/"))
         .build());
     Response response2 = call2.execute();
-    assertEquals(200, response2.code());
+    Assertions.assertThat(response2.code()).isEqualTo(200);
 
     // Close the response body. This should discard the buffered data and update the connection
     // flow-control window.
     response1.close();
 
-    assertEquals("abc", response2.body().string());
+    Assertions.assertThat(response2.body().string()).isEqualTo("abc");
   }
 
   /** https://github.com/square/okhttp/issues/373 */
@@ -406,8 +409,8 @@ public final class HttpOverHttp2Test {
     executor.execute(new AsyncRequest("/r1", countDownLatch));
     executor.execute(new AsyncRequest("/r2", countDownLatch));
     countDownLatch.await();
-    assertEquals(0, server.takeRequest().getSequenceNumber());
-    assertEquals(1, server.takeRequest().getSequenceNumber());
+    Assertions.assertThat(server.takeRequest().getSequenceNumber()).isEqualTo(0);
+    Assertions.assertThat(server.takeRequest().getSequenceNumber()).isEqualTo(1);
   }
 
   @Test public void gzippedResponseBody() throws Exception {
@@ -420,7 +423,7 @@ public final class HttpOverHttp2Test {
         .build());
 
     Response response = call.execute();
-    assertEquals("ABCABCABC", response.body().string());
+    Assertions.assertThat(response.body().string()).isEqualTo("ABCABCABC");
   }
 
   @Test public void authenticate() throws Exception {
@@ -440,13 +443,13 @@ public final class HttpOverHttp2Test {
         .url(server.url("/"))
         .build());
     Response response = call.execute();
-    assertEquals("Successful auth!", response.body().string());
+    Assertions.assertThat(response.body().string()).isEqualTo("Successful auth!");
 
     RecordedRequest denied = server.takeRequest();
-    assertNull(denied.getHeader("Authorization"));
+    Assertions.assertThat(denied.getHeader("Authorization")).isNull();
     RecordedRequest accepted = server.takeRequest();
-    assertEquals("GET / HTTP/1.1", accepted.getRequestLine());
-    assertEquals(credential, accepted.getHeader("Authorization"));
+    Assertions.assertThat(accepted.getRequestLine()).isEqualTo("GET / HTTP/1.1");
+    Assertions.assertThat(accepted.getHeader("Authorization")).isEqualTo(credential);
   }
 
   @Test public void redirect() throws Exception {
@@ -460,12 +463,12 @@ public final class HttpOverHttp2Test {
         .build());
 
     Response response = call.execute();
-    assertEquals("This is the new location!", response.body().string());
+    Assertions.assertThat(response.body().string()).isEqualTo("This is the new location!");
 
     RecordedRequest request1 = server.takeRequest();
-    assertEquals("/", request1.getPath());
+    Assertions.assertThat(request1.getPath()).isEqualTo("/");
     RecordedRequest request2 = server.takeRequest();
-    assertEquals("/foo", request2.getPath());
+    Assertions.assertThat(request2.getPath()).isEqualTo("/foo");
   }
 
   @Test public void readAfterLastByte() throws Exception {
@@ -477,11 +480,11 @@ public final class HttpOverHttp2Test {
     Response response = call.execute();
 
     InputStream in = response.body().byteStream();
-    assertEquals('A', in.read());
-    assertEquals('B', in.read());
-    assertEquals('C', in.read());
-    assertEquals(-1, in.read());
-    assertEquals(-1, in.read());
+    Assertions.assertThat(in.read()).isEqualTo('A');
+    Assertions.assertThat(in.read()).isEqualTo('B');
+    Assertions.assertThat(in.read()).isEqualTo('C');
+    Assertions.assertThat(in.read()).isEqualTo(-1);
+    Assertions.assertThat(in.read()).isEqualTo(-1);
 
     in.close();
   }
@@ -502,7 +505,7 @@ public final class HttpOverHttp2Test {
       call1.execute();
       fail("Should have timed out!");
     } catch (SocketTimeoutException expected) {
-      assertEquals("timeout", expected.getMessage());
+      Assertions.assertThat(expected.getMessage()).isEqualTo("timeout");
     }
 
     // Confirm that a subsequent request on the same connection is not impacted.
@@ -510,11 +513,11 @@ public final class HttpOverHttp2Test {
         .url(server.url("/"))
         .build());
     Response response2 = call2.execute();
-    assertEquals("A", response2.body().string());
+    Assertions.assertThat(response2.body().string()).isEqualTo("A");
 
     // Confirm that the connection was reused.
-    assertEquals(0, server.takeRequest().getSequenceNumber());
-    assertEquals(1, server.takeRequest().getSequenceNumber());
+    Assertions.assertThat(server.takeRequest().getSequenceNumber()).isEqualTo(0);
+    Assertions.assertThat(server.takeRequest().getSequenceNumber()).isEqualTo(1);
   }
 
   /**
@@ -537,7 +540,7 @@ public final class HttpOverHttp2Test {
         .build());
 
     Response response = call.execute();
-    assertEquals(new String(body), response.body().string());
+    Assertions.assertThat(response.body().string()).isEqualTo(new String(body));
   }
 
   /**
@@ -567,7 +570,7 @@ public final class HttpOverHttp2Test {
       response1.body().string();
       fail("Should have timed out!");
     } catch (SocketTimeoutException expected) {
-      assertEquals("timeout", expected.getMessage());
+      Assertions.assertThat(expected.getMessage()).isEqualTo("timeout");
     }
 
     // Confirm that a subsequent request on the same connection is not impacted.
@@ -575,11 +578,11 @@ public final class HttpOverHttp2Test {
         .url(server.url("/"))
         .build());
     Response response2 = call2.execute();
-    assertEquals(body, response2.body().string());
+    Assertions.assertThat(response2.body().string()).isEqualTo(body);
 
     // Confirm that the connection was reused.
-    assertEquals(0, server.takeRequest().getSequenceNumber());
-    assertEquals(1, server.takeRequest().getSequenceNumber());
+    Assertions.assertThat(server.takeRequest().getSequenceNumber()).isEqualTo(0);
+    Assertions.assertThat(server.takeRequest().getSequenceNumber()).isEqualTo(1);
   }
 
   @Test public void connectionTimeout() throws Exception {
@@ -604,7 +607,7 @@ public final class HttpOverHttp2Test {
         .build());
 
     Response response1 = call1.execute();
-    assertEquals("A", response1.body().string());
+    Assertions.assertThat(response1.body().string()).isEqualTo("A");
 
     try {
       call2.execute();
@@ -613,8 +616,8 @@ public final class HttpOverHttp2Test {
     }
 
     // Confirm that the connection was reused.
-    assertEquals(0, server.takeRequest().getSequenceNumber());
-    assertEquals(1, server.takeRequest().getSequenceNumber());
+    Assertions.assertThat(server.takeRequest().getSequenceNumber()).isEqualTo(0);
+    Assertions.assertThat(server.takeRequest().getSequenceNumber()).isEqualTo(1);
   }
 
   @Test public void responsesAreCached() throws IOException {
@@ -631,26 +634,26 @@ public final class HttpOverHttp2Test {
         .build());
     Response response1 = call1.execute();
 
-    assertEquals("A", response1.body().string());
-    assertEquals(1, cache.requestCount());
-    assertEquals(1, cache.networkCount());
-    assertEquals(0, cache.hitCount());
+    Assertions.assertThat(response1.body().string()).isEqualTo("A");
+    Assertions.assertThat(cache.requestCount()).isEqualTo(1);
+    Assertions.assertThat(cache.networkCount()).isEqualTo(1);
+    Assertions.assertThat(cache.hitCount()).isEqualTo(0);
 
     Call call2 = client.newCall(new Request.Builder()
         .url(server.url("/"))
         .build());
     Response response2 = call2.execute();
-    assertEquals("A", response2.body().string());
+    Assertions.assertThat(response2.body().string()).isEqualTo("A");
 
     Call call3 = client.newCall(new Request.Builder()
         .url(server.url("/"))
         .build());
     Response response3 = call3.execute();
-    assertEquals("A", response3.body().string());
+    Assertions.assertThat(response3.body().string()).isEqualTo("A");
 
-    assertEquals(3, cache.requestCount());
-    assertEquals(1, cache.networkCount());
-    assertEquals(2, cache.hitCount());
+    Assertions.assertThat(cache.requestCount()).isEqualTo(3);
+    Assertions.assertThat(cache.networkCount()).isEqualTo(1);
+    Assertions.assertThat(cache.hitCount()).isEqualTo(2);
   }
 
   @Test public void conditionalCache() throws IOException {
@@ -668,21 +671,21 @@ public final class HttpOverHttp2Test {
         .url(server.url("/"))
         .build());
     Response response1 = call1.execute();
-    assertEquals("A", response1.body().string());
+    Assertions.assertThat(response1.body().string()).isEqualTo("A");
 
-    assertEquals(1, cache.requestCount());
-    assertEquals(1, cache.networkCount());
-    assertEquals(0, cache.hitCount());
+    Assertions.assertThat(cache.requestCount()).isEqualTo(1);
+    Assertions.assertThat(cache.networkCount()).isEqualTo(1);
+    Assertions.assertThat(cache.hitCount()).isEqualTo(0);
 
     Call call2 = client.newCall(new Request.Builder()
         .url(server.url("/"))
         .build());
     Response response2 = call2.execute();
-    assertEquals("A", response2.body().string());
+    Assertions.assertThat(response2.body().string()).isEqualTo("A");
 
-    assertEquals(2, cache.requestCount());
-    assertEquals(2, cache.networkCount());
-    assertEquals(1, cache.hitCount());
+    Assertions.assertThat(cache.requestCount()).isEqualTo(2);
+    Assertions.assertThat(cache.networkCount()).isEqualTo(2);
+    Assertions.assertThat(cache.hitCount()).isEqualTo(1);
   }
 
   @Test public void responseCachedWithoutConsumingFullBody() throws IOException {
@@ -701,14 +704,14 @@ public final class HttpOverHttp2Test {
         .url(server.url("/"))
         .build());
     Response response1 = call1.execute();
-    assertEquals("AB", response1.body().source().readUtf8(2));
+    Assertions.assertThat(response1.body().source().readUtf8(2)).isEqualTo("AB");
     response1.body().close();
 
     Call call2 = client.newCall(new Request.Builder()
         .url(server.url("/"))
         .build());
     Response response2 = call2.execute();
-    assertEquals("ABCD", response2.body().source().readUtf8());
+    Assertions.assertThat(response2.body().source().readUtf8()).isEqualTo("ABCD");
     response2.body().close();
   }
 
@@ -729,10 +732,10 @@ public final class HttpOverHttp2Test {
         .url(server.url("/"))
         .build());
     Response response = call.execute();
-    assertEquals("", response.body().string());
+    Assertions.assertThat(response.body().string()).isEqualTo("");
 
     RecordedRequest request = server.takeRequest();
-    assertEquals("a=b", request.getHeader("Cookie"));
+    Assertions.assertThat(request.getHeader("Cookie")).isEqualTo("a=b");
   }
 
   @Test public void receiveResponseCookies() throws Exception {
@@ -748,7 +751,7 @@ public final class HttpOverHttp2Test {
         .url(server.url("/"))
         .build());
     Response response = call.execute();
-    assertEquals("", response.body().string());
+    Assertions.assertThat(response.body().string()).isEqualTo("");
 
     cookieJar.assertResponseCookies("a=b; path=/");
   }
@@ -767,13 +770,13 @@ public final class HttpOverHttp2Test {
     call1.cancel();
 
     // That connection is pooled, and it works.
-    assertEquals(1, client.connectionPool().connectionCount());
+    Assertions.assertThat(client.connectionPool().connectionCount()).isEqualTo(1);
     Call call2 = client.newCall(new Request.Builder()
         .url(server.url("/"))
         .build());
     Response response2 = call2.execute();
-    assertEquals("def", response2.body().string());
-    assertEquals(0, server.takeRequest().getSequenceNumber());
+    Assertions.assertThat(response2.body().string()).isEqualTo("def");
+    Assertions.assertThat(server.takeRequest().getSequenceNumber()).isEqualTo(0);
 
     // Clean up the connection.
     response.close();
@@ -790,10 +793,12 @@ public final class HttpOverHttp2Test {
         .url(server.url("/"))
         .build());
     Response response = call.execute();
-    assertEquals("abc", response.body().string());
+    Assertions.assertThat(response.body().string()).isEqualTo("abc");
 
-    assertEquals(0, server.takeRequest().getSequenceNumber()); // New connection.
-    assertEquals(1, server.takeRequest().getSequenceNumber()); // Reused connection.
+    // New connection.
+    Assertions.assertThat(server.takeRequest().getSequenceNumber()).isEqualTo(0);
+    // Reused connection.
+    Assertions.assertThat(server.takeRequest().getSequenceNumber()).isEqualTo(1);
   }
 
   @Test public void recoverFromOneInternalErrorRequiresNewConnection() throws Exception {
@@ -811,10 +816,12 @@ public final class HttpOverHttp2Test {
         .url(server.url("/"))
         .build());
     Response response = call.execute();
-    assertEquals("abc", response.body().string());
+    Assertions.assertThat(response.body().string()).isEqualTo("abc");
 
-    assertEquals(0, server.takeRequest().getSequenceNumber()); // New connection.
-    assertEquals(0, server.takeRequest().getSequenceNumber()); // New connection.
+    // New connection.
+    Assertions.assertThat(server.takeRequest().getSequenceNumber()).isEqualTo(0);
+    // New connection.
+    Assertions.assertThat(server.takeRequest().getSequenceNumber()).isEqualTo(0);
   }
 
   @Test public void recoverFromMultipleRefusedStreamsRequiresNewConnection() throws Exception {
@@ -835,11 +842,14 @@ public final class HttpOverHttp2Test {
         .url(server.url("/"))
         .build());
     Response response = call.execute();
-    assertEquals("abc", response.body().string());
+    Assertions.assertThat(response.body().string()).isEqualTo("abc");
 
-    assertEquals(0, server.takeRequest().getSequenceNumber()); // New connection.
-    assertEquals(1, server.takeRequest().getSequenceNumber()); // Reused connection.
-    assertEquals(0, server.takeRequest().getSequenceNumber()); // New connection.
+    // New connection.
+    Assertions.assertThat(server.takeRequest().getSequenceNumber()).isEqualTo(0);
+    // Reused connection.
+    Assertions.assertThat(server.takeRequest().getSequenceNumber()).isEqualTo(1);
+    // New connection.
+    Assertions.assertThat(server.takeRequest().getSequenceNumber()).isEqualTo(0);
   }
 
   @Test public void recoverFromCancelReusesConnection() throws Exception {
@@ -860,8 +870,8 @@ public final class HttpOverHttp2Test {
         .url(server.url("/"))
         .build());
     Response response = call.execute();
-    assertEquals("def", response.body().string());
-    assertEquals(1, server.takeRequest().getSequenceNumber());
+    Assertions.assertThat(response.body().string()).isEqualTo("def");
+    Assertions.assertThat(server.takeRequest().getSequenceNumber()).isEqualTo(1);
   }
 
   @Test public void recoverFromMultipleCancelReusesConnection() throws Exception {
@@ -886,8 +896,8 @@ public final class HttpOverHttp2Test {
             .url(server.url("/"))
             .build());
     Response response = call.execute();
-    assertEquals("ghi", response.body().string());
-    assertEquals(2, server.takeRequest().getSequenceNumber());
+    Assertions.assertThat(response.body().string()).isEqualTo("ghi");
+    Assertions.assertThat(server.takeRequest().getSequenceNumber()).isEqualTo(2);
   }
 
   /** Make a call and canceling it as soon as it's accepted by the server. */
@@ -904,7 +914,8 @@ public final class HttpOverHttp2Test {
       @Override public void onResponse(Call call1, Response response) {
       }
     });
-    assertEquals(expectedSequenceNumber, server.takeRequest().getSequenceNumber());
+    Assertions.assertThat(server.takeRequest().getSequenceNumber()).isEqualTo(
+        (long) expectedSequenceNumber);
     call.cancel();
     latch.await();
   }
@@ -935,7 +946,7 @@ public final class HttpOverHttp2Test {
       call.execute();
       fail();
     } catch (StreamResetException expected) {
-      assertEquals(errorCode, expected.errorCode);
+      Assertions.assertThat(expected.errorCode).isEqualTo(errorCode);
     }
   }
 
@@ -985,24 +996,24 @@ public final class HttpOverHttp2Test {
         .build();
     blockingAuthClient.newCall(request).enqueue(callback);
     String response1 = responses.take();
-    assertEquals("", response1);
-    assertEquals(0, server.takeRequest().getSequenceNumber());
+    Assertions.assertThat(response1).isEqualTo("");
+    Assertions.assertThat(server.takeRequest().getSequenceNumber()).isEqualTo(0);
 
     // Now make the second request which will restrict the first HTTP/2 connection from creating new
     // streams.
     client.newCall(request).enqueue(callback);
     String response2 = responses.take();
-    assertEquals("DEF", response2);
-    assertEquals(1, server.takeRequest().getSequenceNumber());
-    assertEquals(0, server.takeRequest().getSequenceNumber());
+    Assertions.assertThat(response2).isEqualTo("DEF");
+    Assertions.assertThat(server.takeRequest().getSequenceNumber()).isEqualTo(1);
+    Assertions.assertThat(server.takeRequest().getSequenceNumber()).isEqualTo(0);
 
     // Let the first request proceed. It should discard the the held HTTP/2 connection and get a new
     // one.
     latch.countDown();
     String response3 = responses.take();
-    assertEquals("ABC", response3);
-    assertEquals(1, server.takeRequest().getSequenceNumber());
-    assertEquals(2, server.takeRequest().getSequenceNumber());
+    Assertions.assertThat(response3).isEqualTo("ABC");
+    Assertions.assertThat(server.takeRequest().getSequenceNumber()).isEqualTo(1);
+    Assertions.assertThat(server.takeRequest().getSequenceNumber()).isEqualTo(2);
   }
 
   @Test public void nonAsciiResponseHeader() throws Exception {
@@ -1016,8 +1027,8 @@ public final class HttpOverHttp2Test {
     Response response = call.execute();
     response.close();
 
-    assertEquals("α", response.header("Alpha"));
-    assertEquals("Beta", response.header("β"));
+    Assertions.assertThat(response.header("Alpha")).isEqualTo("α");
+    Assertions.assertThat(response.header("β")).isEqualTo("Beta");
   }
 
   @Test public void serverSendsPushPromise_GET() throws Exception {
@@ -1033,18 +1044,20 @@ public final class HttpOverHttp2Test {
         .build());
     Response response = call.execute();
 
-    assertEquals("ABCDE", response.body().string());
-    assertEquals(200, response.code());
-    assertEquals("", response.message());
+    Assertions.assertThat(response.body().string()).isEqualTo("ABCDE");
+    Assertions.assertThat(response.code()).isEqualTo(200);
+    Assertions.assertThat(response.message()).isEqualTo("");
 
     RecordedRequest request = server.takeRequest();
-    assertEquals("GET /foo HTTP/1.1", request.getRequestLine());
-    assertEquals(scheme, request.getHeader(":scheme"));
-    assertEquals(server.getHostName() + ":" + server.getPort(), request.getHeader(":authority"));
+    Assertions.assertThat(request.getRequestLine()).isEqualTo("GET /foo HTTP/1.1");
+    Assertions.assertThat(request.getHeader(":scheme")).isEqualTo(scheme);
+    Assertions.assertThat(request.getHeader(":authority")).isEqualTo(
+        (server.getHostName() + ":" + server.getPort()));
 
     RecordedRequest pushedRequest = server.takeRequest();
-    assertEquals("GET /foo/bar HTTP/1.1", pushedRequest.getRequestLine());
-    assertEquals("bar", pushedRequest.getHeader("foo"));
+    Assertions.assertThat(pushedRequest.getRequestLine()).isEqualTo(
+        "GET /foo/bar HTTP/1.1");
+    Assertions.assertThat(pushedRequest.getHeader("foo")).isEqualTo("bar");
   }
 
   @Test public void serverSendsPushPromise_HEAD() throws Exception {
@@ -1059,18 +1072,20 @@ public final class HttpOverHttp2Test {
         .url(server.url("/foo"))
         .build());
     Response response = call.execute();
-    assertEquals("ABCDE", response.body().string());
-    assertEquals(200, response.code());
-    assertEquals("", response.message());
+    Assertions.assertThat(response.body().string()).isEqualTo("ABCDE");
+    Assertions.assertThat(response.code()).isEqualTo(200);
+    Assertions.assertThat(response.message()).isEqualTo("");
 
     RecordedRequest request = server.takeRequest();
-    assertEquals("GET /foo HTTP/1.1", request.getRequestLine());
-    assertEquals(scheme, request.getHeader(":scheme"));
-    assertEquals(server.getHostName() + ":" + server.getPort(), request.getHeader(":authority"));
+    Assertions.assertThat(request.getRequestLine()).isEqualTo("GET /foo HTTP/1.1");
+    Assertions.assertThat(request.getHeader(":scheme")).isEqualTo(scheme);
+    Assertions.assertThat(request.getHeader(":authority")).isEqualTo(
+        (server.getHostName() + ":" + server.getPort()));
 
     RecordedRequest pushedRequest = server.takeRequest();
-    assertEquals("HEAD /foo/bar HTTP/1.1", pushedRequest.getRequestLine());
-    assertEquals("bar", pushedRequest.getHeader("foo"));
+    Assertions.assertThat(pushedRequest.getRequestLine()).isEqualTo(
+        "HEAD /foo/bar HTTP/1.1");
+    Assertions.assertThat(pushedRequest.getHeader("foo")).isEqualTo("bar");
   }
 
   @Test public void noDataFramesSentWithNullRequestBody() throws Exception {
@@ -1082,9 +1097,9 @@ public final class HttpOverHttp2Test {
         .method("DELETE", null)
         .build());
     Response response = call.execute();
-    assertEquals("ABC", response.body().string());
+    Assertions.assertThat(response.body().string()).isEqualTo("ABC");
 
-    assertEquals(protocol, response.protocol());
+    Assertions.assertThat(response.protocol()).isEqualTo(protocol);
 
     List<String> logs = http2Handler.takeAll();
 
@@ -1100,9 +1115,9 @@ public final class HttpOverHttp2Test {
         .method("DELETE", Util.EMPTY_REQUEST)
         .build());
     Response response = call.execute();
-    assertEquals("ABC", response.body().string());
+    Assertions.assertThat(response.body().string()).isEqualTo("ABC");
 
-    assertEquals(protocol, response.protocol());
+    Assertions.assertThat(response.protocol()).isEqualTo(protocol);
 
     List<String> logs = http2Handler.takeAll();
 
@@ -1125,16 +1140,20 @@ public final class HttpOverHttp2Test {
         .url(server.url("/"))
         .build());
     Response response = call.execute();
-    assertEquals("ABC", response.body().string());
+    Assertions.assertThat(response.body().string()).isEqualTo("ABC");
 
-    assertEquals(protocol, response.protocol());
+    Assertions.assertThat(response.protocol()).isEqualTo(protocol);
 
     // Confirm a single ping was sent and received, and its reply was sent and received.
     List<String> logs = http2Handler.takeAll();
-    assertEquals(1, countFrames(logs, "FINE: >> 0x00000000     8 PING          "));
-    assertEquals(1, countFrames(logs, "FINE: << 0x00000000     8 PING          "));
-    assertEquals(1, countFrames(logs, "FINE: >> 0x00000000     8 PING          ACK"));
-    assertEquals(1, countFrames(logs, "FINE: << 0x00000000     8 PING          ACK"));
+    Assertions.assertThat(countFrames(logs, "FINE: >> 0x00000000     8 PING          ")).isEqualTo(
+        (long) 1);
+    Assertions.assertThat(countFrames(logs, "FINE: << 0x00000000     8 PING          ")).isEqualTo(
+        (long) 1);
+    Assertions.assertThat(countFrames(logs, "FINE: >> 0x00000000     8 PING          ACK")).isEqualTo(
+        (long) 1);
+    Assertions.assertThat(countFrames(logs, "FINE: << 0x00000000     8 PING          ACK")).isEqualTo(
+        (long) 1);
   }
 
   @Test public void missingPongsFailsConnection() throws Exception {
@@ -1157,16 +1176,20 @@ public final class HttpOverHttp2Test {
       call.execute();
       fail();
     } catch (StreamResetException expected) {
-      assertEquals("stream was reset: PROTOCOL_ERROR", expected.getMessage());
+      Assertions.assertThat(expected.getMessage()).isEqualTo(
+          "stream was reset: PROTOCOL_ERROR");
     }
 
     long elapsedUntilFailure = System.nanoTime() - executeAtNanos;
-    assertEquals(1000, TimeUnit.NANOSECONDS.toMillis(elapsedUntilFailure), 250d);
+    Assertions.assertThat((double) TimeUnit.NANOSECONDS.toMillis(elapsedUntilFailure)).isCloseTo(
+        (double) 1000, offset(250d));
 
     // Confirm a single ping was sent but not acknowledged.
     List<String> logs = http2Handler.takeAll();
-    assertEquals(1, countFrames(logs, "FINE: >> 0x00000000     8 PING          "));
-    assertEquals(0, countFrames(logs, "FINE: << 0x00000000     8 PING          ACK"));
+    Assertions.assertThat(countFrames(logs, "FINE: >> 0x00000000     8 PING          ")).isEqualTo(
+        (long) 1);
+    Assertions.assertThat(countFrames(logs, "FINE: << 0x00000000     8 PING          ACK")).isEqualTo(
+        (long) 0);
   }
 
   private String firstFrame(List<String> logs, String type) {
@@ -1203,7 +1226,7 @@ public final class HttpOverHttp2Test {
         .url(server.url("/"))
         .build());
     Response response = call.execute();
-    assertEquals("", response.body().string());
+    Assertions.assertThat(response.body().string()).isEqualTo("");
 
     server.enqueue(new MockResponse()
         .setBody("ABC"));
@@ -1227,13 +1250,17 @@ public final class HttpOverHttp2Test {
         .build());
     Response response3 = call3.execute();
 
-    assertEquals("ABC", response1.body().string());
-    assertEquals("DEF", response2.body().string());
-    assertEquals("GHI", response3.body().string());
-    assertEquals(0, server.takeRequest().getSequenceNumber()); // Settings connection.
-    assertEquals(1, server.takeRequest().getSequenceNumber()); // Reuse settings connection.
-    assertEquals(2, server.takeRequest().getSequenceNumber()); // Reuse settings connection.
-    assertEquals(0, server.takeRequest().getSequenceNumber()); // New connection!
+    Assertions.assertThat(response1.body().string()).isEqualTo("ABC");
+    Assertions.assertThat(response2.body().string()).isEqualTo("DEF");
+    Assertions.assertThat(response3.body().string()).isEqualTo("GHI");
+    // Settings connection.
+    Assertions.assertThat(server.takeRequest().getSequenceNumber()).isEqualTo(0);
+    // Reuse settings connection.
+    Assertions.assertThat(server.takeRequest().getSequenceNumber()).isEqualTo(1);
+    // Reuse settings connection.
+    Assertions.assertThat(server.takeRequest().getSequenceNumber()).isEqualTo(2);
+    // New connection!
+    Assertions.assertThat(server.takeRequest().getSequenceNumber()).isEqualTo(0);
   }
 
   @Test public void connectionNotReusedAfterShutdown() throws Exception {
@@ -1247,15 +1274,15 @@ public final class HttpOverHttp2Test {
         .url(server.url("/"))
         .build());
     Response response1 = call1.execute();
-    assertEquals("ABC", response1.body().string());
+    Assertions.assertThat(response1.body().string()).isEqualTo("ABC");
 
     Call call2 = client.newCall(new Request.Builder()
         .url(server.url("/"))
         .build());
     Response response2 = call2.execute();
-    assertEquals("DEF", response2.body().string());
-    assertEquals(0, server.takeRequest().getSequenceNumber());
-    assertEquals(0, server.takeRequest().getSequenceNumber());
+    Assertions.assertThat(response2.body().string()).isEqualTo("DEF");
+    Assertions.assertThat(server.takeRequest().getSequenceNumber()).isEqualTo(0);
+    Assertions.assertThat(server.takeRequest().getSequenceNumber()).isEqualTo(0);
   }
 
   /**
@@ -1282,7 +1309,7 @@ public final class HttpOverHttp2Test {
                   .url(server.url("/"))
                   .build());
               Response response = call.execute();
-              assertEquals("ABC", response.body().string());
+              Assertions.assertThat(response.body().string()).isEqualTo("ABC");
               // Wait until the GOAWAY has been processed.
               RealConnection connection = (RealConnection) chain.connection();
               while (connection.isHealthy(false)) ;
@@ -1296,10 +1323,10 @@ public final class HttpOverHttp2Test {
         .url(server.url("/"))
         .build());
     Response response = call.execute();
-    assertEquals("DEF", response.body().string());
+    Assertions.assertThat(response.body().string()).isEqualTo("DEF");
 
-    assertEquals(0, server.takeRequest().getSequenceNumber());
-    assertEquals(0, server.takeRequest().getSequenceNumber());
+    Assertions.assertThat(server.takeRequest().getSequenceNumber()).isEqualTo(0);
+    Assertions.assertThat(server.takeRequest().getSequenceNumber()).isEqualTo(0);
   }
 
   @Test public void responseHeadersAfterGoaway() throws Exception {
@@ -1322,9 +1349,9 @@ public final class HttpOverHttp2Test {
     client.newCall(new Request.Builder().url(server.url("/")).build()).enqueue(callback);
     client.newCall(new Request.Builder().url(server.url("/")).build()).enqueue(callback);
 
-    assertEquals("DEF", bodies.poll(2, SECONDS));
-    assertEquals("ABC", bodies.poll(2, SECONDS));
-    assertEquals(2, server.getRequestCount());
+    Assertions.assertThat(bodies.poll(2, SECONDS)).isEqualTo("DEF");
+    Assertions.assertThat(bodies.poll(2, SECONDS)).isEqualTo("ABC");
+    Assertions.assertThat(server.getRequestCount()).isEqualTo(2);
   }
 
   /**
@@ -1366,7 +1393,7 @@ public final class HttpOverHttp2Test {
                 .url("https://android.com/call2")
                 .build());
             Response response2 = call2.execute();
-            assertEquals("call2 response", response2.body().string());
+            Assertions.assertThat(response2.body().string()).isEqualTo("call2 response");
           } catch (IOException e) {
             throw new RuntimeException(e);
           }
@@ -1392,27 +1419,27 @@ public final class HttpOverHttp2Test {
         .url("https://android.com/call1")
         .build());
     Response response2 = call1.execute();
-    assertEquals("call1 response", response2.body().string());
+    Assertions.assertThat(response2.body().string()).isEqualTo("call1 response");
 
     RecordedRequest call1Connect = server.takeRequest();
-    assertEquals("CONNECT", call1Connect.getMethod());
-    assertEquals(0, call1Connect.getSequenceNumber());
+    Assertions.assertThat(call1Connect.getMethod()).isEqualTo("CONNECT");
+    Assertions.assertThat(call1Connect.getSequenceNumber()).isEqualTo(0);
 
     RecordedRequest call2Connect = server.takeRequest();
-    assertEquals("CONNECT", call2Connect.getMethod());
-    assertEquals(0, call2Connect.getSequenceNumber());
+    Assertions.assertThat(call2Connect.getMethod()).isEqualTo("CONNECT");
+    Assertions.assertThat(call2Connect.getSequenceNumber()).isEqualTo(0);
 
     RecordedRequest call2Get = server.takeRequest();
-    assertEquals("GET", call2Get.getMethod());
-    assertEquals("/call2", call2Get.getPath());
-    assertEquals(0, call2Get.getSequenceNumber());
+    Assertions.assertThat(call2Get.getMethod()).isEqualTo("GET");
+    Assertions.assertThat(call2Get.getPath()).isEqualTo("/call2");
+    Assertions.assertThat(call2Get.getSequenceNumber()).isEqualTo(0);
 
     RecordedRequest call1Get = server.takeRequest();
-    assertEquals("GET", call1Get.getMethod());
-    assertEquals("/call1", call1Get.getPath());
-    assertEquals(1, call1Get.getSequenceNumber());
+    Assertions.assertThat(call1Get.getMethod()).isEqualTo("GET");
+    Assertions.assertThat(call1Get.getPath()).isEqualTo("/call1");
+    Assertions.assertThat(call1Get.getSequenceNumber()).isEqualTo(1);
 
-    assertEquals(1, client.connectionPool().connectionCount());
+    Assertions.assertThat(client.connectionPool().connectionCount()).isEqualTo(1);
   }
 
   /** https://github.com/square/okhttp/issues/3103 */
@@ -1435,10 +1462,11 @@ public final class HttpOverHttp2Test {
         .build());
 
     Response response = call.execute();
-    assertEquals("", response.body().string());
+    Assertions.assertThat(response.body().string()).isEqualTo("");
 
     RecordedRequest recordedRequest = server.takeRequest();
-    assertEquals("privateobject.com", recordedRequest.getHeader(":authority"));
+    Assertions.assertThat(recordedRequest.getHeader(":authority")).isEqualTo(
+        "privateobject.com");
   }
 
   private Buffer gzip(String bytes) throws IOException {
@@ -1464,7 +1492,7 @@ public final class HttpOverHttp2Test {
             .url(server.url(path))
             .build());
         Response response = call.execute();
-        assertEquals("A", response.body().string());
+        Assertions.assertThat(response.body().string()).isEqualTo("A");
         countDownLatch.countDown();
       } catch (Exception e) {
         throw new RuntimeException(e);

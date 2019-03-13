@@ -34,7 +34,7 @@ import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 
-import static org.junit.Assert.assertEquals;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.fail;
 
 public final class ConnectionCoalescingTest {
@@ -104,7 +104,7 @@ public final class ConnectionCoalescingTest {
     HttpUrl sanUrl = url.newBuilder().host("san.com").build();
     assert200Http2Response(execute(sanUrl), "san.com");
 
-    assertEquals(1, client.connectionPool().connectionCount());
+    assertThat(client.connectionPool().connectionCount()).isEqualTo(1);
   }
 
   /**
@@ -120,7 +120,7 @@ public final class ConnectionCoalescingTest {
 
     assert200Http2Response(execute(url), server.getHostName());
 
-    assertEquals(1, client.connectionPool().connectionCount());
+    assertThat(client.connectionPool().connectionCount()).isEqualTo(1);
   }
 
   /** Test a previously coalesced connection that's no longer healthy. */
@@ -145,7 +145,7 @@ public final class ConnectionCoalescingTest {
     HttpUrl sanUrl = url.newBuilder().host("san.com").build();
     assert200Http2Response(execute(sanUrl), "san.com");
 
-    assertEquals(1, client.connectionPool().connectionCount());
+    assertThat(client.connectionPool().connectionCount()).isEqualTo(1);
   }
 
   /** If the existing connection matches a SAN but not a match for DNS then skip. */
@@ -193,7 +193,7 @@ public final class ConnectionCoalescingTest {
 
     assert200Http2Response(execute(sanUrl), "san.com");
 
-    assertEquals(1, client.connectionPool().connectionCount());
+    assertThat(client.connectionPool().connectionCount()).isEqualTo(1);
   }
 
   /** Certificate pinning used and not a match will avoid coalescing and try to connect. */
@@ -233,7 +233,7 @@ public final class ConnectionCoalescingTest {
 
     assert200Http2Response(execute(sanUrl), "san.com");
 
-    assertEquals(2, client.connectionPool().connectionCount());
+    assertThat(client.connectionPool().connectionCount()).isEqualTo(2);
   }
 
   /**
@@ -263,8 +263,8 @@ public final class ConnectionCoalescingTest {
             serverIps.get(0)));
     assert200Http2Response(execute(sanUrl), "san.com");
 
-    assertEquals(1, client.connectionPool().connectionCount());
-    assertEquals(1, connectCount.get());
+    assertThat(client.connectionPool().connectionCount()).isEqualTo(1);
+    assertThat(connectCount.get()).isEqualTo(1);
   }
 
   /** Check that wildcard SANs are supported. */
@@ -278,7 +278,7 @@ public final class ConnectionCoalescingTest {
     HttpUrl sanUrl = url.newBuilder().host("www.wildcard.com").build();
     assert200Http2Response(execute(sanUrl), "www.wildcard.com");
 
-    assertEquals(1, client.connectionPool().connectionCount());
+    assertThat(client.connectionPool().connectionCount()).isEqualTo(1);
   }
 
   /** Network interceptors check for changes to target. */
@@ -295,7 +295,7 @@ public final class ConnectionCoalescingTest {
     HttpUrl sanUrl = url.newBuilder().host("san.com").build();
     assert200Http2Response(execute(sanUrl), "san.com");
 
-    assertEquals(1, client.connectionPool().connectionCount());
+    assertThat(client.connectionPool().connectionCount()).isEqualTo(1);
   }
 
   /** Run against public external sites, doesn't run by default. */
@@ -309,7 +309,7 @@ public final class ConnectionCoalescingTest {
     assert200Http2Response(execute("https://messenger.com/robots.txt"), "messenger.com");
     assert200Http2Response(execute("https://m.facebook.com/robots.txt"), "m.facebook.com");
 
-    assertEquals(3, client.connectionPool().connectionCount());
+    assertThat(client.connectionPool().connectionCount()).isEqualTo(3);
   }
 
   private Response execute(String url) throws IOException {
@@ -321,9 +321,9 @@ public final class ConnectionCoalescingTest {
   }
 
   private void assert200Http2Response(Response response, String expectedHost) {
-    assertEquals(200, response.code());
-    assertEquals(expectedHost, response.request().url().host());
-    assertEquals(Protocol.HTTP_2, response.protocol());
+    assertThat(response.code()).isEqualTo(200);
+    assertThat(response.request().url().host()).isEqualTo(expectedHost);
+    assertThat(response.protocol()).isEqualTo(Protocol.HTTP_2);
     response.body().close();
   }
 }

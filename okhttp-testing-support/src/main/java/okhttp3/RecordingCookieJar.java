@@ -22,6 +22,7 @@ import java.util.Collections;
 import java.util.Deque;
 import java.util.List;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertEquals;
 
 public final class RecordingCookieJar implements CookieJar {
@@ -42,7 +43,7 @@ public final class RecordingCookieJar implements CookieJar {
     for (Cookie cookie : actualCookies) {
       actualCookieStrings.add(cookie.toString());
     }
-    assertEquals(Arrays.asList(cookies), actualCookieStrings);
+    Assertions.assertThat(actualCookieStrings).isEqualTo(Arrays.asList(cookies));
   }
 
   @Override public void saveFromResponse(HttpUrl url, List<Cookie> cookies) {

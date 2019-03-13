@@ -35,10 +35,8 @@ import org.junit.Rule;
 import org.junit.Test;
 
 import static java.net.CookiePolicy.ACCEPT_ORIGINAL_SERVER;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.data.Offset.offset;
 import static org.junit.Assert.fail;
 
 /** Derived from Android's CookiesTest. */
@@ -65,17 +63,17 @@ public class CookiesTest {
     get(urlWithIpAddress);
 
     List<HttpCookie> cookies = cookieManager.getCookieStore().getCookies();
-    assertEquals(1, cookies.size());
+    assertThat(cookies.size()).isEqualTo(1);
     HttpCookie cookie = cookies.get(0);
-    assertEquals("a", cookie.getName());
-    assertEquals("android", cookie.getValue());
-    assertNull(cookie.getComment());
-    assertNull(cookie.getCommentURL());
-    assertFalse(cookie.getDiscard());
-    assertTrue(cookie.getMaxAge() > 100000000000L);
-    assertEquals("/path", cookie.getPath());
-    assertTrue(cookie.getSecure());
-    assertEquals(0, cookie.getVersion());
+    assertThat(cookie.getName()).isEqualTo("a");
+    assertThat(cookie.getValue()).isEqualTo("android");
+    assertThat(cookie.getComment()).isNull();
+    assertThat(cookie.getCommentURL()).isNull();
+    assertThat(cookie.getDiscard()).isFalse();
+    assertThat(cookie.getMaxAge() > 100000000000L).isTrue();
+    assertThat(cookie.getPath()).isEqualTo("/path");
+    assertThat(cookie.getSecure()).isTrue();
+    assertThat(cookie.getVersion()).isEqualTo(0);
   }
 
   @Test public void testRfc2109Response() throws Exception {
@@ -97,15 +95,16 @@ public class CookiesTest {
     get(urlWithIpAddress);
 
     List<HttpCookie> cookies = cookieManager.getCookieStore().getCookies();
-    assertEquals(1, cookies.size());
+    assertThat(cookies.size()).isEqualTo(1);
     HttpCookie cookie = cookies.get(0);
-    assertEquals("a", cookie.getName());
-    assertEquals("android", cookie.getValue());
-    assertNull(cookie.getCommentURL());
-    assertFalse(cookie.getDiscard());
-    assertEquals(60.0, cookie.getMaxAge(), 1.0); // Converting to a fixed date can cause rounding!
-    assertEquals("/path", cookie.getPath());
-    assertTrue(cookie.getSecure());
+    assertThat(cookie.getName()).isEqualTo("a");
+    assertThat(cookie.getValue()).isEqualTo("android");
+    assertThat(cookie.getCommentURL()).isNull();
+    assertThat(cookie.getDiscard()).isFalse();
+    // Converting to a fixed date can cause rounding!
+    assertThat((double) cookie.getMaxAge()).isCloseTo(60.0, offset(1.0));
+    assertThat(cookie.getPath()).isEqualTo("/path");
+    assertThat(cookie.getSecure()).isTrue();
   }
 
   @Test public void testQuotedAttributeValues() throws Exception {
@@ -130,13 +129,14 @@ public class CookiesTest {
     get(urlWithIpAddress);
 
     List<HttpCookie> cookies = cookieManager.getCookieStore().getCookies();
-    assertEquals(1, cookies.size());
+    assertThat(cookies.size()).isEqualTo(1);
     HttpCookie cookie = cookies.get(0);
-    assertEquals("a", cookie.getName());
-    assertEquals("android", cookie.getValue());
-    assertEquals(60.0, cookie.getMaxAge(), 1.0); // Converting to a fixed date can cause rounding!
-    assertEquals("/path", cookie.getPath());
-    assertTrue(cookie.getSecure());
+    assertThat(cookie.getName()).isEqualTo("a");
+    assertThat(cookie.getValue()).isEqualTo("android");
+    // Converting to a fixed date can cause rounding!
+    assertThat((double) cookie.getMaxAge()).isCloseTo(60.0, offset(1.0));
+    assertThat(cookie.getPath()).isEqualTo("/path");
+    assertThat(cookie.getSecure()).isTrue();
   }
 
   @Test public void testSendingCookiesFromStore() throws Exception {
@@ -161,7 +161,7 @@ public class CookiesTest {
     get(serverUrl);
     RecordedRequest request = server.takeRequest();
 
-    assertEquals("a=android; b=banana", request.getHeader("Cookie"));
+    assertThat(request.getHeader("Cookie")).isEqualTo("a=android; b=banana");
   }
 
   @Test public void cookieHandlerLikeAndroid() throws Exception {
@@ -189,7 +189,7 @@ public class CookiesTest {
     get(serverUrl);
     RecordedRequest request = server.takeRequest();
 
-    assertEquals("a=android; b=banana", request.getHeader("Cookie"));
+    assertThat(request.getHeader("Cookie")).isEqualTo("a=android; b=banana");
   }
 
   @Test public void receiveAndSendMultipleCookies() throws Exception {
@@ -207,11 +207,11 @@ public class CookiesTest {
 
     get(urlWithIpAddress(server, "/"));
     RecordedRequest request1 = server.takeRequest();
-    assertNull(request1.getHeader("Cookie"));
+    assertThat(request1.getHeader("Cookie")).isNull();
 
     get(urlWithIpAddress(server, "/"));
     RecordedRequest request2 = server.takeRequest();
-    assertEquals("a=android; b=banana", request2.getHeader("Cookie"));
+    assertThat(request2.getHeader("Cookie")).isEqualTo("a=android; b=banana");
   }
 
   @Test public void testRedirectsDoNotIncludeTooManyCookies() throws Exception {
@@ -241,7 +241,7 @@ public class CookiesTest {
     get(redirectSourceUrl);
     RecordedRequest request = redirectSource.takeRequest();
 
-    assertEquals("c=cookie", request.getHeader("Cookie"));
+    assertThat(request.getHeader("Cookie")).isEqualTo("c=cookie");
 
     for (String header : redirectTarget.takeRequest().getHeaders().names()) {
       if (header.startsWith("Cookie")) {
@@ -270,9 +270,9 @@ public class CookiesTest {
     get(server.url("/"));
 
     RecordedRequest request = server.takeRequest();
-    assertEquals("Bar=bar; Baz=baz", request.getHeader("Cookie"));
-    assertNull(request.getHeader("Cookie2"));
-    assertNull(request.getHeader("Quux"));
+    assertThat(request.getHeader("Cookie")).isEqualTo("Bar=bar; Baz=baz");
+    assertThat(request.getHeader("Cookie2")).isNull();
+    assertThat(request.getHeader("Quux")).isNull();
   }
 
   @Test public void acceptOriginalServerMatchesSubdomain() throws Exception {
@@ -283,9 +283,9 @@ public class CookiesTest {
     cookieJar.saveFromResponse(url, Arrays.asList(
         Cookie.parse(url, "a=android; Domain=squareup.com")));
     List<Cookie> actualCookies = cookieJar.loadForRequest(url);
-    assertEquals(1, actualCookies.size());
-    assertEquals("a", actualCookies.get(0).name());
-    assertEquals("android", actualCookies.get(0).value());
+    assertThat(actualCookies.size()).isEqualTo(1);
+    assertThat(actualCookies.get(0).name()).isEqualTo("a");
+    assertThat(actualCookies.get(0).value()).isEqualTo("android");
   }
 
   @Test public void acceptOriginalServerMatchesRfc2965Dot() throws Exception {
@@ -296,9 +296,9 @@ public class CookiesTest {
     cookieJar.saveFromResponse(url, Arrays.asList(
         Cookie.parse(url, "a=android; Domain=.squareup.com")));
     List<Cookie> actualCookies = cookieJar.loadForRequest(url);
-    assertEquals(1, actualCookies.size());
-    assertEquals("a", actualCookies.get(0).name());
-    assertEquals("android", actualCookies.get(0).value());
+    assertThat(actualCookies.size()).isEqualTo(1);
+    assertThat(actualCookies.get(0).name()).isEqualTo("a");
+    assertThat(actualCookies.get(0).value()).isEqualTo("android");
   }
 
   @Test public void acceptOriginalServerMatchesExactly() throws Exception {
@@ -309,9 +309,9 @@ public class CookiesTest {
     cookieJar.saveFromResponse(url, Arrays.asList(
         Cookie.parse(url, "a=android; Domain=squareup.com")));
     List<Cookie> actualCookies = cookieJar.loadForRequest(url);
-    assertEquals(1, actualCookies.size());
-    assertEquals("a", actualCookies.get(0).name());
-    assertEquals("android", actualCookies.get(0).value());
+    assertThat(actualCookies.size()).isEqualTo(1);
+    assertThat(actualCookies.get(0).name()).isEqualTo("a");
+    assertThat(actualCookies.get(0).value()).isEqualTo("android");
   }
 
   @Test public void acceptOriginalServerDoesNotMatchDifferentServer() throws Exception {
@@ -324,7 +324,7 @@ public class CookiesTest {
 
     HttpUrl url2 = HttpUrl.get("https://www.squareup.com/");
     List<Cookie> actualCookies = cookieJar.loadForRequest(url2);
-    assertEquals(Collections.<Cookie>emptyList(), actualCookies);
+    assertThat(actualCookies).isEqualTo(Collections.<Cookie>emptyList());
   }
 
   private HttpUrl urlWithIpAddress(MockWebServer server, String path) throws Exception {

@@ -20,7 +20,7 @@ import javax.security.auth.x500.X500Principal;
 
 import org.junit.Test;
 
-import static org.junit.Assert.assertEquals;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.fail;
 
 public final class DistinguishedNameParserTest {
@@ -120,7 +120,8 @@ public final class DistinguishedNameParserTest {
   private void assertCn(String expected, String dn) {
     X500Principal principal = new X500Principal(dn);
     DistinguishedNameParser parser = new DistinguishedNameParser(principal);
-    assertEquals(dn, expected, parser.findMostSpecific("cn"));
+    assertThat(parser.findMostSpecific("cn")).overridingErrorMessage(dn).isEqualTo(
+        expected);
   }
 
   private void expectExceptionInPrincipal(String dn) {

@@ -53,11 +53,8 @@ import org.junit.Test;
 
 import static okhttp3.mockwebserver.SocketPolicy.DISCONNECT_AT_END;
 import static okhttp3.tls.internal.TlsUtil.localhost;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.data.Offset.offset;
 import static org.junit.Assert.fail;
 
 public final class CacheTest {
@@ -181,17 +178,17 @@ public final class CacheTest {
         .url(server.url("/"))
         .build();
     Response response = client.newCall(request).execute();
-    assertEquals(expectedResponseCode, response.code());
+    assertThat(response.code()).isEqualTo(expectedResponseCode);
 
     // Exhaust the content stream.
     response.body().string();
 
     Response cached = cache.get(request);
     if (shouldPut) {
-      assertNotNull(Integer.toString(responseCode), cached);
+      assertThat(cached).isNotNull();
       cached.body().close();
     } else {
-      assertNull(Integer.toString(responseCode), cached);
+      assertThat(cached).isNull();
     }
     server.shutdown(); // tearDown() isn't sufficient; this test starts multiple servers
   }
@@ -225,27 +222,27 @@ public final class CacheTest {
     Response response1 = client.newCall(request).execute();
 
     BufferedSource in1 = response1.body().source();
-    assertEquals("I love ", in1.readUtf8("I love ".length()));
+    assertThat(in1.readUtf8("I love ".length())).isEqualTo("I love ");
     in1.skip("puppies but hate ".length());
-    assertEquals("spiders", in1.readUtf8("spiders".length()));
-    assertTrue(in1.exhausted());
+    assertThat(in1.readUtf8("spiders".length())).isEqualTo("spiders");
+    assertThat(in1.exhausted()).isTrue();
     in1.close();
-    assertEquals(1, cache.writeSuccessCount());
-    assertEquals(0, cache.writeAbortCount());
+    assertThat(cache.writeSuccessCount()).isEqualTo(1);
+    assertThat(cache.writeAbortCount()).isEqualTo(0);
 
     Response response2 = client.newCall(request).execute();
     BufferedSource in2 = response2.body().source();
-    assertEquals("I love puppies but hate spiders",
-        in2.readUtf8("I love puppies but hate spiders".length()));
-    assertEquals(200, response2.code());
-    assertEquals("Fantastic", response2.message());
+    assertThat(in2.readUtf8("I love puppies but hate spiders".length())).isEqualTo(
+        "I love puppies but hate spiders");
+    assertThat(response2.code()).isEqualTo(200);
+    assertThat(response2.message()).isEqualTo("Fantastic");
 
-    assertTrue(in2.exhausted());
+    assertThat(in2.exhausted()).isTrue();
     in2.close();
-    assertEquals(1, cache.writeSuccessCount());
-    assertEquals(0, cache.writeAbortCount());
-    assertEquals(2, cache.requestCount());
-    assertEquals(1, cache.hitCount());
+    assertThat(cache.writeSuccessCount()).isEqualTo(1);
+    assertThat(cache.writeAbortCount()).isEqualTo(0);
+    assertThat(cache.requestCount()).isEqualTo(2);
+    assertThat(cache.hitCount()).isEqualTo(1);
   }
 
   @Test public void secureResponseCaching() throws IOException {
@@ -264,7 +261,7 @@ public final class CacheTest {
     Request request = new Request.Builder().url(server.url("/")).build();
     Response response1 = client.newCall(request).execute();
     BufferedSource in = response1.body().source();
-    assertEquals("ABC", in.readUtf8());
+    assertThat(in.readUtf8()).isEqualTo("ABC");
 
     // OpenJDK 6 fails on this line, complaining that the connection isn't open yet
     CipherSuite cipherSuite = response1.handshake().cipherSuite();
@@ -274,17 +271,17 @@ public final class CacheTest {
     Principal localPrincipal = response1.handshake().localPrincipal();
 
     Response response2 = client.newCall(request).execute(); // Cached!
-    assertEquals("ABC", response2.body().string());
+    assertThat(response2.body().string()).isEqualTo("ABC");
 
-    assertEquals(2, cache.requestCount());
-    assertEquals(1, cache.networkCount());
-    assertEquals(1, cache.hitCount());
+    assertThat(cache.requestCount()).isEqualTo(2);
+    assertThat(cache.networkCount()).isEqualTo(1);
+    assertThat(cache.hitCount()).isEqualTo(1);
 
-    assertEquals(cipherSuite, response2.handshake().cipherSuite());
-    assertEquals(localCerts, response2.handshake().localCertificates());
-    assertEquals(serverCerts, response2.handshake().peerCertificates());
-    assertEquals(peerPrincipal, response2.handshake().peerPrincipal());
-    assertEquals(localPrincipal, response2.handshake().localPrincipal());
+    assertThat(response2.handshake().cipherSuite()).isEqualTo(cipherSuite);
+    assertThat(response2.handshake().localCertificates()).isEqualTo(localCerts);
+    assertThat(response2.handshake().peerCertificates()).isEqualTo(serverCerts);
+    assertThat(response2.handshake().peerPrincipal()).isEqualTo(peerPrincipal);
+    assertThat(response2.handshake().localPrincipal()).isEqualTo(localPrincipal);
   }
 
   @Test public void responseCachingAndRedirects() throws Exception {
@@ -302,14 +299,15 @@ public final class CacheTest {
 
     Request request = new Request.Builder().url(server.url("/")).build();
     Response response1 = client.newCall(request).execute();
-    assertEquals("ABC", response1.body().string());
+    assertThat(response1.body().string()).isEqualTo("ABC");
 
     Response response2 = client.newCall(request).execute(); // Cached!
-    assertEquals("ABC", response2.body().string());
+    assertThat(response2.body().string()).isEqualTo("ABC");
 
-    assertEquals(4, cache.requestCount()); // 2 requests + 2 redirects
-    assertEquals(2, cache.networkCount());
-    assertEquals(2, cache.hitCount());
+    // 2 requests + 2 redirects
+    assertThat(cache.requestCount()).isEqualTo(4);
+    assertThat(cache.networkCount()).isEqualTo(2);
+    assertThat(cache.hitCount()).isEqualTo(2);
   }
 
   @Test public void redirectToCachedResult() throws Exception {
@@ -324,25 +322,25 @@ public final class CacheTest {
 
     Request request1 = new Request.Builder().url(server.url("/foo")).build();
     Response response1 = client.newCall(request1).execute();
-    assertEquals("ABC", response1.body().string());
+    assertThat(response1.body().string()).isEqualTo("ABC");
     RecordedRequest recordedRequest1 = server.takeRequest();
-    assertEquals("GET /foo HTTP/1.1", recordedRequest1.getRequestLine());
-    assertEquals(0, recordedRequest1.getSequenceNumber());
+    assertThat(recordedRequest1.getRequestLine()).isEqualTo("GET /foo HTTP/1.1");
+    assertThat(recordedRequest1.getSequenceNumber()).isEqualTo(0);
 
     Request request2 = new Request.Builder().url(server.url("/bar")).build();
     Response response2 = client.newCall(request2).execute();
-    assertEquals("ABC", response2.body().string());
+    assertThat(response2.body().string()).isEqualTo("ABC");
     RecordedRequest recordedRequest2 = server.takeRequest();
-    assertEquals("GET /bar HTTP/1.1", recordedRequest2.getRequestLine());
-    assertEquals(1, recordedRequest2.getSequenceNumber());
+    assertThat(recordedRequest2.getRequestLine()).isEqualTo("GET /bar HTTP/1.1");
+    assertThat(recordedRequest2.getSequenceNumber()).isEqualTo(1);
 
     // an unrelated request should reuse the pooled connection
     Request request3 = new Request.Builder().url(server.url("/baz")).build();
     Response response3 = client.newCall(request3).execute();
-    assertEquals("DEF", response3.body().string());
+    assertThat(response3.body().string()).isEqualTo("DEF");
     RecordedRequest recordedRequest3 = server.takeRequest();
-    assertEquals("GET /baz HTTP/1.1", recordedRequest3.getRequestLine());
-    assertEquals(2, recordedRequest3.getSequenceNumber());
+    assertThat(recordedRequest3.getRequestLine()).isEqualTo("GET /baz HTTP/1.1");
+    assertThat(recordedRequest3.getSequenceNumber()).isEqualTo(2);
   }
 
   @Test public void secureResponseCachingAndRedirects() throws IOException {
@@ -366,17 +364,19 @@ public final class CacheTest {
         .build();
 
     Response response1 = get(server.url("/"));
-    assertEquals("ABC", response1.body().string());
-    assertNotNull(response1.handshake().cipherSuite());
+    assertThat(response1.body().string()).isEqualTo("ABC");
+    assertThat(response1.handshake().cipherSuite()).isNotNull();
 
     // Cached!
     Response response2 = get(server.url("/"));
-    assertEquals("ABC", response2.body().string());
-    assertNotNull(response2.handshake().cipherSuite());
+    assertThat(response2.body().string()).isEqualTo("ABC");
+    assertThat(response2.handshake().cipherSuite()).isNotNull();
 
-    assertEquals(4, cache.requestCount()); // 2 direct + 2 redirect = 4
-    assertEquals(2, cache.hitCount());
-    assertEquals(response1.handshake().cipherSuite(), response2.handshake().cipherSuite());
+    // 2 direct + 2 redirect = 4
+    assertThat(cache.requestCount()).isEqualTo(4);
+    assertThat(cache.hitCount()).isEqualTo(2);
+    assertThat(response2.handshake().cipherSuite()).isEqualTo(
+        response1.handshake().cipherSuite());
   }
 
   /**
@@ -408,14 +408,15 @@ public final class CacheTest {
         .build();
 
     Response response1 = get(server.url("/"));
-    assertEquals("ABC", response1.body().string());
+    assertThat(response1.body().string()).isEqualTo("ABC");
 
     // Cached!
     Response response2 = get(server.url("/"));
-    assertEquals("ABC", response2.body().string());
+    assertThat(response2.body().string()).isEqualTo("ABC");
 
-    assertEquals(4, cache.requestCount()); // 2 direct + 2 redirect = 4
-    assertEquals(2, cache.hitCount());
+    // 2 direct + 2 redirect = 4
+    assertThat(cache.requestCount()).isEqualTo(4);
+    assertThat(cache.hitCount()).isEqualTo(2);
   }
 
   @Test public void foundCachedWithExpiresHeader() throws Exception {
@@ -457,8 +458,8 @@ public final class CacheTest {
         .setBody("c"));
 
     HttpUrl url = server.url("/");
-    assertEquals("a", get(url).body().string());
-    assertEquals("a", get(url).body().string());
+    assertThat(get(url).body().string()).isEqualTo("a");
+    assertThat(get(url).body().string()).isEqualTo("a");
   }
 
   private void temporaryRedirectNotCachedWithoutCachingHeader(int responseCode) throws Exception {
@@ -471,8 +472,8 @@ public final class CacheTest {
         .setBody("b"));
 
     HttpUrl url = server.url("/");
-    assertEquals("a", get(url).body().string());
-    assertEquals("b", get(url).body().string());
+    assertThat(get(url).body().string()).isEqualTo("a");
+    assertThat(get(url).body().string()).isEqualTo("b");
   }
 
   /** https://github.com/square/okhttp/issues/2198 */
@@ -488,11 +489,11 @@ public final class CacheTest {
 
     Request request1 = new Request.Builder().url(server.url("/")).build();
     Response response1 = client.newCall(request1).execute();
-    assertEquals("ABC", response1.body().string());
+    assertThat(response1.body().string()).isEqualTo("ABC");
 
     Request request2 = new Request.Builder().url(server.url("/")).build();
     Response response2 = client.newCall(request2).execute();
-    assertEquals("ABC", response2.body().string());
+    assertThat(response2.body().string()).isEqualTo("ABC");
   }
 
   @Test public void serverDisconnectsPrematurelyWithContentLengthHeader() throws IOException {
@@ -517,7 +518,7 @@ public final class CacheTest {
         .setBody("Request #2"));
 
     BufferedSource bodySource = get(server.url("/")).body().source();
-    assertEquals("ABCDE", bodySource.readUtf8Line());
+    assertThat(bodySource.readUtf8Line()).isEqualTo("ABCDE");
     try {
       bodySource.readUtf8(21);
       fail("This implementation silently ignored a truncated HTTP body.");
@@ -526,12 +527,12 @@ public final class CacheTest {
       bodySource.close();
     }
 
-    assertEquals(1, cache.writeAbortCount());
-    assertEquals(0, cache.writeSuccessCount());
+    assertThat(cache.writeAbortCount()).isEqualTo(1);
+    assertThat(cache.writeSuccessCount()).isEqualTo(0);
     Response response = get(server.url("/"));
-    assertEquals("Request #2", response.body().string());
-    assertEquals(1, cache.writeAbortCount());
-    assertEquals(1, cache.writeSuccessCount());
+    assertThat(response.body().string()).isEqualTo("Request #2");
+    assertThat(cache.writeAbortCount()).isEqualTo(1);
+    assertThat(cache.writeSuccessCount()).isEqualTo(1);
   }
 
   @Test public void clientPrematureDisconnectWithContentLengthHeader() throws IOException {
@@ -557,7 +558,7 @@ public final class CacheTest {
 
     Response response1 = get(server.url("/"));
     BufferedSource in = response1.body().source();
-    assertEquals("ABCDE", in.readUtf8(5));
+    assertThat(in.readUtf8(5)).isEqualTo("ABCDE");
     in.close();
     try {
       in.readByte();
@@ -565,12 +566,12 @@ public final class CacheTest {
     } catch (IllegalStateException expected) {
     }
 
-    assertEquals(1, cache.writeAbortCount());
-    assertEquals(0, cache.writeSuccessCount());
+    assertThat(cache.writeAbortCount()).isEqualTo(1);
+    assertThat(cache.writeSuccessCount()).isEqualTo(0);
     Response response2 = get(server.url("/"));
-    assertEquals("Request #2", response2.body().string());
-    assertEquals(1, cache.writeAbortCount());
-    assertEquals(1, cache.writeSuccessCount());
+    assertThat(response2.body().string()).isEqualTo("Request #2");
+    assertThat(cache.writeAbortCount()).isEqualTo(1);
+    assertThat(cache.writeSuccessCount()).isEqualTo(1);
   }
 
   @Test public void defaultExpirationDateFullyCachedForLessThan24Hours() throws Exception {
@@ -585,11 +586,11 @@ public final class CacheTest {
 
     HttpUrl url = server.url("/");
     Response response1 = get(url);
-    assertEquals("A", response1.body().string());
+    assertThat(response1.body().string()).isEqualTo("A");
 
     Response response2 = get(url);
-    assertEquals("A", response2.body().string());
-    assertNull(response2.header("Warning"));
+    assertThat(response2.body().string()).isEqualTo("A");
+    assertThat(response2.header("Warning")).isNull();
   }
 
   @Test public void defaultExpirationDateConditionallyCached() throws Exception {
@@ -601,7 +602,8 @@ public final class CacheTest {
     RecordedRequest conditionalRequest = assertConditionallyCached(new MockResponse()
         .addHeader("Last-Modified: " + lastModifiedDate)
         .addHeader("Date: " + formatDate(-15, TimeUnit.SECONDS)));
-    assertEquals(lastModifiedDate, conditionalRequest.getHeader("If-Modified-Since"));
+    assertThat(conditionalRequest.getHeader("If-Modified-Since")).isEqualTo(
+        lastModifiedDate);
   }
 
   @Test public void defaultExpirationDateFullyCachedForMoreThan24Hours() throws Exception {
@@ -614,10 +616,11 @@ public final class CacheTest {
         .addHeader("Date: " + formatDate(-5, TimeUnit.DAYS))
         .setBody("A"));
 
-    assertEquals("A", get(server.url("/")).body().string());
+    assertThat(get(server.url("/")).body().string()).isEqualTo("A");
     Response response = get(server.url("/"));
-    assertEquals("A", response.body().string());
-    assertEquals("113 HttpURLConnection \"Heuristic expiration\"", response.header("Warning"));
+    assertThat(response.body().string()).isEqualTo("A");
+    assertThat(response.header("Warning")).isEqualTo(
+        "113 HttpURLConnection \"Heuristic expiration\"");
   }
 
   @Test public void noDefaultExpirationForUrlsWithQueryString() throws Exception {
@@ -629,8 +632,8 @@ public final class CacheTest {
         .setBody("B"));
 
     HttpUrl url = server.url("/").newBuilder().addQueryParameter("foo", "bar").build();
-    assertEquals("A", get(url).body().string());
-    assertEquals("B", get(url).body().string());
+    assertThat(get(url).body().string()).isEqualTo("A");
+    assertThat(get(url).body().string()).isEqualTo("B");
   }
 
   @Test public void expirationDateInThePastWithLastModifiedHeader() throws Exception {
@@ -638,7 +641,8 @@ public final class CacheTest {
     RecordedRequest conditionalRequest = assertConditionallyCached(new MockResponse()
         .addHeader("Last-Modified: " + lastModifiedDate)
         .addHeader("Expires: " + formatDate(-1, TimeUnit.HOURS)));
-    assertEquals(lastModifiedDate, conditionalRequest.getHeader("If-Modified-Since"));
+    assertThat(conditionalRequest.getHeader("If-Modified-Since")).isEqualTo(
+        lastModifiedDate);
   }
 
   @Test public void expirationDateInThePastWithNoLastModifiedHeader() throws Exception {
@@ -664,7 +668,8 @@ public final class CacheTest {
         .addHeader("Date: " + formatDate(-120, TimeUnit.SECONDS))
         .addHeader("Last-Modified: " + lastModifiedDate)
         .addHeader("Cache-Control: max-age=60"));
-    assertEquals(lastModifiedDate, conditionalRequest.getHeader("If-Modified-Since"));
+    assertThat(conditionalRequest.getHeader("If-Modified-Since")).isEqualTo(
+        lastModifiedDate);
   }
 
   @Test public void maxAgeInThePastWithDateHeaderButNoLastModifiedHeader() throws Exception {
@@ -760,14 +765,14 @@ public final class CacheTest {
         .build();
     Response response1 = client.newCall(request).execute();
     response1.body().close();
-    assertEquals("1", response1.header("X-Response-ID"));
+    assertThat(response1.header("X-Response-ID")).isEqualTo("1");
 
     Response response2 = get(url);
     response2.body().close();
     if (expectCached) {
-      assertEquals("1", response2.header("X-Response-ID"));
+      assertThat(response2.header("X-Response-ID")).isEqualTo("1");
     } else {
-      assertEquals("2", response2.header("X-Response-ID"));
+      assertThat(response2.header("X-Response-ID")).isEqualTo("2");
     }
   }
 
@@ -803,16 +808,16 @@ public final class CacheTest {
 
     HttpUrl url = server.url("/");
 
-    assertEquals("A", get(url).body().string());
+    assertThat(get(url).body().string()).isEqualTo("A");
 
     Request request = new Request.Builder()
         .url(url)
         .method(requestMethod, requestBodyOrNull(requestMethod))
         .build();
     Response invalidate = client.newCall(request).execute();
-    assertEquals("B", invalidate.body().string());
+    assertThat(invalidate.body().string()).isEqualTo("B");
 
-    assertEquals("C", get(url).body().string());
+    assertThat(get(url).body().string()).isEqualTo("C");
   }
 
   @Test public void postInvalidatesCacheWithUncacheableResponse() throws Exception {
@@ -830,16 +835,16 @@ public final class CacheTest {
 
     HttpUrl url = server.url("/");
 
-    assertEquals("A", get(url).body().string());
+    assertThat(get(url).body().string()).isEqualTo("A");
 
     Request request = new Request.Builder()
         .url(url)
         .method("POST", requestBodyOrNull("POST"))
         .build();
     Response invalidate = client.newCall(request).execute();
-    assertEquals("B", invalidate.body().string());
+    assertThat(invalidate.body().string()).isEqualTo("B");
 
-    assertEquals("C", get(url).body().string());
+    assertThat(get(url).body().string()).isEqualTo("C");
   }
 
   @Test public void putInvalidatesWithNoContentResponse() throws Exception {
@@ -857,22 +862,22 @@ public final class CacheTest {
 
     HttpUrl url = server.url("/");
 
-    assertEquals("A", get(url).body().string());
+    assertThat(get(url).body().string()).isEqualTo("A");
 
     Request request = new Request.Builder()
         .url(url)
         .put(RequestBody.create(MediaType.get("text/plain"), "foo"))
         .build();
     Response invalidate = client.newCall(request).execute();
-    assertEquals("", invalidate.body().string());
+    assertThat(invalidate.body().string()).isEqualTo("");
 
-    assertEquals("C", get(url).body().string());
+    assertThat(get(url).body().string()).isEqualTo("C");
   }
 
   @Test public void etag() throws Exception {
     RecordedRequest conditionalRequest = assertConditionallyCached(new MockResponse()
         .addHeader("ETag: v1"));
-    assertEquals("v1", conditionalRequest.getHeader("If-None-Match"));
+    assertThat(conditionalRequest.getHeader("If-None-Match")).isEqualTo("v1");
   }
 
   /** If both If-Modified-Since and If-None-Match conditions apply, send only If-None-Match. */
@@ -882,8 +887,8 @@ public final class CacheTest {
         .addHeader("ETag: v1")
         .addHeader("Last-Modified: " + lastModifiedDate)
         .addHeader("Expires: " + formatDate(-1, TimeUnit.HOURS)));
-    assertEquals("v1", conditionalRequest.getHeader("If-None-Match"));
-    assertNull(conditionalRequest.getHeader("If-Modified-Since"));
+    assertThat(conditionalRequest.getHeader("If-None-Match")).isEqualTo("v1");
+    assertThat(conditionalRequest.getHeader("If-Modified-Since")).isNull();
   }
 
   @Test public void etagAndExpirationDateInTheFuture() throws Exception {
@@ -904,7 +909,8 @@ public final class CacheTest {
         .addHeader("Last-Modified: " + lastModifiedDate)
         .addHeader("Expires: " + formatDate(1, TimeUnit.HOURS))
         .addHeader("Cache-Control: no-cache"));
-    assertEquals(lastModifiedDate, conditionalRequest.getHeader("If-Modified-Since"));
+    assertThat(conditionalRequest.getHeader("If-Modified-Since")).isEqualTo(
+        lastModifiedDate);
   }
 
   @Test public void pragmaNoCache() throws Exception {
@@ -918,7 +924,8 @@ public final class CacheTest {
         .addHeader("Last-Modified: " + lastModifiedDate)
         .addHeader("Expires: " + formatDate(1, TimeUnit.HOURS))
         .addHeader("Pragma: no-cache"));
-    assertEquals(lastModifiedDate, conditionalRequest.getHeader("If-Modified-Since"));
+    assertThat(conditionalRequest.getHeader("If-Modified-Since")).isEqualTo(
+        lastModifiedDate);
   }
 
   @Test public void cacheControlNoStore() throws Exception {
@@ -951,9 +958,9 @@ public final class CacheTest {
         .header("Range", "bytes=1000-1001")
         .build();
     Response range = client.newCall(request).execute();
-    assertEquals("AA", range.body().string());
+    assertThat(range.body().string()).isEqualTo("AA");
 
-    assertEquals("BB", get(url).body().string());
+    assertThat(get(url).body().string()).isEqualTo("BB");
   }
 
   /**
@@ -976,9 +983,9 @@ public final class CacheTest {
 
     HttpUrl url = server.url("/");
 
-    assertEquals("A", get(url).body().string());
-    assertEquals("B", get(url).body().string());
-    assertEquals("B", get(url).body().string());
+    assertThat(get(url).body().string()).isEqualTo("A");
+    assertThat(get(url).body().string()).isEqualTo("B");
+    assertThat(get(url).body().string()).isEqualTo("B");
   }
 
   @Test public void clientSideNoStore() throws Exception {
@@ -994,13 +1001,13 @@ public final class CacheTest {
         .cacheControl(new CacheControl.Builder().noStore().build())
         .build();
     Response response1 = client.newCall(request1).execute();
-    assertEquals("A", response1.body().string());
+    assertThat(response1.body().string()).isEqualTo("A");
 
     Request request2 = new Request.Builder()
         .url(server.url("/"))
         .build();
     Response response2 = client.newCall(request2).execute();
-    assertEquals("B", response2.body().string());
+    assertThat(response2.body().string()).isEqualTo("B");
   }
 
   @Test public void nonIdentityEncodingAndConditionalCache() throws Exception {
@@ -1027,9 +1034,9 @@ public final class CacheTest {
     // At least three request/response pairs are required because after the first request is cached
     // a different execution path might be taken. Thus modifications to the cache applied during
     // the second request might not be visible until another request is performed.
-    assertEquals("ABCABCABC", get(server.url("/")).body().string());
-    assertEquals("ABCABCABC", get(server.url("/")).body().string());
-    assertEquals("ABCABCABC", get(server.url("/")).body().string());
+    assertThat(get(server.url("/")).body().string()).isEqualTo("ABCABCABC");
+    assertThat(get(server.url("/")).body().string()).isEqualTo("ABCABCABC");
+    assertThat(get(server.url("/")).body().string()).isEqualTo("ABCABCABC");
   }
 
   @Test public void previouslyNotGzippedContentIsNotModifiedAndSpecifiesGzipEncoding() throws Exception {
@@ -1045,9 +1052,9 @@ public final class CacheTest {
     server.enqueue(new MockResponse()
             .setBody("DEFDEFDEF"));
 
-    assertEquals("ABCABCABC", get(server.url("/")).body().string());
-    assertEquals("ABCABCABC", get(server.url("/")).body().string());
-    assertEquals("DEFDEFDEF", get(server.url("/")).body().string());
+    assertThat(get(server.url("/")).body().string()).isEqualTo("ABCABCABC");
+    assertThat(get(server.url("/")).body().string()).isEqualTo("ABCABCABC");
+    assertThat(get(server.url("/")).body().string()).isEqualTo("DEFDEFDEF");
   }
 
   @Test public void changedGzippedContentIsNotModifiedAndSpecifiesNewEncoding() throws Exception {
@@ -1064,9 +1071,9 @@ public final class CacheTest {
     server.enqueue(new MockResponse()
             .setBody("DEFDEFDEF"));
 
-    assertEquals("ABCABCABC", get(server.url("/")).body().string());
-    assertEquals("ABCABCABC", get(server.url("/")).body().string());
-    assertEquals("DEFDEFDEF", get(server.url("/")).body().string());
+    assertThat(get(server.url("/")).body().string()).isEqualTo("ABCABCABC");
+    assertThat(get(server.url("/")).body().string()).isEqualTo("ABCABCABC");
+    assertThat(get(server.url("/")).body().string()).isEqualTo("DEFDEFDEF");
   }
 
   @Test public void notModifiedSpecifiesEncoding() throws Exception {
@@ -1081,9 +1088,9 @@ public final class CacheTest {
     server.enqueue(new MockResponse()
         .setBody("DEFDEFDEF"));
 
-    assertEquals("ABCABCABC", get(server.url("/")).body().string());
-    assertEquals("ABCABCABC", get(server.url("/")).body().string());
-    assertEquals("DEFDEFDEF", get(server.url("/")).body().string());
+    assertThat(get(server.url("/")).body().string()).isEqualTo("ABCABCABC");
+    assertThat(get(server.url("/")).body().string()).isEqualTo("ABCABCABC");
+    assertThat(get(server.url("/")).body().string()).isEqualTo("DEFDEFDEF");
   }
 
   /** https://github.com/square/okhttp/issues/947 */
@@ -1096,8 +1103,8 @@ public final class CacheTest {
     server.enqueue(new MockResponse()
         .setBody("FAIL"));
 
-    assertEquals("ABCABCABC", get(server.url("/")).body().string());
-    assertEquals("ABCABCABC", get(server.url("/")).body().string());
+    assertThat(get(server.url("/")).body().string()).isEqualTo("ABCABCABC");
+    assertThat(get(server.url("/")).body().string()).isEqualTo("ABCABCABC");
   }
 
   @Test public void conditionalCacheHitIsNotDoublePooled() throws Exception {
@@ -1110,9 +1117,9 @@ public final class CacheTest {
         .clearHeaders()
         .setResponseCode(HttpURLConnection.HTTP_NOT_MODIFIED));
 
-    assertEquals("A", get(server.url("/")).body().string());
-    assertEquals("A", get(server.url("/")).body().string());
-    assertEquals(1, client.connectionPool().idleConnectionCount());
+    assertThat(get(server.url("/")).body().string()).isEqualTo("A");
+    assertThat(get(server.url("/")).body().string()).isEqualTo("A");
+    assertThat(client.connectionPool().idleConnectionCount()).isEqualTo(1);
   }
 
   @Test public void expiresDateBeforeModifiedDate() throws Exception {
@@ -1130,14 +1137,14 @@ public final class CacheTest {
     server.enqueue(new MockResponse()
         .setBody("B"));
 
-    assertEquals("A", get(server.url("/")).body().string());
+    assertThat(get(server.url("/")).body().string()).isEqualTo("A");
 
     Request request = new Request.Builder()
         .url(server.url("/"))
         .header("Cache-Control", "max-age=30")
         .build();
     Response response = client.newCall(request).execute();
-    assertEquals("B", response.body().string());
+    assertThat(response.body().string()).isEqualTo("B");
   }
 
   @Test public void requestMinFresh() throws IOException {
@@ -1148,14 +1155,14 @@ public final class CacheTest {
     server.enqueue(new MockResponse()
         .setBody("B"));
 
-    assertEquals("A", get(server.url("/")).body().string());
+    assertThat(get(server.url("/")).body().string()).isEqualTo("A");
 
     Request request = new Request.Builder()
         .url(server.url("/"))
         .header("Cache-Control", "min-fresh=120")
         .build();
     Response response = client.newCall(request).execute();
-    assertEquals("B", response.body().string());
+    assertThat(response.body().string()).isEqualTo("B");
   }
 
   @Test public void requestMaxStale() throws IOException {
@@ -1166,15 +1173,16 @@ public final class CacheTest {
     server.enqueue(new MockResponse()
         .setBody("B"));
 
-    assertEquals("A", get(server.url("/")).body().string());
+    assertThat(get(server.url("/")).body().string()).isEqualTo("A");
 
     Request request = new Request.Builder()
         .url(server.url("/"))
         .header("Cache-Control", "max-stale=180")
         .build();
     Response response = client.newCall(request).execute();
-    assertEquals("A", response.body().string());
-    assertEquals("110 HttpURLConnection \"Response is stale\"", response.header("Warning"));
+    assertThat(response.body().string()).isEqualTo("A");
+    assertThat(response.header("Warning")).isEqualTo(
+        "110 HttpURLConnection \"Response is stale\"");
   }
 
   @Test public void requestMaxStaleDirectiveWithNoValue() throws IOException {
@@ -1186,7 +1194,7 @@ public final class CacheTest {
     server.enqueue(new MockResponse()
         .setBody("B"));
 
-    assertEquals("A", get(server.url("/")).body().string());
+    assertThat(get(server.url("/")).body().string()).isEqualTo("A");
 
     // With max-stale, we'll return that stale response.
     Request request = new Request.Builder()
@@ -1194,8 +1202,9 @@ public final class CacheTest {
         .header("Cache-Control", "max-stale")
         .build();
     Response response = client.newCall(request).execute();
-    assertEquals("A", response.body().string());
-    assertEquals("110 HttpURLConnection \"Response is stale\"", response.header("Warning"));
+    assertThat(response.body().string()).isEqualTo("A");
+    assertThat(response.header("Warning")).isEqualTo(
+        "110 HttpURLConnection \"Response is stale\"");
   }
 
   @Test public void requestMaxStaleNotHonoredWithMustRevalidate() throws IOException {
@@ -1206,14 +1215,14 @@ public final class CacheTest {
     server.enqueue(new MockResponse()
         .setBody("B"));
 
-    assertEquals("A", get(server.url("/")).body().string());
+    assertThat(get(server.url("/")).body().string()).isEqualTo("A");
 
     Request request = new Request.Builder()
         .url(server.url("/"))
         .header("Cache-Control", "max-stale=180")
         .build();
     Response response = client.newCall(request).execute();
-    assertEquals("B", response.body().string());
+    assertThat(response.body().string()).isEqualTo("B");
   }
 
   @Test public void requestOnlyIfCachedWithNoResponseCached() throws IOException {
@@ -1224,11 +1233,11 @@ public final class CacheTest {
         .header("Cache-Control", "only-if-cached")
         .build();
     Response response = client.newCall(request).execute();
-    assertTrue(response.body().source().exhausted());
-    assertEquals(504, response.code());
-    assertEquals(1, cache.requestCount());
-    assertEquals(0, cache.networkCount());
-    assertEquals(0, cache.hitCount());
+    assertThat(response.body().source().exhausted()).isTrue();
+    assertThat(response.code()).isEqualTo(504);
+    assertThat(cache.requestCount()).isEqualTo(1);
+    assertThat(cache.networkCount()).isEqualTo(0);
+    assertThat(cache.hitCount()).isEqualTo(0);
   }
 
   @Test public void requestOnlyIfCachedWithFullResponseCached() throws IOException {
@@ -1237,16 +1246,16 @@ public final class CacheTest {
         .addHeader("Cache-Control: max-age=30")
         .addHeader("Date: " + formatDate(0, TimeUnit.MINUTES)));
 
-    assertEquals("A", get(server.url("/")).body().string());
+    assertThat(get(server.url("/")).body().string()).isEqualTo("A");
     Request request = new Request.Builder()
         .url(server.url("/"))
         .header("Cache-Control", "only-if-cached")
         .build();
     Response response = client.newCall(request).execute();
-    assertEquals("A", response.body().string());
-    assertEquals(2, cache.requestCount());
-    assertEquals(1, cache.networkCount());
-    assertEquals(1, cache.hitCount());
+    assertThat(response.body().string()).isEqualTo("A");
+    assertThat(cache.requestCount()).isEqualTo(2);
+    assertThat(cache.networkCount()).isEqualTo(1);
+    assertThat(cache.hitCount()).isEqualTo(1);
   }
 
   @Test public void requestOnlyIfCachedWithConditionalResponseCached() throws IOException {
@@ -1255,34 +1264,34 @@ public final class CacheTest {
         .addHeader("Cache-Control: max-age=30")
         .addHeader("Date: " + formatDate(-1, TimeUnit.MINUTES)));
 
-    assertEquals("A", get(server.url("/")).body().string());
+    assertThat(get(server.url("/")).body().string()).isEqualTo("A");
     Request request = new Request.Builder()
         .url(server.url("/"))
         .header("Cache-Control", "only-if-cached")
         .build();
     Response response = client.newCall(request).execute();
-    assertTrue(response.body().source().exhausted());
-    assertEquals(504, response.code());
-    assertEquals(2, cache.requestCount());
-    assertEquals(1, cache.networkCount());
-    assertEquals(0, cache.hitCount());
+    assertThat(response.body().source().exhausted()).isTrue();
+    assertThat(response.code()).isEqualTo(504);
+    assertThat(cache.requestCount()).isEqualTo(2);
+    assertThat(cache.networkCount()).isEqualTo(1);
+    assertThat(cache.hitCount()).isEqualTo(0);
   }
 
   @Test public void requestOnlyIfCachedWithUnhelpfulResponseCached() throws IOException {
     server.enqueue(new MockResponse()
         .setBody("A"));
 
-    assertEquals("A", get(server.url("/")).body().string());
+    assertThat(get(server.url("/")).body().string()).isEqualTo("A");
     Request request = new Request.Builder()
         .url(server.url("/"))
         .header("Cache-Control", "only-if-cached")
         .build();
     Response response = client.newCall(request).execute();
-    assertTrue(response.body().source().exhausted());
-    assertEquals(504, response.code());
-    assertEquals(2, cache.requestCount());
-    assertEquals(1, cache.networkCount());
-    assertEquals(0, cache.hitCount());
+    assertThat(response.body().source().exhausted()).isTrue();
+    assertThat(response.code()).isEqualTo(504);
+    assertThat(cache.requestCount()).isEqualTo(2);
+    assertThat(cache.networkCount()).isEqualTo(1);
+    assertThat(cache.hitCount()).isEqualTo(0);
   }
 
   @Test public void requestCacheControlNoCache() throws Exception {
@@ -1295,13 +1304,13 @@ public final class CacheTest {
         .setBody("B"));
 
     HttpUrl url = server.url("/");
-    assertEquals("A", get(url).body().string());
+    assertThat(get(url).body().string()).isEqualTo("A");
     Request request = new Request.Builder()
         .url(url)
         .header("Cache-Control", "no-cache")
         .build();
     Response response = client.newCall(request).execute();
-    assertEquals("B", response.body().string());
+    assertThat(response.body().string()).isEqualTo("B");
   }
 
   @Test public void requestPragmaNoCache() throws Exception {
@@ -1314,13 +1323,13 @@ public final class CacheTest {
         .setBody("B"));
 
     HttpUrl url = server.url("/");
-    assertEquals("A", get(url).body().string());
+    assertThat(get(url).body().string()).isEqualTo("A");
     Request request = new Request.Builder()
         .url(url)
         .header("Pragma", "no-cache")
         .build();
     Response response = client.newCall(request).execute();
-    assertEquals("B", response.body().string());
+    assertThat(response.body().string()).isEqualTo("B");
   }
 
   @Test public void clientSuppliedIfModifiedSinceWithCachedResult() throws Exception {
@@ -1330,8 +1339,8 @@ public final class CacheTest {
     String ifModifiedSinceDate = formatDate(-24, TimeUnit.HOURS);
     RecordedRequest request =
         assertClientSuppliedCondition(response, "If-Modified-Since", ifModifiedSinceDate);
-    assertEquals(ifModifiedSinceDate, request.getHeader("If-Modified-Since"));
-    assertNull(request.getHeader("If-None-Match"));
+    assertThat(request.getHeader("If-Modified-Since")).isEqualTo(ifModifiedSinceDate);
+    assertThat(request.getHeader("If-None-Match")).isNull();
   }
 
   @Test public void clientSuppliedIfNoneMatchSinceWithCachedResult() throws Exception {
@@ -1341,8 +1350,8 @@ public final class CacheTest {
         .addHeader("Date: " + formatDate(-2, TimeUnit.MINUTES))
         .addHeader("Cache-Control: max-age=0");
     RecordedRequest request = assertClientSuppliedCondition(response, "If-None-Match", "v1");
-    assertEquals("v1", request.getHeader("If-None-Match"));
-    assertNull(request.getHeader("If-Modified-Since"));
+    assertThat(request.getHeader("If-None-Match")).isEqualTo("v1");
+    assertThat(request.getHeader("If-Modified-Since")).isNull();
   }
 
   private RecordedRequest assertClientSuppliedCondition(MockResponse seed, String conditionName,
@@ -1352,15 +1361,15 @@ public final class CacheTest {
         .setResponseCode(HttpURLConnection.HTTP_NOT_MODIFIED));
 
     HttpUrl url = server.url("/");
-    assertEquals("A", get(url).body().string());
+    assertThat(get(url).body().string()).isEqualTo("A");
 
     Request request = new Request.Builder()
         .url(url)
         .header(conditionName, conditionValue)
         .build();
     Response response = client.newCall(request).execute();
-    assertEquals(HttpURLConnection.HTTP_NOT_MODIFIED, response.code());
-    assertEquals("", response.body().string());
+    assertThat(response.code()).isEqualTo(HttpURLConnection.HTTP_NOT_MODIFIED);
+    assertThat(response.body().string()).isEqualTo("");
 
     server.takeRequest(); // seed
     return server.takeRequest();
@@ -1387,16 +1396,16 @@ public final class CacheTest {
     server.enqueue(new MockResponse()
         .setResponseCode(HttpURLConnection.HTTP_NOT_MODIFIED));
 
-    assertEquals("A", get(server.url("/")).body().string());
-    assertEquals("A", get(server.url("/")).body().string());
+    assertThat(get(server.url("/")).body().string()).isEqualTo("A");
+    assertThat(get(server.url("/")).body().string()).isEqualTo("A");
 
     // The first request has no conditions.
     RecordedRequest request1 = server.takeRequest();
-    assertNull(request1.getHeader("If-Modified-Since"));
+    assertThat(request1.getHeader("If-Modified-Since")).isNull();
 
     // The 2nd request uses the server's date format.
     RecordedRequest request2 = server.takeRequest();
-    assertEquals(lastModifiedString, request2.getHeader("If-Modified-Since"));
+    assertThat(request2.getHeader("If-Modified-Since")).isEqualTo(lastModifiedString);
   }
 
   @Test public void clientSuppliedConditionWithoutCachedResult() throws Exception {
@@ -1408,8 +1417,8 @@ public final class CacheTest {
         .header("If-Modified-Since", formatDate(-24, TimeUnit.HOURS))
         .build();
     Response response = client.newCall(request).execute();
-    assertEquals(HttpURLConnection.HTTP_NOT_MODIFIED, response.code());
-    assertEquals("", response.body().string());
+    assertThat(response.code()).isEqualTo(HttpURLConnection.HTTP_NOT_MODIFIED);
+    assertThat(response.body().string()).isEqualTo("");
   }
 
   @Test public void authorizationRequestFullyCached() throws Exception {
@@ -1425,8 +1434,8 @@ public final class CacheTest {
         .header("Authorization", "password")
         .build();
     Response response = client.newCall(request).execute();
-    assertEquals("A", response.body().string());
-    assertEquals("A", get(url).body().string());
+    assertThat(response.body().string()).isEqualTo("A");
+    assertThat(get(url).body().string()).isEqualTo("A");
   }
 
   @Test public void contentLocationDoesNotPopulateCache() throws Exception {
@@ -1437,8 +1446,8 @@ public final class CacheTest {
     server.enqueue(new MockResponse()
         .setBody("B"));
 
-    assertEquals("A", get(server.url("/foo")).body().string());
-    assertEquals("B", get(server.url("/bar")).body().string());
+    assertThat(get(server.url("/foo")).body().string()).isEqualTo("A");
+    assertThat(get(server.url("/bar")).body().string()).isEqualTo("B");
   }
 
   @Test public void connectionIsReturnedToPoolAfterConditionalSuccess() throws Exception {
@@ -1451,13 +1460,13 @@ public final class CacheTest {
     server.enqueue(new MockResponse()
         .setBody("B"));
 
-    assertEquals("A", get(server.url("/a")).body().string());
-    assertEquals("A", get(server.url("/a")).body().string());
-    assertEquals("B", get(server.url("/b")).body().string());
+    assertThat(get(server.url("/a")).body().string()).isEqualTo("A");
+    assertThat(get(server.url("/a")).body().string()).isEqualTo("A");
+    assertThat(get(server.url("/b")).body().string()).isEqualTo("B");
 
-    assertEquals(0, server.takeRequest().getSequenceNumber());
-    assertEquals(1, server.takeRequest().getSequenceNumber());
-    assertEquals(2, server.takeRequest().getSequenceNumber());
+    assertThat(server.takeRequest().getSequenceNumber()).isEqualTo(0);
+    assertThat(server.takeRequest().getSequenceNumber()).isEqualTo(1);
+    assertThat(server.takeRequest().getSequenceNumber()).isEqualTo(2);
   }
 
   @Test public void statisticsConditionalCacheMiss() throws Exception {
@@ -1470,15 +1479,15 @@ public final class CacheTest {
     server.enqueue(new MockResponse()
         .setBody("C"));
 
-    assertEquals("A", get(server.url("/")).body().string());
-    assertEquals(1, cache.requestCount());
-    assertEquals(1, cache.networkCount());
-    assertEquals(0, cache.hitCount());
-    assertEquals("B", get(server.url("/")).body().string());
-    assertEquals("C", get(server.url("/")).body().string());
-    assertEquals(3, cache.requestCount());
-    assertEquals(3, cache.networkCount());
-    assertEquals(0, cache.hitCount());
+    assertThat(get(server.url("/")).body().string()).isEqualTo("A");
+    assertThat(cache.requestCount()).isEqualTo(1);
+    assertThat(cache.networkCount()).isEqualTo(1);
+    assertThat(cache.hitCount()).isEqualTo(0);
+    assertThat(get(server.url("/")).body().string()).isEqualTo("B");
+    assertThat(get(server.url("/")).body().string()).isEqualTo("C");
+    assertThat(cache.requestCount()).isEqualTo(3);
+    assertThat(cache.networkCount()).isEqualTo(3);
+    assertThat(cache.hitCount()).isEqualTo(0);
   }
 
   @Test public void statisticsConditionalCacheHit() throws Exception {
@@ -1491,15 +1500,15 @@ public final class CacheTest {
     server.enqueue(new MockResponse()
         .setResponseCode(HttpURLConnection.HTTP_NOT_MODIFIED));
 
-    assertEquals("A", get(server.url("/")).body().string());
-    assertEquals(1, cache.requestCount());
-    assertEquals(1, cache.networkCount());
-    assertEquals(0, cache.hitCount());
-    assertEquals("A", get(server.url("/")).body().string());
-    assertEquals("A", get(server.url("/")).body().string());
-    assertEquals(3, cache.requestCount());
-    assertEquals(3, cache.networkCount());
-    assertEquals(2, cache.hitCount());
+    assertThat(get(server.url("/")).body().string()).isEqualTo("A");
+    assertThat(cache.requestCount()).isEqualTo(1);
+    assertThat(cache.networkCount()).isEqualTo(1);
+    assertThat(cache.hitCount()).isEqualTo(0);
+    assertThat(get(server.url("/")).body().string()).isEqualTo("A");
+    assertThat(get(server.url("/")).body().string()).isEqualTo("A");
+    assertThat(cache.requestCount()).isEqualTo(3);
+    assertThat(cache.networkCount()).isEqualTo(3);
+    assertThat(cache.hitCount()).isEqualTo(2);
   }
 
   @Test public void statisticsFullCacheHit() throws Exception {
@@ -1507,15 +1516,15 @@ public final class CacheTest {
         .addHeader("Cache-Control: max-age=60")
         .setBody("A"));
 
-    assertEquals("A", get(server.url("/")).body().string());
-    assertEquals(1, cache.requestCount());
-    assertEquals(1, cache.networkCount());
-    assertEquals(0, cache.hitCount());
-    assertEquals("A", get(server.url("/")).body().string());
-    assertEquals("A", get(server.url("/")).body().string());
-    assertEquals(3, cache.requestCount());
-    assertEquals(1, cache.networkCount());
-    assertEquals(2, cache.hitCount());
+    assertThat(get(server.url("/")).body().string()).isEqualTo("A");
+    assertThat(cache.requestCount()).isEqualTo(1);
+    assertThat(cache.networkCount()).isEqualTo(1);
+    assertThat(cache.hitCount()).isEqualTo(0);
+    assertThat(get(server.url("/")).body().string()).isEqualTo("A");
+    assertThat(get(server.url("/")).body().string()).isEqualTo("A");
+    assertThat(cache.requestCount()).isEqualTo(3);
+    assertThat(cache.networkCount()).isEqualTo(1);
+    assertThat(cache.hitCount()).isEqualTo(2);
   }
 
   @Test public void varyMatchesChangedRequestHeaderField() throws Exception {
@@ -1532,14 +1541,14 @@ public final class CacheTest {
         .header("Accept-Language", "fr-CA")
         .build();
     Response frResponse = client.newCall(frRequest).execute();
-    assertEquals("A", frResponse.body().string());
+    assertThat(frResponse.body().string()).isEqualTo("A");
 
     Request enRequest = new Request.Builder()
         .url(url)
         .header("Accept-Language", "en-US")
         .build();
     Response enResponse = client.newCall(enRequest).execute();
-    assertEquals("B", enResponse.body().string());
+    assertThat(enResponse.body().string()).isEqualTo("B");
   }
 
   @Test public void varyMatchesUnchangedRequestHeaderField() throws Exception {
@@ -1556,13 +1565,13 @@ public final class CacheTest {
         .header("Accept-Language", "fr-CA")
         .build();
     Response response1 = client.newCall(request).execute();
-    assertEquals("A", response1.body().string());
+    assertThat(response1.body().string()).isEqualTo("A");
     Request request1 = new Request.Builder()
         .url(url)
         .header("Accept-Language", "fr-CA")
         .build();
     Response response2 = client.newCall(request1).execute();
-    assertEquals("A", response2.body().string());
+    assertThat(response2.body().string()).isEqualTo("A");
   }
 
   @Test public void varyMatchesAbsentRequestHeaderField() throws Exception {
@@ -1573,8 +1582,8 @@ public final class CacheTest {
     server.enqueue(new MockResponse()
         .setBody("B"));
 
-    assertEquals("A", get(server.url("/")).body().string());
-    assertEquals("A", get(server.url("/")).body().string());
+    assertThat(get(server.url("/")).body().string()).isEqualTo("A");
+    assertThat(get(server.url("/")).body().string()).isEqualTo("A");
   }
 
   @Test public void varyMatchesAddedRequestHeaderField() throws Exception {
@@ -1585,12 +1594,12 @@ public final class CacheTest {
     server.enqueue(new MockResponse()
         .setBody("B"));
 
-    assertEquals("A", get(server.url("/")).body().string());
+    assertThat(get(server.url("/")).body().string()).isEqualTo("A");
     Request request = new Request.Builder()
         .url(server.url("/")).header("Foo", "bar")
         .build();
     Response response = client.newCall(request).execute();
-    assertEquals("B", response.body().string());
+    assertThat(response.body().string()).isEqualTo("B");
   }
 
   @Test public void varyMatchesRemovedRequestHeaderField() throws Exception {
@@ -1605,8 +1614,8 @@ public final class CacheTest {
         .url(server.url("/")).header("Foo", "bar")
         .build();
     Response fooresponse = client.newCall(request).execute();
-    assertEquals("A", fooresponse.body().string());
-    assertEquals("B", get(server.url("/")).body().string());
+    assertThat(fooresponse.body().string()).isEqualTo("A");
+    assertThat(get(server.url("/")).body().string()).isEqualTo("B");
   }
 
   @Test public void varyFieldsAreCaseInsensitive() throws Exception {
@@ -1623,13 +1632,13 @@ public final class CacheTest {
         .header("Accept-Language", "fr-CA")
         .build();
     Response response1 = client.newCall(request).execute();
-    assertEquals("A", response1.body().string());
+    assertThat(response1.body().string()).isEqualTo("A");
     Request request1 = new Request.Builder()
         .url(url)
         .header("accept-language", "fr-CA")
         .build();
     Response response2 = client.newCall(request1).execute();
-    assertEquals("A", response2.body().string());
+    assertThat(response2.body().string()).isEqualTo("A");
   }
 
   @Test public void varyMultipleFieldsWithMatch() throws Exception {
@@ -1649,7 +1658,7 @@ public final class CacheTest {
         .header("Accept-Encoding", "identity")
         .build();
     Response response1 = client.newCall(request).execute();
-    assertEquals("A", response1.body().string());
+    assertThat(response1.body().string()).isEqualTo("A");
     Request request1 = new Request.Builder()
         .url(url)
         .header("Accept-Language", "fr-CA")
@@ -1657,7 +1666,7 @@ public final class CacheTest {
         .header("Accept-Encoding", "identity")
         .build();
     Response response2 = client.newCall(request1).execute();
-    assertEquals("A", response2.body().string());
+    assertThat(response2.body().string()).isEqualTo("A");
   }
 
   @Test public void varyMultipleFieldsWithNoMatch() throws Exception {
@@ -1677,7 +1686,7 @@ public final class CacheTest {
         .header("Accept-Encoding", "identity")
         .build();
     Response frResponse = client.newCall(frRequest).execute();
-    assertEquals("A", frResponse.body().string());
+    assertThat(frResponse.body().string()).isEqualTo("A");
     Request enRequest = new Request.Builder()
         .url(url)
         .header("Accept-Language", "en-CA")
@@ -1685,7 +1694,7 @@ public final class CacheTest {
         .header("Accept-Encoding", "identity")
         .build();
     Response enResponse = client.newCall(enRequest).execute();
-    assertEquals("B", enResponse.body().string());
+    assertThat(enResponse.body().string()).isEqualTo("B");
   }
 
   @Test public void varyMultipleFieldValuesWithMatch() throws Exception {
@@ -1703,7 +1712,7 @@ public final class CacheTest {
         .addHeader("Accept-Language", "en-US")
         .build();
     Response response1 = client.newCall(request1).execute();
-    assertEquals("A", response1.body().string());
+    assertThat(response1.body().string()).isEqualTo("A");
 
     Request request2 = new Request.Builder()
         .url(url)
@@ -1711,7 +1720,7 @@ public final class CacheTest {
         .addHeader("Accept-Language", "en-US")
         .build();
     Response response2 = client.newCall(request2).execute();
-    assertEquals("A", response2.body().string());
+    assertThat(response2.body().string()).isEqualTo("A");
   }
 
   @Test public void varyMultipleFieldValuesWithNoMatch() throws Exception {
@@ -1729,7 +1738,7 @@ public final class CacheTest {
         .addHeader("Accept-Language", "en-US")
         .build();
     Response response1 = client.newCall(request1).execute();
-    assertEquals("A", response1.body().string());
+    assertThat(response1.body().string()).isEqualTo("A");
 
     Request request2 = new Request.Builder()
         .url(url)
@@ -1737,7 +1746,7 @@ public final class CacheTest {
         .addHeader("Accept-Language", "en-US")
         .build();
     Response response2 = client.newCall(request2).execute();
-    assertEquals("B", response2.body().string());
+    assertThat(response2.body().string()).isEqualTo("B");
   }
 
   @Test public void varyAsterisk() throws Exception {
@@ -1748,8 +1757,8 @@ public final class CacheTest {
     server.enqueue(new MockResponse()
         .setBody("B"));
 
-    assertEquals("A", get(server.url("/")).body().string());
-    assertEquals("B", get(server.url("/")).body().string());
+    assertThat(get(server.url("/")).body().string()).isEqualTo("A");
+    assertThat(get(server.url("/")).body().string()).isEqualTo("B");
   }
 
   @Test public void varyAndHttps() throws Exception {
@@ -1773,14 +1782,14 @@ public final class CacheTest {
         .header("Accept-Language", "en-US")
         .build();
     Response response1 = client.newCall(request1).execute();
-    assertEquals("A", response1.body().string());
+    assertThat(response1.body().string()).isEqualTo("A");
 
     Request request2 = new Request.Builder()
         .url(url)
         .header("Accept-Language", "en-US")
         .build();
     Response response2 = client.newCall(request2).execute();
-    assertEquals("A", response2.body().string());
+    assertThat(response2.body().string()).isEqualTo("A");
   }
 
   @Test public void cachePlusCookies() throws Exception {
@@ -1799,9 +1808,9 @@ public final class CacheTest {
         .setResponseCode(HttpURLConnection.HTTP_NOT_MODIFIED));
 
     HttpUrl url = server.url("/");
-    assertEquals("A", get(url).body().string());
+    assertThat(get(url).body().string()).isEqualTo("A");
     cookieJar.assertResponseCookies("a=FIRST; path=/");
-    assertEquals("A", get(url).body().string());
+    assertThat(get(url).body().string()).isEqualTo("A");
     cookieJar.assertResponseCookies("a=SECOND; path=/");
   }
 
@@ -1816,12 +1825,12 @@ public final class CacheTest {
         .setResponseCode(HttpURLConnection.HTTP_NOT_MODIFIED));
 
     Response response1 = get(server.url("/"));
-    assertEquals("A", response1.body().string());
-    assertEquals("GET, HEAD", response1.header("Allow"));
+    assertThat(response1.body().string()).isEqualTo("A");
+    assertThat(response1.header("Allow")).isEqualTo("GET, HEAD");
 
     Response response2 = get(server.url("/"));
-    assertEquals("A", response2.body().string());
-    assertEquals("GET, HEAD, PUT", response2.header("Allow"));
+    assertThat(response2.body().string()).isEqualTo("A");
+    assertThat(response2.header("Allow")).isEqualTo("GET, HEAD, PUT");
   }
 
   @Test public void getHeadersReturnsCachedHopByHopHeaders() throws Exception {
@@ -1835,12 +1844,12 @@ public final class CacheTest {
         .setResponseCode(HttpURLConnection.HTTP_NOT_MODIFIED));
 
     Response response1 = get(server.url("/"));
-    assertEquals("A", response1.body().string());
-    assertEquals("identity", response1.header("Transfer-Encoding"));
+    assertThat(response1.body().string()).isEqualTo("A");
+    assertThat(response1.header("Transfer-Encoding")).isEqualTo("identity");
 
     Response response2 = get(server.url("/"));
-    assertEquals("A", response2.body().string());
-    assertEquals("identity", response2.header("Transfer-Encoding"));
+    assertThat(response2.body().string()).isEqualTo("A");
+    assertThat(response2.header("Transfer-Encoding")).isEqualTo("identity");
   }
 
   @Test public void getHeadersDeletesCached100LevelWarnings() throws Exception {
@@ -1853,12 +1862,12 @@ public final class CacheTest {
         .setResponseCode(HttpURLConnection.HTTP_NOT_MODIFIED));
 
     Response response1 = get(server.url("/"));
-    assertEquals("A", response1.body().string());
-    assertEquals("199 test danger", response1.header("Warning"));
+    assertThat(response1.body().string()).isEqualTo("A");
+    assertThat(response1.header("Warning")).isEqualTo("199 test danger");
 
     Response response2 = get(server.url("/"));
-    assertEquals("A", response2.body().string());
-    assertNull(response2.header("Warning"));
+    assertThat(response2.body().string()).isEqualTo("A");
+    assertThat(response2.header("Warning")).isNull();
   }
 
   @Test public void getHeadersRetainsCached200LevelWarnings() throws Exception {
@@ -1871,12 +1880,12 @@ public final class CacheTest {
         .setResponseCode(HttpURLConnection.HTTP_NOT_MODIFIED));
 
     Response response1 = get(server.url("/"));
-    assertEquals("A", response1.body().string());
-    assertEquals("299 test danger", response1.header("Warning"));
+    assertThat(response1.body().string()).isEqualTo("A");
+    assertThat(response1.header("Warning")).isEqualTo("299 test danger");
 
     Response response2 = get(server.url("/"));
-    assertEquals("A", response2.body().string());
-    assertEquals("299 test danger", response2.header("Warning"));
+    assertThat(response2.body().string()).isEqualTo("A");
+    assertThat(response2.header("Warning")).isEqualTo("299 test danger");
   }
 
   @Test public void doNotCachePartialResponse() throws Exception {
@@ -1902,28 +1911,31 @@ public final class CacheTest {
     // A cache miss writes the cache.
     long t0 = System.currentTimeMillis();
     Response response1 = get(server.url("/a"));
-    assertEquals("A", response1.body().string());
-    assertNull(response1.header("Allow"));
-    assertEquals(0, response1.receivedResponseAtMillis() - t0, 250.0);
+    assertThat(response1.body().string()).isEqualTo("A");
+    assertThat(response1.header("Allow")).isNull();
+    assertThat((double) (response1.receivedResponseAtMillis() - t0)).isCloseTo(
+        (double) 0, offset(250.0));
 
     // A conditional cache hit updates the cache.
     Thread.sleep(500); // Make sure t0 and t1 are distinct.
     long t1 = System.currentTimeMillis();
     Response response2 = get(server.url("/a"));
-    assertEquals(HttpURLConnection.HTTP_OK, response2.code());
-    assertEquals("A", response2.body().string());
-    assertEquals("GET, HEAD", response2.header("Allow"));
-    assertEquals(0, response2.receivedResponseAtMillis() - t1, 250.0);
+    assertThat(response2.code()).isEqualTo(HttpURLConnection.HTTP_OK);
+    assertThat(response2.body().string()).isEqualTo("A");
+    assertThat(response2.header("Allow")).isEqualTo("GET, HEAD");
+    assertThat((double) (response2.receivedResponseAtMillis() - t1)).isCloseTo(
+        (double) 0, offset(250.0));
 
     // A full cache hit reads the cache.
     Thread.sleep(500); // Make sure t1 and t2 are distinct.
     long t2 = System.currentTimeMillis();
     Response response3 = get(server.url("/a"));
-    assertEquals("A", response3.body().string());
-    assertEquals("GET, HEAD", response3.header("Allow"));
-    assertEquals(0, response3.receivedResponseAtMillis() - t1, 250.0);
+    assertThat(response3.body().string()).isEqualTo("A");
+    assertThat(response3.header("Allow")).isEqualTo("GET, HEAD");
+    assertThat((double) (response3.receivedResponseAtMillis() - t1)).isCloseTo(
+        (double) 0, offset(250.0));
 
-    assertEquals(2, server.getRequestCount());
+    assertThat(server.getRequestCount()).isEqualTo(2);
   }
 
   @Test public void responseSourceHeaderCached() throws IOException {
@@ -1932,12 +1944,12 @@ public final class CacheTest {
         .addHeader("Cache-Control: max-age=30")
         .addHeader("Date: " + formatDate(0, TimeUnit.MINUTES)));
 
-    assertEquals("A", get(server.url("/")).body().string());
+    assertThat(get(server.url("/")).body().string()).isEqualTo("A");
     Request request = new Request.Builder()
         .url(server.url("/")).header("Cache-Control", "only-if-cached")
         .build();
     Response response = client.newCall(request).execute();
-    assertEquals("A", response.body().string());
+    assertThat(response.body().string()).isEqualTo("A");
   }
 
   @Test public void responseSourceHeaderConditionalCacheFetched() throws IOException {
@@ -1950,9 +1962,9 @@ public final class CacheTest {
         .addHeader("Cache-Control: max-age=30")
         .addHeader("Date: " + formatDate(0, TimeUnit.MINUTES)));
 
-    assertEquals("A", get(server.url("/")).body().string());
+    assertThat(get(server.url("/")).body().string()).isEqualTo("A");
     Response response = get(server.url("/"));
-    assertEquals("B", response.body().string());
+    assertThat(response.body().string()).isEqualTo("B");
   }
 
   @Test public void responseSourceHeaderConditionalCacheNotFetched() throws IOException {
@@ -1963,9 +1975,9 @@ public final class CacheTest {
     server.enqueue(new MockResponse()
         .setResponseCode(304));
 
-    assertEquals("A", get(server.url("/")).body().string());
+    assertThat(get(server.url("/")).body().string()).isEqualTo("A");
     Response response = get(server.url("/"));
-    assertEquals("A", response.body().string());
+    assertThat(response.body().string()).isEqualTo("A");
   }
 
   @Test public void responseSourceHeaderFetched() throws IOException {
@@ -1973,7 +1985,7 @@ public final class CacheTest {
         .setBody("A"));
 
     Response response = get(server.url("/"));
-    assertEquals("A", response.body().string());
+    assertThat(response.body().string()).isEqualTo("A");
   }
 
   @Test public void emptyResponseHeaderNameFromCacheIsLenient() throws Exception {
@@ -1985,8 +1997,8 @@ public final class CacheTest {
         .setBody("body"));
 
     Response response = get(server.url("/"));
-    assertEquals("A", response.header(""));
-    assertEquals("body", response.body().string());
+    assertThat(response.header("")).isEqualTo("A");
+    assertThat(response.body().string()).isEqualTo("body");
   }
 
   /**
@@ -2045,9 +2057,9 @@ public final class CacheTest {
         .build();
 
     Response response = get(url);
-    assertEquals(entryBody, response.body().string());
-    assertEquals("3", response.header("Content-Length"));
-    assertEquals("foo", response.header("etag"));
+    assertThat(response.body().string()).isEqualTo(entryBody);
+    assertThat(response.header("Content-Length")).isEqualTo("3");
+    assertThat(response.header("etag")).isEqualTo("foo");
   }
 
   /** Exercise the cache format in OkHttp 2.7 and all earlier releases. */
@@ -2095,8 +2107,8 @@ public final class CacheTest {
         .build();
 
     Response response = get(url);
-    assertEquals(entryBody, response.body().string());
-    assertEquals("3", response.header("Content-Length"));
+    assertThat(response.body().string()).isEqualTo(entryBody);
+    assertThat(response.header("Content-Length")).isEqualTo("3");
   }
 
   /** The TLS version is present in OkHttp 3.0 and beyond. */
@@ -2145,8 +2157,8 @@ public final class CacheTest {
         .build();
 
     Response response = get(url);
-    assertEquals(entryBody, response.body().string());
-    assertEquals("3", response.header("Content-Length"));
+    assertThat(response.body().string()).isEqualTo(entryBody);
+    assertThat(response.header("Content-Length")).isEqualTo("3");
   }
 
   @Test public void testGoldenCacheHttpResponseOkHttp30() throws Exception {
@@ -2182,8 +2194,8 @@ public final class CacheTest {
         .build();
 
     Response response = get(url);
-    assertEquals(entryBody, response.body().string());
-    assertEquals("3", response.header("Content-Length"));
+    assertThat(response.body().string()).isEqualTo(entryBody);
+    assertThat(response.header("Content-Length")).isEqualTo("3");
   }
 
   @Test public void evictAll() throws Exception {
@@ -2194,10 +2206,10 @@ public final class CacheTest {
         .setBody("B"));
 
     HttpUrl url = server.url("/");
-    assertEquals("A", get(url).body().string());
+    assertThat(get(url).body().string()).isEqualTo("A");
     client.cache().evictAll();
-    assertEquals(0, client.cache().size());
-    assertEquals("B", get(url).body().string());
+    assertThat(client.cache().size()).isEqualTo(0);
+    assertThat(get(url).body().string()).isEqualTo("B");
   }
 
   @Test public void networkInterceptorInvokedForConditionalGet() throws Exception {
@@ -2209,7 +2221,7 @@ public final class CacheTest {
 
     // Seed the cache.
     HttpUrl url = server.url("/");
-    assertEquals("A", get(url).body().string());
+    assertThat(get(url).body().string()).isEqualTo("A");
 
     final AtomicReference<String> ifNoneMatch = new AtomicReference<>();
     client = client.newBuilder()
@@ -2220,8 +2232,8 @@ public final class CacheTest {
         .build();
 
     // Confirm the value is cached and intercepted.
-    assertEquals("A", get(url).body().string());
-    assertEquals("v1", ifNoneMatch.get());
+    assertThat(get(url).body().string()).isEqualTo("A");
+    assertThat(ifNoneMatch.get()).isEqualTo("v1");
   }
 
   @Test public void networkInterceptorNotInvokedForFullyCached() throws Exception {
@@ -2231,13 +2243,13 @@ public final class CacheTest {
 
     // Seed the cache.
     HttpUrl url = server.url("/");
-    assertEquals("A", get(url).body().string());
+    assertThat(get(url).body().string()).isEqualTo("A");
 
     // Confirm the interceptor isn't exercised.
     client = client.newBuilder()
         .addNetworkInterceptor(chain -> { throw new AssertionError(); })
         .build();
-    assertEquals("A", get(url).body().string());
+    assertThat(get(url).body().string()).isEqualTo("A");
   }
 
   @Test public void iterateCache() throws Exception {
@@ -2245,29 +2257,29 @@ public final class CacheTest {
     server.enqueue(new MockResponse()
         .setBody("a"));
     HttpUrl urlA = server.url("/a");
-    assertEquals("a", get(urlA).body().string());
+    assertThat(get(urlA).body().string()).isEqualTo("a");
 
     server.enqueue(new MockResponse()
         .setBody("b"));
     HttpUrl urlB = server.url("/b");
-    assertEquals("b", get(urlB).body().string());
+    assertThat(get(urlB).body().string()).isEqualTo("b");
 
     server.enqueue(new MockResponse()
         .setBody("c"));
     HttpUrl urlC = server.url("/c");
-    assertEquals("c", get(urlC).body().string());
+    assertThat(get(urlC).body().string()).isEqualTo("c");
 
     // Confirm the iterator returns those responses...
     Iterator<String> i = cache.urls();
-    assertTrue(i.hasNext());
-    assertEquals(urlA.toString(), i.next());
-    assertTrue(i.hasNext());
-    assertEquals(urlB.toString(), i.next());
-    assertTrue(i.hasNext());
-    assertEquals(urlC.toString(), i.next());
+    assertThat(i.hasNext()).isTrue();
+    assertThat(i.next()).isEqualTo(urlA.toString());
+    assertThat(i.hasNext()).isTrue();
+    assertThat(i.next()).isEqualTo(urlB.toString());
+    assertThat(i.hasNext()).isTrue();
+    assertThat(i.next()).isEqualTo(urlC.toString());
 
     // ... and nothing else.
-    assertFalse(i.hasNext());
+    assertThat(i.hasNext()).isFalse();
     try {
       i.next();
       fail();
@@ -2281,17 +2293,17 @@ public final class CacheTest {
         .addHeader("Cache-Control: max-age=60")
         .setBody("a"));
     HttpUrl url = server.url("/a");
-    assertEquals("a", get(url).body().string());
+    assertThat(get(url).body().string()).isEqualTo("a");
 
     // Remove it with iteration.
     Iterator<String> i = cache.urls();
-    assertEquals(url.toString(), i.next());
+    assertThat(i.next()).isEqualTo(url.toString());
     i.remove();
 
     // Confirm that subsequent requests suffer a cache miss.
     server.enqueue(new MockResponse()
         .setBody("b"));
-    assertEquals("b", get(url).body().string());
+    assertThat(get(url).body().string()).isEqualTo("b");
   }
 
   @Test public void iteratorRemoveWithoutNextThrows() throws Exception {
@@ -2299,10 +2311,10 @@ public final class CacheTest {
     server.enqueue(new MockResponse()
         .setBody("a"));
     HttpUrl url = server.url("/a");
-    assertEquals("a", get(url).body().string());
+    assertThat(get(url).body().string()).isEqualTo("a");
 
     Iterator<String> i = cache.urls();
-    assertTrue(i.hasNext());
+    assertThat(i.hasNext()).isTrue();
     try {
       i.remove();
       fail();
@@ -2315,10 +2327,10 @@ public final class CacheTest {
     server.enqueue(new MockResponse()
         .setBody("a"));
     HttpUrl url = server.url("/a");
-    assertEquals("a", get(url).body().string());
+    assertThat(get(url).body().string()).isEqualTo("a");
 
     Iterator<String> i = cache.urls();
-    assertEquals(url.toString(), i.next());
+    assertThat(i.next()).isEqualTo(url.toString());
     i.remove();
 
     // Too many calls to remove().
@@ -2334,15 +2346,15 @@ public final class CacheTest {
     server.enqueue(new MockResponse()
         .setBody("a"));
     HttpUrl url = server.url("/a");
-    assertEquals("a", get(url).body().string());
+    assertThat(get(url).body().string()).isEqualTo("a");
 
     // The URL will remain available if hasNext() returned true...
     Iterator<String> i = cache.urls();
-    assertTrue(i.hasNext());
+    assertThat(i.hasNext()).isTrue();
 
     // ...so even when we evict the element, we still get something back.
     cache.evictAll();
-    assertEquals(url.toString(), i.next());
+    assertThat(i.next()).isEqualTo(url.toString());
 
     // Remove does nothing. But most importantly, it doesn't throw!
     i.remove();
@@ -2353,13 +2365,13 @@ public final class CacheTest {
     server.enqueue(new MockResponse()
         .setBody("a"));
     HttpUrl url = server.url("/a");
-    assertEquals("a", get(url).body().string());
+    assertThat(get(url).body().string()).isEqualTo("a");
 
     Iterator<String> i = cache.urls();
     cache.evictAll();
 
     // The URL was evicted before hasNext() made any promises.
-    assertFalse(i.hasNext());
+    assertThat(i.hasNext()).isFalse();
     try {
       i.next();
       fail();
@@ -2381,15 +2393,15 @@ public final class CacheTest {
         .setResponseCode(HttpURLConnection.HTTP_NOT_MODIFIED));
 
     HttpUrl url = server.url("/");
-    assertEquals("A", get(url).body().string());
-    assertEquals("A", get(url).body().string());
-    assertEquals("B", get(url).body().string());
-    assertEquals("B", get(url).body().string());
+    assertThat(get(url).body().string()).isEqualTo("A");
+    assertThat(get(url).body().string()).isEqualTo("A");
+    assertThat(get(url).body().string()).isEqualTo("B");
+    assertThat(get(url).body().string()).isEqualTo("B");
 
-    assertNull(server.takeRequest().getHeader("If-None-Match"));
-    assertEquals("v1", server.takeRequest().getHeader("If-None-Match"));
-    assertEquals("v1", server.takeRequest().getHeader("If-None-Match"));
-    assertEquals("v2", server.takeRequest().getHeader("If-None-Match"));
+    assertThat(server.takeRequest().getHeader("If-None-Match")).isNull();
+    assertThat(server.takeRequest().getHeader("If-None-Match")).isEqualTo("v1");
+    assertThat(server.takeRequest().getHeader("If-None-Match")).isEqualTo("v1");
+    assertThat(server.takeRequest().getHeader("If-None-Match")).isEqualTo("v2");
   }
 
   @Test public void combinedCacheHeadersCanBeNonAscii() throws Exception {
@@ -2406,16 +2418,16 @@ public final class CacheTest {
         .setResponseCode(HttpURLConnection.HTTP_NOT_MODIFIED));
 
     Response response1 = get(server.url("/"));
-    assertEquals("α", response1.header("Alpha"));
-    assertEquals("Beta", response1.header("β"));
-    assertEquals("abcd", response1.body().string());
+    assertThat(response1.header("Alpha")).isEqualTo("α");
+    assertThat(response1.header("β")).isEqualTo("Beta");
+    assertThat(response1.body().string()).isEqualTo("abcd");
 
     Response response2 = get(server.url("/"));
-    assertEquals("α", response2.header("Alpha"));
-    assertEquals("Beta", response2.header("β"));
-    assertEquals("Γ", response2.header("Gamma"));
-    assertEquals("Delta", response2.header("Δ"));
-    assertEquals("abcd", response2.body().string());
+    assertThat(response2.header("Alpha")).isEqualTo("α");
+    assertThat(response2.header("β")).isEqualTo("Beta");
+    assertThat(response2.header("Gamma")).isEqualTo("Γ");
+    assertThat(response2.header("Δ")).isEqualTo("Delta");
+    assertThat(response2.body().string()).isEqualTo("abcd");
   }
 
   @Test public void etagConditionCanBeNonAscii() throws Exception {
@@ -2427,13 +2439,13 @@ public final class CacheTest {
         .setResponseCode(HttpURLConnection.HTTP_NOT_MODIFIED));
 
     Response response1 = get(server.url("/"));
-    assertEquals("abcd", response1.body().string());
+    assertThat(response1.body().string()).isEqualTo("abcd");
 
     Response response2 = get(server.url("/"));
-    assertEquals("abcd", response2.body().string());
+    assertThat(response2.body().string()).isEqualTo("abcd");
 
-    assertNull(server.takeRequest().getHeader("If-None-Match"));
-    assertEquals("α", server.takeRequest().getHeader("If-None-Match"));
+    assertThat(server.takeRequest().getHeader("If-None-Match")).isNull();
+    assertThat(server.takeRequest().getHeader("If-None-Match")).isEqualTo("α");
   }
 
   private Response get(HttpUrl url) throws IOException {
@@ -2469,8 +2481,8 @@ public final class CacheTest {
         .setBody("B"));
 
     HttpUrl url = server.url("/");
-    assertEquals("A", get(url).body().string());
-    assertEquals("B", get(url).body().string());
+    assertThat(get(url).body().string()).isEqualTo("A");
+    assertThat(get(url).body().string()).isEqualTo("B");
   }
 
   /** @return the request with the conditional get headers. */
@@ -2489,23 +2501,23 @@ public final class CacheTest {
 
     HttpUrl valid = server.url("/valid");
     Response response1 = get(valid);
-    assertEquals("A", response1.body().string());
-    assertEquals(HttpURLConnection.HTTP_OK, response1.code());
-    assertEquals("A-OK", response1.message());
+    assertThat(response1.body().string()).isEqualTo("A");
+    assertThat(response1.code()).isEqualTo(HttpURLConnection.HTTP_OK);
+    assertThat(response1.message()).isEqualTo("A-OK");
     Response response2 = get(valid);
-    assertEquals("A", response2.body().string());
-    assertEquals(HttpURLConnection.HTTP_OK, response2.code());
-    assertEquals("A-OK", response2.message());
+    assertThat(response2.body().string()).isEqualTo("A");
+    assertThat(response2.code()).isEqualTo(HttpURLConnection.HTTP_OK);
+    assertThat(response2.message()).isEqualTo("A-OK");
 
     HttpUrl invalid = server.url("/invalid");
     Response response3 = get(invalid);
-    assertEquals("B", response3.body().string());
-    assertEquals(HttpURLConnection.HTTP_OK, response3.code());
-    assertEquals("B-OK", response3.message());
+    assertThat(response3.body().string()).isEqualTo("B");
+    assertThat(response3.code()).isEqualTo(HttpURLConnection.HTTP_OK);
+    assertThat(response3.message()).isEqualTo("B-OK");
     Response response4 = get(invalid);
-    assertEquals("C", response4.body().string());
-    assertEquals(HttpURLConnection.HTTP_OK, response4.code());
-    assertEquals("C-OK", response4.message());
+    assertThat(response4.body().string()).isEqualTo("C");
+    assertThat(response4.code()).isEqualTo(HttpURLConnection.HTTP_OK);
+    assertThat(response4.message()).isEqualTo("C-OK");
 
     server.takeRequest(); // regular get
     return server.takeRequest(); // conditional get
@@ -2519,8 +2531,8 @@ public final class CacheTest {
         .setBody("B"));
 
     HttpUrl url = server.url("/");
-    assertEquals("A", get(url).body().string());
-    assertEquals("A", get(url).body().string());
+    assertThat(get(url).body().string()).isEqualTo("A");
+    assertThat(get(url).body().string()).isEqualTo("A");
   }
 
   @Test public void immutableIsCachedAfterMultipleCalls() throws Exception {
@@ -2533,9 +2545,9 @@ public final class CacheTest {
         .setBody("C"));
 
     HttpUrl url = server.url("/");
-    assertEquals("A", get(url).body().string());
-    assertEquals("B", get(url).body().string());
-    assertEquals("B", get(url).body().string());
+    assertThat(get(url).body().string()).isEqualTo("A");
+    assertThat(get(url).body().string()).isEqualTo("B");
+    assertThat(get(url).body().string()).isEqualTo("B");
   }
 
   @Test public void immutableIsNotCachedBeyondFreshnessLifetime() throws Exception {
@@ -2548,7 +2560,8 @@ public final class CacheTest {
         .addHeader("Cache-Control: immutable")
         .addHeader("Last-Modified: " + lastModifiedDate)
         .addHeader("Date: " + formatDate(-15, TimeUnit.SECONDS)));
-    assertEquals(lastModifiedDate, conditionalRequest.getHeader("If-Modified-Since"));
+    assertThat(conditionalRequest.getHeader("If-Modified-Since")).isEqualTo(
+        lastModifiedDate);
   }
 
   private void assertFullyCached(MockResponse response) throws Exception {
@@ -2556,8 +2569,8 @@ public final class CacheTest {
     server.enqueue(response.setBody("B"));
 
     HttpUrl url = server.url("/");
-    assertEquals("A", get(url).body().string());
-    assertEquals("A", get(url).body().string());
+    assertThat(get(url).body().string()).isEqualTo("A");
+    assertThat(get(url).body().string()).isEqualTo("A");
   }
 
   /**

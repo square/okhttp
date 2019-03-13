@@ -35,8 +35,7 @@ import static okhttp3.internal.ws.WebSocketProtocol.OPCODE_BINARY;
 import static okhttp3.internal.ws.WebSocketProtocol.OPCODE_TEXT;
 import static okhttp3.internal.ws.WebSocketProtocol.PAYLOAD_BYTE_MAX;
 import static okhttp3.internal.ws.WebSocketProtocol.PAYLOAD_SHORT_MAX;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.fail;
 
 public final class WebSocketWriterTest {
@@ -50,7 +49,8 @@ public final class WebSocketWriterTest {
   @Rule public final TestRule noDataLeftBehind = (base, description) -> new Statement() {
     @Override public void evaluate() throws Throwable {
       base.evaluate();
-      assertEquals("Data not empty", "", data.readByteString().hex());
+      assertThat(data.readByteString().hex()).overridingErrorMessage("Data not empty").isEqualTo(
+          "");
     }
   };
 
@@ -82,7 +82,7 @@ public final class WebSocketWriterTest {
 
     assertData("8105");
     assertData(bytes);
-    assertTrue(data.exhausted());
+    assertThat(data.exhausted()).isTrue();
   }
 
   @Test public void serverLargeBufferedPayloadWrittenAsOneFrame() throws IOException {
@@ -97,7 +97,7 @@ public final class WebSocketWriterTest {
     assertData("817e");
     assertData(Util.format("%04x", length));
     assertData(bytes);
-    assertTrue(data.exhausted());
+    assertThat(data.exhausted()).isTrue();
   }
 
   @Test public void serverLargeNonBufferedPayloadWrittenAsMultipleFrames() throws IOException {
@@ -125,7 +125,7 @@ public final class WebSocketWriterTest {
     assertData(bytes.readByteArray(24_576));
     assertData("807e06a0");
     assertData(bytes.readByteArray(1_696));
-    assertTrue(data.exhausted());
+    assertThat(data.exhausted()).isTrue();
   }
 
   @Test public void closeFlushes() throws IOException {
@@ -150,7 +150,7 @@ public final class WebSocketWriterTest {
       sink.write(payload, payload.size());
       fail();
     } catch (IOException e) {
-      assertEquals("closed", e.getMessage());
+      assertThat(e.getMessage()).isEqualTo("closed");
     }
   }
 
@@ -288,7 +288,7 @@ public final class WebSocketWriterTest {
       clientWriter.writeClose(98724976, ByteString.encodeUtf8("Hello"));
       fail();
     } catch (IllegalArgumentException e) {
-      assertEquals("Code must be in range [1000,5000): 98724976", e.getMessage());
+      assertThat(e.getMessage()).isEqualTo("Code must be in range [1000,5000): 98724976");
     }
   }
 
@@ -297,7 +297,7 @@ public final class WebSocketWriterTest {
       clientWriter.writeClose(1005, ByteString.encodeUtf8("Hello"));
       fail();
     } catch (IllegalArgumentException e) {
-      assertEquals("Code 1005 is reserved and may not be used.", e.getMessage());
+      assertThat(e.getMessage()).isEqualTo("Code 1005 is reserved and may not be used.");
     }
   }
 
@@ -346,7 +346,8 @@ public final class WebSocketWriterTest {
       serverWriter.writePing(ByteString.of(binaryData(1000)));
       fail();
     } catch (IllegalArgumentException e) {
-      assertEquals("Payload size must be less than or equal to 125", e.getMessage());
+      assertThat(e.getMessage()).isEqualTo(
+          "Payload size must be less than or equal to 125");
     }
   }
 
@@ -355,7 +356,8 @@ public final class WebSocketWriterTest {
       serverWriter.writePong(ByteString.of(binaryData(1000)));
       fail();
     } catch (IllegalArgumentException e) {
-      assertEquals("Payload size must be less than or equal to 125", e.getMessage());
+      assertThat(e.getMessage()).isEqualTo(
+          "Payload size must be less than or equal to 125");
     }
   }
 
@@ -365,7 +367,8 @@ public final class WebSocketWriterTest {
       serverWriter.writeClose(1000, longReason);
       fail();
     } catch (IllegalArgumentException e) {
-      assertEquals("Payload size must be less than or equal to 125", e.getMessage());
+      assertThat(e.getMessage()).isEqualTo(
+          "Payload size must be less than or equal to 125");
     }
   }
 
@@ -375,7 +378,8 @@ public final class WebSocketWriterTest {
       clientWriter.newMessageSink(OPCODE_TEXT, -1);
       fail();
     } catch (IllegalStateException e) {
-      assertEquals("Another message writer is active. Did you call close()?", e.getMessage());
+      assertThat(e.getMessage()).isEqualTo(
+          "Another message writer is active. Did you call close()?");
     }
   }
 
@@ -385,7 +389,7 @@ public final class WebSocketWriterTest {
 
   private void assertData(ByteString expected) throws EOFException {
     ByteString actual = data.readByteString(expected.size());
-    assertEquals(expected, actual);
+    assertThat(actual).isEqualTo(expected);
   }
 
   private void assertData(byte[] data) throws IOException {
@@ -394,7 +398,8 @@ public final class WebSocketWriterTest {
       int count = Math.min(byteCount, data.length - i);
       Buffer expectedChunk = new Buffer();
       expectedChunk.write(data, i, count);
-      assertEquals("At " + i, expectedChunk.readByteString(), this.data.readByteString(count));
+      assertThat(this.data.readByteString(count)).overridingErrorMessage("At " + i).isEqualTo(
+          expectedChunk.readByteString());
     }
   }
 

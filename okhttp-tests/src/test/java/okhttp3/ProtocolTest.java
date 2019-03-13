@@ -18,17 +18,17 @@ package okhttp3;
 import java.io.IOException;
 import org.junit.Test;
 
-import static org.junit.Assert.assertEquals;
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class ProtocolTest {
   @Test
   public void testGetKnown() throws IOException {
-    assertEquals(Protocol.HTTP_1_0, Protocol.get("http/1.0"));
-    assertEquals(Protocol.HTTP_1_1, Protocol.get("http/1.1"));
-    assertEquals(Protocol.SPDY_3, Protocol.get("spdy/3.1"));
-    assertEquals(Protocol.HTTP_2, Protocol.get("h2"));
-    assertEquals(Protocol.H2_PRIOR_KNOWLEDGE, Protocol.get("h2_prior_knowledge"));
-    assertEquals(Protocol.QUIC, Protocol.get("quic"));
+    assertThat(Protocol.get("http/1.0")).isEqualTo(Protocol.HTTP_1_0);
+    assertThat(Protocol.get("http/1.1")).isEqualTo(Protocol.HTTP_1_1);
+    assertThat(Protocol.get("spdy/3.1")).isEqualTo(Protocol.SPDY_3);
+    assertThat(Protocol.get("h2")).isEqualTo(Protocol.HTTP_2);
+    assertThat(Protocol.get("h2_prior_knowledge")).isEqualTo(Protocol.H2_PRIOR_KNOWLEDGE);
+    assertThat(Protocol.get("quic")).isEqualTo(Protocol.QUIC);
   }
 
   @Test(expected = IOException.class)
@@ -38,11 +38,11 @@ public class ProtocolTest {
 
   @Test
   public void testToString() throws IOException {
-    assertEquals("http/1.0", Protocol.HTTP_1_0.toString());
-    assertEquals("http/1.1", Protocol.HTTP_1_1.toString());
-    assertEquals("spdy/3.1", Protocol.SPDY_3.toString());
-    assertEquals("h2", Protocol.HTTP_2.toString());
-    assertEquals("h2_prior_knowledge", Protocol.H2_PRIOR_KNOWLEDGE.toString());
-    assertEquals("quic", Protocol.QUIC.toString());
+    assertThat(Protocol.HTTP_1_0.toString()).isEqualTo("http/1.0");
+    assertThat(Protocol.HTTP_1_1.toString()).isEqualTo("http/1.1");
+    assertThat(Protocol.SPDY_3.toString()).isEqualTo("spdy/3.1");
+    assertThat(Protocol.HTTP_2.toString()).isEqualTo("h2");
+    assertThat(Protocol.H2_PRIOR_KNOWLEDGE.toString()).isEqualTo("h2_prior_knowledge");
+    assertThat(Protocol.QUIC.toString()).isEqualTo("quic");
   }
 }

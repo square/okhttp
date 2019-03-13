@@ -18,7 +18,7 @@ package okhttp3.internal.platform;
 import org.junit.Test;
 
 import static okhttp3.internal.platform.PlatformTest.getPlatform;
-import static org.junit.Assert.assertNotNull;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assume.assumeTrue;
 
 public class Jdk8WithJettyBootPlatformTest {
@@ -26,6 +26,6 @@ public class Jdk8WithJettyBootPlatformTest {
   public void testBuildsWithJettyBoot() {
     assumeTrue(getPlatform().equals("jdk-with-jetty-boot"));
 
-    assertNotNull(Jdk8WithJettyBootPlatform.buildIfSupported());
+    assertThat(Jdk8WithJettyBootPlatform.buildIfSupported()).isNotNull();
   }
 }
