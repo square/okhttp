@@ -73,6 +73,13 @@ _2019-03-14_
  *  New: Update the embedded public suffixes list.
 
 
+## Version 3.12.2
+
+ *  Fix: Don't crash if the HTTPS server returns no certificates in the TLS handshake.
+ *  Fix: Don't leak a connection when a call is canceled immediately preceding the `onFailure()`
+    callback.
+
+
 ## Version 3.13.1
 
 _2019-02-05_
