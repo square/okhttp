@@ -26,9 +26,7 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameter;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
+import static org.assertj.core.api.Assertions.assertThat;
 
 /** Runs the web platform URL tests against Java URL models. */
 @RunWith(Parameterized.class)
@@ -101,9 +99,10 @@ public final class WebPlatformUrlTest {
     }
 
     if (testData.expectParseFailure()) {
-      assertNull("Expected URL to fail parsing", url);
+      assertThat(url).overridingErrorMessage("Expected URL to fail parsing").isNull();
     } else {
-      assertNotNull("Expected URL to parse successfully, but was null", url);
+      assertThat(url).overridingErrorMessage(
+          "Expected URL to parse successfully, but was null").isNotNull();
       String effectivePort = url.port() != HttpUrl.defaultPort(url.scheme())
           ? Integer.toString(url.port())
           : "";
@@ -112,12 +111,13 @@ public final class WebPlatformUrlTest {
       String effectiveHost = url.host().contains(":")
           ? ("[" + url.host() + "]")
           : url.host();
-      assertEquals("scheme", testData.scheme, url.scheme());
-      assertEquals("host", testData.host, effectiveHost);
-      assertEquals("port", testData.port, effectivePort);
-      assertEquals("path", testData.path, url.encodedPath());
-      assertEquals("query", testData.query, effectiveQuery);
-      assertEquals("fragment", testData.fragment, effectiveFragment);
+      assertThat(url.scheme()).overridingErrorMessage("scheme").isEqualTo(testData.scheme);
+      assertThat(effectiveHost).overridingErrorMessage("host").isEqualTo(testData.host);
+      assertThat(effectivePort).overridingErrorMessage("port").isEqualTo(testData.port);
+      assertThat(url.encodedPath()).overridingErrorMessage("path").isEqualTo(testData.path);
+      assertThat(effectiveQuery).overridingErrorMessage("query").isEqualTo(testData.query);
+      assertThat(effectiveFragment).overridingErrorMessage("fragment").isEqualTo(
+          testData.fragment);
     }
   }
 

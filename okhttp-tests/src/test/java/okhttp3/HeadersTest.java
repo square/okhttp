@@ -36,9 +36,7 @@ import static java.util.Collections.emptyMap;
 import static java.util.Collections.singletonList;
 import static java.util.Collections.singletonMap;
 import static okhttp3.TestUtil.headerEntries;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertNull;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.fail;
 
 public final class HeadersTest {
@@ -54,9 +52,9 @@ public final class HeadersTest {
     Request request = new Request.Builder().url("http://square.com/").build();
     Response response = Http2ExchangeCodec.readHttp2HeadersList(headerBlock, Protocol.HTTP_2).request(request).build();
     Headers headers = response.headers();
-    assertEquals(1, headers.size());
-    assertEquals(":version", headers.name(0));
-    assertEquals("HTTP/1.1", headers.value(0));
+    assertThat(headers.size()).isEqualTo(1);
+    assertThat(headers.name(0)).isEqualTo(":version");
+    assertThat(headers.value(0)).isEqualTo("HTTP/1.1");
   }
 
   @Test public void http2HeadersListDropsForbiddenHeadersHttp2() {
@@ -72,7 +70,7 @@ public final class HeadersTest {
         ":path", "/",
         ":authority", "square.com",
         ":scheme", "http");
-    assertEquals(expected, Http2ExchangeCodec.http2HeadersList(request));
+    assertThat(Http2ExchangeCodec.http2HeadersList(request)).isEqualTo(expected);
   }
 
   @Test public void http2HeadersListDontDropTeIfTrailersHttp2() {
@@ -85,13 +83,13 @@ public final class HeadersTest {
         ":path", "/",
         ":scheme", "http",
         "te", "trailers");
-    assertEquals(expected, Http2ExchangeCodec.http2HeadersList(request));
+    assertThat(Http2ExchangeCodec.http2HeadersList(request)).isEqualTo(expected);
   }
 
   @Test public void ofTrims() {
     Headers headers = Headers.of("\t User-Agent \n", " \r OkHttp ");
-    assertEquals("User-Agent", headers.name(0));
-    assertEquals("OkHttp", headers.value(0));
+    assertThat(headers.name(0)).isEqualTo("User-Agent");
+    assertThat(headers.value(0)).isEqualTo("OkHttp");
   }
 
   @Test public void addParsing() {
@@ -103,10 +101,10 @@ public final class HeadersTest {
         .add("ping:  pong  ") // Value whitespace is trimmed.
         .add("kit:kat") // Space after colon is not required.
         .build();
-    assertEquals(Arrays.asList("bar", "baz", "bak"), headers.values("foo"));
-    assertEquals(Arrays.asList("value"), headers.values("key"));
-    assertEquals(Arrays.asList("pong"), headers.values("ping"));
-    assertEquals(Arrays.asList("kat"), headers.values("kit"));
+    assertThat(headers.values("foo")).isEqualTo(Arrays.asList("bar", "baz", "bak"));
+    assertThat(headers.values("key")).isEqualTo(Arrays.asList("value"));
+    assertThat(headers.values("ping")).isEqualTo(Arrays.asList("pong"));
+    assertThat(headers.values("kit")).isEqualTo(Arrays.asList("kat"));
   }
 
   @Test public void addThrowsOnEmptyName() {
@@ -145,8 +143,8 @@ public final class HeadersTest {
           .build();
       fail("Should have complained about invalid value");
     } catch (IllegalArgumentException expected) {
-      assertEquals("Unexpected char 0xe9 at 1 in header name: héader1",
-          expected.getMessage());
+      assertThat(expected.getMessage()).isEqualTo(
+          "Unexpected char 0xe9 at 1 in header name: héader1");
     }
   }
 
@@ -154,7 +152,7 @@ public final class HeadersTest {
     Headers headers = new Headers.Builder()
         .addUnsafeNonAscii("header1", "valué1")
         .build();
-    assertEquals("header1: valué1\n", headers.toString());
+    assertThat(headers.toString()).isEqualTo("header1: valué1\n");
   }
 
   @Test public void ofThrowsOddNumberOfHeaders() {
@@ -183,7 +181,7 @@ public final class HeadersTest {
 
   @Test public void ofAcceptsEmptyValue() {
     Headers headers = Headers.of("User-Agent", "");
-    assertEquals("", headers.value(0));
+    assertThat(headers.value(0)).isEqualTo("");
   }
 
   @Test public void ofMakesDefensiveCopy() {
@@ -193,7 +191,7 @@ public final class HeadersTest {
     };
     Headers headers = Headers.of(namesAndValues);
     namesAndValues[1] = "Chrome";
-    assertEquals("OkHttp", headers.value(0));
+    assertThat(headers.value(0)).isEqualTo("OkHttp");
   }
 
   @Test public void ofRejectsNullChar() {
@@ -230,17 +228,17 @@ public final class HeadersTest {
 
   @Test public void ofMapAcceptsEmptyValue() {
     Headers headers = Headers.of(singletonMap("User-Agent", ""));
-    assertEquals("", headers.value(0));
+    assertThat(headers.value(0)).isEqualTo("");
   }
 
   @Test public void ofMapTrimsKey() {
     Headers headers = Headers.of(singletonMap(" User-Agent ", "OkHttp"));
-    assertEquals("User-Agent", headers.name(0));
+    assertThat(headers.name(0)).isEqualTo("User-Agent");
   }
 
   @Test public void ofMapTrimsValue() {
     Headers headers = Headers.of(singletonMap("User-Agent", " OkHttp "));
-    assertEquals("OkHttp", headers.value(0));
+    assertThat(headers.value(0)).isEqualTo("OkHttp");
   }
 
   @Test public void ofMapMakesDefensiveCopy() {
@@ -249,7 +247,7 @@ public final class HeadersTest {
 
     Headers headers = Headers.of(namesAndValues);
     namesAndValues.put("User-Agent", "Chrome");
-    assertEquals("OkHttp", headers.value(0));
+    assertThat(headers.value(0)).isEqualTo("OkHttp");
   }
 
   @Test public void ofMapRejectsNullCharInName() {
@@ -274,8 +272,8 @@ public final class HeadersTest {
         "cache-control", "no-store",
         "user-agent", "OkHttp");
     Map<String, List<String>> headerMap = headers.toMultimap();
-    assertEquals(2, headerMap.get("cache-control").size());
-    assertEquals(1, headerMap.get("user-agent").size());
+    assertThat(headerMap.get("cache-control").size()).isEqualTo(2);
+    assertThat(headerMap.get("user-agent").size()).isEqualTo(1);
   }
 
   @Test public void toMultimapUsesCanonicalCase() {
@@ -284,8 +282,8 @@ public final class HeadersTest {
         "Cache-Control", "no-cache",
         "User-Agent", "OkHttp");
     Map<String, List<String>> headerMap = headers.toMultimap();
-    assertEquals(2, headerMap.get("cache-control").size());
-    assertEquals(1, headerMap.get("user-agent").size());
+    assertThat(headerMap.get("cache-control").size()).isEqualTo(2);
+    assertThat(headerMap.get("user-agent").size()).isEqualTo(1);
   }
 
   @Test public void toMultimapAllowsCaseInsensitiveGet() {
@@ -293,8 +291,8 @@ public final class HeadersTest {
         "cache-control", "no-store",
         "Cache-Control", "no-cache");
     Map<String, List<String>> headerMap = headers.toMultimap();
-    assertEquals(2, headerMap.get("cache-control").size());
-    assertEquals(2, headerMap.get("Cache-Control").size());
+    assertThat(headerMap.get("cache-control").size()).isEqualTo(2);
+    assertThat(headerMap.get("Cache-Control").size()).isEqualTo(2);
   }
 
   @Test public void nameIndexesAreStrict() {
@@ -304,8 +302,8 @@ public final class HeadersTest {
       fail();
     } catch (IndexOutOfBoundsException expected) {
     }
-    assertEquals("a", headers.name(0));
-    assertEquals("c", headers.name(1));
+    assertThat(headers.name(0)).isEqualTo("a");
+    assertThat(headers.name(1)).isEqualTo("c");
     try {
       headers.name(2);
       fail();
@@ -320,8 +318,8 @@ public final class HeadersTest {
       fail();
     } catch (IndexOutOfBoundsException expected) {
     }
-    assertEquals("b", headers.value(0));
-    assertEquals("d", headers.value(1));
+    assertThat(headers.value(0)).isEqualTo("b");
+    assertThat(headers.value(1)).isEqualTo("d");
     try {
       headers.value(2);
       fail();
@@ -334,8 +332,8 @@ public final class HeadersTest {
       new Headers.Builder().add("héader1", "value1");
       fail("Should have complained about invalid name");
     } catch (IllegalArgumentException expected) {
-      assertEquals("Unexpected char 0xe9 at 1 in header name: héader1",
-          expected.getMessage());
+      assertThat(expected.getMessage()).isEqualTo(
+          "Unexpected char 0xe9 at 1 in header name: héader1");
     }
   }
 
@@ -344,8 +342,8 @@ public final class HeadersTest {
       new Headers.Builder().add("header1", "valué1");
       fail("Should have complained about invalid value");
     } catch (IllegalArgumentException expected) {
-      assertEquals("Unexpected char 0xe9 at 4 in header1 value: valué1",
-          expected.getMessage());
+      assertThat(expected.getMessage()).isEqualTo(
+          "Unexpected char 0xe9 at 4 in header1 value: valué1");
     }
   }
 
@@ -354,8 +352,8 @@ public final class HeadersTest {
       Headers.of("héader1", "value1");
       fail("Should have complained about invalid value");
     } catch (IllegalArgumentException expected) {
-      assertEquals("Unexpected char 0xe9 at 1 in header name: héader1",
-          expected.getMessage());
+      assertThat(expected.getMessage()).isEqualTo(
+          "Unexpected char 0xe9 at 1 in header name: héader1");
     }
   }
 
@@ -364,8 +362,8 @@ public final class HeadersTest {
       Headers.of("header1", "valué1");
       fail("Should have complained about invalid value");
     } catch (IllegalArgumentException expected) {
-      assertEquals("Unexpected char 0xe9 at 4 in header1 value: valué1",
-          expected.getMessage());
+      assertThat(expected.getMessage()).isEqualTo(
+          "Unexpected char 0xe9 at 4 in header1 value: valué1");
     }
   }
 
@@ -374,8 +372,8 @@ public final class HeadersTest {
       Headers.of(singletonMap("héader1", "value1"));
       fail("Should have complained about invalid value");
     } catch (IllegalArgumentException expected) {
-      assertEquals("Unexpected char 0xe9 at 1 in header name: héader1",
-          expected.getMessage());
+      assertThat(expected.getMessage()).isEqualTo(
+          "Unexpected char 0xe9 at 1 in header name: héader1");
     }
   }
 
@@ -384,8 +382,8 @@ public final class HeadersTest {
       Headers.of(singletonMap("header1", "valué1"));
       fail("Should have complained about invalid value");
     } catch (IllegalArgumentException expected) {
-      assertEquals("Unexpected char 0xe9 at 4 in header1 value: valué1",
-          expected.getMessage());
+      assertThat(expected.getMessage()).isEqualTo(
+          "Unexpected char 0xe9 at 4 in header1 value: valué1");
     }
   }
 
@@ -398,8 +396,8 @@ public final class HeadersTest {
         .add("Connection", "close")
         .add("Transfer-Encoding", "chunked")
         .build();
-    assertEquals(headers1, headers2);
-    assertEquals(headers1.hashCode(), headers2.hashCode());
+    assertThat(headers2).isEqualTo(headers1);
+    assertThat(headers2.hashCode()).isEqualTo(headers1.hashCode());
   }
 
   @Test public void headersNotEquals() {
@@ -411,8 +409,8 @@ public final class HeadersTest {
         .add("Connection", "keep-alive")
         .add("Transfer-Encoding", "chunked")
         .build();
-    assertNotEquals(headers1, headers2);
-    assertNotEquals(headers1.hashCode(), headers2.hashCode());
+    assertThat(headers2).isNotEqualTo(headers1);
+    assertThat(headers2.hashCode()).isNotEqualTo((long) headers1.hashCode());
   }
 
   @Test public void headersToString() {
@@ -420,7 +418,7 @@ public final class HeadersTest {
         .add("A", "a")
         .add("B", "bb")
         .build();
-    assertEquals("A: a\nB: bb\n", headers.toString());
+    assertThat(headers.toString()).isEqualTo("A: a\nB: bb\n");
   }
 
   @Test public void headersAddAll() {
@@ -434,7 +432,7 @@ public final class HeadersTest {
         .addAll(sourceHeaders)
         .add("C", "c")
         .build();
-    assertEquals("A: a\nA: aa\na: aa\nB: bb\nC: c\n", headers.toString());
+    assertThat(headers.toString()).isEqualTo("A: a\nA: aa\na: aa\nB: bb\nC: c\n");
   }
 
   /** See https://github.com/square/okhttp/issues/2780. */
@@ -444,15 +442,15 @@ public final class HeadersTest {
             + "jdflkasdf\", qop=\"auth\", stale=\"FALSE\"")
         .build();
     List<Challenge> challenges = HttpHeaders.parseChallenges(headers, "WWW-Authenticate");
-    assertEquals(1, challenges.size());
-    assertEquals("Digest", challenges.get(0).scheme());
-    assertEquals("myrealm", challenges.get(0).realm());
+    assertThat(challenges.size()).isEqualTo(1);
+    assertThat(challenges.get(0).scheme()).isEqualTo("Digest");
+    assertThat(challenges.get(0).realm()).isEqualTo("myrealm");
     Map<String, String> expectedAuthParams = new LinkedHashMap<>();
     expectedAuthParams.put("realm", "myrealm");
     expectedAuthParams.put("nonce", "fjalskdflwejrlaskdfjlaskdjflaksjdflkasdf");
     expectedAuthParams.put("qop", "auth");
     expectedAuthParams.put("stale", "FALSE");
-    assertEquals(expectedAuthParams, challenges.get(0).authParams());
+    assertThat(challenges.get(0).authParams()).isEqualTo(expectedAuthParams);
   }
 
   @Test public void testDigestChallengeWithDifferentlyOrderedAuthParams() {
@@ -461,15 +459,15 @@ public final class HeadersTest {
             + "dfjlaskdjflaksjdflkasdf\", stale=\"FALSE\"")
         .build();
     List<Challenge> challenges = HttpHeaders.parseChallenges(headers, "WWW-Authenticate");
-    assertEquals(1, challenges.size());
-    assertEquals("Digest", challenges.get(0).scheme());
-    assertEquals("myrealm", challenges.get(0).realm());
+    assertThat(challenges.size()).isEqualTo(1);
+    assertThat(challenges.get(0).scheme()).isEqualTo("Digest");
+    assertThat(challenges.get(0).realm()).isEqualTo("myrealm");
     Map<String, String> expectedAuthParams = new LinkedHashMap<>();
     expectedAuthParams.put("realm", "myrealm");
     expectedAuthParams.put("nonce", "fjalskdflwejrlaskdfjlaskdjflaksjdflkasdf");
     expectedAuthParams.put("qop", "auth");
     expectedAuthParams.put("stale", "FALSE");
-    assertEquals(expectedAuthParams, challenges.get(0).authParams());
+    assertThat(challenges.get(0).authParams()).isEqualTo(expectedAuthParams);
   }
 
   @Test public void testDigestChallengeWithDifferentlyOrderedAuthParams2() {
@@ -478,15 +476,15 @@ public final class HeadersTest {
             + "asdf\", realm=\"myrealm\", stale=\"FALSE\"")
         .build();
     List<Challenge> challenges = HttpHeaders.parseChallenges(headers, "WWW-Authenticate");
-    assertEquals(1, challenges.size());
-    assertEquals("Digest", challenges.get(0).scheme());
-    assertEquals("myrealm", challenges.get(0).realm());
+    assertThat(challenges.size()).isEqualTo(1);
+    assertThat(challenges.get(0).scheme()).isEqualTo("Digest");
+    assertThat(challenges.get(0).realm()).isEqualTo("myrealm");
     Map<String, String> expectedAuthParams = new LinkedHashMap<>();
     expectedAuthParams.put("realm", "myrealm");
     expectedAuthParams.put("nonce", "fjalskdflwejrlaskdfjlaskdjflaksjdflkasdf");
     expectedAuthParams.put("qop", "auth");
     expectedAuthParams.put("stale", "FALSE");
-    assertEquals(expectedAuthParams, challenges.get(0).authParams());
+    assertThat(challenges.get(0).authParams()).isEqualTo(expectedAuthParams);
   }
 
   @Test public void testDigestChallengeWithMissingRealm() {
@@ -495,15 +493,15 @@ public final class HeadersTest {
             + "rlaskdfjlaskdjflaksjdflkasdf\", stale=\"FALSE\"")
         .build();
     List<Challenge> challenges = HttpHeaders.parseChallenges(headers, "WWW-Authenticate");
-    assertEquals(1, challenges.size());
-    assertEquals("Digest", challenges.get(0).scheme());
-    assertNull(challenges.get(0).realm());
+    assertThat(challenges.size()).isEqualTo(1);
+    assertThat(challenges.get(0).scheme()).isEqualTo("Digest");
+    assertThat(challenges.get(0).realm()).isNull();
     Map<String, String> expectedAuthParams = new LinkedHashMap<>();
     expectedAuthParams.put("underrealm", "myrealm");
     expectedAuthParams.put("nonce", "fjalskdflwejrlaskdfjlaskdjflaksjdflkasdf");
     expectedAuthParams.put("qop", "auth");
     expectedAuthParams.put("stale", "FALSE");
-    assertEquals(expectedAuthParams, challenges.get(0).authParams());
+    assertThat(challenges.get(0).authParams()).isEqualTo(expectedAuthParams);
   }
 
   @Test public void testDigestChallengeWithAdditionalSpaces() {
@@ -512,15 +510,15 @@ public final class HeadersTest {
             + "askdfjlaskdjflaksjdflkasdf\", stale=\"FALSE\"")
         .build();
     List<Challenge> challenges = HttpHeaders.parseChallenges(headers, "WWW-Authenticate");
-    assertEquals(1, challenges.size());
-    assertEquals("Digest", challenges.get(0).scheme());
-    assertEquals("myrealm", challenges.get(0).realm());
+    assertThat(challenges.size()).isEqualTo(1);
+    assertThat(challenges.get(0).scheme()).isEqualTo("Digest");
+    assertThat(challenges.get(0).realm()).isEqualTo("myrealm");
     Map<String, String> expectedAuthParams = new LinkedHashMap<>();
     expectedAuthParams.put("realm", "myrealm");
     expectedAuthParams.put("nonce", "fjalskdflwejrlaskdfjlaskdjflaksjdflkasdf");
     expectedAuthParams.put("qop", "auth");
     expectedAuthParams.put("stale", "FALSE");
-    assertEquals(expectedAuthParams, challenges.get(0).authParams());
+    assertThat(challenges.get(0).authParams()).isEqualTo(expectedAuthParams);
   }
 
   @Test public void testDigestChallengeWithAdditionalSpacesBeforeFirstAuthParam() {
@@ -529,15 +527,15 @@ public final class HeadersTest {
             + "aksjdflkasdf\", qop=\"auth\", stale=\"FALSE\"")
         .build();
     List<Challenge> challenges = HttpHeaders.parseChallenges(headers, "WWW-Authenticate");
-    assertEquals(1, challenges.size());
-    assertEquals("Digest", challenges.get(0).scheme());
-    assertEquals("myrealm", challenges.get(0).realm());
+    assertThat(challenges.size()).isEqualTo(1);
+    assertThat(challenges.get(0).scheme()).isEqualTo("Digest");
+    assertThat(challenges.get(0).realm()).isEqualTo("myrealm");
     Map<String, String> expectedAuthParams = new LinkedHashMap<>();
     expectedAuthParams.put("realm", "myrealm");
     expectedAuthParams.put("nonce", "fjalskdflwejrlaskdfjlaskdjflaksjdflkasdf");
     expectedAuthParams.put("qop", "auth");
     expectedAuthParams.put("stale", "FALSE");
-    assertEquals(expectedAuthParams, challenges.get(0).authParams());
+    assertThat(challenges.get(0).authParams()).isEqualTo(expectedAuthParams);
   }
 
   @Test public void testDigestChallengeWithCamelCasedNames() {
@@ -546,15 +544,15 @@ public final class HeadersTest {
             + "dfjlaskdjflaksjdflkasdf\", stale=\"FALSE\"")
         .build();
     List<Challenge> challenges = HttpHeaders.parseChallenges(headers, "WWW-Authenticate");
-    assertEquals(1, challenges.size());
-    assertEquals("DiGeSt", challenges.get(0).scheme());
-    assertEquals("myrealm", challenges.get(0).realm());
+    assertThat(challenges.size()).isEqualTo(1);
+    assertThat(challenges.get(0).scheme()).isEqualTo("DiGeSt");
+    assertThat(challenges.get(0).realm()).isEqualTo("myrealm");
     Map<String, String> expectedAuthParams = new LinkedHashMap<>();
     expectedAuthParams.put("realm", "myrealm");
     expectedAuthParams.put("nonce", "fjalskdflwejrlaskdfjlaskdjflaksjdflkasdf");
     expectedAuthParams.put("qop", "auth");
     expectedAuthParams.put("stale", "FALSE");
-    assertEquals(expectedAuthParams, challenges.get(0).authParams());
+    assertThat(challenges.get(0).authParams()).isEqualTo(expectedAuthParams);
   }
 
   @Test public void testDigestChallengeWithCamelCasedNames2() {
@@ -564,25 +562,25 @@ public final class HeadersTest {
             + "jdflkasdf\", qop=\"auth\", stale=\"FALSE\"")
         .build();
     List<Challenge> challenges = HttpHeaders.parseChallenges(headers, "WWW-Authenticate");
-    assertEquals(1, challenges.size());
-    assertEquals("DIgEsT", challenges.get(0).scheme());
-    assertEquals("myrealm", challenges.get(0).realm());
+    assertThat(challenges.size()).isEqualTo(1);
+    assertThat(challenges.get(0).scheme()).isEqualTo("DIgEsT");
+    assertThat(challenges.get(0).realm()).isEqualTo("myrealm");
     Map<String, String> expectedAuthParams = new LinkedHashMap<>();
     expectedAuthParams.put("realm", "myrealm");
     expectedAuthParams.put("nonce", "fjalskdflwejrlaskdfjlaskdjflaksjdflkasdf");
     expectedAuthParams.put("qop", "auth");
     expectedAuthParams.put("stale", "FALSE");
-    assertEquals(expectedAuthParams, challenges.get(0).authParams());
+    assertThat(challenges.get(0).authParams()).isEqualTo(expectedAuthParams);
   }
 
   @Test public void testDigestChallengeWithTokenFormOfAuthParam() {
     Headers headers = new Headers.Builder()
         .add("WWW-Authenticate", "Digest realm=myrealm").build();
     List<Challenge> challenges = HttpHeaders.parseChallenges(headers, "WWW-Authenticate");
-    assertEquals(1, challenges.size());
-    assertEquals("Digest", challenges.get(0).scheme());
-    assertEquals("myrealm", challenges.get(0).realm());
-    assertEquals(singletonMap("realm", "myrealm"), challenges.get(0).authParams());
+    assertThat(challenges.size()).isEqualTo(1);
+    assertThat(challenges.get(0).scheme()).isEqualTo("Digest");
+    assertThat(challenges.get(0).realm()).isEqualTo("myrealm");
+    assertThat(challenges.get(0).authParams()).isEqualTo(singletonMap("realm", "myrealm"));
   }
 
   @Test public void testDigestChallengeWithoutAuthParams() {
@@ -590,18 +588,18 @@ public final class HeadersTest {
     Headers headers = new Headers.Builder()
         .add("WWW-Authenticate", "Digest").build();
     List<Challenge> challenges = HttpHeaders.parseChallenges(headers, "WWW-Authenticate");
-    assertEquals(1, challenges.size());
-    assertEquals("Digest", challenges.get(0).scheme());
-    assertNull(challenges.get(0).realm());
-    assertEquals(emptyMap(), challenges.get(0).authParams());
+    assertThat(challenges.size()).isEqualTo(1);
+    assertThat(challenges.get(0).scheme()).isEqualTo("Digest");
+    assertThat(challenges.get(0).realm()).isNull();
+    assertThat(challenges.get(0).authParams()).isEqualTo(emptyMap());
   }
 
   @Test public void basicChallenge() {
     Headers headers = new Headers.Builder()
         .add("WWW-Authenticate: Basic realm=\"protected area\"")
         .build();
-    assertEquals(singletonList(new Challenge("Basic", singletonMap("realm", "protected area"))),
-        HttpHeaders.parseChallenges(headers, "WWW-Authenticate"));
+    assertThat(HttpHeaders.parseChallenges(headers, "WWW-Authenticate")).isEqualTo(
+        singletonList(new Challenge("Basic", singletonMap("realm", "protected area"))));
   }
 
   @Test public void basicChallengeWithCharset() {
@@ -611,8 +609,8 @@ public final class HeadersTest {
     Map<String, String> expectedAuthParams = new LinkedHashMap<>();
     expectedAuthParams.put("realm", "protected area");
     expectedAuthParams.put("charset", "UTF-8");
-    assertEquals(singletonList(new Challenge("Basic", expectedAuthParams)),
-        HttpHeaders.parseChallenges(headers, "WWW-Authenticate"));
+    assertThat(HttpHeaders.parseChallenges(headers, "WWW-Authenticate")).isEqualTo(
+        singletonList(new Challenge("Basic", expectedAuthParams)));
   }
 
   @Test public void basicChallengeWithUnexpectedCharset() {
@@ -623,74 +621,69 @@ public final class HeadersTest {
     Map<String, String> expectedAuthParams = new LinkedHashMap<>();
     expectedAuthParams.put("realm", "protected area");
     expectedAuthParams.put("charset", "US-ASCII");
-    assertEquals(singletonList(new Challenge("Basic", expectedAuthParams)),
-        HttpHeaders.parseChallenges(headers, "WWW-Authenticate"));
+    assertThat(HttpHeaders.parseChallenges(headers, "WWW-Authenticate")).isEqualTo(
+        singletonList(new Challenge("Basic", expectedAuthParams)));
   }
 
   @Test public void separatorsBeforeFirstChallenge() {
     Headers headers = new Headers.Builder()
         .add("WWW-Authenticate", " ,  , Basic realm=myrealm")
         .build();
-    assertEquals(singletonList(new Challenge("Basic", singletonMap("realm", "myrealm"))),
-        HttpHeaders.parseChallenges(headers, "WWW-Authenticate"));
+    assertThat(HttpHeaders.parseChallenges(headers, "WWW-Authenticate")).isEqualTo(
+        singletonList(new Challenge("Basic", singletonMap("realm", "myrealm"))));
   }
 
   @Test public void spacesAroundKeyValueSeparator() {
     Headers headers = new Headers.Builder()
         .add("WWW-Authenticate", "Basic realm = \"myrealm\"")
         .build();
-    assertEquals(singletonList(new Challenge("Basic", singletonMap("realm", "myrealm"))),
-        HttpHeaders.parseChallenges(headers, "WWW-Authenticate"));
+    assertThat(HttpHeaders.parseChallenges(headers, "WWW-Authenticate")).isEqualTo(
+        singletonList(new Challenge("Basic", singletonMap("realm", "myrealm"))));
   }
 
   @Test public void multipleChallengesInOneHeader() {
     Headers headers = new Headers.Builder()
         .add("WWW-Authenticate", "Basic realm = \"myrealm\",Digest")
         .build();
-    assertEquals(Arrays.asList(
+    assertThat(HttpHeaders.parseChallenges(headers, "WWW-Authenticate")).isEqualTo(Arrays.asList(
         new Challenge("Basic", singletonMap("realm", "myrealm")),
-        new Challenge("Digest", Collections.emptyMap())),
-        HttpHeaders.parseChallenges(headers, "WWW-Authenticate"));
+        new Challenge("Digest", Collections.emptyMap())));
   }
 
   @Test public void multipleChallengesWithSameSchemeButDifferentRealmInOneHeader() {
     Headers headers = new Headers.Builder()
         .add("WWW-Authenticate", "Basic realm = \"myrealm\",Basic realm=myotherrealm")
         .build();
-    assertEquals(Arrays.asList(
+    assertThat(HttpHeaders.parseChallenges(headers, "WWW-Authenticate")).isEqualTo(Arrays.asList(
         new Challenge("Basic", singletonMap("realm", "myrealm")),
-        new Challenge("Basic", singletonMap("realm", "myotherrealm"))),
-        HttpHeaders.parseChallenges(headers, "WWW-Authenticate"));
+        new Challenge("Basic", singletonMap("realm", "myotherrealm"))));
   }
 
   @Test public void separatorsBeforeFirstAuthParam() {
     Headers headers = new Headers.Builder()
         .add("WWW-Authenticate", "Digest, Basic ,,realm=\"myrealm\"")
         .build();
-    assertEquals(Arrays.asList(
+    assertThat(HttpHeaders.parseChallenges(headers, "WWW-Authenticate")).isEqualTo(Arrays.asList(
         new Challenge("Digest", Collections.emptyMap()),
-        new Challenge("Basic", singletonMap("realm", "myrealm"))),
-        HttpHeaders.parseChallenges(headers, "WWW-Authenticate"));
+        new Challenge("Basic", singletonMap("realm", "myrealm"))));
   }
 
   @Test public void onlyCommaBetweenChallenges() {
     Headers headers = new Headers.Builder()
         .add("WWW-Authenticate", "Digest,Basic realm=\"myrealm\"")
         .build();
-    assertEquals(Arrays.asList(
+    assertThat(HttpHeaders.parseChallenges(headers, "WWW-Authenticate")).isEqualTo(Arrays.asList(
         new Challenge("Digest", Collections.emptyMap()),
-        new Challenge("Basic", singletonMap("realm", "myrealm"))),
-        HttpHeaders.parseChallenges(headers, "WWW-Authenticate"));
+        new Challenge("Basic", singletonMap("realm", "myrealm"))));
   }
 
   @Test public void multipleSeparatorsBetweenChallenges() {
     Headers headers = new Headers.Builder()
         .add("WWW-Authenticate", "Digest,,,, Basic ,,realm=\"myrealm\"")
         .build();
-    assertEquals(Arrays.asList(
+    assertThat(HttpHeaders.parseChallenges(headers, "WWW-Authenticate")).isEqualTo(Arrays.asList(
         new Challenge("Digest", Collections.emptyMap()),
-        new Challenge("Basic", singletonMap("realm", "myrealm"))),
-        HttpHeaders.parseChallenges(headers, "WWW-Authenticate"));
+        new Challenge("Basic", singletonMap("realm", "myrealm"))));
   }
 
   @Test public void unknownAuthParams() {
@@ -701,10 +694,9 @@ public final class HeadersTest {
     Map<String, String> expectedAuthParams = new LinkedHashMap<>();
     expectedAuthParams.put("realm", "myrealm");
     expectedAuthParams.put("foo", "bar");
-    assertEquals(Arrays.asList(
+    assertThat(HttpHeaders.parseChallenges(headers, "WWW-Authenticate")).isEqualTo(Arrays.asList(
         new Challenge("Digest", Collections.emptyMap()),
-        new Challenge("Basic", expectedAuthParams)),
-        HttpHeaders.parseChallenges(headers, "WWW-Authenticate"));
+        new Challenge("Basic", expectedAuthParams)));
   }
 
   @Test public void escapedCharactersInQuotedString() {
@@ -712,10 +704,9 @@ public final class HeadersTest {
         .add("WWW-Authenticate", "Digest,,,, Basic ,,,realm=\"my\\\\\\\"r\\ealm\"")
         .build();
 
-    assertEquals(Arrays.asList(
+    assertThat(HttpHeaders.parseChallenges(headers, "WWW-Authenticate")).isEqualTo(Arrays.asList(
         new Challenge("Digest", Collections.emptyMap()),
-        new Challenge("Basic", singletonMap("realm", "my\\\"realm"))),
-        HttpHeaders.parseChallenges(headers, "WWW-Authenticate"));
+        new Challenge("Basic", singletonMap("realm", "my\\\"realm"))));
   }
 
   @Test public void commaInQuotedStringAndBeforeFirstChallenge() {
@@ -723,10 +714,9 @@ public final class HeadersTest {
         .add("WWW-Authenticate", ",Digest,,,, Basic ,,,realm=\"my, realm,\"")
         .build();
 
-    assertEquals(Arrays.asList(
+    assertThat(HttpHeaders.parseChallenges(headers, "WWW-Authenticate")).isEqualTo(Arrays.asList(
         new Challenge("Digest", Collections.emptyMap()),
-        new Challenge("Basic", singletonMap("realm", "my, realm,"))),
-        HttpHeaders.parseChallenges(headers, "WWW-Authenticate"));
+        new Challenge("Basic", singletonMap("realm", "my, realm,"))));
   }
 
   @Test public void unescapedDoubleQuoteInQuotedStringWithEvenNumberOfBackslashesInFront() {
@@ -734,9 +724,8 @@ public final class HeadersTest {
         .add("WWW-Authenticate", "Digest,,,, Basic ,,,realm=\"my\\\\\\\\\"r\\ealm\"")
         .build();
 
-    assertEquals(Arrays.asList(
-        new Challenge("Digest", Collections.emptyMap())),
-        HttpHeaders.parseChallenges(headers, "WWW-Authenticate"));
+    assertThat(HttpHeaders.parseChallenges(headers, "WWW-Authenticate")).isEqualTo(Arrays.asList(
+        new Challenge("Digest", Collections.emptyMap())));
   }
 
   @Test public void unescapedDoubleQuoteInQuotedString() {
@@ -744,9 +733,8 @@ public final class HeadersTest {
         .add("WWW-Authenticate", "Digest,,,, Basic ,,,realm=\"my\"realm\"")
         .build();
 
-    assertEquals(Arrays.asList(
-        new Challenge("Digest", Collections.emptyMap())),
-        HttpHeaders.parseChallenges(headers, "WWW-Authenticate"));
+    assertThat(HttpHeaders.parseChallenges(headers, "WWW-Authenticate")).isEqualTo(Arrays.asList(
+        new Challenge("Digest", Collections.emptyMap())));
   }
 
   @Ignore("TODO(jwilson): reject parameters that use invalid characters")
@@ -755,9 +743,8 @@ public final class HeadersTest {
         .add("WWW-Authenticate", "Digest,,,, Basic ,,,realm=my\"realm")
         .build();
 
-    assertEquals(Arrays.asList(
-        new Challenge("Digest", Collections.emptyMap())),
-        HttpHeaders.parseChallenges(headers, "WWW-Authenticate"));
+    assertThat(HttpHeaders.parseChallenges(headers, "WWW-Authenticate")).isEqualTo(Arrays.asList(
+        new Challenge("Digest", Collections.emptyMap())));
   }
 
   @Test public void token68InsteadOfAuthParams() {
@@ -765,9 +752,9 @@ public final class HeadersTest {
         .add("WWW-Authenticate", "Other abc==")
         .build();
 
-    assertEquals(singletonList(
-        new Challenge("Other", singletonMap(null, "abc=="))),
-        HttpHeaders.parseChallenges(headers, "WWW-Authenticate"));
+    assertThat(HttpHeaders.parseChallenges(headers, "WWW-Authenticate")).isEqualTo(
+        singletonList(
+        new Challenge("Other", singletonMap(null, "abc=="))));
   }
 
   @Test public void token68AndAuthParams() {
@@ -775,9 +762,8 @@ public final class HeadersTest {
         .add("WWW-Authenticate", "Other abc==, realm=myrealm")
         .build();
 
-    assertEquals(Arrays.asList(
-        new Challenge("Other", singletonMap(null, "abc=="))),
-        HttpHeaders.parseChallenges(headers, "WWW-Authenticate"));
+    assertThat(HttpHeaders.parseChallenges(headers, "WWW-Authenticate")).isEqualTo(Arrays.asList(
+        new Challenge("Other", singletonMap(null, "abc=="))));
   }
 
   @Test public void repeatedAuthParamKey() {
@@ -785,7 +771,8 @@ public final class HeadersTest {
         .add("WWW-Authenticate", "Other realm=myotherrealm, realm=myrealm")
         .build();
 
-    assertEquals(emptyList(), HttpHeaders.parseChallenges(headers, "WWW-Authenticate"));
+    assertThat(HttpHeaders.parseChallenges(headers, "WWW-Authenticate")).isEqualTo(
+        emptyList());
   }
 
   @Test public void multipleAuthenticateHeaders() {
@@ -794,10 +781,9 @@ public final class HeadersTest {
         .add("WWW-Authenticate", "Basic realm=myrealm")
         .build();
 
-    assertEquals(Arrays.asList(
+    assertThat(HttpHeaders.parseChallenges(headers, "WWW-Authenticate")).isEqualTo(Arrays.asList(
         new Challenge("Digest", Collections.emptyMap()),
-        new Challenge("Basic", singletonMap("realm", "myrealm"))),
-        HttpHeaders.parseChallenges(headers, "WWW-Authenticate"));
+        new Challenge("Basic", singletonMap("realm", "myrealm"))));
   }
 
   @Test public void multipleAuthenticateHeadersInDifferentOrder() {
@@ -806,10 +792,9 @@ public final class HeadersTest {
         .add("WWW-Authenticate", "Digest")
         .build();
 
-    assertEquals(Arrays.asList(
+    assertThat(HttpHeaders.parseChallenges(headers, "WWW-Authenticate")).isEqualTo(Arrays.asList(
         new Challenge("Basic", singletonMap("realm", "myrealm")),
-        new Challenge("Digest", Collections.emptyMap())),
-        HttpHeaders.parseChallenges(headers, "WWW-Authenticate"));
+        new Challenge("Digest", Collections.emptyMap())));
   }
 
   @Test public void multipleBasicAuthenticateHeaders() {
@@ -818,23 +803,22 @@ public final class HeadersTest {
         .add("WWW-Authenticate", "Basic realm=myotherrealm")
         .build();
 
-    assertEquals(Arrays.asList(
+    assertThat(HttpHeaders.parseChallenges(headers, "WWW-Authenticate")).isEqualTo(Arrays.asList(
         new Challenge("Basic", singletonMap("realm", "myrealm")),
-        new Challenge("Basic", singletonMap("realm", "myotherrealm"))),
-        HttpHeaders.parseChallenges(headers, "WWW-Authenticate"));
+        new Challenge("Basic", singletonMap("realm", "myotherrealm"))));
   }
 
   @Test public void byteCount() {
-    assertEquals(0L, Util.EMPTY_HEADERS.byteCount());
-    assertEquals(10L, new Headers.Builder()
+    assertThat(Util.EMPTY_HEADERS.byteCount()).isEqualTo(0L);
+    assertThat(new Headers.Builder()
         .add("abc", "def")
         .build()
-        .byteCount());
-    assertEquals(20L, new Headers.Builder()
+        .byteCount()).isEqualTo(10L);
+    assertThat(new Headers.Builder()
         .add("abc", "def")
         .add("ghi", "jkl")
         .build()
-        .byteCount());
+        .byteCount()).isEqualTo(20L);
   }
 
   @Test public void addDate() {
@@ -842,8 +826,8 @@ public final class HeadersTest {
     Headers headers = new Headers.Builder()
         .add("testDate", expected)
         .build();
-    assertEquals("Thu, 01 Jan 1970 00:00:00 GMT", headers.get("testDate"));
-    assertEquals(new Date(0L), headers.getDate("testDate"));
+    assertThat(headers.get("testDate")).isEqualTo("Thu, 01 Jan 1970 00:00:00 GMT");
+    assertThat(headers.getDate("testDate")).isEqualTo(new Date(0L));
   }
 
   @Test public void addDateNull() {
@@ -853,7 +837,7 @@ public final class HeadersTest {
           .build();
       fail();
     } catch (NullPointerException expected) {
-      assertEquals("value for name testDate == null", expected.getMessage());
+      assertThat(expected.getMessage()).isEqualTo("value for name testDate == null");
     }
   }
 
@@ -862,8 +846,8 @@ public final class HeadersTest {
     Headers headers = new Headers.Builder()
         .add("Test-Instant", expected)
         .build();
-    assertEquals("Thu, 01 Jan 1970 00:00:00 GMT", headers.get("Test-Instant"));
-    assertEquals(expected, headers.getInstant("Test-Instant"));
+    assertThat(headers.get("Test-Instant")).isEqualTo("Thu, 01 Jan 1970 00:00:00 GMT");
+    assertThat(headers.getInstant("Test-Instant")).isEqualTo(expected);
   }
 
   @Test public void addInstantNull() {
@@ -873,7 +857,7 @@ public final class HeadersTest {
           .build();
       fail();
     } catch (NullPointerException expected) {
-      assertEquals("value for name Test-Instant == null", expected.getMessage());
+      assertThat(expected.getMessage()).isEqualTo("value for name Test-Instant == null");
     }
   }
 
@@ -883,8 +867,8 @@ public final class HeadersTest {
         .add("testDate", new Date(0L))
         .set("testDate", expected)
         .build();
-    assertEquals("Thu, 01 Jan 1970 00:00:01 GMT", headers.get("testDate"));
-    assertEquals(expected, headers.getDate("testDate"));
+    assertThat(headers.get("testDate")).isEqualTo("Thu, 01 Jan 1970 00:00:01 GMT");
+    assertThat(headers.getDate("testDate")).isEqualTo(expected);
   }
 
   @Test public void setDateNull() {
@@ -894,7 +878,7 @@ public final class HeadersTest {
           .build();
       fail();
     } catch (NullPointerException expected) {
-      assertEquals("value for name testDate == null", expected.getMessage());
+      assertThat(expected.getMessage()).isEqualTo("value for name testDate == null");
     }
   }
 
@@ -904,8 +888,8 @@ public final class HeadersTest {
         .add("Test-Instant", Instant.ofEpochMilli(0L))
         .set("Test-Instant", expected)
         .build();
-    assertEquals("Thu, 01 Jan 1970 00:00:01 GMT", headers.get("Test-Instant"));
-    assertEquals(expected, headers.getInstant("Test-Instant"));
+    assertThat(headers.get("Test-Instant")).isEqualTo("Thu, 01 Jan 1970 00:00:01 GMT");
+    assertThat(headers.getInstant("Test-Instant")).isEqualTo(expected);
   }
 
   @Test public void setInstantNull() {
@@ -915,7 +899,7 @@ public final class HeadersTest {
           .build();
       fail();
     } catch (NullPointerException expected) {
-      assertEquals("value for name Test-Instant == null", expected.getMessage());
+      assertThat(expected.getMessage()).isEqualTo("value for name Test-Instant == null");
     }
   }
 }

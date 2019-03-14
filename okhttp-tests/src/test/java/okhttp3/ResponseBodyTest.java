@@ -28,59 +28,58 @@ import okio.Okio;
 import org.junit.Test;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.fail;
 
 public final class ResponseBodyTest {
   @Test public void stringEmpty() throws IOException {
     ResponseBody body = body("");
-    assertEquals("", body.string());
+    assertThat(body.string()).isEqualTo("");
   }
 
   @Test public void stringLooksLikeBomButTooShort() throws IOException {
     ResponseBody body = body("000048");
-    assertEquals("\0\0H", body.string());
+    assertThat(body.string()).isEqualTo("\0\0H");
   }
 
   @Test public void stringDefaultsToUtf8() throws IOException {
     ResponseBody body = body("68656c6c6f");
-    assertEquals("hello", body.string());
+    assertThat(body.string()).isEqualTo("hello");
   }
 
   @Test public void stringExplicitCharset() throws IOException {
     ResponseBody body = body("00000068000000650000006c0000006c0000006f", "utf-32be");
-    assertEquals("hello", body.string());
+    assertThat(body.string()).isEqualTo("hello");
   }
 
   @Test public void stringBomOverridesExplicitCharset() throws IOException {
     ResponseBody body = body("0000ffff00000068000000650000006c0000006c0000006f", "utf-8");
-    assertEquals("hello", body.string());
+    assertThat(body.string()).isEqualTo("hello");
   }
 
   @Test public void stringBomUtf8() throws IOException {
     ResponseBody body = body("efbbbf68656c6c6f");
-    assertEquals("hello", body.string());
+    assertThat(body.string()).isEqualTo("hello");
   }
 
   @Test public void stringBomUtf16Be() throws IOException {
     ResponseBody body = body("feff00680065006c006c006f");
-    assertEquals("hello", body.string());
+    assertThat(body.string()).isEqualTo("hello");
   }
 
   @Test public void stringBomUtf16Le() throws IOException {
     ResponseBody body = body("fffe680065006c006c006f00");
-    assertEquals("hello", body.string());
+    assertThat(body.string()).isEqualTo("hello");
   }
 
   @Test public void stringBomUtf32Be() throws IOException {
     ResponseBody body = body("0000ffff00000068000000650000006c0000006c0000006f");
-    assertEquals("hello", body.string());
+    assertThat(body.string()).isEqualTo("hello");
   }
 
   @Test public void stringBomUtf32Le() throws IOException {
     ResponseBody body = body("ffff000068000000650000006c0000006c0000006f000000");
-    assertEquals("hello", body.string());
+    assertThat(body.string()).isEqualTo("hello");
   }
 
   @Test public void stringClosesUnderlyingSource() throws IOException {
@@ -104,53 +103,53 @@ public final class ResponseBodyTest {
         });
       }
     };
-    assertEquals("hello", body.string());
-    assertTrue(closed.get());
+    assertThat(body.string()).isEqualTo("hello");
+    assertThat(closed.get()).isTrue();
   }
 
   @Test public void readerEmpty() throws IOException {
     ResponseBody body = body("");
-    assertEquals("", exhaust(body.charStream()));
+    assertThat(exhaust(body.charStream())).isEqualTo("");
   }
 
   @Test public void readerLooksLikeBomButTooShort() throws IOException {
     ResponseBody body = body("000048");
-    assertEquals("\0\0H", exhaust(body.charStream()));
+    assertThat(exhaust(body.charStream())).isEqualTo("\0\0H");
   }
 
   @Test public void readerDefaultsToUtf8() throws IOException {
     ResponseBody body = body("68656c6c6f");
-    assertEquals("hello", exhaust(body.charStream()));
+    assertThat(exhaust(body.charStream())).isEqualTo("hello");
   }
 
   @Test public void readerExplicitCharset() throws IOException {
     ResponseBody body = body("00000068000000650000006c0000006c0000006f", "utf-32be");
-    assertEquals("hello", exhaust(body.charStream()));
+    assertThat(exhaust(body.charStream())).isEqualTo("hello");
   }
 
   @Test public void readerBomUtf8() throws IOException {
     ResponseBody body = body("efbbbf68656c6c6f");
-    assertEquals("hello", exhaust(body.charStream()));
+    assertThat(exhaust(body.charStream())).isEqualTo("hello");
   }
 
   @Test public void readerBomUtf16Be() throws IOException {
     ResponseBody body = body("feff00680065006c006c006f");
-    assertEquals("hello", exhaust(body.charStream()));
+    assertThat(exhaust(body.charStream())).isEqualTo("hello");
   }
 
   @Test public void readerBomUtf16Le() throws IOException {
     ResponseBody body = body("fffe680065006c006c006f00");
-    assertEquals("hello", exhaust(body.charStream()));
+    assertThat(exhaust(body.charStream())).isEqualTo("hello");
   }
 
   @Test public void readerBomUtf32Be() throws IOException {
     ResponseBody body = body("0000ffff00000068000000650000006c0000006c0000006f");
-    assertEquals("hello", exhaust(body.charStream()));
+    assertThat(exhaust(body.charStream())).isEqualTo("hello");
   }
 
   @Test public void readerBomUtf32Le() throws IOException {
     ResponseBody body = body("ffff000068000000650000006c0000006c0000006f000000");
-    assertEquals("hello", exhaust(body.charStream()));
+    assertThat(exhaust(body.charStream())).isEqualTo("hello");
   }
 
   @Test public void readerClosedBeforeBomClosesUnderlyingSource() throws IOException {
@@ -175,7 +174,7 @@ public final class ResponseBodyTest {
       }
     };
     body.charStream().close();
-    assertTrue(closed.get());
+    assertThat(closed.get()).isTrue();
   }
 
   @Test public void readerClosedAfterBomClosesUnderlyingSource() throws IOException {
@@ -200,25 +199,25 @@ public final class ResponseBodyTest {
       }
     };
     Reader reader = body.charStream();
-    assertEquals('h', reader.read());
+    assertThat(reader.read()).isEqualTo('h');
     reader.close();
-    assertTrue(closed.get());
+    assertThat(closed.get()).isTrue();
   }
 
   @Test public void sourceEmpty() throws IOException {
     ResponseBody body = body("");
     BufferedSource source = body.source();
-    assertTrue(source.exhausted());
-    assertEquals("", source.readUtf8());
+    assertThat(source.exhausted()).isTrue();
+    assertThat(source.readUtf8()).isEqualTo("");
   }
 
   @Test public void sourceSeesBom() throws IOException {
     ResponseBody body = body("efbbbf68656c6c6f");
     BufferedSource source = body.source();
-    assertEquals(0xef, source.readByte() & 0xff);
-    assertEquals(0xbb, source.readByte() & 0xff);
-    assertEquals(0xbf, source.readByte() & 0xff);
-    assertEquals("hello", source.readUtf8());
+    assertThat((source.readByte() & 0xff)).isEqualTo(0xef);
+    assertThat((source.readByte() & 0xff)).isEqualTo(0xbb);
+    assertThat((source.readByte() & 0xff)).isEqualTo(0xbf);
+    assertThat(source.readUtf8()).isEqualTo("hello");
   }
 
   @Test public void sourceClosesUnderlyingSource() throws IOException {
@@ -243,21 +242,21 @@ public final class ResponseBodyTest {
       }
     };
     body.source().close();
-    assertTrue(closed.get());
+    assertThat(closed.get()).isTrue();
   }
 
   @Test public void bytesEmpty() throws IOException {
     ResponseBody body = body("");
-    assertEquals(0, body.bytes().length);
+    assertThat(body.bytes().length).isEqualTo(0);
   }
 
   @Test public void bytesSeesBom() throws IOException {
     ResponseBody body = body("efbbbf68656c6c6f");
     byte[] bytes = body.bytes();
-    assertEquals(0xef, bytes[0] & 0xff);
-    assertEquals(0xbb, bytes[1] & 0xff);
-    assertEquals(0xbf, bytes[2] & 0xff);
-    assertEquals("hello", new String(bytes, 3, 5, UTF_8));
+    assertThat((bytes[0] & 0xff)).isEqualTo(0xef);
+    assertThat((bytes[1] & 0xff)).isEqualTo(0xbb);
+    assertThat((bytes[2] & 0xff)).isEqualTo(0xbf);
+    assertThat(new String(bytes, 3, 5, UTF_8)).isEqualTo("hello");
   }
 
   @Test public void bytesClosesUnderlyingSource() throws IOException {
@@ -281,8 +280,8 @@ public final class ResponseBodyTest {
         });
       }
     };
-    assertEquals(5, body.bytes().length);
-    assertTrue(closed.get());
+    assertThat(body.bytes().length).isEqualTo(5);
+    assertThat(closed.get()).isTrue();
   }
 
   @Test public void bytesThrowsWhenLengthsDisagree() {
@@ -303,7 +302,8 @@ public final class ResponseBodyTest {
       body.bytes();
       fail();
     } catch (IOException e) {
-      assertEquals("Content-Length (10) and stream length (5) disagree", e.getMessage());
+      assertThat(e.getMessage()).isEqualTo(
+          "Content-Length (10) and stream length (5) disagree");
     }
   }
 
@@ -325,23 +325,24 @@ public final class ResponseBodyTest {
       body.bytes();
       fail();
     } catch (IOException e) {
-      assertEquals("Cannot buffer entire body for content length: 2147483648", e.getMessage());
+      assertThat(e.getMessage()).isEqualTo(
+          "Cannot buffer entire body for content length: 2147483648");
     }
   }
 
   @Test public void byteStreamEmpty() throws IOException {
     ResponseBody body = body("");
     InputStream bytes = body.byteStream();
-    assertEquals(-1, bytes.read());
+    assertThat(bytes.read()).isEqualTo(-1);
   }
 
   @Test public void byteStreamSeesBom() throws IOException {
     ResponseBody body = body("efbbbf68656c6c6f");
     InputStream bytes = body.byteStream();
-    assertEquals(0xef, bytes.read());
-    assertEquals(0xbb, bytes.read());
-    assertEquals(0xbf, bytes.read());
-    assertEquals("hello", exhaust(new InputStreamReader(bytes, UTF_8)));
+    assertThat(bytes.read()).isEqualTo(0xef);
+    assertThat(bytes.read()).isEqualTo(0xbb);
+    assertThat(bytes.read()).isEqualTo(0xbf);
+    assertThat(exhaust(new InputStreamReader(bytes, UTF_8))).isEqualTo("hello");
   }
 
   @Test public void byteStreamClosesUnderlyingSource() throws IOException {
@@ -366,7 +367,7 @@ public final class ResponseBodyTest {
       }
     };
     body.byteStream().close();
-    assertTrue(closed.get());
+    assertThat(closed.get()).isTrue();
   }
 
   @Test public void throwingUnderlyingSourceClosesQuietly() throws IOException {
@@ -388,7 +389,7 @@ public final class ResponseBodyTest {
         });
       }
     };
-    assertEquals("hello", body.source().readUtf8());
+    assertThat(body.source().readUtf8()).isEqualTo("hello");
     body.close();
   }
 

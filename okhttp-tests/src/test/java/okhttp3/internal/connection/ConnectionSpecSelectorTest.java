@@ -29,9 +29,7 @@ import okhttp3.tls.HandshakeCertificates;
 import org.junit.Test;
 
 import static okhttp3.tls.internal.TlsUtil.localhost;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class ConnectionSpecSelectorTest {
   static {
@@ -52,7 +50,7 @@ public class ConnectionSpecSelectorTest {
 
     boolean retry = connectionSpecSelector.connectionFailed(
         new IOException("Non-handshake exception"));
-    assertFalse(retry);
+    assertThat(retry).isFalse();
     socket.close();
   }
 
@@ -67,7 +65,7 @@ public class ConnectionSpecSelectorTest {
         new SSLHandshakeException("Certificate handshake exception");
     trustIssueException.initCause(new CertificateException());
     boolean retry = connectionSpecSelector.connectionFailed(trustIssueException);
-    assertFalse(retry);
+    assertThat(retry).isFalse();
     socket.close();
   }
 
@@ -80,7 +78,7 @@ public class ConnectionSpecSelectorTest {
     connectionSpecSelector.configureSecureSocket(socket);
 
     boolean retry = connectionSpecSelector.connectionFailed(RETRYABLE_EXCEPTION);
-    assertTrue(retry);
+    assertThat(retry).isTrue();
     socket.close();
   }
 
@@ -103,7 +101,7 @@ public class ConnectionSpecSelectorTest {
     assertEnabledProtocols(socket, TlsVersion.TLS_1_2);
 
     boolean retry = connectionSpecSelector.connectionFailed(RETRYABLE_EXCEPTION);
-    assertTrue(retry);
+    assertThat(retry).isTrue();
     socket.close();
 
     // COMPATIBLE_TLS is used here.
@@ -112,7 +110,7 @@ public class ConnectionSpecSelectorTest {
     assertEnabledProtocols(socket, TlsVersion.TLS_1_2, TlsVersion.TLS_1_1, TlsVersion.TLS_1_0);
 
     retry = connectionSpecSelector.connectionFailed(RETRYABLE_EXCEPTION);
-    assertFalse(retry);
+    assertThat(retry).isFalse();
     socket.close();
 
     // sslV3 is not used because SSLv3 is not enabled on the socket.
@@ -132,7 +130,7 @@ public class ConnectionSpecSelectorTest {
   private static void assertEnabledProtocols(SSLSocket socket, TlsVersion... required) {
     Set<String> actual = new LinkedHashSet<>(Arrays.asList(socket.getEnabledProtocols()));
     Set<String> expected = new LinkedHashSet<>(Arrays.asList(javaNames(required)));
-    assertEquals(expected, actual);
+    assertThat(actual).isEqualTo(expected);
   }
 
   private static String[] javaNames(TlsVersion... tlsVersions) {

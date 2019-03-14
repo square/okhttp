@@ -26,8 +26,7 @@ import okio.ByteString;
 import org.junit.After;
 import org.junit.Test;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.fail;
 
 public final class WebSocketReaderTest {
@@ -49,7 +48,7 @@ public final class WebSocketReaderTest {
       clientReader.processNextFrame();
       fail();
     } catch (ProtocolException e) {
-      assertEquals("Control frames must be final.", e.getMessage());
+      assertThat(e.getMessage()).isEqualTo("Control frames must be final.");
     }
   }
 
@@ -59,7 +58,7 @@ public final class WebSocketReaderTest {
       clientReader.processNextFrame();
       fail();
     } catch (ProtocolException e) {
-      assertEquals("Reserved flags are unsupported.", e.getMessage());
+      assertThat(e.getMessage()).isEqualTo("Reserved flags are unsupported.");
     }
     data.clear();
     data.write(ByteString.decodeHex("aa00")); // Empty ping, flag 2 set.
@@ -67,7 +66,7 @@ public final class WebSocketReaderTest {
       clientReader.processNextFrame();
       fail();
     } catch (ProtocolException e) {
-      assertEquals("Reserved flags are unsupported.", e.getMessage());
+      assertThat(e.getMessage()).isEqualTo("Reserved flags are unsupported.");
     }
     data.clear();
     data.write(ByteString.decodeHex("ca00")); // Empty ping, flag 3 set.
@@ -75,7 +74,7 @@ public final class WebSocketReaderTest {
       clientReader.processNextFrame();
       fail();
     } catch (ProtocolException e) {
-      assertEquals("Reserved flags are unsupported.", e.getMessage());
+      assertThat(e.getMessage()).isEqualTo("Reserved flags are unsupported.");
     }
   }
 
@@ -85,7 +84,7 @@ public final class WebSocketReaderTest {
       serverReader.processNextFrame();
       fail();
     } catch (ProtocolException e) {
-      assertEquals("Client-sent frames must be masked.", e.getMessage());
+      assertThat(e.getMessage()).isEqualTo("Client-sent frames must be masked.");
     }
   }
 
@@ -95,7 +94,7 @@ public final class WebSocketReaderTest {
       clientReader.processNextFrame();
       fail();
     } catch (ProtocolException e) {
-      assertEquals("Server-sent frames must not be masked.", e.getMessage());
+      assertThat(e.getMessage()).isEqualTo("Server-sent frames must not be masked.");
     }
   }
 
@@ -105,7 +104,7 @@ public final class WebSocketReaderTest {
       clientReader.processNextFrame();
       fail();
     } catch (ProtocolException e) {
-      assertEquals("Control frame must be less than 125B.", e.getMessage());
+      assertThat(e.getMessage()).isEqualTo("Control frame must be less than 125B.");
     }
   }
 
@@ -139,7 +138,8 @@ public final class WebSocketReaderTest {
       clientReader.processNextFrame();
       fail();
     } catch (ProtocolException e) {
-      assertEquals("Frame length 0x8000000000000000 > 0x7FFFFFFFFFFFFFFF", e.getMessage());
+      assertThat(e.getMessage()).isEqualTo(
+          "Frame length 0x8000000000000000 > 0x7FFFFFFFFFFFFFFF");
     }
   }
 
@@ -233,7 +233,7 @@ public final class WebSocketReaderTest {
       clientReader.processNextFrame();
       fail();
     } catch (ProtocolException e) {
-      assertEquals("Expected continuation opcode. Got: 2", e.getMessage());
+      assertThat(e.getMessage()).isEqualTo("Expected continuation opcode. Got: 2");
     }
   }
 
@@ -261,7 +261,7 @@ public final class WebSocketReaderTest {
       clientReader.processNextFrame();
       fail();
     } catch (ProtocolException e) {
-      assertEquals("Malformed close payload length of 1.", e.getMessage());
+      assertThat(e.getMessage()).isEqualTo("Malformed close payload length of 1.");
     }
   }
 
@@ -284,14 +284,14 @@ public final class WebSocketReaderTest {
       clientReader.processNextFrame();
       fail();
     } catch (ProtocolException e) {
-      assertEquals("Code must be in range [1000,5000): 1", e.getMessage());
+      assertThat(e.getMessage()).isEqualTo("Code must be in range [1000,5000): 1");
     }
     data.write(ByteString.decodeHex("88021388")); // Close with code 5000
     try {
       clientReader.processNextFrame();
       fail();
     } catch (ProtocolException e) {
-      assertEquals("Code must be in range [1000,5000): 5000", e.getMessage());
+      assertThat(e.getMessage()).isEqualTo("Code must be in range [1000,5000): 5000");
     }
   }
 
@@ -310,10 +310,11 @@ public final class WebSocketReaderTest {
         fail();
       } catch (ProtocolException e) {
         String message = e.getMessage();
-        assertTrue(message, Pattern.matches("Code \\d+ is reserved and may not be used.", message));
+        assertThat(Pattern.matches("Code \\d+ is reserved and may not be used.", message)).overridingErrorMessage(
+            message).isTrue();
       }
     }
-    assertEquals(1991, count);
+    assertThat(count).isEqualTo(1991);
   }
 
   private byte[] binaryData(int length) {

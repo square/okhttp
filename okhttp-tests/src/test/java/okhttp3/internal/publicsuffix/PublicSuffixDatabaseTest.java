@@ -25,9 +25,7 @@ import okio.Okio;
 import org.junit.Test;
 
 import static okhttp3.internal.publicsuffix.PublicSuffixDatabase.PUBLIC_SUFFIX_RESOURCE;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.fail;
 
 public final class PublicSuffixDatabaseTest {
@@ -40,12 +38,14 @@ public final class PublicSuffixDatabaseTest {
         .writeUtf8("square.com\n");
     publicSuffixDatabase.setListBytes(buffer.readByteArray(), new byte[]{});
 
-    assertEquals("example.com", publicSuffixDatabase.getEffectiveTldPlusOne("example.com"));
-    assertEquals("example.com", publicSuffixDatabase.getEffectiveTldPlusOne("foo.example.com"));
-    assertEquals("bar.square.com",
-        publicSuffixDatabase.getEffectiveTldPlusOne("foo.bar.square.com"));
-    assertEquals("foo.my.square.com",
-        publicSuffixDatabase.getEffectiveTldPlusOne("foo.my.square.com"));
+    assertThat(publicSuffixDatabase.getEffectiveTldPlusOne("example.com")).isEqualTo(
+        "example.com");
+    assertThat(publicSuffixDatabase.getEffectiveTldPlusOne("foo.example.com")).isEqualTo(
+        "example.com");
+    assertThat(publicSuffixDatabase.getEffectiveTldPlusOne("foo.bar.square.com")).isEqualTo(
+        "bar.square.com");
+    assertThat(publicSuffixDatabase.getEffectiveTldPlusOne("foo.my.square.com")).isEqualTo(
+        "foo.my.square.com");
   }
 
   @Test public void wildcardMatch() {
@@ -55,11 +55,11 @@ public final class PublicSuffixDatabaseTest {
         .writeUtf8("example.com\n");
     publicSuffixDatabase.setListBytes(buffer.readByteArray(), new byte[]{});
 
-    assertNull(publicSuffixDatabase.getEffectiveTldPlusOne("my.square.com"));
-    assertEquals("foo.my.square.com",
-        publicSuffixDatabase.getEffectiveTldPlusOne("foo.my.square.com"));
-    assertEquals("foo.my.square.com",
-        publicSuffixDatabase.getEffectiveTldPlusOne("bar.foo.my.square.com"));
+    assertThat(publicSuffixDatabase.getEffectiveTldPlusOne("my.square.com")).isNull();
+    assertThat(publicSuffixDatabase.getEffectiveTldPlusOne("foo.my.square.com")).isEqualTo(
+        "foo.my.square.com");
+    assertThat(publicSuffixDatabase.getEffectiveTldPlusOne("bar.foo.my.square.com")).isEqualTo(
+        "foo.my.square.com");
   }
 
   @Test public void boundarySearches() {
@@ -69,10 +69,10 @@ public final class PublicSuffixDatabaseTest {
         .writeUtf8("fff\n");
     publicSuffixDatabase.setListBytes(buffer.readByteArray(), new byte[]{});
 
-    assertNull(publicSuffixDatabase.getEffectiveTldPlusOne("aaa"));
-    assertNull(publicSuffixDatabase.getEffectiveTldPlusOne("ggg"));
-    assertNull(publicSuffixDatabase.getEffectiveTldPlusOne("ccc"));
-    assertNull(publicSuffixDatabase.getEffectiveTldPlusOne("eee"));
+    assertThat(publicSuffixDatabase.getEffectiveTldPlusOne("aaa")).isNull();
+    assertThat(publicSuffixDatabase.getEffectiveTldPlusOne("ggg")).isNull();
+    assertThat(publicSuffixDatabase.getEffectiveTldPlusOne("ccc")).isNull();
+    assertThat(publicSuffixDatabase.getEffectiveTldPlusOne("eee")).isNull();
   }
 
   @Test public void exceptionRule() {
@@ -85,9 +85,11 @@ public final class PublicSuffixDatabaseTest {
         .writeUtf8("square.com\n");
     publicSuffixDatabase.setListBytes(buffer.readByteArray(), exception.readByteArray());
 
-    assertEquals("my.square.jp", publicSuffixDatabase.getEffectiveTldPlusOne("my.square.jp"));
-    assertEquals("my.square.jp", publicSuffixDatabase.getEffectiveTldPlusOne("foo.my.square.jp"));
-    assertNull(publicSuffixDatabase.getEffectiveTldPlusOne("my1.square.jp"));
+    assertThat(publicSuffixDatabase.getEffectiveTldPlusOne("my.square.jp")).isEqualTo(
+        "my.square.jp");
+    assertThat(publicSuffixDatabase.getEffectiveTldPlusOne("foo.my.square.jp")).isEqualTo(
+        "my.square.jp");
+    assertThat(publicSuffixDatabase.getEffectiveTldPlusOne("my1.square.jp")).isNull();
   }
 
   @Test public void noEffectiveTldPlusOne() {
@@ -100,8 +102,8 @@ public final class PublicSuffixDatabaseTest {
         .writeUtf8("square.com\n");
     publicSuffixDatabase.setListBytes(buffer.readByteArray(), exception.readByteArray());
 
-    assertNull(publicSuffixDatabase.getEffectiveTldPlusOne("example.com"));
-    assertNull(publicSuffixDatabase.getEffectiveTldPlusOne("foo.square.jp"));
+    assertThat(publicSuffixDatabase.getEffectiveTldPlusOne("example.com")).isNull();
+    assertThat(publicSuffixDatabase.getEffectiveTldPlusOne("foo.square.jp")).isNull();
   }
 
   @Test public void allPublicSuffixes() throws IOException {
@@ -119,10 +121,10 @@ public final class PublicSuffixDatabaseTest {
         // A wildcard rule, let's replace the wildcard with a value.
         publicSuffix = publicSuffix.replaceAll("\\*", "square");
       }
-      assertNull(publicSuffixDatabase.getEffectiveTldPlusOne(publicSuffix));
+      assertThat(publicSuffixDatabase.getEffectiveTldPlusOne(publicSuffix)).isNull();
 
       String test = "foobar." + publicSuffix;
-      assertEquals(test, publicSuffixDatabase.getEffectiveTldPlusOne(test));
+      assertThat(publicSuffixDatabase.getEffectiveTldPlusOne(test)).isEqualTo(test);
     }
   }
 
@@ -140,10 +142,11 @@ public final class PublicSuffixDatabaseTest {
 
     while (!buffer.exhausted()) {
       String exception = buffer.readUtf8LineStrict();
-      assertEquals(exception, publicSuffixDatabase.getEffectiveTldPlusOne(exception));
+      assertThat(publicSuffixDatabase.getEffectiveTldPlusOne(exception)).isEqualTo(
+          exception);
 
       String test = "foobar." + exception;
-      assertEquals(exception, publicSuffixDatabase.getEffectiveTldPlusOne(test));
+      assertThat(publicSuffixDatabase.getEffectiveTldPlusOne(test)).isEqualTo(exception);
     }
   }
 
@@ -151,9 +154,9 @@ public final class PublicSuffixDatabaseTest {
     Thread.currentThread().interrupt();
     try {
       String result = publicSuffixDatabase.getEffectiveTldPlusOne("squareup.com");
-      assertEquals("squareup.com", result);
+      assertThat(result).isEqualTo("squareup.com");
     } finally {
-      assertTrue(Thread.interrupted());
+      assertThat(Thread.interrupted()).isTrue();
     }
   }
 
@@ -276,9 +279,9 @@ public final class PublicSuffixDatabaseTest {
 
     String result = publicSuffixDatabase.getEffectiveTldPlusOne(canonicalDomain);
     if (registrablePart == null) {
-      assertNull(result);
+      assertThat(result).isNull();
     } else {
-      assertEquals(Util.canonicalizeHost(registrablePart), result);
+      assertThat(result).isEqualTo(Util.canonicalizeHost(registrablePart));
     }
   }
 }

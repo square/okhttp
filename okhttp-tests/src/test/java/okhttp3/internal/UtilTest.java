@@ -20,7 +20,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import org.junit.Test;
 
-import static org.junit.Assert.assertEquals;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.fail;
 
 public final class UtilTest {
@@ -28,9 +28,9 @@ public final class UtilTest {
     Map<String, String> map = new LinkedHashMap<>();
     map.put("a", "A");
     Map<String, String> immutableCopy = Util.immutableMap(map);
-    assertEquals(immutableCopy, Collections.singletonMap("a", "A"));
+    assertThat(Collections.singletonMap("a", "A")).isEqualTo(immutableCopy);
     map.clear();
-    assertEquals(immutableCopy, Collections.singletonMap("a", "A"));
+    assertThat(Collections.singletonMap("a", "A")).isEqualTo(immutableCopy);
     try {
       immutableCopy.clear();
       fail();

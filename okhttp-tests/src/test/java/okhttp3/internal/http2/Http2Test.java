@@ -35,9 +35,7 @@ import static okhttp3.internal.http2.Http2.FLAG_END_STREAM;
 import static okhttp3.internal.http2.Http2.FLAG_NONE;
 import static okhttp3.internal.http2.Http2.FLAG_PADDED;
 import static okhttp3.internal.http2.Http2.FLAG_PRIORITY;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.fail;
 
 public final class Http2Test {
@@ -65,15 +63,16 @@ public final class Http2Test {
     frame.writeInt(expectedStreamId & 0x7fffffff);
     frame.writeAll(headerBytes);
 
-    assertEquals(frame, sendHeaderFrames(true, sentHeaders)); // Check writer sends the same bytes.
+    // Check writer sends the same bytes.
+    assertThat(sendHeaderFrames(true, sentHeaders)).isEqualTo(frame);
 
     reader.nextFrame(false, new BaseTestHandler() {
       @Override public void headers(boolean inFinished, int streamId,
           int associatedStreamId, List<Header> headerBlock) {
-        assertTrue(inFinished);
-        assertEquals(expectedStreamId, streamId);
-        assertEquals(-1, associatedStreamId);
-        assertEquals(sentHeaders, headerBlock);
+        assertThat(inFinished).isTrue();
+        assertThat(streamId).isEqualTo(expectedStreamId);
+        assertThat(associatedStreamId).isEqualTo(-1);
+        assertThat(headerBlock).isEqualTo(sentHeaders);
       }
     });
   }
@@ -93,17 +92,17 @@ public final class Http2Test {
     reader.nextFrame(false, new BaseTestHandler() {
       @Override public void priority(int streamId, int streamDependency, int weight,
           boolean exclusive) {
-        assertEquals(0, streamDependency);
-        assertEquals(256, weight);
-        assertFalse(exclusive);
+        assertThat(streamDependency).isEqualTo(0);
+        assertThat(weight).isEqualTo(256);
+        assertThat(exclusive).isFalse();
       }
 
       @Override public void headers(boolean inFinished, int streamId,
           int associatedStreamId, List<Header> nameValueBlock) {
-        assertFalse(inFinished);
-        assertEquals(expectedStreamId, streamId);
-        assertEquals(-1, associatedStreamId);
-        assertEquals(sentHeaders, nameValueBlock);
+        assertThat(inFinished).isFalse();
+        assertThat(streamId).isEqualTo(expectedStreamId);
+        assertThat(associatedStreamId).isEqualTo(-1);
+        assertThat(nameValueBlock).isEqualTo(sentHeaders);
       }
     });
   }
@@ -128,16 +127,17 @@ public final class Http2Test {
     frame.writeInt(expectedStreamId & 0x7fffffff);
     frame.writeAll(headerBlock);
 
-    assertEquals(frame, sendHeaderFrames(false, sentHeaders)); // Check writer sends the same bytes.
+    // Check writer sends the same bytes.
+    assertThat(sendHeaderFrames(false, sentHeaders)).isEqualTo(frame);
 
     // Reading the above frames should result in a concatenated headerBlock.
     reader.nextFrame(false, new BaseTestHandler() {
       @Override public void headers(boolean inFinished, int streamId,
           int associatedStreamId, List<Header> headerBlock) {
-        assertFalse(inFinished);
-        assertEquals(expectedStreamId, streamId);
-        assertEquals(-1, associatedStreamId);
-        assertEquals(sentHeaders, headerBlock);
+        assertThat(inFinished).isFalse();
+        assertThat(streamId).isEqualTo(expectedStreamId);
+        assertThat(associatedStreamId).isEqualTo(-1);
+        assertThat(headerBlock).isEqualTo(sentHeaders);
       }
     });
   }
@@ -161,14 +161,15 @@ public final class Http2Test {
     frame.writeInt(expectedPromisedStreamId & 0x7fffffff);
     frame.writeAll(headerBytes);
 
-    assertEquals(frame, sendPushPromiseFrames(expectedPromisedStreamId, pushPromise));
+    assertThat(sendPushPromiseFrames(expectedPromisedStreamId, pushPromise)).isEqualTo(
+        frame);
 
     reader.nextFrame(false, new BaseTestHandler() {
       @Override
       public void pushPromise(int streamId, int promisedStreamId, List<Header> headerBlock) {
-        assertEquals(expectedStreamId, streamId);
-        assertEquals(expectedPromisedStreamId, promisedStreamId);
-        assertEquals(pushPromise, headerBlock);
+        assertThat(streamId).isEqualTo(expectedStreamId);
+        assertThat(promisedStreamId).isEqualTo(expectedPromisedStreamId);
+        assertThat(headerBlock).isEqualTo(pushPromise);
       }
     });
   }
@@ -196,15 +197,16 @@ public final class Http2Test {
     frame.writeInt(expectedStreamId & 0x7fffffff);
     frame.writeAll(headerBlock);
 
-    assertEquals(frame, sendPushPromiseFrames(expectedPromisedStreamId, pushPromise));
+    assertThat(sendPushPromiseFrames(expectedPromisedStreamId, pushPromise)).isEqualTo(
+        frame);
 
     // Reading the above frames should result in a concatenated headerBlock.
     reader.nextFrame(false, new BaseTestHandler() {
       @Override
       public void pushPromise(int streamId, int promisedStreamId, List<Header> headerBlock) {
-        assertEquals(expectedStreamId, streamId);
-        assertEquals(expectedPromisedStreamId, promisedStreamId);
-        assertEquals(pushPromise, headerBlock);
+        assertThat(streamId).isEqualTo(expectedStreamId);
+        assertThat(promisedStreamId).isEqualTo(expectedPromisedStreamId);
+        assertThat(headerBlock).isEqualTo(pushPromise);
       }
     });
   }
@@ -218,8 +220,8 @@ public final class Http2Test {
 
     reader.nextFrame(false, new BaseTestHandler() {
       @Override public void rstStream(int streamId, ErrorCode errorCode) {
-        assertEquals(expectedStreamId, streamId);
-        assertEquals(ErrorCode.PROTOCOL_ERROR, errorCode);
+        assertThat(streamId).isEqualTo(expectedStreamId);
+        assertThat(errorCode).isEqualTo(ErrorCode.PROTOCOL_ERROR);
       }
     });
   }
@@ -238,9 +240,10 @@ public final class Http2Test {
 
     reader.nextFrame(false, new BaseTestHandler() {
       @Override public void settings(boolean clearPrevious, Settings settings) {
-        assertFalse(clearPrevious); // No clearPrevious in HTTP/2.
-        assertEquals(reducedTableSizeBytes, settings.getHeaderTableSize());
-        assertFalse(settings.getEnablePush(true));
+        // No clearPrevious in HTTP/2.
+        assertThat(clearPrevious).isFalse();
+        assertThat(settings.getHeaderTableSize()).isEqualTo(reducedTableSizeBytes);
+        assertThat(settings.getEnablePush(true)).isFalse();
       }
     });
   }
@@ -257,7 +260,7 @@ public final class Http2Test {
       reader.nextFrame(false, new BaseTestHandler());
       fail();
     } catch (IOException e) {
-      assertEquals("PROTOCOL_ERROR SETTINGS_ENABLE_PUSH != 0 or 1", e.getMessage());
+      assertThat(e.getMessage()).isEqualTo("PROTOCOL_ERROR SETTINGS_ENABLE_PUSH != 0 or 1");
     }
   }
 
@@ -275,7 +278,7 @@ public final class Http2Test {
         settingValue.set(settings.get(7));
       }
     });
-    assertEquals(settingValue.intValue(), 1);
+    assertThat(1).isEqualTo(settingValue.intValue());
   }
 
   @Test public void readSettingsFrameExperimentalId() throws IOException {
@@ -305,7 +308,8 @@ public final class Http2Test {
       reader.nextFrame(false, new BaseTestHandler());
       fail();
     } catch (IOException e) {
-      assertEquals("PROTOCOL_ERROR SETTINGS_INITIAL_WINDOW_SIZE > 2^31 - 1", e.getMessage());
+      assertThat(e.getMessage()).isEqualTo(
+          "PROTOCOL_ERROR SETTINGS_INITIAL_WINDOW_SIZE > 2^31 - 1");
     }
   }
 
@@ -321,7 +325,8 @@ public final class Http2Test {
       reader.nextFrame(false, new BaseTestHandler());
       fail();
     } catch (IOException e) {
-      assertEquals("PROTOCOL_ERROR SETTINGS_MAX_FRAME_SIZE: -2147483648", e.getMessage());
+      assertThat(e.getMessage()).isEqualTo(
+          "PROTOCOL_ERROR SETTINGS_MAX_FRAME_SIZE: -2147483648");
     }
   }
 
@@ -337,7 +342,7 @@ public final class Http2Test {
       reader.nextFrame(false, new BaseTestHandler());
       fail();
     } catch (IOException e) {
-      assertEquals("PROTOCOL_ERROR SETTINGS_MAX_FRAME_SIZE: 16383", e.getMessage());
+      assertThat(e.getMessage()).isEqualTo("PROTOCOL_ERROR SETTINGS_MAX_FRAME_SIZE: 16383");
     }
   }
 
@@ -353,7 +358,8 @@ public final class Http2Test {
       reader.nextFrame(false, new BaseTestHandler());
       fail();
     } catch (IOException e) {
-      assertEquals("PROTOCOL_ERROR SETTINGS_MAX_FRAME_SIZE: 16777216", e.getMessage());
+      assertThat(e.getMessage()).isEqualTo(
+          "PROTOCOL_ERROR SETTINGS_MAX_FRAME_SIZE: 16777216");
     }
   }
 
@@ -369,13 +375,13 @@ public final class Http2Test {
     frame.writeInt(expectedPayload2);
 
     // Check writer sends the same bytes.
-    assertEquals(frame, sendPingFrame(true, expectedPayload1, expectedPayload2));
+    assertThat(sendPingFrame(true, expectedPayload1, expectedPayload2)).isEqualTo(frame);
 
     reader.nextFrame(false, new BaseTestHandler() {
       @Override public void ping(boolean ack, int payload1, int payload2) {
-        assertTrue(ack);
-        assertEquals(expectedPayload1, payload1);
-        assertEquals(expectedPayload2, payload2);
+        assertThat(ack).isTrue();
+        assertThat(payload1).isEqualTo(expectedPayload1);
+        assertThat(payload2).isEqualTo(expectedPayload2);
       }
     });
   }
@@ -391,17 +397,17 @@ public final class Http2Test {
     frame.write(expectedData);
 
     // Check writer sends the same bytes.
-    assertEquals(frame, sendDataFrame(new Buffer().write(expectedData)));
+    assertThat(sendDataFrame(new Buffer().write(expectedData))).isEqualTo(frame);
 
     reader.nextFrame(false, new BaseTestHandler() {
       @Override public void data(boolean inFinished, int streamId, BufferedSource source,
           int length) throws IOException {
-        assertFalse(inFinished);
-        assertEquals(expectedStreamId, streamId);
-        assertEquals(Http2.INITIAL_MAX_FRAME_SIZE, length);
+        assertThat(inFinished).isFalse();
+        assertThat(streamId).isEqualTo(expectedStreamId);
+        assertThat(length).isEqualTo(Http2.INITIAL_MAX_FRAME_SIZE);
         ByteString data = source.readByteString(length);
         for (byte b : data.toByteArray()) {
-          assertEquals(2, b);
+          assertThat(b).isEqualTo((byte) 2);
         }
       }
     });
@@ -420,7 +426,7 @@ public final class Http2Test {
       reader.nextFrame(false, new BaseTestHandler());
       fail();
     } catch (IOException e) {
-      assertEquals("PROTOCOL_ERROR: TYPE_DATA streamId == 0", e.getMessage());
+      assertThat(e.getMessage()).isEqualTo("PROTOCOL_ERROR: TYPE_DATA streamId == 0");
     }
   }
 
@@ -441,8 +447,8 @@ public final class Http2Test {
       reader.nextFrame(false, new BaseTestHandler());
       fail();
     } catch (IOException e) {
-      assertEquals("PROTOCOL_ERROR: FLAG_COMPRESSED without SETTINGS_COMPRESS_DATA",
-          e.getMessage());
+      assertThat(e.getMessage()).isEqualTo(
+          "PROTOCOL_ERROR: FLAG_COMPRESSED without SETTINGS_COMPRESS_DATA");
     }
   }
 
@@ -464,7 +470,8 @@ public final class Http2Test {
     frame.write(padding);
 
     reader.nextFrame(false, assertData());
-    assertTrue(frame.exhausted()); // Padding was skipped.
+    // Padding was skipped.
+    assertThat(frame.exhausted()).isTrue();
   }
 
   @Test public void readPaddedDataFrameZeroPadding() throws IOException {
@@ -497,7 +504,8 @@ public final class Http2Test {
     frame.write(padding);
 
     reader.nextFrame(false, assertHeaderBlock());
-    assertTrue(frame.exhausted()); // Padding was skipped.
+    // Padding was skipped.
+    assertThat(frame.exhausted()).isTrue();
   }
 
   @Test public void readPaddedHeadersFrameZeroPadding() throws IOException {
@@ -538,7 +546,7 @@ public final class Http2Test {
     frame.writeAll(headerBlock);
 
     reader.nextFrame(false, assertHeaderBlock());
-    assertTrue(frame.exhausted());
+    assertThat(frame.exhausted()).isTrue();
   }
 
   @Test public void tooLargeDataFrame() throws IOException {
@@ -546,7 +554,7 @@ public final class Http2Test {
       sendDataFrame(new Buffer().write(new byte[0x1000000]));
       fail();
     } catch (IllegalArgumentException e) {
-      assertEquals("FRAME_SIZE_ERROR length > 16384: 16777216", e.getMessage());
+      assertThat(e.getMessage()).isEqualTo("FRAME_SIZE_ERROR length > 16384: 16777216");
     }
   }
 
@@ -560,12 +568,12 @@ public final class Http2Test {
     frame.writeInt((int) expectedWindowSizeIncrement);
 
     // Check writer sends the same bytes.
-    assertEquals(frame, windowUpdate(expectedWindowSizeIncrement));
+    assertThat(windowUpdate(expectedWindowSizeIncrement)).isEqualTo(frame);
 
     reader.nextFrame(false, new BaseTestHandler() {
       @Override public void windowUpdate(int streamId, long windowSizeIncrement) {
-        assertEquals(expectedStreamId, streamId);
-        assertEquals(expectedWindowSizeIncrement, windowSizeIncrement);
+        assertThat(streamId).isEqualTo(expectedStreamId);
+        assertThat(windowSizeIncrement).isEqualTo(expectedWindowSizeIncrement);
       }
     });
   }
@@ -575,15 +583,15 @@ public final class Http2Test {
       windowUpdate(0);
       fail();
     } catch (IllegalArgumentException e) {
-      assertEquals("windowSizeIncrement == 0 || windowSizeIncrement > 0x7fffffffL: 0",
-          e.getMessage());
+      assertThat(e.getMessage()).isEqualTo(
+          "windowSizeIncrement == 0 || windowSizeIncrement > 0x7fffffffL: 0");
     }
     try {
       windowUpdate(0x80000000L);
       fail();
     } catch (IllegalArgumentException e) {
-      assertEquals("windowSizeIncrement == 0 || windowSizeIncrement > 0x7fffffffL: 2147483648",
-          e.getMessage());
+      assertThat(e.getMessage()).isEqualTo(
+          "windowSizeIncrement == 0 || windowSizeIncrement > 0x7fffffffL: 2147483648");
     }
   }
 
@@ -598,14 +606,15 @@ public final class Http2Test {
     frame.writeInt(expectedError.httpCode);
 
     // Check writer sends the same bytes.
-    assertEquals(frame, sendGoAway(expectedStreamId, expectedError, Util.EMPTY_BYTE_ARRAY));
+    assertThat(sendGoAway(expectedStreamId, expectedError, Util.EMPTY_BYTE_ARRAY)).isEqualTo(
+        frame);
 
     reader.nextFrame(false, new BaseTestHandler() {
       @Override public void goAway(
           int lastGoodStreamId, ErrorCode errorCode, ByteString debugData) {
-        assertEquals(expectedStreamId, lastGoodStreamId);
-        assertEquals(expectedError, errorCode);
-        assertEquals(0, debugData.size());
+        assertThat(lastGoodStreamId).isEqualTo(expectedStreamId);
+        assertThat(errorCode).isEqualTo(expectedError);
+        assertThat(debugData.size()).isEqualTo(0);
       }
     });
   }
@@ -624,14 +633,14 @@ public final class Http2Test {
     frame.write(expectedData.toByteArray());
 
     // Check writer sends the same bytes.
-    assertEquals(frame, sendGoAway(0, expectedError, expectedData.toByteArray()));
+    assertThat(sendGoAway(0, expectedError, expectedData.toByteArray())).isEqualTo(frame);
 
     reader.nextFrame(false, new BaseTestHandler() {
       @Override public void goAway(
           int lastGoodStreamId, ErrorCode errorCode, ByteString debugData) {
-        assertEquals(0, lastGoodStreamId);
-        assertEquals(expectedError, errorCode);
-        assertEquals(expectedData, debugData);
+        assertThat(lastGoodStreamId).isEqualTo(0);
+        assertThat(errorCode).isEqualTo(expectedError);
+        assertThat(debugData).isEqualTo(expectedData);
       }
     });
   }
@@ -644,7 +653,7 @@ public final class Http2Test {
       fail();
     } catch (IllegalArgumentException e) {
       // TODO: real max is based on settings between 16384 and 16777215
-      assertEquals("FRAME_SIZE_ERROR length > 16384: 16777216", e.getMessage());
+      assertThat(e.getMessage()).isEqualTo("FRAME_SIZE_ERROR length > 16384: 16777216");
     }
   }
 
@@ -655,7 +664,7 @@ public final class Http2Test {
 
     writer.applyAndAckSettings(new Settings().set(Settings.MAX_FRAME_SIZE, newMaxFrameSize));
 
-    assertEquals(newMaxFrameSize, writer.maxDataLength());
+    assertThat(writer.maxDataLength()).isEqualTo(newMaxFrameSize);
     writer.frameHeader(0, newMaxFrameSize, Http2.TYPE_DATA, FLAG_NONE);
   }
 
@@ -668,7 +677,7 @@ public final class Http2Test {
       writer.frameHeader(streamId, Http2.INITIAL_MAX_FRAME_SIZE, Http2.TYPE_DATA, FLAG_NONE);
       fail();
     } catch (IllegalArgumentException e) {
-      assertEquals("reserved bit set: -2147483645", e.getMessage());
+      assertThat(e.getMessage()).isEqualTo("reserved bit set: -2147483645");
     }
   }
 
@@ -720,10 +729,10 @@ public final class Http2Test {
     return new BaseTestHandler() {
       @Override public void headers(boolean inFinished, int streamId,
           int associatedStreamId, List<Header> headerBlock) {
-        assertFalse(inFinished);
-        assertEquals(expectedStreamId, streamId);
-        assertEquals(-1, associatedStreamId);
-        assertEquals(headerEntries("foo", "barrr", "baz", "qux"), headerBlock);
+        assertThat(inFinished).isFalse();
+        assertThat(streamId).isEqualTo(expectedStreamId);
+        assertThat(associatedStreamId).isEqualTo(-1);
+        assertThat(headerBlock).isEqualTo(headerEntries("foo", "barrr", "baz", "qux"));
       }
     };
   }
@@ -732,12 +741,12 @@ public final class Http2Test {
     return new BaseTestHandler() {
       @Override public void data(boolean inFinished, int streamId, BufferedSource source,
           int length) throws IOException {
-        assertFalse(inFinished);
-        assertEquals(expectedStreamId, streamId);
-        assertEquals(1123, length);
+        assertThat(inFinished).isFalse();
+        assertThat(streamId).isEqualTo(expectedStreamId);
+        assertThat(length).isEqualTo(1123);
         ByteString data = source.readByteString(length);
         for (byte b : data.toByteArray()) {
-          assertEquals(2, b);
+          assertThat(b).isEqualTo((byte) 2);
         }
       }
     };

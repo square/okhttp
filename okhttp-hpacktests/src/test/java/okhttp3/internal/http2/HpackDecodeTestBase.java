@@ -24,7 +24,7 @@ import okhttp3.internal.http2.hpackjson.HpackJsonUtil;
 import okhttp3.internal.http2.hpackjson.Story;
 import okio.Buffer;
 
-import static org.junit.Assert.assertEquals;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.fail;
 
 /**
@@ -83,7 +83,8 @@ public class HpackDecodeTestBase {
    */
   private static void assertSetEquals(
       String message, List<Header> expected, List<Header> observed) {
-    assertEquals(message, new LinkedHashSet<>(expected), new LinkedHashSet<>(observed));
+    assertThat(new LinkedHashSet<>(observed)).overridingErrorMessage(message).isEqualTo(
+        new LinkedHashSet<>(expected));
   }
 
   protected Story getStory() {

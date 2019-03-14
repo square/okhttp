@@ -18,16 +18,15 @@ package okhttp3.internal.connection;
 import java.io.IOException;
 import org.junit.Test;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertSame;
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class RouteExceptionTest {
 
   @Test public void getConnectionIOException_single() {
     IOException firstException = new IOException();
     RouteException re = new RouteException(firstException);
-    assertSame(firstException, re.getFirstConnectException());
-    assertSame(firstException, re.getLastConnectException());
+    assertThat(re.getFirstConnectException()).isSameAs(firstException);
+    assertThat(re.getLastConnectException()).isSameAs(firstException);
   }
 
   @Test public void getConnectionIOException_multiple() {
@@ -39,12 +38,12 @@ public class RouteExceptionTest {
     re.addConnectException(thirdException);
 
     IOException connectionIOException = re.getFirstConnectException();
-    assertSame(firstException, connectionIOException);
+    assertThat(connectionIOException).isSameAs(firstException);
     Throwable[] suppressedExceptions = connectionIOException.getSuppressed();
-    assertEquals(2, suppressedExceptions.length);
-    assertSame(secondException, suppressedExceptions[0]);
-    assertSame(thirdException, suppressedExceptions[1]);
+    assertThat(suppressedExceptions.length).isEqualTo(2);
+    assertThat(suppressedExceptions[0]).isSameAs(secondException);
+    assertThat(suppressedExceptions[1]).isSameAs(thirdException);
 
-    assertSame(thirdException, re.getLastConnectException());
+    assertThat(re.getLastConnectException()).isSameAs(thirdException);
   }
 }

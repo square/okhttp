@@ -17,7 +17,7 @@ package okhttp3.internal.platform;
 
 import org.junit.Test;
 
-import static org.junit.Assert.assertEquals;
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class PlatformTest {
   @Test public void alwaysBuilds() {
@@ -26,7 +26,7 @@ public class PlatformTest {
 
   /** Guard against the default value changing by accident. */
   @Test public void defaultPrefix() {
-    assertEquals("OkHttp", new Platform().getPrefix());
+    assertThat(new Platform().getPrefix()).isEqualTo("OkHttp");
   }
 
   public static String getPlatform() {
@@ -39,6 +39,6 @@ public class PlatformTest {
 
   @Test
   public void testToStringIsClassname() {
-    assertEquals("Platform", new Platform().toString());
+    assertThat(new Platform().toString()).isEqualTo("Platform");
   }
 }

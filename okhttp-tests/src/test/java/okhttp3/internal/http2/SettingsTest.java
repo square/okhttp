@@ -19,43 +19,41 @@ import org.junit.Test;
 
 import static okhttp3.internal.http2.Settings.DEFAULT_INITIAL_WINDOW_SIZE;
 import static okhttp3.internal.http2.Settings.MAX_CONCURRENT_STREAMS;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.assertj.core.api.Assertions.assertThat;
 
 public final class SettingsTest {
   @Test public void unsetField() {
     Settings settings = new Settings();
-    assertEquals(-3, settings.getMaxConcurrentStreams(-3));
+    assertThat(settings.getMaxConcurrentStreams(-3)).isEqualTo(-3);
   }
 
   @Test public void setFields() {
     Settings settings = new Settings();
 
     settings.set(Settings.HEADER_TABLE_SIZE, 8096);
-    assertEquals(8096, settings.getHeaderTableSize());
+    assertThat(settings.getHeaderTableSize()).isEqualTo(8096);
 
-    assertTrue(settings.getEnablePush(true));
+    assertThat(settings.getEnablePush(true)).isTrue();
     settings.set(Settings.ENABLE_PUSH, 1);
-    assertTrue(settings.getEnablePush(false));
+    assertThat(settings.getEnablePush(false)).isTrue();
     settings.clear();
 
-    assertEquals(-3, settings.getMaxConcurrentStreams(-3));
+    assertThat(settings.getMaxConcurrentStreams(-3)).isEqualTo(-3);
     settings.set(MAX_CONCURRENT_STREAMS, 75);
-    assertEquals(75, settings.getMaxConcurrentStreams(-3));
+    assertThat(settings.getMaxConcurrentStreams(-3)).isEqualTo(75);
 
     settings.clear();
-    assertEquals(16384, settings.getMaxFrameSize(16384));
+    assertThat(settings.getMaxFrameSize(16384)).isEqualTo(16384);
     settings.set(Settings.MAX_FRAME_SIZE, 16777215);
-    assertEquals(16777215, settings.getMaxFrameSize(16384));
+    assertThat(settings.getMaxFrameSize(16384)).isEqualTo(16777215);
 
-    assertEquals(-1, settings.getMaxHeaderListSize(-1));
+    assertThat(settings.getMaxHeaderListSize(-1)).isEqualTo(-1);
     settings.set(Settings.MAX_HEADER_LIST_SIZE, 16777215);
-    assertEquals(16777215, settings.getMaxHeaderListSize(-1));
+    assertThat(settings.getMaxHeaderListSize(-1)).isEqualTo(16777215);
 
-    assertEquals(DEFAULT_INITIAL_WINDOW_SIZE,
-        settings.getInitialWindowSize());
+    assertThat(settings.getInitialWindowSize()).isEqualTo(DEFAULT_INITIAL_WINDOW_SIZE);
     settings.set(Settings.INITIAL_WINDOW_SIZE, 108);
-    assertEquals(108, settings.getInitialWindowSize());
+    assertThat(settings.getInitialWindowSize()).isEqualTo(108);
   }
 
   @Test public void merge() {
@@ -70,9 +68,9 @@ public final class SettingsTest {
     b.set(Settings.MAX_CONCURRENT_STREAMS, 60000);
 
     a.merge(b);
-    assertEquals(10000, a.getHeaderTableSize());
-    assertEquals(40000, a.getMaxHeaderListSize(-1));
-    assertEquals(50000, a.getInitialWindowSize());
-    assertEquals(60000, a.getMaxConcurrentStreams(-1));
+    assertThat(a.getHeaderTableSize()).isEqualTo(10000);
+    assertThat(a.getMaxHeaderListSize(-1)).isEqualTo(40000);
+    assertThat(a.getInitialWindowSize()).isEqualTo(50000);
+    assertThat(a.getMaxConcurrentStreams(-1)).isEqualTo(60000);
   }
 }

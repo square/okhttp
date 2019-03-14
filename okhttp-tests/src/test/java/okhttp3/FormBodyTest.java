@@ -20,7 +20,7 @@ import okio.Buffer;
 import org.junit.Test;
 import java.nio.charset.Charset;
 
-import static org.junit.Assert.assertEquals;
+import static org.assertj.core.api.Assertions.assertThat;
 
 public final class FormBodyTest {
   @Test public void urlEncoding() throws Exception {
@@ -30,32 +30,33 @@ public final class FormBodyTest {
         .add("%25", "%25")
         .build();
 
-    assertEquals(3, body.size());
+    assertThat(body.size()).isEqualTo(3);
 
-    assertEquals("a%2B%3D%26%20b", body.encodedName(0));
-    assertEquals("space%2C%20the", body.encodedName(1));
-    assertEquals("%2525", body.encodedName(2));
+    assertThat(body.encodedName(0)).isEqualTo("a%2B%3D%26%20b");
+    assertThat(body.encodedName(1)).isEqualTo("space%2C%20the");
+    assertThat(body.encodedName(2)).isEqualTo("%2525");
 
-    assertEquals("a+=& b", body.name(0));
-    assertEquals("space, the", body.name(1));
-    assertEquals("%25", body.name(2));
+    assertThat(body.name(0)).isEqualTo("a+=& b");
+    assertThat(body.name(1)).isEqualTo("space, the");
+    assertThat(body.name(2)).isEqualTo("%25");
 
-    assertEquals("c%2B%3D%26%20d", body.encodedValue(0));
-    assertEquals("final%20frontier", body.encodedValue(1));
-    assertEquals("%2525", body.encodedValue(2));
+    assertThat(body.encodedValue(0)).isEqualTo("c%2B%3D%26%20d");
+    assertThat(body.encodedValue(1)).isEqualTo("final%20frontier");
+    assertThat(body.encodedValue(2)).isEqualTo("%2525");
 
-    assertEquals("c+=& d", body.value(0));
-    assertEquals("final frontier", body.value(1));
-    assertEquals("%25", body.value(2));
+    assertThat(body.value(0)).isEqualTo("c+=& d");
+    assertThat(body.value(1)).isEqualTo("final frontier");
+    assertThat(body.value(2)).isEqualTo("%25");
 
-    assertEquals("application/x-www-form-urlencoded", body.contentType().toString());
+    assertThat(body.contentType().toString()).isEqualTo(
+        "application/x-www-form-urlencoded");
 
     String expected = "a%2B%3D%26%20b=c%2B%3D%26%20d&space%2C%20the=final%20frontier&%2525=%2525";
-    assertEquals(expected.length(), body.contentLength());
+    assertThat(body.contentLength()).isEqualTo(expected.length());
 
     Buffer out = new Buffer();
     body.writeTo(out);
-    assertEquals(expected, out.readUtf8());
+    assertThat(out.readUtf8()).isEqualTo(expected);
   }
 
   @Test public void addEncoded() throws Exception {
@@ -68,7 +69,7 @@ public final class FormBodyTest {
     String expected = "a+%3D%26%20b=c+%3D%26%20d&e+%3D%26%20f=g+%3D%26%20h&%25=%25";
     Buffer out = new Buffer();
     body.writeTo(out);
-    assertEquals(expected, out.readUtf8());
+    assertThat(out.readUtf8()).isEqualTo(expected);
   }
 
   @Test public void encodedPair() throws Exception {
@@ -77,11 +78,11 @@ public final class FormBodyTest {
         .build();
 
     String expected = "sim=ple";
-    assertEquals(expected.length(), body.contentLength());
+    assertThat(body.contentLength()).isEqualTo(expected.length());
 
     Buffer buffer = new Buffer();
     body.writeTo(buffer);
-    assertEquals(expected, buffer.readUtf8());
+    assertThat(buffer.readUtf8()).isEqualTo(expected);
   }
 
   @Test public void encodeMultiplePairs() throws Exception {
@@ -92,99 +93,103 @@ public final class FormBodyTest {
         .build();
 
     String expected = "sim=ple&hey=there&help=me";
-    assertEquals(expected.length(), body.contentLength());
+    assertThat(body.contentLength()).isEqualTo(expected.length());
 
     Buffer buffer = new Buffer();
     body.writeTo(buffer);
-    assertEquals(expected, buffer.readUtf8());
+    assertThat(buffer.readUtf8()).isEqualTo(expected);
   }
 
   @Test public void buildEmptyForm() throws Exception {
     FormBody body = new FormBody.Builder().build();
 
     String expected = "";
-    assertEquals(expected.length(), body.contentLength());
+    assertThat(body.contentLength()).isEqualTo(expected.length());
 
     Buffer buffer = new Buffer();
     body.writeTo(buffer);
-    assertEquals(expected, buffer.readUtf8());
+    assertThat(buffer.readUtf8()).isEqualTo(expected);
   }
 
   @Test public void characterEncoding() throws Exception {
-    assertEquals("%00", formEncode(0)); // Browsers convert '\u0000' to '%EF%BF%BD'.
-    assertEquals("%01", formEncode(1));
-    assertEquals("%02", formEncode(2));
-    assertEquals("%03", formEncode(3));
-    assertEquals("%04", formEncode(4));
-    assertEquals("%05", formEncode(5));
-    assertEquals("%06", formEncode(6));
-    assertEquals("%07", formEncode(7));
-    assertEquals("%08", formEncode(8));
-    assertEquals("%09", formEncode(9));
-    assertEquals("%0A", formEncode(10)); // Browsers convert '\n' to '\r\n'
-    assertEquals("%0B", formEncode(11));
-    assertEquals("%0C", formEncode(12));
-    assertEquals("%0D", formEncode(13)); // Browsers convert '\r' to '\r\n'
-    assertEquals("%0E", formEncode(14));
-    assertEquals("%0F", formEncode(15));
-    assertEquals("%10", formEncode(16));
-    assertEquals("%11", formEncode(17));
-    assertEquals("%12", formEncode(18));
-    assertEquals("%13", formEncode(19));
-    assertEquals("%14", formEncode(20));
-    assertEquals("%15", formEncode(21));
-    assertEquals("%16", formEncode(22));
-    assertEquals("%17", formEncode(23));
-    assertEquals("%18", formEncode(24));
-    assertEquals("%19", formEncode(25));
-    assertEquals("%1A", formEncode(26));
-    assertEquals("%1B", formEncode(27));
-    assertEquals("%1C", formEncode(28));
-    assertEquals("%1D", formEncode(29));
-    assertEquals("%1E", formEncode(30));
-    assertEquals("%1F", formEncode(31));
-    assertEquals("%20", formEncode(32)); // Browsers use '+' for space.
-    assertEquals("%21", formEncode(33));
-    assertEquals("%22", formEncode(34));
-    assertEquals("%23", formEncode(35));
-    assertEquals("%24", formEncode(36));
-    assertEquals("%25", formEncode(37));
-    assertEquals("%26", formEncode(38));
-    assertEquals("%27", formEncode(39));
-    assertEquals("%28", formEncode(40));
-    assertEquals("%29", formEncode(41));
-    assertEquals("*", formEncode(42));
-    assertEquals("%2B", formEncode(43));
-    assertEquals("%2C", formEncode(44));
-    assertEquals("-", formEncode(45));
-    assertEquals(".", formEncode(46));
-    assertEquals("%2F", formEncode(47));
-    assertEquals("0", formEncode(48));
-    assertEquals("9", formEncode(57));
-    assertEquals("%3A", formEncode(58));
-    assertEquals("%3B", formEncode(59));
-    assertEquals("%3C", formEncode(60));
-    assertEquals("%3D", formEncode(61));
-    assertEquals("%3E", formEncode(62));
-    assertEquals("%3F", formEncode(63));
-    assertEquals("%40", formEncode(64));
-    assertEquals("A", formEncode(65));
-    assertEquals("Z", formEncode(90));
-    assertEquals("%5B", formEncode(91));
-    assertEquals("%5C", formEncode(92));
-    assertEquals("%5D", formEncode(93));
-    assertEquals("%5E", formEncode(94));
-    assertEquals("_", formEncode(95));
-    assertEquals("%60", formEncode(96));
-    assertEquals("a", formEncode(97));
-    assertEquals("z", formEncode(122));
-    assertEquals("%7B", formEncode(123));
-    assertEquals("%7C", formEncode(124));
-    assertEquals("%7D", formEncode(125));
-    assertEquals("%7E", formEncode(126));
-    assertEquals("%7F", formEncode(127));
-    assertEquals("%C2%80", formEncode(128));
-    assertEquals("%C3%BF", formEncode(255));
+    // Browsers convert '\u0000' to '%EF%BF%BD'.
+    assertThat(formEncode(0)).isEqualTo("%00");
+    assertThat(formEncode(1)).isEqualTo("%01");
+    assertThat(formEncode(2)).isEqualTo("%02");
+    assertThat(formEncode(3)).isEqualTo("%03");
+    assertThat(formEncode(4)).isEqualTo("%04");
+    assertThat(formEncode(5)).isEqualTo("%05");
+    assertThat(formEncode(6)).isEqualTo("%06");
+    assertThat(formEncode(7)).isEqualTo("%07");
+    assertThat(formEncode(8)).isEqualTo("%08");
+    assertThat(formEncode(9)).isEqualTo("%09");
+    // Browsers convert '\n' to '\r\n'
+    assertThat(formEncode(10)).isEqualTo("%0A");
+    assertThat(formEncode(11)).isEqualTo("%0B");
+    assertThat(formEncode(12)).isEqualTo("%0C");
+    // Browsers convert '\r' to '\r\n'
+    assertThat(formEncode(13)).isEqualTo("%0D");
+    assertThat(formEncode(14)).isEqualTo("%0E");
+    assertThat(formEncode(15)).isEqualTo("%0F");
+    assertThat(formEncode(16)).isEqualTo("%10");
+    assertThat(formEncode(17)).isEqualTo("%11");
+    assertThat(formEncode(18)).isEqualTo("%12");
+    assertThat(formEncode(19)).isEqualTo("%13");
+    assertThat(formEncode(20)).isEqualTo("%14");
+    assertThat(formEncode(21)).isEqualTo("%15");
+    assertThat(formEncode(22)).isEqualTo("%16");
+    assertThat(formEncode(23)).isEqualTo("%17");
+    assertThat(formEncode(24)).isEqualTo("%18");
+    assertThat(formEncode(25)).isEqualTo("%19");
+    assertThat(formEncode(26)).isEqualTo("%1A");
+    assertThat(formEncode(27)).isEqualTo("%1B");
+    assertThat(formEncode(28)).isEqualTo("%1C");
+    assertThat(formEncode(29)).isEqualTo("%1D");
+    assertThat(formEncode(30)).isEqualTo("%1E");
+    assertThat(formEncode(31)).isEqualTo("%1F");
+    // Browsers use '+' for space.
+    assertThat(formEncode(32)).isEqualTo("%20");
+    assertThat(formEncode(33)).isEqualTo("%21");
+    assertThat(formEncode(34)).isEqualTo("%22");
+    assertThat(formEncode(35)).isEqualTo("%23");
+    assertThat(formEncode(36)).isEqualTo("%24");
+    assertThat(formEncode(37)).isEqualTo("%25");
+    assertThat(formEncode(38)).isEqualTo("%26");
+    assertThat(formEncode(39)).isEqualTo("%27");
+    assertThat(formEncode(40)).isEqualTo("%28");
+    assertThat(formEncode(41)).isEqualTo("%29");
+    assertThat(formEncode(42)).isEqualTo("*");
+    assertThat(formEncode(43)).isEqualTo("%2B");
+    assertThat(formEncode(44)).isEqualTo("%2C");
+    assertThat(formEncode(45)).isEqualTo("-");
+    assertThat(formEncode(46)).isEqualTo(".");
+    assertThat(formEncode(47)).isEqualTo("%2F");
+    assertThat(formEncode(48)).isEqualTo("0");
+    assertThat(formEncode(57)).isEqualTo("9");
+    assertThat(formEncode(58)).isEqualTo("%3A");
+    assertThat(formEncode(59)).isEqualTo("%3B");
+    assertThat(formEncode(60)).isEqualTo("%3C");
+    assertThat(formEncode(61)).isEqualTo("%3D");
+    assertThat(formEncode(62)).isEqualTo("%3E");
+    assertThat(formEncode(63)).isEqualTo("%3F");
+    assertThat(formEncode(64)).isEqualTo("%40");
+    assertThat(formEncode(65)).isEqualTo("A");
+    assertThat(formEncode(90)).isEqualTo("Z");
+    assertThat(formEncode(91)).isEqualTo("%5B");
+    assertThat(formEncode(92)).isEqualTo("%5C");
+    assertThat(formEncode(93)).isEqualTo("%5D");
+    assertThat(formEncode(94)).isEqualTo("%5E");
+    assertThat(formEncode(95)).isEqualTo("_");
+    assertThat(formEncode(96)).isEqualTo("%60");
+    assertThat(formEncode(97)).isEqualTo("a");
+    assertThat(formEncode(122)).isEqualTo("z");
+    assertThat(formEncode(123)).isEqualTo("%7B");
+    assertThat(formEncode(124)).isEqualTo("%7C");
+    assertThat(formEncode(125)).isEqualTo("%7D");
+    assertThat(formEncode(126)).isEqualTo("%7E");
+    assertThat(formEncode(127)).isEqualTo("%7F");
+    assertThat(formEncode(128)).isEqualTo("%C2%80");
+    assertThat(formEncode(255)).isEqualTo("%C3%BF");
   }
 
   private String formEncode(int codePoint) throws IOException {
@@ -204,10 +209,10 @@ public final class FormBodyTest {
         .build();
 
     String expected = "name=Nicol%E1s";
-    assertEquals(expected.length(), body.contentLength());
+    assertThat(body.contentLength()).isEqualTo(expected.length());
 
     Buffer out = new Buffer();
     body.writeTo(out);
-    assertEquals(expected, out.readUtf8());
+    assertThat(out.readUtf8()).isEqualTo(expected);
   }
 }

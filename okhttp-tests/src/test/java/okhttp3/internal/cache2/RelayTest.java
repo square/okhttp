@@ -34,10 +34,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.fail;
 
 public final class RelayTest {
@@ -63,17 +60,17 @@ public final class RelayTest {
     Source source = relay.newSource();
     Buffer sourceBuffer = new Buffer();
 
-    assertEquals(5, source.read(sourceBuffer, 5));
-    assertEquals("abcde", sourceBuffer.readUtf8());
+    assertThat(source.read(sourceBuffer, 5)).isEqualTo(5);
+    assertThat(sourceBuffer.readUtf8()).isEqualTo("abcde");
 
-    assertEquals(8, source.read(sourceBuffer, 1024));
-    assertEquals("fghijklm", sourceBuffer.readUtf8());
+    assertThat(source.read(sourceBuffer, 1024)).isEqualTo(8);
+    assertThat(sourceBuffer.readUtf8()).isEqualTo("fghijklm");
 
-    assertEquals(-1, source.read(sourceBuffer, 1024));
-    assertEquals(0, sourceBuffer.size());
+    assertThat(source.read(sourceBuffer, 1024)).isEqualTo(-1);
+    assertThat(sourceBuffer.size()).isEqualTo(0);
 
     source.close();
-    assertTrue(relay.isClosed());
+    assertThat(relay.isClosed()).isTrue();
     assertFile(Relay.PREFIX_CLEAN, 13L, metadata.size(), "abcdefghijklm", metadata);
   }
 
@@ -85,11 +82,11 @@ public final class RelayTest {
     BufferedSource source1 = Okio.buffer(relay.newSource());
     BufferedSource source2 = Okio.buffer(relay.newSource());
 
-    assertEquals("abcdefghijklm", source1.readUtf8());
-    assertEquals("abcdefghijklm", source2.readUtf8());
+    assertThat(source1.readUtf8()).isEqualTo("abcdefghijklm");
+    assertThat(source2.readUtf8()).isEqualTo("abcdefghijklm");
     source1.close();
     source2.close();
-    assertTrue(relay.isClosed());
+    assertThat(relay.isClosed()).isTrue();
 
     assertFile(Relay.PREFIX_CLEAN, 13L, metadata.size(), "abcdefghijklm", metadata);
   }
@@ -102,15 +99,15 @@ public final class RelayTest {
     BufferedSource source1 = Okio.buffer(relay.newSource());
     BufferedSource source2 = Okio.buffer(relay.newSource());
 
-    assertEquals("abcde", source1.readUtf8(5));
-    assertEquals("abcde", source2.readUtf8(5));
-    assertEquals("fghij", source2.readUtf8(5));
-    assertEquals("fghij", source1.readUtf8(5));
-    assertTrue(source1.exhausted());
-    assertTrue(source2.exhausted());
+    assertThat(source1.readUtf8(5)).isEqualTo("abcde");
+    assertThat(source2.readUtf8(5)).isEqualTo("abcde");
+    assertThat(source2.readUtf8(5)).isEqualTo("fghij");
+    assertThat(source1.readUtf8(5)).isEqualTo("fghij");
+    assertThat(source1.exhausted()).isTrue();
+    assertThat(source2.exhausted()).isTrue();
     source1.close();
     source2.close();
-    assertTrue(relay.isClosed());
+    assertThat(relay.isClosed()).isTrue();
 
     assertFile(Relay.PREFIX_CLEAN, 10L, metadata.size(), "abcdefghij", metadata);
   }
@@ -123,15 +120,15 @@ public final class RelayTest {
     BufferedSource source1 = Okio.buffer(relay.newSource());
     BufferedSource source2 = Okio.buffer(relay.newSource());
 
-    assertEquals("abcdefghij", source1.readUtf8(10));
-    assertEquals("abcdefghij", source2.readUtf8(10));
-    assertEquals("klmnopqrst", source2.readUtf8(10));
-    assertEquals("klmnopqrst", source1.readUtf8(10));
-    assertTrue(source1.exhausted());
-    assertTrue(source2.exhausted());
+    assertThat(source1.readUtf8(10)).isEqualTo("abcdefghij");
+    assertThat(source2.readUtf8(10)).isEqualTo("abcdefghij");
+    assertThat(source2.readUtf8(10)).isEqualTo("klmnopqrst");
+    assertThat(source1.readUtf8(10)).isEqualTo("klmnopqrst");
+    assertThat(source1.exhausted()).isTrue();
+    assertThat(source2.exhausted()).isTrue();
     source1.close();
     source2.close();
-    assertTrue(relay.isClosed());
+    assertThat(relay.isClosed()).isTrue();
 
     assertFile(Relay.PREFIX_CLEAN, 20L, metadata.size(), "abcdefghijklmnopqrst", metadata);
   }
@@ -142,24 +139,24 @@ public final class RelayTest {
 
     Relay relay1 = Relay.edit(file, upstream, metadata, 5);
     BufferedSource source1 = Okio.buffer(relay1.newSource());
-    assertEquals("abcdefghij", source1.readUtf8(10));
-    assertTrue(source1.exhausted());
+    assertThat(source1.readUtf8(10)).isEqualTo("abcdefghij");
+    assertThat(source1.exhausted()).isTrue();
     source1.close();
-    assertTrue(relay1.isClosed());
+    assertThat(relay1.isClosed()).isTrue();
 
     // Since relay1 is closed, new sources cannot be created.
-    assertNull(relay1.newSource());
+    assertThat(relay1.newSource()).isNull();
 
     Relay relay2 = Relay.read(file);
-    assertEquals(metadata, relay2.metadata());
+    assertThat(relay2.metadata()).isEqualTo(metadata);
     BufferedSource source2 = Okio.buffer(relay2.newSource());
-    assertEquals("abcdefghij", source2.readUtf8(10));
-    assertTrue(source2.exhausted());
+    assertThat(source2.readUtf8(10)).isEqualTo("abcdefghij");
+    assertThat(source2.exhausted()).isTrue();
     source2.close();
-    assertTrue(relay2.isClosed());
+    assertThat(relay2.isClosed()).isTrue();
 
     // Since relay2 is closed, new sources cannot be created.
-    assertNull(relay2.newSource());
+    assertThat(relay2.newSource()).isNull();
 
     assertFile(Relay.PREFIX_CLEAN, 10L, metadata.size(), "abcdefghij", metadata);
   }
@@ -170,15 +167,15 @@ public final class RelayTest {
 
     Relay relay1 = Relay.edit(file, upstream, metadata, 5);
     BufferedSource source1 = Okio.buffer(relay1.newSource());
-    assertEquals("abcdefghij", source1.readUtf8(10));
+    assertThat(source1.readUtf8(10)).isEqualTo("abcdefghij");
     source1.close(); // Not exhausted!
-    assertTrue(relay1.isClosed());
+    assertThat(relay1.isClosed()).isTrue();
 
     try {
       Relay.read(file);
       fail();
     } catch (IOException expected) {
-      assertEquals("unreadable cache file", expected.getMessage());
+      assertThat(expected.getMessage()).isEqualTo("unreadable cache file");
     }
 
     assertFile(Relay.PREFIX_DIRTY, -1L, -1, null, null);
@@ -194,10 +191,10 @@ public final class RelayTest {
 
     source1.close();
     source1.close(); // Unnecessary. Shouldn't decrement the reference count.
-    assertFalse(relay.isClosed());
+    assertThat(relay.isClosed()).isFalse();
 
     source2.close();
-    assertTrue(relay.isClosed());
+    assertThat(relay.isClosed()).isTrue();
     assertFile(Relay.PREFIX_DIRTY, -1L, -1, null, null);
   }
 
@@ -217,10 +214,10 @@ public final class RelayTest {
     sink.writeUtf8("klmnopqrst");
     sink.close();
 
-    assertEquals(ByteString.encodeUtf8("abcdefghijklmnopqrst"), future1.get());
-    assertEquals(ByteString.encodeUtf8("abcdefghijklmnopqrst"), future2.get());
+    assertThat(future1.get()).isEqualTo(ByteString.encodeUtf8("abcdefghijklmnopqrst"));
+    assertThat(future2.get()).isEqualTo(ByteString.encodeUtf8("abcdefghijklmnopqrst"));
 
-    assertTrue(relay.isClosed());
+    assertThat(relay.isClosed()).isTrue();
 
     assertFile(Relay.PREFIX_CLEAN, 20L, metadata.size(), "abcdefghijklmnopqrst", metadata);
   }
@@ -239,14 +236,14 @@ public final class RelayTest {
   private void assertFile(ByteString prefix, long upstreamSize, int metadataSize, String upstream,
       ByteString metadata) throws IOException {
     BufferedSource source = Okio.buffer(Okio.source(file));
-    assertEquals(prefix, source.readByteString(prefix.size()));
-    assertEquals(upstreamSize, source.readLong());
-    assertEquals(metadataSize, source.readLong());
+    assertThat(source.readByteString(prefix.size())).isEqualTo(prefix);
+    assertThat(source.readLong()).isEqualTo(upstreamSize);
+    assertThat(source.readLong()).isEqualTo(metadataSize);
     if (upstream != null) {
-      assertEquals(upstream, source.readUtf8(upstreamSize));
+      assertThat(source.readUtf8(upstreamSize)).isEqualTo(upstream);
     }
     if (metadata != null) {
-      assertEquals(metadata, source.readByteString(metadataSize));
+      assertThat(source.readByteString(metadataSize)).isEqualTo(metadata);
     }
     source.close();
   }

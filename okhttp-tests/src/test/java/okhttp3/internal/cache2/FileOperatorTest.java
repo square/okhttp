@@ -30,7 +30,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
-import static org.junit.Assert.assertEquals;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.fail;
 
 public final class FileOperatorTest {
@@ -55,10 +55,10 @@ public final class FileOperatorTest {
 
     Buffer buffer = new Buffer();
     operator.read(0, buffer, 5);
-    assertEquals("Hello", buffer.readUtf8());
+    assertThat(buffer.readUtf8()).isEqualTo("Hello");
 
     operator.read(4, buffer, 5);
-    assertEquals("o, Wo", buffer.readUtf8());
+    assertThat(buffer.readUtf8()).isEqualTo("o, Wo");
   }
 
   @Test public void write() throws Exception {
@@ -66,13 +66,13 @@ public final class FileOperatorTest {
 
     Buffer buffer1 = new Buffer().writeUtf8("Hello, World");
     operator.write(0, buffer1, 5);
-    assertEquals(", World", buffer1.readUtf8());
+    assertThat(buffer1.readUtf8()).isEqualTo(", World");
 
     Buffer buffer2 = new Buffer().writeUtf8("icopter!");
     operator.write(3, buffer2, 7);
-    assertEquals("!", buffer2.readUtf8());
+    assertThat(buffer2.readUtf8()).isEqualTo("!");
 
-    assertEquals(ByteString.encodeUtf8("Helicopter"), snapshot());
+    assertThat(snapshot()).isEqualTo(ByteString.encodeUtf8("Helicopter"));
   }
 
   @Test public void readAndWrite() throws Exception {
@@ -99,12 +99,12 @@ public final class FileOperatorTest {
     operator.read(4, buffer, 19);
     operator.write(80, buffer, buffer.size());
 
-    assertEquals(snapshot(), ByteString.encodeUtf8(""
+    assertThat(ByteString.encodeUtf8(""
         + "god creates dinosaurs. "
         + "god destroys dinosaurs. "
         + "god creates man. "
         + "man destroys god. "
-        + "man creates dinosaurs. "));
+        + "man creates dinosaurs. ")).isEqualTo(snapshot());
   }
 
   @Test public void multipleOperatorsShareOneFile() throws Exception {
@@ -124,13 +124,13 @@ public final class FileOperatorTest {
     operatorA.write(36, bufferA, 33);
 
     operatorB.read(0, bufferB, 9);
-    assertEquals("Dodgson!\n", bufferB.readUtf8());
+    assertThat(bufferB.readUtf8()).isEqualTo("Dodgson!\n");
 
     operatorA.read(9, bufferA, 27);
-    assertEquals("You shouldn't use my name.\n", bufferA.readUtf8());
+    assertThat(bufferA.readUtf8()).isEqualTo("You shouldn't use my name.\n");
 
     operatorB.read(36, bufferB, 33);
-    assertEquals("Dodgson, we've got Dodgson here!\n", bufferB.readUtf8());
+    assertThat(bufferB.readUtf8()).isEqualTo("Dodgson, we've got Dodgson here!\n");
   }
 
   @Test public void largeRead() throws Exception {
@@ -141,7 +141,7 @@ public final class FileOperatorTest {
 
     Buffer buffer = new Buffer();
     operator.read(0, buffer, data.size());
-    assertEquals(data, buffer.readByteString());
+    assertThat(buffer.readByteString()).isEqualTo(data);
   }
 
   @Test public void largeWrite() throws Exception {
@@ -152,7 +152,7 @@ public final class FileOperatorTest {
     Buffer buffer = new Buffer().write(data);
     operator.write(0, buffer, data.size());
 
-    assertEquals(data, snapshot());
+    assertThat(snapshot()).isEqualTo(data);
   }
 
   @Test public void readBounds() throws Exception {

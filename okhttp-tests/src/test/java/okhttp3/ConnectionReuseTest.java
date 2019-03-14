@@ -31,7 +31,7 @@ import org.junit.rules.TestRule;
 import org.junit.rules.Timeout;
 
 import static okhttp3.tls.internal.TlsUtil.localhost;
-import static org.junit.Assert.assertEquals;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.fail;
 
 public final class ConnectionReuseTest {
@@ -132,9 +132,9 @@ public final class ConnectionReuseTest {
         .url(server.url("/"))
         .build();
     Response response = client.newCall(request).execute();
-    assertEquals("b", response.body().string());
-    assertEquals(0, server.takeRequest().getSequenceNumber());
-    assertEquals(1, server.takeRequest().getSequenceNumber());
+    assertThat(response.body().string()).isEqualTo("b");
+    assertThat(server.takeRequest().getSequenceNumber()).isEqualTo(0);
+    assertThat(server.takeRequest().getSequenceNumber()).isEqualTo(1);
   }
 
   @Test public void connectionsNotReusedWithRedirectIfDiscardingResponseIsSlow() throws Exception {
@@ -152,9 +152,9 @@ public final class ConnectionReuseTest {
         .url(server.url("/"))
         .build();
     Response response = client.newCall(request).execute();
-    assertEquals("b", response.body().string());
-    assertEquals(0, server.takeRequest().getSequenceNumber());
-    assertEquals(0, server.takeRequest().getSequenceNumber());
+    assertThat(response.body().string()).isEqualTo("b");
+    assertThat(server.takeRequest().getSequenceNumber()).isEqualTo(0);
+    assertThat(server.takeRequest().getSequenceNumber()).isEqualTo(0);
   }
 
   @Test public void silentRetryWhenIdempotentRequestFailsOnReusedConnection() throws Exception {
@@ -167,13 +167,13 @@ public final class ConnectionReuseTest {
         .build();
 
     Response responseA = client.newCall(request).execute();
-    assertEquals("a", responseA.body().string());
-    assertEquals(0, server.takeRequest().getSequenceNumber());
+    assertThat(responseA.body().string()).isEqualTo("a");
+    assertThat(server.takeRequest().getSequenceNumber()).isEqualTo(0);
 
     Response responseB = client.newCall(request).execute();
-    assertEquals("b", responseB.body().string());
-    assertEquals(1, server.takeRequest().getSequenceNumber());
-    assertEquals(0, server.takeRequest().getSequenceNumber());
+    assertThat(responseB.body().string()).isEqualTo("b");
+    assertThat(server.takeRequest().getSequenceNumber()).isEqualTo(1);
+    assertThat(server.takeRequest().getSequenceNumber()).isEqualTo(0);
   }
 
   @Test public void staleConnectionNotReusedForNonIdempotentRequest() throws Exception {
@@ -185,8 +185,8 @@ public final class ConnectionReuseTest {
         .url(server.url("/"))
         .build();
     Response responseA = client.newCall(requestA).execute();
-    assertEquals("a", responseA.body().string());
-    assertEquals(0, server.takeRequest().getSequenceNumber());
+    assertThat(responseA.body().string()).isEqualTo("a");
+    assertThat(server.takeRequest().getSequenceNumber()).isEqualTo(0);
 
     // Give the socket a chance to become stale.
     Thread.sleep(250);
@@ -196,8 +196,8 @@ public final class ConnectionReuseTest {
         .post(RequestBody.create(MediaType.get("text/plain"), "b"))
         .build();
     Response responseB = client.newCall(requestB).execute();
-    assertEquals("b", responseB.body().string());
-    assertEquals(0, server.takeRequest().getSequenceNumber());
+    assertThat(responseB.body().string()).isEqualTo("b");
+    assertThat(server.takeRequest().getSequenceNumber()).isEqualTo(0);
   }
 
   @Test public void http2ConnectionsAreSharedBeforeResponseIsConsumed() throws Exception {
@@ -212,8 +212,8 @@ public final class ConnectionReuseTest {
     Response response2 = client.newCall(request).execute();
     response1.body().string(); // Discard the response body.
     response2.body().string(); // Discard the response body.
-    assertEquals(0, server.takeRequest().getSequenceNumber());
-    assertEquals(1, server.takeRequest().getSequenceNumber());
+    assertThat(server.takeRequest().getSequenceNumber()).isEqualTo(0);
+    assertThat(server.takeRequest().getSequenceNumber()).isEqualTo(1);
   }
 
   @Test public void connectionsAreEvicted() throws Exception {
@@ -228,16 +228,16 @@ public final class ConnectionReuseTest {
         .build();
 
     Response response1 = client.newCall(request).execute();
-    assertEquals("a", response1.body().string());
+    assertThat(response1.body().string()).isEqualTo("a");
 
     // Give the thread pool a chance to evict.
     Thread.sleep(500);
 
     Response response2 = client.newCall(request).execute();
-    assertEquals("b", response2.body().string());
+    assertThat(response2.body().string()).isEqualTo("b");
 
-    assertEquals(0, server.takeRequest().getSequenceNumber());
-    assertEquals(0, server.takeRequest().getSequenceNumber());
+    assertThat(server.takeRequest().getSequenceNumber()).isEqualTo(0);
+    assertThat(server.takeRequest().getSequenceNumber()).isEqualTo(0);
   }
 
   @Test public void connectionsAreNotReusedIfSslSocketFactoryChanges() throws Exception {
@@ -287,8 +287,8 @@ public final class ConnectionReuseTest {
     Response response2 = anotherClient.newCall(request).execute();
     response2.body().close();
 
-    assertEquals(0, server.takeRequest().getSequenceNumber());
-    assertEquals(0, server.takeRequest().getSequenceNumber());
+    assertThat(server.takeRequest().getSequenceNumber()).isEqualTo(0);
+    assertThat(server.takeRequest().getSequenceNumber()).isEqualTo(0);
   }
 
   /**
@@ -330,11 +330,12 @@ public final class ConnectionReuseTest {
         .build();
     Call call = client.newCall(request);
     try (Response response = call.execute()) {
-      assertEquals("unrelated response body!", response.body().string());
+      assertThat(response.body().string()).isEqualTo("unrelated response body!");
     }
 
-    assertEquals(0, server.takeRequest().getSequenceNumber());
-    assertEquals(0, server.takeRequest().getSequenceNumber()); // No connection reuse.
+    assertThat(server.takeRequest().getSequenceNumber()).isEqualTo(0);
+    // No connection reuse.
+    assertThat(server.takeRequest().getSequenceNumber()).isEqualTo(0);
 
     for (Response response : responsesNotClosed) {
       Util.closeQuietly(response);
@@ -364,7 +365,7 @@ public final class ConnectionReuseTest {
     for (int i = 0; i < requests.length; i++) {
       Response response = client.newCall(requests[i]).execute();
       response.body().string(); // Discard the response body.
-      assertEquals(i, server.takeRequest().getSequenceNumber());
+      assertThat(server.takeRequest().getSequenceNumber()).isEqualTo(i);
     }
   }
 
@@ -372,7 +373,7 @@ public final class ConnectionReuseTest {
     for (Request request : requests) {
       Response response = client.newCall(request).execute();
       response.body().string(); // Discard the response body.
-      assertEquals(0, server.takeRequest().getSequenceNumber());
+      assertThat(server.takeRequest().getSequenceNumber()).isEqualTo(0);
     }
   }
 }

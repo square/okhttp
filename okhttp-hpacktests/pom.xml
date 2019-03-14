@@ -8,7 +8,7 @@
   <parent>
     <groupId>com.squareup.okhttp3</groupId>
     <artifactId>parent</artifactId>
-    <version>3.13.0-SNAPSHOT</version>
+    <version>3.14.0-SNAPSHOT</version>
   </parent>
 
   <artifactId>okhttp-hpacktests</artifactId>
@@ -43,6 +43,11 @@
       <groupId>${project.groupId}</groupId>
       <artifactId>mockwebserver</artifactId>
       <version>${project.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.assertj</groupId>
+      <artifactId>assertj-core</artifactId>
       <scope>test</scope>
     </dependency>
   </dependencies>

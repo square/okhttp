@@ -26,7 +26,7 @@ import java.util.Arrays;
 import java.util.List;
 import okhttp3.internal.Util;
 
-import static org.junit.Assert.assertEquals;
+import static org.assertj.core.api.Assertions.assertThat;
 
 public final class RecordingProxySelector extends ProxySelector {
   public final List<Proxy> proxies = new ArrayList<>();
@@ -39,7 +39,7 @@ public final class RecordingProxySelector extends ProxySelector {
   }
 
   public void assertRequests(URI... expectedUris) {
-    assertEquals(Arrays.asList(expectedUris), requestedUris);
+    assertThat(requestedUris).isEqualTo(Arrays.asList(expectedUris));
     requestedUris.clear();
   }
 

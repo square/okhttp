@@ -25,8 +25,7 @@ import org.junit.Test;
 
 import static okhttp3.TestUtil.headerEntries;
 import static okio.ByteString.decodeHex;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.fail;
 
 public final class HpackTest {
@@ -55,9 +54,9 @@ public final class HpackTest {
     bytesIn.writeAll(bytesOut);
     hpackReader.readHeaders();
 
-    assertEquals(0, hpackReader.headerCount);
+    assertThat(hpackReader.headerCount).isEqualTo(0);
 
-    assertEquals(headerBlock, hpackReader.getAndResetHeaderList());
+    assertThat(hpackReader.getAndResetHeaderList()).isEqualTo(headerBlock);
   }
 
   /**
@@ -75,9 +74,10 @@ public final class HpackTest {
 
     hpackReader.readHeaders();
 
-    assertEquals(0, hpackReader.headerCount);
+    assertThat(hpackReader.headerCount).isEqualTo(0);
 
-    assertEquals(headerEntries("custom-key", "custom-header"), hpackReader.getAndResetHeaderList());
+    assertThat(hpackReader.getAndResetHeaderList()).isEqualTo(
+        headerEntries("custom-key", "custom-header"));
   }
 
   /** Oldest entries are evicted to support newer ones. */
@@ -115,8 +115,8 @@ public final class HpackTest {
     Hpack.Writer writer = new Hpack.Writer(110, false, bytesOut);
     writer.writeHeaders(headerBlock);
 
-    assertEquals(bytesIn, bytesOut);
-    assertEquals(2, writer.headerCount);
+    assertThat(bytesOut).isEqualTo(bytesIn);
+    assertThat(writer.headerCount).isEqualTo(2);
 
     int tableLength = writer.dynamicTable.length;
     Header entry = writer.dynamicTable[tableLength - 1];
@@ -160,7 +160,7 @@ public final class HpackTest {
 
     hpackReader.readHeaders();
 
-    assertEquals(2, hpackReader.headerCount);
+    assertThat(hpackReader.headerCount).isEqualTo(2);
 
     Header entry1 = hpackReader.dynamicTable[readerHeaderTableLength() - 1];
     checkEntry(entry1, "custom-bar", "custom-header", 55);
@@ -170,13 +170,13 @@ public final class HpackTest {
 
     // Once a header field is decoded and added to the reconstructed header
     // list, it cannot be removed from it. Hence, foo is here.
-    assertEquals(headerBlock, hpackReader.getAndResetHeaderList());
+    assertThat(hpackReader.getAndResetHeaderList()).isEqualTo(headerBlock);
 
     // Simulate receiving a small dynamic table size update, that implies eviction.
     bytesIn.writeByte(0x3F); // Dynamic table size update (size = 55).
     bytesIn.writeByte(0x18);
     hpackReader.readHeaders();
-    assertEquals(1, hpackReader.headerCount);
+    assertThat(hpackReader.headerCount).isEqualTo(1);
   }
 
   /** Header table backing array is initially 8 long, let's ensure it grows. */
@@ -198,7 +198,7 @@ public final class HpackTest {
 
     hpackReader.readHeaders();
 
-    assertEquals(256, hpackReader.headerCount);
+    assertThat(hpackReader.headerCount).isEqualTo(256);
   }
 
   @Test public void huffmanDecodingSupported() throws IOException {
@@ -210,8 +210,8 @@ public final class HpackTest {
 
     hpackReader.readHeaders();
 
-    assertEquals(1, hpackReader.headerCount);
-    assertEquals(52, hpackReader.dynamicTableByteCount);
+    assertThat(hpackReader.headerCount).isEqualTo(1);
+    assertThat(hpackReader.dynamicTableByteCount).isEqualTo(52);
 
     Header entry = hpackReader.dynamicTable[readerHeaderTableLength() - 1];
     checkEntry(entry, ":path", "www.example.com", 52);
@@ -230,13 +230,14 @@ public final class HpackTest {
 
     hpackReader.readHeaders();
 
-    assertEquals(1, hpackReader.headerCount);
-    assertEquals(55, hpackReader.dynamicTableByteCount);
+    assertThat(hpackReader.headerCount).isEqualTo(1);
+    assertThat(hpackReader.dynamicTableByteCount).isEqualTo(55);
 
     Header entry = hpackReader.dynamicTable[readerHeaderTableLength() - 1];
     checkEntry(entry, "custom-key", "custom-header", 55);
 
-    assertEquals(headerEntries("custom-key", "custom-header"), hpackReader.getAndResetHeaderList());
+    assertThat(hpackReader.getAndResetHeaderList()).isEqualTo(
+        headerEntries("custom-key", "custom-header"));
   }
 
   /**
@@ -251,13 +252,13 @@ public final class HpackTest {
     bytesIn.writeUtf8("/sample/path");
 
     hpackWriter.writeHeaders(headerBlock);
-    assertEquals(bytesIn, bytesOut);
+    assertThat(bytesOut).isEqualTo(bytesIn);
 
     hpackReader.readHeaders();
 
-    assertEquals(0, hpackReader.headerCount);
+    assertThat(hpackReader.headerCount).isEqualTo(0);
 
-    assertEquals(headerBlock, hpackReader.getAndResetHeaderList());
+    assertThat(hpackReader.getAndResetHeaderList()).isEqualTo(headerBlock);
   }
 
   @Test public void literalHeaderFieldWithoutIndexingNewName() throws IOException {
@@ -272,9 +273,9 @@ public final class HpackTest {
 
     hpackReader.readHeaders();
 
-    assertEquals(0, hpackReader.headerCount);
+    assertThat(hpackReader.headerCount).isEqualTo(0);
 
-    assertEquals(headerBlock, hpackReader.getAndResetHeaderList());
+    assertThat(hpackReader.getAndResetHeaderList()).isEqualTo(headerBlock);
   }
 
   @Test public void literalHeaderFieldNeverIndexedIndexedName() throws IOException {
@@ -285,9 +286,10 @@ public final class HpackTest {
 
     hpackReader.readHeaders();
 
-    assertEquals(0, hpackReader.headerCount);
+    assertThat(hpackReader.headerCount).isEqualTo(0);
 
-    assertEquals(headerEntries(":path", "/sample/path"), hpackReader.getAndResetHeaderList());
+    assertThat(hpackReader.getAndResetHeaderList()).isEqualTo(
+        headerEntries(":path", "/sample/path"));
   }
 
   @Test public void literalHeaderFieldNeverIndexedNewName() throws IOException {
@@ -302,9 +304,9 @@ public final class HpackTest {
 
     hpackReader.readHeaders();
 
-    assertEquals(0, hpackReader.headerCount);
+    assertThat(hpackReader.headerCount).isEqualTo(0);
 
-    assertEquals(headerBlock, hpackReader.getAndResetHeaderList());
+    assertThat(hpackReader.getAndResetHeaderList()).isEqualTo(headerBlock);
   }
 
   @Test public void literalHeaderFieldWithIncrementalIndexingIndexedName() throws IOException {
@@ -316,9 +318,9 @@ public final class HpackTest {
 
     hpackReader.readHeaders();
 
-    assertEquals(1, hpackReader.headerCount);
+    assertThat(hpackReader.headerCount).isEqualTo(1);
 
-    assertEquals(headerBlock, hpackReader.getAndResetHeaderList());
+    assertThat(hpackReader.getAndResetHeaderList()).isEqualTo(headerBlock);
   }
 
   @Test public void literalHeaderFieldWithIncrementalIndexingNewName() throws IOException {
@@ -332,18 +334,18 @@ public final class HpackTest {
     bytesIn.writeUtf8("custom-header");
 
     hpackWriter.writeHeaders(headerBlock);
-    assertEquals(bytesIn, bytesOut);
+    assertThat(bytesOut).isEqualTo(bytesIn);
 
-    assertEquals(1, hpackWriter.headerCount);
+    assertThat(hpackWriter.headerCount).isEqualTo(1);
 
     Header entry = hpackWriter.dynamicTable[hpackWriter.dynamicTable.length - 1];
     checkEntry(entry, "custom-key", "custom-header", 55);
 
     hpackReader.readHeaders();
 
-    assertEquals(1, hpackReader.headerCount);
+    assertThat(hpackReader.headerCount).isEqualTo(1);
 
-    assertEquals(headerBlock, hpackReader.getAndResetHeaderList());
+    assertThat(hpackReader.getAndResetHeaderList()).isEqualTo(headerBlock);
   }
 
   @Test public void theSameHeaderAfterOneIncrementalIndexed() throws IOException {
@@ -362,18 +364,18 @@ public final class HpackTest {
     bytesIn.writeByte(0xbe); // Indexed name and value (idx = 63)
 
     hpackWriter.writeHeaders(headerBlock);
-    assertEquals(bytesIn, bytesOut);
+    assertThat(bytesOut).isEqualTo(bytesIn);
 
-    assertEquals(1, hpackWriter.headerCount);
+    assertThat(hpackWriter.headerCount).isEqualTo(1);
 
     Header entry = hpackWriter.dynamicTable[hpackWriter.dynamicTable.length - 1];
     checkEntry(entry, "custom-key", "custom-header", 55);
 
     hpackReader.readHeaders();
 
-    assertEquals(1, hpackReader.headerCount);
+    assertThat(hpackReader.headerCount).isEqualTo(1);
 
-    assertEquals(headerBlock, hpackReader.getAndResetHeaderList());
+    assertThat(hpackReader.getAndResetHeaderList()).isEqualTo(headerBlock);
   }
 
   @Test public void staticHeaderIsNotCopiedIntoTheIndexedTable() throws IOException {
@@ -382,12 +384,13 @@ public final class HpackTest {
 
     hpackReader.readHeaders();
 
-    assertEquals(0, hpackReader.headerCount);
-    assertEquals(0, hpackReader.dynamicTableByteCount);
+    assertThat(hpackReader.headerCount).isEqualTo(0);
+    assertThat(hpackReader.dynamicTableByteCount).isEqualTo(0);
 
-    assertNull(hpackReader.dynamicTable[readerHeaderTableLength() - 1]);
+    assertThat(hpackReader.dynamicTable[readerHeaderTableLength() - 1]).isNull();
 
-    assertEquals(headerEntries(":method", "GET"), hpackReader.getAndResetHeaderList());
+    assertThat(hpackReader.getAndResetHeaderList()).isEqualTo(
+        headerEntries(":method", "GET"));
   }
 
   // Example taken from twitter/hpack DecoderTest.testUnusedIndex
@@ -398,7 +401,7 @@ public final class HpackTest {
       hpackReader.readHeaders();
       fail();
     } catch (IOException e) {
-      assertEquals("index == 0", e.getMessage());
+      assertThat(e.getMessage()).isEqualTo("index == 0");
     }
   }
 
@@ -410,7 +413,7 @@ public final class HpackTest {
       hpackReader.readHeaders();
       fail();
     } catch (IOException e) {
-      assertEquals("Header index too large 127", e.getMessage());
+      assertThat(e.getMessage()).isEqualTo("Header index too large 127");
     }
   }
 
@@ -423,7 +426,7 @@ public final class HpackTest {
       hpackReader.readHeaders();
       fail();
     } catch (IOException e) {
-      assertEquals("Header index too large -2147483521", e.getMessage());
+      assertThat(e.getMessage()).isEqualTo("Header index too large -2147483521");
     }
   }
 
@@ -432,14 +435,14 @@ public final class HpackTest {
     bytesIn.writeByte(0x20);
     hpackReader.readHeaders();
 
-    assertEquals(0, hpackReader.maxDynamicTableByteCount());
+    assertThat(hpackReader.maxDynamicTableByteCount()).isEqualTo(0);
 
     bytesIn.writeByte(0x3f); // encode size 4096
     bytesIn.writeByte(0xe1);
     bytesIn.writeByte(0x1f);
     hpackReader.readHeaders();
 
-    assertEquals(4096, hpackReader.maxDynamicTableByteCount());
+    assertThat(hpackReader.maxDynamicTableByteCount()).isEqualTo(4096);
   }
 
   // Example taken from twitter/hpack DecoderTest.testIllegalHeaderTableSizeUpdate
@@ -452,7 +455,7 @@ public final class HpackTest {
       hpackReader.readHeaders();
       fail();
     } catch (IOException e) {
-      assertEquals("Invalid dynamic table size update 4097", e.getMessage());
+      assertThat(e.getMessage()).isEqualTo("Invalid dynamic table size update 4097");
     }
   }
 
@@ -465,7 +468,7 @@ public final class HpackTest {
       hpackReader.readHeaders();
       fail();
     } catch (IOException e) {
-      assertEquals("Invalid dynamic table size update -2147483648", e.getMessage());
+      assertThat(e.getMessage()).isEqualTo("Invalid dynamic table size update -2147483648");
     }
   }
 
@@ -480,9 +483,10 @@ public final class HpackTest {
     hpackReader.readHeaders();
 
     // Not buffered in header table.
-    assertEquals(0, hpackReader.headerCount);
+    assertThat(hpackReader.headerCount).isEqualTo(0);
 
-    assertEquals(headerEntries(":method", "GET"), hpackReader.getAndResetHeaderList());
+    assertThat(hpackReader.getAndResetHeaderList()).isEqualTo(
+        headerEntries(":method", "GET"));
   }
 
   @Test public void readLiteralHeaderWithIncrementalIndexingStaticName() throws IOException {
@@ -493,7 +497,8 @@ public final class HpackTest {
 
     hpackReader.readHeaders();
 
-    assertEquals(Arrays.asList(new Header("www-authenticate", "Basic")), hpackReader.getAndResetHeaderList());
+    assertThat(hpackReader.getAndResetHeaderList()).isEqualTo(
+        Arrays.asList(new Header("www-authenticate", "Basic")));
   }
 
   @Test public void readLiteralHeaderWithIncrementalIndexingDynamicName() throws IOException {
@@ -509,9 +514,8 @@ public final class HpackTest {
 
     hpackReader.readHeaders();
 
-    assertEquals(
-        Arrays.asList(new Header("custom-foo", "Basic"), new Header("custom-foo", "Basic2")),
-        hpackReader.getAndResetHeaderList());
+    assertThat(hpackReader.getAndResetHeaderList()).isEqualTo(
+        Arrays.asList(new Header("custom-foo", "Basic"), new Header("custom-foo", "Basic2")));
   }
 
   /**
@@ -548,7 +552,7 @@ public final class HpackTest {
       hpackReader.readHeaders();
       fail();
     } catch (IOException e) {
-      assertEquals("Header index too large 78", e.getMessage());
+      assertThat(e.getMessage()).isEqualTo("Header index too large 78");
     }
   }
 
@@ -566,21 +570,21 @@ public final class HpackTest {
   }
 
   private void checkReadFirstRequestWithoutHuffman() {
-    assertEquals(1, hpackReader.headerCount);
+    assertThat(hpackReader.headerCount).isEqualTo(1);
 
     // [  1] (s =  57) :authority: www.example.com
     Header entry = hpackReader.dynamicTable[readerHeaderTableLength() - 1];
     checkEntry(entry, ":authority", "www.example.com", 57);
 
     // Table size: 57
-    assertEquals(57, hpackReader.dynamicTableByteCount);
+    assertThat(hpackReader.dynamicTableByteCount).isEqualTo(57);
 
     // Decoded header list:
-    assertEquals(headerEntries(
+    assertThat(hpackReader.getAndResetHeaderList()).isEqualTo(headerEntries(
         ":method", "GET",
         ":scheme", "http",
         ":path", "/",
-        ":authority", "www.example.com"), hpackReader.getAndResetHeaderList());
+        ":authority", "www.example.com"));
   }
 
   private void secondRequestWithoutHuffman() {
@@ -599,7 +603,7 @@ public final class HpackTest {
   }
 
   private void checkReadSecondRequestWithoutHuffman() {
-    assertEquals(2, hpackReader.headerCount);
+    assertThat(hpackReader.headerCount).isEqualTo(2);
 
     // [  1] (s =  53) cache-control: no-cache
     Header entry = hpackReader.dynamicTable[readerHeaderTableLength() - 2];
@@ -610,15 +614,15 @@ public final class HpackTest {
     checkEntry(entry, ":authority", "www.example.com", 57);
 
     // Table size: 110
-    assertEquals(110, hpackReader.dynamicTableByteCount);
+    assertThat(hpackReader.dynamicTableByteCount).isEqualTo(110);
 
     // Decoded header list:
-    assertEquals(headerEntries(
+    assertThat(hpackReader.getAndResetHeaderList()).isEqualTo(headerEntries(
         ":method", "GET",
         ":scheme", "http",
         ":path", "/",
         ":authority", "www.example.com",
-        "cache-control", "no-cache"), hpackReader.getAndResetHeaderList());
+        "cache-control", "no-cache"));
   }
 
   private void thirdRequestWithoutHuffman() {
@@ -638,7 +642,7 @@ public final class HpackTest {
   }
 
   private void checkReadThirdRequestWithoutHuffman() {
-    assertEquals(3, hpackReader.headerCount);
+    assertThat(hpackReader.headerCount).isEqualTo(3);
 
     // [  1] (s =  54) custom-key: custom-value
     Header entry = hpackReader.dynamicTable[readerHeaderTableLength() - 3];
@@ -653,15 +657,15 @@ public final class HpackTest {
     checkEntry(entry, ":authority", "www.example.com", 57);
 
     // Table size: 164
-    assertEquals(164, hpackReader.dynamicTableByteCount);
+    assertThat(hpackReader.dynamicTableByteCount).isEqualTo(164);
 
     // Decoded header list:
-    assertEquals(headerEntries(
+    assertThat(hpackReader.getAndResetHeaderList()).isEqualTo(headerEntries(
         ":method", "GET",
         ":scheme", "https",
         ":path", "/index.html",
         ":authority", "www.example.com",
-        "custom-key", "custom-value"), hpackReader.getAndResetHeaderList());
+        "custom-key", "custom-value"));
   }
 
   /**
@@ -696,21 +700,21 @@ public final class HpackTest {
   }
 
   private void checkReadFirstRequestWithHuffman() {
-    assertEquals(1, hpackReader.headerCount);
+    assertThat(hpackReader.headerCount).isEqualTo(1);
 
     // [  1] (s =  57) :authority: www.example.com
     Header entry = hpackReader.dynamicTable[readerHeaderTableLength() - 1];
     checkEntry(entry, ":authority", "www.example.com", 57);
 
     // Table size: 57
-    assertEquals(57, hpackReader.dynamicTableByteCount);
+    assertThat(hpackReader.dynamicTableByteCount).isEqualTo(57);
 
     // Decoded header list:
-    assertEquals(headerEntries(
+    assertThat(hpackReader.getAndResetHeaderList()).isEqualTo(headerEntries(
         ":method", "GET",
         ":scheme", "http",
         ":path", "/",
-        ":authority", "www.example.com"), hpackReader.getAndResetHeaderList());
+        ":authority", "www.example.com"));
   }
 
   private void secondRequestWithHuffman() {
@@ -730,7 +734,7 @@ public final class HpackTest {
   }
 
   private void checkReadSecondRequestWithHuffman() {
-    assertEquals(2, hpackReader.headerCount);
+    assertThat(hpackReader.headerCount).isEqualTo(2);
 
     // [  1] (s =  53) cache-control: no-cache
     Header entry = hpackReader.dynamicTable[readerHeaderTableLength() - 2];
@@ -741,15 +745,15 @@ public final class HpackTest {
     checkEntry(entry, ":authority", "www.example.com", 57);
 
     // Table size: 110
-    assertEquals(110, hpackReader.dynamicTableByteCount);
+    assertThat(hpackReader.dynamicTableByteCount).isEqualTo(110);
 
     // Decoded header list:
-    assertEquals(headerEntries(
+    assertThat(hpackReader.getAndResetHeaderList()).isEqualTo(headerEntries(
         ":method", "GET",
         ":scheme", "http",
         ":path", "/",
         ":authority", "www.example.com",
-        "cache-control", "no-cache"), hpackReader.getAndResetHeaderList());
+        "cache-control", "no-cache"));
   }
 
   private void thirdRequestWithHuffman() {
@@ -771,7 +775,7 @@ public final class HpackTest {
   }
 
   private void checkReadThirdRequestWithHuffman() {
-    assertEquals(3, hpackReader.headerCount);
+    assertThat(hpackReader.headerCount).isEqualTo(3);
 
     // [  1] (s =  54) custom-key: custom-value
     Header entry = hpackReader.dynamicTable[readerHeaderTableLength() - 3];
@@ -786,24 +790,24 @@ public final class HpackTest {
     checkEntry(entry, ":authority", "www.example.com", 57);
 
     // Table size: 164
-    assertEquals(164, hpackReader.dynamicTableByteCount);
+    assertThat(hpackReader.dynamicTableByteCount).isEqualTo(164);
 
     // Decoded header list:
-    assertEquals(headerEntries(
+    assertThat(hpackReader.getAndResetHeaderList()).isEqualTo(headerEntries(
         ":method", "GET",
         ":scheme", "https",
         ":path", "/index.html",
         ":authority", "www.example.com",
-        "custom-key", "custom-value"), hpackReader.getAndResetHeaderList());
+        "custom-key", "custom-value"));
   }
 
   @Test public void readSingleByteInt() throws IOException {
-    assertEquals(10, newReader(byteStream()).readInt(10, 31));
-    assertEquals(10, newReader(byteStream()).readInt(0xe0 | 10, 31));
+    assertThat(newReader(byteStream()).readInt(10, 31)).isEqualTo(10);
+    assertThat(newReader(byteStream()).readInt(0xe0 | 10, 31)).isEqualTo(10);
   }
 
   @Test public void readMultibyteInt() throws IOException {
-    assertEquals(1337, newReader(byteStream(154, 10)).readInt(31, 31));
+    assertThat(newReader(byteStream(154, 10)).readInt(31, 31)).isEqualTo(1337);
   }
 
   @Test public void writeSingleByteInt() throws IOException {
@@ -823,26 +827,26 @@ public final class HpackTest {
   @Test public void max31BitValue() throws IOException {
     hpackWriter.writeInt(0x7fffffff, 31, 0);
     assertBytes(31, 224, 255, 255, 255, 7);
-    assertEquals(0x7fffffff,
-        newReader(byteStream(224, 255, 255, 255, 7)).readInt(31, 31));
+    assertThat(newReader(byteStream(224, 255, 255, 255, 7)).readInt(31, 31)).isEqualTo(
+        (long) 0x7fffffff);
   }
 
   @Test public void prefixMask() throws IOException {
     hpackWriter.writeInt(31, 31, 0);
     assertBytes(31, 0);
-    assertEquals(31, newReader(byteStream(0)).readInt(31, 31));
+    assertThat(newReader(byteStream(0)).readInt(31, 31)).isEqualTo(31);
   }
 
   @Test public void prefixMaskMinusOne() throws IOException {
     hpackWriter.writeInt(30, 31, 0);
     assertBytes(30);
-    assertEquals(31, newReader(byteStream(0)).readInt(31, 31));
+    assertThat(newReader(byteStream(0)).readInt(31, 31)).isEqualTo(31);
   }
 
   @Test public void zero() throws IOException {
     hpackWriter.writeInt(0, 31, 0);
     assertBytes(0);
-    assertEquals(0, newReader(byteStream()).readInt(0, 31));
+    assertThat(newReader(byteStream()).readInt(0, 31)).isEqualTo(0);
   }
 
   @Test public void lowercaseHeaderNameBeforeEmit() throws IOException {
@@ -855,14 +859,15 @@ public final class HpackTest {
       newReader(byteStream(0, 3, 'F', 'o', 'o', 3, 'B', 'a', 'R')).readHeaders();
       fail();
     } catch (IOException e) {
-      assertEquals("PROTOCOL_ERROR response malformed: mixed case name: Foo", e.getMessage());
+      assertThat(e.getMessage()).isEqualTo(
+          "PROTOCOL_ERROR response malformed: mixed case name: Foo");
     }
   }
 
   @Test public void emptyHeaderName() throws IOException {
     hpackWriter.writeByteString(ByteString.encodeUtf8(""));
     assertBytes(0);
-    assertEquals(ByteString.EMPTY, newReader(byteStream(0)).readByteString());
+    assertThat(newReader(byteStream(0)).readByteString()).isEqualTo(ByteString.EMPTY);
   }
 
   @Test public void emitsDynamicTableSizeUpdate() throws IOException {
@@ -931,13 +936,13 @@ public final class HpackTest {
             "custom-key1", "custom-header",
             "custom-key2", "custom-header");
     hpackWriter.writeHeaders(headerBlock);
-    assertEquals(2, hpackWriter.headerCount);
+    assertThat(hpackWriter.headerCount).isEqualTo(2);
 
     hpackWriter.setHeaderTableSizeSetting(56);
-    assertEquals(1, hpackWriter.headerCount);
+    assertThat(hpackWriter.headerCount).isEqualTo(1);
 
     hpackWriter.setHeaderTableSizeSetting(0);
-    assertEquals(0, hpackWriter.headerCount);
+    assertThat(hpackWriter.headerCount).isEqualTo(0);
   }
 
   @Test public void noEvictionOnDynamicTableSizeIncrease() throws IOException {
@@ -946,15 +951,15 @@ public final class HpackTest {
             "custom-key1", "custom-header",
             "custom-key2", "custom-header");
     hpackWriter.writeHeaders(headerBlock);
-    assertEquals(2, hpackWriter.headerCount);
+    assertThat(hpackWriter.headerCount).isEqualTo(2);
 
     hpackWriter.setHeaderTableSizeSetting(8192);
-    assertEquals(2, hpackWriter.headerCount);
+    assertThat(hpackWriter.headerCount).isEqualTo(2);
   }
 
   @Test public void dynamicTableSizeHasAnUpperBound() {
     hpackWriter.setHeaderTableSizeSetting(1048576);
-    assertEquals(16384, hpackWriter.maxDynamicTableByteCount);
+    assertThat(hpackWriter.maxDynamicTableByteCount).isEqualTo(16384);
   }
 
   @Test public void huffmanEncode() throws IOException {
@@ -973,33 +978,33 @@ public final class HpackTest {
         .readByteString();
 
     ByteString actual = bytesOut.readByteString();
-    assertEquals(expected, actual);
+    assertThat(actual).isEqualTo(expected);
   }
 
   @Test public void staticTableIndexedHeaders() throws IOException {
     hpackWriter.writeHeaders(headerEntries(":method", "GET"));
     assertBytes(0x82);
-    assertEquals(0, hpackWriter.headerCount);
+    assertThat(hpackWriter.headerCount).isEqualTo(0);
 
     hpackWriter.writeHeaders(headerEntries(":method", "POST"));
     assertBytes(0x83);
-    assertEquals(0, hpackWriter.headerCount);
+    assertThat(hpackWriter.headerCount).isEqualTo(0);
 
     hpackWriter.writeHeaders(headerEntries(":path", "/"));
     assertBytes(0x84);
-    assertEquals(0, hpackWriter.headerCount);
+    assertThat(hpackWriter.headerCount).isEqualTo(0);
 
     hpackWriter.writeHeaders(headerEntries(":path", "/index.html"));
     assertBytes(0x85);
-    assertEquals(0, hpackWriter.headerCount);
+    assertThat(hpackWriter.headerCount).isEqualTo(0);
 
     hpackWriter.writeHeaders(headerEntries(":scheme", "http"));
     assertBytes(0x86);
-    assertEquals(0, hpackWriter.headerCount);
+    assertThat(hpackWriter.headerCount).isEqualTo(0);
 
     hpackWriter.writeHeaders(headerEntries(":scheme", "https"));
     assertBytes(0x87);
-    assertEquals(0, hpackWriter.headerCount);
+    assertThat(hpackWriter.headerCount).isEqualTo(0);
   }
 
   @Test public void dynamicTableIndexedHeader() throws IOException {
@@ -1007,64 +1012,64 @@ public final class HpackTest {
     assertBytes(0x40,
         10, 'c', 'u', 's', 't', 'o', 'm', '-', 'k', 'e', 'y',
         13, 'c', 'u', 's', 't', 'o', 'm', '-', 'h', 'e', 'a', 'd', 'e', 'r');
-    assertEquals(1, hpackWriter.headerCount);
+    assertThat(hpackWriter.headerCount).isEqualTo(1);
 
     hpackWriter.writeHeaders(headerEntries("custom-key", "custom-header"));
     assertBytes(0xbe);
-    assertEquals(1, hpackWriter.headerCount);
+    assertThat(hpackWriter.headerCount).isEqualTo(1);
   }
 
   @Test public void doNotIndexPseudoHeaders() throws IOException {
     hpackWriter.writeHeaders(headerEntries(":method", "PUT"));
     assertBytes(0x02, 3, 'P', 'U', 'T');
-    assertEquals(0, hpackWriter.headerCount);
+    assertThat(hpackWriter.headerCount).isEqualTo(0);
 
     hpackWriter.writeHeaders(headerEntries(":path", "/okhttp"));
     assertBytes(0x04, 7, '/', 'o', 'k', 'h', 't', 't', 'p');
-    assertEquals(0, hpackWriter.headerCount);
+    assertThat(hpackWriter.headerCount).isEqualTo(0);
   }
 
   @Test public void incrementalIndexingWithAuthorityPseudoHeader() throws IOException {
     hpackWriter.writeHeaders(headerEntries(":authority", "foo.com"));
     assertBytes(0x41, 7, 'f', 'o', 'o', '.', 'c', 'o', 'm');
-    assertEquals(1, hpackWriter.headerCount);
+    assertThat(hpackWriter.headerCount).isEqualTo(1);
 
     hpackWriter.writeHeaders(headerEntries(":authority", "foo.com"));
     assertBytes(0xbe);
-    assertEquals(1, hpackWriter.headerCount);
+    assertThat(hpackWriter.headerCount).isEqualTo(1);
 
     // If the :authority header somehow changes, it should be re-added to the dynamic table.
     hpackWriter.writeHeaders(headerEntries(":authority", "bar.com"));
     assertBytes(0x41, 7, 'b', 'a', 'r', '.', 'c', 'o', 'm');
-    assertEquals(2, hpackWriter.headerCount);
+    assertThat(hpackWriter.headerCount).isEqualTo(2);
 
     hpackWriter.writeHeaders(headerEntries(":authority", "bar.com"));
     assertBytes(0xbe);
-    assertEquals(2, hpackWriter.headerCount);
+    assertThat(hpackWriter.headerCount).isEqualTo(2);
   }
 
   @Test public void incrementalIndexingWithStaticTableIndexedName() throws IOException {
     hpackWriter.writeHeaders(headerEntries("accept-encoding", "gzip"));
     assertBytes(0x50, 4, 'g', 'z', 'i', 'p');
-    assertEquals(1, hpackWriter.headerCount);
+    assertThat(hpackWriter.headerCount).isEqualTo(1);
 
     hpackWriter.writeHeaders(headerEntries("accept-encoding", "gzip"));
     assertBytes(0xbe);
-    assertEquals(1, hpackWriter.headerCount);
+    assertThat(hpackWriter.headerCount).isEqualTo(1);
   }
 
   @Test public void incrementalIndexingWithDynamcTableIndexedName() throws IOException {
     hpackWriter.writeHeaders(headerEntries("foo", "bar"));
     assertBytes(0x40, 3, 'f', 'o', 'o', 3, 'b', 'a', 'r');
-    assertEquals(1, hpackWriter.headerCount);
+    assertThat(hpackWriter.headerCount).isEqualTo(1);
 
     hpackWriter.writeHeaders(headerEntries("foo", "bar1"));
     assertBytes(0x7e, 4, 'b', 'a', 'r', '1');
-    assertEquals(2, hpackWriter.headerCount);
+    assertThat(hpackWriter.headerCount).isEqualTo(2);
 
     hpackWriter.writeHeaders(headerEntries("foo", "bar1"));
     assertBytes(0xbe);
-    assertEquals(2, hpackWriter.headerCount);
+    assertThat(hpackWriter.headerCount).isEqualTo(2);
   }
 
   private Hpack.Reader newReader(Buffer source) {
@@ -1076,15 +1081,15 @@ public final class HpackTest {
   }
 
   private void checkEntry(Header entry, String name, String value, int size) {
-    assertEquals(name, entry.name.utf8());
-    assertEquals(value, entry.value.utf8());
-    assertEquals(size, entry.hpackSize);
+    assertThat(entry.name.utf8()).isEqualTo(name);
+    assertThat(entry.value.utf8()).isEqualTo(value);
+    assertThat(entry.hpackSize).isEqualTo(size);
   }
 
   private void assertBytes(int... bytes) throws IOException {
     ByteString expected = intArrayToByteArray(bytes);
     ByteString actual = bytesOut.readByteString();
-    assertEquals(expected, actual);
+    assertThat(actual).isEqualTo(expected);
   }
 
   private ByteString intArrayToByteArray(int[] bytes) {

@@ -42,12 +42,7 @@ import okio.Source;
 import org.junit.Rule;
 import org.junit.Test;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertSame;
-import static org.junit.Assert.assertTrue;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.fail;
 
 public final class InterceptorTest {
@@ -77,7 +72,7 @@ public final class InterceptorTest {
         .build();
 
     Response response = client.newCall(request).execute();
-    assertSame(interceptorResponse, response);
+    assertThat(response).isSameAs(interceptorResponse);
   }
 
   @Test public void networkInterceptorsCannotShortCircuitResponses() throws Exception {
@@ -102,8 +97,8 @@ public final class InterceptorTest {
       client.newCall(request).execute();
       fail();
     } catch (IllegalStateException expected) {
-      assertEquals("network interceptor " + interceptor + " must call proceed() exactly once",
-          expected.getMessage());
+      assertThat(expected.getMessage()).isEqualTo(
+          ("network interceptor " + interceptor + " must call proceed() exactly once"));
     }
   }
 
@@ -127,8 +122,8 @@ public final class InterceptorTest {
       client.newCall(request).execute();
       fail();
     } catch (IllegalStateException expected) {
-      assertEquals("network interceptor " + interceptor + " must call proceed() exactly once",
-          expected.getMessage());
+      assertThat(expected.getMessage()).isEqualTo(
+          ("network interceptor " + interceptor + " must call proceed() exactly once"));
     }
   }
 
@@ -155,8 +150,8 @@ public final class InterceptorTest {
       client.newCall(request).execute();
       fail();
     } catch (IllegalStateException expected) {
-      assertEquals("network interceptor " + interceptor + " must retain the same host and port",
-          expected.getMessage());
+      assertThat(expected.getMessage()).isEqualTo(
+          ("network interceptor " + interceptor + " must retain the same host and port"));
     }
   }
 
@@ -165,7 +160,7 @@ public final class InterceptorTest {
 
     Interceptor interceptor = chain -> {
       Connection connection = chain.connection();
-      assertNotNull(connection);
+      assertThat(connection).isNotNull();
       return chain.proceed(chain.request());
     };
     client = client.newBuilder()
@@ -186,14 +181,14 @@ public final class InterceptorTest {
     Interceptor interceptor = chain -> {
       // The network request has everything: User-Agent, Host, Accept-Encoding.
       Request networkRequest = chain.request();
-      assertNotNull(networkRequest.header("User-Agent"));
-      assertEquals(server.getHostName() + ":" + server.getPort(),
-          networkRequest.header("Host"));
-      assertNotNull(networkRequest.header("Accept-Encoding"));
+      assertThat(networkRequest.header("User-Agent")).isNotNull();
+      assertThat(networkRequest.header("Host")).isEqualTo(
+          (server.getHostName() + ":" + server.getPort()));
+      assertThat(networkRequest.header("Accept-Encoding")).isNotNull();
 
       // The network response also has everything, including the raw gzipped content.
       Response networkResponse = chain.proceed(networkRequest);
-      assertEquals("gzip", networkResponse.header("Content-Encoding"));
+      assertThat(networkResponse.header("Content-Encoding")).isEqualTo("gzip");
       return networkResponse;
     };
     client = client.newBuilder()
@@ -205,14 +200,14 @@ public final class InterceptorTest {
         .build();
 
     // No extra headers in the application's request.
-    assertNull(request.header("User-Agent"));
-    assertNull(request.header("Host"));
-    assertNull(request.header("Accept-Encoding"));
+    assertThat(request.header("User-Agent")).isNull();
+    assertThat(request.header("Host")).isNull();
+    assertThat(request.header("Accept-Encoding")).isNull();
 
     // No extra headers in the application's response.
     Response response = client.newCall(request).execute();
-    assertNull(request.header("Content-Encoding"));
-    assertEquals("abcabcabc", response.body().string());
+    assertThat(request.header("Content-Encoding")).isNull();
+    assertThat(response.body().string()).isEqualTo("abcabcabc");
   }
 
   @Test public void networkInterceptorsCanChangeRequestMethodFromGetToPost() throws Exception {
@@ -240,8 +235,8 @@ public final class InterceptorTest {
     client.newCall(request).execute();
 
     RecordedRequest recordedRequest = server.takeRequest();
-    assertEquals("POST", recordedRequest.getMethod());
-    assertEquals("abc", recordedRequest.getBody().readUtf8());
+    assertThat(recordedRequest.getMethod()).isEqualTo("POST");
+    assertThat(recordedRequest.getBody().readUtf8()).isEqualTo("abc");
   }
 
   @Test public void applicationInterceptorsRewriteRequestToServer() throws Exception {
@@ -272,10 +267,10 @@ public final class InterceptorTest {
     client.newCall(request).execute();
 
     RecordedRequest recordedRequest = server.takeRequest();
-    assertEquals("ABC", recordedRequest.getBody().readUtf8());
-    assertEquals("foo", recordedRequest.getHeader("Original-Header"));
-    assertEquals("yep", recordedRequest.getHeader("OkHttp-Intercepted"));
-    assertEquals("POST", recordedRequest.getMethod());
+    assertThat(recordedRequest.getBody().readUtf8()).isEqualTo("ABC");
+    assertThat(recordedRequest.getHeader("Original-Header")).isEqualTo("foo");
+    assertThat(recordedRequest.getHeader("OkHttp-Intercepted")).isEqualTo("yep");
+    assertThat(recordedRequest.getMethod()).isEqualTo("POST");
   }
 
   @Test public void applicationInterceptorsRewriteResponseFromServer() throws Exception {
@@ -304,9 +299,9 @@ public final class InterceptorTest {
         .build();
 
     Response response = client.newCall(request).execute();
-    assertEquals("ABC", response.body().string());
-    assertEquals("yep", response.header("OkHttp-Intercepted"));
-    assertEquals("foo", response.header("Original-Header"));
+    assertThat(response.body().string()).isEqualTo("ABC");
+    assertThat(response.header("OkHttp-Intercepted")).isEqualTo("yep");
+    assertThat(response.header("Original-Header")).isEqualTo("foo");
   }
 
   @Test public void multipleApplicationInterceptors() throws Exception {
@@ -344,12 +339,12 @@ public final class InterceptorTest {
         .build();
 
     Response response = client.newCall(request).execute();
-    assertEquals(Arrays.asList("Cupcake", "Donut"),
-        response.headers("Response-Interceptor"));
+    assertThat(response.headers("Response-Interceptor")).isEqualTo(
+        Arrays.asList("Cupcake", "Donut"));
 
     RecordedRequest recordedRequest = server.takeRequest();
-    assertEquals(Arrays.asList("Android", "Bob"),
-        recordedRequest.getHeaders().values("Request-Interceptor"));
+    assertThat(recordedRequest.getHeaders().values("Request-Interceptor")).isEqualTo(
+        Arrays.asList("Android", "Bob"));
   }
 
   @Test public void asyncApplicationInterceptors() throws Exception {
@@ -397,7 +392,7 @@ public final class InterceptorTest {
         .build();
 
     Response response = client.newCall(request).execute();
-    assertEquals(response.body().string(), "b");
+    assertThat("b").isEqualTo(response.body().string());
   }
 
   /** Make sure interceptors can interact with the OkHttp client. */
@@ -412,7 +407,7 @@ public final class InterceptorTest {
                 .url(server.url("/a"))
                 .build();
             Response responseA = client.newCall(requestA).execute();
-            assertEquals("a", responseA.body().string());
+            assertThat(responseA.body().string()).isEqualTo("a");
           }
 
           return chain.proceed(chain.request());
@@ -423,7 +418,7 @@ public final class InterceptorTest {
         .url(server.url("/b"))
         .build();
     Response responseB = client.newCall(requestB).execute();
-    assertEquals("b", responseB.body().string());
+    assertThat(responseB.body().string()).isEqualTo("b");
   }
 
   /** Make sure interceptors can interact with the OkHttp client asynchronously. */
@@ -482,7 +477,7 @@ public final class InterceptorTest {
       client.newCall(request).execute();
       fail();
     } catch (RuntimeException expected) {
-      assertEquals("boom!", expected.getMessage());
+      assertThat(expected.getMessage()).isEqualTo("boom!");
     }
   }
 
@@ -507,9 +502,10 @@ public final class InterceptorTest {
         .build();
 
     Response response = client.newCall(request).execute();
-    assertNotNull(response.request().header("User-Agent"));
-    assertEquals("user request", response.request().header("User-Agent"));
-    assertEquals("intercepted request", response.networkResponse().request().header("User-Agent"));
+    assertThat(response.request().header("User-Agent")).isNotNull();
+    assertThat(response.request().header("User-Agent")).isEqualTo("user request");
+    assertThat(response.networkResponse().request().header("User-Agent")).isEqualTo(
+        "intercepted request");
   }
 
   @Test public void applicationInterceptorThrowsRuntimeExceptionAsynchronous() throws Exception {
@@ -537,7 +533,7 @@ public final class InterceptorTest {
         .build();
     client.newCall(request).enqueue(callback);
 
-    assertEquals("boom!", executor.takeException().getMessage());
+    assertThat(executor.takeException().getMessage()).isEqualTo("boom!");
   }
 
   @Test public void applicationInterceptorReturnsNull() throws Exception {
@@ -563,7 +559,8 @@ public final class InterceptorTest {
       client.newCall(request).execute();
       fail();
     } catch (NullPointerException expected) {
-      assertEquals("interceptor " + interceptor + " returned null", expected.getMessage());
+      assertThat(expected.getMessage()).isEqualTo(
+          ("interceptor " + interceptor + " returned null"));
     }
   }
 
@@ -590,7 +587,8 @@ public final class InterceptorTest {
       client.newCall(request).execute();
       fail();
     } catch (NullPointerException expected) {
-      assertEquals("interceptor " + interceptor + " returned null", expected.getMessage());
+      assertThat(expected.getMessage()).isEqualTo(
+          ("interceptor " + interceptor + " returned null"));
     }
   }
 
@@ -601,7 +599,7 @@ public final class InterceptorTest {
 
     Interceptor interceptor = chain -> {
       Response response = chain.proceed(chain.request());
-      assertNotNull(chain.connection());
+      assertThat(chain.connection()).isNotNull();
       return response;
     };
 
@@ -637,8 +635,8 @@ public final class InterceptorTest {
       client.newCall(request).execute();
       fail();
     } catch (IllegalStateException expected) {
-      assertEquals("interceptor " + interceptor + " returned a response with no body",
-          expected.getMessage());
+      assertThat(expected.getMessage()).isEqualTo(
+          ("interceptor " + interceptor + " returned a response with no body"));
     }
   }
 
@@ -662,23 +660,23 @@ public final class InterceptorTest {
       client.newCall(request).execute();
       fail();
     } catch (IllegalStateException expected) {
-      assertEquals("interceptor " + interceptor + " returned a response with no body",
-          expected.getMessage());
+      assertThat(expected.getMessage()).isEqualTo(
+          ("interceptor " + interceptor + " returned a response with no body"));
     }
   }
 
   @Test public void connectTimeout() throws Exception {
     Interceptor interceptor1 = chainA -> {
-      assertEquals(5000, chainA.connectTimeoutMillis());
+      assertThat(chainA.connectTimeoutMillis()).isEqualTo(5000);
 
       Interceptor.Chain chainB = chainA.withConnectTimeout(100, TimeUnit.MILLISECONDS);
-      assertEquals(100, chainB.connectTimeoutMillis());
+      assertThat(chainB.connectTimeoutMillis()).isEqualTo(100);
 
       return chainB.proceed(chainA.request());
     };
 
     Interceptor interceptor2 = chain -> {
-      assertEquals(100, chain.connectTimeoutMillis());
+      assertThat(chain.connectTimeoutMillis()).isEqualTo(100);
       return chain.proceed(chain.request());
     };
 
@@ -713,16 +711,16 @@ public final class InterceptorTest {
 
   @Test public void chainWithReadTimeout() throws Exception {
     Interceptor interceptor1 = chainA -> {
-      assertEquals(5000, chainA.readTimeoutMillis());
+      assertThat(chainA.readTimeoutMillis()).isEqualTo(5000);
 
       Interceptor.Chain chainB = chainA.withReadTimeout(100, TimeUnit.MILLISECONDS);
-      assertEquals(100, chainB.readTimeoutMillis());
+      assertThat(chainB.readTimeoutMillis()).isEqualTo(100);
 
       return chainB.proceed(chainA.request());
     };
 
     Interceptor interceptor2 = chain -> {
-      assertEquals(100, chain.readTimeoutMillis());
+      assertThat(chain.readTimeoutMillis()).isEqualTo(100);
       return chain.proceed(chain.request());
     };
 
@@ -751,16 +749,16 @@ public final class InterceptorTest {
 
   @Test public void chainWithWriteTimeout() throws Exception {
     Interceptor interceptor1 = chainA -> {
-      assertEquals(5000, chainA.writeTimeoutMillis());
+      assertThat(chainA.writeTimeoutMillis()).isEqualTo(5000);
 
       Interceptor.Chain chainB = chainA.withWriteTimeout(100, TimeUnit.MILLISECONDS);
-      assertEquals(100, chainB.writeTimeoutMillis());
+      assertThat(chainB.writeTimeoutMillis()).isEqualTo(100);
 
       return chainB.proceed(chainA.request());
     };
 
     Interceptor interceptor2 = chain -> {
-      assertEquals(100, chain.writeTimeoutMillis());
+      assertThat(chain.writeTimeoutMillis()).isEqualTo(100);
       return chain.proceed(chain.request());
     };
 
@@ -795,9 +793,9 @@ public final class InterceptorTest {
       Call call = chain.call();
       callRef.set(call);
 
-      assertFalse(call.isCanceled());
+      assertThat(call.isCanceled()).isFalse();
       call.cancel();
-      assertTrue(call.isCanceled());
+      assertThat(call.isCanceled()).isTrue();
 
       return chain.proceed(chain.request());
     };
@@ -817,7 +815,7 @@ public final class InterceptorTest {
     } catch (IOException expected) {
     }
 
-    assertSame(call, callRef.get());
+    assertThat(callRef.get()).isSameAs(call);
   }
 
   private RequestBody uppercase(RequestBody original) {

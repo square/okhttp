@@ -26,8 +26,7 @@ import java.util.List;
 import java.util.concurrent.ConcurrentLinkedDeque;
 import javax.annotation.Nullable;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.assertj.core.api.Assertions.assertThat;
 
 public final class RecordingEventListener extends EventListener {
   final Deque<CallEvent> eventSequence = new ConcurrentLinkedDeque<>();
@@ -66,14 +65,14 @@ public final class RecordingEventListener extends EventListener {
 
   private void logEvent(CallEvent e) {
     for (Object lock : forbiddenLocks) {
-      assertFalse(lock.toString(), Thread.holdsLock(lock));
+      assertThat(Thread.holdsLock(lock)).overridingErrorMessage(lock.toString()).isFalse();
     }
 
     CallEvent startEvent = e.closes();
 
     if (startEvent != null) {
-      assertTrue(e.getName() + " without matching " + startEvent.getName(),
-          eventSequence.contains(startEvent));
+      assertThat(eventSequence.contains(startEvent)).overridingErrorMessage(
+          e.getName() + " without matching " + startEvent.getName()).isTrue();
     }
 
     eventSequence.offer(e);

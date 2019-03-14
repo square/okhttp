@@ -21,10 +21,8 @@ import static okhttp3.CipherSuite.TLS_KRB5_WITH_DES_CBC_MD5;
 import static okhttp3.CipherSuite.TLS_RSA_EXPORT_WITH_RC4_40_MD5;
 import static okhttp3.CipherSuite.TLS_RSA_WITH_AES_128_CBC_SHA256;
 import static okhttp3.CipherSuite.forJavaName;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertSame;
 import static org.junit.Assert.fail;
 
 public class CipherSuiteTest {
@@ -38,18 +36,20 @@ public class CipherSuiteTest {
 
   @Test public void hashCode_usesIdentityHashCode_legacyCase() {
     CipherSuite cs = TLS_RSA_EXPORT_WITH_RC4_40_MD5; // This one's javaName starts with "SSL_".
-    assertEquals(cs.toString(), System.identityHashCode(cs), cs.hashCode());
+    assertThat(cs.hashCode()).overridingErrorMessage(cs.toString()).isEqualTo(
+        System.identityHashCode(cs));
   }
 
   @Test public void hashCode_usesIdentityHashCode_regularCase() {
     CipherSuite cs = TLS_RSA_WITH_AES_128_CBC_SHA256; // This one's javaName matches the identifier.
-    assertEquals(cs.toString(), System.identityHashCode(cs), cs.hashCode());
+    assertThat(cs.hashCode()).overridingErrorMessage(cs.toString()).isEqualTo(
+        System.identityHashCode(cs));
   }
 
   @Test public void instancesAreInterned() {
-    assertSame(forJavaName("TestCipherSuite"), forJavaName("TestCipherSuite"));
-    assertSame(TLS_KRB5_WITH_DES_CBC_MD5,
-        forJavaName(TLS_KRB5_WITH_DES_CBC_MD5.javaName()));
+    assertThat(forJavaName("TestCipherSuite")).isSameAs(forJavaName("TestCipherSuite"));
+    assertThat(forJavaName(TLS_KRB5_WITH_DES_CBC_MD5.javaName()))
+        .isSameAs(TLS_KRB5_WITH_DES_CBC_MD5);
   }
 
   /**
@@ -61,14 +61,16 @@ public class CipherSuiteTest {
     // We're not holding onto a reference to this String instance outside of the CipherSuite...
     CipherSuite cs = forJavaName(new String("FakeCipherSuite_instancesAreInterned"));
     System.gc(); // Unless cs references the String instance, it may now be garbage collected.
-    assertSame(cs, forJavaName(new String(cs.javaName())));
+    assertThat(forJavaName(new String(cs.javaName()))).isSameAs(cs);
   }
 
   @Test public void equals() {
-    assertEquals(forJavaName("cipher"), forJavaName("cipher"));
-    assertNotEquals(forJavaName("cipherA"), forJavaName("cipherB"));
-    assertEquals(forJavaName("SSL_RSA_EXPORT_WITH_RC4_40_MD5"), TLS_RSA_EXPORT_WITH_RC4_40_MD5);
-    assertNotEquals(TLS_RSA_EXPORT_WITH_RC4_40_MD5, TLS_RSA_WITH_AES_128_CBC_SHA256);
+    assertThat(forJavaName("cipher")).isEqualTo(forJavaName("cipher"));
+    assertThat(forJavaName("cipherB")).isNotEqualTo(forJavaName("cipherA"));
+    assertThat(TLS_RSA_EXPORT_WITH_RC4_40_MD5).isEqualTo(
+        forJavaName("SSL_RSA_EXPORT_WITH_RC4_40_MD5"));
+    assertThat(TLS_RSA_WITH_AES_128_CBC_SHA256).isNotEqualTo(
+        TLS_RSA_EXPORT_WITH_RC4_40_MD5);
   }
 
   @Test public void forJavaName_acceptsArbitraryStrings() {
@@ -77,16 +79,18 @@ public class CipherSuiteTest {
   }
 
   @Test public void javaName_examples() {
-    assertEquals("SSL_RSA_EXPORT_WITH_RC4_40_MD5", TLS_RSA_EXPORT_WITH_RC4_40_MD5.javaName());
-    assertEquals("TLS_RSA_WITH_AES_128_CBC_SHA256", TLS_RSA_WITH_AES_128_CBC_SHA256.javaName());
-    assertEquals("TestCipherSuite", forJavaName("TestCipherSuite").javaName());
+    assertThat(TLS_RSA_EXPORT_WITH_RC4_40_MD5.javaName()).isEqualTo(
+        "SSL_RSA_EXPORT_WITH_RC4_40_MD5");
+    assertThat(TLS_RSA_WITH_AES_128_CBC_SHA256.javaName()).isEqualTo(
+        "TLS_RSA_WITH_AES_128_CBC_SHA256");
+    assertThat(forJavaName("TestCipherSuite").javaName()).isEqualTo("TestCipherSuite");
   }
 
   @Test public void javaName_equalsToString() {
-    assertEquals(TLS_RSA_EXPORT_WITH_RC4_40_MD5.javaName,
-        TLS_RSA_EXPORT_WITH_RC4_40_MD5.toString());
-    assertEquals(TLS_RSA_WITH_AES_128_CBC_SHA256.javaName,
-        TLS_RSA_WITH_AES_128_CBC_SHA256.toString());
+    assertThat(TLS_RSA_EXPORT_WITH_RC4_40_MD5.toString()).isEqualTo(
+        TLS_RSA_EXPORT_WITH_RC4_40_MD5.javaName);
+    assertThat(TLS_RSA_WITH_AES_128_CBC_SHA256.toString()).isEqualTo(
+        TLS_RSA_WITH_AES_128_CBC_SHA256.javaName);
   }
 
   /**
@@ -98,15 +102,12 @@ public class CipherSuiteTest {
    */
   @Test public void forJavaName_fromLegacyEnumName() {
     // These would have been considered equal in OkHttp 3.3.1, but now aren't.
-    assertEquals(
-        forJavaName("TLS_RSA_EXPORT_WITH_RC4_40_MD5"),
-        forJavaName("SSL_RSA_EXPORT_WITH_RC4_40_MD5"));
-    assertEquals(
-        forJavaName("TLS_DH_RSA_EXPORT_WITH_DES40_CBC_SHA"),
-        forJavaName("SSL_DH_RSA_EXPORT_WITH_DES40_CBC_SHA"));
-    assertEquals(
-        forJavaName("TLS_FAKE_NEW_CIPHER"),
-        forJavaName("SSL_FAKE_NEW_CIPHER"));
+    assertThat(forJavaName("SSL_RSA_EXPORT_WITH_RC4_40_MD5")).isEqualTo(
+        forJavaName("TLS_RSA_EXPORT_WITH_RC4_40_MD5"));
+    assertThat(forJavaName("SSL_DH_RSA_EXPORT_WITH_DES40_CBC_SHA")).isEqualTo(
+        forJavaName("TLS_DH_RSA_EXPORT_WITH_DES40_CBC_SHA"));
+    assertThat(forJavaName("SSL_FAKE_NEW_CIPHER")).isEqualTo(
+        forJavaName("TLS_FAKE_NEW_CIPHER"));
   }
 
   @Test public void applyIntersectionRetainsSslPrefixes() throws Exception {

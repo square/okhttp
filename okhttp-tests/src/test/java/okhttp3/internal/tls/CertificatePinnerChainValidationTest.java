@@ -47,8 +47,7 @@ import static okhttp3.internal.platform.PlatformTest.getJvmSpecVersion;
 import static okhttp3.internal.platform.PlatformTest.getPlatform;
 import static okhttp3.tls.internal.TlsUtil.newKeyManager;
 import static okhttp3.tls.internal.TlsUtil.newTrustManager;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeFalse;
 
@@ -102,7 +101,7 @@ public final class CertificatePinnerChainValidationTest {
         .url(server.url("/"))
         .build());
     Response response1 = call1.execute();
-    assertEquals("abc", response1.body().string());
+    assertThat(response1.body().string()).isEqualTo("abc");
 
     // Confirm that a second request also succeeds. This should detect caching problems.
     server.enqueue(new MockResponse()
@@ -112,7 +111,7 @@ public final class CertificatePinnerChainValidationTest {
         .url(server.url("/"))
         .build());
     Response response2 = call2.execute();
-    assertEquals("def", response2.body().string());
+    assertThat(response2.body().string()).isEqualTo("def");
   }
 
   /** The pinner should accept an intermediate from the server's chain. */
@@ -162,7 +161,7 @@ public final class CertificatePinnerChainValidationTest {
         .url(server.url("/"))
         .build());
     Response response1 = call1.execute();
-    assertEquals("abc", response1.body().string());
+    assertThat(response1.body().string()).isEqualTo("abc");
     response1.close();
 
     // Force a fresh connection for the next request.
@@ -176,7 +175,7 @@ public final class CertificatePinnerChainValidationTest {
         .url(server.url("/"))
         .build());
     Response response2 = call2.execute();
-    assertEquals("def", response2.body().string());
+    assertThat(response2.body().string()).isEqualTo("def");
     response2.close();
   }
 
@@ -251,7 +250,7 @@ public final class CertificatePinnerChainValidationTest {
     } catch (SSLPeerUnverifiedException expected) {
       // Certificate pinning fails!
       String message = expected.getMessage();
-      assertTrue(message, message.startsWith("Certificate pinning failure!"));
+      assertThat(message).startsWith("Certificate pinning failure!");
     }
   }
 
@@ -326,11 +325,11 @@ public final class CertificatePinnerChainValidationTest {
     } catch (SSLHandshakeException expected) {
       // On Android, the handshake fails before the certificate pinner runs.
       String message = expected.getMessage();
-      assertTrue(message, message.contains("Could not validate certificate"));
+      assertThat(message).contains("Could not validate certificate");
     } catch (SSLPeerUnverifiedException expected) {
       // On OpenJDK, the handshake succeeds but the certificate pinner fails.
       String message = expected.getMessage();
-      assertTrue(message, message.startsWith("Certificate pinning failure!"));
+      assertThat(message).startsWith("Certificate pinning failure!");
     }
   }
 

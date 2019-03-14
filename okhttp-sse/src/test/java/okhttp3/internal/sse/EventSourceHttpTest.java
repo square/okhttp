@@ -27,7 +27,7 @@ import org.junit.After;
 import org.junit.Rule;
 import org.junit.Test;
 
-import static org.junit.Assert.assertEquals;
+import static org.assertj.core.api.Assertions.assertThat;
 
 public final class EventSourceHttpTest {
   @Rule public final MockWebServer server = new MockWebServer();
@@ -47,7 +47,7 @@ public final class EventSourceHttpTest {
 
     EventSource source = newEventSource();
 
-    assertEquals("/", source.request().url().encodedPath());
+    assertThat(source.request().url().encodedPath()).isEqualTo("/");
 
     listener.assertOpen();
     listener.assertEvent(null, null, "hey");
@@ -84,7 +84,7 @@ public final class EventSourceHttpTest {
 
     EventSource source = newEventSource();
 
-    assertEquals("/", source.request().url().encodedPath());
+    assertThat(source.request().url().encodedPath()).isEqualTo("/");
 
     listener.assertOpen();
     listener.assertEvent(null, null, "hey");

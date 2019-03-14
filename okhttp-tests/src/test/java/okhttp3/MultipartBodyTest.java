@@ -21,7 +21,7 @@ import okio.BufferedSink;
 import org.junit.Test;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
-import static org.junit.Assert.assertEquals;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.fail;
 
 public final class MultipartBodyTest {
@@ -30,7 +30,7 @@ public final class MultipartBodyTest {
       new MultipartBody.Builder().build();
       fail();
     } catch (IllegalStateException e) {
-      assertEquals("Multipart body must have at least one part.", e.getMessage());
+      assertThat(e.getMessage()).isEqualTo("Multipart body must have at least one part.");
     }
   }
 
@@ -46,16 +46,16 @@ public final class MultipartBodyTest {
         .addPart(RequestBody.create(null, "Hello, World!"))
         .build();
 
-    assertEquals("123", body.boundary());
-    assertEquals(MultipartBody.MIXED, body.type());
-    assertEquals("multipart/mixed; boundary=123", body.contentType().toString());
-    assertEquals(1, body.parts().size());
-    assertEquals(53, body.contentLength());
+    assertThat(body.boundary()).isEqualTo("123");
+    assertThat(body.type()).isEqualTo(MultipartBody.MIXED);
+    assertThat(body.contentType().toString()).isEqualTo("multipart/mixed; boundary=123");
+    assertThat(body.parts().size()).isEqualTo(1);
+    assertThat(body.contentLength()).isEqualTo(53);
 
     Buffer buffer = new Buffer();
     body.writeTo(buffer);
-    assertEquals(buffer.size(), body.contentLength());
-    assertEquals(expected, buffer.readUtf8());
+    assertThat(body.contentLength()).isEqualTo(buffer.size());
+    assertThat(buffer.readUtf8()).isEqualTo(expected);
   }
 
   @Test public void threeParts() throws Exception {
@@ -80,16 +80,16 @@ public final class MultipartBodyTest {
         .addPart(RequestBody.create(null, "Fox"))
         .build();
 
-    assertEquals("123", body.boundary());
-    assertEquals(MultipartBody.MIXED, body.type());
-    assertEquals("multipart/mixed; boundary=123", body.contentType().toString());
-    assertEquals(3, body.parts().size());
-    assertEquals(112, body.contentLength());
+    assertThat(body.boundary()).isEqualTo("123");
+    assertThat(body.type()).isEqualTo(MultipartBody.MIXED);
+    assertThat(body.contentType().toString()).isEqualTo("multipart/mixed; boundary=123");
+    assertThat(body.parts().size()).isEqualTo(3);
+    assertThat(body.contentLength()).isEqualTo(112);
 
     Buffer buffer = new Buffer();
     body.writeTo(buffer);
-    assertEquals(buffer.size(), body.contentLength());
-    assertEquals(expected, buffer.readUtf8());
+    assertThat(body.contentLength()).isEqualTo(buffer.size());
+    assertThat(buffer.readUtf8()).isEqualTo(expected);
   }
 
   @Test public void fieldAndTwoFiles() throws Exception {
@@ -140,16 +140,17 @@ public final class MultipartBodyTest {
                 .build())
         .build();
 
-    assertEquals("AaB03x", body.boundary());
-    assertEquals(MultipartBody.FORM, body.type());
-    assertEquals("multipart/form-data; boundary=AaB03x", body.contentType().toString());
-    assertEquals(2, body.parts().size());
-    assertEquals(568, body.contentLength());
+    assertThat(body.boundary()).isEqualTo("AaB03x");
+    assertThat(body.type()).isEqualTo(MultipartBody.FORM);
+    assertThat(body.contentType().toString()).isEqualTo(
+        "multipart/form-data; boundary=AaB03x");
+    assertThat(body.parts().size()).isEqualTo(2);
+    assertThat(body.contentLength()).isEqualTo(568);
 
     Buffer buffer = new Buffer();
     body.writeTo(buffer);
-    assertEquals(buffer.size(), body.contentLength());
-    assertEquals(expected, buffer.readUtf8());
+    assertThat(body.contentLength()).isEqualTo(buffer.size());
+    assertThat(buffer.readUtf8()).isEqualTo(expected);
   }
 
   @Test public void stringEscapingIsWeird() throws Exception {
@@ -188,7 +189,7 @@ public final class MultipartBodyTest {
 
     Buffer buffer = new Buffer();
     body.writeTo(buffer);
-    assertEquals(expected, buffer.readUtf8());
+    assertThat(buffer.readUtf8()).isEqualTo(expected);
   }
 
   @Test public void streamingPartHasNoLength() throws Exception {
@@ -228,15 +229,15 @@ public final class MultipartBodyTest {
         .addPart(RequestBody.create(null, "Fox"))
         .build();
 
-    assertEquals("123", body.boundary());
-    assertEquals(MultipartBody.MIXED, body.type());
-    assertEquals("multipart/mixed; boundary=123", body.contentType().toString());
-    assertEquals(3, body.parts().size());
-    assertEquals(-1, body.contentLength());
+    assertThat(body.boundary()).isEqualTo("123");
+    assertThat(body.type()).isEqualTo(MultipartBody.MIXED);
+    assertThat(body.contentType().toString()).isEqualTo("multipart/mixed; boundary=123");
+    assertThat(body.parts().size()).isEqualTo(3);
+    assertThat(body.contentLength()).isEqualTo(-1);
 
     Buffer buffer = new Buffer();
     body.writeTo(buffer);
-    assertEquals(expected, buffer.readUtf8());
+    assertThat(buffer.readUtf8()).isEqualTo(expected);
   }
 
   @Test public void contentTypeHeaderIsForbidden() throws Exception {
@@ -263,13 +264,13 @@ public final class MultipartBodyTest {
     MultipartBody body = new MultipartBody.Builder()
         .addPart(Headers.of("Foo", "Bar"), RequestBody.create(null, "Baz"))
         .build();
-    assertEquals(1, body.parts().size());
+    assertThat(body.parts().size()).isEqualTo(1);
 
     Buffer part1Buffer = new Buffer();
     MultipartBody.Part part1 = body.part(0);
     part1.body().writeTo(part1Buffer);
-    assertEquals(Headers.of("Foo", "Bar"), part1.headers());
-    assertEquals("Baz", part1Buffer.readUtf8());
+    assertThat(part1.headers()).isEqualTo(Headers.of("Foo", "Bar"));
+    assertThat(part1Buffer.readUtf8()).isEqualTo("Baz");
   }
 
   @Test public void nonAsciiFilename() throws Exception {
@@ -290,6 +291,6 @@ public final class MultipartBodyTest {
 
     Buffer buffer = new Buffer();
     body.writeTo(buffer);
-    assertEquals(expected, buffer.readUtf8());
+    assertThat(buffer.readUtf8()).isEqualTo(expected);
   }
 }

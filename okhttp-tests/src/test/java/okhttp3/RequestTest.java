@@ -19,60 +19,59 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.net.URI;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.UUID;
 import okio.Buffer;
 import org.junit.Test;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertSame;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.fail;
 
 public final class RequestTest {
   @Test public void string() throws Exception {
     MediaType contentType = MediaType.get("text/plain; charset=utf-8");
     RequestBody body = RequestBody.create(contentType, "abc".getBytes(UTF_8));
-    assertEquals(contentType, body.contentType());
-    assertEquals(3, body.contentLength());
-    assertEquals("616263", bodyToHex(body));
-    assertEquals("Retransmit body", "616263", bodyToHex(body));
+    assertThat(body.contentType()).isEqualTo(contentType);
+    assertThat(body.contentLength()).isEqualTo(3);
+    assertThat(bodyToHex(body)).isEqualTo("616263");
+    assertThat(bodyToHex(body)).overridingErrorMessage("Retransmit body").isEqualTo(
+        "616263");
   }
 
   @Test public void stringWithDefaultCharsetAdded() throws Exception {
     MediaType contentType = MediaType.get("text/plain");
     RequestBody body = RequestBody.create(contentType, "\u0800");
-    assertEquals(MediaType.get("text/plain; charset=utf-8"), body.contentType());
-    assertEquals(3, body.contentLength());
-    assertEquals("e0a080", bodyToHex(body));
+    assertThat(body.contentType()).isEqualTo(MediaType.get("text/plain; charset=utf-8"));
+    assertThat(body.contentLength()).isEqualTo(3);
+    assertThat(bodyToHex(body)).isEqualTo("e0a080");
   }
 
   @Test public void stringWithNonDefaultCharsetSpecified() throws Exception {
     MediaType contentType = MediaType.get("text/plain; charset=utf-16be");
     RequestBody body = RequestBody.create(contentType, "\u0800");
-    assertEquals(contentType, body.contentType());
-    assertEquals(2, body.contentLength());
-    assertEquals("0800", bodyToHex(body));
+    assertThat(body.contentType()).isEqualTo(contentType);
+    assertThat(body.contentLength()).isEqualTo(2);
+    assertThat(bodyToHex(body)).isEqualTo("0800");
   }
 
   @Test public void byteArray() throws Exception {
     MediaType contentType = MediaType.get("text/plain");
     RequestBody body = RequestBody.create(contentType, "abc".getBytes(UTF_8));
-    assertEquals(contentType, body.contentType());
-    assertEquals(3, body.contentLength());
-    assertEquals("616263", bodyToHex(body));
-    assertEquals("Retransmit body", "616263", bodyToHex(body));
+    assertThat(body.contentType()).isEqualTo(contentType);
+    assertThat(body.contentLength()).isEqualTo(3);
+    assertThat(bodyToHex(body)).isEqualTo("616263");
+    assertThat(bodyToHex(body)).overridingErrorMessage("Retransmit body").isEqualTo(
+        "616263");
   }
 
   @Test public void byteArrayRange() throws Exception {
     MediaType contentType = MediaType.get("text/plain");
     RequestBody body = RequestBody.create(contentType, ".abcd".getBytes(UTF_8), 1, 3);
-    assertEquals(contentType, body.contentType());
-    assertEquals(3, body.contentLength());
-    assertEquals("616263", bodyToHex(body));
-    assertEquals("Retransmit body", "616263", bodyToHex(body));
+    assertThat(body.contentType()).isEqualTo(contentType);
+    assertThat(body.contentLength()).isEqualTo(3);
+    assertThat(bodyToHex(body)).isEqualTo("616263");
+    assertThat(bodyToHex(body)).overridingErrorMessage("Retransmit body").isEqualTo(
+        "616263");
   }
 
   @Test public void file() throws Exception {
@@ -83,10 +82,11 @@ public final class RequestTest {
 
     MediaType contentType = MediaType.get("text/plain");
     RequestBody body = RequestBody.create(contentType, file);
-    assertEquals(contentType, body.contentType());
-    assertEquals(3, body.contentLength());
-    assertEquals("616263", bodyToHex(body));
-    assertEquals("Retransmit body", "616263", bodyToHex(body));
+    assertThat(body.contentType()).isEqualTo(contentType);
+    assertThat(body.contentLength()).isEqualTo(3);
+    assertThat(bodyToHex(body)).isEqualTo("616263");
+    assertThat(bodyToHex(body)).overridingErrorMessage("Retransmit body").isEqualTo(
+        "616263");
   }
 
   /** Common verbs used for apis such as GitHub, AWS, and Google Cloud. */
@@ -95,48 +95,50 @@ public final class RequestTest {
     RequestBody body = RequestBody.create(contentType, "{}");
 
     Request get = new Request.Builder().url("http://localhost/api").get().build();
-    assertEquals("GET", get.method());
-    assertNull(get.body());
+    assertThat(get.method()).isEqualTo("GET");
+    assertThat(get.body()).isNull();
 
     Request head = new Request.Builder().url("http://localhost/api").head().build();
-    assertEquals("HEAD", head.method());
-    assertNull(head.body());
+    assertThat(head.method()).isEqualTo("HEAD");
+    assertThat(head.body()).isNull();
 
     Request delete = new Request.Builder().url("http://localhost/api").delete().build();
-    assertEquals("DELETE", delete.method());
-    assertEquals(0L, delete.body().contentLength());
+    assertThat(delete.method()).isEqualTo("DELETE");
+    assertThat(delete.body().contentLength()).isEqualTo(0L);
 
     Request post = new Request.Builder().url("http://localhost/api").post(body).build();
-    assertEquals("POST", post.method());
-    assertEquals(body, post.body());
+    assertThat(post.method()).isEqualTo("POST");
+    assertThat(post.body()).isEqualTo(body);
 
     Request put = new Request.Builder().url("http://localhost/api").put(body).build();
-    assertEquals("PUT", put.method());
-    assertEquals(body, put.body());
+    assertThat(put.method()).isEqualTo("PUT");
+    assertThat(put.body()).isEqualTo(body);
 
     Request patch = new Request.Builder().url("http://localhost/api").patch(body).build();
-    assertEquals("PATCH", patch.method());
-    assertEquals(body, patch.body());
+    assertThat(patch.method()).isEqualTo("PATCH");
+    assertThat(patch.body()).isEqualTo(body);
   }
 
   @Test public void uninitializedURI() throws Exception {
     Request request = new Request.Builder().url("http://localhost/api").build();
-    assertEquals(new URI("http://localhost/api"), request.url().uri());
-    assertEquals(HttpUrl.get("http://localhost/api"), request.url());
+    assertThat(request.url().uri()).isEqualTo(new URI("http://localhost/api"));
+    assertThat(request.url()).isEqualTo(HttpUrl.get("http://localhost/api"));
   }
 
   @Test public void newBuilderUrlResetsUrl() {
     Request requestWithoutCache = new Request.Builder().url("http://localhost/api").build();
     Request builtRequestWithoutCache =
         requestWithoutCache.newBuilder().url("http://localhost/api/foo").build();
-    assertEquals(HttpUrl.get("http://localhost/api/foo"), builtRequestWithoutCache.url());
+    assertThat(builtRequestWithoutCache.url()).isEqualTo(
+        HttpUrl.get("http://localhost/api/foo"));
 
     Request requestWithCache = new Request.Builder().url("http://localhost/api").build();
     // cache url object
     requestWithCache.url();
     Request builtRequestWithCache = requestWithCache.newBuilder().url(
         "http://localhost/api/foo").build();
-    assertEquals(HttpUrl.get("http://localhost/api/foo"), builtRequestWithCache.url());
+    assertThat(builtRequestWithCache.url()).isEqualTo(
+        HttpUrl.get("http://localhost/api/foo"));
   }
 
   @Test public void cacheControl() {
@@ -144,7 +146,7 @@ public final class RequestTest {
         .cacheControl(new CacheControl.Builder().noCache().build())
         .url("https://square.com")
         .build();
-    assertEquals(Arrays.asList("no-cache"), request.headers("Cache-Control"));
+    assertThat(request.headers("Cache-Control")).containsExactly("no-cache");
   }
 
   @Test public void emptyCacheControlClearsAllCacheControlHeaders() {
@@ -153,7 +155,7 @@ public final class RequestTest {
         .cacheControl(new CacheControl.Builder().build())
         .url("https://square.com")
         .build();
-    assertEquals(Collections.<String>emptyList(), request.headers("Cache-Control"));
+    assertThat(request.headers("Cache-Control")).isEmpty();
   }
 
   @Test public void headerAcceptsPermittedCharacters() {
@@ -248,10 +250,10 @@ public final class RequestTest {
     Request request = new Request.Builder()
         .url("https://square.com")
         .build();
-    assertNull(request.tag());
-    assertNull(request.tag(Object.class));
-    assertNull(request.tag(UUID.class));
-    assertNull(request.tag(String.class));
+    assertThat(request.tag()).isNull();
+    assertThat(request.tag(Object.class)).isNull();
+    assertThat(request.tag(UUID.class)).isNull();
+    assertThat(request.tag(String.class)).isNull();
   }
 
   @Test public void defaultTag() {
@@ -260,10 +262,10 @@ public final class RequestTest {
         .url("https://square.com")
         .tag(tag)
         .build();
-    assertSame(tag, request.tag());
-    assertSame(tag, request.tag(Object.class));
-    assertNull(request.tag(UUID.class));
-    assertNull(request.tag(String.class));
+    assertThat(request.tag()).isSameAs(tag);
+    assertThat(request.tag(Object.class)).isSameAs(tag);
+    assertThat(request.tag(UUID.class)).isNull();
+    assertThat(request.tag(String.class)).isNull();
   }
 
   @Test public void nullRemovesTag() {
@@ -272,7 +274,7 @@ public final class RequestTest {
         .tag("a")
         .tag(null)
         .build();
-    assertNull(request.tag());
+    assertThat(request.tag()).isNull();
   }
 
   @Test public void removeAbsentTag() {
@@ -280,7 +282,7 @@ public final class RequestTest {
         .url("https://square.com")
         .tag(null)
         .build();
-    assertNull(request.tag());
+    assertThat(request.tag()).isNull();
   }
 
   @Test public void objectTag() {
@@ -289,10 +291,10 @@ public final class RequestTest {
         .url("https://square.com")
         .tag(Object.class, tag)
         .build();
-    assertSame(tag, request.tag());
-    assertSame(tag, request.tag(Object.class));
-    assertNull(request.tag(UUID.class));
-    assertNull(request.tag(String.class));
+    assertThat(request.tag()).isSameAs(tag);
+    assertThat(request.tag(Object.class)).isSameAs(tag);
+    assertThat(request.tag(UUID.class)).isNull();
+    assertThat(request.tag(String.class)).isNull();
   }
 
   @Test public void typedTag() {
@@ -301,10 +303,10 @@ public final class RequestTest {
         .url("https://square.com")
         .tag(UUID.class, uuidTag)
         .build();
-    assertNull(request.tag());
-    assertNull(request.tag(Object.class));
-    assertSame(uuidTag, request.tag(UUID.class));
-    assertNull(request.tag(String.class));
+    assertThat(request.tag()).isNull();
+    assertThat(request.tag(Object.class)).isNull();
+    assertThat(request.tag(UUID.class)).isSameAs(uuidTag);
+    assertThat(request.tag(String.class)).isNull();
   }
 
   @Test public void replaceOnlyTag() {
@@ -315,7 +317,7 @@ public final class RequestTest {
         .tag(UUID.class, uuidTag1)
         .tag(UUID.class, uuidTag2)
         .build();
-    assertSame(uuidTag2, request.tag(UUID.class));
+    assertThat(request.tag(UUID.class)).isSameAs(uuidTag2);
   }
 
   @Test public void multipleTags() {
@@ -330,11 +332,11 @@ public final class RequestTest {
         .tag(String.class, stringTag)
         .tag(Long.class, longTag)
         .build();
-    assertSame(objectTag, request.tag());
-    assertSame(objectTag, request.tag(Object.class));
-    assertSame(uuidTag, request.tag(UUID.class));
-    assertSame(stringTag, request.tag(String.class));
-    assertSame(longTag, request.tag(Long.class));
+    assertThat(request.tag()).isSameAs(objectTag);
+    assertThat(request.tag(Object.class)).isSameAs(objectTag);
+    assertThat(request.tag(UUID.class)).isSameAs(uuidTag);
+    assertThat(request.tag(String.class)).isSameAs(stringTag);
+    assertThat(request.tag(Long.class)).isSameAs(longTag);
   }
 
   /** Confirm that we don't accidentally share the backing map between objects. */
@@ -344,9 +346,9 @@ public final class RequestTest {
     Request requestA = builder.tag(String.class, "a").build();
     Request requestB = builder.tag(String.class, "b").build();
     Request requestC = requestA.newBuilder().tag(String.class, "c").build();
-    assertSame("a", requestA.tag(String.class));
-    assertSame("b", requestB.tag(String.class));
-    assertSame("c", requestC.tag(String.class));
+    assertThat(requestA.tag(String.class)).isSameAs("a");
+    assertThat(requestB.tag(String.class)).isSameAs("b");
+    assertThat(requestC.tag(String.class)).isSameAs("c");
   }
 
   private String bodyToHex(RequestBody body) throws IOException {
