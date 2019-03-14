@@ -339,12 +339,11 @@ public final class InterceptorTest {
         .build();
 
     Response response = client.newCall(request).execute();
-    assertThat(response.headers("Response-Interceptor")).isEqualTo(
-        Arrays.asList("Cupcake", "Donut"));
+    assertThat(response.headers("Response-Interceptor")).containsExactly("Cupcake", "Donut");
 
     RecordedRequest recordedRequest = server.takeRequest();
-    assertThat(recordedRequest.getHeaders().values("Request-Interceptor")).isEqualTo(
-        Arrays.asList("Android", "Bob"));
+    assertThat(recordedRequest.getHeaders().values("Request-Interceptor"))
+        .containsExactly("Android", "Bob");
   }
 
   @Test public void asyncApplicationInterceptors() throws Exception {

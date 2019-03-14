@@ -18,7 +18,6 @@ package okhttp3;
 import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -28,6 +27,8 @@ import javax.annotation.Nullable;
 import javax.net.ssl.SSLPeerUnverifiedException;
 import okhttp3.internal.tls.CertificateChainCleaner;
 import okio.ByteString;
+
+import static java.util.Arrays.asList;
 
 /**
  * Constrains which certificates are trusted. Pinning certificates defends against attacks on
@@ -207,7 +208,7 @@ public final class CertificatePinner {
   /** @deprecated replaced with {@link #check(String, List)}. */
   public void check(String hostname, Certificate... peerCertificates)
       throws SSLPeerUnverifiedException {
-    check(hostname, Arrays.asList(peerCertificates));
+    check(hostname, asList(peerCertificates));
   }
 
   /**

@@ -23,7 +23,6 @@ import java.net.HttpCookie;
 import java.net.HttpURLConnection;
 import java.net.InetAddress;
 import java.net.URI;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -35,6 +34,7 @@ import org.junit.Rule;
 import org.junit.Test;
 
 import static java.net.CookiePolicy.ACCEPT_ORIGINAL_SERVER;
+import static java.util.Arrays.asList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.data.Offset.offset;
 import static org.junit.Assert.fail;
@@ -70,7 +70,7 @@ public class CookiesTest {
     assertThat(cookie.getComment()).isNull();
     assertThat(cookie.getCommentURL()).isNull();
     assertThat(cookie.getDiscard()).isFalse();
-    assertThat(cookie.getMaxAge() > 100000000000L).isTrue();
+    assertThat(cookie.getMaxAge()).isGreaterThan(100000000000L);
     assertThat(cookie.getPath()).isEqualTo("/path");
     assertThat(cookie.getSecure()).isTrue();
     assertThat(cookie.getVersion()).isEqualTo(0);
@@ -280,7 +280,7 @@ public class CookiesTest {
     JavaNetCookieJar cookieJar = new JavaNetCookieJar(cookieManager);
 
     HttpUrl url = HttpUrl.get("https://www.squareup.com/");
-    cookieJar.saveFromResponse(url, Arrays.asList(
+    cookieJar.saveFromResponse(url, asList(
         Cookie.parse(url, "a=android; Domain=squareup.com")));
     List<Cookie> actualCookies = cookieJar.loadForRequest(url);
     assertThat(actualCookies.size()).isEqualTo(1);
@@ -293,7 +293,7 @@ public class CookiesTest {
     JavaNetCookieJar cookieJar = new JavaNetCookieJar(cookieManager);
 
     HttpUrl url = HttpUrl.get("https://www.squareup.com/");
-    cookieJar.saveFromResponse(url, Arrays.asList(
+    cookieJar.saveFromResponse(url, asList(
         Cookie.parse(url, "a=android; Domain=.squareup.com")));
     List<Cookie> actualCookies = cookieJar.loadForRequest(url);
     assertThat(actualCookies.size()).isEqualTo(1);
@@ -306,7 +306,7 @@ public class CookiesTest {
     JavaNetCookieJar cookieJar = new JavaNetCookieJar(cookieManager);
 
     HttpUrl url = HttpUrl.get("https://squareup.com/");
-    cookieJar.saveFromResponse(url, Arrays.asList(
+    cookieJar.saveFromResponse(url, asList(
         Cookie.parse(url, "a=android; Domain=squareup.com")));
     List<Cookie> actualCookies = cookieJar.loadForRequest(url);
     assertThat(actualCookies.size()).isEqualTo(1);
@@ -319,7 +319,7 @@ public class CookiesTest {
     JavaNetCookieJar cookieJar = new JavaNetCookieJar(cookieManager);
 
     HttpUrl url1 = HttpUrl.get("https://api.squareup.com/");
-    cookieJar.saveFromResponse(url1, Arrays.asList(
+    cookieJar.saveFromResponse(url1, asList(
         Cookie.parse(url1, "a=android; Domain=api.squareup.com")));
 
     HttpUrl url2 = HttpUrl.get("https://www.squareup.com/");

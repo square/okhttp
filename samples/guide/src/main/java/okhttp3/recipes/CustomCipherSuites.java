@@ -37,6 +37,8 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
 
+import static java.util.Arrays.asList;
+
 public final class CustomCipherSuites {
   private final OkHttpClient client;
 
@@ -45,7 +47,7 @@ public final class CustomCipherSuites {
     // an OkHttp request. In order to be selected a cipher suite must be included in both OkHttp's
     // connection spec and in the SSLSocket's enabled cipher suites array. Most applications should
     // not customize the cipher suites list.
-    List<CipherSuite> customCipherSuites = Arrays.asList(
+    List<CipherSuite> customCipherSuites = asList(
         CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
         CipherSuite.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
         CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,

@@ -28,7 +28,6 @@ import java.net.SocketTimeoutException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -38,7 +37,6 @@ import okhttp3.Headers;
 import okhttp3.HttpUrl;
 import okhttp3.Protocol;
 import okhttp3.RecordingHostnameVerifier;
-import okhttp3.internal.Util;
 import okhttp3.tls.HandshakeCertificates;
 import okhttp3.tls.HeldCertificate;
 import org.junit.After;
@@ -48,6 +46,7 @@ import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static java.util.Arrays.asList;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static okhttp3.tls.internal.TlsUtil.localhost;
@@ -248,11 +247,7 @@ public final class MockWebServerTest {
     assertThat(in.read()).isEqualTo(-1);
     long elapsedNanos = System.nanoTime() - startNanos;
     long elapsedMillis = NANOSECONDS.toMillis(elapsedNanos);
-
-    assertThat(elapsedMillis >= 500).overridingErrorMessage(
-        Util.format("Request + Response: %sms", elapsedMillis)).isTrue();
-    assertThat(elapsedMillis < 1000).overridingErrorMessage(
-        Util.format("Request + Response: %sms", elapsedMillis)).isTrue();
+    assertThat(elapsedMillis).isBetween(500L, 1000L);
   }
 
   /**
@@ -276,11 +271,7 @@ public final class MockWebServerTest {
     assertThat(in.read()).isEqualTo(-1);
     long elapsedNanos = System.nanoTime() - startNanos;
     long elapsedMillis = NANOSECONDS.toMillis(elapsedNanos);
-
-    assertThat(elapsedMillis >= 500).overridingErrorMessage(
-        Util.format("Request + Response: %sms", elapsedMillis)).isTrue();
-    assertThat(elapsedMillis < 1000).overridingErrorMessage(
-        Util.format("Request + Response: %sms", elapsedMillis)).isTrue();
+    assertThat(elapsedMillis).isBetween(500L, 1000L);
   }
 
   /** Delay the response body by sleeping 1s. */
@@ -295,8 +286,7 @@ public final class MockWebServerTest {
     assertThat(in.read()).isEqualTo('A');
     long elapsedNanos = System.nanoTime() - startNanos;
     long elapsedMillis = NANOSECONDS.toMillis(elapsedNanos);
-    assertThat(elapsedMillis >= 1000).overridingErrorMessage(
-        Util.format("Request + Response: %sms", elapsedMillis)).isTrue();
+    assertThat(elapsedMillis).isGreaterThanOrEqualTo(1000L);
 
     in.close();
   }
@@ -382,7 +372,7 @@ public final class MockWebServerTest {
   }
 
   @Test public void portImplicitlyStarts() throws IOException {
-    assertThat(server.getPort() > 0).isTrue();
+    assertThat(server.getPort()).isGreaterThan(0);
   }
 
   @Test public void hostnameImplicitlyStarts() throws IOException {
@@ -468,7 +458,7 @@ public final class MockWebServerTest {
       refusedConnection.getResponseCode();
       fail("Second connection should be refused");
     } catch (ConnectException e ) {
-      assertThat(e.getMessage().contains("refused")).isTrue();
+      assertThat(e.getMessage()).contains("refused");
     }
   }
 
@@ -491,7 +481,7 @@ public final class MockWebServerTest {
 
   @Test public void testH2PriorKnowledgeServerFallback() {
     try {
-      server.setProtocols(Arrays.asList(Protocol.H2_PRIOR_KNOWLEDGE, Protocol.HTTP_1_1));
+      server.setProtocols(asList(Protocol.H2_PRIOR_KNOWLEDGE, Protocol.HTTP_1_1));
       fail();
     } catch (IllegalArgumentException expected) {
       assertThat(expected.getMessage()).isEqualTo(
@@ -503,7 +493,7 @@ public final class MockWebServerTest {
   @Test public void testH2PriorKnowledgeServerDuplicates() {
     try {
       // Treating this use case as user error
-      server.setProtocols(Arrays.asList(Protocol.H2_PRIOR_KNOWLEDGE, Protocol.H2_PRIOR_KNOWLEDGE));
+      server.setProtocols(asList(Protocol.H2_PRIOR_KNOWLEDGE, Protocol.H2_PRIOR_KNOWLEDGE));
       fail();
     } catch (IllegalArgumentException expected) {
       assertThat(expected.getMessage()).isEqualTo(
@@ -513,7 +503,7 @@ public final class MockWebServerTest {
   }
 
   @Test public void testMockWebServerH2PriorKnowledgeProtocol() {
-    server.setProtocols(Arrays.asList(Protocol.H2_PRIOR_KNOWLEDGE));
+    server.setProtocols(asList(Protocol.H2_PRIOR_KNOWLEDGE));
 
     assertThat(server.protocols().size()).isEqualTo(1);
     assertThat(server.protocols().get(0)).isEqualTo(Protocol.H2_PRIOR_KNOWLEDGE);

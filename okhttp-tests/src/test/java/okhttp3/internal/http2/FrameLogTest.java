@@ -92,7 +92,7 @@ public final class FrameLogTest {
     List<String> formattedFlags = new ArrayList<>(0x40); // Highest valid flag is 0x20.
     for (byte i = 0; i < 0x40; i++) formattedFlags.add(Http2.formatFlags(TYPE_HEADERS, i));
 
-    assertThat(formattedFlags).isEqualTo(Arrays.asList(
+    assertThat(formattedFlags).containsExactly(
         "",
         "END_STREAM",
         "00000010",
@@ -157,6 +157,6 @@ public final class FrameLogTest {
         "00111101",
         "00111110",
         "00111111"
-    ));
+    );
   }
 }

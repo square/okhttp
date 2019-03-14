@@ -19,7 +19,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Deque;
 import java.util.Iterator;
 import java.util.List;
@@ -38,6 +37,7 @@ import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import org.junit.rules.Timeout;
 
+import static java.util.Arrays.asList;
 import static okhttp3.internal.cache.DiskLruCache.JOURNAL_FILE;
 import static okhttp3.internal.cache.DiskLruCache.JOURNAL_FILE_BACKUP;
 import static okhttp3.internal.cache.DiskLruCache.MAGIC;
@@ -1650,7 +1650,7 @@ public final class DiskLruCacheTest {
     expectedLines.add("100");
     expectedLines.add("2");
     expectedLines.add("");
-    expectedLines.addAll(Arrays.asList(expectedBodyLines));
+    expectedLines.addAll(asList(expectedBodyLines));
     assertThat(readJournalLines()).isEqualTo(expectedLines);
   }
 

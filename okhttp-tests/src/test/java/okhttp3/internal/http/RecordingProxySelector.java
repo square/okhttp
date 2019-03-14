@@ -39,7 +39,7 @@ public final class RecordingProxySelector extends ProxySelector {
   }
 
   public void assertRequests(URI... expectedUris) {
-    assertThat(requestedUris).isEqualTo(Arrays.asList(expectedUris));
+    assertThat(requestedUris).containsExactly(expectedUris);
     requestedUris.clear();
   }
 

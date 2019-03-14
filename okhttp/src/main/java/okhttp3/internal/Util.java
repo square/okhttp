@@ -59,6 +59,7 @@ import okio.Source;
 import static java.nio.charset.StandardCharsets.UTF_16BE;
 import static java.nio.charset.StandardCharsets.UTF_16LE;
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static java.util.Arrays.asList;
 
 /** Junk drawer of utility methods. */
 public final class Util {
@@ -231,7 +232,7 @@ public final class Util {
   /** Returns an immutable list containing {@code elements}. */
   @SafeVarargs
   public static <T> List<T> immutableList(T... elements) {
-    return Collections.unmodifiableList(Arrays.asList(elements.clone()));
+    return Collections.unmodifiableList(asList(elements.clone()));
   }
 
   public static ThreadFactory threadFactory(String name, boolean daemon) {

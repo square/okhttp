@@ -16,7 +16,6 @@
 package okhttp3.internal.ws;
 
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.Objects;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -161,7 +160,7 @@ public final class WebSocketRecorder extends WebSocketListener {
   }
 
   public void assertExhausted() {
-    assertThat(events.isEmpty()).overridingErrorMessage("Remaining events: " + events).isTrue();
+    assertThat(events).isEmpty();
   }
 
   public WebSocket assertOpen() {
@@ -191,8 +190,7 @@ public final class WebSocketRecorder extends WebSocketListener {
     assertThat(failure.response).isNull();
     assertThat(failure.t.getClass()).isEqualTo(cls);
     if (messages.length > 0) {
-      assertThat(Arrays.asList(messages).contains(failure.t.getMessage())).overridingErrorMessage(
-          failure.t.getMessage()).isTrue();
+      assertThat(messages).contains(failure.t.getMessage());
     }
   }
 

@@ -34,6 +34,7 @@ import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 
+import static java.util.Arrays.asList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.fail;
 
@@ -259,7 +260,7 @@ public final class ConnectionCoalescingTest {
 
     HttpUrl sanUrl = url.newBuilder().host("san.com").build();
     dns.set("san.com",
-        Arrays.asList(InetAddress.getByAddress("san.com", new byte[] {0, 0, 0, 0}),
+        asList(InetAddress.getByAddress("san.com", new byte[] {0, 0, 0, 0}),
             serverIps.get(0)));
     assert200Http2Response(execute(sanUrl), "san.com");
 

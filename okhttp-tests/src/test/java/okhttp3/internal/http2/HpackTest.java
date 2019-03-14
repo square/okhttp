@@ -23,6 +23,7 @@ import okio.ByteString;
 import org.junit.Before;
 import org.junit.Test;
 
+import static java.util.Arrays.asList;
 import static okhttp3.TestUtil.headerEntries;
 import static okio.ByteString.decodeHex;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -497,8 +498,8 @@ public final class HpackTest {
 
     hpackReader.readHeaders();
 
-    assertThat(hpackReader.getAndResetHeaderList()).isEqualTo(
-        Arrays.asList(new Header("www-authenticate", "Basic")));
+    assertThat(hpackReader.getAndResetHeaderList())
+        .containsExactly(new Header("www-authenticate", "Basic"));
   }
 
   @Test public void readLiteralHeaderWithIncrementalIndexingDynamicName() throws IOException {
@@ -514,8 +515,8 @@ public final class HpackTest {
 
     hpackReader.readHeaders();
 
-    assertThat(hpackReader.getAndResetHeaderList()).isEqualTo(
-        Arrays.asList(new Header("custom-foo", "Basic"), new Header("custom-foo", "Basic2")));
+    assertThat(hpackReader.getAndResetHeaderList()).containsExactly(
+        new Header("custom-foo", "Basic"), new Header("custom-foo", "Basic2"));
   }
 
   /**
@@ -850,7 +851,7 @@ public final class HpackTest {
   }
 
   @Test public void lowercaseHeaderNameBeforeEmit() throws IOException {
-    hpackWriter.writeHeaders(Arrays.asList(new Header("FoO", "BaR")));
+    hpackWriter.writeHeaders(asList(new Header("FoO", "BaR")));
     assertBytes(0x40, 3, 'f', 'o', 'o', 3, 'B', 'a', 'R');
   }
 
@@ -872,26 +873,26 @@ public final class HpackTest {
 
   @Test public void emitsDynamicTableSizeUpdate() throws IOException {
     hpackWriter.setHeaderTableSizeSetting(2048);
-    hpackWriter.writeHeaders(Arrays.asList(new Header("foo", "bar")));
+    hpackWriter.writeHeaders(asList(new Header("foo", "bar")));
     assertBytes(
         0x3F, 0xE1, 0xF, // Dynamic table size update (size = 2048).
         0x40, 3, 'f', 'o', 'o', 3, 'b', 'a', 'r');
 
     hpackWriter.setHeaderTableSizeSetting(8192);
-    hpackWriter.writeHeaders(Arrays.asList(new Header("bar", "foo")));
+    hpackWriter.writeHeaders(asList(new Header("bar", "foo")));
     assertBytes(
         0x3F, 0xE1, 0x3F, // Dynamic table size update (size = 8192).
         0x40, 3, 'b', 'a', 'r', 3, 'f', 'o', 'o');
 
     // No more dynamic table updates should be emitted.
-    hpackWriter.writeHeaders(Arrays.asList(new Header("far", "boo")));
+    hpackWriter.writeHeaders(asList(new Header("far", "boo")));
     assertBytes(0x40, 3, 'f', 'a', 'r', 3, 'b', 'o', 'o');
   }
 
   @Test public void noDynamicTableSizeUpdateWhenSizeIsEqual() throws IOException {
     int currentSize = hpackWriter.headerTableSizeSetting;
     hpackWriter.setHeaderTableSizeSetting(currentSize);
-    hpackWriter.writeHeaders(Arrays.asList(new Header("foo", "bar")));
+    hpackWriter.writeHeaders(asList(new Header("foo", "bar")));
 
     assertBytes(0x40, 3, 'f', 'o', 'o', 3, 'b', 'a', 'r');
   }
@@ -899,7 +900,7 @@ public final class HpackTest {
   @Test public void growDynamicTableSize() throws IOException {
     hpackWriter.setHeaderTableSizeSetting(8192);
     hpackWriter.setHeaderTableSizeSetting(16384);
-    hpackWriter.writeHeaders(Arrays.asList(new Header("foo", "bar")));
+    hpackWriter.writeHeaders(asList(new Header("foo", "bar")));
 
     assertBytes(
         0x3F, 0xE1, 0x7F, // Dynamic table size update (size = 16384).
@@ -909,7 +910,7 @@ public final class HpackTest {
   @Test public void shrinkDynamicTableSize() throws IOException {
     hpackWriter.setHeaderTableSizeSetting(2048);
     hpackWriter.setHeaderTableSizeSetting(0);
-    hpackWriter.writeHeaders(Arrays.asList(new Header("foo", "bar")));
+    hpackWriter.writeHeaders(asList(new Header("foo", "bar")));
 
     assertBytes(
         0x20, // Dynamic size update (size = 0).
@@ -922,7 +923,7 @@ public final class HpackTest {
     hpackWriter.setHeaderTableSizeSetting(0);
     hpackWriter.setHeaderTableSizeSetting(4096);
     hpackWriter.setHeaderTableSizeSetting(2048);
-    hpackWriter.writeHeaders(Arrays.asList(new Header("foo", "bar")));
+    hpackWriter.writeHeaders(asList(new Header("foo", "bar")));
 
     assertBytes(
         0x20, // Dynamic size update (size = 0).

@@ -23,6 +23,7 @@ import okhttp3.CertificatePinner.Pin;
 import okhttp3.tls.HeldCertificate;
 import org.junit.Test;
 
+import static java.util.Arrays.asList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.fail;
 
@@ -219,7 +220,7 @@ public final class CertificatePinnerTest {
         .add("second.com", certC1Sha256Pin)
         .build();
 
-    List<Pin> expectedPins = Arrays.asList(
+    List<Pin> expectedPins = asList(
         new Pin("first.com", certA1Sha256Pin),
         new Pin("first.com", certB1Sha256Pin));
     assertThat(certificatePinner.findMatchingPins("first.com")).isEqualTo(expectedPins);
@@ -232,7 +233,7 @@ public final class CertificatePinnerTest {
         .add("b.example.com", certC1Sha256Pin)
         .build();
 
-    List<Pin> expectedPins = Arrays.asList(
+    List<Pin> expectedPins = asList(
         new Pin("*.example.com", certA1Sha256Pin),
         new Pin("a.example.com", certB1Sha256Pin));
     assertThat(certificatePinner.findMatchingPins("a.example.com")).isEqualTo(expectedPins);
@@ -253,10 +254,10 @@ public final class CertificatePinnerTest {
         .add("*.MyExample.Com", certB1Sha256Pin)
         .build();
 
-    List<Pin> expectedPin1 = Arrays.asList(new Pin("EXAMPLE.com", certA1Sha256Pin));
+    List<Pin> expectedPin1 = asList(new Pin("EXAMPLE.com", certA1Sha256Pin));
     assertThat(certificatePinner.findMatchingPins("example.com")).isEqualTo(expectedPin1);
 
-    List<Pin> expectedPin2 = Arrays.asList(new Pin("*.MyExample.Com", certB1Sha256Pin));
+    List<Pin> expectedPin2 = asList(new Pin("*.MyExample.Com", certB1Sha256Pin));
     assertThat(certificatePinner.findMatchingPins("a.myexample.com")).isEqualTo(expectedPin2);
   }
 
@@ -265,7 +266,7 @@ public final class CertificatePinnerTest {
         .add("σkhttp.com", certA1Sha256Pin)
         .build();
 
-    List<Pin> expectedPin = Arrays.asList(new Pin("σkhttp.com", certA1Sha256Pin));
+    List<Pin> expectedPin = asList(new Pin("σkhttp.com", certA1Sha256Pin));
     assertThat(certificatePinner.findMatchingPins("xn--khttp-fde.com")).isEqualTo(expectedPin);
   }
 

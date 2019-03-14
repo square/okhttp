@@ -17,7 +17,6 @@ package okhttp3;
 
 import java.io.IOException;
 import java.time.Instant;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.LinkedHashMap;
@@ -101,10 +100,10 @@ public final class HeadersTest {
         .add("ping:  pong  ") // Value whitespace is trimmed.
         .add("kit:kat") // Space after colon is not required.
         .build();
-    assertThat(headers.values("foo")).isEqualTo(Arrays.asList("bar", "baz", "bak"));
-    assertThat(headers.values("key")).isEqualTo(Arrays.asList("value"));
-    assertThat(headers.values("ping")).isEqualTo(Arrays.asList("pong"));
-    assertThat(headers.values("kit")).isEqualTo(Arrays.asList("kat"));
+    assertThat(headers.values("foo")).containsExactly("bar", "baz", "bak");
+    assertThat(headers.values("key")).containsExactly("value");
+    assertThat(headers.values("ping")).containsExactly("pong");
+    assertThat(headers.values("kit")).containsExactly("kat");
   }
 
   @Test public void addThrowsOnEmptyName() {
@@ -645,45 +644,45 @@ public final class HeadersTest {
     Headers headers = new Headers.Builder()
         .add("WWW-Authenticate", "Basic realm = \"myrealm\",Digest")
         .build();
-    assertThat(HttpHeaders.parseChallenges(headers, "WWW-Authenticate")).isEqualTo(Arrays.asList(
+    assertThat(HttpHeaders.parseChallenges(headers, "WWW-Authenticate")).containsExactly(
         new Challenge("Basic", singletonMap("realm", "myrealm")),
-        new Challenge("Digest", Collections.emptyMap())));
+        new Challenge("Digest", Collections.emptyMap()));
   }
 
   @Test public void multipleChallengesWithSameSchemeButDifferentRealmInOneHeader() {
     Headers headers = new Headers.Builder()
         .add("WWW-Authenticate", "Basic realm = \"myrealm\",Basic realm=myotherrealm")
         .build();
-    assertThat(HttpHeaders.parseChallenges(headers, "WWW-Authenticate")).isEqualTo(Arrays.asList(
+    assertThat(HttpHeaders.parseChallenges(headers, "WWW-Authenticate")).containsExactly(
         new Challenge("Basic", singletonMap("realm", "myrealm")),
-        new Challenge("Basic", singletonMap("realm", "myotherrealm"))));
+        new Challenge("Basic", singletonMap("realm", "myotherrealm")));
   }
 
   @Test public void separatorsBeforeFirstAuthParam() {
     Headers headers = new Headers.Builder()
         .add("WWW-Authenticate", "Digest, Basic ,,realm=\"myrealm\"")
         .build();
-    assertThat(HttpHeaders.parseChallenges(headers, "WWW-Authenticate")).isEqualTo(Arrays.asList(
+    assertThat(HttpHeaders.parseChallenges(headers, "WWW-Authenticate")).containsExactly(
         new Challenge("Digest", Collections.emptyMap()),
-        new Challenge("Basic", singletonMap("realm", "myrealm"))));
+        new Challenge("Basic", singletonMap("realm", "myrealm")));
   }
 
   @Test public void onlyCommaBetweenChallenges() {
     Headers headers = new Headers.Builder()
         .add("WWW-Authenticate", "Digest,Basic realm=\"myrealm\"")
         .build();
-    assertThat(HttpHeaders.parseChallenges(headers, "WWW-Authenticate")).isEqualTo(Arrays.asList(
+    assertThat(HttpHeaders.parseChallenges(headers, "WWW-Authenticate")).containsExactly(
         new Challenge("Digest", Collections.emptyMap()),
-        new Challenge("Basic", singletonMap("realm", "myrealm"))));
+        new Challenge("Basic", singletonMap("realm", "myrealm")));
   }
 
   @Test public void multipleSeparatorsBetweenChallenges() {
     Headers headers = new Headers.Builder()
         .add("WWW-Authenticate", "Digest,,,, Basic ,,realm=\"myrealm\"")
         .build();
-    assertThat(HttpHeaders.parseChallenges(headers, "WWW-Authenticate")).isEqualTo(Arrays.asList(
+    assertThat(HttpHeaders.parseChallenges(headers, "WWW-Authenticate")).containsExactly(
         new Challenge("Digest", Collections.emptyMap()),
-        new Challenge("Basic", singletonMap("realm", "myrealm"))));
+        new Challenge("Basic", singletonMap("realm", "myrealm")));
   }
 
   @Test public void unknownAuthParams() {
@@ -694,9 +693,9 @@ public final class HeadersTest {
     Map<String, String> expectedAuthParams = new LinkedHashMap<>();
     expectedAuthParams.put("realm", "myrealm");
     expectedAuthParams.put("foo", "bar");
-    assertThat(HttpHeaders.parseChallenges(headers, "WWW-Authenticate")).isEqualTo(Arrays.asList(
+    assertThat(HttpHeaders.parseChallenges(headers, "WWW-Authenticate")).containsExactly(
         new Challenge("Digest", Collections.emptyMap()),
-        new Challenge("Basic", expectedAuthParams)));
+        new Challenge("Basic", expectedAuthParams));
   }
 
   @Test public void escapedCharactersInQuotedString() {
@@ -704,9 +703,9 @@ public final class HeadersTest {
         .add("WWW-Authenticate", "Digest,,,, Basic ,,,realm=\"my\\\\\\\"r\\ealm\"")
         .build();
 
-    assertThat(HttpHeaders.parseChallenges(headers, "WWW-Authenticate")).isEqualTo(Arrays.asList(
+    assertThat(HttpHeaders.parseChallenges(headers, "WWW-Authenticate")).containsExactly(
         new Challenge("Digest", Collections.emptyMap()),
-        new Challenge("Basic", singletonMap("realm", "my\\\"realm"))));
+        new Challenge("Basic", singletonMap("realm", "my\\\"realm")));
   }
 
   @Test public void commaInQuotedStringAndBeforeFirstChallenge() {
@@ -714,9 +713,9 @@ public final class HeadersTest {
         .add("WWW-Authenticate", ",Digest,,,, Basic ,,,realm=\"my, realm,\"")
         .build();
 
-    assertThat(HttpHeaders.parseChallenges(headers, "WWW-Authenticate")).isEqualTo(Arrays.asList(
+    assertThat(HttpHeaders.parseChallenges(headers, "WWW-Authenticate")).containsExactly(
         new Challenge("Digest", Collections.emptyMap()),
-        new Challenge("Basic", singletonMap("realm", "my, realm,"))));
+        new Challenge("Basic", singletonMap("realm", "my, realm,")));
   }
 
   @Test public void unescapedDoubleQuoteInQuotedStringWithEvenNumberOfBackslashesInFront() {
@@ -724,8 +723,8 @@ public final class HeadersTest {
         .add("WWW-Authenticate", "Digest,,,, Basic ,,,realm=\"my\\\\\\\\\"r\\ealm\"")
         .build();
 
-    assertThat(HttpHeaders.parseChallenges(headers, "WWW-Authenticate")).isEqualTo(Arrays.asList(
-        new Challenge("Digest", Collections.emptyMap())));
+    assertThat(HttpHeaders.parseChallenges(headers, "WWW-Authenticate")).containsExactly(
+        new Challenge("Digest", Collections.emptyMap()));
   }
 
   @Test public void unescapedDoubleQuoteInQuotedString() {
@@ -733,8 +732,8 @@ public final class HeadersTest {
         .add("WWW-Authenticate", "Digest,,,, Basic ,,,realm=\"my\"realm\"")
         .build();
 
-    assertThat(HttpHeaders.parseChallenges(headers, "WWW-Authenticate")).isEqualTo(Arrays.asList(
-        new Challenge("Digest", Collections.emptyMap())));
+    assertThat(HttpHeaders.parseChallenges(headers, "WWW-Authenticate")).containsExactly(
+        new Challenge("Digest", Collections.emptyMap()));
   }
 
   @Ignore("TODO(jwilson): reject parameters that use invalid characters")
@@ -743,8 +742,8 @@ public final class HeadersTest {
         .add("WWW-Authenticate", "Digest,,,, Basic ,,,realm=my\"realm")
         .build();
 
-    assertThat(HttpHeaders.parseChallenges(headers, "WWW-Authenticate")).isEqualTo(Arrays.asList(
-        new Challenge("Digest", Collections.emptyMap())));
+    assertThat(HttpHeaders.parseChallenges(headers, "WWW-Authenticate")).containsExactly(
+        new Challenge("Digest", Collections.emptyMap()));
   }
 
   @Test public void token68InsteadOfAuthParams() {
@@ -762,8 +761,8 @@ public final class HeadersTest {
         .add("WWW-Authenticate", "Other abc==, realm=myrealm")
         .build();
 
-    assertThat(HttpHeaders.parseChallenges(headers, "WWW-Authenticate")).isEqualTo(Arrays.asList(
-        new Challenge("Other", singletonMap(null, "abc=="))));
+    assertThat(HttpHeaders.parseChallenges(headers, "WWW-Authenticate")).containsExactly(
+        new Challenge("Other", singletonMap(null, "abc==")));
   }
 
   @Test public void repeatedAuthParamKey() {
@@ -781,9 +780,9 @@ public final class HeadersTest {
         .add("WWW-Authenticate", "Basic realm=myrealm")
         .build();
 
-    assertThat(HttpHeaders.parseChallenges(headers, "WWW-Authenticate")).isEqualTo(Arrays.asList(
+    assertThat(HttpHeaders.parseChallenges(headers, "WWW-Authenticate")).containsExactly(
         new Challenge("Digest", Collections.emptyMap()),
-        new Challenge("Basic", singletonMap("realm", "myrealm"))));
+        new Challenge("Basic", singletonMap("realm", "myrealm")));
   }
 
   @Test public void multipleAuthenticateHeadersInDifferentOrder() {
@@ -792,9 +791,9 @@ public final class HeadersTest {
         .add("WWW-Authenticate", "Digest")
         .build();
 
-    assertThat(HttpHeaders.parseChallenges(headers, "WWW-Authenticate")).isEqualTo(Arrays.asList(
+    assertThat(HttpHeaders.parseChallenges(headers, "WWW-Authenticate")).containsExactly(
         new Challenge("Basic", singletonMap("realm", "myrealm")),
-        new Challenge("Digest", Collections.emptyMap())));
+        new Challenge("Digest", Collections.emptyMap()));
   }
 
   @Test public void multipleBasicAuthenticateHeaders() {
@@ -803,9 +802,9 @@ public final class HeadersTest {
         .add("WWW-Authenticate", "Basic realm=myotherrealm")
         .build();
 
-    assertThat(HttpHeaders.parseChallenges(headers, "WWW-Authenticate")).isEqualTo(Arrays.asList(
+    assertThat(HttpHeaders.parseChallenges(headers, "WWW-Authenticate")).containsExactly(
         new Challenge("Basic", singletonMap("realm", "myrealm")),
-        new Challenge("Basic", singletonMap("realm", "myotherrealm"))));
+        new Challenge("Basic", singletonMap("realm", "myotherrealm")));
   }
 
   @Test public void byteCount() {

@@ -21,8 +21,6 @@ import java.io.InterruptedIOException;
 import java.net.HttpURLConnection;
 import java.net.ProtocolException;
 import java.net.SocketTimeoutException;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.Random;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -50,6 +48,7 @@ import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 
+import static java.util.Arrays.asList;
 import static okhttp3.TestUtil.defaultClient;
 import static okhttp3.TestUtil.ensureAllConnectionsReleased;
 import static okhttp3.TestUtil.repeat;
@@ -416,16 +415,16 @@ public final class WebSocketHttpTest {
 
     // Send messages until the client's outgoing buffer overflows!
     ByteString message = ByteString.of(new byte[1024 * 1024]);
-    int messageCount = 0;
+    long messageCount = 0;
     while (true) {
       boolean success = webSocket.send(message);
       if (!success) break;
 
       messageCount++;
       long queueSize = webSocket.queueSize();
-      assertThat(queueSize >= 0 && queueSize <= messageCount * message.size()).isTrue();
+      assertThat(queueSize).isBetween(0L, messageCount * message.size());
       // Expect to fail before enqueueing 32 MiB.
-      assertThat(messageCount < 32).isTrue();
+      assertThat(messageCount).isLessThan(32L);
     }
 
     // Confirm all sent messages were received, followed by a client-initiated close.
@@ -744,7 +743,7 @@ public final class WebSocketHttpTest {
   @Test public void webSocketConnectionIsReleased() throws Exception {
     // This test assumes HTTP/1.1 pooling semantics.
     client = client.newBuilder()
-        .protocols(Arrays.asList(Protocol.HTTP_1_1))
+        .protocols(asList(Protocol.HTTP_1_1))
         .build();
 
     webServer.enqueue(new MockResponse()

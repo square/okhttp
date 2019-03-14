@@ -62,7 +62,6 @@ import okhttp3.RecordingEventListener.ConnectionReleased;
 import okhttp3.RecordingEventListener.ResponseFailed;
 import okhttp3.internal.DoubleInetAddressDns;
 import okhttp3.internal.RecordingOkAuthenticator;
-import okhttp3.internal.Util;
 import okhttp3.internal.Version;
 import okhttp3.internal.http.RecordingProxySelector;
 import okhttp3.internal.io.InMemoryFileSystem;
@@ -88,6 +87,7 @@ import org.junit.rules.TestRule;
 import org.junit.rules.Timeout;
 
 import static java.net.CookiePolicy.ACCEPT_ORIGINAL_SERVER;
+import static java.util.Arrays.asList;
 import static okhttp3.CipherSuite.TLS_DH_anon_WITH_AES_128_GCM_SHA256;
 import static okhttp3.TestUtil.awaitGarbageCollection;
 import static okhttp3.internal.platform.PlatformTest.getJvmSpecVersion;
@@ -205,8 +205,7 @@ public final class CallTest {
         .assertHeader("B", "123", "234");
 
     RecordedRequest recordedRequest = server.takeRequest();
-    assertThat(recordedRequest.getHeaders().values("A")).isEqualTo(
-        Arrays.asList("345", "456"));
+    assertThat(recordedRequest.getHeaders().values("A")).containsExactly("345", "456");
   }
 
   @Test public void repeatedHeaderNames_HTTP_2() throws Exception {
@@ -724,8 +723,8 @@ public final class CallTest {
     bodies.add(firstResponse.getBody());
     bodies.add(secondResponse.getBody());
 
-    assertThat(bodies.contains("abc")).isTrue();
-    assertThat(bodies.contains("def")).isTrue();
+    assertThat(bodies).contains("abc");
+    assertThat(bodies).contains("def");
   }
 
   @Test public void get_Async() throws Exception {
@@ -857,8 +856,7 @@ public final class CallTest {
       // Timed out as expected.
       long elapsedNanos = System.nanoTime() - startNanos;
       long elapsedMillis = TimeUnit.NANOSECONDS.toMillis(elapsedNanos);
-      assertThat(elapsedMillis < 500).overridingErrorMessage(
-          Util.format("Timed out: %sms", elapsedMillis)).isTrue();
+      assertThat(elapsedMillis).isLessThan(500);
     } finally {
       bodySource.close();
     }
@@ -1102,7 +1100,7 @@ public final class CallTest {
             SSLProtocolException.class, // RI response to the FAIL_HANDSHAKE
             SSLHandshakeException.class // Android's response to the FAIL_HANDSHAKE
     );
-    assertThat(client.connectionSpecs().contains(ConnectionSpec.COMPATIBLE_TLS)).isFalse();
+    assertThat(client.connectionSpecs()).doesNotContain(ConnectionSpec.COMPATIBLE_TLS);
   }
 
   @Test public void recoverFromTlsHandshakeFailure() throws Exception {
@@ -1113,7 +1111,7 @@ public final class CallTest {
     client = client.newBuilder()
         .hostnameVerifier(new RecordingHostnameVerifier())
         // Attempt RESTRICTED_TLS then fall back to MODERN_TLS.
-        .connectionSpecs(Arrays.asList(ConnectionSpec.RESTRICTED_TLS, ConnectionSpec.MODERN_TLS))
+        .connectionSpecs(asList(ConnectionSpec.RESTRICTED_TLS, ConnectionSpec.MODERN_TLS))
         .sslSocketFactory(
             suppressTlsFallbackClientSocketFactory(), handshakeCertificates.trustManager())
         .build();
@@ -1124,7 +1122,7 @@ public final class CallTest {
   @Test public void recoverFromTlsHandshakeFailure_tlsFallbackScsvEnabled() throws Exception {
     final String tlsFallbackScsv = "TLS_FALLBACK_SCSV";
     List<String> supportedCiphers =
-        Arrays.asList(handshakeCertificates.sslSocketFactory().getSupportedCipherSuites());
+        asList(handshakeCertificates.sslSocketFactory().getSupportedCipherSuites());
     if (!supportedCiphers.contains(tlsFallbackScsv)) {
       // This only works if the client socket supports TLS_FALLBACK_SCSV.
       return;
@@ -1138,7 +1136,7 @@ public final class CallTest {
     client = client.newBuilder()
         .sslSocketFactory(clientSocketFactory, handshakeCertificates.trustManager())
         // Attempt RESTRICTED_TLS then fall back to MODERN_TLS.
-        .connectionSpecs(Arrays.asList(ConnectionSpec.RESTRICTED_TLS, ConnectionSpec.MODERN_TLS))
+        .connectionSpecs(asList(ConnectionSpec.RESTRICTED_TLS, ConnectionSpec.MODERN_TLS))
         .hostnameVerifier(new RecordingHostnameVerifier())
         .build();
 
@@ -1151,9 +1149,9 @@ public final class CallTest {
 
     List<SSLSocket> clientSockets = clientSocketFactory.getSocketsCreated();
     SSLSocket firstSocket = clientSockets.get(0);
-    assertThat(Arrays.asList(firstSocket.getEnabledCipherSuites()).contains(tlsFallbackScsv)).isFalse();
+    assertThat(asList(firstSocket.getEnabledCipherSuites())).doesNotContain(tlsFallbackScsv);
     SSLSocket secondSocket = clientSockets.get(1);
-    assertThat(Arrays.asList(secondSocket.getEnabledCipherSuites()).contains(tlsFallbackScsv)).isTrue();
+    assertThat(asList(secondSocket.getEnabledCipherSuites())).contains(tlsFallbackScsv);
   }
 
   @Test public void recoverFromTlsHandshakeFailure_Async() throws Exception {
@@ -1164,7 +1162,7 @@ public final class CallTest {
     client = client.newBuilder()
         .hostnameVerifier(new RecordingHostnameVerifier())
         // Attempt RESTRICTED_TLS then fall back to MODERN_TLS.
-        .connectionSpecs(Arrays.asList(ConnectionSpec.RESTRICTED_TLS, ConnectionSpec.MODERN_TLS))
+        .connectionSpecs(asList(ConnectionSpec.RESTRICTED_TLS, ConnectionSpec.MODERN_TLS))
         .sslSocketFactory(
             suppressTlsFallbackClientSocketFactory(), handshakeCertificates.trustManager())
         .build();
@@ -1179,7 +1177,7 @@ public final class CallTest {
 
   @Test public void noRecoveryFromTlsHandshakeFailureWhenTlsFallbackIsDisabled() throws Exception {
     client = client.newBuilder()
-        .connectionSpecs(Arrays.asList(ConnectionSpec.MODERN_TLS, ConnectionSpec.CLEARTEXT))
+        .connectionSpecs(asList(ConnectionSpec.MODERN_TLS, ConnectionSpec.CLEARTEXT))
         .hostnameVerifier(new RecordingHostnameVerifier())
         .sslSocketFactory(
             suppressTlsFallbackClientSocketFactory(), handshakeCertificates.trustManager())
@@ -1247,7 +1245,7 @@ public final class CallTest {
         .sslSocketFactory(
             socketFactoryWithCipherSuite(clientCertificates.sslSocketFactory(), cipherSuite),
             clientCertificates.trustManager())
-        .connectionSpecs(Arrays.asList(new ConnectionSpec.Builder(ConnectionSpec.MODERN_TLS)
+        .connectionSpecs(asList(new ConnectionSpec.Builder(ConnectionSpec.MODERN_TLS)
             .cipherSuites(cipherSuite)
             .build()))
         .build();
@@ -1264,7 +1262,7 @@ public final class CallTest {
   @Test public void cleartextCallsFailWhenCleartextIsDisabled() throws Exception {
     // Configure the client with only TLS configurations. No cleartext!
     client = client.newBuilder()
-        .connectionSpecs(Arrays.asList(ConnectionSpec.MODERN_TLS, ConnectionSpec.COMPATIBLE_TLS))
+        .connectionSpecs(asList(ConnectionSpec.MODERN_TLS, ConnectionSpec.COMPATIBLE_TLS))
         .build();
 
     server.enqueue(new MockResponse());
@@ -1359,7 +1357,7 @@ public final class CallTest {
       client.newCall(request).execute();
       fail();
     } catch (SSLPeerUnverifiedException expected) {
-      assertThat(expected.getMessage().startsWith("Certificate pinning failure!")).isTrue();
+      assertThat(expected.getMessage()).startsWith("Certificate pinning failure!");
     }
   }
 
@@ -2575,8 +2573,7 @@ public final class CallTest {
     executeSynchronously("/");
 
     RecordedRequest recordedRequest = server.takeRequest();
-    assertThat(recordedRequest.getHeader("User-Agent")
-        .matches(Version.userAgent())).isTrue();
+    assertThat(recordedRequest.getHeader("User-Agent")).matches(Version.userAgent());
   }
 
   @Test public void setFollowRedirectsFalse() throws Exception {
@@ -2885,7 +2882,7 @@ public final class CallTest {
     assertThat(get.getHeader("Private")).isEqualTo("Secret");
     assertThat(get.getHeader("User-Agent")).isEqualTo("App 1.0");
 
-    assertThat(hostnameVerifier.calls).isEqualTo(Arrays.asList("verify android.com"));
+    assertThat(hostnameVerifier.calls).containsExactly("verify android.com");
   }
 
   /** Respond to a proxy authorization challenge. */
@@ -3147,7 +3144,7 @@ public final class CallTest {
     assertThat(connect2.getMethod()).isEqualTo("CONNECT");
     assertThat(connect2.getHeader("Proxy-Authorization")).isEqualTo(credential);
 
-    assertThat(challengeSchemes).isEqualTo(Arrays.asList("OkHttp-Preemptive", "Basic"));
+    assertThat(challengeSchemes).containsExactly("OkHttp-Preemptive", "Basic");
   }
 
   @Test public void interceptorGetsHttp2() throws Exception {
@@ -3284,28 +3281,28 @@ public final class CallTest {
     upload(true, 1048576, 256);
     RecordedRequest recordedRequest = server.takeRequest();
     assertThat(recordedRequest.getBodySize()).isEqualTo(1048576);
-    assertThat(recordedRequest.getChunkSizes().isEmpty()).isFalse();
+    assertThat(recordedRequest.getChunkSizes()).isNotEmpty();
   }
 
   @Test public void uploadBodyLargeChunkedEncoding() throws Exception {
     upload(true, 1048576, 65536);
     RecordedRequest recordedRequest = server.takeRequest();
     assertThat(recordedRequest.getBodySize()).isEqualTo(1048576);
-    assertThat(recordedRequest.getChunkSizes().isEmpty()).isFalse();
+    assertThat(recordedRequest.getChunkSizes()).isNotEmpty();
   }
 
   @Test public void uploadBodySmallFixedLength() throws Exception {
     upload(false, 1048576, 256);
     RecordedRequest recordedRequest = server.takeRequest();
     assertThat(recordedRequest.getBodySize()).isEqualTo(1048576);
-    assertThat(recordedRequest.getChunkSizes().isEmpty()).isTrue();
+    assertThat(recordedRequest.getChunkSizes()).isEmpty();
   }
 
   @Test public void uploadBodyLargeFixedLength() throws Exception {
     upload(false, 1048576, 65536);
     RecordedRequest recordedRequest = server.takeRequest();
     assertThat(recordedRequest.getBodySize()).isEqualTo(1048576);
-    assertThat(recordedRequest.getChunkSizes().isEmpty()).isTrue();
+    assertThat(recordedRequest.getChunkSizes()).isEmpty();
   }
 
   private void upload(
@@ -3400,10 +3397,10 @@ public final class CallTest {
       awaitGarbageCollection();
 
       String message = logHandler.take();
-      assertThat(message.contains("A connection to " + server.url("/") + " was leaked."
-            + " Did you forget to close a response body?")).isTrue();
-      assertThat(message.contains("okhttp3.RealCall.execute(")).isTrue();
-      assertThat(message.contains("okhttp3.CallTest.leakedResponseBodyLogsStackTrace(")).isTrue();
+      assertThat(message).contains("A connection to " + server.url("/") + " was leaked."
+            + " Did you forget to close a response body?");
+      assertThat(message).contains("okhttp3.RealCall.execute(");
+      assertThat(message).contains("okhttp3.CallTest.leakedResponseBodyLogsStackTrace(");
     } finally {
       logger.setLevel(original);
     }
@@ -3443,10 +3440,10 @@ public final class CallTest {
       awaitGarbageCollection();
 
       String message = logHandler.take();
-      assertThat(message.contains("A connection to " + server.url("/") + " was leaked."
-            + " Did you forget to close a response body?")).isTrue();
-      assertThat(message.contains("okhttp3.RealCall.enqueue(")).isTrue();
-      assertThat(message.contains("okhttp3.CallTest.asyncLeakedResponseBodyLogsStackTrace(")).isTrue();
+      assertThat(message).contains("A connection to " + server.url("/") + " was leaked."
+            + " Did you forget to close a response body?");
+      assertThat(message).contains("okhttp3.RealCall.enqueue(");
+      assertThat(message).contains("okhttp3.CallTest.asyncLeakedResponseBodyLogsStackTrace(");
     } finally {
       logger.setLevel(original);
     }
@@ -3719,7 +3716,7 @@ public final class CallTest {
   private void enableProtocol(Protocol protocol) {
     enableTls();
     client = client.newBuilder()
-        .protocols(Arrays.asList(protocol, Protocol.HTTP_1_1))
+        .protocols(asList(protocol, Protocol.HTTP_1_1))
         .build();
     server.setProtocols(client.protocols());
   }

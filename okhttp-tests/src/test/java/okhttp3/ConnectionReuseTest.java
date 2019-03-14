@@ -30,6 +30,7 @@ import org.junit.Test;
 import org.junit.rules.TestRule;
 import org.junit.rules.Timeout;
 
+import static java.util.Arrays.asList;
 import static okhttp3.tls.internal.TlsUtil.localhost;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.fail;
@@ -355,7 +356,7 @@ public final class ConnectionReuseTest {
         .sslSocketFactory(
             handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager())
         .hostnameVerifier(new RecordingHostnameVerifier())
-        .protocols(Arrays.asList(protocols))
+        .protocols(asList(protocols))
         .build();
     server.useHttps(handshakeCertificates.sslSocketFactory(), false);
     server.setProtocols(client.protocols());

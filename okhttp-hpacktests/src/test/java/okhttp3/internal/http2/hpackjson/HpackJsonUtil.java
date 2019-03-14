@@ -26,6 +26,8 @@ import java.util.Arrays;
 import java.util.List;
 import okio.Okio;
 
+import static java.util.Arrays.asList;
+
 /**
  * Utilities for reading HPACK tests.
  */
@@ -51,7 +53,7 @@ public final class HpackJsonUtil {
     File testCaseDirectory = new File(HpackJsonUtil.class.getResource("/hpack-test-case").toURI());
     List<String> storyNames = new ArrayList<>();
     for (File path : testCaseDirectory.listFiles()) {
-      if (path.isDirectory() && Arrays.asList(path.list()).contains("story_00.json")) {
+      if (path.isDirectory() && asList(path.list()).contains("story_00.json")) {
         try {
           Story firstStory = readStory(new File(path, "story_00.json"));
           if (firstStory.getDraft() >= BASE_DRAFT) {
