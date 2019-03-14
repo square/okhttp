@@ -912,6 +912,7 @@ public final class HttpOverHttp2Test {
       }
 
       @Override public void onResponse(Call call1, Response response) {
+        fail();
       }
     });
     Assertions.assertThat(server.takeRequest().getSequenceNumber()).isEqualTo(
