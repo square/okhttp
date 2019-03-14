@@ -3,7 +3,7 @@ Change Log
 
 ## Version 3.14.0
 
-_RELEASE TBD_
+_2019-03-14_
 
  *  **This release deletes the long-deprecated `OkUrlFactory` and `OkApacheClient` APIs.** These
     facades hide OkHttp's implementation behind another client's API. If you still need this please
