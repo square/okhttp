@@ -13,6 +13,7 @@ install:
   - ./mvnw dependency:resolve -B
 
 script:
+  - ./mvnw checkstyle:check -B
   - ./mvnw test -B
   - ./mvnw javadoc:jar source:jar -B
 
