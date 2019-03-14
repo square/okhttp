@@ -75,6 +75,8 @@ _2019-03-14_
 
 ## Version 3.12.2
 
+_2019-03-14_
+
  *  Fix: Don't crash if the HTTPS server returns no certificates in the TLS handshake.
  *  Fix: Don't leak a connection when a call is canceled immediately preceding the `onFailure()`
     callback.
