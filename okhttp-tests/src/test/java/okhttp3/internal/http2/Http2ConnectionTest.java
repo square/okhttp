@@ -44,6 +44,7 @@ import org.junit.rules.TestRule;
 import org.junit.rules.Timeout;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static java.util.Arrays.asList;
 import static okhttp3.TestUtil.headerEntries;
 import static okhttp3.TestUtil.repeat;
 import static okhttp3.internal.Internal.initializeInstanceForTests;
@@ -330,9 +331,9 @@ public final class Http2ConnectionTest {
         assertThat(windowUpdate.windowSizeIncrement).isEqualTo(windowUpdateThreshold);
       }
       // connection
-      assertThat(windowUpdateStreamIds.contains(0)).isTrue();
+      assertThat(windowUpdateStreamIds).contains(0);
       // stream
-      assertThat(windowUpdateStreamIds.contains(3)).isTrue();
+      assertThat(windowUpdateStreamIds).contains(3);
     }
   }
 
@@ -414,14 +415,14 @@ public final class Http2ConnectionTest {
     peer.acceptFrame(); // ACK
     peer.acceptFrame(); // SYN_STREAM
     peer.sendFrame().headers(false, 3, headerEntries("a", "android"));
-    final List<Header> expectedRequestHeaders = Arrays.asList(
+    final List<Header> expectedRequestHeaders = asList(
         new Header(Header.TARGET_METHOD, "GET"),
         new Header(Header.TARGET_SCHEME, "https"),
         new Header(Header.TARGET_AUTHORITY, "squareup.com"),
         new Header(Header.TARGET_PATH, "/cached")
     );
     peer.sendFrame().pushPromise(3, 2, expectedRequestHeaders);
-    final List<Header> expectedResponseHeaders = Arrays.asList(
+    final List<Header> expectedResponseHeaders = asList(
         new Header(Header.RESPONSE_STATUS, "200")
     );
     peer.sendFrame().headers(true, 2, expectedResponseHeaders);
@@ -465,13 +466,13 @@ public final class Http2ConnectionTest {
     // write the mocking script
     peer.sendFrame().settings(new Settings());
     peer.acceptFrame(); // ACK
-    peer.sendFrame().pushPromise(3, 2, Arrays.asList(
+    peer.sendFrame().pushPromise(3, 2, asList(
         new Header(Header.TARGET_METHOD, "GET"),
         new Header(Header.TARGET_SCHEME, "https"),
         new Header(Header.TARGET_AUTHORITY, "squareup.com"),
         new Header(Header.TARGET_PATH, "/cached")
     ));
-    peer.sendFrame().headers(true, 2, Arrays.asList(
+    peer.sendFrame().headers(true, 2, asList(
         new Header(Header.RESPONSE_STATUS, "200")
     ));
     peer.acceptFrame(); // RST_STREAM
@@ -830,8 +831,8 @@ public final class Http2ConnectionTest {
     long pingAtNanos = System.nanoTime();
     connection.writePingAndAwaitPong();
     long elapsedNanos = System.nanoTime() - pingAtNanos;
-    assertThat(elapsedNanos > 0).isTrue();
-    assertThat(elapsedNanos < TimeUnit.SECONDS.toNanos(1)).isTrue();
+    assertThat(elapsedNanos).isGreaterThan(0L);
+    assertThat(elapsedNanos).isLessThan(TimeUnit.SECONDS.toNanos(1));
 
     // verify the peer received what was expected
     InFrame pingFrame = peer.takeFrame();
@@ -1660,9 +1661,9 @@ public final class Http2ConnectionTest {
         assertThat(windowUpdate.windowSizeIncrement).isEqualTo(windowUpdateThreshold);
       }
       // connection
-      assertThat(windowUpdateStreamIds.contains(0)).isTrue();
+      assertThat(windowUpdateStreamIds).contains(0);
       // stream
-      assertThat(windowUpdateStreamIds.contains(3)).isTrue();
+      assertThat(windowUpdateStreamIds).contains(3);
     }
   }
 

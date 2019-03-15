@@ -42,6 +42,7 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 
+import static java.util.Arrays.asList;
 import static okhttp3.TestUtil.defaultClient;
 import static okhttp3.internal.platform.PlatformTest.getJvmSpecVersion;
 import static okhttp3.internal.platform.PlatformTest.getPlatform;
@@ -281,7 +282,7 @@ public final class ClientAuthTest {
       X509KeyManager keyManager = newKeyManager(
           null, serverCert, serverIntermediateCa.certificate());
       X509TrustManager trustManager = newTrustManager(
-          null, Arrays.asList(serverRootCa.certificate(), clientRootCa.certificate()));
+          null, asList(serverRootCa.certificate(), clientRootCa.certificate()));
       SSLContext sslContext = SSLContext.getInstance("TLS");
       sslContext.init(new KeyManager[] {keyManager}, new TrustManager[] {trustManager},
           new SecureRandom());

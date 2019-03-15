@@ -21,6 +21,8 @@ import java.util.Arrays;
 import java.util.List;
 import okhttp3.Dns;
 
+import static java.util.Arrays.asList;
+
 /**
  * A network that always resolves two IP addresses per host. Use this when testing route selection
  * fallbacks to guarantee that a fallback address is available.
@@ -28,6 +30,6 @@ import okhttp3.Dns;
 public class DoubleInetAddressDns implements Dns {
   @Override public List<InetAddress> lookup(String hostname) throws UnknownHostException {
     List<InetAddress> addresses = Dns.SYSTEM.lookup(hostname);
-    return Arrays.asList(addresses.get(0), addresses.get(0));
+    return asList(addresses.get(0), addresses.get(0));
   }
 }

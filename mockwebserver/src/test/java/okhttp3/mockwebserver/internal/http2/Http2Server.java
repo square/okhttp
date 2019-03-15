@@ -39,6 +39,7 @@ import okio.BufferedSink;
 import okio.Okio;
 import okio.Source;
 
+import static java.util.Arrays.asList;
 import static okhttp3.internal.platform.Platform.INFO;
 import static okhttp3.tls.internal.TlsUtil.localhost;
 
@@ -125,7 +126,7 @@ public final class Http2Server extends Http2Connection.Listener {
   }
 
   private void send404(Http2Stream stream, String path) throws IOException {
-    List<Header> responseHeaders = Arrays.asList(
+    List<Header> responseHeaders = asList(
         new Header(":status", "404"),
         new Header(":version", "HTTP/1.1"),
         new Header("content-type", "text/plain")
@@ -137,7 +138,7 @@ public final class Http2Server extends Http2Connection.Listener {
   }
 
   private void serveDirectory(Http2Stream stream, File[] files) throws IOException {
-    List<Header> responseHeaders = Arrays.asList(
+    List<Header> responseHeaders = asList(
         new Header(":status", "200"),
         new Header(":version", "HTTP/1.1"),
         new Header("content-type", "text/html; charset=UTF-8")
@@ -152,7 +153,7 @@ public final class Http2Server extends Http2Connection.Listener {
   }
 
   private void serveFile(Http2Stream stream, File file) throws IOException {
-    List<Header> responseHeaders = Arrays.asList(
+    List<Header> responseHeaders = asList(
         new Header(":status", "200"),
         new Header(":version", "HTTP/1.1"),
         new Header("content-type", contentType(file))

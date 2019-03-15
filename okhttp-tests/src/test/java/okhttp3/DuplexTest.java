@@ -18,8 +18,6 @@ package okhttp3;
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.ProtocolException;
-import java.util.Arrays;
-import java.util.List;
 import java.util.concurrent.TimeUnit;
 import okhttp3.internal.RecordingOkAuthenticator;
 import okhttp3.internal.duplex.AsyncRequestBody;
@@ -36,6 +34,7 @@ import org.junit.Test;
 import org.junit.rules.TestRule;
 import org.junit.rules.Timeout;
 
+import static java.util.Arrays.asList;
 import static junit.framework.TestCase.assertTrue;
 import static okhttp3.tls.internal.TlsUtil.localhost;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -234,12 +233,12 @@ public final class DuplexTest {
 
     mockDuplexResponseBody.awaitSuccess();
 
-    List<String> expectedEvents = Arrays.asList("CallStart", "DnsStart", "DnsEnd", "ConnectStart",
+    assertThat(listener.recordedEventTypes()).containsExactly(
+        "CallStart", "DnsStart", "DnsEnd", "ConnectStart",
         "SecureConnectStart", "SecureConnectEnd", "ConnectEnd", "ConnectionAcquired",
         "RequestHeadersStart", "RequestHeadersEnd", "RequestBodyStart", "ResponseHeadersStart",
         "ResponseHeadersEnd", "ResponseBodyStart", "ResponseBodyEnd", "RequestBodyEnd",
         "ConnectionReleased", "CallEnd");
-    assertThat(listener.recordedEventTypes()).isEqualTo(expectedEvents);
   }
 
   @Test public void duplexWith100Continue() throws Exception {
@@ -316,13 +315,13 @@ public final class DuplexTest {
 
     mockDuplexResponseBody.awaitSuccess();
 
-    List<String> expectedEvents = Arrays.asList("CallStart", "DnsStart", "DnsEnd", "ConnectStart",
+    assertThat(listener.recordedEventTypes()).containsExactly(
+        "CallStart", "DnsStart", "DnsEnd", "ConnectStart",
         "SecureConnectStart", "SecureConnectEnd", "ConnectEnd", "ConnectionAcquired",
         "RequestHeadersStart", "RequestHeadersEnd", "RequestBodyStart", "ResponseHeadersStart",
         "ResponseHeadersEnd", "ResponseBodyStart", "ResponseBodyEnd", "RequestHeadersStart",
         "RequestHeadersEnd", "ResponseHeadersStart", "ResponseHeadersEnd", "ResponseBodyStart",
         "ResponseBodyEnd", "ConnectionReleased", "CallEnd", "RequestFailed");
-    assertThat(listener.recordedEventTypes()).isEqualTo(expectedEvents);
   }
 
   /**
@@ -494,7 +493,7 @@ public final class DuplexTest {
   private void enableProtocol(Protocol protocol) {
     enableTls();
     client = client.newBuilder()
-        .protocols(Arrays.asList(protocol, Protocol.HTTP_1_1))
+        .protocols(asList(protocol, Protocol.HTTP_1_1))
         .build();
     server.setProtocols(client.protocols());
   }

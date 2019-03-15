@@ -53,7 +53,7 @@ public final class RecordedResponse {
   }
 
   public RecordedResponse assertRequestHeader(String name, String... values) {
-    assertThat(request.headers(name)).isEqualTo(Arrays.asList(values));
+    assertThat(request.headers(name)).containsExactly(values);
     return this;
   }
 
@@ -73,7 +73,7 @@ public final class RecordedResponse {
   }
 
   public RecordedResponse assertHeader(String name, String... values) {
-    assertThat(response.headers(name)).isEqualTo(Arrays.asList(values));
+    assertThat(response.headers(name)).containsExactly(values);
     return this;
   }
 
@@ -148,15 +148,16 @@ public final class RecordedResponse {
         break;
       }
     }
-    assertThat(found).overridingErrorMessage("Expected exception type among " + Arrays.toString(allowedExceptionTypes)
-            + ", got " + failure).isTrue();
+    assertThat(found)
+        .overridingErrorMessage("Expected exception type among "
+            + Arrays.toString(allowedExceptionTypes) + ", got " + failure)
+        .isTrue();
     return this;
   }
 
   public RecordedResponse assertFailure(String... messages) {
     assertThat(failure).overridingErrorMessage("No failure found").isNotNull();
-    assertThat(Arrays.asList(messages).contains(failure.getMessage())).overridingErrorMessage(
-        failure.getMessage()).isTrue();
+    assertThat(messages).contains(failure.getMessage());
     return this;
   }
 
@@ -179,10 +180,10 @@ public final class RecordedResponse {
   }
 
   private void assertDateInRange(long minimum, long actual, long maximum) {
-    assertThat(actual >= minimum).overridingErrorMessage(
-        "actual " + format(actual) + " < minimum " + format(maximum)).isTrue();
-    assertThat(actual <= maximum).overridingErrorMessage(
-        "actual " + format(actual) + " > maximum " + format(minimum)).isTrue();
+    assertThat(actual)
+        .overridingErrorMessage("%s <= %s <= %s", format(minimum), format(actual), format(maximum))
+        .isBetween(minimum, maximum);
+
   }
 
   private String format(long time) {

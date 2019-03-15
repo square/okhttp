@@ -20,8 +20,6 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.Arrays;
-import java.util.HashSet;
-import java.util.LinkedHashSet;
 import java.util.List;
 import okhttp3.Cache;
 import okhttp3.Dns;
@@ -84,8 +82,8 @@ public class DnsOverHttpsTest {
     List<InetAddress> result = dns.lookup("google.com");
 
     assertThat(result.size()).isEqualTo(2);
-    assertThat(result.contains(address("157.240.1.18"))).isTrue();
-    assertThat(result.contains(address("2a03:2880:f029:11:face:b00c:0:2"))).isTrue();
+    assertThat(result).contains(address("157.240.1.18"));
+    assertThat(result).contains(address("2a03:2880:f029:11:face:b00c:0:2"));
 
     RecordedRequest request1 = server.takeRequest();
     assertThat(request1.getMethod()).isEqualTo("GET");
@@ -93,10 +91,9 @@ public class DnsOverHttpsTest {
     RecordedRequest request2 = server.takeRequest();
     assertThat(request2.getMethod()).isEqualTo("GET");
 
-    assertThat(new LinkedHashSet<>(Arrays.asList(request1.getPath(), request2.getPath()))).isEqualTo(
-        new HashSet<>(
-            Arrays.asList("/lookup?ct&dns=AAABAAABAAAAAAAABmdvb2dsZQNjb20AAAEAAQ",
-                "/lookup?ct&dns=AAABAAABAAAAAAAABmdvb2dsZQNjb20AABwAAQ")));
+    assertThat(asList(request1.getPath(), request2.getPath())).containsExactlyInAnyOrder(
+        "/lookup?ct&dns=AAABAAABAAAAAAAABmdvb2dsZQNjb20AAAEAAQ",
+        "/lookup?ct&dns=AAABAAABAAAAAAAABmdvb2dsZQNjb20AABwAAQ");
   }
 
   @Test public void failure() throws Exception {
@@ -130,9 +127,8 @@ public class DnsOverHttpsTest {
     } catch (IOException ioe) {
       assertThat(ioe.getMessage()).isEqualTo("google.com");
       Throwable cause = ioe.getCause();
-      assertThat(cause instanceof IOException).isTrue();
-      assertThat(cause.getMessage()).isEqualTo(
-          "response size exceeds limit (65536 bytes): 65537 bytes");
+      assertThat(cause).isInstanceOf(IOException.class);
+      assertThat(cause).hasMessage("response size exceeds limit (65536 bytes): 65537 bytes");
     }
   }
 
@@ -143,10 +139,8 @@ public class DnsOverHttpsTest {
       dns.lookup("google.com");
       fail();
     } catch (IOException ioe) {
-      assertThat(ioe.getMessage()).isEqualTo("google.com");
-      Throwable cause = ioe.getCause();
-      boolean condition = cause instanceof RuntimeException;
-      assertThat(condition).isTrue();
+      assertThat(ioe).hasMessage("google.com");
+      assertThat(ioe.getCause()).isInstanceOf(RuntimeException.class);
     }
   }
 

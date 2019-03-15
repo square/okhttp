@@ -23,14 +23,12 @@ import java.security.cert.CertificateParsingException;
 import java.security.cert.X509Certificate;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.X509EncodedKeySpec;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 import java.util.concurrent.TimeUnit;
 import okio.ByteString;
 import org.bouncycastle.asn1.x509.GeneralName;
 import org.junit.Test;
 
+import static java.util.Arrays.asList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.data.Offset.offset;
 
@@ -42,7 +40,7 @@ public final class HeldCertificateTest {
     X509Certificate certificate = heldCertificate.certificate();
     assertThat(certificate.getSubjectX500Principal().getName()).overridingErrorMessage(
         "self-signed").isEqualTo(certificate.getIssuerX500Principal().getName());
-    assertThat(certificate.getIssuerX500Principal().getName().matches("CN=[0-9a-f-]{36}")).isTrue();
+    assertThat(certificate.getIssuerX500Principal().getName()).matches("CN=[0-9a-f-]{36}");
     assertThat(certificate.getSerialNumber()).isEqualTo(BigInteger.ONE);
     assertThat(certificate.getSubjectAlternativeNames()).isNull();
 
@@ -87,11 +85,9 @@ public final class HeldCertificateTest {
         .build();
 
     X509Certificate certificate = heldCertificate.certificate();
-    List<List<?>> subjectAlternativeNames = new ArrayList<>(
-        certificate.getSubjectAlternativeNames());
-    assertThat(Arrays.asList(
-        Arrays.asList(GeneralName.iPAddress, "1.1.1.1"),
-        Arrays.asList(GeneralName.dNSName, "cash.app"))).isEqualTo(subjectAlternativeNames);
+    assertThat(certificate.getSubjectAlternativeNames()).containsExactly(
+        asList(GeneralName.iPAddress, "1.1.1.1"),
+        asList(GeneralName.dNSName, "cash.app"));
   }
 
   @Test public void commonName() {

@@ -28,6 +28,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import static java.util.Arrays.asList;
 import static okhttp3.TestUtil.defaultClient;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.fail;
@@ -128,7 +129,7 @@ public final class OkHttpClientTest {
   @Test public void setProtocolsRejectsHttp10() throws Exception {
     OkHttpClient.Builder builder = new OkHttpClient.Builder();
     try {
-      builder.protocols(Arrays.asList(Protocol.HTTP_1_0, Protocol.HTTP_1_1));
+      builder.protocols(asList(Protocol.HTTP_1_0, Protocol.HTTP_1_1));
       fail();
     } catch (IllegalArgumentException expected) {
     }
@@ -185,7 +186,7 @@ public final class OkHttpClientTest {
   @Test public void testH2PriorKnowledgeOkHttpClientConstructionFallback() {
     try {
       new OkHttpClient.Builder()
-          .protocols(Arrays.asList(Protocol.H2_PRIOR_KNOWLEDGE, Protocol.HTTP_1_1));
+          .protocols(asList(Protocol.H2_PRIOR_KNOWLEDGE, Protocol.HTTP_1_1));
       fail();
     } catch (IllegalArgumentException expected) {
       assertThat(expected.getMessage()).isEqualTo(
@@ -197,7 +198,7 @@ public final class OkHttpClientTest {
   @Test public void testH2PriorKnowledgeOkHttpClientConstructionDuplicates() {
     try {
       new OkHttpClient.Builder()
-          .protocols(Arrays.asList(Protocol.H2_PRIOR_KNOWLEDGE, Protocol.H2_PRIOR_KNOWLEDGE));
+          .protocols(asList(Protocol.H2_PRIOR_KNOWLEDGE, Protocol.H2_PRIOR_KNOWLEDGE));
       fail();
     } catch (IllegalArgumentException expected) {
       assertThat(expected.getMessage()).isEqualTo(
@@ -208,7 +209,7 @@ public final class OkHttpClientTest {
 
   @Test public void testH2PriorKnowledgeOkHttpClientConstructionSuccess() {
     OkHttpClient okHttpClient = new OkHttpClient.Builder()
-        .protocols(Arrays.asList(Protocol.H2_PRIOR_KNOWLEDGE))
+        .protocols(asList(Protocol.H2_PRIOR_KNOWLEDGE))
         .build();
     assertThat(okHttpClient.protocols().size()).isEqualTo(1);
     assertThat(okHttpClient.protocols().get(0)).isEqualTo(Protocol.H2_PRIOR_KNOWLEDGE);

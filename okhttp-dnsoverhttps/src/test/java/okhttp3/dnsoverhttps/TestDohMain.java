@@ -27,13 +27,15 @@ import okhttp3.Cache;
 import okhttp3.HttpUrl;
 import okhttp3.OkHttpClient;
 
+import static java.util.Arrays.asList;
+
 public class TestDohMain {
   public static void main(String[] args) throws IOException {
     Security.insertProviderAt(new org.conscrypt.OpenSSLProvider(), 1);
 
     OkHttpClient bootstrapClient = new OkHttpClient.Builder().build();
 
-    List<String> names = Arrays.asList("google.com", "graph.facebook.com", "sdflkhfsdlkjdf.ee");
+    List<String> names = asList("google.com", "graph.facebook.com", "sdflkhfsdlkjdf.ee");
 
     try {
       System.out.println("uncached\n********\n");
@@ -53,7 +55,7 @@ public class TestDohMain {
       runBatch(badProviders, names);
 
       System.out.println("cached first run\n****************\n");
-      names = Arrays.asList("google.com", "graph.facebook.com");
+      names = asList("google.com", "graph.facebook.com");
       bootstrapClient = bootstrapClient.newBuilder().cache(dnsCache).build();
       dnsProviders = DohProviders.providers(bootstrapClient, true, true, true);
       runBatch(dnsProviders, names);

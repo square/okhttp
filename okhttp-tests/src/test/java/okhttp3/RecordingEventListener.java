@@ -20,12 +20,12 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.Proxy;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Deque;
 import java.util.List;
 import java.util.concurrent.ConcurrentLinkedDeque;
 import javax.annotation.Nullable;
 
+import static java.util.Arrays.asList;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public final class RecordingEventListener extends EventListener {
@@ -71,8 +71,7 @@ public final class RecordingEventListener extends EventListener {
     CallEvent startEvent = e.closes();
 
     if (startEvent != null) {
-      assertThat(eventSequence.contains(startEvent)).overridingErrorMessage(
-          e.getName() + " without matching " + startEvent.getName()).isTrue();
+      assertThat(eventSequence).contains(startEvent);
     }
 
     eventSequence.offer(e);
@@ -175,7 +174,7 @@ public final class RecordingEventListener extends EventListener {
 
     CallEvent(Call call, Object... params) {
       this.call = call;
-      this.params = Arrays.asList(params);
+      this.params = asList(params);
     }
 
     public String getName() {

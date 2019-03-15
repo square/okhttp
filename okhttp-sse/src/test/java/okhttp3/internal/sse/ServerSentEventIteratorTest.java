@@ -30,9 +30,9 @@ public final class ServerSentEventIteratorTest {
   private final Deque<Object> callbacks = new ArrayDeque<>();
 
   @After public void after() {
-    assertThat(callbacks.isEmpty()).overridingErrorMessage("Unconsumed events: " + callbacks).isTrue();
+    assertThat(callbacks).isEmpty();
   }
-  
+
   @Test public void multiline() throws IOException {
     consumeEvents(""
         + "data: YHOO\n"
@@ -177,7 +177,7 @@ public final class ServerSentEventIteratorTest {
         + "\n");
     assertThat(callbacks.remove()).isEqualTo(22L);
   }
-  
+
   private void consumeEvents(String source) throws IOException {
     ServerSentEventReader.Callback callback = new ServerSentEventReader.Callback() {
       @Override public void onEvent(@Nullable String id, @Nullable String type, String data) {

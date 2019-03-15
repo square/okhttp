@@ -2,10 +2,11 @@ package okhttp3;
 
 import java.io.IOException;
 import java.security.Security;
-import java.util.Arrays;
 import java.util.List;
 import okhttp3.internal.platform.Platform;
 import org.conscrypt.Conscrypt;
+
+import static java.util.Arrays.asList;
 
 public class TestTls13Request {
 
@@ -45,7 +46,7 @@ public class TestTls13Request {
 
     // https://github.com/tlswg/tls13-spec/wiki/Implementations
     List<String> urls =
-        Arrays.asList("https://enabled.tls13.com", "https://www.howsmyssl.com/a/check",
+        asList("https://enabled.tls13.com", "https://www.howsmyssl.com/a/check",
             "https://tls13.cloudflare.com", "https://www.allizom.org/robots.txt",
             "https://tls13.crypto.mozilla.org/", "https://tls.ctf.network/robots.txt",
             "https://rustls.jbp.io/", "https://h2o.examp1e.net", "https://mew.org/",
@@ -75,7 +76,7 @@ public class TestTls13Request {
   }
 
   private static OkHttpClient buildClient(ConnectionSpec... specs) {
-    return new OkHttpClient.Builder().connectionSpecs(Arrays.asList(specs)).build();
+    return new OkHttpClient.Builder().connectionSpecs(asList(specs)).build();
   }
 
   private static void sendRequest(OkHttpClient client, String url) {

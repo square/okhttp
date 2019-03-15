@@ -3,11 +3,8 @@ package okhttp3;
 import java.io.IOException;
 import java.io.InterruptedIOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Iterator;
-import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.AbstractExecutorService;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.RejectedExecutionException;
@@ -175,8 +172,8 @@ public final class DispatcherTest {
     a5.enqueue(callback);
     assertThat(dispatcher.runningCallsCount()).isEqualTo(3);
     assertThat(dispatcher.queuedCallsCount()).isEqualTo(2);
-    assertThat(set(dispatcher.runningCalls())).isEqualTo(set(a1, a2, a3));
-    assertThat(set(dispatcher.queuedCalls())).isEqualTo(set(a4, a5));
+    assertThat(dispatcher.runningCalls()).containsExactlyInAnyOrder(a1, a2, a3);
+    assertThat(dispatcher.queuedCalls()).containsExactlyInAnyOrder(a4, a5);
   }
 
   @Test public void synchronousCallAccessors() throws Exception {
@@ -205,13 +202,13 @@ public final class DispatcherTest {
     ready.await();
     assertThat(dispatcher.runningCallsCount()).isEqualTo(2);
     assertThat(dispatcher.queuedCallsCount()).isEqualTo(0);
-    assertThat(set(dispatcher.runningCalls())).isEqualTo(set(a1, a2));
+    assertThat(dispatcher.runningCalls()).containsExactlyInAnyOrder(a1, a2);
     assertThat(dispatcher.queuedCalls()).isEmpty();
 
     // Cancel some calls. That doesn't impact running or queued.
     a2.cancel();
     a3.cancel();
-    assertThat(set(dispatcher.runningCalls())).isEqualTo(set(a1, a2));
+    assertThat(dispatcher.runningCalls()).containsExactlyInAnyOrder(a1, a2);
     assertThat(dispatcher.queuedCalls()).isEmpty();
 
     // Let the calls finish.
@@ -317,15 +314,6 @@ public final class DispatcherTest {
     callback.await(request2.url()).assertFailure(InterruptedIOException.class);
     assertThat(listener.recordedEventTypes()).containsExactly("CallStart", "CallStart",
         "CallFailed");
-  }
-
-  @SafeVarargs
-  private final <T> Set<T> set(T... values) {
-    return set(Arrays.asList(values));
-  }
-
-  private <T> Set<T> set(List<T> list) {
-    return new LinkedHashSet<>(list);
   }
 
   private Thread makeSynchronousCall(Call call) {

@@ -27,6 +27,7 @@ import org.junit.After;
 import org.junit.Assume;
 import org.junit.Test;
 
+import static java.util.Arrays.asList;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class ConscryptTest {
@@ -53,7 +54,7 @@ public class ConscryptTest {
         .supportsTlsExtensions(true)
         .build();
 
-    return new OkHttpClient.Builder().connectionSpecs(Arrays.asList(spec)).build();
+    return new OkHttpClient.Builder().connectionSpecs(asList(spec)).build();
   }
 
   private static void assumeConscrypt() {

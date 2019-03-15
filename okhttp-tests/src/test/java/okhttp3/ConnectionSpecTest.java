@@ -15,14 +15,15 @@
  */
 package okhttp3;
 
-import java.util.Arrays;
-import java.util.LinkedHashSet;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
 import org.junit.Test;
 
+import static java.util.Arrays.asList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.fail;
 
@@ -94,13 +95,11 @@ public final class ConnectionSpecTest {
     assertThat(tlsSpec.isCompatible(socket)).isTrue();
     tlsSpec.apply(socket, false /* isFallback */);
 
-    assertThat(set(socket.getEnabledProtocols())).isEqualTo(set(TlsVersion.TLS_1_2.javaName));
+    assertThat(socket.getEnabledProtocols()).containsExactly(TlsVersion.TLS_1_2.javaName);
 
-    Set<String> expectedCipherSet =
-        set(
-            CipherSuite.TLS_RSA_WITH_RC4_128_MD5.javaName,
-            CipherSuite.TLS_RSA_WITH_RC4_128_SHA.javaName);
-    assertThat(expectedCipherSet).isEqualTo(expectedCipherSet);
+    assertThat(socket.getEnabledCipherSuites()).containsExactlyInAnyOrder(
+        CipherSuite.TLS_RSA_WITH_RC4_128_MD5.javaName,
+        CipherSuite.TLS_RSA_WITH_RC4_128_SHA.javaName);
   }
 
   @Test public void tls_defaultCiphers_withFallbackIndicator() throws Exception {
@@ -122,16 +121,15 @@ public final class ConnectionSpecTest {
     assertThat(tlsSpec.isCompatible(socket)).isTrue();
     tlsSpec.apply(socket, true /* isFallback */);
 
-    assertThat(set(socket.getEnabledProtocols())).isEqualTo(set(TlsVersion.TLS_1_2.javaName));
+    assertThat(socket.getEnabledProtocols()).containsExactly(TlsVersion.TLS_1_2.javaName);
 
-    Set<String> expectedCipherSet =
-        set(
-            CipherSuite.TLS_RSA_WITH_RC4_128_MD5.javaName,
-            CipherSuite.TLS_RSA_WITH_RC4_128_SHA.javaName);
-    if (Arrays.asList(socket.getSupportedCipherSuites()).contains("TLS_FALLBACK_SCSV")) {
-      expectedCipherSet.add("TLS_FALLBACK_SCSV");
+    List<String> expectedCipherSuites = new ArrayList<>();
+    expectedCipherSuites.add(CipherSuite.TLS_RSA_WITH_RC4_128_MD5.javaName);
+    expectedCipherSuites.add(CipherSuite.TLS_RSA_WITH_RC4_128_SHA.javaName);
+    if (asList(socket.getSupportedCipherSuites()).contains("TLS_FALLBACK_SCSV")) {
+      expectedCipherSuites.add("TLS_FALLBACK_SCSV");
     }
-    assertThat(expectedCipherSet).isEqualTo(expectedCipherSet);
+    assertThat(socket.getEnabledCipherSuites()).containsExactlyElementsOf(expectedCipherSuites);
   }
 
   @Test public void tls_explicitCiphers() throws Exception {
@@ -154,13 +152,14 @@ public final class ConnectionSpecTest {
     assertThat(tlsSpec.isCompatible(socket)).isTrue();
     tlsSpec.apply(socket, true /* isFallback */);
 
-    assertThat(set(socket.getEnabledProtocols())).isEqualTo(set(TlsVersion.TLS_1_2.javaName));
+    assertThat(socket.getEnabledProtocols()).containsExactly(TlsVersion.TLS_1_2.javaName);
 
-    Set<String> expectedCipherSet = set(CipherSuite.TLS_RSA_WITH_RC4_128_MD5.javaName);
-    if (Arrays.asList(socket.getSupportedCipherSuites()).contains("TLS_FALLBACK_SCSV")) {
-      expectedCipherSet.add("TLS_FALLBACK_SCSV");
+    List<String> expectedCipherSuites = new ArrayList<>();
+    expectedCipherSuites.add(CipherSuite.TLS_RSA_WITH_RC4_128_MD5.javaName);
+    if (asList(socket.getSupportedCipherSuites()).contains("TLS_FALLBACK_SCSV")) {
+      expectedCipherSuites.add("TLS_FALLBACK_SCSV");
     }
-    assertThat(expectedCipherSet).isEqualTo(expectedCipherSet);
+    assertThat(socket.getEnabledCipherSuites()).containsExactlyElementsOf(expectedCipherSuites);
   }
 
   @Test public void tls_stringCiphersAndVersions() throws Exception {
@@ -210,7 +209,7 @@ public final class ConnectionSpecTest {
     });
 
     tlsSpec.apply(sslSocket, false);
-    assertThat(Arrays.asList(sslSocket.getEnabledCipherSuites())).containsExactly(
+    assertThat(sslSocket.getEnabledCipherSuites()).containsExactly(
         CipherSuite.TLS_RSA_WITH_RC4_128_SHA.javaName,
         CipherSuite.TLS_RSA_WITH_RC4_128_MD5.javaName);
   }
@@ -228,7 +227,7 @@ public final class ConnectionSpecTest {
     });
 
     tlsSpec.apply(sslSocket, false);
-    assertThat(Arrays.asList(sslSocket.getEnabledProtocols())).containsExactly(
+    assertThat(sslSocket.getEnabledProtocols()).containsExactly(
         TlsVersion.SSL_3_0.javaName(), TlsVersion.TLS_1_1.javaName());
   }
 
@@ -272,7 +271,7 @@ public final class ConnectionSpecTest {
     assertThat(set.remove(ConnectionSpec.CLEARTEXT)).isTrue();
     assertThat(set.remove(allTlsVersions)).isTrue();
     assertThat(set.remove(allCipherSuites)).isTrue();
-    assertThat(set.isEmpty()).isTrue();
+    assertThat(set).isEmpty();
   }
 
   @Test public void allEnabledToString() throws Exception {
@@ -293,10 +292,5 @@ public final class ConnectionSpecTest {
     assertThat(connectionSpec.toString()).isEqualTo(
         ("ConnectionSpec(cipherSuites=[SSL_RSA_WITH_RC4_128_MD5], tlsVersions=[TLS_1_2], "
         + "supportsTlsExtensions=true)"));
-  }
-
-  @SafeVarargs
-  private static <T> Set<T> set(T... values) {
-    return new LinkedHashSet<>(Arrays.asList(values));
   }
 }

@@ -28,6 +28,7 @@ import okio.GzipSink;
 import okio.Okio;
 import org.junit.Test;
 
+import static java.util.Arrays.asList;
 import static okhttp3.TestUtil.headerEntries;
 import static okhttp3.internal.http2.Http2.FLAG_COMPRESSED;
 import static okhttp3.internal.http2.Http2.FLAG_END_HEADERS;
@@ -145,7 +146,7 @@ public final class Http2Test {
   @Test public void pushPromise() throws IOException {
     final int expectedPromisedStreamId = 11;
 
-    final List<Header> pushPromise = Arrays.asList(
+    final List<Header> pushPromise = asList(
         new Header(Header.TARGET_METHOD, "GET"),
         new Header(Header.TARGET_SCHEME, "https"),
         new Header(Header.TARGET_AUTHORITY, "squareup.com"),

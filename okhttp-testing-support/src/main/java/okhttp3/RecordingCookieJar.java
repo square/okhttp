@@ -17,11 +17,11 @@ package okhttp3;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Deque;
 import java.util.List;
 
+import static java.util.Arrays.asList;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public final class RecordingCookieJar implements CookieJar {
@@ -29,7 +29,7 @@ public final class RecordingCookieJar implements CookieJar {
   private final Deque<List<Cookie>> responseCookies = new ArrayDeque<>();
 
   public void enqueueRequestCookies(Cookie... cookies) {
-    requestCookies.add(Arrays.asList(cookies));
+    requestCookies.add(asList(cookies));
   }
 
   public List<Cookie> takeResponseCookies() {

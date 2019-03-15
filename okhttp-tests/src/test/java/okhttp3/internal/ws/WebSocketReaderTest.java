@@ -19,7 +19,6 @@ import java.io.EOFException;
 import java.io.IOException;
 import java.net.ProtocolException;
 import java.util.Random;
-import java.util.regex.Pattern;
 import okhttp3.internal.Util;
 import okio.Buffer;
 import okio.ByteString;
@@ -309,9 +308,7 @@ public final class WebSocketReaderTest {
         clientReader.processNextFrame();
         fail();
       } catch (ProtocolException e) {
-        String message = e.getMessage();
-        assertThat(Pattern.matches("Code \\d+ is reserved and may not be used.", message)).overridingErrorMessage(
-            message).isTrue();
+        assertThat(e.getMessage()).matches("Code \\d+ is reserved and may not be used.");
       }
     }
     assertThat(count).isEqualTo(1991);

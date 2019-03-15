@@ -18,8 +18,6 @@ package okhttp3.internal.connection;
 import java.io.IOException;
 import java.security.cert.CertificateException;
 import java.util.Arrays;
-import java.util.LinkedHashSet;
-import java.util.Set;
 import javax.net.ssl.SSLHandshakeException;
 import javax.net.ssl.SSLSocket;
 import okhttp3.ConnectionSpec;
@@ -28,6 +26,7 @@ import okhttp3.internal.Internal;
 import okhttp3.tls.HandshakeCertificates;
 import org.junit.Test;
 
+import static java.util.Arrays.asList;
 import static okhttp3.tls.internal.TlsUtil.localhost;
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -118,7 +117,7 @@ public class ConnectionSpecSelectorTest {
 
   private static ConnectionSpecSelector createConnectionSpecSelector(
       ConnectionSpec... connectionSpecs) {
-    return new ConnectionSpecSelector(Arrays.asList(connectionSpecs));
+    return new ConnectionSpecSelector(asList(connectionSpecs));
   }
 
   private SSLSocket createSocketWithEnabledProtocols(TlsVersion... tlsVersions) throws IOException {
@@ -128,9 +127,7 @@ public class ConnectionSpecSelectorTest {
   }
 
   private static void assertEnabledProtocols(SSLSocket socket, TlsVersion... required) {
-    Set<String> actual = new LinkedHashSet<>(Arrays.asList(socket.getEnabledProtocols()));
-    Set<String> expected = new LinkedHashSet<>(Arrays.asList(javaNames(required)));
-    assertThat(actual).isEqualTo(expected);
+    assertThat(socket.getEnabledProtocols()).containsExactlyInAnyOrder(javaNames(required));
   }
 
   private static String[] javaNames(TlsVersion... tlsVersions) {

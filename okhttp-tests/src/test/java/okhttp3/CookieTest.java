@@ -25,6 +25,7 @@ import okhttp3.internal.Util;
 import okhttp3.internal.http.HttpDate;
 import org.junit.Test;
 
+import static java.util.Arrays.asList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.fail;
 
@@ -553,7 +554,7 @@ public final class CookieTest {
   }
 
   @Test public void equalsAndHashCode() throws Exception {
-    List<String> cookieStrings = Arrays.asList(
+    List<String> cookieStrings = asList(
         "a=b; Path=/c; Domain=example.com; Max-Age=5; Secure; HttpOnly",
         "a= ; Path=/c; Domain=example.com; Max-Age=5; Secure; HttpOnly",
         "a=b;          Domain=example.com; Max-Age=5; Secure; HttpOnly",
