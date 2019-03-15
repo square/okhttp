@@ -26,7 +26,6 @@
     <module>okhttp-testing-support</module>
     <module>okhttp-tls</module>
     <module>okhttp-urlconnection</module>
-    <module>okhttp-hpacktests</module>
 
     <module>okhttp-logging-interceptor</module>
 
