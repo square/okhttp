@@ -85,6 +85,11 @@ public class MainTest {
     assertThat(request.body()).isNull();
   }
 
+  @Test public void defaultUserAgent() {
+    Request request = fromArgs("http://example.com").createRequest();
+    assertThat(request.header("User-Agent")).startsWith("okcurl/");
+  }
+
   @Test public void headerSplitWithDate() {
     Request request = fromArgs("-H", "If-Modified-Since: Mon, 18 Aug 2014 15:16:06 GMT",
         "http://example.com").createRequest();

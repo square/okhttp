@@ -1,0 +1,154 @@
+buildscript {
+  ext.versions = [
+      'airline': '0.8',
+      'android': '4.1.1.4',
+      'animalSniffer': '1.17',
+      'assertj': '3.11.0',
+      'bouncycastle': '1.60',
+      'checkstyle': '8.15',
+      'conscrypt': '2.0.0',
+      'findbugs': '3.0.2',
+      'guava': '27.0.1-jre',
+      'java': '1.8',
+      'jnrUnixsocket': '0.22',
+      'jsoup': '1.11.3',
+      'junit': '4.12',
+      'moshi': '1.8.0',
+      'okio': '1.17.2',
+  ]
+
+  ext.deps = [
+      'airline': "io.airlift:airline:${versions.airline}",
+      'android': "com.google.android:android:${versions.android}",
+      'animalSniffer': "org.codehaus.mojo:animal-sniffer-annotations:${versions.animalSniffer}",
+      'assertj': "org.assertj:assertj-core:${versions.assertj}",
+      'bouncycastle': "org.bouncycastle:bcprov-jdk15on:${versions.bouncycastle}",
+      'conscrypt': "org.conscrypt:conscrypt-openjdk-uber:${versions.conscrypt}",
+      'guava': "com.google.guava:guava:${versions.guava}",
+      'jnrUnixsocket': "com.github.jnr:jnr-unixsocket:${versions.jnrUnixsocket}",
+      'jsoup': "org.jsoup:jsoup:${versions.jsoup}",
+      'jsr305': "com.google.code.findbugs:jsr305:${versions.findbugs}",
+      'junit': "junit:junit:${versions.junit}",
+      'moshi': "com.squareup.moshi:moshi:${versions.moshi}",
+      'okio': "com.squareup.okio:okio:${versions.okio}"
+  ]
+
+  dependencies {
+    // TODO(jwilson): configure maven-publish-plugin to limit which artifacts are published.
+    classpath 'com.vanniktech:gradle-maven-publish-plugin:0.8.0'
+  }
+
+  repositories {
+    mavenCentral()
+    gradlePluginPortal()
+  }
+}
+
+plugins {
+  id 'ru.vyarus.animalsniffer' version '1.5.0'
+  id 'com.github.johnrengelman.shadow' version '4.0.1'
+}
+
+allprojects {
+  group = GROUP
+  version = VERSION_NAME
+
+  repositories {
+    mavenCentral()
+  }
+}
+
+subprojects { project ->
+  apply plugin: 'java'
+  apply plugin: 'java-library'
+  sourceCompatibility = JavaVersion.VERSION_1_8
+  targetCompatibility = JavaVersion.VERSION_1_8
+
+  apply plugin: 'checkstyle'
+  checkstyleMain.exclude '**/CipherSuite.java'
+  afterEvaluate {
+    checkstyle {
+      configFile = rootProject.file('checkstyle.xml')
+      toolVersion "${versions.checkstyle}"
+      sourceSets = [project.sourceSets.main]
+    }
+  }
+
+  // Animal Sniffer confirms we don't use APIs not on both Java 8 and Android 5.
+  apply plugin: 'ru.vyarus.animalsniffer'
+  animalsniffer {
+    sourceSets = [sourceSets.main]
+  }
+  dependencies {
+    signature 'net.sf.androidscents.signature:android-api-level-21:5.0.1_r2@signature'
+    signature 'org.codehaus.mojo.signature:java18:1.0@signature'
+  }
+
+  test {
+    jvmArgs += "-Dlistener=okhttp3.testing.InstallUncaughtExceptionHandlerListener"
+    jvmArgs += "-Dokhttp.platform=platform"
+  }
+
+  // Add alpn-boot on Java 8 so we can use HTTP/2 without a stable API.
+  def alpnBootVersion = alpnBootVersion()
+  if (alpnBootVersion != null) {
+    dependencies {
+      testCompile "org.mortbay.jetty.alpn:alpn-boot:$alpnBootVersion"
+    }
+    def alpnBootJar = configurations.testCompile.find { it.name.startsWith("alpn-boot-") }
+    test {
+      jvmArgs += "-Xbootclasspath/p:${alpnBootJar}"
+    }
+  }
+
+  // TODO(jwilson): configure error prone.
+}
+
+tasks.wrapper {
+  distributionType = Wrapper.DistributionType.ALL
+}
+
+/**
+ * Returns the alpn-boot version specific to this OpenJDK 8 JVM, or null if this is not a Java 8 VM.
+ * https://github.com/xjdr/xio/blob/master/alpn-boot.gradle
+ */
+def alpnBootVersion() {
+  def javaVersion = System.getProperty("java.version")
+  def patchVersionMatcher = (javaVersion =~ /1\.8\.0_(\d+)(-.*)?/)
+  if (!patchVersionMatcher.find()) return null
+  def patchVersion = Integer.parseInt(patchVersionMatcher.group(1))
+  return alpnBootVersionForPatchVersion(javaVersion, patchVersion)
+}
+
+def alpnBootVersionForPatchVersion(String javaVersion, int patchVersion) {
+  switch (patchVersion) {
+    case 0..24:
+      return '8.1.0.v20141016'
+    case 25..30:
+      return '8.1.2.v20141202'
+    case 31..50:
+      return '8.1.3.v20150130'
+    case 51..59:
+      return '8.1.4.v20150727'
+    case 60..64:
+      return '8.1.5.v20150921'
+    case 65..70:
+      return '8.1.6.v20151105'
+    case 71..77:
+      return '8.1.7.v20160121'
+    case 78..101:
+      return '8.1.8.v20160420'
+    case 102..111:
+      return '8.1.9.v20160720'
+    case 112..120:
+      return '8.1.10.v20161026'
+    case 121..160:
+      return '8.1.11.v20170118'
+    case 161..181:
+      return '8.1.12.v20180117'
+    case 191..202:
+      return '8.1.13.v20181017'
+    default:
+      throw new IllegalStateException("Unexpected Java version: ${javaVersion}")
+  }
+}

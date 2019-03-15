@@ -1,0 +1,17 @@
+jar {
+  manifest {
+    attributes('Automatic-Module-Name': 'okhttp3.logging')
+  }
+}
+
+dependencies {
+  api project(':okhttp')
+  compileOnly deps.jsr305
+
+  testCompileOnly deps.jsr305
+  testImplementation deps.junit
+  testImplementation project(':mockwebserver')
+  testImplementation project(':okhttp-testing-support')
+  testImplementation project(':okhttp-tls')
+  testImplementation deps.assertj
+}

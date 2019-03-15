@@ -1,0 +1,17 @@
+jar {
+  manifest {
+    attributes('Automatic-Module-Name': 'okhttp3.urlconnection')
+  }
+}
+
+dependencies {
+  api project(':okhttp')
+  compileOnly deps.jsr305
+  compileOnly deps.animalSniffer
+
+  testImplementation project(':okhttp-testing-support')
+  testImplementation project(':okhttp-tls')
+  testImplementation project(':mockwebserver')
+  testImplementation deps.junit
+  testImplementation deps.assertj
+}

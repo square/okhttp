@@ -1,0 +1,5 @@
+dependencies {
+  implementation project(':okhttp')
+  implementation project(':mockwebserver')
+  implementation deps.jnrUnixsocket
+}
