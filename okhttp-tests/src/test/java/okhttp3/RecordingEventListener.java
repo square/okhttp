@@ -43,11 +43,15 @@ public final class RecordingEventListener extends EventListener {
    * {@code eventClass} and returns it.
    */
   public <T> T removeUpToEvent(Class<T> eventClass) {
+    List<CallEvent> fullEventSequence = new ArrayList<>(eventSequence);
     Object event = eventSequence.poll();
     while (event != null && !eventClass.isInstance(event)) {
       event = eventSequence.poll();
     }
-    if (event == null) throw new AssertionError();
+    if (event == null) {
+      throw new AssertionError(
+          eventClass.getSimpleName() + " not found. Found " + fullEventSequence + ".");
+    }
     return eventClass.cast(event);
   }
 
