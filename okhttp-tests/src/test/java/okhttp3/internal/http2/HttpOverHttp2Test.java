@@ -855,17 +855,37 @@ public final class HttpOverHttp2Test {
   }
 
   @Test public void recoverFromCancelReusesConnection() throws Exception {
-    server.enqueue(new MockResponse()
+    CountDownLatch responseDequeuedLatch = new CountDownLatch(1);
+    CountDownLatch requestCanceledLatch = new CountDownLatch(1);
+
+    QueueDispatcher dispatcher = new QueueDispatcher() {
+      @Override
+      public MockResponse dispatch(RecordedRequest request) throws InterruptedException {
+        // This guarantees a deterministic sequence when handling the canceled request:
+        // 1. Server reads request and dequeues first response
+        // 2. Client cancels request
+        // 3. Server tries to send response on the canceled stream
+        // Otherwise, there is no guarantee for the sequence. For example, the server may use the
+        // first mocked response to respond to the second request.
+        MockResponse response = super.dispatch(request);
+        responseDequeuedLatch.countDown();
+        requestCanceledLatch.await();
+        return response;
+      }
+    };
+    server.setDispatcher(dispatcher);
+
+    dispatcher.enqueueResponse(new MockResponse()
         .setBodyDelay(10, TimeUnit.SECONDS)
         .setBody("abc"));
-    server.enqueue(new MockResponse()
+    dispatcher.enqueueResponse(new MockResponse()
         .setBody("def"));
 
     client = client.newBuilder()
         .dns(new DoubleInetAddressDns())
         .build();
 
-    callAndCancel(0);
+    callAndCancel(0, responseDequeuedLatch, requestCanceledLatch);
 
     // Make a second request to ensure the connection is reused.
     Call call = client.newCall(new Request.Builder()
@@ -890,8 +910,8 @@ public final class HttpOverHttp2Test {
             .dns(new DoubleInetAddressDns())
             .build();
 
-    callAndCancel(0);
-    callAndCancel(1);
+    callAndCancel(0, new CountDownLatch(0), new CountDownLatch(0));
+    callAndCancel(1, new CountDownLatch(0), new CountDownLatch(0));
 
     // Make a third request to ensure the connection is reused.
     Call call = client.newCall(new Request.Builder()
@@ -903,7 +923,8 @@ public final class HttpOverHttp2Test {
   }
 
   /** Make a call and canceling it as soon as it's accepted by the server. */
-  private void callAndCancel(int expectedSequenceNumber) throws Exception {
+  private void callAndCancel(int expectedSequenceNumber, CountDownLatch responseDequeuedLatch,
+      CountDownLatch requestCanceledLatch) throws Exception {
     Call call = client.newCall(new Request.Builder()
         .url(server.url("/"))
         .build());
@@ -919,7 +940,9 @@ public final class HttpOverHttp2Test {
     });
     assertThat(server.takeRequest().getSequenceNumber()).isEqualTo(
         (long) expectedSequenceNumber);
+    responseDequeuedLatch.await();
     call.cancel();
+    requestCanceledLatch.countDown();
     latch.await();
   }
 
