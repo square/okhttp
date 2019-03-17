@@ -13,295 +13,344 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package okhttp3;
+package okhttp3
 
-import java.io.IOException;
-import java.net.InetAddress;
-import java.net.InetSocketAddress;
-import java.net.Proxy;
-import java.util.List;
-import javax.annotation.Nullable;
+import java.io.IOException
+import java.net.InetAddress
+import java.net.InetSocketAddress
+import java.net.Proxy
 
 /**
  * Listener for metrics events. Extend this class to monitor the quantity, size, and duration of
  * your application's HTTP calls.
  *
- * <p>All start/connect/acquire events will eventually receive a matching end/release event,
- * either successful (non-null parameters), or failed (non-null throwable).  The first common
- * parameters of each event pair are used to link the event in case of concurrent or repeated
- * events e.g. dnsStart(call, domainName) -&gt; dnsEnd(call, domainName, inetAddressList).
+ * All start/connect/acquire events will eventually receive a matching end/release event, either
+ * successful (non-null parameters), or failed (non-null throwable).  The first common parameters of
+ * each event pair are used to link the event in case of concurrent or repeated events e.g.
+ * dnsStart(call, domainName) -&gt; dnsEnd(call, domainName, inetAddressList).
  *
- * <p>Nesting is as follows
- * <ul>
- *   <li>call -&gt; (dns -&gt; connect -&gt; secure connect)* -&gt; request events</li>
- *   <li>call -&gt; (connection acquire/release)*</li>
- * </ul>
+ * Nesting is as follows
  *
- * <p>Request events are ordered:
+ *  * call -&gt; (dns -&gt; connect -&gt; secure connect)* -&gt; request events
+ *  * call -&gt; (connection acquire/release)*
+ *
+ * Request events are ordered:
+ *
  * requestHeaders -&gt; requestBody -&gt; responseHeaders -&gt; responseBody
  *
- * <p>Since connections may be reused, the dns and connect events may not be present for a call,
- * or may be repeated in case of failure retries, even concurrently in case of happy eyeballs type
+ * Since connections may be reused, the dns and connect events may not be present for a call, or may
+ * be repeated in case of failure retries, even concurrently in case of happy eyeballs type
  * scenarios. A redirect cross domain, or to use https may cause additional connection and request
  * events.
  *
- * <p>All event methods must execute fast, without external locking, cannot throw exceptions,
- * attempt to mutate the event parameters, or be re-entrant back into the client.
- * Any IO - writing to files or network should be done asynchronously.
+ * All event methods must execute fast, without external locking, cannot throw exceptions, attempt
+ * to mutate the event parameters, or be re-entrant back into the client. Any IO - writing to files
+ * or network should be done asynchronously.
  */
-public abstract class EventListener {
-  public static final EventListener NONE = new EventListener() {
-  };
-
-  static EventListener.Factory factory(EventListener listener) {
-    return call -> listener;
-  }
-
+abstract class EventListener {
   /**
    * Invoked as soon as a call is enqueued or executed by a client. In case of thread or stream
    * limits, this call may be executed well before processing the request is able to begin.
    *
-   * <p>This will be invoked only once for a single {@link Call}. Retries of different routes
-   * or redirects will be handled within the boundaries of a single callStart and {@link
-   * #callEnd}/{@link #callFailed} pair.
+   * This will be invoked only once for a single [Call]. Retries of different routes or redirects
+   * will be handled within the boundaries of a single [callStart] and [callEnd]/[callFailed] pair.
    */
-  public void callStart(Call call) {
+  open fun callStart(
+    call: Call
+  ) {
   }
 
   /**
-   * Invoked just prior to a DNS lookup. See {@link Dns#lookup(String)}.
+   * Invoked just prior to a DNS lookup. See [Dns.lookup].
    *
-   * <p>This can be invoked more than 1 time for a single {@link Call}. For example, if the response
-   * to the {@link Call#request()} is a redirect to a different host.
+   * This can be invoked more than 1 time for a single [Call]. For example, if the response to the
+   * [Call.request] is a redirect to a different host.
    *
-   * <p>If the {@link Call} is able to reuse an existing pooled connection, this method will not be
-   * invoked. See {@link ConnectionPool}.
+   * If the [Call] is able to reuse an existing pooled connection, this method will not be invoked.
+   * See [ConnectionPool].
    */
-  public void dnsStart(Call call, String domainName) {
+  open fun dnsStart(
+    call: Call,
+    domainName: String
+  ) {
   }
 
   /**
    * Invoked immediately after a DNS lookup.
    *
-   * <p>This method is invoked after {@link #dnsStart}.
+   * This method is invoked after [dnsStart].
    */
-  public void dnsEnd(Call call, String domainName, List<InetAddress> inetAddressList) {
+  open fun dnsEnd(
+    call: Call,
+    domainName: String,
+    inetAddressList: List<@JvmSuppressWildcards InetAddress>
+  ) {
   }
 
   /**
    * Invoked just prior to initiating a socket connection.
    *
-   * <p>This method will be invoked if no existing connection in the {@link ConnectionPool} can be
-   * reused.
+   * This method will be invoked if no existing connection in the [ConnectionPool] can be reused.
    *
-   * <p>This can be invoked more than 1 time for a single {@link Call}. For example, if the response
-   * to the {@link Call#request()} is a redirect to a different address, or a connection is retried.
+   * This can be invoked more than 1 time for a single [Call]. For example, if the response to the
+   * [Call.request] is a redirect to a different address, or a connection is retried.
    */
-  public void connectStart(Call call, InetSocketAddress inetSocketAddress, Proxy proxy) {
+  open fun connectStart(
+    call: Call,
+    inetSocketAddress: InetSocketAddress,
+    proxy: Proxy
+  ) {
   }
 
   /**
    * Invoked just prior to initiating a TLS connection.
    *
-   * <p>This method is invoked if the following conditions are met:
-   * <ul>
-   * <li>The {@link Call#request()} requires TLS.</li>
-   * <li>No existing connection from the {@link ConnectionPool} can be reused.</li>
-   * </ul>
+   * This method is invoked if the following conditions are met:
    *
-   * <p>This can be invoked more than 1 time for a single {@link Call}. For example, if the response
-   * to the {@link Call#request()} is a redirect to a different address, or a connection is retried.
+   *  * The [Call.request] requires TLS.
+   *
+   *  * No existing connection from the [ConnectionPool] can be reused.
+   *
+   * This can be invoked more than 1 time for a single [Call]. For example, if the response to the
+   * [Call.request] is a redirect to a different address, or a connection is retried.
    */
-  public void secureConnectStart(Call call) {
+  open fun secureConnectStart(
+    call: Call
+  ) {
   }
 
   /**
    * Invoked immediately after a TLS connection was attempted.
    *
-   * <p>This method is invoked after {@link #secureConnectStart}.
+   * This method is invoked after [secureConnectStart].
    */
-  public void secureConnectEnd(Call call, @Nullable Handshake handshake) {
+  open fun secureConnectEnd(
+    call: Call,
+    handshake: Handshake?
+  ) {
   }
 
   /**
    * Invoked immediately after a socket connection was attempted.
    *
-   * <p>If the {@code call} uses HTTPS, this will be invoked after
-   * {@link #secureConnectEnd(Call, Handshake)}, otherwise it will invoked after
-   * {@link #connectStart(Call, InetSocketAddress, Proxy)}.
+   * If the `call` uses HTTPS, this will be invoked after [secureConnectEnd], otherwise it will
+   * invoked after [connectStart].
    */
-  public void connectEnd(Call call, InetSocketAddress inetSocketAddress, Proxy proxy,
-      @Nullable Protocol protocol) {
+  open fun connectEnd(
+    call: Call,
+    inetSocketAddress: InetSocketAddress,
+    proxy: Proxy,
+    protocol: Protocol?
+  ) {
   }
 
   /**
    * Invoked when a connection attempt fails. This failure is not terminal if further routes are
    * available and failure recovery is enabled.
    *
-   * <p>If the {@code call} uses HTTPS, this will be invoked after {@link #secureConnectEnd(Call,
-   * Handshake)}, otherwise it will invoked after {@link #connectStart(Call, InetSocketAddress,
-   * Proxy)}.
+   * If the `call` uses HTTPS, this will be invoked after [secureConnectEnd], otherwise it will
+   * invoked after [connectStart].
    */
-  public void connectFailed(Call call, InetSocketAddress inetSocketAddress, Proxy proxy,
-      @Nullable Protocol protocol, IOException ioe) {
+  open fun connectFailed(
+    call: Call,
+    inetSocketAddress: InetSocketAddress,
+    proxy: Proxy,
+    protocol: Protocol?,
+    ioe: IOException
+  ) {
   }
 
   /**
-   * Invoked after a connection has been acquired for the {@code call}.
+   * Invoked after a connection has been acquired for the `call`.
    *
-   * <p>This can be invoked more than 1 time for a single {@link Call}. For example, if the response
-   * to the {@link Call#request()} is a redirect to a different address.
+   * This can be invoked more than 1 time for a single [Call]. For example, if the response
+   * to the [Call.request] is a redirect to a different address.
    */
-  public void connectionAcquired(Call call, Connection connection) {
+  open fun connectionAcquired(
+    call: Call,
+    connection: Connection
+  ) {
   }
 
   /**
-   * Invoked after a connection has been released for the {@code call}.
+   * Invoked after a connection has been released for the `call`.
    *
-   * <p>This method is always invoked after {@link #connectionAcquired(Call, Connection)}.
+   * This method is always invoked after [connectionAcquired].
    *
-   * <p>This can be invoked more than 1 time for a single {@link Call}. For example, if the response
-   * to the {@link Call#request()} is a redirect to a different address.
+   * This can be invoked more than 1 time for a single [Call]. For example, if the response to the
+   * [Call.request] is a redirect to a different address.
    */
-  public void connectionReleased(Call call, Connection connection) {
+  open fun connectionReleased(
+    call: Call,
+    connection: Connection
+  ) {
   }
 
   /**
    * Invoked just prior to sending request headers.
    *
-   * <p>The connection is implicit, and will generally relate to the last
-   * {@link #connectionAcquired(Call, Connection)} event.
+   * The connection is implicit, and will generally relate to the last [connectionAcquired] event.
    *
-   * <p>This can be invoked more than 1 time for a single {@link Call}. For example, if the response
-   * to the {@link Call#request()} is a redirect to a different address.
+   * This can be invoked more than 1 time for a single [Call]. For example, if the response to the
+   * [Call.request] is a redirect to a different address.
    */
-  public void requestHeadersStart(Call call) {
+  open fun requestHeadersStart(
+    call: Call
+  ) {
   }
 
   /**
    * Invoked immediately after sending request headers.
    *
-   * <p>This method is always invoked after {@link #requestHeadersStart(Call)}.
+   * This method is always invoked after [requestHeadersStart].
    *
    * @param request the request sent over the network. It is an error to access the body of this
    *     request.
    */
-  public void requestHeadersEnd(Call call, Request request) {
+  open fun requestHeadersEnd(call: Call, request: Request) {
   }
 
   /**
    * Invoked just prior to sending a request body.  Will only be invoked for request allowing and
    * having a request body to send.
    *
-   * <p>The connection is implicit, and will generally relate to the last
-   * {@link #connectionAcquired(Call, Connection)} event.
+   * The connection is implicit, and will generally relate to the last [connectionAcquired] event.
    *
-   * <p>This can be invoked more than 1 time for a single {@link Call}. For example, if the response
-   * to the {@link Call#request()} is a redirect to a different address.
+   * This can be invoked more than 1 time for a single [Call]. For example, if the response to the
+   * [Call.request] is a redirect to a different address.
    */
-  public void requestBodyStart(Call call) {
+  open fun requestBodyStart(
+    call: Call
+  ) {
   }
 
   /**
    * Invoked immediately after sending a request body.
    *
-   * <p>This method is always invoked after {@link #requestBodyStart(Call)}.
+   * This method is always invoked after [requestBodyStart].
    */
-  public void requestBodyEnd(Call call, long byteCount) {
+  open fun requestBodyEnd(
+    call: Call,
+    byteCount: Long
+  ) {
   }
 
   /**
    * Invoked when a request fails to be written.
    *
-   * <p>This method is invoked after {@link #requestHeadersStart} or {@link #requestBodyStart}. Note
-   * that request failures do not necessarily fail the entire call.
+   * This method is invoked after [requestHeadersStart] or [requestBodyStart]. Note that request
+   * failures do not necessarily fail the entire call.
    */
-  public void requestFailed(Call call, IOException ioe) {
+  open fun requestFailed(
+    call: Call,
+    ioe: IOException
+  ) {
   }
 
   /**
    * Invoked just prior to receiving response headers.
    *
-   * <p>The connection is implicit, and will generally relate to the last
-   * {@link #connectionAcquired(Call, Connection)} event.
+   * The connection is implicit, and will generally relate to the last [connectionAcquired] event.
    *
-   * <p>This can be invoked more than 1 time for a single {@link Call}. For example, if the response
-   * to the {@link Call#request()} is a redirect to a different address.
+   * This can be invoked more than 1 time for a single [Call]. For example, if the response to the
+   * [Call.request] is a redirect to a different address.
    */
-  public void responseHeadersStart(Call call) {
+  open fun responseHeadersStart(
+    call: Call
+  ) {
   }
 
   /**
    * Invoked immediately after receiving response headers.
    *
-   * <p>This method is always invoked after {@link #responseHeadersStart}.
+   * This method is always invoked after [responseHeadersStart].
    *
    * @param response the response received over the network. It is an error to access the body of
    *     this response.
    */
-  public void responseHeadersEnd(Call call, Response response) {
+  open fun responseHeadersEnd(
+    call: Call,
+    response: Response
+  ) {
   }
 
   /**
    * Invoked just prior to receiving the response body.
    *
-   * <p>The connection is implicit, and will generally relate to the last
-   * {@link #connectionAcquired(Call, Connection)} event.
+   * The connection is implicit, and will generally relate to the last [connectionAcquired] event.
    *
-   * <p>This will usually be invoked only 1 time for a single {@link Call},
-   * exceptions are a limited set of cases including failure recovery.
+   * This will usually be invoked only 1 time for a single [Call], exceptions are a limited set of
+   * cases including failure recovery.
    */
-  public void responseBodyStart(Call call) {
+  open fun responseBodyStart(
+    call: Call
+  ) {
   }
 
   /**
    * Invoked immediately after receiving a response body and completing reading it.
    *
-   * <p>Will only be invoked for requests having a response body e.g. won't be invoked for a
-   * websocket upgrade.
+   * Will only be invoked for requests having a response body e.g. won't be invoked for a web socket
+   * upgrade.
    *
-   * <p>This method is always invoked after {@link #requestBodyStart(Call)}.
+   * This method is always invoked after [requestBodyStart].
    */
-  public void responseBodyEnd(Call call, long byteCount) {
+  open fun responseBodyEnd(
+    call: Call,
+    byteCount: Long
+  ) {
   }
 
   /**
    * Invoked when a response fails to be read.
    *
-   * <p>This method is invoked after {@link #responseHeadersStart} or {@link #responseBodyStart}.
-   * Note that response failures do not necessarily fail the entire call.
+   * This method is invoked after [responseHeadersStart] or [responseBodyStart]. Note that response
+   * failures do not necessarily fail the entire call.
    */
-  public void responseFailed(Call call, IOException ioe) {
+  open fun responseFailed(
+    call: Call,
+    ioe: IOException
+  ) {
   }
 
   /**
    * Invoked immediately after a call has completely ended.  This includes delayed consumption
    * of response body by the caller.
    *
-   * <p>This method is always invoked after {@link #callStart(Call)}.
+   * This method is always invoked after [callStart].
    */
-  public void callEnd(Call call) {
+  open fun callEnd(
+    call: Call
+  ) {
   }
 
   /**
    * Invoked when a call fails permanently.
    *
-   * <p>This method is always invoked after {@link #callStart(Call)}.
+   * This method is always invoked after [callStart].
    */
-  public void callFailed(Call call, IOException ioe) {
+  open fun callFailed(
+    call: Call,
+    ioe: IOException
+  ) {
   }
 
-  public interface Factory {
+  interface Factory {
     /**
-     * Creates an instance of the {@link EventListener} for a particular {@link Call}. The returned
-     * {@link EventListener} instance will be used during the lifecycle of the {@code call}.
+     * Creates an instance of the [EventListener] for a particular [Call]. The returned
+     * [EventListener] instance will be used during the lifecycle of the `call`.
      *
-     * <p>This method is invoked after the {@code call} is created. See
-     * {@link OkHttpClient#newCall(Request)}.
+     * This method is invoked after the `call` is created. See [OkHttpClient.newCall].
      *
-     * <p><strong>It is an error for implementations to issue any mutating operations on the
-     * {@code call} instance from this method.</strong>
+     * **It is an error for implementations to issue any mutating operations on the `call` instance
+     * from this method.**
      */
-    EventListener create(Call call);
+    fun create(call: Call): EventListener
+  }
+
+  companion object {
+    @JvmField
+    val NONE: EventListener = object : EventListener() {
+    }
   }
 }

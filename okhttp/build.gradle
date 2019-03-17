@@ -23,6 +23,7 @@ task copyJavaTemplates(type: Copy) {
 
 dependencies {
   api deps.okio
+  api deps.kotlinStdlib
   compileOnly deps.conscrypt
   compileOnly deps.android
   compileOnly deps.jsr305
@@ -41,5 +42,8 @@ task japicmp(type: me.champeau.gradle.japicmp.JapicmpTask, dependsOn: 'jar') {
   txtOutputFile = file("$buildDir/reports/japi.txt")
   ignoreMissingClasses = true
   includeSynthetic = true
+  methodExcludes = [
+      'okhttp3.TlsVersion#javaName()', // Became 'final' in 4.0.0.
+  ]
 }
 check.dependsOn(japicmp)

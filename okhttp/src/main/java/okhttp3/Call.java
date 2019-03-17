@@ -13,90 +13,87 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package okhttp3;
+package okhttp3
 
-import java.io.IOException;
-import okio.Timeout;
+import okio.Timeout
+import java.io.IOException
 
 /**
  * A call is a request that has been prepared for execution. A call can be canceled. As this object
  * represents a single request/response pair (stream), it cannot be executed twice.
  */
-public interface Call extends Cloneable {
-  /** Returns the original request that initiated this call. */
-  Request request();
+interface Call : Cloneable {
+  /** Returns the original request that initiated this call.  */
+  fun request(): Request
 
   /**
-   * Invokes the request immediately, and blocks until the response can be processed or is in
-   * error.
+   * Invokes the request immediately, and blocks until the response can be processed or is in error.
    *
-   * <p>To avoid leaking resources callers should close the {@link Response} which in turn will
-   * close the underlying {@link ResponseBody}.
+   * To avoid leaking resources callers should close the [Response] which in turn will close the
+   * underlying [ResponseBody].
    *
-   * <pre>{@code
+   * ```
+   * // ensure the response (and underlying response body) is closed
+   * try (Response response = client.newCall(request).execute()) {
+   *   ...
+   * }
+   * ```
    *
-   *   // ensure the response (and underlying response body) is closed
-   *   try (Response response = client.newCall(request).execute()) {
-   *     ...
-   *   }
+   * The caller may read the response body with the response's [Response.body] method. To avoid
+   * leaking resources callers must [close the response body][ResponseBody] or the response.
    *
-   * }</pre>
-   *
-   * <p>The caller may read the response body with the response's {@link Response#body} method. To
-   * avoid leaking resources callers must {@linkplain ResponseBody close the response body} or the
-   * Response.
-   *
-   * <p>Note that transport-layer success (receiving a HTTP response code, headers and body) does
-   * not necessarily indicate application-layer success: {@code response} may still indicate an
-   * unhappy HTTP response code like 404 or 500.
+   * Note that transport-layer success (receiving a HTTP response code, headers and body) does not
+   * necessarily indicate application-layer success: `response` may still indicate an unhappy HTTP
+   * response code like 404 or 500.
    *
    * @throws IOException if the request could not be executed due to cancellation, a connectivity
-   * problem or timeout. Because networks can fail during an exchange, it is possible that the
-   * remote server accepted the request before the failure.
+   *     problem or timeout. Because networks can fail during an exchange, it is possible that the
+   *     remote server accepted the request before the failure.
    * @throws IllegalStateException when the call has already been executed.
    */
-  Response execute() throws IOException;
+  @Throws(IOException::class)
+  fun execute(): Response
 
   /**
    * Schedules the request to be executed at some point in the future.
    *
-   * <p>The {@link OkHttpClient#dispatcher dispatcher} defines when the request will run: usually
+   * The [dispatcher][OkHttpClient.dispatcher] defines when the request will run: usually
    * immediately unless there are several other requests currently being executed.
    *
-   * <p>This client will later call back {@code responseCallback} with either an HTTP response or a
-   * failure exception.
+   * This client will later call back `responseCallback` with either an HTTP response or a failure
+   * exception.
    *
    * @throws IllegalStateException when the call has already been executed.
    */
-  void enqueue(Callback responseCallback);
+  fun enqueue(responseCallback: Callback)
 
-  /** Cancels the request, if possible. Requests that are already complete cannot be canceled. */
-  void cancel();
+  /** Cancels the request, if possible. Requests that are already complete cannot be canceled.  */
+  fun cancel()
 
   /**
-   * Returns true if this call has been either {@linkplain #execute() executed} or {@linkplain
-   * #enqueue(Callback) enqueued}. It is an error to execute a call more than once.
+   * Returns true if this call has been either [executed][execute] or [enqueued][enqueue]. It is an
+   * error to execute a call more than once.
    */
-  boolean isExecuted();
+  val isExecuted: Boolean
 
-  boolean isCanceled();
+  val isCanceled: Boolean
 
   /**
    * Returns a timeout that spans the entire call: resolving DNS, connecting, writing the request
    * body, server processing, and reading the response body. If the call requires redirects or
    * retries all must complete within one timeout period.
    *
-   * <p>Configure the client's default timeout with {@link OkHttpClient.Builder#callTimeout}.
+   * Configure the client's default timeout with [OkHttpClient.Builder.callTimeout].
    */
-  Timeout timeout();
+  fun timeout(): Timeout
 
   /**
    * Create a new, identical call to this one which can be enqueued or executed even if this call
    * has already been.
    */
-  Call clone();
+  public override fun clone(): Call
 
   interface Factory {
-    Call newCall(Request request);
+    fun newCall(request: Request): Call
   }
 }

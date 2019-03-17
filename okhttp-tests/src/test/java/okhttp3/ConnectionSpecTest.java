@@ -88,14 +88,14 @@ public final class ConnectionSpecTest {
         CipherSuite.TLS_RSA_WITH_RC4_128_SHA.javaName,
     });
     socket.setEnabledProtocols(new String[] {
-        TlsVersion.TLS_1_2.javaName,
-        TlsVersion.TLS_1_1.javaName,
+        TlsVersion.TLS_1_2.javaName(),
+        TlsVersion.TLS_1_1.javaName(),
     });
 
     assertThat(tlsSpec.isCompatible(socket)).isTrue();
     tlsSpec.apply(socket, false /* isFallback */);
 
-    assertThat(socket.getEnabledProtocols()).containsExactly(TlsVersion.TLS_1_2.javaName);
+    assertThat(socket.getEnabledProtocols()).containsExactly(TlsVersion.TLS_1_2.javaName());
 
     assertThat(socket.getEnabledCipherSuites()).containsExactlyInAnyOrder(
         CipherSuite.TLS_RSA_WITH_RC4_128_MD5.javaName,
@@ -114,14 +114,14 @@ public final class ConnectionSpecTest {
         CipherSuite.TLS_RSA_WITH_RC4_128_SHA.javaName,
     });
     socket.setEnabledProtocols(new String[] {
-        TlsVersion.TLS_1_2.javaName,
-        TlsVersion.TLS_1_1.javaName,
+        TlsVersion.TLS_1_2.javaName(),
+        TlsVersion.TLS_1_1.javaName(),
     });
 
     assertThat(tlsSpec.isCompatible(socket)).isTrue();
     tlsSpec.apply(socket, true /* isFallback */);
 
-    assertThat(socket.getEnabledProtocols()).containsExactly(TlsVersion.TLS_1_2.javaName);
+    assertThat(socket.getEnabledProtocols()).containsExactly(TlsVersion.TLS_1_2.javaName());
 
     List<String> expectedCipherSuites = new ArrayList<>();
     expectedCipherSuites.add(CipherSuite.TLS_RSA_WITH_RC4_128_MD5.javaName);
@@ -145,14 +145,14 @@ public final class ConnectionSpecTest {
         CipherSuite.TLS_RSA_WITH_RC4_128_SHA.javaName,
     });
     socket.setEnabledProtocols(new String[] {
-        TlsVersion.TLS_1_2.javaName,
-        TlsVersion.TLS_1_1.javaName,
+        TlsVersion.TLS_1_2.javaName(),
+        TlsVersion.TLS_1_1.javaName(),
     });
 
     assertThat(tlsSpec.isCompatible(socket)).isTrue();
     tlsSpec.apply(socket, true /* isFallback */);
 
-    assertThat(socket.getEnabledProtocols()).containsExactly(TlsVersion.TLS_1_2.javaName);
+    assertThat(socket.getEnabledProtocols()).containsExactly(TlsVersion.TLS_1_2.javaName());
 
     List<String> expectedCipherSuites = new ArrayList<>();
     expectedCipherSuites.add(CipherSuite.TLS_RSA_WITH_RC4_128_MD5.javaName);
@@ -180,8 +180,8 @@ public final class ConnectionSpecTest {
 
     SSLSocket socket = (SSLSocket) SSLSocketFactory.getDefault().createSocket();
     socket.setEnabledProtocols(new String[] {
-        TlsVersion.TLS_1_2.javaName,
-        TlsVersion.TLS_1_1.javaName,
+        TlsVersion.TLS_1_2.javaName(),
+        TlsVersion.TLS_1_1.javaName(),
     });
 
     socket.setEnabledCipherSuites(new String[] {
@@ -244,10 +244,10 @@ public final class ConnectionSpecTest {
     });
 
     socket.setEnabledProtocols(
-        new String[] {TlsVersion.TLS_1_2.javaName, TlsVersion.TLS_1_1.javaName});
+        new String[] {TlsVersion.TLS_1_2.javaName(), TlsVersion.TLS_1_1.javaName()});
     assertThat(tlsSpec.isCompatible(socket)).isTrue();
 
-    socket.setEnabledProtocols(new String[] {TlsVersion.TLS_1_1.javaName});
+    socket.setEnabledProtocols(new String[] {TlsVersion.TLS_1_1.javaName()});
     assertThat(tlsSpec.isCompatible(socket)).isFalse();
   }
 

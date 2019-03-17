@@ -13,50 +13,49 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package okhttp3;
-
-import java.util.Collections;
-import java.util.List;
+package okhttp3
 
 /**
- * Provides <strong>policy</strong> and <strong>persistence</strong> for HTTP cookies.
+ * Provides **policy** and **persistence** for HTTP cookies.
  *
- * <p>As policy, implementations of this interface are responsible for selecting which cookies to
+ * As policy, implementations of this interface are responsible for selecting which cookies to
  * accept and which to reject. A reasonable policy is to reject all cookies, though that may
  * interfere with session-based authentication schemes that require cookies.
  *
- * <p>As persistence, implementations of this interface must also provide storage of cookies. Simple
+ * As persistence, implementations of this interface must also provide storage of cookies. Simple
  * implementations may store cookies in memory; sophisticated ones may use the file system or
- * database to hold accepted cookies. The <a
- * href="https://tools.ietf.org/html/rfc6265#section-5.3">cookie storage model</a> specifies
- * policies for updating and expiring cookies.
+ * database to hold accepted cookies. The [cookie storage
+ * model](https://tools.ietf.org/html/rfc6265#section-5.3) specifies policies for updating and
+ * expiring cookies.
  */
-public interface CookieJar {
-  /** A cookie jar that never accepts any cookies. */
-  CookieJar NO_COOKIES = new CookieJar() {
-    @Override public void saveFromResponse(HttpUrl url, List<Cookie> cookies) {
-    }
-
-    @Override public List<Cookie> loadForRequest(HttpUrl url) {
-      return Collections.emptyList();
-    }
-  };
-
+interface CookieJar {
   /**
-   * Saves {@code cookies} from an HTTP response to this store according to this jar's policy.
+   * Saves `cookies` from an HTTP response to this store according to this jar's policy.
    *
-   * <p>Note that this method may be called a second time for a single HTTP response if the response
-   * includes a trailer. For this obscure HTTP feature, {@code cookies} contains only the trailer's
+   * Note that this method may be called a second time for a single HTTP response if the response
+   * includes a trailer. For this obscure HTTP feature, `cookies` contains only the trailer's
    * cookies.
    */
-  void saveFromResponse(HttpUrl url, List<Cookie> cookies);
+  fun saveFromResponse(url: HttpUrl, cookies: List<Cookie>)
 
   /**
-   * Load cookies from the jar for an HTTP request to {@code url}. This method returns a possibly
+   * Load cookies from the jar for an HTTP request to `url`. This method returns a possibly
    * empty list of cookies for the network request.
    *
-   * <p>Simple implementations will return the accepted cookies that have not yet expired and that
-   * {@linkplain Cookie#matches match} {@code url}.
+   * Simple implementations will return the accepted cookies that have not yet expired and that
+   * [match][Cookie.matches] `url`.
    */
-  List<Cookie> loadForRequest(HttpUrl url);
+  fun loadForRequest(url: HttpUrl): List<Cookie>
+
+  companion object {
+    /** A cookie jar that never accepts any cookies. */
+    @JvmField
+    val NO_COOKIES: CookieJar = object : CookieJar {
+      override fun saveFromResponse(url: HttpUrl, cookies: List<Cookie>) {}
+
+      override fun loadForRequest(url: HttpUrl): List<Cookie> {
+        return emptyList()
+      }
+    }
+  }
 }
