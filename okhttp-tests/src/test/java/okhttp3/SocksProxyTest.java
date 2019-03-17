@@ -26,22 +26,22 @@ import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 
 import static okhttp3.TestUtil.defaultClient;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public final class SocksProxyTest {
+  @Rule public final MockWebServer server = new MockWebServer();
+
   private final SocksProxy socksProxy = new SocksProxy();
-  private final MockWebServer server = new MockWebServer();
 
   @Before public void setUp() throws Exception {
-    server.start();
     socksProxy.play();
   }
 
   @After public void tearDown() throws Exception {
-    server.shutdown();
     socksProxy.shutdown();
   }
 
