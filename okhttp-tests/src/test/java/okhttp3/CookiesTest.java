@@ -99,7 +99,7 @@ public class CookiesTest {
     assertThat(cookie.getCommentURL()).isNull();
     assertThat(cookie.getDiscard()).isFalse();
     // Converting to a fixed date can cause rounding!
-    assertThat((double) cookie.getMaxAge()).isCloseTo(60.0, offset(1.0));
+    assertThat((double) cookie.getMaxAge()).isCloseTo(60.0, offset(5.0));
     assertThat(cookie.getPath()).isEqualTo("/path");
     assertThat(cookie.getSecure()).isTrue();
   }
