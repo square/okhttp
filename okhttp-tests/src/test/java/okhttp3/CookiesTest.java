@@ -41,6 +41,7 @@ import static org.junit.Assert.fail;
 
 /** Derived from Android's CookiesTest. */
 public class CookiesTest {
+  @Rule public final MockWebServer server = new MockWebServer();
   @Rule public final OkHttpClientTestRule clientTestRule = new OkHttpClientTestRule();
 
   private OkHttpClient client = clientTestRule.client;
@@ -51,8 +52,6 @@ public class CookiesTest {
     client = client.newBuilder()
         .cookieJar(new JavaNetCookieJar(cookieManager))
         .build();
-    MockWebServer server = new MockWebServer();
-    server.start();
 
     HttpUrl urlWithIpAddress = urlWithIpAddress(server, "/path/foo");
     server.enqueue(new MockResponse().addHeader("Set-Cookie: a=android; "
@@ -81,8 +80,6 @@ public class CookiesTest {
     client = client.newBuilder()
         .cookieJar(new JavaNetCookieJar(cookieManager))
         .build();
-    MockWebServer server = new MockWebServer();
-    server.start();
 
     HttpUrl urlWithIpAddress = urlWithIpAddress(server, "/path/foo");
     server.enqueue(new MockResponse().addHeader("Set-Cookie: a=android; "
@@ -112,8 +109,6 @@ public class CookiesTest {
     client = client.newBuilder()
         .cookieJar(new JavaNetCookieJar(cookieManager))
         .build();
-    MockWebServer server = new MockWebServer();
-    server.start();
 
     HttpUrl urlWithIpAddress = urlWithIpAddress(server, "/path/foo");
     server.enqueue(new MockResponse().addHeader("Set-Cookie: a=\"android\"; "
@@ -140,9 +135,7 @@ public class CookiesTest {
   }
 
   @Test public void testSendingCookiesFromStore() throws Exception {
-    MockWebServer server = new MockWebServer();
     server.enqueue(new MockResponse());
-    server.start();
     HttpUrl serverUrl = urlWithIpAddress(server, "/");
 
     CookieManager cookieManager = new CookieManager(null, ACCEPT_ORIGINAL_SERVER);
@@ -165,9 +158,7 @@ public class CookiesTest {
   }
 
   @Test public void cookieHandlerLikeAndroid() throws Exception {
-    final MockWebServer server = new MockWebServer();
     server.enqueue(new MockResponse());
-    server.start();
     final HttpUrl serverUrl = urlWithIpAddress(server, "/");
 
     CookieHandler androidCookieHandler = new CookieHandler() {
@@ -193,12 +184,10 @@ public class CookiesTest {
   }
 
   @Test public void receiveAndSendMultipleCookies() throws Exception {
-    MockWebServer server = new MockWebServer();
     server.enqueue(new MockResponse()
         .addHeader("Set-Cookie", "a=android")
         .addHeader("Set-Cookie", "b=banana"));
     server.enqueue(new MockResponse());
-    server.start();
 
     CookieManager cookieManager = new CookieManager(null, ACCEPT_ORIGINAL_SERVER);
     client = client.newBuilder()
@@ -263,9 +252,7 @@ public class CookiesTest {
         }))
         .build();
 
-    MockWebServer server = new MockWebServer();
     server.enqueue(new MockResponse());
-    server.start();
 
     get(server.url("/"));
 
