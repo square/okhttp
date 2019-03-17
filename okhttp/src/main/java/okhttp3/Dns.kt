@@ -46,7 +46,7 @@ interface Dns {
     val SYSTEM = object : Dns {
       override fun lookup(hostname: String): List<InetAddress> {
         try {
-          return asList(*InetAddress.getAllByName(hostname))
+          return InetAddress.getAllByName(hostname).toList()
         } catch (e: NullPointerException) {
           val unknownHostException = UnknownHostException(
               "Broken system behaviour for dns lookup of $hostname")
