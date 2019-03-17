@@ -21,6 +21,7 @@ elif [ "$TRAVIS_BRANCH" != "$BRANCH" ]; then
   echo "Skipping snapshot deployment: wrong branch. Expected '$BRANCH' but was '$TRAVIS_BRANCH'."
 else
   echo "Deploying snapshot..."
-  ./mvnw clean source:jar javadoc:jar deploy --settings=".buildscript/settings.xml" -DskipTests -B
+  echo "TODO: fix snapshot deployment for gradle..."
+  # ./mvnw clean source:jar javadoc:jar deploy --settings=".buildscript/settings.xml" -DskipTests -B
   echo "Snapshot deployed!"
 fi

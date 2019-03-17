@@ -180,6 +180,9 @@ public final class CertificatePinnerChainValidationTest {
   }
 
   @Test public void unrelatedPinnedLeafCertificateInChain() throws Exception {
+    // https://github.com/square/okhttp/issues/4729
+    assumeFalse(getJvmSpecVersion().equals("11"));
+
     // Start with a trusted root CA certificate.
     HeldCertificate rootCa = new HeldCertificate.Builder()
         .serialNumber(1L)
@@ -255,6 +258,9 @@ public final class CertificatePinnerChainValidationTest {
   }
 
   @Test public void unrelatedPinnedIntermediateCertificateInChain() throws Exception {
+    // https://github.com/square/okhttp/issues/4729
+    assumeFalse(getJvmSpecVersion().equals("11"));
+
     // Start with two root CA certificates, one is good and the other is compromised.
     HeldCertificate rootCa = new HeldCertificate.Builder()
         .serialNumber(1L)

@@ -1,0 +1,16 @@
+jar {
+  manifest {
+    attributes('Automatic-Module-Name': 'okhttp3.tls')
+  }
+}
+
+dependencies {
+  api deps.okio
+  implementation project(':okhttp')
+  implementation deps.bouncycastle
+  compileOnly deps.jsr305
+
+  testImplementation project(':okhttp-testing-support')
+  testImplementation deps.junit
+  testImplementation deps.assertj
+}

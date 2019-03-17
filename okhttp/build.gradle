@@ -1,0 +1,31 @@
+jar {
+  manifest {
+    attributes('Automatic-Module-Name': 'okhttp3')
+  }
+}
+
+sourceSets {
+  main.java.srcDirs += "$buildDir/generated/sources/java-templates/java/main"
+}
+
+compileJava {
+  dependsOn 'copyJavaTemplates'
+}
+
+task copyJavaTemplates(type: Copy) {
+  from 'src/main/java-templates'
+  into "$buildDir/generated/sources/java-templates/java/main"
+  expand('projectVersion': "$VERSION_NAME")
+  filteringCharset = 'UTF-8'
+}
+
+dependencies {
+  api deps.okio
+  compileOnly deps.conscrypt
+  compileOnly deps.android
+  compileOnly deps.jsr305
+  compileOnly deps.animalSniffer
+
+  testImplementation deps.junit
+  testImplementation deps.assertj
+}

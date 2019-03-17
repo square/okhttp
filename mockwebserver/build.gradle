@@ -1,0 +1,14 @@
+jar {
+  manifest {
+    attributes('Automatic-Module-Name': 'okhttp3.mockwebserver')
+  }
+}
+
+dependencies {
+  api project(':okhttp')
+  api deps.junit
+
+  testImplementation project(':okhttp-testing-support')
+  testImplementation project(':okhttp-tls')
+  testImplementation deps.assertj
+}
