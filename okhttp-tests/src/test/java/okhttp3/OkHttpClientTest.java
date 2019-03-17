@@ -26,6 +26,7 @@ import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 
 import static java.util.Arrays.asList;
@@ -34,17 +35,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.fail;
 
 public final class OkHttpClientTest {
+  @Rule public final MockWebServer server = new MockWebServer();
+
   private static final ProxySelector DEFAULT_PROXY_SELECTOR = ProxySelector.getDefault();
   private static final CookieHandler DEFAULT_COOKIE_HANDLER = CookieManager.getDefault();
   private static final ResponseCache DEFAULT_RESPONSE_CACHE = ResponseCache.getDefault();
-  private final MockWebServer server = new MockWebServer();
-
-  @Before public void setUp() throws Exception {
-    server.start();
-  }
 
   @After public void tearDown() throws Exception {
-    server.shutdown();
     ProxySelector.setDefault(DEFAULT_PROXY_SELECTOR);
     CookieManager.setDefault(DEFAULT_COOKIE_HANDLER);
     ResponseCache.setDefault(DEFAULT_RESPONSE_CACHE);
