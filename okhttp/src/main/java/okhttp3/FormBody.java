@@ -13,128 +13,97 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package okhttp3;
+package okhttp3
 
-import java.io.IOException;
-import java.nio.charset.Charset;
-import java.util.ArrayList;
-import java.util.List;
-import javax.annotation.Nullable;
-import okhttp3.internal.Util;
-import okio.Buffer;
-import okio.BufferedSink;
+import okhttp3.HttpUrl.Companion.FORM_ENCODE_SET
+import okhttp3.HttpUrl.Companion.percentDecode
+import okhttp3.internal.Util
+import okio.Buffer
+import okio.BufferedSink
+import java.io.IOException
+import java.nio.charset.Charset
 
-import static okhttp3.HttpUrl.FORM_ENCODE_SET;
-import static okhttp3.HttpUrl.percentDecode;
+class FormBody internal constructor(
+  encodedNames: List<String>,
+  encodedValues: List<String>
+) : RequestBody() {
+  private val encodedNames: List<String> = Util.immutableList(encodedNames)
+  private val encodedValues: List<String> = Util.immutableList(encodedValues)
 
-public final class FormBody extends RequestBody {
-  private static final MediaType CONTENT_TYPE = MediaType.get("application/x-www-form-urlencoded");
+  /** The number of key-value pairs in this form-encoded body.  */
+  fun size(): Int = encodedNames.size
 
-  private final List<String> encodedNames;
-  private final List<String> encodedValues;
+  fun encodedName(index: Int) = encodedNames[index]
 
-  FormBody(List<String> encodedNames, List<String> encodedValues) {
-    this.encodedNames = Util.immutableList(encodedNames);
-    this.encodedValues = Util.immutableList(encodedValues);
-  }
+  fun name(index: Int) = percentDecode(encodedName(index), true)
 
-  /** The number of key-value pairs in this form-encoded body. */
-  public int size() {
-    return encodedNames.size();
-  }
+  fun encodedValue(index: Int) = encodedValues[index]
 
-  public String encodedName(int index) {
-    return encodedNames.get(index);
-  }
+  fun value(index: Int) = percentDecode(encodedValue(index), true)
 
-  public String name(int index) {
-    return percentDecode(encodedName(index), true);
-  }
+  override fun contentType() = CONTENT_TYPE
 
-  public String encodedValue(int index) {
-    return encodedValues.get(index);
-  }
+  override fun contentLength() = writeOrCountBytes(null, true)
 
-  public String value(int index) {
-    return percentDecode(encodedValue(index), true);
-  }
-
-  @Override public MediaType contentType() {
-    return CONTENT_TYPE;
-  }
-
-  @Override public long contentLength() {
-    return writeOrCountBytes(null, true);
-  }
-
-  @Override public void writeTo(BufferedSink sink) throws IOException {
-    writeOrCountBytes(sink, false);
+  @Throws(IOException::class)
+  override fun writeTo(sink: BufferedSink) {
+    writeOrCountBytes(sink, false)
   }
 
   /**
-   * Either writes this request to {@code sink} or measures its content length. We have one method
+   * Either writes this request to `sink` or measures its content length. We have one method
    * do double-duty to make sure the counting and content are consistent, particularly when it comes
    * to awkward operations like measuring the encoded length of header strings, or the
    * length-in-digits of an encoded integer.
    */
-  private long writeOrCountBytes(@Nullable BufferedSink sink, boolean countBytes) {
-    long byteCount = 0L;
+  private fun writeOrCountBytes(sink: BufferedSink?, countBytes: Boolean): Long {
+    var byteCount = 0L
 
-    Buffer buffer;
+    val buffer: Buffer
     if (countBytes) {
-      buffer = new Buffer();
+      buffer = Buffer()
     } else {
-      buffer = sink.buffer();
+      buffer = sink!!.buffer()
     }
 
-    for (int i = 0, size = encodedNames.size(); i < size; i++) {
-      if (i > 0) buffer.writeByte('&');
-      buffer.writeUtf8(encodedNames.get(i));
-      buffer.writeByte('=');
-      buffer.writeUtf8(encodedValues.get(i));
+    var i = 0
+    val size = encodedNames.size
+    while (i < size) {
+      if (i > 0) buffer.writeByte('&'.toInt())
+      buffer.writeUtf8(encodedNames[i])
+      buffer.writeByte('='.toInt())
+      buffer.writeUtf8(encodedValues[i])
+      i++
     }
 
     if (countBytes) {
-      byteCount = buffer.size();
-      buffer.clear();
+      byteCount = buffer.size()
+      buffer.clear()
     }
 
-    return byteCount;
+    return byteCount
   }
 
-  public static final class Builder {
-    private final List<String> names = new ArrayList<>();
-    private final List<String> values = new ArrayList<>();
-    private final @Nullable Charset charset;
+  class Builder @JvmOverloads constructor(private val charset: Charset? = null) {
+    private val names = mutableListOf<String>()
+    private val values = mutableListOf<String>()
 
-    public Builder() {
-      this(null);
+    fun add(name: String, value: String): Builder {
+      names.add(HttpUrl.canonicalize(name, FORM_ENCODE_SET, false, false, true, true, charset))
+      values.add(HttpUrl.canonicalize(value, FORM_ENCODE_SET, false, false, true, true, charset))
+      return this
     }
 
-    public Builder(@Nullable Charset charset) {
-      this.charset = charset;
+    fun addEncoded(name: String, value: String): Builder {
+      names.add(HttpUrl.canonicalize(name, FORM_ENCODE_SET, true, false, true, true, charset))
+      values.add(HttpUrl.canonicalize(value, FORM_ENCODE_SET, true, false, true, true, charset))
+      return this
     }
 
-    public Builder add(String name, String value) {
-      if (name == null) throw new NullPointerException("name == null");
-      if (value == null) throw new NullPointerException("value == null");
+    fun build(): FormBody = FormBody(names, values)
+  }
 
-      names.add(HttpUrl.canonicalize(name, FORM_ENCODE_SET, false, false, true, true, charset));
-      values.add(HttpUrl.canonicalize(value, FORM_ENCODE_SET, false, false, true, true, charset));
-      return this;
-    }
-
-    public Builder addEncoded(String name, String value) {
-      if (name == null) throw new NullPointerException("name == null");
-      if (value == null) throw new NullPointerException("value == null");
-
-      names.add(HttpUrl.canonicalize(name, FORM_ENCODE_SET, true, false, true, true, charset));
-      values.add(HttpUrl.canonicalize(value, FORM_ENCODE_SET, true, false, true, true, charset));
-      return this;
-    }
-
-    public FormBody build() {
-      return new FormBody(names, values);
-    }
+  companion object {
+    private val CONTENT_TYPE: MediaType = MediaType.get("application/x-www-form-urlencoded")
   }
 }
