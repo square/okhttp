@@ -47,6 +47,7 @@ buildscript {
 plugins {
   id 'ru.vyarus.animalsniffer' version '1.5.0'
   id 'com.github.johnrengelman.shadow' version '4.0.1'
+  id 'me.champeau.gradle.japicmp' version '0.2.6'
 }
 
 allprojects {
@@ -152,3 +153,22 @@ def alpnBootVersionForPatchVersion(String javaVersion, int patchVersion) {
       throw new IllegalStateException("Unexpected Java version: ${javaVersion}")
   }
 }
+
+/**
+ * Returns a .jar file for the golden version of this project.
+ * https://github.com/Visistema/Groovy1/blob/ba5eb9b2f19ca0cc8927359ce414c4e1974b7016/gradle/binarycompatibility.gradle#L48
+ */
+ext.baselineJar = { project, version ->
+  def group = project.property("GROUP")
+  def artifactId = project.property("POM_ARTIFACT_ID")
+  try {
+    String jarFile = "$artifactId-${version}.jar"
+    project.group = 'virtual_group_for_japicmp' // Prevent it from resolving the current version.
+    def dependency = project.dependencies.create("$group:$artifactId:$version@jar")
+    return project.configurations.detachedConfiguration(dependency).files
+        .find { (it.name == jarFile) }
+  } finally {
+    project.group = group
+  }
+}
+ext.baselineVersion = "3.14.0"
