@@ -45,10 +45,12 @@ import javax.annotation.Nullable;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
 import javax.net.ssl.X509TrustManager;
+import okhttp3.EventListener;
 import okhttp3.Headers;
 import okhttp3.HttpUrl;
 import okhttp3.RequestBody;
 import okhttp3.ResponseBody;
+import okhttp3.TlsVersion;
 import okhttp3.internal.http2.Header;
 import okio.Buffer;
 import okio.BufferedSource;
@@ -60,6 +62,7 @@ import static java.nio.charset.StandardCharsets.UTF_16BE;
 import static java.nio.charset.StandardCharsets.UTF_16LE;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Arrays.asList;
+import static okhttp3.TlsVersion.forJavaName;
 
 /** Junk drawer of utility methods. */
 public final class Util {
@@ -685,5 +688,17 @@ public final class Util {
     return a.host().equals(b.host())
         && a.port() == b.port()
         && a.scheme().equals(b.scheme());
+  }
+
+  public static EventListener.Factory eventListenerFactory(EventListener listener) {
+    return call -> listener;
+  }
+
+  public static List<TlsVersion> tlsVersionsForJavaNames(String... tlsVersions) {
+    List<TlsVersion> result = new ArrayList<>(tlsVersions.length);
+    for (String tlsVersion : tlsVersions) {
+      result.add(forJavaName(tlsVersion));
+    }
+    return Collections.unmodifiableList(result);
   }
 }
