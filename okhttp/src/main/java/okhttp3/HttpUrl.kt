@@ -327,7 +327,7 @@ class HttpUrl internal constructor(builder: Builder) {
   /** Canonical URL.  */
   private val url: String = builder.toString()
 
-  val isHttps: Boolean get() = scheme == "https"
+  val isHttps: Boolean = scheme == "https"
 
   /** Returns this URL as a [java.net.URL][URL].  */
   fun url(): URL {
@@ -610,13 +610,10 @@ class HttpUrl internal constructor(builder: Builder) {
    */
   fun queryParameter(name: String): String? {
     if (queryNamesAndValues == null) return null
-    var i = 0
-    val size = queryNamesAndValues.size
-    while (i < size) {
+    for (i in 0 until queryNamesAndValues.size step 2) {
       if (name == queryNamesAndValues[i]) {
         return queryNamesAndValues[i + 1]
       }
-      i += 2
     }
     return null
   }
@@ -637,11 +634,8 @@ class HttpUrl internal constructor(builder: Builder) {
   fun queryParameterNames(): Set<String> {
     if (queryNamesAndValues == null) return emptySet()
     val result = LinkedHashSet<String>()
-    var i = 0
-    val size = queryNamesAndValues.size
-    while (i < size) {
+    for (i in 0 until queryNamesAndValues.size step 2) {
       result.add(queryNamesAndValues[i]!!)
-      i += 2
     }
     return Collections.unmodifiableSet(result)
   }
@@ -663,13 +657,10 @@ class HttpUrl internal constructor(builder: Builder) {
   fun queryParameterValues(name: String): List<String?> {
     if (queryNamesAndValues == null) return emptyList()
     val result = ArrayList<String?>()
-    var i = 0
-    val size = queryNamesAndValues.size
-    while (i < size) {
+    for (i in 0 until queryNamesAndValues.size step 2) {
       if (name == queryNamesAndValues[i]) {
         result.add(queryNamesAndValues[i + 1])
       }
-      i += 2
     }
     return Collections.unmodifiableList(result)
   }
@@ -987,10 +978,11 @@ class HttpUrl internal constructor(builder: Builder) {
       if (encodedQueryNamesAndValues == null) encodedQueryNamesAndValues = ArrayList()
       encodedQueryNamesAndValues!!.add(
           canonicalize(name, QUERY_COMPONENT_ENCODE_SET, false, false, true, true))
-      encodedQueryNamesAndValues!!.add(if (value != null)
+      encodedQueryNamesAndValues!!.add(if (value != null) {
         canonicalize(value, QUERY_COMPONENT_ENCODE_SET, false, false, true, true)
-      else
-        null)
+      } else {
+        null
+      })
       return this
     }
 
@@ -999,10 +991,11 @@ class HttpUrl internal constructor(builder: Builder) {
       if (encodedQueryNamesAndValues == null) encodedQueryNamesAndValues = ArrayList()
       encodedQueryNamesAndValues!!.add(
           canonicalize(encodedName, QUERY_COMPONENT_REENCODE_SET, true, false, true, true))
-      encodedQueryNamesAndValues!!.add(if (encodedValue != null)
+      encodedQueryNamesAndValues!!.add(if (encodedValue != null) {
         canonicalize(encodedValue, QUERY_COMPONENT_REENCODE_SET, true, false, true, true)
-      else
-        null)
+      } else {
+        null
+      })
       return this
     }
 
@@ -1048,18 +1041,20 @@ class HttpUrl internal constructor(builder: Builder) {
     }
 
     fun fragment(fragment: String?): Builder {
-      this.encodedFragment = if (fragment != null)
+      this.encodedFragment = if (fragment != null) {
         canonicalize(fragment, FRAGMENT_ENCODE_SET, false, false, false, false)
-      else
+      } else {
         null
+      }
       return this
     }
 
     fun encodedFragment(encodedFragment: String?): Builder {
-      this.encodedFragment = if (encodedFragment != null)
+      this.encodedFragment = if (encodedFragment != null) {
         canonicalize(encodedFragment, FRAGMENT_ENCODE_SET, true, false, false, false)
-      else
+      } else {
         null
+      }
       return this
     }
 
@@ -1068,26 +1063,18 @@ class HttpUrl internal constructor(builder: Builder) {
      * particularly strict for certain components.
      */
     internal fun reencodeForUri(): Builder {
-      run {
-        var i = 0
-        val size = encodedPathSegments.size
-        while (i < size) {
-          val pathSegment = encodedPathSegments[i]
-          encodedPathSegments[i] =
-              canonicalize(pathSegment, PATH_SEGMENT_ENCODE_SET_URI, true, true, false, true)
-          i++
-        }
+      for (i in 0 until encodedPathSegments.size) {
+        val pathSegment = encodedPathSegments[i]
+        encodedPathSegments[i] =
+            canonicalize(pathSegment, PATH_SEGMENT_ENCODE_SET_URI, true, true, false, true)
       }
       if (encodedQueryNamesAndValues != null) {
-        var i = 0
-        val size = encodedQueryNamesAndValues!!.size
-        while (i < size) {
+        for (i in 0 until encodedQueryNamesAndValues!!.size) {
           val component = encodedQueryNamesAndValues!![i]
           if (component != null) {
             encodedQueryNamesAndValues!![i] =
                 canonicalize(component, QUERY_COMPONENT_ENCODE_SET_URI, true, true, true, true)
           }
-          i++
         }
       }
       if (encodedFragment != null) {
@@ -1192,10 +1179,11 @@ class HttpUrl internal constructor(builder: Builder) {
         pos += slashCount
         authority@ while (true) {
           val componentDelimiterOffset = delimiterOffset(input, pos, limit, "@/\\?#")
-          val c = if (componentDelimiterOffset != limit)
+          val c = if (componentDelimiterOffset != limit) {
             input[componentDelimiterOffset].toInt()
-          else
+          } else {
             -1
+          }
           when (c) {
             '@'.toInt() -> {
               // User info precedes.
@@ -1204,10 +1192,11 @@ class HttpUrl internal constructor(builder: Builder) {
                     input, pos, componentDelimiterOffset, ':')
                 val canonicalUsername = canonicalize(input, pos, passwordColonOffset,
                     USERNAME_ENCODE_SET, true, false, false, true, null)
-                this.encodedUsername = if (hasUsername)
+                this.encodedUsername = if (hasUsername) {
                   this.encodedUsername + "%40" + canonicalUsername
-                else
+                } else {
                   canonicalUsername
+                }
                 if (passwordColonOffset != componentDelimiterOffset) {
                   hasPassword = true
                   this.encodedPassword = canonicalize(input, passwordColonOffset + 1,
@@ -1227,18 +1216,16 @@ class HttpUrl internal constructor(builder: Builder) {
               if (portColonOffset + 1 < componentDelimiterOffset) {
                 host = canonicalizeHost(input, pos, portColonOffset)
                 port = parsePort(input, portColonOffset + 1, componentDelimiterOffset)
-                if (port == -1) {
-                  throw IllegalArgumentException("Invalid URL port: \""
-                      + input.substring(portColonOffset + 1,
-                      componentDelimiterOffset) + '"'.toString())
+                require(port != -1) {
+                  "Invalid URL port: \"${input.substring(portColonOffset + 1,
+                      componentDelimiterOffset)}\""
                 }
               } else {
                 host = canonicalizeHost(input, pos, portColonOffset)
                 port = defaultPort(scheme!!)
               }
-              if (host == null) {
-                throw IllegalArgumentException(
-                    INVALID_HOST + ": \"" + input.substring(pos, portColonOffset) + '"'.toString())
+              require(host != null) {
+                "$INVALID_HOST: \"${input.substring(pos, portColonOffset)}\""
               }
               pos = componentDelimiterOffset
               break@authority
@@ -1366,8 +1353,7 @@ class HttpUrl internal constructor(builder: Builder) {
     }
 
     companion object {
-      @JvmStatic
-      internal val INVALID_HOST = "Invalid URL host"
+      internal const val INVALID_HOST = "Invalid URL host"
 
       /**
        * Returns the index of the ':' in `input` that is after scheme characters. Returns -1 if
@@ -1383,7 +1369,7 @@ class HttpUrl internal constructor(builder: Builder) {
         for (i in pos + 1 until limit) {
           val c = input[i]
 
-          return if (c >= 'a' && c <= 'z'
+          if (c >= 'a' && c <= 'z'
               || c >= 'A' && c <= 'Z'
               || c >= '0' && c <= '9'
               || c == '+'
@@ -1391,9 +1377,9 @@ class HttpUrl internal constructor(builder: Builder) {
               || c == '.') {
             continue // Scheme character. Keep going.
           } else if (c == ':') {
-            i // Scheme prefix!
+            return i // Scheme prefix!
           } else {
-            -1 // Non-scheme character before the first ':'.
+            return -1 // Non-scheme character before the first ':'.
           }
         }
 
@@ -1403,13 +1389,11 @@ class HttpUrl internal constructor(builder: Builder) {
       /** Returns the number of '/' and '\' slashes in `input`, starting at `pos`.  */
       @JvmStatic
       private fun slashCount(input: String, pos: Int, limit: Int): Int {
-        var pos = pos
         var slashCount = 0
-        while (pos < limit) {
-          val c = input[pos]
+        for (i in pos until limit) {
+          val c = input[i]
           if (c == '\\' || c == '/') {
             slashCount++
-            pos++
           } else {
             break
           }
@@ -1423,8 +1407,10 @@ class HttpUrl internal constructor(builder: Builder) {
         var i = pos
         while (i < limit) {
           when (input[i]) {
-            '[' -> while (++i < limit) {
-              if (input[i] == ']') break
+            '[' -> {
+              while (++i < limit) {
+                if (input[i] == ']') break
+              }
             }
             ':' -> return i
           }
@@ -1470,28 +1456,17 @@ class HttpUrl internal constructor(builder: Builder) {
     @JvmStatic
     private val HEX_DIGITS =
         charArrayOf('0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F')
-    @JvmStatic
-    internal val USERNAME_ENCODE_SET = " \"':;<=>@[]^`{}|/\\?#"
-    @JvmStatic
-    internal val PASSWORD_ENCODE_SET = " \"':;<=>@[]^`{}|/\\?#"
-    @JvmStatic
-    internal val PATH_SEGMENT_ENCODE_SET = " \"<>^`{}|/\\?#"
-    @JvmStatic
-    internal val PATH_SEGMENT_ENCODE_SET_URI = "[]"
-    @JvmStatic
-    internal val QUERY_ENCODE_SET = " \"'<>#"
-    @JvmStatic
-    internal val QUERY_COMPONENT_REENCODE_SET = " \"'<>#&="
-    @JvmStatic
-    internal val QUERY_COMPONENT_ENCODE_SET = " !\"#$&'(),/:;<=>?@[]\\^`{|}~"
-    @JvmStatic
-    internal val QUERY_COMPONENT_ENCODE_SET_URI = "\\^`{|}"
-    @JvmStatic
-    internal val FORM_ENCODE_SET = " \"':;<=>@[]^`{}|/\\?#&!$(),~"
-    @JvmStatic
-    internal val FRAGMENT_ENCODE_SET = ""
-    @JvmStatic
-    internal val FRAGMENT_ENCODE_SET_URI = " \"#<>\\^`{|}"
+    internal const val USERNAME_ENCODE_SET = " \"':;<=>@[]^`{}|/\\?#"
+    internal const val PASSWORD_ENCODE_SET = " \"':;<=>@[]^`{}|/\\?#"
+    internal const val PATH_SEGMENT_ENCODE_SET = " \"<>^`{}|/\\?#"
+    internal const val PATH_SEGMENT_ENCODE_SET_URI = "[]"
+    internal const val QUERY_ENCODE_SET = " \"'<>#"
+    internal const val QUERY_COMPONENT_REENCODE_SET = " \"'<>#&="
+    internal const val QUERY_COMPONENT_ENCODE_SET = " !\"#$&'(),/:;<=>?@[]\\^`{|}~"
+    internal const val QUERY_COMPONENT_ENCODE_SET_URI = "\\^`{|}"
+    internal const val FORM_ENCODE_SET = " \"':;<=>@[]^`{}|/\\?#&!$(),~"
+    internal const val FRAGMENT_ENCODE_SET = ""
+    internal const val FRAGMENT_ENCODE_SET_URI = " \"#<>\\^`{|}"
 
     /** Returns 80 if `scheme.equals("http")`, 443 if `scheme.equals("https")` and -1 otherwise. */
     @JvmStatic
@@ -1505,20 +1480,15 @@ class HttpUrl internal constructor(builder: Builder) {
 
     @JvmStatic
     internal fun pathSegmentsToString(out: StringBuilder, pathSegments: List<String>) {
-      var i = 0
-      val size = pathSegments.size
-      while (i < size) {
+      for (i in 0 until pathSegments.size) {
         out.append('/')
         out.append(pathSegments[i])
-        i++
       }
     }
 
     @JvmStatic
     internal fun namesAndValuesToQueryString(out: StringBuilder, namesAndValues: List<String?>) {
-      var i = 0
-      val size = namesAndValues.size
-      while (i < size) {
+      for (i in 0 until namesAndValues.size step 2) {
         val name = namesAndValues[i]
         val value = namesAndValues[i + 1]
         if (i > 0) out.append('&')
@@ -1527,7 +1497,6 @@ class HttpUrl internal constructor(builder: Builder) {
           out.append('=')
           out.append(value)
         }
-        i += 2
       }
     }
 
