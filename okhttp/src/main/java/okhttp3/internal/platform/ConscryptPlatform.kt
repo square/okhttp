@@ -13,112 +13,103 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package okhttp3.internal.platform;
+package okhttp3.internal.platform
 
-import java.security.NoSuchAlgorithmException;
-import java.security.Provider;
-import java.util.List;
-import javax.annotation.Nullable;
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLSocket;
-import javax.net.ssl.SSLSocketFactory;
-import javax.net.ssl.X509TrustManager;
-import okhttp3.Protocol;
-import org.conscrypt.Conscrypt;
+import okhttp3.Protocol
+import org.conscrypt.Conscrypt
+import java.security.NoSuchAlgorithmException
+import java.security.Provider
+import javax.net.ssl.SSLContext
+import javax.net.ssl.SSLSocket
+import javax.net.ssl.SSLSocketFactory
+import javax.net.ssl.X509TrustManager
 
 /**
  * Platform using Conscrypt (conscrypt.org) if installed as the first Security Provider.
  *
  * Requires org.conscrypt:conscrypt-openjdk-uber on the classpath.
  */
-public class ConscryptPlatform extends Platform {
-  private ConscryptPlatform() {
-  }
+class ConscryptPlatform private constructor() : Platform() {
 
-  @SuppressWarnings("deprecation") private Provider getProvider() {
+  private val provider: Provider
     // defaults to true, but allow for older versions of conscrypt if still compatible
     // new form with boolean is only present in >= 2.0.0
-    return Conscrypt.newProviderBuilder().provideTrustManager().build();
+    get() = Conscrypt.newProviderBuilder().provideTrustManager().build()
+
+  override fun getSSLContext(): SSLContext {
+    // Allow for Conscrypt 1.2
+    return try {
+      SSLContext.getInstance("TLSv1.3", provider)
+    } catch (e: NoSuchAlgorithmException) {
+      try {
+        SSLContext.getInstance("TLS", provider)
+      } catch (e2: NoSuchAlgorithmException) {
+        throw IllegalStateException("No TLS provider", e)
+      }
+    }
   }
 
-  @Override public @Nullable X509TrustManager trustManager(SSLSocketFactory sslSocketFactory) {
-    if (!Conscrypt.isConscrypt(sslSocketFactory)) {
-      return super.trustManager(sslSocketFactory);
-    }
+  public override fun trustManager(sslSocketFactory: SSLSocketFactory): X509TrustManager? =
+      if (!Conscrypt.isConscrypt(sslSocketFactory)) {
+        super.trustManager(sslSocketFactory)
+      } else {
+        try {
+          // org.conscrypt.SSLParametersImpl
+          val sp = readFieldOrNull(sslSocketFactory, Any::class.java, "sslParameters")
 
-    try {
-      // org.conscrypt.SSLParametersImpl
-      Object sp =
-          readFieldOrNull(sslSocketFactory, Object.class, "sslParameters");
-
-      if (sp != null) {
-        return readFieldOrNull(sp, X509TrustManager.class, "x509TrustManager");
+          when {
+            sp != null -> readFieldOrNull(sp, X509TrustManager::class.java, "x509TrustManager")
+            else -> null
+          }
+        } catch (e: Exception) {
+          throw UnsupportedOperationException(
+              "clientBuilder.sslSocketFactory(SSLSocketFactory) not supported on Conscrypt", e)
+        }
       }
 
-      return null;
-    } catch (Exception e) {
-      throw new UnsupportedOperationException(
-          "clientBuilder.sslSocketFactory(SSLSocketFactory) not supported on Conscrypt", e);
-    }
-  }
-
-  @Override public void configureTlsExtensions(
-      SSLSocket sslSocket, String hostname, List<Protocol> protocols) {
+  override fun configureTlsExtensions(
+    sslSocket: SSLSocket, hostname: String?, protocols: List<Protocol>
+  ) {
     if (Conscrypt.isConscrypt(sslSocket)) {
       // Enable SNI and session tickets.
       if (hostname != null) {
-        Conscrypt.setUseSessionTickets(sslSocket, true);
-        Conscrypt.setHostname(sslSocket, hostname);
+        Conscrypt.setUseSessionTickets(sslSocket, true)
+        Conscrypt.setHostname(sslSocket, hostname)
       }
 
       // Enable ALPN.
-      List<String> names = Platform.alpnProtocolNames(protocols);
-      Conscrypt.setApplicationProtocols(sslSocket, names.toArray(new String[0]));
+      val names = alpnProtocolNames(protocols)
+      Conscrypt.setApplicationProtocols(sslSocket, names.toTypedArray())
     } else {
-      super.configureTlsExtensions(sslSocket, hostname, protocols);
+      super.configureTlsExtensions(sslSocket, hostname, protocols)
     }
   }
 
-  @Override public @Nullable String getSelectedProtocol(SSLSocket sslSocket) {
-    if (Conscrypt.isConscrypt(sslSocket)) {
-      return Conscrypt.getApplicationProtocol(sslSocket);
-    } else {
-      return super.getSelectedProtocol(sslSocket);
-    }
-  }
-
-  @Override public SSLContext getSSLContext() {
-    try {
-      return SSLContext.getInstance("TLSv1.3", getProvider());
-    } catch (NoSuchAlgorithmException e) {
-      try {
-        // Allow for Conscrypt 1.2
-        return SSLContext.getInstance("TLS", getProvider());
-      } catch (NoSuchAlgorithmException e2) {
-        throw new IllegalStateException("No TLS provider", e);
-      }
-    }
-  }
-
-  public static ConscryptPlatform buildIfSupported() {
-    try {
-      // Trigger an early exception over a fatal error, prefer a RuntimeException over Error.
-      Class.forName("org.conscrypt.Conscrypt");
-
-      if (!Conscrypt.isAvailable()) {
-        return null;
+  override fun getSelectedProtocol(socket: SSLSocket): String? =
+      if (Conscrypt.isConscrypt(socket)) {
+        Conscrypt.getApplicationProtocol(socket)
+      } else {
+        super.getSelectedProtocol(socket)
       }
 
-      return new ConscryptPlatform();
-    } catch (ClassNotFoundException e) {
-      return null;
-    }
-  }
-
-  @Override
-  public void configureSslSocketFactory(SSLSocketFactory socketFactory) {
+  override fun configureSslSocketFactory(socketFactory: SSLSocketFactory) {
     if (Conscrypt.isConscrypt(socketFactory)) {
-      Conscrypt.setUseEngineSocket(socketFactory, true);
+      Conscrypt.setUseEngineSocket(socketFactory, true)
+    }
+  }
+
+  companion object {
+    @JvmStatic
+    fun buildIfSupported(): ConscryptPlatform? = try {
+      // Trigger an early exception over a fatal error, prefer a RuntimeException over Error.
+      Class.forName("org.conscrypt.Conscrypt")
+
+      when {
+        Conscrypt.isAvailable() -> ConscryptPlatform()
+        else -> null
+      }
+    } catch (e: ClassNotFoundException) {
+      null
     }
   }
 }

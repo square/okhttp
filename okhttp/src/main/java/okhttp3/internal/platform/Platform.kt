@@ -14,275 +14,256 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package okhttp3.internal.platform;
+package okhttp3.internal.platform
 
-import java.io.IOException;
-import java.lang.reflect.Field;
-import java.net.InetSocketAddress;
-import java.net.Socket;
-import java.security.NoSuchAlgorithmException;
-import java.security.Security;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import javax.annotation.Nullable;
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLSocket;
-import javax.net.ssl.SSLSocketFactory;
-import javax.net.ssl.X509TrustManager;
-import okhttp3.OkHttpClient;
-import okhttp3.Protocol;
-import okhttp3.internal.Util;
-import okhttp3.internal.tls.BasicCertificateChainCleaner;
-import okhttp3.internal.tls.BasicTrustRootIndex;
-import okhttp3.internal.tls.CertificateChainCleaner;
-import okhttp3.internal.tls.TrustRootIndex;
-import okio.Buffer;
+import okhttp3.OkHttpClient
+import okhttp3.Protocol
+import okhttp3.internal.Util
+import okhttp3.internal.tls.BasicCertificateChainCleaner
+import okhttp3.internal.tls.BasicTrustRootIndex
+import okhttp3.internal.tls.CertificateChainCleaner
+import okhttp3.internal.tls.TrustRootIndex
+import okio.Buffer
+import java.io.IOException
+import java.net.InetSocketAddress
+import java.net.Socket
+import java.security.NoSuchAlgorithmException
+import java.security.Security
+import java.util.logging.Level
+import java.util.logging.Logger
+import javax.net.ssl.SSLContext
+import javax.net.ssl.SSLSocket
+import javax.net.ssl.SSLSocketFactory
+import javax.net.ssl.X509TrustManager
 
 /**
  * Access to platform-specific features.
  *
  * <h3>Server name indication (SNI)</h3>
  *
- * <p>Supported on Android 2.3+.
+ * Supported on Android 2.3+.
  *
- * <p>Supported on OpenJDK 7+
+ * Supported on OpenJDK 7+
  *
  * <h3>Session Tickets</h3>
  *
- * <p>Supported on Android 2.3+.
+ * Supported on Android 2.3+.
  *
  * <h3>Android Traffic Stats (Socket Tagging)</h3>
  *
- * <p>Supported on Android 4.0+.
+ * Supported on Android 4.0+.
  *
  * <h3>ALPN (Application Layer Protocol Negotiation)</h3>
  *
- * <p>Supported on Android 5.0+. The APIs were present in Android 4.4, but that implementation was
+ * Supported on Android 5.0+. The APIs were present in Android 4.4, but that implementation was
  * unstable.
  *
- * <p>Supported on OpenJDK 8 via the JettyALPN-boot library.
+ * Supported on OpenJDK 8 via the JettyALPN-boot library.
  *
- * <p>Supported on OpenJDK 9+ via SSLParameters and SSLSocket features.
+ * Supported on OpenJDK 9+ via SSLParameters and SSLSocket features.
  *
  * <h3>Trust Manager Extraction</h3>
  *
- * <p>Supported on Android 2.3+ and OpenJDK 7+. There are no public APIs to recover the trust
- * manager that was used to create an {@link SSLSocketFactory}.
+ * Supported on Android 2.3+ and OpenJDK 7+. There are no public APIs to recover the trust
+ * manager that was used to create an [SSLSocketFactory].
  *
  * <h3>Android Cleartext Permit Detection</h3>
  *
- * <p>Supported on Android 6.0+ via {@code NetworkSecurityPolicy}.
+ * Supported on Android 6.0+ via `NetworkSecurityPolicy`.
  */
-public class Platform {
-  private static final Platform PLATFORM = findPlatform();
-  public static final int INFO = 4;
-  public static final int WARN = 5;
-  private static final Logger logger = Logger.getLogger(OkHttpClient.class.getName());
+open class Platform {
 
-  public static Platform get() {
-    return PLATFORM;
+  /** Prefix used on custom headers.  */
+  fun getPrefix() = "OkHttp"
+
+  open fun getSSLContext(): SSLContext = try {
+    SSLContext.getInstance("TLS")
+  } catch (e: NoSuchAlgorithmException) {
+    throw IllegalStateException("No TLS provider", e)
   }
 
-  /** Prefix used on custom headers. */
-  public String getPrefix() {
-    return "OkHttp";
-  }
-
-  protected @Nullable X509TrustManager trustManager(SSLSocketFactory sslSocketFactory) {
-    // Attempt to get the trust manager from an OpenJDK socket factory. We attempt this on all
-    // platforms in order to support Robolectric, which mixes classes from both Android and the
-    // Oracle JDK. Note that we don't support HTTP/2 or other nice features on Robolectric.
-    try {
-      Class<?> sslContextClass = Class.forName("sun.security.ssl.SSLContextImpl");
-      Object context = readFieldOrNull(sslSocketFactory, sslContextClass, "context");
-      if (context == null) return null;
-      return readFieldOrNull(context, X509TrustManager.class, "trustManager");
-    } catch (ClassNotFoundException e) {
-      return null;
+  protected open fun trustManager(sslSocketFactory: SSLSocketFactory): X509TrustManager? {
+    return try {
+      // Attempt to get the trust manager from an OpenJDK socket factory. We attempt this on all
+      // platforms in order to support Robolectric, which mixes classes from both Android and the
+      // Oracle JDK. Note that we don't support HTTP/2 or other nice features on Robolectric.
+      val sslContextClass = Class.forName("sun.security.ssl.SSLContextImpl")
+      val context = readFieldOrNull(sslSocketFactory, sslContextClass, "context") ?: return null
+      readFieldOrNull(context, X509TrustManager::class.java, "trustManager")
+    } catch (e: ClassNotFoundException) {
+      null
     }
   }
 
   /**
-   * Configure TLS extensions on {@code sslSocket} for {@code route}.
+   * Configure TLS extensions on `sslSocket` for `route`.
    *
    * @param hostname non-null for client-side handshakes; null for server-side handshakes.
    */
-  public void configureTlsExtensions(SSLSocket sslSocket, @Nullable String hostname,
-      List<Protocol> protocols) {
+  open fun configureTlsExtensions(
+    sslSocket: SSLSocket, hostname: String?,
+    protocols: List<@JvmSuppressWildcards Protocol>
+  ) {
   }
 
   /**
-   * Called after the TLS handshake to release resources allocated by {@link
-   * #configureTlsExtensions}.
+   * Called after the TLS handshake to release resources allocated by [ ][.configureTlsExtensions].
    */
-  public void afterHandshake(SSLSocket sslSocket) {
+  open fun afterHandshake(sslSocket: SSLSocket) {}
+
+  /** Returns the negotiated protocol, or null if no protocol was negotiated.  */
+  open fun getSelectedProtocol(socket: SSLSocket): String? = null
+
+  @Throws(IOException::class)
+  open fun connectSocket(socket: Socket, address: InetSocketAddress, connectTimeout: Int) {
+    socket.connect(address, connectTimeout)
   }
 
-  /** Returns the negotiated protocol, or null if no protocol was negotiated. */
-  public @Nullable String getSelectedProtocol(SSLSocket socket) {
-    return null;
+  open fun log(level: Int, message: String, t: Throwable?) {
+    val logLevel = if (level == WARN) Level.WARNING else Level.INFO
+    logger.log(logLevel, message, t)
   }
 
-  public void connectSocket(Socket socket, InetSocketAddress address, int connectTimeout)
-      throws IOException {
-    socket.connect(address, connectTimeout);
-  }
-
-  public void log(int level, String message, @Nullable Throwable t) {
-    Level logLevel = level == WARN ? Level.WARNING : Level.INFO;
-    logger.log(logLevel, message, t);
-  }
-
-  public boolean isCleartextTrafficPermitted(String hostname) {
-    return true;
-  }
+  open fun isCleartextTrafficPermitted(hostname: String): Boolean = true
 
   /**
    * Returns an object that holds a stack trace created at the moment this method is executed. This
-   * should be used specifically for {@link java.io.Closeable} objects and in conjunction with
-   * {@link #logCloseableLeak(String, Object)}.
+   * should be used specifically for [java.io.Closeable] objects and in conjunction with
+   * [.logCloseableLeak].
    */
-  public @Nullable Object getStackTraceForCloseable(String closer) {
-    if (logger.isLoggable(Level.FINE)) {
-      return new Throwable(closer); // These are expensive to allocate.
-    }
-    return null;
-  }
+  open fun getStackTraceForCloseable(closer: String): Any? =
+      when {
+        logger.isLoggable(Level.FINE) -> Throwable(closer) // These are expensive to allocate.
+        else -> null
+      }
 
-  public void logCloseableLeak(String message, Object stackTrace) {
+  open fun logCloseableLeak(message: String, stackTrace: Any?) {
+    var logMessage = message
     if (stackTrace == null) {
-      message += " To see where this was allocated, set the OkHttpClient logger level to FINE: "
-          + "Logger.getLogger(OkHttpClient.class.getName()).setLevel(Level.FINE);";
+      logMessage += " To see where this was allocated, set the OkHttpClient logger level to FINE: " +
+          "Logger.getLogger(OkHttpClient.class.getName()).setLevel(Level.FINE);"
     }
-    log(WARN, message, (Throwable) stackTrace);
+    log(WARN, logMessage, stackTrace as Throwable?)
   }
 
-  public static List<String> alpnProtocolNames(List<Protocol> protocols) {
-    List<String> names = new ArrayList<>(protocols.size());
-    for (int i = 0, size = protocols.size(); i < size; i++) {
-      Protocol protocol = protocols.get(i);
-      if (protocol == Protocol.HTTP_1_0) continue; // No HTTP/1.0 for ALPN.
-      names.add(protocol.toString());
-    }
-    return names;
+  open fun buildCertificateChainCleaner(trustManager: X509TrustManager): CertificateChainCleaner =
+      BasicCertificateChainCleaner(buildTrustRootIndex(trustManager))
+
+  fun buildCertificateChainCleaner(sslSocketFactory: SSLSocketFactory): CertificateChainCleaner {
+    val trustManager = trustManager(sslSocketFactory) ?: throw IllegalStateException(
+        "Unable to extract the trust manager on "
+            + get()
+            + ", sslSocketFactory is "
+            + sslSocketFactory.javaClass)
+
+    return buildCertificateChainCleaner(trustManager)
   }
 
-  public CertificateChainCleaner buildCertificateChainCleaner(X509TrustManager trustManager) {
-    return new BasicCertificateChainCleaner(buildTrustRootIndex(trustManager));
-  }
+  open fun buildTrustRootIndex(trustManager: X509TrustManager): TrustRootIndex =
+      BasicTrustRootIndex(*trustManager.acceptedIssuers)
 
-  public CertificateChainCleaner buildCertificateChainCleaner(SSLSocketFactory sslSocketFactory) {
-    X509TrustManager trustManager = trustManager(sslSocketFactory);
+  open fun configureSslSocketFactory(socketFactory: SSLSocketFactory) {}
 
-    if (trustManager == null) {
-      throw new IllegalStateException("Unable to extract the trust manager on "
-          + Platform.get()
-          + ", sslSocketFactory is "
-          + sslSocketFactory.getClass());
-    }
+  override fun toString(): String = javaClass.simpleName
 
-    return buildCertificateChainCleaner(trustManager);
-  }
+  companion object {
+    private val PLATFORM = findPlatform()
 
-  public static boolean isConscryptPreferred() {
+    const val INFO = 4
+    const val WARN = 5
+
+    private val logger = Logger.getLogger(OkHttpClient::class.java.name)
+
+    @JvmStatic
+    fun get(): Platform = PLATFORM
+
+    fun alpnProtocolNames(protocols: List<Protocol>) =
+        protocols.filter { it != Protocol.HTTP_1_0 }.map { it.toString() }
+
     // mainly to allow tests to run cleanly
-    if ("conscrypt".equals(Util.getSystemProperty("okhttp.platform", null))) {
-      return true;
-    }
-
     // check if Provider manually installed
-    String preferredProvider = Security.getProviders()[0].getName();
-    return "Conscrypt".equals(preferredProvider);
-  }
+    @JvmStatic
+    val isConscryptPreferred: Boolean
+      get() {
+        if ("conscrypt" == Util.getSystemProperty("okhttp.platform", null)) {
+          return true
+        }
+        val preferredProvider = Security.getProviders()[0].name
+        return "Conscrypt" == preferredProvider
+      }
 
-  /** Attempt to match the host runtime to a capable Platform implementation. */
-  private static Platform findPlatform() {
-    Platform android = AndroidPlatform.buildIfSupported();
+    /** Attempt to match the host runtime to a capable Platform implementation.  */
+    @JvmStatic
+    private fun findPlatform(): Platform {
+      val android = AndroidPlatform.buildIfSupported()
 
-    if (android != null) {
-      return android;
-    }
+      if (android != null) {
+        return android
+      }
 
-    if (isConscryptPreferred()) {
-      Platform conscrypt = ConscryptPlatform.buildIfSupported();
+      if (isConscryptPreferred) {
+        val conscrypt = ConscryptPlatform.buildIfSupported()
 
-      if (conscrypt != null) {
-        return conscrypt;
+        if (conscrypt != null) {
+          return conscrypt
+        }
+      }
+
+      val jdk9 = Jdk9Platform.buildIfSupported()
+
+      if (jdk9 != null) {
+        return jdk9
+      }
+
+      val jdkWithJettyBoot = Jdk8WithJettyBootPlatform.buildIfSupported()
+
+      return if (jdkWithJettyBoot != null) {
+        jdkWithJettyBoot
+      } else {
+        // Probably an Oracle JDK like OpenJDK.
+        Platform()
       }
     }
 
-    Platform jdk9 = Jdk9Platform.buildIfSupported();
-
-    if (jdk9 != null) {
-      return jdk9;
-    }
-
-    Platform jdkWithJettyBoot = Jdk8WithJettyBootPlatform.buildIfSupported();
-
-    if (jdkWithJettyBoot != null) {
-      return jdkWithJettyBoot;
-    }
-
-    // Probably an Oracle JDK like OpenJDK.
-    return new Platform();
-  }
-
-  /**
-   * Returns the concatenation of 8-bit, length prefixed protocol names.
-   * http://tools.ietf.org/html/draft-agl-tls-nextprotoneg-04#page-4
-   */
-  static byte[] concatLengthPrefixed(List<Protocol> protocols) {
-    Buffer result = new Buffer();
-    for (int i = 0, size = protocols.size(); i < size; i++) {
-      Protocol protocol = protocols.get(i);
-      if (protocol == Protocol.HTTP_1_0) continue; // No HTTP/1.0 for ALPN.
-      result.writeByte(protocol.toString().length());
-      result.writeUtf8(protocol.toString());
-    }
-    return result.readByteArray();
-  }
-
-  static @Nullable <T> T readFieldOrNull(Object instance, Class<T> fieldType, String fieldName) {
-    for (Class<?> c = instance.getClass(); c != Object.class; c = c.getSuperclass()) {
-      try {
-        Field field = c.getDeclaredField(fieldName);
-        field.setAccessible(true);
-        Object value = field.get(instance);
-        if (!fieldType.isInstance(value)) return null;
-        return fieldType.cast(value);
-      } catch (NoSuchFieldException ignored) {
-      } catch (IllegalAccessException e) {
-        throw new AssertionError();
+    /**
+     * Returns the concatenation of 8-bit, length prefixed protocol names.
+     * http://tools.ietf.org/html/draft-agl-tls-nextprotoneg-04#page-4
+     */
+    @JvmStatic
+    fun concatLengthPrefixed(protocols: List<Protocol>): ByteArray {
+      val result = Buffer()
+      alpnProtocolNames(protocols).forEach { protocol ->
+        result.writeByte(protocol.length)
+        result.writeUtf8(protocol)
       }
+      return result.readByteArray()
     }
 
-    // Didn't find the field we wanted. As a last gasp attempt, try to find the value on a delegate.
-    if (!fieldName.equals("delegate")) {
-      Object delegate = readFieldOrNull(instance, Object.class, "delegate");
-      if (delegate != null) return readFieldOrNull(delegate, fieldType, fieldName);
+    @JvmStatic
+    fun <T> readFieldOrNull(instance: Any, fieldType: Class<T>, fieldName: String): T? {
+      var c: Class<*> = instance.javaClass
+      while (c != Any::class.java) {
+        try {
+          val field = c.getDeclaredField(fieldName)
+          field.isAccessible = true
+          val value = field.get(instance)
+          return if (!fieldType.isInstance(value)) null else fieldType.cast(value)
+        } catch (ignored: NoSuchFieldException) {
+        } catch (e: IllegalAccessException) {
+          throw AssertionError()
+        }
+
+        c = c.superclass
+      }
+
+      // Didn't find the field we wanted. As a last gasp attempt,
+      // try to find the value on a delegate.
+      if (fieldName != "delegate") {
+        val delegate = readFieldOrNull(instance, Any::class.java, "delegate")
+        if (delegate != null) return readFieldOrNull(delegate, fieldType, fieldName)
+      }
+
+      return null
     }
-
-    return null;
-  }
-
-  public SSLContext getSSLContext() {
-    try {
-      return SSLContext.getInstance("TLS");
-    } catch (NoSuchAlgorithmException e) {
-      throw new IllegalStateException("No TLS provider", e);
-    }
-  }
-
-  public TrustRootIndex buildTrustRootIndex(X509TrustManager trustManager) {
-    return new BasicTrustRootIndex(trustManager.getAcceptedIssuers());
-  }
-
-  public void configureSslSocketFactory(SSLSocketFactory socketFactory) {
-  }
-
-  @Override public String toString() {
-    return getClass().getSimpleName();
   }
 }
