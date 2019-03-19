@@ -510,7 +510,6 @@ class OkHttpClient internal constructor(
     /**
      * Sets the DNS service used to lookup IP addresses for hostnames.
      *
-     *
      * If unset, the [system-wide default][Dns.SYSTEM] DNS will be used.
      */
     fun dns(dns: Dns) = apply {
@@ -520,7 +519,6 @@ class OkHttpClient internal constructor(
     /**
      * Sets the socket factory used to create connections. OkHttp only uses the parameterless [ ][SocketFactory.createSocket] method to create unconnected sockets. Overriding
      * this method, e. g., allows the socket to be bound to a specific local address.
-     *
      *
      * If unset, the [system-wide default][SocketFactory.getDefault] socket factory will
      * be used.
