@@ -121,102 +121,32 @@ class OkHttpClient internal constructor(
   builder: Builder
 ) : Cloneable, Call.Factory, WebSocket.Factory {
 
-  @get:JvmName("dispatcher")
-  val dispatcher: Dispatcher = builder.dispatcher
-
-  @get:JvmName("proxy")
-  val proxy: Proxy? = builder.proxy
-
-  @get:JvmName("protocols")
-  val protocols: List<Protocol> = builder.protocols
-
-  @get:JvmName("connectionSpecs")
-  val connectionSpecs: List<ConnectionSpec> = builder.connectionSpecs
-
-  /**
-   * Returns an immutable list of interceptors that observe the full span of each call: from before
-   * the connection is established (if any) until after the response source is selected (either the
-   * origin server, cache, or both).
-   */
-  @get:JvmName("interceptors")
-  val interceptors: List<Interceptor> = Util.immutableList(builder.interceptors)
-
-  /**
-   * Returns an immutable list of interceptors that observe a single network request and response.
-   * These interceptors must call [Interceptor.Chain.proceed] exactly once: it is an error for
-   * a network interceptor to short-circuit or repeat a network request.
-   */
-  @get:JvmName("networkInterceptors")
-  val networkInterceptors: List<Interceptor> = Util.immutableList(builder.networkInterceptors)
-
-  @get:JvmName("eventListenerFactory")
-  val eventListenerFactory: EventListener.Factory = builder.eventListenerFactory
-
-  @get:JvmName("proxySelector")
-  val proxySelector: ProxySelector = builder.proxySelector
-
-  @get:JvmName("cookieJar")
-  val cookieJar: CookieJar = builder.cookieJar
-
-  @get:JvmName("cache")
-  val cache: Cache? = builder.cache
-
-  @get:JvmName("socketFactory")
-  val socketFactory: SocketFactory = builder.socketFactory
-
-  @get:JvmName("sslSocketFactory")
-  val sslSocketFactory: SSLSocketFactory
-
-  @get:JvmName("hostnameVerifier")
-  val hostnameVerifier: HostnameVerifier = builder.hostnameVerifier
-
-  @get:JvmName("certificatePinner")
-  val certificatePinner: CertificatePinner
-
-  @get:JvmName("proxyAuthenticator")
-  val proxyAuthenticator: Authenticator = builder.proxyAuthenticator
-
-  @get:JvmName("authenticator")
-  val authenticator: Authenticator = builder.authenticator
-
-  @get:JvmName("connectionPool")
-  val connectionPool: ConnectionPool = builder.connectionPool
-
-  @get:JvmName("dns")
-  val dns: Dns = builder.dns
-
-  @get:JvmName("followSslRedirects")
-  val followSslRedirects: Boolean = builder.followSslRedirects
-
-  @get:JvmName("followRedirects")
-  val followRedirects: Boolean = builder.followRedirects
-
-  @get:JvmName("retryOnConnectionFailure")
-  val retryOnConnectionFailure: Boolean = builder.retryOnConnectionFailure
-
-  /**
-   * Default call timeout (in milliseconds). By default there is no timeout for complete calls, but
-   * there is for the connect, write, and read actions within a call.
-   */
-  @get:JvmName("callTimeoutMillis")
-  val callTimeoutMillis: Int = builder.callTimeout
-
-  /** Default connect timeout (in milliseconds). The default is 10 seconds.  */
-  @get:JvmName("connectTimeoutMillis")
-  val connectTimeoutMillis: Int = builder.connectTimeout
-
-  /** Default read timeout (in milliseconds). The default is 10 seconds. */
-  @get:JvmName("readTimeoutMillis")
-  val readTimeoutMillis: Int = builder.readTimeout
-
-  /** Default write timeout (in milliseconds). The default is 10 seconds. */
-  @get:JvmName("writeTimeoutMillis")
-  val writeTimeoutMillis: Int = builder.writeTimeout
-
-  /** Web socket and HTTP/2 ping interval (in milliseconds). By default pings are not sent. */
-  @get:JvmName("pingIntervalMillis")
-  val pingIntervalMillis: Int = builder.pingInterval
-
+  private val dispatcher: Dispatcher = builder.dispatcher
+  private val proxy: Proxy? = builder.proxy
+  private val protocols: List<Protocol> = builder.protocols
+  private val connectionSpecs: List<ConnectionSpec> = builder.connectionSpecs
+  private val interceptors: List<Interceptor> = Util.immutableList(builder.interceptors)
+  private val networkInterceptors: List<Interceptor> = Util.immutableList(builder.networkInterceptors)
+  private val eventListenerFactory: EventListener.Factory = builder.eventListenerFactory
+  private val proxySelector: ProxySelector = builder.proxySelector
+  private val cookieJar: CookieJar = builder.cookieJar
+  private val cache: Cache? = builder.cache
+  private val socketFactory: SocketFactory = builder.socketFactory
+  private val sslSocketFactory: SSLSocketFactory
+  private val hostnameVerifier: HostnameVerifier = builder.hostnameVerifier
+  private val certificatePinner: CertificatePinner
+  private val proxyAuthenticator: Authenticator = builder.proxyAuthenticator
+  private val authenticator: Authenticator = builder.authenticator
+  private val connectionPool: ConnectionPool = builder.connectionPool
+  private val dns: Dns = builder.dns
+  private val followSslRedirects: Boolean = builder.followSslRedirects
+  private val followRedirects: Boolean = builder.followRedirects
+  private val retryOnConnectionFailure: Boolean = builder.retryOnConnectionFailure
+  private val callTimeout: Int = builder.callTimeout
+  private val connectTimeout: Int = builder.connectTimeout
+  private val readTimeout: Int = builder.readTimeout
+  private val writeTimeout: Int = builder.writeTimeout
+  private val pingInterval: Int = builder.pingInterval
   private val internalCache: InternalCache? = builder.internalCache
   private val certificateChainCleaner: CertificateChainCleaner
 
@@ -246,6 +176,76 @@ class OkHttpClient internal constructor(
         .withCertificateChainCleaner(certificateChainCleaner)
   }
 
+  fun dispatcher(): Dispatcher = dispatcher
+
+  fun proxy(): Proxy? = proxy
+
+  fun protocols(): List<Protocol> = protocols
+
+  fun connectionSpecs(): List<ConnectionSpec> = connectionSpecs
+
+  /**
+   * Returns an immutable list of interceptors that observe the full span of each call: from before
+   * the connection is established (if any) until after the response source is selected (either the
+   * origin server, cache, or both).
+   */
+  fun interceptors(): List<Interceptor> = interceptors
+
+  /**
+   * Returns an immutable list of interceptors that observe a single network request and response.
+   * These interceptors must call [Interceptor.Chain.proceed] exactly once: it is an error for
+   * a network interceptor to short-circuit or repeat a network request.
+   */
+  fun networkInterceptors(): List<Interceptor> = networkInterceptors
+
+  fun eventListenerFactory(): EventListener.Factory = eventListenerFactory
+
+  fun proxySelector(): ProxySelector = proxySelector
+
+  fun cookieJar(): CookieJar = cookieJar
+
+  fun cache(): Cache? = cache
+
+  fun socketFactory(): SocketFactory = socketFactory
+
+  fun sslSocketFactory(): SSLSocketFactory = sslSocketFactory
+
+  fun hostnameVerifier(): HostnameVerifier = hostnameVerifier
+
+  fun certificatePinner(): CertificatePinner = certificatePinner
+
+  fun proxyAuthenticator(): Authenticator = proxyAuthenticator
+
+  fun authenticator(): Authenticator = authenticator
+
+  fun connectionPool(): ConnectionPool = connectionPool
+
+  fun dns(): Dns = dns
+
+  fun followSslRedirects(): Boolean = followSslRedirects
+
+  fun followRedirects(): Boolean = followRedirects
+
+  fun retryOnConnectionFailure(): Boolean = retryOnConnectionFailure
+
+  /**
+   * Default call timeout (in milliseconds). By default there is no timeout for complete calls, but
+   * there is for the connect, write, and read actions within a call.
+   */
+  fun callTimeoutMillis(): Int = callTimeout
+
+  /** Default connect timeout (in milliseconds). The default is 10 seconds.  */
+  fun connectTimeoutMillis(): Int = connectTimeout
+
+  /** Default read timeout (in milliseconds). The default is 10 seconds. */
+  fun readTimeoutMillis(): Int = readTimeout
+
+  /** Default write timeout (in milliseconds). The default is 10 seconds. */
+  fun writeTimeoutMillis(): Int = writeTimeout
+
+  /** Web socket and HTTP/2 ping interval (in milliseconds). By default pings are not sent. */
+  fun pingIntervalMillis(): Int = pingInterval
+
   fun internalCache(): InternalCache? {
     return cache?.internalCache ?: internalCache
   }
@@ -257,7 +257,7 @@ class OkHttpClient internal constructor(
 
   /** Uses [request] to connect a new web socket. */
   override fun newWebSocket(request: Request, listener: WebSocketListener): WebSocket {
-    val webSocket = RealWebSocket(request, listener, Random(), pingIntervalMillis.toLong())
+    val webSocket = RealWebSocket(request, listener, Random(), pingInterval.toLong())
     webSocket.connect(this)
     return webSocket
   }
@@ -319,11 +319,11 @@ class OkHttpClient internal constructor(
       this.followSslRedirects = okHttpClient.followSslRedirects
       this.followRedirects = okHttpClient.followRedirects
       this.retryOnConnectionFailure = okHttpClient.retryOnConnectionFailure
-      this.callTimeout = okHttpClient.callTimeoutMillis
-      this.connectTimeout = okHttpClient.connectTimeoutMillis
-      this.readTimeout = okHttpClient.readTimeoutMillis
-      this.writeTimeout = okHttpClient.writeTimeoutMillis
-      this.pingInterval = okHttpClient.pingIntervalMillis
+      this.callTimeout = okHttpClient.callTimeout
+      this.connectTimeout = okHttpClient.connectTimeout
+      this.readTimeout = okHttpClient.readTimeout
+      this.writeTimeout = okHttpClient.writeTimeout
+      this.pingInterval = okHttpClient.pingInterval
     }
 
     /**
