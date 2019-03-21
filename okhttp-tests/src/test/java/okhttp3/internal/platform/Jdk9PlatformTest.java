@@ -15,6 +15,7 @@
  */
 package okhttp3.internal.platform;
 
+import java.lang.reflect.Method;
 import org.junit.Test;
 
 import static okhttp3.internal.platform.PlatformTest.getPlatform;
@@ -40,7 +41,10 @@ public class Jdk9PlatformTest {
   }
 
   @Test
-  public void testToStringIsClassname() {
-    assertThat(new Jdk9Platform(null, null).toString()).isEqualTo("Jdk9Platform");
+  public void testToStringIsClassname() throws NoSuchMethodException {
+    assumeTrue(getPlatform().equals("jdk9"));
+
+    Method method = this.getClass().getMethod("toString");
+    assertThat(new Jdk9Platform(method, method).toString()).isEqualTo("Jdk9Platform");
   }
 }
