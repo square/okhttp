@@ -98,6 +98,7 @@ enum class Protocol(private val protocol: String) {
     @Throws(IOException::class)
     operator fun get(protocol: String): Protocol {
       // Unroll the loop over values() to save an allocation.
+      @Suppress("DEPRECATION")
       return when (protocol) {
         HTTP_1_0.protocol -> HTTP_1_0
         HTTP_1_1.protocol -> HTTP_1_1
