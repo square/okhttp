@@ -13,36 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package okhttp3.internal.connection;
+package okhttp3.internal.connection
 
-import java.io.IOException;
-
-import static okhttp3.internal.Util.addSuppressedIfPossible;
+import okhttp3.internal.Util.addSuppressedIfPossible
+import java.io.IOException
 
 /**
  * An exception thrown to indicate a problem connecting via a single Route. Multiple attempts may
  * have been made with alternative protocols, none of which were successful.
  */
-public final class RouteException extends RuntimeException {
-  private IOException firstException;
-  private IOException lastException;
+class RouteException internal constructor(val firstConnectException: IOException) :
+    RuntimeException(firstConnectException) {
+  var lastConnectException: IOException? = null
+    private set
 
-  RouteException(IOException cause) {
-    super(cause);
-    firstException = cause;
-    lastException = cause;
+  init {
+    lastConnectException = firstConnectException
   }
 
-  public IOException getFirstConnectException() {
-    return firstException;
-  }
-
-  public IOException getLastConnectException() {
-    return lastException;
-  }
-
-  void addConnectException(IOException e) {
-    addSuppressedIfPossible(firstException, e);
-    lastException = e;
+  fun addConnectException(e: IOException) {
+    addSuppressedIfPossible(firstConnectException, e)
+    lastConnectException = e
   }
 }
