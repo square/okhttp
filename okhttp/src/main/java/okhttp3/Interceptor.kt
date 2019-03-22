@@ -13,43 +13,44 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package okhttp3;
+package okhttp3
 
-import java.io.IOException;
-import java.util.concurrent.TimeUnit;
-import javax.annotation.Nullable;
+import java.io.IOException
+import java.util.concurrent.TimeUnit
 
 /**
  * Observes, modifies, and potentially short-circuits requests going out and the corresponding
  * responses coming back in. Typically interceptors add, remove, or transform headers on the request
  * or response.
  */
-public interface Interceptor {
-  Response intercept(Chain chain) throws IOException;
+interface Interceptor {
+  @Throws(IOException::class)
+  fun intercept(chain: Chain): Response
 
   interface Chain {
-    Request request();
+    fun request(): Request
 
-    Response proceed(Request request) throws IOException;
+    @Throws(IOException::class)
+    fun proceed(request: Request): Response
 
     /**
      * Returns the connection the request will be executed on. This is only available in the chains
      * of network interceptors; for application interceptors this is always null.
      */
-    @Nullable Connection connection();
+    fun connection(): Connection?
 
-    Call call();
+    fun call(): Call
 
-    int connectTimeoutMillis();
+    fun connectTimeoutMillis(): Int
 
-    Chain withConnectTimeout(int timeout, TimeUnit unit);
+    fun withConnectTimeout(timeout: Int, unit: TimeUnit): Chain
 
-    int readTimeoutMillis();
+    fun readTimeoutMillis(): Int
 
-    Chain withReadTimeout(int timeout, TimeUnit unit);
+    fun withReadTimeout(timeout: Int, unit: TimeUnit): Chain
 
-    int writeTimeoutMillis();
+    fun writeTimeoutMillis(): Int
 
-    Chain withWriteTimeout(int timeout, TimeUnit unit);
+    fun withWriteTimeout(timeout: Int, unit: TimeUnit): Chain
   }
 }

@@ -13,6 +13,7 @@ buildscript {
       'jnrUnixsocket': '0.22',
       'jsoup': '1.11.3',
       'junit': '4.12',
+      'kotlin': '1.3.20',
       'moshi': '1.8.0',
       'okio': '1.17.2',
   ]
@@ -29,6 +30,7 @@ buildscript {
       'jsoup': "org.jsoup:jsoup:${versions.jsoup}",
       'jsr305': "com.google.code.findbugs:jsr305:${versions.findbugs}",
       'junit': "junit:junit:${versions.junit}",
+      'kotlinStdlib': "org.jetbrains.kotlin:kotlin-stdlib:${versions.kotlin}",
       'moshi': "com.squareup.moshi:moshi:${versions.moshi}",
       'okio': "com.squareup.okio:okio:${versions.okio}"
   ]
@@ -36,6 +38,8 @@ buildscript {
   dependencies {
     // TODO(jwilson): configure maven-publish-plugin to limit which artifacts are published.
     classpath 'com.vanniktech:gradle-maven-publish-plugin:0.8.0'
+    classpath 'net.ltgt.gradle:gradle-errorprone-plugin:0.7.1'
+    classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:${versions.kotlin}"
   }
 
   repositories {
@@ -47,6 +51,7 @@ buildscript {
 plugins {
   id 'ru.vyarus.animalsniffer' version '1.5.0'
   id 'com.github.johnrengelman.shadow' version '4.0.1'
+  id 'me.champeau.gradle.japicmp' version '0.2.6'
 }
 
 allprojects {
@@ -61,6 +66,7 @@ allprojects {
 subprojects { project ->
   apply plugin: 'java'
   apply plugin: 'java-library'
+  apply plugin: 'org.jetbrains.kotlin.platform.jvm'
   sourceCompatibility = JavaVersion.VERSION_1_8
   targetCompatibility = JavaVersion.VERSION_1_8
 
@@ -103,7 +109,11 @@ subprojects { project ->
     }
   }
 
-  // TODO(jwilson): configure error prone.
+  apply plugin: 'net.ltgt.errorprone'
+  dependencies {
+    errorproneJavac 'com.google.errorprone:javac:9+181-r4173-1'
+    errorprone 'com.google.errorprone:error_prone_core:2.3.3'
+  }
 }
 
 tasks.wrapper {
@@ -154,3 +164,22 @@ def alpnBootVersionForPatchVersion(String javaVersion, int patchVersion) {
       throw new IllegalStateException("Unexpected Java version: ${javaVersion}")
   }
 }
+
+/**
+ * Returns a .jar file for the golden version of this project.
+ * https://github.com/Visistema/Groovy1/blob/ba5eb9b2f19ca0cc8927359ce414c4e1974b7016/gradle/binarycompatibility.gradle#L48
+ */
+ext.baselineJar = { project, version ->
+  def group = project.property("GROUP")
+  def artifactId = project.property("POM_ARTIFACT_ID")
+  try {
+    String jarFile = "$artifactId-${version}.jar"
+    project.group = 'virtual_group_for_japicmp' // Prevent it from resolving the current version.
+    def dependency = project.dependencies.create("$group:$artifactId:$version@jar")
+    return project.configurations.detachedConfiguration(dependency).files
+        .find { (it.name == jarFile) }
+  } finally {
+    project.group = group
+  }
+}
+ext.baselineVersion = "3.14.0"

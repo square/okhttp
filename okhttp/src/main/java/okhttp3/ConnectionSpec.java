@@ -26,6 +26,7 @@ import static okhttp3.internal.Util.concat;
 import static okhttp3.internal.Util.indexOf;
 import static okhttp3.internal.Util.intersect;
 import static okhttp3.internal.Util.nonEmptyIntersection;
+import static okhttp3.internal.Util.tlsVersionsForJavaNames;
 
 /**
  * Specifies configuration for the socket connection that HTTP traffic travels through. For {@code
@@ -150,7 +151,7 @@ public final class ConnectionSpec {
    * socket's enabled TLS versions should be used.
    */
   public @Nullable List<TlsVersion> tlsVersions() {
-    return tlsVersions != null ? TlsVersion.forJavaNames(tlsVersions) : null;
+    return tlsVersions != null ? tlsVersionsForJavaNames(tlsVersions) : null;
   }
 
   public boolean supportsTlsExtensions() {
@@ -319,7 +320,7 @@ public final class ConnectionSpec {
 
       String[] strings = new String[tlsVersions.length];
       for (int i = 0; i < tlsVersions.length; i++) {
-        strings[i] = tlsVersions[i].javaName;
+        strings[i] = tlsVersions[i].javaName();
       }
 
       return tlsVersions(strings);

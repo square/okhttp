@@ -448,7 +448,7 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
       dispatcher = new Dispatcher();
       protocols = DEFAULT_PROTOCOLS;
       connectionSpecs = DEFAULT_CONNECTION_SPECS;
-      eventListenerFactory = EventListener.factory(EventListener.NONE);
+      eventListenerFactory = Util.eventListenerFactory(EventListener.NONE);
       proxySelector = ProxySelector.getDefault();
       if (proxySelector == null) {
         proxySelector = new NullProxySelector();
@@ -993,7 +993,7 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
      */
     public Builder eventListener(EventListener eventListener) {
       if (eventListener == null) throw new NullPointerException("eventListener == null");
-      this.eventListenerFactory = EventListener.factory(eventListener);
+      this.eventListenerFactory = Util.eventListenerFactory(eventListener);
       return this;
     }
 

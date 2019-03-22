@@ -383,12 +383,8 @@ public final class WebSocketHttpTest {
     WebSocket webSocket = newWebSocket();
     clientListener.assertOpen();
     assertThat(interceptedCount.get()).isEqualTo(1);
-    webSocket.close(1000, null);
 
-    WebSocket server = serverListener.assertOpen();
-    server.close(1000, null);
-    clientListener.assertClosing(1000, "");
-    clientListener.assertClosed(1000, "");
+    closeWebSockets(webSocket, serverListener.assertOpen());
   }
 
   @Test public void webSocketAndNetworkInterceptors() {
