@@ -311,8 +311,7 @@ public final class Util {
   }
 
   public static String[] concat(String[] array, String value) {
-    String[] result = new String[array.length + 1];
-    System.arraycopy(array, 0, result, 0, array.length);
+    String[] result = Arrays.copyOf(array, array.length + 1);
     result[result.length - 1] = value;
     return result;
   }
