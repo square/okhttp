@@ -38,6 +38,7 @@ buildscript {
   dependencies {
     // TODO(jwilson): configure maven-publish-plugin to limit which artifacts are published.
     classpath 'com.vanniktech:gradle-maven-publish-plugin:0.8.0'
+    classpath 'net.ltgt.gradle:gradle-errorprone-plugin:0.7.1'
     classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:${versions.kotlin}"
   }
 
@@ -106,7 +107,11 @@ subprojects { project ->
     }
   }
 
-  // TODO(jwilson): configure error prone.
+  apply plugin: 'net.ltgt.errorprone'
+  dependencies {
+    errorproneJavac 'com.google.errorprone:javac:9+181-r4173-1'
+    errorprone 'com.google.errorprone:error_prone_core:2.3.3'
+  }
 }
 
 tasks.wrapper {
