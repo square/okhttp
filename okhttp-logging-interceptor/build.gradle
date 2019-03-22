@@ -12,6 +12,8 @@ dependencies {
 
   testCompileOnly deps.jsr305
   testImplementation deps.junit
+  testImplementation deps.junitApi
+  testRuntimeOnly deps.junitEngine
   testImplementation project(':mockwebserver')
   testImplementation project(':okhttp-testing-support')
   testImplementation project(':okhttp-tls')

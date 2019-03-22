@@ -83,6 +83,8 @@ import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.junit.rules.TestRule;
 import org.junit.rules.Timeout;
 
@@ -98,6 +100,7 @@ import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeFalse;
 
+@Execution(value=ExecutionMode.CONCURRENT)
 public final class CallTest {
   @Rule public final TestRule timeout = new Timeout(30_000, TimeUnit.MILLISECONDS);
   @Rule public final MockWebServer server = new MockWebServer();

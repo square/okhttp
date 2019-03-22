@@ -14,5 +14,7 @@ dependencies {
   testImplementation project(':mockwebserver')
   testImplementation deps.conscrypt
   testImplementation deps.junit
+  testImplementation deps.junitApi
+  testRuntimeOnly deps.junitEngine
   testImplementation deps.assertj
 }

@@ -8,6 +8,9 @@ dependencies {
   testImplementation project(':okhttp-logging-interceptor')
   testImplementation deps.conscrypt
   testImplementation deps.junit
+  testImplementation deps.junitApi
+  testRuntimeOnly deps.junitEngine
+  testRuntimeOnly deps.junitJupiterEngine
   testImplementation deps.assertj
   testCompileOnly deps.jsr305
 }

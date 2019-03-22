@@ -30,6 +30,8 @@ dependencies {
   compileOnly deps.animalSniffer
 
   testImplementation deps.junit
+  testImplementation deps.junitApi
+  testRuntimeOnly deps.junitEngine
   testImplementation deps.assertj
 }
 

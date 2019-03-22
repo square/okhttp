@@ -29,6 +29,8 @@ dependencies {
 
   testImplementation project(':okhttp-testing-support')
   testImplementation deps.junit
+  testImplementation deps.junitApi
+  testRuntimeOnly deps.junitEngine
   testImplementation deps.assertj
 }
 
