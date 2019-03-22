@@ -61,6 +61,13 @@ allprojects {
   repositories {
     mavenCentral()
   }
+
+  task downloadDependencies() {
+    description 'Download all dependencies to the Gradle cache'
+    doLast {
+      configurations.findAll { it.canBeResolved }.files
+    }
+  }
 }
 
 subprojects { project ->
