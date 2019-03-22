@@ -31,6 +31,7 @@ import javax.net.ssl.X509TrustManager
  */
 class ConscryptPlatform private constructor() : Platform() {
 
+  @Suppress("DEPRECATION")
   private val provider: Provider
     // defaults to true, but allow for older versions of conscrypt if still compatible
     // new form with boolean is only present in >= 2.0.0
