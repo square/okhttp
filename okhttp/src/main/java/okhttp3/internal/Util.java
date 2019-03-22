@@ -18,8 +18,6 @@ package okhttp3.internal;
 import java.io.Closeable;
 import java.io.IOException;
 import java.io.InterruptedIOException;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.net.IDN;
 import java.net.InetAddress;
 import java.net.ServerSocket;
@@ -89,27 +87,6 @@ public final class Util {
   public static final TimeZone UTC = TimeZone.getTimeZone("GMT");
 
   public static final Comparator<String> NATURAL_ORDER = String::compareTo;
-
-  private static final Method addSuppressedExceptionMethod;
-
-  static {
-    Method m;
-    try {
-      m = Throwable.class.getDeclaredMethod("addSuppressed", Throwable.class);
-    } catch (Exception e) {
-      m = null;
-    }
-    addSuppressedExceptionMethod = m;
-  }
-
-  public static void addSuppressedIfPossible(Throwable e, Throwable suppressed) {
-    if (addSuppressedExceptionMethod != null) {
-      try {
-        addSuppressedExceptionMethod.invoke(e, suppressed);
-      } catch (InvocationTargetException | IllegalAccessException ignored) {
-      }
-    }
-  }
 
   /**
    * Quick and dirty pattern to differentiate IP addresses from hostnames. This is an approximation
@@ -311,8 +288,7 @@ public final class Util {
   }
 
   public static String[] concat(String[] array, String value) {
-    String[] result = new String[array.length + 1];
-    System.arraycopy(array, 0, result, 0, array.length);
+    String[] result = Arrays.copyOf(array, array.length + 1);
     result[result.length - 1] = value;
     return result;
   }

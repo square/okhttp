@@ -15,8 +15,7 @@
  */
 package okhttp3.internal.connection
 
-import okhttp3.internal.Util.addSuppressedIfPossible
-import java.io.IOException
+import java.io.IOException;
 
 /**
  * An exception thrown to indicate a problem connecting via a single Route. Multiple attempts may
@@ -32,7 +31,7 @@ class RouteException internal constructor(val firstConnectException: IOException
   }
 
   fun addConnectException(e: IOException) {
-    addSuppressedIfPossible(firstConnectException, e)
+    firstConnectException.addSuppressed(e)
     lastConnectException = e
   }
 }

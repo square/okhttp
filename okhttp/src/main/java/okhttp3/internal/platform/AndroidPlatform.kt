@@ -53,8 +53,7 @@ class AndroidPlatform(
   // Try to load TLS 1.2 explicitly.
   // fallback to TLS
   override fun getSSLContext(): SSLContext {
-    var tryTls12: Boolean
-    tryTls12 = try {
+    val tryTls12: Boolean = try {
       Build.VERSION.SDK_INT in 16..21
     } catch (e: NoClassDefFoundError) {
       true

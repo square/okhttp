@@ -310,6 +310,7 @@ class HttpUrl internal constructor(builder: Builder) {
    * the empty string. Each segment is formatted with a leading '/', so if path segments were ["a",
    * "b", ""], then the encoded path would be "/a/b/".
    */
+  @Suppress("UNCHECKED_CAST")
   private val pathSegments: List<String> =
       percentDecode(builder.encodedPathSegments, false) as List<String>
 
@@ -1267,8 +1268,8 @@ class HttpUrl internal constructor(builder: Builder) {
       return this
     }
 
-    private fun resolvePath(input: String, pos: Int, limit: Int) {
-      var pos = pos
+    private fun resolvePath(input: String, startPos: Int, limit: Int) {
+      var pos = startPos
       // Read a delimiter.
       if (pos == limit) {
         // Empty path: keep the base path as-is.
