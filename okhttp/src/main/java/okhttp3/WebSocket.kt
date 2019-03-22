@@ -104,6 +104,16 @@ interface WebSocket {
   fun close(code: Int, reason: String?): Boolean
 
   /**
+   * Attempts to initiate a graceful shutdown of this web socket without sending a status code
+   * or reason. Any already-enqueued messages will be transmitted before the close message is sent
+   * but subsequent calls to [send] will return false and their messages will not be enqueued.
+   *
+   * This returns true if a graceful shutdown was initiated by this call. It returns false if
+   * a graceful shutdown was already underway or if the web socket is already closed or canceled.
+   */
+  fun close(): Boolean
+
+  /**
    * Immediately and violently release resources held by this web socket, discarding any enqueued
    * messages. This does nothing if the web socket has already been closed or canceled.
    */

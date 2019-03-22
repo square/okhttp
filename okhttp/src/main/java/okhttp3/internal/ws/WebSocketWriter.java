@@ -93,6 +93,8 @@ final class WebSocketWriter {
     if (code != 0 || reason != null) {
       if (code != 0) {
         validateCloseCode(code);
+      } else if (reason != null) {
+        throw new IllegalArgumentException("Close reason must be null when code is 0");
       }
       Buffer buffer = new Buffer();
       buffer.writeShort(code);

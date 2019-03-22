@@ -278,17 +278,21 @@ public final class WebSocketWriterTest {
     assertData("888760b420bb635d68de0cd84f");
   }
 
-  @Test public void closeWithOnlyReasonThrows() throws IOException {
-    clientWriter.writeClose(0, ByteString.encodeUtf8("Hello"));
-    assertData("888760b420bb60b468de0cd84f");
-  }
-
   @Test public void closeCodeOutOfRangeThrows() throws IOException {
     try {
       clientWriter.writeClose(98724976, ByteString.encodeUtf8("Hello"));
       fail();
     } catch (IllegalArgumentException e) {
       assertThat(e.getMessage()).isEqualTo("Code must be in range [1000,5000): 98724976");
+    }
+  }
+
+  @Test public void reasonWithEmptyCloseThrows() throws IOException {
+    try {
+      clientWriter.writeClose(0, ByteString.encodeUtf8("Hello"));
+      fail();
+    } catch (IllegalArgumentException e) {
+      assertThat(e.getMessage()).isEqualTo("Close reason must be null when code is 0");
     }
   }
 

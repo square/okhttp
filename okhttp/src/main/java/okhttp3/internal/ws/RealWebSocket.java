@@ -406,12 +406,16 @@ public final class RealWebSocket implements WebSocket, WebSocketReader.FrameCall
     return true;
   }
 
+  @Override public boolean close() {
+    return close(0, null, CANCEL_AFTER_CLOSE_MILLIS);
+  }
+
   @Override public boolean close(int code, String reason) {
+    validateCloseCode(code);
     return close(code, reason, CANCEL_AFTER_CLOSE_MILLIS);
   }
 
   synchronized boolean close(int code, String reason, long cancelAfterCloseMillis) {
-    validateCloseCode(code);
 
     ByteString reasonBytes = null;
     if (reason != null) {

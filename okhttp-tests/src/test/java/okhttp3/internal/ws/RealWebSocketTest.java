@@ -90,6 +90,18 @@ public final class RealWebSocketTest {
     }
   }
 
+  @Test public void clientCloseWithoutStatus() throws IOException {
+    client.webSocket.close();
+    // This will trigger a close response.
+    assertThat(server.processNextFrame()).isFalse();
+    server.listener.assertClosing(1005, "");
+    server.webSocket.close(1000, "Goodbye!");
+    assertThat(client.processNextFrame()).isFalse();
+    client.listener.assertClosing(1000, "Goodbye!");
+    server.listener.assertClosed(1005, "");
+    client.listener.assertClosed(1000, "Goodbye!");
+  }
+
   @Test public void afterSocketClosedPingFailsWebSocket() throws IOException {
     client2Server.source().close();
     client.webSocket.pong(ByteString.encodeUtf8("Ping!"));
