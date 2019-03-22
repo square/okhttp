@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package okhttp3.internal.connection;
+package okhttp3.internal.connection
 
 import java.io.IOException;
 
@@ -21,26 +21,12 @@ import java.io.IOException;
  * An exception thrown to indicate a problem connecting via a single Route. Multiple attempts may
  * have been made with alternative protocols, none of which were successful.
  */
-public final class RouteException extends RuntimeException {
-  private IOException firstException;
-  private IOException lastException;
+class RouteException internal constructor(val firstConnectException: IOException) :
+    RuntimeException(firstConnectException) {
+  var lastConnectException: IOException = firstConnectException
 
-  RouteException(IOException cause) {
-    super(cause);
-    firstException = cause;
-    lastException = cause;
-  }
-
-  public IOException getFirstConnectException() {
-    return firstException;
-  }
-
-  public IOException getLastConnectException() {
-    return lastException;
-  }
-
-  void addConnectException(IOException e) {
-    firstException.addSuppressed(e);
-    lastException = e;
+  fun addConnectException(e: IOException) {
+    firstConnectException.addSuppressed(e)
+    lastConnectException = e
   }
 }

@@ -13,16 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package okhttp3.internal.http2;
+package okhttp3.internal.http2
 
-import java.io.IOException;
+import java.io.IOException
 
-/** Thrown when an HTTP/2 stream is canceled without damage to the socket that carries it. */
-public final class StreamResetException extends IOException {
-  public final ErrorCode errorCode;
-
-  public StreamResetException(ErrorCode errorCode) {
-    super("stream was reset: " + errorCode);
-    this.errorCode = errorCode;
-  }
-}
+/**
+ * Thrown when an HTTP/2 connection is shutdown (either explicitly or if the peer has sent a GOAWAY
+ * frame) and an attempt is made to use the connection.
+ */
+class ConnectionShutdownException : IOException()
