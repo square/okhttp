@@ -25,6 +25,20 @@ import java.util.concurrent.TimeUnit
  * See [RFC 7234, 5.2](https://tools.ietf.org/html/rfc7234#section-5.2).
  */
 class CacheControl private constructor(
+  val noCache: Boolean,
+  val noStore: Boolean,
+  val maxAgeSeconds: Int,
+  val sMaxAgeSeconds: Int,
+  val isPrivate: Boolean,
+  val isPublic: Boolean,
+  val mustRevalidate: Boolean,
+  val maxStaleSeconds: Int,
+  val minFreshSeconds: Int,
+  val onlyIfCached: Boolean,
+  val noTransform: Boolean,
+  val immutable: Boolean,
+  private var headerValue: String?
+) {
   /**
    * In a response, this field's name "no-cache" is misleading. It doesn't prevent us from caching
    * the response; it only means we have to validate the response with the origin server before
@@ -32,50 +46,18 @@ class CacheControl private constructor(
    *
    * In a request, it means do not use a cache to satisfy the request.
    */
-  val noCache: Boolean,
+  fun noCache() = noCache
 
   /** If true, this response should not be cached.  */
-  val noStore: Boolean,
+  fun noStore() = noStore
 
   /** The duration past the response's served date that it can be served without validation. */
-  val maxAgeSeconds: Int,
+  fun maxAgeSeconds() = maxAgeSeconds
 
   /**
    * The "s-maxage" directive is the max age for shared caches. Not to be confused with "max-age"
    * for non-shared caches, As in Firefox and Chrome, this directive is not honored by this cache.
    */
-  val sMaxAgeSeconds: Int,
-
-  val isPrivate: Boolean,
-
-  val isPublic: Boolean,
-
-  val mustRevalidate: Boolean,
-
-  val maxStaleSeconds: Int,
-
-  val minFreshSeconds: Int,
-
-  /**
-   * This field's name "only-if-cached" is misleading. It actually means "do not use the network".
-   * It is set by a client who only wants to make a request if it can be fully satisfied by the
-   * cache. Cached responses that would require validation (ie. conditional gets) are not permitted
-   * if this header is set.
-   */
-  val onlyIfCached: Boolean,
-
-  val noTransform: Boolean,
-
-  val immutable: Boolean,
-
-  private var headerValue: String?
-) {
-  fun noCache() = noCache
-
-  fun noStore() = noStore
-
-  fun maxAgeSeconds() = maxAgeSeconds
-
   fun sMaxAgeSeconds() = sMaxAgeSeconds
 
   fun mustRevalidate() = mustRevalidate
@@ -84,6 +66,12 @@ class CacheControl private constructor(
 
   fun minFreshSeconds() = minFreshSeconds
 
+  /**
+   * This field's name "only-if-cached" is misleading. It actually means "do not use the network".
+   * It is set by a client who only wants to make a request if it can be fully satisfied by the
+   * cache. Cached responses that would require validation (ie. conditional gets) are not permitted
+   * if this header is set.
+   */
   fun onlyIfCached() = onlyIfCached
 
   fun noTransform() = noTransform
