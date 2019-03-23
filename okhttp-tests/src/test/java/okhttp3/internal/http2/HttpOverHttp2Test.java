@@ -1152,9 +1152,13 @@ public final class HttpOverHttp2Test {
     assertThat(firstFrame(logs, "HEADERS"))
         .overridingErrorMessage("header logged")
         .contains("HEADERS       END_HEADERS");
-    assertThat(firstFrame(logs, "DATA"))
-        .overridingErrorMessage("data logged")
-        .contains("0 DATA          END_STREAM");
+    // While MockWebServer waits to read the client's HEADERS frame before sending the response, it
+    // doesn't wait to read the client's DATA frame and may send a DATA frame before the client
+    // does. So we can't assume the client's empty DATA will be logged first.
+    assertThat(countFrames(logs, "FINE: >> 0x00000003     0 DATA          END_STREAM"))
+        .isEqualTo((long) 2);
+    assertThat(countFrames(logs, "FINE: >> 0x00000003     3 DATA          "))
+        .isEqualTo((long) 1);
   }
 
   @Test public void pingsTransmitted() throws Exception {
