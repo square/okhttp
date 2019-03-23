@@ -84,8 +84,8 @@ object DnsRecordCodec {
       throw UnknownHostException("$hostname: SERVFAIL")
     }
 
-    val questionCount = buf.readShort().and(0xffff.toShort())
-    val answerCount = buf.readShort().and(0xffff.toShort())
+    val questionCount = buf.readShort().toInt() and 0xffff
+    val answerCount = buf.readShort().toInt() and 0xffff
     buf.readShort() // authority record count
     buf.readShort() // additional record count
 
