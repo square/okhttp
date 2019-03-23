@@ -24,7 +24,6 @@ import okhttp3.internal.http2.hpackjson.Case;
 import okhttp3.internal.http2.hpackjson.HpackJsonUtil;
 import okhttp3.internal.http2.hpackjson.Story;
 import okio.Buffer;
-import org.junit.AssumptionViolatedException;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

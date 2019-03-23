@@ -23,10 +23,8 @@ import java.io.InputStream;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import okio.Okio;
-import org.junit.AssumptionViolatedException;
 
 import static java.util.Arrays.asList;
 
