@@ -25,6 +25,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import okio.Okio;
+import org.junit.AssumptionViolatedException;
 
 import static java.util.Arrays.asList;
 
@@ -52,7 +53,11 @@ public final class HpackJsonUtil {
   public static String[] storiesForCurrentDraft() throws URISyntaxException {
     File testCaseDirectory = new File(HpackJsonUtil.class.getResource("/hpack-test-case").toURI());
     List<String> storyNames = new ArrayList<>();
-    for (File path : testCaseDirectory.listFiles()) {
+    File[] files = testCaseDirectory.listFiles();
+    if (files == null) {
+      throw new AssumptionViolatedException("No stories");
+    }
+    for (File path : files) {
       if (path.isDirectory() && asList(path.list()).contains("story_00.json")) {
         try {
           Story firstStory = readStory(new File(path, "story_00.json"));

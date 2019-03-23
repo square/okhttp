@@ -23,6 +23,8 @@ import okhttp3.internal.http2.hpackjson.Case;
 import okhttp3.internal.http2.hpackjson.HpackJsonUtil;
 import okhttp3.internal.http2.hpackjson.Story;
 import okio.Buffer;
+import org.junit.Assume;
+import org.junit.AssumptionViolatedException;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.fail;
@@ -41,7 +43,7 @@ public class HpackDecodeTestBase {
     for (String interopTestName : interopTests) {
       List<Story> stories = HpackJsonUtil.readStories(interopTestName);
       if (stories.isEmpty()) {
-        fail("No stories for: " + interopTestName);
+        throw new AssumptionViolatedException("No stories for: " + interopTestName);
       }
       for (Story story : stories) {
         result.add(new Story[] {story});
