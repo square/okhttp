@@ -113,7 +113,6 @@ class MediaType private constructor(
         }
         charset = charsetParameter
         s = parameter.end()
-        continue
       }
 
       return MediaType(string, type, subtype, charset)
