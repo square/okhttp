@@ -44,7 +44,27 @@ task japicmp(type: me.champeau.gradle.japicmp.JapicmpTask, dependsOn: 'jar') {
   includeSynthetic = true
   methodExcludes = [
       // Became 'final' in 4.0.0:
-      'okhttp3.TlsVersion#javaName()',
+      'okhttp3.CacheControl#immutable()',
+      'okhttp3.CacheControl#isPrivate()',
+      'okhttp3.CacheControl#isPublic()',
+      'okhttp3.CacheControl#maxAgeSeconds()',
+      'okhttp3.CacheControl#maxStaleSeconds()',
+      'okhttp3.CacheControl#minFreshSeconds()',
+      'okhttp3.CacheControl#mustRevalidate()',
+      'okhttp3.CacheControl#noCache()',
+      'okhttp3.CacheControl#noStore()',
+      'okhttp3.CacheControl#noTransform()',
+      'okhttp3.CacheControl#onlyIfCached()',
+      'okhttp3.CacheControl#sMaxAgeSeconds()',
+      'okhttp3.CacheControl$Builder#build()',
+      'okhttp3.CacheControl$Builder#immutable()',
+      'okhttp3.CacheControl$Builder#maxAge(int, java.util.concurrent.TimeUnit)',
+      'okhttp3.CacheControl$Builder#maxStale(int, java.util.concurrent.TimeUnit)',
+      'okhttp3.CacheControl$Builder#minFresh(int, java.util.concurrent.TimeUnit)',
+      'okhttp3.CacheControl$Builder#noCache()',
+      'okhttp3.CacheControl$Builder#noStore()',
+      'okhttp3.CacheControl$Builder#noTransform()',
+      'okhttp3.CacheControl$Builder#onlyIfCached()',
       'okhttp3.FormBody#encodedName(int)',
       'okhttp3.FormBody#encodedValue(int)',
       'okhttp3.FormBody#name(int)',
@@ -108,6 +128,7 @@ task japicmp(type: me.champeau.gradle.japicmp.JapicmpTask, dependsOn: 'jar') {
       'okhttp3.HttpUrl$Builder#setPathSegment(int, java.lang.String)',
       'okhttp3.HttpUrl$Builder#setQueryParameter(java.lang.String, java.lang.String)',
       'okhttp3.HttpUrl$Builder#username(java.lang.String)',
+      'okhttp3.TlsVersion#javaName()',
   ]
 }
 check.dependsOn(japicmp)

@@ -141,32 +141,35 @@ public final class CacheControlTest {
   }
 
   @Test public void parseCacheControlHeaderValueInvalidatedByPragma() {
-    Headers headers = Headers.of("Cache-Control", "max-age=12", "Pragma", "must-revalidate");
+    Headers headers = Headers.of(
+        "Cache-Control", "max-age=12",
+        "Pragma", "must-revalidate"
+    );
     CacheControl cacheControl = CacheControl.parse(headers);
-    assertThat(cacheControl.headerValue).isNull();
+    assertThat(cacheControl.toString()).isEqualTo("max-age=12, must-revalidate");
   }
 
   @Test public void parseCacheControlHeaderValueInvalidatedByTwoValues() {
-    Headers headers = Headers.of("Cache-Control", "max-age=12", "Cache-Control", "must-revalidate");
+    Headers headers = Headers.of(
+        "Cache-Control", "max-age=12",
+        "Cache-Control", "must-revalidate"
+    );
     CacheControl cacheControl = CacheControl.parse(headers);
-    assertThat(cacheControl.headerValue).isNull();
+    assertThat(cacheControl.toString()).isEqualTo("max-age=12, must-revalidate");
   }
 
   @Test public void parsePragmaHeaderValueIsNotRetained() {
     Headers headers = Headers.of("Pragma", "must-revalidate");
     CacheControl cacheControl = CacheControl.parse(headers);
-    assertThat(cacheControl.headerValue).isNull();
+    assertThat(cacheControl.toString()).isEqualTo("must-revalidate");
   }
 
   @Test public void computedHeaderValueIsCached() {
     CacheControl cacheControl = new CacheControl.Builder()
         .maxAge(2, TimeUnit.DAYS)
         .build();
-    assertThat(cacheControl.headerValue).isNull();
     assertThat(cacheControl.toString()).isEqualTo("max-age=172800");
-    assertThat(cacheControl.headerValue).isEqualTo("max-age=172800");
-    cacheControl.headerValue = "Hi";
-    assertThat(cacheControl.toString()).isEqualTo("Hi");
+    assertThat(cacheControl.toString()).isSameAs(cacheControl.toString());
   }
 
   @Test public void timeDurationTruncatedToMaxValue() throws Exception {
