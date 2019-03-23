@@ -131,6 +131,10 @@ task japicmp(type: me.champeau.gradle.japicmp.JapicmpTask, dependsOn: 'jar') {
       'okhttp3.HttpUrl$Builder#setPathSegment(int, java.lang.String)',
       'okhttp3.HttpUrl$Builder#setQueryParameter(java.lang.String, java.lang.String)',
       'okhttp3.HttpUrl$Builder#username(java.lang.String)',
+      'okhttp3.MediaType#charset()',
+      'okhttp3.MediaType#charset(java.nio.charset.Charset)',
+      'okhttp3.MediaType#subtype()',
+      'okhttp3.MediaType#type()',
       'okhttp3.TlsVersion#javaName()',
   ]
 }
