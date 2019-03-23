@@ -21,6 +21,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URISyntaxException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -51,13 +52,13 @@ public final class HpackJsonUtil {
 
   /** Iterate through the hpack-test-case resources, only picking stories for the current draft. */
   public static String[] storiesForCurrentDraft() throws URISyntaxException {
-    File testCaseDirectory = new File(HpackJsonUtil.class.getResource("/hpack-test-case").toURI());
-    List<String> storyNames = new ArrayList<>();
-    File[] files = testCaseDirectory.listFiles();
-    if (files == null) {
-      throw new AssumptionViolatedException("No stories");
+    URL resource = HpackJsonUtil.class.getResource("/hpack-test-case");
+    if (resource == null) {
+      return new String[0];
     }
-    for (File path : files) {
+    File testCaseDirectory = new File(resource.toURI());
+    List<String> storyNames = new ArrayList<>();
+    for (File path : testCaseDirectory.listFiles()) {
       if (path.isDirectory() && asList(path.list()).contains("story_00.json")) {
         try {
           Story firstStory = readStory(new File(path, "story_00.json"));
