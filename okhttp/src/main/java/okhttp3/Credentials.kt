@@ -22,7 +22,7 @@ import java.nio.charset.StandardCharsets.ISO_8859_1
 /** Factory for HTTP authorization credentials. */
 object Credentials {
   /** Returns an auth credential for the Basic scheme. */
-  @JvmOverloads fun basic(
+  @JvmStatic @JvmOverloads fun basic(
     username: String,
     password: String,
     charset: Charset = ISO_8859_1
