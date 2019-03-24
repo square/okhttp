@@ -14,44 +14,36 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package okhttp3;
+package okhttp3
 
-import java.util.concurrent.TimeUnit;
-import okhttp3.internal.connection.RealConnectionPool;
+import java.util.concurrent.TimeUnit
+import okhttp3.internal.connection.RealConnectionPool
 
 /**
  * Manages reuse of HTTP and HTTP/2 connections for reduced network latency. HTTP requests that
- * share the same {@link Address} may share a {@link Connection}. This class implements the policy
+ * share the same [Address] may share a [Connection]. This class implements the policy
  * of which connections to keep open for future use.
+ *
+ * @constructor Create a new connection pool with tuning parameters appropriate for a single-user
+ * application. The tuning parameters in this pool are subject to change in future OkHttp releases.
+ * Currently this pool holds up to 5 idle connections which will be evicted after 5 minutes of
+ * inactivity.
  */
-public final class ConnectionPool {
-  final RealConnectionPool delegate;
+class ConnectionPool @JvmOverloads constructor(
+    maxIdleConnections: Int = 5,
+    keepAliveDuration: Long = 5,
+    timeUnit: TimeUnit = TimeUnit.MINUTES
+) {
+  internal val delegate = RealConnectionPool(maxIdleConnections, keepAliveDuration, timeUnit)
 
-  /**
-   * Create a new connection pool with tuning parameters appropriate for a single-user application.
-   * The tuning parameters in this pool are subject to change in future OkHttp releases. Currently
-   * this pool holds up to 5 idle connections which will be evicted after 5 minutes of inactivity.
-   */
-  public ConnectionPool() {
-    this(5, 5, TimeUnit.MINUTES);
-  }
+  /** Returns the number of idle connections in the pool.  */
+  fun idleConnectionCount(): Int = delegate.idleConnectionCount()
 
-  public ConnectionPool(int maxIdleConnections, long keepAliveDuration, TimeUnit timeUnit) {
-    this.delegate = new RealConnectionPool(maxIdleConnections, keepAliveDuration, timeUnit);
-  }
+  /** Returns total number of connections in the pool.  */
+  fun connectionCount(): Int = delegate.connectionCount()
 
-  /** Returns the number of idle connections in the pool. */
-  public int idleConnectionCount() {
-    return delegate.idleConnectionCount();
-  }
-
-  /** Returns total number of connections in the pool. */
-  public int connectionCount() {
-    return delegate.connectionCount();
-  }
-
-  /** Close and remove all idle connections in the pool. */
-  public void evictAll() {
-    delegate.evictAll();
+  /** Close and remove all idle connections in the pool.  */
+  fun evictAll() {
+    delegate.evictAll()
   }
 }
