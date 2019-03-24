@@ -16,8 +16,8 @@
  */
 package okhttp3
 
-import java.util.concurrent.TimeUnit
 import okhttp3.internal.connection.RealConnectionPool
+import java.util.concurrent.TimeUnit
 
 /**
  * Manages reuse of HTTP and HTTP/2 connections for reduced network latency. HTTP requests that
@@ -30,9 +30,9 @@ import okhttp3.internal.connection.RealConnectionPool
  * inactivity.
  */
 class ConnectionPool @JvmOverloads constructor(
-    maxIdleConnections: Int = 5,
-    keepAliveDuration: Long = 5,
-    timeUnit: TimeUnit = TimeUnit.MINUTES
+  maxIdleConnections: Int = 5,
+  keepAliveDuration: Long = 5,
+  timeUnit: TimeUnit = TimeUnit.MINUTES
 ) {
   internal val delegate = RealConnectionPool(maxIdleConnections, keepAliveDuration, timeUnit)
 
