@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 Square, Inc.
+ * Copyright (C) 2015 Square, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,13 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package okhttp3.internal.http2;
+package okhttp3.internal.connection
 
 import java.io.IOException;
 
 /**
- * Thrown when an HTTP/2 connection is shutdown (either explicitly or if the peer has sent a GOAWAY
- * frame) and an attempt is made to use the connection.
+ * An exception thrown to indicate a problem connecting via a single Route. Multiple attempts may
+ * have been made with alternative protocols, none of which were successful.
  */
-public final class ConnectionShutdownException extends IOException {
+class RouteException internal constructor(val firstConnectException: IOException) :
+    RuntimeException(firstConnectException) {
+  var lastConnectException: IOException = firstConnectException
+    private set
+
+  fun addConnectException(e: IOException) {
+    firstConnectException.addSuppressed(e)
+    lastConnectException = e
+  }
 }
