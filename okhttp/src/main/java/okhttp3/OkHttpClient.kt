@@ -117,7 +117,7 @@ import kotlin.DeprecationLevel.ERROR
  * OkHttp also uses daemon threads for HTTP/2 connections. These will exit automatically if they
  * remain idle.
  */
-class OkHttpClient internal constructor(
+open class OkHttpClient internal constructor(
   builder: Builder
 ) : Cloneable, Call.Factory, WebSocket.Factory {
 
@@ -176,75 +176,75 @@ class OkHttpClient internal constructor(
         .withCertificateChainCleaner(certificateChainCleaner)
   }
 
-  fun dispatcher(): Dispatcher = dispatcher
+  open fun dispatcher(): Dispatcher = dispatcher
 
-  fun proxy(): Proxy? = proxy
+  open fun proxy(): Proxy? = proxy
 
-  fun protocols(): List<Protocol> = protocols
+  open fun protocols(): List<Protocol> = protocols
 
-  fun connectionSpecs(): List<ConnectionSpec> = connectionSpecs
+  open fun connectionSpecs(): List<ConnectionSpec> = connectionSpecs
 
   /**
    * Returns an immutable list of interceptors that observe the full span of each call: from before
    * the connection is established (if any) until after the response source is selected (either the
    * origin server, cache, or both).
    */
-  fun interceptors(): List<Interceptor> = interceptors
+  open fun interceptors(): List<Interceptor> = interceptors
 
   /**
    * Returns an immutable list of interceptors that observe a single network request and response.
    * These interceptors must call [Interceptor.Chain.proceed] exactly once: it is an error for
    * a network interceptor to short-circuit or repeat a network request.
    */
-  fun networkInterceptors(): List<Interceptor> = networkInterceptors
+  open fun networkInterceptors(): List<Interceptor> = networkInterceptors
 
-  fun eventListenerFactory(): EventListener.Factory = eventListenerFactory
+  open fun eventListenerFactory(): EventListener.Factory = eventListenerFactory
 
-  fun proxySelector(): ProxySelector = proxySelector
+  open fun proxySelector(): ProxySelector = proxySelector
 
-  fun cookieJar(): CookieJar = cookieJar
+  open fun cookieJar(): CookieJar = cookieJar
 
-  fun cache(): Cache? = cache
+  open fun cache(): Cache? = cache
 
-  fun socketFactory(): SocketFactory = socketFactory
+  open fun socketFactory(): SocketFactory = socketFactory
 
-  fun sslSocketFactory(): SSLSocketFactory = sslSocketFactory
+  open fun sslSocketFactory(): SSLSocketFactory = sslSocketFactory
 
-  fun hostnameVerifier(): HostnameVerifier = hostnameVerifier
+  open fun hostnameVerifier(): HostnameVerifier = hostnameVerifier
 
-  fun certificatePinner(): CertificatePinner = certificatePinner
+  open fun certificatePinner(): CertificatePinner = certificatePinner
 
-  fun proxyAuthenticator(): Authenticator = proxyAuthenticator
+  open fun proxyAuthenticator(): Authenticator = proxyAuthenticator
 
-  fun authenticator(): Authenticator = authenticator
+  open fun authenticator(): Authenticator = authenticator
 
-  fun connectionPool(): ConnectionPool = connectionPool
+  open fun connectionPool(): ConnectionPool = connectionPool
 
-  fun dns(): Dns = dns
+  open fun dns(): Dns = dns
 
-  fun followSslRedirects(): Boolean = followSslRedirects
+  open fun followSslRedirects(): Boolean = followSslRedirects
 
-  fun followRedirects(): Boolean = followRedirects
+  open fun followRedirects(): Boolean = followRedirects
 
-  fun retryOnConnectionFailure(): Boolean = retryOnConnectionFailure
+  open fun retryOnConnectionFailure(): Boolean = retryOnConnectionFailure
 
   /**
    * Default call timeout (in milliseconds). By default there is no timeout for complete calls, but
    * there is for the connect, write, and read actions within a call.
    */
-  fun callTimeoutMillis(): Int = callTimeout
+  open fun callTimeoutMillis(): Int = callTimeout
 
   /** Default connect timeout (in milliseconds). The default is 10 seconds.  */
-  fun connectTimeoutMillis(): Int = connectTimeout
+  open fun connectTimeoutMillis(): Int = connectTimeout
 
   /** Default read timeout (in milliseconds). The default is 10 seconds. */
-  fun readTimeoutMillis(): Int = readTimeout
+  open fun readTimeoutMillis(): Int = readTimeout
 
   /** Default write timeout (in milliseconds). The default is 10 seconds. */
-  fun writeTimeoutMillis(): Int = writeTimeout
+  open fun writeTimeoutMillis(): Int = writeTimeout
 
   /** Web socket and HTTP/2 ping interval (in milliseconds). By default pings are not sent. */
-  fun pingIntervalMillis(): Int = pingInterval
+  open fun pingIntervalMillis(): Int = pingInterval
 
   fun internalCache(): InternalCache? {
     return cache?.internalCache ?: internalCache
@@ -262,7 +262,7 @@ class OkHttpClient internal constructor(
     return webSocket
   }
 
-  fun newBuilder(): Builder = Builder(this)
+  open fun newBuilder(): Builder = Builder(this)
 
   class Builder constructor() {
     internal var dispatcher: Dispatcher = Dispatcher()
