@@ -34,7 +34,6 @@ public class CustomDispatcherTest {
   @Rule public Timeout globalTimeout = Timeout.seconds(30);
 
   @Test public void simpleDispatch() throws Exception {
-    mockWebServer.start();
     final List<RecordedRequest> requestsMade = new ArrayList<>();
     final Dispatcher dispatcher = new Dispatcher() {
       @Override
@@ -55,7 +54,6 @@ public class CustomDispatcherTest {
   @Test public void outOfOrderResponses() throws Exception {
     AtomicInteger firstResponseCode = new AtomicInteger();
     AtomicInteger secondResponseCode = new AtomicInteger();
-    mockWebServer.start();
     final String secondRequest = "/bar";
     final String firstRequest = "/foo";
     final CountDownLatch latch = new CountDownLatch(1);
