@@ -855,37 +855,28 @@ public final class HttpOverHttp2Test {
   }
 
   @Test public void recoverFromCancelReusesConnection() throws Exception {
-    CountDownLatch responseDequeuedLatch = new CountDownLatch(1);
-    CountDownLatch requestCanceledLatch = new CountDownLatch(1);
+    List<CountDownLatch> responseDequeuedLatches = Arrays.asList(
+        new CountDownLatch(1),
+        // No synchronization is needed for the last request, which is not canceled.
+        new CountDownLatch(0));
+    List<CountDownLatch> requestCanceledLatches = Arrays.asList(
+        new CountDownLatch(1),
+        new CountDownLatch(0));
 
-    QueueDispatcher dispatcher = new QueueDispatcher() {
-      @Override
-      public MockResponse dispatch(RecordedRequest request) throws InterruptedException {
-        // This guarantees a deterministic sequence when handling the canceled request:
-        // 1. Server reads request and dequeues first response
-        // 2. Client cancels request
-        // 3. Server tries to send response on the canceled stream
-        // Otherwise, there is no guarantee for the sequence. For example, the server may use the
-        // first mocked response to respond to the second request.
-        MockResponse response = super.dispatch(request);
-        responseDequeuedLatch.countDown();
-        requestCanceledLatch.await();
-        return response;
-      }
-    };
-    server.setDispatcher(dispatcher);
-
+    QueueDispatcher dispatcher =
+        new RespondAfterCancelDispatcher(responseDequeuedLatches, requestCanceledLatches);
     dispatcher.enqueueResponse(new MockResponse()
         .setBodyDelay(10, TimeUnit.SECONDS)
         .setBody("abc"));
     dispatcher.enqueueResponse(new MockResponse()
         .setBody("def"));
+    server.setDispatcher(dispatcher);
 
     client = client.newBuilder()
         .dns(new DoubleInetAddressDns())
         .build();
 
-    callAndCancel(0, responseDequeuedLatch, requestCanceledLatch);
+    callAndCancel(0, responseDequeuedLatches.get(0), requestCanceledLatches.get(0));
 
     // Make a second request to ensure the connection is reused.
     Call call = client.newCall(new Request.Builder()
@@ -897,21 +888,34 @@ public final class HttpOverHttp2Test {
   }
 
   @Test public void recoverFromMultipleCancelReusesConnection() throws Exception {
-    server.enqueue(new MockResponse()
+    List<CountDownLatch> responseDequeuedLatches = Arrays.asList(
+        new CountDownLatch(1),
+        new CountDownLatch(1),
+        // No synchronization is needed for the last request, which is not canceled.
+        new CountDownLatch(0));
+    List<CountDownLatch> requestCanceledLatches = Arrays.asList(
+        new CountDownLatch(1),
+        new CountDownLatch(1),
+        new CountDownLatch(0));
+
+    QueueDispatcher dispatcher =
+        new RespondAfterCancelDispatcher(responseDequeuedLatches, requestCanceledLatches);
+    dispatcher.enqueueResponse(new MockResponse()
             .setBodyDelay(10, TimeUnit.SECONDS)
             .setBody("abc"));
-    server.enqueue(new MockResponse()
+    dispatcher.enqueueResponse(new MockResponse()
             .setBodyDelay(10, TimeUnit.SECONDS)
             .setBody("def"));
-    server.enqueue(new MockResponse()
+    dispatcher.enqueueResponse(new MockResponse()
             .setBody("ghi"));
+    server.setDispatcher(dispatcher);
 
     client = client.newBuilder()
             .dns(new DoubleInetAddressDns())
             .build();
 
-    callAndCancel(0, new CountDownLatch(0), new CountDownLatch(0));
-    callAndCancel(1, new CountDownLatch(0), new CountDownLatch(0));
+    callAndCancel(0, responseDequeuedLatches.get(0), requestCanceledLatches.get(0));
+    callAndCancel(1, responseDequeuedLatches.get(1), requestCanceledLatches.get(1));
 
     // Make a third request to ensure the connection is reused.
     Call call = client.newCall(new Request.Builder()
@@ -920,6 +924,35 @@ public final class HttpOverHttp2Test {
     Response response = call.execute();
     assertThat(response.body().string()).isEqualTo("ghi");
     assertThat(server.takeRequest().getSequenceNumber()).isEqualTo(2);
+  }
+
+  private class RespondAfterCancelDispatcher extends QueueDispatcher {
+    final private List<CountDownLatch> responseDequeuedLatches;
+    final private List<CountDownLatch> requestCanceledLatches;
+    private int responseIndex = 0;
+
+    RespondAfterCancelDispatcher(
+        List<CountDownLatch> responseDequeuedLatches,
+        List<CountDownLatch> requestCanceledLatches) {
+      this.responseDequeuedLatches = responseDequeuedLatches;
+      this.requestCanceledLatches = requestCanceledLatches;
+    }
+
+    @Override
+    synchronized public MockResponse dispatch(RecordedRequest request)
+        throws InterruptedException {
+      // This guarantees a deterministic sequence when handling the canceled request:
+      // 1. Server reads request and dequeues first response
+      // 2. Client cancels request
+      // 3. Server tries to send response on the canceled stream
+      // Otherwise, there is no guarantee for the sequence. For example, the server may use the
+      // first mocked response to respond to the second request.
+      MockResponse response = super.dispatch(request);
+      responseDequeuedLatches.get(responseIndex).countDown();
+      requestCanceledLatches.get(responseIndex).await();
+      responseIndex++;
+      return response;
+    }
   }
 
   /** Make a call and canceling it as soon as it's accepted by the server. */
@@ -1152,9 +1185,13 @@ public final class HttpOverHttp2Test {
     assertThat(firstFrame(logs, "HEADERS"))
         .overridingErrorMessage("header logged")
         .contains("HEADERS       END_HEADERS");
-    assertThat(firstFrame(logs, "DATA"))
-        .overridingErrorMessage("data logged")
-        .contains("0 DATA          END_STREAM");
+    // While MockWebServer waits to read the client's HEADERS frame before sending the response, it
+    // doesn't wait to read the client's DATA frame and may send a DATA frame before the client
+    // does. So we can't assume the client's empty DATA will be logged first.
+    assertThat(countFrames(logs, "FINE: >> 0x00000003     0 DATA          END_STREAM"))
+        .isEqualTo((long) 2);
+    assertThat(countFrames(logs, "FINE: >> 0x00000003     3 DATA          "))
+        .isEqualTo((long) 1);
   }
 
   @Test public void pingsTransmitted() throws Exception {
