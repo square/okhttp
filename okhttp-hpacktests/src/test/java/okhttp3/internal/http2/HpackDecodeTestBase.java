@@ -17,7 +17,6 @@ package okhttp3.internal.http2;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
 import okhttp3.internal.http2.hpackjson.Case;
@@ -40,9 +39,6 @@ public class HpackDecodeTestBase {
     List<Story[]> result = new ArrayList<>();
     for (String interopTestName : interopTests) {
       List<Story> stories = HpackJsonUtil.readStories(interopTestName);
-      if (stories.isEmpty()) {
-        Collections.emptyList();
-      }
       for (Story story : stories) {
         result.add(new Story[] {story});
       }
