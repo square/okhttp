@@ -40,6 +40,7 @@ import okhttp3.RecordingHostnameVerifier;
 import okhttp3.tls.HandshakeCertificates;
 import okhttp3.tls.HeldCertificate;
 import org.junit.After;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.Description;
@@ -505,7 +506,7 @@ public final class MockWebServerTest {
     assertThat(server.protocols().get(0)).isEqualTo(Protocol.H2_PRIOR_KNOWLEDGE);
   }
 
-  @Test(timeout = 60_000) public void https() throws Exception {
+  @Test(timeout = 60_000) @Ignore public void https() throws Exception {
     HandshakeCertificates handshakeCertificates = localhost();
     server.useHttps(handshakeCertificates.sslSocketFactory(), false);
     server.enqueue(new MockResponse().setBody("abc"));
@@ -530,7 +531,7 @@ public final class MockWebServerTest {
     assertThat(handshake.peerCertificates().size()).isEqualTo(0);
   }
 
-  @Test(timeout = 60_000) public void httpsWithClientAuth() throws Exception {
+  @Test(timeout = 60_000) @Ignore public void httpsWithClientAuth() throws Exception {
     HeldCertificate clientCa = new HeldCertificate.Builder()
         .certificateAuthority(0)
         .build();
