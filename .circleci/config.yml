@@ -1,0 +1,40 @@
+# Check https://circleci.com/docs/2.0/language-java/ for more details
+version: 2
+jobs:
+  build:
+    docker:
+      - image: circleci/openjdk:8-jdk
+
+    working_directory: ~/repo
+
+    environment:
+      JVM_OPTS: -Xmx3200m
+      TERM: dumb
+
+    steps:
+      - checkout
+
+      - restore_cache:
+          keys:
+            - v1-dependencies-{{ checksum "build.gradle" }}
+            - v1-dependencies-
+
+      - run: ./gradlew downloadDependencies
+
+      - save_cache:
+          paths:
+            - ~/.gradle/caches
+          key: v1-dependencies-{{ checksum "build.gradle" }}
+
+      - run: ./gradlew check
+      
+      - run:
+          name: Save test results
+          command: |
+            mkdir -p ~/test-results/junit/
+            find . -type f -regex ".*/build/test-results/.*xml" -exec cp {} ~/test-results/junit/ \;
+          when: always
+      - store_test_results:
+          path: ~/test-results
+      - store_artifacts:
+          path: ~/test-results/junit 
