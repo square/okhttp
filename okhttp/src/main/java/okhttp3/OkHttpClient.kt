@@ -77,7 +77,7 @@ import kotlin.DeprecationLevel.ERROR
  *
  * ## Customize your client with newBuilder()
  *
- * You can customize a shared OkHttpClient instance with [.newBuilder]. This builds a
+ * You can customize a shared OkHttpClient instance with [newBuilder]. This builds a
  * client that shares the same connection pool, thread pools, and configuration. Use the builder
  * methods to configure the derived client for a specific purpose.
  *
@@ -472,7 +472,7 @@ class OkHttpClient internal constructor(
 
     /**
      * Sets the HTTP proxy that will be used by connections created by this client. This takes
-     * precedence over [.proxySelector], which is only honored when this proxy is null (which
+     * precedence over [proxySelector], which is only honored when this proxy is null (which
      * it is by default). To disable proxy use completely, call `proxy(Proxy.NO_PROXY)`.
      */
     fun proxy(proxy: Proxy?) = apply {
@@ -480,7 +480,7 @@ class OkHttpClient internal constructor(
     }
 
     /**
-     * Sets the proxy selection policy to be used if no [proxy][.proxy] is specified
+     * Sets the proxy selection policy to be used if no [proxy][proxy] is specified
      * explicitly. The proxy selector may return multiple proxies; in that case they will be tried
      * in sequence until a successful connection is established.
      *
@@ -595,7 +595,7 @@ class OkHttpClient internal constructor(
 
     /**
      * Sets the certificate pinner that constrains which certificates are trusted. By default HTTPS
-     * connections rely on only the [SSL socket factory][.sslSocketFactory] to establish trust.
+     * connections rely on only the [SSL socket factory][sslSocketFactory] to establish trust.
      * Pinning certificates avoids the need to trust certificate authorities.
      */
     fun certificatePinner(certificatePinner: CertificatePinner) = apply {
