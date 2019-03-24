@@ -23,7 +23,6 @@ import java.net.InetAddress
 import java.net.UnknownHostException
 import java.nio.charset.StandardCharsets
 import java.util.ArrayList
-import kotlin.experimental.and
 
 /**
  * Trivial Dns Encoder/Decoder, basically ripped from Netty full implementation.
@@ -46,7 +45,7 @@ object DnsRecordCodec {
     writeShort(0) // additional
 
     val nameBuf = Buffer()
-    val labels = host.split("\\.".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
+    val labels = host.split('.').dropLastWhile { it.isEmpty() }.toTypedArray()
     for (label in labels) {
       val utf8ByteCount = Utf8.size(label)
       if (utf8ByteCount != label.length.toLong()) {
@@ -116,19 +115,19 @@ object DnsRecordCodec {
   }
 
   @Throws(EOFException::class)
-  private fun skipName(`in`: Buffer) {
+  private fun skipName(source: Buffer) {
     // 0 - 63 bytes
-    var length = `in`.readByte().toInt()
+    var length = source.readByte().toInt()
 
     if (length < 0) {
       // compressed name pointer, first two bits are 1
       // drop second byte of compression offset
-      `in`.skip(1)
+      source.skip(1)
     } else {
       while (length > 0) {
         // skip each part of the domain name
-        `in`.skip(length.toLong())
-        length = `in`.readByte().toInt()
+        source.skip(length.toLong())
+        length = source.readByte().toInt()
       }
     }
   }

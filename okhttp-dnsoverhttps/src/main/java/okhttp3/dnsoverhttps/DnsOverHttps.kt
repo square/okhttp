@@ -48,27 +48,19 @@ import java.util.concurrent.CountDownLatch
  * <h3>Warning: This is a non-final API.</h3>
  *
  *
- * **As of OkHttp 3.11, this feature is an unstable preview: the API is subject to change,
- * and the implementation is incomplete. We expect that OkHttp 3.12 or 3.13 will finalize this API.
+ * As of OkHttp 3.14, this feature is an unstable preview: the API is subject to change,
+ * and the implementation is incomplete. We expect that OkHttp 4.0 or 4.1 will finalize this API.
  * Until then, expect API and behavior changes when you update your OkHttp dependency.**
  */
 class DnsOverHttps internal constructor(builder: Builder) : Dns {
-  private val client: OkHttpClient
-  private val url: HttpUrl
-  private val includeIPv6: Boolean
-  private val post: Boolean
-  private val resolvePrivateAddresses: Boolean
-  private val resolvePublicAddresses: Boolean
-
-  init {
-    this.url = builder.url ?: throw NullPointerException("url not set")
-    this.includeIPv6 = builder.includeIPv6
-    this.post = builder.post
-    this.resolvePrivateAddresses = builder.resolvePrivateAddresses
-    this.resolvePublicAddresses = builder.resolvePublicAddresses
-    this.client = builder.client?.newBuilder()?.dns(buildBootstrapClient(builder))?.build()
-      ?: throw NullPointerException("client not set")
-  }
+  private val client: OkHttpClient =
+      builder.client?.newBuilder()?.dns(buildBootstrapClient(builder))?.build()
+          ?: throw NullPointerException("client not set")
+  private val url: HttpUrl = builder.url ?: throw NullPointerException("url not set")
+  private val includeIPv6: Boolean = builder.includeIPv6
+  private val post: Boolean = builder.post
+  private val resolvePrivateAddresses: Boolean = builder.resolvePrivateAddresses
+  private val resolvePublicAddresses: Boolean = builder.resolvePublicAddresses
 
   fun url(): HttpUrl = url
 
@@ -127,7 +119,8 @@ class DnsOverHttps internal constructor(builder: Builder) : Dns {
     val request = buildRequest(hostname, type)
     val response = getCacheOnlyResponse(request)
 
-    response?.let { processResponse(it, hostname, results, failures) } ?: networkRequests.add(client.newCall(request))
+    response?.let { processResponse(it, hostname, results, failures) } ?: networkRequests.add(
+        client.newCall(request))
   }
 
   private fun executeRequests(
@@ -219,7 +212,7 @@ class DnsOverHttps internal constructor(builder: Builder) : Dns {
   @Throws(Exception::class)
   private fun readResponse(hostname: String, response: Response): List<InetAddress> {
     if (response.cacheResponse() == null && response.protocol() !== Protocol.HTTP_2) {
-      Platform.get().log(Platform.WARN, "Incorrect protocol: " + response.protocol(), null)
+      Platform.get().log(Platform.WARN, "Incorrect protocol: ${response.protocol()}", null)
     }
 
     response.use {
@@ -231,11 +224,7 @@ class DnsOverHttps internal constructor(builder: Builder) : Dns {
 
       if (body!!.contentLength() > MAX_RESPONSE_SIZE) {
         throw IOException(
-          "response size exceeds limit ("
-            + MAX_RESPONSE_SIZE
-            + " bytes): "
-            + body.contentLength()
-            + " bytes"
+            "response size exceeds limit ($MAX_RESPONSE_SIZE bytes): ${body.contentLength()} bytes"
         )
       }
 
@@ -246,19 +235,19 @@ class DnsOverHttps internal constructor(builder: Builder) : Dns {
   }
 
   private fun buildRequest(hostname: String, type: Int): Request =
-    Request.Builder().header("Accept", DNS_MESSAGE.toString()).apply {
-      val query = DnsRecordCodec.encodeQuery(hostname, type)
+      Request.Builder().header("Accept", DNS_MESSAGE.toString()).apply {
+        val query = DnsRecordCodec.encodeQuery(hostname, type)
 
-      if (post) {
-        url(url).post(RequestBody.create(DNS_MESSAGE, query))
-      } else {
-        val encoded = query.base64Url().replace("=", "")
-        val requestUrl = url.newBuilder().addQueryParameter("dns", encoded).build()
+        if (post) {
+          url(url).post(RequestBody.create(DNS_MESSAGE, query))
+        } else {
+          val encoded = query.base64Url().replace("=", "")
+          val requestUrl = url.newBuilder().addQueryParameter("dns", encoded).build()
 
-        url(requestUrl)
-      }
+          url(requestUrl)
+        }
 
-    }.build()
+      }.build()
 
   class Builder {
     internal var client: OkHttpClient? = null

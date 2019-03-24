@@ -15,22 +15,24 @@
  */
 package okhttp3.dnsoverhttps
 
+import okhttp3.Dns
 import java.net.InetAddress
 import java.net.UnknownHostException
-import okhttp3.Dns
 
 /**
  * Internal Bootstrap DNS implementation for handling initial connection to DNS over HTTPS server.
  *
  * Returns hardcoded results for the known host.
  */
-internal class BootstrapDns(private val dnsHostname: String, private val dnsServers: List<InetAddress>) : Dns {
-
+internal class BootstrapDns(
+  private val dnsHostname: String,
+  private val dnsServers: List<InetAddress>
+) : Dns {
   @Throws(UnknownHostException::class)
   override fun lookup(hostname: String): List<InetAddress> {
     if (this.dnsHostname != hostname) {
       throw UnknownHostException(
-        "BootstrapDns called for $hostname instead of $dnsHostname"
+          "BootstrapDns called for $hostname instead of $dnsHostname"
       )
     }
 
