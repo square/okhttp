@@ -447,7 +447,7 @@ public final class Http2Connection implements Closeable {
     Http2Stream[] streamsToClose = null;
     synchronized (this) {
       if (!streams.isEmpty()) {
-        streamsToClose = streams.values().toArray(new Http2Stream[streams.size()]);
+        streamsToClose = streams.values().toArray(new Http2Stream[0]);
         streams.clear();
       }
     }
@@ -705,7 +705,7 @@ public final class Http2Connection implements Closeable {
             receivedInitialPeerSettings = true;
           }
           if (!streams.isEmpty()) {
-            streamsToNotify = streams.values().toArray(new Http2Stream[streams.size()]);
+            streamsToNotify = streams.values().toArray(new Http2Stream[0]);
           }
         }
         listenerExecutor.execute(new NamedRunnable("OkHttp %s settings", connectionName) {
@@ -766,7 +766,7 @@ public final class Http2Connection implements Closeable {
       // Copy the streams first. We don't want to hold a lock when we call receiveRstStream().
       Http2Stream[] streamsCopy;
       synchronized (Http2Connection.this) {
-        streamsCopy = streams.values().toArray(new Http2Stream[streams.size()]);
+        streamsCopy = streams.values().toArray(new Http2Stream[0]);
         shutdown = true;
       }
 

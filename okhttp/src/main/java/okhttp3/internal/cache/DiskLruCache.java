@@ -662,7 +662,7 @@ public final class DiskLruCache implements Closeable, Flushable {
       return;
     }
     // Copying for safe iteration.
-    for (Entry entry : lruEntries.values().toArray(new Entry[lruEntries.size()])) {
+    for (Entry entry : lruEntries.values().toArray(new Entry[0])) {
       if (entry.currentEditor != null) {
         entry.currentEditor.abort();
       }
@@ -697,7 +697,7 @@ public final class DiskLruCache implements Closeable, Flushable {
   public synchronized void evictAll() throws IOException {
     initialize();
     // Copying for safe iteration.
-    for (Entry entry : lruEntries.values().toArray(new Entry[lruEntries.size()])) {
+    for (Entry entry : lruEntries.values().toArray(new Entry[0])) {
       removeEntry(entry);
     }
     mostRecentTrimFailed = false;
