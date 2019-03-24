@@ -101,7 +101,6 @@ task japicmp(type: me.champeau.gradle.japicmp.JapicmpTask, dependsOn: 'jar') {
       'okhttp3.Address#certificatePinner()',
       'okhttp3.Address#connectionSpecs()',
       'okhttp3.Address#dns()',
-      'okhttp3.Address#equalsNonHost()', // Remove this
       'okhttp3.Address#hostnameVerifier()',
       'okhttp3.Address#protocols()',
       'okhttp3.Address#proxy()',

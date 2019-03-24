@@ -126,7 +126,7 @@ class Address(
     return result
   }
 
-  fun equalsNonHost(that: Address): Boolean {
+  internal fun equalsNonHost(that: Address): Boolean {
     return (this.dns == that.dns
         && this.proxyAuthenticator == that.proxyAuthenticator
         && this.protocols == that.protocols
