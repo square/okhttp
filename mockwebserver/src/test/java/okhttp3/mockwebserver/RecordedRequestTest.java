@@ -69,7 +69,7 @@ public class RecordedRequestTest {
     }
   }
 
-  @Test public void testIPv4() throws UnknownHostException {
+  @Test(timeout = 60_000) public void testIPv4() throws UnknownHostException {
     Socket socket =
         new FakeSocket(InetAddress.getByAddress("127.0.0.1", new byte[] { 127, 0, 0, 1 }), 80);
 
@@ -79,7 +79,7 @@ public class RecordedRequestTest {
     assertThat(request.getRequestUrl().toString()).isEqualTo("http://127.0.0.1/");
   }
 
-  @Test public void testIpv6() throws UnknownHostException {
+  @Test(timeout = 60_000) public void testIpv6() throws UnknownHostException {
     Socket socket = new FakeSocket(InetAddress.getByAddress("::1",
         new byte[] { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 }), 80);
 
@@ -89,7 +89,7 @@ public class RecordedRequestTest {
     assertThat(request.getRequestUrl().toString()).isEqualTo("http://[::1]/");
   }
 
-  @Test public void testUsesLocal() throws UnknownHostException {
+  @Test(timeout = 60_000) public void testUsesLocal() throws UnknownHostException {
     Socket socket =
         new FakeSocket(InetAddress.getByAddress("127.0.0.1", new byte[] { 127, 0, 0, 1 }), 80);
 

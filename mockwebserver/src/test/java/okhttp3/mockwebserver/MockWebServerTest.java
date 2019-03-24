@@ -57,13 +57,13 @@ import static org.junit.Assert.fail;
 public final class MockWebServerTest {
   @Rule public final MockWebServer server = new MockWebServer();
 
-  @Test public void defaultMockResponse() {
+  @Test(timeout = 60_000) public void defaultMockResponse() {
     MockResponse response = new MockResponse();
     assertThat(headersToList(response)).containsExactly("Content-Length: 0");
     assertThat(response.getStatus()).isEqualTo("HTTP/1.1 200 OK");
   }
 
-  @Test public void setResponseMockReason() {
+  @Test(timeout = 60_000) public void setResponseMockReason() {
     String[] reasons = {
         "Mock Response",
         "Informational",
@@ -81,19 +81,19 @@ public final class MockWebServerTest {
     }
   }
 
-  @Test public void setStatusControlsWholeStatusLine() {
+  @Test(timeout = 60_000) public void setStatusControlsWholeStatusLine() {
     MockResponse response = new MockResponse().setStatus("HTTP/1.1 202 That'll do pig");
     assertThat(headersToList(response)).containsExactly("Content-Length: 0");
     assertThat(response.getStatus()).isEqualTo("HTTP/1.1 202 That'll do pig");
   }
 
-  @Test public void setBodyAdjustsHeaders() throws IOException {
+  @Test(timeout = 60_000) public void setBodyAdjustsHeaders() throws IOException {
     MockResponse response = new MockResponse().setBody("ABC");
     assertThat(headersToList(response)).containsExactly("Content-Length: 3");
     assertThat(response.getBody().readUtf8()).isEqualTo("ABC");
   }
 
-  @Test public void mockResponseAddHeader() {
+  @Test(timeout = 60_000) public void mockResponseAddHeader() {
     MockResponse response = new MockResponse()
         .clearHeaders()
         .addHeader("Cookie: s=square")
@@ -101,7 +101,7 @@ public final class MockWebServerTest {
     assertThat(headersToList(response)).containsExactly("Cookie: s=square", "Cookie: a=android");
   }
 
-  @Test public void mockResponseSetHeader() {
+  @Test(timeout = 60_000) public void mockResponseSetHeader() {
     MockResponse response = new MockResponse()
         .clearHeaders()
         .addHeader("Cookie: s=square")
@@ -111,7 +111,7 @@ public final class MockWebServerTest {
     assertThat(headersToList(response)).containsExactly("Cookies: delicious", "cookie: r=robot");
   }
 
-  @Test public void mockResponseSetHeaders() {
+  @Test(timeout = 60_000) public void mockResponseSetHeaders() {
     MockResponse response = new MockResponse()
         .clearHeaders()
         .addHeader("Cookie: s=square")
@@ -122,7 +122,7 @@ public final class MockWebServerTest {
     assertThat(headersToList(response)).containsExactly("Cookie: a=android");
   }
 
-  @Test public void regularResponse() throws Exception {
+  @Test(timeout = 60_000) public void regularResponse() throws Exception {
     server.enqueue(new MockResponse().setBody("hello world"));
 
     URL url = server.url("/").url();
@@ -138,7 +138,7 @@ public final class MockWebServerTest {
     assertThat(request.getHeader("Accept-Language")).isEqualTo("en-US");
   }
 
-  @Test public void redirect() throws Exception {
+  @Test(timeout = 60_000) public void redirect() throws Exception {
     server.enqueue(new MockResponse()
         .setResponseCode(HttpURLConnection.HTTP_MOVED_TEMP)
         .addHeader("Location: " + server.url("/new-path"))
@@ -160,7 +160,7 @@ public final class MockWebServerTest {
    * Test that MockWebServer blocks for a call to enqueue() if a request is made before a mock
    * response is ready.
    */
-  @Test public void dispatchBlocksWaitingForEnqueue() throws Exception {
+  @Test(timeout = 60_000) public void dispatchBlocksWaitingForEnqueue() throws Exception {
     new Thread(() -> {
       try {
         Thread.sleep(1000);
@@ -175,7 +175,7 @@ public final class MockWebServerTest {
     assertThat(reader.readLine()).isEqualTo("enqueued in the background");
   }
 
-  @Test public void nonHexadecimalChunkSize() throws Exception {
+  @Test(timeout = 60_000) public void nonHexadecimalChunkSize() throws Exception {
     server.enqueue(new MockResponse()
         .setBody("G\r\nxxxxxxxxxxxxxxxx\r\n0\r\n\r\n")
         .clearHeaders()
@@ -190,7 +190,7 @@ public final class MockWebServerTest {
     }
   }
 
-  @Test public void responseTimeout() throws Exception {
+  @Test(timeout = 60_000) public void responseTimeout() throws Exception {
     server.enqueue(new MockResponse()
         .setBody("ABC")
         .clearHeaders()
@@ -220,7 +220,7 @@ public final class MockWebServerTest {
     assertThat(server.takeRequest().getSequenceNumber()).isEqualTo(0);
   }
 
-  @Test public void disconnectAtStart() throws Exception {
+  @Test(timeout = 60_000) public void disconnectAtStart() throws Exception {
     server.enqueue(new MockResponse().setSocketPolicy(SocketPolicy.DISCONNECT_AT_START));
     server.enqueue(new MockResponse()); // The jdk's HttpUrlConnection is a bastard.
     server.enqueue(new MockResponse());
@@ -235,7 +235,7 @@ public final class MockWebServerTest {
    * Throttle the request body by sleeping 500ms after every 3 bytes. With a 6-byte request, this
    * should yield one sleep for a total delay of 500ms.
    */
-  @Test public void throttleRequest() throws Exception {
+  @Test(timeout = 60_000) public void throttleRequest() throws Exception {
     server.enqueue(new MockResponse()
         .throttleBody(3, 500, TimeUnit.MILLISECONDS));
 
@@ -254,7 +254,7 @@ public final class MockWebServerTest {
    * Throttle the response body by sleeping 500ms after every 3 bytes. With a 6-byte response, this
    * should yield one sleep for a total delay of 500ms.
    */
-  @Test public void throttleResponse() throws Exception {
+  @Test(timeout = 60_000) public void throttleResponse() throws Exception {
     server.enqueue(new MockResponse()
         .setBody("ABCDEF")
         .throttleBody(3, 500, TimeUnit.MILLISECONDS));
@@ -275,7 +275,7 @@ public final class MockWebServerTest {
   }
 
   /** Delay the response body by sleeping 1s. */
-  @Test public void delayResponse() throws IOException {
+  @Test(timeout = 60_000) public void delayResponse() throws IOException {
     server.enqueue(new MockResponse()
         .setBody("ABCDEF")
         .setBodyDelay(1, SECONDS));
@@ -291,7 +291,7 @@ public final class MockWebServerTest {
     in.close();
   }
 
-  @Test public void disconnectRequestHalfway() throws Exception {
+  @Test(timeout = 60_000) public void disconnectRequestHalfway() throws Exception {
     server.enqueue(new MockResponse().setSocketPolicy(SocketPolicy.DISCONNECT_DURING_REQUEST_BODY));
     // Limit the size of the request body that the server holds in memory to an arbitrary
     // 3.5 MBytes so this test can pass on devices with little memory.
@@ -322,7 +322,7 @@ public final class MockWebServerTest {
     assertThat((float) i).isCloseTo(512f, offset(5f));
   }
 
-  @Test public void disconnectResponseHalfway() throws IOException {
+  @Test(timeout = 60_000) public void disconnectResponseHalfway() throws IOException {
     server.enqueue(new MockResponse()
         .setBody("ab")
         .setSocketPolicy(SocketPolicy.DISCONNECT_DURING_RESPONSE_BODY));
@@ -351,45 +351,41 @@ public final class MockWebServerTest {
     return headerList;
   }
 
-  @Test public void shutdownWithoutStart() throws IOException {
+  @Test(timeout = 60_000) public void shutdownWithoutStart() throws IOException {
     MockWebServer server = new MockWebServer();
     server.shutdown();
   }
 
-  @Test public void closeViaClosable() throws IOException {
+  @Test(timeout = 60_000) public void closeViaClosable() throws IOException {
     Closeable server = new MockWebServer();
     server.close();
   }
 
-  @Test public void shutdownWithoutEnqueue() throws IOException {
+  @Test(timeout = 60_000) public void shutdownWithoutEnqueue() throws IOException {
     MockWebServer server = new MockWebServer();
     server.start();
     server.shutdown();
   }
 
-  @After public void tearDown() throws IOException {
-    server.shutdown();
-  }
-
-  @Test public void portImplicitlyStarts() throws IOException {
+  @Test(timeout = 60_000) public void portImplicitlyStarts() throws IOException {
     assertThat(server.getPort()).isGreaterThan(0);
   }
 
-  @Test public void hostnameImplicitlyStarts() throws IOException {
+  @Test(timeout = 60_000) public void hostnameImplicitlyStarts() throws IOException {
     assertThat(server.getHostName()).isNotNull();
   }
 
-  @Test public void toProxyAddressImplicitlyStarts() throws IOException {
+  @Test(timeout = 60_000) public void toProxyAddressImplicitlyStarts() throws IOException {
     assertThat(server.toProxyAddress()).isNotNull();
   }
 
-  @Test public void differentInstancesGetDifferentPorts() throws IOException {
+  @Test(timeout = 60_000) public void differentInstancesGetDifferentPorts() throws IOException {
     MockWebServer other = new MockWebServer();
     assertThat(other.getPort()).isNotEqualTo(server.getPort());
     other.shutdown();
   }
 
-  @Test public void statementStartsAndStops() throws Throwable {
+  @Test(timeout = 60_000) public void statementStartsAndStops() throws Throwable {
     final AtomicBoolean called = new AtomicBoolean();
     Statement statement = server.apply(new Statement() {
       @Override public void evaluate() throws Throwable {
@@ -408,7 +404,7 @@ public final class MockWebServerTest {
     }
   }
 
-  @Test public void shutdownWhileBlockedDispatching() throws Exception {
+  @Test(timeout = 60_000) public void shutdownWhileBlockedDispatching() throws Exception {
     // Enqueue a request that'll cause MockWebServer to hang on QueueDispatcher.dispatch().
     HttpURLConnection connection = (HttpURLConnection) server.url("/").url().openConnection();
     connection.setReadTimeout(500);
@@ -422,7 +418,7 @@ public final class MockWebServerTest {
     server.shutdown();
   }
 
-  @Test public void requestUrlReconstructed() throws Exception {
+  @Test(timeout = 60_000) public void requestUrlReconstructed() throws Exception {
     server.enqueue(new MockResponse().setBody("hello world"));
 
     URL url = server.url("/a/deep/path?key=foo%20bar").url();
@@ -444,7 +440,7 @@ public final class MockWebServerTest {
     assertThat(requestUrl.queryParameter("key")).isEqualTo("foo bar");
   }
 
-  @Test public void shutdownServerAfterRequest() throws Exception {
+  @Test(timeout = 60_000) public void shutdownServerAfterRequest() throws Exception {
     server.enqueue(new MockResponse().setSocketPolicy(SocketPolicy.SHUTDOWN_SERVER_AFTER_RESPONSE));
 
     URL url = server.url("/").url();
@@ -462,7 +458,7 @@ public final class MockWebServerTest {
     }
   }
 
-  @Test public void http100Continue() throws Exception {
+  @Test(timeout = 60_000) public void http100Continue() throws Exception {
     server.enqueue(new MockResponse().setBody("response"));
 
     URL url = server.url("/").url();
@@ -479,7 +475,7 @@ public final class MockWebServerTest {
     assertThat(request.getBody().readUtf8()).isEqualTo("request");
   }
 
-  @Test public void testH2PriorKnowledgeServerFallback() {
+  @Test(timeout = 60_000) public void testH2PriorKnowledgeServerFallback() {
     try {
       server.setProtocols(asList(Protocol.H2_PRIOR_KNOWLEDGE, Protocol.HTTP_1_1));
       fail();
@@ -490,7 +486,7 @@ public final class MockWebServerTest {
     }
   }
 
-  @Test public void testH2PriorKnowledgeServerDuplicates() {
+  @Test(timeout = 60_000) public void testH2PriorKnowledgeServerDuplicates() {
     try {
       // Treating this use case as user error
       server.setProtocols(asList(Protocol.H2_PRIOR_KNOWLEDGE, Protocol.H2_PRIOR_KNOWLEDGE));
@@ -502,14 +498,14 @@ public final class MockWebServerTest {
     }
   }
 
-  @Test public void testMockWebServerH2PriorKnowledgeProtocol() {
+  @Test(timeout = 60_000) public void testMockWebServerH2PriorKnowledgeProtocol() {
     server.setProtocols(asList(Protocol.H2_PRIOR_KNOWLEDGE));
 
     assertThat(server.protocols().size()).isEqualTo(1);
     assertThat(server.protocols().get(0)).isEqualTo(Protocol.H2_PRIOR_KNOWLEDGE);
   }
 
-  @Test public void https() throws Exception {
+  @Test(timeout = 60_000) public void https() throws Exception {
     HandshakeCertificates handshakeCertificates = localhost();
     server.useHttps(handshakeCertificates.sslSocketFactory(), false);
     server.enqueue(new MockResponse().setBody("abc"));
@@ -534,7 +530,7 @@ public final class MockWebServerTest {
     assertThat(handshake.peerCertificates().size()).isEqualTo(0);
   }
 
-  @Test public void httpsWithClientAuth() throws Exception {
+  @Test(timeout = 60_000) public void httpsWithClientAuth() throws Exception {
     HeldCertificate clientCa = new HeldCertificate.Builder()
         .certificateAuthority(0)
         .build();

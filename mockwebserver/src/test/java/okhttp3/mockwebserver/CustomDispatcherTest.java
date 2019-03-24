@@ -34,7 +34,7 @@ public class CustomDispatcherTest {
     mockWebServer.shutdown();
   }
 
-  @Test public void simpleDispatch() throws Exception {
+  @Test(timeout = 60_000) public void simpleDispatch() throws Exception {
     mockWebServer.start();
     final List<RecordedRequest> requestsMade = new ArrayList<>();
     final Dispatcher dispatcher = new Dispatcher() {
@@ -53,7 +53,7 @@ public class CustomDispatcherTest {
     assertThat(requestsMade.size()).isEqualTo(1);
   }
 
-  @Test public void outOfOrderResponses() throws Exception {
+  @Test(timeout = 60_000) public void outOfOrderResponses() throws Exception {
     AtomicInteger firstResponseCode = new AtomicInteger();
     AtomicInteger secondResponseCode = new AtomicInteger();
     mockWebServer.start();
