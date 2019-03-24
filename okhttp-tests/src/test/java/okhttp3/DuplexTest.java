@@ -18,6 +18,7 @@ package okhttp3;
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.ProtocolException;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import okhttp3.internal.RecordingOkAuthenticator;
 import okhttp3.internal.duplex.AsyncRequestBody;
@@ -45,7 +46,7 @@ public final class DuplexTest {
   @Rule public final MockWebServer server = new MockWebServer();
   @Rule public OkHttpClientTestRule clientTestRule = new OkHttpClientTestRule();
 
-  private final RecordingEventListener listener = new RecordingEventListener();
+  private RecordingEventListener listener = new RecordingEventListener();
   private HandshakeCertificates handshakeCertificates = localhost();
   private OkHttpClient client = clientTestRule.client
       .newBuilder()
@@ -282,13 +283,31 @@ public final class DuplexTest {
   @Test public void duplexWithRedirect() throws Exception {
     enableProtocol(Protocol.HTTP_2);
 
+    CountDownLatch duplexResponseSent = new CountDownLatch(1);
+    listener = new RecordingEventListener() {
+      @Override public void responseHeadersEnd(Call call, Response response) {
+        try {
+          // Wait for the server to send the duplex response before acting on the 301 response
+          // and resetting the stream.
+          duplexResponseSent.await();
+        } catch (InterruptedException e) {
+          throw new AssertionError();
+        }
+        super.responseHeadersEnd(call, response);
+      }
+    };
+
+    client = client.newBuilder()
+        .eventListener(listener)
+        .build();
+
     MockDuplexResponseBody mockDuplexResponseBody = enqueueResponseWithBody(
         new MockResponse()
             .clearHeaders()
             .setResponseCode(HttpURLConnection.HTTP_MOVED_PERM)
             .addHeader("Location: /b"),
         new MockDuplexResponseBody()
-            .sendResponse("/a has moved!\n")
+            .sendResponse("/a has moved!\n", duplexResponseSent)
             .requestIOException()
             .exhaustResponse());
     server.enqueue(new MockResponse()
