@@ -53,7 +53,7 @@ public final class Headers {
   private final String[] namesAndValues;
 
   Headers(Builder builder) {
-    this.namesAndValues = builder.namesAndValues.toArray(new String[builder.namesAndValues.size()]);
+    this.namesAndValues = builder.namesAndValues.toArray(new String[0]);
   }
 
   private Headers(String[] namesAndValues) {
