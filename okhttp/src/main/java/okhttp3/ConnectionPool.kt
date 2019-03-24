@@ -29,12 +29,14 @@ import java.util.concurrent.TimeUnit
  * Currently this pool holds up to 5 idle connections which will be evicted after 5 minutes of
  * inactivity.
  */
-class ConnectionPool @JvmOverloads constructor(
-  maxIdleConnections: Int = 5,
-  keepAliveDuration: Long = 5,
-  timeUnit: TimeUnit = TimeUnit.MINUTES
+class ConnectionPool(
+  maxIdleConnections: Int,
+  keepAliveDuration: Long,
+  timeUnit: TimeUnit
 ) {
   internal val delegate = RealConnectionPool(maxIdleConnections, keepAliveDuration, timeUnit)
+
+  constructor() : this(5, 5, TimeUnit.MINUTES)
 
   /** Returns the number of idle connections in the pool.  */
   fun idleConnectionCount(): Int = delegate.idleConnectionCount()
