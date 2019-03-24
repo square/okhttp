@@ -13,26 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package okhttp3;
+package okhttp3
 
-import java.nio.charset.Charset;
-import okio.ByteString;
-
-import static java.nio.charset.StandardCharsets.ISO_8859_1;
+import okio.ByteString
+import java.nio.charset.Charset
+import java.nio.charset.StandardCharsets.ISO_8859_1
 
 /** Factory for HTTP authorization credentials. */
-public final class Credentials {
-  private Credentials() {
-  }
-
+object Credentials {
   /** Returns an auth credential for the Basic scheme. */
-  public static String basic(String username, String password) {
-    return basic(username, password, ISO_8859_1);
-  }
-
-  public static String basic(String username, String password, Charset charset) {
-    String usernameAndPassword = username + ":" + password;
-    String encoded = ByteString.encodeString(usernameAndPassword, charset).base64();
-    return "Basic " + encoded;
+  @JvmStatic @JvmOverloads fun basic(
+    username: String,
+    password: String,
+    charset: Charset = ISO_8859_1
+  ): String {
+    val usernameAndPassword = "$username:$password"
+    val encoded = ByteString.encodeString(usernameAndPassword, charset).base64()
+    return "Basic $encoded"
   }
 }
