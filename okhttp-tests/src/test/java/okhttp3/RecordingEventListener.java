@@ -28,7 +28,7 @@ import javax.annotation.Nullable;
 import static java.util.Arrays.asList;
 import static org.assertj.core.api.Assertions.assertThat;
 
-public final class RecordingEventListener extends EventListener {
+public class RecordingEventListener extends EventListener {
   final Deque<CallEvent> eventSequence = new ConcurrentLinkedDeque<>();
 
   final List<Object> forbiddenLocks = new ArrayList<>();

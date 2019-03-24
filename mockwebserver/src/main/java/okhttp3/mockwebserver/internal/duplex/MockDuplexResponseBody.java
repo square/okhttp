@@ -17,6 +17,7 @@ package okhttp3.mockwebserver.internal.duplex;
 
 import java.io.IOException;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.FutureTask;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
@@ -63,9 +64,14 @@ public final class MockDuplexResponseBody implements DuplexResponseBody {
   }
 
   public MockDuplexResponseBody sendResponse(String s) {
+    return sendResponse(s, new CountDownLatch(0));
+  }
+
+    public MockDuplexResponseBody sendResponse(String s, CountDownLatch responseSent) {
     actions.add((request, requestBody, responseBody) -> {
       responseBody.writeUtf8(s);
       responseBody.flush();
+      responseSent.countDown();
     });
     return this;
   }
