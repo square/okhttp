@@ -17,6 +17,7 @@ package okhttp3.internal.http2;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
 import okhttp3.internal.http2.hpackjson.Case;
@@ -24,8 +25,8 @@ import okhttp3.internal.http2.hpackjson.HpackJsonUtil;
 import okhttp3.internal.http2.hpackjson.Story;
 import okio.Buffer;
 
+import static okhttp3.internal.http2.hpackjson.Story.MISSING;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.fail;
 
 /**
  * Tests Hpack implementation using https://github.com/http2jp/hpack-test-case/
@@ -37,12 +38,13 @@ public class HpackDecodeTestBase {
    */
   protected static Collection<Story[]> createStories(String[] interopTests)
       throws Exception {
+    if (interopTests.length == 0) {
+      return Collections.singletonList(new Story[] {MISSING});
+    }
+
     List<Story[]> result = new ArrayList<>();
     for (String interopTestName : interopTests) {
       List<Story> stories = HpackJsonUtil.readStories(interopTestName);
-      if (stories.isEmpty()) {
-        fail("No stories for: " + interopTestName);
-      }
       for (Story story : stories) {
         result.add(new Story[] {story});
       }
@@ -67,10 +69,10 @@ public class HpackDecodeTestBase {
   }
 
   protected void testDecoder(Story story) throws Exception {
-    for (Case caze : story.getCases()) {
-      bytesIn.write(caze.getWire());
+    for (Case testCase : story.getCases()) {
+      bytesIn.write(testCase.getWire());
       hpackReader.readHeaders();
-      assertSetEquals(String.format("seqno=%d", caze.getSeqno()), caze.getHeaders(),
+      assertSetEquals(String.format("seqno=%d", testCase.getSeqno()), testCase.getHeaders(),
           hpackReader.getAndResetHeaderList());
     }
   }
