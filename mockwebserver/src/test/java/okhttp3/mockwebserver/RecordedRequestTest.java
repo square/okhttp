@@ -24,7 +24,9 @@ import java.util.Collections;
 import okhttp3.Headers;
 import okhttp3.internal.Util;
 import okio.Buffer;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.Timeout;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -68,6 +70,8 @@ public class RecordedRequestTest {
       return remotePort;
     }
   }
+
+  @Rule public Timeout globalTimeout = Timeout.seconds(30);
 
   @Test public void testIPv4() throws UnknownHostException {
     Socket socket =

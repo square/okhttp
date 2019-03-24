@@ -39,9 +39,9 @@ import okhttp3.Protocol;
 import okhttp3.RecordingHostnameVerifier;
 import okhttp3.tls.HandshakeCertificates;
 import okhttp3.tls.HeldCertificate;
-import org.junit.After;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.Timeout;
 import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
 
@@ -56,6 +56,8 @@ import static org.junit.Assert.fail;
 
 public final class MockWebServerTest {
   @Rule public final MockWebServer server = new MockWebServer();
+
+  @Rule public Timeout globalTimeout = Timeout.seconds(30);
 
   @Test public void defaultMockResponse() {
     MockResponse response = new MockResponse();
@@ -367,10 +369,6 @@ public final class MockWebServerTest {
     server.shutdown();
   }
 
-  @After public void tearDown() throws IOException {
-    server.shutdown();
-  }
-
   @Test public void portImplicitlyStarts() throws IOException {
     assertThat(server.getPort()).isGreaterThan(0);
   }
@@ -457,7 +455,7 @@ public final class MockWebServerTest {
     try {
       refusedConnection.getResponseCode();
       fail("Second connection should be refused");
-    } catch (ConnectException e ) {
+    } catch (ConnectException e) {
       assertThat(e.getMessage()).contains("refused");
     }
   }
@@ -486,7 +484,7 @@ public final class MockWebServerTest {
     } catch (IllegalArgumentException expected) {
       assertThat(expected.getMessage()).isEqualTo(
           ("protocols containing h2_prior_knowledge cannot use other protocols: "
-                + "[h2_prior_knowledge, http/1.1]"));
+              + "[h2_prior_knowledge, http/1.1]"));
     }
   }
 
@@ -498,7 +496,7 @@ public final class MockWebServerTest {
     } catch (IllegalArgumentException expected) {
       assertThat(expected.getMessage()).isEqualTo(
           ("protocols containing h2_prior_knowledge cannot use other protocols: "
-            + "[h2_prior_knowledge, h2_prior_knowledge]"));
+              + "[h2_prior_knowledge, h2_prior_knowledge]"));
     }
   }
 
