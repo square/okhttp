@@ -23,6 +23,11 @@ import java.util.List;
  * reflectively with Moshi to parse stories from files.
  */
 public class Story implements Cloneable {
+  public final static Story MISSING = new Story();
+
+  static {
+    MISSING.setFileName("missing");
+  }
 
   private transient String fileName;
   private List<Case> cases;

@@ -15,6 +15,7 @@
  */
 package okhttp3.internal.http2.hpackjson;
 
+import com.google.common.collect.Lists;
 import com.squareup.moshi.JsonAdapter;
 import com.squareup.moshi.Moshi;
 import java.io.File;
@@ -27,6 +28,7 @@ import java.util.List;
 import okio.Okio;
 
 import static java.util.Arrays.asList;
+import static okhttp3.internal.http2.hpackjson.Story.MISSING;
 
 /**
  * Utilities for reading HPACK tests.
@@ -92,6 +94,12 @@ public final class HpackJsonUtil {
         storyInputStream.close();
       }
     }
+
+    if (result.isEmpty()) {
+      // missing files
+      return Lists.newArrayList(MISSING);
+    }
+
     return result;
   }
 
