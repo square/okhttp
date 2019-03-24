@@ -22,19 +22,18 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicInteger;
-import org.junit.After;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.Timeout;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class CustomDispatcherTest {
-  private MockWebServer mockWebServer = new MockWebServer();
+  @Rule public MockWebServer mockWebServer = new MockWebServer();
 
-  @After public void tearDown() throws Exception {
-    mockWebServer.shutdown();
-  }
+  @Rule public Timeout globalTimeout = Timeout.seconds(30);
 
-  @Test(timeout = 60_000) public void simpleDispatch() throws Exception {
+  @Test public void simpleDispatch() throws Exception {
     mockWebServer.start();
     final List<RecordedRequest> requestsMade = new ArrayList<>();
     final Dispatcher dispatcher = new Dispatcher() {
@@ -53,7 +52,7 @@ public class CustomDispatcherTest {
     assertThat(requestsMade.size()).isEqualTo(1);
   }
 
-  @Test(timeout = 60_000) public void outOfOrderResponses() throws Exception {
+  @Test public void outOfOrderResponses() throws Exception {
     AtomicInteger firstResponseCode = new AtomicInteger();
     AtomicInteger secondResponseCode = new AtomicInteger();
     mockWebServer.start();

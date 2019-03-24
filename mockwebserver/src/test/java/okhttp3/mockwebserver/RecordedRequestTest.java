@@ -24,7 +24,9 @@ import java.util.Collections;
 import okhttp3.Headers;
 import okhttp3.internal.Util;
 import okio.Buffer;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.Timeout;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -69,7 +71,9 @@ public class RecordedRequestTest {
     }
   }
 
-  @Test(timeout = 60_000) public void testIPv4() throws UnknownHostException {
+  @Rule public Timeout globalTimeout = Timeout.seconds(30);
+
+  @Test public void testIPv4() throws UnknownHostException {
     Socket socket =
         new FakeSocket(InetAddress.getByAddress("127.0.0.1", new byte[] { 127, 0, 0, 1 }), 80);
 
@@ -79,7 +83,7 @@ public class RecordedRequestTest {
     assertThat(request.getRequestUrl().toString()).isEqualTo("http://127.0.0.1/");
   }
 
-  @Test(timeout = 60_000) public void testIpv6() throws UnknownHostException {
+  @Test public void testIpv6() throws UnknownHostException {
     Socket socket = new FakeSocket(InetAddress.getByAddress("::1",
         new byte[] { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 }), 80);
 
@@ -89,7 +93,7 @@ public class RecordedRequestTest {
     assertThat(request.getRequestUrl().toString()).isEqualTo("http://[::1]/");
   }
 
-  @Test(timeout = 60_000) public void testUsesLocal() throws UnknownHostException {
+  @Test public void testUsesLocal() throws UnknownHostException {
     Socket socket =
         new FakeSocket(InetAddress.getByAddress("127.0.0.1", new byte[] { 127, 0, 0, 1 }), 80);
 
