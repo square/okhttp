@@ -25,9 +25,9 @@ import okhttp3.internal.Util
 
 /**
  * A specification for a connection to an origin server. For simple connections, this is the
- * server's hostname and port. If an explicit proxy is requested (or [no][Proxy.NO_PROXY] is explicitly requested), this also includes that proxy information. For secure
- * connections the address also includes the SSL socket factory, hostname verifier, and certificate
- * pinner.
+ * server's hostname and port. If an explicit proxy is requested (or [no proxy][Proxy.NO_PROXY] is explicitly requested),
+ * this also includes that proxy information. For secure connections the address also includes the SSL socket factory,
+ * hostname verifier, and certificate pinner.
  *
  * HTTP requests that share the same `Address` may also share the same [Connection].
  */
@@ -69,9 +69,7 @@ class Address(
   fun dns() = dns
 
   /** Returns the socket factory for new connections. */
-  fun socketFactory(): SocketFactory {
-    return socketFactory
-  }
+  fun socketFactory() = socketFactory
 
   /** Returns the client's proxy authenticator. */
   fun proxyAuthenticator() = proxyAuthenticator
@@ -108,7 +106,7 @@ class Address(
   override fun equals(other: Any?): Boolean {
     return (other is Address
         && url == other.url
-        && equalsNonHost((other as Address?)!!))
+        && equalsNonHost(other))
   }
 
   override fun hashCode(): Int {
@@ -140,17 +138,15 @@ class Address(
   }
 
   override fun toString(): String {
-    val result = StringBuilder()
-        .append("Address{")
-        .append(url.host()).append(":").append(url.port())
-
-    if (proxy != null) {
-      result.append(", proxy=").append(proxy)
-    } else {
-      result.append(", proxySelector=").append(proxySelector)
+    return buildString {
+      append("Address{")
+      append(url.host()).append(":").append(url.port())
+      if (proxy != null) {
+        append(", proxy=").append(proxy)
+      } else {
+        append(", proxySelector=").append(proxySelector)
+      }
+      append("}")
     }
-
-    result.append("}")
-    return result.toString()
   }
 }
