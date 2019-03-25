@@ -17,7 +17,6 @@ package okhttp3;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.Objects;
@@ -26,6 +25,7 @@ import okhttp3.internal.http.HttpDate;
 import org.junit.Test;
 
 import static java.util.Arrays.asList;
+import static okhttp3.internal.InternalKtKt.parseCookie;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.fail;
 
@@ -93,31 +93,31 @@ public final class CookieTest {
   }
 
   @Test public void maxAge() throws Exception {
-    assertThat(Cookie.parse(50000L, url, "a=b; Max-Age=1").expiresAt()).isEqualTo(51000L);
-    assertThat(Cookie.parse(50000L, url, "a=b; Max-Age=9223372036854724").expiresAt()).isEqualTo(
+    assertThat(parseCookie(50000L, url, "a=b; Max-Age=1").expiresAt()).isEqualTo(51000L);
+    assertThat(parseCookie(50000L, url, "a=b; Max-Age=9223372036854724").expiresAt()).isEqualTo(
         HttpDate.MAX_DATE);
-    assertThat(Cookie.parse(50000L, url, "a=b; Max-Age=9223372036854725").expiresAt()).isEqualTo(
+    assertThat(parseCookie(50000L, url, "a=b; Max-Age=9223372036854725").expiresAt()).isEqualTo(
         HttpDate.MAX_DATE);
-    assertThat(Cookie.parse(50000L, url, "a=b; Max-Age=9223372036854726").expiresAt()).isEqualTo(
+    assertThat(parseCookie(50000L, url, "a=b; Max-Age=9223372036854726").expiresAt()).isEqualTo(
         HttpDate.MAX_DATE);
-    assertThat(Cookie.parse(9223372036854773807L, url, "a=b; Max-Age=1").expiresAt()).isEqualTo(
+    assertThat(parseCookie(9223372036854773807L, url, "a=b; Max-Age=1").expiresAt()).isEqualTo(
         HttpDate.MAX_DATE);
-    assertThat(Cookie.parse(9223372036854773807L, url, "a=b; Max-Age=2").expiresAt()).isEqualTo(
+    assertThat(parseCookie(9223372036854773807L, url, "a=b; Max-Age=2").expiresAt()).isEqualTo(
         HttpDate.MAX_DATE);
-    assertThat(Cookie.parse(9223372036854773807L, url, "a=b; Max-Age=3").expiresAt()).isEqualTo(
+    assertThat(parseCookie(9223372036854773807L, url, "a=b; Max-Age=3").expiresAt()).isEqualTo(
         HttpDate.MAX_DATE);
-    assertThat(Cookie.parse(50000L, url, "a=b; Max-Age=10000000000000000000").expiresAt()).isEqualTo(
+    assertThat(parseCookie(50000L, url, "a=b; Max-Age=10000000000000000000").expiresAt()).isEqualTo(
         HttpDate.MAX_DATE);
   }
 
   @Test public void maxAgeNonPositive() throws Exception {
-    assertThat(Cookie.parse(50000L, url, "a=b; Max-Age=-1").expiresAt()).isEqualTo(Long.MIN_VALUE);
-    assertThat(Cookie.parse(50000L, url, "a=b; Max-Age=0").expiresAt()).isEqualTo(Long.MIN_VALUE);
-    assertThat(Cookie.parse(50000L, url, "a=b; Max-Age=-9223372036854775808").expiresAt()).isEqualTo(
+    assertThat(parseCookie(50000L, url, "a=b; Max-Age=-1").expiresAt()).isEqualTo(Long.MIN_VALUE);
+    assertThat(parseCookie(50000L, url, "a=b; Max-Age=0").expiresAt()).isEqualTo(Long.MIN_VALUE);
+    assertThat(parseCookie(50000L, url, "a=b; Max-Age=-9223372036854775808").expiresAt()).isEqualTo(
         Long.MIN_VALUE);
-    assertThat(Cookie.parse(50000L, url, "a=b; Max-Age=-9223372036854775809").expiresAt()).isEqualTo(
+    assertThat(parseCookie(50000L, url, "a=b; Max-Age=-9223372036854775809").expiresAt()).isEqualTo(
         Long.MIN_VALUE);
-    assertThat(Cookie.parse(50000L, url, "a=b; Max-Age=-10000000000000000000").expiresAt()).isEqualTo(
+    assertThat(parseCookie(50000L, url, "a=b; Max-Age=-10000000000000000000").expiresAt()).isEqualTo(
         Long.MIN_VALUE);
   }
 
@@ -356,30 +356,30 @@ public final class CookieTest {
 
   @Test public void maxAgeTakesPrecedenceOverExpires() throws Exception {
     // Max-Age = 1, Expires = 2. In either order.
-    assertThat(Cookie.parse(
+    assertThat(parseCookie(
         0L, url, "a=b; Max-Age=1; Expires=Thu, 01 Jan 1970 00:00:02 GMT").expiresAt()).isEqualTo(
         1000L);
-    assertThat(Cookie.parse(
+    assertThat(parseCookie(
         0L, url, "a=b; Expires=Thu, 01 Jan 1970 00:00:02 GMT; Max-Age=1").expiresAt()).isEqualTo(
         1000L);
     // Max-Age = 2, Expires = 1. In either order.
-    assertThat(Cookie.parse(
+    assertThat(parseCookie(
         0L, url, "a=b; Max-Age=2; Expires=Thu, 01 Jan 1970 00:00:01 GMT").expiresAt()).isEqualTo(
         2000L);
-    assertThat(Cookie.parse(
+    assertThat(parseCookie(
         0L, url, "a=b; Expires=Thu, 01 Jan 1970 00:00:01 GMT; Max-Age=2").expiresAt()).isEqualTo(
         2000L);
   }
 
   /** If a cookie incorrectly defines multiple 'Max-Age' attributes, the last one defined wins. */
   @Test public void lastMaxAgeWins() throws Exception {
-    assertThat(Cookie.parse(
+    assertThat(parseCookie(
         0L, url, "a=b; Max-Age=2; Max-Age=4; Max-Age=1; Max-Age=3").expiresAt()).isEqualTo(3000L);
   }
 
   /** If a cookie incorrectly defines multiple 'Expires' attributes, the last one defined wins. */
   @Test public void lastExpiresAtWins() throws Exception {
-    assertThat(Cookie.parse(0L, url, "a=b; "
+    assertThat(parseCookie(0L, url, "a=b; "
         + "Expires=Thu, 01 Jan 1970 00:00:02 GMT; "
         + "Expires=Thu, 01 Jan 1970 00:00:04 GMT; "
         + "Expires=Thu, 01 Jan 1970 00:00:01 GMT; "
@@ -387,9 +387,9 @@ public final class CookieTest {
   }
 
   @Test public void maxAgeOrExpiresMakesCookiePersistent() throws Exception {
-    assertThat(Cookie.parse(0L, url, "a=b").persistent()).isFalse();
-    assertThat(Cookie.parse(0L, url, "a=b; Max-Age=1").persistent()).isTrue();
-    assertThat(Cookie.parse(0L, url, "a=b; Expires=Thu, 01 Jan 1970 00:00:01 GMT").persistent()).isTrue();
+    assertThat(parseCookie(0L, url, "a=b").persistent()).isFalse();
+    assertThat(parseCookie(0L, url, "a=b; Max-Age=1").persistent()).isTrue();
+    assertThat(parseCookie(0L, url, "a=b; Expires=Thu, 01 Jan 1970 00:00:01 GMT").persistent()).isTrue();
   }
 
   @Test public void parseAll() throws Exception {
@@ -424,7 +424,7 @@ public final class CookieTest {
     try {
       new Cookie.Builder().name(null);
       fail();
-    } catch (NullPointerException expected) {
+    } catch (IllegalArgumentException expected) {
     }
     try {
       new Cookie.Builder().name(" a ");
@@ -437,7 +437,7 @@ public final class CookieTest {
     try {
       new Cookie.Builder().value(null);
       fail();
-    } catch (NullPointerException expected) {
+    } catch (IllegalArgumentException expected) {
     }
     try {
       new Cookie.Builder().value(" b ");
@@ -482,7 +482,7 @@ public final class CookieTest {
     try {
       new Cookie.Builder().hostOnlyDomain(null);
       fail();
-    } catch (NullPointerException expected) {
+    } catch (IllegalArgumentException expected) {
     }
     try {
       new Cookie.Builder().hostOnlyDomain("a/b");
@@ -515,7 +515,7 @@ public final class CookieTest {
     try {
       new Cookie.Builder().path(null);
       fail();
-    } catch (NullPointerException expected) {
+    } catch (IllegalArgumentException expected) {
     }
     try {
       new Cookie.Builder().path("foo");
@@ -564,9 +564,9 @@ public final class CookieTest {
         "a=b; Path=/c; Domain=example.com; Max-Age=5; Secure;         "
     );
     for (String stringA : cookieStrings) {
-      Cookie cookieA = Cookie.parse(0, url, stringA);
+      Cookie cookieA = parseCookie(0, url, stringA);
       for (String stringB : cookieStrings) {
-        Cookie cookieB = Cookie.parse(0, url, stringB);
+        Cookie cookieB = parseCookie(0, url, stringB);
         if (Objects.equals(stringA, stringB)) {
           assertThat(cookieB.hashCode()).isEqualTo(cookieA.hashCode());
           assertThat(cookieB).isEqualTo(cookieA);
