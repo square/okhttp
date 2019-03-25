@@ -68,6 +68,7 @@ import okhttp3.internal.io.InMemoryFileSystem;
 import okhttp3.mockwebserver.Dispatcher;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
+import okhttp3.mockwebserver.QueueDispatcher;
 import okhttp3.mockwebserver.RecordedRequest;
 import okhttp3.mockwebserver.SocketPolicy;
 import okhttp3.tls.HandshakeCertificates;
@@ -105,7 +106,7 @@ public final class CallTest {
   @Rule public final InMemoryFileSystem fileSystem = new InMemoryFileSystem();
   @Rule public final OkHttpClientTestRule clientTestRule = new OkHttpClientTestRule();
 
-  private final RecordingEventListener listener = new RecordingEventListener();
+  private RecordingEventListener listener = new RecordingEventListener();
   private HandshakeCertificates handshakeCertificates = localhost();
   private OkHttpClient client = clientTestRule.client.newBuilder()
       .eventListener(listener)
@@ -1037,12 +1038,32 @@ public final class CallTest {
   }
 
   @Test public void recoverWhenRetryOnConnectionFailureIsTrue() throws Exception {
-    server.enqueue(new MockResponse().setBody("seed connection pool"));
-    server.enqueue(new MockResponse().setSocketPolicy(SocketPolicy.DISCONNECT_AFTER_REQUEST));
-    server.enqueue(new MockResponse().setBody("retry success"));
+    // Set to 2 because the seeding request will count down before the retried request does.
+    CountDownLatch requestFinished = new CountDownLatch(2);
+
+    QueueDispatcher dispatcher = new QueueDispatcher() {
+      @Override public MockResponse dispatch(RecordedRequest request) throws InterruptedException {
+        if (peek().getSocketPolicy() == SocketPolicy.DISCONNECT_AFTER_REQUEST) {
+          requestFinished.await();
+        }
+        return super.dispatch(request);
+      }
+    };
+    dispatcher.enqueueResponse(new MockResponse().setBody("seed connection pool"));
+    dispatcher.enqueueResponse(new MockResponse().setSocketPolicy(SocketPolicy.DISCONNECT_AFTER_REQUEST));
+    dispatcher.enqueueResponse(new MockResponse().setBody("retry success"));
+    server.setDispatcher(dispatcher);
+
+    listener = new RecordingEventListener() {
+      @Override public void responseHeadersStart(Call call) {
+        requestFinished.countDown();
+        super.responseHeadersStart(call);
+      }
+    };
 
     client = client.newBuilder()
         .dns(new DoubleInetAddressDns())
+        .eventListener(listener)
         .build();
     assertThat(client.retryOnConnectionFailure()).isTrue();
 
