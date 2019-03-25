@@ -25,18 +25,18 @@ import java.util.concurrent.TimeUnit
  * See [RFC 7234, 5.2](https://tools.ietf.org/html/rfc7234#section-5.2).
  */
 class CacheControl private constructor(
-  val noCache: Boolean,
-  val noStore: Boolean,
-  val maxAgeSeconds: Int,
-  val sMaxAgeSeconds: Int,
+  private val noCache: Boolean,
+  private val noStore: Boolean,
+  private val maxAgeSeconds: Int,
+  private val sMaxAgeSeconds: Int,
   val isPrivate: Boolean,
   val isPublic: Boolean,
-  val mustRevalidate: Boolean,
-  val maxStaleSeconds: Int,
-  val minFreshSeconds: Int,
-  val onlyIfCached: Boolean,
-  val noTransform: Boolean,
-  val immutable: Boolean,
+  private val mustRevalidate: Boolean,
+  private val maxStaleSeconds: Int,
+  private val minFreshSeconds: Int,
+  private val onlyIfCached: Boolean,
+  private val noTransform: Boolean,
+  private val immutable: Boolean,
   private var headerValue: String?
 ) {
   /**
