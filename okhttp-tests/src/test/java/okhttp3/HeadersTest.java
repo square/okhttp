@@ -205,7 +205,7 @@ public final class HeadersTest {
     try {
       Headers.of(Collections.singletonMap("User-Agent", null));
       fail();
-    } catch (IllegalArgumentException expected) {
+    } catch (NullPointerException expected) {
     }
   }
 
@@ -835,8 +835,7 @@ public final class HeadersTest {
           .add("testDate", (Date) null)
           .build();
       fail();
-    } catch (NullPointerException expected) {
-      assertThat(expected.getMessage()).isEqualTo("value for name testDate == null");
+    } catch (IllegalArgumentException expected) {
     }
   }
 
@@ -855,8 +854,7 @@ public final class HeadersTest {
           .add("Test-Instant", (Instant) null)
           .build();
       fail();
-    } catch (NullPointerException expected) {
-      assertThat(expected.getMessage()).isEqualTo("value for name Test-Instant == null");
+    } catch (IllegalArgumentException expected) {
     }
   }
 
@@ -876,8 +874,7 @@ public final class HeadersTest {
           .set("testDate", (Date) null)
           .build();
       fail();
-    } catch (NullPointerException expected) {
-      assertThat(expected.getMessage()).isEqualTo("value for name testDate == null");
+    } catch (IllegalArgumentException expected) {
     }
   }
 
@@ -897,8 +894,7 @@ public final class HeadersTest {
           .set("Test-Instant", (Instant) null)
           .build();
       fail();
-    } catch (NullPointerException expected) {
-      assertThat(expected.getMessage()).isEqualTo("value for name Test-Instant == null");
+    } catch (IllegalArgumentException expected) {
     }
   }
 }

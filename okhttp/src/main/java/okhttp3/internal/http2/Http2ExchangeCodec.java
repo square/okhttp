@@ -37,6 +37,7 @@ import okhttp3.internal.http.StatusLine;
 import okio.Sink;
 import okio.Source;
 
+import static okhttp3.internal.InternalKtKt.addHeaderLenient;
 import static okhttp3.internal.http.StatusLine.HTTP_CONTINUE;
 import static okhttp3.internal.http2.Header.RESPONSE_STATUS_UTF8;
 import static okhttp3.internal.http2.Header.TARGET_AUTHORITY;
@@ -174,7 +175,7 @@ public final class Http2ExchangeCodec implements ExchangeCodec {
       if (name.equals(RESPONSE_STATUS_UTF8)) {
         statusLine = StatusLine.parse("HTTP/1.1 " + value);
       } else if (!HTTP_2_SKIPPED_RESPONSE_HEADERS.contains(name)) {
-        Internal.instance.addLenient(headersBuilder, name, value);
+        addHeaderLenient(headersBuilder, name, value);
       }
     }
     if (statusLine == null) throw new ProtocolException("Expected ':status' header not present");

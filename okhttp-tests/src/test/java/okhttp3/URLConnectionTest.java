@@ -59,7 +59,7 @@ import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
 import javax.net.ssl.X509TrustManager;
-import okhttp3.internal.Internal;
+import okhttp3.internal.InternalKtKt;
 import okhttp3.internal.RecordingAuthenticator;
 import okhttp3.internal.RecordingOkAuthenticator;
 import okhttp3.internal.Util;
@@ -89,6 +89,7 @@ import static java.util.Arrays.asList;
 import static java.util.Locale.US;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
+import static okhttp3.internal.InternalKtKt.addHeaderLenient;
 import static okhttp3.internal.http.StatusLine.HTTP_PERM_REDIRECT;
 import static okhttp3.internal.http.StatusLine.HTTP_TEMP_REDIRECT;
 import static okhttp3.mockwebserver.SocketPolicy.DISCONNECT_AFTER_REQUEST;
@@ -150,25 +151,25 @@ public final class URLConnectionTest {
       new Request.Builder()
           .header(null, "j");
       fail();
-    } catch (NullPointerException expected) {
+    } catch (IllegalArgumentException expected) {
     }
     try {
       new Request.Builder()
           .addHeader(null, "k");
       fail();
-    } catch (NullPointerException expected) {
+    } catch (IllegalArgumentException expected) {
     }
     try {
       new Request.Builder()
           .addHeader("NullValue", null);
       fail();
-    } catch (NullPointerException expected) {
+    } catch (IllegalArgumentException expected) {
     }
     try {
       new Request.Builder()
           .addHeader("AnotherNullValue", null);
       fail();
-    } catch (NullPointerException expected) {
+    } catch (IllegalArgumentException expected) {
     }
 
     Response response = getResponse(request);
@@ -205,7 +206,7 @@ public final class URLConnectionTest {
     try {
       response.header(null);
       fail();
-    } catch (NullPointerException expected) {
+    } catch (IllegalArgumentException expected) {
     }
     Headers responseHeaders = response.headers();
     assertThat(new LinkedHashSet<>(responseHeaders.values("A"))).isEqualTo(
@@ -3106,7 +3107,7 @@ public final class URLConnectionTest {
 
   @Test public void emptyResponseHeaderNameIsLenient() throws Exception {
     Headers.Builder headers = new Headers.Builder();
-    Internal.instance.addLenient(headers, ":A");
+    InternalKtKt.addHeaderLenient(headers, ":A");
     server.enqueue(new MockResponse()
         .setHeaders(headers.build())
         .setBody("body"));
@@ -3150,12 +3151,12 @@ public final class URLConnectionTest {
   }
 
   @Test public void responseHeaderParsingIsLenient() throws Exception {
-    Headers headers = new Headers.Builder()
-        .add("Content-Length", "0")
-        .addLenient("a\tb: c\u007fd")
-        .addLenient(": ef")
-        .addLenient("\ud83c\udf69: \u2615\ufe0f")
-        .build();
+    Headers.Builder headersBuilder = new Headers.Builder();
+    headersBuilder.add("Content-Length", "0");
+    addHeaderLenient(headersBuilder, "a\tb: c\u007fd");
+    addHeaderLenient(headersBuilder, ": ef");
+    addHeaderLenient(headersBuilder, "\ud83c\udf69: \u2615\ufe0f");
+    Headers headers = headersBuilder.build();
     server.enqueue(new MockResponse()
         .setHeaders(headers));
 

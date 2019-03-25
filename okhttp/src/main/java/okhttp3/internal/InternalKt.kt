@@ -16,6 +16,7 @@
 package okhttp3.internal
 
 import okhttp3.Cookie
+import okhttp3.Headers
 import okhttp3.HttpUrl
 
 fun parseCookie(currentTimeMillis: Long, url: HttpUrl, setCookie: String): Cookie? =
@@ -23,3 +24,9 @@ fun parseCookie(currentTimeMillis: Long, url: HttpUrl, setCookie: String): Cooki
 
 fun cookieToString(cookie: Cookie, forObsoleteRfc2965: Boolean) =
     cookie.toString(forObsoleteRfc2965)
+
+fun addHeaderLenient(builder: Headers.Builder, line: String) =
+    builder.addLenient(line)
+
+fun addHeaderLenient(builder: Headers.Builder, name: String, value: String) =
+    builder.addLenient(name, value)

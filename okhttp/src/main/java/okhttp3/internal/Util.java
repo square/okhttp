@@ -61,6 +61,7 @@ import static java.nio.charset.StandardCharsets.UTF_16LE;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Arrays.asList;
 import static okhttp3.TlsVersion.forJavaName;
+import static okhttp3.internal.InternalKtKt.addHeaderLenient;
 
 /** Junk drawer of utility methods. */
 public final class Util {
@@ -632,7 +633,7 @@ public final class Util {
   public static Headers toHeaders(List<Header> headerBlock) {
     Headers.Builder builder = new Headers.Builder();
     for (Header header : headerBlock) {
-      Internal.instance.addLenient(builder, header.name.utf8(), header.value.utf8());
+      addHeaderLenient(builder, header.name.utf8(), header.value.utf8());
     }
     return builder.build();
   }

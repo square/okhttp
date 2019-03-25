@@ -20,7 +20,7 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 import okhttp3.Headers;
 import okhttp3.WebSocketListener;
-import okhttp3.internal.Internal;
+import okhttp3.internal.InternalKtKt;
 import okhttp3.internal.http2.Settings;
 import okhttp3.mockwebserver.internal.duplex.DuplexResponseBody;
 import okio.Buffer;
@@ -138,7 +138,7 @@ public final class MockResponse implements Cloneable {
    * value.
    */
   public MockResponse addHeaderLenient(String name, Object value) {
-    Internal.instance.addLenient(headers, name, String.valueOf(value));
+    InternalKtKt.addHeaderLenient(headers, name, String.valueOf(value));
     return this;
   }
 

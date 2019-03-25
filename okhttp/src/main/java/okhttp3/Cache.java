@@ -49,6 +49,8 @@ import okio.Okio;
 import okio.Sink;
 import okio.Source;
 
+import static okhttp3.internal.InternalKtKt.addHeaderLenient;
+
 /**
  * Caches HTTP and HTTPS responses to the filesystem so they may be reused, saving time and
  * bandwidth.
@@ -546,7 +548,7 @@ public final class Cache implements Closeable, Flushable {
         Headers.Builder varyHeadersBuilder = new Headers.Builder();
         int varyRequestHeaderLineCount = readInt(source);
         for (int i = 0; i < varyRequestHeaderLineCount; i++) {
-          varyHeadersBuilder.addLenient(source.readUtf8LineStrict());
+          addHeaderLenient(varyHeadersBuilder, source.readUtf8LineStrict());
         }
         varyHeaders = varyHeadersBuilder.build();
 
@@ -557,7 +559,7 @@ public final class Cache implements Closeable, Flushable {
         Headers.Builder responseHeadersBuilder = new Headers.Builder();
         int responseHeaderLineCount = readInt(source);
         for (int i = 0; i < responseHeaderLineCount; i++) {
-          responseHeadersBuilder.addLenient(source.readUtf8LineStrict());
+          addHeaderLenient(responseHeadersBuilder, source.readUtf8LineStrict());
         }
         String sendRequestMillisString = responseHeadersBuilder.get(SENT_MILLIS);
         String receivedResponseMillisString = responseHeadersBuilder.get(RECEIVED_MILLIS);
