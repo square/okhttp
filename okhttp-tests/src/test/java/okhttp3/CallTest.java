@@ -91,6 +91,7 @@ import static java.net.CookiePolicy.ACCEPT_ORIGINAL_SERVER;
 import static java.util.Arrays.asList;
 import static okhttp3.CipherSuite.TLS_DH_anon_WITH_AES_128_GCM_SHA256;
 import static okhttp3.TestUtil.awaitGarbageCollection;
+import static okhttp3.internal.InternalKtKt.addHeaderLenient;
 import static okhttp3.internal.platform.PlatformTest.getJvmSpecVersion;
 import static okhttp3.tls.internal.TlsUtil.localhost;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -2790,12 +2791,12 @@ public final class CallTest {
 
   /** We forbid non-ASCII characters in outgoing request headers, but accept UTF-8. */
   @Test public void responseHeaderParsingIsLenient() throws Exception {
-    Headers headers = new Headers.Builder()
-        .add("Content-Length", "0")
-        .addLenient("a\tb: c\u007fd")
-        .addLenient(": ef")
-        .addLenient("\ud83c\udf69: \u2615\ufe0f")
-        .build();
+    Headers.Builder headersBuilder = new Headers.Builder();
+    headersBuilder.add("Content-Length", "0");
+    addHeaderLenient(headersBuilder, "a\tb: c\u007fd");
+    addHeaderLenient(headersBuilder, ": ef");
+    addHeaderLenient(headersBuilder, "\ud83c\udf69: \u2615\ufe0f");
+    Headers headers = headersBuilder.build();
     server.enqueue(new MockResponse().setHeaders(headers));
 
     executeSynchronously("/")

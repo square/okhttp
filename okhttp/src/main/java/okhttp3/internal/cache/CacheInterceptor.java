@@ -23,7 +23,6 @@ import okhttp3.Interceptor;
 import okhttp3.Protocol;
 import okhttp3.Request;
 import okhttp3.Response;
-import okhttp3.internal.Internal;
 import okhttp3.internal.Util;
 import okhttp3.internal.http.ExchangeCodec;
 import okhttp3.internal.http.HttpHeaders;
@@ -39,6 +38,7 @@ import okio.Timeout;
 
 import static java.net.HttpURLConnection.HTTP_NOT_MODIFIED;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static okhttp3.internal.InternalKtKt.addHeaderLenient;
 import static okhttp3.internal.Util.closeQuietly;
 import static okhttp3.internal.Util.discard;
 
@@ -228,14 +228,14 @@ public final class CacheInterceptor implements Interceptor {
       if (isContentSpecificHeader(fieldName)
           || !isEndToEnd(fieldName)
           || networkHeaders.get(fieldName) == null) {
-        Internal.instance.addLenient(result, fieldName, value);
+        addHeaderLenient(result, fieldName, value);
       }
     }
 
     for (int i = 0, size = networkHeaders.size(); i < size; i++) {
       String fieldName = networkHeaders.name(i);
       if (!isContentSpecificHeader(fieldName) && isEndToEnd(fieldName)) {
-        Internal.instance.addLenient(result, fieldName, networkHeaders.value(i));
+        addHeaderLenient(result, fieldName, networkHeaders.value(i));
       }
     }
 

@@ -129,14 +129,6 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
 
   static {
     Internal.instance = new Internal() {
-      @Override public void addLenient(Headers.Builder builder, String line) {
-        builder.addLenient(line);
-      }
-
-      @Override public void addLenient(Headers.Builder builder, String name, String value) {
-        builder.addLenient(name, value);
-      }
-
       @Override public RealConnectionPool realConnectionPool(ConnectionPool connectionPool) {
         return connectionPool.delegate;
       }

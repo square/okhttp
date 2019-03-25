@@ -183,22 +183,22 @@ public final class RequestTest {
     try {
       builder.header(null, "Value");
       fail();
-    } catch (NullPointerException expected) {
+    } catch (IllegalArgumentException expected) {
     }
     try {
       builder.addHeader(null, "Value");
       fail();
-    } catch (NullPointerException expected) {
+    } catch (IllegalArgumentException expected) {
     }
     try {
       builder.header("Name", null);
       fail();
-    } catch (NullPointerException expected) {
+    } catch (IllegalArgumentException expected) {
     }
     try {
       builder.addHeader("Name", null);
       fail();
-    } catch (NullPointerException expected) {
+    } catch (IllegalArgumentException expected) {
     }
   }
 
