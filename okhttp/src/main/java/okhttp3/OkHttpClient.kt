@@ -35,7 +35,6 @@ import java.net.ProxySelector
 import java.net.Socket
 import java.security.GeneralSecurityException
 import java.time.Duration
-import java.util.ArrayList
 import java.util.Collections
 import java.util.Random
 import java.util.concurrent.ExecutorService
@@ -269,8 +268,8 @@ open class OkHttpClient internal constructor(
     internal var proxy: Proxy? = null
     internal var protocols: List<Protocol> = DEFAULT_PROTOCOLS
     internal var connectionSpecs: List<ConnectionSpec> = DEFAULT_CONNECTION_SPECS
-    internal val interceptors: MutableList<Interceptor> = ArrayList()
-    internal val networkInterceptors: MutableList<Interceptor> = ArrayList()
+    internal val interceptors: MutableList<Interceptor> = mutableListOf()
+    internal val networkInterceptors: MutableList<Interceptor> = mutableListOf()
     internal var eventListenerFactory: EventListener.Factory = Util.eventListenerFactory(
         EventListener.NONE)
     internal var proxySelector: ProxySelector = ProxySelector.getDefault() ?: NullProxySelector()
