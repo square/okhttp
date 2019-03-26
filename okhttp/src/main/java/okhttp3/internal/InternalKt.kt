@@ -15,6 +15,7 @@
  */
 package okhttp3.internal
 
+import okhttp3.Address
 import okhttp3.Cookie
 import okhttp3.Headers
 import okhttp3.HttpUrl
@@ -30,3 +31,5 @@ fun addHeaderLenient(builder: Headers.Builder, line: String) =
 
 fun addHeaderLenient(builder: Headers.Builder, name: String, value: String) =
     builder.addLenient(name, value)
+
+fun addressEqualsNonHost(thisAddress: Address, thatAddress: Address) = thisAddress.equalsNonHost(thatAddress)

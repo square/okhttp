@@ -54,7 +54,7 @@ class Route(
    * See [RFC 2817, Section 5.2](http://www.ietf.org/rfc/rfc2817.txt).
    */
   fun requiresTunnel(): Boolean {
-    return address.sslSocketFactory != null && proxy.type() == Proxy.Type.HTTP
+    return address.sslSocketFactory() != null && proxy.type() == Proxy.Type.HTTP
   }
 
   override fun equals(other: Any?): Boolean {
