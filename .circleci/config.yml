@@ -23,7 +23,7 @@ jobs:
           name: dependencies
           command: ./gradlew downloadDependencies
           environment:
-            GRADLE_OPTS: -Xmx512m
+            GRADLE_OPTS: -Dorg.gradle.daemon=false -Dorg.gradle.parallel=false -Xmx1G
 
       - save_cache:
           paths:
@@ -34,7 +34,7 @@ jobs:
           name: check
           command: ./gradlew check
           environment:
-            GRADLE_OPTS: -Xmx512m
+            GRADLE_OPTS: -Dorg.gradle.daemon=false -Dorg.gradle.parallel=false -Xmx1G
       
       - run:
           name: Save test results
