@@ -58,10 +58,10 @@ class Route(
   }
 
   override fun equals(other: Any?): Boolean {
-    return (other is Route
+    return other is Route
         && other.address == address
         && other.proxy == proxy
-        && other.inetSocketAddress == inetSocketAddress)
+        && other.inetSocketAddress == inetSocketAddress
   }
 
   override fun hashCode(): Int {
