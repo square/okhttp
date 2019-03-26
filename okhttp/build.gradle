@@ -180,6 +180,15 @@ task japicmp(type: me.champeau.gradle.japicmp.JapicmpTask, dependsOn: 'jar') {
       'okhttp3.MediaType#charset(java.nio.charset.Charset)',
       'okhttp3.MediaType#subtype()',
       'okhttp3.MediaType#type()',
+      'okhttp3.RealCall#getResponseWithInterceptorChain()',
+      'okhttp3.RealCall#redactedUrl()',
+      'okhttp3.RealCall#toLoggableString()',
+      'okhttp3.RealCall$AsyncCall#callsPerHost()',
+      'okhttp3.RealCall$AsyncCall#executeOn(java.util.concurrent.ExecutorService)',
+      'okhttp3.RealCall$AsyncCall#get()',
+      'okhttp3.RealCall$AsyncCall#host()',
+      'okhttp3.RealCall$AsyncCall#request()',
+      'okhttp3.RealCall$AsyncCall#reuseCallsPerHostFrom(okhttp3.RealCall$AsyncCall)',
       'okhttp3.TlsVersion#javaName()',
   ]
 }
