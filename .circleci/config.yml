@@ -19,14 +19,22 @@ jobs:
             - v1-dependencies-{{ checksum "build.gradle" }}
             - v1-dependencies-
 
-      - run: ./gradlew downloadDependencies
+      - run: 
+          name: dependencies
+          command: ./gradlew downloadDependencies
+          environment:
+            GRADLE_OPTS: -Xmx512m
 
       - save_cache:
           paths:
             - ~/.gradle/caches
           key: v1-dependencies-{{ checksum "build.gradle" }}
 
-      - run: ./gradlew check
+      - run:
+          name: check
+          command: ./gradlew check
+          environment:
+            GRADLE_OPTS: -Xmx512m
       
       - run:
           name: Save test results
