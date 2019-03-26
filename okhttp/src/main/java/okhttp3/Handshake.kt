@@ -52,7 +52,7 @@ class Handshake private constructor(
 
   /** Returns the remote peer's principle, or null if that peer is anonymous. */
   fun peerPrincipal(): Principal? {
-    return if (!peerCertificates.isEmpty())
+    return if (peerCertificates.isNotEmpty())
       (peerCertificates[0] as X509Certificate).subjectX500Principal
     else
       null
@@ -63,7 +63,7 @@ class Handshake private constructor(
 
   /** Returns the local principle, or null if this peer is anonymous. */
   fun localPrincipal(): Principal? {
-    return if (!localCertificates.isEmpty())
+    return if (localCertificates.isNotEmpty())
       (localCertificates[0] as X509Certificate).subjectX500Principal
     else
       null
