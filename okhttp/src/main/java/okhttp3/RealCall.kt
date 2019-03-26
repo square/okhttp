@@ -55,7 +55,6 @@ internal class RealCall private constructor(
 
   override fun request(): Request = originalRequest
 
-  @Throws(IOException::class)
   override fun execute(): Response {
     synchronized(this) {
       check(!isExecuted) { "Already Executed" }
