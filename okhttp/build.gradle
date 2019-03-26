@@ -189,6 +189,10 @@ task japicmp(type: me.champeau.gradle.japicmp.JapicmpTask, dependsOn: 'jar') {
       'okhttp3.RealCall$AsyncCall#host()',
       'okhttp3.RealCall$AsyncCall#request()',
       'okhttp3.RealCall$AsyncCall#reuseCallsPerHostFrom(okhttp3.RealCall$AsyncCall)',
+      'okhttp3.Route#address()',
+      'okhttp3.Route#proxy()',
+      'okhttp3.Route#requiresTunnel()',
+      'okhttp3.Route#socketAddress()',
       'okhttp3.TlsVersion#javaName()',
   ]
 }
