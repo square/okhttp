@@ -32,7 +32,6 @@ import java.io.IOException
 import java.net.InetAddress
 import java.net.UnknownHostException
 import java.util.ArrayList
-import java.util.Arrays.asList
 import java.util.concurrent.CountDownLatch
 
 /**
@@ -297,7 +296,7 @@ class DnsOverHttps internal constructor(builder: Builder) : Dns {
     }
 
     fun bootstrapDnsHosts(vararg bootstrapDnsHosts: InetAddress): Builder {
-      return bootstrapDnsHosts(asList(*bootstrapDnsHosts))
+      return bootstrapDnsHosts(bootstrapDnsHosts.toList())
     }
 
     fun systemDns(systemDns: Dns): Builder {

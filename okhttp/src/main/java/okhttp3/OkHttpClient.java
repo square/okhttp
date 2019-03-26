@@ -49,6 +49,7 @@ import okio.Source;
 import org.codehaus.mojo.animal_sniffer.IgnoreJRERequirement;
 
 import static okhttp3.internal.InternalKtKt.addressEqualsNonHost;
+import static okhttp3.internal.InternalKtKt.certificatePinnerWithCertificateChainCleaner;
 import static okhttp3.internal.Util.checkDuration;
 
 /**
@@ -228,8 +229,8 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
     }
 
     this.hostnameVerifier = builder.hostnameVerifier;
-    this.certificatePinner = builder.certificatePinner.withCertificateChainCleaner(
-        certificateChainCleaner);
+    this.certificatePinner = certificatePinnerWithCertificateChainCleaner(
+        builder.certificatePinner, certificateChainCleaner);
     this.proxyAuthenticator = builder.proxyAuthenticator;
     this.authenticator = builder.authenticator;
     this.connectionPool = builder.connectionPool;
