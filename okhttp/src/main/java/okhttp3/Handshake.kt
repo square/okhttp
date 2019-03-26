@@ -20,7 +20,6 @@ import java.io.IOException
 import java.security.Principal
 import java.security.cert.Certificate
 import java.security.cert.X509Certificate
-import java.util.ArrayList
 import javax.net.ssl.SSLPeerUnverifiedException
 import javax.net.ssl.SSLSession
 
@@ -32,10 +31,10 @@ import javax.net.ssl.SSLSession
  * for new handshakes.
  */
 class Handshake private constructor(
-    private val tlsVersion: TlsVersion,
-    private val cipherSuite: CipherSuite,
-    private val peerCertificates: List<Certificate>,
-    private val localCertificates: List<Certificate>
+  private val tlsVersion: TlsVersion,
+  private val cipherSuite: CipherSuite,
+  private val peerCertificates: List<Certificate>,
+  private val localCertificates: List<Certificate>
 ) {
 
   /**
@@ -52,10 +51,11 @@ class Handshake private constructor(
 
   /** Returns the remote peer's principle, or null if that peer is anonymous. */
   fun peerPrincipal(): Principal? {
-    return if (peerCertificates.isNotEmpty())
+    return if (peerCertificates.isNotEmpty()) {
       (peerCertificates[0] as X509Certificate).subjectX500Principal
-    else
+    } else {
       null
+    }
   }
 
   /** Returns a possibly-empty list of certificates that identify this peer. */
@@ -63,18 +63,19 @@ class Handshake private constructor(
 
   /** Returns the local principle, or null if this peer is anonymous. */
   fun localPrincipal(): Principal? {
-    return if (localCertificates.isNotEmpty())
+    return if (localCertificates.isNotEmpty()) {
       (localCertificates[0] as X509Certificate).subjectX500Principal
-    else
+    } else {
       null
+    }
   }
 
   override fun equals(other: Any?): Boolean {
-    if (other !is Handshake) return false
-    return (tlsVersion == other.tlsVersion
+    return other is Handshake
+        && tlsVersion == other.tlsVersion
         && cipherSuite == other.cipherSuite
         && peerCertificates == other.peerCertificates
-        && localCertificates == other.localCertificates)
+        && localCertificates == other.localCertificates
   }
 
   override fun hashCode(): Int {
@@ -87,29 +88,27 @@ class Handshake private constructor(
   }
 
   override fun toString(): String {
-    return ("Handshake{"
-        + "tlsVersion="
-        + tlsVersion
-        + " cipherSuite="
-        + cipherSuite
-        + " peerCertificates="
-        + names(peerCertificates)
-        + " localCertificates="
-        + names(localCertificates)
-        + '}'.toString())
+    return "Handshake{" +
+        "tlsVersion=" +
+        tlsVersion +
+        " cipherSuite=" +
+        cipherSuite +
+        " peerCertificates=" +
+        names(peerCertificates) +
+        " localCertificates=" +
+        names(localCertificates) +
+        "}"
   }
 
   private fun names(certificates: List<Certificate>): List<String> {
-    val strings = ArrayList<String>()
-
-    for (cert in certificates) {
-      if (cert is X509Certificate) {
-        strings.add(cert.subjectDN.toString())
-      } else {
-        strings.add(cert.type)
-      }
-    }
-    return strings
+    return certificates
+        .map {
+          if (it is X509Certificate) {
+            it.subjectDN.toString()
+          } else {
+            it.type
+          }
+        }
   }
 
   companion object {
@@ -132,16 +131,18 @@ class Handshake private constructor(
         null
       }
 
-      val peerCertificatesList = if (peerCertificates != null)
+      val peerCertificatesList = if (peerCertificates != null) {
         Util.immutableList(*peerCertificates)
-      else
+      } else {
         emptyList()
+      }
 
       val localCertificates = session.localCertificates
-      val localCertificatesList = if (localCertificates != null)
+      val localCertificatesList = if (localCertificates != null) {
         Util.immutableList(*localCertificates)
-      else
+      } else {
         emptyList()
+      }
 
       return Handshake(tlsVersion, cipherSuite, peerCertificatesList, localCertificatesList)
     }
