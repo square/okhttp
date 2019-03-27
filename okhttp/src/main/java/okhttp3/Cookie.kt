@@ -80,8 +80,8 @@ class Cookie private constructor(
   fun hostOnly(): Boolean = hostOnly
 
   /**
-   * Returns the cookie's domain. If [.hostOnly] returns true this is the only domain that
-   * matches this cookie; otherwise it matches this domain and all subdomains.
+   * Returns the cookie's domain. If [hostOnly] returns true this is the only domain that matches
+   * this cookie; otherwise it matches this domain and all subdomains.
    */
   fun domain(): String = domain
 

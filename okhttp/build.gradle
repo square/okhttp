@@ -53,8 +53,25 @@ task japicmp(type: me.champeau.gradle.japicmp.JapicmpTask, dependsOn: 'jar') {
   packageExcludes = [
       'okhttp3.internal',
   ]
+  classExcludes = [
+      // Package-private in 3.x, internal in 4.0.0:
+      'okhttp3.Cache$CacheResponseBody$1',
+  ]
   methodExcludes = [
       // Became 'final' in 4.0.0:
+      'okhttp3.Cache#delete()',
+      'okhttp3.Cache#directory()',
+      'okhttp3.Cache#evictAll()',
+      'okhttp3.Cache#hitCount()',
+      'okhttp3.Cache#initialize()',
+      'okhttp3.Cache#isClosed()',
+      'okhttp3.Cache#maxSize()',
+      'okhttp3.Cache#networkCount()',
+      'okhttp3.Cache#requestCount()',
+      'okhttp3.Cache#size()',
+      'okhttp3.Cache#urls()',
+      'okhttp3.Cache#writeAbortCount()',
+      'okhttp3.Cache#writeSuccessCount()',
       'okhttp3.CacheControl#immutable()',
       'okhttp3.CacheControl#isPrivate()',
       'okhttp3.CacheControl#isPublic()',
