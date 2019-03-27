@@ -98,18 +98,6 @@ subprojects { project ->
   }
 
   test {
-    testLogging {
-      showStandardStreams = true
-    }
-  }
-
-  test {
-    filter {
-      includeTestsMatching "okhttp3.EventListenerTest.requestBodyFailHttp*"
-    }
-  }
-
-  test {
     jvmArgs += "-Dlistener=okhttp3.testing.InstallUncaughtExceptionHandlerListener"
     jvmArgs += "-Dokhttp.platform=platform"
   }

@@ -6,7 +6,7 @@ jdk:
   - openjdk11
 
 script:
-  - ./gradlew :okhttp:test --tests EventListenerTest
+ - ./gradlew check
 
 after_success:
   - .buildscript/deploy_snapshot.sh
