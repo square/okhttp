@@ -30,7 +30,7 @@ public class CipherSuiteTest {
     try {
       forJavaName(null);
       fail("Should have thrown");
-    } catch (NullPointerException expected) {
+    } catch (IllegalArgumentException expected) {
     }
   }
 
@@ -88,9 +88,9 @@ public class CipherSuiteTest {
 
   @Test public void javaName_equalsToString() {
     assertThat(TLS_RSA_EXPORT_WITH_RC4_40_MD5.toString()).isEqualTo(
-        TLS_RSA_EXPORT_WITH_RC4_40_MD5.javaName);
+        TLS_RSA_EXPORT_WITH_RC4_40_MD5.javaName());
     assertThat(TLS_RSA_WITH_AES_128_CBC_SHA256.toString()).isEqualTo(
-        TLS_RSA_WITH_AES_128_CBC_SHA256.javaName);
+        TLS_RSA_WITH_AES_128_CBC_SHA256.javaName());
   }
 
   /**
