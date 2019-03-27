@@ -19,7 +19,6 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.Proxy;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -181,7 +180,7 @@ public final class ConnectionCoalescingTest {
   /** Can still coalesce when pinning is used if pins match. */
   @Test public void coalescesWhenCertificatePinsMatch() throws Exception {
     CertificatePinner pinner = new CertificatePinner.Builder()
-        .add("san.com", "sha1/" + CertificatePinner.sha1(certificate.certificate()).base64())
+        .add("san.com", CertificatePinner.pin(certificate.certificate()))
         .build();
     client = client.newBuilder().certificatePinner(pinner).build();
 
