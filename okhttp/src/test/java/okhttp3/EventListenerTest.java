@@ -21,6 +21,7 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.Proxy;
 import java.net.UnknownHostException;
+import java.time.Clock;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
@@ -45,6 +46,7 @@ import okhttp3.internal.DoubleInetAddressDns;
 import okhttp3.internal.Internal;
 import okhttp3.internal.RecordingOkAuthenticator;
 import okhttp3.logging.HttpLoggingInterceptor;
+import okhttp3.logging.LoggingEventListener;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import okhttp3.mockwebserver.SocketPolicy;
@@ -949,10 +951,14 @@ public final class EventListenerTest {
     requestBodyFail();
   }
 
+  // XXX
   @Test public void requestBodyFailHttp2OverHttps() throws IOException {
+    client = client.newBuilder().eventListenerFactory(new LoggingEventListener.Factory()).build();
+    System.out.println("XXX requestBodyFailHttp2OverHttps start");
     enableTlsWithTunnel(false);
     server.setProtocols(asList(Protocol.HTTP_2, Protocol.HTTP_1_1));
     requestBodyFail();
+    System.out.println("XXX requestBodyFailHttp2OverHttps end");
   }
 
   @Test public void requestBodyFailHttp() throws IOException {
@@ -960,6 +966,7 @@ public final class EventListenerTest {
   }
 
   private void requestBodyFail() {
+    long start = System.currentTimeMillis();
     // Stream a 256 MiB body so the disconnect will happen before the server has read everything.
     RequestBody requestBody = new RequestBody() {
       @Override public MediaType contentType() {
@@ -971,10 +978,14 @@ public final class EventListenerTest {
       }
 
       @Override public void writeTo(BufferedSink sink) throws IOException {
+        long start = System.currentTimeMillis();
         for (int i = 0; i < 1024; i++) {
+          long start2 = System.currentTimeMillis();
           sink.write(new byte[1024 * 256]);
+          System.out.println("XXX write took " + (System.currentTimeMillis() - start2));
           sink.flush();
         }
+        System.out.println("XXX all writes took " + (System.currentTimeMillis() - start));
       }
     };
 
@@ -993,6 +1004,8 @@ public final class EventListenerTest {
 
     CallFailed callFailed = listener.removeUpToEvent(CallFailed.class);
     assertThat(callFailed.ioe).isNotNull();
+
+    System.out.println("XXX took" + (System.currentTimeMillis() - start));
   }
 
   @Test public void requestBodyMultipleFailuresReportedOnlyOnce() {
@@ -1118,6 +1131,7 @@ public final class EventListenerTest {
         .sslSocketFactory(
             handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager())
         .hostnameVerifier(new RecordingHostnameVerifier())
+        .protocols(asList(Protocol.HTTP_2, Protocol.HTTP_1_1))
         .build();
     server.useHttps(handshakeCertificates.sslSocketFactory(), tunnelProxy);
   }
