@@ -58,7 +58,6 @@ import kotlin.DeprecationLevel.ERROR
  * pools. Reusing connections and threads reduces latency and saves memory. Conversely, creating a
  * client for each request wastes resources on idle pools.
  *
- *
  * Use `new OkHttpClient()` to create a shared instance with the default settings:
  * ```
  * // The singleton HTTP client.
@@ -105,7 +104,6 @@ import kotlin.DeprecationLevel.ERROR
  * ```
  * client.connectionPool().evictAll();
  * ```
- *
  *
  * If your client has a cache, call [close()][Cache.close]. Note that it is an error to
  * create calls against a cache that is closed, and doing so will cause the call to crash.
@@ -442,8 +440,9 @@ open class OkHttpClient internal constructor(
      *
      * If the server does not respond to each ping with a pong within `interval`, this
      * client will assume that connectivity has been lost. When this happens on a web socket the
-     * connection is canceled and its listener is [notified][WebSocketListener.onFailure]. When it happens on an HTTP/2 connection the connection is closed and any
-     * calls it is carrying [will fail with an IOException][java.io.IOException].
+     * connection is canceled and its listener is [notified][WebSocketListener.onFailure]. When it
+     * happens on an HTTP/2 connection the connection is closed and any calls it is carrying
+     * [will fail with an IOException][java.io.IOException].
      *
      * The default value of 0 disables client-initiated pings.
      */
@@ -516,11 +515,11 @@ open class OkHttpClient internal constructor(
     }
 
     /**
-     * Sets the socket factory used to create connections. OkHttp only uses the parameterless [ ][SocketFactory.createSocket] method to create unconnected sockets. Overriding
+     * Sets the socket factory used to create connections. OkHttp only uses the parameterless
+     * [SocketFactory.createSocket] method to create unconnected sockets. Overriding
      * this method, e. g., allows the socket to be bound to a specific local address.
      *
-     * If unset, the [system-wide default][SocketFactory.getDefault] socket factory will
-     * be used.
+     * If unset, the [system-wide default][SocketFactory.getDefault] socket factory will be used.
      */
     fun socketFactory(socketFactory: SocketFactory) = apply {
       if (socketFactory is SSLSocketFactory) {
@@ -649,14 +648,14 @@ open class OkHttpClient internal constructor(
      * Configure this client to retry or not when a connectivity problem is encountered. By default,
      * this client silently recovers from the following problems:
      *
-     *  * **Unreachable IP addresses.** If the URL's host has multiple IP addresses,
-     * failure to reach any individual IP address doesn't fail the overall request. This can
-     * increase availability of multi-homed services.
-     *  * **Stale pooled connections.** The [ConnectionPool] reuses sockets
-     * to decrease request latency, but these connections will occasionally time out.
-     *  * **Unreachable proxy servers.** A [ProxySelector] can be used to
-     * attempt multiple proxy servers in sequence, eventually falling back to a direct
-     * connection.
+     * * **Unreachable IP addresses.** If the URL's host has multiple IP addresses,
+     *   failure to reach any individual IP address doesn't fail the overall request. This can
+     *    increase availability of multi-homed services.
+     * * **Stale pooled connections.** The [ConnectionPool] reuses sockets
+     *   to decrease request latency, but these connections will occasionally time out.
+     * * **Unreachable proxy servers.** A [ProxySelector] can be used to
+     *   attempt multiple proxy servers in sequence, eventually falling back to a direct
+     *   connection.
      *
      * Set this to false to avoid retrying requests when doing so is destructive. In this case the
      * calling application should do its own recovery of connectivity failures.
@@ -680,9 +679,9 @@ open class OkHttpClient internal constructor(
      *
      * The following protocols are currently supported:
      *
-     *  * [http/1.1](http://www.w3.org/Protocols/rfc2616/rfc2616.html)
-     *  * [h2](https://tools.ietf.org/html/rfc7540)
-     *  * [h2 with prior knowledge(cleartext only)](https://tools.ietf.org/html/rfc7540#section-3.4)
+     * * [http/1.1](http://www.w3.org/Protocols/rfc2616/rfc2616.html)
+     * * [h2](https://tools.ietf.org/html/rfc7540)
+     * * [h2 with prior knowledge(cleartext only)](https://tools.ietf.org/html/rfc7540#section-3.4)
      *
      * **This is an evolving set.** Future releases include support for transitional
      * protocols. The http/1.1 transport will never be dropped.
