@@ -51,6 +51,7 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 
+import static okhttp3.internal.InternalKtKt.cacheGet;
 import static okhttp3.mockwebserver.SocketPolicy.DISCONNECT_AT_END;
 import static okhttp3.tls.internal.TlsUtil.localhost;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -183,7 +184,7 @@ public final class CacheTest {
     // Exhaust the content stream.
     response.body().string();
 
-    Response cached = cache.get(request);
+    Response cached = cacheGet(cache, request);
     if (shouldPut) {
       assertThat(cached).isNotNull();
       cached.body().close();

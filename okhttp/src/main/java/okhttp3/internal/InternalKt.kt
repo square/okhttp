@@ -16,10 +16,12 @@
 package okhttp3.internal
 
 import okhttp3.Address
+import okhttp3.Cache
 import okhttp3.CertificatePinner
 import okhttp3.Cookie
 import okhttp3.Headers
 import okhttp3.HttpUrl
+import okhttp3.Request
 import okhttp3.internal.tls.CertificateChainCleaner
 
 fun parseCookie(currentTimeMillis: Long, url: HttpUrl, setCookie: String): Cookie? =
@@ -39,3 +41,7 @@ fun certificatePinnerWithCertificateChainCleaner(
 ) = pinner.withCertificateChainCleaner(cleaner)
 
 fun addressEqualsNonHost(thisAddress: Address, thatAddress: Address) = thisAddress.equalsNonHost(thatAddress)
+
+fun cacheGet(cache: Cache, request: Request) = cache.get(request)
+
+fun internalCache(cache: Cache) = cache.internalCache

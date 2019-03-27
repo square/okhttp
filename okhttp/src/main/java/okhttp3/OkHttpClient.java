@@ -35,6 +35,7 @@ import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
 import okhttp3.internal.Internal;
+import okhttp3.internal.InternalKtKt;
 import okhttp3.internal.Util;
 import okhttp3.internal.cache.InternalCache;
 import okhttp3.internal.connection.Exchange;
@@ -307,7 +308,7 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
   }
 
   @Nullable InternalCache internalCache() {
-    return cache != null ? cache.internalCache : internalCache;
+    return cache != null ? InternalKtKt.internalCache(cache) : internalCache;
   }
 
   public Dns dns() {

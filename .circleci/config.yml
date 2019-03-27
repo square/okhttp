@@ -19,14 +19,22 @@ jobs:
             - v1-dependencies-{{ checksum "build.gradle" }}
             - v1-dependencies-
 
-      - run: ./gradlew downloadDependencies
+      - run: 
+          name: dependencies
+          command: ./gradlew downloadDependencies
+          environment:
+            GRADLE_OPTS: -Dorg.gradle.daemon=false -Dorg.gradle.parallel=false -Xmx1G
 
       - save_cache:
           paths:
             - ~/.gradle/caches
           key: v1-dependencies-{{ checksum "build.gradle" }}
 
-      - run: ./gradlew check
+      - run:
+          name: check
+          command: ./gradlew check
+          environment:
+            GRADLE_OPTS: -Dorg.gradle.daemon=false -Dorg.gradle.parallel=false -Xmx1G
       
       - run:
           name: Save test results
