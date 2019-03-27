@@ -30,7 +30,6 @@ import javax.annotation.Nullable;
 import javax.net.SocketFactory;
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
@@ -142,11 +141,6 @@ public class OkHttpClient implements Cloneable, Call.Factory, WebSocket.Factory 
 
       @Override public int code(Response.Builder responseBuilder) {
         return responseBuilder.code;
-      }
-
-      @Override
-      public void apply(ConnectionSpec tlsConfiguration, SSLSocket sslSocket, boolean isFallback) {
-        tlsConfiguration.apply(sslSocket, isFallback);
       }
 
       @Override public Call newWebSocketCall(OkHttpClient client, Request originalRequest) {

@@ -18,12 +18,13 @@ package okhttp3.internal
 import okhttp3.Address
 import okhttp3.Cache
 import okhttp3.CertificatePinner
-import okhttp3.CipherSuite
+import okhttp3.ConnectionSpec
 import okhttp3.Cookie
 import okhttp3.Headers
 import okhttp3.HttpUrl
 import okhttp3.Request
 import okhttp3.internal.tls.CertificateChainCleaner
+import javax.net.ssl.SSLSocket
 
 fun parseCookie(currentTimeMillis: Long, url: HttpUrl, setCookie: String): Cookie? =
     Cookie.parse(currentTimeMillis, url, setCookie)
@@ -44,12 +45,9 @@ fun certificatePinnerWithCertificateChainCleaner(
 fun addressEqualsNonHost(thisAddress: Address, thatAddress: Address) = thisAddress.equalsNonHost(
     thatAddress)
 
-@JvmField
-val CIPHER_SUITE_ORDER_BY_NAME: Comparator<String> = CipherSuite.ORDER_BY_NAME
-
-fun cipherSuitesForJavaNames(vararg cipherSuites: String): List<CipherSuite> =
-    CipherSuite.forJavaNames(*cipherSuites)
-
 fun cacheGet(cache: Cache, request: Request) = cache.get(request)
 
 fun internalCache(cache: Cache) = cache.internalCache
+
+fun applyConnectionSpec(connectionSpec: ConnectionSpec, sslSocket: SSLSocket, isFallback: Boolean) =
+    connectionSpec.apply(sslSocket, isFallback)

@@ -27,7 +27,7 @@ import javax.net.ssl.SSLHandshakeException;
 import javax.net.ssl.SSLPeerUnverifiedException;
 import javax.net.ssl.SSLSocket;
 import okhttp3.ConnectionSpec;
-import okhttp3.internal.Internal;
+import okhttp3.internal.InternalKtKt;
 
 /**
  * Handles the connection spec fallback strategy: When a secure socket connection fails due to a
@@ -74,7 +74,7 @@ final class ConnectionSpecSelector {
 
     isFallbackPossible = isFallbackPossible(sslSocket);
 
-    Internal.instance.apply(tlsConfiguration, sslSocket, isFallback);
+    InternalKtKt.applyConnectionSpec(tlsConfiguration, sslSocket, isFallback);
 
     return tlsConfiguration;
   }
