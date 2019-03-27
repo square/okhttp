@@ -791,7 +791,7 @@ class HttpUrl internal constructor(builder: Builder) {
   override fun toString(): String = url
 
   /**
-   * Returns the domain name of this URL's [.host] that is one level beneath the public suffix by
+   * Returns the domain name of this URL's [host] that is one level beneath the public suffix by
    * consulting the [public suffix list](https://publicsuffix.org). Returns null if this URL's
    * [host] is an IP address or is considered a public suffix by the public suffix list.
    *
