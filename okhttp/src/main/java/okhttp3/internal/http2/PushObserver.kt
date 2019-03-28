@@ -26,7 +26,8 @@ import okio.BufferedSource
  * While [onReset] may occur at any time, the following callbacks are expected in order,
  * correlated by stream ID.
  *
- *  * [onRequest]  * [onHeaders] (unless canceled)
+ *  * [onRequest]
+ *  * [onHeaders] (unless canceled)
  *  * [onData] (optional sequence of data frames)
  *
  * As a stream ID is scoped to a single HTTP/2 connection, implementations which target multiple
@@ -82,8 +83,7 @@ interface PushObserver {
       }
 
       @Throws(IOException::class)
-      override fun onData(streamId: Int, source: BufferedSource, byteCount: Int,
-                          last: Boolean): Boolean {
+      override fun onData(streamId: Int, source: BufferedSource, byteCount: Int, last: Boolean): Boolean {
         source.skip(byteCount.toLong())
         return true
       }
