@@ -22,6 +22,8 @@ import javax.annotation.Nullable;
 import javax.net.ssl.SSLSocket;
 import okhttp3.internal.Util;
 
+import static okhttp3.internal.InternalKtKt.CIPHER_SUITE_ORDER_BY_NAME;
+import static okhttp3.internal.InternalKtKt.cipherSuitesForJavaNames;
 import static okhttp3.internal.Util.concat;
 import static okhttp3.internal.Util.indexOf;
 import static okhttp3.internal.Util.intersect;
@@ -143,7 +145,7 @@ public final class ConnectionSpec {
    * enabled cipher suites should be used.
    */
   public @Nullable List<CipherSuite> cipherSuites() {
-    return cipherSuites != null ? CipherSuite.forJavaNames(cipherSuites) : null;
+    return cipherSuites != null ? cipherSuitesForJavaNames(cipherSuites) : null;
   }
 
   /**
@@ -176,7 +178,7 @@ public final class ConnectionSpec {
    */
   private ConnectionSpec supportedSpec(SSLSocket sslSocket, boolean isFallback) {
     String[] cipherSuitesIntersection = cipherSuites != null
-        ? intersect(CipherSuite.ORDER_BY_NAME, sslSocket.getEnabledCipherSuites(), cipherSuites)
+        ? intersect(CIPHER_SUITE_ORDER_BY_NAME, sslSocket.getEnabledCipherSuites(), cipherSuites)
         : sslSocket.getEnabledCipherSuites();
     String[] tlsVersionsIntersection = tlsVersions != null
         ? intersect(Util.NATURAL_ORDER, sslSocket.getEnabledProtocols(), tlsVersions)
@@ -186,7 +188,7 @@ public final class ConnectionSpec {
     // the SCSV cipher is added to signal that a protocol fallback has taken place.
     String[] supportedCipherSuites = sslSocket.getSupportedCipherSuites();
     int indexOfFallbackScsv = indexOf(
-        CipherSuite.ORDER_BY_NAME, supportedCipherSuites, "TLS_FALLBACK_SCSV");
+        CIPHER_SUITE_ORDER_BY_NAME, supportedCipherSuites, "TLS_FALLBACK_SCSV");
     if (isFallback && indexOfFallbackScsv != -1) {
       cipherSuitesIntersection = concat(
           cipherSuitesIntersection, supportedCipherSuites[indexOfFallbackScsv]);
@@ -220,7 +222,7 @@ public final class ConnectionSpec {
     }
 
     if (cipherSuites != null && !nonEmptyIntersection(
-        CipherSuite.ORDER_BY_NAME, cipherSuites, socket.getEnabledCipherSuites())) {
+        CIPHER_SUITE_ORDER_BY_NAME, cipherSuites, socket.getEnabledCipherSuites())) {
       return false;
     }
 
@@ -293,7 +295,7 @@ public final class ConnectionSpec {
 
       String[] strings = new String[cipherSuites.length];
       for (int i = 0; i < cipherSuites.length; i++) {
-        strings[i] = cipherSuites[i].javaName;
+        strings[i] = cipherSuites[i].javaName();
       }
       return cipherSuites(strings);
     }

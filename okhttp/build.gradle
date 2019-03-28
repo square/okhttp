@@ -103,6 +103,7 @@ task japicmp(type: me.champeau.gradle.japicmp.JapicmpTask, dependsOn: 'jar') {
       'okhttp3.Challenge#realm()',
       'okhttp3.Challenge#charset()',
       'okhttp3.Challenge#withCharset(java.nio.charset.Charset)',
+      'okhttp3.CipherSuite#javaName()',
       'okhttp3.ConnectionPool#connectionCount()',
       'okhttp3.ConnectionPool#evictAll()',
       'okhttp3.ConnectionPool#idleConnectionCount()',
