@@ -68,7 +68,7 @@ class FormBody internal constructor(
     }
 
     if (countBytes) {
-      byteCount = buffer.size()
+      byteCount = buffer.size
       buffer.clear()
     }
 

@@ -26,15 +26,9 @@ import okhttp3.internal.http.HttpMethod
 import okhttp3.internal.http.StatusLine
 import okhttp3.internal.io.FileSystem
 import okhttp3.internal.platform.Platform
-import okio.Buffer
-import okio.BufferedSink
-import okio.BufferedSource
-import okio.ByteString
-import okio.ForwardingSink
-import okio.ForwardingSource
-import okio.Okio
-import okio.Sink
-import okio.Source
+import okio.*
+import okio.ByteString.Companion.decodeBase64
+import okio.ByteString.Companion.encodeUtf8
 import java.io.Closeable
 import java.io.File
 import java.io.Flushable
@@ -328,7 +322,7 @@ class Cache internal constructor(
         while (delegate.hasNext()) {
           try {
             delegate.next().use { snapshot ->
-              val metadata = Okio.buffer(snapshot.getSource(ENTRY_METADATA))
+              val metadata = snapshot.getSource(ENTRY_METADATA).buffer()
               nextUrl = metadata.readUtf8LineStrict()
               return true
             }
@@ -506,7 +500,7 @@ class Cache internal constructor(
     @Throws(IOException::class)
     internal constructor(rawSource: Source) {
       try {
-        val source = Okio.buffer(rawSource)
+        val source = rawSource.buffer()
         url = source.readUtf8LineStrict()
         requestMethod = source.readUtf8LineStrict()
         val varyHeadersBuilder = Headers.Builder()
@@ -571,7 +565,7 @@ class Cache internal constructor(
 
     @Throws(IOException::class)
     fun writeTo(editor: DiskLruCache.Editor) {
-      val sink = Okio.buffer(editor.newSink(ENTRY_METADATA))
+      val sink = editor.newSink(ENTRY_METADATA).buffer()
       sink.writeUtf8(url).writeByte('\n'.toInt())
       sink.writeUtf8(requestMethod).writeByte('\n'.toInt())
       sink.writeDecimalLong(varyHeaders.size().toLong()).writeByte('\n'.toInt())
@@ -620,7 +614,7 @@ class Cache internal constructor(
         for (i in 0 until length) {
           val line = source.readUtf8LineStrict()
           val bytes = Buffer()
-          bytes.write(ByteString.decodeBase64(line)!!)
+          bytes.write(line.decodeBase64()!!)
           result.add(certificateFactory.generateCertificate(bytes.inputStream()))
         }
         return result
@@ -689,13 +683,13 @@ class Cache internal constructor(
 
     init {
       val source = snapshot.getSource(ENTRY_BODY)
-      bodySource = Okio.buffer(object : ForwardingSource(source) {
+      bodySource = object : ForwardingSource(source) {
         @Throws(IOException::class)
         override fun close() {
           snapshot.close()
           super.close()
         }
-      })
+      }.buffer()
     }
 
     override fun contentType(): MediaType? {
@@ -720,7 +714,7 @@ class Cache internal constructor(
     private const val ENTRY_COUNT = 2
 
     @JvmStatic
-    fun key(url: HttpUrl): String = ByteString.encodeUtf8(url.toString()).md5().hex()
+    fun key(url: HttpUrl): String = url.toString().encodeUtf8().md5().hex()
 
     @Throws(IOException::class)
     @JvmStatic

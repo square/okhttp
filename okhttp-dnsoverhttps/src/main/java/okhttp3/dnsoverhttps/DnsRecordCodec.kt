@@ -56,7 +56,7 @@ object DnsRecordCodec {
     }
     nameBuf.writeByte(0) // end
 
-    nameBuf.copyTo(this, 0, nameBuf.size())
+    nameBuf.copyTo(this, 0, nameBuf.size)
     writeShort(type)
     writeShort(1) // CLASS_IN
   }.readByteString()
