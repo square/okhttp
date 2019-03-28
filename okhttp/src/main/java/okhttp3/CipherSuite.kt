@@ -15,9 +15,6 @@
  */
 package okhttp3
 
-import java.util.ArrayList
-import java.util.Collections
-
 /**
  * [TLS cipher suites](https://www.iana.org/assignments/tls-parameters/tls-parameters.xhtml).
  *
@@ -439,14 +436,6 @@ class CipherSuite private constructor(
         javaName.startsWith("SSL_") -> "TLS_" + javaName.substring(4)
         else -> javaName
       }
-    }
-
-    internal fun forJavaNames(vararg cipherSuites: String): List<CipherSuite> {
-      val result = ArrayList<CipherSuite>(cipherSuites.size)
-      for (cipherSuite in cipherSuites) {
-        result.add(forJavaName(cipherSuite))
-      }
-      return Collections.unmodifiableList(result)
     }
 
     /**

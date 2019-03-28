@@ -24,6 +24,7 @@ import javax.net.ssl.SSLSocketFactory;
 import org.junit.Test;
 
 import static java.util.Arrays.asList;
+import static okhttp3.internal.InternalKtKt.applyConnectionSpec;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.fail;
 
@@ -93,7 +94,7 @@ public final class ConnectionSpecTest {
     });
 
     assertThat(tlsSpec.isCompatible(socket)).isTrue();
-    tlsSpec.apply(socket, false /* isFallback */);
+    applyConnectionSpec(tlsSpec, socket, false /* isFallback */);
 
     assertThat(socket.getEnabledProtocols()).containsExactly(TlsVersion.TLS_1_2.javaName());
 
@@ -119,7 +120,7 @@ public final class ConnectionSpecTest {
     });
 
     assertThat(tlsSpec.isCompatible(socket)).isTrue();
-    tlsSpec.apply(socket, true /* isFallback */);
+    applyConnectionSpec(tlsSpec, socket, true /* isFallback */);
 
     assertThat(socket.getEnabledProtocols()).containsExactly(TlsVersion.TLS_1_2.javaName());
 
@@ -150,7 +151,7 @@ public final class ConnectionSpecTest {
     });
 
     assertThat(tlsSpec.isCompatible(socket)).isTrue();
-    tlsSpec.apply(socket, true /* isFallback */);
+    applyConnectionSpec(tlsSpec, socket, true /* isFallback */);
 
     assertThat(socket.getEnabledProtocols()).containsExactly(TlsVersion.TLS_1_2.javaName());
 
@@ -208,7 +209,7 @@ public final class ConnectionSpecTest {
         CipherSuite.TLS_RSA_WITH_RC4_128_MD5.javaName(),
     });
 
-    tlsSpec.apply(sslSocket, false);
+    applyConnectionSpec(tlsSpec, sslSocket, false);
     assertThat(sslSocket.getEnabledCipherSuites()).containsExactly(
         CipherSuite.TLS_RSA_WITH_RC4_128_SHA.javaName(),
         CipherSuite.TLS_RSA_WITH_RC4_128_MD5.javaName());
@@ -226,7 +227,7 @@ public final class ConnectionSpecTest {
         TlsVersion.TLS_1_1.javaName()
     });
 
-    tlsSpec.apply(sslSocket, false);
+    applyConnectionSpec(tlsSpec, sslSocket, false);
     assertThat(sslSocket.getEnabledProtocols()).containsExactly(
         TlsVersion.SSL_3_0.javaName(), TlsVersion.TLS_1_1.javaName());
   }
