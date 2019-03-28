@@ -38,6 +38,7 @@ import okio.ByteString;
 import static java.net.HttpURLConnection.HTTP_NOT_MODIFIED;
 import static java.net.HttpURLConnection.HTTP_NO_CONTENT;
 import static okhttp3.internal.Util.EMPTY_HEADERS;
+import static okhttp3.internal.Util.readIOSafeByte;
 import static okhttp3.internal.http.StatusLine.HTTP_CONTINUE;
 
 /** Headers and utilities for internal use by OkHttp. */
@@ -242,10 +243,10 @@ public final class HttpHeaders {
     while (!buffer.exhausted()) {
       byte b = buffer.getByte(0);
       if (b == ',') {
-        buffer.readByte(); // Consume ','.
+        readIOSafeByte(buffer); // Consume ','.
         commaFound = true;
       } else if (b == ' ' || b == '\t') {
-        buffer.readByte(); // Consume space or tab.
+        readIOSafeByte(buffer); // Consume space or tab.
       } else {
         break;
       }
@@ -257,7 +258,7 @@ public final class HttpHeaders {
     int count = 0;
     while (!buffer.exhausted() && buffer.getByte(0) == b) {
       count++;
-      buffer.readByte();
+      readIOSafeByte(buffer);
     }
     return count;
   }
@@ -268,7 +269,7 @@ public final class HttpHeaders {
    * double-quoted string.
    */
   private static String readQuotedString(Buffer buffer) {
-    if (buffer.readByte() != '\"') throw new IllegalArgumentException();
+    if (readIOSafeByte(buffer) != '\"') throw new IllegalArgumentException();
     Buffer result = new Buffer();
     while (true) {
       long i = buffer.indexOfElement(QUOTED_STRING_DELIMITERS);
@@ -276,13 +277,13 @@ public final class HttpHeaders {
 
       if (buffer.getByte(i) == '"') {
         result.write(buffer, i);
-        buffer.readByte(); // Consume '"'.
+        readIOSafeByte(buffer); // Consume '"'.
         return result.readUtf8();
       }
 
       if (buffer.size() == i + 1L) return null; // Dangling escape.
       result.write(buffer, i);
-      buffer.readByte(); // Consume '\'.
+      readIOSafeByte(buffer); // Consume '\'.
       result.write(buffer, 1L); // The escaped character.
     }
   }
