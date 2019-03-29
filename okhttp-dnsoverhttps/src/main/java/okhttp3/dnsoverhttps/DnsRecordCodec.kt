@@ -17,7 +17,7 @@ package okhttp3.dnsoverhttps
 
 import okio.Buffer
 import okio.ByteString
-import okio.Utf8
+import okio.utf8Size
 import java.io.EOFException
 import java.net.InetAddress
 import java.net.UnknownHostException
@@ -47,7 +47,7 @@ object DnsRecordCodec {
     val nameBuf = Buffer()
     val labels = host.split('.').dropLastWhile { it.isEmpty() }.toTypedArray()
     for (label in labels) {
-      val utf8ByteCount = Utf8.size(label)
+      val utf8ByteCount = label.utf8Size()
       if (utf8ByteCount != label.length.toLong()) {
         throw IllegalArgumentException("non-ascii hostname: $host")
       }
@@ -56,7 +56,7 @@ object DnsRecordCodec {
     }
     nameBuf.writeByte(0) // end
 
-    nameBuf.copyTo(this, 0, nameBuf.size())
+    nameBuf.copyTo(this, 0, nameBuf.size)
     writeShort(type)
     writeShort(1) // CLASS_IN
   }.readByteString()

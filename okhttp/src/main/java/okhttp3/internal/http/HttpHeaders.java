@@ -32,6 +32,7 @@ import okhttp3.Headers;
 import okhttp3.HttpUrl;
 import okhttp3.Request;
 import okhttp3.Response;
+import okhttp3.internal.platform.Platform;
 import okio.Buffer;
 import okio.ByteString;
 
@@ -171,13 +172,18 @@ public final class HttpHeaders {
     for (int h = 0; h < responseHeaders.size(); h++) {
       if (headerName.equalsIgnoreCase(responseHeaders.name(h))) {
         Buffer header = new Buffer().writeUtf8(responseHeaders.value(h));
-        parseChallengeHeader(result, header);
+        try {
+          parseChallengeHeader(result, header);
+        } catch (EOFException e) {
+          Platform.get().log(Platform.WARN, "Unable to parse challenge", e);
+        }
       }
     }
     return result;
   }
 
-  private static void parseChallengeHeader(List<Challenge> result, Buffer header) {
+  private static void parseChallengeHeader(List<Challenge> result, Buffer header)
+      throws EOFException {
     String peek = null;
 
     while (true) {
@@ -237,15 +243,17 @@ public final class HttpHeaders {
   }
 
   /** Returns true if any commas were skipped. */
-  private static boolean skipWhitespaceAndCommas(Buffer buffer) {
+  private static boolean skipWhitespaceAndCommas(Buffer buffer) throws EOFException {
     boolean commaFound = false;
     while (!buffer.exhausted()) {
       byte b = buffer.getByte(0);
       if (b == ',') {
-        buffer.readByte(); // Consume ','.
+        // Consume ','.
+        buffer.readByte();
         commaFound = true;
       } else if (b == ' ' || b == '\t') {
-        buffer.readByte(); // Consume space or tab.
+        // Consume space or tab.
+        buffer.readByte();
       } else {
         break;
       }
@@ -253,7 +261,7 @@ public final class HttpHeaders {
     return commaFound;
   }
 
-  private static int skipAll(Buffer buffer, byte b) {
+  private static int skipAll(Buffer buffer, byte b) throws EOFException {
     int count = 0;
     while (!buffer.exhausted() && buffer.getByte(0) == b) {
       count++;
@@ -267,7 +275,7 @@ public final class HttpHeaders {
    * each sequence. Returns the unescaped string, or null if the buffer isn't prefixed with a
    * double-quoted string.
    */
-  private static String readQuotedString(Buffer buffer) {
+  private static String readQuotedString(Buffer buffer) throws EOFException {
     if (buffer.readByte() != '\"') throw new IllegalArgumentException();
     Buffer result = new Buffer();
     while (true) {
@@ -276,13 +284,15 @@ public final class HttpHeaders {
 
       if (buffer.getByte(i) == '"') {
         result.write(buffer, i);
-        buffer.readByte(); // Consume '"'.
+        // Consume '"'.
+        buffer.readByte();
         return result.readUtf8();
       }
 
       if (buffer.size() == i + 1L) return null; // Dangling escape.
       result.write(buffer, i);
-      buffer.readByte(); // Consume '\'.
+      // Consume '\'.
+      buffer.readByte();
       result.write(buffer, 1L); // The escaped character.
     }
   }

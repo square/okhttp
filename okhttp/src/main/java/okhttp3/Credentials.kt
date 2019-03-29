@@ -15,7 +15,7 @@
  */
 package okhttp3
 
-import okio.ByteString
+import okio.ByteString.Companion.encode
 import java.nio.charset.Charset
 import java.nio.charset.StandardCharsets.ISO_8859_1
 
@@ -28,7 +28,7 @@ object Credentials {
     charset: Charset = ISO_8859_1
   ): String {
     val usernameAndPassword = "$username:$password"
-    val encoded = ByteString.encodeString(usernameAndPassword, charset).base64()
+    val encoded = usernameAndPassword.encode(charset).base64()
     return "Basic $encoded"
   }
 }

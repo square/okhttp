@@ -17,6 +17,7 @@ package okhttp3
 
 import okhttp3.internal.tls.CertificateChainCleaner
 import okio.ByteString
+import okio.ByteString.Companion.decodeBase64
 import java.security.cert.Certificate
 import java.security.cert.X509Certificate
 import java.util.Objects
@@ -254,11 +255,11 @@ class CertificatePinner internal constructor(
       when {
         pin.startsWith("sha1/") -> {
           this.hashAlgorithm = "sha1/"
-          this.hash = ByteString.decodeBase64(pin.substring("sha1/".length))!!
+          this.hash = pin.substring("sha1/".length).decodeBase64()!!
         }
         pin.startsWith("sha256/") -> {
           this.hashAlgorithm = "sha256/"
-          this.hash = ByteString.decodeBase64(pin.substring("sha256/".length))!!
+          this.hash = pin.substring("sha256/".length).decodeBase64()!!
         }
         else -> throw IllegalArgumentException("pins must start with 'sha256/' or 'sha1/': $pin")
       }
