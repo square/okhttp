@@ -21,6 +21,7 @@ import static okhttp3.CipherSuite.TLS_KRB5_WITH_DES_CBC_MD5;
 import static okhttp3.CipherSuite.TLS_RSA_EXPORT_WITH_RC4_40_MD5;
 import static okhttp3.CipherSuite.TLS_RSA_WITH_AES_128_CBC_SHA256;
 import static okhttp3.CipherSuite.forJavaName;
+import static okhttp3.internal.InternalKtKt.applyConnectionSpec;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.fail;
@@ -30,7 +31,7 @@ public class CipherSuiteTest {
     try {
       forJavaName(null);
       fail("Should have thrown");
-    } catch (NullPointerException expected) {
+    } catch (IllegalArgumentException expected) {
     }
   }
 
@@ -88,9 +89,9 @@ public class CipherSuiteTest {
 
   @Test public void javaName_equalsToString() {
     assertThat(TLS_RSA_EXPORT_WITH_RC4_40_MD5.toString()).isEqualTo(
-        TLS_RSA_EXPORT_WITH_RC4_40_MD5.javaName);
+        TLS_RSA_EXPORT_WITH_RC4_40_MD5.javaName());
     assertThat(TLS_RSA_WITH_AES_128_CBC_SHA256.toString()).isEqualTo(
-        TLS_RSA_WITH_AES_128_CBC_SHA256.javaName);
+        TLS_RSA_WITH_AES_128_CBC_SHA256.javaName());
   }
 
   /**
@@ -120,7 +121,7 @@ public class CipherSuiteTest {
         .tlsVersions(TlsVersion.TLS_1_0)
         .cipherSuites("TLS_A", "TLS_C", "TLS_E")
         .build();
-    connectionSpec.apply(socket, false);
+    applyConnectionSpec(connectionSpec, socket, false);
 
     assertArrayEquals(new String[] { "SSL_A", "SSL_C" }, socket.enabledCipherSuites);
   }
@@ -135,7 +136,7 @@ public class CipherSuiteTest {
         .tlsVersions(TlsVersion.TLS_1_0)
         .cipherSuites("SSL_A", "SSL_C", "SSL_E")
         .build();
-    connectionSpec.apply(socket, false);
+    applyConnectionSpec(connectionSpec, socket, false);
 
     assertArrayEquals(new String[] { "TLS_A", "TLS_C" }, socket.enabledCipherSuites);
   }
@@ -150,7 +151,7 @@ public class CipherSuiteTest {
         .tlsVersions(TlsVersion.TLS_1_0)
         .cipherSuites("SSL_A")
         .build();
-    connectionSpec.apply(socket, true);
+    applyConnectionSpec(connectionSpec, socket, true);
 
     assertArrayEquals(new String[] { "SSL_A", "SSL_FALLBACK_SCSV" }, socket.enabledCipherSuites);
   }
@@ -165,7 +166,7 @@ public class CipherSuiteTest {
         .tlsVersions(TlsVersion.TLS_1_0)
         .cipherSuites("TLS_A")
         .build();
-    connectionSpec.apply(socket, true);
+    applyConnectionSpec(connectionSpec, socket, true);
 
     assertArrayEquals(new String[] { "TLS_A", "TLS_FALLBACK_SCSV" }, socket.enabledCipherSuites);
   }
@@ -180,7 +181,7 @@ public class CipherSuiteTest {
         .tlsVersions(TlsVersion.TLS_1_1, TlsVersion.TLS_1_2, TlsVersion.TLS_1_3)
         .cipherSuites("TLS_A")
         .build();
-    connectionSpec.apply(socket, false);
+    applyConnectionSpec(connectionSpec, socket, false);
 
     assertArrayEquals(new String[] { "TLSv1.1", "TLSv1.2" }, socket.enabledProtocols);
   }

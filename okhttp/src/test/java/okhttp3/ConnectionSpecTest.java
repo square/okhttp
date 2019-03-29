@@ -24,6 +24,7 @@ import javax.net.ssl.SSLSocketFactory;
 import org.junit.Test;
 
 import static java.util.Arrays.asList;
+import static okhttp3.internal.InternalKtKt.applyConnectionSpec;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.fail;
 
@@ -84,8 +85,8 @@ public final class ConnectionSpecTest {
 
     SSLSocket socket = (SSLSocket) SSLSocketFactory.getDefault().createSocket();
     socket.setEnabledCipherSuites(new String[] {
-        CipherSuite.TLS_RSA_WITH_RC4_128_MD5.javaName,
-        CipherSuite.TLS_RSA_WITH_RC4_128_SHA.javaName,
+        CipherSuite.TLS_RSA_WITH_RC4_128_MD5.javaName(),
+        CipherSuite.TLS_RSA_WITH_RC4_128_SHA.javaName(),
     });
     socket.setEnabledProtocols(new String[] {
         TlsVersion.TLS_1_2.javaName(),
@@ -93,13 +94,13 @@ public final class ConnectionSpecTest {
     });
 
     assertThat(tlsSpec.isCompatible(socket)).isTrue();
-    tlsSpec.apply(socket, false /* isFallback */);
+    applyConnectionSpec(tlsSpec, socket, false /* isFallback */);
 
     assertThat(socket.getEnabledProtocols()).containsExactly(TlsVersion.TLS_1_2.javaName());
 
     assertThat(socket.getEnabledCipherSuites()).containsExactlyInAnyOrder(
-        CipherSuite.TLS_RSA_WITH_RC4_128_MD5.javaName,
-        CipherSuite.TLS_RSA_WITH_RC4_128_SHA.javaName);
+        CipherSuite.TLS_RSA_WITH_RC4_128_MD5.javaName(),
+        CipherSuite.TLS_RSA_WITH_RC4_128_SHA.javaName());
   }
 
   @Test public void tls_defaultCiphers_withFallbackIndicator() throws Exception {
@@ -110,8 +111,8 @@ public final class ConnectionSpecTest {
 
     SSLSocket socket = (SSLSocket) SSLSocketFactory.getDefault().createSocket();
     socket.setEnabledCipherSuites(new String[] {
-        CipherSuite.TLS_RSA_WITH_RC4_128_MD5.javaName,
-        CipherSuite.TLS_RSA_WITH_RC4_128_SHA.javaName,
+        CipherSuite.TLS_RSA_WITH_RC4_128_MD5.javaName(),
+        CipherSuite.TLS_RSA_WITH_RC4_128_SHA.javaName(),
     });
     socket.setEnabledProtocols(new String[] {
         TlsVersion.TLS_1_2.javaName(),
@@ -119,13 +120,13 @@ public final class ConnectionSpecTest {
     });
 
     assertThat(tlsSpec.isCompatible(socket)).isTrue();
-    tlsSpec.apply(socket, true /* isFallback */);
+    applyConnectionSpec(tlsSpec, socket, true /* isFallback */);
 
     assertThat(socket.getEnabledProtocols()).containsExactly(TlsVersion.TLS_1_2.javaName());
 
     List<String> expectedCipherSuites = new ArrayList<>();
-    expectedCipherSuites.add(CipherSuite.TLS_RSA_WITH_RC4_128_MD5.javaName);
-    expectedCipherSuites.add(CipherSuite.TLS_RSA_WITH_RC4_128_SHA.javaName);
+    expectedCipherSuites.add(CipherSuite.TLS_RSA_WITH_RC4_128_MD5.javaName());
+    expectedCipherSuites.add(CipherSuite.TLS_RSA_WITH_RC4_128_SHA.javaName());
     if (asList(socket.getSupportedCipherSuites()).contains("TLS_FALLBACK_SCSV")) {
       expectedCipherSuites.add("TLS_FALLBACK_SCSV");
     }
@@ -141,8 +142,8 @@ public final class ConnectionSpecTest {
 
     SSLSocket socket = (SSLSocket) SSLSocketFactory.getDefault().createSocket();
     socket.setEnabledCipherSuites(new String[] {
-        CipherSuite.TLS_RSA_WITH_RC4_128_MD5.javaName,
-        CipherSuite.TLS_RSA_WITH_RC4_128_SHA.javaName,
+        CipherSuite.TLS_RSA_WITH_RC4_128_MD5.javaName(),
+        CipherSuite.TLS_RSA_WITH_RC4_128_SHA.javaName(),
     });
     socket.setEnabledProtocols(new String[] {
         TlsVersion.TLS_1_2.javaName(),
@@ -150,12 +151,12 @@ public final class ConnectionSpecTest {
     });
 
     assertThat(tlsSpec.isCompatible(socket)).isTrue();
-    tlsSpec.apply(socket, true /* isFallback */);
+    applyConnectionSpec(tlsSpec, socket, true /* isFallback */);
 
     assertThat(socket.getEnabledProtocols()).containsExactly(TlsVersion.TLS_1_2.javaName());
 
     List<String> expectedCipherSuites = new ArrayList<>();
-    expectedCipherSuites.add(CipherSuite.TLS_RSA_WITH_RC4_128_MD5.javaName);
+    expectedCipherSuites.add(CipherSuite.TLS_RSA_WITH_RC4_128_MD5.javaName());
     if (asList(socket.getSupportedCipherSuites()).contains("TLS_FALLBACK_SCSV")) {
       expectedCipherSuites.add("TLS_FALLBACK_SCSV");
     }
@@ -185,13 +186,13 @@ public final class ConnectionSpecTest {
     });
 
     socket.setEnabledCipherSuites(new String[] {
-        CipherSuite.TLS_RSA_WITH_RC4_128_SHA.javaName,
-        CipherSuite.TLS_RSA_WITH_RC4_128_MD5.javaName,
+        CipherSuite.TLS_RSA_WITH_RC4_128_SHA.javaName(),
+        CipherSuite.TLS_RSA_WITH_RC4_128_MD5.javaName(),
     });
     assertThat(tlsSpec.isCompatible(socket)).isTrue();
 
     socket.setEnabledCipherSuites(new String[] {
-        CipherSuite.TLS_RSA_WITH_RC4_128_SHA.javaName,
+        CipherSuite.TLS_RSA_WITH_RC4_128_SHA.javaName(),
     });
     assertThat(tlsSpec.isCompatible(socket)).isFalse();
   }
@@ -204,14 +205,14 @@ public final class ConnectionSpecTest {
 
     SSLSocket sslSocket = (SSLSocket) SSLSocketFactory.getDefault().createSocket();
     sslSocket.setEnabledCipherSuites(new String[] {
-        CipherSuite.TLS_RSA_WITH_RC4_128_SHA.javaName,
-        CipherSuite.TLS_RSA_WITH_RC4_128_MD5.javaName,
+        CipherSuite.TLS_RSA_WITH_RC4_128_SHA.javaName(),
+        CipherSuite.TLS_RSA_WITH_RC4_128_MD5.javaName(),
     });
 
-    tlsSpec.apply(sslSocket, false);
+    applyConnectionSpec(tlsSpec, sslSocket, false);
     assertThat(sslSocket.getEnabledCipherSuites()).containsExactly(
-        CipherSuite.TLS_RSA_WITH_RC4_128_SHA.javaName,
-        CipherSuite.TLS_RSA_WITH_RC4_128_MD5.javaName);
+        CipherSuite.TLS_RSA_WITH_RC4_128_SHA.javaName(),
+        CipherSuite.TLS_RSA_WITH_RC4_128_MD5.javaName());
   }
 
   @Test public void allEnabledTlsVersions() throws Exception {
@@ -226,7 +227,7 @@ public final class ConnectionSpecTest {
         TlsVersion.TLS_1_1.javaName()
     });
 
-    tlsSpec.apply(sslSocket, false);
+    applyConnectionSpec(tlsSpec, sslSocket, false);
     assertThat(sslSocket.getEnabledProtocols()).containsExactly(
         TlsVersion.SSL_3_0.javaName(), TlsVersion.TLS_1_1.javaName());
   }
@@ -240,7 +241,7 @@ public final class ConnectionSpecTest {
 
     SSLSocket socket = (SSLSocket) SSLSocketFactory.getDefault().createSocket();
     socket.setEnabledCipherSuites(new String[] {
-        CipherSuite.TLS_RSA_WITH_RC4_128_MD5.javaName,
+        CipherSuite.TLS_RSA_WITH_RC4_128_MD5.javaName(),
     });
 
     socket.setEnabledProtocols(

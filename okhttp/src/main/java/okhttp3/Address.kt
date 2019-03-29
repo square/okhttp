@@ -104,9 +104,9 @@ class Address(
   fun certificatePinner() = certificatePinner
 
   override fun equals(other: Any?): Boolean {
-    return (other is Address
+    return other is Address
         && url == other.url
-        && equalsNonHost(other))
+        && equalsNonHost(other)
   }
 
   override fun hashCode(): Int {
@@ -125,7 +125,7 @@ class Address(
   }
 
   internal fun equalsNonHost(that: Address): Boolean {
-    return (this.dns == that.dns
+    return this.dns == that.dns
         && this.proxyAuthenticator == that.proxyAuthenticator
         && this.protocols == that.protocols
         && this.connectionSpecs == that.connectionSpecs
@@ -134,19 +134,13 @@ class Address(
         && this.sslSocketFactory == that.sslSocketFactory
         && this.hostnameVerifier == that.hostnameVerifier
         && this.certificatePinner == that.certificatePinner
-        && this.url().port() == that.url().port())
+        && this.url().port() == that.url().port()
   }
 
   override fun toString(): String {
-    return buildString {
-      append("Address{")
-      append(url.host()).append(":").append(url.port())
-      if (proxy != null) {
-        append(", proxy=").append(proxy)
-      } else {
-        append(", proxySelector=").append(proxySelector)
-      }
-      append("}")
-    }
+    return "Address{" +
+        "${url.host()}:${url.port()}, " +
+        (if (proxy != null) "proxy=$proxy" else "proxySelector=$proxySelector") +
+        "}"
   }
 }
