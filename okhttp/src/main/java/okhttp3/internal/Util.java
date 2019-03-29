@@ -16,7 +16,6 @@
 package okhttp3.internal;
 
 import java.io.Closeable;
-import java.io.EOFException;
 import java.io.IOException;
 import java.io.InterruptedIOException;
 import java.net.IDN;
@@ -678,21 +677,5 @@ public final class Util {
       result.add(forJavaName(tlsVersion));
     }
     return Collections.unmodifiableList(result);
-  }
-
-  /**
-   * Read a byte from a buffer where the operation is known to be safe, e.g. reading
-   * a stream in-memory with remaining bytes.
-   *
-   * @param buffer the in-memory buffer
-   * @return byte returned by buffer.readByte()
-   * @throws AssertionError in place of EOFException
-   */
-  public static byte readIOSafeByte(Buffer buffer) {
-    try {
-      return buffer.readByte();
-    } catch (EOFException eofe) {
-      throw new AssertionError("unexpected eod of stream", eofe);
-    }
   }
 }
