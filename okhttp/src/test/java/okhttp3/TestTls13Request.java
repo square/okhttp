@@ -70,8 +70,8 @@ public class TestTls13Request {
         sendRequest(client, url);
       }
     } finally {
-      client.dispatcher.executorService().shutdownNow();
-      client.connectionPool.evictAll();
+      client.dispatcher().executorService().shutdownNow();
+      client.connectionPool().evictAll();
     }
   }
 
