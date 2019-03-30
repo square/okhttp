@@ -24,7 +24,6 @@ import java.io.IOException
 internal open class FaultHidingSink(delegate: Sink): ForwardingSink(delegate) {
   private var hasErrors = false
 
-  @Throws(IOException::class)
   override fun write(source: Buffer, byteCount: Long) {
     if (hasErrors) {
       source.skip(byteCount)
@@ -38,7 +37,6 @@ internal open class FaultHidingSink(delegate: Sink): ForwardingSink(delegate) {
     }
   }
 
-  @Throws(IOException::class)
   override fun flush() {
     if (hasErrors) {
       return
@@ -51,7 +49,6 @@ internal open class FaultHidingSink(delegate: Sink): ForwardingSink(delegate) {
     }
   }
 
-  @Throws(IOException::class)
   override fun close() {
     if (hasErrors) {
       return
