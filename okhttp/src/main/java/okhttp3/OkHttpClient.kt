@@ -47,23 +47,25 @@ import javax.net.ssl.X509TrustManager
 import kotlin.DeprecationLevel.ERROR
 
 /**
- * Factory for [calls][Call], which can be used to send HTTP requests and read their
- * responses.
+ * Factory for [calls][Call], which can be used to send HTTP requests and read their responses.
  *
- * ## OkHttpClients should be shared
+ * OkHttpClients Should Be Shared
+ * ------------------------------
  *
- * OkHttp performs best when you create a single `OkHttpClient` instance and reuse it for
- * all of your HTTP calls. This is because each client holds its own connection pool and thread
- * pools. Reusing connections and threads reduces latency and saves memory. Conversely, creating a
- * client for each request wastes resources on idle pools.
+ * OkHttp performs best when you create a single `OkHttpClient` instance and reuse it for all of
+ * your HTTP calls. This is because each client holds its own connection pool and thread pools.
+ * Reusing connections and threads reduces latency and saves memory. Conversely, creating a client
+ * for each request wastes resources on idle pools.
  *
  * Use `new OkHttpClient()` to create a shared instance with the default settings:
+ *
  * ```
  * // The singleton HTTP client.
  * public final OkHttpClient client = new OkHttpClient();
  * ```
  *
  * Or use `new OkHttpClient.Builder()` to create a shared instance with custom settings:
+ *
  * ```
  * // The singleton HTTP client.
  * public final OkHttpClient client = new OkHttpClient.Builder()
@@ -72,13 +74,15 @@ import kotlin.DeprecationLevel.ERROR
  *     .build();
  * ```
  *
- * ## Customize your client with newBuilder()
+ * Customize Your Client With newBuilder()
+ * ---------------------------------------
  *
- * You can customize a shared OkHttpClient instance with [newBuilder]. This builds a
- * client that shares the same connection pool, thread pools, and configuration. Use the builder
- * methods to configure the derived client for a specific purpose.
+ * You can customize a shared OkHttpClient instance with [newBuilder]. This builds a client that
+ * shares the same connection pool, thread pools, and configuration. Use the builder methods to
+ * configure the derived client for a specific purpose.
  *
  * This example shows a call with a short 500 millisecond timeout:
+ *
  * ```
  * OkHttpClient eagerClient = client.newBuilder()
  *     .readTimeout(500, TimeUnit.MILLISECONDS)
@@ -86,26 +90,30 @@ import kotlin.DeprecationLevel.ERROR
  * Response response = eagerClient.newCall(request).execute();
  * ```
  *
- * ## Shutdown isn't necessary
+ * Shutdown Isn't Necessary
+ * ------------------------
  *
- * The threads and connections that are held will be released automatically if they remain idle.
- * But if you are writing a application that needs to aggressively release unused resources you may
- * do so.
+ * The threads and connections that are held will be released automatically if they remain idle. But
+ * if you are writing a application that needs to aggressively release unused resources you may do
+ * so.
  *
- * Shutdown the dispatcher's executor service with [shutdown()][ExecutorService.shutdown].
- * This will also cause future calls to the client to be rejected.
+ * Shutdown the dispatcher's executor service with [shutdown()][ExecutorService.shutdown]. This will
+ * also cause future calls to the client to be rejected.
+ *
  * ```
  * client.dispatcher().executorService().shutdown();
  * ```
  *
- * Clear the connection pool with [evictAll()][ConnectionPool.evictAll]. Note that the
- * connection pool's daemon thread may not exit immediately.
+ * Clear the connection pool with [evictAll()][ConnectionPool.evictAll]. Note that the connection
+ * pool's daemon thread may not exit immediately.
+ *
  * ```
  * client.connectionPool().evictAll();
  * ```
  *
- * If your client has a cache, call [close()][Cache.close]. Note that it is an error to
- * create calls against a cache that is closed, and doing so will cause the call to crash.
+ * If your client has a cache, call [close()][Cache.close]. Note that it is an error to create calls
+ * against a cache that is closed, and doing so will cause the call to crash.
+ *
  * ```
  * client.cache().close();
  * ```
@@ -116,19 +124,20 @@ import kotlin.DeprecationLevel.ERROR
 open class OkHttpClient internal constructor(
   builder: Builder
 ) : Cloneable, Call.Factory, WebSocket.Factory {
-
   private val dispatcher: Dispatcher = builder.dispatcher
   private val proxy: Proxy? = builder.proxy
   private val protocols: List<Protocol> = builder.protocols
   private val connectionSpecs: List<ConnectionSpec> = builder.connectionSpecs
-  private val interceptors: List<Interceptor> = Util.immutableList(builder.interceptors)
-  private val networkInterceptors: List<Interceptor> = Util.immutableList(builder.networkInterceptors)
+  private val interceptors: List<Interceptor> =
+      Util.immutableList(builder.interceptors)
+  private val networkInterceptors: List<Interceptor> =
+      Util.immutableList(builder.networkInterceptors)
   private val eventListenerFactory: EventListener.Factory = builder.eventListenerFactory
   private val proxySelector: ProxySelector = builder.proxySelector
   private val cookieJar: CookieJar = builder.cookieJar
   private val cache: Cache? = builder.cache
   private val socketFactory: SocketFactory = builder.socketFactory
-  private val sslSocketFactory: SSLSocketFactory
+  private val sslSocketFactory: SSLSocketFactory?
   private val hostnameVerifier: HostnameVerifier = builder.hostnameVerifier
   private val certificatePinner: CertificatePinner
   private val proxyAuthenticator: Authenticator = builder.proxyAuthenticator
@@ -144,7 +153,7 @@ open class OkHttpClient internal constructor(
   private val writeTimeout: Int = builder.writeTimeout
   private val pingInterval: Int = builder.pingInterval
   private val internalCache: InternalCache? = builder.internalCache
-  private val certificateChainCleaner: CertificateChainCleaner
+  private val certificateChainCleaner: CertificateChainCleaner?
 
   constructor() : this(Builder())
 
@@ -156,8 +165,8 @@ open class OkHttpClient internal constructor(
 
     // TODO - these nullability warnings existed in Java
     if (builder.sslSocketFactory != null || !isTLS) {
-      this.sslSocketFactory = builder.sslSocketFactory!!
-      this.certificateChainCleaner = builder.certificateChainCleaner!!
+      this.sslSocketFactory = builder.sslSocketFactory
+      this.certificateChainCleaner = builder.certificateChainCleaner
     } else {
       val trustManager = Util.platformTrustManager()
       this.sslSocketFactory = newSslSocketFactory(trustManager)
@@ -170,6 +179,13 @@ open class OkHttpClient internal constructor(
 
     this.certificatePinner = builder.certificatePinner
         .withCertificateChainCleaner(certificateChainCleaner)
+
+    check(null !in (interceptors as List<Interceptor?>)) {
+      "Null interceptor: $interceptors"
+    }
+    check(null !in (networkInterceptors as List<Interceptor?>)) {
+      "Null network interceptor: $networkInterceptors"
+    }
   }
 
   open fun dispatcher(): Dispatcher = dispatcher
@@ -204,7 +220,7 @@ open class OkHttpClient internal constructor(
 
   open fun socketFactory(): SocketFactory = socketFactory
 
-  open fun sslSocketFactory(): SSLSocketFactory = sslSocketFactory
+  open fun sslSocketFactory(): SSLSocketFactory = sslSocketFactory!!
 
   open fun hostnameVerifier(): HostnameVerifier = hostnameVerifier
 
@@ -242,7 +258,7 @@ open class OkHttpClient internal constructor(
   /** Web socket and HTTP/2 ping interval (in milliseconds). By default pings are not sent. */
   open fun pingIntervalMillis(): Int = pingInterval
 
-  fun internalCache(): InternalCache? {
+  internal fun internalCache(): InternalCache? {
     return cache?.internalCache ?: internalCache
   }
 
@@ -326,9 +342,9 @@ open class OkHttpClient internal constructor(
      * Sets the default timeout for complete calls. A value of 0 means no timeout, otherwise values
      * must be between 1 and [Integer.MAX_VALUE] when converted to milliseconds.
      *
-     * The call timeout spans the entire call: resolving DNS, connecting, writing the request
-     * body, server processing, and reading the response body. If the call requires redirects or
-     * retries all must complete within one timeout period.
+     * The call timeout spans the entire call: resolving DNS, connecting, writing the request body,
+     * server processing, and reading the response body. If the call requires redirects or retries
+     * all must complete within one timeout period.
      *
      * The default value is 0 which imposes no timeout.
      */
@@ -340,9 +356,9 @@ open class OkHttpClient internal constructor(
      * Sets the default timeout for complete calls. A value of 0 means no timeout, otherwise values
      * must be between 1 and [Integer.MAX_VALUE] when converted to milliseconds.
      *
-     * The call timeout spans the entire call: resolving DNS, connecting, writing the request
-     * body, server processing, and reading the response body. If the call requires redirects or
-     * retries all must complete within one timeout period.
+     * The call timeout spans the entire call: resolving DNS, connecting, writing the request body,
+     * server processing, and reading the response body. If the call requires redirects or retries
+     * all must complete within one timeout period.
      *
      * The default value is 0 which imposes no timeout.
      */
@@ -353,11 +369,10 @@ open class OkHttpClient internal constructor(
 
     /**
      * Sets the default connect timeout for new connections. A value of 0 means no timeout,
-     * otherwise values must be between 1 and [Integer.MAX_VALUE] when converted to
-     * milliseconds.
+     * otherwise values must be between 1 and [Integer.MAX_VALUE] when converted to milliseconds.
      *
-     * The connect timeout is applied when connecting a TCP socket to the target host.
-     * The default value is 10 seconds.
+     * The connect timeout is applied when connecting a TCP socket to the target host. The default
+     * value is 10 seconds.
      */
     fun connectTimeout(timeout: Long, unit: TimeUnit) = apply {
       connectTimeout = checkDuration("timeout", timeout, unit)
@@ -365,11 +380,10 @@ open class OkHttpClient internal constructor(
 
     /**
      * Sets the default connect timeout for new connections. A value of 0 means no timeout,
-     * otherwise values must be between 1 and [Integer.MAX_VALUE] when converted to
-     * milliseconds.
+     * otherwise values must be between 1 and [Integer.MAX_VALUE] when converted to milliseconds.
      *
-     * The connect timeout is applied when connecting a TCP socket to the target host.
-     * The default value is 10 seconds.
+     * The connect timeout is applied when connecting a TCP socket to the target host. The default
+     * value is 10 seconds.
      */
     @IgnoreJRERequirement
     fun connectTimeout(duration: Duration) = apply {
@@ -409,8 +423,8 @@ open class OkHttpClient internal constructor(
      * Sets the default write timeout for new connections. A value of 0 means no timeout, otherwise
      * values must be between 1 and [Integer.MAX_VALUE] when converted to milliseconds.
      *
-     * The write timeout is applied for individual write IO operations.
-     * The default value is 10 seconds.
+     * The write timeout is applied for individual write IO operations. The default value is 10
+     * seconds.
      *
      * @see Sink.timeout
      */
@@ -422,8 +436,8 @@ open class OkHttpClient internal constructor(
      * Sets the default write timeout for new connections. A value of 0 means no timeout, otherwise
      * values must be between 1 and [Integer.MAX_VALUE] when converted to milliseconds.
      *
-     * The write timeout is applied for individual write IO operations.
-     * The default value is 10 seconds.
+     * The write timeout is applied for individual write IO operations. The default value is 10
+     * seconds.
      *
      * @see Sink.timeout
      */
@@ -437,11 +451,11 @@ open class OkHttpClient internal constructor(
      * automatically send ping frames until either the connection fails or it is closed. This keeps
      * the connection alive and may detect connectivity failures.
      *
-     * If the server does not respond to each ping with a pong within `interval`, this
-     * client will assume that connectivity has been lost. When this happens on a web socket the
-     * connection is canceled and its listener is [notified][WebSocketListener.onFailure]. When it
-     * happens on an HTTP/2 connection the connection is closed and any calls it is carrying
-     * [will fail with an IOException][java.io.IOException].
+     * If the server does not respond to each ping with a pong within `interval`, this client will
+     * assume that connectivity has been lost. When this happens on a web socket the connection is
+     * canceled and its listener is [notified][WebSocketListener.onFailure]. When it happens on an
+     * HTTP/2 connection the connection is closed and any calls it is carrying [will fail with an
+     * IOException][java.io.IOException].
      *
      * The default value of 0 disables client-initiated pings.
      */
@@ -454,11 +468,11 @@ open class OkHttpClient internal constructor(
      * automatically send ping frames until either the connection fails or it is closed. This keeps
      * the connection alive and may detect connectivity failures.
      *
-     * If the server does not respond to each ping with a pong within `interval`, this
-     * client will assume that connectivity has been lost. When this happens on a web socket the
-     * connection is canceled and its listener is [notified][WebSocketListener.onFailure]. When it
-     * happens on an HTTP/2 connection the connection is closed and any calls it is carrying
-     * [will fail with an IOException][java.io.IOException].
+     * If the server does not respond to each ping with a pong within `interval`, this client will
+     * assume that connectivity has been lost. When this happens on a web socket the connection is
+     * canceled and its listener is [notified][WebSocketListener.onFailure]. When it happens on an
+     * HTTP/2 connection the connection is closed and any calls it is carrying [will fail with an
+     * IOException][java.io.IOException].
      *
      * The default value of 0 disables client-initiated pings.
      */
@@ -469,20 +483,19 @@ open class OkHttpClient internal constructor(
 
     /**
      * Sets the HTTP proxy that will be used by connections created by this client. This takes
-     * precedence over [proxySelector], which is only honored when this proxy is null (which
-     * it is by default). To disable proxy use completely, call `proxy(Proxy.NO_PROXY)`.
+     * precedence over [proxySelector], which is only honored when this proxy is null (which it is
+     * by default). To disable proxy use completely, call `proxy(Proxy.NO_PROXY)`.
      */
     fun proxy(proxy: Proxy?) = apply {
       this.proxy = proxy
     }
 
     /**
-     * Sets the proxy selection policy to be used if no [proxy][proxy] is specified
-     * explicitly. The proxy selector may return multiple proxies; in that case they will be tried
-     * in sequence until a successful connection is established.
+     * Sets the proxy selection policy to be used if no [proxy][proxy] is specified explicitly. The
+     * proxy selector may return multiple proxies; in that case they will be tried in sequence until
+     * a successful connection is established.
      *
-     * If unset, the [system-wide default][ProxySelector.getDefault] proxy selector will
-     * be used.
+     * If unset, the [system-wide default][ProxySelector.getDefault] proxy selector will be used.
      */
     fun proxySelector(proxySelector: ProxySelector) = apply {
       this.proxySelector = proxySelector
@@ -515,8 +528,8 @@ open class OkHttpClient internal constructor(
 
     /**
      * Sets the socket factory used to create connections. OkHttp only uses the parameterless
-     * [SocketFactory.createSocket] method to create unconnected sockets. Overriding
-     * this method, e. g., allows the socket to be bound to a specific local address.
+     * [SocketFactory.createSocket] method to create unconnected sockets. Overriding this method,
+     * e. g., allows the socket to be bound to a specific local address.
      *
      * If unset, the [system-wide default][SocketFactory.getDefault] socket factory will be used.
      */
@@ -532,9 +545,9 @@ open class OkHttpClient internal constructor(
      * be used.
      *
      * @deprecated [SSLSocketFactory] does not expose its [X509TrustManager], which is a field that
-     * OkHttp needs to build a clean certificate chain. This method instead must use reflection to
-     * extract the trust manager. Applications should prefer to call
-     * `sslSocketFactory(SSLSocketFactory, X509TrustManager)`, which avoids such reflection.
+     *     OkHttp needs to build a clean certificate chain. This method instead must use reflection
+     *     to extract the trust manager. Applications should prefer to call
+     *     `sslSocketFactory(SSLSocketFactory, X509TrustManager)`, which avoids such reflection.
      */
     @Deprecated(
         message = "Use the sslSocketFactory overload that accepts a X509TrustManager.",
@@ -575,7 +588,8 @@ open class OkHttpClient internal constructor(
      * ```
      */
     fun sslSocketFactory(
-        sslSocketFactory: SSLSocketFactory, trustManager: X509TrustManager) = apply {
+      sslSocketFactory: SSLSocketFactory, trustManager: X509TrustManager
+    ) = apply {
       this.sslSocketFactory = sslSocketFactory
       this.certificateChainCleaner = CertificateChainCleaner.get(trustManager)
     }
@@ -638,7 +652,7 @@ open class OkHttpClient internal constructor(
       this.followSslRedirects = followProtocolRedirects
     }
 
-    /** Configure this client to follow redirects. If unset, redirects will be followed.  */
+    /** Configure this client to follow redirects. If unset, redirects will be followed. */
     fun followRedirects(followRedirects: Boolean) = apply {
       this.followRedirects = followRedirects
     }
@@ -649,9 +663,11 @@ open class OkHttpClient internal constructor(
      *
      * * **Unreachable IP addresses.** If the URL's host has multiple IP addresses,
      *   failure to reach any individual IP address doesn't fail the overall request. This can
-     *    increase availability of multi-homed services.
+     *   increase availability of multi-homed services.
+     *
      * * **Stale pooled connections.** The [ConnectionPool] reuses sockets
      *   to decrease request latency, but these connections will occasionally time out.
+     *
      * * **Unreachable proxy servers.** A [ProxySelector] can be used to
      *   attempt multiple proxy servers in sequence, eventually falling back to a direct
      *   connection.
@@ -685,33 +701,34 @@ open class OkHttpClient internal constructor(
      * **This is an evolving set.** Future releases include support for transitional
      * protocols. The http/1.1 transport will never be dropped.
      *
-     * If multiple protocols are specified, [ALPN](http://tools.ietf.org/html/draft-ietf-tls-applayerprotoneg)
-     * will be used to negotiate a transport. Protocol negotiation is only attempted for HTTPS URLs.
+     * If multiple protocols are specified,
+     * [ALPN](http://tools.ietf.org/html/draft-ietf-tls-applayerprotoneg) will be used to negotiate
+     * a transport. Protocol negotiation is only attempted for HTTPS URLs.
      *
      * [Protocol.HTTP_1_0] is not supported in this set. Requests are initiated with `HTTP/1.1`. If
      * the server responds with `HTTP/1.0`, that will be exposed by [Response.protocol].
      *
      * @param protocols the protocols to use, in order of preference. If the list contains
-     * [Protocol.H2_PRIOR_KNOWLEDGE] then that must be the only protocol and HTTPS URLs will not
-     * be supported. Otherwise the list must contain [Protocol.HTTP_1_1]. The list must
-     * not contain null or [Protocol.HTTP_1_0].
+     *     [Protocol.H2_PRIOR_KNOWLEDGE] then that must be the only protocol and HTTPS URLs will not
+     *     be supported. Otherwise the list must contain [Protocol.HTTP_1_1]. The list must
+     *     not contain null or [Protocol.HTTP_1_0].
      */
     fun protocols(protocols: List<Protocol>) = apply {
       // Create a private copy of the list.
       val protocolsCopy = protocols.toMutableList()
 
       // Validate that the list has everything we require and nothing we forbid.
-      if (Protocol.H2_PRIOR_KNOWLEDGE !in protocolsCopy &&
-          Protocol.HTTP_1_1 !in protocolsCopy) {
-        throw IllegalArgumentException(
-            "protocolsCopy must contain h2_prior_knowledge or http/1.1: $protocolsCopy")
+      require(Protocol.H2_PRIOR_KNOWLEDGE in protocolsCopy || Protocol.HTTP_1_1 in protocolsCopy) {
+        "protocols must contain h2_prior_knowledge or http/1.1: $protocolsCopy"
       }
-      if (Protocol.H2_PRIOR_KNOWLEDGE in protocolsCopy && protocolsCopy.size > 1) {
-        throw IllegalArgumentException(
-            "protocolsCopy containing h2_prior_knowledge cannot use other protocolsCopy: $protocolsCopy")
+      require(Protocol.H2_PRIOR_KNOWLEDGE !in protocolsCopy || protocolsCopy.size <= 1) {
+        "protocols containing h2_prior_knowledge cannot use other protocols: $protocolsCopy"
       }
-      if (Protocol.HTTP_1_0 in protocolsCopy) {
-        throw IllegalArgumentException("protocolsCopy must not contain http/1.0: $protocolsCopy")
+      require(Protocol.HTTP_1_0 !in protocolsCopy) {
+        "protocols must not contain http/1.0: $protocolsCopy"
+      }
+      require(null !in (protocols as List<Protocol?>)) {
+        "protocols must not contain null"
       }
 
       // Remove protocolsCopy that we no longer support.
@@ -739,8 +756,8 @@ open class OkHttpClient internal constructor(
 
     /**
      * Returns a modifiable list of interceptors that observe a single network request and response.
-     * These interceptors must call [Interceptor.Chain.proceed] exactly once: it is an error
-     * for a network interceptor to short-circuit or repeat a network request.
+     * These interceptors must call [Interceptor.Chain.proceed] exactly once: it is an error for a
+     * network interceptor to short-circuit or repeat a network request.
      */
     fun networkInterceptors(): List<Interceptor> = networkInterceptors
 
@@ -749,8 +766,8 @@ open class OkHttpClient internal constructor(
     }
 
     /**
-     * Configure a single client scoped listener that will receive all analytic events
-     * for this client.
+     * Configure a single client scoped listener that will receive all analytic events for this
+     * client.
      *
      * @see EventListener for semantics and restrictions on listener implementations.
      */
@@ -772,8 +789,7 @@ open class OkHttpClient internal constructor(
   }
 
   companion object {
-    internal val DEFAULT_PROTOCOLS = Util.immutableList(
-        HTTP_2, HTTP_1_1)
+    internal val DEFAULT_PROTOCOLS = Util.immutableList(HTTP_2, HTTP_1_1)
 
     internal val DEFAULT_CONNECTION_SPECS = Util.immutableList(
         ConnectionSpec.MODERN_TLS, ConnectionSpec.CLEARTEXT)
@@ -790,8 +806,7 @@ open class OkHttpClient internal constructor(
         override fun newWebSocketCall(client: OkHttpClient, originalRequest: Request) =
             RealCall.newRealCall(client, originalRequest, true)
 
-        override fun initExchange(
-            responseBuilder: Response.Builder, exchange: Exchange) {
+        override fun initExchange(responseBuilder: Response.Builder, exchange: Exchange) {
           responseBuilder.initExchange(exchange)
         }
 

@@ -3476,7 +3476,7 @@ public final class URLConnectionTest {
     try {
       client.newBuilder().sslSocketFactory(null);
       fail();
-    } catch (NullPointerException expected) {
+    } catch (IllegalArgumentException expected) {
     }
   }
 

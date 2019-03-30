@@ -19,13 +19,11 @@ import java.net.CookieHandler;
 import java.net.CookieManager;
 import java.net.ProxySelector;
 import java.net.ResponseCache;
-import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
 import javax.net.ssl.SSLSocketFactory;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import org.junit.After;
-import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 
@@ -144,7 +142,6 @@ public final class OkHttpClientTest {
       builder.addInterceptor(null);
       fail();
     } catch (IllegalArgumentException expected) {
-      assertThat(expected.getMessage()).isEqualTo("interceptor == null");
     }
   }
 
@@ -154,7 +151,6 @@ public final class OkHttpClientTest {
       builder.addNetworkInterceptor(null);
       fail();
     } catch (IllegalArgumentException expected) {
-      assertThat(expected.getMessage()).isEqualTo("interceptor == null");
     }
   }
 
