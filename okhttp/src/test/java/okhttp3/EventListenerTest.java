@@ -952,62 +952,70 @@ public final class EventListenerTest {
     enableTlsWithTunnel(false);
     server.setProtocols(asList(Protocol.HTTP_1_1));
 
-    // Stream a 256 MiB body so the disconnect will happen before the server has read everything.
-    requestBodyFail(new MockResponse()
-        .setSocketPolicy(SocketPolicy.DISCONNECT_DURING_REQUEST_BODY), sizedRequest(256), Protocol.HTTP_1_1);
+    requestBodyFail(Protocol.HTTP_1_1);
   }
 
   @Test public void requestBodyFailHttp2OverHttps() {
     enableTlsWithTunnel(false);
     server.setProtocols(asList(Protocol.HTTP_2, Protocol.HTTP_1_1));
 
-    requestBodyFail(new MockResponse()
-        .setSocketPolicy(SocketPolicy.DISCONNECT_DURING_REQUEST_BODY), sizedRequest(2), Protocol.HTTP_2);
+    requestBodyFail(Protocol.HTTP_2);
   }
 
   @Test public void requestBodyFailHttp() {
-    // Stream a 256 MiB body so the disconnect will happen before the server has read everything.
-    requestBodyFail(new MockResponse()
-        .setSocketPolicy(SocketPolicy.DISCONNECT_DURING_REQUEST_BODY), sizedRequest(256), null);
+    requestBodyFail(null);
   }
 
-  private void requestBodyFail(MockResponse response, RequestBody requestBody,
-      @Nullable Protocol requiredProtocol) {
-    server.enqueue(response);
+  private void requestBodyFail(@Nullable Protocol requiredProtocol) {
+    CountDownLatch latch = new CountDownLatch(1);
 
-    Call call = client.newCall(new Request.Builder()
-        .url(server.url("/"))
-        .post(requestBody)
-        .build());
     try {
-      call.execute();
-      fail();
-    } catch (IOException expected) {
-    }
+      server.enqueue(new MockResponse()
+          .setSocketPolicy(SocketPolicy.DISCONNECT_DURING_REQUEST_BODY));
 
-    if (requiredProtocol != null) {
-      ConnectionAcquired connectionAcquired = listener.removeUpToEvent(ConnectionAcquired.class);
-      assertThat(connectionAcquired.connection.protocol()).isEqualTo(requiredProtocol);
-    }
+      Call call = client.newCall(new Request.Builder()
+          .url(server.url("/"))
+          .post(nonCompletingRequest(latch))
+          .build());
+      try {
+        call.execute();
+        fail();
+      } catch (IOException expected) {
+      }
 
-    CallFailed callFailed = listener.removeUpToEvent(CallFailed.class);
-    assertThat(callFailed.ioe).isNotNull();
+      if (requiredProtocol != null) {
+        ConnectionAcquired connectionAcquired = listener.removeUpToEvent(ConnectionAcquired.class);
+        assertThat(connectionAcquired.connection.protocol()).isEqualTo(requiredProtocol);
+      }
+
+      CallFailed callFailed = listener.removeUpToEvent(CallFailed.class);
+      assertThat(callFailed.ioe).isNotNull();
+    } finally {
+      latch.countDown();
+    }
   }
 
-  @NotNull private RequestBody sizedRequest(int megabytes) {
+  @NotNull private RequestBody nonCompletingRequest(CountDownLatch latch) {
     return new RequestBody() {
       @Override public MediaType contentType() {
         return MediaType.get("text/plain");
       }
 
       @Override public long contentLength() {
-        return 1024 * 1024 * megabytes;
+        return 1024 * 1024 * 4;
       }
 
       @Override public void writeTo(BufferedSink sink) throws IOException {
-        for (int i = 0; i < 1024; i++) {
-          sink.write(new byte[1024 * megabytes]);
-          sink.flush();
+        sink.write(new byte[1024 * 1024]);
+        sink.flush();
+        sink.write(new byte[1024 * 1024]);
+        sink.flush();
+        sink.write(new byte[1024 * 1024]);
+        sink.flush();
+        try {
+          latch.await(10, TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+          fail();
         }
       }
     };
