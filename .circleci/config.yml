@@ -42,7 +42,15 @@ jobs:
             mkdir -p ~/test-results/junit/
             find . -type f -regex ".*/build/test-results/.*xml" -exec cp {} ~/test-results/junit/ \;
           when: always
+      - run:
+          name: Save gradle reports
+          command: |
+            mkdir -p ~/reports/
+            tar cf - */build/reports | (cd ~/reports/; tar xf -)
+          when: always
       - store_test_results:
           path: ~/test-results
       - store_artifacts:
           path: ~/test-results/junit 
+      - store_artifacts:
+          path: ~/reports
