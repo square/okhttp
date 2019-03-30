@@ -31,6 +31,7 @@ public class OkHttpClientTestRule implements TestRule {
 
   private Statement statement(final Statement base) {
     return new Statement() {
+      @Override
       public void evaluate() throws Throwable {
         try {
           base.evaluate();
