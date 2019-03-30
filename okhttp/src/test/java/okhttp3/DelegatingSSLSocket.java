@@ -287,6 +287,7 @@ public abstract class DelegatingSSLSocket extends SSLSocket {
 
   // Java 9 methods.
 
+  @SuppressWarnings("MissingOverride") // Can only override with JDK 9+
   public SSLSession getHandshakeSession() {
     try {
       return (SSLSession) SSLSocket.class.getMethod("getHandshakeSession").invoke(delegate);
@@ -295,6 +296,7 @@ public abstract class DelegatingSSLSocket extends SSLSocket {
     }
   }
 
+  @SuppressWarnings("MissingOverride") // Can only override with JDK 9+
   public String getApplicationProtocol() {
     try {
       return (String) SSLSocket.class.getMethod("getApplicationProtocol").invoke(delegate);
@@ -303,6 +305,7 @@ public abstract class DelegatingSSLSocket extends SSLSocket {
     }
   }
 
+  @SuppressWarnings("MissingOverride") // Can only override with JDK 9+
   public String getHandshakeApplicationProtocol() {
     try {
       return (String) SSLSocket.class.getMethod("getHandshakeApplicationProtocol").invoke(delegate);
@@ -311,6 +314,7 @@ public abstract class DelegatingSSLSocket extends SSLSocket {
     }
   }
 
+  @SuppressWarnings("MissingOverride") // Can only override with JDK 9+
   public <T> Socket setOption(SocketOption<T> name, T value) throws IOException {
     try {
       SSLSocket.class.getMethod("setOption", SocketOption.class, Object.class).invoke(delegate, name, value);
@@ -320,7 +324,10 @@ public abstract class DelegatingSSLSocket extends SSLSocket {
     }
   }
 
-  @SuppressWarnings("unchecked") // Using reflection to delegate.
+  @SuppressWarnings({
+      "MissingOverride", // Can only override with JDK 9+
+      "unchecked" // Using reflection to delegate.
+  })
   public <T> T getOption(SocketOption<T> name) throws IOException {
     try {
       return (T) SSLSocket.class.getMethod("getOption", SocketOption.class).invoke(delegate, name);
@@ -329,7 +336,10 @@ public abstract class DelegatingSSLSocket extends SSLSocket {
     }
   }
 
-  @SuppressWarnings("unchecked") // Using reflection to delegate.
+  @SuppressWarnings({
+      "MissingOverride", // Can only override with JDK 9+
+      "unchecked" // Using reflection to delegate.
+  })
   public Set<SocketOption<?>> supportedOptions() {
     try {
       return (Set<SocketOption<?>>) SSLSocket.class.getMethod("supportedOptions").invoke(delegate);

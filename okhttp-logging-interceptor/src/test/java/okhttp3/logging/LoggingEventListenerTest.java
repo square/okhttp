@@ -220,7 +220,7 @@ public final class LoggingEventListenerTest {
   }
 
   private static class LogRecorder extends HttpLoggingInterceptorTest.LogRecorder {
-    LogRecorder assertLogMatch(String pattern) {
+    @Override LogRecorder assertLogMatch(String pattern) {
       return (LogRecorder) super.assertLogMatch("\\[\\d+ ms] " + pattern);
     }
   }
