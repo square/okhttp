@@ -965,11 +965,11 @@ public final class EventListenerTest {
     requestBodyFail(null);
   }
 
-  private void requestBodyFail(@Nullable Protocol requiredProtocol) {
+  private void requestBodyFail(@Nullable Protocol expectedProtocol) {
     server.enqueue(new MockResponse()
         .setSocketPolicy(SocketPolicy.DISCONNECT_DURING_REQUEST_BODY));
 
-    NonCompletingRequest request = new NonCompletingRequest();
+    NonCompletingRequestBody request = new NonCompletingRequestBody();
     Call call = client.newCall(new Request.Builder()
         .url(server.url("/"))
         .post(request)
@@ -980,9 +980,9 @@ public final class EventListenerTest {
     } catch (IOException expected) {
     }
 
-    if (requiredProtocol != null) {
+    if (expectedProtocol != null) {
       ConnectionAcquired connectionAcquired = listener.removeUpToEvent(ConnectionAcquired.class);
-      assertThat(connectionAcquired.connection.protocol()).isEqualTo(requiredProtocol);
+      assertThat(connectionAcquired.connection.protocol()).isEqualTo(expectedProtocol);
     }
 
     CallFailed callFailed = listener.removeUpToEvent(CallFailed.class);
@@ -991,7 +991,7 @@ public final class EventListenerTest {
     assertThat(request.ioe).isNotNull();
   }
 
-  private class NonCompletingRequest extends RequestBody {
+  private class NonCompletingRequestBody extends RequestBody {
     IOException ioe;
 
     @Override public MediaType contentType() {
