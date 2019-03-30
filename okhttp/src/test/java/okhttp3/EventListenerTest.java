@@ -55,7 +55,6 @@ import org.hamcrest.BaseMatcher;
 import org.hamcrest.CoreMatchers;
 import org.hamcrest.Description;
 import org.hamcrest.Matcher;
-import org.jetbrains.annotations.NotNull;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -967,58 +966,61 @@ public final class EventListenerTest {
   }
 
   private void requestBodyFail(@Nullable Protocol requiredProtocol) {
-    CountDownLatch latch = new CountDownLatch(1);
+    server.enqueue(new MockResponse()
+        .setSocketPolicy(SocketPolicy.DISCONNECT_DURING_REQUEST_BODY));
 
+    NonCompletingRequest request = new NonCompletingRequest();
+    Call call = client.newCall(new Request.Builder()
+        .url(server.url("/"))
+        .post(request)
+        .build());
     try {
-      server.enqueue(new MockResponse()
-          .setSocketPolicy(SocketPolicy.DISCONNECT_DURING_REQUEST_BODY));
-
-      Call call = client.newCall(new Request.Builder()
-          .url(server.url("/"))
-          .post(nonCompletingRequest(latch))
-          .build());
-      try {
-        call.execute();
-        fail();
-      } catch (IOException expected) {
-      }
-
-      if (requiredProtocol != null) {
-        ConnectionAcquired connectionAcquired = listener.removeUpToEvent(ConnectionAcquired.class);
-        assertThat(connectionAcquired.connection.protocol()).isEqualTo(requiredProtocol);
-      }
-
-      CallFailed callFailed = listener.removeUpToEvent(CallFailed.class);
-      assertThat(callFailed.ioe).isNotNull();
-    } finally {
-      latch.countDown();
+      call.execute();
+      fail();
+    } catch (IOException expected) {
     }
+
+    if (requiredProtocol != null) {
+      ConnectionAcquired connectionAcquired = listener.removeUpToEvent(ConnectionAcquired.class);
+      assertThat(connectionAcquired.connection.protocol()).isEqualTo(requiredProtocol);
+    }
+
+    CallFailed callFailed = listener.removeUpToEvent(CallFailed.class);
+    assertThat(callFailed.ioe).isNotNull();
+
+    assertThat(request.ioe).isNotNull();
   }
 
-  @NotNull private RequestBody nonCompletingRequest(CountDownLatch latch) {
-    return new RequestBody() {
-      @Override public MediaType contentType() {
-        return MediaType.get("text/plain");
-      }
+  private class NonCompletingRequest extends RequestBody {
+    IOException ioe;
 
-      @Override public long contentLength() {
-        return 1024 * 1024 * 4;
-      }
+    @Override public MediaType contentType() {
+      return MediaType.get("text/plain");
+    }
 
-      @Override public void writeTo(BufferedSink sink) throws IOException {
-        sink.write(new byte[1024 * 1024]);
-        sink.flush();
-        sink.write(new byte[1024 * 1024]);
-        sink.flush();
-        sink.write(new byte[1024 * 1024]);
-        sink.flush();
-        try {
-          latch.await(10, TimeUnit.SECONDS);
-        } catch (InterruptedException e) {
-          fail();
-        }
+    @Override public long contentLength() {
+      return 1024 * 1024 * 4;
+    }
+
+    @Override public void writeTo(BufferedSink sink) throws IOException {
+      try {
+        writeChunk(sink);
+        writeChunk(sink);
+        writeChunk(sink);
+        writeChunk(sink);
+        Thread.sleep(1000);
+        writeChunk(sink);
+        writeChunk(sink);
+      } catch (IOException e) {
+        ioe = e;
+      } catch (InterruptedException e) {
       }
-    };
+    }
+
+    private void writeChunk(BufferedSink sink) throws IOException {
+      sink.write(new byte[1024 * 512]);
+      sink.flush();
+    }
   }
 
   @Test public void requestBodyMultipleFailuresReportedOnlyOnce() {
