@@ -145,7 +145,7 @@ class LoggingEventListener private constructor(
     logger.log("[$timeMs ms] $message")
   }
 
-  class Factory @JvmOverloads constructor(
+  open class Factory @JvmOverloads constructor(
     private val logger: HttpLoggingInterceptor.Logger = HttpLoggingInterceptor.Logger.DEFAULT
   ) : EventListener.Factory {
     override fun create(call: Call): EventListener = LoggingEventListener(logger)

@@ -111,7 +111,8 @@ class HttpLoggingInterceptor @JvmOverloads constructor(
 
     companion object {
       /** A [Logger] defaults output appropriate for the current platform.  */
-      val DEFAULT: Logger = object : Logger {
+      @JvmStatic
+      const val DEFAULT: Logger = object : Logger {
         override fun log(message: String) {
           Platform.get().log(INFO, message, null)
         }
@@ -119,7 +120,7 @@ class HttpLoggingInterceptor @JvmOverloads constructor(
     }
   }
 
-  fun redactHeader(name: String) {
+  open fun redactHeader(name: String) {
     val newHeadersToRedact = TreeSet(String.CASE_INSENSITIVE_ORDER)
     newHeadersToRedact.addAll(headersToRedact)
     newHeadersToRedact.add(name)
@@ -127,11 +128,11 @@ class HttpLoggingInterceptor @JvmOverloads constructor(
   }
 
   /** Change the level at which this interceptor logs.  */
-  fun setLevel(level: Level) = apply {
+  open fun setLevel(level: Level) = apply {
     this.level = level
   }
 
-  fun getLevel(): Level = level
+  open fun getLevel(): Level = level
 
   @Throws(IOException::class)
   override fun intercept(chain: Interceptor.Chain): Response {
