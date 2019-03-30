@@ -1,5 +1,5 @@
 # Check https://circleci.com/docs/2.0/language-java/ for more details
-version: 2
+version: 2.1
 jobs:
   dependencies:
     docker:
@@ -60,7 +60,7 @@ jobs:
             mkdir -p ~/reports/
             tar cf - */build/reports | (cd ~/reports/; tar xf -)
           when: always
-          
+
       - store_artifacts:
           path: ~/reports
 
@@ -101,7 +101,7 @@ jobs:
       - store_artifacts:
           path: ~/test-results/junit
 workflows:
-  build-test-and-deploy:
+  build-check-and-test:
     jobs:
       - dependencies
       - checkjdk8:
