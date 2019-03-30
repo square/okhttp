@@ -1,14 +1,14 @@
 # Check https://circleci.com/docs/2.0/language-java/ for more details
 version: 2
 jobs:
-  build:
+  dependencies:
     docker:
       - image: circleci/openjdk:8u171-jdk
 
     working_directory: ~/repo
 
     environment:
-      JVM_OPTS: -Xmx3200m
+      JVM_OPTS: -Xmx1g
       TERM: dumb
 
     steps:
@@ -30,27 +30,83 @@ jobs:
             - ~/.gradle/caches
           key: v1-dependencies-{{ checksum "build.gradle" }}
 
+  checkjdk8:
+    docker:
+      - image: circleci/openjdk:8u171-jdk
+
+    working_directory: ~/repo
+
+    environment:
+      JVM_OPTS: -Xmx1g
+      TERM: dumb
+
+    steps:
+      - checkout
+
+      - restore_cache:
+          keys:
+            - v1-dependencies-{{ checksum "build.gradle" }}
+            - v1-dependencies-
+
       - run:
           name: check
-          command: ./gradlew check
+          command: ./gradlew check -x test
           environment:
             GRADLE_OPTS: -Dorg.gradle.daemon=false -Dorg.gradle.parallel=false -Xmx1G
-      
-      - run:
-          name: Save test results
-          command: |
-            mkdir -p ~/test-results/junit/
-            find . -type f -regex ".*/build/test-results/.*xml" -exec cp {} ~/test-results/junit/ \;
-          when: always
+
       - run:
           name: Save gradle reports
           command: |
             mkdir -p ~/reports/
             tar cf - */build/reports | (cd ~/reports/; tar xf -)
           when: always
-      - store_test_results:
-          path: ~/test-results
-      - store_artifacts:
-          path: ~/test-results/junit 
+          
       - store_artifacts:
           path: ~/reports
+
+  testjdk8:
+    docker:
+      - image: circleci/openjdk:8u171-jdk
+
+    working_directory: ~/testrepo
+
+    environment:
+      JVM_OPTS: -Xmx1g
+      TERM: dumb
+
+    steps:
+      - checkout
+
+      - restore_cache:
+          keys:
+            - v1-dependencies-{{ checksum "build.gradle" }}
+            - v1-dependencies-
+
+      - run:
+          name: test
+          command: ./gradlew test
+          environment:
+            GRADLE_OPTS: -Dorg.gradle.daemon=false -Dorg.gradle.parallel=false -Xmx1G
+
+      - run:
+          name: Save test results
+          command: |
+            mkdir -p ~/test-results/junit/
+            find . -type f -regex ".*/build/test-results/.*xml" -exec cp {} ~/test-results/junit/ \;
+          when: always
+
+      - store_test_results:
+          path: ~/test-results
+
+      - store_artifacts:
+          path: ~/test-results/junit
+workflows:
+  build-test-and-deploy:
+    jobs:
+      - dependencies
+      - checkjdk8:
+          requires:
+            - dependencies
+      - testjdk8:
+          requires:
+            - dependencies
