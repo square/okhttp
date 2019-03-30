@@ -167,6 +167,7 @@ public final class DiskLruCache implements Closeable, Flushable {
   /** Used to run 'cleanupRunnable' for journal rebuilds. */
   private final Executor executor;
   private final Runnable cleanupRunnable = new Runnable() {
+    @Override
     public void run() {
       synchronized (DiskLruCache.this) {
         if (!initialized | closed) {
@@ -814,6 +815,7 @@ public final class DiskLruCache implements Closeable, Flushable {
       return lengths[index];
     }
 
+    @Override
     public void close() {
       for (Source in : sources) {
         Util.closeQuietly(in);

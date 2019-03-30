@@ -30,38 +30,47 @@ public final class FakeSSLSession implements SSLSession {
     this.certificates = certificates;
   }
 
+  @Override
   public int getApplicationBufferSize() {
     throw new UnsupportedOperationException();
   }
 
+  @Override
   public String getCipherSuite() {
     throw new UnsupportedOperationException();
   }
 
+  @Override
   public long getCreationTime() {
     throw new UnsupportedOperationException();
   }
 
+  @Override
   public byte[] getId() {
     throw new UnsupportedOperationException();
   }
 
+  @Override
   public long getLastAccessedTime() {
     throw new UnsupportedOperationException();
   }
 
+  @Override
   public Certificate[] getLocalCertificates() {
     throw new UnsupportedOperationException();
   }
 
+  @Override
   public Principal getLocalPrincipal() {
     throw new UnsupportedOperationException();
   }
 
+  @Override
   public int getPacketBufferSize() {
     throw new UnsupportedOperationException();
   }
 
+  @Override
   public Certificate[] getPeerCertificates() throws SSLPeerUnverifiedException {
     if (certificates.length == 0) {
       throw new SSLPeerUnverifiedException("peer not authenticated");
@@ -70,50 +79,62 @@ public final class FakeSSLSession implements SSLSession {
     }
   }
 
+  @Override
   public X509Certificate[] getPeerCertificateChain() throws SSLPeerUnverifiedException {
     throw new UnsupportedOperationException();
   }
 
+  @Override
   public String getPeerHost() {
     throw new UnsupportedOperationException();
   }
 
+  @Override
   public int getPeerPort() {
     throw new UnsupportedOperationException();
   }
 
+  @Override
   public Principal getPeerPrincipal() throws SSLPeerUnverifiedException {
     throw new UnsupportedOperationException();
   }
 
+  @Override
   public String getProtocol() {
     throw new UnsupportedOperationException();
   }
 
+  @Override
   public SSLSessionContext getSessionContext() {
     throw new UnsupportedOperationException();
   }
 
+  @Override
   public void putValue(String s, Object obj) {
     throw new UnsupportedOperationException();
   }
 
+  @Override
   public void removeValue(String s) {
     throw new UnsupportedOperationException();
   }
 
+  @Override
   public Object getValue(String s) {
     throw new UnsupportedOperationException();
   }
 
+  @Override
   public String[] getValueNames() {
     throw new UnsupportedOperationException();
   }
 
+  @Override
   public void invalidate() {
     throw new UnsupportedOperationException();
   }
 
+  @Override
   public boolean isValid() {
     throw new UnsupportedOperationException();
   }
