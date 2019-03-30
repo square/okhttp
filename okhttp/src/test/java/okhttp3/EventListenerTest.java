@@ -60,6 +60,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.Timeout;
 
 import static java.util.Arrays.asList;
 import static okhttp3.tls.internal.TlsUtil.localhost;
@@ -73,6 +74,7 @@ public final class EventListenerTest {
   public static final Matcher<Response> anyResponse = CoreMatchers.any(Response.class);
   @Rule public final MockWebServer server = new MockWebServer();
   @Rule public final OkHttpClientTestRule clientTestRule = new OkHttpClientTestRule();
+  @Rule public final Timeout timeoutRule = new Timeout(20, TimeUnit.SECONDS);
 
   private final RecordingEventListener listener = new RecordingEventListener();
   private final HandshakeCertificates handshakeCertificates = localhost();
@@ -256,7 +258,8 @@ public final class EventListenerTest {
 
     if (requestHeaderLength != null) {
       RequestHeadersEnd responseHeadersEnd = listener.removeUpToEvent(RequestHeadersEnd.class);
-      Assert.assertThat("request header length", responseHeadersEnd.headerLength, requestHeaderLength);
+      Assert.assertThat("request header length", responseHeadersEnd.headerLength,
+          requestHeaderLength);
     } else {
       assertThat(listener.recordedEventTypes()).doesNotContain("RequestHeadersEnd");
     }
@@ -270,7 +273,8 @@ public final class EventListenerTest {
 
     if (responseHeaderLength != null) {
       ResponseHeadersEnd responseHeadersEnd = listener.removeUpToEvent(ResponseHeadersEnd.class);
-      Assert.assertThat("response header length", responseHeadersEnd.headerLength, responseHeaderLength);
+      Assert.assertThat("response header length", responseHeadersEnd.headerLength,
+          responseHeaderLength);
     } else {
       assertThat(listener.recordedEventTypes()).doesNotContain("ResponseHeadersEnd");
     }
@@ -290,7 +294,7 @@ public final class EventListenerTest {
       }
 
       @Override public boolean matches(Object o) {
-        return ((Long)o) > value;
+        return ((Long) o) > value;
       }
     };
   }
@@ -302,7 +306,7 @@ public final class EventListenerTest {
       }
 
       @Override public boolean matches(Object o) {
-        return ((Long)o) < value;
+        return ((Long) o) < value;
       }
     };
   }
@@ -314,7 +318,7 @@ public final class EventListenerTest {
       }
 
       @Override public boolean matches(Object o) {
-        return ((Response)o).protocol == protocol;
+        return ((Response) o).protocol == protocol;
       }
     };
   }
@@ -943,47 +947,32 @@ public final class EventListenerTest {
         "ResponseBodyEnd", "ConnectionReleased", "CallEnd");
   }
 
-  @Test public void requestBodyFailHttp1OverHttps() throws IOException {
+  @Test public void requestBodyFailHttp1OverHttps() {
     enableTlsWithTunnel(false);
     server.setProtocols(asList(Protocol.HTTP_1_1));
-    requestBodyFail();
+
+    requestBodyFail(Protocol.HTTP_1_1);
   }
 
-  @Test public void requestBodyFailHttp2OverHttps() throws IOException {
+  @Test public void requestBodyFailHttp2OverHttps() {
     enableTlsWithTunnel(false);
     server.setProtocols(asList(Protocol.HTTP_2, Protocol.HTTP_1_1));
-    requestBodyFail();
+
+    requestBodyFail(Protocol.HTTP_2);
   }
 
-  @Test public void requestBodyFailHttp() throws IOException {
-    requestBodyFail();
+  @Test public void requestBodyFailHttp() {
+    requestBodyFail(null);
   }
 
-  private void requestBodyFail() {
-    // Stream a 256 MiB body so the disconnect will happen before the server has read everything.
-    RequestBody requestBody = new RequestBody() {
-      @Override public MediaType contentType() {
-        return MediaType.get("text/plain");
-      }
-
-      @Override public long contentLength() {
-        return 1024 * 1024 * 256;
-      }
-
-      @Override public void writeTo(BufferedSink sink) throws IOException {
-        for (int i = 0; i < 1024; i++) {
-          sink.write(new byte[1024 * 256]);
-          sink.flush();
-        }
-      }
-    };
-
+  private void requestBodyFail(@Nullable Protocol expectedProtocol) {
     server.enqueue(new MockResponse()
         .setSocketPolicy(SocketPolicy.DISCONNECT_DURING_REQUEST_BODY));
 
+    NonCompletingRequestBody request = new NonCompletingRequestBody();
     Call call = client.newCall(new Request.Builder()
         .url(server.url("/"))
-        .post(requestBody)
+        .post(request)
         .build());
     try {
       call.execute();
@@ -991,8 +980,47 @@ public final class EventListenerTest {
     } catch (IOException expected) {
     }
 
+    if (expectedProtocol != null) {
+      ConnectionAcquired connectionAcquired = listener.removeUpToEvent(ConnectionAcquired.class);
+      assertThat(connectionAcquired.connection.protocol()).isEqualTo(expectedProtocol);
+    }
+
     CallFailed callFailed = listener.removeUpToEvent(CallFailed.class);
     assertThat(callFailed.ioe).isNotNull();
+
+    assertThat(request.ioe).isNotNull();
+  }
+
+  private class NonCompletingRequestBody extends RequestBody {
+    IOException ioe;
+
+    @Override public MediaType contentType() {
+      return MediaType.get("text/plain");
+    }
+
+    @Override public long contentLength() {
+      return 1024 * 1024 * 4;
+    }
+
+    @Override public void writeTo(BufferedSink sink) throws IOException {
+      try {
+        writeChunk(sink);
+        writeChunk(sink);
+        writeChunk(sink);
+        writeChunk(sink);
+        Thread.sleep(1000);
+        writeChunk(sink);
+        writeChunk(sink);
+      } catch (IOException e) {
+        ioe = e;
+      } catch (InterruptedException e) {
+      }
+    }
+
+    private void writeChunk(BufferedSink sink) throws IOException {
+      sink.write(new byte[1024 * 512]);
+      sink.flush();
+    }
   }
 
   @Test public void requestBodyMultipleFailuresReportedOnlyOnce() {
