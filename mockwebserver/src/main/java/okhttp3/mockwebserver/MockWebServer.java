@@ -342,7 +342,7 @@ public final class MockWebServer extends ExternalResource implements Closeable {
    * use port 0 to avoid flakiness when a specific port is unavailable.
    */
   public void start(int port) throws IOException {
-    start(Inet4Address.getLoopbackAddress(), port);
+    start(InetAddress.getLoopbackAddress(), port);
   }
 
   /**
