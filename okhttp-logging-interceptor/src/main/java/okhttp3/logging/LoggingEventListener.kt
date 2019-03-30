@@ -33,7 +33,6 @@ import java.util.concurrent.TimeUnit
  * An OkHttp EventListener, which logs call events. Can be applied as an
  * [event listener factory][OkHttpClient.eventListenerFactory].
  *
- *
  * The format of the logs created by this class should not be considered stable and may change
  * slightly between releases. If you need a stable logging format, use your own event listener.
  */
@@ -45,7 +44,7 @@ class LoggingEventListener private constructor(
   override fun callStart(call: Call) {
     startNs = System.nanoTime()
 
-    logWithTime("callStart: " + call.request())
+    logWithTime("callStart: ${call.request()}")
   }
 
   override fun dnsStart(call: Call, domainName: String) {
@@ -65,13 +64,13 @@ class LoggingEventListener private constructor(
   }
 
   override fun secureConnectEnd(call: Call, handshake: Handshake?) {
-    logWithTime("secureConnectEnd: " + handshake!!)
+    logWithTime("secureConnectEnd: $handshake")
   }
 
   override fun connectEnd(
     call: Call, inetSocketAddress: InetSocketAddress, proxy: Proxy, protocol: Protocol?
   ) {
-    logWithTime("connectEnd: " + protocol!!)
+    logWithTime("connectEnd: $protocol")
   }
 
   override fun connectFailed(

@@ -33,11 +33,10 @@ import java.util.concurrent.TimeUnit
 
 /**
  * An OkHttp interceptor which logs request and response information. Can be applied as an
- * [application interceptor][OkHttpClient.interceptors] or as a [ ][OkHttpClient.networkInterceptors].
+ * [application interceptor][OkHttpClient.interceptors] or as a [OkHttpClient.networkInterceptors].
  *
- * The format of the logs created by
- * this class should not be considered stable and may change slightly between releases. If you need
- * a stable logging format, use your own interceptor.
+ * The format of the logs created by this class should not be considered stable and may
+ * change slightly between releases. If you need a stable logging format, use your own interceptor.
  */
 class HttpLoggingInterceptor @JvmOverloads constructor(
   private val logger: Logger = Logger.DEFAULT
@@ -54,21 +53,21 @@ class HttpLoggingInterceptor @JvmOverloads constructor(
     /**
      * Logs request and response lines.
      *
-     *
      * Example:
-     * <pre>`--> POST /greeting http/1.1 (3-byte body)
+     * ```
+     * --> POST /greeting http/1.1 (3-byte body)
      *
      * <-- 200 OK (22ms, 6-byte body)
-    `</pre> *
+     * ```
      */
     BASIC,
 
     /**
      * Logs request and response lines and their respective headers.
      *
-     *
      * Example:
-     * <pre>`--> POST /greeting http/1.1
+     * ```
+     * --> POST /greeting http/1.1
      * Host: example.com
      * Content-Type: plain/text
      * Content-Length: 3
@@ -78,16 +77,16 @@ class HttpLoggingInterceptor @JvmOverloads constructor(
      * Content-Type: plain/text
      * Content-Length: 6
      * <-- END HTTP
-    `</pre> *
+     * ```
      */
     HEADERS,
 
     /**
      * Logs request and response lines and their respective headers and bodies (if present).
      *
-     *
      * Example:
-     * <pre>`--> POST /greeting http/1.1
+     * ```
+     * --> POST /greeting http/1.1
      * Host: example.com
      * Content-Type: plain/text
      * Content-Length: 3
@@ -101,7 +100,7 @@ class HttpLoggingInterceptor @JvmOverloads constructor(
      *
      * Hello!
      * <-- END HTTP
-    `</pre> *
+     * ```
      */
     BODY
   }
@@ -149,12 +148,9 @@ class HttpLoggingInterceptor @JvmOverloads constructor(
     val requestBody = request.body()
 
     val connection = chain.connection()
-    var requestStartMessage = ("--> "
-        + request.method()
-        + ' '.toString() + request.url()
-        + if (connection != null) " " + connection.protocol() else "")
+    var requestStartMessage = ("--> ${request.method()} ${request.url()}${if (connection != null) " " + connection.protocol() else ""}")
     if (!logHeaders && requestBody != null) {
-      requestStartMessage += " (" + requestBody.contentLength() + "-byte body)"
+      requestStartMessage += " (${requestBody.contentLength()}-byte body)"
     }
     logger.log(requestStartMessage)
 
@@ -166,7 +162,7 @@ class HttpLoggingInterceptor @JvmOverloads constructor(
           logger.log("Content-Type: $it")
         }
         if (requestBody.contentLength() != -1L) {
-          logger.log("Content-Length: " + requestBody.contentLength())
+          logger.log("Content-Length: ${requestBody.contentLength()}")
         }
       }
 
@@ -184,11 +180,11 @@ class HttpLoggingInterceptor @JvmOverloads constructor(
       }
 
       if (!logBody || requestBody == null) {
-        logger.log("--> END " + request.method())
+        logger.log("--> END ${request.method()}")
       } else if (bodyHasUnknownEncoding(request.headers())) {
-        logger.log("--> END " + request.method() + " (encoded body omitted)")
+        logger.log("--> END ${request.method()} (encoded body omitted)")
       } else if (requestBody.isDuplex) {
-        logger.log("--> END " + request.method() + " (duplex request body omitted)")
+        logger.log("--> END ${request.method()} (duplex request body omitted)")
       } else {
         val buffer = Buffer()
         requestBody.writeTo(buffer)
@@ -199,11 +195,10 @@ class HttpLoggingInterceptor @JvmOverloads constructor(
         logger.log("")
         if (isPlaintext(buffer)) {
           logger.log(buffer.readString(charset))
-          logger.log("--> END " + request.method()
-              + " (" + requestBody.contentLength() + "-byte body)")
+          logger.log("--> END ${request.method()} (${requestBody.contentLength()}-byte body)")
         } else {
-          logger.log("--> END " + request.method() + " (binary "
-              + requestBody.contentLength() + "-byte body omitted)")
+          logger.log(
+              "--> END ${request.method()} (binary ${requestBody.contentLength()}-byte body omitted)")
         }
       }
     }
@@ -222,19 +217,13 @@ class HttpLoggingInterceptor @JvmOverloads constructor(
     val responseBody = response.body()!!
     val contentLength = responseBody.contentLength()
     val bodySize = if (contentLength != -1L) "$contentLength-byte" else "unknown-length"
-    logger.log("<-- "
-        + response.code()
-        + (if (response.message().isEmpty()) "" else ' ' + response.message())
-        + ' '.toString() + response.request().url()
-        + " (" + tookMs + "ms" + (if (!logHeaders) ", $bodySize body" else "") + ')'.toString())
+    logger.log(
+        "<-- ${response.code()}${if (response.message().isEmpty()) "" else ' ' + response.message()} ${response.request().url()} (${tookMs}ms${if (!logHeaders) ", $bodySize body" else ""})")
 
     if (logHeaders) {
       val headers = response.headers()
-      var i = 0
-      val count = headers.size()
-      while (i < count) {
+      for (i in 0 until headers.size()) {
         logHeader(headers, i)
-        i++
       }
 
       if (!logBody || !HttpHeaders.hasBody(response)) {
@@ -260,7 +249,7 @@ class HttpLoggingInterceptor @JvmOverloads constructor(
 
         if (!isPlaintext(buffer)) {
           logger.log("")
-          logger.log("<-- END HTTP (binary " + buffer.size + "-byte body omitted)")
+          logger.log("<-- END HTTP (binary ${buffer.size}-byte body omitted)")
           return response
         }
 
@@ -270,10 +259,9 @@ class HttpLoggingInterceptor @JvmOverloads constructor(
         }
 
         if (gzippedLength != null) {
-          logger.log("<-- END HTTP (" + buffer.size + "-byte, "
-              + gzippedLength + "-gzipped-byte body)")
+          logger.log("<-- END HTTP (${buffer.size}-byte, $gzippedLength-gzipped-byte body)")
         } else {
-          logger.log("<-- END HTTP (" + buffer.size + "-byte body)")
+          logger.log("<-- END HTTP (${buffer.size}-byte body)")
         }
       }
     }
