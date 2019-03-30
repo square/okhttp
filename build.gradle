@@ -40,6 +40,7 @@ buildscript {
     classpath 'com.vanniktech:gradle-maven-publish-plugin:0.8.0'
     classpath 'net.ltgt.gradle:gradle-errorprone-plugin:0.7.1'
     classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:${versions.kotlin}"
+    classpath "org.jetbrains.dokka:dokka-gradle-plugin:0.9.18"
   }
 
   repositories {
@@ -60,6 +61,9 @@ allprojects {
 
   repositories {
     mavenCentral()
+    maven {
+      url 'https://dl.bintray.com/kotlin/dokka'
+    }
   }
 
   task downloadDependencies() {
@@ -118,6 +122,16 @@ subprojects { project ->
   dependencies {
     errorproneJavac 'com.google.errorprone:javac:9+181-r4173-1'
     errorprone 'com.google.errorprone:error_prone_core:2.3.3'
+  }
+
+  apply plugin: 'org.jetbrains.dokka'
+  dokka {
+    reportUndocumented = false 
+    skipDeprecated = true
+    packageOptions {
+      prefix = "okhttp3.internal"
+      suppress = true
+    }
   }
 }
 

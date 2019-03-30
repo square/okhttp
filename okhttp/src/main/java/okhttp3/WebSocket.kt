@@ -21,8 +21,7 @@ import okio.ByteString
  * A non-blocking interface to a web socket. Use the [factory][WebSocket.Factory] to create
  * instances; usually this is [OkHttpClient].
  *
- * Web Socket Lifecycle
- * --------------------
+ * ## Web Socket Lifecycle
  *
  * Upon normal operation each web socket progresses through a sequence of states:
  *
@@ -96,8 +95,8 @@ interface WebSocket {
    * This returns true if a graceful shutdown was initiated by this call. It returns false if
    * a graceful shutdown was already underway or if the web socket is already closed or canceled.
    *
-   * @param code Status code as defined by [Section 7.4 of RFC
-   *     6455](http://tools.ietf.org/html/rfc6455#section-7.4).
+   * @param code Status code as defined by
+   *     [Section 7.4 of RFC 6455](http://tools.ietf.org/html/rfc6455#section-7.4).
    * @param reason Reason for shutting down or null.
    * @throws IllegalArgumentException if code is invalid.
    */

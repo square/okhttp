@@ -89,8 +89,7 @@ import java.util.LinkedHashSet
  * https://www.youtube.com/watch?v=cbP2N1BQdYc
  * ```
  *
- * What's in a URL?
- * ----------------
+ * ## What's in a URL?
  *
  * A URL has several components.
  *
@@ -98,7 +97,7 @@ import java.util.LinkedHashSet
  *
  * Sometimes referred to as *protocol*, A URL's scheme describes what mechanism should be used to
  * retrieve the resource. Although URLs have many schemes (`mailto`, `file`, `ftp`), this class only
- * supports `http` and `https`. Use [ java.net.URI][URI] for URLs with arbitrary schemes.
+ * supports `http` and `https`. Use [java.net.URI][URI] for URLs with arbitrary schemes.
  *
  * ### Username and Password
  *
@@ -127,16 +126,16 @@ import java.util.LinkedHashSet
  * ### Path
  *
  * The path identifies a specific resource on the host. Paths have a hierarchical structure like
- * "/square/okhttp/issues/1486" and decompose into a list of segments like ["square", "okhttp",
- * "issues", "1486"].
+ * "/square/okhttp/issues/1486" and decompose into a list of segments like `["square", "okhttp",
+ * "issues", "1486"]`.
  *
  * This class offers methods to compose and decompose paths by segment. It composes each path
  * from a list of segments by alternating between "/" and the encoded segment. For example the
- * segments ["a", "b"] build "/a/b" and the segments ["a", "b", ""] build "/a/b/".
+ * segments `["a", "b"]` build "/a/b" and the segments `["a", "b", ""]` build "/a/b/".
  *
  * If a path's last segment is the empty string then the path ends with "/". This class always
  * builds non-empty paths: if the path is omitted it defaults to "/". The default path's segment
- * list is a single empty string: [""].
+ * list is a single empty string: `[""]`.
  *
  * ### Query
  *
@@ -150,8 +149,7 @@ import java.util.LinkedHashSet
  * The fragment is optional: it can be null, empty, or non-empty. Unlike host, port, path, and
  * query the fragment is not sent to the webserver: it's private to the client.
  *
- * Encoding
- * --------
+ * ## Encoding
  *
  * Each component must be encoded before it is embedded in the complete URL. As we saw above, the
  * string `cute #puppies` is encoded as `cute%20%23puppies` when used as a query parameter value.
@@ -191,22 +189,20 @@ import java.util.LinkedHashSet
  * Hostnames have different requirements and use a different encoding scheme. It consists of IDNA
  * mapping and Punycode encoding.
  *
- * In order to avoid confusion and discourage phishing attacks, [IDNA
- * Mapping](http://www.unicode.org/reports/tr46/#ToASCII) transforms names to avoid confusing
- * characters. This includes basic case folding: transforming shouting `SQUARE.COM` into cool and
- * casual `square.com`. It also handles more exotic characters. For example, the Unicode trademark
- * sign (™) could be confused for the letters "TM" in `http://ho™mail.com`. To mitigate this, the
- * single character (™) maps to the string (tm). There is similar policy for all of the 1.1 million
- * Unicode code points. Note that some code points such as "\ud83c\udf69" are not mapped and cannot
- * be used in a hostname.
+ * In order to avoid confusion and discourage phishing attacks, [IDNA Mapping][idna] transforms
+ * names to avoid confusing characters. This includes basic case folding: transforming shouting
+ * `SQUARE.COM` into cool and casual `square.com`. It also handles more exotic characters. For
+ * example, the Unicode trademark sign (™) could be confused for the letters "TM" in
+ * `http://ho™mail.com`. To mitigate this, the single character (™) maps to the string (tm). There
+ * is similar policy for all of the 1.1 million Unicode code points. Note that some code points such
+ * as "\ud83c\udf69" are not mapped and cannot be used in a hostname.
  *
  * [Punycode](http://ietf.org/rfc/rfc3492.txt) converts a Unicode string to an ASCII string to make
  * international domain names work everywhere. For example, "σ" encodes as "xn--4xa". The encoded
  * string is not human readable, but can be used with classes like [InetAddress] to establish
  * connections.
  *
- * Why another URL model?
- * ----------------------
+ * ## Why another URL model?
  *
  * Java includes both [java.net.URL][URL] and [java.net.URI][URI]. We offer a new URL
  * model to address problems that the others don't.
@@ -287,6 +283,8 @@ import java.util.LinkedHashSet
  * This class has a modern API. It avoids punitive checked exceptions: [get] throws
  * [IllegalArgumentException] on invalid input or [parse] returns null if the input is an invalid
  * URL. You can even be explicit about whether each component has been encoded already.
+ *
+ * [idna]: http://www.unicode.org/reports/tr46/#ToASCII
  */
 class HttpUrl internal constructor(builder: Builder) {
 

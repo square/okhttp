@@ -34,8 +34,10 @@ import java.util.regex.Pattern
 /**
  * An [RFC 6265](http://tools.ietf.org/html/rfc6265) Cookie.
  *
- * This class doesn't support additional attributes on cookies, like [Chromium's Priority=HIGH
- * extension](https://code.google.com/p/chromium/issues/detail?id=232693).
+ * This class doesn't support additional attributes on cookies, like
+ * [Chromium's Priority=HIGH extension][chromium_extension].
+ *
+ * [chromium_extension]: https://code.google.com/p/chromium/issues/detail?id=232693
  */
 class Cookie private constructor(
   private val name: String,

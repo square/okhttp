@@ -18,15 +18,15 @@ package okhttp3
 import java.io.IOException
 
 /**
- * Protocols that OkHttp implements for
- * [ALPN](http://tools.ietf.org/html/draft-ietf-tls-applayerprotoneg) selection.
+ * Protocols that OkHttp implements for [ALPN][ietf_alpn] selection.
  *
- * Protocol vs Scheme
- * ------------------
+ * ## Protocol vs Scheme
  *
  * Despite its name, [java.net.URL.getProtocol] returns the [scheme][java.net.URI.getScheme] (http,
  * https, etc.) of the URL, not the protocol (http/1.1, spdy/3.1, etc.). OkHttp uses the word
  * *protocol* to identify how HTTP messages are framed.
+ *
+ * [ietf_alpn]: http://tools.ietf.org/html/draft-ietf-tls-applayerprotoneg
  */
 enum class Protocol(private val protocol: String) {
   /**
@@ -37,8 +37,9 @@ enum class Protocol(private val protocol: String) {
   /**
    * A plaintext framing that includes persistent connections.
    *
-   * This version of OkHttp implements [RFC 7230](https://tools.ietf.org/html/rfc7230), and tracks
-   * revisions to that spec.
+   * This version of OkHttp implements [RFC 7230][rfc_7230], and tracks revisions to that spec.
+   *
+   * [rfc_7230]: https://tools.ietf.org/html/rfc7230
    */
   HTTP_1_1("http/1.1"),
 
@@ -66,7 +67,9 @@ enum class Protocol(private val protocol: String) {
    * Cleartext HTTP/2 with no "upgrade" round trip. This option requires the client to have prior
    * knowledge that the server supports cleartext HTTP/2.
    *
-   * @see [Starting HTTP/2 with Prior Knowledge](https://tools.ietf.org/html/rfc7540.section-3.4)
+   * See also [Starting HTTP/2 with Prior Knowledge][rfc_7540_34].
+   *
+   * [rfc_7540_34]: https://tools.ietf.org/html/rfc7540.section-3.4
    */
   H2_PRIOR_KNOWLEDGE("h2_prior_knowledge"),
 
@@ -84,7 +87,9 @@ enum class Protocol(private val protocol: String) {
    * Returns the string used to identify this protocol for ALPN, like "http/1.1", "spdy/3.1" or
    * "h2".
    *
-   * @see [IANA tls-extensiontype-values](https://www.iana.org/assignments/tls-extensiontype-values)
+   * See also [IANA tls-extensiontype-values][iana].
+   *
+   * [iana]: https://www.iana.org/assignments/tls-extensiontype-values
    */
   override fun toString() = protocol
 

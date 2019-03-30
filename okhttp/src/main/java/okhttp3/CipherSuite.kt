@@ -16,21 +16,24 @@
 package okhttp3
 
 /**
- * [TLS cipher suites](https://www.iana.org/assignments/tls-parameters/tls-parameters.xhtml).
+ * [TLS cipher suites][iana_tls_parameters].
  *
  * **Not all cipher suites are supported on all platforms.** As newer cipher suites are created (for
  * stronger privacy, better performance, etc.) they will be adopted by the platform and then exposed
  * here. Cipher suites that are not available on either Android (through API level 24) or Java
  * (through JDK 9) are omitted for brevity.
  *
- * See [Android SSLEngine](https://developer.android.com/reference/javax/net/ssl/SSLEngine.html)
- * which lists the cipher suites supported by Android.
+ * See [Android SSLEngine][sslengine] which lists the cipher suites supported by Android.
  *
- * See [JDK 10 Providers](https://docs.oracle.com/javase/10/security/oracle-providers.htm)
- * which lists the cipher suites supported by Oracle.
+ * See [JDK Providers][oracle_providers] which lists the cipher suites supported by Oracle.
  *
- * See [NativeCrypto.java](https://github.com/google/conscrypt/blob/master/common/src/main/java/org/conscrypt/NativeCrypto.java)
- * from Conscrypt, which lists the cipher suites supported by Conscrypt.
+ * See [NativeCrypto.java][conscrypt_providers] which lists the cipher suites supported by
+ * Conscrypt.
+ *
+ * [iana_tls_parameters]: https://www.iana.org/assignments/tls-parameters/tls-parameters.xhtml
+ * [sslengine]: https://developer.android.com/reference/javax/net/ssl/SSLEngine.html
+ * [oracle_providers]: https://docs.oracle.com/javase/10/security/oracle-providers.htm
+ * [conscrypt_providers]: https://github.com/google/conscrypt/blob/master/common/src/main/java/org/conscrypt/NativeCrypto.java
  */
 class CipherSuite private constructor(
   private val javaName: String
