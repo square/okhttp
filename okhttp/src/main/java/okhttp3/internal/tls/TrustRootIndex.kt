@@ -19,5 +19,5 @@ import java.security.cert.X509Certificate
 
 interface TrustRootIndex {
   /** Returns the trusted CA certificate that signed [cert].  */
-  fun findByIssuerAndSignature(cert: X509Certificate): X509Certificate
+  fun findByIssuerAndSignature(cert: X509Certificate): X509Certificate?
 }
