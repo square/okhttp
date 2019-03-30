@@ -13,11 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package okhttp3.internal.connection;
+package okhttp3.internal.connection
 
-import java.util.LinkedHashSet;
-import java.util.Set;
-import okhttp3.Route;
+import okhttp3.Route
 
 /**
  * A blacklist of failed routes to avoid when creating a new connection to a target address. This is
@@ -25,21 +23,19 @@ import okhttp3.Route;
  * a specific IP address or proxy server, that failure is remembered and alternate routes are
  * preferred.
  */
-final class RouteDatabase {
-  private final Set<Route> failedRoutes = new LinkedHashSet<>();
+class RouteDatabase {
+  private val failedRoutes = mutableSetOf<Route>()
 
-  /** Records a failure connecting to {@code failedRoute}. */
-  public synchronized void failed(Route failedRoute) {
-    failedRoutes.add(failedRoute);
+  /** Records a failure connecting to [failedRoute]. */
+  @Synchronized fun failed(failedRoute: Route) {
+    failedRoutes.add(failedRoute)
   }
 
-  /** Records success connecting to {@code route}. */
-  public synchronized void connected(Route route) {
-    failedRoutes.remove(route);
+  /** Records success connecting to [route]. */
+  @Synchronized fun connected(route: Route) {
+    failedRoutes.remove(route)
   }
 
-  /** Returns true if {@code route} has failed recently and should be avoided. */
-  public synchronized boolean shouldPostpone(Route route) {
-    return failedRoutes.contains(route);
-  }
+  /** Returns true if [route] has failed recently and should be avoided. */
+  @Synchronized fun shouldPostpone(route: Route): Boolean = failedRoutes.contains(route)
 }
