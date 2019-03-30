@@ -79,6 +79,7 @@ import okio.Sink;
 import okio.Timeout;
 import org.junit.rules.ExternalResource;
 
+import static okhttp3.internal.InternalKtKt.addHeaderLenient;
 import static okhttp3.internal.Util.closeQuietly;
 import static okhttp3.mockwebserver.SocketPolicy.CONTINUE_ALWAYS;
 import static okhttp3.mockwebserver.SocketPolicy.DISCONNECT_AFTER_REQUEST;
@@ -656,7 +657,7 @@ public final class MockWebServer extends ExternalResource implements Closeable {
     boolean expectContinue = false;
     String header;
     while ((header = source.readUtf8LineStrict()).length() != 0) {
-      Internal.instance.addLenient(headers, header);
+      addHeaderLenient(headers, header);
       String lowercaseHeader = header.toLowerCase(Locale.US);
       if (contentLength == -1 && lowercaseHeader.startsWith("content-length:")) {
         contentLength = Long.parseLong(header.substring(15).trim());

@@ -16,7 +16,7 @@ buildscript {
       'junit5': '5.4.1',
       'kotlin': '1.3.20',
       'moshi': '1.8.0',
-      'okio': '1.17.2',
+      'okio': '2.2.2',
   ]
 
   ext.deps = [

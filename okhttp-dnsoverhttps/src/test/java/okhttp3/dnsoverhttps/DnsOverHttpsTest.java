@@ -15,6 +15,7 @@
  */
 package okhttp3.dnsoverhttps;
 
+import java.io.EOFException;
 import java.io.File;
 import java.io.IOException;
 import java.net.InetAddress;
@@ -140,7 +141,7 @@ public class DnsOverHttpsTest {
       fail();
     } catch (IOException ioe) {
       assertThat(ioe).hasMessage("google.com");
-      assertThat(ioe.getCause()).isInstanceOf(RuntimeException.class);
+      assertThat(ioe.getCause()).isInstanceOf(EOFException.class);
     }
   }
 

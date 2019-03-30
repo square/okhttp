@@ -19,6 +19,7 @@ import java.util.Collection;
 import okhttp3.internal.http2.hpackjson.Case;
 import okhttp3.internal.http2.hpackjson.Story;
 import okio.Buffer;
+import org.junit.Assume;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -49,6 +50,8 @@ public class HpackRoundTripTest extends HpackDecodeTestBase {
 
   @Test
   public void testRoundTrip() throws Exception {
+    Assume.assumeFalse("Test stories missing, checkout git submodule", getStory() == Story.MISSING);
+
     Story story = getStory().clone();
     // Mutate cases in base class.
     for (Case caze : story.getCases()) {

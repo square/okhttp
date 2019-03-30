@@ -106,9 +106,7 @@ open class Platform {
   ) {
   }
 
-  /**
-   * Called after the TLS handshake to release resources allocated by [ ][.configureTlsExtensions].
-   */
+  /** Called after the TLS handshake to release resources allocated by [configureTlsExtensions]. */
   open fun afterHandshake(sslSocket: SSLSocket) {}
 
   /** Returns the negotiated protocol, or null if no protocol was negotiated.  */
@@ -129,7 +127,7 @@ open class Platform {
   /**
    * Returns an object that holds a stack trace created at the moment this method is executed. This
    * should be used specifically for [java.io.Closeable] objects and in conjunction with
-   * [.logCloseableLeak].
+   * [logCloseableLeak].
    */
   open fun getStackTraceForCloseable(closer: String): Any? =
       when {

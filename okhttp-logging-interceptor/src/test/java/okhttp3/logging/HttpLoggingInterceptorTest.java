@@ -98,8 +98,7 @@ public final class HttpLoggingInterceptorTest {
     try {
       applicationInterceptor.setLevel(null);
       fail();
-    } catch (NullPointerException expected) {
-      assertThat(expected.getMessage()).isEqualTo("level == null. Use Level.NONE instead.");
+    } catch (IllegalArgumentException expected) {
     }
   }
 

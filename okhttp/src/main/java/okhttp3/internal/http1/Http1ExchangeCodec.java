@@ -24,7 +24,6 @@ import okhttp3.HttpUrl;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
-import okhttp3.internal.Internal;
 import okhttp3.internal.Util;
 import okhttp3.internal.connection.RealConnection;
 import okhttp3.internal.http.ExchangeCodec;
@@ -40,6 +39,7 @@ import okio.Source;
 import okio.Timeout;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static okhttp3.internal.InternalKtKt.addHeaderLenient;
 import static okhttp3.internal.Util.checkOffsetAndCount;
 import static okhttp3.internal.http.StatusLine.HTTP_CONTINUE;
 
@@ -245,7 +245,7 @@ public final class Http1ExchangeCodec implements ExchangeCodec {
     Headers.Builder headers = new Headers.Builder();
     // parse the result headers until the first blank line
     for (String line; (line = readHeaderLine()).length() != 0; ) {
-      Internal.instance.addLenient(headers, line);
+      addHeaderLenient(headers, line);
     }
     return headers.build();
   }

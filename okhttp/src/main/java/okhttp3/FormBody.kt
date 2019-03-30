@@ -58,7 +58,7 @@ class FormBody internal constructor(
    */
   private fun writeOrCountBytes(sink: BufferedSink?, countBytes: Boolean): Long {
     var byteCount = 0L
-    val buffer: Buffer = if (countBytes) Buffer() else sink!!.buffer()
+    val buffer: Buffer = if (countBytes) Buffer() else sink!!.buffer
 
     for (i in 0 until encodedNames.size) {
       if (i > 0) buffer.writeByte('&'.toInt())
@@ -68,7 +68,7 @@ class FormBody internal constructor(
     }
 
     if (countBytes) {
-      byteCount = buffer.size()
+      byteCount = buffer.size
       buffer.clear()
     }
 

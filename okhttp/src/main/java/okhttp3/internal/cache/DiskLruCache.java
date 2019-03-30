@@ -167,6 +167,7 @@ public final class DiskLruCache implements Closeable, Flushable {
   /** Used to run 'cleanupRunnable' for journal rebuilds. */
   private final Executor executor;
   private final Runnable cleanupRunnable = new Runnable() {
+    @Override
     public void run() {
       synchronized (DiskLruCache.this) {
         if (!initialized | closed) {
@@ -662,7 +663,7 @@ public final class DiskLruCache implements Closeable, Flushable {
       return;
     }
     // Copying for safe iteration.
-    for (Entry entry : lruEntries.values().toArray(new Entry[lruEntries.size()])) {
+    for (Entry entry : lruEntries.values().toArray(new Entry[0])) {
       if (entry.currentEditor != null) {
         entry.currentEditor.abort();
       }
@@ -697,7 +698,7 @@ public final class DiskLruCache implements Closeable, Flushable {
   public synchronized void evictAll() throws IOException {
     initialize();
     // Copying for safe iteration.
-    for (Entry entry : lruEntries.values().toArray(new Entry[lruEntries.size()])) {
+    for (Entry entry : lruEntries.values().toArray(new Entry[0])) {
       removeEntry(entry);
     }
     mostRecentTrimFailed = false;
@@ -814,6 +815,7 @@ public final class DiskLruCache implements Closeable, Flushable {
       return lengths[index];
     }
 
+    @Override
     public void close() {
       for (Source in : sources) {
         Util.closeQuietly(in);

@@ -21,7 +21,6 @@ import okhttp3.CacheControl;
 import okhttp3.Headers;
 import okhttp3.Request;
 import okhttp3.Response;
-import okhttp3.internal.Internal;
 import okhttp3.internal.http.HttpDate;
 import okhttp3.internal.http.HttpHeaders;
 import okhttp3.internal.http.StatusLine;
@@ -38,6 +37,7 @@ import static java.net.HttpURLConnection.HTTP_NO_CONTENT;
 import static java.net.HttpURLConnection.HTTP_OK;
 import static java.net.HttpURLConnection.HTTP_REQ_TOO_LONG;
 import static java.util.concurrent.TimeUnit.SECONDS;
+import static okhttp3.internal.InternalKtKt.addHeaderLenient;
 
 /**
  * Given a request and cached response, this figures out whether to use the network, the cache, or
@@ -253,7 +253,7 @@ public final class CacheStrategy {
       }
 
       Headers.Builder conditionalRequestHeaders = request.headers().newBuilder();
-      Internal.instance.addLenient(conditionalRequestHeaders, conditionName, conditionValue);
+      addHeaderLenient(conditionalRequestHeaders, conditionName, conditionValue);
 
       Request conditionalRequest = request.newBuilder()
           .headers(conditionalRequestHeaders.build())

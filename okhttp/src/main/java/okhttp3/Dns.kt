@@ -18,7 +18,6 @@ package okhttp3
 import okhttp3.Dns.Companion.SYSTEM
 import java.net.InetAddress
 import java.net.UnknownHostException
-import java.util.Arrays.asList
 
 /**
  * A domain name service that resolves IP addresses for host names. Most applications will use the

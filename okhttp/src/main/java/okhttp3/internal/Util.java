@@ -48,7 +48,6 @@ import okhttp3.Headers;
 import okhttp3.HttpUrl;
 import okhttp3.RequestBody;
 import okhttp3.ResponseBody;
-import okhttp3.TlsVersion;
 import okhttp3.internal.http2.Header;
 import okio.Buffer;
 import okio.BufferedSource;
@@ -60,7 +59,7 @@ import static java.nio.charset.StandardCharsets.UTF_16BE;
 import static java.nio.charset.StandardCharsets.UTF_16LE;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Arrays.asList;
-import static okhttp3.TlsVersion.forJavaName;
+import static okhttp3.internal.InternalKtKt.addHeaderLenient;
 
 /** Junk drawer of utility methods. */
 public final class Util {
@@ -238,7 +237,7 @@ public final class Util {
         }
       }
     }
-    return result.toArray(new String[result.size()]);
+    return result.toArray(new String[0]);
   }
 
   /**
@@ -632,7 +631,7 @@ public final class Util {
   public static Headers toHeaders(List<Header> headerBlock) {
     Headers.Builder builder = new Headers.Builder();
     for (Header header : headerBlock) {
-      Internal.instance.addLenient(builder, header.name.utf8(), header.value.utf8());
+      addHeaderLenient(builder, header.name.utf8(), header.value.utf8());
     }
     return builder.build();
   }
@@ -668,13 +667,5 @@ public final class Util {
 
   public static EventListener.Factory eventListenerFactory(EventListener listener) {
     return call -> listener;
-  }
-
-  public static List<TlsVersion> tlsVersionsForJavaNames(String... tlsVersions) {
-    List<TlsVersion> result = new ArrayList<>(tlsVersions.length);
-    for (String tlsVersion : tlsVersions) {
-      result.add(forJavaName(tlsVersion));
-    }
-    return Collections.unmodifiableList(result);
   }
 }
