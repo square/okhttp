@@ -20,8 +20,10 @@ import java.util.Locale
 import java.util.regex.Pattern
 
 /**
- * An [RFC 2045](http://tools.ietf.org/html/rfc2045) Media Type, appropriate to describe the
- * content type of an HTTP request or response body.
+ * An [RFC 2045][rfc_2045] Media Type, appropriate to describe the content type of an HTTP request
+ * or response body.
+ *
+ * [rfc_2045]: http://tools.ietf.org/html/rfc2045
  */
 class MediaType private constructor(
   private val mediaType: String,

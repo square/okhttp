@@ -40,9 +40,9 @@ import javax.net.ssl.SSLSocket
  * The configuration of each spec changes with each OkHttp release. This is annoying: upgrading
  * your OkHttp library can break connectivity to certain web servers! But it’s a necessary annoyance
  * because the TLS ecosystem is dynamic and staying up to date is necessary to stay secure. See
- * [OkHttp's TLS
- * Configuration History](https://github.com/square/okhttp/wiki/TLS-Configuration-History) to track
- * these changes.
+ * [OkHttp's TLS Configuration History][tls_history] to track these changes.
+ *
+ * [tls_history]: https://github.com/square/okhttp/wiki/TLS-Configuration-History
  */
 class ConnectionSpec internal constructor(builder: Builder) {
   val isTls: Boolean = builder.tls
@@ -196,7 +196,7 @@ class ConnectionSpec internal constructor(builder: Builder) {
       this.cipherSuites = null
     }
 
-    fun cipherSuites(vararg cipherSuites: CipherSuite) = apply {
+    fun cipherSuites(vararg cipherSuites: CipherSuite): Builder = apply {
       require(tls) { "no cipher suites for cleartext connections" }
       val strings = cipherSuites.map(CipherSuite::javaName).toTypedArray()
       return cipherSuites(*strings)
@@ -214,7 +214,7 @@ class ConnectionSpec internal constructor(builder: Builder) {
       this.tlsVersions = null
     }
 
-    fun tlsVersions(vararg tlsVersions: TlsVersion) = apply {
+    fun tlsVersions(vararg tlsVersions: TlsVersion): Builder = apply {
       require(tls) { "no TLS versions for cleartext connections" }
 
       val strings = tlsVersions.map(TlsVersion::javaName).toTypedArray()

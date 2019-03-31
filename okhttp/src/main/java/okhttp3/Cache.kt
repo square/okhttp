@@ -52,8 +52,7 @@ import java.util.NoSuchElementException
  * Caches HTTP and HTTPS responses to the filesystem so they may be reused, saving time and
  * bandwidth.
  *
- * Cache Optimization
- * ------------------
+ * ## Cache Optimization
  *
  * To measure cache effectiveness, this class tracks three statistics:
  *
@@ -69,11 +68,10 @@ import java.util.NoSuchElementException
  * is still valid. Such responses increment both the network count and hit count.
  *
  * The best way to improve the cache hit rate is by configuring the web server to return cacheable
- * responses. Although this client honors all [HTTP/1.1 (RFC
- * 7234)](http://tools.ietf.org/html/rfc7234) cache headers, it doesn't cache partial responses.
+ * responses. Although this client honors all [HTTP/1.1 (RFC 7234)][rfc_7234] cache headers, it
+ * doesn't cache partial responses.
  *
- * Force a Network Response
- * ------------------------
+ * ## Force a Network Response
  *
  * In some situations, such as after a user clicks a 'refresh' button, it may be necessary to skip
  * the cache, and fetch data directly from the server. To force a full refresh, add the `no-cache`
@@ -98,8 +96,7 @@ import java.util.NoSuchElementException
  *     .build();
  * ```
  *
- * Force a Cache Response
- * ----------------------
+ * ## Force a Cache Response
  *
  * Sometimes you'll want to show resources if they are available immediately, but not otherwise.
  * This can be used so your application can show *something* while waiting for the latest data to be
@@ -137,6 +134,8 @@ import java.util.NoSuchElementException
  * The [CacheControl] class can configure request caching directives and parse response caching
  * directives. It even offers convenient constants [CacheControl.FORCE_NETWORK] and
  * [CacheControl.FORCE_CACHE] that address the use cases above.
+ *
+ * [rfc_7234]: http://tools.ietf.org/html/rfc7234
  */
 class Cache internal constructor(
   directory: File,
@@ -308,13 +307,13 @@ class Cache internal constructor(
   }
 
   /**
-   * Returns an iterator over the URLs in this cache. This iterator doesn't throw `ConcurrentModificationException`, but if new responses are added while iterating, their URLs
+   * Returns an iterator over the URLs in this cache. This iterator doesn't throw
+   * `ConcurrentModificationException`, but if new responses are added while iterating, their URLs
    * will not be returned. If existing responses are evicted during iteration, they will be absent
    * (unless they were already returned).
    *
-   *
-   * The iterator supports [Iterator.remove]. Removing a URL from the iterator evicts
-   * the corresponding response from the cache. Use this to evict selected responses.
+   * The iterator supports [MutableIterator.remove]. Removing a URL from the iterator evicts the
+   * corresponding response from the cache. Use this to evict selected responses.
    */
   @Throws(IOException::class)
   fun urls(): MutableIterator<String> {

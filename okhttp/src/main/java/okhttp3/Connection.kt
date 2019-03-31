@@ -23,14 +23,13 @@ import java.net.Socket
  * HTTP request/response exchanges. Connections may be direct to the origin server or via a proxy.
  *
  * Typically instances of this class are created, connected and exercised automatically by the HTTP
- * client. Applications may use this class to monitor HTTP connections as members of a [connection
- * pool][ConnectionPool].
+ * client. Applications may use this class to monitor HTTP connections as members of a
+ * [connection pool][ConnectionPool].
  *
  * Do not confuse this class with the misnamed `HttpURLConnection`, which isn't so much a connection
  * as a single request/response exchange.
  *
- * Modern TLS
- * ----------
+ * ## Modern TLS
  *
  * There are trade-offs when selecting which options to include when negotiating a secure connection
  * to a remote host. Newer TLS options are quite useful:
@@ -45,8 +44,7 @@ import java.net.Socket
  * avoiding these options entirely, this class allows a connection to be attempted with modern
  * options and then retried without them should the attempt fail.
  *
- * Connection Reuse
- * ----------------
+ * ## Connection Reuse
  *
  * Each connection can carry a varying number of streams, depending on the underlying protocol being
  * used. HTTP/1.x connections can carry either zero or one streams. HTTP/2 connections can carry any
@@ -73,9 +71,9 @@ interface Connection {
   fun route(): Route
 
   /**
-   * Returns the socket that this connection is using. Returns an [SSL
-   * socket][javax.net.ssl.SSLSocket] if this connection is HTTPS. If this is an HTTP/2 connection
-   * the socket may be shared by multiple concurrent calls.
+   * Returns the socket that this connection is using. Returns an
+   * [SSL socket][javax.net.ssl.SSLSocket] if this connection is HTTPS. If this is an HTTP/2
+   * connection the socket may be shared by multiple concurrent calls.
    */
   fun socket(): Socket
 

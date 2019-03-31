@@ -22,15 +22,14 @@ import java.io.IOException
  * **reactive** authentication after receiving a challenge from either an origin web server or proxy
  * server.
  *
- * Preemptive Authentication
- * -------------------------
+ * ## Preemptive Authentication
  *
  * To make HTTPS calls using an HTTP proxy server OkHttp must first negotiate a connection with
- * the proxy. This proxy connection is called a "TLS Tunnel" and is specified by [RFC
- * 2817](https://tools.ietf.org/html/rfc2817). The HTTP CONNECT request that creates this tunnel
- * connection is special: it does not participate in any [interceptors][Interceptor] or [event
- * listeners][EventListener]. It doesn't include the motivating request's HTTP headers or even its
- * full URL; only the target server's hostname is sent to the proxy.
+ * the proxy. This proxy connection is called a "TLS Tunnel" and is specified by
+ * [RFC 2817][rfc_2817]. The HTTP CONNECT request that creates this tunnel connection is special: it
+ * does not participate in any [interceptors][Interceptor] or [event listeners][EventListener]. It
+ * doesn't include the motivating request's HTTP headers or even its full URL; only the target
+ * server's hostname is sent to the proxy.
  *
  * Prior to sending any CONNECT request OkHttp always calls the proxy authenticator so that it may
  * prepare preemptive authentication. OkHttp will call [authenticate] with a fake `HTTP/1.1 407
@@ -50,8 +49,7 @@ import java.io.IOException
  * return null; // Didn't find a preemptive auth scheme.
  * ```
  *
- * Reactive Authentication
- * -----------------------
+ * ## Reactive Authentication
  *
  * Implementations authenticate by returning a follow-up request that includes an authorization
  * header, or they may decline the challenge by returning null. In this case the unauthenticated
@@ -94,6 +92,8 @@ import java.io.IOException
  *
  * Applications may configure OkHttp with an authenticator for origin servers, or proxy servers,
  * or both.
+ *
+ * [rfc_2817]: https://tools.ietf.org/html/rfc2817
  */
 interface Authenticator {
   /**

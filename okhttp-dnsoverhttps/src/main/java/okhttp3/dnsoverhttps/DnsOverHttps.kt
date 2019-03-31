@@ -35,9 +35,7 @@ import java.util.ArrayList
 import java.util.concurrent.CountDownLatch
 
 /**
- * DNS over HTTPS implementation.
- *
- * Implementation of https://tools.ietf.org/html/draft-ietf-doh-dns-over-https-13
+ * [DNS over HTTPS implementation][[doh_spec]].
  *
  * <blockquote>A DNS API client encodes a single DNS query into an HTTP request
  * using either the HTTP GET or POST method and the other requirements
@@ -46,10 +44,11 @@ import java.util.concurrent.CountDownLatch
  *
  * <h3>Warning: This is a non-final API.</h3>
  *
- *
  * As of OkHttp 3.14, this feature is an unstable preview: the API is subject to change,
  * and the implementation is incomplete. We expect that OkHttp 4.0 or 4.1 will finalize this API.
  * Until then, expect API and behavior changes when you update your OkHttp dependency.**
+ *
+ * [doh_spec]: https://tools.ietf.org/html/draft-ietf-doh-dns-over-https-13
  */
 class DnsOverHttps internal constructor(builder: Builder) : Dns {
   private val client: OkHttpClient =

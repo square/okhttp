@@ -46,7 +46,7 @@ class Challenge(
     return Challenge(scheme, authParams)
   }
 
-  /** Returns the authentication scheme, like [Basic]. */
+  /** Returns the authentication scheme, like `Basic`. */
   fun scheme() = scheme
 
   /**
