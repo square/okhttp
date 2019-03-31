@@ -104,6 +104,10 @@ subprojects { project ->
   test {
     jvmArgs += "-Dlistener=okhttp3.testing.InstallUncaughtExceptionHandlerListener"
     jvmArgs += "-Dokhttp.platform=platform"
+
+    testLogging {
+      exceptionFormat = 'full'
+    }
   }
 
   // Add alpn-boot on Java 8 so we can use HTTP/2 without a stable API.
