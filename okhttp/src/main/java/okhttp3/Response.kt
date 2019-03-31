@@ -13,218 +13,155 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package okhttp3;
+package okhttp3
 
-import java.io.Closeable;
-import java.io.IOException;
-import java.util.Collections;
-import java.util.List;
-import javax.annotation.Nullable;
-import okhttp3.internal.connection.Exchange;
-import okhttp3.internal.http.HttpHeaders;
-import okio.Buffer;
-import okio.BufferedSource;
+import java.io.Closeable
+import java.io.IOException
+import okhttp3.internal.connection.Exchange
+import okhttp3.internal.http.HttpHeaders
+import okio.Buffer
 
-import static java.net.HttpURLConnection.HTTP_MOVED_PERM;
-import static java.net.HttpURLConnection.HTTP_MOVED_TEMP;
-import static java.net.HttpURLConnection.HTTP_MULT_CHOICE;
-import static java.net.HttpURLConnection.HTTP_PROXY_AUTH;
-import static java.net.HttpURLConnection.HTTP_SEE_OTHER;
-import static java.net.HttpURLConnection.HTTP_UNAUTHORIZED;
-import static okhttp3.internal.http.StatusLine.HTTP_PERM_REDIRECT;
-import static okhttp3.internal.http.StatusLine.HTTP_TEMP_REDIRECT;
+import java.net.HttpURLConnection.HTTP_MOVED_PERM
+import java.net.HttpURLConnection.HTTP_MOVED_TEMP
+import java.net.HttpURLConnection.HTTP_MULT_CHOICE
+import java.net.HttpURLConnection.HTTP_PROXY_AUTH
+import java.net.HttpURLConnection.HTTP_SEE_OTHER
+import java.net.HttpURLConnection.HTTP_UNAUTHORIZED
+import okhttp3.internal.http.StatusLine.HTTP_PERM_REDIRECT
+import okhttp3.internal.http.StatusLine.HTTP_TEMP_REDIRECT
 
 /**
  * An HTTP response. Instances of this class are not immutable: the response body is a one-shot
  * value that may be consumed only once and then closed. All other properties are immutable.
  *
- * <p>This class implements {@link Closeable}. Closing it simply closes its response body. See
- * {@link ResponseBody} for an explanation and examples.
+ * This class implements [Closeable]. Closing it simply closes its response body. See
+ * [ResponseBody] for an explanation and examples.
  */
-public final class Response implements Closeable {
-  final Request request;
-  final Protocol protocol;
-  final int code;
-  final String message;
-  final @Nullable Handshake handshake;
-  final Headers headers;
-  final @Nullable ResponseBody body;
-  final @Nullable Response networkResponse;
-  final @Nullable Response cacheResponse;
-  final @Nullable Response priorResponse;
-  final long sentRequestAtMillis;
-  final long receivedResponseAtMillis;
-  final @Nullable Exchange exchange;
+class Response internal constructor(
+  internal val request: Request,
+  internal val protocol: Protocol,
+  internal val message: String,
+  builder: Builder
+) : Closeable {
+  internal val code: Int = builder.code
+  internal val handshake: Handshake? = builder.handshake
+  internal val headers: Headers = builder.headers.build()
+  internal val body: ResponseBody? = builder.body
+  internal val networkResponse: Response? = builder.networkResponse
+  internal val cacheResponse: Response? = builder.cacheResponse
+  internal val priorResponse: Response? = builder.priorResponse
+  internal val sentRequestAtMillis: Long = builder.sentRequestAtMillis
+  internal val receivedResponseAtMillis: Long = builder.receivedResponseAtMillis
+  internal val exchange: Exchange? = builder.exchange
 
-  private volatile @Nullable CacheControl cacheControl; // Lazily initialized.
-
-  Response(Builder builder) {
-    this.request = builder.request;
-    this.protocol = builder.protocol;
-    this.code = builder.code;
-    this.message = builder.message;
-    this.handshake = builder.handshake;
-    this.headers = builder.headers.build();
-    this.body = builder.body;
-    this.networkResponse = builder.networkResponse;
-    this.cacheResponse = builder.cacheResponse;
-    this.priorResponse = builder.priorResponse;
-    this.sentRequestAtMillis = builder.sentRequestAtMillis;
-    this.receivedResponseAtMillis = builder.receivedResponseAtMillis;
-    this.exchange = builder.exchange;
-  }
+  @Volatile
+  private var cacheControl: CacheControl? = null // Lazily initialized.
 
   /**
    * The wire-level request that initiated this HTTP response. This is not necessarily the same
    * request issued by the application:
    *
-   * <ul>
-   *     <li>It may be transformed by the HTTP client. For example, the client may copy headers like
-   *         {@code Content-Length} from the request body.
-   *     <li>It may be the request generated in response to an HTTP redirect or authentication
-   *         challenge. In this case the request URL may be different than the initial request URL.
-   * </ul>
+   * * It may be transformed by the HTTP client. For example, the client may copy headers like
+   *   `Content-Length` from the request body.
+   * * It may be the request generated in response to an HTTP redirect or authentication
+   *   challenge. In this case the request URL may be different than the initial request URL.
    */
-  public Request request() {
-    return request;
-  }
+  fun request(): Request = request
 
-  /**
-   * Returns the HTTP protocol, such as {@link Protocol#HTTP_1_1} or {@link Protocol#HTTP_1_0}.
-   */
-  public Protocol protocol() {
-    return protocol;
-  }
+  /** Returns the HTTP protocol, such as [Protocol.HTTP_1_1] or [Protocol.HTTP_1_0]. */
+  fun protocol(): Protocol = protocol
 
   /** Returns the HTTP status code. */
-  public int code() {
-    return code;
-  }
+  fun code(): Int = code
 
   /**
    * Returns true if the code is in [200..300), which means the request was successfully received,
    * understood, and accepted.
    */
-  public boolean isSuccessful() {
-    return code >= 200 && code < 300;
-  }
+  fun isSuccessful(): Boolean = code in 200..299
 
   /** Returns the HTTP status message. */
-  public String message() {
-    return message;
-  }
+  fun message(): String = message
 
   /**
-   * Returns the TLS handshake of the connection that carried this response, or null if the response
-   * was received without TLS.
+   * Returns the TLS handshake of the connection that carried this response, or `null` if the
+   * response was received without TLS.
    */
-  public @Nullable Handshake handshake() {
-    return handshake;
-  }
+  fun handshake(): Handshake? = handshake
 
-  public List<String> headers(String name) {
-    return headers.values(name);
-  }
+  fun headers(name: String): List<String>  = headers.values(name)
 
-  public @Nullable String header(String name) {
-    return header(name, null);
-  }
+  @JvmOverloads
+  fun header(name: String, defaultValue: String? = null): String? = headers[name] ?: defaultValue
 
-  public @Nullable String header(String name, @Nullable String defaultValue) {
-    String result = headers.get(name);
-    return result != null ? result : defaultValue;
-  }
-
-  public Headers headers() {
-    return headers;
-  }
+  fun headers(): Headers = headers
 
   /**
    * Returns the trailers after the HTTP response, which may be empty. It is an error to call this
    * before the entire HTTP response body has been consumed.
    */
-  public Headers trailers() throws IOException {
-    if (exchange == null) throw new IllegalStateException("trailers not available");
-    return exchange.trailers();
-  }
+  @Throws(IOException::class)
+  fun trailers(): Headers = checkNotNull(exchange) { "trailers not available" }.trailers()
 
   /**
-   * Peeks up to {@code byteCount} bytes from the response body and returns them as a new response
-   * body. If fewer than {@code byteCount} bytes are in the response body, the full response body is
-   * returned. If more than {@code byteCount} bytes are in the response body, the returned value
-   * will be truncated to {@code byteCount} bytes.
+   * Peeks up to [byteCount] bytes from the response body and returns them as a new response
+   * body. If fewer than [byteCount] bytes are in the response body, the full response body is
+   * returned. If more than [byteCount] bytes are in the response body, the returned value
+   * will be truncated to [byteCount] bytes.
    *
-   * <p>It is an error to call this method after the body has been consumed.
+   * It is an error to call this method after the body has been consumed.
    *
-   * <p><strong>Warning:</strong> this method loads the requested bytes into memory. Most
-   * applications should set a modest limit on {@code byteCount}, such as 1 MiB.
+   * **Warning:** this method loads the requested bytes into memory. Most applications should set
+   * a modest limit on `byteCount`, such as 1 MiB.
    */
-  public ResponseBody peekBody(long byteCount) throws IOException {
-    BufferedSource peeked = body.source().peek();
-    Buffer buffer = new Buffer();
-    peeked.request(byteCount);
-    buffer.write(peeked, Math.min(byteCount, peeked.getBuffer().size()));
-    return ResponseBody.create(body.contentType(), buffer.size(), buffer);
+  @Throws(IOException::class)
+  fun peekBody(byteCount: Long): ResponseBody {
+    val peeked = body!!.source().peek()
+    val buffer = Buffer()
+    peeked.request(byteCount)
+    buffer.write(peeked, Math.min(byteCount, peeked.buffer.size))
+    return ResponseBody.create(body.contentType(), buffer.size, buffer)
   }
 
   /**
-   * Returns a non-null value if this response was passed to {@link Callback#onResponse} or returned
-   * from {@link Call#execute()}. Response bodies must be {@linkplain ResponseBody closed} and may
+   * Returns a non-null value if this response was passed to [Callback.onResponse] or returned
+   * from [Call.execute]. Response bodies must be [closed][ResponseBody] and may
    * be consumed only once.
    *
-   * <p>This always returns null on responses returned from {@link #cacheResponse}, {@link
-   * #networkResponse}, and {@link #priorResponse()}.
+   * This always returns `null` on responses returned from [cacheResponse], [networkResponse],
+   * and [priorResponse].
    */
-  public @Nullable ResponseBody body() {
-    return body;
-  }
+  fun body(): ResponseBody? = body
 
-  public Builder newBuilder() {
-    return new Builder(this);
-  }
+  fun newBuilder(): Builder = Builder(this)
 
   /** Returns true if this response redirects to another resource. */
-  public boolean isRedirect() {
-    switch (code) {
-      case HTTP_PERM_REDIRECT:
-      case HTTP_TEMP_REDIRECT:
-      case HTTP_MULT_CHOICE:
-      case HTTP_MOVED_PERM:
-      case HTTP_MOVED_TEMP:
-      case HTTP_SEE_OTHER:
-        return true;
-      default:
-        return false;
-    }
+  fun isRedirect(): Boolean = when (code) {
+    HTTP_PERM_REDIRECT, HTTP_TEMP_REDIRECT, HTTP_MULT_CHOICE, HTTP_MOVED_PERM, HTTP_MOVED_TEMP, HTTP_SEE_OTHER -> true
+    else -> false
   }
 
   /**
-   * Returns the raw response received from the network. Will be null if this response didn't use
+   * Returns the raw response received from the network. Will be `null` if this response didn't use
    * the network, such as when the response is fully cached. The body of the returned response
    * should not be read.
    */
-  public @Nullable Response networkResponse() {
-    return networkResponse;
-  }
+  fun networkResponse(): Response? = networkResponse
 
   /**
-   * Returns the raw response received from the cache. Will be null if this response didn't use the
-   * cache. For conditional get requests the cache response and network response may both be
+   * Returns the raw response received from the cache. Will be `null` if this response didn't use
+   * the cache. For conditional get requests the cache response and network response may both be
    * non-null. The body of the returned response should not be read.
    */
-  public @Nullable Response cacheResponse() {
-    return cacheResponse;
-  }
+  fun cacheResponse(): Response? = cacheResponse
 
   /**
    * Returns the response for the HTTP redirect or authorization challenge that triggered this
-   * response, or null if this response wasn't triggered by an automatic retry. The body of the
+   * response, or `null` if this response wasn't triggered by an automatic retry. The body of the
    * returned response should not be read because it has already been consumed by the redirecting
    * client.
    */
-  public @Nullable Response priorResponse() {
-    return priorResponse;
-  }
+  fun priorResponse(): Response? = priorResponse
 
   /**
    * Returns the RFC 7235 authorization challenges appropriate for this response's code. If the
@@ -232,227 +169,193 @@ public final class Response implements Closeable {
    * response code is 407 proxy unauthorized, this returns the "Proxy-Authenticate" challenges.
    * Otherwise this returns an empty list of challenges.
    *
-   * <p>If a challenge uses the {@code token68} variant instead of auth params, there is exactly one
-   * auth param in the challenge at key {@code null}. Invalid headers and challenges are ignored.
-   * No semantic validation is done, for example that {@code Basic} auth must have a {@code realm}
+   * If a challenge uses the `token68` variant instead of auth params, there is exactly one
+   * auth param in the challenge at key `null`. Invalid headers and challenges are ignored.
+   * No semantic validation is done, for example that `Basic` auth must have a `realm`
    * auth param, this is up to the caller that interprets these challenges.
    */
-  public List<Challenge> challenges() {
-    String responseField;
-    if (code == HTTP_UNAUTHORIZED) {
-      responseField = "WWW-Authenticate";
-    } else if (code == HTTP_PROXY_AUTH) {
-      responseField = "Proxy-Authenticate";
-    } else {
-      return Collections.emptyList();
-    }
-    return HttpHeaders.parseChallenges(headers(), responseField);
+  fun challenges(): List<Challenge> {
+    return HttpHeaders.parseChallenges(
+        headers(),
+        when (code) {
+          HTTP_UNAUTHORIZED -> "WWW-Authenticate"
+          HTTP_PROXY_AUTH -> "Proxy-Authenticate"
+          else -> return emptyList()
+        }
+    )
   }
 
   /**
    * Returns the cache control directives for this response. This is never null, even if this
-   * response contains no {@code Cache-Control} header.
+   * response contains no `Cache-Control` header.
    */
-  public CacheControl cacheControl() {
-    CacheControl result = cacheControl;
-    return result != null ? result : (cacheControl = CacheControl.parse(headers));
+  fun cacheControl(): CacheControl = cacheControl ?: CacheControl.parse(headers).also {
+    cacheControl = it
   }
 
   /**
-   * Returns a {@linkplain System#currentTimeMillis() timestamp} taken immediately before OkHttp
+   * Returns a [timestamp][System.currentTimeMillis] taken immediately before OkHttp
    * transmitted the initiating request over the network. If this response is being served from the
    * cache then this is the timestamp of the original request.
    */
-  public long sentRequestAtMillis() {
-    return sentRequestAtMillis;
-  }
+  fun sentRequestAtMillis(): Long = sentRequestAtMillis
 
   /**
-   * Returns a {@linkplain System#currentTimeMillis() timestamp} taken immediately after OkHttp
+   * Returns a [timestamp][System.currentTimeMillis] taken immediately after OkHttp
    * received this response's headers from the network. If this response is being served from the
    * cache then this is the timestamp of the original response.
    */
-  public long receivedResponseAtMillis() {
-    return receivedResponseAtMillis;
-  }
+  fun receivedResponseAtMillis(): Long = receivedResponseAtMillis
 
   /**
-   * Closes the response body. Equivalent to {@code body().close()}.
+   * Closes the response body. Equivalent to `body().close()`.
    *
-   * <p>It is an error to close a response that is not eligible for a body. This includes the
-   * responses returned from {@link #cacheResponse}, {@link #networkResponse}, and {@link
-   * #priorResponse()}.
+   * It is an error to close a response that is not eligible for a body. This includes the
+   * responses returned from [cacheResponse], [networkResponse], and [priorResponse].
    */
-  @Override public void close() {
-    if (body == null) {
-      throw new IllegalStateException("response is not eligible for a body and must not be closed");
-    }
-    body.close();
+  override fun close() {
+    checkNotNull(body) { "response is not eligible for a body and must not be closed" }.close()
   }
 
-  @Override public String toString() {
-    return "Response{protocol="
-        + protocol
-        + ", code="
-        + code
-        + ", message="
-        + message
-        + ", url="
-        + request.url()
-        + '}';
-  }
+  override fun toString() =
+      "Response{protocol=$protocol, code=$code, message=$message, url=${request.url()}}"
 
-  public static class Builder {
-    @Nullable Request request;
-    @Nullable Protocol protocol;
-    int code = -1;
-    String message;
-    @Nullable Handshake handshake;
-    Headers.Builder headers;
-    @Nullable ResponseBody body;
-    @Nullable Response networkResponse;
-    @Nullable Response cacheResponse;
-    @Nullable Response priorResponse;
-    long sentRequestAtMillis;
-    long receivedResponseAtMillis;
-    @Nullable Exchange exchange;
+  class Builder {
+    internal var request: Request? = null
+    internal var protocol: Protocol? = null
+    internal var code = -1
+    internal var message: String? = null
+    internal var handshake: Handshake? = null
+    internal var headers: Headers.Builder
+    internal var body: ResponseBody? = null
+    internal var networkResponse: Response? = null
+    internal var cacheResponse: Response? = null
+    internal var priorResponse: Response? = null
+    internal var sentRequestAtMillis: Long = 0
+    internal var receivedResponseAtMillis: Long = 0
+    internal var exchange: Exchange? = null
 
-    public Builder() {
-      headers = new Headers.Builder();
+    constructor() {
+      headers = Headers.Builder()
     }
 
-    Builder(Response response) {
-      this.request = response.request;
-      this.protocol = response.protocol;
-      this.code = response.code;
-      this.message = response.message;
-      this.handshake = response.handshake;
-      this.headers = response.headers.newBuilder();
-      this.body = response.body;
-      this.networkResponse = response.networkResponse;
-      this.cacheResponse = response.cacheResponse;
-      this.priorResponse = response.priorResponse;
-      this.sentRequestAtMillis = response.sentRequestAtMillis;
-      this.receivedResponseAtMillis = response.receivedResponseAtMillis;
-      this.exchange = response.exchange;
+    internal constructor(response: Response) {
+      this.request = response.request
+      this.protocol = response.protocol
+      this.code = response.code
+      this.message = response.message
+      this.handshake = response.handshake
+      this.headers = response.headers.newBuilder()
+      this.body = response.body
+      this.networkResponse = response.networkResponse
+      this.cacheResponse = response.cacheResponse
+      this.priorResponse = response.priorResponse
+      this.sentRequestAtMillis = response.sentRequestAtMillis
+      this.receivedResponseAtMillis = response.receivedResponseAtMillis
+      this.exchange = response.exchange
     }
 
-    public Builder request(Request request) {
-      this.request = request;
-      return this;
+    fun request(request: Request) = apply {
+      this.request = request
     }
 
-    public Builder protocol(Protocol protocol) {
-      this.protocol = protocol;
-      return this;
+    fun protocol(protocol: Protocol) = apply {
+      this.protocol = protocol
     }
 
-    public Builder code(int code) {
-      this.code = code;
-      return this;
+    fun code(code: Int) = apply {
+      this.code = code
     }
 
-    public Builder message(String message) {
-      this.message = message;
-      return this;
+    fun message(message: String) = apply {
+      this.message = message
     }
 
-    public Builder handshake(@Nullable Handshake handshake) {
-      this.handshake = handshake;
-      return this;
+    fun handshake(handshake: Handshake?) = apply {
+      this.handshake = handshake
     }
 
     /**
-     * Sets the header named {@code name} to {@code value}. If this request already has any headers
+     * Sets the header named [name] to [value]. If this request already has any headers
      * with that name, they are all replaced.
      */
-    public Builder header(String name, String value) {
-      headers.set(name, value);
-      return this;
+    fun header(name: String, value: String) = apply {
+      headers[name] = value
     }
 
     /**
-     * Adds a header with {@code name} and {@code value}. Prefer this method for multiply-valued
+     * Adds a header with [name] to [value]. Prefer this method for multiply-valued
      * headers like "Set-Cookie".
      */
-    public Builder addHeader(String name, String value) {
-      headers.add(name, value);
-      return this;
+    fun addHeader(name: String, value: String) = apply {
+      headers.add(name, value)
     }
 
-    /** Removes all headers named {@code name} on this builder. */
-    public Builder removeHeader(String name) {
-      headers.removeAll(name);
-      return this;
+    /** Removes all headers named [name] on this builder. */
+    fun removeHeader(name: String) = apply {
+      headers.removeAll(name)
     }
 
-    /** Removes all headers on this builder and adds {@code headers}. */
-    public Builder headers(Headers headers) {
-      this.headers = headers.newBuilder();
-      return this;
+    /** Removes all headers on this builder and adds [headers]. */
+    fun headers(headers: Headers) = apply {
+      this.headers = headers.newBuilder()
     }
 
-    public Builder body(@Nullable ResponseBody body) {
-      this.body = body;
-      return this;
+    fun body(body: ResponseBody?) = apply {
+      this.body = body
     }
 
-    public Builder networkResponse(@Nullable Response networkResponse) {
-      if (networkResponse != null) checkSupportResponse("networkResponse", networkResponse);
-      this.networkResponse = networkResponse;
-      return this;
+    fun networkResponse(networkResponse: Response?) = apply {
+      checkSupportResponse("networkResponse", networkResponse)
+      this.networkResponse = networkResponse
     }
 
-    public Builder cacheResponse(@Nullable Response cacheResponse) {
-      if (cacheResponse != null) checkSupportResponse("cacheResponse", cacheResponse);
-      this.cacheResponse = cacheResponse;
-      return this;
+    fun cacheResponse(cacheResponse: Response?) = apply {
+      checkSupportResponse("cacheResponse", cacheResponse)
+      this.cacheResponse = cacheResponse
     }
 
-    private void checkSupportResponse(String name, Response response) {
-      if (response.body != null) {
-        throw new IllegalArgumentException(name + ".body != null");
-      } else if (response.networkResponse != null) {
-        throw new IllegalArgumentException(name + ".networkResponse != null");
-      } else if (response.cacheResponse != null) {
-        throw new IllegalArgumentException(name + ".cacheResponse != null");
-      } else if (response.priorResponse != null) {
-        throw new IllegalArgumentException(name + ".priorResponse != null");
+    private fun checkSupportResponse(name: String, response: Response?) {
+      when {
+        response == null -> return
+        response.body != null -> throw IllegalArgumentException("$name.body != null")
+        response.networkResponse != null -> throw IllegalArgumentException("$name.networkResponse != null")
+        response.cacheResponse != null -> throw IllegalArgumentException("$name.cacheResponse != null")
+        response.priorResponse != null -> throw IllegalArgumentException("$name.priorResponse != null")
       }
     }
 
-    public Builder priorResponse(@Nullable Response priorResponse) {
-      if (priorResponse != null) checkPriorResponse(priorResponse);
-      this.priorResponse = priorResponse;
-      return this;
+    fun priorResponse(priorResponse: Response?) = apply {
+      checkPriorResponse(priorResponse)
+      this.priorResponse = priorResponse
     }
 
-    private void checkPriorResponse(Response response) {
-      if (response.body != null) {
-        throw new IllegalArgumentException("priorResponse.body != null");
+    private fun checkPriorResponse(response: Response?) {
+      when {
+        response == null -> return
+        response.body != null -> throw IllegalArgumentException("priorResponse.body != null")
       }
     }
 
-    public Builder sentRequestAtMillis(long sentRequestAtMillis) {
-      this.sentRequestAtMillis = sentRequestAtMillis;
-      return this;
+    fun sentRequestAtMillis(sentRequestAtMillis: Long) = apply {
+      this.sentRequestAtMillis = sentRequestAtMillis
     }
 
-    public Builder receivedResponseAtMillis(long receivedResponseAtMillis) {
-      this.receivedResponseAtMillis = receivedResponseAtMillis;
-      return this;
+    fun receivedResponseAtMillis(receivedResponseAtMillis: Long) = apply {
+      this.receivedResponseAtMillis = receivedResponseAtMillis
     }
 
-    void initExchange(Exchange deferredTrailers) {
-      this.exchange = deferredTrailers;
+    internal fun initExchange(deferredTrailers: Exchange) {
+      this.exchange = deferredTrailers
     }
 
-    public Response build() {
-      if (request == null) throw new IllegalStateException("request == null");
-      if (protocol == null) throw new IllegalStateException("protocol == null");
-      if (code < 0) throw new IllegalStateException("code < 0: " + code);
-      if (message == null) throw new IllegalStateException("message == null");
-      return new Response(this);
+    fun build(): Response {
+      check(code > 0) { "code < 0: $code" }
+      return Response(
+          checkNotNull(request) { "request == null" },
+          checkNotNull(protocol) { "protocol == null" },
+          checkNotNull(message) { "message == null" },
+          this)
     }
   }
 }
