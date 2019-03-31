@@ -182,7 +182,7 @@ public final class EventListenerTest {
 
     Response response = call.execute();
     try {
-      response.body.string();
+      response.body().string();
       fail();
     } catch (IOException expected) {
       assertThat(expected.getMessage()).isEqualTo("unexpected end of stream");
@@ -318,7 +318,7 @@ public final class EventListenerTest {
       }
 
       @Override public boolean matches(Object o) {
-        return ((Response) o).protocol == protocol;
+        return ((Response) o).protocol() == protocol;
       }
     };
   }
@@ -885,7 +885,7 @@ public final class EventListenerTest {
     }
     assertThat(response.protocol()).isEqualTo(expectedProtocol);
     try {
-      response.body.string();
+      response.body().string();
       fail();
     } catch (IOException expected) {
     }
