@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 Square, Inc.
+ * Copyright (C) 2014 Square, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,11 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package okhttp3.internal.tls;
+package okhttp3.internal.cache
 
-import java.security.cert.X509Certificate;
+import java.io.IOException
+import okio.Sink
 
-public interface TrustRootIndex {
-  /** Returns the trusted CA certificate that signed {@code cert}. */
-  X509Certificate findByIssuerAndSignature(X509Certificate cert);
+interface CacheRequest {
+  @Throws(IOException::class)
+  fun body(): Sink
+
+  fun abort()
 }
