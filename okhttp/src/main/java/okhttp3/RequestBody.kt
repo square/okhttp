@@ -71,7 +71,7 @@ abstract class RequestBody {
    * quickly, possibly by handing off the provided request body to another thread to perform
    * writing.
    */
-  open fun isDuplex(): Boolean = false
+  open val isDuplex: Boolean = false
 
   /**
    * Returns true if this body expects at most one call to [writeTo] and can be transmitted
@@ -85,7 +85,7 @@ abstract class RequestBody {
    * (HTTP 401 and 407), or a retryable server failure (HTTP 503 with a `Retry-After: 0`
    * header).
    */
-  open fun isOneShot(): Boolean = false
+  open val isOneShot: Boolean = false
 
   companion object {
 

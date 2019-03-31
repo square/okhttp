@@ -183,7 +183,7 @@ class HttpLoggingInterceptor @JvmOverloads constructor(
         logger.log("--> END ${request.method()}")
       } else if (bodyHasUnknownEncoding(request.headers())) {
         logger.log("--> END ${request.method()} (encoded body omitted)")
-      } else if (requestBody.isDuplex()) {
+      } else if (requestBody.isDuplex) {
         logger.log("--> END ${request.method()} (duplex request body omitted)")
       } else {
         val buffer = Buffer()

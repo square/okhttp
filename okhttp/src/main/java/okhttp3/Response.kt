@@ -79,7 +79,8 @@ class Response internal constructor(
    * Returns true if the code is in [200..300), which means the request was successfully received,
    * understood, and accepted.
    */
-  fun isSuccessful(): Boolean = code in 200..299
+  val isSuccessful: Boolean
+    get() = code in 200..299
 
   /** Returns the HTTP status message. */
   fun message(): String = message
@@ -137,10 +138,11 @@ class Response internal constructor(
   fun newBuilder(): Builder = Builder(this)
 
   /** Returns true if this response redirects to another resource. */
-  fun isRedirect(): Boolean = when (code) {
-    HTTP_PERM_REDIRECT, HTTP_TEMP_REDIRECT, HTTP_MULT_CHOICE, HTTP_MOVED_PERM, HTTP_MOVED_TEMP, HTTP_SEE_OTHER -> true
-    else -> false
-  }
+  val isRedirect: Boolean
+    get() = when (code) {
+      HTTP_PERM_REDIRECT, HTTP_TEMP_REDIRECT, HTTP_MULT_CHOICE, HTTP_MOVED_PERM, HTTP_MOVED_TEMP, HTTP_SEE_OTHER -> true
+      else -> false
+    }
 
   /**
    * Returns the raw response received from the network. Will be `null` if this response didn't use
