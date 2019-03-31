@@ -214,7 +214,7 @@ class DnsOverHttps internal constructor(builder: Builder) : Dns {
     }
 
     response.use {
-      if (!response.isSuccessful) {
+      if (!response.isSuccessful()) {
         throw IOException("response: " + response.code() + " " + response.message())
       }
 
