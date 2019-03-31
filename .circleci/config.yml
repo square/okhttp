@@ -8,7 +8,7 @@ jobs:
     working_directory: ~/repo
 
     environment:
-      JVM_OPTS: -Xmx1g
+      JVM_OPTS: -Xmx512m
       TERM: dumb
 
     steps:
@@ -23,7 +23,7 @@ jobs:
           name: dependencies
           command: ./gradlew downloadDependencies
           environment:
-            GRADLE_OPTS: -Dorg.gradle.daemon=false -Dorg.gradle.parallel=false -Xmx1G
+            GRADLE_OPTS: -Dorg.gradle.daemon=false -Dorg.gradle.parallel=false -Xmx512m
 
       - save_cache:
           paths:
@@ -37,7 +37,7 @@ jobs:
     working_directory: ~/repo
 
     environment:
-      JVM_OPTS: -Xmx1g
+      JVM_OPTS: -Xmx512m
       TERM: dumb
 
     steps:
@@ -52,7 +52,7 @@ jobs:
           name: Run checks
           command: ./gradlew check -x test
           environment:
-            GRADLE_OPTS: -Dorg.gradle.daemon=false -Dorg.gradle.parallel=false -Xmx1G
+            GRADLE_OPTS: -Dorg.gradle.daemon=false -Dorg.gradle.parallel=false -Xmx512m
 
       - run:
           name: Save gradle reports
@@ -72,7 +72,7 @@ jobs:
     working_directory: ~/testrepo
 
     environment:
-      JVM_OPTS: -Xmx1g
+      JVM_OPTS: -Xmx1536m
       TERM: dumb
 
     steps:
@@ -87,7 +87,7 @@ jobs:
           name: test
           command: ./gradlew test
           environment:
-            GRADLE_OPTS: -Dorg.gradle.daemon=false -Dorg.gradle.parallel=false -Xmx1G
+            GRADLE_OPTS: -Dorg.gradle.daemon=false -Dorg.gradle.parallel=false -Xmx1536m
 
       - run:
           name: Save test results
@@ -118,7 +118,7 @@ jobs:
     working_directory: ~/testrepo11
 
     environment:
-      JVM_OPTS: -Xmx1g
+      JVM_OPTS: -Xmx1536m
       TERM: dumb
 
     steps:
@@ -133,7 +133,7 @@ jobs:
           name: test
           command: ./gradlew test
           environment:
-            GRADLE_OPTS: -Dorg.gradle.daemon=false -Dorg.gradle.parallel=false -Xmx1G
+            GRADLE_OPTS: -Dorg.gradle.daemon=false -Dorg.gradle.parallel=false -Xmx1536m
 
       - run:
           name: Save test results
