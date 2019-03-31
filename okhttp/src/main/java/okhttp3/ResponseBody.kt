@@ -25,6 +25,7 @@ import java.io.InputStream
 import java.io.InputStreamReader
 import java.io.Reader
 import java.nio.charset.Charset
+import kotlin.LazyThreadSafetyMode.NONE
 import kotlin.text.Charsets.UTF_8
 
 /**
@@ -99,7 +100,9 @@ import kotlin.text.Charsets.UTF_8
  */
 abstract class ResponseBody : Closeable {
   /** Multiple calls to [charStream] must return the same instance. */
-  private var reader: Reader? = null
+  private val reader: Reader by lazy(NONE) {
+    BomAwareReader(source(), charset())
+  }
 
   abstract fun contentType(): MediaType?
 
@@ -147,9 +150,7 @@ abstract class ResponseBody : Closeable {
    *
    * Otherwise the response bytes are decoded as `UTF-8`.
    */
-  fun charStream(): Reader = reader ?: BomAwareReader(source(), charset()).also {
-    reader = it
-  }
+  fun charStream(): Reader = reader
 
   /**
    * Returns the response as a string.
@@ -188,10 +189,10 @@ abstract class ResponseBody : Closeable {
     override fun read(cbuf: CharArray, off: Int, len: Int): Int {
       if (closed) throw IOException("Stream closed")
 
-      val finalDelegate = this.delegate ?: InputStreamReader(
+      val finalDelegate = delegate ?: InputStreamReader(
           source.inputStream(),
-          Util.bomAwareCharset(source, this.charset)).also {
-        this.delegate = it
+          Util.bomAwareCharset(source, charset)).also {
+        delegate = it
       }
       return finalDelegate.read(cbuf, off, len)
     }
