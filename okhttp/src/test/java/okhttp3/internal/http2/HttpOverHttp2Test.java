@@ -1514,13 +1514,11 @@ public final class HttpOverHttp2Test {
   /** https://github.com/square/okhttp/issues/3103 */
   @Test public void domainFronting() throws Exception {
     client = client.newBuilder()
-        .addNetworkInterceptor(new Interceptor() {
-          @Override public Response intercept(Chain chain) throws IOException {
-            Request request = chain.request().newBuilder()
-                .header("Host", "privateobject.com")
-                .build();
-            return chain.proceed(request);
-          }
+        .addNetworkInterceptor(chain -> {
+          Request request = chain.request().newBuilder()
+              .header("Host", "privateobject.com")
+              .build();
+          return chain.proceed(request);
         })
         .build();
 
