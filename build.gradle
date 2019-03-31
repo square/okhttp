@@ -1,3 +1,5 @@
+import net.ltgt.gradle.errorprone.CheckSeverity
+
 buildscript {
   ext.versions = [
       'airline': '0.8',
@@ -126,6 +128,11 @@ subprojects { project ->
   dependencies {
     errorproneJavac 'com.google.errorprone:javac:9+181-r4173-1'
     errorprone 'com.google.errorprone:error_prone_core:2.3.3'
+  }
+  tasks.withType(JavaCompile).configureEach {
+    options.errorprone {
+      check("MissingOverride", CheckSeverity.ERROR)
+    }
   }
 
   apply plugin: 'org.jetbrains.dokka'

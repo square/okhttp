@@ -746,24 +746,24 @@ public final class URLConnectionTest {
 
   private void testConnectViaSocketFactory(boolean useHttps) throws IOException {
     SocketFactory uselessSocketFactory = new SocketFactory() {
-      public Socket createSocket() {
+      @Override public Socket createSocket() {
         throw new IllegalArgumentException("useless");
       }
 
-      public Socket createSocket(InetAddress host, int port) {
+      @Override public Socket createSocket(InetAddress host, int port) {
         return null;
       }
 
-      public Socket createSocket(InetAddress address, int port, InetAddress localAddress,
+      @Override public Socket createSocket(InetAddress address, int port, InetAddress localAddress,
           int localPort) {
         return null;
       }
 
-      public Socket createSocket(String host, int port) {
+      @Override public Socket createSocket(String host, int port) {
         return null;
       }
 
-      public Socket createSocket(String host, int port, InetAddress localHost, int localPort) {
+      @Override public Socket createSocket(String host, int port, InetAddress localHost, int localPort) {
         return null;
       }
     };
@@ -3807,15 +3807,15 @@ public final class URLConnectionTest {
       this.delegate = delegate;
     }
 
-    public X509Certificate[] getAcceptedIssuers() {
+    @Override public X509Certificate[] getAcceptedIssuers() {
       return delegate.getAcceptedIssuers();
     }
 
-    public void checkClientTrusted(X509Certificate[] chain, String authType) {
+    @Override public void checkClientTrusted(X509Certificate[] chain, String authType) {
       calls.add("checkClientTrusted " + certificatesToString(chain));
     }
 
-    public void checkServerTrusted(X509Certificate[] chain, String authType) {
+    @Override public void checkServerTrusted(X509Certificate[] chain, String authType) {
       calls.add("checkServerTrusted " + certificatesToString(chain));
     }
 
