@@ -19,7 +19,7 @@ jobs:
             - v1-dependencies-{{ checksum "build.gradle" }}
             - v1-dependencies-
 
-      - run: 
+      - run:
           name: dependencies
           command: ./gradlew downloadDependencies
           environment:
@@ -207,19 +207,15 @@ workflows:
   build-check-and-test:
     jobs:
       - dependencies
-      
       - checkjdk8:
         requires:
           - dependencies
-
       - testjdk8:
         requires:
           - dependencies
-
       - testjdk11:
         requires:
           - dependencies
-
       - testjdk12:
         requires:
           - dependencies
