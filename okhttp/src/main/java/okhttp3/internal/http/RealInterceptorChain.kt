@@ -15,7 +15,11 @@
  */
 package okhttp3.internal.http
 
-import okhttp3.*
+import okhttp3.Interceptor
+import okhttp3.Request
+import okhttp3.Call
+import okhttp3.Connection
+import okhttp3.Response
 import okhttp3.internal.Util.checkDuration
 import okhttp3.internal.connection.Exchange
 import okhttp3.internal.connection.Transmitter
@@ -114,11 +118,6 @@ class RealInterceptorChain(
     if (exchange != null && index + 1 < interceptors.size && next.calls != 1) {
       throw IllegalStateException("network interceptor " + interceptor
           + " must call proceed() exactly once")
-    }
-
-    // Confirm that the intercepted response isn't null.
-    if (response == null) {
-      throw NullPointerException("interceptor $interceptor returned null")
     }
 
     if (response.body() == null) {
