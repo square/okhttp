@@ -157,52 +157,6 @@ jobs:
           name: Store gradle reports
           path: ~/testrepo11/reports
 
-  testjdk12:
-    docker:
-      - image: circleci/openjdk:12-jdk
-
-    working_directory: ~/testrepo12
-
-    environment:
-      JVM_OPTS: -Xmx1g
-      TERM: dumb
-
-    steps:
-      - checkout
-
-      - restore_cache:
-          keys:
-            - v1-dependencies-{{ checksum "build.gradle" }}
-            - v1-dependencies-
-
-      - run:
-          name: test
-          command: ./gradlew test
-          environment:
-            GRADLE_OPTS: -Dorg.gradle.daemon=false -Dorg.gradle.parallel=false -Xmx1G
-
-      - run:
-          name: Save test results
-          command: |
-            mkdir -p ~/testrepo12/test-results/junit/
-            find . -type f -regex ".*/build/test-results/.*xml" -exec cp {} ~/testrepo12/test-results/junit/ \;
-          when: always
-
-      - store_test_results:
-          name: Store test results
-          path: ~/test-results
-
-      - run:
-          name: Save gradle reports
-          command: |
-            mkdir -p ~/testrepo12/reports/
-            tar cf - */build/reports | (cd ~/testrepo12/reports/; tar xf -)
-          when: always
-
-      - store_artifacts:
-          name: Store gradle reports
-          path: ~/testrepo12/reports
-
 workflows:
   version: 2
   build-check-and-test:
@@ -215,8 +169,5 @@ workflows:
           requires:
             - dependencies
       - testjdk11:
-          requires:
-            - dependencies
-      - testjdk12:
           requires:
             - dependencies
