@@ -120,6 +120,11 @@ class RealInterceptorChain(
           + " must call proceed() exactly once")
     }
 
+    // Confirm that the intercepted response isn't null.
+    if (response == null) {
+      throw NullPointerException("interceptor $interceptor returned null")
+    }
+
     if (response.body() == null) {
       throw IllegalStateException(
           "interceptor $interceptor returned a response with no body")
