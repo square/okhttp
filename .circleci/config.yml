@@ -204,18 +204,19 @@ jobs:
           path: ~/testrepo12/reports
 
 workflows:
+  version: 2
   build-check-and-test:
     jobs:
       - dependencies
       - checkjdk8:
-        requires:
-          - dependencies
+          requires:
+            - dependencies
       - testjdk8:
-        requires:
-          - dependencies
+          requires:
+            - dependencies
       - testjdk11:
-        requires:
-          - dependencies
+          requires:
+            - dependencies
       - testjdk12:
-        requires:
-          - dependencies
+          requires:
+            - dependencies
