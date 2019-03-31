@@ -80,7 +80,7 @@ class Request internal constructor(
 
   override fun toString(): String = "Request{method=$method, url=$url, tags=$tags}"
 
-  class Builder {
+  open class Builder {
     internal var url: HttpUrl? = null
     internal var method: String
     internal var headers: Headers.Builder
@@ -105,7 +105,7 @@ class Request internal constructor(
       this.headers = request.headers.newBuilder()
     }
 
-    fun url(url: HttpUrl): Builder = apply {
+    open fun url(url: HttpUrl): Builder = apply {
       this.url = url
     }
 
@@ -115,7 +115,7 @@ class Request internal constructor(
      * @throws IllegalArgumentException if [url] is not a valid HTTP or HTTPS URL. Avoid this
      * exception by calling [HttpUrl.parse]; it returns `null` for invalid URLs.
      */
-    fun url(url: String): Builder {
+    open fun url(url: String): Builder {
       // Silently replace web socket URLs with HTTP URLs.
       val finalUrl: String = when {
         url.regionMatches(0, "ws:", 0, 3, ignoreCase = true) -> {
@@ -136,13 +136,13 @@ class Request internal constructor(
      * @throws IllegalArgumentException if the scheme of [url] is not `http` or `https`.
      */
     // Code review TODO - this never checked the scheme before like the doc says. Should it?
-    fun url(url: URL) = url(HttpUrl[url.toString()])
+    open fun url(url: URL) = url(HttpUrl[url.toString()])
 
     /**
      * Sets the header named [name] to [value]. If this request already has any headers
      * with that name, they are all replaced.
      */
-    fun header(name: String, value: String) = apply {
+    open fun header(name: String, value: String) = apply {
       headers[name] = value
     }
 
@@ -153,17 +153,17 @@ class Request internal constructor(
      * Note that for some headers including `Content-Length` and `Content-Encoding`,
      * OkHttp may replace [value] with a header derived from the request body.
      */
-    fun addHeader(name: String, value: String) = apply {
+    open fun addHeader(name: String, value: String) = apply {
       headers.add(name, value)
     }
 
     /** Removes all headers named [name] on this builder. */
-    fun removeHeader(name: String) = apply {
+    open fun removeHeader(name: String) = apply {
       headers.removeAll(name)
     }
 
     /** Removes all headers on this builder and adds [headers]. */
-    fun headers(headers: Headers) = apply {
+    open fun headers(headers: Headers) = apply {
       this.headers = headers.newBuilder()
     }
 
@@ -172,7 +172,7 @@ class Request internal constructor(
      * present. If [cacheControl] doesn't define any directives, this clears this request's
      * cache-control headers.
      */
-    fun cacheControl(cacheControl: CacheControl): Builder {
+    open fun cacheControl(cacheControl: CacheControl): Builder {
       val value = cacheControl.toString()
       return when {
         value.isEmpty() -> removeHeader("Cache-Control")
@@ -180,20 +180,20 @@ class Request internal constructor(
       }
     }
 
-    fun get() = method("GET", null)
+    open fun get() = method("GET", null)
 
-    fun head() = method("HEAD", null)
+    open fun head() = method("HEAD", null)
 
-    fun post(body: RequestBody) = method("POST", body)
+    open fun post(body: RequestBody) = method("POST", body)
 
     @JvmOverloads
-    fun delete(body: RequestBody? = Util.EMPTY_REQUEST) = method("DELETE", body)
+    open fun delete(body: RequestBody? = Util.EMPTY_REQUEST) = method("DELETE", body)
 
-    fun put(body: RequestBody) = method("PUT", body)
+    open fun put(body: RequestBody) = method("PUT", body)
 
-    fun patch(body: RequestBody) = method("PATCH", body)
+    open fun patch(body: RequestBody) = method("PATCH", body)
 
-    fun method(method: String, body: RequestBody?): Builder = apply {
+    open fun method(method: String, body: RequestBody?): Builder = apply {
       if (method.isEmpty()) throw IllegalArgumentException("method.isEmpty() == true")
       if (body != null && !HttpMethod.permitsRequestBody(method)) {
         throw IllegalArgumentException("method $method must not have a request body.")
@@ -206,7 +206,7 @@ class Request internal constructor(
     }
 
     /** Attaches [tag] to the request using `Object.class` as a key. */
-    fun tag(tag: Any?): Builder = tag(Any::class.java, tag)
+    open fun tag(tag: Any?): Builder = tag(Any::class.java, tag)
 
     /**
      * Attaches [tag] to the request using [type] as a key. Tags can be read from a
@@ -215,7 +215,7 @@ class Request internal constructor(
      * Use this API to attach timing, debugging, or other application data to a request so that
      * you may read it in interceptors, event listeners, or callbacks.
      */
-    fun <T> tag(type: Class<in T>, tag: T?) = apply {
+    open fun <T> tag(type: Class<in T>, tag: T?) = apply {
       if (tag == null) {
         tags.remove(type)
       } else {
@@ -226,7 +226,7 @@ class Request internal constructor(
       }
     }
 
-    fun build(): Request =  Request(
+    open fun build(): Request =  Request(
         checkNotNull(url) { "url == null" },
         this
     )

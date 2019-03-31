@@ -220,7 +220,7 @@ class Response internal constructor(
   override fun toString() =
       "Response{protocol=$protocol, code=$code, message=$message, url=${request.url()}}"
 
-  class Builder {
+  open class Builder {
     internal var request: Request? = null
     internal var protocol: Protocol? = null
     internal var code = -1
@@ -255,23 +255,23 @@ class Response internal constructor(
       this.exchange = response.exchange
     }
 
-    fun request(request: Request) = apply {
+    open fun request(request: Request) = apply {
       this.request = request
     }
 
-    fun protocol(protocol: Protocol) = apply {
+    open fun protocol(protocol: Protocol) = apply {
       this.protocol = protocol
     }
 
-    fun code(code: Int) = apply {
+    open fun code(code: Int) = apply {
       this.code = code
     }
 
-    fun message(message: String) = apply {
+    open fun message(message: String) = apply {
       this.message = message
     }
 
-    fun handshake(handshake: Handshake?) = apply {
+    open fun handshake(handshake: Handshake?) = apply {
       this.handshake = handshake
     }
 
@@ -279,7 +279,7 @@ class Response internal constructor(
      * Sets the header named [name] to [value]. If this request already has any headers
      * with that name, they are all replaced.
      */
-    fun header(name: String, value: String) = apply {
+    open fun header(name: String, value: String) = apply {
       headers[name] = value
     }
 
@@ -287,30 +287,30 @@ class Response internal constructor(
      * Adds a header with [name] to [value]. Prefer this method for multiply-valued
      * headers like "Set-Cookie".
      */
-    fun addHeader(name: String, value: String) = apply {
+    open fun addHeader(name: String, value: String) = apply {
       headers.add(name, value)
     }
 
     /** Removes all headers named [name] on this builder. */
-    fun removeHeader(name: String) = apply {
+    open fun removeHeader(name: String) = apply {
       headers.removeAll(name)
     }
 
     /** Removes all headers on this builder and adds [headers]. */
-    fun headers(headers: Headers) = apply {
+    open fun headers(headers: Headers) = apply {
       this.headers = headers.newBuilder()
     }
 
-    fun body(body: ResponseBody?) = apply {
+    open fun body(body: ResponseBody?) = apply {
       this.body = body
     }
 
-    fun networkResponse(networkResponse: Response?) = apply {
+    open fun networkResponse(networkResponse: Response?) = apply {
       checkSupportResponse("networkResponse", networkResponse)
       this.networkResponse = networkResponse
     }
 
-    fun cacheResponse(cacheResponse: Response?) = apply {
+    open fun cacheResponse(cacheResponse: Response?) = apply {
       checkSupportResponse("cacheResponse", cacheResponse)
       this.cacheResponse = cacheResponse
     }
@@ -325,7 +325,7 @@ class Response internal constructor(
       }
     }
 
-    fun priorResponse(priorResponse: Response?) = apply {
+    open fun priorResponse(priorResponse: Response?) = apply {
       checkPriorResponse(priorResponse)
       this.priorResponse = priorResponse
     }
@@ -337,11 +337,11 @@ class Response internal constructor(
       }
     }
 
-    fun sentRequestAtMillis(sentRequestAtMillis: Long) = apply {
+    open fun sentRequestAtMillis(sentRequestAtMillis: Long) = apply {
       this.sentRequestAtMillis = sentRequestAtMillis
     }
 
-    fun receivedResponseAtMillis(receivedResponseAtMillis: Long) = apply {
+    open fun receivedResponseAtMillis(receivedResponseAtMillis: Long) = apply {
       this.receivedResponseAtMillis = receivedResponseAtMillis
     }
 
@@ -349,7 +349,7 @@ class Response internal constructor(
       this.exchange = deferredTrailers
     }
 
-    fun build(): Response {
+    open fun build(): Response {
       check(code > 0) { "code < 0: $code" }
       return Response(
           checkNotNull(request) { "request == null" },
