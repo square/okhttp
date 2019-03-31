@@ -1,122 +1,146 @@
 # Check https://circleci.com/docs/2.0/language-java/ for more details
 version: 2.1
+
+executors:
+  gradlejdk8:
+    docker:
+      - image: circleci/openjdk:8u171-jdk
+
+    working_directory: ~/repo
+
+    environment:
+      JVM_OPTS: -Xmx1g
+      TERM: dumb
+      GRADLE_OPTS: -Dorg.gradle.daemon=false -Dorg.gradle.parallel=false -Xmx1G
+
+  gradlejdk11:
+    docker:
+      - image: circleci/openjdk:11.0.2-jdk
+
+    working_directory: ~/repo11
+
+    environment:
+      JVM_OPTS: -Xmx1g
+      TERM: dumb
+      GRADLE_OPTS: -Dorg.gradle.daemon=false -Dorg.gradle.parallel=false -Xmx1G
+
+  gradlejdk12:
+    docker:
+      - image: circleci/openjdk:12-jdk
+
+    working_directory: ~/repo12
+
+    environment:
+      JVM_OPTS: -Xmx1g
+      TERM: dumb
+      GRADLE_OPTS: -Dorg.gradle.daemon=false -Dorg.gradle.parallel=false -Xmx1G
+
 jobs:
   dependencies:
-    docker:
-      - image: circleci/openjdk:8u171-jdk
-
-    working_directory: ~/repo
-
-    environment:
-      JVM_OPTS: -Xmx1g
-      TERM: dumb
+    executor: gradlejdk8
 
     steps:
       - checkout
 
       - restore_cache:
-          keys:
-            - v1-dependencies-{{ checksum "build.gradle" }}
-            - v1-dependencies-
+        keys:
+          - v1-dependencies-{{ checksum "build.gradle" }}
+          - v1-dependencies-
 
-      - run: 
-          name: dependencies
-          command: ./gradlew downloadDependencies
-          environment:
-            GRADLE_OPTS: -Dorg.gradle.daemon=false -Dorg.gradle.parallel=false -Xmx1G
+      - run:
+        name: dependencies
+        command: ./gradlew downloadDependencies
 
       - save_cache:
-          paths:
-            - ~/.gradle/caches
-          key: v1-dependencies-{{ checksum "build.gradle" }}
+        paths:
+          - ~/.gradle/caches
+        key: v1-dependencies-{{ checksum "build.gradle" }}
 
   checkjdk8:
-    docker:
-      - image: circleci/openjdk:8u171-jdk
+    executor: gradlejdk8
 
-    working_directory: ~/repo
-
-    environment:
-      JVM_OPTS: -Xmx1g
-      TERM: dumb
+    working_directory: ~/checks
 
     steps:
       - checkout
 
       - restore_cache:
-          keys:
-            - v1-dependencies-{{ checksum "build.gradle" }}
-            - v1-dependencies-
+        keys:
+          - v1-dependencies-{{ checksum "build.gradle" }}
+          - v1-dependencies-
 
       - run:
-          name: Run checks
-          command: ./gradlew check -x test
-          environment:
-            GRADLE_OPTS: -Dorg.gradle.daemon=false -Dorg.gradle.parallel=false -Xmx1G
+        name: Run checks
+        command: ./gradlew check -x test
 
       - run:
-          name: Save gradle reports
-          command: |
-            mkdir -p ~/reports/
-            tar cf - */build/reports | (cd ~/reports/; tar xf -)
-          when: always
+        name: Save gradle reports
+        command: |
+          mkdir -p ~/reports/
+          tar cf - */build/reports | (cd ~/reports/; tar xf -)
+        when: always
 
       - store_artifacts:
-          name: Store gradle reports
-          path: ~/reports
+        name: Store gradle reports
+        path: ~/reports
 
-  testjdk8:
-    docker:
-      - image: circleci/openjdk:8u171-jdk
+  test:
+    parameters:
+      executor:
+        type: executor
 
-    working_directory: ~/testrepo
-
-    environment:
-      JVM_OPTS: -Xmx1g
-      TERM: dumb
+    executor: << parameters.executor >>
 
     steps:
       - checkout
 
       - restore_cache:
-          keys:
-            - v1-dependencies-{{ checksum "build.gradle" }}
-            - v1-dependencies-
+        keys:
+          - v1-dependencies-{{ checksum "build.gradle" }}
+          - v1-dependencies-
 
       - run:
-          name: test
-          command: ./gradlew test
-          environment:
-            GRADLE_OPTS: -Dorg.gradle.daemon=false -Dorg.gradle.parallel=false -Xmx1G
+        name: test
+        command: ./gradlew test
 
       - run:
-          name: Save test results
-          command: |
-            mkdir -p ~/test-results/junit/
-            find . -type f -regex ".*/build/test-results/.*xml" -exec cp {} ~/test-results/junit/ \;
-          when: always
+        name: Save test results
+        command: |
+          mkdir -p ~/test-results/junit/
+          find . -type f -regex ".*/build/test-results/.*xml" -exec cp {} ~/test-results/junit/ \;
+        when: always
 
       - store_test_results:
-          name: Store test results
-          path: ~/test-results
+        name: Store test results
+        path: ~/test-results
 
       - run:
-          name: Save gradle reports
-          command: |
-            mkdir -p ~/reports/
-            tar cf - */build/reports | (cd ~/reports/; tar xf -)
-          when: always
+        name: Save gradle reports
+        command: |
+          mkdir -p ~/reports/
+          tar cf - */build/reports | (cd ~/reports/; tar xf -)
+        when: always
 
       - store_artifacts:
-          name: Store gradle reports
-          path: ~/reports
+        name: Store gradle reports
+        path: ~/reports
+
 workflows:
   build-check-and-test:
     jobs:
       - dependencies
       - checkjdk8:
-          requires:
-            - dependencies
-      - testjdk8:
-          requires:
-            - dependencies
+        requires:
+          - dependencies
+      - test:
+        executor: gradlejdk8
+        requires:
+          - dependencies
+      - test:
+        executor: gradlejdk11
+        requires:
+          - dependencies
+      - test:
+        executor: gradlejdk12
+        requires:
+          - dependencies
