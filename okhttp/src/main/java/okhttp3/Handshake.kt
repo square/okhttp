@@ -30,7 +30,7 @@ import javax.net.ssl.SSLSession
  * This value object describes a completed handshake. Use [ConnectionSpec] to set policy
  * for new handshakes.
  */
-class Handshake private constructor(
+data class Handshake private constructor(
   private val tlsVersion: TlsVersion,
   private val cipherSuite: CipherSuite,
   private val peerCertificates: List<Certificate>,
@@ -68,23 +68,6 @@ class Handshake private constructor(
     } else {
       null
     }
-  }
-
-  override fun equals(other: Any?): Boolean {
-    return other is Handshake
-        && tlsVersion == other.tlsVersion
-        && cipherSuite == other.cipherSuite
-        && peerCertificates == other.peerCertificates
-        && localCertificates == other.localCertificates
-  }
-
-  override fun hashCode(): Int {
-    var result = 17
-    result = 31 * result + tlsVersion.hashCode()
-    result = 31 * result + cipherSuite.hashCode()
-    result = 31 * result + peerCertificates.hashCode()
-    result = 31 * result + localCertificates.hashCode()
-    return result
   }
 
   override fun toString(): String {
