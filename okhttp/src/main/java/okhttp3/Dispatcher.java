@@ -199,8 +199,7 @@ public final class Dispatcher {
       isRunning = runningCallsCount() > 0;
     }
 
-    for (int i = 0, size = executableCalls.size(); i < size; i++) {
-      AsyncCall asyncCall = executableCalls.get(i);
+    for (AsyncCall asyncCall : executableCalls) {
       asyncCall.executeOn(executorService());
     }
 

@@ -514,8 +514,7 @@ public final class RealConnection extends Http2Connection.Listener implements Co
    * address.
    */
   private boolean routeMatchesAny(List<Route> candidates) {
-    for (int i = 0, size = candidates.size(); i < size; i++) {
-      Route candidate = candidates.get(i);
+    for (Route candidate : candidates) {
       if (candidate.proxy().type() == Proxy.Type.DIRECT
           && route.proxy().type() == Proxy.Type.DIRECT
           && route.socketAddress().equals(candidate.socketAddress())) {

@@ -130,8 +130,8 @@ class Huffman {
     Node node = root;
     int current = 0;
     int nbits = 0;
-    for (int i = 0; i < buf.length; i++) {
-      int b = buf[i] & 0xFF;
+    for (byte b1 : buf) {
+      int b = b1 & 0xFF;
       current = (current << 8) | b;
       nbits += 8;
       while (nbits >= 8) {

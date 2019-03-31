@@ -38,8 +38,7 @@ public final class JavaNetAuthenticator implements Authenticator {
     boolean proxyAuthorization = response.code() == 407;
     Proxy proxy = route.proxy();
 
-    for (int i = 0, size = challenges.size(); i < size; i++) {
-      Challenge challenge = challenges.get(i);
+    for (Challenge challenge : challenges) {
       if (!"Basic".equalsIgnoreCase(challenge.scheme())) continue;
 
       PasswordAuthentication auth;

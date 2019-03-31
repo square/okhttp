@@ -170,9 +170,7 @@ public final class RealConnectionPool {
 
     // Find either a connection to evict, or the time that the next eviction is due.
     synchronized (this) {
-      for (Iterator<RealConnection> i = connections.iterator(); i.hasNext(); ) {
-        RealConnection connection = i.next();
-
+      for (RealConnection connection : connections) {
         // If the connection is in use, keep searching.
         if (pruneAndGetAllocationCount(connection, now) > 0) {
           inUseConnectionCount++;

@@ -468,8 +468,7 @@ final class Hpack {
         writeInt(maxDynamicTableByteCount, PREFIX_5_BITS, 0x20);
       }
 
-      for (int i = 0, size = headerBlock.size(); i < size; i++) {
-        Header header = headerBlock.get(i);
+      for (Header header : headerBlock) {
         ByteString name = header.name.toAsciiLowercase();
         ByteString value = header.value;
         int headerIndex = -1;

@@ -129,8 +129,7 @@ public final class MultipartBody extends RequestBody {
       sink = byteCountBuffer = new Buffer();
     }
 
-    for (int p = 0, partCount = parts.size(); p < partCount; p++) {
-      Part part = parts.get(p);
+    for (Part part : parts) {
       Headers headers = part.headers;
       RequestBody body = part.body;
 
