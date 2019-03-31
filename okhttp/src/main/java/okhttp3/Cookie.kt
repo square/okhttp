@@ -39,7 +39,7 @@ import java.util.regex.Pattern
  *
  * [chromium_extension]: https://code.google.com/p/chromium/issues/detail?id=232693
  */
-class Cookie private constructor(
+data class Cookie private constructor(
   private val name: String,
   private val value: String,
   private val expiresAt: Long,
@@ -240,34 +240,6 @@ class Cookie private constructor(
 
       return toString()
     }
-  }
-
-  override fun equals(other: Any?): Boolean {
-    if (other !is Cookie) return false
-    val that = other as Cookie?
-    return (that!!.name == name
-        && that.value == value
-        && that.domain == domain
-        && that.path == path
-        && that.expiresAt == expiresAt
-        && that.secure == secure
-        && that.httpOnly == httpOnly
-        && that.persistent == persistent
-        && that.hostOnly == hostOnly)
-  }
-
-  override fun hashCode(): Int {
-    var hash = 17
-    hash = 31 * hash + name.hashCode()
-    hash = 31 * hash + value.hashCode()
-    hash = 31 * hash + domain.hashCode()
-    hash = 31 * hash + path.hashCode()
-    hash = 31 * hash + (expiresAt xor expiresAt.ushr(32)).toInt()
-    hash = 31 * hash + if (secure) 0 else 1
-    hash = 31 * hash + if (httpOnly) 0 else 1
-    hash = 31 * hash + if (persistent) 0 else 1
-    hash = 31 * hash + if (hostOnly) 0 else 1
-    return hash
   }
 
   companion object {
