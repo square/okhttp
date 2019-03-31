@@ -24,9 +24,10 @@ package okhttp3
  *
  * As persistence, implementations of this interface must also provide storage of cookies. Simple
  * implementations may store cookies in memory; sophisticated ones may use the file system or
- * database to hold accepted cookies. The [cookie storage
- * model](https://tools.ietf.org/html/rfc6265#section-5.3) specifies policies for updating and
- * expiring cookies.
+ * database to hold accepted cookies. The [cookie storage model][rfc_6265_53] specifies policies for
+ * updating and expiring cookies.
+ *
+ * [rfc_6265_53]: https://tools.ietf.org/html/rfc6265#section-5.3
  */
 interface CookieJar {
   /**

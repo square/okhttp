@@ -49,8 +49,7 @@ import kotlin.DeprecationLevel.ERROR
 /**
  * Factory for [calls][Call], which can be used to send HTTP requests and read their responses.
  *
- * OkHttpClients Should Be Shared
- * ------------------------------
+ * ## OkHttpClients Should Be Shared
  *
  * OkHttp performs best when you create a single `OkHttpClient` instance and reuse it for all of
  * your HTTP calls. This is because each client holds its own connection pool and thread pools.
@@ -74,8 +73,7 @@ import kotlin.DeprecationLevel.ERROR
  *     .build();
  * ```
  *
- * Customize Your Client With newBuilder()
- * ---------------------------------------
+ * ## Customize Your Client With newBuilder()
  *
  * You can customize a shared OkHttpClient instance with [newBuilder]. This builds a client that
  * shares the same connection pool, thread pools, and configuration. Use the builder methods to
@@ -90,8 +88,7 @@ import kotlin.DeprecationLevel.ERROR
  * Response response = eagerClient.newCall(request).execute();
  * ```
  *
- * Shutdown Isn't Necessary
- * ------------------------
+ * ## Shutdown Isn't Necessary
  *
  * The threads and connections that are held will be released automatically if they remain idle. But
  * if you are writing a application that needs to aggressively release unused resources you may do
@@ -454,8 +451,8 @@ open class OkHttpClient internal constructor(
      * If the server does not respond to each ping with a pong within `interval`, this client will
      * assume that connectivity has been lost. When this happens on a web socket the connection is
      * canceled and its listener is [notified][WebSocketListener.onFailure]. When it happens on an
-     * HTTP/2 connection the connection is closed and any calls it is carrying [will fail with an
-     * IOException][java.io.IOException].
+     * HTTP/2 connection the connection is closed and any calls it is carrying
+     * [will fail with an IOException][java.io.IOException].
      *
      * The default value of 0 disables client-initiated pings.
      */
@@ -471,8 +468,8 @@ open class OkHttpClient internal constructor(
      * If the server does not respond to each ping with a pong within `interval`, this client will
      * assume that connectivity has been lost. When this happens on a web socket the connection is
      * canceled and its listener is [notified][WebSocketListener.onFailure]. When it happens on an
-     * HTTP/2 connection the connection is closed and any calls it is carrying [will fail with an
-     * IOException][java.io.IOException].
+     * HTTP/2 connection the connection is closed and any calls it is carrying
+     * [will fail with an IOException][java.io.IOException].
      *
      * The default value of 0 disables client-initiated pings.
      */
@@ -694,19 +691,23 @@ open class OkHttpClient internal constructor(
      *
      * The following protocols are currently supported:
      *
-     * * [http/1.1](http://www.w3.org/Protocols/rfc2616/rfc2616.html)
-     * * [h2](https://tools.ietf.org/html/rfc7540)
-     * * [h2 with prior knowledge(cleartext only)](https://tools.ietf.org/html/rfc7540#section-3.4)
+     * * [http/1.1][rfc_2616]
+     * * [h2][rfc_7540]
+     * * [h2 with prior knowledge(cleartext only)][rfc_7540_34]
      *
      * **This is an evolving set.** Future releases include support for transitional
      * protocols. The http/1.1 transport will never be dropped.
      *
-     * If multiple protocols are specified,
-     * [ALPN](http://tools.ietf.org/html/draft-ietf-tls-applayerprotoneg) will be used to negotiate
-     * a transport. Protocol negotiation is only attempted for HTTPS URLs.
+     * If multiple protocols are specified, [ALPN][alpn] will be used to negotiate a transport.
+     * Protocol negotiation is only attempted for HTTPS URLs.
      *
      * [Protocol.HTTP_1_0] is not supported in this set. Requests are initiated with `HTTP/1.1`. If
      * the server responds with `HTTP/1.0`, that will be exposed by [Response.protocol].
+     *
+     * [alpn]: http://tools.ietf.org/html/draft-ietf-tls-applayerprotoneg
+     * [rfc_2616]: http://www.w3.org/Protocols/rfc2616/rfc2616.html
+     * [rfc_7540]: https://tools.ietf.org/html/rfc7540
+     * [rfc_7540_34]: https://tools.ietf.org/html/rfc7540#section-3.4
      *
      * @param protocols the protocols to use, in order of preference. If the list contains
      *     [Protocol.H2_PRIOR_KNOWLEDGE] then that must be the only protocol and HTTPS URLs will not

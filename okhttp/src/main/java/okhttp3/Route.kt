@@ -51,7 +51,9 @@ class Route(
 
   /**
    * Returns true if this route tunnels HTTPS through an HTTP proxy.
-   * See [RFC 2817, Section 5.2](http://www.ietf.org/rfc/rfc2817.txt).
+   * See [RFC 2817, Section 5.2][rfc_2817].
+   *
+   * [rfc_2817]: http://www.ietf.org/rfc/rfc2817.txt
    */
   fun requiresTunnel(): Boolean {
     return address.sslSocketFactory() != null && proxy.type() == Proxy.Type.HTTP

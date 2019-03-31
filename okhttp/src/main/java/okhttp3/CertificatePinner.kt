@@ -27,19 +27,16 @@ import javax.net.ssl.SSLPeerUnverifiedException
  * Constrains which certificates are trusted. Pinning certificates defends against attacks on
  * certificate authorities. It also prevents connections through man-in-the-middle certificate
  * authorities either known or unknown to the application's user.
+ * This class currently pins a certificate's Subject Public Key Info as described on
+ * [Adam Langley's Weblog][langley]. Pins are either base64 SHA-256 hashes as in
+ * [HTTP Public Key Pinning (HPKP)][rfc_7469] or SHA-1 base64 hashes as in Chromium's
+ * [static certificates][static_certificates].
  *
- * This class currently pins a certificate's Subject Public Key Info as described on [Adam Langley's
- * Weblog](http://goo.gl/AIx3e5). Pins are either base64 SHA-256 hashes as in [HTTP Public Key
- * Pinning (HPKP)](http://tools.ietf.org/html/rfc7469) or SHA-1 base64 hashes as in Chromium's
- * [static certificates](http://goo.gl/XDh6je).
- *
- * Setting up Certificate Pinning
- * ------------------------------
+ * ## Setting up Certificate Pinning
  *
  * The easiest way to pin a host is turn on pinning with a broken configuration and read the
  * expected configuration when the connection fails. Be sure to do this on a trusted network, and
- * without man-in-the-middle tools like [Charles](http://charlesproxy.com) or
- * [Fiddler](http://fiddlertool.com).
+ * without man-in-the-middle tools like [Charles][charles] or [Fiddler][fiddler].
  *
  * For example, to pin `https://publicobject.com`, start with a broken configuration:
  *
@@ -104,8 +101,7 @@ import javax.net.ssl.SSLPeerUnverifiedException
  * For example: `*.example.com` pinned with `pin1` and `a.example.com` pinned with `pin2`, to check
  * `a.example.com` both `pin1` and `pin2` will be used.
  *
- * Warning: Certificate Pinning is Dangerous!
- * ------------------------------------------
+ * ## Warning: Certificate Pinning is Dangerous!
  *
  * Pinning certificates limits your server team's abilities to update their TLS certificates. By
  * pinning certificates, you take on additional operational complexity and limit your ability to
@@ -117,8 +113,14 @@ import javax.net.ssl.SSLPeerUnverifiedException
  * [CertificatePinner] can not be used to pin self-signed certificate if such certificate is not
  * accepted by [javax.net.ssl.TrustManager].
  *
- * @see [OWASP: Certificate and Public Key
- *     Pinning](https://www.owasp.org/index.php/Certificate_and_Public_Key_Pinning)
+ * See also [OWASP: Certificate and Public Key Pinning][owasp].
+ *
+ * [charles]: http://charlesproxy.com
+ * [fiddler]: http://fiddlertool.com
+ * [langley]: http://goo.gl/AIx3e5
+ * [owasp]: https://www.owasp.org/index.php/Certificate_and_Public_Key_Pinning
+ * [rfc_7469]: http://tools.ietf.org/html/rfc7469
+ * [static_certificates]: http://goo.gl/XDh6je
  */
 class CertificatePinner internal constructor(
   private val pins: Set<Pin>,
