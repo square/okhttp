@@ -317,12 +317,11 @@ class Response internal constructor(
     }
 
     private fun checkSupportResponse(name: String, response: Response?) {
-      when {
-        response == null -> return
-        response.body != null -> throw IllegalArgumentException("$name.body != null")
-        response.networkResponse != null -> throw IllegalArgumentException("$name.networkResponse != null")
-        response.cacheResponse != null -> throw IllegalArgumentException("$name.cacheResponse != null")
-        response.priorResponse != null -> throw IllegalArgumentException("$name.priorResponse != null")
+      response?.apply {
+        requireNotNull(body) { "$name.body != null" }
+        requireNotNull(networkResponse) { "$name.networkResponse != null" }
+        requireNotNull(cacheResponse) { "$name.cacheResponse != null" }
+        requireNotNull(priorResponse) { "$name.priorResponse != null" }
       }
     }
 
@@ -332,9 +331,8 @@ class Response internal constructor(
     }
 
     private fun checkPriorResponse(response: Response?) {
-      when {
-        response == null -> return
-        response.body != null -> throw IllegalArgumentException("priorResponse.body != null")
+      response?.apply {
+        requireNotNull(body) { "priorResponse.body != null" }
       }
     }
 

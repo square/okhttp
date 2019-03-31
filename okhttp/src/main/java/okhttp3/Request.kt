@@ -191,12 +191,17 @@ class Request internal constructor(
     open fun patch(body: RequestBody) = method("PATCH", body)
 
     open fun method(method: String, body: RequestBody?): Builder = apply {
-      if (method.isEmpty()) throw IllegalArgumentException("method.isEmpty() == true")
-      if (body != null && !HttpMethod.permitsRequestBody(method)) {
-        throw IllegalArgumentException("method $method must not have a request body.")
+      require(method.isNotEmpty()) {
+        "method.isEmpty() == true"
       }
-      if (body == null && HttpMethod.requiresRequestBody(method)) {
-        throw IllegalArgumentException("method $method must have a request body.")
+      if (body == null) {
+        require(!HttpMethod.requiresRequestBody(method)) {
+          "method $method must have a request body."
+        }
+      } else {
+        require(HttpMethod.permitsRequestBody(method)) {
+          "method $method must not have a request body."
+        }
       }
       this.method = method
       this.body = body
