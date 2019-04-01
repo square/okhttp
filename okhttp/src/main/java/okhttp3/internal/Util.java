@@ -645,7 +645,7 @@ public final class Util {
   }
 
   /**
-   * Returns the system property, or defaultValue if the system property is null or
+   * Returns the system property, or {@code defaultValue} if the system property is null or
    * cannot be read (e.g. because of security policy restrictions).
    */
   public static String getSystemProperty(String key, @Nullable String defaultValue) {
