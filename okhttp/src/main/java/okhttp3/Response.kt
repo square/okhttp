@@ -54,9 +54,8 @@ class Response internal constructor(
   internal val receivedResponseAtMillis: Long = builder.receivedResponseAtMillis
   internal val exchange: Exchange? = builder.exchange
 
-  private val cacheControl: CacheControl by lazy {
-    CacheControl.parse(headers)
-  }
+  @Volatile
+  private var cacheControl: CacheControl? = null // Lazily initialized.
 
   /**
    * The wire-level request that initiated this HTTP response. This is not necessarily the same
@@ -192,7 +191,9 @@ class Response internal constructor(
    * Returns the cache control directives for this response. This is never null, even if this
    * response contains no `Cache-Control` header.
    */
-  fun cacheControl(): CacheControl = cacheControl
+  fun cacheControl(): CacheControl = cacheControl ?: CacheControl.parse(headers).also {
+    cacheControl = it
+  }
 
   /**
    * Returns a [timestamp][System.currentTimeMillis] taken immediately before OkHttp

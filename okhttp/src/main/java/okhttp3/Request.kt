@@ -32,9 +32,8 @@ class Request internal constructor(
   internal val body: RequestBody? = builder.body
   internal val tags: Map<Class<*>, Any> = Util.immutableMap(builder.tags)
 
-  private val cacheControl: CacheControl by lazy {
-    CacheControl.parse(headers)
-  }
+  @Volatile
+  private var cacheControl: CacheControl? = null // Lazily initialized
 
   val isHttps: Boolean
     get() = url.isHttps
@@ -73,7 +72,11 @@ class Request internal constructor(
    * Returns the cache control directives for this response. This is never null, even if this
    * response contains no `Cache-Control` header.
    */
-  fun cacheControl(): CacheControl = cacheControl
+  fun cacheControl(): CacheControl {
+    return cacheControl ?: CacheControl.parse(headers).also {
+      this.cacheControl = it
+    }
+  }
 
   override fun toString(): String = "Request{method=$method, url=$url, tags=$tags}"
 
