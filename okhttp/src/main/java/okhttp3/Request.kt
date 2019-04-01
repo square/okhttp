@@ -231,7 +231,7 @@ class Request internal constructor(
       }
     }
 
-    open fun build(): Request =  Request(
+    open fun build(): Request = Request(
         checkNotNull(url) { "url == null" },
         this
     )
