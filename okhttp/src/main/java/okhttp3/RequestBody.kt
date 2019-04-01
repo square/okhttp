@@ -21,6 +21,7 @@ import okio.ByteString
 import okio.source
 import java.io.File
 import java.io.IOException
+import java.nio.charset.Charset
 import kotlin.text.Charsets.UTF_8
 
 abstract class RequestBody {
@@ -95,9 +96,17 @@ abstract class RequestBody {
      */
     @JvmStatic
     fun create(contentType: MediaType?, content: String): RequestBody {
-      val (charset, finalContentType) = contentType?.charset()
-          ?.let { it to contentType }
-          ?: UTF_8 to MediaType.parse("$contentType; charset=utf-8")
+      var charset: Charset = UTF_8
+      var finalContentType: MediaType? = contentType
+      if (contentType != null) {
+        val resolvedCharset = contentType.charset()
+        if (resolvedCharset == null) {
+          charset = UTF_8
+          finalContentType = MediaType.parse("$contentType; charset=utf-8")
+        } else {
+          charset = resolvedCharset
+        }
+      }
       val bytes = content.toByteArray(charset)
       return create(finalContentType, bytes)
     }

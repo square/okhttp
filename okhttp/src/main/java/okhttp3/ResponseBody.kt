@@ -209,9 +209,17 @@ abstract class ResponseBody : Closeable {
      */
     @JvmStatic
     fun create(contentType: MediaType?, content: String): ResponseBody {
-      val (charset, finalContentType) = contentType?.charset()
-          ?.let { it to contentType }
-          ?: UTF_8 to MediaType.parse("$contentType; charset=utf-8")
+      var charset: Charset = UTF_8
+      var finalContentType: MediaType? = contentType
+      if (contentType != null) {
+        val resolvedCharset = contentType.charset()
+        if (resolvedCharset == null) {
+          charset = UTF_8
+          finalContentType = MediaType.parse("$contentType; charset=utf-8")
+        } else {
+          charset = resolvedCharset
+        }
+      }
       val buffer = Buffer().writeString(content, charset)
       return create(finalContentType, buffer.size, buffer)
     }
