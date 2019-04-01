@@ -122,7 +122,7 @@ import javax.net.ssl.SSLPeerUnverifiedException
  * [rfc_7469]: http://tools.ietf.org/html/rfc7469
  * [static_certificates]: http://goo.gl/XDh6je
  */
-class CertificatePinner internal constructor(
+data class CertificatePinner internal constructor(
   private val pins: Set<Pin>,
   private val certificateChainCleaner: CertificateChainCleaner?
 ) {
@@ -221,19 +221,6 @@ class CertificatePinner internal constructor(
     } else {
       CertificatePinner(pins, certificateChainCleaner)
     }
-  }
-
-  override fun equals(other: Any?): Boolean {
-    if (other === this) return true
-    return other is CertificatePinner
-        && certificateChainCleaner == other.certificateChainCleaner
-        && pins == other.pins
-  }
-
-  override fun hashCode(): Int {
-    var result = Objects.hashCode(certificateChainCleaner)
-    result = 31 * result + pins.hashCode()
-    return result
   }
 
   internal class Pin(
