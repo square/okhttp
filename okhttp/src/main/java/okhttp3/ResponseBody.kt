@@ -32,8 +32,7 @@ import kotlin.text.Charsets.UTF_8
  * response body. Each response body is supported by an active connection to the webserver. This
  * imposes both obligations and limits on the client application.
  *
- * The response body must be closed.
- * ---------------------------------
+ * ### The response body must be closed.
  *
  * Each response body is backed by a limited resource like a socket (live network responses) or
  * an open file (for cached responses). Failing to close the response body will leak resources and
@@ -85,8 +84,7 @@ import kotlin.text.Charsets.UTF_8
  * cases the consuming thread must call [close] when it has finished reading the response
  * body.
  *
- * The response body can be consumed only once.
- * --------------------------------------------
+ * ### The response body can be consumed only once.
  *
  * This class may be used to stream very large responses. For example, it is possible to use this
  * class to read a response that is larger than the entire memory allocated to the current process.

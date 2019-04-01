@@ -45,8 +45,7 @@ abstract class RequestBody {
    *
    * This method returns false unless it is overridden by a subclass.
    *
-   * Duplex Transmission
-   * -------------------
+   * ### Duplex Transmission
    *
    * With regular HTTP calls the request always completes sending before the response may begin
    * receiving. With duplex the request and response may be interleaved! That is, request body bytes
