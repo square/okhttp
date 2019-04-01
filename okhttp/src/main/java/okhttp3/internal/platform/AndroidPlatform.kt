@@ -348,7 +348,7 @@ class AndroidPlatform(
    * much faster to initialize than [BasicTrustRootIndex] because it doesn't need to load and
    * index trusted CA certificates.
    */
-  internal class CustomTrustRootIndex(
+  internal data class CustomTrustRootIndex(
     private val trustManager: X509TrustManager,
     private val findByIssuerAndSignatureMethod: Method
   ) : TrustRootIndex {
@@ -363,21 +363,6 @@ class AndroidPlatform(
       } catch (e: InvocationTargetException) {
         null
       }
-    }
-
-    override fun equals(other: Any?): Boolean {
-      if (other === this) {
-        return true
-      }
-      if (other !is CustomTrustRootIndex) {
-        return false
-      }
-      val that = other as CustomTrustRootIndex?
-      return trustManager == that!!.trustManager && findByIssuerAndSignatureMethod == that.findByIssuerAndSignatureMethod
-    }
-
-    override fun hashCode(): Int {
-      return trustManager.hashCode() + 31 * findByIssuerAndSignatureMethod.hashCode()
     }
   }
 
