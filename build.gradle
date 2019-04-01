@@ -148,6 +148,7 @@ subprojects { project ->
       packageListUrl = new URL("https://square.github.io/okio/2.x/okio/jvm/package-list")
     }
   }
+  jdkVersion = 8
 }
 
 tasks.wrapper {
