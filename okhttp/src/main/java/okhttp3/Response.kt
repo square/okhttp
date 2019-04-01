@@ -318,10 +318,10 @@ class Response internal constructor(
 
     private fun checkSupportResponse(name: String, response: Response?) {
       response?.apply {
-        requireNotNull(body) { "$name.body != null" }
-        requireNotNull(networkResponse) { "$name.networkResponse != null" }
-        requireNotNull(cacheResponse) { "$name.cacheResponse != null" }
-        requireNotNull(priorResponse) { "$name.priorResponse != null" }
+        require(body == null) { "$name.body != null" }
+        require(networkResponse == null) { "$name.networkResponse != null" }
+        require(cacheResponse == null) { "$name.cacheResponse != null" }
+        require(priorResponse == null) { "$name.priorResponse != null" }
       }
     }
 
@@ -332,7 +332,7 @@ class Response internal constructor(
 
     private fun checkPriorResponse(response: Response?) {
       response?.apply {
-        requireNotNull(body) { "priorResponse.body != null" }
+        require(body == null) { "priorResponse.body != null" }
       }
     }
 
