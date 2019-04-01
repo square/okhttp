@@ -104,8 +104,8 @@ abstract class ResponseBody : Closeable {
   abstract fun contentType(): MediaType?
 
   /**
-   * Returns the number of bytes in that will returned by [bytes], or [byteStream], or
-   * `-1` if unknown.
+   * Returns the number of bytes in that will returned by [bytes], or [byteStream], or -1 if
+   * unknown.
    */
   abstract fun contentLength(): Long
 
@@ -145,7 +145,7 @@ abstract class ResponseBody : Closeable {
    * Otherwise if the response has a `Content-Type` header that specifies a charset, that is used
    * to determine the charset of the response bytes.
    *
-   * Otherwise the response bytes are decoded as `UTF-8`.
+   * Otherwise the response bytes are decoded as UTF-8.
    */
   fun charStream(): Reader = reader ?: BomAwareReader(source(), charset()).also {
     reader = it
@@ -161,7 +161,7 @@ abstract class ResponseBody : Closeable {
    * Otherwise if the response has a `Content-Type` header that specifies a charset, that is used
    * to determine the charset of the response bytes.
    *
-   * Otherwise the response bytes are decoded as `UTF-8`.
+   * Otherwise the response bytes are decoded as UTF-8.
    *
    * This method loads entire response body into memory. If the response body is very large this
    * may trigger an [OutOfMemoryError]. Prefer to stream the response body if this is a
@@ -207,7 +207,7 @@ abstract class ResponseBody : Closeable {
 
     /**
      * Returns a new response body that transmits [content]. If `contentType` is non-null
-     * and lacks a charset, this will use `UTF-8`.
+     * and lacks a charset, this will use UTF-8.
      */
     @JvmStatic
     fun create(contentType: MediaType?, content: String): ResponseBody {

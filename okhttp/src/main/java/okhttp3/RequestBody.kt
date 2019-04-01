@@ -29,8 +29,8 @@ abstract class RequestBody {
   abstract fun contentType(): MediaType?
 
   /**
-   * Returns the number of bytes that will be written to `sink` in a call to [writeTo],
-   * or `-1` if that count is unknown.
+   * Returns the number of bytes that will be written to sink in a call to [writeTo],
+   * or -1 if that count is unknown.
    */
   @Throws(IOException::class)
   open fun contentLength(): Long = -1
@@ -91,7 +91,7 @@ abstract class RequestBody {
 
     /**
      * Returns a new request body that transmits [content]. If [contentType] is non-null
-     * and lacks a charset, this will use `UTF-8`.
+     * and lacks a charset, this will use UTF-8.
      */
     @JvmStatic
     fun create(contentType: MediaType?, content: String): RequestBody {
