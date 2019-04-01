@@ -198,8 +198,7 @@ internal class RealCall private constructor(
   }
 
   companion object {
-    // TODO(egorand): Remove @JvmStatic once OkHttpClient.java is converted to Kotlin
-    @JvmStatic fun newRealCall(
+    fun newRealCall(
       client: OkHttpClient,
       originalRequest: Request,
       forWebSocket: Boolean
