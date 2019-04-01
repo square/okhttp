@@ -53,8 +53,7 @@ abstract class RequestBody {
    *
    * Though any call may be initiated as a duplex call, only web servers that are specially
    * designed for this nonstandard interaction will use it. As of 2019-01, the only widely-used
-   * implementation of this pattern is
-   * [gRPC](https://github.com/grpc/grpc/blob/master/doc/PROTOCOL-HTTP2.md).
+   * implementation of this pattern is [gRPC][grpc].
    *
    * Because the encoding of interleaved data is not well-defined for HTTP/1, duplex request
    * bodies may only be used with HTTP/2. Calls to HTTP/1 servers will fail before the HTTP request
@@ -69,6 +68,8 @@ abstract class RequestBody {
    * reads of the [ResponseBody]. For duplex request bodies, [writeTo] should return
    * quickly, possibly by handing off the provided request body to another thread to perform
    * writing.
+   *
+   * [grpc]: https://github.com/grpc/grpc/blob/master/doc/PROTOCOL-HTTP2.md
    */
   open val isDuplex: Boolean = false
 
