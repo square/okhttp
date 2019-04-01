@@ -98,10 +98,11 @@ class Request internal constructor(
       this.url = request.url
       this.method = request.method
       this.body = request.body
-      this.tags = if (request.tags.isEmpty())
+      this.tags = if (request.tags.isEmpty()) {
         mutableMapOf()
-      else
+      } else {
         request.tags.toMutableMap()
+      }
       this.headers = request.headers.newBuilder()
     }
 
