@@ -128,7 +128,7 @@ class Request internal constructor(
         else -> url
       }
 
-      return url(HttpUrl[finalUrl])
+      return url(HttpUrl.get(finalUrl))
     }
 
     /**
@@ -136,7 +136,7 @@ class Request internal constructor(
      *
      * @throws IllegalArgumentException if the scheme of [url] is not `http` or `https`.
      */
-    open fun url(url: URL) = url(HttpUrl[url.toString()])
+    open fun url(url: URL) = url(HttpUrl.get(url.toString()))
 
     /**
      * Sets the header named [name] to [value]. If this request already has any headers
