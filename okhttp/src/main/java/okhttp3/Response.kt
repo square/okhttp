@@ -86,7 +86,7 @@ class Response internal constructor(
   fun message(): String = message
 
   /**
-   * Returns the TLS handshake of the connection that carried this response, or `null` if the
+   * Returns the TLS handshake of the connection that carried this response, or null if the
    * response was received without TLS.
    */
   fun handshake(): Handshake? = handshake
@@ -130,7 +130,7 @@ class Response internal constructor(
    * from [Call.execute]. Response bodies must be [closed][ResponseBody] and may
    * be consumed only once.
    *
-   * This always returns `null` on responses returned from [cacheResponse], [networkResponse],
+   * This always returns null on responses returned from [cacheResponse], [networkResponse],
    * and [priorResponse].
    */
   fun body(): ResponseBody? = body
@@ -145,14 +145,14 @@ class Response internal constructor(
     }
 
   /**
-   * Returns the raw response received from the network. Will be `null` if this response didn't use
+   * Returns the raw response received from the network. Will be null if this response didn't use
    * the network, such as when the response is fully cached. The body of the returned response
    * should not be read.
    */
   fun networkResponse(): Response? = networkResponse
 
   /**
-   * Returns the raw response received from the cache. Will be `null` if this response didn't use
+   * Returns the raw response received from the cache. Will be null if this response didn't use
    * the cache. For conditional get requests the cache response and network response may both be
    * non-null. The body of the returned response should not be read.
    */
@@ -160,7 +160,7 @@ class Response internal constructor(
 
   /**
    * Returns the response for the HTTP redirect or authorization challenge that triggered this
-   * response, or `null` if this response wasn't triggered by an automatic retry. The body of the
+   * response, or null if this response wasn't triggered by an automatic retry. The body of the
    * returned response should not be read because it has already been consumed by the redirecting
    * client.
    */
@@ -173,7 +173,7 @@ class Response internal constructor(
    * Otherwise this returns an empty list of challenges.
    *
    * If a challenge uses the `token68` variant instead of auth params, there is exactly one
-   * auth param in the challenge at key `null`. Invalid headers and challenges are ignored.
+   * auth param in the challenge at key null. Invalid headers and challenges are ignored.
    * No semantic validation is done, for example that `Basic` auth must have a `realm`
    * auth param, this is up to the caller that interprets these challenges.
    */

@@ -20,7 +20,7 @@ import okhttp3.internal.http.HttpMethod
 import java.net.URL
 
 /**
- * An HTTP request. Instances of this class are immutable if their [body] is `null` or itself
+ * An HTTP request. Instances of this class are immutable if their [body] is null or itself
  * immutable.
  */
 class Request internal constructor(
@@ -52,17 +52,17 @@ class Request internal constructor(
   fun body(): RequestBody? = body
 
   /**
-   * Returns the tag attached with `Object.class` as a key, or `null` if no tag is attached with
+   * Returns the tag attached with `Object.class` as a key, or null if no tag is attached with
    * that key.
    *
-   * Prior to OkHttp 3.11, this method never returned `null` if no tag was attached. Instead it
+   * Prior to OkHttp 3.11, this method never returned null if no tag was attached. Instead it
    * returned either this request, or the request upon which this request was derived with
    * [newBuilder].
    */
   fun tag(): Any? = tag(Any::class.java)
 
   /**
-   * Returns the tag attached with [type] as a key, or `null` if no tag is attached with that
+   * Returns the tag attached with [type] as a key, or null if no tag is attached with that
    * key.
    */
   fun <T> tag(type: Class<out T>): T? = type.cast(tags[type])
@@ -70,7 +70,7 @@ class Request internal constructor(
   fun newBuilder(): Builder = Builder(this)
 
   /**
-   * Returns the cache control directives for this response. This is never `null`, even if this
+   * Returns the cache control directives for this response. This is never null, even if this
    * response contains no `Cache-Control` header.
    */
   fun cacheControl(): CacheControl = cacheControl
@@ -110,7 +110,7 @@ class Request internal constructor(
      * Sets the URL target of this request.
      *
      * @throws IllegalArgumentException if [url] is not a valid HTTP or HTTPS URL. Avoid this
-     * exception by calling [HttpUrl.parse]; it returns `null` for invalid URLs.
+     * exception by calling [HttpUrl.parse]; it returns null for invalid URLs.
      */
     open fun url(url: String): Builder {
       // Silently replace web socket URLs with HTTP URLs.
@@ -212,7 +212,7 @@ class Request internal constructor(
 
     /**
      * Attaches [tag] to the request using [type] as a key. Tags can be read from a
-     * request using [Request.tag]. Use `null` to remove any existing tag assigned for [type].
+     * request using [Request.tag]. Use null to remove any existing tag assigned for [type].
      *
      * Use this API to attach timing, debugging, or other application data to a request so that
      * you may read it in interceptors, event listeners, or callbacks.
