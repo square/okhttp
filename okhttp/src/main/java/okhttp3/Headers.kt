@@ -129,7 +129,7 @@ class Headers private constructor(
   }
 
   /**
-   * Returns true if `other` is a `Headers` object with the same heades, with the same casing, in
+   * Returns true if `other` is a `Headers` object with the same headers, with the same casing, in
    * the same order. Note that two headers instances may be *semantically* equal but not equal
    * according to this method. In particular, none of the following sets of headers are equal
    * according to this method:
