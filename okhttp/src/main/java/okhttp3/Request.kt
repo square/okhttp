@@ -136,7 +136,6 @@ class Request internal constructor(
      *
      * @throws IllegalArgumentException if the scheme of [url] is not `http` or `https`.
      */
-    // Code review TODO - this never checked the scheme before like the doc says. Should it?
     open fun url(url: URL) = url(HttpUrl[url.toString()])
 
     /**
