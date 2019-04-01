@@ -61,7 +61,7 @@ abstract class RequestBody {
    * is transmitted. If you cannot ensure that your client and server both support HTTP/2, do not
    * use this feature.
    *
-   * Duplex APIs
+   * ### Duplex APIs
    *
    * With regular request bodies it is not legal to write bytes to the sink passed to
    * [RequestBody.writeTo] after that method returns. For duplex requests bodies that condition is
