@@ -114,7 +114,7 @@ class Request internal constructor(
      * Sets the URL target of this request.
      *
      * @throws IllegalArgumentException if [url] is not a valid HTTP or HTTPS URL. Avoid this
-     * exception by calling [HttpUrl.parse]; it returns null for invalid URLs.
+     *     exception by calling [HttpUrl.parse]; it returns null for invalid URLs.
      */
     open fun url(url: String): Builder {
       // Silently replace web socket URLs with HTTP URLs.
