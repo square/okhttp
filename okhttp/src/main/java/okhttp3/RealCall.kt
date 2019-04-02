@@ -38,8 +38,7 @@ internal class RealCall private constructor(
   val client: OkHttpClient,
   /** The application's original request unadulterated by redirects or auth headers.  */
   val originalRequest: Request,
-  // TODO(egorand): Remove @JvmField once Dispatcher.java is converted to Kotlin
-  @JvmField val forWebSocket: Boolean
+  val forWebSocket: Boolean
 ) : Call {
   /**
    * There is a cycle between the [Call] and [Transmitter] that makes this awkward.
