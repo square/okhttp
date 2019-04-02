@@ -1,14 +1,14 @@
 # Check https://circleci.com/docs/2.0/language-java/ for more details
 version: 2.1
 jobs:
-  dependencies:
+  compile:
     docker:
       - image: circleci/openjdk:8u171-jdk
 
     working_directory: ~/repo
 
     environment:
-      JVM_OPTS: -Xmx1g
+      JVM_OPTS: -Xmx768m
       TERM: dumb
 
     steps:
@@ -16,19 +16,21 @@ jobs:
 
       - restore_cache:
           keys:
-            - v1-dependencies-{{ checksum "build.gradle" }}
-            - v1-dependencies-
+            - v3-{{ checksum "build.gradle" }}-{{ .Branch }}
+            - v3-{{ checksum "build.gradle" }}-master
+            - v3-{{ checksum "build.gradle" }}
 
       - run:
           name: dependencies
-          command: ./gradlew downloadDependencies
+          command: ./gradlew --parallel --build-cache downloadDependencies testClasses
           environment:
-            GRADLE_OPTS: -Dorg.gradle.daemon=false -Dorg.gradle.parallel=false -Xmx1G
+            GRADLE_OPTS: -Dorg.gradle.daemon=false -Dorg.gradle.workers.max=3 -Xmx768m
 
       - save_cache:
           paths:
             - ~/.gradle/caches
-          key: v1-dependencies-{{ checksum "build.gradle" }}
+            - ~/.gradle/wrapper
+          key: v3-{{ checksum "build.gradle" }}-{{ .Branch }}
 
   checkjdk8:
     docker:
@@ -45,14 +47,15 @@ jobs:
 
       - restore_cache:
           keys:
-            - v1-dependencies-{{ checksum "build.gradle" }}
-            - v1-dependencies-
+            - v3-{{ checksum "build.gradle" }}-{{ .Branch }}
+            - v3-{{ checksum "build.gradle" }}-master
+            - v3-{{ checksum "build.gradle" }}
 
       - run:
           name: Run checks
-          command: ./gradlew check -x test
+          command: ./gradlew --parallel --build-cache check -x test
           environment:
-            GRADLE_OPTS: -Dorg.gradle.daemon=false -Dorg.gradle.parallel=false -Xmx1G
+            GRADLE_OPTS: -Dorg.gradle.daemon=false -Dorg.gradle.workers.max=3 -Xmx1G
 
       - run:
           name: Save gradle reports
@@ -80,14 +83,22 @@ jobs:
 
       - restore_cache:
           keys:
-            - v1-dependencies-{{ checksum "build.gradle" }}
-            - v1-dependencies-
+            - v3-{{ checksum "build.gradle" }}-{{ .Branch }}-testjdk8
+            - v3-{{ checksum "build.gradle" }}-{{ .Branch }}
+            - v3-{{ checksum "build.gradle" }}-master
+            - v3-{{ checksum "build.gradle" }}
 
       - run:
           name: test
-          command: ./gradlew test
+          command: ./gradlew --parallel --build-cache test
           environment:
-            GRADLE_OPTS: -Dorg.gradle.daemon=false -Dorg.gradle.parallel=false -Xmx1G
+            GRADLE_OPTS: -Dorg.gradle.daemon=false -Dorg.gradle.workers.max=3 -Xmx1G
+
+      - save_cache:
+          paths:
+            - ~/.gradle/caches
+            - ~/.gradle/wrapper
+          key: v3-{{ checksum "build.gradle" }}-{{ .Branch }}-testjdk8
 
       - run:
           name: Save test results
@@ -126,14 +137,22 @@ jobs:
 
       - restore_cache:
           keys:
-            - v1-dependencies-{{ checksum "build.gradle" }}
-            - v1-dependencies-
+            - v3-{{ checksum "build.gradle" }}-{{ .Branch }}-testjdk11
+            - v3-{{ checksum "build.gradle" }}-{{ .Branch }}
+            - v3-{{ checksum "build.gradle" }}-master
+            - v3-{{ checksum "build.gradle" }}
 
       - run:
           name: test
-          command: ./gradlew test
+          command: ./gradlew --build-cache --parallel test
           environment:
-            GRADLE_OPTS: -Dorg.gradle.daemon=false -Dorg.gradle.parallel=false -Xmx1G
+            GRADLE_OPTS: -Dorg.gradle.daemon=false -Dorg.gradle.workers.max=3 -Xmx1G
+
+      - save_cache:
+          paths:
+            - ~/.gradle/caches
+            - ~/.gradle/wrapper
+          key: v3-{{ checksum "build.gradle" }}-{{ .Branch }}-testjdk11
 
       - run:
           name: Save test results
@@ -161,13 +180,13 @@ workflows:
   version: 2
   build-check-and-test:
     jobs:
-      - dependencies
+      - compile
       - checkjdk8:
           requires:
-            - dependencies
+            - compile
       - testjdk8:
           requires:
-            - dependencies
+            - compile
       - testjdk11:
           requires:
-            - dependencies
+            - compile
