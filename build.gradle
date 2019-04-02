@@ -139,6 +139,7 @@ subprojects { project ->
   dokka {
     reportUndocumented = false 
     skipDeprecated = true
+    jdkVersion = 8
     packageOptions {
       prefix = "okhttp3.internal"
       suppress = true
