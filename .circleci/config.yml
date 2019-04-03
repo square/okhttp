@@ -243,9 +243,9 @@ workflows:
       - testconscrypt:
           requires:
             - compile
-#          filters:
-#            branches:
-#              only: master
+          filters:
+            branches:
+              only: master
   nightly:
     triggers:
       - schedule:
