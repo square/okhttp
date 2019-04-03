@@ -1246,6 +1246,36 @@ class HttpUrl internal constructor(builder: Builder) {
         }
       }
 
+      /*
+      * add IPv6 interface scope to host when base host and new host are IPv6 link local addresses
+      * used mainly for correct redirection while using link local addresses
+       */
+      this.host?.also { host ->
+        if(base != null
+                && base.host.contains(":")
+                && (base.host.startsWith("fe80::") || base.host.startsWith("fe80::", 1))
+                && base.host.contains("%")
+                && host.contains(":")
+                && !host.contains("%")
+                && (host.startsWith("fe80::") || host.startsWith("fe80::", 1))
+        ){
+          val interfaceScope = base.host.substring(
+                  base.host.indexOf("%"),
+                  if(base.host.endsWith("]")){
+                    base.host.length - 1
+                  } else {
+                    base.host.length
+                  }
+          )
+
+          this.host = if(host.endsWith("]")){
+            host.replace("]", "$interfaceScope]")
+          } else {
+            "$host$interfaceScope"
+          }
+        }
+      }
+
       // Resolve the relative path.
       val pathDelimiterOffset = delimiterOffset(input, pos, limit, "?#")
       resolvePath(input, pos, pathDelimiterOffset)

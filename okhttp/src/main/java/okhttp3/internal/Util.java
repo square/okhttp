@@ -263,14 +263,25 @@ public final class Util {
     return false;
   }
 
-  public static String hostHeader(HttpUrl url, boolean includeDefaultPort) {
-    String host = url.host().contains(":")
-        ? "[" + url.host() + "]"
-        : url.host();
-    return includeDefaultPort || url.port() != HttpUrl.defaultPort(url.scheme())
-        ? host + ":" + url.port()
-        : host;
-  }
+    public static String hostHeader(HttpUrl url, boolean includeDefaultPort) {
+        String host;
+        if (url.host().contains(":")) {
+            int intfScopeStartIndex = url.host().indexOf("%");
+            //make sure interface scope is removed for IPv6 link local hosts
+            host = "["
+                    + url.host().substring(
+                            0,
+                            intfScopeStartIndex != -1 ? intfScopeStartIndex : url.host().length()
+                    )
+                    + "]";
+        } else {
+            host = url.host();
+        }
+
+        return includeDefaultPort || url.port() != HttpUrl.defaultPort(url.scheme())
+                ? host + ":" + url.port()
+                : host;
+    }
 
   /**
    * Returns true if {@code e} is due to a firmware bug fixed after Android 4.2.2.
@@ -372,18 +383,32 @@ public final class Util {
    * if the result contains unsupported ASCII characters.
    */
   public static String canonicalizeHost(String host) {
-    // If the input contains a :, it’s an IPv6 address.
-    if (host.contains(":")) {
-      // If the input is encased in square braces "[...]", drop 'em.
-      InetAddress inetAddress = host.startsWith("[") && host.endsWith("]")
-          ? decodeIpv6(host, 1, host.length() - 1)
-          : decodeIpv6(host, 0, host.length());
-      if (inetAddress == null) return null;
-      byte[] address = inetAddress.getAddress();
-      if (address.length == 16) return inet6AddressToAscii(address);
-      if (address.length == 4) return inetAddress.getHostAddress(); // An IPv4-mapped IPv6 address.
-      throw new AssertionError("Invalid IPv6 address: '" + host + "'");
-    }
+      // If the input contains a :, it’s an IPv6 address.
+      if (host.contains(":")) {
+          // If the input is encased in square braces "[...]", drop 'em.
+            String hostNoBraces = host.startsWith("[") && host.endsWith("]")
+                    ? host.substring(1, host.length() - 1) : host;
+            int percentIndex = hostNoBraces.indexOf("%");
+            InetAddress inetAddress = decodeIpv6(
+                    hostNoBraces,
+                    0, percentIndex > 0 ? percentIndex : hostNoBraces.length()
+            );
+            if (inetAddress == null || (!inetAddress.isLinkLocalAddress() && percentIndex > 0)) {
+                return null;
+            }
+            byte[] address = inetAddress.getAddress();
+            if (address.length == 16) {
+                if (percentIndex > 0) {
+                    return inet6AddressToAscii(address) + hostNoBraces.substring(percentIndex);
+                } else {
+                    return inet6AddressToAscii(address);
+                }
+            }
+            if (address.length == 4) {
+                return inetAddress.getHostAddress(); // An IPv4-mapped IPv6 address.
+            }
+            throw new AssertionError("Invalid IPv6 address: '" + host + "'");
+        }
 
     try {
       String result = IDN.toASCII(host).toLowerCase(Locale.US);

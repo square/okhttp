@@ -509,8 +509,18 @@ public final class HttpUrlTest {
   }
 
   @Test public void hostIpv6ScopedAddress() throws Exception {
-    // java.net.InetAddress parses scoped addresses. These aren't valid in URLs.
+    // java.net.InetAddress parses scoped addresses. These are valid only for link local URLs.
     assertInvalid("http://[::1%2544]", "Invalid URL host: \"[::1%2544]\"");
+    assertThat(parse("http://[fe80::1%eth0]").toString()).isEqualTo("http://[fe80::1%eth0]/");
+    assertThat(parse("http://[fe80::1%eth0]:9999").toString()).isEqualTo("http://[fe80::1%eth0]:9999/");
+  }
+
+  @Test public void hostIpv6ScopedHost() throws Exception {
+    HttpUrl.Builder base = new HttpUrl.Builder();
+    base.scheme("http");
+
+    assertThat(base.host("fe80::1%eth0").build().host()).isEqualTo("fe80::1%eth0");
+    assertThat(base.host("[fe80::1%eth0]").build().host()).isEqualTo("fe80::1%eth0");
   }
 
   @Test public void hostIpv6AddressTooManyLeadingZeros() throws Exception {
