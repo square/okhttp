@@ -23,7 +23,7 @@ jobs:
             - ~/.gradle/caches
             - ~/.gradle/wrapper
           # Under normal usage, saves compiled results from master once a day
-          key: v4-compile-{{ .Branch }}-{{ epoch }}
+          key: v4-{{ .Branch }}-{{ .Environment.CIRCLE_JOB }}-{{ epoch }}
 
   checkjdk8:
     docker:
