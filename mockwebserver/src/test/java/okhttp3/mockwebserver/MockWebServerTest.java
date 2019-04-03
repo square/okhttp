@@ -53,6 +53,7 @@ import static okhttp3.tls.internal.TlsUtil.localhost;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.data.Offset.offset;
 import static org.junit.Assert.fail;
+import static org.junit.Assume.assumeFalse;
 
 public final class MockWebServerTest {
   @Rule public final MockWebServer server = new MockWebServer();
@@ -533,6 +534,8 @@ public final class MockWebServerTest {
   }
 
   @Test public void httpsWithClientAuth() throws Exception {
+    assumeFalse(getPlatform().equals("conscrypt"));
+
     HeldCertificate clientCa = new HeldCertificate.Builder()
         .certificateAuthority(0)
         .build();
@@ -578,5 +581,9 @@ public final class MockWebServerTest {
     assertThat(handshake.localCertificates().size()).isEqualTo(1);
     assertThat(handshake.peerPrincipal()).isNotNull();
     assertThat(handshake.peerCertificates().size()).isEqualTo(1);
+  }
+
+  public static String getPlatform() {
+    return System.getProperty("okhttp.platform", "platform");
   }
 }

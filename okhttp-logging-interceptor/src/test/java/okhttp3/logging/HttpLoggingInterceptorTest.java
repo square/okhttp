@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Pattern;
 import javax.annotation.Nullable;
 import javax.net.ssl.HostnameVerifier;
 import okhttp3.HttpUrl;
@@ -853,7 +854,7 @@ public final class HttpLoggingInterceptorTest {
     LogRecorder assertLogMatch(String pattern) {
       assertThat(index).overridingErrorMessage("No more messages found").isLessThan(logs.size());
       String actual = logs.get(index++);
-      assertThat(actual).matches(pattern);
+      assertThat(actual).matches(Pattern.compile(pattern, Pattern.DOTALL));
       return this;
     }
 

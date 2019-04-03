@@ -5,8 +5,6 @@ jobs:
     docker:
       - image: circleci/openjdk:8u171-jdk
 
-    working_directory: ~/repo
-
     environment:
       JVM_OPTS: -Xmx768m
       TERM: dumb
@@ -35,8 +33,6 @@ jobs:
   checkjdk8:
     docker:
       - image: circleci/openjdk:8u171-jdk
-
-    working_directory: ~/repo
 
     environment:
       JVM_OPTS: -Xmx1g
@@ -71,8 +67,6 @@ jobs:
   testjdk8:
     docker:
       - image: circleci/openjdk:8u171-jdk
-
-    working_directory: ~/testrepo
 
     environment:
       JVM_OPTS: -Xmx1g
@@ -126,8 +120,6 @@ jobs:
     docker:
       - image: circleci/openjdk:11.0.2-jdk
 
-    working_directory: ~/testrepo11
-
     environment:
       JVM_OPTS: -Xmx1g
       TERM: dumb
@@ -146,7 +138,7 @@ jobs:
           name: Run tests
           command: ./gradlew --build-cache --parallel test
           environment:
-            GRADLE_OPTS: -Dorg.gradle.daemon=false -Dorg.gradle.workers.max=3 -Xmx1G
+            GRADLE_OPTS: -Dorg.gradle.daemon=false -Dokhttp.platform=jdk9 -Dorg.gradle.workers.max=3 -Xmx1G
 
       - save_cache:
           paths:
@@ -157,24 +149,76 @@ jobs:
       - run:
           name: Save test results
           command: |
-            mkdir -p ~/testrepo11/test-results/junit/
-            find . -type f -regex ".*/build/test-results/.*xml" -exec cp {} ~/testrepo11/test-results/junit/ \;
+            mkdir -p ~/test-results/junit/
+            find . -type f -regex ".*/build/test-results/.*xml" -exec cp {} ~/test-results/junit/ \;
           when: always
 
       - store_test_results:
           name: Store test results
-          path: ~/testrepo11/test-results
+          path: ~/test-results
 
       - run:
           name: Save gradle reports
           command: |
-            mkdir -p ~/testrepo11/reports/
-            tar cf - */build/reports | (cd ~/testrepo11/reports/; tar xf -)
+            mkdir -p ~/reports/
+            tar cf - */build/reports | (cd ~/reports/; tar xf -)
           when: always
 
       - store_artifacts:
           name: Store gradle reports
-          path: ~/testrepo11/reports
+          path: ~/reports
+
+  testconscrypt:
+    docker:
+      - image: circleci/openjdk:11.0.2-jdk
+
+    environment:
+      JVM_OPTS: -Xmx1g
+      TERM: dumb
+
+    steps:
+      - checkout
+
+      - restore_cache:
+          keys:
+            - v3-{{ checksum "build.gradle" }}-{{ .Branch }}-testconscrypt
+            - v3-{{ checksum "build.gradle" }}-{{ .Branch }}
+            - v3-{{ checksum "build.gradle" }}-master
+            - v3-{{ checksum "build.gradle" }}
+
+      - run:
+          name: Run tests
+          command: ./gradlew --build-cache --parallel test
+          environment:
+            GRADLE_OPTS: -Dorg.gradle.daemon=false -Dokhttp.platform=conscrypt -Dorg.gradle.workers.max=3 -Xmx1G
+
+      - save_cache:
+          paths:
+            - ~/.gradle/caches
+            - ~/.gradle/wrapper
+          key: v3-{{ checksum "build.gradle" }}-{{ .Branch }}-testconscrypt
+
+      - run:
+          name: Save test results
+          command: |
+            mkdir -p ~/test-results/junit/
+            find . -type f -regex ".*/build/test-results/.*xml" -exec cp {} ~/test-results/junit/ \;
+          when: always
+
+      - store_test_results:
+          name: Store test results
+          path: ~/test-results
+
+      - run:
+          name: Save gradle reports
+          command: |
+            mkdir -p ~/reports/
+            tar cf - */build/reports | (cd ~/reports/; tar xf -)
+          when: always
+
+      - store_artifacts:
+          name: Store gradle reports
+          path: ~/reports
 
 workflows:
   version: 2
@@ -196,6 +240,12 @@ workflows:
           filters:
             branches:
               only: master
+      - testconscrypt:
+          requires:
+            - compile
+          filters:
+            branches:
+              only: master
   nightly:
     triggers:
       - schedule:
@@ -212,5 +262,8 @@ workflows:
           requires:
             - compile
       - testjdk11:
+          requires:
+            - compile
+      - testconscrypt:
           requires:
             - compile

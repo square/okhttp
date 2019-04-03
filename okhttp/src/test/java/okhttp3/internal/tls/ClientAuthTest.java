@@ -19,7 +19,6 @@ import java.net.SocketException;
 import java.security.GeneralSecurityException;
 import java.security.SecureRandom;
 import java.security.cert.X509Certificate;
-import java.util.Arrays;
 import javax.net.ssl.KeyManager;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLException;
@@ -64,6 +63,8 @@ public final class ClientAuthTest {
 
   @Before
   public void setUp() {
+    assumeFalse(getPlatform().equals("conscrypt"));
+
     serverRootCa = new HeldCertificate.Builder()
         .serialNumber(1L)
         .certificateAuthority(1)
