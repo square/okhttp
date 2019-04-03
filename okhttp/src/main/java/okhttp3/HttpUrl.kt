@@ -1544,17 +1544,17 @@ class HttpUrl internal constructor(builder: Builder) {
      * @throws IllegalArgumentException If `url` is not a well-formed HTTP or HTTPS URL.
      */
     @JvmStatic
-    operator fun get(url: String): HttpUrl = Builder().parse(null, url).build()
+    fun get(url: String): HttpUrl = Builder().parse(null, url).build()
 
     /**
      * Returns an [HttpUrl] for `url` if its protocol is `http` or `https`, or
      * null if it has any other protocol.
      */
     @JvmStatic
-    operator fun get(url: URL): HttpUrl? = parse(url.toString())
+    fun get(url: URL): HttpUrl? = parse(url.toString())
 
     @JvmStatic
-    operator fun get(uri: URI): HttpUrl? = parse(uri.toString())
+    fun get(uri: URI): HttpUrl? = parse(uri.toString())
 
     @JvmStatic
     internal fun percentDecode(encoded: String, plusIsSpace: Boolean): String =

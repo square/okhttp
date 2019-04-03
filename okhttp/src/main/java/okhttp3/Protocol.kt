@@ -101,7 +101,7 @@ enum class Protocol(private val protocol: String) {
      */
     @JvmStatic
     @Throws(IOException::class)
-    operator fun get(protocol: String): Protocol {
+    fun get(protocol: String): Protocol {
       // Unroll the loop over values() to save an allocation.
       @Suppress("DEPRECATION")
       return when (protocol) {

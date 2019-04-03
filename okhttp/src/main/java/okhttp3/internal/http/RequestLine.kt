@@ -28,7 +28,7 @@ object RequestLine {
    * HTTP/2.
    */
   @JvmStatic
-  operator fun get(request: Request, proxyType: Proxy.Type): String {
+  fun get(request: Request, proxyType: Proxy.Type): String {
     val result = StringBuilder()
     result.append(request.method())
     result.append(' ')
