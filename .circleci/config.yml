@@ -12,12 +12,6 @@ jobs:
     steps:
       - checkout
 
-      - restore_cache:
-          keys:
-            - v3-{{ checksum "build.gradle" }}-{{ .Branch }}
-            - v3-{{ checksum "build.gradle" }}-master
-            - v3-{{ checksum "build.gradle" }}
-
       - run:
           name: Compile
           command: ./gradlew --parallel --build-cache downloadDependencies testClasses
@@ -28,7 +22,8 @@ jobs:
           paths:
             - ~/.gradle/caches
             - ~/.gradle/wrapper
-          key: v3-{{ checksum "build.gradle" }}-{{ .Branch }}
+          # Under normal usage, saves compiled results from master once a day
+          key: v4-{{ .Branch }}-{{ .Environment.CIRCLE_JOB }}-{{ epoch }}
 
   checkjdk8:
     docker:
@@ -43,9 +38,8 @@ jobs:
 
       - restore_cache:
           keys:
-            - v3-{{ checksum "build.gradle" }}-{{ .Branch }}
-            - v3-{{ checksum "build.gradle" }}-master
-            - v3-{{ checksum "build.gradle" }}
+            # restore compilation and wrapper from master build
+            - v4-master-compile
 
       - run:
           name: Run checks
@@ -77,10 +71,9 @@ jobs:
 
       - restore_cache:
           keys:
-            - v3-{{ checksum "build.gradle" }}-{{ .Branch }}-testjdk8
-            - v3-{{ checksum "build.gradle" }}-{{ .Branch }}
-            - v3-{{ checksum "build.gradle" }}-master
-            - v3-{{ checksum "build.gradle" }}
+            # restore compilation and wrapper from previous branch/job build or master
+            - v4-{{ .Branch }}-{{ .Environment.CIRCLE_JOB }}
+            - v4-master-compile
 
       - run:
           name: Run tests
@@ -92,7 +85,8 @@ jobs:
           paths:
             - ~/.gradle/caches
             - ~/.gradle/wrapper
-          key: v3-{{ checksum "build.gradle" }}-{{ .Branch }}-testjdk8
+          key: v4-{{ .Branch }}-{{ .Environment.CIRCLE_JOB }}
+          when: always
 
       - run:
           name: Save test results
@@ -129,10 +123,9 @@ jobs:
 
       - restore_cache:
           keys:
-            - v3-{{ checksum "build.gradle" }}-{{ .Branch }}-testjdk11
-            - v3-{{ checksum "build.gradle" }}-{{ .Branch }}
-            - v3-{{ checksum "build.gradle" }}-master
-            - v3-{{ checksum "build.gradle" }}
+            # restore compilation and wrapper from previous branch/job build or master
+            - v4-{{ .Branch }}-{{ .Environment.CIRCLE_JOB }}
+            - v4-master-compile
 
       - run:
           name: Run tests
@@ -144,7 +137,8 @@ jobs:
           paths:
             - ~/.gradle/caches
             - ~/.gradle/wrapper
-          key: v3-{{ checksum "build.gradle" }}-{{ .Branch }}-testjdk11
+          key: v4-{{ .Branch }}-{{ .Environment.CIRCLE_JOB }}
+          when: always
 
       - run:
           name: Save test results
@@ -181,10 +175,9 @@ jobs:
 
       - restore_cache:
           keys:
-            - v3-{{ checksum "build.gradle" }}-{{ .Branch }}-testconscrypt
-            - v3-{{ checksum "build.gradle" }}-{{ .Branch }}
-            - v3-{{ checksum "build.gradle" }}-master
-            - v3-{{ checksum "build.gradle" }}
+            # restore compilation and wrapper from previous branch/job build or master
+            - v4-{{ .Branch }}-{{ .Environment.CIRCLE_JOB }}
+            - v4-master-compile
 
       - run:
           name: Run tests
@@ -196,7 +189,8 @@ jobs:
           paths:
             - ~/.gradle/caches
             - ~/.gradle/wrapper
-          key: v3-{{ checksum "build.gradle" }}-{{ .Branch }}-testconscrypt
+          key: v4-{{ .Branch }}-{{ .Environment.CIRCLE_JOB }}
+          when: always
 
       - run:
           name: Save test results
@@ -224,25 +218,20 @@ workflows:
   version: 2
   commit:
     jobs:
-      - compile
+      - compile:
+          filters:
+            branches:
+              only: master
       - checkjdk8:
-          requires:
-            - compile
           filters:
             branches:
               ignore: master
-      - testjdk8:
-          requires:
-            - compile
+      - testjdk8
       - testjdk11:
-          requires:
-            - compile
           filters:
             branches:
               only: master
       - testconscrypt:
-          requires:
-            - compile
           filters:
             branches:
               only: master
