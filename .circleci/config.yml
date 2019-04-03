@@ -21,7 +21,7 @@ jobs:
             - v3-{{ checksum "build.gradle" }}
 
       - run:
-          name: dependencies
+          name: Compile
           command: ./gradlew --parallel --build-cache downloadDependencies testClasses
           environment:
             GRADLE_OPTS: -Dorg.gradle.daemon=false -Dorg.gradle.workers.max=3 -Xmx768m
@@ -89,7 +89,7 @@ jobs:
             - v3-{{ checksum "build.gradle" }}
 
       - run:
-          name: test
+          name: Run tests
           command: ./gradlew --parallel --build-cache test
           environment:
             GRADLE_OPTS: -Dorg.gradle.daemon=false -Dorg.gradle.workers.max=3 -Xmx1G
@@ -143,7 +143,7 @@ jobs:
             - v3-{{ checksum "build.gradle" }}
 
       - run:
-          name: test
+          name: Run tests
           command: ./gradlew --build-cache --parallel test
           environment:
             GRADLE_OPTS: -Dorg.gradle.daemon=false -Dorg.gradle.workers.max=3 -Xmx1G
@@ -180,19 +180,19 @@ workflows:
   version: 2
   commit:
     jobs:
-      - dependencies
+      - compile
       - checkjdk8:
           requires:
-            - dependencies
+            - compile
           filters:
             branches:
               ignore: master
       - testjdk8:
           requires:
-            - dependencies
+            - compile
       - testjdk11:
           requires:
-            - dependencies
+            - compile
           filters:
             branches:
               only: master
