@@ -159,7 +159,31 @@ jobs:
 
 workflows:
   version: 2
-  build-check-and-test:
+  commit:
+    jobs:
+      - dependencies
+      - checkjdk8:
+          requires:
+            - dependencies
+          filters:
+            branches:
+              ignore: master
+      - testjdk8:
+          requires:
+            - dependencies
+      - testjdk11:
+          requires:
+            - dependencies
+          filters:
+            branches:
+              only: master
+  nightly:
+    triggers:
+      - schedule:
+          cron: "0 0 * * *"
+          filters:
+            branches:
+              only: master
     jobs:
       - dependencies
       - checkjdk8:
