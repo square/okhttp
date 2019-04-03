@@ -22,7 +22,6 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.security.PrivateKey;
 import java.security.cert.X509Certificate;
-import java.util.Arrays;
 import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
@@ -40,6 +39,7 @@ import org.junit.Test;
 import static java.util.Arrays.asList;
 import static okhttp3.internal.Util.closeQuietly;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.Assume.assumeFalse;
 
 public final class HandshakeCertificatesTest {
   private ExecutorService executorService;
@@ -55,6 +55,8 @@ public final class HandshakeCertificatesTest {
   }
 
   @Test public void clientAndServer() throws Exception {
+    assumeFalse(getPlatform().equals("conscrypt"));
+
     HeldCertificate clientRoot = new HeldCertificate.Builder()
         .certificateAuthority(1)
         .build();
@@ -187,5 +189,9 @@ public final class HandshakeCertificatesTest {
   private void assertPrivateKeysEquals(PrivateKey expected, PrivateKey actual) {
     assertThat(ByteString.of(actual.getEncoded())).isEqualTo(
         ByteString.of(expected.getEncoded()));
+  }
+
+  public static String getPlatform() {
+    return System.getProperty("okhttp.platform", "platform");
   }
 }

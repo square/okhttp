@@ -93,6 +93,7 @@ import static okhttp3.CipherSuite.TLS_DH_anon_WITH_AES_128_GCM_SHA256;
 import static okhttp3.TestUtil.awaitGarbageCollection;
 import static okhttp3.internal.InternalKtKt.addHeaderLenient;
 import static okhttp3.internal.platform.PlatformTest.getJvmSpecVersion;
+import static okhttp3.internal.platform.PlatformTest.getPlatform;
 import static okhttp3.tls.internal.TlsUtil.localhost;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.data.Offset.offset;
@@ -1142,6 +1143,8 @@ public final class CallTest {
   }
 
   @Test public void recoverFromTlsHandshakeFailure_tlsFallbackScsvEnabled() throws Exception {
+    assumeFalse(getPlatform().equals("conscrypt"));
+
     final String tlsFallbackScsv = "TLS_FALLBACK_SCSV";
     List<String> supportedCiphers =
         asList(handshakeCertificates.sslSocketFactory().getSupportedCipherSuites());
@@ -1253,6 +1256,8 @@ public final class CallTest {
    * man-in-the-middle attacks. https://bugs.openjdk.java.net/browse/JDK-8212823
    */
   @Test public void anonCipherSuiteUnsupported() throws Exception {
+    assumeFalse(getPlatform().equals("conscrypt"));
+
     // The _anon_ suites became unsupported in "1.8.0_201" and "11.0.2".
     assumeFalse(System.getProperty("java.version", "unknown").matches("1\\.8\\.0_1\\d\\d"));
     assumeFalse(System.getProperty("java.version", "unknown").matches("11"));
