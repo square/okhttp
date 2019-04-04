@@ -8,7 +8,7 @@ buildscript {
       'assertj': '3.11.0',
       'bouncycastle': '1.60',
       'checkstyle': '8.15',
-      'conscrypt': '2.0.0',
+      'conscrypt': '2.1.0',
       'findbugs': '3.0.2',
       'guava': '27.0.1-jre',
       'java': '1.8',
