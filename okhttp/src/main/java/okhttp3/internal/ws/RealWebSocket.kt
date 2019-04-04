@@ -56,7 +56,9 @@ class RealWebSocket(
   private val originalRequest: Request,
   internal val listener: WebSocketListener,
   private val random: Random,
-  private val pingIntervalMillis: Long
+  private val pingIntervalMillis: Long,
+  compression: Boolean = false,
+  contextTakeover: Boolean = false
 ) : WebSocket, WebSocketReader.FrameCallback {
   private val key: String
 
@@ -81,6 +83,12 @@ class RealWebSocket(
   private var name: String? = null
 
   /**
+   * Null until web socket is connected with compression enabled.
+   * Used for compressing data at message level.
+   */
+  private var messageDeflater: MessageDeflater? = null
+
+  /**
    * The streams held by this web socket. This is non-null until all incoming messages have been
    * read and all outgoing messages have been written. It is closed when both reader and writer are
    * exhausted, or if there is any failure.
@@ -98,6 +106,13 @@ class RealWebSocket(
 
   /** True if we've enqueued a close frame. No further message frames will be enqueued. */
   private var enqueuedClose = false
+
+  /**
+   * For client, suggested compression options.
+   * Actual will be defined based on the server response.
+   * For server, actual compression options for outbound stream.
+   */
+  private var options: WebSocketOptions = WebSocketOptions(compression, contextTakeover)
 
   /** The close code from the peer, or -1 if this web socket has not yet read a close frame. */
   private var receivedCloseCode = -1
@@ -146,6 +161,11 @@ class RealWebSocket(
         .header("Connection", "Upgrade")
         .header("Sec-WebSocket-Key", key)
         .header("Sec-WebSocket-Version", "13")
+        .apply {
+          if (originalRequest.header(HEADER_WS_EXTENSION) == null) {
+            header(HEADER_WS_EXTENSION, HEADER_VALUE_CONTEXT_TAKEOVER)
+          }
+        }
         .build()
     call = RealCall.newRealCall(webSocketClient, request, forWebSocket = true)
     call!!.enqueue(object : Callback {
@@ -155,6 +175,7 @@ class RealWebSocket(
         try {
           checkUpgradeSuccess(response, exchange)
           streams = exchange!!.newWebSocketStreams()
+          options = WebSocketOptions.parseServerResponse(response)
         } catch (e: IOException) {
           exchange?.webSocketUpgradeFailed()
           failWebSocket(e, response)
@@ -215,6 +236,9 @@ class RealWebSocket(
     synchronized(this) {
       this.name = name
       this.streams = streams
+      if (options.compressionEnabled) {
+        messageDeflater = MessageDeflater(options.contextTakeover)
+      }
       this.writer = WebSocketWriter(streams.client, streams.sink, random)
       this.writerTask = WriterTask()
       if (pingIntervalMillis != 0L) {
@@ -229,7 +253,7 @@ class RealWebSocket(
       }
     }
 
-    reader = WebSocketReader(streams.client, streams.source, this)
+    reader = WebSocketReader(streams.client, streams.source, this, options.compressionEnabled)
   }
 
   /** Receive frames until there are no more. Invoked only by the reader thread. */
@@ -304,6 +328,8 @@ class RealWebSocket(
     require(code != -1)
 
     var toClose: Streams? = null
+    var readerToClose: WebSocketReader? = null
+    var deflaterToClose: MessageDeflater? = null
     synchronized(this) {
       check(receivedCloseCode == -1) { "already closed" }
       receivedCloseCode = code
@@ -311,6 +337,10 @@ class RealWebSocket(
       if (enqueuedClose && messageAndCloseQueue.isEmpty()) {
         toClose = this.streams
         this.streams = null
+        readerToClose = this.reader
+        this.reader = null
+        deflaterToClose = this.messageDeflater
+        this.writer = null
         this.taskQueue.shutdown()
       }
     }
@@ -323,6 +353,8 @@ class RealWebSocket(
       }
     } finally {
       toClose?.closeQuietly()
+      readerToClose?.closeQuietly()
+      deflaterToClose?.closeQuietly()
     }
   }
 
@@ -422,6 +454,8 @@ class RealWebSocket(
     var receivedCloseCode = -1
     var receivedCloseReason: String? = null
     var streamsToClose: Streams? = null
+    var readerToClose: WebSocketReader? = null
+    var deflaterToClose: MessageDeflater? = null
 
     synchronized(this@RealWebSocket) {
       if (failed) {
@@ -438,6 +472,10 @@ class RealWebSocket(
           if (receivedCloseCode != -1) {
             streamsToClose = this.streams
             this.streams = null
+            readerToClose = this.reader
+            this.reader = null
+            deflaterToClose = this.messageDeflater
+            this.writer = null
             this.taskQueue.shutdown()
           } else {
             // When we request a graceful close also schedule a cancel of the web socket.
@@ -456,13 +494,27 @@ class RealWebSocket(
       if (pong != null) {
         writer!!.writePong(pong)
       } else if (messageOrClose is Message) {
-        val data = (messageOrClose as Message).data
+        val uncompressedData = (messageOrClose as Message).data
+
+        var data = uncompressedData
+        var compressMessage = false
+        messageDeflater?.let { deflater ->
+          val deflated = deflater.deflate(uncompressedData).readByteString()
+          // If context takeover is NOT used, it's guaranteed that sending uncompressed message
+          // which is smaller than compressed version will be more efficient.
+          // We cannot make such assumptions if context takeover is used.
+          if (options.contextTakeover || deflated.size < uncompressedData.size) {
+            data = deflated
+            compressMessage = true
+          }
+        }
+
         val sink = writer!!.newMessageSink(
-            (messageOrClose as Message).formatOpcode, data.size.toLong()).buffer()
+            (messageOrClose as Message).formatOpcode, data.size.toLong(), compressMessage).buffer()
         sink.write(data)
         sink.close()
         synchronized(this) {
-          queueSize -= data.size.toLong()
+          queueSize -= uncompressedData.size.toLong()
         }
       } else if (messageOrClose is Close) {
         val close = messageOrClose as Close
@@ -479,6 +531,8 @@ class RealWebSocket(
       return true
     } finally {
       streamsToClose?.closeQuietly()
+      readerToClose?.closeQuietly()
+      deflaterToClose?.closeQuietly()
     }
   }
 
@@ -508,11 +562,17 @@ class RealWebSocket(
 
   fun failWebSocket(e: Exception, response: Response?) {
     val streamsToClose: Streams?
+    val readerToClose: WebSocketReader?
+    val deflaterToClose: MessageDeflater?
     synchronized(this) {
       if (failed) return // Already failed.
       failed = true
       streamsToClose = this.streams
       this.streams = null
+      readerToClose = this.reader
+      this.reader = null
+      deflaterToClose = this.messageDeflater
+      this.writer = null
       taskQueue.shutdown()
     }
 
@@ -520,6 +580,8 @@ class RealWebSocket(
       listener.onFailure(this, e, response)
     } finally {
       streamsToClose?.closeQuietly()
+      readerToClose?.closeQuietly()
+      deflaterToClose?.closeQuietly()
     }
   }
 
@@ -565,5 +627,15 @@ class RealWebSocket(
      * the server doesn't respond the web socket will be canceled.
      */
     private const val CANCEL_AFTER_CLOSE_MILLIS = 60L * 1000
+
+    private const val HEADER_WS_EXTENSION = "Sec-WebSocket-Extensions"
+
+    /**
+     * Java Deflater does not allow specifying window size
+     * and the underlying zlib uses default value of MAX_WBITS=15.
+     * It's the default window size for many deflate implementations too.
+     */
+    private const val HEADER_VALUE_CONTEXT_TAKEOVER =
+        "permessage-deflate; server_max_window_bits=15; client_max_window_bits=15"
   }
 }

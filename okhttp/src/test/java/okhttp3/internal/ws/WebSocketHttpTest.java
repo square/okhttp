@@ -64,6 +64,8 @@ public final class WebSocketHttpTest {
   // Flaky https://github.com/square/okhttp/issues/4515
   // Flaky https://github.com/square/okhttp/issues/4953
 
+  private static final String HEADER_WS_EXTENSION = "Sec-WebSocket-Extensions";
+
   @Rule public final MockWebServer webServer = new MockWebServer();
   @Rule public final OkHttpClientTestRule clientTestRule = new OkHttpClientTestRule();
   @Rule public final PlatformRule platform = new PlatformRule();
@@ -403,6 +405,47 @@ public final class WebSocketHttpTest {
     WebSocket server = serverListener.assertOpen();
 
     closeWebSockets(webSocket, server);
+  }
+
+  @Test public void compressionHeaderIsSentIfNoCustomExtensionHeaderInOriginalRequest() {
+    client = client.newBuilder()
+        .addInterceptor(chain -> {
+          assertThat(chain.request().header(HEADER_WS_EXTENSION))
+              .isEqualTo("permessage-deflate; server_max_window_bits=15; client_max_window_bits=15");
+          return chain.proceed(chain.request());
+        })
+        .build();
+
+    webServer.enqueue(new MockResponse().withWebSocketUpgrade(serverListener));
+
+    WebSocket webSocket = newWebSocket();
+    clientListener.assertOpen();
+
+    closeWebSockets(webSocket, serverListener.assertOpen());
+  }
+
+  @Test public void extensionHeaderInOriginalRequestIsNotOverwritten() {
+    String customExtensionHeader = "permessage-deflate";
+
+    client = client.newBuilder()
+        .addInterceptor(chain -> {
+          assertThat(chain.request().header(HEADER_WS_EXTENSION))
+              .isEqualTo(customExtensionHeader);
+          return chain.proceed(chain.request());
+        })
+        .build();
+
+    webServer.enqueue(new MockResponse().withWebSocketUpgrade(serverListener));
+
+    Request request = new Request.Builder()
+        .url(webServer.url("/"))
+        .header(HEADER_WS_EXTENSION, customExtensionHeader)
+        .build();
+
+    WebSocket webSocket = newWebSocket(request);
+    clientListener.assertOpen();
+
+    closeWebSockets(webSocket, serverListener.assertOpen());
   }
 
   @Test public void overflowOutgoingQueue() {
@@ -804,7 +847,8 @@ public final class WebSocketHttpTest {
 
   private RealWebSocket newWebSocket(Request request) {
     RealWebSocket webSocket = new RealWebSocket(
-        TaskRunner.INSTANCE, request, clientListener, random, client.pingIntervalMillis());
+        TaskRunner.INSTANCE, request, clientListener, random,
+                client.pingIntervalMillis(), false, false);
     webSocket.connect(client);
     return webSocket;
   }

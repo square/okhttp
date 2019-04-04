@@ -15,6 +15,7 @@
  */
 package okhttp3.internal.ws
 
+import java.io.Closeable
 import java.io.IOException
 import java.net.ProtocolException
 import java.util.concurrent.TimeUnit
@@ -53,8 +54,9 @@ import okio.ByteString
 internal class WebSocketReader(
   private val isClient: Boolean,
   val source: BufferedSource,
-  private val frameCallback: FrameCallback
-) {
+  private val frameCallback: FrameCallback,
+  private val compressionEnabled: Boolean
+) : Closeable {
 
   var closed = false
 
@@ -63,6 +65,7 @@ internal class WebSocketReader(
   private var frameLength = 0L
   private var isFinalFrame = false
   private var isControlFrame = false
+  private var readingCompressedMessage = false
 
   private val controlFrameBuffer = Buffer()
   private val messageFrameBuffer = Buffer()
@@ -70,6 +73,9 @@ internal class WebSocketReader(
   // Masks are only a concern for server writers.
   private val maskKey: ByteArray? = if (isClient) null else ByteArray(4)
   private val maskCursor: Buffer.UnsafeCursor? = if (isClient) null else Buffer.UnsafeCursor()
+
+  private val messageInflater: MessageInflater? =
+      if (compressionEnabled) MessageInflater() else null
 
   interface FrameCallback {
     @Throws(IOException::class)
@@ -127,9 +133,28 @@ internal class WebSocketReader(
     val reservedFlag1 = b0 and B0_FLAG_RSV1 != 0
     val reservedFlag2 = b0 and B0_FLAG_RSV2 != 0
     val reservedFlag3 = b0 and B0_FLAG_RSV3 != 0
-    if (reservedFlag1 || reservedFlag2 || reservedFlag3) {
+    if (reservedFlag2 || reservedFlag3) {
       // Reserved flags are for extensions which we currently do not support.
-      throw ProtocolException("Reserved flags are unsupported.")
+      throw ProtocolException("Reserved flags rsv2 and rsv3 are unsupported.")
+    }
+
+    if (reservedFlag1) {
+      if (!compressionEnabled) {
+        throw ProtocolException(
+            "Reserved flag rsv1 is not supported if compression is disabled.")
+      }
+
+      if (isControlFrame) {
+        throw ProtocolException("Reserved flag rsv1 must not be set on control frames.")
+      }
+
+      if (opcode == OPCODE_CONTINUATION) {
+        throw ProtocolException("Reserved flag rsv1 1 must not be set on continuation frames.")
+      }
+
+      if (opcode == OPCODE_TEXT || opcode == OPCODE_BINARY) {
+        readingCompressedMessage = true
+      }
     }
 
     val b1 = source.readByte() and 0xff
@@ -216,10 +241,16 @@ internal class WebSocketReader(
 
     readMessage()
 
-    if (opcode == OPCODE_TEXT) {
-      frameCallback.onReadMessage(messageFrameBuffer.readUtf8())
+    val message = if (readingCompressedMessage) {
+      messageInflater!!.inflate(messageFrameBuffer)
     } else {
-      frameCallback.onReadMessage(messageFrameBuffer.readByteString())
+      messageFrameBuffer
+    }
+
+    if (opcode == OPCODE_TEXT) {
+      frameCallback.onReadMessage(message.readUtf8())
+    } else {
+      frameCallback.onReadMessage(message.readByteString())
     }
   }
 
@@ -263,5 +294,10 @@ internal class WebSocketReader(
         throw ProtocolException("Expected continuation opcode. Got: ${opcode.toHexString()}")
       }
     }
+  }
+
+  @Throws(IOException::class)
+  override fun close() {
+    messageInflater?.close()
   }
 }

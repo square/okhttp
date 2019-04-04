@@ -34,8 +34,14 @@ public final class WebSocketReaderTest {
   private final Random random = new Random(0);
 
   // Mutually exclusive. Use the one corresponding to the peer whose behavior you wish to test.
-  final WebSocketReader serverReader = new WebSocketReader(false, data, callback.asFrameCallback());
-  final WebSocketReader clientReader = new WebSocketReader(true, data, callback.asFrameCallback());
+  final WebSocketReader serverReader =
+      new WebSocketReader(false, data, callback.asFrameCallback(), false);
+  final WebSocketReader serverReaderWithCompression =
+      new WebSocketReader(false, data, callback.asFrameCallback(), true);
+  final WebSocketReader clientReader =
+      new WebSocketReader(true, data, callback.asFrameCallback(), false);
+  final WebSocketReader clientReaderWithCompression =
+      new WebSocketReader(true, data, callback.asFrameCallback(), true);
 
   @After public void tearDown() {
     callback.assertExhausted();
@@ -51,21 +57,46 @@ public final class WebSocketReaderTest {
     }
   }
 
-  @Test public void reservedFlagsAreUnsupported() throws IOException {
+  @Test public void reservedFlag1IsUnsupportedWithNoCompression() throws IOException {
     data.write(ByteString.decodeHex("ca00")); // Empty pong, flag 1 set.
     try {
       clientReader.processNextFrame();
       fail();
     } catch (ProtocolException e) {
-      assertThat(e.getMessage()).isEqualTo("Reserved flags are unsupported.");
+      assertThat(e.getMessage())
+          .isEqualTo("Reserved flag rsv1 is not supported if compression is disabled.");
     }
-    data.clear();
+  }
+
+  @Test public void reservedFlag1IsUnsupportedForControlFrames() throws IOException {
+    data.write(ByteString.decodeHex("ca00")); // Empty pong, flag 1 set.
+    try {
+      clientReaderWithCompression.processNextFrame();
+      fail();
+    } catch (ProtocolException e) {
+      assertThat(e.getMessage())
+          .isEqualTo("Reserved flag rsv1 must not be set on control frames.");
+    }
+  }
+
+  @Test public void reservedFlag1IsUnsupportedForContinuationFrames() throws IOException {
+    data.write(ByteString.decodeHex("c000")); // Empty continuation, flag 1 set.
+    try {
+      clientReaderWithCompression.processNextFrame();
+      fail();
+    } catch (ProtocolException e) {
+      assertThat(e.getMessage())
+          .isEqualTo("Reserved flag rsv1 1 must not be set on continuation frames.");
+    }
+  }
+
+  @Test public void reservedFlags2and3AreUnsupported() throws IOException {
     data.write(ByteString.decodeHex("aa00")); // Empty pong, flag 2 set.
     try {
       clientReader.processNextFrame();
       fail();
     } catch (ProtocolException e) {
-      assertThat(e.getMessage()).isEqualTo("Reserved flags are unsupported.");
+      assertThat(e.getMessage()).isEqualTo("Reserved flags rsv2 and rsv3 are unsupported.");
     }
     data.clear();
     data.write(ByteString.decodeHex("9a00")); // Empty pong, flag 3 set.
@@ -73,7 +104,7 @@ public final class WebSocketReaderTest {
       clientReader.processNextFrame();
       fail();
     } catch (ProtocolException e) {
-      assertThat(e.getMessage()).isEqualTo("Reserved flags are unsupported.");
+      assertThat(e.getMessage()).isEqualTo("Reserved flags rsv2 and rsv3 are unsupported.");
     }
   }
 
@@ -113,9 +144,33 @@ public final class WebSocketReaderTest {
     callback.assertTextMessage("Hello");
   }
 
+  @Test public void clientWithCompressionSimpleUncompressedHello() throws IOException {
+    data.write(ByteString.decodeHex("810548656c6c6f")); // Hello
+    clientReaderWithCompression.processNextFrame();
+    callback.assertTextMessage("Hello");
+  }
+
+  @Test public void clientWithCompressionSimpleCompressedHello() throws IOException {
+    data.write(ByteString.decodeHex("c107f248cdc9c90700")); // Hello
+    clientReaderWithCompression.processNextFrame();
+    callback.assertTextMessage("Hello");
+  }
+
   @Test public void serverSimpleHello() throws IOException {
     data.write(ByteString.decodeHex("818537fa213d7f9f4d5158")); // Hello
     serverReader.processNextFrame();
+    callback.assertTextMessage("Hello");
+  }
+
+  @Test public void serverWithCompressionSimpleUncompressedHello() throws IOException {
+    data.write(ByteString.decodeHex("818537fa213d7f9f4d5158")); // Hello
+    serverReaderWithCompression.processNextFrame();
+    callback.assertTextMessage("Hello");
+  }
+
+  @Test public void serverWithCompressionSimpleCompressedHello() throws IOException {
+    data.write(ByteString.decodeHex("c18760b420bb92fced72a9b320")); // Hello
+    serverReaderWithCompression.processNextFrame();
     callback.assertTextMessage("Hello");
   }
 
@@ -151,10 +206,41 @@ public final class WebSocketReaderTest {
     callback.assertTextMessage("Hello");
   }
 
+  @Test public void serverWithCompressionHelloTwoChunks() throws IOException {
+    data.write(ByteString.decodeHex("818537fa213d7f9f4d")); // Hel
+    data.write(ByteString.decodeHex("5158")); // lo
+
+    serverReaderWithCompression.processNextFrame();
+
+    callback.assertTextMessage("Hello");
+  }
+
+  @Test public void serverWithCompressionCompressedHelloTwoChunks() throws IOException {
+    data.write(ByteString.decodeHex("418460b420bb92fced72")); // first 4 bytes of compressed 'Hello'
+    data.write(ByteString.decodeHex("80833851d9d4f156d9"));   // last 3 bytes of compressed 'Hello'
+    serverReaderWithCompression.processNextFrame();
+
+    callback.assertTextMessage("Hello");
+  }
+
   @Test public void clientTwoFrameHello() throws IOException {
     data.write(ByteString.decodeHex("010348656c")); // Hel
     data.write(ByteString.decodeHex("80026c6f")); // lo
     clientReader.processNextFrame();
+    callback.assertTextMessage("Hello");
+  }
+
+  @Test public void clientWithCompressionTwoFrameHello() throws IOException {
+    data.write(ByteString.decodeHex("010348656c")); // Hel
+    data.write(ByteString.decodeHex("80026c6f")); // lo
+    clientReaderWithCompression.processNextFrame();
+    callback.assertTextMessage("Hello");
+  }
+
+  @Test public void clientWithCompressionTwoFrameCompressedHello() throws IOException {
+    data.write(ByteString.decodeHex("4104f248cdc9")); // first 4 bytes of compressed 'Hello'
+    data.write(ByteString.decodeHex("8003c90700"));   // last 3 bytes of compressed 'Hello'
+    clientReaderWithCompression.processNextFrame();
     callback.assertTextMessage("Hello");
   }
 
@@ -173,12 +259,36 @@ public final class WebSocketReaderTest {
     callback.assertTextMessage("Hello");
   }
 
+  @Test public void clientTwoFrameCompressedHelloWithPongs() throws IOException {
+    data.write(ByteString.decodeHex("4104f248cdc9")); // first 4 bytes of compressed 'Hello'
+    data.write(ByteString.decodeHex("8a00")); // Pong
+    data.write(ByteString.decodeHex("8a00")); // Pong
+    data.write(ByteString.decodeHex("8a00")); // Pong
+    data.write(ByteString.decodeHex("8a00")); // Pong
+    data.write(ByteString.decodeHex("8003c90700")); // last 3 bytes of compressed 'Hello'
+    clientReaderWithCompression.processNextFrame();
+    callback.assertPong(ByteString.EMPTY);
+    callback.assertPong(ByteString.EMPTY);
+    callback.assertPong(ByteString.EMPTY);
+    callback.assertPong(ByteString.EMPTY);
+    callback.assertTextMessage("Hello");
+  }
+
   @Test public void clientIncompleteMessageBodyThrows() throws IOException {
     data.write(ByteString.decodeHex("810548656c")); // Length = 5, "Hel"
     try {
       clientReader.processNextFrame();
       fail();
     } catch (EOFException ignored) {
+    }
+  }
+
+  @Test public void clientUncompressedMessageWithCompressedFlagThrows() throws IOException {
+    data.write(ByteString.decodeHex("c10548656c6c6f")); // Uncompressed 'Hello', flag 1 set
+    try {
+      clientReaderWithCompression.processNextFrame();
+      fail();
+    } catch (IOException ignored) {
     }
   }
 
@@ -313,6 +423,17 @@ public final class WebSocketReaderTest {
       }
     }
     assertThat(count).isEqualTo(1988);
+  }
+
+  @Test public void clientWithCompressionCannotBeUsedAfterClose() throws IOException {
+    data.write(ByteString.decodeHex("c107f248cdc9c90700")); // Hello
+    clientReaderWithCompression.close();
+    try {
+      clientReaderWithCompression.processNextFrame();
+      fail();
+    } catch (IllegalStateException e) {
+      assertThat(e.getMessage()).isEqualTo("closed");
+    }
   }
 
   private byte[] binaryData(int length) {

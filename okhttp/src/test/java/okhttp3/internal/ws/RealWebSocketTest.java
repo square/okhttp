@@ -25,6 +25,7 @@ import okhttp3.Protocol;
 import okhttp3.Request;
 import okhttp3.Response;
 import okhttp3.internal.concurrent.TaskRunner;
+import okio.Buffer;
 import okio.ByteString;
 import okio.Okio;
 import okio.Pipe;
@@ -351,6 +352,63 @@ public final class RealWebSocketTest {
         250d));
   }
 
+  @Test public void writesUncompressedMessageIfCompressionDisabled() throws IOException {
+    server.initWebSocket(random, 0, false, false);
+
+    server.webSocket.send(ByteString.encodeUtf8("Hello"));
+    server.webSocket.writeOneFrame$okhttp();
+
+    Buffer buffer = new Buffer();
+    server2client.source().read(buffer, Integer.MAX_VALUE);
+
+    assertThat(buffer.readByteString())
+        .isEqualTo(ByteString.decodeHex("820548656c6c6f")); // Uncompressed Hello
+  }
+
+  @Test public void writesUncompressedMessageIfNoContextTakeoverAndCompressionDoesNotReduceSize()
+      throws IOException {
+    server.initWebSocket(random, 0, true, false);
+
+    // Message is 5 bytes long, compressed would be 7
+    server.webSocket.send(ByteString.encodeUtf8("Hello"));
+    server.webSocket.writeOneFrame$okhttp();
+
+    Buffer buffer = new Buffer();
+    server2client.source().read(buffer, Integer.MAX_VALUE);
+
+    assertThat(buffer.readByteString())
+        .isEqualTo(ByteString.decodeHex("820548656c6c6f")); // Uncompressed
+  }
+
+  @Test public void writesCompressedMessageIfNoContextTakeoverAndCompressionReducesSize()
+      throws IOException {
+    server.initWebSocket(random, 0, true, false);
+
+    // Message is 17 bytes long, compressed is 11
+    server.webSocket.send(ByteString.encodeUtf8("Hello Hello Hello"));
+    server.webSocket.writeOneFrame$okhttp();
+
+    Buffer buffer = new Buffer();
+    server2client.source().read(buffer, Integer.MAX_VALUE);
+
+    assertThat(buffer.readByteString())
+        .isEqualTo(ByteString.decodeHex("c20bf248cdc9c957f040900000")); // Compressed
+  }
+
+  @Test public void writesCompressedMessageIfContextTakeover() throws IOException {
+    server.initWebSocket(random, 0, true, true);
+
+    // Message is 5 bytes long, compressed is 7
+    server.webSocket.send(ByteString.encodeUtf8("Hello"));
+    server.webSocket.writeOneFrame$okhttp();
+
+    Buffer buffer = new Buffer();
+    server2client.source().read(buffer, Integer.MAX_VALUE);
+
+    assertThat(buffer.readByteString())
+        .isEqualTo(ByteString.decodeHex("c207f248cdc9c90700")); // Compressed
+  }
+
   /** One peer's streams, listener, and web socket in the test. */
   private static class TestStreams extends RealWebSocket.Streams {
     private final String name;
@@ -366,6 +424,11 @@ public final class RealWebSocketTest {
     }
 
     public void initWebSocket(Random random, int pingIntervalMillis) throws IOException {
+      initWebSocket(random, pingIntervalMillis, false, false);
+    }
+
+    public void initWebSocket(Random random, int pingIntervalMillis,
+        boolean compressionEnabled, boolean contextTakeover) throws IOException {
       String url = "http://example.com/websocket";
       Response response = new Response.Builder()
           .code(101)
@@ -374,7 +437,8 @@ public final class RealWebSocketTest {
           .protocol(Protocol.HTTP_1_1)
           .build();
       webSocket = new RealWebSocket(
-          TaskRunner.INSTANCE, response.request(), listener, random, pingIntervalMillis);
+          TaskRunner.INSTANCE, response.request(), listener, random,
+              pingIntervalMillis, compressionEnabled, contextTakeover);
       webSocket.initReaderAndWriter(name, this);
     }
 

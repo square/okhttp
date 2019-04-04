@@ -18,6 +18,7 @@ package okhttp3.internal.ws
 import java.io.IOException
 import java.util.Random
 import okhttp3.internal.ws.WebSocketProtocol.B0_FLAG_FIN
+import okhttp3.internal.ws.WebSocketProtocol.B0_FLAG_RSV1
 import okhttp3.internal.ws.WebSocketProtocol.B1_FLAG_MASK
 import okhttp3.internal.ws.WebSocketProtocol.OPCODE_CONTINUATION
 import okhttp3.internal.ws.WebSocketProtocol.OPCODE_CONTROL_CLOSE
@@ -144,7 +145,7 @@ internal class WebSocketWriter(
    * Stream a message payload as a series of frames. This allows control frames to be interleaved
    * between parts of the message.
    */
-  fun newMessageSink(formatOpcode: Int, contentLength: Long): Sink {
+  fun newMessageSink(formatOpcode: Int, contentLength: Long, isCompressed: Boolean): Sink {
     check(!activeWriter) { "Another message writer is active. Did you call close()?" }
     activeWriter = true
 
@@ -152,6 +153,7 @@ internal class WebSocketWriter(
     frameSink.formatOpcode = formatOpcode
     frameSink.contentLength = contentLength
     frameSink.isFirstFrame = true
+    frameSink.isCompressed = isCompressed
     frameSink.closed = false
 
     return frameSink
@@ -162,13 +164,17 @@ internal class WebSocketWriter(
     formatOpcode: Int,
     byteCount: Long,
     isFirstFrame: Boolean,
-    isFinal: Boolean
+    isFinal: Boolean,
+    isCompressed: Boolean
   ) {
     if (writerClosed) throw IOException("closed")
 
     var b0 = if (isFirstFrame) formatOpcode else OPCODE_CONTINUATION
     if (isFinal) {
       b0 = b0 or B0_FLAG_FIN
+    }
+    if (isCompressed && isFirstFrame) {
+      b0 = b0 or B0_FLAG_RSV1
     }
     sinkBuffer.writeByte(b0)
 
@@ -217,6 +223,7 @@ internal class WebSocketWriter(
     var formatOpcode = 0
     var contentLength = 0L
     var isFirstFrame = false
+    var isCompressed = false
     var closed = false
 
     @Throws(IOException::class)
@@ -232,7 +239,8 @@ internal class WebSocketWriter(
 
       val emitCount = buffer.completeSegmentByteCount()
       if (emitCount > 0L && !deferWrite) {
-        writeMessageFrame(formatOpcode, emitCount, isFirstFrame, isFinal = false)
+        writeMessageFrame(formatOpcode, emitCount, isFirstFrame, isFinal = false,
+            isCompressed = isCompressed)
         isFirstFrame = false
       }
     }
@@ -241,7 +249,8 @@ internal class WebSocketWriter(
     override fun flush() {
       if (closed) throw IOException("closed")
 
-      writeMessageFrame(formatOpcode, buffer.size, isFirstFrame, isFinal = false)
+      writeMessageFrame(formatOpcode, buffer.size, isFirstFrame, isFinal = false,
+          isCompressed = isCompressed)
       isFirstFrame = false
     }
 
@@ -251,7 +260,8 @@ internal class WebSocketWriter(
     override fun close() {
       if (closed) throw IOException("closed")
 
-      writeMessageFrame(formatOpcode, buffer.size, isFirstFrame, isFinal = true)
+      writeMessageFrame(formatOpcode, buffer.size, isFirstFrame, isFinal = true,
+          isCompressed = isCompressed)
       closed = true
       activeWriter = false
     }
