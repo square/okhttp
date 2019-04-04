@@ -226,7 +226,7 @@ class MultipartBody internal constructor(
 
     /** Assemble the specified parts into a request body.  */
     fun build(): MultipartBody {
-      require(parts.isNotEmpty()) { "Multipart body must have at least one part." }
+      check(parts.isNotEmpty()) { "Multipart body must have at least one part." }
       return MultipartBody(boundary, type, parts)
     }
   }
