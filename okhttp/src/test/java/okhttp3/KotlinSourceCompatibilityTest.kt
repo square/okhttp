@@ -20,6 +20,9 @@ import okhttp3.internal.tls.OkHostnameVerifier
 import okhttp3.tls.HeldCertificate
 import okhttp3.tls.internal.TlsUtil.localhost
 import okio.Buffer
+import okio.BufferedSink
+import okio.BufferedSource
+import okio.ByteString
 import okio.Timeout
 import org.junit.Ignore
 import org.junit.Test
@@ -55,7 +58,14 @@ import javax.net.ssl.SSLSocketFactory
  * interesting. Do not simplify this code by removing unused declarations or unnecessary types;
  * doing so limits the utility of the test.
  */
-@Suppress("UNUSED_VARIABLE")
+@Suppress(
+    "ASSIGNED_BUT_NEVER_ACCESSED_VARIABLE",
+    "DEPRECATION",
+    "RedundantExplicitType",
+    "UNUSED_VALUE",
+    "UNUSED_VARIABLE",
+    "VARIABLE_WITH_REDUNDANT_INITIALIZER"
+)
 class KotlinSourceCompatibilityTest {
   @Test @Ignore
   fun address() {
@@ -688,5 +698,207 @@ class KotlinSourceCompatibilityTest {
   fun protocol() {
     var protocol: Protocol = Protocol.HTTP_2
     protocol = Protocol.get("")
+  }
+
+  @Test @Ignore
+  fun request() {
+    val request: Request = Request.Builder().build()
+    val isHttps: Boolean = request.isHttps
+    val url: HttpUrl = request.url()
+    val method: String = request.method()
+    val headers: Headers = request.headers()
+    val header: String? = request.header("")
+    val headersForName: List<String> = request.headers("")
+    val body: RequestBody? = request.body()
+    var tag: Any? = request.tag()
+    tag = request.tag(Any::class.java)
+    val builder: Request.Builder = request.newBuilder()
+    val cacheControl: CacheControl = request.cacheControl()
+  }
+
+  @Test @Ignore
+  fun requestBuilder() {
+    val requestBody = RequestBody.create(null, "")
+    var builder = Request.Builder()
+    builder = builder.url(HttpUrl.get(""))
+    builder = builder.url("")
+    builder = builder.url(URL(""))
+    builder = builder.header("", "")
+    builder = builder.addHeader("", "")
+    builder = builder.removeHeader("")
+    builder = builder.headers(Headers.of())
+    builder = builder.cacheControl(CacheControl.FORCE_CACHE)
+    builder = builder.get()
+    builder = builder.head()
+    builder = builder.post(requestBody)
+    builder = builder.delete(requestBody)
+    builder = builder.delete(null)
+    builder = builder.put(requestBody)
+    builder = builder.patch(requestBody)
+    builder = builder.method("", requestBody)
+    builder = builder.method("", null)
+    builder = builder.tag("")
+    builder = builder.tag(null)
+    builder = builder.tag(String::class.java, "")
+    builder = builder.tag(String::class.java, null)
+    val request: Request = builder.build()
+  }
+
+  @Test @Ignore
+  fun requestBody() {
+    var requestBody: RequestBody = object : RequestBody() {
+      override fun contentType(): MediaType? = TODO()
+      override fun contentLength(): Long = TODO()
+      override val isDuplex: Boolean get() = TODO()
+      override val isOneShot: Boolean get() = TODO()
+      override fun writeTo(sink: BufferedSink) = TODO()
+    }
+    requestBody = RequestBody.create(null, "")
+    requestBody = RequestBody.create(MediaType.parse(""), "")
+    requestBody = RequestBody.create(null, ByteString.EMPTY)
+    requestBody = RequestBody.create(MediaType.parse(""), ByteString.EMPTY)
+    requestBody = RequestBody.create(null, byteArrayOf(0, 1))
+    requestBody = RequestBody.create(MediaType.parse(""), byteArrayOf(0, 1))
+    requestBody = RequestBody.create(null, byteArrayOf(0, 1), 0, 2)
+    requestBody = RequestBody.create(MediaType.parse(""), byteArrayOf(0, 1), 0, 2)
+    requestBody = RequestBody.create(null, File(""))
+    requestBody = RequestBody.create(MediaType.parse(""), File(""))
+  }
+
+  @Test @Ignore
+  fun response() {
+    val response: Response = Response.Builder().build()
+    val request: Request = response.request()
+    val protocol: Protocol = response.protocol()
+    val code: Int = response.code()
+    val successful: Boolean = response.isSuccessful
+    val message: String = response.message()
+    val handshake: Handshake? = response.handshake()
+    val headersForName: List<String> = response.headers("")
+    val header: String? = response.header("")
+    val headers: Headers = response.headers()
+    val trailers: Headers = response.trailers()
+    val peekBody: ResponseBody = response.peekBody(0L)
+    val body: ResponseBody? = response.body()
+    val builder: Response.Builder = response.newBuilder()
+    val redirect: Boolean = response.isRedirect
+    val networkResponse: Response? = response.networkResponse()
+    val cacheResponse: Response? = response.cacheResponse()
+    val priorResponse: Response? = response.priorResponse()
+    val challenges: List<Challenge> = response.challenges()
+    val cacheControl: CacheControl = response.cacheControl()
+    val sentRequestAtMillis: Long = response.sentRequestAtMillis()
+    val receivedResponseAtMillis: Long = response.receivedResponseAtMillis()
+  }
+
+  @Test @Ignore
+  fun responseBuilder() {
+    var builder: Response.Builder = Response.Builder()
+    builder = builder.request(Request.Builder().build())
+    builder = builder.protocol(Protocol.HTTP_2)
+    builder = builder.code(0)
+    builder = builder.message("")
+    builder = builder.handshake(Handshake.get(
+        TlsVersion.TLS_1_3,
+        CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
+        listOf(),
+        listOf())
+    )
+    builder = builder.handshake(null)
+    builder = builder.header("", "")
+    builder = builder.addHeader("", "")
+    builder = builder.removeHeader("")
+    builder = builder.headers(Headers.of())
+    builder = builder.body(ResponseBody.create(null, ""))
+    builder = builder.body(null)
+    builder = builder.networkResponse(Response.Builder().build())
+    builder = builder.networkResponse(null)
+    builder = builder.cacheResponse(Response.Builder().build())
+    builder = builder.cacheResponse(null)
+    builder = builder.priorResponse(Response.Builder().build())
+    builder = builder.priorResponse(null)
+    builder = builder.sentRequestAtMillis(0L)
+    builder = builder.receivedResponseAtMillis(0L)
+    val response: Response = builder.build()
+  }
+
+  @Test @Ignore
+  fun responseBody() {
+    var responseBody: ResponseBody = object : ResponseBody() {
+      override fun contentType(): MediaType? = TODO()
+      override fun contentLength(): Long = TODO()
+      override fun source(): BufferedSource = TODO()
+      override fun close() = TODO()
+    }
+    val byteStream = responseBody.byteStream()
+    val source = responseBody.source()
+    val bytes = responseBody.bytes()
+    val charStream = responseBody.charStream()
+    val string = responseBody.string()
+    responseBody.close()
+    responseBody = ResponseBody.create(MediaType.get(""), "")
+    responseBody = ResponseBody.create(null, "")
+    responseBody = ResponseBody.create(MediaType.get(""), ByteString.EMPTY)
+    responseBody = ResponseBody.create(null, ByteString.EMPTY)
+    responseBody = ResponseBody.create(MediaType.get(""), byteArrayOf(0, 1))
+    responseBody = ResponseBody.create(null, byteArrayOf(0, 1))
+    responseBody = ResponseBody.create(MediaType.get(""), 0L, Buffer())
+    responseBody = ResponseBody.create(null, 0L, Buffer())
+  }
+
+  @Test @Ignore
+  fun route() {
+    var proxy: Proxy = Proxy.NO_PROXY
+    var address: Address = Address(
+        "",
+        0,
+        Dns.SYSTEM,
+        SocketFactory.getDefault(),
+        localhost().sslSocketFactory(),
+        OkHostnameVerifier.INSTANCE,
+        CertificatePinner.DEFAULT,
+        Authenticator.NONE,
+        proxy,
+        listOf(Protocol.HTTP_1_1),
+        listOf(ConnectionSpec.MODERN_TLS),
+        NullProxySelector()
+    )
+    var inetSocketAddress: InetSocketAddress = InetSocketAddress.createUnresolved("", 0)
+    val route: Route = Route(address, proxy, inetSocketAddress)
+    address = route.address()
+    proxy = route.proxy()
+    inetSocketAddress = route.socketAddress()
+    val requiresTunnel: Boolean = route.requiresTunnel()
+  }
+
+  @Test @Ignore
+  fun tlsVersion() {
+    var tlsVersion: TlsVersion = TlsVersion.TLS_1_3
+    val javaName: String = tlsVersion.javaName()
+    tlsVersion = TlsVersion.forJavaName("")
+  }
+
+  @Test @Ignore
+  fun webSocket() {
+    val webSocket = object : WebSocket {
+      override fun request(): Request = TODO()
+      override fun queueSize(): Long = TODO()
+      override fun send(text: String): Boolean = TODO()
+      override fun send(bytes: ByteString): Boolean = TODO()
+      override fun close(code: Int, reason: String?): Boolean = TODO()
+      override fun cancel() = TODO()
+    }
+  }
+
+  @Test @Ignore
+  fun webSocketListener() {
+    val webSocketListener = object : WebSocketListener() {
+      override fun onOpen(webSocket: WebSocket, response: Response) = TODO()
+      override fun onMessage(webSocket: WebSocket, text: String) = TODO()
+      override fun onMessage(webSocket: WebSocket, bytes: ByteString) = TODO()
+      override fun onClosing(webSocket: WebSocket, code: Int, reason: String) = TODO()
+      override fun onClosed(webSocket: WebSocket, code: Int, reason: String) = TODO()
+      override fun onFailure(webSocket: WebSocket, t: Throwable, response: Response?) = TODO()
+    }
   }
 }
