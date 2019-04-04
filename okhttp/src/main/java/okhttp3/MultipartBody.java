@@ -13,333 +13,290 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package okhttp3;
+package okhttp3
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
-import javax.annotation.Nullable;
-import okhttp3.internal.Util;
-import okio.Buffer;
-import okio.BufferedSink;
-import okio.ByteString;
+import okhttp3.internal.Util
+import okio.Buffer
+import okio.BufferedSink
+import okio.ByteString
+import okio.ByteString.Companion.encodeUtf8
+import java.io.IOException
+import java.util.UUID
 
-/** An <a href="http://www.ietf.org/rfc/rfc2387.txt">RFC 2387</a>-compliant request body. */
-public final class MultipartBody extends RequestBody {
-  /**
-   * The "mixed" subtype of "multipart" is intended for use when the body parts are independent and
-   * need to be bundled in a particular order. Any "multipart" subtypes that an implementation does
-   * not recognize must be treated as being of subtype "mixed".
-   */
-  public static final MediaType MIXED = MediaType.get("multipart/mixed");
+/**
+ * An [RFC 2387][rfc_2387]-compliant request body.
+ *
+ * [rfc_2387]: http://www.ietf.org/rfc/rfc2387.txt
+ */
+class MultipartBody internal constructor(
+  private val boundary: ByteString,
+  private val originalType: MediaType,
+  parts: List<Part>
+) : RequestBody() {
+  private val contentType: MediaType = MediaType.get("$originalType; boundary=${boundary.utf8()}")
+  private val parts: List<Part> = Util.immutableList(parts)
+  private var contentLength = -1L
 
-  /**
-   * The "multipart/alternative" type is syntactically identical to "multipart/mixed", but the
-   * semantics are different. In particular, each of the body parts is an "alternative" version of
-   * the same information.
-   */
-  public static final MediaType ALTERNATIVE = MediaType.get("multipart/alternative");
+  fun type(): MediaType = originalType
 
-  /**
-   * This type is syntactically identical to "multipart/mixed", but the semantics are different. In
-   * particular, in a digest, the default {@code Content-Type} value for a body part is changed from
-   * "text/plain" to "message/rfc822".
-   */
-  public static final MediaType DIGEST = MediaType.get("multipart/digest");
+  fun boundary(): String = boundary.utf8()
 
-  /**
-   * This type is syntactically identical to "multipart/mixed", but the semantics are different. In
-   * particular, in a parallel entity, the order of body parts is not significant.
-   */
-  public static final MediaType PARALLEL = MediaType.get("multipart/parallel");
+  /** The number of parts in this multipart body.  */
+  fun size(): Int = parts.size
 
-  /**
-   * The media-type multipart/form-data follows the rules of all multipart MIME data streams as
-   * outlined in RFC 2046. In forms, there are a series of fields to be supplied by the user who
-   * fills out the form. Each field has a name. Within a given form, the names are unique.
-   */
-  public static final MediaType FORM = MediaType.get("multipart/form-data");
+  fun parts(): List<Part> = parts
 
-  private static final byte[] COLONSPACE = {':', ' '};
-  private static final byte[] CRLF = {'\r', '\n'};
-  private static final byte[] DASHDASH = {'-', '-'};
+  fun part(index: Int): Part = parts[index]
 
-  private final ByteString boundary;
-  private final MediaType originalType;
-  private final MediaType contentType;
-  private final List<Part> parts;
-  private long contentLength = -1L;
+  /** A combination of [.type] and [.boundary].  */
+  override fun contentType(): MediaType = contentType
 
-  MultipartBody(ByteString boundary, MediaType type, List<Part> parts) {
-    this.boundary = boundary;
-    this.originalType = type;
-    this.contentType = MediaType.get(type + "; boundary=" + boundary.utf8());
-    this.parts = Util.immutableList(parts);
+  @Throws(IOException::class)
+  override fun contentLength(): Long {
+    var result = contentLength
+    if (result == -1L) {
+      result = writeOrCountBytes(null, true)
+      contentLength = result
+    }
+    return result
   }
 
-  public MediaType type() {
-    return originalType;
-  }
-
-  public String boundary() {
-    return boundary.utf8();
-  }
-
-  /** The number of parts in this multipart body. */
-  public int size() {
-    return parts.size();
-  }
-
-  public List<Part> parts() {
-    return parts;
-  }
-
-  public Part part(int index) {
-    return parts.get(index);
-  }
-
-  /** A combination of {@link #type()} and {@link #boundary()}. */
-  @Override public MediaType contentType() {
-    return contentType;
-  }
-
-  @Override public long contentLength() throws IOException {
-    long result = contentLength;
-    if (result != -1L) return result;
-    return contentLength = writeOrCountBytes(null, true);
-  }
-
-  @Override public void writeTo(BufferedSink sink) throws IOException {
-    writeOrCountBytes(sink, false);
+  @Throws(IOException::class)
+  override fun writeTo(sink: BufferedSink) {
+    writeOrCountBytes(sink, false)
   }
 
   /**
-   * Either writes this request to {@code sink} or measures its content length. We have one method
-   * do double-duty to make sure the counting and content are consistent, particularly when it comes
+   * Either writes this request to [sink] or measures its content length. We have one method do
+   * double-duty to make sure the counting and content are consistent, particularly when it comes
    * to awkward operations like measuring the encoded length of header strings, or the
    * length-in-digits of an encoded integer.
    */
-  private long writeOrCountBytes(
-      @Nullable BufferedSink sink, boolean countBytes) throws IOException {
-    long byteCount = 0L;
+  @Throws(IOException::class)
+  private fun writeOrCountBytes(
+    sink: BufferedSink?, countBytes: Boolean
+  ): Long {
+    var sink = sink
+    var byteCount = 0L
 
-    Buffer byteCountBuffer = null;
+    var byteCountBuffer: Buffer? = null
     if (countBytes) {
-      sink = byteCountBuffer = new Buffer();
+      byteCountBuffer = Buffer()
+      sink = byteCountBuffer
     }
 
-    for (int p = 0, partCount = parts.size(); p < partCount; p++) {
-      Part part = parts.get(p);
-      Headers headers = part.headers;
-      RequestBody body = part.body;
+    for (p in 0 until parts.size) {
+      val part = parts[p]
+      val headers = part.headers
+      val body = part.body
 
-      sink.write(DASHDASH);
-      sink.write(boundary);
-      sink.write(CRLF);
+      sink!!.write(DASHDASH)
+      sink.write(boundary)
+      sink.write(CRLF)
 
       if (headers != null) {
-        for (int h = 0, headerCount = headers.size(); h < headerCount; h++) {
+        for (h in 0 until headers.size()) {
           sink.writeUtf8(headers.name(h))
               .write(COLONSPACE)
               .writeUtf8(headers.value(h))
-              .write(CRLF);
+              .write(CRLF)
         }
       }
 
-      MediaType contentType = body.contentType();
+      val contentType = body.contentType()
       if (contentType != null) {
         sink.writeUtf8("Content-Type: ")
             .writeUtf8(contentType.toString())
-            .write(CRLF);
+            .write(CRLF)
       }
 
-      long contentLength = body.contentLength();
-      if (contentLength != -1) {
+      val contentLength = body.contentLength()
+      if (contentLength != -1L) {
         sink.writeUtf8("Content-Length: ")
             .writeDecimalLong(contentLength)
-            .write(CRLF);
+            .write(CRLF)
       } else if (countBytes) {
         // We can't measure the body's size without the sizes of its components.
-        byteCountBuffer.clear();
-        return -1L;
+        byteCountBuffer!!.clear()
+        return -1L
       }
 
-      sink.write(CRLF);
+      sink.write(CRLF)
 
       if (countBytes) {
-        byteCount += contentLength;
+        byteCount += contentLength
       } else {
-        body.writeTo(sink);
+        body.writeTo(sink)
       }
 
-      sink.write(CRLF);
+      sink.write(CRLF)
     }
 
-    sink.write(DASHDASH);
-    sink.write(boundary);
-    sink.write(DASHDASH);
-    sink.write(CRLF);
+    sink!!.write(DASHDASH)
+    sink.write(boundary)
+    sink.write(DASHDASH)
+    sink.write(CRLF)
 
     if (countBytes) {
-      byteCount += byteCountBuffer.size();
-      byteCountBuffer.clear();
+      byteCount += byteCountBuffer!!.size
+      byteCountBuffer.clear()
     }
 
-    return byteCount;
+    return byteCount
   }
 
-  /**
-   * Appends a quoted-string to a StringBuilder.
-   *
-   * <p>RFC 2388 is rather vague about how one should escape special characters in form-data
-   * parameters, and as it turns out Firefox and Chrome actually do rather different things, and
-   * both say in their comments that they're not really sure what the right approach is. We go with
-   * Chrome's behavior (which also experimentally seems to match what IE does), but if you actually
-   * want to have a good chance of things working, please avoid double-quotes, newlines, percent
-   * signs, and the like in your field names.
-   */
-  static void appendQuotedString(StringBuilder target, String key) {
-    target.append('"');
-    for (int i = 0, len = key.length(); i < len; i++) {
-      char ch = key.charAt(i);
-      switch (ch) {
-        case '\n':
-          target.append("%0A");
-          break;
-        case '\r':
-          target.append("%0D");
-          break;
-        case '"':
-          target.append("%22");
-          break;
-        default:
-          target.append(ch);
-          break;
-      }
-    }
-    target.append('"');
-  }
+  class Part private constructor(internal val headers: Headers?, internal val body: RequestBody) {
 
-  public static final class Part {
-    public static Part create(RequestBody body) {
-      return create(null, body);
-    }
+    fun headers(): Headers? = headers
 
-    public static Part create(@Nullable Headers headers, RequestBody body) {
-      if (body == null) {
-        throw new NullPointerException("body == null");
-      }
-      if (headers != null && headers.get("Content-Type") != null) {
-        throw new IllegalArgumentException("Unexpected header: Content-Type");
-      }
-      if (headers != null && headers.get("Content-Length") != null) {
-        throw new IllegalArgumentException("Unexpected header: Content-Length");
-      }
-      return new Part(headers, body);
-    }
+    fun body(): RequestBody = body
 
-    public static Part createFormData(String name, String value) {
-      return createFormData(name, null, RequestBody.create(null, value));
-    }
+    companion object {
+      @JvmStatic
+      fun create(body: RequestBody): Part = create(null, body)
 
-    public static Part createFormData(String name, @Nullable String filename, RequestBody body) {
-      if (name == null) {
-        throw new NullPointerException("name == null");
-      }
-      StringBuilder disposition = new StringBuilder("form-data; name=");
-      appendQuotedString(disposition, name);
-
-      if (filename != null) {
-        disposition.append("; filename=");
-        appendQuotedString(disposition, filename);
+      @JvmStatic
+      fun create(headers: Headers?, body: RequestBody): Part {
+        require(headers?.get("Content-Type") == null) { "Unexpected header: Content-Type" }
+        require(headers?.get("Content-Length") == null) { "Unexpected header: Content-Length" }
+        return Part(headers, body)
       }
 
-      Headers headers = new Headers.Builder()
-          .addUnsafeNonAscii("Content-Disposition", disposition.toString())
-          .build();
+      @JvmStatic
+      fun createFormData(name: String, value: String): Part =
+          createFormData(name, null, RequestBody.create(null, value))
 
-      return create(headers, body);
-    }
+      @JvmStatic
+      fun createFormData(name: String, filename: String?, body: RequestBody): Part {
+        val disposition = StringBuilder("form-data; name=")
+        appendQuotedString(disposition, name)
 
-    final @Nullable Headers headers;
-    final RequestBody body;
+        if (filename != null) {
+          disposition.append("; filename=")
+          appendQuotedString(disposition, filename)
+        }
 
-    private Part(@Nullable Headers headers, RequestBody body) {
-      this.headers = headers;
-      this.body = body;
-    }
+        val headers = Headers.Builder()
+            .addUnsafeNonAscii("Content-Disposition", disposition.toString())
+            .build()
 
-    public @Nullable Headers headers() {
-      return headers;
-    }
-
-    public RequestBody body() {
-      return body;
+        return create(headers, body)
+      }
     }
   }
 
-  public static final class Builder {
-    private final ByteString boundary;
-    private MediaType type = MIXED;
-    private final List<Part> parts = new ArrayList<>();
-
-    public Builder() {
-      this(UUID.randomUUID().toString());
-    }
-
-    public Builder(String boundary) {
-      this.boundary = ByteString.encodeUtf8(boundary);
-    }
+  class Builder @JvmOverloads constructor(boundary: String = UUID.randomUUID().toString()) {
+    private val boundary: ByteString = boundary.encodeUtf8()
+    private var type = MIXED
+    private val parts = mutableListOf<Part>()
 
     /**
-     * Set the MIME type. Expected values for {@code type} are {@link #MIXED} (the default), {@link
-     * #ALTERNATIVE}, {@link #DIGEST}, {@link #PARALLEL} and {@link #FORM}.
+     * Set the MIME type. Expected values for `type` are [MIXED] (the default), [ALTERNATIVE],
+     * [DIGEST], [PARALLEL] and [FORM].
      */
-    public Builder setType(MediaType type) {
-      if (type == null) {
-        throw new NullPointerException("type == null");
+    fun setType(type: MediaType) = apply {
+      require(type.type() == "multipart") { "multipart != $type" }
+      this.type = type
+    }
+
+    /** Add a part to the body.  */
+    fun addPart(body: RequestBody) = apply {
+      addPart(Part.create(body))
+    }
+
+    /** Add a part to the body.  */
+    fun addPart(headers: Headers?, body: RequestBody) = apply {
+      addPart(Part.create(headers, body))
+    }
+
+    /** Add a form data part to the body.  */
+    fun addFormDataPart(name: String, value: String) = apply {
+      addPart(Part.createFormData(name, value))
+    }
+
+    /** Add a form data part to the body.  */
+    fun addFormDataPart(name: String, filename: String?, body: RequestBody) = apply {
+      addPart(Part.createFormData(name, filename, body))
+    }
+
+    /** Add a part to the body.  */
+    fun addPart(part: Part) = apply {
+      parts.add(part)
+    }
+
+    /** Assemble the specified parts into a request body.  */
+    fun build(): MultipartBody {
+      require(!parts.isEmpty()) { "Multipart body must have at least one part." }
+      return MultipartBody(boundary, type, parts)
+    }
+  }
+
+  companion object {
+    /**
+     * The "mixed" subtype of "multipart" is intended for use when the body parts are independent
+     * and need to be bundled in a particular order. Any "multipart" subtypes that an implementation
+     * does not recognize must be treated as being of subtype "mixed".
+     */
+    @JvmField
+    val MIXED = MediaType.get("multipart/mixed")
+
+    /**
+     * The "multipart/alternative" type is syntactically identical to "multipart/mixed", but the
+     * semantics are different. In particular, each of the body parts is an "alternative" version of
+     * the same information.
+     */
+    @JvmField
+    val ALTERNATIVE = MediaType.get("multipart/alternative")
+
+    /**
+     * This type is syntactically identical to "multipart/mixed", but the semantics are different.
+     * In particular, in a digest, the default `Content-Type` value for a body part is changed from
+     * "text/plain" to "message/rfc822".
+     */
+    @JvmField
+    val DIGEST = MediaType.get("multipart/digest")
+
+    /**
+     * This type is syntactically identical to "multipart/mixed", but the semantics are different.
+     * In particular, in a parallel entity, the order of body parts is not significant.
+     */
+    @JvmField
+    val PARALLEL = MediaType.get("multipart/parallel")
+
+    /**
+     * The media-type multipart/form-data follows the rules of all multipart MIME data streams as
+     * outlined in RFC 2046. In forms, there are a series of fields to be supplied by the user who
+     * fills out the form. Each field has a name. Within a given form, the names are unique.
+     */
+    @JvmField
+    val FORM = MediaType.get("multipart/form-data")
+
+    private val COLONSPACE = byteArrayOf(':'.toByte(), ' '.toByte())
+    private val CRLF = byteArrayOf('\r'.toByte(), '\n'.toByte())
+    private val DASHDASH = byteArrayOf('-'.toByte(), '-'.toByte())
+
+    /**
+     * Appends a quoted-string to a StringBuilder.
+     *
+     * RFC 2388 is rather vague about how one should escape special characters in form-data
+     * parameters, and as it turns out Firefox and Chrome actually do rather different things, and
+     * both say in their comments that they're not really sure what the right approach is. We go
+     * with Chrome's behavior (which also experimentally seems to match what IE does), but if you
+     * actually want to have a good chance of things working, please avoid double-quotes, newlines,
+     * percent signs, and the like in your field names.
+     */
+    internal fun appendQuotedString(target: StringBuilder, key: String) {
+      target.append('"')
+      for (i in 0 until key.length) {
+        val ch = key[i]
+        when (ch) {
+          '\n' -> target.append("%0A")
+          '\r' -> target.append("%0D")
+          '"' -> target.append("%22")
+          else -> target.append(ch)
+        }
       }
-      if (!type.type().equals("multipart")) {
-        throw new IllegalArgumentException("multipart != " + type);
-      }
-      this.type = type;
-      return this;
-    }
-
-    /** Add a part to the body. */
-    public Builder addPart(RequestBody body) {
-      return addPart(Part.create(body));
-    }
-
-    /** Add a part to the body. */
-    public Builder addPart(@Nullable Headers headers, RequestBody body) {
-      return addPart(Part.create(headers, body));
-    }
-
-    /** Add a form data part to the body. */
-    public Builder addFormDataPart(String name, String value) {
-      return addPart(Part.createFormData(name, value));
-    }
-
-    /** Add a form data part to the body. */
-    public Builder addFormDataPart(String name, @Nullable String filename, RequestBody body) {
-      return addPart(Part.createFormData(name, filename, body));
-    }
-
-    /** Add a part to the body. */
-    public Builder addPart(Part part) {
-      if (part == null) throw new NullPointerException("part == null");
-      parts.add(part);
-      return this;
-    }
-
-    /** Assemble the specified parts into a request body. */
-    public MultipartBody build() {
-      if (parts.isEmpty()) {
-        throw new IllegalStateException("Multipart body must have at least one part.");
-      }
-      return new MultipartBody(boundary, type, parts);
+      target.append('"')
     }
   }
 }
