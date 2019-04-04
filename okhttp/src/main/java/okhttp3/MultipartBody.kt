@@ -169,11 +169,11 @@ class MultipartBody internal constructor(
       @JvmStatic
       fun createFormData(name: String, filename: String?, body: RequestBody): Part {
         val disposition = StringBuilder("form-data; name=")
-        appendQuotedString(disposition, name)
+        disposition.appendQuotedString(name)
 
         if (filename != null) {
           disposition.append("; filename=")
-          appendQuotedString(disposition, filename)
+          disposition.appendQuotedString(filename)
         }
 
         val headers = Headers.Builder()
@@ -226,7 +226,7 @@ class MultipartBody internal constructor(
 
     /** Assemble the specified parts into a request body.  */
     fun build(): MultipartBody {
-      require(!parts.isEmpty()) { "Multipart body must have at least one part." }
+      require(parts.isNotEmpty()) { "Multipart body must have at least one part." }
       return MultipartBody(boundary, type, parts)
     }
   }
@@ -285,18 +285,18 @@ class MultipartBody internal constructor(
      * actually want to have a good chance of things working, please avoid double-quotes, newlines,
      * percent signs, and the like in your field names.
      */
-    internal fun appendQuotedString(target: StringBuilder, key: String) {
-      target.append('"')
+    internal fun StringBuilder.appendQuotedString(key: String) {
+      append('"')
       for (i in 0 until key.length) {
         val ch = key[i]
         when (ch) {
-          '\n' -> target.append("%0A")
-          '\r' -> target.append("%0D")
-          '"' -> target.append("%22")
-          else -> target.append(ch)
+          '\n' -> append("%0A")
+          '\r' -> append("%0D")
+          '"' -> append("%22")
+          else -> append(ch)
         }
       }
-      target.append('"')
+      append('"')
     }
   }
 }
