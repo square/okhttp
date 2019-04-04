@@ -597,7 +597,7 @@ class KotlinSourceCompatibilityTest {
     val type: MediaType = multipartBody.type()
     val boundary: String = multipartBody.boundary()
     val size: Int = multipartBody.size()
-    val parts: MutableList<MultipartBody.Part> = multipartBody.parts()
+    val parts: List<MultipartBody.Part> = multipartBody.parts()
     val part: MultipartBody.Part = multipartBody.part(0)
     val contentType: MediaType? = multipartBody.contentType()
     val contentLength: Long = multipartBody.contentLength()
