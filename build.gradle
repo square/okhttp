@@ -54,7 +54,7 @@ buildscript {
 plugins {
   id 'ru.vyarus.animalsniffer' version '1.5.0'
   id 'com.github.johnrengelman.shadow' version '4.0.1'
-  id 'me.champeau.gradle.japicmp' version '0.2.6'
+  id 'me.champeau.gradle.japicmp' version '0.2.8'
 }
 
 allprojects {
@@ -82,6 +82,12 @@ subprojects { project ->
   apply plugin: 'org.jetbrains.kotlin.platform.jvm'
   sourceCompatibility = JavaVersion.VERSION_1_8
   targetCompatibility = JavaVersion.VERSION_1_8
+
+  tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).all {
+    kotlinOptions {
+      jvmTarget = '1.8'
+    }
+  }
 
   apply plugin: 'checkstyle'
   checkstyleMain.exclude '**/CipherSuite.java'
