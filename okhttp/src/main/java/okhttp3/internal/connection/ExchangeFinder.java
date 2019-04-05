@@ -182,7 +182,7 @@ final class ExchangeFinder {
 
     // If we need a route selection, make one. This is a blocking operation.
     boolean newRouteSelection = false;
-    if (selectedRoute == null && (routeSelection == null || !routeSelection.hasNext())) {
+    if (selectedRoute == null && (routeSelection == null || !routeSelector.hasNext())) {
       newRouteSelection = true;
       routeSelection = routeSelector.next();
     }
