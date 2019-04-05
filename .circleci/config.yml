@@ -73,6 +73,7 @@ jobs:
           keys:
             # restore compilation and wrapper from previous branch/job build or master
             - v4-{{ .Branch }}-{{ .Environment.CIRCLE_JOB }}
+            - v4-master-{{ .Environment.CIRCLE_JOB }}
             - v4-master-compile
 
       - run:
