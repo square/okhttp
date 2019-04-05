@@ -6,7 +6,7 @@ jobs:
       - image: circleci/openjdk:8u171-jdk
 
     environment:
-      JVM_OPTS: -Xmx768m
+      JVM_OPTS: -Xmx1g
       TERM: dumb
 
     steps:
@@ -18,11 +18,17 @@ jobs:
           environment:
             GRADLE_OPTS: -Dorg.gradle.daemon=false -Dorg.gradle.workers.max=3 -Xmx768m
 
+      - run:
+          name: Run tests
+          command: ./gradlew --parallel --build-cache test
+          environment:
+            GRADLE_OPTS: -Dorg.gradle.daemon=false -Dorg.gradle.workers.max=3 -Xmx1G
+
       - save_cache:
           paths:
             - ~/.gradle/caches
             - ~/.gradle/wrapper
-          # Under normal usage, saves compiled results from master once a day
+          # Under normal usage, saves compiled results from master at least once a day
           key: v4-{{ .Branch }}-{{ .Environment.CIRCLE_JOB }}-{{ epoch }}
 
   checkjdk8:
@@ -72,8 +78,8 @@ jobs:
       - restore_cache:
           keys:
             # restore compilation and wrapper from previous branch/job build or master
+            # master-compile is published on each build (cron or master commit) so is fresher
             - v4-{{ .Branch }}-{{ .Environment.CIRCLE_JOB }}
-            - v4-master-{{ .Environment.CIRCLE_JOB }}
             - v4-master-compile
 
       - run:
