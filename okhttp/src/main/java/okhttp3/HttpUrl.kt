@@ -287,7 +287,6 @@ import java.util.LinkedHashSet
  * [idna]: http://www.unicode.org/reports/tr46/#ToASCII
  */
 class HttpUrl internal constructor(builder: Builder) {
-// TODO remove
 
   /** Either "http" or "https".  */
   internal val scheme: String = builder.scheme ?: throw IllegalStateException("scheme == null")
