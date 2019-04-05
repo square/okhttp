@@ -12,7 +12,7 @@ dependencies {
 
   testImplementation project(':okhttp-testing-support')
   testImplementation project(':okhttp-tls')
-  testImplementation deps.assertj
+  testImplementation 'org.assertj:assertj-core'
 }
 
 apply plugin: 'me.champeau.gradle.japicmp'

@@ -22,22 +22,22 @@ task copyJavaTemplates(type: Copy) {
 }
 
 dependencies {
-  api deps.okio
-  api deps.kotlinStdlib
-  compileOnly deps.conscrypt
+  api 'com.squareup.okio:okio'
+  api 'org.jetbrains.kotlin:kotlin-stdlib'
+  compileOnly 'org.conscrypt:conscrypt-openjdk-uber'
   compileOnly 'com.google.android:android'
   compileOnly 'com.google.code.findbugs:jsr305'
   compileOnly 'org.codehaus.mojo:animal-sniffer-annotations'
 
-  testImplementation deps.okio
+  testImplementation 'com.squareup.okio:okio'
   testImplementation project(':okhttp-testing-support')
   testImplementation project(':okhttp-tls')
   testImplementation project(':okhttp-urlconnection')
   testImplementation project(':mockwebserver')
   testImplementation project(':okhttp-logging-interceptor')
-  testImplementation deps.conscrypt
+  testImplementation 'org.conscrypt:conscrypt-openjdk-uber'
   testImplementation 'junit:junit'
-  testImplementation deps.assertj
+  testImplementation 'org.assertj:assertj-core'
   testCompileOnly 'com.google.code.findbugs:jsr305'
 }
 

@@ -1,9 +1,9 @@
 dependencies {
-  testImplementation deps.okio
+  testImplementation 'com.squareup.okio:okio'
   testImplementation 'com.squareup.moshi:moshi'
   testImplementation project(':okhttp')
   testImplementation project(':okhttp-testing-support')
   testImplementation project(':mockwebserver')
   testImplementation 'junit:junit'
-  testImplementation deps.assertj
+  testImplementation 'org.assertj:assertj-core'
 }

@@ -1,5 +1,5 @@
 dependencies {
   implementation project(':okhttp')
   implementation project(':mockwebserver')
-  implementation deps.jnrUnixsocket
+  implementation 'com.github.jnr:jnr-unixsocket'
 }

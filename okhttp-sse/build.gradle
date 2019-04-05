@@ -13,6 +13,6 @@ dependencies {
   testImplementation project(':okhttp-testing-support')
   testImplementation project(':mockwebserver')
   testImplementation 'junit:junit'
-  testImplementation deps.assertj
+  testImplementation 'org.assertj:assertj-core'
   testCompileOnly 'com.google.code.findbugs:jsr305'
 }

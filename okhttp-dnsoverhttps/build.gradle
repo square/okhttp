@@ -12,7 +12,7 @@ dependencies {
 
   testImplementation project(':okhttp-testing-support')
   testImplementation project(':mockwebserver')
-  testImplementation deps.conscrypt
+  testImplementation 'org.conscrypt:conscrypt-openjdk-uber'
   testImplementation 'junit:junit'
-  testImplementation deps.assertj
+  testImplementation 'org.assertj:assertj-core'
 }

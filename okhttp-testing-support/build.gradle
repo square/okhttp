@@ -1,6 +1,6 @@
 dependencies {
   api project(':okhttp')
   api 'junit:junit'
-  api deps.assertj
+  api 'org.assertj:assertj-core'
   compileOnly 'com.google.code.findbugs:jsr305'
 }

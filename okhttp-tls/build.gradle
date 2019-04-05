@@ -7,14 +7,14 @@ jar {
 }
 
 dependencies {
-  api deps.okio
+  api 'com.squareup.okio:okio'
   implementation project(':okhttp')
-  implementation deps.bouncycastle
+  implementation 'org.bouncycastle:bcprov-jdk15on'
   compileOnly 'com.google.code.findbugs:jsr305'
 
   testImplementation project(':okhttp-testing-support')
   testImplementation 'junit:junit'
-  testImplementation deps.assertj
+  testImplementation 'org.assertj:assertj-core'
 }
 
 apply plugin: 'me.champeau.gradle.japicmp'
