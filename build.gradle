@@ -139,6 +139,7 @@ subprojects { project ->
   }
   tasks.withType(JavaCompile).configureEach {
     options.errorprone {
+      check("MissingFail", CheckSeverity.ERROR)
       check("MissingOverride", CheckSeverity.ERROR)
     }
   }
