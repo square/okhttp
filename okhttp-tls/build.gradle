@@ -10,10 +10,10 @@ dependencies {
   api deps.okio
   implementation project(':okhttp')
   implementation deps.bouncycastle
-  compileOnly deps.jsr305
+  compileOnly 'com.google.code.findbugs:jsr305'
 
   testImplementation project(':okhttp-testing-support')
-  testImplementation deps.junit
+  testImplementation 'junit:junit'
   testImplementation deps.assertj
 }
 

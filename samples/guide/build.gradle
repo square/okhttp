@@ -2,5 +2,5 @@ dependencies {
   implementation project(':okhttp')
   implementation project(':mockwebserver')
   implementation project(':okhttp-tls')
-  implementation deps.moshi
+  implementation 'com.squareup.moshi:moshi'
 }

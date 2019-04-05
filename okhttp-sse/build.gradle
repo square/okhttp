@@ -8,11 +8,11 @@ jar {
 
 dependencies {
   api project(':okhttp')
-  compileOnly deps.jsr305
+  compileOnly 'com.google.code.findbugs:jsr305'
 
   testImplementation project(':okhttp-testing-support')
   testImplementation project(':mockwebserver')
-  testImplementation deps.junit
+  testImplementation 'junit:junit'
   testImplementation deps.assertj
-  testCompileOnly deps.jsr305
+  testCompileOnly 'com.google.code.findbugs:jsr305'
 }

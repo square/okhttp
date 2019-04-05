@@ -25,9 +25,9 @@ dependencies {
   api deps.okio
   api deps.kotlinStdlib
   compileOnly deps.conscrypt
-  compileOnly deps.android
-  compileOnly deps.jsr305
-  compileOnly deps.animalSniffer
+  compileOnly 'com.google.android:android'
+  compileOnly 'com.google.code.findbugs:jsr305'
+  compileOnly 'org.codehaus.mojo:animal-sniffer-annotations'
 
   testImplementation deps.okio
   testImplementation project(':okhttp-testing-support')
@@ -36,9 +36,9 @@ dependencies {
   testImplementation project(':mockwebserver')
   testImplementation project(':okhttp-logging-interceptor')
   testImplementation deps.conscrypt
-  testImplementation deps.junit
+  testImplementation 'junit:junit'
   testImplementation deps.assertj
-  testCompileOnly deps.jsr305
+  testCompileOnly 'com.google.code.findbugs:jsr305'
 }
 
 apply plugin: 'me.champeau.gradle.japicmp'

@@ -8,13 +8,13 @@ jar {
 
 dependencies {
   api project(':okhttp')
-  compileOnly deps.jsr305
-  compileOnly deps.animalSniffer
+  compileOnly 'com.google.code.findbugs:jsr305'
+  compileOnly 'org.codehaus.mojo:animal-sniffer-annotations'
 
   testImplementation project(':okhttp-testing-support')
   testImplementation project(':okhttp-tls')
   testImplementation project(':mockwebserver')
-  testImplementation deps.junit
+  testImplementation 'junit:junit'
   testImplementation deps.assertj
 }
 
