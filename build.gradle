@@ -2,7 +2,6 @@ import net.ltgt.gradle.errorprone.CheckSeverity
 
 buildscript {
   ext.versions = [
-      'airline': '0.8',
       'android': '4.1.1.4',
       'animalSniffer': '1.17',
       'assertj': '3.11.0',
@@ -21,7 +20,6 @@ buildscript {
   ]
 
   ext.deps = [
-      'airline': "io.airlift:airline:${versions.airline}",
       'android': "com.google.android:android:${versions.android}",
       'animalSniffer': "org.codehaus.mojo:animal-sniffer-annotations:${versions.animalSniffer}",
       'assertj': "org.assertj:assertj-core:${versions.assertj}",

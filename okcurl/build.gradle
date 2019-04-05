@@ -24,12 +24,12 @@ task copyResourcesTemplates(type: Copy) {
 dependencies {
   api project(':okhttp')
   api project(':okhttp-logging-interceptor')
-  implementation deps.airline
-  implementation deps.guava
+  implementation 'io.airlift:airline'
+  implementation 'com.google.guava:guava'
 
   testImplementation project(':okhttp-testing-support')
-  testImplementation deps.junit
-  testImplementation deps.assertj
+  testImplementation 'junit:junit'
+  testImplementation 'org.assertj:assertj-core'
 }
 
 apply plugin: 'com.github.johnrengelman.shadow'
