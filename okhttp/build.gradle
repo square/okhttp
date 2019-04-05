@@ -23,7 +23,7 @@ task copyJavaTemplates(type: Copy) {
 
 dependencies {
   api 'com.squareup.okio:okio'
-  api 'org.jetbrains.kotlin:kotlin-stdlib'
+  api "org.jetbrains.kotlin:kotlin-stdlib:${versions.kotlin}"
   compileOnly 'org.conscrypt:conscrypt-openjdk-uber'
   compileOnly 'com.google.android:android'
   compileOnly 'com.google.code.findbugs:jsr305'

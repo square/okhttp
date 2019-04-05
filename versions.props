@@ -9,6 +9,5 @@ com.github.jnr:jnr-unixsocket = 0.22
 org.jsoup:jsoup = 1.11.3
 com.google.code.findbugs:jsr305 = 3.0.2
 junit:junit = 4.12
-org.jetbrains.kotlin:kotlin-stdlib = 1.3.20
 com.squareup.moshi:moshi = 1.8.0
 com.squareup.okio:okio = 2.2.2
