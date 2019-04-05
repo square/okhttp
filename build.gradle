@@ -55,6 +55,7 @@ plugins {
   id 'ru.vyarus.animalsniffer' version '1.5.0'
   id 'com.github.johnrengelman.shadow' version '4.0.1'
   id 'me.champeau.gradle.japicmp' version '0.2.6'
+  id 'com.palantir.consistent-versions' version '1.4.0'
 }
 
 allprojects {
@@ -145,7 +146,7 @@ subprojects { project ->
 
   apply plugin: 'org.jetbrains.dokka'
   dokka {
-    reportUndocumented = false 
+    reportUndocumented = false
     skipDeprecated = true
     jdkVersion = 8
     packageOptions {

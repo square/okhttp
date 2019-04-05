@@ -1,3 +1,5 @@
+rootProject.name = 'okhttp-root'
+
 include ':mockwebserver'
 include ':okcurl'
 include ':okhttp'
