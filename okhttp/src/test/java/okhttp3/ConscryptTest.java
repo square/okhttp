@@ -26,36 +26,16 @@ import org.junit.After;
 import org.junit.Assume;
 import org.junit.Test;
 
-import static java.util.Arrays.asList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 public class ConscryptTest {
-  public static final CipherSuite[] MANDATORY_CIPHER_SUITES = new CipherSuite[] {
-      CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
-      CipherSuite.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
-      CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,
-      CipherSuite.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
-      CipherSuite.TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256,
-      CipherSuite.TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256
-  };
-
-  private OkHttpClient client = buildClient();
+  private OkHttpClient client = new OkHttpClient();
 
   @After
   public void tearDown() {
     TestUtil.ensureAllConnectionsReleased(client);
-  }
-
-  private OkHttpClient buildClient() {
-    ConnectionSpec spec = new ConnectionSpec.Builder(true)
-        .cipherSuites(MANDATORY_CIPHER_SUITES) // Check we are using strong ciphers
-        .tlsVersions(TlsVersion.TLS_1_2, TlsVersion.TLS_1_3) // and modern TLS
-        .supportsTlsExtensions(true)
-        .build();
-
-    return new OkHttpClient.Builder().connectionSpecs(asList(spec)).build();
   }
 
   private static void assumeConscrypt() {
@@ -95,8 +75,11 @@ public class ConscryptTest {
   }
 
   @Test
-  public void testBuild() {
-    assertThat(ConscryptPlatform.buildIfSupported()).isNotNull();
+  public void testBuildIfSupported() {
+    assumeConscrypt();
+
+    ConscryptPlatform actual = ConscryptPlatform.buildIfSupported();
+    assertThat(actual).isNotNull();
   }
 
   @Test
