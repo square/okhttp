@@ -117,8 +117,10 @@ class ConscryptPlatform private constructor() : Platform() {
 
   override fun configureTrustManager(trustManager: X509TrustManager?) {
     if (atLeastVersion(2, 1)) {
-      // OkHttp will verify
-      Conscrypt.setHostnameVerifier(trustManager) { hostname, session -> true }
+      if (Conscrypt.isConscrypt(trustManager)) {
+        // OkHttp will verify
+        Conscrypt.setHostnameVerifier(trustManager) { hostname, session -> true }
+      }
     }
   }
 
