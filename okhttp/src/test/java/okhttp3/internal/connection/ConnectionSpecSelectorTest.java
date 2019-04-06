@@ -17,7 +17,6 @@ package okhttp3.internal.connection;
 
 import java.io.IOException;
 import java.security.cert.CertificateException;
-import java.util.Arrays;
 import javax.net.ssl.SSLHandshakeException;
 import javax.net.ssl.SSLSocket;
 import okhttp3.ConnectionSpec;
