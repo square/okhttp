@@ -644,16 +644,6 @@ public final class HttpLoggingInterceptorTest {
         .assertNoMoreLogs();
   }
 
-  @Test public void isPlaintext() {
-    assertThat(HttpLoggingInterceptor.isPlaintext(new Buffer())).isTrue();
-    assertThat(HttpLoggingInterceptor.isPlaintext(new Buffer().writeUtf8("abc"))).isTrue();
-    assertThat(HttpLoggingInterceptor.isPlaintext(new Buffer().writeUtf8("new\r\nlines"))).isTrue();
-    assertThat(HttpLoggingInterceptor.isPlaintext(new Buffer().writeUtf8("white\t space"))).isTrue();
-    assertThat(HttpLoggingInterceptor.isPlaintext(new Buffer().writeByte(0x80))).isTrue();
-    assertThat(HttpLoggingInterceptor.isPlaintext(new Buffer().writeByte(0x00))).isFalse();
-    assertThat(HttpLoggingInterceptor.isPlaintext(new Buffer().writeByte(0xc0))).isFalse();
-  }
-
   @Test public void responseBodyIsBinary() throws IOException {
     setLevel(Level.BODY);
     Buffer buffer = new Buffer();
