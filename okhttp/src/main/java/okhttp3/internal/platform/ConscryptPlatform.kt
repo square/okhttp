@@ -66,20 +66,6 @@ class ConscryptPlatform private constructor() : Platform() {
       }
     }
 
-  private fun atLeastVersion(major: Int, minor: Int = 0, patch: Int = 0): Boolean {
-    val conscryptVersion = Conscrypt.version()
-
-    if (conscryptVersion.major() != major) {
-      return conscryptVersion.major() > major
-    }
-
-    if (conscryptVersion.minor() != minor) {
-      return conscryptVersion.minor() > minor
-    }
-
-    return conscryptVersion.patch() >= patch
-  }
-
   public override fun trustManager(sslSocketFactory: SSLSocketFactory): X509TrustManager? =
       if (!Conscrypt.isConscrypt(sslSocketFactory)) {
         super.trustManager(sslSocketFactory)
@@ -149,6 +135,21 @@ class ConscryptPlatform private constructor() : Platform() {
       }
     } catch (e: ClassNotFoundException) {
       null
+    }
+
+    @JvmStatic @JvmOverloads
+    fun atLeastVersion(major: Int, minor: Int = 0, patch: Int = 0): Boolean {
+      val conscryptVersion = Conscrypt.version()
+
+      if (conscryptVersion.major() != major) {
+        return conscryptVersion.major() > major
+      }
+
+      if (conscryptVersion.minor() != minor) {
+        return conscryptVersion.minor() > minor
+      }
+
+      return conscryptVersion.patch() >= patch
     }
   }
 }

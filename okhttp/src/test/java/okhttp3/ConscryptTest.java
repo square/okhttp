@@ -19,7 +19,6 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.security.Security;
-import java.util.Arrays;
 import okhttp3.internal.platform.ConscryptPlatform;
 import okhttp3.internal.platform.Platform;
 import org.conscrypt.OpenSSLProvider;
@@ -29,6 +28,8 @@ import org.junit.Test;
 
 import static java.util.Arrays.asList;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 public class ConscryptTest {
   public static final CipherSuite[] MANDATORY_CIPHER_SUITES = new CipherSuite[] {
@@ -109,5 +110,14 @@ public class ConscryptTest {
     } finally {
       Security.removeProvider(provider.getName());
     }
+  }
+
+  @Test
+  public void testVersion() {
+    assertTrue(ConscryptPlatform.atLeastVersion(1, 4, 9));
+    assertTrue(ConscryptPlatform.atLeastVersion(2));
+    assertTrue(ConscryptPlatform.atLeastVersion(2, 1));
+    assertTrue(ConscryptPlatform.atLeastVersion(2, 1, 0));
+    assertFalse(ConscryptPlatform.atLeastVersion(9));
   }
 }
