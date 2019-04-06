@@ -17,7 +17,6 @@ package okhttp3.internal.platform
 
 import okhttp3.Protocol
 import org.conscrypt.Conscrypt
-import java.security.NoSuchAlgorithmException
 import java.security.Provider
 import javax.net.ssl.SSLContext
 import javax.net.ssl.SSLSocket
@@ -27,43 +26,22 @@ import javax.net.ssl.X509TrustManager
 /**
  * Platform using Conscrypt (conscrypt.org) if installed as the first Security Provider.
  *
- * Requires org.conscrypt:conscrypt-openjdk-uber >= 1.4.0 on the classpath.
+ * Requires org.conscrypt:conscrypt-openjdk-uber >= 2.1.0 on the classpath.
  */
 class ConscryptPlatform private constructor() : Platform() {
   private val provider: Provider
-    // defaults to true, but allow for older versions of conscrypt if still compatible
-    // new form with boolean is only present in >= 2.0.0
     get() {
       // n.b. We should consider defaulting to OpenJDK 11 trust manager
       // https://groups.google.com/forum/#!topic/conscrypt/3vYzbesjOb4
 
-      if (atLeastVersion(2)) {
-        return Conscrypt.newProviderBuilder().provideTrustManager(true).build()
-      } else {
-        @Suppress("DEPRECATION")
-        return Conscrypt.newProviderBuilder().provideTrustManager().build()
-      }
+      return Conscrypt.newProviderBuilder().provideTrustManager(true).build()
     }
 
   // See release notes https://groups.google.com/forum/#!forum/conscrypt
   // for version differences
   override fun getSSLContext(): SSLContext =
-    if (atLeastVersion(2)) {
       // supports TLSv1.3 by default (version api is >= 1.4.0)
       SSLContext.getInstance("TLS", provider)
-    } else {
-      // Available post Conscrypt 1.2
-      try {
-        SSLContext.getInstance("TLSv1.3", provider)
-      } catch (e: NoSuchAlgorithmException) {
-      }
-
-      try {
-        SSLContext.getInstance("TLS", provider)
-      } catch (e: NoSuchAlgorithmException) {
-        throw IllegalStateException("No TLS provider", e)
-      }
-    }
 
   override fun platformTrustManager(): X509TrustManager {
     return Conscrypt.getDefaultX509TrustManager()
@@ -119,11 +97,9 @@ class ConscryptPlatform private constructor() : Platform() {
   }
 
   override fun configureTrustManager(trustManager: X509TrustManager?) {
-    if (atLeastVersion(2, 1)) {
-      if (Conscrypt.isConscrypt(trustManager)) {
-        // OkHttp will verify
-        Conscrypt.setHostnameVerifier(trustManager) { hostname, session -> true }
-      }
+    if (Conscrypt.isConscrypt(trustManager)) {
+      // OkHttp will verify
+      Conscrypt.setHostnameVerifier(trustManager) { hostname, session -> true }
     }
   }
 
@@ -131,11 +107,10 @@ class ConscryptPlatform private constructor() : Platform() {
     @JvmStatic
     fun buildIfSupported(): ConscryptPlatform? = try {
       // Trigger an early exception over a fatal error, prefer a RuntimeException over Error.
-      Class.forName("org.conscrypt.Conscrypt")
       Class.forName("org.conscrypt.Conscrypt\$Version")
 
       when {
-        Conscrypt.isAvailable() -> ConscryptPlatform()
+        Conscrypt.isAvailable() && atLeastVersion(2, 1, 0) -> ConscryptPlatform()
         else -> null
       }
     } catch (e: ClassNotFoundException) {
