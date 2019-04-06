@@ -20,7 +20,8 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.security.Security;
 import okhttp3.internal.platform.ConscryptPlatform;
-import org.conscrypt.OpenSSLProvider;
+import okhttp3.internal.platform.Platform;
+import org.conscrypt.Conscrypt;
 import org.junit.After;
 import org.junit.Assume;
 import org.junit.BeforeClass;
@@ -31,15 +32,14 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 public class ConscryptTest {
-  private OkHttpClient client = new OkHttpClient();
-
   @BeforeClass
-  public static void setup() {
-    assumeConscrypt();
-
-    OpenSSLProvider provider = new OpenSSLProvider();
-    Security.insertProviderAt(provider, 1);
+  public static void installProvider() {
+    if ("conscrypt".equals(System.getProperty("okhttp.platform"))) {
+      Security.insertProviderAt(Conscrypt.newProviderBuilder().provideTrustManager(true).build(), 1);
+    }
   }
+
+  private OkHttpClient client = new OkHttpClient();
 
   @After
   public void tearDown() {
@@ -47,7 +47,7 @@ public class ConscryptTest {
   }
 
   private static void assumeConscrypt() {
-    Assume.assumeTrue("conscrypt".equals(System.getProperty("okhttp.platform")));
+    Assume.assumeTrue(Conscrypt.isConscrypt(Platform.get().platformTrustManager()));
   }
 
   private static void assumeNetwork() {
@@ -61,6 +61,7 @@ public class ConscryptTest {
   @Test
   public void testMozilla() throws IOException {
     assumeNetwork();
+    assumeConscrypt();
 
     Request request = new Request.Builder().url("https://mozilla.org/robots.txt").build();
 
@@ -73,6 +74,7 @@ public class ConscryptTest {
   @Test
   public void testGoogle() throws IOException {
     assumeNetwork();
+    assumeConscrypt();
 
     Request request = new Request.Builder().url("https://google.com/robots.txt").build();
 
@@ -84,6 +86,8 @@ public class ConscryptTest {
 
   @Test
   public void testBuildIfSupported() {
+    assumeConscrypt();
+
     ConscryptPlatform actual = ConscryptPlatform.buildIfSupported();
     assertThat(actual).isNotNull();
   }
