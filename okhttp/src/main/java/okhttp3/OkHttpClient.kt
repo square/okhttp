@@ -121,6 +121,7 @@ import kotlin.DeprecationLevel.ERROR
 open class OkHttpClient internal constructor(
   builder: Builder
 ) : Cloneable, Call.Factory, WebSocket.Factory {
+  internal val platform: Platform = builder.platform
   private val dispatcher: Dispatcher = builder.dispatcher
   private val proxy: Proxy? = builder.proxy
   private val protocols: List<Protocol> = builder.protocols
@@ -166,7 +167,7 @@ open class OkHttpClient internal constructor(
       this.certificateChainCleaner = builder.certificateChainCleaner
     } else {
       val trustManager = Util.platformTrustManager()
-      this.sslSocketFactory = newSslSocketFactory(trustManager)
+      this.sslSocketFactory = newSslSocketFactory(platform, trustManager)
       this.certificateChainCleaner = CertificateChainCleaner.get(trustManager)
     }
 
@@ -274,6 +275,7 @@ open class OkHttpClient internal constructor(
   open fun newBuilder(): Builder = Builder(this)
 
   class Builder constructor() {
+    internal var platform: Platform = Platform.get()
     internal var dispatcher: Dispatcher = Dispatcher()
     internal var proxy: Proxy? = null
     internal var protocols: List<Protocol> = DEFAULT_PROTOCOLS
@@ -305,6 +307,7 @@ open class OkHttpClient internal constructor(
     internal var pingInterval: Int = 0
 
     internal constructor(okHttpClient: OkHttpClient) : this() {
+      this.platform = okHttpClient.platform
       this.dispatcher = okHttpClient.dispatcher
       this.proxy = okHttpClient.proxy
       this.protocols = okHttpClient.protocols
@@ -333,6 +336,10 @@ open class OkHttpClient internal constructor(
       this.readTimeout = okHttpClient.readTimeout
       this.writeTimeout = okHttpClient.writeTimeout
       this.pingInterval = okHttpClient.pingInterval
+    }
+
+    fun platform(platform: Platform) = apply {
+      this.platform = platform
     }
 
     /**
@@ -552,7 +559,7 @@ open class OkHttpClient internal constructor(
     )
     fun sslSocketFactory(sslSocketFactory: SSLSocketFactory) = apply {
       this.sslSocketFactory = sslSocketFactory
-      this.certificateChainCleaner = Platform.get().buildCertificateChainCleaner(sslSocketFactory)
+      this.certificateChainCleaner = platform.buildCertificateChainCleaner(sslSocketFactory)
     }
 
     /**
@@ -815,9 +822,9 @@ open class OkHttpClient internal constructor(
       }
     }
 
-    private fun newSslSocketFactory(trustManager: X509TrustManager): SSLSocketFactory {
+    private fun newSslSocketFactory(platform: Platform, trustManager: X509TrustManager): SSLSocketFactory {
       try {
-        val sslContext = Platform.get().getSSLContext()
+        val sslContext = platform.getSSLContext()
         sslContext.init(null, arrayOf<TrustManager>(trustManager), null)
         return sslContext.socketFactory
       } catch (e: GeneralSecurityException) {

@@ -173,7 +173,9 @@ open class Platform {
     private val logger = Logger.getLogger(OkHttpClient::class.java.name)
 
     @JvmStatic
-    fun get(): Platform = PLATFORM
+    fun get(): Platform {
+      return PLATFORM
+    }
 
     fun alpnProtocolNames(protocols: List<Protocol>) =
         protocols.filter { it != Protocol.HTTP_1_0 }.map { it.toString() }
