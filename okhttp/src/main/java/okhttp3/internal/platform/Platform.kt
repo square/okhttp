@@ -27,13 +27,17 @@ import okio.Buffer
 import java.io.IOException
 import java.net.InetSocketAddress
 import java.net.Socket
+import java.security.GeneralSecurityException
+import java.security.KeyStore
 import java.security.NoSuchAlgorithmException
 import java.security.Security
+import java.util.Arrays
 import java.util.logging.Level
 import java.util.logging.Logger
 import javax.net.ssl.SSLContext
 import javax.net.ssl.SSLSocket
 import javax.net.ssl.SSLSocketFactory
+import javax.net.ssl.TrustManagerFactory
 import javax.net.ssl.X509TrustManager
 
 /**
@@ -80,6 +84,23 @@ open class Platform {
     SSLContext.getInstance("TLS")
   } catch (e: NoSuchAlgorithmException) {
     throw IllegalStateException("No TLS provider", e)
+  }
+
+  open fun platformTrustManager(): X509TrustManager {
+    try {
+      val trustManagerFactory = TrustManagerFactory.getInstance(
+          TrustManagerFactory.getDefaultAlgorithm())
+      trustManagerFactory.init(null as KeyStore?)
+      val trustManagers = trustManagerFactory.trustManagers
+      if (trustManagers.size != 1 || trustManagers[0] !is X509TrustManager) {
+        throw IllegalStateException(
+            "Unexpected default trust managers:" + Arrays.toString(trustManagers))
+      }
+      return trustManagers[0] as X509TrustManager
+    } catch (e: GeneralSecurityException) {
+      throw AssertionError("No System TLS", e) // The system has no TLS. Just give up.
+    }
+
   }
 
   protected open fun trustManager(sslSocketFactory: SSLSocketFactory): X509TrustManager? {
@@ -161,6 +182,8 @@ open class Platform {
       BasicTrustRootIndex(*trustManager.acceptedIssuers)
 
   open fun configureSslSocketFactory(socketFactory: SSLSocketFactory) {}
+
+  open fun configureTrustManager(trustManager: X509TrustManager?) {}
 
   override fun toString(): String = javaClass.simpleName
 

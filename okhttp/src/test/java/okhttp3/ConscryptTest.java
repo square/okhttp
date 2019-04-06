@@ -20,40 +20,30 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.security.Security;
 import okhttp3.internal.platform.ConscryptPlatform;
-import okhttp3.internal.platform.Platform;
 import org.conscrypt.OpenSSLProvider;
 import org.junit.After;
 import org.junit.Assume;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
-import static java.util.Arrays.asList;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 public class ConscryptTest {
-  public static final CipherSuite[] MANDATORY_CIPHER_SUITES = new CipherSuite[] {
-      CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
-      CipherSuite.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
-      CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,
-      CipherSuite.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
-      CipherSuite.TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256,
-      CipherSuite.TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256
-  };
+  private OkHttpClient client = new OkHttpClient();
 
-  private OkHttpClient client = buildClient();
+  @BeforeClass
+  public static void setup() {
+    assumeConscrypt();
+
+    OpenSSLProvider provider = new OpenSSLProvider();
+    Security.insertProviderAt(provider, 1);
+  }
 
   @After
   public void tearDown() {
     TestUtil.ensureAllConnectionsReleased(client);
-  }
-
-  private OkHttpClient buildClient() {
-    ConnectionSpec spec = new ConnectionSpec.Builder(true)
-        .cipherSuites(MANDATORY_CIPHER_SUITES) // Check we are using strong ciphers
-        .tlsVersions(TlsVersion.TLS_1_2) // and modern TLS
-        .supportsTlsExtensions(true)
-        .build();
-
-    return new OkHttpClient.Builder().connectionSpecs(asList(spec)).build();
   }
 
   private static void assumeConscrypt() {
@@ -71,41 +61,41 @@ public class ConscryptTest {
   @Test
   public void testMozilla() throws IOException {
     assumeNetwork();
-    assumeConscrypt();
 
     Request request = new Request.Builder().url("https://mozilla.org/robots.txt").build();
 
     Response response = client.newCall(request).execute();
 
     assertThat(response.protocol()).isEqualTo(Protocol.HTTP_2);
+    assertThat(response.handshake().tlsVersion()).isEqualTo(TlsVersion.TLS_1_3);
   }
 
   @Test
   public void testGoogle() throws IOException {
     assumeNetwork();
-    assumeConscrypt();
 
     Request request = new Request.Builder().url("https://google.com/robots.txt").build();
 
     Response response = client.newCall(request).execute();
 
     assertThat(response.protocol()).isEqualTo(Protocol.HTTP_2);
+    assertThat(response.handshake().tlsVersion()).isEqualTo(TlsVersion.TLS_1_3);
   }
 
   @Test
-  public void testBuild() {
-    assertThat(ConscryptPlatform.buildIfSupported()).isNotNull();
+  public void testBuildIfSupported() {
+    ConscryptPlatform actual = ConscryptPlatform.buildIfSupported();
+    assertThat(actual).isNotNull();
   }
 
   @Test
-  public void testPreferred() {
-    Assume.assumeFalse(Platform.isConscryptPreferred());
-
-    try {
-      Security.insertProviderAt(new OpenSSLProvider(), 1);
-      assertThat(Platform.isConscryptPreferred()).isTrue();
-    } finally {
-      Security.removeProvider("Conscrypt");
-    }
+  public void testVersion() {
+    assertTrue(ConscryptPlatform.atLeastVersion(1, 4, 9));
+    assertTrue(ConscryptPlatform.atLeastVersion(2));
+    assertTrue(ConscryptPlatform.atLeastVersion(2, 1));
+    assertTrue(ConscryptPlatform.atLeastVersion(2, 1, 0));
+    assertFalse(ConscryptPlatform.atLeastVersion(2, 1, 1));
+    assertFalse(ConscryptPlatform.atLeastVersion(2, 2));
+    assertFalse(ConscryptPlatform.atLeastVersion(9));
   }
 }

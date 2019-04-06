@@ -166,6 +166,7 @@ open class OkHttpClient internal constructor(
       this.certificateChainCleaner = builder.certificateChainCleaner
     } else {
       val trustManager = Util.platformTrustManager()
+      Platform.get().configureTrustManager(trustManager)
       this.sslSocketFactory = newSslSocketFactory(trustManager)
       this.certificateChainCleaner = CertificateChainCleaner.get(trustManager)
     }
