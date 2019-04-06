@@ -39,16 +39,14 @@ public final class MockDuplexResponseBody implements DuplexResponseBody {
   private final BlockingQueue<FutureTask<Void>> results = new LinkedBlockingQueue<>();
 
   public MockDuplexResponseBody receiveRequest(String expected) {
-    actions.add((request, requestBody, responseBody) -> {
-      assertEquals(expected, requestBody.readUtf8(Utf8.size(expected)));
-    });
+    actions.add((request, requestBody, responseBody) ->
+      assertEquals(expected, requestBody.readUtf8(Utf8.size(expected))));
     return this;
   }
 
   public MockDuplexResponseBody exhaustRequest() {
-    actions.add((request, requestBody, responseBody) -> {
-      assertTrue(requestBody.exhausted());
-    });
+    actions.add((request, requestBody, responseBody) ->
+      assertTrue(requestBody.exhausted()));
     return this;
   }
 
@@ -77,9 +75,8 @@ public final class MockDuplexResponseBody implements DuplexResponseBody {
   }
 
   public MockDuplexResponseBody exhaustResponse() {
-    actions.add((request, requestBody, responseBody) -> {
-      responseBody.close();
-    });
+    actions.add((request, requestBody, responseBody) ->
+      responseBody.close());
     return this;
   }
 
