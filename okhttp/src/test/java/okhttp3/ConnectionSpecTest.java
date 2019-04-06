@@ -25,8 +25,10 @@ import org.junit.Test;
 
 import static java.util.Arrays.asList;
 import static okhttp3.internal.InternalKtKt.applyConnectionSpec;
+import static okhttp3.internal.platform.PlatformTest.getPlatform;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.fail;
+import static org.junit.Assume.assumeFalse;
 
 public final class ConnectionSpecTest {
   @Test public void noTlsVersions() throws Exception {
@@ -78,6 +80,8 @@ public final class ConnectionSpecTest {
   }
 
   @Test public void tls_defaultCiphers_noFallbackIndicator() throws Exception {
+    assumeFalse(getPlatform().equals("conscrypt"));
+
     ConnectionSpec tlsSpec = new ConnectionSpec.Builder(true)
         .tlsVersions(TlsVersion.TLS_1_2)
         .supportsTlsExtensions(false)
@@ -104,6 +108,8 @@ public final class ConnectionSpecTest {
   }
 
   @Test public void tls_defaultCiphers_withFallbackIndicator() throws Exception {
+    assumeFalse(getPlatform().equals("conscrypt"));
+
     ConnectionSpec tlsSpec = new ConnectionSpec.Builder(true)
         .tlsVersions(TlsVersion.TLS_1_2)
         .supportsTlsExtensions(false)
@@ -134,6 +140,8 @@ public final class ConnectionSpecTest {
   }
 
   @Test public void tls_explicitCiphers() throws Exception {
+    assumeFalse(getPlatform().equals("conscrypt"));
+
     ConnectionSpec tlsSpec = new ConnectionSpec.Builder(true)
         .cipherSuites(CipherSuite.TLS_RSA_WITH_RC4_128_MD5)
         .tlsVersions(TlsVersion.TLS_1_2)
@@ -173,6 +181,8 @@ public final class ConnectionSpecTest {
   }
 
   @Test public void tls_missingRequiredCipher() throws Exception {
+    assumeFalse(getPlatform().equals("conscrypt"));
+
     ConnectionSpec tlsSpec = new ConnectionSpec.Builder(true)
         .cipherSuites(CipherSuite.TLS_RSA_WITH_RC4_128_MD5)
         .tlsVersions(TlsVersion.TLS_1_2)
@@ -198,6 +208,8 @@ public final class ConnectionSpecTest {
   }
 
   @Test public void allEnabledCipherSuites() throws Exception {
+    assumeFalse(getPlatform().equals("conscrypt"));
+
     ConnectionSpec tlsSpec = new ConnectionSpec.Builder(ConnectionSpec.MODERN_TLS)
         .allEnabledCipherSuites()
         .build();
@@ -216,6 +228,8 @@ public final class ConnectionSpecTest {
   }
 
   @Test public void allEnabledTlsVersions() throws Exception {
+    assumeFalse(getPlatform().equals("conscrypt"));
+
     ConnectionSpec tlsSpec = new ConnectionSpec.Builder(ConnectionSpec.MODERN_TLS)
         .allEnabledTlsVersions()
         .build();
@@ -233,6 +247,8 @@ public final class ConnectionSpecTest {
   }
 
   @Test public void tls_missingTlsVersion() throws Exception {
+    assumeFalse(getPlatform().equals("conscrypt"));
+
     ConnectionSpec tlsSpec = new ConnectionSpec.Builder(true)
         .cipherSuites(CipherSuite.TLS_RSA_WITH_RC4_128_MD5)
         .tlsVersions(TlsVersion.TLS_1_2)
