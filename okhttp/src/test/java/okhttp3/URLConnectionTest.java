@@ -1722,6 +1722,7 @@ public final class URLConnectionTest {
           .url(server.url("/"))
           .method(requestMethod, RequestBody.create(null, "abc"))
           .build();
+      fail();
     } catch (IllegalArgumentException expected) {
     }
   }
@@ -1740,6 +1741,7 @@ public final class URLConnectionTest {
           .url(server.url("/"))
           .method(requestMethod, null)
           .build();
+      fail();
     } catch (IllegalArgumentException expected) {
     }
   }
@@ -2735,11 +2737,13 @@ public final class URLConnectionTest {
 
     try {
       sinkReference.get().flush();
+      fail();
     } catch (IllegalStateException expected) {
     }
     try {
       sinkReference.get().write("ghi".getBytes(UTF_8));
       sinkReference.get().emit();
+      fail();
     } catch (IllegalStateException expected) {
     }
   }
