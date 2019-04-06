@@ -755,6 +755,16 @@ open class OkHttpClient internal constructor(
       interceptors += interceptor
     }
 
+    // This lambda conversion is for Kotlin callers expecting a Java SAM (single-abstract-method).
+    @JvmName("-deprecated_addInterceptor")
+    inline fun addInterceptor(
+      crossinline interceptor: (chain: Interceptor.Chain) -> Response
+    ) = apply {
+      addInterceptor(object : Interceptor {
+        override fun intercept(chain: Interceptor.Chain): Response = interceptor(chain)
+      })
+    }
+
     /**
      * Returns a modifiable list of interceptors that observe a single network request and response.
      * These interceptors must call [Interceptor.Chain.proceed] exactly once: it is an error for a
@@ -764,6 +774,16 @@ open class OkHttpClient internal constructor(
 
     fun addNetworkInterceptor(interceptor: Interceptor) = apply {
       networkInterceptors += interceptor
+    }
+
+    // This lambda conversion is for Kotlin callers expecting a Java SAM (single-abstract-method).
+    @JvmName("-deprecated_addNetworkInterceptor")
+    inline fun addNetworkInterceptor(
+      crossinline interceptor: (chain: Interceptor.Chain) -> Response
+    ) = apply {
+      addInterceptor(object : Interceptor {
+        override fun intercept(chain: Interceptor.Chain): Response = interceptor(chain)
+      })
     }
 
     /**
@@ -784,6 +804,14 @@ open class OkHttpClient internal constructor(
      */
     fun eventListenerFactory(eventListenerFactory: EventListener.Factory) = apply {
       this.eventListenerFactory = eventListenerFactory
+    }
+
+    // This lambda conversion is for Kotlin callers expecting a Java SAM (single-abstract-method).
+    @JvmName("-deprecated_eventListenerFactory")
+    inline fun eventListenerFactory(crossinline block: (call: Call) -> EventListener) = apply {
+      eventListenerFactory(object : EventListener.Factory {
+        override fun create(call: Call) = block(call)
+      })
     }
 
     fun build(): OkHttpClient = OkHttpClient(this)
