@@ -110,7 +110,7 @@ subprojects { project ->
     jvmArgs += "-Dokhttp.platform=$platform"
 
     testLogging {
-      events "skipped", "failed"
+//      events "skipped", "failed"
       exceptionFormat = 'full'
     }
   }

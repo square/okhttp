@@ -238,11 +238,10 @@ workflows:
           filters:
             branches:
               only: master
-      - testconscrypt
-#      - testconscrypt:
-#          filters:
-#            branches:
-#              ignore: master
+      - testconscrypt:
+          filters:
+            branches:
+              only: master
   nightly:
     triggers:
       - schedule:
