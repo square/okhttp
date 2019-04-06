@@ -241,7 +241,7 @@ workflows:
       - testconscrypt:
           filters:
             branches:
-              only: master
+              ignore: master
   nightly:
     triggers:
       - schedule:
