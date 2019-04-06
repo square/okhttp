@@ -37,10 +37,10 @@ class MediaType private constructor(
    */
   @JvmOverloads
   fun charset(defaultValue: Charset? = null): Charset? {
-    try {
-      return if (charset != null) Charset.forName(charset) else defaultValue
+    return try {
+      if (charset != null) Charset.forName(charset) else defaultValue
     } catch (e: IllegalArgumentException) {
-      return defaultValue // This charset is invalid or unsupported. Give up.
+      defaultValue // This charset is invalid or unsupported. Give up.
     }
   }
 
@@ -123,10 +123,10 @@ class MediaType private constructor(
     /** Returns a media type for `string`, or null if `string` is not a well-formed media type. */
     @JvmStatic
     fun parse(string: String): MediaType? {
-      try {
-        return get(string)
+      return try {
+        get(string)
       } catch (ignored: IllegalArgumentException) {
-        return null
+        null
       }
     }
   }

@@ -352,13 +352,13 @@ class HttpUrl internal constructor(builder: Builder) {
    */
   fun uri(): URI {
     val uri = newBuilder().reencodeForUri().toString()
-    try {
-      return URI(uri)
+    return try {
+      URI(uri)
     } catch (e: URISyntaxException) {
       // Unlikely edge case: the URI has a forbidden character in the fragment. Strip it & retry.
       try {
         val stripped = uri.replace(Regex("[\\u0000-\\u001F\\u007F-\\u009F\\p{javaWhitespace}]"), "")
-        return URI.create(stripped)
+        URI.create(stripped)
       } catch (e1: Exception) {
         throw RuntimeException(e) // Unexpected!
       }
@@ -773,10 +773,10 @@ class HttpUrl internal constructor(builder: Builder) {
    * or null if the resulting URL is not well-formed.
    */
   fun newBuilder(link: String): Builder? {
-    try {
-      return Builder().parse(this, link)
+    return try {
+      Builder().parse(this, link)
     } catch (ignored: IllegalArgumentException) {
-      return null
+      null
     }
   }
 
@@ -807,10 +807,10 @@ class HttpUrl internal constructor(builder: Builder) {
    * </table>
    */
   fun topPrivateDomain(): String? {
-    if (verifyAsIpAddress(host)) {
-      return null
+    return if (verifyAsIpAddress(host)) {
+      null
     } else {
-      return PublicSuffixDatabase.get().getEffectiveTldPlusOne(host)
+      PublicSuffixDatabase.get().getEffectiveTldPlusOne(host)
     }
   }
 
@@ -1368,17 +1368,17 @@ class HttpUrl internal constructor(builder: Builder) {
         for (i in pos + 1 until limit) {
           val c = input[i]
 
-          if (c >= 'a' && c <= 'z'
-              || c >= 'A' && c <= 'Z'
-              || c >= '0' && c <= '9'
-              || c == '+'
-              || c == '-'
-              || c == '.') {
-            continue // Scheme character. Keep going.
+          return if (c in 'a'..'z'
+                  || c in 'A'..'Z'
+                  || c in '0'..'9'
+                  || c == '+'
+                  || c == '-'
+                  || c == '.') {
+              continue // Scheme character. Keep going.
           } else if (c == ':') {
-            return i // Scheme prefix!
+            i // Scheme prefix!
           } else {
-            return -1 // Non-scheme character before the first ':'.
+            -1 // Non-scheme character before the first ':'.
           }
         }
 
@@ -1428,13 +1428,13 @@ class HttpUrl internal constructor(builder: Builder) {
 
       @JvmStatic
       private fun parsePort(input: String, pos: Int, limit: Int): Int {
-        try {
+        return try {
           // Canonicalize the port string to skip '\n' etc.
           val portString = canonicalize(input, pos, limit, "", false, false, false, true, null)
           val i = Integer.parseInt(portString)
-          return if (i > 0 && i <= 65535) i else -1
+          if (i in 1..65535) i else -1
         } catch (e: NumberFormatException) {
-          return -1 // Invalid port.
+          -1 // Invalid port.
         }
 
       }
@@ -1531,10 +1531,10 @@ class HttpUrl internal constructor(builder: Builder) {
      */
     @JvmStatic
     fun parse(url: String): HttpUrl? {
-      try {
-        return get(url)
+      return try {
+        get(url)
       } catch (ignored: IllegalArgumentException) {
-        return null
+        null
       }
     }
 
