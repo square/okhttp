@@ -27,27 +27,57 @@ import javax.net.ssl.X509TrustManager
 /**
  * Platform using Conscrypt (conscrypt.org) if installed as the first Security Provider.
  *
- * Requires org.conscrypt:conscrypt-openjdk-uber on the classpath.
+ * Requires org.conscrypt:conscrypt-openjdk-uber >= 1.4.0 on the classpath.
  */
 class ConscryptPlatform private constructor() : Platform() {
 
-  @Suppress("DEPRECATION")
   private val provider: Provider
     // defaults to true, but allow for older versions of conscrypt if still compatible
     // new form with boolean is only present in >= 2.0.0
-    get() = Conscrypt.newProviderBuilder().provideTrustManager().build()
+    get() {
+      // n.b. We should consider defaulting to OpenJDK 11 trust manager
+      // https://groups.google.com/forum/#!topic/conscrypt/3vYzbesjOb4
 
-  override fun getSSLContext(): SSLContext {
-    // Allow for Conscrypt 1.2
-    return try {
-      SSLContext.getInstance("TLSv1.3", provider)
-    } catch (e: NoSuchAlgorithmException) {
+      if (atLeastVersion(2)) {
+        return Conscrypt.newProviderBuilder().provideTrustManager(true).build()
+      } else {
+        @Suppress("DEPRECATION")
+        return Conscrypt.newProviderBuilder().provideTrustManager().build()
+      }
+    }
+
+  // See release notes https://groups.google.com/forum/#!forum/conscrypt
+  // for version differences
+  override fun getSSLContext(): SSLContext =
+    if (atLeastVersion(2)) {
+      // supports TLSv1.3 by default (version api is >= 1.4.0)
+      SSLContext.getInstance("TLS", provider)
+    } else {
+      // Available post Conscrypt 1.2 (
+      try {
+        SSLContext.getInstance("TLSv1.3", provider)
+      } catch (e: NoSuchAlgorithmException) {
+      }
+
       try {
         SSLContext.getInstance("TLS", provider)
-      } catch (e2: NoSuchAlgorithmException) {
+      } catch (e: NoSuchAlgorithmException) {
         throw IllegalStateException("No TLS provider", e)
       }
     }
+
+  private fun atLeastVersion(major: Int, minor: Int = 0, patch: Int = 0): Boolean {
+    val conscryptVersion = Conscrypt.version()
+
+    if (conscryptVersion.major() != major) {
+      return conscryptVersion.major() > major
+    }
+
+    if (conscryptVersion.minor() != minor) {
+      return conscryptVersion.minor() > minor
+    }
+
+    return conscryptVersion.patch() >= patch
   }
 
   public override fun trustManager(sslSocketFactory: SSLSocketFactory): X509TrustManager? =
@@ -99,11 +129,19 @@ class ConscryptPlatform private constructor() : Platform() {
     }
   }
 
+  override fun configureTrustManager(trustManager: X509TrustManager?) {
+    if (atLeastVersion(2, 1)) {
+      // OkHttp will verify
+      Conscrypt.setHostnameVerifier(trustManager) { hostname, session -> true }
+    }
+  }
+
   companion object {
     @JvmStatic
     fun buildIfSupported(): ConscryptPlatform? = try {
       // Trigger an early exception over a fatal error, prefer a RuntimeException over Error.
       Class.forName("org.conscrypt.Conscrypt")
+      Class.forName("org.conscrypt.Conscrypt.Version")
 
       when {
         Conscrypt.isAvailable() -> ConscryptPlatform()

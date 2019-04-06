@@ -50,7 +50,7 @@ public class ConscryptTest {
   private OkHttpClient buildClient() {
     ConnectionSpec spec = new ConnectionSpec.Builder(true)
         .cipherSuites(MANDATORY_CIPHER_SUITES) // Check we are using strong ciphers
-        .tlsVersions(TlsVersion.TLS_1_2) // and modern TLS
+        .tlsVersions(TlsVersion.TLS_1_2, TlsVersion.TLS_1_3) // and modern TLS
         .supportsTlsExtensions(true)
         .build();
 
@@ -102,11 +102,12 @@ public class ConscryptTest {
   public void testPreferred() {
     Assume.assumeFalse(Platform.isConscryptPreferred());
 
+    OpenSSLProvider provider = new OpenSSLProvider();
     try {
-      Security.insertProviderAt(new OpenSSLProvider(), 1);
+      Security.insertProviderAt(provider, 1);
       assertThat(Platform.isConscryptPreferred()).isTrue();
     } finally {
-      Security.removeProvider("Conscrypt");
+      Security.removeProvider(provider.getName());
     }
   }
 }
