@@ -54,5 +54,13 @@ interface Dns {
         }
       }
     }
+
+    // This lambda conversion is for Kotlin callers expecting a Java SAM (single-abstract-method).
+    @JvmName("-deprecated_Dns")
+    inline operator fun invoke(
+      crossinline block: (String) -> List<InetAddress>
+    ): Dns = object : Dns {
+      override fun lookup(hostname: String): List<InetAddress> = block(hostname)
+    }
   }
 }

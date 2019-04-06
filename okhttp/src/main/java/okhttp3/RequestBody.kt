@@ -72,7 +72,7 @@ abstract class RequestBody {
    *
    * [grpc]: https://github.com/grpc/grpc/blob/master/doc/PROTOCOL-HTTP2.md
    */
-  open val isDuplex: Boolean = false
+  open fun isDuplex(): Boolean = false
 
   /**
    * Returns true if this body expects at most one call to [writeTo] and can be transmitted
@@ -86,7 +86,7 @@ abstract class RequestBody {
    * (HTTP 401 and 407), or a retryable server failure (HTTP 503 with a `Retry-After: 0`
    * header).
    */
-  open val isOneShot: Boolean = false
+  open fun isOneShot(): Boolean = false
 
   companion object {
 

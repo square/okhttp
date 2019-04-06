@@ -112,6 +112,11 @@ class Dispatcher constructor() {
     this.idleCallback = idleCallback
   }
 
+  // This lambda conversion is for Kotlin callers expecting a Java SAM (single-abstract-method).
+  @JvmName("-deprecated_setIdleCallback")
+  inline fun setIdleCallback(crossinline idleCallback: () -> Unit) =
+      setIdleCallback(Runnable { idleCallback() })
+
   internal fun enqueue(call: AsyncCall) {
     synchronized(this) {
       readyAsyncCalls.add(call)

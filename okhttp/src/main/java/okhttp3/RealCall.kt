@@ -47,17 +47,18 @@ internal class RealCall private constructor(
   private lateinit var transmitter: Transmitter
 
   // Guarded by this.
-  @get:Synchronized override var isExecuted: Boolean = false
+  var executed: Boolean = false
 
-  override val isCanceled: Boolean
-    get() = transmitter.isCanceled
+  @Synchronized override fun isExecuted(): Boolean = executed
+
+  override fun isCanceled(): Boolean = transmitter.isCanceled
 
   override fun request(): Request = originalRequest
 
   override fun execute(): Response {
     synchronized(this) {
-      check(!isExecuted) { "Already Executed" }
-      isExecuted = true
+      check(!executed) { "Already Executed" }
+      executed = true
     }
     transmitter.timeoutEnter()
     transmitter.callStart()
@@ -71,8 +72,8 @@ internal class RealCall private constructor(
 
   override fun enqueue(responseCallback: Callback) {
     synchronized(this) {
-      check(!isExecuted) { "Already Executed" }
-      isExecuted = true
+      check(!executed) { "Already Executed" }
+      executed = true
     }
     transmitter.callStart()
     client.dispatcher().enqueue(AsyncCall(responseCallback))
@@ -153,7 +154,7 @@ internal class RealCall private constructor(
    * sensitive information.
    */
   fun toLoggableString(): String {
-    return ((if (isCanceled) "canceled " else "")
+    return ((if (isCanceled()) "canceled " else "")
         + (if (forWebSocket) "web socket" else "call")
         + " to " + redactedUrl())
   }

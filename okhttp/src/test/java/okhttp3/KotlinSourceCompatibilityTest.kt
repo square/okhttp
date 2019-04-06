@@ -62,6 +62,8 @@ import javax.net.ssl.SSLSocketFactory
     "ASSIGNED_BUT_NEVER_ACCESSED_VARIABLE",
     "DEPRECATION",
     "RedundantExplicitType",
+    "RedundantLambdaArrow",
+    "UNUSED_ANONYMOUS_PARAMETER",
     "UNUSED_VALUE",
     "UNUSED_VARIABLE",
     "VARIABLE_WITH_REDUNDANT_INITIALIZER"
@@ -97,9 +99,10 @@ class KotlinSourceCompatibilityTest {
 
   @Test @Ignore
   fun authenticator() {
-    val authenticator = object : Authenticator {
+    var authenticator: Authenticator = object : Authenticator {
       override fun authenticate(route: Route?, response: Response): Request? = TODO()
     }
+    authenticator = Authenticator { route: Route?, response: Response -> TODO() }
   }
 
   @Test @Ignore
@@ -160,8 +163,8 @@ class KotlinSourceCompatibilityTest {
       override fun execute(): Response = TODO()
       override fun enqueue(responseCallback: Callback) = TODO()
       override fun cancel() = TODO()
-      override val isExecuted: Boolean get() = TODO()
-      override val isCanceled: Boolean get() = TODO()
+      override fun isExecuted(): Boolean = TODO()
+      override fun isCanceled(): Boolean = TODO()
       override fun timeout(): Timeout = TODO()
       override fun clone(): Call = TODO()
     }
@@ -312,6 +315,7 @@ class KotlinSourceCompatibilityTest {
     dispatcher.setIdleCallback(object : Runnable {
       override fun run() = TODO()
     })
+    dispatcher.setIdleCallback { TODO() }
     val queuedCalls: List<Call> = dispatcher.queuedCalls()
     val runningCalls: List<Call> = dispatcher.runningCalls()
     val queuedCallsCount: Int = dispatcher.queuedCallsCount()
@@ -321,9 +325,11 @@ class KotlinSourceCompatibilityTest {
 
   @Test @Ignore
   fun dns() {
-    val dns = object : Dns {
+    var dns: Dns = object : Dns {
       override fun lookup(hostname: String): List<InetAddress> = TODO()
     }
+    dns = Dns { it: String -> TODO() }
+
     val system: Dns = Dns.SYSTEM
   }
 
@@ -381,9 +387,10 @@ class KotlinSourceCompatibilityTest {
 
   @Test @Ignore
   fun eventListenerBuilder() {
-    val builder = object : EventListener.Factory {
+    var builder: EventListener.Factory = object : EventListener.Factory {
       override fun create(call: Call): EventListener = TODO()
     }
+    builder = EventListener.Factory { it: Call -> TODO() }
   }
 
   @Test @Ignore
@@ -394,7 +401,7 @@ class KotlinSourceCompatibilityTest {
     val name: String = formBody.name(0)
     val encodedValue: String = formBody.encodedValue(0)
     val value: String = formBody.value(0)
-    val contentType: MediaType = formBody.contentType()
+    val contentType: MediaType? = formBody.contentType()
     val contentLength: Long = formBody.contentLength()
     formBody.writeTo(Buffer())
     val requestBody: RequestBody = formBody
@@ -570,9 +577,10 @@ class KotlinSourceCompatibilityTest {
 
   @Test @Ignore
   fun interceptor() {
-    val interceptor = object : Interceptor {
+    var interceptor: Interceptor = object : Interceptor {
       override fun intercept(chain: Interceptor.Chain): Response = TODO()
     }
+    interceptor = Interceptor { it: Interceptor.Chain -> TODO() }
   }
 
   @Test @Ignore
@@ -683,14 +691,17 @@ class KotlinSourceCompatibilityTest {
     builder = builder.addInterceptor(object : Interceptor {
       override fun intercept(chain: Interceptor.Chain): Response = TODO()
     })
+    builder = builder.addInterceptor { it: Interceptor.Chain -> TODO() }
     val networkInterceptors: List<Interceptor> = builder.networkInterceptors()
     builder = builder.addNetworkInterceptor(object : Interceptor {
       override fun intercept(chain: Interceptor.Chain): Response = TODO()
     })
+    builder = builder.addNetworkInterceptor { it: Interceptor.Chain -> TODO() }
     builder = builder.eventListener(EventListener.NONE)
     builder = builder.eventListenerFactory(object : EventListener.Factory {
       override fun create(call: Call): EventListener = TODO()
     })
+    builder = builder.eventListenerFactory { it: Call -> TODO() }
     val client: OkHttpClient = builder.build()
   }
 
@@ -749,8 +760,8 @@ class KotlinSourceCompatibilityTest {
     var requestBody: RequestBody = object : RequestBody() {
       override fun contentType(): MediaType? = TODO()
       override fun contentLength(): Long = TODO()
-      override val isDuplex: Boolean get() = TODO()
-      override val isOneShot: Boolean get() = TODO()
+      override fun isDuplex(): Boolean = TODO()
+      override fun isOneShot(): Boolean = TODO()
       override fun writeTo(sink: BufferedSink) = TODO()
     }
     requestBody = RequestBody.create(null, "")
