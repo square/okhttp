@@ -22,16 +22,27 @@ import java.security.Security;
 import okhttp3.internal.platform.ConscryptPlatform;
 import okhttp3.internal.platform.Platform;
 import org.conscrypt.OpenSSLProvider;
+import org.jetbrains.annotations.NotNull;
 import org.junit.After;
 import org.junit.Assume;
 import org.junit.Test;
 
+import static java.util.Arrays.asList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 public class ConscryptTest {
-  private OkHttpClient client = new OkHttpClient();
+  private OkHttpClient client = buildClient();
+
+  @NotNull private OkHttpClient buildClient() {
+    // TODO fix TLSv1.3 : javax.net.ssl.SSLHandshakeException: Unknown authType: GENERIC
+    ConnectionSpec spec = new ConnectionSpec.Builder(ConnectionSpec.RESTRICTED_TLS)
+        .tlsVersions(TlsVersion.TLS_1_2)
+        .build();
+
+    return new OkHttpClient.Builder().connectionSpecs(asList(spec)).build();
+  }
 
   @After
   public void tearDown() {
