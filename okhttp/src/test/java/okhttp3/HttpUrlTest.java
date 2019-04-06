@@ -17,7 +17,6 @@ package okhttp3;
 
 import java.net.URI;
 import java.net.URL;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import okhttp3.UrlComponentEncodingTester.Component;
