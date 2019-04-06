@@ -20,28 +20,25 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.security.Security;
 import okhttp3.internal.platform.ConscryptPlatform;
-import okhttp3.internal.platform.Platform;
 import org.conscrypt.OpenSSLProvider;
-import org.jetbrains.annotations.NotNull;
 import org.junit.After;
 import org.junit.Assume;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
-import static java.util.Arrays.asList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 public class ConscryptTest {
-  private OkHttpClient client = buildClient();
+  private OkHttpClient client = new OkHttpClient();
 
-  @NotNull private OkHttpClient buildClient() {
-    // TODO fix TLSv1.3 : javax.net.ssl.SSLHandshakeException: Unknown authType: GENERIC
-    ConnectionSpec spec = new ConnectionSpec.Builder(ConnectionSpec.RESTRICTED_TLS)
-        .tlsVersions(TlsVersion.TLS_1_2)
-        .build();
+  @BeforeClass
+  public static void setup() {
+    assumeConscrypt();
 
-    return new OkHttpClient.Builder().connectionSpecs(asList(spec)).build();
+    OpenSSLProvider provider = new OpenSSLProvider();
+    Security.insertProviderAt(provider, 1);
   }
 
   @After
@@ -64,7 +61,6 @@ public class ConscryptTest {
   @Test
   public void testMozilla() throws IOException {
     assumeNetwork();
-    assumeConscrypt();
 
     Request request = new Request.Builder().url("https://mozilla.org/robots.txt").build();
 
@@ -76,7 +72,6 @@ public class ConscryptTest {
   @Test
   public void testGoogle() throws IOException {
     assumeNetwork();
-    assumeConscrypt();
 
     Request request = new Request.Builder().url("https://google.com/robots.txt").build();
 
@@ -87,23 +82,8 @@ public class ConscryptTest {
 
   @Test
   public void testBuildIfSupported() {
-    assumeConscrypt();
-
     ConscryptPlatform actual = ConscryptPlatform.buildIfSupported();
     assertThat(actual).isNotNull();
-  }
-
-  @Test
-  public void testPreferred() {
-    Assume.assumeFalse(Platform.isConscryptPreferred());
-
-    OpenSSLProvider provider = new OpenSSLProvider();
-    try {
-      Security.insertProviderAt(provider, 1);
-      assertThat(Platform.isConscryptPreferred()).isTrue();
-    } finally {
-      Security.removeProvider(provider.getName());
-    }
   }
 
   @Test
