@@ -30,7 +30,6 @@ import javax.net.ssl.X509TrustManager
  * Requires org.conscrypt:conscrypt-openjdk-uber >= 1.4.0 on the classpath.
  */
 class ConscryptPlatform private constructor() : Platform() {
-
   private val provider: Provider
     // defaults to true, but allow for older versions of conscrypt if still compatible
     // new form with boolean is only present in >= 2.0.0
@@ -65,6 +64,10 @@ class ConscryptPlatform private constructor() : Platform() {
         throw IllegalStateException("No TLS provider", e)
       }
     }
+
+  override fun platformTrustManager(): X509TrustManager {
+    return Conscrypt.getDefaultX509TrustManager()
+  }
 
   public override fun trustManager(sslSocketFactory: SSLSocketFactory): X509TrustManager? =
       if (!Conscrypt.isConscrypt(sslSocketFactory)) {
