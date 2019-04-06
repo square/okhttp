@@ -127,7 +127,7 @@ class ConscryptPlatform private constructor() : Platform() {
     fun buildIfSupported(): ConscryptPlatform? = try {
       // Trigger an early exception over a fatal error, prefer a RuntimeException over Error.
       Class.forName("org.conscrypt.Conscrypt")
-      Class.forName("org.conscrypt.Conscrypt.Version")
+      Class.forName("org.conscrypt.Conscrypt\$Version")
 
       when {
         Conscrypt.isAvailable() -> ConscryptPlatform()
