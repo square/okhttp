@@ -67,6 +67,7 @@ public class ConscryptTest {
     Response response = client.newCall(request).execute();
 
     assertThat(response.protocol()).isEqualTo(Protocol.HTTP_2);
+    assertThat(response.handshake().tlsVersion()).isEqualTo(TlsVersion.TLS_1_3);
   }
 
   @Test
@@ -78,6 +79,7 @@ public class ConscryptTest {
     Response response = client.newCall(request).execute();
 
     assertThat(response.protocol()).isEqualTo(Protocol.HTTP_2);
+    assertThat(response.handshake().tlsVersion()).isEqualTo(TlsVersion.TLS_1_3);
   }
 
   @Test
