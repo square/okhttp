@@ -118,6 +118,8 @@ public class ConscryptTest {
     assertTrue(ConscryptPlatform.atLeastVersion(2));
     assertTrue(ConscryptPlatform.atLeastVersion(2, 1));
     assertTrue(ConscryptPlatform.atLeastVersion(2, 1, 0));
+    assertFalse(ConscryptPlatform.atLeastVersion(2, 1, 1));
+    assertFalse(ConscryptPlatform.atLeastVersion(2, 2));
     assertFalse(ConscryptPlatform.atLeastVersion(9));
   }
 }

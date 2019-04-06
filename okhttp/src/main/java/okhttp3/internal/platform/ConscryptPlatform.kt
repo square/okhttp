@@ -53,7 +53,7 @@ class ConscryptPlatform private constructor() : Platform() {
       // supports TLSv1.3 by default (version api is >= 1.4.0)
       SSLContext.getInstance("TLS", provider)
     } else {
-      // Available post Conscrypt 1.2 (
+      // Available post Conscrypt 1.2
       try {
         SSLContext.getInstance("TLSv1.3", provider)
       } catch (e: NoSuchAlgorithmException) {
