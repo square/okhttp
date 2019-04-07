@@ -25,7 +25,9 @@ open class PlatformRule @JvmOverloads constructor(
   }
 
   override fun after() {
-    Platform.reset()
+    if (platform != null) {
+      Platform.reset()
+    }
   }
 
   fun isConscrypt() = getPlatform() == "conscrypt"
