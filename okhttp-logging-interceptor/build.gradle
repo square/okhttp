@@ -1,4 +1,5 @@
 apply plugin: 'com.vanniktech.maven.publish'
+apply plugin: 'me.champeau.gradle.japicmp'
 
 jar {
   manifest {
@@ -18,7 +19,6 @@ dependencies {
   testImplementation deps.assertj
 }
 
-apply plugin: 'me.champeau.gradle.japicmp'
 task japicmp(type: me.champeau.gradle.japicmp.JapicmpTask, dependsOn: 'jar') {
   oldClasspath = files(baselineJar(project, baselineVersion))
   newClasspath = files(jar.archivePath)
