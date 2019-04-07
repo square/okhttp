@@ -46,27 +46,24 @@ interface FileSystem {
     @JvmField
     val SYSTEM: FileSystem = object : FileSystem {
       @Throws(FileNotFoundException::class)
-      override fun source(file: File): Source {
-        return file.source()
-      }
+      override fun source(file: File): Source = file.source()
 
       @Throws(FileNotFoundException::class)
       override fun sink(file: File): Sink {
         try {
           return file.sink()
-        } catch (e: FileNotFoundException) {
+        } catch (_: FileNotFoundException) {
           // Maybe the parent directory doesn't exist? Try creating it first.
           file.parentFile.mkdirs()
           return file.sink()
         }
-
       }
 
       @Throws(FileNotFoundException::class)
       override fun appendingSink(file: File): Sink {
         try {
           return file.appendingSink()
-        } catch (e: FileNotFoundException) {
+        } catch (_: FileNotFoundException) {
           // Maybe the parent directory doesn't exist? Try creating it first.
           file.parentFile.mkdirs()
           return file.appendingSink()
