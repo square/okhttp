@@ -39,7 +39,7 @@ class ConscryptPlatform private constructor() : Platform() {
 
   // See release notes https://groups.google.com/forum/#!forum/conscrypt
   // for version differences
-  override fun getSSLContext(): SSLContext =
+  override fun newSSLContext(): SSLContext =
       // supports TLSv1.3 by default (version api is >= 1.4.0)
       SSLContext.getInstance("TLS", provider)
 

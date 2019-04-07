@@ -571,7 +571,7 @@ public final class URLConnectionTest {
     Response response1 = getResponse(newRequest("/"));
     assertContent("this response comes via HTTPS", response1);
 
-    SSLContext sslContext2 = Platform.get().getSSLContext();
+    SSLContext sslContext2 = Platform.get().newSSLContext();
     sslContext2.init(null, null, null);
     SSLSocketFactory sslSocketFactory2 = sslContext2.getSocketFactory();
 
@@ -2434,7 +2434,7 @@ public final class URLConnectionTest {
     RecordingHostnameVerifier hostnameVerifier = new RecordingHostnameVerifier();
     RecordingTrustManager trustManager =
         new RecordingTrustManager(handshakeCertificates.trustManager());
-    SSLContext sslContext = Platform.get().getSSLContext();
+    SSLContext sslContext = Platform.get().newSSLContext();
     sslContext.init(null, new TrustManager[] {trustManager}, null);
 
     client = client.newBuilder()

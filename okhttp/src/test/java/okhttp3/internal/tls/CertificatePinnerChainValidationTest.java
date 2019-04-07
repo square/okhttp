@@ -349,7 +349,7 @@ public final class CertificatePinnerChainValidationTest {
     String keystoreType = getPlatform().equals("jdk9") ? "JKS" : null;
     X509KeyManager x509KeyManager = newKeyManager(keystoreType, heldCertificate, intermediates);
     X509TrustManager trustManager = newTrustManager(keystoreType, Collections.emptyList());
-    SSLContext sslContext = Platform.get().getSSLContext();
+    SSLContext sslContext = Platform.get().newSSLContext();
     sslContext.init(new KeyManager[] { x509KeyManager }, new TrustManager[] { trustManager },
         new SecureRandom());
     return sslContext.getSocketFactory();
