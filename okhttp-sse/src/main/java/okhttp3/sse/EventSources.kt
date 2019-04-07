@@ -13,27 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package okhttp3.sse;
+package okhttp3.sse
 
-import okhttp3.OkHttpClient;
-import okhttp3.Response;
-import okhttp3.internal.sse.RealEventSource;
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import okhttp3.Response
+import okhttp3.internal.sse.RealEventSource
 
-public final class EventSources {
-  public static EventSource.Factory createFactory(final OkHttpClient client) {
-    return (request, listener) -> {
-      RealEventSource eventSource = new RealEventSource(request, listener);
-      eventSource.connect(client);
-      return eventSource;
-    };
+object EventSources {
+  @JvmStatic
+  fun createFactory(client: OkHttpClient): EventSource.Factory {
+    return object : EventSource.Factory {
+      override fun newEventSource(request: Request, listener: EventSourceListener): EventSource {
+        val eventSource = RealEventSource(request, listener)
+        eventSource.connect(client)
+        return eventSource
+      }
+    }
   }
 
-  public static void processResponse(Response response, EventSourceListener listener) {
-    RealEventSource eventSource = new RealEventSource(response.request(), listener);
-    eventSource.processResponse(response);
-  }
-
-  private EventSources() {
-    throw new AssertionError();
+  @JvmStatic
+  fun processResponse(response: Response, listener: EventSourceListener) {
+    val eventSource = RealEventSource(response.request(), listener)
+    eventSource.processResponse(response)
   }
 }
