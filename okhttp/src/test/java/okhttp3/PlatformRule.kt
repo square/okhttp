@@ -19,6 +19,7 @@ import okhttp3.internal.platform.Platform
 import org.conscrypt.Conscrypt
 import org.hamcrest.CoreMatchers.equalTo
 import org.hamcrest.CoreMatchers.not
+import org.junit.Assume
 import org.junit.Assume.assumeThat
 import org.junit.rules.ExternalResource
 import java.security.Security
@@ -73,11 +74,19 @@ open class PlatformRule @JvmOverloads constructor(
     assumeThat(getPlatform(), not("platform"))
   }
 
+  fun assumeJettyBootEnabled() {
+    Assume.assumeTrue("ALPN Boot not enabled", isAlpnBootEnabled())
+  }
+
   companion object {
     init {
       if (getPlatform() == "conscrypt" && Security.getProviders()[0].name != "Conscrypt") {
         val provider = Conscrypt.newProviderBuilder().provideTrustManager(true).build()
         Security.insertProviderAt(provider, 1)
+      } else if (getPlatform() == "platform") {
+        if (!isAlpnBootEnabled()) {
+          System.err.println("Warning: ALPN Boot not enabled")
+        }
       }
     }
 
@@ -92,5 +101,13 @@ open class PlatformRule @JvmOverloads constructor(
 
     @JvmStatic
     fun legacy() = PlatformRule("platform")
+
+    @JvmStatic
+    fun isAlpnBootEnabled(): Boolean = try {
+      Class.forName("org.eclipse.jetty.alpn.ALPN", true, null)
+      true
+    } catch (cnfe: ClassNotFoundException) {
+      false
+    }
   }
 }
