@@ -15,10 +15,17 @@
  */
 package okhttp3
 
+import okhttp3.internal.http2.Settings
 import okhttp3.internal.proxy.NullProxySelector
 import okhttp3.internal.tls.OkHostnameVerifier
 import okhttp3.logging.HttpLoggingInterceptor
 import okhttp3.logging.LoggingEventListener
+import okhttp3.mockwebserver.MockResponse
+import okhttp3.mockwebserver.MockWebServer
+import okhttp3.mockwebserver.PushPromise
+import okhttp3.mockwebserver.QueueDispatcher
+import okhttp3.mockwebserver.RecordedRequest
+import okhttp3.mockwebserver.SocketPolicy
 import okhttp3.tls.HandshakeCertificates
 import okhttp3.tls.HeldCertificate
 import okhttp3.tls.internal.TlsUtil.localhost
@@ -52,6 +59,7 @@ import java.util.Date
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
+import javax.net.ServerSocketFactory
 import javax.net.SocketFactory
 import javax.net.ssl.HostnameVerifier
 import javax.net.ssl.SSLContext
@@ -309,6 +317,15 @@ class KotlinSourceCompatibilityTest {
     val queuedCallsCount: Int = dispatcher.queuedCallsCount()
     val runningCallsCount: Int = dispatcher.runningCallsCount()
     dispatcher.cancelAll()
+  }
+
+  @Test @Ignore
+  fun dispatcherFromMockWebServer() {
+    val dispatcher = object : okhttp3.mockwebserver.Dispatcher() {
+      override fun dispatch(request: RecordedRequest?): MockResponse = TODO()
+      override fun peek(): MockResponse = TODO()
+      override fun shutdown() = TODO()
+    }
   }
 
   @Test @Ignore
@@ -658,6 +675,93 @@ class KotlinSourceCompatibilityTest {
   }
 
   @Test @Ignore
+  fun mockResponse() {
+    var mockResponse: MockResponse = MockResponse()
+    var status: String = mockResponse.getStatus()
+    status = mockResponse.status
+    mockResponse = mockResponse.setStatus("")
+    mockResponse.status = ""
+    mockResponse = mockResponse.setResponseCode(0)
+    var headers: Headers = mockResponse.getHeaders()
+    headers = mockResponse.headers
+    var trailers: Headers = mockResponse.getTrailers()
+    trailers = mockResponse.trailers
+    mockResponse = mockResponse.clearHeaders()
+    mockResponse = mockResponse.addHeader("")
+    mockResponse = mockResponse.addHeader("", "")
+    mockResponse = mockResponse.addHeaderLenient("", Any())
+    mockResponse = mockResponse.setHeader("", Any())
+    mockResponse = mockResponse.setHeaders(Headers.of())
+    mockResponse = mockResponse.setTrailers(Headers.of())
+    mockResponse = mockResponse.removeHeader("")
+    var body: Buffer? = mockResponse.getBody()
+    body = mockResponse.body
+    mockResponse = mockResponse.setBody(Buffer())
+    mockResponse.body = Buffer()
+    mockResponse = mockResponse.setChunkedBody(Buffer(), 0)
+    mockResponse = mockResponse.setChunkedBody("", 0)
+    var socketPolicy: SocketPolicy = mockResponse.getSocketPolicy()
+    socketPolicy = mockResponse.socketPolicy
+    mockResponse = mockResponse.setSocketPolicy(SocketPolicy.KEEP_OPEN)
+    var http2ErrorCode: Int = mockResponse.getHttp2ErrorCode()
+    http2ErrorCode = mockResponse.http2ErrorCode
+    mockResponse = mockResponse.setHttp2ErrorCode(0)
+    mockResponse.http2ErrorCode = 0
+    mockResponse = mockResponse.throttleBody(0L, 0L, TimeUnit.SECONDS)
+    var throttleBytesPerPeriod: Long = mockResponse.getThrottleBytesPerPeriod()
+    throttleBytesPerPeriod = mockResponse.throttleBytesPerPeriod
+    var throttlePeriod: Long = mockResponse.getThrottlePeriod(TimeUnit.SECONDS)
+    mockResponse = mockResponse.setBodyDelay(0L, TimeUnit.SECONDS)
+    val bodyDelay: Long = mockResponse.getBodyDelay(TimeUnit.SECONDS)
+    mockResponse = mockResponse.setHeadersDelay(0L, TimeUnit.SECONDS)
+    val headersDelay: Long = mockResponse.getHeadersDelay(TimeUnit.SECONDS)
+    mockResponse = mockResponse.withPush(PushPromise("", "", Headers.of(), MockResponse()))
+    var pushPromises: List<PushPromise> = mockResponse.getPushPromises()
+    pushPromises = mockResponse.pushPromises
+    mockResponse = mockResponse.withSettings(Settings())
+    var settings: Settings = mockResponse.getSettings()
+    settings = mockResponse.settings
+    mockResponse = mockResponse.withWebSocketUpgrade(object : WebSocketListener() {
+    })
+    var webSocketListener: WebSocketListener = mockResponse.getWebSocketListener()
+    webSocketListener = mockResponse.webSocketListener
+  }
+
+  @Test @Ignore
+  fun mockWebServer() {
+    val mockWebServer: MockWebServer = MockWebServer()
+    var port: Int = mockWebServer.getPort()
+    port = mockWebServer.port
+    var hostName: String = mockWebServer.getHostName()
+    hostName = mockWebServer.hostName
+    val toProxyAddress: Proxy = mockWebServer.toProxyAddress()
+    mockWebServer.setServerSocketFactory(ServerSocketFactory.getDefault())
+    val url: HttpUrl = mockWebServer.url("")
+    mockWebServer.setBodyLimit(0L)
+    mockWebServer.setProtocolNegotiationEnabled(false)
+    mockWebServer.setProtocols(listOf<Protocol>())
+    val protocols: List<Protocol> = mockWebServer.protocols()
+    mockWebServer.useHttps(SSLSocketFactory.getDefault() as SSLSocketFactory?, false)
+    mockWebServer.noClientAuth()
+    mockWebServer.requestClientAuth()
+    mockWebServer.requireClientAuth()
+    var request: RecordedRequest = mockWebServer.takeRequest()
+    request = mockWebServer.takeRequest(0L, TimeUnit.SECONDS)
+    var requestCount: Int = mockWebServer.getRequestCount()
+    requestCount = mockWebServer.requestCount
+    mockWebServer.enqueue(MockResponse())
+    mockWebServer.start()
+    mockWebServer.start(0)
+    mockWebServer.start(InetAddress.getLocalHost(), 0)
+    mockWebServer.shutdown()
+    var dispatcher: okhttp3.mockwebserver.Dispatcher = mockWebServer.getDispatcher()
+    dispatcher = mockWebServer.dispatcher
+    mockWebServer.setDispatcher(QueueDispatcher())
+    mockWebServer.dispatcher = QueueDispatcher()
+    mockWebServer.close()
+  }
+
+  @Test @Ignore
   fun multipartBody() {
     val multipartBody: MultipartBody = MultipartBody.Builder().build()
     val type: MediaType = multipartBody.type()
@@ -794,6 +898,67 @@ class KotlinSourceCompatibilityTest {
   fun protocol() {
     var protocol: Protocol = Protocol.HTTP_2
     protocol = Protocol.get("")
+  }
+
+  @Test @Ignore
+  fun pushPromise() {
+    val pushPromise: PushPromise = PushPromise("", "", Headers.of(), MockResponse())
+    val method: String = pushPromise.method()
+    val path: String = pushPromise.path()
+    val headers: Headers = pushPromise.headers()
+    val response: MockResponse = pushPromise.response()
+  }
+
+  @Test @Ignore
+  fun queueDispatcher() {
+    var queueDispatcher: QueueDispatcher = object : QueueDispatcher() {
+      override fun dispatch(request: RecordedRequest?): MockResponse = TODO()
+      override fun peek(): MockResponse = TODO()
+      override fun enqueueResponse(response: MockResponse?) = TODO()
+      override fun shutdown() = TODO()
+      override fun setFailFast(failFast: Boolean) = TODO()
+      override fun setFailFast(failFastResponse: MockResponse?) = TODO()
+    }
+    queueDispatcher = QueueDispatcher()
+    var mockResponse: MockResponse = queueDispatcher.dispatch(
+        RecordedRequest("", Headers.of(), listOf(), 0L, Buffer(), 0, Socket()))
+    mockResponse = queueDispatcher.peek()
+    queueDispatcher.enqueueResponse(MockResponse())
+    queueDispatcher.shutdown()
+    queueDispatcher.setFailFast(false)
+    queueDispatcher.setFailFast(MockResponse())
+  }
+
+  @Test @Ignore
+  fun recordedRequest() {
+    var recordedRequest: RecordedRequest = RecordedRequest(
+        "", Headers.of(), listOf(), 0L, Buffer(), 0, Socket())
+    recordedRequest = RecordedRequest(null, null, null, 0L, null, 0, Socket())
+    var requestUrl: HttpUrl? = recordedRequest.getRequestUrl()
+    var requestLine: String? = recordedRequest.getRequestLine()
+    var method: String? = recordedRequest.getMethod()
+    var path: String? = recordedRequest.getPath()
+    var headers: Headers? = recordedRequest.getHeaders()
+    val header: String? = recordedRequest.getHeader("")
+    var chunkSizes: List<Int>? = recordedRequest.getChunkSizes()
+    var bodySize: Long = recordedRequest.getBodySize()
+    var body: Buffer? = recordedRequest.getBody()
+    var utf8Body: String = recordedRequest.getUtf8Body()
+    var sequenceNumber: Int = recordedRequest.getSequenceNumber()
+    var tlsVersion: TlsVersion = recordedRequest.getTlsVersion()
+    var handshake: Handshake = recordedRequest.getHandshake()
+    requestUrl = recordedRequest.requestUrl
+    requestLine = recordedRequest.requestLine
+    method = recordedRequest.method
+    path = recordedRequest.path
+    headers = recordedRequest.headers
+    chunkSizes = recordedRequest.chunkSizes
+    bodySize = recordedRequest.bodySize
+    body = recordedRequest.body
+    utf8Body = recordedRequest.utf8Body
+    sequenceNumber = recordedRequest.sequenceNumber
+    tlsVersion = recordedRequest.tlsVersion
+    handshake = recordedRequest.handshake
   }
 
   @Test @Ignore
@@ -949,6 +1114,11 @@ class KotlinSourceCompatibilityTest {
     val proxy: Proxy = route.proxy()
     val inetSocketAddress: InetSocketAddress = route.socketAddress()
     val requiresTunnel: Boolean = route.requiresTunnel()
+  }
+
+  @Test @Ignore
+  fun socketPolicy() {
+    val socketPolicy: SocketPolicy = SocketPolicy.KEEP_OPEN
   }
 
   @Test @Ignore
