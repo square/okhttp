@@ -52,7 +52,7 @@ class AndroidPlatform(
   // Not a real Android runtime; probably RoboVM or MoE
   // Try to load TLS 1.2 explicitly.
   // fallback to TLS
-  override fun getSSLContext(): SSLContext {
+  override fun newSSLContext(): SSLContext {
     val tryTls12: Boolean = try {
       Build.VERSION.SDK_INT in 16..21
     } catch (e: NoClassDefFoundError) {

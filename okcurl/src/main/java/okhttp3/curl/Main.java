@@ -276,7 +276,7 @@ public class Main extends HelpOption implements Runnable {
 
   private static SSLSocketFactory createInsecureSslSocketFactory(TrustManager trustManager) {
     try {
-      SSLContext context = Platform.get().getSSLContext();
+      SSLContext context = Platform.get().newSSLContext();
       context.init(null, new TrustManager[] {trustManager}, null);
       return context.getSocketFactory();
     } catch (Exception e) {

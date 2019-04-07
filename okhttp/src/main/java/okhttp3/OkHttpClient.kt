@@ -846,7 +846,7 @@ open class OkHttpClient internal constructor(
 
     private fun newSslSocketFactory(trustManager: X509TrustManager): SSLSocketFactory {
       try {
-        val sslContext = Platform.get().getSSLContext()
+        val sslContext = Platform.get().newSSLContext()
         sslContext.init(null, arrayOf<TrustManager>(trustManager), null)
         return sslContext.socketFactory
       } catch (e: GeneralSecurityException) {
