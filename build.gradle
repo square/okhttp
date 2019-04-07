@@ -80,10 +80,13 @@ subprojects { project ->
   apply plugin: 'java'
   apply plugin: 'java-library'
   apply plugin: 'org.jetbrains.kotlin.platform.jvm'
+  apply plugin: 'checkstyle'
+  apply plugin: 'ru.vyarus.animalsniffer'
+  apply plugin: 'net.ltgt.errorprone'
+  apply plugin: 'org.jetbrains.dokka'
   sourceCompatibility = JavaVersion.VERSION_1_8
   targetCompatibility = JavaVersion.VERSION_1_8
 
-  apply plugin: 'checkstyle'
   checkstyleMain.exclude '**/CipherSuite.java'
   afterEvaluate {
     checkstyle {
@@ -94,7 +97,6 @@ subprojects { project ->
   }
 
   // Animal Sniffer confirms we don't use APIs not on both Java 8 and Android 5.
-  apply plugin: 'ru.vyarus.animalsniffer'
   animalsniffer {
     sourceSets = [sourceSets.main]
   }
@@ -132,7 +134,6 @@ subprojects { project ->
     }
   }
 
-  apply plugin: 'net.ltgt.errorprone'
   dependencies {
     errorproneJavac 'com.google.errorprone:javac:9+181-r4173-1'
     errorprone 'com.google.errorprone:error_prone_core:2.3.3'
@@ -144,7 +145,6 @@ subprojects { project ->
     }
   }
 
-  apply plugin: 'org.jetbrains.dokka'
   dokka {
     reportUndocumented = false 
     skipDeprecated = true

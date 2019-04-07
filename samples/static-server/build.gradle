@@ -1,3 +1,5 @@
+apply plugin: 'com.github.johnrengelman.shadow'
+
 jar {
   manifest {
     attributes 'Main-Class': 'okhttp3.sample.SampleServer'
@@ -8,7 +10,6 @@ dependencies {
   implementation project(':mockwebserver')
 }
 
-apply plugin: 'com.github.johnrengelman.shadow'
 shadowJar {
   mergeServiceFiles()
 }

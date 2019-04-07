@@ -1,4 +1,5 @@
 apply plugin: 'com.vanniktech.maven.publish'
+apply plugin: 'com.github.johnrengelman.shadow'
 
 jar {
   manifest {
@@ -32,7 +33,6 @@ dependencies {
   testImplementation deps.assertj
 }
 
-apply plugin: 'com.github.johnrengelman.shadow'
 shadowJar {
   mergeServiceFiles()
 }
