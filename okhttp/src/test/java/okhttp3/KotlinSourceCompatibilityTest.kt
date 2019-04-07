@@ -17,6 +17,9 @@ package okhttp3
 
 import okhttp3.internal.proxy.NullProxySelector
 import okhttp3.internal.tls.OkHostnameVerifier
+import okhttp3.logging.HttpLoggingInterceptor
+import okhttp3.logging.LoggingEventListener
+import okhttp3.tls.HandshakeCertificates
 import okhttp3.tls.HeldCertificate
 import okhttp3.tls.internal.TlsUtil.localhost
 import okio.Buffer
@@ -28,6 +31,8 @@ import org.junit.Ignore
 import org.junit.Test
 import java.io.File
 import java.io.IOException
+import java.math.BigInteger
+import java.net.CookieHandler
 import java.net.InetAddress
 import java.net.InetSocketAddress
 import java.net.Proxy
@@ -36,6 +41,8 @@ import java.net.Socket
 import java.net.URI
 import java.net.URL
 import java.nio.charset.Charset
+import java.security.KeyPair
+import java.security.KeyPairGenerator
 import java.security.Principal
 import java.security.cert.Certificate
 import java.security.cert.X509Certificate
@@ -47,8 +54,11 @@ import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 import javax.net.SocketFactory
 import javax.net.ssl.HostnameVerifier
+import javax.net.ssl.SSLContext
 import javax.net.ssl.SSLSocket
 import javax.net.ssl.SSLSocketFactory
+import javax.net.ssl.X509KeyManager
+import javax.net.ssl.X509TrustManager
 
 /**
  * Access every type, function, and property from Kotlin to defend against unexpected regressions in
@@ -71,20 +81,7 @@ import javax.net.ssl.SSLSocketFactory
 class KotlinSourceCompatibilityTest {
   @Test @Ignore
   fun address() {
-    val address: Address = Address(
-        "",
-        0,
-        Dns.SYSTEM,
-        SocketFactory.getDefault(),
-        localhost().sslSocketFactory(),
-        OkHostnameVerifier.INSTANCE,
-        CertificatePinner.DEFAULT,
-        Authenticator.NONE,
-        Proxy.NO_PROXY,
-        listOf(Protocol.HTTP_1_1),
-        listOf(ConnectionSpec.MODERN_TLS),
-        NullProxySelector()
-    )
+    val address: Address = newAddress()
     val url: HttpUrl = address.url()
     val dns: Dns = address.dns()
     val socketFactory: SocketFactory = address.socketFactory()
@@ -158,16 +155,7 @@ class KotlinSourceCompatibilityTest {
 
   @Test @Ignore
   fun call() {
-    val call = object : Call {
-      override fun request(): Request = TODO()
-      override fun execute(): Response = TODO()
-      override fun enqueue(responseCallback: Callback) = TODO()
-      override fun cancel() = TODO()
-      override fun isExecuted(): Boolean = TODO()
-      override fun isCanceled(): Boolean = TODO()
-      override fun timeout(): Timeout = TODO()
-      override fun clone(): Call = TODO()
-    }
+    val call: Call = newCall()
   }
 
   @Test @Ignore
@@ -470,40 +458,32 @@ class KotlinSourceCompatibilityTest {
   }
 
   @Test @Ignore
-  fun okHttpClient() {
-    val client: OkHttpClient = OkHttpClient()
-    val dispatcher: Dispatcher = client.dispatcher()
-    val proxy: Proxy? = client.proxy()
-    val protocols: List<Protocol> = client.protocols()
-    val connectionSpecs: List<ConnectionSpec> = client.connectionSpecs()
-    val interceptors: List<Interceptor> = client.interceptors()
-    val networkInterceptors: List<Interceptor> = client.networkInterceptors()
-    val eventListenerFactory: EventListener.Factory = client.eventListenerFactory()
-    val proxySelector: ProxySelector = client.proxySelector()
-    val cookieJar: CookieJar = client.cookieJar()
-    val cache: Cache? = client.cache()
-    val socketFactory: SocketFactory = client.socketFactory()
-    val sslSocketFactory: SSLSocketFactory = client.sslSocketFactory()
-    val hostnameVerifier: HostnameVerifier = client.hostnameVerifier()
-    val certificatePinner: CertificatePinner = client.certificatePinner()
-    val proxyAuthenticator: Authenticator = client.proxyAuthenticator()
-    val authenticator: Authenticator = client.authenticator()
-    val connectionPool: ConnectionPool = client.connectionPool()
-    val dns: Dns = client.dns()
-    val followSslRedirects: Boolean = client.followSslRedirects()
-    val followRedirects: Boolean = client.followRedirects()
-    val retryOnConnectionFailure: Boolean = client.retryOnConnectionFailure()
-    val callTimeoutMillis: Int = client.callTimeoutMillis()
-    val connectTimeoutMillis: Int = client.connectTimeoutMillis()
-    val readTimeoutMillis: Int = client.readTimeoutMillis()
-    val writeTimeoutMillis: Int = client.writeTimeoutMillis()
-    val pingIntervalMillis: Int = client.pingIntervalMillis()
-    val call: Call = client.newCall(Request.Builder().build())
-    val webSocket: WebSocket = client.newWebSocket(
-        Request.Builder().build(),
-        object : WebSocketListener() {
-        })
-    val newBuilder: OkHttpClient.Builder = client.newBuilder()
+  fun httpLoggingInterceptor() {
+    var interceptor: HttpLoggingInterceptor = HttpLoggingInterceptor()
+    interceptor = HttpLoggingInterceptor(HttpLoggingInterceptor.Logger.DEFAULT)
+    interceptor.redactHeader("")
+    interceptor.level = HttpLoggingInterceptor.Level.BASIC
+    interceptor.setLevel(HttpLoggingInterceptor.Level.BASIC)
+    var level: HttpLoggingInterceptor.Level = interceptor.level
+    level = interceptor.getLevel()
+    interceptor.intercept(newInterceptorChain())
+  }
+
+  @Test @Ignore
+  fun httpLoggingInterceptorLevel() {
+    val none: HttpLoggingInterceptor.Level = HttpLoggingInterceptor.Level.NONE
+    val basic: HttpLoggingInterceptor.Level = HttpLoggingInterceptor.Level.BASIC
+    val headers: HttpLoggingInterceptor.Level = HttpLoggingInterceptor.Level.HEADERS
+    val body: HttpLoggingInterceptor.Level = HttpLoggingInterceptor.Level.BODY
+  }
+
+  @Test @Ignore
+  fun httpLoggingInterceptorLogger() {
+    var logger: HttpLoggingInterceptor.Logger = object : HttpLoggingInterceptor.Logger {
+      override fun log(message: String) = TODO()
+    }
+    logger = HttpLoggingInterceptor.Logger { TODO() }
+    val default: HttpLoggingInterceptor.Logger = HttpLoggingInterceptor.Logger.DEFAULT
   }
 
   @Test @Ignore
@@ -585,18 +565,86 @@ class KotlinSourceCompatibilityTest {
 
   @Test @Ignore
   fun interceptorChain() {
-    val chain = object : Interceptor.Chain {
-      override fun request(): Request = TODO()
-      override fun proceed(request: Request): Response = TODO()
-      override fun connection(): Connection? = TODO()
-      override fun call(): Call = TODO()
-      override fun connectTimeoutMillis(): Int = TODO()
-      override fun withConnectTimeout(timeout: Int, unit: TimeUnit): Interceptor.Chain = TODO()
-      override fun readTimeoutMillis(): Int = TODO()
-      override fun withReadTimeout(timeout: Int, unit: TimeUnit): Interceptor.Chain = TODO()
-      override fun writeTimeoutMillis(): Int = TODO()
-      override fun withWriteTimeout(timeout: Int, unit: TimeUnit): Interceptor.Chain = TODO()
+    val chain: Interceptor.Chain = newInterceptorChain()
+  }
+
+  @Test @Ignore
+  fun handshakeCertificates() {
+    val handshakeCertificates = HandshakeCertificates.Builder().build()
+    val keyManager: X509KeyManager = handshakeCertificates.keyManager()
+    val trustManager: X509TrustManager = handshakeCertificates.trustManager()
+    val sslSocketFactory: SSLSocketFactory = handshakeCertificates.sslSocketFactory()
+    val sslContext: SSLContext = handshakeCertificates.sslContext()
+  }
+
+  @Test @Ignore
+  fun handshakeCertificatesBuilder() {
+    var builder: HandshakeCertificates.Builder = HandshakeCertificates.Builder()
+    val heldCertificate = HeldCertificate.Builder().build()
+    builder = builder.heldCertificate(heldCertificate, heldCertificate.certificate())
+    builder = builder.addTrustedCertificate(heldCertificate.certificate())
+    builder = builder.addPlatformTrustedCertificates()
+    val handshakeCertificates: HandshakeCertificates = builder.build()
+  }
+
+  @Test @Ignore
+  fun heldCertificate() {
+    val heldCertificate: HeldCertificate = HeldCertificate.Builder().build()
+    val certificate: X509Certificate = heldCertificate.certificate()
+    val keyPair: KeyPair = heldCertificate.keyPair()
+    val certificatePem: String = heldCertificate.certificatePem()
+    val privateKeyPkcs8Pem: String = heldCertificate.privateKeyPkcs8Pem()
+    val privateKeyPkcs1Pem: String = heldCertificate.privateKeyPkcs1Pem()
+  }
+
+  @Test @Ignore
+  fun heldCertificateBuilder() {
+    val keyPair: KeyPair = KeyPairGenerator.getInstance("").genKeyPair()
+    var builder: HeldCertificate.Builder = HeldCertificate.Builder()
+    builder = builder.validityInterval(0L, 0L)
+    builder = builder.duration(0L, TimeUnit.SECONDS)
+    builder = builder.addSubjectAlternativeName("")
+    builder = builder.commonName("")
+    builder = builder.organizationalUnit("")
+    builder = builder.serialNumber(BigInteger.ZERO)
+    builder = builder.serialNumber(0L)
+    builder = builder.keyPair(keyPair)
+    builder = builder.keyPair(keyPair.public, keyPair.private)
+    builder = builder.signedBy(HeldCertificate.Builder().build())
+    builder = builder.certificateAuthority(0)
+    builder = builder.ecdsa256()
+    builder = builder.rsa2048()
+    val heldCertificate: HeldCertificate = builder.build()
+  }
+
+  @Test @Ignore
+  fun javaNetAuthenticator() {
+    val authenticator = JavaNetAuthenticator()
+    val response = Response.Builder().build()
+    val request: Request? = authenticator.authenticate(newRoute(), response)
+  }
+
+  @Test @Ignore
+  fun javaNetCookieJar() {
+    val cookieJar: JavaNetCookieJar = JavaNetCookieJar(newCookieHandler())
+    val httpUrl = HttpUrl.get("")
+    val loadForRequest: List<Cookie> = cookieJar.loadForRequest(httpUrl)
+    cookieJar.saveFromResponse(httpUrl, listOf(Cookie.Builder().build()))
+  }
+
+  @Test @Ignore
+  fun loggingEventListener() {
+    var loggingEventListener: EventListener = LoggingEventListener.Factory().create(newCall())
+  }
+
+  @Test @Ignore
+  fun loggingEventListenerFactory() {
+    var factory: LoggingEventListener.Factory = LoggingEventListener.Factory()
+    factory = LoggingEventListener.Factory(HttpLoggingInterceptor.Logger.DEFAULT)
+    factory = object : LoggingEventListener.Factory() {
+      override fun create(call: Call): EventListener = TODO()
     }
+    val eventListener: EventListener = factory.create(newCall())
   }
 
   @Test @Ignore
@@ -654,6 +702,43 @@ class KotlinSourceCompatibilityTest {
     builder = builder.addFormDataPart("", null, requestBody)
     builder = builder.addPart(MultipartBody.Part.create(requestBody))
     val multipartBody: MultipartBody = builder.build()
+  }
+
+  @Test @Ignore
+  fun okHttpClient() {
+    val client: OkHttpClient = OkHttpClient()
+    val dispatcher: Dispatcher = client.dispatcher()
+    val proxy: Proxy? = client.proxy()
+    val protocols: List<Protocol> = client.protocols()
+    val connectionSpecs: List<ConnectionSpec> = client.connectionSpecs()
+    val interceptors: List<Interceptor> = client.interceptors()
+    val networkInterceptors: List<Interceptor> = client.networkInterceptors()
+    val eventListenerFactory: EventListener.Factory = client.eventListenerFactory()
+    val proxySelector: ProxySelector = client.proxySelector()
+    val cookieJar: CookieJar = client.cookieJar()
+    val cache: Cache? = client.cache()
+    val socketFactory: SocketFactory = client.socketFactory()
+    val sslSocketFactory: SSLSocketFactory = client.sslSocketFactory()
+    val hostnameVerifier: HostnameVerifier = client.hostnameVerifier()
+    val certificatePinner: CertificatePinner = client.certificatePinner()
+    val proxyAuthenticator: Authenticator = client.proxyAuthenticator()
+    val authenticator: Authenticator = client.authenticator()
+    val connectionPool: ConnectionPool = client.connectionPool()
+    val dns: Dns = client.dns()
+    val followSslRedirects: Boolean = client.followSslRedirects()
+    val followRedirects: Boolean = client.followRedirects()
+    val retryOnConnectionFailure: Boolean = client.retryOnConnectionFailure()
+    val callTimeoutMillis: Int = client.callTimeoutMillis()
+    val connectTimeoutMillis: Int = client.connectTimeoutMillis()
+    val readTimeoutMillis: Int = client.readTimeoutMillis()
+    val writeTimeoutMillis: Int = client.writeTimeoutMillis()
+    val pingIntervalMillis: Int = client.pingIntervalMillis()
+    val call: Call = client.newCall(Request.Builder().build())
+    val webSocket: WebSocket = client.newWebSocket(
+        Request.Builder().build(),
+        object : WebSocketListener() {
+        })
+    val newBuilder: OkHttpClient.Builder = client.newBuilder()
   }
 
   @Test @Ignore
@@ -859,26 +944,10 @@ class KotlinSourceCompatibilityTest {
 
   @Test @Ignore
   fun route() {
-    var proxy: Proxy = Proxy.NO_PROXY
-    var address: Address = Address(
-        "",
-        0,
-        Dns.SYSTEM,
-        SocketFactory.getDefault(),
-        localhost().sslSocketFactory(),
-        OkHostnameVerifier.INSTANCE,
-        CertificatePinner.DEFAULT,
-        Authenticator.NONE,
-        proxy,
-        listOf(Protocol.HTTP_1_1),
-        listOf(ConnectionSpec.MODERN_TLS),
-        NullProxySelector()
-    )
-    var inetSocketAddress: InetSocketAddress = InetSocketAddress.createUnresolved("", 0)
-    val route: Route = Route(address, proxy, inetSocketAddress)
-    address = route.address()
-    proxy = route.proxy()
-    inetSocketAddress = route.socketAddress()
+    val route: Route = newRoute()
+    val address: Address = route.address()
+    val proxy: Proxy = route.proxy()
+    val inetSocketAddress: InetSocketAddress = route.socketAddress()
     val requiresTunnel: Boolean = route.requiresTunnel()
   }
 
@@ -911,5 +980,68 @@ class KotlinSourceCompatibilityTest {
       override fun onClosed(webSocket: WebSocket, code: Int, reason: String) = TODO()
       override fun onFailure(webSocket: WebSocket, t: Throwable, response: Response?) = TODO()
     }
+  }
+
+  private fun newAddress(): Address {
+    return Address(
+        "",
+        0,
+        Dns.SYSTEM,
+        SocketFactory.getDefault(),
+        localhost().sslSocketFactory(),
+        OkHostnameVerifier.INSTANCE,
+        CertificatePinner.DEFAULT,
+        Authenticator.NONE,
+        Proxy.NO_PROXY,
+        listOf(Protocol.HTTP_1_1),
+        listOf(ConnectionSpec.MODERN_TLS),
+        NullProxySelector()
+    )
+  }
+
+  private fun newCall(): Call {
+    return object : Call {
+      override fun request(): Request = TODO()
+      override fun execute(): Response = TODO()
+      override fun enqueue(responseCallback: Callback) = TODO()
+      override fun cancel() = TODO()
+      override fun isExecuted(): Boolean = TODO()
+      override fun isCanceled(): Boolean = TODO()
+      override fun timeout(): Timeout = TODO()
+      override fun clone(): Call = TODO()
+    }
+  }
+
+  private fun newCookieHandler(): CookieHandler {
+    return object : CookieHandler() {
+      override fun put(
+        uri: URI?,
+        responseHeaders: MutableMap<String, MutableList<String>>?
+      ) = TODO()
+
+      override fun get(
+        uri: URI?,
+        requestHeaders: MutableMap<String, MutableList<String>>?
+      ): MutableMap<String, MutableList<String>> = TODO()
+    }
+  }
+
+  private fun newInterceptorChain(): Interceptor.Chain {
+    return object : Interceptor.Chain {
+      override fun request(): Request = TODO()
+      override fun proceed(request: Request): Response = TODO()
+      override fun connection(): Connection? = TODO()
+      override fun call(): Call = TODO()
+      override fun connectTimeoutMillis(): Int = TODO()
+      override fun withConnectTimeout(timeout: Int, unit: TimeUnit): Interceptor.Chain = TODO()
+      override fun readTimeoutMillis(): Int = TODO()
+      override fun withReadTimeout(timeout: Int, unit: TimeUnit): Interceptor.Chain = TODO()
+      override fun writeTimeoutMillis(): Int = TODO()
+      override fun withWriteTimeout(timeout: Int, unit: TimeUnit): Interceptor.Chain = TODO()
+    }
+  }
+
+  private fun newRoute(): Route {
+    return Route(newAddress(), Proxy.NO_PROXY, InetSocketAddress.createUnresolved("", 0))
   }
 }
