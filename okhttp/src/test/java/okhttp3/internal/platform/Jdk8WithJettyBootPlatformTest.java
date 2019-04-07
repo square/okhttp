@@ -15,17 +15,17 @@
  */
 package okhttp3.internal.platform;
 
+import okhttp3.PlatformRule;
+import org.junit.Rule;
 import org.junit.Test;
 
-import static okhttp3.internal.platform.PlatformTest.getPlatform;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assume.assumeTrue;
 
 public class Jdk8WithJettyBootPlatformTest {
+  @Rule public final PlatformRule platform = new PlatformRule("jdk-with-jetty-boot");
+
   @Test
   public void testBuildsWithJettyBoot() {
-    assumeTrue(getPlatform().equals("jdk-with-jetty-boot"));
-
     assertThat(Jdk8WithJettyBootPlatform.buildIfSupported()).isNotNull();
   }
 }

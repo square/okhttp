@@ -15,11 +15,16 @@
  */
 package okhttp3.internal.platform;
 
+import okhttp3.PlatformRule;
+import org.junit.Rule;
 import org.junit.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class PlatformTest {
+  @Rule
+  public PlatformRule platform = new PlatformRule();
+
   @Test public void alwaysBuilds() {
     new Platform();
   }
@@ -27,10 +32,6 @@ public class PlatformTest {
   /** Guard against the default value changing by accident. */
   @Test public void defaultPrefix() {
     assertThat(new Platform().getPrefix()).isEqualTo("OkHttp");
-  }
-
-  public static String getPlatform() {
-    return System.getProperty("okhttp.platform", "platform");
   }
 
   public static String getJvmSpecVersion() {
