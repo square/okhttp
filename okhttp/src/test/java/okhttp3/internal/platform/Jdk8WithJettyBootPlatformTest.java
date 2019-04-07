@@ -22,7 +22,7 @@ import org.junit.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class Jdk8WithJettyBootPlatformTest {
-  @Rule public final PlatformRule platform = new PlatformRule("jdk-with-jetty-boot");
+  @Rule public final PlatformRule platform = PlatformRule.legacy();
 
   @Test
   public void testBuildsWithJettyBoot() {
