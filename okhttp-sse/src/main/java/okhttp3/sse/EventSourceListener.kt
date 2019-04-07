@@ -13,38 +13,36 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package okhttp3.sse;
+package okhttp3.sse
 
-import javax.annotation.Nullable;
-import okhttp3.Response;
+import okhttp3.Response
 
-public abstract class EventSourceListener {
+abstract class EventSourceListener {
   /**
    * Invoked when an event source has been accepted by the remote peer and may begin transmitting
    * events.
    */
-  public void onOpen(EventSource eventSource, Response response) {
+  open fun onOpen(eventSource: EventSource, response: Response) {
   }
 
   /**
    * TODO description.
    */
-  public void onEvent(EventSource eventSource, @Nullable String id, @Nullable String type,
-      String data) {
+  open fun onEvent(eventSource: EventSource, id: String?, type: String?, data: String) {
   }
 
   /**
    * TODO description.
+   *
    * No further calls to this listener will be made.
    */
-  public void onClosed(EventSource eventSource) {
+  open fun onClosed(eventSource: EventSource) {
   }
 
   /**
    * Invoked when an event source has been closed due to an error reading from or writing to the
    * network. Incoming events may have been lost. No further calls to this listener will be made.
    */
-  public void onFailure(EventSource eventSource, @Nullable Throwable t,
-      @Nullable Response response) {
+  open fun onFailure(eventSource: EventSource, t: Throwable?, response: Response?) {
   }
 }
