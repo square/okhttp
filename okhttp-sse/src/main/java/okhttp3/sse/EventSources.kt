@@ -25,9 +25,9 @@ object EventSources {
   fun createFactory(client: OkHttpClient): EventSource.Factory {
     return object : EventSource.Factory {
       override fun newEventSource(request: Request, listener: EventSourceListener): EventSource {
-        val eventSource = RealEventSource(request, listener)
-        eventSource.connect(client)
-        return eventSource
+        return RealEventSource(request, listener).apply {
+          connect(client)
+        }
       }
     }
   }

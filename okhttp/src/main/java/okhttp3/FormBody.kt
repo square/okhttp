@@ -79,16 +79,14 @@ class FormBody internal constructor(
     private val names = mutableListOf<String>()
     private val values = mutableListOf<String>()
 
-    fun add(name: String, value: String): Builder {
-      names.add(HttpUrl.canonicalize(name, FORM_ENCODE_SET, false, false, true, true, charset))
-      values.add(HttpUrl.canonicalize(value, FORM_ENCODE_SET, false, false, true, true, charset))
-      return this
+    fun add(name: String, value: String) = apply {
+      names += HttpUrl.canonicalize(name, FORM_ENCODE_SET, false, false, true, true, charset)
+      values += HttpUrl.canonicalize(value, FORM_ENCODE_SET, false, false, true, true, charset)
     }
 
-    fun addEncoded(name: String, value: String): Builder {
-      names.add(HttpUrl.canonicalize(name, FORM_ENCODE_SET, true, false, true, true, charset))
-      values.add(HttpUrl.canonicalize(value, FORM_ENCODE_SET, true, false, true, true, charset))
-      return this
+    fun addEncoded(name: String, value: String) = apply {
+      names += HttpUrl.canonicalize(name, FORM_ENCODE_SET, true, false, true, true, charset)
+      values += HttpUrl.canonicalize(value, FORM_ENCODE_SET, true, false, true, true, charset)
     }
 
     fun build(): FormBody = FormBody(names, values)

@@ -20,7 +20,6 @@ import okio.ByteString
 import okio.ByteString.Companion.decodeBase64
 import java.security.cert.Certificate
 import java.security.cert.X509Certificate
-import java.util.Objects
 import javax.net.ssl.SSLPeerUnverifiedException
 
 /**
@@ -223,37 +222,16 @@ data class CertificatePinner internal constructor(
     }
   }
 
-  internal class Pin(
+  internal data class Pin(
     /** A hostname like `example.com` or a pattern like `*.example.com`.  */
     val pattern: String,
-    pin: String
-  ) {
     /** The canonical hostname, i.e. `EXAMPLE.com` becomes `example.com`.  */
-    val canonicalHostname: String
+    private val canonicalHostname: String,
     /** Either `sha1/` or `sha256/`.  */
-    val hashAlgorithm: String
+    val hashAlgorithm: String,
     /** The hash of the pinned certificate using [.hashAlgorithm].  */
     val hash: ByteString
-
-    init {
-      this.canonicalHostname = if (pattern.startsWith(WILDCARD)) {
-        HttpUrl.get("http://${pattern.substring(WILDCARD.length)}").host()
-      } else {
-        HttpUrl.get("http://$pattern").host()
-      }
-      when {
-        pin.startsWith("sha1/") -> {
-          this.hashAlgorithm = "sha1/"
-          this.hash = pin.substring("sha1/".length).decodeBase64()!!
-        }
-        pin.startsWith("sha256/") -> {
-          this.hashAlgorithm = "sha256/"
-          this.hash = pin.substring("sha256/".length).decodeBase64()!!
-        }
-        else -> throw IllegalArgumentException("pins must start with 'sha256/' or 'sha1/': $pin")
-      }
-    }
-
+  ) {
     fun matches(hostname: String): Boolean {
       if (pattern.startsWith(WILDCARD)) {
         val firstDot = hostname.indexOf('.')
@@ -262,21 +240,6 @@ data class CertificatePinner internal constructor(
             ignoreCase = false)
       }
       return hostname == canonicalHostname
-    }
-
-    override fun equals(other: Any?): Boolean {
-      return other is Pin
-          && pattern == other.pattern
-          && hashAlgorithm == other.hashAlgorithm
-          && hash == other.hash
-    }
-
-    override fun hashCode(): Int {
-      var result = 17
-      result = 31 * result + pattern.hashCode()
-      result = 31 * result + hashAlgorithm.hashCode()
-      result = 31 * result + hash.hashCode()
-      return result
     }
 
     override fun toString(): String = hashAlgorithm + hash.base64()
@@ -295,7 +258,7 @@ data class CertificatePinner internal constructor(
      */
     fun add(pattern: String, vararg pins: String) = apply {
       for (pin in pins) {
-        this.pins.add(Pin(pattern, pin))
+        this.pins.add(newPin(pattern, pin))
       }
     }
 
@@ -325,5 +288,28 @@ data class CertificatePinner internal constructor(
 
     internal fun sha256(x509Certificate: X509Certificate): ByteString =
         ByteString.of(*x509Certificate.publicKey.encoded).sha256()
+
+    internal fun newPin(pattern: String, pin: String): Pin {
+      val canonicalHostname = when {
+        pattern.startsWith(WILDCARD) -> {
+          HttpUrl.get("http://${pattern.substring(WILDCARD.length)}").host()
+        }
+        else -> {
+          HttpUrl.get("http://$pattern").host()
+        }
+      }
+
+      return when {
+        pin.startsWith("sha1/") -> {
+          val hash = pin.substring("sha1/".length).decodeBase64()!!
+          Pin(pattern, canonicalHostname, "sha1/", hash)
+        }
+        pin.startsWith("sha256/") -> {
+          val hash = pin.substring("sha256/".length).decodeBase64()!!
+          Pin(pattern, canonicalHostname, "sha256/", hash)
+        }
+        else -> throw IllegalArgumentException("pins must start with 'sha256/' or 'sha1/': $pin")
+      }
+    }
   }
 }
