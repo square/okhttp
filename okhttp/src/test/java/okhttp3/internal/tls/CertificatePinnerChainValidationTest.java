@@ -43,7 +43,6 @@ import okhttp3.tls.HeldCertificate;
 import org.junit.Rule;
 import org.junit.Test;
 
-import static okhttp3.PlatformRule.getPlatform;
 import static okhttp3.TestUtil.defaultClient;
 import static okhttp3.internal.platform.PlatformTest.getJvmSpecVersion;
 import static okhttp3.tls.internal.TlsUtil.newKeyManager;

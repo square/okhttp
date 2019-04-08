@@ -18,13 +18,11 @@ package okhttp3.internal.platform
 
 import okhttp3.OkHttpClient
 import okhttp3.Protocol
-import okhttp3.internal.Util
 import okhttp3.internal.tls.BasicCertificateChainCleaner
 import okhttp3.internal.tls.BasicTrustRootIndex
 import okhttp3.internal.tls.CertificateChainCleaner
 import okhttp3.internal.tls.TrustRootIndex
 import okio.Buffer
-import org.jetbrains.annotations.TestOnly
 import java.io.IOException
 import java.net.InetSocketAddress
 import java.net.Socket
@@ -189,7 +187,7 @@ open class Platform {
   override fun toString(): String = javaClass.simpleName
 
   companion object {
-    private var platform = findPlatform()
+    private @Volatile var platform = findPlatform()
 
     const val INFO = 4
     const val WARN = 5
@@ -199,8 +197,7 @@ open class Platform {
     @JvmStatic
     fun get(): Platform = platform
 
-    @TestOnly
-    internal fun reset(platform: Platform = findPlatform()) {
+    internal fun resetForTests(platform: Platform = findPlatform()) {
       this.platform = platform
     }
 

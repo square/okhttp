@@ -34,10 +34,8 @@ import org.junit.Rule;
 import org.junit.Test;
 
 import static java.util.Arrays.asList;
-import static okhttp3.PlatformRule.getPlatform;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.fail;
-import static org.junit.Assume.assumeFalse;
 
 public final class ConnectionCoalescingTest {
   @Rule public final PlatformRule platform = new PlatformRule();

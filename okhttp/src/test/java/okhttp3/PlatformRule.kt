@@ -19,14 +19,13 @@ import okhttp3.internal.platform.Platform
 import org.conscrypt.Conscrypt
 import org.hamcrest.CoreMatchers.equalTo
 import org.hamcrest.CoreMatchers.not
-import org.junit.Assume
-import org.junit.Assume.assumeThat
+import org.junit.Assume.*
 import org.junit.rules.ExternalResource
 import java.security.Security
 
 /**
  * Marks a test as Platform aware, before the test runs a consistent Platform will be
- * established e.g. SecurityManager for Conscrypt installed.
+ * established e.g. SecurityProvider for Conscrypt installed.
  *
  * Also allows a test file to state general platform assumptions, or for individual test.
  */
@@ -36,54 +35,67 @@ open class PlatformRule @JvmOverloads constructor(
 ) : ExternalResource() {
   override fun before() {
     if (requiredPlatformName != null) {
-      assumeThat(getPlatform(), equalTo(requiredPlatformName))
+      assumeThat(getPlatformSystemProperty(), equalTo(requiredPlatformName))
     }
 
     if (platform != null) {
-      Platform.reset(platform)
+      Platform.resetForTests(platform)
     } else {
-      Platform.reset()
+      Platform.resetForTests()
     }
   }
 
   override fun after() {
     if (platform != null) {
-      Platform.reset()
+      Platform.resetForTests()
     }
   }
 
-  fun isConscrypt() = getPlatform() == "conscrypt"
-  fun isJdk9() = getPlatform() == "jdk9"
-  fun isLegacy() = getPlatform() == "platform"
+  fun isConscrypt() = getPlatformSystemProperty() == CONSCRYPT_PROPERTY
+
+  fun isJdk9() = getPlatformSystemProperty() == JDK9_PROPERTY
+
+  fun isJdk8() = getPlatformSystemProperty() == DEFAULT_PROPERTY
+
   fun assumeConscrypt() {
-    assumeThat(getPlatform(), equalTo("conscrypt"))
+    assumeThat(getPlatformSystemProperty(), equalTo(CONSCRYPT_PROPERTY))
   }
+
   fun assumeJdk9() {
-    assumeThat(getPlatform(), equalTo("jdk9"))
+    assumeThat(getPlatformSystemProperty(), equalTo(JDK9_PROPERTY))
   }
-  fun assumeLegacy() {
-    assumeThat(getPlatform(), equalTo("platform"))
+
+  fun assumeJdk8() {
+    assumeThat(getPlatformSystemProperty(), equalTo(DEFAULT_PROPERTY))
   }
+
   fun assumeNotConscrypt() {
-    assumeThat(getPlatform(), not("conscrypt"))
+    assumeThat(getPlatformSystemProperty(), not(CONSCRYPT_PROPERTY))
   }
+
   fun assumeNotJdk9() {
-    assumeThat(getPlatform(), not("jdk9"))
+    assumeThat(getPlatformSystemProperty(), not(JDK9_PROPERTY))
   }
-  fun assumeNotLegacy() {
-    assumeThat(getPlatform(), not("platform"))
+
+  fun assumeNotJdk8() {
+    assumeThat(getPlatformSystemProperty(), not(DEFAULT_PROPERTY))
   }
 
   fun assumeJettyBootEnabled() {
-    Assume.assumeTrue("ALPN Boot not enabled", isAlpnBootEnabled())
+    assumeTrue("ALPN Boot not enabled", isAlpnBootEnabled())
   }
 
   companion object {
+    val PROPERTY_NAME = "okhttp.platform"
+    val CONSCRYPT_PROPERTY = "conscrypt"
+    val DEFAULT_PROPERTY = "default"
+    val JDK9_PROPERTY = "jdk9"
+
     init {
-      if (getPlatform() == "conscrypt" && Security.getProviders()[0].name != "Conscrypt") {
+      if (getPlatformSystemProperty() == CONSCRYPT_PROPERTY && Security.getProviders()[0].name != "Conscrypt") {
         val provider = Conscrypt.newProviderBuilder().provideTrustManager(true).build()
         Security.insertProviderAt(provider, 1)
-      } else if (getPlatform() == "platform") {
+      } else if (getPlatformSystemProperty() == DEFAULT_PROPERTY) {
         if (!isAlpnBootEnabled()) {
           System.err.println("Warning: ALPN Boot not enabled")
         }
@@ -91,16 +103,16 @@ open class PlatformRule @JvmOverloads constructor(
     }
 
     @JvmStatic
-    fun getPlatform(): String = System.getProperty("okhttp.platform", "platform")
+    fun getPlatformSystemProperty(): String = System.getProperty(PROPERTY_NAME, DEFAULT_PROPERTY)
 
     @JvmStatic
-    fun conscrypt() = PlatformRule("conscrypt")
+    fun conscrypt() = PlatformRule(CONSCRYPT_PROPERTY)
 
     @JvmStatic
-    fun jdk9() = PlatformRule("jdk9")
+    fun jdk9() = PlatformRule(JDK9_PROPERTY)
 
     @JvmStatic
-    fun legacy() = PlatformRule("platform")
+    fun jdk8() = PlatformRule(DEFAULT_PROPERTY)
 
     @JvmStatic
     fun isAlpnBootEnabled(): Boolean = try {

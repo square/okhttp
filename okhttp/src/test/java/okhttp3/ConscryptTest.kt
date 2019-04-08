@@ -19,6 +19,7 @@ import okhttp3.internal.platform.ConscryptPlatform
 import okhttp3.internal.platform.Platform
 import org.assertj.core.api.Assertions.assertThat
 import org.conscrypt.Conscrypt
+import org.conscrypt.OpenSSLContextImpl
 import org.junit.After
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -38,7 +39,7 @@ class ConscryptTest {
 
   @Before
   fun createClient() {
-    assertTrue(Conscrypt.isConscrypt(Platform.get().platformTrustManager()))
+    assertThat(Conscrypt.isConscrypt(Platform.get().platformTrustManager())).isTrue()
 
     client = OkHttpClient()
   }
@@ -77,7 +78,10 @@ class ConscryptTest {
     val response = client.newCall(request).execute()
 
     assertThat(response.protocol()).isEqualTo(Protocol.HTTP_2)
+    if (response.handshake()!!.tlsVersion() != TlsVersion.TLS_1_3) {
+      System.err.println("Flaky TLSv1.3 with google")
 //    assertThat(response.handshake()!!.tlsVersion()).isEqualTo(TlsVersion.TLS_1_3)
+    }
   }
 
   @Test

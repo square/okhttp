@@ -125,10 +125,9 @@ class Jdk8WithJettyBootPlatform(
       try {
         // 1.8, 9, 10, 11, 12 etc
         val version = jvmVersion.toInt()
-        if (version >= 9)
-          return null
-      } catch (re: NumberFormatException) {
-        // expected
+        if (version >= 9) return null
+      } catch (nfe: NumberFormatException) {
+        // expected on >= JDK 9
       }
 
       // Find Jetty's ALPN extension for OpenJDK.

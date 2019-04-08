@@ -43,7 +43,7 @@ import org.junit.Rule;
 import org.junit.Test;
 
 import static java.util.Arrays.asList;
-import static okhttp3.PlatformRule.getPlatform;
+import static okhttp3.PlatformRule.getPlatformSystemProperty;
 import static okhttp3.TestUtil.defaultClient;
 import static okhttp3.internal.platform.PlatformTest.getJvmSpecVersion;
 import static okhttp3.tls.internal.TlsUtil.newKeyManager;
@@ -202,7 +202,7 @@ public final class ClientAuthTest {
       String jvmVersion = System.getProperty("java.specification.version");
       assertThat(jvmVersion).isEqualTo("11");
     } catch (SocketException expected) {
-      assertThat(getPlatform()).isEqualTo("jdk9");
+      assertThat(getPlatformSystemProperty()).isEqualTo("jdk9");
     }
   }
 
@@ -258,7 +258,7 @@ public final class ClientAuthTest {
       String jvmVersion = System.getProperty("java.specification.version");
       assertThat(jvmVersion).isEqualTo("11");
     } catch (SocketException expected) {
-      assertThat(getPlatform()).isEqualTo("jdk9");
+      assertThat(getPlatformSystemProperty()).isEqualTo("jdk9");
     }
   }
 

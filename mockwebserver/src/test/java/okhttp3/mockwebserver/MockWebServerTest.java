@@ -587,6 +587,6 @@ public final class MockWebServerTest {
   }
 
   public static String getPlatform() {
-    return System.getProperty("okhttp.platform", "platform");
+    return System.getProperty("okhttp.platform", "jdk8");
   }
 }
