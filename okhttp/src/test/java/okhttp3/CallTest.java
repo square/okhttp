@@ -910,6 +910,32 @@ public final class CallTest {
         .assertBody("success!");
   }
 
+  /** https://github.com/square/okhttp/issues/4875 */
+  @Test public void interceptorRecoversWhenRoutesExhausted() throws Exception {
+    server.enqueue(new MockResponse()
+        .setSocketPolicy(SocketPolicy.DISCONNECT_AT_START));
+    server.enqueue(new MockResponse());
+
+    client = client.newBuilder()
+        .addInterceptor(new Interceptor() {
+          @Override public Response intercept(Chain chain) throws IOException {
+            try {
+              chain.proceed(chain.request());
+              throw new AssertionError();
+            } catch (IOException expected) {
+              return chain.proceed(chain.request());
+            }
+          }
+        })
+        .build();
+
+    Request request = new Request.Builder()
+        .url(server.url("/"))
+        .build();
+    executeSynchronously(request)
+        .assertCode(200);
+  }
+
   /**
    * Make a request with two routes. The first route will fail because the null server connects but
    * never responds. The manual retry will succeed.
