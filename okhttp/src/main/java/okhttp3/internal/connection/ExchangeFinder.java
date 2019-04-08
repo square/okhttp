@@ -258,11 +258,16 @@ final class ExchangeFinder {
     }
   }
 
-  boolean canRetry() {
+  /** Returns true if there is a failure that retrying might fix. */
+  boolean hasStreamFailure() {
     synchronized (connectionPool) {
-      // Don't try if the failure wasn't our fault!
-      if (!hasStreamFailure) return false;
+      return hasStreamFailure;
+    }
+  }
 
+  /** Returns true if a current route is still good or if there are routes we haven't tried yet. */
+  boolean hasRouteToTry() {
+    synchronized (connectionPool) {
       return retryCurrentRoute()
           || (routeSelection != null && routeSelection.hasNext())
           || routeSelector.hasNext();
