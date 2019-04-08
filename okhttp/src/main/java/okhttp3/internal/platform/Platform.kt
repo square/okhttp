@@ -18,7 +18,6 @@ package okhttp3.internal.platform
 
 import okhttp3.OkHttpClient
 import okhttp3.Protocol
-import okhttp3.internal.Util
 import okhttp3.internal.tls.BasicCertificateChainCleaner
 import okhttp3.internal.tls.BasicTrustRootIndex
 import okhttp3.internal.tls.CertificateChainCleaner
@@ -177,7 +176,7 @@ open class Platform {
   override fun toString(): String = javaClass.simpleName
 
   companion object {
-    private val PLATFORM = findPlatform()
+    private @Volatile var platform = findPlatform()
 
     const val INFO = 4
     const val WARN = 5
@@ -185,19 +184,18 @@ open class Platform {
     private val logger = Logger.getLogger(OkHttpClient::class.java.name)
 
     @JvmStatic
-    fun get(): Platform = PLATFORM
+    fun get(): Platform = platform
+
+    internal fun resetForTests(platform: Platform = findPlatform()) {
+      this.platform = platform
+    }
 
     fun alpnProtocolNames(protocols: List<Protocol>) =
         protocols.filter { it != Protocol.HTTP_1_0 }.map { it.toString() }
 
-    // mainly to allow tests to run cleanly
-    // check if Provider manually installed
     @JvmStatic
     val isConscryptPreferred: Boolean
       get() {
-        if ("conscrypt" == Util.getSystemProperty("okhttp.platform", null)) {
-          return true
-        }
         val preferredProvider = Security.getProviders()[0].name
         return "Conscrypt" == preferredProvider
       }

@@ -105,7 +105,7 @@ subprojects { project ->
     signature 'org.codehaus.mojo.signature:java18:1.0@signature'
   }
 
-  def platform = System.getProperty("okhttp.platform", "platform")
+  def platform = System.getProperty("okhttp.platform", "jdk8")
 
   test {
     jvmArgs += "-Dlistener=okhttp3.testing.InstallUncaughtExceptionHandlerListener"
@@ -116,7 +116,7 @@ subprojects { project ->
     }
   }
 
-  if (platform == "platform") {
+  if (platform == "jdk8") {
     // Add alpn-boot on Java 8 so we can use HTTP/2 without a stable API.
     def alpnBootVersion = alpnBootVersion()
     if (alpnBootVersion != null) {

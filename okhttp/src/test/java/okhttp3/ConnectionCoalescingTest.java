@@ -34,12 +34,11 @@ import org.junit.Rule;
 import org.junit.Test;
 
 import static java.util.Arrays.asList;
-import static okhttp3.internal.platform.PlatformTest.getPlatform;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.fail;
-import static org.junit.Assume.assumeFalse;
 
 public final class ConnectionCoalescingTest {
+  @Rule public final PlatformRule platform = new PlatformRule();
   @Rule public final MockWebServer server = new MockWebServer();
   @Rule public final OkHttpClientTestRule clientTestRule = new OkHttpClientTestRule();
 
@@ -52,7 +51,7 @@ public final class ConnectionCoalescingTest {
   private List<InetAddress> serverIps;
 
   @Before public void setUp() throws Exception {
-    assumeFalse(getPlatform().equals("conscrypt"));
+    platform.assumeNotConscrypt();
 
     rootCa = new HeldCertificate.Builder()
         .serialNumber(1L)

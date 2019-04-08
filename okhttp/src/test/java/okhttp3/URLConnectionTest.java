@@ -102,10 +102,10 @@ import static okhttp3.mockwebserver.SocketPolicy.UPGRADE_TO_SSL_AT_END;
 import static okhttp3.tls.internal.TlsUtil.localhost;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.fail;
-import static org.junit.Assume.assumeTrue;
 
 /** Android's URLConnectionTest, ported to exercise OkHttp's Call API. */
 public final class URLConnectionTest {
+  @Rule public final PlatformRule platform = new PlatformRule();
   @Rule public final MockWebServer server = new MockWebServer();
   @Rule public final MockWebServer server2 = new MockWebServer();
   @Rule public final TemporaryFolder tempDir = new TemporaryFolder();
@@ -3579,7 +3579,7 @@ public final class URLConnectionTest {
   }
 
   @Test public void setSslSocketFactoryFailsOnJdk9() {
-    assumeTrue(getPlatform().equals("jdk9"));
+    platform.assumeJdk9();
 
     try {
       client.newBuilder()
@@ -3855,9 +3855,5 @@ public final class URLConnectionTest {
    */
   private FallbackTestClientSocketFactory suppressTlsFallbackClientSocketFactory() {
     return new FallbackTestClientSocketFactory(handshakeCertificates.sslSocketFactory());
-  }
-
-  private String getPlatform() {
-    return System.getProperty("okhttp.platform", "platform");
   }
 }
