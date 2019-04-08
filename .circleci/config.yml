@@ -84,7 +84,7 @@ jobs:
 
       - run:
           name: Run tests
-          command: ./gradlew --parallel --build-cache test
+          command: ./gradlew --parallel --build-cache --continue test
           environment:
             GRADLE_OPTS: -Dorg.gradle.daemon=false -Dorg.gradle.workers.max=3 -Xmx1G
 
@@ -136,7 +136,7 @@ jobs:
 
       - run:
           name: Run tests
-          command: ./gradlew --build-cache --parallel test
+          command: ./gradlew --build-cache --parallel --continue test
           environment:
             GRADLE_OPTS: -Dorg.gradle.daemon=false -Dokhttp.platform=jdk9 -Dorg.gradle.workers.max=3 -Xmx1G
 
@@ -188,7 +188,7 @@ jobs:
 
       - run:
           name: Run tests
-          command: ./gradlew --build-cache --parallel test
+          command: ./gradlew --build-cache --parallel --continue test
           environment:
             GRADLE_OPTS: -Dorg.gradle.daemon=false -Dokhttp.platform=conscrypt -Dorg.gradle.workers.max=3 -Xmx1G
 
