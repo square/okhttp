@@ -11,7 +11,7 @@ sourceSets {
   main.java.srcDirs += "$buildDir/generated/sources/java-templates/java/main"
 }
 
-compileJava {
+compileKotlin {
   dependsOn 'copyJavaTemplates'
 }
 

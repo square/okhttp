@@ -2626,7 +2626,7 @@ public final class CallTest {
     executeSynchronously("/");
 
     RecordedRequest recordedRequest = server.takeRequest();
-    assertThat(recordedRequest.getHeader("User-Agent")).matches(Version.userAgent());
+    assertThat(recordedRequest.getHeader("User-Agent")).matches(Version.userAgent);
   }
 
   @Test public void setFollowRedirectsFalse() throws Exception {
@@ -2927,7 +2927,7 @@ public final class CallTest {
 
     RecordedRequest connect = server.takeRequest();
     assertThat(connect.getHeader("Private")).isNull();
-    assertThat(connect.getHeader("User-Agent")).isEqualTo(Version.userAgent());
+    assertThat(connect.getHeader("User-Agent")).isEqualTo(Version.userAgent);
     assertThat(connect.getHeader("Proxy-Connection")).isEqualTo("Keep-Alive");
     assertThat(connect.getHeader("Host")).isEqualTo("android.com:443");
 

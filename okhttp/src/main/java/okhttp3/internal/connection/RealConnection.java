@@ -444,7 +444,7 @@ public final class RealConnection extends Http2Connection.Listener implements Co
         .method("CONNECT", null)
         .header("Host", Util.hostHeader(route.address().url(), true))
         .header("Proxy-Connection", "Keep-Alive") // For HTTP/1.0 proxies like Squid.
-        .header("User-Agent", Version.userAgent())
+        .header("User-Agent", Version.userAgent)
         .build();
 
     Response fakeAuthChallengeResponse = new Response.Builder()

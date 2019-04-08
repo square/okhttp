@@ -991,7 +991,7 @@ public final class URLConnectionTest {
     RecordedRequest connect = server.takeRequest();
     assertThat(connect.getHeader("Private")).isNull();
     assertThat(connect.getHeader("Proxy-Authorization")).isNull();
-    assertThat(connect.getHeader("User-Agent")).isEqualTo(Version.userAgent());
+    assertThat(connect.getHeader("User-Agent")).isEqualTo(Version.userAgent);
     assertThat(connect.getHeader("Host")).isEqualTo("android.com:443");
     assertThat(connect.getHeader("Proxy-Connection")).isEqualTo("Keep-Alive");
 
@@ -3532,7 +3532,7 @@ public final class URLConnectionTest {
     assertContent("abc", getResponse(newRequest("/")));
 
     RecordedRequest request = server.takeRequest();
-    assertThat(request.getHeader("User-Agent")).isEqualTo(Version.userAgent());
+    assertThat(request.getHeader("User-Agent")).isEqualTo(Version.userAgent);
   }
 
   @Test public void urlWithSpaceInHost() {
