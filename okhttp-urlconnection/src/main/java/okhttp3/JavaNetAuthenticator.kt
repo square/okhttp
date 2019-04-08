@@ -13,63 +13,75 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package okhttp3;
+package okhttp3
 
-import java.io.IOException;
-import java.net.Authenticator.RequestorType;
-import java.net.InetAddress;
-import java.net.InetSocketAddress;
-import java.net.PasswordAuthentication;
-import java.net.Proxy;
-import java.util.List;
-import okhttp3.internal.annotations.EverythingIsNonNull;
+import java.io.IOException
+import java.net.Authenticator
+import java.net.InetAddress
+import java.net.InetSocketAddress
+import java.net.Proxy
 
 /**
- * Adapts {@link java.net.Authenticator} to {@link Authenticator}. Configure OkHttp to use {@link
- * java.net.Authenticator} with {@link OkHttpClient.Builder#authenticator} or {@link
- * OkHttpClient.Builder#proxyAuthenticator(Authenticator)}.
+ * Adapts [Authenticator] to [okhttp3.Authenticator]. Configure OkHttp to use [Authenticator] with
+ * [OkHttpClient.Builder.authenticator] or [OkHttpClient.Builder.proxyAuthenticator].
  */
-@EverythingIsNonNull
-public final class JavaNetAuthenticator implements Authenticator {
-  @Override public Request authenticate(Route route, Response response) throws IOException {
-    List<Challenge> challenges = response.challenges();
-    Request request = response.request();
-    HttpUrl url = request.url();
-    boolean proxyAuthorization = response.code() == 407;
-    Proxy proxy = route.proxy();
+class JavaNetAuthenticator : okhttp3.Authenticator {
+  @Throws(IOException::class)
+  override fun authenticate(route: Route?, response: Response): Request? {
+    val challenges = response.challenges()
+    val request = response.request()
+    val url = request.url()
+    val proxyAuthorization = response.code() == 407
+    val proxy = route?.proxy() ?: Proxy.NO_PROXY
 
-    for (int i = 0, size = challenges.size(); i < size; i++) {
-      Challenge challenge = challenges.get(i);
-      if (!"Basic".equalsIgnoreCase(challenge.scheme())) continue;
+    for (challenge in challenges) {
+      if (!"Basic".equals(challenge.scheme(), ignoreCase = true)) {
+        continue
+      }
 
-      PasswordAuthentication auth;
-      if (proxyAuthorization) {
-        InetSocketAddress proxyAddress = (InetSocketAddress) proxy.address();
-        auth = java.net.Authenticator.requestPasswordAuthentication(
-            proxyAddress.getHostName(), getConnectToInetAddress(proxy, url), proxyAddress.getPort(),
-            url.scheme(), challenge.realm(), challenge.scheme(), url.url(),
-            RequestorType.PROXY);
+      val auth = if (proxyAuthorization) {
+        val proxyAddress = proxy.address() as InetSocketAddress
+        Authenticator.requestPasswordAuthentication(
+            proxyAddress.hostName,
+            proxy.connectToInetAddress(url),
+            proxyAddress.port,
+            url.scheme(),
+            challenge.realm(),
+            challenge.scheme(),
+            url.url(),
+            Authenticator.RequestorType.PROXY
+        )
       } else {
-        auth = java.net.Authenticator.requestPasswordAuthentication(
-            url.host(), getConnectToInetAddress(proxy, url), url.port(), url.scheme(),
-            challenge.realm(), challenge.scheme(), url.url(), RequestorType.SERVER);
+        Authenticator.requestPasswordAuthentication(
+            url.host(),
+            proxy.connectToInetAddress(url),
+            url.port(),
+            url.scheme(),
+            challenge.realm(),
+            challenge.scheme(),
+            url.url(),
+            Authenticator.RequestorType.SERVER
+        )
       }
 
       if (auth != null) {
-        String credential = Credentials.basic(
-            auth.getUserName(), new String(auth.getPassword()), challenge.charset());
+        val credentialHeader = if (proxyAuthorization) "Proxy-Authorization" else "Authorization"
+        val credential = Credentials.basic(
+            auth.userName, String(auth.password), challenge.charset())
         return request.newBuilder()
-            .header(proxyAuthorization ? "Proxy-Authorization" : "Authorization", credential)
-            .build();
+            .header(credentialHeader, credential)
+            .build()
       }
     }
 
-    return null; // No challenges were satisfied!
+    return null // No challenges were satisfied!
   }
 
-  private InetAddress getConnectToInetAddress(Proxy proxy, HttpUrl url) throws IOException {
-    return proxy.type() != Proxy.Type.DIRECT
-        ? ((InetSocketAddress) proxy.address()).getAddress()
-        : InetAddress.getByName(url.host());
+  @Throws(IOException::class)
+  private fun Proxy.connectToInetAddress(url: HttpUrl): InetAddress {
+    return when {
+      type() == Proxy.Type.DIRECT -> InetAddress.getByName(url.host())
+      else -> (address() as InetSocketAddress).address
+    }
   }
 }
