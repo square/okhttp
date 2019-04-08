@@ -123,7 +123,9 @@ public final class Transmitter {
    */
   public void prepareToConnect(Request request) {
     if (this.request != null) {
-      if (sameConnection(this.request.url(), request.url())) return; // Already ready.
+      if (sameConnection(this.request.url(), request.url()) && exchangeFinder.hasRouteToTry()) {
+        return; // Already ready.
+      }
       if (exchange != null) throw new IllegalStateException();
 
       if (exchangeFinder != null) {
@@ -303,7 +305,7 @@ public final class Transmitter {
   }
 
   public boolean canRetry() {
-    return exchangeFinder.canRetry();
+    return exchangeFinder.hasStreamFailure() && exchangeFinder.hasRouteToTry();
   }
 
   public boolean hasExchange() {
