@@ -234,14 +234,14 @@ workflows:
             branches:
               ignore: master
       - testjdk8
-      - testjdk11
-#          filters:
-#            branches:
-#              only: master
-      - testconscrypt
-#          filters:
-#            branches:
-#              only: master
+      - testjdk11:
+          filters:
+            branches:
+              only: master
+      - testconscrypt:
+          filters:
+            branches:
+              only: master
   nightly:
     triggers:
       - schedule:
