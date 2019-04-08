@@ -178,6 +178,36 @@ public final class ServerSentEventIteratorTest {
     assertThat(callbacks.remove()).isEqualTo(22L);
   }
 
+  @Test public void namePrefixIgnored() throws IOException {
+    consumeEvents(""
+        + "data: a\n"
+        + "eventually\n"
+        + "database\n"
+        + "identity\n"
+        + "retrying\n"
+        + "\n");
+    assertThat(callbacks.remove()).isEqualTo(new Event(null, null, "a"));
+  }
+
+  @Test public void nakedNameClearsIdAndTypeAppendsData() throws IOException {
+    consumeEvents(""
+        + "id: a\n"
+        + "event: b\n"
+        + "data: c\n"
+        + "id\n"
+        + "event\n"
+        + "data\n"
+        + "\n");
+    assertThat(callbacks.remove()).isEqualTo(new Event(null, null, "c\n"));
+  }
+
+  @Test public void nakedRetryIgnored() throws IOException {
+    consumeEvents(""
+        + "retry\n"
+        + "\n");
+    assertThat(callbacks).isEmpty();
+  }
+
   private void consumeEvents(String source) throws IOException {
     ServerSentEventReader.Callback callback = new ServerSentEventReader.Callback() {
       @Override public void onEvent(@Nullable String id, @Nullable String type, String data) {

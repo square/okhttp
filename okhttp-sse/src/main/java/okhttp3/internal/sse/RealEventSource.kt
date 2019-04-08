@@ -13,111 +13,95 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package okhttp3.internal.sse;
+package okhttp3.internal.sse
 
-import java.io.IOException;
-import javax.annotation.Nullable;
-import okhttp3.Call;
-import okhttp3.Callback;
-import okhttp3.EventListener;
-import okhttp3.MediaType;
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.Response;
-import okhttp3.ResponseBody;
-import okhttp3.internal.Internal;
-import okhttp3.internal.Util;
-import okhttp3.internal.connection.Exchange;
-import okhttp3.sse.EventSource;
-import okhttp3.sse.EventSourceListener;
+import okhttp3.Call
+import okhttp3.Callback
+import okhttp3.EventListener
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import okhttp3.Response
+import okhttp3.ResponseBody
+import okhttp3.internal.Internal
+import okhttp3.internal.Util
+import okhttp3.sse.EventSource
+import okhttp3.sse.EventSourceListener
+import java.io.IOException
 
-public final class RealEventSource
-    implements EventSource, ServerSentEventReader.Callback, Callback {
+class RealEventSource(
+  private val request: Request,
+  private val listener: EventSourceListener
+) : EventSource, ServerSentEventReader.Callback, Callback {
+  private lateinit var call: Call
 
-  private final Request request;
-  private final EventSourceListener listener;
-
-  private @Nullable Call call;
-
-  public RealEventSource(Request request, EventSourceListener listener) {
-    this.request = request;
-    this.listener = listener;
-  }
-
-  public void connect(OkHttpClient client) {
-    client = client.newBuilder()
+  fun connect(client: OkHttpClient) {
+    val client = client.newBuilder()
         .eventListener(EventListener.NONE)
-        .build();
-    call = client.newCall(request);
-    call.enqueue(this);
+        .build()
+    call = client.newCall(request)
+    call.enqueue(this)
   }
 
-  @Override public void onResponse(Call call, Response response) {
-    processResponse(response);
+  override fun onResponse(call: Call, response: Response) {
+    processResponse(response)
   }
 
-  public void processResponse(Response response) {
-    try {
-      if (!response.isSuccessful()) {
-        listener.onFailure(this, null, response);
-        return;
+  fun processResponse(response: Response) {
+    response.use {
+      if (!response.isSuccessful) {
+        listener.onFailure(this, null, response)
+        return
       }
 
-      ResponseBody body = response.body();
+      val body = response.body()!!
 
-      //noinspection ConstantConditions main body is never null
-      MediaType contentType = body.contentType();
-      if (!isEventStream(contentType)) {
+      if (!body.isEventStream()) {
         listener.onFailure(this,
-            new IllegalStateException("Invalid content-type: " + contentType), response);
-        return;
+            IllegalStateException("Invalid content-type: ${body.contentType()}"), response)
+        return
       }
 
       // This is a long-lived response. Cancel full-call timeouts.
-      Exchange exchange = Internal.instance.exchange(response);
-      if (exchange != null) exchange.timeoutEarlyExit();
+      Internal.instance.exchange(response)?.timeoutEarlyExit()
 
       // Replace the body with an empty one so the callbacks can't see real data.
-      response = response.newBuilder().body(Util.EMPTY_RESPONSE).build();
+      val response = response.newBuilder()
+          .body(Util.EMPTY_RESPONSE)
+          .build()
 
-      ServerSentEventReader reader = new ServerSentEventReader(body.source(), this);
+      val reader = ServerSentEventReader(body.source(), this)
       try {
-        listener.onOpen(this, response);
+        listener.onOpen(this, response)
         while (reader.processNextEvent()) {
         }
-      } catch (Exception e) {
-        listener.onFailure(this, e, response);
-        return;
+      } catch (e: Exception) {
+        listener.onFailure(this, e, response)
+        return
       }
-
-      listener.onClosed(this);
-    } finally {
-      response.close();
+      listener.onClosed(this)
     }
   }
 
-  private static boolean isEventStream(@Nullable MediaType contentType) {
-    return contentType != null && contentType.type().equals("text") && contentType.subtype()
-        .equals("event-stream");
+  private fun ResponseBody.isEventStream(): Boolean {
+    val contentType = contentType() ?: return false
+    return contentType.type() == "text" && contentType.subtype() == "event-stream"
   }
 
-  @Override public void onFailure(Call call, IOException e) {
-    listener.onFailure(this, e, null);
+  override fun onFailure(call: Call, e: IOException) {
+    listener.onFailure(this, e, null)
   }
 
-  @Override public Request request() {
-    return request;
+  override fun request(): Request = request
+
+  override fun cancel() {
+    call.cancel()
   }
 
-  @Override public void cancel() {
-    call.cancel();
+  override fun onEvent(id: String?, type: String?, data: String) {
+    listener.onEvent(this, id, type, data)
   }
 
-  @Override public void onEvent(@Nullable String id, @Nullable String type, String data) {
-    listener.onEvent(this, id, type, data);
-  }
-
-  @Override public void onRetryChange(long timeMs) {
+  override fun onRetryChange(timeMs: Long) {
     // Ignored. We do not auto-retry.
   }
 }

@@ -13,189 +13,149 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package okhttp3.internal.sse;
+package okhttp3.internal.sse
 
-import java.io.IOException;
-import javax.annotation.Nullable;
-import okio.Buffer;
-import okio.BufferedSource;
-import okio.ByteString;
+import okio.Buffer
+import okio.BufferedSource
+import okio.ByteString.Companion.encodeUtf8
+import okio.Options
+import java.io.IOException
 
-public final class ServerSentEventReader {
-  private static final ByteString CRLF = ByteString.encodeUtf8("\r\n");
-  private static final ByteString DATA = ByteString.encodeUtf8("data");
-  private static final ByteString ID = ByteString.encodeUtf8("id");
-  private static final ByteString EVENT = ByteString.encodeUtf8("event");
-  private static final ByteString RETRY = ByteString.encodeUtf8("retry");
+class ServerSentEventReader(
+  private val source: BufferedSource,
+  private val callback: Callback
+) {
+  private var lastId: String? = null
 
-  public interface Callback {
-    void onEvent(@Nullable String id, @Nullable String type, String data);
-    void onRetryChange(long timeMs);
-  }
-
-  private final BufferedSource source;
-  private final Callback callback;
-
-  private String lastId = null;
-
-  public ServerSentEventReader(BufferedSource source, Callback callback) {
-    if (source == null) throw new NullPointerException("source == null");
-    if (callback == null) throw new NullPointerException("callback == null");
-    this.source = source;
-    this.callback = callback;
+  interface Callback {
+    fun onEvent(id: String?, type: String?, data: String)
+    fun onRetryChange(timeMs: Long)
   }
 
   /**
-   * Process the next event. This will result in a single call to {@link Callback#onEvent}
-   * <em>unless</em> the data section was empty. Any number of calls to
-   * {@link Callback#onRetryChange} may occur while processing an event.
+   * Process the next event. This will result in a single call to [Callback.onEvent] *unless* the
+   * data section was empty. Any number of calls to [Callback.onRetryChange] may occur while
+   * processing an event.
    *
    * @return false when EOF is reached
    */
-  boolean processNextEvent() throws IOException {
-    String id = lastId;
-    String type = null;
-    Buffer data = new Buffer();
+  @Throws(IOException::class)
+  fun processNextEvent(): Boolean {
+    var id = lastId
+    var type: String? = null
+    val data = Buffer()
 
     while (true) {
-      long lineEnd = source.indexOfElement(CRLF);
-      if (lineEnd == -1L) {
-        return false;
-      }
+      when (source.select(options)) {
+        in 0..2 -> {
+          completeEvent(id, type, data)
+          return true
+        }
 
-      switch (source.getBuffer().getByte(0)) {
-        case '\r':
-        case '\n':
-          completeEvent(id, type, data);
-          return true;
+        in 3..4 -> {
+          source.readData(data)
+        }
 
-        case 'd':
-          if (isKey(DATA)) {
-            parseData(data, lineEnd);
-            continue;
+        in 5..7 -> {
+          data.writeByte('\n'.toInt()) // 'data' on a line of its own.
+        }
+
+        in 8..9 -> {
+          id = source.readUtf8LineStrict().takeIf { it.isNotEmpty() }
+        }
+
+        in 10..12 -> {
+          id = null // 'id' on a line of its own.
+        }
+
+        in 13..14 -> {
+          type = source.readUtf8LineStrict().takeIf { it.isNotEmpty() }
+        }
+
+        in 15..17 -> {
+          type = null // 'event' on a line of its own
+        }
+
+        in 18..19 -> {
+          val retryMs = source.readRetryMs()
+          if (retryMs != -1L) {
+            callback.onRetryChange(retryMs)
           }
-          break;
+        }
 
-        case 'e':
-          if (isKey(EVENT)) {
-            type = parseEvent(lineEnd);
-            continue;
+        -1 -> {
+          val lineEnd = source.indexOfElement(CRLF)
+          if (lineEnd != -1L) {
+            // Skip the line and newline
+            source.skip(lineEnd)
+            source.select(options)
+          } else {
+            return false // No more newlines.
           }
-          break;
+        }
 
-        case 'i':
-          if (isKey(ID)) {
-            id = parseId(lineEnd);
-            continue;
-          }
-          break;
-
-        case 'r':
-          if (isKey(RETRY)) {
-            parseRetry(lineEnd);
-            continue;
-          }
-          break;
-      }
-
-      source.skip(lineEnd);
-      skipCrAndOrLf();
-    }
-  }
-
-  private void completeEvent(String id, String type, Buffer data) throws IOException {
-    skipCrAndOrLf();
-
-    if (data.size() != 0L) {
-      lastId = id;
-      data.skip(1L); // Leading newline.
-      callback.onEvent(id, type, data.readUtf8());
-    }
-  }
-
-  private void parseData(Buffer data, long end) throws IOException {
-    data.writeByte('\n');
-    end -= skipNameAndDivider(4L);
-    source.readFully(data, end);
-    skipCrAndOrLf();
-  }
-
-  private String parseEvent(long end) throws IOException {
-    String type = null;
-    end -= skipNameAndDivider(5L);
-    if (end != 0L) {
-      type = source.readUtf8(end);
-    }
-    skipCrAndOrLf();
-    return type;
-  }
-
-  private String parseId(long end) throws IOException {
-    String id;
-    end -= skipNameAndDivider(2L);
-    if (end != 0L) {
-      id = source.readUtf8(end);
-    } else {
-      id = null;
-    }
-    skipCrAndOrLf();
-    return id;
-  }
-
-  private void parseRetry(long end) throws IOException {
-    end -= skipNameAndDivider(5L);
-    String retryString = source.readUtf8(end);
-    long retryMs = -1L;
-    try {
-      retryMs = Long.parseLong(retryString);
-    } catch (NumberFormatException ignored) {
-    }
-    if (retryMs != -1L) {
-      callback.onRetryChange(retryMs);
-    }
-    skipCrAndOrLf();
-  }
-
-  /**
-   * Returns true if the first bytes of {@link #source} are {@code key} followed by a colon or
-   * a newline.
-   */
-  private boolean isKey(ByteString key) throws IOException {
-    if (source.rangeEquals(0, key)) {
-      byte nextByte = source.getBuffer().getByte(key.size());
-      return nextByte == ':'
-          || nextByte == '\r'
-          || nextByte == '\n';
-    }
-    return false;
-  }
-
-  /** Consumes {@code \r}, {@code \r\n}, or {@code \n} from {@link #source}. */
-  private void skipCrAndOrLf() throws IOException {
-    if ((source.readByte() & 0xff) == '\r'
-        && source.request(1)
-        && source.getBuffer().getByte(0) == '\n') {
-      source.skip(1);
-    }
-  }
-
-  /**
-   * Consumes the field name of the specified length and the optional colon and its optional
-   * trailing space. Returns the number of bytes skipped.
-   */
-  private long skipNameAndDivider(long length) throws IOException {
-    source.skip(length);
-
-    if (source.getBuffer().getByte(0) == ':') {
-      source.skip(1L);
-      length++;
-
-      if (source.getBuffer().getByte(0) == ' ') {
-        source.skip(1);
-        length++;
+        else -> throw AssertionError()
       }
     }
+  }
 
-    return length;
+  @Throws(IOException::class)
+  private fun completeEvent(id: String?, type: String?, data: Buffer) {
+    if (data.size != 0L) {
+      lastId = id
+      data.skip(1L) // Leading newline.
+      callback.onEvent(id, type, data.readUtf8())
+    }
+  }
+
+  companion object {
+    val options = Options.of(
+        /*  0 */ "\r\n".encodeUtf8(),
+        /*  1 */ "\r".encodeUtf8(),
+        /*  2 */ "\n".encodeUtf8(),
+
+        /*  3 */ "data: ".encodeUtf8(),
+        /*  4 */ "data:".encodeUtf8(),
+
+        /*  5 */ "data\r\n".encodeUtf8(),
+        /*  6 */ "data\r".encodeUtf8(),
+        /*  7 */ "data\n".encodeUtf8(),
+
+        /*  8 */ "id: ".encodeUtf8(),
+        /*  9 */ "id:".encodeUtf8(),
+
+        /* 10 */ "id\r\n".encodeUtf8(),
+        /* 11 */ "id\r".encodeUtf8(),
+        /* 12 */ "id\n".encodeUtf8(),
+
+        /* 13 */ "event: ".encodeUtf8(),
+        /* 14 */ "event:".encodeUtf8(),
+
+        /* 15 */ "event\r\n".encodeUtf8(),
+        /* 16 */ "event\r".encodeUtf8(),
+        /* 17 */ "event\n".encodeUtf8(),
+
+        /* 18 */ "retry: ".encodeUtf8(),
+        /* 19 */ "retry:".encodeUtf8()
+    )
+
+    private val CRLF = "\r\n".encodeUtf8()
+
+    @Throws(IOException::class)
+    private fun BufferedSource.readData(data: Buffer) {
+      data.writeByte('\n'.toInt())
+      readFully(data, indexOfElement(CRLF))
+      select(options) // Skip the newline bytes.
+    }
+
+    @Throws(IOException::class)
+    private fun BufferedSource.readRetryMs(): Long {
+      val retryString = readUtf8LineStrict()
+      return try {
+        retryString.toLong()
+      } catch (_: NumberFormatException) {
+        -1L
+      }
+    }
   }
 }
