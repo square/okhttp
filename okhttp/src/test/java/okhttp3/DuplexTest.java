@@ -30,6 +30,7 @@ import okhttp3.mockwebserver.internal.duplex.MockDuplexResponseBody;
 import okhttp3.tls.HandshakeCertificates;
 import okio.BufferedSink;
 import okio.BufferedSource;
+import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestRule;
@@ -42,6 +43,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.fail;
 
 public final class DuplexTest {
+  @Rule public final PlatformRule platform = new PlatformRule();
   @Rule public final TestRule timeout = new Timeout(30_000, TimeUnit.MILLISECONDS);
   @Rule public final MockWebServer server = new MockWebServer();
   @Rule public OkHttpClientTestRule clientTestRule = new OkHttpClientTestRule();
@@ -52,6 +54,11 @@ public final class DuplexTest {
       .newBuilder()
       .eventListener(listener)
       .build();
+
+  @Before
+  public void checkHttp2() {
+    platform.assumeHttp2Support();
+  }
 
   @Test public void http1DoesntSupportDuplex() throws IOException {
     Call call = client.newCall(new Request.Builder()

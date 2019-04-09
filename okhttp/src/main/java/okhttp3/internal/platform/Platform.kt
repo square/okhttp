@@ -186,7 +186,7 @@ open class Platform {
     @JvmStatic
     fun get(): Platform = platform
 
-    internal fun resetForTests(platform: Platform = findPlatform()) {
+    fun resetForTests(platform: Platform = findPlatform()) {
       this.platform = platform
     }
 
