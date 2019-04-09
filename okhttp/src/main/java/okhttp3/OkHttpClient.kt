@@ -118,8 +118,8 @@ import kotlin.DeprecationLevel.ERROR
  * OkHttp also uses daemon threads for HTTP/2 connections. These will exit automatically if they
  * remain idle.
  */
-open class OkHttpClient internal constructor(
-  builder: Builder
+open class OkHttpClient internal @JvmOverloads constructor(
+  builder: Builder = Builder()
 ) : Cloneable, Call.Factory, WebSocket.Factory {
   private val dispatcher: Dispatcher = builder.dispatcher
   private val proxy: Proxy? = builder.proxy
@@ -151,8 +151,6 @@ open class OkHttpClient internal constructor(
   private val pingInterval: Int = builder.pingInterval
   private val internalCache: InternalCache? = builder.internalCache
   private val certificateChainCleaner: CertificateChainCleaner?
-
-  constructor() : this(Builder())
 
   init {
     var isTLS = false

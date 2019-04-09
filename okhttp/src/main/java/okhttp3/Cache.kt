@@ -137,10 +137,10 @@ import java.util.NoSuchElementException
  *
  * [rfc_7234]: http://tools.ietf.org/html/rfc7234
  */
-class Cache internal constructor(
+class Cache internal @JvmOverloads constructor(
   directory: File,
   maxSize: Long,
-  fileSystem: FileSystem
+  fileSystem: FileSystem = FileSystem.SYSTEM
 ) : Closeable, Flushable {
   internal val internalCache: InternalCache = object : InternalCache {
     override fun get(request: Request): Response? {
@@ -178,9 +178,6 @@ class Cache internal constructor(
   private var requestCount: Int = 0
 
   val isClosed: Boolean get() = cache.isClosed
-
-  /** Create a cache of at most `maxSize` bytes in `directory`. */
-  constructor(directory: File, maxSize: Long) : this(directory, maxSize, FileSystem.SYSTEM)
 
   init {
     this.cache = DiskLruCache.create(fileSystem, directory, VERSION, ENTRY_COUNT, maxSize)
