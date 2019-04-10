@@ -935,6 +935,35 @@ public final class CallTest {
         .assertCode(200);
   }
 
+  /** https://github.com/square/okhttp/issues/4761 */
+  @Test public void interceptorCallsProceedWithoutClosingPriorResponse() throws Exception {
+    server.enqueue(new MockResponse()
+        .setBody("abc"));
+    server.enqueue(new MockResponse());
+
+    client = client.newBuilder()
+        .addInterceptor(new Interceptor() {
+          @Override public Response intercept(Chain chain) throws IOException {
+            Response response = chain.proceed(chain.request());
+            try {
+              chain.proceed(chain.request());
+              fail();
+            } catch (IllegalStateException expected) {
+              assertThat(expected).hasMessageContaining("please call response.close()");
+            }
+            return response;
+          }
+        })
+        .build();
+
+    Request request = new Request.Builder()
+        .url(server.url("/"))
+        .build();
+    executeSynchronously(request)
+        .assertCode(200)
+        .assertBody("abc");
+  }
+
   /**
    * Make a request with two routes. The first route will fail because the null server connects but
    * never responds. The manual retry will succeed.
