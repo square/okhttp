@@ -185,11 +185,11 @@ workflows:
             branches:
               only: master
       - testjdk8alpn
-      - testjdk11
+      - testjdk11:
           filters:
             branches:
               only: master
-      - testconscrypt
+      - testconscrypt:
           filters:
             branches:
               only: master
