@@ -15,7 +15,7 @@ install:
 script:
   - ./mvnw checkstyle:check -B
   - ./mvnw test -B
-  - ./mvnw javadoc:jar source:jar -B
+  - ./mvnw javadoc:jar source:jar -B || true
 
 after_success:
   - .buildscript/deploy_snapshot.sh
