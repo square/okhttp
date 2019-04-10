@@ -181,15 +181,18 @@ workflows:
             branches:
               ignore: master
       - testjdk8
+          filters:
+            branches:
+              only: master
       - testjdk8alpn
       - testjdk11
-#          filters:
-#            branches:
-#              only: master
+          filters:
+            branches:
+              only: master
       - testconscrypt
-#          filters:
-#            branches:
-#              only: master
+          filters:
+            branches:
+              only: master
   nightly:
     triggers:
       - schedule:
@@ -203,6 +206,9 @@ workflows:
           requires:
             - compile
       - testjdk8:
+          requires:
+            - compile
+      - testjdk8alpn:
           requires:
             - compile
       - testjdk11:
