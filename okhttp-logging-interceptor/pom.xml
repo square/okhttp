@@ -6,7 +6,7 @@
   <parent>
     <groupId>com.squareup.okhttp3</groupId>
     <artifactId>parent</artifactId>
-    <version>3.15.0-SNAPSHOT</version>
+    <version>3.14.1</version>
   </parent>
 
   <artifactId>logging-interceptor</artifactId>
