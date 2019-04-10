@@ -5,13 +5,6 @@ jobs:
       - image: circleci/openjdk:8u171-jdk
     steps:
       - checkout
-      - restore_cache:
-          key: cache-okhttp_3.14.x
-      - run: mvn dependency:go-offline
-      - save_cache:
-          paths:
-            - ~/.m2
-          key: cache-okhttp_3.14.x 
       - run:
           name: "Pull Submodules"
           command: |
