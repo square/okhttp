@@ -180,7 +180,7 @@ workflows:
           filters:
             branches:
               ignore: master
-      - testjdk8
+      - testjdk8:
           filters:
             branches:
               only: master
