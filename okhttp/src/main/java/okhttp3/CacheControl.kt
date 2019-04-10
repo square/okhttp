@@ -279,7 +279,6 @@ class CacheControl private constructor(
               pos = HttpHeaders.skipUntil(value, pos, "\"")
               parameter = value.substring(parameterStart, pos)
               pos++ // Consume '"' close quote (if necessary).
-
             } else {
               // Unquoted string.
               val parameterStart = pos

@@ -90,7 +90,7 @@ class Response internal constructor(
    */
   fun handshake(): Handshake? = handshake
 
-  fun headers(name: String): List<String>  = headers.values(name)
+  fun headers(name: String): List<String> = headers.values(name)
 
   @JvmOverloads
   fun header(name: String, defaultValue: String? = null): String? = headers[name] ?: defaultValue

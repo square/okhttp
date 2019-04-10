@@ -176,7 +176,7 @@ open class Platform {
   override fun toString(): String = javaClass.simpleName
 
   companion object {
-    private @Volatile var platform = findPlatform()
+    @Volatile private var platform = findPlatform()
 
     const val INFO = 4
     const val WARN = 5

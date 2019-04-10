@@ -71,9 +71,9 @@ class Challenge(
   }
 
   override fun equals(other: Any?): Boolean {
-    return other is Challenge
-        && other.scheme == scheme
-        && other.authParams == authParams
+    return other is Challenge &&
+        other.scheme == scheme &&
+        other.authParams == authParams
   }
 
   override fun hashCode(): Int {
@@ -86,5 +86,4 @@ class Challenge(
   override fun toString(): String {
     return "$scheme authParams=$authParams"
   }
-
 }

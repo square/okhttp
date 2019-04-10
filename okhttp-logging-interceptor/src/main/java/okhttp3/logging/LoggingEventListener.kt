@@ -68,7 +68,10 @@ class LoggingEventListener private constructor(
   }
 
   override fun connectEnd(
-    call: Call, inetSocketAddress: InetSocketAddress, proxy: Proxy, protocol: Protocol?
+    call: Call,
+    inetSocketAddress: InetSocketAddress,
+    proxy: Proxy,
+    protocol: Protocol?
   ) {
     logWithTime("connectEnd: $protocol")
   }

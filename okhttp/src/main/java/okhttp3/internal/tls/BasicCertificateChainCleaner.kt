@@ -33,7 +33,7 @@ import javax.net.ssl.SSLPeerUnverifiedException
  */
 class BasicCertificateChainCleaner(
   private val trustRootIndex: TrustRootIndex
-): CertificateChainCleaner() {
+) : CertificateChainCleaner() {
 
   /**
    * Returns a cleaned chain for [chain].

@@ -118,7 +118,7 @@ interface Authenticator {
     @JvmName("-deprecated_Authenticator")
     inline operator fun invoke(
       crossinline block: (route: Route?, response: Response) -> Request?
-    ): Authenticator = object: Authenticator {
+    ): Authenticator = object : Authenticator {
       override fun authenticate(route: Route?, response: Response) = block(route, response)
     }
   }

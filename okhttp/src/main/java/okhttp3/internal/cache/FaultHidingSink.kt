@@ -21,7 +21,7 @@ import okio.Sink
 import java.io.IOException
 
 /** A sink that never throws IOExceptions, even if the underlying sink does. */
-internal open class FaultHidingSink(delegate: Sink): ForwardingSink(delegate) {
+internal open class FaultHidingSink(delegate: Sink) : ForwardingSink(delegate) {
   private var hasErrors = false
 
   override fun write(source: Buffer, byteCount: Long) {

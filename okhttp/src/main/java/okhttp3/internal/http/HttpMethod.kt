@@ -17,18 +17,18 @@ package okhttp3.internal.http
 
 object HttpMethod {
   @JvmStatic
-  fun invalidatesCache(method: String): Boolean = (method == "POST"
-      || method == "PATCH"
-      || method == "PUT"
-      || method == "DELETE"
-      || method == "MOVE")     // WebDAV
+  fun invalidatesCache(method: String): Boolean = (method == "POST" ||
+      method == "PATCH" ||
+      method == "PUT" ||
+      method == "DELETE" ||
+      method == "MOVE") // WebDAV
 
   @JvmStatic
-  fun requiresRequestBody(method: String): Boolean = (method == "POST"
-      || method == "PUT"
-      || method == "PATCH"
-      || method == "PROPPATCH" // WebDAV
-      || method == "REPORT")   // CalDAV/CardDAV (defined in WebDAV Versioning)
+  fun requiresRequestBody(method: String): Boolean = (method == "POST" ||
+      method == "PUT" ||
+      method == "PATCH" ||
+      method == "PROPPATCH" || // WebDAV
+      method == "REPORT") // CalDAV/CardDAV (defined in WebDAV Versioning)
 
   @JvmStatic
   fun permitsRequestBody(method: String): Boolean = !(method == "GET" || method == "HEAD")
