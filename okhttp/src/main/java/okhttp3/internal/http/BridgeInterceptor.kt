@@ -109,7 +109,7 @@ class BridgeInterceptor(private val cookieJar: CookieJar) : Interceptor {
 
   /** Returns a 'Cookie' HTTP request header with all cookies, like `a=b; c=d`.  */
   private fun cookieHeader(cookies: List<Cookie>): String = buildString {
-    cookies.forEachIndexed  { index,cookie ->
+    cookies.forEachIndexed { index, cookie ->
       if (index > 0) append("; ")
       append(cookie.name()).append('=').append(cookie.value())
     }
