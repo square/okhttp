@@ -6,7 +6,7 @@
   <parent>
     <groupId>com.squareup.okhttp3</groupId>
     <artifactId>parent</artifactId>
-    <version>3.14.1</version>
+    <version>3.14.2-SNAPSHOT</version>
   </parent>
 
   <artifactId>okhttp-sse</artifactId>
