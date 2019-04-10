@@ -1,5 +1,53 @@
-# Check https://circleci.com/docs/2.0/language-java/ for more details
 version: 2.1
+
+commands:
+  runtests:
+    description: "Run tests"
+    parameters:
+      platform:
+        type: string
+    steps:
+      - restore_cache:
+          keys:
+            # restore compilation and wrapper from previous branch/job build or master
+            - v4-{{ .Branch }}-{{ .Environment.CIRCLE_JOB }}
+            - v4-master-compile
+
+      - run:
+          name: Run tests
+          command: ./gradlew --build-cache --parallel --continue test
+          environment:
+            GRADLE_OPTS: -Dorg.gradle.daemon=false -Dokhttp.platform=<< parameters.platform >> -Dorg.gradle.workers.max=3 -Xmx1G
+
+      - save_cache:
+          paths:
+            - ~/.gradle/caches
+            - ~/.gradle/wrapper
+          key: v4-{{ .Branch }}-{{ .Environment.CIRCLE_JOB }}
+          when: always
+
+      - run:
+          name: Save test results
+          command: |
+            mkdir -p ~/test-results/junit/
+            find . -type f -regex ".*/build/test-results/.*xml" -exec cp {} ~/test-results/junit/ \;
+          when: always
+
+      - store_test_results:
+          name: Store test results
+          path: ~/test-results
+
+      - run:
+          name: Save gradle reports
+          command: |
+            mkdir -p ~/reports/
+            tar cf - */build/reports | (cd ~/reports/; tar xf -)
+          when: always
+
+      - store_artifacts:
+          name: Store gradle reports
+          path: ~/reports
+
 jobs:
   compile:
     docker:
@@ -49,7 +97,7 @@ jobs:
 
       - run:
           name: Run checks
-          command: ./gradlew --parallel --build-cache check -x test
+          command: ./gradlew --parallel --continue --build-cache check -x test
           environment:
             GRADLE_OPTS: -Dorg.gradle.daemon=false -Dorg.gradle.workers.max=3 -Xmx1G
 
@@ -75,47 +123,22 @@ jobs:
     steps:
       - checkout
 
-      - restore_cache:
-          keys:
-            # restore compilation and wrapper from previous branch/job build or master
-            # master-compile is published on each build (cron or master commit) so is fresher
-            - v4-{{ .Branch }}-{{ .Environment.CIRCLE_JOB }}
-            - v4-master-compile
+      - runtests:
+          platform: jdk8
 
-      - run:
-          name: Run tests
-          command: ./gradlew --parallel --build-cache test
-          environment:
-            GRADLE_OPTS: -Dorg.gradle.daemon=false -Dorg.gradle.workers.max=3 -Xmx1G
+  testjdk8alpn:
+    docker:
+      - image: circleci/openjdk:8u171-jdk
 
-      - save_cache:
-          paths:
-            - ~/.gradle/caches
-            - ~/.gradle/wrapper
-          key: v4-{{ .Branch }}-{{ .Environment.CIRCLE_JOB }}
-          when: always
+    environment:
+      JVM_OPTS: -Xmx1g
+      TERM: dumb
 
-      - run:
-          name: Save test results
-          command: |
-            mkdir -p ~/test-results/junit/
-            find . -type f -regex ".*/build/test-results/.*xml" -exec cp {} ~/test-results/junit/ \;
-          when: always
+    steps:
+      - checkout
 
-      - store_test_results:
-          name: Store test results
-          path: ~/test-results
-
-      - run:
-          name: Save gradle reports
-          command: |
-            mkdir -p ~/reports/
-            tar cf - */build/reports | (cd ~/reports/; tar xf -)
-          when: always
-
-      - store_artifacts:
-          name: Store gradle reports
-          path: ~/reports
+      - runtests:
+          platform: jdk8alpn
 
   testjdk11:
     docker:
@@ -128,46 +151,8 @@ jobs:
     steps:
       - checkout
 
-      - restore_cache:
-          keys:
-            # restore compilation and wrapper from previous branch/job build or master
-            - v4-{{ .Branch }}-{{ .Environment.CIRCLE_JOB }}
-            - v4-master-compile
-
-      - run:
-          name: Run tests
-          command: ./gradlew --build-cache --parallel test
-          environment:
-            GRADLE_OPTS: -Dorg.gradle.daemon=false -Dokhttp.platform=jdk9 -Dorg.gradle.workers.max=3 -Xmx1G
-
-      - save_cache:
-          paths:
-            - ~/.gradle/caches
-            - ~/.gradle/wrapper
-          key: v4-{{ .Branch }}-{{ .Environment.CIRCLE_JOB }}
-          when: always
-
-      - run:
-          name: Save test results
-          command: |
-            mkdir -p ~/test-results/junit/
-            find . -type f -regex ".*/build/test-results/.*xml" -exec cp {} ~/test-results/junit/ \;
-          when: always
-
-      - store_test_results:
-          name: Store test results
-          path: ~/test-results
-
-      - run:
-          name: Save gradle reports
-          command: |
-            mkdir -p ~/reports/
-            tar cf - */build/reports | (cd ~/reports/; tar xf -)
-          when: always
-
-      - store_artifacts:
-          name: Store gradle reports
-          path: ~/reports
+      - runtests:
+          platform: jdk9
 
   testconscrypt:
     docker:
@@ -180,46 +165,8 @@ jobs:
     steps:
       - checkout
 
-      - restore_cache:
-          keys:
-            # restore compilation and wrapper from previous branch/job build or master
-            - v4-{{ .Branch }}-{{ .Environment.CIRCLE_JOB }}
-            - v4-master-compile
-
-      - run:
-          name: Run tests
-          command: ./gradlew --build-cache --parallel test
-          environment:
-            GRADLE_OPTS: -Dorg.gradle.daemon=false -Dokhttp.platform=conscrypt -Dorg.gradle.workers.max=3 -Xmx1G
-
-      - save_cache:
-          paths:
-            - ~/.gradle/caches
-            - ~/.gradle/wrapper
-          key: v4-{{ .Branch }}-{{ .Environment.CIRCLE_JOB }}
-          when: always
-
-      - run:
-          name: Save test results
-          command: |
-            mkdir -p ~/test-results/junit/
-            find . -type f -regex ".*/build/test-results/.*xml" -exec cp {} ~/test-results/junit/ \;
-          when: always
-
-      - store_test_results:
-          name: Store test results
-          path: ~/test-results
-
-      - run:
-          name: Save gradle reports
-          command: |
-            mkdir -p ~/reports/
-            tar cf - */build/reports | (cd ~/reports/; tar xf -)
-          when: always
-
-      - store_artifacts:
-          name: Store gradle reports
-          path: ~/reports
+      - runtests:
+          platform: conscrypt
 
 workflows:
   version: 2
@@ -233,7 +180,11 @@ workflows:
           filters:
             branches:
               ignore: master
-      - testjdk8
+      - testjdk8:
+          filters:
+            branches:
+              only: master
+      - testjdk8alpn
       - testjdk11:
           filters:
             branches:
@@ -255,6 +206,9 @@ workflows:
           requires:
             - compile
       - testjdk8:
+          requires:
+            - compile
+      - testjdk8alpn:
           requires:
             - compile
       - testjdk11:

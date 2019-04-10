@@ -72,6 +72,8 @@ import static org.junit.Assume.assumeThat;
 
 public final class EventListenerTest {
   public static final Matcher<Response> anyResponse = CoreMatchers.any(Response.class);
+
+  @Rule public final PlatformRule platform = new PlatformRule();
   @Rule public final MockWebServer server = new MockWebServer();
   @Rule public final OkHttpClientTestRule clientTestRule = new OkHttpClientTestRule();
   @Rule public final Timeout timeoutRule = new Timeout(20, TimeUnit.SECONDS);
@@ -859,6 +861,8 @@ public final class EventListenerTest {
   }
 
   @Test public void responseBodyFailHttp2OverHttps() throws IOException {
+    platform.assumeHttp2Support();
+
     enableTlsWithTunnel(false);
     server.setProtocols(asList(Protocol.HTTP_2, Protocol.HTTP_1_1));
     responseBodyFail(Protocol.HTTP_2);
@@ -955,6 +959,8 @@ public final class EventListenerTest {
   }
 
   @Test public void requestBodyFailHttp2OverHttps() {
+    platform.assumeHttp2Support();
+
     enableTlsWithTunnel(false);
     server.setProtocols(asList(Protocol.HTTP_2, Protocol.HTTP_1_1));
 
@@ -1074,6 +1080,8 @@ public final class EventListenerTest {
   }
 
   @Test public void requestBodySuccessHttp2OverHttps() throws IOException {
+    platform.assumeHttp2Support();
+
     enableTlsWithTunnel(false);
     server.setProtocols(asList(Protocol.HTTP_2, Protocol.HTTP_1_1));
     requestBodySuccess(RequestBody.create(MediaType.get("text/plain"), "Hello"), equalTo(5L),

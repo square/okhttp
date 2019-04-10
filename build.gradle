@@ -116,7 +116,7 @@ subprojects { project ->
     }
   }
 
-  if (platform == "jdk8") {
+  if (platform == "jdk8alpn") {
     // Add alpn-boot on Java 8 so we can use HTTP/2 without a stable API.
     def alpnBootVersion = alpnBootVersion()
     if (alpnBootVersion != null) {

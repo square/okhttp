@@ -2831,6 +2831,8 @@ public final class CallTest {
   }
 
   @Test public void unsuccessfulExpectContinuePermitsConnectionReuseWithHttp2() throws Exception {
+    platform.assumeHttp2Support();
+
     enableProtocol(Protocol.HTTP_2);
 
     server.enqueue(new MockResponse());
@@ -3230,6 +3232,8 @@ public final class CallTest {
   }
 
   @Test public void interceptorGetsHttp2() throws Exception {
+    platform.assumeHttp2Support();
+
     enableProtocol(Protocol.HTTP_2);
 
     // Capture the protocol as it is observed by the interceptor.
@@ -3662,6 +3666,8 @@ public final class CallTest {
   }
 
   @Test public void clientReadsHeadersDataTrailersHttp2() throws IOException {
+    platform.assumeHttp2Support();
+
     MockResponse mockResponse = new MockResponse()
         .clearHeaders()
         .addHeader("h1", "v1")
