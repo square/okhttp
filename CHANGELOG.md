@@ -1,6 +1,17 @@
 Change Log
 ==========
 
+## Version 3.14.1
+
+_2019-04-10_
+
+ *  Fix: Don't crash when an interceptor retries when there are no more routes. This was an
+    edge-case regression introduced with the events cleanup in 3.14.0.
+
+ *  Fix: Provide actionable advice when the exchange is non-null. Prior to 3.14, OkHttp would
+    silently leak connections when an interceptor retries without closing the response body. With
+    3.14 we detect this problem but the exception was not helpful.
+
 ## Version 3.14.0
 
 _2019-03-14_

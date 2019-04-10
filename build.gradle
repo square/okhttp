@@ -229,4 +229,4 @@ ext.baselineJar = { project, version ->
     project.group = group
   }
 }
-ext.baselineVersion = "3.14.0"
+ext.baselineVersion = "3.14.1"

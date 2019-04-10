@@ -638,7 +638,8 @@ class KotlinSourceCompatibilityTest {
   fun javaNetAuthenticator() {
     val authenticator = JavaNetAuthenticator()
     val response = Response.Builder().build()
-    val request: Request? = authenticator.authenticate(newRoute(), response)
+    var request: Request? = authenticator.authenticate(newRoute(), response)
+    request = authenticator.authenticate(null, response)
   }
 
   @Test @Ignore
