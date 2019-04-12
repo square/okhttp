@@ -150,7 +150,7 @@ class LoggingEventListener private constructor(
   open class Factory @JvmOverloads constructor(
     private val logger: HttpLoggingInterceptor.Logger = HttpLoggingInterceptor.Logger.DEFAULT
   ) : EventListener.Factory {
-    constructor(block: (string: String) -> Unit): this(HttpLoggingInterceptor.Logger(block))
+    constructor(block: (string: String) -> Unit) : this(HttpLoggingInterceptor.Logger(block))
 
     override fun create(call: Call): EventListener = LoggingEventListener(logger)
   }
