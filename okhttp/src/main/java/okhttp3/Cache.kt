@@ -506,7 +506,7 @@ class Cache internal constructor(
      */
     @Throws(IOException::class)
     internal constructor(rawSource: Source) {
-      rawSource.use { rawSource ->
+      try {
         val source = rawSource.buffer()
         url = source.readUtf8LineStrict()
         requestMethod = source.readUtf8LineStrict()
@@ -552,6 +552,8 @@ class Cache internal constructor(
         } else {
           handshake = null
         }
+      } finally {
+        rawSource.close()
       }
     }
 
@@ -640,13 +642,12 @@ class Cache internal constructor(
       } catch (e: CertificateEncodingException) {
         throw IOException(e.message)
       }
-
     }
 
     fun matches(request: Request, response: Response): Boolean {
-      return url == request.url().toString()
-          && requestMethod == request.method()
-          && HttpHeaders.varyMatches(response, varyHeaders, request)
+      return url == request.url().toString() &&
+          requestMethod == request.method() &&
+          HttpHeaders.varyMatches(response, varyHeaders, request)
     }
 
     fun response(snapshot: DiskLruCache.Snapshot): Response {
