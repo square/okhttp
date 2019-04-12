@@ -87,7 +87,7 @@ public final class BridgeInterceptor implements Interceptor {
     }
 
     if (userRequest.header("User-Agent") == null) {
-      requestBuilder.header("User-Agent", Version.userAgent());
+      requestBuilder.header("User-Agent", Version.userAgent);
     }
 
     Response networkResponse = chain.proceed(requestBuilder.build());

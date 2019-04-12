@@ -13,13 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package okhttp3.internal;
+@file:JvmName("Version")
+package okhttp3.internal
 
-public final class Version {
-  public static String userAgent() {
-    return "okhttp/${projectVersion}";
-  }
-
-  private Version() {
-  }
-}
+const val userAgent = "okhttp/${projectVersion}"
