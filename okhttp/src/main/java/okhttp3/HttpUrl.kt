@@ -1163,12 +1163,14 @@ class HttpUrl internal constructor(builder: Builder) {
       val schemeDelimiterOffset = schemeDelimiterOffset(input, pos, limit)
       when {
           schemeDelimiterOffset != -1 -> {
-            this.scheme = when {
+            val scheme = when {
               input.startsWith("https:", ignoreCase = true) -> "https"
               input.startsWith("http:", ignoreCase = true) -> "http"
               else -> throw IllegalArgumentException("Expected URL scheme 'http' or 'https' but was '" +
                       input.substring(0, schemeDelimiterOffset) + "'")
-            }.also { pos += it.length }
+            }
+            this.scheme = scheme
+            pos += scheme.length
           }
           base != null -> this.scheme = base.scheme
           else -> throw IllegalArgumentException(
