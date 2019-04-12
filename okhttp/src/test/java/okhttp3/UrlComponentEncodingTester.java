@@ -306,13 +306,13 @@ class UrlComponentEncodingTester {
 
   public enum Encoding {
     IDENTITY {
-      public String encode(int codePoint) {
+      @Override public String encode(int codePoint) {
         return new String(new int[] {codePoint}, 0, 1);
       }
     },
 
     PERCENT {
-      public String encode(int codePoint) {
+      @Override public String encode(int codePoint) {
         ByteString utf8 = ByteString.encodeUtf8(IDENTITY.encode(codePoint));
         Buffer percentEncoded = new Buffer();
         for (int i = 0; i < utf8.size(); i++) {

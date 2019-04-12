@@ -42,7 +42,7 @@ public final class WebSocketReaderTest {
   }
 
   @Test public void controlFramesMustBeFinal() throws IOException {
-    data.write(ByteString.decodeHex("0a00")); // Empty ping.
+    data.write(ByteString.decodeHex("0a00")); // Empty pong.
     try {
       clientReader.processNextFrame();
       fail();
@@ -52,7 +52,7 @@ public final class WebSocketReaderTest {
   }
 
   @Test public void reservedFlagsAreUnsupported() throws IOException {
-    data.write(ByteString.decodeHex("9a00")); // Empty ping, flag 1 set.
+    data.write(ByteString.decodeHex("ca00")); // Empty pong, flag 1 set.
     try {
       clientReader.processNextFrame();
       fail();
@@ -60,7 +60,7 @@ public final class WebSocketReaderTest {
       assertThat(e.getMessage()).isEqualTo("Reserved flags are unsupported.");
     }
     data.clear();
-    data.write(ByteString.decodeHex("aa00")); // Empty ping, flag 2 set.
+    data.write(ByteString.decodeHex("aa00")); // Empty pong, flag 2 set.
     try {
       clientReader.processNextFrame();
       fail();
@@ -68,7 +68,7 @@ public final class WebSocketReaderTest {
       assertThat(e.getMessage()).isEqualTo("Reserved flags are unsupported.");
     }
     data.clear();
-    data.write(ByteString.decodeHex("ca00")); // Empty ping, flag 3 set.
+    data.write(ByteString.decodeHex("9a00")); // Empty pong, flag 3 set.
     try {
       clientReader.processNextFrame();
       fail();

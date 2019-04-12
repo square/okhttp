@@ -1,4 +1,5 @@
 apply plugin: 'com.vanniktech.maven.publish'
+apply plugin: 'me.champeau.gradle.japicmp'
 
 jar {
   manifest {
@@ -18,7 +19,6 @@ dependencies {
   testImplementation deps.assertj
 }
 
-apply plugin: 'me.champeau.gradle.japicmp'
 task japicmp(type: me.champeau.gradle.japicmp.JapicmpTask, dependsOn: 'jar') {
   oldClasspath = files(baselineJar(project, baselineVersion))
   newClasspath = files(jar.archivePath)
@@ -27,5 +27,11 @@ task japicmp(type: me.champeau.gradle.japicmp.JapicmpTask, dependsOn: 'jar') {
   txtOutputFile = file("$buildDir/reports/japi.txt")
   ignoreMissingClasses = true
   includeSynthetic = true
+  methodExcludes = [
+    // Became 'final' in 4.0.0:
+    'okhttp3.logging.HttpLoggingInterceptor#redactHeader(java.lang.String)',
+    'okhttp3.logging.HttpLoggingInterceptor#getLevel()',
+    'okhttp3.logging.HttpLoggingInterceptor#setLevel(okhttp3.logging.HttpLoggingInterceptor$Level)'
+  ]
 }
 check.dependsOn(japicmp)

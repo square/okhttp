@@ -31,7 +31,7 @@ import java.net.Proxy
  *
  * Each route is a specific selection of these options.
  */
-class Route(
+data class Route(
   internal val address: Address,
   internal val proxy: Proxy,
   internal val inetSocketAddress: InetSocketAddress
@@ -51,26 +51,11 @@ class Route(
 
   /**
    * Returns true if this route tunnels HTTPS through an HTTP proxy.
-   * See [RFC 2817, Section 5.2](http://www.ietf.org/rfc/rfc2817.txt).
+   * See [RFC 2817, Section 5.2][rfc_2817].
+   *
+   * [rfc_2817]: http://www.ietf.org/rfc/rfc2817.txt
    */
-  fun requiresTunnel(): Boolean {
-    return address.sslSocketFactory() != null && proxy.type() == Proxy.Type.HTTP
-  }
-
-  override fun equals(other: Any?): Boolean {
-    return other is Route
-        && other.address == address
-        && other.proxy == proxy
-        && other.inetSocketAddress == inetSocketAddress
-  }
-
-  override fun hashCode(): Int {
-    var result = 17
-    result = 31 * result + address.hashCode()
-    result = 31 * result + proxy.hashCode()
-    result = 31 * result + inetSocketAddress.hashCode()
-    return result
-  }
+  fun requiresTunnel(): Boolean = address.sslSocketFactory() != null && proxy.type() == Proxy.Type.HTTP
 
   override fun toString(): String = "Route{$inetSocketAddress}"
 }

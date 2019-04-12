@@ -52,7 +52,7 @@ class AndroidPlatform(
   // Not a real Android runtime; probably RoboVM or MoE
   // Try to load TLS 1.2 explicitly.
   // fallback to TLS
-  override fun getSSLContext(): SSLContext {
+  override fun newSSLContext(): SSLContext {
     val tryTls12: Boolean = try {
       Build.VERSION.SDK_INT in 16..21
     } catch (e: NoClassDefFoundError) {
@@ -348,7 +348,7 @@ class AndroidPlatform(
    * much faster to initialize than [BasicTrustRootIndex] because it doesn't need to load and
    * index trusted CA certificates.
    */
-  internal class CustomTrustRootIndex(
+  internal data class CustomTrustRootIndex(
     private val trustManager: X509TrustManager,
     private val findByIssuerAndSignatureMethod: Method
   ) : TrustRootIndex {
@@ -363,21 +363,6 @@ class AndroidPlatform(
       } catch (e: InvocationTargetException) {
         null
       }
-    }
-
-    override fun equals(other: Any?): Boolean {
-      if (other === this) {
-        return true
-      }
-      if (other !is CustomTrustRootIndex) {
-        return false
-      }
-      val that = other as CustomTrustRootIndex?
-      return trustManager == that!!.trustManager && findByIssuerAndSignatureMethod == that.findByIssuerAndSignatureMethod
-    }
-
-    override fun hashCode(): Int {
-      return trustManager.hashCode() + 31 * findByIssuerAndSignatureMethod.hashCode()
     }
   }
 

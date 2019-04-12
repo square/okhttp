@@ -102,10 +102,10 @@ import static okhttp3.mockwebserver.SocketPolicy.UPGRADE_TO_SSL_AT_END;
 import static okhttp3.tls.internal.TlsUtil.localhost;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.fail;
-import static org.junit.Assume.assumeTrue;
 
 /** Android's URLConnectionTest, ported to exercise OkHttp's Call API. */
 public final class URLConnectionTest {
+  @Rule public final PlatformRule platform = new PlatformRule();
   @Rule public final MockWebServer server = new MockWebServer();
   @Rule public final MockWebServer server2 = new MockWebServer();
   @Rule public final TemporaryFolder tempDir = new TemporaryFolder();
@@ -571,7 +571,7 @@ public final class URLConnectionTest {
     Response response1 = getResponse(newRequest("/"));
     assertContent("this response comes via HTTPS", response1);
 
-    SSLContext sslContext2 = Platform.get().getSSLContext();
+    SSLContext sslContext2 = Platform.get().newSSLContext();
     sslContext2.init(null, null, null);
     SSLSocketFactory sslSocketFactory2 = sslContext2.getSocketFactory();
 
@@ -746,24 +746,24 @@ public final class URLConnectionTest {
 
   private void testConnectViaSocketFactory(boolean useHttps) throws IOException {
     SocketFactory uselessSocketFactory = new SocketFactory() {
-      public Socket createSocket() {
+      @Override public Socket createSocket() {
         throw new IllegalArgumentException("useless");
       }
 
-      public Socket createSocket(InetAddress host, int port) {
+      @Override public Socket createSocket(InetAddress host, int port) {
         return null;
       }
 
-      public Socket createSocket(InetAddress address, int port, InetAddress localAddress,
+      @Override public Socket createSocket(InetAddress address, int port, InetAddress localAddress,
           int localPort) {
         return null;
       }
 
-      public Socket createSocket(String host, int port) {
+      @Override public Socket createSocket(String host, int port) {
         return null;
       }
 
-      public Socket createSocket(String host, int port, InetAddress localHost, int localPort) {
+      @Override public Socket createSocket(String host, int port, InetAddress localHost, int localPort) {
         return null;
       }
     };
@@ -1567,6 +1567,8 @@ public final class URLConnectionTest {
   }
 
   @Test public void postBodyRetransmittedAfterAuthorizationFail_HTTP_2() throws Exception {
+    platform.assumeHttp2Support();
+
     enableProtocol(Protocol.HTTP_2);
     postBodyRetransmittedAfterAuthorizationFail("abc");
   }
@@ -1577,6 +1579,8 @@ public final class URLConnectionTest {
   }
 
   @Test public void postEmptyBodyRetransmittedAfterAuthorizationFail_HTTP_2() throws Exception {
+    platform.assumeHttp2Support();
+
     enableProtocol(Protocol.HTTP_2);
     postBodyRetransmittedAfterAuthorizationFail("");
   }
@@ -1722,6 +1726,7 @@ public final class URLConnectionTest {
           .url(server.url("/"))
           .method(requestMethod, RequestBody.create(null, "abc"))
           .build();
+      fail();
     } catch (IllegalArgumentException expected) {
     }
   }
@@ -1740,6 +1745,7 @@ public final class URLConnectionTest {
           .url(server.url("/"))
           .method(requestMethod, null)
           .build();
+      fail();
     } catch (IllegalArgumentException expected) {
     }
   }
@@ -2432,7 +2438,7 @@ public final class URLConnectionTest {
     RecordingHostnameVerifier hostnameVerifier = new RecordingHostnameVerifier();
     RecordingTrustManager trustManager =
         new RecordingTrustManager(handshakeCertificates.trustManager());
-    SSLContext sslContext = Platform.get().getSSLContext();
+    SSLContext sslContext = Platform.get().newSSLContext();
     sslContext.init(null, new TrustManager[] {trustManager}, null);
 
     client = client.newBuilder()
@@ -2735,11 +2741,13 @@ public final class URLConnectionTest {
 
     try {
       sinkReference.get().flush();
+      fail();
     } catch (IllegalStateException expected) {
     }
     try {
       sinkReference.get().write("ghi".getBytes(UTF_8));
       sinkReference.get().emit();
+      fail();
     } catch (IllegalStateException expected) {
     }
   }
@@ -3293,6 +3301,8 @@ public final class URLConnectionTest {
   }
 
   @Test public void setsNegotiatedProtocolHeader_HTTP_2() throws Exception {
+    platform.assumeHttp2Support();
+
     setsNegotiatedProtocolHeader(Protocol.HTTP_2);
   }
 
@@ -3476,7 +3486,7 @@ public final class URLConnectionTest {
     try {
       client.newBuilder().sslSocketFactory(null);
       fail();
-    } catch (NullPointerException expected) {
+    } catch (IllegalArgumentException expected) {
     }
   }
 
@@ -3575,7 +3585,7 @@ public final class URLConnectionTest {
   }
 
   @Test public void setSslSocketFactoryFailsOnJdk9() {
-    assumeTrue(getPlatform().equals("jdk9"));
+    platform.assumeJdk9();
 
     try {
       client.newBuilder()
@@ -3604,6 +3614,8 @@ public final class URLConnectionTest {
   }
 
   @Test public void streamedBodyIsRetriedOnHttp2Shutdown() throws Exception {
+    platform.assumeHttp2Support();
+
     enableProtocol(Protocol.HTTP_2);
     server.enqueue(new MockResponse()
         .setSocketPolicy(SocketPolicy.DISCONNECT_AT_END)
@@ -3807,15 +3819,15 @@ public final class URLConnectionTest {
       this.delegate = delegate;
     }
 
-    public X509Certificate[] getAcceptedIssuers() {
+    @Override public X509Certificate[] getAcceptedIssuers() {
       return delegate.getAcceptedIssuers();
     }
 
-    public void checkClientTrusted(X509Certificate[] chain, String authType) {
+    @Override public void checkClientTrusted(X509Certificate[] chain, String authType) {
       calls.add("checkClientTrusted " + certificatesToString(chain));
     }
 
-    public void checkServerTrusted(X509Certificate[] chain, String authType) {
+    @Override public void checkServerTrusted(X509Certificate[] chain, String authType) {
       calls.add("checkServerTrusted " + certificatesToString(chain));
     }
 
@@ -3851,9 +3863,5 @@ public final class URLConnectionTest {
    */
   private FallbackTestClientSocketFactory suppressTlsFallbackClientSocketFactory() {
     return new FallbackTestClientSocketFactory(handshakeCertificates.sslSocketFactory());
-  }
-
-  private String getPlatform() {
-    return System.getProperty("okhttp.platform", "platform");
   }
 }

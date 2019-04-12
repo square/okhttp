@@ -20,6 +20,7 @@ import java.net.UnknownHostException;
 import okhttp3.HttpUrl;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
+import okhttp3.PlatformRule;
 import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
@@ -41,6 +42,7 @@ import static org.junit.Assert.fail;
 public final class LoggingEventListenerTest {
   private static final MediaType PLAIN = MediaType.get("text/plain");
 
+  @Rule public final PlatformRule platform = new PlatformRule();
   @Rule public final MockWebServer server = new MockWebServer();
 
   private final HandshakeCertificates handshakeCertificates = localhost();
@@ -139,6 +141,8 @@ public final class LoggingEventListenerTest {
     assertThat(response.body()).isNotNull();
     response.body().bytes();
 
+    platform.assumeHttp2Support();
+
     logRecorder
         .assertLogMatch("callStart: Request\\{method=GET, url=" + url + ", tags=\\{\\}\\}")
         .assertLogMatch("dnsStart: " + url.host())
@@ -209,9 +213,9 @@ public final class LoggingEventListenerTest {
         .assertLogMatch("connectStart: " + url.host() + "/.+ DIRECT")
         .assertLogMatch("secureConnectStart")
         .assertLogMatch(
-            "connectFailed: null javax\\.net\\.ssl\\.SSLProtocolException: (?:Unexpected handshake message: client_hello|Handshake message sequence violation, 1)")
+            "connectFailed: null javax\\.net\\.ssl\\.(?:SSLProtocolException|SSLHandshakeException): (?:Unexpected handshake message: client_hello|Handshake message sequence violation, 1|Read error).*")
         .assertLogMatch(
-            "callFailed: javax\\.net\\.ssl\\.SSLProtocolException: (?:Unexpected handshake message: client_hello|Handshake message sequence violation, 1)")
+            "callFailed: javax\\.net\\.ssl\\.(?:SSLProtocolException|SSLHandshakeException): (?:Unexpected handshake message: client_hello|Handshake message sequence violation, 1|Read error).*")
         .assertNoMoreLogs();
   }
 
@@ -220,7 +224,7 @@ public final class LoggingEventListenerTest {
   }
 
   private static class LogRecorder extends HttpLoggingInterceptorTest.LogRecorder {
-    LogRecorder assertLogMatch(String pattern) {
+    @Override LogRecorder assertLogMatch(String pattern) {
       return (LogRecorder) super.assertLogMatch("\\[\\d+ ms] " + pattern);
     }
   }

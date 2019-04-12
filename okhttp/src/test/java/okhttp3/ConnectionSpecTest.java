@@ -21,6 +21,7 @@ import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
+import org.junit.Rule;
 import org.junit.Test;
 
 import static java.util.Arrays.asList;
@@ -29,7 +30,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.fail;
 
 public final class ConnectionSpecTest {
-  @Test public void noTlsVersions() throws Exception {
+  @Rule public final PlatformRule platform = new PlatformRule();
+
+  @Test public void noTlsVersions() {
     try {
       new ConnectionSpec.Builder(ConnectionSpec.MODERN_TLS)
           .tlsVersions(new TlsVersion[0])
@@ -40,7 +43,7 @@ public final class ConnectionSpecTest {
     }
   }
 
-  @Test public void noCipherSuites() throws Exception {
+  @Test public void noCipherSuites() {
     try {
       new ConnectionSpec.Builder(ConnectionSpec.MODERN_TLS)
           .cipherSuites(new CipherSuite[0])
@@ -51,7 +54,7 @@ public final class ConnectionSpecTest {
     }
   }
 
-  @Test public void cleartextBuilder() throws Exception {
+  @Test public void cleartextBuilder() {
     ConnectionSpec cleartextSpec = new ConnectionSpec.Builder(false).build();
     assertThat(cleartextSpec.isTls()).isFalse();
   }
@@ -78,6 +81,8 @@ public final class ConnectionSpecTest {
   }
 
   @Test public void tls_defaultCiphers_noFallbackIndicator() throws Exception {
+    platform.assumeNotConscrypt();
+
     ConnectionSpec tlsSpec = new ConnectionSpec.Builder(true)
         .tlsVersions(TlsVersion.TLS_1_2)
         .supportsTlsExtensions(false)
@@ -104,6 +109,8 @@ public final class ConnectionSpecTest {
   }
 
   @Test public void tls_defaultCiphers_withFallbackIndicator() throws Exception {
+    platform.assumeNotConscrypt();
+
     ConnectionSpec tlsSpec = new ConnectionSpec.Builder(true)
         .tlsVersions(TlsVersion.TLS_1_2)
         .supportsTlsExtensions(false)
@@ -134,6 +141,8 @@ public final class ConnectionSpecTest {
   }
 
   @Test public void tls_explicitCiphers() throws Exception {
+    platform.assumeNotConscrypt();
+
     ConnectionSpec tlsSpec = new ConnectionSpec.Builder(true)
         .cipherSuites(CipherSuite.TLS_RSA_WITH_RC4_128_MD5)
         .tlsVersions(TlsVersion.TLS_1_2)
@@ -173,6 +182,8 @@ public final class ConnectionSpecTest {
   }
 
   @Test public void tls_missingRequiredCipher() throws Exception {
+    platform.assumeNotConscrypt();
+
     ConnectionSpec tlsSpec = new ConnectionSpec.Builder(true)
         .cipherSuites(CipherSuite.TLS_RSA_WITH_RC4_128_MD5)
         .tlsVersions(TlsVersion.TLS_1_2)
@@ -198,6 +209,8 @@ public final class ConnectionSpecTest {
   }
 
   @Test public void allEnabledCipherSuites() throws Exception {
+    platform.assumeNotConscrypt();
+
     ConnectionSpec tlsSpec = new ConnectionSpec.Builder(ConnectionSpec.MODERN_TLS)
         .allEnabledCipherSuites()
         .build();
@@ -216,6 +229,8 @@ public final class ConnectionSpecTest {
   }
 
   @Test public void allEnabledTlsVersions() throws Exception {
+    platform.assumeNotConscrypt();
+
     ConnectionSpec tlsSpec = new ConnectionSpec.Builder(ConnectionSpec.MODERN_TLS)
         .allEnabledTlsVersions()
         .build();
@@ -233,6 +248,8 @@ public final class ConnectionSpecTest {
   }
 
   @Test public void tls_missingTlsVersion() throws Exception {
+    platform.assumeNotConscrypt();
+
     ConnectionSpec tlsSpec = new ConnectionSpec.Builder(true)
         .cipherSuites(CipherSuite.TLS_RSA_WITH_RC4_128_MD5)
         .tlsVersions(TlsVersion.TLS_1_2)

@@ -74,9 +74,9 @@ interface Call : Cloneable {
    * Returns true if this call has been either [executed][execute] or [enqueued][enqueue]. It is an
    * error to execute a call more than once.
    */
-  val isExecuted: Boolean
+  fun isExecuted(): Boolean
 
-  val isCanceled: Boolean
+  fun isCanceled(): Boolean
 
   /**
    * Returns a timeout that spans the entire call: resolving DNS, connecting, writing the request

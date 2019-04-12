@@ -123,7 +123,9 @@ public final class Transmitter {
    */
   public void prepareToConnect(Request request) {
     if (this.request != null) {
-      if (sameConnection(this.request.url(), request.url())) return; // Already ready.
+      if (sameConnection(this.request.url(), request.url()) && exchangeFinder.hasRouteToTry()) {
+        return; // Already ready.
+      }
       if (exchange != null) throw new IllegalStateException();
 
       if (exchangeFinder != null) {
@@ -155,8 +157,13 @@ public final class Transmitter {
   /** Returns a new exchange to carry a new request and response. */
   Exchange newExchange(Interceptor.Chain chain, boolean doExtensiveHealthChecks) {
     synchronized (connectionPool) {
-      if (noMoreExchanges) throw new IllegalStateException("released");
-      if (exchange != null) throw new IllegalStateException("exchange != null");
+      if (noMoreExchanges) {
+        throw new IllegalStateException("released");
+      }
+      if (exchange != null) {
+        throw new IllegalStateException("cannot make a new request because the previous response "
+            + "is still open: please call response.close()");
+      }
     }
 
     ExchangeCodec codec = exchangeFinder.find(client, chain, doExtensiveHealthChecks);
@@ -303,7 +310,7 @@ public final class Transmitter {
   }
 
   public boolean canRetry() {
-    return exchangeFinder.canRetry();
+    return exchangeFinder.hasStreamFailure() && exchangeFinder.hasRouteToTry();
   }
 
   public boolean hasExchange() {

@@ -2,15 +2,8 @@ package okhttp3;
 
 import java.io.IOException;
 import java.io.InterruptedIOException;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.concurrent.AbstractExecutorService;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.RejectedExecutionException;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-import okhttp3.RealCall.AsyncCall;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -22,7 +15,7 @@ import static org.junit.Assert.fail;
 public final class DispatcherTest {
   @Rule public final OkHttpClientTestRule clientTestRule = new OkHttpClientTestRule();
 
-  RecordingExecutor executor = new RecordingExecutor();
+  RecordingExecutor executor = new RecordingExecutor(this);
   RecordingCallback callback = new RecordingCallback();
   RecordingWebSocketListener webSocketListener = new RecordingWebSocketListener();
   Dispatcher dispatcher = new Dispatcher(executor);
@@ -326,56 +319,6 @@ public final class DispatcherTest {
     });
     thread.start();
     return thread;
-  }
-
-  class RecordingExecutor extends AbstractExecutorService {
-    private boolean shutdown;
-    private List<AsyncCall> calls = new ArrayList<>();
-
-    @Override public void execute(Runnable command) {
-      if (shutdown) throw new RejectedExecutionException();
-      calls.add((AsyncCall) command);
-    }
-
-    public void assertJobs(String... expectedUrls) {
-      List<String> actualUrls = new ArrayList<>();
-      for (AsyncCall call : calls) {
-        actualUrls.add(call.request().url().toString());
-      }
-      assertThat(actualUrls).containsExactly(expectedUrls);
-    }
-
-    public void finishJob(String url) {
-      for (Iterator<AsyncCall> i = calls.iterator(); i.hasNext(); ) {
-        AsyncCall call = i.next();
-        if (call.request().url().toString().equals(url)) {
-          i.remove();
-          dispatcher.finished(call);
-          return;
-        }
-      }
-      throw new AssertionError("No such job: " + url);
-    }
-
-    @Override public void shutdown() {
-      shutdown = true;
-    }
-
-    @Override public List<Runnable> shutdownNow() {
-      throw new UnsupportedOperationException();
-    }
-
-    @Override public boolean isShutdown() {
-      throw new UnsupportedOperationException();
-    }
-
-    @Override public boolean isTerminated() {
-      throw new UnsupportedOperationException();
-    }
-
-    @Override public boolean awaitTermination(long timeout, TimeUnit unit) {
-      throw new UnsupportedOperationException();
-    }
   }
 
   private Request newRequest(String url) {

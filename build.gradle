@@ -1,3 +1,5 @@
+import net.ltgt.gradle.errorprone.CheckSeverity
+
 buildscript {
   ext.versions = [
       'airline': '0.8',
@@ -6,14 +8,14 @@ buildscript {
       'assertj': '3.11.0',
       'bouncycastle': '1.60',
       'checkstyle': '8.15',
-      'conscrypt': '2.0.0',
+      'conscrypt': '2.1.0',
       'findbugs': '3.0.2',
       'guava': '27.0.1-jre',
       'java': '1.8',
       'jnrUnixsocket': '0.22',
       'jsoup': '1.11.3',
       'junit': '4.12',
-      'kotlin': '1.3.20',
+      'kotlin': '1.3.30',
       'moshi': '1.8.0',
       'okio': '2.2.2',
   ]
@@ -40,6 +42,7 @@ buildscript {
     classpath 'com.vanniktech:gradle-maven-publish-plugin:0.8.0'
     classpath 'net.ltgt.gradle:gradle-errorprone-plugin:0.7.1'
     classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:${versions.kotlin}"
+    classpath "org.jetbrains.dokka:dokka-gradle-plugin:0.9.18"
   }
 
   repositories {
@@ -60,6 +63,9 @@ allprojects {
 
   repositories {
     mavenCentral()
+    maven {
+      url 'https://dl.bintray.com/kotlin/dokka'
+    }
   }
 
   task downloadDependencies() {
@@ -74,10 +80,13 @@ subprojects { project ->
   apply plugin: 'java'
   apply plugin: 'java-library'
   apply plugin: 'org.jetbrains.kotlin.platform.jvm'
+  apply plugin: 'checkstyle'
+  apply plugin: 'ru.vyarus.animalsniffer'
+  apply plugin: 'net.ltgt.errorprone'
+  apply plugin: 'org.jetbrains.dokka'
   sourceCompatibility = JavaVersion.VERSION_1_8
   targetCompatibility = JavaVersion.VERSION_1_8
 
-  apply plugin: 'checkstyle'
   checkstyleMain.exclude '**/CipherSuite.java'
   afterEvaluate {
     checkstyle {
@@ -88,7 +97,6 @@ subprojects { project ->
   }
 
   // Animal Sniffer confirms we don't use APIs not on both Java 8 and Android 5.
-  apply plugin: 'ru.vyarus.animalsniffer'
   animalsniffer {
     sourceSets = [sourceSets.main]
   }
@@ -97,27 +105,61 @@ subprojects { project ->
     signature 'org.codehaus.mojo.signature:java18:1.0@signature'
   }
 
+  def platform = System.getProperty("okhttp.platform", "jdk8")
+
   test {
     jvmArgs += "-Dlistener=okhttp3.testing.InstallUncaughtExceptionHandlerListener"
-    jvmArgs += "-Dokhttp.platform=platform"
+    jvmArgs += "-Dokhttp.platform=$platform"
+
+    testLogging {
+      exceptionFormat = 'full'
+    }
   }
 
-  // Add alpn-boot on Java 8 so we can use HTTP/2 without a stable API.
-  def alpnBootVersion = alpnBootVersion()
-  if (alpnBootVersion != null) {
+  if (platform == "jdk8alpn") {
+    // Add alpn-boot on Java 8 so we can use HTTP/2 without a stable API.
+    def alpnBootVersion = alpnBootVersion()
+    if (alpnBootVersion != null) {
+      dependencies {
+        testCompile "org.mortbay.jetty.alpn:alpn-boot:$alpnBootVersion"
+      }
+      def alpnBootJar = configurations.testCompile.find { it.name.startsWith("alpn-boot-") }
+      test {
+        jvmArgs += "-Xbootclasspath/p:${alpnBootJar}"
+      }
+    }
+  } else if (platform == "conscrypt") {
     dependencies {
-      testCompile "org.mortbay.jetty.alpn:alpn-boot:$alpnBootVersion"
-    }
-    def alpnBootJar = configurations.testCompile.find { it.name.startsWith("alpn-boot-") }
-    test {
-      jvmArgs += "-Xbootclasspath/p:${alpnBootJar}"
+      testRuntime "org.conscrypt:conscrypt-openjdk-uber:${versions.conscrypt}"
     }
   }
 
-  apply plugin: 'net.ltgt.errorprone'
   dependencies {
     errorproneJavac 'com.google.errorprone:javac:9+181-r4173-1'
     errorprone 'com.google.errorprone:error_prone_core:2.3.3'
+  }
+  tasks.withType(JavaCompile).configureEach {
+    options.errorprone {
+      check("MissingFail", CheckSeverity.ERROR)
+      check("MissingOverride", CheckSeverity.ERROR)
+    }
+  }
+
+  dokka {
+    reportUndocumented = false 
+    skipDeprecated = true
+    jdkVersion = 8
+    packageOptions {
+      prefix = "okhttp3.internal"
+      suppress = true
+    }
+    if (project.file('Module.md').exists()) {
+      includes = ['Module.md']
+    }
+    externalDocumentationLink {
+      url = new URL("https://square.github.io/okio/2.x/okio/jvm/index.html")
+      packageListUrl = new URL("https://square.github.io/okio/2.x/okio/jvm/package-list")
+    }
   }
 }
 
@@ -187,4 +229,4 @@ ext.baselineJar = { project, version ->
     project.group = group
   }
 }
-ext.baselineVersion = "3.14.0"
+ext.baselineVersion = "3.14.1"

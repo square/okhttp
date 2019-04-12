@@ -1,4 +1,5 @@
 apply plugin: 'com.vanniktech.maven.publish'
+apply plugin: 'me.champeau.gradle.japicmp'
 
 jar {
   manifest {
@@ -17,7 +18,6 @@ dependencies {
   testImplementation deps.assertj
 }
 
-apply plugin: 'me.champeau.gradle.japicmp'
 task japicmp(type: me.champeau.gradle.japicmp.JapicmpTask, dependsOn: 'jar') {
   oldClasspath = files(baselineJar(project, baselineVersion))
   newClasspath = files(jar.archivePath)
@@ -26,5 +26,38 @@ task japicmp(type: me.champeau.gradle.japicmp.JapicmpTask, dependsOn: 'jar') {
   txtOutputFile = file("$buildDir/reports/japi.txt")
   ignoreMissingClasses = true
   includeSynthetic = true
+  packageExcludes = [
+      'okhttp3.tls.internal',
+  ]
+  methodExcludes = [
+      // Became 'final' in 4.0.0:
+      'okhttp3.tls.HandshakeCertificates#keyManager()',
+      'okhttp3.tls.HandshakeCertificates#sslContext()',
+      'okhttp3.tls.HandshakeCertificates#sslSocketFactory()',
+      'okhttp3.tls.HandshakeCertificates#trustManager()',
+      'okhttp3.tls.HandshakeCertificates$Builder#addPlatformTrustedCertificates()',
+      'okhttp3.tls.HandshakeCertificates$Builder#addTrustedCertificate(java.security.cert.X509Certificate)',
+      'okhttp3.tls.HandshakeCertificates$Builder#build()',
+      'okhttp3.tls.HandshakeCertificates$Builder#heldCertificate(okhttp3.tls.HeldCertificate, java.security.cert.X509Certificate\\[\\])',
+      'okhttp3.tls.HeldCertificate#certificate()',
+      'okhttp3.tls.HeldCertificate#certificatePem()',
+      'okhttp3.tls.HeldCertificate#keyPair()',
+      'okhttp3.tls.HeldCertificate#privateKeyPkcs1Pem()',
+      'okhttp3.tls.HeldCertificate#privateKeyPkcs8Pem()',
+      'okhttp3.tls.HeldCertificate$Builder#addSubjectAlternativeName(java.lang.String)',
+      'okhttp3.tls.HeldCertificate$Builder#build()',
+      'okhttp3.tls.HeldCertificate$Builder#certificateAuthority(int)',
+      'okhttp3.tls.HeldCertificate$Builder#commonName(java.lang.String)',
+      'okhttp3.tls.HeldCertificate$Builder#duration(long, java.util.concurrent.TimeUnit)',
+      'okhttp3.tls.HeldCertificate$Builder#ecdsa256()',
+      'okhttp3.tls.HeldCertificate$Builder#keyPair(java.security.KeyPair)',
+      'okhttp3.tls.HeldCertificate$Builder#keyPair(java.security.PublicKey, java.security.PrivateKey)',
+      'okhttp3.tls.HeldCertificate$Builder#organizationalUnit(java.lang.String)',
+      'okhttp3.tls.HeldCertificate$Builder#rsa2048()',
+      'okhttp3.tls.HeldCertificate$Builder#serialNumber(java.math.BigInteger)',
+      'okhttp3.tls.HeldCertificate$Builder#serialNumber(long)',
+      'okhttp3.tls.HeldCertificate$Builder#signedBy(okhttp3.tls.HeldCertificate)',
+      'okhttp3.tls.HeldCertificate$Builder#validityInterval(long, long)',
+  ]
 }
 check.dependsOn(japicmp)

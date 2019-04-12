@@ -121,6 +121,15 @@ class Jdk8WithJettyBootPlatform(
   companion object {
     @JvmStatic
     fun buildIfSupported(): Platform? {
+      val jvmVersion = System.getProperty("java.specification.version", "unknown")
+      try {
+        // 1.8, 9, 10, 11, 12 etc
+        val version = jvmVersion.toInt()
+        if (version >= 9) return null
+      } catch (nfe: NumberFormatException) {
+        // expected on >= JDK 9
+      }
+
       // Find Jetty's ALPN extension for OpenJDK.
       try {
         val alpnClassName = "org.eclipse.jetty.alpn.ALPN"

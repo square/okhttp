@@ -30,7 +30,7 @@ import javax.net.ssl.SSLSession
  * This value object describes a completed handshake. Use [ConnectionSpec] to set policy
  * for new handshakes.
  */
-class Handshake private constructor(
+data class Handshake private constructor(
   private val tlsVersion: TlsVersion,
   private val cipherSuite: CipherSuite,
   private val peerCertificates: List<Certificate>,
@@ -70,52 +70,25 @@ class Handshake private constructor(
     }
   }
 
-  override fun equals(other: Any?): Boolean {
-    return other is Handshake
-        && tlsVersion == other.tlsVersion
-        && cipherSuite == other.cipherSuite
-        && peerCertificates == other.peerCertificates
-        && localCertificates == other.localCertificates
-  }
-
-  override fun hashCode(): Int {
-    var result = 17
-    result = 31 * result + tlsVersion.hashCode()
-    result = 31 * result + cipherSuite.hashCode()
-    result = 31 * result + peerCertificates.hashCode()
-    result = 31 * result + localCertificates.hashCode()
-    return result
-  }
-
   override fun toString(): String {
     return "Handshake{" +
-        "tlsVersion=" +
-        tlsVersion +
-        " cipherSuite=" +
-        cipherSuite +
-        " peerCertificates=" +
-        names(peerCertificates) +
-        " localCertificates=" +
-        names(localCertificates) +
-        "}"
+        "tlsVersion=$tlsVersion " +
+        "cipherSuite=$cipherSuite " +
+        "peerCertificates=${peerCertificates.map { it.name }} " +
+        "localCertificates=${localCertificates.map { it.name }}}"
   }
 
-  private fun names(certificates: List<Certificate>): List<String> {
-    return certificates
-        .map {
-          if (it is X509Certificate) {
-            it.subjectDN.toString()
-          } else {
-            it.type
-          }
-        }
-  }
+  private val Certificate.name: String
+    get() = when (this) {
+      is X509Certificate -> subjectDN.toString()
+      else -> type
+    }
 
   companion object {
     @Throws(IOException::class)
     @JvmStatic
     fun get(session: SSLSession): Handshake {
-      val cipherSuiteString = session.cipherSuite ?: throw IllegalStateException("cipherSuite == null")
+      val cipherSuiteString = checkNotNull(session.cipherSuite) { "cipherSuite == null" }
       if ("SSL_NULL_WITH_NULL_NULL" == cipherSuiteString) {
         throw IOException("cipherSuite == SSL_NULL_WITH_NULL_NULL")
       }
@@ -148,8 +121,12 @@ class Handshake private constructor(
     }
 
     @JvmStatic
-    fun get(tlsVersion: TlsVersion, cipherSuite: CipherSuite,
-            peerCertificates: List<Certificate>, localCertificates: List<Certificate>): Handshake {
+    fun get(
+      tlsVersion: TlsVersion,
+      cipherSuite: CipherSuite,
+      peerCertificates: List<Certificate>,
+      localCertificates: List<Certificate>
+    ): Handshake {
       return Handshake(tlsVersion, cipherSuite, Util.immutableList(peerCertificates),
           Util.immutableList(localCertificates))
     }

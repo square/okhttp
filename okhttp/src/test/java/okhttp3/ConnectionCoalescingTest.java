@@ -38,6 +38,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.fail;
 
 public final class ConnectionCoalescingTest {
+  @Rule public final PlatformRule platform = new PlatformRule();
   @Rule public final MockWebServer server = new MockWebServer();
   @Rule public final OkHttpClientTestRule clientTestRule = new OkHttpClientTestRule();
 
@@ -50,6 +51,9 @@ public final class ConnectionCoalescingTest {
   private List<InetAddress> serverIps;
 
   @Before public void setUp() throws Exception {
+    platform.assumeNotConscrypt();
+    platform.assumeHttp2Support();
+
     rootCa = new HeldCertificate.Builder()
         .serialNumber(1L)
         .certificateAuthority(0)

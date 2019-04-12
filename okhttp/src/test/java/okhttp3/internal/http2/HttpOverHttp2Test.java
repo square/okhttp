@@ -41,6 +41,7 @@ import okhttp3.Interceptor;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import okhttp3.OkHttpClientTestRule;
+import okhttp3.PlatformRule;
 import okhttp3.Protocol;
 import okhttp3.RecordingCookieJar;
 import okhttp3.RecordingHostnameVerifier;
@@ -66,7 +67,6 @@ import okio.BufferedSink;
 import okio.GzipSink;
 import okio.Okio;
 import org.junit.After;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Rule;
@@ -84,7 +84,6 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 import static okhttp3.tls.internal.TlsUtil.localhost;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.data.Offset.offset;
-import static org.hamcrest.CoreMatchers.containsString;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeTrue;
@@ -100,6 +99,7 @@ public final class HttpOverHttp2Test {
     return asList(Protocol.H2_PRIOR_KNOWLEDGE, Protocol.HTTP_2);
   }
 
+  @Rule public final PlatformRule platform = new PlatformRule();
   @Rule public final TemporaryFolder tempDir = new TemporaryFolder();
   @Rule public final MockWebServer server = new MockWebServer();
   @Rule public final OkHttpClientTestRule clientTestRule = new OkHttpClientTestRule();
@@ -116,6 +116,13 @@ public final class HttpOverHttp2Test {
     this.client = protocol == Protocol.HTTP_2 ? buildHttp2Client() : buildH2PriorKnowledgeClient();
     this.scheme = protocol == Protocol.HTTP_2 ? "https" : "http";
     this.protocol = protocol;
+  }
+
+  @Before
+  public void checkHttp2() {
+    if (protocol == Protocol.HTTP_2) {
+      platform.assumeHttp2Support();
+    }
   }
 
   private OkHttpClient buildH2PriorKnowledgeClient() {

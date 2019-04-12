@@ -19,11 +19,13 @@ import java.io.IOException;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Pattern;
 import javax.annotation.Nullable;
 import javax.net.ssl.HostnameVerifier;
 import okhttp3.HttpUrl;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
+import okhttp3.PlatformRule;
 import okhttp3.Protocol;
 import okhttp3.RecordingHostnameVerifier;
 import okhttp3.Request;
@@ -50,6 +52,7 @@ import static org.junit.Assume.assumeThat;
 public final class HttpLoggingInterceptorTest {
   private static final MediaType PLAIN = MediaType.get("text/plain; charset=utf-8");
 
+  @Rule public final PlatformRule platform = new PlatformRule();
   @Rule public final MockWebServer server = new MockWebServer();
 
   private final HandshakeCertificates handshakeCertificates = localhost();
@@ -98,8 +101,7 @@ public final class HttpLoggingInterceptorTest {
     try {
       applicationInterceptor.setLevel(null);
       fail();
-    } catch (NullPointerException expected) {
-      assertThat(expected.getMessage()).isEqualTo("level == null. Use Level.NONE instead.");
+    } catch (IllegalArgumentException expected) {
     }
   }
 
@@ -644,16 +646,6 @@ public final class HttpLoggingInterceptorTest {
         .assertNoMoreLogs();
   }
 
-  @Test public void isPlaintext() {
-    assertThat(HttpLoggingInterceptor.isPlaintext(new Buffer())).isTrue();
-    assertThat(HttpLoggingInterceptor.isPlaintext(new Buffer().writeUtf8("abc"))).isTrue();
-    assertThat(HttpLoggingInterceptor.isPlaintext(new Buffer().writeUtf8("new\r\nlines"))).isTrue();
-    assertThat(HttpLoggingInterceptor.isPlaintext(new Buffer().writeUtf8("white\t space"))).isTrue();
-    assertThat(HttpLoggingInterceptor.isPlaintext(new Buffer().writeByte(0x80))).isTrue();
-    assertThat(HttpLoggingInterceptor.isPlaintext(new Buffer().writeByte(0x00))).isFalse();
-    assertThat(HttpLoggingInterceptor.isPlaintext(new Buffer().writeByte(0xc0))).isFalse();
-  }
-
   @Test public void responseBodyIsBinary() throws IOException {
     setLevel(Level.BODY);
     Buffer buffer = new Buffer();
@@ -794,6 +786,8 @@ public final class HttpLoggingInterceptorTest {
   }
 
   @Test public void duplexRequestsAreNotLogged() throws Exception {
+    platform.assumeHttp2Support();
+
     server.useHttps(handshakeCertificates.sslSocketFactory(), false); // HTTP/2
     url = server.url("/");
 
@@ -854,7 +848,7 @@ public final class HttpLoggingInterceptorTest {
     LogRecorder assertLogMatch(String pattern) {
       assertThat(index).overridingErrorMessage("No more messages found").isLessThan(logs.size());
       String actual = logs.get(index++);
-      assertThat(actual).matches(pattern);
+      assertThat(actual).matches(Pattern.compile(pattern, Pattern.DOTALL));
       return this;
     }
 

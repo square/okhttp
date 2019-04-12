@@ -20,7 +20,7 @@ import okio.ByteString
 import okio.ByteString.Companion.encodeUtf8
 
 /** HTTP header: the name is an ASCII string, but the value can be UTF-8. */
-class Header(
+data class Header(
   /** Name in case-insensitive ASCII encoding. */
   @JvmField val name: ByteString,
   /** Value in UTF-8 encoding. */
@@ -32,19 +32,6 @@ class Header(
   constructor(name: String, value: String) : this(name.encodeUtf8(), value.encodeUtf8())
 
   constructor(name: ByteString, value: String) : this(name, value.encodeUtf8())
-
-  override fun equals(other: Any?): Boolean {
-    return other is Header
-        && this.name == other.name
-        && this.value == other.value
-  }
-
-  override fun hashCode(): Int {
-    var result = 17
-    result = 31 * result + name.hashCode()
-    result = 31 * result + value.hashCode()
-    return result
-  }
 
   override fun toString(): String {
     return Util.format("%s: %s", name.utf8(), value.utf8())

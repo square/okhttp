@@ -29,7 +29,7 @@ class Challenge(
   private val authParams: Map<String?, String>
 
   init {
-    val newAuthParams: MutableMap<String?, String> = LinkedHashMap()
+    val newAuthParams = mutableMapOf<String?, String>()
     for ((key, value) in authParams) {
       val newKey = key?.toLowerCase(US)
       newAuthParams[newKey] = value
@@ -41,12 +41,12 @@ class Challenge(
 
   /** Returns a copy of this charset that expects a credential encoded with [charset]. */
   fun withCharset(charset: Charset): Challenge {
-    val authParams = LinkedHashMap(this.authParams)
+    val authParams = this.authParams.toMutableMap()
     authParams["charset"] = charset.name()
     return Challenge(scheme, authParams)
   }
 
-  /** Returns the authentication scheme, like [Basic]. */
+  /** Returns the authentication scheme, like `Basic`. */
   fun scheme() = scheme
 
   /**

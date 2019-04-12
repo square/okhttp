@@ -70,8 +70,8 @@ public class TestTls13Request {
         sendRequest(client, url);
       }
     } finally {
-      client.dispatcher.executorService().shutdownNow();
-      client.connectionPool.evictAll();
+      client.dispatcher().executorService().shutdownNow();
+      client.connectionPool().evictAll();
     }
   }
 
@@ -95,9 +95,9 @@ public class TestTls13Request {
           + " "
           + response.protocol()
           + " "
-          + response.code
+          + response.code()
           + " "
-          + response.body.bytes().length
+          + response.body().bytes().length
           + "b");
     } catch (IOException ioe) {
       System.out.println(ioe.toString());
