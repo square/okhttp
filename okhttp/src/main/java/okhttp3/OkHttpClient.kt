@@ -586,7 +586,8 @@ open class OkHttpClient internal constructor(
      * ```
      */
     fun sslSocketFactory(
-      sslSocketFactory: SSLSocketFactory, trustManager: X509TrustManager
+      sslSocketFactory: SSLSocketFactory,
+      trustManager: X509TrustManager
     ) = apply {
       this.sslSocketFactory = sslSocketFactory
       this.certificateChainCleaner = CertificateChainCleaner.get(trustManager)

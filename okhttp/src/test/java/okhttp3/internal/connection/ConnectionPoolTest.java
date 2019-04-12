@@ -50,7 +50,7 @@ public final class ConnectionPoolTest {
 
   @Test public void connectionsEvictedWhenIdleLongEnough() throws Exception {
     RealConnectionPool pool = new RealConnectionPool(Integer.MAX_VALUE, 100L, TimeUnit.NANOSECONDS);
-    pool.cleanupRunning = true; // Prevent the cleanup runnable from being started.
+    pool.setCleanupRunning(true); // Prevent the cleanup runnable from being started.
 
     RealConnection c1 = newConnection(pool, routeA1, 50L);
 
@@ -83,7 +83,7 @@ public final class ConnectionPoolTest {
   @Test public void inUseConnectionsNotEvicted() throws Exception {
     ConnectionPool poolApi = new ConnectionPool(Integer.MAX_VALUE, 100L, TimeUnit.NANOSECONDS);
     RealConnectionPool pool = Internal.instance.realConnectionPool(poolApi);
-    pool.cleanupRunning = true; // Prevent the cleanup runnable from being started.
+    pool.setCleanupRunning(true); // Prevent the cleanup runnable from being started.
 
     RealConnection c1 = newConnection(pool, routeA1, 50L);
     synchronized (pool) {
@@ -114,7 +114,7 @@ public final class ConnectionPoolTest {
 
   @Test public void cleanupPrioritizesEarliestEviction() throws Exception {
     RealConnectionPool pool = new RealConnectionPool(Integer.MAX_VALUE, 100L, TimeUnit.NANOSECONDS);
-    pool.cleanupRunning = true; // Prevent the cleanup runnable from being started.
+    pool.setCleanupRunning(true); // Prevent the cleanup runnable from being started.
 
     RealConnection c1 = newConnection(pool, routeA1, 75L);
     RealConnection c2 = newConnection(pool, routeB1, 50L);
@@ -146,7 +146,7 @@ public final class ConnectionPoolTest {
 
   @Test public void oldestConnectionsEvictedIfIdleLimitExceeded() throws Exception {
     RealConnectionPool pool = new RealConnectionPool(2, 100L, TimeUnit.NANOSECONDS);
-    pool.cleanupRunning = true; // Prevent the cleanup runnable from being started.
+    pool.setCleanupRunning(true); // Prevent the cleanup runnable from being started.
 
     RealConnection c1 = newConnection(pool, routeA1, 50L);
     RealConnection c2 = newConnection(pool, routeB1, 75L);
@@ -171,7 +171,7 @@ public final class ConnectionPoolTest {
   @Test public void leakedAllocation() throws Exception {
     ConnectionPool poolApi = new ConnectionPool(Integer.MAX_VALUE, 100L, TimeUnit.NANOSECONDS);
     RealConnectionPool pool = Internal.instance.realConnectionPool(poolApi);
-    pool.cleanupRunning = true; // Prevent the cleanup runnable from being started.
+    pool.setCleanupRunning(true); // Prevent the cleanup runnable from being started.
 
     RealConnection c1 = newConnection(pool, routeA1, 0L);
     allocateAndLeakAllocation(poolApi, c1);

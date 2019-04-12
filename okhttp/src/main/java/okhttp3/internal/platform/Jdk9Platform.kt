@@ -29,7 +29,8 @@ class Jdk9Platform(
   @JvmField val getProtocolMethod: Method
 ) : Platform() {
   override fun configureTlsExtensions(
-    sslSocket: SSLSocket, hostname: String?,
+    sslSocket: SSLSocket,
+    hostname: String?,
     protocols: List<Protocol>
   ) {
     try {

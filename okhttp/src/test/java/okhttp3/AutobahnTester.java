@@ -131,7 +131,7 @@ public final class AutobahnTester {
 
   private void updateReports() {
     final CountDownLatch latch = new CountDownLatch(1);
-    newWebSocket("/updateReports?agent=" + Version.userAgent(), new WebSocketListener() {
+    newWebSocket("/updateReports?agent=" + Version.userAgent, new WebSocketListener() {
       @Override public void onClosing(WebSocket webSocket, int code, String reason) {
         webSocket.close(1000, null);
         latch.countDown();

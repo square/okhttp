@@ -32,7 +32,7 @@ interface Interceptor {
     @JvmName("-deprecated_Interceptor")
     inline operator fun invoke(
       crossinline block: (chain: Chain) -> Response
-    ): Interceptor = object: Interceptor {
+    ): Interceptor = object : Interceptor {
       override fun intercept(chain: Chain) = block(chain)
     }
   }

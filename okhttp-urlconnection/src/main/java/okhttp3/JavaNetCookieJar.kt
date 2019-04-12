@@ -53,8 +53,8 @@ class JavaNetCookieJar(private val cookieHandler: CookieHandler) : CookieJar {
 
     var cookies: MutableList<Cookie>? = null
     for ((key, value) in cookieHeaders) {
-      if (("Cookie".equals(key, ignoreCase = true) || "Cookie2".equals(key, ignoreCase = true))
-          && value.isNotEmpty()) {
+      if (("Cookie".equals(key, ignoreCase = true) || "Cookie2".equals(key, ignoreCase = true)) &&
+          value.isNotEmpty()) {
         for (header in value) {
           if (cookies == null) cookies = ArrayList()
           cookies.addAll(decodeHeaderAsJavaNetCookies(url, header))

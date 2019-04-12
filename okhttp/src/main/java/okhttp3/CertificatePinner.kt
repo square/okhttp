@@ -154,11 +154,11 @@ data class CertificatePinner internal constructor(
         when (pin.hashAlgorithm) {
           "sha256/" -> {
             if (sha256 == null) sha256 = sha256(x509Certificate)
-            if (pin.hash == sha256) return  // Success!
+            if (pin.hash == sha256) return // Success!
           }
           "sha1/" -> {
             if (sha1 == null) sha1 = sha1(x509Certificate)
-            if (pin.hash == sha1) return  // Success!
+            if (pin.hash == sha1) return // Success!
           }
           else -> throw AssertionError("unsupported hashAlgorithm: ${pin.hashAlgorithm}")
         }
@@ -235,8 +235,8 @@ data class CertificatePinner internal constructor(
     fun matches(hostname: String): Boolean {
       if (pattern.startsWith(WILDCARD)) {
         val firstDot = hostname.indexOf('.')
-        return hostname.length - firstDot - 1 == canonicalHostname.length
-            && hostname.regionMatches(firstDot + 1, canonicalHostname, 0, canonicalHostname.length,
+        return hostname.length - firstDot - 1 == canonicalHostname.length &&
+            hostname.regionMatches(firstDot + 1, canonicalHostname, 0, canonicalHostname.length,
             ignoreCase = false)
       }
       return hostname == canonicalHostname
