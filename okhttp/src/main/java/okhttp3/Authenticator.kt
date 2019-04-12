@@ -111,9 +111,15 @@ interface Authenticator {
     /** An authenticator that knows no credentials and makes no attempt to authenticate.  */
     @JvmField
     val NONE = object : Authenticator {
-      override fun authenticate(route: Route?, response: Response): Request? {
-        return null
-      }
+      override fun authenticate(route: Route?, response: Response): Request? = null
+    }
+
+    // This lambda conversion is for Kotlin callers expecting a Java SAM (single-abstract-method).
+    @JvmName("-deprecated_Authenticator")
+    inline operator fun invoke(
+      crossinline block: (route: Route?, response: Response) -> Request?
+    ): Authenticator = object: Authenticator {
+      override fun authenticate(route: Route?, response: Response) = block(route, response)
     }
   }
 }

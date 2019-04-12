@@ -16,24 +16,22 @@
 package okhttp3.internal.platform;
 
 import java.lang.reflect.Method;
+import okhttp3.PlatformRule;
+import org.junit.Rule;
 import org.junit.Test;
 
-import static okhttp3.internal.platform.PlatformTest.getPlatform;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assume.assumeTrue;
 
 public class Jdk9PlatformTest {
+  @Rule public final PlatformRule platform = new PlatformRule("jdk9");
+
   @Test
   public void buildsWhenJdk9() {
-    assumeTrue(getPlatform().equals("jdk9"));
-
     assertThat(Jdk9Platform.buildIfSupported()).isNotNull();
   }
 
   @Test
   public void findsAlpnMethods() {
-    assumeTrue(getPlatform().equals("jdk9"));
-
     Jdk9Platform platform = Jdk9Platform.buildIfSupported();
 
     assertThat(platform.getProtocolMethod.getName()).isEqualTo("getApplicationProtocol");
@@ -42,8 +40,6 @@ public class Jdk9PlatformTest {
 
   @Test
   public void testToStringIsClassname() throws NoSuchMethodException {
-    assumeTrue(getPlatform().equals("jdk9"));
-
     Method method = this.getClass().getMethod("toString");
     assertThat(new Jdk9Platform(method, method).toString()).isEqualTo("Jdk9Platform");
   }

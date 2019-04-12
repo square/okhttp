@@ -44,7 +44,7 @@ class HttpLoggingInterceptor @JvmOverloads constructor(
 
   @Volatile private var headersToRedact = emptySet<String>()
 
-  @Volatile private var level = Level.NONE
+  @Volatile @set:JvmName("-deprecated_setLevel") var level = Level.NONE
 
   enum class Level {
     /** No logs. */
@@ -109,6 +109,14 @@ class HttpLoggingInterceptor @JvmOverloads constructor(
     fun log(message: String)
 
     companion object {
+      // This lambda conversion is for Kotlin callers expecting a Java SAM (single-abstract-method).
+      @JvmName("-deprecated_Logger")
+      inline operator fun invoke(
+        crossinline block: (message: String) -> Unit
+      ): Logger = object : Logger {
+        override fun log(message: String) = block(message)
+      }
+
       /** A [Logger] defaults output appropriate for the current platform.  */
       @JvmField
       val DEFAULT: Logger = object : Logger {
@@ -126,11 +134,11 @@ class HttpLoggingInterceptor @JvmOverloads constructor(
     headersToRedact = newHeadersToRedact
   }
 
-  /** Change the level at which this interceptor logs.  */
   fun setLevel(level: Level) = apply {
     this.level = level
   }
 
+  @JvmName("-deprecated_getLevel")
   fun getLevel(): Level = level
 
   @Throws(IOException::class)
@@ -183,7 +191,7 @@ class HttpLoggingInterceptor @JvmOverloads constructor(
         logger.log("--> END ${request.method()}")
       } else if (bodyHasUnknownEncoding(request.headers())) {
         logger.log("--> END ${request.method()} (encoded body omitted)")
-      } else if (requestBody.isDuplex) {
+      } else if (requestBody.isDuplex()) {
         logger.log("--> END ${request.method()} (duplex request body omitted)")
       } else {
         val buffer = Buffer()
@@ -193,7 +201,7 @@ class HttpLoggingInterceptor @JvmOverloads constructor(
         val charset: Charset = contentType?.charset(UTF8) ?: UTF8
 
         logger.log("")
-        if (isPlaintext(buffer)) {
+        if (buffer.isUtf8()) {
           logger.log(buffer.readString(charset))
           logger.log("--> END ${request.method()} (${requestBody.contentLength()}-byte body)")
         } else {
@@ -247,7 +255,7 @@ class HttpLoggingInterceptor @JvmOverloads constructor(
         val contentType = responseBody.contentType()
         val charset: Charset = contentType?.charset(UTF8) ?: UTF8
 
-        if (!isPlaintext(buffer)) {
+        if (!buffer.isUtf8()) {
           logger.log("")
           logger.log("<-- END HTTP (binary ${buffer.size}-byte body omitted)")
           return response
@@ -278,16 +286,16 @@ class HttpLoggingInterceptor @JvmOverloads constructor(
     private val UTF8 = StandardCharsets.UTF_8
 
     /**
-     * Returns true if the body in question probably contains human readable text. Uses a small sample
-     * of code points to detect unicode control characters commonly used in binary file signatures.
+     * Returns true if the body in question probably contains human readable text. Uses a small
+     * sample of code points to detect unicode control characters commonly used in binary file
+     * signatures.
      */
-    @JvmStatic
-    fun isPlaintext(buffer: Buffer): Boolean {
+    internal fun Buffer.isUtf8(): Boolean {
       try {
         val prefix = Buffer()
-        val byteCount = if (buffer.size < 64) buffer.size else 64
-        buffer.copyTo(prefix, 0, byteCount)
-        for (i in 0..15) {
+        val byteCount = if (size < 64) size else 64
+        copyTo(prefix, 0, byteCount)
+        for (i in 0 until 16) {
           if (prefix.exhausted()) {
             break
           }

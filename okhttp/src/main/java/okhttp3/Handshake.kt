@@ -72,33 +72,23 @@ data class Handshake private constructor(
 
   override fun toString(): String {
     return "Handshake{" +
-        "tlsVersion=" +
-        tlsVersion +
-        " cipherSuite=" +
-        cipherSuite +
-        " peerCertificates=" +
-        names(peerCertificates) +
-        " localCertificates=" +
-        names(localCertificates) +
-        "}"
+        "tlsVersion=$tlsVersion " +
+        "cipherSuite=$cipherSuite " +
+        "peerCertificates=${peerCertificates.map { it.name }} " +
+        "localCertificates=${localCertificates.map { it.name }}}"
   }
 
-  private fun names(certificates: List<Certificate>): List<String> {
-    return certificates
-        .map {
-          if (it is X509Certificate) {
-            it.subjectDN.toString()
-          } else {
-            it.type
-          }
-        }
-  }
+  private val Certificate.name: String
+    get() = when (this) {
+      is X509Certificate -> subjectDN.toString()
+      else -> type
+    }
 
   companion object {
     @Throws(IOException::class)
     @JvmStatic
     fun get(session: SSLSession): Handshake {
-      val cipherSuiteString = session.cipherSuite ?: throw IllegalStateException("cipherSuite == null")
+      val cipherSuiteString = checkNotNull(session.cipherSuite) { "cipherSuite == null" }
       if ("SSL_NULL_WITH_NULL_NULL" == cipherSuiteString) {
         throw IOException("cipherSuite == SSL_NULL_WITH_NULL_NULL")
       }
@@ -131,8 +121,12 @@ data class Handshake private constructor(
     }
 
     @JvmStatic
-    fun get(tlsVersion: TlsVersion, cipherSuite: CipherSuite,
-            peerCertificates: List<Certificate>, localCertificates: List<Certificate>): Handshake {
+    fun get(
+      tlsVersion: TlsVersion,
+      cipherSuite: CipherSuite,
+      peerCertificates: List<Certificate>,
+      localCertificates: List<Certificate>
+    ): Handshake {
       return Handshake(tlsVersion, cipherSuite, Util.immutableList(peerCertificates),
           Util.immutableList(localCertificates))
     }

@@ -88,7 +88,8 @@ interface PushObserver {
         return true
       }
 
-      override fun onReset(streamId: Int, errorCode: ErrorCode) {}
+      override fun onReset(streamId: Int, errorCode: ErrorCode) {
+      }
     }
   }
 }

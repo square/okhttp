@@ -202,9 +202,9 @@ class Headers private constructor(
      * Add a header line without any validation. Only appropriate for headers from the remote peer
      * or cache.
      */
-    internal fun addLenient(line: String): Builder {
+    internal fun addLenient(line: String) = apply {
       val index = line.indexOf(":", 1)
-      return when {
+      when {
         index != -1 -> {
           addLenient(line.substring(0, index), line.substring(index + 1))
         }
@@ -221,28 +221,28 @@ class Headers private constructor(
     }
 
     /** Add an header line containing a field name, a literal colon, and a value. */
-    fun add(line: String): Builder {
+    fun add(line: String) = apply {
       val index = line.indexOf(":")
       require(index != -1) { "Unexpected header: $line" }
-      return add(line.substring(0, index).trim { it <= ' ' }, line.substring(index + 1))
+      add(line.substring(0, index).trim { it <= ' ' }, line.substring(index + 1))
     }
 
     /**
      * Add a header with the specified name and value. Does validation of header names and values.
      */
-    fun add(name: String, value: String): Builder {
+    fun add(name: String, value: String) = apply {
       checkName(name)
       checkValue(value, name)
-      return addLenient(name, value)
+      addLenient(name, value)
     }
 
     /**
      * Add a header with the specified name and value. Does validation of header names, allowing
      * non-ASCII values.
      */
-    fun addUnsafeNonAscii(name: String, value: String): Builder {
+    fun addUnsafeNonAscii(name: String, value: String) = apply {
       checkName(name)
-      return addLenient(name, value)
+      addLenient(name, value)
     }
 
     /**
@@ -267,8 +267,8 @@ class Headers private constructor(
      * and value.
      */
     @IgnoreJRERequirement
-    fun add(name: String, value: Instant): Builder {
-      return add(name, Date(value.toEpochMilli()))
+    fun add(name: String, value: Instant) = apply {
+      add(name, Date(value.toEpochMilli()))
     }
 
     /**

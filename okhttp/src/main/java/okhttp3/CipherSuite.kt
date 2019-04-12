@@ -59,8 +59,8 @@ class CipherSuite private constructor(
         var i = 4
         val limit = Math.min(a.length, b.length)
         while (i < limit) {
-          val charA = a.get(i)
-          val charB = b.get(i)
+          val charA = a[i]
+          val charB = b[i]
           if (charA != charB) return if (charA < charB) -1 else 1
           i++
         }

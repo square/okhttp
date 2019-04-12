@@ -2,5 +2,7 @@ dependencies {
   api project(':okhttp')
   api 'junit:junit'
   api 'org.assertj:assertj-core'
+  api 'org.conscrypt:conscrypt-openjdk-uber'
+
   compileOnly 'com.google.code.findbugs:jsr305'
 }

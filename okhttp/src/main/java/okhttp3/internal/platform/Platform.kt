@@ -18,7 +18,6 @@ package okhttp3.internal.platform
 
 import okhttp3.OkHttpClient
 import okhttp3.Protocol
-import okhttp3.internal.Util
 import okhttp3.internal.tls.BasicCertificateChainCleaner
 import okhttp3.internal.tls.BasicTrustRootIndex
 import okhttp3.internal.tls.CertificateChainCleaner
@@ -27,33 +26,34 @@ import okio.Buffer
 import java.io.IOException
 import java.net.InetSocketAddress
 import java.net.Socket
-import java.security.NoSuchAlgorithmException
+import java.security.KeyStore
 import java.security.Security
 import java.util.logging.Level
 import java.util.logging.Logger
 import javax.net.ssl.SSLContext
 import javax.net.ssl.SSLSocket
 import javax.net.ssl.SSLSocketFactory
+import javax.net.ssl.TrustManagerFactory
 import javax.net.ssl.X509TrustManager
 
 /**
  * Access to platform-specific features.
  *
- * <h3>Server name indication (SNI)</h3>
+ * ### Server name indication (SNI)
  *
  * Supported on Android 2.3+.
  *
  * Supported on OpenJDK 7+
  *
- * <h3>Session Tickets</h3>
+ * ### Session Tickets
  *
  * Supported on Android 2.3+.
  *
- * <h3>Android Traffic Stats (Socket Tagging)</h3>
+ * ### Android Traffic Stats (Socket Tagging)
  *
  * Supported on Android 4.0+.
  *
- * <h3>ALPN (Application Layer Protocol Negotiation)</h3>
+ * ### ALPN (Application Layer Protocol Negotiation)
  *
  * Supported on Android 5.0+. The APIs were present in Android 4.4, but that implementation was
  * unstable.
@@ -62,12 +62,12 @@ import javax.net.ssl.X509TrustManager
  *
  * Supported on OpenJDK 9+ via SSLParameters and SSLSocket features.
  *
- * <h3>Trust Manager Extraction</h3>
+ * ### Trust Manager Extraction
  *
  * Supported on Android 2.3+ and OpenJDK 7+. There are no public APIs to recover the trust
  * manager that was used to create an [SSLSocketFactory].
  *
- * <h3>Android Cleartext Permit Detection</h3>
+ * ### Android Cleartext Permit Detection
  *
  * Supported on Android 6.0+ via `NetworkSecurityPolicy`.
  */
@@ -76,10 +76,17 @@ open class Platform {
   /** Prefix used on custom headers.  */
   fun getPrefix() = "OkHttp"
 
-  open fun getSSLContext(): SSLContext = try {
-    SSLContext.getInstance("TLS")
-  } catch (e: NoSuchAlgorithmException) {
-    throw IllegalStateException("No TLS provider", e)
+  open fun newSSLContext(): SSLContext = SSLContext.getInstance("TLS")
+
+  open fun platformTrustManager(): X509TrustManager {
+    val factory = TrustManagerFactory.getInstance(
+        TrustManagerFactory.getDefaultAlgorithm())
+    factory.init(null as KeyStore?)
+    val trustManagers = factory.trustManagers!!
+    check(trustManagers.size == 1 && trustManagers[0] is X509TrustManager) {
+      "Unexpected default trust managers: ${trustManagers.contentToString()}"
+    }
+    return trustManagers[0] as X509TrustManager
   }
 
   protected open fun trustManager(sslSocketFactory: SSLSocketFactory): X509TrustManager? {
@@ -101,13 +108,15 @@ open class Platform {
    * @param hostname non-null for client-side handshakes; null for server-side handshakes.
    */
   open fun configureTlsExtensions(
-    sslSocket: SSLSocket, hostname: String?,
+    sslSocket: SSLSocket,
+    hostname: String?,
     protocols: List<@JvmSuppressWildcards Protocol>
   ) {
   }
 
   /** Called after the TLS handshake to release resources allocated by [configureTlsExtensions]. */
-  open fun afterHandshake(sslSocket: SSLSocket) {}
+  open fun afterHandshake(sslSocket: SSLSocket) {
+  }
 
   /** Returns the negotiated protocol, or null if no protocol was negotiated.  */
   open fun getSelectedProtocol(socket: SSLSocket): String? = null
@@ -129,17 +138,18 @@ open class Platform {
    * should be used specifically for [java.io.Closeable] objects and in conjunction with
    * [logCloseableLeak].
    */
-  open fun getStackTraceForCloseable(closer: String): Any? =
-      when {
-        logger.isLoggable(Level.FINE) -> Throwable(closer) // These are expensive to allocate.
-        else -> null
-      }
+  open fun getStackTraceForCloseable(closer: String): Any? {
+    return when {
+      logger.isLoggable(Level.FINE) -> Throwable(closer) // These are expensive to allocate.
+      else -> null
+    }
+  }
 
   open fun logCloseableLeak(message: String, stackTrace: Any?) {
     var logMessage = message
     if (stackTrace == null) {
-      logMessage += " To see where this was allocated, set the OkHttpClient logger level to FINE: " +
-          "Logger.getLogger(OkHttpClient.class.getName()).setLevel(Level.FINE);"
+      logMessage += " To see where this was allocated, set the OkHttpClient logger level to " +
+          "FINE: Logger.getLogger(OkHttpClient.class.getName()).setLevel(Level.FINE);"
     }
     log(WARN, logMessage, stackTrace as Throwable?)
   }
@@ -149,23 +159,24 @@ open class Platform {
 
   fun buildCertificateChainCleaner(sslSocketFactory: SSLSocketFactory): CertificateChainCleaner {
     val trustManager = trustManager(sslSocketFactory) ?: throw IllegalStateException(
-        "Unable to extract the trust manager on "
-            + get()
-            + ", sslSocketFactory is "
-            + sslSocketFactory.javaClass)
-
+        "Unable to extract the trust manager on ${get()}, " +
+            "sslSocketFactory is ${sslSocketFactory.javaClass}")
     return buildCertificateChainCleaner(trustManager)
   }
 
   open fun buildTrustRootIndex(trustManager: X509TrustManager): TrustRootIndex =
       BasicTrustRootIndex(*trustManager.acceptedIssuers)
 
-  open fun configureSslSocketFactory(socketFactory: SSLSocketFactory) {}
+  open fun configureSslSocketFactory(socketFactory: SSLSocketFactory) {
+  }
+
+  open fun configureTrustManager(trustManager: X509TrustManager?) {
+  }
 
   override fun toString(): String = javaClass.simpleName
 
   companion object {
-    private val PLATFORM = findPlatform()
+    private @Volatile var platform = findPlatform()
 
     const val INFO = 4
     const val WARN = 5
@@ -173,19 +184,18 @@ open class Platform {
     private val logger = Logger.getLogger(OkHttpClient::class.java.name)
 
     @JvmStatic
-    fun get(): Platform = PLATFORM
+    fun get(): Platform = platform
+
+    fun resetForTests(platform: Platform = findPlatform()) {
+      this.platform = platform
+    }
 
     fun alpnProtocolNames(protocols: List<Protocol>) =
         protocols.filter { it != Protocol.HTTP_1_0 }.map { it.toString() }
 
-    // mainly to allow tests to run cleanly
-    // check if Provider manually installed
     @JvmStatic
     val isConscryptPreferred: Boolean
       get() {
-        if ("conscrypt" == Util.getSystemProperty("okhttp.platform", null)) {
-          return true
-        }
         val preferredProvider = Security.getProviders()[0].name
         return "Conscrypt" == preferredProvider
       }
@@ -230,7 +240,7 @@ open class Platform {
     @JvmStatic
     fun concatLengthPrefixed(protocols: List<Protocol>): ByteArray {
       val result = Buffer()
-      alpnProtocolNames(protocols).forEach { protocol ->
+      for (protocol in alpnProtocolNames(protocols)) {
         result.writeByte(protocol.length)
         result.writeUtf8(protocol)
       }
@@ -247,8 +257,6 @@ open class Platform {
           val value = field.get(instance)
           return if (!fieldType.isInstance(value)) null else fieldType.cast(value)
         } catch (ignored: NoSuchFieldException) {
-        } catch (e: IllegalAccessException) {
-          throw AssertionError()
         }
 
         c = c.superclass

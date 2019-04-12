@@ -93,7 +93,6 @@ import static okhttp3.CipherSuite.TLS_DH_anon_WITH_AES_128_GCM_SHA256;
 import static okhttp3.TestUtil.awaitGarbageCollection;
 import static okhttp3.internal.InternalKtKt.addHeaderLenient;
 import static okhttp3.internal.platform.PlatformTest.getJvmSpecVersion;
-import static okhttp3.internal.platform.PlatformTest.getPlatform;
 import static okhttp3.tls.internal.TlsUtil.localhost;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.data.Offset.offset;
@@ -102,6 +101,7 @@ import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeFalse;
 
 public final class CallTest {
+  @Rule public final PlatformRule platform = new PlatformRule();
   @Rule public final TestRule timeout = new Timeout(30_000, TimeUnit.MILLISECONDS);
   @Rule public final MockWebServer server = new MockWebServer();
   @Rule public final MockWebServer server2 = new MockWebServer();
@@ -910,6 +910,61 @@ public final class CallTest {
         .assertBody("success!");
   }
 
+  /** https://github.com/square/okhttp/issues/4875 */
+  @Test public void interceptorRecoversWhenRoutesExhausted() throws Exception {
+    server.enqueue(new MockResponse()
+        .setSocketPolicy(SocketPolicy.DISCONNECT_AT_START));
+    server.enqueue(new MockResponse());
+
+    client = client.newBuilder()
+        .addInterceptor(new Interceptor() {
+          @Override public Response intercept(Chain chain) throws IOException {
+            try {
+              chain.proceed(chain.request());
+              throw new AssertionError();
+            } catch (IOException expected) {
+              return chain.proceed(chain.request());
+            }
+          }
+        })
+        .build();
+
+    Request request = new Request.Builder()
+        .url(server.url("/"))
+        .build();
+    executeSynchronously(request)
+        .assertCode(200);
+  }
+
+  /** https://github.com/square/okhttp/issues/4761 */
+  @Test public void interceptorCallsProceedWithoutClosingPriorResponse() throws Exception {
+    server.enqueue(new MockResponse()
+        .setBody("abc"));
+    server.enqueue(new MockResponse());
+
+    client = client.newBuilder()
+        .addInterceptor(new Interceptor() {
+          @Override public Response intercept(Chain chain) throws IOException {
+            Response response = chain.proceed(chain.request());
+            try {
+              chain.proceed(chain.request());
+              fail();
+            } catch (IllegalStateException expected) {
+              assertThat(expected).hasMessageContaining("please call response.close()");
+            }
+            return response;
+          }
+        })
+        .build();
+
+    Request request = new Request.Builder()
+        .url(server.url("/"))
+        .build();
+    executeSynchronously(request)
+        .assertCode(200)
+        .assertBody("abc");
+  }
+
   /**
    * Make a request with two routes. The first route will fail because the null server connects but
    * never responds. The manual retry will succeed.
@@ -1143,7 +1198,7 @@ public final class CallTest {
   }
 
   @Test public void recoverFromTlsHandshakeFailure_tlsFallbackScsvEnabled() throws Exception {
-    assumeFalse(getPlatform().equals("conscrypt"));
+    platform.assumeNotConscrypt();
 
     final String tlsFallbackScsv = "TLS_FALLBACK_SCSV";
     List<String> supportedCiphers =
@@ -1256,7 +1311,7 @@ public final class CallTest {
    * man-in-the-middle attacks. https://bugs.openjdk.java.net/browse/JDK-8212823
    */
   @Test public void anonCipherSuiteUnsupported() throws Exception {
-    assumeFalse(getPlatform().equals("conscrypt"));
+    platform.assumeNotConscrypt();
 
     // The _anon_ suites became unsupported in "1.8.0_201" and "11.0.2".
     assumeFalse(System.getProperty("java.version", "unknown").matches("1\\.8\\.0_1\\d\\d"));
@@ -2776,6 +2831,8 @@ public final class CallTest {
   }
 
   @Test public void unsuccessfulExpectContinuePermitsConnectionReuseWithHttp2() throws Exception {
+    platform.assumeHttp2Support();
+
     enableProtocol(Protocol.HTTP_2);
 
     server.enqueue(new MockResponse());
@@ -3175,6 +3232,8 @@ public final class CallTest {
   }
 
   @Test public void interceptorGetsHttp2() throws Exception {
+    platform.assumeHttp2Support();
+
     enableProtocol(Protocol.HTTP_2);
 
     // Capture the protocol as it is observed by the interceptor.
@@ -3607,6 +3666,8 @@ public final class CallTest {
   }
 
   @Test public void clientReadsHeadersDataTrailersHttp2() throws IOException {
+    platform.assumeHttp2Support();
+
     MockResponse mockResponse = new MockResponse()
         .clearHeaders()
         .addHeader("h1", "v1")

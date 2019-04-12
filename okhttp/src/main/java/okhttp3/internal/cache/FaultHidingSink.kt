@@ -61,5 +61,6 @@ internal open class FaultHidingSink(delegate: Sink): ForwardingSink(delegate) {
     }
   }
 
-  protected open fun onException(e: IOException) {}
+  protected open fun onException(e: IOException) {
+  }
 }
