@@ -352,13 +352,13 @@ class HttpUrl internal constructor(builder: Builder) {
    */
   fun uri(): URI {
     val uri = newBuilder().reencodeForUri().toString()
-    try {
-      return URI(uri)
+    return try {
+      URI(uri)
     } catch (e: URISyntaxException) {
       // Unlikely edge case: the URI has a forbidden character in the fragment. Strip it & retry.
       try {
         val stripped = uri.replace(Regex("[\\u0000-\\u001F\\u007F-\\u009F\\p{javaWhitespace}]"), "")
-        return URI.create(stripped)
+        URI.create(stripped)
       } catch (e1: Exception) {
         throw RuntimeException(e) // Unexpected!
       }
@@ -773,10 +773,10 @@ class HttpUrl internal constructor(builder: Builder) {
    * or null if the resulting URL is not well-formed.
    */
   fun newBuilder(link: String): Builder? {
-    try {
-      return Builder().parse(this, link)
+    return try {
+      Builder().parse(this, link)
     } catch (ignored: IllegalArgumentException) {
-      return null
+      null
     }
   }
 
@@ -807,10 +807,10 @@ class HttpUrl internal constructor(builder: Builder) {
    * </table>
    */
   fun topPrivateDomain(): String? {
-    if (verifyAsIpAddress(host)) {
-      return null
+    return if (verifyAsIpAddress(host)) {
+      null
     } else {
-      return PublicSuffixDatabase.get().getEffectiveTldPlusOne(host)
+      PublicSuffixDatabase.get().getEffectiveTldPlusOne(host)
     }
   }
 
@@ -838,24 +838,28 @@ class HttpUrl internal constructor(builder: Builder) {
     }
 
     fun username(username: String): Builder {
-      this.encodedUsername = canonicalize(username, USERNAME_ENCODE_SET, false, false, false, true)
+      this.encodedUsername = canonicalize(username, USERNAME_ENCODE_SET, alreadyEncoded = false,
+              strict = false, plusIsSpace = false, asciiOnly = true)
       return this
     }
 
     fun encodedUsername(encodedUsername: String): Builder {
       this.encodedUsername = canonicalize(
-          encodedUsername, USERNAME_ENCODE_SET, true, false, false, true)
+          encodedUsername, USERNAME_ENCODE_SET, alreadyEncoded = true, strict = false,
+              plusIsSpace = false, asciiOnly = true)
       return this
     }
 
     fun password(password: String): Builder {
-      this.encodedPassword = canonicalize(password, PASSWORD_ENCODE_SET, false, false, false, true)
+      this.encodedPassword = canonicalize(password, PASSWORD_ENCODE_SET, alreadyEncoded = false,
+              strict = false, plusIsSpace = false, asciiOnly = true)
       return this
     }
 
     fun encodedPassword(encodedPassword: String): Builder {
       this.encodedPassword = canonicalize(
-          encodedPassword, PASSWORD_ENCODE_SET, true, false, false, true)
+          encodedPassword, PASSWORD_ENCODE_SET, alreadyEncoded = true, strict = false,
+              plusIsSpace = false, asciiOnly = true)
       return this
     }
 
@@ -881,7 +885,7 @@ class HttpUrl internal constructor(builder: Builder) {
     }
 
     fun addPathSegment(pathSegment: String): Builder {
-      push(pathSegment, 0, pathSegment.length, false, false)
+      push(pathSegment, 0, pathSegment.length, addTrailingSlash = false, alreadyEncoded = false)
       return this
     }
 
@@ -894,7 +898,8 @@ class HttpUrl internal constructor(builder: Builder) {
     }
 
     fun addEncodedPathSegment(encodedPathSegment: String): Builder {
-      push(encodedPathSegment, 0, encodedPathSegment.length, false, true)
+      push(encodedPathSegment, 0, encodedPathSegment.length, addTrailingSlash = false,
+              alreadyEncoded = true)
       return this
     }
 
@@ -955,7 +960,8 @@ class HttpUrl internal constructor(builder: Builder) {
 
     fun query(query: String?): Builder {
       this.encodedQueryNamesAndValues = if (query != null) {
-        queryStringToNamesAndValues(canonicalize(query, QUERY_ENCODE_SET, false, false, true, true))
+        queryStringToNamesAndValues(canonicalize(query, QUERY_ENCODE_SET, alreadyEncoded = false,
+                strict = false, plusIsSpace = true, asciiOnly = true))
       } else {
         null
       }
@@ -965,7 +971,8 @@ class HttpUrl internal constructor(builder: Builder) {
     fun encodedQuery(encodedQuery: String?): Builder {
       this.encodedQueryNamesAndValues = if (encodedQuery != null) {
         queryStringToNamesAndValues(
-            canonicalize(encodedQuery, QUERY_ENCODE_SET, true, false, true, true))
+            canonicalize(encodedQuery, QUERY_ENCODE_SET, alreadyEncoded = true, strict = false,
+                    plusIsSpace = true, asciiOnly = true))
       } else {
         null
       }
@@ -976,9 +983,11 @@ class HttpUrl internal constructor(builder: Builder) {
     fun addQueryParameter(name: String, value: String?): Builder {
       if (encodedQueryNamesAndValues == null) encodedQueryNamesAndValues = ArrayList()
       encodedQueryNamesAndValues!!.add(
-          canonicalize(name, QUERY_COMPONENT_ENCODE_SET, false, false, true, true))
+          canonicalize(name, QUERY_COMPONENT_ENCODE_SET, alreadyEncoded = false, strict = false,
+                  plusIsSpace = true, asciiOnly = true))
       encodedQueryNamesAndValues!!.add(if (value != null) {
-        canonicalize(value, QUERY_COMPONENT_ENCODE_SET, false, false, true, true)
+        canonicalize(value, QUERY_COMPONENT_ENCODE_SET, alreadyEncoded = false, strict = false,
+                plusIsSpace = true, asciiOnly = true)
       } else {
         null
       })
@@ -989,9 +998,11 @@ class HttpUrl internal constructor(builder: Builder) {
     fun addEncodedQueryParameter(encodedName: String, encodedValue: String?): Builder {
       if (encodedQueryNamesAndValues == null) encodedQueryNamesAndValues = ArrayList()
       encodedQueryNamesAndValues!!.add(
-          canonicalize(encodedName, QUERY_COMPONENT_REENCODE_SET, true, false, true, true))
+          canonicalize(encodedName, QUERY_COMPONENT_REENCODE_SET, alreadyEncoded = true,
+                  strict = false, plusIsSpace = true, asciiOnly = true))
       encodedQueryNamesAndValues!!.add(if (encodedValue != null) {
-        canonicalize(encodedValue, QUERY_COMPONENT_REENCODE_SET, true, false, true, true)
+        canonicalize(encodedValue, QUERY_COMPONENT_REENCODE_SET, alreadyEncoded = true,
+                strict = false, plusIsSpace = true, asciiOnly = true)
       } else {
         null
       })
@@ -1012,7 +1023,8 @@ class HttpUrl internal constructor(builder: Builder) {
 
     fun removeAllQueryParameters(name: String): Builder {
       if (encodedQueryNamesAndValues == null) return this
-      val nameToRemove = canonicalize(name, QUERY_COMPONENT_ENCODE_SET, false, false, true, true)
+      val nameToRemove = canonicalize(name, QUERY_COMPONENT_ENCODE_SET, alreadyEncoded = false,
+              strict = false, plusIsSpace = true, asciiOnly = true)
       removeAllCanonicalQueryParameters(nameToRemove)
       return this
     }
@@ -1020,7 +1032,8 @@ class HttpUrl internal constructor(builder: Builder) {
     fun removeAllEncodedQueryParameters(encodedName: String): Builder {
       if (encodedQueryNamesAndValues == null) return this
       removeAllCanonicalQueryParameters(
-          canonicalize(encodedName, QUERY_COMPONENT_REENCODE_SET, true, false, true, true))
+          canonicalize(encodedName, QUERY_COMPONENT_REENCODE_SET, alreadyEncoded = true,
+                  strict = false, plusIsSpace = true, asciiOnly = true))
       return this
     }
 
@@ -1041,7 +1054,8 @@ class HttpUrl internal constructor(builder: Builder) {
 
     fun fragment(fragment: String?): Builder {
       this.encodedFragment = if (fragment != null) {
-        canonicalize(fragment, FRAGMENT_ENCODE_SET, false, false, false, false)
+        canonicalize(fragment, FRAGMENT_ENCODE_SET, alreadyEncoded = false, strict = false,
+                plusIsSpace = false, asciiOnly = false)
       } else {
         null
       }
@@ -1050,7 +1064,8 @@ class HttpUrl internal constructor(builder: Builder) {
 
     fun encodedFragment(encodedFragment: String?): Builder {
       this.encodedFragment = if (encodedFragment != null) {
-        canonicalize(encodedFragment, FRAGMENT_ENCODE_SET, true, false, false, false)
+        canonicalize(encodedFragment, FRAGMENT_ENCODE_SET, alreadyEncoded = true, strict = false,
+                plusIsSpace = false, asciiOnly = false)
       } else {
         null
       }
@@ -1065,20 +1080,23 @@ class HttpUrl internal constructor(builder: Builder) {
       for (i in 0 until encodedPathSegments.size) {
         val pathSegment = encodedPathSegments[i]
         encodedPathSegments[i] =
-            canonicalize(pathSegment, PATH_SEGMENT_ENCODE_SET_URI, true, true, false, true)
+            canonicalize(pathSegment, PATH_SEGMENT_ENCODE_SET_URI, alreadyEncoded = true,
+                    strict = true, plusIsSpace = false, asciiOnly = true)
       }
       if (encodedQueryNamesAndValues != null) {
         for (i in 0 until encodedQueryNamesAndValues!!.size) {
           val component = encodedQueryNamesAndValues!![i]
           if (component != null) {
             encodedQueryNamesAndValues!![i] =
-                canonicalize(component, QUERY_COMPONENT_ENCODE_SET_URI, true, true, true, true)
+                canonicalize(component, QUERY_COMPONENT_ENCODE_SET_URI, alreadyEncoded = true,
+                        strict = true, plusIsSpace = true, asciiOnly = true)
           }
         }
       }
       if (encodedFragment != null) {
         encodedFragment = canonicalize(
-            encodedFragment!!, FRAGMENT_ENCODE_SET_URI, true, true, false, false)
+            encodedFragment!!, FRAGMENT_ENCODE_SET_URI, alreadyEncoded = true, strict = true,
+                plusIsSpace = false, asciiOnly = false)
       }
       return this
     }
@@ -1094,9 +1112,9 @@ class HttpUrl internal constructor(builder: Builder) {
         result.append("//")
       }
 
-      if (!encodedUsername.isEmpty() || !encodedPassword.isEmpty()) {
+      if (encodedUsername.isNotEmpty() || encodedPassword.isNotEmpty()) {
         result.append(encodedUsername)
-        if (!encodedPassword.isEmpty()) {
+        if (encodedPassword.isNotEmpty()) {
           result.append(':')
           result.append(encodedPassword)
         }
@@ -1144,15 +1162,17 @@ class HttpUrl internal constructor(builder: Builder) {
       // Scheme.
       val schemeDelimiterOffset = schemeDelimiterOffset(input, pos, limit)
       if (schemeDelimiterOffset != -1) {
-        if (input.regionMatches(pos, "https:", 0, 6, ignoreCase = true)) {
-          this.scheme = "https"
-          pos += "https:".length
-        } else if (input.regionMatches(pos, "http:", 0, 5, ignoreCase = true)) {
-          this.scheme = "http"
-          pos += "http:".length
-        } else {
-          throw IllegalArgumentException("Expected URL scheme 'http' or 'https' but was '"
-              + input.substring(0, schemeDelimiterOffset) + "'")
+        when {
+            input.regionMatches(pos, "https:", 0, 6, ignoreCase = true) -> {
+              this.scheme = "https"
+              pos += "https:".length
+            }
+            input.regionMatches(pos, "http:", 0, 5, ignoreCase = true) -> {
+              this.scheme = "http"
+              pos += "http:".length
+            }
+            else -> throw IllegalArgumentException("Expected URL scheme 'http' or 'https' but was '"
+                    + input.substring(0, schemeDelimiterOffset) + "'")
         }
       } else if (base != null) {
         this.scheme = base.scheme
@@ -1344,7 +1364,7 @@ class HttpUrl internal constructor(builder: Builder) {
       val removed = encodedPathSegments.removeAt(encodedPathSegments.size - 1)
 
       // Make sure the path ends with a '/' by either adding an empty string or clearing a segment.
-      if (removed.isEmpty() && !encodedPathSegments.isEmpty()) {
+      if (removed.isEmpty() && encodedPathSegments.isNotEmpty()) {
         encodedPathSegments[encodedPathSegments.size - 1] = ""
       } else {
         encodedPathSegments.add("")
@@ -1368,17 +1388,17 @@ class HttpUrl internal constructor(builder: Builder) {
         for (i in pos + 1 until limit) {
           val c = input[i]
 
-          if (c >= 'a' && c <= 'z'
-              || c >= 'A' && c <= 'Z'
-              || c >= '0' && c <= '9'
-              || c == '+'
-              || c == '-'
-              || c == '.') {
-            continue // Scheme character. Keep going.
+          return if (c in 'a'..'z'
+                  || c in 'A'..'Z'
+                  || c in '0'..'9'
+                  || c == '+'
+                  || c == '-'
+                  || c == '.') {
+              continue // Scheme character. Keep going.
           } else if (c == ':') {
-            return i // Scheme prefix!
+            i // Scheme prefix!
           } else {
-            return -1 // Non-scheme character before the first ':'.
+            -1 // Non-scheme character before the first ':'.
           }
         }
 
@@ -1428,13 +1448,13 @@ class HttpUrl internal constructor(builder: Builder) {
 
       @JvmStatic
       private fun parsePort(input: String, pos: Int, limit: Int): Int {
-        try {
+        return try {
           // Canonicalize the port string to skip '\n' etc.
           val portString = canonicalize(input, pos, limit, "", false, false, false, true, null)
           val i = Integer.parseInt(portString)
-          return if (i > 0 && i <= 65535) i else -1
+          if (i in 1..65535) i else -1
         } catch (e: NumberFormatException) {
-          return -1 // Invalid port.
+          -1 // Invalid port.
         }
 
       }
@@ -1531,10 +1551,10 @@ class HttpUrl internal constructor(builder: Builder) {
      */
     @JvmStatic
     fun parse(url: String): HttpUrl? {
-      try {
-        return get(url)
+      return try {
+        get(url)
       } catch (ignored: IllegalArgumentException) {
-        return null
+        null
       }
     }
 

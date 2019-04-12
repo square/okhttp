@@ -506,7 +506,7 @@ class Cache internal constructor(
      */
     @Throws(IOException::class)
     internal constructor(rawSource: Source) {
-      try {
+      rawSource.use { rawSource ->
         val source = rawSource.buffer()
         url = source.readUtf8LineStrict()
         requestMethod = source.readUtf8LineStrict()
@@ -552,8 +552,6 @@ class Cache internal constructor(
         } else {
           handshake = null
         }
-      } finally {
-        rawSource.close()
       }
     }
 
@@ -729,7 +727,7 @@ class Cache internal constructor(
       try {
         val result = source.readDecimalLong()
         val line = source.readUtf8LineStrict()
-        if (result < 0 || result > Integer.MAX_VALUE || !line.isEmpty()) {
+        if (result < 0 || result > Integer.MAX_VALUE || line.isNotEmpty()) {
           throw IOException("expected an int but was \"$result$line\"")
         }
         return result.toInt()

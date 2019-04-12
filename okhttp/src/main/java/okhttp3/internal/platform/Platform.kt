@@ -176,7 +176,8 @@ open class Platform {
   override fun toString(): String = javaClass.simpleName
 
   companion object {
-    private @Volatile var platform = findPlatform()
+    @Volatile
+    private var platform = findPlatform()
 
     const val INFO = 4
     const val WARN = 5
@@ -223,14 +224,10 @@ open class Platform {
         return jdk9
       }
 
+      // An Oracle JDK 8 like OpenJDK.
       val jdkWithJettyBoot = Jdk8WithJettyBootPlatform.buildIfSupported()
 
-      return if (jdkWithJettyBoot != null) {
-        jdkWithJettyBoot
-      } else {
-        // Probably an Oracle JDK like OpenJDK.
-        Platform()
-      }
+      return jdkWithJettyBoot ?: Platform()
     }
 
     /**
