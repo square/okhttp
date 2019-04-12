@@ -22,7 +22,8 @@ import okhttp3.internal.platform.Platform
 import org.conscrypt.Conscrypt
 import org.hamcrest.CoreMatchers.equalTo
 import org.hamcrest.CoreMatchers.not
-import org.junit.Assume.*
+import org.junit.Assume.assumeThat
+import org.junit.Assume.assumeTrue
 import org.junit.rules.ExternalResource
 import java.security.Security
 

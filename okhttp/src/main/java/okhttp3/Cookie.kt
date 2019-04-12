@@ -254,9 +254,9 @@ data class Cookie private constructor(
         return true // As in 'example.com' matching 'example.com'.
       }
 
-      return urlHost.endsWith(domain)
-          && urlHost[urlHost.length - domain.length - 1] == '.'
-          && !verifyAsIpAddress(urlHost)
+      return urlHost.endsWith(domain) &&
+          urlHost[urlHost.length - domain.length - 1] == '.' &&
+          !verifyAsIpAddress(urlHost)
     }
 
     private fun pathMatch(url: HttpUrl, path: String): Boolean {
@@ -381,8 +381,8 @@ data class Cookie private constructor(
       }
 
       // If the domain is a suffix of the url host, it must not be a public suffix.
-      if (urlHost.length != domain.length
-          && PublicSuffixDatabase.get().getEffectiveTldPlusOne(domain) == null) {
+      if (urlHost.length != domain.length &&
+          PublicSuffixDatabase.get().getEffectiveTldPlusOne(domain) == null) {
         return null
       }
 
@@ -469,11 +469,11 @@ data class Cookie private constructor(
     private fun dateCharacterOffset(input: String, pos: Int, limit: Int, invert: Boolean): Int {
       for (i in pos until limit) {
         val c = input[i].toInt()
-        val dateCharacter = (c < ' '.toInt() && c != '\t'.toInt() || c >= '\u007f'.toInt()
-            || c in '0'.toInt()..'9'.toInt()
-            || c in 'a'.toInt()..'z'.toInt()
-            || c in 'A'.toInt()..'Z'.toInt()
-            || c == ':'.toInt())
+        val dateCharacter = (c < ' '.toInt() && c != '\t'.toInt() || c >= '\u007f'.toInt() ||
+            c in '0'.toInt()..'9'.toInt() ||
+            c in 'a'.toInt()..'z'.toInt() ||
+            c in 'A'.toInt()..'Z'.toInt() ||
+            c == ':'.toInt())
         if (dateCharacter == !invert) return i
       }
       return limit

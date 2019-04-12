@@ -43,7 +43,7 @@ class RealInterceptorChain(
   private val connectTimeout: Int,
   private val readTimeout: Int,
   private val writeTimeout: Int
-): Interceptor.Chain {
+) : Interceptor.Chain {
 
   private var calls: Int = 0
 
@@ -98,14 +98,14 @@ class RealInterceptorChain(
 
     // If we already have a stream, confirm that the incoming request will use it.
     if (this.exchange != null && !this.exchange.connection().supportsUrl(request.url())) {
-      throw IllegalStateException("network interceptor " + interceptors[index - 1]
-          + " must retain the same host and port")
+      throw IllegalStateException("network interceptor " + interceptors[index - 1] +
+          " must retain the same host and port")
     }
 
     // If we already have a stream, confirm that this is the only call to chain.proceed().
     if (this.exchange != null && calls > 1) {
-      throw IllegalStateException("network interceptor " + interceptors[index - 1]
-          + " must call proceed() exactly once")
+      throw IllegalStateException("network interceptor " + interceptors[index - 1] +
+          " must call proceed() exactly once")
     }
 
     // Call the next interceptor in the chain.
@@ -116,8 +116,8 @@ class RealInterceptorChain(
 
     // Confirm that the next interceptor made its required call to chain.proceed().
     if (exchange != null && index + 1 < interceptors.size && next.calls != 1) {
-      throw IllegalStateException("network interceptor " + interceptor
-          + " must call proceed() exactly once")
+      throw IllegalStateException("network interceptor " + interceptor +
+          " must call proceed() exactly once")
     }
 
     // Confirm that the intercepted response isn't null.

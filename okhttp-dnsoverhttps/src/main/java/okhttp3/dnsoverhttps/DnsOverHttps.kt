@@ -111,8 +111,11 @@ class DnsOverHttps internal constructor(builder: Builder) : Dns {
   }
 
   private fun buildRequest(
-    hostname: String, networkRequests: MutableList<Call>, results: MutableList<InetAddress>,
-    failures: MutableList<Exception>, type: Int
+    hostname: String,
+    networkRequests: MutableList<Call>,
+    results: MutableList<InetAddress>,
+    failures: MutableList<Exception>,
+    type: Int
   ) {
     val request = buildRequest(hostname, type)
     val response = getCacheOnlyResponse(request)
@@ -122,8 +125,10 @@ class DnsOverHttps internal constructor(builder: Builder) : Dns {
   }
 
   private fun executeRequests(
-    hostname: String, networkRequests: List<Call>,
-    responses: MutableList<InetAddress>, failures: MutableList<Exception>
+    hostname: String,
+    networkRequests: List<Call>,
+    responses: MutableList<InetAddress>,
+    failures: MutableList<Exception>
   ) {
     val latch = CountDownLatch(networkRequests.size)
 
@@ -151,7 +156,9 @@ class DnsOverHttps internal constructor(builder: Builder) : Dns {
   }
 
   private fun processResponse(
-    response: Response, hostname: String, results: MutableList<InetAddress>,
+    response: Response,
+    hostname: String,
+    results: MutableList<InetAddress>,
     failures: MutableList<Exception>
   ) {
     try {
@@ -244,7 +251,6 @@ class DnsOverHttps internal constructor(builder: Builder) : Dns {
 
           url(requestUrl)
         }
-
       }.build()
 
   class Builder {

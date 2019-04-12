@@ -1151,8 +1151,8 @@ class HttpUrl internal constructor(builder: Builder) {
           this.scheme = "http"
           pos += "http:".length
         } else {
-          throw IllegalArgumentException("Expected URL scheme 'http' or 'https' but was '"
-              + input.substring(0, schemeDelimiterOffset) + "'")
+          throw IllegalArgumentException("Expected URL scheme 'http' or 'https' but was '" +
+              input.substring(0, schemeDelimiterOffset) + "'")
         }
       } else if (base != null) {
         this.scheme = base.scheme
@@ -1297,13 +1297,16 @@ class HttpUrl internal constructor(builder: Builder) {
 
     /** Adds a path segment. If the input is ".." or equivalent, this pops a path segment.  */
     private fun push(
-      input: String, pos: Int, limit: Int, addTrailingSlash: Boolean,
+      input: String,
+      pos: Int,
+      limit: Int,
+      addTrailingSlash: Boolean,
       alreadyEncoded: Boolean
     ) {
       val segment = canonicalize(
           input, pos, limit, PATH_SEGMENT_ENCODE_SET, alreadyEncoded, false, false, true, null)
       if (isDot(segment)) {
-        return  // Skip '.' path segments.
+        return // Skip '.' path segments.
       }
       if (isDotDot(segment)) {
         pop()
@@ -1324,10 +1327,10 @@ class HttpUrl internal constructor(builder: Builder) {
     }
 
     private fun isDotDot(input: String): Boolean {
-      return (input == ".."
-          || input.equals("%2e.", ignoreCase = true)
-          || input.equals(".%2e", ignoreCase = true)
-          || input.equals("%2e%2e", ignoreCase = true))
+      return (input == ".." ||
+          input.equals("%2e.", ignoreCase = true) ||
+          input.equals(".%2e", ignoreCase = true) ||
+          input.equals("%2e%2e", ignoreCase = true))
     }
 
     /**
@@ -1368,12 +1371,12 @@ class HttpUrl internal constructor(builder: Builder) {
         for (i in pos + 1 until limit) {
           val c = input[i]
 
-          if (c >= 'a' && c <= 'z'
-              || c >= 'A' && c <= 'Z'
-              || c >= '0' && c <= '9'
-              || c == '+'
-              || c == '-'
-              || c == '.') {
+          if (c >= 'a' && c <= 'z' ||
+              c >= 'A' && c <= 'Z' ||
+              c >= '0' && c <= '9' ||
+              c == '+' ||
+              c == '-' ||
+              c == '.') {
             continue // Scheme character. Keep going.
           } else if (c == ':') {
             return i // Scheme prefix!
@@ -1436,7 +1439,6 @@ class HttpUrl internal constructor(builder: Builder) {
         } catch (e: NumberFormatException) {
           return -1 // Invalid port.
         }
-
       }
     }
   }
@@ -1615,10 +1617,10 @@ class HttpUrl internal constructor(builder: Builder) {
 
     @JvmStatic
     internal fun percentEncoded(encoded: String, pos: Int, limit: Int): Boolean {
-      return (pos + 2 < limit
-          && encoded[pos] == '%'
-          && decodeHexDigit(encoded[pos + 1]) != -1
-          && decodeHexDigit(encoded[pos + 2]) != -1)
+      return (pos + 2 < limit &&
+          encoded[pos] == '%' &&
+          decodeHexDigit(encoded[pos + 1]) != -1 &&
+          decodeHexDigit(encoded[pos + 2]) != -1)
     }
 
     /**
@@ -1643,21 +1645,27 @@ class HttpUrl internal constructor(builder: Builder) {
      */
     @JvmStatic
     internal fun canonicalize(
-      input: String, pos: Int, limit: Int, encodeSet: String,
-      alreadyEncoded: Boolean, strict: Boolean, plusIsSpace: Boolean, asciiOnly: Boolean,
+      input: String,
+      pos: Int,
+      limit: Int,
+      encodeSet: String,
+      alreadyEncoded: Boolean,
+      strict: Boolean,
+      plusIsSpace: Boolean,
+      asciiOnly: Boolean,
       charset: Charset?
     ): String {
       var codePoint: Int
       var i = pos
       while (i < limit) {
         codePoint = input.codePointAt(i)
-        if (codePoint < 0x20
-            || codePoint == 0x7f
-            || codePoint >= 0x80 && asciiOnly
-            || encodeSet.indexOf(codePoint.toChar()) != -1
-            || codePoint == '%'.toInt() && (!alreadyEncoded || strict && !percentEncoded(input, i,
-                limit))
-            || codePoint == '+'.toInt() && plusIsSpace) {
+        if (codePoint < 0x20 ||
+            codePoint == 0x7f ||
+            codePoint >= 0x80 && asciiOnly ||
+            encodeSet.indexOf(codePoint.toChar()) != -1 ||
+            codePoint == '%'.toInt() && (!alreadyEncoded || strict && !percentEncoded(input, i,
+                limit)) ||
+            codePoint == '+'.toInt() && plusIsSpace) {
           // Slow path: the character at i requires encoding!
           val out = Buffer()
           out.writeUtf8(input, pos, i)
@@ -1674,8 +1682,15 @@ class HttpUrl internal constructor(builder: Builder) {
 
     @JvmStatic
     internal fun canonicalize(
-      out: Buffer, input: String, pos: Int, limit: Int, encodeSet: String,
-      alreadyEncoded: Boolean, strict: Boolean, plusIsSpace: Boolean, asciiOnly: Boolean,
+      out: Buffer,
+      input: String,
+      pos: Int,
+      limit: Int,
+      encodeSet: String,
+      alreadyEncoded: Boolean,
+      strict: Boolean,
+      plusIsSpace: Boolean,
+      asciiOnly: Boolean,
       charset: Charset?
     ) {
       var encodedCharBuffer: Buffer? = null // Lazily allocated.
@@ -1688,11 +1703,11 @@ class HttpUrl internal constructor(builder: Builder) {
         } else if (codePoint == '+'.toInt() && plusIsSpace) {
           // Encode '+' as '%2B' since we permit ' ' to be encoded as either '+' or '%20'.
           out.writeUtf8(if (alreadyEncoded) "+" else "%2B")
-        } else if (codePoint < 0x20
-            || codePoint == 0x7f
-            || codePoint >= 0x80 && asciiOnly
-            || encodeSet.indexOf(codePoint.toChar()) != -1
-            || codePoint == '%'.toInt() && (!alreadyEncoded || strict && !percentEncoded(input, i,
+        } else if (codePoint < 0x20 ||
+            codePoint == 0x7f ||
+            codePoint >= 0x80 && asciiOnly ||
+            encodeSet.indexOf(codePoint.toChar()) != -1 ||
+            codePoint == '%'.toInt() && (!alreadyEncoded || strict && !percentEncoded(input, i,
                 limit))) {
           // Percent encode this character.
           if (encodedCharBuffer == null) {
@@ -1721,15 +1736,24 @@ class HttpUrl internal constructor(builder: Builder) {
 
     @JvmStatic
     internal fun canonicalize(
-      input: String, encodeSet: String, alreadyEncoded: Boolean, strict: Boolean,
-      plusIsSpace: Boolean, asciiOnly: Boolean, charset: Charset?
+      input: String,
+      encodeSet: String,
+      alreadyEncoded: Boolean,
+      strict: Boolean,
+      plusIsSpace: Boolean,
+      asciiOnly: Boolean,
+      charset: Charset?
     ): String = canonicalize(input, 0, input.length, encodeSet, alreadyEncoded, strict, plusIsSpace,
         asciiOnly, charset)
 
     @JvmStatic
     internal fun canonicalize(
-      input: String, encodeSet: String, alreadyEncoded: Boolean, strict: Boolean,
-      plusIsSpace: Boolean, asciiOnly: Boolean
+      input: String,
+      encodeSet: String,
+      alreadyEncoded: Boolean,
+      strict: Boolean,
+      plusIsSpace: Boolean,
+      asciiOnly: Boolean
     ): String = canonicalize(
         input, 0, input.length, encodeSet, alreadyEncoded, strict, plusIsSpace, asciiOnly, null)
   }

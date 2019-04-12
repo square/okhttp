@@ -24,11 +24,16 @@ import javax.net.ssl.SSLSocket
 
 /** OpenJDK 8 with `org.mortbay.jetty.alpn:alpn-boot` in the boot class path.  */
 class Jdk8WithJettyBootPlatform(
-  private val putMethod: Method, private val getMethod: Method, private val removeMethod: Method,
-  private val clientProviderClass: Class<*>, private val serverProviderClass: Class<*>
+  private val putMethod: Method,
+  private val getMethod: Method,
+  private val removeMethod: Method,
+  private val clientProviderClass: Class<*>,
+  private val serverProviderClass: Class<*>
 ) : Platform() {
   override fun configureTlsExtensions(
-    sslSocket: SSLSocket, hostname: String?, protocols: List<Protocol>
+    sslSocket: SSLSocket,
+    hostname: String?,
+    protocols: List<Protocol>
   ) {
     val names = alpnProtocolNames(protocols)
 
@@ -51,7 +56,6 @@ class Jdk8WithJettyBootPlatform(
     } catch (e: InvocationTargetException) {
       throw AssertionError("failed to remove ALPN", e)
     }
-
   }
 
   override fun getSelectedProtocol(socket: SSLSocket): String? {
@@ -96,8 +100,8 @@ class Jdk8WithJettyBootPlatform(
         return null
       } else if (methodName == "protocols" && callArgs.isEmpty()) {
         return protocols // Client advertises these protocols.
-      } else if ((methodName == "selectProtocol" || methodName == "select")
-          && String::class.java == returnType && callArgs.size == 1 && callArgs[0] is List<*>) {
+      } else if ((methodName == "selectProtocol" || methodName == "select") &&
+          String::class.java == returnType && callArgs.size == 1 && callArgs[0] is List<*>) {
         val peerProtocols = callArgs[0] as List<*>
         // Pick the first known protocol the peer advertises.
         for (i in 0..peerProtocols.size) {

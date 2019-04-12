@@ -54,7 +54,7 @@ class CipherSuite private constructor(
      * ignoring the "TLS_" or "SSL_" prefix which is not consistent across platforms. In particular
      * some IBM JVMs use the "SSL_" prefix everywhere whereas Oracle JVMs mix "TLS_" and "SSL_".
      */
-    internal val ORDER_BY_NAME = object: Comparator<String> {
+    internal val ORDER_BY_NAME = object : Comparator<String> {
       override fun compare(a: String, b: String): Int {
         var i = 4
         val limit = Math.min(a.length, b.length)

@@ -154,9 +154,9 @@ internal class RealCall private constructor(
    * sensitive information.
    */
   fun toLoggableString(): String {
-    return ((if (isCanceled()) "canceled " else "")
-        + (if (forWebSocket) "web socket" else "call")
-        + " to " + redactedUrl())
+    return ((if (isCanceled()) "canceled " else "") +
+        (if (forWebSocket) "web socket" else "call") +
+        " to " + redactedUrl())
   }
 
   fun redactedUrl(): String = originalRequest.url().redact()

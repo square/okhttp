@@ -74,7 +74,8 @@ class MultipartBody internal constructor(
    */
   @Throws(IOException::class)
   private fun writeOrCountBytes(
-    sink: BufferedSink?, countBytes: Boolean
+    sink: BufferedSink?,
+    countBytes: Boolean
   ): Long {
     var sink = sink
     var byteCount = 0L

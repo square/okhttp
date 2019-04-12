@@ -642,13 +642,12 @@ class Cache internal constructor(
       } catch (e: CertificateEncodingException) {
         throw IOException(e.message)
       }
-
     }
 
     fun matches(request: Request, response: Response): Boolean {
-      return url == request.url().toString()
-          && requestMethod == request.method()
-          && HttpHeaders.varyMatches(response, varyHeaders, request)
+      return url == request.url().toString() &&
+          requestMethod == request.method() &&
+          HttpHeaders.varyMatches(response, varyHeaders, request)
     }
 
     fun response(snapshot: DiskLruCache.Snapshot): Response {
