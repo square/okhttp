@@ -1161,20 +1161,22 @@ class HttpUrl internal constructor(builder: Builder) {
 
       // Scheme.
       val schemeDelimiterOffset = schemeDelimiterOffset(input, pos, limit)
-      when {
-          schemeDelimiterOffset != -1 -> {
-            val scheme = when {
-              input.startsWith("https:", ignoreCase = true) -> "https"
-              input.startsWith("http:", ignoreCase = true) -> "http"
-              else -> throw IllegalArgumentException("Expected URL scheme 'http' or 'https' but was '" +
-                      input.substring(0, schemeDelimiterOffset) + "'")
-            }
-            this.scheme = scheme
-            pos += scheme.length
-          }
-          base != null -> this.scheme = base.scheme
-          else -> throw IllegalArgumentException(
-                  "Expected URL scheme 'http' or 'https' but no colon was found")
+      if (schemeDelimiterOffset != -1) {
+        if (input.regionMatches(pos, "https:", 0, 6, ignoreCase = true)) {
+          this.scheme = "https"
+          pos += "https:".length
+        } else if (input.regionMatches(pos, "http:", 0, 5, ignoreCase = true)) {
+          this.scheme = "http"
+          pos += "http:".length
+        } else {
+          throw IllegalArgumentException("Expected URL scheme 'http' or 'https' but was '" +
+              input.substring(0, schemeDelimiterOffset) + "'")
+        }
+      } else if (base != null) {
+        this.scheme = base.scheme
+      } else {
+        throw IllegalArgumentException(
+            "Expected URL scheme 'http' or 'https' but no colon was found")
       }
 
       // Authority.
