@@ -16,4 +16,4 @@
 @file:JvmName("Version")
 package okhttp3.internal
 
-const val userAgent = "okhttp/${projectVersion}"
+const val userAgent = "okhttp/$projectVersion"
