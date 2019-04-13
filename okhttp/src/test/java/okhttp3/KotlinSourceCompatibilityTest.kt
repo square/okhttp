@@ -866,7 +866,7 @@ class KotlinSourceCompatibilityTest {
     builder = builder.dns(Dns.SYSTEM)
     builder = builder.socketFactory(SocketFactory.getDefault())
     builder = builder.sslSocketFactory(localhost().sslSocketFactory(), localhost().trustManager())
-    builder = builder.hostnameVerifier(OkHostnameVerifier.INSTANCE)
+    builder = builder.hostnameVerifier(OkHostnameVerifier)
     builder = builder.certificatePinner(CertificatePinner.DEFAULT)
     builder = builder.authenticator(Authenticator.NONE)
     builder = builder.proxyAuthenticator(Authenticator.NONE)
@@ -1161,7 +1161,7 @@ class KotlinSourceCompatibilityTest {
         Dns.SYSTEM,
         SocketFactory.getDefault(),
         localhost().sslSocketFactory(),
-        OkHostnameVerifier.INSTANCE,
+        OkHostnameVerifier,
         CertificatePinner.DEFAULT,
         Authenticator.NONE,
         Proxy.NO_PROXY,

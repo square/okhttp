@@ -13,58 +13,43 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package okhttp3.internal.tls;
+package okhttp3.internal.tls
 
-import java.security.PublicKey;
-import java.security.cert.X509Certificate;
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
-import java.util.Map;
-import java.util.Set;
-import javax.security.auth.x500.X500Principal;
+import java.security.cert.X509Certificate
+import javax.security.auth.x500.X500Principal
 
-/** A simple index that of trusted root certificates that have been loaded into memory. */
-public final class BasicTrustRootIndex implements TrustRootIndex {
-  private final Map<X500Principal, Set<X509Certificate>> subjectToCaCerts;
+/** A simple index that of trusted root certificates that have been loaded into memory.  */
+class BasicTrustRootIndex(vararg caCerts: X509Certificate) : TrustRootIndex {
+  private val subjectToCaCerts: Map<X500Principal, Set<X509Certificate>>
 
-  public BasicTrustRootIndex(X509Certificate... caCerts) {
-    subjectToCaCerts = new LinkedHashMap<>();
-    for (X509Certificate caCert : caCerts) {
-      X500Principal subject = caCert.getSubjectX500Principal();
-      Set<X509Certificate> subjectCaCerts = subjectToCaCerts.get(subject);
-      if (subjectCaCerts == null) {
-        subjectCaCerts = new LinkedHashSet<>(1);
-        subjectToCaCerts.put(subject, subjectCaCerts);
-      }
-      subjectCaCerts.add(caCert);
+  init {
+    val map = mutableMapOf<X500Principal, MutableSet<X509Certificate>>()
+    for (caCert in caCerts) {
+      map.getOrPut(caCert.subjectX500Principal) { mutableSetOf() }.add(caCert)
     }
+    this.subjectToCaCerts = map
   }
 
-  @Override public X509Certificate findByIssuerAndSignature(X509Certificate cert) {
-    X500Principal issuer = cert.getIssuerX500Principal();
-    Set<X509Certificate> subjectCaCerts = subjectToCaCerts.get(issuer);
-    if (subjectCaCerts == null) return null;
+  override fun findByIssuerAndSignature(cert: X509Certificate): X509Certificate? {
+    val issuer = cert.issuerX500Principal
+    val subjectCaCerts = subjectToCaCerts[issuer] ?: return null
 
-    for (X509Certificate caCert : subjectCaCerts) {
-      PublicKey publicKey = caCert.getPublicKey();
+    return subjectCaCerts.firstOrNull {
       try {
-        cert.verify(publicKey);
-        return caCert;
-      } catch (Exception ignored) {
+        cert.verify(it.publicKey)
+        return@firstOrNull true
+      } catch (_: Exception) {
+        return@firstOrNull false
       }
     }
-
-    return null;
   }
 
-  @Override public boolean equals(Object other) {
-    if (other == this) return true;
-    return other instanceof okhttp3.internal.tls.BasicTrustRootIndex
-        && ((okhttp3.internal.tls.BasicTrustRootIndex) other).subjectToCaCerts.equals(
-        subjectToCaCerts);
+  override fun equals(other: Any?): Boolean {
+    return other === this ||
+        (other is BasicTrustRootIndex && other.subjectToCaCerts == subjectToCaCerts)
   }
 
-  @Override public int hashCode() {
-    return subjectToCaCerts.hashCode();
+  override fun hashCode(): Int {
+    return subjectToCaCerts.hashCode()
   }
 }

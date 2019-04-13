@@ -290,7 +290,7 @@ open class OkHttpClient internal constructor(
     internal var socketFactory: SocketFactory = SocketFactory.getDefault()
     internal var sslSocketFactory: SSLSocketFactory? = null
     internal var certificateChainCleaner: CertificateChainCleaner? = null
-    internal var hostnameVerifier: HostnameVerifier = OkHostnameVerifier.INSTANCE
+    internal var hostnameVerifier: HostnameVerifier = OkHostnameVerifier
     internal var certificatePinner: CertificatePinner = CertificatePinner.DEFAULT
     internal var proxyAuthenticator: Authenticator = Authenticator.NONE
     internal var authenticator: Authenticator = Authenticator.NONE
