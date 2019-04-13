@@ -223,14 +223,10 @@ open class Platform {
         return jdk9
       }
 
+      // An Oracle JDK 8 like OpenJDK.
       val jdkWithJettyBoot = Jdk8WithJettyBootPlatform.buildIfSupported()
 
-      return if (jdkWithJettyBoot != null) {
-        jdkWithJettyBoot
-      } else {
-        // Probably an Oracle JDK like OpenJDK.
-        Platform()
-      }
+      return jdkWithJettyBoot ?: Platform()
     }
 
     /**
