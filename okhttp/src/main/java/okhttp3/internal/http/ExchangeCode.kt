@@ -27,7 +27,7 @@ import okio.Source
 interface ExchangeCodec {
 
   /** Returns the connection that carries this codec.  */
-  fun connection(): RealConnection
+  fun connection(): RealConnection?
 
   /** Returns an output stream where the request body can be streamed.  */
   @Throws(IOException::class)
