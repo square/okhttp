@@ -229,8 +229,12 @@ public final class Http1ExchangeCodec implements ExchangeCodec {
       return responseBuilder;
     } catch (EOFException e) {
       // Provide more context if the server ends the stream before sending a response.
+      String address = "unknown";
+      if (realConnection != null) {
+        address = realConnection.route().address().url().redact();
+      }
       throw new IOException("unexpected end of stream on "
-          + realConnection.route().address().url().redact(), e);
+          + address, e);
     }
   }
 
