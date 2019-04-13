@@ -240,19 +240,19 @@ class Http1ExchangeCodec(
   }
 
   private fun newFixedLengthSource(length: Long): Source {
-    check(state == STATE_OPEN_REQUEST_BODY) { "state: $state" }
+    check(state == STATE_OPEN_RESPONSE_BODY) { "state: $state" }
     state = STATE_READING_RESPONSE_BODY
     return FixedLengthSource(length)
   }
 
   private fun newChunkedSource(url: HttpUrl): Source {
-    check(state == STATE_OPEN_REQUEST_BODY) { "state: $state" }
+    check(state == STATE_OPEN_RESPONSE_BODY) { "state: $state" }
     state = STATE_READING_RESPONSE_BODY
     return ChunkedSource(url)
   }
 
   private fun newUnknownLengthSource(): Source {
-    check(state == STATE_OPEN_REQUEST_BODY) { "state: $state" }
+    check(state == STATE_OPEN_RESPONSE_BODY) { "state: $state" }
     state = STATE_READING_RESPONSE_BODY
     realConnection!!.noNewExchanges()
     return UnknownLengthSource()
