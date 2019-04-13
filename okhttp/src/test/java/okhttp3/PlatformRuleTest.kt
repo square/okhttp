@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014 Square, Inc.
+ * Copyright (C) 2019 Square, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,13 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package okhttp3.internal;
+package okhttp3
 
-public final class Version {
-  public static String userAgent() {
-    return "okhttp/${projectVersion}";
-  }
+import okhttp3.internal.platform.Platform
+import org.junit.Rule
+import org.junit.Test
 
-  private Version() {
+/**
+ * Sanity test for checking which environment and IDE is picking up.
+ */
+class PlatformRuleTest {
+  @Suppress("RedundantVisibilityModifier")
+  @JvmField
+  @Rule public val platform = PlatformRule()
+
+  @Test
+  fun testMode() {
+    println(PlatformRule.getPlatformSystemProperty())
+    println(Platform.get().javaClass.simpleName)
   }
 }

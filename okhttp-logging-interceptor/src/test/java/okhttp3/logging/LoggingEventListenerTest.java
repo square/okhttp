@@ -20,6 +20,7 @@ import java.net.UnknownHostException;
 import okhttp3.HttpUrl;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
+import okhttp3.PlatformRule;
 import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
@@ -41,6 +42,7 @@ import static org.junit.Assert.fail;
 public final class LoggingEventListenerTest {
   private static final MediaType PLAIN = MediaType.get("text/plain");
 
+  @Rule public final PlatformRule platform = new PlatformRule();
   @Rule public final MockWebServer server = new MockWebServer();
 
   private final HandshakeCertificates handshakeCertificates = localhost();
@@ -138,6 +140,8 @@ public final class LoggingEventListenerTest {
     Response response = client.newCall(request().build()).execute();
     assertThat(response.body()).isNotNull();
     response.body().bytes();
+
+    platform.assumeHttp2Support();
 
     logRecorder
         .assertLogMatch("callStart: Request\\{method=GET, url=" + url + ", tags=\\{\\}\\}")

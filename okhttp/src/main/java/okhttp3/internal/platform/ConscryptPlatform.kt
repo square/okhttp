@@ -66,7 +66,9 @@ class ConscryptPlatform private constructor() : Platform() {
       }
 
   override fun configureTlsExtensions(
-    sslSocket: SSLSocket, hostname: String?, protocols: List<Protocol>
+    sslSocket: SSLSocket,
+    hostname: String?,
+    protocols: List<Protocol>
   ) {
     if (Conscrypt.isConscrypt(sslSocket)) {
       // Enable SNI and session tickets.

@@ -72,7 +72,7 @@ final class ExchangeFinder {
     this.call = call;
     this.eventListener = eventListener;
     this.routeSelector = new RouteSelector(
-        address, connectionPool.routeDatabase, call, eventListener);
+        address, connectionPool.getRouteDatabase(), call, eventListener);
   }
 
   public ExchangeCodec find(
@@ -223,7 +223,7 @@ final class ExchangeFinder {
     // Do TCP + TLS handshakes. This is a blocking operation.
     result.connect(connectTimeout, readTimeout, writeTimeout, pingIntervalMillis,
         connectionRetryEnabled, call, eventListener);
-    connectionPool.routeDatabase.connected(result.route());
+    connectionPool.getRouteDatabase().connected(result.route());
 
     Socket socket = null;
     synchronized (connectionPool) {

@@ -156,7 +156,8 @@ class HttpLoggingInterceptor @JvmOverloads constructor(
     val requestBody = request.body()
 
     val connection = chain.connection()
-    var requestStartMessage = ("--> ${request.method()} ${request.url()}${if (connection != null) " " + connection.protocol() else ""}")
+    var requestStartMessage =
+        ("--> ${request.method()} ${request.url()}${if (connection != null) " " + connection.protocol() else ""}")
     if (!logHeaders && requestBody != null) {
       requestStartMessage += " (${requestBody.contentLength()}-byte body)"
     }
@@ -312,9 +313,9 @@ class HttpLoggingInterceptor @JvmOverloads constructor(
 
     private fun bodyHasUnknownEncoding(headers: Headers): Boolean {
       val contentEncoding = headers["Content-Encoding"]
-      return (contentEncoding != null
-          && !contentEncoding.equals("identity", ignoreCase = true)
-          && !contentEncoding.equals("gzip", ignoreCase = true))
+      return (contentEncoding != null &&
+          !contentEncoding.equals("identity", ignoreCase = true) &&
+          !contentEncoding.equals("gzip", ignoreCase = true))
     }
   }
 }

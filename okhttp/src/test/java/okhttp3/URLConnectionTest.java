@@ -991,7 +991,7 @@ public final class URLConnectionTest {
     RecordedRequest connect = server.takeRequest();
     assertThat(connect.getHeader("Private")).isNull();
     assertThat(connect.getHeader("Proxy-Authorization")).isNull();
-    assertThat(connect.getHeader("User-Agent")).isEqualTo(Version.userAgent());
+    assertThat(connect.getHeader("User-Agent")).isEqualTo(Version.userAgent);
     assertThat(connect.getHeader("Host")).isEqualTo("android.com:443");
     assertThat(connect.getHeader("Proxy-Connection")).isEqualTo("Keep-Alive");
 
@@ -1567,6 +1567,8 @@ public final class URLConnectionTest {
   }
 
   @Test public void postBodyRetransmittedAfterAuthorizationFail_HTTP_2() throws Exception {
+    platform.assumeHttp2Support();
+
     enableProtocol(Protocol.HTTP_2);
     postBodyRetransmittedAfterAuthorizationFail("abc");
   }
@@ -1577,6 +1579,8 @@ public final class URLConnectionTest {
   }
 
   @Test public void postEmptyBodyRetransmittedAfterAuthorizationFail_HTTP_2() throws Exception {
+    platform.assumeHttp2Support();
+
     enableProtocol(Protocol.HTTP_2);
     postBodyRetransmittedAfterAuthorizationFail("");
   }
@@ -3297,6 +3301,8 @@ public final class URLConnectionTest {
   }
 
   @Test public void setsNegotiatedProtocolHeader_HTTP_2() throws Exception {
+    platform.assumeHttp2Support();
+
     setsNegotiatedProtocolHeader(Protocol.HTTP_2);
   }
 
@@ -3532,7 +3538,7 @@ public final class URLConnectionTest {
     assertContent("abc", getResponse(newRequest("/")));
 
     RecordedRequest request = server.takeRequest();
-    assertThat(request.getHeader("User-Agent")).isEqualTo(Version.userAgent());
+    assertThat(request.getHeader("User-Agent")).isEqualTo(Version.userAgent);
   }
 
   @Test public void urlWithSpaceInHost() {
@@ -3608,6 +3614,8 @@ public final class URLConnectionTest {
   }
 
   @Test public void streamedBodyIsRetriedOnHttp2Shutdown() throws Exception {
+    platform.assumeHttp2Support();
+
     enableProtocol(Protocol.HTTP_2);
     server.enqueue(new MockResponse()
         .setSocketPolicy(SocketPolicy.DISCONNECT_AT_END)

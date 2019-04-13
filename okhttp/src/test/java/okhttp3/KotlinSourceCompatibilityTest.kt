@@ -891,6 +891,7 @@ class KotlinSourceCompatibilityTest {
     builder = builder.eventListenerFactory(object : EventListener.Factory {
       override fun create(call: Call): EventListener = TODO()
     })
+    builder = builder.eventListenerFactory(LoggingEventListener.Factory { s -> TODO() })
     builder = builder.eventListenerFactory { it: Call -> TODO() }
     val client: OkHttpClient = builder.build()
   }

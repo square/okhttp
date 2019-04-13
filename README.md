@@ -36,7 +36,7 @@ Download
 Download [the latest JAR][okhttp_latest_jar] or configure this dependency:
 
 ```kotlin
-implementation("com.squareup.okhttp3:okhttp:3.14.0")
+implementation("com.squareup.okhttp3:okhttp:3.14.1")
 ```
 
 Snapshots of the development version are available in [Sonatype's `snapshots` repository][snap].
@@ -53,7 +53,7 @@ MockWebServer coupling with OkHttp is essential for proper testing of HTTP/2 so 
 
 Download [the latest JAR][mockwebserver_latest_jar] or configure this dependency:
 ```xml
-testImplementation("com.squareup.okhttp3:mockwebserver:3.14.0")
+testImplementation("com.squareup.okhttp3:mockwebserver:3.14.1")
 ```
 
 R8 / ProGuard

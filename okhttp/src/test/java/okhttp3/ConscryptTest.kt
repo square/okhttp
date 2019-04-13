@@ -19,7 +19,6 @@ import okhttp3.internal.platform.ConscryptPlatform
 import okhttp3.internal.platform.Platform
 import org.assertj.core.api.Assertions.assertThat
 import org.conscrypt.Conscrypt
-import org.conscrypt.OpenSSLContextImpl
 import org.junit.After
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue

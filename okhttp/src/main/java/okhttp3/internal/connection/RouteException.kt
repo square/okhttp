@@ -15,7 +15,7 @@
  */
 package okhttp3.internal.connection
 
-import java.io.IOException;
+import java.io.IOException
 
 /**
  * An exception thrown to indicate a problem connecting via a single Route. Multiple attempts may

@@ -23,8 +23,8 @@ enum class TlsVersion(private val javaName: String) {
   TLS_1_3("TLSv1.3"), // 2016.
   TLS_1_2("TLSv1.2"), // 2008.
   TLS_1_1("TLSv1.1"), // 2006.
-  TLS_1_0("TLSv1"),   // 1999.
-  SSL_3_0("SSLv3");   // 1996.
+  TLS_1_0("TLSv1"), // 1999.
+  SSL_3_0("SSLv3"); // 1996.
 
   fun javaName() = javaName
 

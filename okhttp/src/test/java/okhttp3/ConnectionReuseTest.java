@@ -35,6 +35,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.fail;
 
 public final class ConnectionReuseTest {
+  @Rule public final PlatformRule platform = new PlatformRule();
   @Rule public final TestRule timeout = new Timeout(30_000);
   @Rule public final MockWebServer server = new MockWebServer();
   @Rule public final OkHttpClientTestRule clientTestRule = new OkHttpClientTestRule();
@@ -347,6 +348,7 @@ public final class ConnectionReuseTest {
   }
 
   private void enableHttp2() {
+    platform.assumeHttp2Support();
     enableHttpsAndAlpn(Protocol.HTTP_2, Protocol.HTTP_1_1);
   }
 

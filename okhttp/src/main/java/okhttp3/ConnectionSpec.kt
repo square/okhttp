@@ -125,13 +125,13 @@ class ConnectionSpec internal constructor(builder: Builder) {
       return false
     }
 
-    if (tlsVersions != null
-        && !nonEmptyIntersection(Util.NATURAL_ORDER, tlsVersions, socket.enabledProtocols)) {
+    if (tlsVersions != null &&
+        !nonEmptyIntersection(Util.NATURAL_ORDER, tlsVersions, socket.enabledProtocols)) {
       return false
     }
 
-    if (cipherSuites != null
-        && !nonEmptyIntersection(
+    if (cipherSuites != null &&
+        !nonEmptyIntersection(
             CipherSuite.ORDER_BY_NAME, cipherSuites, socket.enabledCipherSuites)) {
       return false
     }

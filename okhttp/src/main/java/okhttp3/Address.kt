@@ -32,18 +32,18 @@ import okhttp3.internal.Util
  * HTTP requests that share the same `Address` may also share the same [Connection].
  */
 class Address(
-    uriHost: String,
-    uriPort: Int,
-    private val dns: Dns,
-    private val socketFactory: SocketFactory,
-    private val sslSocketFactory: SSLSocketFactory?,
-    private val hostnameVerifier: HostnameVerifier?,
-    private val certificatePinner: CertificatePinner?,
-    private val proxyAuthenticator: Authenticator,
-    private val proxy: Proxy?,
-    protocols: List<Protocol>,
-    connectionSpecs: List<ConnectionSpec>,
-    private val proxySelector: ProxySelector
+  uriHost: String,
+  uriPort: Int,
+  private val dns: Dns,
+  private val socketFactory: SocketFactory,
+  private val sslSocketFactory: SSLSocketFactory?,
+  private val hostnameVerifier: HostnameVerifier?,
+  private val certificatePinner: CertificatePinner?,
+  private val proxyAuthenticator: Authenticator,
+  private val proxy: Proxy?,
+  protocols: List<Protocol>,
+  connectionSpecs: List<ConnectionSpec>,
+  private val proxySelector: ProxySelector
 ) {
   private val url: HttpUrl = HttpUrl.Builder()
       .scheme(if (sslSocketFactory != null) "https" else "http")
@@ -104,9 +104,9 @@ class Address(
   fun certificatePinner() = certificatePinner
 
   override fun equals(other: Any?): Boolean {
-    return other is Address
-        && url == other.url
-        && equalsNonHost(other)
+    return other is Address &&
+        url == other.url &&
+        equalsNonHost(other)
   }
 
   override fun hashCode(): Int {
@@ -125,16 +125,16 @@ class Address(
   }
 
   internal fun equalsNonHost(that: Address): Boolean {
-    return this.dns == that.dns
-        && this.proxyAuthenticator == that.proxyAuthenticator
-        && this.protocols == that.protocols
-        && this.connectionSpecs == that.connectionSpecs
-        && this.proxySelector == that.proxySelector
-        && this.proxy == that.proxy
-        && this.sslSocketFactory == that.sslSocketFactory
-        && this.hostnameVerifier == that.hostnameVerifier
-        && this.certificatePinner == that.certificatePinner
-        && this.url().port() == that.url().port()
+    return this.dns == that.dns &&
+        this.proxyAuthenticator == that.proxyAuthenticator &&
+        this.protocols == that.protocols &&
+        this.connectionSpecs == that.connectionSpecs &&
+        this.proxySelector == that.proxySelector &&
+        this.proxy == that.proxy &&
+        this.sslSocketFactory == that.sslSocketFactory &&
+        this.hostnameVerifier == that.hostnameVerifier &&
+        this.certificatePinner == that.certificatePinner &&
+        this.url().port() == that.url().port()
   }
 
   override fun toString(): String {

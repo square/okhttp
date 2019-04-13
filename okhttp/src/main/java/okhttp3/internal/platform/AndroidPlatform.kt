@@ -75,7 +75,8 @@ class AndroidPlatform(
 
   @Throws(IOException::class)
   override fun connectSocket(
-    socket: Socket, address: InetSocketAddress,
+    socket: Socket,
+    address: InetSocketAddress,
     connectTimeout: Int
   ) {
     try {
@@ -118,10 +119,12 @@ class AndroidPlatform(
   }
 
   override fun configureTlsExtensions(
-    sslSocket: SSLSocket, hostname: String?, protocols: List<Protocol>
+    sslSocket: SSLSocket,
+    hostname: String?,
+    protocols: List<Protocol>
   ) {
     if (!sslSocketClass.isInstance(sslSocket)) {
-      return  // No TLS extensions if the socket class is custom.
+      return // No TLS extensions if the socket class is custom.
     }
     try {
       // Enable SNI and session tickets.
@@ -206,7 +209,8 @@ class AndroidPlatform(
 
   @Throws(InvocationTargetException::class, IllegalAccessException::class)
   private fun api24IsCleartextTrafficPermitted(
-    hostname: String, networkPolicyClass: Class<*>,
+    hostname: String,
+    networkPolicyClass: Class<*>,
     networkSecurityPolicy: Any
   ): Boolean = try {
     val isCleartextTrafficPermittedMethod = networkPolicyClass
@@ -218,7 +222,8 @@ class AndroidPlatform(
 
   @Throws(InvocationTargetException::class, IllegalAccessException::class)
   private fun api23IsCleartextTrafficPermitted(
-    hostname: String, networkPolicyClass: Class<*>,
+    hostname: String,
+    networkPolicyClass: Class<*>,
     networkSecurityPolicy: Any
   ): Boolean = try {
     val isCleartextTrafficPermittedMethod = networkPolicyClass
@@ -264,7 +269,7 @@ class AndroidPlatform(
 
     @Suppress("UNCHECKED_CAST")
     @Throws(SSLPeerUnverifiedException::class)
-    override// Reflection on List<Certificate>.
+    override // Reflection on List<Certificate>.
     fun clean(chain: List<Certificate>, hostname: String): List<Certificate> = try {
       val certificates = (chain as List<X509Certificate>).toTypedArray()
       checkServerTrusted.invoke(
