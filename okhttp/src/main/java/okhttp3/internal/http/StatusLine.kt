@@ -84,9 +84,8 @@ class StatusLine(
       if (statusLine.length < codeStart + 3) {
         throw ProtocolException("Unexpected status line: $statusLine")
       }
-      val code: Int
-      try {
-        code = Integer.parseInt(statusLine.substring(codeStart, codeStart + 3))
+      val code = try {
+        Integer.parseInt(statusLine.substring(codeStart, codeStart + 3))
       } catch (_: NumberFormatException) {
         throw ProtocolException("Unexpected status line: $statusLine")
       }
