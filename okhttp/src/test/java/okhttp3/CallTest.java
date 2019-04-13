@@ -3231,6 +3231,29 @@ public final class CallTest {
     assertThat(challengeSchemes).containsExactly("OkHttp-Preemptive", "Basic");
   }
 
+  /** https://github.com/square/okhttp/issues/4915 */
+  @Test @Ignore public void proxyDisconnectsAfterRequest() throws Exception {
+    server.useHttps(handshakeCertificates.sslSocketFactory(), true);
+    server.enqueue(new MockResponse()
+        .setSocketPolicy(SocketPolicy.DISCONNECT_AFTER_REQUEST));
+
+    client = client.newBuilder()
+        .sslSocketFactory(
+            handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager())
+        .proxy(server.toProxyAddress())
+        .build();
+
+    Request request = new Request.Builder()
+        .url(server.url("/"))
+        .build();
+
+    try {
+      Response response = client.newCall(request).execute();
+      fail();
+    } catch (IOException expected) {
+    }
+  }
+
   @Test public void interceptorGetsHttp2() throws Exception {
     platform.assumeHttp2Support();
 
