@@ -1390,11 +1390,11 @@ class HttpUrl internal constructor(builder: Builder) {
           val c = input[i]
 
           if (c in 'a'..'z' ||
-                  c in 'A'..'Z' ||
-                  c in '0'..'9' ||
-              c == '+' ||
-              c == '-' ||
-              c == '.') {
+            c in 'A'..'Z' ||
+            c in '0'..'9' ||
+            c == '+' ||
+            c == '-' ||
+            c == '.') {
             continue // Scheme character. Keep going.
           } else if (c == ':') {
             return i // Scheme prefix!
