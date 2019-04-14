@@ -347,7 +347,8 @@ public final class RealConnection extends Http2Connection.Listener implements Co
               "Hostname " + address.url().host() + " not verified:"
                   + "\n    certificate: " + CertificatePinner.pin(cert)
                   + "\n    DN: " + cert.getSubjectDN().getName()
-                  + "\n    subjectAltNames: " + OkHostnameVerifier.allSubjectAltNames(cert));
+                  + "\n    subjectAltNames: "
+                  + OkHostnameVerifier.INSTANCE.allSubjectAltNames(cert));
         } else {
           throw new SSLPeerUnverifiedException(
               "Hostname " + address.url().host() + " not verified (no certificates)");
