@@ -73,6 +73,8 @@ public class Main extends HelpOption implements Runnable {
     }
 
     fromArgs(args).run();
+
+    System.exit(0);
   }
 
   public Main() {
