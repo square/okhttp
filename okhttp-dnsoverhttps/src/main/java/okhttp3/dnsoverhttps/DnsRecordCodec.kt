@@ -21,19 +21,17 @@ import okio.utf8Size
 import java.io.EOFException
 import java.net.InetAddress
 import java.net.UnknownHostException
-import java.nio.charset.StandardCharsets
 import java.util.ArrayList
 
 /**
  * Trivial Dns Encoder/Decoder, basically ripped from Netty full implementation.
  */
+@ExperimentalUnsignedTypes
 object DnsRecordCodec {
-  private const val SERVFAIL = 2
-  private const val NXDOMAIN = 3
-  const val TYPE_A = 0x0001
-  const val TYPE_AAAA = 0x001c
-  private const val TYPE_PTR = 0x000c
-  private val ASCII = StandardCharsets.US_ASCII
+  private const val SERVFAIL = 2u
+  private const val NXDOMAIN = 3u
+  const val TYPE_A: UInt = 1u
+  const val TYPE_AAAA: UInt = 0x001Cu
 
   @JvmStatic
   fun encodeQuery(host: String, type: Int): ByteString = Buffer().apply {
@@ -70,12 +68,12 @@ object DnsRecordCodec {
     buf.write(byteString)
     buf.readShort() // query id
 
-    val flags = buf.readShort().toInt() and 0xffff
-    if (flags shr 15 == 0) {
+    val flags = buf.readShort().toUInt() and 0xFFFFu
+    if (flags shr 15 == 0u) {
       throw IllegalArgumentException("not a response")
     }
 
-    val responseCode = flags and 0xf
+    val responseCode = flags and 0xFu
 
     if (responseCode == NXDOMAIN) {
       throw UnknownHostException("$hostname: NXDOMAIN")
@@ -83,27 +81,27 @@ object DnsRecordCodec {
       throw UnknownHostException("$hostname: SERVFAIL")
     }
 
-    val questionCount = buf.readShort().toInt() and 0xffff
-    val answerCount = buf.readShort().toInt() and 0xffff
+    val questionCount = buf.readShort().toUInt() and 0xFFFFu
+    val answerCount = buf.readShort().toUInt() and 0xFFFFu
     buf.readShort() // authority record count
     buf.readShort() // additional record count
 
-    for (i in 0 until questionCount) {
+    for (i in 0u until questionCount) {
       skipName(buf) // name
       buf.readShort() // type
       buf.readShort() // class
     }
 
-    for (i in 0 until answerCount) {
+    for (i in 0u until answerCount) {
       skipName(buf) // name
 
-      val type = buf.readShort().toInt() and 0xffff
+      val type = buf.readShort().toUInt() and 0xFFFFu
       buf.readShort() // class
-      val ttl = buf.readInt().toLong() and 0xffffffffL // ttl
-      val length = buf.readShort().toInt() and 0xffff
+      buf.readInt() // ttl
+      val length = buf.readShort().toUInt() and 0xFFFFu
 
       if (type == TYPE_A || type == TYPE_AAAA) {
-        val bytes = ByteArray(length)
+        val bytes = ByteArray(length.toInt())
         buf.read(bytes)
         result.add(InetAddress.getByAddress(bytes))
       } else {
@@ -117,17 +115,17 @@ object DnsRecordCodec {
   @Throws(EOFException::class)
   private fun skipName(source: Buffer) {
     // 0 - 63 bytes
-    var length = source.readByte().toInt()
+    var length = source.readByte().toUInt()
 
-    if (length < 0) {
+    if (length and 0xC000u != 0u) {
       // compressed name pointer, first two bits are 1
       // drop second byte of compression offset
       source.skip(1)
     } else {
-      while (length > 0) {
+      while (length and 0xC000u != 0u) {
         // skip each part of the domain name
         source.skip(length.toLong())
-        length = source.readByte().toInt()
+        length = source.readByte().toUInt()
       }
     }
   }
