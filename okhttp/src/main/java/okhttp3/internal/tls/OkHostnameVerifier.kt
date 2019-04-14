@@ -107,7 +107,7 @@ object OkHostnameVerifier : HostnameVerifier {
     pattern = pattern.toLowerCase(Locale.US)
     // Hostname and pattern are now in lower case -- domain names are case-insensitive.
 
-    if (!pattern.contains("*")) {
+    if ("*" !in pattern) {
       // Not a wildcard pattern -- hostname and pattern must match exactly.
       return hostname == pattern
     }
