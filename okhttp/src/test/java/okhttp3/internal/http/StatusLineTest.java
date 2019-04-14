@@ -28,19 +28,19 @@ public final class StatusLineTest {
     String message = "Temporary Redirect";
     int version = 1;
     int code = 200;
-    StatusLine statusLine = StatusLine.Companion.parse("HTTP/1." + version + " " + code + " " + message);
-    assertThat(statusLine.getMessage()).isEqualTo(message);
-    assertThat(statusLine.getProtocol()).isEqualTo(Protocol.HTTP_1_1);
-    assertThat(statusLine.getCode()).isEqualTo(code);
+    StatusLine statusLine = StatusLine.parse("HTTP/1." + version + " " + code + " " + message);
+    assertThat(statusLine.message).isEqualTo(message);
+    assertThat(statusLine.protocol).isEqualTo(Protocol.HTTP_1_1);
+    assertThat(statusLine.code).isEqualTo(code);
   }
 
   @Test public void emptyMessage() throws IOException {
     int version = 1;
     int code = 503;
-    StatusLine statusLine = StatusLine.Companion.parse("HTTP/1." + version + " " + code + " ");
-    assertThat(statusLine.getMessage()).isEqualTo("");
-    assertThat(statusLine.getProtocol()).isEqualTo(Protocol.HTTP_1_1);
-    assertThat(statusLine.getCode()).isEqualTo(code);
+    StatusLine statusLine = StatusLine.parse("HTTP/1." + version + " " + code + " ");
+    assertThat(statusLine.message).isEqualTo("");
+    assertThat(statusLine.protocol).isEqualTo(Protocol.HTTP_1_1);
+    assertThat(statusLine.code).isEqualTo(code);
   }
 
   /**
@@ -50,18 +50,18 @@ public final class StatusLineTest {
   @Test public void emptyMessageAndNoLeadingSpace() throws IOException {
     int version = 1;
     int code = 503;
-    StatusLine statusLine = StatusLine.Companion.parse("HTTP/1." + version + " " + code);
-    assertThat(statusLine.getMessage()).isEqualTo("");
-    assertThat(statusLine.getProtocol()).isEqualTo(Protocol.HTTP_1_1);
-    assertThat(statusLine.getCode()).isEqualTo(code);
+    StatusLine statusLine = StatusLine.parse("HTTP/1." + version + " " + code);
+    assertThat(statusLine.message).isEqualTo("");
+    assertThat(statusLine.protocol).isEqualTo(Protocol.HTTP_1_1);
+    assertThat(statusLine.code).isEqualTo(code);
   }
 
   // https://github.com/square/okhttp/issues/386
   @Test public void shoutcast() throws IOException {
-    StatusLine statusLine = StatusLine.Companion.parse("ICY 200 OK");
-    assertThat(statusLine.getMessage()).isEqualTo("OK");
-    assertThat(statusLine.getProtocol()).isEqualTo(Protocol.HTTP_1_0);
-    assertThat(statusLine.getCode()).isEqualTo(200);
+    StatusLine statusLine = StatusLine.parse("ICY 200 OK");
+    assertThat(statusLine.message).isEqualTo("OK");
+    assertThat(statusLine.protocol).isEqualTo(Protocol.HTTP_1_0);
+    assertThat(statusLine.code).isEqualTo(200);
   }
 
   @Test public void missingProtocol() throws IOException {
@@ -109,7 +109,7 @@ public final class StatusLineTest {
 
   private void assertInvalid(String statusLine) throws IOException {
     try {
-      StatusLine.Companion.parse(statusLine);
+      StatusLine.parse(statusLine);
       fail();
     } catch (ProtocolException expected) {
     }

@@ -445,7 +445,7 @@ class Cache internal constructor(
     private val requestMethod: String
     private val protocol: Protocol
     private val code: Int
-    private val message: String?
+    private val message: String
     private val responseHeaders: Headers
     private val handshake: Handshake?
     private val sentRequestMillis: Long
