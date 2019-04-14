@@ -115,7 +115,7 @@ class DnsOverHttps internal constructor(builder: Builder) : Dns {
     networkRequests: MutableList<Call>,
     results: MutableList<InetAddress>,
     failures: MutableList<Exception>,
-    type: Int
+    type: UInt
   ) {
     val request = buildRequest(hostname, type)
     val response = getCacheOnlyResponse(request)
@@ -239,7 +239,7 @@ class DnsOverHttps internal constructor(builder: Builder) : Dns {
     }
   }
 
-  private fun buildRequest(hostname: String, type: Int): Request =
+  private fun buildRequest(hostname: String, type: UInt): Request =
       Request.Builder().header("Accept", DNS_MESSAGE.toString()).apply {
         val query = DnsRecordCodec.encodeQuery(hostname, type)
 

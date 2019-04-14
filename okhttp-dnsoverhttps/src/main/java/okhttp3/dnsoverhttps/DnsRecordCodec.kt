@@ -34,7 +34,7 @@ object DnsRecordCodec {
   const val TYPE_AAAA: UInt = 0x001Cu
 
   @JvmStatic
-  fun encodeQuery(host: String, type: Int): ByteString = Buffer().apply {
+  fun encodeQuery(host: String, type: UInt): ByteString = Buffer().apply {
     writeShort(0) // query id
     writeShort(256) // flags with recursion
     writeShort(1) // question count
@@ -55,7 +55,7 @@ object DnsRecordCodec {
     nameBuf.writeByte(0) // end
 
     nameBuf.copyTo(this, 0, nameBuf.size)
-    writeShort(type)
+    writeShort(type.toInt())
     writeShort(1) // CLASS_IN
   }.readByteString()
 
