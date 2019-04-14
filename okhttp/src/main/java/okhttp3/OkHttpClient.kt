@@ -751,7 +751,7 @@ open class OkHttpClient internal constructor(
      * before the connection is established (if any) until after the response source is selected
      * (either the origin server, cache, or both).
      */
-    fun interceptors(): List<Interceptor> = interceptors
+    fun interceptors(): MutableList<Interceptor> = interceptors
 
     fun addInterceptor(interceptor: Interceptor) = apply {
       interceptors += interceptor
@@ -772,7 +772,7 @@ open class OkHttpClient internal constructor(
      * These interceptors must call [Interceptor.Chain.proceed] exactly once: it is an error for a
      * network interceptor to short-circuit or repeat a network request.
      */
-    fun networkInterceptors(): List<Interceptor> = networkInterceptors
+    fun networkInterceptors(): MutableList<Interceptor> = networkInterceptors
 
     fun addNetworkInterceptor(interceptor: Interceptor) = apply {
       networkInterceptors += interceptor
