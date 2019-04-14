@@ -41,6 +41,7 @@ class StatusLine(val protocol: Protocol, val code: Int, val message: String?) {
       return StatusLine(response.protocol(), response.code(), response.message())
     }
 
+    @Throws(ProtocolException::class)
     fun parse(statusLine: String): StatusLine {
       // H T T P / 1 . 1   2 0 0   T e m p o r a r y   R e d i r e c t
       // 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0
