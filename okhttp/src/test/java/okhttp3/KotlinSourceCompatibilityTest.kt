@@ -897,6 +897,16 @@ class KotlinSourceCompatibilityTest {
   }
 
   @Test @Ignore
+  fun testAddInterceptor() {
+    val builder = OkHttpClient.Builder()
+
+    val i = HttpLoggingInterceptor()
+
+    builder.interceptors().add(i)
+    builder.networkInterceptors().add(i)
+  }
+
+  @Test @Ignore
   fun protocol() {
     var protocol: Protocol = Protocol.HTTP_2
     protocol = Protocol.get("")
