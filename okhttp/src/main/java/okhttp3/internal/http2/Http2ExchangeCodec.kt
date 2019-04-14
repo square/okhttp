@@ -29,7 +29,7 @@ import okhttp3.internal.http.ExchangeCodec
 import okhttp3.internal.http.HttpHeaders
 import okhttp3.internal.http.RequestLine
 import okhttp3.internal.http.StatusLine
-import okhttp3.internal.http.StatusLine.HTTP_CONTINUE
+import okhttp3.internal.http.StatusLine.Companion.HTTP_CONTINUE
 import okhttp3.internal.http2.Header.Companion.RESPONSE_STATUS_UTF8
 import okhttp3.internal.http2.Header.Companion.TARGET_AUTHORITY
 import okhttp3.internal.http2.Header.Companion.TARGET_AUTHORITY_UTF8

@@ -28,7 +28,7 @@ import okhttp3.internal.http.ExchangeCodec
 import okhttp3.internal.http.HttpHeaders
 import okhttp3.internal.http.RequestLine
 import okhttp3.internal.http.StatusLine
-import okhttp3.internal.http.StatusLine.HTTP_CONTINUE
+import okhttp3.internal.http.StatusLine.Companion.HTTP_CONTINUE
 import okio.Buffer
 import okio.BufferedSink
 import okio.BufferedSource
