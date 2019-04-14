@@ -107,6 +107,8 @@ interface Authenticator {
   @Throws(IOException::class)
   fun authenticate(route: Route?, response: Response): Request?
 
+  fun x() = Unit
+
   companion object {
     /** An authenticator that knows no credentials and makes no attempt to authenticate.  */
     @JvmField

@@ -36,6 +36,8 @@ interface Dns {
   @Throws(UnknownHostException::class)
   fun lookup(hostname: String): List<InetAddress>
 
+  fun x() = Unit
+
   companion object {
     /**
      * A DNS that uses [InetAddress.getAllByName] to ask the underlying operating system to

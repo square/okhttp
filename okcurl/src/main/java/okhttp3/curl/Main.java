@@ -36,6 +36,7 @@ import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
+import okhttp3.CookieJar;
 import okhttp3.Headers;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
@@ -66,7 +67,15 @@ public class Main extends HelpOption implements Runnable {
   }
 
   public static void main(String... args) {
+    if (System.currentTimeMillis() < 0) {
+      new Main();
+      CookieJar.Companion.hashCode();
+    }
+
     fromArgs(args).run();
+  }
+
+  public Main() {
   }
 
   private static String versionString() {
@@ -78,6 +87,8 @@ public class Main extends HelpOption implements Runnable {
       return prop.getProperty("version");
     } catch (IOException e) {
       throw new AssertionError("Could not load okcurl-version.properties.");
+    } catch (RuntimeException re) {
+      return re.toString();
     }
   }
 
@@ -144,6 +155,11 @@ public class Main extends HelpOption implements Runnable {
     if (version) {
       System.out.println(NAME + " " + versionString());
       System.out.println("Protocols: " + protocols());
+      return;
+    }
+
+    if (url == null) {
+      System.err.println("usage: okcurl https://.../...");
       return;
     }
 

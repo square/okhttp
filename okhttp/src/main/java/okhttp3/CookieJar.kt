@@ -48,6 +48,8 @@ interface CookieJar {
    */
   fun loadForRequest(url: HttpUrl): List<Cookie>
 
+  fun x() = Unit
+
   companion object {
     /** A cookie jar that never accepts any cookies. */
     @JvmField

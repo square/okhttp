@@ -71,6 +71,8 @@ interface PushObserver {
   /** Indicates the reason why this stream was canceled.  */
   fun onReset(streamId: Int, errorCode: ErrorCode)
 
+  fun x() = Unit
+
   companion object {
     @JvmField val CANCEL: PushObserver = object : PushObserver {
 
