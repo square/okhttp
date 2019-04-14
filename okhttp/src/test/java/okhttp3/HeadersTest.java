@@ -49,7 +49,7 @@ public final class HeadersTest {
         ":version", "HTTP/1.1",
         "connection", "close");
     Request request = new Request.Builder().url("http://square.com/").build();
-    Response response = Http2ExchangeCodec.readHttp2HeadersList(headerBlock, Protocol.HTTP_2).request(request).build();
+    Response response = Http2ExchangeCodec.Companion.readHttp2HeadersList(headerBlock, Protocol.HTTP_2).request(request).build();
     Headers headers = response.headers();
     assertThat(headers.size()).isEqualTo(1);
     assertThat(headers.name(0)).isEqualTo(":version");
@@ -69,7 +69,7 @@ public final class HeadersTest {
         ":path", "/",
         ":authority", "square.com",
         ":scheme", "http");
-    assertThat(Http2ExchangeCodec.http2HeadersList(request)).isEqualTo(expected);
+    assertThat(Http2ExchangeCodec.Companion.http2HeadersList(request)).isEqualTo(expected);
   }
 
   @Test public void http2HeadersListDontDropTeIfTrailersHttp2() {
@@ -82,7 +82,7 @@ public final class HeadersTest {
         ":path", "/",
         ":scheme", "http",
         "te", "trailers");
-    assertThat(Http2ExchangeCodec.http2HeadersList(request)).isEqualTo(expected);
+    assertThat(Http2ExchangeCodec.Companion.http2HeadersList(request)).isEqualTo(expected);
   }
 
   @Test public void ofTrims() {
