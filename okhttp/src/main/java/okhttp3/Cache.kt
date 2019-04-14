@@ -26,7 +26,6 @@ import okhttp3.internal.http.HttpMethod
 import okhttp3.internal.http.StatusLine
 import okhttp3.internal.io.FileSystem
 import okhttp3.internal.platform.Platform
-import okio.buffer
 import okio.Buffer
 import okio.BufferedSink
 import okio.BufferedSource
@@ -37,6 +36,7 @@ import okio.ForwardingSink
 import okio.ForwardingSource
 import okio.Sink
 import okio.Source
+import okio.buffer
 import java.io.Closeable
 import java.io.File
 import java.io.Flushable
@@ -177,7 +177,7 @@ class Cache internal constructor(
   private var hitCount: Int = 0
   private var requestCount: Int = 0
 
-  val isClosed: Boolean get() = cache.isClosed
+  val isClosed: Boolean get() = cache.isClosed()
 
   /** Create a cache of at most `maxSize` bytes in `directory`. */
   constructor(directory: File, maxSize: Long) : this(directory, maxSize, FileSystem.SYSTEM)

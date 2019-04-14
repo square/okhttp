@@ -470,7 +470,7 @@ public final class DiskLruCacheTest {
     try {
       cache.edit(null);
       fail();
-    } catch (NullPointerException expected) {
+    } catch (IllegalArgumentException expected) {
     }
   }
 
