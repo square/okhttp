@@ -56,7 +56,7 @@ class Http2ExchangeCodec(
 ) : ExchangeCodec {
   @Volatile private var stream: Http2Stream? = null
 
-  private val protocol: Protocol = if (client.protocols().contains(Protocol.H2_PRIOR_KNOWLEDGE)) {
+  private val protocol: Protocol = if (Protocol.H2_PRIOR_KNOWLEDGE in client.protocols()) {
     Protocol.H2_PRIOR_KNOWLEDGE
   } else {
     Protocol.HTTP_2
@@ -169,16 +169,13 @@ class Http2ExchangeCodec(
       }
       result.add(Header(TARGET_SCHEME, request.url().scheme()))
 
-      var i = 0
-      val size = headers.size()
-      while (i < size) {
+      for (i in 0 until headers.size()) {
         // header names must be lowercase.
         val name = headers.name(i).toLowerCase(Locale.US)
-        if (!HTTP_2_SKIPPED_REQUEST_HEADERS.contains(name) || name == TE && headers.value(
-                i) == "trailers") {
+        if (name !in HTTP_2_SKIPPED_REQUEST_HEADERS ||
+            name == TE && headers.value(i) == "trailers") {
           result.add(Header(name, headers.value(i)))
         }
-        i++
       }
       return result
     }
@@ -187,9 +184,7 @@ class Http2ExchangeCodec(
     fun readHttp2HeadersList(headerBlock: Headers, protocol: Protocol): Response.Builder {
       var statusLine: StatusLine? = null
       val headersBuilder = Headers.Builder()
-      var i = 0
-      val size = headerBlock.size()
-      while (i < size) {
+      for (i in 0 until headerBlock.size()) {
         val name = headerBlock.name(i)
         val value = headerBlock.value(i)
         if (name == RESPONSE_STATUS_UTF8) {
@@ -197,7 +192,6 @@ class Http2ExchangeCodec(
         } else if (!HTTP_2_SKIPPED_RESPONSE_HEADERS.contains(name)) {
           addHeaderLenient(headersBuilder, name, value)
         }
-        i++
       }
       if (statusLine == null) throw ProtocolException("Expected ':status' header not present")
 

@@ -69,6 +69,12 @@ class Http1ExchangeCodec(
   private var state = STATE_IDLE
   private var headerLimit = HEADER_LIMIT.toLong()
 
+  private fun Response.isChunked() =
+      "chunked".equals(header("Transfer-Encoding"), ignoreCase = true)
+
+  private fun Request.isChunked() =
+      "chunked".equals(header("Transfer-Encoding"), ignoreCase = true)
+
   /**
    * Received trailers. Null unless the response body uses chunked transfer-encoding and includes
    * trailers. Undefined until the end of the response body.
@@ -84,22 +90,15 @@ class Http1ExchangeCodec(
   }
 
   override fun createRequestBody(request: Request, contentLength: Long): Sink {
-    if (request.body() != null && request.body()!!.isDuplex()) {
-      throw ProtocolException("Duplex connections are not supported for HTTP/1")
+    return when {
+      request.body() != null && request.body()!!.isDuplex() -> throw ProtocolException(
+          "Duplex connections are not supported for HTTP/1")
+      request.isChunked() -> newChunkedSink() // Stream a request body of unknown length.
+      contentLength != -1L -> newKnownLengthSink() // Stream a request body of a known length.
+      else -> // Stream a request body of a known length.
+        throw IllegalStateException(
+            "Cannot stream a request body without chunked encoding or a known content length!")
     }
-
-    if ("chunked".equals(request.header("Transfer-Encoding"), ignoreCase = true)) {
-      // Stream a request body of unknown length.
-      return newChunkedSink()
-    }
-
-    if (contentLength != -1L) {
-      // Stream a request body of a known length.
-      return newKnownLengthSink()
-    }
-
-    throw IllegalStateException(
-        "Cannot stream a request body without chunked encoding or a known content length!")
   }
 
   override fun cancel() {
@@ -123,31 +122,25 @@ class Http1ExchangeCodec(
   }
 
   override fun reportedContentLength(response: Response): Long {
-    if (!HttpHeaders.hasBody(response)) {
-      return 0L
-    }
-
-    return if ("chunked".equals(response.header("Transfer-Encoding"), ignoreCase = true)) {
-      -1L
-    } else {
-      HttpHeaders.contentLength(response)
+    return when {
+      !HttpHeaders.hasBody(response) -> 0L
+      response.isChunked() -> -1L
+      else -> HttpHeaders.contentLength(response)
     }
   }
 
   override fun openResponseBodySource(response: Response): Source {
-    if (!HttpHeaders.hasBody(response)) {
-      return newFixedLengthSource(0)
-    }
-
-    if ("chunked".equals(response.header("Transfer-Encoding"), ignoreCase = true)) {
-      return newChunkedSource(response.request().url())
-    }
-
-    val contentLength = HttpHeaders.contentLength(response)
-    return if (contentLength != -1L) {
-      newFixedLengthSource(contentLength)
-    } else {
-      newUnknownLengthSource()
+    return when {
+      !HttpHeaders.hasBody(response) -> newFixedLengthSource(0)
+      response.isChunked() -> newChunkedSource(response.request().url())
+      else -> {
+        val contentLength = HttpHeaders.contentLength(response)
+        if (contentLength != -1L) {
+          newFixedLengthSource(contentLength)
+        } else {
+          newUnknownLengthSource()
+        }
+      }
     }
   }
 
@@ -168,14 +161,11 @@ class Http1ExchangeCodec(
   fun writeRequest(headers: Headers, requestLine: String) {
     check(state == STATE_IDLE) { "state: $state" }
     sink.writeUtf8(requestLine).writeUtf8("\r\n")
-    var i = 0
-    val size = headers.size()
-    while (i < size) {
+    for (i in 0 until headers.size()) {
       sink.writeUtf8(headers.name(i))
           .writeUtf8(": ")
           .writeUtf8(headers.value(i))
           .writeUtf8("\r\n")
-      i++
     }
     sink.writeUtf8("\r\n")
     state = STATE_OPEN_REQUEST_BODY
@@ -193,15 +183,17 @@ class Http1ExchangeCodec(
           .message(statusLine.message)
           .headers(readHeaders())
 
-      if (expectContinue && statusLine.code == HTTP_CONTINUE) {
-        return null
-      } else if (statusLine.code == HTTP_CONTINUE) {
-        state = STATE_READ_RESPONSE_HEADERS
-        return responseBuilder
+      return when {
+        expectContinue && statusLine.code == HTTP_CONTINUE -> null
+        statusLine.code == HTTP_CONTINUE -> {
+          state = STATE_READ_RESPONSE_HEADERS
+          responseBuilder
+        }
+        else -> {
+          state = STATE_OPEN_RESPONSE_BODY
+          responseBuilder
+        }
       }
-
-      state = STATE_OPEN_RESPONSE_BODY
-      return responseBuilder
     } catch (e: EOFException) {
       // Provide more context if the server ends the stream before sending a response.
       val address = if (realConnection != null) realConnection.route().address().url().redact() else "unknown"
@@ -278,7 +270,7 @@ class Http1ExchangeCodec(
     val contentLength = HttpHeaders.contentLength(response)
     if (contentLength == -1L) return
     val body = newFixedLengthSource(contentLength)
-    Util.skipAll(body, Integer.MAX_VALUE, MILLISECONDS)
+    Util.skipAll(body, Int.MAX_VALUE, MILLISECONDS)
     body.close()
   }
 
@@ -287,9 +279,7 @@ class Http1ExchangeCodec(
     private val timeout = ForwardingTimeout(sink.timeout())
     private var closed: Boolean = false
 
-    override fun timeout(): Timeout {
-      return timeout
-    }
+    override fun timeout(): Timeout = timeout
 
     override fun write(source: Buffer, byteCount: Long) {
       check(!closed) { "closed" }
@@ -314,13 +304,11 @@ class Http1ExchangeCodec(
    * An HTTP body with alternating chunk sizes and chunk bodies. It is the caller's responsibility
    * to buffer chunks; typically by using a buffered sink with this sink.
    */
-  private inner class ChunkedSink internal constructor() : Sink {
+  private inner class ChunkedSink : Sink {
     private val timeout = ForwardingTimeout(sink.timeout())
     private var closed: Boolean = false
 
-    override fun timeout(): Timeout {
-      return timeout
-    }
+    override fun timeout(): Timeout = timeout
 
     override fun write(source: Buffer, byteCount: Long) {
       check(!closed) { "closed" }
@@ -352,13 +340,11 @@ class Http1ExchangeCodec(
     protected val timeout = ForwardingTimeout(source.timeout())
     protected var closed: Boolean = false
 
-    override fun timeout(): Timeout {
-      return timeout
-    }
+    override fun timeout(): Timeout = timeout
 
     override fun read(sink: Buffer, byteCount: Long): Long {
-      try {
-        return source.read(sink, byteCount)
+      return try {
+        source.read(sink, byteCount)
       } catch (e: IOException) {
         realConnection!!.noNewExchanges()
         responseBodyComplete()
@@ -430,8 +416,8 @@ class Http1ExchangeCodec(
     private var hasMoreChunks = true
 
     override fun read(sink: Buffer, byteCount: Long): Long {
-      if (byteCount < 0) throw IllegalArgumentException("byteCount < 0: $byteCount")
-      if (closed) throw IllegalStateException("closed")
+      require(byteCount >= 0) { "byteCount < 0: $byteCount" }
+      check(!closed) { "closed" }
       if (!hasMoreChunks) return -1
 
       if (bytesRemainingInChunk == 0L || bytesRemainingInChunk == NO_CHUNK_YET) {
@@ -490,8 +476,8 @@ class Http1ExchangeCodec(
     private var inputExhausted: Boolean = false
 
     override fun read(sink: Buffer, byteCount: Long): Long {
-      if (byteCount < 0) throw IllegalArgumentException("byteCount < 0: $byteCount")
-      if (closed) throw IllegalStateException("closed")
+      require(byteCount >= 0) { "byteCount < 0: $byteCount" }
+      check(!closed) { "closed" }
       if (inputExhausted) return -1
 
       val read = super.read(sink, byteCount)
