@@ -74,7 +74,7 @@ class StatusLine(val protocol: Protocol, val code: Int, val message: String?) {
       }
       val code = try {
         statusLine.substring(codeStart, codeStart + 3).toInt()
-      } catch (e: NumberFormatException) {
+      } catch (_: NumberFormatException) {
         throw ProtocolException("Unexpected status line: $statusLine")
       }
 

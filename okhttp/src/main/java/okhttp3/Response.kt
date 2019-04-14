@@ -269,7 +269,7 @@ class Response internal constructor(
       this.code = code
     }
 
-    open fun message(message: String) = apply {
+    open fun message(message: String?) = apply {
       this.message = message
     }
 
