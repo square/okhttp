@@ -100,7 +100,7 @@ object OkHostnameVerifier : HostnameVerifier {
       hostname += "."
     }
     if (!pattern.endsWith(".")) {
-      pattern += '.'.toString()
+      pattern += "."
     }
     // Hostname and pattern are now absolute domain names.
 
