@@ -97,7 +97,7 @@ object OkHostnameVerifier : HostnameVerifier {
     //   www.android.com. matches www.android.com.
     //   www.android.com. matches www.android.com
     if (!hostname.endsWith(".")) {
-      hostname += '.'.toString()
+      hostname += "."
     }
     if (!pattern.endsWith(".")) {
       pattern += '.'.toString()
