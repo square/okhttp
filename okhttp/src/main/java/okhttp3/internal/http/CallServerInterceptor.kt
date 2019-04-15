@@ -13,131 +13,117 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package okhttp3.internal.http;
+package okhttp3.internal.http
 
-import java.io.IOException;
-import java.net.ProtocolException;
-import okhttp3.Interceptor;
-import okhttp3.Request;
-import okhttp3.Response;
-import okhttp3.internal.Util;
-import okhttp3.internal.connection.Exchange;
-import okio.BufferedSink;
-import okio.Okio;
+import okhttp3.Interceptor
+import okhttp3.Response
+import okhttp3.internal.Util
+import okio.buffer
+import java.io.IOException
+import java.net.ProtocolException
 
-/** This is the last interceptor in the chain. It makes a network call to the server. */
-public final class CallServerInterceptor implements Interceptor {
-  private final boolean forWebSocket;
+/** This is the last interceptor in the chain. It makes a network call to the server.  */
+class CallServerInterceptor(private val forWebSocket: Boolean) : Interceptor {
 
-  public CallServerInterceptor(boolean forWebSocket) {
-    this.forWebSocket = forWebSocket;
-  }
+  @Throws(IOException::class)
+  override fun intercept(chain: Interceptor.Chain): Response {
+    val realChain = chain as RealInterceptorChain
+    val exchange = realChain.exchange()
+    val request = realChain.request()
+    val requestBody = request.body()
+    val sentRequestMillis = System.currentTimeMillis()
 
-  @Override public Response intercept(Chain chain) throws IOException {
-    RealInterceptorChain realChain = (RealInterceptorChain) chain;
-    Exchange exchange = realChain.exchange();
-    Request request = realChain.request();
+    exchange.writeRequestHeaders(request)
 
-    long sentRequestMillis = System.currentTimeMillis();
-
-    exchange.writeRequestHeaders(request);
-
-    boolean responseHeadersStarted = false;
-    Response.Builder responseBuilder = null;
-    if (HttpMethod.permitsRequestBody(request.method()) && request.body() != null) {
+    var responseHeadersStarted = false
+    var responseBuilder: Response.Builder? = null
+    if (HttpMethod.permitsRequestBody(request.method()) && requestBody != null) {
       // If there's a "Expect: 100-continue" header on the request, wait for a "HTTP/1.1 100
       // Continue" response before transmitting the request body. If we don't get that, return
       // what we did get (such as a 4xx response) without ever transmitting the request body.
-      if ("100-continue".equalsIgnoreCase(request.header("Expect"))) {
-        exchange.flushRequest();
-        responseHeadersStarted = true;
-        exchange.responseHeadersStart();
-        responseBuilder = exchange.readResponseHeaders(true);
+      if ("100-continue".equals(request.header("Expect"), ignoreCase = true)) {
+        exchange.flushRequest()
+        responseHeadersStarted = true
+        exchange.responseHeadersStart()
+        responseBuilder = exchange.readResponseHeaders(true)
       }
-
       if (responseBuilder == null) {
-        if (request.body().isDuplex()) {
+        if (requestBody.isDuplex()) {
           // Prepare a duplex body so that the application can send a request body later.
-          exchange.flushRequest();
-          BufferedSink bufferedRequestBody = Okio.buffer(
-              exchange.createRequestBody(request, true));
-          request.body().writeTo(bufferedRequestBody);
+          exchange.flushRequest()
+          val bufferedRequestBody = exchange.createRequestBody(request, true).buffer()
+          requestBody.writeTo(bufferedRequestBody)
         } else {
           // Write the request body if the "Expect: 100-continue" expectation was met.
-          BufferedSink bufferedRequestBody = Okio.buffer(
-              exchange.createRequestBody(request, false));
-          request.body().writeTo(bufferedRequestBody);
-          bufferedRequestBody.close();
+          val bufferedRequestBody = exchange.createRequestBody(request, false).buffer()
+          requestBody.writeTo(bufferedRequestBody)
+          bufferedRequestBody.close()
         }
       } else {
-        exchange.noRequestBody();
-        if (!exchange.connection().isMultiplexed()) {
+        exchange.noRequestBody()
+        if (!exchange.connection().isMultiplexed) {
           // If the "Expect: 100-continue" expectation wasn't met, prevent the HTTP/1 connection
           // from being reused. Otherwise we're still obligated to transmit the request body to
           // leave the connection in a consistent state.
-          exchange.noNewExchangesOnConnection();
+          exchange.noNewExchangesOnConnection()
         }
       }
     } else {
-      exchange.noRequestBody();
+      exchange.noRequestBody()
     }
 
-    if (request.body() == null || !request.body().isDuplex()) {
-      exchange.finishRequest();
+    if (requestBody == null || !requestBody.isDuplex()) {
+      exchange.finishRequest()
     }
-
     if (!responseHeadersStarted) {
-      exchange.responseHeadersStart();
+      exchange.responseHeadersStart()
     }
-
     if (responseBuilder == null) {
-      responseBuilder = exchange.readResponseHeaders(false);
+      // exchange.readResponseHeaders(false) never returns null
+      // while exchange.readResponseHeaders(true) always returns null
+      responseBuilder = exchange.readResponseHeaders(false)
     }
-
-    Response response = responseBuilder
+      // safe to use!!
+    var response = responseBuilder!!
         .request(request)
         .handshake(exchange.connection().handshake())
         .sentRequestAtMillis(sentRequestMillis)
         .receivedResponseAtMillis(System.currentTimeMillis())
-        .build();
-
-    int code = response.code();
+        .build()
+    var code = response.code()
     if (code == 100) {
       // server sent a 100-continue even though we did not request one.
       // try again to read the actual response
-      response = exchange.readResponseHeaders(false)
+      // exchange.readResponseHeaders(false) never be null
+      response = exchange.readResponseHeaders(false)!!
           .request(request)
           .handshake(exchange.connection().handshake())
           .sentRequestAtMillis(sentRequestMillis)
           .receivedResponseAtMillis(System.currentTimeMillis())
-          .build();
-
-      code = response.code();
+          .build()
+      code = response.code()
     }
 
-    exchange.responseHeadersEnd(response);
+    exchange.responseHeadersEnd(response)
 
-    if (forWebSocket && code == 101) {
+    response = if (forWebSocket && code == 101) {
       // Connection is upgrading, but we need to ensure interceptors see a non-null response body.
-      response = response.newBuilder()
+      response.newBuilder()
           .body(Util.EMPTY_RESPONSE)
-          .build();
+          .build()
     } else {
-      response = response.newBuilder()
+      response.newBuilder()
           .body(exchange.openResponseBody(response))
-          .build();
+          .build()
     }
-
-    if ("close".equalsIgnoreCase(response.request().header("Connection"))
-        || "close".equalsIgnoreCase(response.header("Connection"))) {
-      exchange.noNewExchangesOnConnection();
+    if ("close".equals(response.request().header("Connection"), ignoreCase = true) ||
+        "close".equals(response.header("Connection"), ignoreCase = true)) {
+      exchange.noNewExchangesOnConnection()
     }
-
-    if ((code == 204 || code == 205) && response.body().contentLength() > 0) {
-      throw new ProtocolException(
-          "HTTP " + code + " had non-zero Content-Length: " + response.body().contentLength());
+    if ((code == 204 || code == 205) && response.body()?.contentLength() ?: -1 > 0) {
+      throw ProtocolException(
+          "HTTP " + code + " had non-zero Content-Length: " + response.body()?.contentLength())
     }
-
-    return response;
+    return response
   }
 }
