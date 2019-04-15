@@ -111,6 +111,7 @@ class RealConnectionPool(
       return true
     } else {
       // Awake the cleanup thread: we may have exceeded the idle connection limit.
+      @Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN")
       (this as java.lang.Object).notifyAll()
       return false
     }
@@ -270,6 +271,7 @@ private fun Any.waitNanos(nanos: Long) {
   val ms = nanos / 1_000_000L
   val ns = nanos - (ms * 1_000_000L)
   synchronized(this) {
+    @Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN")
     (this as Object).wait(ms, ns.toInt())
   }
 }

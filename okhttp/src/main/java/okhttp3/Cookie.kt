@@ -39,6 +39,7 @@ import java.util.regex.Pattern
  *
  * [chromium_extension]: https://code.google.com/p/chromium/issues/detail?id=232693
  */
+@Suppress("DataClassPrivateConstructor")
 data class Cookie private constructor(
   private val name: String,
   private val value: String,
