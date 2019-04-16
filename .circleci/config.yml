@@ -17,7 +17,7 @@ commands:
           name: Run tests
           command: ./gradlew --build-cache --parallel --continue test
           environment:
-            GRADLE_OPTS: -Dorg.gradle.daemon=false -Dokhttp.platform=<< parameters.platform >> -Dorg.gradle.workers.max=3 -Xmx1G
+            GRADLE_OPTS: -Dorg.gradle.daemon=false -Dokhttp.platform=<< parameters.platform >> -Dorg.gradle.workers.max=8 -Xmx1G
 
       - save_cache:
           paths:
