@@ -23,7 +23,6 @@ import okhttp3.internal.Util.closeQuietly
 import okhttp3.internal.connection.Transmitter.TransmitterReference
 import okhttp3.internal.notifyAll
 import okhttp3.internal.platform.Platform
-import okhttp3.internal.wait
 import okhttp3.internal.waitNanos
 import java.io.IOException
 import java.net.Proxy
