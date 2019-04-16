@@ -120,6 +120,12 @@ class RealInterceptorChain(
           " must call proceed() exactly once")
     }
 
+    // Needed to enforce Kotlin null checks
+    @Suppress("SENSELESS_COMPARISON")
+    if (response == null) {
+      throw NullPointerException("interceptor $interceptor returned null")
+    }
+
     if (response.body() == null) {
       throw IllegalStateException(
           "interceptor $interceptor returned a response with no body")
