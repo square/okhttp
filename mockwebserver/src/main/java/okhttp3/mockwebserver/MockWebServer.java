@@ -673,7 +673,7 @@ public final class MockWebServer extends ExternalResource implements Closeable {
     }
 
     final SocketPolicy socketPolicy = dispatcher.peek().getSocketPolicy();
-    if (expectContinue && socketPolicy == EXPECT_CONTINUE || socketPolicy == CONTINUE_ALWAYS) {
+    if ((expectContinue && socketPolicy == EXPECT_CONTINUE) || socketPolicy == CONTINUE_ALWAYS) {
       sink.writeUtf8("HTTP/1.1 100 Continue\r\n");
       sink.writeUtf8("Content-Length: 0\r\n");
       sink.writeUtf8("\r\n");
@@ -724,9 +724,10 @@ public final class MockWebServer extends ExternalResource implements Closeable {
         .url(scheme + "://" + authority + "/")
         .headers(request.getHeaders())
         .build();
+    String[] statusParts = response.getStatus().split(" ", 3);
     final Response fancyResponse = new Response.Builder()
-        .code(Integer.parseInt(response.getStatus().split(" ")[1]))
-        .message(response.getStatus().split(" ", 3)[2])
+        .code(Integer.parseInt(statusParts[1]))
+        .message(statusParts[2])
         .headers(response.getHeaders())
         .request(fancyRequest)
         .protocol(Protocol.HTTP_1_1)
@@ -818,7 +819,7 @@ public final class MockWebServer extends ExternalResource implements Closeable {
         : policy.getSocketPolicy() == DISCONNECT_DURING_RESPONSE_BODY;
 
     while (!socket.isClosed()) {
-      for (int b = 0; b < bytesPerPeriod; ) {
+      for (long b = 0; b < bytesPerPeriod; ) {
         // Ensure we do not read past the allotted bytes in this period.
         long toRead = Math.min(byteCount, bytesPerPeriod - b);
         // Ensure we do not read past halfway if the policy will kill the connection.

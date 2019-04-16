@@ -21,7 +21,9 @@ import okhttp3.Route
 import okhttp3.internal.Util
 import okhttp3.internal.Util.closeQuietly
 import okhttp3.internal.connection.Transmitter.TransmitterReference
+import okhttp3.internal.notifyAll
 import okhttp3.internal.platform.Platform
+import okhttp3.internal.waitNanos
 import java.io.IOException
 import java.net.Proxy
 import java.util.ArrayDeque
@@ -111,7 +113,7 @@ class RealConnectionPool(
       return true
     } else {
       // Awake the cleanup thread: we may have exceeded the idle connection limit.
-      (this as java.lang.Object).notifyAll()
+      this.notifyAll()
       return false
     }
   }
@@ -257,19 +259,5 @@ class RealConnectionPool(
         SynchronousQueue(),
         Util.threadFactory("OkHttp ConnectionPool", true)
     )
-  }
-}
-
-/**
- * Lock and wait a duration in nanoseconds. Unlike [java.lang.Object.wait] this interprets 0 as
- * "don't wait" instead of "wait forever".
- */
-@Throws(InterruptedException::class)
-private fun Any.waitNanos(nanos: Long) {
-  if (nanos == 0L) return
-  val ms = nanos / 1_000_000L
-  val ns = nanos - (ms * 1_000_000L)
-  synchronized(this) {
-    (this as Object).wait(ms, ns.toInt())
   }
 }

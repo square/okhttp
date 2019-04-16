@@ -585,6 +585,7 @@ public final class InterceptorTest {
       client.newCall(request).execute();
       fail();
     } catch (NullPointerException expected) {
+      expected.printStackTrace();
       assertThat(expected.getMessage()).isEqualTo(
           ("interceptor " + interceptor + " returned null"));
     }

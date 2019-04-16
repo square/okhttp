@@ -112,17 +112,15 @@ class RealInterceptorChain(
     val next = RealInterceptorChain(interceptors, transmitter, exchange,
         index + 1, request, call, connectTimeout, readTimeout, writeTimeout)
     val interceptor = interceptors[index]
-    val response = interceptor.intercept(next)
+
+    @Suppress("USELESS_ELVIS")
+    val response = interceptor.intercept(next) ?: throw NullPointerException(
+        "interceptor $interceptor returned null")
 
     // Confirm that the next interceptor made its required call to chain.proceed().
     if (exchange != null && index + 1 < interceptors.size && next.calls != 1) {
       throw IllegalStateException("network interceptor " + interceptor +
           " must call proceed() exactly once")
-    }
-
-    // Confirm that the intercepted response isn't null.
-    if (response == null) {
-      throw NullPointerException("interceptor $interceptor returned null")
     }
 
     if (response.body() == null) {
