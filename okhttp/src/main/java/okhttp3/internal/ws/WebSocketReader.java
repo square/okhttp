@@ -23,6 +23,8 @@ import okio.BufferedSource;
 import okio.ByteString;
 
 import static java.lang.Integer.toHexString;
+import static okhttp3.internal.InternalKtKt.closeCodeExceptionMessage;
+import static okhttp3.internal.InternalKtKt.toggleMask;
 import static okhttp3.internal.ws.WebSocketProtocol.B0_FLAG_FIN;
 import static okhttp3.internal.ws.WebSocketProtocol.B0_FLAG_RSV1;
 import static okhttp3.internal.ws.WebSocketProtocol.B0_FLAG_RSV2;
@@ -41,7 +43,6 @@ import static okhttp3.internal.ws.WebSocketProtocol.OPCODE_TEXT;
 import static okhttp3.internal.ws.WebSocketProtocol.PAYLOAD_BYTE_MAX;
 import static okhttp3.internal.ws.WebSocketProtocol.PAYLOAD_LONG;
 import static okhttp3.internal.ws.WebSocketProtocol.PAYLOAD_SHORT;
-import static okhttp3.internal.ws.WebSocketProtocol.toggleMask;
 
 /**
  * An <a href="http://tools.ietf.org/html/rfc6455">RFC 6455</a>-compatible WebSocket frame reader.
@@ -196,7 +197,7 @@ final class WebSocketReader {
         } else if (bufferSize != 0) {
           code = controlFrameBuffer.readShort();
           reason = controlFrameBuffer.readUtf8();
-          String codeExceptionMessage = WebSocketProtocol.closeCodeExceptionMessage(code);
+          String codeExceptionMessage = closeCodeExceptionMessage(code);
           if (codeExceptionMessage != null) throw new ProtocolException(codeExceptionMessage);
         }
         frameCallback.onReadClose(code, reason);
