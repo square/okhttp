@@ -129,7 +129,9 @@ object WebSocketProtocol {
   @JvmStatic
   internal fun validateCloseCode(code: Int) {
     val message = closeCodeExceptionMessage(code)
-    if (message != null) throw IllegalArgumentException(message)
+    if (message != null) {
+      throw IllegalArgumentException(message)
+    }
   }
 
   @JvmStatic
