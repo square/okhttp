@@ -37,14 +37,14 @@ object WebSocketProtocol {
    * Byte 1 flag for whether the payload data is masked.
    *
    * If this flag is set, the next four
-   * bytes represent the mask key. These bytes appear after any additional bytes specified by [ ][.B1_MASK_LENGTH].
+   * bytes represent the mask key. These bytes appear after any additional bytes specified by [B1_MASK_LENGTH].
    */
   internal const val B1_FLAG_MASK = 128
   /**
    * Byte 1 mask for the payload length.
    *
-   * If this value is [.PAYLOAD_SHORT], the next two
-   * bytes represent the length. If this value is [.PAYLOAD_LONG], the next eight bytes
+   * If this value is [PAYLOAD_SHORT], the next two
+   * bytes represent the length. If this value is [PAYLOAD_LONG], the next eight bytes
    * represent the length.
    */
   internal const val B1_MASK_LENGTH = 127
@@ -59,19 +59,19 @@ object WebSocketProtocol {
 
   /**
    * Maximum length of frame payload. Larger payloads, if supported by the frame type, can use the
-   * special values [.PAYLOAD_SHORT] or [.PAYLOAD_LONG].
+   * special values [PAYLOAD_SHORT] or [PAYLOAD_LONG].
    */
   internal const val PAYLOAD_BYTE_MAX = 125L
   /** Maximum length of close message in bytes.  */
   internal const val CLOSE_MESSAGE_MAX = PAYLOAD_BYTE_MAX - 2
   /**
-   * Value for [.B1_MASK_LENGTH] which indicates the next two bytes are the unsigned length.
+   * Value for [B1_MASK_LENGTH] which indicates the next two bytes are the unsigned length.
    */
   internal const val PAYLOAD_SHORT = 126
-  /** Maximum length of a frame payload to be denoted as [.PAYLOAD_SHORT].  */
+  /** Maximum length of a frame payload to be denoted as [PAYLOAD_SHORT].  */
   internal const val PAYLOAD_SHORT_MAX = 0xffffL
   /**
-   * Value for [.B1_MASK_LENGTH] which indicates the next eight bytes are the unsigned
+   * Value for [B1_MASK_LENGTH] which indicates the next eight bytes are the unsigned
    * length.
    */
   internal const val PAYLOAD_LONG = 127
