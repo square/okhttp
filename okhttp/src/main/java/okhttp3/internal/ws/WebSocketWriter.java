@@ -23,8 +23,8 @@ import okio.ByteString;
 import okio.Sink;
 import okio.Timeout;
 
-import static okhttp3.internal.InternalKtKt.toggleMask;
-import static okhttp3.internal.InternalKtKt.validateCloseCode;
+import static okhttp3.internal.ws.WebSocketProtocol.toggleMask;
+import static okhttp3.internal.ws.WebSocketProtocol.validateCloseCode;
 import static okhttp3.internal.ws.WebSocketProtocol.B0_FLAG_FIN;
 import static okhttp3.internal.ws.WebSocketProtocol.B1_FLAG_MASK;
 import static okhttp3.internal.ws.WebSocketProtocol.OPCODE_CONTINUATION;

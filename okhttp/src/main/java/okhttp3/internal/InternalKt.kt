@@ -23,8 +23,6 @@ import okhttp3.Cookie
 import okhttp3.Headers
 import okhttp3.HttpUrl
 import okhttp3.Request
-import okhttp3.internal.ws.WebSocketProtocol
-import okio.Buffer
 import javax.net.ssl.SSLSocket
 
 fun parseCookie(currentTimeMillis: Long, url: HttpUrl, setCookie: String): Cookie? =
@@ -72,9 +70,3 @@ fun Any.waitMillis(timeout: Long, nanos: Int = 0) {
 fun Any.notify() = (this as Object).notify()
 
 fun Any.notifyAll() = (this as Object).notifyAll()
-
-fun toggleMask(cursor: Buffer.UnsafeCursor, key: ByteArray) = WebSocketProtocol.toggleMask(cursor, key)
-
-fun validateCloseCode(code: Int) = WebSocketProtocol.validateCloseCode(code)
-
-fun closeCodeExceptionMessage(code: Int) = WebSocketProtocol.closeCodeExceptionMessage(code)

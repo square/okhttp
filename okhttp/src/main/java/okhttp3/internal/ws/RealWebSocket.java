@@ -46,12 +46,12 @@ import okio.ByteString;
 import okio.Okio;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
-import static okhttp3.internal.InternalKtKt.validateCloseCode;
 import static okhttp3.internal.Util.closeQuietly;
 import static okhttp3.internal.ws.WebSocketProtocol.CLOSE_CLIENT_GOING_AWAY;
 import static okhttp3.internal.ws.WebSocketProtocol.CLOSE_MESSAGE_MAX;
 import static okhttp3.internal.ws.WebSocketProtocol.OPCODE_BINARY;
 import static okhttp3.internal.ws.WebSocketProtocol.OPCODE_TEXT;
+import static okhttp3.internal.ws.WebSocketProtocol.validateCloseCode;
 
 public final class RealWebSocket implements WebSocket, WebSocketReader.FrameCallback {
   private static final List<Protocol> ONLY_HTTP1 = Collections.singletonList(Protocol.HTTP_1_1);

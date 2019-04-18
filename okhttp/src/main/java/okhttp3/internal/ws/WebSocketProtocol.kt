@@ -96,7 +96,7 @@ object WebSocketProtocol {
   internal const val CLOSE_NO_STATUS_CODE = 1005
 
   @JvmStatic
-  internal fun toggleMask(cursor: Buffer.UnsafeCursor, key: ByteArray) {
+  fun toggleMask(cursor: Buffer.UnsafeCursor, key: ByteArray) {
     var keyIndex = 0
     val keyLength = key.size
     do {
@@ -121,7 +121,7 @@ object WebSocketProtocol {
   }
 
   @JvmStatic
-  internal fun closeCodeExceptionMessage(code: Int): String? {
+  fun closeCodeExceptionMessage(code: Int): String? {
     return if (code < 1000 || code >= 5000) {
       "Code must be in range [1000,5000): $code"
     } else if (code in 1004..1006 || code in 1012..2999) {
@@ -132,7 +132,7 @@ object WebSocketProtocol {
   }
 
   @JvmStatic
-  internal fun validateCloseCode(code: Int) {
+  fun validateCloseCode(code: Int) {
     val message = closeCodeExceptionMessage(code)
     if (message != null) {
       throw IllegalArgumentException(message)
