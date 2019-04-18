@@ -17,7 +17,6 @@ package okhttp3.internal.ws
 
 import okio.Buffer
 import okio.ByteString.Companion.encodeUtf8
-import kotlin.experimental.xor
 
 object WebSocketProtocol {
   /** Magic value which must be appended to the key in a response header.  */
@@ -107,7 +106,13 @@ object WebSocketProtocol {
       if (buffer != null) {
         while (i < end) {
           keyIndex %= keyLength // Reassign to prevent overflow breaking counter.
-          buffer[i] = (buffer[i] xor key[keyIndex])
+
+          // Byte xor is experimental in Kotlin so we coerce bytes to int, xor them
+          // and convert back to byte.
+          val bufferInt: Int = buffer[i].toInt()
+          val keyInt: Int = key[keyIndex].toInt()
+          buffer[i] = (bufferInt xor keyInt).toByte()
+
           i++
           keyIndex++
         }
