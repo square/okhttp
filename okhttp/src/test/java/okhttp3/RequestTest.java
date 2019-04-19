@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.util.UUID;
 import okio.Buffer;
+import okio.ByteString;
 import org.junit.Test;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
@@ -72,6 +73,16 @@ public final class RequestTest {
     assertThat(bodyToHex(body)).isEqualTo("616263");
     assertThat(bodyToHex(body)).overridingErrorMessage("Retransmit body").isEqualTo(
         "616263");
+  }
+
+  @Test public void byteString() throws Exception {
+    MediaType contentType = MediaType.get("text/plain");
+    RequestBody body = RequestBody.create(contentType, ByteString.encodeUtf8("Hello"));
+    assertThat(body.contentType()).isEqualTo(contentType);
+    assertThat(body.contentLength()).isEqualTo(5);
+    assertThat(bodyToHex(body)).isEqualTo("48656c6c6f");
+    assertThat(bodyToHex(body)).overridingErrorMessage("Retransmit body").isEqualTo(
+        "48656c6c6f");
   }
 
   @Test public void file() throws Exception {
