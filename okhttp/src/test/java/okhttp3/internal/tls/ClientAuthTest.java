@@ -200,7 +200,7 @@ public final class ClientAuthTest {
     } catch (SSLHandshakeException expected) {
     } catch (SSLException expected) {
       String jvmVersion = System.getProperty("java.specification.version");
-      assertThat(jvmVersion).isEqualTo("11");
+      assertThat(jvmVersion).matches("1[123]");
     } catch (SocketException expected) {
       assertThat(getPlatformSystemProperty()).isEqualTo("jdk9");
     }
@@ -233,7 +233,7 @@ public final class ClientAuthTest {
   @Test public void invalidClientAuthFails() throws Throwable {
     // TODO https://github.com/square/okhttp/issues/4598
     // StreamReset stream was reset: PROT...
-    assumeFalse(getJvmSpecVersion().equals("11"));
+    assumeFalse(getJvmSpecVersion().matches("1[123]"));
 
     HeldCertificate clientCert2 = new HeldCertificate.Builder()
         .serialNumber(4L)
@@ -256,7 +256,7 @@ public final class ClientAuthTest {
     } catch (SSLException expected) {
       // javax.net.ssl.SSLException: readRecord
       String jvmVersion = System.getProperty("java.specification.version");
-      assertThat(jvmVersion).isEqualTo("11");
+      assertThat(jvmVersion).matches("1[123]");
     } catch (SocketException expected) {
       assertThat(getPlatformSystemProperty()).isEqualTo("jdk9");
     }
