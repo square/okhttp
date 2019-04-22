@@ -152,6 +152,7 @@ subprojects { project ->
     options.errorprone {
       check("MissingFail", CheckSeverity.ERROR)
       check("MissingOverride", CheckSeverity.ERROR)
+      enabled = JavaVersion.current() < JavaVersion.VERSION_11
     }
   }
 
