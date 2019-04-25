@@ -13,9 +13,10 @@ install:
   - ./mvnw dependency:resolve -B || true
 
 script:
+  - ./mvnw install -DskipTests
   - ./mvnw checkstyle:check -B
   - ./mvnw test -B
-  - ./mvnw javadoc:jar source:jar -B || true
+  - ./mvnw javadoc:jar source:jar -B
 
 after_success:
   - .buildscript/deploy_snapshot.sh
