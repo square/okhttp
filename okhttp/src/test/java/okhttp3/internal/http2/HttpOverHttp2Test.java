@@ -27,6 +27,7 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
@@ -1413,7 +1414,7 @@ public final class HttpOverHttp2Test {
         .setSocketPolicy(SocketPolicy.DISCONNECT_AT_END)
         .setBody("DEF"));
 
-    BlockingQueue<String> bodies = new SynchronousQueue<>();
+    BlockingQueue<String> bodies = new LinkedBlockingQueue<>();
     Callback callback = new Callback() {
       @Override public void onResponse(Call call, Response response) throws IOException {
         bodies.add(response.body().string());
