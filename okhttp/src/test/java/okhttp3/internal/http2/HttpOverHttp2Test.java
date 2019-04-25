@@ -933,7 +933,7 @@ public final class HttpOverHttp2Test {
     assertThat(server.takeRequest().getSequenceNumber()).isEqualTo(2);
   }
 
-  private class RespondAfterCancelDispatcher extends QueueDispatcher {
+  private static class RespondAfterCancelDispatcher extends QueueDispatcher {
     final private List<CountDownLatch> responseDequeuedLatches;
     final private List<CountDownLatch> requestCanceledLatches;
     private int responseIndex = 0;
