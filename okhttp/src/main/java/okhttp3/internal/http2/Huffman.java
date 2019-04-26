@@ -169,7 +169,7 @@ class Huffman {
     }
   }
 
-  private void addCode(int sym, int code, byte len) {
+  private void addCode(int sym, int code, int len) {
     Node terminal = new Node(sym, len);
 
     Node current = root;

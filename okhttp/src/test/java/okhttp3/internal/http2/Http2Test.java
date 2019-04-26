@@ -217,7 +217,7 @@ public final class Http2Test {
     frame.writeByte(Http2.TYPE_RST_STREAM);
     frame.writeByte(Http2.FLAG_NONE);
     frame.writeInt(expectedStreamId & 0x7fffffff);
-    frame.writeInt(ErrorCode.PROTOCOL_ERROR.httpCode);
+    frame.writeInt(ErrorCode.PROTOCOL_ERROR.getHttpCode());
 
     reader.nextFrame(false, new BaseTestHandler() {
       @Override public void rstStream(int streamId, ErrorCode errorCode) {
@@ -604,7 +604,7 @@ public final class Http2Test {
     frame.writeByte(Http2.FLAG_NONE);
     frame.writeInt(0); // connection-scope
     frame.writeInt(expectedStreamId); // last good stream.
-    frame.writeInt(expectedError.httpCode);
+    frame.writeInt(expectedError.getHttpCode());
 
     // Check writer sends the same bytes.
     assertThat(sendGoAway(expectedStreamId, expectedError, Util.EMPTY_BYTE_ARRAY)).isEqualTo(
@@ -630,7 +630,7 @@ public final class Http2Test {
     frame.writeByte(Http2.FLAG_NONE);
     frame.writeInt(0); // connection-scope
     frame.writeInt(0); // never read any stream!
-    frame.writeInt(expectedError.httpCode);
+    frame.writeInt(expectedError.getHttpCode());
     frame.write(expectedData.toByteArray());
 
     // Check writer sends the same bytes.
