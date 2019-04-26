@@ -13,115 +13,114 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package okhttp3.internal.http2;
-
-import java.util.Arrays;
+package okhttp3.internal.http2
 
 /**
  * Settings describe characteristics of the sending peer, which are used by the receiving peer.
- * Settings are {@link Http2Connection connection} scoped.
+ * Settings are [connection][Http2Connection] scoped.
  */
-public final class Settings {
-  /**
-   * From the HTTP/2 specs, the default initial window size for all streams is 64 KiB. (Chrome 25
-   * uses 10 MiB).
-   */
-  static final int DEFAULT_INITIAL_WINDOW_SIZE = 65535;
+class Settings {
 
-  /** HTTP/2: Size in bytes of the table used to decode the sender's header blocks. */
-  static final int HEADER_TABLE_SIZE = 1;
-  /** HTTP/2: The peer must not send a PUSH_PROMISE frame when this is 0. */
-  static final int ENABLE_PUSH = 2;
-  /** Sender's maximum number of concurrent streams. */
-  static final int MAX_CONCURRENT_STREAMS = 4;
-  /** HTTP/2: Size in bytes of the largest frame payload the sender will accept. */
-  static final int MAX_FRAME_SIZE = 5;
-  /** HTTP/2: Advisory only. Size in bytes of the largest header list the sender will accept. */
-  static final int MAX_HEADER_LIST_SIZE = 6;
-  /** Window size in bytes. */
-  static final int INITIAL_WINDOW_SIZE = 7;
+  /** Bitfield of which flags that values.  */
+  private var set: Int = 0
 
-  /** Total number of settings. */
-  static final int COUNT = 10;
+  /** Flag values.  */
+  private val values = IntArray(COUNT)
 
-  /** Bitfield of which flags that values. */
-  private int set;
-
-  /** Flag values. */
-  private final int[] values = new int[COUNT];
-
-  void clear() {
-    set = 0;
-    Arrays.fill(values, 0);
-  }
-
-  Settings set(int id, int value) {
-    if (id < 0 || id >= values.length) {
-      return this; // Discard unknown settings.
+  /** Returns -1 if unset.  */
+  val headerTableSize: Int
+    get() {
+      val bit = 1 shl HEADER_TABLE_SIZE
+      return if (bit and set != 0) values[HEADER_TABLE_SIZE] else -1
     }
 
-    int bit = 1 << id;
-    set |= bit;
-    values[id] = value;
-    return this;
+  val initialWindowSize: Int
+    get() {
+      val bit = 1 shl INITIAL_WINDOW_SIZE
+      return if (bit and set != 0) values[INITIAL_WINDOW_SIZE] else DEFAULT_INITIAL_WINDOW_SIZE
+    }
+
+  fun clear() {
+    set = 0
+    values.fill(0)
   }
 
-  /** Returns true if a value has been assigned for the setting {@code id}. */
-  boolean isSet(int id) {
-    int bit = 1 << id;
-    return (set & bit) != 0;
+  operator fun set(id: Int, value: Int): Settings {
+    if (id < 0 || id >= values.size) {
+      return this // Discard unknown settings.
+    }
+
+    val bit = 1 shl id
+    set = set or bit
+    values[id] = value
+    return this
   }
 
-  /** Returns the value for the setting {@code id}, or 0 if unset. */
-  int get(int id) {
-    return values[id];
+  /** Returns true if a value has been assigned for the setting `id`.  */
+  fun isSet(id: Int): Boolean {
+    val bit = 1 shl id
+    return set and bit != 0
   }
 
-  /** Returns the number of settings that have values assigned. */
-  int size() {
-    return Integer.bitCount(set);
-  }
+  /** Returns the value for the setting `id`, or 0 if unset.  */
+  operator fun get(id: Int): Int = values[id]
 
-  /** Returns -1 if unset. */
-  int getHeaderTableSize() {
-    int bit = 1 << HEADER_TABLE_SIZE;
-    return (bit & set) != 0 ? values[HEADER_TABLE_SIZE] : -1;
-  }
+  /** Returns the number of settings that have values assigned.  */
+  fun size(): Int = Integer.bitCount(set)
 
   // TODO: honor this setting.
-  boolean getEnablePush(boolean defaultValue) {
-    int bit = 1 << ENABLE_PUSH;
-    return ((bit & set) != 0 ? values[ENABLE_PUSH] : defaultValue ? 1 : 0) == 1;
+  fun getEnablePush(defaultValue: Boolean): Boolean {
+    val bit = 1 shl ENABLE_PUSH
+    return if (bit and set != 0) values[ENABLE_PUSH] == 1 else defaultValue
   }
 
-  int getMaxConcurrentStreams(int defaultValue) {
-    int bit = 1 << MAX_CONCURRENT_STREAMS;
-    return (bit & set) != 0 ? values[MAX_CONCURRENT_STREAMS] : defaultValue;
+  fun getMaxConcurrentStreams(defaultValue: Int): Int {
+    val bit = 1 shl MAX_CONCURRENT_STREAMS
+    return if (bit and set != 0) values[MAX_CONCURRENT_STREAMS] else defaultValue
   }
 
-  int getMaxFrameSize(int defaultValue) {
-    int bit = 1 << MAX_FRAME_SIZE;
-    return (bit & set) != 0 ? values[MAX_FRAME_SIZE] : defaultValue;
+  fun getMaxFrameSize(defaultValue: Int): Int {
+    val bit = 1 shl MAX_FRAME_SIZE
+    return if (bit and set != 0) values[MAX_FRAME_SIZE] else defaultValue
   }
 
-  int getMaxHeaderListSize(int defaultValue) {
-    int bit = 1 << MAX_HEADER_LIST_SIZE;
-    return (bit & set) != 0 ? values[MAX_HEADER_LIST_SIZE] : defaultValue;
-  }
-
-  int getInitialWindowSize() {
-    int bit = 1 << INITIAL_WINDOW_SIZE;
-    return (bit & set) != 0 ? values[INITIAL_WINDOW_SIZE] : DEFAULT_INITIAL_WINDOW_SIZE;
+  fun getMaxHeaderListSize(defaultValue: Int): Int {
+    val bit = 1 shl MAX_HEADER_LIST_SIZE
+    return if (bit and set != 0) values[MAX_HEADER_LIST_SIZE] else defaultValue
   }
 
   /**
-   * Writes {@code other} into this. If any setting is populated by this and {@code other}, the
-   * value and flags from {@code other} will be kept.
+   * Writes `other` into this. If any setting is populated by this and `other`, the
+   * value and flags from `other` will be kept.
    */
-  void merge(Settings other) {
-    for (int i = 0; i < COUNT; i++) {
-      if (!other.isSet(i)) continue;
-      set(i, other.get(i));
+  fun merge(other: Settings) {
+    for (i in 0 until COUNT) {
+      if (!other.isSet(i)) continue
+      set(i, other[i])
     }
+  }
+
+  companion object {
+    /**
+     * From the HTTP/2 specs, the default initial window size for all streams is 64 KiB. (Chrome 25
+     * uses 10 MiB).
+     */
+    const val DEFAULT_INITIAL_WINDOW_SIZE = 65535
+
+    /** HTTP/2: Size in bytes of the table used to decode the sender's header blocks.  */
+    const val HEADER_TABLE_SIZE = 1
+    /** HTTP/2: The peer must not send a PUSH_PROMISE frame when this is 0.  */
+    const val ENABLE_PUSH = 2
+    /** Sender's maximum number of concurrent streams.  */
+    const val MAX_CONCURRENT_STREAMS = 4
+    /** HTTP/2: Size in bytes of the largest frame payload the sender will accept.  */
+    const val MAX_FRAME_SIZE = 5
+    /** HTTP/2: Advisory only. Size in bytes of the largest header list the sender will accept.  */
+    const val MAX_HEADER_LIST_SIZE = 6
+    /** Window size in bytes.  */
+    const val INITIAL_WINDOW_SIZE = 7
+
+    /** Total number of settings.  */
+    const val COUNT = 10
   }
 }

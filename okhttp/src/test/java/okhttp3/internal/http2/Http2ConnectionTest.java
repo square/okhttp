@@ -134,8 +134,8 @@ public final class Http2ConnectionTest {
     // Verify the peer's settings were read and applied.
     assertThat(connection.peerSettings.getHeaderTableSize()).isEqualTo(0);
     Http2Writer writer = connection.writer;
-    assertThat(writer.hpackWriter.dynamicTableByteCount).isEqualTo(0);
-    assertThat(writer.hpackWriter.headerTableSizeSetting).isEqualTo(0);
+    assertThat(writer.getHpackWriter().dynamicTableByteCount).isEqualTo(0);
+    assertThat(writer.getHpackWriter().headerTableSizeSetting).isEqualTo(0);
   }
 
   @Test public void peerHttp2ClientDisablesPush() throws Exception {

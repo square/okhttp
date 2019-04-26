@@ -13,89 +13,78 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package okhttp3.internal.http2;
+package okhttp3.internal.http2
 
-import java.io.Closeable;
-import java.io.EOFException;
-import java.io.IOException;
-import java.util.List;
-import java.util.logging.Logger;
-import okio.Buffer;
-import okio.BufferedSource;
-import okio.ByteString;
-import okio.Source;
-import okio.Timeout;
-
-import static java.util.logging.Level.FINE;
-import static okhttp3.internal.Util.format;
-import static okhttp3.internal.http2.Http2.CONNECTION_PREFACE;
-import static okhttp3.internal.http2.Http2.FLAG_ACK;
-import static okhttp3.internal.http2.Http2.FLAG_COMPRESSED;
-import static okhttp3.internal.http2.Http2.FLAG_END_HEADERS;
-import static okhttp3.internal.http2.Http2.FLAG_END_STREAM;
-import static okhttp3.internal.http2.Http2.FLAG_PADDED;
-import static okhttp3.internal.http2.Http2.FLAG_PRIORITY;
-import static okhttp3.internal.http2.Http2.INITIAL_MAX_FRAME_SIZE;
-import static okhttp3.internal.http2.Http2.TYPE_CONTINUATION;
-import static okhttp3.internal.http2.Http2.TYPE_DATA;
-import static okhttp3.internal.http2.Http2.TYPE_GOAWAY;
-import static okhttp3.internal.http2.Http2.TYPE_HEADERS;
-import static okhttp3.internal.http2.Http2.TYPE_PING;
-import static okhttp3.internal.http2.Http2.TYPE_PRIORITY;
-import static okhttp3.internal.http2.Http2.TYPE_PUSH_PROMISE;
-import static okhttp3.internal.http2.Http2.TYPE_RST_STREAM;
-import static okhttp3.internal.http2.Http2.TYPE_SETTINGS;
-import static okhttp3.internal.http2.Http2.TYPE_WINDOW_UPDATE;
-import static okhttp3.internal.http2.Http2.frameLog;
-import static okhttp3.internal.http2.Http2.ioException;
-import static okio.ByteString.EMPTY;
+import okhttp3.internal.Util.format
+import okhttp3.internal.and
+import okhttp3.internal.http2.Http2.CONNECTION_PREFACE
+import okhttp3.internal.http2.Http2.FLAG_ACK
+import okhttp3.internal.http2.Http2.FLAG_COMPRESSED
+import okhttp3.internal.http2.Http2.FLAG_END_HEADERS
+import okhttp3.internal.http2.Http2.FLAG_END_STREAM
+import okhttp3.internal.http2.Http2.FLAG_PADDED
+import okhttp3.internal.http2.Http2.FLAG_PRIORITY
+import okhttp3.internal.http2.Http2.INITIAL_MAX_FRAME_SIZE
+import okhttp3.internal.http2.Http2.TYPE_CONTINUATION
+import okhttp3.internal.http2.Http2.TYPE_DATA
+import okhttp3.internal.http2.Http2.TYPE_GOAWAY
+import okhttp3.internal.http2.Http2.TYPE_HEADERS
+import okhttp3.internal.http2.Http2.TYPE_PING
+import okhttp3.internal.http2.Http2.TYPE_PRIORITY
+import okhttp3.internal.http2.Http2.TYPE_PUSH_PROMISE
+import okhttp3.internal.http2.Http2.TYPE_RST_STREAM
+import okhttp3.internal.http2.Http2.TYPE_SETTINGS
+import okhttp3.internal.http2.Http2.TYPE_WINDOW_UPDATE
+import okhttp3.internal.http2.Http2.frameLog
+import okhttp3.internal.readMedium
+import okio.Buffer
+import okio.BufferedSource
+import okio.ByteString
+import okio.Source
+import okio.Timeout
+import java.io.Closeable
+import java.io.EOFException
+import java.io.IOException
+import java.util.logging.Level.FINE
+import java.util.logging.Logger
 
 /**
  * Reads HTTP/2 transport frames.
  *
- * <p>This implementation assumes we do not send an increased {@link Settings#getMaxFrameSize frame
- * size setting} to the peer. Hence, we expect all frames to have a max length of {@link
- * Http2#INITIAL_MAX_FRAME_SIZE}.
+ * This implementation assumes we do not send an increased [frame][Settings.getMaxFrameSize] to the
+ * peer. Hence, we expect all frames to have a max length of [Http2.INITIAL_MAX_FRAME_SIZE].
  */
-final class Http2Reader implements Closeable {
-  static final Logger logger = Logger.getLogger(Http2.class.getName());
+internal class Http2Reader(
+  /** Creates a frame reader with max header table size of 4096.  */
+  private val source: BufferedSource,
+  private val client: Boolean
+) : Closeable {
+  private val continuation: ContinuationSource = ContinuationSource(this.source)
+  val hpackReader: Hpack.Reader = Hpack.Reader(4096, continuation)
 
-  private final BufferedSource source;
-  private final ContinuationSource continuation;
-  private final boolean client;
-
-  // Visible for testing.
-  final Hpack.Reader hpackReader;
-
-  /** Creates a frame reader with max header table size of 4096. */
-  Http2Reader(BufferedSource source, boolean client) {
-    this.source = source;
-    this.client = client;
-    this.continuation = new ContinuationSource(this.source);
-    this.hpackReader = new Hpack.Reader(4096, continuation);
-  }
-
-  public void readConnectionPreface(Handler handler) throws IOException {
+  @Throws(IOException::class)
+  fun readConnectionPreface(handler: Handler) {
     if (client) {
       // The client reads the initial SETTINGS frame.
       if (!nextFrame(true, handler)) {
-        throw ioException("Required SETTINGS preface not received");
+        throw IOException("Required SETTINGS preface not received")
       }
     } else {
       // The server reads the CONNECTION_PREFACE byte string.
-      ByteString connectionPreface = source.readByteString(CONNECTION_PREFACE.size());
-      if (logger.isLoggable(FINE)) logger.fine(format("<< CONNECTION %s", connectionPreface.hex()));
-      if (!CONNECTION_PREFACE.equals(connectionPreface)) {
-        throw ioException("Expected a connection header but was %s", connectionPreface.utf8());
+      val connectionPreface = source.readByteString(Http2.CONNECTION_PREFACE.size.toLong())
+      if (logger.isLoggable(FINE)) logger.fine(format("<< CONNECTION ${connectionPreface.hex()}"))
+      if (CONNECTION_PREFACE != connectionPreface) {
+        throw IOException("Expected a connection header but was ${connectionPreface.utf8()}")
       }
     }
   }
 
-  public boolean nextFrame(boolean requireSettings, Handler handler) throws IOException {
+  @Throws(IOException::class)
+  fun nextFrame(requireSettings: Boolean, handler: Handler): Boolean {
     try {
-      source.require(9); // Frame header size
-    } catch (EOFException e) {
-      return false; // This might be a normal socket close.
+      source.require(9) // Frame header size.
+    } catch (e: EOFException) {
+      return false // This might be a normal socket close.
     }
 
     //  0                   1                   2                   3
@@ -109,311 +98,274 @@ final class Http2Reader implements Closeable {
     // +=+=============================================================+
     // |                   Frame Payload (0...)                      ...
     // +---------------------------------------------------------------+
-    int length = readMedium(source);
-    if (length < 0 || length > INITIAL_MAX_FRAME_SIZE) {
-      throw ioException("FRAME_SIZE_ERROR: %s", length);
+    val length = source.readMedium()
+    if (length > INITIAL_MAX_FRAME_SIZE) {
+      throw IOException("FRAME_SIZE_ERROR: $length")
     }
-    byte type = (byte) (source.readByte() & 0xff);
+    val type = source.readByte() and 0xff
     if (requireSettings && type != TYPE_SETTINGS) {
-      throw ioException("Expected a SETTINGS frame but was %s", type);
+      throw IOException("Expected a SETTINGS frame but was $type")
     }
-    byte flags = (byte) (source.readByte() & 0xff);
-    int streamId = (source.readInt() & 0x7fffffff); // Ignore reserved bit.
-    if (logger.isLoggable(FINE)) logger.fine(frameLog(true, streamId, length, type, flags));
+    val flags = source.readByte() and 0xff
+    val streamId = source.readInt() and 0x7fffffff // Ignore reserved bit.
+    if (logger.isLoggable(FINE)) logger.fine(frameLog(true, streamId, length, type, flags))
 
-    switch (type) {
-      case TYPE_DATA:
-        readData(handler, length, flags, streamId);
-        break;
-
-      case TYPE_HEADERS:
-        readHeaders(handler, length, flags, streamId);
-        break;
-
-      case TYPE_PRIORITY:
-        readPriority(handler, length, flags, streamId);
-        break;
-
-      case TYPE_RST_STREAM:
-        readRstStream(handler, length, flags, streamId);
-        break;
-
-      case TYPE_SETTINGS:
-        readSettings(handler, length, flags, streamId);
-        break;
-
-      case TYPE_PUSH_PROMISE:
-        readPushPromise(handler, length, flags, streamId);
-        break;
-
-      case TYPE_PING:
-        readPing(handler, length, flags, streamId);
-        break;
-
-      case TYPE_GOAWAY:
-        readGoAway(handler, length, flags, streamId);
-        break;
-
-      case TYPE_WINDOW_UPDATE:
-        readWindowUpdate(handler, length, flags, streamId);
-        break;
-
-      default:
-        // Implementations MUST discard frames that have unknown or unsupported types.
-        source.skip(length);
+    when (type) {
+      TYPE_DATA -> readData(handler, length, flags, streamId)
+      TYPE_HEADERS -> readHeaders(handler, length, flags, streamId)
+      TYPE_PRIORITY -> readPriority(handler, length, flags, streamId)
+      TYPE_RST_STREAM -> readRstStream(handler, length, flags, streamId)
+      TYPE_SETTINGS -> readSettings(handler, length, flags, streamId)
+      TYPE_PUSH_PROMISE -> readPushPromise(handler, length, flags, streamId)
+      TYPE_PING -> readPing(handler, length, flags, streamId)
+      TYPE_GOAWAY -> readGoAway(handler, length, flags, streamId)
+      TYPE_WINDOW_UPDATE -> readWindowUpdate(handler, length, flags, streamId)
+      else -> source.skip(length.toLong()) // Implementations MUST discard frames of unknown types.
     }
-    return true;
+
+    return true
   }
 
-  private void readHeaders(Handler handler, int length, byte flags, int streamId)
-      throws IOException {
-    if (streamId == 0) throw ioException("PROTOCOL_ERROR: TYPE_HEADERS streamId == 0");
+  @Throws(IOException::class)
+  private fun readHeaders(handler: Handler, length: Int, flags: Int, streamId: Int) {
+    if (streamId == 0) throw IOException("PROTOCOL_ERROR: TYPE_HEADERS streamId == 0")
 
-    boolean endStream = (flags & FLAG_END_STREAM) != 0;
+    val endStream = (flags and FLAG_END_STREAM) != 0
+    val padding = if (flags and FLAG_PADDED != 0) source.readByte() and 0xff else 0
 
-    short padding = (flags & FLAG_PADDED) != 0 ? (short) (source.readByte() & 0xff) : 0;
-
-    if ((flags & FLAG_PRIORITY) != 0) {
-      readPriority(handler, streamId);
-      length -= 5; // account for above read.
+    var headerBlockLength = length
+    if (flags and FLAG_PRIORITY != 0) {
+      readPriority(handler, streamId)
+      headerBlockLength -= 5 // account for above read.
     }
+    headerBlockLength = lengthWithoutPadding(headerBlockLength, flags, padding)
+    val headerBlock = readHeaderBlock(headerBlockLength, padding, flags, streamId)
 
-    length = lengthWithoutPadding(length, flags, padding);
-
-    List<Header> headerBlock = readHeaderBlock(length, padding, flags, streamId);
-
-    handler.headers(endStream, streamId, -1, headerBlock);
+    handler.headers(endStream, streamId, -1, headerBlock)
   }
 
-  private List<Header> readHeaderBlock(int length, short padding, byte flags, int streamId)
-      throws IOException {
-    continuation.length = continuation.left = length;
-    continuation.padding = padding;
-    continuation.flags = flags;
-    continuation.streamId = streamId;
+  @Throws(IOException::class)
+  private fun readHeaderBlock(length: Int, padding: Int, flags: Int, streamId: Int): List<Header> {
+    continuation.left = length
+    continuation.length = continuation.left
+    continuation.padding = padding
+    continuation.flags = flags
+    continuation.streamId = streamId
 
     // TODO: Concat multi-value headers with 0x0, except COOKIE, which uses 0x3B, 0x20.
     // http://tools.ietf.org/html/draft-ietf-httpbis-http2-17#section-8.1.2.5
-    hpackReader.readHeaders();
-    return hpackReader.getAndResetHeaderList();
+    hpackReader.readHeaders()
+    return hpackReader.getAndResetHeaderList()
   }
 
-  private void readData(Handler handler, int length, byte flags, int streamId)
-      throws IOException {
-    if (streamId == 0) throw ioException("PROTOCOL_ERROR: TYPE_DATA streamId == 0");
+  @Throws(IOException::class)
+  private fun readData(handler: Handler, length: Int, flags: Int, streamId: Int) {
+    if (streamId == 0) throw IOException("PROTOCOL_ERROR: TYPE_DATA streamId == 0")
 
     // TODO: checkState open or half-closed (local) or raise STREAM_CLOSED
-    boolean inFinished = (flags & FLAG_END_STREAM) != 0;
-    boolean gzipped = (flags & FLAG_COMPRESSED) != 0;
+    val inFinished = flags and FLAG_END_STREAM != 0
+    val gzipped = flags and FLAG_COMPRESSED != 0
     if (gzipped) {
-      throw ioException("PROTOCOL_ERROR: FLAG_COMPRESSED without SETTINGS_COMPRESS_DATA");
+      throw IOException("PROTOCOL_ERROR: FLAG_COMPRESSED without SETTINGS_COMPRESS_DATA")
     }
 
-    short padding = (flags & FLAG_PADDED) != 0 ? (short) (source.readByte() & 0xff) : 0;
-    length = lengthWithoutPadding(length, flags, padding);
+    val padding = if (flags and FLAG_PADDED != 0) source.readByte() and 0xff else 0
+    val dataLength = lengthWithoutPadding(length, flags, padding)
 
-    handler.data(inFinished, streamId, source, length);
-    source.skip(padding);
+    handler.data(inFinished, streamId, source, dataLength)
+    source.skip(padding.toLong())
   }
 
-  private void readPriority(Handler handler, int length, byte flags, int streamId)
-      throws IOException {
-    if (length != 5) throw ioException("TYPE_PRIORITY length: %d != 5", length);
-    if (streamId == 0) throw ioException("TYPE_PRIORITY streamId == 0");
-    readPriority(handler, streamId);
+  @Throws(IOException::class)
+  private fun readPriority(handler: Handler, length: Int, flags: Int, streamId: Int) {
+    if (length != 5) throw IOException("TYPE_PRIORITY length: $length != 5")
+    if (streamId == 0) throw IOException("TYPE_PRIORITY streamId == 0")
+    readPriority(handler, streamId)
   }
 
-  private void readPriority(Handler handler, int streamId) throws IOException {
-    int w1 = source.readInt();
-    boolean exclusive = (w1 & 0x80000000) != 0;
-    int streamDependency = (w1 & 0x7fffffff);
-    int weight = (source.readByte() & 0xff) + 1;
-    handler.priority(streamId, streamDependency, weight, exclusive);
+  @Throws(IOException::class)
+  private fun readPriority(handler: Handler, streamId: Int) {
+    val w1 = source.readInt()
+    val exclusive = w1 and 0x80000000.toInt() != 0
+    val streamDependency = w1 and 0x7fffffff
+    val weight = (source.readByte() and 0xff) + 1
+    handler.priority(streamId, streamDependency, weight, exclusive)
   }
 
-  private void readRstStream(Handler handler, int length, byte flags, int streamId)
-      throws IOException {
-    if (length != 4) throw ioException("TYPE_RST_STREAM length: %d != 4", length);
-    if (streamId == 0) throw ioException("TYPE_RST_STREAM streamId == 0");
-    int errorCodeInt = source.readInt();
-    ErrorCode errorCode = ErrorCode.fromHttp2(errorCodeInt);
-    if (errorCode == null) {
-      throw ioException("TYPE_RST_STREAM unexpected error code: %d", errorCodeInt);
+  @Throws(IOException::class)
+  private fun readRstStream(handler: Handler, length: Int, flags: Int, streamId: Int) {
+    if (length != 4) throw IOException("TYPE_RST_STREAM length: $length != 4")
+    if (streamId == 0) throw IOException("TYPE_RST_STREAM streamId == 0")
+    val errorCodeInt = source.readInt()
+    val errorCode = ErrorCode.fromHttp2(errorCodeInt) ?: throw IOException(
+        "TYPE_RST_STREAM unexpected error code: $errorCodeInt")
+    handler.rstStream(streamId, errorCode)
+  }
+
+  @Throws(IOException::class)
+  private fun readSettings(handler: Handler, length: Int, flags: Int, streamId: Int) {
+    if (streamId != 0) throw IOException("TYPE_SETTINGS streamId != 0")
+    if (flags and FLAG_ACK != 0) {
+      if (length != 0) throw IOException("FRAME_SIZE_ERROR ack frame should be empty!")
+      handler.ackSettings()
+      return
     }
-    handler.rstStream(streamId, errorCode);
-  }
 
-  private void readSettings(Handler handler, int length, byte flags, int streamId)
-      throws IOException {
-    if (streamId != 0) throw ioException("TYPE_SETTINGS streamId != 0");
-    if ((flags & FLAG_ACK) != 0) {
-      if (length != 0) throw ioException("FRAME_SIZE_ERROR ack frame should be empty!");
-      handler.ackSettings();
-      return;
-    }
+    if (length % 6 != 0) throw IOException("TYPE_SETTINGS length % 6 != 0: $length")
+    val settings = Settings()
+    for (i in 0 until length step 6) {
+      var id = source.readShort() and 0xffff
+      val value = source.readInt()
 
-    if (length % 6 != 0) throw ioException("TYPE_SETTINGS length %% 6 != 0: %s", length);
-    Settings settings = new Settings();
-    for (int i = 0; i < length; i += 6) {
-      int id = source.readShort() & 0xFFFF;
-      int value = source.readInt();
+      when (id) {
+        // SETTINGS_HEADER_TABLE_SIZE
+        1 -> {
+        }
 
-      switch (id) {
-        case 1: // SETTINGS_HEADER_TABLE_SIZE
-          break;
-        case 2: // SETTINGS_ENABLE_PUSH
+        // SETTINGS_ENABLE_PUSH
+        2 -> {
           if (value != 0 && value != 1) {
-            throw ioException("PROTOCOL_ERROR SETTINGS_ENABLE_PUSH != 0 or 1");
+            throw IOException("PROTOCOL_ERROR SETTINGS_ENABLE_PUSH != 0 or 1")
           }
-          break;
-        case 3: // SETTINGS_MAX_CONCURRENT_STREAMS
-          id = 4; // Renumbered in draft 10.
-          break;
-        case 4: // SETTINGS_INITIAL_WINDOW_SIZE
-          id = 7; // Renumbered in draft 10.
+        }
+
+        // SETTINGS_MAX_CONCURRENT_STREAMS
+        3 -> id = 4 // Renumbered in draft 10.
+
+        // SETTINGS_INITIAL_WINDOW_SIZE
+        4 -> {
+          id = 7 // Renumbered in draft 10.
           if (value < 0) {
-            throw ioException("PROTOCOL_ERROR SETTINGS_INITIAL_WINDOW_SIZE > 2^31 - 1");
+            throw IOException("PROTOCOL_ERROR SETTINGS_INITIAL_WINDOW_SIZE > 2^31 - 1")
           }
-          break;
-        case 5: // SETTINGS_MAX_FRAME_SIZE
+        }
+
+        // SETTINGS_MAX_FRAME_SIZE
+        5 -> {
           if (value < INITIAL_MAX_FRAME_SIZE || value > 16777215) {
-            throw ioException("PROTOCOL_ERROR SETTINGS_MAX_FRAME_SIZE: %s", value);
+            throw IOException("PROTOCOL_ERROR SETTINGS_MAX_FRAME_SIZE: $value")
           }
-          break;
-        case 6: // SETTINGS_MAX_HEADER_LIST_SIZE
-          break; // Advisory only, so ignored.
-        default:
-          break; // Must ignore setting with unknown id.
+        }
+
+        // SETTINGS_MAX_HEADER_LIST_SIZE
+        6 -> { // Advisory only, so ignored.
+        }
+
+        // Must ignore setting with unknown id.
+        else -> {
+        }
       }
-      settings.set(id, value);
+      settings[id] = value
     }
-    handler.settings(false, settings);
+    handler.settings(false, settings)
   }
 
-  private void readPushPromise(Handler handler, int length, byte flags, int streamId)
-      throws IOException {
+  @Throws(IOException::class)
+  private fun readPushPromise(handler: Handler, length: Int, flags: Int, streamId: Int) {
     if (streamId == 0) {
-      throw ioException("PROTOCOL_ERROR: TYPE_PUSH_PROMISE streamId == 0");
+      throw IOException("PROTOCOL_ERROR: TYPE_PUSH_PROMISE streamId == 0")
     }
-    short padding = (flags & FLAG_PADDED) != 0 ? (short) (source.readByte() & 0xff) : 0;
-    int promisedStreamId = source.readInt() & 0x7fffffff;
-    length -= 4; // account for above read.
-    length = lengthWithoutPadding(length, flags, padding);
-    List<Header> headerBlock = readHeaderBlock(length, padding, flags, streamId);
-    handler.pushPromise(streamId, promisedStreamId, headerBlock);
+    val padding = if (flags and FLAG_PADDED != 0) source.readByte() and 0xff else 0
+    val promisedStreamId = source.readInt() and 0x7fffffff
+    val headerBlockLength = lengthWithoutPadding(length - 4, flags, padding) // - 4 for readInt().
+    val headerBlock = readHeaderBlock(headerBlockLength, padding, flags, streamId)
+    handler.pushPromise(streamId, promisedStreamId, headerBlock)
   }
 
-  private void readPing(Handler handler, int length, byte flags, int streamId)
-      throws IOException {
-    if (length != 8) throw ioException("TYPE_PING length != 8: %s", length);
-    if (streamId != 0) throw ioException("TYPE_PING streamId != 0");
-    int payload1 = source.readInt();
-    int payload2 = source.readInt();
-    boolean ack = (flags & FLAG_ACK) != 0;
-    handler.ping(ack, payload1, payload2);
+  @Throws(IOException::class)
+  private fun readPing(handler: Handler, length: Int, flags: Int, streamId: Int) {
+    if (length != 8) throw IOException("TYPE_PING length != 8: $length")
+    if (streamId != 0) throw IOException("TYPE_PING streamId != 0")
+    val payload1 = source.readInt()
+    val payload2 = source.readInt()
+    val ack = flags and FLAG_ACK != 0
+    handler.ping(ack, payload1, payload2)
   }
 
-  private void readGoAway(Handler handler, int length, byte flags, int streamId)
-      throws IOException {
-    if (length < 8) throw ioException("TYPE_GOAWAY length < 8: %s", length);
-    if (streamId != 0) throw ioException("TYPE_GOAWAY streamId != 0");
-    int lastStreamId = source.readInt();
-    int errorCodeInt = source.readInt();
-    int opaqueDataLength = length - 8;
-    ErrorCode errorCode = ErrorCode.fromHttp2(errorCodeInt);
-    if (errorCode == null) {
-      throw ioException("TYPE_GOAWAY unexpected error code: %d", errorCodeInt);
-    }
-    ByteString debugData = EMPTY;
+  @Throws(IOException::class)
+  private fun readGoAway(handler: Handler, length: Int, flags: Int, streamId: Int) {
+    if (length < 8) throw IOException("TYPE_GOAWAY length < 8: $length")
+    if (streamId != 0) throw IOException("TYPE_GOAWAY streamId != 0")
+    val lastStreamId = source.readInt()
+    val errorCodeInt = source.readInt()
+    val opaqueDataLength = length - 8
+    val errorCode = ErrorCode.fromHttp2(errorCodeInt) ?: throw IOException(
+        "TYPE_GOAWAY unexpected error code: $errorCodeInt")
+    var debugData = ByteString.EMPTY
     if (opaqueDataLength > 0) { // Must read debug data in order to not corrupt the connection.
-      debugData = source.readByteString(opaqueDataLength);
+      debugData = source.readByteString(opaqueDataLength.toLong())
     }
-    handler.goAway(lastStreamId, errorCode, debugData);
+    handler.goAway(lastStreamId, errorCode, debugData)
   }
 
-  private void readWindowUpdate(Handler handler, int length, byte flags, int streamId)
-      throws IOException {
-    if (length != 4) throw ioException("TYPE_WINDOW_UPDATE length !=4: %s", length);
-    long increment = (source.readInt() & 0x7fffffffL);
-    if (increment == 0) throw ioException("windowSizeIncrement was 0", increment);
-    handler.windowUpdate(streamId, increment);
+  @Throws(IOException::class)
+  private fun readWindowUpdate(handler: Handler, length: Int, flags: Int, streamId: Int) {
+    if (length != 4) throw IOException("TYPE_WINDOW_UPDATE length !=4: $length")
+    val increment = source.readInt() and 0x7fffffffL
+    if (increment == 0L) throw IOException("windowSizeIncrement was 0")
+    handler.windowUpdate(streamId, increment)
   }
 
-  @Override public void close() throws IOException {
-    source.close();
+  @Throws(IOException::class)
+  override fun close() {
+    source.close()
   }
 
   /**
    * Decompression of the header block occurs above the framing layer. This class lazily reads
-   * continuation frames as they are needed by {@link Hpack.Reader#readHeaders()}.
+   * continuation frames as they are needed by [Hpack.Reader.readHeaders].
    */
-  static final class ContinuationSource implements Source {
-    private final BufferedSource source;
+  internal class ContinuationSource(
+    private val source: BufferedSource
+  ) : Source {
 
-    int length;
-    byte flags;
-    int streamId;
+    var length: Int = 0
+    var flags: Int = 0
+    var streamId: Int = 0
 
-    int left;
-    short padding;
+    var left: Int = 0
+    var padding: Int = 0
 
-    ContinuationSource(BufferedSource source) {
-      this.source = source;
-    }
-
-    @Override public long read(Buffer sink, long byteCount) throws IOException {
+    @Throws(IOException::class)
+    override fun read(sink: Buffer, byteCount: Long): Long {
       while (left == 0) {
-        source.skip(padding);
-        padding = 0;
-        if ((flags & FLAG_END_HEADERS) != 0) return -1;
-        readContinuationHeader();
+        source.skip(padding.toLong())
+        padding = 0
+        if (flags and FLAG_END_HEADERS != 0) return -1L
+        readContinuationHeader()
         // TODO: test case for empty continuation header?
       }
 
-      long read = source.read(sink, Math.min(byteCount, left));
-      if (read == -1) return -1;
-      left -= read;
-      return read;
+      val read = source.read(sink, Math.min(byteCount, left.toLong()))
+      if (read == -1L) return -1L
+      left -= read.toInt()
+      return read
     }
 
-    @Override public Timeout timeout() {
-      return source.timeout();
+    override fun timeout(): Timeout = source.timeout()
+
+    @Throws(IOException::class)
+    override fun close() {
     }
 
-    @Override public void close() throws IOException {
-    }
+    @Throws(IOException::class)
+    private fun readContinuationHeader() {
+      val previousStreamId = streamId
 
-    private void readContinuationHeader() throws IOException {
-      int previousStreamId = streamId;
-
-      length = left = readMedium(source);
-      byte type = (byte) (source.readByte() & 0xff);
-      flags = (byte) (source.readByte() & 0xff);
-      if (logger.isLoggable(FINE)) logger.fine(frameLog(true, streamId, length, type, flags));
-      streamId = (source.readInt() & 0x7fffffff);
-      if (type != TYPE_CONTINUATION) throw ioException("%s != TYPE_CONTINUATION", type);
-      if (streamId != previousStreamId) throw ioException("TYPE_CONTINUATION streamId changed");
+      left = source.readMedium()
+      length = left
+      val type = source.readByte() and 0xff
+      flags = source.readByte() and 0xff
+      if (logger.isLoggable(FINE)) logger.fine(frameLog(true, streamId, length, type, flags))
+      streamId = source.readInt() and 0x7fffffff
+      if (type != TYPE_CONTINUATION) throw IOException("$type != TYPE_CONTINUATION")
+      if (streamId != previousStreamId) throw IOException("TYPE_CONTINUATION streamId changed")
     }
   }
 
-  static int readMedium(BufferedSource source) throws IOException {
-    return (source.readByte() & 0xff) << 16
-        | (source.readByte() & 0xff) << 8
-        | (source.readByte() & 0xff);
-  }
-
-  static int lengthWithoutPadding(int length, byte flags, short padding)
-      throws IOException {
-    if ((flags & FLAG_PADDED) != 0) length--; // Account for reading the padding length.
-    if (padding > length) {
-      throw ioException("PROTOCOL_ERROR padding %s > remaining length %s", padding, length);
-    }
-    return (short) (length - padding);
-  }
-
-  interface Handler {
-    void data(boolean inFinished, int streamId, BufferedSource source, int length)
-        throws IOException;
+  internal interface Handler {
+    @Throws(IOException::class)
+    fun data(inFinished: Boolean, streamId: Int, source: BufferedSource, length: Int)
 
     /**
      * Create or update incoming headers, creating the corresponding streams if necessary. Frames
@@ -423,40 +375,54 @@ final class Http2Reader implements Closeable {
      * @param streamId the stream owning these headers.
      * @param associatedStreamId the stream that triggered the sender to create this stream.
      */
-    void headers(boolean inFinished, int streamId, int associatedStreamId,
-        List<Header> headerBlock);
+    fun headers(
+      inFinished: Boolean,
+      streamId: Int,
+      associatedStreamId: Int,
+      headerBlock: List<Header>
+    )
 
-    void rstStream(int streamId, ErrorCode errorCode);
+    fun rstStream(streamId: Int, errorCode: ErrorCode)
 
-    void settings(boolean clearPrevious, Settings settings);
+    fun settings(clearPrevious: Boolean, settings: Settings)
 
-    /** HTTP/2 only. */
-    void ackSettings();
+    /** HTTP/2 only.  */
+    fun ackSettings()
 
     /**
-     * Read a connection-level ping from the peer. {@code ack} indicates this is a reply. The data
-     * in {@code payload1} and {@code payload2} opaque binary, and there are no rules on the
-     * content.
+     * Read a connection-level ping from the peer. `ack` indicates this is a reply. The data
+     * in `payload1` and `payload2` opaque binary, and there are no rules on the content.
      */
-    void ping(boolean ack, int payload1, int payload2);
+    fun ping(
+      ack: Boolean,
+      payload1: Int,
+      payload2: Int
+    )
 
     /**
-     * The peer tells us to stop creating streams.  It is safe to replay streams with {@code ID >
-     * lastGoodStreamId} on a new connection.  In- flight streams with {@code ID <=
-     * lastGoodStreamId} can only be replayed on a new connection if they are idempotent.
+     * The peer tells us to stop creating streams. It is safe to replay streams with
+     * `ID > lastGoodStreamId` on a new connection.  In- flight streams with
+     * `ID <= lastGoodStreamId` can only be replayed on a new connection if they are idempotent.
      *
      * @param lastGoodStreamId the last stream ID the peer processed before sending this message. If
-     * {@code lastGoodStreamId} is zero, the peer processed no frames.
+     *     [lastGoodStreamId] is zero, the peer processed no frames.
      * @param errorCode reason for closing the connection.
      * @param debugData only valid for HTTP/2; opaque debug data to send.
      */
-    void goAway(int lastGoodStreamId, ErrorCode errorCode, ByteString debugData);
+    fun goAway(
+      lastGoodStreamId: Int,
+      errorCode: ErrorCode,
+      debugData: ByteString
+    )
 
     /**
-     * Notifies that an additional {@code windowSizeIncrement} bytes can be sent on {@code
-     * streamId}, or the connection if {@code streamId} is zero.
+     * Notifies that an additional `windowSizeIncrement` bytes can be sent on `streamId`, or the
+     * connection if `streamId` is zero.
      */
-    void windowUpdate(int streamId, long windowSizeIncrement);
+    fun windowUpdate(
+      streamId: Int,
+      windowSizeIncrement: Long
+    )
 
     /**
      * Called when reading a headers or priority frame. This may be used to change the stream's
@@ -464,43 +430,75 @@ final class Http2Reader implements Closeable {
      *
      * @param streamId stream which has a priority change.
      * @param streamDependency the stream ID this stream is dependent on.
-     * @param weight relative proportion of priority in [1..256].
-     * @param exclusive inserts this stream ID as the sole child of {@code streamDependency}.
+     * @param weight relative proportion of priority in `[1..256]`.
+     * @param exclusive inserts this stream ID as the sole child of `streamDependency`.
      */
-    void priority(int streamId, int streamDependency, int weight, boolean exclusive);
+    fun priority(
+      streamId: Int,
+      streamDependency: Int,
+      weight: Int,
+      exclusive: Boolean
+    )
 
     /**
-     * HTTP/2 only. Receive a push promise header block. <p> A push promise contains all the headers
-     * that pertain to a server-initiated request, and a {@code promisedStreamId} to which response
-     * frames will be delivered. Push promise frames are sent as a part of the response to {@code
-     * streamId}.
+     * HTTP/2 only. Receive a push promise header block.
+     *
+     * A push promise contains all the headers that pertain to a server-initiated request, and a
+     * `promisedStreamId` to which response frames will be delivered. Push promise frames are sent
+     * as a part of the response to `streamId`.
      *
      * @param streamId client-initiated stream ID.  Must be an odd number.
      * @param promisedStreamId server-initiated stream ID.  Must be an even number.
-     * @param requestHeaders minimally includes {@code :method}, {@code :scheme}, {@code
-     * :authority}, and (@code :path}.
+     * @param requestHeaders minimally includes `:method`, `:scheme`, `:authority`, and `:path`.
      */
-    void pushPromise(int streamId, int promisedStreamId, List<Header> requestHeaders)
-        throws IOException;
+    @Throws(IOException::class)
+    fun pushPromise(
+      streamId: Int,
+      promisedStreamId: Int,
+      requestHeaders: List<Header>
+    )
 
     /**
      * HTTP/2 only. Expresses that resources for the connection or a client- initiated stream are
      * available from a different network location or protocol configuration.
      *
-     * <p>See <a href="http://tools.ietf.org/html/draft-ietf-httpbis-alt-svc-01">alt-svc</a>
+     * See [alt-svc][alt_svc].
+     *
+     * [alt_svc]: http://tools.ietf.org/html/draft-ietf-httpbis-alt-svc-01
      *
      * @param streamId when a client-initiated stream ID (odd number), the origin of this alternate
-     * service is the origin of the stream. When zero, the origin is specified in the {@code origin}
-     * parameter.
-     * @param origin when present, the <a href="http://tools.ietf.org/html/rfc6454">origin</a> is
-     * typically represented as a combination of scheme, host and port. When empty, the origin is
-     * that of the {@code streamId}.
-     * @param protocol an ALPN protocol, such as {@code h2}.
+     *     service is the origin of the stream. When zero, the origin is specified in the `origin`
+     *     parameter.
+     * @param origin when present, the [origin](http://tools.ietf.org/html/rfc6454) is typically
+     *     represented as a combination of scheme, host and port. When empty, the origin is that of
+     *     the `streamId`.
+     * @param protocol an ALPN protocol, such as `h2`.
      * @param host an IP address or hostname.
      * @param port the IP port associated with the service.
      * @param maxAge time in seconds that this alternative is considered fresh.
      */
-    void alternateService(int streamId, String origin, ByteString protocol, String host, int port,
-        long maxAge);
+    fun alternateService(
+      streamId: Int,
+      origin: String,
+      protocol: ByteString,
+      host: String,
+      port: Int,
+      maxAge: Long
+    )
+  }
+
+  companion object {
+    val logger = Logger.getLogger(Http2::class.java.name)
+
+    @Throws(IOException::class)
+    fun lengthWithoutPadding(length: Int, flags: Int, padding: Int): Int {
+      var result = length
+      if (flags and FLAG_PADDED != 0) result-- // Account for reading the padding length.
+      if (padding > result) {
+        throw IOException("PROTOCOL_ERROR padding $padding > remaining length $result")
+      }
+      result -= padding
+      return result
+    }
   }
 }

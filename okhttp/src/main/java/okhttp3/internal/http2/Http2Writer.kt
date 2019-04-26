@@ -13,282 +13,303 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package okhttp3.internal.http2;
+package okhttp3.internal.http2
 
-import java.io.Closeable;
-import java.io.IOException;
-import java.util.List;
-import java.util.logging.Logger;
-import okio.Buffer;
-import okio.BufferedSink;
+import okhttp3.internal.Util.format
+import okhttp3.internal.http2.Http2.CONNECTION_PREFACE
+import okhttp3.internal.http2.Http2.FLAG_ACK
+import okhttp3.internal.http2.Http2.FLAG_END_HEADERS
+import okhttp3.internal.http2.Http2.FLAG_END_STREAM
+import okhttp3.internal.http2.Http2.FLAG_NONE
+import okhttp3.internal.http2.Http2.INITIAL_MAX_FRAME_SIZE
+import okhttp3.internal.http2.Http2.TYPE_CONTINUATION
+import okhttp3.internal.http2.Http2.TYPE_DATA
+import okhttp3.internal.http2.Http2.TYPE_GOAWAY
+import okhttp3.internal.http2.Http2.TYPE_HEADERS
+import okhttp3.internal.http2.Http2.TYPE_PING
+import okhttp3.internal.http2.Http2.TYPE_PUSH_PROMISE
+import okhttp3.internal.http2.Http2.TYPE_RST_STREAM
+import okhttp3.internal.http2.Http2.TYPE_SETTINGS
+import okhttp3.internal.http2.Http2.TYPE_WINDOW_UPDATE
+import okhttp3.internal.http2.Http2.frameLog
+import okhttp3.internal.writeMedium
+import okio.Buffer
+import okio.BufferedSink
+import java.io.Closeable
+import java.io.IOException
+import java.util.logging.Level.FINE
+import java.util.logging.Logger
 
-import static java.util.logging.Level.FINE;
-import static okhttp3.internal.Util.format;
-import static okhttp3.internal.http2.Http2.CONNECTION_PREFACE;
-import static okhttp3.internal.http2.Http2.FLAG_ACK;
-import static okhttp3.internal.http2.Http2.FLAG_END_HEADERS;
-import static okhttp3.internal.http2.Http2.FLAG_END_STREAM;
-import static okhttp3.internal.http2.Http2.FLAG_NONE;
-import static okhttp3.internal.http2.Http2.INITIAL_MAX_FRAME_SIZE;
-import static okhttp3.internal.http2.Http2.TYPE_CONTINUATION;
-import static okhttp3.internal.http2.Http2.TYPE_DATA;
-import static okhttp3.internal.http2.Http2.TYPE_GOAWAY;
-import static okhttp3.internal.http2.Http2.TYPE_HEADERS;
-import static okhttp3.internal.http2.Http2.TYPE_PING;
-import static okhttp3.internal.http2.Http2.TYPE_PUSH_PROMISE;
-import static okhttp3.internal.http2.Http2.TYPE_RST_STREAM;
-import static okhttp3.internal.http2.Http2.TYPE_SETTINGS;
-import static okhttp3.internal.http2.Http2.TYPE_WINDOW_UPDATE;
-import static okhttp3.internal.http2.Http2.frameLog;
-import static okhttp3.internal.http2.Http2.illegalArgument;
+/** Writes HTTP/2 transport frames.  */
+internal class Http2Writer(
+  private val sink: BufferedSink,
+  private val client: Boolean
+) : Closeable {
+  private val hpackBuffer: Buffer = Buffer()
+  private var maxFrameSize: Int = INITIAL_MAX_FRAME_SIZE
+  private var closed: Boolean = false
+  val hpackWriter: Hpack.Writer = Hpack.Writer(hpackBuffer)
 
-/** Writes HTTP/2 transport frames. */
-final class Http2Writer implements Closeable {
-  private static final Logger logger = Logger.getLogger(Http2.class.getName());
-
-  private final BufferedSink sink;
-  private final boolean client;
-  private final Buffer hpackBuffer;
-  private int maxFrameSize;
-  private boolean closed;
-
-  final Hpack.Writer hpackWriter;
-
-  Http2Writer(BufferedSink sink, boolean client) {
-    this.sink = sink;
-    this.client = client;
-    this.hpackBuffer = new Buffer();
-    this.hpackWriter = new Hpack.Writer(hpackBuffer);
-    this.maxFrameSize = INITIAL_MAX_FRAME_SIZE;
-  }
-
-  public synchronized void connectionPreface() throws IOException {
-    if (closed) throw new IOException("closed");
-    if (!client) return; // Nothing to write; servers don't send connection headers!
+  @Synchronized @Throws(IOException::class)
+  fun connectionPreface() {
+    if (closed) throw IOException("closed")
+    if (!client) return // Nothing to write; servers don't send connection headers!
     if (logger.isLoggable(FINE)) {
-      logger.fine(format(">> CONNECTION %s", CONNECTION_PREFACE.hex()));
+      logger.fine(format(">> CONNECTION ${CONNECTION_PREFACE.hex()}"))
     }
-    sink.write(CONNECTION_PREFACE.toByteArray());
-    sink.flush();
+    sink.write(CONNECTION_PREFACE)
+    sink.flush()
   }
 
-  /** Applies {@code peerSettings} and then sends a settings ACK. */
-  public synchronized void applyAndAckSettings(Settings peerSettings) throws IOException {
-    if (closed) throw new IOException("closed");
-    this.maxFrameSize = peerSettings.getMaxFrameSize(maxFrameSize);
-    if (peerSettings.getHeaderTableSize() != -1) {
-      hpackWriter.setHeaderTableSizeSetting(peerSettings.getHeaderTableSize());
+  /** Applies `peerSettings` and then sends a settings ACK.  */
+  @Synchronized @Throws(IOException::class)
+  fun applyAndAckSettings(peerSettings: Settings) {
+    if (closed) throw IOException("closed")
+    this.maxFrameSize = peerSettings.getMaxFrameSize(maxFrameSize)
+    if (peerSettings.headerTableSize != -1) {
+      hpackWriter.setHeaderTableSizeSetting(peerSettings.headerTableSize)
     }
-    int length = 0;
-    byte type = TYPE_SETTINGS;
-    byte flags = FLAG_ACK;
-    int streamId = 0;
-    frameHeader(streamId, length, type, flags);
-    sink.flush();
+    frameHeader(
+        streamId = 0,
+        length = 0,
+        type = TYPE_SETTINGS,
+        flags = FLAG_ACK
+    )
+    sink.flush()
   }
 
   /**
    * HTTP/2 only. Send a push promise header block.
    *
-   * <p>A push promise contains all the headers that pertain to a server-initiated request, and a
-   * {@code promisedStreamId} to which response frames will be delivered. Push promise frames are
-   * sent as a part of the response to {@code streamId}. The {@code promisedStreamId} has a priority
-   * of one greater than {@code streamId}.
+   * A push promise contains all the headers that pertain to a server-initiated request, and a
+   * `promisedStreamId` to which response frames will be delivered. Push promise frames are sent as
+   * a part of the response to `streamId`. The `promisedStreamId` has a priority of one greater than
+   * `streamId`.
    *
    * @param streamId client-initiated stream ID.  Must be an odd number.
    * @param promisedStreamId server-initiated stream ID.  Must be an even number.
-   * @param requestHeaders minimally includes {@code :method}, {@code :scheme}, {@code :authority},
-   * and {@code :path}.
+   * @param requestHeaders minimally includes `:method`, `:scheme`, `:authority`, and `:path`.
    */
-  public synchronized void pushPromise(int streamId, int promisedStreamId,
-      List<Header> requestHeaders) throws IOException {
-    if (closed) throw new IOException("closed");
-    hpackWriter.writeHeaders(requestHeaders);
+  @Synchronized @Throws(IOException::class)
+  fun pushPromise(
+    streamId: Int,
+    promisedStreamId: Int,
+    requestHeaders: List<Header>
+  ) {
+    if (closed) throw IOException("closed")
+    hpackWriter.writeHeaders(requestHeaders)
 
-    long byteCount = hpackBuffer.size();
-    int length = (int) Math.min(maxFrameSize - 4, byteCount);
-    byte type = TYPE_PUSH_PROMISE;
-    byte flags = byteCount == length ? FLAG_END_HEADERS : 0;
-    frameHeader(streamId, length + 4, type, flags);
-    sink.writeInt(promisedStreamId & 0x7fffffff);
-    sink.write(hpackBuffer, length);
+    val byteCount = hpackBuffer.size
+    val length = Math.min((maxFrameSize - 4).toLong(), byteCount).toInt()
+    frameHeader(
+        streamId = streamId,
+        length = length + 4,
+        type = TYPE_PUSH_PROMISE,
+        flags = if (byteCount == length.toLong()) FLAG_END_HEADERS else 0
+    )
+    sink.writeInt(promisedStreamId and 0x7fffffff)
+    sink.write(hpackBuffer, length.toLong())
 
-    if (byteCount > length) writeContinuationFrames(streamId, byteCount - length);
+    if (byteCount > length) writeContinuationFrames(streamId, byteCount - length)
   }
 
-  public synchronized void flush() throws IOException {
-    if (closed) throw new IOException("closed");
-    sink.flush();
+  @Synchronized @Throws(IOException::class)
+  fun flush() {
+    if (closed) throw IOException("closed")
+    sink.flush()
   }
 
-  public synchronized void rstStream(int streamId, ErrorCode errorCode)
-      throws IOException {
-    if (closed) throw new IOException("closed");
-    if (errorCode.httpCode == -1) throw new IllegalArgumentException();
+  @Synchronized @Throws(IOException::class)
+  fun rstStream(streamId: Int, errorCode: ErrorCode) {
+    if (closed) throw IOException("closed")
+    require(errorCode.httpCode != -1)
 
-    int length = 4;
-    byte type = TYPE_RST_STREAM;
-    byte flags = FLAG_NONE;
-    frameHeader(streamId, length, type, flags);
-    sink.writeInt(errorCode.httpCode);
-    sink.flush();
+    frameHeader(
+        streamId = streamId,
+        length = 4,
+        type = TYPE_RST_STREAM,
+        flags = FLAG_NONE
+    )
+    sink.writeInt(errorCode.httpCode)
+    sink.flush()
   }
 
-  /** The maximum size of bytes that may be sent in a single call to {@link #data}. */
-  public int maxDataLength() {
-    return maxFrameSize;
-  }
+  /** The maximum size of bytes that may be sent in a single call to [.data].  */
+  fun maxDataLength(): Int = maxFrameSize
 
   /**
-   * {@code source.length} may be longer than the max length of the variant's data frame.
-   * Implementations must send multiple frames as necessary.
+   * `source.length` may be longer than the max length of the variant's data frame. Implementations
+   * must send multiple frames as necessary.
    *
    * @param source the buffer to draw bytes from. May be null if byteCount is 0.
-   * @param byteCount must be between 0 and the minimum of {@code source.length} and {@link
-   * #maxDataLength}.
+   * @param byteCount must be between 0 and the minimum of `source.length` and [maxDataLength].
    */
-  public synchronized void data(boolean outFinished, int streamId, Buffer source, int byteCount)
-      throws IOException {
-    if (closed) throw new IOException("closed");
-    byte flags = FLAG_NONE;
-    if (outFinished) flags |= FLAG_END_STREAM;
-    dataFrame(streamId, flags, source, byteCount);
+  @Synchronized @Throws(IOException::class)
+  fun data(outFinished: Boolean, streamId: Int, source: Buffer?, byteCount: Int) {
+    if (closed) throw IOException("closed")
+    var flags = FLAG_NONE
+    if (outFinished) flags = flags or FLAG_END_STREAM
+    dataFrame(streamId, flags, source, byteCount)
   }
 
-  void dataFrame(int streamId, byte flags, Buffer buffer, int byteCount) throws IOException {
-    byte type = TYPE_DATA;
-    frameHeader(streamId, byteCount, type, flags);
+  @Throws(IOException::class)
+  fun dataFrame(streamId: Int, flags: Int, buffer: Buffer?, byteCount: Int) {
+    frameHeader(
+        streamId = streamId,
+        length = byteCount,
+        type = TYPE_DATA,
+        flags = flags
+    )
     if (byteCount > 0) {
-      sink.write(buffer, byteCount);
+      sink.write(buffer!!, byteCount.toLong())
     }
   }
 
-  /** Write okhttp's settings to the peer. */
-  public synchronized void settings(Settings settings) throws IOException {
-    if (closed) throw new IOException("closed");
-    int length = settings.size() * 6;
-    byte type = TYPE_SETTINGS;
-    byte flags = FLAG_NONE;
-    int streamId = 0;
-    frameHeader(streamId, length, type, flags);
-    for (int i = 0; i < Settings.COUNT; i++) {
-      if (!settings.isSet(i)) continue;
-      int id = i;
-      if (id == 4) {
-        id = 3; // SETTINGS_MAX_CONCURRENT_STREAMS renumbered.
-      } else if (id == 7) {
-        id = 4; // SETTINGS_INITIAL_WINDOW_SIZE renumbered.
+  /** Write okhttp's settings to the peer.  */
+  @Synchronized @Throws(IOException::class)
+  fun settings(settings: Settings) {
+    if (closed) throw IOException("closed")
+    frameHeader(
+        streamId = 0,
+        length = settings.size() * 6,
+        type = TYPE_SETTINGS,
+        flags = FLAG_NONE
+    )
+    for (i in 0 until Settings.COUNT) {
+      if (!settings.isSet(i)) continue
+      val id = when (i) {
+        4 -> 3 // SETTINGS_MAX_CONCURRENT_STREAMS renumbered.
+        7 -> 4 // SETTINGS_INITIAL_WINDOW_SIZE renumbered.
+        else -> i
       }
-      sink.writeShort(id);
-      sink.writeInt(settings.get(i));
+      sink.writeShort(id)
+      sink.writeInt(settings[i])
     }
-    sink.flush();
+    sink.flush()
   }
 
   /**
-   * Send a connection-level ping to the peer. {@code ack} indicates this is a reply. The data in
-   * {@code payload1} and {@code payload2} opaque binary, and there are no rules on the content.
+   * Send a connection-level ping to the peer. `ack` indicates this is a reply. The data in
+   * `payload1` and `payload2` opaque binary, and there are no rules on the content.
    */
-  public synchronized void ping(boolean ack, int payload1, int payload2) throws IOException {
-    if (closed) throw new IOException("closed");
-    int length = 8;
-    byte type = TYPE_PING;
-    byte flags = ack ? FLAG_ACK : FLAG_NONE;
-    int streamId = 0;
-    frameHeader(streamId, length, type, flags);
-    sink.writeInt(payload1);
-    sink.writeInt(payload2);
-    sink.flush();
+  @Synchronized @Throws(IOException::class)
+  fun ping(ack: Boolean, payload1: Int, payload2: Int) {
+    if (closed) throw IOException("closed")
+    frameHeader(
+        streamId = 0,
+        length = 8,
+        type = TYPE_PING,
+        flags = if (ack) FLAG_ACK else FLAG_NONE
+    )
+    sink.writeInt(payload1)
+    sink.writeInt(payload2)
+    sink.flush()
   }
 
   /**
-   * Tell the peer to stop creating streams and that we last processed {@code lastGoodStreamId}, or
-   * zero if no streams were processed.
+   * Tell the peer to stop creating streams and that we last processed `lastGoodStreamId`, or zero
+   * if no streams were processed.
    *
    * @param lastGoodStreamId the last stream ID processed, or zero if no streams were processed.
    * @param errorCode reason for closing the connection.
    * @param debugData only valid for HTTP/2; opaque debug data to send.
    */
-  public synchronized void goAway(int lastGoodStreamId, ErrorCode errorCode, byte[] debugData)
-      throws IOException {
-    if (closed) throw new IOException("closed");
-    if (errorCode.httpCode == -1) throw illegalArgument("errorCode.httpCode == -1");
-    int length = 8 + debugData.length;
-    byte type = TYPE_GOAWAY;
-    byte flags = FLAG_NONE;
-    int streamId = 0;
-    frameHeader(streamId, length, type, flags);
-    sink.writeInt(lastGoodStreamId);
-    sink.writeInt(errorCode.httpCode);
-    if (debugData.length > 0) {
-      sink.write(debugData);
+  @Synchronized @Throws(IOException::class)
+  fun goAway(lastGoodStreamId: Int, errorCode: ErrorCode, debugData: ByteArray) {
+    if (closed) throw IOException("closed")
+    require(errorCode.httpCode != -1) { "errorCode.httpCode == -1" }
+    frameHeader(
+        streamId = 0,
+        length = 8 + debugData.size,
+        type = TYPE_GOAWAY,
+        flags = FLAG_NONE
+    )
+    sink.writeInt(lastGoodStreamId)
+    sink.writeInt(errorCode.httpCode)
+    if (debugData.isNotEmpty()) {
+      sink.write(debugData)
     }
-    sink.flush();
+    sink.flush()
   }
 
   /**
-   * Inform peer that an additional {@code windowSizeIncrement} bytes can be sent on {@code
-   * streamId}, or the connection if {@code streamId} is zero.
+   * Inform peer that an additional `windowSizeIncrement` bytes can be sent on `streamId`, or the
+   * connection if `streamId` is zero.
    */
-  public synchronized void windowUpdate(int streamId, long windowSizeIncrement) throws IOException {
-    if (closed) throw new IOException("closed");
-    if (windowSizeIncrement == 0 || windowSizeIncrement > 0x7fffffffL) {
-      throw illegalArgument("windowSizeIncrement == 0 || windowSizeIncrement > 0x7fffffffL: %s",
-          windowSizeIncrement);
+  @Synchronized @Throws(IOException::class)
+  fun windowUpdate(streamId: Int, windowSizeIncrement: Long) {
+    if (closed) throw IOException("closed")
+    require(windowSizeIncrement != 0L && windowSizeIncrement <= 0x7fffffffL) {
+      "windowSizeIncrement == 0 || windowSizeIncrement > 0x7fffffffL: $windowSizeIncrement"
     }
-    int length = 4;
-    byte type = TYPE_WINDOW_UPDATE;
-    byte flags = FLAG_NONE;
-    frameHeader(streamId, length, type, flags);
-    sink.writeInt((int) windowSizeIncrement);
-    sink.flush();
+    frameHeader(
+        streamId = streamId,
+        length = 4,
+        type = TYPE_WINDOW_UPDATE,
+        flags = FLAG_NONE
+    )
+    sink.writeInt(windowSizeIncrement.toInt())
+    sink.flush()
   }
 
-  public void frameHeader(int streamId, int length, byte type, byte flags) throws IOException {
-    if (logger.isLoggable(FINE)) logger.fine(frameLog(false, streamId, length, type, flags));
-    if (length > maxFrameSize) {
-      throw illegalArgument("FRAME_SIZE_ERROR length > %d: %d", maxFrameSize, length);
-    }
-    if ((streamId & 0x80000000) != 0) throw illegalArgument("reserved bit set: %s", streamId);
-    writeMedium(sink, length);
-    sink.writeByte(type & 0xff);
-    sink.writeByte(flags & 0xff);
-    sink.writeInt(streamId & 0x7fffffff);
+  @Throws(IOException::class)
+  fun frameHeader(streamId: Int, length: Int, type: Int, flags: Int) {
+    if (logger.isLoggable(FINE)) logger.fine(frameLog(false, streamId, length, type, flags))
+    require(length <= maxFrameSize) { "FRAME_SIZE_ERROR length > $maxFrameSize: $length" }
+    require(streamId and 0x80000000.toInt() == 0) { "reserved bit set: $streamId" }
+    sink.writeMedium(length)
+    sink.writeByte(type and 0xff)
+    sink.writeByte(flags and 0xff)
+    sink.writeInt(streamId and 0x7fffffff)
   }
 
-  @Override public synchronized void close() throws IOException {
-    closed = true;
-    sink.close();
+  @Synchronized @Throws(IOException::class)
+  override fun close() {
+    closed = true
+    sink.close()
   }
 
-  private static void writeMedium(BufferedSink sink, int i) throws IOException {
-    sink.writeByte((i >>> 16) & 0xff);
-    sink.writeByte((i >>> 8) & 0xff);
-    sink.writeByte(i & 0xff);
-  }
-
-  private void writeContinuationFrames(int streamId, long byteCount) throws IOException {
+  @Throws(IOException::class)
+  private fun writeContinuationFrames(streamId: Int, byteCount: Long) {
+    var byteCount = byteCount
     while (byteCount > 0) {
-      int length = (int) Math.min(maxFrameSize, byteCount);
-      byteCount -= length;
-      frameHeader(streamId, length, TYPE_CONTINUATION, byteCount == 0 ? FLAG_END_HEADERS : 0);
-      sink.write(hpackBuffer, length);
+      val length = Math.min(maxFrameSize.toLong(), byteCount)
+      byteCount -= length
+      frameHeader(
+          streamId = streamId,
+          length = length.toInt(),
+          type = TYPE_CONTINUATION,
+          flags = if (byteCount == 0L) FLAG_END_HEADERS else 0
+      )
+      sink.write(hpackBuffer, length)
     }
   }
 
-  public synchronized void headers(
-      boolean outFinished, int streamId, List<Header> headerBlock) throws IOException {
-    if (closed) throw new IOException("closed");
-    hpackWriter.writeHeaders(headerBlock);
+  @Synchronized @Throws(IOException::class)
+  fun headers(
+    outFinished: Boolean,
+    streamId: Int,
+    headerBlock: List<Header>
+  ) {
+    if (closed) throw IOException("closed")
+    hpackWriter.writeHeaders(headerBlock)
 
-    long byteCount = hpackBuffer.size();
-    int length = (int) Math.min(maxFrameSize, byteCount);
-    byte type = TYPE_HEADERS;
-    byte flags = byteCount == length ? FLAG_END_HEADERS : 0;
-    if (outFinished) flags |= FLAG_END_STREAM;
-    frameHeader(streamId, length, type, flags);
-    sink.write(hpackBuffer, length);
+    val byteCount = hpackBuffer.size
+    val length = Math.min(maxFrameSize.toLong(), byteCount)
+    var flags = if (byteCount == length) FLAG_END_HEADERS else 0
+    if (outFinished) flags = flags or FLAG_END_STREAM
+    frameHeader(
+        streamId = streamId,
+        length = length.toInt(),
+        type = TYPE_HEADERS,
+        flags = flags
+    )
+    sink.write(hpackBuffer, length)
 
-    if (byteCount > length) writeContinuationFrames(streamId, byteCount - length);
+    if (byteCount > length) writeContinuationFrames(streamId, byteCount - length)
+  }
+
+  companion object {
+    private val logger = Logger.getLogger(Http2::class.java.name)
   }
 }

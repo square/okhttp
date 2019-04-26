@@ -13,11 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package okhttp3.internal.http2;
+package okhttp3.internal.http2
 
-// http://tools.ietf.org/html/draft-ietf-httpbis-http2-17#section-7
-public enum ErrorCode {
-  /** Not an error! */
+/** http://tools.ietf.org/html/draft-ietf-httpbis-http2-17#section-7 */
+enum class ErrorCode constructor(val httpCode: Int) {
+  /** Not an error!  */
   NO_ERROR(0),
 
   PROTOCOL_ERROR(1),
@@ -40,16 +40,7 @@ public enum ErrorCode {
 
   HTTP_1_1_REQUIRED(0xd);
 
-  public final int httpCode;
-
-  ErrorCode(int httpCode) {
-    this.httpCode = httpCode;
-  }
-
-  public static ErrorCode fromHttp2(int code) {
-    for (ErrorCode errorCode : ErrorCode.values()) {
-      if (errorCode.httpCode == code) return errorCode;
-    }
-    return null;
+  companion object {
+    fun fromHttp2(code: Int): ErrorCode? = values().find { it.httpCode == code }
   }
 }

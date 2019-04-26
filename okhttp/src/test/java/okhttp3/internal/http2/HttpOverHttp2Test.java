@@ -794,7 +794,7 @@ public final class HttpOverHttp2Test {
   @Test public void recoverFromOneRefusedStreamReusesConnection() throws Exception {
     server.enqueue(new MockResponse()
         .setSocketPolicy(SocketPolicy.RESET_STREAM_AT_START)
-        .setHttp2ErrorCode(ErrorCode.REFUSED_STREAM.httpCode));
+        .setHttp2ErrorCode(ErrorCode.REFUSED_STREAM.getHttpCode()));
     server.enqueue(new MockResponse()
         .setBody("abc"));
 
@@ -813,7 +813,7 @@ public final class HttpOverHttp2Test {
   @Test public void recoverFromOneInternalErrorRequiresNewConnection() throws Exception {
     server.enqueue(new MockResponse()
         .setSocketPolicy(SocketPolicy.RESET_STREAM_AT_START)
-        .setHttp2ErrorCode(ErrorCode.INTERNAL_ERROR.httpCode));
+        .setHttp2ErrorCode(ErrorCode.INTERNAL_ERROR.getHttpCode()));
     server.enqueue(new MockResponse()
         .setBody("abc"));
 
@@ -836,10 +836,10 @@ public final class HttpOverHttp2Test {
   @Test public void recoverFromMultipleRefusedStreamsRequiresNewConnection() throws Exception {
     server.enqueue(new MockResponse()
         .setSocketPolicy(SocketPolicy.RESET_STREAM_AT_START)
-        .setHttp2ErrorCode(ErrorCode.REFUSED_STREAM.httpCode));
+        .setHttp2ErrorCode(ErrorCode.REFUSED_STREAM.getHttpCode()));
     server.enqueue(new MockResponse()
         .setSocketPolicy(SocketPolicy.RESET_STREAM_AT_START)
-        .setHttp2ErrorCode(ErrorCode.REFUSED_STREAM.httpCode));
+        .setHttp2ErrorCode(ErrorCode.REFUSED_STREAM.getHttpCode()));
     server.enqueue(new MockResponse()
         .setBody("abc"));
 
@@ -997,7 +997,7 @@ public final class HttpOverHttp2Test {
   private void noRecoveryFromErrorWithRetryDisabled(ErrorCode errorCode) throws Exception {
     server.enqueue(new MockResponse()
         .setSocketPolicy(SocketPolicy.RESET_STREAM_AT_START)
-        .setHttp2ErrorCode(errorCode.httpCode));
+        .setHttp2ErrorCode(errorCode.getHttpCode()));
     server.enqueue(new MockResponse()
         .setBody("abc"));
 
@@ -1021,7 +1021,7 @@ public final class HttpOverHttp2Test {
         .setResponseCode(401));
     server.enqueue(new MockResponse()
         .setSocketPolicy(SocketPolicy.RESET_STREAM_AT_START)
-        .setHttp2ErrorCode(ErrorCode.INTERNAL_ERROR.httpCode));
+        .setHttp2ErrorCode(ErrorCode.INTERNAL_ERROR.getHttpCode()));
     server.enqueue(new MockResponse()
         .setBody("DEF"));
     server.enqueue(new MockResponse()

@@ -934,7 +934,7 @@ public final class MockWebServer extends ExternalResource implements Closeable {
       if (peekedResponse.getSocketPolicy() == RESET_STREAM_AT_START) {
         try {
           dispatchBookkeepingRequest(sequenceNumber.getAndIncrement(), socket);
-          stream.close(ErrorCode.fromHttp2(peekedResponse.getHttp2ErrorCode()), null);
+          stream.close(ErrorCode.Companion.fromHttp2(peekedResponse.getHttp2ErrorCode()), null);
           return;
         } catch (InterruptedException e) {
           throw new AssertionError(e);

@@ -51,7 +51,8 @@ public final class SettingsTest {
     settings.set(Settings.MAX_HEADER_LIST_SIZE, 16777215);
     assertThat(settings.getMaxHeaderListSize(-1)).isEqualTo(16777215);
 
-    assertThat(settings.getInitialWindowSize()).isEqualTo(DEFAULT_INITIAL_WINDOW_SIZE);
+    assertThat(settings.getInitialWindowSize()).isEqualTo(
+        DEFAULT_INITIAL_WINDOW_SIZE);
     settings.set(Settings.INITIAL_WINDOW_SIZE, 108);
     assertThat(settings.getInitialWindowSize()).isEqualTo(108);
   }
