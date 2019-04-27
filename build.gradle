@@ -121,7 +121,7 @@ subprojects { project ->
     jvmArgs += "-Dlistener=okhttp3.testing.InstallUncaughtExceptionHandlerListener"
     jvmArgs += "-Dokhttp.platform=$platform"
 
-    maxParallelForks Runtime.runtime.availableProcessors().intdiv(2) ?: 1
+    maxParallelForks Runtime.runtime.availableProcessors() * 2
     testLogging {
       exceptionFormat = 'full'
     }
