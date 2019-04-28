@@ -13,576 +13,590 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package okhttp3.internal.http2;
+package okhttp3.internal.http2
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import okio.Buffer;
-import okio.BufferedSource;
-import okio.ByteString;
-import okio.Okio;
-import okio.Source;
+import okhttp3.internal.and
+import okhttp3.internal.http2.Header.Companion.RESPONSE_STATUS
+import okhttp3.internal.http2.Header.Companion.TARGET_AUTHORITY
+import okhttp3.internal.http2.Header.Companion.TARGET_METHOD
+import okhttp3.internal.http2.Header.Companion.TARGET_PATH
+import okhttp3.internal.http2.Header.Companion.TARGET_SCHEME
+import okio.Buffer
+import okio.BufferedSource
+import okio.ByteString
+import okio.ByteString.Companion.toByteString
+import okio.Source
+import okio.buffer
+import java.io.IOException
+import java.util.Arrays
+import java.util.Collections
+import java.util.LinkedHashMap
 
 /**
  * Read and write HPACK v10.
  *
  * http://tools.ietf.org/html/draft-ietf-httpbis-header-compression-12
  *
- * This implementation uses an array for the dynamic table and a list for indexed entries.  Dynamic
- * entries are added to the array, starting in the last position moving forward.  When the array
+ * This implementation uses an array for the dynamic table and a list for indexed entries. Dynamic
+ * entries are added to the array, starting in the last position moving forward. When the array
  * fills, it is doubled.
  */
-final class Hpack {
-  private static final int PREFIX_4_BITS = 0x0f;
-  private static final int PREFIX_5_BITS = 0x1f;
-  private static final int PREFIX_6_BITS = 0x3f;
-  private static final int PREFIX_7_BITS = 0x7f;
+object Hpack {
+  private const val PREFIX_4_BITS = 0x0f
+  private const val PREFIX_5_BITS = 0x1f
+  private const val PREFIX_6_BITS = 0x3f
+  private const val PREFIX_7_BITS = 0x7f
 
-  static final Header[] STATIC_HEADER_TABLE = new Header[] {
-      new Header(Header.TARGET_AUTHORITY, ""),
-      new Header(Header.TARGET_METHOD, "GET"),
-      new Header(Header.TARGET_METHOD, "POST"),
-      new Header(Header.TARGET_PATH, "/"),
-      new Header(Header.TARGET_PATH, "/index.html"),
-      new Header(Header.TARGET_SCHEME, "http"),
-      new Header(Header.TARGET_SCHEME, "https"),
-      new Header(Header.RESPONSE_STATUS, "200"),
-      new Header(Header.RESPONSE_STATUS, "204"),
-      new Header(Header.RESPONSE_STATUS, "206"),
-      new Header(Header.RESPONSE_STATUS, "304"),
-      new Header(Header.RESPONSE_STATUS, "400"),
-      new Header(Header.RESPONSE_STATUS, "404"),
-      new Header(Header.RESPONSE_STATUS, "500"),
-      new Header("accept-charset", ""),
-      new Header("accept-encoding", "gzip, deflate"),
-      new Header("accept-language", ""),
-      new Header("accept-ranges", ""),
-      new Header("accept", ""),
-      new Header("access-control-allow-origin", ""),
-      new Header("age", ""),
-      new Header("allow", ""),
-      new Header("authorization", ""),
-      new Header("cache-control", ""),
-      new Header("content-disposition", ""),
-      new Header("content-encoding", ""),
-      new Header("content-language", ""),
-      new Header("content-length", ""),
-      new Header("content-location", ""),
-      new Header("content-range", ""),
-      new Header("content-type", ""),
-      new Header("cookie", ""),
-      new Header("date", ""),
-      new Header("etag", ""),
-      new Header("expect", ""),
-      new Header("expires", ""),
-      new Header("from", ""),
-      new Header("host", ""),
-      new Header("if-match", ""),
-      new Header("if-modified-since", ""),
-      new Header("if-none-match", ""),
-      new Header("if-range", ""),
-      new Header("if-unmodified-since", ""),
-      new Header("last-modified", ""),
-      new Header("link", ""),
-      new Header("location", ""),
-      new Header("max-forwards", ""),
-      new Header("proxy-authenticate", ""),
-      new Header("proxy-authorization", ""),
-      new Header("range", ""),
-      new Header("referer", ""),
-      new Header("refresh", ""),
-      new Header("retry-after", ""),
-      new Header("server", ""),
-      new Header("set-cookie", ""),
-      new Header("strict-transport-security", ""),
-      new Header("transfer-encoding", ""),
-      new Header("user-agent", ""),
-      new Header("vary", ""),
-      new Header("via", ""),
-      new Header("www-authenticate", "")
-  };
+  private const val SETTINGS_HEADER_TABLE_SIZE = 4_096
 
-  private Hpack() {
-  }
+  /**
+   * The decoder has ultimate control of the maximum size of the dynamic table but we can choose
+   * to use less. We'll put a cap at 16K. This is arbitrary but should be enough for most purposes.
+   */
+  private const val SETTINGS_HEADER_TABLE_SIZE_LIMIT = 16_384
+
+  val STATIC_HEADER_TABLE = arrayOf(
+      Header(TARGET_AUTHORITY, ""),
+      Header(TARGET_METHOD, "GET"),
+      Header(TARGET_METHOD, "POST"),
+      Header(TARGET_PATH, "/"),
+      Header(TARGET_PATH, "/index.html"),
+      Header(TARGET_SCHEME, "http"),
+      Header(TARGET_SCHEME, "https"),
+      Header(RESPONSE_STATUS, "200"),
+      Header(RESPONSE_STATUS, "204"),
+      Header(RESPONSE_STATUS, "206"),
+      Header(RESPONSE_STATUS, "304"),
+      Header(RESPONSE_STATUS, "400"),
+      Header(RESPONSE_STATUS, "404"),
+      Header(RESPONSE_STATUS, "500"),
+      Header("accept-charset", ""),
+      Header("accept-encoding", "gzip, deflate"),
+      Header("accept-language", ""),
+      Header("accept-ranges", ""),
+      Header("accept", ""),
+      Header("access-control-allow-origin", ""),
+      Header("age", ""),
+      Header("allow", ""),
+      Header("authorization", ""),
+      Header("cache-control", ""),
+      Header("content-disposition", ""),
+      Header("content-encoding", ""),
+      Header("content-language", ""),
+      Header("content-length", ""),
+      Header("content-location", ""),
+      Header("content-range", ""),
+      Header("content-type", ""),
+      Header("cookie", ""),
+      Header("date", ""),
+      Header("etag", ""),
+      Header("expect", ""),
+      Header("expires", ""),
+      Header("from", ""),
+      Header("host", ""),
+      Header("if-match", ""),
+      Header("if-modified-since", ""),
+      Header("if-none-match", ""),
+      Header("if-range", ""),
+      Header("if-unmodified-since", ""),
+      Header("last-modified", ""),
+      Header("link", ""),
+      Header("location", ""),
+      Header("max-forwards", ""),
+      Header("proxy-authenticate", ""),
+      Header("proxy-authorization", ""),
+      Header("range", ""),
+      Header("referer", ""),
+      Header("refresh", ""),
+      Header("retry-after", ""),
+      Header("server", ""),
+      Header("set-cookie", ""),
+      Header("strict-transport-security", ""),
+      Header("transfer-encoding", ""),
+      Header("user-agent", ""),
+      Header("vary", ""),
+      Header("via", ""),
+      Header("www-authenticate", "")
+  )
+
+  val NAME_TO_FIRST_INDEX = nameToFirstIndex()
 
   // http://tools.ietf.org/html/draft-ietf-httpbis-header-compression-12#section-3.1
-  static final class Reader {
-
-    private final List<Header> headerList = new ArrayList<>();
-    private final BufferedSource source;
-
-    private final int headerTableSizeSetting;
-    private int maxDynamicTableByteCount;
+  class Reader @JvmOverloads constructor(
+    source: Source,
+    private val headerTableSizeSetting: Int,
+    private var maxDynamicTableByteCount: Int = headerTableSizeSetting
+  ) {
+    private val headerList = mutableListOf<Header>()
+    private val source: BufferedSource = source.buffer()
 
     // Visible for testing.
-    Header[] dynamicTable = new Header[8];
+    @JvmField var dynamicTable = arrayOfNulls<Header>(8)
     // Array is populated back to front, so new entries always have lowest index.
-    int nextHeaderIndex = dynamicTable.length - 1;
-    int headerCount = 0;
-    int dynamicTableByteCount = 0;
+    var nextHeaderIndex = dynamicTable.size - 1
+    @JvmField var headerCount = 0
+    @JvmField var dynamicTableByteCount = 0
 
-    Reader(int headerTableSizeSetting, Source source) {
-      this(headerTableSizeSetting, headerTableSizeSetting, source);
+    fun getAndResetHeaderList(): List<Header> {
+      val result = headerList.toList()
+      headerList.clear()
+      return result
     }
 
-    Reader(int headerTableSizeSetting, int maxDynamicTableByteCount, Source source) {
-      this.headerTableSizeSetting = headerTableSizeSetting;
-      this.maxDynamicTableByteCount = maxDynamicTableByteCount;
-      this.source = Okio.buffer(source);
-    }
+    fun maxDynamicTableByteCount(): Int = maxDynamicTableByteCount
 
-    int maxDynamicTableByteCount() {
-      return maxDynamicTableByteCount;
-    }
-
-    private void adjustDynamicTableByteCount() {
+    private fun adjustDynamicTableByteCount() {
       if (maxDynamicTableByteCount < dynamicTableByteCount) {
         if (maxDynamicTableByteCount == 0) {
-          clearDynamicTable();
+          clearDynamicTable()
         } else {
-          evictToRecoverBytes(dynamicTableByteCount - maxDynamicTableByteCount);
+          evictToRecoverBytes(dynamicTableByteCount - maxDynamicTableByteCount)
         }
       }
     }
 
-    private void clearDynamicTable() {
-      Arrays.fill(dynamicTable, null);
-      nextHeaderIndex = dynamicTable.length - 1;
-      headerCount = 0;
-      dynamicTableByteCount = 0;
+    private fun clearDynamicTable() {
+      dynamicTable.fill(null)
+      nextHeaderIndex = dynamicTable.size - 1
+      headerCount = 0
+      dynamicTableByteCount = 0
     }
 
-    /** Returns the count of entries evicted. */
-    private int evictToRecoverBytes(int bytesToRecover) {
-      int entriesToEvict = 0;
+    /** Returns the count of entries evicted.  */
+    private fun evictToRecoverBytes(bytesToRecover: Int): Int {
+      var bytesToRecover = bytesToRecover
+      var entriesToEvict = 0
       if (bytesToRecover > 0) {
         // determine how many headers need to be evicted.
-        for (int j = dynamicTable.length - 1; j >= nextHeaderIndex && bytesToRecover > 0; j--) {
-          bytesToRecover -= dynamicTable[j].hpackSize;
-          dynamicTableByteCount -= dynamicTable[j].hpackSize;
-          headerCount--;
-          entriesToEvict++;
+        var j = dynamicTable.size - 1
+        while (j >= nextHeaderIndex && bytesToRecover > 0) {
+          val toEvict = dynamicTable[j]!!
+          bytesToRecover -= toEvict.hpackSize
+          dynamicTableByteCount -= toEvict.hpackSize
+          headerCount--
+          entriesToEvict++
+          j--
         }
         System.arraycopy(dynamicTable, nextHeaderIndex + 1, dynamicTable,
-            nextHeaderIndex + 1 + entriesToEvict, headerCount);
-        nextHeaderIndex += entriesToEvict;
+            nextHeaderIndex + 1 + entriesToEvict, headerCount)
+        nextHeaderIndex += entriesToEvict
       }
-      return entriesToEvict;
+      return entriesToEvict
     }
 
     /**
-     * Read {@code byteCount} bytes of headers from the source stream. This implementation does not
+     * Read `byteCount` bytes of headers from the source stream. This implementation does not
      * propagate the never indexed flag of a header.
      */
-    void readHeaders() throws IOException {
+    @Throws(IOException::class)
+    fun readHeaders() {
       while (!source.exhausted()) {
-        int b = source.readByte() & 0xff;
-        if (b == 0x80) { // 10000000
-          throw new IOException("index == 0");
-        } else if ((b & 0x80) == 0x80) { // 1NNNNNNN
-          int index = readInt(b, PREFIX_7_BITS);
-          readIndexedHeader(index - 1);
-        } else if (b == 0x40) { // 01000000
-          readLiteralHeaderWithIncrementalIndexingNewName();
-        } else if ((b & 0x40) == 0x40) {  // 01NNNNNN
-          int index = readInt(b, PREFIX_6_BITS);
-          readLiteralHeaderWithIncrementalIndexingIndexedName(index - 1);
-        } else if ((b & 0x20) == 0x20) {  // 001NNNNN
-          maxDynamicTableByteCount = readInt(b, PREFIX_5_BITS);
-          if (maxDynamicTableByteCount < 0
-              || maxDynamicTableByteCount > headerTableSizeSetting) {
-            throw new IOException("Invalid dynamic table size update " + maxDynamicTableByteCount);
+        val b = source.readByte() and 0xff
+        when {
+          b == 0x80 -> {
+            // 10000000
+            throw IOException("index == 0")
           }
-          adjustDynamicTableByteCount();
-        } else if (b == 0x10 || b == 0) { // 000?0000 - Ignore never indexed bit.
-          readLiteralHeaderWithoutIndexingNewName();
-        } else { // 000?NNNN - Ignore never indexed bit.
-          int index = readInt(b, PREFIX_4_BITS);
-          readLiteralHeaderWithoutIndexingIndexedName(index - 1);
+          b and 0x80 == 0x80 -> {
+            // 1NNNNNNN
+            val index = readInt(b, PREFIX_7_BITS)
+            readIndexedHeader(index - 1)
+          }
+          b == 0x40 -> {
+            // 01000000
+            readLiteralHeaderWithIncrementalIndexingNewName()
+          }
+          b and 0x40 == 0x40 -> {
+            // 01NNNNNN
+            val index = readInt(b, PREFIX_6_BITS)
+            readLiteralHeaderWithIncrementalIndexingIndexedName(index - 1)
+          }
+          b and 0x20 == 0x20 -> {
+            // 001NNNNN
+            maxDynamicTableByteCount = readInt(b, PREFIX_5_BITS)
+            if (maxDynamicTableByteCount < 0 || maxDynamicTableByteCount > headerTableSizeSetting) {
+              throw IOException("Invalid dynamic table size update $maxDynamicTableByteCount")
+            }
+            adjustDynamicTableByteCount()
+          }
+          b == 0x10 || b == 0 -> {
+            // 000?0000 - Ignore never indexed bit.
+            readLiteralHeaderWithoutIndexingNewName()
+          }
+          else -> {
+            // 000?NNNN - Ignore never indexed bit.
+            val index = readInt(b, PREFIX_4_BITS)
+            readLiteralHeaderWithoutIndexingIndexedName(index - 1)
+          }
         }
       }
     }
 
-    public List<Header> getAndResetHeaderList() {
-      List<Header> result = new ArrayList<>(headerList);
-      headerList.clear();
-      return result;
-    }
-
-    private void readIndexedHeader(int index) throws IOException {
+    @Throws(IOException::class)
+    private fun readIndexedHeader(index: Int) {
       if (isStaticHeader(index)) {
-        Header staticEntry = STATIC_HEADER_TABLE[index];
-        headerList.add(staticEntry);
+        val staticEntry = STATIC_HEADER_TABLE[index]
+        headerList.add(staticEntry)
       } else {
-        int dynamicTableIndex = dynamicTableIndex(index - STATIC_HEADER_TABLE.length);
-        if (dynamicTableIndex < 0 || dynamicTableIndex >= dynamicTable.length) {
-          throw new IOException("Header index too large " + (index + 1));
+        val dynamicTableIndex = dynamicTableIndex(index - STATIC_HEADER_TABLE.size)
+        if (dynamicTableIndex < 0 || dynamicTableIndex >= dynamicTable.size) {
+          throw IOException("Header index too large ${index + 1}")
         }
-        headerList.add(dynamicTable[dynamicTableIndex]);
+        headerList += dynamicTable[dynamicTableIndex]!!
       }
     }
 
     // referencedHeaders is relative to nextHeaderIndex + 1.
-    private int dynamicTableIndex(int index) {
-      return nextHeaderIndex + 1 + index;
+    private fun dynamicTableIndex(index: Int): Int {
+      return nextHeaderIndex + 1 + index
     }
 
-    private void readLiteralHeaderWithoutIndexingIndexedName(int index) throws IOException {
-      ByteString name = getName(index);
-      ByteString value = readByteString();
-      headerList.add(new Header(name, value));
+    @Throws(IOException::class)
+    private fun readLiteralHeaderWithoutIndexingIndexedName(index: Int) {
+      val name = getName(index)
+      val value = readByteString()
+      headerList.add(Header(name, value))
     }
 
-    private void readLiteralHeaderWithoutIndexingNewName() throws IOException {
-      ByteString name = checkLowercase(readByteString());
-      ByteString value = readByteString();
-      headerList.add(new Header(name, value));
+    @Throws(IOException::class)
+    private fun readLiteralHeaderWithoutIndexingNewName() {
+      val name = checkLowercase(readByteString())
+      val value = readByteString()
+      headerList.add(Header(name, value))
     }
 
-    private void readLiteralHeaderWithIncrementalIndexingIndexedName(int nameIndex)
-        throws IOException {
-      ByteString name = getName(nameIndex);
-      ByteString value = readByteString();
-      insertIntoDynamicTable(-1, new Header(name, value));
+    @Throws(IOException::class)
+    private fun readLiteralHeaderWithIncrementalIndexingIndexedName(nameIndex: Int) {
+      val name = getName(nameIndex)
+      val value = readByteString()
+      insertIntoDynamicTable(-1, Header(name, value))
     }
 
-    private void readLiteralHeaderWithIncrementalIndexingNewName() throws IOException {
-      ByteString name = checkLowercase(readByteString());
-      ByteString value = readByteString();
-      insertIntoDynamicTable(-1, new Header(name, value));
+    @Throws(IOException::class)
+    private fun readLiteralHeaderWithIncrementalIndexingNewName() {
+      val name = checkLowercase(readByteString())
+      val value = readByteString()
+      insertIntoDynamicTable(-1, Header(name, value))
     }
 
-    private ByteString getName(int index) throws IOException {
+    @Throws(IOException::class)
+    private fun getName(index: Int): ByteString {
       if (isStaticHeader(index)) {
-        return STATIC_HEADER_TABLE[index].name;
+        return STATIC_HEADER_TABLE[index].name
       } else {
-        int dynamicTableIndex = dynamicTableIndex(index - STATIC_HEADER_TABLE.length);
-        if (dynamicTableIndex < 0 || dynamicTableIndex >= dynamicTable.length) {
-          throw new IOException("Header index too large " + (index + 1));
+        val dynamicTableIndex = dynamicTableIndex(index - STATIC_HEADER_TABLE.size)
+        if (dynamicTableIndex < 0 || dynamicTableIndex >= dynamicTable.size) {
+          throw IOException("Header index too large ${index + 1}")
         }
 
-        return dynamicTable[dynamicTableIndex].name;
+        return dynamicTable[dynamicTableIndex]!!.name
       }
     }
 
-    private boolean isStaticHeader(int index) {
-      return index >= 0 && index <= STATIC_HEADER_TABLE.length - 1;
+    private fun isStaticHeader(index: Int): Boolean {
+      return index >= 0 && index <= STATIC_HEADER_TABLE.size - 1
     }
 
-    /** index == -1 when new. */
-    private void insertIntoDynamicTable(int index, Header entry) {
-      headerList.add(entry);
+    /** index == -1 when new.  */
+    private fun insertIntoDynamicTable(index: Int, entry: Header) {
+      var index = index
+      headerList.add(entry)
 
-      int delta = entry.hpackSize;
+      var delta = entry.hpackSize
       if (index != -1) { // Index -1 == new header.
-        delta -= dynamicTable[dynamicTableIndex(index)].hpackSize;
+        delta -= dynamicTable[dynamicTableIndex(index)]!!.hpackSize
       }
 
       // if the new or replacement header is too big, drop all entries.
       if (delta > maxDynamicTableByteCount) {
-        clearDynamicTable();
-        return;
+        clearDynamicTable()
+        return
       }
 
       // Evict headers to the required length.
-      int bytesToRecover = (dynamicTableByteCount + delta) - maxDynamicTableByteCount;
-      int entriesEvicted = evictToRecoverBytes(bytesToRecover);
+      val bytesToRecover = dynamicTableByteCount + delta - maxDynamicTableByteCount
+      val entriesEvicted = evictToRecoverBytes(bytesToRecover)
 
       if (index == -1) { // Adding a value to the dynamic table.
-        if (headerCount + 1 > dynamicTable.length) { // Need to grow the dynamic table.
-          Header[] doubled = new Header[dynamicTable.length * 2];
-          System.arraycopy(dynamicTable, 0, doubled, dynamicTable.length, dynamicTable.length);
-          nextHeaderIndex = dynamicTable.length - 1;
-          dynamicTable = doubled;
+        if (headerCount + 1 > dynamicTable.size) { // Need to grow the dynamic table.
+          val doubled = arrayOfNulls<Header>(dynamicTable.size * 2)
+          System.arraycopy(dynamicTable, 0, doubled, dynamicTable.size, dynamicTable.size)
+          nextHeaderIndex = dynamicTable.size - 1
+          dynamicTable = doubled
         }
-        index = nextHeaderIndex--;
-        dynamicTable[index] = entry;
-        headerCount++;
+        index = nextHeaderIndex--
+        dynamicTable[index] = entry
+        headerCount++
       } else { // Replace value at same position.
-        index += dynamicTableIndex(index) + entriesEvicted;
-        dynamicTable[index] = entry;
+        index += dynamicTableIndex(index) + entriesEvicted
+        dynamicTable[index] = entry
       }
-      dynamicTableByteCount += delta;
+      dynamicTableByteCount += delta
     }
 
-    private int readByte() throws IOException {
-      return source.readByte() & 0xff;
+    @Throws(IOException::class)
+    private fun readByte(): Int {
+      return source.readByte() and 0xff
     }
 
-    int readInt(int firstByte, int prefixMask) throws IOException {
-      int prefix = firstByte & prefixMask;
+    @Throws(IOException::class)
+    fun readInt(firstByte: Int, prefixMask: Int): Int {
+      val prefix = firstByte and prefixMask
       if (prefix < prefixMask) {
-        return prefix; // This was a single byte value.
+        return prefix // This was a single byte value.
       }
 
       // This is a multibyte value. Read 7 bits at a time.
-      int result = prefixMask;
-      int shift = 0;
+      var result = prefixMask
+      var shift = 0
       while (true) {
-        int b = readByte();
-        if ((b & 0x80) != 0) { // Equivalent to (b >= 128) since b is in [0..255].
-          result += (b & 0x7f) << shift;
-          shift += 7;
+        val b = readByte()
+        if (b and 0x80 != 0) { // Equivalent to (b >= 128) since b is in [0..255].
+          result += b and 0x7f shl shift
+          shift += 7
         } else {
-          result += b << shift; // Last byte.
-          break;
+          result += b shl shift // Last byte.
+          break
         }
       }
-      return result;
+      return result
     }
 
-    /** Reads a potentially Huffman encoded byte string. */
-    ByteString readByteString() throws IOException {
-      int firstByte = readByte();
-      boolean huffmanDecode = (firstByte & 0x80) == 0x80; // 1NNNNNNN
-      int length = readInt(firstByte, PREFIX_7_BITS);
+    /** Reads a potentially Huffman encoded byte string.  */
+    @Throws(IOException::class)
+    fun readByteString(): ByteString {
+      val firstByte = readByte()
+      val huffmanDecode = firstByte and 0x80 == 0x80 // 1NNNNNNN
+      val length = readInt(firstByte, PREFIX_7_BITS)
 
       if (huffmanDecode) {
-        return ByteString.of(Huffman.get().decode(source.readByteArray(length)));
+        val bytes = source.readByteArray(length.toLong())
+        return Huffman.get().decode(bytes).toByteString()
       } else {
-        return source.readByteString(length);
+        return source.readByteString(length.toLong())
       }
     }
   }
 
-  static final Map<ByteString, Integer> NAME_TO_FIRST_INDEX = nameToFirstIndex();
-
-  private static Map<ByteString, Integer> nameToFirstIndex() {
-    Map<ByteString, Integer> result = new LinkedHashMap<>(STATIC_HEADER_TABLE.length);
-    for (int i = 0; i < STATIC_HEADER_TABLE.length; i++) {
+  private fun nameToFirstIndex(): Map<ByteString, Int> {
+    val result = LinkedHashMap<ByteString, Int>(STATIC_HEADER_TABLE.size)
+    for (i in STATIC_HEADER_TABLE.indices) {
       if (!result.containsKey(STATIC_HEADER_TABLE[i].name)) {
-        result.put(STATIC_HEADER_TABLE[i].name, i);
+        result[STATIC_HEADER_TABLE[i].name] = i
       }
     }
-    return Collections.unmodifiableMap(result);
+    return Collections.unmodifiableMap(result)
   }
 
-  static final class Writer {
-    private static final int SETTINGS_HEADER_TABLE_SIZE = 4096;
-
-    /**
-     * The decoder has ultimate control of the maximum size of the dynamic table but we can choose
-     * to use less. We'll put a cap at 16K. This is arbitrary but should be enough for most
-     * purposes.
-     */
-    private static final int SETTINGS_HEADER_TABLE_SIZE_LIMIT = 16384;
-
-    private final Buffer out;
-    private final boolean useCompression;
-
+  class Writer @JvmOverloads constructor(
+    @JvmField var headerTableSizeSetting: Int = SETTINGS_HEADER_TABLE_SIZE,
+    private val useCompression: Boolean = true,
+    private val out: Buffer
+  ) {
     /**
      * In the scenario where the dynamic table size changes multiple times between transmission of
      * header blocks, we need to keep track of the smallest value in that interval.
      */
-    private int smallestHeaderTableSizeSetting = Integer.MAX_VALUE;
-    private boolean emitDynamicTableSizeUpdate;
-
-    int headerTableSizeSetting;
-    int maxDynamicTableByteCount;
+    private var smallestHeaderTableSizeSetting = Integer.MAX_VALUE
+    private var emitDynamicTableSizeUpdate: Boolean = false
+    @JvmField var maxDynamicTableByteCount: Int = headerTableSizeSetting
 
     // Visible for testing.
-    Header[] dynamicTable = new Header[8];
+    @JvmField var dynamicTable = arrayOfNulls<Header>(8)
     // Array is populated back to front, so new entries always have lowest index.
-    int nextHeaderIndex = dynamicTable.length - 1;
-    int headerCount = 0;
-    int dynamicTableByteCount = 0;
+    var nextHeaderIndex = dynamicTable.size - 1
+    @JvmField var headerCount = 0
+    @JvmField var dynamicTableByteCount = 0
 
-    Writer(Buffer out) {
-      this(SETTINGS_HEADER_TABLE_SIZE, true, out);
+    private fun clearDynamicTable() {
+      dynamicTable.fill(null)
+      nextHeaderIndex = dynamicTable.size - 1
+      headerCount = 0
+      dynamicTableByteCount = 0
     }
 
-    Writer(int headerTableSizeSetting, boolean useCompression, Buffer out) {
-      this.headerTableSizeSetting = headerTableSizeSetting;
-      this.maxDynamicTableByteCount = headerTableSizeSetting;
-      this.useCompression = useCompression;
-      this.out = out;
-    }
-
-    private void clearDynamicTable() {
-      Arrays.fill(dynamicTable, null);
-      nextHeaderIndex = dynamicTable.length - 1;
-      headerCount = 0;
-      dynamicTableByteCount = 0;
-    }
-
-    /** Returns the count of entries evicted. */
-    private int evictToRecoverBytes(int bytesToRecover) {
-      int entriesToEvict = 0;
+    /** Returns the count of entries evicted.  */
+    private fun evictToRecoverBytes(bytesToRecover: Int): Int {
+      var bytesToRecover = bytesToRecover
+      var entriesToEvict = 0
       if (bytesToRecover > 0) {
         // determine how many headers need to be evicted.
-        for (int j = dynamicTable.length - 1; j >= nextHeaderIndex && bytesToRecover > 0; j--) {
-          bytesToRecover -= dynamicTable[j].hpackSize;
-          dynamicTableByteCount -= dynamicTable[j].hpackSize;
-          headerCount--;
-          entriesToEvict++;
+        var j = dynamicTable.size - 1
+        while (j >= nextHeaderIndex && bytesToRecover > 0) {
+          bytesToRecover -= dynamicTable[j]!!.hpackSize
+          dynamicTableByteCount -= dynamicTable[j]!!.hpackSize
+          headerCount--
+          entriesToEvict++
+          j--
         }
         System.arraycopy(dynamicTable, nextHeaderIndex + 1, dynamicTable,
-            nextHeaderIndex + 1 + entriesToEvict, headerCount);
-        Arrays.fill(dynamicTable, nextHeaderIndex + 1, nextHeaderIndex + 1 + entriesToEvict, null);
-        nextHeaderIndex += entriesToEvict;
+            nextHeaderIndex + 1 + entriesToEvict, headerCount)
+        Arrays.fill(dynamicTable, nextHeaderIndex + 1, nextHeaderIndex + 1 + entriesToEvict, null)
+        nextHeaderIndex += entriesToEvict
       }
-      return entriesToEvict;
+      return entriesToEvict
     }
 
-    private void insertIntoDynamicTable(Header entry) {
-      int delta = entry.hpackSize;
+    private fun insertIntoDynamicTable(entry: Header) {
+      val delta = entry.hpackSize
 
       // if the new or replacement header is too big, drop all entries.
       if (delta > maxDynamicTableByteCount) {
-        clearDynamicTable();
-        return;
+        clearDynamicTable()
+        return
       }
 
       // Evict headers to the required length.
-      int bytesToRecover = (dynamicTableByteCount + delta) - maxDynamicTableByteCount;
-      evictToRecoverBytes(bytesToRecover);
+      val bytesToRecover = dynamicTableByteCount + delta - maxDynamicTableByteCount
+      evictToRecoverBytes(bytesToRecover)
 
-      if (headerCount + 1 > dynamicTable.length) { // Need to grow the dynamic table.
-        Header[] doubled = new Header[dynamicTable.length * 2];
-        System.arraycopy(dynamicTable, 0, doubled, dynamicTable.length, dynamicTable.length);
-        nextHeaderIndex = dynamicTable.length - 1;
-        dynamicTable = doubled;
+      if (headerCount + 1 > dynamicTable.size) { // Need to grow the dynamic table.
+        val doubled = arrayOfNulls<Header>(dynamicTable.size * 2)
+        System.arraycopy(dynamicTable, 0, doubled, dynamicTable.size, dynamicTable.size)
+        nextHeaderIndex = dynamicTable.size - 1
+        dynamicTable = doubled
       }
-      int index = nextHeaderIndex--;
-      dynamicTable[index] = entry;
-      headerCount++;
-      dynamicTableByteCount += delta;
+      val index = nextHeaderIndex--
+      dynamicTable[index] = entry
+      headerCount++
+      dynamicTableByteCount += delta
     }
 
-    /** This does not use "never indexed" semantics for sensitive headers. */
+    /** This does not use "never indexed" semantics for sensitive headers.  */
     // http://tools.ietf.org/html/draft-ietf-httpbis-header-compression-12#section-6.2.3
-    void writeHeaders(List<Header> headerBlock) throws IOException {
+    @Throws(IOException::class)
+    fun writeHeaders(headerBlock: List<Header>) {
       if (emitDynamicTableSizeUpdate) {
         if (smallestHeaderTableSizeSetting < maxDynamicTableByteCount) {
           // Multiple dynamic table size updates!
-          writeInt(smallestHeaderTableSizeSetting, PREFIX_5_BITS, 0x20);
+          writeInt(smallestHeaderTableSizeSetting, PREFIX_5_BITS, 0x20)
         }
-        emitDynamicTableSizeUpdate = false;
-        smallestHeaderTableSizeSetting = Integer.MAX_VALUE;
-        writeInt(maxDynamicTableByteCount, PREFIX_5_BITS, 0x20);
+        emitDynamicTableSizeUpdate = false
+        smallestHeaderTableSizeSetting = Integer.MAX_VALUE
+        writeInt(maxDynamicTableByteCount, PREFIX_5_BITS, 0x20)
       }
 
-      for (int i = 0, size = headerBlock.size(); i < size; i++) {
-        Header header = headerBlock.get(i);
-        ByteString name = header.name.toAsciiLowercase();
-        ByteString value = header.value;
-        int headerIndex = -1;
-        int headerNameIndex = -1;
+      for (i in 0 until headerBlock.size) {
+        val header = headerBlock[i]
+        val name = header.name.toAsciiLowercase()
+        val value = header.value
+        var headerIndex = -1
+        var headerNameIndex = -1
 
-        Integer staticIndex = NAME_TO_FIRST_INDEX.get(name);
+        val staticIndex = NAME_TO_FIRST_INDEX[name]
         if (staticIndex != null) {
-          headerNameIndex = staticIndex + 1;
-          if (headerNameIndex > 1 && headerNameIndex < 8) {
+          headerNameIndex = staticIndex + 1
+          if (headerNameIndex in 2..7) {
             // Only search a subset of the static header table. Most entries have an empty value, so
             // it's unnecessary to waste cycles looking at them. This check is built on the
             // observation that the header entries we care about are in adjacent pairs, and we
             // always know the first index of the pair.
-            if (Objects.equals(STATIC_HEADER_TABLE[headerNameIndex - 1].value, value)) {
-              headerIndex = headerNameIndex;
-            } else if (Objects.equals(STATIC_HEADER_TABLE[headerNameIndex].value, value)) {
-              headerIndex = headerNameIndex + 1;
+            if (STATIC_HEADER_TABLE[headerNameIndex - 1].value == value) {
+              headerIndex = headerNameIndex
+            } else if (STATIC_HEADER_TABLE[headerNameIndex].value == value) {
+              headerIndex = headerNameIndex + 1
             }
           }
         }
 
         if (headerIndex == -1) {
-          for (int j = nextHeaderIndex + 1, length = dynamicTable.length; j < length; j++) {
-            if (Objects.equals(dynamicTable[j].name, name)) {
-              if (Objects.equals(dynamicTable[j].value, value)) {
-                headerIndex = j - nextHeaderIndex + STATIC_HEADER_TABLE.length;
-                break;
+          for (j in nextHeaderIndex + 1 until dynamicTable.size) {
+            if (dynamicTable[j]!!.name == name) {
+              if (dynamicTable[j]!!.value == value) {
+                headerIndex = j - nextHeaderIndex + STATIC_HEADER_TABLE.size
+                break
               } else if (headerNameIndex == -1) {
-                headerNameIndex = j - nextHeaderIndex + STATIC_HEADER_TABLE.length;
+                headerNameIndex = j - nextHeaderIndex + STATIC_HEADER_TABLE.size
               }
             }
           }
         }
 
-        if (headerIndex != -1) {
-          // Indexed Header Field.
-          writeInt(headerIndex, PREFIX_7_BITS, 0x80);
-        } else if (headerNameIndex == -1) {
-          // Literal Header Field with Incremental Indexing - New Name.
-          out.writeByte(0x40);
-          writeByteString(name);
-          writeByteString(value);
-          insertIntoDynamicTable(header);
-        } else if (name.startsWith(Header.PSEUDO_PREFIX) && !Header.TARGET_AUTHORITY.equals(name)) {
-          // Follow Chromes lead - only include the :authority pseudo header, but exclude all other
-          // pseudo headers. Literal Header Field without Indexing - Indexed Name.
-          writeInt(headerNameIndex, PREFIX_4_BITS, 0);
-          writeByteString(value);
-        } else {
-          // Literal Header Field with Incremental Indexing - Indexed Name.
-          writeInt(headerNameIndex, PREFIX_6_BITS, 0x40);
-          writeByteString(value);
-          insertIntoDynamicTable(header);
+        when {
+          headerIndex != -1 -> {
+            // Indexed Header Field.
+            writeInt(headerIndex, PREFIX_7_BITS, 0x80)
+          }
+          headerNameIndex == -1 -> {
+            // Literal Header Field with Incremental Indexing - New Name.
+            out.writeByte(0x40)
+            writeByteString(name)
+            writeByteString(value)
+            insertIntoDynamicTable(header)
+          }
+          name.startsWith(Header.PSEUDO_PREFIX) && TARGET_AUTHORITY != name -> {
+            // Follow Chromes lead - only include the :authority pseudo header, but exclude all other
+            // pseudo headers. Literal Header Field without Indexing - Indexed Name.
+            writeInt(headerNameIndex, PREFIX_4_BITS, 0)
+            writeByteString(value)
+          }
+          else -> {
+            // Literal Header Field with Incremental Indexing - Indexed Name.
+            writeInt(headerNameIndex, PREFIX_6_BITS, 0x40)
+            writeByteString(value)
+            insertIntoDynamicTable(header)
+          }
         }
       }
     }
 
     // http://tools.ietf.org/html/draft-ietf-httpbis-header-compression-12#section-4.1.1
-    void writeInt(int value, int prefixMask, int bits) {
+    fun writeInt(value: Int, prefixMask: Int, bits: Int) {
+      var value = value
       // Write the raw value for a single byte value.
       if (value < prefixMask) {
-        out.writeByte(bits | value);
-        return;
+        out.writeByte(bits or value)
+        return
       }
 
       // Write the mask to start a multibyte value.
-      out.writeByte(bits | prefixMask);
-      value -= prefixMask;
+      out.writeByte(bits or prefixMask)
+      value -= prefixMask
 
       // Write 7 bits at a time 'til we're done.
       while (value >= 0x80) {
-        int b = value & 0x7f;
-        out.writeByte(b | 0x80);
-        value >>>= 7;
+        val b = value and 0x7f
+        out.writeByte(b or 0x80)
+        value = value ushr 7
       }
-      out.writeByte(value);
+      out.writeByte(value)
     }
 
-    void writeByteString(ByteString data) throws IOException {
-      if (useCompression && Huffman.get().encodedLength(data) < data.size()) {
-        Buffer huffmanBuffer = new Buffer();
-        Huffman.get().encode(data, huffmanBuffer);
-        ByteString huffmanBytes = huffmanBuffer.readByteString();
-        writeInt(huffmanBytes.size(), PREFIX_7_BITS, 0x80);
-        out.write(huffmanBytes);
+    @Throws(IOException::class)
+    fun writeByteString(data: ByteString) {
+      if (useCompression && Huffman.get().encodedLength(data) < data.size) {
+        val huffmanBuffer = Buffer()
+        Huffman.get().encode(data, huffmanBuffer)
+        val huffmanBytes = huffmanBuffer.readByteString()
+        writeInt(huffmanBytes.size, PREFIX_7_BITS, 0x80)
+        out.write(huffmanBytes)
       } else {
-        writeInt(data.size(), PREFIX_7_BITS, 0);
-        out.write(data);
+        writeInt(data.size, PREFIX_7_BITS, 0)
+        out.write(data)
       }
     }
 
-    void setHeaderTableSizeSetting(int headerTableSizeSetting) {
-      this.headerTableSizeSetting = headerTableSizeSetting;
-      int effectiveHeaderTableSize = Math.min(headerTableSizeSetting,
-          SETTINGS_HEADER_TABLE_SIZE_LIMIT);
+    fun resizeHeaderTable(headerTableSizeSetting: Int) {
+      this.headerTableSizeSetting = headerTableSizeSetting
+      val effectiveHeaderTableSize = minOf(headerTableSizeSetting, SETTINGS_HEADER_TABLE_SIZE_LIMIT)
 
-      if (maxDynamicTableByteCount == effectiveHeaderTableSize) return; // No change.
+      if (maxDynamicTableByteCount == effectiveHeaderTableSize) return // No change.
 
       if (effectiveHeaderTableSize < maxDynamicTableByteCount) {
-        smallestHeaderTableSizeSetting = Math.min(smallestHeaderTableSizeSetting,
-            effectiveHeaderTableSize);
+        smallestHeaderTableSizeSetting =
+            minOf(smallestHeaderTableSizeSetting, effectiveHeaderTableSize)
       }
-      emitDynamicTableSizeUpdate = true;
-      maxDynamicTableByteCount = effectiveHeaderTableSize;
-      adjustDynamicTableByteCount();
+      emitDynamicTableSizeUpdate = true
+      maxDynamicTableByteCount = effectiveHeaderTableSize
+      adjustDynamicTableByteCount()
     }
 
-    private void adjustDynamicTableByteCount() {
+    private fun adjustDynamicTableByteCount() {
       if (maxDynamicTableByteCount < dynamicTableByteCount) {
         if (maxDynamicTableByteCount == 0) {
-          clearDynamicTable();
+          clearDynamicTable()
         } else {
-          evictToRecoverBytes(dynamicTableByteCount - maxDynamicTableByteCount);
+          evictToRecoverBytes(dynamicTableByteCount - maxDynamicTableByteCount)
         }
       }
     }
@@ -592,13 +606,13 @@ final class Hpack {
    * An HTTP/2 response cannot contain uppercase header characters and must be treated as
    * malformed.
    */
-  static ByteString checkLowercase(ByteString name) throws IOException {
-    for (int i = 0, length = name.size(); i < length; i++) {
-      byte c = name.getByte(i);
-      if (c >= 'A' && c <= 'Z') {
-        throw new IOException("PROTOCOL_ERROR response malformed: mixed case name: " + name.utf8());
+  @Throws(IOException::class)
+  fun checkLowercase(name: ByteString): ByteString {
+    for (i in 0 until name.size) {
+      if (name[i] in 'A'.toByte()..'Z'.toByte()) {
+        throw IOException("PROTOCOL_ERROR response malformed: mixed case name: ${name.utf8()}")
       }
     }
-    return name;
+    return name
   }
 }

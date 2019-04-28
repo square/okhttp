@@ -183,7 +183,7 @@ public final class HpackTest {
   /** Header table backing array is initially 8 long, let's ensure it grows. */
   @Test public void dynamicallyGrowsBeyond64Entries() throws IOException {
     // Lots of headers need more room!
-    hpackReader = new Hpack.Reader(16384, 4096, bytesIn);
+    hpackReader = new Hpack.Reader(bytesIn, 16384, 4096);
     bytesIn.writeByte(0x3F); // Dynamic table size update (size = 16384).
     bytesIn.writeByte(0xE1);
     bytesIn.writeByte(0x7F);
@@ -872,13 +872,13 @@ public final class HpackTest {
   }
 
   @Test public void emitsDynamicTableSizeUpdate() throws IOException {
-    hpackWriter.setHeaderTableSizeSetting(2048);
+    hpackWriter.resizeHeaderTable(2048);
     hpackWriter.writeHeaders(asList(new Header("foo", "bar")));
     assertBytes(
         0x3F, 0xE1, 0xF, // Dynamic table size update (size = 2048).
         0x40, 3, 'f', 'o', 'o', 3, 'b', 'a', 'r');
 
-    hpackWriter.setHeaderTableSizeSetting(8192);
+    hpackWriter.resizeHeaderTable(8192);
     hpackWriter.writeHeaders(asList(new Header("bar", "foo")));
     assertBytes(
         0x3F, 0xE1, 0x3F, // Dynamic table size update (size = 8192).
@@ -891,15 +891,15 @@ public final class HpackTest {
 
   @Test public void noDynamicTableSizeUpdateWhenSizeIsEqual() throws IOException {
     int currentSize = hpackWriter.headerTableSizeSetting;
-    hpackWriter.setHeaderTableSizeSetting(currentSize);
+    hpackWriter.resizeHeaderTable(currentSize);
     hpackWriter.writeHeaders(asList(new Header("foo", "bar")));
 
     assertBytes(0x40, 3, 'f', 'o', 'o', 3, 'b', 'a', 'r');
   }
 
   @Test public void growDynamicTableSize() throws IOException {
-    hpackWriter.setHeaderTableSizeSetting(8192);
-    hpackWriter.setHeaderTableSizeSetting(16384);
+    hpackWriter.resizeHeaderTable(8192);
+    hpackWriter.resizeHeaderTable(16384);
     hpackWriter.writeHeaders(asList(new Header("foo", "bar")));
 
     assertBytes(
@@ -908,8 +908,8 @@ public final class HpackTest {
   }
 
   @Test public void shrinkDynamicTableSize() throws IOException {
-    hpackWriter.setHeaderTableSizeSetting(2048);
-    hpackWriter.setHeaderTableSizeSetting(0);
+    hpackWriter.resizeHeaderTable(2048);
+    hpackWriter.resizeHeaderTable(0);
     hpackWriter.writeHeaders(asList(new Header("foo", "bar")));
 
     assertBytes(
@@ -918,11 +918,11 @@ public final class HpackTest {
   }
 
   @Test public void manyDynamicTableSizeChanges() throws IOException {
-    hpackWriter.setHeaderTableSizeSetting(16384);
-    hpackWriter.setHeaderTableSizeSetting(8096);
-    hpackWriter.setHeaderTableSizeSetting(0);
-    hpackWriter.setHeaderTableSizeSetting(4096);
-    hpackWriter.setHeaderTableSizeSetting(2048);
+    hpackWriter.resizeHeaderTable(16384);
+    hpackWriter.resizeHeaderTable(8096);
+    hpackWriter.resizeHeaderTable(0);
+    hpackWriter.resizeHeaderTable(4096);
+    hpackWriter.resizeHeaderTable(2048);
     hpackWriter.writeHeaders(asList(new Header("foo", "bar")));
 
     assertBytes(
@@ -939,10 +939,10 @@ public final class HpackTest {
     hpackWriter.writeHeaders(headerBlock);
     assertThat(hpackWriter.headerCount).isEqualTo(2);
 
-    hpackWriter.setHeaderTableSizeSetting(56);
+    hpackWriter.resizeHeaderTable(56);
     assertThat(hpackWriter.headerCount).isEqualTo(1);
 
-    hpackWriter.setHeaderTableSizeSetting(0);
+    hpackWriter.resizeHeaderTable(0);
     assertThat(hpackWriter.headerCount).isEqualTo(0);
   }
 
@@ -954,12 +954,12 @@ public final class HpackTest {
     hpackWriter.writeHeaders(headerBlock);
     assertThat(hpackWriter.headerCount).isEqualTo(2);
 
-    hpackWriter.setHeaderTableSizeSetting(8192);
+    hpackWriter.resizeHeaderTable(8192);
     assertThat(hpackWriter.headerCount).isEqualTo(2);
   }
 
   @Test public void dynamicTableSizeHasAnUpperBound() {
-    hpackWriter.setHeaderTableSizeSetting(1048576);
+    hpackWriter.resizeHeaderTable(1048576);
     assertThat(hpackWriter.maxDynamicTableByteCount).isEqualTo(16384);
   }
 
@@ -1074,7 +1074,7 @@ public final class HpackTest {
   }
 
   private Hpack.Reader newReader(Buffer source) {
-    return new Hpack.Reader(4096, source);
+    return new Hpack.Reader(source, 4096);
   }
 
   private Buffer byteStream(int... bytes) {
