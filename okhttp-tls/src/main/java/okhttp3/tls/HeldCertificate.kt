@@ -17,6 +17,7 @@ package okhttp3.tls
 
 import okhttp3.internal.Util.verifyAsIpAddress
 import okio.ByteString
+import okio.ByteString.Companion.toByteString
 import org.bouncycastle.asn1.ASN1Encodable
 import org.bouncycastle.asn1.DERSequence
 import org.bouncycastle.asn1.pkcs.PrivateKeyInfo
@@ -123,7 +124,7 @@ class HeldCertificate(private val keyPair: KeyPair, private val certificate: X50
   fun certificatePem(): String {
     return buildString {
       append("-----BEGIN CERTIFICATE-----\n")
-      encodeBase64Lines(ByteString.of(*certificate.encoded))
+      encodeBase64Lines(certificate.encoded.toByteString())
       append("-----END CERTIFICATE-----\n")
     }
   }
@@ -137,7 +138,7 @@ class HeldCertificate(private val keyPair: KeyPair, private val certificate: X50
   fun privateKeyPkcs8Pem(): String {
     return buildString {
       append("-----BEGIN PRIVATE KEY-----\n")
-      encodeBase64Lines(ByteString.of(*keyPair.private.encoded))
+      encodeBase64Lines(keyPair.private.encoded.toByteString())
       append("-----END PRIVATE KEY-----\n")
     }
   }
@@ -159,7 +160,7 @@ class HeldCertificate(private val keyPair: KeyPair, private val certificate: X50
 
   private fun pkcs1Bytes(): ByteString {
     val privateKeyInfo = PrivateKeyInfo.getInstance(keyPair.private.encoded)
-    return ByteString.of(*privateKeyInfo.parsePrivateKey().toASN1Primitive().encoded)
+    return privateKeyInfo.parsePrivateKey().toASN1Primitive().encoded.toByteString()
   }
 
   private fun StringBuilder.encodeBase64Lines(data: ByteString) {

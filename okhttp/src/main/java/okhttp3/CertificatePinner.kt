@@ -18,6 +18,7 @@ package okhttp3
 import okhttp3.internal.tls.CertificateChainCleaner
 import okio.ByteString
 import okio.ByteString.Companion.decodeBase64
+import okio.ByteString.Companion.toByteString
 import java.security.cert.Certificate
 import java.security.cert.X509Certificate
 import javax.net.ssl.SSLPeerUnverifiedException
@@ -284,10 +285,10 @@ data class CertificatePinner internal constructor(
     }
 
     internal fun sha1(x509Certificate: X509Certificate): ByteString =
-        ByteString.of(*x509Certificate.publicKey.encoded).sha1()
+        x509Certificate.publicKey.encoded.toByteString().sha1()
 
     internal fun sha256(x509Certificate: X509Certificate): ByteString =
-        ByteString.of(*x509Certificate.publicKey.encoded).sha256()
+        x509Certificate.publicKey.encoded.toByteString().sha256()
 
     internal fun newPin(pattern: String, pin: String): Pin {
       val canonicalHostname = when {

@@ -41,14 +41,14 @@ import java.util.logging.Level.FINE
 import java.util.logging.Logger
 
 /** Writes HTTP/2 transport frames.  */
-internal class Http2Writer(
+class Http2Writer(
   private val sink: BufferedSink,
   private val client: Boolean
 ) : Closeable {
   private val hpackBuffer: Buffer = Buffer()
   private var maxFrameSize: Int = INITIAL_MAX_FRAME_SIZE
   private var closed: Boolean = false
-  val hpackWriter: Hpack.Writer = Hpack.Writer(hpackBuffer)
+  val hpackWriter: Hpack.Writer = Hpack.Writer(out = hpackBuffer)
 
   @Synchronized @Throws(IOException::class)
   fun connectionPreface() {
@@ -67,7 +67,7 @@ internal class Http2Writer(
     if (closed) throw IOException("closed")
     this.maxFrameSize = peerSettings.getMaxFrameSize(maxFrameSize)
     if (peerSettings.headerTableSize != -1) {
-      hpackWriter.setHeaderTableSizeSetting(peerSettings.headerTableSize)
+      hpackWriter.resizeHeaderTable(peerSettings.headerTableSize)
     }
     frameHeader(
         streamId = 0,

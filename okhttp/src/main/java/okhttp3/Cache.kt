@@ -29,9 +29,9 @@ import okhttp3.internal.platform.Platform
 import okio.Buffer
 import okio.BufferedSink
 import okio.BufferedSource
-import okio.ByteString
 import okio.ByteString.Companion.decodeBase64
 import okio.ByteString.Companion.encodeUtf8
+import okio.ByteString.Companion.toByteString
 import okio.ForwardingSink
 import okio.ForwardingSource
 import okio.Sink
@@ -636,7 +636,7 @@ class Cache internal constructor(
         sink.writeDecimalLong(certificates.size.toLong()).writeByte('\n'.toInt())
         for (i in 0 until certificates.size) {
           val bytes = certificates[i].encoded
-          val line = ByteString.of(*bytes).base64()
+          val line = bytes.toByteString().base64()
           sink.writeUtf8(line).writeByte('\n'.toInt())
         }
       } catch (e: CertificateEncodingException) {
