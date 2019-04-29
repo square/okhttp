@@ -754,7 +754,7 @@ class HttpUrl internal constructor(builder: Builder) {
   fun resolve(link: String): HttpUrl? = newBuilder(link)?.build()
 
   /**
-   * Returns a builder based on this URL
+   * Returns a builder based on this URL.
    */
   fun newBuilder(): Builder {
     val result = Builder()
@@ -832,7 +832,7 @@ class HttpUrl internal constructor(builder: Builder) {
     }
 
     /**
-     * @param scheme either "http" or "https"
+     * @param scheme either "http" or "https".
      */
     fun scheme(scheme: String): Builder {
       when {
