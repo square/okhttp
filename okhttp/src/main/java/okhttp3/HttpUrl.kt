@@ -832,7 +832,7 @@ class HttpUrl internal constructor(builder: Builder) {
     }
 
     /**
-     * @param scheme either http or https
+     * @param scheme either "http" or "https"
      */
     fun scheme(scheme: String): Builder {
       when {
