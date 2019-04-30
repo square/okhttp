@@ -45,11 +45,12 @@ Get via Maven:
 </dependency>
 ```
 
-or via Gradle 
+or via Gradle
 ```groovy
 implementation 'com.squareup.okhttp3:logging-interceptor:(insert latest version)'
 ```
-
+Latest version can be found in [Maven][2] repository.
 
 
  [1]: https://github.com/square/okhttp/wiki/Interceptors
+ [2]: https://mvnrepository.com/artifact/com.squareup.okhttp3/logging-interceptor
