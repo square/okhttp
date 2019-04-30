@@ -753,6 +753,9 @@ class HttpUrl internal constructor(builder: Builder) {
    */
   fun resolve(link: String): HttpUrl? = newBuilder(link)?.build()
 
+  /**
+   * Returns a builder based on this URL.
+   */
   fun newBuilder(): Builder {
     val result = Builder()
     result.scheme = scheme
@@ -828,6 +831,9 @@ class HttpUrl internal constructor(builder: Builder) {
       encodedPathSegments.add("") // The default path is '/' which needs a trailing space.
     }
 
+    /**
+     * @param scheme either "http" or "https".
+     */
     fun scheme(scheme: String): Builder {
       when {
         scheme.equals("http", ignoreCase = true) -> this.scheme = "http"
