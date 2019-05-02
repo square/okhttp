@@ -926,7 +926,7 @@ class KotlinSourceCompatibilityTest {
     var queueDispatcher: QueueDispatcher = object : QueueDispatcher() {
       override fun dispatch(request: RecordedRequest): MockResponse = TODO()
       override fun peek(): MockResponse = TODO()
-      override fun enqueueResponse(response: MockResponse?) = TODO()
+      override fun enqueueResponse(response: MockResponse) = TODO()
       override fun shutdown() = TODO()
       override fun setFailFast(failFast: Boolean) = TODO()
       override fun setFailFast(failFastResponse: MockResponse?) = TODO()
