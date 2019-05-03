@@ -78,7 +78,7 @@ open class QueueDispatcher : Dispatcher() {
 
   companion object {
     /**
-     * Enqueued on shutdown to release threads waiting on [.dispatch]. Note that this response
+     * Enqueued on shutdown to release threads waiting on [dispatch]. Note that this response
      * isn't transmitted because the connection is closed before this response is returned.
      */
     private val DEAD_LETTER = MockResponse()

@@ -230,7 +230,7 @@ data class CertificatePinner internal constructor(
     private val canonicalHostname: String,
     /** Either `sha1/` or `sha256/`.  */
     val hashAlgorithm: String,
-    /** The hash of the pinned certificate using [.hashAlgorithm].  */
+    /** The hash of the pinned certificate using [hashAlgorithm].  */
     val hash: ByteString
   ) {
     fun matches(hostname: String): Boolean {
