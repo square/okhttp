@@ -134,7 +134,7 @@ class Http2Writer(
     sink.flush()
   }
 
-  /** The maximum size of bytes that may be sent in a single call to [.data].  */
+  /** The maximum size of bytes that may be sent in a single call to [data].  */
   fun maxDataLength(): Int = maxFrameSize
 
   /**

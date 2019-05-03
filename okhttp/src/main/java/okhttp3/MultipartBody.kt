@@ -48,7 +48,7 @@ class MultipartBody internal constructor(
 
   fun part(index: Int): Part = parts[index]
 
-  /** A combination of [.type] and [.boundary].  */
+  /** A combination of [type] and [boundary].  */
   override fun contentType(): MediaType = contentType
 
   @Throws(IOException::class)
