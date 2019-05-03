@@ -24,7 +24,6 @@ import okhttp3.internal.http2.Header.Companion.TARGET_SCHEME
 import okio.Buffer
 import okio.BufferedSource
 import okio.ByteString
-import okio.ByteString.Companion.toByteString
 import okio.Source
 import okio.buffer
 import java.io.IOException
@@ -367,13 +366,14 @@ object Hpack {
     fun readByteString(): ByteString {
       val firstByte = readByte()
       val huffmanDecode = firstByte and 0x80 == 0x80 // 1NNNNNNN
-      val length = readInt(firstByte, PREFIX_7_BITS)
+      val length = readInt(firstByte, PREFIX_7_BITS).toLong()
 
       if (huffmanDecode) {
-        val bytes = source.readByteArray(length.toLong())
-        return Huffman.get().decode(bytes).toByteString()
+        val decodeBuffer = Buffer()
+        Huffman.decode(source, length, decodeBuffer)
+        return decodeBuffer.readByteString()
       } else {
-        return source.readByteString(length.toLong())
+        return source.readByteString(length)
       }
     }
   }
@@ -564,9 +564,9 @@ object Hpack {
 
     @Throws(IOException::class)
     fun writeByteString(data: ByteString) {
-      if (useCompression && Huffman.get().encodedLength(data) < data.size) {
+      if (useCompression && Huffman.encodedLength(data) < data.size) {
         val huffmanBuffer = Buffer()
-        Huffman.get().encode(data, huffmanBuffer)
+        Huffman.encode(data, huffmanBuffer)
         val huffmanBytes = huffmanBuffer.readByteString()
         writeInt(huffmanBytes.size, PREFIX_7_BITS, 0x80)
         out.write(huffmanBytes)

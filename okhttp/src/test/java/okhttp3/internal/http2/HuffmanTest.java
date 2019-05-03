@@ -22,7 +22,7 @@ import okio.ByteString;
 import org.junit.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
 
 /** Original version of this class was lifted from {@code com.twitter.hpack.HuffmanTest}. */
 public final class HuffmanTest {
@@ -39,11 +39,12 @@ public final class HuffmanTest {
   }
 
   private void assertRoundTrip(ByteString data) throws IOException {
-    Buffer buffer = new Buffer();
-    Huffman.get().encode(data, buffer);
-    assertThat(Huffman.get().encodedLength(data)).isEqualTo(buffer.size());
+    Buffer encodeBuffer = new Buffer();
+    Huffman.INSTANCE.encode(data, encodeBuffer);
+    assertThat(Huffman.INSTANCE.encodedLength(data)).isEqualTo(encodeBuffer.size());
 
-    byte[] decodedBytes = Huffman.get().decode(buffer.readByteArray());
-    assertArrayEquals(data.toByteArray(), decodedBytes);
+    Buffer decodeBuffer = new Buffer();
+    Huffman.INSTANCE.decode(encodeBuffer, encodeBuffer.size(), decodeBuffer);
+    assertEquals(data, decodeBuffer.readByteString());
   }
 }
