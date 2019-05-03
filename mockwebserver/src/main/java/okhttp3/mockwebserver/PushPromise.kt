@@ -13,37 +13,31 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package okhttp3.mockwebserver;
+package okhttp3.mockwebserver
 
-import okhttp3.Headers;
+import okhttp3.Headers
 
-/** An HTTP request initiated by the server. */
-public final class PushPromise {
-  private final String method;
-  private final String path;
-  private final Headers headers;
-  private final MockResponse response;
+/** An HTTP request initiated by the server.  */
+class PushPromise(
+  private val method: String,
+  private val path: String,
+  private val headers: Headers,
+  private val response: MockResponse
+) {
 
-  public PushPromise(String method, String path, Headers headers, MockResponse response) {
-    this.method = method;
-    this.path = path;
-    this.headers = headers;
-    this.response = response;
+  fun method(): String {
+    return method
   }
 
-  public String method() {
-    return method;
+  fun path(): String {
+    return path
   }
 
-  public String path() {
-    return path;
+  fun headers(): Headers {
+    return headers
   }
 
-  public Headers headers() {
-    return headers;
-  }
-
-  public MockResponse response() {
-    return response;
+  fun response(): MockResponse {
+    return response
   }
 }
