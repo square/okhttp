@@ -322,7 +322,7 @@ class KotlinSourceCompatibilityTest {
   @Test @Ignore
   fun dispatcherFromMockWebServer() {
     val dispatcher = object : okhttp3.mockwebserver.Dispatcher() {
-      override fun dispatch(request: RecordedRequest?): MockResponse = TODO()
+      override fun dispatch(request: RecordedRequest): MockResponse = TODO()
       override fun peek(): MockResponse = TODO()
       override fun shutdown() = TODO()
     }
@@ -924,9 +924,9 @@ class KotlinSourceCompatibilityTest {
   @Test @Ignore
   fun queueDispatcher() {
     var queueDispatcher: QueueDispatcher = object : QueueDispatcher() {
-      override fun dispatch(request: RecordedRequest?): MockResponse = TODO()
+      override fun dispatch(request: RecordedRequest): MockResponse = TODO()
       override fun peek(): MockResponse = TODO()
-      override fun enqueueResponse(response: MockResponse?) = TODO()
+      override fun enqueueResponse(response: MockResponse) = TODO()
       override fun shutdown() = TODO()
       override fun setFailFast(failFast: Boolean) = TODO()
       override fun setFailFast(failFastResponse: MockResponse?) = TODO()

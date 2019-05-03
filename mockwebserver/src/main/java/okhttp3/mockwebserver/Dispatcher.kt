@@ -13,15 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package okhttp3.mockwebserver;
+package okhttp3.mockwebserver
 
-/** Handler for mock server requests. */
-public abstract class Dispatcher {
+/** Handler for mock server requests.  */
+abstract class Dispatcher {
   /**
-   * Returns a response to satisfy {@code request}. This method may block (for instance, to wait on
+   * Returns a response to satisfy `request`. This method may block (for instance, to wait on
    * a CountdownLatch).
    */
-  public abstract MockResponse dispatch(RecordedRequest request) throws InterruptedException;
+  @Throws(InterruptedException::class)
+  abstract fun dispatch(request: RecordedRequest): MockResponse
 
   /**
    * Returns an early guess of the next response, used for policy on how an incoming request should
@@ -29,8 +30,8 @@ public abstract class Dispatcher {
    * can return other values to test HTTP edge cases, such as unhappy socket policies or throttled
    * request bodies.
    */
-  public MockResponse peek() {
-    return new MockResponse().setSocketPolicy(SocketPolicy.KEEP_OPEN);
+  open fun peek(): MockResponse {
+    return MockResponse().setSocketPolicy(SocketPolicy.KEEP_OPEN)
   }
 
   /**
@@ -38,6 +39,5 @@ public abstract class Dispatcher {
    * should return immediately. Responses returned after shutdown will not be transmitted: their
    * socket connections have already been closed.
    */
-  public void shutdown() {
-  }
+  open fun shutdown() {}
 }
