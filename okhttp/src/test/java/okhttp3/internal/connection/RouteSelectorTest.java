@@ -344,7 +344,7 @@ public final class RouteSelectorTest {
 
     // Extract the regular sequence of routes from selector.
     RouteSelector.Selection selection1 = routeSelector.next();
-    List<Route> regularRoutes = selection1.getAll();
+    List<Route> regularRoutes = selection1.getRoutes();
 
     // Check that we do indeed have more than one route.
     assertThat(regularRoutes.size()).isEqualTo(numberOfAddresses);
@@ -409,7 +409,7 @@ public final class RouteSelectorTest {
     RouteSelector.Selection selection = routeSelector.next();
     dns.assertRequests(uriHost);
 
-    List<Route> routes = selection.getAll();
+    List<Route> routes = selection.getRoutes();
     assertRoute(routes.get(0), address, NO_PROXY, dns.lookup(uriHost, 0), uriPort);
     assertRoute(routes.get(1), address, NO_PROXY, dns.lookup(uriHost, 1), uriPort);
 
@@ -422,19 +422,19 @@ public final class RouteSelectorTest {
   @Test public void getHostString() throws Exception {
     // Name proxy specification.
     InetSocketAddress socketAddress = InetSocketAddress.createUnresolved("host", 1234);
-    assertThat(RouteSelector.getHostString(socketAddress)).isEqualTo("host");
+    assertThat(RouteSelector.getSocketHost(socketAddress)).isEqualTo("host");
     socketAddress = InetSocketAddress.createUnresolved("127.0.0.1", 1234);
-    assertThat(RouteSelector.getHostString(socketAddress)).isEqualTo("127.0.0.1");
+    assertThat(RouteSelector.getSocketHost(socketAddress)).isEqualTo("127.0.0.1");
 
     // InetAddress proxy specification.
     socketAddress = new InetSocketAddress(InetAddress.getByName("localhost"), 1234);
-    assertThat(RouteSelector.getHostString(socketAddress)).isEqualTo("127.0.0.1");
+    assertThat(RouteSelector.getSocketHost(socketAddress)).isEqualTo("127.0.0.1");
     socketAddress = new InetSocketAddress(
         InetAddress.getByAddress(new byte[] {127, 0, 0, 1}), 1234);
-    assertThat(RouteSelector.getHostString(socketAddress)).isEqualTo("127.0.0.1");
+    assertThat(RouteSelector.getSocketHost(socketAddress)).isEqualTo("127.0.0.1");
     socketAddress = new InetSocketAddress(
         InetAddress.getByAddress("foobar", new byte[] {127, 0, 0, 1}), 1234);
-    assertThat(RouteSelector.getHostString(socketAddress)).isEqualTo("127.0.0.1");
+    assertThat(RouteSelector.getSocketHost(socketAddress)).isEqualTo("127.0.0.1");
   }
 
   @Test public void routeToString() throws Exception {

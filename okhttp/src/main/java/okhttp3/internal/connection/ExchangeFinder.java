@@ -194,7 +194,7 @@ final class ExchangeFinder {
       if (newRouteSelection) {
         // Now that we have a set of IP addresses, make another attempt at getting a connection from
         // the pool. This could match due to connection coalescing.
-        routes = routeSelection.getAll();
+        routes = routeSelection.getRoutes();
         if (connectionPool.transmitterAcquirePooledConnection(
             address, transmitter, routes, false)) {
           foundPooledConnection = true;
