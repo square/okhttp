@@ -100,4 +100,3 @@ class MockDuplexResponseBody : DuplexResponseBody {
     futureTask.get(5, TimeUnit.SECONDS)
   }
 }
-
