@@ -43,7 +43,7 @@ class RouteSelector(
   private var nextProxyIndex: Int = 0
 
   /* State for negotiating the next socket address to use. */
-  private var inetSocketAddresses: List<InetSocketAddress> = emptyList()
+  private var inetSocketAddresses = emptyList<InetSocketAddress>()
 
   /* State for negotiating failed routes */
   private val postponedRoutes = mutableListOf<Route>()
