@@ -13,14 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package okhttp3.mockwebserver.internal.duplex;
+package okhttp3.mockwebserver.internal.duplex
 
-import java.io.IOException;
-import okhttp3.mockwebserver.RecordedRequest;
-import okio.BufferedSink;
-import okio.BufferedSource;
+import okhttp3.mockwebserver.RecordedRequest
+import okio.BufferedSink
+import okio.BufferedSource
+import java.io.IOException
 
-public interface DuplexResponseBody {
-  void onRequest(RecordedRequest request, BufferedSource requestBody, BufferedSink responseBody)
-      throws IOException;
+interface DuplexResponseBody {
+  @Throws(IOException::class)
+  fun onRequest(request: RecordedRequest, requestBody: BufferedSource, responseBody: BufferedSink)
 }
