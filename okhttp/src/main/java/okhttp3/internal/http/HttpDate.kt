@@ -63,7 +63,8 @@ object HttpDate {
       "EEE, dd-MM-yyyy HH:mm:ss z",
 
       /* RI bug 6641315 claims a cookie of this format was once served by www.yahoo.com */
-      "EEE MMM d yyyy HH:mm:ss z")
+      "EEE MMM d yyyy HH:mm:ss z"
+  )
 
   private val BROWSER_COMPATIBLE_DATE_FORMATS = arrayOfNulls<DateFormat>(BROWSER_COMPATIBLE_DATE_FORMAT_STRINGS.size)
 
@@ -83,13 +84,15 @@ object HttpDate {
     }
     synchronized(BROWSER_COMPATIBLE_DATE_FORMAT_STRINGS) {
       for (i in 0 until BROWSER_COMPATIBLE_DATE_FORMAT_STRINGS.size) {
-        val format: DateFormat = BROWSER_COMPATIBLE_DATE_FORMATS[i]
-            ?: SimpleDateFormat(BROWSER_COMPATIBLE_DATE_FORMAT_STRINGS[i], Locale.US).apply {
-              // Set the timezone to use when interpreting formats that don't have a timezone. GMT is
-              // specified by RFC 7231.
-              timeZone = UTC
-            }
-        BROWSER_COMPATIBLE_DATE_FORMATS[i] = format
+        var format: DateFormat? = BROWSER_COMPATIBLE_DATE_FORMATS[i]
+        if (format == null) {
+          format = SimpleDateFormat(BROWSER_COMPATIBLE_DATE_FORMAT_STRINGS[i], Locale.US).apply {
+            // Set the timezone to use when interpreting formats that don't have a timezone. GMT is
+            // specified by RFC 7231.
+            timeZone = UTC
+          }
+          BROWSER_COMPATIBLE_DATE_FORMATS[i] = format
+        }
         position.index = 0
         result = format.parse(value, position)
         if (position.index != 0) {
