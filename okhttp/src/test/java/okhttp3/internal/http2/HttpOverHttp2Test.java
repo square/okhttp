@@ -35,8 +35,10 @@ import java.util.logging.Logger;
 import okhttp3.Cache;
 import okhttp3.Call;
 import okhttp3.Callback;
+import okhttp3.Connection;
 import okhttp3.Cookie;
 import okhttp3.Credentials;
+import okhttp3.EventListener;
 import okhttp3.Headers;
 import okhttp3.Interceptor;
 import okhttp3.MediaType;
@@ -67,6 +69,7 @@ import okio.Buffer;
 import okio.BufferedSink;
 import okio.GzipSink;
 import okio.Okio;
+import org.jetbrains.annotations.NotNull;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Ignore;
@@ -1575,5 +1578,42 @@ public final class HttpOverHttp2Test {
         throw new RuntimeException(e);
       }
     }
+  }
+
+  /** https://github.com/square/okhttp/issues/4875 */
+  @Ignore(
+      "This often fails due to a NoSuchElementException thrown from RouteSelector.next(). Run it repeatedly to reproduce.")
+  @Test
+  public void shutdownAfterLateCoalescing() throws Exception {
+    CountDownLatch latch = new CountDownLatch(2);
+
+    Callback callback = new Callback() {
+      @Override public void onResponse(Call call, Response response) {
+        fail();
+      }
+
+      @Override public void onFailure(Call call, IOException e) {
+        latch.countDown();
+      }
+    };
+
+    client = client.newBuilder().eventListener(new EventListener() {
+      int callCount;
+
+      @Override public void connectionAcquired(@NotNull Call call, @NotNull Connection connection) {
+        try {
+          if (callCount++ == 1) {
+            server.shutdown();
+          }
+        } catch(IOException e) {
+          fail();
+        }
+      }
+    }).build();
+
+    client.newCall(new Request.Builder().url(server.url("")).build()).enqueue(callback);
+    client.newCall(new Request.Builder().url(server.url("")).build()).enqueue(callback);
+
+    latch.await();
   }
 }
