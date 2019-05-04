@@ -13,109 +13,91 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package okhttp3.mockwebserver.internal.duplex;
+package okhttp3.mockwebserver.internal.duplex
 
-import java.io.IOException;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.FutureTask;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.TimeUnit;
-import okhttp3.mockwebserver.RecordedRequest;
-import okio.BufferedSink;
-import okio.BufferedSource;
-import okio.Utf8;
+import okhttp3.mockwebserver.RecordedRequest
+import okio.BufferedSink
+import okio.BufferedSource
+import okio.utf8Size
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
+import org.junit.Assert.fail
+import java.io.IOException
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.FutureTask
+import java.util.concurrent.LinkedBlockingQueue
+import java.util.concurrent.TimeUnit
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+private typealias Action = (RecordedRequest, BufferedSource, BufferedSink) -> Unit
 
 /**
- * A scriptable request/response conversation. Create the script by calling methods like {@link
- * #receiveRequest} in the sequence they are run.
+ * A scriptable request/response conversation. Create the script by calling methods like
+ * [receiveRequest] in the sequence they are run.
  */
-public final class MockDuplexResponseBody implements DuplexResponseBody {
-  private final BlockingQueue<Action> actions = new LinkedBlockingQueue<>();
-  private final BlockingQueue<FutureTask<Void>> results = new LinkedBlockingQueue<>();
+class MockDuplexResponseBody : DuplexResponseBody {
+  private val actions = LinkedBlockingQueue<Action>()
+  private val results = LinkedBlockingQueue<FutureTask<Void>>()
 
-  public MockDuplexResponseBody receiveRequest(String expected) {
-    actions.add((request, requestBody, responseBody) -> {
-      assertEquals(expected, requestBody.readUtf8(Utf8.size(expected)));
-    });
-    return this;
+  fun receiveRequest(expected: String) = apply {
+    actions += { _, requestBody, _ ->
+      assertEquals(expected, requestBody.readUtf8(expected.utf8Size()))
+    }
   }
 
-  public MockDuplexResponseBody exhaustRequest() {
-    actions.add((request, requestBody, responseBody) -> {
-      assertTrue(requestBody.exhausted());
-    });
-    return this;
+  fun exhaustRequest() = apply {
+    actions += { _, requestBody, _ -> assertTrue(requestBody.exhausted()) }
   }
 
-  public MockDuplexResponseBody requestIOException() {
-    actions.add((request, requestBody, responseBody) -> {
+  fun requestIOException() = apply {
+    actions += { _, requestBody, _ ->
       try {
-        requestBody.exhausted();
-        fail();
-      } catch (IOException expected) {
+        requestBody.exhausted()
+        fail()
+      } catch (expected: IOException) {
       }
-    });
-    return this;
+    }
   }
 
-  public MockDuplexResponseBody sendResponse(String s) {
-    return sendResponse(s, new CountDownLatch(0));
+  @JvmOverloads fun sendResponse(
+    s: String,
+    responseSent: CountDownLatch = CountDownLatch(0)
+  ) = apply {
+    actions += { _, _, responseBody ->
+      responseBody.writeUtf8(s)
+      responseBody.flush()
+      responseSent.countDown()
+    }
   }
 
-    public MockDuplexResponseBody sendResponse(String s, CountDownLatch responseSent) {
-    actions.add((request, requestBody, responseBody) -> {
-      responseBody.writeUtf8(s);
-      responseBody.flush();
-      responseSent.countDown();
-    });
-    return this;
+  fun exhaustResponse() = apply {
+    actions += { _, _, responseBody -> responseBody.close() }
   }
 
-  public MockDuplexResponseBody exhaustResponse() {
-    actions.add((request, requestBody, responseBody) -> {
-      responseBody.close();
-    });
-    return this;
+  fun sleep(duration: Long, unit: TimeUnit) = apply {
+    actions += { _, _, _ -> Thread.sleep(unit.toMillis(duration)) }
   }
 
-  public MockDuplexResponseBody sleep(long duration, TimeUnit unit) {
-    actions.add((request, requestBody, responseBody) -> {
-      try {
-        Thread.sleep(unit.toMillis(duration));
-      } catch (InterruptedException e) {
-        throw new AssertionError(e);
+  override fun onRequest(
+    request: RecordedRequest,
+    requestBody: BufferedSource,
+    responseBody: BufferedSink
+  ) {
+    val futureTask = FutureTask<Void> {
+      while (true) {
+        val action = actions.poll() ?: break
+        action(request, requestBody, responseBody)
       }
-    });
-    return this;
-  }
-
-  @Override public void onRequest(RecordedRequest request, BufferedSource requestBody,
-      BufferedSink responseBody) {
-    FutureTask<Void> futureTask = new FutureTask<>(() -> {
-      for (Action action; (action = actions.poll()) != null; ) {
-        action.execute(request, requestBody, responseBody);
-      }
-      return null; // Success!
-    });
-    results.add(futureTask);
-    futureTask.run();
+      return@FutureTask null
+    }
+    results.add(futureTask)
+    futureTask.run()
   }
 
   /** Returns once the duplex conversation completes successfully. */
-  public void awaitSuccess() throws Exception {
-    FutureTask<Void> futureTask = results.poll(5, TimeUnit.SECONDS);
-    if (futureTask == null) throw new AssertionError("no onRequest call received");
-    futureTask.get(5, TimeUnit.SECONDS);
-  }
-
-  private interface Action {
-    void execute(RecordedRequest request, BufferedSource requestBody, BufferedSink responseBody)
-        throws IOException;
+  fun awaitSuccess() {
+    val futureTask = results.poll(5, TimeUnit.SECONDS)
+        ?: throw AssertionError("no onRequest call received")
+    futureTask.get(5, TimeUnit.SECONDS)
   }
 }
 
