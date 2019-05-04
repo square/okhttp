@@ -27,6 +27,6 @@ abstract class MwsDuplexAccess {
   abstract fun setBody(mockResponse: MockResponse, duplexResponseBody: DuplexResponseBody)
 
   companion object {
-    @JvmStatic var instance: MwsDuplexAccess? = null
+    @JvmField var instance: MwsDuplexAccess? = null
   }
 }
