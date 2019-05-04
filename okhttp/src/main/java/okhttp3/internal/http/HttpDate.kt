@@ -36,10 +36,10 @@ object HttpDate {
   private val STANDARD_DATE_FORMAT = object : ThreadLocal<DateFormat>() {
     override fun initialValue(): DateFormat {
       // Date format specified by RFC 7231 section 7.1.1.1.
-      val rfc1123 = SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss 'GMT'", Locale.US)
-      rfc1123.isLenient = false
-      rfc1123.timeZone = UTC
-      return rfc1123
+      return SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss 'GMT'", Locale.US).apply {
+        isLenient = false
+        timeZone = UTC
+      }
     }
   }
 
@@ -82,17 +82,14 @@ object HttpDate {
       return result
     }
     synchronized(BROWSER_COMPATIBLE_DATE_FORMAT_STRINGS) {
-      var i = 0
-      val count = BROWSER_COMPATIBLE_DATE_FORMAT_STRINGS.size
-      while (i < count) {
-        var format: DateFormat? = BROWSER_COMPATIBLE_DATE_FORMATS[i]
-        if (format == null) {
-          format = SimpleDateFormat(BROWSER_COMPATIBLE_DATE_FORMAT_STRINGS[i], Locale.US)
-          // Set the timezone to use when interpreting formats that don't have a timezone. GMT is
-          // specified by RFC 7231.
-          format.timeZone = UTC
-          BROWSER_COMPATIBLE_DATE_FORMATS[i] = format
-        }
+      for (i in 0 until BROWSER_COMPATIBLE_DATE_FORMAT_STRINGS.size) {
+        val format: DateFormat = BROWSER_COMPATIBLE_DATE_FORMATS[i]
+            ?: SimpleDateFormat(BROWSER_COMPATIBLE_DATE_FORMAT_STRINGS[i], Locale.US).apply {
+              // Set the timezone to use when interpreting formats that don't have a timezone. GMT is
+              // specified by RFC 7231.
+              timeZone = UTC
+            }
+        BROWSER_COMPATIBLE_DATE_FORMATS[i] = format
         position.index = 0
         result = format.parse(value, position)
         if (position.index != 0) {
@@ -103,7 +100,6 @@ object HttpDate {
           // trailing junk is ignored.
           return result
         }
-        i++
       }
     }
     return null
