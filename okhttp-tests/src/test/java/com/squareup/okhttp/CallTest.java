@@ -2100,6 +2100,50 @@ public final class CallTest {
   }
 
   /**
+   * Respond to a proxy authorization challenge with deliberate
+   * Connection close in proxy server-side. Some proxy servers close the connection
+   * after sending response with "407: Proxy Authentication Required", leaving the current 
+   * socket useless. 
+   */ 
+  @Test public void proxyAuthenticateOnConnectWithConnectionCloseInProxyServer()
+          throws Exception {
+    server.useHttps(sslContext.getSocketFactory(), true);
+    server.enqueue(new MockResponse()
+        .setSocketPolicy(SocketPolicy.DISCONNECT_AT_END)
+        .setResponseCode(407)
+        .addHeader("Proxy-Authenticate: Basic realm=\"localhost\"")
+        .addHeader("Connection: close"));
+    server.enqueue(new MockResponse()
+        .setSocketPolicy(SocketPolicy.UPGRADE_TO_SSL_AT_END)
+        .clearHeaders());
+    server.enqueue(new MockResponse()
+        .setBody("response body"));
+
+    client.setSslSocketFactory(sslContext.getSocketFactory());
+    client.setProxy(server.toProxyAddress());
+    client.setAuthenticator(new RecordingOkAuthenticator("password"));
+    client.setHostnameVerifier(new RecordingHostnameVerifier());
+
+    Request request = new Request.Builder()
+        .url("https://android.com/foo")
+        .build();
+    Response response = client.newCall(request).execute();
+    assertEquals("response body", response.body().string());
+
+    RecordedRequest connect1 = server.takeRequest();
+    assertEquals("CONNECT android.com:443 HTTP/1.1", connect1.getRequestLine());
+    assertNull(connect1.getHeader("Proxy-Authorization"));
+
+    RecordedRequest connect2 = server.takeRequest();
+    assertEquals("CONNECT android.com:443 HTTP/1.1", connect2.getRequestLine());
+    assertEquals("password", connect2.getHeader("Proxy-Authorization"));
+
+    RecordedRequest get = server.takeRequest();
+    assertEquals("GET /foo HTTP/1.1", get.getRequestLine());
+    assertNull(get.getHeader("Proxy-Authorization"));
+  }
+
+  /**
    * Confirm that we don't send the Proxy-Authorization header from the request to the proxy server.
    * We used to have that behavior but it is problematic because unrelated requests end up sharing
    * credentials. Worse, that approach leaks proxy credentials to the origin server.
