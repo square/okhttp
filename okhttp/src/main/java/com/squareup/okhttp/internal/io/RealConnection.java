@@ -16,29 +16,6 @@
  */
 package com.squareup.okhttp.internal.io;
 
-import static com.squareup.okhttp.internal.Util.closeQuietly;
-import static java.net.HttpURLConnection.HTTP_OK;
-import static java.net.HttpURLConnection.HTTP_PROXY_AUTH;
-import static java.util.concurrent.TimeUnit.MILLISECONDS;
-
-import java.io.IOException;
-import java.lang.ref.Reference;
-import java.net.ConnectException;
-import java.net.Proxy;
-import java.net.Socket;
-import java.net.SocketTimeoutException;
-import java.net.UnknownServiceException;
-import java.security.cert.Certificate;
-import java.security.cert.X509Certificate;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.TimeUnit;
-
-import javax.net.ssl.SSLPeerUnverifiedException;
-import javax.net.ssl.SSLSocket;
-import javax.net.ssl.SSLSocketFactory;
-import javax.net.ssl.X509TrustManager;
-
 import com.squareup.okhttp.Address;
 import com.squareup.okhttp.CertificatePinner;
 import com.squareup.okhttp.Connection;
@@ -61,11 +38,31 @@ import com.squareup.okhttp.internal.http.StreamAllocation;
 import com.squareup.okhttp.internal.tls.CertificateChainCleaner;
 import com.squareup.okhttp.internal.tls.OkHostnameVerifier;
 import com.squareup.okhttp.internal.tls.TrustRootIndex;
-
+import java.io.IOException;
+import java.lang.ref.Reference;
+import java.net.ConnectException;
+import java.net.Proxy;
+import java.net.Socket;
+import java.net.SocketTimeoutException;
+import java.net.UnknownServiceException;
+import java.security.cert.Certificate;
+import java.security.cert.X509Certificate;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
+import javax.net.ssl.SSLPeerUnverifiedException;
+import javax.net.ssl.SSLSocket;
+import javax.net.ssl.SSLSocketFactory;
+import javax.net.ssl.X509TrustManager;
 import okio.BufferedSink;
 import okio.BufferedSource;
 import okio.Okio;
 import okio.Source;
+
+import static com.squareup.okhttp.internal.Util.closeQuietly;
+import static java.net.HttpURLConnection.HTTP_OK;
+import static java.net.HttpURLConnection.HTTP_PROXY_AUTH;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 public final class RealConnection implements Connection {
   private final Route route;
@@ -109,10 +106,19 @@ public final class RealConnection implements Connection {
 
     while (protocol == null) {
       try {
-        initializeRawSocket(proxy, address);
+        rawSocket = proxy.type() == Proxy.Type.DIRECT || proxy.type() == Proxy.Type.HTTP
+            ? address.getSocketFactory().createSocket()
+            : new Socket(proxy);
         connectSocket(connectTimeout, readTimeout, writeTimeout, connectionSpecSelector);
       } catch (IOException e) {
-        cleanupConnection();
+        Util.closeQuietly(socket);
+        Util.closeQuietly(rawSocket);
+        socket = null;
+        rawSocket = null;
+        source = null;
+        sink = null;
+        handshake = null;
+        protocol = null;
 
         if (routeException == null) {
           routeException = new RouteException(e);
@@ -130,7 +136,14 @@ public final class RealConnection implements Connection {
   /** Does all the work necessary to build a full HTTP or HTTPS connection on a raw socket. */
   private void connectSocket(int connectTimeout, int readTimeout, int writeTimeout,
       ConnectionSpecSelector connectionSpecSelector) throws IOException {
-    connectRawSocket(connectTimeout, readTimeout);
+    rawSocket.setSoTimeout(readTimeout);
+    try {
+      Platform.get().connectSocket(rawSocket, route.getSocketAddress(), connectTimeout);
+    } catch (ConnectException e) {
+      throw new ConnectException("Failed to connect to " + route.getSocketAddress());
+    }
+    source = Okio.buffer(Okio.source(rawSocket));
+    sink = Okio.buffer(Okio.sink(rawSocket));
 
     if (route.getAddress().getSslSocketFactory() != null) {
       connectTls(connectTimeout, readTimeout, writeTimeout, connectionSpecSelector);
@@ -278,8 +291,8 @@ public final class RealConnection implements Connection {
           return;
 
         case HTTP_PROXY_AUTH:
-          tunnelRequest = OkHeaders.processAuthHeader(route.getAddress().getAuthenticator(),
-          response, route.getProxy());
+          tunnelRequest = OkHeaders.processAuthHeader(
+              route.getAddress().getAuthenticator(), response, route.getProxy());
           if (tunnelRequest != null) {
               String header = response.header("Connection");
               if (header != null && header.toLowerCase().contains("close")) {
@@ -300,48 +313,6 @@ public final class RealConnection implements Connection {
   }
 
   /**
-   * Cleanup current connection and try to open a new one.
-   */
-  private void resetTunnelConnection(int connectTimeout, int readTimeout)
-          throws IOException {
-      cleanupConnection();
-
-      Proxy proxy = route.getProxy();
-      Address address = route.getAddress();
-
-      initializeRawSocket(proxy, address);
-      connectRawSocket(connectTimeout, readTimeout);
-  }
-
-  private void cleanupConnection() {
-      Util.closeQuietly(socket);
-      Util.closeQuietly(rawSocket);
-      socket = null;
-      rawSocket = null;
-      source = null;
-      sink = null;
-      handshake = null;
-      protocol = null;
-  }
-
-  private void initializeRawSocket(Proxy proxy, Address address) throws IOException {
-    rawSocket = proxy.type() == Proxy.Type.DIRECT || proxy.type() == Proxy.Type.HTTP
-      ? address.getSocketFactory().createSocket() : new Socket(proxy);
-  }
-
-  private void connectRawSocket(int connectTimeout, int readTimeout)
-          throws IOException {
-      rawSocket.setSoTimeout(readTimeout);
-      try {
-        Platform.get().connectSocket(rawSocket, route.getSocketAddress(), connectTimeout);
-      } catch (ConnectException e) {
-        throw new ConnectException("Failed to connect to " + route.getSocketAddress());
-      }
-      source = Okio.buffer(Okio.source(rawSocket));
-      sink = Okio.buffer(Okio.sink(rawSocket));
-  }
-
-  /**
    * Returns a request that creates a TLS tunnel via an HTTP proxy, or null if
    * no tunnel is necessary. Everything in the tunnel request is sent
    * unencrypted to the proxy server, so tunnels include only the minimum set of
@@ -355,6 +326,36 @@ public final class RealConnection implements Connection {
         .header("Proxy-Connection", "Keep-Alive")
         .header("User-Agent", Version.userAgent()) // For HTTP/1.0 proxies like Squid.
         .build();
+  }
+
+  /**
+   * Cleanup current connection and try to open a new one.
+   */
+  private void resetTunnelConnection(int connectTimeout, int readTimeout)
+          throws IOException {
+      Util.closeQuietly(socket);
+      Util.closeQuietly(rawSocket);
+      socket = null;
+      rawSocket = null;
+      source = null;
+      sink = null;
+      handshake = null;
+      protocol = null;
+
+      Proxy proxy = route.getProxy();
+      Address address = route.getAddress();
+
+      rawSocket = proxy.type() == Proxy.Type.DIRECT || proxy.type() == Proxy.Type.HTTP
+              ? address.getSocketFactory().createSocket()
+              : new Socket(proxy);
+      rawSocket.setSoTimeout(readTimeout);
+      try {
+          Platform.get().connectSocket(rawSocket, route.getSocketAddress(), connectTimeout);
+      } catch (ConnectException e) {
+          throw new ConnectException("Failed to connect to " + route.getSocketAddress());
+      }
+      source = Okio.buffer(Okio.source(rawSocket));
+      sink = Okio.buffer(Okio.sink(rawSocket));
   }
 
   /** Returns true if {@link #connect} has been attempted on this connection. */
