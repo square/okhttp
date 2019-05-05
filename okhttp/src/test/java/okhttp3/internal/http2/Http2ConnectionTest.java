@@ -119,7 +119,7 @@ public final class Http2ConnectionTest {
     // This stream was created *after* the connection settings were adjusted.
     Http2Stream stream = connection.newStream(headerEntries("a", "android"), false);
 
-    assertThat(connection.peerSettings.getInitialWindowSize()).isEqualTo(3368);
+    assertThat(connection.getPeerSettings().getInitialWindowSize()).isEqualTo(3368);
     // New Stream is has the most recent initial window size.
     assertThat(stream.getBytesLeftInWriteWindow()).isEqualTo(3368);
   }
@@ -132,8 +132,8 @@ public final class Http2ConnectionTest {
     Http2Connection connection = connectWithSettings(client, settings);
 
     // Verify the peer's settings were read and applied.
-    assertThat(connection.peerSettings.getHeaderTableSize()).isEqualTo(0);
-    Http2Writer writer = connection.writer;
+    assertThat(connection.getPeerSettings().getHeaderTableSize()).isEqualTo(0);
+    Http2Writer writer = connection.getWriter();
     assertThat(writer.getHpackWriter().dynamicTableByteCount).isEqualTo(0);
     assertThat(writer.getHpackWriter().headerTableSizeSetting).isEqualTo(0);
   }
@@ -146,7 +146,7 @@ public final class Http2ConnectionTest {
     Http2Connection connection = connectWithSettings(client, settings);
 
     // verify the peer's settings were read and applied.
-    assertThat(connection.peerSettings.getEnablePush(true)).isFalse();
+    assertThat(connection.getPeerSettings().getEnablePush(true)).isFalse();
   }
 
   @Test public void peerIncreasesMaxFrameSize() throws Exception {
@@ -157,8 +157,8 @@ public final class Http2ConnectionTest {
     Http2Connection connection = connectWithSettings(true, settings);
 
     // verify the peer's settings were read and applied.
-    assertThat(connection.peerSettings.getMaxFrameSize(-1)).isEqualTo(newMaxFrameSize);
-    assertThat(connection.writer.maxDataLength()).isEqualTo(newMaxFrameSize);
+    assertThat(connection.getPeerSettings().getMaxFrameSize(-1)).isEqualTo(newMaxFrameSize);
+    assertThat(connection.getWriter().maxDataLength()).isEqualTo(newMaxFrameSize);
   }
 
   /**
@@ -234,7 +234,7 @@ public final class Http2ConnectionTest {
     InFrame frame3 = peer.takeFrame();
     assertThat(frame3.type).isEqualTo(Http2.TYPE_RST_STREAM);
 
-    assertThat(connection.unacknowledgedBytesRead).isEqualTo(2048);
+    assertThat(connection.getUnacknowledgedBytesRead()).isEqualTo(2048);
   }
 
   @Test public void receiveGoAwayHttp2() throws Exception {
@@ -310,7 +310,7 @@ public final class Http2ConnectionTest {
 
     // Play it back.
     Http2Connection connection = connect(peer);
-    connection.okHttpSettings.set(INITIAL_WINDOW_SIZE, windowSize);
+    connection.getOkHttpSettings().set(INITIAL_WINDOW_SIZE, windowSize);
     Http2Stream stream = connection.newStream(headerEntries("b", "banana"), false);
     assertThat(stream.getUnacknowledgedBytesRead()).isEqualTo(0);
     assertThat(stream.takeHeaders()).isEqualTo(Headers.of("a", "android"));
@@ -892,7 +892,7 @@ public final class Http2ConnectionTest {
     Http2Connection connection = connect(peer, IGNORE, listener);
 
     synchronized (connection) {
-      assertThat(connection.peerSettings.getMaxConcurrentStreams(-1)).isEqualTo(10);
+      assertThat(connection.getPeerSettings().getMaxConcurrentStreams(-1)).isEqualTo(10);
     }
     maxConcurrentStreamsUpdated.await();
     assertThat(maxConcurrentStreams.get()).isEqualTo(10);
@@ -922,10 +922,10 @@ public final class Http2ConnectionTest {
     assertThat(peer.takeFrame().type).isEqualTo(Http2.TYPE_SETTINGS);
     assertThat(peer.takeFrame().type).isEqualTo(Http2.TYPE_PING);
     synchronized (connection) {
-      assertThat(connection.peerSettings.getHeaderTableSize()).isEqualTo(10000);
-      assertThat(connection.peerSettings.getInitialWindowSize()).isEqualTo(40000);
-      assertThat(connection.peerSettings.getMaxFrameSize(-1)).isEqualTo(50000);
-      assertThat(connection.peerSettings.getMaxConcurrentStreams(-1)).isEqualTo(60000);
+      assertThat(connection.getPeerSettings().getHeaderTableSize()).isEqualTo(10000);
+      assertThat(connection.getPeerSettings().getInitialWindowSize()).isEqualTo(40000);
+      assertThat(connection.getPeerSettings().getMaxFrameSize(-1)).isEqualTo(50000);
+      assertThat(connection.getPeerSettings().getMaxConcurrentStreams(-1)).isEqualTo(60000);
     }
   }
 
@@ -947,14 +947,14 @@ public final class Http2ConnectionTest {
     // fake a settings frame with clear flag set.
     Settings settings2 = new Settings();
     settings2.set(MAX_CONCURRENT_STREAMS, 60000);
-    connection.readerRunnable.settings(true, settings2);
+    connection.getReaderRunnable().settings(true, settings2);
 
     synchronized (connection) {
-      assertThat(connection.peerSettings.getHeaderTableSize()).isEqualTo(-1);
-      assertThat(connection.peerSettings.getInitialWindowSize()).isEqualTo(
+      assertThat(connection.getPeerSettings().getHeaderTableSize()).isEqualTo(-1);
+      assertThat(connection.getPeerSettings().getInitialWindowSize()).isEqualTo(
           (long) DEFAULT_INITIAL_WINDOW_SIZE);
-      assertThat(connection.peerSettings.getMaxFrameSize(-1)).isEqualTo(-1);
-      assertThat(connection.peerSettings.getMaxConcurrentStreams(-1)).isEqualTo(60000);
+      assertThat(connection.getPeerSettings().getMaxFrameSize(-1)).isEqualTo(-1);
+      assertThat(connection.getPeerSettings().getMaxConcurrentStreams(-1)).isEqualTo(60000);
     }
   }
 
@@ -1329,7 +1329,7 @@ public final class Http2ConnectionTest {
     Http2Connection connection = connect(peer);
     connection.newStream(headerEntries("a", "android"), false);
     synchronized (connection) {
-      if (connection.shutdown) {
+      if (connection.isShutdown()) {
         throw new ConnectionShutdownException();
       }
     }
@@ -1640,7 +1640,7 @@ public final class Http2ConnectionTest {
 
     // Play it back.
     Http2Connection connection = connect(peer);
-    connection.okHttpSettings.set(INITIAL_WINDOW_SIZE, windowSize);
+    connection.getOkHttpSettings().set(INITIAL_WINDOW_SIZE, windowSize);
     Http2Stream stream = connection.newStream(headerEntries("b", "banana"), false);
     assertThat(stream.getUnacknowledgedBytesRead()).isEqualTo(0);
     assertThat(stream.takeHeaders()).isEqualTo(Headers.of("a", "android"));
@@ -1754,13 +1754,13 @@ public final class Http2ConnectionTest {
     out1.flush();
 
     // Check that we've filled the window for both the stream and also the connection.
-    assertThat(connection.bytesLeftInWriteWindow).isEqualTo(0);
+    assertThat(connection.getBytesLeftInWriteWindow()).isEqualTo(0);
     assertThat(connection.getStream(3).getBytesLeftInWriteWindow()).isEqualTo(0);
 
     // receiving a window update on the connection will unblock new streams.
-    connection.readerRunnable.windowUpdate(0, 3);
+    connection.getReaderRunnable().windowUpdate(0, 3);
 
-    assertThat(connection.bytesLeftInWriteWindow).isEqualTo(3);
+    assertThat(connection.getBytesLeftInWriteWindow()).isEqualTo(3);
     assertThat(connection.getStream(3).getBytesLeftInWriteWindow()).isEqualTo(0);
 
     // Another stream should be able to send data even though 1 is blocked.
@@ -1769,7 +1769,7 @@ public final class Http2ConnectionTest {
     out2.writeUtf8("foo");
     out2.flush();
 
-    assertThat(connection.bytesLeftInWriteWindow).isEqualTo(0);
+    assertThat(connection.getBytesLeftInWriteWindow()).isEqualTo(0);
     assertThat(connection.getStream(3).getBytesLeftInWriteWindow()).isEqualTo(0);
     assertThat(connection.getStream(5).getBytesLeftInWriteWindow()).isEqualTo(
         (long) (DEFAULT_INITIAL_WINDOW_SIZE - 3));
@@ -1847,7 +1847,7 @@ public final class Http2ConnectionTest {
   }
 
   private Http2Connection connect(MockHttp2Peer peer) throws Exception {
-    return connect(peer, IGNORE, REFUSE_INCOMING_STREAMS);
+    return connect(peer, IGNORE, Http2Connection.Listener.REFUSE_INCOMING_STREAMS);
   }
 
   /** Builds a new connection to {@code peer} with settings acked. */

@@ -18,6 +18,10 @@ package okhttp3.internal
 import okio.BufferedSink
 import okio.BufferedSource
 import java.io.IOException
+import java.net.InetSocketAddress
+import java.net.Socket
+import java.util.concurrent.Executor
+import java.util.concurrent.RejectedExecutionException
 
 infix fun Byte.and(mask: Int): Int = toInt() and mask
 infix fun Short.and(mask: Int): Int = toInt() and mask
@@ -35,4 +39,34 @@ fun BufferedSource.readMedium(): Int {
   return (readByte() and 0xff shl 16
       or (readByte() and 0xff shl 8)
       or (readByte() and 0xff))
+}
+
+fun Socket.connectionName(): String {
+  val address = remoteSocketAddress
+  return if (address is InetSocketAddress) address.hostName else address.toString()
+}
+
+/** Run [block] until it either throws an [IOException] or completes. */
+inline fun ignoreIoExceptions(block: () -> Unit) {
+  try {
+    block()
+  } catch (_: IOException) {
+  }
+}
+
+/** Execute [block], setting the executing thread's name to [name] for the duration. */
+inline fun Executor.execute(name: String, crossinline block: () -> Unit) {
+  execute(object : NamedRunnable("%s", name) {
+    override fun execute() {
+      block()
+    }
+  })
+}
+
+/** Executes [block] unless this executor has been shutdown, in which case this does nothing. */
+inline fun Executor.tryExecute(name: String, crossinline block: () -> Unit) {
+  try {
+    execute(name, block)
+  } catch (_: RejectedExecutionException) {
+  }
 }
