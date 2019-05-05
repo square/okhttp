@@ -15,7 +15,8 @@
  */
 package okhttp3
 
-import okhttp3.internal.http.HttpHeaders
+import okhttp3.internal.indexOfNonWhitespace
+import okhttp3.internal.toNonNegativeInt
 import java.util.concurrent.TimeUnit
 
 /**
@@ -261,7 +262,7 @@ class CacheControl private constructor(
         var pos = 0
         while (pos < value.length) {
           val tokenStart = pos
-          pos = HttpHeaders.skipUntil(value, pos, "=,;")
+          pos = value.indexOfElement("=,;", pos)
           val directive = value.substring(tokenStart, pos).trim { it <= ' ' }
           val parameter: String?
 
@@ -270,19 +271,19 @@ class CacheControl private constructor(
             parameter = null
           } else {
             pos++ // Consume '='.
-            pos = HttpHeaders.skipWhitespace(value, pos)
+            pos = value.indexOfNonWhitespace(pos)
 
             if (pos < value.length && value[pos] == '\"') {
               // Quoted string.
               pos++ // Consume '"' open quote.
               val parameterStart = pos
-              pos = HttpHeaders.skipUntil(value, pos, "\"")
+              pos = value.indexOfElement("\"", pos)
               parameter = value.substring(parameterStart, pos)
               pos++ // Consume '"' close quote (if necessary).
             } else {
               // Unquoted string.
               val parameterStart = pos
-              pos = HttpHeaders.skipUntil(value, pos, ",;")
+              pos = value.indexOfElement(",;", pos)
               parameter = value.substring(parameterStart, pos).trim { it <= ' ' }
             }
           }
@@ -295,10 +296,10 @@ class CacheControl private constructor(
               noStore = true
             }
             "max-age".equals(directive, ignoreCase = true) -> {
-              maxAgeSeconds = HttpHeaders.parseSeconds(parameter, -1)
+              maxAgeSeconds = parameter.toNonNegativeInt(-1)
             }
             "s-maxage".equals(directive, ignoreCase = true) -> {
-              sMaxAgeSeconds = HttpHeaders.parseSeconds(parameter, -1)
+              sMaxAgeSeconds = parameter.toNonNegativeInt(-1)
             }
             "private".equals(directive, ignoreCase = true) -> {
               isPrivate = true
@@ -310,10 +311,10 @@ class CacheControl private constructor(
               mustRevalidate = true
             }
             "max-stale".equals(directive, ignoreCase = true) -> {
-              maxStaleSeconds = HttpHeaders.parseSeconds(parameter, Integer.MAX_VALUE)
+              maxStaleSeconds = parameter.toNonNegativeInt(Integer.MAX_VALUE)
             }
             "min-fresh".equals(directive, ignoreCase = true) -> {
-              minFreshSeconds = HttpHeaders.parseSeconds(parameter, -1)
+              minFreshSeconds = parameter.toNonNegativeInt(-1)
             }
             "only-if-cached".equals(directive, ignoreCase = true) -> {
               onlyIfCached = true
@@ -335,6 +336,19 @@ class CacheControl private constructor(
       return CacheControl(noCache, noStore, maxAgeSeconds, sMaxAgeSeconds, isPrivate, isPublic,
           mustRevalidate, maxStaleSeconds, minFreshSeconds, onlyIfCached, noTransform, immutable,
           headerValue)
+    }
+
+    /**
+     * Returns the next index in this at or after [startIndex] that is a character from
+     * [characters]. Returns the input length if none of the requested characters can be found.
+     */
+    private fun String.indexOfElement(characters: String, startIndex: Int = 0): Int {
+      for (i in startIndex until length) {
+        if (characters.contains(this[i])) {
+          return i
+        }
+      }
+      return length
     }
   }
 }

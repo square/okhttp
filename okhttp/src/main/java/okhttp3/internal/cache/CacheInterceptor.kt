@@ -16,26 +16,26 @@
  */
 package okhttp3.internal.cache
 
-import java.io.IOException
 import okhttp3.Headers
 import okhttp3.Interceptor
 import okhttp3.Protocol
 import okhttp3.Response
 import okhttp3.internal.Util
-import okhttp3.internal.http.ExchangeCodec
-import okhttp3.internal.http.HttpHeaders
-import okhttp3.internal.http.HttpMethod
-import okhttp3.internal.http.RealResponseBody
-import okio.Buffer
-import okio.Source
-import okio.Timeout
-import java.net.HttpURLConnection.HTTP_NOT_MODIFIED
-import java.util.concurrent.TimeUnit.MILLISECONDS
 import okhttp3.internal.Util.closeQuietly
 import okhttp3.internal.Util.discard
 import okhttp3.internal.addHeaderLenient
+import okhttp3.internal.http.ExchangeCodec
+import okhttp3.internal.http.HttpMethod
+import okhttp3.internal.http.RealResponseBody
+import okhttp3.internal.http.promisesBody
+import okio.Buffer
+import okio.Source
+import okio.Timeout
 import okio.buffer
+import java.io.IOException
 import java.net.HttpURLConnection.HTTP_GATEWAY_TIMEOUT
+import java.net.HttpURLConnection.HTTP_NOT_MODIFIED
+import java.util.concurrent.TimeUnit.MILLISECONDS
 
 /** Serves requests from the cache and writes responses to the cache.  */
 class CacheInterceptor(internal val cache: InternalCache?) : Interceptor {
@@ -118,7 +118,7 @@ class CacheInterceptor(internal val cache: InternalCache?) : Interceptor {
         .build()
 
     if (cache != null) {
-      if (HttpHeaders.hasBody(response) && CacheStrategy.isCacheable(response, networkRequest)) {
+      if (response.promisesBody() && CacheStrategy.isCacheable(response, networkRequest)) {
         // Offer this request to the cache.
         val cacheRequest = cache.put(response)
         return cacheWritingResponse(cacheRequest, response)

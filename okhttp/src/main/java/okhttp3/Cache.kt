@@ -15,13 +15,13 @@
  */
 package okhttp3
 
+import okhttp3.internal.Util
 import okhttp3.internal.Util.closeQuietly
 import okhttp3.internal.addHeaderLenient
 import okhttp3.internal.cache.CacheRequest
 import okhttp3.internal.cache.CacheStrategy
 import okhttp3.internal.cache.DiskLruCache
 import okhttp3.internal.cache.InternalCache
-import okhttp3.internal.http.HttpHeaders
 import okhttp3.internal.http.HttpMethod
 import okhttp3.internal.http.StatusLine
 import okhttp3.internal.io.FileSystem
@@ -47,6 +47,7 @@ import java.security.cert.CertificateException
 import java.security.cert.CertificateFactory
 import java.util.ArrayList
 import java.util.NoSuchElementException
+import java.util.TreeSet
 
 /**
  * Caches HTTP and HTTPS responses to the filesystem so they may be reused, saving time and
@@ -228,7 +229,7 @@ class Cache internal constructor(
       return null
     }
 
-    if (HttpHeaders.hasVaryAll(response)) {
+    if (response.hasVaryAll()) {
       return null
     }
 
@@ -559,7 +560,7 @@ class Cache internal constructor(
 
     internal constructor(response: Response) {
       this.url = response.request().url().toString()
-      this.varyHeaders = HttpHeaders.varyHeaders(response)
+      this.varyHeaders = response.varyHeaders()
       this.requestMethod = response.request().method()
       this.protocol = response.protocol()
       this.code = response.code()
@@ -647,7 +648,7 @@ class Cache internal constructor(
     fun matches(request: Request, response: Response): Boolean {
       return url == request.url().toString() &&
           requestMethod == request.method() &&
-          HttpHeaders.varyMatches(response, varyHeaders, request)
+          varyMatches(response, varyHeaders, request)
     }
 
     fun response(snapshot: DiskLruCache.Snapshot): Response {
@@ -735,6 +736,77 @@ class Cache internal constructor(
       } catch (e: NumberFormatException) {
         throw IOException(e.message)
       }
+    }
+
+    /**
+     * Returns true if none of the Vary headers have changed between [cachedRequest] and
+     * [newRequest].
+     */
+    fun varyMatches(
+      cachedResponse: Response,
+      cachedRequest: Headers,
+      newRequest: Request
+    ): Boolean {
+      return cachedResponse.headers().varyFields().none {
+        cachedRequest.values(it) != newRequest.headers(it)
+      }
+    }
+
+    /** Returns true if a Vary header contains an asterisk. Such responses cannot be cached. */
+    fun Response.hasVaryAll(): Boolean {
+      val responseHeaders = headers()
+      val varyFields = responseHeaders.varyFields()
+      return varyFields.contains("*")
+    }
+
+    /**
+     * Returns the names of the request headers that need to be checked for equality when caching.
+     */
+    private fun Headers.varyFields(): Set<String> {
+      var result: MutableSet<String>? = null
+      for (i in 0 until size()) {
+        if (!"Vary".equals(name(i), ignoreCase = true)) {
+          continue
+        }
+
+        val value = value(i)
+        if (result == null) {
+          result = TreeSet(String.CASE_INSENSITIVE_ORDER)
+        }
+        for (varyField in value.split(',')) {
+          result.add(varyField.trim())
+        }
+      }
+      return result ?: emptySet()
+    }
+
+    /**
+     * Returns the subset of the headers in this's request that impact the content of this's body.
+     */
+    fun Response.varyHeaders(): Headers {
+      // Use the request headers sent over the network, since that's what the response varies on.
+      // Otherwise OkHttp-supplied headers like "Accept-Encoding: gzip" may be lost.
+      val requestHeaders = networkResponse()!!.request().headers()
+      val responseHeaders = headers()
+      return varyHeaders(requestHeaders, responseHeaders)
+    }
+
+    /**
+     * Returns the subset of the headers in [requestHeaders] that impact the content of the
+     * response's body.
+     */
+    private fun varyHeaders(requestHeaders: Headers, responseHeaders: Headers): Headers {
+      val varyFields = responseHeaders.varyFields()
+      if (varyFields.isEmpty()) return Util.EMPTY_HEADERS
+
+      val result = Headers.Builder()
+      for (i in 0 until requestHeaders.size()) {
+        val fieldName = requestHeaders.name(i)
+        if (varyFields.contains(fieldName)) {
+          result.add(fieldName, requestHeaders.value(i))
+        }
+      }
+      return result.build()
     }
   }
 }

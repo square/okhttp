@@ -21,8 +21,8 @@ import okhttp3.CacheControl;
 import okhttp3.Headers;
 import okhttp3.Request;
 import okhttp3.Response;
+import okhttp3.internal.UtilKt;
 import okhttp3.internal.http.HttpDate;
-import okhttp3.internal.http.HttpHeaders;
 import okhttp3.internal.http.StatusLine;
 
 import static java.net.HttpURLConnection.HTTP_BAD_METHOD;
@@ -160,7 +160,7 @@ public final class CacheStrategy {
           } else if ("ETag".equalsIgnoreCase(fieldName)) {
             etag = value;
           } else if ("Age".equalsIgnoreCase(fieldName)) {
-            ageSeconds = HttpHeaders.parseSeconds(value, -1);
+            ageSeconds = UtilKt.toNonNegativeInt(value, -1);
           }
         }
       }
