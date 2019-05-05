@@ -945,20 +945,20 @@ class KotlinSourceCompatibilityTest {
   fun recordedRequest() {
     var recordedRequest: RecordedRequest = RecordedRequest(
         "", Headers.of(), listOf(), 0L, Buffer(), 0, Socket())
-    recordedRequest = RecordedRequest(null, null, null, 0L, null, 0, Socket())
-    var requestUrl: HttpUrl? = recordedRequest.getRequestUrl()
-    var requestLine: String? = recordedRequest.getRequestLine()
-    var method: String? = recordedRequest.getMethod()
-    var path: String? = recordedRequest.getPath()
-    var headers: Headers? = recordedRequest.getHeaders()
+    recordedRequest = RecordedRequest("", Headers.of(), listOf(), 0L, Buffer(), 0, Socket())
+    var requestUrl: HttpUrl? = recordedRequest.requestUrl
+    var requestLine: String = recordedRequest.requestLine
+    var method: String? = recordedRequest.method
+    var path: String? = recordedRequest.path
+    var headers: Headers = recordedRequest.headers
     val header: String? = recordedRequest.getHeader("")
-    var chunkSizes: List<Int>? = recordedRequest.getChunkSizes()
-    var bodySize: Long = recordedRequest.getBodySize()
-    var body: Buffer? = recordedRequest.getBody()
-    var utf8Body: String = recordedRequest.getUtf8Body()
-    var sequenceNumber: Int = recordedRequest.getSequenceNumber()
-    var tlsVersion: TlsVersion = recordedRequest.getTlsVersion()
-    var handshake: Handshake = recordedRequest.getHandshake()
+    var chunkSizes: List<Int> = recordedRequest.chunkSizes
+    var bodySize: Long = recordedRequest.bodySize
+    var body: Buffer = recordedRequest.body
+    var utf8Body: String = recordedRequest.utf8Body
+    var sequenceNumber: Int = recordedRequest.sequenceNumber
+    var tlsVersion: TlsVersion? = recordedRequest.tlsVersion
+    var handshake: Handshake? = recordedRequest.handshake
     requestUrl = recordedRequest.requestUrl
     requestLine = recordedRequest.requestLine
     method = recordedRequest.method

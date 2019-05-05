@@ -78,7 +78,6 @@ import okio.Okio;
 import okio.Sink;
 import okio.Timeout;
 import org.junit.rules.ExternalResource;
-
 import static okhttp3.internal.InternalKtKt.addHeaderLenient;
 import static okhttp3.internal.Util.closeQuietly;
 import static okhttp3.mockwebserver.SocketPolicy.CONTINUE_ALWAYS;
@@ -632,7 +631,7 @@ public final class MockWebServer extends ExternalResource implements Closeable {
   private void dispatchBookkeepingRequest(int sequenceNumber, Socket socket)
       throws InterruptedException {
     RecordedRequest request = new RecordedRequest(
-        null, null, null, -1, null, sequenceNumber, socket);
+        "", Headers.of(), Collections.emptyList(), 0L, new Buffer(), sequenceNumber, socket);
     requestCount.incrementAndGet();
     requestQueue.add(request);
     dispatcher.dispatch(request);

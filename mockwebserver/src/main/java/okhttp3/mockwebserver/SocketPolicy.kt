@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-package okhttp3.mockwebserver;
+package okhttp3.mockwebserver
 
 /**
  * What should be done with the incoming socket.
  *
- * <p>Be careful when using values like {@link #DISCONNECT_AT_END}, {@link #SHUTDOWN_INPUT_AT_END}
- * and {@link #SHUTDOWN_OUTPUT_AT_END} that close a socket after a response, and where there are
+ * Be careful when using values like [DISCONNECT_AT_END], [SHUTDOWN_INPUT_AT_END]
+ * and [SHUTDOWN_OUTPUT_AT_END] that close a socket after a response, and where there are
  * follow-up requests. The client is unblocked and free to continue as soon as it has received the
  * entire response body. If and when the client makes a subsequent request using a pooled socket the
  * server may not have had time to close the socket. The socket will be closed at an indeterminate
@@ -29,10 +29,10 @@ package okhttp3.mockwebserver;
  * client behavior non-deterministic. Add delays in the client to improve the chances that the
  * server has closed the socket before follow up requests are made.
  */
-public enum SocketPolicy {
+enum class SocketPolicy {
 
   /**
-   * Shutdown {@link MockWebServer} after writing response.
+   * Shutdown [MockWebServer] after writing response.
    */
   SHUTDOWN_SERVER_AFTER_RESPONSE,
 
@@ -43,11 +43,11 @@ public enum SocketPolicy {
 
   /**
    * Close the socket after the response. This is the default HTTP/1.0 behavior. For HTTP/2
-   * connections, this sends a <a href="https://tools.ietf.org/html/rfc7540#section-6.8">GOAWAY
-   * frame</a> immediately after the response and will close the connection when the client's socket
+   * connections, this sends a [GOAWAYframe](https://tools.ietf.org/html/rfc7540#section-6.8)
+   * immediately after the response and will close the connection when the client's socket
    * is exhausted.
    *
-   * <p>See {@link SocketPolicy} for reasons why this can cause test flakiness and how to avoid it.
+   * See [SocketPolicy] for reasons why this can cause test flakiness and how to avoid it.
    */
   DISCONNECT_AT_END,
 
@@ -69,26 +69,26 @@ public enum SocketPolicy {
    */
   DISCONNECT_AFTER_REQUEST,
 
-  /** Close connection after reading half of the request body (if present). */
+  /** Close connection after reading half of the request body (if present).  */
   DISCONNECT_DURING_REQUEST_BODY,
 
-  /** Close connection after writing half of the response body (if present). */
+  /** Close connection after writing half of the response body (if present).  */
   DISCONNECT_DURING_RESPONSE_BODY,
 
-  /** Don't trust the client during the SSL handshake. */
+  /** Don't trust the client during the SSL handshake.  */
   FAIL_HANDSHAKE,
 
   /**
    * Shutdown the socket input after sending the response. For testing bad behavior.
    *
-   * <p>See {@link SocketPolicy} for reasons why this can cause test flakiness and how to avoid it.
+   * See [SocketPolicy] for reasons why this can cause test flakiness and how to avoid it.
    */
   SHUTDOWN_INPUT_AT_END,
 
   /**
    * Shutdown the socket output after sending the response. For testing bad behavior.
    *
-   * <p>See {@link SocketPolicy} for reasons why this can cause test flakiness and how to avoid it.
+   * See [SocketPolicy] for reasons why this can cause test flakiness and how to avoid it.
    */
   SHUTDOWN_OUTPUT_AT_END,
 
@@ -105,21 +105,19 @@ public enum SocketPolicy {
   NO_RESPONSE,
 
   /**
-   * Fail HTTP/2 requests without processing them by sending an {@linkplain
-   * MockResponse#getHttp2ErrorCode() HTTP/2 error code}.
+   * Fail HTTP/2 requests without processing them by sending an [MockResponse.getHttp2ErrorCode].
    */
   RESET_STREAM_AT_START,
 
   /**
-   * Transmit a {@code HTTP/1.1 100 Continue} response before reading the HTTP request body.
-   * Typically this response is sent when a client makes a request with the header {@code
-   * Expect: 100-continue}.
+   * Transmit a `HTTP/1.1 100 Continue` response before reading the HTTP request body.
+   * Typically this response is sent when a client makes a request with the header `Expect: 100-continue`.
    */
   EXPECT_CONTINUE,
 
   /**
-   * Transmit a {@code HTTP/1.1 100 Continue} response before reading the HTTP request body even
-   * if the client does not send the header {@code Expect: 100-continue} in its request.
+   * Transmit a `HTTP/1.1 100 Continue` response before reading the HTTP request body even
+   * if the client does not send the header `Expect: 100-continue` in its request.
    */
   CONTINUE_ALWAYS
 }

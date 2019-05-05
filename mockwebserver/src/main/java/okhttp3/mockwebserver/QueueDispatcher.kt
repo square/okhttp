@@ -32,7 +32,7 @@ open class QueueDispatcher : Dispatcher() {
   override fun dispatch(request: RecordedRequest): MockResponse {
     // To permit interactive/browser testing, ignore requests for favicons.
     val requestLine = request.requestLine
-    if (requestLine != null && requestLine == "GET /favicon.ico HTTP/1.1") {
+    if (requestLine == "GET /favicon.ico HTTP/1.1") {
       logger.info("served $requestLine")
       return MockResponse().setResponseCode(HttpURLConnection.HTTP_NOT_FOUND)
     }

@@ -27,5 +27,25 @@ task japicmp(type: me.champeau.gradle.japicmp.JapicmpTask, dependsOn: 'jar') {
   packageExcludes = [
       'okhttp3.mockwebserver.internal',
   ]        
+  methodExcludes = [
+      // Became 'final' in 4.0.0:
+      'okhttp3.mockwebserver.RecordedRequest#getChunkSizes()',
+      'okhttp3.mockwebserver.RecordedRequest#getHandshake()',
+      'okhttp3.mockwebserver.RecordedRequest#getHeader(java.lang.String)',
+      'okhttp3.mockwebserver.RecordedRequest#getHeaders()',
+      'okhttp3.mockwebserver.RecordedRequest#getMethod()',
+      'okhttp3.mockwebserver.RecordedRequest#getPath()',
+      'okhttp3.mockwebserver.RecordedRequest#getRequestLine()',
+      'okhttp3.mockwebserver.RecordedRequest#getRequestUrl()',
+      'okhttp3.mockwebserver.RecordedRequest#getSequenceNumber()',
+      'okhttp3.mockwebserver.RecordedRequest#getTlsVersion()',
+      'okhttp3.mockwebserver.RecordedRequest#getUtf8Body()',
+      'okhttp3.mockwebserver.RecordedRequest#getBody()',
+      'okhttp3.mockwebserver.RecordedRequest#getBodySize()',
+      'okhttp3.mockwebserver.PushPromise#headers()',
+      'okhttp3.mockwebserver.PushPromise#method()',
+      'okhttp3.mockwebserver.PushPromise#path()',
+      'okhttp3.mockwebserver.PushPromise#response()',
+  ]
 }
 check.dependsOn(japicmp)

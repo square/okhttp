@@ -611,7 +611,7 @@ public final class URLConnectionTest {
     assertContent("this response comes via SSL", response);
 
     RecordedRequest failHandshakeRequest = server.takeRequest();
-    assertThat(failHandshakeRequest.getRequestLine()).isNull();
+    assertThat(failHandshakeRequest.getRequestLine()).isEmpty();
 
     RecordedRequest fallbackRequest = server.takeRequest();
     assertThat(fallbackRequest.getRequestLine()).isEqualTo("GET /foo HTTP/1.1");
