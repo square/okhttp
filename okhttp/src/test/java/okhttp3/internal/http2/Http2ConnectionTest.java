@@ -121,7 +121,7 @@ public final class Http2ConnectionTest {
 
     assertThat(connection.peerSettings.getInitialWindowSize()).isEqualTo(3368);
     // New Stream is has the most recent initial window size.
-    assertThat(stream.bytesLeftInWriteWindow).isEqualTo(3368);
+    assertThat(stream.getBytesLeftInWriteWindow()).isEqualTo(3368);
   }
 
   @Test public void peerHttp2ServerZerosCompressionTable() throws Exception {
@@ -312,7 +312,7 @@ public final class Http2ConnectionTest {
     Http2Connection connection = connect(peer);
     connection.okHttpSettings.set(INITIAL_WINDOW_SIZE, windowSize);
     Http2Stream stream = connection.newStream(headerEntries("b", "banana"), false);
-    assertThat(stream.unacknowledgedBytesRead).isEqualTo(0);
+    assertThat(stream.getUnacknowledgedBytesRead()).isEqualTo(0);
     assertThat(stream.takeHeaders()).isEqualTo(Headers.of("a", "android"));
     Source in = stream.getSource();
     Buffer buffer = new Buffer();
@@ -1642,7 +1642,7 @@ public final class Http2ConnectionTest {
     Http2Connection connection = connect(peer);
     connection.okHttpSettings.set(INITIAL_WINDOW_SIZE, windowSize);
     Http2Stream stream = connection.newStream(headerEntries("b", "banana"), false);
-    assertThat(stream.unacknowledgedBytesRead).isEqualTo(0);
+    assertThat(stream.getUnacknowledgedBytesRead()).isEqualTo(0);
     assertThat(stream.takeHeaders()).isEqualTo(Headers.of("a", "android"));
     Source in = stream.getSource();
     Buffer buffer = new Buffer();
@@ -1755,13 +1755,13 @@ public final class Http2ConnectionTest {
 
     // Check that we've filled the window for both the stream and also the connection.
     assertThat(connection.bytesLeftInWriteWindow).isEqualTo(0);
-    assertThat(connection.getStream(3).bytesLeftInWriteWindow).isEqualTo(0);
+    assertThat(connection.getStream(3).getBytesLeftInWriteWindow()).isEqualTo(0);
 
     // receiving a window update on the connection will unblock new streams.
     connection.readerRunnable.windowUpdate(0, 3);
 
     assertThat(connection.bytesLeftInWriteWindow).isEqualTo(3);
-    assertThat(connection.getStream(3).bytesLeftInWriteWindow).isEqualTo(0);
+    assertThat(connection.getStream(3).getBytesLeftInWriteWindow()).isEqualTo(0);
 
     // Another stream should be able to send data even though 1 is blocked.
     Http2Stream stream2 = connection.newStream(headerEntries("b", "banana"), true);
@@ -1770,8 +1770,8 @@ public final class Http2ConnectionTest {
     out2.flush();
 
     assertThat(connection.bytesLeftInWriteWindow).isEqualTo(0);
-    assertThat(connection.getStream(3).bytesLeftInWriteWindow).isEqualTo(0);
-    assertThat(connection.getStream(5).bytesLeftInWriteWindow).isEqualTo(
+    assertThat(connection.getStream(3).getBytesLeftInWriteWindow()).isEqualTo(0);
+    assertThat(connection.getStream(5).getBytesLeftInWriteWindow()).isEqualTo(
         (long) (DEFAULT_INITIAL_WINDOW_SIZE - 3));
   }
 

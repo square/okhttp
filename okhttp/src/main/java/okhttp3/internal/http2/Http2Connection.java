@@ -245,7 +245,9 @@ public final class Http2Connection implements Closeable {
         streamId = nextStreamId;
         nextStreamId += 2;
         stream = new Http2Stream(streamId, this, outFinished, inFinished, null);
-        flushHeaders = !out || bytesLeftInWriteWindow == 0L || stream.bytesLeftInWriteWindow == 0L;
+        flushHeaders = !out
+            || bytesLeftInWriteWindow == 0L
+            || stream.getBytesLeftInWriteWindow() == 0L;
         if (stream.isOpen()) {
           streams.put(streamId, stream);
         }
