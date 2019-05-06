@@ -106,7 +106,7 @@ public final class MockWebServer extends ExternalResource implements Closeable {
     MwsDuplexAccess.instance = new MwsDuplexAccess() {
       @Override public void setBody(
           MockResponse mockResponse, DuplexResponseBody duplexResponseBody) {
-        mockResponse.setBody(duplexResponseBody);
+        mockResponse.setBody$mockwebserver(duplexResponseBody);
       }
     };
   }
@@ -1001,7 +1001,7 @@ public final class MockWebServer extends ExternalResource implements Closeable {
       }
 
       Buffer body = new Buffer();
-      if (readBody && !peek.isDuplex()) {
+      if (readBody && !peek.isDuplex$mockwebserver()) {
         String contentLengthString = headers.get("content-length");
         long byteCount = contentLengthString != null
             ? Long.parseLong(contentLengthString)
@@ -1043,7 +1043,7 @@ public final class MockWebServer extends ExternalResource implements Closeable {
       Buffer body = response.getBody();
       boolean outFinished = body == null
           && response.getPushPromises().isEmpty()
-          && !response.isDuplex();
+          && !response.isDuplex$mockwebserver();
       boolean flushHeaders = body == null;
       if (outFinished && trailers.size() > 0) {
         throw new IllegalStateException("unsupported: no body and non-empty trailers " + trailers);
@@ -1058,10 +1058,10 @@ public final class MockWebServer extends ExternalResource implements Closeable {
           sleepIfDelayed(response.getBodyDelay(TimeUnit.MILLISECONDS));
           throttledTransfer(response, socket, body, sink, body.size(), false);
         }
-      } else if (response.isDuplex()) {
+      } else if (response.isDuplex$mockwebserver()) {
         try (BufferedSink sink = Okio.buffer(stream.getSink());
              BufferedSource source = Okio.buffer(stream.getSource())) {
-          DuplexResponseBody duplexResponseBody = response.getDuplexResponseBody();
+          DuplexResponseBody duplexResponseBody = response.getDuplexResponseBody$mockwebserver();
           duplexResponseBody.onRequest(request, source, sink);
         }
       } else if (!outFinished) {
