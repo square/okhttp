@@ -695,7 +695,7 @@ class KotlinSourceCompatibilityTest {
     mockResponse = mockResponse.setHeaders(Headers.of())
     mockResponse = mockResponse.setTrailers(Headers.of())
     mockResponse = mockResponse.removeHeader("")
-    var body: Buffer = mockResponse.getBody()
+    var body: Buffer? = mockResponse.getBody()
     body = mockResponse.getBody()
     mockResponse = mockResponse.setBody(Buffer())
     mockResponse.setBody(Buffer())

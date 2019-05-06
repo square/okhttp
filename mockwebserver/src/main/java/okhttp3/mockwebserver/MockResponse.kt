@@ -30,7 +30,7 @@ class MockResponse : Cloneable {
   private var headers = Headers.Builder()
   private var trailers = Headers.Builder()
 
-  private var body: Buffer = Buffer()
+  private var body: Buffer? = null
 
   var throttleBytesPerPeriod = java.lang.Long.MAX_VALUE
     private set
@@ -172,8 +172,8 @@ class MockResponse : Cloneable {
   }
 
   /** Returns a copy of the raw HTTP payload.  */
-  fun getBody(): Buffer {
-    return body.clone()
+  fun getBody(): Buffer? {
+    return body?.clone()
   }
 
   fun setBody(body: Buffer): MockResponse {
@@ -305,7 +305,7 @@ class MockResponse : Cloneable {
     setStatus("HTTP/1.1 101 Switching Protocols")
     setHeader("Connection", "Upgrade")
     setHeader("Upgrade", "websocket")
-    body = Buffer()
+    body = null
     webSocketListener = listener
     return this
   }
