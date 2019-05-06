@@ -82,6 +82,8 @@ task japicmp(type: me.champeau.gradle.japicmp.JapicmpTask, dependsOn: 'jar') {
       'okhttp3.mockwebserver.MockResponse#withWebSocketUpgrade(okhttp3.WebSocketListener)',
       'okhttp3.mockwebserver.MockResponse#getHeaders()',
       'okhttp3.mockwebserver.MockResponse#setStatus(java.lang.String)',
+      'okhttp3.mockwebserver.MockResponse#isDuplex()',
+      'okhttp3.mockwebserver.MockResponse#setBody(okhttp3.mockwebserver.internal.duplex.DuplexResponseBody)',
   ]
 }
 check.dependsOn(japicmp)

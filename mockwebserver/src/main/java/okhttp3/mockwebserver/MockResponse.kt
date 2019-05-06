@@ -21,7 +21,6 @@ import okhttp3.internal.addHeaderLenient
 import okhttp3.internal.http2.Settings
 import okhttp3.mockwebserver.internal.duplex.DuplexResponseBody
 import okio.Buffer
-import java.util.ArrayList
 import java.util.concurrent.TimeUnit
 
 /** A scripted response to be replayed by the mock web server.  */
@@ -32,7 +31,7 @@ class MockResponse : Cloneable {
 
   private var body: Buffer? = null
 
-  var throttleBytesPerPeriod = java.lang.Long.MAX_VALUE
+  var throttleBytesPerPeriod = Long.MAX_VALUE
     private set
   private var throttlePeriodAmount: Long = 1
   private var throttlePeriodUnit = TimeUnit.SECONDS
@@ -51,9 +50,9 @@ class MockResponse : Cloneable {
     private set
   var webSocketListener: WebSocketListener? = null
     private set
-  internal var duplexResponseBody: DuplexResponseBody? = null
+  var duplexResponseBody: DuplexResponseBody? = null
     private set
-  internal val isDuplex: Boolean
+  val isDuplex: Boolean
     get() = duplexResponseBody != null
 
   /** Returns the streams the server will push with this response.  */
@@ -83,13 +82,13 @@ class MockResponse : Cloneable {
   }
 
   fun setResponseCode(code: Int): MockResponse {
-    var reason = "Mock Response"
-    when (code) {
-      in 100..199 -> reason = "Informational"
-      in 200..299 -> reason = "OK"
-      in 300..399 -> reason = "Redirection"
-      in 400..499 -> reason = "Client Error"
-      in 500..599 -> reason = "Server Error"
+    val reason: String = when (code) {
+      in 100..199 -> "Informational"
+      in 200..299 -> "OK"
+      in 300..399 -> "Redirection"
+      in 400..499 -> "Client Error"
+      in 500..599 -> "Server Error"
+      else -> "Mock Response"
     }
     return setStatus("HTTP/1.1 $code $reason")
   }
@@ -187,7 +186,7 @@ class MockResponse : Cloneable {
     return setBody(Buffer().writeUtf8(body))
   }
 
-  internal fun setBody(duplexResponseBody: DuplexResponseBody): MockResponse {
+  fun setBody(duplexResponseBody: DuplexResponseBody): MockResponse {
     this.duplexResponseBody = duplexResponseBody
     return this
   }
@@ -201,7 +200,7 @@ class MockResponse : Cloneable {
 
     val bytesOut = Buffer()
     while (!body.exhausted()) {
-      val chunkSize = Math.min(body.size, maxChunkSize.toLong())
+      val chunkSize = minOf(body.size, maxChunkSize.toLong())
       bytesOut.writeHexadecimalUnsignedLong(chunkSize)
       bytesOut.writeUtf8("\r\n")
       bytesOut.write(body, chunkSize)
