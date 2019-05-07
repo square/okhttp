@@ -204,8 +204,8 @@ class RetryAndFollowUpInterceptor(private val client: OkHttpClient) : Intercepto
     val method = userResponse.request().method()
     when (responseCode) {
       HTTP_PROXY_AUTH -> {
-        val selectedProxy = route?.proxy() ?: client.proxy()
-        if (selectedProxy?.type() != Proxy.Type.HTTP) {
+        val selectedProxy = route!!.proxy()
+        if (selectedProxy.type() != Proxy.Type.HTTP) {
           throw ProtocolException("Received HTTP_PROXY_AUTH (407) code while not using proxy")
         }
         return client.proxyAuthenticator().authenticate(route, userResponse)
