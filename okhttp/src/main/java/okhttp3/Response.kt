@@ -15,14 +15,13 @@
  */
 package okhttp3
 
-import java.io.Closeable
-import java.io.IOException
 import okhttp3.internal.connection.Exchange
-import okhttp3.internal.http.HttpHeaders
 import okhttp3.internal.http.StatusLine.Companion.HTTP_PERM_REDIRECT
 import okhttp3.internal.http.StatusLine.Companion.HTTP_TEMP_REDIRECT
+import okhttp3.internal.http.parseChallenges
 import okio.Buffer
-
+import java.io.Closeable
+import java.io.IOException
 import java.net.HttpURLConnection.HTTP_MOVED_PERM
 import java.net.HttpURLConnection.HTTP_MOVED_TEMP
 import java.net.HttpURLConnection.HTTP_MULT_CHOICE
@@ -177,8 +176,7 @@ class Response internal constructor(
    * auth param, this is up to the caller that interprets these challenges.
    */
   fun challenges(): List<Challenge> {
-    return HttpHeaders.parseChallenges(
-        headers(),
+    return headers().parseChallenges(
         when (code) {
           HTTP_UNAUTHORIZED -> "WWW-Authenticate"
           HTTP_PROXY_AUTH -> "Proxy-Authenticate"

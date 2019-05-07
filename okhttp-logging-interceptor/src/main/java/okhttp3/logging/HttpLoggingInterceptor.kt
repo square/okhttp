@@ -19,7 +19,7 @@ import okhttp3.Headers
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import okhttp3.Response
-import okhttp3.internal.http.HttpHeaders
+import okhttp3.internal.http.promisesBody
 import okhttp3.internal.platform.Platform
 import okhttp3.internal.platform.Platform.Companion.INFO
 import okio.Buffer
@@ -235,7 +235,7 @@ class HttpLoggingInterceptor @JvmOverloads constructor(
         logHeader(headers, i)
       }
 
-      if (!logBody || !HttpHeaders.hasBody(response)) {
+      if (!logBody || !response.promisesBody()) {
         logger.log("<-- END HTTP")
       } else if (bodyHasUnknownEncoding(response.headers())) {
         logger.log("<-- END HTTP (encoded body omitted)")

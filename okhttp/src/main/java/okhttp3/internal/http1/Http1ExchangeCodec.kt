@@ -24,11 +24,13 @@ import okhttp3.internal.Util
 import okhttp3.internal.Util.checkOffsetAndCount
 import okhttp3.internal.addHeaderLenient
 import okhttp3.internal.connection.RealConnection
+import okhttp3.internal.headersContentLength
 import okhttp3.internal.http.ExchangeCodec
-import okhttp3.internal.http.HttpHeaders
 import okhttp3.internal.http.RequestLine
 import okhttp3.internal.http.StatusLine
 import okhttp3.internal.http.StatusLine.Companion.HTTP_CONTINUE
+import okhttp3.internal.http.promisesBody
+import okhttp3.internal.http.receiveHeaders
 import okio.Buffer
 import okio.BufferedSink
 import okio.BufferedSource
@@ -123,18 +125,18 @@ class Http1ExchangeCodec(
 
   override fun reportedContentLength(response: Response): Long {
     return when {
-      !HttpHeaders.hasBody(response) -> 0L
+      !response.promisesBody() -> 0L
       response.isChunked() -> -1L
-      else -> HttpHeaders.contentLength(response)
+      else -> response.headersContentLength()
     }
   }
 
   override fun openResponseBodySource(response: Response): Source {
     return when {
-      !HttpHeaders.hasBody(response) -> newFixedLengthSource(0)
+      !response.promisesBody() -> newFixedLengthSource(0)
       response.isChunked() -> newChunkedSource(response.request().url())
       else -> {
-        val contentLength = HttpHeaders.contentLength(response)
+        val contentLength = response.headersContentLength()
         if (contentLength != -1L) {
           newFixedLengthSource(contentLength)
         } else {
@@ -267,7 +269,7 @@ class Http1ExchangeCodec(
    * before proceeding.
    */
   fun skipConnectBody(response: Response) {
-    val contentLength = HttpHeaders.contentLength(response)
+    val contentLength = response.headersContentLength()
     if (contentLength == -1L) return
     val body = newFixedLengthSource(contentLength)
     Util.skipAll(body, Int.MAX_VALUE, MILLISECONDS)
@@ -455,7 +457,7 @@ class Http1ExchangeCodec(
       if (bytesRemainingInChunk == 0L) {
         hasMoreChunks = false
         trailers = readHeaders()
-        HttpHeaders.receiveHeaders(client!!.cookieJar(), url, trailers)
+        client!!.cookieJar().receiveHeaders(url, trailers!!)
         responseBodyComplete()
       }
     }

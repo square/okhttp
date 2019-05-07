@@ -25,8 +25,8 @@ import okhttp3.internal.Internal
 import okhttp3.internal.Util
 import okhttp3.internal.addHeaderLenient
 import okhttp3.internal.connection.RealConnection
+import okhttp3.internal.headersContentLength
 import okhttp3.internal.http.ExchangeCodec
-import okhttp3.internal.http.HttpHeaders
 import okhttp3.internal.http.RequestLine
 import okhttp3.internal.http.StatusLine
 import okhttp3.internal.http.StatusLine.Companion.HTTP_CONTINUE
@@ -108,7 +108,7 @@ class Http2ExchangeCodec(
   }
 
   override fun reportedContentLength(response: Response): Long {
-    return HttpHeaders.contentLength(response)
+    return response.headersContentLength()
   }
 
   override fun openResponseBodySource(response: Response): Source {
