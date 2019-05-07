@@ -46,7 +46,7 @@ class CacheInterceptor(internal val cache: InternalCache?) : Interceptor {
 
     val now = System.currentTimeMillis()
 
-    val strategy = CacheStrategy.Factory(now, chain.request(), cacheCandidate).get()
+    val strategy = CacheStrategy.Factory(now, chain.request(), cacheCandidate).compute()
     val networkRequest = strategy.networkRequest
     val cacheResponse = strategy.cacheResponse
 
