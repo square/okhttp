@@ -13,314 +13,307 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package okhttp3.internal.connection;
+package okhttp3.internal.connection
 
-import java.io.IOException;
-import java.net.ProtocolException;
-import java.net.SocketException;
-import javax.annotation.Nullable;
-import okhttp3.Call;
-import okhttp3.EventListener;
-import okhttp3.Headers;
-import okhttp3.Request;
-import okhttp3.Response;
-import okhttp3.ResponseBody;
-import okhttp3.internal.Internal;
-import okhttp3.internal.http.ExchangeCodec;
-import okhttp3.internal.http.RealResponseBody;
-import okhttp3.internal.ws.RealWebSocket;
-import okio.Buffer;
-import okio.ForwardingSink;
-import okio.ForwardingSource;
-import okio.Okio;
-import okio.Sink;
-import okio.Source;
+import okhttp3.Call
+import okhttp3.EventListener
+import okhttp3.Headers
+import okhttp3.Request
+import okhttp3.Response
+import okhttp3.ResponseBody
+import okhttp3.internal.http.ExchangeCodec
+import okhttp3.internal.http.RealResponseBody
+import okhttp3.internal.ws.RealWebSocket
+import okio.Buffer
+import okio.ForwardingSink
+import okio.ForwardingSource
+import okio.Sink
+import okio.Source
+import okio.buffer
+import java.io.IOException
+import java.net.ProtocolException
+import java.net.SocketException
 
 /**
  * Transmits a single HTTP request and a response pair. This layers connection management and events
- * on {@link ExchangeCodec}, which handles the actual I/O.
+ * on [ExchangeCodec], which handles the actual I/O.
  */
-public final class Exchange {
-  final Transmitter transmitter;
-  final Call call;
-  final EventListener eventListener;
-  final ExchangeFinder finder;
-  final ExchangeCodec codec;
-  private boolean duplex;
-
-  public Exchange(Transmitter transmitter, Call call, EventListener eventListener,
-      ExchangeFinder finder, ExchangeCodec codec) {
-    this.transmitter = transmitter;
-    this.call = call;
-    this.eventListener = eventListener;
-    this.finder = finder;
-    this.codec = codec;
-  }
-
-  public RealConnection connection() {
-    return codec.connection();
-  }
-
+class Exchange(
+  internal val transmitter: Transmitter,
+  internal val call: Call,
+  internal val eventListener: EventListener,
+  private val finder: ExchangeFinder,
+  private val codec: ExchangeCodec
+) {
   /** Returns true if the request body need not complete before the response body starts. */
-  public boolean isDuplex() {
-    return duplex;
-  }
+  var isDuplex: Boolean = false
+    private set
 
-  public void writeRequestHeaders(Request request) throws IOException {
+  fun connection(): RealConnection? = codec.connection()
+
+  @Throws(IOException::class)
+  fun writeRequestHeaders(request: Request) {
     try {
-      eventListener.requestHeadersStart(call);
-      codec.writeRequestHeaders(request);
-      eventListener.requestHeadersEnd(call, request);
-    } catch (IOException e) {
-      eventListener.requestFailed(call, e);
-      trackFailure(e);
-      throw e;
+      eventListener.requestHeadersStart(call)
+      codec.writeRequestHeaders(request)
+      eventListener.requestHeadersEnd(call, request)
+    } catch (e: IOException) {
+      eventListener.requestFailed(call, e)
+      trackFailure(e)
+      throw e
     }
   }
 
-  public Sink createRequestBody(Request request, boolean duplex) throws IOException {
-    this.duplex = duplex;
-    long contentLength = request.body().contentLength();
-    eventListener.requestBodyStart(call);
-    Sink rawRequestBody = codec.createRequestBody(request, contentLength);
-    return new RequestBodySink(rawRequestBody, contentLength);
+  @Throws(IOException::class)
+  fun createRequestBody(request: Request, duplex: Boolean): Sink {
+    this.isDuplex = duplex
+    val contentLength = request.body()!!.contentLength()
+    eventListener.requestBodyStart(call)
+    val rawRequestBody = codec.createRequestBody(request, contentLength)
+    return RequestBodySink(rawRequestBody, contentLength)
   }
 
-  public void flushRequest() throws IOException {
+  @Throws(IOException::class)
+  fun flushRequest() {
     try {
-      codec.flushRequest();
-    } catch (IOException e) {
-      eventListener.requestFailed(call, e);
-      trackFailure(e);
-      throw e;
+      codec.flushRequest()
+    } catch (e: IOException) {
+      eventListener.requestFailed(call, e)
+      trackFailure(e)
+      throw e
     }
   }
 
-  public void finishRequest() throws IOException {
+  @Throws(IOException::class)
+  fun finishRequest() {
     try {
-      codec.finishRequest();
-    } catch (IOException e) {
-      eventListener.requestFailed(call, e);
-      trackFailure(e);
-      throw e;
+      codec.finishRequest()
+    } catch (e: IOException) {
+      eventListener.requestFailed(call, e)
+      trackFailure(e)
+      throw e
     }
   }
 
-  public void responseHeadersStart() {
-    eventListener.responseHeadersStart(call);
+  fun responseHeadersStart() {
+    eventListener.responseHeadersStart(call)
   }
 
-  public @Nullable Response.Builder readResponseHeaders(boolean expectContinue) throws IOException {
+  @Throws(IOException::class)
+  fun readResponseHeaders(expectContinue: Boolean): Response.Builder? {
     try {
-      Response.Builder result = codec.readResponseHeaders(expectContinue);
-      if (result != null) {
-        Internal.instance.initExchange(result, this);
-      }
-      return result;
-    } catch (IOException e) {
-      eventListener.responseFailed(call, e);
-      trackFailure(e);
-      throw e;
+      val result = codec.readResponseHeaders(expectContinue)
+      result?.initExchange(this)
+      return result
+    } catch (e: IOException) {
+      eventListener.responseFailed(call, e)
+      trackFailure(e)
+      throw e
     }
   }
 
-  public void responseHeadersEnd(Response response) {
-    eventListener.responseHeadersEnd(call, response);
+  fun responseHeadersEnd(response: Response) {
+    eventListener.responseHeadersEnd(call, response)
   }
 
-  public ResponseBody openResponseBody(Response response) throws IOException {
+  @Throws(IOException::class)
+  fun openResponseBody(response: Response): ResponseBody {
     try {
-      eventListener.responseBodyStart(call);
-      String contentType = response.header("Content-Type");
-      long contentLength = codec.reportedContentLength(response);
-      Source rawSource = codec.openResponseBodySource(response);
-      ResponseBodySource source = new ResponseBodySource(rawSource, contentLength);
-      return new RealResponseBody(contentType, contentLength, Okio.buffer(source));
-    } catch (IOException e) {
-      eventListener.responseFailed(call, e);
-      trackFailure(e);
-      throw e;
+      eventListener.responseBodyStart(call)
+      val contentType = response.header("Content-Type")
+      val contentLength = codec.reportedContentLength(response)
+      val rawSource = codec.openResponseBodySource(response)
+      val source = ResponseBodySource(rawSource, contentLength)
+      return RealResponseBody(contentType, contentLength, source.buffer())
+    } catch (e: IOException) {
+      eventListener.responseFailed(call, e)
+      trackFailure(e)
+      throw e
     }
   }
 
-  public Headers trailers() throws IOException {
-    return codec.trailers();
+  @Throws(IOException::class)
+  fun trailers(): Headers = codec.trailers()
+
+  fun timeoutEarlyExit() {
+    transmitter.timeoutEarlyExit()
   }
 
-  public void timeoutEarlyExit() {
-    transmitter.timeoutEarlyExit();
+  @Throws(SocketException::class)
+  fun newWebSocketStreams(): RealWebSocket.Streams {
+    transmitter.timeoutEarlyExit()
+    return codec.connection()!!.newWebSocketStreams(this)
   }
 
-  public RealWebSocket.Streams newWebSocketStreams() throws SocketException {
-    transmitter.timeoutEarlyExit();
-    return codec.connection().newWebSocketStreams(this);
+  fun webSocketUpgradeFailed() {
+    bodyComplete(-1L, true, true, null)
   }
 
-  public void webSocketUpgradeFailed() {
-    bodyComplete(-1L, true, true, null);
+  fun noNewExchangesOnConnection() {
+    codec.connection()!!.noNewExchanges()
   }
 
-  public void noNewExchangesOnConnection() {
-    codec.connection().noNewExchanges();
-  }
-
-  public void cancel() {
-    codec.cancel();
+  fun cancel() {
+    codec.cancel()
   }
 
   /**
    * Revoke this exchange's access to streams. This is necessary when a follow-up request is
    * required but the preceding exchange hasn't completed yet.
    */
-  public void detachWithViolence() {
-    codec.cancel();
-    transmitter.exchangeMessageDone(this, true, true, null);
+  fun detachWithViolence() {
+    codec.cancel()
+    transmitter.exchangeMessageDone(this, true, true, null)
   }
 
-  void trackFailure(IOException e) {
-    finder.trackFailure();
-    codec.connection().trackFailure(e);
+  private fun trackFailure(e: IOException) {
+    finder.trackFailure()
+    codec.connection()!!.trackFailure(e)
   }
 
-  @Nullable IOException bodyComplete(
-      long bytesRead, boolean responseDone, boolean requestDone, @Nullable IOException e) {
+  fun <E : IOException?> bodyComplete(
+    bytesRead: Long,
+    responseDone: Boolean,
+    requestDone: Boolean,
+    e: E
+  ): E {
     if (e != null) {
-      trackFailure(e);
+      trackFailure(e)
     }
     if (requestDone) {
       if (e != null) {
-        eventListener.requestFailed(call, e);
+        eventListener.requestFailed(call, e)
       } else {
-        eventListener.requestBodyEnd(call, bytesRead);
+        eventListener.requestBodyEnd(call, bytesRead)
       }
     }
     if (responseDone) {
       if (e != null) {
-        eventListener.responseFailed(call, e);
+        eventListener.responseFailed(call, e)
       } else {
-        eventListener.responseBodyEnd(call, bytesRead);
+        eventListener.responseBodyEnd(call, bytesRead)
       }
     }
-    return transmitter.exchangeMessageDone(this, requestDone, responseDone, e);
+    return transmitter.exchangeMessageDone(this, requestDone, responseDone, e)
   }
 
-  public void noRequestBody() {
-    transmitter.exchangeMessageDone(this, true, false, null);
+  fun noRequestBody() {
+    transmitter.exchangeMessageDone(this, true, false, null)
   }
 
   /** A request body that fires events when it completes. */
-  private final class RequestBodySink extends ForwardingSink {
-    private boolean completed;
+  private inner class RequestBodySink internal constructor(
+    delegate: Sink,
     /** The exact number of bytes to be written, or -1L if that is unknown. */
-    private long contentLength;
-    private long bytesReceived;
-    private boolean closed;
+    private val contentLength: Long
+  ) : ForwardingSink(delegate) {
+    private var completed = false
+    private var bytesReceived = 0L
+    private var closed = false
 
-    RequestBodySink(Sink delegate, long contentLength) {
-      super(delegate);
-      this.contentLength = contentLength;
-    }
-
-    @Override public void write(Buffer source, long byteCount) throws IOException {
-      if (closed) throw new IllegalStateException("closed");
+    @Throws(IOException::class)
+    override fun write(source: Buffer, byteCount: Long) {
+      check(!closed) { "closed" }
       if (contentLength != -1L && bytesReceived + byteCount > contentLength) {
-        throw new ProtocolException("expected " + contentLength
-            + " bytes but received " + (bytesReceived + byteCount));
+        throw ProtocolException(
+            "expected $contentLength bytes but received ${bytesReceived + byteCount}")
       }
       try {
-        super.write(source, byteCount);
-        this.bytesReceived += byteCount;
-      } catch (IOException e) {
-        throw complete(e);
+        super.write(source, byteCount)
+        this.bytesReceived += byteCount
+      } catch (e: IOException) {
+        throw complete(e)
       }
     }
 
-    @Override public void flush() throws IOException {
+    @Throws(IOException::class)
+    override fun flush() {
       try {
-        super.flush();
-      } catch (IOException e) {
-        throw complete(e);
+        super.flush()
+      } catch (e: IOException) {
+        throw complete(e)
       }
     }
 
-    @Override public void close() throws IOException {
-      if (closed) return;
-      closed = true;
+    @Throws(IOException::class)
+    override fun close() {
+      if (closed) return
+      closed = true
       if (contentLength != -1L && bytesReceived != contentLength) {
-        throw new ProtocolException("unexpected end of stream");
+        throw ProtocolException("unexpected end of stream")
       }
       try {
-        super.close();
-        complete(null);
-      } catch (IOException e) {
-        throw complete(e);
+        super.close()
+        complete(null)
+      } catch (e: IOException) {
+        throw complete(e)
       }
     }
 
-    private @Nullable IOException complete(@Nullable IOException e) {
-      if (completed) return e;
-      completed = true;
-      return bodyComplete(bytesReceived, false, true, e);
+    private fun <E : IOException?> complete(e: E): E {
+      if (completed) return e
+      completed = true
+      return bodyComplete(bytesReceived, false, true, e)
     }
   }
 
   /** A response body that fires events when it completes. */
-  final class ResponseBodySource extends ForwardingSource {
-    private final long contentLength;
-    private long bytesReceived;
-    private boolean completed;
-    private boolean closed;
+  internal inner class ResponseBodySource(
+    delegate: Source,
+    private val contentLength: Long
+  ) : ForwardingSource(delegate) {
+    private var bytesReceived = 0L
+    private var completed = false
+    private var closed = false
 
-    ResponseBodySource(Source delegate, long contentLength) {
-      super(delegate);
-      this.contentLength = contentLength;
-
+    init {
       if (contentLength == 0L) {
-        complete(null);
+        complete(null)
       }
     }
 
-    @Override public long read(Buffer sink, long byteCount) throws IOException {
-      if (closed) throw new IllegalStateException("closed");
+    @Throws(IOException::class)
+    override fun read(sink: Buffer, byteCount: Long): Long {
+      check(!closed) { "closed" }
       try {
-        long read = delegate().read(sink, byteCount);
+        val read = delegate.read(sink, byteCount)
         if (read == -1L) {
-          complete(null);
-          return -1L;
+          complete(null)
+          return -1L
         }
 
-        long newBytesReceived = bytesReceived + read;
+        val newBytesReceived = bytesReceived + read
         if (contentLength != -1L && newBytesReceived > contentLength) {
-          throw new ProtocolException("expected " + contentLength
-              + " bytes but received " + newBytesReceived);
+          throw ProtocolException("expected $contentLength bytes but received $newBytesReceived")
         }
 
-        bytesReceived = newBytesReceived;
+        bytesReceived = newBytesReceived
         if (newBytesReceived == contentLength) {
-          complete(null);
+          complete(null)
         }
 
-        return read;
-      } catch (IOException e) {
-        throw complete(e);
+        return read
+      } catch (e: IOException) {
+        throw complete(e)
       }
     }
 
-    @Override public void close() throws IOException {
-      if (closed) return;
-      closed = true;
+    @Throws(IOException::class)
+    override fun close() {
+      if (closed) return
+      closed = true
       try {
-        super.close();
-        complete(null);
-      } catch (IOException e) {
-        throw complete(e);
+        super.close()
+        complete(null)
+      } catch (e: IOException) {
+        throw complete(e)
       }
     }
 
-    @Nullable IOException complete(@Nullable IOException e) {
-      if (completed) return e;
-      completed = true;
-      return bodyComplete(bytesReceived, true, false, e);
+    fun <E : IOException?> complete(e: E): E {
+      if (completed) return e
+      completed = true
+      return bodyComplete(bytesReceived, true, false, e)
     }
   }
 }

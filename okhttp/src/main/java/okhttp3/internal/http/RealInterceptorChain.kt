@@ -15,10 +15,10 @@
  */
 package okhttp3.internal.http
 
-import okhttp3.Interceptor
-import okhttp3.Request
 import okhttp3.Call
 import okhttp3.Connection
+import okhttp3.Interceptor
+import okhttp3.Request
 import okhttp3.Response
 import okhttp3.internal.Util.checkDuration
 import okhttp3.internal.connection.Exchange
@@ -97,7 +97,7 @@ class RealInterceptorChain(
     calls++
 
     // If we already have a stream, confirm that the incoming request will use it.
-    if (this.exchange != null && !this.exchange.connection().supportsUrl(request.url())) {
+    if (this.exchange != null && !this.exchange.connection()!!.supportsUrl(request.url())) {
       throw IllegalStateException("network interceptor " + interceptors[index - 1] +
           " must retain the same host and port")
     }

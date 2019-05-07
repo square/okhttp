@@ -21,7 +21,6 @@ import okhttp3.OkHttpClient
 import okhttp3.Protocol
 import okhttp3.Request
 import okhttp3.Response
-import okhttp3.internal.Internal
 import okhttp3.internal.Util
 import okhttp3.internal.addHeaderLenient
 import okhttp3.internal.connection.RealConnection
@@ -100,7 +99,7 @@ class Http2ExchangeCodec(
   override fun readResponseHeaders(expectContinue: Boolean): Response.Builder? {
     val headers = stream!!.takeHeaders()
     val responseBuilder = readHttp2HeadersList(headers, protocol)
-    return if (expectContinue && Internal.instance.code(responseBuilder) == HTTP_CONTINUE) {
+    return if (expectContinue && responseBuilder.code == HTTP_CONTINUE) {
       null
     } else {
       responseBuilder
