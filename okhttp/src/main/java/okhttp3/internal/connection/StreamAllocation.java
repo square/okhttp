@@ -204,6 +204,7 @@ public final class StreamAllocation {
     }
     if (result != null) {
       // If we found an already-allocated or pooled connection, we're done.
+      route = connection.route();
       return result;
     }
 
