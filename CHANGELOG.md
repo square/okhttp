@@ -1,6 +1,15 @@
 Change Log
 ==========
 
+## Version 3.12.3
+
+_2019-05-07_
+
+ *  Fix: Permit multipart file names to contain non-ASCII characters.
+ *  Fix: Retain the `Route` when a connection is reused on a redirect or other follow-up. This was
+    causing some `Authenticator` calls to see a null route when non-null was expected.
+
+
 ## Version 3.14.1
 
 _2019-04-10_
