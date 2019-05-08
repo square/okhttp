@@ -33,19 +33,19 @@ class MockResponse : Cloneable {
 
   var throttleBytesPerPeriod = Long.MAX_VALUE
     private set
-  private var throttlePeriodAmount: Long = 1
+  private var throttlePeriodAmount = 1L
   private var throttlePeriodUnit = TimeUnit.SECONDS
 
   private var socketPolicy = SocketPolicy.KEEP_OPEN
   private var http2ErrorCode = -1
 
-  private var bodyDelayAmount: Long = 0
+  private var bodyDelayAmount = 0L
   private var bodyDelayUnit = TimeUnit.MILLISECONDS
 
-  private var headersDelayAmount: Long = 0
+  private var headersDelayAmount = 0L
   private var headersDelayUnit = TimeUnit.MILLISECONDS
 
-  private var promises: MutableList<PushPromise> = ArrayList()
+  private var promises = mutableListOf<PushPromise>()
   var settings: Settings = Settings()
     private set
   var webSocketListener: WebSocketListener? = null
@@ -62,24 +62,18 @@ class MockResponse : Cloneable {
   /** Creates a new mock response with an empty body.  */
   init {
     setResponseCode(200)
-    setHeader("Content-Length", 0)
+    setHeader("Content-Length", 0L)
   }
 
   public override fun clone(): MockResponse {
-    try {
-      val result = super.clone() as MockResponse
-      result.headers = headers.build().newBuilder()
-      result.promises = ArrayList(promises)
-      return result
-    } catch (e: CloneNotSupportedException) {
-      throw AssertionError()
-    }
+    val result = super.clone() as MockResponse
+    result.headers = headers.build().newBuilder()
+    result.promises = promises.toMutableList()
+    return result
   }
 
   /** Returns the HTTP response line, such as "HTTP/1.1 200 OK".  */
-  fun getStatus(): String {
-    return status
-  }
+  fun getStatus(): String = status
 
   fun setResponseCode(code: Int): MockResponse {
     val reason: String = when (code) {
@@ -99,13 +93,9 @@ class MockResponse : Cloneable {
   }
 
   /** Returns the HTTP headers, such as "Content-Length: 0".  */
-  fun getHeaders(): Headers {
-    return headers.build()
-  }
+  fun getHeaders(): Headers = headers.build()
 
-  fun getTrailers(): Headers {
-    return trailers.build()
-  }
+  fun getTrailers(): Headers = trailers.build()
 
   /**
    * Removes all HTTP headers including any "Content-Length" and "Transfer-encoding" headers that
@@ -213,28 +203,26 @@ class MockResponse : Cloneable {
   }
 
   /**
-   * Sets the response body to the UTF-8 encoded bytes of [body], chunked every [maxChunkSize] bytes.
+   * Sets the response body to the UTF-8 encoded bytes of [body],
+   * chunked every [maxChunkSize] bytes.
    */
   fun setChunkedBody(body: String, maxChunkSize: Int): MockResponse {
     return setChunkedBody(Buffer().writeUtf8(body), maxChunkSize)
   }
 
-  fun getSocketPolicy(): SocketPolicy {
-    return socketPolicy
-  }
+  fun getSocketPolicy(): SocketPolicy = socketPolicy
 
   fun setSocketPolicy(socketPolicy: SocketPolicy): MockResponse {
     this.socketPolicy = socketPolicy
     return this
   }
 
-  fun getHttp2ErrorCode(): Int {
-    return http2ErrorCode
-  }
+  fun getHttp2ErrorCode(): Int = http2ErrorCode
 
   /**
    * Sets the [HTTP/2 error code](https://tools.ietf.org/html/rfc7540#section-7) to be
-   * returned when resetting the stream. This is only valid with [SocketPolicy.RESET_STREAM_AT_START].
+   * returned when resetting the stream.
+   * This is only valid with [SocketPolicy.RESET_STREAM_AT_START].
    */
   fun setHttp2ErrorCode(http2ErrorCode: Int): MockResponse {
     this.http2ErrorCode = http2ErrorCode
@@ -281,7 +269,8 @@ class MockResponse : Cloneable {
   }
 
   /**
-   * When [protocols][MockWebServer.setProtocols] include [HTTP_2][okhttp3.Protocol], this attaches a pushed stream to this response.
+   * When [protocols][MockWebServer.setProtocols] include [HTTP_2][okhttp3.Protocol],
+   * this attaches a pushed stream to this response.
    */
   fun withPush(promise: PushPromise): MockResponse {
     this.promises.add(promise)
@@ -289,7 +278,8 @@ class MockResponse : Cloneable {
   }
 
   /**
-   * When [protocols][MockWebServer.setProtocols] include [HTTP_2][okhttp3.Protocol], this pushes [settings] before writing the response.
+   * When [protocols][MockWebServer.setProtocols] include [HTTP_2][okhttp3.Protocol],
+   * this pushes [settings] before writing the response.
    */
   fun withSettings(settings: Settings): MockResponse {
     this.settings = settings
@@ -297,8 +287,8 @@ class MockResponse : Cloneable {
   }
 
   /**
-   * Attempts to perform a web socket upgrade on the connection. This will overwrite any previously
-   * set status or body.
+   * Attempts to perform a web socket upgrade on the connection.
+   * This will overwrite any previously set status or body.
    */
   fun withWebSocketUpgrade(listener: WebSocketListener): MockResponse {
     setStatus("HTTP/1.1 101 Switching Protocols")
@@ -309,9 +299,7 @@ class MockResponse : Cloneable {
     return this
   }
 
-  override fun toString(): String {
-    return status
-  }
+  override fun toString(): String = status
 
   companion object {
     private const val CHUNKED_BODY_HEADER = "Transfer-encoding: chunked"
