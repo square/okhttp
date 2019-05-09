@@ -1,6 +1,13 @@
 Change Log
 ==========
 
+## Version 4.0.0-ALPHA01
+
+_2019-05-08_
+
+This is an unstable preview of the OkHttp 4 release. It should not be used.
+
+
 ## Version 3.12.3
 
 _2019-05-07_
