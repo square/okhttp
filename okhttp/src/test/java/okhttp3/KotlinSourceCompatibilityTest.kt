@@ -679,14 +679,14 @@ class KotlinSourceCompatibilityTest {
   fun mockResponse() {
     var mockResponse: MockResponse = MockResponse()
     var status: String = mockResponse.getStatus()
-    status = mockResponse.status
+    status = mockResponse.getStatus()
     mockResponse = mockResponse.setStatus("")
-    mockResponse.status = ""
+    mockResponse.setStatus("")
     mockResponse = mockResponse.setResponseCode(0)
     var headers: Headers = mockResponse.getHeaders()
-    headers = mockResponse.headers
+    headers = mockResponse.getHeaders()
     var trailers: Headers = mockResponse.getTrailers()
-    trailers = mockResponse.trailers
+    trailers = mockResponse.getTrailers()
     mockResponse = mockResponse.clearHeaders()
     mockResponse = mockResponse.addHeader("")
     mockResponse = mockResponse.addHeader("", "")
@@ -696,20 +696,20 @@ class KotlinSourceCompatibilityTest {
     mockResponse = mockResponse.setTrailers(Headers.of())
     mockResponse = mockResponse.removeHeader("")
     var body: Buffer? = mockResponse.getBody()
-    body = mockResponse.body
+    body = mockResponse.getBody()
     mockResponse = mockResponse.setBody(Buffer())
-    mockResponse.body = Buffer()
+    mockResponse.setBody(Buffer())
     mockResponse = mockResponse.setChunkedBody(Buffer(), 0)
     mockResponse = mockResponse.setChunkedBody("", 0)
     var socketPolicy: SocketPolicy = mockResponse.getSocketPolicy()
-    socketPolicy = mockResponse.socketPolicy
+    socketPolicy = mockResponse.getSocketPolicy()
     mockResponse = mockResponse.setSocketPolicy(SocketPolicy.KEEP_OPEN)
     var http2ErrorCode: Int = mockResponse.getHttp2ErrorCode()
-    http2ErrorCode = mockResponse.http2ErrorCode
+    http2ErrorCode = mockResponse.getHttp2ErrorCode()
     mockResponse = mockResponse.setHttp2ErrorCode(0)
-    mockResponse.http2ErrorCode = 0
+    mockResponse.setHttp2ErrorCode(0)
     mockResponse = mockResponse.throttleBody(0L, 0L, TimeUnit.SECONDS)
-    var throttleBytesPerPeriod: Long = mockResponse.getThrottleBytesPerPeriod()
+    var throttleBytesPerPeriod: Long = mockResponse.throttleBytesPerPeriod
     throttleBytesPerPeriod = mockResponse.throttleBytesPerPeriod
     var throttlePeriod: Long = mockResponse.getThrottlePeriod(TimeUnit.SECONDS)
     mockResponse = mockResponse.setBodyDelay(0L, TimeUnit.SECONDS)
@@ -717,14 +717,14 @@ class KotlinSourceCompatibilityTest {
     mockResponse = mockResponse.setHeadersDelay(0L, TimeUnit.SECONDS)
     val headersDelay: Long = mockResponse.getHeadersDelay(TimeUnit.SECONDS)
     mockResponse = mockResponse.withPush(PushPromise("", "", Headers.of(), MockResponse()))
-    var pushPromises: List<PushPromise> = mockResponse.getPushPromises()
+    var pushPromises: List<PushPromise> = mockResponse.pushPromises
     pushPromises = mockResponse.pushPromises
     mockResponse = mockResponse.withSettings(Settings())
-    var settings: Settings = mockResponse.getSettings()
+    var settings: Settings = mockResponse.settings
     settings = mockResponse.settings
     mockResponse = mockResponse.withWebSocketUpgrade(object : WebSocketListener() {
     })
-    var webSocketListener: WebSocketListener = mockResponse.getWebSocketListener()
+    var webSocketListener: WebSocketListener? = mockResponse.webSocketListener
     webSocketListener = mockResponse.webSocketListener
   }
 
