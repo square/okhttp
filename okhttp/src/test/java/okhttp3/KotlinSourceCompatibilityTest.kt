@@ -732,32 +732,32 @@ class KotlinSourceCompatibilityTest {
   fun mockWebServer() {
     val mockWebServer: MockWebServer = MockWebServer()
     var port: Int = mockWebServer.getPort()
-    port = mockWebServer.port
-    var hostName: String = mockWebServer.getHostName()
+    port = mockWebServer.getPort()
+    var hostName: String = mockWebServer.hostName
     hostName = mockWebServer.hostName
     val toProxyAddress: Proxy = mockWebServer.toProxyAddress()
     mockWebServer.setServerSocketFactory(ServerSocketFactory.getDefault())
     val url: HttpUrl = mockWebServer.url("")
     mockWebServer.setBodyLimit(0L)
     mockWebServer.setProtocolNegotiationEnabled(false)
-    mockWebServer.setProtocols(listOf<Protocol>())
+    mockWebServer.setProtocols(listOf())
     val protocols: List<Protocol> = mockWebServer.protocols()
-    mockWebServer.useHttps(SSLSocketFactory.getDefault() as SSLSocketFactory?, false)
+    mockWebServer.useHttps(SSLSocketFactory.getDefault() as SSLSocketFactory, false)
     mockWebServer.noClientAuth()
     mockWebServer.requestClientAuth()
     mockWebServer.requireClientAuth()
-    var request: RecordedRequest = mockWebServer.takeRequest()
+    var request: RecordedRequest? = mockWebServer.takeRequest()
     request = mockWebServer.takeRequest(0L, TimeUnit.SECONDS)
     var requestCount: Int = mockWebServer.getRequestCount()
-    requestCount = mockWebServer.requestCount
+    requestCount = mockWebServer.getRequestCount()
     mockWebServer.enqueue(MockResponse())
     mockWebServer.start()
     mockWebServer.start(0)
     mockWebServer.start(InetAddress.getLocalHost(), 0)
     mockWebServer.shutdown()
-    var dispatcher: okhttp3.mockwebserver.Dispatcher = mockWebServer.getDispatcher()
+    var dispatcher: okhttp3.mockwebserver.Dispatcher = mockWebServer.dispatcher
     dispatcher = mockWebServer.dispatcher
-    mockWebServer.setDispatcher(QueueDispatcher())
+    mockWebServer.dispatcher = QueueDispatcher()
     mockWebServer.dispatcher = QueueDispatcher()
     mockWebServer.close()
   }
