@@ -42,12 +42,7 @@ public abstract class Internal {
 
   public abstract boolean equalsNonHost(Address a, Address b);
 
-  public abstract int code(Response.Builder responseBuilder);
-
   public abstract Call newWebSocketCall(OkHttpClient client, Request request);
-
-  public abstract void initExchange(
-      Response.Builder responseBuilder, Exchange exchange);
 
   public abstract @Nullable Exchange exchange(Response response);
 }

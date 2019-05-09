@@ -15,24 +15,21 @@
  */
 package okhttp3.internal.http
 
-import java.io.FileNotFoundException
-import java.io.IOException
-import java.io.InterruptedIOException
-import java.net.ProtocolException
-import java.net.Proxy
-import java.net.SocketTimeoutException
-import java.security.cert.CertificateException
-import javax.net.ssl.SSLHandshakeException
-import javax.net.ssl.SSLPeerUnverifiedException
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
 import okhttp3.Route
-import okhttp3.internal.Internal
+import okhttp3.internal.Util.closeQuietly
+import okhttp3.internal.Util.sameConnection
 import okhttp3.internal.connection.RouteException
 import okhttp3.internal.connection.Transmitter
+import okhttp3.internal.http.StatusLine.Companion.HTTP_PERM_REDIRECT
+import okhttp3.internal.http.StatusLine.Companion.HTTP_TEMP_REDIRECT
 import okhttp3.internal.http2.ConnectionShutdownException
+import java.io.FileNotFoundException
+import java.io.IOException
+import java.io.InterruptedIOException
 import java.net.HttpURLConnection.HTTP_CLIENT_TIMEOUT
 import java.net.HttpURLConnection.HTTP_MOVED_PERM
 import java.net.HttpURLConnection.HTTP_MOVED_TEMP
@@ -41,10 +38,12 @@ import java.net.HttpURLConnection.HTTP_PROXY_AUTH
 import java.net.HttpURLConnection.HTTP_SEE_OTHER
 import java.net.HttpURLConnection.HTTP_UNAUTHORIZED
 import java.net.HttpURLConnection.HTTP_UNAVAILABLE
-import okhttp3.internal.Util.closeQuietly
-import okhttp3.internal.Util.sameConnection
-import okhttp3.internal.http.StatusLine.Companion.HTTP_PERM_REDIRECT
-import okhttp3.internal.http.StatusLine.Companion.HTTP_TEMP_REDIRECT
+import java.net.ProtocolException
+import java.net.Proxy
+import java.net.SocketTimeoutException
+import java.security.cert.CertificateException
+import javax.net.ssl.SSLHandshakeException
+import javax.net.ssl.SSLPeerUnverifiedException
 
 /**
  * This interceptor recovers from failures and follows redirects as necessary. It may throw an
@@ -98,7 +97,7 @@ class RetryAndFollowUpInterceptor(private val client: OkHttpClient) : Intercepto
             .build()
       }
 
-      val exchange = Internal.instance.exchange(response)
+      val exchange = response.exchange
       val route = exchange?.connection()?.route()
       val followUp = followUpRequest(response, route)
 
