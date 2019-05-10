@@ -105,11 +105,10 @@ class MockWebServer : ExternalResource(), Closeable {
       Collections.newSetFromMap(ConcurrentHashMap<Http2Connection, Boolean>())
   private val requestCount = AtomicInteger()
   private var bodyLimit = Long.MAX_VALUE
-  private var serverSocketFactory: ServerSocketFactory = ServerSocketFactory.getDefault()
-  private var serverSocket: ServerSocket = serverSocketFactory.createServerSocket()
+  private var serverSocketFactory: ServerSocketFactory? = null
+  private var serverSocket: ServerSocket? = null
   private var sslSocketFactory: SSLSocketFactory? = null
-  private var executor: ExecutorService =
-      Executors.newCachedThreadPool(Util.threadFactory("MockWebServer", false))
+  private var executor: ExecutorService? = null
   private var tunnelProxy: Boolean = false
   private var clientAuth = CLIENT_AUTH_NONE
   /**
@@ -122,8 +121,7 @@ class MockWebServer : ExternalResource(), Closeable {
    */
   var dispatcher: Dispatcher = QueueDispatcher()
   private var port = -1
-  private var inetSocketAddress =
-    InetSocketAddress(InetAddress.getByName("localhost"), 0)
+  private var inetSocketAddress: InetSocketAddress? = null
   private var protocolNegotiationEnabled = true
   private var protocols = Util.immutableList(Protocol.HTTP_2, Protocol.HTTP_1_1)
 
@@ -132,7 +130,7 @@ class MockWebServer : ExternalResource(), Closeable {
   val hostName: String
     get() {
       before()
-      return inetSocketAddress.address.canonicalHostName
+      return inetSocketAddress!!.address.canonicalHostName
     }
 
   @Synchronized override fun before() {
@@ -151,13 +149,13 @@ class MockWebServer : ExternalResource(), Closeable {
 
   fun toProxyAddress(): Proxy {
     before()
-    val address = InetSocketAddress(inetSocketAddress.address
+    val address = InetSocketAddress(inetSocketAddress!!.address
         .canonicalHostName, port)
     return Proxy(Proxy.Type.HTTP, address)
   }
 
   fun setServerSocketFactory(serverSocketFactory: ServerSocketFactory) {
-    if (started) {
+    if (executor != null) {
       throw IllegalStateException(
           "setServerSocketFactory() must be called before start()")
     }
@@ -327,16 +325,20 @@ class MockWebServer : ExternalResource(), Closeable {
     if (started) throw IllegalStateException("start() already called")
     started = true
 
+    executor = Executors.newCachedThreadPool(Util.threadFactory("MockWebServer", false))
     this.inetSocketAddress = inetSocketAddress
 
-    serverSocket = serverSocketFactory.createServerSocket()
+    if (serverSocketFactory == null) {
+      serverSocketFactory = ServerSocketFactory.getDefault()
+    }
+    serverSocket = serverSocketFactory!!.createServerSocket()
 
     // Reuse if the user specified a port
-    serverSocket.reuseAddress = inetSocketAddress.port != 0
-    serverSocket.bind(inetSocketAddress, 50)
+    serverSocket!!.reuseAddress = inetSocketAddress.port != 0
+    serverSocket!!.bind(inetSocketAddress, 50)
 
-    port = serverSocket.localPort
-    executor.execute(object : NamedRunnable("MockWebServer $port") {
+    port = serverSocket!!.localPort
+    executor!!.execute(object : NamedRunnable("MockWebServer $port") {
       override fun execute() {
         try {
           logger.info("${this@MockWebServer} starting to accept connections")
@@ -360,7 +362,7 @@ class MockWebServer : ExternalResource(), Closeable {
           httpConnection.remove()
         }
         dispatcher.shutdown()
-        executor.shutdown()
+        executor!!.shutdown()
       }
 
       @Throws(Exception::class)
@@ -368,7 +370,7 @@ class MockWebServer : ExternalResource(), Closeable {
         while (true) {
           val socket: Socket
           try {
-            socket = serverSocket.accept()
+            socket = serverSocket!!.accept()
           } catch (e: SocketException) {
             logger.info("${this@MockWebServer} done accepting connections: ${e.message}")
             return
@@ -391,13 +393,14 @@ class MockWebServer : ExternalResource(), Closeable {
   @Throws(IOException::class)
   fun shutdown() {
     if (!started) return
+    if (serverSocket == null) throw IllegalStateException("shutdown() before start()")
 
     // Cause acceptConnections() to break out.
-    serverSocket.close()
+    serverSocket!!.close()
 
     // Await shutdown.
     try {
-      if (!executor.awaitTermination(5, TimeUnit.SECONDS)) {
+      if (!executor!!.awaitTermination(5, TimeUnit.SECONDS)) {
         throw IOException("Gave up waiting for executor to shut down")
       }
     } catch (e: InterruptedException) {
@@ -414,7 +417,7 @@ class MockWebServer : ExternalResource(), Closeable {
   }
 
   private fun serveConnection(raw: Socket) {
-    executor.execute(object : NamedRunnable("MockWebServer ${raw.remoteSocketAddress}") {
+    executor!!.execute(object : NamedRunnable("MockWebServer ${raw.remoteSocketAddress}") {
       var sequenceNumber = 0
 
       override fun execute() {
@@ -867,7 +870,7 @@ class MockWebServer : ExternalResource(), Closeable {
 
     @Throws(IOException::class)
     override fun write(source: Buffer, byteCount: Long) {
-      val toRead = Math.min(remainingByteCount, byteCount)
+      val toRead = min(remainingByteCount, byteCount)
       if (toRead > 0) {
         source.read(buffer, toRead)
       }
