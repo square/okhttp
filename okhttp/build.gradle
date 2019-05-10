@@ -30,7 +30,6 @@ dependencies {
   compileOnly deps.jsr305
   compileOnly deps.animalSniffer
 
-  testImplementation deps.okio
   testImplementation project(':okhttp-testing-support')
   testImplementation project(':okhttp-tls')
   testImplementation project(':okhttp-urlconnection')
