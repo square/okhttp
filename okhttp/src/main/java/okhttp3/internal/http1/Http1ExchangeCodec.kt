@@ -87,9 +87,7 @@ class Http1ExchangeCodec(
   val isClosed: Boolean
     get() = state == STATE_CLOSED
 
-  override fun connection(): RealConnection? {
-    return realConnection
-  }
+  override fun connection(): RealConnection? = realConnection
 
   override fun createRequestBody(request: Request, contentLength: Long): Sink {
     return when {
@@ -110,12 +108,12 @@ class Http1ExchangeCodec(
   /**
    * Prepares the HTTP headers and sends them to the server.
    *
-   * For streaming requests with a body, headers must be prepared **before** the
-   * output stream has been written to. Otherwise the body would need to be buffered!
+   * For streaming requests with a body, headers must be prepared **before** the output stream has
+   * been written to. Otherwise the body would need to be buffered!
    *
-   * For non-streaming requests with a body, headers must be prepared **after** the
-   * output stream has been written to and closed. This ensures that the `Content-Length`
-   * header field receives the proper value.
+   * For non-streaming requests with a body, headers must be prepared **after** the output stream
+   * has been written to and closed. This ensures that the `Content-Length` header field receives
+   * the proper value.
    */
   override fun writeRequestHeaders(request: Request) {
     val requestLine = RequestLine.get(
@@ -174,7 +172,9 @@ class Http1ExchangeCodec(
   }
 
   override fun readResponseHeaders(expectContinue: Boolean): Response.Builder? {
-    check(state == STATE_OPEN_REQUEST_BODY || state == STATE_READ_RESPONSE_HEADERS) { "state: $state" }
+    check(state == STATE_OPEN_REQUEST_BODY || state == STATE_READ_RESPONSE_HEADERS) {
+      "state: $state"
+    }
 
     try {
       val statusLine = StatusLine.parse(readHeaderLine())
@@ -186,7 +186,9 @@ class Http1ExchangeCodec(
           .headers(readHeaders())
 
       return when {
-        expectContinue && statusLine.code == HTTP_CONTINUE -> null
+        expectContinue && statusLine.code == HTTP_CONTINUE -> {
+          null
+        }
         statusLine.code == HTTP_CONTINUE -> {
           state = STATE_READ_RESPONSE_HEADERS
           responseBuilder
@@ -198,7 +200,7 @@ class Http1ExchangeCodec(
       }
     } catch (e: EOFException) {
       // Provide more context if the server ends the stream before sending a response.
-      val address = if (realConnection != null) realConnection.route().address().url().redact() else "unknown"
+      val address = realConnection?.route()?.address()?.url()?.redact() ?: "unknown"
       throw IOException("unexpected end of stream on $address", e)
     }
   }
@@ -447,8 +449,8 @@ class Http1ExchangeCodec(
         bytesRemainingInChunk = source.readHexadecimalUnsignedLong()
         val extensions = source.readUtf8LineStrict().trim { it <= ' ' }
         if (bytesRemainingInChunk < 0 || extensions.isNotEmpty() && !extensions.startsWith(";")) {
-          throw ProtocolException(
-              "expected chunk size and optional extensions but was \"$bytesRemainingInChunk$extensions\"")
+          throw ProtocolException("expected chunk size and optional extensions" +
+              " but was \"$bytesRemainingInChunk$extensions\"")
         }
       } catch (e: NumberFormatException) {
         throw ProtocolException(e.message)

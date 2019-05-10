@@ -225,7 +225,7 @@ class ExchangeFinder(
 
         // Create a connection and assign it to this allocation immediately. This makes it possible
         // for an asynchronous cancel() to interrupt the handshake we're about to do.
-        result = RealConnection(connectionPool, selectedRoute)
+        result = RealConnection(connectionPool, selectedRoute!!)
         connectingConnection = result
       }
     }
