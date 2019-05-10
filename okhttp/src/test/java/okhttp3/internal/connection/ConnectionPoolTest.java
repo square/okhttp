@@ -34,6 +34,7 @@ import okhttp3.internal.RecordingOkAuthenticator;
 import org.junit.Test;
 
 import static okhttp3.TestUtil.awaitGarbageCollection;
+import static okhttp3.internal.connection.RealConnection.newTestConnection;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public final class ConnectionPoolTest {
@@ -178,10 +179,10 @@ public final class ConnectionPoolTest {
 
     awaitGarbageCollection();
     assertThat(pool.cleanup(100L)).isEqualTo(0L);
-    assertThat(c1.transmitters).isEmpty();
+    assertThat(c1.getTransmitters()).isEmpty();
 
     // Can't allocate once a leak has been detected.
-    assertThat(c1.noNewExchanges).isTrue();
+    assertThat(c1.getNoNewExchanges()).isTrue();
   }
 
   /** Use a helper method so there's no hidden reference remaining on the stack. */
@@ -198,7 +199,7 @@ public final class ConnectionPoolTest {
   }
 
   private RealConnection newConnection(RealConnectionPool pool, Route route, long idleAtNanos) {
-    RealConnection result = RealConnection.testConnection(pool, route, new Socket(), idleAtNanos);
+    RealConnection result = newTestConnection(pool, route, new Socket(), idleAtNanos);
     synchronized (pool) {
       pool.put(result);
     }

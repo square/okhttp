@@ -829,8 +829,6 @@ open class OkHttpClient internal constructor(
         override fun realConnectionPool(connectionPool: ConnectionPool) =
             connectionPool.delegate
 
-        override fun equalsNonHost(a: Address, b: Address) = a.equalsNonHost(b)
-
         override fun newWebSocketCall(client: OkHttpClient, originalRequest: Request) =
             RealCall.newRealCall(client, originalRequest, true)
 
