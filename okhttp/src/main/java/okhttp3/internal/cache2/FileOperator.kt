@@ -20,16 +20,14 @@ import java.io.IOException
 import java.nio.channels.FileChannel
 
 /**
- * Read and write a target file. Unlike Okio's built-in {@linkplain Okio#source(java.io.File) file
- * source} and {@linkplain Okio#sink(java.io.File) file sink} this class offers:
+ * Read and write a target file. Unlike Okio's built-in `Okio.source(java.io.File file)` and `Okio.sink(java.io.File file)`
+ * this class offers:
  *
- * <ul>
- *   <li><strong>Read/write:</strong> read and write using the same operator.
- *   <li><strong>Random access:</strong> access any position within the file.
- *   <li><strong>Shared channels:</strong> read and write a file channel that's shared between
- *       multiple operators. Note that although the underlying `FileChannel` may be shared,
- *       each `FileOperator` should not be.
- * </ul>
+ *  * **Read/write:** read and write using the same operator.
+ *  * **Random access:** access any position within the file.
+ *  * **Shared channels:** read and write a file channel that's shared between
+ * multiple operators. Note that although the underlying `FileChannel` may be shared,
+ * each `FileOperator` should not be.
  */
 internal class FileOperator(
   private val fileChannel: FileChannel
