@@ -16,10 +16,8 @@
 package okhttp3.internal;
 
 import javax.annotation.Nullable;
-import okhttp3.Call;
 import okhttp3.ConnectionPool;
 import okhttp3.OkHttpClient;
-import okhttp3.Request;
 import okhttp3.Response;
 import okhttp3.internal.connection.Exchange;
 import okhttp3.internal.connection.RealConnectionPool;
@@ -38,8 +36,6 @@ public abstract class Internal {
   public static Internal instance;
 
   public abstract RealConnectionPool realConnectionPool(ConnectionPool connectionPool);
-
-  public abstract Call newWebSocketCall(OkHttpClient client, Request request);
 
   public abstract @Nullable Exchange exchange(Response response);
 }

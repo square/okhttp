@@ -576,7 +576,11 @@ class RealConnection(
 
   @Throws(SocketException::class)
   internal fun newWebSocketStreams(exchange: Exchange): RealWebSocket.Streams {
-    socket!!.soTimeout = 0
+    val socket = this.socket!!
+    val source = this.source!!
+    val sink = this.sink!!
+
+    socket.soTimeout = 0
     noNewExchanges()
     return object : RealWebSocket.Streams(true, source, sink) {
       override fun close() {
