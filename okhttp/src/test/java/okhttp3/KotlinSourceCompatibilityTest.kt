@@ -737,7 +737,7 @@ class KotlinSourceCompatibilityTest {
     hostName = mockWebServer.hostName
     val toProxyAddress: Proxy = mockWebServer.toProxyAddress()
     mockWebServer.setServerSocketFactory(ServerSocketFactory.getDefault())
-    val url: HttpUrl? = mockWebServer.url("")
+    val url: HttpUrl = mockWebServer.url("")
     mockWebServer.setBodyLimit(0L)
     mockWebServer.setProtocolNegotiationEnabled(false)
     mockWebServer.setProtocols(listOf())

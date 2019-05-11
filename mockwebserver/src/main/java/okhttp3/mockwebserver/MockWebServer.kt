@@ -155,10 +155,7 @@ class MockWebServer : ExternalResource(), Closeable {
   }
 
   fun setServerSocketFactory(serverSocketFactory: ServerSocketFactory) {
-    if (executor != null) {
-      throw IllegalStateException(
-          "setServerSocketFactory() must be called before start()")
-    }
+    check(executor == null) { "setServerSocketFactory() must be called before start()" }
     this.serverSocketFactory = serverSocketFactory
   }
 
@@ -167,13 +164,13 @@ class MockWebServer : ExternalResource(), Closeable {
    *
    * @param path the request path, such as "/".
    */
-  fun url(path: String): HttpUrl? {
+  fun url(path: String): HttpUrl {
     return HttpUrl.Builder()
         .scheme(if (sslSocketFactory != null) "https" else "http")
         .host(hostName)
         .port(port)
         .build()
-        .resolve(path)
+        .resolve(path)!!
   }
 
   /**
@@ -200,17 +197,13 @@ class MockWebServer : ExternalResource(), Closeable {
    */
   fun setProtocols(protocols: List<Protocol>) {
     val protocolList = Util.immutableList(protocols)
-    if (protocolList.contains(Protocol.H2_PRIOR_KNOWLEDGE) && protocolList.size > 1) {
-      // when using h2_prior_knowledge, no other protocol should be supported.
-      throw IllegalArgumentException(
-          "protocols containing h2_prior_knowledge cannot use other protocols: $protocolList")
-    } else if (!protocolList.contains(Protocol.H2_PRIOR_KNOWLEDGE) && !protocolList.contains(
-            Protocol.HTTP_1_1)) {
-      throw IllegalArgumentException("protocols doesn't contain http/1.1: $protocolList")
+    require(Protocol.H2_PRIOR_KNOWLEDGE !in protocolList || protocolList.size == 1) {
+      "protocols containing h2_prior_knowledge cannot use other protocols: $protocolList"
     }
-    if (protocolList.contains(null)) {
-      throw IllegalArgumentException("protocols must not contain null")
+    require(Protocol.HTTP_1_1 in protocolList || Protocol.H2_PRIOR_KNOWLEDGE in protocolList) {
+      "protocols doesn't contain http/1.1: $protocolList"
     }
+    require(null != protocolList) { "protocols must not contain null" }
     this.protocols = protocolList
   }
 
@@ -322,7 +315,7 @@ class MockWebServer : ExternalResource(), Closeable {
    */
   @Synchronized @Throws(IOException::class)
   private fun start(inetSocketAddress: InetSocketAddress) {
-    if (started) throw IllegalStateException("start() already called")
+    require(!started) { "start() already called" }
     started = true
 
     executor = Executors.newCachedThreadPool(Util.threadFactory("MockWebServer", false))
@@ -393,7 +386,7 @@ class MockWebServer : ExternalResource(), Closeable {
   @Throws(IOException::class)
   fun shutdown() {
     if (!started) return
-    if (serverSocket == null) throw IllegalStateException("shutdown() before start()")
+    require(serverSocket != null) { "shutdown() before start()" }
 
     // Cause acceptConnections() to break out.
     serverSocket!!.close()
@@ -472,7 +465,7 @@ class MockWebServer : ExternalResource(), Closeable {
             }
             openClientSockets.remove(raw)
           }
-          protocols.contains(Protocol.H2_PRIOR_KNOWLEDGE) -> {
+          Protocol.H2_PRIOR_KNOWLEDGE in protocols -> {
             socket = raw
             protocol = Protocol.H2_PRIOR_KNOWLEDGE
           }
@@ -573,14 +566,15 @@ class MockWebServer : ExternalResource(), Closeable {
         }
 
         // See warnings associated with these socket policies in SocketPolicy.
-        when {
-          response.getSocketPolicy() === DISCONNECT_AT_END -> {
+        when (response.getSocketPolicy()) {
+          DISCONNECT_AT_END -> {
             socket.close()
             return false
           }
-          response.getSocketPolicy() === SHUTDOWN_INPUT_AT_END -> socket.shutdownInput()
-          response.getSocketPolicy() === SHUTDOWN_OUTPUT_AT_END -> socket.shutdownOutput()
-          response.getSocketPolicy() === SHUTDOWN_SERVER_AFTER_RESPONSE -> shutdown()
+          SHUTDOWN_INPUT_AT_END -> socket.shutdownInput()
+          SHUTDOWN_OUTPUT_AT_END -> socket.shutdownOutput()
+          SHUTDOWN_SERVER_AFTER_RESPONSE -> shutdown()
+          else -> {}
         }
         sequenceNumber++
         return reuseSocket
@@ -599,7 +593,6 @@ class MockWebServer : ExternalResource(), Closeable {
       socket.startHandshake() // we're testing a handshake failure
       throw AssertionError()
     } catch (expected: IOException) {
-      expected.printStackTrace()
     }
     socket.close()
   }
@@ -631,27 +624,28 @@ class MockWebServer : ExternalResource(), Closeable {
     if (request.isEmpty()) {
       return null // no request because the stream is exhausted
     }
-
     val headers = Headers.Builder()
     var contentLength = -1L
     var chunked = false
     var expectContinue = false
-    var header = source.readUtf8LineStrict()
-    while (header.isNotEmpty()) {
+    while (true) {
+      val header = source.readUtf8LineStrict()
+      if (header.isEmpty()) {
+        break
+      }
       addHeaderLenient(headers, header)
       val lowercaseHeader = header.toLowerCase(Locale.US)
       if (contentLength == -1L && lowercaseHeader.startsWith("content-length:")) {
-        contentLength = header.substring(15).trim { it <= ' ' }.toLong()
+        contentLength = header.substring(15).trim().toLong()
       }
       if (lowercaseHeader.startsWith("transfer-encoding:") && lowercaseHeader.substring(
-              18).trim { it <= ' ' } == "chunked") {
+              18).trim() == "chunked") {
         chunked = true
       }
       if (lowercaseHeader.startsWith("expect:") && lowercaseHeader.substring(
-              7).trim { it <= ' ' }.equals("100-continue", ignoreCase = true)) {
+              7).trim().equals("100-continue", ignoreCase = true)) {
         expectContinue = true
       }
-      header = source.readUtf8LineStrict()
     }
 
     val socketPolicy = dispatcher.peek().getSocketPolicy()
@@ -672,7 +666,7 @@ class MockWebServer : ExternalResource(), Closeable {
     } else if (chunked) {
       hasBody = true
       while (true) {
-        val chunkSize = Integer.parseInt(source.readUtf8LineStrict().trim { it <= ' ' }, 16)
+        val chunkSize = Integer.parseInt(source.readUtf8LineStrict().trim(), 16)
         if (chunkSize == 0) {
           readEmptyLine(source)
           break
@@ -713,7 +707,7 @@ class MockWebServer : ExternalResource(), Closeable {
         .url("$scheme://$authority/")
         .headers(request.headers)
         .build()
-    val statusParts = response.getStatus().split(" ".toRegex(), 3).toTypedArray()
+    val statusParts = response.getStatus().split(" ".toRegex(), 3)
     val fancyResponse = Response.Builder()
         .code(Integer.parseInt(statusParts[1]))
         .message(statusParts[2])
@@ -735,11 +729,7 @@ class MockWebServer : ExternalResource(), Closeable {
       webSocket.loopReader()
 
       // Even if messages are no longer being read we need to wait for the connection close signal.
-      try {
-        connectionClose.await()
-      } catch (e: InterruptedException) {
-        throw AssertionError(e)
-      }
+      connectionClose.await()
     } catch (e: IOException) {
       webSocket.failWebSocket(e, null)
     } finally {
@@ -766,13 +756,11 @@ class MockWebServer : ExternalResource(), Closeable {
 
   @Throws(IOException::class)
   private fun writeHeaders(sink: BufferedSink, headers: Headers) {
-    var i = 0
-    while (i < headers.size()) {
+    for (i in 0 until headers.size()) {
       sink.writeUtf8(headers.name(i))
       sink.writeUtf8(": ")
       sink.writeUtf8(headers.value(i))
       sink.writeUtf8("\r\n")
-      i++
     }
     sink.writeUtf8("\r\n")
     sink.flush()
@@ -780,11 +768,7 @@ class MockWebServer : ExternalResource(), Closeable {
 
   private fun sleepIfDelayed(delayMs: Long) {
     if (delayMs != 0L) {
-      try {
-        Thread.sleep(delayMs)
-      } catch (e: InterruptedException) {
-        throw AssertionError(e)
-      }
+      Thread.sleep(delayMs)
     }
   }
 
@@ -809,10 +793,11 @@ class MockWebServer : ExternalResource(), Closeable {
     val periodDelayMs = policy.getThrottlePeriod(TimeUnit.MILLISECONDS)
 
     val halfByteCount = byteCountNum / 2
-    val disconnectHalfway = if (isRequest)
+    val disconnectHalfway = if (isRequest) {
       policy.getSocketPolicy() === DISCONNECT_DURING_REQUEST_BODY
-    else
+    } else {
       policy.getSocketPolicy() === DISCONNECT_DURING_RESPONSE_BODY
+    }
 
     while (!socket.isClosed) {
       var b = 0L
@@ -841,11 +826,7 @@ class MockWebServer : ExternalResource(), Closeable {
       }
 
       if (periodDelayMs != 0L) {
-        try {
-          Thread.sleep(periodDelayMs)
-        } catch (e: InterruptedException) {
-          throw AssertionError(e)
-        }
+        Thread.sleep(periodDelayMs)
       }
     }
   }
@@ -853,7 +834,7 @@ class MockWebServer : ExternalResource(), Closeable {
   @Throws(IOException::class)
   private fun readEmptyLine(source: BufferedSource) {
     val line = source.readUtf8LineStrict()
-    if (line.isNotEmpty()) throw IllegalStateException("Expected empty but was: $line")
+    check(line.isEmpty()) { "Expected empty but was: $line" }
   }
 
   override fun toString(): String = "MockWebServer[$port]"
@@ -871,11 +852,11 @@ class MockWebServer : ExternalResource(), Closeable {
     @Throws(IOException::class)
     override fun write(source: Buffer, byteCount: Long) {
       val toRead = min(remainingByteCount, byteCount)
-      if (toRead > 0) {
+      if (toRead > 0L) {
         source.read(buffer, toRead)
       }
       val toSkip = byteCount - toRead
-      if (toSkip > 0) {
+      if (toSkip > 0L) {
         source.skip(toSkip)
       }
       remainingByteCount -= toRead
@@ -883,12 +864,12 @@ class MockWebServer : ExternalResource(), Closeable {
     }
 
     @Throws(IOException::class)
-    override fun flush() = Unit
+    override fun flush() {}
 
     override fun timeout(): Timeout = Timeout.NONE
 
     @Throws(IOException::class)
-    override fun close() = Unit
+    override fun close() {}
   }
 
   /** Processes HTTP requests layered over HTTP/2.  */
@@ -902,25 +883,16 @@ class MockWebServer : ExternalResource(), Closeable {
     override fun onStream(stream: Http2Stream) {
       val peekedResponse = dispatcher.peek()
       if (peekedResponse.getSocketPolicy() === RESET_STREAM_AT_START) {
-        try {
           dispatchBookkeepingRequest(sequenceNumber.getAndIncrement(), socket)
           stream.close(ErrorCode.fromHttp2(peekedResponse.getHttp2ErrorCode())!!, null)
           return
-        } catch (e: InterruptedException) {
-          throw AssertionError(e)
-        }
       }
 
       val request = readRequest(stream)
       requestCount.incrementAndGet()
       requestQueue.add(request)
 
-      val response: MockResponse
-      try {
-        response = dispatcher.dispatch(request)
-      } catch (e: InterruptedException) {
-        throw AssertionError(e)
-      }
+      val response: MockResponse = dispatcher.dispatch(request)
 
       if (response.getSocketPolicy() === DISCONNECT_AFTER_REQUEST) {
         socket.close()
@@ -946,10 +918,9 @@ class MockWebServer : ExternalResource(), Closeable {
       var method = "<:method omitted>"
       var path = "<:path omitted>"
       var readBody = true
-      var index = 0
-      while (index < streamHeaders.size()) {
-        val name = streamHeaders.name(index)
-        val value = streamHeaders.value(index)
+      for (i in 0 until streamHeaders.size()) {
+        val name = streamHeaders.name(i)
+        val value = streamHeaders.value(i)
         if (name == Header.TARGET_METHOD_UTF8) {
           method = value
         } else if (name == Header.TARGET_PATH_UTF8) {
@@ -963,7 +934,6 @@ class MockWebServer : ExternalResource(), Closeable {
           // Don't read the body unless we've invited the client to send it.
           readBody = false
         }
-        index++
       }
       val headers = httpHeaders.build()
 
@@ -1010,10 +980,8 @@ class MockWebServer : ExternalResource(), Closeable {
       // TODO: constants for well-known header names.
       http2Headers.add(Header(Header.RESPONSE_STATUS, statusParts[1]))
       val headers = response.getHeaders()
-      var index = 0
-      while (index < headers.size()) {
-        http2Headers.add(Header(headers.name(index), headers.value(index)))
-        index++
+      for (i in 0 until headers.size()) {
+        http2Headers.add(Header(headers.name(i), headers.value(i)))
       }
       val trailers = response.getTrailers()
 
@@ -1024,8 +992,8 @@ class MockWebServer : ExternalResource(), Closeable {
           response.pushPromises.isEmpty() &&
           !response.isDuplex)
       val flushHeaders = body == null
-      if (outFinished && trailers.size() > 0) {
-        throw IllegalStateException("unsupported: no body and non-empty trailers $trailers")
+      require(!outFinished || trailers.size() == 0) {
+        "unsupported: no body and non-empty trailers $trailers"
       }
       stream.writeHeaders(http2Headers, outFinished, flushHeaders)
       if (trailers.size() > 0) {
@@ -1056,15 +1024,13 @@ class MockWebServer : ExternalResource(), Closeable {
       promises: List<PushPromise>
     ) {
       for (pushPromise in promises) {
-        val pushedHeaders = ArrayList<Header>()
-        pushedHeaders.add(Header(Header.TARGET_AUTHORITY, url(pushPromise.path())!!.host()))
+        val pushedHeaders = mutableListOf<Header>()
+        pushedHeaders.add(Header(Header.TARGET_AUTHORITY, url(pushPromise.path()).host()))
         pushedHeaders.add(Header(Header.TARGET_METHOD, pushPromise.method()))
         pushedHeaders.add(Header(Header.TARGET_PATH, pushPromise.path()))
         val pushPromiseHeaders = pushPromise.headers()
-        var index = 0
-        while (index < pushPromiseHeaders.size()) {
-          pushedHeaders.add(Header(pushPromiseHeaders.name(index), pushPromiseHeaders.value(index)))
-          index++
+        for (i in 0 until pushPromiseHeaders.size()) {
+          pushedHeaders.add(Header(pushPromiseHeaders.name(i), pushPromiseHeaders.value(i)))
         }
         val requestLine = "${pushPromise.method()} ${pushPromise.path()} HTTP/1.1"
         val chunkSizes = emptyList<Int>() // No chunked encoding for HTTP/2.
