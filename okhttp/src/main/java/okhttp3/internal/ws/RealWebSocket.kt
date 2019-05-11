@@ -13,264 +13,238 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package okhttp3.internal.ws;
+package okhttp3.internal.ws
 
-import java.io.Closeable;
-import java.io.IOException;
-import java.net.ProtocolException;
-import java.net.SocketTimeoutException;
-import java.util.ArrayDeque;
-import java.util.Collections;
-import java.util.List;
-import java.util.Random;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.ScheduledThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
-import javax.annotation.Nullable;
-import okhttp3.Call;
-import okhttp3.Callback;
-import okhttp3.EventListener;
-import okhttp3.OkHttpClient;
-import okhttp3.Protocol;
-import okhttp3.Request;
-import okhttp3.Response;
-import okhttp3.WebSocket;
-import okhttp3.WebSocketListener;
-import okhttp3.internal.Internal;
-import okhttp3.internal.Util;
-import okhttp3.internal.connection.Exchange;
-import okio.BufferedSink;
-import okio.BufferedSource;
-import okio.ByteString;
-import okio.Okio;
+import okhttp3.Call
+import okhttp3.Callback
+import okhttp3.EventListener
+import okhttp3.OkHttpClient
+import okhttp3.Protocol
+import okhttp3.RealCall
+import okhttp3.Request
+import okhttp3.Response
+import okhttp3.WebSocket
+import okhttp3.WebSocketListener
+import okhttp3.internal.Util
+import okhttp3.internal.Util.closeQuietly
+import okhttp3.internal.connection.Exchange
+import okhttp3.internal.ws.WebSocketProtocol.CLOSE_CLIENT_GOING_AWAY
+import okhttp3.internal.ws.WebSocketProtocol.CLOSE_MESSAGE_MAX
+import okhttp3.internal.ws.WebSocketProtocol.OPCODE_BINARY
+import okhttp3.internal.ws.WebSocketProtocol.OPCODE_TEXT
+import okhttp3.internal.ws.WebSocketProtocol.validateCloseCode
+import okio.BufferedSink
+import okio.BufferedSource
+import okio.ByteString
+import okio.ByteString.Companion.encodeUtf8
+import okio.ByteString.Companion.toByteString
+import okio.buffer
+import java.io.Closeable
+import java.io.IOException
+import java.net.ProtocolException
+import java.net.SocketTimeoutException
+import java.util.ArrayDeque
+import java.util.Random
+import java.util.concurrent.ScheduledExecutorService
+import java.util.concurrent.ScheduledFuture
+import java.util.concurrent.ScheduledThreadPoolExecutor
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.TimeUnit.MILLISECONDS
 
-import static java.util.concurrent.TimeUnit.MILLISECONDS;
-import static okhttp3.internal.Util.closeQuietly;
-import static okhttp3.internal.ws.WebSocketProtocol.CLOSE_CLIENT_GOING_AWAY;
-import static okhttp3.internal.ws.WebSocketProtocol.CLOSE_MESSAGE_MAX;
-import static okhttp3.internal.ws.WebSocketProtocol.OPCODE_BINARY;
-import static okhttp3.internal.ws.WebSocketProtocol.OPCODE_TEXT;
-import static okhttp3.internal.ws.WebSocketProtocol.validateCloseCode;
-
-public final class RealWebSocket implements WebSocket, WebSocketReader.FrameCallback {
-  private static final List<Protocol> ONLY_HTTP1 = Collections.singletonList(Protocol.HTTP_1_1);
-
-  /**
-   * The maximum number of bytes to enqueue. Rather than enqueueing beyond this limit we tear down
-   * the web socket! It's possible that we're writing faster than the peer can read.
-   */
-  private static final long MAX_QUEUE_SIZE = 16 * 1024 * 1024; // 16 MiB.
-
-  /**
-   * The maximum amount of time after the client calls {@link #close} to wait for a graceful
-   * shutdown. If the server doesn't respond the websocket will be canceled.
-   */
-  private static final long CANCEL_AFTER_CLOSE_MILLIS = 60 * 1000;
-
+class RealWebSocket(
   /** The application's original request unadulterated by web socket headers. */
-  private final Request originalRequest;
-
-  final WebSocketListener listener;
-  private final Random random;
-  private final long pingIntervalMillis;
-  private final String key;
+  private val originalRequest: Request,
+  internal val listener: WebSocketListener,
+  private val random: Random,
+  private val pingIntervalMillis: Long
+) : WebSocket, WebSocketReader.FrameCallback {
+  private val key: String
 
   /** Non-null for client web sockets. These can be canceled. */
-  private Call call;
+  private var call: Call? = null
 
-  /** This runnable processes the outgoing queues. Call {@link #runWriter()} to after enqueueing. */
-  private final Runnable writerRunnable;
+  /** This runnable processes the outgoing queues. Call [runWriter] to after enqueueing. */
+  private val writerRunnable: Runnable
 
   /** Null until this web socket is connected. Only accessed by the reader thread. */
-  private WebSocketReader reader;
+  private var reader: WebSocketReader? = null
 
   // All mutable web socket state is guarded by this.
 
   /** Null until this web socket is connected. Note that messages may be enqueued before that. */
-  private WebSocketWriter writer;
+  private var writer: WebSocketWriter? = null
 
   /** Null until this web socket is connected. Used for writes, pings, and close timeouts. */
-  private ScheduledExecutorService executor;
+  private var executor: ScheduledExecutorService? = null
 
   /**
    * The streams held by this web socket. This is non-null until all incoming messages have been
    * read and all outgoing messages have been written. It is closed when both reader and writer are
    * exhausted, or if there is any failure.
    */
-  private Streams streams;
+  private var streams: Streams? = null
 
-  /** Outgoing pongs in the order they should be written. */
-  private final ArrayDeque<ByteString> pongQueue = new ArrayDeque<>();
+  /** Outgoing pongs in the order they should be written.  */
+  private val pongQueue = ArrayDeque<ByteString>()
 
-  /** Outgoing messages and close frames in the order they should be written. */
-  private final ArrayDeque<Object> messageAndCloseQueue = new ArrayDeque<>();
+  /** Outgoing messages and close frames in the order they should be written.  */
+  private val messageAndCloseQueue = ArrayDeque<Any>()
 
-  /** The total size in bytes of enqueued but not yet transmitted messages. */
-  private long queueSize;
+  /** The total size in bytes of enqueued but not yet transmitted messages.  */
+  private var queueSize = 0L
 
-  /** True if we've enqueued a close frame. No further message frames will be enqueued. */
-  private boolean enqueuedClose;
+  /** True if we've enqueued a close frame. No further message frames will be enqueued.  */
+  private var enqueuedClose = false
 
   /**
-   * When executed this will cancel this websocket. This future itself should be canceled if that is
-   * unnecessary because the web socket is already closed or canceled.
+   * When executed this will cancel this web socket. This future itself should be canceled if that
+   * is unnecessary because the web socket is already closed or canceled.
    */
-  private ScheduledFuture<?> cancelFuture;
+  private var cancelFuture: ScheduledFuture<*>? = null
 
-  /** The close code from the peer, or -1 if this web socket has not yet read a close frame. */
-  private int receivedCloseCode = -1;
+  /** The close code from the peer, or -1 if this web socket has not yet read a close frame.  */
+  private var receivedCloseCode = -1
 
-  /** The close reason from the peer, or null if this web socket has not yet read a close frame. */
-  private String receivedCloseReason;
+  /** The close reason from the peer, or null if this web socket has not yet read a close frame.  */
+  private var receivedCloseReason: String? = null
 
-  /** True if this web socket failed and the listener has been notified. */
-  private boolean failed;
+  /** True if this web socket failed and the listener has been notified.  */
+  private var failed = false
 
-  /** Total number of pings sent by this web socket. */
-  private int sentPingCount;
+  /** Total number of pings sent by this web socket.  */
+  private var sentPingCount = 0
 
-  /** Total number of pings received by this web socket. */
-  private int receivedPingCount;
+  /** Total number of pings received by this web socket.  */
+  private var receivedPingCount = 0
 
-  /** Total number of pongs received by this web socket. */
-  private int receivedPongCount;
+  /** Total number of pongs received by this web socket.  */
+  private var receivedPongCount = 0
 
-  /** True if we have sent a ping that is still awaiting a reply. */
-  private boolean awaitingPong;
+  /** True if we have sent a ping that is still awaiting a reply.  */
+  private var awaitingPong = false
 
-  public RealWebSocket(Request request, WebSocketListener listener, Random random,
-      long pingIntervalMillis) {
-    if (!"GET".equals(request.method())) {
-      throw new IllegalArgumentException("Request must be GET: " + request.method());
+  init {
+    require("GET" == originalRequest.method()) {
+      "Request must be GET: ${originalRequest.method()}"
     }
-    this.originalRequest = request;
-    this.listener = listener;
-    this.random = random;
-    this.pingIntervalMillis = pingIntervalMillis;
 
-    byte[] nonce = new byte[16];
-    random.nextBytes(nonce);
-    this.key = ByteString.of(nonce).base64();
-
-    this.writerRunnable = () -> {
+    this.key = ByteArray(16).apply { random.nextBytes(this) }.toByteString().base64()
+    this.writerRunnable = Runnable {
       try {
         while (writeOneFrame()) {
         }
-      } catch (IOException e) {
-        failWebSocket(e, null);
+      } catch (e: IOException) {
+        failWebSocket(e, null)
       }
-    };
+    }
   }
 
-  @Override public Request request() {
-    return originalRequest;
+  override fun request(): Request = originalRequest
+
+  @Synchronized override fun queueSize(): Long = queueSize
+
+  override fun cancel() {
+    call!!.cancel()
   }
 
-  @Override public synchronized long queueSize() {
-    return queueSize;
-  }
-
-  @Override public void cancel() {
-    call.cancel();
-  }
-
-  public void connect(OkHttpClient client) {
-    client = client.newBuilder()
+  fun connect(client: OkHttpClient) {
+    val webSocketClient = client.newBuilder()
         .eventListener(EventListener.NONE)
         .protocols(ONLY_HTTP1)
-        .build();
-    final Request request = originalRequest.newBuilder()
+        .build()
+    val request = originalRequest.newBuilder()
         .header("Upgrade", "websocket")
         .header("Connection", "Upgrade")
         .header("Sec-WebSocket-Key", key)
         .header("Sec-WebSocket-Version", "13")
-        .build();
-    call = Internal.instance.newWebSocketCall(client, request);
-    call.enqueue(new Callback() {
-      @Override public void onResponse(Call call, Response response) {
-        Exchange exchange = Internal.instance.exchange(response);
-        Streams streams;
+        .build()
+    call = RealCall.newRealCall(webSocketClient, request, forWebSocket = true)
+    call!!.enqueue(object : Callback {
+      override fun onResponse(call: Call, response: Response) {
+        val exchange = response.exchange
+        val streams: Streams
         try {
-          checkUpgradeSuccess(response, exchange);
-          streams = exchange.newWebSocketStreams();
-        } catch (IOException e) {
-          if (exchange != null) exchange.webSocketUpgradeFailed();
-          failWebSocket(e, response);
-          closeQuietly(response);
-          return;
+          checkUpgradeSuccess(response, exchange)
+          streams = exchange!!.newWebSocketStreams()
+        } catch (e: IOException) {
+          exchange?.webSocketUpgradeFailed()
+          failWebSocket(e, response)
+          closeQuietly(response)
+          return
         }
 
         // Process all web socket messages.
         try {
-          String name = "OkHttp WebSocket " + request.url().redact();
-          initReaderAndWriter(name, streams);
-          listener.onOpen(RealWebSocket.this, response);
-          loopReader();
-        } catch (Exception e) {
-          failWebSocket(e, null);
+          val name = "OkHttp WebSocket ${request.url().redact()}"
+          initReaderAndWriter(name, streams)
+          listener.onOpen(this@RealWebSocket, response)
+          loopReader()
+        } catch (e: Exception) {
+          failWebSocket(e, null)
         }
       }
 
-      @Override public void onFailure(Call call, IOException e) {
-        failWebSocket(e, null);
+      override fun onFailure(call: Call, e: IOException) {
+        failWebSocket(e, null)
       }
-    });
+    })
   }
 
-  void checkUpgradeSuccess(Response response, @Nullable Exchange exchange) throws IOException {
+  @Throws(IOException::class)
+  internal fun checkUpgradeSuccess(response: Response, exchange: Exchange?) {
     if (response.code() != 101) {
-      throw new ProtocolException("Expected HTTP 101 response but was '"
-          + response.code() + " " + response.message() + "'");
+      throw ProtocolException(
+          "Expected HTTP 101 response but was '${response.code()} ${response.message()}'")
     }
 
-    String headerConnection = response.header("Connection");
-    if (!"Upgrade".equalsIgnoreCase(headerConnection)) {
-      throw new ProtocolException("Expected 'Connection' header value 'Upgrade' but was '"
-          + headerConnection + "'");
+    val headerConnection = response.header("Connection")
+    if (!"Upgrade".equals(headerConnection, ignoreCase = true)) {
+      throw ProtocolException(
+          "Expected 'Connection' header value 'Upgrade' but was '$headerConnection'")
     }
 
-    String headerUpgrade = response.header("Upgrade");
-    if (!"websocket".equalsIgnoreCase(headerUpgrade)) {
-      throw new ProtocolException(
-          "Expected 'Upgrade' header value 'websocket' but was '" + headerUpgrade + "'");
+    val headerUpgrade = response.header("Upgrade")
+    if (!"websocket".equals(headerUpgrade, ignoreCase = true)) {
+      throw ProtocolException(
+          "Expected 'Upgrade' header value 'websocket' but was '$headerUpgrade'")
     }
 
-    String headerAccept = response.header("Sec-WebSocket-Accept");
-    String acceptExpected = ByteString.encodeUtf8(key + WebSocketProtocol.ACCEPT_MAGIC)
-        .sha1().base64();
-    if (!acceptExpected.equals(headerAccept)) {
-      throw new ProtocolException("Expected 'Sec-WebSocket-Accept' header value '"
-          + acceptExpected + "' but was '" + headerAccept + "'");
+    val headerAccept = response.header("Sec-WebSocket-Accept")
+    val acceptExpected = (key + WebSocketProtocol.ACCEPT_MAGIC).encodeUtf8().sha1().base64()
+    if (acceptExpected != headerAccept) {
+      throw ProtocolException(
+          "Expected 'Sec-WebSocket-Accept' header value '$acceptExpected' but was '$headerAccept'")
     }
 
     if (exchange == null) {
-      throw new ProtocolException("Web Socket exchange missing: bad interceptor?");
+      throw ProtocolException("Web Socket exchange missing: bad interceptor?")
     }
   }
 
-  public void initReaderAndWriter(String name, Streams streams) throws IOException {
-    synchronized (this) {
-      this.streams = streams;
-      this.writer = new WebSocketWriter(streams.client, streams.sink, random);
-      this.executor = new ScheduledThreadPoolExecutor(1, Util.threadFactory(name, false));
-      if (pingIntervalMillis != 0) {
-        executor.scheduleAtFixedRate(
-            new PingRunnable(), pingIntervalMillis, pingIntervalMillis, MILLISECONDS);
+  @Throws(IOException::class)
+  fun initReaderAndWriter(name: String, streams: Streams) {
+    synchronized(this) {
+      this.streams = streams
+      this.writer = WebSocketWriter(streams.client, streams.sink, random)
+      this.executor = ScheduledThreadPoolExecutor(1, Util.threadFactory(name, false))
+      if (pingIntervalMillis != 0L) {
+        executor!!.scheduleAtFixedRate(
+            PingRunnable(), pingIntervalMillis, pingIntervalMillis, MILLISECONDS)
       }
       if (!messageAndCloseQueue.isEmpty()) {
-        runWriter(); // Send messages that were enqueued before we were connected.
+        runWriter() // Send messages that were enqueued before we were connected.
       }
     }
 
-    reader = new WebSocketReader(streams.client, streams.source, this);
+    reader = WebSocketReader(streams.client, streams.source, this)
   }
 
   /** Receive frames until there are no more. Invoked only by the reader thread. */
-  public void loopReader() throws IOException {
+  @Throws(IOException::class)
+  fun loopReader() {
     while (receivedCloseCode == -1) {
       // This method call results in one or more onRead* methods being called on this thread.
-      reader.processNextFrame();
+      reader!!.processNextFrame()
     }
   }
 
@@ -278,165 +252,162 @@ public final class RealWebSocket implements WebSocket, WebSocketReader.FrameCall
    * For testing: receive a single frame and return true if there are more frames to read. Invoked
    * only by the reader thread.
    */
-  boolean processNextFrame() throws IOException {
+  @Throws(IOException::class)
+  fun processNextFrame(): Boolean {
     try {
-      reader.processNextFrame();
-      return receivedCloseCode == -1;
-    } catch (Exception e) {
-      failWebSocket(e, null);
-      return false;
+      reader!!.processNextFrame()
+      return receivedCloseCode == -1
+    } catch (e: Exception) {
+      failWebSocket(e, null)
+      return false
     }
   }
 
-  /**
-   * For testing: wait until the web socket's executor has terminated.
-   */
-  void awaitTermination(int timeout, TimeUnit timeUnit) throws InterruptedException {
-    executor.awaitTermination(timeout, timeUnit);
+  /** For testing: wait until the web socket's executor has terminated. */
+  @Throws(InterruptedException::class)
+  fun awaitTermination(timeout: Int, timeUnit: TimeUnit) {
+    executor!!.awaitTermination(timeout.toLong(), timeUnit)
   }
 
-  /**
-   * For testing: force this web socket to release its threads.
-   */
-  void tearDown() throws InterruptedException {
+  /** For testing: force this web socket to release its threads. */
+  @Throws(InterruptedException::class)
+  fun tearDown() {
     if (cancelFuture != null) {
-      cancelFuture.cancel(false);
+      cancelFuture!!.cancel(false)
     }
-    executor.shutdown();
-    executor.awaitTermination(10, TimeUnit.SECONDS);
+    executor!!.shutdown()
+    executor!!.awaitTermination(10, TimeUnit.SECONDS)
   }
 
-  synchronized int sentPingCount() {
-    return sentPingCount;
+  @Synchronized fun sentPingCount(): Int = sentPingCount
+
+  @Synchronized fun receivedPingCount(): Int = receivedPingCount
+
+  @Synchronized fun receivedPongCount(): Int = receivedPongCount
+
+  @Throws(IOException::class)
+  override fun onReadMessage(text: String) {
+    listener.onMessage(this, text)
   }
 
-  synchronized int receivedPingCount() {
-    return receivedPingCount;
+  @Throws(IOException::class)
+  override fun onReadMessage(bytes: ByteString) {
+    listener.onMessage(this, bytes)
   }
 
-  synchronized int receivedPongCount() {
-    return receivedPongCount;
-  }
-
-  @Override public void onReadMessage(String text) throws IOException {
-    listener.onMessage(this, text);
-  }
-
-  @Override public void onReadMessage(ByteString bytes) throws IOException {
-    listener.onMessage(this, bytes);
-  }
-
-  @Override public synchronized void onReadPing(ByteString payload) {
+  @Synchronized override fun onReadPing(payload: ByteString) {
     // Don't respond to pings after we've failed or sent the close frame.
-    if (failed || (enqueuedClose && messageAndCloseQueue.isEmpty())) return;
+    if (failed || enqueuedClose && messageAndCloseQueue.isEmpty()) return
 
-    pongQueue.add(payload);
-    runWriter();
-    receivedPingCount++;
+    pongQueue.add(payload)
+    runWriter()
+    receivedPingCount++
   }
 
-  @Override public synchronized void onReadPong(ByteString buffer) {
+  @Synchronized override fun onReadPong(payload: ByteString) {
     // This API doesn't expose pings.
-    receivedPongCount++;
-    awaitingPong = false;
+    receivedPongCount++
+    awaitingPong = false
   }
 
-  @Override public void onReadClose(int code, String reason) {
-    if (code == -1) throw new IllegalArgumentException();
+  override fun onReadClose(code: Int, reason: String) {
+    require(code != -1)
 
-    Streams toClose = null;
-    synchronized (this) {
-      if (receivedCloseCode != -1) throw new IllegalStateException("already closed");
-      receivedCloseCode = code;
-      receivedCloseReason = reason;
+    var toClose: Streams? = null
+    synchronized(this) {
+      check(receivedCloseCode == -1) { "already closed" }
+      receivedCloseCode = code
+      receivedCloseReason = reason
       if (enqueuedClose && messageAndCloseQueue.isEmpty()) {
-        toClose = this.streams;
-        this.streams = null;
-        if (cancelFuture != null) cancelFuture.cancel(false);
-        this.executor.shutdown();
+        toClose = this.streams
+        this.streams = null
+        if (cancelFuture != null) cancelFuture!!.cancel(false)
+        this.executor!!.shutdown()
       }
     }
 
     try {
-      listener.onClosing(this, code, reason);
+      listener.onClosing(this, code, reason)
 
       if (toClose != null) {
-        listener.onClosed(this, code, reason);
+        listener.onClosed(this, code, reason)
       }
     } finally {
-      closeQuietly(toClose);
+      closeQuietly(toClose)
     }
   }
 
   // Writer methods to enqueue frames. They'll be sent asynchronously by the writer thread.
 
-  @Override public boolean send(String text) {
-    if (text == null) throw new NullPointerException("text == null");
-    return send(ByteString.encodeUtf8(text), OPCODE_TEXT);
+  override fun send(text: String): Boolean {
+    return send(text.encodeUtf8(), OPCODE_TEXT)
   }
 
-  @Override public boolean send(ByteString bytes) {
-    if (bytes == null) throw new NullPointerException("bytes == null");
-    return send(bytes, OPCODE_BINARY);
+  override fun send(bytes: ByteString): Boolean {
+    return send(bytes, OPCODE_BINARY)
   }
 
-  private synchronized boolean send(ByteString data, int formatOpcode) {
+  @Synchronized private fun send(data: ByteString, formatOpcode: Int): Boolean {
     // Don't send new frames after we've failed or enqueued a close frame.
-    if (failed || enqueuedClose) return false;
+    if (failed || enqueuedClose) return false
 
     // If this frame overflows the buffer, reject it and close the web socket.
-    if (queueSize + data.size() > MAX_QUEUE_SIZE) {
-      close(CLOSE_CLIENT_GOING_AWAY, null);
-      return false;
+    if (queueSize + data.size > MAX_QUEUE_SIZE) {
+      close(CLOSE_CLIENT_GOING_AWAY, null)
+      return false
     }
 
     // Enqueue the message frame.
-    queueSize += data.size();
-    messageAndCloseQueue.add(new Message(formatOpcode, data));
-    runWriter();
-    return true;
+    queueSize += data.size.toLong()
+    messageAndCloseQueue.add(Message(formatOpcode, data))
+    runWriter()
+    return true
   }
 
-  synchronized boolean pong(ByteString payload) {
+  @Synchronized fun pong(payload: ByteString): Boolean {
     // Don't send pongs after we've failed or sent the close frame.
-    if (failed || (enqueuedClose && messageAndCloseQueue.isEmpty())) return false;
+    if (failed || enqueuedClose && messageAndCloseQueue.isEmpty()) return false
 
-    pongQueue.add(payload);
-    runWriter();
-    return true;
+    pongQueue.add(payload)
+    runWriter()
+    return true
   }
 
-  @Override public boolean close(int code, String reason) {
-    return close(code, reason, CANCEL_AFTER_CLOSE_MILLIS);
+  override fun close(code: Int, reason: String?): Boolean {
+    return close(code, reason, CANCEL_AFTER_CLOSE_MILLIS)
   }
 
-  synchronized boolean close(int code, String reason, long cancelAfterCloseMillis) {
-    validateCloseCode(code);
+  @Synchronized fun close(
+    code: Int,
+    reason: String?,
+    cancelAfterCloseMillis: Long
+  ): Boolean {
+    validateCloseCode(code)
 
-    ByteString reasonBytes = null;
+    var reasonBytes: ByteString? = null
     if (reason != null) {
-      reasonBytes = ByteString.encodeUtf8(reason);
-      if (reasonBytes.size() > CLOSE_MESSAGE_MAX) {
-        throw new IllegalArgumentException("reason.size() > " + CLOSE_MESSAGE_MAX + ": " + reason);
+      reasonBytes = reason.encodeUtf8()
+      require(reasonBytes.size <= CLOSE_MESSAGE_MAX) {
+        "reason.size() > $CLOSE_MESSAGE_MAX: $reason"
       }
     }
 
-    if (failed || enqueuedClose) return false;
+    if (failed || enqueuedClose) return false
 
     // Immediately prevent further frames from being enqueued.
-    enqueuedClose = true;
+    enqueuedClose = true
 
     // Enqueue the close frame.
-    messageAndCloseQueue.add(new Close(code, reasonBytes, cancelAfterCloseMillis));
-    runWriter();
-    return true;
+    messageAndCloseQueue.add(Close(code, reasonBytes, cancelAfterCloseMillis))
+    runWriter()
+    return true
   }
 
-  private void runWriter() {
-    assert (Thread.holdsLock(this));
+  private fun runWriter() {
+    assert(Thread.holdsLock(this))
 
     if (executor != null) {
-      executor.execute(writerRunnable);
+      executor!!.execute(writerRunnable)
     }
   }
 
@@ -446,170 +417,163 @@ public final class RealWebSocket implements WebSocket, WebSocketReader.FrameCall
    * enqueue messages followed by pongs, but this sends pongs followed by messages. Pongs are always
    * written in the order they were enqueued.
    *
-   * <p>If a frame cannot be sent - because there are none enqueued or because the web socket is not
+   * If a frame cannot be sent - because there are none enqueued or because the web socket is not
    * connected - this does nothing and returns false. Otherwise this returns true and the caller
    * should immediately invoke this method again until it returns false.
    *
-   * <p>This method may only be invoked by the writer thread. There may be only thread invoking this
+   * This method may only be invoked by the writer thread. There may be only thread invoking this
    * method at a time.
    */
-  boolean writeOneFrame() throws IOException {
-    WebSocketWriter writer;
-    ByteString pong;
-    Object messageOrClose = null;
-    int receivedCloseCode = -1;
-    String receivedCloseReason = null;
-    Streams streamsToClose = null;
+  @Throws(IOException::class)
+  internal fun writeOneFrame(): Boolean {
+    val writer: WebSocketWriter?
+    val pong: ByteString?
+    var messageOrClose: Any? = null
+    var receivedCloseCode = -1
+    var receivedCloseReason: String? = null
+    var streamsToClose: Streams? = null
 
-    synchronized (RealWebSocket.this) {
+    synchronized(this@RealWebSocket) {
       if (failed) {
-        return false; // Failed web socket.
+        return false // Failed web socket.
       }
 
-      writer = this.writer;
-      pong = pongQueue.poll();
+      writer = this.writer
+      pong = pongQueue.poll()
       if (pong == null) {
-        messageOrClose = messageAndCloseQueue.poll();
-        if (messageOrClose instanceof Close) {
-          receivedCloseCode = this.receivedCloseCode;
-          receivedCloseReason = this.receivedCloseReason;
+        messageOrClose = messageAndCloseQueue.poll()
+        if (messageOrClose is Close) {
+          receivedCloseCode = this.receivedCloseCode
+          receivedCloseReason = this.receivedCloseReason
           if (receivedCloseCode != -1) {
-            streamsToClose = this.streams;
-            this.streams = null;
-            this.executor.shutdown();
+            streamsToClose = this.streams
+            this.streams = null
+            this.executor!!.shutdown()
           } else {
-            // When we request a graceful close also schedule a cancel of the websocket.
-            cancelFuture = executor.schedule(new CancelRunnable(),
-                ((Close) messageOrClose).cancelAfterCloseMillis, MILLISECONDS);
+            // When we request a graceful close also schedule a cancel of the web socket.
+            cancelFuture = executor!!.schedule(CancelRunnable(),
+                (messageOrClose as Close).cancelAfterCloseMillis, MILLISECONDS)
           }
         } else if (messageOrClose == null) {
-          return false; // The queue is exhausted.
+          return false // The queue is exhausted.
         }
       }
     }
 
     try {
       if (pong != null) {
-        writer.writePong(pong);
-
-      } else if (messageOrClose instanceof Message) {
-        ByteString data = ((Message) messageOrClose).data;
-        BufferedSink sink = Okio.buffer(writer.newMessageSink(
-            ((Message) messageOrClose).formatOpcode, data.size()));
-        sink.write(data);
-        sink.close();
-        synchronized (this) {
-          queueSize -= data.size();
+        writer!!.writePong(pong)
+      } else if (messageOrClose is Message) {
+        val data = (messageOrClose as Message).data
+        val sink = writer!!.newMessageSink(
+            (messageOrClose as Message).formatOpcode, data.size.toLong()).buffer()
+        sink.write(data)
+        sink.close()
+        synchronized(this) {
+          queueSize -= data.size.toLong()
         }
-
-      } else if (messageOrClose instanceof Close) {
-        Close close = (Close) messageOrClose;
-        writer.writeClose(close.code, close.reason);
+      } else if (messageOrClose is Close) {
+        val close = messageOrClose as Close
+        writer!!.writeClose(close.code, close.reason)
 
         // We closed the writer: now both reader and writer are closed.
         if (streamsToClose != null) {
-          listener.onClosed(this, receivedCloseCode, receivedCloseReason);
+          listener.onClosed(this, receivedCloseCode, receivedCloseReason!!)
         }
-
       } else {
-        throw new AssertionError();
+        throw AssertionError()
       }
 
-      return true;
+      return true
     } finally {
-      closeQuietly(streamsToClose);
+      closeQuietly(streamsToClose)
     }
   }
 
-  private final class PingRunnable implements Runnable {
-    PingRunnable() {
-    }
-
-    @Override public void run() {
-      writePingFrame();
+  private inner class PingRunnable : Runnable {
+    override fun run() {
+      writePingFrame()
     }
   }
 
-  void writePingFrame() {
-    WebSocketWriter writer;
-    int failedPing;
-    synchronized (this) {
-      if (failed) return;
-      writer = this.writer;
-      failedPing = awaitingPong ? sentPingCount : -1;
-      sentPingCount++;
-      awaitingPong = true;
+  internal fun writePingFrame() {
+    val writer: WebSocketWriter?
+    val failedPing: Int
+    synchronized(this) {
+      if (failed) return
+      writer = this.writer
+      failedPing = if (awaitingPong) sentPingCount else -1
+      sentPingCount++
+      awaitingPong = true
     }
 
     if (failedPing != -1) {
-      failWebSocket(new SocketTimeoutException("sent ping but didn't receive pong within "
-          + pingIntervalMillis + "ms (after " + (failedPing - 1) + " successful ping/pongs)"),
-          null);
-      return;
+      failWebSocket(SocketTimeoutException("sent ping but didn't receive pong within " +
+          "${pingIntervalMillis}ms (after ${failedPing - 1} successful ping/pongs)"), null)
+      return
     }
 
     try {
-      writer.writePing(ByteString.EMPTY);
-    } catch (IOException e) {
-      failWebSocket(e, null);
+      writer!!.writePing(ByteString.EMPTY)
+    } catch (e: IOException) {
+      failWebSocket(e, null)
     }
   }
 
-  public void failWebSocket(Exception e, @Nullable Response response) {
-    Streams streamsToClose;
-    synchronized (this) {
-      if (failed) return; // Already failed.
-      failed = true;
-      streamsToClose = this.streams;
-      this.streams = null;
-      if (cancelFuture != null) cancelFuture.cancel(false);
-      if (executor != null) executor.shutdown();
+  fun failWebSocket(e: Exception, response: Response?) {
+    val streamsToClose: Streams?
+    synchronized(this) {
+      if (failed) return // Already failed.
+      failed = true
+      streamsToClose = this.streams
+      this.streams = null
+      if (cancelFuture != null) cancelFuture!!.cancel(false)
+      if (executor != null) executor!!.shutdown()
     }
 
     try {
-      listener.onFailure(this, e, response);
+      listener.onFailure(this, e, response)
     } finally {
-      closeQuietly(streamsToClose);
+      closeQuietly(streamsToClose)
     }
   }
 
-  static final class Message {
-    final int formatOpcode;
-    final ByteString data;
+  internal class Message(
+    val formatOpcode: Int,
+    val data: ByteString
+  )
 
-    Message(int formatOpcode, ByteString data) {
-      this.formatOpcode = formatOpcode;
-      this.data = data;
+  internal class Close(
+    val code: Int,
+    val reason: ByteString?,
+    val cancelAfterCloseMillis: Long
+  )
+
+  abstract class Streams(
+    val client: Boolean,
+    val source: BufferedSource,
+    val sink: BufferedSink
+  ) : Closeable
+
+  internal inner class CancelRunnable : Runnable {
+    override fun run() {
+      cancel()
     }
   }
 
-  static final class Close {
-    final int code;
-    final ByteString reason;
-    final long cancelAfterCloseMillis;
+  companion object {
+    private val ONLY_HTTP1 = listOf(Protocol.HTTP_1_1)
 
-    Close(int code, ByteString reason, long cancelAfterCloseMillis) {
-      this.code = code;
-      this.reason = reason;
-      this.cancelAfterCloseMillis = cancelAfterCloseMillis;
-    }
-  }
+    /**
+     * The maximum number of bytes to enqueue. Rather than enqueueing beyond this limit we tear down
+     * the web socket! It's possible that we're writing faster than the peer can read.
+     */
+    private const val MAX_QUEUE_SIZE = 16L * 1024 * 1024 // 16 MiB.
 
-  public abstract static class Streams implements Closeable {
-    public final boolean client;
-    public final BufferedSource source;
-    public final BufferedSink sink;
-
-    public Streams(boolean client, BufferedSource source, BufferedSink sink) {
-      this.client = client;
-      this.source = source;
-      this.sink = sink;
-    }
-  }
-
-  final class CancelRunnable implements Runnable {
-    @Override public void run() {
-      cancel();
-    }
+    /**
+     * The maximum amount of time after the client calls [close] to wait for a graceful shutdown. If
+     * the server doesn't respond the web socket will be canceled.
+     */
+    private const val CANCEL_AFTER_CLOSE_MILLIS = 60L * 1000
   }
 }

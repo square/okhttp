@@ -116,8 +116,7 @@ public final class WebSocketHttpTest {
     try {
       webSocket.send((String) null);
       fail();
-    } catch (NullPointerException e) {
-      assertThat(e.getMessage()).isEqualTo("text == null");
+    } catch (IllegalArgumentException expected) {
     }
 
     closeWebSockets(webSocket, server);
@@ -132,8 +131,7 @@ public final class WebSocketHttpTest {
     try {
       webSocket.send((ByteString) null);
       fail();
-    } catch (NullPointerException e) {
-      assertThat(e.getMessage()).isEqualTo("bytes == null");
+    } catch (IllegalArgumentException expected) {
     }
 
     closeWebSockets(webSocket, server);
@@ -656,7 +654,7 @@ public final class WebSocketHttpTest {
 
     // Initiate a close on the client, which will schedule a hard cancel in 500 ms.
     long closeAtNanos = System.nanoTime();
-    webSocket.close(1000, "goodbye", 500);
+    webSocket.close(1000, "goodbye", 500L);
     serverListener.assertClosing(1000, "goodbye");
 
     // Confirm that the hard cancel occurred after 500 ms.

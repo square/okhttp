@@ -56,8 +56,8 @@ public final class RealWebSocketTest {
   @After public void tearDown() throws Exception {
     client.listener.assertExhausted();
     server.listener.assertExhausted();
-    server.source.close();
-    client.source.close();
+    server.getSource().close();
+    client.getSource().close();
     server.webSocket.tearDown();
     client.webSocket.tearDown();
   }
@@ -135,7 +135,7 @@ public final class RealWebSocketTest {
   }
 
   @Test public void emptyCloseInitiatesShutdown() throws IOException {
-    server.sink.write(ByteString.decodeHex("8800")).emit(); // Close without code.
+    server.getSink().write(ByteString.decodeHex("8800")).emit(); // Close without code.
     client.processNextFrame();
     client.listener.assertClosing(1005, "");
 
@@ -207,7 +207,7 @@ public final class RealWebSocketTest {
   }
 
   @Test public void protocolErrorBeforeCloseSendsFailure() throws IOException {
-    server.sink.write(ByteString.decodeHex("0a00")).emit(); // Invalid non-final ping frame.
+    server.getSink().write(ByteString.decodeHex("0a00")).emit(); // Invalid non-final ping frame.
 
     client.processNextFrame(); // Detects error, send close, close connection.
     assertThat(client.closed).isTrue();
@@ -224,7 +224,7 @@ public final class RealWebSocketTest {
     assertThat(client.closed).isFalse();
 
     // Manually write an invalid masked close frame.
-    server.sink.write(ByteString.decodeHex("888760b420bb635c68de0cd84f")).emit();
+    server.getSink().write(ByteString.decodeHex("888760b420bb635c68de0cd84f")).emit();
 
     client.processNextFrame();// Detects error, disconnects immediately since close already sent.
     assertThat(client.closed).isTrue();
@@ -241,7 +241,7 @@ public final class RealWebSocketTest {
 
     // Not closed until close reply is received.
     assertThat(client.closed).isFalse();
-    server.sink.write(ByteString.decodeHex("0a00")).emit(); // Invalid non-final ping frame.
+    server.getSink().write(ByteString.decodeHex("0a00")).emit(); // Invalid non-final ping frame.
 
     client.processNextFrame(); // Detects error, disconnects immediately since close already sent.
     assertThat(client.closed).isTrue();
@@ -253,7 +253,7 @@ public final class RealWebSocketTest {
   }
 
   @Test public void networkErrorReportedAsFailure() throws IOException {
-    server.sink.close();
+    server.getSink().close();
     client.processNextFrame();
     client.listener.assertFailure(EOFException.class);
   }
@@ -266,7 +266,7 @@ public final class RealWebSocketTest {
 
   @Ignore // TODO(jwilson): come up with a way to test unchecked exceptions on the writer thread.
   @Test public void closeMessageAndConnectionCloseThrowingDoesNotMaskOriginal() throws IOException {
-    client.sink.close();
+    client.getSink().close();
     client.closeThrows = true;
 
     client.webSocket.close(1000, "Bye!");
@@ -381,8 +381,8 @@ public final class RealWebSocketTest {
     }
 
     @Override public void close() throws IOException {
-      source.close();
-      sink.close();
+      getSource().close();
+      getSink().close();
       if (closed) {
         throw new AssertionError("Already closed");
       }
