@@ -269,7 +269,7 @@ public final class PublicSuffixDatabaseTest {
       try {
         publicSuffixDatabase.getEffectiveTldPlusOne(null);
         fail();
-      } catch (NullPointerException expected) {
+      } catch (IllegalArgumentException expected) {
       }
       return;
     }
