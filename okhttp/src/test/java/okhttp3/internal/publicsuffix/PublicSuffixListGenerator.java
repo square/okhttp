@@ -82,7 +82,8 @@ public final class PublicSuffixListGenerator {
         throw new RuntimeException("Unable to create resource directory!");
       }
 
-      Sink fileSink = Okio.sink(new File(resources, PublicSuffixDatabase.PUBLIC_SUFFIX_RESOURCE));
+      Sink fileSink = Okio.sink(new File(resources,
+          PublicSuffixDatabase.PUBLIC_SUFFIX_RESOURCE));
       try (BufferedSink sink = Okio.buffer(new GzipSink(fileSink))) {
         sink.writeInt(totalRuleBytes);
         for (ByteString domain : sortedRules) {

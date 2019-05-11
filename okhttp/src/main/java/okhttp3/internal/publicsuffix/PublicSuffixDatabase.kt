@@ -13,131 +13,103 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package okhttp3.internal.publicsuffix;
+package okhttp3.internal.publicsuffix
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InterruptedIOException;
-import java.net.IDN;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.atomic.AtomicBoolean;
-import okhttp3.internal.platform.Platform;
-import okio.BufferedSource;
-import okio.GzipSource;
-import okio.Okio;
-
-import static java.nio.charset.StandardCharsets.UTF_8;
+import okhttp3.internal.and
+import okhttp3.internal.platform.Platform
+import okio.GzipSource
+import okio.buffer
+import okio.source
+import java.io.IOException
+import java.io.InterruptedIOException
+import java.net.IDN
+import java.nio.charset.StandardCharsets.UTF_8
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.atomic.AtomicBoolean
 
 /**
- * A database of public suffixes provided by
- * <a href="https://publicsuffix.org/">publicsuffix.org</a>.
+ * A database of public suffixes provided by [publicsuffix.org][publicsuffix_org].
+ *
+ * [publicsuffix_org]: https://publicsuffix.org/
  */
-public final class PublicSuffixDatabase {
-  public static final String PUBLIC_SUFFIX_RESOURCE = "publicsuffixes.gz";
+class PublicSuffixDatabase {
 
-  private static final byte[] WILDCARD_LABEL = new byte[]{'*'};
-  private static final String[] EMPTY_RULE = new String[0];
-  private static final String[] PREVAILING_RULE = new String[]{"*"};
+  /** True after we've attempted to read the list for the first time.  */
+  private val listRead = AtomicBoolean(false)
 
-  private static final byte EXCEPTION_MARKER = '!';
-
-  private static final PublicSuffixDatabase instance = new PublicSuffixDatabase();
-
-  /** True after we've attempted to read the list for the first time. */
-  private final AtomicBoolean listRead = new AtomicBoolean(false);
-
-  /** Used for concurrent threads reading the list for the first time. */
-  private final CountDownLatch readCompleteLatch = new CountDownLatch(1);
+  /** Used for concurrent threads reading the list for the first time.  */
+  private val readCompleteLatch = CountDownLatch(1)
 
   // The lists are held as a large array of UTF-8 bytes. This is to avoid allocating lots of strings
   // that will likely never be used. Each rule is separated by '\n'. Please see the
   // PublicSuffixListGenerator class for how these lists are generated.
   // Guarded by this.
-  private byte[] publicSuffixListBytes;
-  private byte[] publicSuffixExceptionListBytes;
-
-  public static PublicSuffixDatabase get() {
-    return instance;
-  }
+  private lateinit var publicSuffixListBytes: ByteArray
+  private lateinit var publicSuffixExceptionListBytes: ByteArray
 
   /**
    * Returns the effective top-level domain plus one (eTLD+1) by referencing the public suffix list.
    * Returns null if the domain is a public suffix or a private address.
    *
-   * <p>Here are some examples: <pre>{@code
+   * Here are some examples:
+   *
+   * ```
    * assertEquals("google.com", getEffectiveTldPlusOne("google.com"));
    * assertEquals("google.com", getEffectiveTldPlusOne("www.google.com"));
    * assertNull(getEffectiveTldPlusOne("com"));
    * assertNull(getEffectiveTldPlusOne("localhost"));
    * assertNull(getEffectiveTldPlusOne("mymacbook"));
-   * }</pre>
+   * ```
    *
    * @param domain A canonicalized domain. An International Domain Name (IDN) should be punycode
-   *    encoded.
+   *     encoded.
    */
-  public String getEffectiveTldPlusOne(String domain) {
-    if (domain == null) throw new NullPointerException("domain == null");
-
+  fun getEffectiveTldPlusOne(domain: String): String? {
     // We use UTF-8 in the list so we need to convert to Unicode.
-    String unicodeDomain = IDN.toUnicode(domain);
-    String[] domainLabels = unicodeDomain.split("\\.");
-    String[] rule = findMatchingRule(domainLabels);
-    if (domainLabels.length == rule.length && rule[0].charAt(0) != EXCEPTION_MARKER) {
-      // The domain is a public suffix.
-      return null;
+    val unicodeDomain = IDN.toUnicode(domain)
+    val domainLabels = unicodeDomain.split('.')
+    val rule = findMatchingRule(domainLabels)
+    if (domainLabels.size == rule.size && rule[0][0] != EXCEPTION_MARKER) {
+      return null // The domain is a public suffix.
     }
 
-    int firstLabelOffset;
-    if (rule[0].charAt(0) == EXCEPTION_MARKER) {
+    val firstLabelOffset = if (rule[0][0] == EXCEPTION_MARKER) {
       // Exception rules hold the effective TLD plus one.
-      firstLabelOffset = domainLabels.length - rule.length;
+      domainLabels.size - rule.size
     } else {
       // Otherwise the rule is for a public suffix, so we must take one more label.
-      firstLabelOffset = domainLabels.length - (rule.length + 1);
+      domainLabels.size - (rule.size + 1)
     }
 
-    StringBuilder effectiveTldPlusOne = new StringBuilder();
-    String[] punycodeLabels = domain.split("\\.");
-    for (int i = firstLabelOffset; i < punycodeLabels.length; i++) {
-      effectiveTldPlusOne.append(punycodeLabels[i]).append('.');
-    }
-    effectiveTldPlusOne.deleteCharAt(effectiveTldPlusOne.length() - 1);
-
-    return effectiveTldPlusOne.toString();
+    return domain.split('.').asSequence().drop(firstLabelOffset).joinToString(".")
   }
 
-  private String[] findMatchingRule(String[] domainLabels) {
+  private fun findMatchingRule(domainLabels: List<String>): List<String> {
     if (!listRead.get() && listRead.compareAndSet(false, true)) {
-      readTheListUninterruptibly();
+      readTheListUninterruptibly()
     } else {
       try {
-        readCompleteLatch.await();
-      } catch (InterruptedException ignored) {
-        Thread.currentThread().interrupt(); // Retain interrupted status.
+        readCompleteLatch.await()
+      } catch (_: InterruptedException) {
+        Thread.currentThread().interrupt() // Retain interrupted status.
       }
     }
 
-    synchronized (this) {
-      if (publicSuffixListBytes == null) {
-        throw new IllegalStateException("Unable to load " + PUBLIC_SUFFIX_RESOURCE + " resource "
-            + "from the classpath.");
-      }
+    check(::publicSuffixListBytes.isInitialized) {
+      "Unable to load $PUBLIC_SUFFIX_RESOURCE resource from the classpath."
     }
 
     // Break apart the domain into UTF-8 labels, i.e. foo.bar.com turns into [foo, bar, com].
-    byte[][] domainLabelsUtf8Bytes = new byte[domainLabels.length][];
-    for (int i = 0; i < domainLabels.length; i++) {
-      domainLabelsUtf8Bytes[i] = domainLabels[i].getBytes(UTF_8);
-    }
+    val domainLabelsUtf8Bytes = Array(domainLabels.size) { i -> domainLabels[i].toByteArray(UTF_8) }
 
     // Start by looking for exact matches. We start at the leftmost label. For example, foo.bar.com
     // will look like: [foo, bar, com], [bar, com], [com]. The longest matching rule wins.
-    String exactMatch = null;
-    for (int i = 0; i < domainLabelsUtf8Bytes.length; i++) {
-      String rule = binarySearchBytes(publicSuffixListBytes, domainLabelsUtf8Bytes, i);
+    var exactMatch: String? = null
+    for (i in domainLabelsUtf8Bytes.indices) {
+      val rule = publicSuffixListBytes.binarySearch(domainLabelsUtf8Bytes, i)
       if (rule != null) {
-        exactMatch = rule;
-        break;
+        exactMatch = rule
+        break
       }
     }
 
@@ -146,136 +118,48 @@ public final class PublicSuffixDatabase {
     // cheats and does not attempt every possible permutation. Instead, it only considers wildcards
     // in the leftmost position. We assert this fact when we generate the public suffix file. If
     // this assertion ever fails we'll need to refactor this implementation.
-    String wildcardMatch = null;
-    if (domainLabelsUtf8Bytes.length > 1) {
-      byte[][] labelsWithWildcard = domainLabelsUtf8Bytes.clone();
-      for (int labelIndex = 0; labelIndex < labelsWithWildcard.length - 1; labelIndex++) {
-        labelsWithWildcard[labelIndex] = WILDCARD_LABEL;
-        String rule = binarySearchBytes(publicSuffixListBytes, labelsWithWildcard, labelIndex);
+    var wildcardMatch: String? = null
+    if (domainLabelsUtf8Bytes.size > 1) {
+      val labelsWithWildcard = domainLabelsUtf8Bytes.clone()
+      for (labelIndex in 0 until labelsWithWildcard.size - 1) {
+        labelsWithWildcard[labelIndex] = WILDCARD_LABEL
+        val rule = publicSuffixListBytes.binarySearch(labelsWithWildcard, labelIndex)
         if (rule != null) {
-          wildcardMatch = rule;
-          break;
+          wildcardMatch = rule
+          break
         }
       }
     }
 
     // Exception rules only apply to wildcard rules, so only try it if we matched a wildcard.
-    String exception = null;
+    var exception: String? = null
     if (wildcardMatch != null) {
-      for (int labelIndex = 0; labelIndex < domainLabelsUtf8Bytes.length - 1; labelIndex++) {
-        String rule = binarySearchBytes(
-            publicSuffixExceptionListBytes, domainLabelsUtf8Bytes, labelIndex);
+      for (labelIndex in 0 until domainLabelsUtf8Bytes.size - 1) {
+        val rule = publicSuffixExceptionListBytes.binarySearch(
+            domainLabelsUtf8Bytes, labelIndex)
         if (rule != null) {
-          exception = rule;
-          break;
+          exception = rule
+          break
         }
       }
     }
 
     if (exception != null) {
       // Signal we've identified an exception rule.
-      exception = "!" + exception;
-      return exception.split("\\.");
+      exception = "!$exception"
+      return exception.split('.')
     } else if (exactMatch == null && wildcardMatch == null) {
-      return PREVAILING_RULE;
+      return PREVAILING_RULE
     }
 
-    String[] exactRuleLabels = exactMatch != null
-        ? exactMatch.split("\\.")
-        : EMPTY_RULE;
+    val exactRuleLabels = exactMatch?.split('.') ?: listOf()
+    val wildcardRuleLabels = wildcardMatch?.split('.') ?: listOf()
 
-    String[] wildcardRuleLabels = wildcardMatch != null
-        ? wildcardMatch.split("\\.")
-        : EMPTY_RULE;
-
-    return exactRuleLabels.length > wildcardRuleLabels.length
-        ? exactRuleLabels
-        : wildcardRuleLabels;
-  }
-
-  private static String binarySearchBytes(byte[] bytesToSearch, byte[][] labels, int labelIndex) {
-    int low = 0;
-    int high = bytesToSearch.length;
-    String match = null;
-    while (low < high) {
-      int mid = (low + high) / 2;
-      // Search for a '\n' that marks the start of a value. Don't go back past the start of the
-      // array.
-      while (mid > -1 && bytesToSearch[mid] != '\n') {
-        mid--;
-      }
-      mid++;
-
-      // Now look for the ending '\n'.
-      int end = 1;
-      while (bytesToSearch[mid + end] != '\n') {
-        end++;
-      }
-      int publicSuffixLength = (mid + end) - mid;
-
-      // Compare the bytes. Note that the file stores UTF-8 encoded bytes, so we must compare the
-      // unsigned bytes.
-      int compareResult;
-      int currentLabelIndex = labelIndex;
-      int currentLabelByteIndex = 0;
-      int publicSuffixByteIndex = 0;
-
-      boolean expectDot = false;
-      while (true) {
-        int byte0;
-        if (expectDot) {
-          byte0 = '.';
-          expectDot = false;
-        } else {
-          byte0 = labels[currentLabelIndex][currentLabelByteIndex] & 0xff;
-        }
-
-        int byte1 = bytesToSearch[mid + publicSuffixByteIndex] & 0xff;
-
-        compareResult = byte0 - byte1;
-        if (compareResult != 0) break;
-
-        publicSuffixByteIndex++;
-        currentLabelByteIndex++;
-        if (publicSuffixByteIndex == publicSuffixLength) break;
-
-        if (labels[currentLabelIndex].length == currentLabelByteIndex) {
-          // We've exhausted our current label. Either there are more labels to compare, in which
-          // case we expect a dot as the next character. Otherwise, we've checked all our labels.
-          if (currentLabelIndex == labels.length - 1) {
-            break;
-          } else {
-            currentLabelIndex++;
-            currentLabelByteIndex = -1;
-            expectDot = true;
-          }
-        }
-      }
-
-      if (compareResult < 0) {
-        high = mid - 1;
-      } else if (compareResult > 0) {
-        low = mid + end + 1;
-      } else {
-        // We found a match, but are the lengths equal?
-        int publicSuffixBytesLeft = publicSuffixLength - publicSuffixByteIndex;
-        int labelBytesLeft = labels[currentLabelIndex].length - currentLabelByteIndex;
-        for (int i = currentLabelIndex + 1; i < labels.length; i++) {
-          labelBytesLeft += labels[i].length;
-        }
-
-        if (labelBytesLeft < publicSuffixBytesLeft) {
-          high = mid - 1;
-        } else if (labelBytesLeft > publicSuffixBytesLeft) {
-          low = mid + end + 1;
-        } else {
-          // Found a match.
-          match = new String(bytesToSearch, mid, publicSuffixLength, UTF_8);
-          break;
-        }
-      }
+    return if (exactRuleLabels.size > wildcardRuleLabels.size) {
+      exactRuleLabels
+    } else {
+      wildcardRuleLabels
     }
-    return match;
   }
 
   /**
@@ -283,58 +167,163 @@ public final class PublicSuffixDatabase {
    * the list otherwise we'll be left in a bad state. If the thread was interrupted prior to this
    * operation, it will be re-interrupted after the list is read.
    */
-  private void readTheListUninterruptibly() {
-    boolean interrupted = false;
+  private fun readTheListUninterruptibly() {
+    var interrupted = false
     try {
       while (true) {
         try {
-          readTheList();
-          return;
-        } catch (InterruptedIOException e) {
-          Thread.interrupted(); // Temporarily clear the interrupted state.
-          interrupted = true;
-        } catch (IOException e) {
-          Platform.get().log(Platform.WARN, "Failed to read public suffix list", e);
-          return;
+          readTheList()
+          return
+        } catch (_: InterruptedIOException) {
+          Thread.interrupted() // Temporarily clear the interrupted state.
+          interrupted = true
+        } catch (e: IOException) {
+          Platform.get().log(Platform.WARN, "Failed to read public suffix list", e)
+          return
         }
       }
     } finally {
       if (interrupted) {
-        Thread.currentThread().interrupt(); // Retain interrupted status.
+        Thread.currentThread().interrupt() // Retain interrupted status.
       }
     }
   }
 
-  private void readTheList() throws IOException {
-    byte[] publicSuffixListBytes;
-    byte[] publicSuffixExceptionListBytes;
+  @Throws(IOException::class)
+  private fun readTheList() {
+    var publicSuffixListBytes: ByteArray? = null
+    var publicSuffixExceptionListBytes: ByteArray? = null
 
-    InputStream resource = PublicSuffixDatabase.class.getResourceAsStream(PUBLIC_SUFFIX_RESOURCE);
-    if (resource == null) return;
+    val resource =
+        PublicSuffixDatabase::class.java.getResourceAsStream(PUBLIC_SUFFIX_RESOURCE) ?: return
 
-    try (BufferedSource bufferedSource = Okio.buffer(new GzipSource(Okio.source(resource)))) {
-      int totalBytes = bufferedSource.readInt();
-      publicSuffixListBytes = new byte[totalBytes];
-      bufferedSource.readFully(publicSuffixListBytes);
+    GzipSource(resource.source()).buffer().use { bufferedSource ->
+      val totalBytes = bufferedSource.readInt()
+      publicSuffixListBytes = bufferedSource.readByteArray(totalBytes.toLong())
 
-      int totalExceptionBytes = bufferedSource.readInt();
-      publicSuffixExceptionListBytes = new byte[totalExceptionBytes];
-      bufferedSource.readFully(publicSuffixExceptionListBytes);
+      val totalExceptionBytes = bufferedSource.readInt()
+      publicSuffixExceptionListBytes = bufferedSource.readByteArray(totalExceptionBytes.toLong())
     }
 
-    synchronized (this) {
-      this.publicSuffixListBytes = publicSuffixListBytes;
-      this.publicSuffixExceptionListBytes = publicSuffixExceptionListBytes;
+    synchronized(this) {
+      this.publicSuffixListBytes = publicSuffixListBytes!!
+      this.publicSuffixExceptionListBytes = publicSuffixExceptionListBytes!!
     }
 
-    readCompleteLatch.countDown();
+    readCompleteLatch.countDown()
   }
 
-  /** Visible for testing. */
-  void setListBytes(byte[] publicSuffixListBytes, byte[] publicSuffixExceptionListBytes) {
-    this.publicSuffixListBytes = publicSuffixListBytes;
-    this.publicSuffixExceptionListBytes = publicSuffixExceptionListBytes;
-    listRead.set(true);
-    readCompleteLatch.countDown();
+  /** Visible for testing.  */
+  fun setListBytes(
+    publicSuffixListBytes: ByteArray,
+    publicSuffixExceptionListBytes: ByteArray
+  ) {
+    this.publicSuffixListBytes = publicSuffixListBytes
+    this.publicSuffixExceptionListBytes = publicSuffixExceptionListBytes
+    listRead.set(true)
+    readCompleteLatch.countDown()
+  }
+
+  companion object {
+    const val PUBLIC_SUFFIX_RESOURCE = "publicsuffixes.gz"
+
+    private val WILDCARD_LABEL = byteArrayOf('*'.toByte())
+    private val PREVAILING_RULE = listOf("*")
+
+    private const val EXCEPTION_MARKER = '!'
+
+    private val instance = PublicSuffixDatabase()
+
+    fun get(): PublicSuffixDatabase {
+      return instance
+    }
+
+    private fun ByteArray.binarySearch(
+      labels: Array<ByteArray>,
+      labelIndex: Int
+    ): String? {
+      var low = 0
+      var high = size
+      var match: String? = null
+      while (low < high) {
+        var mid = (low + high) / 2
+        // Search for a '\n' that marks the start of a value. Don't go back past the start of the
+        // array.
+        while (mid > -1 && this[mid] != '\n'.toByte()) {
+          mid--
+        }
+        mid++
+
+        // Now look for the ending '\n'.
+        var end = 1
+        while (this[mid + end] != '\n'.toByte()) {
+          end++
+        }
+        val publicSuffixLength = mid + end - mid
+
+        // Compare the bytes. Note that the file stores UTF-8 encoded bytes, so we must compare the
+        // unsigned bytes.
+        var compareResult: Int
+        var currentLabelIndex = labelIndex
+        var currentLabelByteIndex = 0
+        var publicSuffixByteIndex = 0
+
+        var expectDot = false
+        while (true) {
+          val byte0: Int
+          if (expectDot) {
+            byte0 = '.'.toInt()
+            expectDot = false
+          } else {
+            byte0 = labels[currentLabelIndex][currentLabelByteIndex] and 0xff
+          }
+
+          val byte1 = this[mid + publicSuffixByteIndex] and 0xff
+
+          compareResult = byte0 - byte1
+          if (compareResult != 0) break
+
+          publicSuffixByteIndex++
+          currentLabelByteIndex++
+          if (publicSuffixByteIndex == publicSuffixLength) break
+
+          if (labels[currentLabelIndex].size == currentLabelByteIndex) {
+            // We've exhausted our current label. Either there are more labels to compare, in which
+            // case we expect a dot as the next character. Otherwise, we've checked all our labels.
+            if (currentLabelIndex == labels.size - 1) {
+              break
+            } else {
+              currentLabelIndex++
+              currentLabelByteIndex = -1
+              expectDot = true
+            }
+          }
+        }
+
+        if (compareResult < 0) {
+          high = mid - 1
+        } else if (compareResult > 0) {
+          low = mid + end + 1
+        } else {
+          // We found a match, but are the lengths equal?
+          val publicSuffixBytesLeft = publicSuffixLength - publicSuffixByteIndex
+          var labelBytesLeft = labels[currentLabelIndex].size - currentLabelByteIndex
+          for (i in currentLabelIndex + 1 until labels.size) {
+            labelBytesLeft += labels[i].size
+          }
+
+          if (labelBytesLeft < publicSuffixBytesLeft) {
+            high = mid - 1
+          } else if (labelBytesLeft > publicSuffixBytesLeft) {
+            low = mid + end + 1
+          } else {
+            // Found a match.
+            match = String(this, mid, publicSuffixLength, UTF_8)
+            break
+          }
+        }
+      }
+      return match
+    }
   }
 }
