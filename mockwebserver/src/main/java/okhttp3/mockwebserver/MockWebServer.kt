@@ -203,7 +203,7 @@ class MockWebServer : ExternalResource(), Closeable {
     require(Protocol.HTTP_1_1 in protocolList || Protocol.H2_PRIOR_KNOWLEDGE in protocolList) {
       "protocols doesn't contain http/1.1: $protocolList"
     }
-    require(null != protocolList) { "protocols must not contain null" }
+    require(null !in protocolList) { "protocols must not contain null" }
     this.protocols = protocolList
   }
 
@@ -864,12 +864,14 @@ class MockWebServer : ExternalResource(), Closeable {
     }
 
     @Throws(IOException::class)
-    override fun flush() {}
+    override fun flush() {
+    }
 
     override fun timeout(): Timeout = Timeout.NONE
 
     @Throws(IOException::class)
-    override fun close() {}
+    override fun close() {
+    }
   }
 
   /** Processes HTTP requests layered over HTTP/2.  */
@@ -883,9 +885,9 @@ class MockWebServer : ExternalResource(), Closeable {
     override fun onStream(stream: Http2Stream) {
       val peekedResponse = dispatcher.peek()
       if (peekedResponse.getSocketPolicy() === RESET_STREAM_AT_START) {
-          dispatchBookkeepingRequest(sequenceNumber.getAndIncrement(), socket)
-          stream.close(ErrorCode.fromHttp2(peekedResponse.getHttp2ErrorCode())!!, null)
-          return
+        dispatchBookkeepingRequest(sequenceNumber.getAndIncrement(), socket)
+        stream.close(ErrorCode.fromHttp2(peekedResponse.getHttp2ErrorCode())!!, null)
+        return
       }
 
       val request = readRequest(stream)
