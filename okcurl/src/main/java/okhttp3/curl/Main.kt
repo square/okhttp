@@ -208,7 +208,7 @@ class Main : Runnable {
         val parts = header.split(":".toRegex()).toTypedArray()
         if ("Content-Type".equals(parts[0], ignoreCase = true)) {
           it.remove(header)
-          return@let parts[1].trim { c -> c <= ' ' }
+          return@let parts[1].trim()
         }
       }
       return@let null
@@ -236,15 +236,11 @@ class Main : Runnable {
     }
 
     private fun versionString(): String {
-      try {
-        val prop = Properties()
-        Main::class.java.getResourceAsStream("/okcurl-version.properties").use {
-          prop.load(it)
-        }
-        return prop.getProperty("version", "dev")
-      } catch (e: IOException) {
-        throw AssertionError("Could not load okcurl-version.properties.")
+      val prop = Properties()
+      Main::class.java.getResourceAsStream("/okcurl-version.properties").use {
+        prop.load(it)
       }
+      return prop.getProperty("version", "dev")
     }
 
     private fun protocols() = Protocol.values().joinToString(", ")
@@ -257,15 +253,10 @@ class Main : Runnable {
       override fun getAcceptedIssuers(): Array<X509Certificate> = arrayOf()
     }
 
-    private fun createInsecureSslSocketFactory(trustManager: TrustManager): SSLSocketFactory {
-      try {
-        val context = Platform.get().newSSLContext()
-        context.init(null, arrayOf(trustManager), null)
-        return context.socketFactory
-      } catch (e: Exception) {
-        throw AssertionError(e)
-      }
-    }
+    private fun createInsecureSslSocketFactory(trustManager: TrustManager): SSLSocketFactory =
+        Platform.get().newSSLContext().apply {
+          init(null, arrayOf(trustManager), null)
+        }.socketFactory
 
     private fun createInsecureHostnameVerifier(): HostnameVerifier =
         HostnameVerifier { _, _ -> true }
