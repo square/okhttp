@@ -49,7 +49,6 @@ import java.util.Locale
 import java.util.TimeZone
 import java.util.concurrent.ThreadFactory
 import java.util.concurrent.TimeUnit
-import java.util.regex.Pattern
 import javax.net.ssl.X509TrustManager
 
 /** Junk drawer of utility methods.  */
@@ -77,7 +76,7 @@ object Util {
   private val UTF_32LE = Charset.forName("UTF-32LE")
 
   /** GMT and UTC are equivalent for our purposes.  */
-  @JvmField val UTC = TimeZone.getTimeZone("GMT")
+  @JvmField val UTC = TimeZone.getTimeZone("GMT")!!
 
   val NATURAL_ORDER = Comparator<String> { obj, anotherString -> obj.compareTo(anotherString) }
 
@@ -92,8 +91,8 @@ object Util {
    * addresses nor hostnames; they will be verified as IP addresses (which is a more strict
    * verification).
    */
-  private val VERIFY_AS_IP_ADDRESS = Pattern.compile(
-      "([0-9a-fA-F]*:[0-9a-fA-F:.]*)|([\\d.]+)")
+  private val VERIFY_AS_IP_ADDRESS =
+      "([0-9a-fA-F]*:[0-9a-fA-F:.]*)|([\\d.]+)".toRegex()
 
   fun checkOffsetAndCount(arrayLength: Long, offset: Long, count: Long) {
     if (offset or count < 0 || offset > arrayLength || arrayLength - offset < count) {
@@ -160,7 +159,7 @@ object Util {
   }
 
   /**
-   * Reads until [in] is exhausted or the deadline has been reached. This is careful to not
+   * Reads until [source] is exhausted or the deadline has been reached. This is careful to not
    * extend the deadline if one exists already.
    */
   @Throws(IOException::class)
@@ -427,7 +426,7 @@ object Util {
   /** Returns true if [host] is not a host name and might be an IP address.  */
   @JvmStatic
   fun verifyAsIpAddress(host: String): Boolean {
-    return VERIFY_AS_IP_ADDRESS.matcher(host).matches()
+    return VERIFY_AS_IP_ADDRESS.matches(host)
   }
 
   /** Returns a [Locale.US] formatted [String].  */
@@ -530,11 +529,7 @@ object Util {
       Arrays.fill(address, compress, compress + (address.size - b), 0.toByte())
     }
 
-    try {
-      return InetAddress.getByAddress(address)
-    } catch (e: UnknownHostException) {
-      throw AssertionError()
-    }
+    return InetAddress.getByAddress(address)
   }
 
   /** Decodes an IPv4 address suffix of an IPv6 address, like 1111::5555:6666:192.168.0.1.  */
@@ -575,8 +570,8 @@ object Util {
       address[b++] = value.toByte()
     }
 
-    return if (b != addressOffset + 4) false else true // Too few groups. We wanted exactly four.
-// Success.
+    // Check for too few groups. We wanted exactly four.
+    return b == addressOffset + 4
   }
 
   /** Encodes an IPv6 address in canonical form according to RFC 5952.  */
