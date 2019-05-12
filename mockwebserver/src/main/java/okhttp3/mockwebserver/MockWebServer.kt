@@ -203,7 +203,7 @@ class MockWebServer : ExternalResource(), Closeable {
     require(Protocol.HTTP_1_1 in protocolList || Protocol.H2_PRIOR_KNOWLEDGE in protocolList) {
       "protocols doesn't contain http/1.1: $protocolList"
     }
-    require(null !in protocolList) { "protocols must not contain null" }
+    require(null !in protocolList as List<Protocol?>) { "protocols must not contain null" }
     this.protocols = protocolList
   }
 
