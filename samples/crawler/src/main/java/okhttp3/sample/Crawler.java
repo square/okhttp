@@ -31,7 +31,6 @@ import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
-import okhttp3.internal.NamedRunnable;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -52,13 +51,11 @@ public final class Crawler {
   private void parallelDrainQueue(int threadCount) {
     ExecutorService executor = Executors.newFixedThreadPool(threadCount);
     for (int i = 0; i < threadCount; i++) {
-      executor.execute(new NamedRunnable("Crawler %s", i) {
-        @Override protected void execute() {
-          try {
-            drainQueue();
-          } catch (Exception e) {
-            e.printStackTrace();
-          }
+      executor.execute(() -> {
+        try {
+          drainQueue();
+        } catch (Exception e) {
+          e.printStackTrace();
         }
       });
     }

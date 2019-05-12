@@ -22,11 +22,11 @@ import okhttp3.HttpUrl
 import okhttp3.Protocol
 import okhttp3.Request
 import okhttp3.Response
-import okhttp3.internal.NamedRunnable
 import okhttp3.internal.Util
 import okhttp3.internal.Util.closeQuietly
 import okhttp3.internal.addHeaderLenient
 import okhttp3.internal.duplex.MwsDuplexAccess
+import okhttp3.internal.execute
 import okhttp3.internal.http.HttpMethod
 import okhttp3.internal.http2.ErrorCode
 import okhttp3.internal.http2.Header
@@ -330,55 +330,53 @@ class MockWebServer : ExternalResource(), Closeable {
     serverSocket!!.bind(inetSocketAddress, 50)
 
     port = serverSocket!!.localPort
-    executor!!.execute(object : NamedRunnable("MockWebServer $port") {
-      override fun execute() {
-        try {
-          logger.info("${this@MockWebServer} starting to accept connections")
-          acceptConnections()
-        } catch (e: Throwable) {
-          logger.log(Level.WARNING, "${this@MockWebServer}  failed unexpectedly", e)
-        }
-
-        // Release all sockets and all threads, even if any close fails.
-        closeQuietly(serverSocket)
-
-        val openClientSocket = openClientSockets.iterator()
-        while (openClientSocket.hasNext()) {
-          closeQuietly(openClientSocket.next())
-          openClientSocket.remove()
-        }
-
-        val httpConnection = openConnections.iterator()
-        while (httpConnection.hasNext()) {
-          closeQuietly(httpConnection.next())
-          httpConnection.remove()
-        }
-        dispatcher.shutdown()
-        executor!!.shutdown()
+    executor!!.execute("MockWebServer $port") {
+      try {
+        logger.info("${this@MockWebServer} starting to accept connections")
+        acceptConnections()
+      } catch (e: Throwable) {
+        logger.log(Level.WARNING, "${this@MockWebServer}  failed unexpectedly", e)
       }
 
-      @Throws(Exception::class)
-      private fun acceptConnections() {
-        while (true) {
-          val socket: Socket
-          try {
-            socket = serverSocket!!.accept()
-          } catch (e: SocketException) {
-            logger.info("${this@MockWebServer} done accepting connections: ${e.message}")
-            return
-          }
+      // Release all sockets and all threads, even if any close fails.
+      closeQuietly(serverSocket)
 
-          val socketPolicy = dispatcher.peek().getSocketPolicy()
-          if (socketPolicy === DISCONNECT_AT_START) {
-            dispatchBookkeepingRequest(0, socket)
-            socket.close()
-          } else {
-            openClientSockets.add(socket)
-            serveConnection(socket)
-          }
-        }
+      val openClientSocket = openClientSockets.iterator()
+      while (openClientSocket.hasNext()) {
+        closeQuietly(openClientSocket.next())
+        openClientSocket.remove()
       }
-    })
+
+      val httpConnection = openConnections.iterator()
+      while (httpConnection.hasNext()) {
+        closeQuietly(httpConnection.next())
+        httpConnection.remove()
+      }
+      dispatcher.shutdown()
+      executor!!.shutdown()
+    }
+  }
+
+  @Throws(Exception::class)
+  private fun acceptConnections() {
+    while (true) {
+      val socket: Socket
+      try {
+        socket = serverSocket!!.accept()
+      } catch (e: SocketException) {
+        logger.info("${this@MockWebServer} done accepting connections: ${e.message}")
+        return
+      }
+
+      val socketPolicy = dispatcher.peek().getSocketPolicy()
+      if (socketPolicy === DISCONNECT_AT_START) {
+        dispatchBookkeepingRequest(0, socket)
+        socket.close()
+      } else {
+        openClientSockets.add(socket)
+        serveConnection(socket)
+      }
+    }
   }
 
   @Synchronized
@@ -409,176 +407,175 @@ class MockWebServer : ExternalResource(), Closeable {
   }
 
   private fun serveConnection(raw: Socket) {
-    executor!!.execute(object : NamedRunnable("MockWebServer ${raw.remoteSocketAddress}") {
-      var sequenceNumber = 0
+    executor!!.execute("MockWebServer ${raw.remoteSocketAddress}") {
+      try {
+        SocketHandler(raw).handle()
+      } catch (e: IOException) {
+        logger.info("${this@MockWebServer} connection from ${raw.inetAddress} failed: $e")
+      } catch (e: Exception) {
+        logger.log(Level.SEVERE,
+            "${this@MockWebServer} connection from ${raw.inetAddress} crashed", e)
+      }
+    }
+  }
 
-      override fun execute() {
-        try {
-          processConnection()
-        } catch (e: IOException) {
-          logger.info(
-              "${this@MockWebServer} connection from ${raw.inetAddress} failed: " + e)
-        } catch (e: Exception) {
-          logger.log(Level.SEVERE,
-              "${this@MockWebServer} connection from ${raw.inetAddress} crashed", e)
+  inner class SocketHandler(private val raw: Socket) {
+    private var sequenceNumber = 0
+
+    @Throws(Exception::class)
+    fun handle() {
+      val socketPolicy = dispatcher.peek().getSocketPolicy()
+      var protocol = Protocol.HTTP_1_1
+      val socket: Socket
+      when {
+        sslSocketFactory != null -> {
+          if (tunnelProxy) {
+            createTunnel()
+          }
+          if (socketPolicy === FAIL_HANDSHAKE) {
+            dispatchBookkeepingRequest(sequenceNumber, raw)
+            processHandshakeFailure(raw)
+            return
+          }
+          socket = sslSocketFactory!!.createSocket(raw, raw.inetAddress.hostAddress,
+              raw.port, true)
+          val sslSocket = socket as SSLSocket
+          sslSocket.useClientMode = false
+          if (clientAuth == CLIENT_AUTH_REQUIRED) {
+            sslSocket.needClientAuth = true
+          } else if (clientAuth == CLIENT_AUTH_REQUESTED) {
+            sslSocket.wantClientAuth = true
+          }
+          openClientSockets.add(socket)
+
+          if (protocolNegotiationEnabled) {
+            Platform.get().configureTlsExtensions(sslSocket, null, protocols)
+          }
+
+          sslSocket.startHandshake()
+
+          if (protocolNegotiationEnabled) {
+            val protocolString = Platform.get().getSelectedProtocol(sslSocket)
+            protocol =
+                if (protocolString != null) Protocol.get(protocolString) else Protocol.HTTP_1_1
+            Platform.get().afterHandshake(sslSocket)
+          }
+          openClientSockets.remove(raw)
         }
+        Protocol.H2_PRIOR_KNOWLEDGE in protocols -> {
+          socket = raw
+          protocol = Protocol.H2_PRIOR_KNOWLEDGE
+        }
+        else -> socket = raw
       }
 
-      @Throws(Exception::class)
-      fun processConnection() {
-        val socketPolicy = dispatcher.peek().getSocketPolicy()
-        var protocol = Protocol.HTTP_1_1
-        val socket: Socket
-        when {
-          sslSocketFactory != null -> {
-            if (tunnelProxy) {
-              createTunnel()
-            }
-            if (socketPolicy === FAIL_HANDSHAKE) {
-              dispatchBookkeepingRequest(sequenceNumber, raw)
-              processHandshakeFailure(raw)
-              return
-            }
-            socket = sslSocketFactory!!.createSocket(raw, raw.inetAddress.hostAddress,
-                raw.port, true)
-            val sslSocket = socket as SSLSocket
-            sslSocket.useClientMode = false
-            if (clientAuth == CLIENT_AUTH_REQUIRED) {
-              sslSocket.needClientAuth = true
-            } else if (clientAuth == CLIENT_AUTH_REQUESTED) {
-              sslSocket.wantClientAuth = true
-            }
-            openClientSockets.add(socket)
+      if (socketPolicy === STALL_SOCKET_AT_START) {
+        return // Ignore the socket until the server is shut down!
+      }
 
-            if (protocolNegotiationEnabled) {
-              Platform.get().configureTlsExtensions(sslSocket, null, protocols)
-            }
-
-            sslSocket.startHandshake()
-
-            if (protocolNegotiationEnabled) {
-              val protocolString = Platform.get().getSelectedProtocol(sslSocket)
-              protocol =
-                  if (protocolString != null) Protocol.get(protocolString) else Protocol.HTTP_1_1
-              Platform.get().afterHandshake(sslSocket)
-            }
-            openClientSockets.remove(raw)
-          }
-          Protocol.H2_PRIOR_KNOWLEDGE in protocols -> {
-            socket = raw
-            protocol = Protocol.H2_PRIOR_KNOWLEDGE
-          }
-          else -> socket = raw
-        }
-
-        if (socketPolicy === STALL_SOCKET_AT_START) {
-          return // Ignore the socket until the server is shut down!
-        }
-
-        if (protocol === Protocol.HTTP_2 || protocol === Protocol.H2_PRIOR_KNOWLEDGE) {
-          val http2SocketHandler = Http2SocketHandler(socket, protocol)
-          val connection = Http2Connection.Builder(false)
-              .socket(socket)
-              .listener(http2SocketHandler)
-              .build()
-          connection.start()
-          openConnections.add(connection)
-          openClientSockets.remove(socket)
-          return
-        } else if (protocol !== Protocol.HTTP_1_1) {
-          throw AssertionError()
-        }
-
-        val source = socket.source().buffer()
-        val sink = socket.sink().buffer()
-
-        while (processOneRequest(socket, source, sink)) {
-        }
-
-        if (sequenceNumber == 0) {
-          logger.warning(
-            "${this@MockWebServer} connection from ${raw.inetAddress} didn't make a request")
-        }
-
-        socket.close()
+      if (protocol === Protocol.HTTP_2 || protocol === Protocol.H2_PRIOR_KNOWLEDGE) {
+        val http2SocketHandler = Http2SocketHandler(socket, protocol)
+        val connection = Http2Connection.Builder(false)
+            .socket(socket)
+            .listener(http2SocketHandler)
+            .build()
+        connection.start()
+        openConnections.add(connection)
         openClientSockets.remove(socket)
+        return
+      } else if (protocol !== Protocol.HTTP_1_1) {
+        throw AssertionError()
       }
 
-      /**
-       * Respond to CONNECT requests until a SWITCH_TO_SSL_AT_END response is
-       * dispatched.
-       */
-      @Throws(IOException::class, InterruptedException::class)
-      private fun createTunnel() {
-        val source = raw.source().buffer()
-        val sink = raw.sink().buffer()
-        while (true) {
-          val socketPolicy = dispatcher.peek().getSocketPolicy()
-          if (!processOneRequest(raw, source, sink)) {
-            throw IllegalStateException("Tunnel without any CONNECT!")
-          }
-          if (socketPolicy === UPGRADE_TO_SSL_AT_END) return
+      val source = socket.source().buffer()
+      val sink = socket.sink().buffer()
+
+      while (processOneRequest(socket, source, sink)) {
+      }
+
+      if (sequenceNumber == 0) {
+        logger.warning(
+          "${this@MockWebServer} connection from ${raw.inetAddress} didn't make a request")
+      }
+
+      socket.close()
+      openClientSockets.remove(socket)
+    }
+
+    /**
+     * Respond to CONNECT requests until a SWITCH_TO_SSL_AT_END response is
+     * dispatched.
+     */
+    @Throws(IOException::class, InterruptedException::class)
+    private fun createTunnel() {
+      val source = raw.source().buffer()
+      val sink = raw.sink().buffer()
+      while (true) {
+        val socketPolicy = dispatcher.peek().getSocketPolicy()
+        if (!processOneRequest(raw, source, sink)) {
+          throw IllegalStateException("Tunnel without any CONNECT!")
         }
+        if (socketPolicy === UPGRADE_TO_SSL_AT_END) return
+      }
+    }
+
+    /**
+     * Reads a request and writes its response. Returns true if further calls should be attempted
+     * on the socket.
+     */
+    @Throws(IOException::class, InterruptedException::class)
+    private fun processOneRequest(
+      socket: Socket,
+      source: BufferedSource,
+      sink: BufferedSink
+    ): Boolean {
+      val request = readRequest(socket, source, sink, sequenceNumber) ?: return false
+
+      requestCount.incrementAndGet()
+      requestQueue.add(request)
+
+      val response = dispatcher.dispatch(request)
+      if (response.getSocketPolicy() === DISCONNECT_AFTER_REQUEST) {
+        socket.close()
+        return false
+      }
+      if (response.getSocketPolicy() === NO_RESPONSE) {
+        // This read should block until the socket is closed. (Because nobody is writing.)
+        if (source.exhausted()) return false
+        throw ProtocolException("unexpected data")
       }
 
-      /**
-       * Reads a request and writes its response. Returns true if further calls should be attempted
-       * on the socket.
-       */
-      @Throws(IOException::class, InterruptedException::class)
-      private fun processOneRequest(
-        socket: Socket,
-        source: BufferedSource,
-        sink: BufferedSink
-      ): Boolean {
-        val request = readRequest(socket, source, sink, sequenceNumber) ?: return false
+      var reuseSocket = true
+      val requestWantsWebSockets = "Upgrade".equals(request.getHeader("Connection"),
+          ignoreCase = true) && "websocket".equals(request.getHeader("Upgrade"),
+          ignoreCase = true)
+      val responseWantsWebSockets = response.webSocketListener != null
+      if (requestWantsWebSockets && responseWantsWebSockets) {
+        handleWebSocketUpgrade(socket, source, sink, request, response)
+        reuseSocket = false
+      } else {
+        writeHttpResponse(socket, sink, response)
+      }
 
-        requestCount.incrementAndGet()
-        requestQueue.add(request)
+      if (logger.isLoggable(Level.INFO)) {
+        logger.info(
+            "${this@MockWebServer} received request: $request and responded: $response")
+      }
 
-        val response = dispatcher.dispatch(request)
-        if (response.getSocketPolicy() === DISCONNECT_AFTER_REQUEST) {
+      // See warnings associated with these socket policies in SocketPolicy.
+      when (response.getSocketPolicy()) {
+        DISCONNECT_AT_END -> {
           socket.close()
           return false
         }
-        if (response.getSocketPolicy() === NO_RESPONSE) {
-          // This read should block until the socket is closed. (Because nobody is writing.)
-          if (source.exhausted()) return false
-          throw ProtocolException("unexpected data")
-        }
-
-        var reuseSocket = true
-        val requestWantsWebSockets = "Upgrade".equals(request.getHeader("Connection"),
-            ignoreCase = true) && "websocket".equals(request.getHeader("Upgrade"),
-            ignoreCase = true)
-        val responseWantsWebSockets = response.webSocketListener != null
-        if (requestWantsWebSockets && responseWantsWebSockets) {
-          handleWebSocketUpgrade(socket, source, sink, request, response)
-          reuseSocket = false
-        } else {
-          writeHttpResponse(socket, sink, response)
-        }
-
-        if (logger.isLoggable(Level.INFO)) {
-          logger.info(
-              "${this@MockWebServer} received request: $request and responded: $response")
-        }
-
-        // See warnings associated with these socket policies in SocketPolicy.
-        when (response.getSocketPolicy()) {
-          DISCONNECT_AT_END -> {
-            socket.close()
-            return false
-          }
-          SHUTDOWN_INPUT_AT_END -> socket.shutdownInput()
-          SHUTDOWN_OUTPUT_AT_END -> socket.shutdownOutput()
-          SHUTDOWN_SERVER_AFTER_RESPONSE -> shutdown()
-          else -> {}
-        }
-        sequenceNumber++
-        return reuseSocket
+        SHUTDOWN_INPUT_AT_END -> socket.shutdownInput()
+        SHUTDOWN_OUTPUT_AT_END -> socket.shutdownOutput()
+        SHUTDOWN_SERVER_AFTER_RESPONSE -> shutdown()
+        else -> {}
       }
-    })
+      sequenceNumber++
+      return reuseSocket
+    }
   }
 
   @Throws(Exception::class)

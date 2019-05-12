@@ -15,7 +15,6 @@
  */
 package okhttp3.internal.http2
 
-import okhttp3.internal.NamedRunnable
 import okhttp3.internal.Util
 import okhttp3.internal.connectionName
 import okhttp3.internal.execute
@@ -24,6 +23,7 @@ import okhttp3.internal.http2.Settings.Companion.DEFAULT_INITIAL_WINDOW_SIZE
 import okhttp3.internal.ignoreIoExceptions
 import okhttp3.internal.platform.Platform
 import okhttp3.internal.platform.Platform.Companion.INFO
+import okhttp3.internal.threadName
 import okhttp3.internal.tryExecute
 import okio.Buffer
 import okio.BufferedSink
@@ -141,8 +141,8 @@ class Http2Connection internal constructor(builder: Builder) : Closeable {
 
   init {
     if (builder.pingIntervalMillis != 0) {
-      writerExecutor.scheduleAtFixedRate(object : NamedRunnable("OkHttp %s ping", connectionName) {
-        override fun execute() {
+      writerExecutor.scheduleAtFixedRate({
+        threadName("OkHttp $connectionName ping") {
           writePing(false, 0, 0)
         }
       }, builder.pingIntervalMillis.toLong(), builder.pingIntervalMillis.toLong(), MILLISECONDS)

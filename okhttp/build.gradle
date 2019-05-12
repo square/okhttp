@@ -55,6 +55,7 @@ task japicmp(type: me.champeau.gradle.japicmp.JapicmpTask, dependsOn: 'jar') {
   classExcludes = [
       // Package-private in 3.x, internal in 4.0.0:
       'okhttp3.Cache$CacheResponseBody$1',
+      'okhttp3.RealCall$AsyncCall',
   ]
   methodExcludes = [
       // Became 'final' in 4.0.0:
