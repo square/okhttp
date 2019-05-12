@@ -23,17 +23,14 @@ import java.security.cert.CertificateParsingException;
 import java.security.cert.X509Certificate;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.X509EncodedKeySpec;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 import java.util.concurrent.TimeUnit;
 import okio.ByteString;
 import org.bouncycastle.asn1.x509.GeneralName;
 import org.junit.Test;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import static java.util.Arrays.asList;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.data.Offset.offset;
 
 public final class HeldCertificateTest {
   @Test public void defaultCertificate() throws CertificateParsingException {
@@ -41,17 +38,18 @@ public final class HeldCertificateTest {
     HeldCertificate heldCertificate = new HeldCertificate.Builder().build();
 
     X509Certificate certificate = heldCertificate.certificate();
-    assertEquals("self-signed",
-        certificate.getIssuerX500Principal().getName(),
-        certificate.getSubjectX500Principal().getName());
-    assertTrue(certificate.getIssuerX500Principal().getName().matches("CN=[0-9a-f-]{36}"));
-    assertEquals(BigInteger.ONE, certificate.getSerialNumber());
-    assertNull(certificate.getSubjectAlternativeNames());
+    assertThat(certificate.getSubjectX500Principal().getName()).overridingErrorMessage(
+        "self-signed").isEqualTo(certificate.getIssuerX500Principal().getName());
+    assertThat(certificate.getIssuerX500Principal().getName()).matches("CN=[0-9a-f-]{36}");
+    assertThat(certificate.getSerialNumber()).isEqualTo(BigInteger.ONE);
+    assertThat(certificate.getSubjectAlternativeNames()).isNull();
 
     double deltaMillis = 1000.0;
     long durationMillis = TimeUnit.MINUTES.toMillis(60 * 24);
-    assertEquals((double) now, certificate.getNotBefore().getTime(), deltaMillis);
-    assertEquals((double) now + durationMillis, certificate.getNotAfter().getTime(), deltaMillis);
+    assertThat((double) certificate.getNotBefore().getTime()).isCloseTo(
+        (double) now, offset(deltaMillis));
+    assertThat((double) certificate.getNotAfter().getTime()).isCloseTo(
+        (double) now + durationMillis, offset(deltaMillis));
   }
 
   @Test public void customInterval() {
@@ -60,8 +58,8 @@ public final class HeldCertificateTest {
         .validityInterval(5_000L, 10_000L)
         .build();
     X509Certificate certificate = heldCertificate.certificate();
-    assertEquals(5_000L, certificate.getNotBefore().getTime());
-    assertEquals(10_000L, certificate.getNotAfter().getTime());
+    assertThat(certificate.getNotBefore().getTime()).isEqualTo(5_000L);
+    assertThat(certificate.getNotAfter().getTime()).isEqualTo(10_000L);
   }
 
   @Test public void customDuration() {
@@ -74,8 +72,10 @@ public final class HeldCertificateTest {
 
     double deltaMillis = 1000.0;
     long durationMillis = 5_000L;
-    assertEquals((double) now, certificate.getNotBefore().getTime(), deltaMillis);
-    assertEquals((double) now + durationMillis, certificate.getNotAfter().getTime(), deltaMillis);
+    assertThat((double) certificate.getNotBefore().getTime()).isCloseTo(
+        (double) now, offset(deltaMillis));
+    assertThat((double) certificate.getNotAfter().getTime()).isCloseTo(
+        (double) now + durationMillis, offset(deltaMillis));
   }
 
   @Test public void subjectAlternativeNames() throws CertificateParsingException {
@@ -85,11 +85,9 @@ public final class HeldCertificateTest {
         .build();
 
     X509Certificate certificate = heldCertificate.certificate();
-    List<List<?>> subjectAlternativeNames = new ArrayList<>(
-        certificate.getSubjectAlternativeNames());
-    assertEquals(subjectAlternativeNames, Arrays.asList(
-        Arrays.asList(GeneralName.iPAddress, "1.1.1.1"),
-        Arrays.asList(GeneralName.dNSName, "cash.app")));
+    assertThat(certificate.getSubjectAlternativeNames()).containsExactly(
+        asList(GeneralName.iPAddress, "1.1.1.1"),
+        asList(GeneralName.dNSName, "cash.app"));
   }
 
   @Test public void commonName() {
@@ -98,7 +96,7 @@ public final class HeldCertificateTest {
         .build();
 
     X509Certificate certificate = heldCertificate.certificate();
-    assertEquals("CN=cash.app", certificate.getSubjectX500Principal().getName());
+    assertThat(certificate.getSubjectX500Principal().getName()).isEqualTo("CN=cash.app");
   }
 
   @Test public void organizationalUnit() {
@@ -108,7 +106,8 @@ public final class HeldCertificateTest {
         .build();
 
     X509Certificate certificate = heldCertificate.certificate();
-    assertEquals("CN=cash.app,OU=cash", certificate.getSubjectX500Principal().getName());
+    assertThat(certificate.getSubjectX500Principal().getName()).isEqualTo(
+        "CN=cash.app,OU=cash");
   }
 
   /** Confirm golden values of encoded PEMs. */
@@ -142,7 +141,7 @@ public final class HeldCertificateTest {
         .rsa2048()
         .build();
 
-    assertEquals(heldCertificate.certificatePem(), ""
+    assertThat((""
         + "-----BEGIN CERTIFICATE-----\n"
         + "MIIBmjCCAQOgAwIBAgIBATANBgkqhkiG9w0BAQsFADATMREwDwYDVQQDEwhjYXNo\n"
         + "LmFwcDAeFw03MDAxMDEwMDAwMDBaFw03MDAxMDEwMDAwMDFaMBMxETAPBgNVBAMT\n"
@@ -153,9 +152,9 @@ public final class HeldCertificateTest {
         + "UVwKh5Ry7es3OxtY3IgQunPUoLc0Gw71gl9Z+7t2FJ5VkcI5gWfutmdxZ2bDXCI8\n"
         + "8V0vxo1pHXnbBrnxhS/Z3TBerw8RyQqcaWOdp+pBXyIWmR+jHk9cHZCqQveTIBsY\n"
         + "jaA9VEhgdaVhxBsT2qzUNDsXlOzGsliznDfoqETb\n"
-        + "-----END CERTIFICATE-----\n");
+        + "-----END CERTIFICATE-----\n")).isEqualTo(heldCertificate.certificatePem());
 
-    assertEquals(heldCertificate.privateKeyPkcs1Pem(), ""
+    assertThat((""
         + "-----BEGIN RSA PRIVATE KEY-----\n"
         + "MIICWwIBAAKBgQCApFHhtrLan28q+oMolZuaTfWBA0V5aMIvq32BsloQu6LlvX1w\n"
         + "J4YEoUCjDlPOtpht7XLbUmBnbIzN89XK4UJVM6Sqp3K88Km8z7gMrdrfTom/274w\n"
@@ -170,9 +169,9 @@ public final class HeldCertificateTest {
         + "xs/h8kq5HE+woNdjPzZHVEJ2Xt46/PKbf/iBjcKJnOlrf5ieH3FjjU5BjHHzmX39\n"
         + "TUHjVwwGeveNVwrCFQJAEjoNNj5VRy4nVO5iBOubMDDOf0TYUuGhY3s/zMMRTTh2\n"
         + "sXPVYAsGD1wizrXX+wFaL3chtF1oG1Fx/jcsSsG6BA==\n"
-        + "-----END RSA PRIVATE KEY-----\n");
+        + "-----END RSA PRIVATE KEY-----\n")).isEqualTo(heldCertificate.privateKeyPkcs1Pem());
 
-    assertEquals(heldCertificate.privateKeyPkcs8Pem(), ""
+    assertThat((""
         + "-----BEGIN PRIVATE KEY-----\n"
         + "MIICdQIBADANBgkqhkiG9w0BAQEFAASCAl8wggJbAgEAAoGBAICkUeG2stqfbyr6\n"
         + "gyiVm5pN9YEDRXlowi+rfYGyWhC7ouW9fXAnhgShQKMOU862mG3tcttSYGdsjM3z\n"
@@ -188,7 +187,7 @@ public final class HeldCertificateTest {
         + "8pt/+IGNwomc6Wt/mJ4fcWONTkGMcfOZff1NQeNXDAZ6941XCsIVAkASOg02PlVH\n"
         + "LidU7mIE65swMM5/RNhS4aFjez/MwxFNOHaxc9VgCwYPXCLOtdf7AVovdyG0XWgb\n"
         + "UXH+NyxKwboE\n"
-        + "-----END PRIVATE KEY-----\n");
+        + "-----END PRIVATE KEY-----\n")).isEqualTo(heldCertificate.privateKeyPkcs8Pem());
   }
 
   @Test public void ecdsaSignedByRsa() {
@@ -202,8 +201,8 @@ public final class HeldCertificateTest {
         .signedBy(root)
         .build();
 
-    assertEquals("SHA256WITHRSA", root.certificate().getSigAlgName());
-    assertEquals("SHA256WITHRSA", leaf.certificate().getSigAlgName());
+    assertThat(root.certificate().getSigAlgName()).isEqualTo("SHA256WITHRSA");
+    assertThat(leaf.certificate().getSigAlgName()).isEqualTo("SHA256WITHRSA");
   }
 
   @Test public void rsaSignedByEcdsa() {
@@ -217,7 +216,7 @@ public final class HeldCertificateTest {
         .signedBy(root)
         .build();
 
-    assertEquals("SHA256WITHECDSA", root.certificate().getSigAlgName());
-    assertEquals("SHA256WITHECDSA", leaf.certificate().getSigAlgName());
+    assertThat(root.certificate().getSigAlgName()).isEqualTo("SHA256WITHECDSA");
+    assertThat(leaf.certificate().getSigAlgName()).isEqualTo("SHA256WITHECDSA");
   }
 }

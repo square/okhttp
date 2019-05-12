@@ -21,10 +21,14 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URISyntaxException;
+import java.net.URL;
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import okio.Okio;
+
+import static java.util.Arrays.asList;
+import static okhttp3.internal.http2.hpackjson.Story.MISSING;
 
 /**
  * Utilities for reading HPACK tests.
@@ -48,10 +52,14 @@ public final class HpackJsonUtil {
 
   /** Iterate through the hpack-test-case resources, only picking stories for the current draft. */
   public static String[] storiesForCurrentDraft() throws URISyntaxException {
-    File testCaseDirectory = new File(HpackJsonUtil.class.getResource("/hpack-test-case").toURI());
+    URL resource = HpackJsonUtil.class.getResource("/hpack-test-case");
+    if (resource == null) {
+      return new String[0];
+    }
+    File testCaseDirectory = new File(resource.toURI());
     List<String> storyNames = new ArrayList<>();
     for (File path : testCaseDirectory.listFiles()) {
-      if (path.isDirectory() && Arrays.asList(path.list()).contains("story_00.json")) {
+      if (path.isDirectory() && asList(path.list()).contains("story_00.json")) {
         try {
           Story firstStory = readStory(new File(path, "story_00.json"));
           if (firstStory.getDraft() >= BASE_DRAFT) {
@@ -86,6 +94,12 @@ public final class HpackJsonUtil {
         storyInputStream.close();
       }
     }
+
+    if (result.isEmpty()) {
+      // missing files
+      return Collections.singletonList(MISSING);
+    }
+
     return result;
   }
 

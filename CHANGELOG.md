@@ -1,6 +1,168 @@
 Change Log
 ==========
 
+## Version 4.0.0-ALPHA01
+
+_2019-05-08_
+
+This is an unstable preview of the OkHttp 4 release. It should not be used.
+
+
+## Version 3.12.3
+
+_2019-05-07_
+
+ *  Fix: Permit multipart file names to contain non-ASCII characters.
+ *  Fix: Retain the `Route` when a connection is reused on a redirect or other follow-up. This was
+    causing some `Authenticator` calls to see a null route when non-null was expected.
+
+
+## Version 3.14.1
+
+_2019-04-10_
+
+ *  Fix: Don't crash when an interceptor retries when there are no more routes. This was an
+    edge-case regression introduced with the events cleanup in 3.14.0.
+
+ *  Fix: Provide actionable advice when the exchange is non-null. Prior to 3.14, OkHttp would
+    silently leak connections when an interceptor retries without closing the response body. With
+    3.14 we detect this problem but the exception was not helpful.
+
+## Version 3.14.0
+
+_2019-03-14_
+
+ *  **This release deletes the long-deprecated `OkUrlFactory` and `OkApacheClient` APIs.** These
+    facades hide OkHttp's implementation behind another client's API. If you still need this please
+    copy and paste [ObsoleteUrlFactory.java][obsolete_url_factory] or
+    [ObsoleteApacheClient.java][obsolete_apache_client] into your project.
+
+ *  **OkHttp now supports duplex calls over HTTP/2.** With normal HTTP calls the request must finish
+    before the response starts. With duplex, request and response bodies are transmitted
+    simultaneously. This can be used to implement interactive conversations within a single HTTP
+    call.
+
+    Create duplex calls by overriding the new `RequestBody.isDuplex()` method to return true.
+    This simple option dramatically changes the behavior of the request body and of the entire
+    call.
+
+    The `RequestBody.writeTo()` method may now retain a reference to the provided sink and
+    hand it off to another thread to write to it after `writeTo` returns.
+
+    The `EventListener` may now see requests and responses interleaved in ways not previously
+    permitted. For example, a listener may receive `responseHeadersStart()` followed by
+    `requestBodyEnd()`, both on the same call. Such events may be triggered by different threads
+    even for a single call.
+
+    Interceptors that rewrite or replace the request body may now inadvertently interfere with
+    duplex request bodies. Such interceptors should check `RequestBody.isDuplex()` and avoid
+    accessing the request body when it is.
+
+    Duplex calls require HTTP/2. If HTTP/1 is established instead the duplex call will fail. The
+    most common use of duplex calls is [gRPC][grpc_http2].
+
+ *  New: Prevent OkHttp from retransmitting a request body by overriding `RequestBody.isOneShot()`.
+    This is most useful when writing the request body is destructive.
+
+ *  New: We've added `requestFailed()` and `responseFailed()` methods to `EventListener`. These
+    are called instead of `requestBodyEnd()` and `responseBodyEnd()` in some failure situations.
+    They may also be fired in cases where no event was published previously. In this release we did
+    an internal rewrite of our event code to fix problems where events were lost or unbalanced.
+
+ *  Fix: Don't leak a connection when a call is canceled immediately preceding the `onFailure()`
+    callback.
+
+ *  Fix: Apply call timeouts when connecting duplex calls, web sockets, and server-sent events.
+    Once the streams are established no further timeout is enforced.
+
+ *  Fix: Retain the `Route` when a connection is reused on a redirect or other follow-up. This was
+    causing some `Authenticator` calls to see a null route when non-null was expected.
+
+ *  Fix: Use the correct key size in the name of `TLS_AES_128_CCM_8_SHA256` which is a TLS 1.3
+    cipher suite. We accidentally specified a key size of 256, preventing that cipher suite from
+    being selected for any TLS handshakes. We didn't notice because this cipher suite isn't
+    supported on Android, Java, or Conscrypt.
+
+    We removed this cipher suite and `TLS_AES_128_CCM_SHA256` from the restricted, modern, and
+    compatible sets of cipher suites. These two cipher suites aren't enabled by default in either
+    Firefox or Chrome.
+
+    See our [TLS Configuration History][tls_configuration_history] tracker for a log of all changes
+    to OkHttp's default TLS options.
+
+ *  New: Upgrade to Conscrypt 2.0.0. OkHttp works with other versions of Conscrypt but this is the
+    version we're testing against.
+
+    ```kotlin
+    implementation("org.conscrypt:conscrypt-openjdk-uber:2.0.0")
+    ```
+
+ *  New: Update the embedded public suffixes list.
+
+
+## Version 3.12.2
+
+_2019-03-14_
+
+ *  Fix: Don't crash if the HTTPS server returns no certificates in the TLS handshake.
+ *  Fix: Don't leak a connection when a call is canceled immediately preceding the `onFailure()`
+    callback.
+
+
+## Version 3.13.1
+
+_2019-02-05_
+
+ *  Fix: Don't crash when using a custom `X509TrustManager` or `SSLSocket` on Android. When we
+    removed obsolete code for Android 4.4 we inadvertently also removed support for custom
+    subclasses. We've restored that support!
+
+
+## Version 3.13.0
+
+_2019-02-04_
+
+ *  **This release bumps our minimum requirements to Java 8+ or Android 5+.** Cutting off old
+    devices is a serious change and we don't do it lightly! [This post][require_android_5] explains
+    why we're doing this and how to upgrade.
+
+    The OkHttp 3.12.x branch will be our long-term branch for Android 2.3+ (API level 9+) and Java
+    7+. These platforms lack support for TLS 1.2 and should not be used. But because upgrading is
+    difficult we will backport critical fixes to the 3.12.x branch through December 31, 2020.
+
+ *  **TLSv1 and TLSv1.1 are no longer enabled by default.** Major web browsers are working towards
+    removing these versions altogether in early 2020. If your servers aren't ready yet you can
+    configure OkHttp 3.13 to allow TLSv1 and TLSv1.1 connections:
+
+    ```
+    OkHttpClient client = new OkHttpClient.Builder()
+        .connectionSpecs(Arrays.asList(ConnectionSpec.COMPATIBLE_TLS))
+        .build();
+    ```
+
+ *  New: You can now access HTTP trailers with `Response.trailers()`. This method may only be called
+    after the entire HTTP response body has been read.
+
+ *  New: Upgrade to Okio 1.17.3. If you're on Kotlin-friendly Okio 2.x this release requires 2.2.2
+    or newer.
+
+    ```kotlin
+    implementation("com.squareup.okio:okio:1.17.3")
+    ```
+
+ *  Fix: Don't miss cancels when sending HTTP/2 request headers.
+ *  Fix: Don't miss whole operation timeouts when calls redirect.
+ *  Fix: Don't leak connections if web sockets have malformed responses or if `onOpen()` throws.
+ *  Fix: Don't retry when request bodies fail due to `FileNotFoundException`.
+ *  Fix: Don't crash when URLs have IPv4-mapped IPv6 addresses.
+ *  Fix: Don't crash when building `HandshakeCertificates` on Android API 28.
+ *  Fix: Permit multipart file names to contain non-ASCII characters.
+ *  New: API to get MockWebServer's dispatcher.
+ *  New: API to access headers as `java.time.Instant`.
+ *  New: Fail fast if a `SSLSocketFactory` is used as a `SocketFactory`.
+ *  New: Log the TLS handshake in `LoggingEventListener`.
+
+
 ## Version 3.12.1
 
 _2018-12-23_
@@ -1607,3 +1769,8 @@ Initial release.
  [conscrypt]: https://github.com/google/conscrypt/
  [conscrypt_dependency]: https://github.com/google/conscrypt/#download
  [https_server_sample]: https://github.com/square/okhttp/blob/master/samples/guide/src/main/java/okhttp3/recipes/HttpsServer.java
+ [require_android_5]: https://medium.com/square-corner-blog/okhttp-3-13-requires-android-5-818bb78d07ce
+ [obsolete_apache_client]: https://gist.github.com/swankjesse/09721f72039e3a46cf50f94323deb82d
+ [obsolete_url_factory]: https://gist.github.com/swankjesse/dd91c0a8854e1559b00f5fc9c7bfae70
+ [tls_configuration_history]: https://github.com/square/okhttp/wiki/TLS-Configuration-History
+ [grpc_http2]: https://github.com/grpc/grpc/blob/master/doc/PROTOCOL-HTTP2.md

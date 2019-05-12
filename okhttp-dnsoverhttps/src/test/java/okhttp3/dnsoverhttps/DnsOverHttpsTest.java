@@ -15,13 +15,12 @@
  */
 package okhttp3.dnsoverhttps;
 
+import java.io.EOFException;
 import java.io.File;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.Arrays;
-import java.util.HashSet;
-import java.util.LinkedHashSet;
 import java.util.List;
 import okhttp3.Cache;
 import okhttp3.Dns;
@@ -39,8 +38,7 @@ import org.junit.Test;
 
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.fail;
 
 public class DnsOverHttpsTest {
@@ -62,12 +60,12 @@ public class DnsOverHttpsTest {
 
     List<InetAddress> result = dns.lookup("google.com");
 
-    assertEquals(singletonList(address("157.240.1.18")), result);
+    assertThat(result).isEqualTo(singletonList(address("157.240.1.18")));
 
     RecordedRequest recordedRequest = server.takeRequest();
-    assertEquals("GET", recordedRequest.getMethod());
-    assertEquals("/lookup?ct&dns=AAABAAABAAAAAAAABmdvb2dsZQNjb20AAAEAAQ",
-        recordedRequest.getPath());
+    assertThat(recordedRequest.getMethod()).isEqualTo("GET");
+    assertThat(recordedRequest.getPath()).isEqualTo(
+        "/lookup?ct&dns=AAABAAABAAAAAAAABmdvb2dsZQNjb20AAAEAAQ");
   }
 
   @Test public void getIpv6() throws Exception {
@@ -84,20 +82,19 @@ public class DnsOverHttpsTest {
 
     List<InetAddress> result = dns.lookup("google.com");
 
-    assertEquals(2, result.size());
-    assertTrue(result.contains(address("157.240.1.18")));
-    assertTrue(result.contains(address("2a03:2880:f029:11:face:b00c:0:2")));
+    assertThat(result.size()).isEqualTo(2);
+    assertThat(result).contains(address("157.240.1.18"));
+    assertThat(result).contains(address("2a03:2880:f029:11:face:b00c:0:2"));
 
     RecordedRequest request1 = server.takeRequest();
-    assertEquals("GET", request1.getMethod());
+    assertThat(request1.getMethod()).isEqualTo("GET");
 
     RecordedRequest request2 = server.takeRequest();
-    assertEquals("GET", request2.getMethod());
+    assertThat(request2.getMethod()).isEqualTo("GET");
 
-    assertEquals(new HashSet<>(
-            Arrays.asList("/lookup?ct&dns=AAABAAABAAAAAAAABmdvb2dsZQNjb20AAAEAAQ",
-                "/lookup?ct&dns=AAABAAABAAAAAAAABmdvb2dsZQNjb20AABwAAQ")),
-        new LinkedHashSet<>(Arrays.asList(request1.getPath(), request2.getPath())));
+    assertThat(asList(request1.getPath(), request2.getPath())).containsExactlyInAnyOrder(
+        "/lookup?ct&dns=AAABAAABAAAAAAAABmdvb2dsZQNjb20AAAEAAQ",
+        "/lookup?ct&dns=AAABAAABAAAAAAAABmdvb2dsZQNjb20AABwAAQ");
   }
 
   @Test public void failure() throws Exception {
@@ -111,13 +108,13 @@ public class DnsOverHttpsTest {
       fail();
     } catch (UnknownHostException uhe) {
       uhe.printStackTrace();
-      assertEquals("google.com: NXDOMAIN", uhe.getMessage());
+      assertThat(uhe.getMessage()).isEqualTo("google.com: NXDOMAIN");
     }
 
     RecordedRequest recordedRequest = server.takeRequest();
-    assertEquals("GET", recordedRequest.getMethod());
-    assertEquals("/lookup?ct&dns=AAABAAABAAAAAAAABmdvb2dsZQNjb20AAAEAAQ",
-        recordedRequest.getPath());
+    assertThat(recordedRequest.getMethod()).isEqualTo("GET");
+    assertThat(recordedRequest.getPath()).isEqualTo(
+        "/lookup?ct&dns=AAABAAABAAAAAAAABmdvb2dsZQNjb20AAAEAAQ");
   }
 
   @Test public void failOnExcessiveResponse() {
@@ -129,10 +126,10 @@ public class DnsOverHttpsTest {
       dns.lookup("google.com");
       fail();
     } catch (IOException ioe) {
-      assertEquals("google.com", ioe.getMessage());
+      assertThat(ioe.getMessage()).isEqualTo("google.com");
       Throwable cause = ioe.getCause();
-      assertTrue(cause instanceof IOException);
-      assertEquals("response size exceeds limit (65536 bytes): 65537 bytes", cause.getMessage());
+      assertThat(cause).isInstanceOf(IOException.class);
+      assertThat(cause).hasMessage("response size exceeds limit (65536 bytes): 65537 bytes");
     }
   }
 
@@ -143,9 +140,8 @@ public class DnsOverHttpsTest {
       dns.lookup("google.com");
       fail();
     } catch (IOException ioe) {
-      assertEquals("google.com", ioe.getMessage());
-      Throwable cause = ioe.getCause();
-      assertTrue(cause instanceof RuntimeException);
+      assertThat(ioe).hasMessage("google.com");
+      assertThat(ioe.getCause()).isInstanceOf(EOFException.class);
     }
   }
 
@@ -170,15 +166,15 @@ public class DnsOverHttpsTest {
 
     List<InetAddress> result = cachedDns.lookup("google.com");
 
-    assertEquals(singletonList(address("157.240.1.18")), result);
+    assertThat(result).containsExactly(address("157.240.1.18"));
 
     RecordedRequest recordedRequest = server.takeRequest();
-    assertEquals("GET", recordedRequest.getMethod());
-    assertEquals("/lookup?ct&dns=AAABAAABAAAAAAAABmdvb2dsZQNjb20AAAEAAQ",
-        recordedRequest.getPath());
+    assertThat(recordedRequest.getMethod()).isEqualTo("GET");
+    assertThat(recordedRequest.getPath()).isEqualTo(
+        "/lookup?ct&dns=AAABAAABAAAAAAAABmdvb2dsZQNjb20AAAEAAQ");
 
     result = cachedDns.lookup("google.com");
-    assertEquals(singletonList(address("157.240.1.18")), result);
+    assertThat(result).isEqualTo(singletonList(address("157.240.1.18")));
   }
 
   private MockResponse dnsResponse(String s) {

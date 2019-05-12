@@ -19,15 +19,13 @@ import java.io.IOException;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingDeque;
 import javax.annotation.Nullable;
-import okhttp3.sse.EventSource;
-import okhttp3.sse.EventSourceListener;
 import okhttp3.Response;
 import okhttp3.internal.platform.Platform;
+import okhttp3.sse.EventSource;
+import okhttp3.sse.EventSourceListener;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import static org.assertj.core.api.Assertions.assertThat;
 
 public final class EventSourceRecorder extends EventSourceListener {
   private final BlockingQueue<Object> events = new LinkedBlockingDeque<>();
@@ -67,12 +65,12 @@ public final class EventSourceRecorder extends EventSourceListener {
   }
 
   public void assertExhausted() {
-    assertTrue("Remaining events: " + events, events.isEmpty());
+    assertThat(events).isEmpty();
   }
 
   public void assertEvent(@Nullable String id, @Nullable String type, String data) {
     Object actual = nextEvent();
-    assertEquals(new Event(id, type, data), actual);
+    assertThat(actual).isEqualTo(new Event(id, type, data));
   }
 
   public EventSource assertOpen() {
@@ -96,9 +94,9 @@ public final class EventSourceRecorder extends EventSourceListener {
       throw new AssertionError("Expected Failure but was " + event);
     }
     if (message != null) {
-      assertEquals(message, ((Failure) event).t.getMessage());
+      assertThat(((Failure) event).t.getMessage()).isEqualTo(message);
     } else {
-      assertNull(((Failure) event).t);
+      assertThat(((Failure) event).t).isNull();
     }
   }
 

@@ -1,0 +1,4 @@
+dependencies {
+  implementation project(':okhttp')
+  implementation deps.moshi
+}

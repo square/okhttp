@@ -2,22 +2,17 @@ language: java
 
 jdk:
   - oraclejdk8
-#  - openjdk11
 
-addons:
-  apt:
-    packages:
-      - oracle-java8-installer # Updates JDK 8 to the latest available.
-
-script: mvn test javadoc:jar source:jar -B
+script:
+ - ./gradlew check
 
 after_success:
   - .buildscript/deploy_snapshot.sh
 
 env:
   global:
-    - secure: "S0BTJVrF4fUCwhTdmoQY6LYr5r1wgXZ/p8lc5bIgUUsc1Ckalwt7s/GDwPuLJ4702sI5t56Eye2iEIMUjeFJKqebZRsX1C5oYsYFxGi3BGlepstYpmj0gLXuSWqCLniS9zmHXCxLhLkC6KxPVjhDlbq76XQx0o3K1J8oEIj/PCE="
-    - secure: "awV7yLXURjlPbTOladsNDZk74KYCNXoiZpAP0gQFfK4Sc0fc7+kg8z/yhdWXeTxjsIZ6m0dVDHTqnH8ytnydwXpBam8JdQJ+EAWA6R3Svq1BR1bzl/PcZUoz+Xn8lMXdU3yA1p4qtQlUhMxwsE3MOVe24HSDJPAu4XeWFj1j3qo="
+    - secure: "fELrorBJHDz+Xk9iSVMnamu0qC0+pYnFvjnEIcGnmKMMxLI/CIMACghIfSkqZhKAcU3hvxgWzyY8JBMnf5tykUjjOwmubAjZ9qIvwujtrUoUitUkpvVaPtqF0d1Yx0Xq4qt3NB9cOugPR/cPGnoEvSKfND3g+o5ta7KzdjwMBCY="
+    - secure: "WMkcWrsvzJNf48w7DJwipUNbhAoggCkC+NM31esq9/GDceGtVWj4hssQETynG4+ckxr0wGqUxsTRTz0uGhX6Fi58haG8yKp+g/HVClqI5EYjI44ptPcwlqlbYjuGbk65k1OGGZLctA6fQA3uT0zee05/yBjJx/jOqrN+PD1tW38="
 
 branches:
   except:
@@ -28,6 +23,11 @@ notifications:
 
 sudo: false
 
+before_cache:
+  - rm -f  $HOME/.gradle/caches/modules-2/modules-2.lock
+  - rm -fr $HOME/.gradle/caches/*/plugin-resolution/
+
 cache:
   directories:
-    - $HOME/.m2
+    - $HOME/.gradle/caches/
+    - $HOME/.gradle/wrapper/

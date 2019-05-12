@@ -18,8 +18,6 @@ package okhttp3.internal;
 import java.io.Closeable;
 import java.io.IOException;
 import java.io.InterruptedIOException;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.net.IDN;
 import java.net.InetAddress;
 import java.net.ServerSocket;
@@ -27,8 +25,6 @@ import java.net.Socket;
 import java.net.UnknownHostException;
 import java.nio.charset.Charset;
 import java.security.AccessControlException;
-import java.security.GeneralSecurityException;
-import java.security.KeyStore;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -42,14 +38,14 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 import javax.annotation.Nullable;
-import javax.net.ssl.TrustManager;
-import javax.net.ssl.TrustManagerFactory;
 import javax.net.ssl.X509TrustManager;
+import okhttp3.EventListener;
 import okhttp3.Headers;
 import okhttp3.HttpUrl;
 import okhttp3.RequestBody;
 import okhttp3.ResponseBody;
 import okhttp3.internal.http2.Header;
+import okhttp3.internal.platform.Platform;
 import okio.Buffer;
 import okio.BufferedSource;
 import okio.ByteString;
@@ -59,6 +55,8 @@ import okio.Source;
 import static java.nio.charset.StandardCharsets.UTF_16BE;
 import static java.nio.charset.StandardCharsets.UTF_16LE;
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static java.util.Arrays.asList;
+import static okhttp3.internal.InternalKtKt.addHeaderLenient;
 
 /** Junk drawer of utility methods. */
 public final class Util {
@@ -84,32 +82,7 @@ public final class Util {
   /** GMT and UTC are equivalent for our purposes. */
   public static final TimeZone UTC = TimeZone.getTimeZone("GMT");
 
-  public static final Comparator<String> NATURAL_ORDER = new Comparator<String>() {
-    @Override public int compare(String a, String b) {
-      return a.compareTo(b);
-    }
-  };
-
-  private static final Method addSuppressedExceptionMethod;
-
-  static {
-    Method m;
-    try {
-      m = Throwable.class.getDeclaredMethod("addSuppressed", Throwable.class);
-    } catch (Exception e) {
-      m = null;
-    }
-    addSuppressedExceptionMethod = m;
-  }
-
-  public static void addSuppressedIfPossible(Throwable e, Throwable suppressed) {
-    if (addSuppressedExceptionMethod != null) {
-      try {
-        addSuppressedExceptionMethod.invoke(e, suppressed);
-      } catch (InvocationTargetException | IllegalAccessException ignored) {
-      }
-    }
-  }
+  public static final Comparator<String> NATURAL_ORDER = String::compareTo;
 
   /**
    * Quick and dirty pattern to differentiate IP addresses from hostnames. This is an approximation
@@ -235,16 +208,14 @@ public final class Util {
   /** Returns an immutable list containing {@code elements}. */
   @SafeVarargs
   public static <T> List<T> immutableList(T... elements) {
-    return Collections.unmodifiableList(Arrays.asList(elements.clone()));
+    return Collections.unmodifiableList(asList(elements.clone()));
   }
 
-  public static ThreadFactory threadFactory(final String name, final boolean daemon) {
-    return new ThreadFactory() {
-      @Override public Thread newThread(Runnable runnable) {
-        Thread result = new Thread(runnable, name);
-        result.setDaemon(daemon);
-        return result;
-      }
+  public static ThreadFactory threadFactory(String name, boolean daemon) {
+    return runnable -> {
+      Thread result = new Thread(runnable, name);
+      result.setDaemon(daemon);
+      return result;
     };
   }
 
@@ -263,7 +234,7 @@ public final class Util {
         }
       }
     }
-    return result.toArray(new String[result.size()]);
+    return result.toArray(new String[0]);
   }
 
   /**
@@ -313,8 +284,7 @@ public final class Util {
   }
 
   public static String[] concat(String[] array, String value) {
-    String[] result = new String[array.length + 1];
-    System.arraycopy(array, 0, result, 0, array.length);
+    String[] result = Arrays.copyOf(array, array.length + 1);
     result[result.length - 1] = value;
     return result;
   }
@@ -640,25 +610,13 @@ public final class Util {
   }
 
   public static X509TrustManager platformTrustManager() {
-    try {
-      TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance(
-          TrustManagerFactory.getDefaultAlgorithm());
-      trustManagerFactory.init((KeyStore) null);
-      TrustManager[] trustManagers = trustManagerFactory.getTrustManagers();
-      if (trustManagers.length != 1 || !(trustManagers[0] instanceof X509TrustManager)) {
-        throw new IllegalStateException("Unexpected default trust managers:"
-            + Arrays.toString(trustManagers));
-      }
-      return (X509TrustManager) trustManagers[0];
-    } catch (GeneralSecurityException e) {
-      throw new AssertionError("No System TLS", e); // The system has no TLS. Just give up.
-    }
+    return Platform.get().platformTrustManager();
   }
 
   public static Headers toHeaders(List<Header> headerBlock) {
     Headers.Builder builder = new Headers.Builder();
     for (Header header : headerBlock) {
-      Internal.instance.addLenient(builder, header.name.utf8(), header.value.utf8());
+      addHeaderLenient(builder, header.name.utf8(), header.value.utf8());
     }
     return builder.build();
   }
@@ -672,16 +630,27 @@ public final class Util {
   }
 
   /**
-   * Returns the system property, or defaultValue if the system property is null or
+   * Returns the system property, or {@code defaultValue} if the system property is null or
    * cannot be read (e.g. because of security policy restrictions).
    */
   public static String getSystemProperty(String key, @Nullable String defaultValue) {
-    final String value;
+    String value;
     try {
       value = System.getProperty(key);
     } catch (AccessControlException ex) {
       return defaultValue;
     }
     return value != null ? value : defaultValue;
+  }
+
+  /** Returns true if an HTTP request for {@code a} and {@code b} can reuse a connection. */
+  public static boolean sameConnection(HttpUrl a, HttpUrl b) {
+    return a.host().equals(b.host())
+        && a.port() == b.port()
+        && a.scheme().equals(b.scheme());
+  }
+
+  public static EventListener.Factory eventListenerFactory(EventListener listener) {
+    return call -> listener;
   }
 }

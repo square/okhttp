@@ -17,19 +17,19 @@ package okhttp3;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Deque;
 import java.util.List;
 
-import static org.junit.Assert.assertEquals;
+import static java.util.Arrays.asList;
+import static org.assertj.core.api.Assertions.assertThat;
 
 public final class RecordingCookieJar implements CookieJar {
   private final Deque<List<Cookie>> requestCookies = new ArrayDeque<>();
   private final Deque<List<Cookie>> responseCookies = new ArrayDeque<>();
 
   public void enqueueRequestCookies(Cookie... cookies) {
-    requestCookies.add(Arrays.asList(cookies));
+    requestCookies.add(asList(cookies));
   }
 
   public List<Cookie> takeResponseCookies() {
@@ -42,7 +42,7 @@ public final class RecordingCookieJar implements CookieJar {
     for (Cookie cookie : actualCookies) {
       actualCookieStrings.add(cookie.toString());
     }
-    assertEquals(Arrays.asList(cookies), actualCookieStrings);
+    assertThat(actualCookieStrings).containsExactly(cookies);
   }
 
   @Override public void saveFromResponse(HttpUrl url, List<Cookie> cookies) {
