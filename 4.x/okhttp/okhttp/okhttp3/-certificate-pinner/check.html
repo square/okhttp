@@ -1,0 +1,21 @@
+<HTML>
+<HEAD>
+<meta charset="UTF-8">
+<title>CertificatePinner.check - okhttp</title>
+<link rel="stylesheet" href="../../../style.css">
+</HEAD>
+<BODY>
+<a href="../../index.html">okhttp</a>&nbsp;/&nbsp;<a href="../index.html">okhttp3</a>&nbsp;/&nbsp;<a href="index.html">CertificatePinner</a>&nbsp;/&nbsp;<a href="./check.html">check</a><br/>
+<br/>
+<h1>check</h1>
+<a name="okhttp3.CertificatePinner$check(kotlin.String, kotlin.collections.List((java.security.cert.Certificate)))"></a>
+<code><span class="keyword">fun </span><span class="identifier">check</span><span class="symbol">(</span><span class="identifier" id="okhttp3.CertificatePinner$check(kotlin.String, kotlin.collections.List((java.security.cert.Certificate)))/hostname">hostname</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><span class="identifier">String</span></a><span class="symbol">, </span><span class="identifier" id="okhttp3.CertificatePinner$check(kotlin.String, kotlin.collections.List((java.security.cert.Certificate)))/peerCertificates">peerCertificates</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.html"><span class="identifier">List</span></a><span class="symbol">&lt;</span><a href="https://docs.oracle.com/javase/8/docs/api/java/security/cert/Certificate.html"><span class="identifier">Certificate</span></a><span class="symbol">&gt;</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code>
+<p>Confirms that at least one of the certificates pinned for <code>hostname</code> is in <code>peerCertificates</code>.
+Does nothing if there are no certificates pinned for <code>hostname</code>. OkHttp calls this after a
+successful TLS handshake, but before the connection is used.</p>
+<h3>Exceptions</h3>
+<p><a name="SSLPeerUnverifiedException"></a>
+<code>SSLPeerUnverifiedException</code> - if <code>peerCertificates</code> don't match the certificates pinned
+    for <code>hostname</code>.</p>
+</BODY>
+</HTML>

@@ -1,0 +1,18 @@
+<HTML>
+<HEAD>
+<meta charset="UTF-8">
+<title>EventListener.connectFailed - okhttp</title>
+<link rel="stylesheet" href="../../../style.css">
+</HEAD>
+<BODY>
+<a href="../../index.html">okhttp</a>&nbsp;/&nbsp;<a href="../index.html">okhttp3</a>&nbsp;/&nbsp;<a href="index.html">EventListener</a>&nbsp;/&nbsp;<a href="./connect-failed.html">connectFailed</a><br/>
+<br/>
+<h1>connectFailed</h1>
+<a name="okhttp3.EventListener$connectFailed(okhttp3.Call, java.net.InetSocketAddress, java.net.Proxy, okhttp3.Protocol, java.io.IOException)"></a>
+<code><span class="keyword">open</span> <span class="keyword">fun </span><span class="identifier">connectFailed</span><span class="symbol">(</span><span class="identifier" id="okhttp3.EventListener$connectFailed(okhttp3.Call, java.net.InetSocketAddress, java.net.Proxy, okhttp3.Protocol, java.io.IOException)/call">call</span><span class="symbol">:</span>&nbsp;<a href="../-call/index.html"><span class="identifier">Call</span></a><span class="symbol">, </span><span class="identifier" id="okhttp3.EventListener$connectFailed(okhttp3.Call, java.net.InetSocketAddress, java.net.Proxy, okhttp3.Protocol, java.io.IOException)/inetSocketAddress">inetSocketAddress</span><span class="symbol">:</span>&nbsp;<a href="https://docs.oracle.com/javase/8/docs/api/java/net/InetSocketAddress.html"><span class="identifier">InetSocketAddress</span></a><span class="symbol">, </span><span class="identifier" id="okhttp3.EventListener$connectFailed(okhttp3.Call, java.net.InetSocketAddress, java.net.Proxy, okhttp3.Protocol, java.io.IOException)/proxy">proxy</span><span class="symbol">:</span>&nbsp;<a href="https://docs.oracle.com/javase/8/docs/api/java/net/Proxy.html"><span class="identifier">Proxy</span></a><span class="symbol">, </span><span class="identifier" id="okhttp3.EventListener$connectFailed(okhttp3.Call, java.net.InetSocketAddress, java.net.Proxy, okhttp3.Protocol, java.io.IOException)/protocol">protocol</span><span class="symbol">:</span>&nbsp;<a href="../-protocol/index.html"><span class="identifier">Protocol</span></a><span class="symbol">?</span><span class="symbol">, </span><span class="identifier" id="okhttp3.EventListener$connectFailed(okhttp3.Call, java.net.InetSocketAddress, java.net.Proxy, okhttp3.Protocol, java.io.IOException)/ioe">ioe</span><span class="symbol">:</span>&nbsp;<a href="https://docs.oracle.com/javase/8/docs/api/java/io/IOException.html"><span class="identifier">IOException</span></a><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code>
+<p>Invoked when a connection attempt fails. This failure is not terminal if further routes are
+available and failure recovery is enabled.</p>
+<p>If the <code>call</code> uses HTTPS, this will be invoked after <a href="secure-connect-end.html">secureConnectEnd</a>, otherwise it will
+invoked after <a href="connect-start.html">connectStart</a>.</p>
+</BODY>
+</HTML>

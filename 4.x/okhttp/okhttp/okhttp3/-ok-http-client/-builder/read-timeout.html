@@ -1,0 +1,24 @@
+<HTML>
+<HEAD>
+<meta charset="UTF-8">
+<title>OkHttpClient.Builder.readTimeout - okhttp</title>
+<link rel="stylesheet" href="../../../../style.css">
+</HEAD>
+<BODY>
+<a href="../../../index.html">okhttp</a>&nbsp;/&nbsp;<a href="../../index.html">okhttp3</a>&nbsp;/&nbsp;<a href="../index.html">OkHttpClient</a>&nbsp;/&nbsp;<a href="index.html">Builder</a>&nbsp;/&nbsp;<a href="./read-timeout.html">readTimeout</a><br/>
+<br/>
+<h1>readTimeout</h1>
+<a name="okhttp3.OkHttpClient.Builder$readTimeout(kotlin.Long, java.util.concurrent.TimeUnit)"></a>
+<code><span class="keyword">fun </span><span class="identifier">readTimeout</span><span class="symbol">(</span><span class="identifier" id="okhttp3.OkHttpClient.Builder$readTimeout(kotlin.Long, java.util.concurrent.TimeUnit)/timeout">timeout</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html"><span class="identifier">Long</span></a><span class="symbol">, </span><span class="identifier" id="okhttp3.OkHttpClient.Builder$readTimeout(kotlin.Long, java.util.concurrent.TimeUnit)/unit">unit</span><span class="symbol">:</span>&nbsp;<a href="https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/TimeUnit.html"><span class="identifier">TimeUnit</span></a><span class="symbol">)</span><span class="symbol">: </span><a href="index.html"><span class="identifier">OkHttpClient.Builder</span></a></code><br/>
+<a name="okhttp3.OkHttpClient.Builder$readTimeout(java.time.Duration)"></a>
+<code><span class="identifier">@IgnoreJRERequirement</span> <span class="keyword">fun </span><span class="identifier">readTimeout</span><span class="symbol">(</span><span class="identifier" id="okhttp3.OkHttpClient.Builder$readTimeout(java.time.Duration)/duration">duration</span><span class="symbol">:</span>&nbsp;<a href="https://docs.oracle.com/javase/8/docs/api/java/time/Duration.html"><span class="identifier">Duration</span></a><span class="symbol">)</span><span class="symbol">: </span><a href="index.html"><span class="identifier">OkHttpClient.Builder</span></a></code>
+<p>Sets the default read timeout for new connections. A value of 0 means no timeout, otherwise
+values must be between 1 and <a href="https://docs.oracle.com/javase/8/docs/api/java/lang/Integer.html#MAX_VALUE">Integer.MAX_VALUE</a> when converted to milliseconds.</p>
+<p>The read timeout is applied to both the TCP socket and for individual read IO operations
+including on <a href="https://square.github.io/okio/2.x/okio/jvm/okio/-source/index.html">Source</a> of the <a href="../../-response/index.html">Response</a>. The default value is 10 seconds.</p>
+<p><strong>See Also</strong><br/>
+<p><a href="https://docs.oracle.com/javase/8/docs/api/java/net/Socket.html#setSoTimeout(int)">Socket.setSoTimeout</a></p>
+<p><a href="https://square.github.io/okio/2.x/okio/jvm/okio/-source/timeout.html">Source.timeout</a></p>
+</p>
+</BODY>
+</HTML>

@@ -1,0 +1,18 @@
+<HTML>
+<HEAD>
+<meta charset="UTF-8">
+<title>EventListener.Factory.create - okhttp</title>
+<link rel="stylesheet" href="../../../../style.css">
+</HEAD>
+<BODY>
+<a href="../../../index.html">okhttp</a>&nbsp;/&nbsp;<a href="../../index.html">okhttp3</a>&nbsp;/&nbsp;<a href="../index.html">EventListener</a>&nbsp;/&nbsp;<a href="index.html">Factory</a>&nbsp;/&nbsp;<a href="./create.html">create</a><br/>
+<br/>
+<h1>create</h1>
+<a name="okhttp3.EventListener.Factory$create(okhttp3.Call)"></a>
+<code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">create</span><span class="symbol">(</span><span class="identifier" id="okhttp3.EventListener.Factory$create(okhttp3.Call)/call">call</span><span class="symbol">:</span>&nbsp;<a href="../../-call/index.html"><span class="identifier">Call</span></a><span class="symbol">)</span><span class="symbol">: </span><a href="../index.html"><span class="identifier">EventListener</span></a></code>
+<p>Creates an instance of the <a href="../index.html">EventListener</a> for a particular <a href="../../-call/index.html">Call</a>. The returned
+<a href="../index.html">EventListener</a> instance will be used during the lifecycle of the <code>call</code>.</p>
+<p>This method is invoked after the <code>call</code> is created. See <a href="../../-ok-http-client/new-call.html">OkHttpClient.newCall</a>.</p>
+<p><strong>It is an error for implementations to issue any mutating operations on the <code>call</code> instancefrom this method.</strong></p>
+</BODY>
+</HTML>

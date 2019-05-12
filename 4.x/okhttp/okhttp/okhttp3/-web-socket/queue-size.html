@@ -1,0 +1,19 @@
+<HTML>
+<HEAD>
+<meta charset="UTF-8">
+<title>WebSocket.queueSize - okhttp</title>
+<link rel="stylesheet" href="../../../style.css">
+</HEAD>
+<BODY>
+<a href="../../index.html">okhttp</a>&nbsp;/&nbsp;<a href="../index.html">okhttp3</a>&nbsp;/&nbsp;<a href="index.html">WebSocket</a>&nbsp;/&nbsp;<a href="./queue-size.html">queueSize</a><br/>
+<br/>
+<h1>queueSize</h1>
+<a name="okhttp3.WebSocket$queueSize()"></a>
+<code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">queueSize</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html"><span class="identifier">Long</span></a></code>
+<p>Returns the size in bytes of all messages enqueued to be transmitted to the server. This
+doesn't include framing overhead. It also doesn't include any bytes buffered by the operating
+system or network intermediaries. This method returns 0 if no messages are waiting in the
+queue. If may return a nonzero value after the web socket has been canceled; this indicates
+that enqueued messages were not transmitted.</p>
+</BODY>
+</HTML>

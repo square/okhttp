@@ -1,0 +1,166 @@
+<HTML>
+<HEAD>
+<meta charset="UTF-8">
+<title>SocketPolicy - mockwebserver</title>
+<link rel="stylesheet" href="../../../style.css">
+</HEAD>
+<BODY>
+<a href="../../index.html">mockwebserver</a>&nbsp;/&nbsp;<a href="../index.html">okhttp3.mockwebserver</a>&nbsp;/&nbsp;<a href="./index.html">SocketPolicy</a><br/>
+<br/>
+<h1>SocketPolicy</h1>
+<code><span class="keyword">enum</span> <span class="keyword">class </span><span class="identifier">SocketPolicy</span></code>
+<p>What should be done with the incoming socket.</p>
+<p>Be careful when using values like <a href="-d-i-s-c-o-n-n-e-c-t_-a-t_-e-n-d.html">DISCONNECT_AT_END</a>, <a href="-s-h-u-t-d-o-w-n_-i-n-p-u-t_-a-t_-e-n-d.html">SHUTDOWN_INPUT_AT_END</a>
+and <a href="-s-h-u-t-d-o-w-n_-o-u-t-p-u-t_-a-t_-e-n-d.html">SHUTDOWN_OUTPUT_AT_END</a> that close a socket after a response, and where there are
+follow-up requests. The client is unblocked and free to continue as soon as it has received the
+entire response body. If and when the client makes a subsequent request using a pooled socket the
+server may not have had time to close the socket. The socket will be closed at an indeterminate
+point before or during the second request. It may be closed after client has started sending the
+request body. If a request body is not retryable then the client may fail the request, making
+client behavior non-deterministic. Add delays in the client to improve the chances that the
+server has closed the socket before follow up requests are made.</p>
+<h3>Enum Values</h3>
+<table>
+<tbody>
+<tr>
+<td>
+<p><a href="-s-h-u-t-d-o-w-n_-s-e-r-v-e-r_-a-f-t-e-r_-r-e-s-p-o-n-s-e.html">SHUTDOWN_SERVER_AFTER_RESPONSE</a></p>
+</td>
+<td>
+<p>Shutdown <a href="../-mock-web-server/index.html">MockWebServer</a> after writing response.</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><a href="-k-e-e-p_-o-p-e-n.html">KEEP_OPEN</a></p>
+</td>
+<td>
+<p>Keep the socket open after the response. This is the default HTTP/1.1 behavior.</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><a href="-d-i-s-c-o-n-n-e-c-t_-a-t_-e-n-d.html">DISCONNECT_AT_END</a></p>
+</td>
+<td>
+<p>Close the socket after the response. This is the default HTTP/1.0 behavior. For HTTP/2
+connections, this sends a <a href="https://tools.ietf.org/html/rfc7540#section-6.8">GOAWAYframe</a>
+immediately after the response and will close the connection when the client's socket
+is exhausted.</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><a href="-u-p-g-r-a-d-e_-t-o_-s-s-l_-a-t_-e-n-d.html">UPGRADE_TO_SSL_AT_END</a></p>
+</td>
+<td>
+<p>Wrap the socket with SSL at the completion of this request/response pair. Used for CONNECT
+messages to tunnel SSL over an HTTP proxy.</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><a href="-d-i-s-c-o-n-n-e-c-t_-a-t_-s-t-a-r-t.html">DISCONNECT_AT_START</a></p>
+</td>
+<td>
+<p>Request immediate close of connection without even reading the request. Use to simulate buggy
+SSL servers closing connections in response to unrecognized TLS extensions.</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><a href="-d-i-s-c-o-n-n-e-c-t_-a-f-t-e-r_-r-e-q-u-e-s-t.html">DISCONNECT_AFTER_REQUEST</a></p>
+</td>
+<td>
+<p>Close connection after reading the request but before writing the response. Use this to
+simulate late connection pool failures.</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><a href="-d-i-s-c-o-n-n-e-c-t_-d-u-r-i-n-g_-r-e-q-u-e-s-t_-b-o-d-y.html">DISCONNECT_DURING_REQUEST_BODY</a></p>
+</td>
+<td>
+<p>Close connection after reading half of the request body (if present).</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><a href="-d-i-s-c-o-n-n-e-c-t_-d-u-r-i-n-g_-r-e-s-p-o-n-s-e_-b-o-d-y.html">DISCONNECT_DURING_RESPONSE_BODY</a></p>
+</td>
+<td>
+<p>Close connection after writing half of the response body (if present).</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><a href="-f-a-i-l_-h-a-n-d-s-h-a-k-e.html">FAIL_HANDSHAKE</a></p>
+</td>
+<td>
+<p>Don't trust the client during the SSL handshake.</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><a href="-s-h-u-t-d-o-w-n_-i-n-p-u-t_-a-t_-e-n-d.html">SHUTDOWN_INPUT_AT_END</a></p>
+</td>
+<td>
+<p>Shutdown the socket input after sending the response. For testing bad behavior.</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><a href="-s-h-u-t-d-o-w-n_-o-u-t-p-u-t_-a-t_-e-n-d.html">SHUTDOWN_OUTPUT_AT_END</a></p>
+</td>
+<td>
+<p>Shutdown the socket output after sending the response. For testing bad behavior.</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><a href="-s-t-a-l-l_-s-o-c-k-e-t_-a-t_-s-t-a-r-t.html">STALL_SOCKET_AT_START</a></p>
+</td>
+<td>
+<p>After accepting the connection and doing TLS (if configured) don't do HTTP/1.1 or HTTP/2
+framing. Ignore the socket completely until the server is shut down.</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><a href="-n-o_-r-e-s-p-o-n-s-e.html">NO_RESPONSE</a></p>
+</td>
+<td>
+<p>Read the request but don't respond to it. Just keep the socket open. For testing read response
+header timeout issue.</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><a href="-r-e-s-e-t_-s-t-r-e-a-m_-a-t_-s-t-a-r-t.html">RESET_STREAM_AT_START</a></p>
+</td>
+<td>
+<p>Fail HTTP/2 requests without processing them by sending an <a href="../-mock-response/get-http2-error-code.html">MockResponse.getHttp2ErrorCode</a>.</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><a href="-e-x-p-e-c-t_-c-o-n-t-i-n-u-e.html">EXPECT_CONTINUE</a></p>
+</td>
+<td>
+<p>Transmit a <code>HTTP/1.1 100 Continue</code> response before reading the HTTP request body.
+Typically this response is sent when a client makes a request with the header <code>Expect: 100-continue</code>.</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><a href="-c-o-n-t-i-n-u-e_-a-l-w-a-y-s.html">CONTINUE_ALWAYS</a></p>
+</td>
+<td>
+<p>Transmit a <code>HTTP/1.1 100 Continue</code> response before reading the HTTP request body even
+if the client does not send the header <code>Expect: 100-continue</code> in its request.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</BODY>
+</HTML>

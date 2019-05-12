@@ -1,0 +1,264 @@
+<HTML>
+<HEAD>
+<meta charset="UTF-8">
+<title>Cache - okhttp</title>
+<link rel="stylesheet" href="../../../style.css">
+</HEAD>
+<BODY>
+<a href="../../index.html">okhttp</a>&nbsp;/&nbsp;<a href="../index.html">okhttp3</a>&nbsp;/&nbsp;<a href="./index.html">Cache</a><br/>
+<br/>
+<h1>Cache</h1>
+<code><span class="keyword">class </span><span class="identifier">Cache</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="https://docs.oracle.com/javase/8/docs/api/java/io/Closeable.html"><span class="identifier">Closeable</span></a><span class="symbol">, </span><a href="https://docs.oracle.com/javase/8/docs/api/java/io/Flushable.html"><span class="identifier">Flushable</span></a></code>
+<p>Caches HTTP and HTTPS responses to the filesystem so they may be reused, saving time and
+bandwidth.</p>
+<h2>Cache Optimization</h2>
+<p>To measure cache effectiveness, this class tracks three statistics:</p>
+<ul><li><strong><a href="request-count.html">Request Count:</a></strong> the number of HTTP requests issued since this cache was
+    created.</li>
+<li><strong><a href="network-count.html">Network Count:</a></strong> the number of those requests that required network use.</li>
+<li><strong><a href="hit-count.html">Hit Count:</a></strong> the number of those requests whose responses were served by the
+    cache.</li>
+</ul>
+<p>Sometimes a request will result in a conditional cache hit. If the cache contains a stale copy of
+the response, the client will issue a conditional <code>GET</code>. The server will then send either
+the updated response if it has changed, or a short 'not modified' response if the client's copy
+is still valid. Such responses increment both the network count and hit count.</p>
+<p>The best way to improve the cache hit rate is by configuring the web server to return cacheable
+responses. Although this client honors all <a href="http://tools.ietf.org/html/rfc7234">HTTP/1.1 (RFC 7234)</a> cache headers, it
+doesn't cache partial responses.</p>
+<h2>Force a Network Response</h2>
+<p>In some situations, such as after a user clicks a 'refresh' button, it may be necessary to skip
+the cache, and fetch data directly from the server. To force a full refresh, add the <code>no-cache</code>
+directive:</p>
+<pre><code>Request request = new Request.Builder()
+    .cacheControl(new CacheControl.Builder().noCache().build())
+    .url("http://publicobject.com/helloworld.txt")
+    .build();
+</code></pre>
+<p>If it is only necessary to force a cached response to be validated by the server, use the more
+efficient <code>max-age=0</code> directive instead:</p>
+<pre><code>Request request = new Request.Builder()
+    .cacheControl(new CacheControl.Builder()
+        .maxAge(0, TimeUnit.SECONDS)
+        .build())
+    .url("http://publicobject.com/helloworld.txt")
+    .build();
+</code></pre>
+<h2>Force a Cache Response</h2>
+<p>Sometimes you'll want to show resources if they are available immediately, but not otherwise.
+This can be used so your application can show <em>something</em> while waiting for the latest data to be
+downloaded. To restrict a request to locally-cached resources, add the <code>only-if-cached</code>
+directive:</p>
+<pre><code>Request request = new Request.Builder()
+    .cacheControl(new CacheControl.Builder()
+        .onlyIfCached()
+        .build())
+    .url("http://publicobject.com/helloworld.txt")
+    .build();
+Response forceCacheResponse = client.newCall(request).execute();
+if (forceCacheResponse.code() != 504) {
+  // The resource was cached! Show it.
+} else {
+  // The resource was not cached.
+}
+</code></pre>
+<p>This technique works even better in situations where a stale response is better than no response.
+To permit stale cached responses, use the <code>max-stale</code> directive with the maximum staleness in
+seconds:</p>
+<pre><code>Request request = new Request.Builder()
+    .cacheControl(new CacheControl.Builder()
+        .maxStale(365, TimeUnit.DAYS)
+        .build())
+    .url("http://publicobject.com/helloworld.txt")
+    .build();
+</code></pre>
+<p>The <a href="../-cache-control/index.html">CacheControl</a> class can configure request caching directives and parse response caching
+directives. It even offers convenient constants <a href="../-cache-control/-f-o-r-c-e_-n-e-t-w-o-r-k.html">CacheControl.FORCE_NETWORK</a> and
+<a href="../-cache-control/-f-o-r-c-e_-c-a-c-h-e.html">CacheControl.FORCE_CACHE</a> that address the use cases above.</p>
+<h3>Constructors</h3>
+<table>
+<tbody>
+<tr>
+<td>
+<p><a href="-init-.html">&lt;init&gt;</a></p>
+</td>
+<td>
+<code><span class="identifier">Cache</span><span class="symbol">(</span><span class="identifier" id="okhttp3.Cache$<init>(java.io.File, kotlin.Long)/directory">directory</span><span class="symbol">:</span>&nbsp;<a href="https://docs.oracle.com/javase/8/docs/api/java/io/File.html"><span class="identifier">File</span></a><span class="symbol">, </span><span class="identifier" id="okhttp3.Cache$<init>(java.io.File, kotlin.Long)/maxSize">maxSize</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html"><span class="identifier">Long</span></a><span class="symbol">)</span></code>
+<p>Create a cache of at most <code>maxSize</code> bytes in <code>directory</code>.</p>
+</td>
+</tr>
+</tbody>
+</table>
+<h3>Properties</h3>
+<table>
+<tbody>
+<tr>
+<td>
+<p><a href="is-closed.html">isClosed</a></p>
+</td>
+<td>
+<code><span class="keyword">val </span><span class="identifier">isClosed</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code></td>
+</tr>
+</tbody>
+</table>
+<h3>Functions</h3>
+<table>
+<tbody>
+<tr>
+<td>
+<p><a href="close.html">close</a></p>
+</td>
+<td>
+<code><span class="keyword">fun </span><span class="identifier">close</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code></td>
+</tr>
+<tr>
+<td>
+<p><a href="delete.html">delete</a></p>
+</td>
+<td>
+<code><span class="keyword">fun </span><span class="identifier">delete</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code>
+<p>Closes the cache and deletes all of its stored values. This will delete all files in the cache
+directory including files that weren't created by the cache.</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><a href="directory.html">directory</a></p>
+</td>
+<td>
+<code><span class="keyword">fun </span><span class="identifier">directory</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://docs.oracle.com/javase/8/docs/api/java/io/File.html"><span class="identifier">File</span></a></code></td>
+</tr>
+<tr>
+<td>
+<p><a href="evict-all.html">evictAll</a></p>
+</td>
+<td>
+<code><span class="keyword">fun </span><span class="identifier">evictAll</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code>
+<p>Deletes all values stored in the cache. In-flight writes to the cache will complete normally,
+but the corresponding responses will not be stored.</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><a href="flush.html">flush</a></p>
+</td>
+<td>
+<code><span class="keyword">fun </span><span class="identifier">flush</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code></td>
+</tr>
+<tr>
+<td>
+<p><a href="hit-count.html">hitCount</a></p>
+</td>
+<td>
+<code><span class="keyword">fun </span><span class="identifier">hitCount</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a></code></td>
+</tr>
+<tr>
+<td>
+<p><a href="initialize.html">initialize</a></p>
+</td>
+<td>
+<code><span class="keyword">fun </span><span class="identifier">initialize</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code>
+<p>Initialize the cache. This will include reading the journal files from the storage and building
+up the necessary in-memory cache information.</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><a href="max-size.html">maxSize</a></p>
+</td>
+<td>
+<code><span class="keyword">fun </span><span class="identifier">maxSize</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html"><span class="identifier">Long</span></a></code>
+<p>Max size of the cache (in bytes).</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><a href="network-count.html">networkCount</a></p>
+</td>
+<td>
+<code><span class="keyword">fun </span><span class="identifier">networkCount</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a></code></td>
+</tr>
+<tr>
+<td>
+<p><a href="request-count.html">requestCount</a></p>
+</td>
+<td>
+<code><span class="keyword">fun </span><span class="identifier">requestCount</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a></code></td>
+</tr>
+<tr>
+<td>
+<p><a href="size.html">size</a></p>
+</td>
+<td>
+<code><span class="keyword">fun </span><span class="identifier">size</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html"><span class="identifier">Long</span></a></code></td>
+</tr>
+<tr>
+<td>
+<p><a href="urls.html">urls</a></p>
+</td>
+<td>
+<code><span class="keyword">fun </span><span class="identifier">urls</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-mutable-iterator/index.html"><span class="identifier">MutableIterator</span></a><span class="symbol">&lt;</span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><span class="identifier">String</span></a><span class="symbol">&gt;</span></code>
+<p>Returns an iterator over the URLs in this cache. This iterator doesn't throw
+<code>ConcurrentModificationException</code>, but if new responses are added while iterating, their URLs
+will not be returned. If existing responses are evicted during iteration, they will be absent
+(unless they were already returned).</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><a href="write-abort-count.html">writeAbortCount</a></p>
+</td>
+<td>
+<code><span class="keyword">fun </span><span class="identifier">writeAbortCount</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a></code></td>
+</tr>
+<tr>
+<td>
+<p><a href="write-success-count.html">writeSuccessCount</a></p>
+</td>
+<td>
+<code><span class="keyword">fun </span><span class="identifier">writeSuccessCount</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a></code></td>
+</tr>
+</tbody>
+</table>
+<h3>Companion Object Functions</h3>
+<table>
+<tbody>
+<tr>
+<td>
+<p><a href="has-vary-all.html">hasVaryAll</a></p>
+</td>
+<td>
+<code><span class="keyword">fun </span><a href="../-response/index.html"><span class="identifier">Response</span></a><span class="symbol">.</span><span class="identifier">hasVaryAll</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code>
+<p>Returns true if a Vary header contains an asterisk. Such responses cannot be cached.</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><a href="key.html">key</a></p>
+</td>
+<td>
+<code><span class="keyword">fun </span><span class="identifier">key</span><span class="symbol">(</span><span class="identifier" id="okhttp3.Cache.Companion$key(okhttp3.HttpUrl)/url">url</span><span class="symbol">:</span>&nbsp;<a href="../-http-url/index.html"><span class="identifier">HttpUrl</span></a><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><span class="identifier">String</span></a></code></td>
+</tr>
+<tr>
+<td>
+<p><a href="vary-headers.html">varyHeaders</a></p>
+</td>
+<td>
+<code><span class="keyword">fun </span><a href="../-response/index.html"><span class="identifier">Response</span></a><span class="symbol">.</span><span class="identifier">varyHeaders</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="../-headers/index.html"><span class="identifier">Headers</span></a></code>
+<p>Returns the subset of the headers in this's request that impact the content of this's body.</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><a href="vary-matches.html">varyMatches</a></p>
+</td>
+<td>
+<code><span class="keyword">fun </span><span class="identifier">varyMatches</span><span class="symbol">(</span><span class="identifier" id="okhttp3.Cache.Companion$varyMatches(okhttp3.Response, okhttp3.Headers, okhttp3.Request)/cachedResponse">cachedResponse</span><span class="symbol">:</span>&nbsp;<a href="../-response/index.html"><span class="identifier">Response</span></a><span class="symbol">, </span><span class="identifier" id="okhttp3.Cache.Companion$varyMatches(okhttp3.Response, okhttp3.Headers, okhttp3.Request)/cachedRequest">cachedRequest</span><span class="symbol">:</span>&nbsp;<a href="../-headers/index.html"><span class="identifier">Headers</span></a><span class="symbol">, </span><span class="identifier" id="okhttp3.Cache.Companion$varyMatches(okhttp3.Response, okhttp3.Headers, okhttp3.Request)/newRequest">newRequest</span><span class="symbol">:</span>&nbsp;<a href="../-request/index.html"><span class="identifier">Request</span></a><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code>
+<p>Returns true if none of the Vary headers have changed between <a href="vary-matches.html#okhttp3.Cache.Companion$varyMatches(okhttp3.Response, okhttp3.Headers, okhttp3.Request)/cachedRequest">cachedRequest</a> and
+<a href="vary-matches.html#okhttp3.Cache.Companion$varyMatches(okhttp3.Response, okhttp3.Headers, okhttp3.Request)/newRequest">newRequest</a>.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</BODY>
+</HTML>

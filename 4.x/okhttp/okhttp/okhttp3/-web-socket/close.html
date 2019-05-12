@@ -1,0 +1,28 @@
+<HTML>
+<HEAD>
+<meta charset="UTF-8">
+<title>WebSocket.close - okhttp</title>
+<link rel="stylesheet" href="../../../style.css">
+</HEAD>
+<BODY>
+<a href="../../index.html">okhttp</a>&nbsp;/&nbsp;<a href="../index.html">okhttp3</a>&nbsp;/&nbsp;<a href="index.html">WebSocket</a>&nbsp;/&nbsp;<a href="./close.html">close</a><br/>
+<br/>
+<h1>close</h1>
+<a name="okhttp3.WebSocket$close(kotlin.Int, kotlin.String)"></a>
+<code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">close</span><span class="symbol">(</span><span class="identifier" id="okhttp3.WebSocket$close(kotlin.Int, kotlin.String)/code">code</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a><span class="symbol">, </span><span class="identifier" id="okhttp3.WebSocket$close(kotlin.Int, kotlin.String)/reason">reason</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><span class="identifier">String</span></a><span class="symbol">?</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code>
+<p>Attempts to initiate a graceful shutdown of this web socket. Any already-enqueued messages will
+be transmitted before the close message is sent but subsequent calls to <a href="send.html">send</a> will return
+false and their messages will not be enqueued.</p>
+<p>This returns true if a graceful shutdown was initiated by this call. It returns false if
+a graceful shutdown was already underway or if the web socket is already closed or canceled.</p>
+<h3>Parameters</h3>
+<p><a name="code"></a>
+<code>code</code> - Status code as defined by
+    <a href="http://tools.ietf.org/html/rfc6455#section-7.4">Section 7.4 of RFC 6455</a>.</p>
+<p><a name="reason"></a>
+<code>reason</code> - Reason for shutting down or null.</p>
+<h3>Exceptions</h3>
+<p><a name="IllegalArgumentException"></a>
+<code>IllegalArgumentException</code> - if code is invalid.</p>
+</BODY>
+</HTML>

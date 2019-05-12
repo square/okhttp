@@ -1,0 +1,188 @@
+<HTML>
+<HEAD>
+<meta charset="UTF-8">
+<title>CacheControl - okhttp</title>
+<link rel="stylesheet" href="../../../style.css">
+</HEAD>
+<BODY>
+<a href="../../index.html">okhttp</a>&nbsp;/&nbsp;<a href="../index.html">okhttp3</a>&nbsp;/&nbsp;<a href="./index.html">CacheControl</a><br/>
+<br/>
+<h1>CacheControl</h1>
+<code><span class="keyword">class </span><span class="identifier">CacheControl</span></code>
+<p>A Cache-Control header with cache directives from a server or client. These directives set policy
+on what responses can be stored, and which requests can be satisfied by those stored responses.</p>
+<p>See <a href="https://tools.ietf.org/html/rfc7234#section-5.2">RFC 7234, 5.2</a>.</p>
+<h3>Types</h3>
+<table>
+<tbody>
+<tr>
+<td>
+<p><a href="-builder/index.html">Builder</a></p>
+</td>
+<td>
+<code><span class="keyword">class </span><span class="identifier">Builder</span></code>
+<p>Builds a <code>Cache-Control</code> request header.</p>
+</td>
+</tr>
+</tbody>
+</table>
+<h3>Properties</h3>
+<table>
+<tbody>
+<tr>
+<td>
+<p><a href="is-private.html">isPrivate</a></p>
+</td>
+<td>
+<code><span class="keyword">val </span><span class="identifier">isPrivate</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code></td>
+</tr>
+<tr>
+<td>
+<p><a href="is-public.html">isPublic</a></p>
+</td>
+<td>
+<code><span class="keyword">val </span><span class="identifier">isPublic</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code></td>
+</tr>
+</tbody>
+</table>
+<h3>Functions</h3>
+<table>
+<tbody>
+<tr>
+<td>
+<p><a href="immutable.html">immutable</a></p>
+</td>
+<td>
+<code><span class="keyword">fun </span><span class="identifier">immutable</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code></td>
+</tr>
+<tr>
+<td>
+<p><a href="max-age-seconds.html">maxAgeSeconds</a></p>
+</td>
+<td>
+<code><span class="keyword">fun </span><span class="identifier">maxAgeSeconds</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a></code>
+<p>The duration past the response's served date that it can be served without validation.</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><a href="max-stale-seconds.html">maxStaleSeconds</a></p>
+</td>
+<td>
+<code><span class="keyword">fun </span><span class="identifier">maxStaleSeconds</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a></code></td>
+</tr>
+<tr>
+<td>
+<p><a href="min-fresh-seconds.html">minFreshSeconds</a></p>
+</td>
+<td>
+<code><span class="keyword">fun </span><span class="identifier">minFreshSeconds</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a></code></td>
+</tr>
+<tr>
+<td>
+<p><a href="must-revalidate.html">mustRevalidate</a></p>
+</td>
+<td>
+<code><span class="keyword">fun </span><span class="identifier">mustRevalidate</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code></td>
+</tr>
+<tr>
+<td>
+<p><a href="no-cache.html">noCache</a></p>
+</td>
+<td>
+<code><span class="keyword">fun </span><span class="identifier">noCache</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code>
+<p>In a response, this field's name "no-cache" is misleading. It doesn't prevent us from caching
+the response; it only means we have to validate the response with the origin server before
+returning it. We can do this with a conditional GET.</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><a href="no-store.html">noStore</a></p>
+</td>
+<td>
+<code><span class="keyword">fun </span><span class="identifier">noStore</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code>
+<p>If true, this response should not be cached.</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><a href="no-transform.html">noTransform</a></p>
+</td>
+<td>
+<code><span class="keyword">fun </span><span class="identifier">noTransform</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code></td>
+</tr>
+<tr>
+<td>
+<p><a href="only-if-cached.html">onlyIfCached</a></p>
+</td>
+<td>
+<code><span class="keyword">fun </span><span class="identifier">onlyIfCached</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code>
+<p>This field's name "only-if-cached" is misleading. It actually means "do not use the network".
+It is set by a client who only wants to make a request if it can be fully satisfied by the
+cache. Cached responses that would require validation (ie. conditional gets) are not permitted
+if this header is set.</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><a href="s-max-age-seconds.html">sMaxAgeSeconds</a></p>
+</td>
+<td>
+<code><span class="keyword">fun </span><span class="identifier">sMaxAgeSeconds</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a></code>
+<p>The "s-maxage" directive is the max age for shared caches. Not to be confused with "max-age"
+for non-shared caches, As in Firefox and Chrome, this directive is not honored by this cache.</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><a href="to-string.html">toString</a></p>
+</td>
+<td>
+<code><span class="keyword">fun </span><span class="identifier">toString</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><span class="identifier">String</span></a></code></td>
+</tr>
+</tbody>
+</table>
+<h3>Companion Object Properties</h3>
+<table>
+<tbody>
+<tr>
+<td>
+<p><a href="-f-o-r-c-e_-c-a-c-h-e.html">FORCE_CACHE</a></p>
+</td>
+<td>
+<code><span class="keyword">val </span><span class="identifier">FORCE_CACHE</span><span class="symbol">: </span><a href="./index.html"><span class="identifier">CacheControl</span></a></code>
+<p>Cache control request directives that uses the cache only, even if the cached response is
+stale. If the response isn't available in the cache or requires server validation, the call
+will fail with a <code>504 Unsatisfiable Request</code>.</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><a href="-f-o-r-c-e_-n-e-t-w-o-r-k.html">FORCE_NETWORK</a></p>
+</td>
+<td>
+<code><span class="keyword">val </span><span class="identifier">FORCE_NETWORK</span><span class="symbol">: </span><a href="./index.html"><span class="identifier">CacheControl</span></a></code>
+<p>Cache control request directives that require network validation of responses. Note that such
+requests may be assisted by the cache via conditional GET requests.</p>
+</td>
+</tr>
+</tbody>
+</table>
+<h3>Companion Object Functions</h3>
+<table>
+<tbody>
+<tr>
+<td>
+<p><a href="parse.html">parse</a></p>
+</td>
+<td>
+<code><span class="keyword">fun </span><span class="identifier">parse</span><span class="symbol">(</span><span class="identifier" id="okhttp3.CacheControl.Companion$parse(okhttp3.Headers)/headers">headers</span><span class="symbol">:</span>&nbsp;<a href="../-headers/index.html"><span class="identifier">Headers</span></a><span class="symbol">)</span><span class="symbol">: </span><a href="./index.html"><span class="identifier">CacheControl</span></a></code>
+<p>Returns the cache directives of <code>headers</code>. This honors both Cache-Control and Pragma headers
+if they are present.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</BODY>
+</HTML>

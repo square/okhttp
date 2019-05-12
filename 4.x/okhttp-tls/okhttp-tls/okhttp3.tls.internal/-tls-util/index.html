@@ -1,0 +1,58 @@
+<HTML>
+<HEAD>
+<meta charset="UTF-8">
+<title>TlsUtil - okhttp-tls</title>
+<link rel="stylesheet" href="../../../style.css">
+</HEAD>
+<BODY>
+<a href="../../index.html">okhttp-tls</a>&nbsp;/&nbsp;<a href="../index.html">okhttp3.tls.internal</a>&nbsp;/&nbsp;<a href="./index.html">TlsUtil</a><br/>
+<br/>
+<h1>TlsUtil</h1>
+<code><span class="keyword">object </span><span class="identifier">TlsUtil</span></code>
+<h3>Properties</h3>
+<table>
+<tbody>
+<tr>
+<td>
+<p><a href="password.html">password</a></p>
+</td>
+<td>
+<code><span class="keyword">val </span><span class="identifier">password</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-char-array/index.html"><span class="identifier">CharArray</span></a></code></td>
+</tr>
+</tbody>
+</table>
+<h3>Functions</h3>
+<table>
+<tbody>
+<tr>
+<td>
+<p><a href="localhost.html">localhost</a></p>
+</td>
+<td>
+<code><span class="keyword">fun </span><span class="identifier">localhost</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="../../okhttp3.tls/-handshake-certificates/index.html"><span class="identifier">HandshakeCertificates</span></a></code>
+<p>Returns an SSL client for this host's localhost address.</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><a href="new-key-manager.html">newKeyManager</a></p>
+</td>
+<td>
+<code><span class="keyword">fun </span><span class="identifier">newKeyManager</span><span class="symbol">(</span><span class="identifier" id="okhttp3.tls.internal.TlsUtil$newKeyManager(kotlin.String, okhttp3.tls.HeldCertificate, kotlin.Array((java.security.cert.X509Certificate)))/keyStoreType">keyStoreType</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><span class="identifier">String</span></a><span class="symbol">?</span><span class="symbol">, </span><span class="identifier" id="okhttp3.tls.internal.TlsUtil$newKeyManager(kotlin.String, okhttp3.tls.HeldCertificate, kotlin.Array((java.security.cert.X509Certificate)))/heldCertificate">heldCertificate</span><span class="symbol">:</span>&nbsp;<a href="../../okhttp3.tls/-held-certificate/index.html"><span class="identifier">HeldCertificate</span></a><span class="symbol">?</span><span class="symbol">, </span><span class="keyword">vararg</span> <span class="identifier" id="okhttp3.tls.internal.TlsUtil$newKeyManager(kotlin.String, okhttp3.tls.HeldCertificate, kotlin.Array((java.security.cert.X509Certificate)))/intermediates">intermediates</span><span class="symbol">:</span>&nbsp;<a href="https://docs.oracle.com/javase/8/docs/api/java/security/cert/X509Certificate.html"><span class="identifier">X509Certificate</span></a><span class="symbol">)</span><span class="symbol">: </span><a href="https://docs.oracle.com/javase/8/docs/api/javax/net/ssl/X509KeyManager.html"><span class="identifier">X509KeyManager</span></a></code>
+<p>Returns a key manager for the held certificate and its chain. Returns an empty key manager if
+<code>heldCertificate</code> is null.</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><a href="new-trust-manager.html">newTrustManager</a></p>
+</td>
+<td>
+<code><span class="keyword">fun </span><span class="identifier">newTrustManager</span><span class="symbol">(</span><span class="identifier" id="okhttp3.tls.internal.TlsUtil$newTrustManager(kotlin.String, kotlin.collections.List((java.security.cert.X509Certificate)))/keyStoreType">keyStoreType</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><span class="identifier">String</span></a><span class="symbol">?</span><span class="symbol">, </span><span class="identifier" id="okhttp3.tls.internal.TlsUtil$newTrustManager(kotlin.String, kotlin.collections.List((java.security.cert.X509Certificate)))/trustedCertificates">trustedCertificates</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.html"><span class="identifier">List</span></a><span class="symbol">&lt;</span><a href="https://docs.oracle.com/javase/8/docs/api/java/security/cert/X509Certificate.html"><span class="identifier">X509Certificate</span></a><span class="symbol">&gt;</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://docs.oracle.com/javase/8/docs/api/javax/net/ssl/X509TrustManager.html"><span class="identifier">X509TrustManager</span></a></code>
+<p>Returns a trust manager that trusts <code>trustedCertificates</code>.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</BODY>
+</HTML>

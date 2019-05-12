@@ -1,0 +1,80 @@
+<HTML>
+<HEAD>
+<meta charset="UTF-8">
+<title>okhttp3.mockwebserver - mockwebserver</title>
+<link rel="stylesheet" href="../../style.css">
+</HEAD>
+<BODY>
+<a href="../index.html">mockwebserver</a>&nbsp;/&nbsp;<a href="./index.html">okhttp3.mockwebserver</a><br/>
+<br/>
+<h2>Package okhttp3.mockwebserver</h2>
+<h3>Types</h3>
+<table>
+<tbody>
+<tr>
+<td>
+<p><a href="-dispatcher/index.html">Dispatcher</a></p>
+</td>
+<td>
+<code><span class="keyword">abstract</span> <span class="keyword">class </span><span class="identifier">Dispatcher</span></code>
+<p>Handler for mock server requests.</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><a href="-mock-response/index.html">MockResponse</a></p>
+</td>
+<td>
+<code><span class="keyword">class </span><span class="identifier">MockResponse</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-cloneable/index.html"><span class="identifier">Cloneable</span></a></code>
+<p>A scripted response to be replayed by the mock web server.</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><a href="-mock-web-server/index.html">MockWebServer</a></p>
+</td>
+<td>
+<code><span class="keyword">class </span><span class="identifier">MockWebServer</span>&nbsp;<span class="symbol">:</span>&nbsp;<span class="identifier">ExternalResource</span><span class="symbol">, </span><a href="https://docs.oracle.com/javase/8/docs/api/java/io/Closeable.html"><span class="identifier">Closeable</span></a></code>
+<p>A scriptable web server. Callers supply canned responses and the server replays them upon request in sequence.</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><a href="-push-promise/index.html">PushPromise</a></p>
+</td>
+<td>
+<code><span class="keyword">class </span><span class="identifier">PushPromise</span></code>
+<p>An HTTP request initiated by the server.</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><a href="-queue-dispatcher/index.html">QueueDispatcher</a></p>
+</td>
+<td>
+<code><span class="keyword">open</span> <span class="keyword">class </span><span class="identifier">QueueDispatcher</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="-dispatcher/index.html"><span class="identifier">Dispatcher</span></a></code>
+<p>Default dispatcher that processes a script of responses. Populate the script by calling <a href="-queue-dispatcher/enqueue-response.html">enqueueResponse</a>.</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><a href="-recorded-request/index.html">RecordedRequest</a></p>
+</td>
+<td>
+<code><span class="keyword">class </span><span class="identifier">RecordedRequest</span></code>
+<p>An HTTP request that came into the mock web server.</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><a href="-socket-policy/index.html">SocketPolicy</a></p>
+</td>
+<td>
+<code><span class="keyword">enum</span> <span class="keyword">class </span><span class="identifier">SocketPolicy</span></code>
+<p>What should be done with the incoming socket.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</BODY>
+</HTML>

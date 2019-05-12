@@ -1,0 +1,254 @@
+<HTML>
+<HEAD>
+<meta charset="UTF-8">
+<title>Response - okhttp</title>
+<link rel="stylesheet" href="../../../style.css">
+</HEAD>
+<BODY>
+<a href="../../index.html">okhttp</a>&nbsp;/&nbsp;<a href="../index.html">okhttp3</a>&nbsp;/&nbsp;<a href="./index.html">Response</a><br/>
+<br/>
+<h1>Response</h1>
+<code><span class="keyword">class </span><span class="identifier">Response</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="https://docs.oracle.com/javase/8/docs/api/java/io/Closeable.html"><span class="identifier">Closeable</span></a></code>
+<p>An HTTP response. Instances of this class are not immutable: the response body is a one-shot
+value that may be consumed only once and then closed. All other properties are immutable.</p>
+<p>This class implements <a href="https://docs.oracle.com/javase/8/docs/api/java/io/Closeable.html">Closeable</a>. Closing it simply closes its response body. See
+<a href="../-response-body/index.html">ResponseBody</a> for an explanation and examples.</p>
+<h3>Types</h3>
+<table>
+<tbody>
+<tr>
+<td>
+<p><a href="-builder/index.html">Builder</a></p>
+</td>
+<td>
+<code><span class="keyword">class </span><span class="identifier">Builder</span></code></td>
+</tr>
+</tbody>
+</table>
+<h3>Properties</h3>
+<table>
+<tbody>
+<tr>
+<td>
+<p><a href="is-redirect.html">isRedirect</a></p>
+</td>
+<td>
+<code><span class="keyword">val </span><span class="identifier">isRedirect</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code>
+<p>Returns true if this response redirects to another resource.</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><a href="is-successful.html">isSuccessful</a></p>
+</td>
+<td>
+<code><span class="keyword">val </span><span class="identifier">isSuccessful</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code>
+<p>Returns true if the code is in [200..300), which means the request was successfully received,
+understood, and accepted.</p>
+</td>
+</tr>
+</tbody>
+</table>
+<h3>Functions</h3>
+<table>
+<tbody>
+<tr>
+<td>
+<p><a href="body.html">body</a></p>
+</td>
+<td>
+<code><span class="keyword">fun </span><span class="identifier">body</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="../-response-body/index.html"><span class="identifier">ResponseBody</span></a><span class="symbol">?</span></code>
+<p>Returns a non-null value if this response was passed to <a href="../-callback/on-response.html">Callback.onResponse</a> or returned
+from <a href="../-call/execute.html">Call.execute</a>. Response bodies must be <a href="../-response-body/index.html">closed</a> and may
+be consumed only once.</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><a href="cache-control.html">cacheControl</a></p>
+</td>
+<td>
+<code><span class="keyword">fun </span><span class="identifier">cacheControl</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="../-cache-control/index.html"><span class="identifier">CacheControl</span></a></code>
+<p>Returns the cache control directives for this response. This is never null, even if this
+response contains no <code>Cache-Control</code> header.</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><a href="cache-response.html">cacheResponse</a></p>
+</td>
+<td>
+<code><span class="keyword">fun </span><span class="identifier">cacheResponse</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="./index.html"><span class="identifier">Response</span></a><span class="symbol">?</span></code>
+<p>Returns the raw response received from the cache. Will be null if this response didn't use
+the cache. For conditional get requests the cache response and network response may both be
+non-null. The body of the returned response should not be read.</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><a href="challenges.html">challenges</a></p>
+</td>
+<td>
+<code><span class="keyword">fun </span><span class="identifier">challenges</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.html"><span class="identifier">List</span></a><span class="symbol">&lt;</span><a href="../-challenge/index.html"><span class="identifier">Challenge</span></a><span class="symbol">&gt;</span></code>
+<p>Returns the RFC 7235 authorization challenges appropriate for this response's code. If the
+response code is 401 unauthorized, this returns the "WWW-Authenticate" challenges. If the
+response code is 407 proxy unauthorized, this returns the "Proxy-Authenticate" challenges.
+Otherwise this returns an empty list of challenges.</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><a href="close.html">close</a></p>
+</td>
+<td>
+<code><span class="keyword">fun </span><span class="identifier">close</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code>
+<p>Closes the response body. Equivalent to <code>body().close()</code>.</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><a href="code.html">code</a></p>
+</td>
+<td>
+<code><span class="keyword">fun </span><span class="identifier">code</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a></code>
+<p>Returns the HTTP status code.</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><a href="handshake.html">handshake</a></p>
+</td>
+<td>
+<code><span class="keyword">fun </span><span class="identifier">handshake</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="../-handshake/index.html"><span class="identifier">Handshake</span></a><span class="symbol">?</span></code>
+<p>Returns the TLS handshake of the connection that carried this response, or null if the
+response was received without TLS.</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><a href="header.html">header</a></p>
+</td>
+<td>
+<code><span class="keyword">fun </span><span class="identifier">header</span><span class="symbol">(</span><span class="identifier" id="okhttp3.Response$header(kotlin.String, kotlin.String)/name">name</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><span class="identifier">String</span></a><span class="symbol">, </span><span class="identifier" id="okhttp3.Response$header(kotlin.String, kotlin.String)/defaultValue">defaultValue</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><span class="identifier">String</span></a><span class="symbol">?</span>&nbsp;<span class="symbol">=</span>&nbsp;null<span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><span class="identifier">String</span></a><span class="symbol">?</span></code></td>
+</tr>
+<tr>
+<td>
+<p><a href="headers.html">headers</a></p>
+</td>
+<td>
+<code><span class="keyword">fun </span><span class="identifier">headers</span><span class="symbol">(</span><span class="identifier" id="okhttp3.Response$headers(kotlin.String)/name">name</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><span class="identifier">String</span></a><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.html"><span class="identifier">List</span></a><span class="symbol">&lt;</span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><span class="identifier">String</span></a><span class="symbol">&gt;</span></code><br/>
+<code><span class="keyword">fun </span><span class="identifier">headers</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="../-headers/index.html"><span class="identifier">Headers</span></a></code></td>
+</tr>
+<tr>
+<td>
+<p><a href="message.html">message</a></p>
+</td>
+<td>
+<code><span class="keyword">fun </span><span class="identifier">message</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><span class="identifier">String</span></a></code>
+<p>Returns the HTTP status message.</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><a href="network-response.html">networkResponse</a></p>
+</td>
+<td>
+<code><span class="keyword">fun </span><span class="identifier">networkResponse</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="./index.html"><span class="identifier">Response</span></a><span class="symbol">?</span></code>
+<p>Returns the raw response received from the network. Will be null if this response didn't use
+the network, such as when the response is fully cached. The body of the returned response
+should not be read.</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><a href="new-builder.html">newBuilder</a></p>
+</td>
+<td>
+<code><span class="keyword">fun </span><span class="identifier">newBuilder</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="-builder/index.html"><span class="identifier">Response.Builder</span></a></code></td>
+</tr>
+<tr>
+<td>
+<p><a href="peek-body.html">peekBody</a></p>
+</td>
+<td>
+<code><span class="keyword">fun </span><span class="identifier">peekBody</span><span class="symbol">(</span><span class="identifier" id="okhttp3.Response$peekBody(kotlin.Long)/byteCount">byteCount</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html"><span class="identifier">Long</span></a><span class="symbol">)</span><span class="symbol">: </span><a href="../-response-body/index.html"><span class="identifier">ResponseBody</span></a></code>
+<p>Peeks up to <a href="peek-body.html#okhttp3.Response$peekBody(kotlin.Long)/byteCount">byteCount</a> bytes from the response body and returns them as a new response
+body. If fewer than <a href="peek-body.html#okhttp3.Response$peekBody(kotlin.Long)/byteCount">byteCount</a> bytes are in the response body, the full response body is
+returned. If more than <a href="peek-body.html#okhttp3.Response$peekBody(kotlin.Long)/byteCount">byteCount</a> bytes are in the response body, the returned value
+will be truncated to <a href="peek-body.html#okhttp3.Response$peekBody(kotlin.Long)/byteCount">byteCount</a> bytes.</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><a href="prior-response.html">priorResponse</a></p>
+</td>
+<td>
+<code><span class="keyword">fun </span><span class="identifier">priorResponse</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="./index.html"><span class="identifier">Response</span></a><span class="symbol">?</span></code>
+<p>Returns the response for the HTTP redirect or authorization challenge that triggered this
+response, or null if this response wasn't triggered by an automatic retry. The body of the
+returned response should not be read because it has already been consumed by the redirecting
+client.</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><a href="protocol.html">protocol</a></p>
+</td>
+<td>
+<code><span class="keyword">fun </span><span class="identifier">protocol</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="../-protocol/index.html"><span class="identifier">Protocol</span></a></code>
+<p>Returns the HTTP protocol, such as <a href="../-protocol/-h-t-t-p_1_1.html">Protocol.HTTP_1_1</a> or <a href="../-protocol/-h-t-t-p_1_0.html">Protocol.HTTP_1_0</a>.</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><a href="received-response-at-millis.html">receivedResponseAtMillis</a></p>
+</td>
+<td>
+<code><span class="keyword">fun </span><span class="identifier">receivedResponseAtMillis</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html"><span class="identifier">Long</span></a></code>
+<p>Returns a <a href="https://docs.oracle.com/javase/8/docs/api/java/lang/System.html#currentTimeMillis()">timestamp</a> taken immediately after OkHttp
+received this response's headers from the network. If this response is being served from the
+cache then this is the timestamp of the original response.</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><a href="request.html">request</a></p>
+</td>
+<td>
+<code><span class="keyword">fun </span><span class="identifier">request</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="../-request/index.html"><span class="identifier">Request</span></a></code>
+<p>The wire-level request that initiated this HTTP response. This is not necessarily the same
+request issued by the application:</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><a href="sent-request-at-millis.html">sentRequestAtMillis</a></p>
+</td>
+<td>
+<code><span class="keyword">fun </span><span class="identifier">sentRequestAtMillis</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html"><span class="identifier">Long</span></a></code>
+<p>Returns a <a href="https://docs.oracle.com/javase/8/docs/api/java/lang/System.html#currentTimeMillis()">timestamp</a> taken immediately before OkHttp
+transmitted the initiating request over the network. If this response is being served from the
+cache then this is the timestamp of the original request.</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><a href="to-string.html">toString</a></p>
+</td>
+<td>
+<code><span class="keyword">fun </span><span class="identifier">toString</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><span class="identifier">String</span></a></code></td>
+</tr>
+<tr>
+<td>
+<p><a href="trailers.html">trailers</a></p>
+</td>
+<td>
+<code><span class="keyword">fun </span><span class="identifier">trailers</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="../-headers/index.html"><span class="identifier">Headers</span></a></code>
+<p>Returns the trailers after the HTTP response, which may be empty. It is an error to call this
+before the entire HTTP response body has been consumed.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</BODY>
+</HTML>

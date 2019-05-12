@@ -1,0 +1,19 @@
+<HTML>
+<HEAD>
+<meta charset="UTF-8">
+<title>SocketPolicy.DISCONNECT_AT_END - mockwebserver</title>
+<link rel="stylesheet" href="../../../style.css">
+</HEAD>
+<BODY>
+<a href="../../index.html">mockwebserver</a>&nbsp;/&nbsp;<a href="../index.html">okhttp3.mockwebserver</a>&nbsp;/&nbsp;<a href="index.html">SocketPolicy</a>&nbsp;/&nbsp;<a href="./-d-i-s-c-o-n-n-e-c-t_-a-t_-e-n-d.html">DISCONNECT_AT_END</a><br/>
+<br/>
+<h1>DISCONNECT_AT_END</h1>
+<a name="okhttp3.mockwebserver.SocketPolicy.DISCONNECT_AT_END"></a>
+<code><span class="identifier">DISCONNECT_AT_END</span></code>
+<p>Close the socket after the response. This is the default HTTP/1.0 behavior. For HTTP/2
+connections, this sends a <a href="https://tools.ietf.org/html/rfc7540#section-6.8">GOAWAYframe</a>
+immediately after the response and will close the connection when the client's socket
+is exhausted.</p>
+<p>See <a href="index.html">SocketPolicy</a> for reasons why this can cause test flakiness and how to avoid it.</p>
+</BODY>
+</HTML>

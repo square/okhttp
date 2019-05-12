@@ -1,0 +1,156 @@
+<HTML>
+<HEAD>
+<meta charset="UTF-8">
+<title>ConnectionSpec - okhttp</title>
+<link rel="stylesheet" href="../../../style.css">
+</HEAD>
+<BODY>
+<a href="../../index.html">okhttp</a>&nbsp;/&nbsp;<a href="../index.html">okhttp3</a>&nbsp;/&nbsp;<a href="./index.html">ConnectionSpec</a><br/>
+<br/>
+<h1>ConnectionSpec</h1>
+<code><span class="keyword">class </span><span class="identifier">ConnectionSpec</span></code>
+<p>Specifies configuration for the socket connection that HTTP traffic travels through. For <code>https:</code>
+URLs, this includes the TLS version and cipher suites to use when negotiating a secure
+connection.</p>
+<p>The TLS versions configured in a connection spec are only be used if they are also enabled in the
+SSL socket. For example, if an SSL socket does not have TLS 1.3 enabled, it will not be used even
+if it is present on the connection spec. The same policy also applies to cipher suites.</p>
+<p>Use <a href="-builder/all-enabled-tls-versions.html">Builder.allEnabledTlsVersions</a> and <a href="-builder/all-enabled-cipher-suites.html">Builder.allEnabledCipherSuites</a> to defer all feature
+selection to the underlying SSL socket.</p>
+<p>The configuration of each spec changes with each OkHttp release. This is annoying: upgrading
+your OkHttp library can break connectivity to certain web servers! But it’s a necessary annoyance
+because the TLS ecosystem is dynamic and staying up to date is necessary to stay secure. See
+<a href="https://github.com/square/okhttp/wiki/TLS-Configuration-History">OkHttp's TLS Configuration History</a> to track these changes.</p>
+<h3>Types</h3>
+<table>
+<tbody>
+<tr>
+<td>
+<p><a href="-builder/index.html">Builder</a></p>
+</td>
+<td>
+<code><span class="keyword">class </span><span class="identifier">Builder</span></code></td>
+</tr>
+</tbody>
+</table>
+<h3>Properties</h3>
+<table>
+<tbody>
+<tr>
+<td>
+<p><a href="is-tls.html">isTls</a></p>
+</td>
+<td>
+<code><span class="keyword">val </span><span class="identifier">isTls</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code></td>
+</tr>
+</tbody>
+</table>
+<h3>Functions</h3>
+<table>
+<tbody>
+<tr>
+<td>
+<p><a href="cipher-suites.html">cipherSuites</a></p>
+</td>
+<td>
+<code><span class="keyword">fun </span><span class="identifier">cipherSuites</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.html"><span class="identifier">List</span></a><span class="symbol">&lt;</span><a href="../-cipher-suite/index.html"><span class="identifier">CipherSuite</span></a><span class="symbol">&gt;</span><span class="symbol">?</span></code>
+<p>Returns the cipher suites to use for a connection. Returns null if all of the SSL socket's
+enabled cipher suites should be used.</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><a href="equals.html">equals</a></p>
+</td>
+<td>
+<code><span class="keyword">fun </span><span class="identifier">equals</span><span class="symbol">(</span><span class="identifier" id="okhttp3.ConnectionSpec$equals(kotlin.Any)/other">other</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-any/index.html"><span class="identifier">Any</span></a><span class="symbol">?</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code></td>
+</tr>
+<tr>
+<td>
+<p><a href="hash-code.html">hashCode</a></p>
+</td>
+<td>
+<code><span class="keyword">fun </span><span class="identifier">hashCode</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a></code></td>
+</tr>
+<tr>
+<td>
+<p><a href="is-compatible.html">isCompatible</a></p>
+</td>
+<td>
+<code><span class="keyword">fun </span><span class="identifier">isCompatible</span><span class="symbol">(</span><span class="identifier" id="okhttp3.ConnectionSpec$isCompatible(javax.net.ssl.SSLSocket)/socket">socket</span><span class="symbol">:</span>&nbsp;<a href="https://docs.oracle.com/javase/8/docs/api/javax/net/ssl/SSLSocket.html"><span class="identifier">SSLSocket</span></a><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code>
+<p>Returns <code>true</code> if the socket, as currently configured, supports this connection spec. In
+order for a socket to be compatible the enabled cipher suites and protocols must intersect.</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><a href="supports-tls-extensions.html">supportsTlsExtensions</a></p>
+</td>
+<td>
+<code><span class="keyword">fun </span><span class="identifier">supportsTlsExtensions</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code></td>
+</tr>
+<tr>
+<td>
+<p><a href="tls-versions.html">tlsVersions</a></p>
+</td>
+<td>
+<code><span class="keyword">fun </span><span class="identifier">tlsVersions</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.html"><span class="identifier">List</span></a><span class="symbol">&lt;</span><a href="../-tls-version/index.html"><span class="identifier">TlsVersion</span></a><span class="symbol">&gt;</span><span class="symbol">?</span></code>
+<p>Returns the TLS versions to use when negotiating a connection. Returns null if all of the SSL
+socket's enabled TLS versions should be used.</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><a href="to-string.html">toString</a></p>
+</td>
+<td>
+<code><span class="keyword">fun </span><span class="identifier">toString</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><span class="identifier">String</span></a></code></td>
+</tr>
+</tbody>
+</table>
+<h3>Companion Object Properties</h3>
+<table>
+<tbody>
+<tr>
+<td>
+<p><a href="-c-l-e-a-r-t-e-x-t.html">CLEARTEXT</a></p>
+</td>
+<td>
+<code><span class="keyword">val </span><span class="identifier">CLEARTEXT</span><span class="symbol">: </span><a href="./index.html"><span class="identifier">ConnectionSpec</span></a></code>
+<p>Unencrypted, unauthenticated connections for <code>http:</code> URLs.</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><a href="-c-o-m-p-a-t-i-b-l-e_-t-l-s.html">COMPATIBLE_TLS</a></p>
+</td>
+<td>
+<code><span class="keyword">val </span><span class="identifier">COMPATIBLE_TLS</span><span class="symbol">: </span><a href="./index.html"><span class="identifier">ConnectionSpec</span></a></code>
+<p>A backwards-compatible fallback configuration that works on obsolete client platforms and can
+connect to obsolete servers. When possible, prefer to upgrade your client platform or server
+rather than using this configuration.</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><a href="-m-o-d-e-r-n_-t-l-s.html">MODERN_TLS</a></p>
+</td>
+<td>
+<code><span class="keyword">val </span><span class="identifier">MODERN_TLS</span><span class="symbol">: </span><a href="./index.html"><span class="identifier">ConnectionSpec</span></a></code>
+<p>A modern TLS configuration that works on most client platforms and can connect to most servers.
+This is OkHttp's default configuration.</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><a href="-r-e-s-t-r-i-c-t-e-d_-t-l-s.html">RESTRICTED_TLS</a></p>
+</td>
+<td>
+<code><span class="keyword">val </span><span class="identifier">RESTRICTED_TLS</span><span class="symbol">: </span><a href="./index.html"><span class="identifier">ConnectionSpec</span></a></code>
+<p>A secure TLS connection that requires a recent client platform and a recent server.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</BODY>
+</HTML>

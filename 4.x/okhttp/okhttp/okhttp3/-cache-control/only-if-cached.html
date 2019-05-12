@@ -1,0 +1,18 @@
+<HTML>
+<HEAD>
+<meta charset="UTF-8">
+<title>CacheControl.onlyIfCached - okhttp</title>
+<link rel="stylesheet" href="../../../style.css">
+</HEAD>
+<BODY>
+<a href="../../index.html">okhttp</a>&nbsp;/&nbsp;<a href="../index.html">okhttp3</a>&nbsp;/&nbsp;<a href="index.html">CacheControl</a>&nbsp;/&nbsp;<a href="./only-if-cached.html">onlyIfCached</a><br/>
+<br/>
+<h1>onlyIfCached</h1>
+<a name="okhttp3.CacheControl$onlyIfCached()"></a>
+<code><span class="keyword">fun </span><span class="identifier">onlyIfCached</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code>
+<p>This field's name "only-if-cached" is misleading. It actually means "do not use the network".
+It is set by a client who only wants to make a request if it can be fully satisfied by the
+cache. Cached responses that would require validation (ie. conditional gets) are not permitted
+if this header is set.</p>
+</BODY>
+</HTML>

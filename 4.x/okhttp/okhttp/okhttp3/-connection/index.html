@@ -1,0 +1,95 @@
+<HTML>
+<HEAD>
+<meta charset="UTF-8">
+<title>Connection - okhttp</title>
+<link rel="stylesheet" href="../../../style.css">
+</HEAD>
+<BODY>
+<a href="../../index.html">okhttp</a>&nbsp;/&nbsp;<a href="../index.html">okhttp3</a>&nbsp;/&nbsp;<a href="./index.html">Connection</a><br/>
+<br/>
+<h1>Connection</h1>
+<code><span class="keyword">interface </span><span class="identifier">Connection</span></code>
+<p>The sockets and streams of an HTTP, HTTPS, or HTTPS+HTTP/2 connection. May be used for multiple
+HTTP request/response exchanges. Connections may be direct to the origin server or via a proxy.</p>
+<p>Typically instances of this class are created, connected and exercised automatically by the HTTP
+client. Applications may use this class to monitor HTTP connections as members of a
+<a href="../-connection-pool/index.html">connection pool</a>.</p>
+<p>Do not confuse this class with the misnamed <code>HttpURLConnection</code>, which isn't so much a connection
+as a single request/response exchange.</p>
+<h2>Modern TLS</h2>
+<p>There are trade-offs when selecting which options to include when negotiating a secure connection
+to a remote host. Newer TLS options are quite useful:</p>
+<ul><li>Server Name Indication (SNI) enables one IP address to negotiate secure connections for
+    multiple domain names.</li>
+
+<li>Application Layer Protocol Negotiation (ALPN) enables the HTTPS port (443) to be used to
+    negotiate HTTP/2.</li>
+</ul>
+<p>Unfortunately, older HTTPS servers refuse to connect when such options are presented. Rather than
+avoiding these options entirely, this class allows a connection to be attempted with modern
+options and then retried without them should the attempt fail.</p>
+<h2>Connection Reuse</h2>
+<p>Each connection can carry a varying number of streams, depending on the underlying protocol being
+used. HTTP/1.x connections can carry either zero or one streams. HTTP/2 connections can carry any
+number of streams, dynamically configured with <code>SETTINGS_MAX_CONCURRENT_STREAMS</code>. A connection
+currently carrying zero streams is an idle stream. We keep it alive because reusing an existing
+connection is typically faster than establishing a new one.</p>
+<p>When a single logical call requires multiple streams due to redirects or authorization
+challenges, we prefer to use the same physical connection for all streams in the sequence. There
+are potential performance and behavior consequences to this preference. To support this feature,
+this class separates <em>allocations</em> from <em>streams</em>. An allocation is created by a call, used for
+one or more streams, and then released. An allocated connection won't be stolen by other calls
+while a redirect or authorization challenge is being handled.</p>
+<p>When the maximum concurrent streams limit is reduced, some allocations will be rescinded.
+Attempting to create new streams on these allocations will fail.</p>
+<p>Note that an allocation may be released before its stream is completed. This is intended to make
+bookkeeping easier for the caller: releasing the allocation as soon as the terminal stream has
+been found. But only complete the stream once its data stream has been exhausted.</p>
+<h3>Functions</h3>
+<table>
+<tbody>
+<tr>
+<td>
+<p><a href="handshake.html">handshake</a></p>
+</td>
+<td>
+<code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">handshake</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="../-handshake/index.html"><span class="identifier">Handshake</span></a><span class="symbol">?</span></code>
+<p>Returns the TLS handshake used to establish this connection, or null if the connection is not
+HTTPS.</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><a href="protocol.html">protocol</a></p>
+</td>
+<td>
+<code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">protocol</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="../-protocol/index.html"><span class="identifier">Protocol</span></a></code>
+<p>Returns the protocol negotiated by this connection, or <a href="../-protocol/-h-t-t-p_1_1.html">Protocol.HTTP_1_1</a> if no protocol
+has been negotiated. This method returns <a href="../-protocol/-h-t-t-p_1_1.html">Protocol.HTTP_1_1</a> even if the remote peer is using
+<a href="../-protocol/-h-t-t-p_1_0.html">Protocol.HTTP_1_0</a>.</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><a href="route.html">route</a></p>
+</td>
+<td>
+<code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">route</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="../-route/index.html"><span class="identifier">Route</span></a></code>
+<p>Returns the route used by this connection.</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><a href="socket.html">socket</a></p>
+</td>
+<td>
+<code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">socket</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://docs.oracle.com/javase/8/docs/api/java/net/Socket.html"><span class="identifier">Socket</span></a></code>
+<p>Returns the socket that this connection is using. Returns an
+<a href="https://docs.oracle.com/javase/8/docs/api/javax/net/ssl/SSLSocket.html">SSL socket</a> if this connection is HTTPS. If this is an HTTP/2
+connection the socket may be shared by multiple concurrent calls.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</BODY>
+</HTML>

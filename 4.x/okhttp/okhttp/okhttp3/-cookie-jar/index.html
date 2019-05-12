@@ -1,0 +1,59 @@
+<HTML>
+<HEAD>
+<meta charset="UTF-8">
+<title>CookieJar - okhttp</title>
+<link rel="stylesheet" href="../../../style.css">
+</HEAD>
+<BODY>
+<a href="../../index.html">okhttp</a>&nbsp;/&nbsp;<a href="../index.html">okhttp3</a>&nbsp;/&nbsp;<a href="./index.html">CookieJar</a><br/>
+<br/>
+<h1>CookieJar</h1>
+<code><span class="keyword">interface </span><span class="identifier">CookieJar</span></code>
+<p>Provides <strong>policy</strong> and <strong>persistence</strong> for HTTP cookies.</p>
+<p>As policy, implementations of this interface are responsible for selecting which cookies to
+accept and which to reject. A reasonable policy is to reject all cookies, though that may
+interfere with session-based authentication schemes that require cookies.</p>
+<p>As persistence, implementations of this interface must also provide storage of cookies. Simple
+implementations may store cookies in memory; sophisticated ones may use the file system or
+database to hold accepted cookies. The <a href="https://tools.ietf.org/html/rfc6265#section-5.3">cookie storage model</a> specifies policies for
+updating and expiring cookies.</p>
+<h3>Functions</h3>
+<table>
+<tbody>
+<tr>
+<td>
+<p><a href="load-for-request.html">loadForRequest</a></p>
+</td>
+<td>
+<code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">loadForRequest</span><span class="symbol">(</span><span class="identifier" id="okhttp3.CookieJar$loadForRequest(okhttp3.HttpUrl)/url">url</span><span class="symbol">:</span>&nbsp;<a href="../-http-url/index.html"><span class="identifier">HttpUrl</span></a><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.html"><span class="identifier">List</span></a><span class="symbol">&lt;</span><a href="../-cookie/index.html"><span class="identifier">Cookie</span></a><span class="symbol">&gt;</span></code>
+<p>Load cookies from the jar for an HTTP request to <code>url</code>. This method returns a possibly
+empty list of cookies for the network request.</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><a href="save-from-response.html">saveFromResponse</a></p>
+</td>
+<td>
+<code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">saveFromResponse</span><span class="symbol">(</span><span class="identifier" id="okhttp3.CookieJar$saveFromResponse(okhttp3.HttpUrl, kotlin.collections.List((okhttp3.Cookie)))/url">url</span><span class="symbol">:</span>&nbsp;<a href="../-http-url/index.html"><span class="identifier">HttpUrl</span></a><span class="symbol">, </span><span class="identifier" id="okhttp3.CookieJar$saveFromResponse(okhttp3.HttpUrl, kotlin.collections.List((okhttp3.Cookie)))/cookies">cookies</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.html"><span class="identifier">List</span></a><span class="symbol">&lt;</span><a href="../-cookie/index.html"><span class="identifier">Cookie</span></a><span class="symbol">&gt;</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code>
+<p>Saves <code>cookies</code> from an HTTP response to this store according to this jar's policy.</p>
+</td>
+</tr>
+</tbody>
+</table>
+<h3>Companion Object Properties</h3>
+<table>
+<tbody>
+<tr>
+<td>
+<p><a href="-n-o_-c-o-o-k-i-e-s.html">NO_COOKIES</a></p>
+</td>
+<td>
+<code><span class="keyword">val </span><span class="identifier">NO_COOKIES</span><span class="symbol">: </span><a href="./index.html"><span class="identifier">CookieJar</span></a></code>
+<p>A cookie jar that never accepts any cookies.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</BODY>
+</HTML>

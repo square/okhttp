@@ -1,0 +1,152 @@
+<HTML>
+<HEAD>
+<meta charset="UTF-8">
+<title>Response.Builder - okhttp</title>
+<link rel="stylesheet" href="../../../../style.css">
+</HEAD>
+<BODY>
+<a href="../../../index.html">okhttp</a>&nbsp;/&nbsp;<a href="../../index.html">okhttp3</a>&nbsp;/&nbsp;<a href="../index.html">Response</a>&nbsp;/&nbsp;<a href="./index.html">Builder</a><br/>
+<br/>
+<h1>Builder</h1>
+<code><span class="keyword">class </span><span class="identifier">Builder</span></code>
+<h3>Constructors</h3>
+<table>
+<tbody>
+<tr>
+<td>
+<p><a href="-init-.html">&lt;init&gt;</a></p>
+</td>
+<td>
+<code><span class="identifier">Builder</span><span class="symbol">(</span><span class="symbol">)</span></code></td>
+</tr>
+</tbody>
+</table>
+<h3>Functions</h3>
+<table>
+<tbody>
+<tr>
+<td>
+<p><a href="add-header.html">addHeader</a></p>
+</td>
+<td>
+<code><span class="keyword">open</span> <span class="keyword">fun </span><span class="identifier">addHeader</span><span class="symbol">(</span><span class="identifier" id="okhttp3.Response.Builder$addHeader(kotlin.String, kotlin.String)/name">name</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><span class="identifier">String</span></a><span class="symbol">, </span><span class="identifier" id="okhttp3.Response.Builder$addHeader(kotlin.String, kotlin.String)/value">value</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><span class="identifier">String</span></a><span class="symbol">)</span><span class="symbol">: </span><a href="./index.html"><span class="identifier">Response.Builder</span></a></code>
+<p>Adds a header with <a href="add-header.html#okhttp3.Response.Builder$addHeader(kotlin.String, kotlin.String)/name">name</a> to <a href="add-header.html#okhttp3.Response.Builder$addHeader(kotlin.String, kotlin.String)/value">value</a>. Prefer this method for multiply-valued
+headers like "Set-Cookie".</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><a href="body.html">body</a></p>
+</td>
+<td>
+<code><span class="keyword">open</span> <span class="keyword">fun </span><span class="identifier">body</span><span class="symbol">(</span><span class="identifier" id="okhttp3.Response.Builder$body(okhttp3.ResponseBody)/body">body</span><span class="symbol">:</span>&nbsp;<a href="../../-response-body/index.html"><span class="identifier">ResponseBody</span></a><span class="symbol">?</span><span class="symbol">)</span><span class="symbol">: </span><a href="./index.html"><span class="identifier">Response.Builder</span></a></code></td>
+</tr>
+<tr>
+<td>
+<p><a href="build.html">build</a></p>
+</td>
+<td>
+<code><span class="keyword">open</span> <span class="keyword">fun </span><span class="identifier">build</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="../index.html"><span class="identifier">Response</span></a></code></td>
+</tr>
+<tr>
+<td>
+<p><a href="cache-response.html">cacheResponse</a></p>
+</td>
+<td>
+<code><span class="keyword">open</span> <span class="keyword">fun </span><span class="identifier">cacheResponse</span><span class="symbol">(</span><span class="identifier" id="okhttp3.Response.Builder$cacheResponse(okhttp3.Response)/cacheResponse">cacheResponse</span><span class="symbol">:</span>&nbsp;<a href="../index.html"><span class="identifier">Response</span></a><span class="symbol">?</span><span class="symbol">)</span><span class="symbol">: </span><a href="./index.html"><span class="identifier">Response.Builder</span></a></code></td>
+</tr>
+<tr>
+<td>
+<p><a href="code.html">code</a></p>
+</td>
+<td>
+<code><span class="keyword">open</span> <span class="keyword">fun </span><span class="identifier">code</span><span class="symbol">(</span><span class="identifier" id="okhttp3.Response.Builder$code(kotlin.Int)/code">code</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a><span class="symbol">)</span><span class="symbol">: </span><a href="./index.html"><span class="identifier">Response.Builder</span></a></code></td>
+</tr>
+<tr>
+<td>
+<p><a href="handshake.html">handshake</a></p>
+</td>
+<td>
+<code><span class="keyword">open</span> <span class="keyword">fun </span><span class="identifier">handshake</span><span class="symbol">(</span><span class="identifier" id="okhttp3.Response.Builder$handshake(okhttp3.Handshake)/handshake">handshake</span><span class="symbol">:</span>&nbsp;<a href="../../-handshake/index.html"><span class="identifier">Handshake</span></a><span class="symbol">?</span><span class="symbol">)</span><span class="symbol">: </span><a href="./index.html"><span class="identifier">Response.Builder</span></a></code></td>
+</tr>
+<tr>
+<td>
+<p><a href="header.html">header</a></p>
+</td>
+<td>
+<code><span class="keyword">open</span> <span class="keyword">fun </span><span class="identifier">header</span><span class="symbol">(</span><span class="identifier" id="okhttp3.Response.Builder$header(kotlin.String, kotlin.String)/name">name</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><span class="identifier">String</span></a><span class="symbol">, </span><span class="identifier" id="okhttp3.Response.Builder$header(kotlin.String, kotlin.String)/value">value</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><span class="identifier">String</span></a><span class="symbol">)</span><span class="symbol">: </span><a href="./index.html"><span class="identifier">Response.Builder</span></a></code>
+<p>Sets the header named <a href="header.html#okhttp3.Response.Builder$header(kotlin.String, kotlin.String)/name">name</a> to <a href="header.html#okhttp3.Response.Builder$header(kotlin.String, kotlin.String)/value">value</a>. If this request already has any headers
+with that name, they are all replaced.</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><a href="headers.html">headers</a></p>
+</td>
+<td>
+<code><span class="keyword">open</span> <span class="keyword">fun </span><span class="identifier">headers</span><span class="symbol">(</span><span class="identifier" id="okhttp3.Response.Builder$headers(okhttp3.Headers)/headers">headers</span><span class="symbol">:</span>&nbsp;<a href="../../-headers/index.html"><span class="identifier">Headers</span></a><span class="symbol">)</span><span class="symbol">: </span><a href="./index.html"><span class="identifier">Response.Builder</span></a></code>
+<p>Removes all headers on this builder and adds <a href="headers.html#okhttp3.Response.Builder$headers(okhttp3.Headers)/headers">headers</a>.</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><a href="message.html">message</a></p>
+</td>
+<td>
+<code><span class="keyword">open</span> <span class="keyword">fun </span><span class="identifier">message</span><span class="symbol">(</span><span class="identifier" id="okhttp3.Response.Builder$message(kotlin.String)/message">message</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><span class="identifier">String</span></a><span class="symbol">)</span><span class="symbol">: </span><a href="./index.html"><span class="identifier">Response.Builder</span></a></code></td>
+</tr>
+<tr>
+<td>
+<p><a href="network-response.html">networkResponse</a></p>
+</td>
+<td>
+<code><span class="keyword">open</span> <span class="keyword">fun </span><span class="identifier">networkResponse</span><span class="symbol">(</span><span class="identifier" id="okhttp3.Response.Builder$networkResponse(okhttp3.Response)/networkResponse">networkResponse</span><span class="symbol">:</span>&nbsp;<a href="../index.html"><span class="identifier">Response</span></a><span class="symbol">?</span><span class="symbol">)</span><span class="symbol">: </span><a href="./index.html"><span class="identifier">Response.Builder</span></a></code></td>
+</tr>
+<tr>
+<td>
+<p><a href="prior-response.html">priorResponse</a></p>
+</td>
+<td>
+<code><span class="keyword">open</span> <span class="keyword">fun </span><span class="identifier">priorResponse</span><span class="symbol">(</span><span class="identifier" id="okhttp3.Response.Builder$priorResponse(okhttp3.Response)/priorResponse">priorResponse</span><span class="symbol">:</span>&nbsp;<a href="../index.html"><span class="identifier">Response</span></a><span class="symbol">?</span><span class="symbol">)</span><span class="symbol">: </span><a href="./index.html"><span class="identifier">Response.Builder</span></a></code></td>
+</tr>
+<tr>
+<td>
+<p><a href="protocol.html">protocol</a></p>
+</td>
+<td>
+<code><span class="keyword">open</span> <span class="keyword">fun </span><span class="identifier">protocol</span><span class="symbol">(</span><span class="identifier" id="okhttp3.Response.Builder$protocol(okhttp3.Protocol)/protocol">protocol</span><span class="symbol">:</span>&nbsp;<a href="../../-protocol/index.html"><span class="identifier">Protocol</span></a><span class="symbol">)</span><span class="symbol">: </span><a href="./index.html"><span class="identifier">Response.Builder</span></a></code></td>
+</tr>
+<tr>
+<td>
+<p><a href="received-response-at-millis.html">receivedResponseAtMillis</a></p>
+</td>
+<td>
+<code><span class="keyword">open</span> <span class="keyword">fun </span><span class="identifier">receivedResponseAtMillis</span><span class="symbol">(</span><span class="identifier" id="okhttp3.Response.Builder$receivedResponseAtMillis(kotlin.Long)/receivedResponseAtMillis">receivedResponseAtMillis</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html"><span class="identifier">Long</span></a><span class="symbol">)</span><span class="symbol">: </span><a href="./index.html"><span class="identifier">Response.Builder</span></a></code></td>
+</tr>
+<tr>
+<td>
+<p><a href="remove-header.html">removeHeader</a></p>
+</td>
+<td>
+<code><span class="keyword">open</span> <span class="keyword">fun </span><span class="identifier">removeHeader</span><span class="symbol">(</span><span class="identifier" id="okhttp3.Response.Builder$removeHeader(kotlin.String)/name">name</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><span class="identifier">String</span></a><span class="symbol">)</span><span class="symbol">: </span><a href="./index.html"><span class="identifier">Response.Builder</span></a></code>
+<p>Removes all headers named <a href="remove-header.html#okhttp3.Response.Builder$removeHeader(kotlin.String)/name">name</a> on this builder.</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><a href="request.html">request</a></p>
+</td>
+<td>
+<code><span class="keyword">open</span> <span class="keyword">fun </span><span class="identifier">request</span><span class="symbol">(</span><span class="identifier" id="okhttp3.Response.Builder$request(okhttp3.Request)/request">request</span><span class="symbol">:</span>&nbsp;<a href="../../-request/index.html"><span class="identifier">Request</span></a><span class="symbol">)</span><span class="symbol">: </span><a href="./index.html"><span class="identifier">Response.Builder</span></a></code></td>
+</tr>
+<tr>
+<td>
+<p><a href="sent-request-at-millis.html">sentRequestAtMillis</a></p>
+</td>
+<td>
+<code><span class="keyword">open</span> <span class="keyword">fun </span><span class="identifier">sentRequestAtMillis</span><span class="symbol">(</span><span class="identifier" id="okhttp3.Response.Builder$sentRequestAtMillis(kotlin.Long)/sentRequestAtMillis">sentRequestAtMillis</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html"><span class="identifier">Long</span></a><span class="symbol">)</span><span class="symbol">: </span><a href="./index.html"><span class="identifier">Response.Builder</span></a></code></td>
+</tr>
+</tbody>
+</table>
+</BODY>
+</HTML>

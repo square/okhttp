@@ -1,0 +1,20 @@
+<HTML>
+<HEAD>
+<meta charset="UTF-8">
+<title>Cache.urls - okhttp</title>
+<link rel="stylesheet" href="../../../style.css">
+</HEAD>
+<BODY>
+<a href="../../index.html">okhttp</a>&nbsp;/&nbsp;<a href="../index.html">okhttp3</a>&nbsp;/&nbsp;<a href="index.html">Cache</a>&nbsp;/&nbsp;<a href="./urls.html">urls</a><br/>
+<br/>
+<h1>urls</h1>
+<a name="okhttp3.Cache$urls()"></a>
+<code><span class="keyword">fun </span><span class="identifier">urls</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-mutable-iterator/index.html"><span class="identifier">MutableIterator</span></a><span class="symbol">&lt;</span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><span class="identifier">String</span></a><span class="symbol">&gt;</span></code>
+<p>Returns an iterator over the URLs in this cache. This iterator doesn't throw
+<code>ConcurrentModificationException</code>, but if new responses are added while iterating, their URLs
+will not be returned. If existing responses are evicted during iteration, they will be absent
+(unless they were already returned).</p>
+<p>The iterator supports <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-mutable-iterator/remove.html">MutableIterator.remove</a>. Removing a URL from the iterator evicts the
+corresponding response from the cache. Use this to evict selected responses.</p>
+</BODY>
+</HTML>

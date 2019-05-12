@@ -1,0 +1,91 @@
+<HTML>
+<HEAD>
+<meta charset="UTF-8">
+<title>Interceptor.Chain - okhttp</title>
+<link rel="stylesheet" href="../../../../style.css">
+</HEAD>
+<BODY>
+<a href="../../../index.html">okhttp</a>&nbsp;/&nbsp;<a href="../../index.html">okhttp3</a>&nbsp;/&nbsp;<a href="../index.html">Interceptor</a>&nbsp;/&nbsp;<a href="./index.html">Chain</a><br/>
+<br/>
+<h1>Chain</h1>
+<code><span class="keyword">interface </span><span class="identifier">Chain</span></code>
+<h3>Functions</h3>
+<table>
+<tbody>
+<tr>
+<td>
+<p><a href="call.html">call</a></p>
+</td>
+<td>
+<code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">call</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="../../-call/index.html"><span class="identifier">Call</span></a></code></td>
+</tr>
+<tr>
+<td>
+<p><a href="connection.html">connection</a></p>
+</td>
+<td>
+<code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">connection</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="../../-connection/index.html"><span class="identifier">Connection</span></a><span class="symbol">?</span></code>
+<p>Returns the connection the request will be executed on. This is only available in the chains
+of network interceptors; for application interceptors this is always null.</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><a href="connect-timeout-millis.html">connectTimeoutMillis</a></p>
+</td>
+<td>
+<code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">connectTimeoutMillis</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a></code></td>
+</tr>
+<tr>
+<td>
+<p><a href="proceed.html">proceed</a></p>
+</td>
+<td>
+<code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">proceed</span><span class="symbol">(</span><span class="identifier" id="okhttp3.Interceptor.Chain$proceed(okhttp3.Request)/request">request</span><span class="symbol">:</span>&nbsp;<a href="../../-request/index.html"><span class="identifier">Request</span></a><span class="symbol">)</span><span class="symbol">: </span><a href="../../-response/index.html"><span class="identifier">Response</span></a></code></td>
+</tr>
+<tr>
+<td>
+<p><a href="read-timeout-millis.html">readTimeoutMillis</a></p>
+</td>
+<td>
+<code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">readTimeoutMillis</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a></code></td>
+</tr>
+<tr>
+<td>
+<p><a href="request.html">request</a></p>
+</td>
+<td>
+<code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">request</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="../../-request/index.html"><span class="identifier">Request</span></a></code></td>
+</tr>
+<tr>
+<td>
+<p><a href="with-connect-timeout.html">withConnectTimeout</a></p>
+</td>
+<td>
+<code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">withConnectTimeout</span><span class="symbol">(</span><span class="identifier" id="okhttp3.Interceptor.Chain$withConnectTimeout(kotlin.Int, java.util.concurrent.TimeUnit)/timeout">timeout</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a><span class="symbol">, </span><span class="identifier" id="okhttp3.Interceptor.Chain$withConnectTimeout(kotlin.Int, java.util.concurrent.TimeUnit)/unit">unit</span><span class="symbol">:</span>&nbsp;<a href="https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/TimeUnit.html"><span class="identifier">TimeUnit</span></a><span class="symbol">)</span><span class="symbol">: </span><a href="./index.html"><span class="identifier">Interceptor.Chain</span></a></code></td>
+</tr>
+<tr>
+<td>
+<p><a href="with-read-timeout.html">withReadTimeout</a></p>
+</td>
+<td>
+<code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">withReadTimeout</span><span class="symbol">(</span><span class="identifier" id="okhttp3.Interceptor.Chain$withReadTimeout(kotlin.Int, java.util.concurrent.TimeUnit)/timeout">timeout</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a><span class="symbol">, </span><span class="identifier" id="okhttp3.Interceptor.Chain$withReadTimeout(kotlin.Int, java.util.concurrent.TimeUnit)/unit">unit</span><span class="symbol">:</span>&nbsp;<a href="https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/TimeUnit.html"><span class="identifier">TimeUnit</span></a><span class="symbol">)</span><span class="symbol">: </span><a href="./index.html"><span class="identifier">Interceptor.Chain</span></a></code></td>
+</tr>
+<tr>
+<td>
+<p><a href="with-write-timeout.html">withWriteTimeout</a></p>
+</td>
+<td>
+<code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">withWriteTimeout</span><span class="symbol">(</span><span class="identifier" id="okhttp3.Interceptor.Chain$withWriteTimeout(kotlin.Int, java.util.concurrent.TimeUnit)/timeout">timeout</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a><span class="symbol">, </span><span class="identifier" id="okhttp3.Interceptor.Chain$withWriteTimeout(kotlin.Int, java.util.concurrent.TimeUnit)/unit">unit</span><span class="symbol">:</span>&nbsp;<a href="https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/TimeUnit.html"><span class="identifier">TimeUnit</span></a><span class="symbol">)</span><span class="symbol">: </span><a href="./index.html"><span class="identifier">Interceptor.Chain</span></a></code></td>
+</tr>
+<tr>
+<td>
+<p><a href="write-timeout-millis.html">writeTimeoutMillis</a></p>
+</td>
+<td>
+<code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">writeTimeoutMillis</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a></code></td>
+</tr>
+</tbody>
+</table>
+</BODY>
+</HTML>

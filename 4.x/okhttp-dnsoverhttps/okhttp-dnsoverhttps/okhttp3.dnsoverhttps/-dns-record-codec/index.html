@@ -1,0 +1,52 @@
+<HTML>
+<HEAD>
+<meta charset="UTF-8">
+<title>DnsRecordCodec - okhttp-dnsoverhttps</title>
+<link rel="stylesheet" href="../../../style.css">
+</HEAD>
+<BODY>
+<a href="../../index.html">okhttp-dnsoverhttps</a>&nbsp;/&nbsp;<a href="../index.html">okhttp3.dnsoverhttps</a>&nbsp;/&nbsp;<a href="./index.html">DnsRecordCodec</a><br/>
+<br/>
+<h1>DnsRecordCodec</h1>
+<code><span class="keyword">object </span><span class="identifier">DnsRecordCodec</span></code>
+<p>Trivial Dns Encoder/Decoder, basically ripped from Netty full implementation.</p>
+<h3>Properties</h3>
+<table>
+<tbody>
+<tr>
+<td>
+<p><a href="-t-y-p-e_-a.html">TYPE_A</a></p>
+</td>
+<td>
+<code><span class="keyword">const</span> <span class="keyword">val </span><span class="identifier">TYPE_A</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a></code></td>
+</tr>
+<tr>
+<td>
+<p><a href="-t-y-p-e_-a-a-a-a.html">TYPE_AAAA</a></p>
+</td>
+<td>
+<code><span class="keyword">const</span> <span class="keyword">val </span><span class="identifier">TYPE_AAAA</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a></code></td>
+</tr>
+</tbody>
+</table>
+<h3>Functions</h3>
+<table>
+<tbody>
+<tr>
+<td>
+<p><a href="decode-answers.html">decodeAnswers</a></p>
+</td>
+<td>
+<code><span class="keyword">fun </span><span class="identifier">decodeAnswers</span><span class="symbol">(</span><span class="identifier" id="okhttp3.dnsoverhttps.DnsRecordCodec$decodeAnswers(kotlin.String, okio.ByteString)/hostname">hostname</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><span class="identifier">String</span></a><span class="symbol">, </span><span class="identifier" id="okhttp3.dnsoverhttps.DnsRecordCodec$decodeAnswers(kotlin.String, okio.ByteString)/byteString">byteString</span><span class="symbol">:</span>&nbsp;<a href="https://square.github.io/okio/2.x/okio/jvm/okio/-byte-string/index.html"><span class="identifier">ByteString</span></a><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.html"><span class="identifier">List</span></a><span class="symbol">&lt;</span><a href="https://docs.oracle.com/javase/8/docs/api/java/net/InetAddress.html"><span class="identifier">InetAddress</span></a><span class="symbol">&gt;</span></code></td>
+</tr>
+<tr>
+<td>
+<p><a href="encode-query.html">encodeQuery</a></p>
+</td>
+<td>
+<code><span class="keyword">fun </span><span class="identifier">encodeQuery</span><span class="symbol">(</span><span class="identifier" id="okhttp3.dnsoverhttps.DnsRecordCodec$encodeQuery(kotlin.String, kotlin.Int)/host">host</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><span class="identifier">String</span></a><span class="symbol">, </span><span class="identifier" id="okhttp3.dnsoverhttps.DnsRecordCodec$encodeQuery(kotlin.String, kotlin.Int)/type">type</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a><span class="symbol">)</span><span class="symbol">: </span><a href="https://square.github.io/okio/2.x/okio/jvm/okio/-byte-string/index.html"><span class="identifier">ByteString</span></a></code></td>
+</tr>
+</tbody>
+</table>
+</BODY>
+</HTML>

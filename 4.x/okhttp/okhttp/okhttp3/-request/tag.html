@@ -1,0 +1,23 @@
+<HTML>
+<HEAD>
+<meta charset="UTF-8">
+<title>Request.tag - okhttp</title>
+<link rel="stylesheet" href="../../../style.css">
+</HEAD>
+<BODY>
+<a href="../../index.html">okhttp</a>&nbsp;/&nbsp;<a href="../index.html">okhttp3</a>&nbsp;/&nbsp;<a href="index.html">Request</a>&nbsp;/&nbsp;<a href="./tag.html">tag</a><br/>
+<br/>
+<h1>tag</h1>
+<a name="okhttp3.Request$tag()"></a>
+<code><span class="keyword">fun </span><span class="identifier">tag</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-any/index.html"><span class="identifier">Any</span></a><span class="symbol">?</span></code>
+<p>Returns the tag attached with <code>Object.class</code> as a key, or null if no tag is attached with
+that key.</p>
+<p>Prior to OkHttp 3.11, this method never returned null if no tag was attached. Instead it
+returned either this request, or the request upon which this request was derived with
+<a href="new-builder.html">newBuilder</a>.</p>
+<a name="okhttp3.Request$tag(java.lang.Class((okhttp3.Request.tag.T)))"></a>
+<code><span class="keyword">fun </span><span class="symbol">&lt;</span><span class="identifier">T</span><span class="symbol">&gt;</span> <span class="identifier">tag</span><span class="symbol">(</span><span class="identifier" id="okhttp3.Request$tag(java.lang.Class((okhttp3.Request.tag.T)))/type">type</span><span class="symbol">:</span>&nbsp;<a href="https://docs.oracle.com/javase/8/docs/api/java/lang/Class.html"><span class="identifier">Class</span></a><span class="symbol">&lt;</span><span class="keyword">out</span>&nbsp;<a href="tag.html#T"><span class="identifier">T</span></a><span class="symbol">&gt;</span><span class="symbol">)</span><span class="symbol">: </span><a href="tag.html#T"><span class="identifier">T</span></a><span class="symbol">?</span></code>
+<p>Returns the tag attached with <a href="tag.html#okhttp3.Request$tag(java.lang.Class((okhttp3.Request.tag.T)))/type">type</a> as a key, or null if no tag is attached with that
+key.</p>
+</BODY>
+</HTML>

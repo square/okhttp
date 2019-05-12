@@ -1,0 +1,93 @@
+<HTML>
+<HEAD>
+<meta charset="UTF-8">
+<title>QueueDispatcher - mockwebserver</title>
+<link rel="stylesheet" href="../../../style.css">
+</HEAD>
+<BODY>
+<a href="../../index.html">mockwebserver</a>&nbsp;/&nbsp;<a href="../index.html">okhttp3.mockwebserver</a>&nbsp;/&nbsp;<a href="./index.html">QueueDispatcher</a><br/>
+<br/>
+<h1>QueueDispatcher</h1>
+<code><span class="keyword">open</span> <span class="keyword">class </span><span class="identifier">QueueDispatcher</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="../-dispatcher/index.html"><span class="identifier">Dispatcher</span></a></code>
+<p>Default dispatcher that processes a script of responses. Populate the script by calling <a href="enqueue-response.html">enqueueResponse</a>.</p>
+<h3>Constructors</h3>
+<table>
+<tbody>
+<tr>
+<td>
+<p><a href="-init-.html">&lt;init&gt;</a></p>
+</td>
+<td>
+<code><span class="identifier">QueueDispatcher</span><span class="symbol">(</span><span class="symbol">)</span></code>
+<p>Default dispatcher that processes a script of responses. Populate the script by calling <a href="enqueue-response.html">enqueueResponse</a>.</p>
+</td>
+</tr>
+</tbody>
+</table>
+<h3>Properties</h3>
+<table>
+<tbody>
+<tr>
+<td>
+<p><a href="response-queue.html">responseQueue</a></p>
+</td>
+<td>
+<code><span class="keyword">val </span><span class="identifier">responseQueue</span><span class="symbol">: </span><a href="https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/BlockingQueue.html"><span class="identifier">BlockingQueue</span></a><span class="symbol">&lt;</span><a href="../-mock-response/index.html"><span class="identifier">MockResponse</span></a><span class="symbol">&gt;</span></code></td>
+</tr>
+</tbody>
+</table>
+<h3>Functions</h3>
+<table>
+<tbody>
+<tr>
+<td>
+<p><a href="dispatch.html">dispatch</a></p>
+</td>
+<td>
+<code><span class="keyword">open</span> <span class="keyword">fun </span><span class="identifier">dispatch</span><span class="symbol">(</span><span class="identifier" id="okhttp3.mockwebserver.QueueDispatcher$dispatch(okhttp3.mockwebserver.RecordedRequest)/request">request</span><span class="symbol">:</span>&nbsp;<a href="../-recorded-request/index.html"><span class="identifier">RecordedRequest</span></a><span class="symbol">)</span><span class="symbol">: </span><a href="../-mock-response/index.html"><span class="identifier">MockResponse</span></a></code>
+<p>Returns a response to satisfy <code>request</code>. This method may block (for instance, to wait on
+a CountdownLatch).</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><a href="enqueue-response.html">enqueueResponse</a></p>
+</td>
+<td>
+<code><span class="keyword">open</span> <span class="keyword">fun </span><span class="identifier">enqueueResponse</span><span class="symbol">(</span><span class="identifier" id="okhttp3.mockwebserver.QueueDispatcher$enqueueResponse(okhttp3.mockwebserver.MockResponse)/response">response</span><span class="symbol">:</span>&nbsp;<a href="../-mock-response/index.html"><span class="identifier">MockResponse</span></a><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code></td>
+</tr>
+<tr>
+<td>
+<p><a href="peek.html">peek</a></p>
+</td>
+<td>
+<code><span class="keyword">open</span> <span class="keyword">fun </span><span class="identifier">peek</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="../-mock-response/index.html"><span class="identifier">MockResponse</span></a></code>
+<p>Returns an early guess of the next response, used for policy on how an incoming request should
+be received. The default implementation returns an empty response. Mischievous implementations
+can return other values to test HTTP edge cases, such as unhappy socket policies or throttled
+request bodies.</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><a href="set-fail-fast.html">setFailFast</a></p>
+</td>
+<td>
+<code><span class="keyword">open</span> <span class="keyword">fun </span><span class="identifier">setFailFast</span><span class="symbol">(</span><span class="identifier" id="okhttp3.mockwebserver.QueueDispatcher$setFailFast(kotlin.Boolean)/failFast">failFast</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code><br/>
+<code><span class="keyword">open</span> <span class="keyword">fun </span><span class="identifier">setFailFast</span><span class="symbol">(</span><span class="identifier" id="okhttp3.mockwebserver.QueueDispatcher$setFailFast(okhttp3.mockwebserver.MockResponse)/failFastResponse">failFastResponse</span><span class="symbol">:</span>&nbsp;<a href="../-mock-response/index.html"><span class="identifier">MockResponse</span></a><span class="symbol">?</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code></td>
+</tr>
+<tr>
+<td>
+<p><a href="shutdown.html">shutdown</a></p>
+</td>
+<td>
+<code><span class="keyword">open</span> <span class="keyword">fun </span><span class="identifier">shutdown</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code>
+<p>Release any resources held by this dispatcher. Any requests that are currently being dispatched
+should return immediately. Responses returned after shutdown will not be transmitted: their
+socket connections have already been closed.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</BODY>
+</HTML>

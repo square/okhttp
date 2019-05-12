@@ -1,0 +1,120 @@
+<HTML>
+<HEAD>
+<meta charset="UTF-8">
+<title>RequestBody - okhttp</title>
+<link rel="stylesheet" href="../../../style.css">
+</HEAD>
+<BODY>
+<a href="../../index.html">okhttp</a>&nbsp;/&nbsp;<a href="../index.html">okhttp3</a>&nbsp;/&nbsp;<a href="./index.html">RequestBody</a><br/>
+<br/>
+<h1>RequestBody</h1>
+<code><span class="keyword">abstract</span> <span class="keyword">class </span><span class="identifier">RequestBody</span></code>
+<h3>Constructors</h3>
+<table>
+<tbody>
+<tr>
+<td>
+<p><a href="-init-.html">&lt;init&gt;</a></p>
+</td>
+<td>
+<code><span class="identifier">RequestBody</span><span class="symbol">(</span><span class="symbol">)</span></code></td>
+</tr>
+</tbody>
+</table>
+<h3>Functions</h3>
+<table>
+<tbody>
+<tr>
+<td>
+<p><a href="content-length.html">contentLength</a></p>
+</td>
+<td>
+<code><span class="keyword">open</span> <span class="keyword">fun </span><span class="identifier">contentLength</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html"><span class="identifier">Long</span></a></code>
+<p>Returns the number of bytes that will be written to sink in a call to <a href="write-to.html">writeTo</a>,
+or -1 if that count is unknown.</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><a href="content-type.html">contentType</a></p>
+</td>
+<td>
+<code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">contentType</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="../-media-type/index.html"><span class="identifier">MediaType</span></a><span class="symbol">?</span></code>
+<p>Returns the Content-Type header for this body.</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><a href="is-duplex.html">isDuplex</a></p>
+</td>
+<td>
+<code><span class="keyword">open</span> <span class="keyword">fun </span><span class="identifier">isDuplex</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code>
+<p>A duplex request body is special in how it is <strong>transmitted</strong> on the network and
+in the <strong>API contract</strong> between OkHttp and the application.</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><a href="is-one-shot.html">isOneShot</a></p>
+</td>
+<td>
+<code><span class="keyword">open</span> <span class="keyword">fun </span><span class="identifier">isOneShot</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code>
+<p>Returns true if this body expects at most one call to <a href="write-to.html">writeTo</a> and can be transmitted
+at most once. This is typically used when writing the request body is destructive and it is not
+possible to recreate the request body after it has been sent.</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><a href="write-to.html">writeTo</a></p>
+</td>
+<td>
+<code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">writeTo</span><span class="symbol">(</span><span class="identifier" id="okhttp3.RequestBody$writeTo(okio.BufferedSink)/sink">sink</span><span class="symbol">:</span>&nbsp;<a href="https://square.github.io/okio/2.x/okio/jvm/okio/-buffered-sink/index.html"><span class="identifier">BufferedSink</span></a><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code>
+<p>Writes the content of this request to <a href="write-to.html#okhttp3.RequestBody$writeTo(okio.BufferedSink)/sink">sink</a>.</p>
+</td>
+</tr>
+</tbody>
+</table>
+<h3>Companion Object Functions</h3>
+<table>
+<tbody>
+<tr>
+<td>
+<p><a href="create.html">create</a></p>
+</td>
+<td>
+<code><span class="keyword">fun </span><span class="identifier">create</span><span class="symbol">(</span><span class="identifier" id="okhttp3.RequestBody.Companion$create(okhttp3.MediaType, kotlin.String)/contentType">contentType</span><span class="symbol">:</span>&nbsp;<a href="../-media-type/index.html"><span class="identifier">MediaType</span></a><span class="symbol">?</span><span class="symbol">, </span><span class="identifier" id="okhttp3.RequestBody.Companion$create(okhttp3.MediaType, kotlin.String)/content">content</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><span class="identifier">String</span></a><span class="symbol">)</span><span class="symbol">: </span><a href="./index.html"><span class="identifier">RequestBody</span></a></code>
+<p>Returns a new request body that transmits <a href="create.html#okhttp3.RequestBody.Companion$create(okhttp3.MediaType, kotlin.String)/content">content</a>. If <a href="create.html#okhttp3.RequestBody.Companion$create(okhttp3.MediaType, kotlin.String)/contentType">contentType</a> is non-null
+and lacks a charset, this will use UTF-8.</p>
+<code><span class="keyword">fun </span><span class="identifier">create</span><span class="symbol">(</span><span class="identifier" id="okhttp3.RequestBody.Companion$create(okhttp3.MediaType, okio.ByteString)/contentType">contentType</span><span class="symbol">:</span>&nbsp;<a href="../-media-type/index.html"><span class="identifier">MediaType</span></a><span class="symbol">?</span><span class="symbol">, </span><span class="identifier" id="okhttp3.RequestBody.Companion$create(okhttp3.MediaType, okio.ByteString)/content">content</span><span class="symbol">:</span>&nbsp;<a href="https://square.github.io/okio/2.x/okio/jvm/okio/-byte-string/index.html"><span class="identifier">ByteString</span></a><span class="symbol">)</span><span class="symbol">: </span><a href="./index.html"><span class="identifier">RequestBody</span></a></code><br/>
+<code><span class="keyword">fun </span><span class="identifier">create</span><span class="symbol">(</span><span class="identifier" id="okhttp3.RequestBody.Companion$create(okhttp3.MediaType, kotlin.ByteArray, kotlin.Int, kotlin.Int)/contentType">contentType</span><span class="symbol">:</span>&nbsp;<a href="../-media-type/index.html"><span class="identifier">MediaType</span></a><span class="symbol">?</span><span class="symbol">, </span><span class="identifier" id="okhttp3.RequestBody.Companion$create(okhttp3.MediaType, kotlin.ByteArray, kotlin.Int, kotlin.Int)/content">content</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-byte-array/index.html"><span class="identifier">ByteArray</span></a><span class="symbol">, </span><span class="identifier" id="okhttp3.RequestBody.Companion$create(okhttp3.MediaType, kotlin.ByteArray, kotlin.Int, kotlin.Int)/offset">offset</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a>&nbsp;<span class="symbol">=</span>&nbsp;0<span class="symbol">, </span><span class="identifier" id="okhttp3.RequestBody.Companion$create(okhttp3.MediaType, kotlin.ByteArray, kotlin.Int, kotlin.Int)/byteCount">byteCount</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a>&nbsp;<span class="symbol">=</span>&nbsp;content.size<span class="symbol">)</span><span class="symbol">: </span><a href="./index.html"><span class="identifier">RequestBody</span></a></code>
+<p>Returns a new request body that transmits <a href="create.html#okhttp3.RequestBody.Companion$create(okhttp3.MediaType, okio.ByteString)/content">content</a>.</p>
+<code><span class="keyword">fun </span><span class="identifier">create</span><span class="symbol">(</span><span class="identifier" id="okhttp3.RequestBody.Companion$create(okhttp3.MediaType, java.io.File)/contentType">contentType</span><span class="symbol">:</span>&nbsp;<a href="../-media-type/index.html"><span class="identifier">MediaType</span></a><span class="symbol">?</span><span class="symbol">, </span><span class="identifier" id="okhttp3.RequestBody.Companion$create(okhttp3.MediaType, java.io.File)/file">file</span><span class="symbol">:</span>&nbsp;<a href="https://docs.oracle.com/javase/8/docs/api/java/io/File.html"><span class="identifier">File</span></a><span class="symbol">)</span><span class="symbol">: </span><a href="./index.html"><span class="identifier">RequestBody</span></a></code>
+<p>Returns a new request body that transmits the content of <a href="create.html#okhttp3.RequestBody.Companion$create(okhttp3.MediaType, java.io.File)/file">file</a>.</p>
+</td>
+</tr>
+</tbody>
+</table>
+<h3>Inheritors</h3>
+<table>
+<tbody>
+<tr>
+<td>
+<p><a href="../-form-body/index.html">FormBody</a></p>
+</td>
+<td>
+<code><span class="keyword">class </span><span class="identifier">FormBody</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="./index.html"><span class="identifier">RequestBody</span></a></code></td>
+</tr>
+<tr>
+<td>
+<p><a href="../-multipart-body/index.html">MultipartBody</a></p>
+</td>
+<td>
+<code><span class="keyword">class </span><span class="identifier">MultipartBody</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="./index.html"><span class="identifier">RequestBody</span></a></code>
+<p>An <a href="http://www.ietf.org/rfc/rfc2387.txt">RFC 2387</a>-compliant request body.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</BODY>
+</HTML>

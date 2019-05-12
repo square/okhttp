@@ -1,0 +1,29 @@
+<HTML>
+<HEAD>
+<meta charset="UTF-8">
+<title>WebSocket.send - okhttp</title>
+<link rel="stylesheet" href="../../../style.css">
+</HEAD>
+<BODY>
+<a href="../../index.html">okhttp</a>&nbsp;/&nbsp;<a href="../index.html">okhttp3</a>&nbsp;/&nbsp;<a href="index.html">WebSocket</a>&nbsp;/&nbsp;<a href="./send.html">send</a><br/>
+<br/>
+<h1>send</h1>
+<a name="okhttp3.WebSocket$send(kotlin.String)"></a>
+<code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">send</span><span class="symbol">(</span><span class="identifier" id="okhttp3.WebSocket$send(kotlin.String)/text">text</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><span class="identifier">String</span></a><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code>
+<p>Attempts to enqueue <code>text</code> to be UTF-8 encoded and sent as a the data of a text (type <code>0x1</code>)
+message.</p>
+<p>This method returns true if the message was enqueued. Messages that would overflow the outgoing
+message buffer will be rejected and trigger a <a href="close.html">graceful shutdown</a> of this web socket.
+This method returns false in that case, and in any other case where this web socket is closing,
+closed, or canceled.</p>
+<p>This method returns immediately.</p>
+<a name="okhttp3.WebSocket$send(okio.ByteString)"></a>
+<code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">send</span><span class="symbol">(</span><span class="identifier" id="okhttp3.WebSocket$send(okio.ByteString)/bytes">bytes</span><span class="symbol">:</span>&nbsp;<a href="https://square.github.io/okio/2.x/okio/jvm/okio/-byte-string/index.html"><span class="identifier">ByteString</span></a><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code>
+<p>Attempts to enqueue <code>bytes</code> to be sent as a the data of a binary (type <code>0x2</code>) message.</p>
+<p>This method returns true if the message was enqueued. Messages that would overflow the outgoing
+message buffer (16 MiB) will be rejected and trigger a <a href="close.html">graceful shutdown</a> of this web
+socket. This method returns false in that case, and in any other case where this web socket is
+closing, closed, or canceled.</p>
+<p>This method returns immediately.</p>
+</BODY>
+</HTML>

@@ -1,0 +1,30 @@
+<HTML>
+<HEAD>
+<meta charset="UTF-8">
+<title>Dispatcher.maxRequestsPerHost - okhttp</title>
+<link rel="stylesheet" href="../../../style.css">
+</HEAD>
+<BODY>
+<a href="../../index.html">okhttp</a>&nbsp;/&nbsp;<a href="../index.html">okhttp3</a>&nbsp;/&nbsp;<a href="index.html">Dispatcher</a>&nbsp;/&nbsp;<a href="./max-requests-per-host.html">maxRequestsPerHost</a><br/>
+<br/>
+<h1>maxRequestsPerHost</h1>
+<a name="okhttp3.Dispatcher$maxRequestsPerHost"></a>
+<code><span class="keyword">var </span><span class="identifier">maxRequestsPerHost</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a></code>
+<p>Set the maximum number of requests for each host to execute concurrently. This limits requests
+by the URL's host name. Note that concurrent requests to a single IP address may still exceed
+this limit: multiple hostnames may share an IP address or be routed through the same HTTP
+proxy.</p>
+<p>If more than <code>maxRequestsPerHost</code> requests are in flight when this is invoked, those
+requests will remain in flight.</p>
+<p>WebSocket connections to hosts <strong>do not</strong> count against this limit.</p>
+<p><strong>Getter</strong><br/>
+<p>Set the maximum number of requests for each host to execute concurrently. This limits requests
+by the URL's host name. Note that concurrent requests to a single IP address may still exceed
+this limit: multiple hostnames may share an IP address or be routed through the same HTTP
+proxy.</p>
+<p>If more than <code>maxRequestsPerHost</code> requests are in flight when this is invoked, those
+requests will remain in flight.</p>
+<p>WebSocket connections to hosts <strong>do not</strong> count against this limit.</p>
+</p>
+</BODY>
+</HTML>

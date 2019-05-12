@@ -1,0 +1,83 @@
+<HTML>
+<HEAD>
+<meta charset="UTF-8">
+<title>Route - okhttp</title>
+<link rel="stylesheet" href="../../../style.css">
+</HEAD>
+<BODY>
+<a href="../../index.html">okhttp</a>&nbsp;/&nbsp;<a href="../index.html">okhttp3</a>&nbsp;/&nbsp;<a href="./index.html">Route</a><br/>
+<br/>
+<h1>Route</h1>
+<code><span class="keyword">data</span> <span class="keyword">class </span><span class="identifier">Route</span></code>
+<p>The concrete route used by a connection to reach an abstract origin server. When creating a
+connection the client has many options:</p>
+<ul><li><strong>HTTP proxy:</strong> a proxy server may be explicitly configured for the client.
+Otherwise the <a href="https://docs.oracle.com/javase/8/docs/api/java/net/ProxySelector.html">proxy selector</a> is used. It may return
+multiple proxies to attempt.</li>
+<li><strong>IP address:</strong> whether connecting directly to an origin server or a proxy,
+opening a socket requires an IP address. The DNS server may return multiple IP addresses
+to attempt.</li>
+</ul>
+<p>Each route is a specific selection of these options.</p>
+<h3>Constructors</h3>
+<table>
+<tbody>
+<tr>
+<td>
+<p><a href="-init-.html">&lt;init&gt;</a></p>
+</td>
+<td>
+<code><span class="identifier">Route</span><span class="symbol">(</span><span class="identifier" id="okhttp3.Route$<init>(okhttp3.Address, java.net.Proxy, java.net.InetSocketAddress)/address">address</span><span class="symbol">:</span>&nbsp;<a href="../-address/index.html"><span class="identifier">Address</span></a><span class="symbol">, </span><span class="identifier" id="okhttp3.Route$<init>(okhttp3.Address, java.net.Proxy, java.net.InetSocketAddress)/proxy">proxy</span><span class="symbol">:</span>&nbsp;<a href="https://docs.oracle.com/javase/8/docs/api/java/net/Proxy.html"><span class="identifier">Proxy</span></a><span class="symbol">, </span><span class="identifier" id="okhttp3.Route$<init>(okhttp3.Address, java.net.Proxy, java.net.InetSocketAddress)/inetSocketAddress">inetSocketAddress</span><span class="symbol">:</span>&nbsp;<a href="https://docs.oracle.com/javase/8/docs/api/java/net/InetSocketAddress.html"><span class="identifier">InetSocketAddress</span></a><span class="symbol">)</span></code>
+<p>The concrete route used by a connection to reach an abstract origin server. When creating a
+connection the client has many options:</p>
+</td>
+</tr>
+</tbody>
+</table>
+<h3>Functions</h3>
+<table>
+<tbody>
+<tr>
+<td>
+<p><a href="address.html">address</a></p>
+</td>
+<td>
+<code><span class="keyword">fun </span><span class="identifier">address</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="../-address/index.html"><span class="identifier">Address</span></a></code></td>
+</tr>
+<tr>
+<td>
+<p><a href="proxy.html">proxy</a></p>
+</td>
+<td>
+<code><span class="keyword">fun </span><span class="identifier">proxy</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://docs.oracle.com/javase/8/docs/api/java/net/Proxy.html"><span class="identifier">Proxy</span></a></code>
+<p>Returns the <a href="https://docs.oracle.com/javase/8/docs/api/java/net/Proxy.html">Proxy</a> of this route.</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><a href="requires-tunnel.html">requiresTunnel</a></p>
+</td>
+<td>
+<code><span class="keyword">fun </span><span class="identifier">requiresTunnel</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code>
+<p>Returns true if this route tunnels HTTPS through an HTTP proxy.
+See <a href="http://www.ietf.org/rfc/rfc2817.txt">RFC 2817, Section 5.2</a>.</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><a href="socket-address.html">socketAddress</a></p>
+</td>
+<td>
+<code><span class="keyword">fun </span><span class="identifier">socketAddress</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://docs.oracle.com/javase/8/docs/api/java/net/InetSocketAddress.html"><span class="identifier">InetSocketAddress</span></a></code></td>
+</tr>
+<tr>
+<td>
+<p><a href="to-string.html">toString</a></p>
+</td>
+<td>
+<code><span class="keyword">fun </span><span class="identifier">toString</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><span class="identifier">String</span></a></code></td>
+</tr>
+</tbody>
+</table>
+</BODY>
+</HTML>

@@ -1,0 +1,37 @@
+<HTML>
+<HEAD>
+<meta charset="UTF-8">
+<title>Headers.equals - okhttp</title>
+<link rel="stylesheet" href="../../../style.css">
+</HEAD>
+<BODY>
+<a href="../../index.html">okhttp</a>&nbsp;/&nbsp;<a href="../index.html">okhttp3</a>&nbsp;/&nbsp;<a href="index.html">Headers</a>&nbsp;/&nbsp;<a href="./equals.html">equals</a><br/>
+<br/>
+<h1>equals</h1>
+<a name="okhttp3.Headers$equals(kotlin.Any)"></a>
+<code><span class="keyword">fun </span><span class="identifier">equals</span><span class="symbol">(</span><span class="identifier" id="okhttp3.Headers$equals(kotlin.Any)/other">other</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-any/index.html"><span class="identifier">Any</span></a><span class="symbol">?</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code>
+<p>Returns true if <code>other</code> is a <code>Headers</code> object with the same headers, with the same casing, in
+the same order. Note that two headers instances may be <em>semantically</em> equal but not equal
+according to this method. In particular, none of the following sets of headers are equal
+according to this method:</p>
+<ol><li>Original</li>
+</ol>
+<pre><code>Content-Type: text/html
+Content-Length: 50
+</code></pre><ol><li>Different order</li>
+</ol>
+<pre><code>Content-Length: 50
+Content-Type: text/html
+</code></pre><ol><li>Different case</li>
+</ol>
+<pre><code>content-type: text/html
+content-length: 50
+</code></pre><ol><li>Different values</li>
+</ol>
+<pre><code>Content-Type: text/html
+Content-Length: 050
+</code></pre>
+<p>Applications that require semantically equal headers should convert them into a canonical form
+before comparing them for equality.</p>
+</BODY>
+</HTML>

@@ -1,0 +1,21 @@
+<HTML>
+<HEAD>
+<meta charset="UTF-8">
+<title>Cache.initialize - okhttp</title>
+<link rel="stylesheet" href="../../../style.css">
+</HEAD>
+<BODY>
+<a href="../../index.html">okhttp</a>&nbsp;/&nbsp;<a href="../index.html">okhttp3</a>&nbsp;/&nbsp;<a href="index.html">Cache</a>&nbsp;/&nbsp;<a href="./initialize.html">initialize</a><br/>
+<br/>
+<h1>initialize</h1>
+<a name="okhttp3.Cache$initialize()"></a>
+<code><span class="keyword">fun </span><span class="identifier">initialize</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code>
+<p>Initialize the cache. This will include reading the journal files from the storage and building
+up the necessary in-memory cache information.</p>
+<p>The initialization time may vary depending on the journal file size and the current actual
+cache size. The application needs to be aware of calling this function during the
+initialization phase and preferably in a background worker thread.</p>
+<p>Note that if the application chooses to not call this method to initialize the cache. By
+default, OkHttp will perform lazy initialization upon the first usage of the cache.</p>
+</BODY>
+</HTML>

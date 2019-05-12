@@ -1,0 +1,20 @@
+<HTML>
+<HEAD>
+<meta charset="UTF-8">
+<title>HandshakeCertificates.Builder.heldCertificate - okhttp-tls</title>
+<link rel="stylesheet" href="../../../../style.css">
+</HEAD>
+<BODY>
+<a href="../../../index.html">okhttp-tls</a>&nbsp;/&nbsp;<a href="../../index.html">okhttp3.tls</a>&nbsp;/&nbsp;<a href="../index.html">HandshakeCertificates</a>&nbsp;/&nbsp;<a href="index.html">Builder</a>&nbsp;/&nbsp;<a href="./held-certificate.html">heldCertificate</a><br/>
+<br/>
+<h1>heldCertificate</h1>
+<a name="okhttp3.tls.HandshakeCertificates.Builder$heldCertificate(okhttp3.tls.HeldCertificate, kotlin.Array((java.security.cert.X509Certificate)))"></a>
+<code><span class="keyword">fun </span><span class="identifier">heldCertificate</span><span class="symbol">(</span><span class="identifier" id="okhttp3.tls.HandshakeCertificates.Builder$heldCertificate(okhttp3.tls.HeldCertificate, kotlin.Array((java.security.cert.X509Certificate)))/heldCertificate">heldCertificate</span><span class="symbol">:</span>&nbsp;<a href="../../-held-certificate/index.html"><span class="identifier">HeldCertificate</span></a><span class="symbol">, </span><span class="keyword">vararg</span> <span class="identifier" id="okhttp3.tls.HandshakeCertificates.Builder$heldCertificate(okhttp3.tls.HeldCertificate, kotlin.Array((java.security.cert.X509Certificate)))/intermediates">intermediates</span><span class="symbol">:</span>&nbsp;<a href="https://docs.oracle.com/javase/8/docs/api/java/security/cert/X509Certificate.html"><span class="identifier">X509Certificate</span></a><span class="symbol">)</span><span class="symbol">: </span><a href="index.html"><span class="identifier">HandshakeCertificates.Builder</span></a></code>
+<p>Configure the certificate chain to use when being authenticated. The first certificate is
+the held certificate, further certificates are included in the handshake so the peer can
+build a trusted path to a trusted root certificate.</p>
+<p>The chain should include all intermediate certificates but does not need the root certificate
+that we expect to be known by the remote peer. The peer already has that certificate so
+transmitting it is unnecessary.</p>
+</BODY>
+</HTML>

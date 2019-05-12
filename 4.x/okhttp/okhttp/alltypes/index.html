@@ -1,0 +1,294 @@
+<HTML>
+<HEAD>
+<meta charset="UTF-8">
+<title>alltypes - okhttp</title>
+<link rel="stylesheet" href="../../style.css">
+</HEAD>
+<BODY>
+<p>An HTTP+HTTP/2 client for Android and Java applications.</p>
+<h3>All Types</h3>
+<table>
+<tbody>
+<tr>
+<td>
+<a href="../okhttp3/-address/index.html">okhttp3.Address</a></td>
+<td>
+<p>A specification for a connection to an origin server. For simple connections, this is the
+server's hostname and port. If an explicit proxy is requested (or <a href="https://docs.oracle.com/javase/8/docs/api/java/net/Proxy.html#NO_PROXY">no proxy</a> is explicitly requested),
+this also includes that proxy information. For secure connections the address also includes the SSL socket factory,
+hostname verifier, and certificate pinner.</p>
+</td>
+</tr>
+<tr>
+<td>
+<a href="../okhttp3/-authenticator/index.html">okhttp3.Authenticator</a></td>
+<td>
+<p>Performs either <strong>preemptive</strong> authentication before connecting to a proxy server, or
+<strong>reactive</strong> authentication after receiving a challenge from either an origin web server or proxy
+server.</p>
+</td>
+</tr>
+<tr>
+<td>
+<a href="../okhttp3/-cache/index.html">okhttp3.Cache</a></td>
+<td>
+<p>Caches HTTP and HTTPS responses to the filesystem so they may be reused, saving time and
+bandwidth.</p>
+</td>
+</tr>
+<tr>
+<td>
+<a href="../okhttp3/-cache-control/index.html">okhttp3.CacheControl</a></td>
+<td>
+<p>A Cache-Control header with cache directives from a server or client. These directives set policy
+on what responses can be stored, and which requests can be satisfied by those stored responses.</p>
+</td>
+</tr>
+<tr>
+<td>
+<a href="../okhttp3/-call/index.html">okhttp3.Call</a></td>
+<td>
+<p>A call is a request that has been prepared for execution. A call can be canceled. As this object
+represents a single request/response pair (stream), it cannot be executed twice.</p>
+</td>
+</tr>
+<tr>
+<td>
+<a href="../okhttp3/-callback/index.html">okhttp3.Callback</a></td>
+<td>
+</td>
+</tr>
+<tr>
+<td>
+<a href="../okhttp3/-certificate-pinner/index.html">okhttp3.CertificatePinner</a></td>
+<td>
+<p>Constrains which certificates are trusted. Pinning certificates defends against attacks on
+certificate authorities. It also prevents connections through man-in-the-middle certificate
+authorities either known or unknown to the application's user.
+This class currently pins a certificate's Subject Public Key Info as described on
+<a href="http://goo.gl/AIx3e5">Adam Langley's Weblog</a>. Pins are either base64 SHA-256 hashes as in
+<a href="http://tools.ietf.org/html/rfc7469">HTTP Public Key Pinning (HPKP)</a> or SHA-1 base64 hashes as in Chromium's
+<a href="http://goo.gl/XDh6je">static certificates</a>.</p>
+</td>
+</tr>
+<tr>
+<td>
+<a href="../okhttp3/-challenge/index.html">okhttp3.Challenge</a></td>
+<td>
+<p>An RFC 7235 challenge.</p>
+</td>
+</tr>
+<tr>
+<td>
+<a href="../okhttp3/-cipher-suite/index.html">okhttp3.CipherSuite</a></td>
+<td>
+<p><a href="https://www.iana.org/assignments/tls-parameters/tls-parameters.xhtml">TLS cipher suites</a>.</p>
+</td>
+</tr>
+<tr>
+<td>
+<a href="../okhttp3/-connection/index.html">okhttp3.Connection</a></td>
+<td>
+<p>The sockets and streams of an HTTP, HTTPS, or HTTPS+HTTP/2 connection. May be used for multiple
+HTTP request/response exchanges. Connections may be direct to the origin server or via a proxy.</p>
+</td>
+</tr>
+<tr>
+<td>
+<a href="../okhttp3/-connection-pool/index.html">okhttp3.ConnectionPool</a></td>
+<td>
+<p>Manages reuse of HTTP and HTTP/2 connections for reduced network latency. HTTP requests that
+share the same <a href="../okhttp3/-address/index.html">Address</a> may share a <a href="../okhttp3/-connection/index.html">Connection</a>. This class implements the policy
+of which connections to keep open for future use.</p>
+</td>
+</tr>
+<tr>
+<td>
+<a href="../okhttp3/-connection-spec/index.html">okhttp3.ConnectionSpec</a></td>
+<td>
+<p>Specifies configuration for the socket connection that HTTP traffic travels through. For <code>https:</code>
+URLs, this includes the TLS version and cipher suites to use when negotiating a secure
+connection.</p>
+</td>
+</tr>
+<tr>
+<td>
+<a href="../okhttp3/-cookie/index.html">okhttp3.Cookie</a></td>
+<td>
+<p>An <a href="http://tools.ietf.org/html/rfc6265">RFC 6265</a> Cookie.</p>
+</td>
+</tr>
+<tr>
+<td>
+<a href="../okhttp3/-cookie-jar/index.html">okhttp3.CookieJar</a></td>
+<td>
+<p>Provides <strong>policy</strong> and <strong>persistence</strong> for HTTP cookies.</p>
+</td>
+</tr>
+<tr>
+<td>
+<a href="../okhttp3/-credentials/index.html">okhttp3.Credentials</a></td>
+<td>
+<p>Factory for HTTP authorization credentials.</p>
+</td>
+</tr>
+<tr>
+<td>
+<a href="../okhttp3/-dispatcher/index.html">okhttp3.Dispatcher</a></td>
+<td>
+<p>Policy on when async requests are executed.</p>
+</td>
+</tr>
+<tr>
+<td>
+<a href="../okhttp3/-dns/index.html">okhttp3.Dns</a></td>
+<td>
+<p>A domain name service that resolves IP addresses for host names. Most applications will use the
+<a href="../okhttp3/-dns/-s-y-s-t-e-m.html">system DNS service</a>, which is the default. Some applications may provide their own
+implementation to use a different DNS server, to prefer IPv6 addresses, to prefer IPv4 addresses,
+or to force a specific known IP address.</p>
+</td>
+</tr>
+<tr>
+<td>
+<a href="../okhttp3/-event-listener/index.html">okhttp3.EventListener</a></td>
+<td>
+<p>Listener for metrics events. Extend this class to monitor the quantity, size, and duration of
+your application's HTTP calls.</p>
+</td>
+</tr>
+<tr>
+<td>
+<a href="../okhttp3/-form-body/index.html">okhttp3.FormBody</a></td>
+<td>
+</td>
+</tr>
+<tr>
+<td>
+<a href="../okhttp3/-handshake/index.html">okhttp3.Handshake</a></td>
+<td>
+<p>A record of a TLS handshake. For HTTPS clients, the client is <em>local</em> and the remote server
+is its <em>peer</em>.</p>
+</td>
+</tr>
+<tr>
+<td>
+<a href="../okhttp3/-headers/index.html">okhttp3.Headers</a></td>
+<td>
+<p>The header fields of a single HTTP message. Values are uninterpreted strings; use <code>Request</code> and
+<code>Response</code> for interpreted headers. This class maintains the order of the header fields within
+the HTTP message.</p>
+</td>
+</tr>
+<tr>
+<td>
+<a href="../okhttp3/-http-url/index.html">okhttp3.HttpUrl</a></td>
+<td>
+<p>A uniform resource locator (URL) with a scheme of either <code>http</code> or <code>https</code>. Use this class to
+compose and decompose Internet addresses. For example, this code will compose and print a URL for
+Google search:</p>
+</td>
+</tr>
+<tr>
+<td>
+<a href="../okhttp3/-interceptor/index.html">okhttp3.Interceptor</a></td>
+<td>
+<p>Observes, modifies, and potentially short-circuits requests going out and the corresponding
+responses coming back in. Typically interceptors add, remove, or transform headers on the request
+or response.</p>
+</td>
+</tr>
+<tr>
+<td>
+<a href="../okhttp3/-media-type/index.html">okhttp3.MediaType</a></td>
+<td>
+<p>An <a href="http://tools.ietf.org/html/rfc2045">RFC 2045</a> Media Type, appropriate to describe the content type of an HTTP request
+or response body.</p>
+</td>
+</tr>
+<tr>
+<td>
+<a href="../okhttp3/-multipart-body/index.html">okhttp3.MultipartBody</a></td>
+<td>
+<p>An <a href="http://www.ietf.org/rfc/rfc2387.txt">RFC 2387</a>-compliant request body.</p>
+</td>
+</tr>
+<tr>
+<td>
+<a href="../okhttp3/-ok-http-client/index.html">okhttp3.OkHttpClient</a></td>
+<td>
+<p>Factory for <a href="../okhttp3/-call/index.html">calls</a>, which can be used to send HTTP requests and read their responses.</p>
+</td>
+</tr>
+<tr>
+<td>
+<a href="../okhttp3/-protocol/index.html">okhttp3.Protocol</a></td>
+<td>
+<p>Protocols that OkHttp implements for <a href="http://tools.ietf.org/html/draft-ietf-tls-applayerprotoneg">ALPN</a> selection.</p>
+</td>
+</tr>
+<tr>
+<td>
+<a href="../okhttp3/-request/index.html">okhttp3.Request</a></td>
+<td>
+<p>An HTTP request. Instances of this class are immutable if their <a href="../okhttp3/-request/body.html">body</a> is null or itself
+immutable.</p>
+</td>
+</tr>
+<tr>
+<td>
+<a href="../okhttp3/-request-body/index.html">okhttp3.RequestBody</a></td>
+<td>
+</td>
+</tr>
+<tr>
+<td>
+<a href="../okhttp3/-response/index.html">okhttp3.Response</a></td>
+<td>
+<p>An HTTP response. Instances of this class are not immutable: the response body is a one-shot
+value that may be consumed only once and then closed. All other properties are immutable.</p>
+</td>
+</tr>
+<tr>
+<td>
+<a href="../okhttp3/-response-body/index.html">okhttp3.ResponseBody</a></td>
+<td>
+<p>A one-shot stream from the origin server to the client application with the raw bytes of the
+response body. Each response body is supported by an active connection to the webserver. This
+imposes both obligations and limits on the client application.</p>
+</td>
+</tr>
+<tr>
+<td>
+<a href="../okhttp3/-route/index.html">okhttp3.Route</a></td>
+<td>
+<p>The concrete route used by a connection to reach an abstract origin server. When creating a
+connection the client has many options:</p>
+</td>
+</tr>
+<tr>
+<td>
+<a href="../okhttp3/-tls-version/index.html">okhttp3.TlsVersion</a></td>
+<td>
+<p>Versions of TLS that can be offered when negotiating a secure socket. See
+<a href="https://docs.oracle.com/javase/8/docs/api/javax/net/ssl/SSLSocket.html#setEnabledProtocols(java.lang.String[])">javax.net.ssl.SSLSocket.setEnabledProtocols</a>.</p>
+</td>
+</tr>
+<tr>
+<td>
+<a href="../okhttp3/-web-socket/index.html">okhttp3.WebSocket</a></td>
+<td>
+<p>A non-blocking interface to a web socket. Use the <a href="../okhttp3/-web-socket/-factory/index.html">factory</a> to create
+instances; usually this is <a href="../okhttp3/-ok-http-client/index.html">OkHttpClient</a>.</p>
+</td>
+</tr>
+<tr>
+<td>
+<a href="../okhttp3/-web-socket-listener/index.html">okhttp3.WebSocketListener</a></td>
+<td>
+</td>
+</tr>
+</tbody>
+</table>
+</BODY>
+</HTML>

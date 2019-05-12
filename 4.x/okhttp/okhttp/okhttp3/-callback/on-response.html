@@ -1,0 +1,21 @@
+<HTML>
+<HEAD>
+<meta charset="UTF-8">
+<title>Callback.onResponse - okhttp</title>
+<link rel="stylesheet" href="../../../style.css">
+</HEAD>
+<BODY>
+<a href="../../index.html">okhttp</a>&nbsp;/&nbsp;<a href="../index.html">okhttp3</a>&nbsp;/&nbsp;<a href="index.html">Callback</a>&nbsp;/&nbsp;<a href="./on-response.html">onResponse</a><br/>
+<br/>
+<h1>onResponse</h1>
+<a name="okhttp3.Callback$onResponse(okhttp3.Call, okhttp3.Response)"></a>
+<code><span class="keyword">abstract</span> <span class="keyword">fun </span><span class="identifier">onResponse</span><span class="symbol">(</span><span class="identifier" id="okhttp3.Callback$onResponse(okhttp3.Call, okhttp3.Response)/call">call</span><span class="symbol">:</span>&nbsp;<a href="../-call/index.html"><span class="identifier">Call</span></a><span class="symbol">, </span><span class="identifier" id="okhttp3.Callback$onResponse(okhttp3.Call, okhttp3.Response)/response">response</span><span class="symbol">:</span>&nbsp;<a href="../-response/index.html"><span class="identifier">Response</span></a><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code>
+<p>Called when the HTTP response was successfully returned by the remote server. The callback may
+proceed to read the response body with <a href="../-response/body.html">Response.body</a>. The response is still live until its
+response body is <a href="../-response-body/index.html">closed</a>. The recipient of the callback may consume the response
+body on another thread.</p>
+<p>Note that transport-layer success (receiving a HTTP response code, headers and body) does not
+necessarily indicate application-layer success: <code>response</code> may still indicate an unhappy HTTP
+response code like 404 or 500.</p>
+</BODY>
+</HTML>

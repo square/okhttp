@@ -1,0 +1,37 @@
+<HTML>
+<HEAD>
+<meta charset="UTF-8">
+<title>OkHttpClient.Builder.sslSocketFactory - okhttp</title>
+<link rel="stylesheet" href="../../../../style.css">
+</HEAD>
+<BODY>
+<a href="../../../index.html">okhttp</a>&nbsp;/&nbsp;<a href="../../index.html">okhttp3</a>&nbsp;/&nbsp;<a href="../index.html">OkHttpClient</a>&nbsp;/&nbsp;<a href="index.html">Builder</a>&nbsp;/&nbsp;<a href="./ssl-socket-factory.html">sslSocketFactory</a><br/>
+<br/>
+<h1>sslSocketFactory</h1>
+<a name="okhttp3.OkHttpClient.Builder$sslSocketFactory(javax.net.ssl.SSLSocketFactory, javax.net.ssl.X509TrustManager)"></a>
+<code><span class="keyword">fun </span><span class="identifier">sslSocketFactory</span><span class="symbol">(</span><span class="identifier" id="okhttp3.OkHttpClient.Builder$sslSocketFactory(javax.net.ssl.SSLSocketFactory, javax.net.ssl.X509TrustManager)/sslSocketFactory">sslSocketFactory</span><span class="symbol">:</span>&nbsp;<a href="https://docs.oracle.com/javase/8/docs/api/javax/net/ssl/SSLSocketFactory.html"><span class="identifier">SSLSocketFactory</span></a><span class="symbol">, </span><span class="identifier" id="okhttp3.OkHttpClient.Builder$sslSocketFactory(javax.net.ssl.SSLSocketFactory, javax.net.ssl.X509TrustManager)/trustManager">trustManager</span><span class="symbol">:</span>&nbsp;<a href="https://docs.oracle.com/javase/8/docs/api/javax/net/ssl/X509TrustManager.html"><span class="identifier">X509TrustManager</span></a><span class="symbol">)</span><span class="symbol">: </span><a href="index.html"><span class="identifier">OkHttpClient.Builder</span></a></code>
+<p>Sets the socket factory and trust manager used to secure HTTPS connections. If unset, the
+system defaults will be used.</p>
+<p>Most applications should not call this method, and instead use the system defaults. Those
+classes include special optimizations that can be lost if the implementations are decorated.</p>
+<p>If necessary, you can create and configure the defaults yourself with the following code:</p>
+<pre><code>TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance(
+TrustManagerFactory.getDefaultAlgorithm());
+trustManagerFactory.init((KeyStore) null);
+TrustManager[] trustManagers = trustManagerFactory.getTrustManagers();
+if (trustManagers.length != 1 || !(trustManagers[0] instanceof X509TrustManager)) {
+    throw new IllegalStateException("Unexpected default trust managers:"
+        + Arrays.toString(trustManagers));
+}
+X509TrustManager trustManager = (X509TrustManager) trustManagers[0];
+
+SSLContext sslContext = SSLContext.getInstance("TLS");
+sslContext.init(null, new TrustManager[] { trustManager }, null);
+SSLSocketFactory sslSocketFactory = sslContext.getSocketFactory();
+
+OkHttpClient client = new OkHttpClient.Builder()
+    .sslSocketFactory(sslSocketFactory, trustManager)
+    .build();
+</code></pre>
+</BODY>
+</HTML>

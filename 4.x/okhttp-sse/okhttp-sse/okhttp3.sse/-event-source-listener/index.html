@@ -1,0 +1,68 @@
+<HTML>
+<HEAD>
+<meta charset="UTF-8">
+<title>EventSourceListener - okhttp-sse</title>
+<link rel="stylesheet" href="../../../style.css">
+</HEAD>
+<BODY>
+<a href="../../index.html">okhttp-sse</a>&nbsp;/&nbsp;<a href="../index.html">okhttp3.sse</a>&nbsp;/&nbsp;<a href="./index.html">EventSourceListener</a><br/>
+<br/>
+<h1>EventSourceListener</h1>
+<code><span class="keyword">abstract</span> <span class="keyword">class </span><span class="identifier">EventSourceListener</span></code>
+<h3>Constructors</h3>
+<table>
+<tbody>
+<tr>
+<td>
+<p><a href="-init-.html">&lt;init&gt;</a></p>
+</td>
+<td>
+<code><span class="identifier">EventSourceListener</span><span class="symbol">(</span><span class="symbol">)</span></code></td>
+</tr>
+</tbody>
+</table>
+<h3>Functions</h3>
+<table>
+<tbody>
+<tr>
+<td>
+<p><a href="on-closed.html">onClosed</a></p>
+</td>
+<td>
+<code><span class="keyword">open</span> <span class="keyword">fun </span><span class="identifier">onClosed</span><span class="symbol">(</span><span class="identifier" id="okhttp3.sse.EventSourceListener$onClosed(okhttp3.sse.EventSource)/eventSource">eventSource</span><span class="symbol">:</span>&nbsp;<a href="../-event-source/index.html"><span class="identifier">EventSource</span></a><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code>
+<p>TODO description.</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><a href="on-event.html">onEvent</a></p>
+</td>
+<td>
+<code><span class="keyword">open</span> <span class="keyword">fun </span><span class="identifier">onEvent</span><span class="symbol">(</span><span class="identifier" id="okhttp3.sse.EventSourceListener$onEvent(okhttp3.sse.EventSource, kotlin.String, kotlin.String, kotlin.String)/eventSource">eventSource</span><span class="symbol">:</span>&nbsp;<a href="../-event-source/index.html"><span class="identifier">EventSource</span></a><span class="symbol">, </span><span class="identifier" id="okhttp3.sse.EventSourceListener$onEvent(okhttp3.sse.EventSource, kotlin.String, kotlin.String, kotlin.String)/id">id</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><span class="identifier">String</span></a><span class="symbol">?</span><span class="symbol">, </span><span class="identifier" id="okhttp3.sse.EventSourceListener$onEvent(okhttp3.sse.EventSource, kotlin.String, kotlin.String, kotlin.String)/type">type</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><span class="identifier">String</span></a><span class="symbol">?</span><span class="symbol">, </span><span class="identifier" id="okhttp3.sse.EventSourceListener$onEvent(okhttp3.sse.EventSource, kotlin.String, kotlin.String, kotlin.String)/data">data</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><span class="identifier">String</span></a><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code>
+<p>TODO description.</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><a href="on-failure.html">onFailure</a></p>
+</td>
+<td>
+<code><span class="keyword">open</span> <span class="keyword">fun </span><span class="identifier">onFailure</span><span class="symbol">(</span><span class="identifier" id="okhttp3.sse.EventSourceListener$onFailure(okhttp3.sse.EventSource, kotlin.Throwable, okhttp3.Response)/eventSource">eventSource</span><span class="symbol">:</span>&nbsp;<a href="../-event-source/index.html"><span class="identifier">EventSource</span></a><span class="symbol">, </span><span class="identifier" id="okhttp3.sse.EventSourceListener$onFailure(okhttp3.sse.EventSource, kotlin.Throwable, okhttp3.Response)/t">t</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-throwable/index.html"><span class="identifier">Throwable</span></a><span class="symbol">?</span><span class="symbol">, </span><span class="identifier" id="okhttp3.sse.EventSourceListener$onFailure(okhttp3.sse.EventSource, kotlin.Throwable, okhttp3.Response)/response">response</span><span class="symbol">:</span>&nbsp;<span class="identifier">Response</span><span class="symbol">?</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code>
+<p>Invoked when an event source has been closed due to an error reading from or writing to the
+network. Incoming events may have been lost. No further calls to this listener will be made.</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><a href="on-open.html">onOpen</a></p>
+</td>
+<td>
+<code><span class="keyword">open</span> <span class="keyword">fun </span><span class="identifier">onOpen</span><span class="symbol">(</span><span class="identifier" id="okhttp3.sse.EventSourceListener$onOpen(okhttp3.sse.EventSource, okhttp3.Response)/eventSource">eventSource</span><span class="symbol">:</span>&nbsp;<a href="../-event-source/index.html"><span class="identifier">EventSource</span></a><span class="symbol">, </span><span class="identifier" id="okhttp3.sse.EventSourceListener$onOpen(okhttp3.sse.EventSource, okhttp3.Response)/response">response</span><span class="symbol">:</span>&nbsp;<span class="identifier">Response</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code>
+<p>Invoked when an event source has been accepted by the remote peer and may begin transmitting
+events.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</BODY>
+</HTML>

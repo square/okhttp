@@ -1,0 +1,21 @@
+<HTML>
+<HEAD>
+<meta charset="UTF-8">
+<title>Response.peekBody - okhttp</title>
+<link rel="stylesheet" href="../../../style.css">
+</HEAD>
+<BODY>
+<a href="../../index.html">okhttp</a>&nbsp;/&nbsp;<a href="../index.html">okhttp3</a>&nbsp;/&nbsp;<a href="index.html">Response</a>&nbsp;/&nbsp;<a href="./peek-body.html">peekBody</a><br/>
+<br/>
+<h1>peekBody</h1>
+<a name="okhttp3.Response$peekBody(kotlin.Long)"></a>
+<code><span class="keyword">fun </span><span class="identifier">peekBody</span><span class="symbol">(</span><span class="identifier" id="okhttp3.Response$peekBody(kotlin.Long)/byteCount">byteCount</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html"><span class="identifier">Long</span></a><span class="symbol">)</span><span class="symbol">: </span><a href="../-response-body/index.html"><span class="identifier">ResponseBody</span></a></code>
+<p>Peeks up to <a href="peek-body.html#okhttp3.Response$peekBody(kotlin.Long)/byteCount">byteCount</a> bytes from the response body and returns them as a new response
+body. If fewer than <a href="peek-body.html#okhttp3.Response$peekBody(kotlin.Long)/byteCount">byteCount</a> bytes are in the response body, the full response body is
+returned. If more than <a href="peek-body.html#okhttp3.Response$peekBody(kotlin.Long)/byteCount">byteCount</a> bytes are in the response body, the returned value
+will be truncated to <a href="peek-body.html#okhttp3.Response$peekBody(kotlin.Long)/byteCount">byteCount</a> bytes.</p>
+<p>It is an error to call this method after the body has been consumed.</p>
+<p><strong>Warning:</strong> this method loads the requested bytes into memory. Most applications should set
+a modest limit on <code>byteCount</code>, such as 1 MiB.</p>
+</BODY>
+</HTML>

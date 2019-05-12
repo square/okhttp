@@ -1,0 +1,188 @@
+<HTML>
+<HEAD>
+<meta charset="UTF-8">
+<title>MultipartBody - okhttp</title>
+<link rel="stylesheet" href="../../../style.css">
+</HEAD>
+<BODY>
+<a href="../../index.html">okhttp</a>&nbsp;/&nbsp;<a href="../index.html">okhttp3</a>&nbsp;/&nbsp;<a href="./index.html">MultipartBody</a><br/>
+<br/>
+<h1>MultipartBody</h1>
+<code><span class="keyword">class </span><span class="identifier">MultipartBody</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="../-request-body/index.html"><span class="identifier">RequestBody</span></a></code>
+<p>An <a href="http://www.ietf.org/rfc/rfc2387.txt">RFC 2387</a>-compliant request body.</p>
+<h3>Types</h3>
+<table>
+<tbody>
+<tr>
+<td>
+<p><a href="-builder/index.html">Builder</a></p>
+</td>
+<td>
+<code><span class="keyword">class </span><span class="identifier">Builder</span></code></td>
+</tr>
+<tr>
+<td>
+<p><a href="-part/index.html">Part</a></p>
+</td>
+<td>
+<code><span class="keyword">class </span><span class="identifier">Part</span></code></td>
+</tr>
+</tbody>
+</table>
+<h3>Functions</h3>
+<table>
+<tbody>
+<tr>
+<td>
+<p><a href="boundary.html">boundary</a></p>
+</td>
+<td>
+<code><span class="keyword">fun </span><span class="identifier">boundary</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><span class="identifier">String</span></a></code></td>
+</tr>
+<tr>
+<td>
+<p><a href="content-length.html">contentLength</a></p>
+</td>
+<td>
+<code><span class="keyword">fun </span><span class="identifier">contentLength</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html"><span class="identifier">Long</span></a></code>
+<p>Returns the number of bytes that will be written to sink in a call to <a href="../-request-body/write-to.html">writeTo</a>,
+or -1 if that count is unknown.</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><a href="content-type.html">contentType</a></p>
+</td>
+<td>
+<code><span class="keyword">fun </span><span class="identifier">contentType</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="../-media-type/index.html"><span class="identifier">MediaType</span></a></code>
+<p>A combination of <a href="type.html">type</a> and <a href="boundary.html">boundary</a>.</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><a href="part.html">part</a></p>
+</td>
+<td>
+<code><span class="keyword">fun </span><span class="identifier">part</span><span class="symbol">(</span><span class="identifier" id="okhttp3.MultipartBody$part(kotlin.Int)/index">index</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a><span class="symbol">)</span><span class="symbol">: </span><a href="-part/index.html"><span class="identifier">MultipartBody.Part</span></a></code></td>
+</tr>
+<tr>
+<td>
+<p><a href="parts.html">parts</a></p>
+</td>
+<td>
+<code><span class="keyword">fun </span><span class="identifier">parts</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.html"><span class="identifier">List</span></a><span class="symbol">&lt;</span><a href="-part/index.html"><span class="identifier">MultipartBody.Part</span></a><span class="symbol">&gt;</span></code></td>
+</tr>
+<tr>
+<td>
+<p><a href="size.html">size</a></p>
+</td>
+<td>
+<code><span class="keyword">fun </span><span class="identifier">size</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a></code>
+<p>The number of parts in this multipart body.</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><a href="type.html">type</a></p>
+</td>
+<td>
+<code><span class="keyword">fun </span><span class="identifier">type</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="../-media-type/index.html"><span class="identifier">MediaType</span></a></code></td>
+</tr>
+<tr>
+<td>
+<p><a href="write-to.html">writeTo</a></p>
+</td>
+<td>
+<code><span class="keyword">fun </span><span class="identifier">writeTo</span><span class="symbol">(</span><span class="identifier" id="okhttp3.MultipartBody$writeTo(okio.BufferedSink)/sink">sink</span><span class="symbol">:</span>&nbsp;<a href="https://square.github.io/okio/2.x/okio/jvm/okio/-buffered-sink/index.html"><span class="identifier">BufferedSink</span></a><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code>
+<p>Writes the content of this request to <a href="../-request-body/write-to.html#okhttp3.RequestBody$writeTo(okio.BufferedSink)/sink">sink</a>.</p>
+</td>
+</tr>
+</tbody>
+</table>
+<h3>Inherited Functions</h3>
+<table>
+<tbody>
+<tr>
+<td>
+<p><a href="../-request-body/is-duplex.html">isDuplex</a></p>
+</td>
+<td>
+<code><span class="keyword">open</span> <span class="keyword">fun </span><span class="identifier">isDuplex</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code>
+<p>A duplex request body is special in how it is <strong>transmitted</strong> on the network and
+in the <strong>API contract</strong> between OkHttp and the application.</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><a href="../-request-body/is-one-shot.html">isOneShot</a></p>
+</td>
+<td>
+<code><span class="keyword">open</span> <span class="keyword">fun </span><span class="identifier">isOneShot</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code>
+<p>Returns true if this body expects at most one call to <a href="../-request-body/write-to.html">writeTo</a> and can be transmitted
+at most once. This is typically used when writing the request body is destructive and it is not
+possible to recreate the request body after it has been sent.</p>
+</td>
+</tr>
+</tbody>
+</table>
+<h3>Companion Object Properties</h3>
+<table>
+<tbody>
+<tr>
+<td>
+<p><a href="-a-l-t-e-r-n-a-t-i-v-e.html">ALTERNATIVE</a></p>
+</td>
+<td>
+<code><span class="keyword">val </span><span class="identifier">ALTERNATIVE</span><span class="symbol">: </span><a href="../-media-type/index.html"><span class="identifier">MediaType</span></a></code>
+<p>The "multipart/alternative" type is syntactically identical to "multipart/mixed", but the
+semantics are different. In particular, each of the body parts is an "alternative" version of
+the same information.</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><a href="-d-i-g-e-s-t.html">DIGEST</a></p>
+</td>
+<td>
+<code><span class="keyword">val </span><span class="identifier">DIGEST</span><span class="symbol">: </span><a href="../-media-type/index.html"><span class="identifier">MediaType</span></a></code>
+<p>This type is syntactically identical to "multipart/mixed", but the semantics are different.
+In particular, in a digest, the default <code>Content-Type</code> value for a body part is changed from
+"text/plain" to "message/rfc822".</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><a href="-f-o-r-m.html">FORM</a></p>
+</td>
+<td>
+<code><span class="keyword">val </span><span class="identifier">FORM</span><span class="symbol">: </span><a href="../-media-type/index.html"><span class="identifier">MediaType</span></a></code>
+<p>The media-type multipart/form-data follows the rules of all multipart MIME data streams as
+outlined in RFC 2046. In forms, there are a series of fields to be supplied by the user who
+fills out the form. Each field has a name. Within a given form, the names are unique.</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><a href="-m-i-x-e-d.html">MIXED</a></p>
+</td>
+<td>
+<code><span class="keyword">val </span><span class="identifier">MIXED</span><span class="symbol">: </span><a href="../-media-type/index.html"><span class="identifier">MediaType</span></a></code>
+<p>The "mixed" subtype of "multipart" is intended for use when the body parts are independent
+and need to be bundled in a particular order. Any "multipart" subtypes that an implementation
+does not recognize must be treated as being of subtype "mixed".</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><a href="-p-a-r-a-l-l-e-l.html">PARALLEL</a></p>
+</td>
+<td>
+<code><span class="keyword">val </span><span class="identifier">PARALLEL</span><span class="symbol">: </span><a href="../-media-type/index.html"><span class="identifier">MediaType</span></a></code>
+<p>This type is syntactically identical to "multipart/mixed", but the semantics are different.
+In particular, in a parallel entity, the order of body parts is not significant.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</BODY>
+</HTML>
