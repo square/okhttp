@@ -39,7 +39,6 @@ import java.nio.charset.Charset
 import java.nio.charset.StandardCharsets.UTF_16BE
 import java.nio.charset.StandardCharsets.UTF_16LE
 import java.nio.charset.StandardCharsets.UTF_8
-import java.security.AccessControlException
 import java.util.ArrayList
 import java.util.Arrays
 import java.util.Arrays.asList
@@ -103,7 +102,7 @@ object Util {
   }
 
   /**
-   * Closes `closeable`, ignoring any checked exceptions. Does nothing if `closeable` is
+   * Closes [closeable], ignoring any checked exceptions. Does nothing if [closeable] is
    * null.
    */
   @JvmStatic
@@ -119,7 +118,7 @@ object Util {
   }
 
   /**
-   * Closes `socket`, ignoring any checked exceptions. Does nothing if `socket` is
+   * Closes [socket], ignoring any checked exceptions. Does nothing if [socket] is
    * null.
    */
   @JvmStatic fun closeQuietly(socket: Socket?) {
@@ -136,7 +135,7 @@ object Util {
   }
 
   /**
-   * Closes `serverSocket`, ignoring any checked exceptions. Does nothing if `serverSocket` is null.
+   * Closes [serverSocket], ignoring any checked exceptions. Does nothing if [serverSocket] is null.
    */
   @JvmStatic fun closeQuietly(serverSocket: ServerSocket?) {
     if (serverSocket != null) {
@@ -150,7 +149,7 @@ object Util {
   }
 
   /**
-   * Attempts to exhaust `source`, returning true if successful. This is useful when reading a
+   * Attempts to exhaust [source], returning true if successful. This is useful when reading a
    * complete source is helpful, such as when doing so completes a cache body or frees a socket
    * connection for reuse.
    */
@@ -161,7 +160,7 @@ object Util {
   }
 
   /**
-   * Reads until `in` is exhausted or the deadline has been reached. This is careful to not
+   * Reads until [in] is exhausted or the deadline has been reached. This is careful to not
    * extend the deadline if one exists already.
    */
   @Throws(IOException::class)
@@ -190,12 +189,12 @@ object Util {
     }
   }
 
-  /** Returns an immutable copy of `list`.  */
+  /** Returns an immutable copy of [list].  */
   fun <T> immutableList(list: List<T>): List<T> {
     return Collections.unmodifiableList(ArrayList(list))
   }
 
-  /** Returns an immutable copy of `map`.  */
+  /** Returns an immutable copy of [map].  */
   @JvmStatic fun <K, V> immutableMap(map: Map<K, V>): Map<K, V> {
     return if (map.isEmpty())
       emptyMap()
@@ -203,7 +202,7 @@ object Util {
       Collections.unmodifiableMap(LinkedHashMap(map))
   }
 
-  /** Returns an immutable list containing `elements`.  */
+  /** Returns an immutable list containing [elements].  */
   @JvmStatic @SafeVarargs
   fun <T> immutableList(vararg elements: T): List<T> {
     return Collections.unmodifiableList(asList(*elements.clone()))
@@ -216,7 +215,8 @@ object Util {
   }
 
   /**
-   * Returns an array containing only elements found in `first` and also in `second`. The returned elements are in the same order as in `first`.
+   * Returns an array containing only elements found in [first] and also in [second].
+   * The returned elements are in the same order as in [first].
    */
   fun intersect(
     comparator: Comparator<in String>,
@@ -236,7 +236,7 @@ object Util {
   }
 
   /**
-   * Returns true if there is an element in `first` that is also in `second`. This
+   * Returns true if there is an element in [first] that is also in [second]. This
    * method terminates if any intersection is found. The sizes of both arguments are assumed to be
    * so small, and the likelihood of an intersection so great, that it is not worth the CPU cost of
    * sorting or the memory cost of hashing.
@@ -271,7 +271,7 @@ object Util {
   }
 
   /**
-   * Returns true if `e` is due to a firmware bug fixed after Android 4.2.2.
+   * Returns true if [e] is due to a firmware bug fixed after Android 4.2.2.
    * https://code.google.com/p/android/issues/detail?id=54072
    */
   fun isAndroidGetsocknameError(e: AssertionError): Boolean {
@@ -296,7 +296,7 @@ object Util {
   }
 
   /**
-   * Increments `pos` until `input[pos]` is not ASCII whitespace. Stops at `limit`.
+   * Increments [pos] until [input] is not ASCII whitespace. Stops at [limit].
    */
   fun skipLeadingAsciiWhitespace(input: String, pos: Int, limit: Int): Int {
     for (i in pos until limit) {
@@ -309,8 +309,7 @@ object Util {
   }
 
   /**
-   * Decrements `limit` until `input[limit - 1]` is not ASCII whitespace. Stops at
-   * `pos`.
+   * Decrements [limit] until `input[limit - 1]` is not ASCII whitespace. Stops at [pos].
    */
   fun skipTrailingAsciiWhitespace(input: String, pos: Int, limit: Int): Int {
     for (i in limit - 1 downTo pos) {
@@ -330,7 +329,8 @@ object Util {
   }
 
   /**
-   * Returns the index of the first character in `input` that contains a character in `delimiters`. Returns limit if there is no such character.
+   * Returns the index of the first character in [input] that contains a character in [delimiters].
+   * Returns limit if there is no such character.
    */
   fun delimiterOffset(input: String, pos: Int, limit: Int, delimiters: String): Int {
     for (i in pos until limit) {
@@ -340,7 +340,7 @@ object Util {
   }
 
   /**
-   * Returns the index of the first character in `input` that is `delimiter`. Returns
+   * Returns the index of the first character in [input] that is [delimiter]. Returns
    * limit if there is no such character.
    */
   fun delimiterOffset(input: String, pos: Int, limit: Int, delimiter: Char): Int {
@@ -351,7 +351,7 @@ object Util {
   }
 
   /**
-   * If `host` is an IP address, this returns the IP address in canonical form.
+   * If [host] is an IP address, this returns the IP address in canonical form.
    *
    *
    * Otherwise this performs IDN ToASCII encoding and canonicalize the result to lowercase. For
@@ -407,8 +407,8 @@ object Util {
   }
 
   /**
-   * Returns the index of the first character in `input` that is either a control character
-   * (like `\u0000 or \n`) or a non-ASCII character. Returns -1 if `input` has no such
+   * Returns the index of the first character in [input] that is either a control character
+   * (like `\u0000` or `\n`) or a non-ASCII character. Returns -1 if [input] has no such
    * characters.
    */
   fun indexOfControlOrNonAscii(input: String): Int {
@@ -424,7 +424,7 @@ object Util {
     return -1
   }
 
-  /** Returns true if `host` is not a host name and might be an IP address.  */
+  /** Returns true if [host] is not a host name and might be an IP address.  */
   @JvmStatic
   fun verifyAsIpAddress(host: String): Boolean {
     return VERIFY_AS_IP_ADDRESS.matcher(host).matches()
@@ -638,22 +638,7 @@ object Util {
     return result
   }
 
-  /**
-   * Returns the system property, or `defaultValue` if the system property is null or
-   * cannot be read (e.g. because of security policy restrictions).
-   */
-  fun getSystemProperty(key: String, defaultValue: String?): String? {
-    val value: String?
-    try {
-      value = System.getProperty(key)
-    } catch (ex: AccessControlException) {
-      return defaultValue
-    }
-
-    return value ?: defaultValue
-  }
-
-  /** Returns true if an HTTP request for `a` and `b` can reuse a connection.  */
+  /** Returns true if an HTTP request for [a] and [b] can reuse a connection.  */
   fun sameConnection(a: HttpUrl, b: HttpUrl): Boolean = (a.host() == b.host() &&
       a.port() == b.port() &&
       a.scheme() == b.scheme())
