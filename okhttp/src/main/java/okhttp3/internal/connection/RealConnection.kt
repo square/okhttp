@@ -23,6 +23,7 @@ import okhttp3.Connection
 import okhttp3.ConnectionSpec
 import okhttp3.EventListener
 import okhttp3.Handshake
+import okhttp3.Handshake.Companion.handshake
 import okhttp3.HttpUrl
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
@@ -349,11 +350,11 @@ class RealConnection(
       sslSocket.startHandshake()
       // block for session establishment
       val sslSocketSession = sslSocket.session
-      val unverifiedHandshake = Handshake.get(sslSocketSession)
+      val unverifiedHandshake = sslSocketSession.handshake()
 
       // Verify that the socket's certificates are acceptable for the target host.
       if (!address.hostnameVerifier()!!.verify(address.url().host(), sslSocketSession)) {
-        val peerCertificates = unverifiedHandshake.peerCertificates()
+        val peerCertificates = unverifiedHandshake.peerCertificates
         if (peerCertificates.isNotEmpty()) {
           val cert = peerCertificates[0] as X509Certificate
           throw SSLPeerUnverifiedException("""
@@ -370,7 +371,7 @@ class RealConnection(
 
       // Check that the certificate pinner is satisfied by the certificates presented.
       address.certificatePinner()!!.check(address.url().host(),
-          unverifiedHandshake.peerCertificates())
+          unverifiedHandshake.peerCertificates)
 
       // Success! Save the handshake and the ALPN protocol.
       val maybeProtocol = if (connectionSpec.supportsTlsExtensions()) {
@@ -519,7 +520,7 @@ class RealConnection(
 
     // 4. Certificate pinning must match the host.
     try {
-      address.certificatePinner()!!.check(address.url().host(), handshake()!!.peerCertificates())
+      address.certificatePinner()!!.check(address.url().host(), handshake()!!.peerCertificates)
     } catch (_: SSLPeerUnverifiedException) {
       return false
     }
@@ -554,7 +555,7 @@ class RealConnection(
 
     // We have a host mismatch. But if the certificate matches, we're still good.
     return handshake != null && OkHostnameVerifier.verify(
-        url.host(), handshake!!.peerCertificates()[0] as X509Certificate)
+        url.host(), handshake!!.peerCertificates[0] as X509Certificate)
   }
 
   @Throws(SocketException::class)
@@ -694,7 +695,7 @@ class RealConnection(
     return "Connection{${route.address().url().host()}:${route.address().url().port()}," +
         " proxy=${route.proxy()}" +
         " hostAddress=${route.socketAddress()}" +
-        " cipherSuite=${handshake?.cipherSuite() ?: "none"}" +
+        " cipherSuite=${handshake?.cipherSuite ?: "none"}" +
         " protocol=$protocol}"
   }
 
