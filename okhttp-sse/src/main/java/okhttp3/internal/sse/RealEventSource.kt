@@ -62,7 +62,7 @@ class RealEventSource(
       }
 
       // This is a long-lived response. Cancel full-call timeouts.
-      Internal.instance.exchange(response)?.timeoutEarlyExit()
+      Internal.exchange(response)?.timeoutEarlyExit()
 
       // Replace the body with an empty one so the callbacks can't see real data.
       val response = response.newBuilder()
