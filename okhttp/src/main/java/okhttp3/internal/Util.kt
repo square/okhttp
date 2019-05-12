@@ -77,12 +77,11 @@ object Util {
   /** GMT and UTC are equivalent for our purposes.  */
   @JvmField val UTC = TimeZone.getTimeZone("GMT")!!
 
-  val NATURAL_ORDER = Comparator<String> { obj, anotherString -> obj.compareTo(anotherString) }
+  val NATURAL_ORDER = Comparator<String> { a, b -> a.compareTo(b) }
 
   /**
    * Quick and dirty pattern to differentiate IP addresses from hostnames. This is an approximation
    * of Android's private InetAddress#isNumeric API.
-   *
    *
    * This matches IPv6 addresses as a hex string containing at least one colon, and possibly
    * including dots after the first colon. It matches IPv4 addresses as strings containing only
@@ -110,7 +109,7 @@ object Util {
         closeable.close()
       } catch (rethrown: RuntimeException) {
         throw rethrown
-      } catch (ignored: Exception) {
+      } catch (_: Exception) {
       }
     }
   }
@@ -127,7 +126,7 @@ object Util {
         if (!isAndroidGetsocknameError(e)) throw e
       } catch (rethrown: RuntimeException) {
         throw rethrown
-      } catch (ignored: Exception) {
+      } catch (_: Exception) {
       }
     }
   }
@@ -141,7 +140,7 @@ object Util {
         serverSocket.close()
       } catch (rethrown: RuntimeException) {
         throw rethrown
-      } catch (ignored: Exception) {
+      } catch (_: Exception) {
       }
     }
   }
@@ -189,7 +188,7 @@ object Util {
 
   /** Returns an immutable copy of [list].  */
   fun <T> immutableList(list: List<T>): List<T> {
-    return Collections.unmodifiableList(ArrayList(list))
+    return Collections.unmodifiableList(list.toMutableList())
   }
 
   /** Returns an immutable copy of [map].  */
@@ -259,11 +258,11 @@ object Util {
 
   fun hostHeader(url: HttpUrl, includeDefaultPort: Boolean): String {
     val host = if (url.host().contains(":"))
-      "[" + url.host() + "]"
+      "[${url.host()}]"
     else
       url.host()
     return if (includeDefaultPort || url.port() != HttpUrl.defaultPort(url.scheme()))
-      host + ":" + url.port()
+      "$host:${url.port()}"
     else
       host
   }
@@ -273,21 +272,15 @@ object Util {
    * https://code.google.com/p/android/issues/detail?id=54072
    */
   fun isAndroidGetsocknameError(e: AssertionError): Boolean {
-    return (e.cause != null &&
-        e.message?.contains("getsockname failed") == true)
+    return e.cause != null &&
+        e.message?.contains("getsockname failed") == true
   }
 
-  fun indexOf(comparator: Comparator<String>, array: Array<String>, value: String): Int {
-    var i = 0
-    val size = array.size
-    while (i < size) {
-      if (comparator.compare(array[i], value) == 0) return i
-      i++
-    }
-    return -1
-  }
+  fun indexOf(comparator: Comparator<String>, array: Array<String>, value: String): Int =
+      array.indexOfFirst { comparator.compare(it, value) == 0 }
 
-  @Suppress("UNCHECKED_CAST") fun concat(array: Array<String>, value: String): Array<String> {
+  @Suppress("UNCHECKED_CAST")
+  fun concat(array: Array<String>, value: String): Array<String> {
     val result = array.copyOf(array.size + 1)
     result[result.size - 1] = value
     return result as Array<String>
@@ -351,7 +344,6 @@ object Util {
   /**
    * If [host] is an IP address, this returns the IP address in canonical form.
    *
-   *
    * Otherwise this performs IDN ToASCII encoding and canonicalize the result to lowercase. For
    * example this converts `☃.net` to `xn--n3h.net`, and `WwW.GoOgLe.cOm` to
    * `www.google.com`. `null` will be returned if the host cannot be ToASCII encoded or
@@ -378,9 +370,10 @@ object Util {
       // Confirm that the IDN ToASCII result doesn't contain any illegal characters.
       return if (containsInvalidHostnameAsciiCodes(result)) {
         null
-      } else result
-      // TODO: implement all label limits.
-    } catch (e: IllegalArgumentException) {
+      } else {
+        result // TODO: implement all label limits.
+      }
+    } catch (_: IllegalArgumentException) {
       return null
     }
   }
@@ -448,18 +441,19 @@ object Util {
   }
 
   fun checkDuration(name: String, duration: Long, unit: TimeUnit?): Int {
-    if (duration < 0) throw IllegalArgumentException("$name < 0")
-    if (unit == null) throw NullPointerException("unit == null")
+    check(duration >= 0) { "$name < 0" }
+    check(unit != null) { "unit == null" }
     val millis = unit.toMillis(duration)
-    if (millis > Integer.MAX_VALUE) throw IllegalArgumentException("$name too large.")
-    if (millis == 0L && duration > 0) throw IllegalArgumentException("$name too small.")
+    require(millis <= Integer.MAX_VALUE) { "$name too large." }
+    require(millis != 0L || duration <= 0) { "$name too small." }
     return millis.toInt()
   }
 
-  fun decodeHexDigit(c: Char): Int {
-    if (c in '0'..'9') return c - '0'
-    if (c in 'a'..'f') return c - 'a' + 10
-    return if (c in 'A'..'F') c - 'A' + 10 else -1
+  fun decodeHexDigit(c: Char): Int = when (c) {
+    in '0'..'9' -> c - '0'
+    in 'a'..'f' -> c - 'a' + 10
+    in 'A'..'F' -> c - 'A' + 10
+    else -> -1
   }
 
   /** Decodes an IPv6 address like 1111:2222:3333:4444:5555:6666:7777:8888 or ::1.  */
@@ -624,12 +618,8 @@ object Util {
     return builder.build()
   }
 
-  fun toHeaderBlock(headers: Headers): List<Header> {
-    val result = ArrayList<Header>()
-    for (i in 0 until headers.size()) {
-      result.add(Header(headers.name(i), headers.value(i)))
-    }
-    return result
+  fun toHeaderBlock(headers: Headers): List<Header> = (0 until headers.size()).map {
+    Header(headers.name(it), headers.value(it))
   }
 
   /** Returns true if an HTTP request for [a] and [b] can reuse a connection.  */
