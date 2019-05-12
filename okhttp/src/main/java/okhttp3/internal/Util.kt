@@ -34,7 +34,6 @@ import java.net.IDN
 import java.net.InetAddress
 import java.net.ServerSocket
 import java.net.Socket
-import java.net.UnknownHostException
 import java.nio.charset.Charset
 import java.nio.charset.StandardCharsets.UTF_16BE
 import java.nio.charset.StandardCharsets.UTF_16LE
