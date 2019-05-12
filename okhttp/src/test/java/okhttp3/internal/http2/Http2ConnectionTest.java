@@ -47,7 +47,6 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Arrays.asList;
 import static okhttp3.TestUtil.headerEntries;
 import static okhttp3.TestUtil.repeat;
-import static okhttp3.internal.Internal.initializeInstanceForTests;
 import static okhttp3.internal.Util.EMPTY_BYTE_ARRAY;
 import static okhttp3.internal.Util.EMPTY_HEADERS;
 import static okhttp3.internal.http2.Http2Connection.Listener.REFUSE_INCOMING_STREAMS;
@@ -66,10 +65,6 @@ public final class Http2ConnectionTest {
   private final MockHttp2Peer peer = new MockHttp2Peer();
 
   @Rule public final TestRule timeout = new Timeout(5_000, TimeUnit.MILLISECONDS);
-
-  @Before public void setup() {
-    initializeInstanceForTests();
-  }
 
   @After public void tearDown() throws Exception {
     peer.close();

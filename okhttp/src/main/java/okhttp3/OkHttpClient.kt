@@ -17,7 +17,6 @@ package okhttp3
 
 import okhttp3.Protocol.HTTP_1_1
 import okhttp3.Protocol.HTTP_2
-import okhttp3.internal.Internal
 import okhttp3.internal.Util
 import okhttp3.internal.Util.checkDuration
 import okhttp3.internal.cache.InternalCache
@@ -823,15 +822,6 @@ open class OkHttpClient internal constructor(
 
     internal val DEFAULT_CONNECTION_SPECS = Util.immutableList(
         ConnectionSpec.MODERN_TLS, ConnectionSpec.CLEARTEXT)
-
-    init {
-      Internal.instance = object : Internal() {
-        override fun realConnectionPool(connectionPool: ConnectionPool) =
-            connectionPool.delegate
-
-        override fun exchange(response: Response) = response.exchange
-      }
-    }
 
     private fun newSslSocketFactory(trustManager: X509TrustManager): SSLSocketFactory {
       try {

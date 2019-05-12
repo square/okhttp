@@ -22,7 +22,6 @@ import okhttp3.HttpUrl
 import okhttp3.Protocol
 import okhttp3.Request
 import okhttp3.Response
-import okhttp3.internal.Internal
 import okhttp3.internal.NamedRunnable
 import okhttp3.internal.Util
 import okhttp3.internal.Util.closeQuietly
@@ -1046,7 +1045,6 @@ class MockWebServer : ExternalResource(), Closeable {
 
   companion object {
     init {
-      Internal.initializeInstanceForTests()
       MwsDuplexAccess.instance = object : MwsDuplexAccess() {
         override fun setBody(
           mockResponse: MockResponse,

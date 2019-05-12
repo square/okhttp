@@ -39,10 +39,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.fail;
 
 public final class HeadersTest {
-  static {
-    Internal.initializeInstanceForTests();
-  }
-
   @Test public void readNameValueBlockDropsForbiddenHeadersHttp2() throws IOException {
     Headers headerBlock = Headers.of(
         ":status", "200 OK",
