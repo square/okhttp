@@ -23,7 +23,7 @@ import okhttp3.internal.connection.RealConnectionPool
 
 /**
  * Escalate internal APIs in `okhttp3` so they can be used from OkHttp's implementation
- * packages. The only implementation of this interface is in [OkHttpClient].
+ * packages.
  */
 object Internal {
   @JvmStatic
