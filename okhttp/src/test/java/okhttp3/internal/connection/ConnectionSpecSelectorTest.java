@@ -30,10 +30,6 @@ import static okhttp3.tls.internal.TlsUtil.localhost;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class ConnectionSpecSelectorTest {
-  static {
-    Internal.initializeInstanceForTests();
-  }
-
   public static final SSLHandshakeException RETRYABLE_EXCEPTION = new SSLHandshakeException(
       "Simulated handshake exception");
 
