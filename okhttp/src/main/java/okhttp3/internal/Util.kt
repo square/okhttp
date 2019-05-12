@@ -171,7 +171,7 @@ object Util {
     else
       java.lang.Long.MAX_VALUE
     source.timeout()
-        .deadlineNanoTime(now + Math.min(originalDuration, timeUnit.toNanos(duration.toLong())))
+        .deadlineNanoTime(now + minOf(originalDuration, timeUnit.toNanos(duration.toLong())))
     return try {
       val skipBuffer = Buffer()
       while (source.read(skipBuffer, 8192) != -1L) {
