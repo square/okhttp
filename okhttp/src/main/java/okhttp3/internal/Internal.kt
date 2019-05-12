@@ -16,7 +16,6 @@
 package okhttp3.internal
 
 import okhttp3.ConnectionPool
-import okhttp3.OkHttpClient
 import okhttp3.Response
 import okhttp3.internal.connection.Exchange
 import okhttp3.internal.connection.RealConnectionPool
