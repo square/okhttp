@@ -32,7 +32,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import okhttp3.internal.NamedRunnable;
 import okhttp3.internal.Util;
 import okio.Buffer;
 import okio.BufferedSink;
@@ -65,23 +64,24 @@ public final class SocksProxy {
 
   public void play() throws IOException {
     serverSocket = new ServerSocket(0);
-    executor.execute(new NamedRunnable("SocksProxy %s", serverSocket.getLocalPort()) {
-      @Override protected void execute() {
-        try {
-          while (true) {
-            Socket socket = serverSocket.accept();
-            connectionCount.incrementAndGet();
-            service(socket);
-          }
-        } catch (SocketException e) {
-          logger.info(name + " done accepting connections: " + e.getMessage());
-        } catch (IOException e) {
-          logger.log(Level.WARNING, name + " failed unexpectedly", e);
-        } finally {
-          for (Socket socket : openSockets) {
-            Util.closeQuietly(socket);
-          }
+    executor.execute(() -> {
+      String threadName = "SocksProxy " + serverSocket.getLocalPort();
+      Thread.currentThread().setName(threadName);
+      try {
+        while (true) {
+          Socket socket = serverSocket.accept();
+          connectionCount.incrementAndGet();
+          service(socket);
         }
+      } catch (SocketException e) {
+        logger.info(threadName + " done accepting connections: " + e.getMessage());
+      } catch (IOException e) {
+        logger.log(Level.WARNING, threadName + " failed unexpectedly", e);
+      } finally {
+        for (Socket socket : openSockets) {
+          Util.closeQuietly(socket);
+        }
+        Thread.currentThread().setName("SocksProxy");
       }
     });
   }
@@ -104,18 +104,20 @@ public final class SocksProxy {
   }
 
   private void service(final Socket from) {
-    executor.execute(new NamedRunnable("SocksProxy %s", from.getRemoteSocketAddress()) {
-      @Override protected void execute() {
-        try {
-          BufferedSource fromSource = Okio.buffer(Okio.source(from));
-          BufferedSink fromSink = Okio.buffer(Okio.sink(from));
-          hello(fromSource, fromSink);
-          acceptCommand(from.getInetAddress(), fromSource, fromSink);
-          openSockets.add(from);
-        } catch (IOException e) {
-          logger.log(Level.WARNING, name + " failed", e);
-          Util.closeQuietly(from);
-        }
+    executor.execute(() -> {
+      String threadName = "SocksProxy " + from.getRemoteSocketAddress();
+      Thread.currentThread().setName(threadName);
+      try {
+        BufferedSource fromSource = Okio.buffer(Okio.source(from));
+        BufferedSink fromSink = Okio.buffer(Okio.sink(from));
+        hello(fromSource, fromSink);
+        acceptCommand(from.getInetAddress(), fromSource, fromSink);
+        openSockets.add(from);
+      } catch (IOException e) {
+        logger.log(Level.WARNING, threadName + " failed", e);
+        Util.closeQuietly(from);
+      } finally {
+        Thread.currentThread().setName("SocksProxy");
       }
     });
   }
@@ -214,34 +216,36 @@ public final class SocksProxy {
 
   private void transfer(final InetAddress fromAddress, final InetAddress toAddress,
       final BufferedSource source, final BufferedSink sink) {
-    executor.execute(new NamedRunnable("SocksProxy %s to %s", fromAddress, toAddress) {
-      @Override protected void execute() {
-        Buffer buffer = new Buffer();
-        try {
-          while (true) {
-            long byteCount = source.read(buffer, 8192L);
-            if (byteCount == -1L) break;
-            sink.write(buffer, byteCount);
-            sink.emit();
-          }
-        } catch (SocketException e) {
-          logger.info(name + " done: " + e.getMessage());
-        } catch (IOException e) {
-          logger.log(Level.WARNING, name + " failed", e);
+    executor.execute(() -> {
+      String threadName = "SocksProxy " + fromAddress + " to " + toAddress;
+      Thread.currentThread().setName(threadName);
+      Buffer buffer = new Buffer();
+      try {
+        while (true) {
+          long byteCount = source.read(buffer, 8192L);
+          if (byteCount == -1L) break;
+          sink.write(buffer, byteCount);
+          sink.emit();
         }
-
-        try {
-          source.close();
-        } catch (IOException e) {
-          logger.log(Level.WARNING, name + " failed", e);
-        }
-
-        try {
-          sink.close();
-        } catch (IOException e) {
-          logger.log(Level.WARNING, name + " failed", e);
-        }
+      } catch (SocketException e) {
+        logger.info(threadName + " done: " + e.getMessage());
+      } catch (IOException e) {
+        logger.log(Level.WARNING, threadName + " failed", e);
       }
+
+      try {
+        source.close();
+      } catch (IOException e) {
+        logger.log(Level.WARNING, threadName + " failed", e);
+      }
+
+      try {
+        sink.close();
+      } catch (IOException e) {
+        logger.log(Level.WARNING, threadName + " failed", e);
+      }
+
+      Thread.currentThread().setName("SocksProxy");
     });
   }
 }

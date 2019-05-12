@@ -15,7 +15,6 @@
  */
 package okhttp3
 
-import okhttp3.internal.NamedRunnable
 import okhttp3.internal.Util.closeQuietly
 import okhttp3.internal.cache.CacheInterceptor
 import okhttp3.internal.connection.ConnectInterceptor
@@ -26,6 +25,7 @@ import okhttp3.internal.http.RealInterceptorChain
 import okhttp3.internal.http.RetryAndFollowUpInterceptor
 import okhttp3.internal.platform.Platform
 import okhttp3.internal.platform.Platform.Companion.INFO
+import okhttp3.internal.threadName
 import okio.Timeout
 import java.io.IOException
 import java.io.InterruptedIOException
@@ -87,12 +87,12 @@ internal class RealCall private constructor(
 
   @SuppressWarnings("CloneDoesntCallSuperClone") // We are a final type & this saves clearing state.
   override fun clone(): RealCall {
-    return RealCall.newRealCall(client, originalRequest, forWebSocket)
+    return newRealCall(client, originalRequest, forWebSocket)
   }
 
   internal inner class AsyncCall(
     private val responseCallback: Callback
-  ) : NamedRunnable("OkHttp %s", redactedUrl()) {
+  ) : Runnable {
     @Volatile private var callsPerHost = AtomicInteger(0)
 
     fun callsPerHost(): AtomicInteger = callsPerHost
@@ -108,7 +108,7 @@ internal class RealCall private constructor(
     fun get(): RealCall = this@RealCall
 
     /**
-     * Attempt to enqueue this async call on `executorService`. This will attempt to clean up
+     * Attempt to enqueue this async call on [executorService]. This will attempt to clean up
      * if the executor has been shut down by reporting the call as failed.
      */
     fun executeOn(executorService: ExecutorService) {
@@ -129,22 +129,24 @@ internal class RealCall private constructor(
       }
     }
 
-    override fun execute() {
-      var signalledCallback = false
-      transmitter.timeoutEnter()
-      try {
-        val response = getResponseWithInterceptorChain()
-        signalledCallback = true
-        responseCallback.onResponse(this@RealCall, response)
-      } catch (e: IOException) {
-        if (signalledCallback) {
-          // Do not signal the callback twice!
-          Platform.get().log(INFO, "Callback failure for ${toLoggableString()}", e)
-        } else {
-          responseCallback.onFailure(this@RealCall, e)
+    override fun run() {
+      threadName("OkHttp ${redactedUrl()}") {
+        var signalledCallback = false
+        transmitter.timeoutEnter()
+        try {
+          val response = getResponseWithInterceptorChain()
+          signalledCallback = true
+          responseCallback.onResponse(this@RealCall, response)
+        } catch (e: IOException) {
+          if (signalledCallback) {
+            // Do not signal the callback twice!
+            Platform.get().log(INFO, "Callback failure for ${toLoggableString()}", e)
+          } else {
+            responseCallback.onFailure(this@RealCall, e)
+          }
+        } finally {
+          client.dispatcher().finished(this)
         }
-      } finally {
-        client.dispatcher().finished(this)
       }
     }
   }

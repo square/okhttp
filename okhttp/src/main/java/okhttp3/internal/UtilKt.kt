@@ -57,13 +57,24 @@ inline fun ignoreIoExceptions(block: () -> Unit) {
   }
 }
 
+inline fun threadName(name: String, block: () -> Unit) {
+  val currentThread = Thread.currentThread()
+  val oldName = currentThread.name
+  currentThread.name = name
+  try {
+    block()
+  } finally {
+    currentThread.name = oldName
+  }
+}
+
 /** Execute [block], setting the executing thread's name to [name] for the duration. */
 inline fun Executor.execute(name: String, crossinline block: () -> Unit) {
-  execute(object : NamedRunnable("%s", name) {
-    override fun execute() {
+  execute {
+    threadName(name) {
       block()
     }
-  })
+  }
 }
 
 /** Executes [block] unless this executor has been shutdown, in which case this does nothing. */
