@@ -16,15 +16,16 @@
 
 package okhttp3.mockwebserver
 
-import java.io.IOException
-import java.net.Inet6Address
-import java.net.Socket
-import javax.net.ssl.SSLSocket
 import okhttp3.Handshake
+import okhttp3.Handshake.Companion.handshake
 import okhttp3.Headers
 import okhttp3.HttpUrl
 import okhttp3.TlsVersion
 import okio.Buffer
+import java.io.IOException
+import java.net.Inet6Address
+import java.net.Socket
+import javax.net.ssl.SSLSocket
 
 /** An HTTP request that came into the mock web server.  */
 class RecordedRequest(
@@ -62,12 +63,12 @@ class RecordedRequest(
 
   /** Returns the connection's TLS version or null if the connection doesn't use SSL.  */
   val tlsVersion: TlsVersion?
-    get() = handshake?.tlsVersion()
+    get() = handshake?.tlsVersion
 
   init {
     if (socket is SSLSocket) {
       try {
-        this.handshake = Handshake.get(socket.session)
+        this.handshake = socket.session.handshake()
       } catch (e: IOException) {
         throw IllegalArgumentException(e)
       }

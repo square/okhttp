@@ -65,7 +65,7 @@ class ConscryptTest {
     val response = client.newCall(request).execute()
 
     assertThat(response.protocol()).isEqualTo(Protocol.HTTP_2)
-    assertThat(response.handshake()!!.tlsVersion()).isEqualTo(TlsVersion.TLS_1_3)
+    assertThat(response.handshake()!!.tlsVersion).isEqualTo(TlsVersion.TLS_1_3)
   }
 
   @Test
@@ -77,9 +77,9 @@ class ConscryptTest {
     val response = client.newCall(request).execute()
 
     assertThat(response.protocol()).isEqualTo(Protocol.HTTP_2)
-    if (response.handshake()!!.tlsVersion() != TlsVersion.TLS_1_3) {
+    if (response.handshake()!!.tlsVersion != TlsVersion.TLS_1_3) {
       System.err.println("Flaky TLSv1.3 with google")
-//    assertThat(response.handshake()!!.tlsVersion()).isEqualTo(TlsVersion.TLS_1_3)
+//    assertThat(response.handshake()!!.tlsVersion).isEqualTo(TlsVersion.TLS_1_3)
     }
   }
 
