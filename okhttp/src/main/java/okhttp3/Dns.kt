@@ -47,10 +47,9 @@ interface Dns {
         try {
           return InetAddress.getAllByName(hostname).toList()
         } catch (e: NullPointerException) {
-          val unknownHostException = UnknownHostException(
-              "Broken system behaviour for dns lookup of $hostname")
-          unknownHostException.initCause(e)
-          throw unknownHostException
+          throw UnknownHostException("Broken system behaviour for dns lookup of $hostname").apply {
+            initCause(e)
+          }
         }
       }
     }
