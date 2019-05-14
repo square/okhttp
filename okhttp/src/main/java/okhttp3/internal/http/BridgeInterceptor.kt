@@ -111,7 +111,7 @@ class BridgeInterceptor(private val cookieJar: CookieJar) : Interceptor {
   private fun cookieHeader(cookies: List<Cookie>): String = buildString {
     cookies.forEachIndexed { index, cookie ->
       if (index > 0) append("; ")
-      append(cookie.name()).append('=').append(cookie.value())
+      append(cookie.name).append('=').append(cookie.value)
     }
   }
 }

@@ -27,43 +27,56 @@ import java.util.regex.Pattern
  */
 class MediaType private constructor(
   private val mediaType: String,
-  val type: String,
-  val subtype: String,
-  private val charset: String?
-) {
-  /**
-   * Returns the charset of this media type, or `defaultValue` if either this media type
-   * doesn't specify a charset, of it its charset is unsupported by the current runtime.
-   */
-  @JvmOverloads
-  fun charset(defaultValue: Charset? = null): Charset? {
-      return try {
-          if (charset != null) Charset.forName(charset) else defaultValue
-      } catch (e: IllegalArgumentException) {
-          defaultValue // This charset is invalid or unsupported. Give up.
-      }
-  }
 
   /**
-   * Returns the high-level media type, such as "text", "image", "audio", "video", or
-   * "application".
+   * Returns the high-level media type, such as "text", "image", "audio", "video", or "application".
    */
-  fun type() = type
+  @get:JvmName("type") val type: String,
 
   /**
    * Returns a specific media subtype, such as "plain" or "png", "mpeg", "mp4" or "xml".
    */
+  @get:JvmName("subtype") val subtype: String,
+
+  private val charset: String?
+) {
+
+  /**
+   * Returns the charset of this media type, or [defaultValue] if either this media type doesn't
+   * specify a charset, of it its charset is unsupported by the current runtime.
+   */
+  @JvmOverloads
+  fun charset(defaultValue: Charset? = null): Charset? {
+    return try {
+      if (charset != null) Charset.forName(charset) else defaultValue
+    } catch (_: IllegalArgumentException) {
+      defaultValue // This charset is invalid or unsupported. Give up.
+    }
+  }
+
+  @JvmName("-deprecated_type")
+  @Deprecated(
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "type"),
+      level = DeprecationLevel.WARNING)
+  fun type() = type
+
+  @JvmName("-deprecated_subtype")
+  @Deprecated(
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "subtype"),
+      level = DeprecationLevel.WARNING)
   fun subtype() = subtype
 
   /**
    * Returns the encoded media type, like "text/plain; charset=utf-8", appropriate for use in a
    * Content-Type header.
    */
-  override fun toString(): String = mediaType
+  override fun toString() = mediaType
 
-  override fun equals(other: Any?): Boolean = other is MediaType && other.mediaType == mediaType
+  override fun equals(other: Any?) = other is MediaType && other.mediaType == mediaType
 
-  override fun hashCode(): Int = mediaType.hashCode()
+  override fun hashCode() = mediaType.hashCode()
 
   companion object {
     private const val TOKEN = "([a-zA-Z0-9-!#$%&'*+.^_`{|}~]+)"
@@ -72,9 +85,9 @@ class MediaType private constructor(
     private val PARAMETER = Pattern.compile(";\\s*(?:$TOKEN=(?:$TOKEN|$QUOTED))?")
 
     /**
-     * Returns a media type for `string`.
+     * Returns a media type for [string].
      *
-     * @throws IllegalArgumentException if `string` is not a well-formed media type.
+     * @throws IllegalArgumentException if [string] is not a well-formed media type.
      */
     @JvmStatic
     fun get(string: String): MediaType {
@@ -120,14 +133,14 @@ class MediaType private constructor(
       return MediaType(string, type, subtype, charset)
     }
 
-    /** Returns a media type for `string`, or null if `string` is not a well-formed media type. */
+    /** Returns a media type for [string], or null if [string] is not a well-formed media type. */
     @JvmStatic
     fun parse(string: String): MediaType? {
-        return try {
-            get(string)
-        } catch (ignored: IllegalArgumentException) {
-            null
-        }
+      return try {
+        get(string)
+      } catch (_: IllegalArgumentException) {
+        null
+      }
     }
   }
 }

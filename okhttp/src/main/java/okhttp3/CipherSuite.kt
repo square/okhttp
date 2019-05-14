@@ -36,14 +36,19 @@ package okhttp3
  * [conscrypt_providers]: https://github.com/google/conscrypt/blob/master/common/src/main/java/org/conscrypt/NativeCrypto.java
  */
 class CipherSuite private constructor(
-  private val javaName: String
-) {
   /**
    * Returns the Java name of this cipher suite. For some older cipher suites the Java name has the
    * prefix `SSL_`, causing the Java name to be different from the instance name which is always
    * prefixed `TLS_`. For example, `TLS_RSA_EXPORT_WITH_RC4_40_MD5.javaName()` is
    * `"SSL_RSA_EXPORT_WITH_RC4_40_MD5"`.
    */
+  @get:JvmName("javaName") val javaName: String
+) {
+  @JvmName("-deprecated_javaName")
+  @Deprecated(
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "javaName"),
+      level = DeprecationLevel.WARNING)
   fun javaName(): String = javaName
 
   override fun toString(): String = javaName

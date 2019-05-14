@@ -198,7 +198,7 @@ class ConnectionSpec internal constructor(builder: Builder) {
 
     fun cipherSuites(vararg cipherSuites: CipherSuite): Builder = apply {
       require(tls) { "no cipher suites for cleartext connections" }
-      val strings = cipherSuites.map(CipherSuite::javaName).toTypedArray()
+      val strings = cipherSuites.map { it.javaName }.toTypedArray()
       return cipherSuites(*strings)
     }
 
