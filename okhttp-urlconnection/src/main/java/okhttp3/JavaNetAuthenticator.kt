@@ -35,7 +35,7 @@ class JavaNetAuthenticator : okhttp3.Authenticator {
     val proxy = route?.proxy() ?: Proxy.NO_PROXY
 
     for (challenge in challenges) {
-      if (!"Basic".equals(challenge.scheme(), ignoreCase = true)) {
+      if (!"Basic".equals(challenge.scheme, ignoreCase = true)) {
         continue
       }
 
@@ -46,8 +46,8 @@ class JavaNetAuthenticator : okhttp3.Authenticator {
             proxy.connectToInetAddress(url),
             proxyAddress.port,
             url.scheme(),
-            challenge.realm(),
-            challenge.scheme(),
+            challenge.realm,
+            challenge.scheme,
             url.url(),
             Authenticator.RequestorType.PROXY
         )
@@ -57,8 +57,8 @@ class JavaNetAuthenticator : okhttp3.Authenticator {
             proxy.connectToInetAddress(url),
             url.port(),
             url.scheme(),
-            challenge.realm(),
-            challenge.scheme(),
+            challenge.realm,
+            challenge.scheme,
             url.url(),
             Authenticator.RequestorType.SERVER
         )
@@ -67,7 +67,7 @@ class JavaNetAuthenticator : okhttp3.Authenticator {
       if (auth != null) {
         val credentialHeader = if (proxyAuthorization) "Proxy-Authorization" else "Authorization"
         val credential = Credentials.basic(
-            auth.userName, String(auth.password), challenge.charset())
+            auth.userName, String(auth.password), challenge.charset)
         return request.newBuilder()
             .header(credentialHeader, credential)
             .build()

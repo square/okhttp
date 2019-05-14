@@ -21,12 +21,41 @@ import java.util.Collections.singletonMap
 import java.util.Collections.unmodifiableMap
 import java.util.Locale.US
 
-/** An RFC 7235 challenge. */
+/**
+ * An [RFC 7235][rfc_7235] challenge.
+ *
+ * [rfc_7235]: https://tools.ietf.org/html/rfc7235
+ */
 class Challenge(
-  private val scheme: String,
+  /** Returns the authentication scheme, like `Basic`. */
+  @get:JvmName("scheme") val scheme: String,
+
   authParams: Map<String?, String>
 ) {
-  private val authParams: Map<String?, String>
+  /**
+   * Returns the auth params, including [realm] and [charset] if present, but as
+   * strings. The map's keys are lowercase and should be treated case-insensitively.
+   */
+  @get:JvmName("authParams") val authParams: Map<String?, String>
+
+  /** Returns the protection space. */
+  @get:JvmName("realm") val realm: String?
+    get() = authParams["realm"]
+
+  /** The charset that should be used to encode the credentials. */
+  @get:JvmName("charset") val charset: Charset
+    get() {
+      val charset = authParams["charset"]
+      if (charset != null) {
+        try {
+          return Charset.forName(charset)
+        } catch (ignore: Exception) {
+        }
+      }
+      return ISO_8859_1
+    }
+
+  constructor(scheme: String, realm: String) : this(scheme, singletonMap("realm", realm))
 
   init {
     val newAuthParams = mutableMapOf<String?, String>()
@@ -37,8 +66,6 @@ class Challenge(
     this.authParams = unmodifiableMap<String?, String>(newAuthParams)
   }
 
-  constructor(scheme: String, realm: String) : this(scheme, singletonMap("realm", realm))
-
   /** Returns a copy of this charset that expects a credential encoded with [charset]. */
   fun withCharset(charset: Charset): Challenge {
     val authParams = this.authParams.toMutableMap()
@@ -46,29 +73,33 @@ class Challenge(
     return Challenge(scheme, authParams)
   }
 
-  /** Returns the authentication scheme, like `Basic`. */
+  @JvmName("-deprecated_scheme")
+  @Deprecated(
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "scheme"),
+      level = DeprecationLevel.WARNING)
   fun scheme() = scheme
 
-  /**
-   * Returns the auth params, including [realm] and [charset] if present, but as
-   * strings. The map's keys are lowercase and should be treated case-insensitively.
-   */
+  @JvmName("-deprecated_authParams")
+  @Deprecated(
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "authParams"),
+      level = DeprecationLevel.WARNING)
   fun authParams() = authParams
 
-  /** Returns the protection space. */
-  fun realm(): String? = authParams["realm"]
+  @JvmName("-deprecated_realm")
+  @Deprecated(
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "realm"),
+      level = DeprecationLevel.WARNING)
+  fun realm(): String? = realm
 
-  /** Returns the charset that should be used to encode the credentials. */
-  fun charset(): Charset {
-    val charset = authParams["charset"]
-    if (charset != null) {
-      try {
-        return Charset.forName(charset)
-      } catch (ignore: Exception) {
-      }
-    }
-    return ISO_8859_1
-  }
+  @JvmName("-deprecated_charset")
+  @Deprecated(
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "charset"),
+      level = DeprecationLevel.WARNING)
+  fun charset(): Charset = charset
 
   override fun equals(other: Any?): Boolean {
     return other is Challenge &&
@@ -83,7 +114,5 @@ class Challenge(
     return result
   }
 
-  override fun toString(): String {
-    return "$scheme authParams=$authParams"
-  }
+  override fun toString() = "$scheme authParams=$authParams"
 }
