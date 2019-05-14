@@ -196,7 +196,7 @@ class MultipartBody internal constructor(
      * [DIGEST], [PARALLEL] and [FORM].
      */
     fun setType(type: MediaType) = apply {
-      require(type.type() == "multipart") { "multipart != $type" }
+      require(type.type == "multipart") { "multipart != $type" }
       this.type = type
     }
 

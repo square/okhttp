@@ -84,7 +84,7 @@ class RealEventSource(
 
   private fun ResponseBody.isEventStream(): Boolean {
     val contentType = contentType() ?: return false
-    return contentType.type() == "text" && contentType.subtype() == "event-stream"
+    return contentType.type == "text" && contentType.subtype == "event-stream"
   }
 
   override fun onFailure(call: Call, e: IOException) {
