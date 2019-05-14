@@ -1022,20 +1022,20 @@ class MockWebServer : ExternalResource(), Closeable {
     ) {
       for (pushPromise in promises) {
         val pushedHeaders = mutableListOf<Header>()
-        pushedHeaders.add(Header(Header.TARGET_AUTHORITY, url(pushPromise.path()).host()))
-        pushedHeaders.add(Header(Header.TARGET_METHOD, pushPromise.method()))
-        pushedHeaders.add(Header(Header.TARGET_PATH, pushPromise.path()))
-        val pushPromiseHeaders = pushPromise.headers()
+        pushedHeaders.add(Header(Header.TARGET_AUTHORITY, url(pushPromise.path).host()))
+        pushedHeaders.add(Header(Header.TARGET_METHOD, pushPromise.method))
+        pushedHeaders.add(Header(Header.TARGET_PATH, pushPromise.path))
+        val pushPromiseHeaders = pushPromise.headers
         for (i in 0 until pushPromiseHeaders.size()) {
           pushedHeaders.add(Header(pushPromiseHeaders.name(i), pushPromiseHeaders.value(i)))
         }
-        val requestLine = "${pushPromise.method()} ${pushPromise.path()} HTTP/1.1"
+        val requestLine = "${pushPromise.method} ${pushPromise.path} HTTP/1.1"
         val chunkSizes = emptyList<Int>() // No chunked encoding for HTTP/2.
-        requestQueue.add(RecordedRequest(requestLine, pushPromise.headers(), chunkSizes, 0,
+        requestQueue.add(RecordedRequest(requestLine, pushPromise.headers, chunkSizes, 0,
             Buffer(), sequenceNumber.getAndIncrement(), socket))
-        val hasBody = pushPromise.response().getBody() != null
+        val hasBody = pushPromise.response.getBody() != null
         val pushedStream = stream.connection.pushStream(stream.id, pushedHeaders, hasBody)
-        writeResponse(pushedStream, request, pushPromise.response())
+        writeResponse(pushedStream, request, pushPromise.response)
       }
     }
   }
