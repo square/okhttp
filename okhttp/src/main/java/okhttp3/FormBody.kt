@@ -31,7 +31,15 @@ class FormBody internal constructor(
   private val encodedValues: List<String> = Util.immutableList(encodedValues)
 
   /** The number of key-value pairs in this form-encoded body.  */
-  fun size(): Int = encodedNames.size
+  @get:JvmName("size") val size: Int
+    get() = encodedNames.size
+
+  @JvmName("-deprecated_size")
+  @Deprecated(
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "size"),
+      level = DeprecationLevel.WARNING)
+  fun size(): Int = size
 
   fun encodedName(index: Int) = encodedNames[index]
 
