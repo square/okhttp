@@ -184,75 +184,75 @@ open class OkHttpClient internal constructor(
     }
   }
 
-  open fun dispatcher(): Dispatcher = dispatcher
+  fun dispatcher(): Dispatcher = dispatcher
 
-  open fun proxy(): Proxy? = proxy
+  fun proxy(): Proxy? = proxy
 
-  open fun protocols(): List<Protocol> = protocols
+  fun protocols(): List<Protocol> = protocols
 
-  open fun connectionSpecs(): List<ConnectionSpec> = connectionSpecs
+  fun connectionSpecs(): List<ConnectionSpec> = connectionSpecs
 
   /**
    * Returns an immutable list of interceptors that observe the full span of each call: from before
    * the connection is established (if any) until after the response source is selected (either the
    * origin server, cache, or both).
    */
-  open fun interceptors(): List<Interceptor> = interceptors
+  fun interceptors(): List<Interceptor> = interceptors
 
   /**
    * Returns an immutable list of interceptors that observe a single network request and response.
    * These interceptors must call [Interceptor.Chain.proceed] exactly once: it is an error for
    * a network interceptor to short-circuit or repeat a network request.
    */
-  open fun networkInterceptors(): List<Interceptor> = networkInterceptors
+  fun networkInterceptors(): List<Interceptor> = networkInterceptors
 
-  open fun eventListenerFactory(): EventListener.Factory = eventListenerFactory
+  fun eventListenerFactory(): EventListener.Factory = eventListenerFactory
 
-  open fun proxySelector(): ProxySelector = proxySelector
+  fun proxySelector(): ProxySelector = proxySelector
 
-  open fun cookieJar(): CookieJar = cookieJar
+  fun cookieJar(): CookieJar = cookieJar
 
-  open fun cache(): Cache? = cache
+  fun cache(): Cache? = cache
 
-  open fun socketFactory(): SocketFactory = socketFactory
+  fun socketFactory(): SocketFactory = socketFactory
 
-  open fun sslSocketFactory(): SSLSocketFactory = sslSocketFactory!!
+  fun sslSocketFactory(): SSLSocketFactory = sslSocketFactory!!
 
-  open fun hostnameVerifier(): HostnameVerifier = hostnameVerifier
+  fun hostnameVerifier(): HostnameVerifier = hostnameVerifier
 
-  open fun certificatePinner(): CertificatePinner = certificatePinner
+  fun certificatePinner(): CertificatePinner = certificatePinner
 
-  open fun proxyAuthenticator(): Authenticator = proxyAuthenticator
+  fun proxyAuthenticator(): Authenticator = proxyAuthenticator
 
-  open fun authenticator(): Authenticator = authenticator
+  fun authenticator(): Authenticator = authenticator
 
-  open fun connectionPool(): ConnectionPool = connectionPool
+  fun connectionPool(): ConnectionPool = connectionPool
 
-  open fun dns(): Dns = dns
+  fun dns(): Dns = dns
 
-  open fun followSslRedirects(): Boolean = followSslRedirects
+  fun followSslRedirects(): Boolean = followSslRedirects
 
-  open fun followRedirects(): Boolean = followRedirects
+  fun followRedirects(): Boolean = followRedirects
 
-  open fun retryOnConnectionFailure(): Boolean = retryOnConnectionFailure
+  fun retryOnConnectionFailure(): Boolean = retryOnConnectionFailure
 
   /**
    * Default call timeout (in milliseconds). By default there is no timeout for complete calls, but
    * there is for the connect, write, and read actions within a call.
    */
-  open fun callTimeoutMillis(): Int = callTimeout
+  fun callTimeoutMillis(): Int = callTimeout
 
   /** Default connect timeout (in milliseconds). The default is 10 seconds.  */
-  open fun connectTimeoutMillis(): Int = connectTimeout
+  fun connectTimeoutMillis(): Int = connectTimeout
 
   /** Default read timeout (in milliseconds). The default is 10 seconds. */
-  open fun readTimeoutMillis(): Int = readTimeout
+  fun readTimeoutMillis(): Int = readTimeout
 
   /** Default write timeout (in milliseconds). The default is 10 seconds. */
-  open fun writeTimeoutMillis(): Int = writeTimeout
+  fun writeTimeoutMillis(): Int = writeTimeout
 
   /** Web socket and HTTP/2 ping interval (in milliseconds). By default pings are not sent. */
-  open fun pingIntervalMillis(): Int = pingInterval
+  fun pingIntervalMillis(): Int = pingInterval
 
   internal fun internalCache(): InternalCache? {
     return cache?.internalCache ?: internalCache
