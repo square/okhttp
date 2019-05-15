@@ -15,7 +15,7 @@
  */
 package okhttp3
 
-import okhttp3.internal.Util
+import okhttp3.internal.toImmutableList
 import okio.Buffer
 import okio.BufferedSink
 import okio.ByteString
@@ -34,7 +34,7 @@ class MultipartBody internal constructor(
   parts: List<Part>
 ) : RequestBody() {
   private val contentType: MediaType = MediaType.get("$originalType; boundary=${boundary.utf8()}")
-  private val parts: List<Part> = Util.immutableList(parts)
+  private val parts: List<Part> = parts.toImmutableList()
   private var contentLength = -1L
 
   fun type(): MediaType = originalType

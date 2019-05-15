@@ -18,18 +18,18 @@ package okhttp3;
 import java.net.Proxy;
 import java.util.List;
 import javax.net.SocketFactory;
-import okhttp3.internal.Util;
 import okhttp3.internal.http.RecordingProxySelector;
 import org.junit.Test;
 
+import static okhttp3.internal.UtilKt.immutableListOf;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public final class AddressTest {
   private Dns dns = Dns.SYSTEM;
   private SocketFactory socketFactory = SocketFactory.getDefault();
   private Authenticator authenticator = Authenticator.NONE;
-  private List<Protocol> protocols = Util.immutableList(Protocol.HTTP_1_1);
-  private List<ConnectionSpec> connectionSpecs = Util.immutableList(ConnectionSpec.MODERN_TLS);
+  private List<Protocol> protocols = immutableListOf(Protocol.HTTP_1_1);
+  private List<ConnectionSpec> connectionSpecs = immutableListOf(ConnectionSpec.MODERN_TLS);
   private RecordingProxySelector proxySelector = new RecordingProxySelector();
 
   @Test public void equalsAndHashcode() throws Exception {

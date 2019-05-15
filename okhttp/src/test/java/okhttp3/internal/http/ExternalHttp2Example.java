@@ -21,12 +21,13 @@ import okhttp3.OkHttpClient;
 import okhttp3.Protocol;
 import okhttp3.Request;
 import okhttp3.Response;
-import okhttp3.internal.Util;
+
+import static okhttp3.internal.UtilKt.immutableListOf;
 
 public final class ExternalHttp2Example {
   public static void main(String[] args) throws Exception {
     OkHttpClient client = new OkHttpClient.Builder()
-        .protocols(Util.immutableList(Protocol.HTTP_2, Protocol.HTTP_1_1))
+        .protocols(immutableListOf(Protocol.HTTP_2, Protocol.HTTP_1_1))
         .build();
 
     Call call = client.newCall(new Request.Builder()

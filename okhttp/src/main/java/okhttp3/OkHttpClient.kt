@@ -20,6 +20,8 @@ import okhttp3.Protocol.HTTP_2
 import okhttp3.internal.Util
 import okhttp3.internal.Util.checkDuration
 import okhttp3.internal.cache.InternalCache
+import okhttp3.internal.toImmutableList
+import okhttp3.internal.immutableListOf
 import okhttp3.internal.platform.Platform
 import okhttp3.internal.proxy.NullProxySelector
 import okhttp3.internal.tls.CertificateChainCleaner
@@ -123,10 +125,8 @@ open class OkHttpClient internal constructor(
   private val proxy: Proxy? = builder.proxy
   private val protocols: List<Protocol> = builder.protocols
   private val connectionSpecs: List<ConnectionSpec> = builder.connectionSpecs
-  private val interceptors: List<Interceptor> =
-      Util.immutableList(builder.interceptors)
-  private val networkInterceptors: List<Interceptor> =
-      Util.immutableList(builder.networkInterceptors)
+  private val interceptors: List<Interceptor> = builder.interceptors.toImmutableList()
+  private val networkInterceptors: List<Interceptor> = builder.networkInterceptors.toImmutableList()
   private val eventListenerFactory: EventListener.Factory = builder.eventListenerFactory
   private val proxySelector: ProxySelector = builder.proxySelector
   private val cookieJar: CookieJar = builder.cookieJar
@@ -741,7 +741,7 @@ open class OkHttpClient internal constructor(
     }
 
     fun connectionSpecs(connectionSpecs: List<ConnectionSpec>) = apply {
-      this.connectionSpecs = Util.immutableList(connectionSpecs)
+      this.connectionSpecs = connectionSpecs.toImmutableList()
     }
 
     /**
@@ -818,9 +818,9 @@ open class OkHttpClient internal constructor(
   }
 
   companion object {
-    internal val DEFAULT_PROTOCOLS = Util.immutableList(HTTP_2, HTTP_1_1)
+    internal val DEFAULT_PROTOCOLS = immutableListOf(HTTP_2, HTTP_1_1)
 
-    internal val DEFAULT_CONNECTION_SPECS = Util.immutableList(
+    internal val DEFAULT_CONNECTION_SPECS = immutableListOf(
         ConnectionSpec.MODERN_TLS, ConnectionSpec.CLEARTEXT)
 
     private fun newSslSocketFactory(trustManager: X509TrustManager): SSLSocketFactory {

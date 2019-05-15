@@ -18,7 +18,6 @@ package okhttp3;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import okhttp3.internal.Util;
 import okio.BufferedSource;
 import okio.Okio;
 import org.junit.Test;
@@ -26,6 +25,7 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameter;
 
+import static okhttp3.internal.UtilKt.immutableListOf;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /** Runs the web platform URL tests against Java URL models. */
@@ -47,9 +47,8 @@ public final class WebPlatformUrlTest {
   @Parameter
   public WebPlatformUrlTestData testData;
 
-  private static final List<String> HTTP_URL_SCHEMES
-      = Util.immutableList("http", "https");
-  private static final List<String> KNOWN_FAILURES = Util.immutableList(
+  private static final List<String> HTTP_URL_SCHEMES = immutableListOf("http", "https");
+  private static final List<String> KNOWN_FAILURES = immutableListOf(
       "Parsing: <http://example\t.\norg> against <http://example.org/foo/bar>",
       "Parsing: <http://f:0/c> against <http://example.org/foo/bar>",
       "Parsing: <http://f:00000000000000/c> against <http://example.org/foo/bar>",

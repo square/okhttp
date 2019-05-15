@@ -37,6 +37,8 @@ import okio.BufferedSource;
 import okio.ByteString;
 import okio.Okio;
 
+import static okhttp3.internal.UtilKt.closeQuietly;
+
 /** Replays prerecorded outgoing frames and records incoming frames. */
 public final class MockHttp2Peer implements Closeable {
   private static final Logger logger = Logger.getLogger(MockHttp2Peer.class.getName());
@@ -114,7 +116,7 @@ public final class MockHttp2Peer implements Closeable {
       try {
         readAndWriteFrames();
       } catch (IOException e) {
-        Util.closeQuietly(MockHttp2Peer.this);
+        closeQuietly(MockHttp2Peer.this);
         logger.info(MockHttp2Peer.this + " done: " + e.getMessage());
       }
     });
@@ -181,8 +183,8 @@ public final class MockHttp2Peer implements Closeable {
 
   @Override public synchronized void close() throws IOException {
     executor.shutdown();
-    Util.closeQuietly(socket);
-    Util.closeQuietly(serverSocket);
+    closeQuietly(socket);
+    closeQuietly(serverSocket);
   }
 
   @Override public String toString() {

@@ -16,6 +16,7 @@
 package okhttp3
 
 import okhttp3.internal.Util
+import okhttp3.internal.closeQuietly
 import okio.Buffer
 import okio.BufferedSource
 import okio.ByteString
@@ -172,7 +173,7 @@ abstract class ResponseBody : Closeable {
 
   private fun charset() = contentType()?.charset(UTF_8) ?: UTF_8
 
-  override fun close() = Util.closeQuietly(source())
+  override fun close() = source().closeQuietly()
 
   internal class BomAwareReader(
     private val source: BufferedSource,

@@ -20,7 +20,8 @@ import okhttp3.Call
 import okhttp3.EventListener
 import okhttp3.HttpUrl
 import okhttp3.Route
-import okhttp3.internal.Util
+import okhttp3.internal.immutableListOf
+import okhttp3.internal.toImmutableList
 import java.io.IOException
 import java.net.InetSocketAddress
 import java.net.Proxy
@@ -100,9 +101,9 @@ class RouteSelector(
       // Try each of the ProxySelector choices until one connection succeeds.
       val proxiesOrNull = address.proxySelector().select(url.uri())
       proxies = if (proxiesOrNull != null && proxiesOrNull.isNotEmpty()) {
-        Util.immutableList(proxiesOrNull)
+        proxiesOrNull.toImmutableList()
       } else {
-        Util.immutableList(Proxy.NO_PROXY)
+        immutableListOf(Proxy.NO_PROXY)
       }
     }
     nextProxyIndex = 0

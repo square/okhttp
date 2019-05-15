@@ -37,7 +37,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import static java.util.Arrays.asList;
-import static okhttp3.internal.Util.closeQuietly;
+import static okhttp3.internal.UtilKt.closeQuietly;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assume.assumeFalse;
 
