@@ -232,12 +232,12 @@ data class Cookie private constructor(
     private var hostOnly = false
 
     fun name(name: String) = apply {
-      require(name.trim { it <= ' ' } == name) { "name is not trimmed" }
+      require(name.trim() == name) { "name is not trimmed" }
       this.name = name
     }
 
     fun value(value: String) = apply {
-      require(value.trim { it <= ' ' } == value) { "value is not trimmed" }
+      require(value.trim() == value) { "value is not trimmed" }
       this.value = value
     }
 

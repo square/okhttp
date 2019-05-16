@@ -618,7 +618,7 @@ object Util {
     return builder.build()
   }
 
-  fun toHeaderBlock(headers: Headers): List<Header> = (0 until headers.size()).map {
+  fun toHeaderBlock(headers: Headers): List<Header> = (0 until headers.size).map {
     Header(headers.name(it), headers.value(it))
   }
 

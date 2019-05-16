@@ -751,10 +751,10 @@ class MockWebServer : ExternalResource(), Closeable {
 
   @Throws(IOException::class)
   private fun writeHeaders(sink: BufferedSink, headers: Headers) {
-    for (i in 0 until headers.size()) {
-      sink.writeUtf8(headers.name(i))
+    for ((name, value) in headers) {
+      sink.writeUtf8(name)
       sink.writeUtf8(": ")
-      sink.writeUtf8(headers.value(i))
+      sink.writeUtf8(value)
       sink.writeUtf8("\r\n")
     }
     sink.writeUtf8("\r\n")
@@ -915,9 +915,7 @@ class MockWebServer : ExternalResource(), Closeable {
       var method = "<:method omitted>"
       var path = "<:path omitted>"
       var readBody = true
-      for (i in 0 until streamHeaders.size()) {
-        val name = streamHeaders.name(i)
-        val value = streamHeaders.value(i)
+      for ((name, value) in streamHeaders) {
         if (name == Header.TARGET_METHOD_UTF8) {
           method = value
         } else if (name == Header.TARGET_PATH_UTF8) {
@@ -977,8 +975,8 @@ class MockWebServer : ExternalResource(), Closeable {
       // TODO: constants for well-known header names.
       http2Headers.add(Header(Header.RESPONSE_STATUS, statusParts[1]))
       val headers = response.getHeaders()
-      for (i in 0 until headers.size()) {
-        http2Headers.add(Header(headers.name(i), headers.value(i)))
+      for ((name, value) in headers) {
+        http2Headers.add(Header(name, value))
       }
       val trailers = response.getTrailers()
 
@@ -989,11 +987,11 @@ class MockWebServer : ExternalResource(), Closeable {
           response.pushPromises.isEmpty() &&
           !response.isDuplex)
       val flushHeaders = body == null
-      require(!outFinished || trailers.size() == 0) {
+      require(!outFinished || trailers.size == 0) {
         "unsupported: no body and non-empty trailers $trailers"
       }
       stream.writeHeaders(http2Headers, outFinished, flushHeaders)
-      if (trailers.size() > 0) {
+      if (trailers.size > 0) {
         stream.enqueueTrailers(trailers)
       }
       pushPromises(stream, request, response.pushPromises)
@@ -1026,8 +1024,8 @@ class MockWebServer : ExternalResource(), Closeable {
         pushedHeaders.add(Header(Header.TARGET_METHOD, pushPromise.method))
         pushedHeaders.add(Header(Header.TARGET_PATH, pushPromise.path))
         val pushPromiseHeaders = pushPromise.headers
-        for (i in 0 until pushPromiseHeaders.size()) {
-          pushedHeaders.add(Header(pushPromiseHeaders.name(i), pushPromiseHeaders.value(i)))
+        for ((name, value) in pushPromiseHeaders) {
+          pushedHeaders.add(Header(name, value))
         }
         val requestLine = "${pushPromise.method} ${pushPromise.path} HTTP/1.1"
         val chunkSizes = emptyList<Int>() // No chunked encoding for HTTP/2.

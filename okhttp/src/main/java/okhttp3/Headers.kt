@@ -48,7 +48,7 @@ import java.util.TreeSet
  */
 class Headers private constructor(
   private val namesAndValues: Array<String>
-) {
+) : Iterable<Pair<String, String>> {
   /** Returns the last value corresponding to the specified field, or null. */
   operator fun get(name: String): String? = get(namesAndValues, name)
 
@@ -72,7 +72,15 @@ class Headers private constructor(
   }
 
   /** Returns the number of field values.  */
-  fun size(): Int = namesAndValues.size / 2
+  @get:JvmName("size") val size: Int
+    get() = namesAndValues.size / 2
+
+  @JvmName("-deprecated_size")
+  @Deprecated(
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "size"),
+      level = DeprecationLevel.WARNING)
+  fun size(): Int = size
 
   /** Returns the field at `position`.  */
   fun name(index: Int): String = namesAndValues[index * 2]
@@ -83,7 +91,7 @@ class Headers private constructor(
   /** Returns an immutable case-insensitive set of header names.  */
   fun names(): Set<String> {
     val result = TreeSet(String.CASE_INSENSITIVE_ORDER)
-    for (i in 0 until size()) {
+    for (i in 0 until size) {
       result.add(name(i))
     }
     return Collections.unmodifiableSet(result)
@@ -92,7 +100,7 @@ class Headers private constructor(
   /** Returns an immutable list of the header values for `name`.  */
   fun values(name: String): List<String> {
     var result: MutableList<String>? = null
-    for (i in 0 until size()) {
+    for (i in 0 until size) {
       if (name.equals(name(i), ignoreCase = true)) {
         if (result == null) result = ArrayList(2)
         result.add(value(i))
@@ -120,6 +128,10 @@ class Headers private constructor(
     }
 
     return result
+  }
+
+  override operator fun iterator(): Iterator<Pair<String, String>> {
+    return Array(size) { name(it) to value(it) }.iterator()
   }
 
   fun newBuilder(): Builder {
@@ -172,7 +184,7 @@ class Headers private constructor(
 
   override fun toString(): String {
     return buildString {
-      for (i in 0 until size()) {
+      for (i in 0 until size) {
         append(name(i))
         append(": ")
         append(value(i))
@@ -183,7 +195,7 @@ class Headers private constructor(
 
   fun toMultimap(): Map<String, List<String>> {
     val result = TreeMap<String, MutableList<String>>(String.CASE_INSENSITIVE_ORDER)
-    for (i in 0 until size()) {
+    for (i in 0 until size) {
       val name = name(i).toLowerCase(Locale.US)
       var values: MutableList<String>? = result[name]
       if (values == null) {
@@ -209,8 +221,8 @@ class Headers private constructor(
           addLenient(line.substring(0, index), line.substring(index + 1))
         }
         line.startsWith(":") -> {
-          // Work around empty header names and header names that start with a
-          // colon (created by old broken SPDY versions of the response cache).
+          // Work around empty header names and header names that start with a colon (created by old
+          // broken SPDY versions of the response cache).
           addLenient("", line.substring(1)) // Empty header name.
         }
         else -> {
@@ -224,7 +236,7 @@ class Headers private constructor(
     fun add(line: String) = apply {
       val index = line.indexOf(":")
       require(index != -1) { "Unexpected header: $line" }
-      add(line.substring(0, index).trim { it <= ' ' }, line.substring(index + 1))
+      add(line.substring(0, index).trim(), line.substring(index + 1))
     }
 
     /**
@@ -249,7 +261,7 @@ class Headers private constructor(
      * Adds all headers from an existing collection.
      */
     fun addAll(headers: Headers) = apply {
-      for (i in 0 until headers.size()) {
+      for (i in 0 until headers.size) {
         addLenient(headers.name(i), headers.value(i))
       }
     }
@@ -294,7 +306,7 @@ class Headers private constructor(
      */
     internal fun addLenient(name: String, value: String) = apply {
       namesAndValues.add(name)
-      namesAndValues.add(value.trim { it <= ' ' })
+      namesAndValues.add(value.trim())
     }
 
     fun removeAll(name: String) = apply {
@@ -355,7 +367,7 @@ class Headers private constructor(
       val namesAndValues: Array<String> = namesAndValues.clone() as Array<String>
       for (i in namesAndValues.indices) {
         require(namesAndValues[i] != null) { "Headers cannot be null" }
-        namesAndValues[i] = namesAndValues[i].trim { it <= ' ' }
+        namesAndValues[i] = namesAndValues[i].trim()
       }
 
       // Check for malformed headers.
@@ -375,9 +387,9 @@ class Headers private constructor(
       // Make a defensive copy and clean it up.
       val namesAndValues = arrayOfNulls<String>(headers.size * 2)
       var i = 0
-      for ((key, value1) in headers) {
-        val name = key.trim { it <= ' ' }
-        val value = value1.trim { it <= ' ' }
+      for ((k, v) in headers) {
+        val name = k.trim()
+        val value = v.trim()
         checkName(name)
         checkValue(value, name)
         namesAndValues[i] = name
