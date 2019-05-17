@@ -18,7 +18,6 @@ package okhttp3.internal.platform
 import android.os.Build
 import android.util.Log
 import okhttp3.Protocol
-import okhttp3.internal.isAndroidGetsocknameError
 import okhttp3.internal.tls.BasicTrustRootIndex
 import okhttp3.internal.tls.CertificateChainCleaner
 import okhttp3.internal.tls.TrustRootIndex
@@ -82,7 +81,6 @@ class AndroidPlatform(
     try {
       socket.connect(address, connectTimeout)
     } catch (e: AssertionError) {
-      if (isAndroidGetsocknameError(e)) throw IOException(e)
       throw e
     } catch (e: ClassCastException) {
       // On android 8.0, socket.connect throws a ClassCastException due to a bug
