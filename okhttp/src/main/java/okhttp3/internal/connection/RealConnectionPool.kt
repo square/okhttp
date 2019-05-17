@@ -217,7 +217,7 @@ class RealConnectionPool(
 
       // We've discovered a leaked transmitter. This is an application bug.
       val transmitterRef = reference as TransmitterReference
-      val message = "A connection to ${connection.route().address().url()} was leaked. " +
+      val message = "A connection to ${connection.route().address().url} was leaked. " +
           "Did you forget to close a response body?"
       Platform.get().logCloseableLeak(message, transmitterRef.callStackTrace)
 
@@ -239,8 +239,8 @@ class RealConnectionPool(
     // Tell the proxy selector when we fail to connect on a fresh connection.
     if (failedRoute.proxy().type() != Proxy.Type.DIRECT) {
       val address = failedRoute.address()
-      address.proxySelector().connectFailed(
-          address.url().uri(), failedRoute.proxy().address(), failure)
+      address.proxySelector.connectFailed(
+          address.url.uri(), failedRoute.proxy().address(), failure)
     }
 
     routeDatabase.failed(failedRoute)
