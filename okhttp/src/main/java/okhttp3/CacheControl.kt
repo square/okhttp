@@ -237,7 +237,7 @@ class CacheControl private constructor(
       var canUseHeaderValue = true
       var headerValue: String? = null
 
-      loop@ for (i in 0 until headers.size()) {
+      loop@ for (i in 0 until headers.size) {
         val name = headers.name(i)
         val value = headers.value(i)
 
@@ -263,7 +263,7 @@ class CacheControl private constructor(
         while (pos < value.length) {
           val tokenStart = pos
           pos = value.indexOfElement("=,;", pos)
-          val directive = value.substring(tokenStart, pos).trim { it <= ' ' }
+          val directive = value.substring(tokenStart, pos).trim()
           val parameter: String?
 
           if (pos == value.length || value[pos] == ',' || value[pos] == ';') {
@@ -284,7 +284,7 @@ class CacheControl private constructor(
               // Unquoted string.
               val parameterStart = pos
               pos = value.indexOfElement(",;", pos)
-              parameter = value.substring(parameterStart, pos).trim { it <= ' ' }
+              parameter = value.substring(parameterStart, pos).trim()
             }
           }
 

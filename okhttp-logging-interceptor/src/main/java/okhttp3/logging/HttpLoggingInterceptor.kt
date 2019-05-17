@@ -177,7 +177,7 @@ class HttpLoggingInterceptor @JvmOverloads constructor(
 
       val headers = request.headers()
       var i = 0
-      val count = headers.size()
+      val count = headers.size
       while (i < count) {
         val name = headers.name(i)
         // Skip headers from the request body as they are explicitly logged above.
@@ -231,7 +231,7 @@ class HttpLoggingInterceptor @JvmOverloads constructor(
 
     if (logHeaders) {
       val headers = response.headers()
-      for (i in 0 until headers.size()) {
+      for (i in 0 until headers.size) {
         logHeader(headers, i)
       }
 

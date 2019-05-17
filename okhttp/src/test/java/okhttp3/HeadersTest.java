@@ -22,7 +22,7 @@ import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import okhttp3.internal.Internal;
+import kotlin.TypeCastException;
 import okhttp3.internal.Util;
 import okhttp3.internal.http.HttpHeaders;
 import okhttp3.internal.http2.Header;
@@ -201,7 +201,7 @@ public final class HeadersTest {
     try {
       Headers.of(Collections.singletonMap("User-Agent", null));
       fail();
-    } catch (NullPointerException expected) {
+    } catch (TypeCastException expected) {
     }
   }
 

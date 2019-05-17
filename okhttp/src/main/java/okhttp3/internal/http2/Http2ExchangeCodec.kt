@@ -159,7 +159,7 @@ class Http2ExchangeCodec(
 
     fun http2HeadersList(request: Request): List<Header> {
       val headers = request.headers()
-      val result = ArrayList<Header>(headers.size() + 4)
+      val result = ArrayList<Header>(headers.size + 4)
       result.add(Header(TARGET_METHOD, request.method()))
       result.add(Header(TARGET_PATH, RequestLine.requestPath(request.url())))
       val host = request.header("Host")
@@ -168,7 +168,7 @@ class Http2ExchangeCodec(
       }
       result.add(Header(TARGET_SCHEME, request.url().scheme()))
 
-      for (i in 0 until headers.size()) {
+      for (i in 0 until headers.size) {
         // header names must be lowercase.
         val name = headers.name(i).toLowerCase(Locale.US)
         if (name !in HTTP_2_SKIPPED_REQUEST_HEADERS ||
@@ -183,7 +183,7 @@ class Http2ExchangeCodec(
     fun readHttp2HeadersList(headerBlock: Headers, protocol: Protocol): Response.Builder {
       var statusLine: StatusLine? = null
       val headersBuilder = Headers.Builder()
-      for (i in 0 until headerBlock.size()) {
+      for (i in 0 until headerBlock.size) {
         val name = headerBlock.name(i)
         val value = headerBlock.value(i)
         if (name == RESPONSE_STATUS_UTF8) {

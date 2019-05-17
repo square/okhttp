@@ -96,7 +96,7 @@ class MultipartBody internal constructor(
       sink.write(CRLF)
 
       if (headers != null) {
-        for (h in 0 until headers.size()) {
+        for (h in 0 until headers.size) {
           sink.writeUtf8(headers.name(h))
               .write(COLONSPACE)
               .writeUtf8(headers.value(h))

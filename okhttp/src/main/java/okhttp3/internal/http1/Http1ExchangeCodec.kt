@@ -161,7 +161,7 @@ class Http1ExchangeCodec(
   fun writeRequest(headers: Headers, requestLine: String) {
     check(state == STATE_IDLE) { "state: $state" }
     sink.writeUtf8(requestLine).writeUtf8("\r\n")
-    for (i in 0 until headers.size()) {
+    for (i in 0 until headers.size) {
       sink.writeUtf8(headers.name(i))
           .writeUtf8(": ")
           .writeUtf8(headers.value(i))
@@ -447,7 +447,7 @@ class Http1ExchangeCodec(
       }
       try {
         bytesRemainingInChunk = source.readHexadecimalUnsignedLong()
-        val extensions = source.readUtf8LineStrict().trim { it <= ' ' }
+        val extensions = source.readUtf8LineStrict().trim()
         if (bytesRemainingInChunk < 0 || extensions.isNotEmpty() && !extensions.startsWith(";")) {
           throw ProtocolException("expected chunk size and optional extensions" +
               " but was \"$bytesRemainingInChunk$extensions\"")
