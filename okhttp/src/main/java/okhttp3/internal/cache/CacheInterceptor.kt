@@ -21,9 +21,9 @@ import okhttp3.Interceptor
 import okhttp3.Protocol
 import okhttp3.Response
 import okhttp3.internal.Util
-import okhttp3.internal.Util.closeQuietly
-import okhttp3.internal.Util.discard
 import okhttp3.internal.addHeaderLenient
+import okhttp3.internal.closeQuietly
+import okhttp3.internal.discard
 import okhttp3.internal.http.ExchangeCodec
 import okhttp3.internal.http.HttpMethod
 import okhttp3.internal.http.RealResponseBody
@@ -56,7 +56,7 @@ class CacheInterceptor(internal val cache: InternalCache?) : Interceptor {
 
     if (cacheCandidate != null && cacheResponse == null) {
       // The cache candidate wasn't applicable. Close it.
-      closeQuietly(cacheCandidate.body())
+      cacheCandidate.body().closeQuietly()
     }
 
     // If we're forbidden from using the network and the cache is insufficient, fail.
@@ -85,7 +85,7 @@ class CacheInterceptor(internal val cache: InternalCache?) : Interceptor {
     } finally {
       // If we're crashing on I/O or otherwise, don't leak the cache body.
       if (networkResponse == null && cacheCandidate != null) {
-        closeQuietly(cacheCandidate.body())
+        cacheCandidate.body().closeQuietly()
       }
     }
 
@@ -108,7 +108,7 @@ class CacheInterceptor(internal val cache: InternalCache?) : Interceptor {
         cache.update(cacheResponse, response)
         return response
       } else {
-        closeQuietly(cacheResponse.body())
+        cacheResponse.body().closeQuietly()
       }
     }
 
@@ -185,8 +185,8 @@ class CacheInterceptor(internal val cache: InternalCache?) : Interceptor {
 
       @Throws(IOException::class)
       override fun close() {
-        if (!cacheRequestClosed && !discard(this, ExchangeCodec.DISCARD_STREAM_TIMEOUT_MILLIS,
-                MILLISECONDS)) {
+        if (!cacheRequestClosed &&
+            !discard(ExchangeCodec.DISCARD_STREAM_TIMEOUT_MILLIS, MILLISECONDS)) {
           cacheRequestClosed = true
           cacheRequest.abort()
         }

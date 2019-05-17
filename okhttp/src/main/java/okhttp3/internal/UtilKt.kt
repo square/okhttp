@@ -20,11 +20,19 @@ import okhttp3.Response
 import okio.Buffer
 import okio.BufferedSink
 import okio.BufferedSource
+import okio.Source
+import java.io.Closeable
 import java.io.IOException
+import java.io.InterruptedIOException
 import java.net.InetSocketAddress
+import java.net.ServerSocket
 import java.net.Socket
+import java.util.Arrays
+import java.util.Collections
+import java.util.LinkedHashMap
 import java.util.concurrent.Executor
 import java.util.concurrent.RejectedExecutionException
+import java.util.concurrent.TimeUnit
 
 infix fun Byte.and(mask: Int): Int = toInt() and mask
 infix fun Short.and(mask: Int): Int = toInt() and mask
@@ -42,6 +50,47 @@ fun BufferedSource.readMedium(): Int {
   return (readByte() and 0xff shl 16
       or (readByte() and 0xff shl 8)
       or (readByte() and 0xff))
+}
+
+/**
+ * Reads until this is exhausted or the deadline has been reached. This is careful to not extend the
+ * deadline if one exists already.
+ */
+@Throws(IOException::class)
+fun Source.skipAll(duration: Int, timeUnit: TimeUnit): Boolean {
+  val now = System.nanoTime()
+  val originalDuration = if (timeout().hasDeadline()) {
+    timeout().deadlineNanoTime() - now
+  } else {
+    Long.MAX_VALUE
+  }
+  timeout().deadlineNanoTime(now + minOf(originalDuration, timeUnit.toNanos(duration.toLong())))
+  return try {
+    val skipBuffer = Buffer()
+    while (read(skipBuffer, 8192) != -1L) {
+      skipBuffer.clear()
+    }
+    true // Success! The source has been exhausted.
+  } catch (_: InterruptedIOException) {
+    false // We ran out of time before exhausting the source.
+  } finally {
+    if (originalDuration == Long.MAX_VALUE) {
+      timeout().clearDeadline()
+    } else {
+      timeout().deadlineNanoTime(now + originalDuration)
+    }
+  }
+}
+
+/**
+ * Attempts to exhaust this, returning true if successful. This is useful when reading a complete
+ * source is helpful, such as when doing so completes a cache body or frees a socket connection for
+ * reuse.
+ */
+fun Source.discard(timeout: Int, timeUnit: TimeUnit): Boolean = try {
+  this.skipAll(timeout, timeUnit)
+} catch (_: IOException) {
+  false
 }
 
 fun Socket.connectionName(): String {
@@ -136,4 +185,64 @@ fun String?.toNonNegativeInt(defaultValue: Int): Int {
   } catch (_: NumberFormatException) {
     return defaultValue
   }
+}
+
+/** Returns an immutable copy of this. */
+fun <T> List<T>.toImmutableList(): List<T> {
+  return Collections.unmodifiableList(toMutableList())
+}
+
+/** Returns an immutable list containing [elements]. */
+@SafeVarargs
+fun <T> immutableListOf(vararg elements: T): List<T> {
+  return Collections.unmodifiableList(Arrays.asList(*elements.clone()))
+}
+
+/** Returns an immutable copy of this. */
+fun <K, V> Map<K, V>.toImmutableMap(): Map<K, V> {
+  return if (isEmpty()) {
+    emptyMap()
+  } else {
+    Collections.unmodifiableMap(LinkedHashMap(this))
+  }
+}
+
+/** Closes this, ignoring any checked exceptions. Does nothing if this is null. */
+fun Closeable?.closeQuietly() {
+  try {
+    this?.close()
+  } catch (rethrown: RuntimeException) {
+    throw rethrown
+  } catch (_: Exception) {
+  }
+}
+
+/** Closes this, ignoring any checked exceptions. Does nothing if this is null. */
+fun Socket?.closeQuietly() {
+  try {
+    this?.close()
+  } catch (e: AssertionError) {
+    if (!isAndroidGetsocknameError(e)) throw e
+  } catch (rethrown: RuntimeException) {
+    throw rethrown
+  } catch (_: Exception) {
+  }
+}
+
+/** Closes this, ignoring any checked exceptions. Does nothing if this is null. */
+fun ServerSocket?.closeQuietly() {
+  try {
+    this?.close()
+  } catch (rethrown: RuntimeException) {
+    throw rethrown
+  } catch (_: Exception) {
+  }
+}
+
+/**
+ * Returns true if [e] is due to a firmware bug fixed after Android 4.2.2.
+ * https://code.google.com/p/android/issues/detail?id=54072
+ */
+fun isAndroidGetsocknameError(e: AssertionError): Boolean {
+  return e.cause != null && e.message?.contains("getsockname failed") == true
 }

@@ -19,7 +19,7 @@ package okhttp3.internal.connection
 import okhttp3.Address
 import okhttp3.Route
 import okhttp3.internal.Util
-import okhttp3.internal.Util.closeQuietly
+import okhttp3.internal.closeQuietly
 import okhttp3.internal.connection.Transmitter.TransmitterReference
 import okhttp3.internal.notifyAll
 import okhttp3.internal.platform.Platform
@@ -133,7 +133,7 @@ class RealConnectionPool(
     }
 
     for (connection in evictedConnections) {
-      closeQuietly(connection.socket())
+      connection.socket().closeQuietly()
     }
   }
 
@@ -193,7 +193,7 @@ class RealConnectionPool(
       }
     }
 
-    closeQuietly(longestIdleConnection!!.socket())
+    longestIdleConnection!!.socket().closeQuietly()
 
     // Cleanup again immediately.
     return 0

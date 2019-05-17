@@ -22,7 +22,7 @@ import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import okhttp3.Route
 import okhttp3.internal.Util
-import okhttp3.internal.Util.closeQuietly
+import okhttp3.internal.closeQuietly
 import okhttp3.internal.http.ExchangeCodec
 import java.io.IOException
 import java.net.Socket
@@ -183,7 +183,7 @@ class ExchangeFinder(
         }
       }
     }
-    closeQuietly(toClose)
+    toClose.closeQuietly()
 
     if (releasedConnection != null) {
       eventListener.connectionReleased(call, releasedConnection!!)
@@ -263,7 +263,7 @@ class ExchangeFinder(
         transmitter.acquireConnectionNoEvents(result!!)
       }
     }
-    closeQuietly(socket)
+    socket.closeQuietly()
 
     eventListener.connectionAcquired(call, result!!)
     return result!!

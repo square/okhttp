@@ -23,8 +23,8 @@ import okhttp3.Protocol
 import okhttp3.Request
 import okhttp3.Response
 import okhttp3.internal.Util
-import okhttp3.internal.Util.closeQuietly
 import okhttp3.internal.addHeaderLenient
+import okhttp3.internal.closeQuietly
 import okhttp3.internal.duplex.MwsDuplexAccess
 import okhttp3.internal.execute
 import okhttp3.internal.http.HttpMethod
@@ -32,7 +32,9 @@ import okhttp3.internal.http2.ErrorCode
 import okhttp3.internal.http2.Header
 import okhttp3.internal.http2.Http2Connection
 import okhttp3.internal.http2.Http2Stream
+import okhttp3.internal.immutableListOf
 import okhttp3.internal.platform.Platform
+import okhttp3.internal.toImmutableList
 import okhttp3.internal.ws.RealWebSocket
 import okhttp3.internal.ws.WebSocketProtocol
 import okhttp3.mockwebserver.SocketPolicy.CONTINUE_ALWAYS
@@ -122,7 +124,7 @@ class MockWebServer : ExternalResource(), Closeable {
   private var port = -1
   private var inetSocketAddress: InetSocketAddress? = null
   private var protocolNegotiationEnabled = true
-  private var protocols = Util.immutableList(Protocol.HTTP_2, Protocol.HTTP_1_1)
+  private var protocols = immutableListOf(Protocol.HTTP_2, Protocol.HTTP_1_1)
 
   private var started: Boolean = false
 
@@ -195,7 +197,7 @@ class MockWebServer : ExternalResource(), Closeable {
    * [Protocol.HTTP_1_1]. It must not contain null.
    */
   fun setProtocols(protocols: List<Protocol>) {
-    val protocolList = Util.immutableList(protocols)
+    val protocolList = protocols.toImmutableList()
     require(Protocol.H2_PRIOR_KNOWLEDGE !in protocolList || protocolList.size == 1) {
       "protocols containing h2_prior_knowledge cannot use other protocols: $protocolList"
     }
@@ -339,17 +341,17 @@ class MockWebServer : ExternalResource(), Closeable {
       }
 
       // Release all sockets and all threads, even if any close fails.
-      closeQuietly(serverSocket)
+      serverSocket.closeQuietly()
 
       val openClientSocket = openClientSockets.iterator()
       while (openClientSocket.hasNext()) {
-        closeQuietly(openClientSocket.next())
+        openClientSocket.next().closeQuietly()
         openClientSocket.remove()
       }
 
       val httpConnection = openConnections.iterator()
       while (httpConnection.hasNext()) {
-        closeQuietly(httpConnection.next())
+        httpConnection.next().closeQuietly()
         httpConnection.remove()
       }
       dispatcher.shutdown()
@@ -728,7 +730,7 @@ class MockWebServer : ExternalResource(), Closeable {
     } catch (e: IOException) {
       webSocket.failWebSocket(e, null)
     } finally {
-      closeQuietly(source)
+      source.closeQuietly()
     }
   }
 

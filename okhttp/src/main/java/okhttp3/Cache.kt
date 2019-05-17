@@ -16,12 +16,12 @@
 package okhttp3
 
 import okhttp3.internal.Util
-import okhttp3.internal.Util.closeQuietly
 import okhttp3.internal.addHeaderLenient
 import okhttp3.internal.cache.CacheRequest
 import okhttp3.internal.cache.CacheStrategy
 import okhttp3.internal.cache.DiskLruCache
 import okhttp3.internal.cache.InternalCache
+import okhttp3.internal.closeQuietly
 import okhttp3.internal.http.HttpMethod
 import okhttp3.internal.http.StatusLine
 import okhttp3.internal.io.FileSystem
@@ -198,13 +198,13 @@ class Cache internal constructor(
     val entry: Entry = try {
       Entry(snapshot.getSource(ENTRY_METADATA))
     } catch (e: IOException) {
-      closeQuietly(snapshot)
+      snapshot.closeQuietly()
       return null
     }
 
     val response = entry.response(snapshot)
     if (!entry.matches(request, response)) {
-      closeQuietly(response.body())
+      response.body().closeQuietly()
       return null
     }
 
@@ -430,7 +430,7 @@ class Cache internal constructor(
         done = true
         writeAbortCount++
       }
-      closeQuietly(cacheOut)
+      cacheOut.closeQuietly()
       try {
         editor.abort()
       } catch (ignored: IOException) {

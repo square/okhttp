@@ -16,6 +16,7 @@
 package okhttp3.internal.http2
 
 import okhttp3.internal.Util
+import okhttp3.internal.closeQuietly
 import okhttp3.internal.connectionName
 import okhttp3.internal.execute
 import okhttp3.internal.http2.ErrorCode.REFUSED_STREAM
@@ -567,7 +568,7 @@ class Http2Connection internal constructor(builder: Builder) : Closeable {
         streamErrorCode = ErrorCode.PROTOCOL_ERROR
       } finally {
         close(connectionErrorCode, streamErrorCode, errorException)
-        Util.closeQuietly(reader)
+        reader.closeQuietly()
       }
     }
 

@@ -15,8 +15,8 @@
  */
 package okhttp3
 
-import okhttp3.internal.Util.closeQuietly
 import okhttp3.internal.cache.CacheInterceptor
+import okhttp3.internal.closeQuietly
 import okhttp3.internal.connection.ConnectInterceptor
 import okhttp3.internal.connection.Transmitter
 import okhttp3.internal.http.BridgeInterceptor
@@ -185,7 +185,7 @@ internal class RealCall private constructor(
     try {
       val response = chain.proceed(originalRequest)
       if (transmitter.isCanceled) {
-        closeQuietly(response)
+        response.closeQuietly()
         throw IOException("Canceled")
       }
       return response

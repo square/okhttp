@@ -54,7 +54,7 @@ import java.util.logging.Logger
  * This implementation assumes we do not send an increased [frame][Settings.getMaxFrameSize] to the
  * peer. Hence, we expect all frames to have a max length of [Http2.INITIAL_MAX_FRAME_SIZE].
  */
-internal class Http2Reader(
+class Http2Reader(
   /** Creates a frame reader with max header table size of 4096.  */
   private val source: BufferedSource,
   private val client: Boolean

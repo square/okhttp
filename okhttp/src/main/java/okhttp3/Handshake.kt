@@ -15,7 +15,8 @@
  */
 package okhttp3
 
-import okhttp3.internal.Util
+import okhttp3.internal.toImmutableList
+import okhttp3.internal.immutableListOf
 import java.io.IOException
 import java.security.Principal
 import java.security.cert.Certificate
@@ -152,14 +153,14 @@ class Handshake private constructor(
       }
 
       val peerCertificatesList = if (peerCertificates != null) {
-        Util.immutableList(*peerCertificates)
+        immutableListOf(*peerCertificates)
       } else {
         emptyList()
       }
 
       val localCertificates = localCertificates
       val localCertificatesList = if (localCertificates != null) {
-        Util.immutableList(*localCertificates)
+        immutableListOf(*localCertificates)
       } else {
         emptyList()
       }
@@ -182,8 +183,8 @@ class Handshake private constructor(
       peerCertificates: List<Certificate>,
       localCertificates: List<Certificate>
     ): Handshake {
-      return Handshake(tlsVersion, cipherSuite, Util.immutableList(peerCertificates),
-          Util.immutableList(localCertificates))
+      return Handshake(tlsVersion, cipherSuite, peerCertificates.toImmutableList(),
+          localCertificates.toImmutableList())
     }
   }
 }

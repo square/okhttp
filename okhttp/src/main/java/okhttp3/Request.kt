@@ -17,6 +17,7 @@ package okhttp3
 
 import okhttp3.internal.Util
 import okhttp3.internal.http.HttpMethod
+import okhttp3.internal.toImmutableMap
 import java.net.URL
 
 /**
@@ -30,7 +31,7 @@ class Request internal constructor(
   internal val method: String = builder.method
   internal val headers: Headers = builder.headers.build()
   internal val body: RequestBody? = builder.body
-  internal val tags: Map<Class<*>, Any> = Util.immutableMap(builder.tags)
+  internal val tags: Map<Class<*>, Any> = builder.tags.toImmutableMap()
 
   @Volatile
   private var cacheControl: CacheControl? = null // Lazily initialized

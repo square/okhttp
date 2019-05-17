@@ -26,7 +26,7 @@ import okhttp3.Response
 import okhttp3.WebSocket
 import okhttp3.WebSocketListener
 import okhttp3.internal.Util
-import okhttp3.internal.Util.closeQuietly
+import okhttp3.internal.closeQuietly
 import okhttp3.internal.connection.Exchange
 import okhttp3.internal.ws.WebSocketProtocol.CLOSE_CLIENT_GOING_AWAY
 import okhttp3.internal.ws.WebSocketProtocol.CLOSE_MESSAGE_MAX
@@ -169,7 +169,7 @@ class RealWebSocket(
         } catch (e: IOException) {
           exchange?.webSocketUpgradeFailed()
           failWebSocket(e, response)
-          closeQuietly(response)
+          response.closeQuietly()
           return
         }
 
@@ -333,7 +333,7 @@ class RealWebSocket(
         listener.onClosed(this, code, reason)
       }
     } finally {
-      closeQuietly(toClose)
+      toClose.closeQuietly()
     }
   }
 
@@ -486,7 +486,7 @@ class RealWebSocket(
 
       return true
     } finally {
-      closeQuietly(streamsToClose)
+      streamsToClose.closeQuietly()
     }
   }
 
@@ -534,7 +534,7 @@ class RealWebSocket(
     try {
       listener.onFailure(this, e, response)
     } finally {
-      closeQuietly(streamsToClose)
+      streamsToClose.closeQuietly()
     }
   }
 

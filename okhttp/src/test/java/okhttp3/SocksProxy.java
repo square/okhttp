@@ -38,6 +38,8 @@ import okio.BufferedSink;
 import okio.BufferedSource;
 import okio.Okio;
 
+import static okhttp3.internal.UtilKt.closeQuietly;
+
 /**
  * A limited implementation of SOCKS Protocol Version 5, intended to be similar to MockWebServer.
  * See <a href="https://www.ietf.org/rfc/rfc1928.txt">RFC 1928</a>.
@@ -79,7 +81,7 @@ public final class SocksProxy {
         logger.log(Level.WARNING, threadName + " failed unexpectedly", e);
       } finally {
         for (Socket socket : openSockets) {
-          Util.closeQuietly(socket);
+          closeQuietly(socket);
         }
         Thread.currentThread().setName("SocksProxy");
       }
@@ -115,7 +117,7 @@ public final class SocksProxy {
         openSockets.add(from);
       } catch (IOException e) {
         logger.log(Level.WARNING, threadName + " failed", e);
-        Util.closeQuietly(from);
+        closeQuietly(from);
       } finally {
         Thread.currentThread().setName("SocksProxy");
       }

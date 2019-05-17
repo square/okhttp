@@ -17,6 +17,7 @@ package okhttp3.internal.cache
 
 import okhttp3.internal.Util
 import okhttp3.internal.cache.DiskLruCache.Editor
+import okhttp3.internal.closeQuietly
 import okhttp3.internal.io.FileSystem
 import okhttp3.internal.platform.Platform
 import okhttp3.internal.platform.Platform.Companion.WARN
@@ -764,7 +765,7 @@ class DiskLruCache internal constructor(
 
     override fun close() {
       for (source in sources) {
-        Util.closeQuietly(source)
+        source.closeQuietly()
       }
     }
   }
@@ -949,7 +950,7 @@ class DiskLruCache internal constructor(
       } catch (_: FileNotFoundException) {
         // A file must have been deleted manually!
         for (source in sources) {
-          Util.closeQuietly(source)
+          source.closeQuietly()
         }
         // Since the entry is no longer valid, remove it so the metadata is accurate (i.e. the cache
         // size.)
