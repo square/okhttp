@@ -62,7 +62,6 @@ import javax.net.ssl.X509TrustManager;
 import okhttp3.internal.InternalKtKt;
 import okhttp3.internal.RecordingAuthenticator;
 import okhttp3.internal.RecordingOkAuthenticator;
-import okhttp3.internal.Util;
 import okhttp3.internal.Version;
 import okhttp3.internal.platform.Platform;
 import okhttp3.mockwebserver.MockResponse;
@@ -90,6 +89,7 @@ import static java.util.Locale.US;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 import static okhttp3.internal.InternalKtKt.addHeaderLenient;
+import static okhttp3.internal.UtilKt.immutableListOf;
 import static okhttp3.internal.http.StatusLine.HTTP_PERM_REDIRECT;
 import static okhttp3.internal.http.StatusLine.HTTP_TEMP_REDIRECT;
 import static okhttp3.mockwebserver.SocketPolicy.DISCONNECT_AFTER_REQUEST;
@@ -939,7 +939,7 @@ public final class URLConnectionTest {
     client = client.newBuilder()
         .sslSocketFactory(
             handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager())
-        .connectionSpecs(Util.immutableList(ConnectionSpec.MODERN_TLS))
+        .connectionSpecs(immutableListOf(ConnectionSpec.MODERN_TLS))
         .hostnameVerifier(new RecordingHostnameVerifier())
         .proxy(server.toProxyAddress())
         .build();

@@ -24,6 +24,7 @@ import okhttp3.internal.Util
 import okhttp3.internal.Util.checkOffsetAndCount
 import okhttp3.internal.addHeaderLenient
 import okhttp3.internal.connection.RealConnection
+import okhttp3.internal.discard
 import okhttp3.internal.headersContentLength
 import okhttp3.internal.http.ExchangeCodec
 import okhttp3.internal.http.RequestLine
@@ -31,6 +32,7 @@ import okhttp3.internal.http.StatusLine
 import okhttp3.internal.http.StatusLine.Companion.HTTP_CONTINUE
 import okhttp3.internal.http.promisesBody
 import okhttp3.internal.http.receiveHeaders
+import okhttp3.internal.skipAll
 import okio.Buffer
 import okio.BufferedSink
 import okio.BufferedSource
@@ -161,7 +163,7 @@ class Http1ExchangeCodec(
   fun writeRequest(headers: Headers, requestLine: String) {
     check(state == STATE_IDLE) { "state: $state" }
     sink.writeUtf8(requestLine).writeUtf8("\r\n")
-    for (i in 0 until headers.size()) {
+    for (i in 0 until headers.size) {
       sink.writeUtf8(headers.name(i))
           .writeUtf8(": ")
           .writeUtf8(headers.value(i))
@@ -274,7 +276,7 @@ class Http1ExchangeCodec(
     val contentLength = response.headersContentLength()
     if (contentLength == -1L) return
     val body = newFixedLengthSource(contentLength)
-    Util.skipAll(body, Int.MAX_VALUE, MILLISECONDS)
+    body.skipAll(Int.MAX_VALUE, MILLISECONDS)
     body.close()
   }
 
@@ -403,8 +405,8 @@ class Http1ExchangeCodec(
     override fun close() {
       if (closed) return
 
-      if (bytesRemaining != 0L && !Util.discard(this,
-              ExchangeCodec.DISCARD_STREAM_TIMEOUT_MILLIS, MILLISECONDS)) {
+      if (bytesRemaining != 0L &&
+          !discard(ExchangeCodec.DISCARD_STREAM_TIMEOUT_MILLIS, MILLISECONDS)) {
         realConnection!!.noNewExchanges() // Unread bytes remain on the stream.
         responseBodyComplete()
       }
@@ -447,7 +449,7 @@ class Http1ExchangeCodec(
       }
       try {
         bytesRemainingInChunk = source.readHexadecimalUnsignedLong()
-        val extensions = source.readUtf8LineStrict().trim { it <= ' ' }
+        val extensions = source.readUtf8LineStrict().trim()
         if (bytesRemainingInChunk < 0 || extensions.isNotEmpty() && !extensions.startsWith(";")) {
           throw ProtocolException("expected chunk size and optional extensions" +
               " but was \"$bytesRemainingInChunk$extensions\"")
@@ -466,8 +468,8 @@ class Http1ExchangeCodec(
 
     override fun close() {
       if (closed) return
-      if (hasMoreChunks && !Util.discard(this, ExchangeCodec.DISCARD_STREAM_TIMEOUT_MILLIS,
-              MILLISECONDS)) {
+      if (hasMoreChunks &&
+          !discard(ExchangeCodec.DISCARD_STREAM_TIMEOUT_MILLIS, MILLISECONDS)) {
         realConnection!!.noNewExchanges() // Unread bytes remain on the stream.
         responseBodyComplete()
       }

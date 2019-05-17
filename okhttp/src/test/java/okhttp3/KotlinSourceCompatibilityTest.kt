@@ -447,7 +447,7 @@ class KotlinSourceCompatibilityTest {
     val get: String? = headers.get("")
     val date: Date? = headers.getDate("")
     val instant: Instant? = headers.getInstant("")
-    val size: Int = headers.size()
+    val size: Int = headers.size
     val name: String = headers.name(0)
     val value: String = headers.value(0)
     val names: Set<String> = headers.names()

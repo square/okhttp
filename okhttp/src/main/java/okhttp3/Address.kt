@@ -15,13 +15,13 @@
  */
 package okhttp3
 
+import okhttp3.internal.toImmutableList
 import java.net.Proxy
 import java.net.ProxySelector
 import java.util.Objects
 import javax.net.SocketFactory
 import javax.net.ssl.HostnameVerifier
 import javax.net.ssl.SSLSocketFactory
-import okhttp3.internal.Util
 
 /**
  * A specification for a connection to an origin server. For simple connections, this is the
@@ -81,10 +81,10 @@ class Address(
    * The protocols the client supports. This method always returns a non-null list that
    * contains minimally [Protocol.HTTP_1_1].
    */
-  @get:JvmName("protocols") val protocols: List<Protocol> = Util.immutableList(protocols)
+  @get:JvmName("protocols") val protocols: List<Protocol> = protocols.toImmutableList()
 
   @get:JvmName("connectionSpecs") val connectionSpecs: List<ConnectionSpec> =
-      Util.immutableList(connectionSpecs)
+      connectionSpecs.toImmutableList()
 
   @JvmName("-deprecated_url")
   @Deprecated(

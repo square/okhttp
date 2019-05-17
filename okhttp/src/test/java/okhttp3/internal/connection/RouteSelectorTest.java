@@ -40,19 +40,19 @@ import okhttp3.Protocol;
 import okhttp3.Request;
 import okhttp3.Route;
 import okhttp3.TestUtil;
-import okhttp3.internal.Util;
 import okhttp3.internal.http.RecordingProxySelector;
 import okhttp3.tls.HandshakeCertificates;
 import org.junit.Before;
 import org.junit.Test;
 
 import static java.net.Proxy.NO_PROXY;
+import static okhttp3.internal.UtilKt.immutableListOf;
 import static okhttp3.tls.internal.TlsUtil.localhost;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.fail;
 
 public final class RouteSelectorTest {
-  public final List<ConnectionSpec> connectionSpecs = Util.immutableList(
+  public final List<ConnectionSpec> connectionSpecs = immutableListOf(
       ConnectionSpec.MODERN_TLS,
       ConnectionSpec.COMPATIBLE_TLS,
       ConnectionSpec.CLEARTEXT);

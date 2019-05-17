@@ -20,8 +20,8 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
 import okhttp3.Route
-import okhttp3.internal.Util.closeQuietly
 import okhttp3.internal.Util.sameConnection
+import okhttp3.internal.closeQuietly
 import okhttp3.internal.connection.RouteException
 import okhttp3.internal.connection.Transmitter
 import okhttp3.internal.http.StatusLine.Companion.HTTP_PERM_REDIRECT
@@ -113,7 +113,7 @@ class RetryAndFollowUpInterceptor(private val client: OkHttpClient) : Intercepto
         return response
       }
 
-      closeQuietly(response.body())
+      response.body().closeQuietly()
       if (transmitter.hasExchange()) {
         exchange?.detachWithViolence()
       }

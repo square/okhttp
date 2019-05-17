@@ -85,6 +85,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Arrays.asList;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
+import static okhttp3.internal.UtilKt.discard;
 import static okhttp3.tls.internal.TlsUtil.localhost;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.data.Offset.offset;
@@ -331,7 +332,7 @@ public final class HttpOverHttp2Test {
     // Cancel the call and discard what we've buffered for the response body. This should free up
     // the connection flow-control window so new requests can proceed.
     call1.cancel();
-    assertThat(Util.discard(response1.body().source(), 1, TimeUnit.SECONDS))
+    assertThat(discard(response1.body().source(), 1, TimeUnit.SECONDS))
         .overridingErrorMessage("Call should not have completed successfully.")
         .isFalse();
 

@@ -100,7 +100,7 @@ class CacheStrategy internal constructor(
         this.sentRequestMillis = cacheResponse.sentRequestAtMillis()
         this.receivedResponseMillis = cacheResponse.receivedResponseAtMillis()
         val headers = cacheResponse.headers()
-        for (i in 0 until headers.size()) {
+        for (i in 0 until headers.size) {
           val fieldName = headers.name(i)
           val value = headers.value(i)
           when {

@@ -32,7 +32,7 @@ import okhttp3.Request
 import okhttp3.Response
 import okhttp3.Route
 import okhttp3.internal.Util
-import okhttp3.internal.Util.closeQuietly
+import okhttp3.internal.closeQuietly
 import okhttp3.internal.http.ExchangeCodec
 import okhttp3.internal.http1.Http1ExchangeCodec
 import okhttp3.internal.http2.ConnectionShutdownException
@@ -41,6 +41,7 @@ import okhttp3.internal.http2.Http2Connection
 import okhttp3.internal.http2.Http2ExchangeCodec
 import okhttp3.internal.http2.Http2Stream
 import okhttp3.internal.http2.StreamResetException
+import okhttp3.internal.isAndroidGetsocknameError
 import okhttp3.internal.platform.Platform
 import okhttp3.internal.tls.OkHostnameVerifier
 import okhttp3.internal.userAgent
@@ -178,8 +179,8 @@ class RealConnection(
         eventListener.connectEnd(call, route.socketAddress(), route.proxy(), protocol)
         break
       } catch (e: IOException) {
-        closeQuietly(socket)
-        closeQuietly(rawSocket)
+        socket.closeQuietly()
+        rawSocket.closeQuietly()
         socket = null
         rawSocket = null
         source = null
@@ -236,7 +237,7 @@ class RealConnection(
 
       // The proxy decided to close the connection after an auth challenge. We need to create a new
       // connection, but this time with the auth credentials.
-      closeQuietly(rawSocket)
+      rawSocket.closeQuietly()
       rawSocket = null
       sink = null
       source = null
@@ -386,14 +387,14 @@ class RealConnection(
       protocol = if (maybeProtocol != null) Protocol.get(maybeProtocol) else Protocol.HTTP_1_1
       success = true
     } catch (e: AssertionError) {
-      if (Util.isAndroidGetsocknameError(e)) throw IOException(e)
+      if (isAndroidGetsocknameError(e)) throw IOException(e)
       throw e
     } finally {
       if (sslSocket != null) {
         Platform.get().afterHandshake(sslSocket)
       }
       if (!success) {
-        closeQuietly(sslSocket)
+        sslSocket.closeQuietly()
       }
     }
   }
@@ -594,7 +595,7 @@ class RealConnection(
 
   fun cancel() {
     // Close the raw socket so we don't end up doing synchronous I/O.
-    closeQuietly(rawSocket)
+    rawSocket.closeQuietly()
   }
 
   override fun socket(): Socket = socket!!

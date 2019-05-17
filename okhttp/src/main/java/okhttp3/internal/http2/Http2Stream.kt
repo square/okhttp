@@ -196,7 +196,7 @@ class Http2Stream internal constructor(
   fun enqueueTrailers(trailers: Headers) {
     synchronized(this) {
       check(!sink.finished) { "already finished" }
-      require(trailers.size() != 0) { "trailers.size() == 0" }
+      require(trailers.size != 0) { "trailers.size() == 0" }
       this.sink.trailers = trailers
     }
   }

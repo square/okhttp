@@ -26,24 +26,16 @@ import okio.Buffer
 import okio.BufferedSource
 import okio.ByteString.Companion.decodeHex
 import okio.Options
-import okio.Source
-import java.io.Closeable
 import java.io.IOException
-import java.io.InterruptedIOException
 import java.net.IDN
 import java.net.InetAddress
-import java.net.ServerSocket
-import java.net.Socket
 import java.nio.charset.Charset
 import java.nio.charset.StandardCharsets.UTF_16BE
 import java.nio.charset.StandardCharsets.UTF_16LE
 import java.nio.charset.StandardCharsets.UTF_8
 import java.util.ArrayList
 import java.util.Arrays
-import java.util.Arrays.asList
-import java.util.Collections
 import java.util.Comparator
-import java.util.LinkedHashMap
 import java.util.Locale
 import java.util.TimeZone
 import java.util.concurrent.ThreadFactory
@@ -96,113 +88,6 @@ object Util {
     if (offset or count < 0 || offset > arrayLength || arrayLength - offset < count) {
       throw ArrayIndexOutOfBoundsException()
     }
-  }
-
-  /**
-   * Closes [closeable], ignoring any checked exceptions. Does nothing if [closeable] is
-   * null.
-   */
-  @JvmStatic
-  fun closeQuietly(closeable: Closeable?) {
-    if (closeable != null) {
-      try {
-        closeable.close()
-      } catch (rethrown: RuntimeException) {
-        throw rethrown
-      } catch (_: Exception) {
-      }
-    }
-  }
-
-  /**
-   * Closes [socket], ignoring any checked exceptions. Does nothing if [socket] is
-   * null.
-   */
-  @JvmStatic fun closeQuietly(socket: Socket?) {
-    if (socket != null) {
-      try {
-        socket.close()
-      } catch (e: AssertionError) {
-        if (!isAndroidGetsocknameError(e)) throw e
-      } catch (rethrown: RuntimeException) {
-        throw rethrown
-      } catch (_: Exception) {
-      }
-    }
-  }
-
-  /**
-   * Closes [serverSocket], ignoring any checked exceptions. Does nothing if [serverSocket] is null.
-   */
-  @JvmStatic fun closeQuietly(serverSocket: ServerSocket?) {
-    if (serverSocket != null) {
-      try {
-        serverSocket.close()
-      } catch (rethrown: RuntimeException) {
-        throw rethrown
-      } catch (_: Exception) {
-      }
-    }
-  }
-
-  /**
-   * Attempts to exhaust [source], returning true if successful. This is useful when reading a
-   * complete source is helpful, such as when doing so completes a cache body or frees a socket
-   * connection for reuse.
-   */
-  @JvmStatic fun discard(source: Source, timeout: Int, timeUnit: TimeUnit): Boolean = try {
-    skipAll(source, timeout, timeUnit)
-  } catch (e: IOException) {
-    false
-  }
-
-  /**
-   * Reads until [source] is exhausted or the deadline has been reached. This is careful to not
-   * extend the deadline if one exists already.
-   */
-  @Throws(IOException::class)
-  fun skipAll(source: Source, duration: Int, timeUnit: TimeUnit): Boolean {
-    val now = System.nanoTime()
-    val originalDuration = if (source.timeout().hasDeadline())
-      source.timeout().deadlineNanoTime() - now
-    else
-      java.lang.Long.MAX_VALUE
-    source.timeout()
-        .deadlineNanoTime(now + minOf(originalDuration, timeUnit.toNanos(duration.toLong())))
-    return try {
-      val skipBuffer = Buffer()
-      while (source.read(skipBuffer, 8192) != -1L) {
-        skipBuffer.clear()
-      }
-      true // Success! The source has been exhausted.
-    } catch (e: InterruptedIOException) {
-      false // We ran out of time before exhausting the source.
-    } finally {
-      if (originalDuration == java.lang.Long.MAX_VALUE) {
-        source.timeout().clearDeadline()
-      } else {
-        source.timeout().deadlineNanoTime(now + originalDuration)
-      }
-    }
-  }
-
-  /** Returns an immutable copy of [list].  */
-  fun <T> immutableList(list: List<T>): List<T> {
-    return Collections.unmodifiableList(list.toMutableList())
-  }
-
-  /** Returns an immutable copy of [map].  */
-  @JvmStatic fun <K, V> immutableMap(map: Map<K, V>): Map<K, V> {
-    return if (map.isEmpty())
-      emptyMap()
-    else
-      Collections.unmodifiableMap(LinkedHashMap(map))
-  }
-
-  /** Returns an immutable list containing [elements].  */
-  @JvmStatic @SafeVarargs
-  fun <T> immutableList(vararg elements: T): List<T> {
-    return Collections.unmodifiableList(asList(*elements.clone()))
   }
 
   @JvmStatic fun threadFactory(name: String, daemon: Boolean): ThreadFactory = ThreadFactory { runnable ->
@@ -265,15 +150,6 @@ object Util {
       "$host:${url.port()}"
     else
       host
-  }
-
-  /**
-   * Returns true if [e] is due to a firmware bug fixed after Android 4.2.2.
-   * https://code.google.com/p/android/issues/detail?id=54072
-   */
-  fun isAndroidGetsocknameError(e: AssertionError): Boolean {
-    return e.cause != null &&
-        e.message?.contains("getsockname failed") == true
   }
 
   fun indexOf(comparator: Comparator<String>, array: Array<String>, value: String): Int =
@@ -618,7 +494,7 @@ object Util {
     return builder.build()
   }
 
-  fun toHeaderBlock(headers: Headers): List<Header> = (0 until headers.size()).map {
+  fun toHeaderBlock(headers: Headers): List<Header> = (0 until headers.size).map {
     Header(headers.name(it), headers.value(it))
   }
 

@@ -16,12 +16,12 @@
 package okhttp3
 
 import okhttp3.internal.Util
-import okhttp3.internal.Util.closeQuietly
 import okhttp3.internal.addHeaderLenient
 import okhttp3.internal.cache.CacheRequest
 import okhttp3.internal.cache.CacheStrategy
 import okhttp3.internal.cache.DiskLruCache
 import okhttp3.internal.cache.InternalCache
+import okhttp3.internal.closeQuietly
 import okhttp3.internal.http.HttpMethod
 import okhttp3.internal.http.StatusLine
 import okhttp3.internal.io.FileSystem
@@ -198,13 +198,13 @@ class Cache internal constructor(
     val entry: Entry = try {
       Entry(snapshot.getSource(ENTRY_METADATA))
     } catch (e: IOException) {
-      closeQuietly(snapshot)
+      snapshot.closeQuietly()
       return null
     }
 
     val response = entry.response(snapshot)
     if (!entry.matches(request, response)) {
-      closeQuietly(response.body())
+      response.body().closeQuietly()
       return null
     }
 
@@ -430,7 +430,7 @@ class Cache internal constructor(
         done = true
         writeAbortCount++
       }
-      closeQuietly(cacheOut)
+      cacheOut.closeQuietly()
       try {
         editor.abort()
       } catch (ignored: IOException) {
@@ -576,8 +576,8 @@ class Cache internal constructor(
       val sink = editor.newSink(ENTRY_METADATA).buffer()
       sink.writeUtf8(url).writeByte('\n'.toInt())
       sink.writeUtf8(requestMethod).writeByte('\n'.toInt())
-      sink.writeDecimalLong(varyHeaders.size().toLong()).writeByte('\n'.toInt())
-      for (i in 0 until varyHeaders.size()) {
+      sink.writeDecimalLong(varyHeaders.size.toLong()).writeByte('\n'.toInt())
+      for (i in 0 until varyHeaders.size) {
         sink.writeUtf8(varyHeaders.name(i))
             .writeUtf8(": ")
             .writeUtf8(varyHeaders.value(i))
@@ -585,8 +585,8 @@ class Cache internal constructor(
       }
 
       sink.writeUtf8(StatusLine(protocol, code, message).toString()).writeByte('\n'.toInt())
-      sink.writeDecimalLong((responseHeaders.size() + 2).toLong()).writeByte('\n'.toInt())
-      for (i in 0 until responseHeaders.size()) {
+      sink.writeDecimalLong((responseHeaders.size + 2).toLong()).writeByte('\n'.toInt())
+      for (i in 0 until responseHeaders.size) {
         sink.writeUtf8(responseHeaders.name(i))
             .writeUtf8(": ")
             .writeUtf8(responseHeaders.value(i))
@@ -764,7 +764,7 @@ class Cache internal constructor(
      */
     private fun Headers.varyFields(): Set<String> {
       var result: MutableSet<String>? = null
-      for (i in 0 until size()) {
+      for (i in 0 until size) {
         if (!"Vary".equals(name(i), ignoreCase = true)) {
           continue
         }
@@ -800,7 +800,7 @@ class Cache internal constructor(
       if (varyFields.isEmpty()) return Util.EMPTY_HEADERS
 
       val result = Headers.Builder()
-      for (i in 0 until requestHeaders.size()) {
+      for (i in 0 until requestHeaders.size) {
         val fieldName = requestHeaders.name(i)
         if (varyFields.contains(fieldName)) {
           result.add(fieldName, requestHeaders.value(i))

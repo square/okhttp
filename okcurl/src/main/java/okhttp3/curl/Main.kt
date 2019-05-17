@@ -131,8 +131,8 @@ class Main : Runnable {
       if (showHeaders) {
         println(StatusLine.get(response))
         val headers = response.headers()
-        for (i in 0 until headers.size()) {
-          println(headers.name(i) + ": " + headers.value(i))
+        for ((name, value) in headers) {
+          println("$name: $value")
         }
         println()
       }

@@ -15,7 +15,7 @@
  */
 package okhttp3.internal.cache2
 
-import okhttp3.internal.Util.closeQuietly
+import okhttp3.internal.closeQuietly
 import okio.Buffer
 import okio.ByteString
 import okio.ByteString.Companion.encodeUtf8
@@ -132,7 +132,7 @@ class Relay private constructor(
       complete = true
     }
 
-    closeQuietly(upstream)
+    upstream.closeQuietly()
     upstream = null
   }
 
@@ -285,7 +285,7 @@ class Relay private constructor(
       }
 
       if (fileToClose != null) {
-        closeQuietly(fileToClose)
+        fileToClose.closeQuietly()
       }
     }
   }

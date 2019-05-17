@@ -57,7 +57,7 @@ private val TOKEN_DELIMITERS = "\t ,=".encodeUtf8()
  */
 fun Headers.parseChallenges(headerName: String): List<Challenge> {
   val result = mutableListOf<Challenge>()
-  for (h in 0 until size()) {
+  for (h in 0 until size) {
     if (headerName.equals(name(h), ignoreCase = true)) {
       val header = Buffer().writeUtf8(value(h))
       try {
