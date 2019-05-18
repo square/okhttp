@@ -1169,11 +1169,11 @@ class HttpUrl internal constructor(builder: Builder) {
       val schemeDelimiterOffset = schemeDelimiterOffset(input, pos, limit)
       if (schemeDelimiterOffset != -1) {
         when {
-          input.regionMatches(pos, "https:", 0, 6, ignoreCase = true) -> {
+          input.startsWith("https:", ignoreCase = true, startIndex = pos) -> {
             this.scheme = "https"
             pos += "https:".length
           }
-          input.regionMatches(pos, "http:", 0, 5, ignoreCase = true) -> {
+          input.startsWith("http:", ignoreCase = true, startIndex = pos) -> {
             this.scheme = "http"
             pos += "http:".length
           }
