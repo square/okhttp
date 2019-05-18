@@ -26,7 +26,7 @@ import kotlin.reflect.KFunction
 
 /** OpenJDK 9+.  */
 class Jdk9Platform(
-  @JvmField val setProtocolMethod: KFunction<Void>,
+  @JvmField val setProtocolMethod: KFunction<*>,
   @JvmField val getProtocolMethod: KFunction<String?>
 ) : Platform() {
   override fun configureTlsExtensions(
