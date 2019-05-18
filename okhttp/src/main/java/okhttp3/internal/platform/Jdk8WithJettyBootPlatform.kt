@@ -120,22 +120,21 @@ class Jdk8WithJettyBootPlatform(
       }
 
       // Find Jetty's ALPN extension for OpenJDK.
-      try {
-        val alpnClassName = "org.eclipse.jetty.alpn.ALPN"
-        val alpnClass = classForName(alpnClassName)
-        val providerClass = classForName("$alpnClassName\$Provider")
-        val clientProviderClass = classForName("$alpnClassName\$ClientProvider")
-        val serverProviderClass = classForName("$alpnClassName\$ServerProvider")
-        val putMethod = alpnClass.memberFunction<Void>("put", SSLSocket::class, providerClass)
-        val getMethod = alpnClass.memberFunction<Any>("get", SSLSocket::class)
-        val removeMethod = alpnClass.memberFunction<Any>("remove", SSLSocket::class)
-        return Jdk8WithJettyBootPlatform(
-            putMethod, getMethod, removeMethod, clientProviderClass, serverProviderClass)
-      } catch (ignored: ClassNotFoundException) {
-      } catch (ignored: NoSuchMethodException) {
-      }
+      val alpnClassName = "org.eclipse.jetty.alpn.ALPN"
 
-      return null
+      return when (val alpnClass = classForName(alpnClassName)) {
+        null -> null
+        else -> {
+          val providerClass = classForName("$alpnClassName\$Provider")!!
+          val clientProviderClass = classForName("$alpnClassName\$ClientProvider")!!
+          val serverProviderClass = classForName("$alpnClassName\$ServerProvider")!!
+          val putMethod = alpnClass.memberFunction<Void>("put", SSLSocket::class, providerClass)
+          val getMethod = alpnClass.memberFunction<Any>("get", SSLSocket::class)
+          val removeMethod = alpnClass.memberFunction<Any>("remove", SSLSocket::class)
+          Jdk8WithJettyBootPlatform(
+              putMethod, getMethod, removeMethod, clientProviderClass, serverProviderClass)
+        }
+      }
     }
   }
 }

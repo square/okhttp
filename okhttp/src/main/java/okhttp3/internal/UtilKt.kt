@@ -252,8 +252,12 @@ fun isAndroidGetsocknameError(e: AssertionError): Boolean {
   return e.cause != null && e.message?.contains("getsockname failed") == true
 }
 
-fun classForName(className: String) =
-    Class.forName(className, true, null).kotlin
+fun classForName(className: String): KClass<*>? =
+    try {
+      Class.forName(className, true, null).kotlin
+    } catch (_: Exception) {
+      null
+    }
 
 inline fun <reified T> KClass<*>.memberFunction(
   name: String,
