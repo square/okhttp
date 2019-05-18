@@ -191,7 +191,7 @@ class Main : Runnable {
     }
 
     for (header in headers.orEmpty()) {
-      val parts = header.split(":".toRegex(), 2).toTypedArray()
+      val parts = header.split(':', limit = 2)
       request.header(parts[0], parts[1])
     }
     referer?.let {
@@ -205,7 +205,7 @@ class Main : Runnable {
   private fun mediaType(): MediaType? {
     val mimeType = headers?.let {
       for (header in it) {
-        val parts = header.split(":".toRegex()).toTypedArray()
+        val parts = header.split(':')
         if ("Content-Type".equals(parts[0], ignoreCase = true)) {
           it.remove(header)
           return@let parts[1].trim()
