@@ -15,13 +15,14 @@
  */
 package okhttp3.internal.platform
 
+import okhttp3.Protocol
+import okhttp3.internal.names
 import java.lang.reflect.InvocationTargetException
 import java.lang.reflect.Method
 import javax.net.ssl.SSLParameters
 import javax.net.ssl.SSLSocket
 import javax.net.ssl.SSLSocketFactory
 import javax.net.ssl.X509TrustManager
-import okhttp3.Protocol
 
 /** OpenJDK 9+.  */
 class Jdk9Platform(
@@ -36,9 +37,7 @@ class Jdk9Platform(
     try {
       val sslParameters = sslSocket.sslParameters
 
-      val names = alpnProtocolNames(protocols)
-
-      setProtocolMethod.invoke(sslParameters, names.toTypedArray())
+      setProtocolMethod.invoke(sslParameters, protocols.names().toTypedArray())
 
       sslSocket.sslParameters = sslParameters
     } catch (e: IllegalAccessException) {
@@ -75,16 +74,27 @@ class Jdk9Platform(
   companion object {
     @JvmStatic
     fun buildIfSupported(): Jdk9Platform? =
-        try {
-          // Find JDK 9 methods
-          val setProtocolMethod = SSLParameters::class.java.getMethod("setApplicationProtocols",
-              Array<String>::class.java)
-          val getProtocolMethod = SSLSocket::class.java.getMethod("getApplicationProtocol")
+        when {
+          isAvailable() -> {
+            // Find JDK 9 methods
+            val setProtocolMethod = SSLParameters::class.java.getMethod("setApplicationProtocols",
+                Array<String>::class.java)
+            val getProtocolMethod = SSLSocket::class.java.getMethod("getApplicationProtocol")
 
-          Jdk9Platform(setProtocolMethod, getProtocolMethod)
-        } catch (ignored: NoSuchMethodException) {
-          // pre JDK 9
-          null
+            Jdk9Platform(setProtocolMethod, getProtocolMethod)
+          }
+          else -> null
         }
+
+    fun isAvailable(): Boolean {
+      val jvmVersion = System.getProperty("java.specification.version", "unknown")
+      return try {
+        // 1.8, 9, 10, 11, 12 etc
+        val version = jvmVersion.toInt()
+        version >= 9
+      } catch (nfe: NumberFormatException) {
+        false
+      }
+    }
   }
 }

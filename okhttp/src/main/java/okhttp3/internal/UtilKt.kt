@@ -16,6 +16,7 @@
 @file:JvmName("UtilKt")
 package okhttp3.internal
 
+import okhttp3.Protocol
 import okhttp3.Response
 import okio.Buffer
 import okio.BufferedSink
@@ -246,3 +247,6 @@ fun ServerSocket?.closeQuietly() {
 fun isAndroidGetsocknameError(e: AssertionError): Boolean {
   return e.cause != null && e.message?.contains("getsockname failed") == true
 }
+
+fun List<Protocol>.names() =
+    filter { it != Protocol.HTTP_1_0 }.map { it.toString() }

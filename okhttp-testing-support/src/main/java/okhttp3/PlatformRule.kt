@@ -15,7 +15,10 @@
  */
 package okhttp3
 
+import okhttp3.internal.platform.Jdk8WithJettyBootPlatform.Companion.isAlpnBootEnabled
+import okhttp3.internal.platform.Jdk9Platform
 import okhttp3.internal.platform.Platform
+import okhttp3.internal.platform.PlatformRegistry
 import org.conscrypt.Conscrypt
 import org.hamcrest.CoreMatchers.equalTo
 import org.hamcrest.CoreMatchers.not
@@ -39,7 +42,7 @@ open class PlatformRule @JvmOverloads constructor(
       assumeThat(getPlatformSystemProperty(), equalTo(requiredPlatformName))
     }
 
-    Platform.resetForTests()
+    PlatformRegistry.resetForTests()
   }
 
   fun isConscrypt() = getPlatformSystemProperty() == CONSCRYPT_PROPERTY
@@ -130,10 +133,17 @@ open class PlatformRule @JvmOverloads constructor(
           System.err.println("Warning: ALPN Boot enabled unintentionally")
         }
       }
+
+      PlatformRegistry.resetForTests()
+
+      System.err.println("Running with Platform ${Platform.get()}")
     }
 
     @JvmStatic
-    fun getPlatformSystemProperty(): String = System.getProperty(PROPERTY_NAME, CONSCRYPT_PROPERTY)
+    fun getPlatformSystemProperty(): String {
+      return System.getProperty(PROPERTY_NAME)
+          ?: if (Jdk9Platform.isAvailable()) JDK9_PROPERTY else CONSCRYPT_PROPERTY
+    }
 
     @JvmStatic
     fun conscrypt() = PlatformRule(CONSCRYPT_PROPERTY)
@@ -146,13 +156,5 @@ open class PlatformRule @JvmOverloads constructor(
 
     @JvmStatic
     fun jdk8alpn() = PlatformRule(JDK8_ALPN_PROPERTY)
-
-    @JvmStatic
-    fun isAlpnBootEnabled(): Boolean = try {
-      Class.forName("org.eclipse.jetty.alpn.ALPN", true, null)
-      true
-    } catch (cnfe: ClassNotFoundException) {
-      false
-    }
   }
 }

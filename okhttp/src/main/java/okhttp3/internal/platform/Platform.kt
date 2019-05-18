@@ -18,16 +18,15 @@ package okhttp3.internal.platform
 
 import okhttp3.OkHttpClient
 import okhttp3.Protocol
+import okhttp3.internal.Util.readFieldOrNull
 import okhttp3.internal.tls.BasicCertificateChainCleaner
 import okhttp3.internal.tls.BasicTrustRootIndex
 import okhttp3.internal.tls.CertificateChainCleaner
 import okhttp3.internal.tls.TrustRootIndex
-import okio.Buffer
 import java.io.IOException
 import java.net.InetSocketAddress
 import java.net.Socket
 import java.security.KeyStore
-import java.security.Security
 import java.util.logging.Level
 import java.util.logging.Logger
 import javax.net.ssl.SSLContext
@@ -176,96 +175,12 @@ open class Platform {
   override fun toString(): String = javaClass.simpleName
 
   companion object {
-    @Volatile private var platform = findPlatform()
-
     const val INFO = 4
     const val WARN = 5
 
     private val logger = Logger.getLogger(OkHttpClient::class.java.name)
 
     @JvmStatic
-    fun get(): Platform = platform
-
-    fun resetForTests(platform: Platform = findPlatform()) {
-      this.platform = platform
-    }
-
-    fun alpnProtocolNames(protocols: List<Protocol>) =
-        protocols.filter { it != Protocol.HTTP_1_0 }.map { it.toString() }
-
-    @JvmStatic
-    val isConscryptPreferred: Boolean
-      get() {
-        val preferredProvider = Security.getProviders()[0].name
-        return "Conscrypt" == preferredProvider
-      }
-
-    /** Attempt to match the host runtime to a capable Platform implementation.  */
-    @JvmStatic
-    private fun findPlatform(): Platform {
-      val android = AndroidPlatform.buildIfSupported()
-
-      if (android != null) {
-        return android
-      }
-
-      if (isConscryptPreferred) {
-        val conscrypt = ConscryptPlatform.buildIfSupported()
-
-        if (conscrypt != null) {
-          return conscrypt
-        }
-      }
-
-      val jdk9 = Jdk9Platform.buildIfSupported()
-
-      if (jdk9 != null) {
-        return jdk9
-      }
-
-      // An Oracle JDK 8 like OpenJDK.
-      val jdkWithJettyBoot = Jdk8WithJettyBootPlatform.buildIfSupported()
-
-      return jdkWithJettyBoot ?: Platform()
-    }
-
-    /**
-     * Returns the concatenation of 8-bit, length prefixed protocol names.
-     * http://tools.ietf.org/html/draft-agl-tls-nextprotoneg-04#page-4
-     */
-    @JvmStatic
-    fun concatLengthPrefixed(protocols: List<Protocol>): ByteArray {
-      val result = Buffer()
-      for (protocol in alpnProtocolNames(protocols)) {
-        result.writeByte(protocol.length)
-        result.writeUtf8(protocol)
-      }
-      return result.readByteArray()
-    }
-
-    @JvmStatic
-    fun <T> readFieldOrNull(instance: Any, fieldType: Class<T>, fieldName: String): T? {
-      var c: Class<*> = instance.javaClass
-      while (c != Any::class.java) {
-        try {
-          val field = c.getDeclaredField(fieldName)
-          field.isAccessible = true
-          val value = field.get(instance)
-          return if (!fieldType.isInstance(value)) null else fieldType.cast(value)
-        } catch (ignored: NoSuchFieldException) {
-        }
-
-        c = c.superclass
-      }
-
-      // Didn't find the field we wanted. As a last gasp attempt,
-      // try to find the value on a delegate.
-      if (fieldName != "delegate") {
-        val delegate = readFieldOrNull(instance, Any::class.java, "delegate")
-        if (delegate != null) return readFieldOrNull(delegate, fieldType, fieldName)
-      }
-
-      return null
-    }
+    fun get(): Platform = PlatformRegistry.platform
   }
 }

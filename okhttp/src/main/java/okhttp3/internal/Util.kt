@@ -18,6 +18,7 @@ package okhttp3.internal
 import okhttp3.EventListener
 import okhttp3.Headers
 import okhttp3.HttpUrl
+import okhttp3.Protocol
 import okhttp3.RequestBody
 import okhttp3.ResponseBody
 import okhttp3.internal.http2.Header
@@ -505,4 +506,43 @@ object Util {
 
   fun eventListenerFactory(listener: EventListener): EventListener.Factory =
       EventListener.Factory { listener }
+
+  /**
+   * Returns the concatenation of 8-bit, length prefixed protocol names.
+   * http://tools.ietf.org/html/draft-agl-tls-nextprotoneg-04#page-4
+   */
+  @JvmStatic
+  fun concatLengthPrefixed(protocols: List<Protocol>): ByteArray {
+    val result = Buffer()
+    for (protocol in protocols.names()) {
+      result.writeByte(protocol.length)
+      result.writeUtf8(protocol)
+    }
+    return result.readByteArray()
+  }
+
+  @JvmStatic
+  fun <T> readFieldOrNull(instance: Any, fieldType: Class<T>, fieldName: String): T? {
+    var c: Class<*> = instance.javaClass
+    while (c != Any::class.java) {
+      try {
+        val field = c.getDeclaredField(fieldName)
+        field.isAccessible = true
+        val value = field.get(instance)
+        return if (!fieldType.isInstance(value)) null else fieldType.cast(value)
+      } catch (ignored: NoSuchFieldException) {
+      }
+
+      c = c.superclass
+    }
+
+    // Didn't find the field we wanted. As a last gasp attempt,
+    // try to find the value on a delegate.
+    if (fieldName != "delegate") {
+      val delegate = readFieldOrNull(instance, Any::class.java, "delegate")
+      if (delegate != null) return readFieldOrNull(delegate, fieldType, fieldName)
+    }
+
+    return null
+  }
 }

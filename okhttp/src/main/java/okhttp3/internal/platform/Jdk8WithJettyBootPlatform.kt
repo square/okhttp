@@ -16,6 +16,7 @@
 package okhttp3.internal.platform
 
 import okhttp3.Protocol
+import okhttp3.internal.names
 import java.lang.reflect.InvocationHandler
 import java.lang.reflect.InvocationTargetException
 import java.lang.reflect.Method
@@ -35,11 +36,9 @@ class Jdk8WithJettyBootPlatform(
     hostname: String?,
     protocols: List<Protocol>
   ) {
-    val names = alpnProtocolNames(protocols)
-
     try {
       val alpnProvider = Proxy.newProxyInstance(Platform::class.java.classLoader,
-          arrayOf(clientProviderClass, serverProviderClass), AlpnProvider(names))
+          arrayOf(clientProviderClass, serverProviderClass), AlpnProvider(protocols.names()))
       putMethod.invoke(null, sslSocket, alpnProvider)
     } catch (e: InvocationTargetException) {
       throw AssertionError("failed to set ALPN", e)
@@ -123,15 +122,17 @@ class Jdk8WithJettyBootPlatform(
   }
 
   companion object {
+    fun isAlpnBootEnabled(): Boolean = try {
+      Class.forName("org.eclipse.jetty.alpn.ALPN", true, null)
+      true
+    } catch (cnfe: ClassNotFoundException) {
+      false
+    }
+
     @JvmStatic
     fun buildIfSupported(): Platform? {
-      val jvmVersion = System.getProperty("java.specification.version", "unknown")
-      try {
-        // 1.8, 9, 10, 11, 12 etc
-        val version = jvmVersion.toInt()
-        if (version >= 9) return null
-      } catch (nfe: NumberFormatException) {
-        // expected on >= JDK 9
+      if (Jdk9Platform.isAvailable()) {
+        return null
       }
 
       // Find Jetty's ALPN extension for OpenJDK.
@@ -146,8 +147,8 @@ class Jdk8WithJettyBootPlatform(
         val removeMethod = alpnClass.getMethod("remove", SSLSocket::class.java)
         return Jdk8WithJettyBootPlatform(
             putMethod, getMethod, removeMethod, clientProviderClass, serverProviderClass)
-      } catch (ignored: ClassNotFoundException) {
-      } catch (ignored: NoSuchMethodException) {
+      } catch (_: ClassNotFoundException) {
+      } catch (_: NoSuchMethodException) {
       }
 
       return null

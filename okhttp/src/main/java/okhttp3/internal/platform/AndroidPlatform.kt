@@ -18,6 +18,8 @@ package okhttp3.internal.platform
 import android.os.Build
 import android.util.Log
 import okhttp3.Protocol
+import okhttp3.internal.Util.concatLengthPrefixed
+import okhttp3.internal.Util.readFieldOrNull
 import okhttp3.internal.isAndroidGetsocknameError
 import okhttp3.internal.tls.BasicTrustRootIndex
 import okhttp3.internal.tls.CertificateChainCleaner

@@ -16,8 +16,11 @@
 package okhttp3.internal.platform
 
 import okhttp3.Protocol
+import okhttp3.internal.Util.readFieldOrNull
+import okhttp3.internal.names
 import org.conscrypt.Conscrypt
 import java.security.Provider
+import java.security.Security
 import javax.net.ssl.SSLContext
 import javax.net.ssl.SSLSocket
 import javax.net.ssl.SSLSocketFactory
@@ -78,8 +81,7 @@ class ConscryptPlatform private constructor() : Platform() {
       }
 
       // Enable ALPN.
-      val names = alpnProtocolNames(protocols)
-      Conscrypt.setApplicationProtocols(sslSocket, names.toTypedArray())
+      Conscrypt.setApplicationProtocols(sslSocket, protocols.names().toTypedArray())
     } else {
       super.configureTlsExtensions(sslSocket, hostname, protocols)
     }
@@ -106,6 +108,13 @@ class ConscryptPlatform private constructor() : Platform() {
   }
 
   companion object {
+    @JvmStatic
+    val isConscryptPreferred: Boolean
+      get() {
+        val preferredProvider = Security.getProviders()[0].name
+        return "Conscrypt" == preferredProvider
+      }
+
     @JvmStatic
     fun buildIfSupported(): ConscryptPlatform? = try {
       // Trigger an early exception over a fatal error, prefer a RuntimeException over Error.
