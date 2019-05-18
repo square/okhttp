@@ -15,9 +15,6 @@
  */
 package okhttp3
 
-import okhttp3.internal.platform.ConscryptPlatform
-import okhttp3.internal.platform.Jdk8WithJettyBootPlatform
-import okhttp3.internal.platform.Jdk9Platform
 import okhttp3.internal.platform.Platform
 import org.conscrypt.Conscrypt
 import org.hamcrest.CoreMatchers.equalTo
@@ -35,25 +32,14 @@ import java.security.Security
  */
 @Suppress("unused", "MemberVisibilityCanBePrivate")
 open class PlatformRule @JvmOverloads constructor(
-  val requiredPlatformName: String? = null,
-  val platform: Platform? = null
+  val requiredPlatformName: String? = null
 ) : ExternalResource() {
   override fun before() {
     if (requiredPlatformName != null) {
       assumeThat(getPlatformSystemProperty(), equalTo(requiredPlatformName))
     }
 
-    if (platform != null) {
-      Platform.resetForTests(platform)
-    } else {
-      Platform.resetForTests()
-    }
-  }
-
-  override fun after() {
-    if (platform != null) {
-      Platform.resetForTests()
-    }
+    Platform.resetForTests()
   }
 
   fun isConscrypt() = getPlatformSystemProperty() == CONSCRYPT_PROPERTY
@@ -147,20 +133,7 @@ open class PlatformRule @JvmOverloads constructor(
     }
 
     @JvmStatic
-    fun getPlatformSystemProperty(): String {
-      var property: String? = System.getProperty(PROPERTY_NAME)
-
-      if (property == null) {
-        property = when (Platform.get()) {
-          is ConscryptPlatform -> CONSCRYPT_PROPERTY
-          is Jdk8WithJettyBootPlatform -> CONSCRYPT_PROPERTY
-          is Jdk9Platform -> JDK9_PROPERTY
-          else -> JDK8_PROPERTY
-        }
-      }
-
-      return property
-    }
+    fun getPlatformSystemProperty(): String = System.getProperty(PROPERTY_NAME, CONSCRYPT_PROPERTY)
 
     @JvmStatic
     fun conscrypt() = PlatformRule(CONSCRYPT_PROPERTY)
