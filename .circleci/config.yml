@@ -179,12 +179,18 @@ workflows:
       - checkjdk8:
           filters:
             branches:
-              ignore: master
+              ignore:
+                - master
+                - gh-pages
       - testjdk8:
           filters:
             branches:
               only: master
-      - testjdk8alpn
+      - testjdk8alpn:
+          filters:
+            branches:
+              ignore:
+                - gh-pages
       - testjdk11:
           filters:
             branches:
