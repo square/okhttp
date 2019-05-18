@@ -19,7 +19,6 @@ import okhttp3.Protocol
 import okhttp3.internal.classForName
 import okhttp3.internal.memberFunction
 import java.lang.reflect.InvocationHandler
-import java.lang.reflect.InvocationTargetException
 import java.lang.reflect.Method
 import java.lang.reflect.Proxy
 import javax.net.ssl.SSLSocket

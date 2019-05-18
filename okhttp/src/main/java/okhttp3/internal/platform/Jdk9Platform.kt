@@ -15,7 +15,6 @@
  */
 package okhttp3.internal.platform
 
-import java.lang.reflect.InvocationTargetException
 import javax.net.ssl.SSLParameters
 import javax.net.ssl.SSLSocket
 import javax.net.ssl.SSLSocketFactory
