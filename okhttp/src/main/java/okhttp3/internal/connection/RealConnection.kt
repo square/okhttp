@@ -566,13 +566,13 @@ class RealConnection(
     val sink = this.sink!!
     val http2Connection = this.http2Connection
 
-    if (http2Connection != null) {
-      return Http2ExchangeCodec(client, this, chain, http2Connection)
+    return if (http2Connection != null) {
+      Http2ExchangeCodec(client, this, chain, http2Connection)
     } else {
       socket.soTimeout = chain.readTimeoutMillis()
       source.timeout().timeout(chain.readTimeoutMillis().toLong(), MILLISECONDS)
       sink.timeout().timeout(chain.writeTimeoutMillis().toLong(), MILLISECONDS)
-      return Http1ExchangeCodec(client, this, source, sink)
+      Http1ExchangeCodec(client, this, source, sink)
     }
   }
 

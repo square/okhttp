@@ -26,7 +26,7 @@ import java.io.IOException
  *
  * To make HTTPS calls using an HTTP proxy server OkHttp must first negotiate a connection with
  * the proxy. This proxy connection is called a "TLS Tunnel" and is specified by
- * [RFC 2817][rfc_2817]. The HTTP CONNECT request that creates this tunnel connection is special: it
+ * [RFC 2817][1]. The HTTP CONNECT request that creates this tunnel connection is special: it
  * does not participate in any [interceptors][Interceptor] or [event listeners][EventListener]. It
  * doesn't include the motivating request's HTTP headers or even its full URL; only the target
  * server's hostname is sent to the proxy.
@@ -93,7 +93,7 @@ import java.io.IOException
  * Applications may configure OkHttp with an authenticator for origin servers, or proxy servers,
  * or both.
  *
- * [rfc_2817]: https://tools.ietf.org/html/rfc2817
+ * [1]: https://tools.ietf.org/html/rfc2817
  */
 interface Authenticator {
   /**

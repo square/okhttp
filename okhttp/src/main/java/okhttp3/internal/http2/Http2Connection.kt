@@ -93,7 +93,7 @@ class Http2Connection internal constructor(builder: Builder) : Closeable {
       Util.threadFactory(Util.format("OkHttp %s Push Observer", connectionName), true))
 
   /** User code to run in response to push promise events.  */
-  internal val pushObserver: PushObserver = builder.pushObserver
+  private val pushObserver: PushObserver = builder.pushObserver
 
   /** True if we have sent a ping that is still awaiting a reply.  */
   private var awaitingPong = false
@@ -138,7 +138,7 @@ class Http2Connection internal constructor(builder: Builder) : Closeable {
   val readerRunnable = ReaderRunnable(Http2Reader(builder.source, client))
 
   // Guarded by this.
-  internal val currentPushRequests = mutableSetOf<Int>()
+  private val currentPushRequests = mutableSetOf<Int>()
 
   init {
     if (builder.pingIntervalMillis != 0) {

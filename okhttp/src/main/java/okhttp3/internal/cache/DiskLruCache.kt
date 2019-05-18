@@ -151,7 +151,7 @@ class DiskLruCache internal constructor(
   private var journalWriter: BufferedSink? = null
   internal val lruEntries = LinkedHashMap<String, Entry>(0, 0.75f, true)
   private var redundantOpCount: Int = 0
-  internal var hasJournalErrors: Boolean = false
+  private var hasJournalErrors: Boolean = false
 
   // Must be read and written when synchronized on 'this'.
   private var initialized: Boolean = false

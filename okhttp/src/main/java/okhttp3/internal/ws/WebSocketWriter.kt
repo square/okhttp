@@ -50,7 +50,7 @@ internal class WebSocketWriter(
 
   /** The [Buffer] of [sink]. Write to this and then flush/emit [sink].  */
   private val sinkBuffer: Buffer = sink.buffer
-  var writerClosed = false
+  private var writerClosed = false
 
   val buffer = Buffer()
   private val frameSink = FrameSink()
