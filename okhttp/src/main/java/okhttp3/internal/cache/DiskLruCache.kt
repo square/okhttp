@@ -39,7 +39,6 @@ import java.util.concurrent.Executor
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.ThreadPoolExecutor
 import java.util.concurrent.TimeUnit
-import java.util.regex.Pattern
 
 /**
  * A cache that uses a bounded amount of space on a filesystem. Each cache entry has a string key
@@ -927,7 +926,7 @@ class DiskLruCache internal constructor(
 
     @Throws(IOException::class)
     private fun invalidLengths(strings: List<String>): IOException {
-      throw IOException("unexpected journal line: ${strings}")
+      throw IOException("unexpected journal line: $strings")
     }
 
     /**
