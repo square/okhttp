@@ -344,7 +344,7 @@ object Util {
       if (b == address.size) return null // Too many groups.
 
       // Read a delimiter.
-      if (i + 2 <= limit && input.regionMatches(i, "::", 0, 2)) {
+      if (i + 2 <= limit && input.startsWith("::", startIndex = i)) {
         // Compression "::" delimiter, which is anywhere in the input, including its prefix.
         if (compress != -1) return null // Multiple "::" delimiters.
         i += 2
@@ -353,9 +353,9 @@ object Util {
         if (i == limit) break
       } else if (b != 0) {
         // Group separator ":" delimiter.
-        if (input.regionMatches(i, ":", 0, 1)) {
+        if (input.startsWith(":", startIndex = i)) {
           i++
-        } else if (input.regionMatches(i, ".", 0, 1)) {
+        } else if (input.startsWith(".", startIndex = i)) {
           // If we see a '.', rewind to the beginning of the previous group and parse as IPv4.
           if (!decodeIpv4Suffix(input, groupOffset, limit, address, b - 2)) return null
           b += 2 // We rewound two bytes and then added four.
