@@ -190,7 +190,7 @@ class Cache internal constructor(
   internal fun get(request: Request): Response? {
     val key = key(request.url())
     val snapshot: DiskLruCache.Snapshot = try {
-      cache.get(key) ?: return null
+      cache[key] ?: return null
     } catch (e: IOException) {
       return null // Give up because the cache cannot be read.
     }

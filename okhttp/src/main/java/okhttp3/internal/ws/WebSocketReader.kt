@@ -59,10 +59,10 @@ internal class WebSocketReader(
   var closed = false
 
   // Stateful data about the current frame.
-  var opcode = 0
-  var frameLength = 0L
-  var isFinalFrame = false
-  var isControlFrame = false
+  private var opcode = 0
+  private var frameLength = 0L
+  private var isFinalFrame = false
+  private var isControlFrame = false
 
   private val controlFrameBuffer = Buffer()
   private val messageFrameBuffer = Buffer()

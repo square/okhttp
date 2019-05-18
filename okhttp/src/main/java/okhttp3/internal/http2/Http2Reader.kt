@@ -491,7 +491,7 @@ class Http2Reader(
   }
 
   companion object {
-    val logger = Logger.getLogger(Http2::class.java.name)
+    val logger: Logger = Logger.getLogger(Http2::class.java.name)
 
     @Throws(IOException::class)
     fun lengthWithoutPadding(length: Int, flags: Int, padding: Int): Int {

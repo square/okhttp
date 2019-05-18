@@ -719,7 +719,7 @@ open class OkHttpClient internal constructor(
       val protocolsCopy = protocols.toMutableList()
 
       // Validate that the list has everything we require and nothing we forbid.
-      require(Protocol.H2_PRIOR_KNOWLEDGE in protocolsCopy || Protocol.HTTP_1_1 in protocolsCopy) {
+      require(Protocol.H2_PRIOR_KNOWLEDGE in protocolsCopy || HTTP_1_1 in protocolsCopy) {
         "protocols must contain h2_prior_knowledge or http/1.1: $protocolsCopy"
       }
       require(Protocol.H2_PRIOR_KNOWLEDGE !in protocolsCopy || protocolsCopy.size <= 1) {
