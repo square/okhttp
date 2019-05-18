@@ -317,8 +317,7 @@ class DiskLruCache internal constructor(
     when {
       secondSpace != -1 && firstSpace == CLEAN.length && line.startsWith(CLEAN) -> {
         val parts = line.substring(secondSpace + 1)
-            .split(" ".toRegex())
-            .toTypedArray()
+            .split(' ')
         entry.readable = true
         entry.currentEditor = null
         entry.setLengths(parts)
@@ -670,8 +669,7 @@ class DiskLruCache internal constructor(
   }
 
   private fun validateKey(key: String) {
-    val matcher = LEGAL_KEY_PATTERN.matcher(key)
-    require(matcher.matches()) { "keys must match regex [a-z0-9_-]{1,120}: \"$key\"" }
+    require(LEGAL_KEY_PATTERN.matches(key)) { "keys must match regex [a-z0-9_-]{1,120}: \"$key\"" }
   }
 
   /**
@@ -905,7 +903,7 @@ class DiskLruCache internal constructor(
 
     /** Set lengths using decimal numbers like "10123".  */
     @Throws(IOException::class)
-    internal fun setLengths(strings: Array<String>) {
+    internal fun setLengths(strings: List<String>) {
       if (strings.size != valueCount) {
         throw invalidLengths(strings)
       }
@@ -928,8 +926,8 @@ class DiskLruCache internal constructor(
     }
 
     @Throws(IOException::class)
-    private fun invalidLengths(strings: Array<String>): IOException {
-      throw IOException("unexpected journal line: ${strings.contentToString()}")
+    private fun invalidLengths(strings: List<String>): IOException {
+      throw IOException("unexpected journal line: ${strings}")
     }
 
     /**
@@ -970,7 +968,7 @@ class DiskLruCache internal constructor(
     @JvmField val MAGIC = "libcore.io.DiskLruCache"
     @JvmField val VERSION_1 = "1"
     @JvmField val ANY_SEQUENCE_NUMBER: Long = -1
-    @JvmField val LEGAL_KEY_PATTERN = Pattern.compile("[a-z0-9_-]{1,120}")
+    @JvmField val LEGAL_KEY_PATTERN = "[a-z0-9_-]{1,120}".toRegex()
     @JvmField val CLEAN = "CLEAN"
     @JvmField val DIRTY = "DIRTY"
     @JvmField val REMOVE = "REMOVE"
