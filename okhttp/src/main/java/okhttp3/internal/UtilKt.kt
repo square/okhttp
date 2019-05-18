@@ -246,3 +246,7 @@ fun ServerSocket?.closeQuietly() {
 fun isAndroidGetsocknameError(e: AssertionError): Boolean {
   return e.cause != null && e.message?.contains("getsockname failed") == true
 }
+
+fun Long.toHexString() = java.lang.Long.toHexString(this)
+
+fun Int.toHexString() = Integer.toHexString(this)
