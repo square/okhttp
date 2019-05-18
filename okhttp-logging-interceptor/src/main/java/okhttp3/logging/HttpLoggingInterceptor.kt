@@ -241,7 +241,7 @@ class HttpLoggingInterceptor @JvmOverloads constructor(
         logger.log("<-- END HTTP (encoded body omitted)")
       } else {
         val source = responseBody.source()
-        source.request(java.lang.Long.MAX_VALUE) // Buffer the entire body.
+        source.request(Long.MAX_VALUE) // Buffer the entire body.
         var buffer = source.buffer
 
         var gzippedLength: Long? = null
