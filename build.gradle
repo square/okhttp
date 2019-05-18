@@ -15,7 +15,7 @@ buildscript {
       'jnrUnixsocket': '0.22',
       'jsoup': '1.11.3',
       'junit': '4.12',
-      'kotlin': '1.3.30',
+      'kotlin': '1.3.31',
       'moshi': '1.8.0',
       'okio': '2.2.2',
       'ktlint': '0.31.0'

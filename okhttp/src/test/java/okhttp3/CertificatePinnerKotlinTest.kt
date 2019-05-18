@@ -115,12 +115,12 @@ class CertificatePinnerKotlinTest {
         .build()
     internal var certA1Sha256Pin = CertificatePinner.pin(certA1.certificate())
 
-    internal var certB1 = HeldCertificate.Builder()
+    private var certB1 = HeldCertificate.Builder()
         .serialNumber(200L)
         .build()
     internal var certB1Sha256Pin = CertificatePinner.pin(certB1.certificate())
 
-    internal var certC1 = HeldCertificate.Builder()
+    private var certC1 = HeldCertificate.Builder()
         .serialNumber(300L)
         .build()
     internal var certC1Sha256Pin = CertificatePinner.pin(certC1.certificate())

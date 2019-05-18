@@ -94,13 +94,13 @@ class RouteSelector(
 
   /** Prepares the proxy servers to try.  */
   private fun resetNextProxy(url: HttpUrl, proxy: Proxy?) {
-    if (proxy != null) {
+    proxies = if (proxy != null) {
       // If the user specifies a proxy, try that and only that.
-      proxies = listOf(proxy)
+      listOf(proxy)
     } else {
       // Try each of the ProxySelector choices until one connection succeeds.
       val proxiesOrNull = address.proxySelector().select(url.uri())
-      proxies = if (proxiesOrNull != null && proxiesOrNull.isNotEmpty()) {
+      if (proxiesOrNull != null && proxiesOrNull.isNotEmpty()) {
         proxiesOrNull.toImmutableList()
       } else {
         immutableListOf(Proxy.NO_PROXY)

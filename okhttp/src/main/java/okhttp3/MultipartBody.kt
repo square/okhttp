@@ -165,7 +165,7 @@ class MultipartBody internal constructor(
 
       @JvmStatic
       fun createFormData(name: String, value: String): Part =
-          createFormData(name, null, RequestBody.create(null, value))
+          createFormData(name, null, create(null, value))
 
       @JvmStatic
       fun createFormData(name: String, filename: String?, body: RequestBody): Part {
@@ -289,8 +289,7 @@ class MultipartBody internal constructor(
     internal fun StringBuilder.appendQuotedString(key: String) {
       append('"')
       for (i in 0 until key.length) {
-        val ch = key[i]
-        when (ch) {
+        when (val ch = key[i]) {
           '\n' -> append("%0A")
           '\r' -> append("%0D")
           '"' -> append("%22")

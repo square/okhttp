@@ -45,7 +45,7 @@ object DnsRecordCodec {
     writeShort(0) // additional
 
     val nameBuf = Buffer()
-    val labels = host.split('.').dropLastWhile { it.isEmpty() }.toTypedArray()
+    val labels = host.split('.').dropLastWhile { it.isEmpty() }
     for (label in labels) {
       val utf8ByteCount = label.utf8Size()
       if (utf8ByteCount != label.length.toLong()) {

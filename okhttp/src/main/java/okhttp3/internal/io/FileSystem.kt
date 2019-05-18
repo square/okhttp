@@ -50,13 +50,13 @@ interface FileSystem {
 
       @Throws(FileNotFoundException::class)
       override fun sink(file: File): Sink {
-          try {
-              return file.sink()
-          } catch (_: FileNotFoundException) {
-              // Maybe the parent directory doesn't exist? Try creating it first.
-              file.parentFile.mkdirs()
-              return file.sink()
-          }
+        return try {
+          file.sink()
+        } catch (_: FileNotFoundException) {
+          // Maybe the parent directory doesn't exist? Try creating it first.
+          file.parentFile.mkdirs()
+          file.sink()
+        }
       }
 
       @Throws(FileNotFoundException::class)

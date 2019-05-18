@@ -254,12 +254,12 @@ class RealWebSocket(
    */
   @Throws(IOException::class)
   fun processNextFrame(): Boolean {
-    try {
+    return try {
       reader!!.processNextFrame()
-      return receivedCloseCode == -1
+      receivedCloseCode == -1
     } catch (e: Exception) {
       failWebSocket(e, null)
-      return false
+      false
     }
   }
 

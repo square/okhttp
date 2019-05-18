@@ -70,7 +70,7 @@ object OkHostnameVerifier : HostnameVerifier {
    * @param pattern domain name pattern from certificate. May be a wildcard pattern such as
    *     `*.android.com`.
    */
-  fun verifyHostname(hostname: String?, pattern: String?): Boolean {
+  private fun verifyHostname(hostname: String?, pattern: String?): Boolean {
     var hostname = hostname
     var pattern = pattern
     // Basic sanity checks
@@ -159,8 +159,8 @@ object OkHostnameVerifier : HostnameVerifier {
   }
 
   fun allSubjectAltNames(certificate: X509Certificate): List<String> {
-    val altIpaNames = getSubjectAltNames(certificate, OkHostnameVerifier.ALT_IPA_NAME)
-    val altDnsNames = getSubjectAltNames(certificate, OkHostnameVerifier.ALT_DNS_NAME)
+    val altIpaNames = getSubjectAltNames(certificate, ALT_IPA_NAME)
+    val altDnsNames = getSubjectAltNames(certificate, ALT_DNS_NAME)
     return altIpaNames + altDnsNames
   }
 

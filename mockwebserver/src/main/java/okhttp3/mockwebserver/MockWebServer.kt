@@ -705,7 +705,7 @@ class MockWebServer : ExternalResource(), Closeable {
         .url("$scheme://$authority/")
         .headers(request.headers)
         .build()
-    val statusParts = response.getStatus().split(" ".toRegex(), 3)
+    val statusParts = response.getStatus().split(' ', limit = 3)
     val fancyResponse = Response.Builder()
         .code(Integer.parseInt(statusParts[1]))
         .message(statusParts[2])
@@ -970,7 +970,7 @@ class MockWebServer : ExternalResource(), Closeable {
         return
       }
       val http2Headers = ArrayList<Header>()
-      val statusParts = response.getStatus().split(" ".toRegex(), 3).toTypedArray()
+      val statusParts = response.getStatus().split(' ', limit = 3)
       if (statusParts.size < 2) {
         throw AssertionError("Unexpected status: ${response.getStatus()}")
       }
