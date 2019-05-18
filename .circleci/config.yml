@@ -180,19 +180,10 @@ workflows:
           filters:
             branches:
               ignore: master
-      - testjdk8:
-          filters:
-            branches:
-              only: master
+      - testjdk8
       - testjdk8alpn
-      - testjdk11:
-          filters:
-            branches:
-              only: master
-      - testconscrypt:
-          filters:
-            branches:
-              only: master
+      - testjdk11
+      - testconscrypt
   nightly:
     triggers:
       - schedule:

@@ -16,19 +16,23 @@
 package okhttp3.internal.platform
 
 import okhttp3.Protocol
+import okhttp3.internal.classForName
+import okhttp3.internal.memberFunction
 import java.lang.reflect.InvocationHandler
 import java.lang.reflect.InvocationTargetException
 import java.lang.reflect.Method
 import java.lang.reflect.Proxy
 import javax.net.ssl.SSLSocket
+import kotlin.reflect.KClass
+import kotlin.reflect.KFunction
 
 /** OpenJDK 8 with `org.mortbay.jetty.alpn:alpn-boot` in the boot class path.  */
 class Jdk8WithJettyBootPlatform(
-  private val putMethod: Method,
-  private val getMethod: Method,
-  private val removeMethod: Method,
-  private val clientProviderClass: Class<*>,
-  private val serverProviderClass: Class<*>
+  private val putMethod: KFunction<Void>,
+  private val getMethod: KFunction<*>,
+  private val removeMethod: KFunction<*>,
+  private val clientProviderClass: KClass<out Any>,
+  private val serverProviderClass: KClass<out Any>
 ) : Platform() {
   override fun configureTlsExtensions(
     sslSocket: SSLSocket,
@@ -37,42 +41,24 @@ class Jdk8WithJettyBootPlatform(
   ) {
     val names = alpnProtocolNames(protocols)
 
-    try {
-      val alpnProvider = Proxy.newProxyInstance(Platform::class.java.classLoader,
-          arrayOf(clientProviderClass, serverProviderClass), AlpnProvider(names))
-      putMethod.invoke(null, sslSocket, alpnProvider)
-    } catch (e: InvocationTargetException) {
-      throw AssertionError("failed to set ALPN", e)
-    } catch (e: IllegalAccessException) {
-      throw AssertionError("failed to set ALPN", e)
-    }
+    val alpnProvider = Proxy.newProxyInstance(Platform::class.java.classLoader,
+        arrayOf(clientProviderClass.java, serverProviderClass.java), AlpnProvider(names))
+    putMethod.call(null, sslSocket, alpnProvider)
   }
 
   override fun afterHandshake(sslSocket: SSLSocket) {
-    try {
-      removeMethod.invoke(null, sslSocket)
-    } catch (e: IllegalAccessException) {
-      throw AssertionError("failed to remove ALPN", e)
-    } catch (e: InvocationTargetException) {
-      throw AssertionError("failed to remove ALPN", e)
-    }
+    removeMethod.call(null, sslSocket)
   }
 
   override fun getSelectedProtocol(socket: SSLSocket): String? {
-    try {
-      val provider = Proxy.getInvocationHandler(getMethod.invoke(null, socket)) as AlpnProvider
-      if (!provider.unsupported && provider.selected == null) {
-        Platform.get().log(INFO,
-            "ALPN callback dropped: HTTP/2 is disabled. " + "Is alpn-boot on the boot class path?",
-            null)
-        return null
-      }
-      return if (provider.unsupported) null else provider.selected
-    } catch (e: InvocationTargetException) {
-      throw AssertionError("failed to get ALPN selected protocol", e)
-    } catch (e: IllegalAccessException) {
-      throw AssertionError("failed to get ALPN selected protocol", e)
+    val provider = Proxy.getInvocationHandler(getMethod.call(null, socket)) as AlpnProvider
+    if (!provider.unsupported && provider.selected == null) {
+      Platform.get().log(INFO,
+          "ALPN callback dropped: HTTP/2 is disabled. " + "Is alpn-boot on the boot class path?",
+          null)
+      return null
     }
+    return if (provider.unsupported) null else provider.selected
   }
 
   /**
@@ -137,13 +123,13 @@ class Jdk8WithJettyBootPlatform(
       // Find Jetty's ALPN extension for OpenJDK.
       try {
         val alpnClassName = "org.eclipse.jetty.alpn.ALPN"
-        val alpnClass = Class.forName(alpnClassName, true, null)
-        val providerClass = Class.forName("$alpnClassName\$Provider", true, null)
-        val clientProviderClass = Class.forName("$alpnClassName\$ClientProvider", true, null)
-        val serverProviderClass = Class.forName("$alpnClassName\$ServerProvider", true, null)
-        val putMethod = alpnClass.getMethod("put", SSLSocket::class.java, providerClass)
-        val getMethod = alpnClass.getMethod("get", SSLSocket::class.java)
-        val removeMethod = alpnClass.getMethod("remove", SSLSocket::class.java)
+        val alpnClass = classForName(alpnClassName)
+        val providerClass = classForName("$alpnClassName\$Provider")
+        val clientProviderClass = classForName("$alpnClassName\$ClientProvider")
+        val serverProviderClass = classForName("$alpnClassName\$ServerProvider")
+        val putMethod = alpnClass.memberFunction<Void>("put", SSLSocket::class, providerClass)
+        val getMethod = alpnClass.memberFunction<Any>("get", SSLSocket::class)
+        val removeMethod = alpnClass.memberFunction<Any>("remove", SSLSocket::class)
         return Jdk8WithJettyBootPlatform(
             putMethod, getMethod, removeMethod, clientProviderClass, serverProviderClass)
       } catch (ignored: ClassNotFoundException) {

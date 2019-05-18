@@ -34,6 +34,7 @@ buildscript {
       'jsr305': "com.google.code.findbugs:jsr305:${versions.findbugs}",
       'junit': "junit:junit:${versions.junit}",
       'kotlinStdlib': "org.jetbrains.kotlin:kotlin-stdlib:${versions.kotlin}",
+      'kotlinReflect': "org.jetbrains.kotlin:kotlin-reflect:${versions.kotlin}",
       'moshi': "com.squareup.moshi:moshi:${versions.moshi}",
       'okio': "com.squareup.okio:okio:${versions.okio}"
   ]

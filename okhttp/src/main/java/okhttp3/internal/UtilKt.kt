@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 @file:JvmName("UtilKt")
+
 package okhttp3.internal
 
 import okhttp3.Response
@@ -33,6 +34,10 @@ import java.util.LinkedHashMap
 import java.util.concurrent.Executor
 import java.util.concurrent.RejectedExecutionException
 import java.util.concurrent.TimeUnit
+import kotlin.reflect.KClass
+import kotlin.reflect.KFunction
+import kotlin.reflect.KParameter
+import kotlin.reflect.full.memberFunctions
 
 infix fun Byte.and(mask: Int): Int = toInt() and mask
 infix fun Short.and(mask: Int): Int = toInt() and mask
@@ -245,4 +250,27 @@ fun ServerSocket?.closeQuietly() {
  */
 fun isAndroidGetsocknameError(e: AssertionError): Boolean {
   return e.cause != null && e.message?.contains("getsockname failed") == true
+}
+
+fun classForName(className: String) =
+    Class.forName(className, true, null).kotlin
+
+inline fun <reified T> KClass<*>.memberFunction(
+  name: String,
+  vararg params: KClass<*>
+): KFunction<T> {
+  val memberFunctions = this.memberFunctions
+  return memberFunctions.single {
+    val paramTypes = it.parameters.map(KParameter::type)
+    val itName = it.name
+
+    if (itName != name) {
+      false
+    } else {
+      itName == name
+//          &&
+//          it.returnType == T::class
+//          paramTypes == params.toList()
+    }
+  } as KFunction<T>
 }
