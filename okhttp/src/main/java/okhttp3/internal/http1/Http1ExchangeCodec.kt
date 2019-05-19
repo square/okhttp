@@ -202,7 +202,7 @@ class Http1ExchangeCodec(
       }
     } catch (e: EOFException) {
       // Provide more context if the server ends the stream before sending a response.
-      val address = realConnection?.route()?.address()?.url()?.redact() ?: "unknown"
+      val address = realConnection?.route()?.address()?.url?.redact() ?: "unknown"
       throw IOException("unexpected end of stream on $address", e)
     }
   }

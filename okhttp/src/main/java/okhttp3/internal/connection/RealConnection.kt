@@ -144,21 +144,21 @@ class RealConnection(
     check(protocol == null) { "already connected" }
 
     var routeException: RouteException? = null
-    val connectionSpecs = route.address().connectionSpecs()
+    val connectionSpecs = route.address().connectionSpecs
     val connectionSpecSelector = ConnectionSpecSelector(connectionSpecs)
 
-    if (route.address().sslSocketFactory() == null) {
+    if (route.address().sslSocketFactory == null) {
       if (ConnectionSpec.CLEARTEXT !in connectionSpecs) {
         throw RouteException(UnknownServiceException(
             "CLEARTEXT communication not enabled for client"))
       }
-      val host = route.address().url().host()
+      val host = route.address().url.host()
       if (!Platform.get().isCleartextTrafficPermitted(host)) {
         throw RouteException(UnknownServiceException(
             "CLEARTEXT communication to $host not permitted by network security policy"))
       }
     } else {
-      if (route.address().protocols().contains(Protocol.H2_PRIOR_KNOWLEDGE)) {
+      if (route.address().protocols.contains(Protocol.H2_PRIOR_KNOWLEDGE)) {
         throw RouteException(UnknownServiceException(
             "H2_PRIOR_KNOWLEDGE cannot be used with HTTPS"))
       }
@@ -257,7 +257,7 @@ class RealConnection(
     val address = route.address()
 
     val rawSocket = when (proxy.type()) {
-      Proxy.Type.DIRECT, Proxy.Type.HTTP -> address.socketFactory().createSocket()!!
+      Proxy.Type.DIRECT, Proxy.Type.HTTP -> address.socketFactory.createSocket()!!
       else -> Socket(proxy)
     }
     this.rawSocket = rawSocket
@@ -293,8 +293,8 @@ class RealConnection(
     call: Call,
     eventListener: EventListener
   ) {
-    if (route.address().sslSocketFactory() == null) {
-      if (route.address().protocols().contains(Protocol.H2_PRIOR_KNOWLEDGE)) {
+    if (route.address().sslSocketFactory == null) {
+      if (route.address().protocols.contains(Protocol.H2_PRIOR_KNOWLEDGE)) {
         socket = rawSocket
         protocol = Protocol.H2_PRIOR_KNOWLEDGE
         startHttp2(pingIntervalMillis)
@@ -322,7 +322,7 @@ class RealConnection(
     val sink = this.sink!!
     socket.soTimeout = 0 // HTTP/2 connection timeouts are set per-stream.
     val http2Connection = Http2Connection.Builder(true)
-        .socket(socket, route.address().url().host(), source, sink)
+        .socket(socket, route.address().url.host(), source, sink)
         .listener(this)
         .pingIntervalMillis(pingIntervalMillis)
         .build()
@@ -333,18 +333,18 @@ class RealConnection(
   @Throws(IOException::class)
   private fun connectTls(connectionSpecSelector: ConnectionSpecSelector) {
     val address = route.address()
-    val sslSocketFactory = address.sslSocketFactory()
+    val sslSocketFactory = address.sslSocketFactory
     var success = false
     var sslSocket: SSLSocket? = null
     try {
       // Create the wrapper over the connected socket.
       sslSocket = sslSocketFactory!!.createSocket(
-          rawSocket, address.url().host(), address.url().port(), true /* autoClose */) as SSLSocket
+          rawSocket, address.url.host(), address.url.port(), true /* autoClose */) as SSLSocket
 
       // Configure the socket's ciphers, TLS versions, and extensions.
       val connectionSpec = connectionSpecSelector.configureSecureSocket(sslSocket)
       if (connectionSpec.supportsTlsExtensions()) {
-        Platform.get().configureTlsExtensions(sslSocket, address.url().host(), address.protocols())
+        Platform.get().configureTlsExtensions(sslSocket, address.url.host(), address.protocols)
       }
 
       // Force handshake. This can throw!
@@ -354,24 +354,24 @@ class RealConnection(
       val unverifiedHandshake = sslSocketSession.handshake()
 
       // Verify that the socket's certificates are acceptable for the target host.
-      if (!address.hostnameVerifier()!!.verify(address.url().host(), sslSocketSession)) {
+      if (!address.hostnameVerifier!!.verify(address.url.host(), sslSocketSession)) {
         val peerCertificates = unverifiedHandshake.peerCertificates
         if (peerCertificates.isNotEmpty()) {
           val cert = peerCertificates[0] as X509Certificate
           throw SSLPeerUnverifiedException("""
-              |Hostname ${address.url().host()} not verified:
+              |Hostname ${address.url.host()} not verified:
               |    certificate: ${CertificatePinner.pin(cert)}
               |    DN: ${cert.subjectDN.name}
               |    subjectAltNames: ${OkHostnameVerifier.allSubjectAltNames(cert)}
               """.trimMargin())
         } else {
           throw SSLPeerUnverifiedException(
-              "Hostname ${address.url().host()} not verified (no certificates)")
+              "Hostname ${address.url.host()} not verified (no certificates)")
         }
       }
 
       // Check that the certificate pinner is satisfied by the certificates presented.
-      address.certificatePinner()!!.check(address.url().host(),
+      address.certificatePinner!!.check(address.url.host(),
           unverifiedHandshake.peerCertificates)
 
       // Success! Save the handshake and the ALPN protocol.
@@ -439,7 +439,7 @@ class RealConnection(
         }
 
         HTTP_PROXY_AUTH -> {
-          nextRequest = route.address().proxyAuthenticator().authenticate(route, response)
+          nextRequest = route.address().proxyAuthenticator.authenticate(route, response)
               ?: throw IOException("Failed to authenticate with proxy")
 
           if ("close".equals(response.header("Connection"), ignoreCase = true)) {
@@ -464,9 +464,9 @@ class RealConnection(
   @Throws(IOException::class)
   private fun createTunnelRequest(): Request {
     val proxyConnectRequest = Request.Builder()
-        .url(route.address().url())
+        .url(route.address().url)
         .method("CONNECT", null)
-        .header("Host", Util.hostHeader(route.address().url(), true))
+        .header("Host", Util.hostHeader(route.address().url, true))
         .header("Proxy-Connection", "Keep-Alive") // For HTTP/1.0 proxies like Squid.
         .header("User-Agent", userAgent)
         .build()
@@ -482,7 +482,7 @@ class RealConnection(
         .header("Proxy-Authenticate", "OkHttp-Preemptive")
         .build()
 
-    val authenticatedRequest = route.address().proxyAuthenticator()
+    val authenticatedRequest = route.address().proxyAuthenticator
         .authenticate(route, fakeAuthChallengeResponse)
 
     return authenticatedRequest ?: proxyConnectRequest
@@ -500,7 +500,7 @@ class RealConnection(
     if (!this.route.address().equalsNonHost(address)) return false
 
     // If the host exactly matches, we're done: this connection can carry the address.
-    if (address.url().host() == this.route().address().url().host()) {
+    if (address.url.host() == this.route().address().url.host()) {
       return true // This connection is a perfect match.
     }
 
@@ -516,12 +516,12 @@ class RealConnection(
     if (routes == null || !routeMatchesAny(routes)) return false
 
     // 3. This connection's server certificate's must cover the new host.
-    if (address.hostnameVerifier() !== OkHostnameVerifier) return false
-    if (!supportsUrl(address.url())) return false
+    if (address.hostnameVerifier !== OkHostnameVerifier) return false
+    if (!supportsUrl(address.url)) return false
 
     // 4. Certificate pinning must match the host.
     try {
-      address.certificatePinner()!!.check(address.url().host(), handshake()!!.peerCertificates)
+      address.certificatePinner!!.check(address.url.host(), handshake()!!.peerCertificates)
     } catch (_: SSLPeerUnverifiedException) {
       return false
     }
@@ -544,7 +544,7 @@ class RealConnection(
   }
 
   fun supportsUrl(url: HttpUrl): Boolean {
-    val routeUrl = route.address().url()
+    val routeUrl = route.address().url
 
     if (url.port() != routeUrl.port()) {
       return false // Port mismatch.
@@ -693,7 +693,7 @@ class RealConnection(
   override fun protocol(): Protocol = protocol!!
 
   override fun toString(): String {
-    return "Connection{${route.address().url().host()}:${route.address().url().port()}," +
+    return "Connection{${route.address().url.host()}:${route.address().url.port()}," +
         " proxy=${route.proxy()}" +
         " hostAddress=${route.socketAddress()}" +
         " cipherSuite=${handshake?.cipherSuite ?: "none"}" +

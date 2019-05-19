@@ -55,7 +55,7 @@ data class Route(
    *
    * [rfc_2817]: http://www.ietf.org/rfc/rfc2817.txt
    */
-  fun requiresTunnel(): Boolean = address.sslSocketFactory() != null && proxy.type() == Proxy.Type.HTTP
+  fun requiresTunnel(): Boolean = address.sslSocketFactory != null && proxy.type() == Proxy.Type.HTTP
 
   override fun toString(): String = "Route{$inetSocketAddress}"
 }
