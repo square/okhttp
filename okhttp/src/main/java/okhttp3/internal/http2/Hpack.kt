@@ -132,7 +132,7 @@ object Hpack {
     // Visible for testing.
     @JvmField var dynamicTable = arrayOfNulls<Header>(8)
     // Array is populated back to front, so new entries always have lowest index.
-    var nextHeaderIndex = dynamicTable.size - 1
+    private var nextHeaderIndex = dynamicTable.size - 1
     @JvmField var headerCount = 0
     @JvmField var dynamicTableByteCount = 0
 
@@ -280,15 +280,15 @@ object Hpack {
 
     @Throws(IOException::class)
     private fun getName(index: Int): ByteString {
-      if (isStaticHeader(index)) {
-        return STATIC_HEADER_TABLE[index].name
+      return if (isStaticHeader(index)) {
+        STATIC_HEADER_TABLE[index].name
       } else {
         val dynamicTableIndex = dynamicTableIndex(index - STATIC_HEADER_TABLE.size)
         if (dynamicTableIndex < 0 || dynamicTableIndex >= dynamicTable.size) {
           throw IOException("Header index too large ${index + 1}")
         }
 
-        return dynamicTable[dynamicTableIndex]!!.name
+        dynamicTable[dynamicTableIndex]!!.name
       }
     }
 
@@ -368,12 +368,12 @@ object Hpack {
       val huffmanDecode = firstByte and 0x80 == 0x80 // 1NNNNNNN
       val length = readInt(firstByte, PREFIX_7_BITS).toLong()
 
-      if (huffmanDecode) {
+      return if (huffmanDecode) {
         val decodeBuffer = Buffer()
         Huffman.decode(source, length, decodeBuffer)
-        return decodeBuffer.readByteString()
+        decodeBuffer.readByteString()
       } else {
-        return source.readByteString(length)
+        source.readByteString(length)
       }
     }
   }
@@ -404,7 +404,7 @@ object Hpack {
     // Visible for testing.
     @JvmField var dynamicTable = arrayOfNulls<Header>(8)
     // Array is populated back to front, so new entries always have lowest index.
-    var nextHeaderIndex = dynamicTable.size - 1
+    private var nextHeaderIndex = dynamicTable.size - 1
     @JvmField var headerCount = 0
     @JvmField var dynamicTableByteCount = 0
 

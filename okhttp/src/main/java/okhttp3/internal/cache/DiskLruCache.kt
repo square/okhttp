@@ -39,7 +39,6 @@ import java.util.concurrent.Executor
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.ThreadPoolExecutor
 import java.util.concurrent.TimeUnit
-import java.util.regex.Pattern
 
 /**
  * A cache that uses a bounded amount of space on a filesystem. Each cache entry has a string key
@@ -151,7 +150,7 @@ class DiskLruCache internal constructor(
   private var journalWriter: BufferedSink? = null
   internal val lruEntries = LinkedHashMap<String, Entry>(0, 0.75f, true)
   private var redundantOpCount: Int = 0
-  internal var hasJournalErrors: Boolean = false
+  private var hasJournalErrors: Boolean = false
 
   // Must be read and written when synchronized on 'this'.
   private var initialized: Boolean = false
@@ -317,8 +316,7 @@ class DiskLruCache internal constructor(
     when {
       secondSpace != -1 && firstSpace == CLEAN.length && line.startsWith(CLEAN) -> {
         val parts = line.substring(secondSpace + 1)
-            .split(" ".toRegex())
-            .toTypedArray()
+            .split(' ')
         entry.readable = true
         entry.currentEditor = null
         entry.setLengths(parts)
@@ -670,8 +668,7 @@ class DiskLruCache internal constructor(
   }
 
   private fun validateKey(key: String) {
-    val matcher = LEGAL_KEY_PATTERN.matcher(key)
-    require(matcher.matches()) { "keys must match regex [a-z0-9_-]{1,120}: \"$key\"" }
+    require(LEGAL_KEY_PATTERN.matches(key)) { "keys must match regex [a-z0-9_-]{1,120}: \"$key\"" }
   }
 
   /**
@@ -905,7 +902,7 @@ class DiskLruCache internal constructor(
 
     /** Set lengths using decimal numbers like "10123".  */
     @Throws(IOException::class)
-    internal fun setLengths(strings: Array<String>) {
+    internal fun setLengths(strings: List<String>) {
       if (strings.size != valueCount) {
         throw invalidLengths(strings)
       }
@@ -928,8 +925,8 @@ class DiskLruCache internal constructor(
     }
 
     @Throws(IOException::class)
-    private fun invalidLengths(strings: Array<String>): IOException {
-      throw IOException("unexpected journal line: ${strings.contentToString()}")
+    private fun invalidLengths(strings: List<String>): IOException {
+      throw IOException("unexpected journal line: $strings")
     }
 
     /**
@@ -970,7 +967,7 @@ class DiskLruCache internal constructor(
     @JvmField val MAGIC = "libcore.io.DiskLruCache"
     @JvmField val VERSION_1 = "1"
     @JvmField val ANY_SEQUENCE_NUMBER: Long = -1
-    @JvmField val LEGAL_KEY_PATTERN = Pattern.compile("[a-z0-9_-]{1,120}")
+    @JvmField val LEGAL_KEY_PATTERN = "[a-z0-9_-]{1,120}".toRegex()
     @JvmField val CLEAN = "CLEAN"
     @JvmField val DIRTY = "DIRTY"
     @JvmField val REMOVE = "REMOVE"

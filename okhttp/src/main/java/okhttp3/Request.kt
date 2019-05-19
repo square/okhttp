@@ -120,10 +120,10 @@ class Request internal constructor(
     open fun url(url: String): Builder {
       // Silently replace web socket URLs with HTTP URLs.
       val finalUrl: String = when {
-        url.regionMatches(0, "ws:", 0, 3, ignoreCase = true) -> {
+        url.startsWith("ws:", ignoreCase = true) -> {
           "http:${url.substring(3)}"
         }
-        url.regionMatches(0, "wss:", 0, 4, ignoreCase = true) -> {
+        url.startsWith("wss:", ignoreCase = true) -> {
           "https:${url.substring(4)}"
         }
         else -> url

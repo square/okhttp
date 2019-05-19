@@ -16,6 +16,7 @@
 package okhttp3.internal.ws
 
 import okhttp3.internal.and
+import okhttp3.internal.toHexString
 import okhttp3.internal.ws.WebSocketProtocol.B0_FLAG_FIN
 import okhttp3.internal.ws.WebSocketProtocol.B0_FLAG_RSV1
 import okhttp3.internal.ws.WebSocketProtocol.B0_FLAG_RSV2
@@ -39,7 +40,6 @@ import okio.Buffer
 import okio.BufferedSource
 import okio.ByteString
 import java.io.IOException
-import java.lang.Integer.toHexString
 import java.net.ProtocolException
 import java.util.concurrent.TimeUnit
 
@@ -59,10 +59,10 @@ internal class WebSocketReader(
   var closed = false
 
   // Stateful data about the current frame.
-  var opcode = 0
-  var frameLength = 0L
-  var isFinalFrame = false
-  var isControlFrame = false
+  private var opcode = 0
+  private var frameLength = 0L
+  private var isFinalFrame = false
+  private var isControlFrame = false
 
   private val controlFrameBuffer = Buffer()
   private val messageFrameBuffer = Buffer()
@@ -152,7 +152,7 @@ internal class WebSocketReader(
       frameLength = source.readLong()
       if (frameLength < 0) {
         throw ProtocolException(
-            "Frame length 0x${java.lang.Long.toHexString(frameLength)} > 0x7FFFFFFFFFFFFFFF")
+            "Frame length 0x${frameLength.toHexString()} > 0x7FFFFFFFFFFFFFFF")
       }
     }
 
@@ -202,7 +202,7 @@ internal class WebSocketReader(
         closed = true
       }
       else -> {
-        throw ProtocolException("Unknown control opcode: " + toHexString(opcode))
+        throw ProtocolException("Unknown control opcode: " + opcode.toHexString())
       }
     }
   }
@@ -211,7 +211,7 @@ internal class WebSocketReader(
   private fun readMessageFrame() {
     val opcode = this.opcode
     if (opcode != OPCODE_TEXT && opcode != OPCODE_BINARY) {
-      throw ProtocolException("Unknown opcode: ${toHexString(opcode)}")
+      throw ProtocolException("Unknown opcode: ${opcode.toHexString()}")
     }
 
     readMessage()
@@ -260,7 +260,7 @@ internal class WebSocketReader(
 
       readUntilNonControlFrame()
       if (opcode != OPCODE_CONTINUATION) {
-        throw ProtocolException("Expected continuation opcode. Got: ${toHexString(opcode)}")
+        throw ProtocolException("Expected continuation opcode. Got: ${opcode.toHexString()}")
       }
     }
   }

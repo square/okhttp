@@ -108,13 +108,13 @@ class RealConnectionPool(
    */
   fun connectionBecameIdle(connection: RealConnection): Boolean {
     assert(Thread.holdsLock(this))
-    if (connection.noNewExchanges || maxIdleConnections == 0) {
+    return if (connection.noNewExchanges || maxIdleConnections == 0) {
       connections.remove(connection)
-      return true
+      true
     } else {
       // Awake the cleanup thread: we may have exceeded the idle connection limit.
       this.notifyAll()
-      return false
+      false
     }
   }
 

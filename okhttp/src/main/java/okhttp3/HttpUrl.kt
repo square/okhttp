@@ -352,13 +352,13 @@ class HttpUrl internal constructor(builder: Builder) {
    */
   fun uri(): URI {
     val uri = newBuilder().reencodeForUri().toString()
-    try {
-      return URI(uri)
+    return try {
+      URI(uri)
     } catch (e: URISyntaxException) {
       // Unlikely edge case: the URI has a forbidden character in the fragment. Strip it & retry.
       try {
         val stripped = uri.replace(Regex("[\\u0000-\\u001F\\u007F-\\u009F\\p{javaWhitespace}]"), "")
-        return URI.create(stripped)
+        URI.create(stripped)
       } catch (e1: Exception) {
         throw RuntimeException(e) // Unexpected!
       }
@@ -776,10 +776,10 @@ class HttpUrl internal constructor(builder: Builder) {
    * or null if the resulting URL is not well-formed.
    */
   fun newBuilder(link: String): Builder? {
-    try {
-      return Builder().parse(this, link)
+    return try {
+      Builder().parse(this, link)
     } catch (ignored: IllegalArgumentException) {
-      return null
+      null
     }
   }
 
@@ -810,10 +810,10 @@ class HttpUrl internal constructor(builder: Builder) {
    * </table>
    */
   fun topPrivateDomain(): String? {
-    if (verifyAsIpAddress(host)) {
-      return null
+    return if (verifyAsIpAddress(host)) {
+      null
     } else {
-      return PublicSuffixDatabase.get().getEffectiveTldPlusOne(host)
+      PublicSuffixDatabase.get().getEffectiveTldPlusOne(host)
     }
   }
 
@@ -1168,14 +1168,16 @@ class HttpUrl internal constructor(builder: Builder) {
       // Scheme.
       val schemeDelimiterOffset = schemeDelimiterOffset(input, pos, limit)
       if (schemeDelimiterOffset != -1) {
-        if (input.regionMatches(pos, "https:", 0, 6, ignoreCase = true)) {
-          this.scheme = "https"
-          pos += "https:".length
-        } else if (input.regionMatches(pos, "http:", 0, 5, ignoreCase = true)) {
-          this.scheme = "http"
-          pos += "http:".length
-        } else {
-          throw IllegalArgumentException("Expected URL scheme 'http' or 'https' but was '" +
+        when {
+          input.startsWith("https:", ignoreCase = true, startIndex = pos) -> {
+            this.scheme = "https"
+            pos += "https:".length
+          }
+          input.startsWith("http:", ignoreCase = true, startIndex = pos) -> {
+            this.scheme = "http"
+            pos += "http:".length
+          }
+          else -> throw IllegalArgumentException("Expected URL scheme 'http' or 'https' but was '" +
               input.substring(0, schemeDelimiterOffset) + "'")
         }
       } else if (base != null) {
@@ -1395,17 +1397,17 @@ class HttpUrl internal constructor(builder: Builder) {
         for (i in pos + 1 until limit) {
           val c = input[i]
 
-          if (c in 'a'..'z' ||
-            c in 'A'..'Z' ||
-            c in '0'..'9' ||
-            c == '+' ||
-            c == '-' ||
-            c == '.') {
+          return if (c in 'a'..'z' ||
+              c in 'A'..'Z' ||
+              c in '0'..'9' ||
+              c == '+' ||
+              c == '-' ||
+              c == '.') {
             continue // Scheme character. Keep going.
           } else if (c == ':') {
-            return i // Scheme prefix!
+            i // Scheme prefix!
           } else {
-            return -1 // Non-scheme character before the first ':'.
+            -1 // Non-scheme character before the first ':'.
           }
         }
 
@@ -1455,13 +1457,13 @@ class HttpUrl internal constructor(builder: Builder) {
 
       @JvmStatic
       private fun parsePort(input: String, pos: Int, limit: Int): Int {
-        try {
+        return try {
           // Canonicalize the port string to skip '\n' etc.
           val portString = canonicalize(input, pos, limit, "", false, false, false, true, null)
           val i = Integer.parseInt(portString)
-          return if (i in 1..65535) i else -1
+          if (i in 1..65535) i else -1
         } catch (e: NumberFormatException) {
-          return -1 // Invalid port.
+          -1 // Invalid port.
         }
       }
     }
@@ -1557,10 +1559,10 @@ class HttpUrl internal constructor(builder: Builder) {
      */
     @JvmStatic
     fun parse(url: String): HttpUrl? {
-      try {
-        return get(url)
+      return try {
+        get(url)
       } catch (ignored: IllegalArgumentException) {
-        return null
+        null
       }
     }
 

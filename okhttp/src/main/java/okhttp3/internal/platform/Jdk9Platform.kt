@@ -49,11 +49,9 @@ class Jdk9Platform(
   }
 
   override fun getSelectedProtocol(socket: SSLSocket): String? = try {
-    val protocol = getProtocolMethod.invoke(socket) as String?
-
     // SSLSocket.getApplicationProtocol returns "" if application protocols values will not
     // be used. Observed if you didn't specify SSLParameters.setApplicationProtocols
-    when (protocol) {
+    when (val protocol = getProtocolMethod.invoke(socket) as String?) {
       null, "" -> null
       else -> protocol
     }

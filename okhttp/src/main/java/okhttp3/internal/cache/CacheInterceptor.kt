@@ -50,9 +50,7 @@ class CacheInterceptor(internal val cache: InternalCache?) : Interceptor {
     val networkRequest = strategy.networkRequest
     val cacheResponse = strategy.cacheResponse
 
-    if (cache != null) {
-      cache.trackResponse(strategy)
-    }
+    cache?.trackResponse(strategy)
 
     if (cacheCandidate != null && cacheResponse == null) {
       // The cache candidate wasn't applicable. Close it.
@@ -204,10 +202,10 @@ class CacheInterceptor(internal val cache: InternalCache?) : Interceptor {
   companion object {
 
     private fun stripBody(response: Response?): Response? {
-      if (response?.body() != null) {
-        return response.newBuilder().body(null).build()
+      return if (response?.body() != null) {
+        response.newBuilder().body(null).build()
       } else {
-        return response
+        response
       }
     }
 
@@ -243,7 +241,7 @@ class CacheInterceptor(internal val cache: InternalCache?) : Interceptor {
      * Returns true if `fieldName` is an end-to-end HTTP header, as defined by RFC 2616,
      * 13.5.1.
      */
-    internal fun isEndToEnd(fieldName: String): Boolean {
+    private fun isEndToEnd(fieldName: String): Boolean {
       return !"Connection".equals(fieldName, ignoreCase = true) &&
           !"Keep-Alive".equals(fieldName, ignoreCase = true) &&
           !"Proxy-Authenticate".equals(fieldName, ignoreCase = true) &&
@@ -258,7 +256,7 @@ class CacheInterceptor(internal val cache: InternalCache?) : Interceptor {
      * Returns true if `fieldName` is content specific and therefore should always be used
      * from cached headers.
      */
-    internal fun isContentSpecificHeader(fieldName: String): Boolean {
+    private fun isContentSpecificHeader(fieldName: String): Boolean {
       return "Content-Length".equals(fieldName, ignoreCase = true) ||
           "Content-Encoding".equals(fieldName, ignoreCase = true) ||
           "Content-Type".equals(fieldName, ignoreCase = true)

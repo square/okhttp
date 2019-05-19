@@ -65,10 +65,10 @@ class StatusLine(
         }
         val httpMinorVersion = statusLine[7] - '0'
         codeStart = 9
-        if (httpMinorVersion == 0) {
-          protocol = Protocol.HTTP_1_0
+        protocol = if (httpMinorVersion == 0) {
+          Protocol.HTTP_1_0
         } else if (httpMinorVersion == 1) {
-          protocol = Protocol.HTTP_1_1
+          Protocol.HTTP_1_1
         } else {
           throw ProtocolException("Unexpected status line: $statusLine")
         }

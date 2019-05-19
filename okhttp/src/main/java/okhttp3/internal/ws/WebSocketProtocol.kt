@@ -141,6 +141,6 @@ object WebSocketProtocol {
 
   @JvmStatic
   fun acceptHeader(key: String): String {
-    return (key + WebSocketProtocol.ACCEPT_MAGIC).encodeUtf8().sha1().base64()
+    return (key + ACCEPT_MAGIC).encodeUtf8().sha1().base64()
   }
 }
