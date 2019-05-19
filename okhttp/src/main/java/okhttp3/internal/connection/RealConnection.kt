@@ -385,8 +385,6 @@ class RealConnection(
       handshake = unverifiedHandshake
       protocol = if (maybeProtocol != null) Protocol.get(maybeProtocol) else Protocol.HTTP_1_1
       success = true
-    } catch (e: AssertionError) {
-      throw e
     } finally {
       if (sslSocket != null) {
         Platform.get().afterHandshake(sslSocket)
