@@ -26,20 +26,6 @@ import java.util.concurrent.TimeUnit
  * See [RFC 7234, 5.2](https://tools.ietf.org/html/rfc7234#section-5.2).
  */
 class CacheControl private constructor(
-  private val noCache: Boolean,
-  private val noStore: Boolean,
-  private val maxAgeSeconds: Int,
-  private val sMaxAgeSeconds: Int,
-  val isPrivate: Boolean,
-  val isPublic: Boolean,
-  private val mustRevalidate: Boolean,
-  private val maxStaleSeconds: Int,
-  private val minFreshSeconds: Int,
-  private val onlyIfCached: Boolean,
-  private val noTransform: Boolean,
-  private val immutable: Boolean,
-  private var headerValue: String?
-) {
   /**
    * In a response, this field's name "no-cache" is misleading. It doesn't prevent us from caching
    * the response; it only means we have to validate the response with the origin server before
@@ -47,25 +33,28 @@ class CacheControl private constructor(
    *
    * In a request, it means do not use a cache to satisfy the request.
    */
-  fun noCache() = noCache
+  @get:JvmName("noCache") val noCache: Boolean,
 
   /** If true, this response should not be cached.  */
-  fun noStore() = noStore
+  @get:JvmName("noStore") val noStore: Boolean,
 
   /** The duration past the response's served date that it can be served without validation. */
-  fun maxAgeSeconds() = maxAgeSeconds
+  @get:JvmName("maxAgeSeconds") val maxAgeSeconds: Int,
 
   /**
    * The "s-maxage" directive is the max age for shared caches. Not to be confused with "max-age"
    * for non-shared caches, As in Firefox and Chrome, this directive is not honored by this cache.
    */
-  fun sMaxAgeSeconds() = sMaxAgeSeconds
+  @get:JvmName("sMaxAgeSeconds") val sMaxAgeSeconds: Int,
 
-  fun mustRevalidate() = mustRevalidate
+  val isPrivate: Boolean,
+  val isPublic: Boolean,
 
-  fun maxStaleSeconds() = maxStaleSeconds
+  @get:JvmName("mustRevalidate") val mustRevalidate: Boolean,
 
-  fun minFreshSeconds() = minFreshSeconds
+  @get:JvmName("maxStaleSeconds") val maxStaleSeconds: Int,
+
+  @get:JvmName("minFreshSeconds") val minFreshSeconds: Int,
 
   /**
    * This field's name "only-if-cached" is misleading. It actually means "do not use the network".
@@ -73,10 +62,82 @@ class CacheControl private constructor(
    * cache. Cached responses that would require validation (ie. conditional gets) are not permitted
    * if this header is set.
    */
+  @get:JvmName("onlyIfCached") val onlyIfCached: Boolean,
+
+  @get:JvmName("noTransform") val noTransform: Boolean,
+
+  @get:JvmName("immutable") val immutable: Boolean,
+
+  private var headerValue: String?
+) {
+  @JvmName("-deprecated_noCache")
+  @Deprecated(
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "noCache"),
+      level = DeprecationLevel.WARNING)
+  fun noCache() = noCache
+
+  @JvmName("-deprecated_noStore")
+  @Deprecated(
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "noStore"),
+      level = DeprecationLevel.WARNING)
+  fun noStore() = noStore
+
+  @JvmName("-deprecated_maxAgeSeconds")
+  @Deprecated(
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "maxAgeSeconds"),
+      level = DeprecationLevel.WARNING)
+  fun maxAgeSeconds() = maxAgeSeconds
+
+  @JvmName("-deprecated_sMaxAgeSeconds")
+  @Deprecated(
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "sMaxAgeSeconds"),
+      level = DeprecationLevel.WARNING)
+  fun sMaxAgeSeconds() = sMaxAgeSeconds
+
+  @JvmName("-deprecated_mustRevalidate")
+  @Deprecated(
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "mustRevalidate"),
+      level = DeprecationLevel.WARNING)
+  fun mustRevalidate() = mustRevalidate
+
+  @JvmName("-deprecated_maxStaleSeconds")
+  @Deprecated(
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "maxStaleSeconds"),
+      level = DeprecationLevel.WARNING)
+  fun maxStaleSeconds() = maxStaleSeconds
+
+  @JvmName("-deprecated_minFreshSeconds")
+  @Deprecated(
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "minFreshSeconds"),
+      level = DeprecationLevel.WARNING)
+  fun minFreshSeconds() = minFreshSeconds
+
+  @JvmName("-deprecated_onlyIfCached")
+  @Deprecated(
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "onlyIfCached"),
+      level = DeprecationLevel.WARNING)
   fun onlyIfCached() = onlyIfCached
 
+  @JvmName("-deprecated_noTransform")
+  @Deprecated(
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "noTransform"),
+      level = DeprecationLevel.WARNING)
   fun noTransform() = noTransform
 
+  @JvmName("-deprecated_immutable")
+  @Deprecated(
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "immutable"),
+      level = DeprecationLevel.WARNING)
   fun immutable() = immutable
 
   override fun toString(): String {
@@ -344,7 +405,7 @@ class CacheControl private constructor(
      */
     private fun String.indexOfElement(characters: String, startIndex: Int = 0): Int {
       for (i in startIndex until length) {
-        if (characters.contains(this[i])) {
+        if (this[i] in characters) {
           return i
         }
       }

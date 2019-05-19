@@ -92,7 +92,7 @@ class CacheStrategy internal constructor(
      * cached response older than 24 hours, we are required to attach a warning.
      */
     private fun isFreshnessLifetimeHeuristic(): Boolean {
-      return cacheResponse!!.cacheControl().maxAgeSeconds() == -1 && expires == null
+      return cacheResponse!!.cacheControl().maxAgeSeconds == -1 && expires == null
     }
 
     init {
@@ -131,7 +131,7 @@ class CacheStrategy internal constructor(
       val candidate = computeCandidate()
 
       // We're forbidden from using the network and the cache is insufficient.
-      if (candidate.networkRequest != null && request.cacheControl().onlyIfCached()) {
+      if (candidate.networkRequest != null && request.cacheControl().onlyIfCached) {
         return CacheStrategy(null, null)
       }
 
@@ -158,7 +158,7 @@ class CacheStrategy internal constructor(
       }
 
       val requestCaching = request.cacheControl()
-      if (requestCaching.noCache() || hasConditions(request)) {
+      if (requestCaching.noCache || hasConditions(request)) {
         return CacheStrategy(request, null)
       }
 
@@ -167,21 +167,21 @@ class CacheStrategy internal constructor(
       val ageMillis = cacheResponseAge()
       var freshMillis = computeFreshnessLifetime()
 
-      if (requestCaching.maxAgeSeconds() != -1) {
-        freshMillis = minOf(freshMillis, SECONDS.toMillis(requestCaching.maxAgeSeconds().toLong()))
+      if (requestCaching.maxAgeSeconds != -1) {
+        freshMillis = minOf(freshMillis, SECONDS.toMillis(requestCaching.maxAgeSeconds.toLong()))
       }
 
       var minFreshMillis: Long = 0
-      if (requestCaching.minFreshSeconds() != -1) {
-        minFreshMillis = SECONDS.toMillis(requestCaching.minFreshSeconds().toLong())
+      if (requestCaching.minFreshSeconds != -1) {
+        minFreshMillis = SECONDS.toMillis(requestCaching.minFreshSeconds.toLong())
       }
 
       var maxStaleMillis: Long = 0
-      if (!responseCaching.mustRevalidate() && requestCaching.maxStaleSeconds() != -1) {
-        maxStaleMillis = SECONDS.toMillis(requestCaching.maxStaleSeconds().toLong())
+      if (!responseCaching.mustRevalidate && requestCaching.maxStaleSeconds != -1) {
+        maxStaleMillis = SECONDS.toMillis(requestCaching.maxStaleSeconds.toLong())
       }
 
-      if (!responseCaching.noCache() && ageMillis + minFreshMillis < freshMillis + maxStaleMillis) {
+      if (!responseCaching.noCache && ageMillis + minFreshMillis < freshMillis + maxStaleMillis) {
         val builder = cacheResponse.newBuilder()
         if (ageMillis + minFreshMillis >= freshMillis) {
           builder.addHeader("Warning", "110 HttpURLConnection \"Response is stale\"")
@@ -231,8 +231,8 @@ class CacheStrategy internal constructor(
      */
     private fun computeFreshnessLifetime(): Long {
       val responseCaching = cacheResponse!!.cacheControl()
-      if (responseCaching.maxAgeSeconds() != -1) {
-        return SECONDS.toMillis(responseCaching.maxAgeSeconds().toLong())
+      if (responseCaching.maxAgeSeconds != -1) {
+        return SECONDS.toMillis(responseCaching.maxAgeSeconds.toLong())
       }
 
       val expires = this.expires
@@ -312,7 +312,7 @@ class CacheStrategy internal constructor(
           // http://tools.ietf.org/html/rfc7234#section-3
           // s-maxage is not checked because OkHttp is a private cache that should ignore s-maxage.
           if (response.header("Expires") == null &&
-              response.cacheControl().maxAgeSeconds() == -1 &&
+              response.cacheControl().maxAgeSeconds == -1 &&
               !response.cacheControl().isPublic &&
               !response.cacheControl().isPrivate) {
             return false
@@ -326,7 +326,7 @@ class CacheStrategy internal constructor(
       }
 
       // A 'no-store' directive on request or response prevents the response from being cached.
-      return !response.cacheControl().noStore() && !request.cacheControl().noStore()
+      return !response.cacheControl().noStore && !request.cacheControl().noStore
     }
   }
 }
