@@ -222,7 +222,7 @@ fun Socket?.closeQuietly() {
   try {
     this?.close()
   } catch (e: AssertionError) {
-    if (!isAndroidGetsocknameError(e)) throw e
+    throw e
   } catch (rethrown: RuntimeException) {
     throw rethrown
   } catch (_: Exception) {
@@ -237,14 +237,6 @@ fun ServerSocket?.closeQuietly() {
     throw rethrown
   } catch (_: Exception) {
   }
-}
-
-/**
- * Returns true if [e] is due to a firmware bug fixed after Android 4.2.2.
- * https://code.google.com/p/android/issues/detail?id=54072
- */
-fun isAndroidGetsocknameError(e: AssertionError): Boolean {
-  return e.cause != null && e.message?.contains("getsockname failed") == true
 }
 
 fun Long.toHexString() = java.lang.Long.toHexString(this)

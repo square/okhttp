@@ -41,7 +41,6 @@ import okhttp3.internal.http2.Http2Connection
 import okhttp3.internal.http2.Http2ExchangeCodec
 import okhttp3.internal.http2.Http2Stream
 import okhttp3.internal.http2.StreamResetException
-import okhttp3.internal.isAndroidGetsocknameError
 import okhttp3.internal.platform.Platform
 import okhttp3.internal.tls.OkHostnameVerifier
 import okhttp3.internal.userAgent
@@ -386,9 +385,6 @@ class RealConnection(
       handshake = unverifiedHandshake
       protocol = if (maybeProtocol != null) Protocol.get(maybeProtocol) else Protocol.HTTP_1_1
       success = true
-    } catch (e: AssertionError) {
-      if (isAndroidGetsocknameError(e)) throw IOException(e)
-      throw e
     } finally {
       if (sslSocket != null) {
         Platform.get().afterHandshake(sslSocket)
