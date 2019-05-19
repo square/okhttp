@@ -1,6 +1,18 @@
 Change Log
 ==========
 
+## Version 3.14.2
+
+_2019-05-19_
+
+ *  Fix: Lock in a route when recovering from an HTTP/2 connection error. We had a bug where two
+    calls that failed at the same time could cause OkHttp to crash with a `NoSuchElementException`
+    instead of the expected `IOException`.
+
+ *  Fix: Don't crash with a `NullPointerException` when formatting an error message describing a
+    truncated response from an HTTPS proxy.
+
+
 ## Version 4.0.0-ALPHA01
 
 _2019-05-08_
