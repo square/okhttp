@@ -1582,8 +1582,6 @@ public final class HttpOverHttp2Test {
   }
 
   /** https://github.com/square/okhttp/issues/4875 */
-  @Ignore(
-      "This often fails due to a NoSuchElementException thrown from RouteSelector.next(). Run it repeatedly to reproduce.")
   @Test
   public void shutdownAfterLateCoalescing() throws Exception {
     CountDownLatch latch = new CountDownLatch(2);
