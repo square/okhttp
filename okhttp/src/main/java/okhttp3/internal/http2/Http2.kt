@@ -15,7 +15,7 @@
  */
 package okhttp3.internal.http2
 
-import okhttp3.internal.Util.format
+import okhttp3.internal.format
 import okio.ByteString.Companion.encodeUtf8
 
 object Http2 {

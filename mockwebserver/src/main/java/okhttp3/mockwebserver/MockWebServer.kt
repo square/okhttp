@@ -22,7 +22,6 @@ import okhttp3.HttpUrl
 import okhttp3.Protocol
 import okhttp3.Request
 import okhttp3.Response
-import okhttp3.internal.Util
 import okhttp3.internal.addHeaderLenient
 import okhttp3.internal.closeQuietly
 import okhttp3.internal.duplex.MwsDuplexAccess
@@ -34,6 +33,7 @@ import okhttp3.internal.http2.Http2Connection
 import okhttp3.internal.http2.Http2Stream
 import okhttp3.internal.immutableListOf
 import okhttp3.internal.platform.Platform
+import okhttp3.internal.threadFactory
 import okhttp3.internal.toImmutableList
 import okhttp3.internal.ws.RealWebSocket
 import okhttp3.internal.ws.WebSocketProtocol
@@ -318,7 +318,7 @@ class MockWebServer : ExternalResource(), Closeable {
     require(!started) { "start() already called" }
     started = true
 
-    executor = Executors.newCachedThreadPool(Util.threadFactory("MockWebServer", false))
+    executor = Executors.newCachedThreadPool(threadFactory("MockWebServer", false))
     this.inetSocketAddress = inetSocketAddress
 
     if (serverSocketFactory == null) {

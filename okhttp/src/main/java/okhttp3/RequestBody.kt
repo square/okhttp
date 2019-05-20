@@ -15,7 +15,7 @@
  */
 package okhttp3
 
-import okhttp3.internal.Util
+import okhttp3.internal.checkOffsetAndCount
 import okio.BufferedSink
 import okio.ByteString
 import okio.source
@@ -135,7 +135,7 @@ abstract class RequestBody {
       offset: Int = 0,
       byteCount: Int = content.size
     ): RequestBody {
-      Util.checkOffsetAndCount(content.size.toLong(), offset.toLong(), byteCount.toLong())
+      checkOffsetAndCount(content.size.toLong(), offset.toLong(), byteCount.toLong())
       return object : RequestBody() {
         override fun contentType() = contentType
 

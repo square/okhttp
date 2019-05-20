@@ -18,7 +18,7 @@
 package okhttp3
 
 import okhttp3.Headers.Builder
-import okhttp3.internal.Util
+import okhttp3.internal.format
 import okhttp3.internal.http.HttpDate
 import org.codehaus.mojo.animal_sniffer.IgnoreJRERequirement
 import java.time.Instant
@@ -405,7 +405,7 @@ class Headers private constructor(
       for (i in 0 until name.length) {
         val c = name[i]
         require(c in '\u0021'..'\u007e') {
-          Util.format("Unexpected char %#04x at %d in header name: %s", c.toInt(), i, name)
+          format("Unexpected char %#04x at %d in header name: %s", c.toInt(), i, name)
         }
       }
     }
@@ -414,7 +414,7 @@ class Headers private constructor(
       for (i in 0 until value.length) {
         val c = value[i]
         require(c == '\t' || c in '\u0020'..'\u007e') {
-          Util.format("Unexpected char %#04x at %d in %s value: %s", c.toInt(), i, name, value)
+          format("Unexpected char %#04x at %d in %s value: %s", c.toInt(), i, name, value)
         }
       }
     }

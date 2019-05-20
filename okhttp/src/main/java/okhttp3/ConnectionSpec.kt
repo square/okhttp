@@ -16,10 +16,10 @@
 package okhttp3
 
 import okhttp3.ConnectionSpec.Builder
-import okhttp3.internal.Util.concat
-import okhttp3.internal.Util.indexOf
-import okhttp3.internal.Util.intersect
-import okhttp3.internal.Util.nonEmptyIntersection
+import okhttp3.internal.concat
+import okhttp3.internal.indexOf
+import okhttp3.internal.intersect
+import okhttp3.internal.nonEmptyIntersection
 import java.util.Arrays
 import java.util.Objects
 import javax.net.ssl.SSLSocket

@@ -15,7 +15,7 @@
  */
 package okhttp3
 
-import okhttp3.internal.Util
+import okhttp3.internal.EMPTY_HEADERS
 import okhttp3.internal.addHeaderLenient
 import okhttp3.internal.cache.CacheRequest
 import okhttp3.internal.cache.CacheStrategy
@@ -792,7 +792,7 @@ class Cache internal constructor(
      */
     private fun varyHeaders(requestHeaders: Headers, responseHeaders: Headers): Headers {
       val varyFields = responseHeaders.varyFields()
-      if (varyFields.isEmpty()) return Util.EMPTY_HEADERS
+      if (varyFields.isEmpty()) return EMPTY_HEADERS
 
       val result = Headers.Builder()
       for (i in 0 until requestHeaders.size) {

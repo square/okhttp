@@ -24,7 +24,7 @@ import okhttp3.HttpUrl
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import okhttp3.Request
-import okhttp3.internal.Util.sameConnection
+import okhttp3.internal.sameConnection
 import okhttp3.internal.closeQuietly
 import okhttp3.internal.platform.Platform
 import okio.AsyncTimeout

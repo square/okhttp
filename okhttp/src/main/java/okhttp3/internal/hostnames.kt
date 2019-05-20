@@ -118,7 +118,7 @@ private fun decodeIpv6(input: String, pos: Int, limit: Int): InetAddress? {
     groupOffset = i
     while (i < limit) {
       val c = input[i]
-      val hexDigit = Util.decodeHexDigit(c)
+      val hexDigit = decodeHexDigit(c)
       if (hexDigit == -1) break
       value = (value shl 4) + hexDigit
       i++

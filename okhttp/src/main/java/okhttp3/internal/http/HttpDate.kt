@@ -15,7 +15,7 @@
  */
 package okhttp3.internal.http
 
-import okhttp3.internal.Util.UTC
+import okhttp3.internal.UTC
 import java.text.DateFormat
 import java.text.ParsePosition
 import java.text.SimpleDateFormat

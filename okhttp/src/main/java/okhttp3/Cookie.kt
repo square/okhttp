@@ -15,11 +15,11 @@
  */
 package okhttp3
 
-import okhttp3.internal.Util.UTC
-import okhttp3.internal.Util.delimiterOffset
-import okhttp3.internal.Util.indexOfControlOrNonAscii
-import okhttp3.internal.Util.trimSubstring
-import okhttp3.internal.Util.verifyAsIpAddress
+import okhttp3.internal.UTC
+import okhttp3.internal.delimiterOffset
+import okhttp3.internal.indexOfControlOrNonAscii
+import okhttp3.internal.trimSubstring
+import okhttp3.internal.verifyAsIpAddress
 import okhttp3.internal.http.HttpDate
 import okhttp3.internal.publicsuffix.PublicSuffixDatabase
 import okhttp3.internal.toCanonicalHost

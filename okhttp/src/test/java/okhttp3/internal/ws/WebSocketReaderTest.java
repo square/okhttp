@@ -300,7 +300,7 @@ public final class WebSocketReaderTest {
     data.write(ByteString.decodeHex("880203ee")); // Close with code 1006
     for (int i = 1012; i <= 2999; i++) {
       data.write(ByteString.decodeHex(
-          "8802" + Util.INSTANCE.format("%04X", i))); // Close with code 'i'
+          "8802" + Util.format("%04X", i))); // Close with code 'i'
     }
 
     int count = 0;

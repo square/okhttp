@@ -15,7 +15,7 @@
  */
 package okhttp3.internal.http2
 
-import okhttp3.internal.Util.format
+import okhttp3.internal.format
 import okhttp3.internal.http2.Http2.CONNECTION_PREFACE
 import okhttp3.internal.http2.Http2.FLAG_ACK
 import okhttp3.internal.http2.Http2.FLAG_END_HEADERS

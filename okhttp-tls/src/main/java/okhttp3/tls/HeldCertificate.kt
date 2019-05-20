@@ -15,7 +15,7 @@
  */
 package okhttp3.tls
 
-import okhttp3.internal.Util.verifyAsIpAddress
+import okhttp3.internal.verifyAsIpAddress
 import okio.ByteString
 import okio.ByteString.Companion.toByteString
 import org.bouncycastle.asn1.ASN1Encodable

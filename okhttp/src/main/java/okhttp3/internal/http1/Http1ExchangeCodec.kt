@@ -20,8 +20,8 @@ import okhttp3.HttpUrl
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
-import okhttp3.internal.Util
-import okhttp3.internal.Util.checkOffsetAndCount
+import okhttp3.internal.EMPTY_HEADERS
+import okhttp3.internal.checkOffsetAndCount
 import okhttp3.internal.addHeaderLenient
 import okhttp3.internal.connection.RealConnection
 import okhttp3.internal.discard
@@ -148,7 +148,7 @@ class Http1ExchangeCodec(
 
   override fun trailers(): Headers {
     check(state == STATE_CLOSED) { "too early; can't read the trailers yet" }
-    return trailers ?: Util.EMPTY_HEADERS
+    return trailers ?: EMPTY_HEADERS
   }
 
   override fun flushRequest() {

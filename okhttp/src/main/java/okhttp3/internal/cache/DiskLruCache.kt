@@ -15,12 +15,12 @@
  */
 package okhttp3.internal.cache
 
-import okhttp3.internal.Util
 import okhttp3.internal.cache.DiskLruCache.Editor
 import okhttp3.internal.closeQuietly
 import okhttp3.internal.io.FileSystem
 import okhttp3.internal.platform.Platform
 import okhttp3.internal.platform.Platform.Companion.WARN
+import okhttp3.internal.threadFactory
 import okio.BufferedSink
 import okio.Sink
 import okio.Source
@@ -993,7 +993,7 @@ class DiskLruCache internal constructor(
 
       // Use a single background thread to evict entries.
       val executor = ThreadPoolExecutor(0, 1, 60L, TimeUnit.SECONDS,
-          LinkedBlockingQueue(), Util.threadFactory("OkHttp DiskLruCache", true))
+          LinkedBlockingQueue(), threadFactory("OkHttp DiskLruCache", true))
 
       return DiskLruCache(fileSystem, directory, appVersion, valueCount, maxSize, executor)
     }

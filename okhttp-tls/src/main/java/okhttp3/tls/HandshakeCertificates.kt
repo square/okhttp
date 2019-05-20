@@ -16,8 +16,8 @@
 package okhttp3.tls
 
 import okhttp3.CertificatePinner
-import okhttp3.internal.Util
 import okhttp3.internal.platform.Platform
+import okhttp3.internal.platformTrustManager
 import okhttp3.tls.internal.TlsUtil.newKeyManager
 import okhttp3.tls.internal.TlsUtil.newTrustManager
 import java.security.SecureRandom
@@ -126,7 +126,7 @@ class HandshakeCertificates private constructor(
      * this problem with [certificate pinning][CertificatePinner].
      */
     fun addPlatformTrustedCertificates() = apply {
-      val platformTrustManager = Util.platformTrustManager()
+      val platformTrustManager = platformTrustManager()
       Collections.addAll(trustedCertificates, *platformTrustManager.acceptedIssuers)
     }
 
