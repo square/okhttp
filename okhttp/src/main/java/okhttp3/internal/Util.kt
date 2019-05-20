@@ -136,14 +136,14 @@ fun nonEmptyIntersection(
   return false
 }
 
-fun hostHeader(url: HttpUrl, includeDefaultPort: Boolean): String {
-  val host = if (":" in url.host) {
-    "[${url.host}]"
+fun HttpUrl.toHostHeader(includeDefaultPort: Boolean = false): String {
+  val host = if (":" in host) {
+    "[$host]"
   } else {
-    url.host
+    host
   }
-  return if (includeDefaultPort || url.port != HttpUrl.defaultPort(url.scheme)) {
-    "$host:${url.port}"
+  return if (includeDefaultPort || port != HttpUrl.defaultPort(scheme)) {
+    "$host:$port"
   } else {
     host
   }
@@ -268,9 +268,9 @@ fun decodeHexDigit(c: Char): Int = when (c) {
   else -> -1
 }
 
-fun toHeaders(headerBlock: List<Header>): Headers {
+fun List<Header>.toHeaders(): Headers {
   val builder = Headers.Builder()
-  for ((name, value) in headerBlock) {
+  for ((name, value) in this) {
     addHeaderLenient(builder, name.utf8(), value.utf8())
   }
   return builder.build()
