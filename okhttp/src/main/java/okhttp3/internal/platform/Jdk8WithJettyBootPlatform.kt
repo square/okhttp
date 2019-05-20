@@ -106,7 +106,7 @@ class Jdk8WithJettyBootPlatform(
         // Pick the first known protocol the peer advertises.
         for (i in 0..peerProtocols.size) {
           val protocol = peerProtocols[i] as String
-          if (protocols.contains(protocol)) {
+          if (protocol in protocols) {
             selected = protocol
             return selected
           }

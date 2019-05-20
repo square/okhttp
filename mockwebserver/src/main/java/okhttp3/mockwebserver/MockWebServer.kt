@@ -675,7 +675,7 @@ class MockWebServer : ExternalResource(), Closeable {
       }
     }
 
-    val method = request.substring(0, request.indexOf(' '))
+    val method = request.substringBefore(' ')
     if (hasBody && !HttpMethod.permitsRequestBody(method)) {
       throw IllegalArgumentException("Request must not have a body: $request")
     }

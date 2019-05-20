@@ -1137,7 +1137,7 @@ class HttpUrl internal constructor(
       }
 
       if (host != null) {
-        if (host!!.indexOf(':') != -1) {
+        if (':' in host!!) {
           // Host is an IPv6 address.
           result.append('[')
           result.append(host)
@@ -1696,7 +1696,7 @@ class HttpUrl internal constructor(
         if (codePoint < 0x20 ||
             codePoint == 0x7f ||
             codePoint >= 0x80 && !unicodeAllowed ||
-            encodeSet.indexOf(codePoint.toChar()) != -1 ||
+            codePoint.toChar() in encodeSet ||
             codePoint == '%'.toInt() &&
             (!alreadyEncoded || strict && !isPercentEncoded(i, limit)) ||
             codePoint == '+'.toInt() && plusIsSpace) {
@@ -1748,7 +1748,7 @@ class HttpUrl internal constructor(
         } else if (codePoint < 0x20 ||
             codePoint == 0x7f ||
             codePoint >= 0x80 && !unicodeAllowed ||
-            encodeSet.indexOf(codePoint.toChar()) != -1 ||
+            codePoint.toChar() in encodeSet ||
             codePoint == '%'.toInt() &&
             (!alreadyEncoded || strict && !input.isPercentEncoded(i, limit))) {
           // Percent encode this character.
