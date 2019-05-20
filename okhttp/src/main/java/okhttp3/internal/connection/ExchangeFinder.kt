@@ -60,6 +60,7 @@ class ExchangeFinder(
       address, connectionPool.routeDatabase, call, eventListener)
   private var connectingConnection: RealConnection? = null
   private var hasStreamFailure = false
+  private var nextRouteToTry: Route? = null
 
   fun find(
     client: OkHttpClient,
@@ -152,14 +153,6 @@ class ExchangeFinder(
       if (transmitter.isCanceled) throw IOException("Canceled")
       hasStreamFailure = false // This is a fresh attempt.
 
-      // Attempt to use an already-allocated connection. We need to be careful here because our
-      // already-allocated connection may have been restricted from creating new exchanges.
-      val previousRoute = if (retryCurrentRoute()) {
-        transmitter.connection!!.route()
-      } else {
-        null
-      }
-
       releasedConnection = transmitter.connection
       toClose = if (transmitter.connection != null && transmitter.connection!!.noNewExchanges) {
         transmitter.releaseConnectionNoEvents()
@@ -178,8 +171,11 @@ class ExchangeFinder(
         if (connectionPool.transmitterAcquirePooledConnection(address, transmitter, null, false)) {
           foundPooledConnection = true
           result = transmitter.connection
-        } else {
-          selectedRoute = previousRoute
+        } else if (nextRouteToTry != null) {
+          selectedRoute = nextRouteToTry
+          nextRouteToTry = null
+        } else if (retryCurrentRoute()) {
+          selectedRoute = transmitter.connection!!.route()
         }
       }
     }
@@ -291,9 +287,15 @@ class ExchangeFinder(
   /** Returns true if a current route is still good or if there are routes we haven't tried yet.  */
   fun hasRouteToTry(): Boolean {
     synchronized(connectionPool) {
-      return retryCurrentRoute() ||
-          routeSelection != null && routeSelection!!.hasNext() ||
-          routeSelector.hasNext()
+      if (nextRouteToTry != null) {
+        return true
+      }
+      if (retryCurrentRoute()) {
+        // Lock in the route because retryCurrentRoute() is racy and we don't want to call it twice.
+        nextRouteToTry = transmitter.connection!!.route()
+        return true
+      }
+      return (routeSelection?.hasNext() ?: false) || routeSelector.hasNext()
     }
   }
 
