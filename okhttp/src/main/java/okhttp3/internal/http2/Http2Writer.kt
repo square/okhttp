@@ -100,7 +100,7 @@ class Http2Writer(
     hpackWriter.writeHeaders(requestHeaders)
 
     val byteCount = hpackBuffer.size
-    val length = Math.min((maxFrameSize - 4).toLong(), byteCount).toInt()
+    val length = minOf(maxFrameSize - 4L, byteCount).toInt()
     frameHeader(
         streamId = streamId,
         length = length + 4,
@@ -272,8 +272,8 @@ class Http2Writer(
   @Throws(IOException::class)
   private fun writeContinuationFrames(streamId: Int, byteCount: Long) {
     var byteCount = byteCount
-    while (byteCount > 0) {
-      val length = Math.min(maxFrameSize.toLong(), byteCount)
+    while (byteCount > 0L) {
+      val length = minOf(maxFrameSize.toLong(), byteCount)
       byteCount -= length
       frameHeader(
           streamId = streamId,
@@ -295,7 +295,7 @@ class Http2Writer(
     hpackWriter.writeHeaders(headerBlock)
 
     val byteCount = hpackBuffer.size
-    val length = Math.min(maxFrameSize.toLong(), byteCount)
+    val length = minOf(maxFrameSize.toLong(), byteCount)
     var flags = if (byteCount == length) FLAG_END_HEADERS else 0
     if (outFinished) flags = flags or FLAG_END_STREAM
     frameHeader(

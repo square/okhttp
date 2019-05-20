@@ -243,7 +243,7 @@ data class Cookie private constructor(
 
     fun expiresAt(expiresAt: Long) = apply {
       var expiresAt = expiresAt
-      if (expiresAt <= 0) expiresAt = Long.MIN_VALUE
+      if (expiresAt <= 0L) expiresAt = Long.MIN_VALUE
       if (expiresAt > HttpDate.MAX_DATE) expiresAt = HttpDate.MAX_DATE
       this.expiresAt = expiresAt
       this.persistent = true

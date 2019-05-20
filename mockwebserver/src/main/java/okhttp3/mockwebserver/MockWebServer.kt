@@ -92,7 +92,6 @@ import javax.net.ssl.SSLSocket
 import javax.net.ssl.SSLSocketFactory
 import javax.net.ssl.TrustManager
 import javax.net.ssl.X509TrustManager
-import kotlin.math.min
 
 /**
  * A scriptable web server. Callers supply canned responses and the server replays them upon request
@@ -659,7 +658,7 @@ class MockWebServer : ExternalResource(), Closeable {
     val chunkSizes = ArrayList<Int>()
     val policy = dispatcher.peek()
     if (contentLength != -1L) {
-      hasBody = contentLength > 0
+      hasBody = contentLength > 0L
       throttledTransfer(policy, socket, source, requestBody.buffer(), contentLength, true)
     } else if (chunked) {
       hasBody = true
@@ -800,10 +799,10 @@ class MockWebServer : ExternalResource(), Closeable {
       var b = 0L
       while (b < bytesPerPeriod) {
         // Ensure we do not read past the allotted bytes in this period.
-        var toRead = min(byteCountNum, bytesPerPeriod - b)
+        var toRead = minOf(byteCountNum, bytesPerPeriod - b)
         // Ensure we do not read past halfway if the policy will kill the connection.
         if (disconnectHalfway) {
-          toRead = min(toRead, byteCountNum - halfByteCount)
+          toRead = minOf(toRead, byteCountNum - halfByteCount)
         }
 
         val read = source.read(buffer, toRead)
@@ -848,7 +847,7 @@ class MockWebServer : ExternalResource(), Closeable {
 
     @Throws(IOException::class)
     override fun write(source: Buffer, byteCount: Long) {
-      val toRead = min(remainingByteCount, byteCount)
+      val toRead = minOf(remainingByteCount, byteCount)
       if (toRead > 0L) {
         source.read(buffer, toRead)
       }

@@ -58,7 +58,7 @@ class RealConnectionPool(
 
   init {
     // Put a floor on the keep alive duration, otherwise cleanup will spin loop.
-    require(keepAliveDuration > 0) { "keepAliveDuration <= 0: $keepAliveDuration" }
+    require(keepAliveDuration > 0L) { "keepAliveDuration <= 0: $keepAliveDuration" }
   }
 
   @Synchronized fun idleConnectionCount(): Int {

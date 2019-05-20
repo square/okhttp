@@ -352,7 +352,7 @@ class Http2Stream internal constructor(
 
             if (closed) {
               throw IOException("stream closed")
-            } else if (readBuffer.size > 0) {
+            } else if (readBuffer.size > 0L) {
               // Prepare to read bytes. Start by moving them to the caller's buffer.
               readBytesDelivered = readBuffer.read(sink, minOf(byteCount, readBuffer.size))
               unacknowledgedBytesRead += readBytesDelivered

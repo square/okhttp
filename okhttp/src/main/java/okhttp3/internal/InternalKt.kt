@@ -62,7 +62,7 @@ fun Any.wait() = (this as Object).wait()
  * Unlike [java.lang.Object.wait] this interprets 0 as "don't wait" instead of "wait forever".
  */
 fun Any.waitMillis(timeout: Long, nanos: Int = 0) {
-  if (timeout > 0 || nanos > 0) {
+  if (timeout > 0L || nanos > 0) {
     (this as Object).wait(timeout, nanos)
   }
 }

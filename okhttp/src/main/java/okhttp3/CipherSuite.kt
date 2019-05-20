@@ -62,7 +62,7 @@ class CipherSuite private constructor(
     internal val ORDER_BY_NAME = object : Comparator<String> {
       override fun compare(a: String, b: String): Int {
         var i = 4
-        val limit = Math.min(a.length, b.length)
+        val limit = minOf(a.length, b.length)
         while (i < limit) {
           val charA = a[i]
           val charB = b[i]
