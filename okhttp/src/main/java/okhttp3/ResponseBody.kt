@@ -15,8 +15,8 @@
  */
 package okhttp3
 
-import okhttp3.internal.bomAwareCharset
 import okhttp3.internal.closeQuietly
+import okhttp3.internal.readBomAsCharset
 import okio.Buffer
 import okio.BufferedSource
 import okio.ByteString
@@ -168,7 +168,7 @@ abstract class ResponseBody : Closeable {
    */
   @Throws(IOException::class)
   fun string(): String = source().use { source ->
-    source.readString(charset = bomAwareCharset(source, charset()))
+    source.readString(charset = source.readBomAsCharset(charset()))
   }
 
   private fun charset() = contentType()?.charset(UTF_8) ?: UTF_8
@@ -189,7 +189,7 @@ abstract class ResponseBody : Closeable {
 
       val finalDelegate = delegate ?: InputStreamReader(
           source.inputStream(),
-          bomAwareCharset(source, charset)).also {
+          source.readBomAsCharset(charset)).also {
         delegate = it
       }
       return finalDelegate.read(cbuf, off, len)

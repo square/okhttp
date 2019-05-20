@@ -245,14 +245,14 @@ fun format(format: String, vararg args: Any): String {
 }
 
 @Throws(IOException::class)
-fun bomAwareCharset(source: BufferedSource, charset: Charset): Charset {
-  return when (source.select(UNICODE_BOMS)) {
+fun BufferedSource.readBomAsCharset(default: Charset): Charset {
+  return when (select(UNICODE_BOMS)) {
     0 -> UTF_8
     1 -> UTF_16BE
     2 -> UTF_16LE
     3 -> UTF_32BE
     4 -> UTF_32LE
-    -1 -> charset
+    -1 -> default
     else -> throw AssertionError()
   }
 }
