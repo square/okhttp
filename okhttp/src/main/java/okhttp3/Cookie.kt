@@ -336,14 +336,12 @@ data class Cookie private constructor(
         parse(System.currentTimeMillis(), url, setCookie)
 
     internal fun parse(currentTimeMillis: Long, url: HttpUrl, setCookie: String): Cookie? {
-      var pos = 0
-      val limit = setCookie.length
-      val cookiePairEnd = delimiterOffset(setCookie, pos, limit, ';')
+      val cookiePairEnd = setCookie.delimiterOffset(';')
 
-      val pairEqualsSign = delimiterOffset(setCookie, pos, cookiePairEnd, '=')
+      val pairEqualsSign = setCookie.delimiterOffset('=', endIndex = cookiePairEnd)
       if (pairEqualsSign == cookiePairEnd) return null
 
-      val cookieName = setCookie.trimSubstring(pos, pairEqualsSign)
+      val cookieName = setCookie.trimSubstring(endIndex = pairEqualsSign)
       if (cookieName.isEmpty() || cookieName.indexOfControlOrNonAscii() != -1) return null
 
       val cookieValue = setCookie.trimSubstring(pairEqualsSign + 1, cookiePairEnd)
@@ -358,11 +356,12 @@ data class Cookie private constructor(
       var hostOnly = true
       var persistent = false
 
-      pos = cookiePairEnd + 1
+      var pos = cookiePairEnd + 1
+      val limit = setCookie.length
       while (pos < limit) {
-        val attributePairEnd = delimiterOffset(setCookie, pos, limit, ';')
+        val attributePairEnd = setCookie.delimiterOffset(';', pos, limit)
 
-        val attributeEqualsSign = delimiterOffset(setCookie, pos, attributePairEnd, '=')
+        val attributeEqualsSign = setCookie.delimiterOffset('=', pos, attributePairEnd)
         val attributeName = setCookie.trimSubstring(pos, attributeEqualsSign)
         val attributeValue = if (attributeEqualsSign < attributePairEnd) {
           setCookie.trimSubstring(attributeEqualsSign + 1, attributePairEnd)

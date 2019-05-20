@@ -442,7 +442,7 @@ class HttpUrl internal constructor(
     get() {
       if (username.isEmpty()) return ""
       val usernameStart = scheme.length + 3 // "://".length() == 3.
-      val usernameEnd = delimiterOffset(url, usernameStart, url.length, ":@")
+      val usernameEnd = url.delimiterOffset(":@", usernameStart, url.length)
       return url.substring(usernameStart, usernameEnd)
     }
 
@@ -492,7 +492,7 @@ class HttpUrl internal constructor(
   @get:JvmName("encodedPath") val encodedPath: String
     get() {
       val pathStart = url.indexOf('/', scheme.length + 3) // "://".length() == 3.
-      val pathEnd = delimiterOffset(url, pathStart, url.length, "?#")
+      val pathEnd = url.delimiterOffset("?#", pathStart, url.length)
       return url.substring(pathStart, pathEnd)
     }
 
@@ -510,12 +510,12 @@ class HttpUrl internal constructor(
   @get:JvmName("encodedPathSegments") val encodedPathSegments: List<String>
     get() {
       val pathStart = url.indexOf('/', scheme.length + 3)
-      val pathEnd = delimiterOffset(url, pathStart, url.length, "?#")
+      val pathEnd = url.delimiterOffset("?#", pathStart, url.length)
       val result = ArrayList<String>()
       var i = pathStart
       while (i < pathEnd) {
         i++ // Skip the '/'.
-        val segmentEnd = delimiterOffset(url, i, pathEnd, '/')
+        val segmentEnd = url.delimiterOffset('/', i, pathEnd)
         result.add(url.substring(i, segmentEnd))
         i = segmentEnd
       }
@@ -539,7 +539,7 @@ class HttpUrl internal constructor(
     get() {
       if (queryNamesAndValues == null) return null // No query.
       val queryStart = url.indexOf('?') + 1
-      val queryEnd = delimiterOffset(url, queryStart, url.length, '#')
+      val queryEnd = url.delimiterOffset('#', queryStart, url.length)
       return url.substring(queryStart, queryEnd)
     }
 
@@ -1020,7 +1020,7 @@ class HttpUrl internal constructor(
     private fun addPathSegments(pathSegments: String, alreadyEncoded: Boolean) = apply {
       var offset = 0
       do {
-        val segmentEnd = delimiterOffset(pathSegments, offset, pathSegments.length, "/\\")
+        val segmentEnd = pathSegments.delimiterOffset("/\\", offset, pathSegments.length)
         val addTrailingSlash = segmentEnd < pathSegments.length
         push(pathSegments, offset, segmentEnd, addTrailingSlash, alreadyEncoded)
         offset = segmentEnd + 1
@@ -1257,8 +1257,8 @@ class HttpUrl internal constructor(
     }
 
     internal fun parse(base: HttpUrl?, input: String): Builder {
-      var pos = input.indexOfFirstNonAsciiWhitespace(0, input.length)
-      val limit = input.indexOfLastNonAsciiWhitespace(pos, input.length)
+      var pos = input.indexOfFirstNonAsciiWhitespace()
+      val limit = input.indexOfLastNonAsciiWhitespace(pos)
 
       // Scheme.
       val schemeDelimiterOffset = schemeDelimiterOffset(input, pos, limit)
@@ -1298,7 +1298,7 @@ class HttpUrl internal constructor(
         //   [username[:password]@]host[:port]
         pos += slashCount
         authority@ while (true) {
-          val componentDelimiterOffset = delimiterOffset(input, pos, limit, "@/\\?#")
+          val componentDelimiterOffset = input.delimiterOffset("@/\\?#", pos, limit)
           val c = if (componentDelimiterOffset != limit) {
             input[componentDelimiterOffset].toInt()
           } else {
@@ -1308,7 +1308,7 @@ class HttpUrl internal constructor(
             '@'.toInt() -> {
               // User info precedes.
               if (!hasPassword) {
-                val passwordColonOffset = delimiterOffset(input, pos, componentDelimiterOffset, ':')
+                val passwordColonOffset = input.delimiterOffset(':', pos, componentDelimiterOffset)
                 val canonicalUsername = input.canonicalize(
                     pos = pos,
                     limit = passwordColonOffset,
@@ -1377,13 +1377,13 @@ class HttpUrl internal constructor(
       }
 
       // Resolve the relative path.
-      val pathDelimiterOffset = delimiterOffset(input, pos, limit, "?#")
+      val pathDelimiterOffset = input.delimiterOffset("?#", pos, limit)
       resolvePath(input, pos, pathDelimiterOffset)
       pos = pathDelimiterOffset
 
       // Query.
       if (pos < limit && input[pos] == '?') {
-        val queryDelimiterOffset = delimiterOffset(input, pos, limit, '#')
+        val queryDelimiterOffset = input.delimiterOffset('#', pos, limit)
         this.encodedQueryNamesAndValues = input.canonicalize(
             pos = pos + 1,
             limit = queryDelimiterOffset,
@@ -1429,7 +1429,7 @@ class HttpUrl internal constructor(
       // Read path segments.
       var i = pos
       while (i < limit) {
-        val pathSegmentDelimiterOffset = delimiterOffset(input, i, limit, "/\\")
+        val pathSegmentDelimiterOffset = input.delimiterOffset("/\\", i, limit)
         val segmentHasTrailingSlash = pathSegmentDelimiterOffset < limit
         push(input, i, pathSegmentDelimiterOffset, segmentHasTrailingSlash, true)
         i = pathSegmentDelimiterOffset
