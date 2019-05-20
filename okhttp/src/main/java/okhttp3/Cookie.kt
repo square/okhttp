@@ -344,10 +344,10 @@ data class Cookie private constructor(
       if (pairEqualsSign == cookiePairEnd) return null
 
       val cookieName = trimSubstring(setCookie, pos, pairEqualsSign)
-      if (cookieName.isEmpty() || indexOfControlOrNonAscii(cookieName) != -1) return null
+      if (cookieName.isEmpty() || cookieName.indexOfControlOrNonAscii() != -1) return null
 
       val cookieValue = trimSubstring(setCookie, pairEqualsSign + 1, cookiePairEnd)
-      if (indexOfControlOrNonAscii(cookieValue) != -1) return null
+      if (cookieValue.indexOfControlOrNonAscii() != -1) return null
 
       var expiresAt = HttpDate.MAX_DATE
       var deltaSeconds = -1L

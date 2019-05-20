@@ -217,19 +217,16 @@ fun delimiterOffset(input: String, pos: Int, limit: Int, delimiter: Char): Int {
 }
 
 /**
- * Returns the index of the first character in [input] that is either a control character
- * (like `\u0000` or `\n`) or a non-ASCII character. Returns -1 if [input] has no such
+ * Returns the index of the first character in [this] that is either a control character
+ * (like `\u0000` or `\n`) or a non-ASCII character. Returns -1 if [this] has no such
  * characters.
  */
-fun indexOfControlOrNonAscii(input: String): Int {
-  var i = 0
-  val length = input.length
-  while (i < length) {
-    val c = input[i]
+fun String.indexOfControlOrNonAscii(): Int {
+  for (i in 0 until length) {
+    val c = this[i]
     if (c <= '\u001f' || c >= '\u007f') {
       return i
     }
-    i++
   }
   return -1
 }
