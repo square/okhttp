@@ -289,5 +289,4 @@ fun HttpUrl.canReuseConnectionFor(other: HttpUrl): Boolean = host == other.host 
     port == other.port &&
     scheme == other.scheme
 
-fun eventListenerFactory(listener: EventListener): EventListener.Factory =
-    EventListener.Factory { listener }
+fun EventListener.asFactory() = EventListener.Factory { this }
