@@ -138,14 +138,16 @@ object Util {
   }
 
   fun hostHeader(url: HttpUrl, includeDefaultPort: Boolean): String {
-    val host = if (url.host().contains(":"))
+    val host = if (":" in url.host()) {
       "[${url.host()}]"
-    else
+    } else {
       url.host()
-    return if (includeDefaultPort || url.port() != HttpUrl.defaultPort(url.scheme()))
+    }
+    return if (includeDefaultPort || url.port() != HttpUrl.defaultPort(url.scheme())) {
       "$host:${url.port()}"
-    else
+    } else {
       host
+    }
   }
 
   fun indexOf(comparator: Comparator<String>, array: Array<String>, value: String): Int =
@@ -197,7 +199,7 @@ object Util {
    */
   fun delimiterOffset(input: String, pos: Int, limit: Int, delimiters: String): Int {
     for (i in pos until limit) {
-      if (delimiters.indexOf(input[i]) != -1) return i
+      if (input[i] in delimiters) return i
     }
     return limit
   }

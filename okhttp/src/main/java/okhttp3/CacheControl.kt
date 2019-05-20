@@ -338,7 +338,7 @@ class CacheControl private constructor(
               // Quoted string.
               pos++ // Consume '"' open quote.
               val parameterStart = pos
-              pos = value.indexOfElement("\"", pos)
+              pos = value.indexOf('"', pos)
               parameter = value.substring(parameterStart, pos)
               pos++ // Consume '"' close quote (if necessary).
             } else {

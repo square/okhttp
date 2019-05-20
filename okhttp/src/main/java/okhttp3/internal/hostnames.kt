@@ -33,7 +33,7 @@ fun String.toCanonicalHost(): String? {
   val host: String = this
 
   // If the input contains a :, it’s an IPv6 address.
-  if (host.contains(":")) {
+  if (":" in host) {
     // If the input is encased in square braces "[...]", drop 'em.
     val inetAddress = (if (host.startsWith("[") && host.endsWith("]")) {
       decodeIpv6(host, 1, host.length - 1)

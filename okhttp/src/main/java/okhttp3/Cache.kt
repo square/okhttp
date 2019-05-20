@@ -752,11 +752,7 @@ class Cache internal constructor(
     }
 
     /** Returns true if a Vary header contains an asterisk. Such responses cannot be cached. */
-    fun Response.hasVaryAll(): Boolean {
-      val responseHeaders = headers()
-      val varyFields = responseHeaders.varyFields()
-      return varyFields.contains("*")
-    }
+    fun Response.hasVaryAll() = "*" in headers().varyFields()
 
     /**
      * Returns the names of the request headers that need to be checked for equality when caching.
@@ -801,7 +797,7 @@ class Cache internal constructor(
       val result = Headers.Builder()
       for (i in 0 until requestHeaders.size) {
         val fieldName = requestHeaders.name(i)
-        if (varyFields.contains(fieldName)) {
+        if (fieldName in varyFields) {
           result.add(fieldName, requestHeaders.value(i))
         }
       }

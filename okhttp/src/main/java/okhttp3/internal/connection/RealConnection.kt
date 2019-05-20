@@ -157,7 +157,7 @@ class RealConnection(
             "CLEARTEXT communication to $host not permitted by network security policy"))
       }
     } else {
-      if (route.address().protocols.contains(Protocol.H2_PRIOR_KNOWLEDGE)) {
+      if (Protocol.H2_PRIOR_KNOWLEDGE in route.address().protocols) {
         throw RouteException(UnknownServiceException(
             "H2_PRIOR_KNOWLEDGE cannot be used with HTTPS"))
       }
@@ -293,7 +293,7 @@ class RealConnection(
     eventListener: EventListener
   ) {
     if (route.address().sslSocketFactory == null) {
-      if (route.address().protocols.contains(Protocol.H2_PRIOR_KNOWLEDGE)) {
+      if (Protocol.H2_PRIOR_KNOWLEDGE in route.address().protocols) {
         socket = rawSocket
         protocol = Protocol.H2_PRIOR_KNOWLEDGE
         startHttp2(pingIntervalMillis)

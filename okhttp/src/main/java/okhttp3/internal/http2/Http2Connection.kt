@@ -790,7 +790,7 @@ class Http2Connection internal constructor(builder: Builder) : Closeable {
 
   internal fun pushRequestLater(streamId: Int, requestHeaders: List<Header>) {
     synchronized(this) {
-      if (currentPushRequests.contains(streamId)) {
+      if (streamId in currentPushRequests) {
         writeSynResetLater(streamId, ErrorCode.PROTOCOL_ERROR)
         return
       }

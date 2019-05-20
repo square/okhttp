@@ -27,7 +27,7 @@ import okio.GzipSource
 import java.io.EOFException
 import java.io.IOException
 import java.nio.charset.Charset
-import java.nio.charset.StandardCharsets
+import java.nio.charset.StandardCharsets.UTF_8
 import java.util.TreeSet
 import java.util.concurrent.TimeUnit
 
@@ -199,7 +199,7 @@ class HttpLoggingInterceptor @JvmOverloads constructor(
         requestBody.writeTo(buffer)
 
         val contentType = requestBody.contentType()
-        val charset: Charset = contentType?.charset(UTF8) ?: UTF8
+        val charset: Charset = contentType?.charset(UTF_8) ?: UTF_8
 
         logger.log("")
         if (buffer.isUtf8()) {
@@ -254,7 +254,7 @@ class HttpLoggingInterceptor @JvmOverloads constructor(
         }
 
         val contentType = responseBody.contentType()
-        val charset: Charset = contentType?.charset(UTF8) ?: UTF8
+        val charset: Charset = contentType?.charset(UTF_8) ?: UTF_8
 
         if (!buffer.isUtf8()) {
           logger.log("")
@@ -279,13 +279,11 @@ class HttpLoggingInterceptor @JvmOverloads constructor(
   }
 
   private fun logHeader(headers: Headers, i: Int) {
-    val value = if (headersToRedact.contains(headers.name(i))) "██" else headers.value(i)
+    val value = if (headers.name(i) in headersToRedact) "██" else headers.value(i)
     logger.log(headers.name(i) + ": " + value)
   }
 
   companion object {
-    private val UTF8 = StandardCharsets.UTF_8
-
     /**
      * Returns true if the body in question probably contains human readable text. Uses a small
      * sample of code points to detect unicode control characters commonly used in binary file
@@ -294,7 +292,7 @@ class HttpLoggingInterceptor @JvmOverloads constructor(
     internal fun Buffer.isUtf8(): Boolean {
       try {
         val prefix = Buffer()
-        val byteCount = if (size < 64) size else 64
+        val byteCount = size.coerceAtMost(64)
         copyTo(prefix, 0, byteCount)
         for (i in 0 until 16) {
           if (prefix.exhausted()) {
