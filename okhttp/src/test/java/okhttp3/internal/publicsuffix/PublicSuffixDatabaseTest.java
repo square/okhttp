@@ -17,13 +17,13 @@ package okhttp3.internal.publicsuffix;
 
 import java.io.IOException;
 import java.io.InputStream;
-import okhttp3.internal.Util;
 import okio.Buffer;
 import okio.BufferedSource;
 import okio.GzipSource;
 import okio.Okio;
 import org.junit.Test;
 
+import static okhttp3.internal.HostnamesKt.toCanonicalHost;
 import static okhttp3.internal.publicsuffix.PublicSuffixDatabase.PUBLIC_SUFFIX_RESOURCE;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.fail;
@@ -274,14 +274,14 @@ public final class PublicSuffixDatabaseTest {
       return;
     }
 
-    String canonicalDomain = Util.canonicalizeHost(domain);
+    String canonicalDomain = toCanonicalHost(domain);
     if (canonicalDomain == null) return;
 
     String result = publicSuffixDatabase.getEffectiveTldPlusOne(canonicalDomain);
     if (registrablePart == null) {
       assertThat(result).isNull();
     } else {
-      assertThat(result).isEqualTo(Util.canonicalizeHost(registrablePart));
+      assertThat(result).isEqualTo(toCanonicalHost(registrablePart));
     }
   }
 }

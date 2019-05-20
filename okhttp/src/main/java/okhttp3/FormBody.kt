@@ -16,6 +16,7 @@
 package okhttp3
 
 import okhttp3.HttpUrl.Companion.FORM_ENCODE_SET
+import okhttp3.HttpUrl.Companion.canonicalize
 import okhttp3.HttpUrl.Companion.percentDecode
 import okhttp3.internal.toImmutableList
 import okio.Buffer
@@ -43,11 +44,11 @@ class FormBody internal constructor(
 
   fun encodedName(index: Int) = encodedNames[index]
 
-  fun name(index: Int) = percentDecode(encodedName(index), true)
+  fun name(index: Int) = encodedName(index).percentDecode(plusIsSpace = true)
 
   fun encodedValue(index: Int) = encodedValues[index]
 
-  fun value(index: Int) = percentDecode(encodedValue(index), true)
+  fun value(index: Int) = encodedValue(index).percentDecode(plusIsSpace = true)
 
   override fun contentType() = CONTENT_TYPE
 
@@ -88,13 +89,31 @@ class FormBody internal constructor(
     private val values = mutableListOf<String>()
 
     fun add(name: String, value: String) = apply {
-      names += HttpUrl.canonicalize(name, FORM_ENCODE_SET, false, false, true, true, charset)
-      values += HttpUrl.canonicalize(value, FORM_ENCODE_SET, false, false, true, true, charset)
+      names += name.canonicalize(
+          encodeSet = FORM_ENCODE_SET,
+          plusIsSpace = true,
+          charset = charset
+      )
+      values += value.canonicalize(
+          encodeSet = FORM_ENCODE_SET,
+          plusIsSpace = true,
+          charset = charset
+      )
     }
 
     fun addEncoded(name: String, value: String) = apply {
-      names += HttpUrl.canonicalize(name, FORM_ENCODE_SET, true, false, true, true, charset)
-      values += HttpUrl.canonicalize(value, FORM_ENCODE_SET, true, false, true, true, charset)
+      names += name.canonicalize(
+          encodeSet = FORM_ENCODE_SET,
+          alreadyEncoded = true,
+          plusIsSpace = true,
+          charset = charset
+      )
+      values += value.canonicalize(
+          encodeSet = FORM_ENCODE_SET,
+          alreadyEncoded = true,
+          plusIsSpace = true,
+          charset = charset
+      )
     }
 
     fun build(): FormBody = FormBody(names, values)
