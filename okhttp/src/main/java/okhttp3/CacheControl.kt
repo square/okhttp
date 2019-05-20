@@ -193,7 +193,7 @@ class CacheControl private constructor(
      *     precision; finer precision will be lost.
      */
     fun maxAge(maxAge: Int, timeUnit: TimeUnit) = apply {
-      if (maxAge < 0) throw IllegalArgumentException("maxAge < 0: $maxAge")
+      require(maxAge >= 0) { "maxAge < 0: $maxAge" }
       val maxAgeSecondsLong = timeUnit.toSeconds(maxAge.toLong())
       this.maxAgeSeconds = maxAgeSecondsLong.clampToInt()
     }
@@ -206,7 +206,7 @@ class CacheControl private constructor(
      *     [TimeUnit.SECONDS] precision; finer precision will be lost.
      */
     fun maxStale(maxStale: Int, timeUnit: TimeUnit) = apply {
-      if (maxStale < 0) throw IllegalArgumentException("maxStale < 0: $maxStale")
+      require(maxStale >= 0) { "maxStale < 0: $maxStale" }
       val maxStaleSecondsLong = timeUnit.toSeconds(maxStale.toLong())
       this.maxStaleSeconds = maxStaleSecondsLong.clampToInt()
     }
@@ -220,7 +220,7 @@ class CacheControl private constructor(
      *     [TimeUnit.SECONDS] precision; finer precision will be lost.
      */
     fun minFresh(minFresh: Int, timeUnit: TimeUnit) = apply {
-      if (minFresh < 0) throw IllegalArgumentException("minFresh < 0: $minFresh")
+      require(minFresh >= 0) { "minFresh < 0: $minFresh" }
       val minFreshSecondsLong = timeUnit.toSeconds(minFresh.toLong())
       this.minFreshSeconds = minFreshSecondsLong.clampToInt()
     }

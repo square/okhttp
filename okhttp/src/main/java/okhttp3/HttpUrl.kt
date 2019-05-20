@@ -877,7 +877,7 @@ class HttpUrl internal constructor(
     }
 
     fun port(port: Int): Builder {
-      if (port <= 0 || port > 65535) throw IllegalArgumentException("unexpected port: $port")
+      require(port in 1..65535) { "unexpected port: $port" }
       this.port = port
       return this
     }
@@ -926,8 +926,8 @@ class HttpUrl internal constructor(
 
     fun setPathSegment(index: Int, pathSegment: String): Builder {
       val canonicalPathSegment = pathSegment.canonicalize(encodeSet = PATH_SEGMENT_ENCODE_SET)
-      if (isDot(canonicalPathSegment) || isDotDot(canonicalPathSegment)) {
-        throw IllegalArgumentException("unexpected path segment: $pathSegment")
+      require(!isDot(canonicalPathSegment) && !isDotDot(canonicalPathSegment)) {
+        "unexpected path segment: $pathSegment"
       }
       encodedPathSegments[index] = canonicalPathSegment
       return this
@@ -939,8 +939,8 @@ class HttpUrl internal constructor(
           alreadyEncoded = true
       )
       encodedPathSegments[index] = canonicalPathSegment
-      if (isDot(canonicalPathSegment) || isDotDot(canonicalPathSegment)) {
-        throw IllegalArgumentException("unexpected path segment: $encodedPathSegment")
+      require(!isDot(canonicalPathSegment) && !isDotDot(canonicalPathSegment)) {
+        "unexpected path segment: $encodedPathSegment"
       }
       return this
     }
@@ -954,9 +954,7 @@ class HttpUrl internal constructor(
     }
 
     fun encodedPath(encodedPath: String): Builder {
-      if (!encodedPath.startsWith("/")) {
-        throw IllegalArgumentException("unexpected encodedPath: $encodedPath")
-      }
+      require(encodedPath.startsWith("/")) { "unexpected encodedPath: $encodedPath" }
       resolvePath(encodedPath, 0, encodedPath.length)
       return this
     }

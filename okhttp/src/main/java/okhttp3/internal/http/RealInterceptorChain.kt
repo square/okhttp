@@ -77,10 +77,7 @@ class RealInterceptorChain(
 
   fun transmitter(): Transmitter = transmitter
 
-  fun exchange(): Exchange {
-    if (exchange == null) throw IllegalStateException()
-    return exchange
-  }
+  fun exchange(): Exchange = exchange!!
 
   override fun call(): Call = call
 
@@ -97,15 +94,13 @@ class RealInterceptorChain(
     calls++
 
     // If we already have a stream, confirm that the incoming request will use it.
-    if (this.exchange != null && !this.exchange.connection()!!.supportsUrl(request.url())) {
-      throw IllegalStateException("network interceptor " + interceptors[index - 1] +
-          " must retain the same host and port")
+    check(this.exchange == null || this.exchange.connection()!!.supportsUrl(request.url())) {
+      "network interceptor ${interceptors[index - 1]} must retain the same host and port"
     }
 
     // If we already have a stream, confirm that this is the only call to chain.proceed().
-    if (this.exchange != null && calls > 1) {
-      throw IllegalStateException("network interceptor " + interceptors[index - 1] +
-          " must call proceed() exactly once")
+    check(this.exchange == null || calls <= 1) {
+      "network interceptor ${interceptors[index - 1]} must call proceed() exactly once"
     }
 
     // Call the next interceptor in the chain.
@@ -118,15 +113,11 @@ class RealInterceptorChain(
         "interceptor $interceptor returned null")
 
     // Confirm that the next interceptor made its required call to chain.proceed().
-    if (exchange != null && index + 1 < interceptors.size && next.calls != 1) {
-      throw IllegalStateException("network interceptor " + interceptor +
-          " must call proceed() exactly once")
+    check(exchange == null || index + 1 >= interceptors.size || next.calls == 1) {
+      "network interceptor $interceptor must call proceed() exactly once"
     }
 
-    if (response.body() == null) {
-      throw IllegalStateException(
-          "interceptor $interceptor returned a response with no body")
-    }
+    check(response.body() != null) { "interceptor $interceptor returned a response with no body" }
 
     return response
   }

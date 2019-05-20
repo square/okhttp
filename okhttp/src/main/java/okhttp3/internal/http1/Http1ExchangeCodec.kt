@@ -383,8 +383,8 @@ class Http1ExchangeCodec(
     }
 
     override fun read(sink: Buffer, byteCount: Long): Long {
-      if (byteCount < 0L) throw IllegalArgumentException("byteCount < 0: $byteCount")
-      if (closed) throw IllegalStateException("closed")
+      require(byteCount >= 0L) { "byteCount < 0: $byteCount" }
+      check(!closed) { "closed" }
       if (bytesRemaining == 0L) return -1
 
       val read = super.read(sink, minOf(bytesRemaining, byteCount))

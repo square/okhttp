@@ -352,7 +352,7 @@ class Cache internal constructor(
       }
 
       override fun remove() {
-        if (!canRemove) throw IllegalStateException("remove() before next()")
+        check(canRemove) { "remove() before next()" }
         delegate.remove()
       }
     }
