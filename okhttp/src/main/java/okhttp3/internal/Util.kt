@@ -280,8 +280,8 @@ fun toHeaders(headerBlock: List<Header>): Headers {
   return builder.build()
 }
 
-fun toHeaderBlock(headers: Headers): List<Header> = (0 until headers.size).map {
-  Header(headers.name(it), headers.value(it))
+fun Headers.toHeaderList(): List<Header> = (0 until size).map {
+  Header(name(it), value(it))
 }
 
 /** Returns true if an HTTP request for [this] and [other] can reuse a connection. */
