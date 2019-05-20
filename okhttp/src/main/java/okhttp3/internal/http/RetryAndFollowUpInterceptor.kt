@@ -20,7 +20,7 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
 import okhttp3.Route
-import okhttp3.internal.Util.sameConnection
+import okhttp3.internal.sameConnection
 import okhttp3.internal.closeQuietly
 import okhttp3.internal.connection.RouteException
 import okhttp3.internal.connection.Transmitter

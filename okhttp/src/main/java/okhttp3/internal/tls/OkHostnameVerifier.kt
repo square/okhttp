@@ -16,7 +16,7 @@
  */
 package okhttp3.internal.tls
 
-import okhttp3.internal.Util.verifyAsIpAddress
+import okhttp3.internal.verifyAsIpAddress
 import java.security.cert.CertificateParsingException
 import java.security.cert.X509Certificate
 import java.util.Locale

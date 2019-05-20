@@ -31,8 +31,9 @@ import okhttp3.Protocol
 import okhttp3.Request
 import okhttp3.Response
 import okhttp3.Route
-import okhttp3.internal.Util
+import okhttp3.internal.EMPTY_RESPONSE
 import okhttp3.internal.closeQuietly
+import okhttp3.internal.hostHeader
 import okhttp3.internal.http.ExchangeCodec
 import okhttp3.internal.http1.Http1ExchangeCodec
 import okhttp3.internal.http2.ConnectionShutdownException
@@ -408,7 +409,7 @@ class RealConnection(
   ): Request? {
     var nextRequest = tunnelRequest
     // Make an SSL Tunnel on the first message pair of each SSL + proxy connection.
-    val requestLine = """CONNECT ${Util.hostHeader(url, true)} HTTP/1.1"""
+    val requestLine = """CONNECT ${hostHeader(url, true)} HTTP/1.1"""
     while (true) {
       val source = this.source!!
       val sink = this.sink!!
@@ -462,7 +463,7 @@ class RealConnection(
     val proxyConnectRequest = Request.Builder()
         .url(route.address().url)
         .method("CONNECT", null)
-        .header("Host", Util.hostHeader(route.address().url, true))
+        .header("Host", hostHeader(route.address().url, true))
         .header("Proxy-Connection", "Keep-Alive") // For HTTP/1.0 proxies like Squid.
         .header("User-Agent", userAgent)
         .build()
@@ -472,7 +473,7 @@ class RealConnection(
         .protocol(Protocol.HTTP_1_1)
         .code(HTTP_PROXY_AUTH)
         .message("Preemptive Authenticate")
-        .body(Util.EMPTY_RESPONSE)
+        .body(EMPTY_RESPONSE)
         .sentRequestAtMillis(-1L)
         .receivedResponseAtMillis(-1L)
         .header("Proxy-Authenticate", "OkHttp-Preemptive")

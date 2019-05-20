@@ -58,7 +58,7 @@ public final class SocksProxy {
   private static final Logger logger = Logger.getLogger(SocksProxy.class.getName());
 
   private final ExecutorService executor = Executors.newCachedThreadPool(
-      Util.INSTANCE.threadFactory("SocksProxy", false));
+      Util.threadFactory("SocksProxy", false));
 
   private ServerSocket serverSocket;
   private AtomicInteger connectionCount = new AtomicInteger();

@@ -16,7 +16,7 @@
 package okhttp3
 
 import okhttp3.RealCall.AsyncCall
-import okhttp3.internal.Util
+import okhttp3.internal.threadFactory
 import java.util.ArrayDeque
 import java.util.ArrayList
 import java.util.Collections
@@ -92,7 +92,7 @@ class Dispatcher constructor() {
   @Synchronized fun executorService(): ExecutorService {
     if (executorService == null) {
       executorService = ThreadPoolExecutor(0, Int.MAX_VALUE, 60, TimeUnit.SECONDS,
-          SynchronousQueue(), Util.threadFactory("OkHttp Dispatcher", false))
+          SynchronousQueue(), threadFactory("OkHttp Dispatcher", false))
     }
     return executorService!!
   }

@@ -16,7 +16,8 @@
 package okhttp3.internal.http2
 
 import okhttp3.Headers
-import okhttp3.internal.Util
+import okhttp3.internal.EMPTY_HEADERS
+import okhttp3.internal.toHeaderBlock
 import okhttp3.internal.wait
 import okio.AsyncTimeout
 import okio.Buffer
@@ -156,7 +157,7 @@ class Http2Stream internal constructor(
     check(source.finished && source.receiveBuffer.exhausted() && source.readBuffer.exhausted()) {
       "too early; can't read the trailers yet"
     }
-    return source.trailers ?: Util.EMPTY_HEADERS
+    return source.trailers ?: EMPTY_HEADERS
   }
 
   /**
@@ -570,7 +571,7 @@ class Http2Stream internal constructor(
             while (sendBuffer.size > 0L) {
               emitFrame(false)
             }
-            connection.writeHeaders(id, true, Util.toHeaderBlock(trailers!!))
+            connection.writeHeaders(id, true, toHeaderBlock(trailers!!))
           }
 
           hasData -> {

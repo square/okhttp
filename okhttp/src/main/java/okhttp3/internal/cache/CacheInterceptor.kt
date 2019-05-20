@@ -20,7 +20,7 @@ import okhttp3.Headers
 import okhttp3.Interceptor
 import okhttp3.Protocol
 import okhttp3.Response
-import okhttp3.internal.Util
+import okhttp3.internal.EMPTY_RESPONSE
 import okhttp3.internal.addHeaderLenient
 import okhttp3.internal.closeQuietly
 import okhttp3.internal.discard
@@ -64,7 +64,7 @@ class CacheInterceptor(internal val cache: InternalCache?) : Interceptor {
           .protocol(Protocol.HTTP_1_1)
           .code(HTTP_GATEWAY_TIMEOUT)
           .message("Unsatisfiable Request (only-if-cached)")
-          .body(Util.EMPTY_RESPONSE)
+          .body(EMPTY_RESPONSE)
           .sentRequestAtMillis(-1L)
           .receivedResponseAtMillis(System.currentTimeMillis())
           .build()

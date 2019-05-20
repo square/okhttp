@@ -17,7 +17,7 @@ package okhttp3.internal.http
 
 import okhttp3.Interceptor
 import okhttp3.Response
-import okhttp3.internal.Util
+import okhttp3.internal.EMPTY_RESPONSE
 import okio.buffer
 import java.io.IOException
 import java.net.ProtocolException
@@ -105,7 +105,7 @@ class CallServerInterceptor(private val forWebSocket: Boolean) : Interceptor {
     response = if (forWebSocket && code == 101) {
       // Connection is upgrading, but we need to ensure interceptors see a non-null response body.
       response.newBuilder()
-          .body(Util.EMPTY_RESPONSE)
+          .body(EMPTY_RESPONSE)
           .build()
     } else {
       response.newBuilder()

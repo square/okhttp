@@ -20,7 +20,7 @@ import okhttp3.Connection
 import okhttp3.Interceptor
 import okhttp3.Request
 import okhttp3.Response
-import okhttp3.internal.Util.checkDuration
+import okhttp3.internal.checkDuration
 import okhttp3.internal.connection.Exchange
 import okhttp3.internal.connection.Transmitter
 import java.io.IOException

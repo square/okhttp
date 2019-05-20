@@ -15,8 +15,8 @@
  */
 package okhttp3
 
-import okhttp3.internal.Util.delimiterOffset
-import okhttp3.internal.Util.trimSubstring
+import okhttp3.internal.delimiterOffset
+import okhttp3.internal.trimSubstring
 import okhttp3.internal.cookieToString
 import okhttp3.internal.platform.Platform
 import okhttp3.internal.platform.Platform.Companion.WARN

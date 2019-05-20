@@ -18,11 +18,11 @@ package okhttp3.internal.connection
 
 import okhttp3.Address
 import okhttp3.Route
-import okhttp3.internal.Util
 import okhttp3.internal.closeQuietly
 import okhttp3.internal.connection.Transmitter.TransmitterReference
 import okhttp3.internal.notifyAll
 import okhttp3.internal.platform.Platform
+import okhttp3.internal.threadFactory
 import okhttp3.internal.waitNanos
 import java.io.IOException
 import java.net.Proxy
@@ -257,7 +257,7 @@ class RealConnectionPool(
         Int.MAX_VALUE, // maximumPoolSize.
         60L, TimeUnit.SECONDS, // keepAliveTime.
         SynchronousQueue(),
-        Util.threadFactory("OkHttp ConnectionPool", true)
+        threadFactory("OkHttp ConnectionPool", true)
     )
   }
 }

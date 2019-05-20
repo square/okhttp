@@ -24,7 +24,7 @@ import okhttp3.Response
 import okhttp3.internal.userAgent
 import okio.GzipSource
 
-import okhttp3.internal.Util.hostHeader
+import okhttp3.internal.hostHeader
 import okio.buffer
 
 /**

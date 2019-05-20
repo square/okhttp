@@ -17,12 +17,13 @@ package okhttp3
 
 import okhttp3.Protocol.HTTP_1_1
 import okhttp3.Protocol.HTTP_2
-import okhttp3.internal.Util
-import okhttp3.internal.Util.checkDuration
+import okhttp3.internal.checkDuration
 import okhttp3.internal.cache.InternalCache
+import okhttp3.internal.eventListenerFactory
 import okhttp3.internal.toImmutableList
 import okhttp3.internal.immutableListOf
 import okhttp3.internal.platform.Platform
+import okhttp3.internal.platformTrustManager
 import okhttp3.internal.proxy.NullProxySelector
 import okhttp3.internal.tls.CertificateChainCleaner
 import okhttp3.internal.tls.OkHostnameVerifier
@@ -163,7 +164,7 @@ open class OkHttpClient internal constructor(
       this.sslSocketFactory = builder.sslSocketFactory
       this.certificateChainCleaner = builder.certificateChainCleaner
     } else {
-      val trustManager = Util.platformTrustManager()
+      val trustManager = platformTrustManager()
       Platform.get().configureTrustManager(trustManager)
       this.sslSocketFactory = newSslSocketFactory(trustManager)
       this.certificateChainCleaner = CertificateChainCleaner.get(trustManager)
@@ -279,7 +280,7 @@ open class OkHttpClient internal constructor(
     internal var connectionSpecs: List<ConnectionSpec> = DEFAULT_CONNECTION_SPECS
     internal val interceptors: MutableList<Interceptor> = mutableListOf()
     internal val networkInterceptors: MutableList<Interceptor> = mutableListOf()
-    internal var eventListenerFactory: EventListener.Factory = Util.eventListenerFactory(
+    internal var eventListenerFactory: EventListener.Factory = eventListenerFactory(
         EventListener.NONE)
     internal var proxySelector: ProxySelector = ProxySelector.getDefault() ?: NullProxySelector()
     internal var cookieJar: CookieJar = CookieJar.NO_COOKIES
@@ -793,7 +794,7 @@ open class OkHttpClient internal constructor(
      * @see EventListener for semantics and restrictions on listener implementations.
      */
     fun eventListener(eventListener: EventListener) = apply {
-      this.eventListenerFactory = Util.eventListenerFactory(eventListener)
+      this.eventListenerFactory = eventListenerFactory(eventListener)
     }
 
     /**

@@ -15,7 +15,7 @@
  */
 package okhttp3
 
-import okhttp3.internal.Util
+import okhttp3.internal.EMPTY_REQUEST
 import okhttp3.internal.http.HttpMethod
 import okhttp3.internal.toImmutableMap
 import java.net.URL
@@ -188,7 +188,7 @@ class Request internal constructor(
     open fun post(body: RequestBody) = method("POST", body)
 
     @JvmOverloads
-    open fun delete(body: RequestBody? = Util.EMPTY_REQUEST) = method("DELETE", body)
+    open fun delete(body: RequestBody? = EMPTY_REQUEST) = method("DELETE", body)
 
     open fun put(body: RequestBody) = method("PUT", body)
 

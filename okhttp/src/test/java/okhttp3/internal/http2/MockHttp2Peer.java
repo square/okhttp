@@ -51,7 +51,7 @@ public final class MockHttp2Peer implements Closeable {
   private final BlockingQueue<InFrame> inFrames = new LinkedBlockingQueue<>();
   private int port;
   private final ExecutorService executor = Executors.newSingleThreadExecutor(
-      Util.INSTANCE.threadFactory("MockHttp2Peer", false));
+      Util.threadFactory("MockHttp2Peer", false));
   private ServerSocket serverSocket;
   private Socket socket;
 

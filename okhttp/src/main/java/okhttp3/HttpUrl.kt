@@ -17,11 +17,11 @@ package okhttp3
 
 import okhttp3.HttpUrl.Companion.get
 import okhttp3.HttpUrl.Companion.parse
-import okhttp3.internal.Util.decodeHexDigit
-import okhttp3.internal.Util.delimiterOffset
-import okhttp3.internal.Util.skipLeadingAsciiWhitespace
-import okhttp3.internal.Util.skipTrailingAsciiWhitespace
-import okhttp3.internal.Util.verifyAsIpAddress
+import okhttp3.internal.decodeHexDigit
+import okhttp3.internal.delimiterOffset
+import okhttp3.internal.skipLeadingAsciiWhitespace
+import okhttp3.internal.skipTrailingAsciiWhitespace
+import okhttp3.internal.verifyAsIpAddress
 import okhttp3.internal.publicsuffix.PublicSuffixDatabase
 import okhttp3.internal.toCanonicalHost
 import okio.Buffer

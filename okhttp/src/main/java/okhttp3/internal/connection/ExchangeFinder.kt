@@ -21,9 +21,9 @@ import okhttp3.EventListener
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import okhttp3.Route
-import okhttp3.internal.Util
 import okhttp3.internal.closeQuietly
 import okhttp3.internal.http.ExchangeCodec
+import okhttp3.internal.sameConnection
 import java.io.IOException
 import java.net.Socket
 
@@ -307,6 +307,6 @@ class ExchangeFinder(
   private fun retryCurrentRoute(): Boolean {
     return transmitter.connection != null &&
         transmitter.connection!!.routeFailureCount == 0 &&
-        Util.sameConnection(transmitter.connection!!.route().address().url, address.url)
+        sameConnection(transmitter.connection!!.route().address().url, address.url)
   }
 }

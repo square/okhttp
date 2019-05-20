@@ -95,7 +95,7 @@ public final class WebSocketWriterTest {
     sink.close();
 
     assertData("817e");
-    assertData(Util.INSTANCE.format("%04x", length));
+    assertData(Util.format("%04x", length));
     assertData(bytes);
     assertThat(data.exhausted()).isTrue();
   }
@@ -199,7 +199,7 @@ public final class WebSocketWriterTest {
     // Write directly to the unbuffered sink. This ensures it will become single frame.
     sink.write(payload.clone(), byteCount);
     assertData("027e"); // 'e' == 4-byte follow-up length.
-    assertData(Util.INSTANCE.format("%04X", payload.completeSegmentByteCount()));
+    assertData(Util.format("%04X", payload.completeSegmentByteCount()));
     assertData(payload.readByteArray());
 
     sink.close();
@@ -219,7 +219,7 @@ public final class WebSocketWriterTest {
     // Write directly to the unbuffered sink. This ensures it will become single frame.
     sink.write(payload.clone(), byteCount);
     assertData("027f"); // 'f' == 16-byte follow-up length.
-    assertData(Util.INSTANCE.format("%016X", byteCount));
+    assertData(Util.format("%016X", byteCount));
     assertData(payload.readByteArray(byteCount));
 
     sink.close();
