@@ -23,7 +23,6 @@ import okhttp3.HttpUrl
 import okhttp3.RequestBody
 import okhttp3.ResponseBody
 import okhttp3.internal.http2.Header
-import okhttp3.internal.platform.Platform
 import okio.BufferedSource
 import okio.ByteString.Companion.decodeHex
 import okio.Options
@@ -38,7 +37,6 @@ import java.util.Locale
 import java.util.TimeZone
 import java.util.concurrent.ThreadFactory
 import java.util.concurrent.TimeUnit
-import javax.net.ssl.X509TrustManager
 import kotlin.text.Charsets.UTF_32BE
 import kotlin.text.Charsets.UTF_32LE
 
@@ -269,8 +267,6 @@ fun decodeHexDigit(c: Char): Int = when (c) {
   in 'A'..'F' -> c - 'A' + 10
   else -> -1
 }
-
-fun platformTrustManager(): X509TrustManager = Platform.get().platformTrustManager()
 
 fun toHeaders(headerBlock: List<Header>): Headers {
   val builder = Headers.Builder()
