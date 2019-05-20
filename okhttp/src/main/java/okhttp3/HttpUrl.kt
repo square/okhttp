@@ -20,10 +20,10 @@ import okhttp3.HttpUrl.Companion.parse
 import okhttp3.internal.decodeHexDigit
 import okhttp3.internal.delimiterOffset
 import okhttp3.internal.publicsuffix.PublicSuffixDatabase
+import okhttp3.internal.canParseAsIpAddress
 import okhttp3.internal.skipLeadingAsciiWhitespace
 import okhttp3.internal.skipTrailingAsciiWhitespace
 import okhttp3.internal.toCanonicalHost
-import okhttp3.internal.verifyAsIpAddress
 import okio.Buffer
 import java.net.InetAddress
 import java.net.MalformedURLException
@@ -789,7 +789,7 @@ class HttpUrl internal constructor(
    * </table>
    */
   fun topPrivateDomain(): String? {
-    return if (verifyAsIpAddress(host)) {
+    return if (host.canParseAsIpAddress()) {
       null
     } else {
       PublicSuffixDatabase.get().getEffectiveTldPlusOne(host)

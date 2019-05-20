@@ -234,9 +234,9 @@ fun indexOfControlOrNonAscii(input: String): Int {
   return -1
 }
 
-/** Returns true if [host] is not a host name and might be an IP address.  */
-fun verifyAsIpAddress(host: String): Boolean {
-  return VERIFY_AS_IP_ADDRESS.matches(host)
+/** Returns true if [this] is not a host name and might be an IP address.  */
+fun String.canParseAsIpAddress(): Boolean {
+  return VERIFY_AS_IP_ADDRESS.matches(this)
 }
 
 /** Returns a [Locale.US] formatted [String].  */

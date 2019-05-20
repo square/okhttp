@@ -19,8 +19,8 @@ import okhttp3.internal.UTC
 import okhttp3.internal.delimiterOffset
 import okhttp3.internal.indexOfControlOrNonAscii
 import okhttp3.internal.trimSubstring
-import okhttp3.internal.verifyAsIpAddress
 import okhttp3.internal.http.HttpDate
+import okhttp3.internal.canParseAsIpAddress
 import okhttp3.internal.publicsuffix.PublicSuffixDatabase
 import okhttp3.internal.toCanonicalHost
 import java.util.Calendar
@@ -309,7 +309,7 @@ data class Cookie private constructor(
 
       return urlHost.endsWith(domain) &&
           urlHost[urlHost.length - domain.length - 1] == '.' &&
-          !verifyAsIpAddress(urlHost)
+          !urlHost.canParseAsIpAddress()
     }
 
     private fun pathMatch(url: HttpUrl, path: String): Boolean {
