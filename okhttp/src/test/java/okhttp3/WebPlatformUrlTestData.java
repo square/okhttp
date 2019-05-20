@@ -82,7 +82,7 @@ public final class WebPlatformUrlTestData {
   }
 
   @Override public String toString() {
-    return Util.format("Parsing: <%s> against <%s>", input, base);
+    return Util.INSTANCE.format("Parsing: <%s> against <%s>", input, base);
   }
 
   public static List<WebPlatformUrlTestData> load(BufferedSource source) throws IOException {

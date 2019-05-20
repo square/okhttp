@@ -422,19 +422,19 @@ public final class RouteSelectorTest {
   @Test public void getHostString() throws Exception {
     // Name proxy specification.
     InetSocketAddress socketAddress = InetSocketAddress.createUnresolved("host", 1234);
-    assertThat(RouteSelector.getSocketHost(socketAddress)).isEqualTo("host");
+    assertThat(RouteSelector.Companion.getSocketHost(socketAddress)).isEqualTo("host");
     socketAddress = InetSocketAddress.createUnresolved("127.0.0.1", 1234);
-    assertThat(RouteSelector.getSocketHost(socketAddress)).isEqualTo("127.0.0.1");
+    assertThat(RouteSelector.Companion.getSocketHost(socketAddress)).isEqualTo("127.0.0.1");
 
     // InetAddress proxy specification.
     socketAddress = new InetSocketAddress(InetAddress.getByName("localhost"), 1234);
-    assertThat(RouteSelector.getSocketHost(socketAddress)).isEqualTo("127.0.0.1");
+    assertThat(RouteSelector.Companion.getSocketHost(socketAddress)).isEqualTo("127.0.0.1");
     socketAddress = new InetSocketAddress(
         InetAddress.getByAddress(new byte[] {127, 0, 0, 1}), 1234);
-    assertThat(RouteSelector.getSocketHost(socketAddress)).isEqualTo("127.0.0.1");
+    assertThat(RouteSelector.Companion.getSocketHost(socketAddress)).isEqualTo("127.0.0.1");
     socketAddress = new InetSocketAddress(
         InetAddress.getByAddress("foobar", new byte[] {127, 0, 0, 1}), 1234);
-    assertThat(RouteSelector.getSocketHost(socketAddress)).isEqualTo("127.0.0.1");
+    assertThat(RouteSelector.Companion.getSocketHost(socketAddress)).isEqualTo("127.0.0.1");
   }
 
   @Test public void routeToString() throws Exception {

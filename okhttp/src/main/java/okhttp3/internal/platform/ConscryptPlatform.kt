@@ -106,7 +106,6 @@ class ConscryptPlatform private constructor() : Platform() {
   }
 
   companion object {
-    @JvmStatic
     fun buildIfSupported(): ConscryptPlatform? = try {
       // Trigger an early exception over a fatal error, prefer a RuntimeException over Error.
       Class.forName("org.conscrypt.Conscrypt\$Version")
@@ -119,7 +118,6 @@ class ConscryptPlatform private constructor() : Platform() {
       null
     }
 
-    @JvmStatic @JvmOverloads
     fun atLeastVersion(major: Int, minor: Int = 0, patch: Int = 0): Boolean {
       val conscryptVersion = Conscrypt.version()
 

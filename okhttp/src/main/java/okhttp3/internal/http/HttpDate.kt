@@ -19,8 +19,8 @@ import okhttp3.internal.Util.UTC
 import java.text.DateFormat
 import java.text.ParsePosition
 import java.text.SimpleDateFormat
-import java.util.Locale
 import java.util.Date
+import java.util.Locale
 
 /**
  * Best-effort parser for HTTP dates.
@@ -69,7 +69,6 @@ object HttpDate {
   private val BROWSER_COMPATIBLE_DATE_FORMATS = arrayOfNulls<DateFormat>(BROWSER_COMPATIBLE_DATE_FORMAT_STRINGS.size)
 
   /** Returns the date for [value]. Returns null if the value couldn't be parsed.  */
-  @JvmStatic
   fun parse(value: String): Date? {
     if (value.isEmpty()) {
       return null
@@ -109,7 +108,6 @@ object HttpDate {
   }
 
   /** Returns the string for [value].  */
-  @JvmStatic
   fun format(value: Date): String {
     return STANDARD_DATE_FORMAT.get().format(value)
   }

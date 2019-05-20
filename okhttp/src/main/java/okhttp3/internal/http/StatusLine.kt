@@ -45,12 +45,10 @@ class StatusLine(
     const val HTTP_PERM_REDIRECT = 308
     const val HTTP_CONTINUE = 100
 
-    @JvmStatic
     fun get(response: Response): StatusLine {
       return StatusLine(response.protocol(), response.code(), response.message())
     }
 
-    @JvmStatic
     @Throws(IOException::class)
     fun parse(statusLine: String): StatusLine {
       // H T T P / 1 . 1   2 0 0   T e m p o r a r y   R e d i r e c t

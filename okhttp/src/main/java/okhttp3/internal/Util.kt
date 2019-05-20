@@ -83,7 +83,7 @@ object Util {
     }
   }
 
-  @JvmStatic fun threadFactory(
+  fun threadFactory(
     name: String,
     daemon: Boolean
   ): ThreadFactory = ThreadFactory { runnable ->
@@ -232,13 +232,11 @@ object Util {
   }
 
   /** Returns true if [host] is not a host name and might be an IP address.  */
-  @JvmStatic
   fun verifyAsIpAddress(host: String): Boolean {
     return VERIFY_AS_IP_ADDRESS.matches(host)
   }
 
   /** Returns a [Locale.US] formatted [String].  */
-  @JvmStatic
   fun format(format: String, vararg args: Any): String {
     return String.format(Locale.US, format, *args)
   }

@@ -95,7 +95,6 @@ object WebSocketProtocol {
   /** Used when an empty close frame was received (i.e., without a status code).  */
   internal const val CLOSE_NO_STATUS_CODE = 1005
 
-  @JvmStatic
   fun toggleMask(cursor: Buffer.UnsafeCursor, key: ByteArray) {
     var keyIndex = 0
     val keyLength = key.size
@@ -120,7 +119,6 @@ object WebSocketProtocol {
     } while (cursor.next() != -1)
   }
 
-  @JvmStatic
   fun closeCodeExceptionMessage(code: Int): String? {
     return if (code < 1000 || code >= 5000) {
       "Code must be in range [1000,5000): $code"
@@ -131,7 +129,6 @@ object WebSocketProtocol {
     }
   }
 
-  @JvmStatic
   fun validateCloseCode(code: Int) {
     val message = closeCodeExceptionMessage(code)
     if (message != null) {
@@ -139,7 +136,6 @@ object WebSocketProtocol {
     }
   }
 
-  @JvmStatic
   fun acceptHeader(key: String): String {
     return (key + ACCEPT_MAGIC).encodeUtf8().sha1().base64()
   }

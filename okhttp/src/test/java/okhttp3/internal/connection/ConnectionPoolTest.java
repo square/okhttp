@@ -34,7 +34,6 @@ import okhttp3.internal.RecordingOkAuthenticator;
 import org.junit.Test;
 
 import static okhttp3.TestUtil.awaitGarbageCollection;
-import static okhttp3.internal.connection.RealConnection.newTestConnection;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public final class ConnectionPoolTest {
@@ -79,7 +78,7 @@ public final class ConnectionPoolTest {
 
   @Test public void inUseConnectionsNotEvicted() throws Exception {
     ConnectionPool poolApi = new ConnectionPool(Integer.MAX_VALUE, 100L, TimeUnit.NANOSECONDS);
-    RealConnectionPool pool = Internal.realConnectionPool(poolApi);
+    RealConnectionPool pool = Internal.INSTANCE.realConnectionPool(poolApi);
     pool.setCleanupRunning(true); // Prevent the cleanup runnable from being started.
 
     RealConnection c1 = newConnection(pool, routeA1, 50L);
@@ -167,7 +166,7 @@ public final class ConnectionPoolTest {
 
   @Test public void leakedAllocation() throws Exception {
     ConnectionPool poolApi = new ConnectionPool(Integer.MAX_VALUE, 100L, TimeUnit.NANOSECONDS);
-    RealConnectionPool pool = Internal.realConnectionPool(poolApi);
+    RealConnectionPool pool = Internal.INSTANCE.realConnectionPool(poolApi);
     pool.setCleanupRunning(true); // Prevent the cleanup runnable from being started.
 
     RealConnection c1 = newConnection(pool, routeA1, 0L);
@@ -183,7 +182,7 @@ public final class ConnectionPoolTest {
 
   /** Use a helper method so there's no hidden reference remaining on the stack. */
   private void allocateAndLeakAllocation(ConnectionPool pool, RealConnection connection) {
-    synchronized (Internal.realConnectionPool(pool)) {
+    synchronized (Internal.INSTANCE.realConnectionPool(pool)) {
       OkHttpClient client = new OkHttpClient.Builder()
           .connectionPool(pool)
           .build();
@@ -195,7 +194,8 @@ public final class ConnectionPoolTest {
   }
 
   private RealConnection newConnection(RealConnectionPool pool, Route route, long idleAtNanos) {
-    RealConnection result = newTestConnection(pool, route, new Socket(), idleAtNanos);
+    RealConnection result = RealConnection.Companion.newTestConnection(
+        pool, route, new Socket(), idleAtNanos);
     synchronized (pool) {
       pool.put(result);
     }

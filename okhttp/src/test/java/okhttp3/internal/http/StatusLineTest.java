@@ -28,7 +28,8 @@ public final class StatusLineTest {
     String message = "Temporary Redirect";
     int version = 1;
     int code = 200;
-    StatusLine statusLine = StatusLine.parse("HTTP/1." + version + " " + code + " " + message);
+    StatusLine statusLine = StatusLine.Companion.parse(
+        "HTTP/1." + version + " " + code + " " + message);
     assertThat(statusLine.message).isEqualTo(message);
     assertThat(statusLine.protocol).isEqualTo(Protocol.HTTP_1_1);
     assertThat(statusLine.code).isEqualTo(code);
@@ -37,7 +38,7 @@ public final class StatusLineTest {
   @Test public void emptyMessage() throws IOException {
     int version = 1;
     int code = 503;
-    StatusLine statusLine = StatusLine.parse("HTTP/1." + version + " " + code + " ");
+    StatusLine statusLine = StatusLine.Companion.parse("HTTP/1." + version + " " + code + " ");
     assertThat(statusLine.message).isEqualTo("");
     assertThat(statusLine.protocol).isEqualTo(Protocol.HTTP_1_1);
     assertThat(statusLine.code).isEqualTo(code);
@@ -50,7 +51,7 @@ public final class StatusLineTest {
   @Test public void emptyMessageAndNoLeadingSpace() throws IOException {
     int version = 1;
     int code = 503;
-    StatusLine statusLine = StatusLine.parse("HTTP/1." + version + " " + code);
+    StatusLine statusLine = StatusLine.Companion.parse("HTTP/1." + version + " " + code);
     assertThat(statusLine.message).isEqualTo("");
     assertThat(statusLine.protocol).isEqualTo(Protocol.HTTP_1_1);
     assertThat(statusLine.code).isEqualTo(code);
@@ -58,7 +59,7 @@ public final class StatusLineTest {
 
   // https://github.com/square/okhttp/issues/386
   @Test public void shoutcast() throws IOException {
-    StatusLine statusLine = StatusLine.parse("ICY 200 OK");
+    StatusLine statusLine = StatusLine.Companion.parse("ICY 200 OK");
     assertThat(statusLine.message).isEqualTo("OK");
     assertThat(statusLine.protocol).isEqualTo(Protocol.HTTP_1_0);
     assertThat(statusLine.code).isEqualTo(200);
@@ -109,7 +110,7 @@ public final class StatusLineTest {
 
   private void assertInvalid(String statusLine) throws IOException {
     try {
-      StatusLine.parse(statusLine);
+      StatusLine.Companion.parse(statusLine);
       fail();
     } catch (ProtocolException expected) {
     }

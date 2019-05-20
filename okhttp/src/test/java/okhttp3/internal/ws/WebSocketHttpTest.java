@@ -764,7 +764,7 @@ public final class WebSocketHttpTest {
         .setStatus("HTTP/1.1 101 Switching Protocols")
         .setHeader("Connection", "Upgrade")
         .setHeader("Upgrade", "websocket")
-        .setHeader("Sec-WebSocket-Accept", WebSocketProtocol.acceptHeader(key));
+        .setHeader("Sec-WebSocket-Accept", WebSocketProtocol.INSTANCE.acceptHeader(key));
   }
 
   private void websocketScheme(String scheme) {

@@ -700,7 +700,6 @@ class RealConnection(
     private const val NPE_THROW_WITH_NULL = "throw with null exception"
     private const val MAX_TUNNEL_ATTEMPTS = 21
 
-    @JvmStatic
     fun newTestConnection(
       connectionPool: RealConnectionPool,
       route: Route,
