@@ -237,7 +237,7 @@ data class CertificatePinner internal constructor(
       if (pattern.startsWith(WILDCARD)) {
         val firstDot = hostname.indexOf('.')
         return hostname.length - firstDot - 1 == canonicalHostname.length &&
-            hostname.startsWith(canonicalHostname, ignoreCase = false, startIndex = firstDot + 1)
+            hostname.startsWith(canonicalHostname, startIndex = firstDot + 1)
       }
       return hostname == canonicalHostname
     }

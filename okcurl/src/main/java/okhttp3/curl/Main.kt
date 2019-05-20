@@ -205,7 +205,7 @@ class Main : Runnable {
   private fun mediaType(): MediaType? {
     val mimeType = headers?.let {
       for (header in it) {
-        val parts = header.split(':')
+        val parts = header.split(':', limit = 2)
         if ("Content-Type".equals(parts[0], ignoreCase = true)) {
           it.remove(header)
           return@let parts[1].trim()
