@@ -830,90 +830,78 @@ class HttpUrl internal constructor(
     /**
      * @param scheme either "http" or "https".
      */
-    fun scheme(scheme: String): Builder {
+    fun scheme(scheme: String) = apply {
       when {
         scheme.equals("http", ignoreCase = true) -> this.scheme = "http"
         scheme.equals("https", ignoreCase = true) -> this.scheme = "https"
         else -> throw IllegalArgumentException("unexpected scheme: $scheme")
       }
-      return this
     }
 
-    fun username(username: String): Builder {
+    fun username(username: String) = apply {
       this.encodedUsername = username.canonicalize(encodeSet = USERNAME_ENCODE_SET)
-      return this
     }
 
-    fun encodedUsername(encodedUsername: String): Builder {
+    fun encodedUsername(encodedUsername: String) = apply {
       this.encodedUsername = encodedUsername.canonicalize(
           encodeSet = USERNAME_ENCODE_SET,
           alreadyEncoded = true
       )
-      return this
     }
 
-    fun password(password: String): Builder {
+    fun password(password: String) = apply {
       this.encodedPassword = password.canonicalize(encodeSet = PASSWORD_ENCODE_SET)
-      return this
     }
 
-    fun encodedPassword(encodedPassword: String): Builder {
+    fun encodedPassword(encodedPassword: String) = apply {
       this.encodedPassword = encodedPassword.canonicalize(
           encodeSet = PASSWORD_ENCODE_SET,
           alreadyEncoded = true
       )
-      return this
     }
 
     /**
      * @param host either a regular hostname, International Domain Name, IPv4 address, or IPv6
      * address.
      */
-    fun host(host: String): Builder {
+    fun host(host: String) = apply {
       val encoded = host.percentDecode().toCanonicalHost() ?: throw IllegalArgumentException(
           "unexpected host: $host")
       this.host = encoded
-      return this
     }
 
-    fun port(port: Int): Builder {
+    fun port(port: Int) = apply {
       require(port in 1..65535) { "unexpected port: $port" }
       this.port = port
-      return this
     }
 
     private fun effectivePort(): Int {
       return if (port != -1) port else defaultPort(scheme!!)
     }
 
-    fun addPathSegment(pathSegment: String): Builder {
+    fun addPathSegment(pathSegment: String) = apply {
       push(pathSegment, 0, pathSegment.length, addTrailingSlash = false, alreadyEncoded = false)
-      return this
     }
 
     /**
      * Adds a set of path segments separated by a slash (either `\` or `/`). If `pathSegments`
      * starts with a slash, the resulting URL will have empty path segment.
      */
-    fun addPathSegments(pathSegments: String): Builder {
-      return addPathSegments(pathSegments, false)
-    }
+    fun addPathSegments(pathSegments: String): Builder = addPathSegments(pathSegments, false)
 
-    fun addEncodedPathSegment(encodedPathSegment: String): Builder {
+    fun addEncodedPathSegment(encodedPathSegment: String) = apply {
       push(encodedPathSegment, 0, encodedPathSegment.length, addTrailingSlash = false,
           alreadyEncoded = true)
-      return this
     }
 
     /**
      * Adds a set of encoded path segments separated by a slash (either `\` or `/`). If
      * `encodedPathSegments` starts with a slash, the resulting URL will have empty path segment.
      */
-    fun addEncodedPathSegments(encodedPathSegments: String): Builder {
-      return addPathSegments(encodedPathSegments, true)
-    }
+    fun addEncodedPathSegments(encodedPathSegments: String): Builder =
+        addPathSegments(encodedPathSegments, true)
 
-    private fun addPathSegments(pathSegments: String, alreadyEncoded: Boolean): Builder {
+    private fun addPathSegments(pathSegments: String, alreadyEncoded: Boolean) = apply {
       var offset = 0
       do {
         val segmentEnd = delimiterOffset(pathSegments, offset, pathSegments.length, "/\\")
@@ -921,19 +909,17 @@ class HttpUrl internal constructor(
         push(pathSegments, offset, segmentEnd, addTrailingSlash, alreadyEncoded)
         offset = segmentEnd + 1
       } while (offset <= pathSegments.length)
-      return this
     }
 
-    fun setPathSegment(index: Int, pathSegment: String): Builder {
+    fun setPathSegment(index: Int, pathSegment: String) = apply {
       val canonicalPathSegment = pathSegment.canonicalize(encodeSet = PATH_SEGMENT_ENCODE_SET)
       require(!isDot(canonicalPathSegment) && !isDotDot(canonicalPathSegment)) {
         "unexpected path segment: $pathSegment"
       }
       encodedPathSegments[index] = canonicalPathSegment
-      return this
     }
 
-    fun setEncodedPathSegment(index: Int, encodedPathSegment: String): Builder {
+    fun setEncodedPathSegment(index: Int, encodedPathSegment: String) = apply {
       val canonicalPathSegment = encodedPathSegment.canonicalize(
           encodeSet = PATH_SEGMENT_ENCODE_SET,
           alreadyEncoded = true
@@ -942,42 +928,37 @@ class HttpUrl internal constructor(
       require(!isDot(canonicalPathSegment) && !isDotDot(canonicalPathSegment)) {
         "unexpected path segment: $encodedPathSegment"
       }
-      return this
     }
 
-    fun removePathSegment(index: Int): Builder {
+    fun removePathSegment(index: Int) = apply {
       encodedPathSegments.removeAt(index)
       if (encodedPathSegments.isEmpty()) {
         encodedPathSegments.add("") // Always leave at least one '/'.
       }
-      return this
     }
 
-    fun encodedPath(encodedPath: String): Builder {
+    fun encodedPath(encodedPath: String) = apply {
       require(encodedPath.startsWith("/")) { "unexpected encodedPath: $encodedPath" }
       resolvePath(encodedPath, 0, encodedPath.length)
-      return this
     }
 
-    fun query(query: String?): Builder {
+    fun query(query: String?) = apply {
       this.encodedQueryNamesAndValues = query?.canonicalize(
           encodeSet = QUERY_ENCODE_SET,
           plusIsSpace = true
       )?.toQueryNamesAndValues()
-      return this
     }
 
-    fun encodedQuery(encodedQuery: String?): Builder {
+    fun encodedQuery(encodedQuery: String?) = apply {
       this.encodedQueryNamesAndValues = encodedQuery?.canonicalize(
           encodeSet = QUERY_ENCODE_SET,
           alreadyEncoded = true,
           plusIsSpace = true
       )?.toQueryNamesAndValues()
-      return this
     }
 
     /** Encodes the query parameter using UTF-8 and adds it to this URL's query string.  */
-    fun addQueryParameter(name: String, value: String?): Builder {
+    fun addQueryParameter(name: String, value: String?) = apply {
       if (encodedQueryNamesAndValues == null) encodedQueryNamesAndValues = ArrayList()
       encodedQueryNamesAndValues!!.add(name.canonicalize(
           encodeSet = QUERY_COMPONENT_ENCODE_SET,
@@ -987,11 +968,10 @@ class HttpUrl internal constructor(
           encodeSet = QUERY_COMPONENT_ENCODE_SET,
           plusIsSpace = true
       ))
-      return this
     }
 
     /** Adds the pre-encoded query parameter to this URL's query string.  */
-    fun addEncodedQueryParameter(encodedName: String, encodedValue: String?): Builder {
+    fun addEncodedQueryParameter(encodedName: String, encodedValue: String?) = apply {
       if (encodedQueryNamesAndValues == null) encodedQueryNamesAndValues = ArrayList()
       encodedQueryNamesAndValues!!.add(encodedName.canonicalize(
           encodeSet = QUERY_COMPONENT_REENCODE_SET,
@@ -1003,39 +983,34 @@ class HttpUrl internal constructor(
           alreadyEncoded = true,
           plusIsSpace = true
       ))
-      return this
     }
 
-    fun setQueryParameter(name: String, value: String?): Builder {
+    fun setQueryParameter(name: String, value: String?) = apply {
       removeAllQueryParameters(name)
       addQueryParameter(name, value)
-      return this
     }
 
-    fun setEncodedQueryParameter(encodedName: String, encodedValue: String?): Builder {
+    fun setEncodedQueryParameter(encodedName: String, encodedValue: String?) = apply {
       removeAllEncodedQueryParameters(encodedName)
       addEncodedQueryParameter(encodedName, encodedValue)
-      return this
     }
 
-    fun removeAllQueryParameters(name: String): Builder {
+    fun removeAllQueryParameters(name: String) = apply {
       if (encodedQueryNamesAndValues == null) return this
       val nameToRemove = name.canonicalize(
           encodeSet = QUERY_COMPONENT_ENCODE_SET,
           plusIsSpace = true
       )
       removeAllCanonicalQueryParameters(nameToRemove)
-      return this
     }
 
-    fun removeAllEncodedQueryParameters(encodedName: String): Builder {
+    fun removeAllEncodedQueryParameters(encodedName: String) = apply {
       if (encodedQueryNamesAndValues == null) return this
       removeAllCanonicalQueryParameters(encodedName.canonicalize(
           encodeSet = QUERY_COMPONENT_REENCODE_SET,
           alreadyEncoded = true,
           plusIsSpace = true
       ))
-      return this
     }
 
     private fun removeAllCanonicalQueryParameters(canonicalName: String) {
@@ -1053,28 +1028,26 @@ class HttpUrl internal constructor(
       }
     }
 
-    fun fragment(fragment: String?): Builder {
+    fun fragment(fragment: String?) = apply {
       this.encodedFragment = fragment?.canonicalize(
           encodeSet = FRAGMENT_ENCODE_SET,
           unicodeAllowed = true
       )
-      return this
     }
 
-    fun encodedFragment(encodedFragment: String?): Builder {
+    fun encodedFragment(encodedFragment: String?) = apply {
       this.encodedFragment = encodedFragment?.canonicalize(
           encodeSet = FRAGMENT_ENCODE_SET,
           alreadyEncoded = true,
           unicodeAllowed = true
       )
-      return this
     }
 
     /**
      * Re-encodes the components of this URL so that it satisfies (obsolete) RFC 2396, which is
      * particularly strict for certain components.
      */
-    internal fun reencodeForUri(): Builder {
+    internal fun reencodeForUri() = apply {
       for (i in 0 until encodedPathSegments.size) {
         encodedPathSegments[i] = encodedPathSegments[i].canonicalize(
             encodeSet = PATH_SEGMENT_ENCODE_SET_URI,
@@ -1098,7 +1071,6 @@ class HttpUrl internal constructor(
           strict = true,
           unicodeAllowed = true
       )
-      return this
     }
 
     fun build(): HttpUrl {

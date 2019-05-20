@@ -265,48 +265,39 @@ class DnsOverHttps internal constructor(builder: Builder) : Dns {
 
     fun build(): DnsOverHttps = DnsOverHttps(this)
 
-    fun client(client: OkHttpClient): Builder {
+    fun client(client: OkHttpClient) = apply {
       this.client = client
-      return this
     }
 
-    fun url(url: HttpUrl): Builder {
+    fun url(url: HttpUrl) = apply {
       this.url = url
-      return this
     }
 
-    fun includeIPv6(includeIPv6: Boolean): Builder {
+    fun includeIPv6(includeIPv6: Boolean) = apply {
       this.includeIPv6 = includeIPv6
-      return this
     }
 
-    fun post(post: Boolean): Builder {
+    fun post(post: Boolean) = apply {
       this.post = post
-      return this
     }
 
-    fun resolvePrivateAddresses(resolvePrivateAddresses: Boolean): Builder {
+    fun resolvePrivateAddresses(resolvePrivateAddresses: Boolean) = apply {
       this.resolvePrivateAddresses = resolvePrivateAddresses
-      return this
     }
 
-    fun resolvePublicAddresses(resolvePublicAddresses: Boolean): Builder {
+    fun resolvePublicAddresses(resolvePublicAddresses: Boolean) = apply {
       this.resolvePublicAddresses = resolvePublicAddresses
-      return this
     }
 
-    fun bootstrapDnsHosts(bootstrapDnsHosts: List<InetAddress>?): Builder {
+    fun bootstrapDnsHosts(bootstrapDnsHosts: List<InetAddress>?) = apply {
       this.bootstrapDnsHosts = bootstrapDnsHosts
-      return this
     }
 
-    fun bootstrapDnsHosts(vararg bootstrapDnsHosts: InetAddress): Builder {
-      return bootstrapDnsHosts(bootstrapDnsHosts.toList())
-    }
+    fun bootstrapDnsHosts(vararg bootstrapDnsHosts: InetAddress): Builder =
+        bootstrapDnsHosts(bootstrapDnsHosts.toList())
 
-    fun systemDns(systemDns: Dns): Builder {
+    fun systemDns(systemDns: Dns) = apply {
       this.systemDns = systemDns
-      return this
     }
   }
 
