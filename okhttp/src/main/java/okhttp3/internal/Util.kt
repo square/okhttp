@@ -162,11 +162,11 @@ fun concat(array: Array<String>, value: String): Array<String> {
 }
 
 /**
- * Increments [pos] until [input] is not ASCII whitespace. Stops at [limit].
+ * Increments [pos] until [this] is not ASCII whitespace. Stops at [limit].
  */
-fun skipLeadingAsciiWhitespace(input: String, pos: Int, limit: Int): Int {
+fun String.indexOfFirstNonAsciiWhitespace(pos: Int, limit: Int): Int {
   for (i in pos until limit) {
-    when (input[i]) {
+    when (this[i]) {
       '\t', '\n', '\u000C', '\r', ' ' -> Unit
       else -> return i
     }
@@ -177,9 +177,9 @@ fun skipLeadingAsciiWhitespace(input: String, pos: Int, limit: Int): Int {
 /**
  * Decrements [limit] until `input[limit - 1]` is not ASCII whitespace. Stops at [pos].
  */
-fun skipTrailingAsciiWhitespace(input: String, pos: Int, limit: Int): Int {
+fun String.indexOfLastNonAsciiWhitespace(pos: Int, limit: Int): Int {
   for (i in limit - 1 downTo pos) {
-    when (input[i]) {
+    when (this[i]) {
       '\t', '\n', '\u000C', '\r', ' ' -> Unit
       else -> return i + 1
     }
@@ -188,10 +188,10 @@ fun skipTrailingAsciiWhitespace(input: String, pos: Int, limit: Int): Int {
 }
 
 /** Equivalent to `string.substring(pos, limit).trim()`.  */
-fun trimSubstring(string: String, pos: Int, limit: Int): String {
-  val start = skipLeadingAsciiWhitespace(string, pos, limit)
-  val end = skipTrailingAsciiWhitespace(string, start, limit)
-  return string.substring(start, end)
+fun String.trimSubstring(pos: Int, limit: Int): String {
+  val start = indexOfFirstNonAsciiWhitespace(pos, limit)
+  val end = indexOfLastNonAsciiWhitespace(start, limit)
+  return substring(start, end)
 }
 
 /**
