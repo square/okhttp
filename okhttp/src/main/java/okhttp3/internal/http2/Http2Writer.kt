@@ -100,7 +100,7 @@ class Http2Writer(
     hpackWriter.writeHeaders(requestHeaders)
 
     val byteCount = hpackBuffer.size
-    val length = minOf((maxFrameSize - 4).toLong(), byteCount).toInt()
+    val length = minOf(maxFrameSize - 4L, byteCount).toInt()
     frameHeader(
         streamId = streamId,
         length = length + 4,
