@@ -16,13 +16,13 @@
 package okhttp3
 
 import okhttp3.internal.Util.UTC
-import okhttp3.internal.Util.canonicalizeHost
 import okhttp3.internal.Util.delimiterOffset
 import okhttp3.internal.Util.indexOfControlOrNonAscii
 import okhttp3.internal.Util.trimSubstring
 import okhttp3.internal.Util.verifyAsIpAddress
 import okhttp3.internal.http.HttpDate
 import okhttp3.internal.publicsuffix.PublicSuffixDatabase
+import okhttp3.internal.toCanonicalHost
 import java.util.Calendar
 import java.util.Collections
 import java.util.Date
@@ -262,7 +262,7 @@ data class Cookie private constructor(
     fun hostOnlyDomain(domain: String): Builder = domain(domain, true)
 
     private fun domain(domain: String, hostOnly: Boolean) = apply {
-      val canonicalDomain = canonicalizeHost(domain)
+      val canonicalDomain = domain.toCanonicalHost()
           ?: throw IllegalArgumentException("unexpected domain: $domain")
       this.domain = canonicalDomain
       this.hostOnly = hostOnly
@@ -558,7 +558,7 @@ data class Cookie private constructor(
      */
     private fun parseDomain(s: String): String {
       require(!s.endsWith("."))
-      return canonicalizeHost(s.removePrefix(".")) ?: throw IllegalArgumentException()
+      return s.removePrefix(".").toCanonicalHost() ?: throw IllegalArgumentException()
     }
 
     /** Returns all of the cookies from a set of HTTP response headers. */
