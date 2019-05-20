@@ -69,8 +69,6 @@ object Util {
   /** GMT and UTC are equivalent for our purposes.  */
   @JvmField val UTC = TimeZone.getTimeZone("GMT")!!
 
-  val NATURAL_ORDER = Comparator<String> { a, b -> a.compareTo(b) }
-
   /**
    * Quick and dirty pattern to differentiate IP addresses from hostnames. This is an approximation
    * of Android's private InetAddress#isNumeric API.

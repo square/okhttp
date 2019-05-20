@@ -16,7 +16,6 @@
 package okhttp3
 
 import okhttp3.ConnectionSpec.Builder
-import okhttp3.internal.Util
 import okhttp3.internal.Util.concat
 import okhttp3.internal.Util.indexOf
 import okhttp3.internal.Util.intersect
@@ -88,7 +87,7 @@ class ConnectionSpec internal constructor(builder: Builder) {
     }
 
     val tlsVersionsIntersection = if (tlsVersions != null) {
-      intersect(Util.NATURAL_ORDER, sslSocket.enabledProtocols, tlsVersions)
+      intersect(naturalOrder(), sslSocket.enabledProtocols, tlsVersions)
     } else {
       sslSocket.enabledProtocols
     }
@@ -126,7 +125,7 @@ class ConnectionSpec internal constructor(builder: Builder) {
     }
 
     if (tlsVersions != null &&
-        !nonEmptyIntersection(Util.NATURAL_ORDER, tlsVersions, socket.enabledProtocols)) {
+        !nonEmptyIntersection(naturalOrder(), tlsVersions, socket.enabledProtocols)) {
       return false
     }
 
