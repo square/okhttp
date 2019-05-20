@@ -25,9 +25,7 @@ import okhttp3.internal.connection.RealConnectionPool
  * packages.
  */
 object Internal {
-  @JvmStatic
   fun realConnectionPool(connectionPool: ConnectionPool): RealConnectionPool = connectionPool.delegate
 
-  @JvmStatic
   fun exchange(response: Response): Exchange? = response.exchange
 }

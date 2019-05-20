@@ -71,7 +71,6 @@ class Jdk9Platform(
   }
 
   companion object {
-    @JvmStatic
     fun buildIfSupported(): Jdk9Platform? =
         try {
           // Find JDK 9 methods

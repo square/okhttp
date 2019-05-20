@@ -662,7 +662,7 @@ public final class DiskLruCacheTest {
 
   @Test public void constructorDoesNotAllowZeroCacheSize() throws Exception {
     try {
-      DiskLruCache.create(fileSystem, cacheDir, appVersion, 2, 0);
+      DiskLruCache.Companion.create(fileSystem, cacheDir, appVersion, 2, 0);
       fail();
     } catch (IllegalArgumentException expected) {
     }
@@ -670,7 +670,7 @@ public final class DiskLruCacheTest {
 
   @Test public void constructorDoesNotAllowZeroValuesPerEntry() throws Exception {
     try {
-      DiskLruCache.create(fileSystem, cacheDir, appVersion, 0, 10);
+      DiskLruCache.Companion.create(fileSystem, cacheDir, appVersion, 0, 10);
       fail();
     } catch (IllegalArgumentException expected) {
     }
@@ -978,7 +978,7 @@ public final class DiskLruCacheTest {
   @Test public void openCreatesDirectoryIfNecessary() throws Exception {
     cache.close();
     File dir = tempDir.newFolder("testOpenCreatesDirectoryIfNecessary");
-    cache = DiskLruCache.create(fileSystem, dir, appVersion, 2, Integer.MAX_VALUE);
+    cache = DiskLruCache.Companion.create(fileSystem, dir, appVersion, 2, Integer.MAX_VALUE);
     set("a", "a", "a");
     assertThat(fileSystem.exists(new File(dir, "a.0"))).isTrue();
     assertThat(fileSystem.exists(new File(dir, "a.1"))).isTrue();

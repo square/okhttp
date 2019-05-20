@@ -44,7 +44,7 @@ public final class RecordingProxySelector extends ProxySelector {
 
   @Override public void connectFailed(URI uri, SocketAddress sa, IOException ioe) {
     InetSocketAddress socketAddress = (InetSocketAddress) sa;
-    failures.add(Util.format("%s %s:%d %s",
+    failures.add(Util.INSTANCE.format("%s %s:%d %s",
         uri, socketAddress, socketAddress.getPort(), ioe.getMessage()));
   }
 

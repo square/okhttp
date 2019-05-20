@@ -16,29 +16,24 @@
 package okhttp3.internal.http
 
 object HttpMethod {
-  @JvmStatic
   fun invalidatesCache(method: String): Boolean = (method == "POST" ||
       method == "PATCH" ||
       method == "PUT" ||
       method == "DELETE" ||
       method == "MOVE") // WebDAV
 
-  @JvmStatic
   fun requiresRequestBody(method: String): Boolean = (method == "POST" ||
       method == "PUT" ||
       method == "PATCH" ||
       method == "PROPPATCH" || // WebDAV
       method == "REPORT") // CalDAV/CardDAV (defined in WebDAV Versioning)
 
-  @JvmStatic
   fun permitsRequestBody(method: String): Boolean = !(method == "GET" || method == "HEAD")
 
-  @JvmStatic
   fun redirectsWithBody(method: String): Boolean =
       // (WebDAV) redirects should also maintain the request body
       method == "PROPFIND"
 
-  @JvmStatic
   fun redirectsToGet(method: String): Boolean =
       // All requests but PROPFIND should redirect to a GET request.
       method != "PROPFIND"

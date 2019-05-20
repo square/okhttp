@@ -37,22 +37,22 @@ public final class CertificateChainCleanerTest {
     HeldCertificate rootB = new HeldCertificate.Builder()
         .serialNumber(2L)
         .build();
-    assertThat(CertificateChainCleaner.get(rootB.certificate(), rootA.certificate())).isEqualTo(
-        CertificateChainCleaner.get(rootA.certificate(), rootB.certificate()));
+    assertThat(CertificateChainCleaner.Companion.get(rootB.certificate(), rootA.certificate()))
+        .isEqualTo(CertificateChainCleaner.Companion.get(rootA.certificate(), rootB.certificate()));
   }
 
   @Test public void equalsFromTrustManager() {
     HandshakeCertificates handshakeCertificates = new HandshakeCertificates.Builder().build();
     X509TrustManager x509TrustManager = handshakeCertificates.trustManager();
-    assertThat(CertificateChainCleaner.get(x509TrustManager)).isEqualTo(
-        CertificateChainCleaner.get(x509TrustManager));
+    assertThat(CertificateChainCleaner.Companion.get(x509TrustManager)).isEqualTo(
+        CertificateChainCleaner.Companion.get(x509TrustManager));
   }
 
   @Test public void normalizeSingleSelfSignedCertificate() throws Exception {
     HeldCertificate root = new HeldCertificate.Builder()
         .serialNumber(1L)
         .build();
-    CertificateChainCleaner cleaner = CertificateChainCleaner.get(root.certificate());
+    CertificateChainCleaner cleaner = CertificateChainCleaner.Companion.get(root.certificate());
     assertThat(cleaner.clean(list(root), "hostname")).isEqualTo(list(root));
   }
 
@@ -60,7 +60,7 @@ public final class CertificateChainCleanerTest {
     HeldCertificate root = new HeldCertificate.Builder()
         .serialNumber(1L)
         .build();
-    CertificateChainCleaner cleaner = CertificateChainCleaner.get();
+    CertificateChainCleaner cleaner = CertificateChainCleaner.Companion.get();
 
     try {
       cleaner.clean(list(root), "hostname");
@@ -82,7 +82,7 @@ public final class CertificateChainCleanerTest {
         .signedBy(certA)
         .build();
 
-    CertificateChainCleaner cleaner = CertificateChainCleaner.get(root.certificate());
+    CertificateChainCleaner cleaner = CertificateChainCleaner.Companion.get(root.certificate());
     assertThat(cleaner.clean(list(certB, certA, root), "hostname")).isEqualTo(
         list(certB, certA, root));
   }
@@ -100,7 +100,7 @@ public final class CertificateChainCleanerTest {
         .signedBy(certA)
         .build();
 
-    CertificateChainCleaner cleaner = CertificateChainCleaner.get(root.certificate());
+    CertificateChainCleaner cleaner = CertificateChainCleaner.Companion.get(root.certificate());
     // Root is added!
     assertThat(cleaner.clean(list(certB, certA), "hostname")).isEqualTo(
         list(certB, certA, root));
@@ -123,7 +123,7 @@ public final class CertificateChainCleanerTest {
         .signedBy(certB)
         .build();
 
-    CertificateChainCleaner cleaner = CertificateChainCleaner.get(root.certificate());
+    CertificateChainCleaner cleaner = CertificateChainCleaner.Companion.get(root.certificate());
     assertThat(cleaner.clean(list(certC, certA, root, certB), "hostname")).isEqualTo(
         list(certC, certB, certA, root));
   }
@@ -145,7 +145,7 @@ public final class CertificateChainCleanerTest {
         .signedBy(certB)
         .build();
 
-    CertificateChainCleaner cleaner = CertificateChainCleaner.get(root.certificate());
+    CertificateChainCleaner cleaner = CertificateChainCleaner.Companion.get(root.certificate());
     assertThat(cleaner.clean(list(certC, certA, certB), "hostname")).isEqualTo(
         list(certC, certB, certA, root));
   }
@@ -166,7 +166,7 @@ public final class CertificateChainCleanerTest {
         .serialNumber(4L)
         .build();
 
-    CertificateChainCleaner cleaner = CertificateChainCleaner.get(root.certificate());
+    CertificateChainCleaner cleaner = CertificateChainCleaner.Companion.get(root.certificate());
     assertThat(cleaner.clean(list(certB, certUnnecessary, certA, root), "hostname")).isEqualTo(
         list(certB, certA, root));
   }
@@ -188,7 +188,7 @@ public final class CertificateChainCleanerTest {
         .signedBy(certA)
         .build();
 
-    CertificateChainCleaner cleaner = CertificateChainCleaner.get(
+    CertificateChainCleaner cleaner = CertificateChainCleaner.Companion.get(
         selfSigned.certificate(), trusted.certificate());
     assertThat(cleaner.clean(list(certB, certA), "hostname")).isEqualTo(
         list(certB, certA, trusted, selfSigned));
@@ -215,7 +215,7 @@ public final class CertificateChainCleanerTest {
         .serialNumber(4L)
         .build();
 
-    CertificateChainCleaner cleaner = CertificateChainCleaner.get(trusted.certificate());
+    CertificateChainCleaner cleaner = CertificateChainCleaner.Companion.get(trusted.certificate());
     assertThat(cleaner.clean(list(certificate, intermediateCa), "hostname")).isEqualTo(
         list(certificate, intermediateCa, trusted));
     assertThat(cleaner.clean(list(certificate, intermediateCa, trusted), "hostname")).isEqualTo(
@@ -230,7 +230,7 @@ public final class CertificateChainCleanerTest {
     }
 
     X509Certificate root = heldCertificates.get(heldCertificates.size() - 1).certificate();
-    CertificateChainCleaner cleaner = CertificateChainCleaner.get(root);
+    CertificateChainCleaner cleaner = CertificateChainCleaner.Companion.get(root);
     assertThat(cleaner.clean(certificates, "hostname")).isEqualTo(certificates);
     assertThat(cleaner.clean(certificates.subList(0, 9), "hostname")).isEqualTo(
         certificates);
@@ -244,7 +244,7 @@ public final class CertificateChainCleanerTest {
     }
 
     X509Certificate root = heldCertificates.get(heldCertificates.size() - 1).certificate();
-    CertificateChainCleaner cleaner = CertificateChainCleaner.get(root);
+    CertificateChainCleaner cleaner = CertificateChainCleaner.Companion.get(root);
     try {
       cleaner.clean(certificates, "hostname");
       fail();

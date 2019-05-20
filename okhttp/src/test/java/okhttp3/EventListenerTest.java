@@ -89,7 +89,7 @@ public final class EventListenerTest {
         .eventListener(listener)
         .build();
 
-    listener.forbidLock(Internal.realConnectionPool(client.connectionPool()));
+    listener.forbidLock(Internal.INSTANCE.realConnectionPool(client.connectionPool()));
     listener.forbidLock(client.dispatcher());
   }
 

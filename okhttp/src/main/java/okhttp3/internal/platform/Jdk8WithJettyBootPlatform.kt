@@ -123,7 +123,6 @@ class Jdk8WithJettyBootPlatform(
   }
 
   companion object {
-    @JvmStatic
     fun buildIfSupported(): Platform? {
       val jvmVersion = System.getProperty("java.specification.version", "unknown")
       try {

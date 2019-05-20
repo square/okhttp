@@ -1421,7 +1421,6 @@ class HttpUrl internal constructor(
        * Returns the index of the ':' in `input` that is after scheme characters. Returns -1 if
        * `input` does not have a scheme that starts at `pos`.
        */
-      @JvmStatic
       private fun schemeDelimiterOffset(input: String, pos: Int, limit: Int): Int {
         if (limit - pos < 2) return -1
 
@@ -1493,7 +1492,6 @@ class HttpUrl internal constructor(
   }
 
   companion object {
-    @JvmStatic
     private val HEX_DIGITS =
         charArrayOf('0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F')
     internal const val USERNAME_ENCODE_SET = " \"':;<=>@[]^`{}|/\\?#"

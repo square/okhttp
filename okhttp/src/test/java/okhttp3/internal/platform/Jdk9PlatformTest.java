@@ -27,12 +27,12 @@ public class Jdk9PlatformTest {
 
   @Test
   public void buildsWhenJdk9() {
-    assertThat(Jdk9Platform.buildIfSupported()).isNotNull();
+    assertThat(Jdk9Platform.Companion.buildIfSupported()).isNotNull();
   }
 
   @Test
   public void findsAlpnMethods() {
-    Jdk9Platform platform = Jdk9Platform.buildIfSupported();
+    Jdk9Platform platform = Jdk9Platform.Companion.buildIfSupported();
 
     assertThat(platform.getProtocolMethod.getName()).isEqualTo("getApplicationProtocol");
     assertThat(platform.setProtocolMethod.getName()).isEqualTo("setApplicationProtocols");

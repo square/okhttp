@@ -35,7 +35,6 @@ object DnsRecordCodec {
   private const val TYPE_PTR = 0x000c
   private val ASCII = StandardCharsets.US_ASCII
 
-  @JvmStatic
   fun encodeQuery(host: String, type: Int): ByteString = Buffer().apply {
     writeShort(0) // query id
     writeShort(256) // flags with recursion
@@ -62,7 +61,6 @@ object DnsRecordCodec {
   }.readByteString()
 
   @Throws(Exception::class)
-  @JvmStatic
   fun decodeAnswers(hostname: String, byteString: ByteString): List<InetAddress> {
     val result = ArrayList<InetAddress>()
 

@@ -193,7 +193,6 @@ open class Platform {
     fun alpnProtocolNames(protocols: List<Protocol>) =
         protocols.filter { it != Protocol.HTTP_1_0 }.map { it.toString() }
 
-    @JvmStatic
     val isConscryptPreferred: Boolean
       get() {
         val preferredProvider = Security.getProviders()[0].name
@@ -201,7 +200,6 @@ open class Platform {
       }
 
     /** Attempt to match the host runtime to a capable Platform implementation.  */
-    @JvmStatic
     private fun findPlatform(): Platform {
       val android = AndroidPlatform.buildIfSupported()
 
@@ -233,7 +231,6 @@ open class Platform {
      * Returns the concatenation of 8-bit, length prefixed protocol names.
      * http://tools.ietf.org/html/draft-agl-tls-nextprotoneg-04#page-4
      */
-    @JvmStatic
     fun concatLengthPrefixed(protocols: List<Protocol>): ByteArray {
       val result = Buffer()
       for (protocol in alpnProtocolNames(protocols)) {
@@ -243,7 +240,6 @@ open class Platform {
       return result.readByteArray()
     }
 
-    @JvmStatic
     fun <T> readFieldOrNull(instance: Any, fieldType: Class<T>, fieldName: String): T? {
       var c: Class<*> = instance.javaClass
       while (c != Any::class.java) {

@@ -724,7 +724,6 @@ class Cache internal constructor(
     fun key(url: HttpUrl): String = url.toString().encodeUtf8().md5().hex()
 
     @Throws(IOException::class)
-    @JvmStatic
     internal fun readInt(source: BufferedSource): Int {
       try {
         val result = source.readDecimalLong()

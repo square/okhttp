@@ -981,7 +981,6 @@ class DiskLruCache internal constructor(
      * @param valueCount the number of values per cache entry. Must be positive.
      * @param maxSize the maximum number of bytes this cache should use to store
      */
-    @JvmStatic
     fun create(
       fileSystem: FileSystem,
       directory: File,

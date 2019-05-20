@@ -309,7 +309,6 @@ class Relay private constructor(
      * close that when they're done. Otherwise a handle to [file] will be leaked.
      */
     @Throws(IOException::class)
-    @JvmStatic
     fun edit(
       file: File,
       upstream: Source,
@@ -333,7 +332,6 @@ class Relay private constructor(
      * close that when they're done. Otherwise a handle to [file] will be leaked.
      */
     @Throws(IOException::class)
-    @JvmStatic
     fun read(file: File): Relay {
       val randomAccessFile = RandomAccessFile(file, "rw")
       val fileOperator = FileOperator(randomAccessFile.channel)

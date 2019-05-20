@@ -105,7 +105,6 @@ object Http2 {
    * `<< 0x0000000f    12 HEADERS       END_HEADERS|END_STREAM
    * ```
    */
-  @JvmStatic
   fun frameLog(
     inbound: Boolean,
     streamId: Int,
@@ -125,7 +124,6 @@ object Http2 {
    * in binary.
    */
   // Visible for testing.
-  @JvmStatic
   fun formatFlags(type: Int, flags: Int): String {
     if (flags == 0) return ""
     when (type) {

@@ -182,7 +182,6 @@ class RouteSelector(
 
   companion object {
     /** Obtain a host string containing either an actual host name or a numeric IP address. */
-    @JvmStatic
     val InetSocketAddress.socketHost: String get() {
       // The InetSocketAddress was specified with a string (either a numeric IP or a host name). If
       // it is a name, all IPs for that name should be tried. If it is an IP address, only that IP

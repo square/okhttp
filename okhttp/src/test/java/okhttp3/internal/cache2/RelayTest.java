@@ -56,7 +56,7 @@ public final class RelayTest {
     Buffer upstream = new Buffer();
     upstream.writeUtf8("abcdefghijklm");
 
-    Relay relay = Relay.edit(file, upstream, metadata, 1024);
+    Relay relay = Relay.Companion.edit(file, upstream, metadata, 1024);
     Source source = relay.newSource();
     Buffer sourceBuffer = new Buffer();
 
@@ -78,7 +78,7 @@ public final class RelayTest {
     Buffer upstream = new Buffer();
     upstream.writeUtf8("abcdefghijklm");
 
-    Relay relay = Relay.edit(file, upstream, metadata, 1024);
+    Relay relay = Relay.Companion.edit(file, upstream, metadata, 1024);
     BufferedSource source1 = Okio.buffer(relay.newSource());
     BufferedSource source2 = Okio.buffer(relay.newSource());
 
@@ -95,7 +95,7 @@ public final class RelayTest {
     Buffer upstream = new Buffer();
     upstream.writeUtf8("abcdefghij");
 
-    Relay relay = Relay.edit(file, upstream, metadata, 5);
+    Relay relay = Relay.Companion.edit(file, upstream, metadata, 5);
     BufferedSource source1 = Okio.buffer(relay.newSource());
     BufferedSource source2 = Okio.buffer(relay.newSource());
 
@@ -116,7 +116,7 @@ public final class RelayTest {
     Buffer upstream = new Buffer();
     upstream.writeUtf8("abcdefghijklmnopqrst");
 
-    Relay relay = Relay.edit(file, upstream, metadata, 5);
+    Relay relay = Relay.Companion.edit(file, upstream, metadata, 5);
     BufferedSource source1 = Okio.buffer(relay.newSource());
     BufferedSource source2 = Okio.buffer(relay.newSource());
 
@@ -137,7 +137,7 @@ public final class RelayTest {
     Buffer upstream = new Buffer();
     upstream.writeUtf8("abcdefghij");
 
-    Relay relay1 = Relay.edit(file, upstream, metadata, 5);
+    Relay relay1 = Relay.Companion.edit(file, upstream, metadata, 5);
     BufferedSource source1 = Okio.buffer(relay1.newSource());
     assertThat(source1.readUtf8(10)).isEqualTo("abcdefghij");
     assertThat(source1.exhausted()).isTrue();
@@ -147,7 +147,7 @@ public final class RelayTest {
     // Since relay1 is closed, new sources cannot be created.
     assertThat(relay1.newSource()).isNull();
 
-    Relay relay2 = Relay.read(file);
+    Relay relay2 = Relay.Companion.read(file);
     assertThat(relay2.metadata()).isEqualTo(metadata);
     BufferedSource source2 = Okio.buffer(relay2.newSource());
     assertThat(source2.readUtf8(10)).isEqualTo("abcdefghij");
@@ -165,14 +165,14 @@ public final class RelayTest {
     Buffer upstream = new Buffer();
     upstream.writeUtf8("abcdefghij");
 
-    Relay relay1 = Relay.edit(file, upstream, metadata, 5);
+    Relay relay1 = Relay.Companion.edit(file, upstream, metadata, 5);
     BufferedSource source1 = Okio.buffer(relay1.newSource());
     assertThat(source1.readUtf8(10)).isEqualTo("abcdefghij");
     source1.close(); // Not exhausted!
     assertThat(relay1.isClosed()).isTrue();
 
     try {
-      Relay.read(file);
+      Relay.Companion.read(file);
       fail();
     } catch (IOException expected) {
       assertThat(expected.getMessage()).isEqualTo("unreadable cache file");
@@ -185,7 +185,7 @@ public final class RelayTest {
     Buffer upstream = new Buffer();
     upstream.writeUtf8("abcde");
 
-    Relay relay = Relay.edit(file, upstream, metadata, 1024);
+    Relay relay = Relay.Companion.edit(file, upstream, metadata, 1024);
     Source source1 = relay.newSource();
     Source source2 = relay.newSource();
 
@@ -202,7 +202,7 @@ public final class RelayTest {
     Pipe pipe = new Pipe(1024);
     BufferedSink sink = Okio.buffer(pipe.sink());
 
-    Relay relay = Relay.edit(file, pipe.source(), metadata, 5);
+    Relay relay = Relay.Companion.edit(file, pipe.source(), metadata, 5);
 
     Future<ByteString> future1 = executor.submit(sourceReader(relay.newSource()));
     Future<ByteString> future2 = executor.submit(sourceReader(relay.newSource()));

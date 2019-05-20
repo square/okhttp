@@ -30,7 +30,6 @@ import static okhttp3.internal.http2.Http2.TYPE_HEADERS;
 import static okhttp3.internal.http2.Http2.TYPE_PING;
 import static okhttp3.internal.http2.Http2.TYPE_PUSH_PROMISE;
 import static okhttp3.internal.http2.Http2.TYPE_SETTINGS;
-import static okhttp3.internal.http2.Http2.frameLog;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public final class FrameLogTest {
@@ -89,7 +88,7 @@ public final class FrameLogTest {
    */
   @Test public void allFormattedFlagsWithValidBits() {
     List<String> formattedFlags = new ArrayList<>(0x40); // Highest valid flag is 0x20.
-    for (byte i = 0; i < 0x40; i++) formattedFlags.add(Http2.formatFlags(TYPE_HEADERS, i));
+    for (byte i = 0; i < 0x40; i++) formattedFlags.add(Http2.INSTANCE.formatFlags(TYPE_HEADERS, i));
 
     assertThat(formattedFlags).containsExactly(
         "",
@@ -157,5 +156,9 @@ public final class FrameLogTest {
         "00111110",
         "00111111"
     );
+  }
+
+  private String frameLog(boolean inbound, int streamId, int length, int type, int flags) {
+    return Http2.INSTANCE.frameLog(inbound, streamId, length, type, flags);
   }
 }
