@@ -405,10 +405,7 @@ class RealWebSocket(
 
   private fun runWriter() {
     assert(Thread.holdsLock(this))
-
-    if (executor != null) {
-      executor!!.execute(writerRunnable)
-    }
+    executor?.execute(writerRunnable)
   }
 
   /**
@@ -527,8 +524,8 @@ class RealWebSocket(
       failed = true
       streamsToClose = this.streams
       this.streams = null
-      if (cancelFuture != null) cancelFuture!!.cancel(false)
-      if (executor != null) executor!!.shutdown()
+      cancelFuture?.cancel(false)
+      executor?.shutdown()
     }
 
     try {
