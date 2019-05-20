@@ -287,10 +287,10 @@ fun toHeaderBlock(headers: Headers): List<Header> = (0 until headers.size).map {
   Header(headers.name(it), headers.value(it))
 }
 
-/** Returns true if an HTTP request for [a] and [b] can reuse a connection.  */
-fun sameConnection(a: HttpUrl, b: HttpUrl): Boolean = (a.host == b.host &&
-    a.port == b.port &&
-    a.scheme == b.scheme)
+/** Returns true if an HTTP request for [this] and [other] can reuse a connection. */
+fun HttpUrl.canReuseConnectionFor(other: HttpUrl): Boolean = host == other.host &&
+    port == other.port &&
+    scheme == other.scheme
 
 fun eventListenerFactory(listener: EventListener): EventListener.Factory =
     EventListener.Factory { listener }

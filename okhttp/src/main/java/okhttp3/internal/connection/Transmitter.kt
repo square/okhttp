@@ -24,8 +24,8 @@ import okhttp3.HttpUrl
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import okhttp3.Request
-import okhttp3.internal.sameConnection
 import okhttp3.internal.closeQuietly
+import okhttp3.internal.canReuseConnectionFor
 import okhttp3.internal.platform.Platform
 import okio.AsyncTimeout
 import okio.Timeout
@@ -118,7 +118,7 @@ class Transmitter(
    */
   fun prepareToConnect(request: Request) {
     if (this.request != null) {
-      if (sameConnection(this.request!!.url(), request.url()) && exchangeFinder!!.hasRouteToTry()) {
+      if (this.request!!.url().canReuseConnectionFor(request.url()) && exchangeFinder!!.hasRouteToTry()) {
         return // Already ready.
       }
       check(exchange == null)
