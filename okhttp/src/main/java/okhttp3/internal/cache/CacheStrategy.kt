@@ -239,7 +239,7 @@ class CacheStrategy internal constructor(
       if (expires != null) {
         val servedMillis = servedDate?.time ?: receivedResponseMillis
         val delta = expires.time - servedMillis
-        return if (delta > 0) delta else 0L
+        return if (delta > 0L) delta else 0L
       }
 
       if (lastModified != null && cacheResponse.request().url().query() == null) {
@@ -248,7 +248,7 @@ class CacheStrategy internal constructor(
         // expiration dates aren't used for URIs containing a query.
         val servedMillis = servedDate?.time ?: sentRequestMillis
         val delta = servedMillis - lastModified!!.time
-        return if (delta > 0) delta / 10 else 0L
+        return if (delta > 0L) delta / 10 else 0L
       }
 
       return 0L

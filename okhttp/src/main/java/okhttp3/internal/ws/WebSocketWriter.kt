@@ -197,7 +197,7 @@ internal class WebSocketWriter(
       random.nextBytes(maskKey!!)
       sinkBuffer.write(maskKey)
 
-      if (byteCount > 0) {
+      if (byteCount > 0L) {
         val bufferStart = sinkBuffer.size
         sinkBuffer.write(buffer, byteCount)
 
@@ -231,7 +231,7 @@ internal class WebSocketWriter(
           buffer.size > contentLength - 8192 /* segment size */
 
       val emitCount = buffer.completeSegmentByteCount()
-      if (emitCount > 0 && !deferWrite) {
+      if (emitCount > 0L && !deferWrite) {
         writeMessageFrame(formatOpcode, emitCount, isFirstFrame, isFinal = false)
         isFirstFrame = false
       }

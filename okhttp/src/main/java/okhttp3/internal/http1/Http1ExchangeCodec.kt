@@ -383,7 +383,7 @@ class Http1ExchangeCodec(
     }
 
     override fun read(sink: Buffer, byteCount: Long): Long {
-      if (byteCount < 0) throw IllegalArgumentException("byteCount < 0: $byteCount")
+      if (byteCount < 0L) throw IllegalArgumentException("byteCount < 0: $byteCount")
       if (closed) throw IllegalStateException("closed")
       if (bytesRemaining == 0L) return -1
 
@@ -422,7 +422,7 @@ class Http1ExchangeCodec(
     private var hasMoreChunks = true
 
     override fun read(sink: Buffer, byteCount: Long): Long {
-      require(byteCount >= 0) { "byteCount < 0: $byteCount" }
+      require(byteCount >= 0L) { "byteCount < 0: $byteCount" }
       check(!closed) { "closed" }
       if (!hasMoreChunks) return -1
 
@@ -450,7 +450,7 @@ class Http1ExchangeCodec(
       try {
         bytesRemainingInChunk = source.readHexadecimalUnsignedLong()
         val extensions = source.readUtf8LineStrict().trim()
-        if (bytesRemainingInChunk < 0 || extensions.isNotEmpty() && !extensions.startsWith(";")) {
+        if (bytesRemainingInChunk < 0L || extensions.isNotEmpty() && !extensions.startsWith(";")) {
           throw ProtocolException("expected chunk size and optional extensions" +
               " but was \"$bytesRemainingInChunk$extensions\"")
         }
@@ -482,7 +482,7 @@ class Http1ExchangeCodec(
     private var inputExhausted: Boolean = false
 
     override fun read(sink: Buffer, byteCount: Long): Long {
-      require(byteCount >= 0) { "byteCount < 0: $byteCount" }
+      require(byteCount >= 0L) { "byteCount < 0: $byteCount" }
       check(!closed) { "closed" }
       if (inputExhausted) return -1
 

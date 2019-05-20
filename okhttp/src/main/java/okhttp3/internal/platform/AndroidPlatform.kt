@@ -166,7 +166,7 @@ class AndroidPlatform(
       var newline = logMessage.indexOf('\n', i)
       newline = if (newline != -1) newline else length
       do {
-        val end = Math.min(newline, i + MAX_LOG_LENGTH)
+        val end = minOf(newline, i + MAX_LOG_LENGTH)
         Log.println(logLevel, "OkHttp", logMessage.substring(i, end))
         i = end
       } while (i < newline)

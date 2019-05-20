@@ -339,7 +339,7 @@ class Http2Reader(
         // TODO: test case for empty continuation header?
       }
 
-      val read = source.read(sink, Math.min(byteCount, left.toLong()))
+      val read = source.read(sink, minOf(byteCount, left.toLong()))
       if (read == -1L) return -1L
       left -= read.toInt()
       return read

@@ -85,7 +85,7 @@ object Util {
       "([0-9a-fA-F]*:[0-9a-fA-F:.]*)|([\\d.]+)".toRegex()
 
   fun checkOffsetAndCount(arrayLength: Long, offset: Long, count: Long) {
-    if (offset or count < 0 || offset > arrayLength || arrayLength - offset < count) {
+    if (offset or count < 0L || offset > arrayLength || arrayLength - offset < count) {
       throw ArrayIndexOutOfBoundsException()
     }
   }
@@ -317,11 +317,11 @@ object Util {
   }
 
   fun checkDuration(name: String, duration: Long, unit: TimeUnit?): Int {
-    check(duration >= 0) { "$name < 0" }
+    check(duration >= 0L) { "$name < 0" }
     check(unit != null) { "unit == null" }
     val millis = unit.toMillis(duration)
     require(millis <= Integer.MAX_VALUE) { "$name too large." }
-    require(millis != 0L || duration <= 0) { "$name too small." }
+    require(millis != 0L || duration <= 0L) { "$name too small." }
     return millis.toInt()
   }
 

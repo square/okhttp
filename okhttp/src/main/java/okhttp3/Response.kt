@@ -119,7 +119,7 @@ class Response internal constructor(
     val peeked = body!!.source().peek()
     val buffer = Buffer()
     peeked.request(byteCount)
-    buffer.write(peeked, Math.min(byteCount, peeked.buffer.size))
+    buffer.write(peeked, minOf(byteCount, peeked.buffer.size))
     return ResponseBody.create(body.contentType(), buffer.size, buffer)
   }
 

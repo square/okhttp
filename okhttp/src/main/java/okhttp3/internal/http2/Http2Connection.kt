@@ -291,7 +291,7 @@ class Http2Connection internal constructor(builder: Builder) : Closeable {
       var toWrite: Int
       synchronized(this@Http2Connection) {
         try {
-          while (bytesLeftInWriteWindow <= 0) {
+          while (bytesLeftInWriteWindow <= 0L) {
             // Before blocking, confirm that the stream we're writing is still open. It's possible
             // that the stream has since been closed (such as if this write timed out.)
             if (!streams.containsKey(streamId)) {

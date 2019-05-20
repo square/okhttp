@@ -150,7 +150,7 @@ internal class WebSocketReader(
       frameLength = (source.readShort() and 0xffff).toLong() // Value is unsigned.
     } else if (frameLength == PAYLOAD_LONG.toLong()) {
       frameLength = source.readLong()
-      if (frameLength < 0) {
+      if (frameLength < 0L) {
         throw ProtocolException(
             "Frame length 0x${frameLength.toHexString()} > 0x7FFFFFFFFFFFFFFF")
       }
@@ -168,7 +168,7 @@ internal class WebSocketReader(
 
   @Throws(IOException::class)
   private fun readControlFrame() {
-    if (frameLength > 0) {
+    if (frameLength > 0L) {
       source.readFully(controlFrameBuffer, frameLength)
 
       if (!isClient) {
@@ -245,7 +245,7 @@ internal class WebSocketReader(
     while (true) {
       if (closed) throw IOException("closed")
 
-      if (frameLength > 0) {
+      if (frameLength > 0L) {
         source.readFully(messageFrameBuffer, frameLength)
 
         if (!isClient) {

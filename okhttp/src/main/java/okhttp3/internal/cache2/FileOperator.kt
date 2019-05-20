@@ -36,7 +36,7 @@ internal class FileOperator(
   /** Write [byteCount] bytes from [source] to the file at [pos]. */
   @Throws(IOException::class)
   fun write(pos: Long, source: Buffer, byteCount: Long) {
-    if (byteCount < 0 || byteCount > source.size) {
+    if (byteCount < 0L || byteCount > source.size) {
       throw IndexOutOfBoundsException()
     }
     var mutablePos = pos
@@ -55,7 +55,7 @@ internal class FileOperator(
    * method throws an `EOFException`.
    */
   fun read(pos: Long, sink: Buffer, byteCount: Long) {
-    if (byteCount < 0) {
+    if (byteCount < 0L) {
       throw IndexOutOfBoundsException()
     }
     var mutablePos = pos

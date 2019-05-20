@@ -729,7 +729,7 @@ class Cache internal constructor(
       try {
         val result = source.readDecimalLong()
         val line = source.readUtf8LineStrict()
-        if (result < 0 || result > Integer.MAX_VALUE || line.isNotEmpty()) {
+        if (result < 0L || result > Integer.MAX_VALUE || line.isNotEmpty()) {
           throw IOException("expected an int but was \"$result$line\"")
         }
         return result.toInt()

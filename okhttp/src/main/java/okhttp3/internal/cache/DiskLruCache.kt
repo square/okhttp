@@ -989,7 +989,7 @@ class DiskLruCache internal constructor(
       valueCount: Int,
       maxSize: Long
     ): DiskLruCache {
-      require(maxSize > 0) { "maxSize <= 0" }
+      require(maxSize > 0L) { "maxSize <= 0" }
       require(valueCount > 0) { "valueCount <= 0" }
 
       // Use a single background thread to evict entries.
