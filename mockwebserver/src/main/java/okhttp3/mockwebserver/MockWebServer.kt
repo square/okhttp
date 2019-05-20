@@ -513,9 +513,7 @@ class MockWebServer : ExternalResource(), Closeable {
       val sink = raw.sink().buffer()
       while (true) {
         val socketPolicy = dispatcher.peek().getSocketPolicy()
-        if (!processOneRequest(raw, source, sink)) {
-          throw IllegalStateException("Tunnel without any CONNECT!")
-        }
+        check(processOneRequest(raw, source, sink)) { "Tunnel without any CONNECT!" }
         if (socketPolicy === UPGRADE_TO_SSL_AT_END) return
       }
     }
@@ -676,8 +674,8 @@ class MockWebServer : ExternalResource(), Closeable {
     }
 
     val method = request.substringBefore(' ')
-    if (hasBody && !HttpMethod.permitsRequestBody(method)) {
-      throw IllegalArgumentException("Request must not have a body: $request")
+    require(!hasBody || HttpMethod.permitsRequestBody(method)) {
+      "Request must not have a body: $request"
     }
 
     return RecordedRequest(request, headers.build(), chunkSizes, requestBody.receivedByteCount,

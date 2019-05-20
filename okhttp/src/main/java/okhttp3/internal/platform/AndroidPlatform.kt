@@ -393,8 +393,7 @@ class AndroidPlatform(
         } catch (ignored: NoSuchMethodException) {
         }
       }
-      throw IllegalStateException(
-          "Expected Android API level 21+ but was " + Build.VERSION.SDK_INT)
+      throw IllegalStateException("Expected Android API level 21+ but was ${Build.VERSION.SDK_INT}")
     }
   }
 }

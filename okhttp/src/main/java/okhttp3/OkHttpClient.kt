@@ -17,16 +17,16 @@ package okhttp3
 
 import okhttp3.Protocol.HTTP_1_1
 import okhttp3.Protocol.HTTP_2
-import okhttp3.internal.checkDuration
 import okhttp3.internal.cache.InternalCache
+import okhttp3.internal.checkDuration
 import okhttp3.internal.eventListenerFactory
-import okhttp3.internal.toImmutableList
 import okhttp3.internal.immutableListOf
 import okhttp3.internal.platform.Platform
 import okhttp3.internal.platformTrustManager
 import okhttp3.internal.proxy.NullProxySelector
 import okhttp3.internal.tls.CertificateChainCleaner
 import okhttp3.internal.tls.OkHostnameVerifier
+import okhttp3.internal.toImmutableList
 import okhttp3.internal.ws.RealWebSocket
 import okio.Sink
 import okio.Source
@@ -531,9 +531,7 @@ open class OkHttpClient internal constructor(
      * If unset, the [system-wide default][SocketFactory.getDefault] socket factory will be used.
      */
     fun socketFactory(socketFactory: SocketFactory) = apply {
-      if (socketFactory is SSLSocketFactory) {
-        throw IllegalArgumentException("socketFactory instanceof SSLSocketFactory")
-      }
+      require(socketFactory !is SSLSocketFactory) { "socketFactory instanceof SSLSocketFactory" }
       this.socketFactory = socketFactory
     }
 

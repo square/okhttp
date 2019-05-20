@@ -47,9 +47,7 @@ object DnsRecordCodec {
     val labels = host.split('.').dropLastWhile { it.isEmpty() }
     for (label in labels) {
       val utf8ByteCount = label.utf8Size()
-      if (utf8ByteCount != label.length.toLong()) {
-        throw IllegalArgumentException("non-ascii hostname: $host")
-      }
+      require(utf8ByteCount == label.length.toLong()) { "non-ascii hostname: $host" }
       nameBuf.writeByte(utf8ByteCount.toInt())
       nameBuf.writeUtf8(label)
     }
@@ -69,9 +67,7 @@ object DnsRecordCodec {
     buf.readShort() // query id
 
     val flags = buf.readShort().toInt() and 0xffff
-    if (flags shr 15 == 0) {
-      throw IllegalArgumentException("not a response")
-    }
+    require(flags shr 15 != 0) { "not a response" }
 
     val responseCode = flags and 0xf
 

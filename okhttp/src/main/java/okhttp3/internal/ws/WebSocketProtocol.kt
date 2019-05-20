@@ -131,9 +131,7 @@ object WebSocketProtocol {
 
   fun validateCloseCode(code: Int) {
     val message = closeCodeExceptionMessage(code)
-    if (message != null) {
-      throw IllegalArgumentException(message)
-    }
+    require(message == null) { message!! }
   }
 
   fun acceptHeader(key: String): String {
