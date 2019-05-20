@@ -41,6 +41,8 @@ import java.util.TimeZone
 import java.util.concurrent.ThreadFactory
 import java.util.concurrent.TimeUnit
 import javax.net.ssl.X509TrustManager
+import kotlin.text.Charsets.UTF_32BE
+import kotlin.text.Charsets.UTF_32LE
 
 /** Junk drawer of utility methods.  */
 object Util {
@@ -62,9 +64,6 @@ object Util {
       "0000ffff".decodeHex(), // UTF-32BE
       "ffff0000".decodeHex() // UTF-32LE
   )
-
-  private val UTF_32BE = Charset.forName("UTF-32BE")
-  private val UTF_32LE = Charset.forName("UTF-32LE")
 
   /** GMT and UTC are equivalent for our purposes.  */
   @JvmField val UTC = TimeZone.getTimeZone("GMT")!!
