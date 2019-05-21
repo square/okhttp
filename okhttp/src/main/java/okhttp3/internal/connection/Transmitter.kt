@@ -282,7 +282,7 @@ class Transmitter(
       if (this.connection != null) releasedConnection = null
       callEnd = noMoreExchanges && exchange == null
     }
-    socket.closeQuietly()
+    socket?.closeQuietly()
 
     if (releasedConnection != null) {
       eventListener.connectionReleased(call, releasedConnection!!)

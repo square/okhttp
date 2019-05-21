@@ -179,8 +179,8 @@ class RealConnection(
         eventListener.connectEnd(call, route.socketAddress(), route.proxy(), protocol)
         break
       } catch (e: IOException) {
-        socket.closeQuietly()
-        rawSocket.closeQuietly()
+        socket?.closeQuietly()
+        rawSocket?.closeQuietly()
         socket = null
         rawSocket = null
         source = null
@@ -237,7 +237,7 @@ class RealConnection(
 
       // The proxy decided to close the connection after an auth challenge. We need to create a new
       // connection, but this time with the auth credentials.
-      rawSocket.closeQuietly()
+      rawSocket?.closeQuietly()
       rawSocket = null
       sink = null
       source = null
@@ -391,7 +391,7 @@ class RealConnection(
         Platform.get().afterHandshake(sslSocket)
       }
       if (!success) {
-        sslSocket.closeQuietly()
+        sslSocket?.closeQuietly()
       }
     }
   }
@@ -592,7 +592,7 @@ class RealConnection(
 
   fun cancel() {
     // Close the raw socket so we don't end up doing synchronous I/O.
-    rawSocket.closeQuietly()
+    rawSocket?.closeQuietly()
   }
 
   override fun socket(): Socket = socket!!

@@ -179,7 +179,7 @@ class ExchangeFinder(
         }
       }
     }
-    toClose.closeQuietly()
+    toClose?.closeQuietly()
 
     if (releasedConnection != null) {
       eventListener.connectionReleased(call, releasedConnection!!)
@@ -259,7 +259,7 @@ class ExchangeFinder(
         transmitter.acquireConnectionNoEvents(result!!)
       }
     }
-    socket.closeQuietly()
+    socket?.closeQuietly()
 
     eventListener.connectionAcquired(call, result!!)
     return result!!

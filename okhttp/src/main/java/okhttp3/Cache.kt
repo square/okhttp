@@ -204,7 +204,7 @@ class Cache internal constructor(
 
     val response = entry.response(snapshot)
     if (!entry.matches(request, response)) {
-      response.body().closeQuietly()
+      response.body()?.closeQuietly()
       return null
     }
 

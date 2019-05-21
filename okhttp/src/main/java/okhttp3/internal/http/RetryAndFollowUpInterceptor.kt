@@ -113,7 +113,7 @@ class RetryAndFollowUpInterceptor(private val client: OkHttpClient) : Intercepto
         return response
       }
 
-      response.body().closeQuietly()
+      response.body()?.closeQuietly()
       if (transmitter.hasExchange()) {
         exchange?.detachWithViolence()
       }

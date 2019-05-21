@@ -51,7 +51,9 @@ public final class HandshakeCertificatesTest {
 
   @After public void tearDown() {
     executorService.shutdown();
-    closeQuietly(serverSocket);
+    if (serverSocket != null) {
+      closeQuietly(serverSocket);
+    }
   }
 
   @Test public void clientAndServer() throws Exception {
