@@ -521,27 +521,23 @@ class Http2Connection internal constructor(builder: Builder) : Closeable {
       connectionName: String = socket.connectionName(),
       source: BufferedSource = socket.source().buffer(),
       sink: BufferedSink = socket.sink().buffer()
-    ): Builder {
+    ) = apply {
       this.socket = socket
       this.connectionName = connectionName
       this.source = source
       this.sink = sink
-      return this
     }
 
-    fun listener(listener: Listener): Builder {
+    fun listener(listener: Listener) = apply {
       this.listener = listener
-      return this
     }
 
-    fun pushObserver(pushObserver: PushObserver): Builder {
+    fun pushObserver(pushObserver: PushObserver) = apply {
       this.pushObserver = pushObserver
-      return this
     }
 
-    fun pingIntervalMillis(pingIntervalMillis: Int): Builder {
+    fun pingIntervalMillis(pingIntervalMillis: Int) = apply {
       this.pingIntervalMillis = pingIntervalMillis
-      return this
     }
 
     fun build(): Http2Connection {

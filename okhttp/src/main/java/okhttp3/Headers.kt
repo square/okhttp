@@ -136,7 +136,7 @@ class Headers private constructor(
 
   fun newBuilder(): Builder {
     val result = Builder()
-    Collections.addAll(result.namesAndValues, *namesAndValues)
+    result.namesAndValues += namesAndValues
     return result
   }
 
