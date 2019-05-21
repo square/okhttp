@@ -54,7 +54,7 @@ class CacheInterceptor(internal val cache: InternalCache?) : Interceptor {
 
     if (cacheCandidate != null && cacheResponse == null) {
       // The cache candidate wasn't applicable. Close it.
-      cacheCandidate.body().closeQuietly()
+      cacheCandidate.body()?.closeQuietly()
     }
 
     // If we're forbidden from using the network and the cache is insufficient, fail.
@@ -83,7 +83,7 @@ class CacheInterceptor(internal val cache: InternalCache?) : Interceptor {
     } finally {
       // If we're crashing on I/O or otherwise, don't leak the cache body.
       if (networkResponse == null && cacheCandidate != null) {
-        cacheCandidate.body().closeQuietly()
+        cacheCandidate.body()?.closeQuietly()
       }
     }
 
@@ -106,7 +106,7 @@ class CacheInterceptor(internal val cache: InternalCache?) : Interceptor {
         cache.update(cacheResponse, response)
         return response
       } else {
-        cacheResponse.body().closeQuietly()
+        cacheResponse.body()?.closeQuietly()
       }
     }
 

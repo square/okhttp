@@ -132,7 +132,7 @@ class Relay private constructor(
       complete = true
     }
 
-    upstream.closeQuietly()
+    upstream?.closeQuietly()
     upstream = null
   }
 
@@ -284,9 +284,7 @@ class Relay private constructor(
         }
       }
 
-      if (fileToClose != null) {
-        fileToClose.closeQuietly()
-      }
+      fileToClose?.closeQuietly()
     }
   }
 

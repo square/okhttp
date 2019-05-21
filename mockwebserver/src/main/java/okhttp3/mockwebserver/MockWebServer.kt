@@ -340,7 +340,7 @@ class MockWebServer : ExternalResource(), Closeable {
       }
 
       // Release all sockets and all threads, even if any close fails.
-      serverSocket.closeQuietly()
+      serverSocket?.closeQuietly()
 
       val openClientSocket = openClientSockets.iterator()
       while (openClientSocket.hasNext()) {

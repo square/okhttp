@@ -333,7 +333,7 @@ class RealWebSocket(
         listener.onClosed(this, code, reason)
       }
     } finally {
-      toClose.closeQuietly()
+      toClose?.closeQuietly()
     }
   }
 
@@ -483,7 +483,7 @@ class RealWebSocket(
 
       return true
     } finally {
-      streamsToClose.closeQuietly()
+      streamsToClose?.closeQuietly()
     }
   }
 
@@ -531,7 +531,7 @@ class RealWebSocket(
     try {
       listener.onFailure(this, e, response)
     } finally {
-      streamsToClose.closeQuietly()
+      streamsToClose?.closeQuietly()
     }
   }
 
