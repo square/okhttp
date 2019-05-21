@@ -40,8 +40,6 @@ object BrotliInterceptor : Interceptor {
     if (response.header("Content-Encoding") == "br") {
       val body = response.body()!!
 
-//      println(body.source().readByteString().hex())
-
       val decompressedSource = BrotliInputStream(body.source().inputStream()).source().buffer()
       return response.newBuilder()
           .removeHeader("Content-Encoding")
