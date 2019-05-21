@@ -99,7 +99,7 @@ class RouteSelector(
       listOf(proxy)
     } else {
       // Try each of the ProxySelector choices until one connection succeeds.
-      val proxiesOrNull = address.proxySelector.select(url.uri())
+      val proxiesOrNull = address.proxySelector.select(url.toUri())
       if (proxiesOrNull != null && proxiesOrNull.isNotEmpty()) {
         proxiesOrNull.toImmutableList()
       } else {
@@ -117,7 +117,7 @@ class RouteSelector(
   private fun nextProxy(): Proxy {
     if (!hasNextProxy()) {
       throw SocketException(
-          "No route to ${address.url.host()}; exhausted proxy configurations: $proxies")
+          "No route to ${address.url.host}; exhausted proxy configurations: $proxies")
     }
     val result = proxies[nextProxyIndex++]
     resetNextInetSocketAddress(result)
@@ -134,8 +134,8 @@ class RouteSelector(
     val socketHost: String
     val socketPort: Int
     if (proxy.type() == Proxy.Type.DIRECT || proxy.type() == Proxy.Type.SOCKS) {
-      socketHost = address.url.host()
-      socketPort = address.url.port()
+      socketHost = address.url.host
+      socketPort = address.url.port
     } else {
       val proxyAddress = proxy.address()
       require(proxyAddress is InetSocketAddress) {

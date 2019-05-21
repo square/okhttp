@@ -139,13 +139,13 @@ fun nonEmptyIntersection(
 }
 
 fun hostHeader(url: HttpUrl, includeDefaultPort: Boolean): String {
-  val host = if (":" in url.host()) {
-    "[${url.host()}]"
+  val host = if (":" in url.host) {
+    "[${url.host}]"
   } else {
-    url.host()
+    url.host
   }
-  return if (includeDefaultPort || url.port() != HttpUrl.defaultPort(url.scheme())) {
-    "$host:${url.port()}"
+  return if (includeDefaultPort || url.port != HttpUrl.defaultPort(url.scheme)) {
+    "$host:${url.port}"
   } else {
     host
   }
@@ -288,9 +288,9 @@ fun toHeaderBlock(headers: Headers): List<Header> = (0 until headers.size).map {
 }
 
 /** Returns true if an HTTP request for [a] and [b] can reuse a connection.  */
-fun sameConnection(a: HttpUrl, b: HttpUrl): Boolean = (a.host() == b.host() &&
-    a.port() == b.port() &&
-    a.scheme() == b.scheme())
+fun sameConnection(a: HttpUrl, b: HttpUrl): Boolean = (a.host == b.host &&
+    a.port == b.port &&
+    a.scheme == b.scheme)
 
 fun eventListenerFactory(listener: EventListener): EventListener.Factory =
     EventListener.Factory { listener }

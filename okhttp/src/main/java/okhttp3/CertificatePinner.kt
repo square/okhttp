@@ -292,10 +292,10 @@ data class CertificatePinner internal constructor(
     internal fun newPin(pattern: String, pin: String): Pin {
       val canonicalHostname = when {
         pattern.startsWith(WILDCARD) -> {
-          HttpUrl.get("http://${pattern.substring(WILDCARD.length)}").host()
+          HttpUrl.get("http://${pattern.substring(WILDCARD.length)}").host
         }
         else -> {
-          HttpUrl.get("http://$pattern").host()
+          HttpUrl.get("http://$pattern").host
         }
       }
 

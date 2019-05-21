@@ -36,7 +36,7 @@ class JavaNetCookieJar(private val cookieHandler: CookieHandler) : CookieJar {
     }
     val multimap = mapOf("Set-Cookie" to cookieStrings)
     try {
-      cookieHandler.put(url.uri(), multimap)
+      cookieHandler.put(url.toUri(), multimap)
     } catch (e: IOException) {
       Platform.get().log(WARN, "Saving cookies failed for " + url.resolve("/...")!!, e)
     }
@@ -45,7 +45,7 @@ class JavaNetCookieJar(private val cookieHandler: CookieHandler) : CookieJar {
   override fun loadForRequest(url: HttpUrl): List<Cookie> {
     val cookieHeaders = try {
       // The RI passes all headers. We don't have 'em, so we don't pass 'em!
-      cookieHandler.get(url.uri(), emptyMap<String, List<String>>())
+      cookieHandler.get(url.toUri(), emptyMap<String, List<String>>())
     } catch (e: IOException) {
       Platform.get().log(WARN, "Loading cookies failed for " + url.resolve("/...")!!, e)
       return emptyList()
@@ -102,7 +102,7 @@ class JavaNetCookieJar(private val cookieHandler: CookieHandler) : CookieJar {
       result.add(Cookie.Builder()
           .name(name)
           .value(value)
-          .domain(url.host())
+          .domain(url.host)
           .build())
       pos = pairEnd + 1
     }

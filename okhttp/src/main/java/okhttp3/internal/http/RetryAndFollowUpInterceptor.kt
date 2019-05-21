@@ -278,7 +278,7 @@ class RetryAndFollowUpInterceptor(private val client: OkHttpClient) : Intercepto
     val url = userResponse.request().url().resolve(location) ?: return null
 
     // If configured, don't follow redirects between SSL and non-SSL.
-    val sameScheme = url.scheme() == userResponse.request().url().scheme()
+    val sameScheme = url.scheme == userResponse.request().url().scheme
     if (!sameScheme && !client.followSslRedirects()) return null
 
     // Most redirects don't include a request body.

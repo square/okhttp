@@ -240,7 +240,7 @@ class RealConnectionPool(
     if (failedRoute.proxy().type() != Proxy.Type.DIRECT) {
       val address = failedRoute.address()
       address.proxySelector.connectFailed(
-          address.url.uri(), failedRoute.proxy().address(), failure)
+          address.url.toUri(), failedRoute.proxy().address(), failure)
     }
 
     routeDatabase.failed(failedRoute)

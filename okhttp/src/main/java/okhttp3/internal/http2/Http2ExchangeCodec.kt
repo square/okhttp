@@ -166,7 +166,7 @@ class Http2ExchangeCodec(
       if (host != null) {
         result.add(Header(TARGET_AUTHORITY, host)) // Optional.
       }
-      result.add(Header(TARGET_SCHEME, request.url().scheme()))
+      result.add(Header(TARGET_SCHEME, request.url().scheme))
 
       for (i in 0 until headers.size) {
         // header names must be lowercase.
