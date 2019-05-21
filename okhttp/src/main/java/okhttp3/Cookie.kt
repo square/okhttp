@@ -19,8 +19,8 @@ import okhttp3.internal.UTC
 import okhttp3.internal.delimiterOffset
 import okhttp3.internal.indexOfControlOrNonAscii
 import okhttp3.internal.trimSubstring
-import okhttp3.internal.verifyAsIpAddress
 import okhttp3.internal.http.HttpDate
+import okhttp3.internal.canParseAsIpAddress
 import okhttp3.internal.publicsuffix.PublicSuffixDatabase
 import okhttp3.internal.toCanonicalHost
 import java.util.Calendar
@@ -309,7 +309,7 @@ data class Cookie private constructor(
 
       return urlHost.endsWith(domain) &&
           urlHost[urlHost.length - domain.length - 1] == '.' &&
-          !verifyAsIpAddress(urlHost)
+          !urlHost.canParseAsIpAddress()
     }
 
     private fun pathMatch(url: HttpUrl, path: String): Boolean {
@@ -343,11 +343,11 @@ data class Cookie private constructor(
       val pairEqualsSign = delimiterOffset(setCookie, pos, cookiePairEnd, '=')
       if (pairEqualsSign == cookiePairEnd) return null
 
-      val cookieName = trimSubstring(setCookie, pos, pairEqualsSign)
-      if (cookieName.isEmpty() || indexOfControlOrNonAscii(cookieName) != -1) return null
+      val cookieName = setCookie.trimSubstring(pos, pairEqualsSign)
+      if (cookieName.isEmpty() || cookieName.indexOfControlOrNonAscii() != -1) return null
 
-      val cookieValue = trimSubstring(setCookie, pairEqualsSign + 1, cookiePairEnd)
-      if (indexOfControlOrNonAscii(cookieValue) != -1) return null
+      val cookieValue = setCookie.trimSubstring(pairEqualsSign + 1, cookiePairEnd)
+      if (cookieValue.indexOfControlOrNonAscii() != -1) return null
 
       var expiresAt = HttpDate.MAX_DATE
       var deltaSeconds = -1L
@@ -363,9 +363,9 @@ data class Cookie private constructor(
         val attributePairEnd = delimiterOffset(setCookie, pos, limit, ';')
 
         val attributeEqualsSign = delimiterOffset(setCookie, pos, attributePairEnd, '=')
-        val attributeName = trimSubstring(setCookie, pos, attributeEqualsSign)
+        val attributeName = setCookie.trimSubstring(pos, attributeEqualsSign)
         val attributeValue = if (attributeEqualsSign < attributePairEnd) {
-          trimSubstring(setCookie, attributeEqualsSign + 1, attributePairEnd)
+          setCookie.trimSubstring(attributeEqualsSign + 1, attributePairEnd)
         } else {
           ""
         }

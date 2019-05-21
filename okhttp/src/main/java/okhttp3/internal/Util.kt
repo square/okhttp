@@ -162,11 +162,11 @@ fun concat(array: Array<String>, value: String): Array<String> {
 }
 
 /**
- * Increments [pos] until [input] is not ASCII whitespace. Stops at [limit].
+ * Increments [pos] until [this] is not ASCII whitespace. Stops at [limit].
  */
-fun skipLeadingAsciiWhitespace(input: String, pos: Int, limit: Int): Int {
+fun String.indexOfFirstNonAsciiWhitespace(pos: Int, limit: Int): Int {
   for (i in pos until limit) {
-    when (input[i]) {
+    when (this[i]) {
       '\t', '\n', '\u000C', '\r', ' ' -> Unit
       else -> return i
     }
@@ -177,9 +177,9 @@ fun skipLeadingAsciiWhitespace(input: String, pos: Int, limit: Int): Int {
 /**
  * Decrements [limit] until `input[limit - 1]` is not ASCII whitespace. Stops at [pos].
  */
-fun skipTrailingAsciiWhitespace(input: String, pos: Int, limit: Int): Int {
+fun String.indexOfLastNonAsciiWhitespace(pos: Int, limit: Int): Int {
   for (i in limit - 1 downTo pos) {
-    when (input[i]) {
+    when (this[i]) {
       '\t', '\n', '\u000C', '\r', ' ' -> Unit
       else -> return i + 1
     }
@@ -188,10 +188,10 @@ fun skipTrailingAsciiWhitespace(input: String, pos: Int, limit: Int): Int {
 }
 
 /** Equivalent to `string.substring(pos, limit).trim()`.  */
-fun trimSubstring(string: String, pos: Int, limit: Int): String {
-  val start = skipLeadingAsciiWhitespace(string, pos, limit)
-  val end = skipTrailingAsciiWhitespace(string, start, limit)
-  return string.substring(start, end)
+fun String.trimSubstring(pos: Int, limit: Int): String {
+  val start = indexOfFirstNonAsciiWhitespace(pos, limit)
+  val end = indexOfLastNonAsciiWhitespace(start, limit)
+  return substring(start, end)
 }
 
 /**
@@ -217,26 +217,23 @@ fun delimiterOffset(input: String, pos: Int, limit: Int, delimiter: Char): Int {
 }
 
 /**
- * Returns the index of the first character in [input] that is either a control character
- * (like `\u0000` or `\n`) or a non-ASCII character. Returns -1 if [input] has no such
+ * Returns the index of the first character in [this] that is either a control character
+ * (like `\u0000` or `\n`) or a non-ASCII character. Returns -1 if [this] has no such
  * characters.
  */
-fun indexOfControlOrNonAscii(input: String): Int {
-  var i = 0
-  val length = input.length
-  while (i < length) {
-    val c = input[i]
+fun String.indexOfControlOrNonAscii(): Int {
+  for (i in 0 until length) {
+    val c = this[i]
     if (c <= '\u001f' || c >= '\u007f') {
       return i
     }
-    i++
   }
   return -1
 }
 
-/** Returns true if [host] is not a host name and might be an IP address.  */
-fun verifyAsIpAddress(host: String): Boolean {
-  return VERIFY_AS_IP_ADDRESS.matches(host)
+/** Returns true if [this] is not a host name and might be an IP address.  */
+fun String.canParseAsIpAddress(): Boolean {
+  return VERIFY_AS_IP_ADDRESS.matches(this)
 }
 
 /** Returns a [Locale.US] formatted [String].  */
@@ -245,14 +242,14 @@ fun format(format: String, vararg args: Any): String {
 }
 
 @Throws(IOException::class)
-fun bomAwareCharset(source: BufferedSource, charset: Charset): Charset {
-  return when (source.select(UNICODE_BOMS)) {
+fun BufferedSource.readBomAsCharset(default: Charset): Charset {
+  return when (select(UNICODE_BOMS)) {
     0 -> UTF_8
     1 -> UTF_16BE
     2 -> UTF_16LE
     3 -> UTF_32BE
     4 -> UTF_32LE
-    -1 -> charset
+    -1 -> default
     else -> throw AssertionError()
   }
 }
@@ -283,14 +280,14 @@ fun toHeaders(headerBlock: List<Header>): Headers {
   return builder.build()
 }
 
-fun toHeaderBlock(headers: Headers): List<Header> = (0 until headers.size).map {
-  Header(headers.name(it), headers.value(it))
+fun Headers.toHeaderList(): List<Header> = (0 until size).map {
+  Header(name(it), value(it))
 }
 
-/** Returns true if an HTTP request for [a] and [b] can reuse a connection.  */
-fun sameConnection(a: HttpUrl, b: HttpUrl): Boolean = (a.host == b.host &&
-    a.port == b.port &&
-    a.scheme == b.scheme)
+/** Returns true if an HTTP request for [this] and [other] can reuse a connection. */
+fun HttpUrl.canReuseConnectionFor(other: HttpUrl): Boolean = host == other.host &&
+    port == other.port &&
+    scheme == other.scheme
 
 fun eventListenerFactory(listener: EventListener): EventListener.Factory =
     EventListener.Factory { listener }

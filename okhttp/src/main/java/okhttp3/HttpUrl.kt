@@ -17,13 +17,13 @@ package okhttp3
 
 import okhttp3.HttpUrl.Companion.get
 import okhttp3.HttpUrl.Companion.parse
+import okhttp3.internal.canParseAsIpAddress
 import okhttp3.internal.decodeHexDigit
 import okhttp3.internal.delimiterOffset
+import okhttp3.internal.indexOfFirstNonAsciiWhitespace
+import okhttp3.internal.indexOfLastNonAsciiWhitespace
 import okhttp3.internal.publicsuffix.PublicSuffixDatabase
-import okhttp3.internal.skipLeadingAsciiWhitespace
-import okhttp3.internal.skipTrailingAsciiWhitespace
 import okhttp3.internal.toCanonicalHost
-import okhttp3.internal.verifyAsIpAddress
 import okio.Buffer
 import java.net.InetAddress
 import java.net.MalformedURLException
@@ -789,7 +789,7 @@ class HttpUrl internal constructor(
    * </table>
    */
   fun topPrivateDomain(): String? {
-    return if (verifyAsIpAddress(host)) {
+    return if (host.canParseAsIpAddress()) {
       null
     } else {
       PublicSuffixDatabase.get().getEffectiveTldPlusOne(host)
@@ -1257,8 +1257,8 @@ class HttpUrl internal constructor(
     }
 
     internal fun parse(base: HttpUrl?, input: String): Builder {
-      var pos = skipLeadingAsciiWhitespace(input, 0, input.length)
-      val limit = skipTrailingAsciiWhitespace(input, pos, input.length)
+      var pos = input.indexOfFirstNonAsciiWhitespace(0, input.length)
+      val limit = input.indexOfLastNonAsciiWhitespace(pos, input.length)
 
       // Scheme.
       val schemeDelimiterOffset = schemeDelimiterOffset(input, pos, limit)

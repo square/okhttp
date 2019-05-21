@@ -16,7 +16,7 @@
  */
 package okhttp3.internal.tls
 
-import okhttp3.internal.verifyAsIpAddress
+import okhttp3.internal.canParseAsIpAddress
 import java.security.cert.CertificateParsingException
 import java.security.cert.X509Certificate
 import java.util.Locale
@@ -43,7 +43,7 @@ object OkHostnameVerifier : HostnameVerifier {
 
   fun verify(host: String, certificate: X509Certificate): Boolean {
     return when {
-      verifyAsIpAddress(host) -> verifyIpAddress(host, certificate)
+      host.canParseAsIpAddress() -> verifyIpAddress(host, certificate)
       else -> verifyHostname(host, certificate)
     }
   }

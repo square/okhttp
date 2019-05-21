@@ -20,13 +20,13 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
 import okhttp3.Route
-import okhttp3.internal.sameConnection
 import okhttp3.internal.closeQuietly
 import okhttp3.internal.connection.RouteException
 import okhttp3.internal.connection.Transmitter
 import okhttp3.internal.http.StatusLine.Companion.HTTP_PERM_REDIRECT
 import okhttp3.internal.http.StatusLine.Companion.HTTP_TEMP_REDIRECT
 import okhttp3.internal.http2.ConnectionShutdownException
+import okhttp3.internal.canReuseConnectionFor
 import java.io.FileNotFoundException
 import java.io.IOException
 import java.io.InterruptedIOException
@@ -301,7 +301,7 @@ class RetryAndFollowUpInterceptor(private val client: OkHttpClient) : Intercepto
     // When redirecting across hosts, drop all authentication headers. This
     // is potentially annoying to the application layer since they have no
     // way to retain them.
-    if (!sameConnection(userResponse.request().url(), url)) {
+    if (!userResponse.request().url().canReuseConnectionFor(url)) {
       requestBuilder.removeHeader("Authorization")
     }
 

@@ -81,7 +81,7 @@ class JavaNetCookieJar(private val cookieHandler: CookieHandler) : CookieJar {
     while (pos < limit) {
       pairEnd = delimiterOffset(header, pos, limit, ";,")
       val equalsSign = delimiterOffset(header, pos, pairEnd, '=')
-      val name = trimSubstring(header, pos, equalsSign)
+      val name = header.trimSubstring(pos, equalsSign)
       if (name.startsWith("$")) {
         pos = pairEnd + 1
         continue
@@ -89,7 +89,7 @@ class JavaNetCookieJar(private val cookieHandler: CookieHandler) : CookieJar {
 
       // We have either name=value or just a name.
       var value = if (equalsSign < pairEnd) {
-        trimSubstring(header, equalsSign + 1, pairEnd)
+        header.trimSubstring(equalsSign + 1, pairEnd)
       } else {
         ""
       }

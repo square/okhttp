@@ -518,28 +518,28 @@ public final class HostnameVerifierTest {
 
   @Test public void verifyAsIpAddress() {
     // IPv4
-    assertThat(Util.verifyAsIpAddress("127.0.0.1")).isTrue();
-    assertThat(Util.verifyAsIpAddress("1.2.3.4")).isTrue();
+    assertThat(Util.canParseAsIpAddress("127.0.0.1")).isTrue();
+    assertThat(Util.canParseAsIpAddress("1.2.3.4")).isTrue();
 
     // IPv6
-    assertThat(Util.verifyAsIpAddress("::1")).isTrue();
-    assertThat(Util.verifyAsIpAddress("2001:db8::1")).isTrue();
-    assertThat(Util.verifyAsIpAddress("::192.168.0.1")).isTrue();
-    assertThat(Util.verifyAsIpAddress("::ffff:192.168.0.1")).isTrue();
-    assertThat(Util.verifyAsIpAddress("FEDC:BA98:7654:3210:FEDC:BA98:7654:3210")).isTrue();
-    assertThat(Util.verifyAsIpAddress("1080:0:0:0:8:800:200C:417A")).isTrue();
-    assertThat(Util.verifyAsIpAddress("1080::8:800:200C:417A")).isTrue();
-    assertThat(Util.verifyAsIpAddress("FF01::101")).isTrue();
-    assertThat(Util.verifyAsIpAddress("0:0:0:0:0:0:13.1.68.3")).isTrue();
-    assertThat(Util.verifyAsIpAddress("0:0:0:0:0:FFFF:129.144.52.38")).isTrue();
-    assertThat(Util.verifyAsIpAddress("::13.1.68.3")).isTrue();
-    assertThat(Util.verifyAsIpAddress("::FFFF:129.144.52.38")).isTrue();
+    assertThat(Util.canParseAsIpAddress("::1")).isTrue();
+    assertThat(Util.canParseAsIpAddress("2001:db8::1")).isTrue();
+    assertThat(Util.canParseAsIpAddress("::192.168.0.1")).isTrue();
+    assertThat(Util.canParseAsIpAddress("::ffff:192.168.0.1")).isTrue();
+    assertThat(Util.canParseAsIpAddress("FEDC:BA98:7654:3210:FEDC:BA98:7654:3210")).isTrue();
+    assertThat(Util.canParseAsIpAddress("1080:0:0:0:8:800:200C:417A")).isTrue();
+    assertThat(Util.canParseAsIpAddress("1080::8:800:200C:417A")).isTrue();
+    assertThat(Util.canParseAsIpAddress("FF01::101")).isTrue();
+    assertThat(Util.canParseAsIpAddress("0:0:0:0:0:0:13.1.68.3")).isTrue();
+    assertThat(Util.canParseAsIpAddress("0:0:0:0:0:FFFF:129.144.52.38")).isTrue();
+    assertThat(Util.canParseAsIpAddress("::13.1.68.3")).isTrue();
+    assertThat(Util.canParseAsIpAddress("::FFFF:129.144.52.38")).isTrue();
 
     // Hostnames
-    assertThat(Util.verifyAsIpAddress("go")).isFalse();
-    assertThat(Util.verifyAsIpAddress("localhost")).isFalse();
-    assertThat(Util.verifyAsIpAddress("squareup.com")).isFalse();
-    assertThat(Util.verifyAsIpAddress("www.nintendo.co.jp")).isFalse();
+    assertThat(Util.canParseAsIpAddress("go")).isFalse();
+    assertThat(Util.canParseAsIpAddress("localhost")).isFalse();
+    assertThat(Util.canParseAsIpAddress("squareup.com")).isFalse();
+    assertThat(Util.canParseAsIpAddress("www.nintendo.co.jp")).isFalse();
   }
 
   private X509Certificate certificate(String certificate) throws Exception {
