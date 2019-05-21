@@ -55,8 +55,8 @@ object RequestLine {
    * URL is. Includes the query component if it exists.
    */
   fun requestPath(url: HttpUrl): String {
-    val path = url.encodedPath()
-    val query = url.encodedQuery()
+    val path = url.encodedPath
+    val query = url.encodedQuery
     return if (query != null) "$path?$query" else path
   }
 }

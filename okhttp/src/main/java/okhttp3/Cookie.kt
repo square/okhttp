@@ -99,9 +99,9 @@ data class Cookie private constructor(
    */
   fun matches(url: HttpUrl): Boolean {
     val domainMatch = if (hostOnly) {
-      url.host() == domain
+      url.host == domain
     } else {
-      domainMatch(url.host(), domain)
+      domainMatch(url.host, domain)
     }
     if (!domainMatch) return false
 
@@ -313,7 +313,7 @@ data class Cookie private constructor(
     }
 
     private fun pathMatch(url: HttpUrl, path: String): Boolean {
-      val urlPath = url.encodedPath()
+      val urlPath = url.encodedPath
 
       if (urlPath == path) {
         return true // As in '/foo' matching '/foo'.
@@ -426,7 +426,7 @@ data class Cookie private constructor(
       }
 
       // If the domain is present, it must domain match. Otherwise we have a host-only cookie.
-      val urlHost = url.host()
+      val urlHost = url.host
       if (domain == null) {
         domain = urlHost
       } else if (!domainMatch(urlHost, domain)) {
@@ -442,7 +442,7 @@ data class Cookie private constructor(
       // If the path is absent or didn't start with '/', use the default path. It's a string like
       // '/foo/bar' for a URL like 'http://example.com/foo/bar/baz'. It always starts with '/'.
       if (path == null || !path.startsWith("/")) {
-        val encodedPath = url.encodedPath()
+        val encodedPath = url.encodedPath
         val lastSlash = encodedPath.lastIndexOf('/')
         path = if (lastSlash != 0) encodedPath.substring(0, lastSlash) else "/"
       }

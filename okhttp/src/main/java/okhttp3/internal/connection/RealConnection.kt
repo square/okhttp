@@ -152,7 +152,7 @@ class RealConnection(
         throw RouteException(UnknownServiceException(
             "CLEARTEXT communication not enabled for client"))
       }
-      val host = route.address().url.host()
+      val host = route.address().url.host
       if (!Platform.get().isCleartextTrafficPermitted(host)) {
         throw RouteException(UnknownServiceException(
             "CLEARTEXT communication to $host not permitted by network security policy"))
@@ -322,7 +322,7 @@ class RealConnection(
     val sink = this.sink!!
     socket.soTimeout = 0 // HTTP/2 connection timeouts are set per-stream.
     val http2Connection = Http2Connection.Builder(true)
-        .socket(socket, route.address().url.host(), source, sink)
+        .socket(socket, route.address().url.host, source, sink)
         .listener(this)
         .pingIntervalMillis(pingIntervalMillis)
         .build()
@@ -339,12 +339,12 @@ class RealConnection(
     try {
       // Create the wrapper over the connected socket.
       sslSocket = sslSocketFactory!!.createSocket(
-          rawSocket, address.url.host(), address.url.port(), true /* autoClose */) as SSLSocket
+          rawSocket, address.url.host, address.url.port, true /* autoClose */) as SSLSocket
 
       // Configure the socket's ciphers, TLS versions, and extensions.
       val connectionSpec = connectionSpecSelector.configureSecureSocket(sslSocket)
       if (connectionSpec.supportsTlsExtensions()) {
-        Platform.get().configureTlsExtensions(sslSocket, address.url.host(), address.protocols)
+        Platform.get().configureTlsExtensions(sslSocket, address.url.host, address.protocols)
       }
 
       // Force handshake. This can throw!
@@ -354,24 +354,24 @@ class RealConnection(
       val unverifiedHandshake = sslSocketSession.handshake()
 
       // Verify that the socket's certificates are acceptable for the target host.
-      if (!address.hostnameVerifier!!.verify(address.url.host(), sslSocketSession)) {
+      if (!address.hostnameVerifier!!.verify(address.url.host, sslSocketSession)) {
         val peerCertificates = unverifiedHandshake.peerCertificates
         if (peerCertificates.isNotEmpty()) {
           val cert = peerCertificates[0] as X509Certificate
           throw SSLPeerUnverifiedException("""
-              |Hostname ${address.url.host()} not verified:
+              |Hostname ${address.url.host} not verified:
               |    certificate: ${CertificatePinner.pin(cert)}
               |    DN: ${cert.subjectDN.name}
               |    subjectAltNames: ${OkHostnameVerifier.allSubjectAltNames(cert)}
               """.trimMargin())
         } else {
           throw SSLPeerUnverifiedException(
-              "Hostname ${address.url.host()} not verified (no certificates)")
+              "Hostname ${address.url.host} not verified (no certificates)")
         }
       }
 
       // Check that the certificate pinner is satisfied by the certificates presented.
-      address.certificatePinner!!.check(address.url.host(),
+      address.certificatePinner!!.check(address.url.host,
           unverifiedHandshake.peerCertificates)
 
       // Success! Save the handshake and the ALPN protocol.
@@ -497,7 +497,7 @@ class RealConnection(
     if (!this.route.address().equalsNonHost(address)) return false
 
     // If the host exactly matches, we're done: this connection can carry the address.
-    if (address.url.host() == this.route().address().url.host()) {
+    if (address.url.host == this.route().address().url.host) {
       return true // This connection is a perfect match.
     }
 
@@ -518,7 +518,7 @@ class RealConnection(
 
     // 4. Certificate pinning must match the host.
     try {
-      address.certificatePinner!!.check(address.url.host(), handshake()!!.peerCertificates)
+      address.certificatePinner!!.check(address.url.host, handshake()!!.peerCertificates)
     } catch (_: SSLPeerUnverifiedException) {
       return false
     }
@@ -543,17 +543,17 @@ class RealConnection(
   fun supportsUrl(url: HttpUrl): Boolean {
     val routeUrl = route.address().url
 
-    if (url.port() != routeUrl.port()) {
+    if (url.port != routeUrl.port) {
       return false // Port mismatch.
     }
 
-    if (url.host() == routeUrl.host()) {
+    if (url.host == routeUrl.host) {
       return true // Host match. The URL is supported.
     }
 
     // We have a host mismatch. But if the certificate matches, we're still good.
     return handshake != null && OkHostnameVerifier.verify(
-        url.host(), handshake!!.peerCertificates[0] as X509Certificate)
+        url.host, handshake!!.peerCertificates[0] as X509Certificate)
   }
 
   @Throws(SocketException::class)
@@ -690,7 +690,7 @@ class RealConnection(
   override fun protocol(): Protocol = protocol!!
 
   override fun toString(): String {
-    return "Connection{${route.address().url.host()}:${route.address().url.port()}," +
+    return "Connection{${route.address().url.host}:${route.address().url.port}," +
         " proxy=${route.proxy()}" +
         " hostAddress=${route.socketAddress()}" +
         " cipherSuite=${handshake?.cipherSuite ?: "none"}" +

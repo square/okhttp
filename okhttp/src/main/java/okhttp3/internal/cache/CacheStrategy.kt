@@ -242,7 +242,7 @@ class CacheStrategy internal constructor(
         return if (delta > 0L) delta else 0L
       }
 
-      if (lastModified != null && cacheResponse.request().url().query() == null) {
+      if (lastModified != null && cacheResponse.request().url().query == null) {
         // As recommended by the HTTP RFC and implemented in Firefox, the max age of a document
         // should be defaulted to 10% of the document's age at the time it was served. Default
         // expiration dates aren't used for URIs containing a query.

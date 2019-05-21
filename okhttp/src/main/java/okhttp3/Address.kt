@@ -194,12 +194,12 @@ class Address(
         this.sslSocketFactory == that.sslSocketFactory &&
         this.hostnameVerifier == that.hostnameVerifier &&
         this.certificatePinner == that.certificatePinner &&
-        this.url.port() == that.url.port()
+        this.url.port == that.url.port
   }
 
   override fun toString(): String {
     return "Address{" +
-        "${url.host()}:${url.port()}, " +
+        "${url.host}:${url.port}, " +
         (if (proxy != null) "proxy=$proxy" else "proxySelector=$proxySelector") +
         "}"
   }

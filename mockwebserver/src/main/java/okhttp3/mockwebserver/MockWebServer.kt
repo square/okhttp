@@ -1019,7 +1019,7 @@ class MockWebServer : ExternalResource(), Closeable {
     ) {
       for (pushPromise in promises) {
         val pushedHeaders = mutableListOf<Header>()
-        pushedHeaders.add(Header(Header.TARGET_AUTHORITY, url(pushPromise.path).host()))
+        pushedHeaders.add(Header(Header.TARGET_AUTHORITY, url(pushPromise.path).host))
         pushedHeaders.add(Header(Header.TARGET_METHOD, pushPromise.method))
         pushedHeaders.add(Header(Header.TARGET_PATH, pushPromise.path))
         val pushPromiseHeaders = pushPromise.headers

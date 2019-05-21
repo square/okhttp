@@ -144,7 +144,7 @@ class Transmitter(
       certificatePinner = client.certificatePinner()
     }
 
-    return Address(url.host(), url.port(), client.dns(), client.socketFactory(),
+    return Address(url.host, url.port, client.dns(), client.socketFactory(),
         sslSocketFactory, hostnameVerifier, certificatePinner, client.proxyAuthenticator(),
         client.proxy(), client.protocols(), client.connectionSpecs(), client.proxySelector())
   }

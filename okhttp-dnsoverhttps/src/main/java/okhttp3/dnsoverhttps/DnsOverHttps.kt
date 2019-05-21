@@ -309,7 +309,7 @@ class DnsOverHttps internal constructor(builder: Builder) : Dns {
       val hosts = builder.bootstrapDnsHosts
 
       return if (hosts != null) {
-        BootstrapDns(builder.url!!.host(), hosts)
+        BootstrapDns(builder.url!!.host, hosts)
       } else {
         builder.systemDns
       }

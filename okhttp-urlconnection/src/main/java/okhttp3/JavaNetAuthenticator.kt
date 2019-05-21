@@ -45,21 +45,21 @@ class JavaNetAuthenticator : okhttp3.Authenticator {
             proxyAddress.hostName,
             proxy.connectToInetAddress(url),
             proxyAddress.port,
-            url.scheme(),
+            url.scheme,
             challenge.realm,
             challenge.scheme,
-            url.url(),
+            url.toUrl(),
             Authenticator.RequestorType.PROXY
         )
       } else {
         Authenticator.requestPasswordAuthentication(
-            url.host(),
+            url.host,
             proxy.connectToInetAddress(url),
-            url.port(),
-            url.scheme(),
+            url.port,
+            url.scheme,
             challenge.realm,
             challenge.scheme,
-            url.url(),
+            url.toUrl(),
             Authenticator.RequestorType.SERVER
         )
       }
@@ -80,7 +80,7 @@ class JavaNetAuthenticator : okhttp3.Authenticator {
   @Throws(IOException::class)
   private fun Proxy.connectToInetAddress(url: HttpUrl): InetAddress {
     return when {
-      type() == Proxy.Type.DIRECT -> InetAddress.getByName(url.host())
+      type() == Proxy.Type.DIRECT -> InetAddress.getByName(url.host)
       else -> (address() as InetSocketAddress).address
     }
   }

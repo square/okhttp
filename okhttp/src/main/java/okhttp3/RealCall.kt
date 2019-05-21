@@ -101,7 +101,7 @@ internal class RealCall private constructor(
       this.callsPerHost = other.callsPerHost
     }
 
-    fun host(): String = originalRequest.url().host()
+    fun host(): String = originalRequest.url().host
 
     fun request(): Request = originalRequest
 

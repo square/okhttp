@@ -738,15 +738,15 @@ class HttpUrl internal constructor(
   fun newBuilder(): Builder {
     val result = Builder()
     result.scheme = scheme
-    result.encodedUsername = encodedUsername()
-    result.encodedPassword = encodedPassword()
+    result.encodedUsername = encodedUsername
+    result.encodedPassword = encodedPassword
     result.host = host
     // If we're set to a default port, unset it in case of a scheme change.
     result.port = if (port != defaultPort(scheme)) port else -1
     result.encodedPathSegments.clear()
-    result.encodedPathSegments.addAll(encodedPathSegments())
-    result.encodedQuery(encodedQuery())
-    result.encodedFragment = encodedFragment()
+    result.encodedPathSegments.addAll(encodedPathSegments)
+    result.encodedQuery(encodedQuery)
+    result.encodedFragment = encodedFragment
     return result
   }
 
@@ -1365,14 +1365,14 @@ class HttpUrl internal constructor(
         }
       } else {
         // This is a relative link. Copy over all authority components. Also maybe the path & query.
-        this.encodedUsername = base.encodedUsername()
-        this.encodedPassword = base.encodedPassword()
+        this.encodedUsername = base.encodedUsername
+        this.encodedPassword = base.encodedPassword
         this.host = base.host
         this.port = base.port
         this.encodedPathSegments.clear()
-        this.encodedPathSegments.addAll(base.encodedPathSegments())
+        this.encodedPathSegments.addAll(base.encodedPathSegments)
         if (pos == limit || input[pos] == '#') {
-          encodedQuery(base.encodedQuery())
+          encodedQuery(base.encodedQuery)
         }
       }
 
