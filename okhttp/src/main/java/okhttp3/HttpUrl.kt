@@ -19,11 +19,11 @@ import okhttp3.HttpUrl.Companion.get
 import okhttp3.HttpUrl.Companion.parse
 import okhttp3.internal.decodeHexDigit
 import okhttp3.internal.delimiterOffset
+import okhttp3.internal.publicsuffix.PublicSuffixDatabase
 import okhttp3.internal.skipLeadingAsciiWhitespace
 import okhttp3.internal.skipTrailingAsciiWhitespace
-import okhttp3.internal.verifyAsIpAddress
-import okhttp3.internal.publicsuffix.PublicSuffixDatabase
 import okhttp3.internal.toCanonicalHost
+import okhttp3.internal.verifyAsIpAddress
 import okio.Buffer
 import java.net.InetAddress
 import java.net.MalformedURLException
@@ -287,27 +287,82 @@ import java.util.LinkedHashSet
  * [idna]: http://www.unicode.org/reports/tr46/#ToASCII
  */
 class HttpUrl internal constructor(
-  /** Either "http" or "https".  */
-  private val scheme: String,
-
-  /** Decoded username.  */
-  private val username: String,
-
-  /** Decoded password.  */
-  private val password: String,
-
-  /** Canonical hostname.  */
-  private val host: String,
-
-  /** Either 80, 443 or a user-specified port. In range [1..65535].  */
-  private val port: Int,
+  /** Either "http" or "https". */
+  @get:JvmName("scheme") val scheme: String,
 
   /**
-   * A list of canonical path segments. This list always contains at least one element, which may be
-   * the empty string. Each segment is formatted with a leading '/', so if path segments were ["a",
-   * "b", ""], then the encoded path would be "/a/b/".
+   * The decoded username, or an empty string if none is present.
+   *
+   * <table summary="">
+   * <tr><th>URL</th><th>`username()`</th></tr>
+   * <tr><td>`http://host/`</td><td>`""`</td></tr>
+   * <tr><td>`http://username@host/`</td><td>`"username"`</td></tr>
+   * <tr><td>`http://username:password@host/`</td><td>`"username"`</td></tr>
+   * <tr><td>`http://a%20b:c%20d@host/`</td><td>`"a b"`</td></tr>
+   * </table>
    */
-  private val pathSegments: List<String>,
+  @get:JvmName("username") val username: String,
+
+  /**
+   * Returns the decoded password, or an empty string if none is present.
+   *
+   * <table summary="">
+   * <tr><th>URL</th><th>`password()`</th></tr>
+   * <tr><td>`http://host/`</td><td>`""`</td></tr>
+   * <tr><td>`http://username@host/`</td><td>`""`</td></tr>
+   * <tr><td>`http://username:password@host/`</td><td>`"password"`</td></tr>
+   * <tr><td>`http://a%20b:c%20d@host/`</td><td>`"c d"`</td></tr>
+   * </table>
+   */
+  @get:JvmName("password") val password: String,
+
+  /**
+   * The host address suitable for use with [InetAddress.getAllByName]. May be:
+   *
+   *  * A regular host name, like `android.com`.
+   *
+   *  * An IPv4 address, like `127.0.0.1`.
+   *
+   *  * An IPv6 address, like `::1`. Note that there are no square braces.
+   *
+   *  * An encoded IDN, like `xn--n3h.net`.
+   *
+   * <table summary="">
+   * <tr><th>URL</th><th>`host()`</th></tr>
+   * <tr><td>`http://android.com/`</td><td>`"android.com"`</td></tr>
+   * <tr><td>`http://127.0.0.1/`</td><td>`"127.0.0.1"`</td></tr>
+   * <tr><td>`http://[::1]/`</td><td>`"::1"`</td></tr>
+   * <tr><td>`http://xn--n3h.net/`</td><td>`"xn--n3h.net"`</td></tr>
+   * </table>
+   */
+  @get:JvmName("host") val host: String,
+
+  /**
+   * The explicitly-specified port if one was provided, or the default port for this URL's scheme.
+   * For example, this returns 8443 for `https://square.com:8443/` and 443 for
+   * `https://square.com/`. The result is in `[1..65535]`.
+   *
+   * <table summary="">
+   * <tr><th>URL</th><th>`port()`</th></tr>
+   * <tr><td>`http://host/`</td><td>`80`</td></tr>
+   * <tr><td>`http://host:8000/`</td><td>`8000`</td></tr>
+   * <tr><td>`https://host/`</td><td>`443`</td></tr>
+   * </table>
+   */
+  @get:JvmName("port") val port: Int,
+
+  /**
+   * A list of path segments like `["a", "b", "c"]` for the URL `http://host/a/b/c`. This list is
+   * never empty though it may contain a single empty string.
+   *
+   * <table summary="">
+   * <tr><th>URL</th><th>`pathSegments()`</th></tr>
+   * <tr><td>`http://host/`</td><td>`[""]`</td></tr>
+   * <tr><td>`http://host/a/b/c"`</td><td>`["a", "b", "c"]`</td></tr>
+   * <tr><td>`http://host/a/b%20c/d"`</td><td>`["a", "b c", "d"]`</td></tr>
+   * </table>
+   */
+  @get:JvmName("pathSegments") val pathSegments: List<String>,
 
   /**
    * Alternating, decoded query names and values, or null for no query. Names may be empty or
@@ -316,16 +371,27 @@ class HttpUrl internal constructor(
    */
   private val queryNamesAndValues: List<String?>?,
 
-  /** Decoded fragment.  */
-  private val fragment: String?,
+  /**
+   * This URL's fragment, like `"abc"` for `http://host/#abc`. This is null if the URL has no
+   * fragment.
+   *
+   * <table summary="">
+   * <tr><th>URL</th><th>`fragment()`</th></tr>
+   * <tr><td>`http://host/`</td><td>null</td></tr>
+   * <tr><td>`http://host/#`</td><td>`""`</td></tr>
+   * <tr><td>`http://host/#abc`</td><td>`"abc"`</td></tr>
+   * <tr><td>`http://host/#abc|def`</td><td>`"abc|def"`</td></tr>
+   * </table>
+   */
+  @get:JvmName("fragment") val fragment: String?,
 
-  /** Canonical URL.  */
+  /** Canonical URL. */
   private val url: String
 ) {
   val isHttps: Boolean = scheme == "https"
 
-  /** Returns this URL as a [java.net.URL][URL].  */
-  fun url(): URL {
+  /** Returns this URL as a [java.net.URL][URL]. */
+  @JvmName("url") fun toUrl(): URL {
     try {
       return URL(url)
     } catch (e: MalformedURLException) {
@@ -346,7 +412,7 @@ class HttpUrl internal constructor(
    * These differences may have a significant consequence when the URI is interpreted by a
    * web server. For this reason the [URI class][URI] and this method should be avoided.
    */
-  fun uri(): URI {
+  @JvmName("uri") fun toUri(): URI {
     val uri = newBuilder().reencodeForUri().toString()
     return try {
       URI(uri)
@@ -361,11 +427,8 @@ class HttpUrl internal constructor(
     }
   }
 
-  /** Returns either "http" or "https".  */
-  fun scheme(): String = scheme
-
   /**
-   * Returns the username, or an empty string if none is set.
+   * The username, or an empty string if none is set.
    *
    * <table summary="">
    * <tr><th>URL</th><th>`encodedUsername()`</th></tr>
@@ -375,28 +438,16 @@ class HttpUrl internal constructor(
    * <tr><td>`http://a%20b:c%20d@host/`</td><td>`"a%20b"`</td></tr>
    * </table>
    */
-  fun encodedUsername(): String {
-    if (username.isEmpty()) return ""
-    val usernameStart = scheme.length + 3 // "://".length() == 3.
-    val usernameEnd = delimiterOffset(url, usernameStart, url.length, ":@")
-    return url.substring(usernameStart, usernameEnd)
-  }
+  @get:JvmName("encodedUsername") val encodedUsername: String
+    get() {
+      if (username.isEmpty()) return ""
+      val usernameStart = scheme.length + 3 // "://".length() == 3.
+      val usernameEnd = delimiterOffset(url, usernameStart, url.length, ":@")
+      return url.substring(usernameStart, usernameEnd)
+    }
 
   /**
-   * Returns the decoded username, or an empty string if none is present.
-   *
-   * <table summary="">
-   * <tr><th>URL</th><th>`username()`</th></tr>
-   * <tr><td>`http://host/`</td><td>`""`</td></tr>
-   * <tr><td>`http://username@host/`</td><td>`"username"`</td></tr>
-   * <tr><td>`http://username:password@host/`</td><td>`"username"`</td></tr>
-   * <tr><td>`http://a%20b:c%20d@host/`</td><td>`"a b"`</td></tr>
-   * </table>
-   */
-  fun username(): String = username
-
-  /**
-   * Returns the password, or an empty string if none is set.
+   * The password, or an empty string if none is set.
    *
    * <table summary="">
    * <tr><th>URL</th><th>`encodedPassword()`</th></tr>
@@ -406,64 +457,17 @@ class HttpUrl internal constructor(
    * <tr><td>`http://a%20b:c%20d@host/`</td><td>`"c%20d"`</td></tr>
    * </table>
    */
-  fun encodedPassword(): String {
-    if (password.isEmpty()) return ""
-    val passwordStart = url.indexOf(':', scheme.length + 3) + 1
-    val passwordEnd = url.indexOf('@')
-    return url.substring(passwordStart, passwordEnd)
-  }
+  @get:JvmName("encodedPassword") val encodedPassword: String
+    get() {
+      if (password.isEmpty()) return ""
+      val passwordStart = url.indexOf(':', scheme.length + 3) + 1
+      val passwordEnd = url.indexOf('@')
+      return url.substring(passwordStart, passwordEnd)
+    }
 
   /**
-   * Returns the decoded password, or an empty string if none is present.
-   *
-   * <table summary="">
-   * <tr><th>URL</th><th>`password()`</th></tr>
-   * <tr><td>`http://host/`</td><td>`""`</td></tr>
-   * <tr><td>`http://username@host/`</td><td>`""`</td></tr>
-   * <tr><td>`http://username:password@host/`</td><td>`"password"`</td></tr>
-   * <tr><td>`http://a%20b:c%20d@host/`</td><td>`"c d"`</td></tr>
-   * </table>
-   */
-  fun password(): String = password
-
-  /**
-   * Returns the host address suitable for use with [InetAddress.getAllByName]. May be:
-   *
-   *  * A regular host name, like `android.com`.
-   *
-   *  * An IPv4 address, like `127.0.0.1`.
-   *
-   *  * An IPv6 address, like `::1`. Note that there are no square braces.
-   *
-   *  * An encoded IDN, like `xn--n3h.net`.
-   *
-   * <table summary="">
-   * <tr><th>URL</th><th>`host()`</th></tr>
-   * <tr><td>`http://android.com/`</td><td>`"android.com"`</td></tr>
-   * <tr><td>`http://127.0.0.1/`</td><td>`"127.0.0.1"`</td></tr>
-   * <tr><td>`http://[::1]/`</td><td>`"::1"`</td></tr>
-   * <tr><td>`http://xn--n3h.net/`</td><td>`"xn--n3h.net"`</td></tr>
-   * </table>
-   */
-  fun host(): String = host
-
-  /**
-   * Returns the explicitly-specified port if one was provided, or the default port for this URL's
-   * scheme. For example, this returns 8443 for `https://square.com:8443/` and 443 for
-   * `https://square.com/`. The result is in `[1..65535]`.
-   *
-   * <table summary="">
-   * <tr><th>URL</th><th>`port()`</th></tr>
-   * <tr><td>`http://host/`</td><td>`80`</td></tr>
-   * <tr><td>`http://host:8000/`</td><td>`8000`</td></tr>
-   * <tr><td>`https://host/`</td><td>`443`</td></tr>
-   * </table>
-   */
-  fun port(): Int = port
-
-  /**
-   * Returns the number of segments in this URL's path. This is also the number of slashes in the
-   * URL's path, like 3 in `http://host/a/b/c`. This is always at least 1.
+   * The number of segments in this URL's path. This is also the number of slashes in this URL's
+   * path, like 3 in `http://host/a/b/c`. This is always at least 1.
    *
    * <table summary="">
    * <tr><th>URL</th><th>`pathSize()`</th></tr>
@@ -472,11 +476,11 @@ class HttpUrl internal constructor(
    * <tr><td>`http://host/a/b/c/`</td><td>`4`</td></tr>
    * </table>
    */
-  fun pathSize(): Int = pathSegments.size
+  @get:JvmName("pathSize") val pathSize: Int get() = pathSegments.size
 
   /**
-   * Returns the entire path of this URL encoded for use in HTTP resource resolution. The returned
-   * path will start with `"/"`.
+   * The entire path of this URL encoded for use in HTTP resource resolution. The returned path will
+   * start with `"/"`.
    *
    * <table summary="">
    * <tr><th>URL</th><th>`encodedPath()`</th></tr>
@@ -485,15 +489,16 @@ class HttpUrl internal constructor(
    * <tr><td>`http://host/a/b%20c/d`</td><td>`"/a/b%20c/d"`</td></tr>
    * </table>
    */
-  fun encodedPath(): String {
-    val pathStart = url.indexOf('/', scheme.length + 3) // "://".length() == 3.
-    val pathEnd = delimiterOffset(url, pathStart, url.length, "?#")
-    return url.substring(pathStart, pathEnd)
-  }
+  @get:JvmName("encodedPath") val encodedPath: String
+    get() {
+      val pathStart = url.indexOf('/', scheme.length + 3) // "://".length() == 3.
+      val pathEnd = delimiterOffset(url, pathStart, url.length, "?#")
+      return url.substring(pathStart, pathEnd)
+    }
 
   /**
-   * Returns a list of encoded path segments like `["a", "b", "c"]` for the URL `http://host/a/b/c`.
-   * This list is never empty though it may contain a single empty string.
+   * A list of encoded path segments like `["a", "b", "c"]` for the URL `http://host/a/b/c`. This
+   * list is never empty though it may contain a single empty string.
    *
    * <table summary="">
    * <tr><th>URL</th><th>`encodedPathSegments()`</th></tr>
@@ -502,37 +507,24 @@ class HttpUrl internal constructor(
    * <tr><td>`http://host/a/b%20c/d`</td><td>`["a", "b%20c", "d"]`</td></tr>
    * </table>
    */
-  fun encodedPathSegments(): List<String> {
-    val pathStart = url.indexOf('/', scheme.length + 3)
-    val pathEnd = delimiterOffset(url, pathStart, url.length, "?#")
-    val result = ArrayList<String>()
-    var i = pathStart
-    while (i < pathEnd) {
-      i++ // Skip the '/'.
-      val segmentEnd = delimiterOffset(url, i, pathEnd, '/')
-      result.add(url.substring(i, segmentEnd))
-      i = segmentEnd
+  @get:JvmName("encodedPathSegments") val encodedPathSegments: List<String>
+    get() {
+      val pathStart = url.indexOf('/', scheme.length + 3)
+      val pathEnd = delimiterOffset(url, pathStart, url.length, "?#")
+      val result = ArrayList<String>()
+      var i = pathStart
+      while (i < pathEnd) {
+        i++ // Skip the '/'.
+        val segmentEnd = delimiterOffset(url, i, pathEnd, '/')
+        result.add(url.substring(i, segmentEnd))
+        i = segmentEnd
+      }
+      return result
     }
-    return result
-  }
 
   /**
-   * Returns a list of path segments like `["a", "b", "c"]` for the URL `http://host/a/b/c`. This
-   * list is never empty though it may contain a single empty string.
-   *
-   * <table summary="">
-   * <tr><th>URL</th><th>`pathSegments()`</th></tr>
-   * <tr><td>`http://host/`</td><td>`[""]`</td></tr>
-   * <tr><td>`http://host/a/b/c"`</td><td>`["a", "b", "c"]`</td></tr>
-   * <tr><td>`http://host/a/b%20c/d"`</td><td>`["a", "b c", "d"]`</td></tr>
-   * </table>
-   */
-  fun pathSegments(): List<String> = pathSegments
-
-  /**
-   * Returns the query of this URL, encoded for use in HTTP resource resolution. The returned string
-   * may be null (for URLs with no query), empty (for URLs with an empty query) or non-empty (all
-   * other URLs).
+   * The query of this URL, encoded for use in HTTP resource resolution. This string may be null
+   * (for URLs with no query), empty (for URLs with an empty query) or non-empty (all other URLs).
    *
    * <table summary="">
    * <tr><th>URL</th><th>`encodedQuery()`</th></tr>
@@ -543,17 +535,18 @@ class HttpUrl internal constructor(
    * <tr><td>`http://host/?a=apple&b`</td><td>`"a=apple&b"`</td></tr>
    * </table>
    */
-  fun encodedQuery(): String? {
-    if (queryNamesAndValues == null) return null // No query.
-    val queryStart = url.indexOf('?') + 1
-    val queryEnd = delimiterOffset(url, queryStart, url.length, '#')
-    return url.substring(queryStart, queryEnd)
-  }
+  @get:JvmName("encodedQuery") val encodedQuery: String?
+    get() {
+      if (queryNamesAndValues == null) return null // No query.
+      val queryStart = url.indexOf('?') + 1
+      val queryEnd = delimiterOffset(url, queryStart, url.length, '#')
+      return url.substring(queryStart, queryEnd)
+    }
 
   /**
-   * Returns this URL's query, like `"abc"` for `http://host/?abc`. Most callers should
-   * prefer [queryParameterName] and [queryParameterValue] because these methods offer direct access
-   * to individual query parameters.
+   * This URL's query, like `"abc"` for `http://host/?abc`. Most callers should prefer
+   * [queryParameterName] and [queryParameterValue] because these methods offer direct access to
+   * individual query parameters.
    *
    * <table summary="">
    * <tr><th>URL</th><th>`query()`</th></tr>
@@ -565,17 +558,18 @@ class HttpUrl internal constructor(
    * <tr><td>`http://host/?a=apple&b`</td><td>`"a=apple&b"`</td></tr>
    * </table>
    */
-  fun query(): String? {
-    if (queryNamesAndValues == null) return null // No query.
-    val result = StringBuilder()
-    queryNamesAndValues.toQueryString(result)
-    return result.toString()
-  }
+  @get:JvmName("query") val query: String?
+    get() {
+      if (queryNamesAndValues == null) return null // No query.
+      val result = StringBuilder()
+      queryNamesAndValues.toQueryString(result)
+      return result.toString()
+    }
 
   /**
-   * Returns the number of query parameters in this URL, like 2 for `http://host/?a=apple&b=banana`.
-   * If this URL has no query this returns 0. Otherwise it returns one more than the number of `"&"`
-   * separators in the query.
+   * The number of query parameters in this URL, like 2 for `http://host/?a=apple&b=banana`. If this
+   * URL has no query this is 0. Otherwise it is one more than the number of `"&"` separators in the
+   * query.
    *
    * <table summary="">
    * <tr><th>URL</th><th>`querySize()`</th></tr>
@@ -586,13 +580,14 @@ class HttpUrl internal constructor(
    * <tr><td>`http://host/?a=apple&b`</td><td>`2`</td></tr>
    * </table>
    */
-  fun querySize(): Int {
-    return if (queryNamesAndValues != null) queryNamesAndValues.size / 2 else 0
-  }
+  @get:JvmName("querySize") val querySize: Int
+    get() {
+      return if (queryNamesAndValues != null) queryNamesAndValues.size / 2 else 0
+    }
 
   /**
-   * Returns the first query parameter named `name` decoded using UTF-8, or null if there is
-   * no such query parameter.
+   * The first query parameter named `name` decoded using UTF-8, or null if there is no such query
+   * parameter.
    *
    * <table summary="">
    * <tr><th>URL</th><th>`queryParameter("a")`</th></tr>
@@ -614,8 +609,8 @@ class HttpUrl internal constructor(
   }
 
   /**
-   * Returns the distinct query parameter names in this URL, like `["a", "b"]` for
-   * `http://host/?a=apple&b=banana`. If this URL has no query this returns the empty set.
+   * The distinct query parameter names in this URL, like `["a", "b"]` for
+   * `http://host/?a=apple&b=banana`. If this URL has no query this is the empty set.
    *
    * <table summary="">
    * <tr><th>URL</th><th>`queryParameterNames()`</th></tr>
@@ -626,14 +621,15 @@ class HttpUrl internal constructor(
    * <tr><td>`http://host/?a=apple&b`</td><td>`["a", "b"]`</td></tr>
    * </table>
    */
-  fun queryParameterNames(): Set<String> {
-    if (queryNamesAndValues == null) return emptySet()
-    val result = LinkedHashSet<String>()
-    for (i in 0 until queryNamesAndValues.size step 2) {
-      result.add(queryNamesAndValues[i]!!)
+  @get:JvmName("queryParameterNames") val queryParameterNames: Set<String>
+    get() {
+      if (queryNamesAndValues == null) return emptySet()
+      val result = LinkedHashSet<String>()
+      for (i in 0 until queryNamesAndValues.size step 2) {
+        result.add(queryNamesAndValues[i]!!)
+      }
+      return Collections.unmodifiableSet(result)
     }
-    return Collections.unmodifiableSet(result)
-  }
 
   /**
    * Returns all values for the query parameter `name` ordered by their appearance in this
@@ -699,8 +695,8 @@ class HttpUrl internal constructor(
   }
 
   /**
-   * Returns this URL's encoded fragment, like `"abc"` for `http://host/#abc`. This returns null if
-   * the URL has no fragment.
+   * This URL's encoded fragment, like `"abc"` for `http://host/#abc`. This is null if the URL has
+   * no fragment.
    *
    * <table summary="">
    * <tr><th>URL</th><th>`encodedFragment()`</th></tr>
@@ -710,25 +706,12 @@ class HttpUrl internal constructor(
    * <tr><td>`http://host/#abc|def`</td><td>`"abc|def"`</td></tr>
    * </table>
    */
-  fun encodedFragment(): String? {
+  @get:JvmName("encodedFragment") val encodedFragment: String?
+    get() {
     if (fragment == null) return null
     val fragmentStart = url.indexOf('#') + 1
     return url.substring(fragmentStart)
   }
-
-  /**
-   * Returns this URL's fragment, like `"abc"` for `http://host/#abc`. This returns null
-   * if the URL has no fragment.
-   *
-   * <table summary="">
-   * <tr><th>URL</th><th>`fragment()`</th></tr>
-   * <tr><td>`http://host/`</td><td>null</td></tr>
-   * <tr><td>`http://host/#`</td><td>`""`</td></tr>
-   * <tr><td>`http://host/#abc`</td><td>`"abc"`</td></tr>
-   * <tr><td>`http://host/#abc|def`</td><td>`"abc|def"`</td></tr>
-   * </table>
-   */
-  fun fragment(): String? = fragment
 
   /**
    * Returns a string with containing this URL with its username, password, query, and fragment
@@ -774,7 +757,7 @@ class HttpUrl internal constructor(
   fun newBuilder(link: String): Builder? {
     return try {
       Builder().parse(this, link)
-    } catch (ignored: IllegalArgumentException) {
+    } catch (_: IllegalArgumentException) {
       null
     }
   }
@@ -812,6 +795,139 @@ class HttpUrl internal constructor(
       PublicSuffixDatabase.get().getEffectiveTldPlusOne(host)
     }
   }
+
+  @JvmName("-deprecated_url")
+  @Deprecated(
+      message = "moved to toUrl()",
+      replaceWith = ReplaceWith(expression = "toUrl()"),
+      level = DeprecationLevel.WARNING)
+  fun url() = toUrl()
+
+  @JvmName("-deprecated_uri")
+  @Deprecated(
+      message = "moved to toUri()",
+      replaceWith = ReplaceWith(expression = "toUri()"),
+      level = DeprecationLevel.WARNING)
+  fun uri() = toUri()
+
+  @JvmName("-deprecated_scheme")
+  @Deprecated(
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "scheme"),
+      level = DeprecationLevel.WARNING)
+  fun scheme(): String = scheme
+
+  @JvmName("-deprecated_encodedUsername")
+  @Deprecated(
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "encodedUsername"),
+      level = DeprecationLevel.WARNING)
+  fun encodedUsername(): String = encodedUsername
+
+  @JvmName("-deprecated_username")
+  @Deprecated(
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "username"),
+      level = DeprecationLevel.WARNING)
+  fun username(): String = username
+
+  @JvmName("-deprecated_encodedPassword")
+  @Deprecated(
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "encodedPassword"),
+      level = DeprecationLevel.WARNING)
+  fun encodedPassword(): String = encodedPassword
+
+  @JvmName("-deprecated_password")
+  @Deprecated(
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "password"),
+      level = DeprecationLevel.WARNING)
+  fun password(): String = password
+
+  @JvmName("-deprecated_host")
+  @Deprecated(
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "host"),
+      level = DeprecationLevel.WARNING)
+  fun host(): String = host
+
+  @JvmName("-deprecated_port")
+  @Deprecated(
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "port"),
+      level = DeprecationLevel.WARNING)
+  fun port(): Int = port
+
+  @JvmName("-deprecated_pathSize")
+  @Deprecated(
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "pathSize"),
+      level = DeprecationLevel.WARNING)
+  fun pathSize(): Int = pathSize
+
+  @JvmName("-deprecated_encodedPath")
+  @Deprecated(
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "encodedPath"),
+      level = DeprecationLevel.WARNING)
+  fun encodedPath(): String = encodedPath
+
+  @JvmName("-deprecated_encodedPathSegments")
+  @Deprecated(
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "encodedPathSegments"),
+      level = DeprecationLevel.WARNING)
+  fun encodedPathSegments(): List<String> = encodedPathSegments
+
+  @JvmName("-deprecated_pathSegments")
+  @Deprecated(
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "pathSegments"),
+      level = DeprecationLevel.WARNING)
+  fun pathSegments(): List<String> = pathSegments
+
+  @JvmName("-deprecated_encodedQuery")
+  @Deprecated(
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "encodedQuery"),
+      level = DeprecationLevel.WARNING)
+  fun encodedQuery(): String? = encodedQuery
+
+  @JvmName("-deprecated_query")
+  @Deprecated(
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "query"),
+      level = DeprecationLevel.WARNING)
+  fun query(): String? = query
+
+  @JvmName("-deprecated_querySize")
+  @Deprecated(
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "querySize"),
+      level = DeprecationLevel.WARNING)
+  fun querySize(): Int = querySize
+
+  @JvmName("-deprecated_queryParameterNames")
+  @Deprecated(
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "queryParameterNames"),
+      level = DeprecationLevel.WARNING)
+  fun queryParameterNames(): Set<String> = queryParameterNames
+
+  @JvmName("-deprecated_encodedFragment")
+  @Deprecated(
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "encodedFragment"),
+      level = DeprecationLevel.WARNING)
+  fun encodedFragment(): String? = encodedFragment
+
+  @JvmName("-deprecated_fragment")
+  @Deprecated(
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "fragment"),
+      level = DeprecationLevel.WARNING)
+  fun fragment(): String? = fragment
 
   class Builder {
     internal var scheme: String? = null
@@ -957,7 +1073,7 @@ class HttpUrl internal constructor(
       )?.toQueryNamesAndValues()
     }
 
-    /** Encodes the query parameter using UTF-8 and adds it to this URL's query string.  */
+    /** Encodes the query parameter using UTF-8 and adds it to this URL's query string. */
     fun addQueryParameter(name: String, value: String?) = apply {
       if (encodedQueryNamesAndValues == null) encodedQueryNamesAndValues = ArrayList()
       encodedQueryNamesAndValues!!.add(name.canonicalize(
@@ -970,7 +1086,7 @@ class HttpUrl internal constructor(
       ))
     }
 
-    /** Adds the pre-encoded query parameter to this URL's query string.  */
+    /** Adds the pre-encoded query parameter to this URL's query string. */
     fun addEncodedQueryParameter(encodedName: String, encodedValue: String?) = apply {
       if (encodedQueryNamesAndValues == null) encodedQueryNamesAndValues = ArrayList()
       encodedQueryNamesAndValues!!.add(encodedName.canonicalize(
@@ -1321,7 +1437,7 @@ class HttpUrl internal constructor(
       }
     }
 
-    /** Adds a path segment. If the input is ".." or equivalent, this pops a path segment.  */
+    /** Adds a path segment. If the input is ".." or equivalent, this pops a path segment. */
     private fun push(
       input: String,
       pos: Int,
@@ -1417,7 +1533,7 @@ class HttpUrl internal constructor(
         return -1 // No ':'; doesn't start with a scheme.
       }
 
-      /** Returns the number of '/' and '\' slashes in this, starting at `pos`.  */
+      /** Returns the number of '/' and '\' slashes in this, starting at `pos`. */
       private fun String.slashCount(pos: Int, limit: Int): Int {
         var slashCount = 0
         for (i in pos until limit) {
@@ -1431,7 +1547,7 @@ class HttpUrl internal constructor(
         return slashCount
       }
 
-      /** Finds the first ':' in `input`, skipping characters between square braces "[...]".  */
+      /** Finds the first ':' in `input`, skipping characters between square braces "[...]". */
       private fun portColonOffset(input: String, pos: Int, limit: Int): Int {
         var i = pos
         while (i < limit) {
