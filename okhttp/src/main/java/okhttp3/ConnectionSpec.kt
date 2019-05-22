@@ -17,9 +17,9 @@ package okhttp3
 
 import okhttp3.ConnectionSpec.Builder
 import okhttp3.internal.concat
+import okhttp3.internal.hasIntersection
 import okhttp3.internal.indexOf
 import okhttp3.internal.intersect
-import okhttp3.internal.nonEmptyIntersection
 import java.util.Arrays
 import java.util.Objects
 import javax.net.ssl.SSLSocket
@@ -81,13 +81,13 @@ class ConnectionSpec internal constructor(builder: Builder) {
    */
   private fun supportedSpec(sslSocket: SSLSocket, isFallback: Boolean): ConnectionSpec {
     var cipherSuitesIntersection = if (cipherSuites != null) {
-      intersect(CipherSuite.ORDER_BY_NAME, sslSocket.enabledCipherSuites, cipherSuites)
+      sslSocket.enabledCipherSuites.intersect(cipherSuites, CipherSuite.ORDER_BY_NAME)
     } else {
       sslSocket.enabledCipherSuites
     }
 
     val tlsVersionsIntersection = if (tlsVersions != null) {
-      intersect(naturalOrder(), sslSocket.enabledProtocols, tlsVersions)
+      sslSocket.enabledProtocols.intersect(tlsVersions, naturalOrder())
     } else {
       sslSocket.enabledProtocols
     }
@@ -95,11 +95,11 @@ class ConnectionSpec internal constructor(builder: Builder) {
     // In accordance with https://tools.ietf.org/html/draft-ietf-tls-downgrade-scsv-00 the SCSV
     // cipher is added to signal that a protocol fallback has taken place.
     val supportedCipherSuites = sslSocket.supportedCipherSuites
-    val indexOfFallbackScsv = indexOf(
-        CipherSuite.ORDER_BY_NAME, supportedCipherSuites, "TLS_FALLBACK_SCSV")
+    val indexOfFallbackScsv = supportedCipherSuites.indexOf(
+        "TLS_FALLBACK_SCSV", CipherSuite.ORDER_BY_NAME)
     if (isFallback && indexOfFallbackScsv != -1) {
-      cipherSuitesIntersection = concat(
-          cipherSuitesIntersection, supportedCipherSuites[indexOfFallbackScsv])
+      cipherSuitesIntersection = cipherSuitesIntersection.concat(
+          supportedCipherSuites[indexOfFallbackScsv])
     }
 
     return Builder(this)
@@ -125,13 +125,13 @@ class ConnectionSpec internal constructor(builder: Builder) {
     }
 
     if (tlsVersions != null &&
-        !nonEmptyIntersection(naturalOrder(), tlsVersions, socket.enabledProtocols)) {
+        !tlsVersions.hasIntersection(socket.enabledProtocols, naturalOrder())) {
       return false
     }
 
     if (cipherSuites != null &&
-        !nonEmptyIntersection(
-            CipherSuite.ORDER_BY_NAME, cipherSuites, socket.enabledCipherSuites)) {
+        !cipherSuites.hasIntersection(
+            socket.enabledCipherSuites, CipherSuite.ORDER_BY_NAME)) {
       return false
     }
 

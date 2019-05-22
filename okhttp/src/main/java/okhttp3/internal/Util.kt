@@ -92,17 +92,16 @@ fun threadFactory(
 }
 
 /**
- * Returns an array containing only elements found in [first] and also in [second].
- * The returned elements are in the same order as in [first].
+ * Returns an array containing only elements found in [this] and also in [other].
+ * The returned elements are in the same order as in [this].
  */
-fun intersect(
-  comparator: Comparator<in String>,
-  first: Array<String>,
-  second: Array<String>
+fun Array<String>.intersect(
+  other: Array<String>,
+  comparator: Comparator<in String>
 ): Array<String> {
   val result = ArrayList<String>()
-  for (a in first) {
-    for (b in second) {
+  for (a in this) {
+    for (b in other) {
       if (comparator.compare(a, b) == 0) {
         result.add(a)
         break
@@ -113,21 +112,20 @@ fun intersect(
 }
 
 /**
- * Returns true if there is an element in [first] that is also in [second]. This
+ * Returns true if there is an element in [this] that is also in [other]. This
  * method terminates if any intersection is found. The sizes of both arguments are assumed to be
  * so small, and the likelihood of an intersection so great, that it is not worth the CPU cost of
  * sorting or the memory cost of hashing.
  */
-fun nonEmptyIntersection(
-  comparator: Comparator<String>,
-  first: Array<String>?,
-  second: Array<String>?
+fun Array<String>.hasIntersection(
+  other: Array<String>?,
+  comparator: Comparator<in String>
 ): Boolean {
-  if (first == null || second == null || first.isEmpty() || second.isEmpty()) {
+  if (isEmpty() || other == null || other.isEmpty()) {
     return false
   }
-  for (a in first) {
-    for (b in second) {
+  for (a in this) {
+    for (b in other) {
       if (comparator.compare(a, b) == 0) {
         return true
       }
@@ -149,13 +147,13 @@ fun HttpUrl.toHostHeader(includeDefaultPort: Boolean = false): String {
   }
 }
 
-fun indexOf(comparator: Comparator<String>, array: Array<String>, value: String): Int =
-    array.indexOfFirst { comparator.compare(it, value) == 0 }
+fun Array<String>.indexOf(value: String, comparator: Comparator<String>): Int =
+    indexOfFirst { comparator.compare(it, value) == 0 }
 
 @Suppress("UNCHECKED_CAST")
-fun concat(array: Array<String>, value: String): Array<String> {
-  val result = array.copyOf(array.size + 1)
-  result[result.size - 1] = value
+fun Array<String>.concat(value: String): Array<String> {
+  val result = copyOf(size + 1)
+  result[result.lastIndex] = value
   return result as Array<String>
 }
 
