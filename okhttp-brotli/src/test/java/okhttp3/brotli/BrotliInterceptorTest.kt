@@ -27,6 +27,7 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.Assert.fail
 import org.junit.Test
 import java.io.IOException
+import okio.ByteString.Companion.encodeUtf8
 
 class BrotliInterceptorTest {
   @Test
@@ -50,7 +51,7 @@ class BrotliInterceptorTest {
 
   @Test
   fun testNoUncompress() {
-    val response = response("https://httpbin.org/brotli", ByteString.of(*"XXXX".toByteArray()))
+    val response = response("https://httpbin.org/brotli", "XXXX".encodeUtf8())
 
     val same = BrotliInterceptor.uncompress(response)
 
