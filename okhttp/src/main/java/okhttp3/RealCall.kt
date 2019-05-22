@@ -101,7 +101,7 @@ internal class RealCall private constructor(
       this.callsPerHost = other.callsPerHost
     }
 
-    fun host(): String = originalRequest.url().host
+    fun host(): String = originalRequest.url.host
 
     fun request(): Request = originalRequest
 
@@ -161,7 +161,7 @@ internal class RealCall private constructor(
         " to " + redactedUrl())
   }
 
-  fun redactedUrl(): String = originalRequest.url().redact()
+  fun redactedUrl(): String = originalRequest.url.redact()
 
   @Throws(IOException::class)
   fun getResponseWithInterceptorChain(): Response {

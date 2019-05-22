@@ -32,7 +32,7 @@ class ConnectInterceptor(val client: OkHttpClient) : Interceptor {
     val transmitter = realChain.transmitter()
 
     // We need the network to satisfy this request. Possibly for validating a conditional GET.
-    val doExtensiveHealthChecks = request.method() != "GET"
+    val doExtensiveHealthChecks = request.method != "GET"
     val exchange = transmitter.newExchange(chain, doExtensiveHealthChecks)
 
     return realChain.proceed(request, transmitter, exchange)

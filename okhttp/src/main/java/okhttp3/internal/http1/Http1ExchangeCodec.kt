@@ -93,7 +93,7 @@ class Http1ExchangeCodec(
 
   override fun createRequestBody(request: Request, contentLength: Long): Sink {
     return when {
-      request.body() != null && request.body()!!.isDuplex() -> throw ProtocolException(
+      request.body != null && request.body!!.isDuplex() -> throw ProtocolException(
           "Duplex connections are not supported for HTTP/1")
       request.isChunked() -> newChunkedSink() // Stream a request body of unknown length.
       contentLength != -1L -> newKnownLengthSink() // Stream a request body of a known length.
@@ -120,7 +120,7 @@ class Http1ExchangeCodec(
   override fun writeRequestHeaders(request: Request) {
     val requestLine = RequestLine.get(
         request, realConnection!!.route().proxy().type())
-    writeRequest(request.headers(), requestLine)
+    writeRequest(request.headers, requestLine)
   }
 
   override fun reportedContentLength(response: Response): Long {
@@ -134,7 +134,7 @@ class Http1ExchangeCodec(
   override fun openResponseBodySource(response: Response): Source {
     return when {
       !response.promisesBody() -> newFixedLengthSource(0)
-      response.isChunked() -> newChunkedSource(response.request().url())
+      response.isChunked() -> newChunkedSource(response.request().url)
       else -> {
         val contentLength = response.headersContentLength()
         if (contentLength != -1L) {

@@ -118,7 +118,7 @@ class Transmitter(
    */
   fun prepareToConnect(request: Request) {
     if (this.request != null) {
-      if (this.request!!.url().canReuseConnectionFor(request.url()) && exchangeFinder!!.hasRouteToTry()) {
+      if (this.request!!.url.canReuseConnectionFor(request.url) && exchangeFinder!!.hasRouteToTry()) {
         return // Already ready.
       }
       check(exchange == null)
@@ -131,7 +131,7 @@ class Transmitter(
 
     this.request = request
     this.exchangeFinder = ExchangeFinder(
-        this, connectionPool, createAddress(request.url()), call, eventListener)
+        this, connectionPool, createAddress(request.url), call, eventListener)
   }
 
   private fun createAddress(url: HttpUrl): Address {

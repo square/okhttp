@@ -122,7 +122,7 @@ class CacheInterceptor(internal val cache: InternalCache?) : Interceptor {
         return cacheWritingResponse(cacheRequest, response)
       }
 
-      if (HttpMethod.invalidatesCache(networkRequest.method())) {
+      if (HttpMethod.invalidatesCache(networkRequest.method)) {
         try {
           cache.remove(networkRequest)
         } catch (ignored: IOException) {

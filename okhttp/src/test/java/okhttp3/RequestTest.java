@@ -158,6 +158,7 @@ public final class RequestTest {
         .url("https://square.com")
         .build();
     assertThat(request.headers("Cache-Control")).containsExactly("no-cache");
+    assertThat(request.cacheControl().noCache()).isTrue();
   }
 
   @Test public void emptyCacheControlClearsAllCacheControlHeaders() {

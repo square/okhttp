@@ -75,7 +75,7 @@ class Http2ExchangeCodec(
   override fun writeRequestHeaders(request: Request) {
     if (stream != null) return
 
-    val hasRequestBody = request.body() != null
+    val hasRequestBody = request.body != null
     val requestHeaders = http2HeadersList(request)
     stream = connection.newStream(requestHeaders, hasRequestBody)
     // We may have been asked to cancel while creating the new stream and sending the request
@@ -158,15 +158,15 @@ class Http2ExchangeCodec(
         UPGRADE)
 
     fun http2HeadersList(request: Request): List<Header> {
-      val headers = request.headers()
+      val headers = request.headers
       val result = ArrayList<Header>(headers.size + 4)
-      result.add(Header(TARGET_METHOD, request.method()))
-      result.add(Header(TARGET_PATH, RequestLine.requestPath(request.url())))
+      result.add(Header(TARGET_METHOD, request.method))
+      result.add(Header(TARGET_PATH, RequestLine.requestPath(request.url)))
       val host = request.header("Host")
       if (host != null) {
         result.add(Header(TARGET_AUTHORITY, host)) // Optional.
       }
-      result.add(Header(TARGET_SCHEME, request.url().scheme))
+      result.add(Header(TARGET_SCHEME, request.url.scheme))
 
       for (i in 0 until headers.size) {
         // header names must be lowercase.

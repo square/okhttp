@@ -26,31 +26,21 @@ import java.net.URL
  * immutable.
  */
 class Request internal constructor(
-  internal val url: HttpUrl,
-  builder: Builder
+  @get:JvmName("url") val url: HttpUrl,
+  @get:JvmName("method") val method: String,
+  @get:JvmName("headers") val headers: Headers,
+  @get:JvmName("body") val body: RequestBody?,
+  internal val tags: Map<Class<*>, Any>
 ) {
-  internal val method: String = builder.method
-  internal val headers: Headers = builder.headers.build()
-  internal val body: RequestBody? = builder.body
-  internal val tags: Map<Class<*>, Any> = builder.tags.toImmutableMap()
 
-  @Volatile
-  private var cacheControl: CacheControl? = null // Lazily initialized
+  private var lazyCacheControl: CacheControl? = null
 
   val isHttps: Boolean
     get() = url.isHttps
 
-  fun url(): HttpUrl = url
-
-  fun method(): String = method
-
-  fun headers(): Headers = headers
-
   fun header(name: String): String? = headers[name]
 
   fun headers(name: String): List<String> = headers.values(name)
-
-  fun body(): RequestBody? = body
 
   /**
    * Returns the tag attached with `Object.class` as a key, or null if no tag is attached with
@@ -74,11 +64,50 @@ class Request internal constructor(
    * Returns the cache control directives for this response. This is never null, even if this
    * response contains no `Cache-Control` header.
    */
-  fun cacheControl(): CacheControl {
-    return cacheControl ?: CacheControl.parse(headers).also {
-      this.cacheControl = it
+  @get:JvmName("cacheControl") val cacheControl: CacheControl
+    get() {
+      var result = lazyCacheControl
+      if (result == null) {
+        result = CacheControl.parse(headers)
+        lazyCacheControl = result
+      }
+      return result
     }
-  }
+
+  @JvmName("-deprecated_url")
+  @Deprecated(
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "url"),
+      level = DeprecationLevel.WARNING)
+  fun url(): HttpUrl = url
+
+  @JvmName("-deprecated_method")
+  @Deprecated(
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "method"),
+      level = DeprecationLevel.WARNING)
+  fun method(): String = method
+
+  @JvmName("-deprecated_headers")
+  @Deprecated(
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "headers"),
+      level = DeprecationLevel.WARNING)
+  fun headers(): Headers = headers
+
+  @JvmName("-deprecated_body")
+  @Deprecated(
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "body"),
+      level = DeprecationLevel.WARNING)
+  fun body(): RequestBody? = body
+
+  @JvmName("-deprecated_cacheControl")
+  @Deprecated(
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "cacheControl"),
+      level = DeprecationLevel.WARNING)
+  fun cacheControl(): CacheControl = cacheControl
 
   override fun toString(): String = "Request{method=$method, url=$url, tags=$tags}"
 
@@ -233,9 +262,14 @@ class Request internal constructor(
       }
     }
 
-    open fun build(): Request = Request(
-        checkNotNull(url) { "url == null" },
-        this
-    )
+    open fun build(): Request {
+      return Request(
+          checkNotNull(url) { "url == null" },
+          method,
+          headers.build(),
+          body,
+          tags.toImmutableMap()
+      )
+    }
   }
 }

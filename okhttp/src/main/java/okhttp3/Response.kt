@@ -218,7 +218,7 @@ class Response internal constructor(
   }
 
   override fun toString() =
-      "Response{protocol=$protocol, code=$code, message=$message, url=${request.url()}}"
+      "Response{protocol=$protocol, code=$code, message=$message, url=${request.url}}"
 
   open class Builder {
     internal var request: Request? = null
