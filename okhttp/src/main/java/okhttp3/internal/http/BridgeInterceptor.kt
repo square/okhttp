@@ -24,7 +24,7 @@ import okhttp3.Response
 import okhttp3.internal.userAgent
 import okio.GzipSource
 
-import okhttp3.internal.hostHeader
+import okhttp3.internal.toHostHeader
 import okio.buffer
 
 /**
@@ -57,7 +57,7 @@ class BridgeInterceptor(private val cookieJar: CookieJar) : Interceptor {
     }
 
     if (userRequest.header("Host") == null) {
-      requestBuilder.header("Host", hostHeader(userRequest.url(), false))
+      requestBuilder.header("Host", userRequest.url().toHostHeader())
     }
 
     if (userRequest.header("Connection") == null) {

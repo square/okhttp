@@ -621,7 +621,7 @@ class Http2Connection internal constructor(builder: Builder) : Closeable {
           if (streamId % 2 == nextStreamId % 2) return
 
           // Create a stream.
-          val headers = toHeaders(headerBlock)
+          val headers = headerBlock.toHeaders()
           val newStream = Http2Stream(streamId, this@Http2Connection, false, inFinished, headers)
           lastGoodStreamId = streamId
           streams[streamId] = newStream
@@ -640,7 +640,7 @@ class Http2Connection internal constructor(builder: Builder) : Closeable {
       }
 
       // Update an existing stream.
-      stream!!.receiveHeaders(toHeaders(headerBlock), inFinished)
+      stream!!.receiveHeaders(headerBlock.toHeaders(), inFinished)
     }
 
     override fun rstStream(streamId: Int, errorCode: ErrorCode) {
