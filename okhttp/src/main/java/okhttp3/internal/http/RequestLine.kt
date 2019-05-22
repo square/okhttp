@@ -29,13 +29,13 @@ object RequestLine {
    */
   fun get(request: Request, proxyType: Proxy.Type): String {
     val result = StringBuilder()
-    result.append(request.method())
+    result.append(request.method)
     result.append(' ')
 
     if (includeAuthorityInRequestLine(request, proxyType)) {
-      result.append(request.url())
+      result.append(request.url)
     } else {
-      result.append(requestPath(request.url()))
+      result.append(requestPath(request.url))
     }
 
     result.append(" HTTP/1.1")

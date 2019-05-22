@@ -212,7 +212,7 @@ fun CookieJar.receiveHeaders(url: HttpUrl, headers: Headers) {
  */
 fun Response.promisesBody(): Boolean {
   // HEAD requests never yield a body regardless of the response headers.
-  if (request().method() == "HEAD") {
+  if (request().method == "HEAD") {
     return false
   }
 

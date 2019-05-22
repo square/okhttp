@@ -229,7 +229,7 @@ class RealConnection(
     eventListener: EventListener
   ) {
     var tunnelRequest: Request = createTunnelRequest()
-    val url = tunnelRequest.url()
+    val url = tunnelRequest.url
     for (i in 0 until MAX_TUNNEL_ATTEMPTS) {
       connectSocket(connectTimeout, readTimeout, call, eventListener)
       tunnelRequest = createTunnel(readTimeout, writeTimeout, tunnelRequest, url)
@@ -416,7 +416,7 @@ class RealConnection(
       val tunnelCodec = Http1ExchangeCodec(null, null, source, sink)
       source.timeout().timeout(readTimeout.toLong(), MILLISECONDS)
       sink.timeout().timeout(writeTimeout.toLong(), MILLISECONDS)
-      tunnelCodec.writeRequest(nextRequest.headers(), requestLine)
+      tunnelCodec.writeRequest(nextRequest.headers, requestLine)
       tunnelCodec.finishRequest()
       val response = tunnelCodec.readResponseHeaders(false)!!
           .request(nextRequest)

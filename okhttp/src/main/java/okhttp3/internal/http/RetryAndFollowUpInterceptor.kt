@@ -108,7 +108,7 @@ class RetryAndFollowUpInterceptor(private val client: OkHttpClient) : Intercepto
         return response
       }
 
-      val followUpBody = followUp.body()
+      val followUpBody = followUp.body
       if (followUpBody != null && followUpBody.isOneShot()) {
         return response
       }
@@ -155,7 +155,7 @@ class RetryAndFollowUpInterceptor(private val client: OkHttpClient) : Intercepto
   }
 
   private fun requestIsOneShot(e: IOException, userRequest: Request): Boolean {
-    val requestBody = userRequest.body()
+    val requestBody = userRequest.body
     return (requestBody != null && requestBody.isOneShot()) ||
         e is FileNotFoundException
   }
@@ -200,7 +200,7 @@ class RetryAndFollowUpInterceptor(private val client: OkHttpClient) : Intercepto
   private fun followUpRequest(userResponse: Response, route: Route?): Request? {
     val responseCode = userResponse.code()
 
-    val method = userResponse.request().method()
+    val method = userResponse.request().method
     when (responseCode) {
       HTTP_PROXY_AUTH -> {
         val selectedProxy = route!!.proxy()
@@ -234,7 +234,7 @@ class RetryAndFollowUpInterceptor(private val client: OkHttpClient) : Intercepto
           return null
         }
 
-        val requestBody = userResponse.request().body()
+        val requestBody = userResponse.request().body
         if (requestBody != null && requestBody.isOneShot()) {
           return null
         }
@@ -275,10 +275,10 @@ class RetryAndFollowUpInterceptor(private val client: OkHttpClient) : Intercepto
 
     val location = userResponse.header("Location") ?: return null
     // Don't follow redirects to unsupported protocols.
-    val url = userResponse.request().url().resolve(location) ?: return null
+    val url = userResponse.request().url.resolve(location) ?: return null
 
     // If configured, don't follow redirects between SSL and non-SSL.
-    val sameScheme = url.scheme == userResponse.request().url().scheme
+    val sameScheme = url.scheme == userResponse.request().url.scheme
     if (!sameScheme && !client.followSslRedirects()) return null
 
     // Most redirects don't include a request body.
@@ -288,7 +288,7 @@ class RetryAndFollowUpInterceptor(private val client: OkHttpClient) : Intercepto
       if (HttpMethod.redirectsToGet(method)) {
         requestBuilder.method("GET", null)
       } else {
-        val requestBody = if (maintainBody) userResponse.request().body() else null
+        val requestBody = if (maintainBody) userResponse.request().body else null
         requestBuilder.method(method, requestBody)
       }
       if (!maintainBody) {
@@ -301,7 +301,7 @@ class RetryAndFollowUpInterceptor(private val client: OkHttpClient) : Intercepto
     // When redirecting across hosts, drop all authentication headers. This
     // is potentially annoying to the application layer since they have no
     // way to retain them.
-    if (!userResponse.request().url().canReuseConnectionFor(url)) {
+    if (!userResponse.request().url.canReuseConnectionFor(url)) {
       requestBuilder.removeHeader("Authorization")
     }
 

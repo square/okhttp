@@ -188,7 +188,7 @@ class Cache internal constructor(
   }
 
   internal fun get(request: Request): Response? {
-    val key = key(request.url())
+    val key = key(request.url)
     val snapshot: DiskLruCache.Snapshot = try {
       cache[key] ?: return null
     } catch (e: IOException) {
@@ -212,9 +212,9 @@ class Cache internal constructor(
   }
 
   internal fun put(response: Response): CacheRequest? {
-    val requestMethod = response.request().method()
+    val requestMethod = response.request().method
 
-    if (HttpMethod.invalidatesCache(response.request().method())) {
+    if (HttpMethod.invalidatesCache(response.request().method)) {
       try {
         remove(response.request())
       } catch (ignored: IOException) {
@@ -236,7 +236,7 @@ class Cache internal constructor(
     val entry = Entry(response)
     var editor: DiskLruCache.Editor? = null
     try {
-      editor = cache.edit(key(response.request().url())) ?: return null
+      editor = cache.edit(key(response.request().url)) ?: return null
       entry.writeTo(editor)
       return RealCacheRequest(editor)
     } catch (e: IOException) {
@@ -247,7 +247,7 @@ class Cache internal constructor(
 
   @Throws(IOException::class)
   internal fun remove(request: Request) {
-    cache.remove(key(request.url()))
+    cache.remove(key(request.url))
   }
 
   internal fun update(cached: Response, network: Response) {
@@ -559,9 +559,9 @@ class Cache internal constructor(
     }
 
     internal constructor(response: Response) {
-      this.url = response.request().url().toString()
+      this.url = response.request().url.toString()
       this.varyHeaders = response.varyHeaders()
-      this.requestMethod = response.request().method()
+      this.requestMethod = response.request().method
       this.protocol = response.protocol()
       this.code = response.code()
       this.message = response.message()
@@ -646,8 +646,8 @@ class Cache internal constructor(
     }
 
     fun matches(request: Request, response: Response): Boolean {
-      return url == request.url().toString() &&
-          requestMethod == request.method() &&
+      return url == request.url.toString() &&
+          requestMethod == request.method &&
           varyMatches(response, varyHeaders, request)
     }
 
@@ -781,7 +781,7 @@ class Cache internal constructor(
     fun Response.varyHeaders(): Headers {
       // Use the request headers sent over the network, since that's what the response varies on.
       // Otherwise OkHttp-supplied headers like "Accept-Encoding: gzip" may be lost.
-      val requestHeaders = networkResponse()!!.request().headers()
+      val requestHeaders = networkResponse()!!.request().headers
       val responseHeaders = headers()
       return varyHeaders(requestHeaders, responseHeaders)
     }

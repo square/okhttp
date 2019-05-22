@@ -153,11 +153,11 @@ class HttpLoggingInterceptor @JvmOverloads constructor(
     val logBody = level == Level.BODY
     val logHeaders = logBody || level == Level.HEADERS
 
-    val requestBody = request.body()
+    val requestBody = request.body
 
     val connection = chain.connection()
     var requestStartMessage =
-        ("--> ${request.method()} ${request.url()}${if (connection != null) " " + connection.protocol() else ""}")
+        ("--> ${request.method} ${request.url}${if (connection != null) " " + connection.protocol() else ""}")
     if (!logHeaders && requestBody != null) {
       requestStartMessage += " (${requestBody.contentLength()}-byte body)"
     }
@@ -175,7 +175,7 @@ class HttpLoggingInterceptor @JvmOverloads constructor(
         }
       }
 
-      val headers = request.headers()
+      val headers = request.headers
       var i = 0
       val count = headers.size
       while (i < count) {
@@ -189,11 +189,11 @@ class HttpLoggingInterceptor @JvmOverloads constructor(
       }
 
       if (!logBody || requestBody == null) {
-        logger.log("--> END ${request.method()}")
-      } else if (bodyHasUnknownEncoding(request.headers())) {
-        logger.log("--> END ${request.method()} (encoded body omitted)")
+        logger.log("--> END ${request.method}")
+      } else if (bodyHasUnknownEncoding(request.headers)) {
+        logger.log("--> END ${request.method} (encoded body omitted)")
       } else if (requestBody.isDuplex()) {
-        logger.log("--> END ${request.method()} (duplex request body omitted)")
+        logger.log("--> END ${request.method} (duplex request body omitted)")
       } else {
         val buffer = Buffer()
         requestBody.writeTo(buffer)
@@ -204,10 +204,10 @@ class HttpLoggingInterceptor @JvmOverloads constructor(
         logger.log("")
         if (buffer.isUtf8()) {
           logger.log(buffer.readString(charset))
-          logger.log("--> END ${request.method()} (${requestBody.contentLength()}-byte body)")
+          logger.log("--> END ${request.method} (${requestBody.contentLength()}-byte body)")
         } else {
           logger.log(
-              "--> END ${request.method()} (binary ${requestBody.contentLength()}-byte body omitted)")
+              "--> END ${request.method} (binary ${requestBody.contentLength()}-byte body omitted)")
         }
       }
     }
@@ -227,7 +227,7 @@ class HttpLoggingInterceptor @JvmOverloads constructor(
     val contentLength = responseBody.contentLength()
     val bodySize = if (contentLength != -1L) "$contentLength-byte" else "unknown-length"
     logger.log(
-        "<-- ${response.code()}${if (response.message().isEmpty()) "" else ' ' + response.message()} ${response.request().url()} (${tookMs}ms${if (!logHeaders) ", $bodySize body" else ""})")
+        "<-- ${response.code()}${if (response.message().isEmpty()) "" else ' ' + response.message()} ${response.request().url} (${tookMs}ms${if (!logHeaders) ", $bodySize body" else ""})")
 
     if (logHeaders) {
       val headers = response.headers()

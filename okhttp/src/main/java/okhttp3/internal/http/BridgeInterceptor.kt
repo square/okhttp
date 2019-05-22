@@ -39,7 +39,7 @@ class BridgeInterceptor(private val cookieJar: CookieJar) : Interceptor {
     val userRequest = chain.request()
     val requestBuilder = userRequest.newBuilder()
 
-    val body = userRequest.body()
+    val body = userRequest.body
     if (body != null) {
       val contentType = body.contentType()
       if (contentType != null) {
@@ -57,7 +57,7 @@ class BridgeInterceptor(private val cookieJar: CookieJar) : Interceptor {
     }
 
     if (userRequest.header("Host") == null) {
-      requestBuilder.header("Host", userRequest.url().toHostHeader())
+      requestBuilder.header("Host", userRequest.url.toHostHeader())
     }
 
     if (userRequest.header("Connection") == null) {
@@ -72,7 +72,7 @@ class BridgeInterceptor(private val cookieJar: CookieJar) : Interceptor {
       requestBuilder.header("Accept-Encoding", "gzip")
     }
 
-    val cookies = cookieJar.loadForRequest(userRequest.url())
+    val cookies = cookieJar.loadForRequest(userRequest.url)
     if (cookies.isNotEmpty()) {
       requestBuilder.header("Cookie", cookieHeader(cookies))
     }
@@ -83,7 +83,7 @@ class BridgeInterceptor(private val cookieJar: CookieJar) : Interceptor {
 
     val networkResponse = chain.proceed(requestBuilder.build())
 
-    cookieJar.receiveHeaders(userRequest.url(), networkResponse.headers())
+    cookieJar.receiveHeaders(userRequest.url, networkResponse.headers())
 
     val responseBuilder = networkResponse.newBuilder()
         .request(userRequest)

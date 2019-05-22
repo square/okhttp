@@ -131,7 +131,7 @@ class CacheStrategy internal constructor(
       val candidate = computeCandidate()
 
       // We're forbidden from using the network and the cache is insufficient.
-      if (candidate.networkRequest != null && request.cacheControl().onlyIfCached) {
+      if (candidate.networkRequest != null && request.cacheControl.onlyIfCached) {
         return CacheStrategy(null, null)
       }
 
@@ -157,7 +157,7 @@ class CacheStrategy internal constructor(
         return CacheStrategy(request, null)
       }
 
-      val requestCaching = request.cacheControl()
+      val requestCaching = request.cacheControl
       if (requestCaching.noCache || hasConditions(request)) {
         return CacheStrategy(request, null)
       }
@@ -216,7 +216,7 @@ class CacheStrategy internal constructor(
         else -> return CacheStrategy(request, null) // No condition! Make a regular request.
       }
 
-      val conditionalRequestHeaders = request.headers().newBuilder()
+      val conditionalRequestHeaders = request.headers.newBuilder()
       addHeaderLenient(conditionalRequestHeaders, conditionName, conditionValue!!)
 
       val conditionalRequest = request.newBuilder()
@@ -242,7 +242,7 @@ class CacheStrategy internal constructor(
         return if (delta > 0L) delta else 0L
       }
 
-      if (lastModified != null && cacheResponse.request().url().query == null) {
+      if (lastModified != null && cacheResponse.request().url.query == null) {
         // As recommended by the HTTP RFC and implemented in Firefox, the max age of a document
         // should be defaulted to 10% of the document's age at the time it was served. Default
         // expiration dates aren't used for URIs containing a query.
@@ -326,7 +326,7 @@ class CacheStrategy internal constructor(
       }
 
       // A 'no-store' directive on request or response prevents the response from being cached.
-      return !response.cacheControl().noStore && !request.cacheControl().noStore
+      return !response.cacheControl().noStore && !request.cacheControl.noStore
     }
   }
 }

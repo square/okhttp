@@ -124,8 +124,8 @@ class RealWebSocket(
   private var awaitingPong = false
 
   init {
-    require("GET" == originalRequest.method()) {
-      "Request must be GET: ${originalRequest.method()}"
+    require("GET" == originalRequest.method) {
+      "Request must be GET: ${originalRequest.method}"
     }
 
     this.key = ByteArray(16).apply { random.nextBytes(this) }.toByteString().base64()
@@ -175,7 +175,7 @@ class RealWebSocket(
 
         // Process all web socket messages.
         try {
-          val name = "OkHttp WebSocket ${request.url().redact()}"
+          val name = "OkHttp WebSocket ${request.url.redact()}"
           initReaderAndWriter(name, streams)
           listener.onOpen(this@RealWebSocket, response)
           loopReader()
