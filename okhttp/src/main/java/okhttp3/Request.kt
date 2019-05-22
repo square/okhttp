@@ -15,6 +15,7 @@
  */
 package okhttp3
 
+import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.internal.EMPTY_REQUEST
 import okhttp3.internal.http.HttpMethod
 import okhttp3.internal.toImmutableMap
@@ -129,7 +130,7 @@ class Request internal constructor(
         else -> url
       }
 
-      return url(HttpUrl.get(finalUrl))
+      return url(finalUrl.toHttpUrl())
     }
 
     /**
@@ -137,7 +138,7 @@ class Request internal constructor(
      *
      * @throws IllegalArgumentException if the scheme of [url] is not `http` or `https`.
      */
-    open fun url(url: URL) = url(HttpUrl.get(url.toString()))
+    open fun url(url: URL) = url(url.toString().toHttpUrl())
 
     /**
      * Sets the header named [name] to [value]. If this request already has any headers

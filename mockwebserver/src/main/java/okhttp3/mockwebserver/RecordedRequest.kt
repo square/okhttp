@@ -20,6 +20,7 @@ import okhttp3.Handshake
 import okhttp3.Handshake.Companion.handshake
 import okhttp3.Headers
 import okhttp3.HttpUrl
+import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.TlsVersion
 import okio.Buffer
 import java.io.IOException
@@ -96,8 +97,7 @@ class RecordedRequest(
 
       val localPort = socket.localPort
       // Allow null in failure case to allow for testing bad requests
-      this.requestUrl =
-          HttpUrl.parse("$scheme://$hostname:$localPort$path")
+      this.requestUrl = "$scheme://$hostname:$localPort$path".toHttpUrlOrNull()
     } else {
       this.requestUrl = null
       this.method = null

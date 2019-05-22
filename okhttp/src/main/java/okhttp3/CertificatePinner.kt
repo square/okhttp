@@ -15,6 +15,7 @@
  */
 package okhttp3
 
+import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.internal.tls.CertificateChainCleaner
 import okio.ByteString
 import okio.ByteString.Companion.decodeBase64
@@ -292,10 +293,10 @@ data class CertificatePinner internal constructor(
     internal fun newPin(pattern: String, pin: String): Pin {
       val canonicalHostname = when {
         pattern.startsWith(WILDCARD) -> {
-          HttpUrl.get("http://${pattern.substring(WILDCARD.length)}").host
+          "http://${pattern.substring(WILDCARD.length)}".toHttpUrl().host
         }
         else -> {
-          HttpUrl.get("http://$pattern").host
+          "http://$pattern".toHttpUrl().host
         }
       }
 
