@@ -135,7 +135,7 @@ class CacheInterceptor(internal val cache: Cache?) : Interceptor {
   }
 
   /**
-   * Returns a new source that writes bytes to `cacheRequest` as they are read by the source
+   * Returns a new source that writes bytes to [cacheRequest] as they are read by the source
    * consumer. This is careful to discard bytes left over when the stream is closed; otherwise we
    * may never exhaust the source stream and therefore not complete the cached response.
    */
@@ -238,7 +238,7 @@ class CacheInterceptor(internal val cache: Cache?) : Interceptor {
     }
 
     /**
-     * Returns true if `fieldName` is an end-to-end HTTP header, as defined by RFC 2616,
+     * Returns true if [fieldName] is an end-to-end HTTP header, as defined by RFC 2616,
      * 13.5.1.
      */
     private fun isEndToEnd(fieldName: String): Boolean {
@@ -253,7 +253,7 @@ class CacheInterceptor(internal val cache: Cache?) : Interceptor {
     }
 
     /**
-     * Returns true if `fieldName` is content specific and therefore should always be used
+     * Returns true if [fieldName] is content specific and therefore should always be used
      * from cached headers.
      */
     private fun isContentSpecificHeader(fieldName: String): Boolean {
