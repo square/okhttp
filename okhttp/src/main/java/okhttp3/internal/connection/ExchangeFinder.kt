@@ -307,6 +307,6 @@ class ExchangeFinder(
   private fun retryCurrentRoute(): Boolean {
     return transmitter.connection != null &&
         transmitter.connection!!.routeFailureCount == 0 &&
-        transmitter.connection!!.route().address().url.canReuseConnectionFor(address.url)
+        transmitter.connection!!.route().address.url.canReuseConnectionFor(address.url)
   }
 }
