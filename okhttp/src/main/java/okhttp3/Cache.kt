@@ -217,7 +217,7 @@ class Cache internal constructor(
     if (HttpMethod.invalidatesCache(response.request().method)) {
       try {
         remove(response.request())
-      } catch (ignored: IOException) {
+      } catch (_: IOException) {
         // The cache cannot be written.
       }
       return null
@@ -269,7 +269,7 @@ class Cache internal constructor(
     // Give up because the cache cannot be written.
     try {
       editor?.abort()
-    } catch (ignored: IOException) {
+    } catch (_: IOException) {
     }
   }
 
@@ -334,7 +334,7 @@ class Cache internal constructor(
               nextUrl = metadata.readUtf8LineStrict()
               return true
             }
-          } catch (ignored: IOException) {
+          } catch (_: IOException) {
             // We couldn't read the metadata for this snapshot; possibly because the host filesystem
             // has disappeared! Skip it.
           }
@@ -433,7 +433,7 @@ class Cache internal constructor(
       cacheOut.closeQuietly()
       try {
         editor.abort()
-      } catch (ignored: IOException) {
+      } catch (_: IOException) {
       }
     }
 
