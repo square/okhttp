@@ -17,6 +17,7 @@
 package okhttp3.internal.connection
 
 import okhttp3.Address
+import okhttp3.ConnectionPool
 import okhttp3.Route
 import okhttp3.internal.closeQuietly
 import okhttp3.internal.connection.Transmitter.TransmitterReference
@@ -259,5 +260,7 @@ class RealConnectionPool(
         SynchronousQueue(),
         threadFactory("OkHttp ConnectionPool", true)
     )
+
+    fun get(connectionPool: ConnectionPool): RealConnectionPool = connectionPool.delegate
   }
 }

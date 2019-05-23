@@ -29,7 +29,6 @@ import okhttp3.Dns;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Route;
-import okhttp3.internal.Internal;
 import okhttp3.internal.RecordingOkAuthenticator;
 import org.junit.Test;
 
@@ -78,7 +77,7 @@ public final class ConnectionPoolTest {
 
   @Test public void inUseConnectionsNotEvicted() throws Exception {
     ConnectionPool poolApi = new ConnectionPool(Integer.MAX_VALUE, 100L, TimeUnit.NANOSECONDS);
-    RealConnectionPool pool = Internal.INSTANCE.realConnectionPool(poolApi);
+    RealConnectionPool pool = RealConnectionPool.Companion.get(poolApi);
     pool.setCleanupRunning(true); // Prevent the cleanup runnable from being started.
 
     RealConnection c1 = newConnection(pool, routeA1, 50L);
@@ -166,7 +165,7 @@ public final class ConnectionPoolTest {
 
   @Test public void leakedAllocation() throws Exception {
     ConnectionPool poolApi = new ConnectionPool(Integer.MAX_VALUE, 100L, TimeUnit.NANOSECONDS);
-    RealConnectionPool pool = Internal.INSTANCE.realConnectionPool(poolApi);
+    RealConnectionPool pool = RealConnectionPool.Companion.get(poolApi);
     pool.setCleanupRunning(true); // Prevent the cleanup runnable from being started.
 
     RealConnection c1 = newConnection(pool, routeA1, 0L);
@@ -182,7 +181,7 @@ public final class ConnectionPoolTest {
 
   /** Use a helper method so there's no hidden reference remaining on the stack. */
   private void allocateAndLeakAllocation(ConnectionPool pool, RealConnection connection) {
-    synchronized (Internal.INSTANCE.realConnectionPool(pool)) {
+    synchronized (RealConnectionPool.Companion.get(pool)) {
       OkHttpClient client = new OkHttpClient.Builder()
           .connectionPool(pool)
           .build();

@@ -21,7 +21,6 @@ import javax.net.ssl.SSLHandshakeException;
 import javax.net.ssl.SSLSocket;
 import okhttp3.ConnectionSpec;
 import okhttp3.TlsVersion;
-import okhttp3.internal.Internal;
 import okhttp3.tls.HandshakeCertificates;
 import org.junit.Test;
 
