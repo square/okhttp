@@ -170,7 +170,7 @@ class HeldCertificate(private val keyPair: KeyPair, private val certificate: X50
     }
   }
 
-  /** Build a held certificate with reasonable defaults.  */
+  /** Build a held certificate with reasonable defaults. */
   class Builder {
     private var notBefore = -1L
     private var notAfter = -1L

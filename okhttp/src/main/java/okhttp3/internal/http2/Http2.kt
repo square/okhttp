@@ -22,7 +22,7 @@ object Http2 {
   @JvmField
   val CONNECTION_PREFACE = "PRI * HTTP/2.0\r\n\r\nSM\r\n\r\n".encodeUtf8()
 
-  /** The initial max frame size, applied independently writing to, or reading from the peer.  */
+  /** The initial max frame size, applied independently writing to, or reading from the peer. */
   const val INITIAL_MAX_FRAME_SIZE = 0x4000 // 16384
 
   const val TYPE_DATA = 0x0
@@ -45,7 +45,7 @@ object Http2 {
   const val FLAG_PRIORITY = 0x20 // Used for headers.
   const val FLAG_COMPRESSED = 0x20 // Used for data.
 
-  /** Lookup table for valid frame types.  */
+  /** Lookup table for valid frame types. */
   private val FRAME_NAMES = arrayOf(
       "DATA", "HEADERS", "PRIORITY", "RST_STREAM", "SETTINGS", "PUSH_PROMISE", "PING", "GOAWAY",
       "WINDOW_UPDATE", "CONTINUATION"

@@ -836,7 +836,7 @@ class MockWebServer : ExternalResource(), Closeable {
   @Throws(IOException::class)
   override fun close() = shutdown()
 
-  /** A buffer wrapper that drops data after [bodyLimit] bytes.  */
+  /** A buffer wrapper that drops data after [bodyLimit] bytes. */
   private class TruncatingBuffer internal constructor(
     private var remainingByteCount: Long
   ) : Sink {
@@ -868,7 +868,7 @@ class MockWebServer : ExternalResource(), Closeable {
     }
   }
 
-  /** Processes HTTP requests layered over HTTP/2.  */
+  /** Processes HTTP requests layered over HTTP/2. */
   private inner class Http2SocketHandler constructor(
     private val socket: Socket,
     private val protocol: Protocol

@@ -18,7 +18,7 @@ package okhttp3.internal.tls
 import java.security.cert.X509Certificate
 import javax.security.auth.x500.X500Principal
 
-/** A simple index that of trusted root certificates that have been loaded into memory.  */
+/** A simple index that of trusted root certificates that have been loaded into memory. */
 class BasicTrustRootIndex(vararg caCerts: X509Certificate) : TrustRootIndex {
   private val subjectToCaCerts: Map<X500Principal, Set<X509Certificate>>
 

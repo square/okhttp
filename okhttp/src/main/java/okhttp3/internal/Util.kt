@@ -50,7 +50,7 @@ val EMPTY_RESPONSE = ResponseBody.create(null, EMPTY_BYTE_ARRAY)
 @JvmField
 val EMPTY_REQUEST = RequestBody.create(null, EMPTY_BYTE_ARRAY)
 
-/** Byte order marks.  */
+/** Byte order marks. */
 private val UNICODE_BOMS = Options.of(
     "efbbbf".decodeHex(), // UTF-8
     "feff".decodeHex(), // UTF-16BE
@@ -59,7 +59,7 @@ private val UNICODE_BOMS = Options.of(
     "ffff0000".decodeHex() // UTF-32LE
 )
 
-/** GMT and UTC are equivalent for our purposes.  */
+/** GMT and UTC are equivalent for our purposes. */
 @JvmField
 val UTC = TimeZone.getTimeZone("GMT")!!
 
@@ -183,7 +183,7 @@ fun String.indexOfLastNonAsciiWhitespace(startIndex: Int = 0, endIndex: Int = le
   return startIndex
 }
 
-/** Equivalent to `string.substring(startIndex, endIndex).trim()`.  */
+/** Equivalent to `string.substring(startIndex, endIndex).trim()`. */
 fun String.trimSubstring(startIndex: Int = 0, endIndex: Int = length): String {
   val start = indexOfFirstNonAsciiWhitespace(startIndex, endIndex)
   val end = indexOfLastNonAsciiWhitespace(start, endIndex)
@@ -227,12 +227,12 @@ fun String.indexOfControlOrNonAscii(): Int {
   return -1
 }
 
-/** Returns true if [this] is not a host name and might be an IP address.  */
+/** Returns true if [this] is not a host name and might be an IP address. */
 fun String.canParseAsIpAddress(): Boolean {
   return VERIFY_AS_IP_ADDRESS.matches(this)
 }
 
-/** Returns a [Locale.US] formatted [String].  */
+/** Returns a [Locale.US] formatted [String]. */
 fun format(format: String, vararg args: Any): String {
   return String.format(Locale.US, format, *args)
 }

@@ -40,7 +40,7 @@ import java.io.IOException
 import java.util.logging.Level.FINE
 import java.util.logging.Logger
 
-/** Writes HTTP/2 transport frames.  */
+/** Writes HTTP/2 transport frames. */
 class Http2Writer(
   private val sink: BufferedSink,
   private val client: Boolean
@@ -61,7 +61,7 @@ class Http2Writer(
     sink.flush()
   }
 
-  /** Applies `peerSettings` and then sends a settings ACK.  */
+  /** Applies `peerSettings` and then sends a settings ACK. */
   @Synchronized @Throws(IOException::class)
   fun applyAndAckSettings(peerSettings: Settings) {
     if (closed) throw IOException("closed")
@@ -134,7 +134,7 @@ class Http2Writer(
     sink.flush()
   }
 
-  /** The maximum size of bytes that may be sent in a single call to [data].  */
+  /** The maximum size of bytes that may be sent in a single call to [data]. */
   fun maxDataLength(): Int = maxFrameSize
 
   /**
@@ -165,7 +165,7 @@ class Http2Writer(
     }
   }
 
-  /** Write okhttp's settings to the peer.  */
+  /** Write okhttp's settings to the peer. */
   @Synchronized @Throws(IOException::class)
   fun settings(settings: Settings) {
     if (closed) throw IOException("closed")

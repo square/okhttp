@@ -365,7 +365,7 @@ class Cache internal constructor(
   @Throws(IOException::class)
   fun size(): Long = cache.size()
 
-  /** Max size of the cache (in bytes).  */
+  /** Max size of the cache (in bytes). */
   fun maxSize(): Long = cache.maxSize
 
   @Throws(IOException::class)
@@ -673,10 +673,10 @@ class Cache internal constructor(
     }
 
     companion object {
-      /** Synthetic response header: the local time when the request was sent.  */
+      /** Synthetic response header: the local time when the request was sent. */
       private val SENT_MILLIS = Platform.get().getPrefix() + "-Sent-Millis"
 
-      /** Synthetic response header: the local time when the response was received.  */
+      /** Synthetic response header: the local time when the response was received. */
       private val RECEIVED_MILLIS = Platform.get().getPrefix() + "-Received-Millis"
     }
   }

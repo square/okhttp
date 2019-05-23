@@ -149,7 +149,7 @@ class Transmitter(
         client.proxy(), client.protocols(), client.connectionSpecs(), client.proxySelector())
   }
 
-  /** Returns a new exchange to carry a new request and response.  */
+  /** Returns a new exchange to carry a new request and response. */
   internal fun newExchange(chain: Interceptor.Chain, doExtensiveHealthChecks: Boolean): Exchange {
     synchronized(connectionPool) {
       check(!noMoreExchanges) { "released" }

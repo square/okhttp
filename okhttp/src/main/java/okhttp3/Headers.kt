@@ -71,7 +71,7 @@ class Headers private constructor(
     return value?.toInstant()
   }
 
-  /** Returns the number of field values.  */
+  /** Returns the number of field values. */
   @get:JvmName("size") val size: Int
     get() = namesAndValues.size / 2
 
@@ -82,13 +82,13 @@ class Headers private constructor(
       level = DeprecationLevel.WARNING)
   fun size(): Int = size
 
-  /** Returns the field at `position`.  */
+  /** Returns the field at `position`. */
   fun name(index: Int): String = namesAndValues[index * 2]
 
-  /** Returns the value at `index`.  */
+  /** Returns the value at `index`. */
   fun value(index: Int): String = namesAndValues[index * 2 + 1]
 
-  /** Returns an immutable case-insensitive set of header names.  */
+  /** Returns an immutable case-insensitive set of header names. */
   fun names(): Set<String> {
     val result = TreeSet(String.CASE_INSENSITIVE_ORDER)
     for (i in 0 until size) {
@@ -97,7 +97,7 @@ class Headers private constructor(
     return Collections.unmodifiableSet(result)
   }
 
-  /** Returns an immutable list of the header values for `name`.  */
+  /** Returns an immutable list of the header values for `name`. */
   fun values(name: String): List<String> {
     var result: MutableList<String>? = null
     for (i in 0 until size) {
@@ -332,7 +332,7 @@ class Headers private constructor(
       addLenient(name, value)
     }
 
-    /** Equivalent to `build().get(name)`, but potentially faster.  */
+    /** Equivalent to `build().get(name)`, but potentially faster. */
     operator fun get(name: String): String? {
       for (i in namesAndValues.size - 2 downTo 0 step 2) {
         if (name.equals(namesAndValues[i], ignoreCase = true)) {

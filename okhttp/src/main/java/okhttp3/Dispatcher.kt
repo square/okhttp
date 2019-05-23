@@ -73,16 +73,16 @@ class Dispatcher constructor() {
 
   private var idleCallback: Runnable? = null
 
-  /** Executes calls. Created lazily.  */
+  /** Executes calls. Created lazily. */
   private var executorService: ExecutorService? = null
 
-  /** Ready async calls in the order they'll be run.  */
+  /** Ready async calls in the order they'll be run. */
   private val readyAsyncCalls = ArrayDeque<AsyncCall>()
 
-  /** Running asynchronous calls. Includes canceled calls that haven't finished yet.  */
+  /** Running asynchronous calls. Includes canceled calls that haven't finished yet. */
   private val runningAsyncCalls = ArrayDeque<AsyncCall>()
 
-  /** Running synchronous calls. Includes canceled calls that haven't finished yet.  */
+  /** Running synchronous calls. Includes canceled calls that haven't finished yet. */
   private val runningSyncCalls = ArrayDeque<RealCall>()
 
   constructor(executorService: ExecutorService) : this() {
@@ -193,18 +193,18 @@ class Dispatcher constructor() {
     return isRunning
   }
 
-  /** Used by `Call#execute` to signal it is in-flight.  */
+  /** Used by `Call#execute` to signal it is in-flight. */
   @Synchronized internal fun executed(call: RealCall) {
     runningSyncCalls.add(call)
   }
 
-  /** Used by `AsyncCall#run` to signal completion.  */
+  /** Used by `AsyncCall#run` to signal completion. */
   internal fun finished(call: AsyncCall) {
     call.callsPerHost().decrementAndGet()
     finished(runningAsyncCalls, call)
   }
 
-  /** Used by `Call#execute` to signal completion.  */
+  /** Used by `Call#execute` to signal completion. */
   internal fun finished(call: RealCall) {
     finished(runningSyncCalls, call)
   }
@@ -223,12 +223,12 @@ class Dispatcher constructor() {
     }
   }
 
-  /** Returns a snapshot of the calls currently awaiting execution.  */
+  /** Returns a snapshot of the calls currently awaiting execution. */
   @Synchronized fun queuedCalls(): List<Call> {
     return Collections.unmodifiableList(readyAsyncCalls.map { it.get() })
   }
 
-  /** Returns a snapshot of the calls currently being executed.  */
+  /** Returns a snapshot of the calls currently being executed. */
   @Synchronized fun runningCalls(): List<Call> {
     return Collections.unmodifiableList(runningSyncCalls + runningAsyncCalls.map { it.get() })
   }

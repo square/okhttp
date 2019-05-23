@@ -42,7 +42,7 @@ import java.io.IOException
 interface FileSystem {
 
   companion object {
-    /** The host machine's local file system.  */
+    /** The host machine's local file system. */
     @JvmField
     val SYSTEM: FileSystem = object : FileSystem {
       @Throws(FileNotFoundException::class)
@@ -105,7 +105,7 @@ interface FileSystem {
     }
   }
 
-  /** Reads from [file].  */
+  /** Reads from [file]. */
   @Throws(FileNotFoundException::class)
   fun source(file: File): Source
 
@@ -123,17 +123,17 @@ interface FileSystem {
   @Throws(FileNotFoundException::class)
   fun appendingSink(file: File): Sink
 
-  /** Deletes [file] if it exists. Throws if the file exists and cannot be deleted.  */
+  /** Deletes [file] if it exists. Throws if the file exists and cannot be deleted. */
   @Throws(IOException::class)
   fun delete(file: File)
 
-  /** Returns true if [file] exists on the file system.  */
+  /** Returns true if [file] exists on the file system. */
   fun exists(file: File): Boolean
 
-  /** Returns the number of bytes stored in [file], or 0 if it does not exist.  */
+  /** Returns the number of bytes stored in [file], or 0 if it does not exist. */
   fun size(file: File): Long
 
-  /** Renames [from] to [to]. Throws if the file cannot be renamed.  */
+  /** Renames [from] to [to]. Throws if the file cannot be renamed. */
   @Throws(IOException::class)
   fun rename(from: File, to: File)
 

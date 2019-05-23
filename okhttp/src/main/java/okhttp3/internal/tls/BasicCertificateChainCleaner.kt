@@ -93,7 +93,7 @@ class BasicCertificateChainCleaner(
     throw SSLPeerUnverifiedException("Certificate chain too long: $result")
   }
 
-  /** Returns true if [toVerify] was signed by [signingCert]'s public key.  */
+  /** Returns true if [toVerify] was signed by [signingCert]'s public key. */
   private fun verifySignature(toVerify: X509Certificate, signingCert: X509Certificate): Boolean {
     if (toVerify.issuerDN != signingCert.subjectDN) {
       return false

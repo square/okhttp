@@ -223,7 +223,7 @@ internal class WebSocketReader(
     }
   }
 
-  /** Read headers and process any control frames until we reach a non-control frame.  */
+  /** Read headers and process any control frames until we reach a non-control frame. */
   @Throws(IOException::class)
   private fun readUntilNonControlFrame() {
     while (!closed) {

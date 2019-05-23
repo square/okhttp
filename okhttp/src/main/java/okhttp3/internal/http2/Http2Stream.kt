@@ -31,7 +31,7 @@ import java.io.InterruptedIOException
 import java.net.SocketTimeoutException
 import java.util.ArrayDeque
 
-/** A logical bidirectional stream.  */
+/** A logical bidirectional stream. */
 class Http2Stream internal constructor(
   val id: Int,
   val connection: Http2Connection,
@@ -61,7 +61,7 @@ class Http2Stream internal constructor(
   /** Received headers yet to be [taken][takeHeaders], or [read][FramingSource.read]. */
   private val headersQueue = ArrayDeque<Headers>()
 
-  /** True if response headers have been sent or received.  */
+  /** True if response headers have been sent or received. */
   private var hasResponseHeaders: Boolean = false
 
   internal val source = FramingSource(
@@ -117,7 +117,7 @@ class Http2Stream internal constructor(
       return true
     }
 
-  /** Returns true if this stream was created by this peer.  */
+  /** Returns true if this stream was created by this peer. */
   val isLocallyInitiated: Boolean
     get() {
       val streamIsClient = (id and 1) == 1
@@ -206,7 +206,7 @@ class Http2Stream internal constructor(
 
   fun writeTimeout(): Timeout = writeTimeout
 
-  /** Returns a source that reads data from the peer.  */
+  /** Returns a source that reads data from the peer. */
   fun getSource(): Source = source
 
   /**
@@ -246,7 +246,7 @@ class Http2Stream internal constructor(
     connection.writeSynResetLater(id, errorCode)
   }
 
-  /** Returns true if this stream was closed.  */
+  /** Returns true if this stream was closed. */
   private fun closeInternal(errorCode: ErrorCode, errorException: IOException?): Boolean {
     assert(!Thread.holdsLock(this))
     synchronized(this) {
@@ -308,7 +308,7 @@ class Http2Stream internal constructor(
    * readers.
    */
   inner class FramingSource internal constructor(
-    /** Maximum number of bytes to buffer before reporting a flow control error.  */
+    /** Maximum number of bytes to buffer before reporting a flow control error. */
     private val maxByteCount: Long,
 
     /**
@@ -317,10 +317,10 @@ class Http2Stream internal constructor(
      */
     internal var finished: Boolean
   ) : Source {
-    /** Buffer to receive data from the network into. Only accessed by the reader thread.  */
+    /** Buffer to receive data from the network into. Only accessed by the reader thread. */
     val receiveBuffer = Buffer()
 
-    /** Buffer with readable data. Guarded by Http2Stream.this.  */
+    /** Buffer with readable data. Guarded by Http2Stream.this. */
     val readBuffer = Buffer()
 
     /**
@@ -329,7 +329,7 @@ class Http2Stream internal constructor(
      */
     var trailers: Headers? = null
 
-    /** True if the caller has closed this stream.  */
+    /** True if the caller has closed this stream. */
     internal var closed: Boolean = false
 
     @Throws(IOException::class)
@@ -483,7 +483,7 @@ class Http2Stream internal constructor(
     }
   }
 
-  /** A sink that writes outgoing data frames of a stream. This class is not thread safe.  */
+  /** A sink that writes outgoing data frames of a stream. This class is not thread safe. */
   internal inner class FramingSink(
     /** True if either side has cleanly shut down this stream. We shall send no more bytes. */
     var finished: Boolean = false
@@ -495,7 +495,7 @@ class Http2Stream internal constructor(
      */
     private val sendBuffer = Buffer()
 
-    /** Trailers to send at the end of the stream.  */
+    /** Trailers to send at the end of the stream. */
     var trailers: Headers? = null
 
     var closed: Boolean = false

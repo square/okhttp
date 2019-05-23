@@ -42,11 +42,11 @@ object TlsUtil {
         .build()
   }
 
-  /** Returns an SSL client for this host's localhost address.  */
+  /** Returns an SSL client for this host's localhost address. */
   @JvmStatic
   fun localhost(): HandshakeCertificates = localhost
 
-  /** Returns a trust manager that trusts `trustedCertificates`.  */
+  /** Returns a trust manager that trusts `trustedCertificates`. */
   @JvmStatic
   fun newTrustManager(
     keyStoreType: String?,

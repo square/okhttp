@@ -117,7 +117,7 @@ class HttpLoggingInterceptor @JvmOverloads constructor(
         override fun log(message: String) = block(message)
       }
 
-      /** A [Logger] defaults output appropriate for the current platform.  */
+      /** A [Logger] defaults output appropriate for the current platform. */
       @JvmField
       val DEFAULT: Logger = object : Logger {
         override fun log(message: String) {

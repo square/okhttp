@@ -17,7 +17,7 @@ package okhttp3.mockwebserver
 
 import okhttp3.Headers
 
-/** An HTTP request initiated by the server.  */
+/** An HTTP request initiated by the server. */
 class PushPromise(
   @get:JvmName("method") val method: String,
   @get:JvmName("path") val path: String,

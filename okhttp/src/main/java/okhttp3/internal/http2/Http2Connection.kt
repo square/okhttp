@@ -69,7 +69,7 @@ class Http2Connection internal constructor(builder: Builder) : Closeable {
   // blocking I/O) and this (to create streams). Such operations must synchronize on 'this' last.
   // This ensures that we never wait for a blocking operation while holding 'this'.
 
-  /** True if this peer initiated the connection.  */
+  /** True if this peer initiated the connection. */
   internal val client: Boolean = builder.client
 
   /**
@@ -87,22 +87,22 @@ class Http2Connection internal constructor(builder: Builder) : Closeable {
   @get:Synchronized var isShutdown = false
     internal set
 
-  /** Asynchronously writes frames to the outgoing socket.  */
+  /** Asynchronously writes frames to the outgoing socket. */
   private val writerExecutor = ScheduledThreadPoolExecutor(1,
       threadFactory(format("OkHttp %s Writer", connectionName), false))
 
-  /** Ensures push promise callbacks events are sent in order per stream.  */
+  /** Ensures push promise callbacks events are sent in order per stream. */
   // Like newSingleThreadExecutor, except lazy creates the thread.
   private val pushExecutor = ThreadPoolExecutor(0, 1, 60L, TimeUnit.SECONDS, LinkedBlockingQueue(),
       threadFactory(format("OkHttp %s Push Observer", connectionName), true))
 
-  /** User code to run in response to push promise events.  */
+  /** User code to run in response to push promise events. */
   private val pushObserver: PushObserver = builder.pushObserver
 
-  /** True if we have sent a ping that is still awaiting a reply.  */
+  /** True if we have sent a ping that is still awaiting a reply. */
   private var awaitingPong = false
 
-  /** Settings we communicate to the peer.  */
+  /** Settings we communicate to the peer. */
   val okHttpSettings = Settings().apply {
     // Flow control was designed more for servers, or proxies than edge clients. If we are a client,
     // set the flow control window to 16MiB.  This avoids thrashing window updates every 64KiB, yet
@@ -112,7 +112,7 @@ class Http2Connection internal constructor(builder: Builder) : Closeable {
     }
   }
 
-  /** Settings we receive from the peer.  */
+  /** Settings we receive from the peer. */
   // TODO: MWS will need to guard on this setting before attempting to push.
   val peerSettings = Settings().apply {
     set(Settings.INITIAL_WINDOW_SIZE, DEFAULT_INITIAL_WINDOW_SIZE)
@@ -376,14 +376,14 @@ class Http2Connection internal constructor(builder: Builder) : Closeable {
     }
   }
 
-  /** For testing: sends a ping and waits for a pong.  */
+  /** For testing: sends a ping and waits for a pong. */
   @Throws(InterruptedException::class)
   fun writePingAndAwaitPong() {
     writePing(false, 0x4f4b6f6b /* "OKok" */, -0xf607257 /* donut */)
     awaitPong()
   }
 
-  /** For testing: waits until `requiredPongCount` pings have been received from the peer.  */
+  /** For testing: waits until `requiredPongCount` pings have been received from the peer. */
   @Synchronized @Throws(InterruptedException::class)
   fun awaitPong() {
     while (awaitingPong) {
@@ -489,7 +489,7 @@ class Http2Connection internal constructor(builder: Builder) : Closeable {
     Thread(readerRunnable, "OkHttp $connectionName").start() // Not a daemon thread.
   }
 
-  /** Merges [settings] into this peer's settings and sends them to the remote peer.  */
+  /** Merges [settings] into this peer's settings and sends them to the remote peer. */
   @Throws(IOException::class)
   fun setSettings(settings: Settings) {
     synchronized(writer) {
@@ -785,7 +785,7 @@ class Http2Connection internal constructor(builder: Builder) : Closeable {
     }
   }
 
-  /** Even, positive numbered streams are pushed streams in HTTP/2.  */
+  /** Even, positive numbered streams are pushed streams in HTTP/2. */
   internal fun pushedStream(streamId: Int): Boolean = streamId != 0 && streamId and 1 == 0
 
   internal fun pushRequestLater(streamId: Int, requestHeaders: List<Header>) {
@@ -871,7 +871,7 @@ class Http2Connection internal constructor(builder: Builder) : Closeable {
     }
   }
 
-  /** Listener of streams and settings initiated by the peer.  */
+  /** Listener of streams and settings initiated by the peer. */
   abstract class Listener {
     /**
      * Handle a new stream from this connection's peer. Implementations should respond by either

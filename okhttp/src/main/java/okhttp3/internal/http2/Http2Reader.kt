@@ -55,7 +55,7 @@ import java.util.logging.Logger
  * peer. Hence, we expect all frames to have a max length of [Http2.INITIAL_MAX_FRAME_SIZE].
  */
 class Http2Reader(
-  /** Creates a frame reader with max header table size of 4096.  */
+  /** Creates a frame reader with max header table size of 4096. */
   private val source: BufferedSource,
   private val client: Boolean
 ) : Closeable {
@@ -389,7 +389,7 @@ class Http2Reader(
 
     fun settings(clearPrevious: Boolean, settings: Settings)
 
-    /** HTTP/2 only.  */
+    /** HTTP/2 only. */
     fun ackSettings()
 
     /**
