@@ -29,7 +29,7 @@ import org.junit.rules.TestRule;
 import org.junit.rules.Timeout;
 
 import static java.util.Arrays.asList;
-import static okhttp3.internal.UtilKt.closeQuietly;
+import static okhttp3.internal.Util.closeQuietly;
 import static okhttp3.tls.internal.TlsUtil.localhost;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.fail;

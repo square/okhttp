@@ -25,7 +25,7 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameter;
 
-import static okhttp3.internal.UtilKt.immutableListOf;
+import static okhttp3.internal.Util.immutableListOf;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /** Runs the web platform URL tests against Java URL models. */

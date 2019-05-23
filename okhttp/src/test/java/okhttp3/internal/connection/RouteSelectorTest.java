@@ -46,7 +46,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import static java.net.Proxy.NO_PROXY;
-import static okhttp3.internal.UtilKt.immutableListOf;
+import static okhttp3.internal.Util.immutableListOf;
 import static okhttp3.tls.internal.TlsUtil.localhost;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.fail;
