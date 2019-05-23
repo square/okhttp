@@ -125,7 +125,7 @@ class CacheInterceptor(internal val cache: InternalCache?) : Interceptor {
       if (HttpMethod.invalidatesCache(networkRequest.method)) {
         try {
           cache.remove(networkRequest)
-        } catch (ignored: IOException) {
+        } catch (_: IOException) {
           // The cache cannot be written.
         }
       }

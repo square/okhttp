@@ -248,7 +248,7 @@ open class Platform {
           field.isAccessible = true
           val value = field.get(instance)
           return if (!fieldType.isInstance(value)) null else fieldType.cast(value)
-        } catch (ignored: NoSuchFieldException) {
+        } catch (_: NoSuchFieldException) {
         }
 
         c = c.superclass

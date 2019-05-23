@@ -79,7 +79,7 @@ class Jdk9Platform(
           val getProtocolMethod = SSLSocket::class.java.getMethod("getApplicationProtocol")
 
           Jdk9Platform(setProtocolMethod, getProtocolMethod)
-        } catch (ignored: NoSuchMethodException) {
+        } catch (_: NoSuchMethodException) {
           // pre JDK 9
           null
         }

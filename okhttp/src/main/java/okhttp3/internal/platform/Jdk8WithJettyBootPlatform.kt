@@ -145,8 +145,8 @@ class Jdk8WithJettyBootPlatform(
         val removeMethod = alpnClass.getMethod("remove", SSLSocket::class.java)
         return Jdk8WithJettyBootPlatform(
             putMethod, getMethod, removeMethod, clientProviderClass, serverProviderClass)
-      } catch (ignored: ClassNotFoundException) {
-      } catch (ignored: NoSuchMethodException) {
+      } catch (_: ClassNotFoundException) {
+      } catch (_: NoSuchMethodException) {
       }
 
       return null
