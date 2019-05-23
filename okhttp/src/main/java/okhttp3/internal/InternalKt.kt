@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-@file:Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN")
 
 package okhttp3.internal
 
@@ -41,32 +40,3 @@ fun cacheGet(cache: Cache, request: Request) = cache.get(request)
 
 fun applyConnectionSpec(connectionSpec: ConnectionSpec, sslSocket: SSLSocket, isFallback: Boolean) =
     connectionSpec.apply(sslSocket, isFallback)
-
-/**
- * Lock and wait a duration in nanoseconds. Unlike [java.lang.Object.wait] this interprets 0 as
- * "don't wait" instead of "wait forever".
- */
-@Throws(InterruptedException::class)
-fun Any.waitNanos(nanos: Long) {
-  val ms = nanos / 1_000_000L
-  val ns = nanos - (ms * 1_000_000L)
-  synchronized(this) {
-    this.waitMillis(ms, ns.toInt())
-  }
-}
-
-fun Any.wait() = (this as Object).wait()
-
-/**
- * Lock and wait a duration in milliseconds and nanos.
- * Unlike [java.lang.Object.wait] this interprets 0 as "don't wait" instead of "wait forever".
- */
-fun Any.waitMillis(timeout: Long, nanos: Int = 0) {
-  if (timeout > 0L || nanos > 0) {
-    (this as Object).wait(timeout, nanos)
-  }
-}
-
-fun Any.notify() = (this as Object).notify()
-
-fun Any.notifyAll() = (this as Object).notifyAll()

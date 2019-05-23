@@ -38,7 +38,7 @@ import okio.BufferedSink;
 import okio.BufferedSource;
 import okio.Okio;
 
-import static okhttp3.internal.UtilKt.closeQuietly;
+import static okhttp3.internal.Util.closeQuietly;
 
 /**
  * A limited implementation of SOCKS Protocol Version 5, intended to be similar to MockWebServer.

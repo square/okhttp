@@ -21,7 +21,7 @@ import javax.net.SocketFactory;
 import okhttp3.internal.http.RecordingProxySelector;
 import org.junit.Test;
 
-import static okhttp3.internal.UtilKt.immutableListOf;
+import static okhttp3.internal.Util.immutableListOf;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public final class AddressTest {

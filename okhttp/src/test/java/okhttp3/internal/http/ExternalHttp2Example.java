@@ -22,7 +22,7 @@ import okhttp3.Protocol;
 import okhttp3.Request;
 import okhttp3.Response;
 
-import static okhttp3.internal.UtilKt.immutableListOf;
+import static okhttp3.internal.Util.immutableListOf;
 
 public final class ExternalHttp2Example {
   public static void main(String[] args) throws Exception {
