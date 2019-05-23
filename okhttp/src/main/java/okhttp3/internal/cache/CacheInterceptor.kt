@@ -16,6 +16,7 @@
  */
 package okhttp3.internal.cache
 
+import okhttp3.Cache
 import okhttp3.Headers
 import okhttp3.Interceptor
 import okhttp3.Protocol
@@ -38,7 +39,7 @@ import java.net.HttpURLConnection.HTTP_NOT_MODIFIED
 import java.util.concurrent.TimeUnit.MILLISECONDS
 
 /** Serves requests from the cache and writes responses to the cache.  */
-class CacheInterceptor(internal val cache: InternalCache?) : Interceptor {
+class CacheInterceptor(internal val cache: Cache?) : Interceptor {
 
   @Throws(IOException::class)
   override fun intercept(chain: Interceptor.Chain): Response {

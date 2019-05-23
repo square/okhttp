@@ -18,7 +18,6 @@ package okhttp3
 import okhttp3.Protocol.HTTP_1_1
 import okhttp3.Protocol.HTTP_2
 import okhttp3.internal.asFactory
-import okhttp3.internal.cache.InternalCache
 import okhttp3.internal.checkDuration
 import okhttp3.internal.immutableListOf
 import okhttp3.internal.platform.Platform
@@ -147,7 +146,6 @@ open class OkHttpClient internal constructor(
   private val readTimeout: Int = builder.readTimeout
   private val writeTimeout: Int = builder.writeTimeout
   private val pingInterval: Int = builder.pingInterval
-  private val internalCache: InternalCache? = builder.internalCache
   private val certificateChainCleaner: CertificateChainCleaner?
 
   constructor() : this(Builder())
@@ -254,13 +252,9 @@ open class OkHttpClient internal constructor(
   /** Web socket and HTTP/2 ping interval (in milliseconds). By default pings are not sent. */
   fun pingIntervalMillis(): Int = pingInterval
 
-  internal fun internalCache(): InternalCache? {
-    return cache?.internalCache ?: internalCache
-  }
-
   /** Prepares the [request] to be executed at some point in the future. */
   override fun newCall(request: Request): Call {
-    return RealCall.newRealCall(this, request, false /* for web socket */)
+    return RealCall.newRealCall(this, request, forWebSocket = false)
   }
 
   /** Uses [request] to connect a new web socket. */
@@ -283,7 +277,6 @@ open class OkHttpClient internal constructor(
     internal var proxySelector: ProxySelector = ProxySelector.getDefault() ?: NullProxySelector()
     internal var cookieJar: CookieJar = CookieJar.NO_COOKIES
     internal var cache: Cache? = null
-    internal var internalCache: InternalCache? = null
     internal var socketFactory: SocketFactory = SocketFactory.getDefault()
     internal var sslSocketFactory: SSLSocketFactory? = null
     internal var certificateChainCleaner: CertificateChainCleaner? = null
@@ -312,7 +305,6 @@ open class OkHttpClient internal constructor(
       this.eventListenerFactory = okHttpClient.eventListenerFactory
       this.proxySelector = okHttpClient.proxySelector
       this.cookieJar = okHttpClient.cookieJar
-      this.internalCache = okHttpClient.internalCache
       this.cache = okHttpClient.cache
       this.socketFactory = okHttpClient.socketFactory
       this.sslSocketFactory = okHttpClient.sslSocketFactory
@@ -509,7 +501,6 @@ open class OkHttpClient internal constructor(
     /** Sets the response cache to be used to read and write cached responses.  */
     fun cache(cache: Cache?) = apply {
       this.cache = cache
-      this.internalCache = null
     }
 
     /**

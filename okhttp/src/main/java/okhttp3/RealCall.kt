@@ -170,7 +170,7 @@ internal class RealCall private constructor(
     interceptors.addAll(client.interceptors())
     interceptors.add(RetryAndFollowUpInterceptor(client))
     interceptors.add(BridgeInterceptor(client.cookieJar()))
-    interceptors.add(CacheInterceptor(client.internalCache()))
+    interceptors.add(CacheInterceptor(client.cache()))
     interceptors.add(ConnectInterceptor(client))
     if (!forWebSocket) {
       interceptors.addAll(client.networkInterceptors())
