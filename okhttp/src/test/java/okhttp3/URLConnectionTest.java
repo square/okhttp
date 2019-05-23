@@ -59,7 +59,7 @@ import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
 import javax.net.ssl.X509TrustManager;
-import okhttp3.internal.InternalKtKt;
+import okhttp3.internal.Internal;
 import okhttp3.internal.RecordingAuthenticator;
 import okhttp3.internal.RecordingOkAuthenticator;
 import okhttp3.internal.Version;
@@ -88,7 +88,7 @@ import static java.util.Arrays.asList;
 import static java.util.Locale.US;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
-import static okhttp3.internal.InternalKtKt.addHeaderLenient;
+import static okhttp3.internal.Internal.addHeaderLenient;
 import static okhttp3.internal.Util.immutableListOf;
 import static okhttp3.internal.http.StatusLine.HTTP_PERM_REDIRECT;
 import static okhttp3.internal.http.StatusLine.HTTP_TEMP_REDIRECT;
@@ -3115,7 +3115,7 @@ public final class URLConnectionTest {
 
   @Test public void emptyResponseHeaderNameIsLenient() throws Exception {
     Headers.Builder headers = new Headers.Builder();
-    InternalKtKt.addHeaderLenient(headers, ":A");
+    Internal.addHeaderLenient(headers, ":A");
     server.enqueue(new MockResponse()
         .setHeaders(headers.build())
         .setBody("body"));
