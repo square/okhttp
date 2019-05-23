@@ -17,7 +17,6 @@ package okhttp3.internal.cache
 
 import okhttp3.Request
 import okhttp3.Response
-import okhttp3.internal.addHeaderLenient
 import okhttp3.internal.http.HttpDate
 import okhttp3.internal.http.StatusLine
 import okhttp3.internal.toNonNegativeInt
@@ -217,7 +216,7 @@ class CacheStrategy internal constructor(
       }
 
       val conditionalRequestHeaders = request.headers.newBuilder()
-      addHeaderLenient(conditionalRequestHeaders, conditionName, conditionValue!!)
+      conditionalRequestHeaders.addLenient(conditionName, conditionValue!!)
 
       val conditionalRequest = request.newBuilder()
           .headers(conditionalRequestHeaders.build())

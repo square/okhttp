@@ -22,7 +22,6 @@ import okhttp3.Request
 import okhttp3.Response
 import okhttp3.internal.EMPTY_HEADERS
 import okhttp3.internal.checkOffsetAndCount
-import okhttp3.internal.addHeaderLenient
 import okhttp3.internal.connection.RealConnection
 import okhttp3.internal.discard
 import okhttp3.internal.headersContentLength
@@ -219,7 +218,7 @@ class Http1ExchangeCodec(
     // parse the result headers until the first blank line
     var line = readHeaderLine()
     while (line.isNotEmpty()) {
-      addHeaderLenient(headers, line)
+      headers.addLenient(line)
       line = readHeaderLine()
     }
     return headers.build()

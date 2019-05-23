@@ -21,7 +21,6 @@ import okhttp3.OkHttpClient
 import okhttp3.Protocol
 import okhttp3.Request
 import okhttp3.Response
-import okhttp3.internal.addHeaderLenient
 import okhttp3.internal.connection.RealConnection
 import okhttp3.internal.headersContentLength
 import okhttp3.internal.http.ExchangeCodec
@@ -189,7 +188,7 @@ class Http2ExchangeCodec(
         if (name == RESPONSE_STATUS_UTF8) {
           statusLine = StatusLine.parse("HTTP/1.1 $value")
         } else if (name !in HTTP_2_SKIPPED_RESPONSE_HEADERS) {
-          addHeaderLenient(headersBuilder, name, value)
+          headersBuilder.addLenient(name, value)
         }
       }
       if (statusLine == null) throw ProtocolException("Expected ':status' header not present")
