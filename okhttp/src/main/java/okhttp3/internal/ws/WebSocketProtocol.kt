@@ -19,7 +19,7 @@ import okio.Buffer
 import okio.ByteString.Companion.encodeUtf8
 
 object WebSocketProtocol {
-  /** Magic value which must be appended to the key in a response header.  */
+  /** Magic value which must be appended to the key in a response header. */
   internal const val ACCEPT_MAGIC = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11"
 
   /*
@@ -34,17 +34,17 @@ object WebSocketProtocol {
   +-+-+-+-+-------+  +-+-------------+
   */
 
-  /** Byte 0 flag for whether this is the final fragment in a message.  */
+  /** Byte 0 flag for whether this is the final fragment in a message. */
   internal const val B0_FLAG_FIN = 128
-  /** Byte 0 reserved flag 1. Must be 0 unless negotiated otherwise.  */
+  /** Byte 0 reserved flag 1. Must be 0 unless negotiated otherwise. */
   internal const val B0_FLAG_RSV1 = 64
-  /** Byte 0 reserved flag 2. Must be 0 unless negotiated otherwise.  */
+  /** Byte 0 reserved flag 2. Must be 0 unless negotiated otherwise. */
   internal const val B0_FLAG_RSV2 = 32
-  /** Byte 0 reserved flag 3. Must be 0 unless negotiated otherwise.  */
+  /** Byte 0 reserved flag 3. Must be 0 unless negotiated otherwise. */
   internal const val B0_FLAG_RSV3 = 16
-  /** Byte 0 mask for the frame opcode.  */
+  /** Byte 0 mask for the frame opcode. */
   internal const val B0_MASK_OPCODE = 15
-  /** Flag in the opcode which indicates a control frame.  */
+  /** Flag in the opcode which indicates a control frame. */
   internal const val OPCODE_FLAG_CONTROL = 8
 
   /**
@@ -76,13 +76,13 @@ object WebSocketProtocol {
    * special values [PAYLOAD_SHORT] or [PAYLOAD_LONG].
    */
   internal const val PAYLOAD_BYTE_MAX = 125L
-  /** Maximum length of close message in bytes.  */
+  /** Maximum length of close message in bytes. */
   internal const val CLOSE_MESSAGE_MAX = PAYLOAD_BYTE_MAX - 2
   /**
    * Value for [B1_MASK_LENGTH] which indicates the next two bytes are the unsigned length.
    */
   internal const val PAYLOAD_SHORT = 126
-  /** Maximum length of a frame payload to be denoted as [PAYLOAD_SHORT].  */
+  /** Maximum length of a frame payload to be denoted as [PAYLOAD_SHORT]. */
   internal const val PAYLOAD_SHORT_MAX = 0xffffL
   /**
    * Value for [B1_MASK_LENGTH] which indicates the next eight bytes are the unsigned
@@ -90,9 +90,9 @@ object WebSocketProtocol {
    */
   internal const val PAYLOAD_LONG = 127
 
-  /** Used when an unchecked exception was thrown in a listener.  */
+  /** Used when an unchecked exception was thrown in a listener. */
   internal const val CLOSE_CLIENT_GOING_AWAY = 1001
-  /** Used when an empty close frame was received (i.e., without a status code).  */
+  /** Used when an empty close frame was received (i.e., without a status code). */
   internal const val CLOSE_NO_STATUS_CODE = 1005
 
   fun toggleMask(cursor: Buffer.UnsafeCursor, key: ByteArray) {

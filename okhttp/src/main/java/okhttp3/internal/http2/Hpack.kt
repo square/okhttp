@@ -161,7 +161,7 @@ object Hpack {
       dynamicTableByteCount = 0
     }
 
-    /** Returns the count of entries evicted.  */
+    /** Returns the count of entries evicted. */
     private fun evictToRecoverBytes(bytesToRecover: Int): Int {
       var bytesToRecover = bytesToRecover
       var entriesToEvict = 0
@@ -296,7 +296,7 @@ object Hpack {
       return index >= 0 && index <= STATIC_HEADER_TABLE.size - 1
     }
 
-    /** index == -1 when new.  */
+    /** index == -1 when new. */
     private fun insertIntoDynamicTable(index: Int, entry: Header) {
       var index = index
       headerList.add(entry)
@@ -361,7 +361,7 @@ object Hpack {
       return result
     }
 
-    /** Reads a potentially Huffman encoded byte string.  */
+    /** Reads a potentially Huffman encoded byte string. */
     @Throws(IOException::class)
     fun readByteString(): ByteString {
       val firstByte = readByte()
@@ -415,7 +415,7 @@ object Hpack {
       dynamicTableByteCount = 0
     }
 
-    /** Returns the count of entries evicted.  */
+    /** Returns the count of entries evicted. */
     private fun evictToRecoverBytes(bytesToRecover: Int): Int {
       var bytesToRecover = bytesToRecover
       var entriesToEvict = 0
@@ -462,7 +462,7 @@ object Hpack {
       dynamicTableByteCount += delta
     }
 
-    /** This does not use "never indexed" semantics for sensitive headers.  */
+    /** This does not use "never indexed" semantics for sensitive headers. */
     // http://tools.ietf.org/html/draft-ietf-httpbis-header-compression-12#section-6.2.3
     @Throws(IOException::class)
     fun writeHeaders(headerBlock: List<Header>) {

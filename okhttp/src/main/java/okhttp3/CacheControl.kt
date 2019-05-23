@@ -35,7 +35,7 @@ class CacheControl private constructor(
    */
   @get:JvmName("noCache") val noCache: Boolean,
 
-  /** If true, this response should not be cached.  */
+  /** If true, this response should not be cached. */
   @get:JvmName("noStore") val noStore: Boolean,
 
   /** The duration past the response's served date that it can be served without validation. */
@@ -164,7 +164,7 @@ class CacheControl private constructor(
     return result
   }
 
-  /** Builds a `Cache-Control` request header.  */
+  /** Builds a `Cache-Control` request header. */
   class Builder {
     private var noCache: Boolean = false
     private var noStore: Boolean = false
@@ -175,12 +175,12 @@ class CacheControl private constructor(
     private var noTransform: Boolean = false
     private var immutable: Boolean = false
 
-    /** Don't accept an unvalidated cached response.  */
+    /** Don't accept an unvalidated cached response. */
     fun noCache() = apply {
       this.noCache = true
     }
 
-    /** Don't store the server's response in any cache.  */
+    /** Don't store the server's response in any cache. */
     fun noStore() = apply {
       this.noStore = true
     }
@@ -233,7 +233,7 @@ class CacheControl private constructor(
       this.onlyIfCached = true
     }
 
-    /** Don't accept a transformed response.  */
+    /** Don't accept a transformed response. */
     fun noTransform() = apply {
       this.noTransform = true
     }

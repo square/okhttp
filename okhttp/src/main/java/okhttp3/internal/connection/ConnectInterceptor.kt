@@ -22,7 +22,7 @@ import okhttp3.OkHttpClient
 import okhttp3.Response
 import okhttp3.internal.http.RealInterceptorChain
 
-/** Opens a connection to the target server and proceeds to the next interceptor.  */
+/** Opens a connection to the target server and proceeds to the next interceptor. */
 class ConnectInterceptor(val client: OkHttpClient) : Interceptor {
 
   @Throws(IOException::class)

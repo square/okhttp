@@ -68,7 +68,7 @@ interface PushObserver {
   @Throws(IOException::class)
   fun onData(streamId: Int, source: BufferedSource, byteCount: Int, last: Boolean): Boolean
 
-  /** Indicates the reason why this stream was canceled.  */
+  /** Indicates the reason why this stream was canceled. */
   fun onReset(streamId: Int, errorCode: ErrorCode)
 
   companion object {

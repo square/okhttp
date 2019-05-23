@@ -23,25 +23,25 @@ import okhttp3.internal.connection.RealConnection
 import okio.Sink
 import okio.Source
 
-/** Encodes HTTP requests and decodes HTTP responses.  */
+/** Encodes HTTP requests and decodes HTTP responses. */
 interface ExchangeCodec {
 
-  /** Returns the connection that carries this codec.  */
+  /** Returns the connection that carries this codec. */
   fun connection(): RealConnection?
 
-  /** Returns an output stream where the request body can be streamed.  */
+  /** Returns an output stream where the request body can be streamed. */
   @Throws(IOException::class)
   fun createRequestBody(request: Request, contentLength: Long): Sink
 
-  /** This should update the HTTP engine's sentRequestMillis field.  */
+  /** This should update the HTTP engine's sentRequestMillis field. */
   @Throws(IOException::class)
   fun writeRequestHeaders(request: Request)
 
-  /** Flush the request to the underlying socket.  */
+  /** Flush the request to the underlying socket. */
   @Throws(IOException::class)
   fun flushRequest()
 
-  /** Flush the request to the underlying socket and signal no more bytes will be transmitted.  */
+  /** Flush the request to the underlying socket and signal no more bytes will be transmitted. */
   @Throws(IOException::class)
   fun finishRequest()
 
@@ -60,7 +60,7 @@ interface ExchangeCodec {
   @Throws(IOException::class)
   fun openResponseBodySource(response: Response): Source
 
-  /** Returns the trailers after the HTTP response. May be empty.  */
+  /** Returns the trailers after the HTTP response. May be empty. */
   @Throws(IOException::class)
   fun trailers(): Headers
 

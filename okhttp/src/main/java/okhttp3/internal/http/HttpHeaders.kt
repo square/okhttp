@@ -131,7 +131,7 @@ private fun Buffer.readChallengeHeader(result: MutableList<Challenge>) {
   }
 }
 
-/** Returns true if any commas were skipped.  */
+/** Returns true if any commas were skipped. */
 private fun Buffer.skipCommasAndWhitespace(): Boolean {
   var commaFound = false
   loop@ while (!exhausted()) {

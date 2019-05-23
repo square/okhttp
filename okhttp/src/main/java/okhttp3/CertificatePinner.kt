@@ -213,7 +213,7 @@ data class CertificatePinner internal constructor(
     return result
   }
 
-  /** Returns a certificate pinner that uses `certificateChainCleaner`.  */
+  /** Returns a certificate pinner that uses `certificateChainCleaner`. */
   internal fun withCertificateChainCleaner(
     certificateChainCleaner: CertificateChainCleaner?
   ): CertificatePinner {
@@ -225,13 +225,13 @@ data class CertificatePinner internal constructor(
   }
 
   internal data class Pin(
-    /** A hostname like `example.com` or a pattern like `*.example.com`.  */
+    /** A hostname like `example.com` or a pattern like `*.example.com`. */
     val pattern: String,
-    /** The canonical hostname, i.e. `EXAMPLE.com` becomes `example.com`.  */
+    /** The canonical hostname, i.e. `EXAMPLE.com` becomes `example.com`. */
     private val canonicalHostname: String,
-    /** Either `sha1/` or `sha256/`.  */
+    /** Either `sha1/` or `sha256/`. */
     val hashAlgorithm: String,
-    /** The hash of the pinned certificate using [hashAlgorithm].  */
+    /** The hash of the pinned certificate using [hashAlgorithm]. */
     val hash: ByteString
   ) {
     fun matches(hostname: String): Boolean {
@@ -246,7 +246,7 @@ data class CertificatePinner internal constructor(
     override fun toString(): String = hashAlgorithm + hash.base64()
   }
 
-  /** Builds a configured certificate pinner.  */
+  /** Builds a configured certificate pinner. */
   class Builder {
     private val pins = mutableListOf<Pin>()
 

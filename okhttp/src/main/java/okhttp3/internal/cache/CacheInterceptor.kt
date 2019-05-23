@@ -38,7 +38,7 @@ import java.net.HttpURLConnection.HTTP_GATEWAY_TIMEOUT
 import java.net.HttpURLConnection.HTTP_NOT_MODIFIED
 import java.util.concurrent.TimeUnit.MILLISECONDS
 
-/** Serves requests from the cache and writes responses to the cache.  */
+/** Serves requests from the cache and writes responses to the cache. */
 class CacheInterceptor(internal val cache: Cache?) : Interceptor {
 
   @Throws(IOException::class)
@@ -126,7 +126,7 @@ class CacheInterceptor(internal val cache: Cache?) : Interceptor {
       if (HttpMethod.invalidatesCache(networkRequest.method)) {
         try {
           cache.remove(networkRequest)
-        } catch (ignored: IOException) {
+        } catch (_: IOException) {
           // The cache cannot be written.
         }
       }
@@ -210,7 +210,7 @@ class CacheInterceptor(internal val cache: Cache?) : Interceptor {
       }
     }
 
-    /** Combines cached headers with a network headers as defined by RFC 7234, 4.3.4.  */
+    /** Combines cached headers with a network headers as defined by RFC 7234, 4.3.4. */
     private fun combine(cachedHeaders: Headers, networkHeaders: Headers): Headers {
       val result = Headers.Builder()
 

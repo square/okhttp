@@ -63,7 +63,7 @@ class ConnectionSpec internal constructor(builder: Builder) {
 
   fun supportsTlsExtensions(): Boolean = supportsTlsExtensions
 
-  /** Applies this spec to `sslSocket`.  */
+  /** Applies this spec to `sslSocket`. */
   internal fun apply(sslSocket: SSLSocket, isFallback: Boolean) {
     val specToApply = supportedSpec(sslSocket, isFallback)
 
@@ -280,7 +280,7 @@ class ConnectionSpec internal constructor(builder: Builder) {
         CipherSuite.TLS_RSA_WITH_AES_256_CBC_SHA,
         CipherSuite.TLS_RSA_WITH_3DES_EDE_CBC_SHA)
 
-    /** A secure TLS connection that requires a recent client platform and a recent server.  */
+    /** A secure TLS connection that requires a recent client platform and a recent server. */
     @JvmField
     val RESTRICTED_TLS = Builder(true)
         .cipherSuites(*RESTRICTED_CIPHER_SUITES)
@@ -311,7 +311,7 @@ class ConnectionSpec internal constructor(builder: Builder) {
         .supportsTlsExtensions(true)
         .build()
 
-    /** Unencrypted, unauthenticated connections for `http:` URLs.  */
+    /** Unencrypted, unauthenticated connections for `http:` URLs. */
     @JvmField
     val CLEARTEXT = Builder(false).build()
   }

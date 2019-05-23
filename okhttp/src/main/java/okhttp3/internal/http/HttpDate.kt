@@ -26,7 +26,7 @@ import java.util.Locale
  * Best-effort parser for HTTP dates.
  */
 object HttpDate {
-  /** The last four-digit year: "Fri, 31 Dec 9999 23:59:59 GMT".  */
+  /** The last four-digit year: "Fri, 31 Dec 9999 23:59:59 GMT". */
   const val MAX_DATE = 253402300799999L
 
   /**
@@ -43,7 +43,7 @@ object HttpDate {
     }
   }
 
-  /** If we fail to parse a date in a non-standard format, try each of these formats in sequence.  */
+  /** If we fail to parse a date in a non-standard format, try each of these formats in sequence. */
   private val BROWSER_COMPATIBLE_DATE_FORMAT_STRINGS = arrayOf(
       // HTTP formats required by RFC2616 but with any timezone.
       "EEE, dd MMM yyyy HH:mm:ss zzz", // RFC 822, updated by RFC 1123 with any TZ
@@ -68,7 +68,7 @@ object HttpDate {
 
   private val BROWSER_COMPATIBLE_DATE_FORMATS = arrayOfNulls<DateFormat>(BROWSER_COMPATIBLE_DATE_FORMAT_STRINGS.size)
 
-  /** Returns the date for [value]. Returns null if the value couldn't be parsed.  */
+  /** Returns the date for [value]. Returns null if the value couldn't be parsed. */
   fun parse(value: String): Date? {
     if (value.isEmpty()) {
       return null
@@ -107,7 +107,7 @@ object HttpDate {
     return null
   }
 
-  /** Returns the string for [value].  */
+  /** Returns the string for [value]. */
   fun format(value: Date): String {
     return STANDARD_DATE_FORMAT.get().format(value)
   }

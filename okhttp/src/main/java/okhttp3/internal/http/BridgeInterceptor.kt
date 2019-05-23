@@ -107,7 +107,7 @@ class BridgeInterceptor(private val cookieJar: CookieJar) : Interceptor {
     return responseBuilder.build()
   }
 
-  /** Returns a 'Cookie' HTTP request header with all cookies, like `a=b; c=d`.  */
+  /** Returns a 'Cookie' HTTP request header with all cookies, like `a=b; c=d`. */
   private fun cookieHeader(cookies: List<Cookie>): String = buildString {
     cookies.forEachIndexed { index, cookie ->
       if (index > 0) append("; ")

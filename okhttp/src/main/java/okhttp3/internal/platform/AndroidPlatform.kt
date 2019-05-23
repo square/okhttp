@@ -37,7 +37,7 @@ import javax.net.ssl.SSLSocket
 import javax.net.ssl.SSLSocketFactory
 import javax.net.ssl.X509TrustManager
 
-/** Android 5+.  */
+/** Android 5+. */
 class AndroidPlatform(
   private val sslParametersClass: Class<*>,
   private val sslSocketClass: Class<*>,
@@ -301,7 +301,7 @@ class AndroidPlatform(
           val closeGuardInstance = getMethod.invoke(null)
           openMethod!!.invoke(closeGuardInstance, closer)
           return closeGuardInstance
-        } catch (ignored: Exception) {
+        } catch (_: Exception) {
         }
       }
       return null
@@ -313,7 +313,7 @@ class AndroidPlatform(
         try {
           warnIfOpenMethod!!.invoke(closeGuardInstance)
           reported = true
-        } catch (ignored: Exception) {
+        } catch (_: Exception) {
         }
       }
       return reported
@@ -330,7 +330,7 @@ class AndroidPlatform(
           getMethod = closeGuardClass.getMethod("get")
           openMethod = closeGuardClass.getMethod("open", String::class.java)
           warnIfOpenMethod = closeGuardClass.getMethod("warnIfOpen")
-        } catch (ignored: Exception) {
+        } catch (_: Exception) {
           getMethod = null
           openMethod = null
           warnIfOpenMethod = null
@@ -377,7 +377,7 @@ class AndroidPlatform(
       try {
         sslParametersClass = Class.forName("com.android.org.conscrypt.SSLParametersImpl")
         sslSocketClass = Class.forName("com.android.org.conscrypt.OpenSSLSocketImpl")
-      } catch (ignored: ClassNotFoundException) {
+      } catch (_: ClassNotFoundException) {
         return null // Not an Android runtime.
       }
 
@@ -390,7 +390,7 @@ class AndroidPlatform(
           val setAlpnProtocols = sslSocketClass.getMethod("setAlpnProtocols", ByteArray::class.java)
           return AndroidPlatform(sslParametersClass, sslSocketClass, setUseSessionTickets,
               setHostname, getAlpnSelectedProtocol, setAlpnProtocols)
-        } catch (ignored: NoSuchMethodException) {
+        } catch (_: NoSuchMethodException) {
         }
       }
       throw IllegalStateException("Expected Android API level 21+ but was ${Build.VERSION.SDK_INT}")

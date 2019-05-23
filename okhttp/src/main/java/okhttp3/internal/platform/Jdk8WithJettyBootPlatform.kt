@@ -22,7 +22,7 @@ import java.lang.reflect.Method
 import java.lang.reflect.Proxy
 import javax.net.ssl.SSLSocket
 
-/** OpenJDK 8 with `org.mortbay.jetty.alpn:alpn-boot` in the boot class path.  */
+/** OpenJDK 8 with `org.mortbay.jetty.alpn:alpn-boot` in the boot class path. */
 class Jdk8WithJettyBootPlatform(
   private val putMethod: Method,
   private val getMethod: Method,
@@ -80,12 +80,12 @@ class Jdk8WithJettyBootPlatform(
    * dependency on those interfaces.
    */
   private class AlpnProvider internal constructor(
-    /** This peer's supported protocols.  */
+    /** This peer's supported protocols. */
     private val protocols: List<String>
   ) : InvocationHandler {
-    /** Set when remote peer notifies ALPN is unsupported.  */
+    /** Set when remote peer notifies ALPN is unsupported. */
     internal var unsupported: Boolean = false
-    /** The protocol the server selected.  */
+    /** The protocol the server selected. */
     internal var selected: String? = null
 
     @Throws(Throwable::class)
@@ -145,8 +145,8 @@ class Jdk8WithJettyBootPlatform(
         val removeMethod = alpnClass.getMethod("remove", SSLSocket::class.java)
         return Jdk8WithJettyBootPlatform(
             putMethod, getMethod, removeMethod, clientProviderClass, serverProviderClass)
-      } catch (ignored: ClassNotFoundException) {
-      } catch (ignored: NoSuchMethodException) {
+      } catch (_: ClassNotFoundException) {
+      } catch (_: NoSuchMethodException) {
       }
 
       return null

@@ -28,7 +28,7 @@ import java.net.Inet6Address
 import java.net.Socket
 import javax.net.ssl.SSLSocket
 
-/** An HTTP request that came into the mock web server.  */
+/** An HTTP request that came into the mock web server. */
 class RecordedRequest(
   val requestLine: String,
   /** All headers. */
@@ -62,7 +62,7 @@ class RecordedRequest(
     @Deprecated("Use {@link #getBody() getBody().readUtf8()}. ")
     get() = body.readUtf8()
 
-  /** Returns the connection's TLS version or null if the connection doesn't use SSL.  */
+  /** Returns the connection's TLS version or null if the connection doesn't use SSL. */
   val tlsVersion: TlsVersion?
     get() = handshake?.tlsVersion
 
@@ -105,7 +105,7 @@ class RecordedRequest(
     }
   }
 
-  /** Returns the first header named [name], or null if no such header exists.  */
+  /** Returns the first header named [name], or null if no such header exists. */
   fun getHeader(name: String): String? {
     return headers.values(name).firstOrNull()
   }

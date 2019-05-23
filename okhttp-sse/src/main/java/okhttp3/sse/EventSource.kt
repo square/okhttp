@@ -18,7 +18,7 @@ package okhttp3.sse
 import okhttp3.Request
 
 interface EventSource {
-  /** Returns the original request that initiated this event source.  */
+  /** Returns the original request that initiated this event source. */
   fun request(): Request
 
   /**

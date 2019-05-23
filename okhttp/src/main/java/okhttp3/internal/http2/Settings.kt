@@ -21,13 +21,13 @@ package okhttp3.internal.http2
  */
 class Settings {
 
-  /** Bitfield of which flags that values.  */
+  /** Bitfield of which flags that values. */
   private var set: Int = 0
 
-  /** Flag values.  */
+  /** Flag values. */
   private val values = IntArray(COUNT)
 
-  /** Returns -1 if unset.  */
+  /** Returns -1 if unset. */
   val headerTableSize: Int
     get() {
       val bit = 1 shl HEADER_TABLE_SIZE
@@ -56,16 +56,16 @@ class Settings {
     return this
   }
 
-  /** Returns true if a value has been assigned for the setting `id`.  */
+  /** Returns true if a value has been assigned for the setting `id`. */
   fun isSet(id: Int): Boolean {
     val bit = 1 shl id
     return set and bit != 0
   }
 
-  /** Returns the value for the setting `id`, or 0 if unset.  */
+  /** Returns the value for the setting `id`, or 0 if unset. */
   operator fun get(id: Int): Int = values[id]
 
-  /** Returns the number of settings that have values assigned.  */
+  /** Returns the number of settings that have values assigned. */
   fun size(): Int = Integer.bitCount(set)
 
   // TODO: honor this setting.
@@ -107,20 +107,20 @@ class Settings {
      */
     const val DEFAULT_INITIAL_WINDOW_SIZE = 65535
 
-    /** HTTP/2: Size in bytes of the table used to decode the sender's header blocks.  */
+    /** HTTP/2: Size in bytes of the table used to decode the sender's header blocks. */
     const val HEADER_TABLE_SIZE = 1
-    /** HTTP/2: The peer must not send a PUSH_PROMISE frame when this is 0.  */
+    /** HTTP/2: The peer must not send a PUSH_PROMISE frame when this is 0. */
     const val ENABLE_PUSH = 2
-    /** Sender's maximum number of concurrent streams.  */
+    /** Sender's maximum number of concurrent streams. */
     const val MAX_CONCURRENT_STREAMS = 4
-    /** HTTP/2: Size in bytes of the largest frame payload the sender will accept.  */
+    /** HTTP/2: Size in bytes of the largest frame payload the sender will accept. */
     const val MAX_FRAME_SIZE = 5
-    /** HTTP/2: Advisory only. Size in bytes of the largest header list the sender will accept.  */
+    /** HTTP/2: Advisory only. Size in bytes of the largest header list the sender will accept. */
     const val MAX_HEADER_LIST_SIZE = 6
-    /** Window size in bytes.  */
+    /** Window size in bytes. */
     const val INITIAL_WINDOW_SIZE = 7
 
-    /** Total number of settings.  */
+    /** Total number of settings. */
     const val COUNT = 10
   }
 }
