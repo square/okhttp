@@ -26,7 +26,7 @@ import java.net.HttpCookie
 import java.util.ArrayList
 import java.util.Collections
 
-/** A cookie jar that delegates to a [java.net.CookieHandler].  */
+/** A cookie jar that delegates to a [java.net.CookieHandler]. */
 class JavaNetCookieJar(private val cookieHandler: CookieHandler) : CookieJar {
 
   override fun saveFromResponse(url: HttpUrl, cookies: List<Cookie>) {

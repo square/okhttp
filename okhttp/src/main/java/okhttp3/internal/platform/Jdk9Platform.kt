@@ -23,7 +23,7 @@ import javax.net.ssl.SSLSocketFactory
 import javax.net.ssl.X509TrustManager
 import okhttp3.Protocol
 
-/** OpenJDK 9+.  */
+/** OpenJDK 9+. */
 class Jdk9Platform(
   @JvmField val setProtocolMethod: Method,
   @JvmField val getProtocolMethod: Method

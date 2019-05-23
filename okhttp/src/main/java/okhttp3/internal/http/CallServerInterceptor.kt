@@ -22,7 +22,7 @@ import okio.buffer
 import java.io.IOException
 import java.net.ProtocolException
 
-/** This is the last interceptor in the chain. It makes a network call to the server.  */
+/** This is the last interceptor in the chain. It makes a network call to the server. */
 class CallServerInterceptor(private val forWebSocket: Boolean) : Interceptor {
 
   @Throws(IOException::class)

@@ -31,7 +31,7 @@ class FormBody internal constructor(
   private val encodedNames: List<String> = encodedNames.toImmutableList()
   private val encodedValues: List<String> = encodedValues.toImmutableList()
 
-  /** The number of key-value pairs in this form-encoded body.  */
+  /** The number of key-value pairs in this form-encoded body. */
   @get:JvmName("size") val size: Int
     get() = encodedNames.size
 

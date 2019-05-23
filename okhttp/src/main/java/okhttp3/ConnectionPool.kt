@@ -40,13 +40,13 @@ class ConnectionPool(
 
   constructor() : this(5, 5, TimeUnit.MINUTES)
 
-  /** Returns the number of idle connections in the pool.  */
+  /** Returns the number of idle connections in the pool. */
   fun idleConnectionCount(): Int = delegate.idleConnectionCount()
 
-  /** Returns total number of connections in the pool.  */
+  /** Returns total number of connections in the pool. */
   fun connectionCount(): Int = delegate.connectionCount()
 
-  /** Close and remove all idle connections in the pool.  */
+  /** Close and remove all idle connections in the pool. */
   fun evictAll() {
     delegate.evictAll()
   }

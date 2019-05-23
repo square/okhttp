@@ -84,16 +84,16 @@ class RealWebSocket(
    */
   private var streams: Streams? = null
 
-  /** Outgoing pongs in the order they should be written.  */
+  /** Outgoing pongs in the order they should be written. */
   private val pongQueue = ArrayDeque<ByteString>()
 
-  /** Outgoing messages and close frames in the order they should be written.  */
+  /** Outgoing messages and close frames in the order they should be written. */
   private val messageAndCloseQueue = ArrayDeque<Any>()
 
-  /** The total size in bytes of enqueued but not yet transmitted messages.  */
+  /** The total size in bytes of enqueued but not yet transmitted messages. */
   private var queueSize = 0L
 
-  /** True if we've enqueued a close frame. No further message frames will be enqueued.  */
+  /** True if we've enqueued a close frame. No further message frames will be enqueued. */
   private var enqueuedClose = false
 
   /**
@@ -102,25 +102,25 @@ class RealWebSocket(
    */
   private var cancelFuture: ScheduledFuture<*>? = null
 
-  /** The close code from the peer, or -1 if this web socket has not yet read a close frame.  */
+  /** The close code from the peer, or -1 if this web socket has not yet read a close frame. */
   private var receivedCloseCode = -1
 
-  /** The close reason from the peer, or null if this web socket has not yet read a close frame.  */
+  /** The close reason from the peer, or null if this web socket has not yet read a close frame. */
   private var receivedCloseReason: String? = null
 
-  /** True if this web socket failed and the listener has been notified.  */
+  /** True if this web socket failed and the listener has been notified. */
   private var failed = false
 
-  /** Total number of pings sent by this web socket.  */
+  /** Total number of pings sent by this web socket. */
   private var sentPingCount = 0
 
-  /** Total number of pings received by this web socket.  */
+  /** Total number of pings received by this web socket. */
   private var receivedPingCount = 0
 
-  /** Total number of pongs received by this web socket.  */
+  /** Total number of pongs received by this web socket. */
   private var receivedPongCount = 0
 
-  /** True if we have sent a ping that is still awaiting a reply.  */
+  /** True if we have sent a ping that is still awaiting a reply. */
   private var awaitingPong = false
 
   init {

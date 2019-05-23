@@ -277,14 +277,14 @@ class ExchangeFinder(
     }
   }
 
-  /** Returns true if there is a failure that retrying might fix.  */
+  /** Returns true if there is a failure that retrying might fix. */
   fun hasStreamFailure(): Boolean {
     synchronized(connectionPool) {
       return hasStreamFailure
     }
   }
 
-  /** Returns true if a current route is still good or if there are routes we haven't tried yet.  */
+  /** Returns true if a current route is still good or if there are routes we haven't tried yet. */
   fun hasRouteToTry(): Boolean {
     synchronized(connectionPool) {
       if (nextRouteToTry != null) {

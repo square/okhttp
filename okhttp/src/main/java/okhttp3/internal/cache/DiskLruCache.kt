@@ -80,7 +80,7 @@ import java.util.concurrent.TimeUnit
 class DiskLruCache internal constructor(
   internal val fileSystem: FileSystem,
 
-  /** Returns the directory where this cache stores its data.  */
+  /** Returns the directory where this cache stores its data. */
   val directory: File,
 
   private val appVersion: Int,
@@ -90,7 +90,7 @@ class DiskLruCache internal constructor(
   /** Returns the maximum number of bytes that this cache should use to store its data. */
   maxSize: Long,
 
-  /** Used to run 'cleanupRunnable' for journal rebuilds.  */
+  /** Used to run 'cleanupRunnable' for journal rebuilds. */
   private val executor: Executor
 
 ) : Closeable, Flushable {
@@ -601,7 +601,7 @@ class DiskLruCache internal constructor(
     check(!closed) { "cache is closed" }
   }
 
-  /** Force buffered operations to the filesystem.  */
+  /** Force buffered operations to the filesystem. */
   @Synchronized @Throws(IOException::class)
   override fun flush() {
     if (!initialized) return
@@ -613,7 +613,7 @@ class DiskLruCache internal constructor(
 
   @Synchronized fun isClosed(): Boolean = closed
 
-  /** Closes this cache. Stored values will remain on the filesystem.  */
+  /** Closes this cache. Stored values will remain on the filesystem. */
   @Synchronized @Throws(IOException::class)
   override fun close() {
     if (!initialized || closed) {
@@ -688,13 +688,13 @@ class DiskLruCache internal constructor(
   fun snapshots(): MutableIterator<Snapshot> {
     initialize()
     return object : MutableIterator<Snapshot> {
-      /** Iterate a copy of the entries to defend against concurrent modification errors.  */
+      /** Iterate a copy of the entries to defend against concurrent modification errors. */
       val delegate = ArrayList(lruEntries.values).iterator()
 
-      /** The snapshot to return from [next]. Null if we haven't computed that yet.  */
+      /** The snapshot to return from [next]. Null if we haven't computed that yet. */
       var nextSnapshot: Snapshot? = null
 
-      /** The snapshot to remove with [remove]. Null if removal is illegal.  */
+      /** The snapshot to remove with [remove]. Null if removal is illegal. */
       var removeSnapshot: Snapshot? = null
 
       override fun hasNext(): Boolean {
@@ -738,7 +738,7 @@ class DiskLruCache internal constructor(
     }
   }
 
-  /** A snapshot of the values for an entry.  */
+  /** A snapshot of the values for an entry. */
   inner class Snapshot internal constructor(
     private val key: String,
     private val sequenceNumber: Long,
@@ -754,10 +754,10 @@ class DiskLruCache internal constructor(
     @Throws(IOException::class)
     fun edit(): Editor? = this@DiskLruCache.edit(key, sequenceNumber)
 
-    /** Returns the unbuffered stream with the value for `index`.  */
+    /** Returns the unbuffered stream with the value for `index`. */
     fun getSource(index: Int): Source = sources[index]
 
-    /** Returns the byte length of the value for `index`.  */
+    /** Returns the byte length of the value for `index`. */
     fun getLength(index: Int): Long = lengths[index]
 
     override fun close() {
@@ -767,7 +767,7 @@ class DiskLruCache internal constructor(
     }
   }
 
-  /** Edits the values for an entry.  */
+  /** Edits the values for an entry. */
   inner class Editor internal constructor(internal val entry: Entry) {
     internal val written: BooleanArray? = if (entry.readable) null else BooleanArray(valueCount)
     private var done: Boolean = false
@@ -873,18 +873,18 @@ class DiskLruCache internal constructor(
     internal val key: String
   ) {
 
-    /** Lengths of this entry's files.  */
+    /** Lengths of this entry's files. */
     internal val lengths: LongArray = LongArray(valueCount)
     internal val cleanFiles = mutableListOf<File>()
     internal val dirtyFiles = mutableListOf<File>()
 
-    /** True if this entry has ever been published.  */
+    /** True if this entry has ever been published. */
     internal var readable: Boolean = false
 
-    /** The ongoing edit or null if this entry is not being edited.  */
+    /** The ongoing edit or null if this entry is not being edited. */
     internal var currentEditor: Editor? = null
 
-    /** The sequence number of the most recently committed edit to this entry.  */
+    /** The sequence number of the most recently committed edit to this entry. */
     internal var sequenceNumber: Long = 0
 
     init {
@@ -900,7 +900,7 @@ class DiskLruCache internal constructor(
       }
     }
 
-    /** Set lengths using decimal numbers like "10123".  */
+    /** Set lengths using decimal numbers like "10123". */
     @Throws(IOException::class)
     internal fun setLengths(strings: List<String>) {
       if (strings.size != valueCount) {
@@ -916,7 +916,7 @@ class DiskLruCache internal constructor(
       }
     }
 
-    /** Append space-prefixed lengths to `writer`.  */
+    /** Append space-prefixed lengths to `writer`. */
     @Throws(IOException::class)
     internal fun writeLengths(writer: BufferedSink) {
       for (length in lengths) {

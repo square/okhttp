@@ -46,7 +46,7 @@ import java.util.ArrayList
 import java.util.Locale
 import java.util.concurrent.TimeUnit
 
-/** Encode requests and responses using HTTP/2 frames.  */
+/** Encode requests and responses using HTTP/2 frames. */
 class Http2ExchangeCodec(
   client: OkHttpClient,
   private val realConnection: RealConnection,
@@ -133,7 +133,7 @@ class Http2ExchangeCodec(
     private const val ENCODING = "encoding"
     private const val UPGRADE = "upgrade"
 
-    /** See http://tools.ietf.org/html/draft-ietf-httpbis-http2-09#section-8.1.3.  */
+    /** See http://tools.ietf.org/html/draft-ietf-httpbis-http2-09#section-8.1.3. */
     private val HTTP_2_SKIPPED_REQUEST_HEADERS = immutableListOf(
         CONNECTION,
         HOST,
@@ -179,7 +179,7 @@ class Http2ExchangeCodec(
       return result
     }
 
-    /** Returns headers for a name value block containing an HTTP/2 response.  */
+    /** Returns headers for a name value block containing an HTTP/2 response. */
     fun readHttp2HeadersList(headerBlock: Headers, protocol: Protocol): Response.Builder {
       var statusLine: StatusLine? = null
       val headersBuilder = Headers.Builder()

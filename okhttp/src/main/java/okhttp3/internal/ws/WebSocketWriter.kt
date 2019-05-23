@@ -48,7 +48,7 @@ internal class WebSocketWriter(
   val random: Random
 ) {
 
-  /** The [Buffer] of [sink]. Write to this and then flush/emit [sink].  */
+  /** The [Buffer] of [sink]. Write to this and then flush/emit [sink]. */
   private val sinkBuffer: Buffer = sink.buffer
   private var writerClosed = false
 

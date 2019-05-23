@@ -23,7 +23,7 @@ import okhttp3.mockwebserver.internal.duplex.DuplexResponseBody
 import okio.Buffer
 import java.util.concurrent.TimeUnit
 
-/** A scripted response to be replayed by the mock web server.  */
+/** A scripted response to be replayed by the mock web server. */
 class MockResponse : Cloneable {
   private var status: String = ""
   private var headers = Headers.Builder()
@@ -55,11 +55,11 @@ class MockResponse : Cloneable {
   val isDuplex: Boolean
     get() = duplexResponseBody != null
 
-  /** Returns the streams the server will push with this response.  */
+  /** Returns the streams the server will push with this response. */
   val pushPromises: List<PushPromise>
     get() = promises
 
-  /** Creates a new mock response with an empty body.  */
+  /** Creates a new mock response with an empty body. */
   init {
     setResponseCode(200)
     setHeader("Content-Length", 0L)
@@ -72,7 +72,7 @@ class MockResponse : Cloneable {
     return result
   }
 
-  /** Returns the HTTP response line, such as "HTTP/1.1 200 OK".  */
+  /** Returns the HTTP response line, such as "HTTP/1.1 200 OK". */
   fun getStatus(): String = status
 
   fun setResponseCode(code: Int): MockResponse {
@@ -92,7 +92,7 @@ class MockResponse : Cloneable {
     return this
   }
 
-  /** Returns the HTTP headers, such as "Content-Length: 0".  */
+  /** Returns the HTTP headers, such as "Content-Length: 0". */
   fun getHeaders(): Headers = headers.build()
 
   fun getTrailers(): Headers = trailers.build()
@@ -142,25 +142,25 @@ class MockResponse : Cloneable {
     return addHeader(name, value)
   }
 
-  /** Replaces all headers with those specified.  */
+  /** Replaces all headers with those specified. */
   fun setHeaders(headers: Headers): MockResponse {
     this.headers = headers.newBuilder()
     return this
   }
 
-  /** Replaces all trailers with those specified.  */
+  /** Replaces all trailers with those specified. */
   fun setTrailers(trailers: Headers): MockResponse {
     this.trailers = trailers.newBuilder()
     return this
   }
 
-  /** Removes all headers named [name].  */
+  /** Removes all headers named [name]. */
   fun removeHeader(name: String): MockResponse {
     headers.removeAll(name)
     return this
   }
 
-  /** Returns a copy of the raw HTTP payload.  */
+  /** Returns a copy of the raw HTTP payload. */
   fun getBody(): Buffer? {
     return body?.clone()
   }
@@ -171,7 +171,7 @@ class MockResponse : Cloneable {
     return this
   }
 
-  /** Sets the response body to the UTF-8 encoded bytes of [body].  */
+  /** Sets the response body to the UTF-8 encoded bytes of [body]. */
   fun setBody(body: String): MockResponse {
     return setBody(Buffer().writeUtf8(body))
   }

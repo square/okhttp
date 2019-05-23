@@ -242,7 +242,7 @@ open class OkHttpClient internal constructor(
    */
   fun callTimeoutMillis(): Int = callTimeout
 
-  /** Default connect timeout (in milliseconds). The default is 10 seconds.  */
+  /** Default connect timeout (in milliseconds). The default is 10 seconds. */
   fun connectTimeoutMillis(): Int = connectTimeout
 
   /** Default read timeout (in milliseconds). The default is 10 seconds. */
@@ -506,7 +506,7 @@ open class OkHttpClient internal constructor(
       this.cookieJar = cookieJar
     }
 
-    /** Sets the response cache to be used to read and write cached responses.  */
+    /** Sets the response cache to be used to read and write cached responses. */
     fun cache(cache: Cache?) = apply {
       this.cache = cache
       this.internalCache = null

@@ -44,9 +44,9 @@ import java.util.concurrent.TimeUnit.SECONDS
  * stale).
  */
 class CacheStrategy internal constructor(
-  /** The request to send on the network, or null if this call doesn't use the network.  */
+  /** The request to send on the network, or null if this call doesn't use the network. */
   val networkRequest: Request?,
-  /** The cached response to return or validate; or null if this call doesn't use a cache.  */
+  /** The cached response to return or validate; or null if this call doesn't use a cache. */
   val cacheResponse: Response?
 ) {
 
@@ -287,7 +287,7 @@ class CacheStrategy internal constructor(
   }
 
   companion object {
-    /** Returns true if `response` can be stored to later serve another request.  */
+    /** Returns true if `response` can be stored to later serve another request. */
     fun isCacheable(response: Response, request: Request): Boolean {
       // Always go to network for uncacheable response codes (RFC 7231 section 6.1), This
       // implementation doesn't support caching partial content.

@@ -92,7 +92,7 @@ class RouteSelector(
     return Selection(routes)
   }
 
-  /** Prepares the proxy servers to try.  */
+  /** Prepares the proxy servers to try. */
   private fun resetNextProxy(url: HttpUrl, proxy: Proxy?) {
     proxies = if (proxy != null) {
       // If the user specifies a proxy, try that and only that.
@@ -109,10 +109,10 @@ class RouteSelector(
     nextProxyIndex = 0
   }
 
-  /** Returns true if there's another proxy to try.  */
+  /** Returns true if there's another proxy to try. */
   private fun hasNextProxy(): Boolean = nextProxyIndex < proxies.size
 
-  /** Returns the next proxy to try. May be PROXY.NO_PROXY but never null.  */
+  /** Returns the next proxy to try. May be PROXY.NO_PROXY but never null. */
   @Throws(IOException::class)
   private fun nextProxy(): Proxy {
     if (!hasNextProxy()) {
@@ -124,7 +124,7 @@ class RouteSelector(
     return result
   }
 
-  /** Prepares the socket addresses to attempt for the current proxy or host.  */
+  /** Prepares the socket addresses to attempt for the current proxy or host. */
   @Throws(IOException::class)
   private fun resetNextInetSocketAddress(proxy: Proxy) {
     // Clear the addresses. Necessary if getAllByName() below throws!

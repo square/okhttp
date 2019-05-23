@@ -37,7 +37,7 @@ import javax.net.ssl.SSLSocket
 import javax.net.ssl.SSLSocketFactory
 import javax.net.ssl.X509TrustManager
 
-/** Android 5+.  */
+/** Android 5+. */
 class AndroidPlatform(
   private val sslParametersClass: Class<*>,
   private val sslSocketClass: Class<*>,

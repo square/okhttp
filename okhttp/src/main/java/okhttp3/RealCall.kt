@@ -36,7 +36,7 @@ import java.util.concurrent.atomic.AtomicInteger
 
 internal class RealCall private constructor(
   val client: OkHttpClient,
-  /** The application's original request unadulterated by redirects or auth headers.  */
+  /** The application's original request unadulterated by redirects or auth headers. */
   val originalRequest: Request,
   val forWebSocket: Boolean
 ) : Call {
