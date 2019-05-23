@@ -316,4 +316,8 @@ class Exchange(
       return bodyComplete(bytesReceived, true, false, e)
     }
   }
+
+  companion object {
+    fun get(response: Response): Exchange? = response.exchange
+  }
 }

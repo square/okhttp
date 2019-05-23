@@ -42,8 +42,8 @@ import okhttp3.RecordingEventListener.ResponseHeadersEnd;
 import okhttp3.RecordingEventListener.SecureConnectEnd;
 import okhttp3.RecordingEventListener.SecureConnectStart;
 import okhttp3.internal.DoubleInetAddressDns;
-import okhttp3.internal.Internal;
 import okhttp3.internal.RecordingOkAuthenticator;
+import okhttp3.internal.connection.RealConnectionPool;
 import okhttp3.logging.HttpLoggingInterceptor;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
@@ -89,7 +89,7 @@ public final class EventListenerTest {
         .eventListener(listener)
         .build();
 
-    listener.forbidLock(Internal.INSTANCE.realConnectionPool(client.connectionPool()));
+    listener.forbidLock(RealConnectionPool.Companion.get(client.connectionPool()));
     listener.forbidLock(client.dispatcher());
   }
 
