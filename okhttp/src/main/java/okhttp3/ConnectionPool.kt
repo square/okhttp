@@ -34,9 +34,7 @@ class ConnectionPool(
   keepAliveDuration: Long,
   timeUnit: TimeUnit
 ) {
-  // TODO(kotlin): remove @JvmField once OkHttpClient is in Kotlin
-  @JvmField internal val delegate =
-      RealConnectionPool(maxIdleConnections, keepAliveDuration, timeUnit)
+  internal val delegate = RealConnectionPool(maxIdleConnections, keepAliveDuration, timeUnit)
 
   constructor() : this(5, 5, TimeUnit.MINUTES)
 
