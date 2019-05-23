@@ -16,7 +16,6 @@
 package okhttp3
 
 import okhttp3.internal.EMPTY_HEADERS
-import okhttp3.internal.addHeaderLenient
 import okhttp3.internal.cache.CacheRequest
 import okhttp3.internal.cache.CacheStrategy
 import okhttp3.internal.cache.DiskLruCache
@@ -493,7 +492,7 @@ class Cache internal constructor(
         val varyHeadersBuilder = Headers.Builder()
         val varyRequestHeaderLineCount = readInt(source)
         for (i in 0 until varyRequestHeaderLineCount) {
-          addHeaderLenient(varyHeadersBuilder, source.readUtf8LineStrict())
+          varyHeadersBuilder.addLenient(source.readUtf8LineStrict())
         }
         varyHeaders = varyHeadersBuilder.build()
 
@@ -504,7 +503,7 @@ class Cache internal constructor(
         val responseHeadersBuilder = Headers.Builder()
         val responseHeaderLineCount = readInt(source)
         for (i in 0 until responseHeaderLineCount) {
-          addHeaderLenient(responseHeadersBuilder, source.readUtf8LineStrict())
+          responseHeadersBuilder.addLenient(source.readUtf8LineStrict())
         }
         val sendRequestMillisString = responseHeadersBuilder[SENT_MILLIS]
         val receivedResponseMillisString = responseHeadersBuilder[RECEIVED_MILLIS]

@@ -269,7 +269,7 @@ fun decodeHexDigit(c: Char): Int = when (c) {
 fun List<Header>.toHeaders(): Headers {
   val builder = Headers.Builder()
   for ((name, value) in this) {
-    addHeaderLenient(builder, name.utf8(), value.utf8())
+    builder.addLenient(name.utf8(), value.utf8())
   }
   return builder.build()
 }

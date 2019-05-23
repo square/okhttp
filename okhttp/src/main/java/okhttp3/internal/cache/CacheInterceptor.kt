@@ -22,7 +22,6 @@ import okhttp3.Interceptor
 import okhttp3.Protocol
 import okhttp3.Response
 import okhttp3.internal.EMPTY_RESPONSE
-import okhttp3.internal.addHeaderLenient
 import okhttp3.internal.closeQuietly
 import okhttp3.internal.discard
 import okhttp3.internal.http.ExchangeCodec
@@ -224,14 +223,14 @@ class CacheInterceptor(internal val cache: Cache?) : Interceptor {
         if (isContentSpecificHeader(fieldName) ||
             !isEndToEnd(fieldName) ||
             networkHeaders[fieldName] == null) {
-          addHeaderLenient(result, fieldName, value)
+          result.addLenient(fieldName, value)
         }
       }
 
       for (index in networkHeaders.names().indices) {
         val fieldName = networkHeaders.name(index)
         if (!isContentSpecificHeader(fieldName) && isEndToEnd(fieldName)) {
-          addHeaderLenient(result, fieldName, networkHeaders.value(index))
+          result.addLenient(fieldName, networkHeaders.value(index))
         }
       }
 
