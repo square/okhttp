@@ -91,7 +91,7 @@ import static java.net.CookiePolicy.ACCEPT_ORIGINAL_SERVER;
 import static java.util.Arrays.asList;
 import static okhttp3.CipherSuite.TLS_DH_anon_WITH_AES_128_GCM_SHA256;
 import static okhttp3.TestUtil.awaitGarbageCollection;
-import static okhttp3.internal.InternalKtKt.addHeaderLenient;
+import static okhttp3.internal.Internal.addHeaderLenient;
 import static okhttp3.internal.platform.PlatformTest.getJvmSpecVersion;
 import static okhttp3.tls.internal.TlsUtil.localhost;
 import static org.assertj.core.api.Assertions.assertThat;

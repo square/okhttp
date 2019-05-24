@@ -25,7 +25,7 @@ import okhttp3.internal.http.HttpDate;
 import org.junit.Test;
 
 import static java.util.Arrays.asList;
-import static okhttp3.internal.InternalKtKt.parseCookie;
+import static okhttp3.internal.Internal.parseCookie;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.fail;
 

@@ -14,6 +14,9 @@
  * limitations under the License.
  */
 
+/** Exposes Kotlin-internal APIs to Java test code and code in other modules. */
+@file:JvmName("Internal")
+
 package okhttp3.internal
 
 import okhttp3.Cache

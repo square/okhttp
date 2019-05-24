@@ -34,7 +34,7 @@ import java.util.TimeZone;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import javax.net.ssl.HostnameVerifier;
-import okhttp3.internal.InternalKtKt;
+import okhttp3.internal.Internal;
 import okhttp3.internal.io.InMemoryFileSystem;
 import okhttp3.internal.platform.Platform;
 import okhttp3.mockwebserver.MockResponse;
@@ -51,7 +51,7 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 
-import static okhttp3.internal.InternalKtKt.cacheGet;
+import static okhttp3.internal.Internal.cacheGet;
 import static okhttp3.mockwebserver.SocketPolicy.DISCONNECT_AT_END;
 import static okhttp3.tls.internal.TlsUtil.localhost;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -1992,7 +1992,7 @@ public final class CacheTest {
   @Test public void emptyResponseHeaderNameFromCacheIsLenient() throws Exception {
     Headers.Builder headers = new Headers.Builder()
         .add("Cache-Control: max-age=120");
-    InternalKtKt.addHeaderLenient(headers, ": A");
+    Internal.addHeaderLenient(headers, ": A");
     server.enqueue(new MockResponse()
         .setHeaders(headers.build())
         .setBody("body"));
