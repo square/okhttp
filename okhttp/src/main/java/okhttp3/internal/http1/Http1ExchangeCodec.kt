@@ -118,7 +118,7 @@ class Http1ExchangeCodec(
    */
   override fun writeRequestHeaders(request: Request) {
     val requestLine = RequestLine.get(
-        request, realConnection!!.route().proxy().type())
+        request, realConnection!!.route().proxy.type())
     writeRequest(request.headers, requestLine)
   }
 
@@ -201,7 +201,7 @@ class Http1ExchangeCodec(
       }
     } catch (e: EOFException) {
       // Provide more context if the server ends the stream before sending a response.
-      val address = realConnection?.route()?.address()?.url?.redact() ?: "unknown"
+      val address = realConnection?.route()?.address?.url?.redact() ?: "unknown"
       throw IOException("unexpected end of stream on $address", e)
     }
   }

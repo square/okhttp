@@ -32,7 +32,7 @@ class JavaNetAuthenticator : okhttp3.Authenticator {
     val request = response.request()
     val url = request.url
     val proxyAuthorization = response.code() == 407
-    val proxy = route?.proxy() ?: Proxy.NO_PROXY
+    val proxy = route?.proxy ?: Proxy.NO_PROXY
 
     for (challenge in challenges) {
       if (!"Basic".equals(challenge.scheme, ignoreCase = true)) {
