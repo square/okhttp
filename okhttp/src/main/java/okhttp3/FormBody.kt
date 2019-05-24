@@ -60,7 +60,7 @@ class FormBody internal constructor(
   }
 
   /**
-   * Either writes this request to `sink` or measures its content length. We have one method
+   * Either writes this request to [sink] or measures its content length. We have one method
    * do double-duty to make sure the counting and content are consistent, particularly when it comes
    * to awkward operations like measuring the encoded length of header strings, or the
    * length-in-digits of an encoded integer.

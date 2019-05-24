@@ -48,14 +48,14 @@ object OkHostnameVerifier : HostnameVerifier {
     }
   }
 
-  /** Returns true if `certificate` matches `ipAddress`. */
+  /** Returns true if [certificate] matches [ipAddress]. */
   private fun verifyIpAddress(ipAddress: String, certificate: X509Certificate): Boolean {
     return getSubjectAltNames(certificate, ALT_IPA_NAME).any {
       ipAddress.equals(it, ignoreCase = true)
     }
   }
 
-  /** Returns true if `certificate` matches `hostname`. */
+  /** Returns true if [certificate] matches [hostname]. */
   private fun verifyHostname(hostname: String, certificate: X509Certificate): Boolean {
     val hostname = hostname.toLowerCase(Locale.US)
     return getSubjectAltNames(certificate, ALT_DNS_NAME).any {

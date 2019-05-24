@@ -286,7 +286,7 @@ class CacheStrategy internal constructor(
   }
 
   companion object {
-    /** Returns true if `response` can be stored to later serve another request. */
+    /** Returns true if [response] can be stored to later serve another request. */
     fun isCacheable(response: Response, request: Request): Boolean {
       // Always go to network for uncacheable response codes (RFC 7231 section 6.1), This
       // implementation doesn't support caching partial content.

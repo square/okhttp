@@ -456,7 +456,7 @@ class RealConnection(
    *
    * In order to support preemptive authentication we pass a fake "Auth Failed" response to the
    * authenticator. This gives the authenticator the option to customize the CONNECT request. It can
-   * decline to do so by returning null, in which case OkHttp will use it as-is
+   * decline to do so by returning null, in which case OkHttp will use it as-is.
    */
   @Throws(IOException::class)
   private fun createTunnelRequest(): Request {

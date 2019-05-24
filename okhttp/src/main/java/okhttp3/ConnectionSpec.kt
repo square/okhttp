@@ -63,7 +63,7 @@ class ConnectionSpec internal constructor(builder: Builder) {
 
   fun supportsTlsExtensions(): Boolean = supportsTlsExtensions
 
-  /** Applies this spec to `sslSocket`. */
+  /** Applies this spec to [sslSocket]. */
   internal fun apply(sslSocket: SSLSocket, isFallback: Boolean) {
     val specToApply = supportedSpec(sslSocket, isFallback)
 
@@ -77,7 +77,7 @@ class ConnectionSpec internal constructor(builder: Builder) {
   }
 
   /**
-   * Returns a copy of this that omits cipher suites and TLS versions not enabled by `sslSocket`.
+   * Returns a copy of this that omits cipher suites and TLS versions not enabled by [sslSocket].
    */
   private fun supportedSpec(sslSocket: SSLSocket, isFallback: Boolean): ConnectionSpec {
     var cipherSuitesIntersection = if (cipherSuites != null) {

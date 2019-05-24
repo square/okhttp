@@ -192,7 +192,7 @@ class RetryAndFollowUpInterceptor(private val client: OkHttpClient) : Intercepto
   }
 
   /**
-   * Figures out the HTTP request to make in response to receiving `userResponse`. This will
+   * Figures out the HTTP request to make in response to receiving [userResponse]. This will
    * either add authentication headers, follow redirects or handle a client request timeout. If a
    * follow-up is either unnecessary or not applicable, this returns null.
    */
