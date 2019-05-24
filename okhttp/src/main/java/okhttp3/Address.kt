@@ -184,17 +184,17 @@ class Address(
     return result
   }
 
-  internal fun equalsNonHost(that: Address): Boolean = with(this) {
-    dns == that.dns &&
-        proxyAuthenticator == that.proxyAuthenticator &&
-        protocols == that.protocols &&
-        connectionSpecs == that.connectionSpecs &&
-        proxySelector == that.proxySelector &&
-        proxy == that.proxy &&
-        sslSocketFactory == that.sslSocketFactory &&
-        hostnameVerifier == that.hostnameVerifier &&
-        certificatePinner == that.certificatePinner &&
-        url.port == that.url.port
+  internal fun equalsNonHost(that: Address): Boolean {
+    return this.dns == that.dns &&
+        this.proxyAuthenticator == that.proxyAuthenticator &&
+        this.protocols == that.protocols &&
+        this.connectionSpecs == that.connectionSpecs &&
+        this.proxySelector == that.proxySelector &&
+        this.proxy == that.proxy &&
+        this.sslSocketFactory == that.sslSocketFactory &&
+        this.hostnameVerifier == that.hostnameVerifier &&
+        this.certificatePinner == that.certificatePinner &&
+        this.url.port == that.url.port
   }
 
   override fun toString(): String {
