@@ -273,10 +273,10 @@ fun checkDuration(name: String, duration: Long, unit: TimeUnit?): Int {
   return millis.toInt()
 }
 
-fun decodeHexDigit(c: Char): Int = when (c) {
-  in '0'..'9' -> c - '0'
-  in 'a'..'f' -> c - 'a' + 10
-  in 'A'..'F' -> c - 'A' + 10
+fun Char.parseHexDigit(): Int = when (this) {
+  in '0'..'9' -> this - '0'
+  in 'a'..'f' -> this - 'a' + 10
+  in 'A'..'F' -> this - 'A' + 10
   else -> -1
 }
 
