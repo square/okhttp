@@ -133,7 +133,7 @@ class Http1ExchangeCodec(
   override fun openResponseBodySource(response: Response): Source {
     return when {
       !response.promisesBody() -> newFixedLengthSource(0)
-      response.isChunked() -> newChunkedSource(response.request().url)
+      response.isChunked() -> newChunkedSource(response.request.url)
       else -> {
         val contentLength = response.headersContentLength()
         if (contentLength != -1L) {

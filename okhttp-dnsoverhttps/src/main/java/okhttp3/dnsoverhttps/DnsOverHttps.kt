@@ -202,7 +202,7 @@ class DnsOverHttps internal constructor(builder: Builder) : Dns {
 
         val cacheResponse = client.newCall(cacheRequest).execute()
 
-        if (cacheResponse.code() != 504) {
+        if (cacheResponse.code != 504) {
           return cacheResponse
         }
       } catch (ioe: IOException) {
@@ -216,16 +216,16 @@ class DnsOverHttps internal constructor(builder: Builder) : Dns {
 
   @Throws(Exception::class)
   private fun readResponse(hostname: String, response: Response): List<InetAddress> {
-    if (response.cacheResponse() == null && response.protocol() !== Protocol.HTTP_2) {
-      Platform.get().log(Platform.WARN, "Incorrect protocol: ${response.protocol()}", null)
+    if (response.cacheResponse == null && response.protocol !== Protocol.HTTP_2) {
+      Platform.get().log(Platform.WARN, "Incorrect protocol: ${response.protocol}", null)
     }
 
     response.use {
       if (!response.isSuccessful) {
-        throw IOException("response: " + response.code() + " " + response.message())
+        throw IOException("response: " + response.code + " " + response.message)
       }
 
-      val body = response.body()
+      val body = response.body
 
       if (body!!.contentLength() > MAX_RESPONSE_SIZE) {
         throw IOException(

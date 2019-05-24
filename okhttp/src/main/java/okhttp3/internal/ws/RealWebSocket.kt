@@ -192,9 +192,9 @@ class RealWebSocket(
 
   @Throws(IOException::class)
   internal fun checkUpgradeSuccess(response: Response, exchange: Exchange?) {
-    if (response.code() != 101) {
+    if (response.code != 101) {
       throw ProtocolException(
-          "Expected HTTP 101 response but was '${response.code()} ${response.message()}'")
+          "Expected HTTP 101 response but was '${response.code} ${response.message}'")
     }
 
     val headerConnection = response.header("Connection")

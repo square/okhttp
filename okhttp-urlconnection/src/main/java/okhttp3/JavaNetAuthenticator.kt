@@ -29,9 +29,9 @@ class JavaNetAuthenticator : okhttp3.Authenticator {
   @Throws(IOException::class)
   override fun authenticate(route: Route?, response: Response): Request? {
     val challenges = response.challenges()
-    val request = response.request()
+    val request = response.request
     val url = request.url
-    val proxyAuthorization = response.code() == 407
+    val proxyAuthorization = response.code == 407
     val proxy = route?.proxy ?: Proxy.NO_PROXY
 
     for (challenge in challenges) {
