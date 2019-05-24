@@ -423,7 +423,7 @@ class RealConnection(
           .build()
       tunnelCodec.skipConnectBody(response)
 
-      when (response.code()) {
+      when (response.code) {
         HTTP_OK -> {
           // Assume the server won't send a TLS ServerHello until we send a TLS ClientHello. If
           // that happens, then we will have buffered bytes that are needed by the SSLSocket!
@@ -444,7 +444,7 @@ class RealConnection(
           }
         }
 
-        else -> throw IOException("Unexpected response code for CONNECT: ${response.code()}")
+        else -> throw IOException("Unexpected response code for CONNECT: ${response.code}")
       }
     }
   }

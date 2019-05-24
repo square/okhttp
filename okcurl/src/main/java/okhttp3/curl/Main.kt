@@ -130,7 +130,7 @@ class Main : Runnable {
       val response = client.newCall(request).execute()
       if (showHeaders) {
         println(StatusLine.get(response))
-        val headers = response.headers()
+        val headers = response.headers
         for ((name, value) in headers) {
           println("$name: $value")
         }
@@ -139,13 +139,13 @@ class Main : Runnable {
 
       // Stream the response to the System.out as it is returned from the server.
       val out = System.out.sink()
-      val source = response.body()!!.source()
+      val source = response.body!!.source()
       while (!source.exhausted()) {
         out.write(source.buffer, source.buffer.size)
         out.flush()
       }
 
-      response.body()!!.close()
+      response.body!!.close()
     } catch (e: IOException) {
       e.printStackTrace()
     } finally {

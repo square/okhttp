@@ -83,7 +83,7 @@ class BridgeInterceptor(private val cookieJar: CookieJar) : Interceptor {
 
     val networkResponse = chain.proceed(requestBuilder.build())
 
-    cookieJar.receiveHeaders(userRequest.url, networkResponse.headers())
+    cookieJar.receiveHeaders(userRequest.url, networkResponse.headers)
 
     val responseBuilder = networkResponse.newBuilder()
         .request(userRequest)
@@ -91,10 +91,10 @@ class BridgeInterceptor(private val cookieJar: CookieJar) : Interceptor {
     if (transparentGzip &&
         "gzip".equals(networkResponse.header("Content-Encoding"), ignoreCase = true) &&
         networkResponse.promisesBody()) {
-      val responseBody = networkResponse.body()
+      val responseBody = networkResponse.body
       if (responseBody != null) {
         val gzipSource = GzipSource(responseBody.source())
-        val strippedHeaders = networkResponse.headers().newBuilder()
+        val strippedHeaders = networkResponse.headers.newBuilder()
             .removeAll("Content-Encoding")
             .removeAll("Content-Length")
             .build()

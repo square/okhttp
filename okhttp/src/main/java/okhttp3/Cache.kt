@@ -174,7 +174,7 @@ class Cache internal constructor(
 
     val response = entry.response(snapshot)
     if (!entry.matches(request, response)) {
-      response.body()?.closeQuietly()
+      response.body?.closeQuietly()
       return null
     }
 
@@ -182,11 +182,11 @@ class Cache internal constructor(
   }
 
   internal fun put(response: Response): CacheRequest? {
-    val requestMethod = response.request().method
+    val requestMethod = response.request.method
 
-    if (HttpMethod.invalidatesCache(response.request().method)) {
+    if (HttpMethod.invalidatesCache(response.request.method)) {
       try {
-        remove(response.request())
+        remove(response.request)
       } catch (_: IOException) {
         // The cache cannot be written.
       }
@@ -206,7 +206,7 @@ class Cache internal constructor(
     val entry = Entry(response)
     var editor: DiskLruCache.Editor? = null
     try {
-      editor = cache.edit(key(response.request().url)) ?: return null
+      editor = cache.edit(key(response.request.url)) ?: return null
       entry.writeTo(editor)
       return RealCacheRequest(editor)
     } catch (_: IOException) {
@@ -222,7 +222,7 @@ class Cache internal constructor(
 
   internal fun update(cached: Response, network: Response) {
     val entry = Entry(network)
-    val snapshot = (cached.body() as CacheResponseBody).snapshot
+    val snapshot = (cached.body as CacheResponseBody).snapshot
     var editor: DiskLruCache.Editor? = null
     try {
       editor = snapshot.edit() // Returns null if snapshot is not current.
@@ -537,16 +537,16 @@ class Cache internal constructor(
     }
 
     internal constructor(response: Response) {
-      this.url = response.request().url.toString()
+      this.url = response.request.url.toString()
       this.varyHeaders = response.varyHeaders()
-      this.requestMethod = response.request().method
-      this.protocol = response.protocol()
-      this.code = response.code()
-      this.message = response.message()
-      this.responseHeaders = response.headers()
-      this.handshake = response.handshake()
-      this.sentRequestMillis = response.sentRequestAtMillis()
-      this.receivedResponseMillis = response.receivedResponseAtMillis()
+      this.requestMethod = response.request.method
+      this.protocol = response.protocol
+      this.code = response.code
+      this.message = response.message
+      this.responseHeaders = response.headers
+      this.handshake = response.handshake
+      this.sentRequestMillis = response.sentRequestAtMillis
+      this.receivedResponseMillis = response.receivedResponseAtMillis
     }
 
     @Throws(IOException::class)
@@ -724,13 +724,13 @@ class Cache internal constructor(
       cachedRequest: Headers,
       newRequest: Request
     ): Boolean {
-      return cachedResponse.headers().varyFields().none {
+      return cachedResponse.headers.varyFields().none {
         cachedRequest.values(it) != newRequest.headers(it)
       }
     }
 
     /** Returns true if a Vary header contains an asterisk. Such responses cannot be cached. */
-    fun Response.hasVaryAll() = "*" in headers().varyFields()
+    fun Response.hasVaryAll() = "*" in headers.varyFields()
 
     /**
      * Returns the names of the request headers that need to be checked for equality when caching.
@@ -759,8 +759,8 @@ class Cache internal constructor(
     fun Response.varyHeaders(): Headers {
       // Use the request headers sent over the network, since that's what the response varies on.
       // Otherwise OkHttp-supplied headers like "Accept-Encoding: gzip" may be lost.
-      val requestHeaders = networkResponse()!!.request().headers
-      val responseHeaders = headers()
+      val requestHeaders = networkResponse!!.request.headers
+      val responseHeaders = headers
       return varyHeaders(requestHeaders, responseHeaders)
     }
 

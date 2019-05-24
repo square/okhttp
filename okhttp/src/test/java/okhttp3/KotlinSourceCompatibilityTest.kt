@@ -1041,27 +1041,27 @@ class KotlinSourceCompatibilityTest {
   @Test @Ignore
   fun response() {
     val response: Response = Response.Builder().build()
-    val request: Request = response.request()
-    val protocol: Protocol = response.protocol()
-    val code: Int = response.code()
+    val request: Request = response.request
+    val protocol: Protocol = response.protocol
+    val code: Int = response.code
     val successful: Boolean = response.isSuccessful
-    val message: String = response.message()
-    val handshake: Handshake? = response.handshake()
+    val message: String = response.message
+    val handshake: Handshake? = response.handshake
     val headersForName: List<String> = response.headers("")
     val header: String? = response.header("")
-    val headers: Headers = response.headers()
+    val headers: Headers = response.headers
     val trailers: Headers = response.trailers()
     val peekBody: ResponseBody = response.peekBody(0L)
-    val body: ResponseBody? = response.body()
+    val body: ResponseBody? = response.body
     val builder: Response.Builder = response.newBuilder()
     val redirect: Boolean = response.isRedirect
-    val networkResponse: Response? = response.networkResponse()
-    val cacheResponse: Response? = response.cacheResponse()
-    val priorResponse: Response? = response.priorResponse()
+    val networkResponse: Response? = response.networkResponse
+    val cacheResponse: Response? = response.cacheResponse
+    val priorResponse: Response? = response.priorResponse
     val challenges: List<Challenge> = response.challenges()
-    val cacheControl: CacheControl = response.cacheControl()
-    val sentRequestAtMillis: Long = response.sentRequestAtMillis()
-    val receivedResponseAtMillis: Long = response.receivedResponseAtMillis()
+    val cacheControl: CacheControl = response.cacheControl
+    val sentRequestAtMillis: Long = response.sentRequestAtMillis
+    val receivedResponseAtMillis: Long = response.receivedResponseAtMillis
   }
 
   @Test @Ignore

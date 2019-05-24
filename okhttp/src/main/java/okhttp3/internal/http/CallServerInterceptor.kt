@@ -87,7 +87,7 @@ class CallServerInterceptor(private val forWebSocket: Boolean) : Interceptor {
         .sentRequestAtMillis(sentRequestMillis)
         .receivedResponseAtMillis(System.currentTimeMillis())
         .build()
-    var code = response.code()
+    var code = response.code
     if (code == 100) {
       // server sent a 100-continue even though we did not request one.
       // try again to read the actual response
@@ -97,7 +97,7 @@ class CallServerInterceptor(private val forWebSocket: Boolean) : Interceptor {
           .sentRequestAtMillis(sentRequestMillis)
           .receivedResponseAtMillis(System.currentTimeMillis())
           .build()
-      code = response.code()
+      code = response.code
     }
 
     exchange.responseHeadersEnd(response)
@@ -112,13 +112,13 @@ class CallServerInterceptor(private val forWebSocket: Boolean) : Interceptor {
           .body(exchange.openResponseBody(response))
           .build()
     }
-    if ("close".equals(response.request().header("Connection"), ignoreCase = true) ||
+    if ("close".equals(response.request.header("Connection"), ignoreCase = true) ||
         "close".equals(response.header("Connection"), ignoreCase = true)) {
       exchange.noNewExchangesOnConnection()
     }
-    if ((code == 204 || code == 205) && response.body()?.contentLength() ?: -1L > 0L) {
+    if ((code == 204 || code == 205) && response.body?.contentLength() ?: -1L > 0L) {
       throw ProtocolException(
-          "HTTP $code had non-zero Content-Length: ${response.body()?.contentLength()}")
+          "HTTP $code had non-zero Content-Length: ${response.body?.contentLength()}")
     }
     return response
   }

@@ -223,21 +223,21 @@ class HttpLoggingInterceptor @JvmOverloads constructor(
 
     val tookMs = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startNs)
 
-    val responseBody = response.body()!!
+    val responseBody = response.body!!
     val contentLength = responseBody.contentLength()
     val bodySize = if (contentLength != -1L) "$contentLength-byte" else "unknown-length"
     logger.log(
-        "<-- ${response.code()}${if (response.message().isEmpty()) "" else ' ' + response.message()} ${response.request().url} (${tookMs}ms${if (!logHeaders) ", $bodySize body" else ""})")
+        "<-- ${response.code}${if (response.message.isEmpty()) "" else ' ' + response.message} ${response.request.url} (${tookMs}ms${if (!logHeaders) ", $bodySize body" else ""})")
 
     if (logHeaders) {
-      val headers = response.headers()
+      val headers = response.headers
       for (i in 0 until headers.size) {
         logHeader(headers, i)
       }
 
       if (!logBody || !response.promisesBody()) {
         logger.log("<-- END HTTP")
-      } else if (bodyHasUnknownEncoding(response.headers())) {
+      } else if (bodyHasUnknownEncoding(response.headers)) {
         logger.log("<-- END HTTP (encoded body omitted)")
       } else {
         val source = responseBody.source()

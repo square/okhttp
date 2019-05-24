@@ -91,14 +91,14 @@ class CacheStrategy internal constructor(
      * cached response older than 24 hours, we are required to attach a warning.
      */
     private fun isFreshnessLifetimeHeuristic(): Boolean {
-      return cacheResponse!!.cacheControl().maxAgeSeconds == -1 && expires == null
+      return cacheResponse!!.cacheControl.maxAgeSeconds == -1 && expires == null
     }
 
     init {
       if (cacheResponse != null) {
-        this.sentRequestMillis = cacheResponse.sentRequestAtMillis()
-        this.receivedResponseMillis = cacheResponse.receivedResponseAtMillis()
-        val headers = cacheResponse.headers()
+        this.sentRequestMillis = cacheResponse.sentRequestAtMillis
+        this.receivedResponseMillis = cacheResponse.receivedResponseAtMillis
+        val headers = cacheResponse.headers
         for (i in 0 until headers.size) {
           val fieldName = headers.name(i)
           val value = headers.value(i)
@@ -145,7 +145,7 @@ class CacheStrategy internal constructor(
       }
 
       // Drop the cached response if it's missing a required handshake.
-      if (request.isHttps && cacheResponse.handshake() == null) {
+      if (request.isHttps && cacheResponse.handshake == null) {
         return CacheStrategy(request, null)
       }
 
@@ -161,7 +161,7 @@ class CacheStrategy internal constructor(
         return CacheStrategy(request, null)
       }
 
-      val responseCaching = cacheResponse.cacheControl()
+      val responseCaching = cacheResponse.cacheControl
 
       val ageMillis = cacheResponseAge()
       var freshMillis = computeFreshnessLifetime()
@@ -229,7 +229,7 @@ class CacheStrategy internal constructor(
      * date.
      */
     private fun computeFreshnessLifetime(): Long {
-      val responseCaching = cacheResponse!!.cacheControl()
+      val responseCaching = cacheResponse!!.cacheControl
       if (responseCaching.maxAgeSeconds != -1) {
         return SECONDS.toMillis(responseCaching.maxAgeSeconds.toLong())
       }
@@ -241,7 +241,7 @@ class CacheStrategy internal constructor(
         return if (delta > 0L) delta else 0L
       }
 
-      if (lastModified != null && cacheResponse.request().url.query == null) {
+      if (lastModified != null && cacheResponse.request.url.query == null) {
         // As recommended by the HTTP RFC and implemented in Firefox, the max age of a document
         // should be defaulted to 10% of the document's age at the time it was served. Default
         // expiration dates aren't used for URIs containing a query.
@@ -290,7 +290,7 @@ class CacheStrategy internal constructor(
     fun isCacheable(response: Response, request: Request): Boolean {
       // Always go to network for uncacheable response codes (RFC 7231 section 6.1), This
       // implementation doesn't support caching partial content.
-      when (response.code()) {
+      when (response.code) {
         HTTP_OK,
         HTTP_NOT_AUTHORITATIVE,
         HTTP_NO_CONTENT,
@@ -311,9 +311,9 @@ class CacheStrategy internal constructor(
           // http://tools.ietf.org/html/rfc7234#section-3
           // s-maxage is not checked because OkHttp is a private cache that should ignore s-maxage.
           if (response.header("Expires") == null &&
-              response.cacheControl().maxAgeSeconds == -1 &&
-              !response.cacheControl().isPublic &&
-              !response.cacheControl().isPrivate) {
+              response.cacheControl.maxAgeSeconds == -1 &&
+              !response.cacheControl.isPublic &&
+              !response.cacheControl.isPrivate) {
             return false
           }
         }
@@ -325,7 +325,7 @@ class CacheStrategy internal constructor(
       }
 
       // A 'no-store' directive on request or response prevents the response from being cached.
-      return !response.cacheControl().noStore && !request.cacheControl.noStore
+      return !response.cacheControl.noStore && !request.cacheControl.noStore
     }
   }
 }

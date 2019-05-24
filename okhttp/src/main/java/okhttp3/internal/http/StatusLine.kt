@@ -46,7 +46,7 @@ class StatusLine(
     const val HTTP_CONTINUE = 100
 
     fun get(response: Response): StatusLine {
-      return StatusLine(response.protocol(), response.code(), response.message())
+      return StatusLine(response.protocol, response.code, response.message)
     }
 
     @Throws(IOException::class)

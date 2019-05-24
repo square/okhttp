@@ -117,7 +117,7 @@ class RealInterceptorChain(
       "network interceptor $interceptor must call proceed() exactly once"
     }
 
-    check(response.body() != null) { "interceptor $interceptor returned a response with no body" }
+    check(response.body != null) { "interceptor $interceptor returned a response with no body" }
 
     return response
   }

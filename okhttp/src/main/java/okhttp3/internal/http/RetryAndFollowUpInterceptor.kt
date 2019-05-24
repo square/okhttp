@@ -113,7 +113,7 @@ class RetryAndFollowUpInterceptor(private val client: OkHttpClient) : Intercepto
         return response
       }
 
-      response.body()?.closeQuietly()
+      response.body?.closeQuietly()
       if (transmitter.hasExchange()) {
         exchange?.detachWithViolence()
       }
@@ -198,9 +198,9 @@ class RetryAndFollowUpInterceptor(private val client: OkHttpClient) : Intercepto
    */
   @Throws(IOException::class)
   private fun followUpRequest(userResponse: Response, route: Route?): Request? {
-    val responseCode = userResponse.code()
+    val responseCode = userResponse.code
 
-    val method = userResponse.request().method
+    val method = userResponse.request.method
     when (responseCode) {
       HTTP_PROXY_AUTH -> {
         val selectedProxy = route!!.proxy
@@ -234,12 +234,12 @@ class RetryAndFollowUpInterceptor(private val client: OkHttpClient) : Intercepto
           return null
         }
 
-        val requestBody = userResponse.request().body
+        val requestBody = userResponse.request.body
         if (requestBody != null && requestBody.isOneShot()) {
           return null
         }
-        val priorResponse = userResponse.priorResponse()
-        if (priorResponse != null && priorResponse.code() == HTTP_CLIENT_TIMEOUT) {
+        val priorResponse = userResponse.priorResponse
+        if (priorResponse != null && priorResponse.code == HTTP_CLIENT_TIMEOUT) {
           // We attempted to retry and got another timeout. Give up.
           return null
         }
@@ -248,19 +248,19 @@ class RetryAndFollowUpInterceptor(private val client: OkHttpClient) : Intercepto
           return null
         }
 
-        return userResponse.request()
+        return userResponse.request
       }
 
       HTTP_UNAVAILABLE -> {
-        val priorResponse = userResponse.priorResponse()
-        if (priorResponse != null && priorResponse.code() == HTTP_UNAVAILABLE) {
+        val priorResponse = userResponse.priorResponse
+        if (priorResponse != null && priorResponse.code == HTTP_UNAVAILABLE) {
           // We attempted to retry and got another timeout. Give up.
           return null
         }
 
         if (retryAfter(userResponse, Integer.MAX_VALUE) == 0) {
           // specifically received an instruction to retry without delay
-          return userResponse.request()
+          return userResponse.request
         }
 
         return null
@@ -275,20 +275,20 @@ class RetryAndFollowUpInterceptor(private val client: OkHttpClient) : Intercepto
 
     val location = userResponse.header("Location") ?: return null
     // Don't follow redirects to unsupported protocols.
-    val url = userResponse.request().url.resolve(location) ?: return null
+    val url = userResponse.request.url.resolve(location) ?: return null
 
     // If configured, don't follow redirects between SSL and non-SSL.
-    val sameScheme = url.scheme == userResponse.request().url.scheme
+    val sameScheme = url.scheme == userResponse.request.url.scheme
     if (!sameScheme && !client.followSslRedirects()) return null
 
     // Most redirects don't include a request body.
-    val requestBuilder = userResponse.request().newBuilder()
+    val requestBuilder = userResponse.request.newBuilder()
     if (HttpMethod.permitsRequestBody(method)) {
       val maintainBody = HttpMethod.redirectsWithBody(method)
       if (HttpMethod.redirectsToGet(method)) {
         requestBuilder.method("GET", null)
       } else {
-        val requestBody = if (maintainBody) userResponse.request().body else null
+        val requestBody = if (maintainBody) userResponse.request.body else null
         requestBuilder.method(method, requestBody)
       }
       if (!maintainBody) {
@@ -301,7 +301,7 @@ class RetryAndFollowUpInterceptor(private val client: OkHttpClient) : Intercepto
     // When redirecting across hosts, drop all authentication headers. This
     // is potentially annoying to the application layer since they have no
     // way to retain them.
-    if (!userResponse.request().url.canReuseConnectionFor(url)) {
+    if (!userResponse.request.url.canReuseConnectionFor(url)) {
       requestBuilder.removeHeader("Authorization")
     }
 

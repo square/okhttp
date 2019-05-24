@@ -53,7 +53,7 @@ class RealEventSource(
         return
       }
 
-      val body = response.body()!!
+      val body = response.body!!
 
       if (!body.isEventStream()) {
         listener.onFailure(this,
