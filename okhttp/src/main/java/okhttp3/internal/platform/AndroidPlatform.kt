@@ -27,11 +27,9 @@ import java.lang.reflect.Method
 import java.net.InetSocketAddress
 import java.net.Socket
 import java.nio.charset.StandardCharsets.UTF_8
-import java.security.NoSuchAlgorithmException
 import java.security.cert.Certificate
 import java.security.cert.TrustAnchor
 import java.security.cert.X509Certificate
-import javax.net.ssl.SSLContext
 import javax.net.ssl.SSLPeerUnverifiedException
 import javax.net.ssl.SSLSocket
 import javax.net.ssl.SSLSocketFactory
@@ -47,30 +45,6 @@ class AndroidPlatform(
   private val setAlpnProtocols: Method
 ) : Platform() {
   private val closeGuard = CloseGuard.get()
-
-  // Not a real Android runtime; probably RoboVM or MoE
-  // Try to load TLS 1.2 explicitly.
-  // fallback to TLS
-  override fun newSSLContext(): SSLContext {
-    val tryTls12: Boolean = try {
-      Build.VERSION.SDK_INT in 16..21
-    } catch (e: NoClassDefFoundError) {
-      true
-    }
-
-    if (tryTls12) {
-      try {
-        return SSLContext.getInstance("TLSv1.2")
-      } catch (e: NoSuchAlgorithmException) {
-      }
-    }
-
-    try {
-      return SSLContext.getInstance("TLS")
-    } catch (e: NoSuchAlgorithmException) {
-      throw IllegalStateException("No TLS provider", e)
-    }
-  }
 
   @Throws(IOException::class)
   override fun connectSocket(
