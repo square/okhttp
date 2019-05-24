@@ -76,7 +76,7 @@ class MockResponse : Cloneable {
   fun getStatus(): String = status
 
   fun setResponseCode(code: Int): MockResponse {
-    val reason: String = when (code) {
+    val reason = when (code) {
       in 100..199 -> "Informational"
       in 200..299 -> "OK"
       in 300..399 -> "Redirection"
@@ -87,9 +87,8 @@ class MockResponse : Cloneable {
     return setStatus("HTTP/1.1 $code $reason")
   }
 
-  fun setStatus(status: String): MockResponse {
+  fun setStatus(status: String) = apply {
     this.status = status
-    return this
   }
 
   /** Returns the HTTP headers, such as "Content-Length: 0". */
@@ -101,27 +100,24 @@ class MockResponse : Cloneable {
    * Removes all HTTP headers including any "Content-Length" and "Transfer-encoding" headers that
    * were added by default.
    */
-  fun clearHeaders(): MockResponse {
+  fun clearHeaders() = apply {
     headers = Headers.Builder()
-    return this
   }
 
   /**
    * Adds [header] as an HTTP header. For well-formed HTTP [header] should contain a
    * name followed by a colon and a value.
    */
-  fun addHeader(header: String): MockResponse {
+  fun addHeader(header: String) = apply {
     headers.add(header)
-    return this
   }
 
   /**
    * Adds a new header with the name and value. This may be used to add multiple headers with the
    * same name.
    */
-  fun addHeader(name: String, value: Any): MockResponse {
+  fun addHeader(name: String, value: Any) = apply {
     headers.add(name, value.toString())
-    return this
   }
 
   /**
@@ -129,62 +125,52 @@ class MockResponse : Cloneable {
    * same name. Unlike [addHeader] this does not validate the name and
    * value.
    */
-  fun addHeaderLenient(name: String, value: Any): MockResponse {
+  fun addHeaderLenient(name: String, value: Any) = apply {
     addHeaderLenient(headers, name, value.toString())
-    return this
   }
 
   /**
    * Removes all headers named [name], then adds a new header with the name and value.
    */
-  fun setHeader(name: String, value: Any): MockResponse {
+  fun setHeader(name: String, value: Any) = apply {
     removeHeader(name)
-    return addHeader(name, value)
+    addHeader(name, value)
   }
 
   /** Replaces all headers with those specified. */
-  fun setHeaders(headers: Headers): MockResponse {
+  fun setHeaders(headers: Headers) = apply {
     this.headers = headers.newBuilder()
-    return this
   }
 
   /** Replaces all trailers with those specified. */
-  fun setTrailers(trailers: Headers): MockResponse {
+  fun setTrailers(trailers: Headers) = apply {
     this.trailers = trailers.newBuilder()
-    return this
   }
 
   /** Removes all headers named [name]. */
-  fun removeHeader(name: String): MockResponse {
+  fun removeHeader(name: String) = apply {
     headers.removeAll(name)
-    return this
   }
 
   /** Returns a copy of the raw HTTP payload. */
-  fun getBody(): Buffer? {
-    return body?.clone()
-  }
+  fun getBody(): Buffer? = body?.clone()
 
-  fun setBody(body: Buffer): MockResponse {
+  fun setBody(body: Buffer) = apply {
     setHeader("Content-Length", body.size)
     this.body = body.clone() // Defensive copy.
-    return this
   }
 
   /** Sets the response body to the UTF-8 encoded bytes of [body]. */
-  fun setBody(body: String): MockResponse {
-    return setBody(Buffer().writeUtf8(body))
-  }
+  fun setBody(body: String): MockResponse = setBody(Buffer().writeUtf8(body))
 
-  fun setBody(duplexResponseBody: DuplexResponseBody): MockResponse {
+  fun setBody(duplexResponseBody: DuplexResponseBody) = apply {
     this.duplexResponseBody = duplexResponseBody
-    return this
   }
 
   /**
    * Sets the response body to [body], chunked every [maxChunkSize] bytes.
    */
-  fun setChunkedBody(body: Buffer, maxChunkSize: Int): MockResponse {
+  fun setChunkedBody(body: Buffer, maxChunkSize: Int) = apply {
     removeHeader("Content-Length")
     headers.add(CHUNKED_BODY_HEADER)
 
@@ -197,109 +183,95 @@ class MockResponse : Cloneable {
       bytesOut.writeUtf8("\r\n")
     }
     bytesOut.writeUtf8("0\r\n") // Last chunk. Trailers follow!
-
     this.body = bytesOut
-    return this
   }
 
   /**
    * Sets the response body to the UTF-8 encoded bytes of [body],
    * chunked every [maxChunkSize] bytes.
    */
-  fun setChunkedBody(body: String, maxChunkSize: Int): MockResponse {
-    return setChunkedBody(Buffer().writeUtf8(body), maxChunkSize)
-  }
+  fun setChunkedBody(body: String, maxChunkSize: Int): MockResponse =
+    setChunkedBody(Buffer().writeUtf8(body), maxChunkSize)
 
-  fun getSocketPolicy(): SocketPolicy = socketPolicy
+  fun getSocketPolicy() = socketPolicy
 
-  fun setSocketPolicy(socketPolicy: SocketPolicy): MockResponse {
+  fun setSocketPolicy(socketPolicy: SocketPolicy) = apply {
     this.socketPolicy = socketPolicy
-    return this
   }
 
-  fun getHttp2ErrorCode(): Int = http2ErrorCode
+  fun getHttp2ErrorCode() = http2ErrorCode
 
   /**
    * Sets the [HTTP/2 error code](https://tools.ietf.org/html/rfc7540#section-7) to be
    * returned when resetting the stream.
    * This is only valid with [SocketPolicy.RESET_STREAM_AT_START].
    */
-  fun setHttp2ErrorCode(http2ErrorCode: Int): MockResponse {
+  fun setHttp2ErrorCode(http2ErrorCode: Int) = apply {
     this.http2ErrorCode = http2ErrorCode
-    return this
   }
 
   /**
    * Throttles the request reader and response writer to sleep for the given period after each
    * series of [bytesPerPeriod] bytes are transferred. Use this to simulate network behavior.
    */
-  fun throttleBody(bytesPerPeriod: Long, period: Long, unit: TimeUnit): MockResponse {
-    this.throttleBytesPerPeriod = bytesPerPeriod
-    this.throttlePeriodAmount = period
-    this.throttlePeriodUnit = unit
-    return this
+  fun throttleBody(bytesPerPeriod: Long, period: Long, unit: TimeUnit) = apply {
+    throttleBytesPerPeriod = bytesPerPeriod
+    throttlePeriodAmount = period
+    throttlePeriodUnit = unit
   }
 
-  fun getThrottlePeriod(unit: TimeUnit): Long {
-    return unit.convert(throttlePeriodAmount, throttlePeriodUnit)
-  }
+  fun getThrottlePeriod(unit: TimeUnit): Long =
+    unit.convert(throttlePeriodAmount, throttlePeriodUnit)
 
   /**
    * Set the delayed time of the response body to [delay]. This applies to the response body
    * only; response headers are not affected.
    */
-  fun setBodyDelay(delay: Long, unit: TimeUnit): MockResponse {
+  fun setBodyDelay(delay: Long, unit: TimeUnit) = apply {
     bodyDelayAmount = delay
     bodyDelayUnit = unit
-    return this
   }
 
-  fun getBodyDelay(unit: TimeUnit): Long {
-    return unit.convert(bodyDelayAmount, bodyDelayUnit)
-  }
+  fun getBodyDelay(unit: TimeUnit): Long =
+    unit.convert(bodyDelayAmount, bodyDelayUnit)
 
-  fun setHeadersDelay(delay: Long, unit: TimeUnit): MockResponse {
+  fun setHeadersDelay(delay: Long, unit: TimeUnit) = apply {
     headersDelayAmount = delay
     headersDelayUnit = unit
-    return this
   }
 
-  fun getHeadersDelay(unit: TimeUnit): Long {
-    return unit.convert(headersDelayAmount, headersDelayUnit)
-  }
+  fun getHeadersDelay(unit: TimeUnit): Long =
+    unit.convert(headersDelayAmount, headersDelayUnit)
 
   /**
    * When [protocols][MockWebServer.setProtocols] include [HTTP_2][okhttp3.Protocol],
    * this attaches a pushed stream to this response.
    */
-  fun withPush(promise: PushPromise): MockResponse {
-    this.promises.add(promise)
-    return this
+  fun withPush(promise: PushPromise) = apply {
+    promises.add(promise)
   }
 
   /**
    * When [protocols][MockWebServer.setProtocols] include [HTTP_2][okhttp3.Protocol],
    * this pushes [settings] before writing the response.
    */
-  fun withSettings(settings: Settings): MockResponse {
+  fun withSettings(settings: Settings) = apply {
     this.settings = settings
-    return this
   }
 
   /**
    * Attempts to perform a web socket upgrade on the connection.
    * This will overwrite any previously set status or body.
    */
-  fun withWebSocketUpgrade(listener: WebSocketListener): MockResponse {
+  fun withWebSocketUpgrade(listener: WebSocketListener) = apply {
     setStatus("HTTP/1.1 101 Switching Protocols")
     setHeader("Connection", "Upgrade")
     setHeader("Upgrade", "websocket")
     body = null
     webSocketListener = listener
-    return this
   }
 
-  override fun toString(): String = status
+  override fun toString() = status
 
   companion object {
     private const val CHUNKED_BODY_HEADER = "Transfer-encoding: chunked"
