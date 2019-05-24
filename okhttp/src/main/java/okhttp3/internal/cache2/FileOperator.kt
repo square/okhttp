@@ -26,8 +26,8 @@ import java.nio.channels.FileChannel
  *  * **Read/write:** read and write using the same operator.
  *  * **Random access:** access any position within the file.
  *  * **Shared channels:** read and write a file channel that's shared between
- * multiple operators. Note that although the underlying `FileChannel` may be shared,
- * each `FileOperator` should not be.
+ * multiple operators. Note that although the underlying [FileChannel] may be shared,
+ * each [FileOperator] should not be.
  */
 internal class FileOperator(
   private val fileChannel: FileChannel

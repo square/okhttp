@@ -400,7 +400,7 @@ class DiskLruCache internal constructor(
   }
 
   /**
-   * Returns a snapshot of the entry named `key`, or null if it doesn't exist is not currently
+   * Returns a snapshot of the entry named [key], or null if it doesn't exist is not currently
    * readable. If a value is returned, it is moved to the head of the LRU queue.
    */
   @Synchronized @Throws(IOException::class)
@@ -425,7 +425,7 @@ class DiskLruCache internal constructor(
     return snapshot
   }
 
-  /** Returns an editor for the entry named `key`, or null if another edit is in progress. */
+  /** Returns an editor for the entry named [key], or null if another edit is in progress. */
   @Synchronized @Throws(IOException::class)
   @JvmOverloads
   fun edit(key: String, expectedSequenceNumber: Long = ANY_SEQUENCE_NUMBER): Editor? {
@@ -754,10 +754,10 @@ class DiskLruCache internal constructor(
     @Throws(IOException::class)
     fun edit(): Editor? = this@DiskLruCache.edit(key, sequenceNumber)
 
-    /** Returns the unbuffered stream with the value for `index`. */
+    /** Returns the unbuffered stream with the value for [index]. */
     fun getSource(index: Int): Source = sources[index]
 
-    /** Returns the byte length of the value for `index`. */
+    /** Returns the byte length of the value for [index]. */
     fun getLength(index: Int): Long = lengths[index]
 
     override fun close() {
@@ -916,7 +916,7 @@ class DiskLruCache internal constructor(
       }
     }
 
-    /** Append space-prefixed lengths to `writer`. */
+    /** Append space-prefixed lengths to [writer]. */
     @Throws(IOException::class)
     internal fun writeLengths(writer: BufferedSink) {
       for (length in lengths) {
@@ -974,7 +974,7 @@ class DiskLruCache internal constructor(
     @JvmField val READ = "READ"
 
     /**
-     * Create a cache which will reside in `directory`. This cache is lazily initialized on first
+     * Create a cache which will reside in [directory]. This cache is lazily initialized on first
      * access and will be created if it does not exist.
      *
      * @param directory a writable directory

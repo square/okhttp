@@ -186,7 +186,7 @@ class CacheControl private constructor(
     }
 
     /**
-     * Sets the maximum age of a cached response. If the cache response's age exceeds `maxAge`, it
+     * Sets the maximum age of a cached response. If the cache response's age exceeds [maxAge], it
      * will not be used and a network request will be made.
      *
      * @param maxAge a non-negative integer. This is stored and transmitted with [TimeUnit.SECONDS]
@@ -213,7 +213,7 @@ class CacheControl private constructor(
 
     /**
      * Sets the minimum number of seconds that a response will continue to be fresh for. If the
-     * response will be stale when `minFresh` have elapsed, the cached response will not be used and
+     * response will be stale when [minFresh] have elapsed, the cached response will not be used and
      * a network request will be made.
      *
      * @param minFresh a non-negative integer. This is stored and transmitted with
@@ -277,7 +277,7 @@ class CacheControl private constructor(
         .build()
 
     /**
-     * Returns the cache directives of `headers`. This honors both Cache-Control and Pragma headers
+     * Returns the cache directives of [headers]. This honors both Cache-Control and Pragma headers
      * if they are present.
      */
     @JvmStatic

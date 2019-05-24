@@ -29,7 +29,7 @@ import javax.net.ssl.SSLSocketFactory
  * this also includes that proxy information. For secure connections the address also includes the SSL socket factory,
  * hostname verifier, and certificate pinner.
  *
- * HTTP requests that share the same `Address` may also share the same [Connection].
+ * HTTP requests that share the same [Address] may also share the same [Connection].
  */
 class Address(
   uriHost: String,
