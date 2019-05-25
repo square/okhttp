@@ -37,7 +37,7 @@ class Dispatcher constructor() {
    * The maximum number of requests to execute concurrently. Above this requests queue in memory,
    * waiting for the running calls to complete.
    *
-   * If more than `maxRequests` requests are in flight when this is invoked, those requests will
+   * If more than [maxRequests] requests are in flight when this is invoked, those requests will
    * remain in flight.
    */
   @get:Synchronized var maxRequests = 64
