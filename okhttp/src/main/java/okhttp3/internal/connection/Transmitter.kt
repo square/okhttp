@@ -50,14 +50,14 @@ class Transmitter(
   private val client: OkHttpClient,
   private val call: Call
 ) {
-  private val connectionPool: RealConnectionPool = client.connectionPool().delegate
-  private val eventListener: EventListener = client.eventListenerFactory().create(call)
+  private val connectionPool: RealConnectionPool = client.connectionPool.delegate
+  private val eventListener: EventListener = client.eventListenerFactory.create(call)
   private val timeout = object : AsyncTimeout() {
     override fun timedOut() {
       cancel()
     }
   }.apply {
-    timeout(client.callTimeoutMillis().toLong(), MILLISECONDS)
+    timeout(client.callTimeoutMillis.toLong(), MILLISECONDS)
   }
 
   private var callStackTrace: Any? = null
@@ -139,14 +139,14 @@ class Transmitter(
     var hostnameVerifier: HostnameVerifier? = null
     var certificatePinner: CertificatePinner? = null
     if (url.isHttps) {
-      sslSocketFactory = client.sslSocketFactory()
-      hostnameVerifier = client.hostnameVerifier()
-      certificatePinner = client.certificatePinner()
+      sslSocketFactory = client.sslSocketFactory
+      hostnameVerifier = client.hostnameVerifier
+      certificatePinner = client.certificatePinner
     }
 
-    return Address(url.host, url.port, client.dns(), client.socketFactory(),
-        sslSocketFactory, hostnameVerifier, certificatePinner, client.proxyAuthenticator(),
-        client.proxy(), client.protocols(), client.connectionSpecs(), client.proxySelector())
+    return Address(url.host, url.port, client.dns, client.socketFactory,
+        sslSocketFactory, hostnameVerifier, certificatePinner, client.proxyAuthenticator,
+        client.proxy, client.protocols, client.connectionSpecs, client.proxySelector)
   }
 
   /** Returns a new exchange to carry a new request and response. */

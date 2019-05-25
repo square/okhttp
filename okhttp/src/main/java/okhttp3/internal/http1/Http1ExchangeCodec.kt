@@ -460,7 +460,7 @@ class Http1ExchangeCodec(
       if (bytesRemainingInChunk == 0L) {
         hasMoreChunks = false
         trailers = readHeaders()
-        client!!.cookieJar().receiveHeaders(url, trailers!!)
+        client!!.cookieJar.receiveHeaders(url, trailers!!)
         responseBodyComplete()
       }
     }

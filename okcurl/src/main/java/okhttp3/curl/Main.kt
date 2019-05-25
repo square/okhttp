@@ -218,7 +218,7 @@ class Main : Runnable {
   }
 
   private fun close() {
-    client.connectionPool().evictAll() // Close any persistent connections.
+    client.connectionPool.evictAll() // Close any persistent connections.
   }
 
   companion object {

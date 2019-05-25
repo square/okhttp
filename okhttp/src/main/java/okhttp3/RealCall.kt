@@ -62,10 +62,10 @@ internal class RealCall private constructor(
     transmitter.timeoutEnter()
     transmitter.callStart()
     try {
-      client.dispatcher().executed(this)
+      client.dispatcher.executed(this)
       return getResponseWithInterceptorChain()
     } finally {
-      client.dispatcher().finished(this)
+      client.dispatcher.finished(this)
     }
   }
 
@@ -75,7 +75,7 @@ internal class RealCall private constructor(
       executed = true
     }
     transmitter.callStart()
-    client.dispatcher().enqueue(AsyncCall(responseCallback))
+    client.dispatcher.enqueue(AsyncCall(responseCallback))
   }
 
   override fun cancel() {
@@ -111,7 +111,7 @@ internal class RealCall private constructor(
      * if the executor has been shut down by reporting the call as failed.
      */
     fun executeOn(executorService: ExecutorService) {
-      assert(!Thread.holdsLock(client.dispatcher()))
+      assert(!Thread.holdsLock(client.dispatcher))
       var success = false
       try {
         executorService.execute(this)
@@ -123,7 +123,7 @@ internal class RealCall private constructor(
         responseCallback.onFailure(this@RealCall, ioException)
       } finally {
         if (!success) {
-          client.dispatcher().finished(this) // This call is no longer running!
+          client.dispatcher.finished(this) // This call is no longer running!
         }
       }
     }
@@ -144,7 +144,7 @@ internal class RealCall private constructor(
             responseCallback.onFailure(this@RealCall, e)
           }
         } finally {
-          client.dispatcher().finished(this)
+          client.dispatcher.finished(this)
         }
       }
     }
@@ -166,19 +166,18 @@ internal class RealCall private constructor(
   fun getResponseWithInterceptorChain(): Response {
     // Build a full stack of interceptors.
     val interceptors = mutableListOf<Interceptor>()
-    interceptors += client.interceptors()
+    interceptors += client.interceptors
     interceptors += RetryAndFollowUpInterceptor(client)
-    interceptors += BridgeInterceptor(client.cookieJar())
-    interceptors += CacheInterceptor(client.cache())
+    interceptors += BridgeInterceptor(client.cookieJar)
+    interceptors += CacheInterceptor(client.cache)
     interceptors += ConnectInterceptor
     if (!forWebSocket) {
-      interceptors += client.networkInterceptors()
+      interceptors += client.networkInterceptors
     }
     interceptors += CallServerInterceptor(forWebSocket)
 
-    val chain = RealInterceptorChain(interceptors, transmitter, null, 0,
-        originalRequest, this, client.connectTimeoutMillis(),
-        client.readTimeoutMillis(), client.writeTimeoutMillis())
+    val chain = RealInterceptorChain(interceptors, transmitter, null, 0, originalRequest, this,
+        client.connectTimeoutMillis, client.readTimeoutMillis, client.writeTimeoutMillis)
 
     var calledNoMoreExchanges = false
     try {

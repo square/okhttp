@@ -196,7 +196,7 @@ class DnsOverHttps internal constructor(builder: Builder) : Dns {
   }
 
   private fun getCacheOnlyResponse(request: Request): Response? {
-    if (!post && client.cache() != null) {
+    if (!post && client.cache != null) {
       try {
         val cacheRequest = request.newBuilder().cacheControl(CacheControl.FORCE_CACHE).build()
 
