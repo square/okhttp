@@ -109,7 +109,29 @@ class Request internal constructor(
       level = DeprecationLevel.WARNING)
   fun cacheControl(): CacheControl = cacheControl
 
-  override fun toString(): String = "Request{method=$method, url=$url, tags=$tags}"
+  override fun toString() = buildString {
+    append("Request{method=")
+    append(method)
+    append(", url=")
+    append(url)
+    if (headers.size != 0) {
+      append(", headers=[")
+      headers.forEachIndexed { index, (name, value) ->
+        if (index > 0) {
+          append(", ")
+        }
+        append(name)
+        append(':')
+        append(value)
+      }
+      append(']')
+    }
+    if (tags.isNotEmpty()) {
+      append(", tags=")
+      append(tags)
+    }
+    append('}')
+  }
 
   open class Builder {
     internal var url: HttpUrl? = null
