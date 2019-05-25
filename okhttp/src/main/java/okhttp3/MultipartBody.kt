@@ -15,6 +15,7 @@
  */
 package okhttp3
 
+import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.internal.toImmutableList
 import okio.Buffer
 import okio.BufferedSink
@@ -203,7 +204,7 @@ class MultipartBody internal constructor(
 
       @JvmStatic
       fun createFormData(name: String, value: String): Part =
-          createFormData(name, null, create(null, value))
+          createFormData(name, null, value.toRequestBody())
 
       @JvmStatic
       fun createFormData(name: String, filename: String?, body: RequestBody): Part {

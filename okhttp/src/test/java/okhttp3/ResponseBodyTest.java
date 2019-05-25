@@ -399,7 +399,7 @@ public final class ResponseBodyTest {
 
   static ResponseBody body(String hex, String charset) {
     MediaType mediaType = charset == null ? null : MediaType.get("any/thing; charset=" + charset);
-    return ResponseBody.create(mediaType, ByteString.decodeHex(hex));
+    return ResponseBody.create(ByteString.decodeHex(hex), mediaType);
   }
 
   static String exhaust(Reader reader) throws IOException {

@@ -140,7 +140,7 @@ public final class HttpLoggingInterceptorTest {
     setLevel(Level.BASIC);
 
     server.enqueue(new MockResponse());
-    client.newCall(request().post(RequestBody.create(PLAIN, "Hi?")).build()).execute();
+    client.newCall(request().post(RequestBody.create("Hi?", PLAIN)).build()).execute();
 
     applicationLogs
         .assertLogEqual("--> POST " + url + " (3-byte body)")
@@ -225,7 +225,7 @@ public final class HttpLoggingInterceptorTest {
     setLevel(Level.HEADERS);
 
     server.enqueue(new MockResponse());
-    Request request = request().post(RequestBody.create(PLAIN, "Hi?")).build();
+    Request request = request().post(RequestBody.create("Hi?", PLAIN)).build();
     Response response = client.newCall(request).execute();
     response.body().close();
 
@@ -258,7 +258,7 @@ public final class HttpLoggingInterceptorTest {
     setLevel(Level.HEADERS);
 
     server.enqueue(new MockResponse());
-    Request request = request().post(RequestBody.create(null, "Hi?")).build();
+    Request request = request().post(RequestBody.create("Hi?", null)).build();
     Response response = client.newCall(request).execute();
     response.body().close();
 
@@ -426,7 +426,7 @@ public final class HttpLoggingInterceptorTest {
     setLevel(Level.BODY);
 
     server.enqueue(new MockResponse());
-    Request request = request().post(RequestBody.create(PLAIN, "Hi?")).build();
+    Request request = request().post(RequestBody.create("Hi?", PLAIN)).build();
     Response response = client.newCall(request).execute();
     response.body().close();
 

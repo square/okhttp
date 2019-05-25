@@ -85,7 +85,7 @@ public final class ResponseTest {
       }
     };
 
-    return ResponseBody.create(null, -1, Okio.buffer(source));
+    return ResponseBody.create(Okio.buffer(source), null, -1);
   }
 
   private Response newResponse(ResponseBody responseBody) {

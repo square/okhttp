@@ -194,7 +194,7 @@ public final class ConnectionReuseTest {
 
     Request requestB = new Request.Builder()
         .url(server.url("/"))
-        .post(RequestBody.create(MediaType.get("text/plain"), "b"))
+        .post(RequestBody.create("b", MediaType.get("text/plain")))
         .build();
     Response responseB = client.newCall(requestB).execute();
     assertThat(responseB.body().string()).isEqualTo("b");
@@ -314,7 +314,7 @@ public final class ConnectionReuseTest {
           responsesNotClosed.add(response);
           return response
               .newBuilder()
-              .body(ResponseBody.create(null, "unrelated response body!"))
+              .body(ResponseBody.create("unrelated response body!", null))
               .build();
         })
         .build();

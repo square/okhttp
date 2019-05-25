@@ -24,7 +24,7 @@ import okhttp3.MediaType
 import okhttp3.OkHttpClient
 import okhttp3.Protocol
 import okhttp3.Request
-import okhttp3.RequestBody
+import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.curl.Main.Companion.NAME
 import okhttp3.internal.format
 import okhttp3.internal.http.StatusLine
@@ -187,7 +187,7 @@ class Main : Runnable {
     request.url(requestUrl)
 
     data?.let {
-      request.method(requestMethod, RequestBody.create(mediaType(), it))
+      request.method(requestMethod, it.toRequestBody(mediaType()))
     }
 
     for (header in headers.orEmpty()) {

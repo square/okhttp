@@ -15,6 +15,7 @@
  */
 package okhttp3
 
+import okhttp3.ResponseBody.Companion.toResponseBody
 import okhttp3.internal.connection.Exchange
 import okhttp3.internal.http.StatusLine.Companion.HTTP_PERM_REDIRECT
 import okhttp3.internal.http.StatusLine.Companion.HTTP_TEMP_REDIRECT
@@ -195,7 +196,7 @@ class Response internal constructor(
     val buffer = Buffer()
     peeked.request(byteCount)
     buffer.write(peeked, minOf(byteCount, peeked.buffer.size))
-    return ResponseBody.create(body.contentType(), buffer.size, buffer)
+    return buffer.toResponseBody(body.contentType(), buffer.size)
   }
 
   @JvmName("-deprecated_body")
