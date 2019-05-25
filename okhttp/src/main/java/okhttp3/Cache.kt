@@ -584,7 +584,7 @@ class Cache internal constructor(
         sink.writeUtf8(handshake!!.cipherSuite.javaName).writeByte('\n'.toInt())
         writeCertList(sink, handshake.peerCertificates)
         writeCertList(sink, handshake.localCertificates)
-        sink.writeUtf8(handshake.tlsVersion.javaName()).writeByte('\n'.toInt())
+        sink.writeUtf8(handshake.tlsVersion.javaName).writeByte('\n'.toInt())
       }
       sink.close()
     }
