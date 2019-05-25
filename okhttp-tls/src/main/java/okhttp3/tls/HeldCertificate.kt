@@ -111,9 +111,23 @@ import javax.security.auth.x500.X500Principal
  * a chain of certificates. The server uses a set of trusted root certificates to authenticate the
  * client. Subject alternative names are not used for client authentication.
  */
-class HeldCertificate(private val keyPair: KeyPair, private val certificate: X509Certificate) {
+class HeldCertificate(
+  @get:JvmName("keyPair") val keyPair: KeyPair,
+  @get:JvmName("certificate") val certificate: X509Certificate
+) {
+
+  @JvmName("-deprecated_certificate")
+  @Deprecated(
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "certificate"),
+      level = DeprecationLevel.WARNING)
   fun certificate(): X509Certificate = certificate
 
+  @JvmName("-deprecated_keyPair")
+  @Deprecated(
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "keyPair"),
+      level = DeprecationLevel.WARNING)
   fun keyPair(): KeyPair = keyPair
 
   /**
