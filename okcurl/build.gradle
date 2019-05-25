@@ -1,3 +1,8 @@
+plugins {
+  id("com.palantir.graal") version "0.3.0-6-g0b828af"
+  id("com.hpe.kraal") version "0.0.15"
+}
+
 apply plugin: 'com.vanniktech.maven.publish'
 apply plugin: 'com.github.johnrengelman.shadow'
 
@@ -31,6 +36,14 @@ dependencies {
   testImplementation project(':okhttp-testing-support')
   testImplementation deps.junit
   testImplementation deps.assertj
+}
+
+graal {
+  graalVersion("1.0.0-rc16")
+  mainClass("okhttp3.curl.Main")
+  outputName("okcurl")
+  option("--configurations-path")
+  option("graal.config")
 }
 
 shadowJar {
