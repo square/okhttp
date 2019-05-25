@@ -216,7 +216,7 @@ class ConnectionSpec internal constructor(builder: Builder) {
     fun tlsVersions(vararg tlsVersions: TlsVersion): Builder = apply {
       require(tls) { "no TLS versions for cleartext connections" }
 
-      val strings = tlsVersions.map(TlsVersion::javaName).toTypedArray()
+      val strings = tlsVersions.map { it.javaName }.toTypedArray()
       return tlsVersions(*strings)
     }
 
