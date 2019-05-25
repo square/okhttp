@@ -54,7 +54,7 @@ class Dispatcher constructor() {
    * the URL's host name. Note that concurrent requests to a single IP address may still exceed this
    * limit: multiple hostnames may share an IP address or be routed through the same HTTP proxy.
    *
-   * If more than `maxRequestsPerHost` requests are in flight when this is invoked, those requests
+   * If more than [maxRequestsPerHost] requests are in flight when this is invoked, those requests
    * will remain in flight.
    *
    * WebSocket connections to hosts **do not** count against this limit.
