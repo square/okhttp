@@ -653,7 +653,7 @@ class MockWebServer : ExternalResource(), Closeable {
 
     var hasBody = false
     val requestBody = TruncatingBuffer(bodyLimit)
-    val chunkSizes = ArrayList<Int>()
+    val chunkSizes = mutableListOf<Int>()
     val policy = dispatcher.peek()
     if (contentLength != -1L) {
       hasBody = contentLength > 0L
@@ -966,7 +966,7 @@ class MockWebServer : ExternalResource(), Closeable {
       if (response.getSocketPolicy() === NO_RESPONSE) {
         return
       }
-      val http2Headers = ArrayList<Header>()
+      val http2Headers = mutableListOf<Header>()
       val statusParts = response.getStatus().split(' ', limit = 3)
       if (statusParts.size < 2) {
         throw AssertionError("Unexpected status: ${response.getStatus()}")

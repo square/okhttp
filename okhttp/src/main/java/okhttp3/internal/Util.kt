@@ -40,7 +40,6 @@ import java.nio.charset.Charset
 import java.nio.charset.StandardCharsets.UTF_16BE
 import java.nio.charset.StandardCharsets.UTF_16LE
 import java.nio.charset.StandardCharsets.UTF_8
-import java.util.ArrayList
 import java.util.Arrays
 import java.util.Collections
 import java.util.Comparator
@@ -113,7 +112,7 @@ fun Array<String>.intersect(
   other: Array<String>,
   comparator: Comparator<in String>
 ): Array<String> {
-  val result = ArrayList<String>()
+  val result = mutableListOf<String>()
   for (a in this) {
     for (b in other) {
       if (comparator.compare(a, b) == 0) {

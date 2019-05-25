@@ -43,7 +43,6 @@ import java.security.cert.Certificate
 import java.security.cert.CertificateEncodingException
 import java.security.cert.CertificateException
 import java.security.cert.CertificateFactory
-import java.util.ArrayList
 import java.util.NoSuchElementException
 import java.util.TreeSet
 

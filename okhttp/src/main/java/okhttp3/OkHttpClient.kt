@@ -121,32 +121,32 @@ open class OkHttpClient internal constructor(
   builder: Builder
 ) : Cloneable, Call.Factory, WebSocket.Factory {
   private val dispatcher: Dispatcher = builder.dispatcher
-  private val proxy: Proxy? = builder.proxy
-  private val protocols: List<Protocol> = builder.protocols
-  private val connectionSpecs: List<ConnectionSpec> = builder.connectionSpecs
+  private val connectionPool: ConnectionPool = builder.connectionPool
   private val interceptors: List<Interceptor> = builder.interceptors.toImmutableList()
   private val networkInterceptors: List<Interceptor> = builder.networkInterceptors.toImmutableList()
   private val eventListenerFactory: EventListener.Factory = builder.eventListenerFactory
-  private val proxySelector: ProxySelector = builder.proxySelector
+  private val retryOnConnectionFailure: Boolean = builder.retryOnConnectionFailure
+  private val authenticator: Authenticator = builder.authenticator
+  private val followRedirects: Boolean = builder.followRedirects
+  private val followSslRedirects: Boolean = builder.followSslRedirects
   private val cookieJar: CookieJar = builder.cookieJar
   private val cache: Cache? = builder.cache
+  private val dns: Dns = builder.dns
+  private val proxy: Proxy? = builder.proxy
+  private val proxySelector: ProxySelector = builder.proxySelector
+  private val proxyAuthenticator: Authenticator = builder.proxyAuthenticator
   private val socketFactory: SocketFactory = builder.socketFactory
   private val sslSocketFactory: SSLSocketFactory?
+  private val connectionSpecs: List<ConnectionSpec> = builder.connectionSpecs
+  private val protocols: List<Protocol> = builder.protocols
   private val hostnameVerifier: HostnameVerifier = builder.hostnameVerifier
   private val certificatePinner: CertificatePinner
-  private val proxyAuthenticator: Authenticator = builder.proxyAuthenticator
-  private val authenticator: Authenticator = builder.authenticator
-  private val connectionPool: ConnectionPool = builder.connectionPool
-  private val dns: Dns = builder.dns
-  private val followSslRedirects: Boolean = builder.followSslRedirects
-  private val followRedirects: Boolean = builder.followRedirects
-  private val retryOnConnectionFailure: Boolean = builder.retryOnConnectionFailure
+  private val certificateChainCleaner: CertificateChainCleaner?
   private val callTimeout: Int = builder.callTimeout
   private val connectTimeout: Int = builder.connectTimeout
   private val readTimeout: Int = builder.readTimeout
   private val writeTimeout: Int = builder.writeTimeout
   private val pingInterval: Int = builder.pingInterval
-  private val certificateChainCleaner: CertificateChainCleaner?
 
   constructor() : this(Builder())
 
@@ -184,11 +184,7 @@ open class OkHttpClient internal constructor(
 
   fun dispatcher(): Dispatcher = dispatcher
 
-  fun proxy(): Proxy? = proxy
-
-  fun protocols(): List<Protocol> = protocols
-
-  fun connectionSpecs(): List<ConnectionSpec> = connectionSpecs
+  fun connectionPool(): ConnectionPool = connectionPool
 
   /**
    * Returns an immutable list of interceptors that observe the full span of each call: from before
@@ -206,33 +202,37 @@ open class OkHttpClient internal constructor(
 
   fun eventListenerFactory(): EventListener.Factory = eventListenerFactory
 
-  fun proxySelector(): ProxySelector = proxySelector
+  fun retryOnConnectionFailure(): Boolean = retryOnConnectionFailure
+
+  fun authenticator(): Authenticator = authenticator
+
+  fun followRedirects(): Boolean = followRedirects
+
+  fun followSslRedirects(): Boolean = followSslRedirects
 
   fun cookieJar(): CookieJar = cookieJar
 
   fun cache(): Cache? = cache
 
+  fun dns(): Dns = dns
+
+  fun proxy(): Proxy? = proxy
+
+  fun proxySelector(): ProxySelector = proxySelector
+
+  fun proxyAuthenticator(): Authenticator = proxyAuthenticator
+
   fun socketFactory(): SocketFactory = socketFactory
 
   fun sslSocketFactory(): SSLSocketFactory = sslSocketFactory!!
 
+  fun connectionSpecs(): List<ConnectionSpec> = connectionSpecs
+
+  fun protocols(): List<Protocol> = protocols
+
   fun hostnameVerifier(): HostnameVerifier = hostnameVerifier
 
   fun certificatePinner(): CertificatePinner = certificatePinner
-
-  fun proxyAuthenticator(): Authenticator = proxyAuthenticator
-
-  fun authenticator(): Authenticator = authenticator
-
-  fun connectionPool(): ConnectionPool = connectionPool
-
-  fun dns(): Dns = dns
-
-  fun followSslRedirects(): Boolean = followSslRedirects
-
-  fun followRedirects(): Boolean = followRedirects
-
-  fun retryOnConnectionFailure(): Boolean = retryOnConnectionFailure
 
   /**
    * Default call timeout (in milliseconds). By default there is no timeout for complete calls, but
@@ -268,61 +268,395 @@ open class OkHttpClient internal constructor(
 
   class Builder constructor() {
     internal var dispatcher: Dispatcher = Dispatcher()
-    internal var proxy: Proxy? = null
-    internal var protocols: List<Protocol> = DEFAULT_PROTOCOLS
-    internal var connectionSpecs: List<ConnectionSpec> = DEFAULT_CONNECTION_SPECS
+    internal var connectionPool: ConnectionPool = ConnectionPool()
     internal val interceptors: MutableList<Interceptor> = mutableListOf()
     internal val networkInterceptors: MutableList<Interceptor> = mutableListOf()
     internal var eventListenerFactory: EventListener.Factory = EventListener.NONE.asFactory()
-    internal var proxySelector: ProxySelector = ProxySelector.getDefault() ?: NullProxySelector()
+    internal var retryOnConnectionFailure = true
+    internal var authenticator: Authenticator = Authenticator.NONE
+    internal var followRedirects = true
+    internal var followSslRedirects = true
     internal var cookieJar: CookieJar = CookieJar.NO_COOKIES
     internal var cache: Cache? = null
+    internal var dns: Dns = Dns.SYSTEM
+    internal var proxy: Proxy? = null
+    internal var proxySelector: ProxySelector = ProxySelector.getDefault() ?: NullProxySelector()
+    internal var proxyAuthenticator: Authenticator = Authenticator.NONE
     internal var socketFactory: SocketFactory = SocketFactory.getDefault()
     internal var sslSocketFactory: SSLSocketFactory? = null
-    internal var certificateChainCleaner: CertificateChainCleaner? = null
+    internal var connectionSpecs: List<ConnectionSpec> = DEFAULT_CONNECTION_SPECS
+    internal var protocols: List<Protocol> = DEFAULT_PROTOCOLS
     internal var hostnameVerifier: HostnameVerifier = OkHostnameVerifier
     internal var certificatePinner: CertificatePinner = CertificatePinner.DEFAULT
-    internal var proxyAuthenticator: Authenticator = Authenticator.NONE
-    internal var authenticator: Authenticator = Authenticator.NONE
-    internal var connectionPool: ConnectionPool = ConnectionPool()
-    internal var dns: Dns = Dns.SYSTEM
-    internal var followSslRedirects: Boolean = true
-    internal var followRedirects: Boolean = true
-    internal var retryOnConnectionFailure: Boolean = true
-    internal var callTimeout: Int = 0
-    internal var connectTimeout: Int = 10000
-    internal var readTimeout: Int = 10000
-    internal var writeTimeout: Int = 10000
-    internal var pingInterval: Int = 0
+    internal var certificateChainCleaner: CertificateChainCleaner? = null
+    internal var callTimeout = 0
+    internal var connectTimeout = 10_000
+    internal var readTimeout = 10_000
+    internal var writeTimeout = 10_000
+    internal var pingInterval = 0
 
     internal constructor(okHttpClient: OkHttpClient) : this() {
       this.dispatcher = okHttpClient.dispatcher
-      this.proxy = okHttpClient.proxy
-      this.protocols = okHttpClient.protocols
-      this.connectionSpecs = okHttpClient.connectionSpecs
+      this.connectionPool = okHttpClient.connectionPool
       this.interceptors += okHttpClient.interceptors
       this.networkInterceptors += okHttpClient.networkInterceptors
       this.eventListenerFactory = okHttpClient.eventListenerFactory
-      this.proxySelector = okHttpClient.proxySelector
+      this.retryOnConnectionFailure = okHttpClient.retryOnConnectionFailure
+      this.authenticator = okHttpClient.authenticator
+      this.followRedirects = okHttpClient.followRedirects
+      this.followSslRedirects = okHttpClient.followSslRedirects
       this.cookieJar = okHttpClient.cookieJar
       this.cache = okHttpClient.cache
+      this.dns = okHttpClient.dns
+      this.proxy = okHttpClient.proxy
+      this.proxySelector = okHttpClient.proxySelector
+      this.proxyAuthenticator = okHttpClient.proxyAuthenticator
       this.socketFactory = okHttpClient.socketFactory
       this.sslSocketFactory = okHttpClient.sslSocketFactory
-      this.certificateChainCleaner = okHttpClient.certificateChainCleaner
+      this.connectionSpecs = okHttpClient.connectionSpecs
+      this.protocols = okHttpClient.protocols
       this.hostnameVerifier = okHttpClient.hostnameVerifier
       this.certificatePinner = okHttpClient.certificatePinner
-      this.proxyAuthenticator = okHttpClient.proxyAuthenticator
-      this.authenticator = okHttpClient.authenticator
-      this.connectionPool = okHttpClient.connectionPool
-      this.dns = okHttpClient.dns
-      this.followSslRedirects = okHttpClient.followSslRedirects
-      this.followRedirects = okHttpClient.followRedirects
-      this.retryOnConnectionFailure = okHttpClient.retryOnConnectionFailure
+      this.certificateChainCleaner = okHttpClient.certificateChainCleaner
       this.callTimeout = okHttpClient.callTimeout
       this.connectTimeout = okHttpClient.connectTimeout
       this.readTimeout = okHttpClient.readTimeout
       this.writeTimeout = okHttpClient.writeTimeout
       this.pingInterval = okHttpClient.pingInterval
+    }
+
+    /**
+     * Sets the dispatcher used to set policy and execute asynchronous requests. Must not be null.
+     */
+    fun dispatcher(dispatcher: Dispatcher) = apply {
+      this.dispatcher = dispatcher
+    }
+
+    /**
+     * Sets the connection pool used to recycle HTTP and HTTPS connections.
+     *
+     * If unset, a new connection pool will be used.
+     */
+    fun connectionPool(connectionPool: ConnectionPool) = apply {
+      this.connectionPool = connectionPool
+    }
+
+    /**
+     * Returns a modifiable list of interceptors that observe the full span of each call: from
+     * before the connection is established (if any) until after the response source is selected
+     * (either the origin server, cache, or both).
+     */
+    fun interceptors(): MutableList<Interceptor> = interceptors
+
+    fun addInterceptor(interceptor: Interceptor) = apply {
+      interceptors += interceptor
+    }
+
+    // This lambda conversion is for Kotlin callers expecting a Java SAM (single-abstract-method).
+    @JvmName("-deprecated_addInterceptor")
+    inline fun addInterceptor(
+      crossinline interceptor: (chain: Interceptor.Chain) -> Response
+    ) = apply {
+      addInterceptor(object : Interceptor {
+        override fun intercept(chain: Interceptor.Chain): Response = interceptor(chain)
+      })
+    }
+
+    /**
+     * Returns a modifiable list of interceptors that observe a single network request and response.
+     * These interceptors must call [Interceptor.Chain.proceed] exactly once: it is an error for a
+     * network interceptor to short-circuit or repeat a network request.
+     */
+    fun networkInterceptors(): MutableList<Interceptor> = networkInterceptors
+
+    fun addNetworkInterceptor(interceptor: Interceptor) = apply {
+      networkInterceptors += interceptor
+    }
+
+    // This lambda conversion is for Kotlin callers expecting a Java SAM (single-abstract-method).
+    @JvmName("-deprecated_addNetworkInterceptor")
+    inline fun addNetworkInterceptor(
+      crossinline interceptor: (chain: Interceptor.Chain) -> Response
+    ) = apply {
+      addInterceptor(object : Interceptor {
+        override fun intercept(chain: Interceptor.Chain): Response = interceptor(chain)
+      })
+    }
+
+    /**
+     * Configure a single client scoped listener that will receive all analytic events for this
+     * client.
+     *
+     * @see EventListener for semantics and restrictions on listener implementations.
+     */
+    fun eventListener(eventListener: EventListener) = apply {
+      this.eventListenerFactory = eventListener.asFactory()
+    }
+
+    /**
+     * Configure a factory to provide per-call scoped listeners that will receive analytic events
+     * for this client.
+     *
+     * @see EventListener for semantics and restrictions on listener implementations.
+     */
+    fun eventListenerFactory(eventListenerFactory: EventListener.Factory) = apply {
+      this.eventListenerFactory = eventListenerFactory
+    }
+
+    // This lambda conversion is for Kotlin callers expecting a Java SAM (single-abstract-method).
+    @JvmName("-deprecated_eventListenerFactory")
+    inline fun eventListenerFactory(crossinline block: (call: Call) -> EventListener) = apply {
+      eventListenerFactory(object : EventListener.Factory {
+        override fun create(call: Call) = block(call)
+      })
+    }
+
+    /**
+     * Configure this client to retry or not when a connectivity problem is encountered. By default,
+     * this client silently recovers from the following problems:
+     *
+     * * **Unreachable IP addresses.** If the URL's host has multiple IP addresses,
+     *   failure to reach any individual IP address doesn't fail the overall request. This can
+     *   increase availability of multi-homed services.
+     *
+     * * **Stale pooled connections.** The [ConnectionPool] reuses sockets
+     *   to decrease request latency, but these connections will occasionally time out.
+     *
+     * * **Unreachable proxy servers.** A [ProxySelector] can be used to
+     *   attempt multiple proxy servers in sequence, eventually falling back to a direct
+     *   connection.
+     *
+     * Set this to false to avoid retrying requests when doing so is destructive. In this case the
+     * calling application should do its own recovery of connectivity failures.
+     */
+    fun retryOnConnectionFailure(retryOnConnectionFailure: Boolean) = apply {
+      this.retryOnConnectionFailure = retryOnConnectionFailure
+    }
+
+    /**
+     * Sets the authenticator used to respond to challenges from origin servers. Use
+     * [proxyAuthenticator] to set the authenticator for proxy servers.
+     *
+     * If unset, the [no authentication will be attempted][Authenticator.NONE].
+     */
+    fun authenticator(authenticator: Authenticator) = apply {
+      this.authenticator = authenticator
+    }
+
+    /** Configure this client to follow redirects. If unset, redirects will be followed. */
+    fun followRedirects(followRedirects: Boolean) = apply {
+      this.followRedirects = followRedirects
+    }
+
+    /**
+     * Configure this client to follow redirects from HTTPS to HTTP and from HTTP to HTTPS.
+     *
+     * If unset, protocol redirects will be followed. This is different than the built-in
+     * `HttpURLConnection`'s default.
+     */
+    fun followSslRedirects(followProtocolRedirects: Boolean) = apply {
+      this.followSslRedirects = followProtocolRedirects
+    }
+
+    /**
+     * Sets the handler that can accept cookies from incoming HTTP responses and provides cookies to
+     * outgoing HTTP requests.
+     *
+     * If unset, [no cookies][CookieJar.NO_COOKIES] will be accepted nor provided.
+     */
+    fun cookieJar(cookieJar: CookieJar) = apply {
+      this.cookieJar = cookieJar
+    }
+
+    /** Sets the response cache to be used to read and write cached responses. */
+    fun cache(cache: Cache?) = apply {
+      this.cache = cache
+    }
+
+    /**
+     * Sets the DNS service used to lookup IP addresses for hostnames.
+     *
+     * If unset, the [system-wide default][Dns.SYSTEM] DNS will be used.
+     */
+    fun dns(dns: Dns) = apply {
+      this.dns = dns
+    }
+
+    /**
+     * Sets the HTTP proxy that will be used by connections created by this client. This takes
+     * precedence over [proxySelector], which is only honored when this proxy is null (which it is
+     * by default). To disable proxy use completely, call `proxy(Proxy.NO_PROXY)`.
+     */
+    fun proxy(proxy: Proxy?) = apply {
+      this.proxy = proxy
+    }
+
+    /**
+     * Sets the proxy selection policy to be used if no [proxy][proxy] is specified explicitly. The
+     * proxy selector may return multiple proxies; in that case they will be tried in sequence until
+     * a successful connection is established.
+     *
+     * If unset, the [system-wide default][ProxySelector.getDefault] proxy selector will be used.
+     */
+    fun proxySelector(proxySelector: ProxySelector) = apply {
+      this.proxySelector = proxySelector
+    }
+
+    /**
+     * Sets the authenticator used to respond to challenges from proxy servers. Use [authenticator]
+     * to set the authenticator for origin servers.
+     *
+     * If unset, the [no authentication will be attempted][Authenticator.NONE].
+     */
+    fun proxyAuthenticator(proxyAuthenticator: Authenticator) = apply {
+      this.proxyAuthenticator = proxyAuthenticator
+    }
+
+    /**
+     * Sets the socket factory used to create connections. OkHttp only uses the parameterless
+     * [SocketFactory.createSocket] method to create unconnected sockets. Overriding this method,
+     * e. g., allows the socket to be bound to a specific local address.
+     *
+     * If unset, the [system-wide default][SocketFactory.getDefault] socket factory will be used.
+     */
+    fun socketFactory(socketFactory: SocketFactory) = apply {
+      require(socketFactory !is SSLSocketFactory) { "socketFactory instanceof SSLSocketFactory" }
+      this.socketFactory = socketFactory
+    }
+
+    /**
+     * Sets the socket factory used to secure HTTPS connections. If unset, the system default will
+     * be used.
+     *
+     * @deprecated [SSLSocketFactory] does not expose its [X509TrustManager], which is a field that
+     *     OkHttp needs to build a clean certificate chain. This method instead must use reflection
+     *     to extract the trust manager. Applications should prefer to call
+     *     `sslSocketFactory(SSLSocketFactory, X509TrustManager)`, which avoids such reflection.
+     */
+    @Deprecated(
+        message = "Use the sslSocketFactory overload that accepts a X509TrustManager.",
+        level = ERROR
+    )
+    fun sslSocketFactory(sslSocketFactory: SSLSocketFactory) = apply {
+      this.sslSocketFactory = sslSocketFactory
+      this.certificateChainCleaner = Platform.get().buildCertificateChainCleaner(sslSocketFactory)
+    }
+
+    /**
+     * Sets the socket factory and trust manager used to secure HTTPS connections. If unset, the
+     * system defaults will be used.
+     *
+     * Most applications should not call this method, and instead use the system defaults. Those
+     * classes include special optimizations that can be lost if the implementations are decorated.
+     *
+     * If necessary, you can create and configure the defaults yourself with the following code:
+     *
+     * ```
+     * TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance(
+     * TrustManagerFactory.getDefaultAlgorithm());
+     * trustManagerFactory.init((KeyStore) null);
+     * TrustManager[] trustManagers = trustManagerFactory.getTrustManagers();
+     * if (trustManagers.length != 1 || !(trustManagers[0] instanceof X509TrustManager)) {
+     *     throw new IllegalStateException("Unexpected default trust managers:"
+     *         + Arrays.toString(trustManagers));
+     * }
+     * X509TrustManager trustManager = (X509TrustManager) trustManagers[0];
+     *
+     * SSLContext sslContext = SSLContext.getInstance("TLS");
+     * sslContext.init(null, new TrustManager[] { trustManager }, null);
+     * SSLSocketFactory sslSocketFactory = sslContext.getSocketFactory();
+     *
+     * OkHttpClient client = new OkHttpClient.Builder()
+     *     .sslSocketFactory(sslSocketFactory, trustManager)
+     *     .build();
+     * ```
+     */
+    fun sslSocketFactory(
+      sslSocketFactory: SSLSocketFactory,
+      trustManager: X509TrustManager
+    ) = apply {
+      this.sslSocketFactory = sslSocketFactory
+      this.certificateChainCleaner = CertificateChainCleaner.get(trustManager)
+    }
+
+    fun connectionSpecs(connectionSpecs: List<ConnectionSpec>) = apply {
+      this.connectionSpecs = connectionSpecs.toImmutableList()
+    }
+
+    /**
+     * Configure the protocols used by this client to communicate with remote servers. By default
+     * this client will prefer the most efficient transport available, falling back to more
+     * ubiquitous protocols. Applications should only call this method to avoid specific
+     * compatibility problems, such as web servers that behave incorrectly when HTTP/2 is enabled.
+     *
+     * The following protocols are currently supported:
+     *
+     * * [http/1.1][rfc_2616]
+     * * [h2][rfc_7540]
+     * * [h2 with prior knowledge(cleartext only)][rfc_7540_34]
+     *
+     * **This is an evolving set.** Future releases include support for transitional
+     * protocols. The http/1.1 transport will never be dropped.
+     *
+     * If multiple protocols are specified, [ALPN][alpn] will be used to negotiate a transport.
+     * Protocol negotiation is only attempted for HTTPS URLs.
+     *
+     * [Protocol.HTTP_1_0] is not supported in this set. Requests are initiated with `HTTP/1.1`. If
+     * the server responds with `HTTP/1.0`, that will be exposed by [Response.protocol].
+     *
+     * [alpn]: http://tools.ietf.org/html/draft-ietf-tls-applayerprotoneg
+     * [rfc_2616]: http://www.w3.org/Protocols/rfc2616/rfc2616.html
+     * [rfc_7540]: https://tools.ietf.org/html/rfc7540
+     * [rfc_7540_34]: https://tools.ietf.org/html/rfc7540#section-3.4
+     *
+     * @param protocols the protocols to use, in order of preference. If the list contains
+     *     [Protocol.H2_PRIOR_KNOWLEDGE] then that must be the only protocol and HTTPS URLs will not
+     *     be supported. Otherwise the list must contain [Protocol.HTTP_1_1]. The list must
+     *     not contain null or [Protocol.HTTP_1_0].
+     */
+    fun protocols(protocols: List<Protocol>) = apply {
+      // Create a private copy of the list.
+      val protocolsCopy = protocols.toMutableList()
+
+      // Validate that the list has everything we require and nothing we forbid.
+      require(Protocol.H2_PRIOR_KNOWLEDGE in protocolsCopy || HTTP_1_1 in protocolsCopy) {
+        "protocols must contain h2_prior_knowledge or http/1.1: $protocolsCopy"
+      }
+      require(Protocol.H2_PRIOR_KNOWLEDGE !in protocolsCopy || protocolsCopy.size <= 1) {
+        "protocols containing h2_prior_knowledge cannot use other protocols: $protocolsCopy"
+      }
+      require(Protocol.HTTP_1_0 !in protocolsCopy) {
+        "protocols must not contain http/1.0: $protocolsCopy"
+      }
+      require(null !in (protocols as List<Protocol?>)) {
+        "protocols must not contain null"
+      }
+
+      // Remove protocolsCopy that we no longer support.
+      @Suppress("DEPRECATION")
+      protocolsCopy.remove(Protocol.SPDY_3)
+
+      // Assign as an unmodifiable list. This is effectively immutable.
+      this.protocols = Collections.unmodifiableList(protocols)
+    }
+
+    /**
+     * Sets the verifier used to confirm that response certificates apply to requested hostnames for
+     * HTTPS connections.
+     *
+     * If unset, a default hostname verifier will be used.
+     */
+    fun hostnameVerifier(hostnameVerifier: HostnameVerifier) = apply {
+      this.hostnameVerifier = hostnameVerifier
+    }
+
+    /**
+     * Sets the certificate pinner that constrains which certificates are trusted. By default HTTPS
+     * connections rely on only the [SSL socket factory][sslSocketFactory] to establish trust.
+     * Pinning certificates avoids the need to trust certificate authorities.
+     */
+    fun certificatePinner(certificatePinner: CertificatePinner) = apply {
+      this.certificatePinner = certificatePinner
     }
 
     /**
@@ -466,340 +800,6 @@ open class OkHttpClient internal constructor(
     @IgnoreJRERequirement
     fun pingInterval(duration: Duration) = apply {
       pingInterval = checkDuration("timeout", duration.toMillis(), TimeUnit.MILLISECONDS)
-    }
-
-    /**
-     * Sets the HTTP proxy that will be used by connections created by this client. This takes
-     * precedence over [proxySelector], which is only honored when this proxy is null (which it is
-     * by default). To disable proxy use completely, call `proxy(Proxy.NO_PROXY)`.
-     */
-    fun proxy(proxy: Proxy?) = apply {
-      this.proxy = proxy
-    }
-
-    /**
-     * Sets the proxy selection policy to be used if no [proxy][proxy] is specified explicitly. The
-     * proxy selector may return multiple proxies; in that case they will be tried in sequence until
-     * a successful connection is established.
-     *
-     * If unset, the [system-wide default][ProxySelector.getDefault] proxy selector will be used.
-     */
-    fun proxySelector(proxySelector: ProxySelector) = apply {
-      this.proxySelector = proxySelector
-    }
-
-    /**
-     * Sets the handler that can accept cookies from incoming HTTP responses and provides cookies to
-     * outgoing HTTP requests.
-     *
-     * If unset, [no cookies][CookieJar.NO_COOKIES] will be accepted nor provided.
-     */
-    fun cookieJar(cookieJar: CookieJar) = apply {
-      this.cookieJar = cookieJar
-    }
-
-    /** Sets the response cache to be used to read and write cached responses. */
-    fun cache(cache: Cache?) = apply {
-      this.cache = cache
-    }
-
-    /**
-     * Sets the DNS service used to lookup IP addresses for hostnames.
-     *
-     * If unset, the [system-wide default][Dns.SYSTEM] DNS will be used.
-     */
-    fun dns(dns: Dns) = apply {
-      this.dns = dns
-    }
-
-    /**
-     * Sets the socket factory used to create connections. OkHttp only uses the parameterless
-     * [SocketFactory.createSocket] method to create unconnected sockets. Overriding this method,
-     * e. g., allows the socket to be bound to a specific local address.
-     *
-     * If unset, the [system-wide default][SocketFactory.getDefault] socket factory will be used.
-     */
-    fun socketFactory(socketFactory: SocketFactory) = apply {
-      require(socketFactory !is SSLSocketFactory) { "socketFactory instanceof SSLSocketFactory" }
-      this.socketFactory = socketFactory
-    }
-
-    /**
-     * Sets the socket factory used to secure HTTPS connections. If unset, the system default will
-     * be used.
-     *
-     * @deprecated [SSLSocketFactory] does not expose its [X509TrustManager], which is a field that
-     *     OkHttp needs to build a clean certificate chain. This method instead must use reflection
-     *     to extract the trust manager. Applications should prefer to call
-     *     `sslSocketFactory(SSLSocketFactory, X509TrustManager)`, which avoids such reflection.
-     */
-    @Deprecated(
-        message = "Use the sslSocketFactory overload that accepts a X509TrustManager.",
-        level = ERROR
-    )
-    fun sslSocketFactory(sslSocketFactory: SSLSocketFactory) = apply {
-      this.sslSocketFactory = sslSocketFactory
-      this.certificateChainCleaner = Platform.get().buildCertificateChainCleaner(sslSocketFactory)
-    }
-
-    /**
-     * Sets the socket factory and trust manager used to secure HTTPS connections. If unset, the
-     * system defaults will be used.
-     *
-     * Most applications should not call this method, and instead use the system defaults. Those
-     * classes include special optimizations that can be lost if the implementations are decorated.
-     *
-     * If necessary, you can create and configure the defaults yourself with the following code:
-     *
-     * ```
-     * TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance(
-     * TrustManagerFactory.getDefaultAlgorithm());
-     * trustManagerFactory.init((KeyStore) null);
-     * TrustManager[] trustManagers = trustManagerFactory.getTrustManagers();
-     * if (trustManagers.length != 1 || !(trustManagers[0] instanceof X509TrustManager)) {
-     *     throw new IllegalStateException("Unexpected default trust managers:"
-     *         + Arrays.toString(trustManagers));
-     * }
-     * X509TrustManager trustManager = (X509TrustManager) trustManagers[0];
-     *
-     * SSLContext sslContext = SSLContext.getInstance("TLS");
-     * sslContext.init(null, new TrustManager[] { trustManager }, null);
-     * SSLSocketFactory sslSocketFactory = sslContext.getSocketFactory();
-     *
-     * OkHttpClient client = new OkHttpClient.Builder()
-     *     .sslSocketFactory(sslSocketFactory, trustManager)
-     *     .build();
-     * ```
-     */
-    fun sslSocketFactory(
-      sslSocketFactory: SSLSocketFactory,
-      trustManager: X509TrustManager
-    ) = apply {
-      this.sslSocketFactory = sslSocketFactory
-      this.certificateChainCleaner = CertificateChainCleaner.get(trustManager)
-    }
-
-    /**
-     * Sets the verifier used to confirm that response certificates apply to requested hostnames for
-     * HTTPS connections.
-     *
-     * If unset, a default hostname verifier will be used.
-     */
-    fun hostnameVerifier(hostnameVerifier: HostnameVerifier) = apply {
-      this.hostnameVerifier = hostnameVerifier
-    }
-
-    /**
-     * Sets the certificate pinner that constrains which certificates are trusted. By default HTTPS
-     * connections rely on only the [SSL socket factory][sslSocketFactory] to establish trust.
-     * Pinning certificates avoids the need to trust certificate authorities.
-     */
-    fun certificatePinner(certificatePinner: CertificatePinner) = apply {
-      this.certificatePinner = certificatePinner
-    }
-
-    /**
-     * Sets the authenticator used to respond to challenges from origin servers. Use
-     * [proxyAuthenticator] to set the authenticator for proxy servers.
-     *
-     * If unset, the [no authentication will be attempted][Authenticator.NONE].
-     */
-    fun authenticator(authenticator: Authenticator) = apply {
-      this.authenticator = authenticator
-    }
-
-    /**
-     * Sets the authenticator used to respond to challenges from proxy servers. Use [authenticator]
-     * to set the authenticator for origin servers.
-     *
-     * If unset, the [no authentication will be attempted][Authenticator.NONE].
-     */
-    fun proxyAuthenticator(proxyAuthenticator: Authenticator) = apply {
-      this.proxyAuthenticator = proxyAuthenticator
-    }
-
-    /**
-     * Sets the connection pool used to recycle HTTP and HTTPS connections.
-     *
-     * If unset, a new connection pool will be used.
-     */
-    fun connectionPool(connectionPool: ConnectionPool) = apply {
-      this.connectionPool = connectionPool
-    }
-
-    /**
-     * Configure this client to follow redirects from HTTPS to HTTP and from HTTP to HTTPS.
-     *
-     * If unset, protocol redirects will be followed. This is different than the built-in
-     * `HttpURLConnection`'s default.
-     */
-    fun followSslRedirects(followProtocolRedirects: Boolean) = apply {
-      this.followSslRedirects = followProtocolRedirects
-    }
-
-    /** Configure this client to follow redirects. If unset, redirects will be followed. */
-    fun followRedirects(followRedirects: Boolean) = apply {
-      this.followRedirects = followRedirects
-    }
-
-    /**
-     * Configure this client to retry or not when a connectivity problem is encountered. By default,
-     * this client silently recovers from the following problems:
-     *
-     * * **Unreachable IP addresses.** If the URL's host has multiple IP addresses,
-     *   failure to reach any individual IP address doesn't fail the overall request. This can
-     *   increase availability of multi-homed services.
-     *
-     * * **Stale pooled connections.** The [ConnectionPool] reuses sockets
-     *   to decrease request latency, but these connections will occasionally time out.
-     *
-     * * **Unreachable proxy servers.** A [ProxySelector] can be used to
-     *   attempt multiple proxy servers in sequence, eventually falling back to a direct
-     *   connection.
-     *
-     * Set this to false to avoid retrying requests when doing so is destructive. In this case the
-     * calling application should do its own recovery of connectivity failures.
-     */
-    fun retryOnConnectionFailure(retryOnConnectionFailure: Boolean) = apply {
-      this.retryOnConnectionFailure = retryOnConnectionFailure
-    }
-
-    /**
-     * Sets the dispatcher used to set policy and execute asynchronous requests. Must not be null.
-     */
-    fun dispatcher(dispatcher: Dispatcher) = apply {
-      this.dispatcher = dispatcher
-    }
-
-    /**
-     * Configure the protocols used by this client to communicate with remote servers. By default
-     * this client will prefer the most efficient transport available, falling back to more
-     * ubiquitous protocols. Applications should only call this method to avoid specific
-     * compatibility problems, such as web servers that behave incorrectly when HTTP/2 is enabled.
-     *
-     * The following protocols are currently supported:
-     *
-     * * [http/1.1][rfc_2616]
-     * * [h2][rfc_7540]
-     * * [h2 with prior knowledge(cleartext only)][rfc_7540_34]
-     *
-     * **This is an evolving set.** Future releases include support for transitional
-     * protocols. The http/1.1 transport will never be dropped.
-     *
-     * If multiple protocols are specified, [ALPN][alpn] will be used to negotiate a transport.
-     * Protocol negotiation is only attempted for HTTPS URLs.
-     *
-     * [Protocol.HTTP_1_0] is not supported in this set. Requests are initiated with `HTTP/1.1`. If
-     * the server responds with `HTTP/1.0`, that will be exposed by [Response.protocol].
-     *
-     * [alpn]: http://tools.ietf.org/html/draft-ietf-tls-applayerprotoneg
-     * [rfc_2616]: http://www.w3.org/Protocols/rfc2616/rfc2616.html
-     * [rfc_7540]: https://tools.ietf.org/html/rfc7540
-     * [rfc_7540_34]: https://tools.ietf.org/html/rfc7540#section-3.4
-     *
-     * @param protocols the protocols to use, in order of preference. If the list contains
-     *     [Protocol.H2_PRIOR_KNOWLEDGE] then that must be the only protocol and HTTPS URLs will not
-     *     be supported. Otherwise the list must contain [Protocol.HTTP_1_1]. The list must
-     *     not contain null or [Protocol.HTTP_1_0].
-     */
-    fun protocols(protocols: List<Protocol>) = apply {
-      // Create a private copy of the list.
-      val protocolsCopy = protocols.toMutableList()
-
-      // Validate that the list has everything we require and nothing we forbid.
-      require(Protocol.H2_PRIOR_KNOWLEDGE in protocolsCopy || HTTP_1_1 in protocolsCopy) {
-        "protocols must contain h2_prior_knowledge or http/1.1: $protocolsCopy"
-      }
-      require(Protocol.H2_PRIOR_KNOWLEDGE !in protocolsCopy || protocolsCopy.size <= 1) {
-        "protocols containing h2_prior_knowledge cannot use other protocols: $protocolsCopy"
-      }
-      require(Protocol.HTTP_1_0 !in protocolsCopy) {
-        "protocols must not contain http/1.0: $protocolsCopy"
-      }
-      require(null !in (protocols as List<Protocol?>)) {
-        "protocols must not contain null"
-      }
-
-      // Remove protocolsCopy that we no longer support.
-      @Suppress("DEPRECATION")
-      protocolsCopy.remove(Protocol.SPDY_3)
-
-      // Assign as an unmodifiable list. This is effectively immutable.
-      this.protocols = Collections.unmodifiableList(protocols)
-    }
-
-    fun connectionSpecs(connectionSpecs: List<ConnectionSpec>) = apply {
-      this.connectionSpecs = connectionSpecs.toImmutableList()
-    }
-
-    /**
-     * Returns a modifiable list of interceptors that observe the full span of each call: from
-     * before the connection is established (if any) until after the response source is selected
-     * (either the origin server, cache, or both).
-     */
-    fun interceptors(): MutableList<Interceptor> = interceptors
-
-    fun addInterceptor(interceptor: Interceptor) = apply {
-      interceptors += interceptor
-    }
-
-    // This lambda conversion is for Kotlin callers expecting a Java SAM (single-abstract-method).
-    @JvmName("-deprecated_addInterceptor")
-    inline fun addInterceptor(
-      crossinline interceptor: (chain: Interceptor.Chain) -> Response
-    ) = apply {
-      addInterceptor(object : Interceptor {
-        override fun intercept(chain: Interceptor.Chain): Response = interceptor(chain)
-      })
-    }
-
-    /**
-     * Returns a modifiable list of interceptors that observe a single network request and response.
-     * These interceptors must call [Interceptor.Chain.proceed] exactly once: it is an error for a
-     * network interceptor to short-circuit or repeat a network request.
-     */
-    fun networkInterceptors(): MutableList<Interceptor> = networkInterceptors
-
-    fun addNetworkInterceptor(interceptor: Interceptor) = apply {
-      networkInterceptors += interceptor
-    }
-
-    // This lambda conversion is for Kotlin callers expecting a Java SAM (single-abstract-method).
-    @JvmName("-deprecated_addNetworkInterceptor")
-    inline fun addNetworkInterceptor(
-      crossinline interceptor: (chain: Interceptor.Chain) -> Response
-    ) = apply {
-      addInterceptor(object : Interceptor {
-        override fun intercept(chain: Interceptor.Chain): Response = interceptor(chain)
-      })
-    }
-
-    /**
-     * Configure a single client scoped listener that will receive all analytic events for this
-     * client.
-     *
-     * @see EventListener for semantics and restrictions on listener implementations.
-     */
-    fun eventListener(eventListener: EventListener) = apply {
-      this.eventListenerFactory = eventListener.asFactory()
-    }
-
-    /**
-     * Configure a factory to provide per-call scoped listeners that will receive analytic events
-     * for this client.
-     *
-     * @see EventListener for semantics and restrictions on listener implementations.
-     */
-    fun eventListenerFactory(eventListenerFactory: EventListener.Factory) = apply {
-      this.eventListenerFactory = eventListenerFactory
-    }
-
-    // This lambda conversion is for Kotlin callers expecting a Java SAM (single-abstract-method).
-    @JvmName("-deprecated_eventListenerFactory")
-    inline fun eventListenerFactory(crossinline block: (call: Call) -> EventListener) = apply {
-      eventListenerFactory(object : EventListener.Factory {
-        override fun create(call: Call) = block(call)
-      })
     }
 
     fun build(): OkHttpClient = OkHttpClient(this)
