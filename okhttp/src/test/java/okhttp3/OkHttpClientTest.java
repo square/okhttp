@@ -229,4 +229,15 @@ public final class OkHttpClientTest {
     } catch (IllegalArgumentException expected) {
     }
   }
+
+  @Test public void noSslSocketFactoryConfigured() throws Exception {
+    OkHttpClient client = new OkHttpClient.Builder()
+        .connectionSpecs(asList(ConnectionSpec.CLEARTEXT))
+        .build();
+    try {
+      client.sslSocketFactory();
+      fail();
+    } catch (IllegalStateException expected) {
+    }
+  }
 }

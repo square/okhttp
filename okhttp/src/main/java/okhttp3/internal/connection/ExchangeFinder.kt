@@ -21,9 +21,9 @@ import okhttp3.EventListener
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import okhttp3.Route
+import okhttp3.internal.canReuseConnectionFor
 import okhttp3.internal.closeQuietly
 import okhttp3.internal.http.ExchangeCodec
-import okhttp3.internal.canReuseConnectionFor
 import java.io.IOException
 import java.net.Socket
 
@@ -70,8 +70,8 @@ class ExchangeFinder(
     val connectTimeout = chain.connectTimeoutMillis()
     val readTimeout = chain.readTimeoutMillis()
     val writeTimeout = chain.writeTimeoutMillis()
-    val pingIntervalMillis = client.pingIntervalMillis()
-    val connectionRetryEnabled = client.retryOnConnectionFailure()
+    val pingIntervalMillis = client.pingIntervalMillis
+    val connectionRetryEnabled = client.retryOnConnectionFailure
 
     try {
       val resultConnection = findHealthyConnection(
