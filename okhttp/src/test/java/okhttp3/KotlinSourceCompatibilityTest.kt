@@ -308,9 +308,6 @@ class KotlinSourceCompatibilityTest {
     val maxRequestsPerHost: Int = dispatcher.maxRequestsPerHost
     dispatcher.maxRequestsPerHost = 0
     val executorService: ExecutorService = dispatcher.executorService()
-    dispatcher.setIdleCallback(object : Runnable {
-      override fun run() = TODO()
-    })
     dispatcher.setIdleCallback { TODO() }
     val queuedCalls: List<Call> = dispatcher.queuedCalls()
     val runningCalls: List<Call> = dispatcher.runningCalls()

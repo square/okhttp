@@ -28,18 +28,17 @@ import java.util.concurrent.TimeUnit
 /**
  * Policy on when async requests are executed.
  *
- *
  * Each dispatcher uses an [ExecutorService] to run calls internally. If you supply your own
  * executor, it should be able to run [the configured maximum][maxRequests] number of calls
  * concurrently.
  */
 class Dispatcher constructor() {
   /**
-   * Set the maximum number of requests to execute concurrently. Above this requests queue in
-   * memory, waiting for the running calls to complete.
+   * The maximum number of requests to execute concurrently. Above this requests queue in memory,
+   * waiting for the running calls to complete.
    *
-   * If more than `maxRequests` requests are in flight when this is invoked, those requests
-   * will remain in flight.
+   * If more than [maxRequests] requests are in flight when this is invoked, those requests will
+   * remain in flight.
    */
   @get:Synchronized var maxRequests = 64
     set(maxRequests) {
@@ -51,13 +50,12 @@ class Dispatcher constructor() {
     }
 
   /**
-   * Set the maximum number of requests for each host to execute concurrently. This limits requests
-   * by the URL's host name. Note that concurrent requests to a single IP address may still exceed
-   * this limit: multiple hostnames may share an IP address or be routed through the same HTTP
-   * proxy.
+   * The maximum number of requests for each host to execute concurrently. This limits requests by
+   * the URL's host name. Note that concurrent requests to a single IP address may still exceed this
+   * limit: multiple hostnames may share an IP address or be routed through the same HTTP proxy.
    *
-   * If more than `maxRequestsPerHost` requests are in flight when this is invoked, those
-   * requests will remain in flight.
+   * If more than [maxRequestsPerHost] requests are in flight when this is invoked, those requests
+   * will remain in flight.
    *
    * WebSocket connections to hosts **do not** count against this limit.
    */
@@ -70,10 +68,32 @@ class Dispatcher constructor() {
       promoteAndExecute()
     }
 
-  private var idleCallback: Runnable? = null
+  /**
+   * A callback to be invoked each time the dispatcher becomes idle (when the number of running
+   * calls returns to zero).
+   *
+   * Note: The time at which a [call][Call] is considered idle is different depending on whether it
+   * was run [asynchronously][Call.enqueue] or [synchronously][Call.execute]. Asynchronous calls
+   * become idle after the [onResponse][Callback.onResponse] or [onFailure][Callback.onFailure]
+   * callback has returned. Synchronous calls become idle once [execute()][Call.execute] returns.
+   * This means that if you are doing synchronous calls the network layer will not truly be idle
+   * until every returned [Response] has been closed.
+   */
+  @set:Synchronized
+  @get:Synchronized
+  var idleCallback: Runnable? = null
 
-  /** Executes calls. Created lazily. */
-  private var executorService: ExecutorService? = null
+  private var executorServiceOrNull: ExecutorService? = null
+
+  @get:Synchronized
+  @get:JvmName("executorService") val executorService: ExecutorService
+    get() {
+      if (executorServiceOrNull == null) {
+        executorServiceOrNull = ThreadPoolExecutor(0, Int.MAX_VALUE, 60, TimeUnit.SECONDS,
+            SynchronousQueue(), threadFactory("OkHttp Dispatcher", false))
+      }
+      return executorServiceOrNull!!
+    }
 
   /** Ready async calls in the order they'll be run. */
   private val readyAsyncCalls = ArrayDeque<AsyncCall>()
@@ -85,36 +105,8 @@ class Dispatcher constructor() {
   private val runningSyncCalls = ArrayDeque<RealCall>()
 
   constructor(executorService: ExecutorService) : this() {
-    this.executorService = executorService
+    this.executorServiceOrNull = executorService
   }
-
-  @Synchronized fun executorService(): ExecutorService {
-    if (executorService == null) {
-      executorService = ThreadPoolExecutor(0, Int.MAX_VALUE, 60, TimeUnit.SECONDS,
-          SynchronousQueue(), threadFactory("OkHttp Dispatcher", false))
-    }
-    return executorService!!
-  }
-
-  /**
-   * Set a callback to be invoked each time the dispatcher becomes idle (when the number of running
-   * calls returns to zero).
-   *
-   * Note: The time at which a [call][Call] is considered idle is different depending
-   * on whether it was run [asynchronously][Call.enqueue] or [synchronously][Call.execute].
-   * Asynchronous calls become idle after the [onResponse][Callback.onResponse] or
-   * [onFailure][Callback.onFailure] callback has returned. Synchronous calls become idle once
-   * [execute()][Call.execute] returns. This means that if you are doing synchronous calls the
-   * network layer will not truly be idle until every returned [Response] has been closed.
-   */
-  @Synchronized fun setIdleCallback(idleCallback: Runnable?) {
-    this.idleCallback = idleCallback
-  }
-
-  // This lambda conversion is for Kotlin callers expecting a Java SAM (single-abstract-method).
-  @JvmName("-deprecated_setIdleCallback")
-  inline fun setIdleCallback(crossinline idleCallback: () -> Unit) =
-      setIdleCallback(Runnable { idleCallback() })
 
   internal fun enqueue(call: AsyncCall) {
     synchronized(this) {
@@ -186,7 +178,7 @@ class Dispatcher constructor() {
 
     for (i in 0 until executableCalls.size) {
       val asyncCall = executableCalls[i]
-      asyncCall.executeOn(executorService())
+      asyncCall.executeOn(executorService)
     }
 
     return isRunning
@@ -235,4 +227,21 @@ class Dispatcher constructor() {
   @Synchronized fun queuedCallsCount(): Int = readyAsyncCalls.size
 
   @Synchronized fun runningCallsCount(): Int = runningAsyncCalls.size + runningSyncCalls.size
+
+  @JvmName("-deprecated_executorService")
+  @Deprecated(
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "executorService"),
+      level = DeprecationLevel.WARNING)
+  fun executorService(): ExecutorService = executorService
+
+  // This lambda conversion is for Kotlin callers expecting a Java SAM (single-abstract-method).
+  @Deprecated(
+      message = "moved to var",
+      replaceWith = ReplaceWith(expression = "this.idleCallback = Runnable { idleCallback() }"),
+      level = DeprecationLevel.WARNING)
+  @JvmName("-deprecated_setIdleCallback")
+  inline fun setIdleCallback(crossinline idleCallback: () -> Unit) {
+    this.idleCallback = Runnable { idleCallback() }
+  }
 }
