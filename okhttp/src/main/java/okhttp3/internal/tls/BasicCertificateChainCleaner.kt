@@ -18,8 +18,8 @@ package okhttp3.internal.tls
 import java.security.GeneralSecurityException
 import java.security.cert.Certificate
 import java.security.cert.X509Certificate
-import java.util.Deque
 import java.util.ArrayDeque
+import java.util.Deque
 import javax.net.ssl.SSLPeerUnverifiedException
 
 /**
@@ -45,7 +45,7 @@ class BasicCertificateChainCleaner(
   @Throws(SSLPeerUnverifiedException::class)
   override fun clean(chain: List<Certificate>, hostname: String): List<Certificate> {
     val queue: Deque<Certificate> = ArrayDeque<Certificate>(chain)
-    val result = ArrayList<Certificate>()
+    val result = mutableListOf<Certificate>()
     result.add(queue.removeFirst())
     var foundTrustedCertificate = false
 

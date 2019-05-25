@@ -22,7 +22,6 @@ import java.io.EOFException
 import java.net.InetAddress
 import java.net.UnknownHostException
 import java.nio.charset.StandardCharsets
-import java.util.ArrayList
 
 /**
  * Trivial Dns Encoder/Decoder, basically ripped from Netty full implementation.
@@ -60,7 +59,7 @@ object DnsRecordCodec {
 
   @Throws(Exception::class)
   fun decodeAnswers(hostname: String, byteString: ByteString): List<InetAddress> {
-    val result = ArrayList<InetAddress>()
+    val result = mutableListOf<InetAddress>()
 
     val buf = Buffer()
     buf.write(byteString)

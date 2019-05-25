@@ -16,7 +16,6 @@
 package okhttp3
 
 import org.assertj.core.api.Assertions.assertThat
-import java.util.ArrayList
 import java.util.concurrent.AbstractExecutorService
 import java.util.concurrent.RejectedExecutionException
 import java.util.concurrent.TimeUnit
@@ -25,7 +24,7 @@ internal class RecordingExecutor(
   private val dispatcherTest: DispatcherTest
 ) : AbstractExecutorService() {
   private var shutdown: Boolean = false
-  private val calls = ArrayList<RealCall.AsyncCall>()
+  private val calls = mutableListOf<RealCall.AsyncCall>()
 
   override fun execute(command: Runnable) {
     if (shutdown) throw RejectedExecutionException()

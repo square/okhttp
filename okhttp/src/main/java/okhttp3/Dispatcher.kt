@@ -18,7 +18,6 @@ package okhttp3
 import okhttp3.RealCall.AsyncCall
 import okhttp3.internal.threadFactory
 import java.util.ArrayDeque
-import java.util.ArrayList
 import java.util.Collections
 import java.util.Deque
 import java.util.concurrent.ExecutorService
@@ -167,7 +166,7 @@ class Dispatcher constructor() {
   private fun promoteAndExecute(): Boolean {
     assert(!Thread.holdsLock(this))
 
-    val executableCalls = ArrayList<AsyncCall>()
+    val executableCalls = mutableListOf<AsyncCall>()
     val isRunning: Boolean
     synchronized(this) {
       val i = readyAsyncCalls.iterator()

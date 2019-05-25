@@ -511,7 +511,7 @@ class HttpUrl internal constructor(
     get() {
       val pathStart = url.indexOf('/', scheme.length + 3)
       val pathEnd = url.delimiterOffset("?#", pathStart, url.length)
-      val result = ArrayList<String>()
+      val result = mutableListOf<String>()
       var i = pathStart
       while (i < pathEnd) {
         i++ // Skip the '/'.
@@ -647,7 +647,7 @@ class HttpUrl internal constructor(
    */
   fun queryParameterValues(name: String): List<String?> {
     if (queryNamesAndValues == null) return emptyList()
-    val result = ArrayList<String?>()
+    val result = mutableListOf<String?>()
     for (i in 0 until queryNamesAndValues.size step 2) {
       if (name == queryNamesAndValues[i]) {
         result.add(queryNamesAndValues[i + 1])
@@ -1075,7 +1075,7 @@ class HttpUrl internal constructor(
 
     /** Encodes the query parameter using UTF-8 and adds it to this URL's query string. */
     fun addQueryParameter(name: String, value: String?) = apply {
-      if (encodedQueryNamesAndValues == null) encodedQueryNamesAndValues = ArrayList()
+      if (encodedQueryNamesAndValues == null) encodedQueryNamesAndValues = mutableListOf()
       encodedQueryNamesAndValues!!.add(name.canonicalize(
           encodeSet = QUERY_COMPONENT_ENCODE_SET,
           plusIsSpace = true
@@ -1088,7 +1088,7 @@ class HttpUrl internal constructor(
 
     /** Adds the pre-encoded query parameter to this URL's query string. */
     fun addEncodedQueryParameter(encodedName: String, encodedValue: String?) = apply {
-      if (encodedQueryNamesAndValues == null) encodedQueryNamesAndValues = ArrayList()
+      if (encodedQueryNamesAndValues == null) encodedQueryNamesAndValues = mutableListOf()
       encodedQueryNamesAndValues!!.add(encodedName.canonicalize(
           encodeSet = QUERY_COMPONENT_REENCODE_SET,
           alreadyEncoded = true,

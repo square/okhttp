@@ -29,7 +29,6 @@ import okhttp3.internal.threadName
 import okio.Timeout
 import java.io.IOException
 import java.io.InterruptedIOException
-import java.util.ArrayList
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.RejectedExecutionException
 import java.util.concurrent.atomic.AtomicInteger
@@ -166,16 +165,16 @@ internal class RealCall private constructor(
   @Throws(IOException::class)
   fun getResponseWithInterceptorChain(): Response {
     // Build a full stack of interceptors.
-    val interceptors = ArrayList<Interceptor>()
-    interceptors.addAll(client.interceptors())
-    interceptors.add(RetryAndFollowUpInterceptor(client))
-    interceptors.add(BridgeInterceptor(client.cookieJar()))
-    interceptors.add(CacheInterceptor(client.cache()))
-    interceptors.add(ConnectInterceptor(client))
+    val interceptors = mutableListOf<Interceptor>()
+    interceptors += client.interceptors()
+    interceptors += RetryAndFollowUpInterceptor(client)
+    interceptors += BridgeInterceptor(client.cookieJar())
+    interceptors += CacheInterceptor(client.cache())
+    interceptors += ConnectInterceptor
     if (!forWebSocket) {
-      interceptors.addAll(client.networkInterceptors())
+      interceptors += client.networkInterceptors()
     }
-    interceptors.add(CallServerInterceptor(forWebSocket))
+    interceptors += CallServerInterceptor(forWebSocket)
 
     val chain = RealInterceptorChain(interceptors, transmitter, null, 0,
         originalRequest, this, client.connectTimeoutMillis(),
