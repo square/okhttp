@@ -20,9 +20,9 @@ package okhttp3.internal
 import okhttp3.EventListener
 import okhttp3.Headers
 import okhttp3.HttpUrl
-import okhttp3.RequestBody
+import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
-import okhttp3.ResponseBody
+import okhttp3.ResponseBody.Companion.toResponseBody
 import okhttp3.internal.http2.Header
 import okio.Buffer
 import okio.BufferedSink
@@ -59,9 +59,9 @@ val EMPTY_BYTE_ARRAY = ByteArray(0)
 val EMPTY_HEADERS = Headers.of()
 
 @JvmField
-val EMPTY_RESPONSE = ResponseBody.create(null, EMPTY_BYTE_ARRAY)
+val EMPTY_RESPONSE = EMPTY_BYTE_ARRAY.toResponseBody()
 @JvmField
-val EMPTY_REQUEST = RequestBody.create(null, EMPTY_BYTE_ARRAY)
+val EMPTY_REQUEST = EMPTY_BYTE_ARRAY.toRequestBody()
 
 /** Byte order marks. */
 private val UNICODE_BOMS = Options.of(
@@ -105,8 +105,8 @@ fun threadFactory(
 }
 
 /**
- * Returns an array containing only elements found in [this] and also in [other].
- * The returned elements are in the same order as in [this].
+ * Returns an array containing only elements found in this array and also in [other]. The returned
+ * elements are in the same order as in this.
  */
 fun Array<String>.intersect(
   other: Array<String>,
@@ -125,10 +125,10 @@ fun Array<String>.intersect(
 }
 
 /**
- * Returns true if there is an element in [this] that is also in [other]. This
- * method terminates if any intersection is found. The sizes of both arguments are assumed to be
- * so small, and the likelihood of an intersection so great, that it is not worth the CPU cost of
- * sorting or the memory cost of hashing.
+ * Returns true if there is an element in this array that is also in [other]. This method terminates
+ * if any intersection is found. The sizes of both arguments are assumed to be so small, and the
+ * likelihood of an intersection so great, that it is not worth the CPU cost of sorting or the
+ * memory cost of hashing.
  */
 fun Array<String>.hasIntersection(
   other: Array<String>?,
@@ -171,7 +171,7 @@ fun Array<String>.concat(value: String): Array<String> {
 }
 
 /**
- * Increments [startIndex] until [this] is not ASCII whitespace. Stops at [endIndex].
+ * Increments [startIndex] until this string is not ASCII whitespace. Stops at [endIndex].
  */
 fun String.indexOfFirstNonAsciiWhitespace(startIndex: Int = 0, endIndex: Int = length): Int {
   for (i in startIndex until endIndex) {
@@ -204,8 +204,8 @@ fun String.trimSubstring(startIndex: Int = 0, endIndex: Int = length): String {
 }
 
 /**
- * Returns the index of the first character in [this] that contains a character in [delimiters].
- * Returns endIndex if there is no such character.
+ * Returns the index of the first character in this string that contains a character in
+ * [delimiters]. Returns endIndex if there is no such character.
  */
 fun String.delimiterOffset(delimiters: String, startIndex: Int = 0, endIndex: Int = length): Int {
   for (i in startIndex until endIndex) {
@@ -215,8 +215,8 @@ fun String.delimiterOffset(delimiters: String, startIndex: Int = 0, endIndex: In
 }
 
 /**
- * Returns the index of the first character in [this] that is [delimiter]. Returns
- * endIndex if there is no such character.
+ * Returns the index of the first character in this string that is [delimiter]. Returns [endIndex]
+ * if there is no such character.
  */
 fun String.delimiterOffset(delimiter: Char, startIndex: Int = 0, endIndex: Int = length): Int {
   for (i in startIndex until endIndex) {
@@ -226,9 +226,8 @@ fun String.delimiterOffset(delimiter: Char, startIndex: Int = 0, endIndex: Int =
 }
 
 /**
- * Returns the index of the first character in [this] that is either a control character
- * (like `\u0000` or `\n`) or a non-ASCII character. Returns -1 if [this] has no such
- * characters.
+ * Returns the index of the first character in this string that is either a control character (like
+ * `\u0000` or `\n`) or a non-ASCII character. Returns -1 if this string has no such characters.
  */
 fun String.indexOfControlOrNonAscii(): Int {
   for (i in 0 until length) {
@@ -240,7 +239,7 @@ fun String.indexOfControlOrNonAscii(): Int {
   return -1
 }
 
-/** Returns true if [this] is not a host name and might be an IP address. */
+/** Returns true if this string is not a host name and might be an IP address. */
 fun String.canParseAsIpAddress(): Boolean {
   return VERIFY_AS_IP_ADDRESS.matches(this)
 }
@@ -291,7 +290,7 @@ fun Headers.toHeaderList(): List<Header> = (0 until size).map {
   Header(name(it), value(it))
 }
 
-/** Returns true if an HTTP request for [this] and [other] can reuse a connection. */
+/** Returns true if an HTTP request for this URL and [other] can reuse a connection. */
 fun HttpUrl.canReuseConnectionFor(other: HttpUrl): Boolean = host == other.host &&
     port == other.port &&
     scheme == other.scheme

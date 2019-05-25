@@ -1619,9 +1619,9 @@ class HttpUrl internal constructor(
     }
 
     /**
-     * Cuts [this] up into alternating parameter names and values. This divides a query string like
-     * `subject=math&easy&problem=5-2=3` into the list `["subject", "math", "easy", null, "problem",
-     * "5-2=3"]`. Note that values may be null and may contain '=' characters.
+     * Cuts this string up into alternating parameter names and values. This divides a query string
+     * like `subject=math&easy&problem=5-2=3` into the list `["subject", "math", "easy", null,
+     * "problem", "5-2=3"]`. Note that values may be null and may contain '=' characters.
      */
     internal fun String.toQueryNamesAndValues(): MutableList<String?> {
       val result = mutableListOf<String?>()

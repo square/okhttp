@@ -203,13 +203,13 @@ abstract class ResponseBody : Closeable {
   }
 
   companion object {
-
     /**
-     * Returns a new response body that transmits [content]. If `contentType` is non-null
-     * and lacks a charset, this will use UTF-8.
+     * Returns a new response body that transmits this string. If [contentType] is non-null and
+     * lacks a charset, this will use UTF-8.
      */
     @JvmStatic
-    fun create(contentType: MediaType?, content: String): ResponseBody {
+    @JvmName("create")
+    fun String.toResponseBody(contentType: MediaType? = null): ResponseBody {
       var charset: Charset = UTF_8
       var finalContentType: MediaType? = contentType
       if (contentType != null) {
@@ -221,36 +221,84 @@ abstract class ResponseBody : Closeable {
           charset = resolvedCharset
         }
       }
-      val buffer = Buffer().writeString(content, charset)
-      return create(finalContentType, buffer.size, buffer)
+      val buffer = Buffer().writeString(this, charset)
+      return buffer.toResponseBody(finalContentType, buffer.size)
     }
 
-    /** Returns a new response body that transmits [content]. */
+    /** Returns a new response body that transmits this byte array. */
     @JvmStatic
-    fun create(contentType: MediaType?, content: ByteArray): ResponseBody {
-      val buffer = Buffer().write(content)
-      return create(contentType, content.size.toLong(), buffer)
+    @JvmName("create")
+    fun ByteArray.toResponseBody(contentType: MediaType? = null): ResponseBody {
+      return Buffer()
+          .write(this)
+          .toResponseBody(contentType, size.toLong())
     }
 
-    /** Returns a new response body that transmits [content]. */
+    /** Returns a new response body that transmits this byte string. */
     @JvmStatic
-    fun create(contentType: MediaType?, content: ByteString): ResponseBody {
-      val buffer = Buffer().write(content)
-      return create(contentType, content.size.toLong(), buffer)
+    @JvmName("create")
+    fun ByteString.toResponseBody(contentType: MediaType? = null): ResponseBody {
+      return Buffer()
+          .write(this)
+          .toResponseBody(contentType, size.toLong())
     }
 
-    /** Returns a new response body that transmits [content]. */
+    /** Returns a new response body that transmits this source. */
     @JvmStatic
-    fun create(
-      contentType: MediaType?,
-      contentLength: Long,
-      content: BufferedSource
+    @JvmName("create")
+    fun BufferedSource.toResponseBody(
+      contentType: MediaType? = null,
+      contentLength: Long = -1L
     ): ResponseBody = object : ResponseBody() {
       override fun contentType() = contentType
 
       override fun contentLength() = contentLength
 
-      override fun source() = content
+      override fun source() = this@toResponseBody
     }
+
+    @JvmStatic
+    @Deprecated(
+        message = "Moved to extension function. Put the 'content' argument first to fix Java",
+        replaceWith = ReplaceWith(
+            expression = "content.toResponseBody(contentType)",
+            imports = ["okhttp3.ResponseBody.Companion.toResponseBody"]
+        ),
+        level = DeprecationLevel.WARNING)
+    fun create(contentType: MediaType?, content: String) = content.toResponseBody(contentType)
+
+    @JvmStatic
+    @Deprecated(
+        message = "Moved to extension function. Put the 'content' argument first to fix Java",
+        replaceWith = ReplaceWith(
+            expression = "content.toResponseBody(contentType)",
+            imports = ["okhttp3.ResponseBody.Companion.toResponseBody"]
+        ),
+        level = DeprecationLevel.WARNING)
+    fun create(contentType: MediaType?, content: ByteArray) = content.toResponseBody(contentType)
+
+    @JvmStatic
+    @Deprecated(
+        message = "Moved to extension function. Put the 'content' argument first to fix Java",
+        replaceWith = ReplaceWith(
+            expression = "content.toResponseBody(contentType)",
+            imports = ["okhttp3.ResponseBody.Companion.toResponseBody"]
+        ),
+        level = DeprecationLevel.WARNING)
+    fun create(contentType: MediaType?, content: ByteString) = content.toResponseBody(contentType)
+
+    @JvmStatic
+    @Deprecated(
+        message = "Moved to extension function. Put the 'content' argument first to fix Java",
+        replaceWith = ReplaceWith(
+            expression = "content.toResponseBody(contentType, contentLength)",
+            imports = ["okhttp3.ResponseBody.Companion.toResponseBody"]
+        ),
+        level = DeprecationLevel.WARNING)
+    fun create(
+      contentType: MediaType?,
+      contentLength: Long,
+      content: BufferedSource
+    ) = content.toResponseBody(contentType, contentLength)
   }
 }

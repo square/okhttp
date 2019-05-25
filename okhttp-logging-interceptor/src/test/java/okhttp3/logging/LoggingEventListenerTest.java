@@ -101,7 +101,7 @@ public final class LoggingEventListenerTest {
   @Test
   public void post() throws IOException {
     server.enqueue(new MockResponse());
-    client.newCall(request().post(RequestBody.create(PLAIN, "Hello!")).build()).execute();
+    client.newCall(request().post(RequestBody.create("Hello!", PLAIN)).build()).execute();
 
     logRecorder
         .assertLogMatch("callStart: Request\\{method=POST, url=" + url + ", tags=\\{\\}\\}")

@@ -52,7 +52,7 @@ public final class RequestBodyCompression {
     Map<String, String> requestBody = new LinkedHashMap<>();
     requestBody.put("longUrl", "https://publicobject.com/2014/12/04/html-formatting-javadocs/");
     RequestBody jsonRequestBody = RequestBody.create(
-        MEDIA_TYPE_JSON, mapJsonAdapter.toJson(requestBody));
+        mapJsonAdapter.toJson(requestBody), MEDIA_TYPE_JSON);
     Request request = new Request.Builder()
         .url("https://www.googleapis.com/urlshortener/v1/url?key=" + GOOGLE_API_KEY)
         .post(jsonRequestBody)
