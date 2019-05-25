@@ -27,19 +27,15 @@ object RequestLine {
    * [HttpURLConnection.getHeaderFields], so it needs to be set even if the transport is
    * HTTP/2.
    */
-  fun get(request: Request, proxyType: Proxy.Type): String {
-    val result = StringBuilder()
-    result.append(request.method)
-    result.append(' ')
-
+  fun get(request: Request, proxyType: Proxy.Type) = buildString {
+    append(request.method)
+    append(' ')
     if (includeAuthorityInRequestLine(request, proxyType)) {
-      result.append(request.url)
+      append(request.url)
     } else {
-      result.append(requestPath(request.url))
+      append(requestPath(request.url))
     }
-
-    result.append(" HTTP/1.1")
-    return result.toString()
+    append(" HTTP/1.1")
   }
 
   /**

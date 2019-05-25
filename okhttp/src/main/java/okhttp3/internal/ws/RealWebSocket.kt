@@ -231,7 +231,7 @@ class RealWebSocket(
         executor!!.scheduleAtFixedRate(
             PingRunnable(), pingIntervalMillis, pingIntervalMillis, MILLISECONDS)
       }
-      if (!messageAndCloseQueue.isEmpty()) {
+      if (messageAndCloseQueue.isNotEmpty()) {
         runWriter() // Send messages that were enqueued before we were connected.
       }
     }

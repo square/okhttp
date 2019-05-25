@@ -357,7 +357,7 @@ class HeldCertificate(private val keyPair: KeyPair, private val certificate: X50
             BasicConstraints(maxIntermediateCas))
       }
 
-      if (!altNames.isEmpty()) {
+      if (altNames.isNotEmpty()) {
         val encodableAltNames = arrayOfNulls<ASN1Encodable>(altNames.size)
         for (i in 0 until altNames.size) {
           val altName = altNames[i]

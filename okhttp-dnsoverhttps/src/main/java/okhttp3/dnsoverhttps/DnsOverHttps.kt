@@ -103,7 +103,7 @@ class DnsOverHttps internal constructor(builder: Builder) : Dns {
 
     executeRequests(hostname, networkRequests, results, failures)
 
-    return if (!results.isEmpty()) {
+    return if (results.isNotEmpty()) {
       results
     } else {
       throwBestFailure(hostname, failures)
