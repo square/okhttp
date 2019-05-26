@@ -2,11 +2,11 @@
 
 ## Supported Versions
 
-| Version | Supported          |
-| ------- | ------------------ |
-| 4.x     | :white_check_mark: |
-| 3.14.x  | :white_check_mark: |
-| 3.12.x  | :white_check_mark: |
+| Version | Supported          | Notes                                                                        |
+| ------- | ------------------ | ---------------------------------------------------------------------------- |
+| 4.x     | :white_check_mark: | Not released.                                                                |
+| 3.14.x  | :white_check_mark: |                                                                              |
+| 3.12.x  | :white_check_mark: | Android 2.3+ (API level 9+) and Java 7+.  Platforms may not support TLSv1.2. |
 
 ## Reporting a Vulnerability
 
