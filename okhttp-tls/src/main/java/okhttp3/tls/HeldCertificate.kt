@@ -164,7 +164,7 @@ class HeldCertificate(
    * [rfc_7468]: https://tools.ietf.org/html/rfc7468
    */
   fun privateKeyPkcs1Pem(): String {
-    require(keyPair.private is RSAPrivateKey) { "PKCS1 only supports RSA keys" }
+    check(keyPair.private is RSAPrivateKey) { "PKCS1 only supports RSA keys" }
     return buildString {
       append("-----BEGIN RSA PRIVATE KEY-----\n")
       encodeBase64Lines(pkcs1Bytes())
