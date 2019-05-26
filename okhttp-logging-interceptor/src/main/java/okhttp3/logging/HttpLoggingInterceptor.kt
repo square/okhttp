@@ -24,7 +24,6 @@ import okhttp3.internal.platform.Platform
 import okhttp3.internal.platform.Platform.Companion.INFO
 import okio.Buffer
 import okio.GzipSource
-import java.io.EOFException
 import java.io.IOException
 import java.nio.charset.Charset
 import java.nio.charset.StandardCharsets.UTF_8
@@ -44,7 +43,8 @@ class HttpLoggingInterceptor @JvmOverloads constructor(
 
   @Volatile private var headersToRedact = emptySet<String>()
 
-  @Volatile @set:JvmName("-deprecated_setLevel") var level = Level.NONE
+  @set:JvmName("level")
+  @Volatile var level = Level.NONE
 
   enum class Level {
     /** No logs. */
@@ -129,16 +129,24 @@ class HttpLoggingInterceptor @JvmOverloads constructor(
 
   fun redactHeader(name: String) {
     val newHeadersToRedact = TreeSet(String.CASE_INSENSITIVE_ORDER)
-    newHeadersToRedact.addAll(headersToRedact)
-    newHeadersToRedact.add(name)
+    newHeadersToRedact += headersToRedact
+    newHeadersToRedact += name
     headersToRedact = newHeadersToRedact
   }
 
+  @Deprecated(
+      message = "Moved to var. Replace setLevel(...) with level(...) to fix Java",
+      replaceWith = ReplaceWith(expression = "apply { this.level = level }"),
+      level = DeprecationLevel.WARNING)
   fun setLevel(level: Level) = apply {
     this.level = level
   }
 
-  @JvmName("-deprecated_getLevel")
+  @JvmName("-deprecated_level")
+  @Deprecated(
+      message = "moved to var",
+      replaceWith = ReplaceWith(expression = "level"),
+      level = DeprecationLevel.WARNING)
   fun getLevel(): Level = level
 
   @Throws(IOException::class)
@@ -176,16 +184,13 @@ class HttpLoggingInterceptor @JvmOverloads constructor(
       }
 
       val headers = request.headers
-      var i = 0
-      val count = headers.size
-      while (i < count) {
+      for (i in 0 until headers.size) {
         val name = headers.name(i)
         // Skip headers from the request body as they are explicitly logged above.
-        if (!"Content-Type".equals(name, ignoreCase = true) && !"Content-Length".equals(name,
-                ignoreCase = true)) {
+        if (!"Content-Type".equals(name, ignoreCase = true) &&
+            !"Content-Length".equals(name, ignoreCase = true)) {
           logHeader(headers, i)
         }
-        i++
       }
 
       if (!logBody || requestBody == null) {
@@ -202,7 +207,7 @@ class HttpLoggingInterceptor @JvmOverloads constructor(
         val charset: Charset = contentType?.charset(UTF_8) ?: UTF_8
 
         logger.log("")
-        if (buffer.isUtf8()) {
+        if (buffer.isProbablyUtf8()) {
           logger.log(buffer.readString(charset))
           logger.log("--> END ${request.method} (${requestBody.contentLength()}-byte body)")
         } else {
@@ -256,7 +261,7 @@ class HttpLoggingInterceptor @JvmOverloads constructor(
         val contentType = responseBody.contentType()
         val charset: Charset = contentType?.charset(UTF_8) ?: UTF_8
 
-        if (!buffer.isUtf8()) {
+        if (!buffer.isProbablyUtf8()) {
           logger.log("")
           logger.log("<-- END HTTP (binary ${buffer.size}-byte body omitted)")
           return response
@@ -283,37 +288,9 @@ class HttpLoggingInterceptor @JvmOverloads constructor(
     logger.log(headers.name(i) + ": " + value)
   }
 
-  companion object {
-    /**
-     * Returns true if the body in question probably contains human readable text. Uses a small
-     * sample of code points to detect unicode control characters commonly used in binary file
-     * signatures.
-     */
-    internal fun Buffer.isUtf8(): Boolean {
-      try {
-        val prefix = Buffer()
-        val byteCount = size.coerceAtMost(64)
-        copyTo(prefix, 0, byteCount)
-        for (i in 0 until 16) {
-          if (prefix.exhausted()) {
-            break
-          }
-          val codePoint = prefix.readUtf8CodePoint()
-          if (Character.isISOControl(codePoint) && !Character.isWhitespace(codePoint)) {
-            return false
-          }
-        }
-        return true
-      } catch (e: EOFException) {
-        return false // Truncated UTF-8 sequence.
-      }
-    }
-
-    private fun bodyHasUnknownEncoding(headers: Headers): Boolean {
-      val contentEncoding = headers["Content-Encoding"]
-      return (contentEncoding != null &&
-          !contentEncoding.equals("identity", ignoreCase = true) &&
-          !contentEncoding.equals("gzip", ignoreCase = true))
-    }
+  private fun bodyHasUnknownEncoding(headers: Headers): Boolean {
+    val contentEncoding = headers["Content-Encoding"] ?: return false
+    return !contentEncoding.equals("identity", ignoreCase = true) &&
+        !contentEncoding.equals("gzip", ignoreCase = true)
   }
 }
