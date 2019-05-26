@@ -75,7 +75,7 @@ import javax.net.ssl.X509TrustManager
 
 /**
  * Access every type, function, and property from Kotlin to defend against unexpected regressions in
- * modern source-compatibility.
+ * source-compatibility.
  *
  * Unlike most tests we're only really interested in whether this test compiles: it's output is not
  * interesting. Do not simplify this code by removing unused declarations or unnecessary types;
@@ -254,6 +254,7 @@ class KotlinSourceModernTest {
     builder = builder.allEnabledTlsVersions()
     builder = builder.tlsVersions(TlsVersion.TLS_1_3)
     builder = builder.tlsVersions("", "")
+    builder = builder.supportsTlsExtensions(false)
     val connectionSpec: ConnectionSpec = builder.build()
   }
 
@@ -475,7 +476,7 @@ class KotlinSourceModernTest {
 
   @Test @Ignore
   fun httpLoggingInterceptor() {
-    var interceptor: HttpLoggingInterceptor = HttpLoggingInterceptor()
+    var interceptor = HttpLoggingInterceptor()
     interceptor = HttpLoggingInterceptor(HttpLoggingInterceptor.Logger.DEFAULT)
     interceptor.redactHeader("")
     interceptor.level = HttpLoggingInterceptor.Level.BASIC
@@ -643,7 +644,7 @@ class KotlinSourceModernTest {
 
   @Test @Ignore
   fun javaNetCookieJar() {
-    val cookieJar: JavaNetCookieJar = JavaNetCookieJar(newCookieHandler())
+    val cookieJar = JavaNetCookieJar(newCookieHandler())
     val httpUrl = "".toHttpUrl()
     val loadForRequest: List<Cookie> = cookieJar.loadForRequest(httpUrl)
     cookieJar.saveFromResponse(httpUrl, listOf(Cookie.Builder().build()))
@@ -729,7 +730,7 @@ class KotlinSourceModernTest {
 
   @Test @Ignore
   fun mockWebServer() {
-    val mockWebServer: MockWebServer = MockWebServer()
+    val mockWebServer = MockWebServer()
     var port: Int = mockWebServer.getPort()
     port = mockWebServer.getPort()
     var hostName: String = mockWebServer.hostName
@@ -810,7 +811,7 @@ class KotlinSourceModernTest {
 
   @Test @Ignore
   fun okHttpClient() {
-    val client: OkHttpClient = OkHttpClient()
+    val client = OkHttpClient()
     val dispatcher: Dispatcher = client.dispatcher
     val proxy: Proxy? = client.proxy
     val protocols: List<Protocol> = client.protocols
@@ -847,7 +848,7 @@ class KotlinSourceModernTest {
 
   @Test @Ignore
   fun okHttpClientBuilder() {
-    var builder: OkHttpClient.Builder = OkHttpClient.Builder()
+    var builder = OkHttpClient.Builder()
     builder = builder.callTimeout(0L, TimeUnit.SECONDS)
     builder = builder.callTimeout(Duration.ofSeconds(0L))
     builder = builder.connectTimeout(0L, TimeUnit.SECONDS)
@@ -913,7 +914,7 @@ class KotlinSourceModernTest {
 
   @Test @Ignore
   fun pushPromise() {
-    val pushPromise: PushPromise = PushPromise("", "", Headers.of(), MockResponse())
+    val pushPromise = PushPromise("", "", Headers.of(), MockResponse())
     val method: String = pushPromise.method
     val path: String = pushPromise.path
     val headers: Headers = pushPromise.headers
@@ -942,7 +943,7 @@ class KotlinSourceModernTest {
 
   @Test @Ignore
   fun recordedRequest() {
-    var recordedRequest: RecordedRequest = RecordedRequest(
+    var recordedRequest = RecordedRequest(
         "", Headers.of(), listOf(), 0L, Buffer(), 0, Socket())
     recordedRequest = RecordedRequest("", Headers.of(), listOf(), 0L, Buffer(), 0, Socket())
     var requestUrl: HttpUrl? = recordedRequest.requestUrl
@@ -1029,10 +1030,11 @@ class KotlinSourceModernTest {
     requestBody = "".toRequestBody(MediaType.parse(""))
     requestBody = ByteString.EMPTY.toRequestBody(null)
     requestBody = ByteString.EMPTY.toRequestBody(MediaType.parse(""))
-    requestBody = byteArrayOf(0, 1).toRequestBody(null, 0, content.size)
-    requestBody = byteArrayOf(0, 1).toRequestBody(MediaType.parse(""), 0, content.size)
-    requestBody = byteArrayOf(0, 1).toRequestBody(null, 0, 2)
-    requestBody = byteArrayOf(0, 1).toRequestBody(MediaType.parse(""), 0, 2)
+    val content = byteArrayOf(0, 1)
+    requestBody = content.toRequestBody(null, 0, content.size)
+    requestBody = content.toRequestBody(MediaType.parse(""), 0, content.size)
+    requestBody = content.toRequestBody(null, 0, 2)
+    requestBody = content.toRequestBody(MediaType.parse(""), 0, 2)
     requestBody = File("").toRequestBody(null)
     requestBody = File("").toRequestBody(MediaType.parse(""))
   }

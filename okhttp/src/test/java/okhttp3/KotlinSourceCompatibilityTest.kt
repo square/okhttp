@@ -473,7 +473,7 @@ class KotlinSourceCompatibilityTest {
 
   @Test @Ignore
   fun httpLoggingInterceptor() {
-    var interceptor: HttpLoggingInterceptor = HttpLoggingInterceptor()
+    var interceptor = HttpLoggingInterceptor()
     interceptor = HttpLoggingInterceptor(HttpLoggingInterceptor.Logger.DEFAULT)
     interceptor.redactHeader("")
     interceptor.level = HttpLoggingInterceptor.Level.BASIC
@@ -641,7 +641,7 @@ class KotlinSourceCompatibilityTest {
 
   @Test @Ignore
   fun javaNetCookieJar() {
-    val cookieJar: JavaNetCookieJar = JavaNetCookieJar(newCookieHandler())
+    val cookieJar = JavaNetCookieJar(newCookieHandler())
     val httpUrl = HttpUrl.get("")
     val loadForRequest: List<Cookie> = cookieJar.loadForRequest(httpUrl)
     cookieJar.saveFromResponse(httpUrl, listOf(Cookie.Builder().build()))
@@ -727,7 +727,7 @@ class KotlinSourceCompatibilityTest {
 
   @Test @Ignore
   fun mockWebServer() {
-    val mockWebServer: MockWebServer = MockWebServer()
+    val mockWebServer = MockWebServer()
     var port: Int = mockWebServer.getPort()
     port = mockWebServer.getPort()
     var hostName: String = mockWebServer.hostName
@@ -808,7 +808,7 @@ class KotlinSourceCompatibilityTest {
 
   @Test @Ignore
   fun okHttpClient() {
-    val client: OkHttpClient = OkHttpClient()
+    val client = OkHttpClient()
     val dispatcher: Dispatcher = client.dispatcher()
     val proxy: Proxy? = client.proxy()
     val protocols: List<Protocol> = client.protocols()
@@ -845,7 +845,7 @@ class KotlinSourceCompatibilityTest {
 
   @Test @Ignore
   fun okHttpClientBuilder() {
-    var builder: OkHttpClient.Builder = OkHttpClient.Builder()
+    var builder = OkHttpClient.Builder()
     builder = builder.callTimeout(0L, TimeUnit.SECONDS)
     builder = builder.callTimeout(Duration.ofSeconds(0L))
     builder = builder.connectTimeout(0L, TimeUnit.SECONDS)
@@ -911,7 +911,7 @@ class KotlinSourceCompatibilityTest {
 
   @Test @Ignore
   fun pushPromise() {
-    val pushPromise: PushPromise = PushPromise("", "", Headers.of(), MockResponse())
+    val pushPromise = PushPromise("", "", Headers.of(), MockResponse())
     val method: String = pushPromise.method()
     val path: String = pushPromise.path()
     val headers: Headers = pushPromise.headers()
@@ -940,7 +940,7 @@ class KotlinSourceCompatibilityTest {
 
   @Test @Ignore
   fun recordedRequest() {
-    var recordedRequest: RecordedRequest = RecordedRequest(
+    var recordedRequest = RecordedRequest(
         "", Headers.of(), listOf(), 0L, Buffer(), 0, Socket())
     recordedRequest = RecordedRequest("", Headers.of(), listOf(), 0L, Buffer(), 0, Socket())
     var requestUrl: HttpUrl? = recordedRequest.requestUrl
