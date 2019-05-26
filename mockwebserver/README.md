@@ -140,19 +140,8 @@ server.setDispatcher(dispatcher);
 
 ### Download
 
-Get MockWebServer via Maven:
-```xml
-<dependency>
-  <groupId>com.squareup.okhttp3</groupId>
-  <artifactId>mockwebserver</artifactId>
-  <version>(insert latest version)</version>
-  <scope>test</scope>
-</dependency>
-```
-
-or via Gradle 
-```groovy
-testImplementation 'com.squareup.okhttp3:mockwebserver:(insert latest version)'
+```kotlin
+testImplementation("com.squareup.okhttp3:mockwebserver:3.14.2")
 ```
 
 ### License

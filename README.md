@@ -33,13 +33,11 @@ critical fixes to the [3.12.x branch][okhttp_312x] through December 31, 2020.
 Download
 --------
 
-Download [the latest JAR][okhttp_latest_jar] or configure this dependency:
-
 ```kotlin
 implementation("com.squareup.okhttp3:okhttp:3.14.2")
 ```
 
-Snapshots of the development version are available in [Sonatype's `snapshots` repository][snap].
+Snapshot builds are [available][snap].
 
 
 MockWebServer
@@ -51,8 +49,7 @@ MockWebServer coupling with OkHttp is essential for proper testing of HTTP/2 so 
 
 ### Download
 
-Download [the latest JAR][mockwebserver_latest_jar] or configure this dependency:
-```xml
+```kotlin
 testImplementation("com.squareup.okhttp3:mockwebserver:3.14.2")
 ```
 
@@ -81,9 +78,7 @@ License
 
 
  [conscrypt]: https://github.com/google/conscrypt/
- [mockwebserver_latest_jar]: https://search.maven.org/remote_content?g=com.squareup.okhttp3&a=mockwebserver&v=LATEST
  [okhttp_312x]: https://github.com/square/okhttp/tree/okhttp_3.12.x
- [okhttp_latest_jar]: https://search.maven.org/remote_content?g=com.squareup.okhttp3&a=okhttp&v=LATEST
  [okio]: https://github.com/square/okio/
  [snap]: https://oss.sonatype.org/content/repositories/snapshots/
  [tls_history]: https://github.com/square/okhttp/wiki/TLS-Configuration-History
