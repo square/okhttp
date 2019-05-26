@@ -226,18 +226,8 @@ clients use `HeldCertificate.Builder.rsa2048()`.
 Download
 --------
 
-Get via Maven:
-```xml
-<dependency>
-  <groupId>com.squareup.okhttp3</groupId>
-  <artifactId>okhttp-tls</artifactId>
-  <version>(insert latest version)</version>
-</dependency>
-```
-
-or via Gradle
-```groovy
-implementation 'com.squareup.okhttp3:okhttp-tls:(insert latest version)'
+```kotlin
+implementation("com.squareup.okhttp3:okhttp-tls:3.14.2")
 ```
 
  [held_certificate]: http://square.github.io/okhttp/3.x/okhttp-tls/okhttp3/tls/HeldCertificate.html
