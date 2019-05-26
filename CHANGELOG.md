@@ -1,6 +1,13 @@
 Change Log
 ==========
 
+## Version 4.0.0-ALPHA02
+
+_2019-05-25_
+
+This is an unstable preview of the OkHttp 4 release. It should not be used.
+
+
 ## Version 3.14.2
 
 _2019-05-19_
@@ -11,13 +18,6 @@ _2019-05-19_
 
  *  Fix: Don't crash with a `NullPointerException` when formatting an error message describing a
     truncated response from an HTTPS proxy.
-
-
-## Version 4.0.0-ALPHA01
-
-_2019-05-08_
-
-This is an unstable preview of the OkHttp 4 release. It should not be used.
 
 
 ## Version 3.12.3
