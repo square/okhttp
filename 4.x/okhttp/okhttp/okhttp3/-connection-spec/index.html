@@ -38,26 +38,43 @@ because the TLS ecosystem is dynamic and staying up to date is necessary to stay
 <tbody>
 <tr>
 <td>
+<p><a href="cipher-suites.html">cipherSuites</a></p>
+</td>
+<td>
+<code><span class="keyword">val </span><span class="identifier">cipherSuites</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.html"><span class="identifier">List</span></a><span class="symbol">&lt;</span><a href="../-cipher-suite/index.html"><span class="identifier">CipherSuite</span></a><span class="symbol">&gt;</span><span class="symbol">?</span></code>
+<p>Returns the cipher suites to use for a connection. Returns null if all of the SSL socket's
+enabled cipher suites should be used.</p>
+</td>
+</tr>
+<tr>
+<td>
 <p><a href="is-tls.html">isTls</a></p>
 </td>
 <td>
 <code><span class="keyword">val </span><span class="identifier">isTls</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code></td>
+</tr>
+<tr>
+<td>
+<p><a href="supports-tls-extensions.html">supportsTlsExtensions</a></p>
+</td>
+<td>
+<code><span class="keyword">val </span><span class="identifier">supportsTlsExtensions</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code></td>
+</tr>
+<tr>
+<td>
+<p><a href="tls-versions.html">tlsVersions</a></p>
+</td>
+<td>
+<code><span class="keyword">val </span><span class="identifier">tlsVersions</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.html"><span class="identifier">List</span></a><span class="symbol">&lt;</span><a href="../-tls-version/index.html"><span class="identifier">TlsVersion</span></a><span class="symbol">&gt;</span><span class="symbol">?</span></code>
+<p>Returns the TLS versions to use when negotiating a connection. Returns null if all of the SSL
+socket's enabled TLS versions should be used.</p>
+</td>
 </tr>
 </tbody>
 </table>
 <h3>Functions</h3>
 <table>
 <tbody>
-<tr>
-<td>
-<p><a href="cipher-suites.html">cipherSuites</a></p>
-</td>
-<td>
-<code><span class="keyword">fun </span><span class="identifier">cipherSuites</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.html"><span class="identifier">List</span></a><span class="symbol">&lt;</span><a href="../-cipher-suite/index.html"><span class="identifier">CipherSuite</span></a><span class="symbol">&gt;</span><span class="symbol">?</span></code>
-<p>Returns the cipher suites to use for a connection. Returns null if all of the SSL socket's
-enabled cipher suites should be used.</p>
-</td>
-</tr>
 <tr>
 <td>
 <p><a href="equals.html">equals</a></p>
@@ -80,23 +97,6 @@ enabled cipher suites should be used.</p>
 <code><span class="keyword">fun </span><span class="identifier">isCompatible</span><span class="symbol">(</span><span class="identifier" id="okhttp3.ConnectionSpec$isCompatible(javax.net.ssl.SSLSocket)/socket">socket</span><span class="symbol">:</span>&nbsp;<a href="https://docs.oracle.com/javase/8/docs/api/javax/net/ssl/SSLSocket.html"><span class="identifier">SSLSocket</span></a><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code>
 <p>Returns <code>true</code> if the socket, as currently configured, supports this connection spec. In
 order for a socket to be compatible the enabled cipher suites and protocols must intersect.</p>
-</td>
-</tr>
-<tr>
-<td>
-<p><a href="supports-tls-extensions.html">supportsTlsExtensions</a></p>
-</td>
-<td>
-<code><span class="keyword">fun </span><span class="identifier">supportsTlsExtensions</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code></td>
-</tr>
-<tr>
-<td>
-<p><a href="tls-versions.html">tlsVersions</a></p>
-</td>
-<td>
-<code><span class="keyword">fun </span><span class="identifier">tlsVersions</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.html"><span class="identifier">List</span></a><span class="symbol">&lt;</span><a href="../-tls-version/index.html"><span class="identifier">TlsVersion</span></a><span class="symbol">&gt;</span><span class="symbol">?</span></code>
-<p>Returns the TLS versions to use when negotiating a connection. Returns null if all of the SSL
-socket's enabled TLS versions should be used.</p>
 </td>
 </tr>
 <tr>

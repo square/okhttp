@@ -1,0 +1,42 @@
+<HTML>
+<HEAD>
+<meta charset="UTF-8">
+<title>Dispatcher.idleCallback - okhttp</title>
+<link rel="stylesheet" href="../../../style.css">
+</HEAD>
+<BODY>
+<a href="../../index.html">okhttp</a>&nbsp;/&nbsp;<a href="../index.html">okhttp3</a>&nbsp;/&nbsp;<a href="index.html">Dispatcher</a>&nbsp;/&nbsp;<a href="./idle-callback.html">idleCallback</a><br/>
+<br/>
+<h1>idleCallback</h1>
+<a name="okhttp3.Dispatcher$idleCallback"></a>
+<code><span class="keyword">var </span><span class="identifier">idleCallback</span><span class="symbol">: </span><a href="https://docs.oracle.com/javase/8/docs/api/java/lang/Runnable.html"><span class="identifier">Runnable</span></a><span class="symbol">?</span></code>
+<p>A callback to be invoked each time the dispatcher becomes idle (when the number of running
+calls returns to zero).</p>
+<p>Note: The time at which a <a href="../-call/index.html">call</a> is considered idle is different depending on whether it
+was run <a href="../-call/enqueue.html">asynchronously</a> or <a href="../-call/execute.html">synchronously</a>. Asynchronous calls
+become idle after the <a href="../-callback/on-response.html">onResponse</a> or <a href="../-callback/on-failure.html">onFailure</a>
+callback has returned. Synchronous calls become idle once <a href="../-call/execute.html">execute()</a> returns.
+This means that if you are doing synchronous calls the network layer will not truly be idle
+until every returned <a href="../-response/index.html">Response</a> has been closed.</p>
+<p><strong>Getter</strong><br/>
+<p>A callback to be invoked each time the dispatcher becomes idle (when the number of running
+calls returns to zero).</p>
+<p>Note: The time at which a <a href="../-call/index.html">call</a> is considered idle is different depending on whether it
+was run <a href="../-call/enqueue.html">asynchronously</a> or <a href="../-call/execute.html">synchronously</a>. Asynchronous calls
+become idle after the <a href="../-callback/on-response.html">onResponse</a> or <a href="../-callback/on-failure.html">onFailure</a>
+callback has returned. Synchronous calls become idle once <a href="../-call/execute.html">execute()</a> returns.
+This means that if you are doing synchronous calls the network layer will not truly be idle
+until every returned <a href="../-response/index.html">Response</a> has been closed.</p>
+</p>
+<p><strong>Setter</strong><br/>
+<p>A callback to be invoked each time the dispatcher becomes idle (when the number of running
+calls returns to zero).</p>
+<p>Note: The time at which a <a href="../-call/index.html">call</a> is considered idle is different depending on whether it
+was run <a href="../-call/enqueue.html">asynchronously</a> or <a href="../-call/execute.html">synchronously</a>. Asynchronous calls
+become idle after the <a href="../-callback/on-response.html">onResponse</a> or <a href="../-callback/on-failure.html">onFailure</a>
+callback has returned. Synchronous calls become idle once <a href="../-call/execute.html">execute()</a> returns.
+This means that if you are doing synchronous calls the network layer will not truly be idle
+until every returned <a href="../-response/index.html">Response</a> has been closed.</p>
+</p>
+</BODY>
+</HTML>

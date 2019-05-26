@@ -13,7 +13,7 @@
 server's hostname and port. If an explicit proxy is requested (or <a href="https://docs.oracle.com/javase/8/docs/api/java/net/Proxy.html#NO_PROXY">no proxy</a> is explicitly requested),
 this also includes that proxy information. For secure connections the address also includes the SSL socket factory,
 hostname verifier, and certificate pinner.</p>
-<p>HTTP requests that share the same <code>Address</code> may also share the same <a href="../-connection/index.html">Connection</a>.</p>
+<p>HTTP requests that share the same <a href="./index.html">Address</a> may also share the same <a href="../-connection/index.html">Connection</a>.</p>
 <h3>Constructors</h3>
 <table>
 <tbody>
@@ -31,7 +31,7 @@ hostname verifier, and certificate pinner.</p>
 </tr>
 </tbody>
 </table>
-<h3>Functions</h3>
+<h3>Properties</h3>
 <table>
 <tbody>
 <tr>
@@ -39,7 +39,7 @@ hostname verifier, and certificate pinner.</p>
 <p><a href="certificate-pinner.html">certificatePinner</a></p>
 </td>
 <td>
-<code><span class="keyword">fun </span><span class="identifier">certificatePinner</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="../-certificate-pinner/index.html"><span class="identifier">CertificatePinner</span></a><span class="symbol">?</span></code>
+<code><span class="keyword">val </span><span class="identifier">certificatePinner</span><span class="symbol">: </span><a href="../-certificate-pinner/index.html"><span class="identifier">CertificatePinner</span></a><span class="symbol">?</span></code>
 <p>Returns this address's certificate pinner, or null if this is not an HTTPS address.</p>
 </td>
 </tr>
@@ -48,17 +48,98 @@ hostname verifier, and certificate pinner.</p>
 <p><a href="connection-specs.html">connectionSpecs</a></p>
 </td>
 <td>
-<code><span class="keyword">fun </span><span class="identifier">connectionSpecs</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.html"><span class="identifier">List</span></a><span class="symbol">&lt;</span><a href="../-connection-spec/index.html"><span class="identifier">ConnectionSpec</span></a><span class="symbol">&gt;</span></code></td>
+<code><span class="keyword">val </span><span class="identifier">connectionSpecs</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.html"><span class="identifier">List</span></a><span class="symbol">&lt;</span><a href="../-connection-spec/index.html"><span class="identifier">ConnectionSpec</span></a><span class="symbol">&gt;</span></code></td>
 </tr>
 <tr>
 <td>
 <p><a href="dns.html">dns</a></p>
 </td>
 <td>
-<code><span class="keyword">fun </span><span class="identifier">dns</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="../-dns/index.html"><span class="identifier">Dns</span></a></code>
+<code><span class="keyword">val </span><span class="identifier">dns</span><span class="symbol">: </span><a href="../-dns/index.html"><span class="identifier">Dns</span></a></code>
 <p>Returns the service that will be used to resolve IP addresses for hostnames.</p>
 </td>
 </tr>
+<tr>
+<td>
+<p><a href="hostname-verifier.html">hostnameVerifier</a></p>
+</td>
+<td>
+<code><span class="keyword">val </span><span class="identifier">hostnameVerifier</span><span class="symbol">: </span><a href="https://docs.oracle.com/javase/8/docs/api/javax/net/ssl/HostnameVerifier.html"><span class="identifier">HostnameVerifier</span></a><span class="symbol">?</span></code>
+<p>Returns the hostname verifier, or null if this is not an HTTPS address.</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><a href="protocols.html">protocols</a></p>
+</td>
+<td>
+<code><span class="keyword">val </span><span class="identifier">protocols</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.html"><span class="identifier">List</span></a><span class="symbol">&lt;</span><a href="../-protocol/index.html"><span class="identifier">Protocol</span></a><span class="symbol">&gt;</span></code>
+<p>The protocols the client supports. This method always returns a non-null list that
+contains minimally <a href="../-protocol/-h-t-t-p_1_1.html">Protocol.HTTP_1_1</a>.</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><a href="proxy.html">proxy</a></p>
+</td>
+<td>
+<code><span class="keyword">val </span><span class="identifier">proxy</span><span class="symbol">: </span><a href="https://docs.oracle.com/javase/8/docs/api/java/net/Proxy.html"><span class="identifier">Proxy</span></a><span class="symbol">?</span></code>
+<p>Returns this address's explicitly-specified HTTP proxy, or null to delegate to the {@linkplain
+#proxySelector proxy selector}.</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><a href="proxy-authenticator.html">proxyAuthenticator</a></p>
+</td>
+<td>
+<code><span class="keyword">val </span><span class="identifier">proxyAuthenticator</span><span class="symbol">: </span><a href="../-authenticator/index.html"><span class="identifier">Authenticator</span></a></code>
+<p>Returns the client's proxy authenticator.</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><a href="proxy-selector.html">proxySelector</a></p>
+</td>
+<td>
+<code><span class="keyword">val </span><span class="identifier">proxySelector</span><span class="symbol">: </span><a href="https://docs.oracle.com/javase/8/docs/api/java/net/ProxySelector.html"><span class="identifier">ProxySelector</span></a></code>
+<p>Returns this address's proxy selector. Only used if the proxy is null. If none of this
+selector's proxies are reachable, a direct connection will be attempted.</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><a href="socket-factory.html">socketFactory</a></p>
+</td>
+<td>
+<code><span class="keyword">val </span><span class="identifier">socketFactory</span><span class="symbol">: </span><a href="https://docs.oracle.com/javase/8/docs/api/javax/net/SocketFactory.html"><span class="identifier">SocketFactory</span></a></code>
+<p>Returns the socket factory for new connections.</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><a href="ssl-socket-factory.html">sslSocketFactory</a></p>
+</td>
+<td>
+<code><span class="keyword">val </span><span class="identifier">sslSocketFactory</span><span class="symbol">: </span><a href="https://docs.oracle.com/javase/8/docs/api/javax/net/ssl/SSLSocketFactory.html"><span class="identifier">SSLSocketFactory</span></a><span class="symbol">?</span></code>
+<p>Returns the SSL socket factory, or null if this is not an HTTPS address.</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><a href="url.html">url</a></p>
+</td>
+<td>
+<code><span class="keyword">val </span><span class="identifier">url</span><span class="symbol">: </span><a href="../-http-url/index.html"><span class="identifier">HttpUrl</span></a></code>
+<p>Returns a URL with the hostname and port of the origin server. The path, query, and fragment of
+this URL are always empty, since they are not significant for planning a route.</p>
+</td>
+</tr>
+</tbody>
+</table>
+<h3>Functions</h3>
+<table>
+<tbody>
 <tr>
 <td>
 <p><a href="equals.html">equals</a></p>
@@ -75,86 +156,10 @@ hostname verifier, and certificate pinner.</p>
 </tr>
 <tr>
 <td>
-<p><a href="hostname-verifier.html">hostnameVerifier</a></p>
-</td>
-<td>
-<code><span class="keyword">fun </span><span class="identifier">hostnameVerifier</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://docs.oracle.com/javase/8/docs/api/javax/net/ssl/HostnameVerifier.html"><span class="identifier">HostnameVerifier</span></a><span class="symbol">?</span></code>
-<p>Returns the hostname verifier, or null if this is not an HTTPS address.</p>
-</td>
-</tr>
-<tr>
-<td>
-<p><a href="protocols.html">protocols</a></p>
-</td>
-<td>
-<code><span class="keyword">fun </span><span class="identifier">protocols</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.html"><span class="identifier">List</span></a><span class="symbol">&lt;</span><a href="../-protocol/index.html"><span class="identifier">Protocol</span></a><span class="symbol">&gt;</span></code>
-<p>Returns the protocols the client supports. This method always returns a non-null list that
-contains minimally {@link Protocol#HTTP_1_1}.</p>
-</td>
-</tr>
-<tr>
-<td>
-<p><a href="proxy.html">proxy</a></p>
-</td>
-<td>
-<code><span class="keyword">fun </span><span class="identifier">proxy</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://docs.oracle.com/javase/8/docs/api/java/net/Proxy.html"><span class="identifier">Proxy</span></a><span class="symbol">?</span></code>
-<p>Returns this address's explicitly-specified HTTP proxy, or null to delegate to the {@linkplain
-#proxySelector proxy selector}.</p>
-</td>
-</tr>
-<tr>
-<td>
-<p><a href="proxy-authenticator.html">proxyAuthenticator</a></p>
-</td>
-<td>
-<code><span class="keyword">fun </span><span class="identifier">proxyAuthenticator</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="../-authenticator/index.html"><span class="identifier">Authenticator</span></a></code>
-<p>Returns the client's proxy authenticator.</p>
-</td>
-</tr>
-<tr>
-<td>
-<p><a href="proxy-selector.html">proxySelector</a></p>
-</td>
-<td>
-<code><span class="keyword">fun </span><span class="identifier">proxySelector</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://docs.oracle.com/javase/8/docs/api/java/net/ProxySelector.html"><span class="identifier">ProxySelector</span></a></code>
-<p>Returns this address's proxy selector. Only used if the proxy is null. If none of this
-selector's proxies are reachable, a direct connection will be attempted.</p>
-</td>
-</tr>
-<tr>
-<td>
-<p><a href="socket-factory.html">socketFactory</a></p>
-</td>
-<td>
-<code><span class="keyword">fun </span><span class="identifier">socketFactory</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://docs.oracle.com/javase/8/docs/api/javax/net/SocketFactory.html"><span class="identifier">SocketFactory</span></a></code>
-<p>Returns the socket factory for new connections.</p>
-</td>
-</tr>
-<tr>
-<td>
-<p><a href="ssl-socket-factory.html">sslSocketFactory</a></p>
-</td>
-<td>
-<code><span class="keyword">fun </span><span class="identifier">sslSocketFactory</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://docs.oracle.com/javase/8/docs/api/javax/net/ssl/SSLSocketFactory.html"><span class="identifier">SSLSocketFactory</span></a><span class="symbol">?</span></code>
-<p>Returns the SSL socket factory, or null if this is not an HTTPS address.</p>
-</td>
-</tr>
-<tr>
-<td>
 <p><a href="to-string.html">toString</a></p>
 </td>
 <td>
 <code><span class="keyword">fun </span><span class="identifier">toString</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><span class="identifier">String</span></a></code></td>
-</tr>
-<tr>
-<td>
-<p><a href="url.html">url</a></p>
-</td>
-<td>
-<code><span class="keyword">fun </span><span class="identifier">url</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="../-http-url/index.html"><span class="identifier">HttpUrl</span></a></code>
-<p>Returns a URL with the hostname and port of the origin server. The path, query, and fragment of
-this URL are always empty, since they are not significant for planning a route.</p>
-</td>
 </tr>
 </tbody>
 </table>

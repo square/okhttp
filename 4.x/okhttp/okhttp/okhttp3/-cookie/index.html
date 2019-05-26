@@ -27,7 +27,7 @@
 </tr>
 </tbody>
 </table>
-<h3>Functions</h3>
+<h3>Properties</h3>
 <table>
 <tbody>
 <tr>
@@ -35,8 +35,8 @@
 <p><a href="domain.html">domain</a></p>
 </td>
 <td>
-<code><span class="keyword">fun </span><span class="identifier">domain</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><span class="identifier">String</span></a></code>
-<p>Returns the cookie's domain. If <a href="host-only.html">hostOnly</a> returns true this is the only domain that matches
+<code><span class="keyword">val </span><span class="identifier">domain</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><span class="identifier">String</span></a></code>
+<p>Returns the cookie's domain. If <a href="#">hostOnly</a> returns true this is the only domain that matches
 this cookie; otherwise it matches this domain and all subdomains.</p>
 </td>
 </tr>
@@ -45,9 +45,9 @@ this cookie; otherwise it matches this domain and all subdomains.</p>
 <p><a href="expires-at.html">expiresAt</a></p>
 </td>
 <td>
-<code><span class="keyword">fun </span><span class="identifier">expiresAt</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html"><span class="identifier">Long</span></a></code>
+<code><span class="keyword">val </span><span class="identifier">expiresAt</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html"><span class="identifier">Long</span></a></code>
 <p>Returns the time that this cookie expires, in the same format as <a href="https://docs.oracle.com/javase/8/docs/api/java/lang/System.html#currentTimeMillis()">System.currentTimeMillis</a>.
-This is December 31, 9999 if the cookie is <a href="persistent.html">persistent</a>, in which case it will expire at the
+This is December 31, 9999 if the cookie is <a href="#">persistent</a>, in which case it will expire at the
 end of the current session.</p>
 </td>
 </tr>
@@ -56,7 +56,7 @@ end of the current session.</p>
 <p><a href="host-only.html">hostOnly</a></p>
 </td>
 <td>
-<code><span class="keyword">fun </span><span class="identifier">hostOnly</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code>
+<code><span class="keyword">val </span><span class="identifier">hostOnly</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code>
 <p>Returns true if this cookie's domain should be interpreted as a single host name, or false if
 it should be interpreted as a pattern. This flag will be false if its <code>Set-Cookie</code> header
 included a <code>domain</code> attribute.</p>
@@ -67,19 +67,9 @@ included a <code>domain</code> attribute.</p>
 <p><a href="http-only.html">httpOnly</a></p>
 </td>
 <td>
-<code><span class="keyword">fun </span><span class="identifier">httpOnly</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code>
+<code><span class="keyword">val </span><span class="identifier">httpOnly</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code>
 <p>Returns true if this cookie should be limited to only HTTP APIs. In web browsers this prevents
 the cookie from being accessible to scripts.</p>
-</td>
-</tr>
-<tr>
-<td>
-<p><a href="matches.html">matches</a></p>
-</td>
-<td>
-<code><span class="keyword">fun </span><span class="identifier">matches</span><span class="symbol">(</span><span class="identifier" id="okhttp3.Cookie$matches(okhttp3.HttpUrl)/url">url</span><span class="symbol">:</span>&nbsp;<a href="../-http-url/index.html"><span class="identifier">HttpUrl</span></a><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code>
-<p>Returns true if this cookie should be included on a request to <code>url</code>. In addition to this
-check callers should also confirm that this cookie has not expired.</p>
 </td>
 </tr>
 <tr>
@@ -87,7 +77,7 @@ check callers should also confirm that this cookie has not expired.</p>
 <p><a href="name.html">name</a></p>
 </td>
 <td>
-<code><span class="keyword">fun </span><span class="identifier">name</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><span class="identifier">String</span></a></code>
+<code><span class="keyword">val </span><span class="identifier">name</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><span class="identifier">String</span></a></code>
 <p>Returns a non-empty string with this cookie's name.</p>
 </td>
 </tr>
@@ -96,7 +86,7 @@ check callers should also confirm that this cookie has not expired.</p>
 <p><a href="path.html">path</a></p>
 </td>
 <td>
-<code><span class="keyword">fun </span><span class="identifier">path</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><span class="identifier">String</span></a></code>
+<code><span class="keyword">val </span><span class="identifier">path</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><span class="identifier">String</span></a></code>
 <p>Returns this cookie's path. This cookie matches URLs prefixed with path segments that match
 this path's segments. For example, if this path is <code>/foo</code> this cookie matches requests to
 <code>/foo</code> and <code>/foo/bar</code>, but not <code>/</code> or <code>/football</code>.</p>
@@ -107,7 +97,7 @@ this path's segments. For example, if this path is <code>/foo</code> this cookie
 <p><a href="persistent.html">persistent</a></p>
 </td>
 <td>
-<code><span class="keyword">fun </span><span class="identifier">persistent</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code>
+<code><span class="keyword">val </span><span class="identifier">persistent</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code>
 <p>Returns true if this cookie does not expire at the end of the current session.</p>
 </td>
 </tr>
@@ -116,8 +106,32 @@ this path's segments. For example, if this path is <code>/foo</code> this cookie
 <p><a href="secure.html">secure</a></p>
 </td>
 <td>
-<code><span class="keyword">fun </span><span class="identifier">secure</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code>
+<code><span class="keyword">val </span><span class="identifier">secure</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code>
 <p>Returns true if this cookie should be limited to only HTTPS requests.</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><a href="value.html">value</a></p>
+</td>
+<td>
+<code><span class="keyword">val </span><span class="identifier">value</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><span class="identifier">String</span></a></code>
+<p>Returns a possibly-empty string with this cookie's value.</p>
+</td>
+</tr>
+</tbody>
+</table>
+<h3>Functions</h3>
+<table>
+<tbody>
+<tr>
+<td>
+<p><a href="matches.html">matches</a></p>
+</td>
+<td>
+<code><span class="keyword">fun </span><span class="identifier">matches</span><span class="symbol">(</span><span class="identifier" id="okhttp3.Cookie$matches(okhttp3.HttpUrl)/url">url</span><span class="symbol">:</span>&nbsp;<a href="../-http-url/index.html"><span class="identifier">HttpUrl</span></a><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code>
+<p>Returns true if this cookie should be included on a request to <a href="matches.html#okhttp3.Cookie$matches(okhttp3.HttpUrl)/url">url</a>. In addition to this
+check callers should also confirm that this cookie has not expired.</p>
 </td>
 </tr>
 <tr>
@@ -126,15 +140,6 @@ this path's segments. For example, if this path is <code>/foo</code> this cookie
 </td>
 <td>
 <code><span class="keyword">fun </span><span class="identifier">toString</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><span class="identifier">String</span></a></code></td>
-</tr>
-<tr>
-<td>
-<p><a href="value.html">value</a></p>
-</td>
-<td>
-<code><span class="keyword">fun </span><span class="identifier">value</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><span class="identifier">String</span></a></code>
-<p>Returns a possibly-empty string with this cookie's value.</p>
-</td>
 </tr>
 </tbody>
 </table>
@@ -147,8 +152,8 @@ this path's segments. For example, if this path is <code>/foo</code> this cookie
 </td>
 <td>
 <code><span class="keyword">fun </span><span class="identifier">parse</span><span class="symbol">(</span><span class="identifier" id="okhttp3.Cookie.Companion$parse(okhttp3.HttpUrl, kotlin.String)/url">url</span><span class="symbol">:</span>&nbsp;<a href="../-http-url/index.html"><span class="identifier">HttpUrl</span></a><span class="symbol">, </span><span class="identifier" id="okhttp3.Cookie.Companion$parse(okhttp3.HttpUrl, kotlin.String)/setCookie">setCookie</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><span class="identifier">String</span></a><span class="symbol">)</span><span class="symbol">: </span><a href="./index.html"><span class="identifier">Cookie</span></a><span class="symbol">?</span></code>
-<p>Attempt to parse a <code>Set-Cookie</code> HTTP header value <code>setCookie</code> as a cookie. Returns null if
-<code>setCookie</code> is not a well-formed cookie.</p>
+<p>Attempt to parse a <code>Set-Cookie</code> HTTP header value <a href="parse.html#okhttp3.Cookie.Companion$parse(okhttp3.HttpUrl, kotlin.String)/setCookie">setCookie</a> as a cookie. Returns null if
+<a href="parse.html#okhttp3.Cookie.Companion$parse(okhttp3.HttpUrl, kotlin.String)/setCookie">setCookie</a> is not a well-formed cookie.</p>
 </td>
 </tr>
 <tr>

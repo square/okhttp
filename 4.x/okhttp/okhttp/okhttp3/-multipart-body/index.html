@@ -29,7 +29,7 @@
 </tr>
 </tbody>
 </table>
-<h3>Functions</h3>
+<h3>Properties</h3>
 <table>
 <tbody>
 <tr>
@@ -37,8 +37,36 @@
 <p><a href="boundary.html">boundary</a></p>
 </td>
 <td>
-<code><span class="keyword">fun </span><span class="identifier">boundary</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><span class="identifier">String</span></a></code></td>
+<code><span class="keyword">val </span><span class="identifier">boundary</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><span class="identifier">String</span></a></code></td>
 </tr>
+<tr>
+<td>
+<p><a href="parts.html">parts</a></p>
+</td>
+<td>
+<code><span class="keyword">val </span><span class="identifier">parts</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.html"><span class="identifier">List</span></a><span class="symbol">&lt;</span><a href="-part/index.html"><span class="identifier">MultipartBody.Part</span></a><span class="symbol">&gt;</span></code></td>
+</tr>
+<tr>
+<td>
+<p><a href="size.html">size</a></p>
+</td>
+<td>
+<code><span class="keyword">val </span><span class="identifier">size</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a></code>
+<p>The number of parts in this multipart body.</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><a href="type.html">type</a></p>
+</td>
+<td>
+<code><span class="keyword">val </span><span class="identifier">type</span><span class="symbol">: </span><a href="../-media-type/index.html"><span class="identifier">MediaType</span></a></code></td>
+</tr>
+</tbody>
+</table>
+<h3>Functions</h3>
+<table>
+<tbody>
 <tr>
 <td>
 <p><a href="content-length.html">contentLength</a></p>
@@ -55,7 +83,7 @@ or -1 if that count is unknown.</p>
 </td>
 <td>
 <code><span class="keyword">fun </span><span class="identifier">contentType</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="../-media-type/index.html"><span class="identifier">MediaType</span></a></code>
-<p>A combination of <a href="type.html">type</a> and <a href="boundary.html">boundary</a>.</p>
+<p>A combination of <a href="#">type</a> and <a href="#">boundaryByteString</a>.</p>
 </td>
 </tr>
 <tr>
@@ -64,29 +92,6 @@ or -1 if that count is unknown.</p>
 </td>
 <td>
 <code><span class="keyword">fun </span><span class="identifier">part</span><span class="symbol">(</span><span class="identifier" id="okhttp3.MultipartBody$part(kotlin.Int)/index">index</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a><span class="symbol">)</span><span class="symbol">: </span><a href="-part/index.html"><span class="identifier">MultipartBody.Part</span></a></code></td>
-</tr>
-<tr>
-<td>
-<p><a href="parts.html">parts</a></p>
-</td>
-<td>
-<code><span class="keyword">fun </span><span class="identifier">parts</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.html"><span class="identifier">List</span></a><span class="symbol">&lt;</span><a href="-part/index.html"><span class="identifier">MultipartBody.Part</span></a><span class="symbol">&gt;</span></code></td>
-</tr>
-<tr>
-<td>
-<p><a href="size.html">size</a></p>
-</td>
-<td>
-<code><span class="keyword">fun </span><span class="identifier">size</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a></code>
-<p>The number of parts in this multipart body.</p>
-</td>
-</tr>
-<tr>
-<td>
-<p><a href="type.html">type</a></p>
-</td>
-<td>
-<code><span class="keyword">fun </span><span class="identifier">type</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="../-media-type/index.html"><span class="identifier">MediaType</span></a></code></td>
 </tr>
 <tr>
 <td>

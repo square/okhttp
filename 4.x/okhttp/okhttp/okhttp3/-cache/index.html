@@ -84,7 +84,7 @@ directives. It even offers convenient constants <a href="../-cache-control/-f-o-
 </td>
 <td>
 <code><span class="identifier">Cache</span><span class="symbol">(</span><span class="identifier" id="okhttp3.Cache$<init>(java.io.File, kotlin.Long)/directory">directory</span><span class="symbol">:</span>&nbsp;<a href="https://docs.oracle.com/javase/8/docs/api/java/io/File.html"><span class="identifier">File</span></a><span class="symbol">, </span><span class="identifier" id="okhttp3.Cache$<init>(java.io.File, kotlin.Long)/maxSize">maxSize</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html"><span class="identifier">Long</span></a><span class="symbol">)</span></code>
-<p>Create a cache of at most <code>maxSize</code> bytes in <code>directory</code>.</p>
+<p>Create a cache of at most <a href="-init-.html#okhttp3.Cache$<init>(java.io.File, kotlin.Long)/maxSize">maxSize</a> bytes in <a href="-init-.html#okhttp3.Cache$<init>(java.io.File, kotlin.Long)/directory">directory</a>.</p>
 </td>
 </tr>
 </tbody>
@@ -92,6 +92,13 @@ directives. It even offers convenient constants <a href="../-cache-control/-f-o-
 <h3>Properties</h3>
 <table>
 <tbody>
+<tr>
+<td>
+<p><a href="directory.html">directory</a></p>
+</td>
+<td>
+<code><span class="keyword">val </span><span class="identifier">directory</span><span class="symbol">: </span><a href="https://docs.oracle.com/javase/8/docs/api/java/io/File.html"><span class="identifier">File</span></a></code></td>
+</tr>
 <tr>
 <td>
 <p><a href="is-closed.html">isClosed</a></p>
@@ -120,13 +127,6 @@ directives. It even offers convenient constants <a href="../-cache-control/-f-o-
 <p>Closes the cache and deletes all of its stored values. This will delete all files in the cache
 directory including files that weren't created by the cache.</p>
 </td>
-</tr>
-<tr>
-<td>
-<p><a href="directory.html">directory</a></p>
-</td>
-<td>
-<code><span class="keyword">fun </span><span class="identifier">directory</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://docs.oracle.com/javase/8/docs/api/java/io/File.html"><span class="identifier">File</span></a></code></td>
 </tr>
 <tr>
 <td>

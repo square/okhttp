@@ -8,12 +8,12 @@
 <a href="../../index.html">okhttp</a>&nbsp;/&nbsp;<a href="../index.html">okhttp3</a>&nbsp;/&nbsp;<a href="./index.html">Handshake</a><br/>
 <br/>
 <h1>Handshake</h1>
-<code><span class="keyword">data</span> <span class="keyword">class </span><span class="identifier">Handshake</span></code>
-<p>A record of a TLS handshake. For HTTPS clients, the client is <em>local</em> and the remote server
-is its <em>peer</em>.</p>
-<p>This value object describes a completed handshake. Use <a href="../-connection-spec/index.html">ConnectionSpec</a> to set policy
-for new handshakes.</p>
-<h3>Functions</h3>
+<code><span class="keyword">class </span><span class="identifier">Handshake</span></code>
+<p>A record of a TLS handshake. For HTTPS clients, the client is <em>local</em> and the remote server is
+its <em>peer</em>.</p>
+<p>This value object describes a completed handshake. Use <a href="../-connection-spec/index.html">ConnectionSpec</a> to set policy for new
+handshakes.</p>
+<h3>Properties</h3>
 <table>
 <tbody>
 <tr>
@@ -21,7 +21,7 @@ for new handshakes.</p>
 <p><a href="cipher-suite.html">cipherSuite</a></p>
 </td>
 <td>
-<code><span class="keyword">fun </span><span class="identifier">cipherSuite</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="../-cipher-suite/index.html"><span class="identifier">CipherSuite</span></a></code>
+<code><span class="keyword">val </span><span class="identifier">cipherSuite</span><span class="symbol">: </span><a href="../-cipher-suite/index.html"><span class="identifier">CipherSuite</span></a></code>
 <p>Returns the cipher suite used for the connection.</p>
 </td>
 </tr>
@@ -30,7 +30,7 @@ for new handshakes.</p>
 <p><a href="local-certificates.html">localCertificates</a></p>
 </td>
 <td>
-<code><span class="keyword">fun </span><span class="identifier">localCertificates</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.html"><span class="identifier">List</span></a><span class="symbol">&lt;</span><a href="https://docs.oracle.com/javase/8/docs/api/java/security/cert/Certificate.html"><span class="identifier">Certificate</span></a><span class="symbol">&gt;</span></code>
+<code><span class="keyword">val </span><span class="identifier">localCertificates</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.html"><span class="identifier">List</span></a><span class="symbol">&lt;</span><a href="https://docs.oracle.com/javase/8/docs/api/java/security/cert/Certificate.html"><span class="identifier">Certificate</span></a><span class="symbol">&gt;</span></code>
 <p>Returns a possibly-empty list of certificates that identify this peer.</p>
 </td>
 </tr>
@@ -39,7 +39,7 @@ for new handshakes.</p>
 <p><a href="local-principal.html">localPrincipal</a></p>
 </td>
 <td>
-<code><span class="keyword">fun </span><span class="identifier">localPrincipal</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://docs.oracle.com/javase/8/docs/api/java/security/Principal.html"><span class="identifier">Principal</span></a><span class="symbol">?</span></code>
+<code><span class="keyword">val </span><span class="identifier">localPrincipal</span><span class="symbol">: </span><a href="https://docs.oracle.com/javase/8/docs/api/java/security/Principal.html"><span class="identifier">Principal</span></a><span class="symbol">?</span></code>
 <p>Returns the local principle, or null if this peer is anonymous.</p>
 </td>
 </tr>
@@ -48,7 +48,7 @@ for new handshakes.</p>
 <p><a href="peer-certificates.html">peerCertificates</a></p>
 </td>
 <td>
-<code><span class="keyword">fun </span><span class="identifier">peerCertificates</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.html"><span class="identifier">List</span></a><span class="symbol">&lt;</span><a href="https://docs.oracle.com/javase/8/docs/api/java/security/cert/Certificate.html"><span class="identifier">Certificate</span></a><span class="symbol">&gt;</span></code>
+<code><span class="keyword">val </span><span class="identifier">peerCertificates</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.html"><span class="identifier">List</span></a><span class="symbol">&lt;</span><a href="https://docs.oracle.com/javase/8/docs/api/java/security/cert/Certificate.html"><span class="identifier">Certificate</span></a><span class="symbol">&gt;</span></code>
 <p>Returns a possibly-empty list of certificates that identify the remote peer.</p>
 </td>
 </tr>
@@ -57,7 +57,7 @@ for new handshakes.</p>
 <p><a href="peer-principal.html">peerPrincipal</a></p>
 </td>
 <td>
-<code><span class="keyword">fun </span><span class="identifier">peerPrincipal</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://docs.oracle.com/javase/8/docs/api/java/security/Principal.html"><span class="identifier">Principal</span></a><span class="symbol">?</span></code>
+<code><span class="keyword">val </span><span class="identifier">peerPrincipal</span><span class="symbol">: </span><a href="https://docs.oracle.com/javase/8/docs/api/java/security/Principal.html"><span class="identifier">Principal</span></a><span class="symbol">?</span></code>
 <p>Returns the remote peer's principle, or null if that peer is anonymous.</p>
 </td>
 </tr>
@@ -66,10 +66,29 @@ for new handshakes.</p>
 <p><a href="tls-version.html">tlsVersion</a></p>
 </td>
 <td>
-<code><span class="keyword">fun </span><span class="identifier">tlsVersion</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="../-tls-version/index.html"><span class="identifier">TlsVersion</span></a></code>
+<code><span class="keyword">val </span><span class="identifier">tlsVersion</span><span class="symbol">: </span><a href="../-tls-version/index.html"><span class="identifier">TlsVersion</span></a></code>
 <p>Returns the TLS version used for this connection. This value wasn't tracked prior to OkHttp
 3.0. For responses cached by preceding versions this returns <a href="../-tls-version/-s-s-l_3_0.html">TlsVersion.SSL_3_0</a>.</p>
 </td>
+</tr>
+</tbody>
+</table>
+<h3>Functions</h3>
+<table>
+<tbody>
+<tr>
+<td>
+<p><a href="equals.html">equals</a></p>
+</td>
+<td>
+<code><span class="keyword">fun </span><span class="identifier">equals</span><span class="symbol">(</span><span class="identifier" id="okhttp3.Handshake$equals(kotlin.Any)/other">other</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-any/index.html"><span class="identifier">Any</span></a><span class="symbol">?</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code></td>
+</tr>
+<tr>
+<td>
+<p><a href="hash-code.html">hashCode</a></p>
+</td>
+<td>
+<code><span class="keyword">fun </span><span class="identifier">hashCode</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a></code></td>
 </tr>
 <tr>
 <td>
@@ -88,8 +107,14 @@ for new handshakes.</p>
 <p><a href="get.html">get</a></p>
 </td>
 <td>
-<code><span class="keyword">fun </span><span class="identifier">get</span><span class="symbol">(</span><span class="identifier" id="okhttp3.Handshake.Companion$get(javax.net.ssl.SSLSession)/session">session</span><span class="symbol">:</span>&nbsp;<a href="https://docs.oracle.com/javase/8/docs/api/javax/net/ssl/SSLSession.html"><span class="identifier">SSLSession</span></a><span class="symbol">)</span><span class="symbol">: </span><a href="./index.html"><span class="identifier">Handshake</span></a></code><br/>
 <code><span class="keyword">fun </span><span class="identifier">get</span><span class="symbol">(</span><span class="identifier" id="okhttp3.Handshake.Companion$get(okhttp3.TlsVersion, okhttp3.CipherSuite, kotlin.collections.List((java.security.cert.Certificate)), kotlin.collections.List((java.security.cert.Certificate)))/tlsVersion">tlsVersion</span><span class="symbol">:</span>&nbsp;<a href="../-tls-version/index.html"><span class="identifier">TlsVersion</span></a><span class="symbol">, </span><span class="identifier" id="okhttp3.Handshake.Companion$get(okhttp3.TlsVersion, okhttp3.CipherSuite, kotlin.collections.List((java.security.cert.Certificate)), kotlin.collections.List((java.security.cert.Certificate)))/cipherSuite">cipherSuite</span><span class="symbol">:</span>&nbsp;<a href="../-cipher-suite/index.html"><span class="identifier">CipherSuite</span></a><span class="symbol">, </span><span class="identifier" id="okhttp3.Handshake.Companion$get(okhttp3.TlsVersion, okhttp3.CipherSuite, kotlin.collections.List((java.security.cert.Certificate)), kotlin.collections.List((java.security.cert.Certificate)))/peerCertificates">peerCertificates</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.html"><span class="identifier">List</span></a><span class="symbol">&lt;</span><a href="https://docs.oracle.com/javase/8/docs/api/java/security/cert/Certificate.html"><span class="identifier">Certificate</span></a><span class="symbol">&gt;</span><span class="symbol">, </span><span class="identifier" id="okhttp3.Handshake.Companion$get(okhttp3.TlsVersion, okhttp3.CipherSuite, kotlin.collections.List((java.security.cert.Certificate)), kotlin.collections.List((java.security.cert.Certificate)))/localCertificates">localCertificates</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.html"><span class="identifier">List</span></a><span class="symbol">&lt;</span><a href="https://docs.oracle.com/javase/8/docs/api/java/security/cert/Certificate.html"><span class="identifier">Certificate</span></a><span class="symbol">&gt;</span><span class="symbol">)</span><span class="symbol">: </span><a href="./index.html"><span class="identifier">Handshake</span></a></code></td>
+</tr>
+<tr>
+<td>
+<p><a href="handshake.html">handshake</a></p>
+</td>
+<td>
+<code><span class="keyword">fun </span><a href="https://docs.oracle.com/javase/8/docs/api/javax/net/ssl/SSLSession.html"><span class="identifier">SSLSession</span></a><span class="symbol">.</span><span class="identifier">handshake</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="./index.html"><span class="identifier">Handshake</span></a></code></td>
 </tr>
 </tbody>
 </table>

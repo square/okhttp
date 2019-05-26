@@ -32,12 +32,29 @@ concurrently.</p>
 <tbody>
 <tr>
 <td>
+<p><a href="executor-service.html">executorService</a></p>
+</td>
+<td>
+<code><span class="keyword">val </span><span class="identifier">executorService</span><span class="symbol">: </span><a href="https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/ExecutorService.html"><span class="identifier">ExecutorService</span></a></code></td>
+</tr>
+<tr>
+<td>
+<p><a href="idle-callback.html">idleCallback</a></p>
+</td>
+<td>
+<code><span class="keyword">var </span><span class="identifier">idleCallback</span><span class="symbol">: </span><a href="https://docs.oracle.com/javase/8/docs/api/java/lang/Runnable.html"><span class="identifier">Runnable</span></a><span class="symbol">?</span></code>
+<p>A callback to be invoked each time the dispatcher becomes idle (when the number of running
+calls returns to zero).</p>
+</td>
+</tr>
+<tr>
+<td>
 <p><a href="max-requests.html">maxRequests</a></p>
 </td>
 <td>
 <code><span class="keyword">var </span><span class="identifier">maxRequests</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a></code>
-<p>Set the maximum number of requests to execute concurrently. Above this requests queue in
-memory, waiting for the running calls to complete.</p>
+<p>The maximum number of requests to execute concurrently. Above this requests queue in memory,
+waiting for the running calls to complete.</p>
 </td>
 </tr>
 <tr>
@@ -46,10 +63,9 @@ memory, waiting for the running calls to complete.</p>
 </td>
 <td>
 <code><span class="keyword">var </span><span class="identifier">maxRequestsPerHost</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a></code>
-<p>Set the maximum number of requests for each host to execute concurrently. This limits requests
-by the URL's host name. Note that concurrent requests to a single IP address may still exceed
-this limit: multiple hostnames may share an IP address or be routed through the same HTTP
-proxy.</p>
+<p>The maximum number of requests for each host to execute concurrently. This limits requests by
+the URL's host name. Note that concurrent requests to a single IP address may still exceed this
+limit: multiple hostnames may share an IP address or be routed through the same HTTP proxy.</p>
 </td>
 </tr>
 </tbody>
@@ -66,13 +82,6 @@ proxy.</p>
 <p>Cancel all calls currently enqueued or executing. Includes calls executed both
 <a href="../-call/execute.html">synchronously</a> and <a href="../-call/enqueue.html">asynchronously</a>.</p>
 </td>
-</tr>
-<tr>
-<td>
-<p><a href="executor-service.html">executorService</a></p>
-</td>
-<td>
-<code><span class="keyword">fun </span><span class="identifier">executorService</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/ExecutorService.html"><span class="identifier">ExecutorService</span></a></code></td>
 </tr>
 <tr>
 <td>
@@ -105,16 +114,6 @@ proxy.</p>
 </td>
 <td>
 <code><span class="keyword">fun </span><span class="identifier">runningCallsCount</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a></code></td>
-</tr>
-<tr>
-<td>
-<p><a href="set-idle-callback.html">setIdleCallback</a></p>
-</td>
-<td>
-<code><span class="keyword">fun </span><span class="identifier">setIdleCallback</span><span class="symbol">(</span><span class="identifier" id="okhttp3.Dispatcher$setIdleCallback(java.lang.Runnable)/idleCallback">idleCallback</span><span class="symbol">:</span>&nbsp;<a href="https://docs.oracle.com/javase/8/docs/api/java/lang/Runnable.html"><span class="identifier">Runnable</span></a><span class="symbol">?</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code>
-<p>Set a callback to be invoked each time the dispatcher becomes idle (when the number of running
-calls returns to zero).</p>
-<code><span class="keyword">fun </span><span class="identifier">setIdleCallback</span><span class="symbol">(</span><span class="identifier" id="okhttp3.Dispatcher$setIdleCallback(kotlin.Function0((kotlin.Unit)))/idleCallback">idleCallback</span><span class="symbol">:</span>&nbsp;<span class="symbol">(</span><span class="symbol">)</span>&nbsp;<span class="symbol">-&gt;</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><span class="identifier">Unit</span></a></code></td>
 </tr>
 </tbody>
 </table>

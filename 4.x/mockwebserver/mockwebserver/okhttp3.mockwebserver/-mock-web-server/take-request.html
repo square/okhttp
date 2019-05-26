@@ -9,19 +9,23 @@
 <br/>
 <h1>takeRequest</h1>
 <a name="okhttp3.mockwebserver.MockWebServer$takeRequest()"></a>
-<code><span class="keyword">fun </span><span class="identifier">takeRequest</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="../-recorded-request/index.html"><span class="identifier">RecordedRequest</span></a><span class="symbol">!</span></code>
-<p>Awaits the next HTTP request, removes it, and returns it. Callers should use this to verify the request was sent as intended. This method will block until the request is available, possibly forever.</p>
+<code><span class="keyword">fun </span><span class="identifier">takeRequest</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="../-recorded-request/index.html"><span class="identifier">RecordedRequest</span></a></code>
+<p>Awaits the next HTTP request, removes it, and returns it. Callers should use this to verify the
+request was sent as intended. This method will block until the request is available, possibly
+forever.</p>
 <p><strong>Return</strong><br/>
-<a href="../-recorded-request/index.html"><span class="identifier">RecordedRequest</span></a><span class="symbol">!</span><span class="symbol">:</span> the head of the request queue</p>
+the head of the request queue</p>
 <a name="okhttp3.mockwebserver.MockWebServer$takeRequest(kotlin.Long, java.util.concurrent.TimeUnit)"></a>
-<code><span class="keyword">fun </span><span class="identifier">takeRequest</span><span class="symbol">(</span><span class="identifier" id="okhttp3.mockwebserver.MockWebServer$takeRequest(kotlin.Long, java.util.concurrent.TimeUnit)/timeout">timeout</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html"><span class="identifier">Long</span></a><span class="symbol">, </span><span class="identifier" id="okhttp3.mockwebserver.MockWebServer$takeRequest(kotlin.Long, java.util.concurrent.TimeUnit)/unit">unit</span><span class="symbol">:</span>&nbsp;<a href="https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/TimeUnit.html"><span class="identifier">TimeUnit</span></a><span class="symbol">!</span><span class="symbol">)</span><span class="symbol">: </span><a href="../-recorded-request/index.html"><span class="identifier">RecordedRequest</span></a><span class="symbol">!</span></code>
-<p>Awaits the next HTTP request (waiting up to the specified wait time if necessary), removes it, and returns it. Callers should use this to verify the request was sent as intended within the given time.</p>
+<code><span class="keyword">fun </span><span class="identifier">takeRequest</span><span class="symbol">(</span><span class="identifier" id="okhttp3.mockwebserver.MockWebServer$takeRequest(kotlin.Long, java.util.concurrent.TimeUnit)/timeout">timeout</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html"><span class="identifier">Long</span></a><span class="symbol">, </span><span class="identifier" id="okhttp3.mockwebserver.MockWebServer$takeRequest(kotlin.Long, java.util.concurrent.TimeUnit)/unit">unit</span><span class="symbol">:</span>&nbsp;<a href="https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/TimeUnit.html"><span class="identifier">TimeUnit</span></a><span class="symbol">)</span><span class="symbol">: </span><a href="../-recorded-request/index.html"><span class="identifier">RecordedRequest</span></a><span class="symbol">?</span></code>
+<p>Awaits the next HTTP request (waiting up to the specified wait time if necessary), removes it,
+and returns it. Callers should use this to verify the request was sent as intended within the
+given time.</p>
 <h3>Parameters</h3>
 <p><a name="timeout"></a>
-<code>timeout</code> - <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html"><span class="identifier">Long</span></a><span class="symbol">:</span> how long to wait before giving up, in units of <code>unit</code></p>
+<code>timeout</code> - how long to wait before giving up, in units of <a href="take-request.html#okhttp3.mockwebserver.MockWebServer$takeRequest(kotlin.Long, java.util.concurrent.TimeUnit)/unit">unit</a></p>
 <p><a name="unit"></a>
-<code>unit</code> - <a href="https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/TimeUnit.html"><span class="identifier">TimeUnit</span></a><span class="symbol">!</span><span class="symbol">:</span> a <code>TimeUnit</code> determining how to interpret the <code>timeout</code> parameter</p>
+<code>unit</code> - a <a href="https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/TimeUnit.html">TimeUnit</a> determining how to interpret the <a href="take-request.html#okhttp3.mockwebserver.MockWebServer$takeRequest(kotlin.Long, java.util.concurrent.TimeUnit)/timeout">timeout</a> parameter</p>
 <p><strong>Return</strong><br/>
-<a href="../-recorded-request/index.html"><span class="identifier">RecordedRequest</span></a><span class="symbol">!</span><span class="symbol">:</span> the head of the request queue</p>
+the head of the request queue</p>
 </BODY>
 </HTML>

@@ -18,7 +18,7 @@ try (Response response = client.newCall(request).execute()) {
   ...
 }
 </code></pre>
-<p>The caller may read the response body with the response's <a href="../-response/body.html">Response.body</a> method. To avoid
+<p>The caller may read the response body with the response's <a href="#">Response.body</a> method. To avoid
 leaking resources callers must <a href="../-response-body/index.html">close the response body</a> or the response.</p>
 <p>Note that transport-layer success (receiving a HTTP response code, headers and body) does not
 necessarily indicate application-layer success: <code>response</code> may still indicate an unhappy HTTP

@@ -78,7 +78,7 @@ remain idle.</p>
 </tr>
 </tbody>
 </table>
-<h3>Functions</h3>
+<h3>Properties</h3>
 <table>
 <tbody>
 <tr>
@@ -86,52 +86,59 @@ remain idle.</p>
 <p><a href="authenticator.html">authenticator</a></p>
 </td>
 <td>
-<code><span class="keyword">open</span> <span class="keyword">fun </span><span class="identifier">authenticator</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="../-authenticator/index.html"><span class="identifier">Authenticator</span></a></code></td>
+<code><span class="keyword">val </span><span class="identifier">authenticator</span><span class="symbol">: </span><a href="../-authenticator/index.html"><span class="identifier">Authenticator</span></a></code></td>
 </tr>
 <tr>
 <td>
 <p><a href="cache.html">cache</a></p>
 </td>
 <td>
-<code><span class="keyword">open</span> <span class="keyword">fun </span><span class="identifier">cache</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="../-cache/index.html"><span class="identifier">Cache</span></a><span class="symbol">?</span></code></td>
+<code><span class="keyword">val </span><span class="identifier">cache</span><span class="symbol">: </span><a href="../-cache/index.html"><span class="identifier">Cache</span></a><span class="symbol">?</span></code></td>
 </tr>
 <tr>
 <td>
 <p><a href="call-timeout-millis.html">callTimeoutMillis</a></p>
 </td>
 <td>
-<code><span class="keyword">open</span> <span class="keyword">fun </span><span class="identifier">callTimeoutMillis</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a></code>
+<code><span class="keyword">val </span><span class="identifier">callTimeoutMillis</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a></code>
 <p>Default call timeout (in milliseconds). By default there is no timeout for complete calls, but
 there is for the connect, write, and read actions within a call.</p>
 </td>
 </tr>
 <tr>
 <td>
+<p><a href="certificate-chain-cleaner.html">certificateChainCleaner</a></p>
+</td>
+<td>
+<code><span class="keyword">val </span><span class="identifier">certificateChainCleaner</span><span class="symbol">: </span><span class="identifier">CertificateChainCleaner</span><span class="symbol">?</span></code></td>
+</tr>
+<tr>
+<td>
 <p><a href="certificate-pinner.html">certificatePinner</a></p>
 </td>
 <td>
-<code><span class="keyword">open</span> <span class="keyword">fun </span><span class="identifier">certificatePinner</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="../-certificate-pinner/index.html"><span class="identifier">CertificatePinner</span></a></code></td>
+<code><span class="keyword">val </span><span class="identifier">certificatePinner</span><span class="symbol">: </span><a href="../-certificate-pinner/index.html"><span class="identifier">CertificatePinner</span></a></code></td>
 </tr>
 <tr>
 <td>
 <p><a href="connection-pool.html">connectionPool</a></p>
 </td>
 <td>
-<code><span class="keyword">open</span> <span class="keyword">fun </span><span class="identifier">connectionPool</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="../-connection-pool/index.html"><span class="identifier">ConnectionPool</span></a></code></td>
+<code><span class="keyword">val </span><span class="identifier">connectionPool</span><span class="symbol">: </span><a href="../-connection-pool/index.html"><span class="identifier">ConnectionPool</span></a></code></td>
 </tr>
 <tr>
 <td>
 <p><a href="connection-specs.html">connectionSpecs</a></p>
 </td>
 <td>
-<code><span class="keyword">open</span> <span class="keyword">fun </span><span class="identifier">connectionSpecs</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.html"><span class="identifier">List</span></a><span class="symbol">&lt;</span><a href="../-connection-spec/index.html"><span class="identifier">ConnectionSpec</span></a><span class="symbol">&gt;</span></code></td>
+<code><span class="keyword">val </span><span class="identifier">connectionSpecs</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.html"><span class="identifier">List</span></a><span class="symbol">&lt;</span><a href="../-connection-spec/index.html"><span class="identifier">ConnectionSpec</span></a><span class="symbol">&gt;</span></code></td>
 </tr>
 <tr>
 <td>
 <p><a href="connect-timeout-millis.html">connectTimeoutMillis</a></p>
 </td>
 <td>
-<code><span class="keyword">open</span> <span class="keyword">fun </span><span class="identifier">connectTimeoutMillis</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a></code>
+<code><span class="keyword">val </span><span class="identifier">connectTimeoutMillis</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a></code>
 <p>Default connect timeout (in milliseconds). The default is 10 seconds.</p>
 </td>
 </tr>
@@ -140,56 +147,56 @@ there is for the connect, write, and read actions within a call.</p>
 <p><a href="cookie-jar.html">cookieJar</a></p>
 </td>
 <td>
-<code><span class="keyword">open</span> <span class="keyword">fun </span><span class="identifier">cookieJar</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="../-cookie-jar/index.html"><span class="identifier">CookieJar</span></a></code></td>
+<code><span class="keyword">val </span><span class="identifier">cookieJar</span><span class="symbol">: </span><a href="../-cookie-jar/index.html"><span class="identifier">CookieJar</span></a></code></td>
 </tr>
 <tr>
 <td>
 <p><a href="dispatcher.html">dispatcher</a></p>
 </td>
 <td>
-<code><span class="keyword">open</span> <span class="keyword">fun </span><span class="identifier">dispatcher</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="../-dispatcher/index.html"><span class="identifier">Dispatcher</span></a></code></td>
+<code><span class="keyword">val </span><span class="identifier">dispatcher</span><span class="symbol">: </span><a href="../-dispatcher/index.html"><span class="identifier">Dispatcher</span></a></code></td>
 </tr>
 <tr>
 <td>
 <p><a href="dns.html">dns</a></p>
 </td>
 <td>
-<code><span class="keyword">open</span> <span class="keyword">fun </span><span class="identifier">dns</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="../-dns/index.html"><span class="identifier">Dns</span></a></code></td>
+<code><span class="keyword">val </span><span class="identifier">dns</span><span class="symbol">: </span><a href="../-dns/index.html"><span class="identifier">Dns</span></a></code></td>
 </tr>
 <tr>
 <td>
 <p><a href="event-listener-factory.html">eventListenerFactory</a></p>
 </td>
 <td>
-<code><span class="keyword">open</span> <span class="keyword">fun </span><span class="identifier">eventListenerFactory</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="../-event-listener/-factory/index.html"><span class="identifier">EventListener.Factory</span></a></code></td>
+<code><span class="keyword">val </span><span class="identifier">eventListenerFactory</span><span class="symbol">: </span><a href="../-event-listener/-factory/index.html"><span class="identifier">EventListener.Factory</span></a></code></td>
 </tr>
 <tr>
 <td>
 <p><a href="follow-redirects.html">followRedirects</a></p>
 </td>
 <td>
-<code><span class="keyword">open</span> <span class="keyword">fun </span><span class="identifier">followRedirects</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code></td>
+<code><span class="keyword">val </span><span class="identifier">followRedirects</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code></td>
 </tr>
 <tr>
 <td>
 <p><a href="follow-ssl-redirects.html">followSslRedirects</a></p>
 </td>
 <td>
-<code><span class="keyword">open</span> <span class="keyword">fun </span><span class="identifier">followSslRedirects</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code></td>
+<code><span class="keyword">val </span><span class="identifier">followSslRedirects</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code></td>
 </tr>
 <tr>
 <td>
 <p><a href="hostname-verifier.html">hostnameVerifier</a></p>
 </td>
 <td>
-<code><span class="keyword">open</span> <span class="keyword">fun </span><span class="identifier">hostnameVerifier</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://docs.oracle.com/javase/8/docs/api/javax/net/ssl/HostnameVerifier.html"><span class="identifier">HostnameVerifier</span></a></code></td>
+<code><span class="keyword">val </span><span class="identifier">hostnameVerifier</span><span class="symbol">: </span><a href="https://docs.oracle.com/javase/8/docs/api/javax/net/ssl/HostnameVerifier.html"><span class="identifier">HostnameVerifier</span></a></code></td>
 </tr>
 <tr>
 <td>
 <p><a href="interceptors.html">interceptors</a></p>
 </td>
 <td>
-<code><span class="keyword">open</span> <span class="keyword">fun </span><span class="identifier">interceptors</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.html"><span class="identifier">List</span></a><span class="symbol">&lt;</span><a href="../-interceptor/index.html"><span class="identifier">Interceptor</span></a><span class="symbol">&gt;</span></code>
+<code><span class="keyword">val </span><span class="identifier">interceptors</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.html"><span class="identifier">List</span></a><span class="symbol">&lt;</span><a href="../-interceptor/index.html"><span class="identifier">Interceptor</span></a><span class="symbol">&gt;</span></code>
 <p>Returns an immutable list of interceptors that observe the full span of each call: from before
 the connection is established (if any) until after the response source is selected (either the
 origin server, cache, or both).</p>
@@ -200,12 +207,93 @@ origin server, cache, or both).</p>
 <p><a href="network-interceptors.html">networkInterceptors</a></p>
 </td>
 <td>
-<code><span class="keyword">open</span> <span class="keyword">fun </span><span class="identifier">networkInterceptors</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.html"><span class="identifier">List</span></a><span class="symbol">&lt;</span><a href="../-interceptor/index.html"><span class="identifier">Interceptor</span></a><span class="symbol">&gt;</span></code>
+<code><span class="keyword">val </span><span class="identifier">networkInterceptors</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.html"><span class="identifier">List</span></a><span class="symbol">&lt;</span><a href="../-interceptor/index.html"><span class="identifier">Interceptor</span></a><span class="symbol">&gt;</span></code>
 <p>Returns an immutable list of interceptors that observe a single network request and response.
 These interceptors must call <a href="../-interceptor/-chain/proceed.html">Interceptor.Chain.proceed</a> exactly once: it is an error for
 a network interceptor to short-circuit or repeat a network request.</p>
 </td>
 </tr>
+<tr>
+<td>
+<p><a href="ping-interval-millis.html">pingIntervalMillis</a></p>
+</td>
+<td>
+<code><span class="keyword">val </span><span class="identifier">pingIntervalMillis</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a></code>
+<p>Web socket and HTTP/2 ping interval (in milliseconds). By default pings are not sent.</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><a href="protocols.html">protocols</a></p>
+</td>
+<td>
+<code><span class="keyword">val </span><span class="identifier">protocols</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.html"><span class="identifier">List</span></a><span class="symbol">&lt;</span><a href="../-protocol/index.html"><span class="identifier">Protocol</span></a><span class="symbol">&gt;</span></code></td>
+</tr>
+<tr>
+<td>
+<p><a href="proxy.html">proxy</a></p>
+</td>
+<td>
+<code><span class="keyword">val </span><span class="identifier">proxy</span><span class="symbol">: </span><a href="https://docs.oracle.com/javase/8/docs/api/java/net/Proxy.html"><span class="identifier">Proxy</span></a><span class="symbol">?</span></code></td>
+</tr>
+<tr>
+<td>
+<p><a href="proxy-authenticator.html">proxyAuthenticator</a></p>
+</td>
+<td>
+<code><span class="keyword">val </span><span class="identifier">proxyAuthenticator</span><span class="symbol">: </span><a href="../-authenticator/index.html"><span class="identifier">Authenticator</span></a></code></td>
+</tr>
+<tr>
+<td>
+<p><a href="proxy-selector.html">proxySelector</a></p>
+</td>
+<td>
+<code><span class="keyword">val </span><span class="identifier">proxySelector</span><span class="symbol">: </span><a href="https://docs.oracle.com/javase/8/docs/api/java/net/ProxySelector.html"><span class="identifier">ProxySelector</span></a></code></td>
+</tr>
+<tr>
+<td>
+<p><a href="read-timeout-millis.html">readTimeoutMillis</a></p>
+</td>
+<td>
+<code><span class="keyword">val </span><span class="identifier">readTimeoutMillis</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a></code>
+<p>Default read timeout (in milliseconds). The default is 10 seconds.</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><a href="retry-on-connection-failure.html">retryOnConnectionFailure</a></p>
+</td>
+<td>
+<code><span class="keyword">val </span><span class="identifier">retryOnConnectionFailure</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code></td>
+</tr>
+<tr>
+<td>
+<p><a href="socket-factory.html">socketFactory</a></p>
+</td>
+<td>
+<code><span class="keyword">val </span><span class="identifier">socketFactory</span><span class="symbol">: </span><a href="https://docs.oracle.com/javase/8/docs/api/javax/net/SocketFactory.html"><span class="identifier">SocketFactory</span></a></code></td>
+</tr>
+<tr>
+<td>
+<p><a href="ssl-socket-factory.html">sslSocketFactory</a></p>
+</td>
+<td>
+<code><span class="keyword">val </span><span class="identifier">sslSocketFactory</span><span class="symbol">: </span><a href="https://docs.oracle.com/javase/8/docs/api/javax/net/ssl/SSLSocketFactory.html"><span class="identifier">SSLSocketFactory</span></a></code></td>
+</tr>
+<tr>
+<td>
+<p><a href="write-timeout-millis.html">writeTimeoutMillis</a></p>
+</td>
+<td>
+<code><span class="keyword">val </span><span class="identifier">writeTimeoutMillis</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a></code>
+<p>Default write timeout (in milliseconds). The default is 10 seconds.</p>
+</td>
+</tr>
+</tbody>
+</table>
+<h3>Functions</h3>
+<table>
+<tbody>
 <tr>
 <td>
 <p><a href="new-builder.html">newBuilder</a></p>
@@ -229,82 +317,6 @@ a network interceptor to short-circuit or repeat a network request.</p>
 <td>
 <code><span class="keyword">open</span> <span class="keyword">fun </span><span class="identifier">newWebSocket</span><span class="symbol">(</span><span class="identifier" id="okhttp3.OkHttpClient$newWebSocket(okhttp3.Request, okhttp3.WebSocketListener)/request">request</span><span class="symbol">:</span>&nbsp;<a href="../-request/index.html"><span class="identifier">Request</span></a><span class="symbol">, </span><span class="identifier" id="okhttp3.OkHttpClient$newWebSocket(okhttp3.Request, okhttp3.WebSocketListener)/listener">listener</span><span class="symbol">:</span>&nbsp;<a href="../-web-socket-listener/index.html"><span class="identifier">WebSocketListener</span></a><span class="symbol">)</span><span class="symbol">: </span><a href="../-web-socket/index.html"><span class="identifier">WebSocket</span></a></code>
 <p>Uses <a href="new-web-socket.html#okhttp3.OkHttpClient$newWebSocket(okhttp3.Request, okhttp3.WebSocketListener)/request">request</a> to connect a new web socket.</p>
-</td>
-</tr>
-<tr>
-<td>
-<p><a href="ping-interval-millis.html">pingIntervalMillis</a></p>
-</td>
-<td>
-<code><span class="keyword">open</span> <span class="keyword">fun </span><span class="identifier">pingIntervalMillis</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a></code>
-<p>Web socket and HTTP/2 ping interval (in milliseconds). By default pings are not sent.</p>
-</td>
-</tr>
-<tr>
-<td>
-<p><a href="protocols.html">protocols</a></p>
-</td>
-<td>
-<code><span class="keyword">open</span> <span class="keyword">fun </span><span class="identifier">protocols</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.html"><span class="identifier">List</span></a><span class="symbol">&lt;</span><a href="../-protocol/index.html"><span class="identifier">Protocol</span></a><span class="symbol">&gt;</span></code></td>
-</tr>
-<tr>
-<td>
-<p><a href="proxy.html">proxy</a></p>
-</td>
-<td>
-<code><span class="keyword">open</span> <span class="keyword">fun </span><span class="identifier">proxy</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://docs.oracle.com/javase/8/docs/api/java/net/Proxy.html"><span class="identifier">Proxy</span></a><span class="symbol">?</span></code></td>
-</tr>
-<tr>
-<td>
-<p><a href="proxy-authenticator.html">proxyAuthenticator</a></p>
-</td>
-<td>
-<code><span class="keyword">open</span> <span class="keyword">fun </span><span class="identifier">proxyAuthenticator</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="../-authenticator/index.html"><span class="identifier">Authenticator</span></a></code></td>
-</tr>
-<tr>
-<td>
-<p><a href="proxy-selector.html">proxySelector</a></p>
-</td>
-<td>
-<code><span class="keyword">open</span> <span class="keyword">fun </span><span class="identifier">proxySelector</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://docs.oracle.com/javase/8/docs/api/java/net/ProxySelector.html"><span class="identifier">ProxySelector</span></a></code></td>
-</tr>
-<tr>
-<td>
-<p><a href="read-timeout-millis.html">readTimeoutMillis</a></p>
-</td>
-<td>
-<code><span class="keyword">open</span> <span class="keyword">fun </span><span class="identifier">readTimeoutMillis</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a></code>
-<p>Default read timeout (in milliseconds). The default is 10 seconds.</p>
-</td>
-</tr>
-<tr>
-<td>
-<p><a href="retry-on-connection-failure.html">retryOnConnectionFailure</a></p>
-</td>
-<td>
-<code><span class="keyword">open</span> <span class="keyword">fun </span><span class="identifier">retryOnConnectionFailure</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><span class="identifier">Boolean</span></a></code></td>
-</tr>
-<tr>
-<td>
-<p><a href="socket-factory.html">socketFactory</a></p>
-</td>
-<td>
-<code><span class="keyword">open</span> <span class="keyword">fun </span><span class="identifier">socketFactory</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://docs.oracle.com/javase/8/docs/api/javax/net/SocketFactory.html"><span class="identifier">SocketFactory</span></a></code></td>
-</tr>
-<tr>
-<td>
-<p><a href="ssl-socket-factory.html">sslSocketFactory</a></p>
-</td>
-<td>
-<code><span class="keyword">open</span> <span class="keyword">fun </span><span class="identifier">sslSocketFactory</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://docs.oracle.com/javase/8/docs/api/javax/net/ssl/SSLSocketFactory.html"><span class="identifier">SSLSocketFactory</span></a></code></td>
-</tr>
-<tr>
-<td>
-<p><a href="write-timeout-millis.html">writeTimeoutMillis</a></p>
-</td>
-<td>
-<code><span class="keyword">open</span> <span class="keyword">fun </span><span class="identifier">writeTimeoutMillis</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a></code>
-<p>Default write timeout (in milliseconds). The default is 10 seconds.</p>
 </td>
 </tr>
 </tbody>

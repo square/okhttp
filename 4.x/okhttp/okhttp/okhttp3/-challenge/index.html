@@ -9,7 +9,7 @@
 <br/>
 <h1>Challenge</h1>
 <code><span class="keyword">class </span><span class="identifier">Challenge</span></code>
-<p>An RFC 7235 challenge.</p>
+<p>An <a href="https://tools.ietf.org/html/rfc7235">RFC 7235</a> challenge.</p>
 <h3>Constructors</h3>
 <table>
 <tbody>
@@ -19,12 +19,12 @@
 </td>
 <td>
 <code><span class="identifier">Challenge</span><span class="symbol">(</span><span class="identifier" id="okhttp3.Challenge$<init>(kotlin.String, kotlin.String)/scheme">scheme</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><span class="identifier">String</span></a><span class="symbol">, </span><span class="identifier" id="okhttp3.Challenge$<init>(kotlin.String, kotlin.String)/realm">realm</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><span class="identifier">String</span></a><span class="symbol">)</span></code><code><span class="identifier">Challenge</span><span class="symbol">(</span><span class="identifier" id="okhttp3.Challenge$<init>(kotlin.String, kotlin.collections.Map((kotlin.String, kotlin.String)))/scheme">scheme</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><span class="identifier">String</span></a><span class="symbol">, </span><span class="identifier" id="okhttp3.Challenge$<init>(kotlin.String, kotlin.collections.Map((kotlin.String, kotlin.String)))/authParams">authParams</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-map/index.html"><span class="identifier">Map</span></a><span class="symbol">&lt;</span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><span class="identifier">String</span></a><span class="symbol">?</span><span class="symbol">,</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><span class="identifier">String</span></a><span class="symbol">&gt;</span><span class="symbol">)</span></code>
-<p>An RFC 7235 challenge.</p>
+<p>An <a href="https://tools.ietf.org/html/rfc7235">RFC 7235</a> challenge.</p>
 </td>
 </tr>
 </tbody>
 </table>
-<h3>Functions</h3>
+<h3>Properties</h3>
 <table>
 <tbody>
 <tr>
@@ -32,8 +32,8 @@
 <p><a href="auth-params.html">authParams</a></p>
 </td>
 <td>
-<code><span class="keyword">fun </span><span class="identifier">authParams</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-map/index.html"><span class="identifier">Map</span></a><span class="symbol">&lt;</span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><span class="identifier">String</span></a><span class="symbol">?</span><span class="symbol">,</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><span class="identifier">String</span></a><span class="symbol">&gt;</span></code>
-<p>Returns the auth params, including <a href="realm.html">realm</a> and <a href="charset.html">charset</a> if present, but as
+<code><span class="keyword">val </span><span class="identifier">authParams</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-map/index.html"><span class="identifier">Map</span></a><span class="symbol">&lt;</span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><span class="identifier">String</span></a><span class="symbol">?</span><span class="symbol">,</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><span class="identifier">String</span></a><span class="symbol">&gt;</span></code>
+<p>Returns the auth params, including <a href="#">realm</a> and <a href="#">charset</a> if present, but as
 strings. The map's keys are lowercase and should be treated case-insensitively.</p>
 </td>
 </tr>
@@ -42,10 +42,33 @@ strings. The map's keys are lowercase and should be treated case-insensitively.<
 <p><a href="charset.html">charset</a></p>
 </td>
 <td>
-<code><span class="keyword">fun </span><span class="identifier">charset</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://docs.oracle.com/javase/8/docs/api/java/nio/charset/Charset.html"><span class="identifier">Charset</span></a></code>
-<p>Returns the charset that should be used to encode the credentials.</p>
+<code><span class="keyword">val </span><span class="identifier">charset</span><span class="symbol">: </span><a href="https://docs.oracle.com/javase/8/docs/api/java/nio/charset/Charset.html"><span class="identifier">Charset</span></a></code>
+<p>The charset that should be used to encode the credentials.</p>
 </td>
 </tr>
+<tr>
+<td>
+<p><a href="realm.html">realm</a></p>
+</td>
+<td>
+<code><span class="keyword">val </span><span class="identifier">realm</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><span class="identifier">String</span></a><span class="symbol">?</span></code>
+<p>Returns the protection space.</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><a href="scheme.html">scheme</a></p>
+</td>
+<td>
+<code><span class="keyword">val </span><span class="identifier">scheme</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><span class="identifier">String</span></a></code>
+<p>Returns the authentication scheme, like <code>Basic</code>.</p>
+</td>
+</tr>
+</tbody>
+</table>
+<h3>Functions</h3>
+<table>
+<tbody>
 <tr>
 <td>
 <p><a href="equals.html">equals</a></p>
@@ -59,24 +82,6 @@ strings. The map's keys are lowercase and should be treated case-insensitively.<
 </td>
 <td>
 <code><span class="keyword">fun </span><span class="identifier">hashCode</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a></code></td>
-</tr>
-<tr>
-<td>
-<p><a href="realm.html">realm</a></p>
-</td>
-<td>
-<code><span class="keyword">fun </span><span class="identifier">realm</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><span class="identifier">String</span></a><span class="symbol">?</span></code>
-<p>Returns the protection space.</p>
-</td>
-</tr>
-<tr>
-<td>
-<p><a href="scheme.html">scheme</a></p>
-</td>
-<td>
-<code><span class="keyword">fun </span><span class="identifier">scheme</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><span class="identifier">String</span></a></code>
-<p>Returns the authentication scheme, like <code>Basic</code>.</p>
-</td>
 </tr>
 <tr>
 <td>

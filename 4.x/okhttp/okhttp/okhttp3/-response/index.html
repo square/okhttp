@@ -30,6 +30,73 @@ value that may be consumed only once and then closed. All other properties are i
 <tbody>
 <tr>
 <td>
+<p><a href="body.html">body</a></p>
+</td>
+<td>
+<code><span class="keyword">val </span><span class="identifier">body</span><span class="symbol">: </span><a href="../-response-body/index.html"><span class="identifier">ResponseBody</span></a><span class="symbol">?</span></code>
+<p>Returns a non-null value if this response was passed to <a href="../-callback/on-response.html">Callback.onResponse</a> or returned
+from <a href="../-call/execute.html">Call.execute</a>. Response bodies must be <a href="../-response-body/index.html">closed</a> and may
+be consumed only once.</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><a href="cache-control.html">cacheControl</a></p>
+</td>
+<td>
+<code><span class="keyword">val </span><span class="identifier">cacheControl</span><span class="symbol">: </span><a href="../-cache-control/index.html"><span class="identifier">CacheControl</span></a></code>
+<p>Returns the cache control directives for this response. This is never null, even if this
+response contains no <code>Cache-Control</code> header.</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><a href="cache-response.html">cacheResponse</a></p>
+</td>
+<td>
+<code><span class="keyword">val </span><span class="identifier">cacheResponse</span><span class="symbol">: </span><a href="./index.html"><span class="identifier">Response</span></a><span class="symbol">?</span></code>
+<p>Returns the raw response received from the cache. Will be null if this response didn't use
+the cache. For conditional get requests the cache response and network response may both be
+non-null. The body of the returned response should not be read.</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><a href="code.html">code</a></p>
+</td>
+<td>
+<code><span class="keyword">val </span><span class="identifier">code</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a></code>
+<p>Returns the HTTP status code.</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><a href="exchange.html">exchange</a></p>
+</td>
+<td>
+<code><span class="keyword">val </span><span class="identifier">exchange</span><span class="symbol">: </span><span class="identifier">Exchange</span><span class="symbol">?</span></code></td>
+</tr>
+<tr>
+<td>
+<p><a href="handshake.html">handshake</a></p>
+</td>
+<td>
+<code><span class="keyword">val </span><span class="identifier">handshake</span><span class="symbol">: </span><a href="../-handshake/index.html"><span class="identifier">Handshake</span></a><span class="symbol">?</span></code>
+<p>Returns the TLS handshake of the connection that carried this response, or null if the
+response was received without TLS.</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><a href="headers.html">headers</a></p>
+</td>
+<td>
+<code><span class="keyword">val </span><span class="identifier">headers</span><span class="symbol">: </span><a href="../-headers/index.html"><span class="identifier">Headers</span></a></code>
+<p>Returns the HTTP headers.</p>
+</td>
+</tr>
+<tr>
+<td>
 <p><a href="is-redirect.html">isRedirect</a></p>
 </td>
 <td>
@@ -47,43 +114,84 @@ value that may be consumed only once and then closed. All other properties are i
 understood, and accepted.</p>
 </td>
 </tr>
+<tr>
+<td>
+<p><a href="message.html">message</a></p>
+</td>
+<td>
+<code><span class="keyword">val </span><span class="identifier">message</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><span class="identifier">String</span></a></code>
+<p>Returns the HTTP status message.</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><a href="network-response.html">networkResponse</a></p>
+</td>
+<td>
+<code><span class="keyword">val </span><span class="identifier">networkResponse</span><span class="symbol">: </span><a href="./index.html"><span class="identifier">Response</span></a><span class="symbol">?</span></code>
+<p>Returns the raw response received from the network. Will be null if this response didn't use
+the network, such as when the response is fully cached. The body of the returned response
+should not be read.</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><a href="prior-response.html">priorResponse</a></p>
+</td>
+<td>
+<code><span class="keyword">val </span><span class="identifier">priorResponse</span><span class="symbol">: </span><a href="./index.html"><span class="identifier">Response</span></a><span class="symbol">?</span></code>
+<p>Returns the response for the HTTP redirect or authorization challenge that triggered this
+response, or null if this response wasn't triggered by an automatic retry. The body of the
+returned response should not be read because it has already been consumed by the redirecting
+client.</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><a href="protocol.html">protocol</a></p>
+</td>
+<td>
+<code><span class="keyword">val </span><span class="identifier">protocol</span><span class="symbol">: </span><a href="../-protocol/index.html"><span class="identifier">Protocol</span></a></code>
+<p>Returns the HTTP protocol, such as <a href="../-protocol/-h-t-t-p_1_1.html">Protocol.HTTP_1_1</a> or <a href="../-protocol/-h-t-t-p_1_0.html">Protocol.HTTP_1_0</a>.</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><a href="received-response-at-millis.html">receivedResponseAtMillis</a></p>
+</td>
+<td>
+<code><span class="keyword">val </span><span class="identifier">receivedResponseAtMillis</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html"><span class="identifier">Long</span></a></code>
+<p>Returns a <a href="https://docs.oracle.com/javase/8/docs/api/java/lang/System.html#currentTimeMillis()">timestamp</a> taken immediately after OkHttp
+received this response's headers from the network. If this response is being served from the
+cache then this is the timestamp of the original response.</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><a href="request.html">request</a></p>
+</td>
+<td>
+<code><span class="keyword">val </span><span class="identifier">request</span><span class="symbol">: </span><a href="../-request/index.html"><span class="identifier">Request</span></a></code>
+<p>The wire-level request that initiated this HTTP response. This is not necessarily the same
+request issued by the application:</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><a href="sent-request-at-millis.html">sentRequestAtMillis</a></p>
+</td>
+<td>
+<code><span class="keyword">val </span><span class="identifier">sentRequestAtMillis</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html"><span class="identifier">Long</span></a></code>
+<p>Returns a <a href="https://docs.oracle.com/javase/8/docs/api/java/lang/System.html#currentTimeMillis()">timestamp</a> taken immediately before OkHttp
+transmitted the initiating request over the network. If this response is being served from the
+cache then this is the timestamp of the original request.</p>
+</td>
+</tr>
 </tbody>
 </table>
 <h3>Functions</h3>
 <table>
 <tbody>
-<tr>
-<td>
-<p><a href="body.html">body</a></p>
-</td>
-<td>
-<code><span class="keyword">fun </span><span class="identifier">body</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="../-response-body/index.html"><span class="identifier">ResponseBody</span></a><span class="symbol">?</span></code>
-<p>Returns a non-null value if this response was passed to <a href="../-callback/on-response.html">Callback.onResponse</a> or returned
-from <a href="../-call/execute.html">Call.execute</a>. Response bodies must be <a href="../-response-body/index.html">closed</a> and may
-be consumed only once.</p>
-</td>
-</tr>
-<tr>
-<td>
-<p><a href="cache-control.html">cacheControl</a></p>
-</td>
-<td>
-<code><span class="keyword">fun </span><span class="identifier">cacheControl</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="../-cache-control/index.html"><span class="identifier">CacheControl</span></a></code>
-<p>Returns the cache control directives for this response. This is never null, even if this
-response contains no <code>Cache-Control</code> header.</p>
-</td>
-</tr>
-<tr>
-<td>
-<p><a href="cache-response.html">cacheResponse</a></p>
-</td>
-<td>
-<code><span class="keyword">fun </span><span class="identifier">cacheResponse</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="./index.html"><span class="identifier">Response</span></a><span class="symbol">?</span></code>
-<p>Returns the raw response received from the cache. Will be null if this response didn't use
-the cache. For conditional get requests the cache response and network response may both be
-non-null. The body of the returned response should not be read.</p>
-</td>
-</tr>
 <tr>
 <td>
 <p><a href="challenges.html">challenges</a></p>
@@ -107,25 +215,6 @@ Otherwise this returns an empty list of challenges.</p>
 </tr>
 <tr>
 <td>
-<p><a href="code.html">code</a></p>
-</td>
-<td>
-<code><span class="keyword">fun </span><span class="identifier">code</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a></code>
-<p>Returns the HTTP status code.</p>
-</td>
-</tr>
-<tr>
-<td>
-<p><a href="handshake.html">handshake</a></p>
-</td>
-<td>
-<code><span class="keyword">fun </span><span class="identifier">handshake</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="../-handshake/index.html"><span class="identifier">Handshake</span></a><span class="symbol">?</span></code>
-<p>Returns the TLS handshake of the connection that carried this response, or null if the
-response was received without TLS.</p>
-</td>
-</tr>
-<tr>
-<td>
 <p><a href="header.html">header</a></p>
 </td>
 <td>
@@ -136,28 +225,7 @@ response was received without TLS.</p>
 <p><a href="headers.html">headers</a></p>
 </td>
 <td>
-<code><span class="keyword">fun </span><span class="identifier">headers</span><span class="symbol">(</span><span class="identifier" id="okhttp3.Response$headers(kotlin.String)/name">name</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><span class="identifier">String</span></a><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.html"><span class="identifier">List</span></a><span class="symbol">&lt;</span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><span class="identifier">String</span></a><span class="symbol">&gt;</span></code><br/>
-<code><span class="keyword">fun </span><span class="identifier">headers</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="../-headers/index.html"><span class="identifier">Headers</span></a></code></td>
-</tr>
-<tr>
-<td>
-<p><a href="message.html">message</a></p>
-</td>
-<td>
-<code><span class="keyword">fun </span><span class="identifier">message</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><span class="identifier">String</span></a></code>
-<p>Returns the HTTP status message.</p>
-</td>
-</tr>
-<tr>
-<td>
-<p><a href="network-response.html">networkResponse</a></p>
-</td>
-<td>
-<code><span class="keyword">fun </span><span class="identifier">networkResponse</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="./index.html"><span class="identifier">Response</span></a><span class="symbol">?</span></code>
-<p>Returns the raw response received from the network. Will be null if this response didn't use
-the network, such as when the response is fully cached. The body of the returned response
-should not be read.</p>
-</td>
+<code><span class="keyword">fun </span><span class="identifier">headers</span><span class="symbol">(</span><span class="identifier" id="okhttp3.Response$headers(kotlin.String)/name">name</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><span class="identifier">String</span></a><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.html"><span class="identifier">List</span></a><span class="symbol">&lt;</span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><span class="identifier">String</span></a><span class="symbol">&gt;</span></code></td>
 </tr>
 <tr>
 <td>
@@ -176,59 +244,6 @@ should not be read.</p>
 body. If fewer than <a href="peek-body.html#okhttp3.Response$peekBody(kotlin.Long)/byteCount">byteCount</a> bytes are in the response body, the full response body is
 returned. If more than <a href="peek-body.html#okhttp3.Response$peekBody(kotlin.Long)/byteCount">byteCount</a> bytes are in the response body, the returned value
 will be truncated to <a href="peek-body.html#okhttp3.Response$peekBody(kotlin.Long)/byteCount">byteCount</a> bytes.</p>
-</td>
-</tr>
-<tr>
-<td>
-<p><a href="prior-response.html">priorResponse</a></p>
-</td>
-<td>
-<code><span class="keyword">fun </span><span class="identifier">priorResponse</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="./index.html"><span class="identifier">Response</span></a><span class="symbol">?</span></code>
-<p>Returns the response for the HTTP redirect or authorization challenge that triggered this
-response, or null if this response wasn't triggered by an automatic retry. The body of the
-returned response should not be read because it has already been consumed by the redirecting
-client.</p>
-</td>
-</tr>
-<tr>
-<td>
-<p><a href="protocol.html">protocol</a></p>
-</td>
-<td>
-<code><span class="keyword">fun </span><span class="identifier">protocol</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="../-protocol/index.html"><span class="identifier">Protocol</span></a></code>
-<p>Returns the HTTP protocol, such as <a href="../-protocol/-h-t-t-p_1_1.html">Protocol.HTTP_1_1</a> or <a href="../-protocol/-h-t-t-p_1_0.html">Protocol.HTTP_1_0</a>.</p>
-</td>
-</tr>
-<tr>
-<td>
-<p><a href="received-response-at-millis.html">receivedResponseAtMillis</a></p>
-</td>
-<td>
-<code><span class="keyword">fun </span><span class="identifier">receivedResponseAtMillis</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html"><span class="identifier">Long</span></a></code>
-<p>Returns a <a href="https://docs.oracle.com/javase/8/docs/api/java/lang/System.html#currentTimeMillis()">timestamp</a> taken immediately after OkHttp
-received this response's headers from the network. If this response is being served from the
-cache then this is the timestamp of the original response.</p>
-</td>
-</tr>
-<tr>
-<td>
-<p><a href="request.html">request</a></p>
-</td>
-<td>
-<code><span class="keyword">fun </span><span class="identifier">request</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="../-request/index.html"><span class="identifier">Request</span></a></code>
-<p>The wire-level request that initiated this HTTP response. This is not necessarily the same
-request issued by the application:</p>
-</td>
-</tr>
-<tr>
-<td>
-<p><a href="sent-request-at-millis.html">sentRequestAtMillis</a></p>
-</td>
-<td>
-<code><span class="keyword">fun </span><span class="identifier">sentRequestAtMillis</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html"><span class="identifier">Long</span></a></code>
-<p>Returns a <a href="https://docs.oracle.com/javase/8/docs/api/java/lang/System.html#currentTimeMillis()">timestamp</a> taken immediately before OkHttp
-transmitted the initiating request over the network. If this response is being served from the
-cache then this is the timestamp of the original request.</p>
 </td>
 </tr>
 <tr>

@@ -92,7 +92,7 @@ This class currently pins a certificate's Subject Public Key Info as described o
 </td>
 <td>
 <code><span class="keyword">class </span><span class="identifier">Challenge</span></code>
-<p>An RFC 7235 challenge.</p>
+<p>An <a href="https://tools.ietf.org/html/rfc7235">RFC 7235</a> challenge.</p>
 </td>
 </tr>
 <tr>
@@ -206,9 +206,9 @@ your application's HTTP calls.</p>
 <p><a href="-handshake/index.html">Handshake</a></p>
 </td>
 <td>
-<code><span class="keyword">data</span> <span class="keyword">class </span><span class="identifier">Handshake</span></code>
-<p>A record of a TLS handshake. For HTTPS clients, the client is <em>local</em> and the remote server
-is its <em>peer</em>.</p>
+<code><span class="keyword">class </span><span class="identifier">Handshake</span></code>
+<p>A record of a TLS handshake. For HTTPS clients, the client is <em>local</em> and the remote server is
+its <em>peer</em>.</p>
 </td>
 </tr>
 <tr>
@@ -216,7 +216,7 @@ is its <em>peer</em>.</p>
 <p><a href="-headers/index.html">Headers</a></p>
 </td>
 <td>
-<code><span class="keyword">class </span><span class="identifier">Headers</span></code>
+<code><span class="keyword">class </span><span class="identifier">Headers</span>&nbsp;<span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-iterable/index.html"><span class="identifier">Iterable</span></a><span class="symbol">&lt;</span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-pair/index.html"><span class="identifier">Pair</span></a><span class="symbol">&lt;</span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><span class="identifier">String</span></a><span class="symbol">,</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><span class="identifier">String</span></a><span class="symbol">&gt;</span><span class="symbol">&gt;</span></code>
 <p>The header fields of a single HTTP message. Values are uninterpreted strings; use <code>Request</code> and
 <code>Response</code> for interpreted headers. This class maintains the order of the header fields within
 the HTTP message.</p>
@@ -287,7 +287,7 @@ or response body.</p>
 </td>
 <td>
 <code><span class="keyword">class </span><span class="identifier">Request</span></code>
-<p>An HTTP request. Instances of this class are immutable if their <a href="-request/body.html">body</a> is null or itself
+<p>An HTTP request. Instances of this class are immutable if their <a href="#">body</a> is null or itself
 immutable.</p>
 </td>
 </tr>
