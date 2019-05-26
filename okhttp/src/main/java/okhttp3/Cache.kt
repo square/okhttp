@@ -15,6 +15,7 @@
  */
 package okhttp3
 
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.internal.EMPTY_HEADERS
 import okhttp3.internal.cache.CacheRequest
 import okhttp3.internal.cache.CacheStrategy
@@ -24,6 +25,7 @@ import okhttp3.internal.http.HttpMethod
 import okhttp3.internal.http.StatusLine
 import okhttp3.internal.io.FileSystem
 import okhttp3.internal.platform.Platform
+import okhttp3.internal.toLongOrDefault
 import okio.Buffer
 import okio.BufferedSink
 import okio.BufferedSource
@@ -676,17 +678,9 @@ class Cache internal constructor(
       }.buffer()
     }
 
-    override fun contentType(): MediaType? {
-      return if (contentType != null) MediaType.parse(contentType) else null
-    }
+    override fun contentType(): MediaType? = contentType?.toMediaTypeOrNull()
 
-    override fun contentLength(): Long {
-      return try {
-        contentLength?.toLong() ?: -1
-      } catch (_: NumberFormatException) {
-        -1L
-      }
-    }
+    override fun contentLength(): Long = contentLength?.toLongOrDefault(-1L) ?: -1L
 
     override fun source(): BufferedSource = bodySource
   }

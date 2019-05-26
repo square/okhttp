@@ -16,13 +16,13 @@
 package okhttp3
 
 import okhttp3.internal.UTC
-import okhttp3.internal.delimiterOffset
-import okhttp3.internal.indexOfControlOrNonAscii
-import okhttp3.internal.trimSubstring
-import okhttp3.internal.http.HttpDate
 import okhttp3.internal.canParseAsIpAddress
+import okhttp3.internal.delimiterOffset
+import okhttp3.internal.http.HttpDate
+import okhttp3.internal.indexOfControlOrNonAscii
 import okhttp3.internal.publicsuffix.PublicSuffixDatabase
 import okhttp3.internal.toCanonicalHost
+import okhttp3.internal.trimSubstring
 import java.util.Calendar
 import java.util.Collections
 import java.util.Date
@@ -532,11 +532,10 @@ data class Cookie private constructor(
     }
 
     /**
-     * Returns the positive value if `attributeValue` is positive, or [Long.MIN_VALUE] if it is
-     * either 0 or negative. If the value is positive but out of range, this returns
-     * [Long.MAX_VALUE].
+     * Returns the positive value if [s] is positive, or [Long.MIN_VALUE] if it is either 0 or
+     * negative. If the value is positive but out of range, this returns [Long.MAX_VALUE].
      *
-     * @throws NumberFormatException if `s` is not an integer of any precision.
+     * @throws NumberFormatException if [s] is not an integer of any precision.
      */
     private fun parseMaxAge(s: String): Long {
       try {
