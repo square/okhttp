@@ -15,6 +15,7 @@
  */
 package okhttp3.internal.sse
 
+import okhttp3.internal.toLongOrDefault
 import okio.Buffer
 import okio.BufferedSource
 import okio.ByteString.Companion.encodeUtf8
@@ -151,11 +152,7 @@ class ServerSentEventReader(
     @Throws(IOException::class)
     private fun BufferedSource.readRetryMs(): Long {
       val retryString = readUtf8LineStrict()
-      return try {
-        retryString.toLong()
-      } catch (_: NumberFormatException) {
-        -1L
-      }
+      return retryString.toLongOrDefault(-1L)
     }
   }
 }

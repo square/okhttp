@@ -15,6 +15,7 @@
  */
 package okhttp3
 
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.internal.closeQuietly
 import okhttp3.internal.readBomAsCharset
 import okio.Buffer
@@ -216,7 +217,7 @@ abstract class ResponseBody : Closeable {
         val resolvedCharset = contentType.charset()
         if (resolvedCharset == null) {
           charset = UTF_8
-          finalContentType = MediaType.parse("$contentType; charset=utf-8")
+          finalContentType = "$contentType; charset=utf-8".toMediaTypeOrNull()
         } else {
           charset = resolvedCharset
         }

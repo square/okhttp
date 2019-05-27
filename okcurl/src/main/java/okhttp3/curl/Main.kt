@@ -21,6 +21,7 @@ import com.github.rvesse.airline.annotations.Arguments
 import com.github.rvesse.airline.annotations.Command
 import com.github.rvesse.airline.annotations.Option
 import okhttp3.MediaType
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.OkHttpClient
 import okhttp3.Protocol
 import okhttp3.Request
@@ -214,7 +215,7 @@ class Main : Runnable {
       return@let null
     } ?: "application/x-www-form-urlencoded"
 
-    return MediaType.parse(mimeType)
+    return mimeType.toMediaTypeOrNull()
   }
 
   private fun close() {

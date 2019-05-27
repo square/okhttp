@@ -85,24 +85,25 @@ class MediaType private constructor(
     private val PARAMETER = Pattern.compile(";\\s*(?:$TOKEN=(?:$TOKEN|$QUOTED))?")
 
     /**
-     * Returns a media type for [string].
+     * Returns a media type for this string.
      *
-     * @throws IllegalArgumentException if [string] is not a well-formed media type.
+     * @throws IllegalArgumentException if this is not a well-formed media type.
      */
     @JvmStatic
-    fun get(string: String): MediaType {
-      val typeSubtype = TYPE_SUBTYPE.matcher(string)
-      require(typeSubtype.lookingAt()) { "No subtype found for: \"$string\"" }
+    @JvmName("get")
+    fun String.toMediaType(): MediaType {
+      val typeSubtype = TYPE_SUBTYPE.matcher(this)
+      require(typeSubtype.lookingAt()) { "No subtype found for: \"$this\"" }
       val type = typeSubtype.group(1).toLowerCase(Locale.US)
       val subtype = typeSubtype.group(2).toLowerCase(Locale.US)
 
       var charset: String? = null
-      val parameter = PARAMETER.matcher(string)
+      val parameter = PARAMETER.matcher(this)
       var s = typeSubtype.end()
-      while (s < string.length) {
-        parameter.region(s, string.length)
+      while (s < length) {
+        parameter.region(s, length)
         require(parameter.lookingAt()) {
-          "Parameter is not formatted correctly: \"${string.substring(s)}\" for: \"$string\""
+          "Parameter is not formatted correctly: \"${substring(s)}\" for: \"$this\""
         }
 
         val name = parameter.group(1)
@@ -124,23 +125,42 @@ class MediaType private constructor(
           else -> token
         }
         require(charset == null || charsetParameter.equals(charset, ignoreCase = true)) {
-          "Multiple charsets defined: \"$charset\" and: \"$charsetParameter\" for: \"$string\""
+          "Multiple charsets defined: \"$charset\" and: \"$charsetParameter\" for: \"$this\""
         }
         charset = charsetParameter
         s = parameter.end()
       }
 
-      return MediaType(string, type, subtype, charset)
+      return MediaType(this, type, subtype, charset)
     }
 
-    /** Returns a media type for [string], or null if [string] is not a well-formed media type. */
+    /** Returns a media type for this, or null if this is not a well-formed media type. */
     @JvmStatic
-    fun parse(string: String): MediaType? {
+    @JvmName("parse")
+    fun String.toMediaTypeOrNull(): MediaType? {
       return try {
-        get(string)
+        toMediaType()
       } catch (_: IllegalArgumentException) {
         null
       }
     }
+
+    @JvmName("-deprecated_get")
+    @Deprecated(
+        message = "moved to extension function",
+        replaceWith = ReplaceWith(
+            expression = "mediaType.toMediaType()",
+            imports = ["okhttp3.MediaType.Companion.toMediaType"]),
+        level = DeprecationLevel.WARNING)
+    fun get(mediaType: String): MediaType = mediaType.toMediaType()
+
+    @JvmName("-deprecated_parse")
+    @Deprecated(
+        message = "moved to extension function",
+        replaceWith = ReplaceWith(
+            expression = "mediaType.toMediaTypeOrNull()",
+            imports = ["okhttp3.MediaType.Companion.toMediaTypeOrNull"]),
+        level = DeprecationLevel.WARNING)
+    fun parse(mediaType: String): MediaType? = mediaType.toMediaTypeOrNull()
   }
 }

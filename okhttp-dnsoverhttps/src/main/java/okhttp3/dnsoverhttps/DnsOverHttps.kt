@@ -21,6 +21,7 @@ import okhttp3.Callback
 import okhttp3.Dns
 import okhttp3.HttpUrl
 import okhttp3.MediaType
+import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Protocol
 import okhttp3.Request
@@ -302,7 +303,7 @@ class DnsOverHttps internal constructor(builder: Builder) : Dns {
   }
 
   companion object {
-    val DNS_MESSAGE: MediaType = MediaType.get("application/dns-message")
+    val DNS_MESSAGE: MediaType = "application/dns-message".toMediaType()
     const val MAX_RESPONSE_SIZE = 64 * 1024
 
     private fun buildBootstrapClient(builder: Builder): Dns {
