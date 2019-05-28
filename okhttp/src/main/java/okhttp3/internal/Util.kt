@@ -19,6 +19,7 @@ package okhttp3.internal
 
 import okhttp3.EventListener
 import okhttp3.Headers
+import okhttp3.Headers.Companion.headersOf
 import okhttp3.HttpUrl
 import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
@@ -56,7 +57,7 @@ import kotlin.text.Charsets.UTF_32LE
 @JvmField
 val EMPTY_BYTE_ARRAY = ByteArray(0)
 @JvmField
-val EMPTY_HEADERS = Headers.of()
+val EMPTY_HEADERS = headersOf()
 
 @JvmField
 val EMPTY_RESPONSE = EMPTY_BYTE_ARRAY.toResponseBody()

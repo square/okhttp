@@ -16,6 +16,8 @@
 package okhttp3
 
 import okhttp3.Handshake.Companion.handshake
+import okhttp3.Headers.Companion.headersOf
+import okhttp3.Headers.Companion.toHeaders
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.MediaType.Companion.toMediaType
@@ -149,7 +151,7 @@ class KotlinSourceModernTest {
     val immutable: Boolean = cacheControl.immutable
     val forceCache: CacheControl = CacheControl.FORCE_CACHE
     val forceNetwork: CacheControl = CacheControl.FORCE_NETWORK
-    val parse: CacheControl = CacheControl.parse(Headers.of())
+    val parse: CacheControl = CacheControl.parse(headersOf())
   }
 
   @Test @Ignore
@@ -274,7 +276,7 @@ class KotlinSourceModernTest {
     val secure: Boolean = cookie.secure
     val matches: Boolean = cookie.matches("".toHttpUrl())
     val parsedCookie: Cookie? = Cookie.parse("".toHttpUrl(), "")
-    val cookies: List<Cookie> = Cookie.parseAll("".toHttpUrl(), Headers.of())
+    val cookies: List<Cookie> = Cookie.parseAll("".toHttpUrl(), headersOf())
   }
 
   @Test @Ignore
@@ -444,8 +446,8 @@ class KotlinSourceModernTest {
 
   @Test @Ignore
   fun headers() {
-    var headers: Headers = Headers.of("", "")
-    headers = Headers.of(mapOf("" to ""))
+    var headers: Headers = headersOf("", "")
+    headers = mapOf("" to "").toHeaders()
     val get: String? = headers.get("")
     val date: Date? = headers.getDate("")
     val instant: Instant? = headers.getInstant("")
@@ -465,7 +467,7 @@ class KotlinSourceModernTest {
     builder = builder.add("")
     builder = builder.add("", "")
     builder = builder.addUnsafeNonAscii("", "")
-    builder = builder.addAll(Headers.of())
+    builder = builder.addAll(headersOf())
     builder = builder.add("", Date(0L))
     builder = builder.add("", Instant.EPOCH)
     builder = builder.set("", "")
@@ -694,8 +696,8 @@ class KotlinSourceModernTest {
     mockResponse = mockResponse.addHeader("", "")
     mockResponse = mockResponse.addHeaderLenient("", Any())
     mockResponse = mockResponse.setHeader("", Any())
-    mockResponse = mockResponse.setHeaders(Headers.of())
-    mockResponse = mockResponse.setTrailers(Headers.of())
+    mockResponse = mockResponse.setHeaders(headersOf())
+    mockResponse = mockResponse.setTrailers(headersOf())
     mockResponse = mockResponse.removeHeader("")
     var body: Buffer? = mockResponse.getBody()
     body = mockResponse.getBody()
@@ -718,7 +720,7 @@ class KotlinSourceModernTest {
     val bodyDelay: Long = mockResponse.getBodyDelay(TimeUnit.SECONDS)
     mockResponse = mockResponse.setHeadersDelay(0L, TimeUnit.SECONDS)
     val headersDelay: Long = mockResponse.getHeadersDelay(TimeUnit.SECONDS)
-    mockResponse = mockResponse.withPush(PushPromise("", "", Headers.of(), MockResponse()))
+    mockResponse = mockResponse.withPush(PushPromise("", "", headersOf(), MockResponse()))
     var pushPromises: List<PushPromise> = mockResponse.pushPromises
     pushPromises = mockResponse.pushPromises
     mockResponse = mockResponse.withSettings(Settings())
@@ -786,7 +788,7 @@ class KotlinSourceModernTest {
   fun multipartBodyPart() {
     val requestBody: RequestBody = "".toRequestBody(null)
     var part: MultipartBody.Part = MultipartBody.Part.create(null, requestBody)
-    part = MultipartBody.Part.create(Headers.of(), requestBody)
+    part = MultipartBody.Part.create(headersOf(), requestBody)
     part = MultipartBody.Part.create(requestBody)
     part = MultipartBody.Part.createFormData("", "")
     part = MultipartBody.Part.createFormData("", "", requestBody)
@@ -802,7 +804,7 @@ class KotlinSourceModernTest {
     builder = MultipartBody.Builder("")
     builder = builder.setType("".toMediaType())
     builder = builder.addPart(requestBody)
-    builder = builder.addPart(Headers.of(), requestBody)
+    builder = builder.addPart(headersOf(), requestBody)
     builder = builder.addPart(null, requestBody)
     builder = builder.addFormDataPart("", "")
     builder = builder.addFormDataPart("", "", requestBody)
@@ -916,7 +918,7 @@ class KotlinSourceModernTest {
 
   @Test @Ignore
   fun pushPromise() {
-    val pushPromise: PushPromise = PushPromise("", "", Headers.of(), MockResponse())
+    val pushPromise: PushPromise = PushPromise("", "", headersOf(), MockResponse())
     val method: String = pushPromise.method
     val path: String = pushPromise.path
     val headers: Headers = pushPromise.headers
@@ -935,7 +937,7 @@ class KotlinSourceModernTest {
     }
     queueDispatcher = QueueDispatcher()
     var mockResponse: MockResponse = queueDispatcher.dispatch(
-        RecordedRequest("", Headers.of(), listOf(), 0L, Buffer(), 0, Socket()))
+        RecordedRequest("", headersOf(), listOf(), 0L, Buffer(), 0, Socket()))
     mockResponse = queueDispatcher.peek()
     queueDispatcher.enqueueResponse(MockResponse())
     queueDispatcher.shutdown()
@@ -946,8 +948,8 @@ class KotlinSourceModernTest {
   @Test @Ignore
   fun recordedRequest() {
     var recordedRequest: RecordedRequest = RecordedRequest(
-        "", Headers.of(), listOf(), 0L, Buffer(), 0, Socket())
-    recordedRequest = RecordedRequest("", Headers.of(), listOf(), 0L, Buffer(), 0, Socket())
+        "", headersOf(), listOf(), 0L, Buffer(), 0, Socket())
+    recordedRequest = RecordedRequest("", headersOf(), listOf(), 0L, Buffer(), 0, Socket())
     var requestUrl: HttpUrl? = recordedRequest.requestUrl
     var requestLine: String = recordedRequest.requestLine
     var method: String? = recordedRequest.method
@@ -1001,7 +1003,7 @@ class KotlinSourceModernTest {
     builder = builder.header("", "")
     builder = builder.addHeader("", "")
     builder = builder.removeHeader("")
-    builder = builder.headers(Headers.of())
+    builder = builder.headers(headersOf())
     builder = builder.cacheControl(CacheControl.FORCE_CACHE)
     builder = builder.get()
     builder = builder.head()
@@ -1083,7 +1085,7 @@ class KotlinSourceModernTest {
     builder = builder.header("", "")
     builder = builder.addHeader("", "")
     builder = builder.removeHeader("")
-    builder = builder.headers(Headers.of())
+    builder = builder.headers(headersOf())
     builder = builder.body("".toResponseBody(null))
     builder = builder.body(null)
     builder = builder.networkResponse(Response.Builder().build())
