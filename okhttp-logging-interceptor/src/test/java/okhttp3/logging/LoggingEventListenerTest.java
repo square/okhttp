@@ -73,7 +73,7 @@ public final class LoggingEventListenerTest {
     response.body().bytes();
 
     logRecorder
-        .assertLogMatch("callStart: Request\\{method=GET, url=" + url + ", tags=\\{\\}\\}")
+        .assertLogMatch("callStart: Request\\{method=GET, url=" + url + "\\}")
         .assertLogMatch("dnsStart: " + url.host())
         .assertLogMatch("dnsEnd: \\[.+\\]")
         .assertLogMatch("connectStart: " + url.host() + "/.+ DIRECT")
@@ -104,7 +104,7 @@ public final class LoggingEventListenerTest {
     client.newCall(request().post(RequestBody.create("Hello!", PLAIN)).build()).execute();
 
     logRecorder
-        .assertLogMatch("callStart: Request\\{method=POST, url=" + url + ", tags=\\{\\}\\}")
+        .assertLogMatch("callStart: Request\\{method=POST, url=" + url + "\\}")
         .assertLogMatch("dnsStart: " + url.host())
         .assertLogMatch("dnsEnd: \\[.+\\]")
         .assertLogMatch("connectStart: " + url.host() + "/.+ DIRECT")
@@ -144,7 +144,7 @@ public final class LoggingEventListenerTest {
     platform.assumeHttp2Support();
 
     logRecorder
-        .assertLogMatch("callStart: Request\\{method=GET, url=" + url + ", tags=\\{\\}\\}")
+        .assertLogMatch("callStart: Request\\{method=GET, url=" + url + "\\}")
         .assertLogMatch("dnsStart: " + url.host())
         .assertLogMatch("dnsEnd: \\[.+\\]")
         .assertLogMatch("connectStart: " + url.host() + "/.+ DIRECT")
@@ -187,7 +187,7 @@ public final class LoggingEventListenerTest {
     }
 
     logRecorder
-        .assertLogMatch("callStart: Request\\{method=GET, url=" + url + ", tags=\\{\\}\\}")
+        .assertLogMatch("callStart: Request\\{method=GET, url=" + url + "\\}")
         .assertLogMatch("dnsStart: " + url.host())
         .assertLogMatch("callFailed: java.net.UnknownHostException: reason")
         .assertNoMoreLogs();
@@ -207,7 +207,7 @@ public final class LoggingEventListenerTest {
     }
 
     logRecorder
-        .assertLogMatch("callStart: Request\\{method=GET, url=" + url + ", tags=\\{\\}\\}")
+        .assertLogMatch("callStart: Request\\{method=GET, url=" + url + "\\}")
         .assertLogMatch("dnsStart: " + url.host())
         .assertLogMatch("dnsEnd: \\[.+\\]")
         .assertLogMatch("connectStart: " + url.host() + "/.+ DIRECT")
