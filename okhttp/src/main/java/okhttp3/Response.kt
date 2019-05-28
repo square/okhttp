@@ -113,7 +113,7 @@ class Response internal constructor(
    */
   @get:JvmName("receivedResponseAtMillis") val receivedResponseAtMillis: Long,
 
-  @get:JvmName("exchange") val exchange: Exchange?
+  @get:JvmName("exchange") internal val exchange: Exchange?
 ) : Closeable {
 
   private var lazyCacheControl: CacheControl? = null

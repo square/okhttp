@@ -31,7 +31,7 @@ import java.net.Proxy
  *
  * Each route is a specific selection of these options.
  */
-data class Route(
+class Route(
   @get:JvmName("address") val address: Address,
   /**
    * Returns the [Proxy] of this route.
@@ -71,6 +71,21 @@ data class Route(
    * [rfc_2817]: http://www.ietf.org/rfc/rfc2817.txt
    */
   fun requiresTunnel() = address.sslSocketFactory != null && proxy.type() == Proxy.Type.HTTP
+
+  override fun equals(other: Any?): Boolean {
+    return other is Route &&
+        other.address == address &&
+        other.proxy == proxy &&
+        other.socketAddress == socketAddress
+  }
+
+  override fun hashCode(): Int {
+    var result = 17
+    result = 31 * result + address.hashCode()
+    result = 31 * result + proxy.hashCode()
+    result = 31 * result + socketAddress.hashCode()
+    return result
+  }
 
   override fun toString(): String = "Route{$socketAddress}"
 }

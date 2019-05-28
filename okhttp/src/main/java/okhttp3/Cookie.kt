@@ -16,13 +16,13 @@
 package okhttp3
 
 import okhttp3.internal.UTC
-import okhttp3.internal.delimiterOffset
-import okhttp3.internal.indexOfControlOrNonAscii
-import okhttp3.internal.trimSubstring
-import okhttp3.internal.http.HttpDate
 import okhttp3.internal.canParseAsIpAddress
+import okhttp3.internal.delimiterOffset
+import okhttp3.internal.http.HttpDate
+import okhttp3.internal.indexOfControlOrNonAscii
 import okhttp3.internal.publicsuffix.PublicSuffixDatabase
 import okhttp3.internal.toCanonicalHost
+import okhttp3.internal.trimSubstring
 import java.util.Calendar
 import java.util.Collections
 import java.util.Date
@@ -38,7 +38,7 @@ import java.util.regex.Pattern
  *
  * [chromium_extension]: https://code.google.com/p/chromium/issues/detail?id=232693
  */
-data class Cookie private constructor(
+class Cookie private constructor(
   /** Returns a non-empty string with this cookie's name. */
   @get:JvmName("name") val name: String,
 
@@ -110,6 +110,35 @@ data class Cookie private constructor(
     return !secure || url.isHttps
   }
 
+  override fun equals(other: Any?): Boolean {
+    return other is Cookie &&
+        other.name == name &&
+        other.value == value &&
+        other.expiresAt == expiresAt &&
+        other.domain == domain &&
+        other.path == path &&
+        other.secure == secure &&
+        other.httpOnly == httpOnly &&
+        other.persistent == persistent &&
+        other.hostOnly == hostOnly
+  }
+
+  override fun hashCode(): Int {
+    var result = 17
+    result = 31 * result + name.hashCode()
+    result = 31 * result + value.hashCode()
+    result = 31 * result + expiresAt.hashCode()
+    result = 31 * result + domain.hashCode()
+    result = 31 * result + path.hashCode()
+    result = 31 * result + secure.hashCode()
+    result = 31 * result + httpOnly.hashCode()
+    result = 31 * result + persistent.hashCode()
+    result = 31 * result + hostOnly.hashCode()
+    return result
+  }
+
+  override fun toString(): String = toString(false)
+
   @JvmName("-deprecated_name")
   @Deprecated(
       message = "moved to val",
@@ -172,8 +201,6 @@ data class Cookie private constructor(
       replaceWith = ReplaceWith(expression = "secure"),
       level = DeprecationLevel.WARNING)
   fun secure(): Boolean = secure
-
-  override fun toString(): String = toString(false)
 
   /**
    * @param forObsoleteRfc2965 true to include a leading `.` on the domain pattern. This is
