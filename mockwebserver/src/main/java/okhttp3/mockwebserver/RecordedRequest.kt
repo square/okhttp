@@ -91,7 +91,7 @@ class RecordedRequest(
       val inetAddress = socket.localAddress
 
       var hostname = inetAddress.hostName
-      if (inetAddress is Inet6Address) {
+      if (inetAddress is Inet6Address && hostname != "localhost") {
         hostname = "[$hostname]"
       }
 
