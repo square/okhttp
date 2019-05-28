@@ -67,11 +67,22 @@ import javax.net.ssl.X509TrustManager
  *    roots private to an organization or service.
  */
 class HandshakeCertificates private constructor(
-  private val keyManager: X509KeyManager,
-  private val trustManager: X509TrustManager
+  @get:JvmName("keyManager") val keyManager: X509KeyManager,
+  @get:JvmName("trustManager") val trustManager: X509TrustManager
 ) {
+
+  @JvmName("-deprecated_keyManager")
+  @Deprecated(
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "keyManager"),
+      level = DeprecationLevel.WARNING)
   fun keyManager(): X509KeyManager = keyManager
 
+  @JvmName("-deprecated_trustManager")
+  @Deprecated(
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "trustManager"),
+      level = DeprecationLevel.WARNING)
   fun trustManager(): X509TrustManager = trustManager
 
   fun sslSocketFactory(): SSLSocketFactory = sslContext().socketFactory
