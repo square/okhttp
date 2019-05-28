@@ -51,26 +51,59 @@ import java.util.concurrent.CountDownLatch
  *
  * [doh_spec]: https://tools.ietf.org/html/draft-ietf-doh-dns-over-https-13
  */
-class DnsOverHttps internal constructor(builder: Builder) : Dns {
-  private val client: OkHttpClient =
-      builder.client?.newBuilder()?.dns(buildBootstrapClient(builder))?.build()
-          ?: throw NullPointerException("client not set")
-  private val url: HttpUrl = builder.url ?: throw NullPointerException("url not set")
-  private val includeIPv6: Boolean = builder.includeIPv6
-  private val post: Boolean = builder.post
-  private val resolvePrivateAddresses: Boolean = builder.resolvePrivateAddresses
-  private val resolvePublicAddresses: Boolean = builder.resolvePublicAddresses
+class DnsOverHttps internal constructor(
+  @get:JvmName("client") val client: OkHttpClient,
+  @get:JvmName("url") val url: HttpUrl,
+  @get:JvmName("includeIPv6") val includeIPv6: Boolean,
+  @get:JvmName("post") val post: Boolean,
+  @get:JvmName("resolvePrivateAddresses") val resolvePrivateAddresses: Boolean,
+  @get:JvmName("resolvePublicAddresses") val resolvePublicAddresses: Boolean,
+  private val systemDns: Dns,
+  private val bootstrapDnsHosts: List<InetAddress>?
+) : Dns {
 
+  @JvmName("-deprecated_url")
+  @Deprecated(
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "url"),
+      level = DeprecationLevel.WARNING)
   fun url(): HttpUrl = url
 
+  @JvmName("-deprecated_post")
+  @Deprecated(
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "post"),
+      level = DeprecationLevel.WARNING)
   fun post(): Boolean = post
 
+  @JvmName("-deprecated_includeIPv6")
+  @Deprecated(
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "includeIPv6"),
+      level = DeprecationLevel.WARNING)
   fun includeIPv6(): Boolean = includeIPv6
 
-  fun client(): OkHttpClient = client
+  @JvmName("-deprecated_client")
+  @Deprecated(
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "client"),
+      level = DeprecationLevel.WARNING)
+  fun client(): OkHttpClient = client.newBuilder()
+          .dns(buildBootstrapClient(bootstrapDnsHosts, url, systemDns))
+          .build()
 
+  @JvmName("-deprecated_resolvePrivateAddresses")
+  @Deprecated(
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "resolvePrivateAddresses"),
+      level = DeprecationLevel.WARNING)
   fun resolvePrivateAddresses(): Boolean = resolvePrivateAddresses
 
+  @JvmName("-deprecated_resolvePublicAddresses")
+  @Deprecated(
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "resolvePublicAddresses"),
+      level = DeprecationLevel.WARNING)
   fun resolvePublicAddresses(): Boolean = resolvePublicAddresses
 
   @Throws(UnknownHostException::class)
@@ -264,7 +297,18 @@ class DnsOverHttps internal constructor(builder: Builder) : Dns {
     internal var resolvePrivateAddresses = false
     internal var resolvePublicAddresses = true
 
-    fun build(): DnsOverHttps = DnsOverHttps(this)
+    fun build(): DnsOverHttps {
+      return DnsOverHttps(
+          checkNotNull(client) { "client not set" },
+          checkNotNull(url) { "url not set" },
+          includeIPv6,
+          post,
+          resolvePrivateAddresses,
+          resolvePublicAddresses,
+          systemDns,
+          bootstrapDnsHosts
+      )
+    }
 
     fun client(client: OkHttpClient) = apply {
       this.client = client
@@ -306,13 +350,15 @@ class DnsOverHttps internal constructor(builder: Builder) : Dns {
     val DNS_MESSAGE: MediaType = "application/dns-message".toMediaType()
     const val MAX_RESPONSE_SIZE = 64 * 1024
 
-    private fun buildBootstrapClient(builder: Builder): Dns {
-      val hosts = builder.bootstrapDnsHosts
-
-      return if (hosts != null) {
-        BootstrapDns(builder.url!!.host, hosts)
+    private fun buildBootstrapClient(
+      bootstrapDnsHosts: List<InetAddress>?,
+      url: HttpUrl,
+      systemDns: Dns
+    ): Dns {
+      return if (bootstrapDnsHosts != null) {
+        BootstrapDns(url.host, bootstrapDnsHosts)
       } else {
-        builder.systemDns
+        systemDns
       }
     }
 
