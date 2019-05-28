@@ -26,10 +26,10 @@ class CertificatePinnerKotlinTest {
   @Test
   fun successfulCheckSha1Pin() {
     val certificatePinner = CertificatePinner.Builder()
-        .add("example.com", "sha1/" + certA1.certificate().toSha1ByteString().base64())
+        .add("example.com", "sha1/" + certA1.certificate.toSha1ByteString().base64())
         .build()
 
-    certificatePinner.check("example.com", certA1.certificate())
+    certificatePinner.check("example.com", certA1.certificate)
   }
 
   @Test fun successfulFindMatchingPins() {
@@ -114,16 +114,16 @@ class CertificatePinnerKotlinTest {
     internal var certA1: HeldCertificate = HeldCertificate.Builder()
         .serialNumber(100L)
         .build()
-    internal var certA1Sha256Pin = CertificatePinner.pin(certA1.certificate())
+    internal var certA1Sha256Pin = CertificatePinner.pin(certA1.certificate)
 
     private var certB1 = HeldCertificate.Builder()
         .serialNumber(200L)
         .build()
-    internal var certB1Sha256Pin = CertificatePinner.pin(certB1.certificate())
+    internal var certB1Sha256Pin = CertificatePinner.pin(certB1.certificate)
 
     private var certC1 = HeldCertificate.Builder()
         .serialNumber(300L)
         .build()
-    internal var certC1Sha256Pin = CertificatePinner.pin(certC1.certificate())
+    internal var certC1Sha256Pin = CertificatePinner.pin(certC1.certificate)
   }
 }

@@ -111,9 +111,23 @@ import javax.security.auth.x500.X500Principal
  * a chain of certificates. The server uses a set of trusted root certificates to authenticate the
  * client. Subject alternative names are not used for client authentication.
  */
-class HeldCertificate(private val keyPair: KeyPair, private val certificate: X509Certificate) {
+class HeldCertificate(
+  @get:JvmName("keyPair") val keyPair: KeyPair,
+  @get:JvmName("certificate") val certificate: X509Certificate
+) {
+
+  @JvmName("-deprecated_certificate")
+  @Deprecated(
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "certificate"),
+      level = DeprecationLevel.WARNING)
   fun certificate(): X509Certificate = certificate
 
+  @JvmName("-deprecated_keyPair")
+  @Deprecated(
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "keyPair"),
+      level = DeprecationLevel.WARNING)
   fun keyPair(): KeyPair = keyPair
 
   /**
@@ -150,7 +164,7 @@ class HeldCertificate(private val keyPair: KeyPair, private val certificate: X50
    * [rfc_7468]: https://tools.ietf.org/html/rfc7468
    */
   fun privateKeyPkcs1Pem(): String {
-    require(keyPair.private is RSAPrivateKey) { "PKCS1 only supports RSA keys" }
+    check(keyPair.private is RSAPrivateKey) { "PKCS1 only supports RSA keys" }
     return buildString {
       append("-----BEGIN RSA PRIVATE KEY-----\n")
       encodeBase64Lines(pkcs1Bytes())
