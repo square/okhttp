@@ -18,6 +18,8 @@ package okhttp3
 import okhttp3.Handshake.Companion.handshake
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.ResponseBody.Companion.toResponseBody
 import okhttp3.internal.http2.Settings
@@ -180,7 +182,7 @@ class KotlinSourceModernTest {
   @Test @Ignore
   fun certificatePinner() {
     val heldCertificate: HeldCertificate = HeldCertificate.Builder().build()
-    val certificate: X509Certificate = heldCertificate.certificate()
+    val certificate: X509Certificate = heldCertificate.certificate
     val certificatePinner: CertificatePinner = CertificatePinner.Builder().build()
     val certificates: List<Certificate> = listOf()
     certificatePinner.check("", listOf(certificate))
@@ -588,8 +590,8 @@ class KotlinSourceModernTest {
   @Test @Ignore
   fun handshakeCertificates() {
     val handshakeCertificates = HandshakeCertificates.Builder().build()
-    val keyManager: X509KeyManager = handshakeCertificates.keyManager()
-    val trustManager: X509TrustManager = handshakeCertificates.trustManager()
+    val keyManager: X509KeyManager = handshakeCertificates.keyManager
+    val trustManager: X509TrustManager = handshakeCertificates.trustManager
     val sslSocketFactory: SSLSocketFactory = handshakeCertificates.sslSocketFactory()
     val sslContext: SSLContext = handshakeCertificates.sslContext()
   }
@@ -598,8 +600,8 @@ class KotlinSourceModernTest {
   fun handshakeCertificatesBuilder() {
     var builder: HandshakeCertificates.Builder = HandshakeCertificates.Builder()
     val heldCertificate = HeldCertificate.Builder().build()
-    builder = builder.heldCertificate(heldCertificate, heldCertificate.certificate())
-    builder = builder.addTrustedCertificate(heldCertificate.certificate())
+    builder = builder.heldCertificate(heldCertificate, heldCertificate.certificate)
+    builder = builder.addTrustedCertificate(heldCertificate.certificate)
     builder = builder.addPlatformTrustedCertificates()
     val handshakeCertificates: HandshakeCertificates = builder.build()
   }
@@ -607,8 +609,8 @@ class KotlinSourceModernTest {
   @Test @Ignore
   fun heldCertificate() {
     val heldCertificate: HeldCertificate = HeldCertificate.Builder().build()
-    val certificate: X509Certificate = heldCertificate.certificate()
-    val keyPair: KeyPair = heldCertificate.keyPair()
+    val certificate: X509Certificate = heldCertificate.certificate
+    val keyPair: KeyPair = heldCertificate.keyPair
     val certificatePem: String = heldCertificate.certificatePem()
     val privateKeyPkcs8Pem: String = heldCertificate.privateKeyPkcs8Pem()
     val privateKeyPkcs1Pem: String = heldCertificate.privateKeyPkcs1Pem()
@@ -667,12 +669,12 @@ class KotlinSourceModernTest {
 
   @Test @Ignore
   fun mediaType() {
-    val mediaType: MediaType = MediaType.get("")
+    val mediaType: MediaType = "".toMediaType()
     val defaultCharset: Charset? = mediaType.charset()
     val charset: Charset? = mediaType.charset(Charsets.UTF_8)
     val type: String = mediaType.type
     val subtype: String = mediaType.subtype
-    val parse: MediaType? = MediaType.parse("")
+    val parse: MediaType? = "".toMediaTypeOrNull()
   }
 
   @Test @Ignore
@@ -798,7 +800,7 @@ class KotlinSourceModernTest {
     val requestBody = "".toRequestBody(null)
     var builder: MultipartBody.Builder = MultipartBody.Builder()
     builder = MultipartBody.Builder("")
-    builder = builder.setType(MediaType.get(""))
+    builder = builder.setType("".toMediaType())
     builder = builder.addPart(requestBody)
     builder = builder.addPart(Headers.of(), requestBody)
     builder = builder.addPart(null, requestBody)
@@ -865,7 +867,7 @@ class KotlinSourceModernTest {
     builder = builder.cache(Cache(File("/cache/"), Integer.MAX_VALUE.toLong()))
     builder = builder.dns(Dns.SYSTEM)
     builder = builder.socketFactory(SocketFactory.getDefault())
-    builder = builder.sslSocketFactory(localhost().sslSocketFactory(), localhost().trustManager())
+    builder = builder.sslSocketFactory(localhost().sslSocketFactory(), localhost().trustManager)
     builder = builder.hostnameVerifier(OkHostnameVerifier)
     builder = builder.certificatePinner(CertificatePinner.DEFAULT)
     builder = builder.authenticator(Authenticator.NONE)
@@ -1027,15 +1029,15 @@ class KotlinSourceModernTest {
       override fun writeTo(sink: BufferedSink) = TODO()
     }
     requestBody = "".toRequestBody(null)
-    requestBody = "".toRequestBody(MediaType.parse(""))
+    requestBody = "".toRequestBody("".toMediaTypeOrNull())
     requestBody = ByteString.EMPTY.toRequestBody(null)
-    requestBody = ByteString.EMPTY.toRequestBody(MediaType.parse(""))
+    requestBody = ByteString.EMPTY.toRequestBody("".toMediaTypeOrNull())
     requestBody = byteArrayOf(0, 1).toRequestBody(null, 0, 2)
-    requestBody = byteArrayOf(0, 1).toRequestBody(MediaType.parse(""), 0, 2)
+    requestBody = byteArrayOf(0, 1).toRequestBody("".toMediaTypeOrNull(), 0, 2)
     requestBody = byteArrayOf(0, 1).toRequestBody(null, 0, 2)
-    requestBody = byteArrayOf(0, 1).toRequestBody(MediaType.parse(""), 0, 2)
+    requestBody = byteArrayOf(0, 1).toRequestBody("".toMediaTypeOrNull(), 0, 2)
     requestBody = File("").toRequestBody(null)
-    requestBody = File("").toRequestBody(MediaType.parse(""))
+    requestBody = File("").toRequestBody("".toMediaTypeOrNull())
   }
 
   @Test @Ignore
@@ -1109,13 +1111,13 @@ class KotlinSourceModernTest {
     val charStream = responseBody.charStream()
     val string = responseBody.string()
     responseBody.close()
-    responseBody = "".toResponseBody(MediaType.get(""))
+    responseBody = "".toResponseBody("".toMediaType())
     responseBody = "".toResponseBody(null)
-    responseBody = ByteString.EMPTY.toResponseBody(MediaType.get(""))
+    responseBody = ByteString.EMPTY.toResponseBody("".toMediaType())
     responseBody = ByteString.EMPTY.toResponseBody(null)
-    responseBody = byteArrayOf(0, 1).toResponseBody(MediaType.get(""))
+    responseBody = byteArrayOf(0, 1).toResponseBody("".toMediaType())
     responseBody = byteArrayOf(0, 1).toResponseBody(null)
-    responseBody = Buffer().toResponseBody(MediaType.get(""), 0L)
+    responseBody = Buffer().toResponseBody("".toMediaType(), 0L)
     responseBody = Buffer().toResponseBody(null, 0L)
   }
 
