@@ -15,6 +15,7 @@
  */
 package okhttp3
 
+import okhttp3.Headers.Companion.headersOf
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Test
 import java.time.Instant
@@ -22,14 +23,14 @@ import java.util.Date
 
 class HeadersKotlinTest {
   @Test fun getOperator() {
-    val headers = Headers.of("a", "b", "c", "d")
+    val headers = headersOf("a", "b", "c", "d")
     assertThat(headers["a"]).isEqualTo("b")
     assertThat(headers["c"]).isEqualTo("d")
     assertThat(headers["e"]).isNull()
   }
 
   @Test fun iteratorOperator() {
-    val headers = Headers.of("a", "b", "c", "d")
+    val headers = headersOf("a", "b", "c", "d")
 
     val pairs = mutableListOf<Pair<String, String>>()
     for ((name, value) in headers) {

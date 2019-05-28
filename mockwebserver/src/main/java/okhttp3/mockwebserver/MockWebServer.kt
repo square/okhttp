@@ -18,6 +18,7 @@
 package okhttp3.mockwebserver
 
 import okhttp3.Headers
+import okhttp3.Headers.Companion.headersOf
 import okhttp3.HttpUrl
 import okhttp3.Protocol
 import okhttp3.Request
@@ -595,7 +596,7 @@ class MockWebServer : ExternalResource(), Closeable {
   @Throws(InterruptedException::class)
   private fun dispatchBookkeepingRequest(sequenceNumber: Int, socket: Socket) {
     val request = RecordedRequest(
-        "", Headers.of(), emptyList(), 0L, Buffer(), sequenceNumber, socket)
+        "", headersOf(), emptyList(), 0L, Buffer(), sequenceNumber, socket)
     requestCount.incrementAndGet()
     requestQueue.add(request)
     dispatcher.dispatch(request)
