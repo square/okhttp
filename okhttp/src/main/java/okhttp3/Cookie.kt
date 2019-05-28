@@ -18,7 +18,8 @@ package okhttp3
 import okhttp3.internal.UTC
 import okhttp3.internal.canParseAsIpAddress
 import okhttp3.internal.delimiterOffset
-import okhttp3.internal.http.HttpDate
+import okhttp3.internal.http.MAX_DATE
+import okhttp3.internal.http.toHttpDateString
 import okhttp3.internal.indexOfControlOrNonAscii
 import okhttp3.internal.publicsuffix.PublicSuffixDatabase
 import okhttp3.internal.toCanonicalHost
@@ -217,7 +218,7 @@ class Cookie private constructor(
         if (expiresAt == Long.MIN_VALUE) {
           append("; max-age=0")
         } else {
-          append("; expires=").append(HttpDate.format(Date(expiresAt)))
+          append("; expires=").append(Date(expiresAt).toHttpDateString())
         }
       }
 
@@ -250,7 +251,7 @@ class Cookie private constructor(
   class Builder {
     private var name: String? = null
     private var value: String? = null
-    private var expiresAt = HttpDate.MAX_DATE
+    private var expiresAt = MAX_DATE
     private var domain: String? = null
     private var path = "/"
     private var secure = false
@@ -271,7 +272,7 @@ class Cookie private constructor(
     fun expiresAt(expiresAt: Long) = apply {
       var expiresAt = expiresAt
       if (expiresAt <= 0L) expiresAt = Long.MIN_VALUE
-      if (expiresAt > HttpDate.MAX_DATE) expiresAt = HttpDate.MAX_DATE
+      if (expiresAt > MAX_DATE) expiresAt = MAX_DATE
       this.expiresAt = expiresAt
       this.persistent = true
     }
@@ -374,7 +375,7 @@ class Cookie private constructor(
       val cookieValue = setCookie.trimSubstring(pairEqualsSign + 1, cookiePairEnd)
       if (cookieValue.indexOfControlOrNonAscii() != -1) return null
 
-      var expiresAt = HttpDate.MAX_DATE
+      var expiresAt = MAX_DATE
       var deltaSeconds = -1L
       var domain: String? = null
       var path: String? = null
@@ -446,8 +447,8 @@ class Cookie private constructor(
           Long.MAX_VALUE
         }
         expiresAt = currentTimeMillis + deltaMilliseconds
-        if (expiresAt < currentTimeMillis || expiresAt > HttpDate.MAX_DATE) {
-          expiresAt = HttpDate.MAX_DATE // Handle overflow & limit the date range.
+        if (expiresAt < currentTimeMillis || expiresAt > MAX_DATE) {
+          expiresAt = MAX_DATE // Handle overflow & limit the date range.
         }
       }
 

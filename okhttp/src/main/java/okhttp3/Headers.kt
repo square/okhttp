@@ -19,7 +19,8 @@ package okhttp3
 
 import okhttp3.Headers.Builder
 import okhttp3.internal.format
-import okhttp3.internal.http.HttpDate
+import okhttp3.internal.http.toHttpDateOrNull
+import okhttp3.internal.http.toHttpDateString
 import org.codehaus.mojo.animal_sniffer.IgnoreJRERequirement
 import java.time.Instant
 import java.util.ArrayList
@@ -56,10 +57,7 @@ class Headers private constructor(
    * Returns the last value corresponding to the specified field parsed as an HTTP date, or null if
    * either the field is absent or cannot be parsed as a date.
    */
-  fun getDate(name: String): Date? {
-    val value = get(name)
-    return if (value != null) HttpDate.parse(value) else null
-  }
+  fun getDate(name: String): Date? = get(name)?.toHttpDateOrNull()
 
   /**
    * Returns the last value corresponding to the specified field parsed as an HTTP date, or null if
@@ -271,7 +269,7 @@ class Headers private constructor(
      * value.
      */
     fun add(name: String, value: Date) = apply {
-      add(name, HttpDate.format(value))
+      add(name, value.toHttpDateString())
     }
 
     /**
@@ -288,7 +286,7 @@ class Headers private constructor(
      * found, the existing values are replaced.
      */
     operator fun set(name: String, value: Date) = apply {
-      set(name, HttpDate.format(value))
+      set(name, value.toHttpDateString())
     }
 
     /**
