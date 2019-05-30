@@ -121,16 +121,31 @@ abstract class ResponseBody : Closeable {
    * possibility for your response.
    */
   @Throws(IOException::class)
-  fun bytes(): ByteArray {
+  fun bytes() = consumeSource(BufferedSource::readByteArray) { it.size }
+
+  /**
+   * Returns the response as a [ByteString].
+   *
+   * This method loads entire response body into memory. If the response body is very large this
+   * may trigger an [OutOfMemoryError]. Prefer to stream the response body if this is a
+   * possibility for your response.
+   */
+  @Throws(IOException::class)
+  fun byteString() = consumeSource(BufferedSource::readByteString) { it.size }
+
+  private inline fun <T : Any> consumeSource(
+    consumer: (BufferedSource) -> T,
+    sizeMapper: (T) -> Int
+  ): T {
     val contentLength = contentLength()
-    if (contentLength > Integer.MAX_VALUE) {
+    if (contentLength > Int.MAX_VALUE) {
       throw IOException("Cannot buffer entire body for content length: $contentLength")
     }
 
-    val bytes: ByteArray = source().use(BufferedSource::readByteArray)
-    if (contentLength != -1L && contentLength != bytes.size.toLong()) {
-      throw IOException(
-          "Content-Length ($contentLength) and stream length (${bytes.size}) disagree")
+    val bytes = source().use(consumer)
+    val size = sizeMapper(bytes)
+    if (contentLength != -1L && contentLength != size.toLong()) {
+      throw IOException("Content-Length ($contentLength) and stream length ($size) disagree")
     }
     return bytes
   }
