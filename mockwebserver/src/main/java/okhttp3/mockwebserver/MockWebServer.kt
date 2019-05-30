@@ -370,7 +370,7 @@ class MockWebServer : ExternalResource(), Closeable {
         return
       }
 
-      val socketPolicy = dispatcher.peek().getSocketPolicy()
+      val socketPolicy = dispatcher.peek().socketPolicy
       if (socketPolicy === DISCONNECT_AT_START) {
         dispatchBookkeepingRequest(0, socket)
         socket.close()
@@ -426,7 +426,7 @@ class MockWebServer : ExternalResource(), Closeable {
 
     @Throws(Exception::class)
     fun handle() {
-      val socketPolicy = dispatcher.peek().getSocketPolicy()
+      val socketPolicy = dispatcher.peek().socketPolicy
       var protocol = Protocol.HTTP_1_1
       val socket: Socket
       when {
@@ -513,7 +513,7 @@ class MockWebServer : ExternalResource(), Closeable {
       val source = raw.source().buffer()
       val sink = raw.sink().buffer()
       while (true) {
-        val socketPolicy = dispatcher.peek().getSocketPolicy()
+        val socketPolicy = dispatcher.peek().socketPolicy
         check(processOneRequest(raw, source, sink)) { "Tunnel without any CONNECT!" }
         if (socketPolicy === UPGRADE_TO_SSL_AT_END) return
       }
@@ -535,11 +535,11 @@ class MockWebServer : ExternalResource(), Closeable {
       requestQueue.add(request)
 
       val response = dispatcher.dispatch(request)
-      if (response.getSocketPolicy() === DISCONNECT_AFTER_REQUEST) {
+      if (response.socketPolicy === DISCONNECT_AFTER_REQUEST) {
         socket.close()
         return false
       }
-      if (response.getSocketPolicy() === NO_RESPONSE) {
+      if (response.socketPolicy === NO_RESPONSE) {
         // This read should block until the socket is closed. (Because nobody is writing.)
         if (source.exhausted()) return false
         throw ProtocolException("unexpected data")
@@ -563,7 +563,7 @@ class MockWebServer : ExternalResource(), Closeable {
       }
 
       // See warnings associated with these socket policies in SocketPolicy.
-      when (response.getSocketPolicy()) {
+      when (response.socketPolicy) {
         DISCONNECT_AT_END -> {
           socket.close()
           return false
@@ -644,7 +644,7 @@ class MockWebServer : ExternalResource(), Closeable {
       }
     }
 
-    val socketPolicy = dispatcher.peek().getSocketPolicy()
+    val socketPolicy = dispatcher.peek().socketPolicy
     if (expectContinue && socketPolicy === EXPECT_CONTINUE || socketPolicy === CONTINUE_ALWAYS) {
       sink.writeUtf8("HTTP/1.1 100 Continue\r\n")
       sink.writeUtf8("Content-Length: 0\r\n")
@@ -703,7 +703,7 @@ class MockWebServer : ExternalResource(), Closeable {
         .url("$scheme://$authority/")
         .headers(request.headers)
         .build()
-    val statusParts = response.getStatus().split(' ', limit = 3)
+    val statusParts = response.status.split(' ', limit = 3)
     val fancyResponse = Response.Builder()
         .code(Integer.parseInt(statusParts[1]))
         .message(statusParts[2])
@@ -735,7 +735,7 @@ class MockWebServer : ExternalResource(), Closeable {
   @Throws(IOException::class)
   private fun writeHttpResponse(socket: Socket, sink: BufferedSink, response: MockResponse) {
     sleepIfDelayed(response.getHeadersDelay(TimeUnit.MILLISECONDS))
-    sink.writeUtf8(response.getStatus())
+    sink.writeUtf8(response.status)
     sink.writeUtf8("\r\n")
 
     writeHeaders(sink, response.getHeaders())
@@ -789,9 +789,9 @@ class MockWebServer : ExternalResource(), Closeable {
 
     val halfByteCount = byteCountNum / 2
     val disconnectHalfway = if (isRequest) {
-      policy.getSocketPolicy() === DISCONNECT_DURING_REQUEST_BODY
+      policy.socketPolicy === DISCONNECT_DURING_REQUEST_BODY
     } else {
-      policy.getSocketPolicy() === DISCONNECT_DURING_RESPONSE_BODY
+      policy.socketPolicy === DISCONNECT_DURING_RESPONSE_BODY
     }
 
     while (!socket.isClosed) {
@@ -879,9 +879,9 @@ class MockWebServer : ExternalResource(), Closeable {
     @Throws(IOException::class)
     override fun onStream(stream: Http2Stream) {
       val peekedResponse = dispatcher.peek()
-      if (peekedResponse.getSocketPolicy() === RESET_STREAM_AT_START) {
+      if (peekedResponse.socketPolicy === RESET_STREAM_AT_START) {
         dispatchBookkeepingRequest(sequenceNumber.getAndIncrement(), socket)
-        stream.close(ErrorCode.fromHttp2(peekedResponse.getHttp2ErrorCode())!!, null)
+        stream.close(ErrorCode.fromHttp2(peekedResponse.http2ErrorCode)!!, null)
         return
       }
 
@@ -891,7 +891,7 @@ class MockWebServer : ExternalResource(), Closeable {
 
       val response: MockResponse = dispatcher.dispatch(request)
 
-      if (response.getSocketPolicy() === DISCONNECT_AFTER_REQUEST) {
+      if (response.socketPolicy === DISCONNECT_AFTER_REQUEST) {
         socket.close()
         return
       }
@@ -902,7 +902,7 @@ class MockWebServer : ExternalResource(), Closeable {
                 "and responded: $response protocol is $protocol")
       }
 
-      if (response.getSocketPolicy() === DISCONNECT_AT_END) {
+      if (response.socketPolicy === DISCONNECT_AT_END) {
         val connection = stream.connection
         connection.shutdown(ErrorCode.NO_ERROR)
       }
@@ -933,7 +933,7 @@ class MockWebServer : ExternalResource(), Closeable {
       val headers = httpHeaders.build()
 
       val peek = dispatcher.peek()
-      if (!readBody && peek.getSocketPolicy() === EXPECT_CONTINUE) {
+      if (!readBody && peek.socketPolicy === EXPECT_CONTINUE) {
         val continueHeaders =
             listOf(Header(Header.RESPONSE_STATUS, "100 Continue".encodeUtf8()))
         stream.writeHeaders(continueHeaders, outFinished = false, flushHeaders = true)
@@ -964,13 +964,14 @@ class MockWebServer : ExternalResource(), Closeable {
       val settings = response.settings
       stream.connection.setSettings(settings)
 
-      if (response.getSocketPolicy() === NO_RESPONSE) {
+      if (response.socketPolicy === NO_RESPONSE) {
         return
       }
       val http2Headers = mutableListOf<Header>()
-      val statusParts = response.getStatus().split(' ', limit = 3)
+      val statusParts = response.status.split(' ', limit = 3)
+
       if (statusParts.size < 2) {
-        throw AssertionError("Unexpected status: ${response.getStatus()}")
+        throw AssertionError("Unexpected status: ${response.status}")
       }
       // TODO: constants for well-known header names.
       http2Headers.add(Header(Header.RESPONSE_STATUS, statusParts[1]))

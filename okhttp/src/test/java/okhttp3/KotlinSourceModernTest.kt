@@ -682,10 +682,10 @@ class KotlinSourceModernTest {
   @Test @Ignore
   fun mockResponse() {
     var mockResponse: MockResponse = MockResponse()
-    var status: String = mockResponse.getStatus()
-    status = mockResponse.getStatus()
-    mockResponse = mockResponse.setStatus("")
-    mockResponse.setStatus("")
+    var status: String = mockResponse.status
+    status = mockResponse.status
+    mockResponse = mockResponse.apply { mockResponse.status = "" }
+    mockResponse.status = ""
     mockResponse = mockResponse.setResponseCode(0)
     var headers: Headers = mockResponse.getHeaders()
     headers = mockResponse.getHeaders()
@@ -705,13 +705,14 @@ class KotlinSourceModernTest {
     mockResponse.setBody(Buffer())
     mockResponse = mockResponse.setChunkedBody(Buffer(), 0)
     mockResponse = mockResponse.setChunkedBody("", 0)
-    var socketPolicy: SocketPolicy = mockResponse.getSocketPolicy()
-    socketPolicy = mockResponse.getSocketPolicy()
-    mockResponse = mockResponse.setSocketPolicy(SocketPolicy.KEEP_OPEN)
-    var http2ErrorCode: Int = mockResponse.getHttp2ErrorCode()
-    http2ErrorCode = mockResponse.getHttp2ErrorCode()
-    mockResponse = mockResponse.setHttp2ErrorCode(0)
-    mockResponse.setHttp2ErrorCode(0)
+    var socketPolicy: SocketPolicy = mockResponse.socketPolicy
+    socketPolicy = mockResponse.socketPolicy
+    mockResponse = mockResponse.apply { mockResponse.socketPolicy = SocketPolicy.KEEP_OPEN }
+    mockResponse.socketPolicy = SocketPolicy.KEEP_OPEN
+    var http2ErrorCode: Int = mockResponse.http2ErrorCode
+    http2ErrorCode = mockResponse.http2ErrorCode
+    mockResponse = mockResponse.apply { mockResponse.http2ErrorCode = 0 }
+    mockResponse.http2ErrorCode = 0
     mockResponse = mockResponse.throttleBody(0L, 0L, TimeUnit.SECONDS)
     var throttleBytesPerPeriod: Long = mockResponse.throttleBytesPerPeriod
     throttleBytesPerPeriod = mockResponse.throttleBytesPerPeriod
