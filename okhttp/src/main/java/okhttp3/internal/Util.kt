@@ -512,7 +512,7 @@ fun Int.toHexString(): String = Integer.toHexString(this)
  * "don't wait" instead of "wait forever".
  */
 @Throws(InterruptedException::class)
-fun Any.waitNanos(nanos: Long) {
+fun Any.lockAndWaitNanos(nanos: Long) {
   val ms = nanos / 1_000_000L
   val ns = nanos - (ms * 1_000_000L)
   synchronized(this) {
@@ -520,8 +520,8 @@ fun Any.waitNanos(nanos: Long) {
   }
 }
 
-@Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN")
-fun Any.wait() = (this as Object).wait()
+@Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN", "NOTHING_TO_INLINE")
+inline fun Any.wait() = (this as Object).wait()
 
 /**
  * Lock and wait a duration in milliseconds and nanos.
@@ -534,8 +534,8 @@ fun Any.waitMillis(timeout: Long, nanos: Int = 0) {
   }
 }
 
-@Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN")
-fun Any.notify() = (this as Object).notify()
+@Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN", "NOTHING_TO_INLINE")
+inline fun Any.notify() = (this as Object).notify()
 
-@Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN")
-fun Any.notifyAll() = (this as Object).notifyAll()
+@Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN", "NOTHING_TO_INLINE")
+inline fun Any.notifyAll() = (this as Object).notifyAll()

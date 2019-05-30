@@ -17,6 +17,7 @@ package okhttp3.internal.http2
 
 import okhttp3.Headers
 import okhttp3.internal.EMPTY_HEADERS
+import okhttp3.internal.notifyAll
 import okhttp3.internal.toHeaderList
 import okhttp3.internal.wait
 import okio.AsyncTimeout
@@ -258,7 +259,7 @@ class Http2Stream internal constructor(
       }
       this.errorCode = errorCode
       this.errorException = errorException
-      (this as Object).notifyAll()
+      notifyAll()
     }
     connection.removeStream(id)
     return true
@@ -288,7 +289,7 @@ class Http2Stream internal constructor(
         this.source.finished = true
       }
       open = isOpen
-      (this as Object).notifyAll()
+      notifyAll()
     }
     if (!open) {
       connection.removeStream(id)
@@ -298,7 +299,7 @@ class Http2Stream internal constructor(
   @Synchronized fun receiveRstStream(errorCode: ErrorCode) {
     if (this.errorCode == null) {
       this.errorCode = errorCode
-      (this as Object).notifyAll()
+      notifyAll()
     }
   }
 
@@ -440,7 +441,7 @@ class Http2Stream internal constructor(
           val wasEmpty = readBuffer.size == 0L
           readBuffer.writeAll(receiveBuffer)
           if (wasEmpty) {
-            (this@Http2Stream as Object).notifyAll()
+            this@Http2Stream.notifyAll()
           }
         }
       }
@@ -455,7 +456,7 @@ class Http2Stream internal constructor(
         closed = true
         bytesDiscarded = readBuffer.size
         readBuffer.clear()
-        (this@Http2Stream as Object).notifyAll() // TODO(jwilson): Unnecessary?
+        this@Http2Stream.notifyAll() // TODO(jwilson): Unnecessary?
       }
       if (bytesDiscarded > 0L) {
         updateConnectionFlowControl(bytesDiscarded)
@@ -601,7 +602,7 @@ class Http2Stream internal constructor(
   fun addBytesToWriteWindow(delta: Long) {
     bytesLeftInWriteWindow += delta
     if (delta > 0L) {
-      (this@Http2Stream as Object).notifyAll()
+      this@Http2Stream.notifyAll()
     }
   }
 
