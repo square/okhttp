@@ -959,7 +959,7 @@ class KotlinSourceModernTest {
     var chunkSizes: List<Int> = recordedRequest.chunkSizes
     var bodySize: Long = recordedRequest.bodySize
     var body: Buffer = recordedRequest.body
-    var utf8Body: String = recordedRequest.utf8Body
+    var utf8Body: String = recordedRequest.body.readUtf8()
     var sequenceNumber: Int = recordedRequest.sequenceNumber
     var tlsVersion: TlsVersion? = recordedRequest.tlsVersion
     var handshake: Handshake? = recordedRequest.handshake
@@ -971,7 +971,7 @@ class KotlinSourceModernTest {
     chunkSizes = recordedRequest.chunkSizes
     bodySize = recordedRequest.bodySize
     body = recordedRequest.body
-    utf8Body = recordedRequest.utf8Body
+    utf8Body = recordedRequest.body.readUtf8()
     sequenceNumber = recordedRequest.sequenceNumber
     tlsVersion = recordedRequest.tlsVersion
     handshake = recordedRequest.handshake

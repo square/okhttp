@@ -943,31 +943,31 @@ class KotlinSourceCompatibilityTest {
     var recordedRequest: RecordedRequest = RecordedRequest(
         "", Headers.of(), listOf(), 0L, Buffer(), 0, Socket())
     recordedRequest = RecordedRequest("", Headers.of(), listOf(), 0L, Buffer(), 0, Socket())
-    var requestUrl: HttpUrl? = recordedRequest.requestUrl
-    var requestLine: String = recordedRequest.requestLine
-    var method: String? = recordedRequest.method
-    var path: String? = recordedRequest.path
-    var headers: Headers = recordedRequest.headers
+    var requestUrl: HttpUrl? = recordedRequest.getRequestUrl()
+    var requestLine: String = recordedRequest.getRequestLine()
+    var method: String? = recordedRequest.getMethod()
+    var path: String? = recordedRequest.getPath()
+    var headers: Headers = recordedRequest.getHeaders()
     val header: String? = recordedRequest.getHeader("")
-    var chunkSizes: List<Int> = recordedRequest.chunkSizes
-    var bodySize: Long = recordedRequest.bodySize
-    var body: Buffer = recordedRequest.body
+    var chunkSizes: List<Int> = recordedRequest.getChunkSizes()
+    var bodySize: Long = recordedRequest.getBodySize()
+    var body: Buffer = recordedRequest.getBody()
     var utf8Body: String = recordedRequest.utf8Body
-    var sequenceNumber: Int = recordedRequest.sequenceNumber
-    var tlsVersion: TlsVersion? = recordedRequest.tlsVersion
-    var handshake: Handshake? = recordedRequest.handshake
-    requestUrl = recordedRequest.requestUrl
-    requestLine = recordedRequest.requestLine
-    method = recordedRequest.method
-    path = recordedRequest.path
-    headers = recordedRequest.headers
-    chunkSizes = recordedRequest.chunkSizes
-    bodySize = recordedRequest.bodySize
-    body = recordedRequest.body
+    var sequenceNumber: Int = recordedRequest.getSequenceNumber()
+    var tlsVersion: TlsVersion? = recordedRequest.getTlsVersion()
+    var handshake: Handshake? = recordedRequest.getHandshake()
+    requestUrl = recordedRequest.getRequestUrl()
+    requestLine = recordedRequest.getRequestLine()
+    method = recordedRequest.getMethod()
+    path = recordedRequest.getPath()
+    headers = recordedRequest.getHeaders()
+    chunkSizes = recordedRequest.getChunkSizes()
+    bodySize = recordedRequest.getBodySize()
+    body = recordedRequest.getBody()
     utf8Body = recordedRequest.utf8Body
-    sequenceNumber = recordedRequest.sequenceNumber
-    tlsVersion = recordedRequest.tlsVersion
-    handshake = recordedRequest.handshake
+    sequenceNumber = recordedRequest.getSequenceNumber()
+    tlsVersion = recordedRequest.getTlsVersion()
+    handshake = recordedRequest.getHandshake()
   }
 
   @Test @Ignore

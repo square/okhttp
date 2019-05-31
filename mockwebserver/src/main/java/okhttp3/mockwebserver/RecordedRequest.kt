@@ -30,40 +30,50 @@ import javax.net.ssl.SSLSocket
 
 /** An HTTP request that came into the mock web server. */
 class RecordedRequest(
-  val requestLine: String,
+  @get:JvmName("requestLine") val requestLine: String,
+
   /** All headers. */
-  val headers: Headers,
+  @get:JvmName("headers") val headers: Headers,
+
   /**
    * The sizes of the chunks of this request's body, or an empty list if the request's body
    * was empty or unchunked.
    */
-  val chunkSizes: List<Int>,
+  @get:JvmName("chunkSizes") val chunkSizes: List<Int>,
+
   /** The total size of the body of this POST request (before truncation).*/
-  val bodySize: Long,
+  @get:JvmName("bodySize") val bodySize: Long,
+
   /** The body of this POST request. This may be truncated. */
-  val body: Buffer,
+  @get:JvmName("body") val body: Buffer,
+
   /**
    * The index of this request on its HTTP connection. Since a single HTTP connection may
    * serve multiple requests, each request is assigned its own sequence number.
    */
-  val sequenceNumber: Int,
-  socket: Socket
+  @get:JvmName("sequenceNumber") val sequenceNumber: Int,
+
+  internal val socket: Socket
 ) {
-  val method: String?
-  val path: String?
+  @get:JvmName("method") val method: String?
+  @get:JvmName("path") val path: String?
+
   /**
    * The TLS handshake of the connection that carried this request, or null if the request
    * was received without TLS.
    */
-  val handshake: Handshake?
-  val requestUrl: HttpUrl?
+  @get:JvmName("handshake") val handshake: Handshake?
+  @get:JvmName("requestUrl") val requestUrl: HttpUrl?
 
   val utf8Body: String
-    @Deprecated("Use {@link #getBody() getBody().readUtf8()}. ")
+    @Deprecated(
+        message = "Use body().readUtf8() instead.",
+        replaceWith = ReplaceWith(expression = "body.readUtf8"),
+        level = DeprecationLevel.WARNING)
     get() = body.readUtf8()
 
   /** Returns the connection's TLS version or null if the connection doesn't use SSL. */
-  val tlsVersion: TlsVersion?
+  @get:JvmName("tlsVersion") val tlsVersion: TlsVersion?
     get() = handshake?.tlsVersion
 
   init {
@@ -109,6 +119,72 @@ class RecordedRequest(
   fun getHeader(name: String): String? {
     return headers.values(name).firstOrNull()
   }
+
+  @Deprecated(
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "requestLine"),
+      level = DeprecationLevel.WARNING)
+  fun getRequestLine(): String = requestLine
+
+  @Deprecated(
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "headers"),
+      level = DeprecationLevel.WARNING)
+  fun getHeaders(): Headers = headers
+
+  @Deprecated(
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "chunkSizes"),
+      level = DeprecationLevel.WARNING)
+  fun getChunkSizes(): List<Int> = chunkSizes
+
+  @Deprecated(
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "bodySize"),
+      level = DeprecationLevel.WARNING)
+  fun getBodySize(): Long = bodySize
+
+  @Deprecated(
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "body"),
+      level = DeprecationLevel.WARNING)
+  fun getBody(): Buffer = body
+
+  @Deprecated(
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "sequenceNumber"),
+      level = DeprecationLevel.WARNING)
+  fun getSequenceNumber(): Int = sequenceNumber
+
+  @Deprecated(
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "method"),
+      level = DeprecationLevel.WARNING)
+  fun getMethod(): String? = method
+
+  @Deprecated(
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "path"),
+      level = DeprecationLevel.WARNING)
+  fun getPath(): String? = path
+
+  @Deprecated(
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "handshake"),
+      level = DeprecationLevel.WARNING)
+  fun getHandshake(): Handshake? = handshake
+
+  @Deprecated(
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "requestUrl"),
+      level = DeprecationLevel.WARNING)
+  fun getRequestUrl(): HttpUrl? = requestUrl
+
+  @Deprecated(
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "tlsVersion"),
+      level = DeprecationLevel.WARNING)
+  fun getTlsVersion(): TlsVersion? = tlsVersion
 
   override fun toString(): String {
     return requestLine
