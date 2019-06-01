@@ -423,7 +423,7 @@ fun String.indexOfNonWhitespace(startIndex: Int = 0): Int {
 
 /** Returns the Content-Length as reported by the response headers. */
 fun Response.headersContentLength(): Long {
-  return headers()["Content-Length"]?.toLongOrDefault(-1L) ?: -1L
+  return headers["Content-Length"]?.toLongOrDefault(-1L) ?: -1L
 }
 
 fun String.toLongOrDefault(defaultValue: Long): Long {
