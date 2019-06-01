@@ -684,7 +684,6 @@ class KotlinSourceModernTest {
     var mockResponse: MockResponse = MockResponse()
     var status: String = mockResponse.status
     status = mockResponse.status
-    mockResponse = mockResponse.apply { mockResponse.status = "" }
     mockResponse.status = ""
     mockResponse = mockResponse.setResponseCode(0)
     var headers: Headers = mockResponse.getHeaders()
@@ -707,11 +706,9 @@ class KotlinSourceModernTest {
     mockResponse = mockResponse.setChunkedBody("", 0)
     var socketPolicy: SocketPolicy = mockResponse.socketPolicy
     socketPolicy = mockResponse.socketPolicy
-    mockResponse = mockResponse.apply { mockResponse.socketPolicy = SocketPolicy.KEEP_OPEN }
     mockResponse.socketPolicy = SocketPolicy.KEEP_OPEN
     var http2ErrorCode: Int = mockResponse.http2ErrorCode
     http2ErrorCode = mockResponse.http2ErrorCode
-    mockResponse = mockResponse.apply { mockResponse.http2ErrorCode = 0 }
     mockResponse.http2ErrorCode = 0
     mockResponse = mockResponse.throttleBody(0L, 0L, TimeUnit.SECONDS)
     var throttleBytesPerPeriod: Long = mockResponse.throttleBytesPerPeriod
@@ -736,25 +733,23 @@ class KotlinSourceModernTest {
   @Test @Ignore
   fun mockWebServer() {
     val mockWebServer: MockWebServer = MockWebServer()
-    var port: Int = mockWebServer.getPort()
-    port = mockWebServer.getPort()
+    var port: Int = mockWebServer.port
     var hostName: String = mockWebServer.hostName
     hostName = mockWebServer.hostName
     val toProxyAddress: Proxy = mockWebServer.toProxyAddress()
-    mockWebServer.setServerSocketFactory(ServerSocketFactory.getDefault())
+    mockWebServer.serverSocketFactory = ServerSocketFactory.getDefault()
     val url: HttpUrl = mockWebServer.url("")
-    mockWebServer.setBodyLimit(0L)
-    mockWebServer.setProtocolNegotiationEnabled(false)
-    mockWebServer.setProtocols(listOf())
-    val protocols: List<Protocol> = mockWebServer.protocols()
+    mockWebServer.bodyLimit = 0L
+    mockWebServer.protocolNegotiationEnabled = false
+    mockWebServer.protocols = listOf()
+    val protocols: List<Protocol> = mockWebServer.protocols
     mockWebServer.useHttps(SSLSocketFactory.getDefault() as SSLSocketFactory, false)
     mockWebServer.noClientAuth()
     mockWebServer.requestClientAuth()
     mockWebServer.requireClientAuth()
     var request: RecordedRequest? = mockWebServer.takeRequest()
     request = mockWebServer.takeRequest(0L, TimeUnit.SECONDS)
-    var requestCount: Int = mockWebServer.getRequestCount()
-    requestCount = mockWebServer.getRequestCount()
+    var requestCount: Int = mockWebServer.requestCount
     mockWebServer.enqueue(MockResponse())
     mockWebServer.start()
     mockWebServer.start(0)

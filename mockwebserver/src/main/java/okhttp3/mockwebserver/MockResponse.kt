@@ -276,16 +276,16 @@ class MockResponse : Cloneable {
     unit.convert(headersDelayAmount, headersDelayUnit)
 
   /**
-   * When [protocols][MockWebServer.setProtocols] include [HTTP_2][okhttp3.Protocol],
-   * this attaches a pushed stream to this response.
+   * When [protocols][MockWebServer.protocols] include [HTTP_2][okhttp3.Protocol], this attaches a
+   * pushed stream to this response.
    */
   fun withPush(promise: PushPromise) = apply {
     promises.add(promise)
   }
 
   /**
-   * When [protocols][MockWebServer.setProtocols] include [HTTP_2][okhttp3.Protocol],
-   * this pushes [settings] before writing the response.
+   * When [protocols][MockWebServer.protocols] include [HTTP_2][okhttp3.Protocol], this pushes
+   * [settings] before writing the response.
    */
   fun withSettings(settings: Settings) = apply {
     this.settings = settings
