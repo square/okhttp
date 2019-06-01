@@ -17,7 +17,6 @@ package okhttp3
 
 import okhttp3.internal.http2.Settings
 import okhttp3.internal.proxy.NullProxySelector
-import okhttp3.internal.tls.OkHostnameVerifier
 import okhttp3.logging.HttpLoggingInterceptor
 import okhttp3.logging.LoggingEventListener
 import okhttp3.mockwebserver.MockResponse
@@ -63,6 +62,7 @@ import javax.net.ServerSocketFactory
 import javax.net.SocketFactory
 import javax.net.ssl.HostnameVerifier
 import javax.net.ssl.SSLContext
+import javax.net.ssl.SSLSession
 import javax.net.ssl.SSLSocket
 import javax.net.ssl.SSLSocketFactory
 import javax.net.ssl.X509KeyManager
@@ -444,7 +444,7 @@ class KotlinSourceCompatibilityTest {
     val get: String? = headers.get("")
     val date: Date? = headers.getDate("")
     val instant: Instant? = headers.getInstant("")
-    val size: Int = headers.size
+    val size: Int = headers.size()
     val name: String = headers.name(0)
     val value: String = headers.value(0)
     val names: Set<String> = headers.names()
@@ -863,7 +863,8 @@ class KotlinSourceCompatibilityTest {
     builder = builder.dns(Dns.SYSTEM)
     builder = builder.socketFactory(SocketFactory.getDefault())
     builder = builder.sslSocketFactory(localhost().sslSocketFactory(), localhost().trustManager())
-    builder = builder.hostnameVerifier(OkHostnameVerifier)
+    builder = builder.hostnameVerifier(newHostnameVerifier())
+    builder = builder.hostnameVerifier { hostname: String, session: SSLSession -> false }
     builder = builder.certificatePinner(CertificatePinner.DEFAULT)
     builder = builder.authenticator(Authenticator.NONE)
     builder = builder.proxyAuthenticator(Authenticator.NONE)
@@ -1056,7 +1057,7 @@ class KotlinSourceCompatibilityTest {
     val cacheResponse: Response? = response.cacheResponse
     val priorResponse: Response? = response.priorResponse
     val challenges: List<Challenge> = response.challenges()
-    val cacheControl: CacheControl = response.cacheControl
+    val cacheControl: CacheControl = response.cacheControl()
     val sentRequestAtMillis: Long = response.sentRequestAtMillis
     val receivedResponseAtMillis: Long = response.receivedResponseAtMillis
   }
@@ -1168,7 +1169,7 @@ class KotlinSourceCompatibilityTest {
         Dns.SYSTEM,
         SocketFactory.getDefault(),
         localhost().sslSocketFactory(),
-        OkHostnameVerifier,
+        newHostnameVerifier(),
         CertificatePinner.DEFAULT,
         Authenticator.NONE,
         Proxy.NO_PROXY,
@@ -1176,6 +1177,12 @@ class KotlinSourceCompatibilityTest {
         listOf(ConnectionSpec.MODERN_TLS),
         NullProxySelector()
     )
+  }
+
+  private fun newHostnameVerifier(): HostnameVerifier {
+    return object : HostnameVerifier {
+      override fun verify(hostname: String, sslSession: SSLSession) = false
+    }
   }
 
   private fun newCall(): Call {

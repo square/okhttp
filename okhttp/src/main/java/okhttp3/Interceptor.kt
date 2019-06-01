@@ -28,11 +28,11 @@ interface Interceptor {
   fun intercept(chain: Chain): Response
 
   companion object {
-    // This lambda conversion is for Kotlin callers expecting a Java SAM (single-abstract-method).
     @JvmName("-deprecated_Interceptor")
-    inline operator fun invoke(
-      crossinline block: (chain: Chain) -> Response
-    ): Interceptor = object : Interceptor {
+    @Deprecated(
+        message = "No SAM (single-abstract-method) conversions for Kotlin declarations",
+        level = DeprecationLevel.WARNING)
+    operator fun invoke(block: (chain: Chain) -> Response): Interceptor = object : Interceptor {
       override fun intercept(chain: Chain) = block(chain)
     }
   }

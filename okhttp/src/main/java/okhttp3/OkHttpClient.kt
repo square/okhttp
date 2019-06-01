@@ -40,10 +40,10 @@ import java.util.concurrent.ExecutorService
 import java.util.concurrent.TimeUnit
 import javax.net.SocketFactory
 import javax.net.ssl.HostnameVerifier
+import javax.net.ssl.SSLSession
 import javax.net.ssl.SSLSocketFactory
 import javax.net.ssl.TrustManager
 import javax.net.ssl.X509TrustManager
-import kotlin.DeprecationLevel.ERROR
 
 /**
  * Factory for [calls][Call], which can be used to send HTTP requests and read their responses.
@@ -512,15 +512,14 @@ open class OkHttpClient internal constructor(
       interceptors += interceptor
     }
 
-    // This lambda conversion is for Kotlin callers expecting a Java SAM (single-abstract-method).
     @JvmName("-deprecated_addInterceptor")
-    inline fun addInterceptor(
-      crossinline interceptor: (chain: Interceptor.Chain) -> Response
-    ) = apply {
-      addInterceptor(object : Interceptor {
-        override fun intercept(chain: Interceptor.Chain): Response = interceptor(chain)
-      })
-    }
+    @Deprecated(
+        message = "No SAM (single-abstract-method) conversions for Kotlin declarations",
+        level = DeprecationLevel.WARNING)
+    fun addInterceptor(block: (chain: Interceptor.Chain) -> Response) =
+        addInterceptor(object : Interceptor {
+          override fun intercept(chain: Interceptor.Chain): Response = block(chain)
+        })
 
     /**
      * Returns a modifiable list of interceptors that observe a single network request and response.
@@ -533,15 +532,14 @@ open class OkHttpClient internal constructor(
       networkInterceptors += interceptor
     }
 
-    // This lambda conversion is for Kotlin callers expecting a Java SAM (single-abstract-method).
     @JvmName("-deprecated_addNetworkInterceptor")
-    inline fun addNetworkInterceptor(
-      crossinline interceptor: (chain: Interceptor.Chain) -> Response
-    ) = apply {
-      addInterceptor(object : Interceptor {
-        override fun intercept(chain: Interceptor.Chain): Response = interceptor(chain)
-      })
-    }
+    @Deprecated(
+        message = "No SAM (single-abstract-method) conversions for Kotlin declarations",
+        level = DeprecationLevel.WARNING)
+    fun addNetworkInterceptor(block: (chain: Interceptor.Chain) -> Response) =
+        addNetworkInterceptor(object : Interceptor {
+          override fun intercept(chain: Interceptor.Chain): Response = block(chain)
+        })
 
     /**
      * Configure a single client scoped listener that will receive all analytic events for this
@@ -563,13 +561,14 @@ open class OkHttpClient internal constructor(
       this.eventListenerFactory = eventListenerFactory
     }
 
-    // This lambda conversion is for Kotlin callers expecting a Java SAM (single-abstract-method).
     @JvmName("-deprecated_eventListenerFactory")
-    inline fun eventListenerFactory(crossinline block: (call: Call) -> EventListener) = apply {
-      eventListenerFactory(object : EventListener.Factory {
-        override fun create(call: Call) = block(call)
-      })
-    }
+    @Deprecated(
+        message = "No SAM (single-abstract-method) conversions for Kotlin declarations",
+        level = DeprecationLevel.WARNING)
+    fun eventListenerFactory(block: (call: Call) -> EventListener) =
+        eventListenerFactory(object : EventListener.Factory {
+          override fun create(call: Call) = block(call)
+        })
 
     /**
      * Configure this client to retry or not when a connectivity problem is encountered. By default,
@@ -695,7 +694,7 @@ open class OkHttpClient internal constructor(
      */
     @Deprecated(
         message = "Use the sslSocketFactory overload that accepts a X509TrustManager.",
-        level = ERROR
+        level = DeprecationLevel.ERROR
     )
     fun sslSocketFactory(sslSocketFactory: SSLSocketFactory) = apply {
       this.sslSocketFactoryOrNull = sslSocketFactory
@@ -809,6 +808,13 @@ open class OkHttpClient internal constructor(
     fun hostnameVerifier(hostnameVerifier: HostnameVerifier) = apply {
       this.hostnameVerifier = hostnameVerifier
     }
+
+    @JvmName("-deprecated_hostnameVerifier")
+    @Deprecated(
+        message = "No SAM (single-abstract-method) conversions for Kotlin declarations",
+        level = DeprecationLevel.WARNING)
+    fun hostnameVerifier(block: (String, SSLSession) -> Boolean) =
+        hostnameVerifier(HostnameVerifier { hostname, sslSession -> block(hostname, sslSession) })
 
     /**
      * Sets the certificate pinner that constrains which certificates are trusted. By default HTTPS
