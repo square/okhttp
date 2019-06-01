@@ -25,7 +25,10 @@ import java.util.concurrent.TimeUnit
 
 /** A scripted response to be replayed by the mock web server. */
 class MockResponse : Cloneable {
-  private var status: String = ""
+  /** Returns the HTTP response line, such as "HTTP/1.1 200 OK". */
+  @set:JvmName("status")
+  var status: String = ""
+
   private var headers = Headers.Builder()
   private var trailers = Headers.Builder()
 
@@ -36,8 +39,16 @@ class MockResponse : Cloneable {
   private var throttlePeriodAmount = 1L
   private var throttlePeriodUnit = TimeUnit.SECONDS
 
-  private var socketPolicy = SocketPolicy.KEEP_OPEN
-  private var http2ErrorCode = -1
+  @set:JvmName("socketPolicy")
+  var socketPolicy = SocketPolicy.KEEP_OPEN
+
+  /**
+   * Sets the [HTTP/2 error code](https://tools.ietf.org/html/rfc7540#section-7) to be
+   * returned when resetting the stream.
+   * This is only valid with [SocketPolicy.RESET_STREAM_AT_START].
+   */
+  @set:JvmName("http2ErrorCode")
+  var http2ErrorCode = -1
 
   private var bodyDelayAmount = 0L
   private var bodyDelayUnit = TimeUnit.MILLISECONDS
@@ -72,8 +83,20 @@ class MockResponse : Cloneable {
     return result
   }
 
-  /** Returns the HTTP response line, such as "HTTP/1.1 200 OK". */
+  @JvmName("-deprecated_getStatus")
+  @Deprecated(
+      message = "moved to var",
+      replaceWith = ReplaceWith(expression = "status"),
+      level = DeprecationLevel.WARNING)
   fun getStatus(): String = status
+
+  @Deprecated(
+      message = "moved to var.  Replace setStatus(...) with status(...) to fix Java",
+      replaceWith = ReplaceWith(expression = "apply { this.status = status }"),
+      level = DeprecationLevel.WARNING)
+  fun setStatus(status: String) = apply {
+    this.status = status
+  }
 
   fun setResponseCode(code: Int): MockResponse {
     val reason = when (code) {
@@ -84,11 +107,7 @@ class MockResponse : Cloneable {
       in 500..599 -> "Server Error"
       else -> "Mock Response"
     }
-    return setStatus("HTTP/1.1 $code $reason")
-  }
-
-  fun setStatus(status: String) = apply {
-    this.status = status
+    return apply { status = "HTTP/1.1 $code $reason" }
   }
 
   /** Returns the HTTP headers, such as "Content-Length: 0". */
@@ -193,19 +212,32 @@ class MockResponse : Cloneable {
   fun setChunkedBody(body: String, maxChunkSize: Int): MockResponse =
     setChunkedBody(Buffer().writeUtf8(body), maxChunkSize)
 
+  @JvmName("-deprecated_getSocketPolicy")
+  @Deprecated(
+      message = "moved to var",
+      replaceWith = ReplaceWith(expression = "socketPolicy"),
+      level = DeprecationLevel.WARNING)
   fun getSocketPolicy() = socketPolicy
 
+  @Deprecated(
+      message = "moved to var. Replace setSocketPolicy(...) with socketPolicy(...) to fix Java",
+      replaceWith = ReplaceWith(expression = "apply { this.socketPolicy = socketPolicy }"),
+      level = DeprecationLevel.WARNING)
   fun setSocketPolicy(socketPolicy: SocketPolicy) = apply {
     this.socketPolicy = socketPolicy
   }
 
+  @JvmName("-deprecated_getHttp2ErrorCode")
+  @Deprecated(
+      message = "moved to var",
+      replaceWith = ReplaceWith(expression = "http2ErrorCode"),
+      level = DeprecationLevel.WARNING)
   fun getHttp2ErrorCode() = http2ErrorCode
 
-  /**
-   * Sets the [HTTP/2 error code](https://tools.ietf.org/html/rfc7540#section-7) to be
-   * returned when resetting the stream.
-   * This is only valid with [SocketPolicy.RESET_STREAM_AT_START].
-   */
+  @Deprecated(
+      message = "moved to var. Replace setHttp2ErrorCode(...) with http2ErrorCode(...) to fix Java",
+      replaceWith = ReplaceWith(expression = "apply { this.http2ErrorCode = http2ErrorCode }"),
+      level = DeprecationLevel.WARNING)
   fun setHttp2ErrorCode(http2ErrorCode: Int) = apply {
     this.http2ErrorCode = http2ErrorCode
   }
@@ -264,7 +296,7 @@ class MockResponse : Cloneable {
    * This will overwrite any previously set status or body.
    */
   fun withWebSocketUpgrade(listener: WebSocketListener) = apply {
-    setStatus("HTTP/1.1 101 Switching Protocols")
+    status = "HTTP/1.1 101 Switching Protocols"
     setHeader("Connection", "Upgrade")
     setHeader("Upgrade", "websocket")
     body = null

@@ -31,7 +31,8 @@ abstract class Dispatcher {
    * request bodies.
    */
   open fun peek(): MockResponse {
-    return MockResponse().setSocketPolicy(SocketPolicy.KEEP_OPEN)
+    val mockResponse = MockResponse()
+    return mockResponse.apply { mockResponse.socketPolicy = SocketPolicy.KEEP_OPEN }
   }
 
   /**
