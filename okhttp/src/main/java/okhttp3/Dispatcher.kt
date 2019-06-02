@@ -232,6 +232,6 @@ class Dispatcher constructor() {
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "executorService"),
-      level = DeprecationLevel.WARNING)
+      level = DeprecationLevel.ERROR)
   fun executorService(): ExecutorService = executorService
 }

@@ -47,21 +47,21 @@ class Route(
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "address"),
-      level = DeprecationLevel.WARNING)
+      level = DeprecationLevel.ERROR)
   fun address(): Address = address
 
   @JvmName("-deprecated_proxy")
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "proxy"),
-      level = DeprecationLevel.WARNING)
+      level = DeprecationLevel.ERROR)
   fun proxy(): Proxy = proxy
 
   @JvmName("-deprecated_socketAddress")
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "socketAddress"),
-      level = DeprecationLevel.WARNING)
+      level = DeprecationLevel.ERROR)
   fun socketAddress(): InetSocketAddress = socketAddress
 
   /**

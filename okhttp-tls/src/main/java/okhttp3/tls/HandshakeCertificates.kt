@@ -75,14 +75,14 @@ class HandshakeCertificates private constructor(
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "keyManager"),
-      level = DeprecationLevel.WARNING)
+      level = DeprecationLevel.ERROR)
   fun keyManager(): X509KeyManager = keyManager
 
   @JvmName("-deprecated_trustManager")
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "trustManager"),
-      level = DeprecationLevel.WARNING)
+      level = DeprecationLevel.ERROR)
   fun trustManager(): X509TrustManager = trustManager
 
   fun sslSocketFactory(): SSLSocketFactory = sslContext().socketFactory

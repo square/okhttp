@@ -63,7 +63,7 @@ class ConnectionSpec internal constructor(
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "cipherSuites"),
-      level = DeprecationLevel.WARNING)
+      level = DeprecationLevel.ERROR)
   fun cipherSuites(): List<CipherSuite>? = cipherSuites
 
   /**
@@ -79,14 +79,14 @@ class ConnectionSpec internal constructor(
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "tlsVersions"),
-      level = DeprecationLevel.WARNING)
+      level = DeprecationLevel.ERROR)
   fun tlsVersions(): List<TlsVersion>? = tlsVersions
 
   @JvmName("-deprecated_supportsTlsExtensions")
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "supportsTlsExtensions"),
-      level = DeprecationLevel.WARNING)
+      level = DeprecationLevel.ERROR)
   fun supportsTlsExtensions(): Boolean = supportsTlsExtensions
 
   /** Applies this spec to [sslSocket]. */

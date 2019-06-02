@@ -247,182 +247,182 @@ open class OkHttpClient internal constructor(
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "dispatcher"),
-      level = DeprecationLevel.WARNING)
+      level = DeprecationLevel.ERROR)
   fun dispatcher(): Dispatcher = dispatcher
 
   @JvmName("-deprecated_connectionPool")
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "connectionPool"),
-      level = DeprecationLevel.WARNING)
+      level = DeprecationLevel.ERROR)
   fun connectionPool(): ConnectionPool = connectionPool
 
   @JvmName("-deprecated_interceptors")
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "interceptors"),
-      level = DeprecationLevel.WARNING)
+      level = DeprecationLevel.ERROR)
   fun interceptors(): List<Interceptor> = interceptors
 
   @JvmName("-deprecated_networkInterceptors")
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "networkInterceptors"),
-      level = DeprecationLevel.WARNING)
+      level = DeprecationLevel.ERROR)
   fun networkInterceptors(): List<Interceptor> = networkInterceptors
 
   @JvmName("-deprecated_eventListenerFactory")
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "eventListenerFactory"),
-      level = DeprecationLevel.WARNING)
+      level = DeprecationLevel.ERROR)
   fun eventListenerFactory(): EventListener.Factory = eventListenerFactory
 
   @JvmName("-deprecated_retryOnConnectionFailure")
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "retryOnConnectionFailure"),
-      level = DeprecationLevel.WARNING)
+      level = DeprecationLevel.ERROR)
   fun retryOnConnectionFailure(): Boolean = retryOnConnectionFailure
 
   @JvmName("-deprecated_authenticator")
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "authenticator"),
-      level = DeprecationLevel.WARNING)
+      level = DeprecationLevel.ERROR)
   fun authenticator(): Authenticator = authenticator
 
   @JvmName("-deprecated_followRedirects")
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "followRedirects"),
-      level = DeprecationLevel.WARNING)
+      level = DeprecationLevel.ERROR)
   fun followRedirects(): Boolean = followRedirects
 
   @JvmName("-deprecated_followSslRedirects")
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "followSslRedirects"),
-      level = DeprecationLevel.WARNING)
+      level = DeprecationLevel.ERROR)
   fun followSslRedirects(): Boolean = followSslRedirects
 
   @JvmName("-deprecated_cookieJar")
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "cookieJar"),
-      level = DeprecationLevel.WARNING)
+      level = DeprecationLevel.ERROR)
   fun cookieJar(): CookieJar = cookieJar
 
   @JvmName("-deprecated_cache")
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "cache"),
-      level = DeprecationLevel.WARNING)
+      level = DeprecationLevel.ERROR)
   fun cache(): Cache? = cache
 
   @JvmName("-deprecated_dns")
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "dns"),
-      level = DeprecationLevel.WARNING)
+      level = DeprecationLevel.ERROR)
   fun dns(): Dns = dns
 
   @JvmName("-deprecated_proxy")
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "proxy"),
-      level = DeprecationLevel.WARNING)
+      level = DeprecationLevel.ERROR)
   fun proxy(): Proxy? = proxy
 
   @JvmName("-deprecated_proxySelector")
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "proxySelector"),
-      level = DeprecationLevel.WARNING)
+      level = DeprecationLevel.ERROR)
   fun proxySelector(): ProxySelector = proxySelector
 
   @JvmName("-deprecated_proxyAuthenticator")
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "proxyAuthenticator"),
-      level = DeprecationLevel.WARNING)
+      level = DeprecationLevel.ERROR)
   fun proxyAuthenticator(): Authenticator = proxyAuthenticator
 
   @JvmName("-deprecated_socketFactory")
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "socketFactory"),
-      level = DeprecationLevel.WARNING)
+      level = DeprecationLevel.ERROR)
   fun socketFactory(): SocketFactory = socketFactory
 
   @JvmName("-deprecated_sslSocketFactory")
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "sslSocketFactory"),
-      level = DeprecationLevel.WARNING)
+      level = DeprecationLevel.ERROR)
   fun sslSocketFactory(): SSLSocketFactory = sslSocketFactory
 
   @JvmName("-deprecated_connectionSpecs")
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "connectionSpecs"),
-      level = DeprecationLevel.WARNING)
+      level = DeprecationLevel.ERROR)
   fun connectionSpecs(): List<ConnectionSpec> = connectionSpecs
 
   @JvmName("-deprecated_protocols")
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "protocols"),
-      level = DeprecationLevel.WARNING)
+      level = DeprecationLevel.ERROR)
   fun protocols(): List<Protocol> = protocols
 
   @JvmName("-deprecated_hostnameVerifier")
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "hostnameVerifier"),
-      level = DeprecationLevel.WARNING)
+      level = DeprecationLevel.ERROR)
   fun hostnameVerifier(): HostnameVerifier = hostnameVerifier
 
   @JvmName("-deprecated_certificatePinner")
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "certificatePinner"),
-      level = DeprecationLevel.WARNING)
+      level = DeprecationLevel.ERROR)
   fun certificatePinner(): CertificatePinner = certificatePinner
 
   @JvmName("-deprecated_callTimeoutMillis")
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "callTimeoutMillis"),
-      level = DeprecationLevel.WARNING)
+      level = DeprecationLevel.ERROR)
   fun callTimeoutMillis(): Int = callTimeoutMillis
 
   @JvmName("-deprecated_connectTimeoutMillis")
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "connectTimeoutMillis"),
-      level = DeprecationLevel.WARNING)
+      level = DeprecationLevel.ERROR)
   fun connectTimeoutMillis(): Int = connectTimeoutMillis
 
   @JvmName("-deprecated_readTimeoutMillis")
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "readTimeoutMillis"),
-      level = DeprecationLevel.WARNING)
+      level = DeprecationLevel.ERROR)
   fun readTimeoutMillis(): Int = readTimeoutMillis
 
   @JvmName("-deprecated_writeTimeoutMillis")
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "writeTimeoutMillis"),
-      level = DeprecationLevel.WARNING)
+      level = DeprecationLevel.ERROR)
   fun writeTimeoutMillis(): Int = writeTimeoutMillis
 
   @JvmName("-deprecated_pingIntervalMillis")
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "pingIntervalMillis"),
-      level = DeprecationLevel.WARNING)
+      level = DeprecationLevel.ERROR)
   fun pingIntervalMillis(): Int = pingIntervalMillis
 
   class Builder constructor() {

@@ -138,7 +138,7 @@ class HttpLoggingInterceptor @JvmOverloads constructor(
   @Deprecated(
       message = "moved to var",
       replaceWith = ReplaceWith(expression = "level"),
-      level = DeprecationLevel.WARNING)
+      level = DeprecationLevel.ERROR)
   fun getLevel(): Level = level
 
   @Throws(IOException::class)

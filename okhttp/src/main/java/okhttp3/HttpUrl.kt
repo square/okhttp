@@ -800,133 +800,133 @@ class HttpUrl internal constructor(
   @Deprecated(
       message = "moved to toUrl()",
       replaceWith = ReplaceWith(expression = "toUrl()"),
-      level = DeprecationLevel.WARNING)
+      level = DeprecationLevel.ERROR)
   fun url() = toUrl()
 
   @JvmName("-deprecated_uri")
   @Deprecated(
       message = "moved to toUri()",
       replaceWith = ReplaceWith(expression = "toUri()"),
-      level = DeprecationLevel.WARNING)
+      level = DeprecationLevel.ERROR)
   fun uri() = toUri()
 
   @JvmName("-deprecated_scheme")
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "scheme"),
-      level = DeprecationLevel.WARNING)
+      level = DeprecationLevel.ERROR)
   fun scheme(): String = scheme
 
   @JvmName("-deprecated_encodedUsername")
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "encodedUsername"),
-      level = DeprecationLevel.WARNING)
+      level = DeprecationLevel.ERROR)
   fun encodedUsername(): String = encodedUsername
 
   @JvmName("-deprecated_username")
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "username"),
-      level = DeprecationLevel.WARNING)
+      level = DeprecationLevel.ERROR)
   fun username(): String = username
 
   @JvmName("-deprecated_encodedPassword")
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "encodedPassword"),
-      level = DeprecationLevel.WARNING)
+      level = DeprecationLevel.ERROR)
   fun encodedPassword(): String = encodedPassword
 
   @JvmName("-deprecated_password")
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "password"),
-      level = DeprecationLevel.WARNING)
+      level = DeprecationLevel.ERROR)
   fun password(): String = password
 
   @JvmName("-deprecated_host")
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "host"),
-      level = DeprecationLevel.WARNING)
+      level = DeprecationLevel.ERROR)
   fun host(): String = host
 
   @JvmName("-deprecated_port")
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "port"),
-      level = DeprecationLevel.WARNING)
+      level = DeprecationLevel.ERROR)
   fun port(): Int = port
 
   @JvmName("-deprecated_pathSize")
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "pathSize"),
-      level = DeprecationLevel.WARNING)
+      level = DeprecationLevel.ERROR)
   fun pathSize(): Int = pathSize
 
   @JvmName("-deprecated_encodedPath")
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "encodedPath"),
-      level = DeprecationLevel.WARNING)
+      level = DeprecationLevel.ERROR)
   fun encodedPath(): String = encodedPath
 
   @JvmName("-deprecated_encodedPathSegments")
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "encodedPathSegments"),
-      level = DeprecationLevel.WARNING)
+      level = DeprecationLevel.ERROR)
   fun encodedPathSegments(): List<String> = encodedPathSegments
 
   @JvmName("-deprecated_pathSegments")
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "pathSegments"),
-      level = DeprecationLevel.WARNING)
+      level = DeprecationLevel.ERROR)
   fun pathSegments(): List<String> = pathSegments
 
   @JvmName("-deprecated_encodedQuery")
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "encodedQuery"),
-      level = DeprecationLevel.WARNING)
+      level = DeprecationLevel.ERROR)
   fun encodedQuery(): String? = encodedQuery
 
   @JvmName("-deprecated_query")
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "query"),
-      level = DeprecationLevel.WARNING)
+      level = DeprecationLevel.ERROR)
   fun query(): String? = query
 
   @JvmName("-deprecated_querySize")
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "querySize"),
-      level = DeprecationLevel.WARNING)
+      level = DeprecationLevel.ERROR)
   fun querySize(): Int = querySize
 
   @JvmName("-deprecated_queryParameterNames")
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "queryParameterNames"),
-      level = DeprecationLevel.WARNING)
+      level = DeprecationLevel.ERROR)
   fun queryParameterNames(): Set<String> = queryParameterNames
 
   @JvmName("-deprecated_encodedFragment")
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "encodedFragment"),
-      level = DeprecationLevel.WARNING)
+      level = DeprecationLevel.ERROR)
   fun encodedFragment(): String? = encodedFragment
 
   @JvmName("-deprecated_fragment")
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "fragment"),
-      level = DeprecationLevel.WARNING)
+      level = DeprecationLevel.ERROR)
   fun fragment(): String? = fragment
 
   class Builder {
@@ -1680,7 +1680,7 @@ class HttpUrl internal constructor(
         replaceWith = ReplaceWith(
             expression = "url.toHttpUrl()",
             imports = ["okhttp3.HttpUrl.Companion.toHttpUrl"]),
-        level = DeprecationLevel.WARNING)
+        level = DeprecationLevel.ERROR)
     fun get(url: String): HttpUrl = url.toHttpUrl()
 
     @JvmName("-deprecated_parse")
@@ -1689,7 +1689,7 @@ class HttpUrl internal constructor(
         replaceWith = ReplaceWith(
             expression = "url.toHttpUrlOrNull()",
             imports = ["okhttp3.HttpUrl.Companion.toHttpUrlOrNull"]),
-        level = DeprecationLevel.WARNING)
+        level = DeprecationLevel.ERROR)
     fun parse(url: String): HttpUrl? = url.toHttpUrlOrNull()
 
     @JvmName("-deprecated_get")
@@ -1698,7 +1698,7 @@ class HttpUrl internal constructor(
         replaceWith = ReplaceWith(
             expression = "url.toHttpUrlOrNull()",
             imports = ["okhttp3.HttpUrl.Companion.toHttpUrlOrNull"]),
-        level = DeprecationLevel.WARNING)
+        level = DeprecationLevel.ERROR)
     fun get(url: URL): HttpUrl? = url.toHttpUrlOrNull()
 
     @JvmName("-deprecated_get")
@@ -1707,7 +1707,7 @@ class HttpUrl internal constructor(
         replaceWith = ReplaceWith(
             expression = "uri.toHttpUrlOrNull()",
             imports = ["okhttp3.HttpUrl.Companion.toHttpUrlOrNull"]),
-        level = DeprecationLevel.WARNING)
+        level = DeprecationLevel.ERROR)
     fun get(uri: URI): HttpUrl? = uri.toHttpUrlOrNull()
 
     internal fun String.percentDecode(

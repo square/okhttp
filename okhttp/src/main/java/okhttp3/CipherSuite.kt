@@ -48,7 +48,7 @@ class CipherSuite private constructor(
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "javaName"),
-      level = DeprecationLevel.WARNING)
+      level = DeprecationLevel.ERROR)
   fun javaName(): String = javaName
 
   override fun toString(): String = javaName

@@ -80,9 +80,6 @@ import javax.net.ssl.X509TrustManager
 /**
  * Access every type, function, and property from Kotlin to defend against unexpected regressions in
  * modern 4.0.x kotlin source-compatibility.
- *
- * To regenerate, copy the body of [KotlinSourceCompatibilityTest] and then run Intellij
- * SilentCode Cleanup on this file only.
  */
 @Suppress(
     "ASSIGNED_BUT_NEVER_ACCESSED_VARIABLE",
@@ -483,7 +480,6 @@ class KotlinSourceModernTest {
     interceptor.level = HttpLoggingInterceptor.Level.BASIC
     interceptor.setLevel(HttpLoggingInterceptor.Level.BASIC)
     var level: HttpLoggingInterceptor.Level = interceptor.level
-    level = interceptor.getLevel()
     interceptor.intercept(newInterceptorChain())
   }
 
@@ -689,8 +685,8 @@ class KotlinSourceModernTest {
     mockResponse = mockResponse.addHeader("", "")
     mockResponse = mockResponse.addHeaderLenient("", Any())
     mockResponse = mockResponse.setHeader("", Any())
-    mockResponse.headers = Headers.of()
-    mockResponse.trailers = Headers.of()
+    mockResponse.headers = headersOf()
+    mockResponse.trailers = headersOf()
     mockResponse = mockResponse.removeHeader("")
     var body: Buffer? = mockResponse.getBody()
     mockResponse = mockResponse.setBody(Buffer())
@@ -943,22 +939,10 @@ class KotlinSourceModernTest {
     var chunkSizes: List<Int> = recordedRequest.chunkSizes
     var bodySize: Long = recordedRequest.bodySize
     var body: Buffer = recordedRequest.body
-    var utf8Body: String = recordedRequest.utf8Body
+    var utf8Body: String = recordedRequest.body.readUtf8()
     var sequenceNumber: Int = recordedRequest.sequenceNumber
     var tlsVersion: TlsVersion? = recordedRequest.tlsVersion
     var handshake: Handshake? = recordedRequest.handshake
-    requestUrl = recordedRequest.requestUrl
-    requestLine = recordedRequest.requestLine
-    method = recordedRequest.method
-    path = recordedRequest.path
-    headers = recordedRequest.headers
-    chunkSizes = recordedRequest.chunkSizes
-    bodySize = recordedRequest.bodySize
-    body = recordedRequest.body
-    utf8Body = recordedRequest.utf8Body
-    sequenceNumber = recordedRequest.sequenceNumber
-    tlsVersion = recordedRequest.tlsVersion
-    handshake = recordedRequest.handshake
   }
 
   @Test @Ignore
