@@ -40,7 +40,6 @@ import java.util.concurrent.ExecutorService
 import java.util.concurrent.TimeUnit
 import javax.net.SocketFactory
 import javax.net.ssl.HostnameVerifier
-import javax.net.ssl.SSLSession
 import javax.net.ssl.SSLSocketFactory
 import javax.net.ssl.TrustManager
 import javax.net.ssl.X509TrustManager
@@ -512,14 +511,9 @@ open class OkHttpClient internal constructor(
       interceptors += interceptor
     }
 
-    @JvmName("-deprecated_addInterceptor")
-    @Deprecated(
-        message = "No SAM (single-abstract-method) conversions for Kotlin declarations",
-        level = DeprecationLevel.WARNING)
-    fun addInterceptor(block: (chain: Interceptor.Chain) -> Response) =
-        addInterceptor(object : Interceptor {
-          override fun intercept(chain: Interceptor.Chain): Response = block(chain)
-        })
+    @JvmName("-addInterceptor") // Prefix with '-' to prevent ambiguous overloads from Java.
+    inline fun addInterceptor(crossinline block: (chain: Interceptor.Chain) -> Response) =
+        addInterceptor(Interceptor { chain -> block(chain) })
 
     /**
      * Returns a modifiable list of interceptors that observe a single network request and response.
@@ -532,14 +526,9 @@ open class OkHttpClient internal constructor(
       networkInterceptors += interceptor
     }
 
-    @JvmName("-deprecated_addNetworkInterceptor")
-    @Deprecated(
-        message = "No SAM (single-abstract-method) conversions for Kotlin declarations",
-        level = DeprecationLevel.WARNING)
-    fun addNetworkInterceptor(block: (chain: Interceptor.Chain) -> Response) =
-        addNetworkInterceptor(object : Interceptor {
-          override fun intercept(chain: Interceptor.Chain): Response = block(chain)
-        })
+    @JvmName("-addNetworkInterceptor") // Prefix with '-' to prevent ambiguous overloads from Java.
+    inline fun addNetworkInterceptor(crossinline block: (chain: Interceptor.Chain) -> Response) =
+        addNetworkInterceptor(Interceptor { chain -> block(chain) })
 
     /**
      * Configure a single client scoped listener that will receive all analytic events for this
@@ -560,15 +549,6 @@ open class OkHttpClient internal constructor(
     fun eventListenerFactory(eventListenerFactory: EventListener.Factory) = apply {
       this.eventListenerFactory = eventListenerFactory
     }
-
-    @JvmName("-deprecated_eventListenerFactory")
-    @Deprecated(
-        message = "No SAM (single-abstract-method) conversions for Kotlin declarations",
-        level = DeprecationLevel.WARNING)
-    fun eventListenerFactory(block: (call: Call) -> EventListener) =
-        eventListenerFactory(object : EventListener.Factory {
-          override fun create(call: Call) = block(call)
-        })
 
     /**
      * Configure this client to retry or not when a connectivity problem is encountered. By default,
@@ -808,13 +788,6 @@ open class OkHttpClient internal constructor(
     fun hostnameVerifier(hostnameVerifier: HostnameVerifier) = apply {
       this.hostnameVerifier = hostnameVerifier
     }
-
-    @JvmName("-deprecated_hostnameVerifier")
-    @Deprecated(
-        message = "No SAM (single-abstract-method) conversions for Kotlin declarations",
-        level = DeprecationLevel.WARNING)
-    fun hostnameVerifier(block: (String, SSLSession) -> Boolean) =
-        hostnameVerifier(HostnameVerifier { hostname, sslSession -> block(hostname, sslSession) })
 
     /**
      * Sets the certificate pinner that constrains which certificates are trusted. By default HTTPS

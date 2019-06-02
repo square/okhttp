@@ -113,15 +113,5 @@ interface Authenticator {
     val NONE = object : Authenticator {
       override fun authenticate(route: Route?, response: Response): Request? = null
     }
-
-    @JvmName("-deprecated_Authenticator")
-    @Deprecated(
-        message = "No SAM (single-abstract-method) conversions for Kotlin declarations",
-        level = DeprecationLevel.WARNING)
-    operator fun invoke(
-      block: (route: Route?, response: Response) -> Request?
-    ): Authenticator = object : Authenticator {
-      override fun authenticate(route: Route?, response: Response) = block(route, response)
-    }
   }
 }

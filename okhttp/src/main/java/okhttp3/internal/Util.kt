@@ -17,6 +17,7 @@
 
 package okhttp3.internal
 
+import okhttp3.Call
 import okhttp3.EventListener
 import okhttp3.Headers
 import okhttp3.Headers.Companion.headersOf
@@ -296,7 +297,9 @@ fun HttpUrl.canReuseConnectionFor(other: HttpUrl): Boolean = host == other.host 
     port == other.port &&
     scheme == other.scheme
 
-fun EventListener.asFactory() = EventListener.Factory { this }
+fun EventListener.asFactory() = object : EventListener.Factory {
+  override fun create(call: Call): EventListener = this@asFactory
+}
 
 infix fun Byte.and(mask: Int): Int = toInt() and mask
 infix fun Short.and(mask: Int): Int = toInt() and mask

@@ -114,7 +114,6 @@ class KotlinSourceModernTest {
     var authenticator: Authenticator = object : Authenticator {
       override fun authenticate(route: Route?, response: Response): Request? = TODO()
     }
-    authenticator = Authenticator { route: Route?, response: Response -> TODO() }
   }
 
   @Test @Ignore
@@ -337,7 +336,6 @@ class KotlinSourceModernTest {
     var dns: Dns = object : Dns {
       override fun lookup(hostname: String): List<InetAddress> = TODO()
     }
-    dns = Dns { it: String -> TODO() }
 
     val system: Dns = Dns.SYSTEM
   }
@@ -399,7 +397,6 @@ class KotlinSourceModernTest {
     var builder: EventListener.Factory = object : EventListener.Factory {
       override fun create(call: Call): EventListener = TODO()
     }
-    builder = EventListener.Factory { it: Call -> TODO() }
   }
 
   @Test @Ignore
@@ -503,7 +500,6 @@ class KotlinSourceModernTest {
     var logger: HttpLoggingInterceptor.Logger = object : HttpLoggingInterceptor.Logger {
       override fun log(message: String) = TODO()
     }
-    logger = HttpLoggingInterceptor.Logger { TODO() }
     val default: HttpLoggingInterceptor.Logger = HttpLoggingInterceptor.Logger.DEFAULT
   }
 
@@ -885,8 +881,6 @@ class KotlinSourceModernTest {
     builder = builder.eventListenerFactory(object : EventListener.Factory {
       override fun create(call: Call): EventListener = TODO()
     })
-    builder = builder.eventListenerFactory(LoggingEventListener.Factory { s -> TODO() })
-    builder = builder.eventListenerFactory { it: Call -> TODO() }
     val client: OkHttpClient = builder.build()
   }
 

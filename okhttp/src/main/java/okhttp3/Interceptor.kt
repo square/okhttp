@@ -28,13 +28,20 @@ interface Interceptor {
   fun intercept(chain: Chain): Response
 
   companion object {
-    @JvmName("-deprecated_Interceptor")
-    @Deprecated(
-        message = "No SAM (single-abstract-method) conversions for Kotlin declarations",
-        level = DeprecationLevel.WARNING)
-    operator fun invoke(block: (chain: Chain) -> Response): Interceptor = object : Interceptor {
-      override fun intercept(chain: Chain) = block(chain)
-    }
+    /**
+     * Constructs an interceptor for a lambda. This compact syntax is most useful for inline
+     * interceptors.
+     *
+     * ```
+     * val interceptor = Interceptor { chain: Interceptor.Chain ->
+     *     chain.proceed(chain.request())
+     * }
+     * ```
+     */
+    inline operator fun invoke(crossinline block: (chain: Chain) -> Response): Interceptor =
+        object : Interceptor {
+          override fun intercept(chain: Chain) = block(chain)
+        }
   }
 
   interface Chain {
