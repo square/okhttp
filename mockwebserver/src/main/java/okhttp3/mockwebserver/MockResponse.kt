@@ -29,8 +29,23 @@ class MockResponse : Cloneable {
   @set:JvmName("status")
   var status: String = ""
 
-  private var headers = Headers.Builder()
-  private var trailers = Headers.Builder()
+  private var headersBuilder = Headers.Builder()
+  private var trailersBuilder = Headers.Builder()
+
+  /** The HTTP headers, such as "Content-Length: 0". */
+  @set:JvmName("headers")
+  var headers: Headers
+    get() = headersBuilder.build()
+    set(value) {
+      this.headersBuilder = value.newBuilder()
+    }
+
+  @set:JvmName("trailers")
+  var trailers: Headers
+    get() = trailersBuilder.build()
+    set(value) {
+      this.trailersBuilder = value.newBuilder()
+    }
 
   private var body: Buffer? = null
 
@@ -78,7 +93,7 @@ class MockResponse : Cloneable {
 
   public override fun clone(): MockResponse {
     val result = super.clone() as MockResponse
-    result.headers = headers.build().newBuilder()
+    result.headersBuilder = headersBuilder.build().newBuilder()
     result.promises = promises.toMutableList()
     return result
   }
@@ -110,17 +125,12 @@ class MockResponse : Cloneable {
     return apply { status = "HTTP/1.1 $code $reason" }
   }
 
-  /** Returns the HTTP headers, such as "Content-Length: 0". */
-  fun getHeaders(): Headers = headers.build()
-
-  fun getTrailers(): Headers = trailers.build()
-
   /**
    * Removes all HTTP headers including any "Content-Length" and "Transfer-encoding" headers that
    * were added by default.
    */
   fun clearHeaders() = apply {
-    headers = Headers.Builder()
+    headersBuilder = Headers.Builder()
   }
 
   /**
@@ -128,7 +138,7 @@ class MockResponse : Cloneable {
    * name followed by a colon and a value.
    */
   fun addHeader(header: String) = apply {
-    headers.add(header)
+    headersBuilder.add(header)
   }
 
   /**
@@ -136,7 +146,7 @@ class MockResponse : Cloneable {
    * same name.
    */
   fun addHeader(name: String, value: Any) = apply {
-    headers.add(name, value.toString())
+    headersBuilder.add(name, value.toString())
   }
 
   /**
@@ -145,7 +155,7 @@ class MockResponse : Cloneable {
    * value.
    */
   fun addHeaderLenient(name: String, value: Any) = apply {
-    addHeaderLenient(headers, name, value.toString())
+    addHeaderLenient(headersBuilder, name, value.toString())
   }
 
   /**
@@ -156,19 +166,9 @@ class MockResponse : Cloneable {
     addHeader(name, value)
   }
 
-  /** Replaces all headers with those specified. */
-  fun setHeaders(headers: Headers) = apply {
-    this.headers = headers.newBuilder()
-  }
-
-  /** Replaces all trailers with those specified. */
-  fun setTrailers(trailers: Headers) = apply {
-    this.trailers = trailers.newBuilder()
-  }
-
   /** Removes all headers named [name]. */
   fun removeHeader(name: String) = apply {
-    headers.removeAll(name)
+    headersBuilder.removeAll(name)
   }
 
   /** Returns a copy of the raw HTTP payload. */
@@ -191,7 +191,7 @@ class MockResponse : Cloneable {
    */
   fun setChunkedBody(body: Buffer, maxChunkSize: Int) = apply {
     removeHeader("Content-Length")
-    headers.add(CHUNKED_BODY_HEADER)
+    headersBuilder.add(CHUNKED_BODY_HEADER)
 
     val bytesOut = Buffer()
     while (!body.exhausted()) {
@@ -211,6 +211,32 @@ class MockResponse : Cloneable {
    */
   fun setChunkedBody(body: String, maxChunkSize: Int): MockResponse =
     setChunkedBody(Buffer().writeUtf8(body), maxChunkSize)
+
+  @JvmName("-deprecated_getHeaders")
+  @Deprecated(
+      message = "moved to var",
+      replaceWith = ReplaceWith(expression = "headers"),
+      level = DeprecationLevel.WARNING)
+  fun getHeaders(): Headers = headers
+
+  @Deprecated(
+      message = "moved to var. Replace setHeaders(...) with headers(...) to fix Java",
+      replaceWith = ReplaceWith(expression = "apply { this.headers = headers }"),
+      level = DeprecationLevel.WARNING)
+  fun setHeaders(headers: Headers) = apply { this.headers = headers }
+
+  @JvmName("-deprecated_getTrailers")
+  @Deprecated(
+      message = "moved to var",
+      replaceWith = ReplaceWith(expression = "trailers"),
+      level = DeprecationLevel.WARNING)
+  fun getTrailers(): Headers = trailers
+
+  @Deprecated(
+      message = "moved to var. Replace setTrailers(...) with trailers(...) to fix Java",
+      replaceWith = ReplaceWith(expression = "apply { this.trailers = trailers }"),
+      level = DeprecationLevel.WARNING)
+  fun setTrailers(trailers: Headers) = apply { this.trailers = trailers }
 
   @JvmName("-deprecated_getSocketPolicy")
   @Deprecated(

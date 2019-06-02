@@ -97,6 +97,7 @@ class KotlinSourceCompatibilityTest {
     val protocols: List<Protocol> = address.protocols()
     val connectionSpecs: List<ConnectionSpec> = address.connectionSpecs()
     val proxySelector: ProxySelector = address.proxySelector()
+    val proxy: Proxy? = address.proxy()
     val sslSocketFactory: SSLSocketFactory? = address.sslSocketFactory()
     val hostnameVerifier: HostnameVerifier? = address.hostnameVerifier()
     val certificatePinner: CertificatePinner? = address.certificatePinner()
@@ -309,6 +310,11 @@ class KotlinSourceCompatibilityTest {
     dispatcher.maxRequestsPerHost = 0
     val executorService: ExecutorService = dispatcher.executorService()
     dispatcher.setIdleCallback { TODO() }
+    dispatcher.idleCallback = object : Runnable {
+      override fun run() {
+        TODO()
+      }
+    }
     val queuedCalls: List<Call> = dispatcher.queuedCalls()
     val runningCalls: List<Call> = dispatcher.runningCalls()
     val queuedCallsCount: Int = dispatcher.queuedCallsCount()
@@ -676,35 +682,35 @@ class KotlinSourceCompatibilityTest {
   fun mockResponse() {
     var mockResponse: MockResponse = MockResponse()
     var status: String = mockResponse.getStatus()
-    status = mockResponse.getStatus()
+    status = mockResponse.status
     mockResponse = mockResponse.setStatus("")
-    mockResponse.setStatus("")
+    mockResponse.status = ""
     mockResponse = mockResponse.setResponseCode(0)
     var headers: Headers = mockResponse.getHeaders()
-    headers = mockResponse.getHeaders()
+    headers = mockResponse.headers
     var trailers: Headers = mockResponse.getTrailers()
-    trailers = mockResponse.getTrailers()
+    trailers = mockResponse.trailers
     mockResponse = mockResponse.clearHeaders()
     mockResponse = mockResponse.addHeader("")
     mockResponse = mockResponse.addHeader("", "")
     mockResponse = mockResponse.addHeaderLenient("", Any())
     mockResponse = mockResponse.setHeader("", Any())
     mockResponse = mockResponse.setHeaders(Headers.of())
+    mockResponse.headers = Headers.of()
     mockResponse = mockResponse.setTrailers(Headers.of())
+    mockResponse.trailers = Headers.of()
     mockResponse = mockResponse.removeHeader("")
     var body: Buffer? = mockResponse.getBody()
-    body = mockResponse.getBody()
     mockResponse = mockResponse.setBody(Buffer())
-    mockResponse.setBody(Buffer())
     mockResponse = mockResponse.setChunkedBody(Buffer(), 0)
     mockResponse = mockResponse.setChunkedBody("", 0)
     var socketPolicy: SocketPolicy = mockResponse.getSocketPolicy()
-    socketPolicy = mockResponse.getSocketPolicy()
+    socketPolicy = mockResponse.socketPolicy
     mockResponse = mockResponse.setSocketPolicy(SocketPolicy.KEEP_OPEN)
     var http2ErrorCode: Int = mockResponse.getHttp2ErrorCode()
-    http2ErrorCode = mockResponse.getHttp2ErrorCode()
+    http2ErrorCode = mockResponse.http2ErrorCode
     mockResponse = mockResponse.setHttp2ErrorCode(0)
-    mockResponse.setHttp2ErrorCode(0)
+    mockResponse.http2ErrorCode = 0
     mockResponse = mockResponse.throttleBody(0L, 0L, TimeUnit.SECONDS)
     var throttleBytesPerPeriod: Long = mockResponse.throttleBytesPerPeriod
     throttleBytesPerPeriod = mockResponse.throttleBytesPerPeriod
@@ -729,24 +735,23 @@ class KotlinSourceCompatibilityTest {
   fun mockWebServer() {
     val mockWebServer: MockWebServer = MockWebServer()
     var port: Int = mockWebServer.getPort()
-    port = mockWebServer.getPort()
+    port = mockWebServer.port
     var hostName: String = mockWebServer.hostName
-    hostName = mockWebServer.hostName
     val toProxyAddress: Proxy = mockWebServer.toProxyAddress()
     mockWebServer.setServerSocketFactory(ServerSocketFactory.getDefault())
     val url: HttpUrl = mockWebServer.url("")
     mockWebServer.setBodyLimit(0L)
     mockWebServer.setProtocolNegotiationEnabled(false)
-    mockWebServer.setProtocols(listOf())
+    mockWebServer.setProtocols(listOf(Protocol.HTTP_1_1))
     val protocols: List<Protocol> = mockWebServer.protocols()
     mockWebServer.useHttps(SSLSocketFactory.getDefault() as SSLSocketFactory, false)
     mockWebServer.noClientAuth()
     mockWebServer.requestClientAuth()
     mockWebServer.requireClientAuth()
-    var request: RecordedRequest? = mockWebServer.takeRequest()
+    var request: RecordedRequest = mockWebServer.takeRequest()
     request = mockWebServer.takeRequest(0L, TimeUnit.SECONDS)
     var requestCount: Int = mockWebServer.getRequestCount()
-    requestCount = mockWebServer.getRequestCount()
+    requestCount = mockWebServer.requestCount
     mockWebServer.enqueue(MockResponse())
     mockWebServer.start()
     mockWebServer.start(0)
@@ -754,7 +759,6 @@ class KotlinSourceCompatibilityTest {
     mockWebServer.shutdown()
     var dispatcher: okhttp3.mockwebserver.Dispatcher = mockWebServer.dispatcher
     dispatcher = mockWebServer.dispatcher
-    mockWebServer.dispatcher = QueueDispatcher()
     mockWebServer.dispatcher = QueueDispatcher()
     mockWebServer.close()
   }
@@ -957,18 +961,6 @@ class KotlinSourceCompatibilityTest {
     var sequenceNumber: Int = recordedRequest.sequenceNumber
     var tlsVersion: TlsVersion? = recordedRequest.tlsVersion
     var handshake: Handshake? = recordedRequest.handshake
-    requestUrl = recordedRequest.requestUrl
-    requestLine = recordedRequest.requestLine
-    method = recordedRequest.method
-    path = recordedRequest.path
-    headers = recordedRequest.headers
-    chunkSizes = recordedRequest.chunkSizes
-    bodySize = recordedRequest.bodySize
-    body = recordedRequest.body
-    utf8Body = recordedRequest.utf8Body
-    sequenceNumber = recordedRequest.sequenceNumber
-    tlsVersion = recordedRequest.tlsVersion
-    handshake = recordedRequest.handshake
   }
 
   @Test @Ignore
@@ -1039,27 +1031,27 @@ class KotlinSourceCompatibilityTest {
   @Test @Ignore
   fun response() {
     val response: Response = Response.Builder().build()
-    val request: Request = response.request
-    val protocol: Protocol = response.protocol
-    val code: Int = response.code
+    val request: Request = response.request()
+    val protocol: Protocol = response.protocol()
+    val code: Int = response.code()
     val successful: Boolean = response.isSuccessful
-    val message: String = response.message
-    val handshake: Handshake? = response.handshake
+    val message: String = response.message()
+    val handshake: Handshake? = response.handshake()
     val headersForName: List<String> = response.headers("")
     val header: String? = response.header("")
-    val headers: Headers = response.headers
+    val headers: Headers = response.headers()
     val trailers: Headers = response.trailers()
     val peekBody: ResponseBody = response.peekBody(0L)
-    val body: ResponseBody? = response.body
+    val body: ResponseBody? = response.body()
     val builder: Response.Builder = response.newBuilder()
     val redirect: Boolean = response.isRedirect
-    val networkResponse: Response? = response.networkResponse
-    val cacheResponse: Response? = response.cacheResponse
-    val priorResponse: Response? = response.priorResponse
+    val networkResponse: Response? = response.networkResponse()
+    val cacheResponse: Response? = response.cacheResponse()
+    val priorResponse: Response? = response.priorResponse()
     val challenges: List<Challenge> = response.challenges()
     val cacheControl: CacheControl = response.cacheControl()
-    val sentRequestAtMillis: Long = response.sentRequestAtMillis
-    val receivedResponseAtMillis: Long = response.receivedResponseAtMillis
+    val sentRequestAtMillis: Long = response.sentRequestAtMillis()
+    val receivedResponseAtMillis: Long = response.receivedResponseAtMillis()
   }
 
   @Test @Ignore
