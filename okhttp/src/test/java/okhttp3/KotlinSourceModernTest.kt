@@ -686,29 +686,23 @@ class KotlinSourceModernTest {
     status = mockResponse.status
     mockResponse.status = ""
     mockResponse = mockResponse.setResponseCode(0)
-    var headers: Headers = mockResponse.getHeaders()
-    headers = mockResponse.getHeaders()
-    var trailers: Headers = mockResponse.getTrailers()
-    trailers = mockResponse.getTrailers()
+    var headers: Headers = mockResponse.headers
+    var trailers: Headers = mockResponse.trailers
     mockResponse = mockResponse.clearHeaders()
     mockResponse = mockResponse.addHeader("")
     mockResponse = mockResponse.addHeader("", "")
     mockResponse = mockResponse.addHeaderLenient("", Any())
     mockResponse = mockResponse.setHeader("", Any())
-    mockResponse = mockResponse.setHeaders(headersOf())
-    mockResponse = mockResponse.setTrailers(headersOf())
+    mockResponse.headers = Headers.of()
+    mockResponse.trailers = Headers.of()
     mockResponse = mockResponse.removeHeader("")
     var body: Buffer? = mockResponse.getBody()
-    body = mockResponse.getBody()
     mockResponse = mockResponse.setBody(Buffer())
-    mockResponse.setBody(Buffer())
     mockResponse = mockResponse.setChunkedBody(Buffer(), 0)
     mockResponse = mockResponse.setChunkedBody("", 0)
     var socketPolicy: SocketPolicy = mockResponse.socketPolicy
-    socketPolicy = mockResponse.socketPolicy
     mockResponse.socketPolicy = SocketPolicy.KEEP_OPEN
     var http2ErrorCode: Int = mockResponse.http2ErrorCode
-    http2ErrorCode = mockResponse.http2ErrorCode
     mockResponse.http2ErrorCode = 0
     mockResponse = mockResponse.throttleBody(0L, 0L, TimeUnit.SECONDS)
     var throttleBytesPerPeriod: Long = mockResponse.throttleBytesPerPeriod
@@ -747,7 +741,7 @@ class KotlinSourceModernTest {
     mockWebServer.noClientAuth()
     mockWebServer.requestClientAuth()
     mockWebServer.requireClientAuth()
-    var request: RecordedRequest? = mockWebServer.takeRequest()
+    var request: RecordedRequest = mockWebServer.takeRequest()
     request = mockWebServer.takeRequest(0L, TimeUnit.SECONDS)
     var requestCount: Int = mockWebServer.requestCount
     mockWebServer.enqueue(MockResponse())
