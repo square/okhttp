@@ -114,10 +114,12 @@ interface Authenticator {
       override fun authenticate(route: Route?, response: Response): Request? = null
     }
 
-    // This lambda conversion is for Kotlin callers expecting a Java SAM (single-abstract-method).
     @JvmName("-deprecated_Authenticator")
-    inline operator fun invoke(
-      crossinline block: (route: Route?, response: Response) -> Request?
+    @Deprecated(
+        message = "No SAM (single-abstract-method) conversions for Kotlin declarations",
+        level = DeprecationLevel.WARNING)
+    operator fun invoke(
+      block: (route: Route?, response: Response) -> Request?
     ): Authenticator = object : Authenticator {
       override fun authenticate(route: Route?, response: Response) = block(route, response)
     }

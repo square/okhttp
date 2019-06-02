@@ -109,11 +109,11 @@ class HttpLoggingInterceptor @JvmOverloads constructor(
     fun log(message: String)
 
     companion object {
-      // This lambda conversion is for Kotlin callers expecting a Java SAM (single-abstract-method).
       @JvmName("-deprecated_Logger")
-      inline operator fun invoke(
-        crossinline block: (message: String) -> Unit
-      ): Logger = object : Logger {
+      @Deprecated(
+          message = "No SAM (single-abstract-method) conversions for Kotlin declarations",
+          level = DeprecationLevel.WARNING)
+      operator fun invoke(block: (message: String) -> Unit): Logger = object : Logger {
         override fun log(message: String) = block(message)
       }
 

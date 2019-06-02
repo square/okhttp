@@ -235,13 +235,11 @@ class Dispatcher constructor() {
       level = DeprecationLevel.WARNING)
   fun executorService(): ExecutorService = executorService
 
-  // This lambda conversion is for Kotlin callers expecting a Java SAM (single-abstract-method).
-  @Deprecated(
-      message = "moved to var",
-      replaceWith = ReplaceWith(expression = "this.idleCallback = Runnable { idleCallback() }"),
-      level = DeprecationLevel.WARNING)
   @JvmName("-deprecated_setIdleCallback")
-  inline fun setIdleCallback(crossinline idleCallback: () -> Unit) {
+  @Deprecated(
+      message = "No SAM (single-abstract-method) conversions for Kotlin declarations",
+      level = DeprecationLevel.WARNING)
+  fun setIdleCallback(idleCallback: () -> Unit) = run {
     this.idleCallback = Runnable { idleCallback() }
   }
 }

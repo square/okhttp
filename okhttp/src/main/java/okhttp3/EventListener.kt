@@ -348,11 +348,11 @@ abstract class EventListener {
     fun create(call: Call): EventListener
 
     companion object {
-      // This lambda conversion is for Kotlin callers expecting a Java SAM (single-abstract-method).
       @JvmName("-deprecated_Factory")
-      inline operator fun invoke(
-        crossinline block: (call: Call) -> EventListener
-      ): Factory = object : Factory {
+      @Deprecated(
+          message = "No SAM (single-abstract-method) conversions for Kotlin declarations",
+          level = DeprecationLevel.WARNING)
+      operator fun invoke(block: (call: Call) -> EventListener): Factory = object : Factory {
         override fun create(call: Call) = block(call)
       }
     }
