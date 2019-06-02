@@ -36,18 +36,18 @@ import java.util.ArrayList
 import java.util.concurrent.CountDownLatch
 
 /**
- * [DNS over HTTPS implementation][[doh_spec]].
+ * [DNS over HTTPS implementation][doh_spec].
  *
- * <blockquote>A DNS API client encodes a single DNS query into an HTTP request
- * using either the HTTP GET or POST method and the other requirements
- * of this section.  The DNS API server defines the URI used by the
- * request through the use of a URI Template.</blockquote>
+ * > A DNS API client encodes a single DNS query into an HTTP request
+ * > using either the HTTP GET or POST method and the other requirements
+ * > of this section.  The DNS API server defines the URI used by the
+ * > request through the use of a URI Template.
  *
- * <h3>Warning: This is a non-final API.</h3>
+ * ### Warning: This is a non-final API.
  *
- * As of OkHttp 3.14, this feature is an unstable preview: the API is subject to change,
- * and the implementation is incomplete. We expect that OkHttp 4.0 or 4.1 will finalize this API.
- * Until then, expect API and behavior changes when you update your OkHttp dependency.**
+ * As of OkHttp 3.14, this feature is an unstable preview: the API is subject to change, and the
+ * implementation is incomplete. We expect that OkHttp 4.0 or 4.1 will finalize this API. Until
+ * then, expect API and behavior changes when you update your OkHttp dependency.**
  *
  * [doh_spec]: https://tools.ietf.org/html/draft-ietf-doh-dns-over-https-13
  */
@@ -57,55 +57,8 @@ class DnsOverHttps internal constructor(
   @get:JvmName("includeIPv6") val includeIPv6: Boolean,
   @get:JvmName("post") val post: Boolean,
   @get:JvmName("resolvePrivateAddresses") val resolvePrivateAddresses: Boolean,
-  @get:JvmName("resolvePublicAddresses") val resolvePublicAddresses: Boolean,
-  private val systemDns: Dns,
-  private val bootstrapDnsHosts: List<InetAddress>?
+  @get:JvmName("resolvePublicAddresses") val resolvePublicAddresses: Boolean
 ) : Dns {
-
-  @JvmName("-deprecated_url")
-  @Deprecated(
-      message = "moved to val",
-      replaceWith = ReplaceWith(expression = "url"),
-      level = DeprecationLevel.WARNING)
-  fun url(): HttpUrl = url
-
-  @JvmName("-deprecated_post")
-  @Deprecated(
-      message = "moved to val",
-      replaceWith = ReplaceWith(expression = "post"),
-      level = DeprecationLevel.WARNING)
-  fun post(): Boolean = post
-
-  @JvmName("-deprecated_includeIPv6")
-  @Deprecated(
-      message = "moved to val",
-      replaceWith = ReplaceWith(expression = "includeIPv6"),
-      level = DeprecationLevel.WARNING)
-  fun includeIPv6(): Boolean = includeIPv6
-
-  @JvmName("-deprecated_client")
-  @Deprecated(
-      message = "moved to val",
-      replaceWith = ReplaceWith(expression = "client"),
-      level = DeprecationLevel.WARNING)
-  fun client(): OkHttpClient = client.newBuilder()
-          .dns(buildBootstrapClient(bootstrapDnsHosts, url, systemDns))
-          .build()
-
-  @JvmName("-deprecated_resolvePrivateAddresses")
-  @Deprecated(
-      message = "moved to val",
-      replaceWith = ReplaceWith(expression = "resolvePrivateAddresses"),
-      level = DeprecationLevel.WARNING)
-  fun resolvePrivateAddresses(): Boolean = resolvePrivateAddresses
-
-  @JvmName("-deprecated_resolvePublicAddresses")
-  @Deprecated(
-      message = "moved to val",
-      replaceWith = ReplaceWith(expression = "resolvePublicAddresses"),
-      level = DeprecationLevel.WARNING)
-  fun resolvePublicAddresses(): Boolean = resolvePublicAddresses
-
   @Throws(UnknownHostException::class)
   override fun lookup(hostname: String): List<InetAddress> {
     if (!resolvePrivateAddresses || !resolvePublicAddresses) {
@@ -298,15 +251,14 @@ class DnsOverHttps internal constructor(
     internal var resolvePublicAddresses = true
 
     fun build(): DnsOverHttps {
+      val client = this.client ?: throw NullPointerException("client not set")
       return DnsOverHttps(
-          checkNotNull(client) { "client not set" },
+          client.newBuilder().dns(buildBootstrapClient(this)).build(),
           checkNotNull(url) { "url not set" },
           includeIPv6,
           post,
           resolvePrivateAddresses,
-          resolvePublicAddresses,
-          systemDns,
-          bootstrapDnsHosts
+          resolvePublicAddresses
       )
     }
 
@@ -350,15 +302,13 @@ class DnsOverHttps internal constructor(
     val DNS_MESSAGE: MediaType = "application/dns-message".toMediaType()
     const val MAX_RESPONSE_SIZE = 64 * 1024
 
-    private fun buildBootstrapClient(
-      bootstrapDnsHosts: List<InetAddress>?,
-      url: HttpUrl,
-      systemDns: Dns
-    ): Dns {
-      return if (bootstrapDnsHosts != null) {
-        BootstrapDns(url.host, bootstrapDnsHosts)
+    private fun buildBootstrapClient(builder: Builder): Dns {
+      val hosts = builder.bootstrapDnsHosts
+
+      return if (hosts != null) {
+        BootstrapDns(builder.url!!.host, hosts)
       } else {
-        systemDns
+        builder.systemDns
       }
     }
 
