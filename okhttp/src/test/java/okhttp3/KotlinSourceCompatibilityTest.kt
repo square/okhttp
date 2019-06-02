@@ -108,7 +108,6 @@ class KotlinSourceCompatibilityTest {
     var authenticator: Authenticator = object : Authenticator {
       override fun authenticate(route: Route?, response: Response): Request? = TODO()
     }
-    authenticator = Authenticator { route: Route?, response: Response -> TODO() }
   }
 
   @Test @Ignore
@@ -309,7 +308,6 @@ class KotlinSourceCompatibilityTest {
     val maxRequestsPerHost: Int = dispatcher.maxRequestsPerHost
     dispatcher.maxRequestsPerHost = 0
     val executorService: ExecutorService = dispatcher.executorService()
-    dispatcher.setIdleCallback { TODO() }
     dispatcher.idleCallback = object : Runnable {
       override fun run() {
         TODO()
@@ -336,7 +334,6 @@ class KotlinSourceCompatibilityTest {
     var dns: Dns = object : Dns {
       override fun lookup(hostname: String): List<InetAddress> = TODO()
     }
-    dns = Dns { it: String -> TODO() }
 
     val system: Dns = Dns.SYSTEM
   }
@@ -398,7 +395,6 @@ class KotlinSourceCompatibilityTest {
     var builder: EventListener.Factory = object : EventListener.Factory {
       override fun create(call: Call): EventListener = TODO()
     }
-    builder = EventListener.Factory { it: Call -> TODO() }
   }
 
   @Test @Ignore
@@ -502,7 +498,6 @@ class KotlinSourceCompatibilityTest {
     var logger: HttpLoggingInterceptor.Logger = object : HttpLoggingInterceptor.Logger {
       override fun log(message: String) = TODO()
     }
-    logger = HttpLoggingInterceptor.Logger { TODO() }
     val default: HttpLoggingInterceptor.Logger = HttpLoggingInterceptor.Logger.DEFAULT
   }
 
@@ -580,7 +575,7 @@ class KotlinSourceCompatibilityTest {
     var interceptor: Interceptor = object : Interceptor {
       override fun intercept(chain: Interceptor.Chain): Response = TODO()
     }
-    interceptor = Interceptor { it: Interceptor.Chain -> TODO() }
+    interceptor = Interceptor { chain: Interceptor.Chain -> chain.proceed(chain.request()) }
   }
 
   @Test @Ignore
@@ -868,7 +863,7 @@ class KotlinSourceCompatibilityTest {
     builder = builder.socketFactory(SocketFactory.getDefault())
     builder = builder.sslSocketFactory(localhost().sslSocketFactory(), localhost().trustManager())
     builder = builder.hostnameVerifier(newHostnameVerifier())
-    builder = builder.hostnameVerifier { hostname: String, session: SSLSession -> false }
+    builder = builder.hostnameVerifier(HostnameVerifier { hostname, session -> false })
     builder = builder.certificatePinner(CertificatePinner.DEFAULT)
     builder = builder.authenticator(Authenticator.NONE)
     builder = builder.proxyAuthenticator(Authenticator.NONE)
@@ -893,8 +888,6 @@ class KotlinSourceCompatibilityTest {
     builder = builder.eventListenerFactory(object : EventListener.Factory {
       override fun create(call: Call): EventListener = TODO()
     })
-    builder = builder.eventListenerFactory(LoggingEventListener.Factory { s -> TODO() })
-    builder = builder.eventListenerFactory { it: Call -> TODO() }
     val client: OkHttpClient = builder.build()
   }
 

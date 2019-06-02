@@ -234,12 +234,4 @@ class Dispatcher constructor() {
       replaceWith = ReplaceWith(expression = "executorService"),
       level = DeprecationLevel.WARNING)
   fun executorService(): ExecutorService = executorService
-
-  @JvmName("-deprecated_setIdleCallback")
-  @Deprecated(
-      message = "No SAM (single-abstract-method) conversions for Kotlin declarations",
-      level = DeprecationLevel.WARNING)
-  fun setIdleCallback(idleCallback: () -> Unit) = run {
-    this.idleCallback = Runnable { idleCallback() }
-  }
 }
