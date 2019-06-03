@@ -74,70 +74,70 @@ class CacheControl private constructor(
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "noCache"),
-      level = DeprecationLevel.WARNING)
+      level = DeprecationLevel.ERROR)
   fun noCache() = noCache
 
   @JvmName("-deprecated_noStore")
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "noStore"),
-      level = DeprecationLevel.WARNING)
+      level = DeprecationLevel.ERROR)
   fun noStore() = noStore
 
   @JvmName("-deprecated_maxAgeSeconds")
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "maxAgeSeconds"),
-      level = DeprecationLevel.WARNING)
+      level = DeprecationLevel.ERROR)
   fun maxAgeSeconds() = maxAgeSeconds
 
   @JvmName("-deprecated_sMaxAgeSeconds")
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "sMaxAgeSeconds"),
-      level = DeprecationLevel.WARNING)
+      level = DeprecationLevel.ERROR)
   fun sMaxAgeSeconds() = sMaxAgeSeconds
 
   @JvmName("-deprecated_mustRevalidate")
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "mustRevalidate"),
-      level = DeprecationLevel.WARNING)
+      level = DeprecationLevel.ERROR)
   fun mustRevalidate() = mustRevalidate
 
   @JvmName("-deprecated_maxStaleSeconds")
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "maxStaleSeconds"),
-      level = DeprecationLevel.WARNING)
+      level = DeprecationLevel.ERROR)
   fun maxStaleSeconds() = maxStaleSeconds
 
   @JvmName("-deprecated_minFreshSeconds")
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "minFreshSeconds"),
-      level = DeprecationLevel.WARNING)
+      level = DeprecationLevel.ERROR)
   fun minFreshSeconds() = minFreshSeconds
 
   @JvmName("-deprecated_onlyIfCached")
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "onlyIfCached"),
-      level = DeprecationLevel.WARNING)
+      level = DeprecationLevel.ERROR)
   fun onlyIfCached() = onlyIfCached
 
   @JvmName("-deprecated_noTransform")
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "noTransform"),
-      level = DeprecationLevel.WARNING)
+      level = DeprecationLevel.ERROR)
   fun noTransform() = noTransform
 
   @JvmName("-deprecated_immutable")
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "immutable"),
-      level = DeprecationLevel.WARNING)
+      level = DeprecationLevel.ERROR)
   fun immutable() = immutable
 
   override fun toString(): String {

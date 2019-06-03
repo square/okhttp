@@ -201,7 +201,7 @@ class MockWebServer : ExternalResource(), Closeable {
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "port"),
-      level = DeprecationLevel.WARNING)
+      level = DeprecationLevel.ERROR)
   fun getPort(): Int = port
 
   fun toProxyAddress(): Proxy {
@@ -216,7 +216,7 @@ class MockWebServer : ExternalResource(), Closeable {
       replaceWith = ReplaceWith(
           expression = "run { this.serverSocketFactory = serverSocketFactory }"
       ),
-      level = DeprecationLevel.WARNING)
+      level = DeprecationLevel.ERROR)
   fun setServerSocketFactory(serverSocketFactory: ServerSocketFactory) = run {
     this.serverSocketFactory = serverSocketFactory
   }
@@ -241,7 +241,7 @@ class MockWebServer : ExternalResource(), Closeable {
       replaceWith = ReplaceWith(
           expression = "run { this.bodyLimit = bodyLimit }"
       ),
-      level = DeprecationLevel.WARNING)
+      level = DeprecationLevel.ERROR)
   fun setBodyLimit(bodyLimit: Long) = run { this.bodyLimit = bodyLimit }
 
   @JvmName("-deprecated_protocolNegotiationEnabled")
@@ -250,7 +250,7 @@ class MockWebServer : ExternalResource(), Closeable {
       replaceWith = ReplaceWith(
           expression = "run { this.protocolNegotiationEnabled = protocolNegotiationEnabled }"
       ),
-      level = DeprecationLevel.WARNING)
+      level = DeprecationLevel.ERROR)
   fun setProtocolNegotiationEnabled(protocolNegotiationEnabled: Boolean) = run {
     this.protocolNegotiationEnabled = protocolNegotiationEnabled
   }
@@ -259,14 +259,14 @@ class MockWebServer : ExternalResource(), Closeable {
   @Deprecated(
       message = "moved to var",
       replaceWith = ReplaceWith(expression = "run { this.protocols = protocols }"),
-      level = DeprecationLevel.WARNING)
+      level = DeprecationLevel.ERROR)
   fun setProtocols(protocols: List<Protocol>) = run { this.protocols = protocols }
 
   @JvmName("-deprecated_protocols")
   @Deprecated(
       message = "moved to var",
       replaceWith = ReplaceWith(expression = "protocols"),
-      level = DeprecationLevel.WARNING)
+      level = DeprecationLevel.ERROR)
   fun protocols(): List<Protocol> = protocols
 
   /**
@@ -335,7 +335,7 @@ class MockWebServer : ExternalResource(), Closeable {
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "requestCount"),
-      level = DeprecationLevel.WARNING)
+      level = DeprecationLevel.ERROR)
   fun getRequestCount(): Int = requestCount
 
   /**
@@ -764,7 +764,7 @@ class MockWebServer : ExternalResource(), Closeable {
     val fancyResponse = Response.Builder()
         .code(Integer.parseInt(statusParts[1]))
         .message(statusParts[2])
-        .headers(response.getHeaders())
+        .headers(response.headers)
         .request(fancyRequest)
         .protocol(Protocol.HTTP_1_1)
         .build()
@@ -795,14 +795,14 @@ class MockWebServer : ExternalResource(), Closeable {
     sink.writeUtf8(response.status)
     sink.writeUtf8("\r\n")
 
-    writeHeaders(sink, response.getHeaders())
+    writeHeaders(sink, response.headers)
 
     val body = response.getBody() ?: return
     sleepIfDelayed(response.getBodyDelay(TimeUnit.MILLISECONDS))
     throttledTransfer(response, socket, body, sink, body.size, false)
 
-    if ("chunked".equals(response.getHeaders()["Transfer-Encoding"], ignoreCase = true)) {
-      writeHeaders(sink, response.getTrailers())
+    if ("chunked".equals(response.headers["Transfer-Encoding"], ignoreCase = true)) {
+      writeHeaders(sink, response.trailers)
     }
   }
 
@@ -1032,11 +1032,11 @@ class MockWebServer : ExternalResource(), Closeable {
       }
       // TODO: constants for well-known header names.
       http2Headers.add(Header(Header.RESPONSE_STATUS, statusParts[1]))
-      val headers = response.getHeaders()
+      val headers = response.headers
       for ((name, value) in headers) {
         http2Headers.add(Header(name, value))
       }
-      val trailers = response.getTrailers()
+      val trailers = response.trailers
 
       sleepIfDelayed(response.getHeadersDelay(TimeUnit.MILLISECONDS))
 

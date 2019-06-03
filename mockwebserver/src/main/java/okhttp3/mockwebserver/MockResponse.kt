@@ -102,7 +102,7 @@ class MockResponse : Cloneable {
   @Deprecated(
       message = "moved to var",
       replaceWith = ReplaceWith(expression = "status"),
-      level = DeprecationLevel.WARNING)
+      level = DeprecationLevel.ERROR)
   fun getStatus(): String = status
 
   @Deprecated(
@@ -216,7 +216,7 @@ class MockResponse : Cloneable {
   @Deprecated(
       message = "moved to var",
       replaceWith = ReplaceWith(expression = "headers"),
-      level = DeprecationLevel.WARNING)
+      level = DeprecationLevel.ERROR)
   fun getHeaders(): Headers = headers
 
   @Deprecated(
@@ -229,7 +229,7 @@ class MockResponse : Cloneable {
   @Deprecated(
       message = "moved to var",
       replaceWith = ReplaceWith(expression = "trailers"),
-      level = DeprecationLevel.WARNING)
+      level = DeprecationLevel.ERROR)
   fun getTrailers(): Headers = trailers
 
   @Deprecated(
@@ -242,7 +242,7 @@ class MockResponse : Cloneable {
   @Deprecated(
       message = "moved to var",
       replaceWith = ReplaceWith(expression = "socketPolicy"),
-      level = DeprecationLevel.WARNING)
+      level = DeprecationLevel.ERROR)
   fun getSocketPolicy() = socketPolicy
 
   @Deprecated(
@@ -257,7 +257,7 @@ class MockResponse : Cloneable {
   @Deprecated(
       message = "moved to var",
       replaceWith = ReplaceWith(expression = "http2ErrorCode"),
-      level = DeprecationLevel.WARNING)
+      level = DeprecationLevel.ERROR)
   fun getHttp2ErrorCode() = http2ErrorCode
 
   @Deprecated(

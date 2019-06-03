@@ -40,7 +40,7 @@ class FormBody internal constructor(
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "size"),
-      level = DeprecationLevel.WARNING)
+      level = DeprecationLevel.ERROR)
   fun size(): Int = size
 
   fun encodedName(index: Int) = encodedNames[index]

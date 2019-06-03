@@ -356,7 +356,7 @@ class Cache internal constructor(
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "directory"),
-      level = DeprecationLevel.WARNING)
+      level = DeprecationLevel.ERROR)
   fun directory(): File = cache.directory
 
   @Synchronized internal fun trackResponse(cacheStrategy: CacheStrategy) {

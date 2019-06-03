@@ -58,14 +58,14 @@ class MediaType private constructor(
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "type"),
-      level = DeprecationLevel.WARNING)
+      level = DeprecationLevel.ERROR)
   fun type() = type
 
   @JvmName("-deprecated_subtype")
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "subtype"),
-      level = DeprecationLevel.WARNING)
+      level = DeprecationLevel.ERROR)
   fun subtype() = subtype
 
   /**
@@ -151,7 +151,7 @@ class MediaType private constructor(
         replaceWith = ReplaceWith(
             expression = "mediaType.toMediaType()",
             imports = ["okhttp3.MediaType.Companion.toMediaType"]),
-        level = DeprecationLevel.WARNING)
+        level = DeprecationLevel.ERROR)
     fun get(mediaType: String): MediaType = mediaType.toMediaType()
 
     @JvmName("-deprecated_parse")
@@ -160,7 +160,7 @@ class MediaType private constructor(
         replaceWith = ReplaceWith(
             expression = "mediaType.toMediaTypeOrNull()",
             imports = ["okhttp3.MediaType.Companion.toMediaTypeOrNull"]),
-        level = DeprecationLevel.WARNING)
+        level = DeprecationLevel.ERROR)
     fun parse(mediaType: String): MediaType? = mediaType.toMediaTypeOrNull()
   }
 }

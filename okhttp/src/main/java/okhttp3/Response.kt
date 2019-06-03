@@ -122,21 +122,21 @@ class Response internal constructor(
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "request"),
-      level = DeprecationLevel.WARNING)
+      level = DeprecationLevel.ERROR)
   fun request(): Request = request
 
   @JvmName("-deprecated_protocol")
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "protocol"),
-      level = DeprecationLevel.WARNING)
+      level = DeprecationLevel.ERROR)
   fun protocol(): Protocol = protocol
 
   @JvmName("-deprecated_code")
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "code"),
-      level = DeprecationLevel.WARNING)
+      level = DeprecationLevel.ERROR)
   fun code(): Int = code
 
   /**
@@ -150,14 +150,14 @@ class Response internal constructor(
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "message"),
-      level = DeprecationLevel.WARNING)
+      level = DeprecationLevel.ERROR)
   fun message(): String = message
 
   @JvmName("-deprecated_handshake")
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "handshake"),
-      level = DeprecationLevel.WARNING)
+      level = DeprecationLevel.ERROR)
   fun handshake(): Handshake? = handshake
 
   fun headers(name: String): List<String> = headers.values(name)
@@ -169,7 +169,7 @@ class Response internal constructor(
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "headers"),
-      level = DeprecationLevel.WARNING)
+      level = DeprecationLevel.ERROR)
   fun headers(): Headers = headers
 
   /**
@@ -203,7 +203,7 @@ class Response internal constructor(
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "body"),
-      level = DeprecationLevel.WARNING)
+      level = DeprecationLevel.ERROR)
   fun body(): ResponseBody? = body
 
   fun newBuilder(): Builder = Builder(this)
@@ -219,21 +219,21 @@ class Response internal constructor(
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "networkResponse"),
-      level = DeprecationLevel.WARNING)
+      level = DeprecationLevel.ERROR)
   fun networkResponse(): Response? = networkResponse
 
   @JvmName("-deprecated_cacheResponse")
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "cacheResponse"),
-      level = DeprecationLevel.WARNING)
+      level = DeprecationLevel.ERROR)
   fun cacheResponse(): Response? = cacheResponse
 
   @JvmName("-deprecated_priorResponse")
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "priorResponse"),
-      level = DeprecationLevel.WARNING)
+      level = DeprecationLevel.ERROR)
   fun priorResponse(): Response? = priorResponse
 
   /**
@@ -275,21 +275,21 @@ class Response internal constructor(
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "cacheControl"),
-      level = DeprecationLevel.WARNING)
+      level = DeprecationLevel.ERROR)
   fun cacheControl(): CacheControl = cacheControl
 
   @JvmName("-deprecated_sentRequestAtMillis")
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "sentRequestAtMillis"),
-      level = DeprecationLevel.WARNING)
+      level = DeprecationLevel.ERROR)
   fun sentRequestAtMillis(): Long = sentRequestAtMillis
 
   @JvmName("-deprecated_receivedResponseAtMillis")
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "receivedResponseAtMillis"),
-      level = DeprecationLevel.WARNING)
+      level = DeprecationLevel.ERROR)
   fun receivedResponseAtMillis(): Long = receivedResponseAtMillis
 
   /**

@@ -77,28 +77,28 @@ class Challenge(
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "scheme"),
-      level = DeprecationLevel.WARNING)
+      level = DeprecationLevel.ERROR)
   fun scheme() = scheme
 
   @JvmName("-deprecated_authParams")
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "authParams"),
-      level = DeprecationLevel.WARNING)
+      level = DeprecationLevel.ERROR)
   fun authParams() = authParams
 
   @JvmName("-deprecated_realm")
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "realm"),
-      level = DeprecationLevel.WARNING)
+      level = DeprecationLevel.ERROR)
   fun realm(): String? = realm
 
   @JvmName("-deprecated_charset")
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "charset"),
-      level = DeprecationLevel.WARNING)
+      level = DeprecationLevel.ERROR)
   fun charset(): Charset = charset
 
   override fun equals(other: Any?): Boolean {

@@ -76,7 +76,7 @@ class Headers private constructor(
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "size"),
-      level = DeprecationLevel.WARNING)
+      level = DeprecationLevel.ERROR)
   fun size(): Int = size
 
   /** Returns the field at `position`. */
@@ -383,7 +383,7 @@ class Headers private constructor(
     @Deprecated(
         message = "function name changed",
         replaceWith = ReplaceWith(expression = "headersOf(*namesAndValues)"),
-        level = DeprecationLevel.WARNING)
+        level = DeprecationLevel.ERROR)
     fun of(vararg namesAndValues: String): Headers {
       return headersOf(*namesAndValues)
     }
@@ -412,7 +412,7 @@ class Headers private constructor(
     @Deprecated(
         message = "function moved to extension",
         replaceWith = ReplaceWith(expression = "headers.toHeaders()"),
-        level = DeprecationLevel.WARNING)
+        level = DeprecationLevel.ERROR)
     fun of(headers: Map<String, String>): Headers {
       return headers.toHeaders()
     }

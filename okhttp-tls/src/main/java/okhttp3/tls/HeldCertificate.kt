@@ -120,14 +120,14 @@ class HeldCertificate(
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "certificate"),
-      level = DeprecationLevel.WARNING)
+      level = DeprecationLevel.ERROR)
   fun certificate(): X509Certificate = certificate
 
   @JvmName("-deprecated_keyPair")
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "keyPair"),
-      level = DeprecationLevel.WARNING)
+      level = DeprecationLevel.ERROR)
   fun keyPair(): KeyPair = keyPair
 
   /**

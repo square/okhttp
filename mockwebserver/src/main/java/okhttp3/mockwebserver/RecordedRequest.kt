@@ -68,7 +68,7 @@ class RecordedRequest(
   @Deprecated(
       message = "Use body.readUtf8()",
       replaceWith = ReplaceWith("body.readUtf8()"),
-      level = DeprecationLevel.WARNING)
+      level = DeprecationLevel.ERROR)
   val utf8Body: String
     get() = body.readUtf8()
 
