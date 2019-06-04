@@ -11,7 +11,7 @@ keeping the package name the same: `okhttp3`!
 There are three kinds of compatibility we're tracking:
 
  * **Binary compatibility** is the ability to compile a program against OkHttp 3.x, and then to run
-   it against OkHttp 4.x. We're using use the excellent [japicmp][japicmp] library via its
+   it against OkHttp 4.x. We're using the excellent [japicmp][japicmp] library via its
    [Gradle plugin][japicmp_gradle] to enforce binary compatibility.
 
  * **Java source compatibility** is the ability to upgrade Java uses of OkHttp 3.x to 4.x without
