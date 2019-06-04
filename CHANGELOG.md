@@ -1,11 +1,15 @@
 Change Log
 ==========
 
-## Version 4.0.0-ALPHA02
+## Version 4.0.0-RC1
 
-_2019-05-25_
+_2019-06-03_
 
-This is an unstable preview of the OkHttp 4 release. It should not be used.
+**OkHttp 4 upgrades OkHttp to Kotlin.** This is the first stable preview of OkHttp 4. Use it to find
+bugs or performance regressions before the final 4.0.0 release.
+
+We tried our best to make it fast and safe to upgrade from OkHttp 3.x.
+[We even wrote a guide](UPGRADING_TO_OKHTTP_4.md) to help you with it!
 
 
 ## Version 3.14.2
