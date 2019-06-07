@@ -82,6 +82,22 @@ class HttpLoggingInterceptor @JvmOverloads constructor(
     HEADERS,
 
     /**
+     * Logs request and response lines and their respective bodies (if present) without headers.
+     *
+     * Example:
+     * ```
+     * --> POST /greeting http/1.1
+     * Hi?
+     * --> END POST
+     *
+     * <-- 200 OK (22ms)
+     * Hello!
+     * <-- END HTTP
+     * ```
+     */
+    JUSTBODY,
+
+    /**
      * Logs request and response lines and their respective headers and bodies (if present).
      *
      * Example:
@@ -150,8 +166,8 @@ class HttpLoggingInterceptor @JvmOverloads constructor(
       return chain.proceed(request)
     }
 
-    val logBody = level == Level.BODY
-    val logHeaders = logBody || level == Level.HEADERS
+    val logBody = level == Level.BODY || level == Level.JUSTBODY
+    val logHeaders = level == Level.BODY || level == Level.HEADERS
 
     val requestBody = request.body
 
