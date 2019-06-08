@@ -27,7 +27,7 @@ A call to `chain.proceed(request)` is a critical part of each interceptor’s im
 
 Interceptors can be chained. Suppose you have both a compressing interceptor and a checksumming interceptor: you'll need to decide whether data is compressed and then checksummed, or checksummed and then compressed. OkHttp uses lists to track interceptors, and interceptors are called in order.
 
-![Interceptors Diagram](https://raw.githubusercontent.com/wiki/square/okhttp/interceptors@2x.png)
+![Interceptors Diagram](docs/images/interceptors@2x.png)
 
 #### Application Interceptors
 
@@ -191,10 +191,6 @@ private static final Interceptor REWRITE_CACHE_CONTROL_INTERCEPTOR = new Interce
 ```
 
 Typically this approach works best when it complements a corresponding fix on the webserver!
-
-#### Availability
-
-OkHttp's interceptors require OkHttp 2.2 or better. Unfortunately, interceptors do not work with `OkUrlFactory`, or the libraries that build on it, including [Retrofit](http://square.github.io/retrofit/) ≤ 1.8 and [Picasso](http://square.github.io/picasso/) ≤ 2.4.
 
 
 ----

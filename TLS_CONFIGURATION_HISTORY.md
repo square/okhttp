@@ -7,7 +7,7 @@ changes we've made over time to OkHttp's default TLS options.
 [OkHttp 3.14][OkHttp314]
 ------------------------
 
-_RELEASE TBD_
+_2019-03-14_
 
 Remove 2 TLSv1.3 cipher suites that are neither available on OkHttp’s host platforms nor enabled in releases of Chrome and Firefox.
 
