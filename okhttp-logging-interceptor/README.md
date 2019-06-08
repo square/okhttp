@@ -52,4 +52,4 @@ implementation 'com.squareup.okhttp3:logging-interceptor:(insert latest version)
 
 
 
- [1]: https://github.com/square/okhttp/wiki/Interceptors
+ [1]: ../INTERCEPTORS.md

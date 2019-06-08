@@ -1,8 +1,18 @@
-OkHttp
-======
+OkHttp 3.x
+==========
 
-An HTTP & HTTP/2 client for Android and Java applications. For more information see [the
-website][website] and [the wiki][wiki].
+An HTTP & HTTP/2 client for Android and Java applications.
+
+Docs
+----
+
+ * [**User's Guide**](CALLS.md) (includes [Calls](CALLS.md), [Connections](CONNECTIONS.md),
+   [Recipes](RECIPES.md), [Interceptors](INTERCEPTORS.md), [HTTPS](HTTPS.md), [Events](EVENTS.md))
+ * [**3.x API**][3x_okhttp] (also [dnsoverhttps][3x_dnsoverhttps],
+   [logging-interceptor][3x_logging], [sse][3x_sse], [tls][3x_tls],
+   [urlconnection][3x_urlconnection], [mockwebserver][3x_mockwebserver])
+ * [**StackOverflow**](http://stackoverflow.com/questions/tagged/okhttp?sort=active)
+ * [**Works with OkHttp**](WORKS_WITH_OKHTTP.md)
 
 
 Requirements
@@ -30,13 +40,13 @@ The OkHttp 3.12.x branch supports Android 2.3+ (API level 9+) and Java 7+. These
 support for TLS 1.2 and should not be used. But because upgrading is difficult we will backport
 critical fixes to the [3.12.x branch][okhttp_312x] through December 31, 2020.
 
-Download
+Releases
 --------
 
-Download [the latest JAR][okhttp_latest_jar] or configure this dependency:
+Our [change log](CHANGELOG.md) has release history.
 
 ```kotlin
-implementation("com.squareup.okhttp3:okhttp:3.14.0")
+implementation("com.squareup.okhttp3:okhttp:3.14.2")
 ```
 
 Snapshots of the development version are available in [Sonatype's `snapshots` repository][snap].
@@ -45,15 +55,11 @@ Snapshots of the development version are available in [Sonatype's `snapshots` re
 MockWebServer
 -------------
 
-A library for testing HTTP, HTTPS, and HTTP/2 clients.
-
-MockWebServer coupling with OkHttp is essential for proper testing of HTTP/2 so that code can be shared.
-
-### Download
+OkHttp includes a library for testing HTTP, HTTPS, and HTTP/2 clients.
 
 Download [the latest JAR][mockwebserver_latest_jar] or configure this dependency:
 ```xml
-testImplementation("com.squareup.okhttp3:mockwebserver:3.14.0")
+testImplementation("com.squareup.okhttp3:mockwebserver:3.14.2")
 ```
 
 R8 / ProGuard
@@ -86,7 +92,14 @@ License
  [okhttp_latest_jar]: https://search.maven.org/remote_content?g=com.squareup.okhttp3&a=okhttp&v=LATEST
  [okio]: https://github.com/square/okio/
  [snap]: https://oss.sonatype.org/content/repositories/snapshots/
- [tls_history]: https://github.com/square/okhttp/wiki/TLS-Configuration-History
+ [tls_history]: TLS_CONFIGURATION_HISTORY.md
  [website]: https://square.github.io/okhttp
- [wiki]: https://github.com/square/okhttp/wiki
  [okhttp3_pro]: https://github.com/square/okhttp/blob/master/okhttp/src/main/resources/META-INF/proguard/okhttp3.pro
+
+ [3x_okhttp]: http://square.github.io/okhttp/3.x/okhttp/
+ [3x_dnsoverhttps]: http://square.github.io/okhttp/3.x/okhttp-dnsoverhttps/
+ [3x_logging]: http://square.github.io/okhttp/3.x/logging-interceptor/
+ [3x_sse]: http://square.github.io/okhttp/3.x/okhttp-sse/
+ [3x_tls]: http://square.github.io/okhttp/3.x/okhttp-tls/
+ [3x_urlconnection]: http://square.github.io/okhttp/3.x/okhttp-urlconnection/
+ [3x_mockwebserver]: http://square.github.io/okhttp/3.x/mockwebserver/
