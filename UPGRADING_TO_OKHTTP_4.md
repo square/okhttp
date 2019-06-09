@@ -105,6 +105,9 @@ SAM conversion impacts these APIs:
  * LoggingEventListener.Factory
  * OkHttpClient.Builder.hostnameVerifier(HostnameVerifier)
 
+JetBrains [is working on][kotlin_sams] SAM conversions of Kotlin interfaces. Expect it in a future
+release of the Kotlin language.
+
 
 Vars and Vals
 -------------
@@ -198,3 +201,48 @@ null are uncommon and Kotlin callers may have incorrectly assigned the result to
 [japicmp_gradle]: https://github.com/melix/japicmp-gradle-plugin
 [mockito]: https://site.mockito.org/
 [kotlin_sam]: https://kotlinlang.org/docs/reference/java-interop.html#sam-conversions
+
+
+Companion Imports
+-----------------
+
+The equivalent of static methods in Java is companion object functions in Kotlin. The bytecode is
+the same but `.kt` files now need `Companion` in the import.
+
+This works with OkHttp 3.x:
+
+```
+import okhttp3.CipherSuite.forJavaName
+```
+
+But OkHttp 4.x needs a `Companion`:
+
+```
+import okhttp3.CipherSuite.Companion.forJavaName
+```
+
+In the unlikely event that you have a lot of these, run this:
+
+```
+sed -i "" \
+  's/^\(import okhttp3\.[^.]*\)\.\([a-z][a-zA-Z]*\)$/\1.Companion.\2/g' \
+  `find . -name "*.kt"`
+```
+
+
+R8 / ProGuard
+-------------
+
+R8 and ProGuard are both code optimizers for `.class` files.
+
+R8 is the [default optimizer][r8] in Android Studio 3.4 and newer. It works well with all
+releases of OkHttp.
+
+ProGuard was the previous default. We're [tracking problems][proguard_problems] with interactions
+between ProGuard, OkHttp 4.x, and Kotlin-originated `.class` files. Make sure you're on the latest
+release if you're using ProGuard,
+
+
+ [kotlin_sams]: https://discuss.kotlinlang.org/t/new-type-inference-in-kotlin-1-3-0-rc-190/9914/2
+ [proguard_problems]: https://github.com/square/okhttp/issues/5167
+ [r8]: https://developer.android.com/studio/releases#r8-default
