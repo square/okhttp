@@ -78,7 +78,7 @@ with OkHttp 3.x: must use `object :` with OkHttp 4.x:
 
 Kotlin calling OkHttp 3.x:
 
-```
+```kotlin
 val client = OkHttpClient.Builder()
     .dns { hostname -> InetAddress.getAllByName(hostname).toList() }
     .build()
@@ -86,7 +86,7 @@ val client = OkHttpClient.Builder()
 
 Kotlin calling OkHttp 4.x:
 
-```
+```kotlin
 val client = OkHttpClient.Builder()
     .dns(object : Dns {
       override fun lookup(hostname: String) =
@@ -211,19 +211,19 @@ the same but `.kt` files now need `Companion` in the import.
 
 This works with OkHttp 3.x:
 
-```
+```kotlin
 import okhttp3.CipherSuite.forJavaName
 ```
 
 But OkHttp 4.x needs a `Companion`:
 
-```
+```kotlin
 import okhttp3.CipherSuite.Companion.forJavaName
 ```
 
 In the unlikely event that you have a lot of these, run this:
 
-```
+```bash
 sed -i "" \
   's/^\(import okhttp3\.[^.]*\)\.\([a-z][a-zA-Z]*\)$/\1.Companion.\2/g' \
   `find . -name "*.kt"`
