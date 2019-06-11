@@ -49,7 +49,7 @@ By default, OkHttp trusts the certificate authorities of the host platform. This
 
 Use [CertificatePinner](http://square.github.io/okhttp/3.x/okhttp/okhttp3/CertificatePinner.html) to restrict which certificates and certificate authorities are trusted. Certificate pinning increases security, but limits your server team’s abilities to update their TLS certificates. **Do not use certificate pinning without the blessing of your server’s TLS administrator!**
 
-```
+```java
   public CertificatePinning() {
     client = new OkHttpClient.Builder()
         .certificatePinner(new CertificatePinner.Builder()
@@ -76,7 +76,7 @@ Use [CertificatePinner](http://square.github.io/okhttp/3.x/okhttp/okhttp3/Certif
 
 The full code sample shows how to replace the host platform’s certificate authorities with your own set. As above, **do not use custom certificates without the blessing of your server’s TLS administrator!**
 
-```
+```java
   private final OkHttpClient client;
 
   public CustomTrust() {
