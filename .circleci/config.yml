@@ -196,7 +196,7 @@ jobs:
 
       - run:
           name: Install native-image
-          command: ~/.gradle/caches/com.palantir.graal/19.0.2/graalvm-ce-19.0.2/Contents/Home/bin/gu install native-image
+          command: ~/.gradle/caches/com.palantir.graal/19.0.2/graalvm-ce-19.0.2/bin/gu install native-image
 
       - run:
           name: Build nativeImage
