@@ -1,3 +1,5 @@
+import org.gradle.internal.os.OperatingSystem
+
 plugins {
   id("com.palantir.graal") version "0.3.0-6-g0b828af"
   id("com.hpe.kraal") version "0.0.15"
@@ -38,10 +40,16 @@ dependencies {
   testImplementation deps.assertj
 }
 
+String os = "linux"
+
+if (OperatingSystem.current().isMacOsX()) {
+  os = "darwin"
+}
+
 graal {
   graalVersion("19.0.2")
   // https://github.com/palantir/gradle-graal/issues/105
-  downloadBaseUrl("https://github.com/oracle/graal/releases/download/vm-19.0.2/graalvm-ce-darwin-amd64-19.0.2.tar.gz?a=")
+  downloadBaseUrl("https://github.com/oracle/graal/releases/download/vm-19.0.2/graalvm-ce-$os-amd64-19.0.2.tar.gz?a=")
   mainClass("okhttp3.curl.Main")
   outputName("okcurl")
   option("--configurations-path")

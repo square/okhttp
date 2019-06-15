@@ -185,6 +185,16 @@ jobs:
             - v4-master-compile
 
       - run:
+          name: Download Graal
+          command: ./gradlew :okcurl:extractGraalTooling
+          environment:
+            GRADLE_OPTS: -Dorg.gradle.daemon=false -Dorg.gradle.workers.max=3 -Xmx1G
+
+      - run:
+          name: Install native-image
+          command: ~/.gradle/caches/com.palantir.graal/19.0.2/graalvm-ce-19.0.2/Contents/Home/bin/gu install native-image
+
+      - run:
           name: Build nativeImage
           command: ./gradlew :okcurl:nativeImage
           environment:
