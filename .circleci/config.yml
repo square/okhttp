@@ -168,6 +168,36 @@ jobs:
       - runtests:
           platform: conscrypt
 
+  okcurl-graal:
+    docker:
+      - image: circleci/openjdk:11.0.3-jdk-stretch
+
+    environment:
+      JVM_OPTS: -Xmx1g
+      TERM: dumb
+
+    steps:
+      - checkout
+
+      - restore_cache:
+          keys:
+            # restore compilation and wrapper from master build
+            - v4-master-compile
+
+      - run:
+          name: Build nativeImage
+          command: ./gradlew :okcurl:nativeImage
+          environment:
+            GRADLE_OPTS: -Dorg.gradle.daemon=false -Dorg.gradle.workers.max=3 -Xmx1G
+
+      - run:
+          name: Run okcurl nativeImage
+          command: ./okcurl/build/graal/okcurl https://api.twitter.com/robots.txt
+
+      - store_artifacts:
+          name: Store okcurl binary
+          path: okcurl/build/graal/okcurl
+
 workflows:
   version: 2
   commit:
@@ -199,6 +229,7 @@ workflows:
           filters:
             branches:
               only: master
+      - okcurl-graal
   nightly:
     triggers:
       - schedule:
