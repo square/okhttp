@@ -191,6 +191,10 @@ jobs:
             GRADLE_OPTS: -Dorg.gradle.daemon=false -Dorg.gradle.workers.max=3 -Xmx1G
 
       - run:
+          name: Debug
+          command: find ~/.gradle/caches/com.palantir.graal
+
+      - run:
           name: Install native-image
           command: ~/.gradle/caches/com.palantir.graal/19.0.2/graalvm-ce-19.0.2/Contents/Home/bin/gu install native-image
 
