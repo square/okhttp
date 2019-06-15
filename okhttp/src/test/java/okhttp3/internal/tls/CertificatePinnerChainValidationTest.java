@@ -30,6 +30,7 @@ import javax.net.ssl.X509TrustManager;
 import okhttp3.Call;
 import okhttp3.CertificatePinner;
 import okhttp3.OkHttpClient;
+import okhttp3.OkHttpClientTestRule;
 import okhttp3.PlatformRule;
 import okhttp3.RecordingHostnameVerifier;
 import okhttp3.Request;
@@ -43,7 +44,6 @@ import okhttp3.tls.HeldCertificate;
 import org.junit.Rule;
 import org.junit.Test;
 
-import static okhttp3.TestUtil.defaultClient;
 import static okhttp3.internal.platform.PlatformTest.getJvmSpecVersion;
 import static okhttp3.tls.internal.TlsUtil.newKeyManager;
 import static okhttp3.tls.internal.TlsUtil.newTrustManager;
@@ -53,6 +53,7 @@ import static org.junit.Assume.assumeFalse;
 
 public final class CertificatePinnerChainValidationTest {
   @Rule public final PlatformRule platform = new PlatformRule();
+  @Rule public final OkHttpClientTestRule clientTestRule = new OkHttpClientTestRule();
 
   @Rule public final MockWebServer server = new MockWebServer();
 
@@ -83,7 +84,7 @@ public final class CertificatePinnerChainValidationTest {
     HandshakeCertificates handshakeCertificates = new HandshakeCertificates.Builder()
         .addTrustedCertificate(rootCa.certificate())
         .build();
-    OkHttpClient client = defaultClient().newBuilder()
+    OkHttpClient client = clientTestRule.newClientBuilder()
         .sslSocketFactory(
             handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager())
         .hostnameVerifier(new RecordingHostnameVerifier())
@@ -143,7 +144,7 @@ public final class CertificatePinnerChainValidationTest {
     HandshakeCertificates handshakeCertificates = new HandshakeCertificates.Builder()
         .addTrustedCertificate(rootCa.certificate())
         .build();
-    OkHttpClient client = defaultClient().newBuilder()
+    OkHttpClient client = clientTestRule.newClientBuilder()
         .sslSocketFactory(
             handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager())
         .hostnameVerifier(new RecordingHostnameVerifier())
@@ -212,7 +213,7 @@ public final class CertificatePinnerChainValidationTest {
     HandshakeCertificates handshakeCertificates = new HandshakeCertificates.Builder()
         .addTrustedCertificate(rootCa.certificate())
         .build();
-    OkHttpClient client = defaultClient().newBuilder()
+    OkHttpClient client = clientTestRule.newClientBuilder()
         .sslSocketFactory(
             handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager())
         .hostnameVerifier(new RecordingHostnameVerifier())
@@ -291,7 +292,7 @@ public final class CertificatePinnerChainValidationTest {
         .addTrustedCertificate(rootCa.certificate())
         .addTrustedCertificate(compromisedRootCa.certificate())
         .build();
-    OkHttpClient client = defaultClient().newBuilder()
+    OkHttpClient client = clientTestRule.newClientBuilder()
         .sslSocketFactory(
             handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager())
         .hostnameVerifier(new RecordingHostnameVerifier())

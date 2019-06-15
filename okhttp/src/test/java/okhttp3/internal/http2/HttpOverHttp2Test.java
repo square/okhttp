@@ -118,42 +118,29 @@ public final class HttpOverHttp2Test {
   private Protocol protocol;
 
   public HttpOverHttp2Test(Protocol protocol) {
-    this.client = protocol == Protocol.HTTP_2 ? buildHttp2Client() : buildH2PriorKnowledgeClient();
-    this.scheme = protocol == Protocol.HTTP_2 ? "https" : "http";
     this.protocol = protocol;
   }
 
-  @Before
-  public void checkHttp2() {
+  @Before public void setUp() {
     if (protocol == Protocol.HTTP_2) {
       platform.assumeHttp2Support();
-    }
-  }
-
-  private OkHttpClient buildH2PriorKnowledgeClient() {
-    return clientTestRule.client.newBuilder()
-        .protocols(asList(Protocol.H2_PRIOR_KNOWLEDGE))
-        .build();
-  }
-
-  private OkHttpClient buildHttp2Client() {
-    return clientTestRule.client.newBuilder()
-        .protocols(asList(Protocol.HTTP_2, Protocol.HTTP_1_1))
-        .sslSocketFactory(
-            handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager())
-        .hostnameVerifier(new RecordingHostnameVerifier())
-        .build();
-  }
-
-  @Before public void setUp() {
-    if (protocol == Protocol.H2_PRIOR_KNOWLEDGE) {
-      server.setProtocols(asList(Protocol.H2_PRIOR_KNOWLEDGE));
-    } else {
       server.useHttps(handshakeCertificates.sslSocketFactory(), false);
+      client = clientTestRule.newClientBuilder()
+          .protocols(asList(Protocol.HTTP_2, Protocol.HTTP_1_1))
+          .sslSocketFactory(
+              handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager())
+          .hostnameVerifier(new RecordingHostnameVerifier())
+          .build();
+      scheme = "https";
+    } else {
+      server.setProtocols(asList(Protocol.H2_PRIOR_KNOWLEDGE));
+      client = clientTestRule.newClientBuilder()
+          .protocols(asList(Protocol.H2_PRIOR_KNOWLEDGE))
+          .build();
+      scheme = "http";
     }
 
     cache = new Cache(tempDir.getRoot(), Integer.MAX_VALUE);
-
     http2Logger.addHandler(http2Handler);
     previousLevel = http2Logger.getLevel();
     http2Logger.setLevel(Level.FINE);

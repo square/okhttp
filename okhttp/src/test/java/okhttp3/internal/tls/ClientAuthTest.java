@@ -31,6 +31,7 @@ import javax.net.ssl.X509TrustManager;
 import javax.security.auth.x500.X500Principal;
 import okhttp3.Call;
 import okhttp3.OkHttpClient;
+import okhttp3.OkHttpClientTestRule;
 import okhttp3.PlatformRule;
 import okhttp3.Request;
 import okhttp3.Response;
@@ -44,7 +45,6 @@ import org.junit.Test;
 
 import static java.util.Arrays.asList;
 import static okhttp3.PlatformRule.getPlatformSystemProperty;
-import static okhttp3.TestUtil.defaultClient;
 import static okhttp3.internal.platform.PlatformTest.getJvmSpecVersion;
 import static okhttp3.tls.internal.TlsUtil.newKeyManager;
 import static okhttp3.tls.internal.TlsUtil.newTrustManager;
@@ -54,6 +54,7 @@ import static org.junit.Assume.assumeFalse;
 
 public final class ClientAuthTest {
   @Rule public final PlatformRule platform = new PlatformRule();
+  @Rule public final OkHttpClientTestRule clientTestRule = new OkHttpClientTestRule();
   @Rule public final MockWebServer server = new MockWebServer();
 
   private HeldCertificate serverRootCa;
@@ -272,7 +273,7 @@ public final class ClientAuthTest {
     }
 
     HandshakeCertificates handshakeCertificates = builder.build();
-    return defaultClient().newBuilder()
+    return clientTestRule.newClientBuilder()
         .sslSocketFactory(
             handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager())
         .build();

@@ -27,6 +27,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Logger;
 import okhttp3.OkHttpClient;
+import okhttp3.OkHttpClientTestRule;
 import okhttp3.Protocol;
 import okhttp3.RecordingEventListener;
 import okhttp3.RecordingHostnameVerifier;
@@ -44,13 +45,12 @@ import okhttp3.tls.HandshakeCertificates;
 import okio.Buffer;
 import okio.ByteString;
 import org.junit.After;
+import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 
 import static java.util.Arrays.asList;
-import static okhttp3.TestUtil.defaultClient;
-import static okhttp3.TestUtil.ensureAllConnectionsReleased;
 import static okhttp3.TestUtil.repeat;
 import static okhttp3.tls.internal.TlsUtil.localhost;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -59,21 +59,26 @@ import static org.junit.Assert.fail;
 
 public final class WebSocketHttpTest {
   @Rule public final MockWebServer webServer = new MockWebServer();
+  @Rule public final OkHttpClientTestRule clientTestRule = new OkHttpClientTestRule();
 
   private final HandshakeCertificates handshakeCertificates = localhost();
   private final WebSocketRecorder clientListener = new WebSocketRecorder("client");
   private final WebSocketRecorder serverListener = new WebSocketRecorder("server");
   private final Random random = new Random(0);
-  private OkHttpClient client = defaultClient().newBuilder()
-      .writeTimeout(500, TimeUnit.MILLISECONDS)
-      .readTimeout(500, TimeUnit.MILLISECONDS)
-      .addInterceptor(chain -> {
-        Response response = chain.proceed(chain.request());
-        // Ensure application interceptors never see a null body.
-        assertThat(response.body()).isNotNull();
-        return response;
-      })
-      .build();
+  private OkHttpClient client;
+
+  @Before public void setUp() {
+    client = clientTestRule.newClientBuilder()
+        .writeTimeout(500, TimeUnit.MILLISECONDS)
+        .readTimeout(500, TimeUnit.MILLISECONDS)
+        .addInterceptor(chain -> {
+          Response response = chain.proceed(chain.request());
+          // Ensure application interceptors never see a null body.
+          assertThat(response.body()).isNotNull();
+          return response;
+        })
+        .build();
+  }
 
   @After public void tearDown() {
     clientListener.assertExhausted();
@@ -300,8 +305,6 @@ public final class WebSocketHttpTest {
 
     clientListener.assertFailure(101, null, ProtocolException.class,
         "Expected 'Connection' header value 'Upgrade' but was 'null'");
-
-    ensureAllConnectionsReleased(client);
   }
 
   @Test public void wrongConnectionHeader() throws IOException {
