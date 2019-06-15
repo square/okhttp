@@ -10,10 +10,9 @@
 <h1>dispatcher</h1>
 <a name="okhttp3.mockwebserver.MockWebServer$dispatcher"></a>
 <code><span class="keyword">var </span><span class="identifier">dispatcher</span><span class="symbol">: </span><a href="../-dispatcher/index.html"><span class="identifier">Dispatcher</span></a></code>
-<p>Returns the dispatcher used to respond to HTTP requests.
-The default dispatcher is a <a href="../-queue-dispatcher/index.html">QueueDispatcher</a> but other dispatchers can be configured.</p>
-<p>Sets the dispatcher used to match incoming requests to mock responses. The default dispatcher
-simply serves a fixed sequence of responses from a <a href="enqueue.html">queue</a>; custom
-dispatchers can vary the response based on timing or the content of the request.</p>
+<p>The dispatcher used to respond to HTTP requests. The default dispatcher is a <a href="../-queue-dispatcher/index.html">QueueDispatcher</a>,
+which serves a fixed sequence of responses from a <a href="enqueue.html">queue</a>.</p>
+<p>Other dispatchers can be configured. They can vary the response based on timing or the content
+of the request.</p>
 </BODY>
 </HTML>

@@ -36,6 +36,26 @@
 </tr>
 <tr>
 <td>
+<p><a href="headers.html">headers</a></p>
+</td>
+<td>
+<code><span class="keyword">var </span><span class="identifier">headers</span><span class="symbol">: </span><span class="identifier">Headers</span></code>
+<p>The HTTP headers, such as "Content-Length: 0".</p>
+</td>
+</tr>
+<tr>
+<td>
+<p><a href="http2-error-code.html">http2ErrorCode</a></p>
+</td>
+<td>
+<code><span class="keyword">var </span><span class="identifier">http2ErrorCode</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a></code>
+<p>Sets the <a href="https://tools.ietf.org/html/rfc7540#section-7">HTTP/2 error code</a> to be
+returned when resetting the stream.
+This is only valid with <a href="../-socket-policy/-r-e-s-e-t_-s-t-r-e-a-m_-a-t_-s-t-a-r-t.html">SocketPolicy.RESET_STREAM_AT_START</a>.</p>
+</td>
+</tr>
+<tr>
+<td>
 <p><a href="is-duplex.html">isDuplex</a></p>
 </td>
 <td>
@@ -59,10 +79,33 @@
 </tr>
 <tr>
 <td>
+<p><a href="socket-policy.html">socketPolicy</a></p>
+</td>
+<td>
+<code><span class="keyword">var </span><span class="identifier">socketPolicy</span><span class="symbol">: </span><a href="../-socket-policy/index.html"><span class="identifier">SocketPolicy</span></a></code></td>
+</tr>
+<tr>
+<td>
+<p><a href="status.html">status</a></p>
+</td>
+<td>
+<code><span class="keyword">var </span><span class="identifier">status</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><span class="identifier">String</span></a></code>
+<p>Returns the HTTP response line, such as "HTTP/1.1 200 OK".</p>
+</td>
+</tr>
+<tr>
+<td>
 <p><a href="throttle-bytes-per-period.html">throttleBytesPerPeriod</a></p>
 </td>
 <td>
 <code><span class="keyword">var </span><span class="identifier">throttleBytesPerPeriod</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html"><span class="identifier">Long</span></a></code></td>
+</tr>
+<tr>
+<td>
+<p><a href="trailers.html">trailers</a></p>
+</td>
+<td>
+<code><span class="keyword">var </span><span class="identifier">trailers</span><span class="symbol">: </span><span class="identifier">Headers</span></code></td>
 </tr>
 <tr>
 <td>
@@ -135,15 +178,6 @@ were added by default.</p>
 </tr>
 <tr>
 <td>
-<p><a href="get-headers.html">getHeaders</a></p>
-</td>
-<td>
-<code><span class="keyword">fun </span><span class="identifier">getHeaders</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">Headers</span></code>
-<p>Returns the HTTP headers, such as "Content-Length: 0".</p>
-</td>
-</tr>
-<tr>
-<td>
 <p><a href="get-headers-delay.html">getHeadersDelay</a></p>
 </td>
 <td>
@@ -151,40 +185,10 @@ were added by default.</p>
 </tr>
 <tr>
 <td>
-<p><a href="get-http2-error-code.html">getHttp2ErrorCode</a></p>
-</td>
-<td>
-<code><span class="keyword">fun </span><span class="identifier">getHttp2ErrorCode</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a></code></td>
-</tr>
-<tr>
-<td>
-<p><a href="get-socket-policy.html">getSocketPolicy</a></p>
-</td>
-<td>
-<code><span class="keyword">fun </span><span class="identifier">getSocketPolicy</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="../-socket-policy/index.html"><span class="identifier">SocketPolicy</span></a></code></td>
-</tr>
-<tr>
-<td>
-<p><a href="get-status.html">getStatus</a></p>
-</td>
-<td>
-<code><span class="keyword">fun </span><span class="identifier">getStatus</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><span class="identifier">String</span></a></code>
-<p>Returns the HTTP response line, such as "HTTP/1.1 200 OK".</p>
-</td>
-</tr>
-<tr>
-<td>
 <p><a href="get-throttle-period.html">getThrottlePeriod</a></p>
 </td>
 <td>
 <code><span class="keyword">fun </span><span class="identifier">getThrottlePeriod</span><span class="symbol">(</span><span class="identifier" id="okhttp3.mockwebserver.MockResponse$getThrottlePeriod(java.util.concurrent.TimeUnit)/unit">unit</span><span class="symbol">:</span>&nbsp;<a href="https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/TimeUnit.html"><span class="identifier">TimeUnit</span></a><span class="symbol">)</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html"><span class="identifier">Long</span></a></code></td>
-</tr>
-<tr>
-<td>
-<p><a href="get-trailers.html">getTrailers</a></p>
-</td>
-<td>
-<code><span class="keyword">fun </span><span class="identifier">getTrailers</span><span class="symbol">(</span><span class="symbol">)</span><span class="symbol">: </span><span class="identifier">Headers</span></code></td>
 </tr>
 <tr>
 <td>
@@ -238,15 +242,6 @@ chunked every <a href="set-chunked-body.html#okhttp3.mockwebserver.MockResponse$
 </tr>
 <tr>
 <td>
-<p><a href="set-headers.html">setHeaders</a></p>
-</td>
-<td>
-<code><span class="keyword">fun </span><span class="identifier">setHeaders</span><span class="symbol">(</span><span class="identifier" id="okhttp3.mockwebserver.MockResponse$setHeaders(okhttp3.Headers)/headers">headers</span><span class="symbol">:</span>&nbsp;<span class="identifier">Headers</span><span class="symbol">)</span><span class="symbol">: </span><a href="./index.html"><span class="identifier">MockResponse</span></a></code>
-<p>Replaces all headers with those specified.</p>
-</td>
-</tr>
-<tr>
-<td>
 <p><a href="set-headers-delay.html">setHeadersDelay</a></p>
 </td>
 <td>
@@ -254,44 +249,10 @@ chunked every <a href="set-chunked-body.html#okhttp3.mockwebserver.MockResponse$
 </tr>
 <tr>
 <td>
-<p><a href="set-http2-error-code.html">setHttp2ErrorCode</a></p>
-</td>
-<td>
-<code><span class="keyword">fun </span><span class="identifier">setHttp2ErrorCode</span><span class="symbol">(</span><span class="identifier" id="okhttp3.mockwebserver.MockResponse$setHttp2ErrorCode(kotlin.Int)/http2ErrorCode">http2ErrorCode</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a><span class="symbol">)</span><span class="symbol">: </span><a href="./index.html"><span class="identifier">MockResponse</span></a></code>
-<p>Sets the <a href="https://tools.ietf.org/html/rfc7540#section-7">HTTP/2 error code</a> to be
-returned when resetting the stream.
-This is only valid with <a href="../-socket-policy/-r-e-s-e-t_-s-t-r-e-a-m_-a-t_-s-t-a-r-t.html">SocketPolicy.RESET_STREAM_AT_START</a>.</p>
-</td>
-</tr>
-<tr>
-<td>
 <p><a href="set-response-code.html">setResponseCode</a></p>
 </td>
 <td>
 <code><span class="keyword">fun </span><span class="identifier">setResponseCode</span><span class="symbol">(</span><span class="identifier" id="okhttp3.mockwebserver.MockResponse$setResponseCode(kotlin.Int)/code">code</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a><span class="symbol">)</span><span class="symbol">: </span><a href="./index.html"><span class="identifier">MockResponse</span></a></code></td>
-</tr>
-<tr>
-<td>
-<p><a href="set-socket-policy.html">setSocketPolicy</a></p>
-</td>
-<td>
-<code><span class="keyword">fun </span><span class="identifier">setSocketPolicy</span><span class="symbol">(</span><span class="identifier" id="okhttp3.mockwebserver.MockResponse$setSocketPolicy(okhttp3.mockwebserver.SocketPolicy)/socketPolicy">socketPolicy</span><span class="symbol">:</span>&nbsp;<a href="../-socket-policy/index.html"><span class="identifier">SocketPolicy</span></a><span class="symbol">)</span><span class="symbol">: </span><a href="./index.html"><span class="identifier">MockResponse</span></a></code></td>
-</tr>
-<tr>
-<td>
-<p><a href="set-status.html">setStatus</a></p>
-</td>
-<td>
-<code><span class="keyword">fun </span><span class="identifier">setStatus</span><span class="symbol">(</span><span class="identifier" id="okhttp3.mockwebserver.MockResponse$setStatus(kotlin.String)/status">status</span><span class="symbol">:</span>&nbsp;<a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><span class="identifier">String</span></a><span class="symbol">)</span><span class="symbol">: </span><a href="./index.html"><span class="identifier">MockResponse</span></a></code></td>
-</tr>
-<tr>
-<td>
-<p><a href="set-trailers.html">setTrailers</a></p>
-</td>
-<td>
-<code><span class="keyword">fun </span><span class="identifier">setTrailers</span><span class="symbol">(</span><span class="identifier" id="okhttp3.mockwebserver.MockResponse$setTrailers(okhttp3.Headers)/trailers">trailers</span><span class="symbol">:</span>&nbsp;<span class="identifier">Headers</span><span class="symbol">)</span><span class="symbol">: </span><a href="./index.html"><span class="identifier">MockResponse</span></a></code>
-<p>Replaces all trailers with those specified.</p>
-</td>
 </tr>
 <tr>
 <td>
@@ -316,8 +277,8 @@ series of <a href="throttle-body.html#okhttp3.mockwebserver.MockResponse$throttl
 </td>
 <td>
 <code><span class="keyword">fun </span><span class="identifier">withPush</span><span class="symbol">(</span><span class="identifier" id="okhttp3.mockwebserver.MockResponse$withPush(okhttp3.mockwebserver.PushPromise)/promise">promise</span><span class="symbol">:</span>&nbsp;<a href="../-push-promise/index.html"><span class="identifier">PushPromise</span></a><span class="symbol">)</span><span class="symbol">: </span><a href="./index.html"><span class="identifier">MockResponse</span></a></code>
-<p>When <a href="../-mock-web-server/set-protocols.html">protocols</a> include <a href="#">HTTP_2</a>,
-this attaches a pushed stream to this response.</p>
+<p>When <a href="#">protocols</a> include <a href="#">HTTP_2</a>, this attaches a
+pushed stream to this response.</p>
 </td>
 </tr>
 <tr>
@@ -326,8 +287,8 @@ this attaches a pushed stream to this response.</p>
 </td>
 <td>
 <code><span class="keyword">fun </span><span class="identifier">withSettings</span><span class="symbol">(</span><span class="identifier" id="okhttp3.mockwebserver.MockResponse$withSettings(okhttp3.internal.http2.Settings)/settings">settings</span><span class="symbol">:</span>&nbsp;<span class="identifier">Settings</span><span class="symbol">)</span><span class="symbol">: </span><a href="./index.html"><span class="identifier">MockResponse</span></a></code>
-<p>When <a href="../-mock-web-server/set-protocols.html">protocols</a> include <a href="#">HTTP_2</a>,
-this pushes <a href="with-settings.html#okhttp3.mockwebserver.MockResponse$withSettings(okhttp3.internal.http2.Settings)/settings">settings</a> before writing the response.</p>
+<p>When <a href="#">protocols</a> include <a href="#">HTTP_2</a>, this pushes
+<a href="with-settings.html#okhttp3.mockwebserver.MockResponse$withSettings(okhttp3.internal.http2.Settings)/settings">settings</a> before writing the response.</p>
 </td>
 </tr>
 <tr>

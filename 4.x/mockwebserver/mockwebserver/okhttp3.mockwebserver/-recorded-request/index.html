@@ -61,8 +61,8 @@ was empty or unchunked.</p>
 </td>
 <td>
 <code><span class="keyword">val </span><span class="identifier">handshake</span><span class="symbol">: </span><span class="identifier">Handshake</span><span class="symbol">?</span></code>
-<p>The TLS handshake of the connection that carried this request, or null if the request
-was received without TLS.</p>
+<p>The TLS handshake of the connection that carried this request, or null if the request was
+received without TLS.</p>
 </td>
 </tr>
 <tr>
@@ -108,8 +108,8 @@ was received without TLS.</p>
 </td>
 <td>
 <code><span class="keyword">val </span><span class="identifier">sequenceNumber</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><span class="identifier">Int</span></a></code>
-<p>The index of this request on its HTTP connection. Since a single HTTP connection may
-serve multiple requests, each request is assigned its own sequence number.</p>
+<p>The index of this request on its HTTP connection. Since a single HTTP connection may serve
+multiple requests, each request is assigned its own sequence number.</p>
 </td>
 </tr>
 <tr>
@@ -120,13 +120,6 @@ serve multiple requests, each request is assigned its own sequence number.</p>
 <code><span class="keyword">val </span><span class="identifier">tlsVersion</span><span class="symbol">: </span><span class="identifier">TlsVersion</span><span class="symbol">?</span></code>
 <p>Returns the connection's TLS version or null if the connection doesn't use SSL.</p>
 </td>
-</tr>
-<tr>
-<td>
-<p><a href="utf8-body.html">utf8Body</a></p>
-</td>
-<td>
-<code><span class="keyword">val </span><span class="identifier">utf8Body</span><span class="symbol">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><span class="identifier">String</span></a></code></td>
 </tr>
 </tbody>
 </table>
