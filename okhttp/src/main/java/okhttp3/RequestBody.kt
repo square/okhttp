@@ -152,7 +152,7 @@ abstract class RequestBody {
     /** Returns a new request body that transmits the content of this. */
     @JvmStatic
     @JvmName("create")
-    fun File.toRequestBody(contentType: MediaType? = null): RequestBody {
+    fun File.asRequestBody(contentType: MediaType? = null): RequestBody {
       return object : RequestBody() {
         override fun contentType() = contentType
 
@@ -207,10 +207,10 @@ abstract class RequestBody {
     @Deprecated(
         message = "Moved to extension function. Put the 'file' argument first to fix Java",
         replaceWith = ReplaceWith(
-            expression = "file.toRequestBody(contentType)",
-            imports = ["okhttp3.RequestBody.Companion.toRequestBody"]
+            expression = "file.asRequestBody(contentType)",
+            imports = ["okhttp3.RequestBody.Companion.asRequestBody"]
         ),
         level = DeprecationLevel.WARNING)
-    fun create(contentType: MediaType?, file: File) = file.toRequestBody(contentType)
+    fun create(contentType: MediaType?, file: File) = file.asRequestBody(contentType)
   }
 }
