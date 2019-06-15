@@ -129,7 +129,7 @@ class Jdk8WithJettyBootPlatform(
         // 1.8, 9, 10, 11, 12 etc
         val version = jvmVersion.toInt()
         if (version >= 9) return null
-      } catch (nfe: NumberFormatException) {
+      } catch (_: NumberFormatException) {
         // expected on >= JDK 9
       }
 

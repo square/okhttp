@@ -16,13 +16,14 @@
 package okhttp3
 
 import okhttp3.internal.UTC
-import okhttp3.internal.delimiterOffset
-import okhttp3.internal.indexOfControlOrNonAscii
-import okhttp3.internal.trimSubstring
-import okhttp3.internal.http.HttpDate
 import okhttp3.internal.canParseAsIpAddress
+import okhttp3.internal.delimiterOffset
+import okhttp3.internal.http.MAX_DATE
+import okhttp3.internal.http.toHttpDateString
+import okhttp3.internal.indexOfControlOrNonAscii
 import okhttp3.internal.publicsuffix.PublicSuffixDatabase
 import okhttp3.internal.toCanonicalHost
+import okhttp3.internal.trimSubstring
 import java.util.Calendar
 import java.util.Collections
 import java.util.Date
@@ -38,7 +39,7 @@ import java.util.regex.Pattern
  *
  * [chromium_extension]: https://code.google.com/p/chromium/issues/detail?id=232693
  */
-data class Cookie private constructor(
+class Cookie private constructor(
   /** Returns a non-empty string with this cookie's name. */
   @get:JvmName("name") val name: String,
 
@@ -110,70 +111,97 @@ data class Cookie private constructor(
     return !secure || url.isHttps
   }
 
+  override fun equals(other: Any?): Boolean {
+    return other is Cookie &&
+        other.name == name &&
+        other.value == value &&
+        other.expiresAt == expiresAt &&
+        other.domain == domain &&
+        other.path == path &&
+        other.secure == secure &&
+        other.httpOnly == httpOnly &&
+        other.persistent == persistent &&
+        other.hostOnly == hostOnly
+  }
+
+  override fun hashCode(): Int {
+    var result = 17
+    result = 31 * result + name.hashCode()
+    result = 31 * result + value.hashCode()
+    result = 31 * result + expiresAt.hashCode()
+    result = 31 * result + domain.hashCode()
+    result = 31 * result + path.hashCode()
+    result = 31 * result + secure.hashCode()
+    result = 31 * result + httpOnly.hashCode()
+    result = 31 * result + persistent.hashCode()
+    result = 31 * result + hostOnly.hashCode()
+    return result
+  }
+
+  override fun toString(): String = toString(false)
+
   @JvmName("-deprecated_name")
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "name"),
-      level = DeprecationLevel.WARNING)
+      level = DeprecationLevel.ERROR)
   fun name(): String = name
 
   @JvmName("-deprecated_value")
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "value"),
-      level = DeprecationLevel.WARNING)
+      level = DeprecationLevel.ERROR)
   fun value(): String = value
 
   @JvmName("-deprecated_persistent")
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "persistent"),
-      level = DeprecationLevel.WARNING)
+      level = DeprecationLevel.ERROR)
   fun persistent(): Boolean = persistent
 
   @JvmName("-deprecated_expiresAt")
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "expiresAt"),
-      level = DeprecationLevel.WARNING)
+      level = DeprecationLevel.ERROR)
   fun expiresAt(): Long = expiresAt
 
   @JvmName("-deprecated_hostOnly")
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "hostOnly"),
-      level = DeprecationLevel.WARNING)
+      level = DeprecationLevel.ERROR)
   fun hostOnly(): Boolean = hostOnly
 
   @JvmName("-deprecated_domain")
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "domain"),
-      level = DeprecationLevel.WARNING)
+      level = DeprecationLevel.ERROR)
   fun domain(): String = domain
 
   @JvmName("-deprecated_path")
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "path"),
-      level = DeprecationLevel.WARNING)
+      level = DeprecationLevel.ERROR)
   fun path(): String = path
 
   @JvmName("-deprecated_httpOnly")
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "httpOnly"),
-      level = DeprecationLevel.WARNING)
+      level = DeprecationLevel.ERROR)
   fun httpOnly(): Boolean = httpOnly
 
   @JvmName("-deprecated_secure")
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "secure"),
-      level = DeprecationLevel.WARNING)
+      level = DeprecationLevel.ERROR)
   fun secure(): Boolean = secure
-
-  override fun toString(): String = toString(false)
 
   /**
    * @param forObsoleteRfc2965 true to include a leading `.` on the domain pattern. This is
@@ -190,7 +218,7 @@ data class Cookie private constructor(
         if (expiresAt == Long.MIN_VALUE) {
           append("; max-age=0")
         } else {
-          append("; expires=").append(HttpDate.format(Date(expiresAt)))
+          append("; expires=").append(Date(expiresAt).toHttpDateString())
         }
       }
 
@@ -223,7 +251,7 @@ data class Cookie private constructor(
   class Builder {
     private var name: String? = null
     private var value: String? = null
-    private var expiresAt = HttpDate.MAX_DATE
+    private var expiresAt = MAX_DATE
     private var domain: String? = null
     private var path = "/"
     private var secure = false
@@ -244,7 +272,7 @@ data class Cookie private constructor(
     fun expiresAt(expiresAt: Long) = apply {
       var expiresAt = expiresAt
       if (expiresAt <= 0L) expiresAt = Long.MIN_VALUE
-      if (expiresAt > HttpDate.MAX_DATE) expiresAt = HttpDate.MAX_DATE
+      if (expiresAt > MAX_DATE) expiresAt = MAX_DATE
       this.expiresAt = expiresAt
       this.persistent = true
     }
@@ -347,7 +375,7 @@ data class Cookie private constructor(
       val cookieValue = setCookie.trimSubstring(pairEqualsSign + 1, cookiePairEnd)
       if (cookieValue.indexOfControlOrNonAscii() != -1) return null
 
-      var expiresAt = HttpDate.MAX_DATE
+      var expiresAt = MAX_DATE
       var deltaSeconds = -1L
       var domain: String? = null
       var path: String? = null
@@ -419,8 +447,8 @@ data class Cookie private constructor(
           Long.MAX_VALUE
         }
         expiresAt = currentTimeMillis + deltaMilliseconds
-        if (expiresAt < currentTimeMillis || expiresAt > HttpDate.MAX_DATE) {
-          expiresAt = HttpDate.MAX_DATE // Handle overflow & limit the date range.
+        if (expiresAt < currentTimeMillis || expiresAt > MAX_DATE) {
+          expiresAt = MAX_DATE // Handle overflow & limit the date range.
         }
       }
 
@@ -532,11 +560,10 @@ data class Cookie private constructor(
     }
 
     /**
-     * Returns the positive value if `attributeValue` is positive, or [Long.MIN_VALUE] if it is
-     * either 0 or negative. If the value is positive but out of range, this returns
-     * [Long.MAX_VALUE].
+     * Returns the positive value if [s] is positive, or [Long.MIN_VALUE] if it is either 0 or
+     * negative. If the value is positive but out of range, this returns [Long.MAX_VALUE].
      *
-     * @throws NumberFormatException if `s` is not an integer of any precision.
+     * @throws NumberFormatException if [s] is not an integer of any precision.
      */
     private fun parseMaxAge(s: String): Long {
       try {

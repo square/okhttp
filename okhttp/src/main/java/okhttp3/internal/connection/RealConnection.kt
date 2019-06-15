@@ -343,7 +343,7 @@ class RealConnection(
 
       // Configure the socket's ciphers, TLS versions, and extensions.
       val connectionSpec = connectionSpecSelector.configureSecureSocket(sslSocket)
-      if (connectionSpec.supportsTlsExtensions()) {
+      if (connectionSpec.supportsTlsExtensions) {
         Platform.get().configureTlsExtensions(sslSocket, address.url.host, address.protocols)
       }
 
@@ -375,7 +375,7 @@ class RealConnection(
           unverifiedHandshake.peerCertificates)
 
       // Success! Save the handshake and the ALPN protocol.
-      val maybeProtocol = if (connectionSpec.supportsTlsExtensions()) {
+      val maybeProtocol = if (connectionSpec.supportsTlsExtensions) {
         Platform.get().getSelectedProtocol(sslSocket)
       } else {
         null

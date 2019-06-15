@@ -16,6 +16,7 @@
 package okhttp3.internal.http
 
 import okhttp3.MediaType
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.ResponseBody
 import okio.BufferedSource
 
@@ -31,13 +32,7 @@ class RealResponseBody(
 
   override fun contentLength(): Long = contentLength
 
-  override fun contentType(): MediaType? {
-    return if (contentTypeString != null) {
-      MediaType.parse(contentTypeString)
-    } else {
-      null
-    }
-  }
+  override fun contentType(): MediaType? = contentTypeString?.toMediaTypeOrNull()
 
   override fun source(): BufferedSource = source
 }

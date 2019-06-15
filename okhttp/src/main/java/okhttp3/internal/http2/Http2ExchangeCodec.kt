@@ -54,7 +54,7 @@ class Http2ExchangeCodec(
 ) : ExchangeCodec {
   @Volatile private var stream: Http2Stream? = null
 
-  private val protocol: Protocol = if (Protocol.H2_PRIOR_KNOWLEDGE in client.protocols()) {
+  private val protocol: Protocol = if (Protocol.H2_PRIOR_KNOWLEDGE in client.protocols) {
     Protocol.H2_PRIOR_KNOWLEDGE
   } else {
     Protocol.HTTP_2

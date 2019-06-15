@@ -21,11 +21,11 @@ import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 import okhttp3.internal.Util;
-import okhttp3.internal.http.HttpDate;
 import org.junit.Test;
 
 import static java.util.Arrays.asList;
 import static okhttp3.internal.Internal.parseCookie;
+import static okhttp3.internal.http.DatesKt.MAX_DATE;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.fail;
 
@@ -93,32 +93,35 @@ public final class CookieTest {
   }
 
   @Test public void maxAge() throws Exception {
-    assertThat(parseCookie(50000L, url, "a=b; Max-Age=1").expiresAt()).isEqualTo(51000L);
-    assertThat(parseCookie(50000L, url, "a=b; Max-Age=9223372036854724").expiresAt()).isEqualTo(
-        HttpDate.MAX_DATE);
-    assertThat(parseCookie(50000L, url, "a=b; Max-Age=9223372036854725").expiresAt()).isEqualTo(
-        HttpDate.MAX_DATE);
-    assertThat(parseCookie(50000L, url, "a=b; Max-Age=9223372036854726").expiresAt()).isEqualTo(
-        HttpDate.MAX_DATE);
-    assertThat(parseCookie(9223372036854773807L, url, "a=b; Max-Age=1").expiresAt()).isEqualTo(
-        HttpDate.MAX_DATE);
-    assertThat(parseCookie(9223372036854773807L, url, "a=b; Max-Age=2").expiresAt()).isEqualTo(
-        HttpDate.MAX_DATE);
-    assertThat(parseCookie(9223372036854773807L, url, "a=b; Max-Age=3").expiresAt()).isEqualTo(
-        HttpDate.MAX_DATE);
-    assertThat(parseCookie(50000L, url, "a=b; Max-Age=10000000000000000000").expiresAt()).isEqualTo(
-        HttpDate.MAX_DATE);
+    assertThat(parseCookie(50000L, url, "a=b; Max-Age=1").expiresAt())
+        .isEqualTo(51000L);
+    assertThat(parseCookie(50000L, url, "a=b; Max-Age=9223372036854724").expiresAt())
+        .isEqualTo(MAX_DATE);
+    assertThat(parseCookie(50000L, url, "a=b; Max-Age=9223372036854725").expiresAt())
+        .isEqualTo(MAX_DATE);
+    assertThat(parseCookie(50000L, url, "a=b; Max-Age=9223372036854726").expiresAt())
+        .isEqualTo(MAX_DATE);
+    assertThat(parseCookie(9223372036854773807L, url, "a=b; Max-Age=1").expiresAt())
+        .isEqualTo(MAX_DATE);
+    assertThat(parseCookie(9223372036854773807L, url, "a=b; Max-Age=2").expiresAt())
+        .isEqualTo(MAX_DATE);
+    assertThat(parseCookie(9223372036854773807L, url, "a=b; Max-Age=3").expiresAt())
+        .isEqualTo(MAX_DATE);
+    assertThat(parseCookie(50000L, url, "a=b; Max-Age=10000000000000000000").expiresAt())
+        .isEqualTo(MAX_DATE);
   }
 
   @Test public void maxAgeNonPositive() throws Exception {
-    assertThat(parseCookie(50000L, url, "a=b; Max-Age=-1").expiresAt()).isEqualTo(Long.MIN_VALUE);
-    assertThat(parseCookie(50000L, url, "a=b; Max-Age=0").expiresAt()).isEqualTo(Long.MIN_VALUE);
-    assertThat(parseCookie(50000L, url, "a=b; Max-Age=-9223372036854775808").expiresAt()).isEqualTo(
-        Long.MIN_VALUE);
-    assertThat(parseCookie(50000L, url, "a=b; Max-Age=-9223372036854775809").expiresAt()).isEqualTo(
-        Long.MIN_VALUE);
-    assertThat(parseCookie(50000L, url, "a=b; Max-Age=-10000000000000000000").expiresAt()).isEqualTo(
-        Long.MIN_VALUE);
+    assertThat(parseCookie(50000L, url, "a=b; Max-Age=-1").expiresAt())
+        .isEqualTo(Long.MIN_VALUE);
+    assertThat(parseCookie(50000L, url, "a=b; Max-Age=0").expiresAt())
+        .isEqualTo(Long.MIN_VALUE);
+    assertThat(parseCookie(50000L, url, "a=b; Max-Age=-9223372036854775808").expiresAt())
+        .isEqualTo(Long.MIN_VALUE);
+    assertThat(parseCookie(50000L, url, "a=b; Max-Age=-9223372036854775809").expiresAt())
+        .isEqualTo(Long.MIN_VALUE);
+    assertThat(parseCookie(50000L, url, "a=b; Max-Age=-10000000000000000000").expiresAt())
+        .isEqualTo(Long.MIN_VALUE);
   }
 
   @Test public void domainAndPath() throws Exception {
@@ -139,76 +142,75 @@ public final class CookieTest {
   }
 
   @Test public void expiresDate() throws Exception {
-    assertThat(new Date(
-        Cookie.parse(url, "a=b; Expires=Thu, 01 Jan 1970 00:00:00 GMT").expiresAt())).isEqualTo(
-        date("1970-01-01T00:00:00.000+0000"));
-    assertThat(new Date(
-        Cookie.parse(url, "a=b; Expires=Wed, 09 Jun 2021 10:18:14 GMT").expiresAt())).isEqualTo(
-        date("2021-06-09T10:18:14.000+0000"));
-    assertThat(new Date(
-        Cookie.parse(url, "a=b; Expires=Sun, 06 Nov 1994 08:49:37 GMT").expiresAt())).isEqualTo(
-        date("1994-11-06T08:49:37.000+0000"));
+    assertThat(new Date(Cookie.parse(url, "a=b; Expires=Thu, 01 Jan 1970 00:00:00 GMT")
+        .expiresAt())).isEqualTo(date("1970-01-01T00:00:00.000+0000"));
+    assertThat(new Date(Cookie.parse(url, "a=b; Expires=Wed, 09 Jun 2021 10:18:14 GMT")
+        .expiresAt())).isEqualTo(date("2021-06-09T10:18:14.000+0000"));
+    assertThat(new Date(Cookie.parse(url, "a=b; Expires=Sun, 06 Nov 1994 08:49:37 GMT")
+        .expiresAt())).isEqualTo(date("1994-11-06T08:49:37.000+0000"));
   }
 
   @Test public void awkwardDates() throws Exception {
-    assertThat(Cookie.parse(url, "a=b; Expires=Thu, 01 Jan 70 00:00:00 GMT").expiresAt()).isEqualTo(
-        0L);
-    assertThat(Cookie.parse(url, "a=b; Expires=Thu, 01 January 1970 00:00:00 GMT").expiresAt()).isEqualTo(
-        0L);
-    assertThat(Cookie.parse(url, "a=b; Expires=Thu, 01 Janucember 1970 00:00:00 GMT").expiresAt()).isEqualTo(
-        0L);
-    assertThat(Cookie.parse(url, "a=b; Expires=Thu, 1 Jan 1970 00:00:00 GMT").expiresAt()).isEqualTo(
-        0L);
-    assertThat(Cookie.parse(url, "a=b; Expires=Thu, 01 Jan 1970 0:00:00 GMT").expiresAt()).isEqualTo(
-        0L);
-    assertThat(Cookie.parse(url, "a=b; Expires=Thu, 01 Jan 1970 00:0:00 GMT").expiresAt()).isEqualTo(
-        0L);
-    assertThat(Cookie.parse(url, "a=b; Expires=Thu, 01 Jan 1970 00:00:0 GMT").expiresAt()).isEqualTo(
-        0L);
-    assertThat(Cookie.parse(url, "a=b; Expires=00:00:00 Thu, 01 Jan 1970 GMT").expiresAt()).isEqualTo(
-        0L);
-    assertThat(Cookie.parse(url, "a=b; Expires=00:00:00 1970 Jan 01").expiresAt()).isEqualTo(0L);
-    assertThat(Cookie.parse(url, "a=b; Expires=00:00:00 1970 Jan 1").expiresAt()).isEqualTo(0L);
+    assertThat(Cookie.parse(url, "a=b; Expires=Thu, 01 Jan 70 00:00:00 GMT").expiresAt())
+        .isEqualTo(0L);
+    assertThat(Cookie.parse(url, "a=b; Expires=Thu, 01 January 1970 00:00:00 GMT").expiresAt())
+        .isEqualTo(0L);
+    assertThat(Cookie.parse(url, "a=b; Expires=Thu, 01 Janucember 1970 00:00:00 GMT").expiresAt())
+        .isEqualTo(0L);
+    assertThat(Cookie.parse(url, "a=b; Expires=Thu, 1 Jan 1970 00:00:00 GMT").expiresAt())
+        .isEqualTo(0L);
+    assertThat(Cookie.parse(url, "a=b; Expires=Thu, 01 Jan 1970 0:00:00 GMT").expiresAt())
+        .isEqualTo(0L);
+    assertThat(Cookie.parse(url, "a=b; Expires=Thu, 01 Jan 1970 00:0:00 GMT").expiresAt())
+        .isEqualTo(0L);
+    assertThat(Cookie.parse(url, "a=b; Expires=Thu, 01 Jan 1970 00:00:0 GMT").expiresAt())
+        .isEqualTo(0L);
+    assertThat(Cookie.parse(url, "a=b; Expires=00:00:00 Thu, 01 Jan 1970 GMT").expiresAt())
+        .isEqualTo(0L);
+    assertThat(Cookie.parse(url, "a=b; Expires=00:00:00 1970 Jan 01").expiresAt())
+        .isEqualTo(0L);
+    assertThat(Cookie.parse(url, "a=b; Expires=00:00:00 1970 Jan 1").expiresAt())
+        .isEqualTo(0L);
   }
 
   @Test public void invalidYear() throws Exception {
-    assertThat(Cookie.parse(url, "a=b; Expires=Thu, 01 Jan 1600 00:00:00 GMT").expiresAt()).isEqualTo(
-        HttpDate.MAX_DATE);
-    assertThat(Cookie.parse(url, "a=b; Expires=Thu, 01 Jan 19999 00:00:00 GMT").expiresAt()).isEqualTo(
-        HttpDate.MAX_DATE);
-    assertThat(Cookie.parse(url, "a=b; Expires=Thu, 01 Jan 00:00:00 GMT").expiresAt()).isEqualTo(
-        HttpDate.MAX_DATE);
+    assertThat(Cookie.parse(url, "a=b; Expires=Thu, 01 Jan 1600 00:00:00 GMT").expiresAt())
+        .isEqualTo(MAX_DATE);
+    assertThat(Cookie.parse(url, "a=b; Expires=Thu, 01 Jan 19999 00:00:00 GMT").expiresAt())
+        .isEqualTo(MAX_DATE);
+    assertThat(Cookie.parse(url, "a=b; Expires=Thu, 01 Jan 00:00:00 GMT").expiresAt())
+        .isEqualTo(MAX_DATE);
   }
 
   @Test public void invalidMonth() throws Exception {
-    assertThat(Cookie.parse(url, "a=b; Expires=Thu, 01 Foo 1970 00:00:00 GMT").expiresAt()).isEqualTo(
-        HttpDate.MAX_DATE);
-    assertThat(Cookie.parse(url, "a=b; Expires=Thu, 01 Foocember 1970 00:00:00 GMT").expiresAt()).isEqualTo(
-        HttpDate.MAX_DATE);
-    assertThat(Cookie.parse(url, "a=b; Expires=Thu, 01 1970 00:00:00 GMT").expiresAt()).isEqualTo(
-        HttpDate.MAX_DATE);
+    assertThat(Cookie.parse(url, "a=b; Expires=Thu, 01 Foo 1970 00:00:00 GMT").expiresAt())
+        .isEqualTo(MAX_DATE);
+    assertThat(Cookie.parse(url, "a=b; Expires=Thu, 01 Foocember 1970 00:00:00 GMT").expiresAt())
+        .isEqualTo(MAX_DATE);
+    assertThat(Cookie.parse(url, "a=b; Expires=Thu, 01 1970 00:00:00 GMT").expiresAt())
+        .isEqualTo(MAX_DATE);
   }
 
   @Test public void invalidDayOfMonth() throws Exception {
-    assertThat(Cookie.parse(url, "a=b; Expires=Thu, 32 Jan 1970 00:00:00 GMT").expiresAt()).isEqualTo(
-        HttpDate.MAX_DATE);
-    assertThat(Cookie.parse(url, "a=b; Expires=Thu, Jan 1970 00:00:00 GMT").expiresAt()).isEqualTo(
-        HttpDate.MAX_DATE);
+    assertThat(Cookie.parse(url, "a=b; Expires=Thu, 32 Jan 1970 00:00:00 GMT").expiresAt())
+        .isEqualTo(MAX_DATE);
+    assertThat(Cookie.parse(url, "a=b; Expires=Thu, Jan 1970 00:00:00 GMT").expiresAt())
+        .isEqualTo(MAX_DATE);
   }
 
   @Test public void invalidHour() throws Exception {
-    assertThat(Cookie.parse(url, "a=b; Expires=Thu, 01 Jan 1970 24:00:00 GMT").expiresAt()).isEqualTo(
-        HttpDate.MAX_DATE);
+    assertThat(Cookie.parse(url, "a=b; Expires=Thu, 01 Jan 1970 24:00:00 GMT").expiresAt())
+        .isEqualTo(MAX_DATE);
   }
 
   @Test public void invalidMinute() throws Exception {
-    assertThat(Cookie.parse(url, "a=b; Expires=Thu, 01 Jan 1970 00:60:00 GMT").expiresAt()).isEqualTo(
-        HttpDate.MAX_DATE);
+    assertThat(Cookie.parse(url, "a=b; Expires=Thu, 01 Jan 1970 00:60:00 GMT").expiresAt())
+        .isEqualTo(MAX_DATE);
   }
 
   @Test public void invalidSecond() throws Exception {
-    assertThat(Cookie.parse(url, "a=b; Expires=Thu, 01 Jan 1970 00:00:60 GMT").expiresAt()).isEqualTo(
-        HttpDate.MAX_DATE);
+    assertThat(Cookie.parse(url, "a=b; Expires=Thu, 01 Jan 1970 00:00:60 GMT").expiresAt())
+        .isEqualTo(MAX_DATE);
   }
 
   @Test public void domainMatches() throws Exception {
@@ -389,7 +391,8 @@ public final class CookieTest {
   @Test public void maxAgeOrExpiresMakesCookiePersistent() throws Exception {
     assertThat(parseCookie(0L, url, "a=b").persistent()).isFalse();
     assertThat(parseCookie(0L, url, "a=b; Max-Age=1").persistent()).isTrue();
-    assertThat(parseCookie(0L, url, "a=b; Expires=Thu, 01 Jan 1970 00:00:01 GMT").persistent()).isTrue();
+    assertThat(parseCookie(0L, url, "a=b; Expires=Thu, 01 Jan 1970 00:00:01 GMT").persistent())
+        .isTrue();
   }
 
   @Test public void parseAll() throws Exception {
@@ -411,7 +414,7 @@ public final class CookieTest {
         .build();
     assertThat(cookie.name()).isEqualTo("a");
     assertThat(cookie.value()).isEqualTo("b");
-    assertThat(cookie.expiresAt()).isEqualTo(HttpDate.MAX_DATE);
+    assertThat(cookie.expiresAt()).isEqualTo(MAX_DATE);
     assertThat(cookie.domain()).isEqualTo("example.com");
     assertThat(cookie.path()).isEqualTo("/");
     assertThat(cookie.secure()).isFalse();

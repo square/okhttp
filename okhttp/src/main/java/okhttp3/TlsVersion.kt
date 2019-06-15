@@ -32,7 +32,7 @@ enum class TlsVersion(
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "javaName"),
-      level = DeprecationLevel.WARNING)
+      level = DeprecationLevel.ERROR)
   fun javaName() = javaName
 
   companion object {

@@ -24,7 +24,7 @@ import okhttp3.internal.connection.Transmitter.TransmitterReference
 import okhttp3.internal.notifyAll
 import okhttp3.internal.platform.Platform
 import okhttp3.internal.threadFactory
-import okhttp3.internal.waitNanos
+import okhttp3.internal.lockAndWaitNanos
 import java.io.IOException
 import java.net.Proxy
 import java.util.ArrayDeque
@@ -46,7 +46,7 @@ class RealConnectionPool(
         val waitNanos = cleanup(System.nanoTime())
         if (waitNanos == -1L) return
         try {
-          this@RealConnectionPool.waitNanos(waitNanos)
+          this@RealConnectionPool.lockAndWaitNanos(waitNanos)
         } catch (_: InterruptedException) {
         }
       }

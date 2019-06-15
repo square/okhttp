@@ -193,7 +193,7 @@ class CacheInterceptor(internal val cache: Cache?) : Interceptor {
     }
 
     val contentType = response.header("Content-Type")
-    val contentLength = response.body!!.contentLength()
+    val contentLength = response.body.contentLength()
     return response.newBuilder()
         .body(RealResponseBody(contentType, contentLength, cacheWritingSource.buffer()))
         .build()

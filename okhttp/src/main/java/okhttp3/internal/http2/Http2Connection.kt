@@ -24,12 +24,14 @@ import okhttp3.internal.format
 import okhttp3.internal.http2.ErrorCode.REFUSED_STREAM
 import okhttp3.internal.http2.Settings.Companion.DEFAULT_INITIAL_WINDOW_SIZE
 import okhttp3.internal.ignoreIoExceptions
+import okhttp3.internal.notifyAll
 import okhttp3.internal.platform.Platform
 import okhttp3.internal.platform.Platform.Companion.INFO
 import okhttp3.internal.threadFactory
 import okhttp3.internal.threadName
 import okhttp3.internal.toHeaders
 import okhttp3.internal.tryExecute
+import okhttp3.internal.wait
 import okio.Buffer
 import okio.BufferedSink
 import okio.BufferedSource
@@ -165,7 +167,7 @@ class Http2Connection internal constructor(builder: Builder) : Closeable {
     val stream = streams.remove(streamId)
 
     // The removed stream may be blocked on a connection-wide window update.
-    (this as Object).notifyAll()
+    notifyAll()
 
     return stream
   }
@@ -301,7 +303,7 @@ class Http2Connection internal constructor(builder: Builder) : Closeable {
             if (!streams.containsKey(streamId)) {
               throw IOException("stream closed")
             }
-            (this@Http2Connection as Object).wait() // Wait until we receive a WINDOW_UPDATE.
+            this@Http2Connection.wait() // Wait until we receive a WINDOW_UPDATE.
           }
         } catch (e: InterruptedException) {
           Thread.currentThread().interrupt() // Retain interrupted status.
@@ -387,7 +389,7 @@ class Http2Connection internal constructor(builder: Builder) : Closeable {
   @Synchronized @Throws(InterruptedException::class)
   fun awaitPong() {
     while (awaitingPong) {
-      (this as Object).wait()
+      wait()
     }
   }
 
@@ -705,7 +707,7 @@ class Http2Connection internal constructor(builder: Builder) : Closeable {
       if (reply) {
         synchronized(this@Http2Connection) {
           awaitingPong = false
-          (this@Http2Connection as Object).notifyAll()
+          this@Http2Connection.notifyAll()
         }
       } else {
         // Send a reply to a client ping if this is a server and vice versa.
@@ -744,7 +746,7 @@ class Http2Connection internal constructor(builder: Builder) : Closeable {
       if (streamId == 0) {
         synchronized(this@Http2Connection) {
           bytesLeftInWriteWindow += windowSizeIncrement
-          (this@Http2Connection as Object).notifyAll()
+          this@Http2Connection.notifyAll()
         }
       } else {
         val stream = getStream(streamId)

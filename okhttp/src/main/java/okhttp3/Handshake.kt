@@ -52,21 +52,21 @@ class Handshake private constructor(
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "tlsVersion"),
-      level = DeprecationLevel.WARNING)
+      level = DeprecationLevel.ERROR)
   fun tlsVersion() = tlsVersion
 
   @JvmName("-deprecated_cipherSuite")
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "cipherSuite"),
-      level = DeprecationLevel.WARNING)
+      level = DeprecationLevel.ERROR)
   fun cipherSuite() = cipherSuite
 
   @JvmName("-deprecated_peerCertificates")
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "peerCertificates"),
-      level = DeprecationLevel.WARNING)
+      level = DeprecationLevel.ERROR)
   fun peerCertificates() = peerCertificates
 
   /** Returns the remote peer's principle, or null if that peer is anonymous. */
@@ -78,14 +78,14 @@ class Handshake private constructor(
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "peerPrincipal"),
-      level = DeprecationLevel.WARNING)
+      level = DeprecationLevel.ERROR)
   fun peerPrincipal() = peerPrincipal
 
   @JvmName("-deprecated_localCertificates")
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "localCertificates"),
-      level = DeprecationLevel.WARNING)
+      level = DeprecationLevel.ERROR)
   fun localCertificates() = localCertificates
 
   /** Returns the local principle, or null if this peer is anonymous. */
@@ -97,7 +97,7 @@ class Handshake private constructor(
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "localPrincipal"),
-      level = DeprecationLevel.WARNING)
+      level = DeprecationLevel.ERROR)
   fun localPrincipal() = localPrincipal
 
   override fun equals(other: Any?): Boolean {
@@ -173,7 +173,7 @@ class Handshake private constructor(
     @Deprecated(
         message = "moved to extension function",
         replaceWith = ReplaceWith(expression = "sslSession.handshake()"),
-        level = DeprecationLevel.WARNING)
+        level = DeprecationLevel.ERROR)
     fun get(sslSession: SSLSession) = sslSession.handshake()
 
     @JvmStatic

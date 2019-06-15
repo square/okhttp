@@ -43,7 +43,7 @@ public final class MultipartBodyTest {
         + "--123--\r\n";
 
     MultipartBody body = new MultipartBody.Builder("123")
-        .addPart(RequestBody.create(null, "Hello, World!"))
+        .addPart(RequestBody.create("Hello, World!", null))
         .build();
 
     assertThat(body.boundary()).isEqualTo("123");
@@ -75,9 +75,9 @@ public final class MultipartBodyTest {
         + "--123--\r\n";
 
     MultipartBody body = new MultipartBody.Builder("123")
-        .addPart(RequestBody.create(null, "Quick"))
-        .addPart(RequestBody.create(null, "Brown"))
-        .addPart(RequestBody.create(null, "Fox"))
+        .addPart(RequestBody.create("Quick", null))
+        .addPart(RequestBody.create("Brown", null))
+        .addPart(RequestBody.create("Fox", null))
         .build();
 
     assertThat(body.boundary()).isEqualTo("123");
@@ -129,14 +129,14 @@ public final class MultipartBodyTest {
                 .addPart(
                     Headers.of("Content-Disposition", "file; filename=\"file1.txt\""),
                     RequestBody.create(
-                        MediaType.get("text/plain"), "... contents of file1.txt ..."))
+                        "... contents of file1.txt ...", MediaType.get("text/plain")))
                 .addPart(
                     Headers.of(
                         "Content-Disposition", "file; filename=\"file2.gif\"",
                         "Content-Transfer-Encoding", "binary"),
                     RequestBody.create(
-                        MediaType.get("image/gif"),
-                        "... contents of file2.gif ...".getBytes(UTF_8)))
+                        "... contents of file2.gif ...".getBytes(UTF_8),
+                        MediaType.get("image/gif")))
                 .build())
         .build();
 
@@ -181,7 +181,7 @@ public final class MultipartBodyTest {
     MultipartBody body = new MultipartBody.Builder("AaB03x")
         .setType(MultipartBody.FORM)
         .addFormDataPart("field with spaces", "filename with spaces.txt",
-            RequestBody.create(MediaType.get("text/plain; charset=utf-8"), "okay"))
+            RequestBody.create("okay", MediaType.get("text/plain; charset=utf-8")))
         .addFormDataPart("field with \"", "\"")
         .addFormDataPart("field with %22", "%22")
         .addFormDataPart("field with \u007e", "Alpha")
@@ -224,9 +224,9 @@ public final class MultipartBodyTest {
         + "--123--\r\n";
 
     MultipartBody body = new MultipartBody.Builder("123")
-        .addPart(RequestBody.create(null, "Quick"))
+        .addPart(RequestBody.create("Quick", null))
         .addPart(new StreamingBody("Brown"))
-        .addPart(RequestBody.create(null, "Fox"))
+        .addPart(RequestBody.create("Fox", null))
         .build();
 
     assertThat(body.boundary()).isEqualTo("123");
@@ -244,7 +244,7 @@ public final class MultipartBodyTest {
     MultipartBody.Builder multipart = new MultipartBody.Builder();
     try {
       multipart.addPart(Headers.of("Content-Type", "text/plain"),
-          RequestBody.create(null, "Hello, World!"));
+          RequestBody.create("Hello, World!", null));
       fail();
     } catch (IllegalArgumentException expected) {
     }
@@ -254,7 +254,7 @@ public final class MultipartBodyTest {
     MultipartBody.Builder multipart = new MultipartBody.Builder();
     try {
       multipart.addPart(Headers.of("Content-Length", "13"),
-          RequestBody.create(null, "Hello, World!"));
+          RequestBody.create("Hello, World!", null));
       fail();
     } catch (IllegalArgumentException expected) {
     }
@@ -262,7 +262,7 @@ public final class MultipartBodyTest {
 
   @Test public void partAccessors() throws IOException {
     MultipartBody body = new MultipartBody.Builder()
-        .addPart(Headers.of("Foo", "Bar"), RequestBody.create(null, "Baz"))
+        .addPart(Headers.of("Foo", "Bar"), RequestBody.create("Baz", null))
         .build();
     assertThat(body.parts().size()).isEqualTo(1);
 
@@ -286,7 +286,7 @@ public final class MultipartBodyTest {
     MultipartBody body = new MultipartBody.Builder("AaB03x")
         .setType(MultipartBody.FORM)
         .addFormDataPart("attachment", "resumé.pdf",
-            RequestBody.create(MediaType.parse("application/pdf"), "Jesse’s Resumé"))
+            RequestBody.create("Jesse’s Resumé", MediaType.parse("application/pdf")))
         .build();
 
     Buffer buffer = new Buffer();

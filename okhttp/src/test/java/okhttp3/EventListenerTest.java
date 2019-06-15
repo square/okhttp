@@ -1075,7 +1075,7 @@ public final class EventListenerTest {
   @Test public void requestBodySuccessHttp1OverHttps() throws IOException {
     enableTlsWithTunnel(false);
     server.setProtocols(asList(Protocol.HTTP_1_1));
-    requestBodySuccess(RequestBody.create(MediaType.get("text/plain"), "Hello"), equalTo(5L),
+    requestBodySuccess(RequestBody.create("Hello", MediaType.get("text/plain")), equalTo(5L),
         equalTo(19L));
   }
 
@@ -1084,12 +1084,12 @@ public final class EventListenerTest {
 
     enableTlsWithTunnel(false);
     server.setProtocols(asList(Protocol.HTTP_2, Protocol.HTTP_1_1));
-    requestBodySuccess(RequestBody.create(MediaType.get("text/plain"), "Hello"), equalTo(5L),
+    requestBodySuccess(RequestBody.create("Hello", MediaType.get("text/plain")), equalTo(5L),
         equalTo(19L));
   }
 
   @Test public void requestBodySuccessHttp() throws IOException {
-    requestBodySuccess(RequestBody.create(MediaType.get("text/plain"), "Hello"), equalTo(5L),
+    requestBodySuccess(RequestBody.create("Hello", MediaType.get("text/plain")), equalTo(5L),
         equalTo(19L));
   }
 
@@ -1109,7 +1109,7 @@ public final class EventListenerTest {
   }
 
   @Test public void requestBodySuccessEmpty() throws IOException {
-    requestBodySuccess(RequestBody.create(MediaType.get("text/plain"), ""), equalTo(0L),
+    requestBodySuccess(RequestBody.create("", MediaType.get("text/plain")), equalTo(0L),
         equalTo(19L));
   }
 
@@ -1232,7 +1232,7 @@ public final class EventListenerTest {
             .protocol(Protocol.HTTP_1_1)
             .code(200)
             .message("OK")
-            .body(ResponseBody.create(null, "a"))
+            .body(ResponseBody.create("a", null))
             .build())
         .build();
 
@@ -1251,7 +1251,7 @@ public final class EventListenerTest {
     Request request = new Request.Builder()
         .url(server.url("/"))
         .header("Expect", "100-continue")
-        .post(RequestBody.create(MediaType.get("text/plain"), "abc"))
+        .post(RequestBody.create("abc", MediaType.get("text/plain")))
         .build();
 
     Call call = client.newCall(request);

@@ -17,8 +17,8 @@ package okhttp3.internal.cache
 
 import okhttp3.Request
 import okhttp3.Response
-import okhttp3.internal.http.HttpDate
 import okhttp3.internal.http.StatusLine
+import okhttp3.internal.http.toHttpDateOrNull
 import okhttp3.internal.toNonNegativeInt
 import java.net.HttpURLConnection.HTTP_BAD_METHOD
 import java.net.HttpURLConnection.HTTP_GONE
@@ -104,14 +104,14 @@ class CacheStrategy internal constructor(
           val value = headers.value(i)
           when {
             fieldName.equals("Date", ignoreCase = true) -> {
-              servedDate = HttpDate.parse(value)
+              servedDate = value.toHttpDateOrNull()
               servedDateString = value
             }
             fieldName.equals("Expires", ignoreCase = true) -> {
-              expires = HttpDate.parse(value)
+              expires = value.toHttpDateOrNull()
             }
             fieldName.equals("Last-Modified", ignoreCase = true) -> {
-              lastModified = HttpDate.parse(value)
+              lastModified = value.toHttpDateOrNull()
               lastModifiedString = value
             }
             fieldName.equals("ETag", ignoreCase = true) -> {

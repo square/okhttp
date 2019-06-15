@@ -78,38 +78,60 @@ class Request internal constructor(
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "url"),
-      level = DeprecationLevel.WARNING)
+      level = DeprecationLevel.ERROR)
   fun url(): HttpUrl = url
 
   @JvmName("-deprecated_method")
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "method"),
-      level = DeprecationLevel.WARNING)
+      level = DeprecationLevel.ERROR)
   fun method(): String = method
 
   @JvmName("-deprecated_headers")
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "headers"),
-      level = DeprecationLevel.WARNING)
+      level = DeprecationLevel.ERROR)
   fun headers(): Headers = headers
 
   @JvmName("-deprecated_body")
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "body"),
-      level = DeprecationLevel.WARNING)
+      level = DeprecationLevel.ERROR)
   fun body(): RequestBody? = body
 
   @JvmName("-deprecated_cacheControl")
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "cacheControl"),
-      level = DeprecationLevel.WARNING)
+      level = DeprecationLevel.ERROR)
   fun cacheControl(): CacheControl = cacheControl
 
-  override fun toString(): String = "Request{method=$method, url=$url, tags=$tags}"
+  override fun toString() = buildString {
+    append("Request{method=")
+    append(method)
+    append(", url=")
+    append(url)
+    if (headers.size != 0) {
+      append(", headers=[")
+      headers.forEachIndexed { index, (name, value) ->
+        if (index > 0) {
+          append(", ")
+        }
+        append(name)
+        append(':')
+        append(value)
+      }
+      append(']')
+    }
+    if (tags.isNotEmpty()) {
+      append(", tags=")
+      append(tags)
+    }
+    append('}')
+  }
 
   open class Builder {
     internal var url: HttpUrl? = null

@@ -18,6 +18,7 @@ package okhttp3
 import okhttp3.HttpUrl.Companion.FORM_ENCODE_SET
 import okhttp3.HttpUrl.Companion.canonicalize
 import okhttp3.HttpUrl.Companion.percentDecode
+import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.internal.toImmutableList
 import okio.Buffer
 import okio.BufferedSink
@@ -39,7 +40,7 @@ class FormBody internal constructor(
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "size"),
-      level = DeprecationLevel.WARNING)
+      level = DeprecationLevel.ERROR)
   fun size(): Int = size
 
   fun encodedName(index: Int) = encodedNames[index]
@@ -120,6 +121,6 @@ class FormBody internal constructor(
   }
 
   companion object {
-    private val CONTENT_TYPE: MediaType = MediaType.get("application/x-www-form-urlencoded")
+    private val CONTENT_TYPE: MediaType = "application/x-www-form-urlencoded".toMediaType()
   }
 }

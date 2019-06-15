@@ -31,7 +31,7 @@ abstract class Dispatcher {
    * request bodies.
    */
   open fun peek(): MockResponse {
-    return MockResponse().setSocketPolicy(SocketPolicy.KEEP_OPEN)
+    return MockResponse().apply { this.socketPolicy = SocketPolicy.KEEP_OPEN }
   }
 
   /**

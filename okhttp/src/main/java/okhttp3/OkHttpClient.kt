@@ -43,7 +43,6 @@ import javax.net.ssl.HostnameVerifier
 import javax.net.ssl.SSLSocketFactory
 import javax.net.ssl.TrustManager
 import javax.net.ssl.X509TrustManager
-import kotlin.DeprecationLevel.ERROR
 
 /**
  * Factory for [calls][Call], which can be used to send HTTP requests and read their responses.
@@ -120,55 +119,103 @@ import kotlin.DeprecationLevel.ERROR
 open class OkHttpClient internal constructor(
   builder: Builder
 ) : Cloneable, Call.Factory, WebSocket.Factory {
-  private val dispatcher: Dispatcher = builder.dispatcher
-  private val connectionPool: ConnectionPool = builder.connectionPool
-  private val interceptors: List<Interceptor> = builder.interceptors.toImmutableList()
-  private val networkInterceptors: List<Interceptor> = builder.networkInterceptors.toImmutableList()
-  private val eventListenerFactory: EventListener.Factory = builder.eventListenerFactory
-  private val retryOnConnectionFailure: Boolean = builder.retryOnConnectionFailure
-  private val authenticator: Authenticator = builder.authenticator
-  private val followRedirects: Boolean = builder.followRedirects
-  private val followSslRedirects: Boolean = builder.followSslRedirects
-  private val cookieJar: CookieJar = builder.cookieJar
-  private val cache: Cache? = builder.cache
-  private val dns: Dns = builder.dns
-  private val proxy: Proxy? = builder.proxy
-  private val proxySelector: ProxySelector = builder.proxySelector
-  private val proxyAuthenticator: Authenticator = builder.proxyAuthenticator
-  private val socketFactory: SocketFactory = builder.socketFactory
-  private val sslSocketFactory: SSLSocketFactory?
-  private val connectionSpecs: List<ConnectionSpec> = builder.connectionSpecs
-  private val protocols: List<Protocol> = builder.protocols
-  private val hostnameVerifier: HostnameVerifier = builder.hostnameVerifier
-  private val certificatePinner: CertificatePinner
-  private val certificateChainCleaner: CertificateChainCleaner?
-  private val callTimeout: Int = builder.callTimeout
-  private val connectTimeout: Int = builder.connectTimeout
-  private val readTimeout: Int = builder.readTimeout
-  private val writeTimeout: Int = builder.writeTimeout
-  private val pingInterval: Int = builder.pingInterval
+
+  @get:JvmName("dispatcher") val dispatcher: Dispatcher = builder.dispatcher
+
+  @get:JvmName("connectionPool") val connectionPool: ConnectionPool = builder.connectionPool
+
+  /**
+   * Returns an immutable list of interceptors that observe the full span of each call: from before
+   * the connection is established (if any) until after the response source is selected (either the
+   * origin server, cache, or both).
+   */
+  @get:JvmName("interceptors") val interceptors: List<Interceptor> =
+      builder.interceptors.toImmutableList()
+
+  /**
+   * Returns an immutable list of interceptors that observe a single network request and response.
+   * These interceptors must call [Interceptor.Chain.proceed] exactly once: it is an error for
+   * a network interceptor to short-circuit or repeat a network request.
+   */
+  @get:JvmName("networkInterceptors") val networkInterceptors: List<Interceptor> =
+      builder.networkInterceptors.toImmutableList()
+
+  @get:JvmName("eventListenerFactory") val eventListenerFactory: EventListener.Factory =
+      builder.eventListenerFactory
+
+  @get:JvmName("retryOnConnectionFailure") val retryOnConnectionFailure: Boolean =
+      builder.retryOnConnectionFailure
+
+  @get:JvmName("authenticator") val authenticator: Authenticator = builder.authenticator
+
+  @get:JvmName("followRedirects") val followRedirects: Boolean = builder.followRedirects
+
+  @get:JvmName("followSslRedirects") val followSslRedirects: Boolean = builder.followSslRedirects
+
+  @get:JvmName("cookieJar") val cookieJar: CookieJar = builder.cookieJar
+
+  @get:JvmName("cache") val cache: Cache? = builder.cache
+
+  @get:JvmName("dns") val dns: Dns = builder.dns
+
+  @get:JvmName("proxy") val proxy: Proxy? = builder.proxy
+
+  @get:JvmName("proxySelector") val proxySelector: ProxySelector = builder.proxySelector
+
+  @get:JvmName("proxyAuthenticator") val proxyAuthenticator: Authenticator =
+      builder.proxyAuthenticator
+
+  @get:JvmName("socketFactory") val socketFactory: SocketFactory = builder.socketFactory
+
+  private val sslSocketFactoryOrNull: SSLSocketFactory?
+
+  @get:JvmName("sslSocketFactory") val sslSocketFactory: SSLSocketFactory
+    get() = sslSocketFactoryOrNull ?: throw IllegalStateException("CLEARTEXT-only client")
+
+  @get:JvmName("connectionSpecs") val connectionSpecs: List<ConnectionSpec> =
+      builder.connectionSpecs
+
+  @get:JvmName("protocols") val protocols: List<Protocol> = builder.protocols
+
+  @get:JvmName("hostnameVerifier") val hostnameVerifier: HostnameVerifier = builder.hostnameVerifier
+
+  @get:JvmName("certificatePinner") val certificatePinner: CertificatePinner
+
+  @get:JvmName("certificateChainCleaner") val certificateChainCleaner: CertificateChainCleaner?
+
+  /**
+   * Default call timeout (in milliseconds). By default there is no timeout for complete calls, but
+   * there is for the connect, write, and read actions within a call.
+   */
+  @get:JvmName("callTimeoutMillis") val callTimeoutMillis: Int = builder.callTimeout
+
+  /** Default connect timeout (in milliseconds). The default is 10 seconds. */
+  @get:JvmName("connectTimeoutMillis") val connectTimeoutMillis: Int = builder.connectTimeout
+
+  /** Default read timeout (in milliseconds). The default is 10 seconds. */
+  @get:JvmName("readTimeoutMillis") val readTimeoutMillis: Int = builder.readTimeout
+
+  /** Default write timeout (in milliseconds). The default is 10 seconds. */
+  @get:JvmName("writeTimeoutMillis") val writeTimeoutMillis: Int = builder.writeTimeout
+
+  /** Web socket and HTTP/2 ping interval (in milliseconds). By default pings are not sent. */
+  @get:JvmName("pingIntervalMillis") val pingIntervalMillis: Int = builder.pingInterval
 
   constructor() : this(Builder())
 
   init {
-    var isTLS = false
-    for (spec in connectionSpecs) {
-      isTLS = isTLS || spec.isTls
-    }
-
-    // TODO - these nullability warnings existed in Java
-    if (builder.sslSocketFactory != null || !isTLS) {
-      this.sslSocketFactory = builder.sslSocketFactory
+    if (builder.sslSocketFactoryOrNull != null || connectionSpecs.none { it.isTls }) {
+      this.sslSocketFactoryOrNull = builder.sslSocketFactoryOrNull
       this.certificateChainCleaner = builder.certificateChainCleaner
     } else {
       val trustManager = Platform.get().platformTrustManager()
       Platform.get().configureTrustManager(trustManager)
-      this.sslSocketFactory = newSslSocketFactory(trustManager)
+      this.sslSocketFactoryOrNull = newSslSocketFactory(trustManager)
       this.certificateChainCleaner = CertificateChainCleaner.get(trustManager)
     }
 
-    if (sslSocketFactory != null) {
-      Platform.get().configureSslSocketFactory(sslSocketFactory)
+    if (sslSocketFactoryOrNull != null) {
+      Platform.get().configureSslSocketFactory(sslSocketFactoryOrNull)
     }
 
     this.certificatePinner = builder.certificatePinner
@@ -182,76 +229,6 @@ open class OkHttpClient internal constructor(
     }
   }
 
-  fun dispatcher(): Dispatcher = dispatcher
-
-  fun connectionPool(): ConnectionPool = connectionPool
-
-  /**
-   * Returns an immutable list of interceptors that observe the full span of each call: from before
-   * the connection is established (if any) until after the response source is selected (either the
-   * origin server, cache, or both).
-   */
-  fun interceptors(): List<Interceptor> = interceptors
-
-  /**
-   * Returns an immutable list of interceptors that observe a single network request and response.
-   * These interceptors must call [Interceptor.Chain.proceed] exactly once: it is an error for
-   * a network interceptor to short-circuit or repeat a network request.
-   */
-  fun networkInterceptors(): List<Interceptor> = networkInterceptors
-
-  fun eventListenerFactory(): EventListener.Factory = eventListenerFactory
-
-  fun retryOnConnectionFailure(): Boolean = retryOnConnectionFailure
-
-  fun authenticator(): Authenticator = authenticator
-
-  fun followRedirects(): Boolean = followRedirects
-
-  fun followSslRedirects(): Boolean = followSslRedirects
-
-  fun cookieJar(): CookieJar = cookieJar
-
-  fun cache(): Cache? = cache
-
-  fun dns(): Dns = dns
-
-  fun proxy(): Proxy? = proxy
-
-  fun proxySelector(): ProxySelector = proxySelector
-
-  fun proxyAuthenticator(): Authenticator = proxyAuthenticator
-
-  fun socketFactory(): SocketFactory = socketFactory
-
-  fun sslSocketFactory(): SSLSocketFactory = sslSocketFactory!!
-
-  fun connectionSpecs(): List<ConnectionSpec> = connectionSpecs
-
-  fun protocols(): List<Protocol> = protocols
-
-  fun hostnameVerifier(): HostnameVerifier = hostnameVerifier
-
-  fun certificatePinner(): CertificatePinner = certificatePinner
-
-  /**
-   * Default call timeout (in milliseconds). By default there is no timeout for complete calls, but
-   * there is for the connect, write, and read actions within a call.
-   */
-  fun callTimeoutMillis(): Int = callTimeout
-
-  /** Default connect timeout (in milliseconds). The default is 10 seconds. */
-  fun connectTimeoutMillis(): Int = connectTimeout
-
-  /** Default read timeout (in milliseconds). The default is 10 seconds. */
-  fun readTimeoutMillis(): Int = readTimeout
-
-  /** Default write timeout (in milliseconds). The default is 10 seconds. */
-  fun writeTimeoutMillis(): Int = writeTimeout
-
-  /** Web socket and HTTP/2 ping interval (in milliseconds). By default pings are not sent. */
-  fun pingIntervalMillis(): Int = pingInterval
-
   /** Prepares the [request] to be executed at some point in the future. */
   override fun newCall(request: Request): Call {
     return RealCall.newRealCall(this, request, forWebSocket = false)
@@ -259,12 +236,194 @@ open class OkHttpClient internal constructor(
 
   /** Uses [request] to connect a new web socket. */
   override fun newWebSocket(request: Request, listener: WebSocketListener): WebSocket {
-    val webSocket = RealWebSocket(request, listener, Random(), pingInterval.toLong())
+    val webSocket = RealWebSocket(request, listener, Random(), pingIntervalMillis.toLong())
     webSocket.connect(this)
     return webSocket
   }
 
   open fun newBuilder(): Builder = Builder(this)
+
+  @JvmName("-deprecated_dispatcher")
+  @Deprecated(
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "dispatcher"),
+      level = DeprecationLevel.ERROR)
+  fun dispatcher(): Dispatcher = dispatcher
+
+  @JvmName("-deprecated_connectionPool")
+  @Deprecated(
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "connectionPool"),
+      level = DeprecationLevel.ERROR)
+  fun connectionPool(): ConnectionPool = connectionPool
+
+  @JvmName("-deprecated_interceptors")
+  @Deprecated(
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "interceptors"),
+      level = DeprecationLevel.ERROR)
+  fun interceptors(): List<Interceptor> = interceptors
+
+  @JvmName("-deprecated_networkInterceptors")
+  @Deprecated(
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "networkInterceptors"),
+      level = DeprecationLevel.ERROR)
+  fun networkInterceptors(): List<Interceptor> = networkInterceptors
+
+  @JvmName("-deprecated_eventListenerFactory")
+  @Deprecated(
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "eventListenerFactory"),
+      level = DeprecationLevel.ERROR)
+  fun eventListenerFactory(): EventListener.Factory = eventListenerFactory
+
+  @JvmName("-deprecated_retryOnConnectionFailure")
+  @Deprecated(
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "retryOnConnectionFailure"),
+      level = DeprecationLevel.ERROR)
+  fun retryOnConnectionFailure(): Boolean = retryOnConnectionFailure
+
+  @JvmName("-deprecated_authenticator")
+  @Deprecated(
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "authenticator"),
+      level = DeprecationLevel.ERROR)
+  fun authenticator(): Authenticator = authenticator
+
+  @JvmName("-deprecated_followRedirects")
+  @Deprecated(
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "followRedirects"),
+      level = DeprecationLevel.ERROR)
+  fun followRedirects(): Boolean = followRedirects
+
+  @JvmName("-deprecated_followSslRedirects")
+  @Deprecated(
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "followSslRedirects"),
+      level = DeprecationLevel.ERROR)
+  fun followSslRedirects(): Boolean = followSslRedirects
+
+  @JvmName("-deprecated_cookieJar")
+  @Deprecated(
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "cookieJar"),
+      level = DeprecationLevel.ERROR)
+  fun cookieJar(): CookieJar = cookieJar
+
+  @JvmName("-deprecated_cache")
+  @Deprecated(
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "cache"),
+      level = DeprecationLevel.ERROR)
+  fun cache(): Cache? = cache
+
+  @JvmName("-deprecated_dns")
+  @Deprecated(
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "dns"),
+      level = DeprecationLevel.ERROR)
+  fun dns(): Dns = dns
+
+  @JvmName("-deprecated_proxy")
+  @Deprecated(
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "proxy"),
+      level = DeprecationLevel.ERROR)
+  fun proxy(): Proxy? = proxy
+
+  @JvmName("-deprecated_proxySelector")
+  @Deprecated(
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "proxySelector"),
+      level = DeprecationLevel.ERROR)
+  fun proxySelector(): ProxySelector = proxySelector
+
+  @JvmName("-deprecated_proxyAuthenticator")
+  @Deprecated(
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "proxyAuthenticator"),
+      level = DeprecationLevel.ERROR)
+  fun proxyAuthenticator(): Authenticator = proxyAuthenticator
+
+  @JvmName("-deprecated_socketFactory")
+  @Deprecated(
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "socketFactory"),
+      level = DeprecationLevel.ERROR)
+  fun socketFactory(): SocketFactory = socketFactory
+
+  @JvmName("-deprecated_sslSocketFactory")
+  @Deprecated(
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "sslSocketFactory"),
+      level = DeprecationLevel.ERROR)
+  fun sslSocketFactory(): SSLSocketFactory = sslSocketFactory
+
+  @JvmName("-deprecated_connectionSpecs")
+  @Deprecated(
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "connectionSpecs"),
+      level = DeprecationLevel.ERROR)
+  fun connectionSpecs(): List<ConnectionSpec> = connectionSpecs
+
+  @JvmName("-deprecated_protocols")
+  @Deprecated(
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "protocols"),
+      level = DeprecationLevel.ERROR)
+  fun protocols(): List<Protocol> = protocols
+
+  @JvmName("-deprecated_hostnameVerifier")
+  @Deprecated(
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "hostnameVerifier"),
+      level = DeprecationLevel.ERROR)
+  fun hostnameVerifier(): HostnameVerifier = hostnameVerifier
+
+  @JvmName("-deprecated_certificatePinner")
+  @Deprecated(
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "certificatePinner"),
+      level = DeprecationLevel.ERROR)
+  fun certificatePinner(): CertificatePinner = certificatePinner
+
+  @JvmName("-deprecated_callTimeoutMillis")
+  @Deprecated(
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "callTimeoutMillis"),
+      level = DeprecationLevel.ERROR)
+  fun callTimeoutMillis(): Int = callTimeoutMillis
+
+  @JvmName("-deprecated_connectTimeoutMillis")
+  @Deprecated(
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "connectTimeoutMillis"),
+      level = DeprecationLevel.ERROR)
+  fun connectTimeoutMillis(): Int = connectTimeoutMillis
+
+  @JvmName("-deprecated_readTimeoutMillis")
+  @Deprecated(
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "readTimeoutMillis"),
+      level = DeprecationLevel.ERROR)
+  fun readTimeoutMillis(): Int = readTimeoutMillis
+
+  @JvmName("-deprecated_writeTimeoutMillis")
+  @Deprecated(
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "writeTimeoutMillis"),
+      level = DeprecationLevel.ERROR)
+  fun writeTimeoutMillis(): Int = writeTimeoutMillis
+
+  @JvmName("-deprecated_pingIntervalMillis")
+  @Deprecated(
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "pingIntervalMillis"),
+      level = DeprecationLevel.ERROR)
+  fun pingIntervalMillis(): Int = pingIntervalMillis
 
   class Builder constructor() {
     internal var dispatcher: Dispatcher = Dispatcher()
@@ -283,7 +442,7 @@ open class OkHttpClient internal constructor(
     internal var proxySelector: ProxySelector = ProxySelector.getDefault() ?: NullProxySelector()
     internal var proxyAuthenticator: Authenticator = Authenticator.NONE
     internal var socketFactory: SocketFactory = SocketFactory.getDefault()
-    internal var sslSocketFactory: SSLSocketFactory? = null
+    internal var sslSocketFactoryOrNull: SSLSocketFactory? = null
     internal var connectionSpecs: List<ConnectionSpec> = DEFAULT_CONNECTION_SPECS
     internal var protocols: List<Protocol> = DEFAULT_PROTOCOLS
     internal var hostnameVerifier: HostnameVerifier = OkHostnameVerifier
@@ -312,17 +471,17 @@ open class OkHttpClient internal constructor(
       this.proxySelector = okHttpClient.proxySelector
       this.proxyAuthenticator = okHttpClient.proxyAuthenticator
       this.socketFactory = okHttpClient.socketFactory
-      this.sslSocketFactory = okHttpClient.sslSocketFactory
+      this.sslSocketFactoryOrNull = okHttpClient.sslSocketFactoryOrNull
       this.connectionSpecs = okHttpClient.connectionSpecs
       this.protocols = okHttpClient.protocols
       this.hostnameVerifier = okHttpClient.hostnameVerifier
       this.certificatePinner = okHttpClient.certificatePinner
       this.certificateChainCleaner = okHttpClient.certificateChainCleaner
-      this.callTimeout = okHttpClient.callTimeout
-      this.connectTimeout = okHttpClient.connectTimeout
-      this.readTimeout = okHttpClient.readTimeout
-      this.writeTimeout = okHttpClient.writeTimeout
-      this.pingInterval = okHttpClient.pingInterval
+      this.callTimeout = okHttpClient.callTimeoutMillis
+      this.connectTimeout = okHttpClient.connectTimeoutMillis
+      this.readTimeout = okHttpClient.readTimeoutMillis
+      this.writeTimeout = okHttpClient.writeTimeoutMillis
+      this.pingInterval = okHttpClient.pingIntervalMillis
     }
 
     /**
@@ -352,15 +511,9 @@ open class OkHttpClient internal constructor(
       interceptors += interceptor
     }
 
-    // This lambda conversion is for Kotlin callers expecting a Java SAM (single-abstract-method).
-    @JvmName("-deprecated_addInterceptor")
-    inline fun addInterceptor(
-      crossinline interceptor: (chain: Interceptor.Chain) -> Response
-    ) = apply {
-      addInterceptor(object : Interceptor {
-        override fun intercept(chain: Interceptor.Chain): Response = interceptor(chain)
-      })
-    }
+    @JvmName("-addInterceptor") // Prefix with '-' to prevent ambiguous overloads from Java.
+    inline fun addInterceptor(crossinline block: (chain: Interceptor.Chain) -> Response) =
+        addInterceptor(Interceptor { chain -> block(chain) })
 
     /**
      * Returns a modifiable list of interceptors that observe a single network request and response.
@@ -373,15 +526,9 @@ open class OkHttpClient internal constructor(
       networkInterceptors += interceptor
     }
 
-    // This lambda conversion is for Kotlin callers expecting a Java SAM (single-abstract-method).
-    @JvmName("-deprecated_addNetworkInterceptor")
-    inline fun addNetworkInterceptor(
-      crossinline interceptor: (chain: Interceptor.Chain) -> Response
-    ) = apply {
-      addInterceptor(object : Interceptor {
-        override fun intercept(chain: Interceptor.Chain): Response = interceptor(chain)
-      })
-    }
+    @JvmName("-addNetworkInterceptor") // Prefix with '-' to prevent ambiguous overloads from Java.
+    inline fun addNetworkInterceptor(crossinline block: (chain: Interceptor.Chain) -> Response) =
+        addNetworkInterceptor(Interceptor { chain -> block(chain) })
 
     /**
      * Configure a single client scoped listener that will receive all analytic events for this
@@ -401,14 +548,6 @@ open class OkHttpClient internal constructor(
      */
     fun eventListenerFactory(eventListenerFactory: EventListener.Factory) = apply {
       this.eventListenerFactory = eventListenerFactory
-    }
-
-    // This lambda conversion is for Kotlin callers expecting a Java SAM (single-abstract-method).
-    @JvmName("-deprecated_eventListenerFactory")
-    inline fun eventListenerFactory(crossinline block: (call: Call) -> EventListener) = apply {
-      eventListenerFactory(object : EventListener.Factory {
-        override fun create(call: Call) = block(call)
-      })
     }
 
     /**
@@ -535,10 +674,10 @@ open class OkHttpClient internal constructor(
      */
     @Deprecated(
         message = "Use the sslSocketFactory overload that accepts a X509TrustManager.",
-        level = ERROR
+        level = DeprecationLevel.ERROR
     )
     fun sslSocketFactory(sslSocketFactory: SSLSocketFactory) = apply {
-      this.sslSocketFactory = sslSocketFactory
+      this.sslSocketFactoryOrNull = sslSocketFactory
       this.certificateChainCleaner = Platform.get().buildCertificateChainCleaner(sslSocketFactory)
     }
 
@@ -575,7 +714,7 @@ open class OkHttpClient internal constructor(
       sslSocketFactory: SSLSocketFactory,
       trustManager: X509TrustManager
     ) = apply {
-      this.sslSocketFactory = sslSocketFactory
+      this.sslSocketFactoryOrNull = sslSocketFactory
       this.certificateChainCleaner = CertificateChainCleaner.get(trustManager)
     }
 

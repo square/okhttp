@@ -15,6 +15,7 @@
  */
 package okhttp3
 
+import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.internal.toImmutableList
 import okio.Buffer
 import okio.BufferedSink
@@ -33,7 +34,7 @@ class MultipartBody internal constructor(
   @get:JvmName("type") val type: MediaType,
   @get:JvmName("parts") val parts: List<Part>
 ) : RequestBody() {
-  private val contentType: MediaType = MediaType.get("$type; boundary=$boundary")
+  private val contentType: MediaType = "$type; boundary=$boundary".toMediaType()
   private var contentLength = -1L
 
   @get:JvmName("boundary") val boundary: String
@@ -52,28 +53,28 @@ class MultipartBody internal constructor(
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "type"),
-      level = DeprecationLevel.WARNING)
+      level = DeprecationLevel.ERROR)
   fun type(): MediaType = type
 
   @JvmName("-deprecated_boundary")
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "boundary"),
-      level = DeprecationLevel.WARNING)
+      level = DeprecationLevel.ERROR)
   fun boundary(): String = boundary
 
   @JvmName("-deprecated_size")
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "size"),
-      level = DeprecationLevel.WARNING)
+      level = DeprecationLevel.ERROR)
   fun size(): Int = size
 
   @JvmName("-deprecated_parts")
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "parts"),
-      level = DeprecationLevel.WARNING)
+      level = DeprecationLevel.ERROR)
   fun parts(): List<Part> = parts
 
   @Throws(IOException::class)
@@ -180,14 +181,14 @@ class MultipartBody internal constructor(
     @Deprecated(
         message = "moved to val",
         replaceWith = ReplaceWith(expression = "headers"),
-        level = DeprecationLevel.WARNING)
+        level = DeprecationLevel.ERROR)
     fun headers(): Headers? = headers
 
     @JvmName("-deprecated_body")
     @Deprecated(
         message = "moved to val",
         replaceWith = ReplaceWith(expression = "body"),
-        level = DeprecationLevel.WARNING)
+        level = DeprecationLevel.ERROR)
     fun body(): RequestBody = body
 
     companion object {
@@ -203,7 +204,7 @@ class MultipartBody internal constructor(
 
       @JvmStatic
       fun createFormData(name: String, value: String): Part =
-          createFormData(name, null, create(null, value))
+          createFormData(name, null, value.toRequestBody())
 
       @JvmStatic
       fun createFormData(name: String, filename: String?, body: RequestBody): Part {
@@ -279,7 +280,7 @@ class MultipartBody internal constructor(
      * does not recognize must be treated as being of subtype "mixed".
      */
     @JvmField
-    val MIXED = MediaType.get("multipart/mixed")
+    val MIXED = "multipart/mixed".toMediaType()
 
     /**
      * The "multipart/alternative" type is syntactically identical to "multipart/mixed", but the
@@ -287,7 +288,7 @@ class MultipartBody internal constructor(
      * the same information.
      */
     @JvmField
-    val ALTERNATIVE = MediaType.get("multipart/alternative")
+    val ALTERNATIVE = "multipart/alternative".toMediaType()
 
     /**
      * This type is syntactically identical to "multipart/mixed", but the semantics are different.
@@ -295,14 +296,14 @@ class MultipartBody internal constructor(
      * "text/plain" to "message/rfc822".
      */
     @JvmField
-    val DIGEST = MediaType.get("multipart/digest")
+    val DIGEST = "multipart/digest".toMediaType()
 
     /**
      * This type is syntactically identical to "multipart/mixed", but the semantics are different.
      * In particular, in a parallel entity, the order of body parts is not significant.
      */
     @JvmField
-    val PARALLEL = MediaType.get("multipart/parallel")
+    val PARALLEL = "multipart/parallel".toMediaType()
 
     /**
      * The media-type multipart/form-data follows the rules of all multipart MIME data streams as
@@ -310,7 +311,7 @@ class MultipartBody internal constructor(
      * fills out the form. Each field has a name. Within a given form, the names are unique.
      */
     @JvmField
-    val FORM = MediaType.get("multipart/form-data")
+    val FORM = "multipart/form-data".toMediaType()
 
     private val COLONSPACE = byteArrayOf(':'.toByte(), ' '.toByte())
     private val CRLF = byteArrayOf('\r'.toByte(), '\n'.toByte())

@@ -31,7 +31,7 @@ import java.net.Proxy
  *
  * Each route is a specific selection of these options.
  */
-data class Route(
+class Route(
   @get:JvmName("address") val address: Address,
   /**
    * Returns the [Proxy] of this route.
@@ -47,21 +47,21 @@ data class Route(
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "address"),
-      level = DeprecationLevel.WARNING)
+      level = DeprecationLevel.ERROR)
   fun address(): Address = address
 
   @JvmName("-deprecated_proxy")
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "proxy"),
-      level = DeprecationLevel.WARNING)
+      level = DeprecationLevel.ERROR)
   fun proxy(): Proxy = proxy
 
   @JvmName("-deprecated_socketAddress")
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "socketAddress"),
-      level = DeprecationLevel.WARNING)
+      level = DeprecationLevel.ERROR)
   fun socketAddress(): InetSocketAddress = socketAddress
 
   /**
@@ -71,6 +71,21 @@ data class Route(
    * [rfc_2817]: http://www.ietf.org/rfc/rfc2817.txt
    */
   fun requiresTunnel() = address.sslSocketFactory != null && proxy.type() == Proxy.Type.HTTP
+
+  override fun equals(other: Any?): Boolean {
+    return other is Route &&
+        other.address == address &&
+        other.proxy == proxy &&
+        other.socketAddress == socketAddress
+  }
+
+  override fun hashCode(): Int {
+    var result = 17
+    result = 31 * result + address.hashCode()
+    result = 31 * result + proxy.hashCode()
+    result = 31 * result + socketAddress.hashCode()
+    return result
+  }
 
   override fun toString(): String = "Route{$socketAddress}"
 }

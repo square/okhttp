@@ -1597,7 +1597,7 @@ public final class URLConnectionTest {
 
     Response response = getResponse(new Request.Builder()
         .url(server.url("/"))
-        .post(RequestBody.create(null, body))
+        .post(RequestBody.create(body, null))
         .build());
     assertThat(response.code()).isEqualTo(200);
     response.body().byteStream().close();
@@ -1715,7 +1715,7 @@ public final class URLConnectionTest {
   private void assertMethodPermitsRequestBody(String requestMethod) {
     Request request = new Request.Builder()
         .url(server.url("/"))
-        .method(requestMethod, RequestBody.create(null, "abc"))
+        .method(requestMethod, RequestBody.create("abc", null))
         .build();
     assertThat(request.method()).isEqualTo(requestMethod);
   }
@@ -1724,7 +1724,7 @@ public final class URLConnectionTest {
     try {
       new Request.Builder()
           .url(server.url("/"))
-          .method(requestMethod, RequestBody.create(null, "abc"))
+          .method(requestMethod, RequestBody.create("abc", null))
           .build();
       fail();
     } catch (IllegalArgumentException expected) {
@@ -1853,7 +1853,7 @@ public final class URLConnectionTest {
         .build();
     Response response = getResponse(new Request.Builder()
         .url(server.url("/"))
-        .post(RequestBody.create(null, "ABCD"))
+        .post(RequestBody.create("ABCD", null))
         .build());
     assertThat(readAscii(response.body().byteStream(), Integer.MAX_VALUE)).isEqualTo(
         "Successful auth!");
@@ -2291,7 +2291,7 @@ public final class URLConnectionTest {
 
     Response response = getResponse(new Request.Builder()
         .url(server.url("/page1"))
-        .post(RequestBody.create(MediaType.get("text/plain; charset=utf-8"), "ABCD"))
+        .post(RequestBody.create("ABCD", MediaType.get("text/plain; charset=utf-8")))
         .header("Transfer-Encoding", "identity")
         .build());
     assertThat(readAscii(response.body().byteStream(), Integer.MAX_VALUE)).isEqualTo(
@@ -2371,7 +2371,7 @@ public final class URLConnectionTest {
     Request.Builder requestBuilder = new Request.Builder()
         .url(server.url("/page1"));
     if (method.equals("POST")) {
-      requestBuilder.post(RequestBody.create(null, "ABCD"));
+      requestBuilder.post(RequestBody.create("ABCD", null));
     } else {
       requestBuilder.method(method, null);
     }
@@ -2488,7 +2488,7 @@ public final class URLConnectionTest {
 
     Response response = getResponse(new Request.Builder()
         .url(server.url("/"))
-        .post(RequestBody.create(null, "Hello"))
+        .post(RequestBody.create("Hello", null))
         .build());
 
     assertThat(response.code()).isEqualTo(200);
@@ -2820,7 +2820,7 @@ public final class URLConnectionTest {
     try {
       new Request.Builder()
           .url(server.url("/"))
-          .method("GET", RequestBody.create(null, "abc"))
+          .method("GET", RequestBody.create("abc", null))
           .build();
       fail();
     } catch (IllegalArgumentException expected) {
@@ -2832,7 +2832,7 @@ public final class URLConnectionTest {
         .setBody("A"));
     Response response = getResponse(new Request.Builder()
         .url(server.url("/"))
-        .post(RequestBody.create(null, "ABC"))
+        .post(RequestBody.create("ABC", null))
         .build());
     assertThat(readAscii(response.body().byteStream(), Integer.MAX_VALUE)).isEqualTo(
         "A");
@@ -2884,7 +2884,7 @@ public final class URLConnectionTest {
     try {
       new Request.Builder()
           .url(server.url("/"))
-          .method("HEAD", RequestBody.create(null, ""))
+          .method("HEAD", RequestBody.create("", null))
           .build();
       fail();
     } catch (IllegalArgumentException expected) {
@@ -2998,7 +2998,7 @@ public final class URLConnectionTest {
 
     Response post = getResponse(new Request.Builder()
         .url(server.url("/"))
-        .post(RequestBody.create(null, "body!"))
+        .post(RequestBody.create("body!", null))
         .build());
     assertContent("def", post);
 
@@ -3357,7 +3357,7 @@ public final class URLConnectionTest {
 
     Response response = getResponse(new Request.Builder()
         .url(server.url("/"))
-        .method(method, RequestBody.create(null, ""))
+        .method(method, RequestBody.create("", null))
         .build());
     assertContent("", response);
     RecordedRequest zeroLengthPayload = server.takeRequest();
@@ -3522,7 +3522,7 @@ public final class URLConnectionTest {
 
     Response response = getResponse(new Request.Builder()
         .url(server.url("/"))
-        .delete(RequestBody.create(null, "BODY"))
+        .delete(RequestBody.create("BODY", null))
         .build());
     assertThat(response.code()).isEqualTo(200);
 
@@ -3632,7 +3632,7 @@ public final class URLConnectionTest {
 
     assertContent("def", getResponse(new Request.Builder()
         .url(server.url("/"))
-        .post(RequestBody.create(null, "123"))
+        .post(RequestBody.create("123", null))
         .build()));
 
     RecordedRequest request1 = server.takeRequest();

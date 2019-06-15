@@ -15,6 +15,7 @@
  */
 package okhttp3
 
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.internal.checkOffsetAndCount
 import okio.BufferedSink
 import okio.ByteString
@@ -34,7 +35,7 @@ abstract class RequestBody {
    * or -1 if that count is unknown.
    */
   @Throws(IOException::class)
-  open fun contentLength(): Long = -1
+  open fun contentLength(): Long = -1L
 
   /** Writes the content of this request to [sink]. */
   @Throws(IOException::class)
@@ -91,72 +92,125 @@ abstract class RequestBody {
   companion object {
 
     /**
-     * Returns a new request body that transmits [content]. If [contentType] is non-null
-     * and lacks a charset, this will use UTF-8.
+     * Returns a new request body that transmits this string. If [contentType] is non-null and lacks
+     * a charset, this will use UTF-8.
      */
     @JvmStatic
-    fun create(contentType: MediaType?, content: String): RequestBody {
+    @JvmName("create")
+    fun String.toRequestBody(contentType: MediaType? = null): RequestBody {
       var charset: Charset = UTF_8
       var finalContentType: MediaType? = contentType
       if (contentType != null) {
         val resolvedCharset = contentType.charset()
         if (resolvedCharset == null) {
           charset = UTF_8
-          finalContentType = MediaType.parse("$contentType; charset=utf-8")
+          finalContentType = "$contentType; charset=utf-8".toMediaTypeOrNull()
         } else {
           charset = resolvedCharset
         }
       }
-      val bytes = content.toByteArray(charset)
-      return create(finalContentType, bytes)
+      val bytes = toByteArray(charset)
+      return bytes.toRequestBody(finalContentType, 0, bytes.size)
     }
 
-    /** Returns a new request body that transmits [content]. */
+    /** Returns a new request body that transmits this. */
     @JvmStatic
-    fun create(
-      contentType: MediaType?,
-      content: ByteString
-    ): RequestBody = object : RequestBody() {
-      override fun contentType() = contentType
+    @JvmName("create")
+    fun ByteString.toRequestBody(contentType: MediaType? = null): RequestBody {
+      return object : RequestBody() {
+        override fun contentType() = contentType
 
-      override fun contentLength() = content.size.toLong()
+        override fun contentLength() = size.toLong()
 
-      override fun writeTo(sink: BufferedSink) {
-        sink.write(content)
+        override fun writeTo(sink: BufferedSink) {
+          sink.write(this@toRequestBody)
+        }
       }
     }
 
-    /** Returns a new request body that transmits [content]. */
+    /** Returns a new request body that transmits this. */
     @JvmOverloads
     @JvmStatic
-    fun create(
-      contentType: MediaType?,
-      content: ByteArray,
+    @JvmName("create")
+    fun ByteArray.toRequestBody(
+      contentType: MediaType? = null,
       offset: Int = 0,
-      byteCount: Int = content.size
+      byteCount: Int = size
     ): RequestBody {
-      checkOffsetAndCount(content.size.toLong(), offset.toLong(), byteCount.toLong())
+      checkOffsetAndCount(size.toLong(), offset.toLong(), byteCount.toLong())
       return object : RequestBody() {
         override fun contentType() = contentType
 
         override fun contentLength() = byteCount.toLong()
 
         override fun writeTo(sink: BufferedSink) {
-          sink.write(content, offset, byteCount)
+          sink.write(this@toRequestBody, offset, byteCount)
         }
       }
     }
 
-    /** Returns a new request body that transmits the content of [file]. */
+    /** Returns a new request body that transmits the content of this. */
     @JvmStatic
-    fun create(contentType: MediaType?, file: File): RequestBody = object : RequestBody() {
-      override fun contentType() = contentType
+    @JvmName("create")
+    fun File.asRequestBody(contentType: MediaType? = null): RequestBody {
+      return object : RequestBody() {
+        override fun contentType() = contentType
 
-      override fun contentLength() = file.length()
+        override fun contentLength() = length()
 
-      override fun writeTo(sink: BufferedSink) {
-        file.source().use { source -> sink.writeAll(source) }
+        override fun writeTo(sink: BufferedSink) {
+          source().use { source -> sink.writeAll(source) }
+        }
       }
     }
+
+    @JvmStatic
+    @Deprecated(
+        message = "Moved to extension function. Put the 'content' argument first to fix Java",
+        replaceWith = ReplaceWith(
+            expression = "content.toRequestBody(contentType)",
+            imports = ["okhttp3.RequestBody.Companion.toRequestBody"]
+        ),
+        level = DeprecationLevel.WARNING)
+    fun create(contentType: MediaType?, content: String) = content.toRequestBody(contentType)
+
+    @JvmStatic
+    @Deprecated(
+        message = "Moved to extension function. Put the 'content' argument first to fix Java",
+        replaceWith = ReplaceWith(
+            expression = "content.toRequestBody(contentType)",
+            imports = ["okhttp3.RequestBody.Companion.toRequestBody"]
+        ),
+        level = DeprecationLevel.WARNING)
+    fun create(
+      contentType: MediaType?,
+      content: ByteString
+    ): RequestBody = content.toRequestBody(contentType)
+
+    @JvmOverloads
+    @JvmStatic
+    @Deprecated(
+        message = "Moved to extension function. Put the 'content' argument first to fix Java",
+        replaceWith = ReplaceWith(
+            expression = "content.toRequestBody(contentType, offset, byteCount)",
+            imports = ["okhttp3.RequestBody.Companion.toRequestBody"]
+        ),
+        level = DeprecationLevel.WARNING)
+    fun create(
+      contentType: MediaType?,
+      content: ByteArray,
+      offset: Int = 0,
+      byteCount: Int = content.size
+    ) = content.toRequestBody(contentType, offset, byteCount)
+
+    @JvmStatic
+    @Deprecated(
+        message = "Moved to extension function. Put the 'file' argument first to fix Java",
+        replaceWith = ReplaceWith(
+            expression = "file.asRequestBody(contentType)",
+            imports = ["okhttp3.RequestBody.Companion.asRequestBody"]
+        ),
+        level = DeprecationLevel.WARNING)
+    fun create(contentType: MediaType?, file: File) = file.asRequestBody(contentType)
   }
 }

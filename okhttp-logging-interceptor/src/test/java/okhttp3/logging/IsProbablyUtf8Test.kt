@@ -15,19 +15,18 @@
  */
 package okhttp3.logging
 
-import okhttp3.logging.HttpLoggingInterceptor.Companion.isUtf8
 import okio.Buffer
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Test
 
-class HttpLoggingInterceptorKotlinTest {
-  @Test fun isPlaintext() {
-    assertThat(Buffer().isUtf8()).isTrue()
-    assertThat(Buffer().writeUtf8("abc").isUtf8()).isTrue()
-    assertThat(Buffer().writeUtf8("new\r\nlines").isUtf8()).isTrue()
-    assertThat(Buffer().writeUtf8("white\t space").isUtf8()).isTrue()
-    assertThat(Buffer().writeByte(0x80).isUtf8()).isTrue()
-    assertThat(Buffer().writeByte(0x00).isUtf8()).isFalse()
-    assertThat(Buffer().writeByte(0xc0).isUtf8()).isFalse()
+class IsProbablyUtf8Test {
+  @Test fun isProbablyUtf8() {
+    assertThat(Buffer().isProbablyUtf8()).isTrue()
+    assertThat(Buffer().writeUtf8("abc").isProbablyUtf8()).isTrue()
+    assertThat(Buffer().writeUtf8("new\r\nlines").isProbablyUtf8()).isTrue()
+    assertThat(Buffer().writeUtf8("white\t space").isProbablyUtf8()).isTrue()
+    assertThat(Buffer().writeByte(0x80).isProbablyUtf8()).isTrue()
+    assertThat(Buffer().writeByte(0x00).isProbablyUtf8()).isFalse()
+    assertThat(Buffer().writeByte(0xc0).isProbablyUtf8()).isFalse()
   }
 }
