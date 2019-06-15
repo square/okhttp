@@ -39,7 +39,9 @@ dependencies {
 }
 
 graal {
-  graalVersion("1.0.0-rc16")
+  graalVersion("19.0.2")
+  // https://github.com/palantir/gradle-graal/issues/105
+  downloadBaseUrl("https://github.com/oracle/graal/releases/download/vm-19.0.2/graalvm-ce-darwin-amd64-19.0.2.tar.gz?a=")
   mainClass("okhttp3.curl.Main")
   outputName("okcurl")
   option("--configurations-path")
