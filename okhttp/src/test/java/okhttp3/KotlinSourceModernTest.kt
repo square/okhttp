@@ -23,7 +23,9 @@ import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.RequestBody.Companion.toRequestBody
+import okhttp3.RequestBody.Companion.asRequestBody
 import okhttp3.ResponseBody.Companion.toResponseBody
+import okhttp3.ResponseBody.Companion.asResponseBody
 import okhttp3.internal.http2.Settings
 import okhttp3.internal.proxy.NullProxySelector
 import okhttp3.internal.tls.OkHostnameVerifier
@@ -1006,8 +1008,8 @@ class KotlinSourceModernTest {
     requestBody = byteArrayOf(0, 1).toRequestBody("".toMediaTypeOrNull(), 0, 2)
     requestBody = byteArrayOf(0, 1).toRequestBody(null, 0, 2)
     requestBody = byteArrayOf(0, 1).toRequestBody("".toMediaTypeOrNull(), 0, 2)
-    requestBody = File("").toRequestBody(null)
-    requestBody = File("").toRequestBody("".toMediaTypeOrNull())
+    requestBody = File("").asRequestBody(null)
+    requestBody = File("").asRequestBody("".toMediaTypeOrNull())
   }
 
   @Test @Ignore
@@ -1087,8 +1089,8 @@ class KotlinSourceModernTest {
     responseBody = ByteString.EMPTY.toResponseBody(null)
     responseBody = byteArrayOf(0, 1).toResponseBody("".toMediaType())
     responseBody = byteArrayOf(0, 1).toResponseBody(null)
-    responseBody = Buffer().toResponseBody("".toMediaType(), 0L)
-    responseBody = Buffer().toResponseBody(null, 0L)
+    responseBody = Buffer().asResponseBody("".toMediaType(), 0L)
+    responseBody = Buffer().asResponseBody(null, 0L)
   }
 
   @Test @Ignore

@@ -223,7 +223,7 @@ abstract class ResponseBody : Closeable {
         }
       }
       val buffer = Buffer().writeString(this, charset)
-      return buffer.toResponseBody(finalContentType, buffer.size)
+      return buffer.asResponseBody(finalContentType, buffer.size)
     }
 
     /** Returns a new response body that transmits this byte array. */
@@ -232,7 +232,7 @@ abstract class ResponseBody : Closeable {
     fun ByteArray.toResponseBody(contentType: MediaType? = null): ResponseBody {
       return Buffer()
           .write(this)
-          .toResponseBody(contentType, size.toLong())
+          .asResponseBody(contentType, size.toLong())
     }
 
     /** Returns a new response body that transmits this byte string. */
@@ -241,13 +241,13 @@ abstract class ResponseBody : Closeable {
     fun ByteString.toResponseBody(contentType: MediaType? = null): ResponseBody {
       return Buffer()
           .write(this)
-          .toResponseBody(contentType, size.toLong())
+          .asResponseBody(contentType, size.toLong())
     }
 
     /** Returns a new response body that transmits this source. */
     @JvmStatic
     @JvmName("create")
-    fun BufferedSource.toResponseBody(
+    fun BufferedSource.asResponseBody(
       contentType: MediaType? = null,
       contentLength: Long = -1L
     ): ResponseBody = object : ResponseBody() {
@@ -255,7 +255,7 @@ abstract class ResponseBody : Closeable {
 
       override fun contentLength() = contentLength
 
-      override fun source() = this@toResponseBody
+      override fun source() = this@asResponseBody
     }
 
     @JvmStatic
@@ -292,14 +292,14 @@ abstract class ResponseBody : Closeable {
     @Deprecated(
         message = "Moved to extension function. Put the 'content' argument first to fix Java",
         replaceWith = ReplaceWith(
-            expression = "content.toResponseBody(contentType, contentLength)",
-            imports = ["okhttp3.ResponseBody.Companion.toResponseBody"]
+            expression = "content.asResponseBody(contentType, contentLength)",
+            imports = ["okhttp3.ResponseBody.Companion.asResponseBody"]
         ),
         level = DeprecationLevel.WARNING)
     fun create(
       contentType: MediaType?,
       contentLength: Long,
       content: BufferedSource
-    ) = content.toResponseBody(contentType, contentLength)
+    ) = content.asResponseBody(contentType, contentLength)
   }
 }

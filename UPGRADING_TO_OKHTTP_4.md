@@ -175,9 +175,9 @@ _Code Cleanup_ will fix these too:
 | MediaType.parse(String)             | String.toMediaTypeOrNull()      |
 | RequestBody.create(ByteArray)       | ByteArray.toRequestBody()       |
 | RequestBody.create(ByteString)      | ByteString.toRequestBody()      |
-| RequestBody.create(File)            | File.toRequestBody()            |
+| RequestBody.create(File)            | File.asRequestBody()            |
 | RequestBody.create(String)          | String.toRequestBody()          |
-| ResponseBody.create(BufferedSource) | BufferedSource.toResponseBody() |
+| ResponseBody.create(BufferedSource) | BufferedSource.asResponseBody() |
 | ResponseBody.create(ByteArray)      | ByteArray.toResponseBody()      |
 | ResponseBody.create(ByteString)     | ByteString.toResponseBody()     |
 | ResponseBody.create(String)         | String.toResponseBody()         |
