@@ -25,7 +25,7 @@ import org.junit.Test;
 
 import static java.util.Arrays.asList;
 import static okhttp3.internal.Internal.parseCookie;
-import static okhttp3.internal.http.DatesKt.MAX_DATE;
+import static okhttp3.internal.http.Dates.MAX_DATE;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.fail;
 

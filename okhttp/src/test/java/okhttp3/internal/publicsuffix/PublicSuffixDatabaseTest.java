@@ -23,7 +23,7 @@ import okio.GzipSource;
 import okio.Okio;
 import org.junit.Test;
 
-import static okhttp3.internal.HostnamesKt.toCanonicalHost;
+import static okhttp3.internal.Hostnames.toCanonicalHost;
 import static okhttp3.internal.publicsuffix.PublicSuffixDatabase.PUBLIC_SUFFIX_RESOURCE;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.fail;

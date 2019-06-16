@@ -13,6 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+@file:JvmName("Dates")
+
 package okhttp3.internal.http
 
 import okhttp3.internal.UTC
