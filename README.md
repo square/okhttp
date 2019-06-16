@@ -23,8 +23,7 @@ Requirements
 
 OkHttp works on Android 5.0+ (API level 21+) and on Java 8+.
 
-OkHttp has one library dependency on [Okio][okio], a small library for high-performance I/O. It
-works with either Okio 1.x (implemented in Java) or Okio 2.x (upgraded to Kotlin).
+OkHttp has one library dependency on [Okio][okio], a small library for high-performance I/O.
 
 We highly recommend you keep OkHttp up-to-date. As with auto-updating web browsers, staying current
 with HTTPS clients is an important defense against potential security problems. [We
