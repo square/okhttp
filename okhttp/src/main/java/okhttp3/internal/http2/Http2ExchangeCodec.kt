@@ -27,6 +27,7 @@ import okhttp3.internal.http.ExchangeCodec
 import okhttp3.internal.http.RequestLine
 import okhttp3.internal.http.StatusLine
 import okhttp3.internal.http.StatusLine.Companion.HTTP_CONTINUE
+import okhttp3.internal.http.promisesBody
 import okhttp3.internal.http2.Header.Companion.RESPONSE_STATUS_UTF8
 import okhttp3.internal.http2.Header.Companion.TARGET_AUTHORITY
 import okhttp3.internal.http2.Header.Companion.TARGET_AUTHORITY_UTF8
@@ -106,7 +107,10 @@ class Http2ExchangeCodec(
   }
 
   override fun reportedContentLength(response: Response): Long {
-    return response.headersContentLength()
+    return when {
+      !response.promisesBody() -> 0L
+      else -> response.headersContentLength()
+    }
   }
 
   override fun openResponseBodySource(response: Response): Source {
