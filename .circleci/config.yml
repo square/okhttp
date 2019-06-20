@@ -154,6 +154,34 @@ jobs:
       - runtests:
           platform: jdk9
 
+  testjdk12:
+    docker:
+      - image: circleci/dynamodb:12.0.1-jdk
+
+    environment:
+      JVM_OPTS: -Xmx1g
+      TERM: dumb
+
+    steps:
+      - checkout
+
+      - runtests:
+          platform: jdk9
+
+  testjdk13:
+    docker:
+      - image: circleci/dynamodb:13-ea-25-jdk
+
+    environment:
+      JVM_OPTS: -Xmx1g
+      TERM: dumb
+
+    steps:
+      - checkout
+
+      - runtests:
+          platform: jdk9
+
   testconscrypt:
     docker:
       - image: circleci/openjdk:11.0.3-jdk-stretch
@@ -192,6 +220,14 @@ workflows:
               ignore:
                 - gh-pages
       - testjdk11:
+          filters:
+            branches:
+              only: master
+      - testjdk12:
+          filters:
+            branches:
+              only: master
+      - testjdk13:
           filters:
             branches:
               only: master
