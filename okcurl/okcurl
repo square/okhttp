@@ -1,0 +1,5 @@
+#!/bin/sh -e
+
+../gradlew -q --console plain installDist
+
+./build/install/okcurl/bin/okcurl "$@"
