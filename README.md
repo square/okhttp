@@ -3,19 +3,7 @@ OkHttp
 
 An HTTP & HTTP/2 client for Android and Java applications.
 
-Docs
-----
-
- * [**User's Guide**](docs/calls.md) (includes [Calls](docs/calls.md), [Connections](docs/connections.md),
-   [Recipes](docs/recipes.md), [Interceptors](docs/interceptors.md), [HTTPS](docs/https.md), [Events](docs/events.md))
- * [**4.x API**][4x_okhttp] (also [dnsoverhttps][4x_dnsoverhttps],
-   [logging-interceptor][4x_logging], [sse][4x_sse], [tls][4x_tls],
-   [urlconnection][4x_urlconnection], [mockwebserver][4x_mockwebserver])
- * [**3.x API**][3x_okhttp] (also [dnsoverhttps][3x_dnsoverhttps],
-   [logging-interceptor][3x_logging], [sse][3x_sse], [tls][3x_tls],
-   [urlconnection][3x_urlconnection], [mockwebserver][3x_mockwebserver])
- * [**StackOverflow**](http://stackoverflow.com/questions/tagged/okhttp?sort=active)
- * [**Works with OkHttp**](docs/works_with_okhttp.md)
+See the [**project website**][website] for documentation and APIs.
 
 
 Requirements
@@ -91,21 +79,6 @@ License
  [okhttp_312x]: https://github.com/square/okhttp/tree/okhttp_3.12.x
  [okio]: https://github.com/square/okio/
  [snap]: https://oss.sonatype.org/content/repositories/snapshots/
- [tls_history]: docs/tls_configuration_history.md
+ [tls_history]: https://square.github.io/okhttp/tls_configuration_history/
  [website]: https://square.github.io/okhttp
  [okhttp3_pro]: https://github.com/square/okhttp/blob/master/okhttp/src/main/resources/META-INF/proguard/okhttp3.pro
-
- [4x_okhttp]: http://square.github.io/okhttp/4.x/okhttp/okhttp/okhttp3/
- [4x_dnsoverhttps]: http://square.github.io/okhttp/4.x/okhttp-dnsoverhttps/okhttp-dnsoverhttps/okhttp3.dnsoverhttps/
- [4x_logging]: http://square.github.io/okhttp/4.x/logging-interceptor/okhttp-logging-interceptor/okhttp3.logging/
- [4x_sse]: http://square.github.io/okhttp/4.x/okhttp-sse/okhttp-sse/okhttp3.sse/
- [4x_tls]: http://square.github.io/okhttp/4.x/okhttp-tls/okhttp-tls/okhttp3.tls/
- [4x_urlconnection]: http://square.github.io/okhttp/4.x/okhttp-urlconnection/okhttp-urlconnection/okhttp3/
- [4x_mockwebserver]: http://square.github.io/okhttp/4.x/mockwebserver/mockwebserver/okhttp3.mockwebserver/
- [3x_okhttp]: http://square.github.io/okhttp/3.x/okhttp/
- [3x_dnsoverhttps]: http://square.github.io/okhttp/3.x/okhttp-dnsoverhttps/
- [3x_logging]: http://square.github.io/okhttp/3.x/logging-interceptor/
- [3x_sse]: http://square.github.io/okhttp/3.x/okhttp-sse/
- [3x_tls]: http://square.github.io/okhttp/3.x/okhttp-tls/
- [3x_urlconnection]: http://square.github.io/okhttp/3.x/okhttp-urlconnection/
- [3x_mockwebserver]: http://square.github.io/okhttp/3.x/mockwebserver/
