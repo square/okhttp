@@ -1,0 +1,5 @@
+$dokka.format:gfm
+$dokka.linkExtension:md
+
+okhttp3.tls
+okhttp3.tls.internal

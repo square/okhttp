@@ -1,0 +1,5 @@
+$dokka.format:gfm
+$dokka.linkExtension:md
+
+okhttp3.mockwebserver
+okhttp3.mockwebserver.internal.duplex
