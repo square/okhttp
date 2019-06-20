@@ -15,7 +15,7 @@ Specific security vs. connectivity decisions are implemented by [ConnectionSpec]
  * `COMPATIBLE_TLS` is a secure configuration that connects to secure–but not current–HTTPS servers.
  * `CLEARTEXT` is an insecure configuration that is used for `http://` URLs.
 
-These loosely follow the model set in [Google Cloud Policies](https://cloud.google.com/load-balancing/docs/ssl-policies-concepts). We [track changes](TLS_CONFIGURATION_HISTORY.md) to this policy.
+These loosely follow the model set in [Google Cloud Policies](https://cloud.google.com/load-balancing/docs/ssl-policies-concepts). We [track changes](tls_configuration_history.md) to this policy.
 
 By default, OkHttp will attempt a `MODERN_TLS` connection.  However by configuring the client connectionSpecs you can allow a fall back to `COMPATIBLE_TLS` connection if the modern configuration fails.
 
@@ -103,12 +103,3 @@ The full code sample shows how to replace the host platform’s certificate auth
     ... // Full source omitted. See sample.
   }
 ```
-
-
-----
-
-<table><tr>
-  <td width="25%" align="left"><a href="INTERCEPTORS.md">← Interceptors</a></td>
-  <td width="50%" align="center">OkHttp User's Guide</td>
-  <td width="25%" align="right"><a href="EVENTS.md">Events →</a></td>
-</tr></table>

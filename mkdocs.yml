@@ -1,0 +1,50 @@
+site_name: OkHttp
+repo_name: OkHttp
+repo_url: https://github.com/square/okhttp
+site_description: "An HTTP & HTTP/2 client for Android and Java applications"
+site_author: Square, Inc.
+remote_branch: gh-pages
+
+copyright: 'Copyright &copy; 2016 Square, Inc.'
+
+theme:
+  name: 'material'
+  logo: images/icon-square.png
+  palette:
+    primary: 'teal'
+    accent: 'white'
+
+extra_css:
+  - 'css/app.css'
+
+markdown_extensions:
+  - smarty
+  - codehilite:
+      guess_lang: false
+  - footnotes
+  - meta
+  - toc:
+      permalink: true
+  - pymdownx.betterem:
+      smart_enable: all
+  - pymdownx.caret
+  - pymdownx.inlinehilite
+  - pymdownx.magiclink
+  - pymdownx.smartsymbols
+  - pymdownx.superfences
+  - tables
+
+nav:
+  - 'Calls': calls.md
+  - 'Concurrency': concurrency.md
+  - 'Connections': connections.md
+  - 'Events': events.md
+  - 'Https': https.md
+  - 'Interceptors': interceptors.md
+  - 'Recipes': recipes.md
+  - 'Security': security.md
+  - 'TLS Configuration History': tls_configuration_history.md
+  - 'Upgrading to OkHttp 4': upgrading_to_okhttp_4.md
+  - 'Works with OkHttp': works_with_okhttp.md
+  - 'Stack Overflow': https://stackoverflow.com/questions/tagged/okhttp?sort=active
+  - 'API Docs': api/okhttp/okhttp3/index.md

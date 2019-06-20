@@ -27,7 +27,7 @@ A call to `chain.proceed(request)` is a critical part of each interceptor’s im
 
 Interceptors can be chained. Suppose you have both a compressing interceptor and a checksumming interceptor: you'll need to decide whether data is compressed and then checksummed, or checksummed and then compressed. OkHttp uses lists to track interceptors, and interceptors are called in order.
 
-![Interceptors Diagram](docs/images/interceptors@2x.png)
+![Interceptors Diagram](images/interceptors@2x.png)
 
 #### Application Interceptors
 
@@ -191,12 +191,3 @@ private static final Interceptor REWRITE_CACHE_CONTROL_INTERCEPTOR = new Interce
 ```
 
 Typically this approach works best when it complements a corresponding fix on the webserver!
-
-
-----
-
-<table><tr>
-  <td width="25%" align="left"><a href="RECIPES.md">← Recipes</a></td>
-  <td width="50%" align="center">OkHttp User's Guide</td>
-  <td width="25%" align="right"><a href="HTTPS.md">HTTPS →</a></td>
-</tr></table>

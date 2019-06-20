@@ -9,7 +9,7 @@ _2019-06-03_
 bugs or performance regressions before the final 4.0.0 release.
 
 We tried our best to make it fast and safe to upgrade from OkHttp 3.x.
-[We even wrote a guide](UPGRADING_TO_OKHTTP_4.md) to help you with it!
+[We even wrote a guide](docs/upgrading_to_okhttp_4.md) to help you with it!
 
 
 ## Version 3.14.2
@@ -1304,7 +1304,7 @@ _2014-12-30_
     running SSLv3, you must manually configure your own `ConnectionSpec`.
 
  *  **OkHttp now offers interceptors.** Interceptors are a powerful mechanism
-    that can monitor, rewrite, and retry calls. The [interceptors doc](INTERCEPTORS.md) is a full
+    that can monitor, rewrite, and retry calls. The [interceptors doc](docs/interceptors.md) is a full
     introduction to this new API.
 
  *  New: APIs to iterate and selectively clear the response cache.
@@ -1787,5 +1787,5 @@ Initial release.
  [require_android_5]: https://medium.com/square-corner-blog/okhttp-3-13-requires-android-5-818bb78d07ce
  [obsolete_apache_client]: https://gist.github.com/swankjesse/09721f72039e3a46cf50f94323deb82d
  [obsolete_url_factory]: https://gist.github.com/swankjesse/dd91c0a8854e1559b00f5fc9c7bfae70
- [tls_configuration_history]: TLS_CONFIGURATION_HISTORY.md
+ [tls_configuration_history]: docs/tls_configuration_history.md
  [grpc_http2]: https://github.com/grpc/grpc/blob/master/doc/PROTOCOL-HTTP2.md
