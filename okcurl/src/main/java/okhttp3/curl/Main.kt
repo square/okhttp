@@ -91,12 +91,20 @@ class Main : Runnable {
   @Option(names = ["-v", "--verbose"], description = ["Makes $NAME verbose during the operation"])
   var verbose: Boolean = false
 
-  @Parameters(paramLabel = "url", arity = "1", description = ["Remote resource URL"])
+  @Option(names = ["--completionScript"], hidden = true)
+  var completionScript: Boolean = false
+
+  @Parameters(paramLabel = "url", description = ["Remote resource URL"])
   var url: String? = null
 
   private lateinit var client: OkHttpClient
 
   override fun run() {
+    if (completionScript) {
+      println(picocli.AutoComplete.bash("okcurl", CommandLine(Main())))
+      return
+    }
+
     if (showHttp2Frames) {
       enableHttp2FrameLogging()
     }
