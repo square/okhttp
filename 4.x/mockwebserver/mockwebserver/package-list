@@ -1,5 +1,0 @@
-$dokka.format:html
-$dokka.linkExtension:html
-
-okhttp3.mockwebserver
-okhttp3.mockwebserver.internal.duplex

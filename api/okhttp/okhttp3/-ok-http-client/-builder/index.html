@@ -1,0 +1,627 @@
+
+
+
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      <meta http-equiv="x-ua-compatible" content="ie=edge">
+      
+        <meta name="description" content="An HTTP & HTTP/2 client for Android and Java applications">
+      
+      
+      
+        <meta name="author" content="Square, Inc.">
+      
+      
+        <meta name="lang:clipboard.copy" content="Copy to clipboard">
+      
+        <meta name="lang:clipboard.copied" content="Copied to clipboard">
+      
+        <meta name="lang:search.language" content="en">
+      
+        <meta name="lang:search.pipeline.stopwords" content="True">
+      
+        <meta name="lang:search.pipeline.trimmer" content="True">
+      
+        <meta name="lang:search.result.none" content="No matching documents">
+      
+        <meta name="lang:search.result.one" content="1 matching document">
+      
+        <meta name="lang:search.result.other" content="# matching documents">
+      
+        <meta name="lang:search.tokenizer" content="[\s\-]+">
+      
+      <link rel="shortcut icon" href="../../../../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.0.4, mkdocs-material-4.4.0">
+    
+    
+      
+        <title>OkHttp</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../../../../assets/stylesheets/application.0284f74d.css">
+      
+        <link rel="stylesheet" href="../../../../../assets/stylesheets/application-palette.01803549.css">
+      
+      
+        
+        
+        <meta name="theme-color" content="#009688">
+      
+    
+    
+      <script src="../../../../../assets/javascripts/modernizr.74668098.js"></script>
+    
+    
+      
+        <link href="https://fonts.gstatic.com" rel="preconnect" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,400i,700|Roboto+Mono&display=fallback">
+        <style>body,input{font-family:"Roboto","Helvetica Neue",Helvetica,Arial,sans-serif}code,kbd,pre{font-family:"Roboto Mono","Courier New",Courier,monospace}</style>
+      
+    
+    <link rel="stylesheet" href="../../../../../assets/fonts/material-icons.css">
+    
+    
+      <link rel="stylesheet" href="../../../../../css/app.css">
+    
+    
+      
+    
+    
+  </head>
+  
+    
+    
+    <body dir="ltr" data-md-color-primary="teal" data-md-color-accent="white">
+  
+    <svg class="md-svg">
+      <defs>
+        
+        
+          <svg xmlns="http://www.w3.org/2000/svg" width="416" height="448" viewBox="0 0 416 448" id="__github"><path fill="currentColor" d="M160 304q0 10-3.125 20.5t-10.75 19T128 352t-18.125-8.5-10.75-19T96 304t3.125-20.5 10.75-19T128 256t18.125 8.5 10.75 19T160 304zm160 0q0 10-3.125 20.5t-10.75 19T288 352t-18.125-8.5-10.75-19T256 304t3.125-20.5 10.75-19T288 256t18.125 8.5 10.75 19T320 304zm40 0q0-30-17.25-51T296 232q-10.25 0-48.75 5.25Q229.5 240 208 240t-39.25-2.75Q130.75 232 120 232q-29.5 0-46.75 21T56 304q0 22 8 38.375t20.25 25.75 30.5 15 35 7.375 37.25 1.75h42q20.5 0 37.25-1.75t35-7.375 30.5-15 20.25-25.75T360 304zm56-44q0 51.75-15.25 82.75-9.5 19.25-26.375 33.25t-35.25 21.5-42.5 11.875-42.875 5.5T212 416q-19.5 0-35.5-.75t-36.875-3.125-38.125-7.5-34.25-12.875T37 371.5t-21.5-28.75Q0 312 0 260q0-59.25 34-99-6.75-20.5-6.75-42.5 0-29 12.75-54.5 27 0 47.5 9.875t47.25 30.875Q171.5 96 212 96q37 0 70 8 26.25-20.5 46.75-30.25T376 64q12.75 25.5 12.75 54.5 0 21.75-6.75 42 34 40 34 99.5z"/></svg>
+        
+      </defs>
+    </svg>
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" data-md-component="overlay" for="__drawer"></label>
+    
+      <a href="#builder" tabindex="1" class="md-skip">
+        Skip to content
+      </a>
+    
+    
+      <header class="md-header" data-md-component="header">
+  <nav class="md-header-nav md-grid">
+    <div class="md-flex">
+      <div class="md-flex__cell md-flex__cell--shrink">
+        <a href="../../" title="OkHttp" class="md-header-nav__button md-logo">
+          
+            <img src="../../../../../images/icon-square.png" width="24" height="24">
+          
+        </a>
+      </div>
+      <div class="md-flex__cell md-flex__cell--shrink">
+        <label class="md-icon md-icon--menu md-header-nav__button" for="__drawer"></label>
+      </div>
+      <div class="md-flex__cell md-flex__cell--stretch">
+        <div class="md-flex__ellipsis md-header-nav__title" data-md-component="title">
+          
+            <span class="md-header-nav__topic">
+              OkHttp
+            </span>
+            <span class="md-header-nav__topic">
+              
+                Home
+              
+            </span>
+          
+        </div>
+      </div>
+      <div class="md-flex__cell md-flex__cell--shrink">
+        
+          <label class="md-icon md-icon--search md-header-nav__button" for="__search"></label>
+          
+<div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="query" data-md-state="active">
+      <label class="md-icon md-search__icon" for="__search"></label>
+      <button type="reset" class="md-icon md-search__icon" data-md-component="reset" tabindex="-1">
+        &#xE5CD;
+      </button>
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="result">
+          <div class="md-search-result__meta">
+            Type to start searching
+          </div>
+          <ol class="md-search-result__list"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+        
+      </div>
+      
+        <div class="md-flex__cell md-flex__cell--shrink">
+          <div class="md-header-nav__source">
+            
+
+
+  
+
+<a href="https://github.com/square/okhttp/" title="Go to repository" class="md-source" data-md-source="github">
+  
+    <div class="md-source__icon">
+      <svg viewBox="0 0 24 24" width="24" height="24">
+        <use xlink:href="#__github" width="24" height="24"></use>
+      </svg>
+    </div>
+  
+  <div class="md-source__repository">
+    OkHttp
+  </div>
+</a>
+          </div>
+        </div>
+      
+    </div>
+  </nav>
+</header>
+    
+    <div class="md-container">
+      
+        
+      
+      
+      <main class="md-main">
+        <div class="md-main__inner md-grid" data-md-component="container">
+          
+            
+              <div class="md-sidebar md-sidebar--primary" data-md-component="navigation">
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    <nav class="md-nav md-nav--primary" data-md-level="0">
+  <label class="md-nav__title md-nav__title--site" for="__drawer">
+    <a href="../../" title="OkHttp" class="md-nav__button md-logo">
+      
+        <img src="../../../../../images/icon-square.png" width="48" height="48">
+      
+    </a>
+    OkHttp
+  </label>
+  
+    <div class="md-nav__source">
+      
+
+
+  
+
+<a href="https://github.com/square/okhttp/" title="Go to repository" class="md-source" data-md-source="github">
+  
+    <div class="md-source__icon">
+      <svg viewBox="0 0 24 24" width="24" height="24">
+        <use xlink:href="#__github" width="24" height="24"></use>
+      </svg>
+    </div>
+  
+  <div class="md-source__repository">
+    OkHttp
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+      
+
+
+  <li class="md-nav__item">
+    <a href="../../../../../calls/" title="Calls" class="md-nav__link">
+      Calls
+    </a>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item">
+    <a href="../../../../../concurrency/" title="Concurrency" class="md-nav__link">
+      Concurrency
+    </a>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item">
+    <a href="../../../../../connections/" title="Connections" class="md-nav__link">
+      Connections
+    </a>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item">
+    <a href="../../../../../events/" title="Events" class="md-nav__link">
+      Events
+    </a>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item">
+    <a href="../../../../../https/" title="Https" class="md-nav__link">
+      Https
+    </a>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item">
+    <a href="../../../../../interceptors/" title="Interceptors" class="md-nav__link">
+      Interceptors
+    </a>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item">
+    <a href="../../../../../recipes/" title="Recipes" class="md-nav__link">
+      Recipes
+    </a>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item">
+    <a href="../../../../../security/" title="Security" class="md-nav__link">
+      Security
+    </a>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item">
+    <a href="../../../../../tls_configuration_history/" title="TLS Configuration History" class="md-nav__link">
+      TLS Configuration History
+    </a>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item">
+    <a href="../../../../../upgrading_to_okhttp_4/" title="Upgrading to OkHttp 4" class="md-nav__link">
+      Upgrading to OkHttp 4
+    </a>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item">
+    <a href="../../../../../works_with_okhttp/" title="Works with OkHttp" class="md-nav__link">
+      Works with OkHttp
+    </a>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item">
+    <a href="https://stackoverflow.com/questions/tagged/okhttp?sort=active" title="Stack Overflow" class="md-nav__link">
+      Stack Overflow
+    </a>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item">
+    <a href="../../" title="API Docs" class="md-nav__link">
+      API Docs
+    </a>
+  </li>
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="toc">
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+<nav class="md-nav md-nav--secondary">
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">Table of contents</label>
+    <ul class="md-nav__list" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#constructors" title="Constructors" class="md-nav__link">
+    Constructors
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#functions" title="Functions" class="md-nav__link">
+    Functions
+  </a>
+  
+</li>
+      
+      
+      
+      
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          <div class="md-content">
+            <article class="md-content__inner md-typeset">
+              
+                
+                  <a href="https://github.com/square/okhttp/edit/master/docs/api/okhttp/okhttp3/-ok-http-client/-builder/index.md" title="Edit this page" class="md-icon md-content__icon">&#xE3C9;</a>
+                
+                
+                <p><a href="../../../">okhttp</a> / <a href="../../">okhttp3</a> / <a href="../">OkHttpClient</a> / <a href="./">Builder</a></p>
+<h1 id="builder">Builder<a class="headerlink" href="#builder" title="Permanent link">&para;</a></h1>
+<p><code>class Builder</code></p>
+<h3 id="constructors">Constructors<a class="headerlink" href="#constructors" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Summary</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="-init-/">&lt;init&gt;</a></td>
+<td><code>Builder()</code></td>
+</tr>
+</tbody>
+</table>
+<h3 id="functions">Functions<a class="headerlink" href="#functions" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Summary</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="add-interceptor/">addInterceptor</a></td>
+<td><code>fun addInterceptor(interceptor:</code><a href="../../-interceptor/"><code>Interceptor</code></a><code>):</code><a href="./"><code>OkHttpClient.Builder</code></a><br><code>fun addInterceptor(block: (chain:</code><a href="../../-interceptor/-chain/"><code>Interceptor.Chain</code></a><code>) -&gt;</code><a href="../../-response/"><code>Response</code></a><code>):</code><a href="./"><code>OkHttpClient.Builder</code></a></td>
+</tr>
+<tr>
+<td><a href="add-network-interceptor/">addNetworkInterceptor</a></td>
+<td><code>fun addNetworkInterceptor(interceptor:</code><a href="../../-interceptor/"><code>Interceptor</code></a><code>):</code><a href="./"><code>OkHttpClient.Builder</code></a><br><code>fun addNetworkInterceptor(block: (chain:</code><a href="../../-interceptor/-chain/"><code>Interceptor.Chain</code></a><code>) -&gt;</code><a href="../../-response/"><code>Response</code></a><code>):</code><a href="./"><code>OkHttpClient.Builder</code></a></td>
+</tr>
+<tr>
+<td><a href="authenticator/">authenticator</a></td>
+<td><code>fun authenticator(authenticator:</code><a href="../../-authenticator/"><code>Authenticator</code></a><code>):</code><a href="./"><code>OkHttpClient.Builder</code></a><br>Sets the authenticator used to respond to challenges from origin servers. Use <a href="proxy-authenticator/">proxyAuthenticator</a> to set the authenticator for proxy servers.</td>
+</tr>
+<tr>
+<td><a href="build/">build</a></td>
+<td><code>fun build():</code><a href="../"><code>OkHttpClient</code></a></td>
+</tr>
+<tr>
+<td><a href="cache/">cache</a></td>
+<td><code>fun cache(cache:</code><a href="../../-cache/"><code>Cache</code></a><code>?):</code><a href="./"><code>OkHttpClient.Builder</code></a><br>Sets the response cache to be used to read and write cached responses.</td>
+</tr>
+<tr>
+<td><a href="call-timeout/">callTimeout</a></td>
+<td><code>fun callTimeout(timeout:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html"><code>Long</code></a><code>, unit:</code><a href="https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/TimeUnit.html"><code>TimeUnit</code></a><code>):</code><a href="./"><code>OkHttpClient.Builder</code></a><br><code>fun callTimeout(duration:</code><a href="https://docs.oracle.com/javase/8/docs/api/java/time/Duration.html"><code>Duration</code></a><code>):</code><a href="./"><code>OkHttpClient.Builder</code></a><br>Sets the default timeout for complete calls. A value of 0 means no timeout, otherwise values must be between 1 and <a href="https://docs.oracle.com/javase/8/docs/api/java/lang/Integer.html#MAX_VALUE">Integer.MAX_VALUE</a> when converted to milliseconds.</td>
+</tr>
+<tr>
+<td><a href="certificate-pinner/">certificatePinner</a></td>
+<td><code>fun certificatePinner(certificatePinner:</code><a href="../../-certificate-pinner/"><code>CertificatePinner</code></a><code>):</code><a href="./"><code>OkHttpClient.Builder</code></a><br>Sets the certificate pinner that constrains which certificates are trusted. By default HTTPS connections rely on only the <a href="#">SSL socket factory</a> to establish trust. Pinning certificates avoids the need to trust certificate authorities.</td>
+</tr>
+<tr>
+<td><a href="connection-pool/">connectionPool</a></td>
+<td><code>fun connectionPool(connectionPool:</code><a href="../../-connection-pool/"><code>ConnectionPool</code></a><code>):</code><a href="./"><code>OkHttpClient.Builder</code></a><br>Sets the connection pool used to recycle HTTP and HTTPS connections.</td>
+</tr>
+<tr>
+<td><a href="connection-specs/">connectionSpecs</a></td>
+<td><code>fun connectionSpecs(connectionSpecs:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.html"><code>List</code></a><code>&lt;</code><a href="../../-connection-spec/"><code>ConnectionSpec</code></a><code>&gt;):</code><a href="./"><code>OkHttpClient.Builder</code></a></td>
+</tr>
+<tr>
+<td><a href="connect-timeout/">connectTimeout</a></td>
+<td><code>fun connectTimeout(timeout:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html"><code>Long</code></a><code>, unit:</code><a href="https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/TimeUnit.html"><code>TimeUnit</code></a><code>):</code><a href="./"><code>OkHttpClient.Builder</code></a><br><code>fun connectTimeout(duration:</code><a href="https://docs.oracle.com/javase/8/docs/api/java/time/Duration.html"><code>Duration</code></a><code>):</code><a href="./"><code>OkHttpClient.Builder</code></a><br>Sets the default connect timeout for new connections. A value of 0 means no timeout, otherwise values must be between 1 and <a href="https://docs.oracle.com/javase/8/docs/api/java/lang/Integer.html#MAX_VALUE">Integer.MAX_VALUE</a> when converted to milliseconds.</td>
+</tr>
+<tr>
+<td><a href="cookie-jar/">cookieJar</a></td>
+<td><code>fun cookieJar(cookieJar:</code><a href="../../-cookie-jar/"><code>CookieJar</code></a><code>):</code><a href="./"><code>OkHttpClient.Builder</code></a><br>Sets the handler that can accept cookies from incoming HTTP responses and provides cookies to outgoing HTTP requests.</td>
+</tr>
+<tr>
+<td><a href="dispatcher/">dispatcher</a></td>
+<td><code>fun dispatcher(dispatcher:</code><a href="../../-dispatcher/"><code>Dispatcher</code></a><code>):</code><a href="./"><code>OkHttpClient.Builder</code></a><br>Sets the dispatcher used to set policy and execute asynchronous requests. Must not be null.</td>
+</tr>
+<tr>
+<td><a href="dns/">dns</a></td>
+<td><code>fun dns(dns:</code><a href="../../-dns/"><code>Dns</code></a><code>):</code><a href="./"><code>OkHttpClient.Builder</code></a><br>Sets the DNS service used to lookup IP addresses for hostnames.</td>
+</tr>
+<tr>
+<td><a href="event-listener/">eventListener</a></td>
+<td><code>fun eventListener(eventListener:</code><a href="../../-event-listener/"><code>EventListener</code></a><code>):</code><a href="./"><code>OkHttpClient.Builder</code></a><br>Configure a single client scoped listener that will receive all analytic events for this client.</td>
+</tr>
+<tr>
+<td><a href="event-listener-factory/">eventListenerFactory</a></td>
+<td><code>fun eventListenerFactory(eventListenerFactory:</code><a href="../../-event-listener/-factory/"><code>EventListener.Factory</code></a><code>):</code><a href="./"><code>OkHttpClient.Builder</code></a><br>Configure a factory to provide per-call scoped listeners that will receive analytic events for this client.</td>
+</tr>
+<tr>
+<td><a href="follow-redirects/">followRedirects</a></td>
+<td><code>fun followRedirects(followRedirects:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><code>Boolean</code></a><code>):</code><a href="./"><code>OkHttpClient.Builder</code></a><br>Configure this client to follow redirects. If unset, redirects will be followed.</td>
+</tr>
+<tr>
+<td><a href="follow-ssl-redirects/">followSslRedirects</a></td>
+<td><code>fun followSslRedirects(followProtocolRedirects:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><code>Boolean</code></a><code>):</code><a href="./"><code>OkHttpClient.Builder</code></a><br>Configure this client to follow redirects from HTTPS to HTTP and from HTTP to HTTPS.</td>
+</tr>
+<tr>
+<td><a href="hostname-verifier/">hostnameVerifier</a></td>
+<td><code>fun hostnameVerifier(hostnameVerifier:</code><a href="https://docs.oracle.com/javase/8/docs/api/javax/net/ssl/HostnameVerifier.html"><code>HostnameVerifier</code></a><code>):</code><a href="./"><code>OkHttpClient.Builder</code></a><br>Sets the verifier used to confirm that response certificates apply to requested hostnames for HTTPS connections.</td>
+</tr>
+<tr>
+<td><a href="interceptors/">interceptors</a></td>
+<td><code>fun interceptors():</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-mutable-list/index.html"><code>MutableList</code></a><code>&lt;</code><a href="../../-interceptor/"><code>Interceptor</code></a><code>&gt;</code><br>Returns a modifiable list of interceptors that observe the full span of each call: from before the connection is established (if any) until after the response source is selected (either the origin server, cache, or both).</td>
+</tr>
+<tr>
+<td><a href="network-interceptors/">networkInterceptors</a></td>
+<td><code>fun networkInterceptors():</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-mutable-list/index.html"><code>MutableList</code></a><code>&lt;</code><a href="../../-interceptor/"><code>Interceptor</code></a><code>&gt;</code><br>Returns a modifiable list of interceptors that observe a single network request and response. These interceptors must call <a href="../../-interceptor/-chain/proceed/">Interceptor.Chain.proceed</a> exactly once: it is an error for a network interceptor to short-circuit or repeat a network request.</td>
+</tr>
+<tr>
+<td><a href="ping-interval/">pingInterval</a></td>
+<td><code>fun pingInterval(interval:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html"><code>Long</code></a><code>, unit:</code><a href="https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/TimeUnit.html"><code>TimeUnit</code></a><code>):</code><a href="./"><code>OkHttpClient.Builder</code></a><br><code>fun pingInterval(duration:</code><a href="https://docs.oracle.com/javase/8/docs/api/java/time/Duration.html"><code>Duration</code></a><code>):</code><a href="./"><code>OkHttpClient.Builder</code></a><br>Sets the interval between HTTP/2 and web socket pings initiated by this client. Use this to automatically send ping frames until either the connection fails or it is closed. This keeps the connection alive and may detect connectivity failures.</td>
+</tr>
+<tr>
+<td><a href="protocols/">protocols</a></td>
+<td><code>fun protocols(protocols:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.html"><code>List</code></a><code>&lt;</code><a href="../../-protocol/"><code>Protocol</code></a><code>&gt;):</code><a href="./"><code>OkHttpClient.Builder</code></a><br>Configure the protocols used by this client to communicate with remote servers. By default this client will prefer the most efficient transport available, falling back to more ubiquitous protocols. Applications should only call this method to avoid specific compatibility problems, such as web servers that behave incorrectly when HTTP/2 is enabled.</td>
+</tr>
+<tr>
+<td><a href="proxy/">proxy</a></td>
+<td><code>fun proxy(proxy:</code><a href="https://docs.oracle.com/javase/8/docs/api/java/net/Proxy.html"><code>Proxy</code></a><code>?):</code><a href="./"><code>OkHttpClient.Builder</code></a><br>Sets the HTTP proxy that will be used by connections created by this client. This takes precedence over <a href="proxy-selector/">proxySelector</a>, which is only honored when this proxy is null (which it is by default). To disable proxy use completely, call <code>proxy(Proxy.NO_PROXY)</code>.</td>
+</tr>
+<tr>
+<td><a href="proxy-authenticator/">proxyAuthenticator</a></td>
+<td><code>fun proxyAuthenticator(proxyAuthenticator:</code><a href="../../-authenticator/"><code>Authenticator</code></a><code>):</code><a href="./"><code>OkHttpClient.Builder</code></a><br>Sets the authenticator used to respond to challenges from proxy servers. Use <a href="authenticator/">authenticator</a> to set the authenticator for origin servers.</td>
+</tr>
+<tr>
+<td><a href="proxy-selector/">proxySelector</a></td>
+<td><code>fun proxySelector(proxySelector:</code><a href="https://docs.oracle.com/javase/8/docs/api/java/net/ProxySelector.html"><code>ProxySelector</code></a><code>):</code><a href="./"><code>OkHttpClient.Builder</code></a><br>Sets the proxy selection policy to be used if no <a href="proxy/">proxy</a> is specified explicitly. The proxy selector may return multiple proxies; in that case they will be tried in sequence until a successful connection is established.</td>
+</tr>
+<tr>
+<td><a href="read-timeout/">readTimeout</a></td>
+<td><code>fun readTimeout(timeout:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html"><code>Long</code></a><code>, unit:</code><a href="https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/TimeUnit.html"><code>TimeUnit</code></a><code>):</code><a href="./"><code>OkHttpClient.Builder</code></a><br><code>fun readTimeout(duration:</code><a href="https://docs.oracle.com/javase/8/docs/api/java/time/Duration.html"><code>Duration</code></a><code>):</code><a href="./"><code>OkHttpClient.Builder</code></a><br>Sets the default read timeout for new connections. A value of 0 means no timeout, otherwise values must be between 1 and <a href="https://docs.oracle.com/javase/8/docs/api/java/lang/Integer.html#MAX_VALUE">Integer.MAX_VALUE</a> when converted to milliseconds.</td>
+</tr>
+<tr>
+<td><a href="retry-on-connection-failure/">retryOnConnectionFailure</a></td>
+<td><code>fun retryOnConnectionFailure(retryOnConnectionFailure:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><code>Boolean</code></a><code>):</code><a href="./"><code>OkHttpClient.Builder</code></a><br>Configure this client to retry or not when a connectivity problem is encountered. By default, this client silently recovers from the following problems:</td>
+</tr>
+<tr>
+<td><a href="socket-factory/">socketFactory</a></td>
+<td><code>fun socketFactory(socketFactory:</code><a href="https://docs.oracle.com/javase/8/docs/api/javax/net/SocketFactory.html"><code>SocketFactory</code></a><code>):</code><a href="./"><code>OkHttpClient.Builder</code></a><br>Sets the socket factory used to create connections. OkHttp only uses the parameterless <a href="https://docs.oracle.com/javase/8/docs/api/javax/net/SocketFactory.html#createSocket()">SocketFactory.createSocket</a> method to create unconnected sockets. Overriding this method, e. g., allows the socket to be bound to a specific local address.</td>
+</tr>
+<tr>
+<td><a href="ssl-socket-factory/">sslSocketFactory</a></td>
+<td><code>fun sslSocketFactory(sslSocketFactory:</code><a href="https://docs.oracle.com/javase/8/docs/api/javax/net/ssl/SSLSocketFactory.html"><code>SSLSocketFactory</code></a><code>, trustManager:</code><a href="https://docs.oracle.com/javase/8/docs/api/javax/net/ssl/X509TrustManager.html"><code>X509TrustManager</code></a><code>):</code><a href="./"><code>OkHttpClient.Builder</code></a><br>Sets the socket factory and trust manager used to secure HTTPS connections. If unset, the system defaults will be used.</td>
+</tr>
+<tr>
+<td><a href="write-timeout/">writeTimeout</a></td>
+<td><code>fun writeTimeout(timeout:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html"><code>Long</code></a><code>, unit:</code><a href="https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/TimeUnit.html"><code>TimeUnit</code></a><code>):</code><a href="./"><code>OkHttpClient.Builder</code></a><br><code>fun writeTimeout(duration:</code><a href="https://docs.oracle.com/javase/8/docs/api/java/time/Duration.html"><code>Duration</code></a><code>):</code><a href="./"><code>OkHttpClient.Builder</code></a><br>Sets the default write timeout for new connections. A value of 0 means no timeout, otherwise values must be between 1 and <a href="https://docs.oracle.com/javase/8/docs/api/java/lang/Integer.html#MAX_VALUE">Integer.MAX_VALUE</a> when converted to milliseconds.</td>
+</tr>
+</tbody>
+</table>
+                
+                  
+                
+              
+              
+                
+
+
+              
+            </article>
+          </div>
+        </div>
+      </main>
+      
+        
+<footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-footer-copyright">
+        
+          <div class="md-footer-copyright__highlight">
+            Copyright &copy; 2016 Square, Inc.
+          </div>
+        
+        powered by
+        <a href="https://www.mkdocs.org">MkDocs</a>
+        and
+        <a href="https://squidfunk.github.io/mkdocs-material/">
+          Material for MkDocs</a>
+      </div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    
+      <script src="../../../../../assets/javascripts/application.245445c6.js"></script>
+      
+      <script>app.initialize({version:"1.0.4",url:{base:"../../../../.."}})</script>
+      
+    
+  </body>
+</html>

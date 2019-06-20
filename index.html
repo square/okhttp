@@ -1,228 +1,573 @@
-<!DOCTYPE html>
-<html lang="en">
+
+
+
+
+<!doctype html>
+<html lang="en" class="no-js">
   <head>
-    <meta charset="utf-8">
-    <title>OkHttp</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="An HTTP &amp; HTTP/2 client for Android and Java applications">
-    <link href="static/bootstrap-combined.min.css" rel="stylesheet">
-    <link href="static/app.css" rel="stylesheet">
-    <link href="static/app-theme.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css?family=Roboto:400,300italic,100,100italic,300" rel="stylesheet" type="text/css">
-    <!--[if lt IE 9]><script src="static/html5shiv.min.js"></script><![endif]-->
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      <meta http-equiv="x-ua-compatible" content="ie=edge">
+      
+        <meta name="description" content="An HTTP & HTTP/2 client for Android and Java applications">
+      
+      
+      
+        <meta name="author" content="Square, Inc.">
+      
+      
+        <meta name="lang:clipboard.copy" content="Copy to clipboard">
+      
+        <meta name="lang:clipboard.copied" content="Copied to clipboard">
+      
+        <meta name="lang:search.language" content="en">
+      
+        <meta name="lang:search.pipeline.stopwords" content="True">
+      
+        <meta name="lang:search.pipeline.trimmer" content="True">
+      
+        <meta name="lang:search.result.none" content="No matching documents">
+      
+        <meta name="lang:search.result.one" content="1 matching document">
+      
+        <meta name="lang:search.result.other" content="# matching documents">
+      
+        <meta name="lang:search.tokenizer" content="[\s\-]+">
+      
+      <link rel="shortcut icon" href="assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.0.4, mkdocs-material-4.4.0">
+    
+    
+      
+        <title>OkHttp</title>
+      
+    
+    
+      <link rel="stylesheet" href="assets/stylesheets/application.0284f74d.css">
+      
+        <link rel="stylesheet" href="assets/stylesheets/application-palette.01803549.css">
+      
+      
+        
+        
+        <meta name="theme-color" content="#009688">
+      
+    
+    
+      <script src="assets/javascripts/modernizr.74668098.js"></script>
+    
+    
+      
+        <link href="https://fonts.gstatic.com" rel="preconnect" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,400i,700|Roboto+Mono&display=fallback">
+        <style>body,input{font-family:"Roboto","Helvetica Neue",Helvetica,Arial,sans-serif}code,kbd,pre{font-family:"Roboto Mono","Courier New",Courier,monospace}</style>
+      
+    
+    <link rel="stylesheet" href="assets/fonts/material-icons.css">
+    
+    
+      <link rel="stylesheet" href="css/app.css">
+    
+    
+      
+    
+    
   </head>
-  <body data-target=".content-nav">
-    <header>
-      <div class="container">
-        <div class="row">
-          <div class="span5">
-            <h1>OkHttp</h1>
-          </div>
-          <div class="span7">
-            <menu>
-              <ul>
-                <li><a href="#download" class="menu download">Download <span class="version-tag">Latest</span></a></li>
-                <li><a href="https://github.com/square/okhttp" data-title="View GitHub Project" class="menu github"><img src="static/icon-github.png" alt="GitHub"/></a></li>
-                <li><a href="https://square.github.io/" data-title="Square Open Source Portal" class="menu square"><img src="static/icon-square.png" alt="Square"/></a></li>
-              </ul>
-            </menu>
-          </div>
+  
+    
+    
+    <body dir="ltr" data-md-color-primary="teal" data-md-color-accent="white">
+  
+    <svg class="md-svg">
+      <defs>
+        
+        
+          <svg xmlns="http://www.w3.org/2000/svg" width="416" height="448" viewBox="0 0 416 448" id="__github"><path fill="currentColor" d="M160 304q0 10-3.125 20.5t-10.75 19T128 352t-18.125-8.5-10.75-19T96 304t3.125-20.5 10.75-19T128 256t18.125 8.5 10.75 19T160 304zm160 0q0 10-3.125 20.5t-10.75 19T288 352t-18.125-8.5-10.75-19T256 304t3.125-20.5 10.75-19T288 256t18.125 8.5 10.75 19T320 304zm40 0q0-30-17.25-51T296 232q-10.25 0-48.75 5.25Q229.5 240 208 240t-39.25-2.75Q130.75 232 120 232q-29.5 0-46.75 21T56 304q0 22 8 38.375t20.25 25.75 30.5 15 35 7.375 37.25 1.75h42q20.5 0 37.25-1.75t35-7.375 30.5-15 20.25-25.75T360 304zm56-44q0 51.75-15.25 82.75-9.5 19.25-26.375 33.25t-35.25 21.5-42.5 11.875-42.875 5.5T212 416q-19.5 0-35.5-.75t-36.875-3.125-38.125-7.5-34.25-12.875T37 371.5t-21.5-28.75Q0 312 0 260q0-59.25 34-99-6.75-20.5-6.75-42.5 0-29 12.75-54.5 27 0 47.5 9.875t47.25 30.875Q171.5 96 212 96q37 0 70 8 26.25-20.5 46.75-30.25T376 64q12.75 25.5 12.75 54.5 0 21.75-6.75 42 34 40 34 99.5z"/></svg>
+        
+      </defs>
+    </svg>
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" data-md-component="overlay" for="__drawer"></label>
+    
+      <a href="#an-http-http2-client-for-android-and-java-applications" tabindex="1" class="md-skip">
+        Skip to content
+      </a>
+    
+    
+      <header class="md-header" data-md-component="header">
+  <nav class="md-header-nav md-grid">
+    <div class="md-flex">
+      <div class="md-flex__cell md-flex__cell--shrink">
+        <a href="api/okhttp/okhttp3/" title="OkHttp" class="md-header-nav__button md-logo">
+          
+            <img src="images/icon-square.png" width="24" height="24">
+          
+        </a>
+      </div>
+      <div class="md-flex__cell md-flex__cell--shrink">
+        <label class="md-icon md-icon--menu md-header-nav__button" for="__drawer"></label>
+      </div>
+      <div class="md-flex__cell md-flex__cell--stretch">
+        <div class="md-flex__ellipsis md-header-nav__title" data-md-component="title">
+          
+            <span class="md-header-nav__topic">
+              OkHttp
+            </span>
+            <span class="md-header-nav__topic">
+              
+                Home
+              
+            </span>
+          
         </div>
       </div>
-    </header>
-    <section id="subtitle">
-      <div class="container">
-        <div class="row">
-          <div class="span12">
-            <h2>An <strong>HTTP &amp; HTTP/2</strong> client for Android and Java applications</h2>
+      <div class="md-flex__cell md-flex__cell--shrink">
+        
+          <label class="md-icon md-icon--search md-header-nav__button" for="__search"></label>
+          
+<div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="query" data-md-state="active">
+      <label class="md-icon md-search__icon" for="__search"></label>
+      <button type="reset" class="md-icon md-search__icon" data-md-component="reset" tabindex="-1">
+        &#xE5CD;
+      </button>
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="result">
+          <div class="md-search-result__meta">
+            Type to start searching
           </div>
+          <ol class="md-search-result__list"></ol>
         </div>
       </div>
-    </section>
-    <section id="body">
-      <div class="container">
-        <div class="row">
-          <div class="span9">
-            <h3 id="overview">Overview</h3>
-            <p>HTTP is the way modern applications network. It’s how we exchange data &amp; media.
-                Doing HTTP efficiently makes your stuff load faster and saves bandwidth.</p>
+    </div>
+  </div>
+</div>
+        
+      </div>
+      
+        <div class="md-flex__cell md-flex__cell--shrink">
+          <div class="md-header-nav__source">
+            
 
-            <p>OkHttp is an HTTP client that’s efficient by default:</p>
-            <ul>
-                <li>HTTP/2 support allows all requests to the same host to share a socket.</li>
-                <li>Connection pooling reduces request latency (if HTTP/2 isn’t available).</li>
-                <li>Transparent GZIP shrinks download sizes.</li>
-                <li>Response caching avoids the network completely for repeat requests.</li>
-            </ul>
 
-            <p>OkHttp perseveres when the network is troublesome: it will silently recover from
-                common connection problems. If your service has multiple IP addresses OkHttp will
-                attempt alternate addresses if the first connect fails. This is necessary for IPv4+IPv6
-                and for services hosted in redundant data centers. OkHttp supports modern TLS
-                features (TLS 1.3, ALPN, certificate pinning). It can be configured to fall back for
-                broad connectivity.</p>
+  
 
-            <p>Using OkHttp is easy. Its request/response API is designed with fluent builders and
-                immutability. It supports both synchronous blocking calls and async calls with
-                callbacks.</p>
+<a href="https://github.com/square/okhttp/" title="Go to repository" class="md-source" data-md-source="github">
+  
+    <div class="md-source__icon">
+      <svg viewBox="0 0 24 24" width="24" height="24">
+        <use xlink:href="#__github" width="24" height="24"></use>
+      </svg>
+    </div>
+  
+  <div class="md-source__repository">
+    OkHttp
+  </div>
+</a>
+          </div>
+        </div>
+      
+    </div>
+  </nav>
+</header>
+    
+    <div class="md-container">
+      
+        
+      
+      
+      <main class="md-main">
+        <div class="md-main__inner md-grid" data-md-component="container">
+          
+            
+              <div class="md-sidebar md-sidebar--primary" data-md-component="navigation">
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    <nav class="md-nav md-nav--primary" data-md-level="0">
+  <label class="md-nav__title md-nav__title--site" for="__drawer">
+    <a href="api/okhttp/okhttp3/" title="OkHttp" class="md-nav__button md-logo">
+      
+        <img src="images/icon-square.png" width="48" height="48">
+      
+    </a>
+    OkHttp
+  </label>
+  
+    <div class="md-nav__source">
+      
 
-            <p>OkHttp supports Android 5.0+ (API level 21+) and Java 8+.</p>
 
-            <h3 id="examples">Examples</h3>
-            <h4>Get a URL</h4>
-            <p>This program downloads a URL and prints its contents as a string. <a href="https://raw.github.com/square/okhttp/master/samples/guide/src/main/java/okhttp3/guide/GetExample.java">Full source</a>.
-<pre class="prettyprint">
-OkHttpClient client = new OkHttpClient();
+  
 
-String run(String url) throws IOException {
-  Request request = new Request.Builder()
-      .url(url)
-      .build();
+<a href="https://github.com/square/okhttp/" title="Go to repository" class="md-source" data-md-source="github">
+  
+    <div class="md-source__icon">
+      <svg viewBox="0 0 24 24" width="24" height="24">
+        <use xlink:href="#__github" width="24" height="24"></use>
+      </svg>
+    </div>
+  
+  <div class="md-source__repository">
+    OkHttp
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+      
 
-  try (Response response = client.newCall(request).execute()) {
-    return response.body().string();
-  }
-}
-</pre>
-            <h4>Post to a Server</h4>
-            <p>This program posts data to a service. <a href="https://raw.github.com/square/okhttp/master/samples/guide/src/main/java/okhttp3/guide/PostExample.java">Full source</a>.
 
-<pre class="prettyprint">
-public static final MediaType JSON
-    = MediaType.get("application/json; charset=utf-8");
+  <li class="md-nav__item">
+    <a href="calls/" title="Calls" class="md-nav__link">
+      Calls
+    </a>
+  </li>
 
-OkHttpClient client = new OkHttpClient();
+    
+      
+      
+      
 
-String post(String url, String json) throws IOException {
-  RequestBody body = RequestBody.create(JSON, json);
-  Request request = new Request.Builder()
-      .url(url)
-      .post(body)
-      .build();
-  try (Response response = client.newCall(request).execute()) {
-    return response.body().string();
-  }
-}
-</pre>
 
-            <h3 id="download">Download</h3>
-            <p><a href="https://search.maven.org/remote_content?g=com.squareup.okhttp3&a=okhttp&v=LATEST" class="dl version-href">&darr; <span class="version-tag">Latest</span> JAR</a></p>
-            <p>You'll also need <a href="https://github.com/square/okio">Okio</a>, which OkHttp
-                uses for fast I/O and resizable buffers. Download the
-                <a href="https://search.maven.org/remote_content?g=com.squareup.okio&a=okio&v=LATEST">latest JAR</a>.
-            <p>The source code to OkHttp, its samples, and this website is <a href="https://github.com/square/okhttp">available on GitHub</a>.</p>
+  <li class="md-nav__item">
+    <a href="concurrency/" title="Concurrency" class="md-nav__link">
+      Concurrency
+    </a>
+  </li>
 
-            <h4>Maven</h4>
-            <pre class="prettyprint">&lt;dependency>
-  &lt;groupId>com.squareup.okhttp3&lt;/groupId>
-  &lt;artifactId>okhttp&lt;/artifactId>
-  &lt;version><span class="version pln"><em>(insert latest version)</em></span>&lt;/version>
-&lt;/dependency></pre>
+    
+      
+      
+      
 
-            <h4>Gradle</h4>
-            <pre class="prettyprint">implementation 'com.squareup.okhttp3:okhttp:<span class="version pln"><em>(insert latest version)</em></span>'</pre>
 
-            <h3 id="contributing">Contributing</h3>
-            <p>If you would like to contribute code you can do so through GitHub by forking the repository and sending a pull request.</p>
-            <p>When submitting code, please make every effort to follow existing conventions and style in order to keep the code as readable as possible. Please also make sure your code compiles by running <code>mvn clean verify</code>.</p>
+  <li class="md-nav__item">
+    <a href="connections/" title="Connections" class="md-nav__link">
+      Connections
+    </a>
+  </li>
 
-            <p>Some general advice</p>
-            <ul>
-                <li>Don’t change public API lightly, avoid if possible, and include your reasoning in the PR if essential. It causes pain for developers who use OkHttp and sometimes runtime errors.</li>
-                <li>Favour a working external library if appropriate. There are many examples of OkHttp libraries that can sit on top or hook in via existing APIs.</li>
-                <li>Get working code on a personal branch with tests before you submit a PR.</li>
-                <li>OkHttp is a small and light dependency. Don't introduce new dependencies or major new functionality.</li>
-                <li>OkHttp targets the intersection of RFC correct and widely implemented. Incorrect implementations that are very widely implemented e.g. a bug in Apache, Nginx, Google, Firefox should also be handled.</li>
-            </ul>
+    
+      
+      
+      
 
-            <p>Before your code can be accepted into the project you must also sign the <a href="https://squ.re/sign-the-cla">Individual Contributor License Agreement (CLA)</a>.</p>
 
-            <h3 id="license">License</h3>
-            <pre>Copyright 2016 Square, Inc.
+  <li class="md-nav__item">
+    <a href="events/" title="Events" class="md-nav__link">
+      Events
+    </a>
+  </li>
 
-Licensed under the Apache License, Version 2.0 (the "License");
+    
+      
+      
+      
+
+
+  <li class="md-nav__item">
+    <a href="https/" title="Https" class="md-nav__link">
+      Https
+    </a>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item">
+    <a href="interceptors/" title="Interceptors" class="md-nav__link">
+      Interceptors
+    </a>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item">
+    <a href="recipes/" title="Recipes" class="md-nav__link">
+      Recipes
+    </a>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item">
+    <a href="security/" title="Security" class="md-nav__link">
+      Security
+    </a>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item">
+    <a href="tls_configuration_history/" title="TLS Configuration History" class="md-nav__link">
+      TLS Configuration History
+    </a>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item">
+    <a href="upgrading_to_okhttp_4/" title="Upgrading to OkHttp 4" class="md-nav__link">
+      Upgrading to OkHttp 4
+    </a>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item">
+    <a href="works_with_okhttp/" title="Works with OkHttp" class="md-nav__link">
+      Works with OkHttp
+    </a>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item">
+    <a href="https://stackoverflow.com/questions/tagged/okhttp?sort=active" title="Stack Overflow" class="md-nav__link">
+      Stack Overflow
+    </a>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item">
+    <a href="api/okhttp/okhttp3/" title="API Docs" class="md-nav__link">
+      API Docs
+    </a>
+  </li>
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="toc">
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+<nav class="md-nav md-nav--secondary">
+  
+  
+    
+  
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          <div class="md-content">
+            <article class="md-content__inner md-typeset">
+              
+                
+                  <a href="https://github.com/square/okhttp/edit/master/docs/index.md" title="Edit this page" class="md-icon md-content__icon">&#xE3C9;</a>
+                
+                
+                <h2 id="an-http-http2-client-for-android-and-java-applications">An HTTP &amp; HTTP/2 client for Android and Java applications<a class="headerlink" href="#an-http-http2-client-for-android-and-java-applications" title="Permanent link">&para;</a></h2>
+<h1 id="overview">Overview<a class="headerlink" href="#overview" title="Permanent link">&para;</a></h1>
+<p>HTTP is the way modern applications network. It’s how we exchange data &amp; media.
+Doing HTTP efficiently makes your stuff load faster and saves bandwidth.</p>
+<p>OkHttp is an HTTP client that’s efficient by default:</p>
+<ul>
+<li>HTTP/2 support allows all requests to the same host to share a socket.</li>
+<li>Connection pooling reduces request latency (if HTTP/2 isn’t available).</li>
+<li>Transparent GZIP shrinks download sizes.</li>
+<li>Response caching avoids the network completely for repeat requests.</li>
+</ul>
+<p>OkHttp perseveres when the network is troublesome: it will silently recover from
+common connection problems. If your service has multiple IP addresses OkHttp will
+attempt alternate addresses if the first connect fails. This is necessary for IPv4+IPv6
+and for services hosted in redundant data centers. OkHttp supports modern TLS
+features (TLS 1.3, ALPN, certificate pinning). It can be configured to fall back for
+broad connectivity.</p>
+<p>Using OkHttp is easy. Its request/response API is designed with fluent builders and
+immutability. It supports both synchronous blocking calls and async calls with
+callbacks.</p>
+<p>OkHttp supports Android 5.0+ (API level 21+) and Java 8+.</p>
+<h1 id="examples">Examples<a class="headerlink" href="#examples" title="Permanent link">&para;</a></h1>
+<h2 id="get-a-url">Get a URL<a class="headerlink" href="#get-a-url" title="Permanent link">&para;</a></h2>
+<p>This program downloads a URL and prints its contents as a string. <a href="https://raw.github.com/square/okhttp/master/samples/guide/src/main/java/okhttp3/guide/GetExample.java">Full source</a>.</p>
+<div class="codehilite"><pre><span></span><span class="n">OkHttpClient</span> <span class="n">client</span> <span class="o">=</span> <span class="k">new</span> <span class="n">OkHttpClient</span><span class="o">();</span>
+
+<span class="n">String</span> <span class="nf">run</span><span class="o">(</span><span class="n">String</span> <span class="n">url</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">IOException</span> <span class="o">{</span>
+  <span class="n">Request</span> <span class="n">request</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Request</span><span class="o">.</span><span class="na">Builder</span><span class="o">()</span>
+      <span class="o">.</span><span class="na">url</span><span class="o">(</span><span class="n">url</span><span class="o">)</span>
+      <span class="o">.</span><span class="na">build</span><span class="o">();</span>
+
+  <span class="k">try</span> <span class="o">(</span><span class="n">Response</span> <span class="n">response</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="na">newCall</span><span class="o">(</span><span class="n">request</span><span class="o">).</span><span class="na">execute</span><span class="o">())</span> <span class="o">{</span>
+    <span class="k">return</span> <span class="n">response</span><span class="o">.</span><span class="na">body</span><span class="o">().</span><span class="na">string</span><span class="o">();</span>
+  <span class="o">}</span>
+<span class="o">}</span>
+</pre></div>
+
+<h2 id="post-to-a-server">Post to a Server<a class="headerlink" href="#post-to-a-server" title="Permanent link">&para;</a></h2>
+<p>This program posts data to a service. <a href="https://raw.github.com/square/okhttp/master/samples/guide/src/main/java/okhttp3/guide/PostExample.java">Full source</a>.</p>
+<div class="codehilite"><pre><span></span><span class="kd">public</span> <span class="kd">static</span> <span class="kd">final</span> <span class="n">MediaType</span> <span class="n">JSON</span>
+    <span class="o">=</span> <span class="n">MediaType</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="s">&quot;application/json; charset=utf-8&quot;</span><span class="o">);</span>
+
+<span class="n">OkHttpClient</span> <span class="n">client</span> <span class="o">=</span> <span class="k">new</span> <span class="n">OkHttpClient</span><span class="o">();</span>
+
+<span class="n">String</span> <span class="nf">post</span><span class="o">(</span><span class="n">String</span> <span class="n">url</span><span class="o">,</span> <span class="n">String</span> <span class="n">json</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">IOException</span> <span class="o">{</span>
+  <span class="n">RequestBody</span> <span class="n">body</span> <span class="o">=</span> <span class="n">RequestBody</span><span class="o">.</span><span class="na">create</span><span class="o">(</span><span class="n">JSON</span><span class="o">,</span> <span class="n">json</span><span class="o">);</span>
+  <span class="n">Request</span> <span class="n">request</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Request</span><span class="o">.</span><span class="na">Builder</span><span class="o">()</span>
+      <span class="o">.</span><span class="na">url</span><span class="o">(</span><span class="n">url</span><span class="o">)</span>
+      <span class="o">.</span><span class="na">post</span><span class="o">(</span><span class="n">body</span><span class="o">)</span>
+      <span class="o">.</span><span class="na">build</span><span class="o">();</span>
+  <span class="k">try</span> <span class="o">(</span><span class="n">Response</span> <span class="n">response</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="na">newCall</span><span class="o">(</span><span class="n">request</span><span class="o">).</span><span class="na">execute</span><span class="o">())</span> <span class="o">{</span>
+    <span class="k">return</span> <span class="n">response</span><span class="o">.</span><span class="na">body</span><span class="o">().</span><span class="na">string</span><span class="o">();</span>
+  <span class="o">}</span>
+<span class="o">}</span>
+</pre></div>
+
+<h1 id="download">Download<a class="headerlink" href="#download" title="Permanent link">&para;</a></h1>
+<p><button data-md-color-primary="teal" href="https://search.maven.org/remote_content?g=com.squareup.okhttp3&a=okhttp&v=LATEST" class="dl">&darr;&nbsp;Latest&nbsp;JAR</button></p>
+<p>You&rsquo;ll also need <a href="https://github.com/square/okio">Okio</a>, which OkHttp uses for fast I/O and resizable buffers. Download the
+<a href="https://search.maven.org/remote_content?g=com.squareup.okio&amp;a=okio&amp;v=LATEST">latest JAR</a>. The source code to OkHttp, its samples, and this website is <a href="https://github.com/square/okhttp">available
+on GitHub</a>.</p>
+<h2 id="maven">Maven<a class="headerlink" href="#maven" title="Permanent link">&para;</a></h2>
+<div class="codehilite"><pre><span></span><span class="nt">&lt;dependency&gt;</span>
+  <span class="nt">&lt;groupId&gt;</span>com.squareup.okhttp3<span class="nt">&lt;/groupId&gt;</span>
+  <span class="nt">&lt;artifactId&gt;</span>okhttp<span class="nt">&lt;/artifactId&gt;</span>
+  <span class="nt">&lt;version&gt;</span>(insert latest version)<span class="nt">&lt;/version&gt;</span>
+<span class="nt">&lt;/dependency&gt;</span>
+</pre></div>
+
+<h2 id="gradle">Gradle<a class="headerlink" href="#gradle" title="Permanent link">&para;</a></h2>
+<div class="codehilite"><pre><span></span><span class="n">implementation</span> <span class="s1">&#39;com.squareup.okhttp3:okhttp:(insert latest version)&#39;</span>
+</pre></div>
+
+<h1 id="contributing">Contributing<a class="headerlink" href="#contributing" title="Permanent link">&para;</a></h1>
+<p>If you would like to contribute code you can do so through GitHub by forking the repository and
+sending a pull request. When submitting code, please make every effort to follow existing
+conventions and style in order to keep the code as readable as possible. Please also make sure your
+code compiles by running <code>/gradlew check</code>.</p>
+<p>Some general advice</p>
+<ul>
+<li>Don’t change public API lightly, avoid if possible, and include your reasoning in the PR if essential. It causes pain for developers who use OkHttp and sometimes runtime errors.</li>
+<li>Favour a working external library if appropriate. There are many examples of OkHttp libraries that can sit on top or hook in via existing APIs.</li>
+<li>Get working code on a personal branch with tests before you submit a PR.</li>
+<li>OkHttp is a small and light dependency. Don&rsquo;t introduce new dependencies or major new functionality.</li>
+<li>OkHttp targets the intersection of RFC correct and widely implemented. Incorrect implementations that are very widely implemented e.g. a bug in Apache, Nginx, Google, Firefox should also be handled.</li>
+</ul>
+<p>Before your code can be accepted into the project you must also sign the <a href="https://squ.re/sign-the-cla">Individual Contributor License Agreement (CLA)</a>.</p>
+<h1 id="license">License<a class="headerlink" href="#license" title="Permanent link">&para;</a></h1>
+<div class="codehilite"><pre><span></span>Copyright 2016 Square, Inc.
+
+Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
 
    http://www.apache.org/licenses/LICENSE-2.0
 
 Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
+distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
-limitations under the License.</pre>
-          </div>
-          <div class="span3">
-            <div class="content-nav" data-spy="affix" data-offset-top="80">
-              <ul class="nav nav-tabs nav-stacked primary">
-                <li><a href="#overview">Overview</a></li>
-                <li><a href="#examples">Examples</a></li>
-                <li><a href="#download">Download</a></li>
-                <li><a href="#contributing">Contributing</a></li>
-                <li><a href="#license">License</a></li>
-              </ul>
-              <ul class="nav nav-pills nav-stacked secondary">
-                <li><a href="https://github.com/square/okhttp/wiki">Wiki</a></li>
-                <li><a href="3.x/okhttp/">Javadoc</a></li>
-                <li><a href="https://stackoverflow.com/questions/tagged/okhttp?sort=active">StackOverflow</a></li>
-              </ul>
-            </div>
+limitations under the License.
+</pre></div>
+
+<div class="logo">
+<a href="https://squareup.com"><img src="images/logo-square.png" alt="Square, Inc."/></a>
+</div>
+
+<script type="text/javascript">
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-40704740-2']);
+  _gaq.push(['_trackPageview']);
+
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+</script>
+                
+                  
+                
+              
+              
+                
+
+
+              
+            </article>
           </div>
         </div>
-        <div class="row">
-          <div class="span12 logo">
-            <a href="https://squareup.com"><img src="static/logo-square.png" alt="Square, Inc."/></a>
+      </main>
+      
+        
+<footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-footer-copyright">
+        
+          <div class="md-footer-copyright__highlight">
+            Copyright &copy; 2016 Square, Inc.
           </div>
-        </div>
+        
+        powered by
+        <a href="https://www.mkdocs.org">MkDocs</a>
+        and
+        <a href="https://squidfunk.github.io/mkdocs-material/">
+          Material for MkDocs</a>
       </div>
-    </section>
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
-    <script src="static/bootstrap.min.js"></script>
-    <script src="static/jquery.smooth-scroll.min.js"></script>
-    <script src="static/jquery-maven-artifact.min.js"></script>
-    <script src="static/prettify.js"></script>
-    <script type="text/javascript">
-      $(function() {
-        // Syntax highlight code blocks.
-        prettyPrint();
-
-        // Spy on scroll position for real-time updating of current section.
-        $('body').scrollspy();
-
-        // Use smooth-scroll for internal links.
-        $('a').smoothScroll();
-
-        // Enable tooltips on the header nav image items.
-        $('.menu').tooltip({
-          placement: 'bottom',
-          trigger: 'hover',
-          container: 'body',
-          delay: {
-            show: 500,
-            hide: 0
-          }
-        });
-
-        // Look up the latest version of the library.
-        $.fn.artifactVersion({
-          'groupId': 'com.squareup.okhttp3',
-          'artifactId': 'okhttp'
-        }, function(version, url) {
-          $('.version').text(version);
-          $('.version-tag').text('v' + version);
-          $('.version-href').attr('href', url);
-        });
-      });
-
-      var _gaq = _gaq || [];
-      _gaq.push(['_setAccount', 'UA-40704740-2']);
-      _gaq.push(['_trackPageview']);
-
-      (function() {
-        var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
-        ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
-        var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
-      })();
-    </script>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    
+      <script src="assets/javascripts/application.245445c6.js"></script>
+      
+      <script>app.initialize({version:"1.0.4",url:{base:"."}})</script>
+      
+    
   </body>
 </html>

@@ -1,0 +1,1177 @@
+
+
+
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      <meta http-equiv="x-ua-compatible" content="ie=edge">
+      
+        <meta name="description" content="An HTTP & HTTP/2 client for Android and Java applications">
+      
+      
+      
+        <meta name="author" content="Square, Inc.">
+      
+      
+        <meta name="lang:clipboard.copy" content="Copy to clipboard">
+      
+        <meta name="lang:clipboard.copied" content="Copied to clipboard">
+      
+        <meta name="lang:search.language" content="en">
+      
+        <meta name="lang:search.pipeline.stopwords" content="True">
+      
+        <meta name="lang:search.pipeline.trimmer" content="True">
+      
+        <meta name="lang:search.result.none" content="No matching documents">
+      
+        <meta name="lang:search.result.one" content="1 matching document">
+      
+        <meta name="lang:search.result.other" content="# matching documents">
+      
+        <meta name="lang:search.tokenizer" content="[\s\-]+">
+      
+      <link rel="shortcut icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.0.4, mkdocs-material-4.4.0">
+    
+    
+      
+        <title>Recipes - OkHttp</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/application.0284f74d.css">
+      
+        <link rel="stylesheet" href="../assets/stylesheets/application-palette.01803549.css">
+      
+      
+        
+        
+        <meta name="theme-color" content="#009688">
+      
+    
+    
+      <script src="../assets/javascripts/modernizr.74668098.js"></script>
+    
+    
+      
+        <link href="https://fonts.gstatic.com" rel="preconnect" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,400i,700|Roboto+Mono&display=fallback">
+        <style>body,input{font-family:"Roboto","Helvetica Neue",Helvetica,Arial,sans-serif}code,kbd,pre{font-family:"Roboto Mono","Courier New",Courier,monospace}</style>
+      
+    
+    <link rel="stylesheet" href="../assets/fonts/material-icons.css">
+    
+    
+      <link rel="stylesheet" href="../css/app.css">
+    
+    
+      
+    
+    
+  </head>
+  
+    
+    
+    <body dir="ltr" data-md-color-primary="teal" data-md-color-accent="white">
+  
+    <svg class="md-svg">
+      <defs>
+        
+        
+          <svg xmlns="http://www.w3.org/2000/svg" width="416" height="448" viewBox="0 0 416 448" id="__github"><path fill="currentColor" d="M160 304q0 10-3.125 20.5t-10.75 19T128 352t-18.125-8.5-10.75-19T96 304t3.125-20.5 10.75-19T128 256t18.125 8.5 10.75 19T160 304zm160 0q0 10-3.125 20.5t-10.75 19T288 352t-18.125-8.5-10.75-19T256 304t3.125-20.5 10.75-19T288 256t18.125 8.5 10.75 19T320 304zm40 0q0-30-17.25-51T296 232q-10.25 0-48.75 5.25Q229.5 240 208 240t-39.25-2.75Q130.75 232 120 232q-29.5 0-46.75 21T56 304q0 22 8 38.375t20.25 25.75 30.5 15 35 7.375 37.25 1.75h42q20.5 0 37.25-1.75t35-7.375 30.5-15 20.25-25.75T360 304zm56-44q0 51.75-15.25 82.75-9.5 19.25-26.375 33.25t-35.25 21.5-42.5 11.875-42.875 5.5T212 416q-19.5 0-35.5-.75t-36.875-3.125-38.125-7.5-34.25-12.875T37 371.5t-21.5-28.75Q0 312 0 260q0-59.25 34-99-6.75-20.5-6.75-42.5 0-29 12.75-54.5 27 0 47.5 9.875t47.25 30.875Q171.5 96 212 96q37 0 70 8 26.25-20.5 46.75-30.25T376 64q12.75 25.5 12.75 54.5 0 21.75-6.75 42 34 40 34 99.5z"/></svg>
+        
+      </defs>
+    </svg>
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" data-md-component="overlay" for="__drawer"></label>
+    
+      <a href="#recipes" tabindex="1" class="md-skip">
+        Skip to content
+      </a>
+    
+    
+      <header class="md-header" data-md-component="header">
+  <nav class="md-header-nav md-grid">
+    <div class="md-flex">
+      <div class="md-flex__cell md-flex__cell--shrink">
+        <a href="../api/okhttp/okhttp3/" title="OkHttp" class="md-header-nav__button md-logo">
+          
+            <img src="../images/icon-square.png" width="24" height="24">
+          
+        </a>
+      </div>
+      <div class="md-flex__cell md-flex__cell--shrink">
+        <label class="md-icon md-icon--menu md-header-nav__button" for="__drawer"></label>
+      </div>
+      <div class="md-flex__cell md-flex__cell--stretch">
+        <div class="md-flex__ellipsis md-header-nav__title" data-md-component="title">
+          
+            <span class="md-header-nav__topic">
+              OkHttp
+            </span>
+            <span class="md-header-nav__topic">
+              
+                Recipes
+              
+            </span>
+          
+        </div>
+      </div>
+      <div class="md-flex__cell md-flex__cell--shrink">
+        
+          <label class="md-icon md-icon--search md-header-nav__button" for="__search"></label>
+          
+<div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="query" data-md-state="active">
+      <label class="md-icon md-search__icon" for="__search"></label>
+      <button type="reset" class="md-icon md-search__icon" data-md-component="reset" tabindex="-1">
+        &#xE5CD;
+      </button>
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="result">
+          <div class="md-search-result__meta">
+            Type to start searching
+          </div>
+          <ol class="md-search-result__list"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+        
+      </div>
+      
+        <div class="md-flex__cell md-flex__cell--shrink">
+          <div class="md-header-nav__source">
+            
+
+
+  
+
+<a href="https://github.com/square/okhttp/" title="Go to repository" class="md-source" data-md-source="github">
+  
+    <div class="md-source__icon">
+      <svg viewBox="0 0 24 24" width="24" height="24">
+        <use xlink:href="#__github" width="24" height="24"></use>
+      </svg>
+    </div>
+  
+  <div class="md-source__repository">
+    OkHttp
+  </div>
+</a>
+          </div>
+        </div>
+      
+    </div>
+  </nav>
+</header>
+    
+    <div class="md-container">
+      
+        
+      
+      
+      <main class="md-main">
+        <div class="md-main__inner md-grid" data-md-component="container">
+          
+            
+              <div class="md-sidebar md-sidebar--primary" data-md-component="navigation">
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    <nav class="md-nav md-nav--primary" data-md-level="0">
+  <label class="md-nav__title md-nav__title--site" for="__drawer">
+    <a href="../api/okhttp/okhttp3/" title="OkHttp" class="md-nav__button md-logo">
+      
+        <img src="../images/icon-square.png" width="48" height="48">
+      
+    </a>
+    OkHttp
+  </label>
+  
+    <div class="md-nav__source">
+      
+
+
+  
+
+<a href="https://github.com/square/okhttp/" title="Go to repository" class="md-source" data-md-source="github">
+  
+    <div class="md-source__icon">
+      <svg viewBox="0 0 24 24" width="24" height="24">
+        <use xlink:href="#__github" width="24" height="24"></use>
+      </svg>
+    </div>
+  
+  <div class="md-source__repository">
+    OkHttp
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+      
+
+
+  <li class="md-nav__item">
+    <a href="../calls/" title="Calls" class="md-nav__link">
+      Calls
+    </a>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item">
+    <a href="../concurrency/" title="Concurrency" class="md-nav__link">
+      Concurrency
+    </a>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item">
+    <a href="../connections/" title="Connections" class="md-nav__link">
+      Connections
+    </a>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item">
+    <a href="../events/" title="Events" class="md-nav__link">
+      Events
+    </a>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item">
+    <a href="../https/" title="Https" class="md-nav__link">
+      Https
+    </a>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item">
+    <a href="../interceptors/" title="Interceptors" class="md-nav__link">
+      Interceptors
+    </a>
+  </li>
+
+    
+      
+      
+      
+
+  
+
+
+  <li class="md-nav__item md-nav__item--active">
+    
+    <input class="md-toggle md-nav__toggle" data-md-toggle="toc" type="checkbox" id="__toc">
+    
+      
+    
+    
+      <label class="md-nav__link md-nav__link--active" for="__toc">
+        Recipes
+      </label>
+    
+    <a href="./" title="Recipes" class="md-nav__link md-nav__link--active">
+      Recipes
+    </a>
+    
+      
+<nav class="md-nav md-nav--secondary">
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">Table of contents</label>
+    <ul class="md-nav__list" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#synchronous-get" title="Synchronous Get" class="md-nav__link">
+    Synchronous Get
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#asynchronous-get" title="Asynchronous Get" class="md-nav__link">
+    Asynchronous Get
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#accessing-headers" title="Accessing Headers" class="md-nav__link">
+    Accessing Headers
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#posting-a-string" title="Posting a String" class="md-nav__link">
+    Posting a String
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#post-streaming" title="Post Streaming" class="md-nav__link">
+    Post Streaming
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#posting-a-file" title="Posting a File" class="md-nav__link">
+    Posting a File
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#posting-form-parameters" title="Posting form parameters" class="md-nav__link">
+    Posting form parameters
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#posting-a-multipart-request" title="Posting a multipart request" class="md-nav__link">
+    Posting a multipart request
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#parse-a-json-response-with-moshi" title="Parse a JSON Response With Moshi" class="md-nav__link">
+    Parse a JSON Response With Moshi
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#response-caching" title="Response Caching" class="md-nav__link">
+    Response Caching
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#canceling-a-call" title="Canceling a Call" class="md-nav__link">
+    Canceling a Call
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#timeouts" title="Timeouts" class="md-nav__link">
+    Timeouts
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#per-call-configuration" title="Per-call Configuration" class="md-nav__link">
+    Per-call Configuration
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#handling-authentication" title="Handling authentication" class="md-nav__link">
+    Handling authentication
+  </a>
+  
+</li>
+      
+      
+      
+      
+      
+    </ul>
+  
+</nav>
+    
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item">
+    <a href="../security/" title="Security" class="md-nav__link">
+      Security
+    </a>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item">
+    <a href="../tls_configuration_history/" title="TLS Configuration History" class="md-nav__link">
+      TLS Configuration History
+    </a>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item">
+    <a href="../upgrading_to_okhttp_4/" title="Upgrading to OkHttp 4" class="md-nav__link">
+      Upgrading to OkHttp 4
+    </a>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item">
+    <a href="../works_with_okhttp/" title="Works with OkHttp" class="md-nav__link">
+      Works with OkHttp
+    </a>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item">
+    <a href="https://stackoverflow.com/questions/tagged/okhttp?sort=active" title="Stack Overflow" class="md-nav__link">
+      Stack Overflow
+    </a>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item">
+    <a href="../api/okhttp/okhttp3/" title="API Docs" class="md-nav__link">
+      API Docs
+    </a>
+  </li>
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="toc">
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+<nav class="md-nav md-nav--secondary">
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">Table of contents</label>
+    <ul class="md-nav__list" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#synchronous-get" title="Synchronous Get" class="md-nav__link">
+    Synchronous Get
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#asynchronous-get" title="Asynchronous Get" class="md-nav__link">
+    Asynchronous Get
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#accessing-headers" title="Accessing Headers" class="md-nav__link">
+    Accessing Headers
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#posting-a-string" title="Posting a String" class="md-nav__link">
+    Posting a String
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#post-streaming" title="Post Streaming" class="md-nav__link">
+    Post Streaming
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#posting-a-file" title="Posting a File" class="md-nav__link">
+    Posting a File
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#posting-form-parameters" title="Posting form parameters" class="md-nav__link">
+    Posting form parameters
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#posting-a-multipart-request" title="Posting a multipart request" class="md-nav__link">
+    Posting a multipart request
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#parse-a-json-response-with-moshi" title="Parse a JSON Response With Moshi" class="md-nav__link">
+    Parse a JSON Response With Moshi
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#response-caching" title="Response Caching" class="md-nav__link">
+    Response Caching
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#canceling-a-call" title="Canceling a Call" class="md-nav__link">
+    Canceling a Call
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#timeouts" title="Timeouts" class="md-nav__link">
+    Timeouts
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#per-call-configuration" title="Per-call Configuration" class="md-nav__link">
+    Per-call Configuration
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#handling-authentication" title="Handling authentication" class="md-nav__link">
+    Handling authentication
+  </a>
+  
+</li>
+      
+      
+      
+      
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          <div class="md-content">
+            <article class="md-content__inner md-typeset">
+              
+                
+                  <a href="https://github.com/square/okhttp/edit/master/docs/recipes.md" title="Edit this page" class="md-icon md-content__icon">&#xE3C9;</a>
+                
+                
+                <h1 id="recipes">Recipes<a class="headerlink" href="#recipes" title="Permanent link">&para;</a></h1>
+<p>We&rsquo;ve written some recipes that demonstrate how to solve common problems with OkHttp. Read through them to learn about how everything works together. Cut-and-paste these examples freely; that&rsquo;s what they&rsquo;re for.</p>
+<h4 id="synchronous-get"><a href="https://github.com/square/okhttp/blob/master/samples/guide/src/main/java/okhttp3/recipes/SynchronousGet.java">Synchronous Get</a><a class="headerlink" href="#synchronous-get" title="Permanent link">&para;</a></h4>
+<p>Download a file, print its headers, and print its response body as a string.</p>
+<p>The <code>string()</code> method on response body is convenient and efficient for small documents. But if the response body is large (greater than 1 MiB), avoid <code>string()</code> because it will load the entire document into memory. In that case, prefer to process the body as a stream.</p>
+<div class="codehilite"><pre><span></span>  <span class="kd">private</span> <span class="kd">final</span> <span class="n">OkHttpClient</span> <span class="n">client</span> <span class="o">=</span> <span class="k">new</span> <span class="n">OkHttpClient</span><span class="o">();</span>
+
+  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">run</span><span class="o">()</span> <span class="kd">throws</span> <span class="n">Exception</span> <span class="o">{</span>
+    <span class="n">Request</span> <span class="n">request</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Request</span><span class="o">.</span><span class="na">Builder</span><span class="o">()</span>
+        <span class="o">.</span><span class="na">url</span><span class="o">(</span><span class="s">&quot;https://publicobject.com/helloworld.txt&quot;</span><span class="o">)</span>
+        <span class="o">.</span><span class="na">build</span><span class="o">();</span>
+
+    <span class="k">try</span> <span class="o">(</span><span class="n">Response</span> <span class="n">response</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="na">newCall</span><span class="o">(</span><span class="n">request</span><span class="o">).</span><span class="na">execute</span><span class="o">())</span> <span class="o">{</span>
+      <span class="k">if</span> <span class="o">(!</span><span class="n">response</span><span class="o">.</span><span class="na">isSuccessful</span><span class="o">())</span> <span class="k">throw</span> <span class="k">new</span> <span class="n">IOException</span><span class="o">(</span><span class="s">&quot;Unexpected code &quot;</span> <span class="o">+</span> <span class="n">response</span><span class="o">);</span>
+
+      <span class="n">Headers</span> <span class="n">responseHeaders</span> <span class="o">=</span> <span class="n">response</span><span class="o">.</span><span class="na">headers</span><span class="o">();</span>
+      <span class="k">for</span> <span class="o">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">responseHeaders</span><span class="o">.</span><span class="na">size</span><span class="o">();</span> <span class="n">i</span><span class="o">++)</span> <span class="o">{</span>
+        <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="n">responseHeaders</span><span class="o">.</span><span class="na">name</span><span class="o">(</span><span class="n">i</span><span class="o">)</span> <span class="o">+</span> <span class="s">&quot;: &quot;</span> <span class="o">+</span> <span class="n">responseHeaders</span><span class="o">.</span><span class="na">value</span><span class="o">(</span><span class="n">i</span><span class="o">));</span>
+      <span class="o">}</span>
+
+      <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="n">response</span><span class="o">.</span><span class="na">body</span><span class="o">().</span><span class="na">string</span><span class="o">());</span>
+    <span class="o">}</span>
+  <span class="o">}</span>
+</pre></div>
+
+<h4 id="asynchronous-get"><a href="https://github.com/square/okhttp/blob/master/samples/guide/src/main/java/okhttp3/recipes/AsynchronousGet.java">Asynchronous Get</a><a class="headerlink" href="#asynchronous-get" title="Permanent link">&para;</a></h4>
+<p>Download a file on a worker thread, and get called back when the response is readable. The callback is made after the response headers are ready. Reading the response body may still block. OkHttp doesn&rsquo;t currently offer asynchronous APIs to receive a response body in parts.</p>
+<div class="codehilite"><pre><span></span>  <span class="kd">private</span> <span class="kd">final</span> <span class="n">OkHttpClient</span> <span class="n">client</span> <span class="o">=</span> <span class="k">new</span> <span class="n">OkHttpClient</span><span class="o">();</span>
+
+  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">run</span><span class="o">()</span> <span class="kd">throws</span> <span class="n">Exception</span> <span class="o">{</span>
+    <span class="n">Request</span> <span class="n">request</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Request</span><span class="o">.</span><span class="na">Builder</span><span class="o">()</span>
+        <span class="o">.</span><span class="na">url</span><span class="o">(</span><span class="s">&quot;http://publicobject.com/helloworld.txt&quot;</span><span class="o">)</span>
+        <span class="o">.</span><span class="na">build</span><span class="o">();</span>
+
+    <span class="n">client</span><span class="o">.</span><span class="na">newCall</span><span class="o">(</span><span class="n">request</span><span class="o">).</span><span class="na">enqueue</span><span class="o">(</span><span class="k">new</span> <span class="n">Callback</span><span class="o">()</span> <span class="o">{</span>
+      <span class="nd">@Override</span> <span class="kd">public</span> <span class="kt">void</span> <span class="nf">onFailure</span><span class="o">(</span><span class="n">Call</span> <span class="n">call</span><span class="o">,</span> <span class="n">IOException</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+        <span class="n">e</span><span class="o">.</span><span class="na">printStackTrace</span><span class="o">();</span>
+      <span class="o">}</span>
+
+      <span class="nd">@Override</span> <span class="kd">public</span> <span class="kt">void</span> <span class="nf">onResponse</span><span class="o">(</span><span class="n">Call</span> <span class="n">call</span><span class="o">,</span> <span class="n">Response</span> <span class="n">response</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">IOException</span> <span class="o">{</span>
+        <span class="k">try</span> <span class="o">(</span><span class="n">ResponseBody</span> <span class="n">responseBody</span> <span class="o">=</span> <span class="n">response</span><span class="o">.</span><span class="na">body</span><span class="o">())</span> <span class="o">{</span>
+          <span class="k">if</span> <span class="o">(!</span><span class="n">response</span><span class="o">.</span><span class="na">isSuccessful</span><span class="o">())</span> <span class="k">throw</span> <span class="k">new</span> <span class="n">IOException</span><span class="o">(</span><span class="s">&quot;Unexpected code &quot;</span> <span class="o">+</span> <span class="n">response</span><span class="o">);</span>
+
+          <span class="n">Headers</span> <span class="n">responseHeaders</span> <span class="o">=</span> <span class="n">response</span><span class="o">.</span><span class="na">headers</span><span class="o">();</span>
+          <span class="k">for</span> <span class="o">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="o">,</span> <span class="n">size</span> <span class="o">=</span> <span class="n">responseHeaders</span><span class="o">.</span><span class="na">size</span><span class="o">();</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">size</span><span class="o">;</span> <span class="n">i</span><span class="o">++)</span> <span class="o">{</span>
+            <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="n">responseHeaders</span><span class="o">.</span><span class="na">name</span><span class="o">(</span><span class="n">i</span><span class="o">)</span> <span class="o">+</span> <span class="s">&quot;: &quot;</span> <span class="o">+</span> <span class="n">responseHeaders</span><span class="o">.</span><span class="na">value</span><span class="o">(</span><span class="n">i</span><span class="o">));</span>
+          <span class="o">}</span>
+
+          <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="n">responseBody</span><span class="o">.</span><span class="na">string</span><span class="o">());</span>
+        <span class="o">}</span>
+      <span class="o">}</span>
+    <span class="o">});</span>
+  <span class="o">}</span>
+</pre></div>
+
+<h4 id="accessing-headers"><a href="https://github.com/square/okhttp/blob/master/samples/guide/src/main/java/okhttp3/recipes/AccessHeaders.java">Accessing Headers</a><a class="headerlink" href="#accessing-headers" title="Permanent link">&para;</a></h4>
+<p>Typically HTTP headers work like a <code>Map&lt;String, String&gt;</code>: each field has one value or none. But some headers permit multiple values, like Guava&rsquo;s <a href="http://docs.guava-libraries.googlecode.com/git/javadoc/com/google/common/collect/Multimap.html">Multimap</a>. For example, it&rsquo;s legal and common for an HTTP response to supply multiple <code>Vary</code> headers. OkHttp&rsquo;s APIs attempt to make both cases comfortable.</p>
+<p>When writing request headers, use <code>header(name, value)</code> to set the only occurrence of <code>name</code> to <code>value</code>. If there are existing values, they will be removed before the new value is added. Use <code>addHeader(name, value)</code> to add a header without removing the headers already present.</p>
+<p>When reading response a header, use <code>header(name)</code> to return the <em>last</em> occurrence of the named value. Usually this is also the only occurrence! If no value is present, <code>header(name)</code> will return null. To read all of a field&rsquo;s values as a list, use <code>headers(name)</code>.</p>
+<p>To visit all headers, use the <code>Headers</code> class which supports access by index.</p>
+<div class="codehilite"><pre><span></span>  <span class="kd">private</span> <span class="kd">final</span> <span class="n">OkHttpClient</span> <span class="n">client</span> <span class="o">=</span> <span class="k">new</span> <span class="n">OkHttpClient</span><span class="o">();</span>
+
+  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">run</span><span class="o">()</span> <span class="kd">throws</span> <span class="n">Exception</span> <span class="o">{</span>
+    <span class="n">Request</span> <span class="n">request</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Request</span><span class="o">.</span><span class="na">Builder</span><span class="o">()</span>
+        <span class="o">.</span><span class="na">url</span><span class="o">(</span><span class="s">&quot;https://api.github.com/repos/square/okhttp/issues&quot;</span><span class="o">)</span>
+        <span class="o">.</span><span class="na">header</span><span class="o">(</span><span class="s">&quot;User-Agent&quot;</span><span class="o">,</span> <span class="s">&quot;OkHttp Headers.java&quot;</span><span class="o">)</span>
+        <span class="o">.</span><span class="na">addHeader</span><span class="o">(</span><span class="s">&quot;Accept&quot;</span><span class="o">,</span> <span class="s">&quot;application/json; q=0.5&quot;</span><span class="o">)</span>
+        <span class="o">.</span><span class="na">addHeader</span><span class="o">(</span><span class="s">&quot;Accept&quot;</span><span class="o">,</span> <span class="s">&quot;application/vnd.github.v3+json&quot;</span><span class="o">)</span>
+        <span class="o">.</span><span class="na">build</span><span class="o">();</span>
+
+    <span class="k">try</span> <span class="o">(</span><span class="n">Response</span> <span class="n">response</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="na">newCall</span><span class="o">(</span><span class="n">request</span><span class="o">).</span><span class="na">execute</span><span class="o">())</span> <span class="o">{</span>
+      <span class="k">if</span> <span class="o">(!</span><span class="n">response</span><span class="o">.</span><span class="na">isSuccessful</span><span class="o">())</span> <span class="k">throw</span> <span class="k">new</span> <span class="n">IOException</span><span class="o">(</span><span class="s">&quot;Unexpected code &quot;</span> <span class="o">+</span> <span class="n">response</span><span class="o">);</span>
+
+      <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">&quot;Server: &quot;</span> <span class="o">+</span> <span class="n">response</span><span class="o">.</span><span class="na">header</span><span class="o">(</span><span class="s">&quot;Server&quot;</span><span class="o">));</span>
+      <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">&quot;Date: &quot;</span> <span class="o">+</span> <span class="n">response</span><span class="o">.</span><span class="na">header</span><span class="o">(</span><span class="s">&quot;Date&quot;</span><span class="o">));</span>
+      <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">&quot;Vary: &quot;</span> <span class="o">+</span> <span class="n">response</span><span class="o">.</span><span class="na">headers</span><span class="o">(</span><span class="s">&quot;Vary&quot;</span><span class="o">));</span>
+    <span class="o">}</span>
+  <span class="o">}</span>
+</pre></div>
+
+<h4 id="posting-a-string"><a href="https://github.com/square/okhttp/blob/master/samples/guide/src/main/java/okhttp3/recipes/PostString.java">Posting a String</a><a class="headerlink" href="#posting-a-string" title="Permanent link">&para;</a></h4>
+<p>Use an HTTP POST to send a request body to a service. This example posts a markdown document to a web service that renders markdown as HTML. Because the entire request body is in memory simultaneously, avoid posting large (greater than 1 MiB) documents using this API.</p>
+<div class="codehilite"><pre><span></span>  <span class="kd">public</span> <span class="kd">static</span> <span class="kd">final</span> <span class="n">MediaType</span> <span class="n">MEDIA_TYPE_MARKDOWN</span>
+      <span class="o">=</span> <span class="n">MediaType</span><span class="o">.</span><span class="na">parse</span><span class="o">(</span><span class="s">&quot;text/x-markdown; charset=utf-8&quot;</span><span class="o">);</span>
+
+  <span class="kd">private</span> <span class="kd">final</span> <span class="n">OkHttpClient</span> <span class="n">client</span> <span class="o">=</span> <span class="k">new</span> <span class="n">OkHttpClient</span><span class="o">();</span>
+
+  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">run</span><span class="o">()</span> <span class="kd">throws</span> <span class="n">Exception</span> <span class="o">{</span>
+    <span class="n">String</span> <span class="n">postBody</span> <span class="o">=</span> <span class="s">&quot;&quot;</span>
+        <span class="o">+</span> <span class="s">&quot;Releases\n&quot;</span>
+        <span class="o">+</span> <span class="s">&quot;--------\n&quot;</span>
+        <span class="o">+</span> <span class="s">&quot;\n&quot;</span>
+        <span class="o">+</span> <span class="s">&quot; * _1.0_ May 6, 2013\n&quot;</span>
+        <span class="o">+</span> <span class="s">&quot; * _1.1_ June 15, 2013\n&quot;</span>
+        <span class="o">+</span> <span class="s">&quot; * _1.2_ August 11, 2013\n&quot;</span><span class="o">;</span>
+
+    <span class="n">Request</span> <span class="n">request</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Request</span><span class="o">.</span><span class="na">Builder</span><span class="o">()</span>
+        <span class="o">.</span><span class="na">url</span><span class="o">(</span><span class="s">&quot;https://api.github.com/markdown/raw&quot;</span><span class="o">)</span>
+        <span class="o">.</span><span class="na">post</span><span class="o">(</span><span class="n">RequestBody</span><span class="o">.</span><span class="na">create</span><span class="o">(</span><span class="n">MEDIA_TYPE_MARKDOWN</span><span class="o">,</span> <span class="n">postBody</span><span class="o">))</span>
+        <span class="o">.</span><span class="na">build</span><span class="o">();</span>
+
+    <span class="k">try</span> <span class="o">(</span><span class="n">Response</span> <span class="n">response</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="na">newCall</span><span class="o">(</span><span class="n">request</span><span class="o">).</span><span class="na">execute</span><span class="o">())</span> <span class="o">{</span>
+      <span class="k">if</span> <span class="o">(!</span><span class="n">response</span><span class="o">.</span><span class="na">isSuccessful</span><span class="o">())</span> <span class="k">throw</span> <span class="k">new</span> <span class="n">IOException</span><span class="o">(</span><span class="s">&quot;Unexpected code &quot;</span> <span class="o">+</span> <span class="n">response</span><span class="o">);</span>
+
+      <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="n">response</span><span class="o">.</span><span class="na">body</span><span class="o">().</span><span class="na">string</span><span class="o">());</span>
+    <span class="o">}</span>
+  <span class="o">}</span>
+</pre></div>
+
+<h4 id="post-streaming"><a href="https://github.com/square/okhttp/blob/master/samples/guide/src/main/java/okhttp3/recipes/PostStreaming.java">Post Streaming</a><a class="headerlink" href="#post-streaming" title="Permanent link">&para;</a></h4>
+<p>Here we <code>POST</code> a request body as a stream. The content of this request body is being generated as it&rsquo;s being written. This example streams directly into the <a href="https://github.com/square/okio">Okio</a> buffered sink. Your programs may prefer an <code>OutputStream</code>, which you can get from <code>BufferedSink.outputStream()</code>.</p>
+<div class="codehilite"><pre><span></span>  <span class="kd">public</span> <span class="kd">static</span> <span class="kd">final</span> <span class="n">MediaType</span> <span class="n">MEDIA_TYPE_MARKDOWN</span>
+      <span class="o">=</span> <span class="n">MediaType</span><span class="o">.</span><span class="na">parse</span><span class="o">(</span><span class="s">&quot;text/x-markdown; charset=utf-8&quot;</span><span class="o">);</span>
+
+  <span class="kd">private</span> <span class="kd">final</span> <span class="n">OkHttpClient</span> <span class="n">client</span> <span class="o">=</span> <span class="k">new</span> <span class="n">OkHttpClient</span><span class="o">();</span>
+
+  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">run</span><span class="o">()</span> <span class="kd">throws</span> <span class="n">Exception</span> <span class="o">{</span>
+    <span class="n">RequestBody</span> <span class="n">requestBody</span> <span class="o">=</span> <span class="k">new</span> <span class="n">RequestBody</span><span class="o">()</span> <span class="o">{</span>
+      <span class="nd">@Override</span> <span class="kd">public</span> <span class="n">MediaType</span> <span class="nf">contentType</span><span class="o">()</span> <span class="o">{</span>
+        <span class="k">return</span> <span class="n">MEDIA_TYPE_MARKDOWN</span><span class="o">;</span>
+      <span class="o">}</span>
+
+      <span class="nd">@Override</span> <span class="kd">public</span> <span class="kt">void</span> <span class="nf">writeTo</span><span class="o">(</span><span class="n">BufferedSink</span> <span class="n">sink</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">IOException</span> <span class="o">{</span>
+        <span class="n">sink</span><span class="o">.</span><span class="na">writeUtf8</span><span class="o">(</span><span class="s">&quot;Numbers\n&quot;</span><span class="o">);</span>
+        <span class="n">sink</span><span class="o">.</span><span class="na">writeUtf8</span><span class="o">(</span><span class="s">&quot;-------\n&quot;</span><span class="o">);</span>
+        <span class="k">for</span> <span class="o">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">2</span><span class="o">;</span> <span class="n">i</span> <span class="o">&lt;=</span> <span class="mi">997</span><span class="o">;</span> <span class="n">i</span><span class="o">++)</span> <span class="o">{</span>
+          <span class="n">sink</span><span class="o">.</span><span class="na">writeUtf8</span><span class="o">(</span><span class="n">String</span><span class="o">.</span><span class="na">format</span><span class="o">(</span><span class="s">&quot; * %s = %s\n&quot;</span><span class="o">,</span> <span class="n">i</span><span class="o">,</span> <span class="n">factor</span><span class="o">(</span><span class="n">i</span><span class="o">)));</span>
+        <span class="o">}</span>
+      <span class="o">}</span>
+
+      <span class="kd">private</span> <span class="n">String</span> <span class="nf">factor</span><span class="o">(</span><span class="kt">int</span> <span class="n">n</span><span class="o">)</span> <span class="o">{</span>
+        <span class="k">for</span> <span class="o">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">2</span><span class="o">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">n</span><span class="o">;</span> <span class="n">i</span><span class="o">++)</span> <span class="o">{</span>
+          <span class="kt">int</span> <span class="n">x</span> <span class="o">=</span> <span class="n">n</span> <span class="o">/</span> <span class="n">i</span><span class="o">;</span>
+          <span class="k">if</span> <span class="o">(</span><span class="n">x</span> <span class="o">*</span> <span class="n">i</span> <span class="o">==</span> <span class="n">n</span><span class="o">)</span> <span class="k">return</span> <span class="n">factor</span><span class="o">(</span><span class="n">x</span><span class="o">)</span> <span class="o">+</span> <span class="s">&quot; × &quot;</span> <span class="o">+</span> <span class="n">i</span><span class="o">;</span>
+        <span class="o">}</span>
+        <span class="k">return</span> <span class="n">Integer</span><span class="o">.</span><span class="na">toString</span><span class="o">(</span><span class="n">n</span><span class="o">);</span>
+      <span class="o">}</span>
+    <span class="o">};</span>
+
+    <span class="n">Request</span> <span class="n">request</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Request</span><span class="o">.</span><span class="na">Builder</span><span class="o">()</span>
+        <span class="o">.</span><span class="na">url</span><span class="o">(</span><span class="s">&quot;https://api.github.com/markdown/raw&quot;</span><span class="o">)</span>
+        <span class="o">.</span><span class="na">post</span><span class="o">(</span><span class="n">requestBody</span><span class="o">)</span>
+        <span class="o">.</span><span class="na">build</span><span class="o">();</span>
+
+    <span class="k">try</span> <span class="o">(</span><span class="n">Response</span> <span class="n">response</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="na">newCall</span><span class="o">(</span><span class="n">request</span><span class="o">).</span><span class="na">execute</span><span class="o">())</span> <span class="o">{</span>
+      <span class="k">if</span> <span class="o">(!</span><span class="n">response</span><span class="o">.</span><span class="na">isSuccessful</span><span class="o">())</span> <span class="k">throw</span> <span class="k">new</span> <span class="n">IOException</span><span class="o">(</span><span class="s">&quot;Unexpected code &quot;</span> <span class="o">+</span> <span class="n">response</span><span class="o">);</span>
+
+      <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="n">response</span><span class="o">.</span><span class="na">body</span><span class="o">().</span><span class="na">string</span><span class="o">());</span>
+    <span class="o">}</span>
+  <span class="o">}</span>
+</pre></div>
+
+<h4 id="posting-a-file"><a href="https://github.com/square/okhttp/blob/master/samples/guide/src/main/java/okhttp3/recipes/PostFile.java">Posting a File</a><a class="headerlink" href="#posting-a-file" title="Permanent link">&para;</a></h4>
+<p>It&rsquo;s easy to use a file as a request body.</p>
+<div class="codehilite"><pre><span></span>  <span class="kd">public</span> <span class="kd">static</span> <span class="kd">final</span> <span class="n">MediaType</span> <span class="n">MEDIA_TYPE_MARKDOWN</span>
+      <span class="o">=</span> <span class="n">MediaType</span><span class="o">.</span><span class="na">parse</span><span class="o">(</span><span class="s">&quot;text/x-markdown; charset=utf-8&quot;</span><span class="o">);</span>
+
+  <span class="kd">private</span> <span class="kd">final</span> <span class="n">OkHttpClient</span> <span class="n">client</span> <span class="o">=</span> <span class="k">new</span> <span class="n">OkHttpClient</span><span class="o">();</span>
+
+  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">run</span><span class="o">()</span> <span class="kd">throws</span> <span class="n">Exception</span> <span class="o">{</span>
+    <span class="n">File</span> <span class="n">file</span> <span class="o">=</span> <span class="k">new</span> <span class="n">File</span><span class="o">(</span><span class="s">&quot;README.md&quot;</span><span class="o">);</span>
+
+    <span class="n">Request</span> <span class="n">request</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Request</span><span class="o">.</span><span class="na">Builder</span><span class="o">()</span>
+        <span class="o">.</span><span class="na">url</span><span class="o">(</span><span class="s">&quot;https://api.github.com/markdown/raw&quot;</span><span class="o">)</span>
+        <span class="o">.</span><span class="na">post</span><span class="o">(</span><span class="n">RequestBody</span><span class="o">.</span><span class="na">create</span><span class="o">(</span><span class="n">MEDIA_TYPE_MARKDOWN</span><span class="o">,</span> <span class="n">file</span><span class="o">))</span>
+        <span class="o">.</span><span class="na">build</span><span class="o">();</span>
+
+    <span class="k">try</span> <span class="o">(</span><span class="n">Response</span> <span class="n">response</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="na">newCall</span><span class="o">(</span><span class="n">request</span><span class="o">).</span><span class="na">execute</span><span class="o">())</span> <span class="o">{</span>
+      <span class="k">if</span> <span class="o">(!</span><span class="n">response</span><span class="o">.</span><span class="na">isSuccessful</span><span class="o">())</span> <span class="k">throw</span> <span class="k">new</span> <span class="n">IOException</span><span class="o">(</span><span class="s">&quot;Unexpected code &quot;</span> <span class="o">+</span> <span class="n">response</span><span class="o">);</span>
+
+      <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="n">response</span><span class="o">.</span><span class="na">body</span><span class="o">().</span><span class="na">string</span><span class="o">());</span>
+    <span class="o">}</span>
+  <span class="o">}</span>
+</pre></div>
+
+<h4 id="posting-form-parameters"><a href="https://github.com/square/okhttp/blob/master/samples/guide/src/main/java/okhttp3/recipes/PostForm.java">Posting form parameters</a><a class="headerlink" href="#posting-form-parameters" title="Permanent link">&para;</a></h4>
+<p>Use <code>FormBody.Builder</code> to build a request body that works like an HTML <code>&lt;form&gt;</code> tag. Names and values will be encoded using an HTML-compatible form URL encoding.</p>
+<div class="codehilite"><pre><span></span>  <span class="kd">private</span> <span class="kd">final</span> <span class="n">OkHttpClient</span> <span class="n">client</span> <span class="o">=</span> <span class="k">new</span> <span class="n">OkHttpClient</span><span class="o">();</span>
+
+  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">run</span><span class="o">()</span> <span class="kd">throws</span> <span class="n">Exception</span> <span class="o">{</span>
+    <span class="n">RequestBody</span> <span class="n">formBody</span> <span class="o">=</span> <span class="k">new</span> <span class="n">FormBody</span><span class="o">.</span><span class="na">Builder</span><span class="o">()</span>
+        <span class="o">.</span><span class="na">add</span><span class="o">(</span><span class="s">&quot;search&quot;</span><span class="o">,</span> <span class="s">&quot;Jurassic Park&quot;</span><span class="o">)</span>
+        <span class="o">.</span><span class="na">build</span><span class="o">();</span>
+    <span class="n">Request</span> <span class="n">request</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Request</span><span class="o">.</span><span class="na">Builder</span><span class="o">()</span>
+        <span class="o">.</span><span class="na">url</span><span class="o">(</span><span class="s">&quot;https://en.wikipedia.org/w/index.php&quot;</span><span class="o">)</span>
+        <span class="o">.</span><span class="na">post</span><span class="o">(</span><span class="n">formBody</span><span class="o">)</span>
+        <span class="o">.</span><span class="na">build</span><span class="o">();</span>
+
+    <span class="k">try</span> <span class="o">(</span><span class="n">Response</span> <span class="n">response</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="na">newCall</span><span class="o">(</span><span class="n">request</span><span class="o">).</span><span class="na">execute</span><span class="o">())</span> <span class="o">{</span>
+      <span class="k">if</span> <span class="o">(!</span><span class="n">response</span><span class="o">.</span><span class="na">isSuccessful</span><span class="o">())</span> <span class="k">throw</span> <span class="k">new</span> <span class="n">IOException</span><span class="o">(</span><span class="s">&quot;Unexpected code &quot;</span> <span class="o">+</span> <span class="n">response</span><span class="o">);</span>
+
+      <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="n">response</span><span class="o">.</span><span class="na">body</span><span class="o">().</span><span class="na">string</span><span class="o">());</span>
+    <span class="o">}</span>
+  <span class="o">}</span>
+</pre></div>
+
+<h4 id="posting-a-multipart-request"><a href="https://github.com/square/okhttp/blob/master/samples/guide/src/main/java/okhttp3/recipes/PostMultipart.java">Posting a multipart request</a><a class="headerlink" href="#posting-a-multipart-request" title="Permanent link">&para;</a></h4>
+<p><code>MultipartBody.Builder</code> can build sophisticated request bodies compatible with HTML file upload forms. Each part of a multipart request body is itself a request body, and can define its own headers. If present, these headers should describe the part body, such as its <code>Content-Disposition</code>. The <code>Content-Length</code> and <code>Content-Type</code> headers are added automatically if they&rsquo;re available.</p>
+<div class="codehilite"><pre><span></span>  <span class="cm">/**</span>
+<span class="cm">   * The imgur client ID for OkHttp recipes. If you&#39;re using imgur for anything other than running</span>
+<span class="cm">   * these examples, please request your own client ID! https://api.imgur.com/oauth2</span>
+<span class="cm">   */</span>
+  <span class="kd">private</span> <span class="kd">static</span> <span class="kd">final</span> <span class="n">String</span> <span class="n">IMGUR_CLIENT_ID</span> <span class="o">=</span> <span class="s">&quot;...&quot;</span><span class="o">;</span>
+  <span class="kd">private</span> <span class="kd">static</span> <span class="kd">final</span> <span class="n">MediaType</span> <span class="n">MEDIA_TYPE_PNG</span> <span class="o">=</span> <span class="n">MediaType</span><span class="o">.</span><span class="na">parse</span><span class="o">(</span><span class="s">&quot;image/png&quot;</span><span class="o">);</span>
+
+  <span class="kd">private</span> <span class="kd">final</span> <span class="n">OkHttpClient</span> <span class="n">client</span> <span class="o">=</span> <span class="k">new</span> <span class="n">OkHttpClient</span><span class="o">();</span>
+
+  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">run</span><span class="o">()</span> <span class="kd">throws</span> <span class="n">Exception</span> <span class="o">{</span>
+    <span class="c1">// Use the imgur image upload API as documented at https://api.imgur.com/endpoints/image</span>
+    <span class="n">RequestBody</span> <span class="n">requestBody</span> <span class="o">=</span> <span class="k">new</span> <span class="n">MultipartBody</span><span class="o">.</span><span class="na">Builder</span><span class="o">()</span>
+        <span class="o">.</span><span class="na">setType</span><span class="o">(</span><span class="n">MultipartBody</span><span class="o">.</span><span class="na">FORM</span><span class="o">)</span>
+        <span class="o">.</span><span class="na">addFormDataPart</span><span class="o">(</span><span class="s">&quot;title&quot;</span><span class="o">,</span> <span class="s">&quot;Square Logo&quot;</span><span class="o">)</span>
+        <span class="o">.</span><span class="na">addFormDataPart</span><span class="o">(</span><span class="s">&quot;image&quot;</span><span class="o">,</span> <span class="s">&quot;logo-square.png&quot;</span><span class="o">,</span>
+            <span class="n">RequestBody</span><span class="o">.</span><span class="na">create</span><span class="o">(</span><span class="n">MEDIA_TYPE_PNG</span><span class="o">,</span> <span class="k">new</span> <span class="n">File</span><span class="o">(</span><span class="s">&quot;website/static/logo-square.png&quot;</span><span class="o">)))</span>
+        <span class="o">.</span><span class="na">build</span><span class="o">();</span>
+
+    <span class="n">Request</span> <span class="n">request</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Request</span><span class="o">.</span><span class="na">Builder</span><span class="o">()</span>
+        <span class="o">.</span><span class="na">header</span><span class="o">(</span><span class="s">&quot;Authorization&quot;</span><span class="o">,</span> <span class="s">&quot;Client-ID &quot;</span> <span class="o">+</span> <span class="n">IMGUR_CLIENT_ID</span><span class="o">)</span>
+        <span class="o">.</span><span class="na">url</span><span class="o">(</span><span class="s">&quot;https://api.imgur.com/3/image&quot;</span><span class="o">)</span>
+        <span class="o">.</span><span class="na">post</span><span class="o">(</span><span class="n">requestBody</span><span class="o">)</span>
+        <span class="o">.</span><span class="na">build</span><span class="o">();</span>
+
+    <span class="k">try</span> <span class="o">(</span><span class="n">Response</span> <span class="n">response</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="na">newCall</span><span class="o">(</span><span class="n">request</span><span class="o">).</span><span class="na">execute</span><span class="o">())</span> <span class="o">{</span>
+      <span class="k">if</span> <span class="o">(!</span><span class="n">response</span><span class="o">.</span><span class="na">isSuccessful</span><span class="o">())</span> <span class="k">throw</span> <span class="k">new</span> <span class="n">IOException</span><span class="o">(</span><span class="s">&quot;Unexpected code &quot;</span> <span class="o">+</span> <span class="n">response</span><span class="o">);</span>
+
+      <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="n">response</span><span class="o">.</span><span class="na">body</span><span class="o">().</span><span class="na">string</span><span class="o">());</span>
+    <span class="o">}</span>
+  <span class="o">}</span>
+</pre></div>
+
+<h4 id="parse-a-json-response-with-moshi"><a href="https://github.com/square/okhttp/blob/master/samples/guide/src/main/java/okhttp3/recipes/ParseResponseWithMoshi.java">Parse a JSON Response With Moshi</a><a class="headerlink" href="#parse-a-json-response-with-moshi" title="Permanent link">&para;</a></h4>
+<p><a href="https://github.com/square/moshi">Moshi</a> is a handy API for converting between JSON and Java objects. Here we&rsquo;re using it to decode a JSON response from a GitHub API.</p>
+<p>Note that <code>ResponseBody.charStream()</code> uses the <code>Content-Type</code> response header to select which charset to use when decoding the response body. It defaults to <code>UTF-8</code> if no charset is specified.</p>
+<div class="codehilite"><pre><span></span>  <span class="kd">private</span> <span class="kd">final</span> <span class="n">OkHttpClient</span> <span class="n">client</span> <span class="o">=</span> <span class="k">new</span> <span class="n">OkHttpClient</span><span class="o">();</span>
+  <span class="kd">private</span> <span class="kd">final</span> <span class="n">Moshi</span> <span class="n">moshi</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Moshi</span><span class="o">.</span><span class="na">Builder</span><span class="o">().</span><span class="na">build</span><span class="o">();</span>
+  <span class="kd">private</span> <span class="kd">final</span> <span class="n">JsonAdapter</span><span class="o">&lt;</span><span class="n">Gist</span><span class="o">&gt;</span> <span class="n">gistJsonAdapter</span> <span class="o">=</span> <span class="n">moshi</span><span class="o">.</span><span class="na">adapter</span><span class="o">(</span><span class="n">Gist</span><span class="o">.</span><span class="na">class</span><span class="o">);</span>
+
+  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">run</span><span class="o">()</span> <span class="kd">throws</span> <span class="n">Exception</span> <span class="o">{</span>
+    <span class="n">Request</span> <span class="n">request</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Request</span><span class="o">.</span><span class="na">Builder</span><span class="o">()</span>
+        <span class="o">.</span><span class="na">url</span><span class="o">(</span><span class="s">&quot;https://api.github.com/gists/c2a7c39532239ff261be&quot;</span><span class="o">)</span>
+        <span class="o">.</span><span class="na">build</span><span class="o">();</span>
+    <span class="k">try</span> <span class="o">(</span><span class="n">Response</span> <span class="n">response</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="na">newCall</span><span class="o">(</span><span class="n">request</span><span class="o">).</span><span class="na">execute</span><span class="o">())</span> <span class="o">{</span>
+      <span class="k">if</span> <span class="o">(!</span><span class="n">response</span><span class="o">.</span><span class="na">isSuccessful</span><span class="o">())</span> <span class="k">throw</span> <span class="k">new</span> <span class="n">IOException</span><span class="o">(</span><span class="s">&quot;Unexpected code &quot;</span> <span class="o">+</span> <span class="n">response</span><span class="o">);</span>
+
+      <span class="n">Gist</span> <span class="n">gist</span> <span class="o">=</span> <span class="n">gistJsonAdapter</span><span class="o">.</span><span class="na">fromJson</span><span class="o">(</span><span class="n">response</span><span class="o">.</span><span class="na">body</span><span class="o">().</span><span class="na">source</span><span class="o">());</span>
+
+      <span class="k">for</span> <span class="o">(</span><span class="n">Map</span><span class="o">.</span><span class="na">Entry</span><span class="o">&lt;</span><span class="n">String</span><span class="o">,</span> <span class="n">GistFile</span><span class="o">&gt;</span> <span class="n">entry</span> <span class="o">:</span> <span class="n">gist</span><span class="o">.</span><span class="na">files</span><span class="o">.</span><span class="na">entrySet</span><span class="o">())</span> <span class="o">{</span>
+        <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="n">entry</span><span class="o">.</span><span class="na">getKey</span><span class="o">());</span>
+        <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="n">entry</span><span class="o">.</span><span class="na">getValue</span><span class="o">().</span><span class="na">content</span><span class="o">);</span>
+      <span class="o">}</span>
+    <span class="o">}</span>
+  <span class="o">}</span>
+
+  <span class="kd">static</span> <span class="kd">class</span> <span class="nc">Gist</span> <span class="o">{</span>
+    <span class="n">Map</span><span class="o">&lt;</span><span class="n">String</span><span class="o">,</span> <span class="n">GistFile</span><span class="o">&gt;</span> <span class="n">files</span><span class="o">;</span>
+  <span class="o">}</span>
+
+  <span class="kd">static</span> <span class="kd">class</span> <span class="nc">GistFile</span> <span class="o">{</span>
+    <span class="n">String</span> <span class="n">content</span><span class="o">;</span>
+  <span class="o">}</span>
+</pre></div>
+
+<h4 id="response-caching"><a href="https://github.com/square/okhttp/blob/master/samples/guide/src/main/java/okhttp3/recipes/CacheResponse.java">Response Caching</a><a class="headerlink" href="#response-caching" title="Permanent link">&para;</a></h4>
+<p>To cache responses, you&rsquo;ll need a cache directory that you can read and write to, and a limit on the cache&rsquo;s size. The cache directory should be private, and untrusted applications should not be able to read its contents!</p>
+<p>It is an error to have multiple caches accessing the same cache directory simultaneously. Most applications should call <code>new OkHttpClient()</code> exactly once, configure it with their cache, and use that same instance everywhere. Otherwise the two cache instances will stomp on each other, corrupt the response cache, and possibly crash your program.</p>
+<p>Response caching uses HTTP headers for all configuration. You can add request headers like <code>Cache-Control: max-stale=3600</code> and OkHttp&rsquo;s cache will honor them. Your webserver configures how long responses are cached with its own response headers, like <code>Cache-Control: max-age=9600</code>. There are cache headers to force a cached response, force a network response, or force the network response to be validated with a conditional GET.</p>
+<p><div class="codehilite"><pre><span></span>  <span class="kd">private</span> <span class="kd">final</span> <span class="n">OkHttpClient</span> <span class="n">client</span><span class="o">;</span>
+
+  <span class="kd">public</span> <span class="nf">CacheResponse</span><span class="o">(</span><span class="n">File</span> <span class="n">cacheDirectory</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">Exception</span> <span class="o">{</span>
+    <span class="kt">int</span> <span class="n">cacheSize</span> <span class="o">=</span> <span class="mi">10</span> <span class="o">*</span> <span class="mi">1024</span> <span class="o">*</span> <span class="mi">1024</span><span class="o">;</span> <span class="c1">// 10 MiB</span>
+    <span class="n">Cache</span> <span class="n">cache</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Cache</span><span class="o">(</span><span class="n">cacheDirectory</span><span class="o">,</span> <span class="n">cacheSize</span><span class="o">);</span>
+
+    <span class="n">client</span> <span class="o">=</span> <span class="k">new</span> <span class="n">OkHttpClient</span><span class="o">.</span><span class="na">Builder</span><span class="o">()</span>
+        <span class="o">.</span><span class="na">cache</span><span class="o">(</span><span class="n">cache</span><span class="o">)</span>
+        <span class="o">.</span><span class="na">build</span><span class="o">();</span>
+  <span class="o">}</span>
+
+  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">run</span><span class="o">()</span> <span class="kd">throws</span> <span class="n">Exception</span> <span class="o">{</span>
+    <span class="n">Request</span> <span class="n">request</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Request</span><span class="o">.</span><span class="na">Builder</span><span class="o">()</span>
+        <span class="o">.</span><span class="na">url</span><span class="o">(</span><span class="s">&quot;http://publicobject.com/helloworld.txt&quot;</span><span class="o">)</span>
+        <span class="o">.</span><span class="na">build</span><span class="o">();</span>
+
+    <span class="n">String</span> <span class="n">response1Body</span><span class="o">;</span>
+    <span class="k">try</span> <span class="o">(</span><span class="n">Response</span> <span class="n">response1</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="na">newCall</span><span class="o">(</span><span class="n">request</span><span class="o">).</span><span class="na">execute</span><span class="o">())</span> <span class="o">{</span>
+      <span class="k">if</span> <span class="o">(!</span><span class="n">response1</span><span class="o">.</span><span class="na">isSuccessful</span><span class="o">())</span> <span class="k">throw</span> <span class="k">new</span> <span class="n">IOException</span><span class="o">(</span><span class="s">&quot;Unexpected code &quot;</span> <span class="o">+</span> <span class="n">response1</span><span class="o">);</span>
+
+      <span class="n">response1Body</span> <span class="o">=</span> <span class="n">response1</span><span class="o">.</span><span class="na">body</span><span class="o">().</span><span class="na">string</span><span class="o">();</span>
+      <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">&quot;Response 1 response:          &quot;</span> <span class="o">+</span> <span class="n">response1</span><span class="o">);</span>
+      <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">&quot;Response 1 cache response:    &quot;</span> <span class="o">+</span> <span class="n">response1</span><span class="o">.</span><span class="na">cacheResponse</span><span class="o">());</span>
+      <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">&quot;Response 1 network response:  &quot;</span> <span class="o">+</span> <span class="n">response1</span><span class="o">.</span><span class="na">networkResponse</span><span class="o">());</span>
+    <span class="o">}</span>
+
+    <span class="n">String</span> <span class="n">response2Body</span><span class="o">;</span>
+    <span class="k">try</span> <span class="o">(</span><span class="n">Response</span> <span class="n">response2</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="na">newCall</span><span class="o">(</span><span class="n">request</span><span class="o">).</span><span class="na">execute</span><span class="o">())</span> <span class="o">{</span>
+      <span class="k">if</span> <span class="o">(!</span><span class="n">response2</span><span class="o">.</span><span class="na">isSuccessful</span><span class="o">())</span> <span class="k">throw</span> <span class="k">new</span> <span class="n">IOException</span><span class="o">(</span><span class="s">&quot;Unexpected code &quot;</span> <span class="o">+</span> <span class="n">response2</span><span class="o">);</span>
+
+      <span class="n">response2Body</span> <span class="o">=</span> <span class="n">response2</span><span class="o">.</span><span class="na">body</span><span class="o">().</span><span class="na">string</span><span class="o">();</span>
+      <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">&quot;Response 2 response:          &quot;</span> <span class="o">+</span> <span class="n">response2</span><span class="o">);</span>
+      <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">&quot;Response 2 cache response:    &quot;</span> <span class="o">+</span> <span class="n">response2</span><span class="o">.</span><span class="na">cacheResponse</span><span class="o">());</span>
+      <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">&quot;Response 2 network response:  &quot;</span> <span class="o">+</span> <span class="n">response2</span><span class="o">.</span><span class="na">networkResponse</span><span class="o">());</span>
+    <span class="o">}</span>
+
+    <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">&quot;Response 2 equals Response 1? &quot;</span> <span class="o">+</span> <span class="n">response1Body</span><span class="o">.</span><span class="na">equals</span><span class="o">(</span><span class="n">response2Body</span><span class="o">));</span>
+  <span class="o">}</span>
+</pre></div>
+To prevent a response from using the cache, use <a href="http://square.github.io/okhttp/3.x/okhttp/okhttp3/CacheControl.html#FORCE_NETWORK"><code>CacheControl.FORCE_NETWORK</code></a>. To prevent it from using the network, use <a href="http://square.github.io/okhttp/3.x/okhttp/okhttp3/CacheControl.html#FORCE_CACHE"><code>CacheControl.FORCE_CACHE</code></a>. Be warned: if you use <code>FORCE_CACHE</code> and the response requires the network, OkHttp will return a <code>504 Unsatisfiable Request</code> response.</p>
+<h4 id="canceling-a-call"><a href="https://github.com/square/okhttp/blob/master/samples/guide/src/main/java/okhttp3/recipes/CancelCall.java">Canceling a Call</a><a class="headerlink" href="#canceling-a-call" title="Permanent link">&para;</a></h4>
+<p>Use <code>Call.cancel()</code> to stop an ongoing call immediately. If a thread is currently writing a request or reading a response, it will receive an <code>IOException</code>. Use this to conserve the network when a call is no longer necessary; for example when your user navigates away from an application. Both synchronous and asynchronous calls can be canceled.</p>
+<div class="codehilite"><pre><span></span>  <span class="kd">private</span> <span class="kd">final</span> <span class="n">ScheduledExecutorService</span> <span class="n">executor</span> <span class="o">=</span> <span class="n">Executors</span><span class="o">.</span><span class="na">newScheduledThreadPool</span><span class="o">(</span><span class="mi">1</span><span class="o">);</span>
+  <span class="kd">private</span> <span class="kd">final</span> <span class="n">OkHttpClient</span> <span class="n">client</span> <span class="o">=</span> <span class="k">new</span> <span class="n">OkHttpClient</span><span class="o">();</span>
+
+  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">run</span><span class="o">()</span> <span class="kd">throws</span> <span class="n">Exception</span> <span class="o">{</span>
+    <span class="n">Request</span> <span class="n">request</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Request</span><span class="o">.</span><span class="na">Builder</span><span class="o">()</span>
+        <span class="o">.</span><span class="na">url</span><span class="o">(</span><span class="s">&quot;http://httpbin.org/delay/2&quot;</span><span class="o">)</span> <span class="c1">// This URL is served with a 2 second delay.</span>
+        <span class="o">.</span><span class="na">build</span><span class="o">();</span>
+
+    <span class="kd">final</span> <span class="kt">long</span> <span class="n">startNanos</span> <span class="o">=</span> <span class="n">System</span><span class="o">.</span><span class="na">nanoTime</span><span class="o">();</span>
+    <span class="kd">final</span> <span class="n">Call</span> <span class="n">call</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="na">newCall</span><span class="o">(</span><span class="n">request</span><span class="o">);</span>
+
+    <span class="c1">// Schedule a job to cancel the call in 1 second.</span>
+    <span class="n">executor</span><span class="o">.</span><span class="na">schedule</span><span class="o">(</span><span class="k">new</span> <span class="n">Runnable</span><span class="o">()</span> <span class="o">{</span>
+      <span class="nd">@Override</span> <span class="kd">public</span> <span class="kt">void</span> <span class="nf">run</span><span class="o">()</span> <span class="o">{</span>
+        <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">printf</span><span class="o">(</span><span class="s">&quot;%.2f Canceling call.%n&quot;</span><span class="o">,</span> <span class="o">(</span><span class="n">System</span><span class="o">.</span><span class="na">nanoTime</span><span class="o">()</span> <span class="o">-</span> <span class="n">startNanos</span><span class="o">)</span> <span class="o">/</span> <span class="mf">1e9f</span><span class="o">);</span>
+        <span class="n">call</span><span class="o">.</span><span class="na">cancel</span><span class="o">();</span>
+        <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">printf</span><span class="o">(</span><span class="s">&quot;%.2f Canceled call.%n&quot;</span><span class="o">,</span> <span class="o">(</span><span class="n">System</span><span class="o">.</span><span class="na">nanoTime</span><span class="o">()</span> <span class="o">-</span> <span class="n">startNanos</span><span class="o">)</span> <span class="o">/</span> <span class="mf">1e9f</span><span class="o">);</span>
+      <span class="o">}</span>
+    <span class="o">},</span> <span class="mi">1</span><span class="o">,</span> <span class="n">TimeUnit</span><span class="o">.</span><span class="na">SECONDS</span><span class="o">);</span>
+
+    <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">printf</span><span class="o">(</span><span class="s">&quot;%.2f Executing call.%n&quot;</span><span class="o">,</span> <span class="o">(</span><span class="n">System</span><span class="o">.</span><span class="na">nanoTime</span><span class="o">()</span> <span class="o">-</span> <span class="n">startNanos</span><span class="o">)</span> <span class="o">/</span> <span class="mf">1e9f</span><span class="o">);</span>
+    <span class="k">try</span> <span class="o">(</span><span class="n">Response</span> <span class="n">response</span> <span class="o">=</span> <span class="n">call</span><span class="o">.</span><span class="na">execute</span><span class="o">())</span> <span class="o">{</span>
+      <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">printf</span><span class="o">(</span><span class="s">&quot;%.2f Call was expected to fail, but completed: %s%n&quot;</span><span class="o">,</span>
+          <span class="o">(</span><span class="n">System</span><span class="o">.</span><span class="na">nanoTime</span><span class="o">()</span> <span class="o">-</span> <span class="n">startNanos</span><span class="o">)</span> <span class="o">/</span> <span class="mf">1e9f</span><span class="o">,</span> <span class="n">response</span><span class="o">);</span>
+    <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">IOException</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+      <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">printf</span><span class="o">(</span><span class="s">&quot;%.2f Call failed as expected: %s%n&quot;</span><span class="o">,</span>
+          <span class="o">(</span><span class="n">System</span><span class="o">.</span><span class="na">nanoTime</span><span class="o">()</span> <span class="o">-</span> <span class="n">startNanos</span><span class="o">)</span> <span class="o">/</span> <span class="mf">1e9f</span><span class="o">,</span> <span class="n">e</span><span class="o">);</span>
+    <span class="o">}</span>
+  <span class="o">}</span>
+</pre></div>
+
+<h4 id="timeouts"><a href="https://github.com/square/okhttp/blob/master/samples/guide/src/main/java/okhttp3/recipes/ConfigureTimeouts.java">Timeouts</a><a class="headerlink" href="#timeouts" title="Permanent link">&para;</a></h4>
+<p>Use timeouts to fail a call when its peer is unreachable. Network partitions can be due to client connectivity problems, server availability problems, or anything between. OkHttp supports connect, read, and write timeouts.</p>
+<div class="codehilite"><pre><span></span>  <span class="kd">private</span> <span class="kd">final</span> <span class="n">OkHttpClient</span> <span class="n">client</span><span class="o">;</span>
+
+  <span class="kd">public</span> <span class="nf">ConfigureTimeouts</span><span class="o">()</span> <span class="kd">throws</span> <span class="n">Exception</span> <span class="o">{</span>
+    <span class="n">client</span> <span class="o">=</span> <span class="k">new</span> <span class="n">OkHttpClient</span><span class="o">.</span><span class="na">Builder</span><span class="o">()</span>
+        <span class="o">.</span><span class="na">connectTimeout</span><span class="o">(</span><span class="mi">10</span><span class="o">,</span> <span class="n">TimeUnit</span><span class="o">.</span><span class="na">SECONDS</span><span class="o">)</span>
+        <span class="o">.</span><span class="na">writeTimeout</span><span class="o">(</span><span class="mi">10</span><span class="o">,</span> <span class="n">TimeUnit</span><span class="o">.</span><span class="na">SECONDS</span><span class="o">)</span>
+        <span class="o">.</span><span class="na">readTimeout</span><span class="o">(</span><span class="mi">30</span><span class="o">,</span> <span class="n">TimeUnit</span><span class="o">.</span><span class="na">SECONDS</span><span class="o">)</span>
+        <span class="o">.</span><span class="na">build</span><span class="o">();</span>
+  <span class="o">}</span>
+
+  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">run</span><span class="o">()</span> <span class="kd">throws</span> <span class="n">Exception</span> <span class="o">{</span>
+    <span class="n">Request</span> <span class="n">request</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Request</span><span class="o">.</span><span class="na">Builder</span><span class="o">()</span>
+        <span class="o">.</span><span class="na">url</span><span class="o">(</span><span class="s">&quot;http://httpbin.org/delay/2&quot;</span><span class="o">)</span> <span class="c1">// This URL is served with a 2 second delay.</span>
+        <span class="o">.</span><span class="na">build</span><span class="o">();</span>
+
+    <span class="k">try</span> <span class="o">(</span><span class="n">Response</span> <span class="n">response</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="na">newCall</span><span class="o">(</span><span class="n">request</span><span class="o">).</span><span class="na">execute</span><span class="o">())</span> <span class="o">{</span>
+      <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">&quot;Response completed: &quot;</span> <span class="o">+</span> <span class="n">response</span><span class="o">);</span>
+    <span class="o">}</span>
+  <span class="o">}</span>
+</pre></div>
+
+<h4 id="per-call-configuration"><a href="https://github.com/square/okhttp/blob/master/samples/guide/src/main/java/okhttp3/recipes/PerCallSettings.java">Per-call Configuration</a><a class="headerlink" href="#per-call-configuration" title="Permanent link">&para;</a></h4>
+<p>All the HTTP client configuration lives in <code>OkHttpClient</code> including proxy settings, timeouts, and caches. When you need to change the configuration of a single call, call <code>OkHttpClient.newBuilder()</code>. This returns a builder that shares the same connection pool, dispatcher, and configuration with the original client. In the example below, we make one request with a 500 ms timeout and another with a 3000 ms timeout.</p>
+<div class="codehilite"><pre><span></span>  <span class="kd">private</span> <span class="kd">final</span> <span class="n">OkHttpClient</span> <span class="n">client</span> <span class="o">=</span> <span class="k">new</span> <span class="n">OkHttpClient</span><span class="o">();</span>
+
+  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">run</span><span class="o">()</span> <span class="kd">throws</span> <span class="n">Exception</span> <span class="o">{</span>
+    <span class="n">Request</span> <span class="n">request</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Request</span><span class="o">.</span><span class="na">Builder</span><span class="o">()</span>
+        <span class="o">.</span><span class="na">url</span><span class="o">(</span><span class="s">&quot;http://httpbin.org/delay/1&quot;</span><span class="o">)</span> <span class="c1">// This URL is served with a 1 second delay.</span>
+        <span class="o">.</span><span class="na">build</span><span class="o">();</span>
+
+    <span class="c1">// Copy to customize OkHttp for this request.</span>
+    <span class="n">OkHttpClient</span> <span class="n">client1</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="na">newBuilder</span><span class="o">()</span>
+        <span class="o">.</span><span class="na">readTimeout</span><span class="o">(</span><span class="mi">500</span><span class="o">,</span> <span class="n">TimeUnit</span><span class="o">.</span><span class="na">MILLISECONDS</span><span class="o">)</span>
+        <span class="o">.</span><span class="na">build</span><span class="o">();</span>
+    <span class="k">try</span> <span class="o">(</span><span class="n">Response</span> <span class="n">response</span> <span class="o">=</span> <span class="n">client1</span><span class="o">.</span><span class="na">newCall</span><span class="o">(</span><span class="n">request</span><span class="o">).</span><span class="na">execute</span><span class="o">())</span> <span class="o">{</span>
+      <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">&quot;Response 1 succeeded: &quot;</span> <span class="o">+</span> <span class="n">response</span><span class="o">);</span>
+    <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">IOException</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+      <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">&quot;Response 1 failed: &quot;</span> <span class="o">+</span> <span class="n">e</span><span class="o">);</span>
+    <span class="o">}</span>
+
+    <span class="c1">// Copy to customize OkHttp for this request.</span>
+    <span class="n">OkHttpClient</span> <span class="n">client2</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="na">newBuilder</span><span class="o">()</span>
+        <span class="o">.</span><span class="na">readTimeout</span><span class="o">(</span><span class="mi">3000</span><span class="o">,</span> <span class="n">TimeUnit</span><span class="o">.</span><span class="na">MILLISECONDS</span><span class="o">)</span>
+        <span class="o">.</span><span class="na">build</span><span class="o">();</span>
+    <span class="k">try</span> <span class="o">(</span><span class="n">Response</span> <span class="n">response</span> <span class="o">=</span> <span class="n">client2</span><span class="o">.</span><span class="na">newCall</span><span class="o">(</span><span class="n">request</span><span class="o">).</span><span class="na">execute</span><span class="o">())</span> <span class="o">{</span>
+      <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">&quot;Response 2 succeeded: &quot;</span> <span class="o">+</span> <span class="n">response</span><span class="o">);</span>
+    <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">IOException</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+      <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">&quot;Response 2 failed: &quot;</span> <span class="o">+</span> <span class="n">e</span><span class="o">);</span>
+    <span class="o">}</span>
+  <span class="o">}</span>
+</pre></div>
+
+<h4 id="handling-authentication"><a href="https://github.com/square/okhttp/blob/master/samples/guide/src/main/java/okhttp3/recipes/Authenticate.java">Handling authentication</a><a class="headerlink" href="#handling-authentication" title="Permanent link">&para;</a></h4>
+<p>OkHttp can automatically retry unauthenticated requests. When a response is <code>401 Not Authorized</code>, an <code>Authenticator</code> is asked to supply credentials. Implementations should build a new request that includes the missing credentials. If no credentials are available, return null to skip the retry.</p>
+<p>Use <code>Response.challenges()</code> to get the schemes and realms of any authentication challenges. When fulfilling a <code>Basic</code> challenge, use <code>Credentials.basic(username, password)</code> to encode the request header.</p>
+<div class="codehilite"><pre><span></span>  <span class="kd">private</span> <span class="kd">final</span> <span class="n">OkHttpClient</span> <span class="n">client</span><span class="o">;</span>
+
+  <span class="kd">public</span> <span class="nf">Authenticate</span><span class="o">()</span> <span class="o">{</span>
+    <span class="n">client</span> <span class="o">=</span> <span class="k">new</span> <span class="n">OkHttpClient</span><span class="o">.</span><span class="na">Builder</span><span class="o">()</span>
+        <span class="o">.</span><span class="na">authenticator</span><span class="o">(</span><span class="k">new</span> <span class="n">Authenticator</span><span class="o">()</span> <span class="o">{</span>
+          <span class="nd">@Override</span> <span class="kd">public</span> <span class="n">Request</span> <span class="nf">authenticate</span><span class="o">(</span><span class="n">Route</span> <span class="n">route</span><span class="o">,</span> <span class="n">Response</span> <span class="n">response</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">IOException</span> <span class="o">{</span>
+            <span class="k">if</span> <span class="o">(</span><span class="n">response</span><span class="o">.</span><span class="na">request</span><span class="o">().</span><span class="na">header</span><span class="o">(</span><span class="s">&quot;Authorization&quot;</span><span class="o">)</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+              <span class="k">return</span> <span class="kc">null</span><span class="o">;</span> <span class="c1">// Give up, we&#39;ve already attempted to authenticate.</span>
+            <span class="o">}</span>
+
+            <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">&quot;Authenticating for response: &quot;</span> <span class="o">+</span> <span class="n">response</span><span class="o">);</span>
+            <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">&quot;Challenges: &quot;</span> <span class="o">+</span> <span class="n">response</span><span class="o">.</span><span class="na">challenges</span><span class="o">());</span>
+            <span class="n">String</span> <span class="n">credential</span> <span class="o">=</span> <span class="n">Credentials</span><span class="o">.</span><span class="na">basic</span><span class="o">(</span><span class="s">&quot;jesse&quot;</span><span class="o">,</span> <span class="s">&quot;password1&quot;</span><span class="o">);</span>
+            <span class="k">return</span> <span class="n">response</span><span class="o">.</span><span class="na">request</span><span class="o">().</span><span class="na">newBuilder</span><span class="o">()</span>
+                <span class="o">.</span><span class="na">header</span><span class="o">(</span><span class="s">&quot;Authorization&quot;</span><span class="o">,</span> <span class="n">credential</span><span class="o">)</span>
+                <span class="o">.</span><span class="na">build</span><span class="o">();</span>
+          <span class="o">}</span>
+        <span class="o">})</span>
+        <span class="o">.</span><span class="na">build</span><span class="o">();</span>
+  <span class="o">}</span>
+
+  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">run</span><span class="o">()</span> <span class="kd">throws</span> <span class="n">Exception</span> <span class="o">{</span>
+    <span class="n">Request</span> <span class="n">request</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Request</span><span class="o">.</span><span class="na">Builder</span><span class="o">()</span>
+        <span class="o">.</span><span class="na">url</span><span class="o">(</span><span class="s">&quot;http://publicobject.com/secrets/hellosecret.txt&quot;</span><span class="o">)</span>
+        <span class="o">.</span><span class="na">build</span><span class="o">();</span>
+
+    <span class="k">try</span> <span class="o">(</span><span class="n">Response</span> <span class="n">response</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="na">newCall</span><span class="o">(</span><span class="n">request</span><span class="o">).</span><span class="na">execute</span><span class="o">())</span> <span class="o">{</span>
+      <span class="k">if</span> <span class="o">(!</span><span class="n">response</span><span class="o">.</span><span class="na">isSuccessful</span><span class="o">())</span> <span class="k">throw</span> <span class="k">new</span> <span class="n">IOException</span><span class="o">(</span><span class="s">&quot;Unexpected code &quot;</span> <span class="o">+</span> <span class="n">response</span><span class="o">);</span>
+
+      <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="n">response</span><span class="o">.</span><span class="na">body</span><span class="o">().</span><span class="na">string</span><span class="o">());</span>
+    <span class="o">}</span>
+  <span class="o">}</span>
+</pre></div>
+
+<p>To avoid making many retries when authentication isn&rsquo;t working, you can return null to give up. For example, you may want to skip the retry when these exact credentials have already been attempted:</p>
+<div class="codehilite"><pre><span></span>  <span class="k">if</span> <span class="o">(</span><span class="n">credential</span><span class="o">.</span><span class="na">equals</span><span class="o">(</span><span class="n">response</span><span class="o">.</span><span class="na">request</span><span class="o">().</span><span class="na">header</span><span class="o">(</span><span class="s">&quot;Authorization&quot;</span><span class="o">)))</span> <span class="o">{</span>
+    <span class="k">return</span> <span class="kc">null</span><span class="o">;</span> <span class="c1">// If we already failed with these credentials, don&#39;t retry.</span>
+   <span class="o">}</span>
+</pre></div>
+
+<p>You may also skip the retry when you’ve hit an application-defined attempt limit:</p>
+<div class="codehilite"><pre><span></span>  <span class="k">if</span> <span class="o">(</span><span class="n">responseCount</span><span class="o">(</span><span class="n">response</span><span class="o">)</span> <span class="o">&gt;=</span> <span class="mi">3</span><span class="o">)</span> <span class="o">{</span>
+    <span class="k">return</span> <span class="kc">null</span><span class="o">;</span> <span class="c1">// If we&#39;ve failed 3 times, give up.</span>
+  <span class="o">}</span>
+</pre></div>
+
+<p>This above code relies on this <code>responseCount()</code> method:</p>
+<div class="codehilite"><pre><span></span>  <span class="kd">private</span> <span class="kt">int</span> <span class="nf">responseCount</span><span class="o">(</span><span class="n">Response</span> <span class="n">response</span><span class="o">)</span> <span class="o">{</span>
+    <span class="kt">int</span> <span class="n">result</span> <span class="o">=</span> <span class="mi">1</span><span class="o">;</span>
+    <span class="k">while</span> <span class="o">((</span><span class="n">response</span> <span class="o">=</span> <span class="n">response</span><span class="o">.</span><span class="na">priorResponse</span><span class="o">())</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+      <span class="n">result</span><span class="o">++;</span>
+    <span class="o">}</span>
+    <span class="k">return</span> <span class="n">result</span><span class="o">;</span>
+  <span class="o">}</span>
+</pre></div>
+                
+                  
+                
+              
+              
+                
+
+
+              
+            </article>
+          </div>
+        </div>
+      </main>
+      
+        
+<footer class="md-footer">
+  
+    <div class="md-footer-nav">
+      <nav class="md-footer-nav__inner md-grid">
+        
+          <a href="../interceptors/" title="Interceptors" class="md-flex md-footer-nav__link md-footer-nav__link--prev" rel="prev">
+            <div class="md-flex__cell md-flex__cell--shrink">
+              <i class="md-icon md-icon--arrow-back md-footer-nav__button"></i>
+            </div>
+            <div class="md-flex__cell md-flex__cell--stretch md-footer-nav__title">
+              <span class="md-flex__ellipsis">
+                <span class="md-footer-nav__direction">
+                  Previous
+                </span>
+                Interceptors
+              </span>
+            </div>
+          </a>
+        
+        
+          <a href="../security/" title="Security" class="md-flex md-footer-nav__link md-footer-nav__link--next" rel="next">
+            <div class="md-flex__cell md-flex__cell--stretch md-footer-nav__title">
+              <span class="md-flex__ellipsis">
+                <span class="md-footer-nav__direction">
+                  Next
+                </span>
+                Security
+              </span>
+            </div>
+            <div class="md-flex__cell md-flex__cell--shrink">
+              <i class="md-icon md-icon--arrow-forward md-footer-nav__button"></i>
+            </div>
+          </a>
+        
+      </nav>
+    </div>
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-footer-copyright">
+        
+          <div class="md-footer-copyright__highlight">
+            Copyright &copy; 2016 Square, Inc.
+          </div>
+        
+        powered by
+        <a href="https://www.mkdocs.org">MkDocs</a>
+        and
+        <a href="https://squidfunk.github.io/mkdocs-material/">
+          Material for MkDocs</a>
+      </div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    
+      <script src="../assets/javascripts/application.245445c6.js"></script>
+      
+      <script>app.initialize({version:"1.0.4",url:{base:".."}})</script>
+      
+    
+  </body>
+</html>

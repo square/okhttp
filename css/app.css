@@ -1,0 +1,16 @@
+button.dl {
+  font-weight: 300;
+  font-size: 25px;
+  line-height: 40px;
+  padding: 3px 10px;
+  display: inline-block;
+  border-radius: 6px;
+  color: #f0f0f0;
+  margin: 5px 0;
+  width: auto;
+}
+
+.logo {
+  text-align: center;
+  margin-top: 150px;
+}
