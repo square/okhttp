@@ -223,14 +223,8 @@ workflows:
           filters:
             branches:
               only: master
-      - testjdk12:
-          filters:
-            branches:
-              only: master
-      - testjdk13:
-          filters:
-            branches:
-              only: master
+      - testjdk12
+      - testjdk13
       - testconscrypt:
           filters:
             branches:
