@@ -171,7 +171,7 @@ class Main : Runnable {
     return builder.build()
   }
 
-  private fun createRequest(): Request {
+  public fun createRequest(): Request {
     val request = Request.Builder()
 
     val requestMethod = method ?: if (data != null) "POST" else "GET"

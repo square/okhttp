@@ -20,11 +20,15 @@ import okhttp3.Request;
 import okhttp3.RequestBody;
 import okio.Buffer;
 import org.junit.Test;
+import picocli.CommandLine;
 
-import static okhttp3.curl.Main.fromArgs;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class MainTest {
+  public static Main fromArgs(String... args) {
+    return CommandLine.populateCommand(new Main(), args);
+  }
+
   @Test public void simple() {
     Request request = fromArgs("http://example.com").createRequest();
     assertThat(request.method()).isEqualTo("GET");
