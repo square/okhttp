@@ -18,6 +18,13 @@ dependencies {
   testImplementation deps.assertj
 }
 
+afterEvaluate { project ->
+  project.tasks.dokka {
+    outputDirectory = "$rootDir/docs/api"
+    outputFormat = 'gfm'
+  }
+}
+
 task japicmp(type: me.champeau.gradle.japicmp.JapicmpTask, dependsOn: 'jar') {
   oldClasspath = files(baselineJar(project, baselineVersion))
   newClasspath = files(jar.archivePath)

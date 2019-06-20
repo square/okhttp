@@ -21,10 +21,22 @@ git clone $REPO $DIR
 cd $DIR
 
 # Generate the API docs
-./gradlew :okhttp:dokka
+./gradlew \
+  :mockwebserver:dokka \
+  :okhttp-dnsoverhttps:dokka \
+  :okhttp-logging-interceptor:dokka \
+  :okhttp-sse:dokka \
+  :okhttp-tls:dokka \
+  :okhttp-urlconnection:dokka \
+  :okhttp:dokka
 
 # Build the site and push the new files up to GitHub
 mkdocs gh-deploy
+
+# Restore Javadocs from 1.x, 2.x, and 3.x.
+git checkout gh-pages
+git cherry-pick bb229b9dcc9a21a73edbf8d936bea88f52e0a3ff
+git push
 
 # Delete our temp folder
 cd ..
