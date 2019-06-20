@@ -71,6 +71,7 @@ import okhttp3.mockwebserver.MockWebServer;
 import okhttp3.mockwebserver.QueueDispatcher;
 import okhttp3.mockwebserver.RecordedRequest;
 import okhttp3.mockwebserver.SocketPolicy;
+import okhttp3.testing.JdkMatchRule;
 import okhttp3.tls.HandshakeCertificates;
 import okhttp3.tls.HeldCertificate;
 import okio.Buffer;
@@ -102,6 +103,7 @@ import static org.junit.Assume.assumeFalse;
 
 public final class CallTest {
   @Rule public final PlatformRule platform = new PlatformRule();
+  @Rule public final JdkMatchRule jdkMatchRule = new JdkMatchRule();
   @Rule public final TestRule timeout = new Timeout(30_000, TimeUnit.MILLISECONDS);
   @Rule public final MockWebServer server = new MockWebServer();
   @Rule public final MockWebServer server2 = new MockWebServer();
@@ -1315,7 +1317,6 @@ public final class CallTest {
 
     // The _anon_ suites became unsupported in "1.8.0_201" and "11.0.2".
     assumeFalse(System.getProperty("java.version", "unknown").matches("1\\.8\\.0_1\\d\\d"));
-    assumeFalse(System.getProperty("java.version", "unknown").matches("11"));
 
     server.enqueue(new MockResponse());
 
@@ -1396,9 +1397,6 @@ public final class CallTest {
   }
 
   @Test public void matchingPinnedCertificate() throws Exception {
-    // TODO https://github.com/square/okhttp/issues/4703
-    assumeFalse(getJvmSpecVersion().equals("11"));
-
     enableTls();
     server.enqueue(new MockResponse());
     server.enqueue(new MockResponse());

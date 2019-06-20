@@ -16,6 +16,7 @@
 package okhttp3.internal.tls;
 
 import java.security.GeneralSecurityException;
+import java.security.KeyStoreException;
 import java.security.SecureRandom;
 import java.security.cert.X509Certificate;
 import java.util.Collections;
@@ -38,29 +39,33 @@ import okhttp3.internal.platform.Platform;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import okhttp3.mockwebserver.SocketPolicy;
+import okhttp3.testing.JdkMatchRule;
 import okhttp3.tls.HandshakeCertificates;
 import okhttp3.tls.HeldCertificate;
+import org.hamcrest.CoreMatchers;
+import org.hamcrest.Matcher;
 import org.junit.Rule;
 import org.junit.Test;
 
 import static okhttp3.TestUtil.defaultClient;
 import static okhttp3.internal.platform.PlatformTest.getJvmSpecVersion;
+import static okhttp3.testing.JdkMatchRuleKt.fromMajor;
 import static okhttp3.tls.internal.TlsUtil.newKeyManager;
 import static okhttp3.tls.internal.TlsUtil.newTrustManager;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.CoreMatchers.anything;
+import static org.hamcrest.CoreMatchers.isA;
 import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeFalse;
 
 public final class CertificatePinnerChainValidationTest {
   @Rule public final PlatformRule platform = new PlatformRule();
+  @Rule public final JdkMatchRule jdkMatchRule = new JdkMatchRule();
 
   @Rule public final MockWebServer server = new MockWebServer();
 
   /** The pinner should pull the root certificate from the trust manager. */
   @Test public void pinRootNotPresentInChain() throws Exception {
-    // TODO https://github.com/square/okhttp/issues/4703
-    assumeFalse(getJvmSpecVersion().equals("11"));
-
     HeldCertificate rootCa = new HeldCertificate.Builder()
         .serialNumber(1L)
         .certificateAuthority(1)
@@ -118,9 +123,6 @@ public final class CertificatePinnerChainValidationTest {
 
   /** The pinner should accept an intermediate from the server's chain. */
   @Test public void pinIntermediatePresentInChain() throws Exception {
-    // TODO https://github.com/square/okhttp/issues/4703
-    assumeFalse(getJvmSpecVersion().equals("11"));
-
     HeldCertificate rootCa = new HeldCertificate.Builder()
         .serialNumber(1L)
         .certificateAuthority(1)
@@ -183,7 +185,7 @@ public final class CertificatePinnerChainValidationTest {
 
   @Test public void unrelatedPinnedLeafCertificateInChain() throws Exception {
     // https://github.com/square/okhttp/issues/4729
-    assumeFalse(getJvmSpecVersion().matches("1[123]"));
+    //jdkMatchRule.expectFailure(fromMajor(11), isA(KeyStoreException.class));
 
     // Start with a trusted root CA certificate.
     HeldCertificate rootCa = new HeldCertificate.Builder()
@@ -261,7 +263,7 @@ public final class CertificatePinnerChainValidationTest {
 
   @Test public void unrelatedPinnedIntermediateCertificateInChain() throws Exception {
     // https://github.com/square/okhttp/issues/4729
-    assumeFalse(getJvmSpecVersion().matches("1[123]"));
+    //jdkMatchRule.expectFailure(fromMajor(11), isA(KeyStoreException.class));
 
     // Start with two root CA certificates, one is good and the other is compromised.
     HeldCertificate rootCa = new HeldCertificate.Builder()

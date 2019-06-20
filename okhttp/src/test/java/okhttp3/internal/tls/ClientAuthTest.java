@@ -36,6 +36,7 @@ import okhttp3.Request;
 import okhttp3.Response;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
+import okhttp3.testing.JdkMatchRule;
 import okhttp3.tls.HandshakeCertificates;
 import okhttp3.tls.HeldCertificate;
 import org.junit.Before;
@@ -54,6 +55,7 @@ import static org.junit.Assume.assumeFalse;
 
 public final class ClientAuthTest {
   @Rule public final PlatformRule platform = new PlatformRule();
+  @Rule public final JdkMatchRule jdkMatchRule = new JdkMatchRule();
   @Rule public final MockWebServer server = new MockWebServer();
 
   private HeldCertificate serverRootCa;
@@ -183,7 +185,7 @@ public final class ClientAuthTest {
   @Test public void missingClientAuthFailsForNeeds() throws Exception {
     // TODO https://github.com/square/okhttp/issues/4598
     // StreamReset stream was reset: PROT...
-    assumeFalse(getJvmSpecVersion().equals("11"));
+    //jdkMatchRule.expectFailure(fromMajor(11), isA(KeyStoreException.class));
 
     OkHttpClient client = buildClient(null, clientIntermediateCa.certificate());
 
