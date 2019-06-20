@@ -30,7 +30,10 @@ import okhttp3.logging.HttpLoggingInterceptor
 import okhttp3.logging.LoggingEventListener
 import okio.sink
 import picocli.CommandLine
-import picocli.CommandLine.*
+import picocli.CommandLine.Command
+import picocli.CommandLine.IVersionProvider
+import picocli.CommandLine.Option
+import picocli.CommandLine.Parameters
 import java.io.IOException
 import java.security.cert.X509Certificate
 import java.util.Properties
@@ -211,7 +214,7 @@ class Main : Runnable {
     client.dispatcher.executorService.shutdownNow()
   }
 
-  class VersionProvider: IVersionProvider {
+  class VersionProvider : IVersionProvider {
     override fun getVersion(): Array<String> {
       return arrayOf(
           "$NAME ${versionString()}",
