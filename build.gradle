@@ -107,11 +107,11 @@ subprojects { project ->
     signature 'net.sf.androidscents.signature:android-api-level-21:5.0.1_r2@signature'
     signature 'org.codehaus.mojo.signature:java18:1.0@signature'
   }
-  
+
   spotless {
     kotlin {
       target "**/*.kt"
-      ktlint(versions.ktlint).userData(['indent_size': '2', 'continuation_indent_size' : '2'])
+      ktlint(versions.ktlint).userData(['indent_size': '2', 'continuation_indent_size': '2'])
     }
   }
 
@@ -159,9 +159,9 @@ subprojects { project ->
   // We have to set the dokka configuration after evaluation since the com.vanniktech.maven.publish
   // plugin overwrites our dokka configuration on projects where it's applied.
   afterEvaluate { p ->
-      p.tasks.dokka {
-        reportUndocumented = false
-        skipDeprecated = true
+    p.tasks.dokka {
+      reportUndocumented = false
+      skipDeprecated = true
       jdkVersion = 8
       packageOptions {
         prefix = "okhttp3.internal"
