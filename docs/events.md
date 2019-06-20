@@ -10,7 +10,7 @@ Events allow you to capture metrics on your application’s HTTP calls. Use even
 
 Subclass [EventListener](https://square.github.io/okhttp/3.x/okhttp/okhttp3/EventListener.html) and override methods for the events you are interested in. In a successful HTTP call with no redirects or retries the sequence of events is described by this flow.
 
-![Events Diagram](docs/images/events@2x.png)
+![Events Diagram](images/events@2x.png)
 
 Here’s a [sample event listener](https://github.com/square/okhttp/blob/master/samples/guide/src/main/java/okhttp3/recipes/PrintEventsNonConcurrent.java) that prints each event with a timestamp.
 
@@ -224,7 +224,7 @@ class MetricsEventListener extends EventListener {
 
 When an operation fails, a failure method is called. This is `connectFailed()` for failures while building a connection to the server, and `callFailed()` when the HTTP call fails permanently. When a failure happens it is possible that a `start` event won’t have a corresponding `end` event.
 
-![Events Diagram](docs/images/events_with_failures@2x.png)
+![Events Diagram](images/events_with_failures@2x.png)
 
 ### Events with Retries and Follow-Ups
 
@@ -232,17 +232,8 @@ OkHttp is resilient and can automatically recover from some connectivity failure
 
 A single HTTP call may require follow-up requests to be made to handle authentication challenges, redirects, and HTTP-layer timeouts. In such cases multiple connections, requests, and responses may be attempted. Follow-ups are another reason a single call may trigger multiple events of the same type.
 
-![Events Diagram](docs/images/events_with_failures_and_retries@2x.png)
+![Events Diagram](images/events_with_failures_and_retries@2x.png)
 
 ### Availability
 
 Events is available as a public API in OkHttp 3.11. Future releases may introduce new event types; you will need to override the corresponding methods to handle them.
-
-
-----
-
-<table><tr>
-  <td width="25%" align="left"><a href="HTTPS.md">← HTTPS</a></td>
-  <td width="50%" align="center">OkHttp User's Guide</td>
-  <td width="25%" align="right"><a href="README.md">Home →</a></td>
-</tr></table>

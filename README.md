@@ -6,8 +6,8 @@ An HTTP & HTTP/2 client for Android and Java applications.
 Docs
 ----
 
- * [**User's Guide**](CALLS.md) (includes [Calls](CALLS.md), [Connections](CONNECTIONS.md),
-   [Recipes](RECIPES.md), [Interceptors](INTERCEPTORS.md), [HTTPS](HTTPS.md), [Events](EVENTS.md))
+ * [**User's Guide**](docs/calls.md) (includes [Calls](docs/calls.md), [Connections](docs/connections.md),
+   [Recipes](docs/recipes.md), [Interceptors](docs/interceptors.md), [HTTPS](docs/https.md), [Events](docs/events.md))
  * [**4.x API**][4x_okhttp] (also [dnsoverhttps][4x_dnsoverhttps],
    [logging-interceptor][4x_logging], [sse][4x_sse], [tls][4x_tls],
    [urlconnection][4x_urlconnection], [mockwebserver][4x_mockwebserver])
@@ -15,7 +15,7 @@ Docs
    [logging-interceptor][3x_logging], [sse][3x_sse], [tls][3x_tls],
    [urlconnection][3x_urlconnection], [mockwebserver][3x_mockwebserver])
  * [**StackOverflow**](http://stackoverflow.com/questions/tagged/okhttp?sort=active)
- * [**Works with OkHttp**](WORKS_WITH_OKHTTP.md)
+ * [**Works with OkHttp**](docs/works_with_okhttp.md)
 
 
 Requirements
@@ -91,7 +91,7 @@ License
  [okhttp_312x]: https://github.com/square/okhttp/tree/okhttp_3.12.x
  [okio]: https://github.com/square/okio/
  [snap]: https://oss.sonatype.org/content/repositories/snapshots/
- [tls_history]: TLS_CONFIGURATION_HISTORY.md
+ [tls_history]: docs/tls_configuration_history.md
  [website]: https://square.github.io/okhttp
  [okhttp3_pro]: https://github.com/square/okhttp/blob/master/okhttp/src/main/resources/META-INF/proguard/okhttp3.pro
 

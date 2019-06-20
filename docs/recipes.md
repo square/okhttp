@@ -509,12 +509,3 @@ This above code relies on this `responseCount()` method:
     return result;
   }
 ```
-
-
-----
-
-<table><tr>
-  <td width="25%" align="left"><a href="CONNECTIONS.md">← Connections</a></td>
-  <td width="50%" align="center">OkHttp User's Guide</td>
-  <td width="25%" align="right"><a href="INTERCEPTORS.md">Interceptors →</a></td>
-</tr></table>

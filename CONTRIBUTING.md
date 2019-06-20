@@ -9,7 +9,7 @@ If you've found a security problem, please follow our [bug bounty](BUG-BOUNTY.md
 If you've found a bug, please contribute a failing test case so we can study and fix it.
 
 If you have a new feature idea, please build it in an external library. There are
-[many libraries](WORKS_WITH_OKHTTP.md) that sit on top or hook in via existing APIs. If you build
+[many libraries](./docs/works_with_okhttp.md) that sit on top or hook in via existing APIs. If you build
 something that integrates with OkHttp, tell us so that we can link it!
 
 Before code can be accepted all contributors must complete our
@@ -35,5 +35,5 @@ squash all pull requests on merge.
 Committer's Guides
 ------------------
 
- * [Concurrency](CONCURRENCY.md)
+ * [Concurrency](./docs/concurrency.md)
  * [Releasing](RELEASING.md)

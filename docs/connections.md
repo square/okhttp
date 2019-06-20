@@ -41,12 +41,3 @@ When you request a URL with OkHttp, here's what it does:
 If there's a problem with the connection, OkHttp will select another route and try again. This allows OkHttp to recover when a subset of a server's addresses are unreachable. It's also useful when a pooled connection is stale or if the attempted TLS version is unsupported.
 
 Once the response has been received, the connection will be returned to the pool so it can be reused for a future request. Connections are evicted from the pool after a period of inactivity.
-
-
-----
-
-<table><tr>
-  <td width="25%" align="left"><a href="CALLS.md">← Calls</a></td>
-  <td width="50%" align="center">OkHttp User's Guide</td>
-  <td width="25%" align="right"><a href="RECIPES.md">Recipes →</a></td>
-</tr></table>

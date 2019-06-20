@@ -1,5 +1,11 @@
 #!/bin/bash
 
+# The website is built using MkDocs with the Material theme.
+# https://squidfunk.github.io/mkdocs-material/
+# It requires Python to run.
+# Install the packages with the following command:
+# pip install mkdocs mkdocs-material
+
 set -ex
 
 REPO="git@github.com:square/okhttp.git"
@@ -14,22 +20,11 @@ git clone $REPO $DIR
 # Move working directory into temp folder
 cd $DIR
 
-# Checkout and track the gh-pages branch
-git checkout -t origin/gh-pages
+# Generate the API docs
+./gradlew :okhttp:dokka
 
-# Delete everything that isn't versioned (1.x, 2.x)
-ls | grep -E -v '^\d+\.x$' | xargs rm -rf
-
-# Copy website files from real repo
-cp -R ../website/* .
-
-# Stage all files in git and create a commit
-git add .
-git add -u
-git commit -m "Website at $(date)"
-
-# Push the new files up to GitHub
-git push origin gh-pages
+# Build the site and push the new files up to GitHub
+mkdocs gh-deploy
 
 # Delete our temp folder
 cd ..
