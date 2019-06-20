@@ -185,7 +185,7 @@ public final class CertificatePinnerChainValidationTest {
 
   @Test public void unrelatedPinnedLeafCertificateInChain() throws Exception {
     // https://github.com/square/okhttp/issues/4729
-    //jdkMatchRule.expectFailure(fromMajor(11), isA(KeyStoreException.class));
+    jdkMatchRule.expectFailure(fromMajor(11), isA(KeyStoreException.class));
 
     // Start with a trusted root CA certificate.
     HeldCertificate rootCa = new HeldCertificate.Builder()
@@ -263,7 +263,7 @@ public final class CertificatePinnerChainValidationTest {
 
   @Test public void unrelatedPinnedIntermediateCertificateInChain() throws Exception {
     // https://github.com/square/okhttp/issues/4729
-    //jdkMatchRule.expectFailure(fromMajor(11), isA(KeyStoreException.class));
+    jdkMatchRule.expectFailure(fromMajor(11), isA(KeyStoreException.class));
 
     // Start with two root CA certificates, one is good and the other is compromised.
     HeldCertificate rootCa = new HeldCertificate.Builder()
