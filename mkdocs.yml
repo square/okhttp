@@ -35,6 +35,7 @@ markdown_extensions:
   - tables
 
 nav:
+  - 'Overview': index.md
   - 'Calls': calls.md
   - 'Connections': connections.md
   - 'Recipes': recipes.md
