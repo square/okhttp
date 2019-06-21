@@ -40,7 +40,7 @@
     
     
       
-        <title>TLS Configuration History - OkHttp</title>
+        <title>Tls configuration history - OkHttp</title>
       
     
     
@@ -117,7 +117,7 @@
             </span>
             <span class="md-header-nav__topic">
               
-                TLS Configuration History
+                Tls configuration history
               
             </span>
           
@@ -228,8 +228,8 @@
 
 
   <li class="md-nav__item">
-    <a href="../calls/" title="Calls" class="md-nav__link">
-      Calls
+    <a href=".." title="Overview" class="md-nav__link">
+      Overview
     </a>
   </li>
 
@@ -240,8 +240,8 @@
 
 
   <li class="md-nav__item">
-    <a href="../concurrency/" title="Concurrency" class="md-nav__link">
-      Concurrency
+    <a href="../calls/" title="Calls" class="md-nav__link">
+      Calls
     </a>
   </li>
 
@@ -264,20 +264,8 @@
 
 
   <li class="md-nav__item">
-    <a href="../events/" title="Events" class="md-nav__link">
-      Events
-    </a>
-  </li>
-
-    
-      
-      
-      
-
-
-  <li class="md-nav__item">
-    <a href="../https/" title="Https" class="md-nav__link">
-      Https
+    <a href="../recipes/" title="Recipes" class="md-nav__link">
+      Recipes
     </a>
   </li>
 
@@ -300,8 +288,8 @@
 
 
   <li class="md-nav__item">
-    <a href="../recipes/" title="Recipes" class="md-nav__link">
-      Recipes
+    <a href="../https/" title="HTTPS" class="md-nav__link">
+      HTTPS
     </a>
   </li>
 
@@ -312,287 +300,8 @@
 
 
   <li class="md-nav__item">
-    <a href="../security/" title="Security" class="md-nav__link">
-      Security
-    </a>
-  </li>
-
-    
-      
-      
-      
-
-  
-
-
-  <li class="md-nav__item md-nav__item--active">
-    
-    <input class="md-toggle md-nav__toggle" data-md-toggle="toc" type="checkbox" id="__toc">
-    
-      
-    
-    
-      <label class="md-nav__link md-nav__link--active" for="__toc">
-        TLS Configuration History
-      </label>
-    
-    <a href="./" title="TLS Configuration History" class="md-nav__link md-nav__link--active">
-      TLS Configuration History
-    </a>
-    
-      
-<nav class="md-nav md-nav--secondary">
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">Table of contents</label>
-    <ul class="md-nav__list" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#okhttp-314" title="OkHttp 3.14" class="md-nav__link">
-    OkHttp 3.14
-  </a>
-  
-    <nav class="md-nav">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#restricted_tls-cipher-suites" title="RESTRICTED_TLS cipher suites" class="md-nav__link">
-    RESTRICTED_TLS cipher suites
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#modern_tls-compatible_tls-cipher-suites" title="MODERN_TLS / COMPATIBLE_TLS cipher suites" class="md-nav__link">
-    MODERN_TLS / COMPATIBLE_TLS cipher suites
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#okhttp-313" title="OkHttp 3.13" class="md-nav__link">
-    OkHttp 3.13
-  </a>
-  
-    <nav class="md-nav">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#restricted_tls-versions" title="RESTRICTED_TLS versions" class="md-nav__link">
-    RESTRICTED_TLS versions
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#modern_tls-versions" title="MODERN_TLS versions" class="md-nav__link">
-    MODERN_TLS versions
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#compatible_tls-versions" title="COMPATIBLE_TLS versions" class="md-nav__link">
-    COMPATIBLE_TLS versions
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#okhttp-312" title="OkHttp 3.12" class="md-nav__link">
-    OkHttp 3.12
-  </a>
-  
-    <nav class="md-nav">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#restricted_tls-cipher-suites_1" title="RESTRICTED_TLS cipher suites" class="md-nav__link">
-    RESTRICTED_TLS cipher suites
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#modern_tls-compatible_tls-cipher-suites_1" title="MODERN_TLS / COMPATIBLE_TLS cipher suites" class="md-nav__link">
-    MODERN_TLS / COMPATIBLE_TLS cipher suites
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#restricted_tls-versions_1" title="RESTRICTED_TLS versions" class="md-nav__link">
-    RESTRICTED_TLS versions
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#modern_tls-versions_1" title="MODERN_TLS versions" class="md-nav__link">
-    MODERN_TLS versions
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#compatible_tls-versions_1" title="COMPATIBLE_TLS versions" class="md-nav__link">
-    COMPATIBLE_TLS versions
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#okhttp-311" title="OkHttp 3.11" class="md-nav__link">
-    OkHttp 3.11
-  </a>
-  
-    <nav class="md-nav">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#restricted_tls-cipher-suites_2" title="RESTRICTED_TLS cipher suites" class="md-nav__link">
-    RESTRICTED_TLS cipher suites
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#restricted_tls-versions_2" title="RESTRICTED_TLS versions" class="md-nav__link">
-    RESTRICTED_TLS versions
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#okhttp-310" title="OkHttp 3.10" class="md-nav__link">
-    OkHttp 3.10
-  </a>
-  
-    <nav class="md-nav">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#modern_tls-compatible_tls-cipher-suites_2" title="MODERN_TLS / COMPATIBLE_TLS cipher suites" class="md-nav__link">
-    MODERN_TLS / COMPATIBLE_TLS cipher suites
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#okhttp-35" title="OkHttp 3.5" class="md-nav__link">
-    OkHttp 3.5
-  </a>
-  
-    <nav class="md-nav">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#modern_tls-compatible_tls-cipher-suites_3" title="MODERN_TLS / COMPATIBLE_TLS cipher suites" class="md-nav__link">
-    MODERN_TLS / COMPATIBLE_TLS cipher suites
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#okhttp-30" title="OkHttp 3.0" class="md-nav__link">
-    OkHttp 3.0
-  </a>
-  
-    <nav class="md-nav">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#modern_tls-compatible_tls-cipher-suites_4" title="MODERN_TLS / COMPATIBLE_TLS cipher suites" class="md-nav__link">
-    MODERN_TLS / COMPATIBLE_TLS cipher suites
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#modern_tls-versions_2" title="MODERN_TLS versions" class="md-nav__link">
-    MODERN_TLS versions
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#compatible_tls-versions_2" title="COMPATIBLE_TLS versions" class="md-nav__link">
-    COMPATIBLE_TLS versions
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#1-tlsv13-only" title="¹ TLSv1.3 Only" class="md-nav__link">
-    ¹ TLSv1.3 Only
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#2-http2-cipher-suite-denylist" title="² HTTP/2 Cipher Suite Denylist" class="md-nav__link">
-    ² HTTP/2 Cipher Suite Denylist
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-      
-      
-      
-      
-    </ul>
-  
-</nav>
-    
-  </li>
-
-    
-      
-      
-      
-
-
-  <li class="md-nav__item">
-    <a href="../upgrading_to_okhttp_4/" title="Upgrading to OkHttp 4" class="md-nav__link">
-      Upgrading to OkHttp 4
+    <a href="../events/" title="Events" class="md-nav__link">
+      Events
     </a>
   </li>
 
@@ -615,8 +324,8 @@
 
 
   <li class="md-nav__item">
-    <a href="https://stackoverflow.com/questions/tagged/okhttp?sort=active" title="Stack Overflow" class="md-nav__link">
-      Stack Overflow
+    <a href="https://stackoverflow.com/questions/tagged/okhttp?sort=active" title="Stack Overflow ⏏" class="md-nav__link">
+      Stack Overflow ⏏
     </a>
   </li>
 
@@ -628,13 +337,13 @@
 
   <li class="md-nav__item md-nav__item--nested">
     
-      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-13" type="checkbox" id="nav-13">
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-10" type="checkbox" id="nav-10">
     
-    <label class="md-nav__link" for="nav-13">
+    <label class="md-nav__link" for="nav-10">
       4.x API
     </label>
     <nav class="md-nav" data-md-component="collapsible" data-md-level="1">
-      <label class="md-nav__title" for="nav-13">
+      <label class="md-nav__title" for="nav-10">
         4.x API
       </label>
       <ul class="md-nav__list" data-md-scrollfix>
@@ -736,13 +445,13 @@
 
   <li class="md-nav__item md-nav__item--nested">
     
-      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-14" type="checkbox" id="nav-14">
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-11" type="checkbox" id="nav-11">
     
-    <label class="md-nav__link" for="nav-14">
+    <label class="md-nav__link" for="nav-11">
       3.x API
     </label>
     <nav class="md-nav" data-md-component="collapsible" data-md-level="1">
-      <label class="md-nav__title" for="nav-14">
+      <label class="md-nav__title" for="nav-11">
         3.x API
       </label>
       <ul class="md-nav__list" data-md-scrollfix>
@@ -754,8 +463,8 @@
 
 
   <li class="md-nav__item">
-    <a href="https://square.github.io/okhttp/3.x/okhttp/" title="okhttp" class="md-nav__link">
-      okhttp
+    <a href="https://square.github.io/okhttp/3.x/okhttp/" title="okhttp ⏏" class="md-nav__link">
+      okhttp ⏏
     </a>
   </li>
 
@@ -766,8 +475,8 @@
 
 
   <li class="md-nav__item">
-    <a href="https://square.github.io/okhttp/3.x/okhttp-dnsoverhttps/" title="dnsoverhttps" class="md-nav__link">
-      dnsoverhttps
+    <a href="https://square.github.io/okhttp/3.x/okhttp-dnsoverhttps/" title="dnsoverhttps ⏏" class="md-nav__link">
+      dnsoverhttps ⏏
     </a>
   </li>
 
@@ -778,8 +487,8 @@
 
 
   <li class="md-nav__item">
-    <a href="https://square.github.io/okhttp/3.x/logging-interceptor/" title="logging-interceptor" class="md-nav__link">
-      logging-interceptor
+    <a href="https://square.github.io/okhttp/3.x/logging-interceptor/" title="logging-interceptor ⏏" class="md-nav__link">
+      logging-interceptor ⏏
     </a>
   </li>
 
@@ -790,8 +499,8 @@
 
 
   <li class="md-nav__item">
-    <a href="https://square.github.io/okhttp/3.x/okhttp-sse/" title="sse" class="md-nav__link">
-      sse
+    <a href="https://square.github.io/okhttp/3.x/okhttp-sse/" title="sse ⏏" class="md-nav__link">
+      sse ⏏
     </a>
   </li>
 
@@ -802,8 +511,8 @@
 
 
   <li class="md-nav__item">
-    <a href="https://square.github.io/okhttp/3.x/okhttp-tls/" title="tls" class="md-nav__link">
-      tls
+    <a href="https://square.github.io/okhttp/3.x/okhttp-tls/" title="tls ⏏" class="md-nav__link">
+      tls ⏏
     </a>
   </li>
 
@@ -814,8 +523,8 @@
 
 
   <li class="md-nav__item">
-    <a href="https://square.github.io/okhttp/3.x/okhttp-urlconnection/" title="urlconnection" class="md-nav__link">
-      urlconnection
+    <a href="https://square.github.io/okhttp/3.x/okhttp-urlconnection/" title="urlconnection ⏏" class="md-nav__link">
+      urlconnection ⏏
     </a>
   </li>
 
@@ -826,14 +535,50 @@
 
 
   <li class="md-nav__item">
-    <a href="https://square.github.io/okhttp/3.x/mockwebserver/" title="mockwebserver" class="md-nav__link">
-      mockwebserver
+    <a href="https://square.github.io/okhttp/3.x/mockwebserver/" title="mockwebserver ⏏" class="md-nav__link">
+      mockwebserver ⏏
     </a>
   </li>
 
         
       </ul>
     </nav>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item">
+    <a href="../changelog/" title="Change Log" class="md-nav__link">
+      Change Log
+    </a>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item">
+    <a href="../upgrading_to_okhttp_4/" title="Upgrading to OkHttp 4" class="md-nav__link">
+      Upgrading to OkHttp 4
+    </a>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item">
+    <a href="../contributing/" title="Contributing" class="md-nav__link">
+      Contributing
+    </a>
   </li>
 
     
@@ -1334,47 +1079,12 @@ default.</p>
         
 <footer class="md-footer">
   
-    <div class="md-footer-nav">
-      <nav class="md-footer-nav__inner md-grid">
-        
-          <a href="../security/" title="Security" class="md-flex md-footer-nav__link md-footer-nav__link--prev" rel="prev">
-            <div class="md-flex__cell md-flex__cell--shrink">
-              <i class="md-icon md-icon--arrow-back md-footer-nav__button"></i>
-            </div>
-            <div class="md-flex__cell md-flex__cell--stretch md-footer-nav__title">
-              <span class="md-flex__ellipsis">
-                <span class="md-footer-nav__direction">
-                  Previous
-                </span>
-                Security
-              </span>
-            </div>
-          </a>
-        
-        
-          <a href="../upgrading_to_okhttp_4/" title="Upgrading to OkHttp 4" class="md-flex md-footer-nav__link md-footer-nav__link--next" rel="next">
-            <div class="md-flex__cell md-flex__cell--stretch md-footer-nav__title">
-              <span class="md-flex__ellipsis">
-                <span class="md-footer-nav__direction">
-                  Next
-                </span>
-                Upgrading to OkHttp 4
-              </span>
-            </div>
-            <div class="md-flex__cell md-flex__cell--shrink">
-              <i class="md-icon md-icon--arrow-forward md-footer-nav__button"></i>
-            </div>
-          </a>
-        
-      </nav>
-    </div>
-  
   <div class="md-footer-meta md-typeset">
     <div class="md-footer-meta__inner md-grid">
       <div class="md-footer-copyright">
         
           <div class="md-footer-copyright__highlight">
-            Copyright &copy; 2016 Square, Inc.
+            Copyright &copy; 2019 Square, Inc.
           </div>
         
         powered by
