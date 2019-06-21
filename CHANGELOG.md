@@ -1,6 +1,19 @@
 Change Log
 ==========
 
+## Version 4.0.0-RC2
+
+_2019-06-21_
+
+ *  New: Require Kotlin 1.3.40.
+ *  New: Change the Kotlin API from `File.toRequestBody()` to `File.asRequestBody()` and
+    `BufferedSource.toResponseBody()` to `BufferedSource.asResponseBody()`. If the returned value
+    is a view of what created it, we use _as_.
+ *  Fix: Permit response codes of zero for compatibility with OkHttp 3.x.
+ *  Fix: Change the return type of `MockWebServer.takeRequest()` to be nullable.
+ *  Fix: Make `Call.clone()` public to Kotlin callers.
+
+
 ## Version 4.0.0-RC1
 
 _2019-06-03_
