@@ -5,10 +5,9 @@ Security Policy
 
 | Version | Supported  | Notes          |
 | ------- | ---------- | -------------- |
-| 4.x     | ❌         | Not released.  |
+| 4.x     | ✅         |                |
 | 3.14.x  | ✅         |                |
-| 3.12.x  | ✅         | Android 2.3+ (API level 9+) and Java 7+.  Platforms may not support TLSv1.2. Until December 31, 2020  |
-| 2.7.x   | ❌         | Not supported. |
+| 3.12.x  | ✅         | Android 2.3+ (API level 9+) and Java 7+. Platforms may not support TLSv1.2. Until December 31, 2020  |
 
 
 ## Reporting a Vulnerability
