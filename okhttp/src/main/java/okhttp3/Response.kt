@@ -433,7 +433,7 @@ class Response internal constructor(
     }
 
     open fun build(): Response {
-      check(code > 0) { "code < 0: $code" }
+      check(code >= 0) { "code < 0: $code" }
       return Response(
           checkNotNull(request) { "request == null" },
           checkNotNull(protocol) { "protocol == null" },

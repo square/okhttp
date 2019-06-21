@@ -24,6 +24,7 @@ import okio.Timeout;
 import org.junit.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.Assert.fail;
 
 public final class ResponseTest {
@@ -61,6 +62,16 @@ public final class ResponseTest {
     assertThat(p2.string()).isEqualTo("ab");
   }
 
+  @Test public void negativeStatusCodeThrowsIllegalStateException() {
+    assertThatThrownBy(() -> newResponse(responseBody("set status code -1"), -1))
+        .isInstanceOf(IllegalStateException.class);
+  }
+
+  @Test public void zeroStatusCodeIsValid() {
+    Response response = newResponse(responseBody("set status code 0"), 0);
+    assertThat(response.code()).isEqualTo(0);
+  }
+
   /**
    * Returns a new response body that refuses to be read once it has been closed. This is true of
    * most {@link BufferedSource} instances, but not of {@link Buffer}.
@@ -89,12 +100,16 @@ public final class ResponseTest {
   }
 
   private Response newResponse(ResponseBody responseBody) {
+    return newResponse(responseBody, 200);
+  }
+
+  private Response newResponse(ResponseBody responseBody, int code) {
     return new Response.Builder()
         .request(new Request.Builder()
             .url("https://example.com/")
             .build())
         .protocol(Protocol.HTTP_1_1)
-        .code(200)
+        .code(code)
         .message("OK")
         .body(responseBody)
         .build();
