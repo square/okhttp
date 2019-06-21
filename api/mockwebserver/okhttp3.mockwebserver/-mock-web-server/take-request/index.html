@@ -636,7 +636,7 @@ request was sent as intended. This method will block until the request is availa
 forever.</p>
 <p><strong>Return</strong>
 the head of the request queue</p>
-<p><code>fun takeRequest(timeout:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html"><code>Long</code></a><code>, unit:</code><a href="https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/TimeUnit.html"><code>TimeUnit</code></a><code>):</code><a href="../../-recorded-request/"><code>RecordedRequest</code></a></p>
+<p><code>fun takeRequest(timeout:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html"><code>Long</code></a><code>, unit:</code><a href="https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/TimeUnit.html"><code>TimeUnit</code></a><code>):</code><a href="../../-recorded-request/"><code>RecordedRequest</code></a><code>?</code></p>
 <p>Awaits the next HTTP request (waiting up to the specified wait time if necessary), removes it,
 and returns it. Callers should use this to verify the request was sent as intended within the
 given time.</p>

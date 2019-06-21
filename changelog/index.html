@@ -579,6 +579,13 @@
     <ul class="md-nav__list" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#version-400-rc2" title="Version 4.0.0-RC2" class="md-nav__link">
+    Version 4.0.0-RC2
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#version-400-rc1" title="Version 4.0.0-RC1" class="md-nav__link">
     Version 4.0.0-RC1
   </a>
@@ -1122,6 +1129,13 @@
     <ul class="md-nav__list" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#version-400-rc2" title="Version 4.0.0-RC2" class="md-nav__link">
+    Version 4.0.0-RC2
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#version-400-rc1" title="Version 4.0.0-RC1" class="md-nav__link">
     Version 4.0.0-RC1
   </a>
@@ -1629,6 +1643,17 @@
                 
                 
                 <h1 id="change-log">Change Log<a class="headerlink" href="#change-log" title="Permanent link">&para;</a></h1>
+<h2 id="version-400-rc2">Version 4.0.0-RC2<a class="headerlink" href="#version-400-rc2" title="Permanent link">&para;</a></h2>
+<p><em>2019-06-21</em></p>
+<ul>
+<li>New: Require Kotlin 1.3.40.</li>
+<li>New: Change the Kotlin API from <code>File.toRequestBody()</code> to <code>File.asRequestBody()</code> and
+    <code>BufferedSource.toResponseBody()</code> to <code>BufferedSource.asResponseBody()</code>. If the returned value
+    is a view of what created it, we use <em>as</em>.</li>
+<li>Fix: Permit response codes of zero for compatibility with OkHttp 3.x.</li>
+<li>Fix: Change the return type of <code>MockWebServer.takeRequest()</code> to be nullable.</li>
+<li>Fix: Make <code>Call.clone()</code> public to Kotlin callers.</li>
+</ul>
 <h2 id="version-400-rc1">Version 4.0.0-RC1<a class="headerlink" href="#version-400-rc1" title="Permanent link">&para;</a></h2>
 <p><em>2019-06-03</em></p>
 <p><strong>OkHttp 4 upgrades OkHttp to Kotlin.</strong> This is the first stable preview of OkHttp 4. Use it to find
