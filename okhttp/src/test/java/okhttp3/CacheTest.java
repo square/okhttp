@@ -74,7 +74,7 @@ public final class CacheTest {
   @Before public void setUp() throws Exception {
     server.setProtocolNegotiationEnabled(false);
     cache = new Cache(new File("/cache/"), Integer.MAX_VALUE, fileSystem);
-    client = clientTestRule.client.newBuilder()
+    client = clientTestRule.newClientBuilder()
         .cache(cache)
         .cookieJar(new JavaNetCookieJar(cookieManager))
         .build();
@@ -1109,7 +1109,7 @@ public final class CacheTest {
   }
 
   @Test public void conditionalCacheHitIsNotDoublePooled() throws Exception {
-    TestUtil.ensureAllConnectionsReleased(client);
+    clientTestRule.ensureAllConnectionsReleased();
 
     server.enqueue(new MockResponse()
         .addHeader("ETag: v1")

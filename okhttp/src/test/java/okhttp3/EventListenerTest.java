@@ -81,11 +81,11 @@ public final class EventListenerTest {
   private final RecordingEventListener listener = new RecordingEventListener();
   private final HandshakeCertificates handshakeCertificates = localhost();
 
-  private OkHttpClient client = clientTestRule.client;
+  private OkHttpClient client;
   private SocksProxy socksProxy;
 
   @Before public void setUp() {
-    client = clientTestRule.client.newBuilder()
+    client = clientTestRule.newClientBuilder()
         .eventListener(listener)
         .build();
 

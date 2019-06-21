@@ -112,11 +112,12 @@ public final class URLConnectionTest {
   @Rule public final OkHttpClientTestRule clientTestRule = new OkHttpClientTestRule();
 
   private HandshakeCertificates handshakeCertificates = localhost();
-  private OkHttpClient client = clientTestRule.client;
+  private OkHttpClient client;
   private @Nullable Cache cache;
 
   @Before public void setUp() {
     server.setProtocolNegotiationEnabled(false);
+    client = clientTestRule.newClient();
   }
 
   @After public void tearDown() throws Exception {

@@ -34,18 +34,18 @@ class ConscryptTest {
   @JvmField
   @Rule public val platform = PlatformRule.conscrypt()
 
+  @JvmField @Rule val clientTestRule = OkHttpClientTestRule()
   private lateinit var client: OkHttpClient
 
   @Before
-  fun createClient() {
+  fun setUp() {
+    client = clientTestRule.newClient()
     assertThat(Conscrypt.isConscrypt(Platform.get().platformTrustManager())).isTrue()
-
-    client = OkHttpClient()
   }
 
   @After
   fun tearDown() {
-    TestUtil.ensureAllConnectionsReleased(client)
+    clientTestRule.ensureAllConnectionsReleased()
   }
 
   private fun assumeNetwork() {
