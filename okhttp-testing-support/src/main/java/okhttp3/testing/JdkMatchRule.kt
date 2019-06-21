@@ -2,7 +2,9 @@ package okhttp3.testing
 
 import org.hamcrest.CoreMatchers
 import org.hamcrest.Matcher
+import org.hamcrest.StringDescription
 import org.hamcrest.TypeSafeMatcher
+import org.junit.Assert.fail
 import org.junit.rules.TestRule
 import org.junit.runner.Description
 import org.junit.runners.model.Statement
@@ -35,30 +37,55 @@ object VersionInfo {
 }
 
 class JdkMatchRule : TestRule {
+  val versionChecks = mutableListOf<Pair<Matcher<VersionInfo>, Matcher<out Any>>>()
+
   override fun apply(base: Statement, description: Description): Statement {
     return object : Statement() {
       @Throws(Throwable::class)
       override fun evaluate() {
+        var failed = false
         try {
           base.evaluate()
-          failIfExpected()
         } catch (e: Throwable) {
+          failed = true
           rethrowIfNotExpected(e)
+        }
+        if (!failed) {
+          failIfExpected()
         }
       }
     }
   }
 
-  fun expectFailure(versionMatcher: Matcher<VersionInfo>, failureMatcher: Matcher<*> = CoreMatchers.anything()) {
-    // TODO implement
+  fun expectFailure(versionMatcher: Matcher<VersionInfo>, failureMatcher: Matcher<out Any> = CoreMatchers.anything()) {
+    versionChecks.add(Pair(versionMatcher, failureMatcher))
   }
 
   fun rethrowIfNotExpected(e: Throwable) {
-    // TODO check expectations
+    versionChecks.forEach { (versionMatcher, failureMatcher) ->
+      if (versionMatcher.matches(VersionInfo)) {
+        if (!failureMatcher.matches(failureMatcher.matches(e))) {
+          // TODO should we log mismatch decsription?
+          throw e
+        }
+
+        return
+      }
+    }
+
     throw e
   }
 
   fun failIfExpected() {
-    // TODO check expectations
+    versionChecks.forEach { (versionMatcher, failureMatcher) ->
+      if (versionMatcher.matches(VersionInfo)) {
+        val description = StringDescription()
+        versionMatcher.describeTo(description)
+        description.appendText(" expected to fail with exception that ")
+        failureMatcher.describeTo(description)
+
+        fail(description.toString())
+      }
+    }
   }
 }

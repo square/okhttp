@@ -47,9 +47,11 @@ import static java.util.Arrays.asList;
 import static okhttp3.PlatformRule.getPlatformSystemProperty;
 import static okhttp3.TestUtil.defaultClient;
 import static okhttp3.internal.platform.PlatformTest.getJvmSpecVersion;
+import static okhttp3.testing.JdkMatchRuleKt.fromMajor;
 import static okhttp3.tls.internal.TlsUtil.newKeyManager;
 import static okhttp3.tls.internal.TlsUtil.newTrustManager;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.CoreMatchers.anything;
 import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeFalse;
 
@@ -185,7 +187,7 @@ public final class ClientAuthTest {
   @Test public void missingClientAuthFailsForNeeds() throws Exception {
     // TODO https://github.com/square/okhttp/issues/4598
     // StreamReset stream was reset: PROT...
-    //jdkMatchRule.expectFailure(fromMajor(11), isA(KeyStoreException.class));
+    jdkMatchRule.expectFailure(fromMajor(11), anything());
 
     OkHttpClient client = buildClient(null, clientIntermediateCa.certificate());
 
