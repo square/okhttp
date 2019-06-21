@@ -55,6 +55,10 @@ class OkHttpClientTestRule : TestRule {
         acquireClient()
         try {
           base.evaluate()
+          logEventsIfFlaky()
+        } catch (t: Throwable) {
+          logEventsOnFailure(t)
+          throw t
         } finally {
           ensureAllConnectionsReleased()
           releaseClient()
@@ -62,14 +66,36 @@ class OkHttpClientTestRule : TestRule {
       }
 
       private fun acquireClient() {
-        prototype = prototypes.poll() ?: OkHttpClient.Builder()
-            .dns(SINGLE_INET_ADDRESS_DNS) // Prevent unexpected fallback addresses.
-            .build()
+        prototype = prototypes.poll() ?: freshClient()
+        clientEventsMap[prototype!!] = mutableListOf()
       }
 
       private fun releaseClient() {
         prototypes.push(prototype)
+        clientEventsMap.remove(prototype)
         prototype = null
+      }
+    }
+  }
+
+  private fun logEventsIfFlaky() {
+    // TODO check if test is a known flaky test that should always log
+//    logEvents()
+  }
+
+  private fun logEventsOnFailure(t: Throwable) {
+    logEvents()
+  }
+
+  private fun logEvents() {
+    val events = clientEventsMap[prototype]
+
+    // Will fail if test overrides the listener
+    if (events != null) {
+      println("Events (${events.size})")
+
+      events.forEach {
+        println(it)
       }
     }
   }
@@ -82,6 +108,8 @@ class OkHttpClientTestRule : TestRule {
      */
     internal val prototypes = ConcurrentLinkedDeque<OkHttpClient>()
 
+    val clientEventsMap = mutableMapOf<OkHttpClient, MutableList<String>>()
+
     /**
      * A network that resolves only one IP address per host. Use this when testing route selection
      * fallbacks to prevent the host machine's various IP addresses from interfering.
@@ -91,6 +119,19 @@ class OkHttpClientTestRule : TestRule {
         val addresses = Dns.SYSTEM.lookup(hostname)
         return listOf(addresses[0])
       }
+    }
+
+    private fun freshClient(): OkHttpClient {
+      val listener = ClientRuleEventListener { client, line ->
+        clientEventsMap[client]?.add(line)
+      }
+
+      return OkHttpClient.Builder()
+          .dns(SINGLE_INET_ADDRESS_DNS) // Prevent unexpected fallback addresses.
+          .eventListener(listener)
+          .build().apply {
+            listener.client = this
+          }
     }
   }
 }

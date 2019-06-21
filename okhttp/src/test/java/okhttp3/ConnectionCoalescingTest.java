@@ -109,6 +109,8 @@ public final class ConnectionCoalescingTest {
     assert200Http2Response(execute(sanUrl), "san.com");
 
     assertThat(client.connectionPool().connectionCount()).isEqualTo(1);
+    
+    fail("Revert before landing");
   }
 
   /**
