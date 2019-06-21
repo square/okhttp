@@ -735,8 +735,8 @@ class KotlinSourceModernTest {
     mockWebServer.noClientAuth()
     mockWebServer.requestClientAuth()
     mockWebServer.requireClientAuth()
-    var request: RecordedRequest = mockWebServer.takeRequest()
-    request = mockWebServer.takeRequest(0L, TimeUnit.SECONDS)
+    val request: RecordedRequest = mockWebServer.takeRequest()
+    val nullableRequest: RecordedRequest? = mockWebServer.takeRequest(0L, TimeUnit.SECONDS)
     var requestCount: Int = mockWebServer.requestCount
     mockWebServer.enqueue(MockResponse())
     mockWebServer.start()
