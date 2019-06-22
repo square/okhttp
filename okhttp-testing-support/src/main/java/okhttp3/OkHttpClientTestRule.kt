@@ -55,7 +55,7 @@ class OkHttpClientTestRule : TestRule {
         acquireClient()
         try {
           base.evaluate()
-          logEventsIfFlaky()
+          logEventsIfFlaky(description.testClass.canonicalName, description.methodName)
         } catch (t: Throwable) {
           logEventsOnFailure(t)
           throw t
@@ -78,9 +78,10 @@ class OkHttpClientTestRule : TestRule {
     }
   }
 
-  private fun logEventsIfFlaky() {
-    // TODO check if test is a known flaky test that should always log
-//    logEvents()
+  private fun logEventsIfFlaky(testClass: String, testMethod: String) {
+    if (flakyTests.contains(testClass) || flakyTests.contains("$testClass#$testMethod")) {
+      logEvents()
+    }
   }
 
   private fun logEventsOnFailure(t: Throwable) {
@@ -109,6 +110,11 @@ class OkHttpClientTestRule : TestRule {
     internal val prototypes = ConcurrentLinkedDeque<OkHttpClient>()
 
     val clientEventsMap = mutableMapOf<OkHttpClient, MutableList<String>>()
+
+    val flakyTests: Set<String> by lazy {
+      this::class.java.getResource("/flakytests.txt").readText().lines().filterNot { it.isBlank() }
+          .toSet()
+    }
 
     /**
      * A network that resolves only one IP address per host. Use this when testing route selection
