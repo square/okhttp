@@ -59,6 +59,10 @@ public final class CheckHandshake {
   }
 
   public static void main(String... args) throws Exception {
-    new CheckHandshake().run();
+    try {
+      new CheckHandshake().run();
+    } catch (IOException ioe) {
+      // expected
+    }
   }
 }
