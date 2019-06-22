@@ -87,6 +87,8 @@ interface Call : Cloneable {
    */
   fun timeout(): Timeout
 
+  fun eventListener(): EventListener
+
   /**
    * Create a new, identical call to this one which can be enqueued or executed even if this call
    * has already been.

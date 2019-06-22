@@ -247,6 +247,8 @@ class RealConnectionPool(
     routeDatabase.failed(failedRoute)
   }
 
+  @Synchronized fun listConnections(): List<RealConnection> = connections.toList()
+
   companion object {
     /**
      * Background threads are used to cleanup expired connections. There will be at most a single

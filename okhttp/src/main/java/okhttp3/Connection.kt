@@ -89,4 +89,12 @@ interface Connection {
    * [Protocol.HTTP_1_0].
    */
   fun protocol(): Protocol
+
+  val allowsNewExchanges: Boolean
+
+  val isMultiplexed: Boolean
+
+  val routeFailureCount: Int
+
+  val successCount: Int
 }

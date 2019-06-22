@@ -48,4 +48,11 @@ class ConnectionPool(
   fun evictAll() {
     delegate.evictAll()
   }
+
+  /** Returns a snapshot of current connections */
+  fun listConnections(): List<Connection> {
+    // TODO should it be wrapped connections
+    // TODO what properties hold e.g. identity, equality
+    return delegate.listConnections()
+  }
 }

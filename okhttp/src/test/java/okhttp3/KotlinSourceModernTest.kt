@@ -22,10 +22,10 @@ import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
-import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.RequestBody.Companion.asRequestBody
-import okhttp3.ResponseBody.Companion.toResponseBody
+import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.ResponseBody.Companion.asResponseBody
+import okhttp3.ResponseBody.Companion.toResponseBody
 import okhttp3.internal.http2.Settings
 import okhttp3.internal.proxy.NullProxySelector
 import okhttp3.internal.tls.OkHostnameVerifier
@@ -222,6 +222,14 @@ class KotlinSourceModernTest {
       override fun socket(): Socket = TODO()
       override fun handshake(): Handshake? = TODO()
       override fun protocol(): Protocol = TODO()
+      override val allowsNewExchanges: Boolean
+        get() = TODO()
+      override val isMultiplexed: Boolean
+        get() = TODO()
+      override val routeFailureCount: Int
+        get() = TODO()
+      override val successCount: Int
+        get() = TODO()
     }
   }
 
@@ -1165,6 +1173,7 @@ class KotlinSourceModernTest {
       override fun isCanceled(): Boolean = TODO()
       override fun timeout(): Timeout = TODO()
       override fun clone(): Call = TODO()
+      override fun eventListener(): EventListener = TODO()
     }
   }
 

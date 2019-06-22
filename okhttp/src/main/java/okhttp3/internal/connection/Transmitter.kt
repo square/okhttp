@@ -51,7 +51,7 @@ class Transmitter(
   private val call: Call
 ) {
   private val connectionPool: RealConnectionPool = client.connectionPool.delegate
-  private val eventListener: EventListener = client.eventListenerFactory.create(call)
+  val eventListener: EventListener = client.eventListenerFactory.create(call)
   private val timeout = object : AsyncTimeout() {
     override fun timedOut() {
       cancel()

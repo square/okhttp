@@ -197,6 +197,8 @@ internal class RealCall private constructor(
     }
   }
 
+  override fun eventListener(): EventListener = transmitter.eventListener
+
   companion object {
     fun newRealCall(
       client: OkHttpClient,

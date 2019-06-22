@@ -100,9 +100,9 @@ class RealConnection(
    * The number of times there was a problem establishing a stream that could be due to route
    * chosen. Guarded by [connectionPool].
    */
-  internal var routeFailureCount = 0
+  override var routeFailureCount = 0
 
-  internal var successCount = 0
+  override var successCount = 0
   private var refusedStreamCount = 0
 
   /**
@@ -121,7 +121,7 @@ class RealConnection(
    * Returns true if this is an HTTP/2 connection. Such connections can be used in multiple HTTP
    * requests simultaneously.
    */
-  val isMultiplexed: Boolean
+  override val isMultiplexed: Boolean
     get() = http2Connection != null
 
   /** Prevent further exchanges from being created on this connection. */
@@ -131,6 +131,9 @@ class RealConnection(
       noNewExchanges = true
     }
   }
+
+  override val allowsNewExchanges: Boolean
+    get() = !noNewExchanges
 
   fun connect(
     connectTimeout: Int,
