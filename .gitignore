@@ -27,7 +27,7 @@ obj
 .DS_Store
 
 # Special Mkdocs files
-docs/api
+docs/4.x
 docs/changelog.md
 docs/contributing.md
 docs/index.md
