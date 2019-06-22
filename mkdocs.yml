@@ -5,7 +5,7 @@ site_description: "An HTTP & HTTP/2 client for Android and Java applications"
 site_author: Square, Inc.
 remote_branch: gh-pages
 
-copyright: 'Copyright &copy; 2016 Square, Inc.'
+copyright: 'Copyright &copy; 2019 Square, Inc.'
 
 theme:
   name: 'material'
@@ -35,32 +35,32 @@ markdown_extensions:
   - tables
 
 nav:
+  - 'Overview': index.md
   - 'Calls': calls.md
-  - 'Concurrency': concurrency.md
   - 'Connections': connections.md
-  - 'Events': events.md
-  - 'Https': https.md
-  - 'Interceptors': interceptors.md
   - 'Recipes': recipes.md
-  - 'Security': security.md
-  - 'TLS Configuration History': tls_configuration_history.md
-  - 'Upgrading to OkHttp 4': upgrading_to_okhttp_4.md
+  - 'Interceptors': interceptors.md
+  - 'HTTPS': https.md
+  - 'Events': events.md
   - 'Works with OkHttp': works_with_okhttp.md
-  - 'Stack Overflow': https://stackoverflow.com/questions/tagged/okhttp?sort=active
+  - 'Stack Overflow ⏏': https://stackoverflow.com/questions/tagged/okhttp?sort=active
   - '4.x API':
-    - 'okhttp': api/okhttp/okhttp3/index.md
-    - 'dnsoverhttps': api/okhttp-dnsoverhttps/okhttp3.dnsoverhttps/index.md
-    - 'logging-interceptor': api/okhttp-logging-interceptor/okhttp3.logging/index.md
-    - 'sse': api/okhttp-sse/okhttp3.sse/index.md
-    - 'tls': api/okhttp-tls/okhttp3.tls/index.md
-    - 'urlconnection': api/okhttp-urlconnection/okhttp3/index.md
-    - 'mockwebserver': api/mockwebserver/okhttp3.mockwebserver/index.md
+    - 'okhttp': 4.x/okhttp/okhttp3/index.md
+    - 'dnsoverhttps': 4.x/okhttp-dnsoverhttps/okhttp3.dnsoverhttps/index.md
+    - 'logging-interceptor': 4.x/okhttp-logging-interceptor/okhttp3.logging/index.md
+    - 'sse': 4.x/okhttp-sse/okhttp3.sse/index.md
+    - 'tls': 4.x/okhttp-tls/okhttp3.tls/index.md
+    - 'urlconnection': 4.x/okhttp-urlconnection/okhttp3/index.md
+    - 'mockwebserver': 4.x/mockwebserver/okhttp3.mockwebserver/index.md
   - '3.x API':
-    - 'okhttp': https://square.github.io/okhttp/3.x/okhttp/
-    - 'dnsoverhttps': https://square.github.io/okhttp/3.x/okhttp-dnsoverhttps/
-    - 'logging-interceptor': https://square.github.io/okhttp/3.x/logging-interceptor/
-    - 'sse': https://square.github.io/okhttp/3.x/okhttp-sse/
-    - 'tls': https://square.github.io/okhttp/3.x/okhttp-tls/
-    - 'urlconnection': https://square.github.io/okhttp/3.x/okhttp-urlconnection/
-    - 'mockwebserver': https://square.github.io/okhttp/3.x/mockwebserver/
+    - 'okhttp ⏏': https://square.github.io/okhttp/3.x/okhttp/
+    - 'dnsoverhttps ⏏': https://square.github.io/okhttp/3.x/okhttp-dnsoverhttps/
+    - 'logging-interceptor ⏏': https://square.github.io/okhttp/3.x/logging-interceptor/
+    - 'sse ⏏': https://square.github.io/okhttp/3.x/okhttp-sse/
+    - 'tls ⏏': https://square.github.io/okhttp/3.x/okhttp-tls/
+    - 'urlconnection ⏏': https://square.github.io/okhttp/3.x/okhttp-urlconnection/
+    - 'mockwebserver ⏏': https://square.github.io/okhttp/3.x/mockwebserver/
+  - 'Change Log': changelog.md
+  - 'Upgrading to OkHttp 4': upgrading_to_okhttp_4.md
+  - 'Contributing': contributing.md
 

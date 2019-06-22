@@ -28,12 +28,12 @@ import org.junit.Rule;
 import org.junit.Test;
 
 import static java.util.Arrays.asList;
-import static okhttp3.TestUtil.defaultClient;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.fail;
 
 public final class OkHttpClientTest {
   @Rule public final MockWebServer server = new MockWebServer();
+  @Rule public final OkHttpClientTestRule clientTestRule = new OkHttpClientTestRule();
 
   private static final ProxySelector DEFAULT_PROXY_SELECTOR = ProxySelector.getDefault();
   private static final CookieHandler DEFAULT_COOKIE_HANDLER = CookieManager.getDefault();
@@ -46,7 +46,7 @@ public final class OkHttpClientTest {
   }
 
   @Test public void durationDefaults() {
-    OkHttpClient client = defaultClient();
+    OkHttpClient client = clientTestRule.newClient();
     assertThat(client.callTimeoutMillis()).isEqualTo(0);
     assertThat(client.connectTimeoutMillis()).isEqualTo(10_000);
     assertThat(client.readTimeoutMillis()).isEqualTo(10_000);
@@ -92,7 +92,7 @@ public final class OkHttpClientTest {
 
   @Test public void clonedInterceptorsListsAreIndependent() throws Exception {
     Interceptor interceptor = chain -> chain.proceed(chain.request());
-    OkHttpClient original = defaultClient();
+    OkHttpClient original = clientTestRule.newClient();
     original.newBuilder()
         .addInterceptor(interceptor)
         .addNetworkInterceptor(interceptor)
@@ -106,7 +106,7 @@ public final class OkHttpClientTest {
    * clients.
    */
   @Test public void cloneSharesStatefulInstances() throws Exception {
-    OkHttpClient client = defaultClient();
+    OkHttpClient client = clientTestRule.newClient();
 
     // Values should be non-null.
     OkHttpClient a = client.newBuilder().build();
@@ -131,8 +131,8 @@ public final class OkHttpClientTest {
   }
 
   @Test public void certificatePinnerEquality() {
-    OkHttpClient clientA = TestUtil.defaultClient();
-    OkHttpClient clientB = TestUtil.defaultClient();
+    OkHttpClient clientA = clientTestRule.newClient();
+    OkHttpClient clientB = clientTestRule.newClient();
     assertThat(clientB.certificatePinner()).isEqualTo(clientA.certificatePinner());
   }
 
@@ -213,8 +213,7 @@ public final class OkHttpClientTest {
 
     ProxySelector.setDefault(null);
 
-    OkHttpClient client = defaultClient().newBuilder()
-        .build();
+    OkHttpClient client = clientTestRule.newClient();
 
     Request request = new Request.Builder().url(server.url("/")).build();
     Response response = client.newCall(request).execute();

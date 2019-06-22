@@ -48,6 +48,7 @@ import org.junit.runners.model.Statement;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Arrays.asList;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static okhttp3.tls.internal.TlsUtil.localhost;
@@ -140,6 +141,9 @@ public final class MockWebServerTest {
     RecordedRequest request = server.takeRequest();
     assertThat(request.getRequestLine()).isEqualTo("GET / HTTP/1.1");
     assertThat(request.getHeader("Accept-Language")).isEqualTo("en-US");
+
+    // Server has no more requests.
+    assertThat(server.takeRequest(100, MILLISECONDS)).isNull();
   }
 
   @Test public void redirect() throws Exception {

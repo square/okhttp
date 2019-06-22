@@ -81,11 +81,11 @@ public final class ConnectionCoalescingTest {
         .addTrustedCertificate(rootCa.certificate())
         .build();
 
-    client = new OkHttpClient.Builder().dns(dns)
+    client = clientTestRule.newClientBuilder()
+        .dns(dns)
         .sslSocketFactory(
             handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager())
         .build();
-    clientTestRule.client = client;
 
     HandshakeCertificates serverHandshakeCertificates = new HandshakeCertificates.Builder()
         .heldCertificate(certificate)

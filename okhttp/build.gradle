@@ -43,7 +43,7 @@ dependencies {
 
 afterEvaluate { project ->
   project.tasks.dokka {
-    outputDirectory = "$rootDir/docs/api"
+    outputDirectory = "$rootDir/docs/4.x"
     outputFormat = 'gfm'
   }
 }

@@ -329,7 +329,7 @@ class MockWebServer : ExternalResource(), Closeable {
    * @return the head of the request queue
    */
   @Throws(InterruptedException::class)
-  fun takeRequest(timeout: Long, unit: TimeUnit): RecordedRequest = requestQueue.poll(timeout, unit)
+  fun takeRequest(timeout: Long, unit: TimeUnit): RecordedRequest? = requestQueue.poll(timeout, unit)
 
   @JvmName("-deprecated_requestCount")
   @Deprecated(

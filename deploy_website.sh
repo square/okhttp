@@ -30,6 +30,11 @@ cd $DIR
   :okhttp-urlconnection:dokka \
   :okhttp:dokka
 
+# Copy in special files that GitHub wants in the project root.
+cat README.md | grep -v 'project website' > docs/index.md
+cp CHANGELOG.md docs/changelog.md
+cp CONTRIBUTING.md docs/contributing.md
+
 # Build the site and push the new files up to GitHub
 mkdocs gh-deploy
 
