@@ -485,9 +485,9 @@ fun Closeable.closeQuietly() {
 }
 
 /** Closes this, ignoring any checked exceptions. Does nothing if this is null. */
-fun Socket.closeQuietly() {
+fun Socket?.closeQuietly() {
   try {
-    close()
+    this?.close()
   } catch (e: AssertionError) {
     throw e
   } catch (rethrown: RuntimeException) {
@@ -497,9 +497,9 @@ fun Socket.closeQuietly() {
 }
 
 /** Closes this, ignoring any checked exceptions. Does nothing if this is null. */
-fun ServerSocket.closeQuietly() {
+fun ServerSocket?.closeQuietly() {
   try {
-    close()
+    this?.close()
   } catch (rethrown: RuntimeException) {
     throw rethrown
   } catch (_: Exception) {
