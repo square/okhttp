@@ -91,7 +91,7 @@ class OkHttpClientTestRule : TestRule {
   private fun logEvents() {
     val events = clientEventsMap[prototype]
 
-    // Will fail if test overrides the listener
+    // Will be ineffective if test overrides the listener
     if (events != null) {
       println("Events (${events.size})")
 
