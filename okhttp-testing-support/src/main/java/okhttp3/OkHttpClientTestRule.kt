@@ -46,7 +46,7 @@ class OkHttpClientTestRule : TestRule {
   fun ensureAllConnectionsReleased() {
     val connectionPool = prototype!!.connectionPool
     connectionPool.evictAll()
-    assertThat(connectionPool.idleConnectionCount()).isEqualTo(0)
+    assertThat(connectionPool.connectionCount()).isEqualTo(0)
   }
 
   override fun apply(base: Statement, description: Description): Statement {
