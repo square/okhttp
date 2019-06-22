@@ -187,7 +187,7 @@ public final class ClientAuthTest {
   @Test public void missingClientAuthFailsForNeeds() throws Exception {
     // TODO https://github.com/square/okhttp/issues/4598
     // StreamReset stream was reset: PROT...
-    jdkMatchRule.expectFailure(fromMajor(11), anything());
+    //jdkMatchRule.expectFailure(fromMajor(11), anything());
 
     OkHttpClient client = buildClient(null, clientIntermediateCa.certificate());
 

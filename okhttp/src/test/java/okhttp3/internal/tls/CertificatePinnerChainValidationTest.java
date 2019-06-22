@@ -67,7 +67,7 @@ public final class CertificatePinnerChainValidationTest {
   /** The pinner should pull the root certificate from the trust manager. */
   @Test public void pinRootNotPresentInChain() throws Exception {
     // TODO https://github.com/square/okhttp/issues/4703
-    jdkMatchRule.expectFailure(fromMajor(11), anything());
+    //jdkMatchRule.expectFailure(fromMajor(11), anything());
 
     HeldCertificate rootCa = new HeldCertificate.Builder()
         .serialNumber(1L)
@@ -127,7 +127,7 @@ public final class CertificatePinnerChainValidationTest {
   /** The pinner should accept an intermediate from the server's chain. */
   @Test public void pinIntermediatePresentInChain() throws Exception {
     // TODO https://github.com/square/okhttp/issues/4703
-    jdkMatchRule.expectFailure(fromMajor(11), anything());
+    //jdkMatchRule.expectFailure(fromMajor(11), anything());
 
     HeldCertificate rootCa = new HeldCertificate.Builder()
         .serialNumber(1L)
@@ -191,7 +191,7 @@ public final class CertificatePinnerChainValidationTest {
 
   @Test public void unrelatedPinnedLeafCertificateInChain() throws Exception {
     // https://github.com/square/okhttp/issues/4729
-    jdkMatchRule.expectFailure(fromMajor(11), isA(KeyStoreException.class));
+    //jdkMatchRule.expectFailure(fromMajor(11), isA(KeyStoreException.class));
 
     // Start with a trusted root CA certificate.
     HeldCertificate rootCa = new HeldCertificate.Builder()
@@ -269,7 +269,7 @@ public final class CertificatePinnerChainValidationTest {
 
   @Test public void unrelatedPinnedIntermediateCertificateInChain() throws Exception {
     // https://github.com/square/okhttp/issues/4729
-    jdkMatchRule.expectFailure(fromMajor(11), isA(KeyStoreException.class));
+    //jdkMatchRule.expectFailure(fromMajor(11), isA(KeyStoreException.class));
 
     // Start with two root CA certificates, one is good and the other is compromised.
     HeldCertificate rootCa = new HeldCertificate.Builder()
