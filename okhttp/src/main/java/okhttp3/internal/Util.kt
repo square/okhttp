@@ -475,9 +475,9 @@ fun <K, V> Map<K, V>.toImmutableMap(): Map<K, V> {
 }
 
 /** Closes this, ignoring any checked exceptions. Does nothing if this is null. */
-fun Closeable.closeQuietly() {
+fun Closeable?.closeQuietly() {
   try {
-    close()
+    this?.close()
   } catch (rethrown: RuntimeException) {
     throw rethrown
   } catch (_: Exception) {
