@@ -59,9 +59,9 @@ import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeFalse;
 
 public final class CertificatePinnerChainValidationTest {
+  @Rule public final JdkMatchRule jdkMatchRule = new JdkMatchRule();
   @Rule public final PlatformRule platform = new PlatformRule();
   @Rule public final OkHttpClientTestRule clientTestRule = new OkHttpClientTestRule();
-  @Rule public final JdkMatchRule jdkMatchRule = new JdkMatchRule();
 
   @Rule public final MockWebServer server = new MockWebServer();
 
@@ -192,7 +192,8 @@ public final class CertificatePinnerChainValidationTest {
 
   @Test public void unrelatedPinnedLeafCertificateInChain() throws Exception {
     // https://github.com/square/okhttp/issues/4729
-    //jdkMatchRule.expectFailure(fromMajor(11), isA(KeyStoreException.class));
+    jdkMatchRule.expectFailure(platform.platformMatcher(PlatformRule.CONSCRYPT_PROPERTY),
+        isA(KeyStoreException.class));
 
     // Start with a trusted root CA certificate.
     HeldCertificate rootCa = new HeldCertificate.Builder()
@@ -270,7 +271,8 @@ public final class CertificatePinnerChainValidationTest {
 
   @Test public void unrelatedPinnedIntermediateCertificateInChain() throws Exception {
     // https://github.com/square/okhttp/issues/4729
-    //jdkMatchRule.expectFailure(fromMajor(11), isA(KeyStoreException.class));
+    jdkMatchRule.expectFailure(platform.platformMatcher(PlatformRule.CONSCRYPT_PROPERTY),
+        isA(KeyStoreException.class));
 
     // Start with two root CA certificates, one is good and the other is compromised.
     HeldCertificate rootCa = new HeldCertificate.Builder()
@@ -361,7 +363,7 @@ public final class CertificatePinnerChainValidationTest {
     X509KeyManager x509KeyManager = newKeyManager(keystoreType, heldCertificate, intermediates);
     X509TrustManager trustManager = newTrustManager(keystoreType, Collections.emptyList());
     SSLContext sslContext = Platform.get().newSSLContext();
-    sslContext.init(new KeyManager[] { x509KeyManager }, new TrustManager[] { trustManager },
+    sslContext.init(new KeyManager[] {x509KeyManager}, new TrustManager[] {trustManager},
         new SecureRandom());
     return sslContext.getSocketFactory();
   }

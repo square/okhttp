@@ -20,8 +20,11 @@ import okhttp3.internal.platform.Jdk8WithJettyBootPlatform
 import okhttp3.internal.platform.Jdk9Platform
 import okhttp3.internal.platform.Platform
 import org.conscrypt.Conscrypt
+import org.hamcrest.BaseMatcher
 import org.hamcrest.CoreMatchers.equalTo
 import org.hamcrest.CoreMatchers.not
+import org.hamcrest.Description
+import org.hamcrest.Matcher
 import org.junit.Assume.assumeThat
 import org.junit.Assume.assumeTrue
 import org.junit.rules.ExternalResource
@@ -118,6 +121,16 @@ open class PlatformRule @JvmOverloads constructor(
 
   fun assumeJettyBootEnabled() {
     assumeTrue("ALPN Boot not enabled", isAlpnBootEnabled())
+  }
+
+  fun platformMatcher(platform: String): Matcher<Any> = object : BaseMatcher<Any>() {
+    override fun describeTo(description: Description) {
+      description.appendText(platform)
+    }
+
+    override fun matches(item: Any?): Boolean {
+      return getPlatformSystemProperty() == platform
+    }
   }
 
   companion object {

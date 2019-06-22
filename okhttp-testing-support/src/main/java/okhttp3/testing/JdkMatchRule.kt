@@ -52,7 +52,7 @@ object VersionInfo {
 }
 
 class JdkMatchRule : TestRule {
-  val versionChecks = mutableListOf<Pair<Matcher<VersionInfo>, Matcher<out Any>>>()
+  private val versionChecks = mutableListOf<Pair<Matcher<out Any>, Matcher<out Any>>>()
 
   override fun apply(base: Statement, description: Description): Statement {
     return object : Statement() {
@@ -72,14 +72,14 @@ class JdkMatchRule : TestRule {
     }
   }
 
-  fun expectFailure(versionMatcher: Matcher<VersionInfo>, failureMatcher: Matcher<out Any> = CoreMatchers.anything()) {
+  fun expectFailure(versionMatcher: Matcher<out Any>, failureMatcher: Matcher<out Any> = CoreMatchers.anything()) {
     versionChecks.add(Pair(versionMatcher, failureMatcher))
   }
 
   fun rethrowIfNotExpected(e: Throwable) {
     versionChecks.forEach { (versionMatcher, failureMatcher) ->
       if (versionMatcher.matches(VersionInfo)) {
-        if (!failureMatcher.matches(failureMatcher.matches(e))) {
+        if (!failureMatcher.matches(e)) {
           throw e
         }
 
