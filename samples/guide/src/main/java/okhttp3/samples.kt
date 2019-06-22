@@ -1,3 +1,5 @@
 package okhttp3
 
-val prefix = "../../"
+import java.io.File
+
+val prefix = if (File("README.md").exists()) "" else "../../"
