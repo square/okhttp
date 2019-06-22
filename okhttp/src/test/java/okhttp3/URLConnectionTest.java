@@ -36,6 +36,7 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.net.UnknownHostException;
 import java.security.KeyStore;
+import java.security.KeyStoreException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
@@ -68,6 +69,7 @@ import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import okhttp3.mockwebserver.RecordedRequest;
 import okhttp3.mockwebserver.SocketPolicy;
+import okhttp3.testing.JdkMatchRule;
 import okhttp3.tls.HandshakeCertificates;
 import okio.Buffer;
 import okio.BufferedSink;
@@ -101,6 +103,7 @@ import static okhttp3.mockwebserver.SocketPolicy.SHUTDOWN_OUTPUT_AT_END;
 import static okhttp3.mockwebserver.SocketPolicy.UPGRADE_TO_SSL_AT_END;
 import static okhttp3.tls.internal.TlsUtil.localhost;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.CoreMatchers.isA;
 import static org.junit.Assert.fail;
 
 /** Android's URLConnectionTest, ported to exercise OkHttp's Call API. */
@@ -110,6 +113,7 @@ public final class URLConnectionTest {
   @Rule public final MockWebServer server2 = new MockWebServer();
   @Rule public final TemporaryFolder tempDir = new TemporaryFolder();
   @Rule public final OkHttpClientTestRule clientTestRule = new OkHttpClientTestRule();
+  @Rule public final JdkMatchRule jdkMatchRule = new JdkMatchRule();
 
   private HandshakeCertificates handshakeCertificates = localhost();
   private OkHttpClient client;
@@ -685,6 +689,10 @@ public final class URLConnectionTest {
    * http://code.google.com/p/android/issues/detail?id=13178
    */
   @Test public void connectViaHttpsToUntrustedServer() throws Exception {
+    // https://github.com/square/okhttp/issues/5222
+    jdkMatchRule.expectFailure(platform.platformMatcher(PlatformRule.CONSCRYPT_PROPERTY),
+        isA(KeyStoreException.class));
+
     server.useHttps(handshakeCertificates.sslSocketFactory(), false);
     server.enqueue(new MockResponse()); // unused
 
