@@ -112,8 +112,8 @@ class OkHttpClientTestRule : TestRule {
     val clientEventsMap = mutableMapOf<OkHttpClient, MutableList<String>>()
 
     val flakyTests: Set<String> by lazy {
-      this::class.java.getResource("/flakytests.txt").readText().lines().filterNot { it.isBlank() }
-          .toSet()
+      (this::class.java.getResource("/flakytests.txt")?.readText() ?: "")
+          .lines().filterNot { it.isBlank() }.toSet()
     }
 
     /**
