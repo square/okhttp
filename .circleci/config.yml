@@ -195,10 +195,7 @@ workflows:
           filters:
             branches:
               only: master
-      - testconscrypt:
-          filters:
-            branches:
-              only: master
+      - testconscrypt
   nightly:
     triggers:
       - schedule:
