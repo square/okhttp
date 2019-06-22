@@ -45,13 +45,13 @@ nav:
   - 'Works with OkHttp': works_with_okhttp.md
   - 'Stack Overflow ⏏': https://stackoverflow.com/questions/tagged/okhttp?sort=active
   - '4.x API':
-    - 'okhttp': api/okhttp/okhttp3/index.md
-    - 'dnsoverhttps': api/okhttp-dnsoverhttps/okhttp3.dnsoverhttps/index.md
-    - 'logging-interceptor': api/okhttp-logging-interceptor/okhttp3.logging/index.md
-    - 'sse': api/okhttp-sse/okhttp3.sse/index.md
-    - 'tls': api/okhttp-tls/okhttp3.tls/index.md
-    - 'urlconnection': api/okhttp-urlconnection/okhttp3/index.md
-    - 'mockwebserver': api/mockwebserver/okhttp3.mockwebserver/index.md
+    - 'okhttp': 4.x/okhttp/okhttp3/index.md
+    - 'dnsoverhttps': 4.x/okhttp-dnsoverhttps/okhttp3.dnsoverhttps/index.md
+    - 'logging-interceptor': 4.x/okhttp-logging-interceptor/okhttp3.logging/index.md
+    - 'sse': 4.x/okhttp-sse/okhttp3.sse/index.md
+    - 'tls': 4.x/okhttp-tls/okhttp3.tls/index.md
+    - 'urlconnection': 4.x/okhttp-urlconnection/okhttp3/index.md
+    - 'mockwebserver': 4.x/mockwebserver/okhttp3.mockwebserver/index.md
   - '3.x API':
     - 'okhttp ⏏': https://square.github.io/okhttp/3.x/okhttp/
     - 'dnsoverhttps ⏏': https://square.github.io/okhttp/3.x/okhttp-dnsoverhttps/
