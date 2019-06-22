@@ -414,7 +414,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../api/okhttp/okhttp3/" title="okhttp" class="md-nav__link">
+    <a href="../4.x/okhttp/okhttp3/" title="okhttp" class="md-nav__link">
       okhttp
     </a>
   </li>
@@ -426,7 +426,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../api/okhttp-dnsoverhttps/okhttp3.dnsoverhttps/" title="dnsoverhttps" class="md-nav__link">
+    <a href="../4.x/okhttp-dnsoverhttps/okhttp3.dnsoverhttps/" title="dnsoverhttps" class="md-nav__link">
       dnsoverhttps
     </a>
   </li>
@@ -438,7 +438,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../api/okhttp-logging-interceptor/okhttp3.logging/" title="logging-interceptor" class="md-nav__link">
+    <a href="../4.x/okhttp-logging-interceptor/okhttp3.logging/" title="logging-interceptor" class="md-nav__link">
       logging-interceptor
     </a>
   </li>
@@ -450,7 +450,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../api/okhttp-sse/okhttp3.sse/" title="sse" class="md-nav__link">
+    <a href="../4.x/okhttp-sse/okhttp3.sse/" title="sse" class="md-nav__link">
       sse
     </a>
   </li>
@@ -462,7 +462,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../api/okhttp-tls/okhttp3.tls/" title="tls" class="md-nav__link">
+    <a href="../4.x/okhttp-tls/okhttp3.tls/" title="tls" class="md-nav__link">
       tls
     </a>
   </li>
@@ -474,7 +474,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../api/okhttp-urlconnection/okhttp3/" title="urlconnection" class="md-nav__link">
+    <a href="../4.x/okhttp-urlconnection/okhttp3/" title="urlconnection" class="md-nav__link">
       urlconnection
     </a>
   </li>
@@ -486,7 +486,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../api/mockwebserver/okhttp3.mockwebserver/" title="mockwebserver" class="md-nav__link">
+    <a href="../4.x/mockwebserver/okhttp3.mockwebserver/" title="mockwebserver" class="md-nav__link">
       mockwebserver
     </a>
   </li>
@@ -710,7 +710,7 @@
                 
                 <h1 id="connections">Connections<a class="headerlink" href="#connections" title="Permanent link">&para;</a></h1>
 <p>Although you provide only the URL, OkHttp plans its connection to your webserver using three types: URL, Address, and Route.</p>
-<h4 id="urls"><a href="http://square.github.io/okhttp/api/okhttp/okhttp3/-http-url/">URLs</a><a class="headerlink" href="#urls" title="Permanent link">&para;</a></h4>
+<h4 id="urls"><a href="http://square.github.io/okhttp/4.x/okhttp/okhttp3/-http-url/">URLs</a><a class="headerlink" href="#urls" title="Permanent link">&para;</a></h4>
 <p>URLs (like <code>https://github.com/square/okhttp</code>) are fundamental to HTTP and the Internet. In addition to being a universal, decentralized naming scheme for everything on the web, they also specify how to access web resources.</p>
 <p>URLs are abstract:</p>
 <ul>
@@ -718,14 +718,14 @@
 <li>They don&rsquo;t specify whether a specific proxy server should be used or how to authenticate with that proxy server.</li>
 </ul>
 <p>They&rsquo;re also concrete: each URL identifies a specific path (like <code>/square/okhttp</code>) and query (like <code>?q=sharks&amp;lang=en</code>). Each webserver hosts many URLs.</p>
-<h4 id="addresses"><a href="http://square.github.io/okhttp/api/okhttp/okhttp3/-address/">Addresses</a><a class="headerlink" href="#addresses" title="Permanent link">&para;</a></h4>
+<h4 id="addresses"><a href="http://square.github.io/okhttp/4.x/okhttp/okhttp3/-address/">Addresses</a><a class="headerlink" href="#addresses" title="Permanent link">&para;</a></h4>
 <p>Addresses specify a webserver (like <code>github.com</code>) and all of the <strong>static</strong> configuration necessary to connect to that server: the port number, HTTPS settings, and preferred network protocols (like HTTP/2 or SPDY).</p>
-<p>URLs that share the same address may also share the same underlying TCP socket connection. Sharing a connection has substantial performance benefits: lower latency, higher throughput (due to <a href="http://www.igvita.com/2011/10/20/faster-web-vs-tcp-slow-start/">TCP slow start</a>) and conserved battery. OkHttp uses a <a href="http://square.github.io/okhttp/api/okhttp/okhttp3/-connection-pool/">ConnectionPool</a> that automatically reuses HTTP/1.x connections and multiplexes HTTP/2 and SPDY connections.</p>
-<p>In OkHttp some fields of the address come from the URL (scheme, hostname, port) and the rest come from the <a href="http://square.github.io/okhttp/api/okhttp/okhttp3/-ok-http-client/">OkHttpClient</a>.</p>
-<h4 id="routes"><a href="http://square.github.io/okhttp/api/okhttp/okhttp3/-route/">Routes</a><a class="headerlink" href="#routes" title="Permanent link">&para;</a></h4>
+<p>URLs that share the same address may also share the same underlying TCP socket connection. Sharing a connection has substantial performance benefits: lower latency, higher throughput (due to <a href="http://www.igvita.com/2011/10/20/faster-web-vs-tcp-slow-start/">TCP slow start</a>) and conserved battery. OkHttp uses a <a href="http://square.github.io/okhttp/4.x/okhttp/okhttp3/-connection-pool/">ConnectionPool</a> that automatically reuses HTTP/1.x connections and multiplexes HTTP/2 and SPDY connections.</p>
+<p>In OkHttp some fields of the address come from the URL (scheme, hostname, port) and the rest come from the <a href="http://square.github.io/okhttp/4.x/okhttp/okhttp3/-ok-http-client/">OkHttpClient</a>.</p>
+<h4 id="routes"><a href="http://square.github.io/okhttp/4.x/okhttp/okhttp3/-route/">Routes</a><a class="headerlink" href="#routes" title="Permanent link">&para;</a></h4>
 <p>Routes supply the <strong>dynamic</strong> information necessary to actually connect to a webserver. This is the specific IP address to attempt (as discovered by a DNS query), the exact proxy server to use (if a <a href="http://developer.android.com/reference/java/net/ProxySelector.html">ProxySelector</a> is in use), and which version of TLS to negotiate (for HTTPS connections).</p>
 <p>There may be many routes for a single address. For example, a webserver that is hosted in multiple datacenters may yield multiple IP addresses in its DNS response.</p>
-<h4 id="connections_1"><a href="http://square.github.io/okhttp/api/okhttp/okhttp3/-connection/">Connections</a><a class="headerlink" href="#connections_1" title="Permanent link">&para;</a></h4>
+<h4 id="connections_1"><a href="http://square.github.io/okhttp/4.x/okhttp/okhttp3/-connection/">Connections</a><a class="headerlink" href="#connections_1" title="Permanent link">&para;</a></h4>
 <p>When you request a URL with OkHttp, here&rsquo;s what it does:</p>
 <ol>
 <li>It uses the URL and configured OkHttpClient to create an <strong>address</strong>. This address specifies how we&rsquo;ll connect to the webserver.</li>

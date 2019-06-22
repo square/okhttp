@@ -484,7 +484,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../api/okhttp/okhttp3/" title="okhttp" class="md-nav__link">
+    <a href="../4.x/okhttp/okhttp3/" title="okhttp" class="md-nav__link">
       okhttp
     </a>
   </li>
@@ -496,7 +496,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../api/okhttp-dnsoverhttps/okhttp3.dnsoverhttps/" title="dnsoverhttps" class="md-nav__link">
+    <a href="../4.x/okhttp-dnsoverhttps/okhttp3.dnsoverhttps/" title="dnsoverhttps" class="md-nav__link">
       dnsoverhttps
     </a>
   </li>
@@ -508,7 +508,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../api/okhttp-logging-interceptor/okhttp3.logging/" title="logging-interceptor" class="md-nav__link">
+    <a href="../4.x/okhttp-logging-interceptor/okhttp3.logging/" title="logging-interceptor" class="md-nav__link">
       logging-interceptor
     </a>
   </li>
@@ -520,7 +520,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../api/okhttp-sse/okhttp3.sse/" title="sse" class="md-nav__link">
+    <a href="../4.x/okhttp-sse/okhttp3.sse/" title="sse" class="md-nav__link">
       sse
     </a>
   </li>
@@ -532,7 +532,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../api/okhttp-tls/okhttp3.tls/" title="tls" class="md-nav__link">
+    <a href="../4.x/okhttp-tls/okhttp3.tls/" title="tls" class="md-nav__link">
       tls
     </a>
   </li>
@@ -544,7 +544,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../api/okhttp-urlconnection/okhttp3/" title="urlconnection" class="md-nav__link">
+    <a href="../4.x/okhttp-urlconnection/okhttp3/" title="urlconnection" class="md-nav__link">
       urlconnection
     </a>
   </li>
@@ -556,7 +556,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../api/mockwebserver/okhttp3.mockwebserver/" title="mockwebserver" class="md-nav__link">
+    <a href="../4.x/mockwebserver/okhttp3.mockwebserver/" title="mockwebserver" class="md-nav__link">
       mockwebserver
     </a>
   </li>
@@ -1153,7 +1153,7 @@
     <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">&quot;Response 2 equals Response 1? &quot;</span> <span class="o">+</span> <span class="n">response1Body</span><span class="o">.</span><span class="na">equals</span><span class="o">(</span><span class="n">response2Body</span><span class="o">));</span>
   <span class="o">}</span>
 </pre></div>
-To prevent a response from using the cache, use <a href="http://square.github.io/okhttp/api/okhttp/okhttp3/-cache-control/-f-o-r-c-e_-n-e-t-w-o-r-k/"><code>CacheControl.FORCE_NETWORK</code></a>. To prevent it from using the network, use <a href="http://square.github.io/okhttp/api/okhttp/okhttp3/-cache-control/-f-o-r-c-e_-c-a-c-h-e/"><code>CacheControl.FORCE_CACHE</code></a>. Be warned: if you use <code>FORCE_CACHE</code> and the response requires the network, OkHttp will return a <code>504 Unsatisfiable Request</code> response.</p>
+To prevent a response from using the cache, use <a href="http://square.github.io/okhttp/4.x/okhttp/okhttp3/-cache-control/-f-o-r-c-e_-n-e-t-w-o-r-k/"><code>CacheControl.FORCE_NETWORK</code></a>. To prevent it from using the network, use <a href="http://square.github.io/okhttp/4.x/okhttp/okhttp3/-cache-control/-f-o-r-c-e_-c-a-c-h-e/"><code>CacheControl.FORCE_CACHE</code></a>. Be warned: if you use <code>FORCE_CACHE</code> and the response requires the network, OkHttp will return a <code>504 Unsatisfiable Request</code> response.</p>
 <h4 id="canceling-a-call"><a href="https://github.com/square/okhttp/blob/master/samples/guide/src/main/java/okhttp3/recipes/CancelCall.java">Canceling a Call</a><a class="headerlink" href="#canceling-a-call" title="Permanent link">&para;</a></h4>
 <p>Use <code>Call.cancel()</code> to stop an ongoing call immediately. If a thread is currently writing a request or reading a response, it will receive an <code>IOException</code>. Use this to conserve the network when a call is no longer necessary; for example when your user navigates away from an application. Both synchronous and asynchronous calls can be canceled.</p>
 <div class="codehilite"><pre><span></span>  <span class="kd">private</span> <span class="kd">final</span> <span class="n">ScheduledExecutorService</span> <span class="n">executor</span> <span class="o">=</span> <span class="n">Executors</span><span class="o">.</span><span class="na">newScheduledThreadPool</span><span class="o">(</span><span class="mi">1</span><span class="o">);</span>
