@@ -80,7 +80,6 @@ class JdkMatchRule : TestRule {
     versionChecks.forEach { (versionMatcher, failureMatcher) ->
       if (versionMatcher.matches(VersionInfo)) {
         if (!failureMatcher.matches(failureMatcher.matches(e))) {
-          // TODO should we log mismatch description?
           throw e
         }
 
