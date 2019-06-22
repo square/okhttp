@@ -238,7 +238,7 @@ public final class ClientAuthTest {
   @Test public void invalidClientAuthFails() throws Throwable {
     // TODO https://github.com/square/okhttp/issues/4598
     // StreamReset stream was reset: PROT...
-    assumeFalse(getJvmSpecVersion().matches("1[123]"));
+    //jdkMatchRule.expectFailure(fromMajor(11), anything());
 
     HeldCertificate clientCert2 = new HeldCertificate.Builder()
         .serialNumber(4L)
