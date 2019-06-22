@@ -76,7 +76,9 @@ import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.RuleChain;
 import org.junit.rules.TemporaryFolder;
+import org.junit.rules.TestRule;
 import org.junit.rules.Timeout;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -108,12 +110,13 @@ public final class HttpOverHttp2Test {
     return asList(Protocol.H2_PRIOR_KNOWLEDGE, Protocol.HTTP_2);
   }
 
-  @Rule public final JdkMatchRule jdkMatchRule = new JdkMatchRule();
-  @Rule public final PlatformRule platform = new PlatformRule();
+  private JdkMatchRule jdkMatchRule = new JdkMatchRule();
+  private PlatformRule platform = new PlatformRule();
+  @Rule public final TestRule chain =
+      RuleChain.outerRule(platform).around(jdkMatchRule).around(new Timeout(5, SECONDS));
   @Rule public final TemporaryFolder tempDir = new TemporaryFolder();
   @Rule public final MockWebServer server = new MockWebServer();
   @Rule public final OkHttpClientTestRule clientTestRule = new OkHttpClientTestRule();
-  @Rule public final Timeout timeout = new Timeout(5, SECONDS);
 
   private OkHttpClient client;
   private Cache cache;
@@ -601,16 +604,16 @@ public final class HttpOverHttp2Test {
         .build();
     Call call1 = client1
         .newCall(new Request.Builder()
-        .url(server.url("/"))
-        .build());
+            .url(server.url("/"))
+            .build());
 
     OkHttpClient client2 = client.newBuilder()
         .readTimeout(200, MILLISECONDS)
         .build();
     Call call2 = client2
         .newCall(new Request.Builder()
-        .url(server.url("/"))
-        .build());
+            .url(server.url("/"))
+            .build());
 
     Response response1 = call1.execute();
     assertThat(response1.body().string()).isEqualTo("A");
@@ -905,26 +908,26 @@ public final class HttpOverHttp2Test {
     QueueDispatcher dispatcher =
         new RespondAfterCancelDispatcher(responseDequeuedLatches, requestCanceledLatches);
     dispatcher.enqueueResponse(new MockResponse()
-            .setBodyDelay(10, TimeUnit.SECONDS)
-            .setBody("abc"));
+        .setBodyDelay(10, TimeUnit.SECONDS)
+        .setBody("abc"));
     dispatcher.enqueueResponse(new MockResponse()
-            .setBodyDelay(10, TimeUnit.SECONDS)
-            .setBody("def"));
+        .setBodyDelay(10, TimeUnit.SECONDS)
+        .setBody("def"));
     dispatcher.enqueueResponse(new MockResponse()
-            .setBody("ghi"));
+        .setBody("ghi"));
     server.setDispatcher(dispatcher);
 
     client = client.newBuilder()
-            .dns(new DoubleInetAddressDns())
-            .build();
+        .dns(new DoubleInetAddressDns())
+        .build();
 
     callAndCancel(0, responseDequeuedLatches.get(0), requestCanceledLatches.get(0));
     callAndCancel(1, responseDequeuedLatches.get(1), requestCanceledLatches.get(1));
 
     // Make a third request to ensure the connection is reused.
     Call call = client.newCall(new Request.Builder()
-            .url(server.url("/"))
-            .build());
+        .url(server.url("/"))
+        .build());
     Response response = call.execute();
     assertThat(response.body().string()).isEqualTo("ghi");
     assertThat(server.takeRequest().getSequenceNumber()).isEqualTo(2);
@@ -1271,7 +1274,7 @@ public final class HttpOverHttp2Test {
   }
 
   private String firstFrame(List<String> logs, String type) {
-    for (String log: logs) {
+    for (String log : logs) {
       if (log.contains(type)) {
         return log;
       }
@@ -1281,7 +1284,7 @@ public final class HttpOverHttp2Test {
 
   private int countFrames(List<String> logs, String message) {
     int result = 0;
-    for (String log: logs) {
+    for (String log : logs) {
       if (log.equals(message)) {
         result++;
       }
@@ -1420,6 +1423,7 @@ public final class HttpOverHttp2Test {
       @Override public void onResponse(Call call, Response response) throws IOException {
         bodies.add(response.body().string());
       }
+
       @Override public void onFailure(Call call, IOException e) {
         System.out.println(e);
       }
@@ -1601,7 +1605,7 @@ public final class HttpOverHttp2Test {
           if (callCount++ == 1) {
             server.shutdown();
           }
-        } catch(IOException e) {
+        } catch (IOException e) {
           fail();
         }
       }
