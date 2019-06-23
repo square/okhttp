@@ -2,16 +2,16 @@ Upgrading to OkHttp 4
 =====================
 
 OkHttp 4.x upgrades our implementation language from Java to Kotlin and keeps everything else the
-same. We've chosen Kotlin because it gives us powerful new capabilities while integrating closely
+same. We’ve chosen Kotlin because it gives us powerful new capabilities while integrating closely
 with Java.
 
-We spent a lot of time and energy on retaining strict compatibility with OkHttp 3.x. We're even
+We spent a lot of time and energy on retaining strict compatibility with OkHttp 3.x. We’re even
 keeping the package name the same: `okhttp3`!
 
-There are three kinds of compatibility we're tracking:
+There are three kinds of compatibility we’re tracking:
 
  * **Binary compatibility** is the ability to compile a program against OkHttp 3.x, and then to run
-   it against OkHttp 4.x. We're using the excellent [japicmp][japicmp] library via its
+   it against OkHttp 4.x. We’re using the excellent [japicmp][japicmp] library via its
    [Gradle plugin][japicmp_gradle] to enforce binary compatibility.
 
  * **Java source compatibility** is the ability to upgrade Java uses of OkHttp 3.x to 4.x without
@@ -20,38 +20,40 @@ There are three kinds of compatibility we're tracking:
  * **Kotlin source compatibility** is the ability to upgrade Kotlin uses of OkHttp 3.x to 4.x
    without changing `.kt` files.
 
-With one exception, OkHttp 4.x is both binary- and Java source-compatible with OkHttp 3.x. You can
-use an OkHttp 4.x .jar file with applications or libraries built for OkHttp 3.x. (The exception?
-`OkHttpClient` makes more things `final`.)
+With a few small exceptions (below), OkHttp 4.x is both binary- and Java source-compatible with
+OkHttp 3.x. You can use an OkHttp 4.x .jar file with applications or libraries built for OkHttp 3.x.
 
 OkHttp is **not** source-compatible for Kotlin callers, but upgrading should be automatic thanks to
-Kotlin's powerful deprecation features. Most developers should be able to use IntelliJ's _Code
+Kotlin’s powerful deprecation features. Most developers should be able to use IntelliJ’s _Code
 Cleanup_ for a safe and fast upgrade.
-
-For example, when we upgraded Square's Kotlin and Java codebases to OkHttp 4.x we had these
-problems:
-
- * Single Abstract Method (SAM) conversions required us to replace lambdas with objects for Kotlin
-   callers.
-
- * OkHttp 4.x's new `RequestBody.create()` overload conflicted with an overload in one of our
-   subclasses. The compiler caught this!
-
-We expect most projects to have similarly trivial problems with the upgrade, if any. This guide
-walks through all of the changes and how to address them.
 
 
 Backwards-Incompatible Changes
 ------------------------------
 
+#### OkHttpClient final methods
+
 `OkHttpClient` has 26 accessors like `interceptors()` and `writeTimeoutMillis()` that were non-final
 in OkHttp 3.x and are final in 4.x. These were made non-final for use with mocking frameworks like
-[Mockito][mockito]. We believe subtyping `OkHttpClient` is the wrong way to test with OkHttp.
+[Mockito][mockito]. We believe subtyping `OkHttpClient` is the wrong way to test with OkHttp. If
+you must, mock `Call.Factory` which is the interface that `OkHttpClient` implements.
+
+#### Internal API changes
 
 The `okhttp3.internal` package is not a published API and we change it frequently without warning.
-Depending on code in this package is bad and will cause you problems with any upgrade. But the 4.x
+Depending on code in this package is bad and will cause you problems with any upgrade! But the 4.x
 will be particularly painful to naughty developers that import from this package! We changed a lot
 to take advantage of sweet Kotlin features.
+
+#### Credentials.basic()
+
+The username and password parameters to `Credentials.basic()` are now non-null strings. In OkHttp
+3.x, null would yield a username or password of "null".
+
+#### HttpUrl.queryParameterValues()
+
+The return type of `HttpUrl.queryParameterValues()` is `List<String?>`. Lists that may contain null
+are uncommon and Kotlin callers may have incorrectly assigned the result to `List<String>`.
 
 
 Code Cleanup
@@ -61,62 +63,14 @@ IntelliJ and Android Studio offer a **Code Cleanup** feature that will automatic
 deprecated APIs with their replacements. Access this feature from the _Search Anywhere_ dialog
 (double-press shift) or under the _Analyze_ menu.
 
-The deprecation replacements that Code Cleanup possible are included in OkHttp 4.0. We will remove
-them in a future update to OkHttp, so if you're skipping releases you should upgrade to OkHttp 4.0
+We’ve included deprecated APIs in OkHttp 4.0 because they make migration easy. We will remove them
+in a future release! If you’re skipping releases, it’ll be much easier if you upgrade to OkHttp 4.0
 as an intermediate step.
 
+#### Vars and Vals
 
-SAM Conversions
----------------
-
-When you use Java APIs from Kotlin you can operate on Java interfaces as if they were Kotlin
-lambdas. The [feature][kotlin_sam] is available for interfaces that define a Single Abstract Method
-(SAM).
-
-But when you use Kotlin APIs from Kotlin there's no automatic conversion. Code that used SAM lambdas
-with OkHttp 3.x: must use `object :` with OkHttp 4.x:
-
-Kotlin calling OkHttp 3.x:
-
-```kotlin
-val client = OkHttpClient.Builder()
-    .dns { hostname -> InetAddress.getAllByName(hostname).toList() }
-    .build()
-```
-
-Kotlin calling OkHttp 4.x:
-
-```kotlin
-val client = OkHttpClient.Builder()
-    .dns(object : Dns {
-      override fun lookup(hostname: String) =
-          InetAddress.getAllByName(hostname).toList()
-    })
-    .build()
-```
-
-SAM conversion impacts these APIs:
-
- * Authenticator
- * Dispatcher.setIdleCallback(Runnable)
- * Dns
- * EventListener.Factory
- * HttpLoggingInterceptor.Logger
- * LoggingEventListener.Factory
- * OkHttpClient.Builder.hostnameVerifier(HostnameVerifier)
-
-JetBrains [is working on][kotlin_sams] SAM conversions of Kotlin interfaces. Expect it in a future
-release of the Kotlin language.
-
-
-Vars and Vals
--------------
-
-Java doesn't have language support for properties so developers make do with getters and setters.
+Java doesn’t have language support for properties so developers make do with getters and setters.
 Kotlin does have properties and we take advantage of them in OkHttp.
-
-We recommend using _Code Cleanup_ to fix these; it'll use `@Deprecated` to find replacements and fix
-them automatically.
 
  * **Address**: certificatePinner, connectionSpecs, dns, hostnameVerifier, protocols, proxy,
    proxyAuthenticator, proxySelector, socketFactory, sslSocketFactory, url
@@ -155,11 +109,14 @@ them automatically.
  * **Route**: address, proxy, socketAddress
  * **TlsVersion**: javaName
 
+#### Renamed Functions
 
-Extension Functions
--------------------
+* **Headers.of()**: for symmetry with `listOf()`, `setOf()`, etc., we’ve replaced
+  `Headers.of(String...)` with `headersOf(vararg String)`.
 
-_Code Cleanup_ will fix these too:
+#### Extension Functions
+
+We’ve migrated from static functions to extension functions where we think they fit.
 
 | Java                                | Kotlin                          |
 | :---------------------------------- | :------------------------------ |
@@ -183,24 +140,47 @@ _Code Cleanup_ will fix these too:
 | ResponseBody.create(String)         | String.toResponseBody()         |
 
 
-headersOf()
------------
+SAM Conversions
+---------------
 
-For symmetry with `listOf()`, `setOf()`, etc., we've replaced `Headers.of(String...)` with
-`headersOf(vararg String)`.
+When you use Java APIs from Kotlin you can operate on Java interfaces as if they were Kotlin
+lambdas. The [feature][java_sams] is available for interfaces that define a Single Abstract Method
+(SAM).
 
+But when you use Kotlin APIs from Kotlin there’s no automatic conversion. Code that used SAM lambdas
+with OkHttp 3.x: must use `object :` with OkHttp 4.x:
 
-queryParameterValues()
-----------------------
+Kotlin calling OkHttp 3.x:
 
-The return type of `HttpUrl.queryParameterValues()` is `List<String?>`. Lists that may contain
-null are uncommon and Kotlin callers may have incorrectly assigned the result to `List<String>`.
+```kotlin
+val client = OkHttpClient.Builder()
+    .dns { hostname -> InetAddress.getAllByName(hostname).toList() }
+    .build()
+```
 
+Kotlin calling OkHttp 4.x:
 
-[japicmp]: https://github.com/siom79/japicmp
-[japicmp_gradle]: https://github.com/melix/japicmp-gradle-plugin
-[mockito]: https://site.mockito.org/
-[kotlin_sam]: https://kotlinlang.org/docs/reference/java-interop.html#sam-conversions
+```kotlin
+val client = OkHttpClient.Builder()
+    .dns(object : Dns {
+      override fun lookup(hostname: String) =
+          InetAddress.getAllByName(hostname).toList()
+    })
+    .build()
+```
+
+SAM conversion impacts these APIs:
+
+ * Authenticator
+ * Dispatcher.setIdleCallback(Runnable)
+ * Dns
+ * EventListener.Factory
+ * HttpLoggingInterceptor.Logger
+ * LoggingEventListener.Factory
+ * OkHttpClient.Builder.hostnameVerifier(HostnameVerifier)
+
+JetBrains [is working on][kotlin_sams] SAM conversions of Kotlin interfaces. Expect it in a future
+release of the Kotlin language.
 
 
 Companion Imports
@@ -230,6 +210,16 @@ sed -i "" \
 ```
 
 
+Advanced Profiling
+------------------
+
+Android Studio’s Advanced Profiling feature rewrites OkHttp bytecode for instrumentation.
+Unfortunately it crashes on OkHttp 4.x’s bytecode. Until [Google’s bug][advanced_profiling_bug] is
+fixed you must disable advanced profiling in Android Studio.
+
+![Disable Advanced Profiling](images/disable_advanced_profiling@2x.png)
+
+
 R8 / ProGuard
 -------------
 
@@ -238,11 +228,16 @@ R8 and ProGuard are both code optimizers for `.class` files.
 R8 is the [default optimizer][r8] in Android Studio 3.4 and newer. It works well with all
 releases of OkHttp.
 
-ProGuard was the previous default. We're [tracking problems][proguard_problems] with interactions
-between ProGuard, OkHttp 4.x, and Kotlin-originated `.class` files. Make sure you're on the latest
-release if you're using ProGuard,
+ProGuard was the previous default. We’re [tracking problems][proguard_problems] with interactions
+between ProGuard, OkHttp 4.x, and Kotlin-originated `.class` files. Make sure you’re on the latest
+release if you’re using ProGuard,
 
 
- [kotlin_sams]: https://discuss.kotlinlang.org/t/new-type-inference-in-kotlin-1-3-0-rc-190/9914/2
+ [advanced_profiling_bug]: https://issuetracker.google.com/issues/135141615
+ [japicmp]: https://github.com/siom79/japicmp
+ [japicmp_gradle]: https://github.com/melix/japicmp-gradle-plugin
+ [java_sams]: https://kotlinlang.org/docs/reference/java-interop.html#sam-conversions
+ [kotlin_sams]: https://youtrack.jetbrains.com/issue/KT-11129
+ [mockito]: https://site.mockito.org/
  [proguard_problems]: https://github.com/square/okhttp/issues/5167
  [r8]: https://developer.android.com/studio/releases#r8-default
