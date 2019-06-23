@@ -66,11 +66,7 @@ public final class RequestBodyCompression {
   }
 
   public static void main(String... args) throws Exception {
-    try {
-      new RequestBodyCompression().run();
-    } catch (IOException ioe) {
-      // possible
-    }
+    new RequestBodyCompression().run();
   }
 
   /** This interceptor compresses the HTTP request body. Many webservers can't handle this! */

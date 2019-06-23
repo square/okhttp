@@ -23,7 +23,6 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
-import okhttp3.SamplesKt;
 
 public final class PostMultipart {
   /**
@@ -42,7 +41,7 @@ public final class PostMultipart {
         .addFormDataPart("title", "Square Logo")
         .addFormDataPart("image", "logo-square.png",
             RequestBody.create(
-                new File(SamplesKt.getPrefix() + "/docs/images/logo-square.png"),
+                new File("docs/images/logo-square.png"),
                 MEDIA_TYPE_PNG))
         .build();
 
