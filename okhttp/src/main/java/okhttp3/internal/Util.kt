@@ -474,20 +474,20 @@ fun <K, V> Map<K, V>.toImmutableMap(): Map<K, V> {
   }
 }
 
-/** Closes this, ignoring any checked exceptions. Does nothing if this is null. */
-fun Closeable?.closeQuietly() {
+/** Closes this, ignoring any checked exceptions. */
+fun Closeable.closeQuietly() {
   try {
-    this?.close()
+    this.close()
   } catch (rethrown: RuntimeException) {
     throw rethrown
   } catch (_: Exception) {
   }
 }
 
-/** Closes this, ignoring any checked exceptions. Does nothing if this is null. */
-fun Socket?.closeQuietly() {
+/** Closes this, ignoring any checked exceptions. */
+fun Socket.closeQuietly() {
   try {
-    this?.close()
+    this.close()
   } catch (e: AssertionError) {
     throw e
   } catch (rethrown: RuntimeException) {
@@ -496,10 +496,10 @@ fun Socket?.closeQuietly() {
   }
 }
 
-/** Closes this, ignoring any checked exceptions. Does nothing if this is null. */
-fun ServerSocket?.closeQuietly() {
+/** Closes this, ignoring any checked exceptions.  */
+fun ServerSocket.closeQuietly() {
   try {
-    this?.close()
+    this.close()
   } catch (rethrown: RuntimeException) {
     throw rethrown
   } catch (_: Exception) {
