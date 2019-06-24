@@ -477,7 +477,7 @@ fun <K, V> Map<K, V>.toImmutableMap(): Map<K, V> {
 /** Closes this, ignoring any checked exceptions. */
 fun Closeable.closeQuietly() {
   try {
-    this.close()
+    close()
   } catch (rethrown: RuntimeException) {
     throw rethrown
   } catch (_: Exception) {
@@ -487,7 +487,7 @@ fun Closeable.closeQuietly() {
 /** Closes this, ignoring any checked exceptions. */
 fun Socket.closeQuietly() {
   try {
-    this.close()
+    close()
   } catch (e: AssertionError) {
     throw e
   } catch (rethrown: RuntimeException) {
@@ -499,7 +499,7 @@ fun Socket.closeQuietly() {
 /** Closes this, ignoring any checked exceptions.  */
 fun ServerSocket.closeQuietly() {
   try {
-    this.close()
+    close()
   } catch (rethrown: RuntimeException) {
     throw rethrown
   } catch (_: Exception) {
