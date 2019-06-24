@@ -1,6 +1,14 @@
 Change Log
 ==========
 
+## Version 4.0.0-RC3
+
+_2019-06-24_
+
+ *  Fix: Retain binary-compatibility in `okhttp3.internal.HttpMethod`. Naughty third party SDKs
+    import this and we want to ease upgrades for their users.
+
+
 ## Version 4.0.0-RC2
 
 _2019-06-21_
