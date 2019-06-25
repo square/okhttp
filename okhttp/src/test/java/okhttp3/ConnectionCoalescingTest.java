@@ -51,7 +51,6 @@ public final class ConnectionCoalescingTest {
   private List<InetAddress> serverIps;
 
   @Before public void setUp() throws Exception {
-    platform.assumeNotConscrypt();
     platform.assumeHttp2Support();
 
     rootCa = new HeldCertificate.Builder()
@@ -300,20 +299,6 @@ public final class ConnectionCoalescingTest {
     assert200Http2Response(execute(sanUrl), "san.com");
 
     assertThat(client.connectionPool().connectionCount()).isEqualTo(1);
-  }
-
-  /** Run against public external sites, doesn't run by default. */
-  @Ignore
-  @Test public void coalescesConnectionsToRealSites() throws IOException {
-    client = new OkHttpClient();
-
-    assert200Http2Response(execute("https://graph.facebook.com/robots.txt"), "graph.facebook.com");
-    assert200Http2Response(execute("https://www.facebook.com/robots.txt"), "m.facebook.com");
-    assert200Http2Response(execute("https://fb.com/robots.txt"), "m.facebook.com");
-    assert200Http2Response(execute("https://messenger.com/robots.txt"), "messenger.com");
-    assert200Http2Response(execute("https://m.facebook.com/robots.txt"), "m.facebook.com");
-
-    assertThat(client.connectionPool().connectionCount()).isEqualTo(3);
   }
 
   private Response execute(String url) throws IOException {
