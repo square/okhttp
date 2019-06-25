@@ -84,7 +84,7 @@ public final class WebSocketHttpTest {
     clientListener.assertExhausted();
 
     // TODO: assert all connections are released once leaks are fixed
-    clientTestRule.abandonClient(client);
+    clientTestRule.abandonClient();
   }
 
   @Test public void textMessage() {

@@ -81,11 +81,11 @@ class OkHttpClientTestRule : TestRule {
   /**
    * Called if a test is known to be leaky.
    */
-  fun abandonClient(client: OkHttpClient) {
-    if (prototype == client) {
+  fun abandonClient() {
+    prototype?.let {
       prototype = null
-      client.dispatcher.executorService.shutdownNow()
-      client.connectionPool.evictAll()
+      it.dispatcher.executorService.shutdownNow()
+      it.connectionPool.evictAll()
     }
   }
 
