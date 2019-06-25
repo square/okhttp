@@ -9,6 +9,7 @@ copyright: 'Copyright &copy; 2019 Square, Inc.'
 
 theme:
   name: 'material'
+  favicon: images/icon-square.png
   logo: images/icon-square.png
   palette:
     primary: 'teal'
