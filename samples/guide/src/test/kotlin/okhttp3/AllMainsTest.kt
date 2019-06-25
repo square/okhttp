@@ -15,6 +15,7 @@
  */
 package okhttp3
 
+import org.junit.Ignore
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
@@ -22,6 +23,7 @@ import java.io.File
 import java.lang.reflect.InvocationTargetException
 
 @RunWith(Parameterized::class)
+@Ignore
 class AllMainsTest(val className: String) {
   @Test
   fun runMain() {
@@ -51,7 +53,8 @@ class AllMainsTest(val className: String) {
     fun data(): List<String> {
       val mainFiles = mainFiles()
       return mainFiles.map {
-        it.path.substring("$prefix/samples/guide/src/main/java".length, it.path.length - 5).replace('/', '.')
+        it.path.substring("$prefix/samples/guide/src/main/java".length, it.path.length - 5)
+            .replace('/', '.')
       }.sorted()
     }
 
