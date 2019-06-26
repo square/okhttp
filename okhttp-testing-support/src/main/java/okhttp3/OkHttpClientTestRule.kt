@@ -44,9 +44,11 @@ class OkHttpClientTestRule : TestRule {
   }
 
   fun ensureAllConnectionsReleased() {
-    val connectionPool = prototype!!.connectionPool
-    connectionPool.evictAll()
-    assertThat(connectionPool.idleConnectionCount()).isEqualTo(0)
+    prototype?.let {
+      val connectionPool = it.connectionPool
+      connectionPool.evictAll()
+      assertThat(connectionPool.connectionCount()).isEqualTo(0)
+    }
   }
 
   override fun apply(base: Statement, description: Description): Statement {
@@ -68,9 +70,22 @@ class OkHttpClientTestRule : TestRule {
       }
 
       private fun releaseClient() {
-        prototypes.push(prototype)
-        prototype = null
+        prototype?.let {
+          prototypes.push(it)
+          prototype = null
+        }
       }
+    }
+  }
+
+  /**
+   * Called if a test is known to be leaky.
+   */
+  fun abandonClient() {
+    prototype?.let {
+      prototype = null
+      it.dispatcher.executorService.shutdownNow()
+      it.connectionPool.evictAll()
     }
   }
 
