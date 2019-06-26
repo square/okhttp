@@ -21,6 +21,7 @@ import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
+import okhttp3.testing.PlatformRule;
 import org.junit.Rule;
 import org.junit.Test;
 

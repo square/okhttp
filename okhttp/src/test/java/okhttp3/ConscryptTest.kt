@@ -17,6 +17,7 @@ package okhttp3
 
 import okhttp3.internal.platform.ConscryptPlatform
 import okhttp3.internal.platform.Platform
+import okhttp3.testing.PlatformRule
 import org.assertj.core.api.Assertions.assertThat
 import org.conscrypt.Conscrypt
 import org.junit.After
@@ -24,14 +25,11 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Assume
 import org.junit.Before
-import org.junit.Ignore
 import org.junit.Rule
 import org.junit.Test
 import java.net.InetAddress
 import java.net.UnknownHostException
 
-// https://github.com/square/okhttp/issues/5222
-@Ignore
 class ConscryptTest {
   @Suppress("RedundantVisibilityModifier")
   @JvmField

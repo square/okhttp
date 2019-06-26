@@ -29,7 +29,6 @@ import java.net.Proxy;
 import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
 import java.net.UnknownServiceException;
-import java.security.KeyStoreException;
 import java.security.cert.Certificate;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -72,7 +71,7 @@ import okhttp3.mockwebserver.MockWebServer;
 import okhttp3.mockwebserver.QueueDispatcher;
 import okhttp3.mockwebserver.RecordedRequest;
 import okhttp3.mockwebserver.SocketPolicy;
-import okhttp3.testing.JdkMatchRule;
+import okhttp3.testing.PlatformRule;
 import okhttp3.tls.HandshakeCertificates;
 import okhttp3.tls.HeldCertificate;
 import okio.Buffer;
@@ -94,20 +93,16 @@ import static java.util.Arrays.asList;
 import static okhttp3.CipherSuite.TLS_DH_anon_WITH_AES_128_GCM_SHA256;
 import static okhttp3.TestUtil.awaitGarbageCollection;
 import static okhttp3.internal.Internal.addHeaderLenient;
-import static okhttp3.internal.platform.PlatformTest.getJvmSpecVersion;
-import static okhttp3.testing.JdkMatchRuleKt.fromMajor;
 import static okhttp3.tls.internal.TlsUtil.localhost;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.data.Offset.offset;
 import static org.hamcrest.CoreMatchers.anything;
-import static org.hamcrest.CoreMatchers.isA;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeFalse;
 
 public final class CallTest {
   @Rule public final PlatformRule platform = new PlatformRule();
-  @Rule public final JdkMatchRule jdkMatchRule = new JdkMatchRule();
   @Rule public final TestRule timeout = new Timeout(30_000, TimeUnit.MILLISECONDS);
   @Rule public final MockWebServer server = new MockWebServer();
   @Rule public final MockWebServer server2 = new MockWebServer();
@@ -1322,7 +1317,6 @@ public final class CallTest {
 
     // The _anon_ suites became unsupported in "1.8.0_201" and "11.0.2".
     assumeFalse(System.getProperty("java.version", "unknown").matches("1\\.8\\.0_1\\d\\d"));
-    //jdkMatchRule.expectFailure(fromMajor(11), anything());
 
     server.enqueue(new MockResponse());
 
@@ -1403,8 +1397,7 @@ public final class CallTest {
   }
 
   @Test public void matchingPinnedCertificate() throws Exception {
-    // TODO https://github.com/square/okhttp/issues/4703
-    //jdkMatchRule.expectFailure(fromMajor(11), anything());
+    // Fails on 11.0.1 https://github.com/square/okhttp/issues/4703
 
     enableTls();
     server.enqueue(new MockResponse());

@@ -44,7 +44,7 @@ import okhttp3.Interceptor;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import okhttp3.OkHttpClientTestRule;
-import okhttp3.PlatformRule;
+import okhttp3.testing.PlatformRule;
 import okhttp3.Protocol;
 import okhttp3.RecordingCookieJar;
 import okhttp3.RecordingHostnameVerifier;
@@ -64,7 +64,6 @@ import okhttp3.mockwebserver.PushPromise;
 import okhttp3.mockwebserver.QueueDispatcher;
 import okhttp3.mockwebserver.RecordedRequest;
 import okhttp3.mockwebserver.SocketPolicy;
-import okhttp3.testing.JdkMatchRule;
 import okhttp3.tls.HandshakeCertificates;
 import okio.Buffer;
 import okio.BufferedSink;
@@ -90,7 +89,7 @@ import static java.util.Arrays.asList;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static okhttp3.internal.Util.discard;
-import static okhttp3.testing.JdkMatchRuleKt.fromMajor;
+import static okhttp3.testing.PlatformRule.*;
 import static okhttp3.tls.internal.TlsUtil.localhost;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.data.Offset.offset;
@@ -110,10 +109,9 @@ public final class HttpOverHttp2Test {
     return asList(Protocol.H2_PRIOR_KNOWLEDGE, Protocol.HTTP_2);
   }
 
-  private JdkMatchRule jdkMatchRule = new JdkMatchRule();
   private PlatformRule platform = new PlatformRule();
   @Rule public final TestRule chain =
-      RuleChain.outerRule(platform).around(jdkMatchRule).around(new Timeout(5, SECONDS));
+      RuleChain.outerRule(platform).around(new Timeout(5, SECONDS));
   @Rule public final TemporaryFolder tempDir = new TemporaryFolder();
   @Rule public final MockWebServer server = new MockWebServer();
   @Rule public final OkHttpClientTestRule clientTestRule = new OkHttpClientTestRule();
@@ -1235,7 +1233,7 @@ public final class HttpOverHttp2Test {
   @Test public void missingPongsFailsConnection() throws Exception {
     if (protocol == Protocol.HTTP_2) {
       // https://github.com/square/okhttp/issues/5221
-      jdkMatchRule.expectFailure(fromMajor(12), isA(TestTimedOutException.class));
+      platform.expectFailure(fromMajor(12), TestTimedOutException.class);
     }
 
     // Ping every 500 ms, starting at 500 ms.

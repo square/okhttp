@@ -32,12 +32,11 @@ import javax.security.auth.x500.X500Principal;
 import okhttp3.Call;
 import okhttp3.OkHttpClient;
 import okhttp3.OkHttpClientTestRule;
-import okhttp3.PlatformRule;
 import okhttp3.Request;
 import okhttp3.Response;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
-import okhttp3.testing.JdkMatchRule;
+import okhttp3.testing.PlatformRule;
 import okhttp3.tls.HandshakeCertificates;
 import okhttp3.tls.HeldCertificate;
 import org.junit.Before;
@@ -45,20 +44,15 @@ import org.junit.Rule;
 import org.junit.Test;
 
 import static java.util.Arrays.asList;
-import static okhttp3.PlatformRule.getPlatformSystemProperty;
-import static okhttp3.internal.platform.PlatformTest.getJvmSpecVersion;
-import static okhttp3.testing.JdkMatchRuleKt.fromMajor;
+import static okhttp3.testing.PlatformRule.getPlatformSystemProperty;
 import static okhttp3.tls.internal.TlsUtil.newKeyManager;
 import static okhttp3.tls.internal.TlsUtil.newTrustManager;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hamcrest.CoreMatchers.anything;
 import static org.junit.Assert.fail;
-import static org.junit.Assume.assumeFalse;
 
 public final class ClientAuthTest {
   @Rule public final PlatformRule platform = new PlatformRule();
   @Rule public final OkHttpClientTestRule clientTestRule = new OkHttpClientTestRule();
-  @Rule public final JdkMatchRule jdkMatchRule = new JdkMatchRule();
   @Rule public final MockWebServer server = new MockWebServer();
 
   private HeldCertificate serverRootCa;
@@ -186,9 +180,8 @@ public final class ClientAuthTest {
   }
 
   @Test public void missingClientAuthFailsForNeeds() throws Exception {
-    // TODO https://github.com/square/okhttp/issues/4598
+    // Fails with 11.0.1 https://github.com/square/okhttp/issues/4598
     // StreamReset stream was reset: PROT...
-    //jdkMatchRule.expectFailure(fromMajor(11), anything());
 
     OkHttpClient client = buildClient(null, clientIntermediateCa.certificate());
 
@@ -236,9 +229,8 @@ public final class ClientAuthTest {
   }
 
   @Test public void invalidClientAuthFails() throws Throwable {
-    // TODO https://github.com/square/okhttp/issues/4598
+    // Fails with https://github.com/square/okhttp/issues/4598
     // StreamReset stream was reset: PROT...
-    //jdkMatchRule.expectFailure(fromMajor(11), anything());
 
     HeldCertificate clientCert2 = new HeldCertificate.Builder()
         .serialNumber(4L)

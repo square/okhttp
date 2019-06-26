@@ -13,9 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package okhttp3
+package okhttp3.testing
 
 import okhttp3.internal.platform.Platform
+import okhttp3.testing.PlatformRule.Companion.fromMajor
 import org.junit.Rule
 import org.junit.Test
 
@@ -31,5 +32,20 @@ class PlatformRuleTest {
   fun testMode() {
     println(PlatformRule.getPlatformSystemProperty())
     println(Platform.get().javaClass.simpleName)
+  }
+  @Test
+  fun testGreenCase() {
+  }
+
+  @Test
+  fun testGreenCaseFailingOnLater() {
+    platform.expectFailure(fromMajor(VersionInfo.majorVersion + 1))
+  }
+
+  @Test
+  fun failureCase() {
+    platform.expectFailure(fromMajor(VersionInfo.majorVersion))
+
+    check(false)
   }
 }
