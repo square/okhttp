@@ -37,12 +37,7 @@ import javax.net.ssl.X509TrustManager
 
 /** Android 5+. */
 class AndroidPlatform(
-  private val sslParametersClass: Class<*>,
-  private val sslSocketClass: Class<*>,
-  private val setUseSessionTickets: Method,
-  private val setHostname: Method,
-  private val getAlpnSelectedProtocol: Method,
-  private val setAlpnProtocols: Method
+  private val socketClasses: List<SocketClasses>
 ) : Platform() {
   private val closeGuard = CloseGuard.get()
 
@@ -66,22 +61,14 @@ class AndroidPlatform(
   }
 
   override fun trustManager(sslSocketFactory: SSLSocketFactory): X509TrustManager? {
-    var context: Any? =
-        readFieldOrNull(sslSocketFactory, sslParametersClass, "sslParameters")
-    if (context == null) {
-      // If that didn't work, try the Google Play Services SSL provider before giving up. This
-      // must be loaded by the SSLSocketFactory's class loader.
-      try {
-        val gmsSslParametersClass = Class.forName(
-            "com.google.android.gms.org.conscrypt.SSLParametersImpl", false,
-            sslSocketFactory.javaClass.classLoader)
-        context = readFieldOrNull(sslSocketFactory, gmsSslParametersClass,
-            "sslParameters")
-      } catch (e: ClassNotFoundException) {
-        return super.trustManager(sslSocketFactory)
-      }
+    val socketClasses = socketClasses.find { it.matchesSocketFactory(sslSocketFactory) }
+
+    if (socketClasses == null) {
+      return super.trustManager(sslSocketFactory)
     }
 
+    val context: Any? =
+        readFieldOrNull(sslSocketFactory, socketClasses.paramClass, "sslParameters")
     val x509TrustManager = readFieldOrNull(
         context!!, X509TrustManager::class.java, "x509TrustManager")
     return x509TrustManager ?: readFieldOrNull(context, X509TrustManager::class.java,
@@ -93,19 +80,19 @@ class AndroidPlatform(
     hostname: String?,
     protocols: List<Protocol>
   ) {
-    if (!sslSocketClass.isInstance(sslSocket)) {
-      return // No TLS extensions if the socket class is custom.
-    }
+    // No TLS extensions if the socket class is custom.
+    val socketClasses = socketClasses.find { it.matchesSocket(sslSocket) } ?: return
+
     try {
       // Enable SNI and session tickets.
       if (hostname != null) {
-        setUseSessionTickets.invoke(sslSocket, true)
+        socketClasses.setUseSessionTickets.invoke(sslSocket, true)
         // This is SSLParameters.setServerNames() in API 24+.
-        setHostname.invoke(sslSocket, hostname)
+        socketClasses.setHostname.invoke(sslSocket, hostname)
       }
 
       // Enable ALPN.
-      setAlpnProtocols.invoke(sslSocket, concatLengthPrefixed(protocols))
+      socketClasses.setAlpnProtocols.invoke(sslSocket, concatLengthPrefixed(protocols))
     } catch (e: IllegalAccessException) {
       throw AssertionError(e)
     } catch (e: InvocationTargetException) {
@@ -114,17 +101,15 @@ class AndroidPlatform(
   }
 
   override fun getSelectedProtocol(socket: SSLSocket): String? {
-    return if (sslSocketClass.isInstance(socket))
-      try {
-        val alpnResult = getAlpnSelectedProtocol.invoke(socket) as ByteArray?
-        if (alpnResult != null) String(alpnResult, UTF_8) else null
-      } catch (e: IllegalAccessException) {
-        throw AssertionError(e)
-      } catch (e: InvocationTargetException) {
-        throw AssertionError(e)
-      }
-    else {
-      null // No TLS extensions if the socket class is custom.
+    val socketClasses = socketClasses.find { it.matchesSocket(socket) } ?: return null
+
+    return try {
+      val alpnResult = socketClasses.getAlpnSelectedProtocol.invoke(socket) as ByteArray?
+      if (alpnResult != null) String(alpnResult, UTF_8) else null
+    } catch (e: IllegalAccessException) {
+      throw AssertionError(e)
+    } catch (e: InvocationTargetException) {
+      throw AssertionError(e)
     }
   }
 
@@ -341,33 +326,50 @@ class AndroidPlatform(
     }
   }
 
+  class SocketClasses(
+    val packageName: String,
+    val sslSocketClass: Class<*>,
+    val paramClass: Class<*>
+  ) {
+    fun matchesSocket(socket: SSLSocket): Boolean = sslSocketClass.isInstance(socket)
+    fun matchesSocketFactory(sslSocketFactory: SSLSocketFactory) =
+        sslSocketFactory.javaClass.packageName == packageName
+
+    val setUseSessionTickets = sslSocketClass.getDeclaredMethod(
+        "setUseSessionTickets", Boolean::class.javaPrimitiveType)
+    val setHostname = sslSocketClass.getMethod("setHostname", String::class.java)
+    val getAlpnSelectedProtocol = sslSocketClass.getMethod("getAlpnSelectedProtocol")
+    val setAlpnProtocols = sslSocketClass.getMethod("setAlpnProtocols", ByteArray::class.java)
+  }
+
   companion object {
     private const val MAX_LOG_LENGTH = 4000
 
     fun buildIfSupported(): Platform? {
       // Attempt to find Android 5+ APIs.
-      val sslParametersClass: Class<*>
-      val sslSocketClass: Class<*>
-      try {
-        sslParametersClass = Class.forName("com.android.org.conscrypt.SSLParametersImpl")
-        sslSocketClass = Class.forName("com.android.org.conscrypt.OpenSSLSocketImpl")
-      } catch (_: ClassNotFoundException) {
-        return null // Not an Android runtime.
+      val androidClasses = conscryptClasses("com.android.org.conscrypt") ?: return null
+
+      if (Build.VERSION.SDK_INT < 21) {
+        throw IllegalStateException(
+            "Expected Android API level 21+ but was ${Build.VERSION.SDK_INT}")
       }
 
-      if (Build.VERSION.SDK_INT >= 21) {
-        try {
-          val setUseSessionTickets = sslSocketClass.getDeclaredMethod(
-              "setUseSessionTickets", Boolean::class.javaPrimitiveType)
-          val setHostname = sslSocketClass.getMethod("setHostname", String::class.java)
-          val getAlpnSelectedProtocol = sslSocketClass.getMethod("getAlpnSelectedProtocol")
-          val setAlpnProtocols = sslSocketClass.getMethod("setAlpnProtocols", ByteArray::class.java)
-          return AndroidPlatform(sslParametersClass, sslSocketClass, setUseSessionTickets,
-              setHostname, getAlpnSelectedProtocol, setAlpnProtocols)
-        } catch (_: NoSuchMethodException) {
-        }
+      val gmsClasses = conscryptClasses("com.google.android.gms.org.conscrypt")
+      val conscryptClasses = conscryptClasses("org.conscrypt")
+
+      val supportedClasses = listOfNotNull(androidClasses, gmsClasses, conscryptClasses)
+
+      return AndroidPlatform(supportedClasses)
+    }
+
+    private fun conscryptClasses(prefix: String): SocketClasses? {
+      return try {
+        val sslParametersClass = Class.forName("$prefix.SSLParametersImpl")
+        val sslSocketClass = Class.forName("$prefix.OpenSSLSocketImpl")
+        SocketClasses(prefix, sslSocketClass, sslParametersClass)
+      } catch (_: ClassNotFoundException) {
+        null // Not an Android runtime.
       }
-      throw IllegalStateException("Expected Android API level 21+ but was ${Build.VERSION.SDK_INT}")
     }
   }
 }
