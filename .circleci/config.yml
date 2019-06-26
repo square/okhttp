@@ -197,15 +197,27 @@ workflows:
               ignore:
                 - master
                 - gh-pages
-      - testjdk8
+      - testjdk8:
+          filters:
+            branches:
+              only: master
       - testjdk8alpn:
           filters:
             branches:
               ignore:
                 - gh-pages
-      - testjdk11
-      - testjdk12
-      - testconscrypt
+      - testjdk11:
+          filters:
+            branches:
+              only: master
+      - testjdk12:
+          filters:
+            branches:
+              only: master
+      - testconscrypt:
+          filters:
+            branches:
+              only: master
   nightly:
     triggers:
       - schedule:
