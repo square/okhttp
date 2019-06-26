@@ -1,3 +1,0 @@
-okhttp3.internal.ws.WebSocketHttpTest
-okhttp3.internal.http2.HttpOverHttp2Test
-okhttp3.ConnectionCoalescingTest#commonThenAlternative

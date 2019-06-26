@@ -15,6 +15,7 @@
  */
 package okhttp3
 
+import okhttp3.testing.Flaky
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.rules.TestRule
 import org.junit.runner.Description
@@ -44,9 +45,11 @@ class OkHttpClientTestRule : TestRule {
   }
 
   fun ensureAllConnectionsReleased() {
-    val connectionPool = prototype!!.connectionPool
-    connectionPool.evictAll()
-    assertThat(connectionPool.idleConnectionCount()).isEqualTo(0)
+    prototype?.let {
+      val connectionPool = it.connectionPool
+      connectionPool.evictAll()
+      assertThat(connectionPool.connectionCount()).isEqualTo(0)
+    }
   }
 
   override fun apply(base: Statement, description: Description): Statement {
@@ -55,9 +58,9 @@ class OkHttpClientTestRule : TestRule {
         acquireClient()
         try {
           base.evaluate()
-          logEventsIfFlaky(description.testClass.canonicalName, description.methodName)
+          logEventsIfFlaky(description)
         } catch (t: Throwable) {
-          logEventsOnFailure(t)
+          logEvents()
           throw t
         } finally {
           ensureAllConnectionsReleased()
@@ -71,21 +74,19 @@ class OkHttpClientTestRule : TestRule {
       }
 
       private fun releaseClient() {
-        prototypes.push(prototype)
-        clientEventsMap.remove(prototype)
-        prototype = null
+        prototype?.let {
+          prototypes.push(it)
+          clientEventsMap.remove(it)
+          prototype = null
+        }
       }
     }
   }
 
-  private fun logEventsIfFlaky(testClass: String, testMethod: String) {
-    if (flakyTests.contains(testClass) || flakyTests.contains("$testClass#$testMethod")) {
+  private fun logEventsIfFlaky(description: Description) {
+    if (description.annotations.any { it.annotationClass == Flaky::class }) {
       logEvents()
     }
-  }
-
-  private fun logEventsOnFailure(t: Throwable) {
-    logEvents()
   }
 
   private fun logEvents() {
@@ -95,9 +96,20 @@ class OkHttpClientTestRule : TestRule {
     if (events != null) {
       println("Events (${events.size})")
 
-      events.forEach {
-        println(it)
+      for (e in events) {
+        println(e)
       }
+    }
+  }
+
+  /**
+   * Called if a test is known to be leaky.
+   */
+  fun abandonClient() {
+    prototype?.let {
+      prototype = null
+      it.dispatcher.executorService.shutdownNow()
+      it.connectionPool.evictAll()
     }
   }
 
@@ -110,11 +122,6 @@ class OkHttpClientTestRule : TestRule {
     internal val prototypes = ConcurrentLinkedDeque<OkHttpClient>()
 
     val clientEventsMap = mutableMapOf<OkHttpClient, MutableList<String>>()
-
-    val flakyTests: Set<String> by lazy {
-      (this::class.java.getResource("/flakytests.txt")?.readText() ?: "")
-          .lines().filterNot { it.isBlank() }.toSet()
-    }
 
     /**
      * A network that resolves only one IP address per host. Use this when testing route selection

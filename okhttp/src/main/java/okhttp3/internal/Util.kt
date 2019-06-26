@@ -474,7 +474,7 @@ fun <K, V> Map<K, V>.toImmutableMap(): Map<K, V> {
   }
 }
 
-/** Closes this, ignoring any checked exceptions. Does nothing if this is null. */
+/** Closes this, ignoring any checked exceptions. */
 fun Closeable.closeQuietly() {
   try {
     close()
@@ -484,7 +484,7 @@ fun Closeable.closeQuietly() {
   }
 }
 
-/** Closes this, ignoring any checked exceptions. Does nothing if this is null. */
+/** Closes this, ignoring any checked exceptions. */
 fun Socket.closeQuietly() {
   try {
     close()
@@ -496,7 +496,7 @@ fun Socket.closeQuietly() {
   }
 }
 
-/** Closes this, ignoring any checked exceptions. Does nothing if this is null. */
+/** Closes this, ignoring any checked exceptions.  */
 fun ServerSocket.closeQuietly() {
   try {
     close()

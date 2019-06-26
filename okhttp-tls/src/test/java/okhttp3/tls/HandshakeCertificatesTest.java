@@ -164,8 +164,12 @@ public final class HandshakeCertificatesTest {
         sslSocket.startHandshake();
         return Handshake.get(sslSocket.getSession());
       } finally {
-        closeQuietly(rawSocket);
-        closeQuietly(sslSocket);
+        if (rawSocket != null) {
+          closeQuietly(rawSocket);
+        }
+        if (sslSocket != null) {
+          closeQuietly(sslSocket);
+        }
       }
     });
   }
@@ -183,7 +187,9 @@ public final class HandshakeCertificatesTest {
         return Handshake.get(sslSocket.getSession());
       } finally {
         closeQuietly(rawSocket);
-        closeQuietly(sslSocket);
+        if (sslSocket != null) {
+          closeQuietly(sslSocket);
+        }
       }
     });
   }

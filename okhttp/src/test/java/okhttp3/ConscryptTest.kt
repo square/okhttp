@@ -19,7 +19,6 @@ import okhttp3.internal.platform.ConscryptPlatform
 import okhttp3.internal.platform.Platform
 import org.assertj.core.api.Assertions.assertThat
 import org.conscrypt.Conscrypt
-import org.junit.After
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Assume
@@ -35,17 +34,17 @@ class ConscryptTest {
   @Rule public val platform = PlatformRule.conscrypt()
 
   @JvmField @Rule val clientTestRule = OkHttpClientTestRule()
+
   private lateinit var client: OkHttpClient
 
-  @Before
-  fun setUp() {
+  @Before fun setUp() {
+    platform.assumeConscrypt()
     client = clientTestRule.newClient()
-    assertThat(Conscrypt.isConscrypt(Platform.get().platformTrustManager())).isTrue()
   }
 
-  @After
-  fun tearDown() {
-    clientTestRule.ensureAllConnectionsReleased()
+  @Test
+  fun testTrustManager() {
+    assertThat(Conscrypt.isConscrypt(Platform.get().platformTrustManager())).isTrue()
   }
 
   private fun assumeNetwork() {
@@ -62,10 +61,10 @@ class ConscryptTest {
 
     val request = Request.Builder().url("https://mozilla.org/robots.txt").build()
 
-    val response = client.newCall(request).execute()
-
-    assertThat(response.protocol).isEqualTo(Protocol.HTTP_2)
-    assertThat(response.handshake!!.tlsVersion).isEqualTo(TlsVersion.TLS_1_3)
+    client.newCall(request).execute().use {
+      assertThat(it.protocol).isEqualTo(Protocol.HTTP_2)
+      assertThat(it.handshake!!.tlsVersion).isEqualTo(TlsVersion.TLS_1_3)
+    }
   }
 
   @Test
@@ -74,12 +73,12 @@ class ConscryptTest {
 
     val request = Request.Builder().url("https://google.com/robots.txt").build()
 
-    val response = client.newCall(request).execute()
-
-    assertThat(response.protocol).isEqualTo(Protocol.HTTP_2)
-    if (response.handshake!!.tlsVersion != TlsVersion.TLS_1_3) {
-      System.err.println("Flaky TLSv1.3 with google")
-//    assertThat(response.handshake()!!.tlsVersion).isEqualTo(TlsVersion.TLS_1_3)
+    client.newCall(request).execute().use {
+      assertThat(it.protocol).isEqualTo(Protocol.HTTP_2)
+      if (it.handshake!!.tlsVersion != TlsVersion.TLS_1_3) {
+        System.err.println("Flaky TLSv1.3 with google")
+//    assertThat(it.handshake()!!.tlsVersion).isEqualTo(TlsVersion.TLS_1_3)
+      }
     }
   }
 

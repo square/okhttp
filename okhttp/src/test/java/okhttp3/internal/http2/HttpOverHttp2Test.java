@@ -64,6 +64,7 @@ import okhttp3.mockwebserver.PushPromise;
 import okhttp3.mockwebserver.QueueDispatcher;
 import okhttp3.mockwebserver.RecordedRequest;
 import okhttp3.mockwebserver.SocketPolicy;
+import okhttp3.testing.Flaky;
 import okhttp3.tls.HandshakeCertificates;
 import okio.Buffer;
 import okio.BufferedSink;
@@ -95,6 +96,7 @@ import static org.junit.Assume.assumeTrue;
 
 /** Test how HTTP/2 interacts with HTTP features. */
 @RunWith(Parameterized.class)
+@Flaky
 public final class HttpOverHttp2Test {
   private static final Logger http2Logger = Logger.getLogger(Http2.class.getName());
   private static final HandshakeCertificates handshakeCertificates = localhost();

@@ -41,6 +41,7 @@ import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import okhttp3.mockwebserver.RecordedRequest;
 import okhttp3.mockwebserver.SocketPolicy;
+import okhttp3.testing.Flaky;
 import okhttp3.tls.HandshakeCertificates;
 import okio.Buffer;
 import okio.ByteString;
@@ -57,6 +58,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.data.Offset.offset;
 import static org.junit.Assert.fail;
 
+@Flaky
 public final class WebSocketHttpTest {
   @Rule public final MockWebServer webServer = new MockWebServer();
   @Rule public final OkHttpClientTestRule clientTestRule = new OkHttpClientTestRule();
@@ -84,6 +86,7 @@ public final class WebSocketHttpTest {
     clientListener.assertExhausted();
 
     // TODO: assert all connections are released once leaks are fixed
+    clientTestRule.abandonClient();
   }
 
   @Test public void textMessage() {

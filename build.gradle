@@ -115,6 +115,12 @@ subprojects { project ->
     }
   }
 
+  tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).configureEach {
+    kotlinOptions {
+      jvmTarget = "1.8"
+    }
+  }
+
   def platform = System.getProperty("okhttp.platform", "jdk8")
 
   test {
@@ -149,10 +155,13 @@ subprojects { project ->
     errorprone 'com.google.errorprone:error_prone_core:2.3.3'
   }
   tasks.withType(JavaCompile).configureEach {
+    sourceCompatibility = JavaVersion.VERSION_1_8
+    targetCompatibility = JavaVersion.VERSION_1_8
+
     options.errorprone {
       check("MissingFail", CheckSeverity.ERROR)
       check("MissingOverride", CheckSeverity.ERROR)
-      enabled = JavaVersion.current() < JavaVersion.VERSION_11
+      enabled = JavaVersion.current() < JavaVersion.VERSION_12
     }
   }
 
