@@ -32,7 +32,6 @@ import okhttp3.Call;
 import okhttp3.CertificatePinner;
 import okhttp3.OkHttpClient;
 import okhttp3.OkHttpClientTestRule;
-import okhttp3.testing.PlatformRule;
 import okhttp3.RecordingHostnameVerifier;
 import okhttp3.Request;
 import okhttp3.Response;
@@ -40,20 +39,18 @@ import okhttp3.internal.platform.Platform;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import okhttp3.mockwebserver.SocketPolicy;
+import okhttp3.testing.PlatformRule;
 import okhttp3.tls.HandshakeCertificates;
 import okhttp3.tls.HeldCertificate;
 import org.junit.Rule;
 import org.junit.Test;
 
-import static okhttp3.testing.PlatformRule.*;
-import static okhttp3.testing.PlatformRule.platformMatcher;
+import static okhttp3.testing.PlatformRule.CONSCRYPT_PROPERTY;
+import static okhttp3.testing.PlatformRule.platformMatches;
 import static okhttp3.tls.internal.TlsUtil.newKeyManager;
 import static okhttp3.tls.internal.TlsUtil.newTrustManager;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hamcrest.CoreMatchers.anything;
-import static org.hamcrest.CoreMatchers.isA;
 import static org.junit.Assert.fail;
-import static org.junit.Assume.assumeFalse;
 
 public final class CertificatePinnerChainValidationTest {
   @Rule public final PlatformRule platform = new PlatformRule();
