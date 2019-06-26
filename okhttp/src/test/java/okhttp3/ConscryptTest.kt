@@ -25,6 +25,7 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Assume
 import org.junit.Before
+import org.junit.Ignore
 import org.junit.Rule
 import org.junit.Test
 import java.net.InetAddress
@@ -58,6 +59,7 @@ class ConscryptTest {
   }
 
   @Test
+  @Ignore
   fun testMozilla() {
     assumeNetwork()
 
@@ -70,6 +72,7 @@ class ConscryptTest {
   }
 
   @Test
+  @Ignore
   fun testGoogle() {
     assumeNetwork()
 
