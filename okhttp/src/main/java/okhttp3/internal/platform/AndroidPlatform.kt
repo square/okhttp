@@ -333,7 +333,7 @@ class AndroidPlatform(
   ) {
     fun matchesSocket(socket: SSLSocket): Boolean = sslSocketClass.isInstance(socket)
     fun matchesSocketFactory(sslSocketFactory: SSLSocketFactory) =
-        sslSocketFactory.javaClass.packageName == this.packageName
+        sslSocketFactory.javaClass.name.startsWith("${this.packageName}.")
 
     val setUseSessionTickets = sslSocketClass.getDeclaredMethod(
         "setUseSessionTickets", Boolean::class.javaPrimitiveType)
