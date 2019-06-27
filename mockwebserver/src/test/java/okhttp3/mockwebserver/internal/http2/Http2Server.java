@@ -76,10 +76,14 @@ public final class Http2Server extends Http2Connection.Listener {
         connection.start();
       } catch (IOException e) {
         logger.log(Level.INFO, "Http2Server connection failure: " + e);
-        closeQuietly(socket);
+        if (socket != null) {
+          closeQuietly(socket);
+        }
       } catch (Exception e) {
         logger.log(Level.WARNING, "Http2Server unexpected failure", e);
-        closeQuietly(socket);
+        if (socket != null) {
+          closeQuietly(socket);
+        }
       }
     }
   }

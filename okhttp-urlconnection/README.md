@@ -6,5 +6,5 @@ This module integrates OkHttp with `Authenticator` and `CookieHandler` from `jav
 ### Download
 
 ```kotlin
-testImplementation("com.squareup.okhttp3:okhttp-urlconnection:3.14.2")
+testImplementation("com.squareup.okhttp3:okhttp-urlconnection:4.0.0")
 ```

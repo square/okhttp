@@ -9,6 +9,7 @@ copyright: 'Copyright &copy; 2019 Square, Inc.'
 
 theme:
   name: 'material'
+  favicon: images/icon-square.png
   logo: images/icon-square.png
   palette:
     primary: 'teal'
@@ -63,4 +64,5 @@ nav:
   - 'Change Log': changelog.md
   - 'Upgrading to OkHttp 4': upgrading_to_okhttp_4.md
   - 'Contributing': contributing.md
+  - 'Code of Conduct': code_of_conduct.md
 

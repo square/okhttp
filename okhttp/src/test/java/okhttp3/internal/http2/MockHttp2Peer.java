@@ -183,8 +183,12 @@ public final class MockHttp2Peer implements Closeable {
 
   @Override public synchronized void close() throws IOException {
     executor.shutdown();
-    closeQuietly(socket);
-    closeQuietly(serverSocket);
+    if (socket != null) {
+      closeQuietly(socket);
+    }
+    if (serverSocket != null) {
+      closeQuietly(serverSocket);
+    }
   }
 
   @Override public String toString() {

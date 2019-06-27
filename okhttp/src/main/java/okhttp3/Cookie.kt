@@ -24,6 +24,7 @@ import okhttp3.internal.indexOfControlOrNonAscii
 import okhttp3.internal.publicsuffix.PublicSuffixDatabase
 import okhttp3.internal.toCanonicalHost
 import okhttp3.internal.trimSubstring
+import org.codehaus.mojo.animal_sniffer.IgnoreJRERequirement
 import java.util.Calendar
 import java.util.Collections
 import java.util.Date
@@ -124,6 +125,7 @@ class Cookie private constructor(
         other.hostOnly == hostOnly
   }
 
+  @IgnoreJRERequirement // As of AGP 3.4.1, D8 desugars API 24 hashCode methods.
   override fun hashCode(): Int {
     var result = 17
     result = 31 * result + name.hashCode()

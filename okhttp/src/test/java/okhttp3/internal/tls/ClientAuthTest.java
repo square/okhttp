@@ -64,8 +64,6 @@ public final class ClientAuthTest {
 
   @Before
   public void setUp() {
-    platform.assumeNotConscrypt();
-
     serverRootCa = new HeldCertificate.Builder()
         .serialNumber(1L)
         .certificateAuthority(1)

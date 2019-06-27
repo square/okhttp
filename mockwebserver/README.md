@@ -142,7 +142,7 @@ server.setDispatcher(dispatcher);
 ### Download
 
 ```kotlin
-testImplementation("com.squareup.okhttp3:mockwebserver:3.14.2")
+testImplementation("com.squareup.okhttp3:mockwebserver:4.0.0")
 ```
 
 ### License
