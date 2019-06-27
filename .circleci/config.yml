@@ -189,12 +189,12 @@ workflows:
       - testjdk8alpn:
           filters:
             branches:
-              ignore:
-                - gh-pages
+              only: master
       - testjdk11:
           filters:
             branches:
-              only: master
+              ignore:
+                - gh-pages
       - testconscrypt:
           filters:
             branches:

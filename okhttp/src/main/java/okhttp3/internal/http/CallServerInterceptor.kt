@@ -22,7 +22,7 @@ import okio.buffer
 import java.io.IOException
 import java.net.ProtocolException
 
-/** This is the last interceptor in the chain. It makes a network call to the server.  */
+/** This is the last interceptor in the chain. It makes a network call to the server. */
 class CallServerInterceptor(private val forWebSocket: Boolean) : Interceptor {
 
   @Throws(IOException::class)
@@ -30,14 +30,14 @@ class CallServerInterceptor(private val forWebSocket: Boolean) : Interceptor {
     val realChain = chain as RealInterceptorChain
     val exchange = realChain.exchange()
     val request = realChain.request()
-    val requestBody = request.body()
+    val requestBody = request.body
     val sentRequestMillis = System.currentTimeMillis()
 
     exchange.writeRequestHeaders(request)
 
     var responseHeadersStarted = false
     var responseBuilder: Response.Builder? = null
-    if (HttpMethod.permitsRequestBody(request.method()) && requestBody != null) {
+    if (HttpMethod.permitsRequestBody(request.method) && requestBody != null) {
       // If there's a "Expect: 100-continue" header on the request, wait for a "HTTP/1.1 100
       // Continue" response before transmitting the request body. If we don't get that, return
       // what we did get (such as a 4xx response) without ever transmitting the request body.
@@ -87,7 +87,7 @@ class CallServerInterceptor(private val forWebSocket: Boolean) : Interceptor {
         .sentRequestAtMillis(sentRequestMillis)
         .receivedResponseAtMillis(System.currentTimeMillis())
         .build()
-    var code = response.code()
+    var code = response.code
     if (code == 100) {
       // server sent a 100-continue even though we did not request one.
       // try again to read the actual response
@@ -97,7 +97,7 @@ class CallServerInterceptor(private val forWebSocket: Boolean) : Interceptor {
           .sentRequestAtMillis(sentRequestMillis)
           .receivedResponseAtMillis(System.currentTimeMillis())
           .build()
-      code = response.code()
+      code = response.code
     }
 
     exchange.responseHeadersEnd(response)
@@ -112,13 +112,13 @@ class CallServerInterceptor(private val forWebSocket: Boolean) : Interceptor {
           .body(exchange.openResponseBody(response))
           .build()
     }
-    if ("close".equals(response.request().header("Connection"), ignoreCase = true) ||
+    if ("close".equals(response.request.header("Connection"), ignoreCase = true) ||
         "close".equals(response.header("Connection"), ignoreCase = true)) {
       exchange.noNewExchangesOnConnection()
     }
-    if ((code == 204 || code == 205) && response.body()?.contentLength() ?: -1L > 0L) {
+    if ((code == 204 || code == 205) && response.body?.contentLength() ?: -1L > 0L) {
       throw ProtocolException(
-          "HTTP $code had non-zero Content-Length: ${response.body()?.contentLength()}")
+          "HTTP $code had non-zero Content-Length: ${response.body?.contentLength()}")
     }
     return response
   }

@@ -80,7 +80,7 @@ private fun String.containsInvalidHostnameAsciiCodes(): Boolean {
   return false
 }
 
-/** Decodes an IPv6 address like 1111:2222:3333:4444:5555:6666:7777:8888 or ::1.  */
+/** Decodes an IPv6 address like 1111:2222:3333:4444:5555:6666:7777:8888 or ::1. */
 private fun decodeIpv6(input: String, pos: Int, limit: Int): InetAddress? {
   val address = ByteArray(16)
   var b = 0
@@ -117,8 +117,7 @@ private fun decodeIpv6(input: String, pos: Int, limit: Int): InetAddress? {
     var value = 0
     groupOffset = i
     while (i < limit) {
-      val c = input[i]
-      val hexDigit = decodeHexDigit(c)
+      val hexDigit = input[i].parseHexDigit()
       if (hexDigit == -1) break
       value = (value shl 4) + hexDigit
       i++
@@ -149,7 +148,7 @@ private fun decodeIpv6(input: String, pos: Int, limit: Int): InetAddress? {
   return InetAddress.getByAddress(address)
 }
 
-/** Decodes an IPv4 address suffix of an IPv6 address, like 1111::5555:6666:192.168.0.1.  */
+/** Decodes an IPv4 address suffix of an IPv6 address, like 1111::5555:6666:192.168.0.1. */
 private fun decodeIpv4Suffix(
   input: String,
   pos: Int,
@@ -191,7 +190,7 @@ private fun decodeIpv4Suffix(
   return b == addressOffset + 4
 }
 
-/** Encodes an IPv6 address in canonical form according to RFC 5952.  */
+/** Encodes an IPv6 address in canonical form according to RFC 5952. */
 private fun inet6AddressToAscii(address: ByteArray): String {
   // Go through the address looking for the longest run of 0s. Each group is 2-bytes.
   // A run must be longer than one group (section 4.2.2).

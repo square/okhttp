@@ -18,6 +18,7 @@
 package okhttp3.mockwebserver
 
 import okhttp3.Headers
+import okhttp3.Headers.Companion.headersOf
 import okhttp3.HttpUrl
 import okhttp3.Protocol
 import okhttp3.Request
@@ -103,35 +104,89 @@ class MockWebServer : ExternalResource(), Closeable {
       Collections.newSetFromMap(ConcurrentHashMap<Socket, Boolean>())
   private val openConnections =
       Collections.newSetFromMap(ConcurrentHashMap<Http2Connection, Boolean>())
-  private val requestCount = AtomicInteger()
-  private var bodyLimit = Long.MAX_VALUE
-  private var serverSocketFactory: ServerSocketFactory? = null
+
+  private val atomicRequestCount = AtomicInteger()
+
+  /**
+   * The number of HTTP requests received thus far by this server. This may exceed the number of
+   * HTTP connections when connection reuse is in practice.
+   */
+  val requestCount: Int
+    get() = atomicRequestCount.get()
+
+  /** The number of bytes of the POST body to keep in memory to the given limit. */
+  var bodyLimit = Long.MAX_VALUE
+
+  var serverSocketFactory: ServerSocketFactory? = null
+    get() {
+      if (field == null && started) {
+        field = ServerSocketFactory.getDefault() // Build the default value lazily.
+      }
+      return field
+    }
+    set(value) {
+      check(!started) { "serverSocketFactory must not be set after start()" }
+      field = value
+    }
+
   private var serverSocket: ServerSocket? = null
   private var sslSocketFactory: SSLSocketFactory? = null
   private var executor: ExecutorService? = null
   private var tunnelProxy: Boolean = false
   private var clientAuth = CLIENT_AUTH_NONE
+
   /**
-   * Returns the dispatcher used to respond to HTTP requests.
-   * The default dispatcher is a [QueueDispatcher] but other dispatchers can be configured.
+   * The dispatcher used to respond to HTTP requests. The default dispatcher is a [QueueDispatcher],
+   * which serves a fixed sequence of responses from a [queue][enqueue].
    *
-   * Sets the dispatcher used to match incoming requests to mock responses. The default dispatcher
-   * simply serves a fixed sequence of responses from a [queue][enqueue]; custom
-   * dispatchers can vary the response based on timing or the content of the request.
+   * Other dispatchers can be configured. They can vary the response based on timing or the content
+   * of the request.
    */
   var dispatcher: Dispatcher = QueueDispatcher()
-  private var port = -1
-  private var inetSocketAddress: InetSocketAddress? = null
-  private var protocolNegotiationEnabled = true
-  private var protocols = immutableListOf(Protocol.HTTP_2, Protocol.HTTP_1_1)
 
-  private var started: Boolean = false
+  private var portField: Int = -1
+  val port: Int
+    get() {
+      before()
+      return portField
+    }
 
   val hostName: String
     get() {
       before()
       return inetSocketAddress!!.address.canonicalHostName
     }
+
+  private var inetSocketAddress: InetSocketAddress? = null
+
+  /**
+   * True if ALPN is used on incoming HTTPS connections to negotiate a protocol like HTTP/1.1 or
+   * HTTP/2. This is true by default; set to false to disable negotiation and restrict connections
+   * to HTTP/1.1.
+   */
+  var protocolNegotiationEnabled = true
+
+  /**
+   * The protocols supported by ALPN on incoming HTTPS connections in order of preference. The list
+   * must contain [Protocol.HTTP_1_1]. It must not contain null.
+   *
+   * This list is ignored when [negotiation is disabled][protocolNegotiationEnabled].
+   */
+  @get:JvmName("protocols") var protocols: List<Protocol> =
+      immutableListOf(Protocol.HTTP_2, Protocol.HTTP_1_1)
+    set(value) {
+      val protocolList = value.toImmutableList()
+      require(Protocol.H2_PRIOR_KNOWLEDGE !in protocolList || protocolList.size == 1) {
+        "protocols containing h2_prior_knowledge cannot use other protocols: $protocolList"
+      }
+      require(Protocol.HTTP_1_1 in protocolList || Protocol.H2_PRIOR_KNOWLEDGE in protocolList) {
+        "protocols doesn't contain http/1.1: $protocolList"
+      }
+      require(null !in protocolList as List<Protocol?>) { "protocols must not contain null" }
+      field = protocolList
+    }
+
+  private var started: Boolean = false
 
   @Synchronized override fun before() {
     if (started) return
@@ -142,20 +197,27 @@ class MockWebServer : ExternalResource(), Closeable {
     }
   }
 
-  fun getPort(): Int {
-    before()
-    return port
-  }
+  @JvmName("-deprecated_port")
+  @Deprecated(
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "port"),
+      level = DeprecationLevel.ERROR)
+  fun getPort(): Int = port
 
   fun toProxyAddress(): Proxy {
     before()
-    val address = InetSocketAddress(inetSocketAddress!!.address
-        .canonicalHostName, port)
+    val address = InetSocketAddress(inetSocketAddress!!.address.canonicalHostName, port)
     return Proxy(Proxy.Type.HTTP, address)
   }
 
-  fun setServerSocketFactory(serverSocketFactory: ServerSocketFactory) {
-    check(executor == null) { "setServerSocketFactory() must be called before start()" }
+  @JvmName("-deprecated_serverSocketFactory")
+  @Deprecated(
+      message = "moved to var",
+      replaceWith = ReplaceWith(
+          expression = "run { this.serverSocketFactory = serverSocketFactory }"
+      ),
+      level = DeprecationLevel.ERROR)
+  fun setServerSocketFactory(serverSocketFactory: ServerSocketFactory) = run {
     this.serverSocketFactory = serverSocketFactory
   }
 
@@ -173,40 +235,38 @@ class MockWebServer : ExternalResource(), Closeable {
         .resolve(path)!!
   }
 
-  /**
-   * Sets the number of bytes of the POST body to keep in memory to the given limit.
-   */
-  fun setBodyLimit(maxBodyLength: Long) {
-    this.bodyLimit = maxBodyLength
-  }
+  @JvmName("-deprecated_bodyLimit")
+  @Deprecated(
+      message = "moved to var",
+      replaceWith = ReplaceWith(
+          expression = "run { this.bodyLimit = bodyLimit }"
+      ),
+      level = DeprecationLevel.ERROR)
+  fun setBodyLimit(bodyLimit: Long) = run { this.bodyLimit = bodyLimit }
 
-  /**
-   * Sets whether ALPN is used on incoming HTTPS connections to negotiate a protocol like HTTP/1.1
-   * or HTTP/2. Call this method to disable negotiation and restrict connections to HTTP/1.1.
-   */
-  fun setProtocolNegotiationEnabled(protocolNegotiationEnabled: Boolean) {
+  @JvmName("-deprecated_protocolNegotiationEnabled")
+  @Deprecated(
+      message = "moved to var",
+      replaceWith = ReplaceWith(
+          expression = "run { this.protocolNegotiationEnabled = protocolNegotiationEnabled }"
+      ),
+      level = DeprecationLevel.ERROR)
+  fun setProtocolNegotiationEnabled(protocolNegotiationEnabled: Boolean) = run {
     this.protocolNegotiationEnabled = protocolNegotiationEnabled
   }
 
-  /**
-   * Indicates the protocols supported by ALPN on incoming HTTPS connections. This list is ignored
-   * when [negotiation is disabled][setProtocolNegotiationEnabled].
-   *
-   * @param protocols the protocols to use, in order of preference. The list must contain
-   * [Protocol.HTTP_1_1]. It must not contain null.
-   */
-  fun setProtocols(protocols: List<Protocol>) {
-    val protocolList = protocols.toImmutableList()
-    require(Protocol.H2_PRIOR_KNOWLEDGE !in protocolList || protocolList.size == 1) {
-      "protocols containing h2_prior_knowledge cannot use other protocols: $protocolList"
-    }
-    require(Protocol.HTTP_1_1 in protocolList || Protocol.H2_PRIOR_KNOWLEDGE in protocolList) {
-      "protocols doesn't contain http/1.1: $protocolList"
-    }
-    require(null !in protocolList as List<Protocol?>) { "protocols must not contain null" }
-    this.protocols = protocolList
-  }
+  @JvmName("-deprecated_protocols")
+  @Deprecated(
+      message = "moved to var",
+      replaceWith = ReplaceWith(expression = "run { this.protocols = protocols }"),
+      level = DeprecationLevel.ERROR)
+  fun setProtocols(protocols: List<Protocol>) = run { this.protocols = protocols }
 
+  @JvmName("-deprecated_protocols")
+  @Deprecated(
+      message = "moved to var",
+      replaceWith = ReplaceWith(expression = "protocols"),
+      level = DeprecationLevel.ERROR)
   fun protocols(): List<Protocol> = protocols
 
   /**
@@ -269,14 +329,14 @@ class MockWebServer : ExternalResource(), Closeable {
    * @return the head of the request queue
    */
   @Throws(InterruptedException::class)
-  fun takeRequest(timeout: Long, unit: TimeUnit): RecordedRequest? =
-      requestQueue.poll(timeout, unit)
+  fun takeRequest(timeout: Long, unit: TimeUnit): RecordedRequest? = requestQueue.poll(timeout, unit)
 
-  /**
-   * Returns the number of HTTP requests received thus far by this server. This may exceed the
-   * number of HTTP connections when connection reuse is in practice.
-   */
-  fun getRequestCount(): Int = requestCount.get()
+  @JvmName("-deprecated_requestCount")
+  @Deprecated(
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "requestCount"),
+      level = DeprecationLevel.ERROR)
+  fun getRequestCount(): Int = requestCount
 
   /**
    * Scripts [response] to be returned to a request made in sequence. The first request is
@@ -321,17 +381,14 @@ class MockWebServer : ExternalResource(), Closeable {
     executor = Executors.newCachedThreadPool(threadFactory("MockWebServer", false))
     this.inetSocketAddress = inetSocketAddress
 
-    if (serverSocketFactory == null) {
-      serverSocketFactory = ServerSocketFactory.getDefault()
-    }
     serverSocket = serverSocketFactory!!.createServerSocket()
 
     // Reuse if the user specified a port
     serverSocket!!.reuseAddress = inetSocketAddress.port != 0
     serverSocket!!.bind(inetSocketAddress, 50)
 
-    port = serverSocket!!.localPort
-    executor!!.execute("MockWebServer $port") {
+    portField = serverSocket!!.localPort
+    executor!!.execute("MockWebServer $portField") {
       try {
         logger.info("${this@MockWebServer} starting to accept connections")
         acceptConnections()
@@ -369,7 +426,7 @@ class MockWebServer : ExternalResource(), Closeable {
         return
       }
 
-      val socketPolicy = dispatcher.peek().getSocketPolicy()
+      val socketPolicy = dispatcher.peek().socketPolicy
       if (socketPolicy === DISCONNECT_AT_START) {
         dispatchBookkeepingRequest(0, socket)
         socket.close()
@@ -420,12 +477,12 @@ class MockWebServer : ExternalResource(), Closeable {
     }
   }
 
-  inner class SocketHandler(private val raw: Socket) {
+  internal inner class SocketHandler(private val raw: Socket) {
     private var sequenceNumber = 0
 
     @Throws(Exception::class)
     fun handle() {
-      val socketPolicy = dispatcher.peek().getSocketPolicy()
+      val socketPolicy = dispatcher.peek().socketPolicy
       var protocol = Protocol.HTTP_1_1
       val socket: Socket
       when {
@@ -496,7 +553,7 @@ class MockWebServer : ExternalResource(), Closeable {
 
       if (sequenceNumber == 0) {
         logger.warning(
-          "${this@MockWebServer} connection from ${raw.inetAddress} didn't make a request")
+            "${this@MockWebServer} connection from ${raw.inetAddress} didn't make a request")
       }
 
       socket.close()
@@ -512,7 +569,7 @@ class MockWebServer : ExternalResource(), Closeable {
       val source = raw.source().buffer()
       val sink = raw.sink().buffer()
       while (true) {
-        val socketPolicy = dispatcher.peek().getSocketPolicy()
+        val socketPolicy = dispatcher.peek().socketPolicy
         check(processOneRequest(raw, source, sink)) { "Tunnel without any CONNECT!" }
         if (socketPolicy === UPGRADE_TO_SSL_AT_END) return
       }
@@ -530,15 +587,15 @@ class MockWebServer : ExternalResource(), Closeable {
     ): Boolean {
       val request = readRequest(socket, source, sink, sequenceNumber) ?: return false
 
-      requestCount.incrementAndGet()
+      atomicRequestCount.incrementAndGet()
       requestQueue.add(request)
 
       val response = dispatcher.dispatch(request)
-      if (response.getSocketPolicy() === DISCONNECT_AFTER_REQUEST) {
+      if (response.socketPolicy === DISCONNECT_AFTER_REQUEST) {
         socket.close()
         return false
       }
-      if (response.getSocketPolicy() === NO_RESPONSE) {
+      if (response.socketPolicy === NO_RESPONSE) {
         // This read should block until the socket is closed. (Because nobody is writing.)
         if (source.exhausted()) return false
         throw ProtocolException("unexpected data")
@@ -562,7 +619,7 @@ class MockWebServer : ExternalResource(), Closeable {
       }
 
       // See warnings associated with these socket policies in SocketPolicy.
-      when (response.getSocketPolicy()) {
+      when (response.socketPolicy) {
         DISCONNECT_AT_END -> {
           socket.close()
           return false
@@ -570,7 +627,8 @@ class MockWebServer : ExternalResource(), Closeable {
         SHUTDOWN_INPUT_AT_END -> socket.shutdownInput()
         SHUTDOWN_OUTPUT_AT_END -> socket.shutdownOutput()
         SHUTDOWN_SERVER_AFTER_RESPONSE -> shutdown()
-        else -> {}
+        else -> {
+        }
       }
       sequenceNumber++
       return reuseSocket
@@ -595,8 +653,8 @@ class MockWebServer : ExternalResource(), Closeable {
   @Throws(InterruptedException::class)
   private fun dispatchBookkeepingRequest(sequenceNumber: Int, socket: Socket) {
     val request = RecordedRequest(
-        "", Headers.of(), emptyList(), 0L, Buffer(), sequenceNumber, socket)
-    requestCount.incrementAndGet()
+        "", headersOf(), emptyList(), 0L, Buffer(), sequenceNumber, socket)
+    atomicRequestCount.incrementAndGet()
     requestQueue.add(request)
     dispatcher.dispatch(request)
   }
@@ -643,7 +701,7 @@ class MockWebServer : ExternalResource(), Closeable {
       }
     }
 
-    val socketPolicy = dispatcher.peek().getSocketPolicy()
+    val socketPolicy = dispatcher.peek().socketPolicy
     if (expectContinue && socketPolicy === EXPECT_CONTINUE || socketPolicy === CONTINUE_ALWAYS) {
       sink.writeUtf8("HTTP/1.1 100 Continue\r\n")
       sink.writeUtf8("Content-Length: 0\r\n")
@@ -653,7 +711,7 @@ class MockWebServer : ExternalResource(), Closeable {
 
     var hasBody = false
     val requestBody = TruncatingBuffer(bodyLimit)
-    val chunkSizes = ArrayList<Int>()
+    val chunkSizes = mutableListOf<Int>()
     val policy = dispatcher.peek()
     if (contentLength != -1L) {
       hasBody = contentLength > 0L
@@ -702,11 +760,11 @@ class MockWebServer : ExternalResource(), Closeable {
         .url("$scheme://$authority/")
         .headers(request.headers)
         .build()
-    val statusParts = response.getStatus().split(' ', limit = 3)
+    val statusParts = response.status.split(' ', limit = 3)
     val fancyResponse = Response.Builder()
         .code(Integer.parseInt(statusParts[1]))
         .message(statusParts[2])
-        .headers(response.getHeaders())
+        .headers(response.headers)
         .request(fancyRequest)
         .protocol(Protocol.HTTP_1_1)
         .build()
@@ -734,17 +792,17 @@ class MockWebServer : ExternalResource(), Closeable {
   @Throws(IOException::class)
   private fun writeHttpResponse(socket: Socket, sink: BufferedSink, response: MockResponse) {
     sleepIfDelayed(response.getHeadersDelay(TimeUnit.MILLISECONDS))
-    sink.writeUtf8(response.getStatus())
+    sink.writeUtf8(response.status)
     sink.writeUtf8("\r\n")
 
-    writeHeaders(sink, response.getHeaders())
+    writeHeaders(sink, response.headers)
 
     val body = response.getBody() ?: return
     sleepIfDelayed(response.getBodyDelay(TimeUnit.MILLISECONDS))
     throttledTransfer(response, socket, body, sink, body.size, false)
 
-    if ("chunked".equals(response.getHeaders()["Transfer-Encoding"], ignoreCase = true)) {
-      writeHeaders(sink, response.getTrailers())
+    if ("chunked".equals(response.headers["Transfer-Encoding"], ignoreCase = true)) {
+      writeHeaders(sink, response.trailers)
     }
   }
 
@@ -788,9 +846,9 @@ class MockWebServer : ExternalResource(), Closeable {
 
     val halfByteCount = byteCountNum / 2
     val disconnectHalfway = if (isRequest) {
-      policy.getSocketPolicy() === DISCONNECT_DURING_REQUEST_BODY
+      policy.socketPolicy === DISCONNECT_DURING_REQUEST_BODY
     } else {
-      policy.getSocketPolicy() === DISCONNECT_DURING_RESPONSE_BODY
+      policy.socketPolicy === DISCONNECT_DURING_RESPONSE_BODY
     }
 
     while (!socket.isClosed) {
@@ -831,12 +889,12 @@ class MockWebServer : ExternalResource(), Closeable {
     check(line.isEmpty()) { "Expected empty but was: $line" }
   }
 
-  override fun toString(): String = "MockWebServer[$port]"
+  override fun toString(): String = "MockWebServer[$portField]"
 
   @Throws(IOException::class)
   override fun close() = shutdown()
 
-  /** A buffer wrapper that drops data after [bodyLimit] bytes.  */
+  /** A buffer wrapper that drops data after [bodyLimit] bytes. */
   private class TruncatingBuffer internal constructor(
     private var remainingByteCount: Long
   ) : Sink {
@@ -868,7 +926,7 @@ class MockWebServer : ExternalResource(), Closeable {
     }
   }
 
-  /** Processes HTTP requests layered over HTTP/2.  */
+  /** Processes HTTP requests layered over HTTP/2. */
   private inner class Http2SocketHandler constructor(
     private val socket: Socket,
     private val protocol: Protocol
@@ -878,19 +936,19 @@ class MockWebServer : ExternalResource(), Closeable {
     @Throws(IOException::class)
     override fun onStream(stream: Http2Stream) {
       val peekedResponse = dispatcher.peek()
-      if (peekedResponse.getSocketPolicy() === RESET_STREAM_AT_START) {
+      if (peekedResponse.socketPolicy === RESET_STREAM_AT_START) {
         dispatchBookkeepingRequest(sequenceNumber.getAndIncrement(), socket)
-        stream.close(ErrorCode.fromHttp2(peekedResponse.getHttp2ErrorCode())!!, null)
+        stream.close(ErrorCode.fromHttp2(peekedResponse.http2ErrorCode)!!, null)
         return
       }
 
       val request = readRequest(stream)
-      requestCount.incrementAndGet()
+      atomicRequestCount.incrementAndGet()
       requestQueue.add(request)
 
       val response: MockResponse = dispatcher.dispatch(request)
 
-      if (response.getSocketPolicy() === DISCONNECT_AFTER_REQUEST) {
+      if (response.socketPolicy === DISCONNECT_AFTER_REQUEST) {
         socket.close()
         return
       }
@@ -901,7 +959,7 @@ class MockWebServer : ExternalResource(), Closeable {
                 "and responded: $response protocol is $protocol")
       }
 
-      if (response.getSocketPolicy() === DISCONNECT_AT_END) {
+      if (response.socketPolicy === DISCONNECT_AT_END) {
         val connection = stream.connection
         connection.shutdown(ErrorCode.NO_ERROR)
       }
@@ -932,7 +990,7 @@ class MockWebServer : ExternalResource(), Closeable {
       val headers = httpHeaders.build()
 
       val peek = dispatcher.peek()
-      if (!readBody && peek.getSocketPolicy() === EXPECT_CONTINUE) {
+      if (!readBody && peek.socketPolicy === EXPECT_CONTINUE) {
         val continueHeaders =
             listOf(Header(Header.RESPONSE_STATUS, "100 Continue".encodeUtf8()))
         stream.writeHeaders(continueHeaders, outFinished = false, flushHeaders = true)
@@ -963,21 +1021,22 @@ class MockWebServer : ExternalResource(), Closeable {
       val settings = response.settings
       stream.connection.setSettings(settings)
 
-      if (response.getSocketPolicy() === NO_RESPONSE) {
+      if (response.socketPolicy === NO_RESPONSE) {
         return
       }
-      val http2Headers = ArrayList<Header>()
-      val statusParts = response.getStatus().split(' ', limit = 3)
+      val http2Headers = mutableListOf<Header>()
+      val statusParts = response.status.split(' ', limit = 3)
+
       if (statusParts.size < 2) {
-        throw AssertionError("Unexpected status: ${response.getStatus()}")
+        throw AssertionError("Unexpected status: ${response.status}")
       }
       // TODO: constants for well-known header names.
       http2Headers.add(Header(Header.RESPONSE_STATUS, statusParts[1]))
-      val headers = response.getHeaders()
+      val headers = response.headers
       for ((name, value) in headers) {
         http2Headers.add(Header(name, value))
       }
-      val trailers = response.getTrailers()
+      val trailers = response.trailers
 
       sleepIfDelayed(response.getHeadersDelay(TimeUnit.MILLISECONDS))
 

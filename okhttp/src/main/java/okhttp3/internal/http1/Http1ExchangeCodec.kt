@@ -22,7 +22,6 @@ import okhttp3.Request
 import okhttp3.Response
 import okhttp3.internal.EMPTY_HEADERS
 import okhttp3.internal.checkOffsetAndCount
-import okhttp3.internal.addHeaderLenient
 import okhttp3.internal.connection.RealConnection
 import okhttp3.internal.discard
 import okhttp3.internal.headersContentLength
@@ -63,9 +62,9 @@ import java.util.concurrent.TimeUnit.MILLISECONDS
  * [newFixedLengthSource(0)][newFixedLengthSource] and may skip reading and closing that source.
  */
 class Http1ExchangeCodec(
-  /** The client that configures this stream. May be null for HTTPS proxy tunnels.  */
+  /** The client that configures this stream. May be null for HTTPS proxy tunnels. */
   private val client: OkHttpClient?,
-  /** The connection that carries this stream.  */
+  /** The connection that carries this stream. */
   private val realConnection: RealConnection?,
   private val source: BufferedSource,
   private val sink: BufferedSink
@@ -85,7 +84,7 @@ class Http1ExchangeCodec(
    */
   private var trailers: Headers? = null
 
-  /** Returns true if this connection is closed.  */
+  /** Returns true if this connection is closed. */
   val isClosed: Boolean
     get() = state == STATE_CLOSED
 
@@ -93,7 +92,7 @@ class Http1ExchangeCodec(
 
   override fun createRequestBody(request: Request, contentLength: Long): Sink {
     return when {
-      request.body() != null && request.body()!!.isDuplex() -> throw ProtocolException(
+      request.body != null && request.body.isDuplex() -> throw ProtocolException(
           "Duplex connections are not supported for HTTP/1")
       request.isChunked() -> newChunkedSink() // Stream a request body of unknown length.
       contentLength != -1L -> newKnownLengthSink() // Stream a request body of a known length.
@@ -119,8 +118,8 @@ class Http1ExchangeCodec(
    */
   override fun writeRequestHeaders(request: Request) {
     val requestLine = RequestLine.get(
-        request, realConnection!!.route().proxy().type())
-    writeRequest(request.headers(), requestLine)
+        request, realConnection!!.route().proxy.type())
+    writeRequest(request.headers, requestLine)
   }
 
   override fun reportedContentLength(response: Response): Long {
@@ -134,7 +133,7 @@ class Http1ExchangeCodec(
   override fun openResponseBodySource(response: Response): Source {
     return when {
       !response.promisesBody() -> newFixedLengthSource(0)
-      response.isChunked() -> newChunkedSource(response.request().url())
+      response.isChunked() -> newChunkedSource(response.request.url)
       else -> {
         val contentLength = response.headersContentLength()
         if (contentLength != -1L) {
@@ -159,7 +158,7 @@ class Http1ExchangeCodec(
     sink.flush()
   }
 
-  /** Returns bytes of a request header for sending on an HTTP transport.  */
+  /** Returns bytes of a request header for sending on an HTTP transport. */
   fun writeRequest(headers: Headers, requestLine: String) {
     check(state == STATE_IDLE) { "state: $state" }
     sink.writeUtf8(requestLine).writeUtf8("\r\n")
@@ -202,7 +201,7 @@ class Http1ExchangeCodec(
       }
     } catch (e: EOFException) {
       // Provide more context if the server ends the stream before sending a response.
-      val address = realConnection?.route()?.address()?.url?.redact() ?: "unknown"
+      val address = realConnection?.route()?.address?.url?.redact() ?: "unknown"
       throw IOException("unexpected end of stream on $address", e)
     }
   }
@@ -213,13 +212,13 @@ class Http1ExchangeCodec(
     return line
   }
 
-  /** Reads headers or trailers.  */
+  /** Reads headers or trailers. */
   private fun readHeaders(): Headers {
     val headers = Headers.Builder()
     // parse the result headers until the first blank line
     var line = readHeaderLine()
     while (line.isNotEmpty()) {
-      addHeaderLenient(headers, line)
+      headers.addLenient(line)
       line = readHeaderLine()
     }
     return headers.build()
@@ -280,7 +279,7 @@ class Http1ExchangeCodec(
     body.close()
   }
 
-  /** An HTTP request body.  */
+  /** An HTTP request body. */
   private inner class KnownLengthSink : Sink {
     private val timeout = ForwardingTimeout(sink.timeout())
     private var closed: Boolean = false
@@ -372,7 +371,7 @@ class Http1ExchangeCodec(
     }
   }
 
-  /** An HTTP body with a fixed length specified in advance.  */
+  /** An HTTP body with a fixed length specified in advance. */
   private inner class FixedLengthSource internal constructor(private var bytesRemaining: Long) :
       AbstractSource() {
 
@@ -415,7 +414,7 @@ class Http1ExchangeCodec(
     }
   }
 
-  /** An HTTP body with alternating chunk sizes and chunk bodies.  */
+  /** An HTTP body with alternating chunk sizes and chunk bodies. */
   private inner class ChunkedSource internal constructor(private val url: HttpUrl) :
       AbstractSource() {
     private var bytesRemainingInChunk = NO_CHUNK_YET
@@ -461,7 +460,7 @@ class Http1ExchangeCodec(
       if (bytesRemainingInChunk == 0L) {
         hasMoreChunks = false
         trailers = readHeaders()
-        client!!.cookieJar().receiveHeaders(url, trailers!!)
+        client!!.cookieJar.receiveHeaders(url, trailers!!)
         responseBodyComplete()
       }
     }
@@ -477,7 +476,7 @@ class Http1ExchangeCodec(
     }
   }
 
-  /** An HTTP message body terminated by the end of the underlying stream.  */
+  /** An HTTP message body terminated by the end of the underlying stream. */
   private inner class UnknownLengthSource : AbstractSource() {
     private var inputExhausted: Boolean = false
 

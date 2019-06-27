@@ -27,17 +27,15 @@ import java.lang.reflect.Method
 import java.net.InetSocketAddress
 import java.net.Socket
 import java.nio.charset.StandardCharsets.UTF_8
-import java.security.NoSuchAlgorithmException
 import java.security.cert.Certificate
 import java.security.cert.TrustAnchor
 import java.security.cert.X509Certificate
-import javax.net.ssl.SSLContext
 import javax.net.ssl.SSLPeerUnverifiedException
 import javax.net.ssl.SSLSocket
 import javax.net.ssl.SSLSocketFactory
 import javax.net.ssl.X509TrustManager
 
-/** Android 5+.  */
+/** Android 5+. */
 class AndroidPlatform(
   private val sslParametersClass: Class<*>,
   private val sslSocketClass: Class<*>,
@@ -47,30 +45,6 @@ class AndroidPlatform(
   private val setAlpnProtocols: Method
 ) : Platform() {
   private val closeGuard = CloseGuard.get()
-
-  // Not a real Android runtime; probably RoboVM or MoE
-  // Try to load TLS 1.2 explicitly.
-  // fallback to TLS
-  override fun newSSLContext(): SSLContext {
-    val tryTls12: Boolean = try {
-      Build.VERSION.SDK_INT in 16..21
-    } catch (e: NoClassDefFoundError) {
-      true
-    }
-
-    if (tryTls12) {
-      try {
-        return SSLContext.getInstance("TLSv1.2")
-      } catch (e: NoSuchAlgorithmException) {
-      }
-    }
-
-    try {
-      return SSLContext.getInstance("TLS")
-    } catch (e: NoSuchAlgorithmException) {
-      throw IllegalStateException("No TLS provider", e)
-    }
-  }
 
   @Throws(IOException::class)
   override fun connectSocket(
@@ -301,7 +275,7 @@ class AndroidPlatform(
           val closeGuardInstance = getMethod.invoke(null)
           openMethod!!.invoke(closeGuardInstance, closer)
           return closeGuardInstance
-        } catch (ignored: Exception) {
+        } catch (_: Exception) {
         }
       }
       return null
@@ -313,7 +287,7 @@ class AndroidPlatform(
         try {
           warnIfOpenMethod!!.invoke(closeGuardInstance)
           reported = true
-        } catch (ignored: Exception) {
+        } catch (_: Exception) {
         }
       }
       return reported
@@ -330,7 +304,7 @@ class AndroidPlatform(
           getMethod = closeGuardClass.getMethod("get")
           openMethod = closeGuardClass.getMethod("open", String::class.java)
           warnIfOpenMethod = closeGuardClass.getMethod("warnIfOpen")
-        } catch (ignored: Exception) {
+        } catch (_: Exception) {
           getMethod = null
           openMethod = null
           warnIfOpenMethod = null
@@ -377,7 +351,7 @@ class AndroidPlatform(
       try {
         sslParametersClass = Class.forName("com.android.org.conscrypt.SSLParametersImpl")
         sslSocketClass = Class.forName("com.android.org.conscrypt.OpenSSLSocketImpl")
-      } catch (ignored: ClassNotFoundException) {
+      } catch (_: ClassNotFoundException) {
         return null // Not an Android runtime.
       }
 
@@ -390,7 +364,7 @@ class AndroidPlatform(
           val setAlpnProtocols = sslSocketClass.getMethod("setAlpnProtocols", ByteArray::class.java)
           return AndroidPlatform(sslParametersClass, sslSocketClass, setUseSessionTickets,
               setHostname, getAlpnSelectedProtocol, setAlpnProtocols)
-        } catch (ignored: NoSuchMethodException) {
+        } catch (_: NoSuchMethodException) {
         }
       }
       throw IllegalStateException("Expected Android API level 21+ but was ${Build.VERSION.SDK_INT}")

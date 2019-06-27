@@ -34,10 +34,10 @@ import java.util.concurrent.atomic.AtomicBoolean
  */
 class PublicSuffixDatabase {
 
-  /** True after we've attempted to read the list for the first time.  */
+  /** True after we've attempted to read the list for the first time. */
   private val listRead = AtomicBoolean(false)
 
-  /** Used for concurrent threads reading the list for the first time.  */
+  /** Used for concurrent threads reading the list for the first time. */
   private val readCompleteLatch = CountDownLatch(1)
 
   // The lists are held as a large array of UTF-8 bytes. This is to avoid allocating lots of strings
@@ -213,7 +213,7 @@ class PublicSuffixDatabase {
     readCompleteLatch.countDown()
   }
 
-  /** Visible for testing.  */
+  /** Visible for testing. */
   fun setListBytes(
     publicSuffixListBytes: ByteArray,
     publicSuffixExceptionListBytes: ByteArray

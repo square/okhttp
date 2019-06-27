@@ -108,12 +108,12 @@ class RetryAndFollowUpInterceptor(private val client: OkHttpClient) : Intercepto
         return response
       }
 
-      val followUpBody = followUp.body()
+      val followUpBody = followUp.body
       if (followUpBody != null && followUpBody.isOneShot()) {
         return response
       }
 
-      response.body()?.closeQuietly()
+      response.body?.closeQuietly()
       if (transmitter.hasExchange()) {
         exchange?.detachWithViolence()
       }
@@ -140,7 +140,7 @@ class RetryAndFollowUpInterceptor(private val client: OkHttpClient) : Intercepto
     userRequest: Request
   ): Boolean {
     // The application layer has forbidden retries.
-    if (!client.retryOnConnectionFailure()) return false
+    if (!client.retryOnConnectionFailure) return false
 
     // We can't send the request body again.
     if (requestSendStarted && requestIsOneShot(e, userRequest)) return false
@@ -155,7 +155,7 @@ class RetryAndFollowUpInterceptor(private val client: OkHttpClient) : Intercepto
   }
 
   private fun requestIsOneShot(e: IOException, userRequest: Request): Boolean {
-    val requestBody = userRequest.body()
+    val requestBody = userRequest.body
     return (requestBody != null && requestBody.isOneShot()) ||
         e is FileNotFoundException
   }
@@ -192,25 +192,25 @@ class RetryAndFollowUpInterceptor(private val client: OkHttpClient) : Intercepto
   }
 
   /**
-   * Figures out the HTTP request to make in response to receiving `userResponse`. This will
+   * Figures out the HTTP request to make in response to receiving [userResponse]. This will
    * either add authentication headers, follow redirects or handle a client request timeout. If a
    * follow-up is either unnecessary or not applicable, this returns null.
    */
   @Throws(IOException::class)
   private fun followUpRequest(userResponse: Response, route: Route?): Request? {
-    val responseCode = userResponse.code()
+    val responseCode = userResponse.code
 
-    val method = userResponse.request().method()
+    val method = userResponse.request.method
     when (responseCode) {
       HTTP_PROXY_AUTH -> {
-        val selectedProxy = route!!.proxy()
+        val selectedProxy = route!!.proxy
         if (selectedProxy.type() != Proxy.Type.HTTP) {
           throw ProtocolException("Received HTTP_PROXY_AUTH (407) code while not using proxy")
         }
-        return client.proxyAuthenticator().authenticate(route, userResponse)
+        return client.proxyAuthenticator.authenticate(route, userResponse)
       }
 
-      HTTP_UNAUTHORIZED -> return client.authenticator().authenticate(route, userResponse)
+      HTTP_UNAUTHORIZED -> return client.authenticator.authenticate(route, userResponse)
 
       HTTP_PERM_REDIRECT, HTTP_TEMP_REDIRECT -> {
         // "If the 307 or 308 status code is received in response to a request other than GET
@@ -229,17 +229,17 @@ class RetryAndFollowUpInterceptor(private val client: OkHttpClient) : Intercepto
         // 408's are rare in practice, but some servers like HAProxy use this response code. The
         // spec says that we may repeat the request without modifications. Modern browsers also
         // repeat the request (even non-idempotent ones.)
-        if (!client.retryOnConnectionFailure()) {
+        if (!client.retryOnConnectionFailure) {
           // The application layer has directed us not to retry the request.
           return null
         }
 
-        val requestBody = userResponse.request().body()
+        val requestBody = userResponse.request.body
         if (requestBody != null && requestBody.isOneShot()) {
           return null
         }
-        val priorResponse = userResponse.priorResponse()
-        if (priorResponse != null && priorResponse.code() == HTTP_CLIENT_TIMEOUT) {
+        val priorResponse = userResponse.priorResponse
+        if (priorResponse != null && priorResponse.code == HTTP_CLIENT_TIMEOUT) {
           // We attempted to retry and got another timeout. Give up.
           return null
         }
@@ -248,19 +248,19 @@ class RetryAndFollowUpInterceptor(private val client: OkHttpClient) : Intercepto
           return null
         }
 
-        return userResponse.request()
+        return userResponse.request
       }
 
       HTTP_UNAVAILABLE -> {
-        val priorResponse = userResponse.priorResponse()
-        if (priorResponse != null && priorResponse.code() == HTTP_UNAVAILABLE) {
+        val priorResponse = userResponse.priorResponse
+        if (priorResponse != null && priorResponse.code == HTTP_UNAVAILABLE) {
           // We attempted to retry and got another timeout. Give up.
           return null
         }
 
         if (retryAfter(userResponse, Integer.MAX_VALUE) == 0) {
           // specifically received an instruction to retry without delay
-          return userResponse.request()
+          return userResponse.request
         }
 
         return null
@@ -271,24 +271,24 @@ class RetryAndFollowUpInterceptor(private val client: OkHttpClient) : Intercepto
 
   private fun buildRedirectRequest(userResponse: Response, method: String): Request? {
     // Does the client allow redirects?
-    if (!client.followRedirects()) return null
+    if (!client.followRedirects) return null
 
     val location = userResponse.header("Location") ?: return null
     // Don't follow redirects to unsupported protocols.
-    val url = userResponse.request().url().resolve(location) ?: return null
+    val url = userResponse.request.url.resolve(location) ?: return null
 
     // If configured, don't follow redirects between SSL and non-SSL.
-    val sameScheme = url.scheme == userResponse.request().url().scheme
-    if (!sameScheme && !client.followSslRedirects()) return null
+    val sameScheme = url.scheme == userResponse.request.url.scheme
+    if (!sameScheme && !client.followSslRedirects) return null
 
     // Most redirects don't include a request body.
-    val requestBuilder = userResponse.request().newBuilder()
+    val requestBuilder = userResponse.request.newBuilder()
     if (HttpMethod.permitsRequestBody(method)) {
       val maintainBody = HttpMethod.redirectsWithBody(method)
       if (HttpMethod.redirectsToGet(method)) {
         requestBuilder.method("GET", null)
       } else {
-        val requestBody = if (maintainBody) userResponse.request().body() else null
+        val requestBody = if (maintainBody) userResponse.request.body else null
         requestBuilder.method(method, requestBody)
       }
       if (!maintainBody) {
@@ -301,7 +301,7 @@ class RetryAndFollowUpInterceptor(private val client: OkHttpClient) : Intercepto
     // When redirecting across hosts, drop all authentication headers. This
     // is potentially annoying to the application layer since they have no
     // way to retain them.
-    if (!userResponse.request().url().canReuseConnectionFor(url)) {
+    if (!userResponse.request.url.canReuseConnectionFor(url)) {
       requestBuilder.removeHeader("Authorization")
     }
 

@@ -16,6 +16,7 @@
 package okhttp3.internal.cache2
 
 import okhttp3.internal.closeQuietly
+import okhttp3.internal.notifyAll
 import okio.Buffer
 import okio.ByteString
 import okio.ByteString.Companion.encodeUtf8
@@ -263,7 +264,7 @@ class Relay private constructor(
       } finally {
         synchronized(this@Relay) {
           upstreamReader = null
-          (this@Relay as Object).notifyAll()
+          this@Relay.notifyAll()
         }
       }
     }

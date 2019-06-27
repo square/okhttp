@@ -21,9 +21,9 @@ import okhttp3.EventListener
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import okhttp3.Route
+import okhttp3.internal.canReuseConnectionFor
 import okhttp3.internal.closeQuietly
 import okhttp3.internal.http.ExchangeCodec
-import okhttp3.internal.canReuseConnectionFor
 import java.io.IOException
 import java.net.Socket
 
@@ -70,8 +70,8 @@ class ExchangeFinder(
     val connectTimeout = chain.connectTimeoutMillis()
     val readTimeout = chain.readTimeoutMillis()
     val writeTimeout = chain.writeTimeoutMillis()
-    val pingIntervalMillis = client.pingIntervalMillis()
-    val connectionRetryEnabled = client.retryOnConnectionFailure()
+    val pingIntervalMillis = client.pingIntervalMillis
+    val connectionRetryEnabled = client.retryOnConnectionFailure
 
     try {
       val resultConnection = findHealthyConnection(
@@ -277,14 +277,14 @@ class ExchangeFinder(
     }
   }
 
-  /** Returns true if there is a failure that retrying might fix.  */
+  /** Returns true if there is a failure that retrying might fix. */
   fun hasStreamFailure(): Boolean {
     synchronized(connectionPool) {
       return hasStreamFailure
     }
   }
 
-  /** Returns true if a current route is still good or if there are routes we haven't tried yet.  */
+  /** Returns true if a current route is still good or if there are routes we haven't tried yet. */
   fun hasRouteToTry(): Boolean {
     synchronized(connectionPool) {
       if (nextRouteToTry != null) {
@@ -307,6 +307,6 @@ class ExchangeFinder(
   private fun retryCurrentRoute(): Boolean {
     return transmitter.connection != null &&
         transmitter.connection!!.routeFailureCount == 0 &&
-        transmitter.connection!!.route().address().url.canReuseConnectionFor(address.url)
+        transmitter.connection!!.route().address.url.canReuseConnectionFor(address.url)
   }
 }

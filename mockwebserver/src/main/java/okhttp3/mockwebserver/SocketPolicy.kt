@@ -69,13 +69,13 @@ enum class SocketPolicy {
    */
   DISCONNECT_AFTER_REQUEST,
 
-  /** Close connection after reading half of the request body (if present).  */
+  /** Close connection after reading half of the request body (if present). */
   DISCONNECT_DURING_REQUEST_BODY,
 
-  /** Close connection after writing half of the response body (if present).  */
+  /** Close connection after writing half of the response body (if present). */
   DISCONNECT_DURING_RESPONSE_BODY,
 
-  /** Don't trust the client during the SSL handshake.  */
+  /** Don't trust the client during the SSL handshake. */
   FAIL_HANDSHAKE,
 
   /**

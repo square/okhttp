@@ -17,13 +17,14 @@
 package okhttp3.internal.connection
 
 import okhttp3.Address
+import okhttp3.ConnectionPool
 import okhttp3.Route
 import okhttp3.internal.closeQuietly
 import okhttp3.internal.connection.Transmitter.TransmitterReference
 import okhttp3.internal.notifyAll
 import okhttp3.internal.platform.Platform
 import okhttp3.internal.threadFactory
-import okhttp3.internal.waitNanos
+import okhttp3.internal.lockAndWaitNanos
 import java.io.IOException
 import java.net.Proxy
 import java.util.ArrayDeque
@@ -32,7 +33,7 @@ import java.util.concurrent.ThreadPoolExecutor
 import java.util.concurrent.TimeUnit
 
 class RealConnectionPool(
-  /** The maximum number of idle connections for each address.  */
+  /** The maximum number of idle connections for each address. */
   private val maxIdleConnections: Int,
   keepAliveDuration: Long,
   timeUnit: TimeUnit
@@ -45,7 +46,7 @@ class RealConnectionPool(
         val waitNanos = cleanup(System.nanoTime())
         if (waitNanos == -1L) return
         try {
-          this@RealConnectionPool.waitNanos(waitNanos)
+          this@RealConnectionPool.lockAndWaitNanos(waitNanos)
         } catch (_: InterruptedException) {
         }
       }
@@ -70,10 +71,10 @@ class RealConnectionPool(
   }
 
   /**
-   * Attempts to acquire a recycled connection to `address` for `transmitter`. Returns true if a
+   * Attempts to acquire a recycled connection to [address] for [transmitter]. Returns true if a
    * connection was acquired.
    *
-   * If `routes` is non-null these are the resolved routes (ie. IP addresses) for the connection.
+   * If [routes] is non-null these are the resolved routes (ie. IP addresses) for the connection.
    * This is used to coalesce related domains to the same HTTP/2 connection, such as `square.com`
    * and `square.ca`.
    */
@@ -103,7 +104,7 @@ class RealConnectionPool(
   }
 
   /**
-   * Notify this pool that `connection` has become idle. Returns true if the connection has
+   * Notify this pool that [connection] has become idle. Returns true if the connection has
    * been removed from the pool and should be closed.
    */
   fun connectionBecameIdle(connection: RealConnection): Boolean {
@@ -201,7 +202,7 @@ class RealConnectionPool(
 
   /**
    * Prunes any leaked transmitters and then returns the number of remaining live transmitters on
-   * `connection`. Transmitters are leaked if the connection is tracking them but the application
+   * [connection]. Transmitters are leaked if the connection is tracking them but the application
    * code has abandoned them. Leak detection is imprecise and relies on garbage collection.
    */
   private fun pruneAndGetAllocationCount(connection: RealConnection, now: Long): Int {
@@ -217,7 +218,7 @@ class RealConnectionPool(
 
       // We've discovered a leaked transmitter. This is an application bug.
       val transmitterRef = reference as TransmitterReference
-      val message = "A connection to ${connection.route().address().url} was leaked. " +
+      val message = "A connection to ${connection.route().address.url} was leaked. " +
           "Did you forget to close a response body?"
       Platform.get().logCloseableLeak(message, transmitterRef.callStackTrace)
 
@@ -234,13 +235,13 @@ class RealConnectionPool(
     return references.size
   }
 
-  /** Track a bad route in the route database. Other routes will be attempted first.  */
+  /** Track a bad route in the route database. Other routes will be attempted first. */
   fun connectFailed(failedRoute: Route, failure: IOException) {
     // Tell the proxy selector when we fail to connect on a fresh connection.
-    if (failedRoute.proxy().type() != Proxy.Type.DIRECT) {
-      val address = failedRoute.address()
+    if (failedRoute.proxy.type() != Proxy.Type.DIRECT) {
+      val address = failedRoute.address
       address.proxySelector.connectFailed(
-          address.url.toUri(), failedRoute.proxy().address(), failure)
+          address.url.toUri(), failedRoute.proxy.address(), failure)
     }
 
     routeDatabase.failed(failedRoute)
@@ -259,5 +260,7 @@ class RealConnectionPool(
         SynchronousQueue(),
         threadFactory("OkHttp ConnectionPool", true)
     )
+
+    fun get(connectionPool: ConnectionPool): RealConnectionPool = connectionPool.delegate
   }
 }

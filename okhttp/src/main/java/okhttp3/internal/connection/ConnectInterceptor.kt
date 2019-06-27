@@ -16,14 +16,13 @@
  */
 package okhttp3.internal.connection
 
-import java.io.IOException
 import okhttp3.Interceptor
-import okhttp3.OkHttpClient
 import okhttp3.Response
 import okhttp3.internal.http.RealInterceptorChain
+import java.io.IOException
 
-/** Opens a connection to the target server and proceeds to the next interceptor.  */
-class ConnectInterceptor(val client: OkHttpClient) : Interceptor {
+/** Opens a connection to the target server and proceeds to the next interceptor. */
+object ConnectInterceptor : Interceptor {
 
   @Throws(IOException::class)
   override fun intercept(chain: Interceptor.Chain): Response {
@@ -32,7 +31,7 @@ class ConnectInterceptor(val client: OkHttpClient) : Interceptor {
     val transmitter = realChain.transmitter()
 
     // We need the network to satisfy this request. Possibly for validating a conditional GET.
-    val doExtensiveHealthChecks = request.method() != "GET"
+    val doExtensiveHealthChecks = request.method != "GET"
     val exchange = transmitter.newExchange(chain, doExtensiveHealthChecks)
 
     return realChain.proceed(request, transmitter, exchange)

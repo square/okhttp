@@ -81,8 +81,9 @@ open class QueueDispatcher : Dispatcher() {
      * Enqueued on shutdown to release threads waiting on [dispatch]. Note that this response
      * isn't transmitted because the connection is closed before this response is returned.
      */
-    private val DEAD_LETTER = MockResponse()
-        .setStatus("HTTP/1.1 $HTTP_UNAVAILABLE shutting down")
+    private val DEAD_LETTER = MockResponse().apply {
+      this.status = "HTTP/1.1 $HTTP_UNAVAILABLE shutting down"
+    }
 
     private val logger = Logger.getLogger(QueueDispatcher::class.java.name)
   }

@@ -15,18 +15,17 @@
  */
 package okhttp3
 
-import okhttp3.internal.delimiterOffset
-import okhttp3.internal.trimSubstring
 import okhttp3.internal.cookieToString
+import okhttp3.internal.delimiterOffset
 import okhttp3.internal.platform.Platform
 import okhttp3.internal.platform.Platform.Companion.WARN
+import okhttp3.internal.trimSubstring
 import java.io.IOException
 import java.net.CookieHandler
 import java.net.HttpCookie
-import java.util.ArrayList
 import java.util.Collections
 
-/** A cookie jar that delegates to a [java.net.CookieHandler].  */
+/** A cookie jar that delegates to a [java.net.CookieHandler]. */
 class JavaNetCookieJar(private val cookieHandler: CookieHandler) : CookieJar {
 
   override fun saveFromResponse(url: HttpUrl, cookies: List<Cookie>) {
@@ -56,7 +55,7 @@ class JavaNetCookieJar(private val cookieHandler: CookieHandler) : CookieJar {
       if (("Cookie".equals(key, ignoreCase = true) || "Cookie2".equals(key, ignoreCase = true)) &&
           value.isNotEmpty()) {
         for (header in value) {
-          if (cookies == null) cookies = ArrayList()
+          if (cookies == null) cookies = mutableListOf()
           cookies.addAll(decodeHeaderAsJavaNetCookies(url, header))
         }
       }
@@ -79,8 +78,8 @@ class JavaNetCookieJar(private val cookieHandler: CookieHandler) : CookieJar {
     val limit = header.length
     var pairEnd: Int
     while (pos < limit) {
-      pairEnd = delimiterOffset(header, pos, limit, ";,")
-      val equalsSign = delimiterOffset(header, pos, pairEnd, '=')
+      pairEnd = header.delimiterOffset(";,", pos, limit)
+      val equalsSign = header.delimiterOffset('=', pos, pairEnd)
       val name = header.trimSubstring(pos, equalsSign)
       if (name.startsWith("$")) {
         pos = pairEnd + 1

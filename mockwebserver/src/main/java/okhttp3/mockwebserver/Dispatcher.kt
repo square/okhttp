@@ -15,7 +15,7 @@
  */
 package okhttp3.mockwebserver
 
-/** Handler for mock server requests.  */
+/** Handler for mock server requests. */
 abstract class Dispatcher {
   /**
    * Returns a response to satisfy `request`. This method may block (for instance, to wait on
@@ -31,7 +31,7 @@ abstract class Dispatcher {
    * request bodies.
    */
   open fun peek(): MockResponse {
-    return MockResponse().setSocketPolicy(SocketPolicy.KEEP_OPEN)
+    return MockResponse().apply { this.socketPolicy = SocketPolicy.KEEP_OPEN }
   }
 
   /**

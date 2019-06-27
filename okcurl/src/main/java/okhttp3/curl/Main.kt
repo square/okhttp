@@ -21,10 +21,11 @@ import com.github.rvesse.airline.annotations.Arguments
 import com.github.rvesse.airline.annotations.Command
 import com.github.rvesse.airline.annotations.Option
 import okhttp3.MediaType
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.OkHttpClient
 import okhttp3.Protocol
 import okhttp3.Request
-import okhttp3.RequestBody
+import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.curl.Main.Companion.NAME
 import okhttp3.internal.format
 import okhttp3.internal.http.StatusLine
@@ -130,7 +131,7 @@ class Main : Runnable {
       val response = client.newCall(request).execute()
       if (showHeaders) {
         println(StatusLine.get(response))
-        val headers = response.headers()
+        val headers = response.headers
         for ((name, value) in headers) {
           println("$name: $value")
         }
@@ -139,13 +140,13 @@ class Main : Runnable {
 
       // Stream the response to the System.out as it is returned from the server.
       val out = System.out.sink()
-      val source = response.body()!!.source()
+      val source = response.body!!.source()
       while (!source.exhausted()) {
         out.write(source.buffer, source.buffer.size)
         out.flush()
       }
 
-      response.body()!!.close()
+      response.body!!.close()
     } catch (e: IOException) {
       e.printStackTrace()
     } finally {
@@ -172,7 +173,11 @@ class Main : Runnable {
       builder.hostnameVerifier(createInsecureHostnameVerifier())
     }
     if (verbose) {
-      val logger = HttpLoggingInterceptor.Logger { println(it) }
+      val logger = object : HttpLoggingInterceptor.Logger {
+        override fun log(message: String) {
+          println(message)
+        }
+      }
       builder.eventListenerFactory(LoggingEventListener.Factory(logger))
     }
     return builder.build()
@@ -187,7 +192,7 @@ class Main : Runnable {
     request.url(requestUrl)
 
     data?.let {
-      request.method(requestMethod, RequestBody.create(mediaType(), it))
+      request.method(requestMethod, it.toRequestBody(mediaType()))
     }
 
     for (header in headers.orEmpty()) {
@@ -214,11 +219,11 @@ class Main : Runnable {
       return@let null
     } ?: "application/x-www-form-urlencoded"
 
-    return MediaType.parse(mimeType)
+    return mimeType.toMediaTypeOrNull()
   }
 
   private fun close() {
-    client.connectionPool().evictAll() // Close any persistent connections.
+    client.connectionPool.evictAll() // Close any persistent connections.
   }
 
   companion object {

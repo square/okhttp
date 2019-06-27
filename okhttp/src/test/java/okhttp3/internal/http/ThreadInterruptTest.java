@@ -50,7 +50,7 @@ public final class ThreadInterruptTest {
   private static final int SOCKET_BUFFER_SIZE = 256 * 1024;
 
   private MockWebServer server;
-  private OkHttpClient client = clientTestRule.client;
+  private OkHttpClient client;
 
   @Before public void setUp() throws Exception {
     // Sockets on some platforms can have large buffers that mean writes do not block when
@@ -65,7 +65,7 @@ public final class ThreadInterruptTest {
             return serverSocket;
           }
         });
-    client = clientTestRule.client.newBuilder()
+    client = clientTestRule.newClientBuilder()
         .socketFactory(new DelegatingSocketFactory(SocketFactory.getDefault()) {
           @Override
           protected Socket configureSocket(Socket socket) throws IOException {

@@ -73,7 +73,7 @@ import javax.net.ssl.X509TrustManager
  */
 open class Platform {
 
-  /** Prefix used on custom headers.  */
+  /** Prefix used on custom headers. */
   fun getPrefix() = "OkHttp"
 
   open fun newSSLContext(): SSLContext = SSLContext.getInstance("TLS")
@@ -118,7 +118,7 @@ open class Platform {
   open fun afterHandshake(sslSocket: SSLSocket) {
   }
 
-  /** Returns the negotiated protocol, or null if no protocol was negotiated.  */
+  /** Returns the negotiated protocol, or null if no protocol was negotiated. */
   open fun getSelectedProtocol(socket: SSLSocket): String? = null
 
   @Throws(IOException::class)
@@ -199,7 +199,7 @@ open class Platform {
         return "Conscrypt" == preferredProvider
       }
 
-    /** Attempt to match the host runtime to a capable Platform implementation.  */
+    /** Attempt to match the host runtime to a capable Platform implementation. */
     private fun findPlatform(): Platform {
       val android = AndroidPlatform.buildIfSupported()
 
@@ -248,7 +248,7 @@ open class Platform {
           field.isAccessible = true
           val value = field.get(instance)
           return if (!fieldType.isInstance(value)) null else fieldType.cast(value)
-        } catch (ignored: NoSuchFieldException) {
+        } catch (_: NoSuchFieldException) {
         }
 
         c = c.superclass

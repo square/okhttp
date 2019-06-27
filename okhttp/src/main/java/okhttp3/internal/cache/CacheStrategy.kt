@@ -17,9 +17,8 @@ package okhttp3.internal.cache
 
 import okhttp3.Request
 import okhttp3.Response
-import okhttp3.internal.addHeaderLenient
-import okhttp3.internal.http.HttpDate
 import okhttp3.internal.http.StatusLine
+import okhttp3.internal.http.toHttpDateOrNull
 import okhttp3.internal.toNonNegativeInt
 import java.net.HttpURLConnection.HTTP_BAD_METHOD
 import java.net.HttpURLConnection.HTTP_GONE
@@ -44,9 +43,9 @@ import java.util.concurrent.TimeUnit.SECONDS
  * stale).
  */
 class CacheStrategy internal constructor(
-  /** The request to send on the network, or null if this call doesn't use the network.  */
+  /** The request to send on the network, or null if this call doesn't use the network. */
   val networkRequest: Request?,
-  /** The cached response to return or validate; or null if this call doesn't use a cache.  */
+  /** The cached response to return or validate; or null if this call doesn't use a cache. */
   val cacheResponse: Response?
 ) {
 
@@ -92,27 +91,27 @@ class CacheStrategy internal constructor(
      * cached response older than 24 hours, we are required to attach a warning.
      */
     private fun isFreshnessLifetimeHeuristic(): Boolean {
-      return cacheResponse!!.cacheControl().maxAgeSeconds == -1 && expires == null
+      return cacheResponse!!.cacheControl.maxAgeSeconds == -1 && expires == null
     }
 
     init {
       if (cacheResponse != null) {
-        this.sentRequestMillis = cacheResponse.sentRequestAtMillis()
-        this.receivedResponseMillis = cacheResponse.receivedResponseAtMillis()
-        val headers = cacheResponse.headers()
+        this.sentRequestMillis = cacheResponse.sentRequestAtMillis
+        this.receivedResponseMillis = cacheResponse.receivedResponseAtMillis
+        val headers = cacheResponse.headers
         for (i in 0 until headers.size) {
           val fieldName = headers.name(i)
           val value = headers.value(i)
           when {
             fieldName.equals("Date", ignoreCase = true) -> {
-              servedDate = HttpDate.parse(value)
+              servedDate = value.toHttpDateOrNull()
               servedDateString = value
             }
             fieldName.equals("Expires", ignoreCase = true) -> {
-              expires = HttpDate.parse(value)
+              expires = value.toHttpDateOrNull()
             }
             fieldName.equals("Last-Modified", ignoreCase = true) -> {
-              lastModified = HttpDate.parse(value)
+              lastModified = value.toHttpDateOrNull()
               lastModifiedString = value
             }
             fieldName.equals("ETag", ignoreCase = true) -> {
@@ -131,7 +130,7 @@ class CacheStrategy internal constructor(
       val candidate = computeCandidate()
 
       // We're forbidden from using the network and the cache is insufficient.
-      if (candidate.networkRequest != null && request.cacheControl().onlyIfCached) {
+      if (candidate.networkRequest != null && request.cacheControl.onlyIfCached) {
         return CacheStrategy(null, null)
       }
 
@@ -146,7 +145,7 @@ class CacheStrategy internal constructor(
       }
 
       // Drop the cached response if it's missing a required handshake.
-      if (request.isHttps && cacheResponse.handshake() == null) {
+      if (request.isHttps && cacheResponse.handshake == null) {
         return CacheStrategy(request, null)
       }
 
@@ -157,12 +156,12 @@ class CacheStrategy internal constructor(
         return CacheStrategy(request, null)
       }
 
-      val requestCaching = request.cacheControl()
+      val requestCaching = request.cacheControl
       if (requestCaching.noCache || hasConditions(request)) {
         return CacheStrategy(request, null)
       }
 
-      val responseCaching = cacheResponse.cacheControl()
+      val responseCaching = cacheResponse.cacheControl
 
       val ageMillis = cacheResponseAge()
       var freshMillis = computeFreshnessLifetime()
@@ -216,8 +215,8 @@ class CacheStrategy internal constructor(
         else -> return CacheStrategy(request, null) // No condition! Make a regular request.
       }
 
-      val conditionalRequestHeaders = request.headers().newBuilder()
-      addHeaderLenient(conditionalRequestHeaders, conditionName, conditionValue!!)
+      val conditionalRequestHeaders = request.headers.newBuilder()
+      conditionalRequestHeaders.addLenient(conditionName, conditionValue!!)
 
       val conditionalRequest = request.newBuilder()
           .headers(conditionalRequestHeaders.build())
@@ -230,7 +229,7 @@ class CacheStrategy internal constructor(
      * date.
      */
     private fun computeFreshnessLifetime(): Long {
-      val responseCaching = cacheResponse!!.cacheControl()
+      val responseCaching = cacheResponse!!.cacheControl
       if (responseCaching.maxAgeSeconds != -1) {
         return SECONDS.toMillis(responseCaching.maxAgeSeconds.toLong())
       }
@@ -242,7 +241,7 @@ class CacheStrategy internal constructor(
         return if (delta > 0L) delta else 0L
       }
 
-      if (lastModified != null && cacheResponse.request().url().query == null) {
+      if (lastModified != null && cacheResponse.request.url.query == null) {
         // As recommended by the HTTP RFC and implemented in Firefox, the max age of a document
         // should be defaulted to 10% of the document's age at the time it was served. Default
         // expiration dates aren't used for URIs containing a query.
@@ -287,11 +286,11 @@ class CacheStrategy internal constructor(
   }
 
   companion object {
-    /** Returns true if `response` can be stored to later serve another request.  */
+    /** Returns true if [response] can be stored to later serve another request. */
     fun isCacheable(response: Response, request: Request): Boolean {
       // Always go to network for uncacheable response codes (RFC 7231 section 6.1), This
       // implementation doesn't support caching partial content.
-      when (response.code()) {
+      when (response.code) {
         HTTP_OK,
         HTTP_NOT_AUTHORITATIVE,
         HTTP_NO_CONTENT,
@@ -312,9 +311,9 @@ class CacheStrategy internal constructor(
           // http://tools.ietf.org/html/rfc7234#section-3
           // s-maxage is not checked because OkHttp is a private cache that should ignore s-maxage.
           if (response.header("Expires") == null &&
-              response.cacheControl().maxAgeSeconds == -1 &&
-              !response.cacheControl().isPublic &&
-              !response.cacheControl().isPrivate) {
+              response.cacheControl.maxAgeSeconds == -1 &&
+              !response.cacheControl.isPublic &&
+              !response.cacheControl.isPrivate) {
             return false
           }
         }
@@ -326,7 +325,7 @@ class CacheStrategy internal constructor(
       }
 
       // A 'no-store' directive on request or response prevents the response from being cached.
-      return !response.cacheControl().noStore && !request.cacheControl().noStore
+      return !response.cacheControl.noStore && !request.cacheControl.noStore
     }
   }
 }

@@ -15,6 +15,7 @@
  */
 package okhttp3
 
+import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.internal.toImmutableList
 import okio.Buffer
 import okio.BufferedSink
@@ -29,27 +30,52 @@ import java.util.UUID
  * [rfc_2387]: http://www.ietf.org/rfc/rfc2387.txt
  */
 class MultipartBody internal constructor(
-  private val boundary: ByteString,
-  private val originalType: MediaType,
-  parts: List<Part>
+  private val boundaryByteString: ByteString,
+  @get:JvmName("type") val type: MediaType,
+  @get:JvmName("parts") val parts: List<Part>
 ) : RequestBody() {
-  private val contentType: MediaType = MediaType.get("$originalType; boundary=${boundary.utf8()}")
-  private val parts: List<Part> = parts.toImmutableList()
+  private val contentType: MediaType = "$type; boundary=$boundary".toMediaType()
   private var contentLength = -1L
 
-  fun type(): MediaType = originalType
+  @get:JvmName("boundary") val boundary: String
+    get() = boundaryByteString.utf8()
 
-  fun boundary(): String = boundary.utf8()
-
-  /** The number of parts in this multipart body.  */
-  fun size(): Int = parts.size
-
-  fun parts(): List<Part> = parts
+  /** The number of parts in this multipart body. */
+  @get:JvmName("size") val size: Int
+    get() = parts.size
 
   fun part(index: Int): Part = parts[index]
 
-  /** A combination of [type] and [boundary].  */
+  /** A combination of [type] and [boundaryByteString]. */
   override fun contentType(): MediaType = contentType
+
+  @JvmName("-deprecated_type")
+  @Deprecated(
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "type"),
+      level = DeprecationLevel.ERROR)
+  fun type(): MediaType = type
+
+  @JvmName("-deprecated_boundary")
+  @Deprecated(
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "boundary"),
+      level = DeprecationLevel.ERROR)
+  fun boundary(): String = boundary
+
+  @JvmName("-deprecated_size")
+  @Deprecated(
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "size"),
+      level = DeprecationLevel.ERROR)
+  fun size(): Int = size
+
+  @JvmName("-deprecated_parts")
+  @Deprecated(
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "parts"),
+      level = DeprecationLevel.ERROR)
+  fun parts(): List<Part> = parts
 
   @Throws(IOException::class)
   override fun contentLength(): Long {
@@ -92,7 +118,7 @@ class MultipartBody internal constructor(
       val body = part.body
 
       sink!!.write(DASHDASH)
-      sink.write(boundary)
+      sink.write(boundaryByteString)
       sink.write(CRLF)
 
       if (headers != null) {
@@ -134,7 +160,7 @@ class MultipartBody internal constructor(
     }
 
     sink!!.write(DASHDASH)
-    sink.write(boundary)
+    sink.write(boundaryByteString)
     sink.write(DASHDASH)
     sink.write(CRLF)
 
@@ -146,10 +172,23 @@ class MultipartBody internal constructor(
     return byteCount
   }
 
-  class Part private constructor(internal val headers: Headers?, internal val body: RequestBody) {
+  class Part private constructor(
+    @get:JvmName("headers") val headers: Headers?,
+    @get:JvmName("body") val body: RequestBody
+  ) {
 
+    @JvmName("-deprecated_headers")
+    @Deprecated(
+        message = "moved to val",
+        replaceWith = ReplaceWith(expression = "headers"),
+        level = DeprecationLevel.ERROR)
     fun headers(): Headers? = headers
 
+    @JvmName("-deprecated_body")
+    @Deprecated(
+        message = "moved to val",
+        replaceWith = ReplaceWith(expression = "body"),
+        level = DeprecationLevel.ERROR)
     fun body(): RequestBody = body
 
     companion object {
@@ -165,20 +204,22 @@ class MultipartBody internal constructor(
 
       @JvmStatic
       fun createFormData(name: String, value: String): Part =
-          createFormData(name, null, create(null, value))
+          createFormData(name, null, value.toRequestBody())
 
       @JvmStatic
       fun createFormData(name: String, filename: String?, body: RequestBody): Part {
-        val disposition = StringBuilder("form-data; name=")
-        disposition.appendQuotedString(name)
+        val disposition = buildString {
+          append("form-data; name=")
+          appendQuotedString(name)
 
-        if (filename != null) {
-          disposition.append("; filename=")
-          disposition.appendQuotedString(filename)
+          if (filename != null) {
+            append("; filename=")
+            appendQuotedString(filename)
+          }
         }
 
         val headers = Headers.Builder()
-            .addUnsafeNonAscii("Content-Disposition", disposition.toString())
+            .addUnsafeNonAscii("Content-Disposition", disposition)
             .build()
 
         return create(headers, body)
@@ -200,35 +241,35 @@ class MultipartBody internal constructor(
       this.type = type
     }
 
-    /** Add a part to the body.  */
+    /** Add a part to the body. */
     fun addPart(body: RequestBody) = apply {
       addPart(Part.create(body))
     }
 
-    /** Add a part to the body.  */
+    /** Add a part to the body. */
     fun addPart(headers: Headers?, body: RequestBody) = apply {
       addPart(Part.create(headers, body))
     }
 
-    /** Add a form data part to the body.  */
+    /** Add a form data part to the body. */
     fun addFormDataPart(name: String, value: String) = apply {
       addPart(Part.createFormData(name, value))
     }
 
-    /** Add a form data part to the body.  */
+    /** Add a form data part to the body. */
     fun addFormDataPart(name: String, filename: String?, body: RequestBody) = apply {
       addPart(Part.createFormData(name, filename, body))
     }
 
-    /** Add a part to the body.  */
+    /** Add a part to the body. */
     fun addPart(part: Part) = apply {
-      parts.add(part)
+      parts += part
     }
 
-    /** Assemble the specified parts into a request body.  */
+    /** Assemble the specified parts into a request body. */
     fun build(): MultipartBody {
       check(parts.isNotEmpty()) { "Multipart body must have at least one part." }
-      return MultipartBody(boundary, type, parts)
+      return MultipartBody(boundary, type, parts.toImmutableList())
     }
   }
 
@@ -239,7 +280,7 @@ class MultipartBody internal constructor(
      * does not recognize must be treated as being of subtype "mixed".
      */
     @JvmField
-    val MIXED = MediaType.get("multipart/mixed")
+    val MIXED = "multipart/mixed".toMediaType()
 
     /**
      * The "multipart/alternative" type is syntactically identical to "multipart/mixed", but the
@@ -247,7 +288,7 @@ class MultipartBody internal constructor(
      * the same information.
      */
     @JvmField
-    val ALTERNATIVE = MediaType.get("multipart/alternative")
+    val ALTERNATIVE = "multipart/alternative".toMediaType()
 
     /**
      * This type is syntactically identical to "multipart/mixed", but the semantics are different.
@@ -255,14 +296,14 @@ class MultipartBody internal constructor(
      * "text/plain" to "message/rfc822".
      */
     @JvmField
-    val DIGEST = MediaType.get("multipart/digest")
+    val DIGEST = "multipart/digest".toMediaType()
 
     /**
      * This type is syntactically identical to "multipart/mixed", but the semantics are different.
      * In particular, in a parallel entity, the order of body parts is not significant.
      */
     @JvmField
-    val PARALLEL = MediaType.get("multipart/parallel")
+    val PARALLEL = "multipart/parallel".toMediaType()
 
     /**
      * The media-type multipart/form-data follows the rules of all multipart MIME data streams as
@@ -270,7 +311,7 @@ class MultipartBody internal constructor(
      * fills out the form. Each field has a name. Within a given form, the names are unique.
      */
     @JvmField
-    val FORM = MediaType.get("multipart/form-data")
+    val FORM = "multipart/form-data".toMediaType()
 
     private val COLONSPACE = byteArrayOf(':'.toByte(), ' '.toByte())
     private val CRLF = byteArrayOf('\r'.toByte(), '\n'.toByte())

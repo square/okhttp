@@ -23,13 +23,14 @@ import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import okhttp3.mockwebserver.SocketPolicy;
 import okhttp3.tls.HandshakeCertificates;
+import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestRule;
 import org.junit.rules.Timeout;
 
 import static java.util.Arrays.asList;
-import static okhttp3.internal.UtilKt.closeQuietly;
+import static okhttp3.internal.Util.closeQuietly;
 import static okhttp3.tls.internal.TlsUtil.localhost;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.fail;
@@ -41,7 +42,11 @@ public final class ConnectionReuseTest {
   @Rule public final OkHttpClientTestRule clientTestRule = new OkHttpClientTestRule();
 
   private HandshakeCertificates handshakeCertificates = localhost();
-  private OkHttpClient client = clientTestRule.client;
+  private OkHttpClient client;
+
+  @Before public void setUp() {
+    client = clientTestRule.newClient();
+  }
 
   @Test public void connectionsAreReused() throws Exception {
     server.enqueue(new MockResponse().setBody("a"));
@@ -194,7 +199,7 @@ public final class ConnectionReuseTest {
 
     Request requestB = new Request.Builder()
         .url(server.url("/"))
-        .post(RequestBody.create(MediaType.get("text/plain"), "b"))
+        .post(RequestBody.create("b", MediaType.get("text/plain")))
         .build();
     Response responseB = client.newCall(requestB).execute();
     assertThat(responseB.body().string()).isEqualTo("b");
@@ -314,7 +319,7 @@ public final class ConnectionReuseTest {
           responsesNotClosed.add(response);
           return response
               .newBuilder()
-              .body(ResponseBody.create(null, "unrelated response body!"))
+              .body(ResponseBody.create("unrelated response body!", null))
               .build();
         })
         .build();

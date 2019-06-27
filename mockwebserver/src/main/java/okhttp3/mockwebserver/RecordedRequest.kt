@@ -20,6 +20,7 @@ import okhttp3.Handshake
 import okhttp3.Handshake.Companion.handshake
 import okhttp3.Headers
 import okhttp3.HttpUrl
+import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.TlsVersion
 import okio.Buffer
 import java.io.IOException
@@ -27,41 +28,51 @@ import java.net.Inet6Address
 import java.net.Socket
 import javax.net.ssl.SSLSocket
 
-/** An HTTP request that came into the mock web server.  */
+/** An HTTP request that came into the mock web server. */
 class RecordedRequest(
   val requestLine: String,
+
   /** All headers. */
   val headers: Headers,
+
   /**
    * The sizes of the chunks of this request's body, or an empty list if the request's body
    * was empty or unchunked.
    */
   val chunkSizes: List<Int>,
+
   /** The total size of the body of this POST request (before truncation).*/
   val bodySize: Long,
+
   /** The body of this POST request. This may be truncated. */
   val body: Buffer,
+
   /**
-   * The index of this request on its HTTP connection. Since a single HTTP connection may
-   * serve multiple requests, each request is assigned its own sequence number.
+   * The index of this request on its HTTP connection. Since a single HTTP connection may serve
+   * multiple requests, each request is assigned its own sequence number.
    */
   val sequenceNumber: Int,
   socket: Socket
 ) {
   val method: String?
   val path: String?
+
   /**
-   * The TLS handshake of the connection that carried this request, or null if the request
-   * was received without TLS.
+   * The TLS handshake of the connection that carried this request, or null if the request was
+   * received without TLS.
    */
   val handshake: Handshake?
   val requestUrl: HttpUrl?
 
+  @get:JvmName("-deprecated_utf8Body")
+  @Deprecated(
+      message = "Use body.readUtf8()",
+      replaceWith = ReplaceWith("body.readUtf8()"),
+      level = DeprecationLevel.ERROR)
   val utf8Body: String
-    @Deprecated("Use {@link #getBody() getBody().readUtf8()}. ")
     get() = body.readUtf8()
 
-  /** Returns the connection's TLS version or null if the connection doesn't use SSL.  */
+  /** Returns the connection's TLS version or null if the connection doesn't use SSL. */
   val tlsVersion: TlsVersion?
     get() = handshake?.tlsVersion
 
@@ -96,8 +107,7 @@ class RecordedRequest(
 
       val localPort = socket.localPort
       // Allow null in failure case to allow for testing bad requests
-      this.requestUrl =
-          HttpUrl.parse("$scheme://$hostname:$localPort$path")
+      this.requestUrl = "$scheme://$hostname:$localPort$path".toHttpUrlOrNull()
     } else {
       this.requestUrl = null
       this.method = null
@@ -105,12 +115,14 @@ class RecordedRequest(
     }
   }
 
-  /** Returns the first header named [name], or null if no such header exists.  */
-  fun getHeader(name: String): String? {
-    return headers.values(name).firstOrNull()
-  }
+  @Deprecated(
+      message = "Use body.readUtf8()",
+      replaceWith = ReplaceWith("body.readUtf8()"),
+      level = DeprecationLevel.WARNING)
+  fun getUtf8Body(): String = body.readUtf8()
 
-  override fun toString(): String {
-    return requestLine
-  }
+  /** Returns the first header named [name], or null if no such header exists. */
+  fun getHeader(name: String): String? = headers.values(name).firstOrNull()
+
+  override fun toString(): String = requestLine
 }

@@ -94,7 +94,7 @@ class RealInterceptorChain(
     calls++
 
     // If we already have a stream, confirm that the incoming request will use it.
-    check(this.exchange == null || this.exchange.connection()!!.supportsUrl(request.url())) {
+    check(this.exchange == null || this.exchange.connection()!!.supportsUrl(request.url)) {
       "network interceptor ${interceptors[index - 1]} must retain the same host and port"
     }
 
@@ -117,7 +117,7 @@ class RealInterceptorChain(
       "network interceptor $interceptor must call proceed() exactly once"
     }
 
-    check(response.body() != null) { "interceptor $interceptor returned a response with no body" }
+    check(response.body != null) { "interceptor $interceptor returned a response with no body" }
 
     return response
   }

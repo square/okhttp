@@ -35,7 +35,7 @@ class CacheControl private constructor(
    */
   @get:JvmName("noCache") val noCache: Boolean,
 
-  /** If true, this response should not be cached.  */
+  /** If true, this response should not be cached. */
   @get:JvmName("noStore") val noStore: Boolean,
 
   /** The duration past the response's served date that it can be served without validation. */
@@ -74,70 +74,70 @@ class CacheControl private constructor(
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "noCache"),
-      level = DeprecationLevel.WARNING)
+      level = DeprecationLevel.ERROR)
   fun noCache() = noCache
 
   @JvmName("-deprecated_noStore")
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "noStore"),
-      level = DeprecationLevel.WARNING)
+      level = DeprecationLevel.ERROR)
   fun noStore() = noStore
 
   @JvmName("-deprecated_maxAgeSeconds")
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "maxAgeSeconds"),
-      level = DeprecationLevel.WARNING)
+      level = DeprecationLevel.ERROR)
   fun maxAgeSeconds() = maxAgeSeconds
 
   @JvmName("-deprecated_sMaxAgeSeconds")
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "sMaxAgeSeconds"),
-      level = DeprecationLevel.WARNING)
+      level = DeprecationLevel.ERROR)
   fun sMaxAgeSeconds() = sMaxAgeSeconds
 
   @JvmName("-deprecated_mustRevalidate")
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "mustRevalidate"),
-      level = DeprecationLevel.WARNING)
+      level = DeprecationLevel.ERROR)
   fun mustRevalidate() = mustRevalidate
 
   @JvmName("-deprecated_maxStaleSeconds")
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "maxStaleSeconds"),
-      level = DeprecationLevel.WARNING)
+      level = DeprecationLevel.ERROR)
   fun maxStaleSeconds() = maxStaleSeconds
 
   @JvmName("-deprecated_minFreshSeconds")
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "minFreshSeconds"),
-      level = DeprecationLevel.WARNING)
+      level = DeprecationLevel.ERROR)
   fun minFreshSeconds() = minFreshSeconds
 
   @JvmName("-deprecated_onlyIfCached")
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "onlyIfCached"),
-      level = DeprecationLevel.WARNING)
+      level = DeprecationLevel.ERROR)
   fun onlyIfCached() = onlyIfCached
 
   @JvmName("-deprecated_noTransform")
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "noTransform"),
-      level = DeprecationLevel.WARNING)
+      level = DeprecationLevel.ERROR)
   fun noTransform() = noTransform
 
   @JvmName("-deprecated_immutable")
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "immutable"),
-      level = DeprecationLevel.WARNING)
+      level = DeprecationLevel.ERROR)
   fun immutable() = immutable
 
   override fun toString(): String {
@@ -164,7 +164,7 @@ class CacheControl private constructor(
     return result
   }
 
-  /** Builds a `Cache-Control` request header.  */
+  /** Builds a `Cache-Control` request header. */
   class Builder {
     private var noCache: Boolean = false
     private var noStore: Boolean = false
@@ -175,18 +175,18 @@ class CacheControl private constructor(
     private var noTransform: Boolean = false
     private var immutable: Boolean = false
 
-    /** Don't accept an unvalidated cached response.  */
+    /** Don't accept an unvalidated cached response. */
     fun noCache() = apply {
       this.noCache = true
     }
 
-    /** Don't store the server's response in any cache.  */
+    /** Don't store the server's response in any cache. */
     fun noStore() = apply {
       this.noStore = true
     }
 
     /**
-     * Sets the maximum age of a cached response. If the cache response's age exceeds `maxAge`, it
+     * Sets the maximum age of a cached response. If the cache response's age exceeds [maxAge], it
      * will not be used and a network request will be made.
      *
      * @param maxAge a non-negative integer. This is stored and transmitted with [TimeUnit.SECONDS]
@@ -213,7 +213,7 @@ class CacheControl private constructor(
 
     /**
      * Sets the minimum number of seconds that a response will continue to be fresh for. If the
-     * response will be stale when `minFresh` have elapsed, the cached response will not be used and
+     * response will be stale when [minFresh] have elapsed, the cached response will not be used and
      * a network request will be made.
      *
      * @param minFresh a non-negative integer. This is stored and transmitted with
@@ -233,7 +233,7 @@ class CacheControl private constructor(
       this.onlyIfCached = true
     }
 
-    /** Don't accept a transformed response.  */
+    /** Don't accept a transformed response. */
     fun noTransform() = apply {
       this.noTransform = true
     }
@@ -277,7 +277,7 @@ class CacheControl private constructor(
         .build()
 
     /**
-     * Returns the cache directives of `headers`. This honors both Cache-Control and Pragma headers
+     * Returns the cache directives of [headers]. This honors both Cache-Control and Pragma headers
      * if they are present.
      */
     @JvmStatic

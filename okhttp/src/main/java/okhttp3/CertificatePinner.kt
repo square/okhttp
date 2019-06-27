@@ -15,6 +15,7 @@
  */
 package okhttp3
 
+import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.internal.tls.CertificateChainCleaner
 import okio.ByteString
 import okio.ByteString.Companion.decodeBase64
@@ -122,7 +123,7 @@ import javax.net.ssl.SSLPeerUnverifiedException
  * [rfc_7469]: http://tools.ietf.org/html/rfc7469
  * [static_certificates]: http://goo.gl/XDh6je
  */
-data class CertificatePinner internal constructor(
+class CertificatePinner internal constructor(
   private val pins: Set<Pin>,
   private val certificateChainCleaner: CertificateChainCleaner?
 ) {
@@ -154,11 +155,11 @@ data class CertificatePinner internal constructor(
       for (pin in pins) {
         when (pin.hashAlgorithm) {
           "sha256/" -> {
-            if (sha256 == null) sha256 = sha256(x509Certificate)
+            if (sha256 == null) sha256 = x509Certificate.toSha256ByteString()
             if (pin.hash == sha256) return // Success!
           }
           "sha1/" -> {
-            if (sha1 == null) sha1 = sha1(x509Certificate)
+            if (sha1 == null) sha1 = x509Certificate.toSha1ByteString()
             if (pin.hash == sha1) return // Success!
           }
           else -> throw AssertionError("unsupported hashAlgorithm: ${pin.hashAlgorithm}")
@@ -212,7 +213,7 @@ data class CertificatePinner internal constructor(
     return result
   }
 
-  /** Returns a certificate pinner that uses `certificateChainCleaner`.  */
+  /** Returns a certificate pinner that uses `certificateChainCleaner`. */
   internal fun withCertificateChainCleaner(
     certificateChainCleaner: CertificateChainCleaner?
   ): CertificatePinner {
@@ -223,14 +224,27 @@ data class CertificatePinner internal constructor(
     }
   }
 
+  override fun equals(other: Any?): Boolean {
+    return other is CertificatePinner &&
+        other.pins == pins &&
+        other.certificateChainCleaner == certificateChainCleaner
+  }
+
+  override fun hashCode(): Int {
+    var result = 37
+    result = 41 * result + pins.hashCode()
+    result = 41 * result + certificateChainCleaner.hashCode()
+    return result
+  }
+
   internal data class Pin(
-    /** A hostname like `example.com` or a pattern like `*.example.com`.  */
+    /** A hostname like `example.com` or a pattern like `*.example.com`. */
     val pattern: String,
-    /** The canonical hostname, i.e. `EXAMPLE.com` becomes `example.com`.  */
+    /** The canonical hostname, i.e. `EXAMPLE.com` becomes `example.com`. */
     private val canonicalHostname: String,
-    /** Either `sha1/` or `sha256/`.  */
+    /** Either `sha1/` or `sha256/`. */
     val hashAlgorithm: String,
-    /** The hash of the pinned certificate using [hashAlgorithm].  */
+    /** The hash of the pinned certificate using [hashAlgorithm]. */
     val hash: ByteString
   ) {
     fun matches(hostname: String): Boolean {
@@ -245,7 +259,7 @@ data class CertificatePinner internal constructor(
     override fun toString(): String = hashAlgorithm + hash.base64()
   }
 
-  /** Builds a configured certificate pinner.  */
+  /** Builds a configured certificate pinner. */
   class Builder {
     private val pins = mutableListOf<Pin>()
 
@@ -280,22 +294,22 @@ data class CertificatePinner internal constructor(
     @JvmStatic
     fun pin(certificate: Certificate): String {
       require(certificate is X509Certificate) { "Certificate pinning requires X509 certificates" }
-      return "sha256/${sha256(certificate).base64()}"
+      return "sha256/${certificate.toSha256ByteString().base64()}"
     }
 
-    internal fun sha1(x509Certificate: X509Certificate): ByteString =
-        x509Certificate.publicKey.encoded.toByteString().sha1()
+    internal fun X509Certificate.toSha1ByteString(): ByteString =
+        publicKey.encoded.toByteString().sha1()
 
-    internal fun sha256(x509Certificate: X509Certificate): ByteString =
-        x509Certificate.publicKey.encoded.toByteString().sha256()
+    internal fun X509Certificate.toSha256ByteString(): ByteString =
+        publicKey.encoded.toByteString().sha256()
 
     internal fun newPin(pattern: String, pin: String): Pin {
       val canonicalHostname = when {
         pattern.startsWith(WILDCARD) -> {
-          HttpUrl.get("http://${pattern.substring(WILDCARD.length)}").host
+          "http://${pattern.substring(WILDCARD.length)}".toHttpUrl().host
         }
         else -> {
-          HttpUrl.get("http://$pattern").host
+          "http://$pattern".toHttpUrl().host
         }
       }
 

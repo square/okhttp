@@ -37,7 +37,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import static java.util.Arrays.asList;
-import static okhttp3.internal.UtilKt.closeQuietly;
+import static okhttp3.internal.Util.closeQuietly;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assume.assumeFalse;
 
@@ -164,8 +164,12 @@ public final class HandshakeCertificatesTest {
         sslSocket.startHandshake();
         return Handshake.get(sslSocket.getSession());
       } finally {
-        closeQuietly(rawSocket);
-        closeQuietly(sslSocket);
+        if (rawSocket != null) {
+          closeQuietly(rawSocket);
+        }
+        if (sslSocket != null) {
+          closeQuietly(sslSocket);
+        }
       }
     });
   }
@@ -183,7 +187,9 @@ public final class HandshakeCertificatesTest {
         return Handshake.get(sslSocket.getSession());
       } finally {
         closeQuietly(rawSocket);
-        closeQuietly(sslSocket);
+        if (sslSocket != null) {
+          closeQuietly(sslSocket);
+        }
       }
     });
   }

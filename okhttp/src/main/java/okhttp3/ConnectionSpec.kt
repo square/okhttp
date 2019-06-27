@@ -17,9 +17,9 @@ package okhttp3
 
 import okhttp3.ConnectionSpec.Builder
 import okhttp3.internal.concat
+import okhttp3.internal.hasIntersection
 import okhttp3.internal.indexOf
 import okhttp3.internal.intersect
-import okhttp3.internal.nonEmptyIntersection
 import java.util.Arrays
 import java.util.Objects
 import javax.net.ssl.SSLSocket
@@ -43,51 +43,77 @@ import javax.net.ssl.SSLSocket
  *
  * [tls_history]: https://github.com/square/okhttp/wiki/TLS-Configuration-History
  */
-class ConnectionSpec internal constructor(builder: Builder) {
-  val isTls: Boolean = builder.tls
-  internal val supportsTlsExtensions: Boolean = builder.supportsTlsExtensions
-  internal val cipherSuites: Array<String>? = builder.cipherSuites
-  internal val tlsVersions: Array<String>? = builder.tlsVersions
+class ConnectionSpec internal constructor(
+  @get:JvmName("isTls") val isTls: Boolean,
+  @get:JvmName("supportsTlsExtensions") val supportsTlsExtensions: Boolean,
+  private val cipherSuitesAsString: Array<String>?,
+  private val tlsVersionsAsString: Array<String>?
+) {
 
   /**
    * Returns the cipher suites to use for a connection. Returns null if all of the SSL socket's
    * enabled cipher suites should be used.
    */
-  fun cipherSuites(): List<CipherSuite>? = cipherSuites?.map(CipherSuite.Companion::forJavaName)
+  @get:JvmName("cipherSuites") val cipherSuites: List<CipherSuite>?
+    get() {
+      return cipherSuitesAsString?.map { CipherSuite.forJavaName(it) }?.toList()
+    }
+
+  @JvmName("-deprecated_cipherSuites")
+  @Deprecated(
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "cipherSuites"),
+      level = DeprecationLevel.ERROR)
+  fun cipherSuites(): List<CipherSuite>? = cipherSuites
 
   /**
    * Returns the TLS versions to use when negotiating a connection. Returns null if all of the SSL
    * socket's enabled TLS versions should be used.
    */
-  fun tlsVersions(): List<TlsVersion>? = tlsVersions?.map(TlsVersion.Companion::forJavaName)
+  @get:JvmName("tlsVersions") val tlsVersions: List<TlsVersion>?
+    get() {
+      return tlsVersionsAsString?.map { TlsVersion.forJavaName(it) }?.toList()
+    }
 
+  @JvmName("-deprecated_tlsVersions")
+  @Deprecated(
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "tlsVersions"),
+      level = DeprecationLevel.ERROR)
+  fun tlsVersions(): List<TlsVersion>? = tlsVersions
+
+  @JvmName("-deprecated_supportsTlsExtensions")
+  @Deprecated(
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "supportsTlsExtensions"),
+      level = DeprecationLevel.ERROR)
   fun supportsTlsExtensions(): Boolean = supportsTlsExtensions
 
-  /** Applies this spec to `sslSocket`.  */
+  /** Applies this spec to [sslSocket]. */
   internal fun apply(sslSocket: SSLSocket, isFallback: Boolean) {
     val specToApply = supportedSpec(sslSocket, isFallback)
 
     if (specToApply.tlsVersions != null) {
-      sslSocket.enabledProtocols = specToApply.tlsVersions
+      sslSocket.enabledProtocols = specToApply.tlsVersionsAsString
     }
 
     if (specToApply.cipherSuites != null) {
-      sslSocket.enabledCipherSuites = specToApply.cipherSuites
+      sslSocket.enabledCipherSuites = specToApply.cipherSuitesAsString
     }
   }
 
   /**
-   * Returns a copy of this that omits cipher suites and TLS versions not enabled by `sslSocket`.
+   * Returns a copy of this that omits cipher suites and TLS versions not enabled by [sslSocket].
    */
   private fun supportedSpec(sslSocket: SSLSocket, isFallback: Boolean): ConnectionSpec {
-    var cipherSuitesIntersection = if (cipherSuites != null) {
-      intersect(CipherSuite.ORDER_BY_NAME, sslSocket.enabledCipherSuites, cipherSuites)
+    var cipherSuitesIntersection = if (cipherSuitesAsString != null) {
+      sslSocket.enabledCipherSuites.intersect(cipherSuitesAsString, CipherSuite.ORDER_BY_NAME)
     } else {
       sslSocket.enabledCipherSuites
     }
 
-    val tlsVersionsIntersection = if (tlsVersions != null) {
-      intersect(naturalOrder(), sslSocket.enabledProtocols, tlsVersions)
+    val tlsVersionsIntersection = if (tlsVersionsAsString != null) {
+      sslSocket.enabledProtocols.intersect(tlsVersionsAsString, naturalOrder())
     } else {
       sslSocket.enabledProtocols
     }
@@ -95,11 +121,11 @@ class ConnectionSpec internal constructor(builder: Builder) {
     // In accordance with https://tools.ietf.org/html/draft-ietf-tls-downgrade-scsv-00 the SCSV
     // cipher is added to signal that a protocol fallback has taken place.
     val supportedCipherSuites = sslSocket.supportedCipherSuites
-    val indexOfFallbackScsv = indexOf(
-        CipherSuite.ORDER_BY_NAME, supportedCipherSuites, "TLS_FALLBACK_SCSV")
+    val indexOfFallbackScsv = supportedCipherSuites.indexOf(
+        "TLS_FALLBACK_SCSV", CipherSuite.ORDER_BY_NAME)
     if (isFallback && indexOfFallbackScsv != -1) {
-      cipherSuitesIntersection = concat(
-          cipherSuitesIntersection, supportedCipherSuites[indexOfFallbackScsv])
+      cipherSuitesIntersection = cipherSuitesIntersection.concat(
+          supportedCipherSuites[indexOfFallbackScsv])
     }
 
     return Builder(this)
@@ -124,14 +150,14 @@ class ConnectionSpec internal constructor(builder: Builder) {
       return false
     }
 
-    if (tlsVersions != null &&
-        !nonEmptyIntersection(naturalOrder(), tlsVersions, socket.enabledProtocols)) {
+    if (tlsVersionsAsString != null &&
+        !tlsVersionsAsString.hasIntersection(socket.enabledProtocols, naturalOrder())) {
       return false
     }
 
-    if (cipherSuites != null &&
-        !nonEmptyIntersection(
-            CipherSuite.ORDER_BY_NAME, cipherSuites, socket.enabledCipherSuites)) {
+    if (cipherSuitesAsString != null &&
+        !cipherSuitesAsString.hasIntersection(
+            socket.enabledCipherSuites, CipherSuite.ORDER_BY_NAME)) {
       return false
     }
 
@@ -146,8 +172,8 @@ class ConnectionSpec internal constructor(builder: Builder) {
     if (this.isTls != that!!.isTls) return false
 
     if (isTls) {
-      if (!Arrays.equals(this.cipherSuites, that.cipherSuites)) return false
-      if (!Arrays.equals(this.tlsVersions, that.tlsVersions)) return false
+      if (!Arrays.equals(this.cipherSuitesAsString, that.cipherSuitesAsString)) return false
+      if (!Arrays.equals(this.tlsVersionsAsString, that.tlsVersionsAsString)) return false
       if (this.supportsTlsExtensions != that.supportsTlsExtensions) return false
     }
 
@@ -157,8 +183,8 @@ class ConnectionSpec internal constructor(builder: Builder) {
   override fun hashCode(): Int {
     var result = 17
     if (isTls) {
-      result = 31 * result + cipherSuites!!.contentHashCode()
-      result = 31 * result + tlsVersions!!.contentHashCode()
+      result = 31 * result + cipherSuitesAsString!!.contentHashCode()
+      result = 31 * result + tlsVersionsAsString!!.contentHashCode()
       result = 31 * result + if (supportsTlsExtensions) 0 else 1
     }
     return result
@@ -168,8 +194,8 @@ class ConnectionSpec internal constructor(builder: Builder) {
     if (!isTls) return "ConnectionSpec()"
 
     return ("ConnectionSpec(" +
-        "cipherSuites=${Objects.toString(cipherSuites(), "[all enabled]")}, " +
-        "tlsVersions=${Objects.toString(tlsVersions(), "[all enabled]")}, " +
+        "cipherSuites=${Objects.toString(cipherSuites, "[all enabled]")}, " +
+        "tlsVersions=${Objects.toString(tlsVersions, "[all enabled]")}, " +
         "supportsTlsExtensions=$supportsTlsExtensions)")
   }
 
@@ -185,8 +211,8 @@ class ConnectionSpec internal constructor(builder: Builder) {
 
     constructor(connectionSpec: ConnectionSpec) {
       this.tls = connectionSpec.isTls
-      this.cipherSuites = connectionSpec.cipherSuites
-      this.tlsVersions = connectionSpec.tlsVersions
+      this.cipherSuites = connectionSpec.cipherSuitesAsString
+      this.tlsVersions = connectionSpec.tlsVersionsAsString
       this.supportsTlsExtensions = connectionSpec.supportsTlsExtensions
     }
 
@@ -216,7 +242,7 @@ class ConnectionSpec internal constructor(builder: Builder) {
     fun tlsVersions(vararg tlsVersions: TlsVersion): Builder = apply {
       require(tls) { "no TLS versions for cleartext connections" }
 
-      val strings = tlsVersions.map(TlsVersion::javaName).toTypedArray()
+      val strings = tlsVersions.map { it.javaName }.toTypedArray()
       return tlsVersions(*strings)
     }
 
@@ -235,7 +261,12 @@ class ConnectionSpec internal constructor(builder: Builder) {
       this.supportsTlsExtensions = supportsTlsExtensions
     }
 
-    fun build(): ConnectionSpec = ConnectionSpec(this)
+    fun build(): ConnectionSpec = ConnectionSpec(
+        tls,
+        supportsTlsExtensions,
+        cipherSuites,
+        tlsVersions
+    )
   }
 
   companion object {
@@ -280,7 +311,7 @@ class ConnectionSpec internal constructor(builder: Builder) {
         CipherSuite.TLS_RSA_WITH_AES_256_CBC_SHA,
         CipherSuite.TLS_RSA_WITH_3DES_EDE_CBC_SHA)
 
-    /** A secure TLS connection that requires a recent client platform and a recent server.  */
+    /** A secure TLS connection that requires a recent client platform and a recent server. */
     @JvmField
     val RESTRICTED_TLS = Builder(true)
         .cipherSuites(*RESTRICTED_CIPHER_SUITES)
@@ -311,7 +342,7 @@ class ConnectionSpec internal constructor(builder: Builder) {
         .supportsTlsExtensions(true)
         .build()
 
-    /** Unencrypted, unauthenticated connections for `http:` URLs.  */
+    /** Unencrypted, unauthenticated connections for `http:` URLs. */
     @JvmField
     val CLEARTEXT = Builder(false).build()
   }

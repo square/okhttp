@@ -24,7 +24,6 @@ import okhttp3.internal.platform.Platform
 import okhttp3.internal.platform.Platform.Companion.INFO
 import okio.Buffer
 import okio.GzipSource
-import java.io.EOFException
 import java.io.IOException
 import java.nio.charset.Charset
 import java.nio.charset.StandardCharsets.UTF_8
@@ -44,7 +43,8 @@ class HttpLoggingInterceptor @JvmOverloads constructor(
 
   @Volatile private var headersToRedact = emptySet<String>()
 
-  @Volatile @set:JvmName("-deprecated_setLevel") var level = Level.NONE
+  @set:JvmName("level")
+  @Volatile var level = Level.NONE
 
   enum class Level {
     /** No logs. */
@@ -109,15 +109,7 @@ class HttpLoggingInterceptor @JvmOverloads constructor(
     fun log(message: String)
 
     companion object {
-      // This lambda conversion is for Kotlin callers expecting a Java SAM (single-abstract-method).
-      @JvmName("-deprecated_Logger")
-      inline operator fun invoke(
-        crossinline block: (message: String) -> Unit
-      ): Logger = object : Logger {
-        override fun log(message: String) = block(message)
-      }
-
-      /** A [Logger] defaults output appropriate for the current platform.  */
+      /** A [Logger] defaults output appropriate for the current platform. */
       @JvmField
       val DEFAULT: Logger = object : Logger {
         override fun log(message: String) {
@@ -129,16 +121,24 @@ class HttpLoggingInterceptor @JvmOverloads constructor(
 
   fun redactHeader(name: String) {
     val newHeadersToRedact = TreeSet(String.CASE_INSENSITIVE_ORDER)
-    newHeadersToRedact.addAll(headersToRedact)
-    newHeadersToRedact.add(name)
+    newHeadersToRedact += headersToRedact
+    newHeadersToRedact += name
     headersToRedact = newHeadersToRedact
   }
 
+  @Deprecated(
+      message = "Moved to var. Replace setLevel(...) with level(...) to fix Java",
+      replaceWith = ReplaceWith(expression = "apply { this.level = level }"),
+      level = DeprecationLevel.WARNING)
   fun setLevel(level: Level) = apply {
     this.level = level
   }
 
-  @JvmName("-deprecated_getLevel")
+  @JvmName("-deprecated_level")
+  @Deprecated(
+      message = "moved to var",
+      replaceWith = ReplaceWith(expression = "level"),
+      level = DeprecationLevel.ERROR)
   fun getLevel(): Level = level
 
   @Throws(IOException::class)
@@ -153,11 +153,11 @@ class HttpLoggingInterceptor @JvmOverloads constructor(
     val logBody = level == Level.BODY
     val logHeaders = logBody || level == Level.HEADERS
 
-    val requestBody = request.body()
+    val requestBody = request.body
 
     val connection = chain.connection()
     var requestStartMessage =
-        ("--> ${request.method()} ${request.url()}${if (connection != null) " " + connection.protocol() else ""}")
+        ("--> ${request.method} ${request.url}${if (connection != null) " " + connection.protocol() else ""}")
     if (!logHeaders && requestBody != null) {
       requestStartMessage += " (${requestBody.contentLength()}-byte body)"
     }
@@ -175,25 +175,22 @@ class HttpLoggingInterceptor @JvmOverloads constructor(
         }
       }
 
-      val headers = request.headers()
-      var i = 0
-      val count = headers.size
-      while (i < count) {
+      val headers = request.headers
+      for (i in 0 until headers.size) {
         val name = headers.name(i)
         // Skip headers from the request body as they are explicitly logged above.
-        if (!"Content-Type".equals(name, ignoreCase = true) && !"Content-Length".equals(name,
-                ignoreCase = true)) {
+        if (!"Content-Type".equals(name, ignoreCase = true) &&
+            !"Content-Length".equals(name, ignoreCase = true)) {
           logHeader(headers, i)
         }
-        i++
       }
 
       if (!logBody || requestBody == null) {
-        logger.log("--> END ${request.method()}")
-      } else if (bodyHasUnknownEncoding(request.headers())) {
-        logger.log("--> END ${request.method()} (encoded body omitted)")
+        logger.log("--> END ${request.method}")
+      } else if (bodyHasUnknownEncoding(request.headers)) {
+        logger.log("--> END ${request.method} (encoded body omitted)")
       } else if (requestBody.isDuplex()) {
-        logger.log("--> END ${request.method()} (duplex request body omitted)")
+        logger.log("--> END ${request.method} (duplex request body omitted)")
       } else {
         val buffer = Buffer()
         requestBody.writeTo(buffer)
@@ -202,12 +199,12 @@ class HttpLoggingInterceptor @JvmOverloads constructor(
         val charset: Charset = contentType?.charset(UTF_8) ?: UTF_8
 
         logger.log("")
-        if (buffer.isUtf8()) {
+        if (buffer.isProbablyUtf8()) {
           logger.log(buffer.readString(charset))
-          logger.log("--> END ${request.method()} (${requestBody.contentLength()}-byte body)")
+          logger.log("--> END ${request.method} (${requestBody.contentLength()}-byte body)")
         } else {
           logger.log(
-              "--> END ${request.method()} (binary ${requestBody.contentLength()}-byte body omitted)")
+              "--> END ${request.method} (binary ${requestBody.contentLength()}-byte body omitted)")
         }
       }
     }
@@ -223,21 +220,21 @@ class HttpLoggingInterceptor @JvmOverloads constructor(
 
     val tookMs = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startNs)
 
-    val responseBody = response.body()!!
+    val responseBody = response.body!!
     val contentLength = responseBody.contentLength()
     val bodySize = if (contentLength != -1L) "$contentLength-byte" else "unknown-length"
     logger.log(
-        "<-- ${response.code()}${if (response.message().isEmpty()) "" else ' ' + response.message()} ${response.request().url()} (${tookMs}ms${if (!logHeaders) ", $bodySize body" else ""})")
+        "<-- ${response.code}${if (response.message.isEmpty()) "" else ' ' + response.message} ${response.request.url} (${tookMs}ms${if (!logHeaders) ", $bodySize body" else ""})")
 
     if (logHeaders) {
-      val headers = response.headers()
+      val headers = response.headers
       for (i in 0 until headers.size) {
         logHeader(headers, i)
       }
 
       if (!logBody || !response.promisesBody()) {
         logger.log("<-- END HTTP")
-      } else if (bodyHasUnknownEncoding(response.headers())) {
+      } else if (bodyHasUnknownEncoding(response.headers)) {
         logger.log("<-- END HTTP (encoded body omitted)")
       } else {
         val source = responseBody.source()
@@ -256,7 +253,7 @@ class HttpLoggingInterceptor @JvmOverloads constructor(
         val contentType = responseBody.contentType()
         val charset: Charset = contentType?.charset(UTF_8) ?: UTF_8
 
-        if (!buffer.isUtf8()) {
+        if (!buffer.isProbablyUtf8()) {
           logger.log("")
           logger.log("<-- END HTTP (binary ${buffer.size}-byte body omitted)")
           return response
@@ -283,37 +280,9 @@ class HttpLoggingInterceptor @JvmOverloads constructor(
     logger.log(headers.name(i) + ": " + value)
   }
 
-  companion object {
-    /**
-     * Returns true if the body in question probably contains human readable text. Uses a small
-     * sample of code points to detect unicode control characters commonly used in binary file
-     * signatures.
-     */
-    internal fun Buffer.isUtf8(): Boolean {
-      try {
-        val prefix = Buffer()
-        val byteCount = size.coerceAtMost(64)
-        copyTo(prefix, 0, byteCount)
-        for (i in 0 until 16) {
-          if (prefix.exhausted()) {
-            break
-          }
-          val codePoint = prefix.readUtf8CodePoint()
-          if (Character.isISOControl(codePoint) && !Character.isWhitespace(codePoint)) {
-            return false
-          }
-        }
-        return true
-      } catch (e: EOFException) {
-        return false // Truncated UTF-8 sequence.
-      }
-    }
-
-    private fun bodyHasUnknownEncoding(headers: Headers): Boolean {
-      val contentEncoding = headers["Content-Encoding"]
-      return (contentEncoding != null &&
-          !contentEncoding.equals("identity", ignoreCase = true) &&
-          !contentEncoding.equals("gzip", ignoreCase = true))
-    }
+  private fun bodyHasUnknownEncoding(headers: Headers): Boolean {
+    val contentEncoding = headers["Content-Encoding"] ?: return false
+    return !contentEncoding.equals("identity", ignoreCase = true) &&
+        !contentEncoding.equals("gzip", ignoreCase = true)
   }
 }

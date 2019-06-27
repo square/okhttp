@@ -75,7 +75,7 @@ public final class WebSocketWriterTest {
     int length = 5;
     byte[] bytes = binaryData(length);
 
-    RequestBody body = RequestBody.create(null, bytes);
+    RequestBody body = RequestBody.create(bytes, null);
     BufferedSink sink = Okio.buffer(serverWriter.newMessageSink(OPCODE_TEXT, length));
     body.writeTo(sink);
     sink.close();
@@ -89,7 +89,7 @@ public final class WebSocketWriterTest {
     int length = 12345;
     byte[] bytes = binaryData(length);
 
-    RequestBody body = RequestBody.create(null, bytes);
+    RequestBody body = RequestBody.create(bytes, null);
     BufferedSink sink = Okio.buffer(serverWriter.newMessageSink(OPCODE_TEXT, length));
     body.writeTo(sink);
     sink.close();

@@ -23,7 +23,7 @@ import javax.net.ssl.SSLSocketFactory
 import javax.net.ssl.X509TrustManager
 import okhttp3.Protocol
 
-/** OpenJDK 9+.  */
+/** OpenJDK 9+. */
 class Jdk9Platform(
   @JvmField val setProtocolMethod: Method,
   @JvmField val getProtocolMethod: Method
@@ -79,7 +79,7 @@ class Jdk9Platform(
           val getProtocolMethod = SSLSocket::class.java.getMethod("getApplicationProtocol")
 
           Jdk9Platform(setProtocolMethod, getProtocolMethod)
-        } catch (ignored: NoSuchMethodException) {
+        } catch (_: NoSuchMethodException) {
           // pre JDK 9
           null
         }

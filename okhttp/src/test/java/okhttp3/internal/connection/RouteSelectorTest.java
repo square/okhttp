@@ -36,22 +36,25 @@ import okhttp3.Call;
 import okhttp3.ConnectionSpec;
 import okhttp3.EventListener;
 import okhttp3.FakeDns;
+import okhttp3.OkHttpClientTestRule;
 import okhttp3.Protocol;
 import okhttp3.Request;
 import okhttp3.Route;
-import okhttp3.TestUtil;
 import okhttp3.internal.http.RecordingProxySelector;
 import okhttp3.tls.HandshakeCertificates;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 
 import static java.net.Proxy.NO_PROXY;
-import static okhttp3.internal.UtilKt.immutableListOf;
+import static okhttp3.internal.Util.immutableListOf;
 import static okhttp3.tls.internal.TlsUtil.localhost;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.fail;
 
 public final class RouteSelectorTest {
+  @Rule public final OkHttpClientTestRule clientTestRule = new OkHttpClientTestRule();
+
   public final List<ConnectionSpec> connectionSpecs = immutableListOf(
       ConnectionSpec.MODERN_TLS,
       ConnectionSpec.COMPATIBLE_TLS,
@@ -81,7 +84,7 @@ public final class RouteSelectorTest {
   private RouteDatabase routeDatabase = new RouteDatabase();
 
   @Before public void setUp() throws Exception {
-    call = TestUtil.defaultClient().newCall(new Request.Builder()
+    call = clientTestRule.newClient().newCall(new Request.Builder()
         .url("https://" + uriHost + ":" + uriPort + "/")
         .build());
     socketFactory = SocketFactory.getDefault();

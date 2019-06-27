@@ -38,6 +38,7 @@ import okio.GzipSink;
 import okio.Okio;
 import okio.Sink;
 import okio.Source;
+import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 
@@ -48,8 +49,12 @@ public final class InterceptorTest {
   @Rule public MockWebServer server = new MockWebServer();
   @Rule public final OkHttpClientTestRule clientTestRule = new OkHttpClientTestRule();
 
-  private OkHttpClient client = clientTestRule.client;
+  private OkHttpClient client;
   private RecordingCallback callback = new RecordingCallback();
+
+  @Before public void setUp() {
+    client = clientTestRule.newClient();
+  }
 
   @Test public void applicationInterceptorsCanShortCircuitResponses() throws Exception {
     server.shutdown(); // Accept no connections.
@@ -63,7 +68,7 @@ public final class InterceptorTest {
         .protocol(Protocol.HTTP_1_1)
         .code(200)
         .message("Intercepted!")
-        .body(ResponseBody.create(MediaType.get("text/plain; charset=utf-8"), "abc"))
+        .body(ResponseBody.create("abc", MediaType.get("text/plain; charset=utf-8")))
         .build();
 
     client = client.newBuilder()
@@ -82,7 +87,7 @@ public final class InterceptorTest {
         .protocol(Protocol.HTTP_1_1)
         .code(200)
         .message("Intercepted!")
-        .body(ResponseBody.create(MediaType.get("text/plain; charset=utf-8"), "abc"))
+        .body(ResponseBody.create("abc", MediaType.get("text/plain; charset=utf-8")))
         .build();
     client = client.newBuilder()
         .addNetworkInterceptor(interceptor)
@@ -215,7 +220,7 @@ public final class InterceptorTest {
     Interceptor interceptor = chain -> {
       Request originalRequest = chain.request();
       MediaType mediaType = MediaType.get("text/plain");
-      RequestBody body = RequestBody.create(mediaType, "abc");
+      RequestBody body = RequestBody.create("abc", mediaType);
       return chain.proceed(originalRequest.newBuilder()
           .method("POST", body)
           .header("Content-Type", mediaType.toString())
@@ -260,7 +265,7 @@ public final class InterceptorTest {
     Request request = new Request.Builder()
         .url(server.url("/"))
         .addHeader("Original-Header", "foo")
-        .method("PUT", RequestBody.create(MediaType.get("text/plain"), "abc"))
+        .method("PUT", RequestBody.create("abc", MediaType.get("text/plain")))
         .build();
 
     client.newCall(request).execute();
@@ -774,7 +779,7 @@ public final class InterceptorTest {
     byte[] data = new byte[2 * 1024 * 1024]; // 2 MiB.
     Request request1 = new Request.Builder()
         .url(server.url("/"))
-        .post(RequestBody.create(MediaType.get("text/plain"), data))
+        .post(RequestBody.create(data, MediaType.get("text/plain")))
         .build();
     Call call = client.newCall(request1);
 
@@ -845,8 +850,8 @@ public final class InterceptorTest {
   }
 
   static ResponseBody uppercase(ResponseBody original) throws IOException {
-    return ResponseBody.create(original.contentType(), original.contentLength(),
-        Okio.buffer(uppercase(original.source())));
+    return ResponseBody.create(Okio.buffer(uppercase(original.source())),
+        original.contentType(), original.contentLength());
   }
 
   private static Source uppercase(Source original) {

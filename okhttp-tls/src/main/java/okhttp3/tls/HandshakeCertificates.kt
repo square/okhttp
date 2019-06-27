@@ -17,7 +17,6 @@ package okhttp3.tls
 
 import okhttp3.CertificatePinner
 import okhttp3.internal.platform.Platform
-import okhttp3.internal.platformTrustManager
 import okhttp3.tls.internal.TlsUtil.newKeyManager
 import okhttp3.tls.internal.TlsUtil.newTrustManager
 import java.security.SecureRandom
@@ -68,11 +67,22 @@ import javax.net.ssl.X509TrustManager
  *    roots private to an organization or service.
  */
 class HandshakeCertificates private constructor(
-  private val keyManager: X509KeyManager,
-  private val trustManager: X509TrustManager
+  @get:JvmName("keyManager") val keyManager: X509KeyManager,
+  @get:JvmName("trustManager") val trustManager: X509TrustManager
 ) {
+
+  @JvmName("-deprecated_keyManager")
+  @Deprecated(
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "keyManager"),
+      level = DeprecationLevel.ERROR)
   fun keyManager(): X509KeyManager = keyManager
 
+  @JvmName("-deprecated_trustManager")
+  @Deprecated(
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "trustManager"),
+      level = DeprecationLevel.ERROR)
   fun trustManager(): X509TrustManager = trustManager
 
   fun sslSocketFactory(): SSLSocketFactory = sslContext().socketFactory
@@ -126,7 +136,7 @@ class HandshakeCertificates private constructor(
      * this problem with [certificate pinning][CertificatePinner].
      */
     fun addPlatformTrustedCertificates() = apply {
-      val platformTrustManager = platformTrustManager()
+      val platformTrustManager = Platform.get().platformTrustManager()
       Collections.addAll(trustedCertificates, *platformTrustManager.acceptedIssuers)
     }
 

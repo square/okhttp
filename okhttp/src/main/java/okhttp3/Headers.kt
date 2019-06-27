@@ -19,11 +19,11 @@ package okhttp3
 
 import okhttp3.Headers.Builder
 import okhttp3.internal.format
-import okhttp3.internal.http.HttpDate
+import okhttp3.internal.http.toHttpDateOrNull
+import okhttp3.internal.http.toHttpDateString
 import org.codehaus.mojo.animal_sniffer.IgnoreJRERequirement
 import java.time.Instant
 import java.util.ArrayList
-import java.util.Arrays
 import java.util.Collections
 import java.util.Date
 import java.util.Locale
@@ -56,10 +56,7 @@ class Headers private constructor(
    * Returns the last value corresponding to the specified field parsed as an HTTP date, or null if
    * either the field is absent or cannot be parsed as a date.
    */
-  fun getDate(name: String): Date? {
-    val value = get(name)
-    return if (value != null) HttpDate.parse(value) else null
-  }
+  fun getDate(name: String): Date? = get(name)?.toHttpDateOrNull()
 
   /**
    * Returns the last value corresponding to the specified field parsed as an HTTP date, or null if
@@ -71,7 +68,7 @@ class Headers private constructor(
     return value?.toInstant()
   }
 
-  /** Returns the number of field values.  */
+  /** Returns the number of field values. */
   @get:JvmName("size") val size: Int
     get() = namesAndValues.size / 2
 
@@ -79,16 +76,16 @@ class Headers private constructor(
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "size"),
-      level = DeprecationLevel.WARNING)
+      level = DeprecationLevel.ERROR)
   fun size(): Int = size
 
-  /** Returns the field at `position`.  */
+  /** Returns the field at `position`. */
   fun name(index: Int): String = namesAndValues[index * 2]
 
-  /** Returns the value at `index`.  */
+  /** Returns the value at `index`. */
   fun value(index: Int): String = namesAndValues[index * 2 + 1]
 
-  /** Returns an immutable case-insensitive set of header names.  */
+  /** Returns an immutable case-insensitive set of header names. */
   fun names(): Set<String> {
     val result = TreeSet(String.CASE_INSENSITIVE_ORDER)
     for (i in 0 until size) {
@@ -97,7 +94,7 @@ class Headers private constructor(
     return Collections.unmodifiableSet(result)
   }
 
-  /** Returns an immutable list of the header values for `name`.  */
+  /** Returns an immutable list of the header values for `name`. */
   fun values(name: String): List<String> {
     var result: MutableList<String>? = null
     for (i in 0 until size) {
@@ -177,10 +174,10 @@ class Headers private constructor(
    * before comparing them for equality.
    */
   override fun equals(other: Any?): Boolean {
-    return other is Headers && Arrays.equals(other.namesAndValues, namesAndValues)
+    return other is Headers && namesAndValues.contentEquals(other.namesAndValues)
   }
 
-  override fun hashCode(): Int = Arrays.hashCode(namesAndValues)
+  override fun hashCode(): Int = namesAndValues.contentHashCode()
 
   override fun toString(): String {
     return buildString {
@@ -215,12 +212,12 @@ class Headers private constructor(
      * or cache.
      */
     internal fun addLenient(line: String) = apply {
-      val index = line.indexOf(":", 1)
+      val index = line.indexOf(':', 1)
       when {
         index != -1 -> {
           addLenient(line.substring(0, index), line.substring(index + 1))
         }
-        line.startsWith(":") -> {
+        line[0] == ':' -> {
           // Work around empty header names and header names that start with a colon (created by old
           // broken SPDY versions of the response cache).
           addLenient("", line.substring(1)) // Empty header name.
@@ -234,7 +231,7 @@ class Headers private constructor(
 
     /** Add an header line containing a field name, a literal colon, and a value. */
     fun add(line: String) = apply {
-      val index = line.indexOf(":")
+      val index = line.indexOf(':')
       require(index != -1) { "Unexpected header: $line" }
       add(line.substring(0, index).trim(), line.substring(index + 1))
     }
@@ -271,7 +268,7 @@ class Headers private constructor(
      * value.
      */
     fun add(name: String, value: Date) = apply {
-      add(name, HttpDate.format(value))
+      add(name, value.toHttpDateString())
     }
 
     /**
@@ -288,7 +285,7 @@ class Headers private constructor(
      * found, the existing values are replaced.
      */
     operator fun set(name: String, value: Date) = apply {
-      set(name, HttpDate.format(value))
+      set(name, value.toHttpDateString())
     }
 
     /**
@@ -332,7 +329,7 @@ class Headers private constructor(
       addLenient(name, value)
     }
 
-    /** Equivalent to `build().get(name)`, but potentially faster.  */
+    /** Equivalent to `build().get(name)`, but potentially faster. */
     operator fun get(name: String): String? {
       for (i in namesAndValues.size - 2 downTo 0 step 2) {
         if (name.equals(namesAndValues[i], ignoreCase = true)) {
@@ -360,7 +357,8 @@ class Headers private constructor(
      * arguments, and they must alternate between header names and values.
      */
     @JvmStatic
-    fun of(vararg namesAndValues: String): Headers {
+    @JvmName("of")
+    fun headersOf(vararg namesAndValues: String): Headers {
       require(namesAndValues.size % 2 == 0) { "Expected alternating header names and values" }
 
       // Make a defensive copy and clean it up.
@@ -381,13 +379,23 @@ class Headers private constructor(
       return Headers(namesAndValues)
     }
 
+    @JvmName("-deprecated_of")
+    @Deprecated(
+        message = "function name changed",
+        replaceWith = ReplaceWith(expression = "headersOf(*namesAndValues)"),
+        level = DeprecationLevel.ERROR)
+    fun of(vararg namesAndValues: String): Headers {
+      return headersOf(*namesAndValues)
+    }
+
     /** Returns headers for the header names and values in the [Map]. */
     @JvmStatic
-    fun of(headers: Map<String, String>): Headers {
+    @JvmName("of")
+    fun Map<String, String>.toHeaders(): Headers {
       // Make a defensive copy and clean it up.
-      val namesAndValues = arrayOfNulls<String>(headers.size * 2)
+      val namesAndValues = arrayOfNulls<String>(size * 2)
       var i = 0
-      for ((k, v) in headers) {
+      for ((k, v) in this) {
         val name = k.trim()
         val value = v.trim()
         checkName(name)
@@ -400,7 +408,16 @@ class Headers private constructor(
       return Headers(namesAndValues as Array<String>)
     }
 
-    internal fun checkName(name: String) {
+    @JvmName("-deprecated_of")
+    @Deprecated(
+        message = "function moved to extension",
+        replaceWith = ReplaceWith(expression = "headers.toHeaders()"),
+        level = DeprecationLevel.ERROR)
+    fun of(headers: Map<String, String>): Headers {
+      return headers.toHeaders()
+    }
+
+    private fun checkName(name: String) {
       require(name.isNotEmpty()) { "name is empty" }
       for (i in 0 until name.length) {
         val c = name[i]
@@ -410,7 +427,7 @@ class Headers private constructor(
       }
     }
 
-    internal fun checkValue(value: String, name: String) {
+    private fun checkValue(value: String, name: String) {
       for (i in 0 until value.length) {
         val c = value[i]
         require(c == '\t' || c in '\u0020'..'\u007e') {

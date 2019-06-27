@@ -18,8 +18,8 @@ package okhttp3.internal.tls
 import java.security.GeneralSecurityException
 import java.security.cert.Certificate
 import java.security.cert.X509Certificate
-import java.util.Deque
 import java.util.ArrayDeque
+import java.util.Deque
 import javax.net.ssl.SSLPeerUnverifiedException
 
 /**
@@ -45,7 +45,7 @@ class BasicCertificateChainCleaner(
   @Throws(SSLPeerUnverifiedException::class)
   override fun clean(chain: List<Certificate>, hostname: String): List<Certificate> {
     val queue: Deque<Certificate> = ArrayDeque<Certificate>(chain)
-    val result = ArrayList<Certificate>()
+    val result = mutableListOf<Certificate>()
     result.add(queue.removeFirst())
     var foundTrustedCertificate = false
 
@@ -93,7 +93,7 @@ class BasicCertificateChainCleaner(
     throw SSLPeerUnverifiedException("Certificate chain too long: $result")
   }
 
-  /** Returns true if [toVerify] was signed by [signingCert]'s public key.  */
+  /** Returns true if [toVerify] was signed by [signingCert]'s public key. */
   private fun verifySignature(toVerify: X509Certificate, signingCert: X509Certificate): Boolean {
     if (toVerify.issuerDN != signingCert.subjectDN) {
       return false

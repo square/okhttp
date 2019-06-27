@@ -67,7 +67,7 @@ class Exchange(
   @Throws(IOException::class)
   fun createRequestBody(request: Request, duplex: Boolean): Sink {
     this.isDuplex = duplex
-    val contentLength = request.body()!!.contentLength()
+    val contentLength = request.body!!.contentLength()
     eventListener.requestBodyStart(call)
     val rawRequestBody = codec.createRequestBody(request, contentLength)
     return RequestBodySink(rawRequestBody, contentLength)
@@ -315,5 +315,9 @@ class Exchange(
       completed = true
       return bodyComplete(bytesReceived, true, false, e)
     }
+  }
+
+  companion object {
+    fun get(response: Response): Exchange? = response.exchange
   }
 }

@@ -18,6 +18,7 @@ package okhttp3
 import okhttp3.HttpUrl.Companion.FORM_ENCODE_SET
 import okhttp3.HttpUrl.Companion.canonicalize
 import okhttp3.HttpUrl.Companion.percentDecode
+import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.internal.toImmutableList
 import okio.Buffer
 import okio.BufferedSink
@@ -31,7 +32,7 @@ class FormBody internal constructor(
   private val encodedNames: List<String> = encodedNames.toImmutableList()
   private val encodedValues: List<String> = encodedValues.toImmutableList()
 
-  /** The number of key-value pairs in this form-encoded body.  */
+  /** The number of key-value pairs in this form-encoded body. */
   @get:JvmName("size") val size: Int
     get() = encodedNames.size
 
@@ -39,7 +40,7 @@ class FormBody internal constructor(
   @Deprecated(
       message = "moved to val",
       replaceWith = ReplaceWith(expression = "size"),
-      level = DeprecationLevel.WARNING)
+      level = DeprecationLevel.ERROR)
   fun size(): Int = size
 
   fun encodedName(index: Int) = encodedNames[index]
@@ -60,7 +61,7 @@ class FormBody internal constructor(
   }
 
   /**
-   * Either writes this request to `sink` or measures its content length. We have one method
+   * Either writes this request to [sink] or measures its content length. We have one method
    * do double-duty to make sure the counting and content are consistent, particularly when it comes
    * to awkward operations like measuring the encoded length of header strings, or the
    * length-in-digits of an encoded integer.
@@ -120,6 +121,6 @@ class FormBody internal constructor(
   }
 
   companion object {
-    private val CONTENT_TYPE: MediaType = MediaType.get("application/x-www-form-urlencoded")
+    private val CONTENT_TYPE: MediaType = "application/x-www-form-urlencoded".toMediaType()
   }
 }
