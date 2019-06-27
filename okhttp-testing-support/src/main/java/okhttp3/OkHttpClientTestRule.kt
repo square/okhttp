@@ -25,6 +25,7 @@ import java.util.concurrent.ConcurrentLinkedDeque
 
 /** Apply this rule to tests that need an OkHttpClient instance. */
 class OkHttpClientTestRule : TestRule {
+  private val clientEventsList = mutableListOf<String>()
   private var prototype: OkHttpClient? = null
 
   /**
@@ -41,7 +42,13 @@ class OkHttpClientTestRule : TestRule {
   }
 
   fun newClientBuilder(): OkHttpClient.Builder {
-    return checkNotNull(prototype) { "don't create clients in test initialization!" }.newBuilder()
+    return checkNotNull(prototype) { "don't create clients in test initialization!" }
+        .newBuilder()
+        .eventListener(ClientRuleEventListener { addEvent(it) })
+  }
+
+  @Synchronized private fun addEvent(it: String) {
+    clientEventsList.add(it)
   }
 
   fun ensureAllConnectionsReleased() {
@@ -70,13 +77,11 @@ class OkHttpClientTestRule : TestRule {
 
       private fun acquireClient() {
         prototype = prototypes.poll() ?: freshClient()
-        clientEventsMap[prototype!!] = mutableListOf()
       }
 
       private fun releaseClient() {
         prototype?.let {
           prototypes.push(it)
-          clientEventsMap.remove(it)
           prototype = null
         }
       }
@@ -84,21 +89,22 @@ class OkHttpClientTestRule : TestRule {
   }
 
   private fun logEventsIfFlaky(description: Description) {
-    if (description.annotations.any { it.annotationClass == Flaky::class }) {
+    if (isTestFlaky(description)) {
       logEvents()
     }
   }
 
-  private fun logEvents() {
-    val events = clientEventsMap[prototype]
+  private fun isTestFlaky(description: Description): Boolean {
+    return description.annotations.any { it.annotationClass == Flaky::class } ||
+        description.testClass.annotations.any { it.annotationClass == Flaky::class }
+  }
 
+  @Synchronized private fun logEvents() {
     // Will be ineffective if test overrides the listener
-    if (events != null) {
-      println("Events (${events.size})")
+    println("Events (${clientEventsList.size})")
 
-      for (e in events) {
-        println(e)
-      }
+    for (e in clientEventsList) {
+      println(e)
     }
   }
 
@@ -121,8 +127,6 @@ class OkHttpClientTestRule : TestRule {
      */
     internal val prototypes = ConcurrentLinkedDeque<OkHttpClient>()
 
-    val clientEventsMap = mutableMapOf<OkHttpClient, MutableList<String>>()
-
     /**
      * A network that resolves only one IP address per host. Use this when testing route selection
      * fallbacks to prevent the host machine's various IP addresses from interfering.
@@ -134,17 +138,10 @@ class OkHttpClientTestRule : TestRule {
       }
     }
 
-    private fun freshClient(): OkHttpClient {
-      val listener = ClientRuleEventListener { client, line ->
-        clientEventsMap[client]?.add(line)
-      }
-
+    fun freshClient(): OkHttpClient {
       return OkHttpClient.Builder()
           .dns(SINGLE_INET_ADDRESS_DNS) // Prevent unexpected fallback addresses.
-          .eventListener(listener)
-          .build().apply {
-            listener.client = this
-          }
+          .build()
     }
   }
 }

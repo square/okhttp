@@ -21,10 +21,9 @@ import java.net.InetSocketAddress
 import java.net.Proxy
 import java.util.concurrent.TimeUnit
 
-class ClientRuleEventListener(var logger: (OkHttpClient, String) -> Unit) : EventListener(),
+class ClientRuleEventListener(var logger: (String) -> Unit) : EventListener(),
     EventListener.Factory {
   private var startNs: Long = 0
-  var client: OkHttpClient? = null
 
   override fun create(call: Call): EventListener = this
 
@@ -130,9 +129,7 @@ class ClientRuleEventListener(var logger: (OkHttpClient, String) -> Unit) : Even
   }
 
   private fun logWithTime(message: String) {
-    client?.let {
-      val timeMs = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startNs)
-      logger.invoke(it, "[$timeMs ms] $message")
-    }
+    val timeMs = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startNs)
+    logger.invoke("[$timeMs ms] $message")
   }
 }
