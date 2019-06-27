@@ -579,6 +579,13 @@
     <ul class="md-nav__list" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#version-400" title="Version 4.0.0" class="md-nav__link">
+    Version 4.0.0
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#version-400-rc3" title="Version 4.0.0-RC3" class="md-nav__link">
     Version 4.0.0-RC3
   </a>
@@ -1148,6 +1155,13 @@
     <ul class="md-nav__list" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#version-400" title="Version 4.0.0" class="md-nav__link">
+    Version 4.0.0
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#version-400-rc3" title="Version 4.0.0-RC3" class="md-nav__link">
     Version 4.0.0-RC3
   </a>
@@ -1669,6 +1683,14 @@
                 
                 
                 <h1 id="change-log">Change Log<a class="headerlink" href="#change-log" title="Permanent link">&para;</a></h1>
+<h2 id="version-400">Version 4.0.0<a class="headerlink" href="#version-400" title="Permanent link">&para;</a></h2>
+<p><em>2019-06-26</em></p>
+<p><strong>This release upgrades OkHttp to Kotlin.</strong> We tried our best to make fast and safe to upgrade
+from OkHttp 3.x. We wrote an <a href="https://square.github.io/okhttp/upgrading_to_okhttp_4/">upgrade guide</a> to help with the migration and a
+<a href="https://cashapp.github.io/2019-06-26/okhttp-4-goes-kotlin">blog post</a> to explain it.</p>
+<ul>
+<li>Fix: Target Java 8 bytecode for Java and Kotlin.</li>
+</ul>
 <h2 id="version-400-rc3">Version 4.0.0-RC3<a class="headerlink" href="#version-400-rc3" title="Permanent link">&para;</a></h2>
 <p><em>2019-06-24</em></p>
 <ul>
@@ -1688,10 +1710,9 @@
 </ul>
 <h2 id="version-400-rc1">Version 4.0.0-RC1<a class="headerlink" href="#version-400-rc1" title="Permanent link">&para;</a></h2>
 <p><em>2019-06-03</em></p>
-<p><strong>OkHttp 4 upgrades OkHttp to Kotlin.</strong> This is the first stable preview of OkHttp 4. Use it to find
-bugs or performance regressions before the final 4.0.0 release.</p>
-<p>We tried our best to make it fast and safe to upgrade from OkHttp 3.x.
-<a href="http://square.github.io/okhttp/upgrading_to_okhttp_4/">We even wrote a guide</a> to help you with it!</p>
+<ul>
+<li>First stable preview of OkHttp 4.</li>
+</ul>
 <h2 id="version-3142">Version 3.14.2<a class="headerlink" href="#version-3142" title="Permanent link">&para;</a></h2>
 <p><em>2019-05-19</em></p>
 <ul>
@@ -1784,7 +1805,7 @@ most common use of duplex calls is <a href="https://github.com/grpc/grpc/blob/ma
 <p>We removed this cipher suite and <code>TLS_AES_128_CCM_SHA256</code> from the restricted, modern, and
 compatible sets of cipher suites. These two cipher suites aren&rsquo;t enabled by default in either
 Firefox or Chrome.</p>
-<p>See our <a href="http://square.github.io/okhttp/tls_configuration_history/">TLS Configuration History</a> tracker for a log of all changes
+<p>See our <a href="https://square.github.io/okhttp/tls_configuration_history/">TLS Configuration History</a> tracker for a log of all changes
 to OkHttp&rsquo;s default TLS options.</p>
 </li>
 <li>
@@ -2535,7 +2556,7 @@ upgrade from the 2.x API to the 3.x API mechanically and without risk.</p>
 package name from <code>com.squareup.okhttp</code> to <code>okhttp3</code>. This should make it
 possible for large applications to migrate incrementally. The Maven group ID
 is now <code>com.squareup.okhttp3</code>. For an explanation of this strategy, see Jake
-Wharton&rsquo;s post, <a href="http://jakewharton.com/java-interoperability-policy-for-major-version-updates/">Java Interoperability Policy for Major Version
+Wharton&rsquo;s post, <a href="https://jakewharton.com/java-interoperability-policy-for-major-version-updates/">Java Interoperability Policy for Major Version
 Updates</a>.</p>
 <p>This release obsoletes OkHttp 2.x, and all code that uses OkHttp&rsquo;s
 <code>com.squareup.okhttp</code> package should upgrade to the <code>okhttp3</code> package. Libraries
@@ -2979,7 +3000,7 @@ logs.</p>
 </li>
 <li>
 <p><strong>OkHttp now offers interceptors.</strong> Interceptors are a powerful mechanism
-    that can monitor, rewrite, and retry calls. The <a href="http://square.github.io/okhttp/interceptors/">interceptors doc</a> is a full
+    that can monitor, rewrite, and retry calls. The <a href="https://square.github.io/okhttp/interceptors/">interceptors doc</a> is a full
     introduction to this new API.</p>
 </li>
 <li>
