@@ -1,6 +1,17 @@
 Change Log
 ==========
 
+## Version 4.0.0
+
+_2019-06-26_
+
+**This release upgrades OkHttp to Kotlin.** We tried our best to make fast and safe to upgrade
+from OkHttp 3.x. We wrote an [upgrade guide][upgrading_to_okhttp_4] to help with the migration and a
+[blog post][okhttp4_blog_post] to explain it.
+
+ *  Fix: Target Java 8 bytecode for Java and Kotlin.
+
+
 ## Version 4.0.0-RC3
 
 _2019-06-24_
@@ -26,11 +37,7 @@ _2019-06-21_
 
 _2019-06-03_
 
-**OkHttp 4 upgrades OkHttp to Kotlin.** This is the first stable preview of OkHttp 4. Use it to find
-bugs or performance regressions before the final 4.0.0 release.
-
-We tried our best to make it fast and safe to upgrade from OkHttp 3.x.
-[We even wrote a guide][upgrading_to_okhttp_4] to help you with it!
+ *  First stable preview of OkHttp 4.
 
 
 ## Version 3.14.2
@@ -1794,7 +1801,7 @@ Initial release.
 
  [brick]: https://noncombatant.org/2015/05/01/about-http-public-key-pinning/
  [webdav]: https://tools.ietf.org/html/rfc4918
- [major_versions]: http://jakewharton.com/java-interoperability-policy-for-major-version-updates/
+ [major_versions]: https://jakewharton.com/java-interoperability-policy-for-major-version-updates/
  [nginx_959]: https://trac.nginx.org/nginx/ticket/959
  [okhttp_idling_resource]: https://github.com/JakeWharton/okhttp-idling-resource
  [bom]: https://en.wikipedia.org/wiki/Byte_order_mark
@@ -1808,7 +1815,8 @@ Initial release.
  [require_android_5]: https://medium.com/square-corner-blog/okhttp-3-13-requires-android-5-818bb78d07ce
  [obsolete_apache_client]: https://gist.github.com/swankjesse/09721f72039e3a46cf50f94323deb82d
  [obsolete_url_factory]: https://gist.github.com/swankjesse/dd91c0a8854e1559b00f5fc9c7bfae70
- [tls_configuration_history]: http://square.github.io/okhttp/tls_configuration_history/
+ [tls_configuration_history]: https://square.github.io/okhttp/tls_configuration_history/
  [grpc_http2]: https://github.com/grpc/grpc/blob/master/doc/PROTOCOL-HTTP2.md
- [upgrading_to_okhttp_4]: http://square.github.io/okhttp/upgrading_to_okhttp_4/
- [interceptors]: http://square.github.io/okhttp/interceptors/
+ [upgrading_to_okhttp_4]: https://square.github.io/okhttp/upgrading_to_okhttp_4/
+ [interceptors]: https://square.github.io/okhttp/interceptors/
+ [okhttp4_blog_post]: https://cashapp.github.io/2019-06-26/okhttp-4-goes-kotlin
