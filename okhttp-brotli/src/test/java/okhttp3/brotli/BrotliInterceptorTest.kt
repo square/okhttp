@@ -15,19 +15,18 @@
  */
 package okhttp3.brotli
 
-import com.baulsupp.okurl.brotli.BrotliInterceptor
-import okhttp3.MediaType
+import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.Protocol
 import okhttp3.Request
 import okhttp3.Response
-import okhttp3.ResponseBody
+import okhttp3.ResponseBody.Companion.toResponseBody
 import okio.ByteString
 import okio.ByteString.Companion.decodeHex
+import okio.ByteString.Companion.encodeUtf8
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Assert.fail
 import org.junit.Test
 import java.io.IOException
-import okio.ByteString.Companion.encodeUtf8
 
 class BrotliInterceptorTest {
   @Test
@@ -44,7 +43,7 @@ class BrotliInterceptorTest {
 
     val uncompressed = BrotliInterceptor.uncompress(response)
 
-    val responseString = uncompressed.body()?.string()
+    val responseString = uncompressed.body?.string()
     assertThat(responseString).contains("\"brotli\": true,")
     assertThat(responseString).contains("\"Accept-Encoding\": \"br\"")
   }
@@ -55,7 +54,7 @@ class BrotliInterceptorTest {
 
     val same = BrotliInterceptor.uncompress(response)
 
-    val responseString = same.body()?.string()
+    val responseString = same.body?.string()
     assertThat(responseString).isEqualTo("XXXX")
   }
 
@@ -67,7 +66,7 @@ class BrotliInterceptorTest {
 
     try {
       val failingResponse = BrotliInterceptor.uncompress(response)
-      failingResponse.body()?.string()
+      failingResponse.body?.string()
 
       fail("expected uncompress error")
     } catch (ioe: IOException) {
@@ -82,7 +81,7 @@ class BrotliInterceptorTest {
     fn: Response.Builder.() -> Unit = {}
   ): Response {
     return Response.Builder()
-        .body(ResponseBody.create(MediaType.get("text/plain"), bodyHex))
+        .body(bodyHex.toResponseBody("text/plain".toMediaType()))
         .code(200)
         .message("OK")
         .request(Request.Builder().url(url).build())

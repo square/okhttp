@@ -13,11 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.baulsupp.okurl.brotli
+package okhttp3.brotli
 
 import okhttp3.Interceptor
 import okhttp3.Response
-import okhttp3.ResponseBody
+import okhttp3.ResponseBody.Companion.asResponseBody
 import okio.buffer
 import okio.source
 import org.brotli.dec.BrotliInputStream
@@ -29,7 +29,9 @@ import org.brotli.dec.BrotliInputStream
  */
 object BrotliInterceptor : Interceptor {
   override fun intercept(chain: Interceptor.Chain): Response {
-    val request = chain.request().newBuilder().header("Accept-Encoding", "br").build()
+    val request = chain.request().newBuilder()
+        .addHeader("Accept-Encoding", "br,gzip")
+        .build()
 
     val response = chain.proceed(request)
 
@@ -38,12 +40,12 @@ object BrotliInterceptor : Interceptor {
 
   internal fun uncompress(response: Response): Response {
     if (response.header("Content-Encoding") == "br") {
-      val body = response.body()!!
+      val body = response.body!!
 
       val decompressedSource = BrotliInputStream(body.source().inputStream()).source().buffer()
       return response.newBuilder()
           .removeHeader("Content-Encoding")
-          .body(ResponseBody.create(body.contentType(), -1, decompressedSource))
+          .body(decompressedSource.asResponseBody(body.contentType(), -1))
           .build()
     }
 

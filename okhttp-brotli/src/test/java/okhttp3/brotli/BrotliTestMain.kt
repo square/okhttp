@@ -15,7 +15,6 @@
  */
 package okhttp3.brotli
 
-import com.baulsupp.okurl.brotli.BrotliInterceptor
 import okhttp3.OkHttpClient
 import okhttp3.Request
 
@@ -29,6 +28,6 @@ fun main() {
       .build()
 
   client.newCall(req).execute().use {
-    println(it.body()?.string())
+    println(it.body?.string())
   }
 }

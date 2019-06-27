@@ -15,7 +15,6 @@
  */
 package okhttp3.brotli;
 
-import com.baulsupp.okurl.brotli.BrotliInterceptor;
 import org.junit.Ignore;
 import org.junit.Test;
 
