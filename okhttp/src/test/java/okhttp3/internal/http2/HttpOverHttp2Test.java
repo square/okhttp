@@ -96,7 +96,8 @@ import static org.junit.Assume.assumeTrue;
 
 /** Test how HTTP/2 interacts with HTTP features. */
 @RunWith(Parameterized.class)
-@Flaky
+@Flaky(issues = {"https://github.com/square/okhttp/issues/4632",
+    "https://github.com/square/okhttp/issues/4633"})
 public final class HttpOverHttp2Test {
   private static final Logger http2Logger = Logger.getLogger(Http2.class.getName());
   private static final HandshakeCertificates handshakeCertificates = localhost();
@@ -598,16 +599,16 @@ public final class HttpOverHttp2Test {
         .build();
     Call call1 = client1
         .newCall(new Request.Builder()
-        .url(server.url("/"))
-        .build());
+            .url(server.url("/"))
+            .build());
 
     OkHttpClient client2 = client.newBuilder()
         .readTimeout(200, MILLISECONDS)
         .build();
     Call call2 = client2
         .newCall(new Request.Builder()
-        .url(server.url("/"))
-        .build());
+            .url(server.url("/"))
+            .build());
 
     Response response1 = call1.execute();
     assertThat(response1.body().string()).isEqualTo("A");
@@ -902,26 +903,26 @@ public final class HttpOverHttp2Test {
     QueueDispatcher dispatcher =
         new RespondAfterCancelDispatcher(responseDequeuedLatches, requestCanceledLatches);
     dispatcher.enqueueResponse(new MockResponse()
-            .setBodyDelay(10, TimeUnit.SECONDS)
-            .setBody("abc"));
+        .setBodyDelay(10, TimeUnit.SECONDS)
+        .setBody("abc"));
     dispatcher.enqueueResponse(new MockResponse()
-            .setBodyDelay(10, TimeUnit.SECONDS)
-            .setBody("def"));
+        .setBodyDelay(10, TimeUnit.SECONDS)
+        .setBody("def"));
     dispatcher.enqueueResponse(new MockResponse()
-            .setBody("ghi"));
+        .setBody("ghi"));
     server.setDispatcher(dispatcher);
 
     client = client.newBuilder()
-            .dns(new DoubleInetAddressDns())
-            .build();
+        .dns(new DoubleInetAddressDns())
+        .build();
 
     callAndCancel(0, responseDequeuedLatches.get(0), requestCanceledLatches.get(0));
     callAndCancel(1, responseDequeuedLatches.get(1), requestCanceledLatches.get(1));
 
     // Make a third request to ensure the connection is reused.
     Call call = client.newCall(new Request.Builder()
-            .url(server.url("/"))
-            .build());
+        .url(server.url("/"))
+        .build());
     Response response = call.execute();
     assertThat(response.body().string()).isEqualTo("ghi");
     assertThat(server.takeRequest().getSequenceNumber()).isEqualTo(2);
@@ -1226,6 +1227,7 @@ public final class HttpOverHttp2Test {
         (long) 1);
   }
 
+  @Flaky(issues = "https://github.com/square/okhttp/issues/5221")
   @Test public void missingPongsFailsConnection() throws Exception {
     // Ping every 500 ms, starting at 500 ms.
     client = client.newBuilder()
@@ -1263,7 +1265,7 @@ public final class HttpOverHttp2Test {
   }
 
   private String firstFrame(List<String> logs, String type) {
-    for (String log: logs) {
+    for (String log : logs) {
       if (log.contains(type)) {
         return log;
       }
@@ -1273,7 +1275,7 @@ public final class HttpOverHttp2Test {
 
   private int countFrames(List<String> logs, String message) {
     int result = 0;
-    for (String log: logs) {
+    for (String log : logs) {
       if (log.equals(message)) {
         result++;
       }
@@ -1399,6 +1401,7 @@ public final class HttpOverHttp2Test {
     assertThat(server.takeRequest().getSequenceNumber()).isEqualTo(0);
   }
 
+  @Flaky(issues = "https://github.com/square/okhttp/issues/4836")
   @Test public void responseHeadersAfterGoaway() throws Exception {
     server.enqueue(new MockResponse()
         .setHeadersDelay(1, SECONDS)
@@ -1412,6 +1415,7 @@ public final class HttpOverHttp2Test {
       @Override public void onResponse(Call call, Response response) throws IOException {
         bodies.add(response.body().string());
       }
+
       @Override public void onFailure(Call call, IOException e) {
         System.out.println(e);
       }
@@ -1593,7 +1597,7 @@ public final class HttpOverHttp2Test {
           if (callCount++ == 1) {
             server.shutdown();
           }
-        } catch(IOException e) {
+        } catch (IOException e) {
           fail();
         }
       }

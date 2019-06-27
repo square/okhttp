@@ -58,7 +58,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.data.Offset.offset;
 import static org.junit.Assert.fail;
 
-@Flaky
+@Flaky(issues = {"https://github.com/square/okhttp/issues/4515",
+    "https://github.com/square/okhttp/issues/4953"})
 public final class WebSocketHttpTest {
   @Rule public final MockWebServer webServer = new MockWebServer();
   @Rule public final OkHttpClientTestRule clientTestRule = new OkHttpClientTestRule();
@@ -251,8 +252,8 @@ public final class WebSocketHttpTest {
     server.close(1001, "bye");
     clientListener.assertClosed(1001, "bye");
     clientListener.assertExhausted();
-    serverListener.assertClosing(1000,  "");
-    serverListener.assertClosed(1000,  "");
+    serverListener.assertClosing(1000, "");
+    serverListener.assertClosed(1000, "");
     serverListener.assertExhausted();
   }
 
@@ -581,8 +582,9 @@ public final class WebSocketHttpTest {
     }
 
     long elapsedUntilPong3 = System.nanoTime() - startNanos;
-    assertThat((double) TimeUnit.NANOSECONDS.toMillis(elapsedUntilPong3)).isCloseTo((double) 1500, offset(
-        250d));
+    assertThat((double) TimeUnit.NANOSECONDS.toMillis(elapsedUntilPong3)).isCloseTo((double) 1500,
+        offset(
+            250d));
 
     // The client pinged the server 3 times, and it has ponged back 3 times.
     assertThat(webSocket.sentPingCount()).isEqualTo(3);
@@ -646,8 +648,9 @@ public final class WebSocketHttpTest {
     latch.countDown();
 
     long elapsedUntilFailure = System.nanoTime() - openAtNanos;
-    assertThat((double) TimeUnit.NANOSECONDS.toMillis(elapsedUntilFailure)).isCloseTo((double) 1000, offset(
-        250d));
+    assertThat((double) TimeUnit.NANOSECONDS.toMillis(elapsedUntilFailure)).isCloseTo((double) 1000,
+        offset(
+            250d));
   }
 
   /** https://github.com/square/okhttp/issues/2788 */
@@ -666,8 +669,9 @@ public final class WebSocketHttpTest {
     // Confirm that the hard cancel occurred after 500 ms.
     clientListener.assertFailure();
     long elapsedUntilFailure = System.nanoTime() - closeAtNanos;
-    assertThat((double) TimeUnit.NANOSECONDS.toMillis(elapsedUntilFailure)).isCloseTo((double) 500, offset(
-        250d));
+    assertThat((double) TimeUnit.NANOSECONDS.toMillis(elapsedUntilFailure)).isCloseTo((double) 500,
+        offset(
+            250d));
 
     // Close the server and confirm it saw what we expected.
     server.close(1000, null);
