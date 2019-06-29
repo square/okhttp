@@ -30,11 +30,16 @@ import static org.junit.Assert.assertTrue;
 
   @Test public void requiresRequestBody() {
     assertTrue(HttpMethod.requiresRequestBody("PUT"));
-    assertFalse(HttpMethod.requiresRequestBody("POST"));
+    assertFalse(HttpMethod.requiresRequestBody("GET"));
   }
 
   @Test public void hasBody() {
-    Response response = new Response.Builder().build();
+    Request request = new Request.Builder().url("http://example.com").build();
+    Response response = new Response.Builder().code(200)
+        .message("OK")
+        .request(request)
+        .protocol(Protocol.HTTP_2)
+        .build();
     assertTrue(HttpHeaders.hasBody(response));
   }
 }
