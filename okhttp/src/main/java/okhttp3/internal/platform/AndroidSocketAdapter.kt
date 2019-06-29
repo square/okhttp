@@ -54,6 +54,7 @@ open class AndroidSocketAdapter internal constructor(private val packageName: St
     val matches = matchesSocketInternal(sslSocket)
 
     if (matches) {
+      // Avoid from scratch reflection, jump from the socket instance
       initSocketClasses(sslSocket.javaClass)
     }
 

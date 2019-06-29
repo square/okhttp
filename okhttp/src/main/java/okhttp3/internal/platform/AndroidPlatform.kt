@@ -62,8 +62,8 @@ class AndroidPlatform : Platform() {
   }
 
   override fun trustManager(sslSocketFactory: SSLSocketFactory): X509TrustManager? =
-      socketAdapters.find { it.matchesSocketFactory(sslSocketFactory) }?.trustManager(
-          sslSocketFactory)
+      socketAdapters.find { it.matchesSocketFactory(sslSocketFactory) }
+          ?.trustManager(sslSocketFactory)
 
   override fun configureTlsExtensions(
     sslSocket: SSLSocket,
@@ -75,11 +75,9 @@ class AndroidPlatform : Platform() {
         ?.configureTlsExtensions(sslSocket, hostname, protocols)
   }
 
-  override fun getSelectedProtocol(sslSocket: SSLSocket): String? {
-    // No TLS extensions if the socket class is custom.
-    return socketAdapters.find { it.matchesSocket(sslSocket) }
-        ?.getSelectedProtocol(sslSocket)
-  }
+  override fun getSelectedProtocol(sslSocket: SSLSocket) =
+      // No TLS extensions if the socket class is custom.
+      socketAdapters.find { it.matchesSocket(sslSocket) }?.getSelectedProtocol(sslSocket)
 
   override fun log(level: Int, message: String, t: Throwable?) {
     Companion.log(level, message, t)
@@ -255,7 +253,6 @@ class AndroidPlatform : Platform() {
   /**
    * A trust manager for Android applications that customize the trust manager.
    *
-   *
    * This class exploits knowledge of Android implementation details. This class is potentially
    * much faster to initialize than [BasicTrustRootIndex] because it doesn't need to load and
    * index trusted CA certificates.
@@ -264,7 +261,6 @@ class AndroidPlatform : Platform() {
     private val trustManager: X509TrustManager,
     private val findByIssuerAndSignatureMethod: Method
   ) : TrustRootIndex {
-
     override fun findByIssuerAndSignature(cert: X509Certificate): X509Certificate? {
       return try {
         val trustAnchor = findByIssuerAndSignatureMethod.invoke(

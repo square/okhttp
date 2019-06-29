@@ -59,7 +59,7 @@ class AndroidSocketAdapterTest(val adapter: AndroidSocketAdapter) {
     @JvmStatic
     @Parameterized.Parameters(name = "{0}")
     fun data(): Collection<AndroidSocketAdapter> {
-      return listOf(ConscryptSocketAdapter, AndroidSocketAdapter("org.conscrypt"));
+      return listOf(ConscryptSocketAdapter, AndroidSocketAdapter("org.conscrypt"))
     }
   }
 }
