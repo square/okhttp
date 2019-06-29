@@ -63,10 +63,6 @@ class AndroidPlatform(
   override fun trustManager(sslSocketFactory: SSLSocketFactory): X509TrustManager? {
     val socketClasses = socketClasses.find { it.matchesSocketFactory(sslSocketFactory) }
 
-    if (socketClasses == null) {
-      return super.trustManager(sslSocketFactory)
-    }
-
     val context: Any? =
         readFieldOrNull(sslSocketFactory, socketClasses.paramClass, "sslParameters")
     val x509TrustManager = readFieldOrNull(
@@ -326,14 +322,18 @@ class AndroidPlatform(
     }
   }
 
-  class SocketClasses(
-    val packageName: String,
-    val sslSocketClass: Class<*>,
-    val paramClass: Class<*>
+  class ConscryptClasses(
+    val packageName: String
   ) {
-    fun matchesSocket(socket: SSLSocket): Boolean = sslSocketClass.isInstance(socket)
+    fun matchesSocket(socket: SSLSocket): Boolean = sslSocketClass.javaClass.name.startsWith("${this.packageName}.")
     fun matchesSocketFactory(sslSocketFactory: SSLSocketFactory) =
         sslSocketFactory.javaClass.name.startsWith("${this.packageName}.")
+
+//    val sslParametersClass = Class.forName("$prefix.SSLParametersImpl")
+//    val sslSocketClass = Class.forName("$prefix.OpenSSLSocketImpl")
+
+    val sslSocketClass: Class<*>,
+    val paramClass: Class<*>
 
     val setUseSessionTickets = sslSocketClass.getDeclaredMethod(
         "setUseSessionTickets", Boolean::class.javaPrimitiveType)
@@ -347,29 +347,23 @@ class AndroidPlatform(
 
     fun buildIfSupported(): Platform? {
       // Attempt to find Android 5+ APIs.
-      val androidClasses = conscryptClasses("com.android.org.conscrypt") ?: return null
+      val androidClasses = ConscryptClasses("com.android.org.conscrypt")
+
+      if (!androidClasses.isAvailable()) {
+        return null
+      }
 
       if (Build.VERSION.SDK_INT < 21) {
         throw IllegalStateException(
             "Expected Android API level 21+ but was ${Build.VERSION.SDK_INT}")
       }
 
-      val gmsClasses = conscryptClasses("com.google.android.gms.org.conscrypt")
-      val conscryptClasses = conscryptClasses("org.conscrypt")
+      val gmsClasses = ConscryptClasses("com.google.android.gms.org.conscrypt")
+      val conscryptClasses = ConscryptClasses("org.conscrypt")
 
-      val supportedClasses = listOfNotNull(androidClasses, gmsClasses, conscryptClasses)
+      val supportedClasses = listOf(androidClasses, gmsClasses, conscryptClasses)
 
       return AndroidPlatform(supportedClasses)
-    }
-
-    private fun conscryptClasses(prefix: String): SocketClasses? {
-      return try {
-        val sslParametersClass = Class.forName("$prefix.SSLParametersImpl")
-        val sslSocketClass = Class.forName("$prefix.OpenSSLSocketImpl")
-        SocketClasses(prefix, sslSocketClass, sslParametersClass)
-      } catch (_: ClassNotFoundException) {
-        null // Not an Android runtime.
-      }
     }
   }
 }
