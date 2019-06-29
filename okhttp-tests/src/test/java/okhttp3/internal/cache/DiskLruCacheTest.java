@@ -33,7 +33,6 @@ import okio.Okio;
 import okio.Source;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -1640,6 +1639,23 @@ public final class DiskLruCacheTest {
     editor.abort();
     assertEquals(0, cache.size());
     assertAbsent("k1");
+  }
+
+  @Test public void dontRemoveUnfinishedEntryWhenCreatingSnapshot() throws Exception {
+    DiskLruCache.Editor creator = cache.edit("k1");
+    setString(creator, 0, "ABC");
+    setString(creator, 1, "DE");
+
+    assertNull(creator.newSource(0));
+    assertNull(creator.newSource(1));
+
+    Iterator<DiskLruCache.Snapshot> snapshotWhileEditing = cache.snapshots();
+    assertFalse(snapshotWhileEditing.hasNext()); // entry still is being created/edited
+    creator.commit();
+
+    Iterator<DiskLruCache.Snapshot> snapshotAfterCommit = cache.snapshots();
+
+    assertTrue("Entry has been removed during creation.", snapshotAfterCommit.hasNext());
   }
 
   private void assertJournalEquals(String... expectedBodyLines) throws Exception {
