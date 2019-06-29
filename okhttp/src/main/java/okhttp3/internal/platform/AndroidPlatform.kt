@@ -26,7 +26,6 @@ import java.lang.reflect.InvocationTargetException
 import java.lang.reflect.Method
 import java.net.InetSocketAddress
 import java.net.Socket
-import java.nio.charset.StandardCharsets.UTF_8
 import java.security.cert.Certificate
 import java.security.cert.TrustAnchor
 import java.security.cert.X509Certificate
@@ -36,9 +35,11 @@ import javax.net.ssl.SSLSocketFactory
 import javax.net.ssl.X509TrustManager
 
 /** Android 5+. */
-class AndroidPlatform(
-  private val socketClasses: List<SocketClasses>
-) : Platform() {
+class AndroidPlatform : Platform() {
+  private val socketAdapters =
+      listOf(AndroidSocketAdapter.Standard, AndroidSocketAdapter.Gms,
+          ConscryptSocketAdapter).filter(AndroidSocketAdapter::isSupported)
+
   private val closeGuard = CloseGuard.get()
 
   @Throws(IOException::class)
@@ -60,16 +61,9 @@ class AndroidPlatform(
     }
   }
 
-  override fun trustManager(sslSocketFactory: SSLSocketFactory): X509TrustManager? {
-    val socketClasses = socketClasses.find { it.matchesSocketFactory(sslSocketFactory) }
-
-    val context: Any? =
-        readFieldOrNull(sslSocketFactory, socketClasses.paramClass, "sslParameters")
-    val x509TrustManager = readFieldOrNull(
-        context!!, X509TrustManager::class.java, "x509TrustManager")
-    return x509TrustManager ?: readFieldOrNull(context, X509TrustManager::class.java,
-        "trustManager")
-  }
+  override fun trustManager(sslSocketFactory: SSLSocketFactory): X509TrustManager? =
+      socketAdapters.find { it.matchesSocketFactory(sslSocketFactory) }?.trustManager(
+          sslSocketFactory)
 
   override fun configureTlsExtensions(
     sslSocket: SSLSocket,
@@ -77,56 +71,18 @@ class AndroidPlatform(
     protocols: List<Protocol>
   ) {
     // No TLS extensions if the socket class is custom.
-    val socketClasses = socketClasses.find { it.matchesSocket(sslSocket) } ?: return
-
-    try {
-      // Enable SNI and session tickets.
-      if (hostname != null) {
-        socketClasses.setUseSessionTickets.invoke(sslSocket, true)
-        // This is SSLParameters.setServerNames() in API 24+.
-        socketClasses.setHostname.invoke(sslSocket, hostname)
-      }
-
-      // Enable ALPN.
-      socketClasses.setAlpnProtocols.invoke(sslSocket, concatLengthPrefixed(protocols))
-    } catch (e: IllegalAccessException) {
-      throw AssertionError(e)
-    } catch (e: InvocationTargetException) {
-      throw AssertionError(e)
-    }
+    socketAdapters.find { it.matchesSocket(sslSocket) }
+        ?.configureTlsExtensions(sslSocket, hostname, protocols)
   }
 
-  override fun getSelectedProtocol(socket: SSLSocket): String? {
-    val socketClasses = socketClasses.find { it.matchesSocket(socket) } ?: return null
-
-    return try {
-      val alpnResult = socketClasses.getAlpnSelectedProtocol.invoke(socket) as ByteArray?
-      if (alpnResult != null) String(alpnResult, UTF_8) else null
-    } catch (e: IllegalAccessException) {
-      throw AssertionError(e)
-    } catch (e: InvocationTargetException) {
-      throw AssertionError(e)
-    }
+  override fun getSelectedProtocol(sslSocket: SSLSocket): String? {
+    // No TLS extensions if the socket class is custom.
+    return socketAdapters.find { it.matchesSocket(sslSocket) }
+        ?.getSelectedProtocol(sslSocket)
   }
 
   override fun log(level: Int, message: String, t: Throwable?) {
-    var logMessage = message
-    val logLevel = if (level == WARN) Log.WARN else Log.DEBUG
-    if (t != null) logMessage = logMessage + '\n'.toString() + Log.getStackTraceString(t)
-
-    // Split by line, then ensure each line can fit into Log's maximum length.
-    var i = 0
-    val length = logMessage.length
-    while (i < length) {
-      var newline = logMessage.indexOf('\n', i)
-      newline = if (newline != -1) newline else length
-      do {
-        val end = minOf(newline, i + MAX_LOG_LENGTH)
-        Log.println(logLevel, "OkHttp", logMessage.substring(i, end))
-        i = end
-      } while (i < newline)
-      i++
-    }
+    Companion.log(level, message, t)
   }
 
   override fun getStackTraceForCloseable(closer: String): Any? = closeGuard.createAndOpen(closer)
@@ -322,48 +278,46 @@ class AndroidPlatform(
     }
   }
 
-  class ConscryptClasses(
-    val packageName: String
-  ) {
-    fun matchesSocket(socket: SSLSocket): Boolean = sslSocketClass.javaClass.name.startsWith("${this.packageName}.")
-    fun matchesSocketFactory(sslSocketFactory: SSLSocketFactory) =
-        sslSocketFactory.javaClass.name.startsWith("${this.packageName}.")
-
-//    val sslParametersClass = Class.forName("$prefix.SSLParametersImpl")
-//    val sslSocketClass = Class.forName("$prefix.OpenSSLSocketImpl")
-
-    val sslSocketClass: Class<*>,
-    val paramClass: Class<*>
-
-    val setUseSessionTickets = sslSocketClass.getDeclaredMethod(
-        "setUseSessionTickets", Boolean::class.javaPrimitiveType)
-    val setHostname = sslSocketClass.getMethod("setHostname", String::class.java)
-    val getAlpnSelectedProtocol = sslSocketClass.getMethod("getAlpnSelectedProtocol")
-    val setAlpnProtocols = sslSocketClass.getMethod("setAlpnProtocols", ByteArray::class.java)
-  }
-
   companion object {
     private const val MAX_LOG_LENGTH = 4000
 
-    fun buildIfSupported(): Platform? {
-      // Attempt to find Android 5+ APIs.
-      val androidClasses = ConscryptClasses("com.android.org.conscrypt")
+    val isSupported: Boolean by lazy {
+      try {
+        // Trigger an early exception over a fatal error, prefer a RuntimeException over Error.
+        Class.forName("com.android.org.conscrypt.OpenSSLSocketImpl")
 
-      if (!androidClasses.isAvailable()) {
-        return null
+        // Fail Fast
+        if (Build.VERSION.SDK_INT < 21) {
+          throw IllegalStateException(
+              "Expected Android API level 21+ but was ${Build.VERSION.SDK_INT}")
+        }
+
+        true
+      } catch (e: ClassNotFoundException) {
+        false
       }
+    }
 
-      if (Build.VERSION.SDK_INT < 21) {
-        throw IllegalStateException(
-            "Expected Android API level 21+ but was ${Build.VERSION.SDK_INT}")
+    fun buildIfSupported(): Platform? = if (isSupported) AndroidPlatform() else null
+
+    fun log(level: Int, message: String, t: Throwable?) {
+      var logMessage = message
+      val logLevel = if (level == WARN) Log.WARN else Log.DEBUG
+      if (t != null) logMessage = logMessage + '\n'.toString() + Log.getStackTraceString(t)
+
+      // Split by line, then ensure each line can fit into Log's maximum length.
+      var i = 0
+      val length = logMessage.length
+      while (i < length) {
+        var newline = logMessage.indexOf('\n', i)
+        newline = if (newline != -1) newline else length
+        do {
+          val end = minOf(newline, i + MAX_LOG_LENGTH)
+          Log.println(logLevel, "OkHttp", logMessage.substring(i, end))
+          i = end
+        } while (i < newline)
+        i++
       }
-
-      val gmsClasses = ConscryptClasses("com.google.android.gms.org.conscrypt")
-      val conscryptClasses = ConscryptClasses("org.conscrypt")
-
-      val supportedClasses = listOf(androidClasses, gmsClasses, conscryptClasses)
-
-      return AndroidPlatform(supportedClasses)
     }
   }
 }

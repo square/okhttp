@@ -119,7 +119,7 @@ open class Platform {
   }
 
   /** Returns the negotiated protocol, or null if no protocol was negotiated. */
-  open fun getSelectedProtocol(socket: SSLSocket): String? = null
+  open fun getSelectedProtocol(sslSocket: SSLSocket): String? = null
 
   @Throws(IOException::class)
   open fun connectSocket(socket: Socket, address: InetSocketAddress, connectTimeout: Int) {
