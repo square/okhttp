@@ -30,7 +30,7 @@ import java.io.IOException
 
 class BrotliInterceptorTest {
   @Test
-  fun testUncompress() {
+  fun testUncompressBrotli() {
     val s =
         "1bce00009c05ceb9f028d14e416230f718960a537b0922d2f7b6adef56532c08dff44551516690131494db" +
             "6021c7e3616c82c1bc2416abb919aaa06e8d30d82cc2981c2f5c900bfb8ee29d5c03deb1c0dacff80e" +
