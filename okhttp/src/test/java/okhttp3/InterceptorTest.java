@@ -16,6 +16,7 @@
 package okhttp3;
 
 import java.io.IOException;
+import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketTimeoutException;
@@ -684,7 +685,8 @@ public final class InterceptorTest {
       return chain.proceed(chain.request());
     };
 
-    ServerSocket serverSocket = new ServerSocket(0, 1);
+    InetAddress localhost = InetAddress.getLoopbackAddress();
+    ServerSocket serverSocket = new ServerSocket(0, 1, localhost);
     // Fill backlog queue with this request so subsequent requests will be blocked.
     new Socket().connect(serverSocket.getLocalSocketAddress());
 

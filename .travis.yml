@@ -4,7 +4,7 @@ jdk:
   - oraclejdk8
 
 script:
- - ./gradlew check
+ - ./gradlew check --parallel
 
 after_success:
   - .buildscript/deploy_snapshot.sh
