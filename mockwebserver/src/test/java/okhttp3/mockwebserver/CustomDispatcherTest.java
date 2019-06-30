@@ -22,20 +22,18 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicInteger;
-import org.junit.After;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.Timeout;
 
-import static org.junit.Assert.assertEquals;
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class CustomDispatcherTest {
-  private MockWebServer mockWebServer = new MockWebServer();
+  @Rule public MockWebServer mockWebServer = new MockWebServer();
 
-  @After public void tearDown() throws Exception {
-    mockWebServer.shutdown();
-  }
+  @Rule public Timeout globalTimeout = Timeout.seconds(30);
 
   @Test public void simpleDispatch() throws Exception {
-    mockWebServer.start();
     final List<RecordedRequest> requestsMade = new ArrayList<>();
     final Dispatcher dispatcher = new Dispatcher() {
       @Override
@@ -44,19 +42,18 @@ public class CustomDispatcherTest {
         return new MockResponse();
       }
     };
-    assertEquals(0, requestsMade.size());
+    assertThat(requestsMade.size()).isEqualTo(0);
     mockWebServer.setDispatcher(dispatcher);
     final URL url = mockWebServer.url("/").url();
     final HttpURLConnection conn = (HttpURLConnection) url.openConnection();
     conn.getResponseCode(); // Force the connection to hit the "server".
     // Make sure our dispatcher got the request.
-    assertEquals(1, requestsMade.size());
+    assertThat(requestsMade.size()).isEqualTo(1);
   }
 
   @Test public void outOfOrderResponses() throws Exception {
     AtomicInteger firstResponseCode = new AtomicInteger();
     AtomicInteger secondResponseCode = new AtomicInteger();
-    mockWebServer.start();
     final String secondRequest = "/bar";
     final String firstRequest = "/foo";
     final CountDownLatch latch = new CountDownLatch(1);
@@ -75,24 +72,26 @@ public class CustomDispatcherTest {
     final Thread endsFirst = buildRequestThread(secondRequest, secondResponseCode);
     endsFirst.start();
     endsFirst.join();
-    assertEquals(0, firstResponseCode.get()); // First response is still waiting.
-    assertEquals(200, secondResponseCode.get()); // Second response is done.
+    // First response is still waiting.
+    assertThat(firstResponseCode.get()).isEqualTo(0);
+    // Second response is done.
+    assertThat(secondResponseCode.get()).isEqualTo(200);
     latch.countDown();
     startsFirst.join();
-    assertEquals(200, firstResponseCode.get()); // And now it's done!
-    assertEquals(200, secondResponseCode.get()); // (Still done).
+    // And now it's done!
+    assertThat(firstResponseCode.get()).isEqualTo(200);
+    // (Still done).
+    assertThat(secondResponseCode.get()).isEqualTo(200);
   }
 
-  private Thread buildRequestThread(final String path, final AtomicInteger responseCode) {
-    return new Thread(new Runnable() {
-      @Override public void run() {
-        final URL url = mockWebServer.url(path).url();
-        final HttpURLConnection conn;
-        try {
-          conn = (HttpURLConnection) url.openConnection();
-          responseCode.set(conn.getResponseCode()); // Force the connection to hit the "server".
-        } catch (IOException e) {
-        }
+  private Thread buildRequestThread(String path, AtomicInteger responseCode) {
+    return new Thread(() -> {
+      URL url = mockWebServer.url(path).url();
+      HttpURLConnection conn;
+      try {
+        conn = (HttpURLConnection) url.openConnection();
+        responseCode.set(conn.getResponseCode()); // Force the connection to hit the "server".
+      } catch (IOException ignored) {
       }
     });
   }

@@ -21,15 +21,14 @@ import java.io.IOException;
 import java.net.ProtocolException;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
+import okhttp3.Headers;
 import okhttp3.Protocol;
-import okhttp3.internal.Util;
 import okhttp3.internal.http2.Header;
 import okhttp3.internal.http2.Http2Connection;
 import okhttp3.internal.http2.Http2Stream;
@@ -38,6 +37,8 @@ import okio.BufferedSink;
 import okio.Okio;
 import okio.Source;
 
+import static java.util.Arrays.asList;
+import static okhttp3.internal.Util.closeQuietly;
 import static okhttp3.internal.platform.Platform.INFO;
 import static okhttp3.tls.internal.TlsUtil.localhost;
 
@@ -75,10 +76,14 @@ public final class Http2Server extends Http2Connection.Listener {
         connection.start();
       } catch (IOException e) {
         logger.log(Level.INFO, "Http2Server connection failure: " + e);
-        Util.closeQuietly(socket);
+        if (socket != null) {
+          closeQuietly(socket);
+        }
       } catch (Exception e) {
         logger.log(Level.WARNING, "Http2Server unexpected failure", e);
-        Util.closeQuietly(socket);
+        if (socket != null) {
+          closeQuietly(socket);
+        }
       }
     }
   }
@@ -95,11 +100,11 @@ public final class Http2Server extends Http2Connection.Listener {
 
   @Override public void onStream(Http2Stream stream) throws IOException {
     try {
-      List<Header> requestHeaders = stream.getRequestHeaders();
+      Headers requestHeaders = stream.takeHeaders();
       String path = null;
       for (int i = 0, size = requestHeaders.size(); i < size; i++) {
-        if (requestHeaders.get(i).name.equals(Header.TARGET_PATH)) {
-          path = requestHeaders.get(i).value.utf8();
+        if (requestHeaders.name(i).equals(Header.TARGET_PATH_UTF8)) {
+          path = requestHeaders.value(i);
           break;
         }
       }
@@ -124,24 +129,24 @@ public final class Http2Server extends Http2Connection.Listener {
   }
 
   private void send404(Http2Stream stream, String path) throws IOException {
-    List<Header> responseHeaders = Arrays.asList(
+    List<Header> responseHeaders = asList(
         new Header(":status", "404"),
         new Header(":version", "HTTP/1.1"),
         new Header("content-type", "text/plain")
     );
-    stream.sendResponseHeaders(responseHeaders, true);
+    stream.writeHeaders(responseHeaders, false, false);
     BufferedSink out = Okio.buffer(stream.getSink());
     out.writeUtf8("Not found: " + path);
     out.close();
   }
 
   private void serveDirectory(Http2Stream stream, File[] files) throws IOException {
-    List<Header> responseHeaders = Arrays.asList(
+    List<Header> responseHeaders = asList(
         new Header(":status", "200"),
         new Header(":version", "HTTP/1.1"),
         new Header("content-type", "text/html; charset=UTF-8")
     );
-    stream.sendResponseHeaders(responseHeaders, true);
+    stream.writeHeaders(responseHeaders, false, false);
     BufferedSink out = Okio.buffer(stream.getSink());
     for (File file : files) {
       String target = file.isDirectory() ? (file.getName() + "/") : file.getName();
@@ -151,19 +156,14 @@ public final class Http2Server extends Http2Connection.Listener {
   }
 
   private void serveFile(Http2Stream stream, File file) throws IOException {
-    List<Header> responseHeaders = Arrays.asList(
+    List<Header> responseHeaders = asList(
         new Header(":status", "200"),
         new Header(":version", "HTTP/1.1"),
         new Header("content-type", contentType(file))
     );
-    stream.sendResponseHeaders(responseHeaders, true);
-    Source source = Okio.source(file);
-    try {
-      BufferedSink out = Okio.buffer(stream.getSink());
-      out.writeAll(source);
-      out.close();
-    } finally {
-      Util.closeQuietly(source);
+    stream.writeHeaders(responseHeaders, false, false);
+    try (Source source = Okio.source(file); BufferedSink sink = Okio.buffer(stream.getSink())) {
+      sink.writeAll(source);
     }
   }
 

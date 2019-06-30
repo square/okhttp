@@ -1,0 +1,48 @@
+@font-face {
+    font-family: cash-market;
+    src: url("https://cash-f.squarecdn.com/static/fonts/cash-market/v2/CashMarket-Regular.woff2") format("woff2");
+    font-weight: 400;
+    font-style: normal
+}
+
+@font-face {
+    font-family: cash-market;
+    src: url("https://cash-f.squarecdn.com/static/fonts/cash-market/v2/CashMarket-Medium.woff2") format("woff2");
+    font-weight: 500;
+    font-style: normal
+}
+
+@font-face {
+    font-family: cash-market;
+    src: url("https://cash-f.squarecdn.com/static/fonts/cash-market/v2/CashMarket-Bold.woff2") format("woff2");
+    font-weight: 700;
+    font-style: normal
+}
+
+body, input {
+    font-family: cash-market,"Helvetica Neue",helvetica,sans-serif;
+}
+
+.md-typeset h1, .md-typeset h2, .md-typeset h3, .md-typeset h4 {
+    font-family: cash-market,"Helvetica Neue",helvetica,sans-serif;
+    line-height: normal;
+    font-weight: bold;
+    color: #353535;
+}
+
+button.dl {
+  font-weight: 300;
+  font-size: 25px;
+  line-height: 40px;
+  padding: 3px 10px;
+  display: inline-block;
+  border-radius: 6px;
+  color: #f0f0f0;
+  margin: 5px 0;
+  width: auto;
+}
+
+.logo {
+  text-align: center;
+  margin-top: 150px;
+}

@@ -1,0 +1,8 @@
+dependencies {
+  api project(':okhttp')
+  api deps.junit
+  api deps.assertj
+  api deps.conscrypt
+  
+  compileOnly deps.jsr305
+}

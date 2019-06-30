@@ -1,0 +1,9 @@
+dependencies {
+  testImplementation deps.okio
+  testImplementation deps.moshi
+  testImplementation project(':okhttp')
+  testImplementation project(':okhttp-testing-support')
+  testImplementation project(':mockwebserver')
+  testImplementation deps.junit
+  testImplementation deps.assertj
+}

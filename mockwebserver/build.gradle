@@ -1,0 +1,119 @@
+apply plugin: 'com.vanniktech.maven.publish'
+apply plugin: 'me.champeau.gradle.japicmp'
+
+jar {
+  manifest {
+    attributes('Automatic-Module-Name': 'okhttp3.mockwebserver')
+  }
+}
+
+dependencies {
+  api project(':okhttp')
+  api deps.junit
+
+  testImplementation project(':okhttp-testing-support')
+  testImplementation project(':okhttp-tls')
+  testImplementation deps.assertj
+}
+
+afterEvaluate { project ->
+  project.tasks.dokka {
+    outputDirectory = "$rootDir/docs/4.x"
+    outputFormat = 'gfm'
+  }
+}
+
+task japicmp(type: me.champeau.gradle.japicmp.JapicmpTask, dependsOn: 'jar') {
+  oldClasspath = files(baselineJar(project, baselineVersion))
+  newClasspath = files(jar.archivePath)
+  onlyBinaryIncompatibleModified = true
+  failOnModification = true
+  txtOutputFile = file("$buildDir/reports/japi.txt")
+  ignoreMissingClasses = true
+  includeSynthetic = true
+  packageExcludes = [
+      'okhttp3.mockwebserver.internal',
+  ]        
+  methodExcludes = [
+      // Became 'final' in 4.0.0:
+      'okhttp3.mockwebserver.RecordedRequest#getChunkSizes()',
+      'okhttp3.mockwebserver.RecordedRequest#getHandshake()',
+      'okhttp3.mockwebserver.RecordedRequest#getHeader(java.lang.String)',
+      'okhttp3.mockwebserver.RecordedRequest#getHeaders()',
+      'okhttp3.mockwebserver.RecordedRequest#getMethod()',
+      'okhttp3.mockwebserver.RecordedRequest#getPath()',
+      'okhttp3.mockwebserver.RecordedRequest#getRequestLine()',
+      'okhttp3.mockwebserver.RecordedRequest#getRequestUrl()',
+      'okhttp3.mockwebserver.RecordedRequest#getSequenceNumber()',
+      'okhttp3.mockwebserver.RecordedRequest#getTlsVersion()',
+      'okhttp3.mockwebserver.RecordedRequest#getUtf8Body()',
+      'okhttp3.mockwebserver.RecordedRequest#getBody()',
+      'okhttp3.mockwebserver.RecordedRequest#getBodySize()',
+      'okhttp3.mockwebserver.PushPromise#headers()',
+      'okhttp3.mockwebserver.PushPromise#method()',
+      'okhttp3.mockwebserver.PushPromise#path()',
+      'okhttp3.mockwebserver.PushPromise#response()',
+      'okhttp3.mockwebserver.MockResponse#addHeader(java.lang.String)',
+      'okhttp3.mockwebserver.MockResponse#addHeader(java.lang.String, java.lang.Object)',
+      'okhttp3.mockwebserver.MockResponse#addHeaderLenient(java.lang.String, java.lang.Object)',
+      'okhttp3.mockwebserver.MockResponse#clearHeaders()',
+      'okhttp3.mockwebserver.MockResponse#getBody()',
+      'okhttp3.mockwebserver.MockResponse#getBodyDelay(java.util.concurrent.TimeUnit)',
+      'okhttp3.mockwebserver.MockResponse#getDuplexResponseBody()',
+      'okhttp3.mockwebserver.MockResponse#getHeadersDelay(java.util.concurrent.TimeUnit)',
+      'okhttp3.mockwebserver.MockResponse#getHttp2ErrorCode()',
+      'okhttp3.mockwebserver.MockResponse#getPushPromises()',
+      'okhttp3.mockwebserver.MockResponse#getSettings()',
+      'okhttp3.mockwebserver.MockResponse#getSocketPolicy()',
+      'okhttp3.mockwebserver.MockResponse#getStatus()',
+      'okhttp3.mockwebserver.MockResponse#getThrottleBytesPerPeriod()',
+      'okhttp3.mockwebserver.MockResponse#getThrottlePeriod(java.util.concurrent.TimeUnit)',
+      'okhttp3.mockwebserver.MockResponse#getTrailers()',
+      'okhttp3.mockwebserver.MockResponse#getWebSocketListener()',
+      'okhttp3.mockwebserver.MockResponse#removeHeader(java.lang.String)',
+      'okhttp3.mockwebserver.MockResponse#setBody(okio.Buffer)',
+      'okhttp3.mockwebserver.MockResponse#setBody(java.lang.String)',
+      'okhttp3.mockwebserver.MockResponse#setBodyDelay(long, java.util.concurrent.TimeUnit)',
+      'okhttp3.mockwebserver.MockResponse#setChunkedBody(okio.Buffer, int)',
+      'okhttp3.mockwebserver.MockResponse#setChunkedBody(java.lang.String, int)',
+      'okhttp3.mockwebserver.MockResponse#setHeader(java.lang.String, java.lang.Object)',
+      'okhttp3.mockwebserver.MockResponse#setHeaders(okhttp3.Headers)',
+      'okhttp3.mockwebserver.MockResponse#setHeadersDelay(long, java.util.concurrent.TimeUnit)',
+      'okhttp3.mockwebserver.MockResponse#setHttp2ErrorCode(int)',
+      'okhttp3.mockwebserver.MockResponse#setResponseCode(int)',
+      'okhttp3.mockwebserver.MockResponse#setSocketPolicy(okhttp3.mockwebserver.SocketPolicy)',
+      'okhttp3.mockwebserver.MockResponse#setTrailers(okhttp3.Headers)',
+      'okhttp3.mockwebserver.MockResponse#throttleBody(long, long, java.util.concurrent.TimeUnit)',
+      'okhttp3.mockwebserver.MockResponse#withPush(okhttp3.mockwebserver.PushPromise)',
+      'okhttp3.mockwebserver.MockResponse#withSettings(okhttp3.internal.http2.Settings)',
+      'okhttp3.mockwebserver.MockResponse#withWebSocketUpgrade(okhttp3.WebSocketListener)',
+      'okhttp3.mockwebserver.MockResponse#getHeaders()',
+      'okhttp3.mockwebserver.MockResponse#setStatus(java.lang.String)',
+      'okhttp3.mockwebserver.MockResponse#isDuplex()',
+      'okhttp3.mockwebserver.MockResponse#setBody(okhttp3.mockwebserver.internal.duplex.DuplexResponseBody)',
+      'okhttp3.mockwebserver.MockWebServer#enqueue(okhttp3.mockwebserver.MockResponse)',
+      'okhttp3.mockwebserver.MockWebServer#getDispatcher()',
+      'okhttp3.mockwebserver.MockWebServer#getHostName()',
+      'okhttp3.mockwebserver.MockWebServer#getPort()',
+      'okhttp3.mockwebserver.MockWebServer#getRequestCount()',
+      'okhttp3.mockwebserver.MockWebServer#noClientAuth()',
+      'okhttp3.mockwebserver.MockWebServer#protocols()',
+      'okhttp3.mockwebserver.MockWebServer#requestClientAuth()',
+      'okhttp3.mockwebserver.MockWebServer#requireClientAuth()',
+      'okhttp3.mockwebserver.MockWebServer#setBodyLimit(long)',
+      'okhttp3.mockwebserver.MockWebServer#setDispatcher(okhttp3.mockwebserver.Dispatcher)',
+      'okhttp3.mockwebserver.MockWebServer#setProtocolNegotiationEnabled(boolean)',
+      'okhttp3.mockwebserver.MockWebServer#setProtocols(java.util.List)',
+      'okhttp3.mockwebserver.MockWebServer#setServerSocketFactory(javax.net.ServerSocketFactory)',
+      'okhttp3.mockwebserver.MockWebServer#shutdown()',
+      'okhttp3.mockwebserver.MockWebServer#start()',
+      'okhttp3.mockwebserver.MockWebServer#start(int)',
+      'okhttp3.mockwebserver.MockWebServer#start(java.net.InetAddress, int)',
+      'okhttp3.mockwebserver.MockWebServer#takeRequest()',
+      'okhttp3.mockwebserver.MockWebServer#takeRequest(long, java.util.concurrent.TimeUnit)',
+      'okhttp3.mockwebserver.MockWebServer#toProxyAddress()',
+      'okhttp3.mockwebserver.MockWebServer#url(java.lang.String)',
+      'okhttp3.mockwebserver.MockWebServer#useHttps(javax.net.ssl.SSLSocketFactory, boolean)',
+  ]
+}
+check.dependsOn(japicmp)

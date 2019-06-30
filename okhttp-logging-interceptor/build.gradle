@@ -1,0 +1,44 @@
+apply plugin: 'com.vanniktech.maven.publish'
+apply plugin: 'me.champeau.gradle.japicmp'
+
+jar {
+  manifest {
+    attributes('Automatic-Module-Name': 'okhttp3.logging')
+  }
+}
+
+dependencies {
+  api project(':okhttp')
+  compileOnly deps.jsr305
+
+  testCompileOnly deps.jsr305
+  testImplementation deps.junit
+  testImplementation project(':mockwebserver')
+  testImplementation project(':okhttp-testing-support')
+  testImplementation project(':okhttp-tls')
+  testImplementation deps.assertj
+}
+
+afterEvaluate { project ->
+  project.tasks.dokka {
+    outputDirectory = "$rootDir/docs/4.x"
+    outputFormat = 'gfm'
+  }
+}
+
+task japicmp(type: me.champeau.gradle.japicmp.JapicmpTask, dependsOn: 'jar') {
+  oldClasspath = files(baselineJar(project, baselineVersion))
+  newClasspath = files(jar.archivePath)
+  onlyBinaryIncompatibleModified = true
+  failOnModification = true
+  txtOutputFile = file("$buildDir/reports/japi.txt")
+  ignoreMissingClasses = true
+  includeSynthetic = true
+  methodExcludes = [
+    // Became 'final' in 4.0.0:
+    'okhttp3.logging.HttpLoggingInterceptor#redactHeader(java.lang.String)',
+    'okhttp3.logging.HttpLoggingInterceptor#getLevel()',
+    'okhttp3.logging.HttpLoggingInterceptor#setLevel(okhttp3.logging.HttpLoggingInterceptor$Level)'
+  ]
+}
+check.dependsOn(japicmp)

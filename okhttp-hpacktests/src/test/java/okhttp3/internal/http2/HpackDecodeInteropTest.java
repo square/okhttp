@@ -17,6 +17,7 @@ package okhttp3.internal.http2;
 
 import java.util.Collection;
 import okhttp3.internal.http2.hpackjson.Story;
+import org.junit.Assume;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -37,6 +38,8 @@ public class HpackDecodeInteropTest extends HpackDecodeTestBase {
 
   @Test
   public void testGoodDecoderInterop() throws Exception {
+    Assume.assumeFalse("Test stories missing, checkout git submodule", getStory() == Story.MISSING);
+
     testDecoder();
   }
 }

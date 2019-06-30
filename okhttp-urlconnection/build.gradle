@@ -1,0 +1,38 @@
+apply plugin: 'com.vanniktech.maven.publish'
+apply plugin: 'me.champeau.gradle.japicmp'
+
+jar {
+  manifest {
+    attributes('Automatic-Module-Name': 'okhttp3.urlconnection')
+  }
+}
+
+dependencies {
+  api project(':okhttp')
+  compileOnly deps.jsr305
+  compileOnly deps.animalSniffer
+
+  testImplementation project(':okhttp-testing-support')
+  testImplementation project(':okhttp-tls')
+  testImplementation project(':mockwebserver')
+  testImplementation deps.junit
+  testImplementation deps.assertj
+}
+
+afterEvaluate { project ->
+  project.tasks.dokka {
+    outputDirectory = "$rootDir/docs/4.x"
+    outputFormat = 'gfm'
+  }
+}
+
+task japicmp(type: me.champeau.gradle.japicmp.JapicmpTask, dependsOn: 'jar') {
+  oldClasspath = files(baselineJar(project, baselineVersion))
+  newClasspath = files(jar.archivePath)
+  onlyBinaryIncompatibleModified = true
+  failOnModification = true
+  txtOutputFile = file("$buildDir/reports/japi.txt")
+  ignoreMissingClasses = true
+  includeSynthetic = true
+}
+check.dependsOn(japicmp)

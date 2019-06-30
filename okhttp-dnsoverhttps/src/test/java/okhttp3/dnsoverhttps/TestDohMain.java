@@ -20,14 +20,13 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.security.Security;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import okhttp3.Cache;
 import okhttp3.HttpUrl;
 import okhttp3.OkHttpClient;
 
-import static okhttp3.dnsoverhttps.DnsOverHttps.UDPWIREFORMAT;
+import static java.util.Arrays.asList;
 
 public class TestDohMain {
   public static void main(String[] args) throws IOException {
@@ -35,7 +34,7 @@ public class TestDohMain {
 
     OkHttpClient bootstrapClient = new OkHttpClient.Builder().build();
 
-    List<String> names = Arrays.asList("google.com", "graph.facebook.com", "sdflkhfsdlkjdf.ee");
+    List<String> names = asList("google.com", "graph.facebook.com", "sdflkhfsdlkjdf.ee");
 
     try {
       System.out.println("uncached\n********\n");
@@ -51,15 +50,11 @@ public class TestDohMain {
 
       HttpUrl url = HttpUrl.get("https://dns.cloudflare.com/.not-so-well-known/run-dmc-query");
       List<DnsOverHttps> badProviders = Collections.singletonList(
-          new DnsOverHttps.Builder().client(bootstrapClient)
-              .url(url)
-              .post(true)
-              .contentType(UDPWIREFORMAT)
-              .build());
+          new DnsOverHttps.Builder().client(bootstrapClient).url(url).post(true).build());
       runBatch(badProviders, names);
 
       System.out.println("cached first run\n****************\n");
-      names = Arrays.asList("google.com", "graph.facebook.com");
+      names = asList("google.com", "graph.facebook.com");
       bootstrapClient = bootstrapClient.newBuilder().cache(dnsCache).build();
       dnsProviders = DohProviders.providers(bootstrapClient, true, true, true);
       runBatch(dnsProviders, names);
