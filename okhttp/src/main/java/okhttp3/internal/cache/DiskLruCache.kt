@@ -706,6 +706,8 @@ class DiskLruCache internal constructor(
 
           while (delegate.hasNext()) {
             val entry = delegate.next()
+            if (entry == null || !entry.readable) continue // Entry during edit
+
             val snapshot = entry.snapshot() ?: continue
             // Evicted since we copied the entries.
             nextSnapshot = snapshot

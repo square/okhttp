@@ -330,6 +330,89 @@ public final class ResponseBodyTest {
     }
   }
 
+  @Test public void byteStringEmpty() throws IOException {
+    ResponseBody body = body("");
+    assertThat(body.byteString()).isEqualTo(ByteString.EMPTY);
+  }
+
+  @Test public void byteStringSeesBom() throws IOException {
+    ResponseBody body = body("efbbbf68656c6c6f");
+    ByteString actual = body.byteString();
+    ByteString expected = ByteString.decodeHex("efbbbf68656c6c6f");
+    assertThat(actual).isEqualTo(expected);
+  }
+
+  @Test public void byteStringClosesUnderlyingSource() throws IOException {
+    final AtomicBoolean closed = new AtomicBoolean();
+    ResponseBody body = new ResponseBody() {
+      @Override public MediaType contentType() {
+        return null;
+      }
+
+      @Override public long contentLength() {
+        return 5;
+      }
+
+      @Override public BufferedSource source() {
+        Buffer source = new Buffer().writeUtf8("hello");
+        return Okio.buffer(new ForwardingSource(source) {
+          @Override public void close() throws IOException {
+            closed.set(true);
+            super.close();
+          }
+        });
+      }
+    };
+    assertThat(body.byteString().size()).isEqualTo(5);
+    assertThat(closed.get()).isTrue();
+  }
+
+  @Test public void byteStringThrowsWhenLengthsDisagree() {
+    ResponseBody body = new ResponseBody() {
+      @Override public MediaType contentType() {
+        return null;
+      }
+
+      @Override public long contentLength() {
+        return 10;
+      }
+
+      @Override public BufferedSource source() {
+        return new Buffer().writeUtf8("hello");
+      }
+    };
+    try {
+      body.byteString();
+      fail();
+    } catch (IOException e) {
+      assertThat(e.getMessage()).isEqualTo(
+          "Content-Length (10) and stream length (5) disagree");
+    }
+  }
+
+  @Test public void byteStringThrowsMoreThanIntMaxValue() {
+    ResponseBody body = new ResponseBody() {
+      @Override public MediaType contentType() {
+        return null;
+      }
+
+      @Override public long contentLength() {
+        return Integer.MAX_VALUE + 1L;
+      }
+
+      @Override public BufferedSource source() {
+        throw new AssertionError();
+      }
+    };
+    try {
+      body.byteString();
+      fail();
+    } catch (IOException e) {
+      assertThat(e.getMessage()).isEqualTo(
+          "Cannot buffer entire body for content length: 2147483648");
+    }
+  }
+
   @Test public void byteStreamEmpty() throws IOException {
     ResponseBody body = body("");
     InputStream bytes = body.byteStream();
