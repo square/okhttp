@@ -44,7 +44,6 @@ import okhttp3.Interceptor;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import okhttp3.OkHttpClientTestRule;
-import okhttp3.testing.PlatformRule;
 import okhttp3.Protocol;
 import okhttp3.RecordingCookieJar;
 import okhttp3.RecordingHostnameVerifier;
@@ -64,6 +63,7 @@ import okhttp3.mockwebserver.PushPromise;
 import okhttp3.mockwebserver.QueueDispatcher;
 import okhttp3.mockwebserver.RecordedRequest;
 import okhttp3.mockwebserver.SocketPolicy;
+import okhttp3.testing.PlatformRule;
 import okhttp3.tls.HandshakeCertificates;
 import okio.Buffer;
 import okio.BufferedSink;
@@ -82,18 +82,15 @@ import org.junit.rules.Timeout;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
-import org.junit.runners.model.TestTimedOutException;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Arrays.asList;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static okhttp3.internal.Util.discard;
-import static okhttp3.testing.PlatformRule.*;
 import static okhttp3.tls.internal.TlsUtil.localhost;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.data.Offset.offset;
-import static org.hamcrest.CoreMatchers.isA;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeTrue;
@@ -1233,7 +1230,7 @@ public final class HttpOverHttp2Test {
   @Test public void missingPongsFailsConnection() throws Exception {
     if (protocol == Protocol.HTTP_2) {
       // https://github.com/square/okhttp/issues/5221
-      platform.expectFailure(fromMajor(12), TestTimedOutException.class);
+      platform.expectFailureFromJdkVersion(12);
     }
 
     // Ping every 500 ms, starting at 500 ms.

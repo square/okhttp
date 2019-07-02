@@ -101,7 +101,6 @@ import static okhttp3.mockwebserver.SocketPolicy.SHUTDOWN_INPUT_AT_END;
 import static okhttp3.mockwebserver.SocketPolicy.SHUTDOWN_OUTPUT_AT_END;
 import static okhttp3.mockwebserver.SocketPolicy.UPGRADE_TO_SSL_AT_END;
 import static okhttp3.testing.PlatformRule.CONSCRYPT_PROPERTY;
-import static okhttp3.testing.PlatformRule.platformMatches;
 import static okhttp3.tls.internal.TlsUtil.localhost;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.CoreMatchers.anything;
@@ -690,7 +689,7 @@ public final class URLConnectionTest {
    */
   @Test public void connectViaHttpsToUntrustedServer() throws Exception {
     // https://github.com/square/okhttp/issues/5222
-    platform.expectFailure(platformMatches(CONSCRYPT_PROPERTY));
+    platform.expectFailureOnConscryptPlatform();
 
     server.useHttps(handshakeCertificates.sslSocketFactory(), false);
     server.enqueue(new MockResponse()); // unused

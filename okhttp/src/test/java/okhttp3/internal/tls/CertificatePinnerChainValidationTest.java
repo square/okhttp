@@ -16,7 +16,6 @@
 package okhttp3.internal.tls;
 
 import java.security.GeneralSecurityException;
-import java.security.KeyStoreException;
 import java.security.SecureRandom;
 import java.security.cert.X509Certificate;
 import java.util.Collections;
@@ -45,8 +44,6 @@ import okhttp3.tls.HeldCertificate;
 import org.junit.Rule;
 import org.junit.Test;
 
-import static okhttp3.testing.PlatformRule.CONSCRYPT_PROPERTY;
-import static okhttp3.testing.PlatformRule.platformMatches;
 import static okhttp3.tls.internal.TlsUtil.newKeyManager;
 import static okhttp3.tls.internal.TlsUtil.newTrustManager;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -183,7 +180,7 @@ public final class CertificatePinnerChainValidationTest {
 
   @Test public void unrelatedPinnedLeafCertificateInChain() throws Exception {
     // https://github.com/square/okhttp/issues/4729
-    platform.expectFailure(platformMatches(CONSCRYPT_PROPERTY), KeyStoreException.class);
+    platform.expectFailureOnConscryptPlatform();
 
     // Start with a trusted root CA certificate.
     HeldCertificate rootCa = new HeldCertificate.Builder()
@@ -261,7 +258,7 @@ public final class CertificatePinnerChainValidationTest {
 
   @Test public void unrelatedPinnedIntermediateCertificateInChain() throws Exception {
     // https://github.com/square/okhttp/issues/4729
-    platform.expectFailure(platformMatches(CONSCRYPT_PROPERTY), KeyStoreException.class);
+    platform.expectFailureOnConscryptPlatform();
 
     // Start with two root CA certificates, one is good and the other is compromised.
     HeldCertificate rootCa = new HeldCertificate.Builder()

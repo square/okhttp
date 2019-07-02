@@ -23,7 +23,6 @@ import org.conscrypt.Conscrypt
 import org.hamcrest.BaseMatcher
 import org.hamcrest.CoreMatchers
 import org.hamcrest.CoreMatchers.equalTo
-import org.hamcrest.CoreMatchers.isA
 import org.hamcrest.CoreMatchers.not
 import org.hamcrest.Description
 import org.hamcrest.Matcher
@@ -92,28 +91,46 @@ open class PlatformRule @JvmOverloads constructor(
     }
   }
 
-  @JvmOverloads
-  fun expectFailure(
+  fun expectFailureOnConscryptPlatform() {
+    expectFailure(platformMatches(CONSCRYPT_PROPERTY))
+  }
+
+  fun expectFailureFromJdkVersion(majorVersion: Int) {
+    expectFailure(fromMajor(majorVersion))
+  }
+
+  private fun expectFailure(
     versionMatcher: Matcher<out Any>,
     failureMatcher: Matcher<out Any> = CoreMatchers.anything()
   ) {
     versionChecks.add(Pair(versionMatcher, failureMatcher))
   }
 
-  fun expectFailure(
-    versionMatcher: Matcher<out Any>,
-    expectedType: Class<*>
-  ) {
-    versionChecks.add(Pair(versionMatcher, isA(expectedType)))
+  fun platformMatches(platform: String): Matcher<Any> = object : BaseMatcher<Any>() {
+    override fun describeTo(description: Description) {
+      description.appendText(platform)
+    }
+
+    override fun matches(item: Any?): Boolean {
+      return getPlatformSystemProperty() == platform
+    }
+  }
+
+  fun fromMajor(version: Int): Matcher<PlatformVersion> {
+    return object : TypeSafeMatcher<PlatformVersion>() {
+      override fun describeTo(description: org.hamcrest.Description) {
+        description.appendText("JDK with version from $version")
+      }
+
+      override fun matchesSafely(item: PlatformVersion): Boolean {
+        return item.majorVersion >= version
+      }
+    }
   }
 
   fun rethrowIfNotExpected(e: Throwable) {
     versionChecks.forEach { (versionMatcher, failureMatcher) ->
-      if (versionMatcher.matches(VersionInfo)) {
-        if (!failureMatcher.matches(e)) {
-          throw e
-        }
-
+      if (versionMatcher.matches(PlatformVersion) && failureMatcher.matches(e)) {
         return
       }
     }
@@ -123,7 +140,7 @@ open class PlatformRule @JvmOverloads constructor(
 
   fun failIfExpected() {
     versionChecks.forEach { (versionMatcher, failureMatcher) ->
-      if (versionMatcher.matches(VersionInfo)) {
+      if (versionMatcher.matches(PlatformVersion)) {
         val description = StringDescription()
         versionMatcher.describeTo(description)
         description.appendText(" expected to fail with exception that ")
@@ -220,30 +237,6 @@ open class PlatformRule @JvmOverloads constructor(
       } else if (getPlatformSystemProperty() == JDK8_PROPERTY) {
         if (isAlpnBootEnabled()) {
           System.err.println("Warning: ALPN Boot enabled unintentionally")
-        }
-      }
-    }
-
-    @JvmStatic
-    fun platformMatches(platform: String): Matcher<Any> = object : BaseMatcher<Any>() {
-      override fun describeTo(description: Description) {
-        description.appendText(platform)
-      }
-
-      override fun matches(item: Any?): Boolean {
-        return getPlatformSystemProperty() == platform
-      }
-    }
-
-    @JvmStatic
-    fun fromMajor(version: Int): Matcher<VersionInfo> {
-      return object : TypeSafeMatcher<VersionInfo>() {
-        override fun describeTo(description: org.hamcrest.Description) {
-          description.appendText("JDK with version from $version")
-        }
-
-        override fun matchesSafely(item: VersionInfo): Boolean {
-          return item.majorVersion >= version
         }
       }
     }
