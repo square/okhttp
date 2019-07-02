@@ -233,6 +233,41 @@ between ProGuard, OkHttp 4.x, and Kotlin-originated `.class` files. Make sure yo
 release if you’re using ProGuard,
 
 
+Gradle
+------
+
+OkHttp 4’s minimum requirements are Java 8+ and Android 5+. These requirements were
+[first introduced][require_android_5] with OkHttp 3.13.
+
+Here’s what you need in `build.gradle` to target Java 8 byte code for Kotlin, Java, and Android
+plugins respectively.
+
+```
+compileKotlin {
+  kotlinOptions {
+    jvmTarget = "1.8"
+  }
+}
+compileTestKotlin {
+  kotlinOptions {
+    jvmTarget = "1.8"
+  }
+}
+
+compileJava {
+  sourceCompatibility = JavaVersion.VERSION_1_8
+  targetCompatibility = JavaVersion.VERSION_1_8
+}
+
+android {
+  compileOptions {
+    sourceCompatibility JavaVersion.VERSION_1_8
+    targetCompatibility JavaVersion.VERSION_1_8
+  }
+}
+```
+
+
  [advanced_profiling_bug]: https://issuetracker.google.com/issues/135141615
  [japicmp]: https://github.com/siom79/japicmp
  [japicmp_gradle]: https://github.com/melix/japicmp-gradle-plugin
@@ -240,4 +275,5 @@ release if you’re using ProGuard,
  [kotlin_sams]: https://youtrack.jetbrains.com/issue/KT-11129
  [mockito]: https://site.mockito.org/
  [proguard_problems]: https://github.com/square/okhttp/issues/5167
+ [require_android_5]: https://cashapp.github.io/2019-02-05/okhttp-3-13-requires-android-5
  [r8]: https://developer.android.com/studio/releases#r8-default
