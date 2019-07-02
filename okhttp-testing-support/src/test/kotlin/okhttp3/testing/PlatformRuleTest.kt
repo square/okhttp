@@ -16,7 +16,6 @@
 package okhttp3.testing
 
 import okhttp3.internal.platform.Platform
-import okhttp3.testing.PlatformRule.Companion.fromMajor
 import org.junit.Rule
 import org.junit.Test
 
