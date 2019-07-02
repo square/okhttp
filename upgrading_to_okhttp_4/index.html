@@ -693,6 +693,13 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#gradle" title="Gradle" class="md-nav__link">
+    Gradle
+  </a>
+  
+</li>
+      
       
       
       
@@ -847,6 +854,13 @@
         <li class="md-nav__item">
   <a href="#r8-proguard" title="R8 / ProGuard" class="md-nav__link">
     R8 / ProGuard
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#gradle" title="Gradle" class="md-nav__link">
+    Gradle
   </a>
   
 </li>
@@ -1113,6 +1127,34 @@ releases of OkHttp.</p>
 <p>ProGuard was the previous default. We’re <a href="https://github.com/square/okhttp/issues/5167">tracking problems</a> with interactions
 between ProGuard, OkHttp 4.x, and Kotlin-originated <code>.class</code> files. Make sure you’re on the latest
 release if you’re using ProGuard,</p>
+<h2 id="gradle">Gradle<a class="headerlink" href="#gradle" title="Permanent link">&para;</a></h2>
+<p>OkHttp 4’s minimum requirements are Java 8+ and Android 5+. These requirements were
+<a href="https://cashapp.github.io/2019-02-05/okhttp-3-13-requires-android-5">first introduced</a> with OkHttp 3.13.</p>
+<p>Here’s what you need in <code>build.gradle</code> to target Java 8 byte code for Kotlin, Java, and Android
+plugins respectively.</p>
+<div class="codehilite"><pre><span></span>compileKotlin {
+  kotlinOptions {
+    jvmTarget = &quot;1.8&quot;
+  }
+}
+compileTestKotlin {
+  kotlinOptions {
+    jvmTarget = &quot;1.8&quot;
+  }
+}
+
+compileJava {
+  sourceCompatibility = JavaVersion.VERSION_1_8
+  targetCompatibility = JavaVersion.VERSION_1_8
+}
+
+android {
+  compileOptions {
+    sourceCompatibility JavaVersion.VERSION_1_8
+    targetCompatibility JavaVersion.VERSION_1_8
+  }
+}
+</pre></div>
                 
                   
                 
