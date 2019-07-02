@@ -13,18 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package okhttp3
+package okhttp3.testing
 
 import okhttp3.internal.platform.ConscryptPlatform
 import okhttp3.internal.platform.Jdk8WithJettyBootPlatform
 import okhttp3.internal.platform.Jdk9Platform
 import okhttp3.internal.platform.Platform
 import org.conscrypt.Conscrypt
+import org.hamcrest.BaseMatcher
+import org.hamcrest.CoreMatchers
 import org.hamcrest.CoreMatchers.equalTo
 import org.hamcrest.CoreMatchers.not
+import org.hamcrest.Description
+import org.hamcrest.Matcher
+import org.hamcrest.StringDescription
+import org.hamcrest.TypeSafeMatcher
+import org.junit.Assert
 import org.junit.Assume.assumeThat
 import org.junit.Assume.assumeTrue
-import org.junit.rules.ExternalResource
+import org.junit.AssumptionViolatedException
+import org.junit.rules.TestRule
+import org.junit.runners.model.Statement
 import java.security.Security
 
 /**
@@ -37,8 +46,34 @@ import java.security.Security
 open class PlatformRule @JvmOverloads constructor(
   val requiredPlatformName: String? = null,
   val platform: Platform? = null
-) : ExternalResource() {
-  override fun before() {
+) : TestRule {
+  private val versionChecks = mutableListOf<Pair<Matcher<out Any>, Matcher<out Any>>>()
+
+  override fun apply(base: Statement, description: org.junit.runner.Description): Statement {
+    return object : Statement() {
+      @Throws(Throwable::class)
+      override fun evaluate() {
+        var failed = false
+        try {
+          setupPlatform()
+
+          base.evaluate()
+        } catch (e: AssumptionViolatedException) {
+          throw e
+        } catch (e: Throwable) {
+          failed = true
+          rethrowIfNotExpected(e)
+        } finally {
+          resetPlatform()
+        }
+        if (!failed) {
+          failIfExpected()
+        }
+      }
+    }
+  }
+
+  fun setupPlatform() {
     if (requiredPlatformName != null) {
       assumeThat(getPlatformSystemProperty(), equalTo(requiredPlatformName))
     }
@@ -50,9 +85,69 @@ open class PlatformRule @JvmOverloads constructor(
     }
   }
 
-  override fun after() {
+  fun resetPlatform() {
     if (platform != null) {
       Platform.resetForTests()
+    }
+  }
+
+  fun expectFailureOnConscryptPlatform() {
+    expectFailure(platformMatches(CONSCRYPT_PROPERTY))
+  }
+
+  fun expectFailureFromJdkVersion(majorVersion: Int) {
+    expectFailure(fromMajor(majorVersion))
+  }
+
+  private fun expectFailure(
+    versionMatcher: Matcher<out Any>,
+    failureMatcher: Matcher<out Any> = CoreMatchers.anything()
+  ) {
+    versionChecks.add(Pair(versionMatcher, failureMatcher))
+  }
+
+  fun platformMatches(platform: String): Matcher<Any> = object : BaseMatcher<Any>() {
+    override fun describeTo(description: Description) {
+      description.appendText(platform)
+    }
+
+    override fun matches(item: Any?): Boolean {
+      return getPlatformSystemProperty() == platform
+    }
+  }
+
+  fun fromMajor(version: Int): Matcher<PlatformVersion> {
+    return object : TypeSafeMatcher<PlatformVersion>() {
+      override fun describeTo(description: org.hamcrest.Description) {
+        description.appendText("JDK with version from $version")
+      }
+
+      override fun matchesSafely(item: PlatformVersion): Boolean {
+        return item.majorVersion >= version
+      }
+    }
+  }
+
+  fun rethrowIfNotExpected(e: Throwable) {
+    versionChecks.forEach { (versionMatcher, failureMatcher) ->
+      if (versionMatcher.matches(PlatformVersion) && failureMatcher.matches(e)) {
+        return
+      }
+    }
+
+    throw e
+  }
+
+  fun failIfExpected() {
+    versionChecks.forEach { (versionMatcher, failureMatcher) ->
+      if (versionMatcher.matches(PlatformVersion)) {
+        val description = StringDescription()
+        versionMatcher.describeTo(description)
+        description.appendText(" expected to fail with exception that ")
+        failureMatcher.describeTo(description)
+
+        Assert.fail(description.toString())
+      }
     }
   }
 
@@ -148,7 +243,8 @@ open class PlatformRule @JvmOverloads constructor(
 
     @JvmStatic
     fun getPlatformSystemProperty(): String {
-      var property: String? = System.getProperty(PROPERTY_NAME)
+      var property: String? = System.getProperty(
+          PROPERTY_NAME)
 
       if (property == null) {
         property = when (Platform.get()) {
@@ -163,7 +259,8 @@ open class PlatformRule @JvmOverloads constructor(
     }
 
     @JvmStatic
-    fun conscrypt() = PlatformRule(CONSCRYPT_PROPERTY)
+    fun conscrypt() = PlatformRule(
+        CONSCRYPT_PROPERTY)
 
     @JvmStatic
     fun jdk9() = PlatformRule(JDK9_PROPERTY)
@@ -172,7 +269,8 @@ open class PlatformRule @JvmOverloads constructor(
     fun jdk8() = PlatformRule(JDK8_PROPERTY)
 
     @JvmStatic
-    fun jdk8alpn() = PlatformRule(JDK8_ALPN_PROPERTY)
+    fun jdk8alpn() = PlatformRule(
+        JDK8_ALPN_PROPERTY)
 
     @JvmStatic
     fun isAlpnBootEnabled(): Boolean = try {
