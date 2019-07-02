@@ -39,12 +39,12 @@ class PlatformRuleTest {
 
   @Test
   fun testGreenCaseFailingOnLater() {
-    platform.expectFailure(fromMajor(PlatformVersion.majorVersion + 1))
+    platform.expectFailureFromJdkVersion(PlatformVersion.majorVersion + 1)
   }
 
   @Test
   fun failureCase() {
-    platform.expectFailure(fromMajor(PlatformVersion.majorVersion))
+    platform.expectFailureFromJdkVersion(PlatformVersion.majorVersion)
 
     check(false)
   }
