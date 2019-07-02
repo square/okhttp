@@ -239,6 +239,9 @@ workflows:
       - testjdk11:
           requires:
             - compile
+      - testjdk12:
+          requires:
+            - compile
       - testconscrypt:
           requires:
             - compile
