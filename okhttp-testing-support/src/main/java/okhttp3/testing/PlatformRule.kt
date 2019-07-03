@@ -259,8 +259,7 @@ open class PlatformRule @JvmOverloads constructor(
     }
 
     @JvmStatic
-    fun conscrypt() = PlatformRule(
-        CONSCRYPT_PROPERTY)
+    fun conscrypt() = PlatformRule(CONSCRYPT_PROPERTY)
 
     @JvmStatic
     fun jdk9() = PlatformRule(JDK9_PROPERTY)
@@ -269,8 +268,7 @@ open class PlatformRule @JvmOverloads constructor(
     fun jdk8() = PlatformRule(JDK8_PROPERTY)
 
     @JvmStatic
-    fun jdk8alpn() = PlatformRule(
-        JDK8_ALPN_PROPERTY)
+    fun jdk8alpn() = PlatformRule(JDK8_ALPN_PROPERTY)
 
     @JvmStatic
     fun isAlpnBootEnabled(): Boolean = try {

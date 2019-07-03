@@ -37,6 +37,7 @@ import okhttp3.Response;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import okhttp3.testing.PlatformRule;
+import okhttp3.testing.PlatformVersion;
 import okhttp3.tls.HandshakeCertificates;
 import okhttp3.tls.HeldCertificate;
 import org.junit.Before;
@@ -195,10 +196,10 @@ public final class ClientAuthTest {
       fail();
     } catch (SSLHandshakeException expected) {
     } catch (SSLException expected) {
-      String jvmVersion = System.getProperty("java.specification.version");
-      assertThat(jvmVersion).matches("1[123]");
+      assertThat(PlatformVersion.INSTANCE.getMajorVersion()).isGreaterThanOrEqualTo(11);
     } catch (SocketException expected) {
-      assertThat(getPlatformSystemProperty()).isEqualTo("jdk9");
+      assertThat(getPlatformSystemProperty()).isIn(PlatformRule.JDK9_PROPERTY,
+          PlatformRule.CONSCRYPT_PROPERTY);
     }
   }
 
@@ -250,10 +251,10 @@ public final class ClientAuthTest {
     } catch (SSLHandshakeException expected) {
     } catch (SSLException expected) {
       // javax.net.ssl.SSLException: readRecord
-      String jvmVersion = System.getProperty("java.specification.version");
-      assertThat(jvmVersion).matches("1[123]");
+      assertThat(PlatformVersion.INSTANCE.getMajorVersion()).isGreaterThanOrEqualTo(11);
     } catch (SocketException expected) {
-      assertThat(getPlatformSystemProperty()).isEqualTo("jdk9");
+      assertThat(getPlatformSystemProperty()).isIn(PlatformRule.JDK9_PROPERTY,
+          PlatformRule.CONSCRYPT_PROPERTY);
     }
   }
 

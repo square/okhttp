@@ -96,7 +96,6 @@ import static okhttp3.internal.Internal.addHeaderLenient;
 import static okhttp3.tls.internal.TlsUtil.localhost;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.data.Offset.offset;
-import static org.hamcrest.CoreMatchers.anything;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeFalse;
