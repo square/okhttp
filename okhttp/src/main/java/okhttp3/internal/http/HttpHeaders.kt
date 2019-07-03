@@ -234,7 +234,9 @@ fun Response.promisesBody(): Boolean {
   return false
 }
 
-@Deprecated(message = "No longer supported", level = DeprecationLevel.ERROR,
+@Deprecated(
+    message = "No longer supported",
+    level = DeprecationLevel.ERROR,
     replaceWith = ReplaceWith(expression = "response.promisesBody()"))
 fun hasBody(response: Response): Boolean {
   return response.promisesBody()

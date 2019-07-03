@@ -36,11 +36,10 @@ import static java.util.Collections.singletonList;
 import static java.util.Collections.singletonMap;
 import static okhttp3.TestUtil.headerEntries;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 public final class HeadersTest {
-  @Test public void readNameValueBlockDropsForbiddenHeadersHttp2() throws IOException {
+  @Test public void readNameValueBlockDropsForbiddenHeadersHttp2() {
     Headers headerBlock = Headers.of(
         ":status", "200 OK",
         ":version", "HTTP/1.1",
