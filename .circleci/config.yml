@@ -197,10 +197,7 @@ workflows:
               ignore:
                 - master
                 - gh-pages
-      - testjdk8:
-          filters:
-            branches:
-              only: master
+      - testjdk8
       - testjdk8alpn:
           filters:
             branches:
@@ -210,10 +207,7 @@ workflows:
             branches:
               ignore:
                 - gh-pages
-      - testjdk12:
-          filters:
-            branches:
-              only: master
+      - testjdk12
       - testconscrypt:
           filters:
             branches:
