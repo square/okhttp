@@ -103,7 +103,7 @@ class MultipartBody internal constructor(
     sink: BufferedSink?,
     countBytes: Boolean
   ): Long {
-    var sink = sink
+    @Suppress("NAME_SHADOWING") var sink = sink
     var byteCount = 0L
 
     var byteCountBuffer: Buffer? = null

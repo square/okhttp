@@ -272,7 +272,7 @@ class Cookie private constructor(
     }
 
     fun expiresAt(expiresAt: Long) = apply {
-      var expiresAt = expiresAt
+      @Suppress("NAME_SHADOWING") var expiresAt = expiresAt
       if (expiresAt <= 0L) expiresAt = Long.MIN_VALUE
       if (expiresAt > MAX_DATE) expiresAt = MAX_DATE
       this.expiresAt = expiresAt
@@ -482,7 +482,7 @@ class Cookie private constructor(
 
     /** Parse a date as specified in RFC 6265, section 5.1.1. */
     private fun parseExpires(s: String, pos: Int, limit: Int): Long {
-      var pos = pos
+      @Suppress("NAME_SHADOWING") var pos = pos
       pos = dateCharacterOffset(s, pos, limit, false)
 
       var hour = -1

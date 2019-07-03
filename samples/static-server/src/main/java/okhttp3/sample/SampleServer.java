@@ -18,7 +18,7 @@ import okhttp3.mockwebserver.RecordedRequest;
 import okio.Buffer;
 import okio.Okio;
 
-public class SampleServer extends Dispatcher {
+@SuppressWarnings("deprecation") public class SampleServer extends Dispatcher {
   private final SSLContext sslContext;
   private final String root;
   private final int port;

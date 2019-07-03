@@ -271,7 +271,7 @@ class Http2Writer(
 
   @Throws(IOException::class)
   private fun writeContinuationFrames(streamId: Int, byteCount: Long) {
-    var byteCount = byteCount
+    @Suppress("NAME_SHADOWING") var byteCount = byteCount
     while (byteCount > 0L) {
       val length = minOf(maxFrameSize.toLong(), byteCount)
       byteCount -= length

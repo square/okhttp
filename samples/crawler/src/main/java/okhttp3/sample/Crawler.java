@@ -48,6 +48,7 @@ public final class Crawler {
     this.client = client;
   }
 
+  @SuppressWarnings("CatchAndPrintStackTrace")
   private void parallelDrainQueue(int threadCount) {
     ExecutorService executor = Executors.newFixedThreadPool(threadCount);
     for (int i = 0; i < threadCount; i++) {

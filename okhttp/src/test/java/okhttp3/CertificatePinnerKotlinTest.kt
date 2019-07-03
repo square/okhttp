@@ -23,6 +23,7 @@ import org.junit.Test
 
 class CertificatePinnerKotlinTest {
 
+  @Suppress("DEPRECATION")
   @Test
   fun successfulCheckSha1Pin() {
     val certificatePinner = CertificatePinner.Builder()

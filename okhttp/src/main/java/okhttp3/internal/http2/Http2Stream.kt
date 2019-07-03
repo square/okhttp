@@ -171,7 +171,7 @@ class Http2Stream internal constructor(
    */
   @Throws(IOException::class)
   fun writeHeaders(responseHeaders: List<Header>, outFinished: Boolean, flushHeaders: Boolean) {
-    var flushHeaders = flushHeaders
+    @Suppress("NAME_SHADOWING") var flushHeaders = flushHeaders
     assert(!Thread.holdsLock(this@Http2Stream))
     synchronized(this) {
       this.hasResponseHeaders = true
@@ -407,7 +407,7 @@ class Http2Stream internal constructor(
 
     @Throws(IOException::class)
     internal fun receive(source: BufferedSource, byteCount: Long) {
-      var byteCount = byteCount
+      @Suppress("NAME_SHADOWING") var byteCount = byteCount
       assert(!Thread.holdsLock(this@Http2Stream))
 
       while (byteCount > 0L) {

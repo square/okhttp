@@ -304,6 +304,7 @@ class KotlinSourceModernTest {
     val basic: String = Credentials.basic("", "")
   }
 
+  @Suppress("IMPLICIT_NOTHING_AS_TYPE_PARAMETER")
   @Test @Ignore
   fun dispatcher() {
     var dispatcher = Dispatcher()
@@ -474,6 +475,7 @@ class KotlinSourceModernTest {
     val headers: Headers = builder.build()
   }
 
+  @Suppress("DEPRECATION")
   @Test @Ignore
   fun httpLoggingInterceptor() {
     var interceptor: HttpLoggingInterceptor = HttpLoggingInterceptor()

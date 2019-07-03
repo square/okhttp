@@ -137,15 +137,15 @@ class CertificatePinner internal constructor(
    */
   @Throws(SSLPeerUnverifiedException::class)
   fun check(hostname: String, peerCertificates: List<Certificate>) {
-    var peerCertificates = peerCertificates
+    var cleanPeerCertificates = peerCertificates
     val pins = findMatchingPins(hostname)
     if (pins.isEmpty()) return
 
     if (certificateChainCleaner != null) {
-      peerCertificates = certificateChainCleaner.clean(peerCertificates, hostname)
+      cleanPeerCertificates = certificateChainCleaner.clean(cleanPeerCertificates, hostname)
     }
 
-    for (peerCertificate in peerCertificates) {
+    for (peerCertificate in cleanPeerCertificates) {
       val x509Certificate = peerCertificate as X509Certificate
 
       // Lazily compute the hashes for each certificate.
@@ -171,8 +171,8 @@ class CertificatePinner internal constructor(
     val message = buildString {
       append("Certificate pinning failure!")
       append("\n  Peer certificate chain:")
-      for (c in 0 until peerCertificates.size) {
-        val x509Certificate = peerCertificates[c] as X509Certificate
+      for (c in 0 until cleanPeerCertificates.size) {
+        val x509Certificate = cleanPeerCertificates[c] as X509Certificate
         append("\n    ")
         append(pin(x509Certificate))
         append(": ")
@@ -194,7 +194,7 @@ class CertificatePinner internal constructor(
       ReplaceWith("check(hostname, peerCertificates.toList())")
   )
   @Throws(SSLPeerUnverifiedException::class)
-  inline fun check(hostname: String, vararg peerCertificates: Certificate) {
+  fun check(hostname: String, vararg peerCertificates: Certificate) {
     check(hostname, peerCertificates.toList())
   }
 

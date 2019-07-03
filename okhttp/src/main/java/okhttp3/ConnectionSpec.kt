@@ -269,6 +269,7 @@ class ConnectionSpec internal constructor(
     )
   }
 
+  @Suppress("DEPRECATION")
   companion object {
     // Most secure but generally supported list.
     private val RESTRICTED_CIPHER_SUITES = arrayOf(

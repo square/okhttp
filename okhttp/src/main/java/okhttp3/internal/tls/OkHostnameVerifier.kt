@@ -57,7 +57,7 @@ object OkHostnameVerifier : HostnameVerifier {
 
   /** Returns true if [certificate] matches [hostname]. */
   private fun verifyHostname(hostname: String, certificate: X509Certificate): Boolean {
-    val hostname = hostname.toLowerCase(Locale.US)
+    @Suppress("NAME_SHADOWING") val hostname = hostname.toLowerCase(Locale.US)
     return getSubjectAltNames(certificate, ALT_DNS_NAME).any {
       verifyHostname(hostname, it)
     }
@@ -70,6 +70,7 @@ object OkHostnameVerifier : HostnameVerifier {
    * @param pattern domain name pattern from certificate. May be a wildcard pattern such as
    *     `*.android.com`.
    */
+  @Suppress("NAME_SHADOWING")
   private fun verifyHostname(hostname: String?, pattern: String?): Boolean {
     var hostname = hostname
     var pattern = pattern

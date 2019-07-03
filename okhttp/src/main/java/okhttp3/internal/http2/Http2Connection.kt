@@ -292,7 +292,7 @@ class Http2Connection internal constructor(builder: Builder) : Closeable {
       return
     }
 
-    var byteCount = byteCount
+    @Suppress("NAME_SHADOWING") var byteCount = byteCount
     while (byteCount > 0L) {
       var toWrite: Int
       synchronized(this@Http2Connection) {
@@ -700,11 +700,11 @@ class Http2Connection internal constructor(builder: Builder) : Closeable {
     }
 
     override fun ping(
-      reply: Boolean,
+      ack: Boolean,
       payload1: Int,
       payload2: Int
     ) {
-      if (reply) {
+      if (ack) {
         synchronized(this@Http2Connection) {
           awaitingPong = false
           this@Http2Connection.notifyAll()
