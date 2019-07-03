@@ -68,6 +68,7 @@ import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import okhttp3.mockwebserver.RecordedRequest;
 import okhttp3.mockwebserver.SocketPolicy;
+import okhttp3.testing.PlatformRule;
 import okhttp3.tls.HandshakeCertificates;
 import okio.Buffer;
 import okio.BufferedSink;
@@ -99,8 +100,10 @@ import static okhttp3.mockwebserver.SocketPolicy.FAIL_HANDSHAKE;
 import static okhttp3.mockwebserver.SocketPolicy.SHUTDOWN_INPUT_AT_END;
 import static okhttp3.mockwebserver.SocketPolicy.SHUTDOWN_OUTPUT_AT_END;
 import static okhttp3.mockwebserver.SocketPolicy.UPGRADE_TO_SSL_AT_END;
+import static okhttp3.testing.PlatformRule.CONSCRYPT_PROPERTY;
 import static okhttp3.tls.internal.TlsUtil.localhost;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.CoreMatchers.anything;
 import static org.junit.Assert.fail;
 
 /** Android's URLConnectionTest, ported to exercise OkHttp's Call API. */
@@ -685,6 +688,9 @@ public final class URLConnectionTest {
    * http://code.google.com/p/android/issues/detail?id=13178
    */
   @Test public void connectViaHttpsToUntrustedServer() throws Exception {
+    // https://github.com/square/okhttp/issues/5222
+    platform.expectFailureOnConscryptPlatform();
+
     server.useHttps(handshakeCertificates.sslSocketFactory(), false);
     server.enqueue(new MockResponse()); // unused
 

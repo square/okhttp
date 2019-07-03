@@ -154,6 +154,21 @@ jobs:
       - runtests:
           platform: jdk9
 
+  testjdk12:
+    docker:
+      # best source of JDK 12 for now
+      - image: circleci/dynamodb:12.0.1-jdk
+
+    environment:
+      JVM_OPTS: -Xmx1g
+      TERM: dumb
+
+    steps:
+      - checkout
+
+      - runtests:
+          platform: jdk9
+
   testconscrypt:
     docker:
       - image: circleci/openjdk:11.0.3-jdk-stretch
@@ -195,6 +210,10 @@ workflows:
             branches:
               ignore:
                 - gh-pages
+      - testjdk12:
+          filters:
+            branches:
+              only: master
       - testconscrypt:
           filters:
             branches:
@@ -218,6 +237,9 @@ workflows:
           requires:
             - compile
       - testjdk11:
+          requires:
+            - compile
+      - testjdk12:
           requires:
             - compile
       - testconscrypt:

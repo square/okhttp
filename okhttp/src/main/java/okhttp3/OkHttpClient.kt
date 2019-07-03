@@ -767,7 +767,7 @@ open class OkHttpClient internal constructor(
       require(Protocol.HTTP_1_0 !in protocolsCopy) {
         "protocols must not contain http/1.0: $protocolsCopy"
       }
-      require(null !in (protocols as List<Protocol?>)) {
+      require(null !in (protocolsCopy as List<Protocol?>)) {
         "protocols must not contain null"
       }
 
