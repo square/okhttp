@@ -47,7 +47,6 @@ import org.junit.rules.Timeout;
 import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
 
-import static java.nio.charset.StandardCharsets.*;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Arrays.asList;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
@@ -59,7 +58,8 @@ import static org.assertj.core.data.Offset.offset;
 import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeFalse;
 
-@SuppressWarnings({"ArraysAsListWithZeroOrOneArgument", "deprecation"}) public final class MockWebServerTest {
+@SuppressWarnings({"ArraysAsListWithZeroOrOneArgument", "deprecation"})
+public final class MockWebServerTest {
   @Rule public final MockWebServer server = new MockWebServer();
 
   @Rule public Timeout globalTimeout = Timeout.seconds(30);
