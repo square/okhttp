@@ -20,6 +20,7 @@ import java.net.CookieManager;
 import java.net.ProxySelector;
 import java.net.ResponseCache;
 import java.util.AbstractList;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import javax.net.ssl.SSLSocketFactory;
@@ -269,5 +270,17 @@ public final class OkHttpClientTest {
         .protocols(nullHostileProtocols)
         .build();
     assertEquals(asList(Protocol.HTTP_1_1), client.protocols());
+  }
+
+  @Test public void nullProtocolInList() {
+    List<Protocol> protocols = new ArrayList<>();
+    protocols.add(Protocol.HTTP_1_1);
+    protocols.add(null);
+    try {
+      new OkHttpClient.Builder().protocols(protocols);
+      fail();
+    } catch (IllegalArgumentException expected) {
+      assertThat(expected.getMessage()).isEqualTo(("protocols must not contain null"));
+    }
   }
 }
