@@ -25,7 +25,6 @@ import okio.BufferedSink;
 import okio.Okio;
 import okio.Pipe;
 
-@SuppressWarnings("CatchAndPrintStackTrace")
 public final class PostStreamingWithPipe {
   public static final MediaType MEDIA_TYPE_MARKDOWN
       = MediaType.get("text/x-markdown; charset=utf-8");

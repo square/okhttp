@@ -41,6 +41,7 @@ import java.util.logging.Level.FINE
 import java.util.logging.Logger
 
 /** Writes HTTP/2 transport frames. */
+@Suppress("NAME_SHADOWING")
 class Http2Writer(
   private val sink: BufferedSink,
   private val client: Boolean
@@ -271,7 +272,7 @@ class Http2Writer(
 
   @Throws(IOException::class)
   private fun writeContinuationFrames(streamId: Int, byteCount: Long) {
-    @Suppress("NAME_SHADOWING") var byteCount = byteCount
+    var byteCount = byteCount
     while (byteCount > 0L) {
       val length = minOf(maxFrameSize.toLong(), byteCount)
       byteCount -= length

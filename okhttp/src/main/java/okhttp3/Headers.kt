@@ -46,6 +46,7 @@ import java.util.TreeSet
  *
  * Instances of this class are immutable. Use [Builder] to create instances.
  */
+@Suppress("NAME_SHADOWING")
 class Headers private constructor(
   private val namesAndValues: Array<String>
 ) : Iterable<Pair<String, String>> {
@@ -362,7 +363,7 @@ class Headers private constructor(
       require(namesAndValues.size % 2 == 0) { "Expected alternating header names and values" }
 
       // Make a defensive copy and clean it up.
-      @Suppress("NAME_SHADOWING") val namesAndValues: Array<String> = namesAndValues.clone() as Array<String>
+      val namesAndValues: Array<String> = namesAndValues.clone() as Array<String>
       for (i in namesAndValues.indices) {
         require(namesAndValues[i] != null) { "Headers cannot be null" }
         namesAndValues[i] = namesAndValues[i].trim()

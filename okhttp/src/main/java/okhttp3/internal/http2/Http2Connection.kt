@@ -58,6 +58,7 @@ import java.util.concurrent.TimeUnit.MILLISECONDS
  * This is typical for Java but atypical for HTTP/2. This is motivated by exception transparency:
  * an [IOException] that was triggered by a certain caller can be caught and handled by that caller.
  */
+@Suppress("NAME_SHADOWING")
 class Http2Connection internal constructor(builder: Builder) : Closeable {
 
   // Internal state of this connection is guarded by 'this'. No blocking operations may be
@@ -292,7 +293,7 @@ class Http2Connection internal constructor(builder: Builder) : Closeable {
       return
     }
 
-    @Suppress("NAME_SHADOWING") var byteCount = byteCount
+    var byteCount = byteCount
     while (byteCount > 0L) {
       var toWrite: Int
       synchronized(this@Http2Connection) {

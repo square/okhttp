@@ -40,6 +40,7 @@ import java.util.LinkedHashMap
  * entries are added to the array, starting in the last position moving forward. When the array
  * fills, it is doubled.
  */
+@Suppress("NAME_SHADOWING")
 object Hpack {
   private const val PREFIX_4_BITS = 0x0f
   private const val PREFIX_5_BITS = 0x1f
@@ -163,7 +164,7 @@ object Hpack {
 
     /** Returns the count of entries evicted. */
     private fun evictToRecoverBytes(bytesToRecover: Int): Int {
-      @Suppress("NAME_SHADOWING") var bytesToRecover = bytesToRecover
+      var bytesToRecover = bytesToRecover
       var entriesToEvict = 0
       if (bytesToRecover > 0) {
         // determine how many headers need to be evicted.
@@ -298,7 +299,7 @@ object Hpack {
 
     /** index == -1 when new. */
     private fun insertIntoDynamicTable(index: Int, entry: Header) {
-      @Suppress("NAME_SHADOWING") var index = index
+      var index = index
       headerList.add(entry)
 
       var delta = entry.hpackSize
@@ -417,7 +418,7 @@ object Hpack {
 
     /** Returns the count of entries evicted. */
     private fun evictToRecoverBytes(bytesToRecover: Int): Int {
-      @Suppress("NAME_SHADOWING") var bytesToRecover = bytesToRecover
+      var bytesToRecover = bytesToRecover
       var entriesToEvict = 0
       if (bytesToRecover > 0) {
         // determine how many headers need to be evicted.
@@ -542,7 +543,7 @@ object Hpack {
 
     // http://tools.ietf.org/html/draft-ietf-httpbis-header-compression-12#section-4.1.1
     fun writeInt(value: Int, prefixMask: Int, bits: Int) {
-      @Suppress("NAME_SHADOWING") var value = value
+      var value = value
       // Write the raw value for a single byte value.
       if (value < prefixMask) {
         out.writeByte(bits or value)

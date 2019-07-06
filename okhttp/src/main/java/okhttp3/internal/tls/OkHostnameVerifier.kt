@@ -29,6 +29,7 @@ import javax.net.ssl.SSLSession
  *
  * [rfc_2818]: http://www.ietf.org/rfc/rfc2818.txt
  */
+@Suppress("NAME_SHADOWING")
 object OkHostnameVerifier : HostnameVerifier {
   private const val ALT_DNS_NAME = 2
   private const val ALT_IPA_NAME = 7
@@ -57,7 +58,7 @@ object OkHostnameVerifier : HostnameVerifier {
 
   /** Returns true if [certificate] matches [hostname]. */
   private fun verifyHostname(hostname: String, certificate: X509Certificate): Boolean {
-    @Suppress("NAME_SHADOWING") val hostname = hostname.toLowerCase(Locale.US)
+    val hostname = hostname.toLowerCase(Locale.US)
     return getSubjectAltNames(certificate, ALT_DNS_NAME).any {
       verifyHostname(hostname, it)
     }
@@ -70,7 +71,6 @@ object OkHostnameVerifier : HostnameVerifier {
    * @param pattern domain name pattern from certificate. May be a wildcard pattern such as
    *     `*.android.com`.
    */
-  @Suppress("NAME_SHADOWING")
   private fun verifyHostname(hostname: String?, pattern: String?): Boolean {
     var hostname = hostname
     var pattern = pattern

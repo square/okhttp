@@ -23,14 +23,13 @@ import org.junit.Test
 
 class CertificatePinnerKotlinTest {
 
-  @Suppress("DEPRECATION")
   @Test
   fun successfulCheckSha1Pin() {
     val certificatePinner = CertificatePinner.Builder()
         .add("example.com", "sha1/" + certA1.certificate.toSha1ByteString().base64())
         .build()
 
-    certificatePinner.check("example.com", certA1.certificate)
+    certificatePinner.check("example.com", listOf(certA1.certificate))
   }
 
   @Test fun successfulFindMatchingPins() {

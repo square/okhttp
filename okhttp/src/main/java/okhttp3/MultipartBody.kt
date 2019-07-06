@@ -29,6 +29,7 @@ import java.util.UUID
  *
  * [rfc_2387]: http://www.ietf.org/rfc/rfc2387.txt
  */
+@Suppress("NAME_SHADOWING")
 class MultipartBody internal constructor(
   private val boundaryByteString: ByteString,
   @get:JvmName("type") val type: MediaType,
@@ -103,7 +104,7 @@ class MultipartBody internal constructor(
     sink: BufferedSink?,
     countBytes: Boolean
   ): Long {
-    @Suppress("NAME_SHADOWING") var sink = sink
+    var sink = sink
     var byteCount = 0L
 
     var byteCountBuffer: Buffer? = null

@@ -123,6 +123,7 @@ import javax.net.ssl.SSLPeerUnverifiedException
  * [rfc_7469]: http://tools.ietf.org/html/rfc7469
  * [static_certificates]: http://goo.gl/XDh6je
  */
+@Suppress("NAME_SHADOWING")
 class CertificatePinner internal constructor(
   private val pins: Set<Pin>,
   private val certificateChainCleaner: CertificateChainCleaner?
@@ -137,15 +138,15 @@ class CertificatePinner internal constructor(
    */
   @Throws(SSLPeerUnverifiedException::class)
   fun check(hostname: String, peerCertificates: List<Certificate>) {
-    var cleanPeerCertificates = peerCertificates
+    var peerCertificates = peerCertificates
     val pins = findMatchingPins(hostname)
     if (pins.isEmpty()) return
 
     if (certificateChainCleaner != null) {
-      cleanPeerCertificates = certificateChainCleaner.clean(cleanPeerCertificates, hostname)
+      peerCertificates = certificateChainCleaner.clean(peerCertificates, hostname)
     }
 
-    for (peerCertificate in cleanPeerCertificates) {
+    for (peerCertificate in peerCertificates) {
       val x509Certificate = peerCertificate as X509Certificate
 
       // Lazily compute the hashes for each certificate.
@@ -171,8 +172,8 @@ class CertificatePinner internal constructor(
     val message = buildString {
       append("Certificate pinning failure!")
       append("\n  Peer certificate chain:")
-      for (c in 0 until cleanPeerCertificates.size) {
-        val x509Certificate = cleanPeerCertificates[c] as X509Certificate
+      for (c in 0 until peerCertificates.size) {
+        val x509Certificate = peerCertificates[c] as X509Certificate
         append("\n    ")
         append(pin(x509Certificate))
         append(": ")
@@ -194,7 +195,7 @@ class CertificatePinner internal constructor(
       ReplaceWith("check(hostname, peerCertificates.toList())")
   )
   @Throws(SSLPeerUnverifiedException::class)
-  fun check(hostname: String, vararg peerCertificates: Certificate) {
+  inline fun check(hostname: String, vararg peerCertificates: Certificate) {
     check(hostname, peerCertificates.toList())
   }
 

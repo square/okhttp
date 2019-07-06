@@ -40,6 +40,7 @@ import java.util.regex.Pattern
  *
  * [chromium_extension]: https://code.google.com/p/chromium/issues/detail?id=232693
  */
+@Suppress("NAME_SHADOWING")
 class Cookie private constructor(
   /** Returns a non-empty string with this cookie's name. */
   @get:JvmName("name") val name: String,
@@ -272,7 +273,7 @@ class Cookie private constructor(
     }
 
     fun expiresAt(expiresAt: Long) = apply {
-      @Suppress("NAME_SHADOWING") var expiresAt = expiresAt
+      var expiresAt = expiresAt
       if (expiresAt <= 0L) expiresAt = Long.MIN_VALUE
       if (expiresAt > MAX_DATE) expiresAt = MAX_DATE
       this.expiresAt = expiresAt
@@ -325,6 +326,7 @@ class Cookie private constructor(
     }
   }
 
+  @Suppress("NAME_SHADOWING")
   companion object {
     private val YEAR_PATTERN = Pattern.compile("(\\d{2,4})[^\\d]*")
     private val MONTH_PATTERN =
@@ -482,7 +484,7 @@ class Cookie private constructor(
 
     /** Parse a date as specified in RFC 6265, section 5.1.1. */
     private fun parseExpires(s: String, pos: Int, limit: Int): Long {
-      @Suppress("NAME_SHADOWING") var pos = pos
+      var pos = pos
       pos = dateCharacterOffset(s, pos, limit, false)
 
       var hour = -1

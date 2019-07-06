@@ -24,7 +24,6 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
 
-@SuppressWarnings("FutureReturnValueIgnored")
 public class CancelCall {
   private final ScheduledExecutorService executor = Executors.newScheduledThreadPool(1);
   private final OkHttpClient client = new OkHttpClient();

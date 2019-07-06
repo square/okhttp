@@ -33,6 +33,7 @@ import java.net.SocketTimeoutException
 import java.util.ArrayDeque
 
 /** A logical bidirectional stream. */
+@Suppress("NAME_SHADOWING")
 class Http2Stream internal constructor(
   val id: Int,
   val connection: Http2Connection,
@@ -171,7 +172,7 @@ class Http2Stream internal constructor(
    */
   @Throws(IOException::class)
   fun writeHeaders(responseHeaders: List<Header>, outFinished: Boolean, flushHeaders: Boolean) {
-    @Suppress("NAME_SHADOWING") var flushHeaders = flushHeaders
+    var flushHeaders = flushHeaders
     assert(!Thread.holdsLock(this@Http2Stream))
     synchronized(this) {
       this.hasResponseHeaders = true
@@ -407,7 +408,7 @@ class Http2Stream internal constructor(
 
     @Throws(IOException::class)
     internal fun receive(source: BufferedSource, byteCount: Long) {
-      @Suppress("NAME_SHADOWING") var byteCount = byteCount
+      var byteCount = byteCount
       assert(!Thread.holdsLock(this@Http2Stream))
 
       while (byteCount > 0L) {
