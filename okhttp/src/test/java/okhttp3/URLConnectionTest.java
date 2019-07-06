@@ -689,7 +689,6 @@ public final class URLConnectionTest {
    */
   @Test public void connectViaHttpsToUntrustedServer() throws Exception {
     // https://github.com/square/okhttp/issues/5222
-    platform.expectFailureOnConscryptPlatform();
 
     server.useHttps(handshakeCertificates.sslSocketFactory(), false);
     server.enqueue(new MockResponse()); // unused
