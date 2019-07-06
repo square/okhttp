@@ -15,21 +15,27 @@
  */
 package okhttp3.internal.platform
 
+import okhttp3.DelegatingSSLSocket
+import okhttp3.DelegatingSSLSocketFactory
 import okhttp3.Protocol.HTTP_1_1
 import okhttp3.Protocol.HTTP_2
 import org.conscrypt.Conscrypt
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
+import java.security.Provider
 import javax.net.ssl.SSLContext
 import javax.net.ssl.SSLSocket
 
 @RunWith(Parameterized::class)
 class AndroidSocketAdapterTest(val adapter: AndroidSocketAdapter) {
-  val provider = Conscrypt.newProviderBuilder().provideTrustManager(true).build()
-  val context = SSLContext.getInstance("TLS", provider)
+  val provider: Provider = Conscrypt.newProviderBuilder().provideTrustManager(true).build()
+  val context: SSLContext = SSLContext.getInstance("TLS", provider)
+
   init {
     context.init(null, null, null)
   }
@@ -37,10 +43,10 @@ class AndroidSocketAdapterTest(val adapter: AndroidSocketAdapter) {
   @Test
   fun testInit() {
     val socketFactory = context.socketFactory
-    adapter.matchesSocketFactory(socketFactory)
+    assertTrue(adapter.matchesSocketFactory(socketFactory))
 
     val sslSocket = socketFactory.createSocket() as SSLSocket
-    adapter.matchesSocket(sslSocket)
+    assertTrue(adapter.matchesSocket(sslSocket))
 
     // Could avoid completely for ConscryptSocketAdapter
     assertNotNull(adapter.sslSocketClass)
@@ -49,6 +55,21 @@ class AndroidSocketAdapterTest(val adapter: AndroidSocketAdapter) {
     assertNotNull(adapter.setAlpnProtocols)
     assertNotNull(adapter.setHostname)
     assertNotNull(adapter.setUseSessionTickets)
+
+    adapter.configureTlsExtensions(sslSocket, "example.com", listOf(HTTP_2, HTTP_1_1))
+    // not connected
+    assertNull(adapter.getSelectedProtocol(sslSocket))
+  }
+
+  @Test
+  fun testCustomSocket() {
+    val socketFactory = DelegatingSSLSocketFactory(context.socketFactory)
+
+    assertFalse(adapter.matchesSocketFactory(socketFactory))
+
+    val sslSocket =
+        object : DelegatingSSLSocket(context.socketFactory.createSocket() as SSLSocket) {}
+    assertFalse(adapter.matchesSocket(sslSocket))
 
     adapter.configureTlsExtensions(sslSocket, "example.com", listOf(HTTP_2, HTTP_1_1))
     // not connected

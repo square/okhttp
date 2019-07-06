@@ -115,24 +115,31 @@ open class AndroidSocketAdapter internal constructor(private val packageName: St
     protocols: List<Protocol>
   ) {
     // No TLS extensions if the socket class is custom.
-    try {
-      // Enable SNI and session tickets.
-      if (hostname != null) {
-        setUseSessionTickets.invoke(sslSocket, true)
-        // This is SSLParameters.setServerNames() in API 24+.
-        setHostname.invoke(sslSocket, hostname)
-      }
+    if (matchesSocket(sslSocket)) {
+      try {
+        // Enable SNI and session tickets.
+        if (hostname != null) {
+          setUseSessionTickets.invoke(sslSocket, true)
+          // This is SSLParameters.setServerNames() in API 24+.
+          setHostname.invoke(sslSocket, hostname)
+        }
 
-      // Enable ALPN.
-      setAlpnProtocols.invoke(sslSocket, Platform.concatLengthPrefixed(protocols))
-    } catch (e: IllegalAccessException) {
-      throw AssertionError(e)
-    } catch (e: InvocationTargetException) {
-      throw AssertionError(e)
+        // Enable ALPN.
+        setAlpnProtocols.invoke(sslSocket, Platform.concatLengthPrefixed(protocols))
+      } catch (e: IllegalAccessException) {
+        throw AssertionError(e)
+      } catch (e: InvocationTargetException) {
+        throw AssertionError(e)
+      }
     }
   }
 
   open fun getSelectedProtocol(sslSocket: SSLSocket): String? {
+    // No TLS extensions if the socket class is custom.
+    if (!matchesSocket(sslSocket)) {
+      return null
+    }
+
     return try {
       val alpnResult = getAlpnSelectedProtocol.invoke(sslSocket) as ByteArray?
       if (alpnResult != null) String(alpnResult, StandardCharsets.UTF_8) else null

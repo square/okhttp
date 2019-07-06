@@ -28,23 +28,28 @@ object ConscryptSocketAdapter : AndroidSocketAdapter("org.conscrypt") {
 
   override fun isSupported(): Boolean = super.isSupported() && ConscryptPlatform.isSupported
 
-  override fun getSelectedProtocol(sslSocket: SSLSocket): String? {
-    return Conscrypt.getApplicationProtocol(sslSocket)
-  }
+  override fun getSelectedProtocol(sslSocket: SSLSocket): String? =
+      when {
+        matchesSocket(sslSocket) -> Conscrypt.getApplicationProtocol(sslSocket)
+        else -> null // No TLS extensions if the socket class is custom.
+      }
 
   override fun configureTlsExtensions(
     sslSocket: SSLSocket,
     hostname: String?,
     protocols: List<Protocol>
   ) {
-    // Enable SNI and session tickets.
-    if (hostname != null) {
-      Conscrypt.setUseSessionTickets(sslSocket, true)
-      Conscrypt.setHostname(sslSocket, hostname)
-    }
+    // No TLS extensions if the socket class is custom.
+    if (matchesSocket(sslSocket)) {
+      // Enable SNI and session tickets.
+      if (hostname != null) {
+        Conscrypt.setUseSessionTickets(sslSocket, true)
+        Conscrypt.setHostname(sslSocket, hostname)
+      }
 
-    // Enable ALPN.
-    val names = Platform.alpnProtocolNames(protocols)
-    Conscrypt.setApplicationProtocols(sslSocket, names.toTypedArray())
+      // Enable ALPN.
+      val names = Platform.alpnProtocolNames(protocols)
+      Conscrypt.setApplicationProtocols(sslSocket, names.toTypedArray())
+    }
   }
 }
