@@ -61,7 +61,6 @@ plugins {
   id 'ru.vyarus.animalsniffer' version '1.5.0'
   id 'com.github.johnrengelman.shadow' version '4.0.1'
   id 'me.champeau.gradle.japicmp' version '0.2.6'
-  id 'net.ltgt.errorprone' version "0.7.1" apply false
 }
 
 allprojects {

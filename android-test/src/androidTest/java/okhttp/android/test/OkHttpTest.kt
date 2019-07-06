@@ -17,6 +17,9 @@ import org.junit.Test
 import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
+/**
+ * Run with "./gradlew :android-test:connectedCheck" and make sure ANDROID_SDK_ROOT is set.
+ */
 class OkHttpTest {
   private lateinit var client: OkHttpClient
 
