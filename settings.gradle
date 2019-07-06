@@ -1,6 +1,7 @@
 include ':mockwebserver'
 include ':okcurl'
 include ':okhttp'
+include ':okhttp-brotli'
 include ':okhttp-dnsoverhttps'
 include ':okhttp-hpacktests'
 include ':okhttp-logging-interceptor'
