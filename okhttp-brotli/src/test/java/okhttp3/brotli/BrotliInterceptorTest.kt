@@ -49,6 +49,26 @@ class BrotliInterceptorTest {
   }
 
   @Test
+  fun testUncompressGzip() {
+    val s =
+        "1f8b0800968f215d02ff558ec10e82301044ef7c45b3e75269d0c478e340e4a426e007086c4a636c9bb65e" +
+            "24fcbb5b484c3cec61deccecee9c3106eaa39dc3114e2cfa377296d8848f117d20369324500d03ba98" +
+            "d766b0a3368a0ce83d4f55581b14696c88894f31ba5e1b61bdfa79f7803eaf149a35619f29b3db0b29" +
+            "8abcbd54b7b6b97640c965bbfec238d9f4109ceb6edb01d66ba54d6247296441531e445970f627215b" +
+            "b22f1017320dd5000000"
+
+    val response = response("https://httpbin.org/brotli", s.decodeHex()) {
+      header("Content-Encoding", "gzip")
+    }
+
+    val uncompressed = BrotliInterceptor.uncompress(response)
+
+    val responseString = uncompressed.body?.string()
+    assertThat(responseString).contains("\"gzipped\": true,")
+    assertThat(responseString).contains("\"Accept-Encoding\": \"br,gzip\"")
+  }
+
+  @Test
   fun testNoUncompress() {
     val response = response("https://httpbin.org/brotli", "XXXX".encodeUtf8())
 

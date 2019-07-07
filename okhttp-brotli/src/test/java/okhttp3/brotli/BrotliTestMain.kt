@@ -23,9 +23,12 @@ fun main() {
       .addInterceptor(BrotliInterceptor)
       .build()
 
-  val req = Request.Builder()
-      .url("https://httpbin.org/brotli")
-      .build()
+  sendRequest("https://httpbin.org/brotli", client)
+  sendRequest("https://httpbin.org/gzip", client)
+}
+
+private fun sendRequest(url: String, client: OkHttpClient) {
+  val req = Request.Builder().url(url).build()
 
   client.newCall(req).execute().use {
     println(it.body?.string())

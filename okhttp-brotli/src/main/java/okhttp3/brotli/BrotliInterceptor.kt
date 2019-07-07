@@ -27,7 +27,7 @@ import org.brotli.dec.BrotliInputStream
  * Transparent Brotli response support.
  *
  * Adds Accept-Encoding: br to request and checks (and strips) for Content-Encoding: br in
- * responses.  n.b. this replaces the transparent gzip compression InBridgeInterceptor.
+ * responses.  n.b. this replaces the transparent gzip compression in BridgeInterceptor.
  */
 object BrotliInterceptor : Interceptor {
   override fun intercept(chain: Interceptor.Chain): Response =
