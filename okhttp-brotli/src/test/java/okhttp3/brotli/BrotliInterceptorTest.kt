@@ -57,7 +57,7 @@ class BrotliInterceptorTest {
             "8abcbd54b7b6b97640c965bbfec238d9f4109ceb6edb01d66ba54d6247296441531e445970f627215b" +
             "b22f1017320dd5000000"
 
-    val response = response("https://httpbin.org/brotli", s.decodeHex()) {
+    val response = response("https://httpbin.org/gzip", s.decodeHex()) {
       header("Content-Encoding", "gzip")
     }
 
