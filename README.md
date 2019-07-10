@@ -100,7 +100,7 @@ Releases
 Our [change log][changelog] has release history.
 
 ```kotlin
-implementation("com.squareup.okhttp3:okhttp:4.0.0")
+implementation("com.squareup.okhttp3:okhttp:4.0.1")
 ```
 
 Snapshot builds are [available][snap].
@@ -120,7 +120,7 @@ MockWebServer
 OkHttp includes a library for testing HTTP, HTTPS, and HTTP/2 clients.
 
 ```kotlin
-testImplementation("com.squareup.okhttp3:mockwebserver:4.0.0")
+testImplementation("com.squareup.okhttp3:mockwebserver:4.0.1")
 ```
 
 
