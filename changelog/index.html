@@ -579,6 +579,13 @@
     <ul class="md-nav__list" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#version-401" title="Version 4.0.1" class="md-nav__link">
+    Version 4.0.1
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#version-400" title="Version 4.0.0" class="md-nav__link">
     Version 4.0.0
   </a>
@@ -1155,6 +1162,13 @@
     <ul class="md-nav__list" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#version-401" title="Version 4.0.1" class="md-nav__link">
+    Version 4.0.1
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#version-400" title="Version 4.0.0" class="md-nav__link">
     Version 4.0.0
   </a>
@@ -1683,6 +1697,14 @@
                 
                 
                 <h1 id="change-log">Change Log<a class="headerlink" href="#change-log" title="Permanent link">&para;</a></h1>
+<h2 id="version-401">Version 4.0.1<a class="headerlink" href="#version-401" title="Permanent link">&para;</a></h2>
+<p><em>2019-07-10</em></p>
+<ul>
+<li>Fix: Tolerate null-hostile lists in public API. Lists created with <code>List.of(...)</code> don&rsquo;t like it
+    when you call <code>contains(null)</code> on them!</li>
+<li>Fix: Retain binary-compatibility in <code>okhttp3.internal.HttpHeaders.hasBody()</code>. Some unscrupulous
+    coders call this and we don&rsquo;t want their users to suffer.</li>
+</ul>
 <h2 id="version-400">Version 4.0.0<a class="headerlink" href="#version-400" title="Permanent link">&para;</a></h2>
 <p><em>2019-06-26</em></p>
 <p><strong>This release upgrades OkHttp to Kotlin.</strong> We tried our best to make fast and safe to upgrade
