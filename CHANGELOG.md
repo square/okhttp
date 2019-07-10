@@ -1,6 +1,16 @@
 Change Log
 ==========
 
+## Version 4.0.1
+
+_2019-07-10_
+
+ *  Fix: Tolerate null-hostile lists in public API. Lists created with `List.of(...)` don't like it
+    when you call `contains(null)` on them!
+ *  Fix: Retain binary-compatibility in `okhttp3.internal.HttpHeaders.hasBody()`. Some unscrupulous
+    coders call this and we don't want their users to suffer.
+
+
 ## Version 4.0.0
 
 _2019-06-26_
