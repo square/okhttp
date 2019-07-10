@@ -39,7 +39,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.fail;
 
 public final class HeadersTest {
-  @Test public void readNameValueBlockDropsForbiddenHeadersHttp2() throws IOException {
+  @Test public void readNameValueBlockDropsForbiddenHeadersHttp2() {
     Headers headerBlock = Headers.of(
         ":status", "200 OK",
         ":version", "HTTP/1.1",

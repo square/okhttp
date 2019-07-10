@@ -19,6 +19,8 @@ import java.net.CookieHandler;
 import java.net.CookieManager;
 import java.net.ProxySelector;
 import java.net.ResponseCache;
+import java.util.AbstractList;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 import javax.net.ssl.SSLSocketFactory;
 import okhttp3.mockwebserver.MockResponse;
@@ -29,6 +31,7 @@ import org.junit.Test;
 
 import static java.util.Arrays.asList;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
 public final class OkHttpClientTest {
@@ -238,5 +241,33 @@ public final class OkHttpClientTest {
       fail();
     } catch (IllegalStateException expected) {
     }
+  }
+
+  @Test public void nullHostileProtocolList() {
+    List<Protocol> nullHostileProtocols = new AbstractList<Protocol>() {
+      @Override public boolean contains(Object o) {
+        if (o == null) throw new NullPointerException();
+        return super.contains(o);
+      }
+
+      @Override public int indexOf(Object o) {
+        if (o == null) throw new NullPointerException();
+        return super.indexOf(o);
+      }
+
+      @Override public Protocol get(int index) {
+        if (index != 0) throw new IndexOutOfBoundsException();
+        return Protocol.HTTP_1_1;
+      }
+
+      @Override public int size() {
+        return 1;
+      }
+    };
+
+    OkHttpClient client = new OkHttpClient.Builder()
+        .protocols(nullHostileProtocols)
+        .build();
+    assertEquals(asList(Protocol.HTTP_1_1), client.protocols());
   }
 }
