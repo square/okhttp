@@ -667,9 +667,8 @@ public final class WebSocketHttpTest {
     // Confirm that the hard cancel occurred after 500 ms.
     clientListener.assertFailure();
     long elapsedUntilFailure = System.nanoTime() - closeAtNanos;
-    assertThat((double) TimeUnit.NANOSECONDS.toMillis(elapsedUntilFailure)).isCloseTo((double) 500,
-        offset(
-            250d));
+    assertThat(TimeUnit.NANOSECONDS.toMillis(elapsedUntilFailure))
+        .isCloseTo(500L, offset(250L));
 
     // Close the server and confirm it saw what we expected.
     server.close(1000, null);
