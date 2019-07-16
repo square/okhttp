@@ -582,9 +582,8 @@ public final class WebSocketHttpTest {
     }
 
     long elapsedUntilPong3 = System.nanoTime() - startNanos;
-    assertThat((double) TimeUnit.NANOSECONDS.toMillis(elapsedUntilPong3)).isCloseTo((double) 1500,
-        offset(
-            250d));
+    assertThat(TimeUnit.NANOSECONDS.toMillis(elapsedUntilPong3))
+        .isCloseTo(1500L, offset(250L));
 
     // The client pinged the server 3 times, and it has ponged back 3 times.
     assertThat(webSocket.sentPingCount()).isEqualTo(3);
@@ -648,9 +647,8 @@ public final class WebSocketHttpTest {
     latch.countDown();
 
     long elapsedUntilFailure = System.nanoTime() - openAtNanos;
-    assertThat((double) TimeUnit.NANOSECONDS.toMillis(elapsedUntilFailure)).isCloseTo((double) 1000,
-        offset(
-            250d));
+    assertThat(TimeUnit.NANOSECONDS.toMillis(elapsedUntilFailure))
+        .isCloseTo(1000L, offset(250L));
   }
 
   /** https://github.com/square/okhttp/issues/2788 */

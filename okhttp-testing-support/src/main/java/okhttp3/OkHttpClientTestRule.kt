@@ -138,7 +138,7 @@ class OkHttpClientTestRule : TestRule {
       }
     }
 
-    fun freshClient(): OkHttpClient {
+    private fun freshClient(): OkHttpClient {
       return OkHttpClient.Builder()
           .dns(SINGLE_INET_ADDRESS_DNS) // Prevent unexpected fallback addresses.
           .build()
