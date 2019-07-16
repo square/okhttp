@@ -47,11 +47,13 @@ buildscript {
     classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:${versions.kotlin}"
     classpath "org.jetbrains.dokka:dokka-gradle-plugin:0.9.18"
     classpath 'com.diffplug.spotless:spotless-plugin-gradle:3.21.1'
+    classpath 'com.android.tools.build:gradle:3.4.1'
   }
 
   repositories {
     mavenCentral()
     gradlePluginPortal()
+    google()
   }
 }
 
@@ -70,6 +72,7 @@ allprojects {
     maven {
       url 'https://dl.bintray.com/kotlin/dokka'
     }
+    google()
   }
 
   task downloadDependencies() {
@@ -81,6 +84,9 @@ allprojects {
 }
 
 subprojects { project ->
+  if (project.name == 'android-test')
+    return
+
   apply plugin: 'java'
   apply plugin: 'java-library'
   apply plugin: 'org.jetbrains.kotlin.platform.jvm'
