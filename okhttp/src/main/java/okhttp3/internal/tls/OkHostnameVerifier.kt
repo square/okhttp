@@ -29,6 +29,7 @@ import javax.net.ssl.SSLSession
  *
  * [rfc_2818]: http://www.ietf.org/rfc/rfc2818.txt
  */
+@Suppress("NAME_SHADOWING")
 object OkHostnameVerifier : HostnameVerifier {
   private const val ALT_DNS_NAME = 2
   private const val ALT_IPA_NAME = 7

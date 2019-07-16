@@ -92,7 +92,7 @@ object DnsRecordCodec {
 
       val type = buf.readShort().toInt() and 0xffff
       buf.readShort() // class
-      val ttl = buf.readInt().toLong() and 0xffffffffL // ttl
+      @Suppress("UNUSED_VARIABLE") val ttl = buf.readInt().toLong() and 0xffffffffL // ttl
       val length = buf.readShort().toInt() and 0xffff
 
       if (type == TYPE_A || type == TYPE_AAAA) {

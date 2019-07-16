@@ -44,7 +44,6 @@ import okhttp3.Interceptor;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import okhttp3.OkHttpClientTestRule;
-import okhttp3.PlatformRule;
 import okhttp3.Protocol;
 import okhttp3.RecordingCookieJar;
 import okhttp3.RecordingHostnameVerifier;
@@ -65,6 +64,7 @@ import okhttp3.mockwebserver.QueueDispatcher;
 import okhttp3.mockwebserver.RecordedRequest;
 import okhttp3.mockwebserver.SocketPolicy;
 import okhttp3.testing.Flaky;
+import okhttp3.testing.PlatformRule;
 import okhttp3.tls.HandshakeCertificates;
 import okio.Buffer;
 import okio.BufferedSink;
@@ -76,7 +76,9 @@ import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.RuleChain;
 import org.junit.rules.TemporaryFolder;
+import org.junit.rules.TestRule;
 import org.junit.rules.Timeout;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -107,11 +109,12 @@ public final class HttpOverHttp2Test {
     return asList(Protocol.H2_PRIOR_KNOWLEDGE, Protocol.HTTP_2);
   }
 
-  @Rule public final PlatformRule platform = new PlatformRule();
+  private PlatformRule platform = new PlatformRule();
+  @Rule public final TestRule chain =
+      RuleChain.outerRule(platform).around(new Timeout(5, SECONDS));
   @Rule public final TemporaryFolder tempDir = new TemporaryFolder();
   @Rule public final MockWebServer server = new MockWebServer();
   @Rule public final OkHttpClientTestRule clientTestRule = new OkHttpClientTestRule();
-  @Rule public final Timeout timeout = new Timeout(5, SECONDS);
 
   private OkHttpClient client;
   private Cache cache;
@@ -1229,6 +1232,11 @@ public final class HttpOverHttp2Test {
 
   @Flaky(issues = "https://github.com/square/okhttp/issues/5221")
   @Test public void missingPongsFailsConnection() throws Exception {
+    if (protocol == Protocol.HTTP_2) {
+      // https://github.com/square/okhttp/issues/5221
+      platform.expectFailureFromJdkVersion(12);
+    }
+
     // Ping every 500 ms, starting at 500 ms.
     client = client.newBuilder()
         .readTimeout(10, TimeUnit.SECONDS) // Confirm we fail before the read timeout.

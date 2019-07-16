@@ -33,6 +33,7 @@ import java.net.SocketTimeoutException
 import java.util.ArrayDeque
 
 /** A logical bidirectional stream. */
+@Suppress("NAME_SHADOWING")
 class Http2Stream internal constructor(
   val id: Int,
   val connection: Http2Connection,

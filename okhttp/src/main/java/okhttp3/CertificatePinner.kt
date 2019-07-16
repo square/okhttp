@@ -123,6 +123,7 @@ import javax.net.ssl.SSLPeerUnverifiedException
  * [rfc_7469]: http://tools.ietf.org/html/rfc7469
  * [static_certificates]: http://goo.gl/XDh6je
  */
+@Suppress("NAME_SHADOWING")
 class CertificatePinner internal constructor(
   private val pins: Set<Pin>,
   private val certificateChainCleaner: CertificateChainCleaner?

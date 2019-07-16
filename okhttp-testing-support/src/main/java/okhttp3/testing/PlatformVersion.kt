@@ -13,23 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package okhttp3
+package okhttp3.testing
 
-import okhttp3.internal.platform.Platform
-import org.junit.Rule
-import org.junit.Test
+object PlatformVersion {
+  val majorVersion: Int by lazy {
+    when (val jvmSpecVersion = getJvmSpecVersion()) {
+      "1.8" -> 8
+      else -> jvmSpecVersion.toInt()
+    }
+  }
 
-/**
- * Sanity test for checking which environment and IDE is picking up.
- */
-class PlatformRuleTest {
-  @Suppress("RedundantVisibilityModifier")
-  @JvmField
-  @Rule public val platform = PlatformRule()
-
-  @Test
-  fun testMode() {
-    println(PlatformRule.getPlatformSystemProperty())
-    println(Platform.get().javaClass.simpleName)
+  fun getJvmSpecVersion(): String {
+    return System.getProperty("java.specification.version", "unknown")
   }
 }

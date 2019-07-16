@@ -25,7 +25,7 @@ import javax.net.ssl.HostnameVerifier;
 import okhttp3.HttpUrl;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
-import okhttp3.PlatformRule;
+import okhttp3.testing.PlatformRule;
 import okhttp3.Protocol;
 import okhttp3.RecordingHostnameVerifier;
 import okhttp3.Request;
