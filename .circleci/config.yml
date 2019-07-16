@@ -196,7 +196,6 @@ jobs:
       - runtests:
           platform: jdk9
 
-
   testjdk13:
     docker:
       - image: circleci/openjdk:13.0.1-jdk-buster
@@ -238,6 +237,37 @@ jobs:
 
       - runtests:
           platform: corretto
+  docs:
+    machine:
+      image: circleci/classic:latest
+    parallelism: 1
+    steps:
+      - checkout # check out source code to working directory
+      - run: | # mkdocs wants to be run with Python 3, force the path to prioritize pyenv 3.5.2
+          pyenv global 3.5.2
+          export PATH="/opt/circleci/.pyenv/versions/3.5.2/lib/:$PATH"
+          pip install mkdocs mkdocs-material
+      - run: ./deploy_website.sh -d
+      # - run: |
+      #     ./gradlew \
+      #       :mockwebserver:dokka \
+      #       :okhttp-dnsoverhttps:dokka \
+      #       :okhttp-logging-interceptor:dokka \
+      #       :okhttp-sse:dokka \
+      #       :okhttp-tls:dokka \
+      #       :okhttp-urlconnection:dokka \
+      #       :okhttp:dokka
+      # - run: |
+      #       cat README.md | grep -v 'project website' > docs/index.md
+      #       cp CHANGELOG.md docs/changelog.md
+      #       cp CONTRIBUTING.md docs/contributing.md
+      # - run: |
+      #       git remote set-url origin https://github.com/square/okhttp.git
+      #       git config --global user.email "circleci@squareup.com"
+      #       git config --global user.name "CircleCI"
+      #       git cherry-pick bb229b9dcc9a21a73edbf8d936bea88f52e0a3ff
+      #       git cherry-pick c695732f1d4aea103b826876c077fbfea630e244
+      #   - run: mkdocs build
 
 workflows:
   version: 2
@@ -277,9 +307,11 @@ workflows:
             branches:
               ignore:
                 - gh-pages
-      #- testopenjsse
-      #- testconscrypt
-      #- testcorretto
+              #- testopenjsse
+              #- testconscrypt
+              #- testcorretto
+              only: master
+      - docs
   nightly:
     triggers:
       - schedule:
@@ -313,3 +345,4 @@ workflows:
       - testconscrypt:
           requires:
             - compile
+      - docs
