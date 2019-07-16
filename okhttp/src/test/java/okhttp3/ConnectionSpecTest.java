@@ -284,6 +284,8 @@ public final class ConnectionSpecTest {
     assertThat(set.add(ConnectionSpec.CLEARTEXT)).isTrue();
     assertThat(set.add(allTlsVersions)).isTrue();
     assertThat(set.add(allCipherSuites)).isTrue();
+    allCipherSuites.hashCode();
+    assertThat(allCipherSuites.equals(null)).isFalse();
 
     assertThat(set.remove(ConnectionSpec.MODERN_TLS)).isTrue();
     assertThat(set.remove(ConnectionSpec.COMPATIBLE_TLS)).isTrue();
@@ -291,6 +293,8 @@ public final class ConnectionSpecTest {
     assertThat(set.remove(allTlsVersions)).isTrue();
     assertThat(set.remove(allCipherSuites)).isTrue();
     assertThat(set).isEmpty();
+    allTlsVersions.hashCode();
+    assertThat(allTlsVersions.equals(null)).isFalse();
   }
 
   @Test public void allEnabledToString() throws Exception {
