@@ -27,6 +27,7 @@ import java.net.ProtocolException;
 import java.net.SocketTimeoutException;
 import java.net.URL;
 import java.net.URLConnection;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -57,6 +58,7 @@ import static org.assertj.core.data.Offset.offset;
 import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeFalse;
 
+@SuppressWarnings({"ArraysAsListWithZeroOrOneArgument", "deprecation"})
 public final class MockWebServerTest {
   @Rule public final MockWebServer server = new MockWebServer();
 
@@ -134,7 +136,7 @@ public final class MockWebServerTest {
     HttpURLConnection connection = (HttpURLConnection) url.openConnection();
     connection.setRequestProperty("Accept-Language", "en-US");
     InputStream in = connection.getInputStream();
-    BufferedReader reader = new BufferedReader(new InputStreamReader(in));
+    BufferedReader reader = new BufferedReader(new InputStreamReader(in, UTF_8));
     assertThat(connection.getResponseCode()).isEqualTo(HttpURLConnection.HTTP_OK);
     assertThat(reader.readLine()).isEqualTo("hello world");
 
@@ -155,7 +157,7 @@ public final class MockWebServerTest {
 
     URLConnection connection = server.url("/").url().openConnection();
     InputStream in = connection.getInputStream();
-    BufferedReader reader = new BufferedReader(new InputStreamReader(in));
+    BufferedReader reader = new BufferedReader(new InputStreamReader(in, UTF_8));
     assertThat(reader.readLine()).isEqualTo("This is the new location!");
 
     RecordedRequest first = server.takeRequest();
@@ -179,7 +181,7 @@ public final class MockWebServerTest {
 
     URLConnection connection = server.url("/").url().openConnection();
     InputStream in = connection.getInputStream();
-    BufferedReader reader = new BufferedReader(new InputStreamReader(in));
+    BufferedReader reader = new BufferedReader(new InputStreamReader(in, UTF_8));
     assertThat(reader.readLine()).isEqualTo("enqueued in the background");
   }
 
@@ -377,15 +379,15 @@ public final class MockWebServerTest {
     server.shutdown();
   }
 
-  @Test public void portImplicitlyStarts() throws IOException {
+  @Test public void portImplicitlyStarts() {
     assertThat(server.getPort()).isGreaterThan(0);
   }
 
-  @Test public void hostnameImplicitlyStarts() throws IOException {
+  @Test public void hostnameImplicitlyStarts() {
     assertThat(server.getHostName()).isNotNull();
   }
 
-  @Test public void toProxyAddressImplicitlyStarts() throws IOException {
+  @Test public void toProxyAddressImplicitlyStarts() {
     assertThat(server.toProxyAddress()).isNotNull();
   }
 
@@ -434,7 +436,7 @@ public final class MockWebServerTest {
     URL url = server.url("/a/deep/path?key=foo%20bar").url();
     HttpURLConnection connection = (HttpURLConnection) url.openConnection();
     InputStream in = connection.getInputStream();
-    BufferedReader reader = new BufferedReader(new InputStreamReader(in));
+    BufferedReader reader = new BufferedReader(new InputStreamReader(in, UTF_8));
     assertThat(connection.getResponseCode()).isEqualTo(HttpURLConnection.HTTP_OK);
     assertThat(reader.readLine()).isEqualTo("hello world");
 
@@ -478,7 +480,7 @@ public final class MockWebServerTest {
     connection.getOutputStream().write("request".getBytes(UTF_8));
 
     InputStream in = connection.getInputStream();
-    BufferedReader reader = new BufferedReader(new InputStreamReader(in));
+    BufferedReader reader = new BufferedReader(new InputStreamReader(in, UTF_8));
     assertThat(reader.readLine()).isEqualTo("response");
 
     RecordedRequest request = server.takeRequest();
@@ -526,7 +528,8 @@ public final class MockWebServerTest {
     connection.setHostnameVerifier(new RecordingHostnameVerifier());
 
     assertThat(connection.getResponseCode()).isEqualTo(HttpURLConnection.HTTP_OK);
-    BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+    BufferedReader reader =
+        new BufferedReader(new InputStreamReader(connection.getInputStream(), UTF_8));
     assertThat(reader.readLine()).isEqualTo("abc");
 
     RecordedRequest request = server.takeRequest();

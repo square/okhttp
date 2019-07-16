@@ -46,6 +46,7 @@ import java.util.TreeSet
  *
  * Instances of this class are immutable. Use [Builder] to create instances.
  */
+@Suppress("NAME_SHADOWING")
 class Headers private constructor(
   private val namesAndValues: Array<String>
 ) : Iterable<Pair<String, String>> {

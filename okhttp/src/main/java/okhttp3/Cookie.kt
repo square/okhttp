@@ -40,6 +40,7 @@ import java.util.regex.Pattern
  *
  * [chromium_extension]: https://code.google.com/p/chromium/issues/detail?id=232693
  */
+@Suppress("NAME_SHADOWING")
 class Cookie private constructor(
   /** Returns a non-empty string with this cookie's name. */
   @get:JvmName("name") val name: String,
@@ -325,6 +326,7 @@ class Cookie private constructor(
     }
   }
 
+  @Suppress("NAME_SHADOWING")
   companion object {
     private val YEAR_PATTERN = Pattern.compile("(\\d{2,4})[^\\d]*")
     private val MONTH_PATTERN =
