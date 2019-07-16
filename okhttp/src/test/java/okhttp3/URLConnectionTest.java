@@ -686,8 +686,10 @@ public final class URLConnectionTest {
    *
    * http://code.google.com/p/android/issues/detail?id=13178
    */
-  @Flaky(issues = "https://github.com/square/okhttp/issues/5222")
+  @Flaky
   @Test public void connectViaHttpsToUntrustedServer() throws Exception {
+    // Flaky https://github.com/square/okhttp/issues/5222
+
     server.useHttps(handshakeCertificates.sslSocketFactory(), false);
     server.enqueue(new MockResponse()); // unused
 

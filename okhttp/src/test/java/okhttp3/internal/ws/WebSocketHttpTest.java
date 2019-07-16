@@ -58,9 +58,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.data.Offset.offset;
 import static org.junit.Assert.fail;
 
-@Flaky(issues = {"https://github.com/square/okhttp/issues/4515",
-    "https://github.com/square/okhttp/issues/4953"})
+@Flaky
 public final class WebSocketHttpTest {
+  // Flaky https://github.com/square/okhttp/issues/4515
+  // Flaky https://github.com/square/okhttp/issues/4953
+
   @Rule public final MockWebServer webServer = new MockWebServer();
   @Rule public final OkHttpClientTestRule clientTestRule = new OkHttpClientTestRule();
 
