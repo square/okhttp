@@ -224,21 +224,19 @@ class AndroidPlatform : Platform() {
   }
 
   companion object {
-    val isSupported: Boolean by lazy {
-      try {
-        // Trigger an early exception over a fatal error, prefer a RuntimeException over Error.
-        Class.forName("com.android.org.conscrypt.OpenSSLSocketImpl")
+    val isSupported: Boolean = try {
+      // Trigger an early exception over a fatal error, prefer a RuntimeException over Error.
+      Class.forName("com.android.org.conscrypt.OpenSSLSocketImpl")
 
-        // Fail Fast
-        if (Build.VERSION.SDK_INT < 21) {
-          throw IllegalStateException(
-              "Expected Android API level 21+ but was ${Build.VERSION.SDK_INT}")
-        }
-
-        true
-      } catch (e: ClassNotFoundException) {
-        false
+      // Fail Fast
+      if (Build.VERSION.SDK_INT < 21) {
+        throw IllegalStateException(
+            "Expected Android API level 21+ but was ${Build.VERSION.SDK_INT}")
       }
+
+      true
+    } catch (e: ClassNotFoundException) {
+      false
     }
 
     fun buildIfSupported(): Platform? = if (isSupported) AndroidPlatform() else null
