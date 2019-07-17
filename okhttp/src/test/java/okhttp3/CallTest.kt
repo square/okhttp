@@ -51,6 +51,8 @@ import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.data.Offset.offset
 import org.junit.After
 import org.junit.Assert.assertArrayEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Assert.fail
 import org.junit.Assume.assumeFalse
 import org.junit.Before
@@ -97,12 +99,12 @@ import kotlin.math.min
 
 @Suppress("SameParameterValue")
 class CallTest {
-  @Rule val platform = PlatformRule()
-  @Rule val timeout: TestRule = Timeout(30000, TimeUnit.MILLISECONDS)
-  @Rule val server = MockWebServer()
-  @Rule val server2 = MockWebServer()
-  @Rule val fileSystem = InMemoryFileSystem()
-  @Rule val clientTestRule = OkHttpClientTestRule()
+  @JvmField @Rule val platform = PlatformRule()
+  @JvmField @Rule val timeout: TestRule = Timeout(30000, TimeUnit.MILLISECONDS)
+  @JvmField @Rule val server = MockWebServer()
+  @JvmField @Rule val server2 = MockWebServer()
+  @JvmField @Rule val fileSystem = InMemoryFileSystem()
+  @JvmField @Rule val clientTestRule = OkHttpClientTestRule()
 
   private var listener = RecordingEventListener()
   private val handshakeCertificates = localhost()
@@ -868,9 +870,9 @@ class CallTest {
       @Throws(IOException::class)
       override fun onResponse(call: Call, response: Response) {
         val bytes = response.body!!.byteStream()
-        assertThat(bytes.read()).isEqualTo('a')
-        assertThat(bytes.read()).isEqualTo('b')
-        assertThat(bytes.read()).isEqualTo('c')
+        assertThat(bytes.read()).isEqualTo('a'.toInt())
+        assertThat(bytes.read()).isEqualTo('b'.toInt())
+        assertThat(bytes.read()).isEqualTo('c'.toInt())
 
         // This request will share a connection with 'A' cause it's all done.
         client.newCall(Request.Builder().url(server.url("/b")).build()).enqueue(callback)
@@ -1100,7 +1102,7 @@ class CallTest {
 
       @Throws(IOException::class)
       override fun writeTo(sink: BufferedSink) {
-        assertThat(sink.timeout().hasDeadline()).isFalse
+        assertFalse(sink.timeout().hasDeadline())
         sink.writeUtf8("def")
       }
     }
@@ -1133,7 +1135,7 @@ class CallTest {
     val response2 = client.newCall(request2).execute()
     val body2 = response2.body!!.source()
     assertThat(body2.readUtf8()).isEqualTo("def")
-    assertThat(body2.timeout().hasDeadline()).isFalse
+    assertFalse(body2.timeout().hasDeadline())
 
     // Use sequence numbers to confirm the connection was pooled.
     assertThat(server.takeRequest().sequenceNumber).isEqualTo(0)
@@ -1197,7 +1199,7 @@ class CallTest {
         .dns(DoubleInetAddressDns())
         .eventListener(listener)
         .build()
-    assertThat(client.retryOnConnectionFailure).isTrue
+    assertTrue(client.retryOnConnectionFailure)
 
     executeSynchronously("/").assertBody("seed connection pool")
     executeSynchronously("/").assertBody("retry success")
@@ -2668,7 +2670,7 @@ class CallTest {
 
     latch.await()
     assertThat(bodyRef.get()).isEqualTo("A")
-    assertThat(failureRef.get()).isFalse
+    assertFalse(failureRef.get())
   }
 
   @Test
@@ -3931,7 +3933,7 @@ class CallTest {
     assertThat(source.readUtf8(5)).isEqualTo("Hello")
     assertThat(source.readUtf8(7)).isEqualTo("Bonjour")
 
-    assertThat(source.exhausted()).isTrue
+    assertTrue(source.exhausted())
     assertThat(response.trailers()).isEqualTo(headersOf("trailers", "boom"))
   }
 
@@ -3961,7 +3963,7 @@ class CallTest {
       assertThat(source.readUtf8(5)).isEqualTo("Hello")
       assertThat(source.readUtf8(7)).isEqualTo("Bonjour")
 
-      assertThat(source.exhausted()).isTrue
+      assertTrue(source.exhausted())
       assertThat(response.trailers()).isEqualTo(headersOf("trailers", "boom"))
     }
   }
@@ -4022,7 +4024,7 @@ class CallTest {
         .build()
 
     executeSynchronously("/").assertFailure("Canceled")
-    assertThat(closed.get()).isTrue
+    assertTrue(closed.get())
   }
 
   private fun makeFailingCall() {
