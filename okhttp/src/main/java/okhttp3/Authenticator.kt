@@ -114,7 +114,6 @@ interface Authenticator {
       override fun authenticate(route: Route?, response: Response): Request? = null
     }
 
-
     /**
      * Constructs an interceptor for a lambda. This compact syntax is most useful for inline
      * interceptors.
