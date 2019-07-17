@@ -113,5 +113,22 @@ interface Authenticator {
     val NONE = object : Authenticator {
       override fun authenticate(route: Route?, response: Response): Request? = null
     }
+
+
+    /**
+     * Constructs an interceptor for a lambda. This compact syntax is most useful for inline
+     * interceptors.
+     *
+     * ```
+     * val interceptor = Interceptor { chain: Interceptor.Chain ->
+     *     chain.proceed(chain.request())
+     * }
+     * ```
+     */
+    inline operator fun invoke(crossinline block: (route: Route?, response: Response) -> Request?): Authenticator =
+        object : Authenticator {
+          override fun authenticate(route: Route?, response: Response): Request? =
+              block(route, response)
+        }
   }
 }
