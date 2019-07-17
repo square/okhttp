@@ -106,18 +106,16 @@ class ConscryptPlatform private constructor() : Platform() {
   }
 
   companion object {
-    val isSupported: Boolean by lazy {
-      try {
-        // Trigger an early exception over a fatal error, prefer a RuntimeException over Error.
-        Class.forName("org.conscrypt.Conscrypt\$Version")
+    val isSupported: Boolean = try {
+      // Trigger an early exception over a fatal error, prefer a RuntimeException over Error.
+      Class.forName("org.conscrypt.Conscrypt\$Version")
 
-        when {
-          Conscrypt.isAvailable() && atLeastVersion(2, 1, 0) -> true
-          else -> false
-        }
-      } catch (e: ClassNotFoundException) {
-        false
+      when {
+        Conscrypt.isAvailable() && atLeastVersion(2, 1, 0) -> true
+        else -> false
       }
+    } catch (e: ClassNotFoundException) {
+      false
     }
 
     fun buildIfSupported(): ConscryptPlatform? = if (isSupported) ConscryptPlatform() else null
