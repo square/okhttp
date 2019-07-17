@@ -16,8 +16,12 @@
 package okhttp3.internal.platform
 
 import android.os.Build
-import android.util.Log
 import okhttp3.Protocol
+import okhttp3.internal.platform.android.CloseGuard
+import okhttp3.internal.platform.android.ConscryptSocketAdapter
+import okhttp3.internal.platform.android.DeferredSocketAdapter
+import okhttp3.internal.platform.android.StandardAndroidSocketAdapter
+import okhttp3.internal.platform.android.androidLog
 import okhttp3.internal.tls.BasicTrustRootIndex
 import okhttp3.internal.tls.CertificateChainCleaner
 import okhttp3.internal.tls.TrustRootIndex
@@ -36,9 +40,11 @@ import javax.net.ssl.X509TrustManager
 
 /** Android 5+. */
 class AndroidPlatform : Platform() {
-  private val socketAdapters =
-      listOf(AndroidSocketAdapter.Standard, AndroidSocketAdapter.Gms,
-          ConscryptSocketAdapter).filter(AndroidSocketAdapter::isSupported)
+  private val socketAdapters = listOfNotNull(
+      StandardAndroidSocketAdapter.buildIfSupported(),
+      ConscryptSocketAdapter,
+      DeferredSocketAdapter("com.google.android.gms.org.conscrypt")
+  ).filter { it.isSupported() }
 
   private val closeGuard = CloseGuard.get()
 
@@ -80,7 +86,7 @@ class AndroidPlatform : Platform() {
       socketAdapters.find { it.matchesSocket(sslSocket) }?.getSelectedProtocol(sslSocket)
 
   override fun log(level: Int, message: String, t: Throwable?) {
-    Companion.log(level, message, t)
+    androidLog(level, message, t)
   }
 
   override fun getStackTraceForCloseable(closer: String): Any? = closeGuard.createAndOpen(closer)
@@ -194,63 +200,6 @@ class AndroidPlatform : Platform() {
   }
 
   /**
-   * Provides access to the internal dalvik.system.CloseGuard class. Android uses this in
-   * combination with android.os.StrictMode to report on leaked java.io.Closeable's. Available since
-   * Android API 11.
-   */
-  internal class CloseGuard(
-    private val getMethod: Method?,
-    private val openMethod: Method?,
-    private val warnIfOpenMethod: Method?
-  ) {
-
-    fun createAndOpen(closer: String): Any? {
-      if (getMethod != null) {
-        try {
-          val closeGuardInstance = getMethod.invoke(null)
-          openMethod!!.invoke(closeGuardInstance, closer)
-          return closeGuardInstance
-        } catch (_: Exception) {
-        }
-      }
-      return null
-    }
-
-    fun warnIfOpen(closeGuardInstance: Any?): Boolean {
-      var reported = false
-      if (closeGuardInstance != null) {
-        try {
-          warnIfOpenMethod!!.invoke(closeGuardInstance)
-          reported = true
-        } catch (_: Exception) {
-        }
-      }
-      return reported
-    }
-
-    companion object {
-      fun get(): CloseGuard {
-        var getMethod: Method?
-        var openMethod: Method?
-        var warnIfOpenMethod: Method?
-
-        try {
-          val closeGuardClass = Class.forName("dalvik.system.CloseGuard")
-          getMethod = closeGuardClass.getMethod("get")
-          openMethod = closeGuardClass.getMethod("open", String::class.java)
-          warnIfOpenMethod = closeGuardClass.getMethod("warnIfOpen")
-        } catch (_: Exception) {
-          getMethod = null
-          openMethod = null
-          warnIfOpenMethod = null
-        }
-
-        return CloseGuard(getMethod, openMethod, warnIfOpenMethod)
-      }
-    }
-  }
-
-  /**
    * A trust manager for Android applications that customize the trust manager.
    *
    * This class exploits knowledge of Android implementation details. This class is potentially
@@ -275,8 +224,6 @@ class AndroidPlatform : Platform() {
   }
 
   companion object {
-    private const val MAX_LOG_LENGTH = 4000
-
     val isSupported: Boolean by lazy {
       try {
         // Trigger an early exception over a fatal error, prefer a RuntimeException over Error.
@@ -295,25 +242,5 @@ class AndroidPlatform : Platform() {
     }
 
     fun buildIfSupported(): Platform? = if (isSupported) AndroidPlatform() else null
-
-    fun log(level: Int, message: String, t: Throwable?) {
-      var logMessage = message
-      val logLevel = if (level == WARN) Log.WARN else Log.DEBUG
-      if (t != null) logMessage = logMessage + '\n'.toString() + Log.getStackTraceString(t)
-
-      // Split by line, then ensure each line can fit into Log's maximum length.
-      var i = 0
-      val length = logMessage.length
-      while (i < length) {
-        var newline = logMessage.indexOf('\n', i)
-        newline = if (newline != -1) newline else length
-        do {
-          val end = minOf(newline, i + MAX_LOG_LENGTH)
-          Log.println(logLevel, "OkHttp", logMessage.substring(i, end))
-          i = end
-        } while (i < newline)
-        i++
-      }
-    }
   }
 }

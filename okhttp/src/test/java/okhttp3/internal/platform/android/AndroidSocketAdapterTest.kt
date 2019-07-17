@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package okhttp3.internal.platform
+package okhttp3.internal.platform.android
 
 import okhttp3.DelegatingSSLSocket
 import okhttp3.DelegatingSSLSocketFactory
@@ -24,6 +24,8 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
+import org.junit.Assume.assumeFalse
+import org.junit.Assume.assumeTrue
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
@@ -32,8 +34,8 @@ import javax.net.ssl.SSLContext
 import javax.net.ssl.SSLSocket
 
 @RunWith(Parameterized::class)
-class AndroidSocketAdapterTest(val adapter: AndroidSocketAdapter) {
-  val provider: Provider = Conscrypt.newProviderBuilder().provideTrustManager(true).build()
+class AndroidSocketAdapterTest(private val adapter: SocketAdapter) {
+  private val provider: Provider = Conscrypt.newProviderBuilder().provideTrustManager(true).build()
   val context: SSLContext = SSLContext.getInstance("TLS", provider)
 
   init {
@@ -41,24 +43,31 @@ class AndroidSocketAdapterTest(val adapter: AndroidSocketAdapter) {
   }
 
   @Test
-  fun testInit() {
+  fun testMatchesSupportedSocket() {
     val socketFactory = context.socketFactory
-    assertTrue(adapter.matchesSocketFactory(socketFactory))
 
     val sslSocket = socketFactory.createSocket() as SSLSocket
     assertTrue(adapter.matchesSocket(sslSocket))
 
-    // Could avoid completely for ConscryptSocketAdapter
-    assertNotNull(adapter.sslSocketClass)
-    assertNotNull(adapter.paramClass)
-    assertNotNull(adapter.getAlpnSelectedProtocol)
-    assertNotNull(adapter.setAlpnProtocols)
-    assertNotNull(adapter.setHostname)
-    assertNotNull(adapter.setUseSessionTickets)
-
     adapter.configureTlsExtensions(sslSocket, "example.com", listOf(HTTP_2, HTTP_1_1))
     // not connected
     assertNull(adapter.getSelectedProtocol(sslSocket))
+  }
+
+  @Test
+  fun testMatchesSupportedAndroidSocketFactory() {
+    assumeTrue(adapter is StandardAndroidSocketAdapter)
+
+    assertTrue(adapter.matchesSocketFactory(context.socketFactory))
+    assertNotNull(adapter.trustManager(context.socketFactory))
+  }
+
+  @Test
+  fun testDoesntMatchSupportedCustomSocketFactory() {
+    assumeFalse(adapter is StandardAndroidSocketAdapter)
+
+    assertFalse(adapter.matchesSocketFactory(context.socketFactory))
+    assertNull(adapter.trustManager(context.socketFactory))
   }
 
   @Test
@@ -79,8 +88,13 @@ class AndroidSocketAdapterTest(val adapter: AndroidSocketAdapter) {
   companion object {
     @JvmStatic
     @Parameterized.Parameters(name = "{0}")
-    fun data(): Collection<AndroidSocketAdapter> {
-      return listOf(ConscryptSocketAdapter, AndroidSocketAdapter("org.conscrypt"))
+    fun data(): Collection<SocketAdapter> {
+      return listOf(
+          ConscryptSocketAdapter,
+          DeferredSocketAdapter("org.conscrypt"),
+          AndroidSocketAdapter.buildIfSupported("org.conscrypt")!!,
+          StandardAndroidSocketAdapter.buildIfSupported("org.conscrypt")!!
+      )
     }
   }
 }

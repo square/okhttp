@@ -13,20 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package okhttp3.internal.platform
+package okhttp3.internal.platform.android
 
 import okhttp3.Protocol
+import okhttp3.internal.platform.ConscryptPlatform
+import okhttp3.internal.platform.Platform
 import org.conscrypt.Conscrypt
 import javax.net.ssl.SSLSocket
 import javax.net.ssl.SSLSocketFactory
+import javax.net.ssl.X509TrustManager
 
-object ConscryptSocketAdapter : AndroidSocketAdapter("org.conscrypt") {
-  override fun matchesSocketFactoryInternal(sslSocketFactory: SSLSocketFactory): Boolean =
-      Conscrypt.isConscrypt(sslSocketFactory)
+/**
+ * Simple non-reflection SocketAdapter for Conscrypt.
+ */
+object ConscryptSocketAdapter : SocketAdapter {
+  override fun trustManager(sslSocketFactory: SSLSocketFactory): X509TrustManager? = null
 
-  override fun matchesSocketInternal(socket: SSLSocket): Boolean = Conscrypt.isConscrypt(socket)
+  override fun matchesSocketFactory(sslSocketFactory: SSLSocketFactory): Boolean = false
 
-  override fun isSupported(): Boolean = super.isSupported() && ConscryptPlatform.isSupported
+  override fun matchesSocket(sslSocket: SSLSocket): Boolean = Conscrypt.isConscrypt(sslSocket)
+
+  override fun isSupported(): Boolean = ConscryptPlatform.isSupported
 
   override fun getSelectedProtocol(sslSocket: SSLSocket): String? =
       when {
