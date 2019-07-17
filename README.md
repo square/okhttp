@@ -74,7 +74,7 @@ Requirements
 
 OkHttp works on Android 5.0+ (API level 21+) and on Java 8+.
 
-OkHttp has one library dependency on [Okio][okio], a small library for high-performance I/O.
+OkHttp depends on [Okio][okio] for high-performance I/O and the [Kotlin standard library][kotlin]. Both are small libraries with strong backwards-compatibility.
 
 We highly recommend you keep OkHttp up-to-date. As with auto-updating web browsers, staying current
 with HTTPS clients is an important defense against potential security problems. [We
@@ -100,7 +100,7 @@ Releases
 Our [change log][changelog] has release history.
 
 ```kotlin
-implementation("com.squareup.okhttp3:okhttp:4.0.0")
+implementation("com.squareup.okhttp3:okhttp:4.0.1")
 ```
 
 Snapshot builds are [available][snap].
@@ -120,7 +120,7 @@ MockWebServer
 OkHttp includes a library for testing HTTP, HTTPS, and HTTP/2 clients.
 
 ```kotlin
-testImplementation("com.squareup.okhttp3:mockwebserver:4.0.0")
+testImplementation("com.squareup.okhttp3:mockwebserver:4.0.1")
 ```
 
 
@@ -146,6 +146,7 @@ limitations under the License.
  [changelog]: http://square.github.io/okhttp/changelog/
  [conscrypt]: https://github.com/google/conscrypt/
  [get_example]: https://raw.github.com/square/okhttp/master/samples/guide/src/main/java/okhttp3/guide/GetExample.java
+ [kotlin]: https://kotlinlang.org/
  [okhttp3_pro]: https://github.com/square/okhttp/blob/master/okhttp/src/main/resources/META-INF/proguard/okhttp3.pro
  [okhttp_312x]: https://github.com/square/okhttp/tree/okhttp_3.12.x
  [okhttp]: https://square.github.io/okhttp/

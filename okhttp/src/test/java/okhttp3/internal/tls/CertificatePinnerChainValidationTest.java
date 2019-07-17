@@ -31,7 +31,6 @@ import okhttp3.Call;
 import okhttp3.CertificatePinner;
 import okhttp3.OkHttpClient;
 import okhttp3.OkHttpClientTestRule;
-import okhttp3.PlatformRule;
 import okhttp3.RecordingHostnameVerifier;
 import okhttp3.Request;
 import okhttp3.Response;
@@ -39,17 +38,16 @@ import okhttp3.internal.platform.Platform;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import okhttp3.mockwebserver.SocketPolicy;
+import okhttp3.testing.PlatformRule;
 import okhttp3.tls.HandshakeCertificates;
 import okhttp3.tls.HeldCertificate;
 import org.junit.Rule;
 import org.junit.Test;
 
-import static okhttp3.internal.platform.PlatformTest.getJvmSpecVersion;
 import static okhttp3.tls.internal.TlsUtil.newKeyManager;
 import static okhttp3.tls.internal.TlsUtil.newTrustManager;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.fail;
-import static org.junit.Assume.assumeFalse;
 
 public final class CertificatePinnerChainValidationTest {
   @Rule public final PlatformRule platform = new PlatformRule();
@@ -59,8 +57,7 @@ public final class CertificatePinnerChainValidationTest {
 
   /** The pinner should pull the root certificate from the trust manager. */
   @Test public void pinRootNotPresentInChain() throws Exception {
-    // TODO https://github.com/square/okhttp/issues/4703
-    assumeFalse(getJvmSpecVersion().equals("11"));
+    // Fails on 11.0.1 https://github.com/square/okhttp/issues/4703
 
     HeldCertificate rootCa = new HeldCertificate.Builder()
         .serialNumber(1L)
@@ -119,8 +116,7 @@ public final class CertificatePinnerChainValidationTest {
 
   /** The pinner should accept an intermediate from the server's chain. */
   @Test public void pinIntermediatePresentInChain() throws Exception {
-    // TODO https://github.com/square/okhttp/issues/4703
-    assumeFalse(getJvmSpecVersion().equals("11"));
+    // Fails on 11.0.1 https://github.com/square/okhttp/issues/4703
 
     HeldCertificate rootCa = new HeldCertificate.Builder()
         .serialNumber(1L)
@@ -184,7 +180,7 @@ public final class CertificatePinnerChainValidationTest {
 
   @Test public void unrelatedPinnedLeafCertificateInChain() throws Exception {
     // https://github.com/square/okhttp/issues/4729
-    assumeFalse(getJvmSpecVersion().matches("1[123]"));
+    platform.expectFailureOnConscryptPlatform();
 
     // Start with a trusted root CA certificate.
     HeldCertificate rootCa = new HeldCertificate.Builder()
@@ -262,7 +258,7 @@ public final class CertificatePinnerChainValidationTest {
 
   @Test public void unrelatedPinnedIntermediateCertificateInChain() throws Exception {
     // https://github.com/square/okhttp/issues/4729
-    assumeFalse(getJvmSpecVersion().matches("1[123]"));
+    platform.expectFailureOnConscryptPlatform();
 
     // Start with two root CA certificates, one is good and the other is compromised.
     HeldCertificate rootCa = new HeldCertificate.Builder()
@@ -353,7 +349,7 @@ public final class CertificatePinnerChainValidationTest {
     X509KeyManager x509KeyManager = newKeyManager(keystoreType, heldCertificate, intermediates);
     X509TrustManager trustManager = newTrustManager(keystoreType, Collections.emptyList());
     SSLContext sslContext = Platform.get().newSSLContext();
-    sslContext.init(new KeyManager[] { x509KeyManager }, new TrustManager[] { trustManager },
+    sslContext.init(new KeyManager[] {x509KeyManager}, new TrustManager[] {trustManager},
         new SecureRandom());
     return sslContext.getSocketFactory();
   }

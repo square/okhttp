@@ -298,7 +298,7 @@ public final class WebSocketReaderTest {
     data.write(ByteString.decodeHex("880203ec")); // Close with code 1004
     data.write(ByteString.decodeHex("880203ed")); // Close with code 1005
     data.write(ByteString.decodeHex("880203ee")); // Close with code 1006
-    for (int i = 1012; i <= 2999; i++) {
+    for (int i = 1015; i <= 2999; i++) {
       data.write(ByteString.decodeHex(
           "8802" + Util.format("%04X", i))); // Close with code 'i'
     }
@@ -312,7 +312,7 @@ public final class WebSocketReaderTest {
         assertThat(e.getMessage()).matches("Code \\d+ is reserved and may not be used.");
       }
     }
-    assertThat(count).isEqualTo(1991);
+    assertThat(count).isEqualTo(1988);
   }
 
   private byte[] binaryData(int length) {

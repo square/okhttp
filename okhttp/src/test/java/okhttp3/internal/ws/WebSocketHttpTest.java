@@ -41,6 +41,7 @@ import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import okhttp3.mockwebserver.RecordedRequest;
 import okhttp3.mockwebserver.SocketPolicy;
+import okhttp3.testing.Flaky;
 import okhttp3.tls.HandshakeCertificates;
 import okio.Buffer;
 import okio.ByteString;
@@ -57,7 +58,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.data.Offset.offset;
 import static org.junit.Assert.fail;
 
+@Flaky
 public final class WebSocketHttpTest {
+  // Flaky https://github.com/square/okhttp/issues/4515
+  // Flaky https://github.com/square/okhttp/issues/4953
+
   @Rule public final MockWebServer webServer = new MockWebServer();
   @Rule public final OkHttpClientTestRule clientTestRule = new OkHttpClientTestRule();
 
@@ -249,8 +254,8 @@ public final class WebSocketHttpTest {
     server.close(1001, "bye");
     clientListener.assertClosed(1001, "bye");
     clientListener.assertExhausted();
-    serverListener.assertClosing(1000,  "");
-    serverListener.assertClosed(1000,  "");
+    serverListener.assertClosing(1000, "");
+    serverListener.assertClosed(1000, "");
     serverListener.assertExhausted();
   }
 
@@ -579,8 +584,8 @@ public final class WebSocketHttpTest {
     }
 
     long elapsedUntilPong3 = System.nanoTime() - startNanos;
-    assertThat((double) TimeUnit.NANOSECONDS.toMillis(elapsedUntilPong3)).isCloseTo((double) 1500, offset(
-        250d));
+    assertThat(TimeUnit.NANOSECONDS.toMillis(elapsedUntilPong3))
+        .isCloseTo(1500L, offset(250L));
 
     // The client pinged the server 3 times, and it has ponged back 3 times.
     assertThat(webSocket.sentPingCount()).isEqualTo(3);
@@ -644,8 +649,8 @@ public final class WebSocketHttpTest {
     latch.countDown();
 
     long elapsedUntilFailure = System.nanoTime() - openAtNanos;
-    assertThat((double) TimeUnit.NANOSECONDS.toMillis(elapsedUntilFailure)).isCloseTo((double) 1000, offset(
-        250d));
+    assertThat(TimeUnit.NANOSECONDS.toMillis(elapsedUntilFailure))
+        .isCloseTo(1000L, offset(250L));
   }
 
   /** https://github.com/square/okhttp/issues/2788 */
@@ -664,8 +669,8 @@ public final class WebSocketHttpTest {
     // Confirm that the hard cancel occurred after 500 ms.
     clientListener.assertFailure();
     long elapsedUntilFailure = System.nanoTime() - closeAtNanos;
-    assertThat((double) TimeUnit.NANOSECONDS.toMillis(elapsedUntilFailure)).isCloseTo((double) 500, offset(
-        250d));
+    assertThat(TimeUnit.NANOSECONDS.toMillis(elapsedUntilFailure))
+        .isCloseTo(500L, offset(250L));
 
     // Close the server and confirm it saw what we expected.
     server.close(1000, null);

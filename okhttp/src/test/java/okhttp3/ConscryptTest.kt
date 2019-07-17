@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014 Square, Inc.
+ * Copyright (C) 2018 Square, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,12 +17,14 @@ package okhttp3
 
 import okhttp3.internal.platform.ConscryptPlatform
 import okhttp3.internal.platform.Platform
+import okhttp3.testing.PlatformRule
 import org.assertj.core.api.Assertions.assertThat
 import org.conscrypt.Conscrypt
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Assume
 import org.junit.Before
+import org.junit.Ignore
 import org.junit.Rule
 import org.junit.Test
 import java.net.InetAddress
@@ -56,6 +58,7 @@ class ConscryptTest {
   }
 
   @Test
+  @Ignore
   fun testMozilla() {
     assumeNetwork()
 
@@ -68,6 +71,7 @@ class ConscryptTest {
   }
 
   @Test
+  @Ignore
   fun testGoogle() {
     assumeNetwork()
 

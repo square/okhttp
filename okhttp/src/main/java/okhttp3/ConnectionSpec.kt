@@ -168,13 +168,12 @@ class ConnectionSpec internal constructor(
     if (other !is ConnectionSpec) return false
     if (other === this) return true
 
-    val that = other as ConnectionSpec?
-    if (this.isTls != that!!.isTls) return false
+    if (this.isTls != other.isTls) return false
 
     if (isTls) {
-      if (!Arrays.equals(this.cipherSuitesAsString, that.cipherSuitesAsString)) return false
-      if (!Arrays.equals(this.tlsVersionsAsString, that.tlsVersionsAsString)) return false
-      if (this.supportsTlsExtensions != that.supportsTlsExtensions) return false
+      if (!Arrays.equals(this.cipherSuitesAsString, other.cipherSuitesAsString)) return false
+      if (!Arrays.equals(this.tlsVersionsAsString, other.tlsVersionsAsString)) return false
+      if (this.supportsTlsExtensions != other.supportsTlsExtensions) return false
     }
 
     return true
@@ -183,8 +182,8 @@ class ConnectionSpec internal constructor(
   override fun hashCode(): Int {
     var result = 17
     if (isTls) {
-      result = 31 * result + cipherSuitesAsString!!.contentHashCode()
-      result = 31 * result + tlsVersionsAsString!!.contentHashCode()
+      result = 31 * result + (cipherSuitesAsString?.contentHashCode() ?: 0)
+      result = 31 * result + (tlsVersionsAsString?.contentHashCode() ?: 0)
       result = 31 * result + if (supportsTlsExtensions) 0 else 1
     }
     return result
@@ -269,6 +268,7 @@ class ConnectionSpec internal constructor(
     )
   }
 
+  @Suppress("DEPRECATION")
   companion object {
     // Most secure but generally supported list.
     private val RESTRICTED_CIPHER_SUITES = arrayOf(

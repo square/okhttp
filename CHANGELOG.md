@@ -1,6 +1,16 @@
 Change Log
 ==========
 
+## Version 4.0.1
+
+_2019-07-10_
+
+ *  Fix: Tolerate null-hostile lists in public API. Lists created with `List.of(...)` don't like it
+    when you call `contains(null)` on them!
+ *  Fix: Retain binary-compatibility in `okhttp3.internal.HttpHeaders.hasBody()`. Some unscrupulous
+    coders call this and we don't want their users to suffer.
+
+
 ## Version 4.0.0
 
 _2019-06-26_
@@ -1812,7 +1822,7 @@ Initial release.
  [conscrypt]: https://github.com/google/conscrypt/
  [conscrypt_dependency]: https://github.com/google/conscrypt/#download
  [https_server_sample]: https://github.com/square/okhttp/blob/master/samples/guide/src/main/java/okhttp3/recipes/HttpsServer.java
- [require_android_5]: https://medium.com/square-corner-blog/okhttp-3-13-requires-android-5-818bb78d07ce
+ [require_android_5]: https://cashapp.github.io/2019-02-05/okhttp-3-13-requires-android-5
  [obsolete_apache_client]: https://gist.github.com/swankjesse/09721f72039e3a46cf50f94323deb82d
  [obsolete_url_factory]: https://gist.github.com/swankjesse/dd91c0a8854e1559b00f5fc9c7bfae70
  [tls_configuration_history]: https://square.github.io/okhttp/tls_configuration_history/

@@ -41,6 +41,7 @@ import java.util.logging.Level.FINE
 import java.util.logging.Logger
 
 /** Writes HTTP/2 transport frames. */
+@Suppress("NAME_SHADOWING")
 class Http2Writer(
   private val sink: BufferedSink,
   private val client: Boolean
