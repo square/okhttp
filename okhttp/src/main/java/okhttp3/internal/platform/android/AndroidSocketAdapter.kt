@@ -28,8 +28,8 @@ import javax.net.ssl.X509TrustManager
 /**
  * Modern reflection based SocketAdapter for Conscrypt class SSLSockets.
  */
-open class AndroidSocketAdapter
-internal constructor(private val sslSocketClass: Class<in SSLSocket>) : SocketAdapter {
+open class AndroidSocketAdapter(private val sslSocketClass: Class<in SSLSocket>) :
+    SocketAdapter {
   private val setUseSessionTickets: Method =
       sslSocketClass.getDeclaredMethod("setUseSessionTickets", Boolean::class.javaPrimitiveType)
   private val setHostname = sslSocketClass.getMethod("setHostname", String::class.java)
