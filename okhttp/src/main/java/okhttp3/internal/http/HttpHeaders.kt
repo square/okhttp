@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 @file:JvmName("HttpHeaders")
+
 package okhttp3.internal.http
 
 import okhttp3.Challenge
@@ -231,4 +232,12 @@ fun Response.promisesBody(): Boolean {
   }
 
   return false
+}
+
+@Deprecated(
+    message = "No longer supported",
+    level = DeprecationLevel.ERROR,
+    replaceWith = ReplaceWith(expression = "response.promisesBody()"))
+fun hasBody(response: Response): Boolean {
+  return response.promisesBody()
 }

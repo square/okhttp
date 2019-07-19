@@ -68,6 +68,8 @@ import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import okhttp3.mockwebserver.RecordedRequest;
 import okhttp3.mockwebserver.SocketPolicy;
+import okhttp3.testing.Flaky;
+import okhttp3.testing.PlatformRule;
 import okhttp3.tls.HandshakeCertificates;
 import okio.Buffer;
 import okio.BufferedSink;
@@ -112,11 +114,12 @@ public final class URLConnectionTest {
   @Rule public final OkHttpClientTestRule clientTestRule = new OkHttpClientTestRule();
 
   private HandshakeCertificates handshakeCertificates = localhost();
-  private OkHttpClient client = clientTestRule.client;
+  private OkHttpClient client;
   private @Nullable Cache cache;
 
   @Before public void setUp() {
     server.setProtocolNegotiationEnabled(false);
+    client = clientTestRule.newClient();
   }
 
   @After public void tearDown() throws Exception {
@@ -683,7 +686,10 @@ public final class URLConnectionTest {
    *
    * http://code.google.com/p/android/issues/detail?id=13178
    */
+  @Flaky
   @Test public void connectViaHttpsToUntrustedServer() throws Exception {
+    // Flaky https://github.com/square/okhttp/issues/5222
+
     server.useHttps(handshakeCertificates.sslSocketFactory(), false);
     server.enqueue(new MockResponse()); // unused
 
@@ -691,7 +697,10 @@ public final class URLConnectionTest {
       getResponse(newRequest("/foo"));
       fail();
     } catch (SSLHandshakeException expected) {
-      assertThat(expected.getCause()).isInstanceOf(CertificateException.class);
+      // Allow conscrypt to fail in different ways
+      if (!platform.isConscrypt()) {
+        assertThat(expected.getCause()).isInstanceOf(CertificateException.class);
+      }
     }
     assertThat(server.getRequestCount()).isEqualTo(0);
   }

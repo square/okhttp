@@ -19,6 +19,9 @@ import java.net.CookieHandler;
 import java.net.CookieManager;
 import java.net.ProxySelector;
 import java.net.ResponseCache;
+import java.util.AbstractList;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 import javax.net.ssl.SSLSocketFactory;
 import okhttp3.mockwebserver.MockResponse;
@@ -28,12 +31,13 @@ import org.junit.Rule;
 import org.junit.Test;
 
 import static java.util.Arrays.asList;
-import static okhttp3.TestUtil.defaultClient;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
 public final class OkHttpClientTest {
   @Rule public final MockWebServer server = new MockWebServer();
+  @Rule public final OkHttpClientTestRule clientTestRule = new OkHttpClientTestRule();
 
   private static final ProxySelector DEFAULT_PROXY_SELECTOR = ProxySelector.getDefault();
   private static final CookieHandler DEFAULT_COOKIE_HANDLER = CookieManager.getDefault();
@@ -46,7 +50,7 @@ public final class OkHttpClientTest {
   }
 
   @Test public void durationDefaults() {
-    OkHttpClient client = defaultClient();
+    OkHttpClient client = clientTestRule.newClient();
     assertThat(client.callTimeoutMillis()).isEqualTo(0);
     assertThat(client.connectTimeoutMillis()).isEqualTo(10_000);
     assertThat(client.readTimeoutMillis()).isEqualTo(10_000);
@@ -92,7 +96,7 @@ public final class OkHttpClientTest {
 
   @Test public void clonedInterceptorsListsAreIndependent() throws Exception {
     Interceptor interceptor = chain -> chain.proceed(chain.request());
-    OkHttpClient original = defaultClient();
+    OkHttpClient original = clientTestRule.newClient();
     original.newBuilder()
         .addInterceptor(interceptor)
         .addNetworkInterceptor(interceptor)
@@ -106,7 +110,7 @@ public final class OkHttpClientTest {
    * clients.
    */
   @Test public void cloneSharesStatefulInstances() throws Exception {
-    OkHttpClient client = defaultClient();
+    OkHttpClient client = clientTestRule.newClient();
 
     // Values should be non-null.
     OkHttpClient a = client.newBuilder().build();
@@ -131,8 +135,8 @@ public final class OkHttpClientTest {
   }
 
   @Test public void certificatePinnerEquality() {
-    OkHttpClient clientA = TestUtil.defaultClient();
-    OkHttpClient clientB = TestUtil.defaultClient();
+    OkHttpClient clientA = clientTestRule.newClient();
+    OkHttpClient clientB = clientTestRule.newClient();
     assertThat(clientB.certificatePinner()).isEqualTo(clientA.certificatePinner());
   }
 
@@ -213,8 +217,7 @@ public final class OkHttpClientTest {
 
     ProxySelector.setDefault(null);
 
-    OkHttpClient client = defaultClient().newBuilder()
-        .build();
+    OkHttpClient client = clientTestRule.newClient();
 
     Request request = new Request.Builder().url(server.url("/")).build();
     Response response = client.newCall(request).execute();
@@ -238,6 +241,46 @@ public final class OkHttpClientTest {
       client.sslSocketFactory();
       fail();
     } catch (IllegalStateException expected) {
+    }
+  }
+
+  @Test public void nullHostileProtocolList() {
+    List<Protocol> nullHostileProtocols = new AbstractList<Protocol>() {
+      @Override public boolean contains(Object o) {
+        if (o == null) throw new NullPointerException();
+        return super.contains(o);
+      }
+
+      @Override public int indexOf(Object o) {
+        if (o == null) throw new NullPointerException();
+        return super.indexOf(o);
+      }
+
+      @Override public Protocol get(int index) {
+        if (index != 0) throw new IndexOutOfBoundsException();
+        return Protocol.HTTP_1_1;
+      }
+
+      @Override public int size() {
+        return 1;
+      }
+    };
+
+    OkHttpClient client = new OkHttpClient.Builder()
+        .protocols(nullHostileProtocols)
+        .build();
+    assertEquals(asList(Protocol.HTTP_1_1), client.protocols());
+  }
+
+  @Test public void nullProtocolInList() {
+    List<Protocol> protocols = new ArrayList<>();
+    protocols.add(Protocol.HTTP_1_1);
+    protocols.add(null);
+    try {
+      new OkHttpClient.Builder().protocols(protocols);
+      fail();
+    } catch (IllegalArgumentException expected) {
+      assertThat(expected.getMessage()).isEqualTo(("protocols must not contain null"));
     }
   }
 }

@@ -16,6 +16,7 @@
 package okhttp3;
 
 import java.io.IOException;
+import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketTimeoutException;
@@ -38,6 +39,7 @@ import okio.GzipSink;
 import okio.Okio;
 import okio.Sink;
 import okio.Source;
+import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 
@@ -48,8 +50,12 @@ public final class InterceptorTest {
   @Rule public MockWebServer server = new MockWebServer();
   @Rule public final OkHttpClientTestRule clientTestRule = new OkHttpClientTestRule();
 
-  private OkHttpClient client = clientTestRule.client;
+  private OkHttpClient client;
   private RecordingCallback callback = new RecordingCallback();
+
+  @Before public void setUp() {
+    client = clientTestRule.newClient();
+  }
 
   @Test public void applicationInterceptorsCanShortCircuitResponses() throws Exception {
     server.shutdown(); // Accept no connections.
@@ -679,7 +685,8 @@ public final class InterceptorTest {
       return chain.proceed(chain.request());
     };
 
-    ServerSocket serverSocket = new ServerSocket(0, 1);
+    InetAddress localhost = InetAddress.getLoopbackAddress();
+    ServerSocket serverSocket = new ServerSocket(0, 1, localhost);
     // Fill backlog queue with this request so subsequent requests will be blocked.
     new Socket().connect(serverSocket.getLocalSocketAddress());
 

@@ -71,6 +71,7 @@ import okhttp3.mockwebserver.MockWebServer;
 import okhttp3.mockwebserver.QueueDispatcher;
 import okhttp3.mockwebserver.RecordedRequest;
 import okhttp3.mockwebserver.SocketPolicy;
+import okhttp3.testing.PlatformRule;
 import okhttp3.tls.HandshakeCertificates;
 import okhttp3.tls.HeldCertificate;
 import okio.Buffer;
@@ -92,7 +93,6 @@ import static java.util.Arrays.asList;
 import static okhttp3.CipherSuite.TLS_DH_anon_WITH_AES_128_GCM_SHA256;
 import static okhttp3.TestUtil.awaitGarbageCollection;
 import static okhttp3.internal.Internal.addHeaderLenient;
-import static okhttp3.internal.platform.PlatformTest.getJvmSpecVersion;
 import static okhttp3.tls.internal.TlsUtil.localhost;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.data.Offset.offset;
@@ -110,16 +110,17 @@ public final class CallTest {
 
   private RecordingEventListener listener = new RecordingEventListener();
   private HandshakeCertificates handshakeCertificates = localhost();
-  private OkHttpClient client = clientTestRule.client.newBuilder()
-      .eventListener(listener)
-      .build();
+  private OkHttpClient client;
   private RecordingCallback callback = new RecordingCallback();
   private TestLogHandler logHandler = new TestLogHandler();
   private Cache cache = new Cache(new File("/cache/"), Integer.MAX_VALUE, fileSystem);
   private Logger logger = Logger.getLogger(OkHttpClient.class.getName());
 
-  @Before public void setUp() throws Exception {
+  @Before public void setUp() {
     logger.addHandler(logHandler);
+    client = clientTestRule.newClientBuilder()
+        .eventListener(listener)
+        .build();
   }
 
   @After public void tearDown() throws Exception {
@@ -994,7 +995,7 @@ public final class CallTest {
 
   /** https://github.com/square/okhttp/issues/1801 */
   @Test public void asyncCallEngineInitialized() throws Exception {
-    OkHttpClient c = clientTestRule.client.newBuilder()
+    OkHttpClient c = client.newBuilder()
         .addInterceptor(chain -> { throw new IOException(); })
         .build();
     Request request = new Request.Builder().url(server.url("/")).build();
@@ -1315,7 +1316,6 @@ public final class CallTest {
 
     // The _anon_ suites became unsupported in "1.8.0_201" and "11.0.2".
     assumeFalse(System.getProperty("java.version", "unknown").matches("1\\.8\\.0_1\\d\\d"));
-    assumeFalse(System.getProperty("java.version", "unknown").matches("11"));
 
     server.enqueue(new MockResponse());
 
@@ -1396,8 +1396,7 @@ public final class CallTest {
   }
 
   @Test public void matchingPinnedCertificate() throws Exception {
-    // TODO https://github.com/square/okhttp/issues/4703
-    assumeFalse(getJvmSpecVersion().equals("11"));
+    // Fails on 11.0.1 https://github.com/square/okhttp/issues/4703
 
     enableTls();
     server.enqueue(new MockResponse());
@@ -3490,7 +3489,7 @@ public final class CallTest {
     server.enqueue(new MockResponse()
         .setBody("This gets leaked."));
 
-    client = clientTestRule.client.newBuilder()
+    client = clientTestRule.newClientBuilder()
         .connectionPool(new ConnectionPool(0, 10, TimeUnit.MILLISECONDS))
         .build();
 
@@ -3519,7 +3518,7 @@ public final class CallTest {
     server.enqueue(new MockResponse()
         .setBody("This gets leaked."));
 
-    client = clientTestRule.client.newBuilder()
+    client = clientTestRule.newClientBuilder()
         .connectionPool(new ConnectionPool(0, 10, TimeUnit.MILLISECONDS))
         .build();
 

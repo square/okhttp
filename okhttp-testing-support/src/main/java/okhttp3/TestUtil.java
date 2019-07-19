@@ -15,50 +15,17 @@
  */
 package okhttp3;
 
-import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import okhttp3.internal.http2.Header;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 public final class TestUtil {
   public static final InetSocketAddress UNREACHABLE_ADDRESS
       = new InetSocketAddress("198.51.100.1", 8080);
 
-  /**
-   * A network that resolves only one IP address per host. Use this when testing route selection
-   * fallbacks to prevent the host machine's various IP addresses from interfering.
-   */
-  private static final Dns SINGLE_INET_ADDRESS_DNS = hostname -> {
-    List<InetAddress> addresses = Dns.SYSTEM.lookup(hostname);
-    return Collections.singletonList(addresses.get(0));
-  };
-
   private TestUtil() {
-  }
-
-  private static final ConnectionPool connectionPool = new ConnectionPool();
-  private static final Dispatcher dispatcher = new Dispatcher();
-
-  /**
-   * Returns an OkHttpClient for all tests to use as a starting point.
-   *
-   * <p>The shared instance allows all tests to share a single connection pool, which prevents idle
-   * connections from consuming unnecessary resources while connections wait to be evicted.
-   *
-   * <p>This client is also configured to be slightly more deterministic, returning a single IP
-   * address for all hosts, regardless of the actual number of IP addresses reported by DNS.
-   */
-  public static OkHttpClient defaultClient() {
-    return new OkHttpClient.Builder()
-        .connectionPool(connectionPool)
-        .dispatcher(dispatcher)
-        .dns(SINGLE_INET_ADDRESS_DNS) // Prevent unexpected fallback addresses.
-        .build();
   }
 
   public static List<Header> headerEntries(String... elements) {
@@ -84,10 +51,5 @@ public final class TestUtil {
     Runtime.getRuntime().gc();
     Thread.sleep(100);
     System.runFinalization();
-  }
-
-  public static void ensureAllConnectionsReleased(OkHttpClient client) {
-    client.connectionPool().evictAll();
-    assertThat(client.connectionPool().idleConnectionCount()).isEqualTo(0);
   }
 }

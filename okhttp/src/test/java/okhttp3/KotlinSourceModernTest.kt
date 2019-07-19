@@ -90,7 +90,8 @@ import javax.net.ssl.X509TrustManager
     "UNUSED_VARIABLE",
     "VARIABLE_WITH_REDUNDANT_INITIALIZER",
     "RedundantLambdaArrow",
-    "RedundantExplicitType"
+    "RedundantExplicitType",
+    "IMPLICIT_NOTHING_AS_TYPE_PARAMETER"
 )
 class KotlinSourceModernTest {
   @Test @Ignore
@@ -256,7 +257,6 @@ class KotlinSourceModernTest {
     builder = builder.allEnabledTlsVersions()
     builder = builder.tlsVersions(TlsVersion.TLS_1_3)
     builder = builder.tlsVersions("", "")
-    builder = builder.supportsTlsExtensions(false)
     val connectionSpec: ConnectionSpec = builder.build()
   }
 
@@ -480,7 +480,6 @@ class KotlinSourceModernTest {
     interceptor = HttpLoggingInterceptor(HttpLoggingInterceptor.Logger.DEFAULT)
     interceptor.redactHeader("")
     interceptor.level = HttpLoggingInterceptor.Level.BASIC
-    interceptor.setLevel(HttpLoggingInterceptor.Level.BASIC)
     var level: HttpLoggingInterceptor.Level = interceptor.level
     interceptor.intercept(newInterceptorChain())
   }
@@ -735,8 +734,8 @@ class KotlinSourceModernTest {
     mockWebServer.noClientAuth()
     mockWebServer.requestClientAuth()
     mockWebServer.requireClientAuth()
-    var request: RecordedRequest = mockWebServer.takeRequest()
-    request = mockWebServer.takeRequest(0L, TimeUnit.SECONDS)
+    val request: RecordedRequest = mockWebServer.takeRequest()
+    val nullableRequest: RecordedRequest? = mockWebServer.takeRequest(0L, TimeUnit.SECONDS)
     var requestCount: Int = mockWebServer.requestCount
     mockWebServer.enqueue(MockResponse())
     mockWebServer.start()

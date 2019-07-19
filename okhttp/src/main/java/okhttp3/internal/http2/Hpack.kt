@@ -40,6 +40,7 @@ import java.util.LinkedHashMap
  * entries are added to the array, starting in the last position moving forward. When the array
  * fills, it is doubled.
  */
+@Suppress("NAME_SHADOWING")
 object Hpack {
   private const val PREFIX_4_BITS = 0x0f
   private const val PREFIX_5_BITS = 0x1f

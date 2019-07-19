@@ -29,6 +29,7 @@ import java.util.UUID
  *
  * [rfc_2387]: http://www.ietf.org/rfc/rfc2387.txt
  */
+@Suppress("NAME_SHADOWING")
 class MultipartBody internal constructor(
   private val boundaryByteString: ByteString,
   @get:JvmName("type") val type: MediaType,

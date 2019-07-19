@@ -48,6 +48,7 @@ import okhttp3.logging.HttpLoggingInterceptor;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import okhttp3.mockwebserver.SocketPolicy;
+import okhttp3.testing.PlatformRule;
 import okhttp3.tls.HandshakeCertificates;
 import okio.Buffer;
 import okio.BufferedSink;
@@ -81,11 +82,11 @@ public final class EventListenerTest {
   private final RecordingEventListener listener = new RecordingEventListener();
   private final HandshakeCertificates handshakeCertificates = localhost();
 
-  private OkHttpClient client = clientTestRule.client;
+  private OkHttpClient client;
   private SocksProxy socksProxy;
 
   @Before public void setUp() {
-    client = clientTestRule.client.newBuilder()
+    client = clientTestRule.newClientBuilder()
         .eventListener(listener)
         .build();
 

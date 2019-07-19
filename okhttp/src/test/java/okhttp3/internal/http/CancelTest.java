@@ -63,7 +63,7 @@ public final class CancelTest {
             return serverSocket;
           }
         });
-    client = clientTestRule.client.newBuilder()
+    client = clientTestRule.newClientBuilder()
         .socketFactory(new DelegatingSocketFactory(SocketFactory.getDefault()) {
           @Override protected Socket configureSocket(Socket socket) throws IOException {
             socket.setSendBufferSize(SOCKET_BUFFER_SIZE);

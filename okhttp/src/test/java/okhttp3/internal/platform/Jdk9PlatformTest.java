@@ -16,7 +16,7 @@
 package okhttp3.internal.platform;
 
 import java.lang.reflect.Method;
-import okhttp3.PlatformRule;
+import okhttp3.testing.PlatformRule;
 import org.junit.Rule;
 import org.junit.Test;
 

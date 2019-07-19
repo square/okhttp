@@ -1,15 +1,53 @@
 Change Log
 ==========
 
+## Version 4.0.1
+
+_2019-07-10_
+
+ *  Fix: Tolerate null-hostile lists in public API. Lists created with `List.of(...)` don't like it
+    when you call `contains(null)` on them!
+ *  Fix: Retain binary-compatibility in `okhttp3.internal.HttpHeaders.hasBody()`. Some unscrupulous
+    coders call this and we don't want their users to suffer.
+
+
+## Version 4.0.0
+
+_2019-06-26_
+
+**This release upgrades OkHttp to Kotlin.** We tried our best to make fast and safe to upgrade
+from OkHttp 3.x. We wrote an [upgrade guide][upgrading_to_okhttp_4] to help with the migration and a
+[blog post][okhttp4_blog_post] to explain it.
+
+ *  Fix: Target Java 8 bytecode for Java and Kotlin.
+
+
+## Version 4.0.0-RC3
+
+_2019-06-24_
+
+ *  Fix: Retain binary-compatibility in `okhttp3.internal.HttpMethod`. Naughty third party SDKs
+    import this and we want to ease upgrades for their users.
+
+
+## Version 4.0.0-RC2
+
+_2019-06-21_
+
+ *  New: Require Kotlin 1.3.40.
+ *  New: Change the Kotlin API from `File.toRequestBody()` to `File.asRequestBody()` and
+    `BufferedSource.toResponseBody()` to `BufferedSource.asResponseBody()`. If the returned value
+    is a view of what created it, we use _as_.
+ *  Fix: Permit response codes of zero for compatibility with OkHttp 3.x.
+ *  Fix: Change the return type of `MockWebServer.takeRequest()` to be nullable.
+ *  Fix: Make `Call.clone()` public to Kotlin callers.
+
+
 ## Version 4.0.0-RC1
 
 _2019-06-03_
 
-**OkHttp 4 upgrades OkHttp to Kotlin.** This is the first stable preview of OkHttp 4. Use it to find
-bugs or performance regressions before the final 4.0.0 release.
-
-We tried our best to make it fast and safe to upgrade from OkHttp 3.x.
-[We even wrote a guide](UPGRADING_TO_OKHTTP_4.md) to help you with it!
+ *  First stable preview of OkHttp 4.
 
 
 ## Version 3.14.2
@@ -1304,7 +1342,7 @@ _2014-12-30_
     running SSLv3, you must manually configure your own `ConnectionSpec`.
 
  *  **OkHttp now offers interceptors.** Interceptors are a powerful mechanism
-    that can monitor, rewrite, and retry calls. The [interceptors doc](INTERCEPTORS.md) is a full
+    that can monitor, rewrite, and retry calls. The [interceptors doc][interceptors] is a full
     introduction to this new API.
 
  *  New: APIs to iterate and selectively clear the response cache.
@@ -1773,7 +1811,7 @@ Initial release.
 
  [brick]: https://noncombatant.org/2015/05/01/about-http-public-key-pinning/
  [webdav]: https://tools.ietf.org/html/rfc4918
- [major_versions]: http://jakewharton.com/java-interoperability-policy-for-major-version-updates/
+ [major_versions]: https://jakewharton.com/java-interoperability-policy-for-major-version-updates/
  [nginx_959]: https://trac.nginx.org/nginx/ticket/959
  [okhttp_idling_resource]: https://github.com/JakeWharton/okhttp-idling-resource
  [bom]: https://en.wikipedia.org/wiki/Byte_order_mark
@@ -1784,8 +1822,11 @@ Initial release.
  [conscrypt]: https://github.com/google/conscrypt/
  [conscrypt_dependency]: https://github.com/google/conscrypt/#download
  [https_server_sample]: https://github.com/square/okhttp/blob/master/samples/guide/src/main/java/okhttp3/recipes/HttpsServer.java
- [require_android_5]: https://medium.com/square-corner-blog/okhttp-3-13-requires-android-5-818bb78d07ce
+ [require_android_5]: https://cashapp.github.io/2019-02-05/okhttp-3-13-requires-android-5
  [obsolete_apache_client]: https://gist.github.com/swankjesse/09721f72039e3a46cf50f94323deb82d
  [obsolete_url_factory]: https://gist.github.com/swankjesse/dd91c0a8854e1559b00f5fc9c7bfae70
- [tls_configuration_history]: TLS_CONFIGURATION_HISTORY.md
+ [tls_configuration_history]: https://square.github.io/okhttp/tls_configuration_history/
  [grpc_http2]: https://github.com/grpc/grpc/blob/master/doc/PROTOCOL-HTTP2.md
+ [upgrading_to_okhttp_4]: https://square.github.io/okhttp/upgrading_to_okhttp_4/
+ [interceptors]: https://square.github.io/okhttp/interceptors/
+ [okhttp4_blog_post]: https://cashapp.github.io/2019-06-26/okhttp-4-goes-kotlin
