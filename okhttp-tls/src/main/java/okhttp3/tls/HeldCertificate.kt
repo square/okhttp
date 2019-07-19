@@ -15,8 +15,9 @@
  */
 package okhttp3.tls
 
-import okhttp3.internal.Util.verifyAsIpAddress
+import okhttp3.internal.canParseAsIpAddress
 import okio.ByteString
+import okio.ByteString.Companion.toByteString
 import org.bouncycastle.asn1.ASN1Encodable
 import org.bouncycastle.asn1.DERSequence
 import org.bouncycastle.asn1.pkcs.PrivateKeyInfo
@@ -110,9 +111,23 @@ import javax.security.auth.x500.X500Principal
  * a chain of certificates. The server uses a set of trusted root certificates to authenticate the
  * client. Subject alternative names are not used for client authentication.
  */
-class HeldCertificate(private val keyPair: KeyPair, private val certificate: X509Certificate) {
+class HeldCertificate(
+  @get:JvmName("keyPair") val keyPair: KeyPair,
+  @get:JvmName("certificate") val certificate: X509Certificate
+) {
+
+  @JvmName("-deprecated_certificate")
+  @Deprecated(
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "certificate"),
+      level = DeprecationLevel.ERROR)
   fun certificate(): X509Certificate = certificate
 
+  @JvmName("-deprecated_keyPair")
+  @Deprecated(
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "keyPair"),
+      level = DeprecationLevel.ERROR)
   fun keyPair(): KeyPair = keyPair
 
   /**
@@ -123,7 +138,7 @@ class HeldCertificate(private val keyPair: KeyPair, private val certificate: X50
   fun certificatePem(): String {
     return buildString {
       append("-----BEGIN CERTIFICATE-----\n")
-      encodeBase64Lines(ByteString.of(*certificate.encoded))
+      encodeBase64Lines(certificate.encoded.toByteString())
       append("-----END CERTIFICATE-----\n")
     }
   }
@@ -137,7 +152,7 @@ class HeldCertificate(private val keyPair: KeyPair, private val certificate: X50
   fun privateKeyPkcs8Pem(): String {
     return buildString {
       append("-----BEGIN PRIVATE KEY-----\n")
-      encodeBase64Lines(ByteString.of(*keyPair.private.encoded))
+      encodeBase64Lines(keyPair.private.encoded.toByteString())
       append("-----END PRIVATE KEY-----\n")
     }
   }
@@ -149,7 +164,7 @@ class HeldCertificate(private val keyPair: KeyPair, private val certificate: X50
    * [rfc_7468]: https://tools.ietf.org/html/rfc7468
    */
   fun privateKeyPkcs1Pem(): String {
-    require(keyPair.private is RSAPrivateKey) { "PKCS1 only supports RSA keys" }
+    check(keyPair.private is RSAPrivateKey) { "PKCS1 only supports RSA keys" }
     return buildString {
       append("-----BEGIN RSA PRIVATE KEY-----\n")
       encodeBase64Lines(pkcs1Bytes())
@@ -159,17 +174,17 @@ class HeldCertificate(private val keyPair: KeyPair, private val certificate: X50
 
   private fun pkcs1Bytes(): ByteString {
     val privateKeyInfo = PrivateKeyInfo.getInstance(keyPair.private.encoded)
-    return ByteString.of(*privateKeyInfo.parsePrivateKey().toASN1Primitive().encoded)
+    return privateKeyInfo.parsePrivateKey().toASN1Primitive().encoded.toByteString()
   }
 
   private fun StringBuilder.encodeBase64Lines(data: ByteString) {
     val base64 = data.base64()
     for (i in 0 until base64.length step 64) {
-      append(base64, i, Math.min(i + 64, base64.length)).append('\n')
+      append(base64, i, minOf(i + 64, base64.length)).append('\n')
     }
   }
 
-  /** Build a held certificate with reasonable defaults.  */
+  /** Build a held certificate with reasonable defaults. */
   class Builder {
     private var notBefore = -1L
     private var notAfter = -1L
@@ -356,12 +371,12 @@ class HeldCertificate(private val keyPair: KeyPair, private val certificate: X50
             BasicConstraints(maxIntermediateCas))
       }
 
-      if (!altNames.isEmpty()) {
+      if (altNames.isNotEmpty()) {
         val encodableAltNames = arrayOfNulls<ASN1Encodable>(altNames.size)
         for (i in 0 until altNames.size) {
           val altName = altNames[i]
           val tag = when {
-            verifyAsIpAddress(altName) -> GeneralName.iPAddress
+            altName.canParseAsIpAddress() -> GeneralName.iPAddress
             else -> GeneralName.dNSName
           }
           encodableAltNames[i] = GeneralName(tag, altName)

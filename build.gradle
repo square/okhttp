@@ -2,11 +2,11 @@ import net.ltgt.gradle.errorprone.CheckSeverity
 
 buildscript {
   ext.versions = [
-      'airline': '0.8',
       'android': '4.1.1.4',
       'animalSniffer': '1.17',
       'assertj': '3.11.0',
-      'bouncycastle': '1.60',
+      'bouncycastle': '1.62',
+      'brotli': '0.1.2',
       'checkstyle': '8.15',
       'conscrypt': '2.1.0',
       'findbugs': '3.0.2',
@@ -15,18 +15,20 @@ buildscript {
       'jnrUnixsocket': '0.22',
       'jsoup': '1.11.3',
       'junit': '4.12',
-      'kotlin': '1.3.30',
+      'kotlin': '1.3.41',
       'moshi': '1.8.0',
       'okio': '2.2.2',
-      'ktlint': '0.31.0'
+      'ktlint': '0.31.0',
+      'picocli': '4.0.1'
   ]
 
   ext.deps = [
-      'airline': "io.airlift:airline:${versions.airline}",
+      'picocli': "info.picocli:picocli:${versions.picocli}",
       'android': "com.google.android:android:${versions.android}",
       'animalSniffer': "org.codehaus.mojo:animal-sniffer-annotations:${versions.animalSniffer}",
       'assertj': "org.assertj:assertj-core:${versions.assertj}",
       'bouncycastle': "org.bouncycastle:bcprov-jdk15on:${versions.bouncycastle}",
+      'brotli': "org.brotli:dec:${versions.brotli}",
       'conscrypt': "org.conscrypt:conscrypt-openjdk-uber:${versions.conscrypt}",
       'guava': "com.google.guava:guava:${versions.guava}",
       'jnrUnixsocket': "com.github.jnr:jnr-unixsocket:${versions.jnrUnixsocket}",
@@ -45,11 +47,13 @@ buildscript {
     classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:${versions.kotlin}"
     classpath "org.jetbrains.dokka:dokka-gradle-plugin:0.9.18"
     classpath 'com.diffplug.spotless:spotless-plugin-gradle:3.21.1'
+    classpath 'com.android.tools.build:gradle:3.4.1'
   }
 
   repositories {
     mavenCentral()
     gradlePluginPortal()
+    google()
   }
 }
 
@@ -68,6 +72,7 @@ allprojects {
     maven {
       url 'https://dl.bintray.com/kotlin/dokka'
     }
+    google()
   }
 
   task downloadDependencies() {
@@ -79,6 +84,9 @@ allprojects {
 }
 
 subprojects { project ->
+  if (project.name == 'android-test')
+    return
+
   apply plugin: 'java'
   apply plugin: 'java-library'
   apply plugin: 'org.jetbrains.kotlin.platform.jvm'
@@ -107,11 +115,17 @@ subprojects { project ->
     signature 'net.sf.androidscents.signature:android-api-level-21:5.0.1_r2@signature'
     signature 'org.codehaus.mojo.signature:java18:1.0@signature'
   }
-  
+
   spotless {
     kotlin {
       target "**/*.kt"
-      ktlint(versions.ktlint).userData(['indent_size': '2', 'continuation_indent_size' : '2'])
+      ktlint(versions.ktlint).userData(['indent_size': '2', 'continuation_indent_size': '2'])
+    }
+  }
+
+  tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).configureEach {
+    kotlinOptions {
+      jvmTarget = "1.8"
     }
   }
 
@@ -121,6 +135,7 @@ subprojects { project ->
     jvmArgs += "-Dlistener=okhttp3.testing.InstallUncaughtExceptionHandlerListener"
     jvmArgs += "-Dokhttp.platform=$platform"
 
+    maxParallelForks Runtime.runtime.availableProcessors() * 2
     testLogging {
       exceptionFormat = 'full'
     }
@@ -149,26 +164,34 @@ subprojects { project ->
     errorprone 'com.google.errorprone:error_prone_core:2.3.3'
   }
   tasks.withType(JavaCompile).configureEach {
+    sourceCompatibility = JavaVersion.VERSION_1_8
+    targetCompatibility = JavaVersion.VERSION_1_8
+
     options.errorprone {
       check("MissingFail", CheckSeverity.ERROR)
       check("MissingOverride", CheckSeverity.ERROR)
+      enabled = JavaVersion.current() < JavaVersion.VERSION_12
     }
   }
 
-  dokka {
-    reportUndocumented = false 
-    skipDeprecated = true
-    jdkVersion = 8
-    packageOptions {
-      prefix = "okhttp3.internal"
-      suppress = true
-    }
-    if (project.file('Module.md').exists()) {
-      includes = ['Module.md']
-    }
-    externalDocumentationLink {
-      url = new URL("https://square.github.io/okio/2.x/okio/jvm/index.html")
-      packageListUrl = new URL("https://square.github.io/okio/2.x/okio/jvm/package-list")
+  // We have to set the dokka configuration after evaluation since the com.vanniktech.maven.publish
+  // plugin overwrites our dokka configuration on projects where it's applied.
+  afterEvaluate { p ->
+    p.tasks.dokka {
+      reportUndocumented = false
+      skipDeprecated = true
+      jdkVersion = 8
+      packageOptions {
+        prefix = "okhttp3.internal"
+        suppress = true
+      }
+      if (project.file('Module.md').exists()) {
+        includes = ['Module.md']
+      }
+      externalDocumentationLink {
+        url = new URL("https://square.github.io/okio/2.x/okio/jvm/index.html")
+        packageListUrl = new URL("https://square.github.io/okio/2.x/okio/jvm/package-list")
+      }
     }
   }
 }
@@ -215,7 +238,7 @@ def alpnBootVersionForPatchVersion(String javaVersion, int patchVersion) {
       return '8.1.11.v20170118'
     case 161..181:
       return '8.1.12.v20180117'
-    case 191..202:
+    case 191..212:
       return '8.1.13.v20181017'
     default:
       throw new IllegalStateException("Unexpected Java version: ${javaVersion}")

@@ -59,16 +59,17 @@ import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
 import javax.net.ssl.X509TrustManager;
-import okhttp3.internal.InternalKtKt;
+import okhttp3.internal.Internal;
 import okhttp3.internal.RecordingAuthenticator;
 import okhttp3.internal.RecordingOkAuthenticator;
-import okhttp3.internal.Util;
 import okhttp3.internal.Version;
 import okhttp3.internal.platform.Platform;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import okhttp3.mockwebserver.RecordedRequest;
 import okhttp3.mockwebserver.SocketPolicy;
+import okhttp3.testing.Flaky;
+import okhttp3.testing.PlatformRule;
 import okhttp3.tls.HandshakeCertificates;
 import okio.Buffer;
 import okio.BufferedSink;
@@ -89,7 +90,8 @@ import static java.util.Arrays.asList;
 import static java.util.Locale.US;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
-import static okhttp3.internal.InternalKtKt.addHeaderLenient;
+import static okhttp3.internal.Internal.addHeaderLenient;
+import static okhttp3.internal.Util.immutableListOf;
 import static okhttp3.internal.http.StatusLine.HTTP_PERM_REDIRECT;
 import static okhttp3.internal.http.StatusLine.HTTP_TEMP_REDIRECT;
 import static okhttp3.mockwebserver.SocketPolicy.DISCONNECT_AFTER_REQUEST;
@@ -112,11 +114,12 @@ public final class URLConnectionTest {
   @Rule public final OkHttpClientTestRule clientTestRule = new OkHttpClientTestRule();
 
   private HandshakeCertificates handshakeCertificates = localhost();
-  private OkHttpClient client = clientTestRule.client;
+  private OkHttpClient client;
   private @Nullable Cache cache;
 
   @Before public void setUp() {
     server.setProtocolNegotiationEnabled(false);
+    client = clientTestRule.newClient();
   }
 
   @After public void tearDown() throws Exception {
@@ -611,7 +614,7 @@ public final class URLConnectionTest {
     assertContent("this response comes via SSL", response);
 
     RecordedRequest failHandshakeRequest = server.takeRequest();
-    assertThat(failHandshakeRequest.getRequestLine()).isNull();
+    assertThat(failHandshakeRequest.getRequestLine()).isEmpty();
 
     RecordedRequest fallbackRequest = server.takeRequest();
     assertThat(fallbackRequest.getRequestLine()).isEqualTo("GET /foo HTTP/1.1");
@@ -683,7 +686,10 @@ public final class URLConnectionTest {
    *
    * http://code.google.com/p/android/issues/detail?id=13178
    */
+  @Flaky
   @Test public void connectViaHttpsToUntrustedServer() throws Exception {
+    // Flaky https://github.com/square/okhttp/issues/5222
+
     server.useHttps(handshakeCertificates.sslSocketFactory(), false);
     server.enqueue(new MockResponse()); // unused
 
@@ -691,7 +697,10 @@ public final class URLConnectionTest {
       getResponse(newRequest("/foo"));
       fail();
     } catch (SSLHandshakeException expected) {
-      assertThat(expected.getCause()).isInstanceOf(CertificateException.class);
+      // Allow conscrypt to fail in different ways
+      if (!platform.isConscrypt()) {
+        assertThat(expected.getCause()).isInstanceOf(CertificateException.class);
+      }
     }
     assertThat(server.getRequestCount()).isEqualTo(0);
   }
@@ -939,7 +948,7 @@ public final class URLConnectionTest {
     client = client.newBuilder()
         .sslSocketFactory(
             handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager())
-        .connectionSpecs(Util.immutableList(ConnectionSpec.MODERN_TLS))
+        .connectionSpecs(immutableListOf(ConnectionSpec.MODERN_TLS))
         .hostnameVerifier(new RecordingHostnameVerifier())
         .proxy(server.toProxyAddress())
         .build();
@@ -1597,7 +1606,7 @@ public final class URLConnectionTest {
 
     Response response = getResponse(new Request.Builder()
         .url(server.url("/"))
-        .post(RequestBody.create(null, body))
+        .post(RequestBody.create(body, null))
         .build());
     assertThat(response.code()).isEqualTo(200);
     response.body().byteStream().close();
@@ -1715,7 +1724,7 @@ public final class URLConnectionTest {
   private void assertMethodPermitsRequestBody(String requestMethod) {
     Request request = new Request.Builder()
         .url(server.url("/"))
-        .method(requestMethod, RequestBody.create(null, "abc"))
+        .method(requestMethod, RequestBody.create("abc", null))
         .build();
     assertThat(request.method()).isEqualTo(requestMethod);
   }
@@ -1724,7 +1733,7 @@ public final class URLConnectionTest {
     try {
       new Request.Builder()
           .url(server.url("/"))
-          .method(requestMethod, RequestBody.create(null, "abc"))
+          .method(requestMethod, RequestBody.create("abc", null))
           .build();
       fail();
     } catch (IllegalArgumentException expected) {
@@ -1853,7 +1862,7 @@ public final class URLConnectionTest {
         .build();
     Response response = getResponse(new Request.Builder()
         .url(server.url("/"))
-        .post(RequestBody.create(null, "ABCD"))
+        .post(RequestBody.create("ABCD", null))
         .build());
     assertThat(readAscii(response.body().byteStream(), Integer.MAX_VALUE)).isEqualTo(
         "Successful auth!");
@@ -2291,7 +2300,7 @@ public final class URLConnectionTest {
 
     Response response = getResponse(new Request.Builder()
         .url(server.url("/page1"))
-        .post(RequestBody.create(MediaType.get("text/plain; charset=utf-8"), "ABCD"))
+        .post(RequestBody.create("ABCD", MediaType.get("text/plain; charset=utf-8")))
         .header("Transfer-Encoding", "identity")
         .build());
     assertThat(readAscii(response.body().byteStream(), Integer.MAX_VALUE)).isEqualTo(
@@ -2371,7 +2380,7 @@ public final class URLConnectionTest {
     Request.Builder requestBuilder = new Request.Builder()
         .url(server.url("/page1"));
     if (method.equals("POST")) {
-      requestBuilder.post(RequestBody.create(null, "ABCD"));
+      requestBuilder.post(RequestBody.create("ABCD", null));
     } else {
       requestBuilder.method(method, null);
     }
@@ -2488,7 +2497,7 @@ public final class URLConnectionTest {
 
     Response response = getResponse(new Request.Builder()
         .url(server.url("/"))
-        .post(RequestBody.create(null, "Hello"))
+        .post(RequestBody.create("Hello", null))
         .build());
 
     assertThat(response.code()).isEqualTo(200);
@@ -2820,7 +2829,7 @@ public final class URLConnectionTest {
     try {
       new Request.Builder()
           .url(server.url("/"))
-          .method("GET", RequestBody.create(null, "abc"))
+          .method("GET", RequestBody.create("abc", null))
           .build();
       fail();
     } catch (IllegalArgumentException expected) {
@@ -2832,7 +2841,7 @@ public final class URLConnectionTest {
         .setBody("A"));
     Response response = getResponse(new Request.Builder()
         .url(server.url("/"))
-        .post(RequestBody.create(null, "ABC"))
+        .post(RequestBody.create("ABC", null))
         .build());
     assertThat(readAscii(response.body().byteStream(), Integer.MAX_VALUE)).isEqualTo(
         "A");
@@ -2884,7 +2893,7 @@ public final class URLConnectionTest {
     try {
       new Request.Builder()
           .url(server.url("/"))
-          .method("HEAD", RequestBody.create(null, ""))
+          .method("HEAD", RequestBody.create("", null))
           .build();
       fail();
     } catch (IllegalArgumentException expected) {
@@ -2998,7 +3007,7 @@ public final class URLConnectionTest {
 
     Response post = getResponse(new Request.Builder()
         .url(server.url("/"))
-        .post(RequestBody.create(null, "body!"))
+        .post(RequestBody.create("body!", null))
         .build());
     assertContent("def", post);
 
@@ -3115,7 +3124,7 @@ public final class URLConnectionTest {
 
   @Test public void emptyResponseHeaderNameIsLenient() throws Exception {
     Headers.Builder headers = new Headers.Builder();
-    InternalKtKt.addHeaderLenient(headers, ":A");
+    Internal.addHeaderLenient(headers, ":A");
     server.enqueue(new MockResponse()
         .setHeaders(headers.build())
         .setBody("body"));
@@ -3357,7 +3366,7 @@ public final class URLConnectionTest {
 
     Response response = getResponse(new Request.Builder()
         .url(server.url("/"))
-        .method(method, RequestBody.create(null, ""))
+        .method(method, RequestBody.create("", null))
         .build());
     assertContent("", response);
     RecordedRequest zeroLengthPayload = server.takeRequest();
@@ -3522,7 +3531,7 @@ public final class URLConnectionTest {
 
     Response response = getResponse(new Request.Builder()
         .url(server.url("/"))
-        .delete(RequestBody.create(null, "BODY"))
+        .delete(RequestBody.create("BODY", null))
         .build());
     assertThat(response.code()).isEqualTo(200);
 
@@ -3632,7 +3641,7 @@ public final class URLConnectionTest {
 
     assertContent("def", getResponse(new Request.Builder()
         .url(server.url("/"))
-        .post(RequestBody.create(null, "123"))
+        .post(RequestBody.create("123", null))
         .build()));
 
     RecordedRequest request1 = server.takeRequest();

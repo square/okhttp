@@ -15,9 +15,8 @@
  */
 package okhttp3
 
-import okhttp3.internal.NamedRunnable
-import okhttp3.internal.Util.closeQuietly
 import okhttp3.internal.cache.CacheInterceptor
+import okhttp3.internal.closeQuietly
 import okhttp3.internal.connection.ConnectInterceptor
 import okhttp3.internal.connection.Transmitter
 import okhttp3.internal.http.BridgeInterceptor
@@ -26,17 +25,17 @@ import okhttp3.internal.http.RealInterceptorChain
 import okhttp3.internal.http.RetryAndFollowUpInterceptor
 import okhttp3.internal.platform.Platform
 import okhttp3.internal.platform.Platform.Companion.INFO
+import okhttp3.internal.threadName
 import okio.Timeout
 import java.io.IOException
 import java.io.InterruptedIOException
-import java.util.ArrayList
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.RejectedExecutionException
 import java.util.concurrent.atomic.AtomicInteger
 
 internal class RealCall private constructor(
   val client: OkHttpClient,
-  /** The application's original request unadulterated by redirects or auth headers.  */
+  /** The application's original request unadulterated by redirects or auth headers. */
   val originalRequest: Request,
   val forWebSocket: Boolean
 ) : Call {
@@ -63,10 +62,10 @@ internal class RealCall private constructor(
     transmitter.timeoutEnter()
     transmitter.callStart()
     try {
-      client.dispatcher().executed(this)
+      client.dispatcher.executed(this)
       return getResponseWithInterceptorChain()
     } finally {
-      client.dispatcher().finished(this)
+      client.dispatcher.finished(this)
     }
   }
 
@@ -76,7 +75,7 @@ internal class RealCall private constructor(
       executed = true
     }
     transmitter.callStart()
-    client.dispatcher().enqueue(AsyncCall(responseCallback))
+    client.dispatcher.enqueue(AsyncCall(responseCallback))
   }
 
   override fun cancel() {
@@ -87,12 +86,12 @@ internal class RealCall private constructor(
 
   @SuppressWarnings("CloneDoesntCallSuperClone") // We are a final type & this saves clearing state.
   override fun clone(): RealCall {
-    return RealCall.newRealCall(client, originalRequest, forWebSocket)
+    return newRealCall(client, originalRequest, forWebSocket)
   }
 
   internal inner class AsyncCall(
     private val responseCallback: Callback
-  ) : NamedRunnable("OkHttp %s", redactedUrl()) {
+  ) : Runnable {
     @Volatile private var callsPerHost = AtomicInteger(0)
 
     fun callsPerHost(): AtomicInteger = callsPerHost
@@ -101,18 +100,18 @@ internal class RealCall private constructor(
       this.callsPerHost = other.callsPerHost
     }
 
-    fun host(): String = originalRequest.url().host()
+    fun host(): String = originalRequest.url.host
 
     fun request(): Request = originalRequest
 
     fun get(): RealCall = this@RealCall
 
     /**
-     * Attempt to enqueue this async call on `executorService`. This will attempt to clean up
+     * Attempt to enqueue this async call on [executorService]. This will attempt to clean up
      * if the executor has been shut down by reporting the call as failed.
      */
     fun executeOn(executorService: ExecutorService) {
-      assert(!Thread.holdsLock(client.dispatcher()))
+      assert(!Thread.holdsLock(client.dispatcher))
       var success = false
       try {
         executorService.execute(this)
@@ -124,27 +123,29 @@ internal class RealCall private constructor(
         responseCallback.onFailure(this@RealCall, ioException)
       } finally {
         if (!success) {
-          client.dispatcher().finished(this) // This call is no longer running!
+          client.dispatcher.finished(this) // This call is no longer running!
         }
       }
     }
 
-    override fun execute() {
-      var signalledCallback = false
-      transmitter.timeoutEnter()
-      try {
-        val response = getResponseWithInterceptorChain()
-        signalledCallback = true
-        responseCallback.onResponse(this@RealCall, response)
-      } catch (e: IOException) {
-        if (signalledCallback) {
-          // Do not signal the callback twice!
-          Platform.get().log(INFO, "Callback failure for ${toLoggableString()}", e)
-        } else {
-          responseCallback.onFailure(this@RealCall, e)
+    override fun run() {
+      threadName("OkHttp ${redactedUrl()}") {
+        var signalledCallback = false
+        transmitter.timeoutEnter()
+        try {
+          val response = getResponseWithInterceptorChain()
+          signalledCallback = true
+          responseCallback.onResponse(this@RealCall, response)
+        } catch (e: IOException) {
+          if (signalledCallback) {
+            // Do not signal the callback twice!
+            Platform.get().log(INFO, "Callback failure for ${toLoggableString()}", e)
+          } else {
+            responseCallback.onFailure(this@RealCall, e)
+          }
+        } finally {
+          client.dispatcher.finished(this)
         }
-      } finally {
-        client.dispatcher().finished(this)
       }
     }
   }
@@ -159,31 +160,30 @@ internal class RealCall private constructor(
         " to " + redactedUrl())
   }
 
-  fun redactedUrl(): String = originalRequest.url().redact()
+  fun redactedUrl(): String = originalRequest.url.redact()
 
   @Throws(IOException::class)
   fun getResponseWithInterceptorChain(): Response {
     // Build a full stack of interceptors.
-    val interceptors = ArrayList<Interceptor>()
-    interceptors.addAll(client.interceptors())
-    interceptors.add(RetryAndFollowUpInterceptor(client))
-    interceptors.add(BridgeInterceptor(client.cookieJar()))
-    interceptors.add(CacheInterceptor(client.internalCache()))
-    interceptors.add(ConnectInterceptor(client))
+    val interceptors = mutableListOf<Interceptor>()
+    interceptors += client.interceptors
+    interceptors += RetryAndFollowUpInterceptor(client)
+    interceptors += BridgeInterceptor(client.cookieJar)
+    interceptors += CacheInterceptor(client.cache)
+    interceptors += ConnectInterceptor
     if (!forWebSocket) {
-      interceptors.addAll(client.networkInterceptors())
+      interceptors += client.networkInterceptors
     }
-    interceptors.add(CallServerInterceptor(forWebSocket))
+    interceptors += CallServerInterceptor(forWebSocket)
 
-    val chain = RealInterceptorChain(interceptors, transmitter, null, 0,
-        originalRequest, this, client.connectTimeoutMillis(),
-        client.readTimeoutMillis(), client.writeTimeoutMillis())
+    val chain = RealInterceptorChain(interceptors, transmitter, null, 0, originalRequest, this,
+        client.connectTimeoutMillis, client.readTimeoutMillis, client.writeTimeoutMillis)
 
     var calledNoMoreExchanges = false
     try {
       val response = chain.proceed(originalRequest)
       if (transmitter.isCanceled) {
-        closeQuietly(response)
+        response.closeQuietly()
         throw IOException("Canceled")
       }
       return response

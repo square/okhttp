@@ -16,7 +16,7 @@
  */
 package okhttp3.internal.tls
 
-import okhttp3.internal.Util.verifyAsIpAddress
+import okhttp3.internal.canParseAsIpAddress
 import java.security.cert.CertificateParsingException
 import java.security.cert.X509Certificate
 import java.util.Locale
@@ -29,6 +29,7 @@ import javax.net.ssl.SSLSession
  *
  * [rfc_2818]: http://www.ietf.org/rfc/rfc2818.txt
  */
+@Suppress("NAME_SHADOWING")
 object OkHostnameVerifier : HostnameVerifier {
   private const val ALT_DNS_NAME = 2
   private const val ALT_IPA_NAME = 7
@@ -43,19 +44,19 @@ object OkHostnameVerifier : HostnameVerifier {
 
   fun verify(host: String, certificate: X509Certificate): Boolean {
     return when {
-      verifyAsIpAddress(host) -> verifyIpAddress(host, certificate)
+      host.canParseAsIpAddress() -> verifyIpAddress(host, certificate)
       else -> verifyHostname(host, certificate)
     }
   }
 
-  /** Returns true if `certificate` matches `ipAddress`.  */
+  /** Returns true if [certificate] matches [ipAddress]. */
   private fun verifyIpAddress(ipAddress: String, certificate: X509Certificate): Boolean {
     return getSubjectAltNames(certificate, ALT_IPA_NAME).any {
       ipAddress.equals(it, ignoreCase = true)
     }
   }
 
-  /** Returns true if `certificate` matches `hostname`.  */
+  /** Returns true if [certificate] matches [hostname]. */
   private fun verifyHostname(hostname: String, certificate: X509Certificate): Boolean {
     val hostname = hostname.toLowerCase(Locale.US)
     return getSubjectAltNames(certificate, ALT_DNS_NAME).any {
@@ -70,7 +71,7 @@ object OkHostnameVerifier : HostnameVerifier {
    * @param pattern domain name pattern from certificate. May be a wildcard pattern such as
    *     `*.android.com`.
    */
-  fun verifyHostname(hostname: String?, pattern: String?): Boolean {
+  private fun verifyHostname(hostname: String?, pattern: String?): Boolean {
     var hostname = hostname
     var pattern = pattern
     // Basic sanity checks
@@ -159,8 +160,8 @@ object OkHostnameVerifier : HostnameVerifier {
   }
 
   fun allSubjectAltNames(certificate: X509Certificate): List<String> {
-    val altIpaNames = getSubjectAltNames(certificate, OkHostnameVerifier.ALT_IPA_NAME)
-    val altDnsNames = getSubjectAltNames(certificate, OkHostnameVerifier.ALT_DNS_NAME)
+    val altIpaNames = getSubjectAltNames(certificate, ALT_IPA_NAME)
+    val altDnsNames = getSubjectAltNames(certificate, ALT_DNS_NAME)
     return altIpaNames + altDnsNames
   }
 

@@ -38,15 +38,15 @@ object TlsUtil {
         .build()
     return@lazy HandshakeCertificates.Builder()
         .heldCertificate(heldCertificate)
-        .addTrustedCertificate(heldCertificate.certificate())
+        .addTrustedCertificate(heldCertificate.certificate)
         .build()
   }
 
-  /** Returns an SSL client for this host's localhost address.  */
+  /** Returns an SSL client for this host's localhost address. */
   @JvmStatic
   fun localhost(): HandshakeCertificates = localhost
 
-  /** Returns a trust manager that trusts `trustedCertificates`.  */
+  /** Returns a trust manager that trusts `trustedCertificates`. */
   @JvmStatic
   fun newTrustManager(
     keyStoreType: String?,
@@ -80,9 +80,9 @@ object TlsUtil {
     val keyStore = newEmptyKeyStore(keyStoreType)
     if (heldCertificate != null) {
       val chain = arrayOfNulls<Certificate>(1 + intermediates.size)
-      chain[0] = heldCertificate.certificate()
+      chain[0] = heldCertificate.certificate
       intermediates.copyInto(chain, 1)
-      keyStore.setKeyEntry("private", heldCertificate.keyPair().private, password, chain)
+      keyStore.setKeyEntry("private", heldCertificate.keyPair.private, password, chain)
     }
 
     val factory = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm())

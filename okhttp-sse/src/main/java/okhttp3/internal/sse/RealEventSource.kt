@@ -22,8 +22,8 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
 import okhttp3.ResponseBody
-import okhttp3.internal.Internal
-import okhttp3.internal.Util
+import okhttp3.internal.EMPTY_RESPONSE
+import okhttp3.internal.connection.Exchange
 import okhttp3.sse.EventSource
 import okhttp3.sse.EventSourceListener
 import java.io.IOException
@@ -53,7 +53,7 @@ class RealEventSource(
         return
       }
 
-      val body = response.body()!!
+      val body = response.body!!
 
       if (!body.isEventStream()) {
         listener.onFailure(this,
@@ -62,11 +62,11 @@ class RealEventSource(
       }
 
       // This is a long-lived response. Cancel full-call timeouts.
-      Internal.instance.exchange(response)?.timeoutEarlyExit()
+      Exchange.get(response)?.timeoutEarlyExit()
 
       // Replace the body with an empty one so the callbacks can't see real data.
       val response = response.newBuilder()
-          .body(Util.EMPTY_RESPONSE)
+          .body(EMPTY_RESPONSE)
           .build()
 
       val reader = ServerSentEventReader(body.source(), this)
@@ -84,7 +84,7 @@ class RealEventSource(
 
   private fun ResponseBody.isEventStream(): Boolean {
     val contentType = contentType() ?: return false
-    return contentType.type() == "text" && contentType.subtype() == "event-stream"
+    return contentType.type == "text" && contentType.subtype == "event-stream"
   }
 
   override fun onFailure(call: Call, e: IOException) {

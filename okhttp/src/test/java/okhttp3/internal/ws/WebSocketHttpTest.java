@@ -27,6 +27,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Logger;
 import okhttp3.OkHttpClient;
+import okhttp3.OkHttpClientTestRule;
 import okhttp3.Protocol;
 import okhttp3.RecordingEventListener;
 import okhttp3.RecordingHostnameVerifier;
@@ -40,45 +41,55 @@ import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import okhttp3.mockwebserver.RecordedRequest;
 import okhttp3.mockwebserver.SocketPolicy;
+import okhttp3.testing.Flaky;
 import okhttp3.tls.HandshakeCertificates;
 import okio.Buffer;
 import okio.ByteString;
 import org.junit.After;
+import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 
 import static java.util.Arrays.asList;
-import static okhttp3.TestUtil.defaultClient;
-import static okhttp3.TestUtil.ensureAllConnectionsReleased;
 import static okhttp3.TestUtil.repeat;
 import static okhttp3.tls.internal.TlsUtil.localhost;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.data.Offset.offset;
 import static org.junit.Assert.fail;
 
+@Flaky
 public final class WebSocketHttpTest {
+  // Flaky https://github.com/square/okhttp/issues/4515
+  // Flaky https://github.com/square/okhttp/issues/4953
+
   @Rule public final MockWebServer webServer = new MockWebServer();
+  @Rule public final OkHttpClientTestRule clientTestRule = new OkHttpClientTestRule();
 
   private final HandshakeCertificates handshakeCertificates = localhost();
   private final WebSocketRecorder clientListener = new WebSocketRecorder("client");
   private final WebSocketRecorder serverListener = new WebSocketRecorder("server");
   private final Random random = new Random(0);
-  private OkHttpClient client = defaultClient().newBuilder()
-      .writeTimeout(500, TimeUnit.MILLISECONDS)
-      .readTimeout(500, TimeUnit.MILLISECONDS)
-      .addInterceptor(chain -> {
-        Response response = chain.proceed(chain.request());
-        // Ensure application interceptors never see a null body.
-        assertThat(response.body()).isNotNull();
-        return response;
-      })
-      .build();
+  private OkHttpClient client;
+
+  @Before public void setUp() {
+    client = clientTestRule.newClientBuilder()
+        .writeTimeout(500, TimeUnit.MILLISECONDS)
+        .readTimeout(500, TimeUnit.MILLISECONDS)
+        .addInterceptor(chain -> {
+          Response response = chain.proceed(chain.request());
+          // Ensure application interceptors never see a null body.
+          assertThat(response.body()).isNotNull();
+          return response;
+        })
+        .build();
+  }
 
   @After public void tearDown() {
     clientListener.assertExhausted();
 
     // TODO: assert all connections are released once leaks are fixed
+    clientTestRule.abandonClient();
   }
 
   @Test public void textMessage() {
@@ -116,8 +127,7 @@ public final class WebSocketHttpTest {
     try {
       webSocket.send((String) null);
       fail();
-    } catch (NullPointerException e) {
-      assertThat(e.getMessage()).isEqualTo("text == null");
+    } catch (IllegalArgumentException expected) {
     }
 
     closeWebSockets(webSocket, server);
@@ -132,8 +142,7 @@ public final class WebSocketHttpTest {
     try {
       webSocket.send((ByteString) null);
       fail();
-    } catch (NullPointerException e) {
-      assertThat(e.getMessage()).isEqualTo("bytes == null");
+    } catch (IllegalArgumentException expected) {
     }
 
     closeWebSockets(webSocket, server);
@@ -245,8 +254,8 @@ public final class WebSocketHttpTest {
     server.close(1001, "bye");
     clientListener.assertClosed(1001, "bye");
     clientListener.assertExhausted();
-    serverListener.assertClosing(1000,  "");
-    serverListener.assertClosed(1000,  "");
+    serverListener.assertClosing(1000, "");
+    serverListener.assertClosed(1000, "");
     serverListener.assertExhausted();
   }
 
@@ -302,8 +311,6 @@ public final class WebSocketHttpTest {
 
     clientListener.assertFailure(101, null, ProtocolException.class,
         "Expected 'Connection' header value 'Upgrade' but was 'null'");
-
-    ensureAllConnectionsReleased(client);
   }
 
   @Test public void wrongConnectionHeader() throws IOException {
@@ -577,8 +584,8 @@ public final class WebSocketHttpTest {
     }
 
     long elapsedUntilPong3 = System.nanoTime() - startNanos;
-    assertThat((double) TimeUnit.NANOSECONDS.toMillis(elapsedUntilPong3)).isCloseTo((double) 1500, offset(
-        250d));
+    assertThat(TimeUnit.NANOSECONDS.toMillis(elapsedUntilPong3))
+        .isCloseTo(1500L, offset(250L));
 
     // The client pinged the server 3 times, and it has ponged back 3 times.
     assertThat(webSocket.sentPingCount()).isEqualTo(3);
@@ -642,8 +649,8 @@ public final class WebSocketHttpTest {
     latch.countDown();
 
     long elapsedUntilFailure = System.nanoTime() - openAtNanos;
-    assertThat((double) TimeUnit.NANOSECONDS.toMillis(elapsedUntilFailure)).isCloseTo((double) 1000, offset(
-        250d));
+    assertThat(TimeUnit.NANOSECONDS.toMillis(elapsedUntilFailure))
+        .isCloseTo(1000L, offset(250L));
   }
 
   /** https://github.com/square/okhttp/issues/2788 */
@@ -656,14 +663,14 @@ public final class WebSocketHttpTest {
 
     // Initiate a close on the client, which will schedule a hard cancel in 500 ms.
     long closeAtNanos = System.nanoTime();
-    webSocket.close(1000, "goodbye", 500);
+    webSocket.close(1000, "goodbye", 500L);
     serverListener.assertClosing(1000, "goodbye");
 
     // Confirm that the hard cancel occurred after 500 ms.
     clientListener.assertFailure();
     long elapsedUntilFailure = System.nanoTime() - closeAtNanos;
-    assertThat((double) TimeUnit.NANOSECONDS.toMillis(elapsedUntilFailure)).isCloseTo((double) 500, offset(
-        250d));
+    assertThat(TimeUnit.NANOSECONDS.toMillis(elapsedUntilFailure))
+        .isCloseTo(500L, offset(250L));
 
     // Close the server and confirm it saw what we expected.
     server.close(1000, null);
@@ -766,7 +773,7 @@ public final class WebSocketHttpTest {
         .setStatus("HTTP/1.1 101 Switching Protocols")
         .setHeader("Connection", "Upgrade")
         .setHeader("Upgrade", "websocket")
-        .setHeader("Sec-WebSocket-Accept", WebSocketProtocol.acceptHeader(key));
+        .setHeader("Sec-WebSocket-Accept", WebSocketProtocol.INSTANCE.acceptHeader(key));
   }
 
   private void websocketScheme(String scheme) {

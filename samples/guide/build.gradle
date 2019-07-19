@@ -4,3 +4,7 @@ dependencies {
   implementation project(':okhttp-tls')
   implementation deps.moshi
 }
+
+tasks.withType(JavaCompile) {
+  options.warnings = false
+}

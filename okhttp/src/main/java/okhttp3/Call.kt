@@ -23,7 +23,7 @@ import java.io.IOException
  * represents a single request/response pair (stream), it cannot be executed twice.
  */
 interface Call : Cloneable {
-  /** Returns the original request that initiated this call.  */
+  /** Returns the original request that initiated this call. */
   fun request(): Request
 
   /**
@@ -67,7 +67,7 @@ interface Call : Cloneable {
    */
   fun enqueue(responseCallback: Callback)
 
-  /** Cancels the request, if possible. Requests that are already complete cannot be canceled.  */
+  /** Cancels the request, if possible. Requests that are already complete cannot be canceled. */
   fun cancel()
 
   /**
@@ -91,7 +91,7 @@ interface Call : Cloneable {
    * Create a new, identical call to this one which can be enqueued or executed even if this call
    * has already been.
    */
-  override fun clone(): Call
+  public override fun clone(): Call
 
   interface Factory {
     fun newCall(request: Request): Call

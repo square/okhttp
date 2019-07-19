@@ -15,7 +15,8 @@
  */
 package okhttp3
 
-import okhttp3.internal.http.HttpHeaders
+import okhttp3.internal.indexOfNonWhitespace
+import okhttp3.internal.toNonNegativeInt
 import java.util.concurrent.TimeUnit
 
 /**
@@ -25,20 +26,6 @@ import java.util.concurrent.TimeUnit
  * See [RFC 7234, 5.2](https://tools.ietf.org/html/rfc7234#section-5.2).
  */
 class CacheControl private constructor(
-  private val noCache: Boolean,
-  private val noStore: Boolean,
-  private val maxAgeSeconds: Int,
-  private val sMaxAgeSeconds: Int,
-  val isPrivate: Boolean,
-  val isPublic: Boolean,
-  private val mustRevalidate: Boolean,
-  private val maxStaleSeconds: Int,
-  private val minFreshSeconds: Int,
-  private val onlyIfCached: Boolean,
-  private val noTransform: Boolean,
-  private val immutable: Boolean,
-  private var headerValue: String?
-) {
   /**
    * In a response, this field's name "no-cache" is misleading. It doesn't prevent us from caching
    * the response; it only means we have to validate the response with the origin server before
@@ -46,25 +33,28 @@ class CacheControl private constructor(
    *
    * In a request, it means do not use a cache to satisfy the request.
    */
-  fun noCache() = noCache
+  @get:JvmName("noCache") val noCache: Boolean,
 
-  /** If true, this response should not be cached.  */
-  fun noStore() = noStore
+  /** If true, this response should not be cached. */
+  @get:JvmName("noStore") val noStore: Boolean,
 
   /** The duration past the response's served date that it can be served without validation. */
-  fun maxAgeSeconds() = maxAgeSeconds
+  @get:JvmName("maxAgeSeconds") val maxAgeSeconds: Int,
 
   /**
    * The "s-maxage" directive is the max age for shared caches. Not to be confused with "max-age"
    * for non-shared caches, As in Firefox and Chrome, this directive is not honored by this cache.
    */
-  fun sMaxAgeSeconds() = sMaxAgeSeconds
+  @get:JvmName("sMaxAgeSeconds") val sMaxAgeSeconds: Int,
 
-  fun mustRevalidate() = mustRevalidate
+  val isPrivate: Boolean,
+  val isPublic: Boolean,
 
-  fun maxStaleSeconds() = maxStaleSeconds
+  @get:JvmName("mustRevalidate") val mustRevalidate: Boolean,
 
-  fun minFreshSeconds() = minFreshSeconds
+  @get:JvmName("maxStaleSeconds") val maxStaleSeconds: Int,
+
+  @get:JvmName("minFreshSeconds") val minFreshSeconds: Int,
 
   /**
    * This field's name "only-if-cached" is misleading. It actually means "do not use the network".
@@ -72,10 +62,82 @@ class CacheControl private constructor(
    * cache. Cached responses that would require validation (ie. conditional gets) are not permitted
    * if this header is set.
    */
+  @get:JvmName("onlyIfCached") val onlyIfCached: Boolean,
+
+  @get:JvmName("noTransform") val noTransform: Boolean,
+
+  @get:JvmName("immutable") val immutable: Boolean,
+
+  private var headerValue: String?
+) {
+  @JvmName("-deprecated_noCache")
+  @Deprecated(
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "noCache"),
+      level = DeprecationLevel.ERROR)
+  fun noCache() = noCache
+
+  @JvmName("-deprecated_noStore")
+  @Deprecated(
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "noStore"),
+      level = DeprecationLevel.ERROR)
+  fun noStore() = noStore
+
+  @JvmName("-deprecated_maxAgeSeconds")
+  @Deprecated(
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "maxAgeSeconds"),
+      level = DeprecationLevel.ERROR)
+  fun maxAgeSeconds() = maxAgeSeconds
+
+  @JvmName("-deprecated_sMaxAgeSeconds")
+  @Deprecated(
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "sMaxAgeSeconds"),
+      level = DeprecationLevel.ERROR)
+  fun sMaxAgeSeconds() = sMaxAgeSeconds
+
+  @JvmName("-deprecated_mustRevalidate")
+  @Deprecated(
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "mustRevalidate"),
+      level = DeprecationLevel.ERROR)
+  fun mustRevalidate() = mustRevalidate
+
+  @JvmName("-deprecated_maxStaleSeconds")
+  @Deprecated(
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "maxStaleSeconds"),
+      level = DeprecationLevel.ERROR)
+  fun maxStaleSeconds() = maxStaleSeconds
+
+  @JvmName("-deprecated_minFreshSeconds")
+  @Deprecated(
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "minFreshSeconds"),
+      level = DeprecationLevel.ERROR)
+  fun minFreshSeconds() = minFreshSeconds
+
+  @JvmName("-deprecated_onlyIfCached")
+  @Deprecated(
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "onlyIfCached"),
+      level = DeprecationLevel.ERROR)
   fun onlyIfCached() = onlyIfCached
 
+  @JvmName("-deprecated_noTransform")
+  @Deprecated(
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "noTransform"),
+      level = DeprecationLevel.ERROR)
   fun noTransform() = noTransform
 
+  @JvmName("-deprecated_immutable")
+  @Deprecated(
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "immutable"),
+      level = DeprecationLevel.ERROR)
   fun immutable() = immutable
 
   override fun toString(): String {
@@ -102,7 +164,7 @@ class CacheControl private constructor(
     return result
   }
 
-  /** Builds a `Cache-Control` request header.  */
+  /** Builds a `Cache-Control` request header. */
   class Builder {
     private var noCache: Boolean = false
     private var noStore: Boolean = false
@@ -113,25 +175,25 @@ class CacheControl private constructor(
     private var noTransform: Boolean = false
     private var immutable: Boolean = false
 
-    /** Don't accept an unvalidated cached response.  */
+    /** Don't accept an unvalidated cached response. */
     fun noCache() = apply {
       this.noCache = true
     }
 
-    /** Don't store the server's response in any cache.  */
+    /** Don't store the server's response in any cache. */
     fun noStore() = apply {
       this.noStore = true
     }
 
     /**
-     * Sets the maximum age of a cached response. If the cache response's age exceeds `maxAge`, it
+     * Sets the maximum age of a cached response. If the cache response's age exceeds [maxAge], it
      * will not be used and a network request will be made.
      *
      * @param maxAge a non-negative integer. This is stored and transmitted with [TimeUnit.SECONDS]
      *     precision; finer precision will be lost.
      */
     fun maxAge(maxAge: Int, timeUnit: TimeUnit) = apply {
-      if (maxAge < 0) throw IllegalArgumentException("maxAge < 0: $maxAge")
+      require(maxAge >= 0) { "maxAge < 0: $maxAge" }
       val maxAgeSecondsLong = timeUnit.toSeconds(maxAge.toLong())
       this.maxAgeSeconds = maxAgeSecondsLong.clampToInt()
     }
@@ -144,21 +206,21 @@ class CacheControl private constructor(
      *     [TimeUnit.SECONDS] precision; finer precision will be lost.
      */
     fun maxStale(maxStale: Int, timeUnit: TimeUnit) = apply {
-      if (maxStale < 0) throw IllegalArgumentException("maxStale < 0: $maxStale")
+      require(maxStale >= 0) { "maxStale < 0: $maxStale" }
       val maxStaleSecondsLong = timeUnit.toSeconds(maxStale.toLong())
       this.maxStaleSeconds = maxStaleSecondsLong.clampToInt()
     }
 
     /**
      * Sets the minimum number of seconds that a response will continue to be fresh for. If the
-     * response will be stale when `minFresh` have elapsed, the cached response will not be used and
+     * response will be stale when [minFresh] have elapsed, the cached response will not be used and
      * a network request will be made.
      *
      * @param minFresh a non-negative integer. This is stored and transmitted with
      *     [TimeUnit.SECONDS] precision; finer precision will be lost.
      */
     fun minFresh(minFresh: Int, timeUnit: TimeUnit) = apply {
-      if (minFresh < 0) throw IllegalArgumentException("minFresh < 0: $minFresh")
+      require(minFresh >= 0) { "minFresh < 0: $minFresh" }
       val minFreshSecondsLong = timeUnit.toSeconds(minFresh.toLong())
       this.minFreshSeconds = minFreshSecondsLong.clampToInt()
     }
@@ -171,7 +233,7 @@ class CacheControl private constructor(
       this.onlyIfCached = true
     }
 
-    /** Don't accept a transformed response.  */
+    /** Don't accept a transformed response. */
     fun noTransform() = apply {
       this.noTransform = true
     }
@@ -215,7 +277,7 @@ class CacheControl private constructor(
         .build()
 
     /**
-     * Returns the cache directives of `headers`. This honors both Cache-Control and Pragma headers
+     * Returns the cache directives of [headers]. This honors both Cache-Control and Pragma headers
      * if they are present.
      */
     @JvmStatic
@@ -236,7 +298,7 @@ class CacheControl private constructor(
       var canUseHeaderValue = true
       var headerValue: String? = null
 
-      loop@ for (i in 0 until headers.size()) {
+      loop@ for (i in 0 until headers.size) {
         val name = headers.name(i)
         val value = headers.value(i)
 
@@ -261,8 +323,8 @@ class CacheControl private constructor(
         var pos = 0
         while (pos < value.length) {
           val tokenStart = pos
-          pos = HttpHeaders.skipUntil(value, pos, "=,;")
-          val directive = value.substring(tokenStart, pos).trim { it <= ' ' }
+          pos = value.indexOfElement("=,;", pos)
+          val directive = value.substring(tokenStart, pos).trim()
           val parameter: String?
 
           if (pos == value.length || value[pos] == ',' || value[pos] == ';') {
@@ -270,20 +332,20 @@ class CacheControl private constructor(
             parameter = null
           } else {
             pos++ // Consume '='.
-            pos = HttpHeaders.skipWhitespace(value, pos)
+            pos = value.indexOfNonWhitespace(pos)
 
             if (pos < value.length && value[pos] == '\"') {
               // Quoted string.
               pos++ // Consume '"' open quote.
               val parameterStart = pos
-              pos = HttpHeaders.skipUntil(value, pos, "\"")
+              pos = value.indexOf('"', pos)
               parameter = value.substring(parameterStart, pos)
               pos++ // Consume '"' close quote (if necessary).
             } else {
               // Unquoted string.
               val parameterStart = pos
-              pos = HttpHeaders.skipUntil(value, pos, ",;")
-              parameter = value.substring(parameterStart, pos).trim { it <= ' ' }
+              pos = value.indexOfElement(",;", pos)
+              parameter = value.substring(parameterStart, pos).trim()
             }
           }
 
@@ -295,10 +357,10 @@ class CacheControl private constructor(
               noStore = true
             }
             "max-age".equals(directive, ignoreCase = true) -> {
-              maxAgeSeconds = HttpHeaders.parseSeconds(parameter, -1)
+              maxAgeSeconds = parameter.toNonNegativeInt(-1)
             }
             "s-maxage".equals(directive, ignoreCase = true) -> {
-              sMaxAgeSeconds = HttpHeaders.parseSeconds(parameter, -1)
+              sMaxAgeSeconds = parameter.toNonNegativeInt(-1)
             }
             "private".equals(directive, ignoreCase = true) -> {
               isPrivate = true
@@ -310,10 +372,10 @@ class CacheControl private constructor(
               mustRevalidate = true
             }
             "max-stale".equals(directive, ignoreCase = true) -> {
-              maxStaleSeconds = HttpHeaders.parseSeconds(parameter, Integer.MAX_VALUE)
+              maxStaleSeconds = parameter.toNonNegativeInt(Integer.MAX_VALUE)
             }
             "min-fresh".equals(directive, ignoreCase = true) -> {
-              minFreshSeconds = HttpHeaders.parseSeconds(parameter, -1)
+              minFreshSeconds = parameter.toNonNegativeInt(-1)
             }
             "only-if-cached".equals(directive, ignoreCase = true) -> {
               onlyIfCached = true
@@ -335,6 +397,19 @@ class CacheControl private constructor(
       return CacheControl(noCache, noStore, maxAgeSeconds, sMaxAgeSeconds, isPrivate, isPublic,
           mustRevalidate, maxStaleSeconds, minFreshSeconds, onlyIfCached, noTransform, immutable,
           headerValue)
+    }
+
+    /**
+     * Returns the next index in this at or after [startIndex] that is a character from
+     * [characters]. Returns the input length if none of the requested characters can be found.
+     */
+    private fun String.indexOfElement(characters: String, startIndex: Int = 0): Int {
+      for (i in startIndex until length) {
+        if (this[i] in characters) {
+          return i
+        }
+      }
+      return length
     }
   }
 }

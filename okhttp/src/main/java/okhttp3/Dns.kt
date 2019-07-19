@@ -49,20 +49,11 @@ interface Dns {
         try {
           return InetAddress.getAllByName(hostname).toList()
         } catch (e: NullPointerException) {
-          val unknownHostException = UnknownHostException(
-              "Broken system behaviour for dns lookup of $hostname")
-          unknownHostException.initCause(e)
-          throw unknownHostException
+          throw UnknownHostException("Broken system behaviour for dns lookup of $hostname").apply {
+            initCause(e)
+          }
         }
       }
-    }
-
-    // This lambda conversion is for Kotlin callers expecting a Java SAM (single-abstract-method).
-    @JvmName("-deprecated_Dns")
-    inline operator fun invoke(
-      crossinline block: (String) -> List<InetAddress>
-    ): Dns = object : Dns {
-      override fun lookup(hostname: String): List<InetAddress> = block(hostname)
     }
   }
 }

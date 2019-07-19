@@ -15,8 +15,10 @@
  */
 package okhttp3
 
-import okhttp3.internal.Util
+import okhttp3.HttpUrl.Companion.toHttpUrl
+import okhttp3.internal.EMPTY_REQUEST
 import okhttp3.internal.http.HttpMethod
+import okhttp3.internal.toImmutableMap
 import java.net.URL
 
 /**
@@ -24,31 +26,21 @@ import java.net.URL
  * immutable.
  */
 class Request internal constructor(
-  internal val url: HttpUrl,
-  builder: Builder
+  @get:JvmName("url") val url: HttpUrl,
+  @get:JvmName("method") val method: String,
+  @get:JvmName("headers") val headers: Headers,
+  @get:JvmName("body") val body: RequestBody?,
+  internal val tags: Map<Class<*>, Any>
 ) {
-  internal val method: String = builder.method
-  internal val headers: Headers = builder.headers.build()
-  internal val body: RequestBody? = builder.body
-  internal val tags: Map<Class<*>, Any> = Util.immutableMap(builder.tags)
 
-  @Volatile
-  private var cacheControl: CacheControl? = null // Lazily initialized
+  private var lazyCacheControl: CacheControl? = null
 
   val isHttps: Boolean
     get() = url.isHttps
 
-  fun url(): HttpUrl = url
-
-  fun method(): String = method
-
-  fun headers(): Headers = headers
-
   fun header(name: String): String? = headers[name]
 
   fun headers(name: String): List<String> = headers.values(name)
-
-  fun body(): RequestBody? = body
 
   /**
    * Returns the tag attached with `Object.class` as a key, or null if no tag is attached with
@@ -72,13 +64,74 @@ class Request internal constructor(
    * Returns the cache control directives for this response. This is never null, even if this
    * response contains no `Cache-Control` header.
    */
-  fun cacheControl(): CacheControl {
-    return cacheControl ?: CacheControl.parse(headers).also {
-      this.cacheControl = it
+  @get:JvmName("cacheControl") val cacheControl: CacheControl
+    get() {
+      var result = lazyCacheControl
+      if (result == null) {
+        result = CacheControl.parse(headers)
+        lazyCacheControl = result
+      }
+      return result
     }
-  }
 
-  override fun toString(): String = "Request{method=$method, url=$url, tags=$tags}"
+  @JvmName("-deprecated_url")
+  @Deprecated(
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "url"),
+      level = DeprecationLevel.ERROR)
+  fun url(): HttpUrl = url
+
+  @JvmName("-deprecated_method")
+  @Deprecated(
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "method"),
+      level = DeprecationLevel.ERROR)
+  fun method(): String = method
+
+  @JvmName("-deprecated_headers")
+  @Deprecated(
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "headers"),
+      level = DeprecationLevel.ERROR)
+  fun headers(): Headers = headers
+
+  @JvmName("-deprecated_body")
+  @Deprecated(
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "body"),
+      level = DeprecationLevel.ERROR)
+  fun body(): RequestBody? = body
+
+  @JvmName("-deprecated_cacheControl")
+  @Deprecated(
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "cacheControl"),
+      level = DeprecationLevel.ERROR)
+  fun cacheControl(): CacheControl = cacheControl
+
+  override fun toString() = buildString {
+    append("Request{method=")
+    append(method)
+    append(", url=")
+    append(url)
+    if (headers.size != 0) {
+      append(", headers=[")
+      headers.forEachIndexed { index, (name, value) ->
+        if (index > 0) {
+          append(", ")
+        }
+        append(name)
+        append(':')
+        append(value)
+      }
+      append(']')
+    }
+    if (tags.isNotEmpty()) {
+      append(", tags=")
+      append(tags)
+    }
+    append('}')
+  }
 
   open class Builder {
     internal var url: HttpUrl? = null
@@ -119,16 +172,16 @@ class Request internal constructor(
     open fun url(url: String): Builder {
       // Silently replace web socket URLs with HTTP URLs.
       val finalUrl: String = when {
-        url.regionMatches(0, "ws:", 0, 3, ignoreCase = true) -> {
+        url.startsWith("ws:", ignoreCase = true) -> {
           "http:${url.substring(3)}"
         }
-        url.regionMatches(0, "wss:", 0, 4, ignoreCase = true) -> {
+        url.startsWith("wss:", ignoreCase = true) -> {
           "https:${url.substring(4)}"
         }
         else -> url
       }
 
-      return url(HttpUrl.get(finalUrl))
+      return url(finalUrl.toHttpUrl())
     }
 
     /**
@@ -136,7 +189,7 @@ class Request internal constructor(
      *
      * @throws IllegalArgumentException if the scheme of [url] is not `http` or `https`.
      */
-    open fun url(url: URL) = url(HttpUrl.get(url.toString()))
+    open fun url(url: URL) = url(url.toString().toHttpUrl())
 
     /**
      * Sets the header named [name] to [value]. If this request already has any headers
@@ -187,7 +240,7 @@ class Request internal constructor(
     open fun post(body: RequestBody) = method("POST", body)
 
     @JvmOverloads
-    open fun delete(body: RequestBody? = Util.EMPTY_REQUEST) = method("DELETE", body)
+    open fun delete(body: RequestBody? = EMPTY_REQUEST) = method("DELETE", body)
 
     open fun put(body: RequestBody) = method("PUT", body)
 
@@ -231,9 +284,14 @@ class Request internal constructor(
       }
     }
 
-    open fun build(): Request = Request(
-        checkNotNull(url) { "url == null" },
-        this
-    )
+    open fun build(): Request {
+      return Request(
+          checkNotNull(url) { "url == null" },
+          method,
+          headers.build(),
+          body,
+          tags.toImmutableMap()
+      )
+    }
   }
 }

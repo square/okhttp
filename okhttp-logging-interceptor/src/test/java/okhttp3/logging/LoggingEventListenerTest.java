@@ -20,7 +20,7 @@ import java.net.UnknownHostException;
 import okhttp3.HttpUrl;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
-import okhttp3.PlatformRule;
+import okhttp3.testing.PlatformRule;
 import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
@@ -73,7 +73,7 @@ public final class LoggingEventListenerTest {
     response.body().bytes();
 
     logRecorder
-        .assertLogMatch("callStart: Request\\{method=GET, url=" + url + ", tags=\\{\\}\\}")
+        .assertLogMatch("callStart: Request\\{method=GET, url=" + url + "\\}")
         .assertLogMatch("dnsStart: " + url.host())
         .assertLogMatch("dnsEnd: \\[.+\\]")
         .assertLogMatch("connectStart: " + url.host() + "/.+ DIRECT")
@@ -101,10 +101,10 @@ public final class LoggingEventListenerTest {
   @Test
   public void post() throws IOException {
     server.enqueue(new MockResponse());
-    client.newCall(request().post(RequestBody.create(PLAIN, "Hello!")).build()).execute();
+    client.newCall(request().post(RequestBody.create("Hello!", PLAIN)).build()).execute();
 
     logRecorder
-        .assertLogMatch("callStart: Request\\{method=POST, url=" + url + ", tags=\\{\\}\\}")
+        .assertLogMatch("callStart: Request\\{method=POST, url=" + url + "\\}")
         .assertLogMatch("dnsStart: " + url.host())
         .assertLogMatch("dnsEnd: \\[.+\\]")
         .assertLogMatch("connectStart: " + url.host() + "/.+ DIRECT")
@@ -144,7 +144,7 @@ public final class LoggingEventListenerTest {
     platform.assumeHttp2Support();
 
     logRecorder
-        .assertLogMatch("callStart: Request\\{method=GET, url=" + url + ", tags=\\{\\}\\}")
+        .assertLogMatch("callStart: Request\\{method=GET, url=" + url + "\\}")
         .assertLogMatch("dnsStart: " + url.host())
         .assertLogMatch("dnsEnd: \\[.+\\]")
         .assertLogMatch("connectStart: " + url.host() + "/.+ DIRECT")
@@ -187,7 +187,7 @@ public final class LoggingEventListenerTest {
     }
 
     logRecorder
-        .assertLogMatch("callStart: Request\\{method=GET, url=" + url + ", tags=\\{\\}\\}")
+        .assertLogMatch("callStart: Request\\{method=GET, url=" + url + "\\}")
         .assertLogMatch("dnsStart: " + url.host())
         .assertLogMatch("callFailed: java.net.UnknownHostException: reason")
         .assertNoMoreLogs();
@@ -207,7 +207,7 @@ public final class LoggingEventListenerTest {
     }
 
     logRecorder
-        .assertLogMatch("callStart: Request\\{method=GET, url=" + url + ", tags=\\{\\}\\}")
+        .assertLogMatch("callStart: Request\\{method=GET, url=" + url + "\\}")
         .assertLogMatch("dnsStart: " + url.host())
         .assertLogMatch("dnsEnd: \\[.+\\]")
         .assertLogMatch("connectStart: " + url.host() + "/.+ DIRECT")

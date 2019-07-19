@@ -30,7 +30,6 @@ dependencies {
   compileOnly deps.jsr305
   compileOnly deps.animalSniffer
 
-  testImplementation deps.okio
   testImplementation project(':okhttp-testing-support')
   testImplementation project(':okhttp-tls')
   testImplementation project(':okhttp-urlconnection')
@@ -40,6 +39,13 @@ dependencies {
   testImplementation deps.junit
   testImplementation deps.assertj
   testCompileOnly deps.jsr305
+}
+
+afterEvaluate { project ->
+  project.tasks.dokka {
+    outputDirectory = "$rootDir/docs/4.x"
+    outputFormat = 'gfm'
+  }
 }
 
 task japicmp(type: me.champeau.gradle.japicmp.JapicmpTask, dependsOn: 'jar') {
@@ -56,6 +62,7 @@ task japicmp(type: me.champeau.gradle.japicmp.JapicmpTask, dependsOn: 'jar') {
   classExcludes = [
       // Package-private in 3.x, internal in 4.0.0:
       'okhttp3.Cache$CacheResponseBody$1',
+      'okhttp3.RealCall$AsyncCall',
   ]
   methodExcludes = [
       // Became 'final' in 4.0.0:
@@ -354,6 +361,33 @@ task japicmp(type: me.champeau.gradle.japicmp.JapicmpTask, dependsOn: 'jar') {
       'okhttp3.Route#requiresTunnel()',
       'okhttp3.Route#socketAddress()',
       'okhttp3.TlsVersion#javaName()',
+      // Real API change! Became 'final' despite a non-final enclosing class in 4.0.0:
+      'okhttp3.OkHttpClient#authenticator()',
+      'okhttp3.OkHttpClient#cache()',
+      'okhttp3.OkHttpClient#callTimeoutMillis()',
+      'okhttp3.OkHttpClient#certificatePinner()',
+      'okhttp3.OkHttpClient#connectionPool()',
+      'okhttp3.OkHttpClient#connectionSpecs()',
+      'okhttp3.OkHttpClient#connectTimeoutMillis()',
+      'okhttp3.OkHttpClient#cookieJar()',
+      'okhttp3.OkHttpClient#dispatcher()',
+      'okhttp3.OkHttpClient#dns()',
+      'okhttp3.OkHttpClient#eventListenerFactory()',
+      'okhttp3.OkHttpClient#followRedirects()',
+      'okhttp3.OkHttpClient#followSslRedirects()',
+      'okhttp3.OkHttpClient#hostnameVerifier()',
+      'okhttp3.OkHttpClient#interceptors()',
+      'okhttp3.OkHttpClient#networkInterceptors()',
+      'okhttp3.OkHttpClient#pingIntervalMillis()',
+      'okhttp3.OkHttpClient#protocols()',
+      'okhttp3.OkHttpClient#proxy()',
+      'okhttp3.OkHttpClient#proxyAuthenticator()',
+      'okhttp3.OkHttpClient#proxySelector()',
+      'okhttp3.OkHttpClient#readTimeoutMillis()',
+      'okhttp3.OkHttpClient#retryOnConnectionFailure()',
+      'okhttp3.OkHttpClient#socketFactory()',
+      'okhttp3.OkHttpClient#sslSocketFactory()',
+      'okhttp3.OkHttpClient#writeTimeoutMillis()',
   ]
 }
 check.dependsOn(japicmp)

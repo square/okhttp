@@ -22,7 +22,7 @@ import java.lang.reflect.Method
 import java.lang.reflect.Proxy
 import javax.net.ssl.SSLSocket
 
-/** OpenJDK 8 with `org.mortbay.jetty.alpn:alpn-boot` in the boot class path.  */
+/** OpenJDK 8 with `org.mortbay.jetty.alpn:alpn-boot` in the boot class path. */
 class Jdk8WithJettyBootPlatform(
   private val putMethod: Method,
   private val getMethod: Method,
@@ -80,12 +80,12 @@ class Jdk8WithJettyBootPlatform(
    * dependency on those interfaces.
    */
   private class AlpnProvider internal constructor(
-    /** This peer's supported protocols.  */
+    /** This peer's supported protocols. */
     private val protocols: List<String>
   ) : InvocationHandler {
-    /** Set when remote peer notifies ALPN is unsupported.  */
+    /** Set when remote peer notifies ALPN is unsupported. */
     internal var unsupported: Boolean = false
-    /** The protocol the server selected.  */
+    /** The protocol the server selected. */
     internal var selected: String? = null
 
     @Throws(Throwable::class)
@@ -106,7 +106,7 @@ class Jdk8WithJettyBootPlatform(
         // Pick the first known protocol the peer advertises.
         for (i in 0..peerProtocols.size) {
           val protocol = peerProtocols[i] as String
-          if (protocols.contains(protocol)) {
+          if (protocol in protocols) {
             selected = protocol
             return selected
           }
@@ -123,14 +123,13 @@ class Jdk8WithJettyBootPlatform(
   }
 
   companion object {
-    @JvmStatic
     fun buildIfSupported(): Platform? {
       val jvmVersion = System.getProperty("java.specification.version", "unknown")
       try {
         // 1.8, 9, 10, 11, 12 etc
         val version = jvmVersion.toInt()
         if (version >= 9) return null
-      } catch (nfe: NumberFormatException) {
+      } catch (_: NumberFormatException) {
         // expected on >= JDK 9
       }
 
@@ -146,8 +145,8 @@ class Jdk8WithJettyBootPlatform(
         val removeMethod = alpnClass.getMethod("remove", SSLSocket::class.java)
         return Jdk8WithJettyBootPlatform(
             putMethod, getMethod, removeMethod, clientProviderClass, serverProviderClass)
-      } catch (ignored: ClassNotFoundException) {
-      } catch (ignored: NoSuchMethodException) {
+      } catch (_: ClassNotFoundException) {
+      } catch (_: NoSuchMethodException) {
       }
 
       return null

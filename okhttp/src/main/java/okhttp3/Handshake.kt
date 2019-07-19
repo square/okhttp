@@ -15,7 +15,8 @@
  */
 package okhttp3
 
-import okhttp3.internal.Util
+import okhttp3.internal.toImmutableList
+import okhttp3.internal.immutableListOf
 import java.io.IOException
 import java.security.Principal
 import java.security.cert.Certificate
@@ -24,50 +25,96 @@ import javax.net.ssl.SSLPeerUnverifiedException
 import javax.net.ssl.SSLSession
 
 /**
- * A record of a TLS handshake. For HTTPS clients, the client is *local* and the remote server
- * is its *peer*.
+ * A record of a TLS handshake. For HTTPS clients, the client is *local* and the remote server is
+ * its *peer*.
  *
- * This value object describes a completed handshake. Use [ConnectionSpec] to set policy
- * for new handshakes.
+ * This value object describes a completed handshake. Use [ConnectionSpec] to set policy for new
+ * handshakes.
  */
-data class Handshake private constructor(
-  private val tlsVersion: TlsVersion,
-  private val cipherSuite: CipherSuite,
-  private val peerCertificates: List<Certificate>,
-  private val localCertificates: List<Certificate>
-) {
-
+class Handshake private constructor(
   /**
    * Returns the TLS version used for this connection. This value wasn't tracked prior to OkHttp
    * 3.0. For responses cached by preceding versions this returns [TlsVersion.SSL_3_0].
    */
-  fun tlsVersion() = tlsVersion
+  @get:JvmName("tlsVersion") val tlsVersion: TlsVersion,
 
   /** Returns the cipher suite used for the connection. */
-  fun cipherSuite() = cipherSuite
+  @get:JvmName("cipherSuite") val cipherSuite: CipherSuite,
 
   /** Returns a possibly-empty list of certificates that identify the remote peer. */
+  @get:JvmName("peerCertificates") val peerCertificates: List<Certificate>,
+
+  /** Returns a possibly-empty list of certificates that identify this peer. */
+  @get:JvmName("localCertificates") val localCertificates: List<Certificate>
+) {
+
+  @JvmName("-deprecated_tlsVersion")
+  @Deprecated(
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "tlsVersion"),
+      level = DeprecationLevel.ERROR)
+  fun tlsVersion() = tlsVersion
+
+  @JvmName("-deprecated_cipherSuite")
+  @Deprecated(
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "cipherSuite"),
+      level = DeprecationLevel.ERROR)
+  fun cipherSuite() = cipherSuite
+
+  @JvmName("-deprecated_peerCertificates")
+  @Deprecated(
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "peerCertificates"),
+      level = DeprecationLevel.ERROR)
   fun peerCertificates() = peerCertificates
 
   /** Returns the remote peer's principle, or null if that peer is anonymous. */
-  fun peerPrincipal(): Principal? {
-    return if (peerCertificates.isNotEmpty()) {
-      (peerCertificates[0] as X509Certificate).subjectX500Principal
-    } else {
-      null
-    }
-  }
+  @get:JvmName("peerPrincipal")
+  val peerPrincipal: Principal?
+    get() = (peerCertificates.firstOrNull() as? X509Certificate)?.subjectX500Principal
 
-  /** Returns a possibly-empty list of certificates that identify this peer. */
+  @JvmName("-deprecated_peerPrincipal")
+  @Deprecated(
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "peerPrincipal"),
+      level = DeprecationLevel.ERROR)
+  fun peerPrincipal() = peerPrincipal
+
+  @JvmName("-deprecated_localCertificates")
+  @Deprecated(
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "localCertificates"),
+      level = DeprecationLevel.ERROR)
   fun localCertificates() = localCertificates
 
   /** Returns the local principle, or null if this peer is anonymous. */
-  fun localPrincipal(): Principal? {
-    return if (localCertificates.isNotEmpty()) {
-      (localCertificates[0] as X509Certificate).subjectX500Principal
-    } else {
-      null
-    }
+  @get:JvmName("localPrincipal")
+  val localPrincipal: Principal?
+    get() = (localCertificates.firstOrNull() as? X509Certificate)?.subjectX500Principal
+
+  @JvmName("-deprecated_localPrincipal")
+  @Deprecated(
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "localPrincipal"),
+      level = DeprecationLevel.ERROR)
+  fun localPrincipal() = localPrincipal
+
+  override fun equals(other: Any?): Boolean {
+    return other is Handshake &&
+        other.tlsVersion == tlsVersion &&
+        other.cipherSuite == cipherSuite &&
+        other.peerCertificates == peerCertificates &&
+        other.localCertificates == localCertificates
+  }
+
+  override fun hashCode(): Int {
+    var result = 17
+    result = 31 * result + tlsVersion.hashCode()
+    result = 31 * result + cipherSuite.hashCode()
+    result = 31 * result + peerCertificates.hashCode()
+    result = 31 * result + localCertificates.hashCode()
+    return result
   }
 
   override fun toString(): String {
@@ -87,38 +134,47 @@ data class Handshake private constructor(
   companion object {
     @Throws(IOException::class)
     @JvmStatic
-    fun get(session: SSLSession): Handshake {
-      val cipherSuiteString = checkNotNull(session.cipherSuite) { "cipherSuite == null" }
+    @JvmName("get")
+    fun SSLSession.handshake(): Handshake {
+      val cipherSuiteString = checkNotNull(cipherSuite) { "cipherSuite == null" }
       if ("SSL_NULL_WITH_NULL_NULL" == cipherSuiteString) {
         throw IOException("cipherSuite == SSL_NULL_WITH_NULL_NULL")
       }
       val cipherSuite = CipherSuite.forJavaName(cipherSuiteString)
 
-      val tlsVersionString = session.protocol ?: throw IllegalStateException("tlsVersion == null")
+      val tlsVersionString = checkNotNull(protocol) { "tlsVersion == null" }
       if ("NONE" == tlsVersionString) throw IOException("tlsVersion == NONE")
       val tlsVersion = TlsVersion.forJavaName(tlsVersionString)
 
       val peerCertificates: Array<Certificate>? = try {
-        session.peerCertificates
-      } catch (ignored: SSLPeerUnverifiedException) {
+        peerCertificates
+      } catch (_: SSLPeerUnverifiedException) {
         null
       }
 
       val peerCertificatesList = if (peerCertificates != null) {
-        Util.immutableList(*peerCertificates)
+        immutableListOf(*peerCertificates)
       } else {
         emptyList()
       }
 
-      val localCertificates = session.localCertificates
+      val localCertificates = localCertificates
       val localCertificatesList = if (localCertificates != null) {
-        Util.immutableList(*localCertificates)
+        immutableListOf(*localCertificates)
       } else {
         emptyList()
       }
 
       return Handshake(tlsVersion, cipherSuite, peerCertificatesList, localCertificatesList)
     }
+
+    @Throws(IOException::class)
+    @JvmName("-deprecated_get")
+    @Deprecated(
+        message = "moved to extension function",
+        replaceWith = ReplaceWith(expression = "sslSession.handshake()"),
+        level = DeprecationLevel.ERROR)
+    fun get(sslSession: SSLSession) = sslSession.handshake()
 
     @JvmStatic
     fun get(
@@ -127,8 +183,8 @@ data class Handshake private constructor(
       peerCertificates: List<Certificate>,
       localCertificates: List<Certificate>
     ): Handshake {
-      return Handshake(tlsVersion, cipherSuite, Util.immutableList(peerCertificates),
-          Util.immutableList(localCertificates))
+      return Handshake(tlsVersion, cipherSuite, peerCertificates.toImmutableList(),
+          localCertificates.toImmutableList())
     }
   }
 }

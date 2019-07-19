@@ -23,7 +23,7 @@ import javax.net.ssl.SSLSocketFactory
 import javax.net.ssl.X509TrustManager
 import okhttp3.Protocol
 
-/** OpenJDK 9+.  */
+/** OpenJDK 9+. */
 class Jdk9Platform(
   @JvmField val setProtocolMethod: Method,
   @JvmField val getProtocolMethod: Method
@@ -49,11 +49,9 @@ class Jdk9Platform(
   }
 
   override fun getSelectedProtocol(socket: SSLSocket): String? = try {
-    val protocol = getProtocolMethod.invoke(socket) as String?
-
     // SSLSocket.getApplicationProtocol returns "" if application protocols values will not
     // be used. Observed if you didn't specify SSLParameters.setApplicationProtocols
-    when (protocol) {
+    when (val protocol = getProtocolMethod.invoke(socket) as String?) {
       null, "" -> null
       else -> protocol
     }
@@ -73,7 +71,6 @@ class Jdk9Platform(
   }
 
   companion object {
-    @JvmStatic
     fun buildIfSupported(): Jdk9Platform? =
         try {
           // Find JDK 9 methods
@@ -82,7 +79,7 @@ class Jdk9Platform(
           val getProtocolMethod = SSLSocket::class.java.getMethod("getApplicationProtocol")
 
           Jdk9Platform(setProtocolMethod, getProtocolMethod)
-        } catch (ignored: NoSuchMethodException) {
+        } catch (_: NoSuchMethodException) {
           // pre JDK 9
           null
         }

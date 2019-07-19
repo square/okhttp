@@ -34,7 +34,7 @@ import java.util.TimeZone;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import javax.net.ssl.HostnameVerifier;
-import okhttp3.internal.InternalKtKt;
+import okhttp3.internal.Internal;
 import okhttp3.internal.io.InMemoryFileSystem;
 import okhttp3.internal.platform.Platform;
 import okhttp3.mockwebserver.MockResponse;
@@ -51,7 +51,7 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 
-import static okhttp3.internal.InternalKtKt.cacheGet;
+import static okhttp3.internal.Internal.cacheGet;
 import static okhttp3.mockwebserver.SocketPolicy.DISCONNECT_AT_END;
 import static okhttp3.tls.internal.TlsUtil.localhost;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -74,7 +74,7 @@ public final class CacheTest {
   @Before public void setUp() throws Exception {
     server.setProtocolNegotiationEnabled(false);
     cache = new Cache(new File("/cache/"), Integer.MAX_VALUE, fileSystem);
-    client = clientTestRule.client.newBuilder()
+    client = clientTestRule.newClientBuilder()
         .cache(cache)
         .cookieJar(new JavaNetCookieJar(cookieManager))
         .build();
@@ -779,7 +779,7 @@ public final class CacheTest {
 
   private RequestBody requestBodyOrNull(String requestMethod) {
     return (requestMethod.equals("POST") || requestMethod.equals("PUT"))
-        ? RequestBody.create(MediaType.get("text/plain"), "foo")
+        ? RequestBody.create("foo", MediaType.get("text/plain"))
         : null;
   }
 
@@ -867,7 +867,7 @@ public final class CacheTest {
 
     Request request = new Request.Builder()
         .url(url)
-        .put(RequestBody.create(MediaType.get("text/plain"), "foo"))
+        .put(RequestBody.create("foo", MediaType.get("text/plain")))
         .build();
     Response invalidate = client.newCall(request).execute();
     assertThat(invalidate.body().string()).isEqualTo("");
@@ -1109,7 +1109,7 @@ public final class CacheTest {
   }
 
   @Test public void conditionalCacheHitIsNotDoublePooled() throws Exception {
-    TestUtil.ensureAllConnectionsReleased(client);
+    clientTestRule.ensureAllConnectionsReleased();
 
     server.enqueue(new MockResponse()
         .addHeader("ETag: v1")
@@ -1992,7 +1992,7 @@ public final class CacheTest {
   @Test public void emptyResponseHeaderNameFromCacheIsLenient() throws Exception {
     Headers.Builder headers = new Headers.Builder()
         .add("Cache-Control: max-age=120");
-    InternalKtKt.addHeaderLenient(headers, ": A");
+    Internal.addHeaderLenient(headers, ": A");
     server.enqueue(new MockResponse()
         .setHeaders(headers.build())
         .setBody("body"));

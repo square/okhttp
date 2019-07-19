@@ -15,18 +15,17 @@
  */
 package okhttp3
 
-import okhttp3.internal.Util.delimiterOffset
-import okhttp3.internal.Util.trimSubstring
 import okhttp3.internal.cookieToString
+import okhttp3.internal.delimiterOffset
 import okhttp3.internal.platform.Platform
 import okhttp3.internal.platform.Platform.Companion.WARN
+import okhttp3.internal.trimSubstring
 import java.io.IOException
 import java.net.CookieHandler
 import java.net.HttpCookie
-import java.util.ArrayList
 import java.util.Collections
 
-/** A cookie jar that delegates to a [java.net.CookieHandler].  */
+/** A cookie jar that delegates to a [java.net.CookieHandler]. */
 class JavaNetCookieJar(private val cookieHandler: CookieHandler) : CookieJar {
 
   override fun saveFromResponse(url: HttpUrl, cookies: List<Cookie>) {
@@ -36,7 +35,7 @@ class JavaNetCookieJar(private val cookieHandler: CookieHandler) : CookieJar {
     }
     val multimap = mapOf("Set-Cookie" to cookieStrings)
     try {
-      cookieHandler.put(url.uri(), multimap)
+      cookieHandler.put(url.toUri(), multimap)
     } catch (e: IOException) {
       Platform.get().log(WARN, "Saving cookies failed for " + url.resolve("/...")!!, e)
     }
@@ -45,7 +44,7 @@ class JavaNetCookieJar(private val cookieHandler: CookieHandler) : CookieJar {
   override fun loadForRequest(url: HttpUrl): List<Cookie> {
     val cookieHeaders = try {
       // The RI passes all headers. We don't have 'em, so we don't pass 'em!
-      cookieHandler.get(url.uri(), emptyMap<String, List<String>>())
+      cookieHandler.get(url.toUri(), emptyMap<String, List<String>>())
     } catch (e: IOException) {
       Platform.get().log(WARN, "Loading cookies failed for " + url.resolve("/...")!!, e)
       return emptyList()
@@ -56,7 +55,7 @@ class JavaNetCookieJar(private val cookieHandler: CookieHandler) : CookieJar {
       if (("Cookie".equals(key, ignoreCase = true) || "Cookie2".equals(key, ignoreCase = true)) &&
           value.isNotEmpty()) {
         for (header in value) {
-          if (cookies == null) cookies = ArrayList()
+          if (cookies == null) cookies = mutableListOf()
           cookies.addAll(decodeHeaderAsJavaNetCookies(url, header))
         }
       }
@@ -79,9 +78,9 @@ class JavaNetCookieJar(private val cookieHandler: CookieHandler) : CookieJar {
     val limit = header.length
     var pairEnd: Int
     while (pos < limit) {
-      pairEnd = delimiterOffset(header, pos, limit, ";,")
-      val equalsSign = delimiterOffset(header, pos, pairEnd, '=')
-      val name = trimSubstring(header, pos, equalsSign)
+      pairEnd = header.delimiterOffset(";,", pos, limit)
+      val equalsSign = header.delimiterOffset('=', pos, pairEnd)
+      val name = header.trimSubstring(pos, equalsSign)
       if (name.startsWith("$")) {
         pos = pairEnd + 1
         continue
@@ -89,7 +88,7 @@ class JavaNetCookieJar(private val cookieHandler: CookieHandler) : CookieJar {
 
       // We have either name=value or just a name.
       var value = if (equalsSign < pairEnd) {
-        trimSubstring(header, equalsSign + 1, pairEnd)
+        header.trimSubstring(equalsSign + 1, pairEnd)
       } else {
         ""
       }
@@ -102,7 +101,7 @@ class JavaNetCookieJar(private val cookieHandler: CookieHandler) : CookieJar {
       result.add(Cookie.Builder()
           .name(name)
           .value(value)
-          .domain(url.host())
+          .domain(url.host)
           .build())
       pos = pairEnd + 1
     }

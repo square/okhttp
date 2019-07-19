@@ -15,10 +15,10 @@
  */
 package okhttp3.internal.http
 
-import java.net.HttpURLConnection
-import java.net.Proxy
 import okhttp3.HttpUrl
 import okhttp3.Request
+import java.net.HttpURLConnection
+import java.net.Proxy
 
 object RequestLine {
 
@@ -27,27 +27,21 @@ object RequestLine {
    * [HttpURLConnection.getHeaderFields], so it needs to be set even if the transport is
    * HTTP/2.
    */
-  @JvmStatic
-  fun get(request: Request, proxyType: Proxy.Type): String {
-    val result = StringBuilder()
-    result.append(request.method())
-    result.append(' ')
-
+  fun get(request: Request, proxyType: Proxy.Type) = buildString {
+    append(request.method)
+    append(' ')
     if (includeAuthorityInRequestLine(request, proxyType)) {
-      result.append(request.url())
+      append(request.url)
     } else {
-      result.append(requestPath(request.url()))
+      append(requestPath(request.url))
     }
-
-    result.append(" HTTP/1.1")
-    return result.toString()
+    append(" HTTP/1.1")
   }
 
   /**
    * Returns true if the request line should contain the full URL with host and port (like "GET
    * http://android.com/foo HTTP/1.1") or only the path (like "GET /foo HTTP/1.1").
    */
-  @JvmStatic
   private fun includeAuthorityInRequestLine(request: Request, proxyType: Proxy.Type): Boolean {
     return !request.isHttps && proxyType == Proxy.Type.HTTP
   }
@@ -56,10 +50,9 @@ object RequestLine {
    * Returns the path to request, like the '/' in 'GET / HTTP/1.1'. Never empty, even if the request
    * URL is. Includes the query component if it exists.
    */
-  @JvmStatic
   fun requestPath(url: HttpUrl): String {
-    val path = url.encodedPath()
-    val query = url.encodedQuery()
+    val path = url.encodedPath
+    val query = url.encodedQuery
     return if (query != null) "$path?$query" else path
   }
 }

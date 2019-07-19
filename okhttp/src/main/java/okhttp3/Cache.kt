@@ -15,28 +15,28 @@
  */
 package okhttp3
 
-import okhttp3.internal.Util.closeQuietly
-import okhttp3.internal.addHeaderLenient
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.internal.EMPTY_HEADERS
 import okhttp3.internal.cache.CacheRequest
 import okhttp3.internal.cache.CacheStrategy
 import okhttp3.internal.cache.DiskLruCache
-import okhttp3.internal.cache.InternalCache
-import okhttp3.internal.http.HttpHeaders
+import okhttp3.internal.closeQuietly
 import okhttp3.internal.http.HttpMethod
 import okhttp3.internal.http.StatusLine
 import okhttp3.internal.io.FileSystem
 import okhttp3.internal.platform.Platform
-import okio.buffer
+import okhttp3.internal.toLongOrDefault
 import okio.Buffer
 import okio.BufferedSink
 import okio.BufferedSource
-import okio.ByteString
 import okio.ByteString.Companion.decodeBase64
 import okio.ByteString.Companion.encodeUtf8
+import okio.ByteString.Companion.toByteString
 import okio.ForwardingSink
 import okio.ForwardingSource
 import okio.Sink
 import okio.Source
+import okio.buffer
 import java.io.Closeable
 import java.io.File
 import java.io.Flushable
@@ -45,8 +45,8 @@ import java.security.cert.Certificate
 import java.security.cert.CertificateEncodingException
 import java.security.cert.CertificateException
 import java.security.cert.CertificateFactory
-import java.util.ArrayList
 import java.util.NoSuchElementException
+import java.util.TreeSet
 
 /**
  * Caches HTTP and HTTPS responses to the filesystem so they may be reused, saving time and
@@ -142,68 +142,40 @@ class Cache internal constructor(
   maxSize: Long,
   fileSystem: FileSystem
 ) : Closeable, Flushable {
-  internal val internalCache: InternalCache = object : InternalCache {
-    override fun get(request: Request): Response? {
-      return this@Cache.get(request)
-    }
-
-    override fun put(response: Response): CacheRequest? {
-      return this@Cache.put(response)
-    }
-
-    override fun remove(request: Request) {
-      this@Cache.remove(request)
-    }
-
-    override fun update(cached: Response, network: Response) {
-      this@Cache.update(cached, network)
-    }
-
-    override fun trackConditionalCacheHit() {
-      this@Cache.trackConditionalCacheHit()
-    }
-
-    override fun trackResponse(cacheStrategy: CacheStrategy) {
-      this@Cache.trackResponse(cacheStrategy)
-    }
-  }
-
-  internal val cache: DiskLruCache
+  internal val cache: DiskLruCache =
+      DiskLruCache.create(fileSystem, directory, VERSION, ENTRY_COUNT, maxSize)
 
   // read and write statistics, all guarded by 'this'.
-  internal var writeSuccessCount: Int = 0
-  internal var writeAbortCount: Int = 0
-  private var networkCount: Int = 0
-  private var hitCount: Int = 0
-  private var requestCount: Int = 0
+  internal var writeSuccessCount = 0
+  internal var writeAbortCount = 0
+  private var networkCount = 0
+  private var hitCount = 0
+  private var requestCount = 0
 
-  val isClosed: Boolean get() = cache.isClosed
+  val isClosed: Boolean
+    get() = cache.isClosed()
 
-  /** Create a cache of at most `maxSize` bytes in `directory`. */
+  /** Create a cache of at most [maxSize] bytes in [directory]. */
   constructor(directory: File, maxSize: Long) : this(directory, maxSize, FileSystem.SYSTEM)
 
-  init {
-    this.cache = DiskLruCache.create(fileSystem, directory, VERSION, ENTRY_COUNT, maxSize)
-  }
-
   internal fun get(request: Request): Response? {
-    val key = key(request.url())
+    val key = key(request.url)
     val snapshot: DiskLruCache.Snapshot = try {
-      cache.get(key) ?: return null
-    } catch (e: IOException) {
+      cache[key] ?: return null
+    } catch (_: IOException) {
       return null // Give up because the cache cannot be read.
     }
 
     val entry: Entry = try {
       Entry(snapshot.getSource(ENTRY_METADATA))
-    } catch (e: IOException) {
-      closeQuietly(snapshot)
+    } catch (_: IOException) {
+      snapshot.closeQuietly()
       return null
     }
 
     val response = entry.response(snapshot)
     if (!entry.matches(request, response)) {
-      closeQuietly(response.body())
+      response.body?.closeQuietly()
       return null
     }
 
@@ -211,12 +183,12 @@ class Cache internal constructor(
   }
 
   internal fun put(response: Response): CacheRequest? {
-    val requestMethod = response.request().method()
+    val requestMethod = response.request.method
 
-    if (HttpMethod.invalidatesCache(response.request().method())) {
+    if (HttpMethod.invalidatesCache(response.request.method)) {
       try {
-        remove(response.request())
-      } catch (ignored: IOException) {
+        remove(response.request)
+      } catch (_: IOException) {
         // The cache cannot be written.
       }
       return null
@@ -228,17 +200,17 @@ class Cache internal constructor(
       return null
     }
 
-    if (HttpHeaders.hasVaryAll(response)) {
+    if (response.hasVaryAll()) {
       return null
     }
 
     val entry = Entry(response)
     var editor: DiskLruCache.Editor? = null
     try {
-      editor = cache.edit(key(response.request().url())) ?: return null
+      editor = cache.edit(key(response.request.url)) ?: return null
       entry.writeTo(editor)
       return RealCacheRequest(editor)
-    } catch (e: IOException) {
+    } catch (_: IOException) {
       abortQuietly(editor)
       return null
     }
@@ -246,12 +218,12 @@ class Cache internal constructor(
 
   @Throws(IOException::class)
   internal fun remove(request: Request) {
-    cache.remove(key(request.url()))
+    cache.remove(key(request.url))
   }
 
   internal fun update(cached: Response, network: Response) {
     val entry = Entry(network)
-    val snapshot = (cached.body() as CacheResponseBody).snapshot
+    val snapshot = (cached.body as CacheResponseBody).snapshot
     var editor: DiskLruCache.Editor? = null
     try {
       editor = snapshot.edit() // Returns null if snapshot is not current.
@@ -259,7 +231,7 @@ class Cache internal constructor(
         entry.writeTo(editor)
         editor.commit()
       }
-    } catch (e: IOException) {
+    } catch (_: IOException) {
       abortQuietly(editor)
     }
   }
@@ -268,7 +240,7 @@ class Cache internal constructor(
     // Give up because the cache cannot be written.
     try {
       editor?.abort()
-    } catch (ignored: IOException) {
+    } catch (_: IOException) {
     }
   }
 
@@ -333,7 +305,7 @@ class Cache internal constructor(
               nextUrl = metadata.readUtf8LineStrict()
               return true
             }
-          } catch (ignored: IOException) {
+          } catch (_: IOException) {
             // We couldn't read the metadata for this snapshot; possibly because the host filesystem
             // has disappeared! Skip it.
           }
@@ -351,7 +323,7 @@ class Cache internal constructor(
       }
 
       override fun remove() {
-        if (!canRemove) throw IllegalStateException("remove() before next()")
+        check(canRemove) { "remove() before next()" }
         delegate.remove()
       }
     }
@@ -364,7 +336,7 @@ class Cache internal constructor(
   @Throws(IOException::class)
   fun size(): Long = cache.size()
 
-  /** Max size of the cache (in bytes).  */
+  /** Max size of the cache (in bytes). */
   fun maxSize(): Long = cache.maxSize
 
   @Throws(IOException::class)
@@ -377,6 +349,14 @@ class Cache internal constructor(
     cache.close()
   }
 
+  @get:JvmName("directory") val directory: File
+    get() = cache.directory
+
+  @JvmName("-deprecated_directory")
+  @Deprecated(
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "directory"),
+      level = DeprecationLevel.ERROR)
   fun directory(): File = cache.directory
 
   @Synchronized internal fun trackResponse(cacheStrategy: CacheStrategy) {
@@ -429,10 +409,10 @@ class Cache internal constructor(
         done = true
         writeAbortCount++
       }
-      closeQuietly(cacheOut)
+      cacheOut.closeQuietly()
       try {
         editor.abort()
-      } catch (ignored: IOException) {
+      } catch (_: IOException) {
       }
     }
 
@@ -513,7 +493,7 @@ class Cache internal constructor(
         val varyHeadersBuilder = Headers.Builder()
         val varyRequestHeaderLineCount = readInt(source)
         for (i in 0 until varyRequestHeaderLineCount) {
-          addHeaderLenient(varyHeadersBuilder, source.readUtf8LineStrict())
+          varyHeadersBuilder.addLenient(source.readUtf8LineStrict())
         }
         varyHeaders = varyHeadersBuilder.build()
 
@@ -524,7 +504,7 @@ class Cache internal constructor(
         val responseHeadersBuilder = Headers.Builder()
         val responseHeaderLineCount = readInt(source)
         for (i in 0 until responseHeaderLineCount) {
-          addHeaderLenient(responseHeadersBuilder, source.readUtf8LineStrict())
+          responseHeadersBuilder.addLenient(source.readUtf8LineStrict())
         }
         val sendRequestMillisString = responseHeadersBuilder[SENT_MILLIS]
         val receivedResponseMillisString = responseHeadersBuilder[RECEIVED_MILLIS]
@@ -558,16 +538,16 @@ class Cache internal constructor(
     }
 
     internal constructor(response: Response) {
-      this.url = response.request().url().toString()
-      this.varyHeaders = HttpHeaders.varyHeaders(response)
-      this.requestMethod = response.request().method()
-      this.protocol = response.protocol()
-      this.code = response.code()
-      this.message = response.message()
-      this.responseHeaders = response.headers()
-      this.handshake = response.handshake()
-      this.sentRequestMillis = response.sentRequestAtMillis()
-      this.receivedResponseMillis = response.receivedResponseAtMillis()
+      this.url = response.request.url.toString()
+      this.varyHeaders = response.varyHeaders()
+      this.requestMethod = response.request.method
+      this.protocol = response.protocol
+      this.code = response.code
+      this.message = response.message
+      this.responseHeaders = response.headers
+      this.handshake = response.handshake
+      this.sentRequestMillis = response.sentRequestAtMillis
+      this.receivedResponseMillis = response.receivedResponseAtMillis
     }
 
     @Throws(IOException::class)
@@ -575,8 +555,8 @@ class Cache internal constructor(
       val sink = editor.newSink(ENTRY_METADATA).buffer()
       sink.writeUtf8(url).writeByte('\n'.toInt())
       sink.writeUtf8(requestMethod).writeByte('\n'.toInt())
-      sink.writeDecimalLong(varyHeaders.size().toLong()).writeByte('\n'.toInt())
-      for (i in 0 until varyHeaders.size()) {
+      sink.writeDecimalLong(varyHeaders.size.toLong()).writeByte('\n'.toInt())
+      for (i in 0 until varyHeaders.size) {
         sink.writeUtf8(varyHeaders.name(i))
             .writeUtf8(": ")
             .writeUtf8(varyHeaders.value(i))
@@ -584,8 +564,8 @@ class Cache internal constructor(
       }
 
       sink.writeUtf8(StatusLine(protocol, code, message).toString()).writeByte('\n'.toInt())
-      sink.writeDecimalLong((responseHeaders.size() + 2).toLong()).writeByte('\n'.toInt())
-      for (i in 0 until responseHeaders.size()) {
+      sink.writeDecimalLong((responseHeaders.size + 2).toLong()).writeByte('\n'.toInt())
+      for (i in 0 until responseHeaders.size) {
         sink.writeUtf8(responseHeaders.name(i))
             .writeUtf8(": ")
             .writeUtf8(responseHeaders.value(i))
@@ -602,10 +582,10 @@ class Cache internal constructor(
 
       if (isHttps) {
         sink.writeByte('\n'.toInt())
-        sink.writeUtf8(handshake!!.cipherSuite().javaName()).writeByte('\n'.toInt())
-        writeCertList(sink, handshake.peerCertificates())
-        writeCertList(sink, handshake.localCertificates())
-        sink.writeUtf8(handshake.tlsVersion().javaName()).writeByte('\n'.toInt())
+        sink.writeUtf8(handshake!!.cipherSuite.javaName).writeByte('\n'.toInt())
+        writeCertList(sink, handshake.peerCertificates)
+        writeCertList(sink, handshake.localCertificates)
+        sink.writeUtf8(handshake.tlsVersion.javaName).writeByte('\n'.toInt())
       }
       sink.close()
     }
@@ -636,7 +616,7 @@ class Cache internal constructor(
         sink.writeDecimalLong(certificates.size.toLong()).writeByte('\n'.toInt())
         for (i in 0 until certificates.size) {
           val bytes = certificates[i].encoded
-          val line = ByteString.of(*bytes).base64()
+          val line = bytes.toByteString().base64()
           sink.writeUtf8(line).writeByte('\n'.toInt())
         }
       } catch (e: CertificateEncodingException) {
@@ -645,9 +625,9 @@ class Cache internal constructor(
     }
 
     fun matches(request: Request, response: Response): Boolean {
-      return url == request.url().toString() &&
-          requestMethod == request.method() &&
-          HttpHeaders.varyMatches(response, varyHeaders, request)
+      return url == request.url.toString() &&
+          requestMethod == request.method &&
+          varyMatches(response, varyHeaders, request)
     }
 
     fun response(snapshot: DiskLruCache.Snapshot): Response {
@@ -672,10 +652,10 @@ class Cache internal constructor(
     }
 
     companion object {
-      /** Synthetic response header: the local time when the request was sent.  */
+      /** Synthetic response header: the local time when the request was sent. */
       private val SENT_MILLIS = Platform.get().getPrefix() + "-Sent-Millis"
 
-      /** Synthetic response header: the local time when the response was received.  */
+      /** Synthetic response header: the local time when the response was received. */
       private val RECEIVED_MILLIS = Platform.get().getPrefix() + "-Received-Millis"
     }
   }
@@ -698,17 +678,9 @@ class Cache internal constructor(
       }.buffer()
     }
 
-    override fun contentType(): MediaType? {
-      return if (contentType != null) MediaType.parse(contentType) else null
-    }
+    override fun contentType(): MediaType? = contentType?.toMediaTypeOrNull()
 
-    override fun contentLength(): Long {
-      return try {
-        contentLength?.toLong() ?: -1
-      } catch (e: NumberFormatException) {
-        -1L
-      }
-    }
+    override fun contentLength(): Long = contentLength?.toLongOrDefault(-1L) ?: -1L
 
     override fun source(): BufferedSource = bodySource
   }
@@ -723,18 +695,84 @@ class Cache internal constructor(
     fun key(url: HttpUrl): String = url.toString().encodeUtf8().md5().hex()
 
     @Throws(IOException::class)
-    @JvmStatic
     internal fun readInt(source: BufferedSource): Int {
       try {
         val result = source.readDecimalLong()
         val line = source.readUtf8LineStrict()
-        if (result < 0 || result > Integer.MAX_VALUE || line.isNotEmpty()) {
+        if (result < 0L || result > Integer.MAX_VALUE || line.isNotEmpty()) {
           throw IOException("expected an int but was \"$result$line\"")
         }
         return result.toInt()
       } catch (e: NumberFormatException) {
         throw IOException(e.message)
       }
+    }
+
+    /**
+     * Returns true if none of the Vary headers have changed between [cachedRequest] and
+     * [newRequest].
+     */
+    fun varyMatches(
+      cachedResponse: Response,
+      cachedRequest: Headers,
+      newRequest: Request
+    ): Boolean {
+      return cachedResponse.headers.varyFields().none {
+        cachedRequest.values(it) != newRequest.headers(it)
+      }
+    }
+
+    /** Returns true if a Vary header contains an asterisk. Such responses cannot be cached. */
+    fun Response.hasVaryAll() = "*" in headers.varyFields()
+
+    /**
+     * Returns the names of the request headers that need to be checked for equality when caching.
+     */
+    private fun Headers.varyFields(): Set<String> {
+      var result: MutableSet<String>? = null
+      for (i in 0 until size) {
+        if (!"Vary".equals(name(i), ignoreCase = true)) {
+          continue
+        }
+
+        val value = value(i)
+        if (result == null) {
+          result = TreeSet(String.CASE_INSENSITIVE_ORDER)
+        }
+        for (varyField in value.split(',')) {
+          result.add(varyField.trim())
+        }
+      }
+      return result ?: emptySet()
+    }
+
+    /**
+     * Returns the subset of the headers in this's request that impact the content of this's body.
+     */
+    fun Response.varyHeaders(): Headers {
+      // Use the request headers sent over the network, since that's what the response varies on.
+      // Otherwise OkHttp-supplied headers like "Accept-Encoding: gzip" may be lost.
+      val requestHeaders = networkResponse!!.request.headers
+      val responseHeaders = headers
+      return varyHeaders(requestHeaders, responseHeaders)
+    }
+
+    /**
+     * Returns the subset of the headers in [requestHeaders] that impact the content of the
+     * response's body.
+     */
+    private fun varyHeaders(requestHeaders: Headers, responseHeaders: Headers): Headers {
+      val varyFields = responseHeaders.varyFields()
+      if (varyFields.isEmpty()) return EMPTY_HEADERS
+
+      val result = Headers.Builder()
+      for (i in 0 until requestHeaders.size) {
+        val fieldName = requestHeaders.name(i)
+        if (fieldName in varyFields) {
+          result.add(fieldName, requestHeaders.value(i))
+        }
+      }
+      return result.build()
     }
   }
 }

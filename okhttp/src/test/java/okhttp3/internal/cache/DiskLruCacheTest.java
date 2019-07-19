@@ -470,7 +470,7 @@ public final class DiskLruCacheTest {
     try {
       cache.edit(null);
       fail();
-    } catch (NullPointerException expected) {
+    } catch (IllegalArgumentException expected) {
     }
   }
 
@@ -662,7 +662,7 @@ public final class DiskLruCacheTest {
 
   @Test public void constructorDoesNotAllowZeroCacheSize() throws Exception {
     try {
-      DiskLruCache.create(fileSystem, cacheDir, appVersion, 2, 0);
+      DiskLruCache.Companion.create(fileSystem, cacheDir, appVersion, 2, 0);
       fail();
     } catch (IllegalArgumentException expected) {
     }
@@ -670,7 +670,7 @@ public final class DiskLruCacheTest {
 
   @Test public void constructorDoesNotAllowZeroValuesPerEntry() throws Exception {
     try {
-      DiskLruCache.create(fileSystem, cacheDir, appVersion, 0, 10);
+      DiskLruCache.Companion.create(fileSystem, cacheDir, appVersion, 0, 10);
       fail();
     } catch (IllegalArgumentException expected) {
     }
@@ -978,7 +978,7 @@ public final class DiskLruCacheTest {
   @Test public void openCreatesDirectoryIfNecessary() throws Exception {
     cache.close();
     File dir = tempDir.newFolder("testOpenCreatesDirectoryIfNecessary");
-    cache = DiskLruCache.create(fileSystem, dir, appVersion, 2, Integer.MAX_VALUE);
+    cache = DiskLruCache.Companion.create(fileSystem, dir, appVersion, 2, Integer.MAX_VALUE);
     set("a", "a", "a");
     assertThat(fileSystem.exists(new File(dir, "a.0"))).isTrue();
     assertThat(fileSystem.exists(new File(dir, "a.1"))).isTrue();
@@ -1641,6 +1641,25 @@ public final class DiskLruCacheTest {
     editor.abort();
     assertThat(cache.size()).isEqualTo(0);
     assertAbsent("k1");
+  }
+
+  @Test public void dontRemoveUnfinishedEntryWhenCreatingSnapshot() throws Exception {
+    DiskLruCache.Editor creator = cache.edit("k1");
+    setString(creator, 0, "ABC");
+    setString(creator, 1, "DE");
+
+    assertThat(creator.newSource(0)).isNull();
+    assertThat(creator.newSource(1)).isNull();
+
+    Iterator<DiskLruCache.Snapshot> snapshotWhileEditing = cache.snapshots();
+    assertThat(snapshotWhileEditing.hasNext()).isFalse(); // entry still is being created/edited
+    creator.commit();
+
+    Iterator<DiskLruCache.Snapshot> snapshotAfterCommit = cache.snapshots();
+
+    assertThat(snapshotAfterCommit.hasNext())
+        .withFailMessage("Entry has been removed during creation.")
+        .isTrue();
   }
 
   private void assertJournalEquals(String... expectedBodyLines) throws Exception {

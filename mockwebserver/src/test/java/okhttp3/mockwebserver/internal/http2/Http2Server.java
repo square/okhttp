@@ -29,7 +29,6 @@ import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
 import okhttp3.Headers;
 import okhttp3.Protocol;
-import okhttp3.internal.Util;
 import okhttp3.internal.http2.Header;
 import okhttp3.internal.http2.Http2Connection;
 import okhttp3.internal.http2.Http2Stream;
@@ -39,6 +38,7 @@ import okio.Okio;
 import okio.Source;
 
 import static java.util.Arrays.asList;
+import static okhttp3.internal.Util.closeQuietly;
 import static okhttp3.internal.platform.Platform.INFO;
 import static okhttp3.tls.internal.TlsUtil.localhost;
 
@@ -76,10 +76,14 @@ public final class Http2Server extends Http2Connection.Listener {
         connection.start();
       } catch (IOException e) {
         logger.log(Level.INFO, "Http2Server connection failure: " + e);
-        Util.closeQuietly(socket);
+        if (socket != null) {
+          closeQuietly(socket);
+        }
       } catch (Exception e) {
         logger.log(Level.WARNING, "Http2Server unexpected failure", e);
-        Util.closeQuietly(socket);
+        if (socket != null) {
+          closeQuietly(socket);
+        }
       }
     }
   }

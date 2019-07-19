@@ -33,7 +33,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class RecordedRequestTest {
   Headers headers = Util.EMPTY_HEADERS;
 
-  private class FakeSocket extends Socket {
+  private static class FakeSocket extends Socket {
     private final InetAddress localAddress;
     private final int remotePort;
     private final InetAddress remoteAddress;

@@ -15,7 +15,7 @@
  */
 package okhttp3.internal.platform;
 
-import okhttp3.PlatformRule;
+import okhttp3.testing.PlatformRule;
 import org.junit.Rule;
 import org.junit.Test;
 
@@ -31,13 +31,13 @@ public class Jdk8WithJettyBootPlatformTest {
     assumeTrue(System.getProperty("java.specification.version").equals("1.8"));
     platform.assumeJettyBootEnabled();
 
-    assertThat(Jdk8WithJettyBootPlatform.buildIfSupported()).isNotNull();
+    assertThat(Jdk8WithJettyBootPlatform.Companion.buildIfSupported()).isNotNull();
   }
 
   @Test
   public void testNotBuildWithOther() {
     assumeFalse(System.getProperty("java.specification.version").equals("1.8"));
 
-    assertThat(Jdk8WithJettyBootPlatform.buildIfSupported()).isNull();
+    assertThat(Jdk8WithJettyBootPlatform.Companion.buildIfSupported()).isNull();
   }
 }

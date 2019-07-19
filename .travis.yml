@@ -2,11 +2,9 @@ language: java
 
 jdk:
   - oraclejdk8
-  - openjdk8
-  - openjdk11
 
 script:
- - ./gradlew check
+ - ./gradlew check --parallel
 
 after_success:
   - .buildscript/deploy_snapshot.sh
@@ -17,8 +15,8 @@ env:
     - secure: "WMkcWrsvzJNf48w7DJwipUNbhAoggCkC+NM31esq9/GDceGtVWj4hssQETynG4+ckxr0wGqUxsTRTz0uGhX6Fi58haG8yKp+g/HVClqI5EYjI44ptPcwlqlbYjuGbk65k1OGGZLctA6fQA3uT0zee05/yBjJx/jOqrN+PD1tW38="
 
 branches:
-  except:
-    - gh-pages
+  only:
+    - master
 
 notifications:
   email: false

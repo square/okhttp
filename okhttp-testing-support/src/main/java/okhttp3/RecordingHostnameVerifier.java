@@ -24,7 +24,7 @@ public final class RecordingHostnameVerifier implements HostnameVerifier {
   public final List<String> calls = new ArrayList<>();
 
   @Override
-  public boolean verify(String hostname, SSLSession session) {
+  public synchronized boolean verify(String hostname, SSLSession session) {
     calls.add("verify " + hostname);
     return true;
   }

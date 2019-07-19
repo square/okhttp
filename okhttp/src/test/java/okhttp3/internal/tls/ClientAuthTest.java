@@ -31,11 +31,13 @@ import javax.net.ssl.X509TrustManager;
 import javax.security.auth.x500.X500Principal;
 import okhttp3.Call;
 import okhttp3.OkHttpClient;
-import okhttp3.PlatformRule;
+import okhttp3.OkHttpClientTestRule;
 import okhttp3.Request;
 import okhttp3.Response;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
+import okhttp3.testing.PlatformRule;
+import okhttp3.testing.PlatformVersion;
 import okhttp3.tls.HandshakeCertificates;
 import okhttp3.tls.HeldCertificate;
 import org.junit.Before;
@@ -43,17 +45,15 @@ import org.junit.Rule;
 import org.junit.Test;
 
 import static java.util.Arrays.asList;
-import static okhttp3.PlatformRule.getPlatformSystemProperty;
-import static okhttp3.TestUtil.defaultClient;
-import static okhttp3.internal.platform.PlatformTest.getJvmSpecVersion;
+import static okhttp3.testing.PlatformRule.getPlatformSystemProperty;
 import static okhttp3.tls.internal.TlsUtil.newKeyManager;
 import static okhttp3.tls.internal.TlsUtil.newTrustManager;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.fail;
-import static org.junit.Assume.assumeFalse;
 
 public final class ClientAuthTest {
   @Rule public final PlatformRule platform = new PlatformRule();
+  @Rule public final OkHttpClientTestRule clientTestRule = new OkHttpClientTestRule();
   @Rule public final MockWebServer server = new MockWebServer();
 
   private HeldCertificate serverRootCa;
@@ -65,8 +65,6 @@ public final class ClientAuthTest {
 
   @Before
   public void setUp() {
-    platform.assumeNotConscrypt();
-
     serverRootCa = new HeldCertificate.Builder()
         .serialNumber(1L)
         .certificateAuthority(1)
@@ -181,9 +179,8 @@ public final class ClientAuthTest {
   }
 
   @Test public void missingClientAuthFailsForNeeds() throws Exception {
-    // TODO https://github.com/square/okhttp/issues/4598
+    // Fails with 11.0.1 https://github.com/square/okhttp/issues/4598
     // StreamReset stream was reset: PROT...
-    assumeFalse(getJvmSpecVersion().equals("11"));
 
     OkHttpClient client = buildClient(null, clientIntermediateCa.certificate());
 
@@ -199,10 +196,10 @@ public final class ClientAuthTest {
       fail();
     } catch (SSLHandshakeException expected) {
     } catch (SSLException expected) {
-      String jvmVersion = System.getProperty("java.specification.version");
-      assertThat(jvmVersion).isEqualTo("11");
+      assertThat(PlatformVersion.INSTANCE.getMajorVersion()).isGreaterThanOrEqualTo(11);
     } catch (SocketException expected) {
-      assertThat(getPlatformSystemProperty()).isEqualTo("jdk9");
+      assertThat(getPlatformSystemProperty()).isIn(PlatformRule.JDK9_PROPERTY,
+          PlatformRule.CONSCRYPT_PROPERTY);
     }
   }
 
@@ -231,9 +228,8 @@ public final class ClientAuthTest {
   }
 
   @Test public void invalidClientAuthFails() throws Throwable {
-    // TODO https://github.com/square/okhttp/issues/4598
+    // Fails with https://github.com/square/okhttp/issues/4598
     // StreamReset stream was reset: PROT...
-    assumeFalse(getJvmSpecVersion().equals("11"));
 
     HeldCertificate clientCert2 = new HeldCertificate.Builder()
         .serialNumber(4L)
@@ -255,10 +251,10 @@ public final class ClientAuthTest {
     } catch (SSLHandshakeException expected) {
     } catch (SSLException expected) {
       // javax.net.ssl.SSLException: readRecord
-      String jvmVersion = System.getProperty("java.specification.version");
-      assertThat(jvmVersion).isEqualTo("11");
+      assertThat(PlatformVersion.INSTANCE.getMajorVersion()).isGreaterThanOrEqualTo(11);
     } catch (SocketException expected) {
-      assertThat(getPlatformSystemProperty()).isEqualTo("jdk9");
+      assertThat(getPlatformSystemProperty()).isIn(PlatformRule.JDK9_PROPERTY,
+          PlatformRule.CONSCRYPT_PROPERTY);
     }
   }
 
@@ -272,7 +268,7 @@ public final class ClientAuthTest {
     }
 
     HandshakeCertificates handshakeCertificates = builder.build();
-    return defaultClient().newBuilder()
+    return clientTestRule.newClientBuilder()
         .sslSocketFactory(
             handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager())
         .build();

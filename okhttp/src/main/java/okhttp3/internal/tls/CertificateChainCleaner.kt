@@ -38,12 +38,10 @@ abstract class CertificateChainCleaner {
   abstract fun clean(chain: List<Certificate>, hostname: String): List<Certificate>
 
   companion object {
-    @JvmStatic
     fun get(trustManager: X509TrustManager): CertificateChainCleaner {
       return Platform.get().buildCertificateChainCleaner(trustManager)
     }
 
-    @JvmStatic
     fun get(vararg caCerts: X509Certificate): CertificateChainCleaner {
       return BasicCertificateChainCleaner(BasicTrustRootIndex(*caCerts))
     }

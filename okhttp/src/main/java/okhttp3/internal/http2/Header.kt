@@ -15,7 +15,6 @@
  */
 package okhttp3.internal.http2
 
-import okhttp3.internal.Util
 import okio.ByteString
 import okio.ByteString.Companion.encodeUtf8
 
@@ -26,16 +25,14 @@ data class Header(
   /** Value in UTF-8 encoding. */
   @JvmField val value: ByteString
 ) {
-  @JvmField internal val hpackSize = 32 + name.size + value.size
+  @JvmField val hpackSize = 32 + name.size + value.size
 
   // TODO: search for toLowerCase and consider moving logic here.
   constructor(name: String, value: String) : this(name.encodeUtf8(), value.encodeUtf8())
 
   constructor(name: ByteString, value: String) : this(name, value.encodeUtf8())
 
-  override fun toString(): String {
-    return Util.format("%s: %s", name.utf8(), value.utf8())
-  }
+  override fun toString(): String = "${name.utf8()}: ${value.utf8()}"
 
   companion object {
     // Special header names defined in HTTP/2 spec.

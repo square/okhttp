@@ -22,7 +22,7 @@ import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import okhttp3.internal.Internal;
+import kotlin.TypeCastException;
 import okhttp3.internal.Util;
 import okhttp3.internal.http.HttpHeaders;
 import okhttp3.internal.http2.Header;
@@ -39,11 +39,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.fail;
 
 public final class HeadersTest {
-  static {
-    Internal.initializeInstanceForTests();
-  }
-
-  @Test public void readNameValueBlockDropsForbiddenHeadersHttp2() throws IOException {
+  @Test public void readNameValueBlockDropsForbiddenHeadersHttp2() {
     Headers headerBlock = Headers.of(
         ":status", "200 OK",
         ":version", "HTTP/1.1",
@@ -205,7 +201,7 @@ public final class HeadersTest {
     try {
       Headers.of(Collections.singletonMap("User-Agent", null));
       fail();
-    } catch (NullPointerException expected) {
+    } catch (TypeCastException expected) {
     }
   }
 

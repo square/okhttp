@@ -29,11 +29,11 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 
-import static okhttp3.TestUtil.defaultClient;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public final class SocksProxyTest {
   @Rule public final MockWebServer server = new MockWebServer();
+  @Rule public final OkHttpClientTestRule clientTestRule = new OkHttpClientTestRule();
 
   private final SocksProxy socksProxy = new SocksProxy();
 
@@ -49,7 +49,7 @@ public final class SocksProxyTest {
     server.enqueue(new MockResponse().setBody("abc"));
     server.enqueue(new MockResponse().setBody("def"));
 
-    OkHttpClient client = defaultClient().newBuilder()
+    OkHttpClient client = clientTestRule.newClientBuilder()
         .proxy(socksProxy.proxy())
         .build();
 
@@ -78,7 +78,7 @@ public final class SocksProxyTest {
       }
     };
 
-    OkHttpClient client = defaultClient().newBuilder()
+    OkHttpClient client = clientTestRule.newClientBuilder()
         .proxySelector(proxySelector)
         .build();
 
@@ -93,7 +93,7 @@ public final class SocksProxyTest {
     // This testcase will fail if the target is resolved locally instead of through the proxy.
     server.enqueue(new MockResponse().setBody("abc"));
 
-    OkHttpClient client = defaultClient().newBuilder()
+    OkHttpClient client = clientTestRule.newClientBuilder()
         .proxy(socksProxy.proxy())
         .build();
 

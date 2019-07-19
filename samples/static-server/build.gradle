@@ -1,5 +1,9 @@
 apply plugin: 'com.github.johnrengelman.shadow'
 
+tasks.withType(JavaCompile) {
+  options.warnings = false
+}
+
 jar {
   manifest {
     attributes 'Main-Class': 'okhttp3.sample.SampleServer'

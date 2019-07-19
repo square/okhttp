@@ -36,23 +36,26 @@ import okhttp3.Call;
 import okhttp3.ConnectionSpec;
 import okhttp3.EventListener;
 import okhttp3.FakeDns;
+import okhttp3.OkHttpClientTestRule;
 import okhttp3.Protocol;
 import okhttp3.Request;
 import okhttp3.Route;
-import okhttp3.TestUtil;
-import okhttp3.internal.Util;
 import okhttp3.internal.http.RecordingProxySelector;
 import okhttp3.tls.HandshakeCertificates;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 
 import static java.net.Proxy.NO_PROXY;
+import static okhttp3.internal.Util.immutableListOf;
 import static okhttp3.tls.internal.TlsUtil.localhost;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.fail;
 
 public final class RouteSelectorTest {
-  public final List<ConnectionSpec> connectionSpecs = Util.immutableList(
+  @Rule public final OkHttpClientTestRule clientTestRule = new OkHttpClientTestRule();
+
+  public final List<ConnectionSpec> connectionSpecs = immutableListOf(
       ConnectionSpec.MODERN_TLS,
       ConnectionSpec.COMPATIBLE_TLS,
       ConnectionSpec.CLEARTEXT);
@@ -81,7 +84,7 @@ public final class RouteSelectorTest {
   private RouteDatabase routeDatabase = new RouteDatabase();
 
   @Before public void setUp() throws Exception {
-    call = TestUtil.defaultClient().newCall(new Request.Builder()
+    call = clientTestRule.newClient().newCall(new Request.Builder()
         .url("https://" + uriHost + ":" + uriPort + "/")
         .build());
     socketFactory = SocketFactory.getDefault();
@@ -344,7 +347,7 @@ public final class RouteSelectorTest {
 
     // Extract the regular sequence of routes from selector.
     RouteSelector.Selection selection1 = routeSelector.next();
-    List<Route> regularRoutes = selection1.getAll();
+    List<Route> regularRoutes = selection1.getRoutes();
 
     // Check that we do indeed have more than one route.
     assertThat(regularRoutes.size()).isEqualTo(numberOfAddresses);
@@ -409,7 +412,7 @@ public final class RouteSelectorTest {
     RouteSelector.Selection selection = routeSelector.next();
     dns.assertRequests(uriHost);
 
-    List<Route> routes = selection.getAll();
+    List<Route> routes = selection.getRoutes();
     assertRoute(routes.get(0), address, NO_PROXY, dns.lookup(uriHost, 0), uriPort);
     assertRoute(routes.get(1), address, NO_PROXY, dns.lookup(uriHost, 1), uriPort);
 
@@ -422,19 +425,19 @@ public final class RouteSelectorTest {
   @Test public void getHostString() throws Exception {
     // Name proxy specification.
     InetSocketAddress socketAddress = InetSocketAddress.createUnresolved("host", 1234);
-    assertThat(RouteSelector.getHostString(socketAddress)).isEqualTo("host");
+    assertThat(RouteSelector.Companion.getSocketHost(socketAddress)).isEqualTo("host");
     socketAddress = InetSocketAddress.createUnresolved("127.0.0.1", 1234);
-    assertThat(RouteSelector.getHostString(socketAddress)).isEqualTo("127.0.0.1");
+    assertThat(RouteSelector.Companion.getSocketHost(socketAddress)).isEqualTo("127.0.0.1");
 
     // InetAddress proxy specification.
     socketAddress = new InetSocketAddress(InetAddress.getByName("localhost"), 1234);
-    assertThat(RouteSelector.getHostString(socketAddress)).isEqualTo("127.0.0.1");
+    assertThat(RouteSelector.Companion.getSocketHost(socketAddress)).isEqualTo("127.0.0.1");
     socketAddress = new InetSocketAddress(
         InetAddress.getByAddress(new byte[] {127, 0, 0, 1}), 1234);
-    assertThat(RouteSelector.getHostString(socketAddress)).isEqualTo("127.0.0.1");
+    assertThat(RouteSelector.Companion.getSocketHost(socketAddress)).isEqualTo("127.0.0.1");
     socketAddress = new InetSocketAddress(
         InetAddress.getByAddress("foobar", new byte[] {127, 0, 0, 1}), 1234);
-    assertThat(RouteSelector.getHostString(socketAddress)).isEqualTo("127.0.0.1");
+    assertThat(RouteSelector.Companion.getSocketHost(socketAddress)).isEqualTo("127.0.0.1");
   }
 
   @Test public void routeToString() throws Exception {

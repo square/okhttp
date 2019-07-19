@@ -24,7 +24,7 @@ import okhttp3.Response
 import okhttp3.internal.userAgent
 import okio.GzipSource
 
-import okhttp3.internal.Util.hostHeader
+import okhttp3.internal.toHostHeader
 import okio.buffer
 
 /**
@@ -39,7 +39,7 @@ class BridgeInterceptor(private val cookieJar: CookieJar) : Interceptor {
     val userRequest = chain.request()
     val requestBuilder = userRequest.newBuilder()
 
-    val body = userRequest.body()
+    val body = userRequest.body
     if (body != null) {
       val contentType = body.contentType()
       if (contentType != null) {
@@ -57,7 +57,7 @@ class BridgeInterceptor(private val cookieJar: CookieJar) : Interceptor {
     }
 
     if (userRequest.header("Host") == null) {
-      requestBuilder.header("Host", hostHeader(userRequest.url(), false))
+      requestBuilder.header("Host", userRequest.url.toHostHeader())
     }
 
     if (userRequest.header("Connection") == null) {
@@ -72,7 +72,7 @@ class BridgeInterceptor(private val cookieJar: CookieJar) : Interceptor {
       requestBuilder.header("Accept-Encoding", "gzip")
     }
 
-    val cookies = cookieJar.loadForRequest(userRequest.url())
+    val cookies = cookieJar.loadForRequest(userRequest.url)
     if (cookies.isNotEmpty()) {
       requestBuilder.header("Cookie", cookieHeader(cookies))
     }
@@ -83,18 +83,18 @@ class BridgeInterceptor(private val cookieJar: CookieJar) : Interceptor {
 
     val networkResponse = chain.proceed(requestBuilder.build())
 
-    HttpHeaders.receiveHeaders(cookieJar, userRequest.url(), networkResponse.headers())
+    cookieJar.receiveHeaders(userRequest.url, networkResponse.headers)
 
     val responseBuilder = networkResponse.newBuilder()
         .request(userRequest)
 
     if (transparentGzip &&
         "gzip".equals(networkResponse.header("Content-Encoding"), ignoreCase = true) &&
-        HttpHeaders.hasBody(networkResponse)) {
-      val responseBody = networkResponse.body()
+        networkResponse.promisesBody()) {
+      val responseBody = networkResponse.body
       if (responseBody != null) {
         val gzipSource = GzipSource(responseBody.source())
-        val strippedHeaders = networkResponse.headers().newBuilder()
+        val strippedHeaders = networkResponse.headers.newBuilder()
             .removeAll("Content-Encoding")
             .removeAll("Content-Length")
             .build()
@@ -107,11 +107,11 @@ class BridgeInterceptor(private val cookieJar: CookieJar) : Interceptor {
     return responseBuilder.build()
   }
 
-  /** Returns a 'Cookie' HTTP request header with all cookies, like `a=b; c=d`.  */
+  /** Returns a 'Cookie' HTTP request header with all cookies, like `a=b; c=d`. */
   private fun cookieHeader(cookies: List<Cookie>): String = buildString {
     cookies.forEachIndexed { index, cookie ->
       if (index > 0) append("; ")
-      append(cookie.name()).append('=').append(cookie.value())
+      append(cookie.name).append('=').append(cookie.value)
     }
   }
 }

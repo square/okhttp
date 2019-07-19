@@ -45,12 +45,10 @@ class StatusLine(
     const val HTTP_PERM_REDIRECT = 308
     const val HTTP_CONTINUE = 100
 
-    @JvmStatic
     fun get(response: Response): StatusLine {
-      return StatusLine(response.protocol(), response.code(), response.message())
+      return StatusLine(response.protocol, response.code, response.message)
     }
 
-    @JvmStatic
     @Throws(IOException::class)
     fun parse(statusLine: String): StatusLine {
       // H T T P / 1 . 1   2 0 0   T e m p o r a r y   R e d i r e c t
@@ -65,10 +63,10 @@ class StatusLine(
         }
         val httpMinorVersion = statusLine[7] - '0'
         codeStart = 9
-        if (httpMinorVersion == 0) {
-          protocol = Protocol.HTTP_1_0
+        protocol = if (httpMinorVersion == 0) {
+          Protocol.HTTP_1_0
         } else if (httpMinorVersion == 1) {
-          protocol = Protocol.HTTP_1_1
+          Protocol.HTTP_1_1
         } else {
           throw ProtocolException("Unexpected status line: $statusLine")
         }

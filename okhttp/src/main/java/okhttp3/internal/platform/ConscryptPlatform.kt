@@ -101,12 +101,11 @@ class ConscryptPlatform private constructor() : Platform() {
   override fun configureTrustManager(trustManager: X509TrustManager?) {
     if (Conscrypt.isConscrypt(trustManager)) {
       // OkHttp will verify
-      Conscrypt.setHostnameVerifier(trustManager) { hostname, session -> true }
+      Conscrypt.setHostnameVerifier(trustManager) { _, _ -> true }
     }
   }
 
   companion object {
-    @JvmStatic
     fun buildIfSupported(): ConscryptPlatform? = try {
       // Trigger an early exception over a fatal error, prefer a RuntimeException over Error.
       Class.forName("org.conscrypt.Conscrypt\$Version")
@@ -119,7 +118,6 @@ class ConscryptPlatform private constructor() : Platform() {
       null
     }
 
-    @JvmStatic @JvmOverloads
     fun atLeastVersion(major: Int, minor: Int = 0, patch: Int = 0): Boolean {
       val conscryptVersion = Conscrypt.version()
 

@@ -15,14 +15,14 @@
  */
 package okhttp3
 
-import java.io.Closeable
-import java.io.IOException
+import okhttp3.ResponseBody.Companion.asResponseBody
 import okhttp3.internal.connection.Exchange
-import okhttp3.internal.http.HttpHeaders
 import okhttp3.internal.http.StatusLine.Companion.HTTP_PERM_REDIRECT
 import okhttp3.internal.http.StatusLine.Companion.HTTP_TEMP_REDIRECT
+import okhttp3.internal.http.parseChallenges
 import okio.Buffer
-
+import java.io.Closeable
+import java.io.IOException
 import java.net.HttpURLConnection.HTTP_MOVED_PERM
 import java.net.HttpURLConnection.HTTP_MOVED_TEMP
 import java.net.HttpURLConnection.HTTP_MULT_CHOICE
@@ -38,25 +38,6 @@ import java.net.HttpURLConnection.HTTP_UNAUTHORIZED
  * [ResponseBody] for an explanation and examples.
  */
 class Response internal constructor(
-  internal val request: Request,
-  internal val protocol: Protocol,
-  internal val message: String,
-  builder: Builder
-) : Closeable {
-  internal val code: Int = builder.code
-  internal val handshake: Handshake? = builder.handshake
-  internal val headers: Headers = builder.headers.build()
-  internal val body: ResponseBody? = builder.body
-  internal val networkResponse: Response? = builder.networkResponse
-  internal val cacheResponse: Response? = builder.cacheResponse
-  internal val priorResponse: Response? = builder.priorResponse
-  internal val sentRequestAtMillis: Long = builder.sentRequestAtMillis
-  internal val receivedResponseAtMillis: Long = builder.receivedResponseAtMillis
-  internal val exchange: Exchange? = builder.exchange
-
-  @Volatile
-  private var cacheControl: CacheControl? = null // Lazily initialized.
-
   /**
    * The wire-level request that initiated this HTTP response. This is not necessarily the same
    * request issued by the application:
@@ -66,12 +47,96 @@ class Response internal constructor(
    * * It may be the request generated in response to an HTTP redirect or authentication
    *   challenge. In this case the request URL may be different than the initial request URL.
    */
-  fun request(): Request = request
+  @get:JvmName("request") val request: Request,
 
   /** Returns the HTTP protocol, such as [Protocol.HTTP_1_1] or [Protocol.HTTP_1_0]. */
-  fun protocol(): Protocol = protocol
+  @get:JvmName("protocol") val protocol: Protocol,
+
+  /** Returns the HTTP status message. */
+  @get:JvmName("message") val message: String,
 
   /** Returns the HTTP status code. */
+  @get:JvmName("code") val code: Int,
+
+  /**
+   * Returns the TLS handshake of the connection that carried this response, or null if the
+   * response was received without TLS.
+   */
+  @get:JvmName("handshake") val handshake: Handshake?,
+
+  /** Returns the HTTP headers. */
+  @get:JvmName("headers") val headers: Headers,
+
+  /**
+   * Returns a non-null value if this response was passed to [Callback.onResponse] or returned
+   * from [Call.execute]. Response bodies must be [closed][ResponseBody] and may
+   * be consumed only once.
+   *
+   * This always returns null on responses returned from [cacheResponse], [networkResponse],
+   * and [priorResponse].
+   */
+  @get:JvmName("body") val body: ResponseBody?,
+
+  /**
+   * Returns the raw response received from the network. Will be null if this response didn't use
+   * the network, such as when the response is fully cached. The body of the returned response
+   * should not be read.
+   */
+  @get:JvmName("networkResponse") val networkResponse: Response?,
+
+  /**
+   * Returns the raw response received from the cache. Will be null if this response didn't use
+   * the cache. For conditional get requests the cache response and network response may both be
+   * non-null. The body of the returned response should not be read.
+   */
+  @get:JvmName("cacheResponse") val cacheResponse: Response?,
+
+  /**
+   * Returns the response for the HTTP redirect or authorization challenge that triggered this
+   * response, or null if this response wasn't triggered by an automatic retry. The body of the
+   * returned response should not be read because it has already been consumed by the redirecting
+   * client.
+   */
+  @get:JvmName("priorResponse") val priorResponse: Response?,
+
+  /**
+   * Returns a [timestamp][System.currentTimeMillis] taken immediately before OkHttp
+   * transmitted the initiating request over the network. If this response is being served from the
+   * cache then this is the timestamp of the original request.
+   */
+  @get:JvmName("sentRequestAtMillis") val sentRequestAtMillis: Long,
+
+  /**
+   * Returns a [timestamp][System.currentTimeMillis] taken immediately after OkHttp
+   * received this response's headers from the network. If this response is being served from the
+   * cache then this is the timestamp of the original response.
+   */
+  @get:JvmName("receivedResponseAtMillis") val receivedResponseAtMillis: Long,
+
+  @get:JvmName("exchange") internal val exchange: Exchange?
+) : Closeable {
+
+  private var lazyCacheControl: CacheControl? = null
+
+  @JvmName("-deprecated_request")
+  @Deprecated(
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "request"),
+      level = DeprecationLevel.ERROR)
+  fun request(): Request = request
+
+  @JvmName("-deprecated_protocol")
+  @Deprecated(
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "protocol"),
+      level = DeprecationLevel.ERROR)
+  fun protocol(): Protocol = protocol
+
+  @JvmName("-deprecated_code")
+  @Deprecated(
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "code"),
+      level = DeprecationLevel.ERROR)
   fun code(): Int = code
 
   /**
@@ -81,13 +146,18 @@ class Response internal constructor(
   val isSuccessful: Boolean
     get() = code in 200..299
 
-  /** Returns the HTTP status message. */
+  @JvmName("-deprecated_message")
+  @Deprecated(
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "message"),
+      level = DeprecationLevel.ERROR)
   fun message(): String = message
 
-  /**
-   * Returns the TLS handshake of the connection that carried this response, or null if the
-   * response was received without TLS.
-   */
+  @JvmName("-deprecated_handshake")
+  @Deprecated(
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "handshake"),
+      level = DeprecationLevel.ERROR)
   fun handshake(): Handshake? = handshake
 
   fun headers(name: String): List<String> = headers.values(name)
@@ -95,6 +165,11 @@ class Response internal constructor(
   @JvmOverloads
   fun header(name: String, defaultValue: String? = null): String? = headers[name] ?: defaultValue
 
+  @JvmName("-deprecated_headers")
+  @Deprecated(
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "headers"),
+      level = DeprecationLevel.ERROR)
   fun headers(): Headers = headers
 
   /**
@@ -120,18 +195,15 @@ class Response internal constructor(
     val peeked = body!!.source().peek()
     val buffer = Buffer()
     peeked.request(byteCount)
-    buffer.write(peeked, Math.min(byteCount, peeked.buffer.size))
-    return ResponseBody.create(body.contentType(), buffer.size, buffer)
+    buffer.write(peeked, minOf(byteCount, peeked.buffer.size))
+    return buffer.asResponseBody(body.contentType(), buffer.size)
   }
 
-  /**
-   * Returns a non-null value if this response was passed to [Callback.onResponse] or returned
-   * from [Call.execute]. Response bodies must be [closed][ResponseBody] and may
-   * be consumed only once.
-   *
-   * This always returns null on responses returned from [cacheResponse], [networkResponse],
-   * and [priorResponse].
-   */
+  @JvmName("-deprecated_body")
+  @Deprecated(
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "body"),
+      level = DeprecationLevel.ERROR)
   fun body(): ResponseBody? = body
 
   fun newBuilder(): Builder = Builder(this)
@@ -143,26 +215,25 @@ class Response internal constructor(
       else -> false
     }
 
-  /**
-   * Returns the raw response received from the network. Will be null if this response didn't use
-   * the network, such as when the response is fully cached. The body of the returned response
-   * should not be read.
-   */
+  @JvmName("-deprecated_networkResponse")
+  @Deprecated(
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "networkResponse"),
+      level = DeprecationLevel.ERROR)
   fun networkResponse(): Response? = networkResponse
 
-  /**
-   * Returns the raw response received from the cache. Will be null if this response didn't use
-   * the cache. For conditional get requests the cache response and network response may both be
-   * non-null. The body of the returned response should not be read.
-   */
+  @JvmName("-deprecated_cacheResponse")
+  @Deprecated(
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "cacheResponse"),
+      level = DeprecationLevel.ERROR)
   fun cacheResponse(): Response? = cacheResponse
 
-  /**
-   * Returns the response for the HTTP redirect or authorization challenge that triggered this
-   * response, or null if this response wasn't triggered by an automatic retry. The body of the
-   * returned response should not be read because it has already been consumed by the redirecting
-   * client.
-   */
+  @JvmName("-deprecated_priorResponse")
+  @Deprecated(
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "priorResponse"),
+      level = DeprecationLevel.ERROR)
   fun priorResponse(): Response? = priorResponse
 
   /**
@@ -177,8 +248,7 @@ class Response internal constructor(
    * auth param, this is up to the caller that interprets these challenges.
    */
   fun challenges(): List<Challenge> {
-    return HttpHeaders.parseChallenges(
-        headers(),
+    return headers.parseChallenges(
         when (code) {
           HTTP_UNAUTHORIZED -> "WWW-Authenticate"
           HTTP_PROXY_AUTH -> "Proxy-Authenticate"
@@ -191,22 +261,35 @@ class Response internal constructor(
    * Returns the cache control directives for this response. This is never null, even if this
    * response contains no `Cache-Control` header.
    */
-  fun cacheControl(): CacheControl = cacheControl ?: CacheControl.parse(headers).also {
-    cacheControl = it
-  }
+  @get:JvmName("cacheControl") val cacheControl: CacheControl
+    get() {
+      var result = lazyCacheControl
+      if (result == null) {
+        result = CacheControl.parse(headers)
+        lazyCacheControl = result
+      }
+      return result
+    }
 
-  /**
-   * Returns a [timestamp][System.currentTimeMillis] taken immediately before OkHttp
-   * transmitted the initiating request over the network. If this response is being served from the
-   * cache then this is the timestamp of the original request.
-   */
+  @JvmName("-deprecated_cacheControl")
+  @Deprecated(
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "cacheControl"),
+      level = DeprecationLevel.ERROR)
+  fun cacheControl(): CacheControl = cacheControl
+
+  @JvmName("-deprecated_sentRequestAtMillis")
+  @Deprecated(
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "sentRequestAtMillis"),
+      level = DeprecationLevel.ERROR)
   fun sentRequestAtMillis(): Long = sentRequestAtMillis
 
-  /**
-   * Returns a [timestamp][System.currentTimeMillis] taken immediately after OkHttp
-   * received this response's headers from the network. If this response is being served from the
-   * cache then this is the timestamp of the original response.
-   */
+  @JvmName("-deprecated_receivedResponseAtMillis")
+  @Deprecated(
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "receivedResponseAtMillis"),
+      level = DeprecationLevel.ERROR)
   fun receivedResponseAtMillis(): Long = receivedResponseAtMillis
 
   /**
@@ -220,7 +303,7 @@ class Response internal constructor(
   }
 
   override fun toString() =
-      "Response{protocol=$protocol, code=$code, message=$message, url=${request.url()}}"
+      "Response{protocol=$protocol, code=$code, message=$message, url=${request.url}}"
 
   open class Builder {
     internal var request: Request? = null
@@ -350,12 +433,22 @@ class Response internal constructor(
     }
 
     open fun build(): Response {
-      check(code > 0) { "code < 0: $code" }
+      check(code >= 0) { "code < 0: $code" }
       return Response(
           checkNotNull(request) { "request == null" },
           checkNotNull(protocol) { "protocol == null" },
           checkNotNull(message) { "message == null" },
-          this)
+          code,
+          handshake,
+          headers.build(),
+          body,
+          networkResponse,
+          cacheResponse,
+          priorResponse,
+          sentRequestAtMillis,
+          receivedResponseAtMillis,
+          exchange
+      )
     }
   }
 }

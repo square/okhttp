@@ -16,7 +16,6 @@
 package okhttp3
 
 import org.assertj.core.api.Assertions.assertThat
-import java.util.ArrayList
 import java.util.concurrent.AbstractExecutorService
 import java.util.concurrent.RejectedExecutionException
 import java.util.concurrent.TimeUnit
@@ -25,7 +24,7 @@ internal class RecordingExecutor(
   private val dispatcherTest: DispatcherTest
 ) : AbstractExecutorService() {
   private var shutdown: Boolean = false
-  private val calls = ArrayList<RealCall.AsyncCall>()
+  private val calls = mutableListOf<RealCall.AsyncCall>()
 
   override fun execute(command: Runnable) {
     if (shutdown) throw RejectedExecutionException()
@@ -33,7 +32,7 @@ internal class RecordingExecutor(
   }
 
   fun assertJobs(vararg expectedUrls: String) {
-    val actualUrls = calls.map { it.request().url().toString() }
+    val actualUrls = calls.map { it.request().url.toString() }
     assertThat(actualUrls).containsExactly(*expectedUrls)
   }
 
@@ -41,7 +40,7 @@ internal class RecordingExecutor(
     val i = calls.iterator()
     while (i.hasNext()) {
       val call = i.next()
-      if (call.request().url().toString() == url) {
+      if (call.request().url.toString() == url) {
         i.remove()
         dispatcherTest.dispatcher.finished(call)
         return

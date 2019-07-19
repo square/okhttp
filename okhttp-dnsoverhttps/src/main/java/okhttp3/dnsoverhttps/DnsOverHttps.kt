@@ -21,10 +21,11 @@ import okhttp3.Callback
 import okhttp3.Dns
 import okhttp3.HttpUrl
 import okhttp3.MediaType
+import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Protocol
 import okhttp3.Request
-import okhttp3.RequestBody
+import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
 import okhttp3.internal.platform.Platform
 import okhttp3.internal.publicsuffix.PublicSuffixDatabase
@@ -35,43 +36,29 @@ import java.util.ArrayList
 import java.util.concurrent.CountDownLatch
 
 /**
- * [DNS over HTTPS implementation][[doh_spec]].
+ * [DNS over HTTPS implementation][doh_spec].
  *
- * <blockquote>A DNS API client encodes a single DNS query into an HTTP request
- * using either the HTTP GET or POST method and the other requirements
- * of this section.  The DNS API server defines the URI used by the
- * request through the use of a URI Template.</blockquote>
+ * > A DNS API client encodes a single DNS query into an HTTP request
+ * > using either the HTTP GET or POST method and the other requirements
+ * > of this section.  The DNS API server defines the URI used by the
+ * > request through the use of a URI Template.
  *
- * <h3>Warning: This is a non-final API.</h3>
+ * ### Warning: This is a non-final API.
  *
- * As of OkHttp 3.14, this feature is an unstable preview: the API is subject to change,
- * and the implementation is incomplete. We expect that OkHttp 4.0 or 4.1 will finalize this API.
- * Until then, expect API and behavior changes when you update your OkHttp dependency.**
+ * As of OkHttp 3.14, this feature is an unstable preview: the API is subject to change, and the
+ * implementation is incomplete. We expect that OkHttp 4.0 or 4.1 will finalize this API. Until
+ * then, expect API and behavior changes when you update your OkHttp dependency.**
  *
  * [doh_spec]: https://tools.ietf.org/html/draft-ietf-doh-dns-over-https-13
  */
-class DnsOverHttps internal constructor(builder: Builder) : Dns {
-  private val client: OkHttpClient =
-      builder.client?.newBuilder()?.dns(buildBootstrapClient(builder))?.build()
-          ?: throw NullPointerException("client not set")
-  private val url: HttpUrl = builder.url ?: throw NullPointerException("url not set")
-  private val includeIPv6: Boolean = builder.includeIPv6
-  private val post: Boolean = builder.post
-  private val resolvePrivateAddresses: Boolean = builder.resolvePrivateAddresses
-  private val resolvePublicAddresses: Boolean = builder.resolvePublicAddresses
-
-  fun url(): HttpUrl = url
-
-  fun post(): Boolean = post
-
-  fun includeIPv6(): Boolean = includeIPv6
-
-  fun client(): OkHttpClient = client
-
-  fun resolvePrivateAddresses(): Boolean = resolvePrivateAddresses
-
-  fun resolvePublicAddresses(): Boolean = resolvePublicAddresses
-
+class DnsOverHttps internal constructor(
+  @get:JvmName("client") val client: OkHttpClient,
+  @get:JvmName("url") val url: HttpUrl,
+  @get:JvmName("includeIPv6") val includeIPv6: Boolean,
+  @get:JvmName("post") val post: Boolean,
+  @get:JvmName("resolvePrivateAddresses") val resolvePrivateAddresses: Boolean,
+  @get:JvmName("resolvePublicAddresses") val resolvePublicAddresses: Boolean
+) : Dns {
   @Throws(UnknownHostException::class)
   override fun lookup(hostname: String): List<InetAddress> {
     if (!resolvePrivateAddresses || !resolvePublicAddresses) {
@@ -103,7 +90,7 @@ class DnsOverHttps internal constructor(builder: Builder) : Dns {
 
     executeRequests(hostname, networkRequests, results, failures)
 
-    return if (!results.isEmpty()) {
+    return if (results.isNotEmpty()) {
       results
     } else {
       throwBestFailure(hostname, failures)
@@ -196,13 +183,13 @@ class DnsOverHttps internal constructor(builder: Builder) : Dns {
   }
 
   private fun getCacheOnlyResponse(request: Request): Response? {
-    if (!post && client.cache() != null) {
+    if (!post && client.cache != null) {
       try {
         val cacheRequest = request.newBuilder().cacheControl(CacheControl.FORCE_CACHE).build()
 
         val cacheResponse = client.newCall(cacheRequest).execute()
 
-        if (cacheResponse.code() != 504) {
+        if (cacheResponse.code != 504) {
           return cacheResponse
         }
       } catch (ioe: IOException) {
@@ -216,16 +203,16 @@ class DnsOverHttps internal constructor(builder: Builder) : Dns {
 
   @Throws(Exception::class)
   private fun readResponse(hostname: String, response: Response): List<InetAddress> {
-    if (response.cacheResponse() == null && response.protocol() !== Protocol.HTTP_2) {
-      Platform.get().log(Platform.WARN, "Incorrect protocol: ${response.protocol()}", null)
+    if (response.cacheResponse == null && response.protocol !== Protocol.HTTP_2) {
+      Platform.get().log(Platform.WARN, "Incorrect protocol: ${response.protocol}", null)
     }
 
     response.use {
       if (!response.isSuccessful) {
-        throw IOException("response: " + response.code() + " " + response.message())
+        throw IOException("response: " + response.code + " " + response.message)
       }
 
-      val body = response.body()
+      val body = response.body
 
       if (body!!.contentLength() > MAX_RESPONSE_SIZE) {
         throw IOException(
@@ -244,7 +231,7 @@ class DnsOverHttps internal constructor(builder: Builder) : Dns {
         val query = DnsRecordCodec.encodeQuery(hostname, type)
 
         if (post) {
-          url(url).post(RequestBody.create(DNS_MESSAGE, query))
+          url(url).post(query.toRequestBody(DNS_MESSAGE))
         } else {
           val encoded = query.base64Url().replace("=", "")
           val requestUrl = url.newBuilder().addQueryParameter("dns", encoded).build()
@@ -263,62 +250,63 @@ class DnsOverHttps internal constructor(builder: Builder) : Dns {
     internal var resolvePrivateAddresses = false
     internal var resolvePublicAddresses = true
 
-    fun build(): DnsOverHttps = DnsOverHttps(this)
+    fun build(): DnsOverHttps {
+      val client = this.client ?: throw NullPointerException("client not set")
+      return DnsOverHttps(
+          client.newBuilder().dns(buildBootstrapClient(this)).build(),
+          checkNotNull(url) { "url not set" },
+          includeIPv6,
+          post,
+          resolvePrivateAddresses,
+          resolvePublicAddresses
+      )
+    }
 
-    fun client(client: OkHttpClient): Builder {
+    fun client(client: OkHttpClient) = apply {
       this.client = client
-      return this
     }
 
-    fun url(url: HttpUrl): Builder {
+    fun url(url: HttpUrl) = apply {
       this.url = url
-      return this
     }
 
-    fun includeIPv6(includeIPv6: Boolean): Builder {
+    fun includeIPv6(includeIPv6: Boolean) = apply {
       this.includeIPv6 = includeIPv6
-      return this
     }
 
-    fun post(post: Boolean): Builder {
+    fun post(post: Boolean) = apply {
       this.post = post
-      return this
     }
 
-    fun resolvePrivateAddresses(resolvePrivateAddresses: Boolean): Builder {
+    fun resolvePrivateAddresses(resolvePrivateAddresses: Boolean) = apply {
       this.resolvePrivateAddresses = resolvePrivateAddresses
-      return this
     }
 
-    fun resolvePublicAddresses(resolvePublicAddresses: Boolean): Builder {
+    fun resolvePublicAddresses(resolvePublicAddresses: Boolean) = apply {
       this.resolvePublicAddresses = resolvePublicAddresses
-      return this
     }
 
-    fun bootstrapDnsHosts(bootstrapDnsHosts: List<InetAddress>?): Builder {
+    fun bootstrapDnsHosts(bootstrapDnsHosts: List<InetAddress>?) = apply {
       this.bootstrapDnsHosts = bootstrapDnsHosts
-      return this
     }
 
-    fun bootstrapDnsHosts(vararg bootstrapDnsHosts: InetAddress): Builder {
-      return bootstrapDnsHosts(bootstrapDnsHosts.toList())
-    }
+    fun bootstrapDnsHosts(vararg bootstrapDnsHosts: InetAddress): Builder =
+        bootstrapDnsHosts(bootstrapDnsHosts.toList())
 
-    fun systemDns(systemDns: Dns): Builder {
+    fun systemDns(systemDns: Dns) = apply {
       this.systemDns = systemDns
-      return this
     }
   }
 
   companion object {
-    val DNS_MESSAGE: MediaType = MediaType.get("application/dns-message")
+    val DNS_MESSAGE: MediaType = "application/dns-message".toMediaType()
     const val MAX_RESPONSE_SIZE = 64 * 1024
 
     private fun buildBootstrapClient(builder: Builder): Dns {
       val hosts = builder.bootstrapDnsHosts
 
       return if (hosts != null) {
-        BootstrapDns(builder.url!!.host(), hosts)
+        BootstrapDns(builder.url!!.host, hosts)
       } else {
         builder.systemDns
       }

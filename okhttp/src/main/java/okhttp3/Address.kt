@@ -15,13 +15,13 @@
  */
 package okhttp3
 
+import okhttp3.internal.toImmutableList
 import java.net.Proxy
 import java.net.ProxySelector
 import java.util.Objects
 import javax.net.SocketFactory
 import javax.net.ssl.HostnameVerifier
 import javax.net.ssl.SSLSocketFactory
-import okhttp3.internal.Util
 
 /**
  * A specification for a connection to an origin server. For simple connections, this is the
@@ -29,23 +29,49 @@ import okhttp3.internal.Util
  * this also includes that proxy information. For secure connections the address also includes the SSL socket factory,
  * hostname verifier, and certificate pinner.
  *
- * HTTP requests that share the same `Address` may also share the same [Connection].
+ * HTTP requests that share the same [Address] may also share the same [Connection].
  */
 class Address(
   uriHost: String,
   uriPort: Int,
-  private val dns: Dns,
-  private val socketFactory: SocketFactory,
-  private val sslSocketFactory: SSLSocketFactory?,
-  private val hostnameVerifier: HostnameVerifier?,
-  private val certificatePinner: CertificatePinner?,
-  private val proxyAuthenticator: Authenticator,
-  private val proxy: Proxy?,
+  /** Returns the service that will be used to resolve IP addresses for hostnames. */
+  @get:JvmName("dns") val dns: Dns,
+
+  /** Returns the socket factory for new connections. */
+  @get:JvmName("socketFactory") val socketFactory: SocketFactory,
+
+  /** Returns the SSL socket factory, or null if this is not an HTTPS address. */
+  @get:JvmName("sslSocketFactory") val sslSocketFactory: SSLSocketFactory?,
+
+  /** Returns the hostname verifier, or null if this is not an HTTPS address. */
+  @get:JvmName("hostnameVerifier") val hostnameVerifier: HostnameVerifier?,
+
+  /** Returns this address's certificate pinner, or null if this is not an HTTPS address. */
+  @get:JvmName("certificatePinner") val certificatePinner: CertificatePinner?,
+
+  /** Returns the client's proxy authenticator. */
+  @get:JvmName("proxyAuthenticator") val proxyAuthenticator: Authenticator,
+
+  /**
+   * Returns this address's explicitly-specified HTTP proxy, or null to delegate to the {@linkplain
+   * #proxySelector proxy selector}.
+   */
+  @get:JvmName("proxy") val proxy: Proxy?,
+
   protocols: List<Protocol>,
   connectionSpecs: List<ConnectionSpec>,
-  private val proxySelector: ProxySelector
+
+  /**
+   * Returns this address's proxy selector. Only used if the proxy is null. If none of this
+   * selector's proxies are reachable, a direct connection will be attempted.
+   */
+  @get:JvmName("proxySelector") val proxySelector: ProxySelector
 ) {
-  private val url: HttpUrl = HttpUrl.Builder()
+  /**
+   * Returns a URL with the hostname and port of the origin server. The path, query, and fragment of
+   * this URL are always empty, since they are not significant for planning a route.
+   */
+  @get:JvmName("url") val url: HttpUrl = HttpUrl.Builder()
       .scheme(if (sslSocketFactory != null) "https" else "http")
       .host(uriHost)
       .port(uriPort)
@@ -55,52 +81,86 @@ class Address(
    * The protocols the client supports. This method always returns a non-null list that
    * contains minimally [Protocol.HTTP_1_1].
    */
-  private val protocols: List<Protocol> = Util.immutableList(protocols)
+  @get:JvmName("protocols") val protocols: List<Protocol> = protocols.toImmutableList()
 
-  private val connectionSpecs: List<ConnectionSpec> = Util.immutableList(connectionSpecs)
+  @get:JvmName("connectionSpecs") val connectionSpecs: List<ConnectionSpec> =
+      connectionSpecs.toImmutableList()
 
-  /**
-   * Returns a URL with the hostname and port of the origin server. The path, query, and fragment of
-   * this URL are always empty, since they are not significant for planning a route.
-   */
+  @JvmName("-deprecated_url")
+  @Deprecated(
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "url"),
+      level = DeprecationLevel.ERROR)
   fun url() = url
 
-  /** Returns the service that will be used to resolve IP addresses for hostnames. */
+  @JvmName("-deprecated_dns")
+  @Deprecated(
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "dns"),
+      level = DeprecationLevel.ERROR)
   fun dns() = dns
 
-  /** Returns the socket factory for new connections. */
+  @JvmName("-deprecated_socketFactory")
+  @Deprecated(
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "socketFactory"),
+      level = DeprecationLevel.ERROR)
   fun socketFactory() = socketFactory
 
-  /** Returns the client's proxy authenticator. */
+  @JvmName("-deprecated_proxyAuthenticator")
+  @Deprecated(
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "proxyAuthenticator"),
+      level = DeprecationLevel.ERROR)
   fun proxyAuthenticator() = proxyAuthenticator
 
-  /**
-   * Returns the protocols the client supports. This method always returns a non-null list that
-   * contains minimally {@link Protocol#HTTP_1_1}.
-   */
+  @JvmName("-deprecated_protocols")
+  @Deprecated(
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "protocols"),
+      level = DeprecationLevel.ERROR)
   fun protocols() = protocols
 
+  @JvmName("-deprecated_connectionSpecs")
+  @Deprecated(
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "connectionSpecs"),
+      level = DeprecationLevel.ERROR)
   fun connectionSpecs() = connectionSpecs
 
-  /**
-   * Returns this address's proxy selector. Only used if the proxy is null. If none of this
-   * selector's proxies are reachable, a direct connection will be attempted.
-   */
+  @JvmName("-deprecated_proxySelector")
+  @Deprecated(
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "proxySelector"),
+      level = DeprecationLevel.ERROR)
   fun proxySelector() = proxySelector
 
-  /**
-   * Returns this address's explicitly-specified HTTP proxy, or null to delegate to the {@linkplain
-   * #proxySelector proxy selector}.
-   */
+  @JvmName("-deprecated_proxy")
+  @Deprecated(
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "proxy"),
+      level = DeprecationLevel.ERROR)
   fun proxy() = proxy
 
-  /** Returns the SSL socket factory, or null if this is not an HTTPS address. */
+  @JvmName("-deprecated_sslSocketFactory")
+  @Deprecated(
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "sslSocketFactory"),
+      level = DeprecationLevel.ERROR)
   fun sslSocketFactory() = sslSocketFactory
 
-  /** Returns the hostname verifier, or null if this is not an HTTPS address. */
+  @JvmName("-deprecated_hostnameVerifier")
+  @Deprecated(
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "hostnameVerifier"),
+      level = DeprecationLevel.ERROR)
   fun hostnameVerifier() = hostnameVerifier
 
-  /** Returns this address's certificate pinner, or null if this is not an HTTPS address. */
+  @JvmName("-deprecated_certificatePinner")
+  @Deprecated(
+      message = "moved to val",
+      replaceWith = ReplaceWith(expression = "certificatePinner"),
+      level = DeprecationLevel.ERROR)
   fun certificatePinner() = certificatePinner
 
   override fun equals(other: Any?): Boolean {
@@ -134,12 +194,12 @@ class Address(
         this.sslSocketFactory == that.sslSocketFactory &&
         this.hostnameVerifier == that.hostnameVerifier &&
         this.certificatePinner == that.certificatePinner &&
-        this.url().port() == that.url().port()
+        this.url.port == that.url.port
   }
 
   override fun toString(): String {
     return "Address{" +
-        "${url.host()}:${url.port()}, " +
+        "${url.host}:${url.port}, " +
         (if (proxy != null) "proxy=$proxy" else "proxySelector=$proxySelector") +
         "}"
   }

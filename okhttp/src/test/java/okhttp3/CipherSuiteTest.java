@@ -21,7 +21,7 @@ import static okhttp3.CipherSuite.TLS_KRB5_WITH_DES_CBC_MD5;
 import static okhttp3.CipherSuite.TLS_RSA_EXPORT_WITH_RC4_40_MD5;
 import static okhttp3.CipherSuite.TLS_RSA_WITH_AES_128_CBC_SHA256;
 import static okhttp3.CipherSuite.forJavaName;
-import static okhttp3.internal.InternalKtKt.applyConnectionSpec;
+import static okhttp3.internal.Internal.applyConnectionSpec;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.fail;

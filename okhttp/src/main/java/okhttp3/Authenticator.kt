@@ -26,7 +26,7 @@ import java.io.IOException
  *
  * To make HTTPS calls using an HTTP proxy server OkHttp must first negotiate a connection with
  * the proxy. This proxy connection is called a "TLS Tunnel" and is specified by
- * [RFC 2817][rfc_2817]. The HTTP CONNECT request that creates this tunnel connection is special: it
+ * [RFC 2817][1]. The HTTP CONNECT request that creates this tunnel connection is special: it
  * does not participate in any [interceptors][Interceptor] or [event listeners][EventListener]. It
  * doesn't include the motivating request's HTTP headers or even its full URL; only the target
  * server's hostname is sent to the proxy.
@@ -93,12 +93,12 @@ import java.io.IOException
  * Applications may configure OkHttp with an authenticator for origin servers, or proxy servers,
  * or both.
  *
- * [rfc_2817]: https://tools.ietf.org/html/rfc2817
+ * [1]: https://tools.ietf.org/html/rfc2817
  */
 interface Authenticator {
   /**
    * Returns a request that includes a credential to satisfy an authentication challenge in
-   * `response`. Returns null if the challenge cannot be satisfied.
+   * [response]. Returns null if the challenge cannot be satisfied.
    *
    * The route is best effort, it currently may not always be provided even when logically
    * available. It may also not be provided when an authenticator is re-used manually in an
@@ -110,18 +110,10 @@ interface Authenticator {
   fun x() = Unit
 
   companion object {
-    /** An authenticator that knows no credentials and makes no attempt to authenticate.  */
+    /** An authenticator that knows no credentials and makes no attempt to authenticate. */
     @JvmField
     val NONE = object : Authenticator {
       override fun authenticate(route: Route?, response: Response): Request? = null
-    }
-
-    // This lambda conversion is for Kotlin callers expecting a Java SAM (single-abstract-method).
-    @JvmName("-deprecated_Authenticator")
-    inline operator fun invoke(
-      crossinline block: (route: Route?, response: Response) -> Request?
-    ): Authenticator = object : Authenticator {
-      override fun authenticate(route: Route?, response: Response) = block(route, response)
     }
   }
 }

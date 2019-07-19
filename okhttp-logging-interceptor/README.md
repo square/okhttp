@@ -36,20 +36,10 @@ logging.redactHeader("Cookie");
 Download
 --------
 
-Get via Maven:
-```xml
-<dependency>
-  <groupId>com.squareup.okhttp3</groupId>
-  <artifactId>logging-interceptor</artifactId>
-  <version>(insert latest version)</version>
-</dependency>
-```
-
-or via Gradle 
-```groovy
-implementation 'com.squareup.okhttp3:logging-interceptor:(insert latest version)'
+```kotlin
+implementation("com.squareup.okhttp3:logging-interceptor:4.0.1")
 ```
 
 
 
- [1]: https://github.com/square/okhttp/wiki/Interceptors
+ [1]: ../INTERCEPTORS.md

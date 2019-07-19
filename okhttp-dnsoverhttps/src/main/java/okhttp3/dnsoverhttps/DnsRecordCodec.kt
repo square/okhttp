@@ -22,7 +22,6 @@ import java.io.EOFException
 import java.net.InetAddress
 import java.net.UnknownHostException
 import java.nio.charset.StandardCharsets
-import java.util.ArrayList
 
 /**
  * Trivial Dns Encoder/Decoder, basically ripped from Netty full implementation.
@@ -35,7 +34,6 @@ object DnsRecordCodec {
   private const val TYPE_PTR = 0x000c
   private val ASCII = StandardCharsets.US_ASCII
 
-  @JvmStatic
   fun encodeQuery(host: String, type: Int): ByteString = Buffer().apply {
     writeShort(0) // query id
     writeShort(256) // flags with recursion
@@ -45,12 +43,10 @@ object DnsRecordCodec {
     writeShort(0) // additional
 
     val nameBuf = Buffer()
-    val labels = host.split('.').dropLastWhile { it.isEmpty() }.toTypedArray()
+    val labels = host.split('.').dropLastWhile { it.isEmpty() }
     for (label in labels) {
       val utf8ByteCount = label.utf8Size()
-      if (utf8ByteCount != label.length.toLong()) {
-        throw IllegalArgumentException("non-ascii hostname: $host")
-      }
+      require(utf8ByteCount == label.length.toLong()) { "non-ascii hostname: $host" }
       nameBuf.writeByte(utf8ByteCount.toInt())
       nameBuf.writeUtf8(label)
     }
@@ -62,18 +58,15 @@ object DnsRecordCodec {
   }.readByteString()
 
   @Throws(Exception::class)
-  @JvmStatic
   fun decodeAnswers(hostname: String, byteString: ByteString): List<InetAddress> {
-    val result = ArrayList<InetAddress>()
+    val result = mutableListOf<InetAddress>()
 
     val buf = Buffer()
     buf.write(byteString)
     buf.readShort() // query id
 
     val flags = buf.readShort().toInt() and 0xffff
-    if (flags shr 15 == 0) {
-      throw IllegalArgumentException("not a response")
-    }
+    require(flags shr 15 != 0) { "not a response" }
 
     val responseCode = flags and 0xf
 
@@ -99,7 +92,7 @@ object DnsRecordCodec {
 
       val type = buf.readShort().toInt() and 0xffff
       buf.readShort() // class
-      val ttl = buf.readInt().toLong() and 0xffffffffL // ttl
+      @Suppress("UNUSED_VARIABLE") val ttl = buf.readInt().toLong() and 0xffffffffL // ttl
       val length = buf.readShort().toInt() and 0xffff
 
       if (type == TYPE_A || type == TYPE_AAAA) {

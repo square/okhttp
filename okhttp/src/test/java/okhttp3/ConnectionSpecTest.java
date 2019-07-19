@@ -21,11 +21,12 @@ import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
+import okhttp3.testing.PlatformRule;
 import org.junit.Rule;
 import org.junit.Test;
 
 import static java.util.Arrays.asList;
-import static okhttp3.internal.InternalKtKt.applyConnectionSpec;
+import static okhttp3.internal.Internal.applyConnectionSpec;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.fail;
 
@@ -283,6 +284,8 @@ public final class ConnectionSpecTest {
     assertThat(set.add(ConnectionSpec.CLEARTEXT)).isTrue();
     assertThat(set.add(allTlsVersions)).isTrue();
     assertThat(set.add(allCipherSuites)).isTrue();
+    allCipherSuites.hashCode();
+    assertThat(allCipherSuites.equals(null)).isFalse();
 
     assertThat(set.remove(ConnectionSpec.MODERN_TLS)).isTrue();
     assertThat(set.remove(ConnectionSpec.COMPATIBLE_TLS)).isTrue();
@@ -290,6 +293,8 @@ public final class ConnectionSpecTest {
     assertThat(set.remove(allTlsVersions)).isTrue();
     assertThat(set.remove(allCipherSuites)).isTrue();
     assertThat(set).isEmpty();
+    allTlsVersions.hashCode();
+    assertThat(allTlsVersions.equals(null)).isFalse();
   }
 
   @Test public void allEnabledToString() throws Exception {
