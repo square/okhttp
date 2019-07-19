@@ -1,6 +1,7 @@
 plugins {
   id "com.palantir.graal" version "0.3.0-6-g0b828af"
   id "com.hpe.kraal" version "0.0.15"
+  id  "application"
 }
 
 apply plugin: 'com.vanniktech.maven.publish'
@@ -46,7 +47,11 @@ dependencies {
   api project(':okhttp')
   api project(':okhttp-logging-interceptor')
   implementation deps.picocli
+  implementation "info.picocli:picocli-codegen:4.0.1"
   implementation deps.guava
+  implementation "org.conscrypt:conscrypt-openjdk-uber:${versions.conscrypt}"
+  implementation "org.bouncycastle:bcprov-jdk15on:${versions.bouncycastle}"
+  implementation "org.bouncycastle:bctls-jdk15on:${versions.bouncycastle}"
 
   testImplementation project(':okhttp-testing-support')
   testImplementation deps.junit
@@ -58,7 +63,8 @@ shadowJar {
 }
 
 graal {
-  graalVersion("1.0.0-rc15")
+  graalVersion("19.1.1")
+  downloadBaseUrl("https://github.com/oracle/graal/releases/download/vm-19.1.1/graalvm-ce-darwin-amd64-19.1.1.tar.gz?a=")
   mainClass("okhttp3.curl.Main")
   outputName("okcurl")
   option("--enable-http")
@@ -66,4 +72,10 @@ graal {
   option("-H:+ReportUnsupportedElementsAtRuntime")
   option("-H:+ReportExceptionStackTraces")
   option("-H:ReflectionConfigurationFiles=reflect.config")
+  option("--rerun-class-initialization-at-runtime=org.bouncycastle.crypto.prng.SP800SecureRandom")
+  option("--rerun-class-initialization-at-runtime=org.bouncycastle.jcajce.provider.drbg.DRBG\$Default")
+  option("--rerun-class-initialization-at-runtime=org.bouncycastle.jcajce.provider.drbg.DRBG\$NonceAndIV")
+  option("--initialize-at-build-time=org.bouncycastle.util.Strings")
+//  option("-J-Djava.security.properties=java.security.overrides")
+  option("-J-Djava.net.preferIPv4Stack=true")
 }

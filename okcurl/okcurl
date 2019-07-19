@@ -1,5 +1,11 @@
 #!/bin/sh -e
 
-../gradlew -q --console plain installDist
+#../gradlew -q --console plain installDist
+#./build/install/okcurl/bin/okcurl "$@"
 
-./build/install/okcurl/bin/okcurl "$@"
+if [ ! -f build/graal/okcurl ]; then 
+  ../gradlew -q --console plain :okcurl:nativeImage
+fi
+
+build/graal/okcurl -Djava.library.path=$JAVA_HOME/lib/ "$@"
+

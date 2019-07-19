@@ -15,6 +15,8 @@
  */
 package okhttp3.curl
 
+//import okhttp3.logging.HttpLoggingInterceptor
+//import okhttp3.logging.LoggingEventListener
 import okhttp3.MediaType
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.OkHttpClient
@@ -26,8 +28,6 @@ import okhttp3.internal.format
 import okhttp3.internal.http.StatusLine
 import okhttp3.internal.http2.Http2
 import okhttp3.internal.platform.Platform
-import okhttp3.logging.HttpLoggingInterceptor
-import okhttp3.logging.LoggingEventListener
 import okio.sink
 import picocli.CommandLine
 import picocli.CommandLine.Command
@@ -134,6 +134,11 @@ class Main : Runnable {
         out.flush()
       }
 
+      if (verbose) {
+        println(response.protocol)
+        println(response.handshake?.cipherSuite)
+      }
+
       response.body!!.close()
     } catch (e: IOException) {
       e.printStackTrace()
@@ -160,14 +165,14 @@ class Main : Runnable {
       builder.sslSocketFactory(sslSocketFactory, trustManager)
       builder.hostnameVerifier(createInsecureHostnameVerifier())
     }
-    if (verbose) {
-      val logger = object : HttpLoggingInterceptor.Logger {
-        override fun log(message: String) {
-          println(message)
-        }
-      }
-      builder.eventListenerFactory(LoggingEventListener.Factory(logger))
-    }
+//    if (verbose) {
+//      val logger = object : HttpLoggingInterceptor.Logger {
+//        override fun log(message: String) {
+//          println(message)
+//        }
+//      }
+//      builder.eventListenerFactory(LoggingEventListener.Factory(logger))
+//    }
     return builder.build()
   }
 
@@ -231,12 +236,17 @@ class Main : Runnable {
 
     @JvmStatic
     fun main(args: Array<String>) {
+      // https://github.com/oracle/graal/issues/951
+//      Security.addProvider(Conscrypt.newProviderBuilder().provideTrustManager(true).build())
+//      Security.removeProvider("SunEC")
+//      Security.addProvider(BouncyCastleProvider())System.loadLibrary
+
       exitProcess(CommandLine(Main()).execute(*args))
     }
 
     private fun versionString(): String? {
       val prop = Properties()
-      Main::class.java.getResourceAsStream("/okcurl-version.properties").use {
+      Main::class.java.getResourceAsStream("/okcurl-version.properties")?.use {
         prop.load(it)
       }
       return prop.getProperty("version", "dev")
