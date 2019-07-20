@@ -42,7 +42,7 @@ import javax.net.ssl.X509TrustManager
 class AndroidPlatform : Platform() {
   private val socketAdapters = listOfNotNull(
       StandardAndroidSocketAdapter.buildIfSupported(),
-      ConscryptSocketAdapter,
+      ConscryptSocketAdapter.buildIfSupported(),
       DeferredSocketAdapter("com.google.android.gms.org.conscrypt")
   ).filter { it.isSupported() }
 

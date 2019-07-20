@@ -59,4 +59,7 @@ object ConscryptSocketAdapter : SocketAdapter {
       Conscrypt.setApplicationProtocols(sslSocket, names.toTypedArray())
     }
   }
+
+  fun buildIfSupported(): SocketAdapter? =
+      if (ConscryptPlatform.isSupported) ConscryptSocketAdapter else null
 }
