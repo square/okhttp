@@ -21,9 +21,9 @@ import java.io.StringWriter
 import java.lang.Thread.UncaughtExceptionHandler
 
 /**
- * installs an aggressive default [UncaughtExceptionHandler] similar to the one found on Android.
- * No exceptions should escape from OkHttp that might cause apps to be killed or tests to fail on
- * Android.
+ * This JVM singleton installs an aggressive default [UncaughtExceptionHandler] similar to the one
+ * found on Android. No exceptions should escape from OkHttp that might cause apps to be killed or
+ * tests to fail on Android.
  */
 object UncaughtExceptionHandlerListener {
   private var runningTests = mutableSetOf<Description>()
