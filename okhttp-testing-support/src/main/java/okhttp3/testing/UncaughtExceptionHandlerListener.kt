@@ -81,9 +81,11 @@ object UncaughtExceptionHandlerListener {
     val possiblyRelatedExceptions = drainExceptions()
 
     if (possiblyRelatedExceptions.isNotEmpty()) {
-      System.err.println("Uncaught exceptions not associated with tests")
       for ((_, info) in possiblyRelatedExceptions) {
         System.err.println(info)
+      }
+      if (triggerFailure) {
+        throw possiblyRelatedExceptions.first().first
       }
     }
   }
@@ -91,7 +93,9 @@ object UncaughtExceptionHandlerListener {
   private fun drainExceptions(): List<Pair<Throwable, String>> {
     synchronized(exceptions) {
       return if (exceptions.isNotEmpty()) {
-        exceptions.takeWhile { true }
+        val drained = exceptions.toList()
+        exceptions.clear()
+        drained
       } else {
         listOf()
       }
