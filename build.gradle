@@ -132,7 +132,6 @@ subprojects { project ->
   def platform = System.getProperty("okhttp.platform", "jdk8")
 
   test {
-    jvmArgs += "-Dlistener=okhttp3.testing.InstallUncaughtExceptionHandlerListener"
     jvmArgs += "-Dokhttp.platform=$platform"
 
     maxParallelForks Runtime.runtime.availableProcessors() * 2

@@ -16,6 +16,7 @@
 package okhttp3
 
 import okhttp3.testing.Flaky
+import okhttp3.testing.UncaughtExceptionHandlerListener
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.rules.TestRule
 import org.junit.runner.Description
@@ -62,14 +63,18 @@ class OkHttpClientTestRule : TestRule {
   override fun apply(base: Statement, description: Description): Statement {
     return object : Statement() {
       override fun evaluate() {
+        UncaughtExceptionHandlerListener.testStarted(description)
         acquireClient()
         try {
           base.evaluate()
           logEventsIfFlaky(description)
+          UncaughtExceptionHandlerListener.testPassed(description)
         } catch (t: Throwable) {
           logEvents()
+          UncaughtExceptionHandlerListener.testFailed(description)
           throw t
         } finally {
+          // TODO should not override an existing test failure, which is likely cause
           ensureAllConnectionsReleased()
           releaseClient()
         }
@@ -131,7 +136,7 @@ class OkHttpClientTestRule : TestRule {
      * A network that resolves only one IP address per host. Use this when testing route selection
      * fallbacks to prevent the host machine's various IP addresses from interfering.
      */
-    internal val SINGLE_INET_ADDRESS_DNS = object : Dns {
+    private val SINGLE_INET_ADDRESS_DNS = object : Dns {
       override fun lookup(hostname: String): List<InetAddress> {
         val addresses = Dns.SYSTEM.lookup(hostname)
         return listOf(addresses[0])
