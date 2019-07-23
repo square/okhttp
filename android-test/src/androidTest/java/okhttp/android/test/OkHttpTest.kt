@@ -17,19 +17,28 @@ package okhttp.android.test
 
 import android.os.Build
 import android.support.test.runner.AndroidJUnit4
-import okhttp3.*
+import okhttp3.Call
+import okhttp3.CertificatePinner
+import okhttp3.Connection
+import okhttp3.EventListener
+import okhttp3.OkHttpClient
+import okhttp3.Protocol
+import okhttp3.Request
+import okhttp3.TlsVersion
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import okhttp3.tls.internal.TlsUtil.localhost
-import org.junit.*
+import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.fail
+import org.junit.Assume
+import org.junit.Before
+import org.junit.Rule
+import org.junit.Test
 import org.junit.runner.RunWith
 import java.net.InetAddress
 import java.net.UnknownHostException
-import okhttp3.CertificatePinner
 import javax.net.ssl.SSLPeerUnverifiedException
-
 
 /**
  * Run with "./gradlew :android-test:connectedCheck" and make sure ANDROID_SDK_ROOT is set.
