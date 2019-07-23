@@ -17,102 +17,168 @@ package okhttp.android.test
 
 import android.os.Build
 import android.support.test.runner.AndroidJUnit4
-import okhttp3.Call
-import okhttp3.Connection
-import okhttp3.EventListener
-import okhttp3.OkHttpClient
-import okhttp3.Protocol
-import okhttp3.Request
-import okhttp3.TlsVersion
-import org.junit.After
+import okhttp3.*
+import okhttp3.mockwebserver.MockResponse
+import okhttp3.mockwebserver.MockWebServer
+import okhttp3.tls.internal.TlsUtil.localhost
+import org.junit.*
 import org.junit.Assert.assertEquals
 import org.junit.Assert.fail
-import org.junit.Assume
-import org.junit.Before
-import org.junit.Test
 import org.junit.runner.RunWith
 import java.net.InetAddress
 import java.net.UnknownHostException
+import okhttp3.CertificatePinner
+import javax.net.ssl.SSLPeerUnverifiedException
+
 
 /**
  * Run with "./gradlew :android-test:connectedCheck" and make sure ANDROID_SDK_ROOT is set.
  */
 @RunWith(AndroidJUnit4::class)
 class OkHttpTest {
-  private lateinit var client: OkHttpClient
+    private lateinit var client: OkHttpClient
 
-  @Before
-  fun createClient() {
-    client = OkHttpClient.Builder()
-        .build()
-  }
+    @JvmField
+    @Rule
+    val server = MockWebServer()
+    private val handshakeCertificates = localhost()
 
-  @After
-  fun cleanup() {
-    client.dispatcher.executorService.shutdownNow()
-  }
-
-  @Test
-  fun testRequest() {
-    assumeNetwork()
-
-    val request = Request.Builder().url("https://api.twitter.com/robots.txt").build()
-
-    val response = client.newCall(request).execute()
-
-    response.use {
-      assertEquals(200, response.code)
+    @Before
+    fun createClient() {
+        client = OkHttpClient.Builder()
+                .build()
     }
-  }
 
-  @Test
-  fun testRequestUsesAndroidConscrypt() {
-    assumeNetwork()
-
-    val request = Request.Builder().url("https://facebook.com/robots.txt").build()
-
-    var socketClass: String? = null
-
-    val client2 = client.newBuilder()
-        .eventListener(object : EventListener() {
-          override fun connectionAcquired(call: Call, connection: Connection) {
-            socketClass = connection.socket().javaClass.name
-          }
-        })
-        .build()
-
-    val response = client2.newCall(request).execute()
-
-    response.use {
-      assertEquals(Protocol.HTTP_2, response.protocol)
-      if (Build.VERSION.SDK_INT >= 29) {
-        assertEquals(TlsVersion.TLS_1_3, response.handshake?.tlsVersion)
-      } else {
-        assertEquals(TlsVersion.TLS_1_2, response.handshake?.tlsVersion)
-      }
-      assertEquals(200, response.code)
-      assertEquals("com.android.org.conscrypt.Java8FileDescriptorSocket", socketClass)
+    @After
+    fun cleanup() {
+        client.dispatcher.executorService.shutdownNow()
     }
-  }
 
-  @Test
-  fun testHttpRequestBlocked() {
-    Assume.assumeTrue(Build.VERSION.SDK_INT >= 23)
+    @Test
+    fun testRequest() {
+        assumeNetwork()
 
-    val request = Request.Builder().url("http://api.twitter.com/robots.txt").build()
+        val request = Request.Builder().url("https://api.twitter.com/robots.txt").build()
 
-    try {
-      client.newCall(request).execute()
-      fail("expected cleartext blocking")
-    } catch (_: java.net.UnknownServiceException) {
+        val response = client.newCall(request).execute()
+
+        response.use {
+            assertEquals(200, response.code)
+        }
     }
-  }
 
-  private fun assumeNetwork() {
-    try {
-      InetAddress.getByName("www.google.com")
-    } catch (uhe: UnknownHostException) {
-      Assume.assumeNoException(uhe)
+    @Test
+    fun testRequestUsesAndroidConscrypt() {
+        assumeNetwork()
+
+        val request = Request.Builder().url("https://facebook.com/robots.txt").build()
+
+        var socketClass: String? = null
+
+        val client2 = client.newBuilder()
+                .eventListener(object : EventListener() {
+                    override fun connectionAcquired(call: Call, connection: Connection) {
+                        socketClass = connection.socket().javaClass.name
+                    }
+                })
+                .build()
+
+        val response = client2.newCall(request).execute()
+
+        response.use {
+            assertEquals(Protocol.HTTP_2, response.protocol)
+            if (Build.VERSION.SDK_INT >= 29) {
+                assertEquals(TlsVersion.TLS_1_3, response.handshake?.tlsVersion)
+            } else {
+                assertEquals(TlsVersion.TLS_1_2, response.handshake?.tlsVersion)
+            }
+            assertEquals(200, response.code)
+            assertEquals("com.android.org.conscrypt.Java8FileDescriptorSocket", socketClass)
+        }
     }
-  }
+
+    @Test
+    fun testHttpRequestBlocked() {
+        Assume.assumeTrue(Build.VERSION.SDK_INT >= 23)
+
+        val request = Request.Builder().url("http://api.twitter.com/robots.txt").build()
+
+        try {
+            client.newCall(request).execute()
+            fail("expected cleartext blocking")
+        } catch (_: java.net.UnknownServiceException) {
+        }
+    }
+
+    @Test
+    fun testMockWebserverRequest() {
+        enableTls()
+
+        server.enqueue(MockResponse().setBody("abc"))
+
+        val request = Request.Builder().url(server.url("/")).build()
+
+        val response = client.newCall(request).execute()
+
+        response.use {
+            assertEquals(200, response.code)
+        }
+    }
+
+    @Test
+    fun testCertificatePinningFailure() {
+        enableTls()
+
+        val certificatePinner = CertificatePinner.Builder()
+                .add(server.hostName, "sha256/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=")
+                .build()
+        client = client.newBuilder().certificatePinner(certificatePinner).build()
+
+        server.enqueue(MockResponse().setBody("abc"))
+
+        val request = Request.Builder().url(server.url("/")).build()
+
+        try {
+            val response = client.newCall(request).execute()
+            fail()
+        } catch (spue: SSLPeerUnverifiedException) {
+            // expected
+        }
+    }
+
+    @Test
+    fun testCertificatePinningSuccess() {
+        enableTls()
+
+        val certificatePinner = CertificatePinner.Builder()
+                .add(server.hostName, CertificatePinner.pin(handshakeCertificates.trustManager.acceptedIssuers[0]))
+                .build()
+        client = client.newBuilder().certificatePinner(certificatePinner).build()
+
+        server.enqueue(MockResponse().setBody("abc"))
+
+        val request = Request.Builder().url(server.url("/")).build()
+
+        val response = client.newCall(request).execute()
+
+        response.use {
+            assertEquals(200, response.code)
+        }
+    }
+
+    private fun enableTls() {
+        client = client.newBuilder()
+                .sslSocketFactory(
+                        handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager)
+                .build()
+        server.useHttps(handshakeCertificates.sslSocketFactory(), false)
+    }
+
+    private fun assumeNetwork() {
+        try {
+            InetAddress.getByName("www.google.com")
+        } catch (uhe: UnknownHostException) {
+            Assume.assumeNoException(uhe)
+        }
+    }
 }

@@ -47,7 +47,7 @@ buildscript {
     classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:${versions.kotlin}"
     classpath "org.jetbrains.dokka:dokka-gradle-plugin:0.9.18"
     classpath 'com.diffplug.spotless:spotless-plugin-gradle:3.21.1'
-    classpath 'com.android.tools.build:gradle:3.4.1'
+    classpath 'com.android.tools.build:gradle:3.4.2'
   }
 
   repositories {
@@ -146,7 +146,7 @@ subprojects { project ->
     def alpnBootVersion = alpnBootVersion()
     if (alpnBootVersion != null) {
       dependencies {
-        testCompile "org.mortbay.jetty.alpn:alpn-boot:$alpnBootVersion"
+        testImplementation "org.mortbay.jetty.alpn:alpn-boot:$alpnBootVersion"
       }
       def alpnBootJar = configurations.testCompile.find { it.name.startsWith("alpn-boot-") }
       test {

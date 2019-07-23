@@ -1,6 +1,12 @@
 apply plugin: 'com.android.library'
 apply plugin: 'org.jetbrains.kotlin.android'
 
+repositories {
+  maven {
+    url 'https://repo.spring.io/plugins-release'
+  }
+}
+
 android {
   compileOptions {
     sourceCompatibility JavaVersion.VERSION_1_8
@@ -23,6 +29,8 @@ dependencies {
   implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:${versions.kotlin}"
   implementation project(':okhttp')
   testImplementation 'junit:junit:4.12'
+  androidTestImplementation project(':mockwebserver')
+  androidTestImplementation project(':okhttp-tls')
   androidTestImplementation 'com.android.support.test:runner:1.0.2'
   androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'
 }
