@@ -45,149 +45,150 @@ import javax.net.ssl.SSLPeerUnverifiedException
  */
 @RunWith(AndroidJUnit4::class)
 class OkHttpTest {
-    private lateinit var client: OkHttpClient
+  private lateinit var client: OkHttpClient
 
-    @JvmField
-    @Rule
-    val server = MockWebServer()
-    private val handshakeCertificates = localhost()
+  @JvmField
+  @Rule
+  val server = MockWebServer()
+  private val handshakeCertificates = localhost()
 
-    @Before
-    fun createClient() {
-        client = OkHttpClient.Builder()
-                .build()
+  @Before
+  fun createClient() {
+    client = OkHttpClient.Builder()
+        .build()
+  }
+
+  @After
+  fun cleanup() {
+    client.dispatcher.executorService.shutdownNow()
+  }
+
+  @Test
+  fun testRequest() {
+    assumeNetwork()
+
+    val request = Request.Builder().url("https://api.twitter.com/robots.txt").build()
+
+    val response = client.newCall(request).execute()
+
+    response.use {
+      assertEquals(200, response.code)
     }
+  }
 
-    @After
-    fun cleanup() {
-        client.dispatcher.executorService.shutdownNow()
+  @Test
+  fun testRequestUsesAndroidConscrypt() {
+    assumeNetwork()
+
+    val request = Request.Builder().url("https://facebook.com/robots.txt").build()
+
+    var socketClass: String? = null
+
+    val client2 = client.newBuilder()
+        .eventListener(object : EventListener() {
+          override fun connectionAcquired(call: Call, connection: Connection) {
+            socketClass = connection.socket().javaClass.name
+          }
+        })
+        .build()
+
+    val response = client2.newCall(request).execute()
+
+    response.use {
+      assertEquals(Protocol.HTTP_2, response.protocol)
+      if (Build.VERSION.SDK_INT >= 29) {
+        assertEquals(TlsVersion.TLS_1_3, response.handshake?.tlsVersion)
+      } else {
+        assertEquals(TlsVersion.TLS_1_2, response.handshake?.tlsVersion)
+      }
+      assertEquals(200, response.code)
+      assertEquals("com.android.org.conscrypt.Java8FileDescriptorSocket", socketClass)
     }
+  }
 
-    @Test
-    fun testRequest() {
-        assumeNetwork()
+  @Test
+  fun testHttpRequestBlocked() {
+    Assume.assumeTrue(Build.VERSION.SDK_INT >= 23)
 
-        val request = Request.Builder().url("https://api.twitter.com/robots.txt").build()
+    val request = Request.Builder().url("http://api.twitter.com/robots.txt").build()
 
-        val response = client.newCall(request).execute()
-
-        response.use {
-            assertEquals(200, response.code)
-        }
+    try {
+      client.newCall(request).execute()
+      fail("expected cleartext blocking")
+    } catch (_: java.net.UnknownServiceException) {
     }
+  }
 
-    @Test
-    fun testRequestUsesAndroidConscrypt() {
-        assumeNetwork()
+  @Test
+  fun testMockWebserverRequest() {
+    enableTls()
 
-        val request = Request.Builder().url("https://facebook.com/robots.txt").build()
+    server.enqueue(MockResponse().setBody("abc"))
 
-        var socketClass: String? = null
+    val request = Request.Builder().url(server.url("/")).build()
 
-        val client2 = client.newBuilder()
-                .eventListener(object : EventListener() {
-                    override fun connectionAcquired(call: Call, connection: Connection) {
-                        socketClass = connection.socket().javaClass.name
-                    }
-                })
-                .build()
+    val response = client.newCall(request).execute()
 
-        val response = client2.newCall(request).execute()
-
-        response.use {
-            assertEquals(Protocol.HTTP_2, response.protocol)
-            if (Build.VERSION.SDK_INT >= 29) {
-                assertEquals(TlsVersion.TLS_1_3, response.handshake?.tlsVersion)
-            } else {
-                assertEquals(TlsVersion.TLS_1_2, response.handshake?.tlsVersion)
-            }
-            assertEquals(200, response.code)
-            assertEquals("com.android.org.conscrypt.Java8FileDescriptorSocket", socketClass)
-        }
+    response.use {
+      assertEquals(200, response.code)
     }
+  }
 
-    @Test
-    fun testHttpRequestBlocked() {
-        Assume.assumeTrue(Build.VERSION.SDK_INT >= 23)
+  @Test
+  fun testCertificatePinningFailure() {
+    enableTls()
 
-        val request = Request.Builder().url("http://api.twitter.com/robots.txt").build()
+    val certificatePinner = CertificatePinner.Builder()
+        .add(server.hostName, "sha256/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=")
+        .build()
+    client = client.newBuilder().certificatePinner(certificatePinner).build()
 
-        try {
-            client.newCall(request).execute()
-            fail("expected cleartext blocking")
-        } catch (_: java.net.UnknownServiceException) {
-        }
+    server.enqueue(MockResponse().setBody("abc"))
+
+    val request = Request.Builder().url(server.url("/")).build()
+
+    try {
+      val response = client.newCall(request).execute()
+      fail()
+    } catch (spue: SSLPeerUnverifiedException) {
+      // expected
     }
+  }
 
-    @Test
-    fun testMockWebserverRequest() {
-        enableTls()
+  @Test
+  fun testCertificatePinningSuccess() {
+    enableTls()
 
-        server.enqueue(MockResponse().setBody("abc"))
+    val certificatePinner = CertificatePinner.Builder()
+        .add(server.hostName,
+            CertificatePinner.pin(handshakeCertificates.trustManager.acceptedIssuers[0]))
+        .build()
+    client = client.newBuilder().certificatePinner(certificatePinner).build()
 
-        val request = Request.Builder().url(server.url("/")).build()
+    server.enqueue(MockResponse().setBody("abc"))
 
-        val response = client.newCall(request).execute()
+    val request = Request.Builder().url(server.url("/")).build()
 
-        response.use {
-            assertEquals(200, response.code)
-        }
+    val response = client.newCall(request).execute()
+
+    response.use {
+      assertEquals(200, response.code)
     }
+  }
 
-    @Test
-    fun testCertificatePinningFailure() {
-        enableTls()
+  private fun enableTls() {
+    client = client.newBuilder()
+        .sslSocketFactory(
+            handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager)
+        .build()
+    server.useHttps(handshakeCertificates.sslSocketFactory(), false)
+  }
 
-        val certificatePinner = CertificatePinner.Builder()
-                .add(server.hostName, "sha256/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=")
-                .build()
-        client = client.newBuilder().certificatePinner(certificatePinner).build()
-
-        server.enqueue(MockResponse().setBody("abc"))
-
-        val request = Request.Builder().url(server.url("/")).build()
-
-        try {
-            val response = client.newCall(request).execute()
-            fail()
-        } catch (spue: SSLPeerUnverifiedException) {
-            // expected
-        }
+  private fun assumeNetwork() {
+    try {
+      InetAddress.getByName("www.google.com")
+    } catch (uhe: UnknownHostException) {
+      Assume.assumeNoException(uhe)
     }
-
-    @Test
-    fun testCertificatePinningSuccess() {
-        enableTls()
-
-        val certificatePinner = CertificatePinner.Builder()
-                .add(server.hostName, CertificatePinner.pin(handshakeCertificates.trustManager.acceptedIssuers[0]))
-                .build()
-        client = client.newBuilder().certificatePinner(certificatePinner).build()
-
-        server.enqueue(MockResponse().setBody("abc"))
-
-        val request = Request.Builder().url(server.url("/")).build()
-
-        val response = client.newCall(request).execute()
-
-        response.use {
-            assertEquals(200, response.code)
-        }
-    }
-
-    private fun enableTls() {
-        client = client.newBuilder()
-                .sslSocketFactory(
-                        handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager)
-                .build()
-        server.useHttps(handshakeCertificates.sslSocketFactory(), false)
-    }
-
-    private fun assumeNetwork() {
-        try {
-            InetAddress.getByName("www.google.com")
-        } catch (uhe: UnknownHostException) {
-            Assume.assumeNoException(uhe)
-        }
-    }
+  }
 }
