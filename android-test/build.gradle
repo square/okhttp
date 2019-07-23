@@ -2,8 +2,11 @@ apply plugin: 'com.android.library'
 apply plugin: 'org.jetbrains.kotlin.android'
 
 repositories {
-  maven {
-    url 'https://repo.spring.io/plugins-release'
+  jcenter {
+    // Required for a dependency of Android lint.
+    content {
+      includeGroup 'org.jetbrains.trove4j'
+    }
   }
 }
 
