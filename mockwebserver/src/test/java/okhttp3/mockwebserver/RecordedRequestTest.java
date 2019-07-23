@@ -31,7 +31,7 @@ import org.junit.rules.Timeout;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class RecordedRequestTest {
-  Headers headers = Util.EMPTY_HEADERS;
+  private Headers headers = Util.EMPTY_HEADERS;
 
   private static class FakeSocket extends Socket {
     private final InetAddress localAddress;
@@ -101,5 +101,15 @@ public class RecordedRequestTest {
         Collections.emptyList(), 0, new Buffer(), 0, socket);
 
     assertThat(request.getRequestUrl().toString()).isEqualTo("http://127.0.0.1/");
+  }
+
+  @Test public void testUsesLocalIpv6WithoutBrackets() throws UnknownHostException {
+    Socket socket = new FakeSocket(InetAddress.getByAddress("localhost",
+        new byte[] { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 }), 80);
+
+    RecordedRequest request = new RecordedRequest("GET / HTTP/1.1", headers,
+        Collections.emptyList(), 0, new Buffer(), 0, socket);
+
+    assertThat(request.getRequestUrl().toString()).isEqualTo("http://localhost/");
   }
 }
