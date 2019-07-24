@@ -1,6 +1,6 @@
 language: java
 
-dist: bionic
+dist: trusty
 
 jdk:
   - openjdk8
