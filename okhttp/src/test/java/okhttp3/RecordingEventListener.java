@@ -24,7 +24,6 @@ import java.util.Deque;
 import java.util.List;
 import java.util.concurrent.ConcurrentLinkedDeque;
 import javax.annotation.Nullable;
-import org.jetbrains.annotations.NotNull;
 
 import static java.util.Arrays.asList;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -82,12 +81,12 @@ public class RecordingEventListener extends EventListener {
     eventSequence.offer(e);
   }
 
-  @Override public void proxySelectStart(@NotNull Call call, @NotNull HttpUrl url) {
+  @Override public void proxySelectStart(Call call, HttpUrl url) {
     logEvent(new ProxySelectStart(call, url));
   }
 
-  @Override public void proxySelectEnd(@NotNull Call call, @NotNull HttpUrl url,
-      @NotNull List<Proxy> proxies) {
+  @Override public void proxySelectEnd(Call call, HttpUrl url,
+      List<Proxy> proxies) {
     logEvent(new ProxySelectEnd(call, url, proxies));
   }
 

@@ -29,7 +29,6 @@ import okhttp3.OkHttpClient;
 import okhttp3.Protocol;
 import okhttp3.Request;
 import okhttp3.Response;
-import org.jetbrains.annotations.NotNull;
 
 /**
  * This prints events for a single in-flight call. It won't work for multiple concurrent calls
@@ -78,12 +77,11 @@ public final class PrintEventsNonConcurrent {
       printEvent("callStart");
     }
 
-    @Override public void proxySelectStart(@NotNull Call call, @NotNull HttpUrl url) {
+    @Override public void proxySelectStart(Call call, HttpUrl url) {
       printEvent("proxySelectStart");
     }
 
-    @Override public void proxySelectEnd(@NotNull Call call, @NotNull HttpUrl url,
-        @NotNull List<Proxy> proxies) {
+    @Override public void proxySelectEnd(Call call, HttpUrl url, List<Proxy> proxies) {
       printEvent("proxySelectEnd");
     }
 
