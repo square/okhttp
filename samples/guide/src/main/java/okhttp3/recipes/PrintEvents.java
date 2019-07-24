@@ -26,11 +26,13 @@ import okhttp3.Callback;
 import okhttp3.Connection;
 import okhttp3.EventListener;
 import okhttp3.Handshake;
+import okhttp3.HttpUrl;
 import okhttp3.OkHttpClient;
 import okhttp3.Protocol;
 import okhttp3.Request;
 import okhttp3.Response;
 import okhttp3.ResponseBody;
+import org.jetbrains.annotations.NotNull;
 
 public final class PrintEvents {
   private final OkHttpClient client = new OkHttpClient.Builder()
@@ -95,6 +97,15 @@ public final class PrintEvents {
     private void printEvent(String name) {
       long elapsedNanos = System.nanoTime() - callStartNanos;
       System.out.printf("%04d %.3f %s%n", callId, elapsedNanos / 1000000000d, name);
+    }
+
+    @Override public void proxySelectStart(@NotNull Call call, @NotNull HttpUrl url) {
+      printEvent("proxySelectStart");
+    }
+
+    @Override public void proxySelectEnd(@NotNull Call call, @NotNull HttpUrl url,
+        @NotNull List<? extends Proxy> proxies) {
+      printEvent("proxySelectEnd");
     }
 
     @Override public void callStart(Call call) {

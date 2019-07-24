@@ -74,6 +74,8 @@ public final class LoggingEventListenerTest {
 
     logRecorder
         .assertLogMatch("callStart: Request\\{method=GET, url=" + url + "\\}")
+        .assertLogMatch("proxySelectStart: " + url)
+        .assertLogMatch("proxySelectEnd: \\[DIRECT\\]")
         .assertLogMatch("dnsStart: " + url.host())
         .assertLogMatch("dnsEnd: \\[.+\\]")
         .assertLogMatch("connectStart: " + url.host() + "/.+ DIRECT")
@@ -105,6 +107,8 @@ public final class LoggingEventListenerTest {
 
     logRecorder
         .assertLogMatch("callStart: Request\\{method=POST, url=" + url + "\\}")
+        .assertLogMatch("proxySelectStart: " + url)
+        .assertLogMatch("proxySelectEnd: \\[DIRECT\\]")
         .assertLogMatch("dnsStart: " + url.host())
         .assertLogMatch("dnsEnd: \\[.+\\]")
         .assertLogMatch("connectStart: " + url.host() + "/.+ DIRECT")
@@ -188,6 +192,8 @@ public final class LoggingEventListenerTest {
 
     logRecorder
         .assertLogMatch("callStart: Request\\{method=GET, url=" + url + "\\}")
+        .assertLogMatch("proxySelectStart: " + url)
+        .assertLogMatch("proxySelectEnd: \\[DIRECT\\]")
         .assertLogMatch("dnsStart: " + url.host())
         .assertLogMatch("callFailed: java.net.UnknownHostException: reason")
         .assertNoMoreLogs();
@@ -208,6 +214,8 @@ public final class LoggingEventListenerTest {
 
     logRecorder
         .assertLogMatch("callStart: Request\\{method=GET, url=" + url + "\\}")
+        .assertLogMatch("proxySelectStart: " + url)
+        .assertLogMatch("proxySelectEnd: \\[DIRECT\\]")
         .assertLogMatch("dnsStart: " + url.host())
         .assertLogMatch("dnsEnd: \\[.+\\]")
         .assertLogMatch("connectStart: " + url.host() + "/.+ DIRECT")

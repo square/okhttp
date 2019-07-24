@@ -24,6 +24,7 @@ import java.util.Deque;
 import java.util.List;
 import java.util.concurrent.ConcurrentLinkedDeque;
 import javax.annotation.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import static java.util.Arrays.asList;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -79,6 +80,15 @@ public class RecordingEventListener extends EventListener {
     }
 
     eventSequence.offer(e);
+  }
+
+  @Override public void proxySelectStart(@NotNull Call call, @NotNull HttpUrl url) {
+    logEvent(new ProxySelectStart(call, url));
+  }
+
+  @Override public void proxySelectEnd(@NotNull Call call, @NotNull HttpUrl url,
+      @NotNull List<Proxy> proxies) {
+    logEvent(new ProxySelectEnd(call, url, proxies));
   }
 
   @Override public void dnsStart(Call call, String domainName) {
@@ -205,6 +215,24 @@ public class RecordingEventListener extends EventListener {
 
     public @Nullable CallEvent closes() {
       return null;
+    }
+  }
+
+  static final class ProxySelectStart extends CallEvent {
+    final HttpUrl url;
+
+    ProxySelectStart(Call call, HttpUrl url) {
+      super(call, url);
+      this.url = url;
+    }
+  }
+
+  static final class ProxySelectEnd extends CallEvent {
+    final HttpUrl url;
+
+    ProxySelectEnd(Call call, HttpUrl url, List<Proxy> proxies) {
+      super(call, url, proxies);
+      this.url = url;
     }
   }
 
