@@ -104,7 +104,7 @@ public final class PrintEvents {
     }
 
     @Override public void proxySelectEnd(@NotNull Call call, @NotNull HttpUrl url,
-        @NotNull List<? extends Proxy> proxies) {
+        @NotNull List<Proxy> proxies) {
       printEvent("proxySelectEnd");
     }
 
