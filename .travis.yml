@@ -1,7 +1,9 @@
 language: java
 
+dist: bionic
+
 jdk:
-  - oraclejdk8
+  - openjdk8
 
 script:
  - ./gradlew check --parallel
