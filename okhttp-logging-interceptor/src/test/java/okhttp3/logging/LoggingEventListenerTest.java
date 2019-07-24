@@ -149,6 +149,8 @@ public final class LoggingEventListenerTest {
 
     logRecorder
         .assertLogMatch("callStart: Request\\{method=GET, url=" + url + "\\}")
+        .assertLogMatch("proxySelectStart: " + url)
+        .assertLogMatch("proxySelectEnd: \\[DIRECT\\]")
         .assertLogMatch("dnsStart: " + url.host())
         .assertLogMatch("dnsEnd: \\[.+\\]")
         .assertLogMatch("connectStart: " + url.host() + "/.+ DIRECT")
