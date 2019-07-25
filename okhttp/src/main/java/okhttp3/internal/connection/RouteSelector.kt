@@ -94,6 +94,7 @@ class RouteSelector(
 
   /** Prepares the proxy servers to try. */
   private fun resetNextProxy(url: HttpUrl, proxy: Proxy?) {
+    eventListener.proxySelectStart(call, url)
     proxies = if (proxy != null) {
       // If the user specifies a proxy, try that and only that.
       listOf(proxy)
@@ -107,6 +108,7 @@ class RouteSelector(
       }
     }
     nextProxyIndex = 0
+    eventListener.proxySelectEnd(call, url, proxies)
   }
 
   /** Returns true if there's another proxy to try. */

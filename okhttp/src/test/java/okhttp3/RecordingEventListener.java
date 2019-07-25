@@ -81,6 +81,15 @@ public class RecordingEventListener extends EventListener {
     eventSequence.offer(e);
   }
 
+  @Override public void proxySelectStart(Call call, HttpUrl url) {
+    logEvent(new ProxySelectStart(call, url));
+  }
+
+  @Override public void proxySelectEnd(Call call, HttpUrl url,
+      List<Proxy> proxies) {
+    logEvent(new ProxySelectEnd(call, url, proxies));
+  }
+
   @Override public void dnsStart(Call call, String domainName) {
     logEvent(new DnsStart(call, domainName));
   }
@@ -205,6 +214,24 @@ public class RecordingEventListener extends EventListener {
 
     public @Nullable CallEvent closes() {
       return null;
+    }
+  }
+
+  static final class ProxySelectStart extends CallEvent {
+    final HttpUrl url;
+
+    ProxySelectStart(Call call, HttpUrl url) {
+      super(call, url);
+      this.url = url;
+    }
+  }
+
+  static final class ProxySelectEnd extends CallEvent {
+    final HttpUrl url;
+
+    ProxySelectEnd(Call call, HttpUrl url, List<Proxy> proxies) {
+      super(call, url, proxies);
+      this.url = url;
     }
   }
 
