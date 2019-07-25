@@ -30,6 +30,7 @@ import okhttp3.mockwebserver.MockWebServer
 import okhttp3.tls.internal.TlsUtil.localhost
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Assert.fail
 import org.junit.Assume
 import org.junit.Before
@@ -102,7 +103,20 @@ class OkHttpTest {
         assertEquals(TlsVersion.TLS_1_2, response.handshake?.tlsVersion)
       }
       assertEquals(200, response.code)
-      assertEquals("com.android.org.conscrypt.Java8FileDescriptorSocket", socketClass)
+      assertTrue(socketClass?.startsWith("com.android.org.conscrypt.") == true)
+    }
+  }
+
+  @Test
+  fun testHttpRequestNotBlockedOnLegacyAndroid() {
+    Assume.assumeTrue(Build.VERSION.SDK_INT < 23)
+
+    val request = Request.Builder().url("http://api.twitter.com/robots.txt").build()
+
+    val response = client.newCall(request).execute()
+
+    response.use {
+      assertEquals(200, response.code)
     }
   }
 
@@ -148,7 +162,7 @@ class OkHttpTest {
     val request = Request.Builder().url(server.url("/")).build()
 
     try {
-      val response = client.newCall(request).execute()
+      client.newCall(request).execute()
       fail()
     } catch (spue: SSLPeerUnverifiedException) {
       // expected
