@@ -24,6 +24,7 @@ import okhttp3.Call;
 import okhttp3.Connection;
 import okhttp3.EventListener;
 import okhttp3.Handshake;
+import okhttp3.HttpUrl;
 import okhttp3.OkHttpClient;
 import okhttp3.Protocol;
 import okhttp3.Request;
@@ -74,6 +75,14 @@ public final class PrintEventsNonConcurrent {
 
     @Override public void callStart(Call call) {
       printEvent("callStart");
+    }
+
+    @Override public void proxySelectStart(Call call, HttpUrl url) {
+      printEvent("proxySelectStart");
+    }
+
+    @Override public void proxySelectEnd(Call call, HttpUrl url, List<Proxy> proxies) {
+      printEvent("proxySelectEnd");
     }
 
     @Override public void dnsStart(Call call, String domainName) {
