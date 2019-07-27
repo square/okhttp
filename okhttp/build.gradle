@@ -35,6 +35,8 @@ dependencies {
   testImplementation project(':okhttp-urlconnection')
   testImplementation project(':mockwebserver')
   testImplementation project(':okhttp-logging-interceptor')
+  testImplementation deps.bouncycastle
+  testImplementation deps.bouncycastletls
   testImplementation deps.conscrypt
   testImplementation deps.junit
   testImplementation deps.assertj
