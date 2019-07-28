@@ -23,7 +23,7 @@ class LoggingInterceptor implements Interceptor {
 }
 ```
 
-A call to `chain.proceed(request)` is a critical part of each interceptor’s implementation. This simple-looking method is where all the HTTP work happens, producing a response to satisfy the request.
+A call to `chain.proceed(request)` is a critical part of each interceptor’s implementation. This simple-looking method is where all the HTTP work happens, producing a response to satisfy the request. If `chain.proceed(request)` is being called more than once previous response bodies must be closed.
 
 Interceptors can be chained. Suppose you have both a compressing interceptor and a checksumming interceptor: you'll need to decide whether data is compressed and then checksummed, or checksummed and then compressed. OkHttp uses lists to track interceptors, and interceptors are called in order.
 
