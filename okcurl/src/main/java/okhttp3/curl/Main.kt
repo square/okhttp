@@ -15,11 +15,6 @@
  */
 package okhttp3.curl
 
-import com.github.rvesse.airline.HelpOption
-import com.github.rvesse.airline.SingleCommand
-import com.github.rvesse.airline.annotations.Arguments
-import com.github.rvesse.airline.annotations.Command
-import com.github.rvesse.airline.annotations.Option
 import okhttp3.MediaType
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.OkHttpClient
@@ -34,6 +29,11 @@ import okhttp3.internal.platform.Platform
 import okhttp3.logging.HttpLoggingInterceptor
 import okhttp3.logging.LoggingEventListener
 import okio.sink
+import picocli.CommandLine
+import picocli.CommandLine.Command
+import picocli.CommandLine.IVersionProvider
+import picocli.CommandLine.Option
+import picocli.CommandLine.Parameters
 import java.io.IOException
 import java.security.cert.X509Certificate
 import java.util.Properties
@@ -43,75 +43,68 @@ import java.util.logging.Level
 import java.util.logging.LogRecord
 import java.util.logging.Logger
 import java.util.logging.SimpleFormatter
-import javax.inject.Inject
 import javax.net.ssl.HostnameVerifier
 import javax.net.ssl.SSLSocketFactory
 import javax.net.ssl.TrustManager
 import javax.net.ssl.X509TrustManager
+import kotlin.system.exitProcess
 
-@Command(name = NAME, description = "A curl for the next-generation web.")
+@Command(name = NAME, description = ["A curl for the next-generation web."],
+    mixinStandardHelpOptions = true, versionProvider = Main.VersionProvider::class)
 class Main : Runnable {
-  @Inject
-  var help: HelpOption<Main>? = null
-
-  @Option(name = ["-X", "--request"], description = "Specify request command to use")
+  @Option(names = ["-X", "--request"], description = ["Specify request command to use"])
   var method: String? = null
 
-  @Option(name = ["-d", "--data"], description = "HTTP POST data")
+  @Option(names = ["-d", "--data"], description = ["HTTP POST data"])
   var data: String? = null
 
-  @Option(name = ["-H", "--header"], description = "Custom header to pass to server")
+  @Option(names = ["-H", "--header"], description = ["Custom header to pass to server"])
   var headers: MutableList<String>? = null
 
-  @Option(name = ["-A", "--user-agent"], description = "User-Agent to send to server")
+  @Option(names = ["-A", "--user-agent"], description = ["User-Agent to send to server"])
   var userAgent = NAME + "/" + versionString()
 
-  @Option(name = ["--connect-timeout"],
-      description = "Maximum time allowed for connection (seconds)")
+  @Option(names = ["--connect-timeout"],
+      description = ["Maximum time allowed for connection (seconds)"])
   var connectTimeout = DEFAULT_TIMEOUT
 
-  @Option(name = ["--read-timeout"],
-      description = "Maximum time allowed for reading data (seconds)")
+  @Option(names = ["--read-timeout"],
+      description = ["Maximum time allowed for reading data (seconds)"])
   var readTimeout = DEFAULT_TIMEOUT
 
-  @Option(name = ["--call-timeout"],
-      description = "Maximum time allowed for the entire call (seconds)")
+  @Option(names = ["--call-timeout"],
+      description = ["Maximum time allowed for the entire call (seconds)"])
   var callTimeout = DEFAULT_TIMEOUT
 
-  @Option(name = ["-L", "--location"], description = "Follow redirects")
+  @Option(names = ["-L", "--location"], description = ["Follow redirects"])
   var followRedirects: Boolean = false
 
-  @Option(name = ["-k", "--insecure"], description = "Allow connections to SSL sites without certs")
+  @Option(names = ["-k", "--insecure"], description = ["Allow connections to SSL sites without certs"])
   var allowInsecure: Boolean = false
 
-  @Option(name = ["-i", "--include"], description = "Include protocol headers in the output")
+  @Option(names = ["-i", "--include"], description = ["Include protocol headers in the output"])
   var showHeaders: Boolean = false
 
-  @Option(name = ["--frames"], description = "Log HTTP/2 frames to STDERR")
+  @Option(names = ["--frames"], description = ["Log HTTP/2 frames to STDERR"])
   var showHttp2Frames: Boolean = false
 
-  @Option(name = ["-e", "--referer"], description = "Referer URL")
+  @Option(names = ["-e", "--referer"], description = ["Referer URL"])
   var referer: String? = null
 
-  @Option(name = ["-V", "--version"], description = "Show version number and quit")
-  var version: Boolean = false
-
-  @Option(name = ["-v", "--verbose"], description = "Makes $NAME verbose during the operation")
+  @Option(names = ["-v", "--verbose"], description = ["Makes $NAME verbose during the operation"])
   var verbose: Boolean = false
 
-  @Arguments(title = ["url"], description = "Remote resource URL")
+  @Option(names = ["--completionScript"], hidden = true)
+  var completionScript: Boolean = false
+
+  @Parameters(paramLabel = "url", description = ["Remote resource URL"])
   var url: String? = null
 
   private lateinit var client: OkHttpClient
 
   override fun run() {
-    if (help?.showHelpIfRequested() == true) {
-      return
-    }
-
-    if (version) {
-      println(NAME + " " + versionString())
-      println("Protocols: " + protocols())
+    if (completionScript) {
+      println(picocli.AutoComplete.bash("okcurl", CommandLine(Main())))
       return
     }
 
@@ -121,11 +114,6 @@ class Main : Runnable {
 
     client = createClient()
     val request = createRequest()
-
-    if (request == null) {
-      help?.showHelp()
-      return
-    }
 
     try {
       val response = client.newCall(request).execute()
@@ -183,13 +171,12 @@ class Main : Runnable {
     return builder.build()
   }
 
-  fun createRequest(): Request? {
+  public fun createRequest(): Request {
     val request = Request.Builder()
 
-    val requestUrl = url ?: return null
     val requestMethod = method ?: if (data != null) "POST" else "GET"
 
-    request.url(requestUrl)
+    request.url(url!!)
 
     data?.let {
       request.method(requestMethod, it.toRequestBody(mediaType()))
@@ -224,6 +211,17 @@ class Main : Runnable {
 
   private fun close() {
     client.connectionPool.evictAll() // Close any persistent connections.
+    client.dispatcher.executorService.shutdownNow()
+  }
+
+  class VersionProvider : IVersionProvider {
+    override fun getVersion(): Array<String> {
+      return arrayOf(
+          "$NAME ${versionString()}",
+          "Protocols: ${Protocol.values().joinToString(", ")}",
+          "Platform: ${Platform.get()::class.java.simpleName}"
+      )
+    }
   }
 
   companion object {
@@ -232,23 +230,17 @@ class Main : Runnable {
     private var frameLogger: Logger? = null
 
     @JvmStatic
-    fun fromArgs(vararg args: String): Main =
-        SingleCommand.singleCommand(Main::class.java).parse(*args)
-
-    @JvmStatic
     fun main(args: Array<String>) {
-      Main.fromArgs(*args).run()
+      exitProcess(CommandLine(Main()).execute(*args))
     }
 
-    private fun versionString(): String {
+    private fun versionString(): String? {
       val prop = Properties()
       Main::class.java.getResourceAsStream("/okcurl-version.properties").use {
         prop.load(it)
       }
       return prop.getProperty("version", "dev")
     }
-
-    private fun protocols() = Protocol.values().joinToString(", ")
 
     private fun createInsecureTrustManager(): X509TrustManager = object : X509TrustManager {
       override fun checkClientTrusted(chain: Array<X509Certificate>, authType: String) {}

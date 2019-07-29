@@ -70,7 +70,6 @@ import okio.Buffer;
 import okio.BufferedSink;
 import okio.GzipSink;
 import okio.Okio;
-import org.jetbrains.annotations.NotNull;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Ignore;
@@ -1603,7 +1602,7 @@ public final class HttpOverHttp2Test {
     client = client.newBuilder().eventListener(new EventListener() {
       int callCount;
 
-      @Override public void connectionAcquired(@NotNull Call call, @NotNull Connection connection) {
+      @Override public void connectionAcquired(Call call, Connection connection) {
         try {
           if (callCount++ == 1) {
             server.shutdown();

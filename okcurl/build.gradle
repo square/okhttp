@@ -1,3 +1,7 @@
+plugins {
+  id "application"
+}
+
 apply plugin: 'com.vanniktech.maven.publish'
 apply plugin: 'com.github.johnrengelman.shadow'
 
@@ -6,6 +10,10 @@ jar {
     attributes 'Automatic-Module-Name': 'okhttp3.curl'
     attributes 'Main-Class': 'okhttp3.curl.Main'
   }
+}
+
+application {
+  mainClassName = "okhttp3.curl.Main"
 }
 
 // resources-templates.
@@ -25,7 +33,7 @@ task copyResourcesTemplates(type: Copy) {
 dependencies {
   api project(':okhttp')
   api project(':okhttp-logging-interceptor')
-  implementation deps.airline
+  implementation deps.picocli
   implementation deps.guava
 
   testImplementation project(':okhttp-testing-support')

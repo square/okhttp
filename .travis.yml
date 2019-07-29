@@ -1,10 +1,16 @@
 language: java
 
+dist: trusty
+
 jdk:
   - oraclejdk8
 
+# avoid ./gradlew assemble default which builds docs
+install:
+ - ./gradlew jar --parallel
+
 script:
- - ./gradlew check --parallel
+ - ./gradlew test --parallel
 
 after_success:
   - .buildscript/deploy_snapshot.sh

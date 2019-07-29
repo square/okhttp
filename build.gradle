@@ -2,7 +2,6 @@ import net.ltgt.gradle.errorprone.CheckSeverity
 
 buildscript {
   ext.versions = [
-      'airline': '2.6.0',
       'android': '4.1.1.4',
       'animalSniffer': '1.17',
       'assertj': '3.11.0',
@@ -19,11 +18,12 @@ buildscript {
       'kotlin': '1.3.41',
       'moshi': '1.8.0',
       'okio': '2.2.2',
-      'ktlint': '0.31.0'
+      'ktlint': '0.31.0',
+      'picocli': '4.0.1'
   ]
 
   ext.deps = [
-      'airline': "com.github.rvesse:airline:${versions.airline}",
+      'picocli': "info.picocli:picocli:${versions.picocli}",
       'android': "com.google.android:android:${versions.android}",
       'animalSniffer': "org.codehaus.mojo:animal-sniffer-annotations:${versions.animalSniffer}",
       'assertj': "org.assertj:assertj-core:${versions.assertj}",
