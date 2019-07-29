@@ -33,6 +33,14 @@ class ClientRuleEventListener(var logger: (String) -> Unit) : EventListener(),
     logWithTime("callStart: ${call.request()}")
   }
 
+  override fun proxySelectStart(call: Call, url: HttpUrl) {
+    logWithTime("proxySelectStart: $url")
+  }
+
+  override fun proxySelectEnd(call: Call, url: HttpUrl, proxies: List<Proxy>) {
+    logWithTime("proxySelectEnd: $proxies")
+  }
+
   override fun dnsStart(call: Call, domainName: String) {
     logWithTime("dnsStart: $domainName")
   }

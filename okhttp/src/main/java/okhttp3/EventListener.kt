@@ -61,6 +61,42 @@ abstract class EventListener {
   }
 
   /**
+   * Invoked prior to a proxy selection.
+   *
+   * This will be invoked for route selection regardless of whether the client
+   * is configured with a single proxy, a proxy selector, or neither.
+   *
+   * @param url a URL with only the scheme, hostname, and port specified.
+   */
+  open fun proxySelectStart(
+    call: Call,
+    url: HttpUrl
+  ) {
+  }
+
+  /**
+   * Invoked after proxy selection.
+   *
+   * Note that the list of proxies is never null, but it may be a list containing
+   * only [Proxy.NO_PROXY]. This comes up in several situations:
+   *
+   * * If neither a proxy nor proxy selector is configured.
+   * * If the proxy is configured explicitly as [Proxy.NO_PROXY].
+   * * If the proxy selector returns only [Proxy.NO_PROXY].
+   * * If the proxy selector returns an empty list or null.
+   *
+   * Otherwise it lists the proxies in the order they will be attempted.
+   *
+   * @param url a URL with only the scheme, hostname, and port specified.
+   */
+  open fun proxySelectEnd(
+    call: Call,
+    url: HttpUrl,
+    proxies: List<@JvmSuppressWildcards Proxy>
+  ) {
+  }
+
+  /**
    * Invoked just prior to a DNS lookup. See [Dns.lookup].
    *
    * This can be invoked more than 1 time for a single [Call]. For example, if the response to the

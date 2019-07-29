@@ -19,6 +19,7 @@ import okhttp3.Call
 import okhttp3.Connection
 import okhttp3.EventListener
 import okhttp3.Handshake
+import okhttp3.HttpUrl
 import okhttp3.OkHttpClient
 import okhttp3.Protocol
 import okhttp3.Request
@@ -45,6 +46,14 @@ class LoggingEventListener private constructor(
     startNs = System.nanoTime()
 
     logWithTime("callStart: ${call.request()}")
+  }
+
+  override fun proxySelectStart(call: Call, url: HttpUrl) {
+    logWithTime("proxySelectStart: $url")
+  }
+
+  override fun proxySelectEnd(call: Call, url: HttpUrl, proxies: List<Proxy>) {
+    logWithTime("proxySelectEnd: $proxies")
   }
 
   override fun dnsStart(call: Call, domainName: String) {
