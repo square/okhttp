@@ -138,11 +138,15 @@ class CertificatePinner internal constructor(
    */
   @Throws(SSLPeerUnverifiedException::class)
   fun check(hostname: String, peerCertificates: List<Certificate>) {
+    return check(hostname, peerCertificates, cleaned = false)
+  }
+
+  internal fun check(hostname: String, peerCertificates: List<Certificate>, cleaned: Boolean) {
     var peerCertificates = peerCertificates
     val pins = findMatchingPins(hostname)
     if (pins.isEmpty()) return
 
-    if (certificateChainCleaner != null) {
+    if (!cleaned && certificateChainCleaner != null) {
       peerCertificates = certificateChainCleaner.clean(peerCertificates, hostname)
     }
 
@@ -195,8 +199,8 @@ class CertificatePinner internal constructor(
       ReplaceWith("check(hostname, peerCertificates.toList())")
   )
   @Throws(SSLPeerUnverifiedException::class)
-  inline fun check(hostname: String, vararg peerCertificates: Certificate) {
-    check(hostname, peerCertificates.toList())
+  fun check(hostname: String, vararg peerCertificates: Certificate) {
+    check(hostname, peerCertificates.toList(), cleaned = false)
   }
 
   /**

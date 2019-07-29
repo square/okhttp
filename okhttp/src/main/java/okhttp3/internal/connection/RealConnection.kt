@@ -33,7 +33,6 @@ import okhttp3.Response
 import okhttp3.Route
 import okhttp3.internal.EMPTY_RESPONSE
 import okhttp3.internal.closeQuietly
-import okhttp3.internal.toHostHeader
 import okhttp3.internal.http.ExchangeCodec
 import okhttp3.internal.http1.Http1ExchangeCodec
 import okhttp3.internal.http2.ConnectionShutdownException
@@ -43,7 +42,9 @@ import okhttp3.internal.http2.Http2ExchangeCodec
 import okhttp3.internal.http2.Http2Stream
 import okhttp3.internal.http2.StreamResetException
 import okhttp3.internal.platform.Platform
+import okhttp3.internal.tls.CertificateChainCleaner
 import okhttp3.internal.tls.OkHostnameVerifier
+import okhttp3.internal.toHostHeader
 import okhttp3.internal.userAgent
 import okhttp3.internal.ws.RealWebSocket
 import okio.BufferedSink
@@ -69,7 +70,8 @@ import javax.net.ssl.SSLSocket
 
 class RealConnection(
   val connectionPool: RealConnectionPool,
-  private val route: Route
+  private val route: Route,
+  private val certificateChainCleaner: CertificateChainCleaner? = null
 ) : Http2Connection.Listener(), Connection {
 
   // The fields below are initialized by connect() and never reassigned.
@@ -370,9 +372,18 @@ class RealConnection(
         }
       }
 
+      handshake = if (certificateChainCleaner != null) {
+        val cleanedCertificates =
+            certificateChainCleaner.clean(unverifiedHandshake.peerCertificates, address.url.host)
+        Handshake.get(unverifiedHandshake.tlsVersion, unverifiedHandshake.cipherSuite,
+            cleanedCertificates, unverifiedHandshake.localCertificates)
+      } else {
+        unverifiedHandshake
+      }
+
       // Check that the certificate pinner is satisfied by the certificates presented.
-      address.certificatePinner!!.check(address.url.host,
-          unverifiedHandshake.peerCertificates)
+      address.certificatePinner!!.check(address.url.host, handshake!!.peerCertificates,
+          cleaned = true)
 
       // Success! Save the handshake and the ALPN protocol.
       val maybeProtocol = if (connectionSpec.supportsTlsExtensions) {
@@ -383,7 +394,6 @@ class RealConnection(
       socket = sslSocket
       source = sslSocket.source().buffer()
       sink = sslSocket.sink().buffer()
-      handshake = unverifiedHandshake
       protocol = if (maybeProtocol != null) Protocol.get(maybeProtocol) else Protocol.HTTP_1_1
       success = true
     } finally {
