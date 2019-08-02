@@ -24,6 +24,7 @@ import okhttp3.OkHttpClient
 import okhttp3.Protocol
 import okhttp3.Request
 import okhttp3.TlsVersion
+import okhttp3.logging.LoggingEventListener
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.fail
@@ -31,7 +32,13 @@ import org.junit.Assume
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
+import java.io.IOException
 import java.net.InetAddress
+import java.net.InetSocketAddress
+import java.net.Proxy
+import java.net.ProxySelector
+import java.net.SocketAddress
+import java.net.URI
 import java.net.UnknownHostException
 
 /**
@@ -106,6 +113,55 @@ class OkHttpTest {
       fail("expected cleartext blocking")
     } catch (_: java.net.UnknownServiceException) {
     }
+  }
+
+  @Test
+  fun testProxyRequest() {
+    assumeNetwork()
+
+    client = client.newBuilder().eventListenerFactory(LoggingEventListener.Factory()).build()
+
+    val proxies = queryProxyList()
+
+    client = client.newBuilder().proxySelector(object : ProxySelector() {
+      override fun select(uri: URI): MutableList<Proxy> = proxies.toMutableList()
+
+      override fun connectFailed(p0: URI?, p1: SocketAddress?, p2: IOException?) {}
+    }).build()  
+
+    val request = Request.Builder().url("https://api.twitter.com/robots.txt").build()
+
+    val response = client.newCall(request).execute()
+
+    response.use {
+      assertEquals(200, response.code)
+    }
+  }
+
+  fun queryProxyList(): List<Proxy> {
+    // https://www.proxy-list.download/api/v1
+    // https://www.proxy-list.download/api/v1/get?type=http&anon=elite&country=US
+
+    val request = Request.Builder()
+        .url("https://www.proxy-list.download/api/v1/get?type=http&anon=elite&country=US").build()
+
+    val response = client.newCall(request).execute()
+
+    val deadProxies =
+        listOf("192.0.2.1:8080", "192.0.2.2:8080", "192.0.2.3:8080").mapNotNull { it.toProxy() }
+
+    val liveProxies = response.use {
+      response.body!!.string().lines().mapNotNull { it.toProxy() }
+    }
+
+    return deadProxies + liveProxies
+  }
+
+  private fun String.toProxy(): Proxy? = try {
+    val (host, port) = this.split(':', limit = 2)
+    Proxy(Proxy.Type.HTTP, InetSocketAddress.createUnresolved(host, port.toInt()))
+  } catch (_ : IndexOutOfBoundsException) {
+    null
   }
 
   private fun assumeNetwork() {
