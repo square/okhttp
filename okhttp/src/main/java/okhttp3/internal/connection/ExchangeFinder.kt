@@ -254,6 +254,10 @@ class ExchangeFinder(
         result!!.noNewExchanges = true
         socket = result!!.socket()
         result = transmitter.connection
+
+        // It's possible for us to obtain a coalesced connection that is immediately unhealthy. In
+        // that case we will retry the route we just successfully connected with.
+        nextRouteToTry = selectedRoute
       } else {
         connectionPool.put(result!!)
         transmitter.acquireConnectionNoEvents(result!!)

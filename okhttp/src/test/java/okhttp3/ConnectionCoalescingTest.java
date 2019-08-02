@@ -21,6 +21,7 @@ import java.net.InetSocketAddress;
 import java.net.Proxy;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import javax.net.ssl.HostnameVerifier;
@@ -149,6 +150,107 @@ public final class ConnectionCoalescingTest {
     assert200Http2Response(execute(sanUrl), "san.com");
 
     assertThat(client.connectionPool().connectionCount()).isEqualTo(1);
+  }
+
+  /**
+   * This is an extraordinary test case. Here's what it's trying to simulate.
+   * - 2 requests happen concurrently to a host that can be coalesced onto a single connection.
+   * - Both request discover no existing connection. They both make a connection.
+   * - The first request "wins the race".
+   * - The second request discovers it "lost the race" and closes the connection it just opened.
+   * - The second request uses the coalesced connection from request1.
+   * - The coalesced connection is violently closed after servicing the first request.
+   * - The second request discovers the coalesced connection is unhealthy just after acquiring it.
+   */
+  @Test public void coalescedConnectionDestroyedAfterAcquire() throws Exception {
+    server.enqueue(new MockResponse().setResponseCode(200));
+    server.enqueue(new MockResponse().setResponseCode(200));
+
+    dns.set("san.com", Dns.SYSTEM.lookup(server.getHostName()).subList(0, 1));
+    HttpUrl sanUrl = url.newBuilder().host("san.com").build();
+
+    CountDownLatch latch1 = new CountDownLatch(1);
+    CountDownLatch latch2 = new CountDownLatch(1);
+    CountDownLatch latch3 = new CountDownLatch(1);
+    CountDownLatch latch4 = new CountDownLatch(1);
+    EventListener listener1 = new EventListener() {
+      @Override public void connectStart(Call call, InetSocketAddress inetSocketAddress,
+          Proxy proxy) {
+        try {
+          // Wait for request2 to guarantee we make 2 separate connections to the server.
+          latch1.await();
+        } catch (InterruptedException e) {
+          throw new AssertionError(e);
+        }
+      }
+
+      @Override public void connectionAcquired(Call call, Connection connection) {
+        // We have the connection and it's in the pool. Let request2 proceed to make a connection.
+        latch2.countDown();
+      }
+    };
+
+    EventListener request2Listener = new EventListener() {
+      @Override public void connectStart(Call call, InetSocketAddress inetSocketAddress,
+          Proxy proxy) {
+        // Let request1 proceed to make a connection.
+        latch1.countDown();
+        try {
+          // Wait until request1 makes the connection and puts it in the connection pool.
+          latch2.await();
+        } catch (InterruptedException e) {
+          throw new AssertionError(e);
+        }
+      }
+
+      @Override public void connectionAcquired(Call call, Connection connection) {
+        // We obtained the coalesced connection. Let request1 violently destroy it.
+        latch3.countDown();
+        try {
+          latch4.await();
+        } catch (InterruptedException e) {
+          throw new AssertionError(e);
+        }
+      }
+    };
+
+    // Get a reference to the connection so we can violently destroy it.
+    AtomicReference<Connection> connection = new AtomicReference<>();
+    OkHttpClient client1 = client.newBuilder()
+        .addNetworkInterceptor(chain -> {
+          connection.set(chain.connection());
+          return chain.proceed(chain.request());
+        })
+        .eventListener(listener1)
+        .build();
+
+    Request request = new Request.Builder().url(sanUrl).build();
+    Call call1 = client1.newCall(request);
+    call1.enqueue(new Callback() {
+      @Override public void onResponse(Call call, Response response) throws IOException {
+        try {
+          // Wait until request2 acquires the connection before we destroy it violently.
+          latch3.await();
+        } catch (InterruptedException e) {
+          throw new AssertionError(e);
+        }
+        assert200Http2Response(response, "san.com");
+        connection.get().socket().close();
+        latch4.countDown();
+      }
+
+      @Override public void onFailure(Call call, IOException e) {
+        fail();
+      }
+    });
+
+    OkHttpClient client2 = client.newBuilder()
+        .eventListener(request2Listener)
+        .build();
+    Call call2 = client2.newCall(request);
+    Response response = call2.execute();
+
+    assert200Http2Response(response, "san.com");
   }
 
   /** If the existing connection matches a SAN but not a match for DNS then skip. */
@@ -299,10 +401,6 @@ public final class ConnectionCoalescingTest {
     assert200Http2Response(execute(sanUrl), "san.com");
 
     assertThat(client.connectionPool().connectionCount()).isEqualTo(1);
-  }
-
-  private Response execute(String url) throws IOException {
-    return execute(HttpUrl.get(url));
   }
 
   private Response execute(HttpUrl url) throws IOException {
