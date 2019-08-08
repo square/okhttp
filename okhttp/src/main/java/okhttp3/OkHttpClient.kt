@@ -439,7 +439,7 @@ open class OkHttpClient internal constructor(
     internal var cache: Cache? = null
     internal var dns: Dns = Dns.SYSTEM
     internal var proxy: Proxy? = null
-    internal var proxySelector: ProxySelector = ProxySelector.getDefault() ?: NullProxySelector()
+    internal var proxySelector: ProxySelector = getDefaultProxySelector()
     internal var proxyAuthenticator: Authenticator = Authenticator.NONE
     internal var socketFactory: SocketFactory = SocketFactory.getDefault()
     internal var sslSocketFactoryOrNull: SSLSocketFactory? = null
@@ -958,6 +958,14 @@ open class OkHttpClient internal constructor(
       } catch (e: GeneralSecurityException) {
         throw AssertionError("No System TLS", e) // The system has no TLS. Just give up.
       }
+    }
+
+    private fun getDefaultProxySelector(): ProxySelector = try {
+      ProxySelector.getDefault() ?: NullProxySelector()
+    } catch (se: SecurityException) {
+      Platform.get().log(Platform.WARN,
+          "SecurityException getting ProxySelector.getDefault, using NullProxySelector", se)
+      NullProxySelector()
     }
   }
 }
