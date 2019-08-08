@@ -49,8 +49,7 @@ class RealConnectionPool(
           this@RealConnectionPool.lockAndWaitNanos(waitNanos)
         } catch (ie: InterruptedException) {
           cleanupRunning = false
-          val count = connectionCount()
-          if (count > 0) {
+          if (connectionCount() > 0) {
             Platform.get().log(
                 Platform.WARN,
                 "${Thread.currentThread().name} interrupted without cleanly closing connections",
