@@ -21,10 +21,10 @@ import okhttp3.ConnectionPool
 import okhttp3.Route
 import okhttp3.internal.closeQuietly
 import okhttp3.internal.connection.Transmitter.TransmitterReference
+import okhttp3.internal.lockAndWaitNanos
 import okhttp3.internal.notifyAll
 import okhttp3.internal.platform.Platform
 import okhttp3.internal.threadFactory
-import okhttp3.internal.lockAndWaitNanos
 import java.io.IOException
 import java.net.Proxy
 import java.util.ArrayDeque
@@ -47,7 +47,16 @@ class RealConnectionPool(
         if (waitNanos == -1L) return
         try {
           this@RealConnectionPool.lockAndWaitNanos(waitNanos)
-        } catch (_: InterruptedException) {
+        } catch (ie: InterruptedException) {
+          cleanupRunning = false
+          val count = connectionCount()
+          if (count > 0) {
+            Platform.get().log(
+                Platform.WARN,
+                "${Thread.currentThread().name} interrupted without cleanly closing connections",
+                ie)
+          }
+          break
         }
       }
     }
