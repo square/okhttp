@@ -48,14 +48,8 @@ class RealConnectionPool(
         try {
           this@RealConnectionPool.lockAndWaitNanos(waitNanos)
         } catch (ie: InterruptedException) {
-          cleanupRunning = false
-          if (connectionCount() > 0) {
-            Platform.get().log(
-                Platform.WARN,
-                "${Thread.currentThread().name} interrupted without cleanly closing connections",
-                ie)
-          }
-          break
+          // Will cause the thread to exit unless other connections are created!
+          evictAll()
         }
       }
     }
