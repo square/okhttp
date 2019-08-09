@@ -189,6 +189,7 @@ public final class ConnectionPoolTest {
     Thread.enumerate(threads);
     for (Thread t: threads) {
       if (t != null && t.getName().equals("OkHttp ConnectionPool")) {
+        System.out.println("Interrupting " + t.getId());
         t.interrupt();
       }
     }
