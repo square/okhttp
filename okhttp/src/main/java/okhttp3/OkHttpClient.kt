@@ -964,6 +964,5 @@ open class OkHttpClient internal constructor(
         throw AssertionError("No System TLS", e) // The system has no TLS. Just give up.
       }
     }
-
   }
 }
