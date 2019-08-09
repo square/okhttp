@@ -119,12 +119,14 @@ public final class OkHttpClientTest {
     assertThat(a.dispatcher()).isNotNull();
     assertThat(a.connectionPool()).isNotNull();
     assertThat(a.sslSocketFactory()).isNotNull();
+    assertThat(a.x509TrustManager()).isNotNull();
 
     // Multiple clients share the instances.
     OkHttpClient b = client.newBuilder().build();
     assertThat(b.dispatcher()).isSameAs(a.dispatcher());
     assertThat(b.connectionPool()).isSameAs(a.connectionPool());
     assertThat(b.sslSocketFactory()).isSameAs(a.sslSocketFactory());
+    assertThat(b.x509TrustManager()).isSameAs(a.x509TrustManager());
   }
 
   @Test public void setProtocolsRejectsHttp10() throws Exception {
