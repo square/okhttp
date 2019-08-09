@@ -185,6 +185,8 @@ public final class ConnectionPoolTest {
 
     assertThat(pool.getCleanupRunning()).isTrue();
 
+    Thread.sleep(100);
+
     Thread[] threads = new Thread[Thread.activeCount() * 2];
     Thread.enumerate(threads);
     for (Thread t: threads) {
