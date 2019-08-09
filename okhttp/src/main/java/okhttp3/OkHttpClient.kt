@@ -160,7 +160,12 @@ open class OkHttpClient internal constructor(
 
   @get:JvmName("proxy") val proxy: Proxy? = builder.proxy
 
-  @get:JvmName("proxySelector") val proxySelector: ProxySelector = builder.proxySelector
+  @get:JvmName("proxySelector") val proxySelector: ProxySelector =
+      when {
+        // Avoid possible SecurityException from ProxySelector.getDefault
+        builder.proxy != null -> NullProxySelector()
+        else -> builder.proxySelector ?: ProxySelector.getDefault() ?: NullProxySelector()
+      }
 
   @get:JvmName("proxyAuthenticator") val proxyAuthenticator: Authenticator =
       builder.proxyAuthenticator
@@ -439,7 +444,7 @@ open class OkHttpClient internal constructor(
     internal var cache: Cache? = null
     internal var dns: Dns = Dns.SYSTEM
     internal var proxy: Proxy? = null
-    internal var proxySelector: ProxySelector = ProxySelector.getDefault() ?: NullProxySelector()
+    internal var proxySelector: ProxySelector? = null
     internal var proxyAuthenticator: Authenticator = Authenticator.NONE
     internal var socketFactory: SocketFactory = SocketFactory.getDefault()
     internal var sslSocketFactoryOrNull: SSLSocketFactory? = null
