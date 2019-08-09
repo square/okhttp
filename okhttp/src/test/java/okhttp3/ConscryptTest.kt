@@ -94,12 +94,14 @@ class ConscryptTest {
 
   @Test
   fun testVersion() {
+    val version = Conscrypt.version()
+
     assertTrue(ConscryptPlatform.atLeastVersion(1, 4, 9))
-    assertTrue(ConscryptPlatform.atLeastVersion(2))
-    assertTrue(ConscryptPlatform.atLeastVersion(2, 1))
-    assertTrue(ConscryptPlatform.atLeastVersion(2, 1, 0))
-    assertFalse(ConscryptPlatform.atLeastVersion(2, 1, 1))
-    assertFalse(ConscryptPlatform.atLeastVersion(2, 2))
-    assertFalse(ConscryptPlatform.atLeastVersion(9))
+    assertTrue(ConscryptPlatform.atLeastVersion(version.major()))
+    assertTrue(ConscryptPlatform.atLeastVersion(version.major(), version.minor()))
+    assertTrue(ConscryptPlatform.atLeastVersion(version.major(), version.minor(), version.patch()))
+    assertFalse(ConscryptPlatform.atLeastVersion(version.major(), version.minor(), version.patch() + 1))
+    assertFalse(ConscryptPlatform.atLeastVersion(version.major(), version.minor() + 1))
+    assertFalse(ConscryptPlatform.atLeastVersion(version.major() + 1))
   }
 }
