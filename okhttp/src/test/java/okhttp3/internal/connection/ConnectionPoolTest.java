@@ -179,6 +179,27 @@ public final class ConnectionPoolTest {
     assertThat(c1.getNoNewExchanges()).isTrue();
   }
 
+  @Test public void interruptStopsThread() throws Exception {
+    RealConnectionPool pool = new RealConnectionPool(2, 100L, TimeUnit.NANOSECONDS);
+    RealConnection c1 = newConnection(pool, routeA1, Long.MAX_VALUE);
+
+    assertThat(pool.getCleanupRunning()).isTrue();
+
+    Thread.sleep(100);
+
+    Thread[] threads = new Thread[Thread.activeCount() * 2];
+    Thread.enumerate(threads);
+    for (Thread t: threads) {
+      if (t != null && t.getName().equals("OkHttp ConnectionPool")) {
+        t.interrupt();
+      }
+    }
+
+    Thread.sleep(100);
+
+    assertThat(pool.getCleanupRunning()).isFalse();
+  }
+
   /** Use a helper method so there's no hidden reference remaining on the stack. */
   private void allocateAndLeakAllocation(ConnectionPool pool, RealConnection connection) {
     synchronized (RealConnectionPool.Companion.get(pool)) {

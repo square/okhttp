@@ -160,7 +160,12 @@ open class OkHttpClient internal constructor(
 
   @get:JvmName("proxy") val proxy: Proxy? = builder.proxy
 
-  @get:JvmName("proxySelector") val proxySelector: ProxySelector = builder.proxySelector
+  @get:JvmName("proxySelector") val proxySelector: ProxySelector =
+      when {
+        // Avoid possible SecurityException from ProxySelector.getDefault
+        builder.proxy != null -> NullProxySelector()
+        else -> builder.proxySelector ?: ProxySelector.getDefault() ?: NullProxySelector()
+      }
 
   @get:JvmName("proxyAuthenticator") val proxyAuthenticator: Authenticator =
       builder.proxyAuthenticator
@@ -171,6 +176,8 @@ open class OkHttpClient internal constructor(
 
   @get:JvmName("sslSocketFactory") val sslSocketFactory: SSLSocketFactory
     get() = sslSocketFactoryOrNull ?: throw IllegalStateException("CLEARTEXT-only client")
+
+  @get:JvmName("x509TrustManager") val x509TrustManager: X509TrustManager?
 
   @get:JvmName("connectionSpecs") val connectionSpecs: List<ConnectionSpec> =
       builder.connectionSpecs
@@ -207,11 +214,12 @@ open class OkHttpClient internal constructor(
     if (builder.sslSocketFactoryOrNull != null || connectionSpecs.none { it.isTls }) {
       this.sslSocketFactoryOrNull = builder.sslSocketFactoryOrNull
       this.certificateChainCleaner = builder.certificateChainCleaner
+      this.x509TrustManager = builder.x509TrustManagerOrNull
     } else {
-      val trustManager = Platform.get().platformTrustManager()
-      Platform.get().configureTrustManager(trustManager)
-      this.sslSocketFactoryOrNull = newSslSocketFactory(trustManager)
-      this.certificateChainCleaner = CertificateChainCleaner.get(trustManager)
+      this.x509TrustManager = Platform.get().platformTrustManager()
+      Platform.get().configureTrustManager(x509TrustManager)
+      this.sslSocketFactoryOrNull = newSslSocketFactory(x509TrustManager!!)
+      this.certificateChainCleaner = CertificateChainCleaner.get(x509TrustManager!!)
     }
 
     if (sslSocketFactoryOrNull != null) {
@@ -439,10 +447,11 @@ open class OkHttpClient internal constructor(
     internal var cache: Cache? = null
     internal var dns: Dns = Dns.SYSTEM
     internal var proxy: Proxy? = null
-    internal var proxySelector: ProxySelector = ProxySelector.getDefault() ?: NullProxySelector()
+    internal var proxySelector: ProxySelector? = null
     internal var proxyAuthenticator: Authenticator = Authenticator.NONE
     internal var socketFactory: SocketFactory = SocketFactory.getDefault()
     internal var sslSocketFactoryOrNull: SSLSocketFactory? = null
+    internal var x509TrustManagerOrNull: X509TrustManager? = null
     internal var connectionSpecs: List<ConnectionSpec> = DEFAULT_CONNECTION_SPECS
     internal var protocols: List<Protocol> = DEFAULT_PROTOCOLS
     internal var hostnameVerifier: HostnameVerifier = OkHostnameVerifier
@@ -472,6 +481,7 @@ open class OkHttpClient internal constructor(
       this.proxyAuthenticator = okHttpClient.proxyAuthenticator
       this.socketFactory = okHttpClient.socketFactory
       this.sslSocketFactoryOrNull = okHttpClient.sslSocketFactoryOrNull
+      this.x509TrustManagerOrNull = okHttpClient.x509TrustManager
       this.connectionSpecs = okHttpClient.connectionSpecs
       this.protocols = okHttpClient.protocols
       this.hostnameVerifier = okHttpClient.hostnameVerifier
@@ -716,6 +726,7 @@ open class OkHttpClient internal constructor(
     ) = apply {
       this.sslSocketFactoryOrNull = sslSocketFactory
       this.certificateChainCleaner = CertificateChainCleaner.get(trustManager)
+      this.x509TrustManagerOrNull = trustManager
     }
 
     fun connectionSpecs(connectionSpecs: List<ConnectionSpec>) = apply {

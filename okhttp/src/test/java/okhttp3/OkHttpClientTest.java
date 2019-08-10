@@ -17,6 +17,7 @@ package okhttp3;
 
 import java.net.CookieHandler;
 import java.net.CookieManager;
+import java.net.Proxy;
 import java.net.ProxySelector;
 import java.net.ResponseCache;
 import java.util.AbstractList;
@@ -24,6 +25,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import javax.net.ssl.SSLSocketFactory;
+import okhttp3.internal.proxy.NullProxySelector;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import org.junit.After;
@@ -117,12 +119,14 @@ public final class OkHttpClientTest {
     assertThat(a.dispatcher()).isNotNull();
     assertThat(a.connectionPool()).isNotNull();
     assertThat(a.sslSocketFactory()).isNotNull();
+    assertThat(a.x509TrustManager()).isNotNull();
 
     // Multiple clients share the instances.
     OkHttpClient b = client.newBuilder().build();
     assertThat(b.dispatcher()).isSameAs(a.dispatcher());
     assertThat(b.connectionPool()).isSameAs(a.connectionPool());
     assertThat(b.sslSocketFactory()).isSameAs(a.sslSocketFactory());
+    assertThat(b.x509TrustManager()).isSameAs(a.x509TrustManager());
   }
 
   @Test public void setProtocolsRejectsHttp10() throws Exception {
@@ -282,5 +286,19 @@ public final class OkHttpClientTest {
     } catch (IllegalArgumentException expected) {
       assertThat(expected.getMessage()).isEqualTo(("protocols must not contain null"));
     }
+  }
+
+  @Test public void testProxyDefaults() {
+    OkHttpClient client = new OkHttpClient.Builder().build();
+    assertThat(client.proxy()).isNull();
+    assertThat(client.proxySelector()).isNotInstanceOf(NullProxySelector.class);
+
+    client = new OkHttpClient.Builder().proxy(Proxy.NO_PROXY).build();
+    assertThat(client.proxy()).isSameAs(Proxy.NO_PROXY);
+    assertThat(client.proxySelector()).isInstanceOf(NullProxySelector.class);
+
+    client = new OkHttpClient.Builder().proxySelector(new FakeProxySelector()).build();
+    assertThat(client.proxy()).isNull();
+    assertThat(client.proxySelector()).isInstanceOf(FakeProxySelector.class);
   }
 }
