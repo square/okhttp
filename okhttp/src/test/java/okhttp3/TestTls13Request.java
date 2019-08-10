@@ -3,6 +3,7 @@ package okhttp3;
 import java.io.IOException;
 import java.security.Security;
 import java.util.List;
+import javax.net.ssl.SSLSessionContext;
 import okhttp3.internal.platform.Platform;
 import org.conscrypt.Conscrypt;
 

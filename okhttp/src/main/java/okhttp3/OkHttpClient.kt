@@ -40,6 +40,8 @@ import java.util.concurrent.ExecutorService
 import java.util.concurrent.TimeUnit
 import javax.net.SocketFactory
 import javax.net.ssl.HostnameVerifier
+import javax.net.ssl.SSLContext
+import javax.net.ssl.SSLSessionContext
 import javax.net.ssl.SSLSocketFactory
 import javax.net.ssl.TrustManager
 import javax.net.ssl.X509TrustManager
@@ -179,6 +181,8 @@ open class OkHttpClient internal constructor(
 
   @get:JvmName("x509TrustManager") val x509TrustManager: X509TrustManager?
 
+  @get:JvmName("sslSessionContext") val sslSessionContext: SSLSessionContext?
+
   @get:JvmName("connectionSpecs") val connectionSpecs: List<ConnectionSpec> =
       builder.connectionSpecs
 
@@ -215,10 +219,13 @@ open class OkHttpClient internal constructor(
       this.sslSocketFactoryOrNull = builder.sslSocketFactoryOrNull
       this.certificateChainCleaner = builder.certificateChainCleaner
       this.x509TrustManager = builder.x509TrustManagerOrNull
+      this.sslSessionContext = null
     } else {
       this.x509TrustManager = Platform.get().platformTrustManager()
       Platform.get().configureTrustManager(x509TrustManager)
-      this.sslSocketFactoryOrNull = newSslSocketFactory(x509TrustManager!!)
+      val x = newSslSocketFactory(x509TrustManager!!)
+      this.sslSocketFactoryOrNull = x.first
+      this.sslSessionContext = x.second
       this.certificateChainCleaner = CertificateChainCleaner.get(x509TrustManager!!)
     }
 
@@ -961,11 +968,14 @@ open class OkHttpClient internal constructor(
     internal val DEFAULT_CONNECTION_SPECS = immutableListOf(
         ConnectionSpec.MODERN_TLS, ConnectionSpec.CLEARTEXT)
 
-    private fun newSslSocketFactory(trustManager: X509TrustManager): SSLSocketFactory {
+    private fun newSslSocketFactory(trustManager: X509TrustManager): Pair<SSLSocketFactory, SSLSessionContext> {
       try {
         val sslContext = Platform.get().newSSLContext()
         sslContext.init(null, arrayOf<TrustManager>(trustManager), null)
-        return sslContext.socketFactory
+
+        println("Created sslContext $sslContext")
+
+        return Pair(sslContext.socketFactory, sslContext.clientSessionContext)
       } catch (e: GeneralSecurityException) {
         throw AssertionError("No System TLS", e) // The system has no TLS. Just give up.
       }
