@@ -125,7 +125,7 @@ class OkHttpTest {
   fun testHttpRequestBlocked() {
     assumeTrue(Build.VERSION.SDK_INT >= 23)
 
-    val request = Request.Builder().url("http://api.twitter.com/robots.txt").build()
+    val request = Request.Builder().url("http://squareup.com/robots.txt").build()
 
     try {
       client.newCall(request).execute()
