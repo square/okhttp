@@ -32,7 +32,8 @@ import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Assert.fail
-import org.junit.Assume
+import org.junit.Assume.assumeNoException
+import org.junit.Assume.assumeTrue
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -109,9 +110,9 @@ class OkHttpTest {
 
   @Test
   fun testHttpRequestNotBlockedOnLegacyAndroid() {
-    Assume.assumeTrue(Build.VERSION.SDK_INT < 23)
+    assumeTrue(Build.VERSION.SDK_INT < 23)
 
-    val request = Request.Builder().url("http://api.twitter.com/robots.txt").build()
+    val request = Request.Builder().url("http://squareup.com/robots.txt").build()
 
     val response = client.newCall(request).execute()
 
@@ -122,7 +123,7 @@ class OkHttpTest {
 
   @Test
   fun testHttpRequestBlocked() {
-    Assume.assumeTrue(Build.VERSION.SDK_INT >= 23)
+    assumeTrue(Build.VERSION.SDK_INT >= 23)
 
     val request = Request.Builder().url("http://api.twitter.com/robots.txt").build()
 
@@ -164,8 +165,7 @@ class OkHttpTest {
     try {
       client.newCall(request).execute()
       fail()
-    } catch (spue: SSLPeerUnverifiedException) {
-      // expected
+    } catch (_: SSLPeerUnverifiedException) {
     }
   }
 
@@ -202,7 +202,7 @@ class OkHttpTest {
     try {
       InetAddress.getByName("www.google.com")
     } catch (uhe: UnknownHostException) {
-      Assume.assumeNoException(uhe)
+      assumeNoException(uhe)
     }
   }
 }
