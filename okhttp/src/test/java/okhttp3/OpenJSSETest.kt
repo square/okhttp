@@ -21,6 +21,7 @@ import okhttp3.mockwebserver.MockWebServer
 import okhttp3.testing.PlatformRule
 import okhttp3.tls.HandshakeCertificates
 import okhttp3.tls.HeldCertificate
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Before
@@ -65,6 +66,8 @@ class OpenJSSETest {
       assertEquals(200, response.code)
       assertEquals(TlsVersion.TLS_1_3, response.handshake?.tlsVersion)
       assertEquals(Protocol.HTTP_1_1, response.protocol)
+
+      assertThat(response.exchange?.connection()?.socket()).isInstanceOf(SSLSocketImpl::class.java)
     }
   }
 
