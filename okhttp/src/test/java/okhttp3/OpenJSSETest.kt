@@ -32,7 +32,7 @@ class OpenJSSETest {
   }
 
   @Test
-  fun testX() {
+  fun testTlsv13Works() {
     enableTls()
 
     server.enqueue(MockResponse().setBody("abc"))
@@ -49,6 +49,7 @@ class OpenJSSETest {
 
   private fun enableTls() {
     // Generate a self-signed cert for the server to serve and the client to trust.
+    // can't use localhost with a non OpenJSSE trust manager
     val heldCertificate = HeldCertificate.Builder()
         .commonName("localhost")
         .addSubjectAlternativeName(InetAddress.getByName("localhost").canonicalHostName)
