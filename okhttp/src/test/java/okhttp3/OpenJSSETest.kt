@@ -7,6 +7,7 @@ import okhttp3.tls.HeldCertificate
 import okhttp3.tls.internal.TlsUtil.localhost
 import org.junit.After
 import org.junit.Assert
+import org.junit.Assert.*
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -41,7 +42,8 @@ class OpenJSSETest {
     val response = client.newCall(request).execute()
 
     response.use {
-      Assert.assertEquals(200, response.code)
+      assertEquals(200, response.code)
+      assertEquals(TlsVersion.TLS_1_3, response.handshake?.tlsVersion)
     }
   }
 
