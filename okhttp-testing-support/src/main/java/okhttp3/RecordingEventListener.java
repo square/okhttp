@@ -27,6 +27,7 @@ import javax.annotation.Nullable;
 
 import static java.util.Arrays.asList;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.Assert.assertTrue;
 
 public class RecordingEventListener extends EventListener {
   final Deque<CallEvent> eventSequence = new ConcurrentLinkedDeque<>();
@@ -75,7 +76,7 @@ public class RecordingEventListener extends EventListener {
     CallEvent startEvent = e.closes();
 
     if (startEvent != null) {
-      assertThat(eventSequence).contains(startEvent);
+      assertTrue(eventSequence.contains(startEvent));
     }
 
     eventSequence.offer(e);
