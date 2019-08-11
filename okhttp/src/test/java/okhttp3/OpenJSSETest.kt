@@ -15,6 +15,7 @@
  */
 package okhttp3
 
+import okhttp3.Protocol.HTTP_2
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import okhttp3.tls.HandshakeCertificates
@@ -25,6 +26,8 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.openjsse.net.ssl.OpenJSSE
+import org.openjsse.sun.security.ssl.SSLSocketFactoryImpl
+import org.openjsse.sun.security.ssl.SSLSocketImpl
 import java.net.InetAddress
 import java.security.Security
 
@@ -57,7 +60,18 @@ class OpenJSSETest {
     response.use {
       assertEquals(200, response.code)
       assertEquals(TlsVersion.TLS_1_3, response.handshake?.tlsVersion)
+      assertEquals(Protocol.HTTP_1_1, response.protocol)
     }
+  }
+
+  @Test
+  fun testSupportedProtocols() {
+    val factory = SSLSocketFactoryImpl()
+    val s = factory.createSocket() as SSLSocketImpl
+
+    // A Public API available is available to use in a custom Platform
+    s.setHandshakeApplicationProtocolSelector { _, _ -> HTTP_2.toString() }
+    assertEquals(listOf("TLSv1.3", "TLSv1.2", "TLSv1.1", "TLSv1"), s.enabledProtocols.toList())
   }
 
   private fun enableTls() {
