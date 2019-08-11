@@ -18,6 +18,7 @@ package okhttp3
 import okhttp3.Protocol.HTTP_2
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
+import okhttp3.testing.PlatformRule
 import okhttp3.tls.HandshakeCertificates
 import okhttp3.tls.HeldCertificate
 import org.junit.After
@@ -32,12 +33,15 @@ import java.net.InetAddress
 import java.security.Security
 
 class OpenJSSETest {
+  @JvmField @Rule var platform = PlatformRule()
   @JvmField @Rule val clientTestRule = OkHttpClientTestRule()
   @JvmField @Rule val server = MockWebServer()
   lateinit var client: OkHttpClient
 
   @Before
   fun setUp() {
+    platform.assumeJdk8()
+
     Security.insertProviderAt(OpenJSSE(), 1)
     client = clientTestRule.newClient()
   }
