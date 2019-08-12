@@ -764,6 +764,14 @@ or network should be done asynchronously.</p>
 <td><code>open fun dnsStart(call:</code><a href="../-call/"><code>Call</code></a><code>, domainName:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><code>String</code></a><code>):</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><code>Unit</code></a><br>Invoked just prior to a DNS lookup. See <a href="../-dns/lookup/">Dns.lookup</a>.</td>
 </tr>
 <tr>
+<td><a href="proxy-select-end/">proxySelectEnd</a></td>
+<td><code>open fun proxySelectEnd(call:</code><a href="../-call/"><code>Call</code></a><code>, url:</code><a href="../-http-url/"><code>HttpUrl</code></a><code>, proxies:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.html"><code>List</code></a><code>&lt;</code><a href="https://docs.oracle.com/javase/8/docs/api/java/net/Proxy.html"><code>Proxy</code></a><code>&gt;):</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><code>Unit</code></a><br>Invoked after proxy selection.</td>
+</tr>
+<tr>
+<td><a href="proxy-select-start/">proxySelectStart</a></td>
+<td><code>open fun proxySelectStart(call:</code><a href="../-call/"><code>Call</code></a><code>, url:</code><a href="../-http-url/"><code>HttpUrl</code></a><code>):</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><code>Unit</code></a><br>Invoked prior to a proxy selection.</td>
+</tr>
+<tr>
 <td><a href="request-body-end/">requestBodyEnd</a></td>
 <td><code>open fun requestBodyEnd(call:</code><a href="../-call/"><code>Call</code></a><code>, byteCount:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html"><code>Long</code></a><code>):</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><code>Unit</code></a><br>Invoked immediately after sending a request body.</td>
 </tr>

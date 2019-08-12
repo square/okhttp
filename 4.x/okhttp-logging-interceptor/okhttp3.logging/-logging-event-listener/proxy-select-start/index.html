@@ -40,7 +40,7 @@
     
     
       
-        <title>Send - OkHttp</title>
+        <title>Proxy select start - OkHttp</title>
       
     
     
@@ -91,7 +91,7 @@
     <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
     <label class="md-overlay" data-md-component="overlay" for="__drawer"></label>
     
-      <a href="#send" tabindex="1" class="md-skip">
+      <a href="#proxyselectstart" tabindex="1" class="md-skip">
         Skip to content
       </a>
     
@@ -117,7 +117,7 @@
             </span>
             <span class="md-header-nav__topic">
               
-                Send
+                Proxy select start
               
             </span>
           
@@ -355,7 +355,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../../" title="okhttp" class="md-nav__link">
+    <a href="../../../../okhttp/okhttp3/" title="okhttp" class="md-nav__link">
       okhttp
     </a>
   </li>
@@ -379,7 +379,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../../../../okhttp-logging-interceptor/okhttp3.logging/" title="logging-interceptor" class="md-nav__link">
+    <a href="../../" title="logging-interceptor" class="md-nav__link">
       logging-interceptor
     </a>
   </li>
@@ -621,26 +621,12 @@
             <article class="md-content__inner md-typeset">
               
                 
-                  <a href="https://github.com/square/okhttp/edit/master/docs/4.x/okhttp/okhttp3/-web-socket/send.md" title="Edit this page" class="md-icon md-content__icon">&#xE3C9;</a>
+                  <a href="https://github.com/square/okhttp/edit/master/docs/4.x/okhttp-logging-interceptor/okhttp3.logging/-logging-event-listener/proxy-select-start.md" title="Edit this page" class="md-icon md-content__icon">&#xE3C9;</a>
                 
                 
-                <p><a href="../../../">okhttp</a> / <a href="../../">okhttp3</a> / <a href="../">WebSocket</a> / <a href="./">send</a></p>
-<h1 id="send">send<a class="headerlink" href="#send" title="Permanent link">&para;</a></h1>
-<p><code>abstract fun send(text:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><code>String</code></a><code>):</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><code>Boolean</code></a></p>
-<p>Attempts to enqueue <code>text</code> to be UTF-8 encoded and sent as a the data of a text (type <code>0x1</code>)
-message.</p>
-<p>This method returns true if the message was enqueued. Messages that would overflow the outgoing
-message buffer will be rejected and trigger a <a href="../close/">graceful shutdown</a> of this web socket.
-This method returns false in that case, and in any other case where this web socket is closing,
-closed, or canceled.</p>
-<p>This method returns immediately.</p>
-<p><code>abstract fun send(bytes:</code><a href="https://square.github.io/okio/2.x/okio/okio/-byte-string/index.md"><code>ByteString</code></a><code>):</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html"><code>Boolean</code></a></p>
-<p>Attempts to enqueue <code>bytes</code> to be sent as a the data of a binary (type <code>0x2</code>) message.</p>
-<p>This method returns true if the message was enqueued. Messages that would overflow the outgoing
-message buffer (16 MiB) will be rejected and trigger a <a href="../close/">graceful shutdown</a> of this web
-socket. This method returns false in that case, and in any other case where this web socket is
-closing, closed, or canceled.</p>
-<p>This method returns immediately.</p>
+                <p><a href="../../../">okhttp-logging-interceptor</a> / <a href="../../">okhttp3.logging</a> / <a href="../">LoggingEventListener</a> / <a href="./">proxySelectStart</a></p>
+<h1 id="proxyselectstart">proxySelectStart<a class="headerlink" href="#proxyselectstart" title="Permanent link">&para;</a></h1>
+<p><code>fun proxySelectStart(call: Call, url: HttpUrl):</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-unit/index.html"><code>Unit</code></a></p>
                 
                   
                 

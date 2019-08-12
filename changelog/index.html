@@ -579,6 +579,13 @@
     <ul class="md-nav__list" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#version-410" title="Version 4.1.0" class="md-nav__link">
+    Version 4.1.0
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#version-401" title="Version 4.0.1" class="md-nav__link">
     Version 4.0.1
   </a>
@@ -1162,6 +1169,13 @@
     <ul class="md-nav__list" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#version-410" title="Version 4.1.0" class="md-nav__link">
+    Version 4.1.0
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#version-401" title="Version 4.0.1" class="md-nav__link">
     Version 4.0.1
   </a>
@@ -1697,6 +1711,33 @@
                 
                 
                 <h1 id="change-log">Change Log<a class="headerlink" href="#change-log" title="Permanent link">&para;</a></h1>
+<h2 id="version-410">Version 4.1.0<a class="headerlink" href="#version-410" title="Permanent link">&para;</a></h2>
+<p><em>2019-08-12</em></p>
+<ul>
+<li>
+<p><strong>OkHttp&rsquo;s new okhttp-brotli module implements Brotli compression.</strong> Install the interceptor to
+    enable <a href="https://github.com/google/brotli">Brotli compression</a>, which compresses 5-20% smaller than gzip.</p>
+<div class="codehilite"><pre><span></span>val client = OkHttpClient.Builder()
+    .addInterceptor(BrotliInterceptor)
+    .build()
+</pre></div>
+
+<p>This artifact has a dependency on Google&rsquo;s Brotli decoder (95 KiB).</p>
+</li>
+<li>
+<p>New: <code>EventListener.proxySelectStart()</code>, <code>proxySelectEnd()</code> events give visibility into the
+    proxy selection process.</p>
+</li>
+<li>New: <code>Response.byteString()</code> reads the entire response into memory as a byte string.</li>
+<li>New: <code>OkHttpClient.x509TrustManager</code> accessor.</li>
+<li>New: Permit <a href="https://www.iana.org/assignments/websocket/websocket.txt">new WebSocket response codes</a>: 1012 (Service Restart), 1013 (Try
+    Again Later), and 1014 (invalid response from the upstream).</li>
+<li>New: Build with Kotlin 1.3.41, BouncyCastle 1.62, and Conscrypt 2.2.1.</li>
+<li>Fix: Recover gracefully when a a coalesced connection immediately goes unhealthy.</li>
+<li>Fix: Defer the <code>SecurityException</code> when looking up the default proxy selector.</li>
+<li>Fix: Don&rsquo;t use brackets formatting IPv6 host names in MockWebServer.</li>
+<li>Fix: Don&rsquo;t permit cache iterators to remove entries that are being written.</li>
+</ul>
 <h2 id="version-401">Version 4.0.1<a class="headerlink" href="#version-401" title="Permanent link">&para;</a></h2>
 <p><em>2019-07-10</em></p>
 <ul>
