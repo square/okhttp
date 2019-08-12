@@ -1,6 +1,36 @@
 Change Log
 ==========
 
+## Version 4.1.0
+
+_2019-08-12_
+
+ [brotli]: https://github.com/google/brotli
+
+ *  **OkHttp's new okhttp-brotli module implements Brotli compression.** Install the interceptor to
+    enable [Brotli compression][brotli], which compresses 5-20% smaller than gzip.
+
+    ```
+    val client = OkHttpClient.Builder()
+        .addInterceptor(BrotliInterceptor)
+        .build()
+    ```
+
+    This artifact has a dependency on Google's Brotli decoder (95 KiB).
+
+ *  New: `EventListener.proxySelectStart()`, `proxySelectEnd()` events give visibility into the
+    proxy selection process.
+ *  New: `Response.byteString()` reads the entire response into memory as a byte string.
+ *  New: `OkHttpClient.x509TrustManager` accessor.
+ *  New: Permit [new WebSocket response codes][iana_websocket]: 1012 (Service Restart), 1013 (Try
+    Again Later), and 1014 (invalid response from the upstream).
+ *  New: Build with Kotlin 1.3.41, BouncyCastle 1.62, and Conscrypt 2.2.1.
+ *  Fix: Recover gracefully when a a coalesced connection immediately goes unhealthy.
+ *  Fix: Defer the `SecurityException` when looking up the default proxy selector.
+ *  Fix: Don't use brackets formatting IPv6 host names in MockWebServer.
+ *  Fix: Don't permit cache iterators to remove entries that are being written.
+
+
 ## Version 4.0.1
 
 _2019-07-10_
@@ -1830,3 +1860,4 @@ Initial release.
  [upgrading_to_okhttp_4]: https://square.github.io/okhttp/upgrading_to_okhttp_4/
  [interceptors]: https://square.github.io/okhttp/interceptors/
  [okhttp4_blog_post]: https://cashapp.github.io/2019-06-26/okhttp-4-goes-kotlin
+ [iana_websocket]: https://www.iana.org/assignments/websocket/websocket.txt
