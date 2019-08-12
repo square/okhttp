@@ -980,7 +980,7 @@ public final class EventListenerTest {
   }
 
   private void requestBodyFail() {
-    // Stream a 8 MiB body so the disconnect will happen before the server has read everything.
+    // Stream a 256 MiB body so the disconnect will happen before the server has read everything.
     RequestBody requestBody = new RequestBody() {
       @Override public MediaType contentType() {
         return MediaType.get("text/plain");
@@ -998,6 +998,7 @@ public final class EventListenerTest {
       }
     };
 
+    server.setBodyLimit(0L);
     server.enqueue(new MockResponse()
         .setSocketPolicy(SocketPolicy.DISCONNECT_DURING_REQUEST_BODY));
 
