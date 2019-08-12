@@ -1,19 +1,15 @@
-apply plugin: 'com.github.johnrengelman.shadow'
+plugins {
+  id "application"
+}
 
 tasks.withType(JavaCompile) {
   options.warnings = false
 }
 
-jar {
-  manifest {
-    attributes 'Main-Class': 'okhttp3.sample.SampleServer'
-  }
+application {
+  mainClassName = 'okhttp3.sample.SampleServer'
 }
 
 dependencies {
   implementation project(':mockwebserver')
-}
-
-shadowJar {
-  mergeServiceFiles()
 }

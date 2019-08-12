@@ -3,7 +3,6 @@ plugins {
 }
 
 apply plugin: 'com.vanniktech.maven.publish'
-apply plugin: 'com.github.johnrengelman.shadow'
 
 jar {
   manifest {
@@ -39,8 +38,4 @@ dependencies {
   testImplementation project(':okhttp-testing-support')
   testImplementation deps.junit
   testImplementation deps.assertj
-}
-
-shadowJar {
-  mergeServiceFiles()
 }
