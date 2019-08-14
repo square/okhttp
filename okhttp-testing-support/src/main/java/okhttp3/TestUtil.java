@@ -22,9 +22,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import okhttp3.internal.http2.Header;
-import org.junit.Assume;
 
-import static org.junit.Assume.*;
+import static org.junit.Assume.assumeNoException;
 
 public final class TestUtil {
   public static final InetSocketAddress UNREACHABLE_ADDRESS

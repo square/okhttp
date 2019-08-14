@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014 Square, Inc.
+ * Copyright (C) 2019 Square, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,7 +30,7 @@ import javax.net.ssl.X509TrustManager
  * Platform using OpenJSSE (https://github.com/openjsse/openjsse) if installed as the first
  * Security Provider.
  *
- * Requires org.conscrypt:conscrypt-openjdk-uber >= 2.1.0 on the classpath.
+ * Requires org.openjsse:openjsse >= 1.1.0 on the classpath.
  */
 class OpenJSSEPlatform private constructor() : Platform() {
   private val provider: Provider = org.openjsse.net.ssl.OpenJSSE()

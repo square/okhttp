@@ -200,7 +200,7 @@ open class Platform {
         return "Conscrypt" == preferredProvider
       }
 
-    val isOpenJSSEPreferred: Boolean
+    private val isOpenJSSEPreferred: Boolean
       get() {
         val preferredProvider = Security.getProviders()[0].name
         return "OpenJSSE" == preferredProvider
