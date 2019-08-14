@@ -159,6 +159,10 @@ subprojects { project ->
     dependencies {
       testRuntime "org.conscrypt:conscrypt-openjdk-uber:${versions.conscrypt}"
     }
+  } else if (platform == "openjsse") {
+    dependencies {
+      testRuntime deps.openjsse
+    }
   }
 
   dependencies {

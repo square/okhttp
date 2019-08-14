@@ -16,6 +16,7 @@
 package okhttp3.internal.platform
 
 import okhttp3.Protocol
+import okhttp3.internal.readFieldOrNull
 import org.conscrypt.Conscrypt
 import java.security.Provider
 import javax.net.ssl.SSLContext
@@ -29,13 +30,9 @@ import javax.net.ssl.X509TrustManager
  * Requires org.conscrypt:conscrypt-openjdk-uber >= 2.1.0 on the classpath.
  */
 class ConscryptPlatform private constructor() : Platform() {
-  private val provider: Provider
-    get() {
-      // n.b. We should consider defaulting to OpenJDK 11 trust manager
-      // https://groups.google.com/forum/#!topic/conscrypt/3vYzbesjOb4
-
-      return Conscrypt.newProviderBuilder().provideTrustManager(true).build()
-    }
+  // n.b. We should consider defaulting to OpenJDK 11 trust manager
+  // https://groups.google.com/forum/#!topic/conscrypt/3vYzbesjOb4
+  private val provider: Provider = Conscrypt.newProviderBuilder().provideTrustManager(true).build()
 
   // See release notes https://groups.google.com/forum/#!forum/conscrypt
   // for version differences
