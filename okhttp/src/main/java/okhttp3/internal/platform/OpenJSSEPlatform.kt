@@ -19,7 +19,6 @@ import android.annotation.SuppressLint
 import okhttp3.Protocol
 import java.security.KeyStore
 import java.security.Provider
-import javax.net.ssl.SNIHostName
 import javax.net.ssl.SSLContext
 import javax.net.ssl.SSLSocket
 import javax.net.ssl.SSLSocketFactory
@@ -70,9 +69,9 @@ class OpenJSSEPlatform private constructor() : Platform() {
 
       // Enable SNI.
       // TODO: Maybe not need post JDK 1.7?
-      if (hostname != null) {
-        sslParameters.serverNames = listOf(SNIHostName(hostname))
-      }
+//      if (hostname != null) {
+//        sslParameters.serverNames = listOf(SNIHostName(hostname))
+//      }
 
       sslSocket.sslParameters = sslParameters
     } else {

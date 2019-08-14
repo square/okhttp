@@ -73,7 +73,7 @@ class OpenJSSETest {
   }
 
   @Test
-  @Ignore
+//  @Ignore
   fun testMozilla() {
     assumeNetwork()
 
