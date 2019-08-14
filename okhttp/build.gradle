@@ -38,6 +38,7 @@ dependencies {
   testImplementation deps.conscrypt
   testImplementation deps.junit
   testImplementation deps.assertj
+  testImplementation deps.openjsse
   testCompileOnly deps.jsr305
 }
 

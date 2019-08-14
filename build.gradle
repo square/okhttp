@@ -19,7 +19,8 @@ buildscript {
       'moshi': '1.8.0',
       'okio': '2.2.2',
       'ktlint': '0.31.0',
-      'picocli': '4.0.1'
+      'picocli': '4.0.1',
+      'openjsse': '1.1.0'
   ]
 
   ext.deps = [
@@ -37,7 +38,8 @@ buildscript {
       'junit': "junit:junit:${versions.junit}",
       'kotlinStdlib': "org.jetbrains.kotlin:kotlin-stdlib:${versions.kotlin}",
       'moshi': "com.squareup.moshi:moshi:${versions.moshi}",
-      'okio': "com.squareup.okio:okio:${versions.okio}"
+      'okio': "com.squareup.okio:okio:${versions.okio}",
+      'openjsse': "org.openjsse:openjsse:${versions.openjsse}"
   ]
 
   dependencies {
