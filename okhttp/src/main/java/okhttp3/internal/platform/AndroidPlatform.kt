@@ -15,6 +15,7 @@
  */
 package okhttp3.internal.platform
 
+import android.annotation.SuppressLint
 import android.os.Build
 import okhttp3.Protocol
 import okhttp3.internal.platform.android.CloseGuard
@@ -105,9 +106,9 @@ class AndroidPlatform : Platform() {
       val getInstanceMethod = networkPolicyClass.getMethod("getInstance")
       val networkSecurityPolicy = getInstanceMethod.invoke(null)
       api24IsCleartextTrafficPermitted(hostname, networkPolicyClass, networkSecurityPolicy)
-    } catch (e: ClassNotFoundException) {
+    } catch (_: ClassNotFoundException) {
       super.isCleartextTrafficPermitted(hostname)
-    } catch (e: NoSuchMethodException) {
+    } catch (_: NoSuchMethodException) {
       super.isCleartextTrafficPermitted(hostname)
     } catch (e: IllegalAccessException) {
       throw AssertionError("unable to determine cleartext support", e)
@@ -127,7 +128,7 @@ class AndroidPlatform : Platform() {
     val isCleartextTrafficPermittedMethod = networkPolicyClass
         .getMethod("isCleartextTrafficPermitted", String::class.java)
     isCleartextTrafficPermittedMethod.invoke(networkSecurityPolicy, hostname) as Boolean
-  } catch (e: NoSuchMethodException) {
+  } catch (_: NoSuchMethodException) {
     api23IsCleartextTrafficPermitted(hostname, networkPolicyClass, networkSecurityPolicy)
   }
 
@@ -140,7 +141,7 @@ class AndroidPlatform : Platform() {
     val isCleartextTrafficPermittedMethod = networkPolicyClass
         .getMethod("isCleartextTrafficPermitted")
     isCleartextTrafficPermittedMethod.invoke(networkSecurityPolicy) as Boolean
-  } catch (e: NoSuchMethodException) {
+  } catch (_: NoSuchMethodException) {
     super.isCleartextTrafficPermitted(hostname)
   }
 
@@ -153,7 +154,7 @@ class AndroidPlatform : Platform() {
             "checkServerTrusted", Array<X509Certificate>::class.java, String::class.java,
             String::class.java)
         AndroidCertificateChainCleaner(extensions, checkServerTrusted)
-      } catch (e: Exception) {
+      } catch (_: Exception) {
         super.buildCertificateChainCleaner(trustManager)
       }
 
@@ -217,25 +218,23 @@ class AndroidPlatform : Platform() {
         trustAnchor.trustedCert
       } catch (e: IllegalAccessException) {
         throw AssertionError("unable to get issues and signature", e)
-      } catch (e: InvocationTargetException) {
+      } catch (_: InvocationTargetException) {
         null
       }
     }
   }
 
   companion object {
+    @SuppressLint("PrivateApi")
     val isSupported: Boolean = try {
       // Trigger an early exception over a fatal error, prefer a RuntimeException over Error.
       Class.forName("com.android.org.conscrypt.OpenSSLSocketImpl")
 
       // Fail Fast
-      if (Build.VERSION.SDK_INT < 21) {
-        throw IllegalStateException(
-            "Expected Android API level 21+ but was ${Build.VERSION.SDK_INT}")
-      }
+      check(Build.VERSION.SDK_INT >= 21) { "Expected Android API level 21+ but was ${Build.VERSION.SDK_INT}" }
 
       true
-    } catch (e: ClassNotFoundException) {
+    } catch (_: ClassNotFoundException) {
       false
     }
 
