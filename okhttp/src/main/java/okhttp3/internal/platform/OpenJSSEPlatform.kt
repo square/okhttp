@@ -15,7 +15,6 @@
  */
 package okhttp3.internal.platform
 
-import android.annotation.SuppressLint
 import okhttp3.Protocol
 import java.security.KeyStore
 import java.security.Provider
@@ -52,7 +51,6 @@ class OpenJSSEPlatform private constructor() : Platform() {
       throw UnsupportedOperationException(
           "clientBuilder.sslSocketFactory(SSLSocketFactory) not supported with OpenJSSE")
 
-  @SuppressLint("NewApi")
   override fun configureTlsExtensions(
     sslSocket: SSLSocket,
     hostname: String?,
