@@ -85,11 +85,11 @@ class ConscryptPlatform private constructor() : Platform() {
     }
   }
 
-  override fun getSelectedProtocol(socket: SSLSocket): String? =
-      if (Conscrypt.isConscrypt(socket)) {
-        Conscrypt.getApplicationProtocol(socket)
+  override fun getSelectedProtocol(sslSocket: SSLSocket): String? =
+      if (Conscrypt.isConscrypt(sslSocket)) {
+        Conscrypt.getApplicationProtocol(sslSocket)
       } else {
-        super.getSelectedProtocol(socket)
+        super.getSelectedProtocol(sslSocket)
       }
 
   override fun configureSslSocketFactory(socketFactory: SSLSocketFactory) {
@@ -106,17 +106,19 @@ class ConscryptPlatform private constructor() : Platform() {
   }
 
   companion object {
-    fun buildIfSupported(): ConscryptPlatform? = try {
+    val isSupported: Boolean = try {
       // Trigger an early exception over a fatal error, prefer a RuntimeException over Error.
       Class.forName("org.conscrypt.Conscrypt\$Version")
 
       when {
-        Conscrypt.isAvailable() && atLeastVersion(2, 1, 0) -> ConscryptPlatform()
-        else -> null
+        Conscrypt.isAvailable() && atLeastVersion(2, 1, 0) -> true
+        else -> false
       }
     } catch (e: ClassNotFoundException) {
-      null
+      false
     }
+
+    fun buildIfSupported(): ConscryptPlatform? = if (isSupported) ConscryptPlatform() else null
 
     fun atLeastVersion(major: Int, minor: Int = 0, patch: Int = 0): Boolean {
       val conscryptVersion = Conscrypt.version()
