@@ -86,7 +86,10 @@ public final class CacheTest {
 
   @After public void tearDown() throws Exception {
     ResponseCache.setDefault(null);
-    cache.delete();
+
+    if (cache != null) {
+      cache.delete();
+    }
   }
 
   /**
