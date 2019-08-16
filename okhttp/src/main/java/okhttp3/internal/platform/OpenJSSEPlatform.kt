@@ -65,12 +65,6 @@ class OpenJSSEPlatform private constructor() : Platform() {
         sslParameters.applicationProtocols = names.toTypedArray()
       }
 
-      // Enable SNI.
-      // TODO: Maybe not need post JDK 1.7?
-//      if (hostname != null) {
-//        sslParameters.serverNames = listOf(SNIHostName(hostname))
-//      }
-
       sslSocket.sslParameters = sslParameters
     } else {
       super.configureTlsExtensions(sslSocket, hostname, protocols)
