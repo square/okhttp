@@ -25,7 +25,6 @@ import okhttp3.tls.HeldCertificate
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Assert.assertEquals
 import org.junit.Before
-import org.junit.Ignore
 import org.junit.Rule
 import org.junit.Test
 import org.openjsse.sun.security.ssl.SSLSocketFactoryImpl
