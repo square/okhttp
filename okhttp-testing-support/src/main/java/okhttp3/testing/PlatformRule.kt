@@ -59,6 +59,8 @@ open class PlatformRule @JvmOverloads constructor(
         try {
           setupPlatform()
 
+          System.err.println("Running with ${Platform.get().javaClass.simpleName}")
+
           base.evaluate()
         } catch (e: AssumptionViolatedException) {
           throw e
@@ -217,6 +219,11 @@ open class PlatformRule @JvmOverloads constructor(
         JDK8_ALPN_PROPERTY))
   }
 
+  fun assumeNotOpenJSSE() {
+    assumeThat(getPlatformSystemProperty(), not(
+        OPENJSSE_PROPERTY))
+  }
+
   fun assumeNotHttp2Support() {
     assumeThat(getPlatformSystemProperty(), equalTo(
         JDK8_PROPERTY))
@@ -257,6 +264,8 @@ open class PlatformRule @JvmOverloads constructor(
 
         Security.insertProviderAt(OpenJSSE(), 1)
       }
+
+      Platform.resetForTests()
     }
 
     @JvmStatic
