@@ -220,8 +220,8 @@ open class PlatformRule @JvmOverloads constructor(
   }
 
   fun assumeNotOpenJSSE() {
-    assumeThat(getPlatformSystemProperty(), not(
-        OPENJSSE_PROPERTY))
+//    assumeThat(getPlatformSystemProperty(), not(
+//        OPENJSSE_PROPERTY))
   }
 
   fun assumeNotHttp2Support() {
