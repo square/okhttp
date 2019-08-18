@@ -65,6 +65,8 @@ public final class ClientAuthTest {
 
   @Before
   public void setUp() {
+    platform.assumeNotOpenJSSE();
+
     serverRootCa = new HeldCertificate.Builder()
         .serialNumber(1L)
         .certificateAuthority(1)

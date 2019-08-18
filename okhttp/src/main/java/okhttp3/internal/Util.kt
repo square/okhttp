@@ -542,3 +542,27 @@ inline fun Any.notify() = (this as Object).notify()
 
 @Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN", "NOTHING_TO_INLINE")
 inline fun Any.notifyAll() = (this as Object).notifyAll()
+
+fun <T> readFieldOrNull(instance: Any, fieldType: Class<T>, fieldName: String): T? {
+  var c: Class<*> = instance.javaClass
+  while (c != Any::class.java) {
+    try {
+      val field = c.getDeclaredField(fieldName)
+      field.isAccessible = true
+      val value = field.get(instance)
+      return if (!fieldType.isInstance(value)) null else fieldType.cast(value)
+    } catch (_: NoSuchFieldException) {
+    }
+
+    c = c.superclass
+  }
+
+  // Didn't find the field we wanted. As a last gasp attempt,
+  // try to find the value on a delegate.
+  if (fieldName != "delegate") {
+    val delegate = readFieldOrNull(instance, Any::class.java, "delegate")
+    if (delegate != null) return readFieldOrNull(delegate, fieldType, fieldName)
+  }
+
+  return null
+}

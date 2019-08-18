@@ -42,6 +42,7 @@ import okhttp3.mockwebserver.MockWebServer;
 import okhttp3.mockwebserver.RecordedRequest;
 import okhttp3.mockwebserver.SocketPolicy;
 import okhttp3.testing.Flaky;
+import okhttp3.testing.PlatformRule;
 import okhttp3.tls.HandshakeCertificates;
 import okio.Buffer;
 import okio.ByteString;
@@ -65,6 +66,7 @@ public final class WebSocketHttpTest {
 
   @Rule public final MockWebServer webServer = new MockWebServer();
   @Rule public final OkHttpClientTestRule clientTestRule = new OkHttpClientTestRule();
+  @Rule public final PlatformRule platform = new PlatformRule();
 
   private final HandshakeCertificates handshakeCertificates = localhost();
   private final WebSocketRecorder clientListener = new WebSocketRecorder("client");
@@ -73,6 +75,8 @@ public final class WebSocketHttpTest {
   private OkHttpClient client;
 
   @Before public void setUp() {
+    platform.assumeNotOpenJSSE();
+
     client = clientTestRule.newClientBuilder()
         .writeTimeout(500, TimeUnit.MILLISECONDS)
         .readTimeout(500, TimeUnit.MILLISECONDS)

@@ -15,7 +15,6 @@
  */
 package okhttp3.internal.platform
 
-import android.annotation.SuppressLint
 import android.os.Build
 import okhttp3.Protocol
 import okhttp3.internal.platform.android.CloseGuard
@@ -225,7 +224,6 @@ class AndroidPlatform : Platform() {
   }
 
   companion object {
-    @SuppressLint("PrivateApi")
     val isSupported: Boolean = try {
       // Trigger an early exception over a fatal error, prefer a RuntimeException over Error.
       Class.forName("com.android.org.conscrypt.OpenSSLSocketImpl")

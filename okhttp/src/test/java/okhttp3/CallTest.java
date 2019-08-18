@@ -117,6 +117,8 @@ public final class CallTest {
   private Logger logger = Logger.getLogger(OkHttpClient.class.getName());
 
   @Before public void setUp() {
+    platform.assumeNotOpenJSSE();
+
     logger.addHandler(logHandler);
     client = clientTestRule.newClientBuilder()
         .eventListener(listener)

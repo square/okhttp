@@ -16,6 +16,7 @@
 package okhttp3.internal.platform.android
 
 import okhttp3.internal.platform.Platform
+import okhttp3.internal.readFieldOrNull
 import javax.net.ssl.SSLSocket
 import javax.net.ssl.SSLSocketFactory
 import javax.net.ssl.X509TrustManager
@@ -35,11 +36,11 @@ class StandardAndroidSocketAdapter(
 
   override fun trustManager(sslSocketFactory: SSLSocketFactory): X509TrustManager? {
     val context: Any? =
-        Platform.readFieldOrNull(sslSocketFactory, paramClass,
+        readFieldOrNull(sslSocketFactory, paramClass,
             "sslParameters")
-    val x509TrustManager = Platform.readFieldOrNull(
+    val x509TrustManager = readFieldOrNull(
         context!!, X509TrustManager::class.java, "x509TrustManager")
-    return x509TrustManager ?: Platform.readFieldOrNull(context,
+    return x509TrustManager ?: readFieldOrNull(context,
         X509TrustManager::class.java,
         "trustManager")
   }
