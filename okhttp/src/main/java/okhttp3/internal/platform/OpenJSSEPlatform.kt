@@ -33,6 +33,9 @@ import javax.net.ssl.X509TrustManager
 class OpenJSSEPlatform private constructor() : Platform() {
   private val provider: Provider = org.openjsse.net.ssl.OpenJSSE()
 
+  // Selects TLSv1.3 so we are specific about our intended version ranges (not just 1.3)
+  // and because it's a common pattern for VMs to have differences between supported and
+  // defaulted versions for TLS based on what is requested.
   override fun newSSLContext(): SSLContext =
       SSLContext.getInstance("TLSv1.3", provider)
 
@@ -63,9 +66,9 @@ class OpenJSSEPlatform private constructor() : Platform() {
         // Enable ALPN.
         val names = alpnProtocolNames(protocols)
         sslParameters.applicationProtocols = names.toTypedArray()
-      }
 
-      sslSocket.sslParameters = sslParameters
+        sslSocket.sslParameters = sslParameters
+      }
     } else {
       super.configureTlsExtensions(sslSocket, hostname, protocols)
     }
@@ -74,6 +77,7 @@ class OpenJSSEPlatform private constructor() : Platform() {
   override fun getSelectedProtocol(sslSocket: SSLSocket): String? =
       if (sslSocket is org.openjsse.javax.net.ssl.SSLSocket) {
         when (val protocol = sslSocket.applicationProtocol) {
+          // Handles both un-configured and none selected.
           null, "" -> null
           else -> protocol
         }
