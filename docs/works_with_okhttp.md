@@ -4,9 +4,10 @@ Works with OkHttp
 Here’s some libraries that work nicely with OkHttp.
 
  * [Chucker](https://github.com/ChuckerTeam/chucker): An in-app HTTP inspector for Android OkHttp clients.
- * [Coil](https://github.com/colinrtwhite/coil): An image loading library for Android backed by Kotlin Coroutines.
+ * [Coil](https://github.com/coil-kt/coil): An image loading library for Android backed by Kotlin Coroutines.
  * [Communicator](https://github.com/Taig/Communicator): An OkHttp wrapper for Scala built with Android in mind.
  * [CWAC-NetSecurity](https://github.com/commonsguy/cwac-netsecurity): Simplifying Secure Internet Access.
+ * [Flipper](https://fbflipper.com/): A desktop debugging platform for mobile developers.
  * [Fresco](https://github.com/facebook/fresco): An Android library for managing images and the memory they use.
  * [Glide](https://github.com/bumptech/glide): An image loading and caching library for Android focused on smooth scrolling.
  * [GoogleAppEngineOkHttp](https://github.com/apkelly/GoogleAppEngineOkHttp): An OkHttp Call that works on Google App Engine.
