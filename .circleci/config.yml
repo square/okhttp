@@ -51,7 +51,7 @@ commands:
 jobs:
   compile:
     docker:
-      - image: circleci/openjdk:8u222-jdk
+      - image: circleci/openjdk:8u222-jdk-stretch
 
     environment:
       JVM_OPTS: -Xmx1g
@@ -81,7 +81,7 @@ jobs:
 
   checkjdk8:
     docker:
-      - image: circleci/openjdk:8u222-jdk
+      - image: circleci/openjdk:8u222-jdk-stretch
 
     environment:
       JVM_OPTS: -Xmx1g
@@ -114,7 +114,7 @@ jobs:
 
   testjdk8:
     docker:
-      - image: circleci/openjdk:8u222-jdk
+      - image: circleci/openjdk:8u222-jdk-stretch
 
     environment:
       JVM_OPTS: -Xmx1g
@@ -128,7 +128,7 @@ jobs:
 
   testjdk8alpn:
     docker:
-      - image: circleci/openjdk:8u222-jdk
+      - image: circleci/openjdk:8u222-jdk-stretch
 
     environment:
       JVM_OPTS: -Xmx1g
@@ -142,7 +142,7 @@ jobs:
 
   testopenjsse:
     docker:
-      - image: circleci/openjdk:8u222-jdk
+      - image: circleci/openjdk:8u222-jdk-stretch
 
     environment:
       JVM_OPTS: -Xmx1g
