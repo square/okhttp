@@ -246,10 +246,11 @@ workflows:
           filters:
             branches:
               only: master
-      - testjdk12:
+      - testjdk13:
           filters:
-            ignore:
-              - gh-pages
+            branches:
+              ignore:
+                - gh-pages
       - testconscrypt:
           filters:
             branches:
