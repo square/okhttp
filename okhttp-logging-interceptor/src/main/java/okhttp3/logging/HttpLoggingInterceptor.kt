@@ -116,6 +116,21 @@ class HttpLoggingInterceptor @JvmOverloads constructor(
           Platform.get().log(INFO, message, null)
         }
       }
+
+      /**
+       * Constructs an logger for a lambda. This compact syntax is most useful for inline
+       * loggers.
+       *
+       * ```
+       * val logger = Logger { message: String ->
+       *     //custom logging
+       * }
+       * ```
+       */
+      inline operator fun invoke(crossinline block: (message: String) -> Unit): Logger =
+              object : Logger {
+                override fun log(message: String) = block(message)
+              }
     }
   }
 
