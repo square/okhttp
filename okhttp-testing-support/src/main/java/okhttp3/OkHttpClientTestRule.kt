@@ -22,6 +22,7 @@ import org.junit.runner.Description
 import org.junit.runners.model.Statement
 import java.net.InetAddress
 import java.util.concurrent.ConcurrentLinkedDeque
+import javax.net.ssl.SSLSessionContext
 
 /** Apply this rule to tests that need an OkHttpClient instance. */
 class OkHttpClientTestRule : TestRule {
@@ -81,6 +82,11 @@ class OkHttpClientTestRule : TestRule {
 
       private fun releaseClient() {
         prototype?.let {
+          it.sslSessionContext?.let { sslSessionContext: SSLSessionContext ->
+            for (session in sslSessionContext.ids) {
+              sslSessionContext.getSession(session).invalidate()
+            }
+          }
           prototypes.push(it)
           prototype = null
         }

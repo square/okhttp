@@ -40,6 +40,7 @@ import java.util.concurrent.ExecutorService
 import java.util.concurrent.TimeUnit
 import javax.net.SocketFactory
 import javax.net.ssl.HostnameVerifier
+import javax.net.ssl.SSLSessionContext
 import javax.net.ssl.SSLSocketFactory
 import javax.net.ssl.TrustManager
 import javax.net.ssl.X509TrustManager
@@ -179,6 +180,8 @@ open class OkHttpClient internal constructor(
 
   @get:JvmName("x509TrustManager") val x509TrustManager: X509TrustManager?
 
+  @get:JvmName("sslSessionContext") val sslSessionContext: SSLSessionContext?
+
   @get:JvmName("connectionSpecs") val connectionSpecs: List<ConnectionSpec> =
       builder.connectionSpecs
 
@@ -215,10 +218,13 @@ open class OkHttpClient internal constructor(
       this.sslSocketFactoryOrNull = builder.sslSocketFactoryOrNull
       this.certificateChainCleaner = builder.certificateChainCleaner
       this.x509TrustManager = builder.x509TrustManagerOrNull
+      this.sslSessionContext = builder.sslSessionContextOrNull
     } else {
       this.x509TrustManager = Platform.get().platformTrustManager()
       Platform.get().configureTrustManager(x509TrustManager)
-      this.sslSocketFactoryOrNull = newSslSocketFactory(x509TrustManager!!)
+      val (newSSLSessionContext, newSslSocketFactory) = newSslSocketFactory(x509TrustManager!!)
+      this.sslSocketFactoryOrNull = newSslSocketFactory
+      this.sslSessionContext = newSSLSessionContext
       this.certificateChainCleaner = CertificateChainCleaner.get(x509TrustManager!!)
     }
 
@@ -452,6 +458,7 @@ open class OkHttpClient internal constructor(
     internal var socketFactory: SocketFactory = SocketFactory.getDefault()
     internal var sslSocketFactoryOrNull: SSLSocketFactory? = null
     internal var x509TrustManagerOrNull: X509TrustManager? = null
+    internal var sslSessionContextOrNull: SSLSessionContext? = null
     internal var connectionSpecs: List<ConnectionSpec> = DEFAULT_CONNECTION_SPECS
     internal var protocols: List<Protocol> = DEFAULT_PROTOCOLS
     internal var hostnameVerifier: HostnameVerifier = OkHostnameVerifier
@@ -482,6 +489,7 @@ open class OkHttpClient internal constructor(
       this.socketFactory = okHttpClient.socketFactory
       this.sslSocketFactoryOrNull = okHttpClient.sslSocketFactoryOrNull
       this.x509TrustManagerOrNull = okHttpClient.x509TrustManager
+      this.sslSessionContextOrNull = okHttpClient.sslSessionContext
       this.connectionSpecs = okHttpClient.connectionSpecs
       this.protocols = okHttpClient.protocols
       this.hostnameVerifier = okHttpClient.hostnameVerifier
@@ -961,11 +969,11 @@ open class OkHttpClient internal constructor(
     internal val DEFAULT_CONNECTION_SPECS = immutableListOf(
         ConnectionSpec.MODERN_TLS, ConnectionSpec.CLEARTEXT)
 
-    private fun newSslSocketFactory(trustManager: X509TrustManager): SSLSocketFactory {
+    private fun newSslSocketFactory(trustManager: X509TrustManager): Pair<SSLSessionContext, SSLSocketFactory> {
       try {
         val sslContext = Platform.get().newSSLContext()
         sslContext.init(null, arrayOf<TrustManager>(trustManager), null)
-        return sslContext.socketFactory
+        return Pair(sslContext.clientSessionContext, sslContext.socketFactory)
       } catch (e: GeneralSecurityException) {
         throw AssertionError("No System TLS", e) // The system has no TLS. Just give up.
       }
