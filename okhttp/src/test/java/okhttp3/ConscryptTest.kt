@@ -19,6 +19,7 @@ import okhttp3.TestUtil.assumeNetwork
 import okhttp3.internal.platform.ConscryptPlatform
 import okhttp3.internal.platform.Platform
 import okhttp3.testing.PlatformRule
+import okio.ByteString.Companion.toByteString
 import org.assertj.core.api.Assertions.assertThat
 import org.conscrypt.Conscrypt
 import org.junit.Assert.assertFalse
@@ -61,11 +62,11 @@ class ConscryptTest {
   }
 
   @Test
-  @Ignore
+//  @Ignore
   fun testGoogle() {
     assumeNetwork()
 
-    val request = Request.Builder().url("https://google.com/robots.txt").build()
+    val request = Request.Builder().url("https://www.google.com/robots.txt").build()
 
     client.newCall(request).execute().use {
       assertThat(it.protocol).isEqualTo(Protocol.HTTP_2)
@@ -73,6 +74,13 @@ class ConscryptTest {
         System.err.println("Flaky TLSv1.3 with google")
 //    assertThat(it.handshake()!!.tlsVersion).isEqualTo(TlsVersion.TLS_1_3)
       }
+    }
+
+    val sslSessionContext = client.sslSessionContext
+    for (id in sslSessionContext.ids) {
+      val session = sslSessionContext.getSession(id)
+      println(
+          "${session.javaClass.simpleName} ${session.peerHost} ${session.creationTime} ${session.isValid} ${session.id.toByteString().hex()}")
     }
   }
 
@@ -90,7 +98,8 @@ class ConscryptTest {
     assertTrue(ConscryptPlatform.atLeastVersion(version.major()))
     assertTrue(ConscryptPlatform.atLeastVersion(version.major(), version.minor()))
     assertTrue(ConscryptPlatform.atLeastVersion(version.major(), version.minor(), version.patch()))
-    assertFalse(ConscryptPlatform.atLeastVersion(version.major(), version.minor(), version.patch() + 1))
+    assertFalse(
+        ConscryptPlatform.atLeastVersion(version.major(), version.minor(), version.patch() + 1))
     assertFalse(ConscryptPlatform.atLeastVersion(version.major(), version.minor() + 1))
     assertFalse(ConscryptPlatform.atLeastVersion(version.major() + 1))
   }

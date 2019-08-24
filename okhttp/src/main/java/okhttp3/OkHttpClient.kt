@@ -180,7 +180,10 @@ open class OkHttpClient internal constructor(
 
   @get:JvmName("x509TrustManager") val x509TrustManager: X509TrustManager?
 
-  @get:JvmName("sslSessionContext") val sslSessionContext: SSLSessionContext?
+  private val sslSessionContextOrNull: SSLSessionContext?
+
+  @get:JvmName("sslSessionContext") val sslSessionContext: SSLSessionContext
+    get() = sslSessionContextOrNull ?: throw IllegalStateException("CLEARTEXT-only client")
 
   @get:JvmName("connectionSpecs") val connectionSpecs: List<ConnectionSpec> =
       builder.connectionSpecs
@@ -218,13 +221,13 @@ open class OkHttpClient internal constructor(
       this.sslSocketFactoryOrNull = builder.sslSocketFactoryOrNull
       this.certificateChainCleaner = builder.certificateChainCleaner
       this.x509TrustManager = builder.x509TrustManagerOrNull
-      this.sslSessionContext = builder.sslSessionContextOrNull
+      this.sslSessionContextOrNull = builder.sslSessionContextOrNull
     } else {
       this.x509TrustManager = Platform.get().platformTrustManager()
       Platform.get().configureTrustManager(x509TrustManager)
       val (newSSLSessionContext, newSslSocketFactory) = newSslSocketFactory(x509TrustManager!!)
       this.sslSocketFactoryOrNull = newSslSocketFactory
-      this.sslSessionContext = newSSLSessionContext
+      this.sslSessionContextOrNull = newSSLSessionContext
       this.certificateChainCleaner = CertificateChainCleaner.get(x509TrustManager!!)
     }
 

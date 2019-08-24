@@ -82,14 +82,20 @@ class OkHttpClientTestRule : TestRule {
 
       private fun releaseClient() {
         prototype?.let {
-          it.sslSessionContext?.let { sslSessionContext: SSLSessionContext ->
-            for (session in sslSessionContext.ids) {
-              sslSessionContext.getSession(session).invalidate()
-            }
-          }
+          it.sslSessionContext.releaseSslSessions()
           prototypes.push(it)
           prototype = null
         }
+      }
+    }
+  }
+
+  private fun SSLSessionContext.releaseSslSessions() {
+    for (session in ids) {
+      try {
+        getSession(session).invalidate()
+      } catch (_: UnsupportedOperationException) {
+        // unavoidable https://github.com/google/conscrypt/issues/708
       }
     }
   }
