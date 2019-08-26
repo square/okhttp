@@ -82,7 +82,7 @@ class OkHttpClientTestRule : TestRule {
 
       private fun releaseClient() {
         prototype?.let {
-          it.sslSessionContext.releaseSslSessions()
+          it.sslContext.clientSessionContext.releaseSslSessions()
           prototypes.push(it)
           prototype = null
         }

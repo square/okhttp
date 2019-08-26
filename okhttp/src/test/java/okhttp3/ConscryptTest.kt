@@ -62,7 +62,7 @@ class ConscryptTest {
   }
 
   @Test
-//  @Ignore
+  @Ignore
   fun testGoogle() {
     assumeNetwork()
 
@@ -76,7 +76,8 @@ class ConscryptTest {
       }
     }
 
-    val sslSessionContext = client.sslSessionContext
+    // Print out useful debugging of SSL session tickets
+    val sslSessionContext = client.sslContext.clientSessionContext
     for (id in sslSessionContext.ids) {
       val session = sslSessionContext.getSession(id)
       println(
