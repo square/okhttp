@@ -3,6 +3,7 @@ dependencies {
   api deps.junit
   api deps.assertj
   api deps.conscrypt
+  api deps.openjsse
   
   compileOnly deps.jsr305
 }

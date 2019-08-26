@@ -7,5 +7,5 @@ API is not considered stable and may change at any time.
 ### Download
 
 ```kotlin
-testImplementation("com.squareup.okhttp3:okhttp-sse:4.0.1")
+testImplementation("com.squareup.okhttp3:okhttp-sse:4.1.0")
 ```

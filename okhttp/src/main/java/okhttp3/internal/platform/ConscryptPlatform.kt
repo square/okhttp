@@ -16,6 +16,7 @@
 package okhttp3.internal.platform
 
 import okhttp3.Protocol
+import okhttp3.internal.readFieldOrNull
 import org.conscrypt.Conscrypt
 import java.security.Provider
 import javax.net.ssl.SSLContext
@@ -29,13 +30,9 @@ import javax.net.ssl.X509TrustManager
  * Requires org.conscrypt:conscrypt-openjdk-uber >= 2.1.0 on the classpath.
  */
 class ConscryptPlatform private constructor() : Platform() {
-  private val provider: Provider
-    get() {
-      // n.b. We should consider defaulting to OpenJDK 11 trust manager
-      // https://groups.google.com/forum/#!topic/conscrypt/3vYzbesjOb4
-
-      return Conscrypt.newProviderBuilder().provideTrustManager(true).build()
-    }
+  // n.b. We should consider defaulting to OpenJDK 11 trust manager
+  // https://groups.google.com/forum/#!topic/conscrypt/3vYzbesjOb4
+  private val provider: Provider = Conscrypt.newProviderBuilder().provideTrustManager(true).build()
 
   // See release notes https://groups.google.com/forum/#!forum/conscrypt
   // for version differences
@@ -85,11 +82,11 @@ class ConscryptPlatform private constructor() : Platform() {
     }
   }
 
-  override fun getSelectedProtocol(socket: SSLSocket): String? =
-      if (Conscrypt.isConscrypt(socket)) {
-        Conscrypt.getApplicationProtocol(socket)
+  override fun getSelectedProtocol(sslSocket: SSLSocket): String? =
+      if (Conscrypt.isConscrypt(sslSocket)) {
+        Conscrypt.getApplicationProtocol(sslSocket)
       } else {
-        super.getSelectedProtocol(socket)
+        super.getSelectedProtocol(sslSocket)
       }
 
   override fun configureSslSocketFactory(socketFactory: SSLSocketFactory) {
@@ -106,17 +103,19 @@ class ConscryptPlatform private constructor() : Platform() {
   }
 
   companion object {
-    fun buildIfSupported(): ConscryptPlatform? = try {
+    val isSupported: Boolean = try {
       // Trigger an early exception over a fatal error, prefer a RuntimeException over Error.
       Class.forName("org.conscrypt.Conscrypt\$Version")
 
       when {
-        Conscrypt.isAvailable() && atLeastVersion(2, 1, 0) -> ConscryptPlatform()
-        else -> null
+        Conscrypt.isAvailable() && atLeastVersion(2, 1, 0) -> true
+        else -> false
       }
     } catch (e: ClassNotFoundException) {
-      null
+      false
     }
+
+    fun buildIfSupported(): ConscryptPlatform? = if (isSupported) ConscryptPlatform() else null
 
     fun atLeastVersion(major: Int, minor: Int = 0, patch: Int = 0): Boolean {
       val conscryptVersion = Conscrypt.version()

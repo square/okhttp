@@ -16,8 +16,12 @@
 package okhttp3.internal.platform
 
 import android.os.Build
-import android.util.Log
 import okhttp3.Protocol
+import okhttp3.internal.platform.android.CloseGuard
+import okhttp3.internal.platform.android.ConscryptSocketAdapter
+import okhttp3.internal.platform.android.DeferredSocketAdapter
+import okhttp3.internal.platform.android.StandardAndroidSocketAdapter
+import okhttp3.internal.platform.android.androidLog
 import okhttp3.internal.tls.BasicTrustRootIndex
 import okhttp3.internal.tls.CertificateChainCleaner
 import okhttp3.internal.tls.TrustRootIndex
@@ -26,7 +30,6 @@ import java.lang.reflect.InvocationTargetException
 import java.lang.reflect.Method
 import java.net.InetSocketAddress
 import java.net.Socket
-import java.nio.charset.StandardCharsets.UTF_8
 import java.security.cert.Certificate
 import java.security.cert.TrustAnchor
 import java.security.cert.X509Certificate
@@ -36,14 +39,13 @@ import javax.net.ssl.SSLSocketFactory
 import javax.net.ssl.X509TrustManager
 
 /** Android 5+. */
-class AndroidPlatform(
-  private val sslParametersClass: Class<*>,
-  private val sslSocketClass: Class<*>,
-  private val setUseSessionTickets: Method,
-  private val setHostname: Method,
-  private val getAlpnSelectedProtocol: Method,
-  private val setAlpnProtocols: Method
-) : Platform() {
+class AndroidPlatform : Platform() {
+  private val socketAdapters = listOfNotNull(
+      StandardAndroidSocketAdapter.buildIfSupported(),
+      ConscryptSocketAdapter.buildIfSupported(),
+      DeferredSocketAdapter("com.google.android.gms.org.conscrypt")
+  ).filter { it.isSupported() }
+
   private val closeGuard = CloseGuard.get()
 
   @Throws(IOException::class)
@@ -65,87 +67,26 @@ class AndroidPlatform(
     }
   }
 
-  override fun trustManager(sslSocketFactory: SSLSocketFactory): X509TrustManager? {
-    var context: Any? =
-        readFieldOrNull(sslSocketFactory, sslParametersClass, "sslParameters")
-    if (context == null) {
-      // If that didn't work, try the Google Play Services SSL provider before giving up. This
-      // must be loaded by the SSLSocketFactory's class loader.
-      try {
-        val gmsSslParametersClass = Class.forName(
-            "com.google.android.gms.org.conscrypt.SSLParametersImpl", false,
-            sslSocketFactory.javaClass.classLoader)
-        context = readFieldOrNull(sslSocketFactory, gmsSslParametersClass,
-            "sslParameters")
-      } catch (e: ClassNotFoundException) {
-        return super.trustManager(sslSocketFactory)
-      }
-    }
-
-    val x509TrustManager = readFieldOrNull(
-        context!!, X509TrustManager::class.java, "x509TrustManager")
-    return x509TrustManager ?: readFieldOrNull(context, X509TrustManager::class.java,
-        "trustManager")
-  }
+  override fun trustManager(sslSocketFactory: SSLSocketFactory): X509TrustManager? =
+      socketAdapters.find { it.matchesSocketFactory(sslSocketFactory) }
+          ?.trustManager(sslSocketFactory)
 
   override fun configureTlsExtensions(
     sslSocket: SSLSocket,
     hostname: String?,
     protocols: List<Protocol>
   ) {
-    if (!sslSocketClass.isInstance(sslSocket)) {
-      return // No TLS extensions if the socket class is custom.
-    }
-    try {
-      // Enable SNI and session tickets.
-      if (hostname != null) {
-        setUseSessionTickets.invoke(sslSocket, true)
-        // This is SSLParameters.setServerNames() in API 24+.
-        setHostname.invoke(sslSocket, hostname)
-      }
-
-      // Enable ALPN.
-      setAlpnProtocols.invoke(sslSocket, concatLengthPrefixed(protocols))
-    } catch (e: IllegalAccessException) {
-      throw AssertionError(e)
-    } catch (e: InvocationTargetException) {
-      throw AssertionError(e)
-    }
+    // No TLS extensions if the socket class is custom.
+    socketAdapters.find { it.matchesSocket(sslSocket) }
+        ?.configureTlsExtensions(sslSocket, hostname, protocols)
   }
 
-  override fun getSelectedProtocol(socket: SSLSocket): String? {
-    return if (sslSocketClass.isInstance(socket))
-      try {
-        val alpnResult = getAlpnSelectedProtocol.invoke(socket) as ByteArray?
-        if (alpnResult != null) String(alpnResult, UTF_8) else null
-      } catch (e: IllegalAccessException) {
-        throw AssertionError(e)
-      } catch (e: InvocationTargetException) {
-        throw AssertionError(e)
-      }
-    else {
-      null // No TLS extensions if the socket class is custom.
-    }
-  }
+  override fun getSelectedProtocol(sslSocket: SSLSocket) =
+      // No TLS extensions if the socket class is custom.
+      socketAdapters.find { it.matchesSocket(sslSocket) }?.getSelectedProtocol(sslSocket)
 
   override fun log(level: Int, message: String, t: Throwable?) {
-    var logMessage = message
-    val logLevel = if (level == WARN) Log.WARN else Log.DEBUG
-    if (t != null) logMessage = logMessage + '\n'.toString() + Log.getStackTraceString(t)
-
-    // Split by line, then ensure each line can fit into Log's maximum length.
-    var i = 0
-    val length = logMessage.length
-    while (i < length) {
-      var newline = logMessage.indexOf('\n', i)
-      newline = if (newline != -1) newline else length
-      do {
-        val end = minOf(newline, i + MAX_LOG_LENGTH)
-        Log.println(logLevel, "OkHttp", logMessage.substring(i, end))
-        i = end
-      } while (i < newline)
-      i++
-    }
+    androidLog(level, message, t)
   }
 
   override fun getStackTraceForCloseable(closer: String): Any? = closeGuard.createAndOpen(closer)
@@ -164,9 +105,9 @@ class AndroidPlatform(
       val getInstanceMethod = networkPolicyClass.getMethod("getInstance")
       val networkSecurityPolicy = getInstanceMethod.invoke(null)
       api24IsCleartextTrafficPermitted(hostname, networkPolicyClass, networkSecurityPolicy)
-    } catch (e: ClassNotFoundException) {
+    } catch (_: ClassNotFoundException) {
       super.isCleartextTrafficPermitted(hostname)
-    } catch (e: NoSuchMethodException) {
+    } catch (_: NoSuchMethodException) {
       super.isCleartextTrafficPermitted(hostname)
     } catch (e: IllegalAccessException) {
       throw AssertionError("unable to determine cleartext support", e)
@@ -186,7 +127,7 @@ class AndroidPlatform(
     val isCleartextTrafficPermittedMethod = networkPolicyClass
         .getMethod("isCleartextTrafficPermitted", String::class.java)
     isCleartextTrafficPermittedMethod.invoke(networkSecurityPolicy, hostname) as Boolean
-  } catch (e: NoSuchMethodException) {
+  } catch (_: NoSuchMethodException) {
     api23IsCleartextTrafficPermitted(hostname, networkPolicyClass, networkSecurityPolicy)
   }
 
@@ -199,7 +140,7 @@ class AndroidPlatform(
     val isCleartextTrafficPermittedMethod = networkPolicyClass
         .getMethod("isCleartextTrafficPermitted")
     isCleartextTrafficPermittedMethod.invoke(networkSecurityPolicy) as Boolean
-  } catch (e: NoSuchMethodException) {
+  } catch (_: NoSuchMethodException) {
     super.isCleartextTrafficPermitted(hostname)
   }
 
@@ -212,7 +153,7 @@ class AndroidPlatform(
             "checkServerTrusted", Array<X509Certificate>::class.java, String::class.java,
             String::class.java)
         AndroidCertificateChainCleaner(extensions, checkServerTrusted)
-      } catch (e: Exception) {
+      } catch (_: Exception) {
         super.buildCertificateChainCleaner(trustManager)
       }
 
@@ -259,65 +200,7 @@ class AndroidPlatform(
   }
 
   /**
-   * Provides access to the internal dalvik.system.CloseGuard class. Android uses this in
-   * combination with android.os.StrictMode to report on leaked java.io.Closeable's. Available since
-   * Android API 11.
-   */
-  internal class CloseGuard(
-    private val getMethod: Method?,
-    private val openMethod: Method?,
-    private val warnIfOpenMethod: Method?
-  ) {
-
-    fun createAndOpen(closer: String): Any? {
-      if (getMethod != null) {
-        try {
-          val closeGuardInstance = getMethod.invoke(null)
-          openMethod!!.invoke(closeGuardInstance, closer)
-          return closeGuardInstance
-        } catch (_: Exception) {
-        }
-      }
-      return null
-    }
-
-    fun warnIfOpen(closeGuardInstance: Any?): Boolean {
-      var reported = false
-      if (closeGuardInstance != null) {
-        try {
-          warnIfOpenMethod!!.invoke(closeGuardInstance)
-          reported = true
-        } catch (_: Exception) {
-        }
-      }
-      return reported
-    }
-
-    companion object {
-      fun get(): CloseGuard {
-        var getMethod: Method?
-        var openMethod: Method?
-        var warnIfOpenMethod: Method?
-
-        try {
-          val closeGuardClass = Class.forName("dalvik.system.CloseGuard")
-          getMethod = closeGuardClass.getMethod("get")
-          openMethod = closeGuardClass.getMethod("open", String::class.java)
-          warnIfOpenMethod = closeGuardClass.getMethod("warnIfOpen")
-        } catch (_: Exception) {
-          getMethod = null
-          openMethod = null
-          warnIfOpenMethod = null
-        }
-
-        return CloseGuard(getMethod, openMethod, warnIfOpenMethod)
-      }
-    }
-  }
-
-  /**
    * A trust manager for Android applications that customize the trust manager.
-   *
    *
    * This class exploits knowledge of Android implementation details. This class is potentially
    * much faster to initialize than [BasicTrustRootIndex] because it doesn't need to load and
@@ -327,7 +210,6 @@ class AndroidPlatform(
     private val trustManager: X509TrustManager,
     private val findByIssuerAndSignatureMethod: Method
   ) : TrustRootIndex {
-
     override fun findByIssuerAndSignature(cert: X509Certificate): X509Certificate? {
       return try {
         val trustAnchor = findByIssuerAndSignatureMethod.invoke(
@@ -335,39 +217,25 @@ class AndroidPlatform(
         trustAnchor.trustedCert
       } catch (e: IllegalAccessException) {
         throw AssertionError("unable to get issues and signature", e)
-      } catch (e: InvocationTargetException) {
+      } catch (_: InvocationTargetException) {
         null
       }
     }
   }
 
   companion object {
-    private const val MAX_LOG_LENGTH = 4000
+    val isSupported: Boolean = try {
+      // Trigger an early exception over a fatal error, prefer a RuntimeException over Error.
+      Class.forName("com.android.org.conscrypt.OpenSSLSocketImpl")
 
-    fun buildIfSupported(): Platform? {
-      // Attempt to find Android 5+ APIs.
-      val sslParametersClass: Class<*>
-      val sslSocketClass: Class<*>
-      try {
-        sslParametersClass = Class.forName("com.android.org.conscrypt.SSLParametersImpl")
-        sslSocketClass = Class.forName("com.android.org.conscrypt.OpenSSLSocketImpl")
-      } catch (_: ClassNotFoundException) {
-        return null // Not an Android runtime.
-      }
+      // Fail Fast
+      check(Build.VERSION.SDK_INT >= 21) { "Expected Android API level 21+ but was ${Build.VERSION.SDK_INT}" }
 
-      if (Build.VERSION.SDK_INT >= 21) {
-        try {
-          val setUseSessionTickets = sslSocketClass.getDeclaredMethod(
-              "setUseSessionTickets", Boolean::class.javaPrimitiveType)
-          val setHostname = sslSocketClass.getMethod("setHostname", String::class.java)
-          val getAlpnSelectedProtocol = sslSocketClass.getMethod("getAlpnSelectedProtocol")
-          val setAlpnProtocols = sslSocketClass.getMethod("setAlpnProtocols", ByteArray::class.java)
-          return AndroidPlatform(sslParametersClass, sslSocketClass, setUseSessionTickets,
-              setHostname, getAlpnSelectedProtocol, setAlpnProtocols)
-        } catch (_: NoSuchMethodException) {
-        }
-      }
-      throw IllegalStateException("Expected Android API level 21+ but was ${Build.VERSION.SDK_INT}")
+      true
+    } catch (_: ClassNotFoundException) {
+      false
     }
+
+    fun buildIfSupported(): Platform? = if (isSupported) AndroidPlatform() else null
   }
 }

@@ -23,6 +23,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
+import okhttp3.testing.Flaky;
 import okio.BufferedSink;
 import org.junit.Before;
 import org.junit.Rule;
@@ -286,7 +287,10 @@ public final class WholeOperationTimeoutTest {
     }
   }
 
+  @Flaky
   @Test public void noTimeout() throws Exception {
+    // Flaky https://github.com/square/okhttp/issues/5304
+
     server.enqueue(new MockResponse()
         .setHeadersDelay(250, TimeUnit.MILLISECONDS)
         .setBody(BIG_ENOUGH_BODY));
@@ -297,7 +301,7 @@ public final class WholeOperationTimeoutTest {
         .build();
 
     Call call = client.newCall(request);
-    call.timeout().timeout(1000, TimeUnit.MILLISECONDS);
+    call.timeout().timeout(2000, TimeUnit.MILLISECONDS);
     Response response = call.execute();
     Thread.sleep(250);
     response.body().source().readUtf8();

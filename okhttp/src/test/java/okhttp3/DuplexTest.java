@@ -54,6 +54,7 @@ public final class DuplexTest {
   private OkHttpClient client;
 
   @Before public void setUp() {
+    platform.assumeNotOpenJSSE();
     platform.assumeHttp2Support();
     client = clientTestRule.newClientBuilder()
         .eventListener(listener)

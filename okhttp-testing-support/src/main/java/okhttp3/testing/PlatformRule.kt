@@ -18,6 +18,7 @@ package okhttp3.testing
 import okhttp3.internal.platform.ConscryptPlatform
 import okhttp3.internal.platform.Jdk8WithJettyBootPlatform
 import okhttp3.internal.platform.Jdk9Platform
+import okhttp3.internal.platform.OpenJSSEPlatform
 import okhttp3.internal.platform.Platform
 import org.conscrypt.Conscrypt
 import org.hamcrest.BaseMatcher
@@ -34,6 +35,7 @@ import org.junit.Assume.assumeTrue
 import org.junit.AssumptionViolatedException
 import org.junit.rules.TestRule
 import org.junit.runners.model.Statement
+import org.openjsse.net.ssl.OpenJSSE
 import java.security.Security
 
 /**
@@ -56,6 +58,8 @@ open class PlatformRule @JvmOverloads constructor(
         var failed = false
         try {
           setupPlatform()
+
+          System.err.println("Running with ${Platform.get().javaClass.simpleName}")
 
           base.evaluate()
         } catch (e: AssumptionViolatedException) {
@@ -95,6 +99,10 @@ open class PlatformRule @JvmOverloads constructor(
     expectFailure(platformMatches(CONSCRYPT_PROPERTY))
   }
 
+  fun expectFailureOnOpenJSSEPlatform() {
+    expectFailure(platformMatches(OPENJSSE_PROPERTY))
+  }
+
   fun expectFailureFromJdkVersion(majorVersion: Int) {
     expectFailure(fromMajor(majorVersion))
   }
@@ -118,7 +126,7 @@ open class PlatformRule @JvmOverloads constructor(
 
   fun fromMajor(version: Int): Matcher<PlatformVersion> {
     return object : TypeSafeMatcher<PlatformVersion>() {
-      override fun describeTo(description: org.hamcrest.Description) {
+      override fun describeTo(description: Description) {
         description.appendText("JDK with version from $version")
       }
 
@@ -171,6 +179,11 @@ open class PlatformRule @JvmOverloads constructor(
         JDK9_PROPERTY))
   }
 
+  fun assumeOpenJSSE() {
+    assumeThat(getPlatformSystemProperty(), equalTo(
+        OPENJSSE_PROPERTY))
+  }
+
   fun assumeJdk8() {
     assumeThat(getPlatformSystemProperty(), equalTo(
         JDK8_PROPERTY))
@@ -206,6 +219,11 @@ open class PlatformRule @JvmOverloads constructor(
         JDK8_ALPN_PROPERTY))
   }
 
+  fun assumeNotOpenJSSE() {
+    assumeThat(getPlatformSystemProperty(), not(
+        OPENJSSE_PROPERTY))
+  }
+
   fun assumeNotHttp2Support() {
     assumeThat(getPlatformSystemProperty(), equalTo(
         JDK8_PROPERTY))
@@ -221,6 +239,7 @@ open class PlatformRule @JvmOverloads constructor(
     const val JDK9_PROPERTY = "jdk9"
     const val JDK8_ALPN_PROPERTY = "jdk8alpn"
     const val JDK8_PROPERTY = "jdk8"
+    const val OPENJSSE_PROPERTY = "openjsse"
 
     init {
       if (getPlatformSystemProperty() == CONSCRYPT_PROPERTY && Security.getProviders()[0].name != "Conscrypt") {
@@ -238,7 +257,15 @@ open class PlatformRule @JvmOverloads constructor(
         if (isAlpnBootEnabled()) {
           System.err.println("Warning: ALPN Boot enabled unintentionally")
         }
+      } else if (getPlatformSystemProperty() == OPENJSSE_PROPERTY && Security.getProviders()[0].name != "OpenJSSE") {
+        if (!OpenJSSEPlatform.isSupported) {
+          System.err.println("Warning: OpenJSSE not available")
+        }
+
+        Security.insertProviderAt(OpenJSSE(), 1)
       }
+
+      Platform.resetForTests()
     }
 
     @JvmStatic
@@ -249,6 +276,7 @@ open class PlatformRule @JvmOverloads constructor(
       if (property == null) {
         property = when (Platform.get()) {
           is ConscryptPlatform -> CONSCRYPT_PROPERTY
+          is OpenJSSEPlatform -> OPENJSSE_PROPERTY
           is Jdk8WithJettyBootPlatform -> CONSCRYPT_PROPERTY
           is Jdk9Platform -> JDK9_PROPERTY
           else -> JDK8_PROPERTY
@@ -260,6 +288,9 @@ open class PlatformRule @JvmOverloads constructor(
 
     @JvmStatic
     fun conscrypt() = PlatformRule(CONSCRYPT_PROPERTY)
+
+    @JvmStatic
+    fun openjsse() = PlatformRule(OPENJSSE_PROPERTY)
 
     @JvmStatic
     fun jdk9() = PlatformRule(JDK9_PROPERTY)

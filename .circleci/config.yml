@@ -51,7 +51,7 @@ commands:
 jobs:
   compile:
     docker:
-      - image: circleci/openjdk:8u171-jdk
+      - image: circleci/openjdk:8u222-jdk-stretch
 
     environment:
       JVM_OPTS: -Xmx1g
@@ -81,7 +81,7 @@ jobs:
 
   checkjdk8:
     docker:
-      - image: circleci/openjdk:8u171-jdk
+      - image: circleci/openjdk:8u222-jdk-stretch
 
     environment:
       JVM_OPTS: -Xmx1g
@@ -114,7 +114,7 @@ jobs:
 
   testjdk8:
     docker:
-      - image: circleci/openjdk:8u171-jdk
+      - image: circleci/openjdk:8u222-jdk-stretch
 
     environment:
       JVM_OPTS: -Xmx1g
@@ -128,7 +128,7 @@ jobs:
 
   testjdk8alpn:
     docker:
-      - image: circleci/openjdk:8u171-jdk
+      - image: circleci/openjdk:8u222-jdk-stretch
 
     environment:
       JVM_OPTS: -Xmx1g
@@ -140,9 +140,23 @@ jobs:
       - runtests:
           platform: jdk8alpn
 
+  testopenjsse:
+    docker:
+      - image: circleci/openjdk:8u222-jdk-stretch
+
+    environment:
+      JVM_OPTS: -Xmx1g
+      TERM: dumb
+
+    steps:
+      - checkout
+
+      - runtests:
+          platform: openjsse
+
   testjdk11:
     docker:
-      - image: circleci/openjdk:11.0.3-jdk-stretch
+      - image: circleci/openjdk:11.0.4-jdk-stretch
 
     environment:
       JVM_OPTS: -Xmx1g
@@ -157,7 +171,7 @@ jobs:
   testjdk12:
     docker:
       # best source of JDK 12 for now
-      - image: circleci/dynamodb:12.0.1-jdk
+      - image: circleci/dynamodb:12.0.2-jdk
 
     environment:
       JVM_OPTS: -Xmx1g
@@ -171,7 +185,7 @@ jobs:
 
   testconscrypt:
     docker:
-      - image: circleci/openjdk:11.0.3-jdk-stretch
+      - image: circleci/openjdk:11.0.4-jdk-stretch
 
     environment:
       JVM_OPTS: -Xmx1g
@@ -205,6 +219,10 @@ workflows:
           filters:
             branches:
               only: master
+      - testopenjsse:
+          filters:
+            branches:
+              only: master
       - testjdk11:
           filters:
             branches:
@@ -234,6 +252,9 @@ workflows:
           requires:
             - compile
       - testjdk8alpn:
+          requires:
+            - compile
+      - testopenjsse:
           requires:
             - compile
       - testjdk11:

@@ -164,25 +164,25 @@ class HttpLoggingInterceptor @JvmOverloads constructor(
     logger.log(requestStartMessage)
 
     if (logHeaders) {
+      val headers = request.headers
+
       if (requestBody != null) {
-        // Request body headers are only present when installed as a network interceptor. Force
-        // them to be included (when available) so there values are known.
+        // Request body headers are only present when installed as a network interceptor. When not
+        // already present, force them to be included (if available) so their values are known.
         requestBody.contentType()?.let {
-          logger.log("Content-Type: $it")
+          if (headers["Content-Type"] == null) {
+            logger.log("Content-Type: $it")
+          }
         }
         if (requestBody.contentLength() != -1L) {
-          logger.log("Content-Length: ${requestBody.contentLength()}")
+          if (headers["Content-Length"] == null) {
+            logger.log("Content-Length: ${requestBody.contentLength()}")
+          }
         }
       }
 
-      val headers = request.headers
       for (i in 0 until headers.size) {
-        val name = headers.name(i)
-        // Skip headers from the request body as they are explicitly logged above.
-        if (!"Content-Type".equals(name, ignoreCase = true) &&
-            !"Content-Length".equals(name, ignoreCase = true)) {
-          logHeader(headers, i)
-        }
+        logHeader(headers, i)
       }
 
       if (!logBody || requestBody == null) {

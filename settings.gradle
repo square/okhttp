@@ -1,11 +1,13 @@
 rootProject.name = 'okhttp-parent'
 
 include ':mockwebserver'
-if (!properties.containsKey('android.injected.invoked.from.ide') && System.getenv(
-        'ANDROID_SDK_ROOT') != null) {
-  // Currently incompatible with Intellij
+
+if (properties.containsKey('android.injected.invoked.from.ide') ||
+        System.getenv('ANDROID_SDK_ROOT') != null) {
+  // Currently incompatible with Intellij, use with Android Studio and from CLI with explicit flag
   include ':android-test'
 }
+
 include ':okcurl'
 include ':okhttp'
 include ':okhttp-brotli'

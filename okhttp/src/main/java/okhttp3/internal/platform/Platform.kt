@@ -18,6 +18,7 @@ package okhttp3.internal.platform
 
 import okhttp3.OkHttpClient
 import okhttp3.Protocol
+import okhttp3.internal.readFieldOrNull
 import okhttp3.internal.tls.BasicCertificateChainCleaner
 import okhttp3.internal.tls.BasicTrustRootIndex
 import okhttp3.internal.tls.CertificateChainCleaner
@@ -119,7 +120,7 @@ open class Platform {
   }
 
   /** Returns the negotiated protocol, or null if no protocol was negotiated. */
-  open fun getSelectedProtocol(socket: SSLSocket): String? = null
+  open fun getSelectedProtocol(sslSocket: SSLSocket): String? = null
 
   @Throws(IOException::class)
   open fun connectSocket(socket: Socket, address: InetSocketAddress, connectTimeout: Int) {
@@ -193,10 +194,16 @@ open class Platform {
     fun alpnProtocolNames(protocols: List<Protocol>) =
         protocols.filter { it != Protocol.HTTP_1_0 }.map { it.toString() }
 
-    val isConscryptPreferred: Boolean
+    private val isConscryptPreferred: Boolean
       get() {
         val preferredProvider = Security.getProviders()[0].name
         return "Conscrypt" == preferredProvider
+      }
+
+    private val isOpenJSSEPreferred: Boolean
+      get() {
+        val preferredProvider = Security.getProviders()[0].name
+        return "OpenJSSE" == preferredProvider
       }
 
     /** Attempt to match the host runtime to a capable Platform implementation. */
@@ -212,6 +219,14 @@ open class Platform {
 
         if (conscrypt != null) {
           return conscrypt
+        }
+      }
+
+      if (isOpenJSSEPreferred) {
+        val openJSSE = OpenJSSEPlatform.buildIfSupported()
+
+        if (openJSSE != null) {
+          return openJSSE
         }
       }
 
@@ -238,30 +253,6 @@ open class Platform {
         result.writeUtf8(protocol)
       }
       return result.readByteArray()
-    }
-
-    fun <T> readFieldOrNull(instance: Any, fieldType: Class<T>, fieldName: String): T? {
-      var c: Class<*> = instance.javaClass
-      while (c != Any::class.java) {
-        try {
-          val field = c.getDeclaredField(fieldName)
-          field.isAccessible = true
-          val value = field.get(instance)
-          return if (!fieldType.isInstance(value)) null else fieldType.cast(value)
-        } catch (_: NoSuchFieldException) {
-        }
-
-        c = c.superclass
-      }
-
-      // Didn't find the field we wanted. As a last gasp attempt,
-      // try to find the value on a delegate.
-      if (fieldName != "delegate") {
-        val delegate = readFieldOrNull(instance, Any::class.java, "delegate")
-        if (delegate != null) return readFieldOrNull(delegate, fieldType, fieldName)
-      }
-
-      return null
     }
   }
 }

@@ -129,6 +129,8 @@ public final class HttpOverHttp2Test {
   }
 
   @Before public void setUp() {
+    platform.assumeNotOpenJSSE();
+
     if (protocol == Protocol.HTTP_2) {
       platform.assumeHttp2Support();
       server.useHttps(handshakeCertificates.sslSocketFactory(), false);

@@ -40,6 +40,7 @@ import okhttp3.internal.platform.Platform;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import okhttp3.mockwebserver.RecordedRequest;
+import okhttp3.testing.PlatformRule;
 import okhttp3.tls.HandshakeCertificates;
 import okio.Buffer;
 import okio.BufferedSink;
@@ -65,6 +66,7 @@ public final class CacheTest {
   @Rule public MockWebServer server2 = new MockWebServer();
   @Rule public InMemoryFileSystem fileSystem = new InMemoryFileSystem();
   @Rule public final OkHttpClientTestRule clientTestRule = new OkHttpClientTestRule();
+  @Rule public final PlatformRule platform = new PlatformRule();
 
   private final HandshakeCertificates handshakeCertificates = localhost();
   private OkHttpClient client;
@@ -72,6 +74,8 @@ public final class CacheTest {
   private final CookieManager cookieManager = new CookieManager();
 
   @Before public void setUp() throws Exception {
+    platform.assumeNotOpenJSSE();
+
     server.setProtocolNegotiationEnabled(false);
     cache = new Cache(new File("/cache/"), Integer.MAX_VALUE, fileSystem);
     client = clientTestRule.newClientBuilder()
@@ -82,7 +86,10 @@ public final class CacheTest {
 
   @After public void tearDown() throws Exception {
     ResponseCache.setDefault(null);
-    cache.delete();
+
+    if (cache != null) {
+      cache.delete();
+    }
   }
 
   /**

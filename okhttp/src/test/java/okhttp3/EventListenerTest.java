@@ -86,6 +86,8 @@ public final class EventListenerTest {
   private SocksProxy socksProxy;
 
   @Before public void setUp() {
+    platform.assumeNotOpenJSSE();
+
     client = clientTestRule.newClientBuilder()
         .eventListener(listener)
         .build();

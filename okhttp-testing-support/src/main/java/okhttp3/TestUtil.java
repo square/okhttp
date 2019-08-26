@@ -15,11 +15,15 @@
  */
 package okhttp3;
 
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import okhttp3.internal.http2.Header;
+
+import static org.junit.Assume.assumeNoException;
 
 public final class TestUtil {
   public static final InetSocketAddress UNREACHABLE_ADDRESS
@@ -51,5 +55,13 @@ public final class TestUtil {
     Runtime.getRuntime().gc();
     Thread.sleep(100);
     System.runFinalization();
+  }
+
+  public static void assumeNetwork() {
+    try {
+      InetAddress.getByName("www.google.com");
+    } catch (UnknownHostException uhe) {
+      assumeNoException(uhe);
+    }
   }
 }

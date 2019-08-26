@@ -23,6 +23,7 @@ import java.util.regex.Pattern;
 import javax.annotation.Nullable;
 import javax.net.ssl.HostnameVerifier;
 import okhttp3.HttpUrl;
+import okhttp3.Interceptor;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import okhttp3.testing.PlatformRule;
@@ -69,6 +70,8 @@ public final class HttpLoggingInterceptorTest {
   private final HttpLoggingInterceptor applicationInterceptor =
       new HttpLoggingInterceptor(applicationLogs);
 
+  private Interceptor extraNetworkInterceptor = null;
+
   private void setLevel(Level level) {
     networkInterceptor.setLevel(level);
     applicationInterceptor.setLevel(level);
@@ -76,6 +79,9 @@ public final class HttpLoggingInterceptorTest {
 
   @Before public void setUp() {
     client = new OkHttpClient.Builder()
+        .addNetworkInterceptor(chain -> extraNetworkInterceptor != null
+            ? extraNetworkInterceptor.intercept(chain)
+            : chain.proceed(chain.request()))
         .addNetworkInterceptor(networkInterceptor)
         .addInterceptor(applicationInterceptor)
         .sslSocketFactory(
@@ -318,6 +324,45 @@ public final class HttpLoggingInterceptorTest {
         .assertLogEqual("Connection: Keep-Alive")
         .assertLogEqual("Accept-Encoding: gzip")
         .assertLogMatch("User-Agent: okhttp/.+")
+        .assertLogEqual("--> END POST")
+        .assertLogMatch("<-- 200 OK " + url + " \\(\\d+ms\\)")
+        .assertLogEqual("Content-Length: 0")
+        .assertLogEqual("<-- END HTTP")
+        .assertNoMoreLogs();
+  }
+
+  @Test public void headersPostWithHeaderOverrides() throws IOException {
+    setLevel(Level.HEADERS);
+
+    extraNetworkInterceptor = chain -> chain.proceed(chain.request()
+        .newBuilder()
+        .header("Content-Length", "2")
+        .header("Content-Type", "text/plain-ish")
+        .build());
+
+    server.enqueue(new MockResponse());
+    client.newCall(request()
+        .post(RequestBody.create("Hi?", PLAIN))
+        .build()).execute();
+
+    applicationLogs
+        .assertLogEqual("--> POST " + url)
+        .assertLogEqual("Content-Type: text/plain; charset=utf-8")
+        .assertLogEqual("Content-Length: 3")
+        .assertLogEqual("--> END POST")
+        .assertLogMatch("<-- 200 OK " + url + " \\(\\d+ms\\)")
+        .assertLogEqual("Content-Length: 0")
+        .assertLogEqual("<-- END HTTP")
+        .assertNoMoreLogs();
+
+    networkLogs
+        .assertLogEqual("--> POST " + url + " http/1.1")
+        .assertLogEqual("Host: " + host)
+        .assertLogEqual("Connection: Keep-Alive")
+        .assertLogEqual("Accept-Encoding: gzip")
+        .assertLogMatch("User-Agent: okhttp/.+")
+        .assertLogEqual("Content-Length: 2")
+        .assertLogEqual("Content-Type: text/plain-ish")
         .assertLogEqual("--> END POST")
         .assertLogMatch("<-- 200 OK " + url + " \\(\\d+ms\\)")
         .assertLogEqual("Content-Length: 0")

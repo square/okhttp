@@ -26,6 +26,7 @@ dependencies {
   api deps.okio
   api deps.kotlinStdlib
   compileOnly deps.conscrypt
+  compileOnly deps.openjsse
   compileOnly deps.android
   compileOnly deps.jsr305
   compileOnly deps.animalSniffer
@@ -38,6 +39,7 @@ dependencies {
   testImplementation deps.conscrypt
   testImplementation deps.junit
   testImplementation deps.assertj
+  testImplementation deps.openjsse
   testCompileOnly deps.jsr305
 }
 
