@@ -18,7 +18,7 @@ package okhttp3.testing
 import okhttp3.internal.platform.ConscryptPlatform
 import okhttp3.internal.platform.Jdk8WithJettyBootPlatform
 import okhttp3.internal.platform.Jdk9Platform
-import okhttp3.internal.platform.OpenJSSEPlatform
+//import okhttp3.internal.platform.OpenJSSEPlatform
 import okhttp3.internal.platform.Platform
 import org.conscrypt.Conscrypt
 import org.hamcrest.BaseMatcher
@@ -35,7 +35,7 @@ import org.junit.Assume.assumeTrue
 import org.junit.AssumptionViolatedException
 import org.junit.rules.TestRule
 import org.junit.runners.model.Statement
-import org.openjsse.net.ssl.OpenJSSE
+//import org.openjsse.net.ssl.OpenJSSE
 import java.security.Security
 
 /**
@@ -258,11 +258,11 @@ open class PlatformRule @JvmOverloads constructor(
           System.err.println("Warning: ALPN Boot enabled unintentionally")
         }
       } else if (getPlatformSystemProperty() == OPENJSSE_PROPERTY && Security.getProviders()[0].name != "OpenJSSE") {
-        if (!OpenJSSEPlatform.isSupported) {
-          System.err.println("Warning: OpenJSSE not available")
-        }
-
-        Security.insertProviderAt(OpenJSSE(), 1)
+//        if (!OpenJSSEPlatform.isSupported) {
+//          System.err.println("Warning: OpenJSSE not available")
+//        }
+//
+//        Security.insertProviderAt(OpenJSSE(), 1)
       }
 
       Platform.resetForTests()
@@ -276,7 +276,7 @@ open class PlatformRule @JvmOverloads constructor(
       if (property == null) {
         property = when (Platform.get()) {
           is ConscryptPlatform -> CONSCRYPT_PROPERTY
-          is OpenJSSEPlatform -> OPENJSSE_PROPERTY
+//          is OpenJSSEPlatform -> OPENJSSE_PROPERTY
           is Jdk8WithJettyBootPlatform -> CONSCRYPT_PROPERTY
           is Jdk9Platform -> JDK9_PROPERTY
           else -> JDK8_PROPERTY
