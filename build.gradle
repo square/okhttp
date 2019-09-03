@@ -161,7 +161,7 @@ subprojects { project ->
     }
   } else if (platform == "openjsse") {
     dependencies {
-//      testRuntime deps.openjsse
+      testRuntime deps.openjsse
     }
   }
 

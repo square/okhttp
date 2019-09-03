@@ -32,7 +32,9 @@ dependencies {
   implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:${versions.kotlin}"
   implementation project(':okhttp')
   testImplementation 'junit:junit:4.12'
-  androidTestImplementation project(':okhttp-testing-support')
+  androidTestImplementation(project(':okhttp-testing-support')) {
+     exclude group: 'org.openjsse', module: 'openjsse'
+  }
   androidTestImplementation project(':mockwebserver')
   androidTestImplementation project(':okhttp-tls')
   androidTestImplementation 'com.android.support.test:runner:1.0.2'
