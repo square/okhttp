@@ -16,6 +16,7 @@
 package okhttp.android.test
 
 import android.os.Build
+import android.os.StrictMode
 import android.support.test.runner.AndroidJUnit4
 import okhttp3.Call
 import okhttp3.CertificatePinner
@@ -275,6 +276,15 @@ class OkHttpTest {
       InetAddress.getByName("www.google.com")
     } catch (uhe: UnknownHostException) {
       assumeNoException(uhe)
+    }
+  }
+
+  companion object {
+    init {
+      StrictMode.setVmPolicy(StrictMode.VmPolicy.Builder()
+                .detectNonSdkApiUsage()
+                .penaltyLog()
+                .build())
     }
   }
 }
