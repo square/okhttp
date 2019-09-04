@@ -374,11 +374,8 @@ class RealConnection(
 
       handshake = Handshake(unverifiedHandshake.tlsVersion, unverifiedHandshake.cipherSuite,
           unverifiedHandshake.localCertificates) {
-        val cleanedCertificates =
-            certificatePinner.certificateChainCleaner!!.clean(unverifiedHandshake.peerCertificates,
-                address.url.host)
-
-        cleanedCertificates
+        certificatePinner.certificateChainCleaner!!.clean(unverifiedHandshake.peerCertificates,
+            address.url.host)
       }
 
       // Check that the certificate pinner is satisfied by the certificates presented.
