@@ -42,7 +42,6 @@ import okhttp3.internal.http2.Http2ExchangeCodec
 import okhttp3.internal.http2.Http2Stream
 import okhttp3.internal.http2.StreamResetException
 import okhttp3.internal.platform.Platform
-import okhttp3.internal.tls.CertificateChainCleaner
 import okhttp3.internal.tls.OkHostnameVerifier
 import okhttp3.internal.toHostHeader
 import okhttp3.internal.userAgent
@@ -70,8 +69,7 @@ import javax.net.ssl.SSLSocket
 
 class RealConnection(
   val connectionPool: RealConnectionPool,
-  private val route: Route,
-  private val certificateChainCleaner: CertificateChainCleaner? = null
+  private val route: Route
 ) : Http2Connection.Listener(), Connection {
 
   // The fields below are initialized by connect() and never reassigned.
@@ -372,18 +370,19 @@ class RealConnection(
         }
       }
 
-      handshake = if (certificateChainCleaner != null) {
+      val certificatePinner = address.certificatePinner!!
+
+      handshake = Handshake(unverifiedHandshake.tlsVersion, unverifiedHandshake.cipherSuite,
+          unverifiedHandshake.localCertificates) {
         val cleanedCertificates =
-            certificateChainCleaner.clean(unverifiedHandshake.peerCertificates, address.url.host)
-        Handshake.get(unverifiedHandshake.tlsVersion, unverifiedHandshake.cipherSuite,
-            cleanedCertificates, unverifiedHandshake.localCertificates)
-      } else {
-        unverifiedHandshake
+            certificatePinner.certificateChainCleaner!!.clean(unverifiedHandshake.peerCertificates,
+                address.url.host)
+
+        cleanedCertificates
       }
 
       // Check that the certificate pinner is satisfied by the certificates presented.
-      address.certificatePinner!!.check(address.url.host, handshake!!.peerCertificates,
-          cleaned = true)
+      certificatePinner.check(address.url.host) { handshake!!.peerCertificates }
 
       // Success! Save the handshake and the ALPN protocol.
       val maybeProtocol = if (connectionSpec.supportsTlsExtensions) {

@@ -126,7 +126,7 @@ import javax.net.ssl.SSLPeerUnverifiedException
 @Suppress("NAME_SHADOWING")
 class CertificatePinner internal constructor(
   private val pins: Set<Pin>,
-  private val certificateChainCleaner: CertificateChainCleaner?
+  internal val certificateChainCleaner: CertificateChainCleaner?
 ) {
   /**
    * Confirms that at least one of the certificates pinned for `hostname` is in `peerCertificates`.
@@ -138,15 +138,16 @@ class CertificatePinner internal constructor(
    */
   @Throws(SSLPeerUnverifiedException::class)
   fun check(hostname: String, peerCertificates: List<Certificate>) {
-    return check(hostname, peerCertificates, cleaned = false)
+    return check(hostname) { peerCertificates }
   }
 
-  internal fun check(hostname: String, peerCertificates: List<Certificate>, cleaned: Boolean) {
-    var peerCertificates = peerCertificates
+  internal fun check(hostname: String, peerCertificatesFn: () -> List<Certificate>) {
     val pins = findMatchingPins(hostname)
     if (pins.isEmpty()) return
 
-    if (!cleaned && certificateChainCleaner != null) {
+    var peerCertificates = peerCertificatesFn()
+
+    if (certificateChainCleaner != null) {
       peerCertificates = certificateChainCleaner.clean(peerCertificates, hostname)
     }
 
@@ -176,8 +177,8 @@ class CertificatePinner internal constructor(
     val message = buildString {
       append("Certificate pinning failure!")
       append("\n  Peer certificate chain:")
-      for (c in 0 until peerCertificates.size) {
-        val x509Certificate = peerCertificates[c] as X509Certificate
+      for (element in peerCertificates) {
+        val x509Certificate = element as X509Certificate
         append("\n    ")
         append(pin(x509Certificate))
         append(": ")
@@ -200,7 +201,7 @@ class CertificatePinner internal constructor(
   )
   @Throws(SSLPeerUnverifiedException::class)
   fun check(hostname: String, vararg peerCertificates: Certificate) {
-    check(hostname, peerCertificates.toList(), cleaned = false)
+    check(hostname) { peerCertificates.toList() }
   }
 
   /**

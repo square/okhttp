@@ -800,11 +800,6 @@ open class OkHttpClient internal constructor(
       this.hostnameVerifier = hostnameVerifier
     }
 
-    @JvmName("-certificateChainCleaner")
-    internal fun certificateChainCleaner(certificateChainCleaner: CertificateChainCleaner?) = apply {
-      this.certificateChainCleaner = certificateChainCleaner
-    }
-
     /**
      * Sets the certificate pinner that constrains which certificates are trusted. By default HTTPS
      * connections rely on only the [SSL socket factory][sslSocketFactory] to establish trust.
