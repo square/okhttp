@@ -198,7 +198,7 @@ class CertificatePinner internal constructor(
   )
   @Throws(SSLPeerUnverifiedException::class)
   fun check(hostname: String, vararg peerCertificates: Certificate) {
-    check(hostname) { peerCertificates.map { it as X509Certificate }.toList() }
+    check(hostname, peerCertificates.toList())
   }
 
   /**
