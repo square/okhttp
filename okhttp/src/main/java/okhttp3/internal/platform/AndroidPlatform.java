@@ -167,6 +167,11 @@ class AndroidPlatform extends Platform {
   }
 
   @Override public boolean isCleartextTrafficPermitted(String hostname) {
+    // Don't look for NetworkSecurityPolicy on older devices; that might crash them.
+    // https://github.com/square/okhttp/issues/3772#issuecomment-527711999
+    if (Build.VERSION.SDK_INT < 23) {
+      return super.isCleartextTrafficPermitted(hostname);
+    }
     try {
       Class<?> networkPolicyClass = Class.forName("android.security.NetworkSecurityPolicy");
       Method getInstanceMethod = networkPolicyClass.getMethod("getInstance");
