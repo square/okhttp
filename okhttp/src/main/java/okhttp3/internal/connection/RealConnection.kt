@@ -382,7 +382,9 @@ class RealConnection(
       }
 
       // Check that the certificate pinner is satisfied by the certificates presented.
-      certificatePinner.check(address.url.host) { handshake!!.peerCertificates }
+      certificatePinner.check(address.url.host) {
+        handshake!!.peerCertificates.map { it as X509Certificate }
+      }
 
       // Success! Save the handshake and the ALPN protocol.
       val maybeProtocol = if (connectionSpec.supportsTlsExtensions) {

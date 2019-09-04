@@ -138,22 +138,19 @@ class CertificatePinner internal constructor(
    */
   @Throws(SSLPeerUnverifiedException::class)
   fun check(hostname: String, peerCertificates: List<Certificate>) {
-    return check(hostname) { peerCertificates }
+    return check(hostname) {
+      (certificateChainCleaner?.clean(peerCertificates, hostname) ?: peerCertificates)
+          .map { it as X509Certificate }
+    }
   }
 
-  internal fun check(hostname: String, peerCertificatesFn: () -> List<Certificate>) {
+  internal fun check(hostname: String, cleanedPeerCertificatesFn: () -> List<X509Certificate>) {
     val pins = findMatchingPins(hostname)
     if (pins.isEmpty()) return
 
-    var peerCertificates = peerCertificatesFn()
-
-    if (certificateChainCleaner != null) {
-      peerCertificates = certificateChainCleaner.clean(peerCertificates, hostname)
-    }
+    val peerCertificates = cleanedPeerCertificatesFn()
 
     for (peerCertificate in peerCertificates) {
-      val x509Certificate = peerCertificate as X509Certificate
-
       // Lazily compute the hashes for each certificate.
       var sha1: ByteString? = null
       var sha256: ByteString? = null
@@ -161,11 +158,11 @@ class CertificatePinner internal constructor(
       for (pin in pins) {
         when (pin.hashAlgorithm) {
           "sha256/" -> {
-            if (sha256 == null) sha256 = x509Certificate.toSha256ByteString()
+            if (sha256 == null) sha256 = peerCertificate.toSha256ByteString()
             if (pin.hash == sha256) return // Success!
           }
           "sha1/" -> {
-            if (sha1 == null) sha1 = x509Certificate.toSha1ByteString()
+            if (sha1 == null) sha1 = peerCertificate.toSha1ByteString()
             if (pin.hash == sha1) return // Success!
           }
           else -> throw AssertionError("unsupported hashAlgorithm: ${pin.hashAlgorithm}")
@@ -201,7 +198,7 @@ class CertificatePinner internal constructor(
   )
   @Throws(SSLPeerUnverifiedException::class)
   fun check(hostname: String, vararg peerCertificates: Certificate) {
-    check(hostname) { peerCertificates.toList() }
+    check(hostname) { peerCertificates.map { it as X509Certificate }.toList() }
   }
 
   /**
