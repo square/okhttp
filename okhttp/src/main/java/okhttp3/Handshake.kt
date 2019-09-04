@@ -45,7 +45,6 @@ class Handshake internal constructor(
   @get:JvmName(
       "localCertificates") val localCertificates: List<Certificate>,
 
-  /** Returns a possibly-empty list of certificates that identify the remote peer. */
   private val peerCertificatesFn: () -> List<Certificate>
 ) {
   /** Returns a possibly-empty list of certificates that identify the remote peer. */

@@ -47,7 +47,7 @@ import javax.net.ssl.SSLSocketFactory
  * canceling may break the entire connection.
  */
 class Transmitter(
-  internal val client: OkHttpClient,
+  private val client: OkHttpClient,
   private val call: Call
 ) {
   private val connectionPool: RealConnectionPool = client.connectionPool.delegate
