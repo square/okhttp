@@ -1,6 +1,15 @@
 Change Log
 ==========
 
+## Version 4.1.1
+
+_2019-09-05_
+
+ *  Fix: Don't drop repeated headers when validating cached responses. In our Kotlin upgrade we
+    introduced a regression where we iterated the number of unique header names rather than then
+    number of unique headers. If you're using OkHttp's response cache this may impact you.
+
+
 ## Version 4.1.0
 
 _2019-08-12_
