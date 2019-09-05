@@ -150,6 +150,13 @@ _2019-02-04_
  *  New: Log the TLS handshake in `LoggingEventListener`.
 
 
+## Version 3.12.4
+
+_2019-09-04_
+
+ *  Fix: Don't crash looking up an absent class on certain buggy Android 4.x devices.
+
+
 ## Version 3.12.3
 
 _2019-05-07_
