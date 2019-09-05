@@ -213,7 +213,7 @@ class CacheInterceptor(internal val cache: Cache?) : Interceptor {
     private fun combine(cachedHeaders: Headers, networkHeaders: Headers): Headers {
       val result = Headers.Builder()
 
-      for (index in cachedHeaders.names().indices) {
+      for (index in 0 until cachedHeaders.size) {
         val fieldName = cachedHeaders.name(index)
         val value = cachedHeaders.value(index)
         if ("Warning".equals(fieldName, ignoreCase = true) && value.startsWith("1")) {
@@ -227,7 +227,7 @@ class CacheInterceptor(internal val cache: Cache?) : Interceptor {
         }
       }
 
-      for (index in networkHeaders.names().indices) {
+      for (index in 0 until networkHeaders.size) {
         val fieldName = networkHeaders.name(index)
         if (!isContentSpecificHeader(fieldName) && isEndToEnd(fieldName)) {
           result.addLenient(fieldName, networkHeaders.value(index))
