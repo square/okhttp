@@ -19,6 +19,7 @@ import okhttp3.Headers
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import okhttp3.Response
+import okhttp3.MediaType
 import okhttp3.internal.http.promisesBody
 import okhttp3.internal.platform.Platform
 import okhttp3.internal.platform.Platform.Companion.INFO
@@ -191,6 +192,8 @@ class HttpLoggingInterceptor @JvmOverloads constructor(
         logger.log("--> END ${request.method} (encoded body omitted)")
       } else if (requestBody.isDuplex()) {
         logger.log("--> END ${request.method} (duplex request body omitted)")
+      } else if (mediaTypeIsProbablyBinary(requestBody.contentType())) {
+        logger.log("--> END ${request.method} (binary ${requestBody.contentLength()}-byte body omitted)")
       } else {
         val buffer = Buffer()
         requestBody.writeTo(buffer)
@@ -253,7 +256,7 @@ class HttpLoggingInterceptor @JvmOverloads constructor(
         val contentType = responseBody.contentType()
         val charset: Charset = contentType?.charset(UTF_8) ?: UTF_8
 
-        if (!buffer.isProbablyUtf8()) {
+        if (mediaTypeIsProbablyBinary(contentType) || !buffer.isProbablyUtf8()) {
           logger.log("")
           logger.log("<-- END HTTP (binary ${buffer.size}-byte body omitted)")
           return response
@@ -285,4 +288,23 @@ class HttpLoggingInterceptor @JvmOverloads constructor(
     return !contentEncoding.equals("identity", ignoreCase = true) &&
         !contentEncoding.equals("gzip", ignoreCase = true)
   }
+    private fun mediaTypeIsProbablyBinary(mediaType: MediaType?): Boolean {
+        val type = mediaType?.type
+        val subType = mediaType?.subtype
+
+        val binaryTypes = listOf("audio", "binary", "font", "image", "video")
+        val binaryApplicationSubtypes = listOf("binary", "excel", "java-archive", "java-vm", "lzx",
+                "macbinary", "mp4", "mspowerpoint", "msword", "octet-stream", "ogg", "pdf",
+                "pkcs10", "pkcs12", "vnd.iccprofile", "vnd.ms-excel", "vnd.ms-powerpoint",
+                "vnd.oasis.opendocument.presentation", "vnd.oasis.opendocument.spreadsheet",
+                "vnd.oasis.opendocument.text",
+                "vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                "vnd.openxmlformats-officedocument.wordprocessingml.document", "x-7z-compressed",
+                "x-apple-diskimage", "x-binary", "x-compress", "x-compressed", "x-dvi", "x-excel",
+                "x-font-ttf", "x-font-woff", "x-gzip", "x-lzh", "x-lzx", "x-macbinary",
+                "x-msdownload", "x-msexcel", "x-mspowerpoint", "x-rar-compressed", "x-tar",
+                "x-visio", "zip")
+
+        return binaryTypes.contains(type) || (type == "application" && binaryApplicationSubtypes.contains(subType))
+    }
 }
