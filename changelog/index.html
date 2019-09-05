@@ -579,6 +579,13 @@
     <ul class="md-nav__list" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#version-411" title="Version 4.1.1" class="md-nav__link">
+    Version 4.1.1
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#version-410" title="Version 4.1.0" class="md-nav__link">
     Version 4.1.0
   </a>
@@ -695,6 +702,13 @@
     <ul class="md-nav__list" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#version-411" title="Version 4.1.1" class="md-nav__link">
+    Version 4.1.1
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#version-410" title="Version 4.1.0" class="md-nav__link">
     Version 4.1.0
   </a>
@@ -763,6 +777,13 @@
                 
                 
                 <h1 id="change-log">Change Log<a class="headerlink" href="#change-log" title="Permanent link">&para;</a></h1>
+<h2 id="version-411">Version 4.1.1<a class="headerlink" href="#version-411" title="Permanent link">&para;</a></h2>
+<p><em>2019-09-05</em></p>
+<ul>
+<li>Fix: Don&rsquo;t drop repeated headers when validating cached responses. In our Kotlin upgrade we
+    introduced a regression where we iterated the number of unique header names rather than then
+    number of unique headers. If you&rsquo;re using OkHttp&rsquo;s response cache this may impact you.</li>
+</ul>
 <h2 id="version-410">Version 4.1.0<a class="headerlink" href="#version-410" title="Permanent link">&para;</a></h2>
 <p><em>2019-08-12</em></p>
 <ul>
