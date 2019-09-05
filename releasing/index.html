@@ -615,8 +615,29 @@
     <ul class="md-nav__list" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#prerequisites" title="Prerequisites" class="md-nav__link">
-    Prerequisites
+  <a href="#prerequisite-sonatype-maven-central-account" title="Prerequisite: Sonatype (Maven Central) Account" class="md-nav__link">
+    Prerequisite: Sonatype (Maven Central) Account
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#prerequisite-gpg-keys" title="Prerequisite: GPG Keys" class="md-nav__link">
+    Prerequisite: GPG Keys
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#prerequisite-gradle-properties" title="Prerequisite: Gradle Properties" class="md-nav__link">
+    Prerequisite: Gradle Properties
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#cutting-a-release" title="Cutting a Release" class="md-nav__link">
+    Cutting a Release
   </a>
   
 </li>
@@ -641,6 +662,45 @@
                 
                 
                 <h1 id="releasing">Releasing<a class="headerlink" href="#releasing" title="Permanent link">&para;</a></h1>
+<h3 id="prerequisite-sonatype-maven-central-account">Prerequisite: Sonatype (Maven Central) Account<a class="headerlink" href="#prerequisite-sonatype-maven-central-account" title="Permanent link">&para;</a></h3>
+<p>Create an account on the <a href="https://issues.sonatype.org/">Sonatype issues site</a>. Ask an existing publisher to open
+an issue requesting publishing permissions for <code>com.squareup</code> projects.</p>
+<h3 id="prerequisite-gpg-keys">Prerequisite: GPG Keys<a class="headerlink" href="#prerequisite-gpg-keys" title="Permanent link">&para;</a></h3>
+<p>Generate a GPG key (RSA, 4096 bit, 3650 day) expiry, or use an existing one. You should leave the
+password empty for this key.</p>
+<div class="codehilite"><pre><span></span>$ gpg --full-generate-key
+</pre></div>
+
+<p>Upload the GPG keys to public servers:</p>
+<div class="codehilite"><pre><span></span>$ gpg --list-keys --keyid-format LONG
+/Users/johnbarber/.gnupg/pubring.kbx
+------------------------------
+pub   rsa4096/XXXXXXXXXXXXXXXX 2019-07-16 [SC] [expires: 2029-07-13]
+      YYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYY
+uid           [ultimate] John Barber &lt;jbarber@squareup.com&gt;
+sub   rsa4096/ZZZZZZZZZZZZZZZZ 2019-07-16 [E] [expires: 2029-07-13]
+
+$ gpg --send-keys --keyserver keyserver.ubuntu.com XXXXXXXXXXXXXXXX
+</pre></div>
+
+<h3 id="prerequisite-gradle-properties">Prerequisite: Gradle Properties<a class="headerlink" href="#prerequisite-gradle-properties" title="Permanent link">&para;</a></h3>
+<p>Define publishing properties in <code>~/.gradle/gradle.properties</code>:</p>
+<div class="codehilite"><pre><span></span>signing.keyId=1A2345F8
+signing.password=
+signing.secretKeyRingFile=/Users/jbarber/.gnupg/secring.gpg
+</pre></div>
+
+<p><code>signing.keyId</code> is the GPG key&rsquo;s ID. Get it with this:</p>
+<div class="codehilite"><pre><span></span>$ gpg --list-keys --keyid-format SHORT
+</pre></div>
+
+<p><code>signing.password</code> is the password for this key. This might be empty!</p>
+<p><code>signing.secretKeyRingFile</code> is the absolute path for <code>secring.gpg</code>. You may need to export this
+file manually with the following command where <code>XXXXXXXX</code> is the <code>keyId</code> above:</p>
+<div class="codehilite"><pre><span></span>$ gpg --keyring secring.gpg --export-secret-key XXXXXXXX &gt; ~/.gnupg/secring.gpg
+</pre></div>
+
+<h2 id="cutting-a-release">Cutting a Release<a class="headerlink" href="#cutting-a-release" title="Permanent link">&para;</a></h2>
 <ol>
 <li>
 <p>Update <code>CHANGELOG.md</code>.</p>
@@ -649,6 +709,13 @@
 <p>Set versions:</p>
 <div class="codehilite"><pre><span></span>export RELEASE_VERSION=X.Y.Z
 export NEXT_VERSION=X.Y.Z-SNAPSHOT
+</pre></div>
+
+</li>
+<li>
+<p>Set environment variables with your <a href="https://issues.sonatype.org/">Sonatype credentials</a>.</p>
+<div class="codehilite"><pre><span></span>export SONATYPE_NEXUS_USERNAME=johnbarber
+export SONATYPE_NEXUS_PASSWORD=`pbpaste`
 </pre></div>
 
 </li>
@@ -665,7 +732,8 @@ sed -i &quot;&quot; \
 
 </li>
 <li>
-<p>Visit <a href="https://oss.sonatype.org/">Sonatype Nexus</a> to promote the artifact. Or drop it if there is a problem!</p>
+<p>Visit <a href="https://oss.sonatype.org/">Sonatype Nexus</a> to promote (close then release) the artifact. Or drop it
+   if there is a problem!</p>
 </li>
 <li>
 <p>Tag the release, prepare for the next one, and push to GitHub.</p>
@@ -680,12 +748,6 @@ git push &amp;&amp; git push --tags
 
 </li>
 </ol>
-<h2 id="prerequisites">Prerequisites<a class="headerlink" href="#prerequisites" title="Permanent link">&para;</a></h2>
-<p>In <code>~/.gradle/gradle.properties</code>, set the following:</p>
-<ul>
-<li><code>SONATYPE_NEXUS_USERNAME</code> - Sonatype username for releasing to <code>com.squareup</code>.</li>
-<li><code>SONATYPE_NEXUS_PASSWORD</code> - Sonatype password for releasing to <code>com.squareup</code>.</li>
-</ul>
                 
                   
                 
