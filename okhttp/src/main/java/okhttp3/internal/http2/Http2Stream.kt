@@ -44,20 +44,20 @@ class Http2Stream internal constructor(
   // Internal state is guarded by this. No long-running or potentially blocking operations are
   // performed while the lock is held.
 
-  /**
-   * The total number of bytes consumed by the application (with [FramingSource.read]), but
-   * not yet acknowledged by sending a `WINDOW_UPDATE` frame on this stream.
-   */
-  var unacknowledgedBytesRead = 0L
+  /** The total number of bytes consumed by the application. */
+  var readBytesTotal = 0L
     internal set
 
-  /**
-   * Count of bytes that can be written on the stream before receiving a window update. Even if this
-   * is positive, writes will block until there available bytes in
-   * [Http2Connection.bytesLeftInWriteWindow].
-   */
-  // guarded by this
-  var bytesLeftInWriteWindow: Long = connection.peerSettings.initialWindowSize.toLong()
+  /** The total number of bytes acknowledged by outgoing `WINDOW_UPDATE` frames. */
+  var readBytesAcknowledged = 0L
+    internal set
+
+  /** The total number of bytes produced by the application. */
+  var writeBytesTotal = 0L
+    internal set
+
+  /** The total number of bytes permitted to be produced by incoming `WINDOW_UPDATE` frame. */
+  var writeBytesMaximum: Long = connection.peerSettings.initialWindowSize.toLong()
     internal set
 
   /** Received headers yet to be [taken][takeHeaders], or [read][FramingSource.read]. */
@@ -185,7 +185,7 @@ class Http2Stream internal constructor(
     // flow-control window is fully depleted.
     if (!flushHeaders) {
       synchronized(connection) {
-        flushHeaders = connection.bytesLeftInWriteWindow == 0L
+        flushHeaders = (connection.writeBytesTotal >= connection.writeBytesMaximum)
       }
     }
 
@@ -358,14 +358,15 @@ class Http2Stream internal constructor(
             } else if (readBuffer.size > 0L) {
               // Prepare to read bytes. Start by moving them to the caller's buffer.
               readBytesDelivered = readBuffer.read(sink, minOf(byteCount, readBuffer.size))
-              unacknowledgedBytesRead += readBytesDelivered
+              readBytesTotal += readBytesDelivered
 
+              val unacknowledgedBytesRead = (readBytesTotal - readBytesAcknowledged)
               if (errorExceptionToDeliver == null &&
                   unacknowledgedBytesRead >= connection.okHttpSettings.initialWindowSize / 2) {
                 // Flow control: notify the peer that we're ready for more data! Only send a
                 // WINDOW_UPDATE if the stream isn't in error.
                 connection.writeWindowUpdateLater(id, unacknowledgedBytesRead)
-                unacknowledgedBytesRead = 0
+                readBytesAcknowledged = readBytesTotal
               }
             } else if (!finished && errorExceptionToDeliver == null) {
               // Nothing to do. Wait until that changes then try again.
@@ -521,7 +522,10 @@ class Http2Stream internal constructor(
       synchronized(this@Http2Stream) {
         writeTimeout.enter()
         try {
-          while (bytesLeftInWriteWindow <= 0L && !finished && !closed && errorCode == null) {
+          while (writeBytesTotal >= writeBytesMaximum &&
+              !finished &&
+              !closed &&
+              errorCode == null) {
             waitForIo() // Wait until we receive a WINDOW_UPDATE for this stream.
           }
         } finally {
@@ -529,8 +533,8 @@ class Http2Stream internal constructor(
         }
 
         checkOutNotClosed() // Kick out if the stream was reset or closed while waiting.
-        toWrite = minOf(bytesLeftInWriteWindow, sendBuffer.size)
-        bytesLeftInWriteWindow -= toWrite
+        toWrite = minOf(writeBytesMaximum - writeBytesTotal, sendBuffer.size)
+        writeBytesTotal += toWrite
       }
 
       writeTimeout.enter()
@@ -601,7 +605,7 @@ class Http2Stream internal constructor(
 
   /** [delta] will be negative if a settings frame initial window is smaller than the last. */
   fun addBytesToWriteWindow(delta: Long) {
-    bytesLeftInWriteWindow += delta
+    writeBytesMaximum += delta
     if (delta > 0L) {
       this@Http2Stream.notifyAll()
     }
