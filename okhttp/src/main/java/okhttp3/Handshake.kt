@@ -45,7 +45,8 @@ class Handshake internal constructor(
   @get:JvmName(
       "localCertificates") val localCertificates: List<Certificate>,
 
-  private val peerCertificatesFn: () -> List<Certificate>
+  // Delayed provider of peerCertificates, to allow lazy cleaning.
+  peerCertificatesFn: () -> List<Certificate>
 ) {
   /** Returns a possibly-empty list of certificates that identify the remote peer. */
   @get:JvmName("peerCertificates") val peerCertificates: List<Certificate> by lazy(
@@ -149,25 +150,21 @@ class Handshake internal constructor(
       if ("NONE" == tlsVersionString) throw IOException("tlsVersion == NONE")
       val tlsVersion = TlsVersion.forJavaName(tlsVersionString)
 
-      val peerCertificates: Array<Certificate>? = try {
-        peerCertificates
+      val peerCertificatesCopy = try {
+        peerCertificates.toImmutableList()
       } catch (_: SSLPeerUnverifiedException) {
-        null
+        listOf<Certificate>()
       }
 
-      val localCertificates = localCertificates
-      val localCertificatesList = if (localCertificates != null) {
-        immutableListOf(*localCertificates)
+      return Handshake(tlsVersion, cipherSuite,
+          localCertificates.toImmutableList()) { peerCertificatesCopy }
+    }
+
+    private fun Array<out Certificate>?.toImmutableList(): List<Certificate> {
+      return if (this != null) {
+        immutableListOf(*this)
       } else {
         emptyList()
-      }
-
-      return Handshake(tlsVersion, cipherSuite, localCertificatesList) {
-        if (peerCertificates != null) {
-          immutableListOf(*peerCertificates)
-        } else {
-          emptyList()
-        }
       }
     }
 
@@ -186,8 +183,9 @@ class Handshake internal constructor(
       peerCertificates: List<Certificate>,
       localCertificates: List<Certificate>
     ): Handshake {
-      return Handshake(tlsVersion, cipherSuite, localCertificates.toImmutableList(),
-          { peerCertificates.toImmutableList() })
+      val peerCertificatesCopy = peerCertificates.toImmutableList()
+      return Handshake(tlsVersion, cipherSuite, localCertificates.toImmutableList()
+      ) { peerCertificatesCopy }
     }
   }
 }
