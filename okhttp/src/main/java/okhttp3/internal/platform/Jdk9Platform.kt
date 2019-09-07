@@ -15,8 +15,6 @@
  */
 package okhttp3.internal.platform
 
-import java.lang.reflect.InvocationTargetException
-import java.lang.reflect.Method
 import javax.net.ssl.SSLParameters
 import javax.net.ssl.SSLSocket
 import javax.net.ssl.SSLSocketFactory
@@ -24,41 +22,27 @@ import javax.net.ssl.X509TrustManager
 import okhttp3.Protocol
 
 /** OpenJDK 9+. */
-class Jdk9Platform(
-  @JvmField val setProtocolMethod: Method,
-  @JvmField val getProtocolMethod: Method
-) : Platform() {
+open class Jdk9Platform() : Platform() {
   override fun configureTlsExtensions(
     sslSocket: SSLSocket,
-    hostname: String?,
-    protocols: List<Protocol>
+    protocols: List<@JvmSuppressWildcards Protocol>
   ) {
-    try {
       val sslParameters = sslSocket.sslParameters
 
       val names = alpnProtocolNames(protocols)
 
-      setProtocolMethod.invoke(sslParameters, names.toTypedArray())
+      sslParameters.applicationProtocols = names.toTypedArray()
 
       sslSocket.sslParameters = sslParameters
-    } catch (e: IllegalAccessException) {
-      throw AssertionError("failed to set SSL parameters", e)
-    } catch (e: InvocationTargetException) {
-      throw AssertionError("failed to set SSL parameters", e)
-    }
   }
 
-  override fun getSelectedProtocol(socket: SSLSocket): String? = try {
+  override fun getSelectedProtocol(socket: SSLSocket): String? {
     // SSLSocket.getApplicationProtocol returns "" if application protocols values will not
     // be used. Observed if you didn't specify SSLParameters.setApplicationProtocols
-    when (val protocol = getProtocolMethod.invoke(socket) as String?) {
+    return when (val protocol = socket.applicationProtocol) {
       null, "" -> null
       else -> protocol
     }
-  } catch (e: IllegalAccessException) {
-    throw AssertionError("failed to get ALPN selected protocol", e)
-  } catch (e: InvocationTargetException) {
-    throw AssertionError("failed to get ALPN selected protocol", e)
   }
 
   public override fun trustManager(sslSocketFactory: SSLSocketFactory): X509TrustManager? {
@@ -78,7 +62,7 @@ class Jdk9Platform(
               Array<String>::class.java)
           val getProtocolMethod = SSLSocket::class.java.getMethod("getApplicationProtocol")
 
-          Jdk9Platform(setProtocolMethod, getProtocolMethod)
+          Jdk9Platform()
         } catch (_: NoSuchMethodException) {
           // pre JDK 9
           null

@@ -32,7 +32,6 @@ open class AndroidSocketAdapter(private val sslSocketClass: Class<in SSLSocket>)
     SocketAdapter {
   private val setUseSessionTickets: Method =
       sslSocketClass.getDeclaredMethod("setUseSessionTickets", Boolean::class.javaPrimitiveType)
-  private val setHostname = sslSocketClass.getMethod("setHostname", String::class.java)
   private val getAlpnSelectedProtocol = sslSocketClass.getMethod("getAlpnSelectedProtocol")
   private val setAlpnProtocols =
       sslSocketClass.getMethod("setAlpnProtocols", ByteArray::class.java)
@@ -47,18 +46,13 @@ open class AndroidSocketAdapter(private val sslSocketClass: Class<in SSLSocket>)
 
   override fun configureTlsExtensions(
     sslSocket: SSLSocket,
-    hostname: String?,
     protocols: List<Protocol>
   ) {
     // No TLS extensions if the socket class is custom.
     if (matchesSocket(sslSocket)) {
       try {
-        // Enable SNI and session tickets.
-        if (hostname != null) {
-          setUseSessionTickets.invoke(sslSocket, true)
-          // This is SSLParameters.setServerNames() in API 24+.
-          setHostname.invoke(sslSocket, hostname)
-        }
+        // Enable session tickets.
+        setUseSessionTickets.invoke(sslSocket, true)
 
         // Enable ALPN.
         setAlpnProtocols.invoke(sslSocket,

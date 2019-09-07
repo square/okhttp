@@ -56,8 +56,7 @@ class OpenJSSEPlatform private constructor() : Platform() {
 
   override fun configureTlsExtensions(
     sslSocket: SSLSocket,
-    hostname: String?,
-    protocols: List<Protocol>
+    protocols: List<@JvmSuppressWildcards Protocol>
   ) {
     if (sslSocket is org.openjsse.javax.net.ssl.SSLSocket) {
       val sslParameters = sslSocket.sslParameters
@@ -70,7 +69,7 @@ class OpenJSSEPlatform private constructor() : Platform() {
         sslSocket.sslParameters = sslParameters
       }
     } else {
-      super.configureTlsExtensions(sslSocket, hostname, protocols)
+      super.configureTlsExtensions(sslSocket, protocols)
     }
   }
 

@@ -27,9 +27,9 @@ dependencies {
   api deps.kotlinStdlib
   compileOnly deps.conscrypt
   compileOnly deps.openjsse
-  compileOnly deps.android
   compileOnly deps.jsr305
   compileOnly deps.animalSniffer
+  compileOnly files('/Users/yuri/Library/Android/sdk/platforms/android-29/android.jar')
 
   testImplementation project(':okhttp-testing-support')
   testImplementation project(':okhttp-tls')

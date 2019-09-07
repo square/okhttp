@@ -208,9 +208,7 @@ workflows:
       - checkjdk8:
           filters:
             branches:
-              ignore:
-                - master
-                - gh-pages
+              only: master
       - testjdk8:
           filters:
             branches:

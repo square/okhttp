@@ -39,7 +39,7 @@ import javax.net.ssl.SSLSocketFactory
 import javax.net.ssl.X509TrustManager
 
 /** Android 5+. */
-class AndroidPlatform : Platform() {
+open class AndroidPlatform : Platform() {
   private val socketAdapters = listOfNotNull(
       StandardAndroidSocketAdapter.buildIfSupported(),
       ConscryptSocketAdapter.buildIfSupported(),
@@ -73,12 +73,11 @@ class AndroidPlatform : Platform() {
 
   override fun configureTlsExtensions(
     sslSocket: SSLSocket,
-    hostname: String?,
-    protocols: List<Protocol>
+    protocols: List<@JvmSuppressWildcards Protocol>
   ) {
     // No TLS extensions if the socket class is custom.
     socketAdapters.find { it.matchesSocket(sslSocket) }
-        ?.configureTlsExtensions(sslSocket, hostname, protocols)
+        ?.configureTlsExtensions(sslSocket, protocols)
   }
 
   override fun getSelectedProtocol(sslSocket: SSLSocket) =

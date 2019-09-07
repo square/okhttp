@@ -49,7 +49,7 @@ class AndroidSocketAdapterTest(private val adapter: SocketAdapter) {
     val sslSocket = socketFactory.createSocket() as SSLSocket
     assertTrue(adapter.matchesSocket(sslSocket))
 
-    adapter.configureTlsExtensions(sslSocket, "example.com", listOf(HTTP_2, HTTP_1_1))
+    adapter.configureTlsExtensions(sslSocket, listOf(HTTP_2, HTTP_1_1))
     // not connected
     assertNull(adapter.getSelectedProtocol(sslSocket))
   }
@@ -80,7 +80,7 @@ class AndroidSocketAdapterTest(private val adapter: SocketAdapter) {
         object : DelegatingSSLSocket(context.socketFactory.createSocket() as SSLSocket) {}
     assertFalse(adapter.matchesSocket(sslSocket))
 
-    adapter.configureTlsExtensions(sslSocket, "example.com", listOf(HTTP_2, HTTP_1_1))
+    adapter.configureTlsExtensions(sslSocket, listOf(HTTP_2, HTTP_1_1))
     // not connected
     assertNull(adapter.getSelectedProtocol(sslSocket))
   }

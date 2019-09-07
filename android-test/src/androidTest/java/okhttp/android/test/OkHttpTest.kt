@@ -44,6 +44,9 @@ import java.net.InetAddress
 import java.net.UnknownHostException
 import javax.net.ssl.SSLPeerUnverifiedException
 import javax.net.ssl.SSLSocket
+import okhttp3.internal.platform.Platform
+import okhttp3.internal.platform.AndroidPlatform
+import okhttp3.internal.platform.AndroidQPlatform
 
 /**
  * Run with "./gradlew :android-test:connectedCheck" and make sure ANDROID_SDK_ROOT is set.
@@ -66,6 +69,16 @@ class OkHttpTest {
   @After
   fun cleanup() {
     client.dispatcher.executorService.shutdownNow()
+  }
+
+
+  @Test
+  fun testPlatform() {
+    if (Build.VERSION.SDK_INT >= 29) {
+      assertTrue(Platform.get() is AndroidQPlatform)
+    } else {
+      assertTrue(Platform.get() is AndroidPlatform)
+    }
   }
 
   @Test
