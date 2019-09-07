@@ -17,6 +17,8 @@ package okhttp.android.test
 
 import android.os.Build
 import android.support.test.runner.AndroidJUnit4
+import com.squareup.moshi.Moshi
+import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import okhttp3.Call
 import okhttp3.CertificatePinner
 import okhttp3.Connection
@@ -51,6 +53,10 @@ import javax.net.ssl.SSLSocket
 @RunWith(AndroidJUnit4::class)
 class OkHttpTest {
   private lateinit var client: OkHttpClient
+
+  private val moshi = Moshi.Builder()
+      .add(KotlinJsonAdapterFactory())
+      .build()
 
   @JvmField
   @Rule
@@ -135,6 +141,37 @@ class OkHttpTest {
       fail("expected cleartext blocking")
     } catch (_: java.net.UnknownServiceException) {
     }
+  }
+
+  data class HowsMySslResults(
+    val unknown_cipher_suite_supported: Boolean,
+    val beast_vuln: Boolean,
+    val session_ticket_supported: Boolean,
+    val tls_compression_supported: Boolean,
+    val ephemeral_keys_supported: Boolean,
+    val rating: String,
+    val tls_version: String,
+    val able_to_detect_n_minus_one_splitting: Boolean,
+    val insecure_cipher_suites: Map<String, List<String>>,
+    val given_cipher_suites: List<String>?
+  )
+
+  @Test
+  fun testSSLFeatures() {
+    assumeNetwork()
+
+    val request = Request.Builder().url("https://www.howsmyssl.com/a/check").build()
+
+    val response = client.newCall(request).execute()
+
+    val results = response.use {
+      moshi.adapter(HowsMySslResults::class.java).fromJson(response.body!!.string())!!
+    }
+
+    assertTrue(results.session_ticket_supported)
+    assertEquals("Probably Okay", results.rating)
+    assertEquals("TLS 1.3", results.tls_version)
+    assertEquals(0, results.insecure_cipher_suites.size)
   }
 
   @Test
