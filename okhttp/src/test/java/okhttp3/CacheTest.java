@@ -2456,6 +2456,34 @@ public final class CacheTest {
     assertThat(server.takeRequest().getHeader("If-None-Match")).isEqualTo("α");
   }
 
+  @Test public void conditionalHitHeadersCombined() throws Exception {
+    server.enqueue(new MockResponse()
+        .addHeader("Etag", "a")
+        .addHeader("Cache-Control: max-age=0")
+        .addHeader("A: a1")
+        .addHeader("B: b2")
+        .addHeader("B: b3")
+        .setBody("abcd"));
+    server.enqueue(new MockResponse()
+        .setResponseCode(HttpURLConnection.HTTP_NOT_MODIFIED)
+        .addHeader("B: b4")
+        .addHeader("B: b5")
+        .addHeader("C: c6"));
+
+    Response response1 = get(server.url("/"));
+    assertThat(response1.body().string()).isEqualTo("abcd");
+    assertThat(response1.headers()).isEqualTo(Headers.of("Etag", "a", "Cache-Control", "max-age=0",
+        "A", "a1", "B", "b2", "B", "b3", "Content-Length", "4"));
+
+    // The original 'A' header is retained because the network response doesn't have one.
+    // The original 'B' headers are replaced by the network response.
+    // The network's 'C' header is added.
+    Response response2 = get(server.url("/"));
+    assertThat(response2.body().string()).isEqualTo("abcd");
+    assertThat(response2.headers()).isEqualTo(Headers.of("Etag", "a", "Cache-Control", "max-age=0",
+        "A", "a1", "Content-Length", "4", "B", "b4", "B", "b5", "C", "c6"));
+  }
+
   private Response get(HttpUrl url) throws IOException {
     Request request = new Request.Builder()
         .url(url)

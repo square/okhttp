@@ -37,7 +37,6 @@ import okio.Sink;
 import okio.Source;
 import okio.Utf8;
 import org.junit.After;
-import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestRule;
@@ -114,9 +113,10 @@ public final class Http2ConnectionTest {
     // This stream was created *after* the connection settings were adjusted.
     Http2Stream stream = connection.newStream(headerEntries("a", "android"), false);
 
-    assertThat(connection.getPeerSettings().getInitialWindowSize()).isEqualTo(3368);
+    assertThat(connection.getPeerSettings().getInitialWindowSize()).isEqualTo(3368L);
     // New Stream is has the most recent initial window size.
-    assertThat(stream.getBytesLeftInWriteWindow()).isEqualTo(3368);
+    assertThat(stream.getWriteBytesTotal()).isEqualTo(0L);
+    assertThat(stream.getWriteBytesMaximum()).isEqualTo(3368L);
   }
 
   @Test public void peerHttp2ServerZerosCompressionTable() throws Exception {
@@ -229,7 +229,8 @@ public final class Http2ConnectionTest {
     InFrame frame3 = peer.takeFrame();
     assertThat(frame3.type).isEqualTo(Http2.TYPE_RST_STREAM);
 
-    assertThat(connection.getUnacknowledgedBytesRead()).isEqualTo(2048);
+    assertThat(connection.getReadBytesAcknowledged()).isEqualTo(0L);
+    assertThat(connection.getReadBytesTotal()).isEqualTo(2048L);
   }
 
   @Test public void receiveGoAwayHttp2() throws Exception {
@@ -307,7 +308,8 @@ public final class Http2ConnectionTest {
     Http2Connection connection = connect(peer);
     connection.getOkHttpSettings().set(INITIAL_WINDOW_SIZE, windowSize);
     Http2Stream stream = connection.newStream(headerEntries("b", "banana"), false);
-    assertThat(stream.getUnacknowledgedBytesRead()).isEqualTo(0);
+    assertThat(stream.getReadBytesAcknowledged()).isEqualTo(0L);
+    assertThat(stream.getReadBytesTotal()).isEqualTo(0L);
     assertThat(stream.takeHeaders()).isEqualTo(Headers.of("a", "android"));
     Source in = stream.getSource();
     Buffer buffer = new Buffer();
@@ -1637,7 +1639,8 @@ public final class Http2ConnectionTest {
     Http2Connection connection = connect(peer);
     connection.getOkHttpSettings().set(INITIAL_WINDOW_SIZE, windowSize);
     Http2Stream stream = connection.newStream(headerEntries("b", "banana"), false);
-    assertThat(stream.getUnacknowledgedBytesRead()).isEqualTo(0);
+    assertThat(stream.getReadBytesAcknowledged()).isEqualTo(0L);
+    assertThat(stream.getReadBytesTotal()).isEqualTo(0L);
     assertThat(stream.takeHeaders()).isEqualTo(Headers.of("a", "android"));
     Source in = stream.getSource();
     Buffer buffer = new Buffer();
@@ -1749,14 +1752,18 @@ public final class Http2ConnectionTest {
     out1.flush();
 
     // Check that we've filled the window for both the stream and also the connection.
-    assertThat(connection.getBytesLeftInWriteWindow()).isEqualTo(0);
-    assertThat(connection.getStream(3).getBytesLeftInWriteWindow()).isEqualTo(0);
+    assertThat(connection.getWriteBytesTotal()).isEqualTo(DEFAULT_INITIAL_WINDOW_SIZE);
+    assertThat(connection.getWriteBytesMaximum()).isEqualTo(DEFAULT_INITIAL_WINDOW_SIZE);
+    assertThat(stream1.getWriteBytesTotal()).isEqualTo(DEFAULT_INITIAL_WINDOW_SIZE);
+    assertThat(stream1.getWriteBytesMaximum()).isEqualTo(DEFAULT_INITIAL_WINDOW_SIZE);
 
     // receiving a window update on the connection will unblock new streams.
     connection.getReaderRunnable().windowUpdate(0, 3);
 
-    assertThat(connection.getBytesLeftInWriteWindow()).isEqualTo(3);
-    assertThat(connection.getStream(3).getBytesLeftInWriteWindow()).isEqualTo(0);
+    assertThat(connection.getWriteBytesTotal()).isEqualTo(DEFAULT_INITIAL_WINDOW_SIZE);
+    assertThat(connection.getWriteBytesMaximum()).isEqualTo(DEFAULT_INITIAL_WINDOW_SIZE + 3);
+    assertThat(stream1.getWriteBytesTotal()).isEqualTo(DEFAULT_INITIAL_WINDOW_SIZE);
+    assertThat(stream1.getWriteBytesMaximum()).isEqualTo(DEFAULT_INITIAL_WINDOW_SIZE);
 
     // Another stream should be able to send data even though 1 is blocked.
     Http2Stream stream2 = connection.newStream(headerEntries("b", "banana"), true);
@@ -1764,10 +1771,12 @@ public final class Http2ConnectionTest {
     out2.writeUtf8("foo");
     out2.flush();
 
-    assertThat(connection.getBytesLeftInWriteWindow()).isEqualTo(0);
-    assertThat(connection.getStream(3).getBytesLeftInWriteWindow()).isEqualTo(0);
-    assertThat(connection.getStream(5).getBytesLeftInWriteWindow()).isEqualTo(
-        (long) (DEFAULT_INITIAL_WINDOW_SIZE - 3));
+    assertThat(connection.getWriteBytesTotal()).isEqualTo(DEFAULT_INITIAL_WINDOW_SIZE + 3);
+    assertThat(connection.getWriteBytesMaximum()).isEqualTo(DEFAULT_INITIAL_WINDOW_SIZE + 3);
+    assertThat(stream1.getWriteBytesTotal()).isEqualTo(DEFAULT_INITIAL_WINDOW_SIZE);
+    assertThat(stream1.getWriteBytesMaximum()).isEqualTo(DEFAULT_INITIAL_WINDOW_SIZE);
+    assertThat(stream2.getWriteBytesTotal()).isEqualTo(3L);
+    assertThat(stream2.getWriteBytesMaximum()).isEqualTo(DEFAULT_INITIAL_WINDOW_SIZE);
   }
 
   @Test public void remoteOmitsInitialSettings() throws Exception {
