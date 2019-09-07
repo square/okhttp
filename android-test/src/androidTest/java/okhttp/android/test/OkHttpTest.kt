@@ -28,6 +28,7 @@ import okhttp3.Protocol
 import okhttp3.RecordingEventListener
 import okhttp3.Request
 import okhttp3.TlsVersion
+import okhttp3.internal.platform.Platform
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import okhttp3.tls.internal.TlsUtil.localhost
@@ -168,10 +169,15 @@ class OkHttpTest {
       moshi.adapter(HowsMySslResults::class.java).fromJson(response.body!!.string())!!
     }
 
+    Platform.get().log(Platform.WARN, "results $results", null)
+
     assertTrue(results.session_ticket_supported)
     assertEquals("Probably Okay", results.rating)
     assertEquals("TLS 1.3", results.tls_version)
     assertEquals(0, results.insecure_cipher_suites.size)
+
+    assertEquals(TlsVersion.TLS_1_3, response.handshake?.tlsVersion)
+    assertEquals(Protocol.HTTP_2, response.protocol)
   }
 
   @Test
