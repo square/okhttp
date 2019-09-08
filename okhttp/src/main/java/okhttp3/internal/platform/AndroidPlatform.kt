@@ -15,8 +15,9 @@
  */
 package okhttp3.internal.platform
 
-import android.os.Build
 import okhttp3.Protocol
+import okhttp3.internal.futureapi.android.os.BuildX
+import okhttp3.internal.platform.android.AndroidCertificateChainCleaner
 import okhttp3.internal.platform.android.CloseGuard
 import okhttp3.internal.platform.android.ConscryptSocketAdapter
 import okhttp3.internal.platform.android.DeferredSocketAdapter
@@ -30,10 +31,8 @@ import java.lang.reflect.InvocationTargetException
 import java.lang.reflect.Method
 import java.net.InetSocketAddress
 import java.net.Socket
-import java.security.cert.Certificate
 import java.security.cert.TrustAnchor
 import java.security.cert.X509Certificate
-import javax.net.ssl.SSLPeerUnverifiedException
 import javax.net.ssl.SSLSocket
 import javax.net.ssl.SSLSocketFactory
 import javax.net.ssl.X509TrustManager
@@ -59,7 +58,7 @@ open class AndroidPlatform : Platform() {
     } catch (e: ClassCastException) {
       // On android 8.0, socket.connect throws a ClassCastException due to a bug
       // see https://issuetracker.google.com/issues/63649622
-      if (Build.VERSION.SDK_INT == 26) {
+      if (BuildX.VERSION_SDK_INT == 26) {
         throw IOException("Exception in connect", e)
       } else {
         throw e
@@ -168,37 +167,6 @@ open class AndroidPlatform : Platform() {
   }
 
   /**
-   * X509TrustManagerExtensions was added to Android in API 17 (Android 4.2, released in late 2012).
-   * This is the best way to get a clean chain on Android because it uses the same code as the TLS
-   * handshake.
-   */
-  internal class AndroidCertificateChainCleaner(
-    private val x509TrustManagerExtensions: Any,
-    private val checkServerTrusted: Method
-  ) : CertificateChainCleaner() {
-
-    @Suppress("UNCHECKED_CAST")
-    @Throws(SSLPeerUnverifiedException::class)
-    override // Reflection on List<Certificate>.
-    fun clean(chain: List<Certificate>, hostname: String): List<Certificate> = try {
-      val certificates = (chain as List<X509Certificate>).toTypedArray()
-      checkServerTrusted.invoke(
-          x509TrustManagerExtensions, certificates, "RSA", hostname) as List<Certificate>
-    } catch (e: InvocationTargetException) {
-      val exception = SSLPeerUnverifiedException(e.message)
-      exception.initCause(e)
-      throw exception
-    } catch (e: IllegalAccessException) {
-      throw AssertionError(e)
-    }
-
-    override fun equals(other: Any?): Boolean =
-        other is AndroidCertificateChainCleaner // All instances are equivalent.
-
-    override fun hashCode(): Int = 0
-  }
-
-  /**
    * A trust manager for Android applications that customize the trust manager.
    *
    * This class exploits knowledge of Android implementation details. This class is potentially
@@ -228,7 +196,7 @@ open class AndroidPlatform : Platform() {
       Class.forName("com.android.org.conscrypt.OpenSSLSocketImpl")
 
       // Fail Fast
-      check(Build.VERSION.SDK_INT >= 21) { "Expected Android API level 21+ but was ${Build.VERSION.SDK_INT}" }
+      check(BuildX.VERSION_SDK_INT >= 21) { "Expected Android API level 21+ but was ${BuildX.VERSION_SDK_INT}" }
 
       true
     } catch (_: ClassNotFoundException) {

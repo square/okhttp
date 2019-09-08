@@ -62,13 +62,14 @@ class OkHttpTest {
 
   @Before
   fun createClient() {
-    client = OkHttpClient.Builder()
-        .build()
+    client = OkHttpClient.Builder().build()
   }
 
   @After
   fun cleanup() {
-    client.dispatcher.executorService.shutdownNow()
+    if (this::client.isInitialized) {
+      client.dispatcher.executorService.shutdownNow()
+    }
   }
 
 

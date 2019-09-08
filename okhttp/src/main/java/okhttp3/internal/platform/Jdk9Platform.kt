@@ -15,11 +15,12 @@
  */
 package okhttp3.internal.platform
 
-import javax.net.ssl.SSLParameters
+import okhttp3.Protocol
+import okhttp3.internal.futureapi.javax.net.ssl.applicationProtocolX
+import okhttp3.internal.futureapi.javax.net.ssl.applicationProtocolsX
 import javax.net.ssl.SSLSocket
 import javax.net.ssl.SSLSocketFactory
 import javax.net.ssl.X509TrustManager
-import okhttp3.Protocol
 
 /** OpenJDK 9+. */
 open class Jdk9Platform() : Platform() {
@@ -27,19 +28,19 @@ open class Jdk9Platform() : Platform() {
     sslSocket: SSLSocket,
     protocols: List<@JvmSuppressWildcards Protocol>
   ) {
-      val sslParameters = sslSocket.sslParameters
+    val sslParameters = sslSocket.sslParameters
 
-      val names = alpnProtocolNames(protocols)
+    val names = alpnProtocolNames(protocols)
 
-      sslParameters.applicationProtocols = names.toTypedArray()
+    sslParameters.applicationProtocolsX = names.toTypedArray()
 
-      sslSocket.sslParameters = sslParameters
+    sslSocket.sslParameters = sslParameters
   }
 
   override fun getSelectedProtocol(socket: SSLSocket): String? {
     // SSLSocket.getApplicationProtocol returns "" if application protocols values will not
     // be used. Observed if you didn't specify SSLParameters.setApplicationProtocols
-    return when (val protocol = socket.applicationProtocol) {
+    return when (val protocol = socket.applicationProtocolX) {
       null, "" -> null
       else -> protocol
     }
@@ -55,17 +56,13 @@ open class Jdk9Platform() : Platform() {
   }
 
   companion object {
-    fun buildIfSupported(): Jdk9Platform? =
-        try {
-          // Find JDK 9 methods
-          val setProtocolMethod = SSLParameters::class.java.getMethod("setApplicationProtocols",
-              Array<String>::class.java)
-          val getProtocolMethod = SSLSocket::class.java.getMethod("getApplicationProtocol")
+    val isAvailable: Boolean
 
-          Jdk9Platform()
-        } catch (_: NoSuchMethodException) {
-          // pre JDK 9
-          null
-        }
+    init {
+      val majorVersion: Int = Integer.getInteger("java.specification.version") ?: 8
+      isAvailable = majorVersion >= 9
+    }
+
+    fun buildIfSupported(): Jdk9Platform? = if (isAvailable) Jdk9Platform() else null
   }
 }
