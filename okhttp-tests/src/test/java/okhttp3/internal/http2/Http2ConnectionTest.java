@@ -946,7 +946,7 @@ public final class Http2ConnectionTest {
     // fake a settings frame with clear flag set.
     Settings settings2 = new Settings();
     settings2.set(MAX_CONCURRENT_STREAMS, 60000);
-    connection.readerRunnable.settings(true, settings2);
+    connection.readerRunnable.applyAndAckSettings(true, settings2);
 
     synchronized (connection) {
       assertThat(connection.peerSettings.getHeaderTableSize()).isEqualTo(-1);

@@ -129,7 +129,6 @@ public final class Http2Connection implements Closeable {
   // TODO: MWS will need to guard on this setting before attempting to push.
   final Settings peerSettings = new Settings();
 
-  boolean receivedInitialPeerSettings = false;
   final Socket socket;
   final Http2Writer writer;
 
@@ -690,53 +689,52 @@ public final class Http2Connection implements Closeable {
       }
     }
 
-    @Override public void settings(boolean clearPrevious, Settings newSettings) {
-      long delta = 0;
-      Http2Stream[] streamsToNotify = null;
-      synchronized (Http2Connection.this) {
-        int priorWriteWindowSize = peerSettings.getInitialWindowSize();
-        if (clearPrevious) peerSettings.clear();
-        peerSettings.merge(newSettings);
-        applyAndAckSettings(newSettings);
-        int peerInitialWindowSize = peerSettings.getInitialWindowSize();
-        if (peerInitialWindowSize != -1 && peerInitialWindowSize != priorWriteWindowSize) {
-          delta = peerInitialWindowSize - priorWriteWindowSize;
-          if (!receivedInitialPeerSettings) {
-            receivedInitialPeerSettings = true;
-          }
-          if (!streams.isEmpty()) {
-            streamsToNotify = streams.values().toArray(new Http2Stream[streams.size()]);
-          }
-        }
-        listenerExecutor.execute(new NamedRunnable("OkHttp %s settings", connectionName) {
+    @Override public void settings(boolean clearPrevious, Settings settings) {
+      try {
+        writerExecutor.execute(new NamedRunnable("OkHttp %s ACK Settings", connectionName) {
           @Override public void execute() {
-            listener.onSettings(Http2Connection.this);
+            applyAndAckSettings(clearPrevious, settings);
           }
         });
+      } catch (RejectedExecutionException ignored) {
+        // This connection has been closed.
       }
-      if (streamsToNotify != null && delta != 0) {
+    }
+
+    void applyAndAckSettings(boolean clearPrevious, Settings settings) {
+      long delta = 0;
+      Http2Stream[] streamsToNotify = null;
+      synchronized (writer) {
+        synchronized (Http2Connection.this) {
+          int priorWriteWindowSize = peerSettings.getInitialWindowSize();
+          if (clearPrevious) peerSettings.clear();
+          peerSettings.merge(settings);
+          int peerInitialWindowSize = peerSettings.getInitialWindowSize();
+          if (peerInitialWindowSize != -1 && peerInitialWindowSize != priorWriteWindowSize) {
+            delta = peerInitialWindowSize - priorWriteWindowSize;
+            streamsToNotify = !streams.isEmpty()
+                ? streams.values().toArray(new Http2Stream[streams.size()])
+                : null;
+          }
+        }
+        try {
+          writer.applyAndAckSettings(peerSettings);
+        } catch (IOException e) {
+          failConnection(e);
+        }
+      }
+      if (streamsToNotify != null) {
         for (Http2Stream stream : streamsToNotify) {
           synchronized (stream) {
             stream.addBytesToWriteWindow(delta);
           }
         }
       }
-    }
-
-    private void applyAndAckSettings(final Settings peerSettings) {
-      try {
-        writerExecutor.execute(new NamedRunnable("OkHttp %s ACK Settings", connectionName) {
-          @Override public void execute() {
-            try {
-              writer.applyAndAckSettings(peerSettings);
-            } catch (IOException e) {
-              failConnection(e);
-            }
-          }
-        });
-      } catch (RejectedExecutionException ignored) {
-        // This connection has been closed.
-      }
+      listenerExecutor.execute(new NamedRunnable("OkHttp %s settings", connectionName) {
+        @Override public void execute() {
+          listener.onSettings(Http2Connection.this);
+        }
+      });
     }
 
     @Override public void ackSettings() {
