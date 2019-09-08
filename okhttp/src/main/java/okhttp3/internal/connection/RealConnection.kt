@@ -74,6 +74,11 @@ class RealConnection(
 
   // The fields below are initialized by connect() and never reassigned.
 
+  val readBytesTotal: Long get() = http2Connection?.readBytesTotal ?: 0
+  val readBytesAcknowledged: Long get() = http2Connection?.readBytesAcknowledged ?: 0
+  val writeBytesTotal: Long get() = http2Connection?.writeBytesTotal ?: 0
+  val writeBytesMaximum: Long get() = http2Connection?.writeBytesMaximum ?: 0
+
   /** The low-level TCP socket. */
   private var rawSocket: Socket? = null
 

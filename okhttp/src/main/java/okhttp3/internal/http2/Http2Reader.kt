@@ -202,6 +202,9 @@ class Http2Reader(
     val errorCodeInt = source.readInt()
     val errorCode = ErrorCode.fromHttp2(errorCodeInt) ?: throw IOException(
         "TYPE_RST_STREAM unexpected error code: $errorCodeInt")
+    if (errorCode != ErrorCode.NO_ERROR) {
+      println()
+    }
     handler.rstStream(streamId, errorCode)
   }
 
