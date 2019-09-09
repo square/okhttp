@@ -40,6 +40,7 @@ import org.junit.Assert.fail
 import org.junit.Assume.assumeNoException
 import org.junit.Assume.assumeTrue
 import org.junit.Before
+import org.junit.Ignore
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -158,6 +159,7 @@ class OkHttpTest {
   )
 
   @Test
+  @Ignore
   fun testSSLFeatures() {
     assumeNetwork()
 
@@ -173,6 +175,7 @@ class OkHttpTest {
 
     assertTrue(results.session_ticket_supported)
     assertEquals("Probably Okay", results.rating)
+    // TODO map to expected versions automatically, test ignored for now.  Run manually.
     assertEquals("TLS 1.3", results.tls_version)
     assertEquals(0, results.insecure_cipher_suites.size)
 
