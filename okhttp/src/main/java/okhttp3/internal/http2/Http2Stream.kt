@@ -360,7 +360,7 @@ class Http2Stream internal constructor(
               readBytesDelivered = readBuffer.read(sink, minOf(byteCount, readBuffer.size))
               readBytesTotal += readBytesDelivered
 
-              val unacknowledgedBytesRead = (readBytesTotal - readBytesAcknowledged)
+              val unacknowledgedBytesRead = readBytesTotal - readBytesAcknowledged
               if (errorExceptionToDeliver == null &&
                   unacknowledgedBytesRead >= connection.okHttpSettings.initialWindowSize / 2) {
                 // Flow control: notify the peer that we're ready for more data! Only send a
@@ -407,6 +407,10 @@ class Http2Stream internal constructor(
       connection.updateConnectionFlowControl(read)
     }
 
+    /**
+     * Accept bytes on the connection's reader thread. This function avoids holding locks while it
+     * performs blocking reads for the incoming bytes.
+     */
     @Throws(IOException::class)
     internal fun receive(source: BufferedSource, byteCount: Long) {
       var byteCount = byteCount
@@ -438,13 +442,24 @@ class Http2Stream internal constructor(
         if (read == -1L) throw EOFException()
         byteCount -= read
 
-        // Move the received data to the read buffer to the reader can read it.
+        // Move the received data to the read buffer to the reader can read it. If this source has
+        // been closed since this read began we must discard the incoming data and tell the
+        // connection we've done so.
+        var bytesDiscarded = 0L
         synchronized(this@Http2Stream) {
-          val wasEmpty = readBuffer.size == 0L
-          readBuffer.writeAll(receiveBuffer)
-          if (wasEmpty) {
-            this@Http2Stream.notifyAll()
+          if (closed) {
+            bytesDiscarded = receiveBuffer.size
+            receiveBuffer.clear()
+          } else {
+            val wasEmpty = readBuffer.size == 0L
+            readBuffer.writeAll(receiveBuffer)
+            if (wasEmpty) {
+              this@Http2Stream.notifyAll()
+            }
           }
+        }
+        if (bytesDiscarded > 0L) {
+          updateConnectionFlowControl(bytesDiscarded)
         }
       }
     }
