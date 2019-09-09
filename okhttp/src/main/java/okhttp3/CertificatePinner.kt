@@ -126,7 +126,7 @@ import javax.net.ssl.SSLPeerUnverifiedException
 @Suppress("NAME_SHADOWING")
 class CertificatePinner internal constructor(
   private val pins: Set<Pin>,
-  private val certificateChainCleaner: CertificateChainCleaner?
+  internal val certificateChainCleaner: CertificateChainCleaner?
 ) {
   /**
    * Confirms that at least one of the certificates pinned for `hostname` is in `peerCertificates`.
@@ -138,17 +138,19 @@ class CertificatePinner internal constructor(
    */
   @Throws(SSLPeerUnverifiedException::class)
   fun check(hostname: String, peerCertificates: List<Certificate>) {
-    var peerCertificates = peerCertificates
+    return check(hostname) {
+      (certificateChainCleaner?.clean(peerCertificates, hostname) ?: peerCertificates)
+          .map { it as X509Certificate }
+    }
+  }
+
+  internal fun check(hostname: String, cleanedPeerCertificatesFn: () -> List<X509Certificate>) {
     val pins = findMatchingPins(hostname)
     if (pins.isEmpty()) return
 
-    if (certificateChainCleaner != null) {
-      peerCertificates = certificateChainCleaner.clean(peerCertificates, hostname)
-    }
+    val peerCertificates = cleanedPeerCertificatesFn()
 
     for (peerCertificate in peerCertificates) {
-      val x509Certificate = peerCertificate as X509Certificate
-
       // Lazily compute the hashes for each certificate.
       var sha1: ByteString? = null
       var sha256: ByteString? = null
@@ -156,11 +158,11 @@ class CertificatePinner internal constructor(
       for (pin in pins) {
         when (pin.hashAlgorithm) {
           "sha256/" -> {
-            if (sha256 == null) sha256 = x509Certificate.toSha256ByteString()
+            if (sha256 == null) sha256 = peerCertificate.toSha256ByteString()
             if (pin.hash == sha256) return // Success!
           }
           "sha1/" -> {
-            if (sha1 == null) sha1 = x509Certificate.toSha1ByteString()
+            if (sha1 == null) sha1 = peerCertificate.toSha1ByteString()
             if (pin.hash == sha1) return // Success!
           }
           else -> throw AssertionError("unsupported hashAlgorithm: ${pin.hashAlgorithm}")
@@ -172,8 +174,8 @@ class CertificatePinner internal constructor(
     val message = buildString {
       append("Certificate pinning failure!")
       append("\n  Peer certificate chain:")
-      for (c in 0 until peerCertificates.size) {
-        val x509Certificate = peerCertificates[c] as X509Certificate
+      for (element in peerCertificates) {
+        val x509Certificate = element as X509Certificate
         append("\n    ")
         append(pin(x509Certificate))
         append(": ")
@@ -195,7 +197,7 @@ class CertificatePinner internal constructor(
       ReplaceWith("check(hostname, peerCertificates.toList())")
   )
   @Throws(SSLPeerUnverifiedException::class)
-  inline fun check(hostname: String, vararg peerCertificates: Certificate) {
+  fun check(hostname: String, vararg peerCertificates: Certificate) {
     check(hostname, peerCertificates.toList())
   }
 
