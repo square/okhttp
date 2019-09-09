@@ -190,44 +190,52 @@ public final class CertificatePinnerTest {
     }
   }
 
-
-  @Test public void successfulCheckForHostnameWithSubdomainsIncluded() throws Exception {
+  @Test public void checkForHostnameWithDoubleAsterisk() throws Exception {
     CertificatePinner certificatePinner = new CertificatePinner.Builder()
-        .add("example.co.uk", true, certA1Sha256Pin)
+        .add("**.example.co.uk", certA1Sha256Pin)
         .build();
-    // Domains and certificates should match:
-    certificatePinner.check("example.co.uk", certA1.certificate());
-    certificatePinner.check("foo.example.co.uk", certA1.certificate());
-    certificatePinner.check("foo.bar.example.co.uk", certA1.certificate());
-    certificatePinner.check("foo.bar.baz.example.co.uk", certA1.certificate());
 
-    // Mismatching certificates, but domains should not match:
+    // Should be pinned:
+    try {
+      certificatePinner.check("foo.example.co.uk", certB1.certificate());
+      fail();
+    } catch (SSLPeerUnverifiedException expected) {}
+    try {
+      certificatePinner.check("foo.bar.example.co.uk", certB1.certificate());
+      fail();
+    } catch (SSLPeerUnverifiedException expected) {}
+    try {
+      certificatePinner.check("foo.bar.baz.example.co.uk", certB1.certificate());
+      fail();
+    } catch (SSLPeerUnverifiedException expected) {}
+
+    // Should not be pinned:
+    certificatePinner.check("uk", certB1.certificate());
+    certificatePinner.check("co.uk", certB1.certificate());
+    certificatePinner.check("example.co.uk", certB1.certificate());
+    certificatePinner.check("anotherexample.co.uk", certB1.certificate());
+  }
+
+  @Test public void checkForHostnameWithMultipleWildcardSegments() throws Exception {
+    CertificatePinner certificatePinner = new CertificatePinner.Builder()
+            .add("*.*.example.co.uk", certA1Sha256Pin)
+            .build();
+
+    // Should be pinned:
+    try {
+      certificatePinner.check("foo.bar.example.co.uk", certB1.certificate());
+      fail();
+    } catch (SSLPeerUnverifiedException expected) {}
+
+    // Should not be pinned:
+    certificatePinner.check("example.co.uk", certB1.certificate());
+    certificatePinner.check("foo.example.co.uk", certB1.certificate());
+    certificatePinner.check("foo.bar.baz.example.co.uk", certB1.certificate());
     certificatePinner.check("uk", certB1.certificate());
     certificatePinner.check("co.uk", certB1.certificate());
     certificatePinner.check("anotherexample.co.uk", certB1.certificate());
   }
 
-  @Test public void unsuccessfulCheckForHostnameWithSubdomainsIncluded() {
-	CertificatePinner certificatePinner = new CertificatePinner.Builder()
-			                                      .add("example.co.uk", true, certB1Sha256Pin)
-			                                      .build();
-	try {
-	  certificatePinner.check("example.co.uk", certA1.certificate());
-	  fail();
-	} catch (SSLPeerUnverifiedException expected) {}
-	try {
-	  certificatePinner.check("foo.example.co.uk", certA1.certificate());
-	  fail();
-	} catch (SSLPeerUnverifiedException expected) {}
-	try {
-	  certificatePinner.check("foo.bar.example.co.uk", certA1.certificate());
-	  fail();
-	} catch (SSLPeerUnverifiedException expected) {}
-	try {
-	  certificatePinner.check("foo.bar.baz.example.co.uk", certA1.certificate());
-	  fail();
-	} catch (SSLPeerUnverifiedException expected) {}
-  }
 
 
 }
