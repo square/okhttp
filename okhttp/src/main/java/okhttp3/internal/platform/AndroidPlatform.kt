@@ -15,8 +15,8 @@
  */
 package okhttp3.internal.platform
 
+import android.os.Build
 import okhttp3.Protocol
-import okhttp3.internal.futureapi.android.os.BuildX
 import okhttp3.internal.platform.android.AndroidCertificateChainCleaner
 import okhttp3.internal.platform.android.CloseGuard
 import okhttp3.internal.platform.android.ConscryptSocketAdapter
@@ -58,7 +58,7 @@ open class AndroidPlatform : Platform() {
     } catch (e: ClassCastException) {
       // On android 8.0, socket.connect throws a ClassCastException due to a bug
       // see https://issuetracker.google.com/issues/63649622
-      if (BuildX.VERSION_SDK_INT == 26) {
+      if (Build.VERSION.SDK_INT == 26) {
         throw IOException("Exception in connect", e)
       } else {
         throw e
@@ -191,12 +191,21 @@ open class AndroidPlatform : Platform() {
   }
 
   companion object {
+    val isAndroid: Boolean = try {
+      // Trigger an early exception over a fatal error, prefer a RuntimeException over Error.
+      Class.forName("com.android.org.conscrypt.OpenSSLSocketImpl")
+      true
+    } catch (_: ClassNotFoundException) {
+      false
+    }
+
     val isSupported: Boolean = try {
       // Trigger an early exception over a fatal error, prefer a RuntimeException over Error.
       Class.forName("com.android.org.conscrypt.OpenSSLSocketImpl")
 
       // Fail Fast
-      check(BuildX.VERSION_SDK_INT >= 21) { "Expected Android API level 21+ but was ${BuildX.VERSION_SDK_INT}" }
+      check(
+          Build.VERSION.SDK_INT >= 21) { "Expected Android API level 21+ but was ${Build.VERSION.SDK_INT}" }
 
       true
     } catch (_: ClassNotFoundException) {

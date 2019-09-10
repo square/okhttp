@@ -16,8 +16,6 @@
 package okhttp3.internal.platform
 
 import okhttp3.Protocol
-import okhttp3.internal.futureapi.javax.net.ssl.applicationProtocolX
-import okhttp3.internal.futureapi.javax.net.ssl.applicationProtocolsX
 import javax.net.ssl.SSLSocket
 import javax.net.ssl.SSLSocketFactory
 import javax.net.ssl.X509TrustManager
@@ -32,7 +30,7 @@ open class Jdk9Platform() : Platform() {
 
     val names = alpnProtocolNames(protocols)
 
-    sslParameters.applicationProtocolsX = names.toTypedArray()
+    sslParameters.applicationProtocols = names.toTypedArray()
 
     sslSocket.sslParameters = sslParameters
   }
@@ -40,7 +38,7 @@ open class Jdk9Platform() : Platform() {
   override fun getSelectedProtocol(socket: SSLSocket): String? {
     // SSLSocket.getApplicationProtocol returns "" if application protocols values will not
     // be used. Observed if you didn't specify SSLParameters.setApplicationProtocols
-    return when (val protocol = socket.applicationProtocolX) {
+    return when (val protocol = socket.applicationProtocol) {
       null, "" -> null
       else -> protocol
     }

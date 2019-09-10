@@ -15,9 +15,9 @@
  */
 package okhttp3.internal.platform
 
-import okhttp3.internal.futureapi.android.net.http.isCleartextTrafficPermittedX
-import okhttp3.internal.futureapi.android.os.BuildX
-import okhttp3.internal.futureapi.android.util.isAndroid
+import android.os.Build
+import android.security.NetworkSecurityPolicy
+import okhttp3.internal.platform.AndroidPlatform.Companion.isAndroid
 import okhttp3.internal.platform.android.AndroidQCertificateChainCleaner
 import okhttp3.internal.tls.CertificateChainCleaner
 import java.io.IOException
@@ -37,13 +37,13 @@ class AndroidQPlatform : Jdk9Platform() {
   }
 
   override fun isCleartextTrafficPermitted(hostname: String): Boolean =
-      isCleartextTrafficPermittedX(hostname)
+      NetworkSecurityPolicy.getInstance().isCleartextTrafficPermitted(hostname)
 
   override fun buildCertificateChainCleaner(trustManager: X509TrustManager): CertificateChainCleaner =
       AndroidQCertificateChainCleaner(trustManager)
 
   companion object {
-    val isSupported: Boolean = isAndroid && BuildX.VERSION_SDK_INT >= 29
+    val isSupported: Boolean = isAndroid && Build.VERSION.SDK_INT >= 29
 
     fun buildIfSupported(): Platform? = if (isSupported) AndroidQPlatform() else null
   }

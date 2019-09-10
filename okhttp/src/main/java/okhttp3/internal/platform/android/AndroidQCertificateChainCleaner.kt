@@ -1,6 +1,6 @@
 package okhttp3.internal.platform.android
 
-import okhttp3.internal.futureapi.android.net.http.X509TrustManagerExtensionsX
+import android.net.http.X509TrustManagerExtensions
 import okhttp3.internal.tls.CertificateChainCleaner
 import java.security.cert.Certificate
 import java.security.cert.X509Certificate
@@ -15,7 +15,7 @@ import javax.net.ssl.X509TrustManager
 internal class AndroidQCertificateChainCleaner(
   trustManager: X509TrustManager
 ) : CertificateChainCleaner() {
-  val extensions = X509TrustManagerExtensionsX(trustManager)
+  val extensions = X509TrustManagerExtensions(trustManager)
 
   @Suppress("UNCHECKED_CAST")
   @Throws(SSLPeerUnverifiedException::class)

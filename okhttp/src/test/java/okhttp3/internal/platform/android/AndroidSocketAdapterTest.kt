@@ -19,6 +19,7 @@ import okhttp3.DelegatingSSLSocket
 import okhttp3.DelegatingSSLSocketFactory
 import okhttp3.Protocol.HTTP_1_1
 import okhttp3.Protocol.HTTP_2
+import okhttp3.testing.PlatformRule
 import org.conscrypt.Conscrypt
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
@@ -26,6 +27,8 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Assume.assumeFalse
 import org.junit.Assume.assumeTrue
+import org.junit.Before
+import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
@@ -35,11 +38,18 @@ import javax.net.ssl.SSLSocket
 
 @RunWith(Parameterized::class)
 class AndroidSocketAdapterTest(private val adapter: SocketAdapter) {
-  private val provider: Provider = Conscrypt.newProviderBuilder().provideTrustManager(true).build()
-  val context: SSLContext = SSLContext.getInstance("TLS", provider)
+  @Suppress("RedundantVisibilityModifier")
+  @JvmField
+  @Rule
+  public val platform = PlatformRule.conscrypt()
 
-  init {
+  val context by lazy {
+    val provider: Provider = Conscrypt.newProviderBuilder().provideTrustManager(true).build()
+
+    val context = SSLContext.getInstance("TLS", provider)
     context.init(null, null, null)
+
+    context
   }
 
   @Test
