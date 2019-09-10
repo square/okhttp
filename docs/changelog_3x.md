@@ -1,6 +1,19 @@
 OkHttp 3.x Change Log
 =====================
 
+## Version 3.14.3
+
+_2019-09-10_
+
+ *  Fix: Don't lose HTTP/2 flow control bytes when incoming data races with a stream close. If this
+    happened enough then eventually the connection would stall.
+
+ *  Fix: Acknowledge and apply inbound HTTP/2 settings atomically. Previously we had a race where we
+    could use new flow control capacity before acknowledging it, causing strict HTTP/2 servers to
+    fail the call.
+
+ *  Fix: Recover gracefully when a coalesced connection immediately goes unhealthy.
+
 ## Version 3.14.2
 
 _2019-05-19_
@@ -148,6 +161,18 @@ _2019-02-04_
  *  New: API to access headers as `java.time.Instant`.
  *  New: Fail fast if a `SSLSocketFactory` is used as a `SocketFactory`.
  *  New: Log the TLS handshake in `LoggingEventListener`.
+
+
+## Version 3.12.5
+
+_2019-09-10_
+
+ *  Fix: Don't lose HTTP/2 flow control bytes when incoming data races with a stream close. If this
+    happened enough then eventually the connection would stall.
+
+ *  Fix: Acknowledge and apply inbound HTTP/2 settings atomically. Previously we had a race where we
+    could use new flow control capacity before acknowledging it, causing strict HTTP/2 servers to
+    fail the call.
 
 
 ## Version 3.12.4
