@@ -313,9 +313,7 @@ val hash: ByteString
         publicKey.encoded.toByteString().sha256()
 
     internal fun newPin(pattern: String, pin: String): Pin {
-      if (pattern.endsWith("*")) {
-        throw IllegalArgumentException("Invalid pattern: TLD cannot be a wildcard")
-      }
+      require(!pattern.endsWith("*")) { "Invalid pattern: TLD cannot be a wildcard" }
       val canonicalPattern = pattern.toCanonicalHost() ?: throw IllegalArgumentException("Invalid pattern")
 
       return when {
