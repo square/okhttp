@@ -642,6 +642,13 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#companion-object-functions" title="Companion Object Functions" class="md-nav__link">
+    Companion Object Functions
+  </a>
+  
+</li>
+      
       
       
       
@@ -803,6 +810,21 @@ client. Subject alternative names are not used for client authentication.</p>
 <tr>
 <td><a href="private-key-pkcs8-pem/">privateKeyPkcs8Pem</a></td>
 <td><code>fun privateKeyPkcs8Pem():</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><code>String</code></a><br>Returns the RSA private key encoded in <a href="https://tools.ietf.org/html/rfc5208">PKCS #8</a> <a href="https://tools.ietf.org/html/rfc7468">PEM format</a>.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="companion-object-functions">Companion Object Functions<a class="headerlink" href="#companion-object-functions" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Summary</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="decode/">decode</a></td>
+<td><code>fun decode(certificateAndPrivateKeyPem:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><code>String</code></a><code>):</code><a href="./"><code>HeldCertificate</code></a><br>Decodes a multiline string that contains both a <a href="certificate-pem/">certificate</a> and a <a href="private-key-pkcs8-pem/">private key</a>, both <a href="https://tools.ietf.org/html/rfc7468">PEM-encoded</a>. A typical input string looks like this:</td>
 </tr>
 </tbody>
 </table>

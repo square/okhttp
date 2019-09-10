@@ -40,7 +40,7 @@
     
     
       
-        <title>Peer certificates - OkHttp</title>
+        <title>Decode - OkHttp</title>
       
     
     
@@ -91,7 +91,7 @@
     <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
     <label class="md-overlay" data-md-component="overlay" for="__drawer"></label>
     
-      <a href="#peercertificates" tabindex="1" class="md-skip">
+      <a href="#decode" tabindex="1" class="md-skip">
         Skip to content
       </a>
     
@@ -117,7 +117,7 @@
             </span>
             <span class="md-header-nav__topic">
               
-                Peer certificates
+                Decode
               
             </span>
           
@@ -355,7 +355,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../../" title="okhttp" class="md-nav__link">
+    <a href="../../../../okhttp/okhttp3/" title="okhttp" class="md-nav__link">
       okhttp
     </a>
   </li>
@@ -403,7 +403,7 @@
 
 
   <li class="md-nav__item">
-    <a href="../../../../okhttp-tls/okhttp3.tls/" title="tls" class="md-nav__link">
+    <a href="../../" title="tls" class="md-nav__link">
       tls
     </a>
   </li>
@@ -621,15 +621,36 @@
             <article class="md-content__inner md-typeset">
               
                 
-                  <a href="https://github.com/square/okhttp/edit/master/docs/4.x/okhttp/okhttp3/-handshake/peer-certificates.md" title="Edit this page" class="md-icon md-content__icon">&#xE3C9;</a>
+                  <a href="https://github.com/square/okhttp/edit/master/docs/4.x/okhttp-tls/okhttp3.tls/-held-certificate/decode.md" title="Edit this page" class="md-icon md-content__icon">&#xE3C9;</a>
                 
                 
-                <p><a href="../../../">okhttp</a> / <a href="../../">okhttp3</a> / <a href="../">Handshake</a> / <a href="./">peerCertificates</a></p>
-<h1 id="peercertificates">peerCertificates<a class="headerlink" href="#peercertificates" title="Permanent link">&para;</a></h1>
-<p><code>val peerCertificates:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-list/index.html"><code>List</code></a><code>&lt;</code><a href="https://docs.oracle.com/javase/8/docs/api/java/security/cert/Certificate.html"><code>Certificate</code></a><code>&gt;</code></p>
-<p>Returns a possibly-empty list of certificates that identify the remote peer.</p>
-<p><strong>Getter</strong></p>
-<p>Returns a possibly-empty list of certificates that identify the remote peer.</p>
+                <p><a href="../../../">okhttp-tls</a> / <a href="../../">okhttp3.tls</a> / <a href="../">HeldCertificate</a> / <a href="./">decode</a></p>
+<h1 id="decode">decode<a class="headerlink" href="#decode" title="Permanent link">&para;</a></h1>
+<p><code>@JvmStatic fun decode(certificateAndPrivateKeyPem:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html"><code>String</code></a><code>):</code><a href="../"><code>HeldCertificate</code></a></p>
+<p>Decodes a multiline string that contains both a <a href="../certificate-pem/">certificate</a> and a
+<a href="../private-key-pkcs8-pem/">private key</a>, both <a href="https://tools.ietf.org/html/rfc7468">PEM-encoded</a>. A typical input string looks
+like this:</p>
+<div class="codehilite"><pre><span></span>-----BEGIN CERTIFICATE-----
+MIIBYTCCAQegAwIBAgIBKjAKBggqhkjOPQQDAjApMRQwEgYDVQQLEwtlbmdpbmVl
+cmluZzERMA8GA1UEAxMIY2FzaC5hcHAwHhcNNzAwMTAxMDAwMDA1WhcNNzAwMTAx
+MDAwMDEwWjApMRQwEgYDVQQLEwtlbmdpbmVlcmluZzERMA8GA1UEAxMIY2FzaC5h
+cHAwWTATBgcqhkjOPQIBBggqhkjOPQMBBwNCAASda8ChkQXxGELnrV/oBnIAx3dD
+ocUOJfdz4pOJTP6dVQB9U3UBiW5uSX/MoOD0LL5zG3bVyL3Y6pDwKuYvfLNhoyAw
+HjAcBgNVHREBAf8EEjAQhwQBAQEBgghjYXNoLmFwcDAKBggqhkjOPQQDAgNIADBF
+AiAyHHg1N6YDDQiY920+cnI5XSZwEGhAtb9PYWO8bLmkcQIhAI2CfEZf3V/obmdT
+yyaoEufLKVXhrTQhRfodTeigi4RX
+-----END CERTIFICATE-----
+-----BEGIN PRIVATE KEY-----
+MEECAQAwEwYHKoZIzj0CAQYIKoZIzj0DAQcEJzAlAgEBBCA7ODT0xhGSNn4ESj6J
+lu/GJQZoU9lDrCPeUcQ28tzOWw==
+-----END PRIVATE KEY-----
+</pre></div>
+
+<p>The string should contain exactly one certificate and one private key in <a href="https://tools.ietf.org/html/rfc5208">PKCS #8</a>
+format. It should not contain any other PEM-encoded blocks, but it may contain other text
+which will be ignored.</p>
+<p>Encode a held certificate into this format by concatenating the results of
+<a href="../certificate-pem/">certificatePem()</a> and <a href="../private-key-pkcs8-pem/">privateKeyPkcs8Pem()</a>.</p>
                 
                   
                 

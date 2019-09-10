@@ -579,6 +579,13 @@
     <ul class="md-nav__list" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#version-420" title="Version 4.2.0" class="md-nav__link">
+    Version 4.2.0
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#version-411" title="Version 4.1.1" class="md-nav__link">
     Version 4.1.1
   </a>
@@ -702,6 +709,13 @@
     <ul class="md-nav__list" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#version-420" title="Version 4.2.0" class="md-nav__link">
+    Version 4.2.0
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#version-411" title="Version 4.1.1" class="md-nav__link">
     Version 4.1.1
   </a>
@@ -777,6 +791,45 @@
                 
                 
                 <h1 id="change-log">Change Log<a class="headerlink" href="#change-log" title="Permanent link">&para;</a></h1>
+<h2 id="version-420">Version 4.2.0<a class="headerlink" href="#version-420" title="Permanent link">&para;</a></h2>
+<p><em>2019-09-10</em></p>
+<ul>
+<li>
+<p>New: API to decode a certificate and private key to create a <code>HeldCertificate</code>. This accepts a
+    string containing both a certificate and PKCS #8-encoded private key.</p>
+<div class="codehilite"><pre><span></span>val heldCertificate = HeldCertificate.decode(&quot;&quot;&quot;
+    |-----BEGIN CERTIFICATE-----
+    |MIIBYTCCAQegAwIBAgIBKjAKBggqhkjOPQQDAjApMRQwEgYDVQQLEwtlbmdpbmVl
+    |cmluZzERMA8GA1UEAxMIY2FzaC5hcHAwHhcNNzAwMTAxMDAwMDA1WhcNNzAwMTAx
+    |MDAwMDEwWjApMRQwEgYDVQQLEwtlbmdpbmVlcmluZzERMA8GA1UEAxMIY2FzaC5h
+    |cHAwWTATBgcqhkjOPQIBBggqhkjOPQMBBwNCAASda8ChkQXxGELnrV/oBnIAx3dD
+    |ocUOJfdz4pOJTP6dVQB9U3UBiW5uSX/MoOD0LL5zG3bVyL3Y6pDwKuYvfLNhoyAw
+    |HjAcBgNVHREBAf8EEjAQhwQBAQEBgghjYXNoLmFwcDAKBggqhkjOPQQDAgNIADBF
+    |AiAyHHg1N6YDDQiY920+cnI5XSZwEGhAtb9PYWO8bLmkcQIhAI2CfEZf3V/obmdT
+    |yyaoEufLKVXhrTQhRfodTeigi4RX
+    |-----END CERTIFICATE-----
+    |-----BEGIN PRIVATE KEY-----
+    |MEECAQAwEwYHKoZIzj0CAQYIKoZIzj0DAQcEJzAlAgEBBCA7ODT0xhGSNn4ESj6J
+    |lu/GJQZoU9lDrCPeUcQ28tzOWw==
+    |-----END PRIVATE KEY-----
+    &quot;&quot;&quot;.trimMargin())
+val handshakeCertificates = HandshakeCertificates.Builder()
+    .heldCertificate(heldCertificate)
+    .build()
+val server = MockWebServer()
+server.useHttps(handshakeCertificates.sslSocketFactory(), false)
+</pre></div>
+
+<p>Get these strings with <code>HeldCertificate.certificatePem()</code> and <code>privateKeyPkcs8Pem()</code>.
+ *  Fix: Handshake now returns peer certificates in canonical order: each certificate is signed by
+the certificate that follows and the last certificate is signed by a trusted root.
+ *  Fix: Don&rsquo;t lose HTTP/2 flow control bytes when incoming data races with a stream close. If this
+happened enough then eventually the connection would stall.
+ *  Fix: Acknowledge and apply inbound HTTP/2 settings atomically. Previously we had a race where we
+could use new flow control capacity before acknowledging it, causing strict HTTP/2 servers to
+fail the call.</p>
+</li>
+</ul>
 <h2 id="version-411">Version 4.1.1<a class="headerlink" href="#version-411" title="Permanent link">&para;</a></h2>
 <p><em>2019-09-05</em></p>
 <ul>
