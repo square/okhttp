@@ -249,6 +249,9 @@ val hashAlgorithm: String,
 val hash: ByteString
   ) {
     fun matches(hostname: String): Boolean {
+      if (hostname == pattern) {
+        return true
+      }
       val patternSegments = canonicalPattern.split('.').reversed()
       val hostnameSegments = hostname.split('.').reversed()
       if (patternSegments.size != hostnameSegments.size && patternSegments.last() != "**") {
