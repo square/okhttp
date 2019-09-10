@@ -15,8 +15,8 @@
  */
 package okhttp3
 
-import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.internal.tls.CertificateChainCleaner
+import okhttp3.internal.toCanonicalHost
 import okio.ByteString
 import okio.ByteString.Companion.decodeBase64
 import okio.ByteString.Companion.toByteString
@@ -313,7 +313,7 @@ val hash: ByteString
         publicKey.encoded.toByteString().sha256()
 
     internal fun newPin(pattern: String, pin: String): Pin {
-      val canonicalPattern = "https://$pattern".toHttpUrl().host
+      val canonicalPattern = pattern.toCanonicalHost() ?: throw java.lang.IllegalArgumentException("Invalid pattern")
 
       return when {
         pin.startsWith("sha1/") -> {
