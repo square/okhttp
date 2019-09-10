@@ -875,8 +875,6 @@ public final class HttpLoggingInterceptorTest {
         .assertNoMoreLogs();
   }
 
-
-
   @Test public void oneShotRequestsAreNotLogged() throws Exception {
     url = server.url("/");
 
