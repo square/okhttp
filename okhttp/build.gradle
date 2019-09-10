@@ -30,7 +30,6 @@ dependencies {
   compileOnly deps.openjsse
   compileOnly deps.jsr305
   compileOnly deps.animalSniffer
-  implementation project(':okhttp-futureapi')
 
   testImplementation project(':okhttp-testing-support')
   testImplementation project(':okhttp-tls')
