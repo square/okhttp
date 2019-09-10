@@ -90,13 +90,19 @@ import javax.net.ssl.SSLPeerUnverifiedException
  *
  * Wildcard pattern rules:
  *
- *  1. Asterisk `*` is only permitted in the left-most domain name label and must be the only
- *     character in that label (i.e., must match the whole left-most label). For example,
- *     `*.example.com` is permitted, while `*a.example.com`, `a*.example.com`, `a*b.example.com`,
- *     `a.*.example.com` are not permitted.
- *  2. Asterisk `*` cannot match across domain name labels. For example, `*.example.com` matches
+ *  1. Where used, asterisk `*` (or double-asterisk `**`) must be the only text in the label. For
+ *     example, `*.example.com` is permitted, while `*a.example.com`, `a*.example.com`, and
+ *     `a*b.example.com` are not permitted.
+ *  2. Asterisk `*` can appear multiple times but must not appear in the top-level label. For
+ *     example, `*.*.example.com` and `*.foo.*.example.com` are permitted, but `*.example.*` and
+ *     `example.*` are not.
+ *  3. Asterisk `*` cannot match across domain name labels. For example, `*.example.com` matches
  *     `test.example.com` but does not match `sub.test.example.com`.
- *  3. Wildcard patterns for single-label domain names are not permitted.
+ *  4. Double asterisk `**` matches across zero or more labels. For example, `**.example.com`
+ *     matches `example.com`, `foo.example.com`, and `foo.bar.example.com`.
+ *  5. Double asterisk `**` can only be used in the bottom-level label. For example,
+ *     `**.example.com` and `**.foo.*.example.com` are allowed, but `foo.**.example.com` is not.
+ *  6. Wildcard patterns for single-label domain names are not permitted.
  *
  * If hostname pinned directly and via wildcard pattern, both direct and wildcard pins will be used.
  * For example: `*.example.com` pinned with `pin1` and `a.example.com` pinned with `pin2`, to check
