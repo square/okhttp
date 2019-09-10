@@ -797,37 +797,43 @@
 <li>
 <p>New: API to decode a certificate and private key to create a <code>HeldCertificate</code>. This accepts a
     string containing both a certificate and PKCS #8-encoded private key.</p>
-<div class="codehilite"><pre><span></span>val heldCertificate = HeldCertificate.decode(&quot;&quot;&quot;
-    |-----BEGIN CERTIFICATE-----
-    |MIIBYTCCAQegAwIBAgIBKjAKBggqhkjOPQQDAjApMRQwEgYDVQQLEwtlbmdpbmVl
-    |cmluZzERMA8GA1UEAxMIY2FzaC5hcHAwHhcNNzAwMTAxMDAwMDA1WhcNNzAwMTAx
-    |MDAwMDEwWjApMRQwEgYDVQQLEwtlbmdpbmVlcmluZzERMA8GA1UEAxMIY2FzaC5h
-    |cHAwWTATBgcqhkjOPQIBBggqhkjOPQMBBwNCAASda8ChkQXxGELnrV/oBnIAx3dD
-    |ocUOJfdz4pOJTP6dVQB9U3UBiW5uSX/MoOD0LL5zG3bVyL3Y6pDwKuYvfLNhoyAw
-    |HjAcBgNVHREBAf8EEjAQhwQBAQEBgghjYXNoLmFwcDAKBggqhkjOPQQDAgNIADBF
-    |AiAyHHg1N6YDDQiY920+cnI5XSZwEGhAtb9PYWO8bLmkcQIhAI2CfEZf3V/obmdT
-    |yyaoEufLKVXhrTQhRfodTeigi4RX
-    |-----END CERTIFICATE-----
-    |-----BEGIN PRIVATE KEY-----
-    |MEECAQAwEwYHKoZIzj0CAQYIKoZIzj0DAQcEJzAlAgEBBCA7ODT0xhGSNn4ESj6J
-    |lu/GJQZoU9lDrCPeUcQ28tzOWw==
-    |-----END PRIVATE KEY-----
-    &quot;&quot;&quot;.trimMargin())
-val handshakeCertificates = HandshakeCertificates.Builder()
-    .heldCertificate(heldCertificate)
-    .build()
-val server = MockWebServer()
-server.useHttps(handshakeCertificates.sslSocketFactory(), false)
+<div class="codehilite"><pre><span></span><span class="k">val</span> <span class="py">heldCertificate</span> <span class="p">=</span> <span class="n">HeldCertificate</span><span class="p">.</span><span class="n">decode</span><span class="p">(</span><span class="s">&quot;&quot;&quot;</span>
+<span class="s">    |-----BEGIN CERTIFICATE-----</span>
+<span class="s">    |MIIBYTCCAQegAwIBAgIBKjAKBggqhkjOPQQDAjApMRQwEgYDVQQLEwtlbmdpbmVl</span>
+<span class="s">    |cmluZzERMA8GA1UEAxMIY2FzaC5hcHAwHhcNNzAwMTAxMDAwMDA1WhcNNzAwMTAx</span>
+<span class="s">    |MDAwMDEwWjApMRQwEgYDVQQLEwtlbmdpbmVlcmluZzERMA8GA1UEAxMIY2FzaC5h</span>
+<span class="s">    |cHAwWTATBgcqhkjOPQIBBggqhkjOPQMBBwNCAASda8ChkQXxGELnrV/oBnIAx3dD</span>
+<span class="s">    |ocUOJfdz4pOJTP6dVQB9U3UBiW5uSX/MoOD0LL5zG3bVyL3Y6pDwKuYvfLNhoyAw</span>
+<span class="s">    |HjAcBgNVHREBAf8EEjAQhwQBAQEBgghjYXNoLmFwcDAKBggqhkjOPQQDAgNIADBF</span>
+<span class="s">    |AiAyHHg1N6YDDQiY920+cnI5XSZwEGhAtb9PYWO8bLmkcQIhAI2CfEZf3V/obmdT</span>
+<span class="s">    |yyaoEufLKVXhrTQhRfodTeigi4RX</span>
+<span class="s">    |-----END CERTIFICATE-----</span>
+<span class="s">    |-----BEGIN PRIVATE KEY-----</span>
+<span class="s">    |MEECAQAwEwYHKoZIzj0CAQYIKoZIzj0DAQcEJzAlAgEBBCA7ODT0xhGSNn4ESj6J</span>
+<span class="s">    |lu/GJQZoU9lDrCPeUcQ28tzOWw==</span>
+<span class="s">    |-----END PRIVATE KEY-----</span>
+<span class="s">    &quot;&quot;&quot;</span><span class="p">.</span><span class="n">trimMargin</span><span class="p">())</span>
+<span class="k">val</span> <span class="py">handshakeCertificates</span> <span class="p">=</span> <span class="n">HandshakeCertificates</span><span class="p">.</span><span class="n">Builder</span><span class="p">()</span>
+    <span class="p">.</span><span class="n">heldCertificate</span><span class="p">(</span><span class="n">heldCertificate</span><span class="p">)</span>
+    <span class="p">.</span><span class="n">build</span><span class="p">()</span>
+<span class="k">val</span> <span class="py">server</span> <span class="p">=</span> <span class="n">MockWebServer</span><span class="p">()</span>
+<span class="n">server</span><span class="p">.</span><span class="n">useHttps</span><span class="p">(</span><span class="n">handshakeCertificates</span><span class="p">.</span><span class="n">sslSocketFactory</span><span class="p">(),</span> <span class="k">false</span><span class="p">)</span>
 </pre></div>
 
-<p>Get these strings with <code>HeldCertificate.certificatePem()</code> and <code>privateKeyPkcs8Pem()</code>.
- *  Fix: Handshake now returns peer certificates in canonical order: each certificate is signed by
-the certificate that follows and the last certificate is signed by a trusted root.
- *  Fix: Don&rsquo;t lose HTTP/2 flow control bytes when incoming data races with a stream close. If this
-happened enough then eventually the connection would stall.
- *  Fix: Acknowledge and apply inbound HTTP/2 settings atomically. Previously we had a race where we
-could use new flow control capacity before acknowledging it, causing strict HTTP/2 servers to
-fail the call.</p>
+<p>Get these strings with <code>HeldCertificate.certificatePem()</code> and <code>privateKeyPkcs8Pem()</code>.</p>
+</li>
+<li>
+<p>Fix: Handshake now returns peer certificates in canonical order: each certificate is signed by
+    the certificate that follows and the last certificate is signed by a trusted root.</p>
+</li>
+<li>
+<p>Fix: Don&rsquo;t lose HTTP/2 flow control bytes when incoming data races with a stream close. If this
+    happened enough then eventually the connection would stall.</p>
+</li>
+<li>
+<p>Fix: Acknowledge and apply inbound HTTP/2 settings atomically. Previously we had a race where we
+    could use new flow control capacity before acknowledging it, causing strict HTTP/2 servers to
+    fail the call.</p>
 </li>
 </ul>
 <h2 id="version-411">Version 4.1.1<a class="headerlink" href="#version-411" title="Permanent link">&para;</a></h2>
@@ -859,7 +865,7 @@ fail the call.</p>
 <li>New: Permit <a href="https://www.iana.org/assignments/websocket/websocket.txt">new WebSocket response codes</a>: 1012 (Service Restart), 1013 (Try
     Again Later), and 1014 (invalid response from the upstream).</li>
 <li>New: Build with Kotlin 1.3.41, BouncyCastle 1.62, and Conscrypt 2.2.1.</li>
-<li>Fix: Recover gracefully when a a coalesced connection immediately goes unhealthy.</li>
+<li>Fix: Recover gracefully when a coalesced connection immediately goes unhealthy.</li>
 <li>Fix: Defer the <code>SecurityException</code> when looking up the default proxy selector.</li>
 <li>Fix: Don&rsquo;t use brackets formatting IPv6 host names in MockWebServer.</li>
 <li>Fix: Don&rsquo;t permit cache iterators to remove entries that are being written.</li>

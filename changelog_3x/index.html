@@ -615,6 +615,13 @@
     <ul class="md-nav__list" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#version-3143" title="Version 3.14.3" class="md-nav__link">
+    Version 3.14.3
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#version-3142" title="Version 3.14.2" class="md-nav__link">
     Version 3.14.2
   </a>
@@ -645,6 +652,13 @@
         <li class="md-nav__item">
   <a href="#version-3130" title="Version 3.13.0" class="md-nav__link">
     Version 3.13.0
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#version-3125" title="Version 3.12.5" class="md-nav__link">
+    Version 3.12.5
   </a>
   
 </li>
@@ -865,6 +879,22 @@
                 
                 
                 <h1 id="okhttp-3x-change-log">OkHttp 3.x Change Log<a class="headerlink" href="#okhttp-3x-change-log" title="Permanent link">&para;</a></h1>
+<h2 id="version-3143">Version 3.14.3<a class="headerlink" href="#version-3143" title="Permanent link">&para;</a></h2>
+<p><em>2019-09-10</em></p>
+<ul>
+<li>
+<p>Fix: Don&rsquo;t lose HTTP/2 flow control bytes when incoming data races with a stream close. If this
+    happened enough then eventually the connection would stall.</p>
+</li>
+<li>
+<p>Fix: Acknowledge and apply inbound HTTP/2 settings atomically. Previously we had a race where we
+    could use new flow control capacity before acknowledging it, causing strict HTTP/2 servers to
+    fail the call.</p>
+</li>
+<li>
+<p>Fix: Recover gracefully when a coalesced connection immediately goes unhealthy.</p>
+</li>
+</ul>
 <h2 id="version-3142">Version 3.14.2<a class="headerlink" href="#version-3142" title="Permanent link">&para;</a></h2>
 <p><em>2019-05-19</em></p>
 <ul>
@@ -1016,6 +1046,19 @@ difficult we will backport critical fixes to the 3.12.x branch through December 
 <li>New: API to access headers as <code>java.time.Instant</code>.</li>
 <li>New: Fail fast if a <code>SSLSocketFactory</code> is used as a <code>SocketFactory</code>.</li>
 <li>New: Log the TLS handshake in <code>LoggingEventListener</code>.</li>
+</ul>
+<h2 id="version-3125">Version 3.12.5<a class="headerlink" href="#version-3125" title="Permanent link">&para;</a></h2>
+<p><em>2019-09-10</em></p>
+<ul>
+<li>
+<p>Fix: Don&rsquo;t lose HTTP/2 flow control bytes when incoming data races with a stream close. If this
+    happened enough then eventually the connection would stall.</p>
+</li>
+<li>
+<p>Fix: Acknowledge and apply inbound HTTP/2 settings atomically. Previously we had a race where we
+    could use new flow control capacity before acknowledging it, causing strict HTTP/2 servers to
+    fail the call.</p>
+</li>
 </ul>
 <h2 id="version-3124">Version 3.12.4<a class="headerlink" href="#version-3124" title="Permanent link">&para;</a></h2>
 <p><em>2019-09-04</em></p>
