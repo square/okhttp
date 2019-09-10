@@ -435,6 +435,10 @@ public final class Http2Stream {
       connection.updateConnectionFlowControl(read);
     }
 
+    /**
+     * Accept bytes on the connection's reader thread. This function avoids holding locks while it
+     * performs blocking reads for the incoming bytes.
+     */
     void receive(BufferedSource in, long byteCount) throws IOException {
       assert (!Thread.holdsLock(Http2Stream.this));
 
@@ -464,13 +468,24 @@ public final class Http2Stream {
         if (read == -1) throw new EOFException();
         byteCount -= read;
 
-        // Move the received data to the read buffer to the reader can read it.
+        // Move the received data to the read buffer to the reader can read it. If this source has
+        // been closed since this read began we must discard the incoming data and tell the
+        // connection we've done so.
+        long bytesDiscarded = 0L;
         synchronized (Http2Stream.this) {
-          boolean wasEmpty = readBuffer.size() == 0;
-          readBuffer.writeAll(receiveBuffer);
-          if (wasEmpty) {
-            Http2Stream.this.notifyAll();
+          if (closed) {
+            bytesDiscarded = receiveBuffer.size();
+            receiveBuffer.clear();
+          } else {
+            boolean wasEmpty = readBuffer.size() == 0;
+            readBuffer.writeAll(receiveBuffer);
+            if (wasEmpty) {
+              Http2Stream.this.notifyAll();
+            }
           }
+        }
+        if (bytesDiscarded > 0L) {
+          updateConnectionFlowControl(bytesDiscarded);
         }
       }
     }
