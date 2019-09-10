@@ -3,6 +3,7 @@ package okhttp3.internal.platform.android
 import android.net.http.X509TrustManagerExtensions
 import okhttp3.internal.tls.CertificateChainCleaner
 import java.security.cert.Certificate
+import java.security.cert.CertificateException
 import java.security.cert.X509Certificate
 import javax.net.ssl.SSLPeerUnverifiedException
 import javax.net.ssl.X509TrustManager
@@ -22,7 +23,11 @@ internal class AndroidQCertificateChainCleaner(
   override // Reflection on List<Certificate>.
   fun clean(chain: List<Certificate>, hostname: String): List<Certificate> {
     val certificates = (chain as List<X509Certificate>).toTypedArray()
-    return extensions.checkServerTrusted(certificates, "RSA", hostname)
+    try {
+      return extensions.checkServerTrusted(certificates, "RSA", hostname)
+    } catch (ce: CertificateException) {
+      throw SSLPeerUnverifiedException(ce.message).apply { initCause(ce) }
+    }
   }
 
   override fun equals(other: Any?): Boolean =

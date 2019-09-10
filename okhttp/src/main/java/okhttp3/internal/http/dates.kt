@@ -70,7 +70,7 @@ internal fun String.toHttpDateOrNull(): Date? {
   if (isEmpty()) return null
 
   val position = ParsePosition(0)
-  var result = STANDARD_DATE_FORMAT.get()!!.parse(this, position)
+  var result = STANDARD_DATE_FORMAT.get().parse(this, position)
   if (position.index == length) {
     // STANDARD_DATE_FORMAT must match exactly; all text must be consumed, e.g. no ignored
     // non-standard trailing "+01:00". Those cases are covered below.
@@ -103,4 +103,4 @@ internal fun String.toHttpDateOrNull(): Date? {
 }
 
 /** Returns the string for this date. */
-internal fun Date.toHttpDateString(): String = STANDARD_DATE_FORMAT.get()!!.format(this)
+internal fun Date.toHttpDateString(): String = STANDARD_DATE_FORMAT.get().format(this)

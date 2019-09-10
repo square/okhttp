@@ -25,9 +25,7 @@ internal class AndroidCertificateChainCleaner(
     checkServerTrusted.invoke(
         x509TrustManagerExtensions, certificates, "RSA", hostname) as List<Certificate>
   } catch (e: InvocationTargetException) {
-    val exception = SSLPeerUnverifiedException(e.message)
-    exception.initCause(e)
-    throw exception
+    throw SSLPeerUnverifiedException(e.message).apply { initCause(e) }
   } catch (e: IllegalAccessException) {
     throw AssertionError(e)
   }

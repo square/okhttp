@@ -554,7 +554,7 @@ fun <T> readFieldOrNull(instance: Any, fieldType: Class<T>, fieldName: String): 
     } catch (_: NoSuchFieldException) {
     }
 
-    c = c.superclass as Class<*>
+    c = c.superclass
   }
 
   // Didn't find the field we wanted. As a last gasp attempt,

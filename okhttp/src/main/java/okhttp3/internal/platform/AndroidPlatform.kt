@@ -38,7 +38,7 @@ import javax.net.ssl.SSLSocketFactory
 import javax.net.ssl.X509TrustManager
 
 /** Android 5+. */
-open class AndroidPlatform : Platform() {
+class AndroidPlatform : Platform() {
   private val socketAdapters = listOfNotNull(
       StandardAndroidSocketAdapter.buildIfSupported(),
       ConscryptSocketAdapter.buildIfSupported(),

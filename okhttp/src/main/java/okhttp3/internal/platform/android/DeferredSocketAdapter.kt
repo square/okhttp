@@ -51,9 +51,9 @@ class DeferredSocketAdapter(private val socketPackage: String) : SocketAdapter {
   @Synchronized private fun getDelegate(actualSSLSocketClass: SSLSocket): SocketAdapter? {
     if (!initialized) {
       try {
-        var possibleClass: Class<*>? = actualSSLSocketClass.javaClass
-        while (possibleClass!!.name != "$socketPackage.OpenSSLSocketImpl") {
-          possibleClass = possibleClass.superclass as Class<*>?
+        var possibleClass: Class<in SSLSocket> = actualSSLSocketClass.javaClass
+        while (possibleClass.name != "$socketPackage.OpenSSLSocketImpl") {
+          possibleClass = possibleClass.superclass
 
           if (possibleClass == null) {
             throw AssertionError(
@@ -61,7 +61,7 @@ class DeferredSocketAdapter(private val socketPackage: String) : SocketAdapter {
           }
         }
 
-        delegate = AndroidSocketAdapter(possibleClass as Class<in SSLSocket>)
+        delegate = AndroidSocketAdapter(possibleClass)
       } catch (e: Exception) {
         Platform.get()
             .log(Platform.WARN, "Failed to initialize DeferredSocketAdapter $socketPackage", e)

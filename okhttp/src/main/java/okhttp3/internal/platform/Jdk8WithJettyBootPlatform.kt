@@ -32,7 +32,7 @@ class Jdk8WithJettyBootPlatform(
 ) : Platform() {
   override fun configureTlsExtensions(
     sslSocket: SSLSocket,
-    protocols: List<@JvmSuppressWildcards Protocol>
+    protocols: List<Protocol>
   ) {
     val names = alpnProtocolNames(protocols)
 
@@ -126,7 +126,7 @@ class Jdk8WithJettyBootPlatform(
       val jvmVersion = System.getProperty("java.specification.version", "unknown")
       try {
         // 1.8, 9, 10, 11, 12 etc
-        val version = jvmVersion!!.toInt()
+        val version = jvmVersion.toInt()
         if (version >= 9) return null
       } catch (_: NumberFormatException) {
         // expected on >= JDK 9
