@@ -260,8 +260,8 @@ val hash: ByteString
       for (i in patternSegments.indices) {
         val patternSegment = patternSegments[i]
         if (patternSegment != "**") {
-          val hostnameSegmentN = hostnameSegments.getOrNull(i)
-          if (patternSegment != hostnameSegmentN && (patternSegment != "*" || hostnameSegmentN == null)) {
+          val hostnameSegment = hostnameSegments.getOrNull(i)
+          if (patternSegment != hostnameSegment && (patternSegment != "*" || hostnameSegment == null)) {
             return false
           }
         }
