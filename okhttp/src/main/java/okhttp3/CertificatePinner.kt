@@ -259,6 +259,9 @@ val hash: ByteString
       }
       for (i in patternSegments.indices) {
         val patternSegment = patternSegments[i]
+        if (patternSegment == "**" && i == patternSegments.lastIndex) {
+          return true
+        }
         val hostnameSegment = hostnameSegments.getOrNull(i) ?: return false
         if (patternSegment != hostnameSegment && patternSegment != "*" && patternSegment != "**") {
           return false

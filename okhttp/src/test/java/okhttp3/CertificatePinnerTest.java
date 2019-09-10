@@ -197,6 +197,10 @@ public final class CertificatePinnerTest {
 
     // Should be pinned:
     try {
+      certificatePinner.check("example.co.uk", certB1.certificate());
+      fail();
+    } catch (SSLPeerUnverifiedException expected) {}
+    try {
       certificatePinner.check("foo.example.co.uk", certB1.certificate());
       fail();
     } catch (SSLPeerUnverifiedException expected) {}
@@ -212,7 +216,6 @@ public final class CertificatePinnerTest {
     // Should not be pinned:
     certificatePinner.check("uk", certB1.certificate());
     certificatePinner.check("co.uk", certB1.certificate());
-    certificatePinner.check("example.co.uk", certB1.certificate());
     certificatePinner.check("anotherexample.co.uk", certB1.certificate());
   }
 
