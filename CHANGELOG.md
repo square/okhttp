@@ -1,6 +1,47 @@
 Change Log
 ==========
 
+## Version 4.2.0
+
+_2019-09-10_
+
+ *  New: API to decode a certificate and private key to create a `HeldCertificate`. This accepts a
+    string containing both a certificate and PKCS #8-encoded private key.
+
+    ```
+    val heldCertificate = HeldCertificate.decode("""
+        |-----BEGIN CERTIFICATE-----
+        |MIIBYTCCAQegAwIBAgIBKjAKBggqhkjOPQQDAjApMRQwEgYDVQQLEwtlbmdpbmVl
+        |cmluZzERMA8GA1UEAxMIY2FzaC5hcHAwHhcNNzAwMTAxMDAwMDA1WhcNNzAwMTAx
+        |MDAwMDEwWjApMRQwEgYDVQQLEwtlbmdpbmVlcmluZzERMA8GA1UEAxMIY2FzaC5h
+        |cHAwWTATBgcqhkjOPQIBBggqhkjOPQMBBwNCAASda8ChkQXxGELnrV/oBnIAx3dD
+        |ocUOJfdz4pOJTP6dVQB9U3UBiW5uSX/MoOD0LL5zG3bVyL3Y6pDwKuYvfLNhoyAw
+        |HjAcBgNVHREBAf8EEjAQhwQBAQEBgghjYXNoLmFwcDAKBggqhkjOPQQDAgNIADBF
+        |AiAyHHg1N6YDDQiY920+cnI5XSZwEGhAtb9PYWO8bLmkcQIhAI2CfEZf3V/obmdT
+        |yyaoEufLKVXhrTQhRfodTeigi4RX
+        |-----END CERTIFICATE-----
+        |-----BEGIN PRIVATE KEY-----
+        |MEECAQAwEwYHKoZIzj0CAQYIKoZIzj0DAQcEJzAlAgEBBCA7ODT0xhGSNn4ESj6J
+        |lu/GJQZoU9lDrCPeUcQ28tzOWw==
+        |-----END PRIVATE KEY-----
+        """.trimMargin())
+    val handshakeCertificates = HandshakeCertificates.Builder()
+        .heldCertificate(heldCertificate)
+        .build()
+    val server = MockWebServer()
+    server.useHttps(handshakeCertificates.sslSocketFactory(), false)
+    ```
+
+    Get these strings with `HeldCertificate.certificatePem()` and `privateKeyPkcs8Pem()`.
+ *  Fix: Handshake now returns peer certificates in canonical order: each certificate is signed by
+    the certificate that follows and the last certificate is signed by a trusted root.
+ *  Fix: Don't lose HTTP/2 flow control bytes when incoming data races with a stream close. If this
+    happened enough then eventually the connection would stall.
+ *  Fix: Acknowledge and apply inbound HTTP/2 settings atomically. Previously we had a race where we
+    could use new flow control capacity before acknowledging it, causing strict HTTP/2 servers to
+    fail the call.
+
+
 ## Version 4.1.1
 
 _2019-09-05_
