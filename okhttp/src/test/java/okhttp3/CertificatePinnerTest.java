@@ -217,50 +217,7 @@ public final class CertificatePinnerTest {
     certificatePinner.check("uk", certB1.certificate());
     certificatePinner.check("co.uk", certB1.certificate());
     certificatePinner.check("anotherexample.co.uk", certB1.certificate());
+    certificatePinner.check("foo.anotherexample.co.uk", certB1.certificate());
   }
-
-  @Test public void checkForHostnameWithMultipleWildcardSegments() throws Exception {
-    CertificatePinner certificatePinner = new CertificatePinner.Builder()
-            .add("*.*.example.co.uk", certA1Sha256Pin)
-            .build();
-
-    // Should be pinned:
-    try {
-      certificatePinner.check("foo.bar.example.co.uk", certB1.certificate());
-      fail();
-    } catch (SSLPeerUnverifiedException expected) {}
-
-    // Should not be pinned:
-    certificatePinner.check("example.co.uk", certB1.certificate());
-    certificatePinner.check("foo.example.co.uk", certB1.certificate());
-    certificatePinner.check("foo.bar.baz.example.co.uk", certB1.certificate());
-    certificatePinner.check("uk", certB1.certificate());
-    certificatePinner.check("co.uk", certB1.certificate());
-    certificatePinner.check("anotherexample.co.uk", certB1.certificate());
-  }
-
-  @Test public void checkForHostnameWithWildcardSegmentInTheMiddle() throws Exception {
-    CertificatePinner certificatePinner = new CertificatePinner.Builder()
-                                                  .add("foo.*.example.co.uk", certA1Sha256Pin)
-                                                  .build();
-
-    // Should be pinned:
-    try {
-      certificatePinner.check("foo.bar.example.co.uk", certB1.certificate());
-      fail();
-    } catch (SSLPeerUnverifiedException expected) {}
-
-    // Should not be pinned:
-    certificatePinner.check("uk", certB1.certificate());
-    certificatePinner.check("co.uk", certB1.certificate());
-    certificatePinner.check("example.co.uk", certB1.certificate());
-    certificatePinner.check("foo.example.co.uk", certB1.certificate());
-    certificatePinner.check("bar.baz.example.co.uk", certB1.certificate());
-    certificatePinner.check("foo.bar.baz.example.co.uk", certB1.certificate());
-    certificatePinner.check("bar.foo.baz.example.co.uk", certB1.certificate());
-    certificatePinner.check("foo.bar.anotherexample.co.uk", certB1.certificate());
-  }
-
-
 
 }

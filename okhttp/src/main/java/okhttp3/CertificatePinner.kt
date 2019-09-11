@@ -245,34 +245,22 @@ class CertificatePinner internal constructor(
   }
 
   internal data class Pin(
-    /** A hostname like `example.com` or a pattern like `*.example.com`. */
-val pattern: String,
-    /** The canonical hostname, i.e. `EXAMPLE.com` becomes `example.com`. */
-private val canonicalPattern: String,
+    /** A hostname like `example.com` or a pattern like `*.example.com` (canonical form). */
+    private val pattern: String,
     /** Either `sha1/` or `sha256/`. */
-val hashAlgorithm: String,
+    val hashAlgorithm: String,
     /** The hash of the pinned certificate using [hashAlgorithm]. */
-val hash: ByteString
+    val hash: ByteString
   ) {
+
     fun matches(hostname: String): Boolean {
-      if (hostname == pattern) {
-        return true
+      val ending by lazy { pattern.substringAfter(".") }
+      return when {
+        pattern.startsWith("**.") -> hostname.endsWith(ending) &&
+            (hostname.length == ending.length || hostname[hostname.length - ending.length - 1] == '.')
+        pattern.startsWith("*.") -> hostname.substringAfter('.') == ending
+        else -> hostname == pattern
       }
-      val patternSegments = canonicalPattern.split('.').reversed()
-      val hostnameSegments = hostname.split('.').reversed()
-      if (patternSegments.size != hostnameSegments.size && patternSegments.last() != "**") {
-        return false
-      }
-      for (i in patternSegments.indices) {
-        val patternSegment = patternSegments[i]
-        if (patternSegment != "**") {
-          val hostnameSegment = hostnameSegments.getOrNull(i)
-          if (patternSegment != hostnameSegment && (patternSegment != "*" || hostnameSegment == null)) {
-            return false
-          }
-        }
-      }
-      return true
     }
 
     override fun toString(): String = hashAlgorithm + hash.base64()
@@ -322,16 +310,17 @@ val hash: ByteString
 
     internal fun newPin(pattern: String, pin: String): Pin {
       require(!pattern.endsWith("*")) { "Invalid pattern: TLD cannot be a wildcard" }
-      val canonicalPattern = pattern.toCanonicalHost() ?: throw IllegalArgumentException("Invalid pattern")
+      val canonicalPattern =
+          pattern.toCanonicalHost() ?: throw IllegalArgumentException("Invalid pattern")
 
       return when {
         pin.startsWith("sha1/") -> {
           val hash = pin.substring("sha1/".length).decodeBase64()!!
-          Pin(pattern, canonicalPattern, "sha1/", hash)
+          Pin(canonicalPattern, "sha1/", hash)
         }
         pin.startsWith("sha256/") -> {
           val hash = pin.substring("sha256/".length).decodeBase64()!!
-          Pin(pattern, canonicalPattern, "sha256/", hash)
+          Pin(canonicalPattern, "sha256/", hash)
         }
         else -> throw IllegalArgumentException("pins must start with 'sha256/' or 'sha1/': $pin")
       }
