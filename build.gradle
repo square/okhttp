@@ -131,10 +131,15 @@ subprojects { project ->
   }
 
   def platform = System.getProperty("okhttp.platform", "jdk8")
+  def platformJavaHome = System.getenv('TEST_JAVA_HOME')
 
   test {
     jvmArgs += "-Dlistener=okhttp3.testing.InstallUncaughtExceptionHandlerListener"
     jvmArgs += "-Dokhttp.platform=$platform"
+
+    if (platformJavaHome != null) {
+      executable = "$platformJavaHome/bin/java"
+    }
 
     maxParallelForks Runtime.runtime.availableProcessors() * 2
     testLogging {
