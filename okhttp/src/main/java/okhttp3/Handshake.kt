@@ -42,8 +42,7 @@ class Handshake internal constructor(
   @get:JvmName("cipherSuite") val cipherSuite: CipherSuite,
 
   /** Returns a possibly-empty list of certificates that identify this peer. */
-  @get:JvmName(
-      "localCertificates") val localCertificates: List<Certificate>,
+  @get:JvmName("localCertificates") val localCertificates: List<Certificate>,
 
   // Delayed provider of peerCertificates, to allow lazy cleaning.
   peerCertificatesFn: () -> List<Certificate>
@@ -141,10 +140,12 @@ class Handshake internal constructor(
     @JvmName("get")
     fun SSLSession.handshake(): Handshake {
       val cipherSuiteString = checkNotNull(cipherSuite) { "cipherSuite == null" }
-      if ("SSL_NULL_WITH_NULL_NULL" == cipherSuiteString) {
-        throw IOException("cipherSuite == SSL_NULL_WITH_NULL_NULL")
+      val cipherSuite = when (cipherSuiteString) {
+        "TLS_NULL_WITH_NULL_NULL", "SSL_NULL_WITH_NULL_NULL" -> {
+          throw IOException("cipherSuite == $cipherSuiteString")
+        }
+        else -> CipherSuite.forJavaName(cipherSuiteString)
       }
-      val cipherSuite = CipherSuite.forJavaName(cipherSuiteString)
 
       val tlsVersionString = checkNotNull(protocol) { "tlsVersion == null" }
       if ("NONE" == tlsVersionString) throw IOException("tlsVersion == NONE")
@@ -184,8 +185,9 @@ class Handshake internal constructor(
       localCertificates: List<Certificate>
     ): Handshake {
       val peerCertificatesCopy = peerCertificates.toImmutableList()
-      return Handshake(tlsVersion, cipherSuite, localCertificates.toImmutableList()
-      ) { peerCertificatesCopy }
+      return Handshake(tlsVersion, cipherSuite, localCertificates.toImmutableList()) {
+        peerCertificatesCopy
+      }
     }
   }
 }
