@@ -55,7 +55,7 @@ public static final MediaType JSON
 OkHttpClient client = new OkHttpClient();
 
 String post(String url, String json) throws IOException {
-  RequestBody body = RequestBody.create(json, JSON);
+  RequestBody body = RequestBody.create(JSON, json);
   Request request = new Request.Builder()
       .url(url)
       .post(body)
