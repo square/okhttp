@@ -131,7 +131,7 @@ subprojects { project ->
   }
 
   def platform = System.getProperty("okhttp.platform", "jdk8")
-  def platformJavaHome = System.getenv('TEST_JAVA_HOME')
+  def platformJavaHome = System.getProperty('test.java.home')
 
   test {
     jvmArgs += "-Dlistener=okhttp3.testing.InstallUncaughtExceptionHandlerListener"
@@ -215,6 +215,12 @@ tasks.wrapper {
  * https://github.com/xjdr/xio/blob/master/alpn-boot.gradle
  */
 def alpnBootVersion() {
+  def version = System.getProperty('alpn.boot.version')
+
+  if (version != null) {
+    return version
+  }
+
   def javaVersion = System.getProperty("java.version")
   def patchVersionMatcher = (javaVersion =~ /1\.8\.0_(\d+)(-.*)?/)
   if (!patchVersionMatcher.find()) return null
