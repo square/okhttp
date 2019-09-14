@@ -143,6 +143,14 @@ internal class RealCall private constructor(
           } else {
             responseCallback.onFailure(this@RealCall, e)
           }
+        } catch (t: Throwable) {
+          cancel()
+          if (!signalledCallback) {
+            val canceledException = IOException("canceled due to $t")
+            canceledException.addSuppressed(t)
+            responseCallback.onFailure(this@RealCall, canceledException)
+          }
+          throw t
         } finally {
           client.dispatcher.finished(this)
         }
