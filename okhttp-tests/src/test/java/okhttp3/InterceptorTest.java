@@ -553,13 +553,14 @@ public final class InterceptorTest {
   }
 
   /**
-   * When an interceptor throws an unexpected exception, asynchronous callers are left hanging. The
+   * When an interceptor throws an unexpected exception, asynchronous calls are canceled. The
    * exception goes to the uncaught exception handler.
    */
   private void interceptorThrowsRuntimeExceptionAsynchronous(boolean network) throws Exception {
+    final RuntimeException boom = new RuntimeException("boom!");
     addInterceptor(network, new Interceptor() {
       @Override public Response intercept(Chain chain) throws IOException {
-        throw new RuntimeException("boom!");
+        throw boom;
       }
     });
 
@@ -571,9 +572,13 @@ public final class InterceptorTest {
     Request request = new Request.Builder()
         .url(server.url("/"))
         .build();
-    client.newCall(request).enqueue(callback);
-
-    assertEquals("boom!", executor.takeException().getMessage());
+    Call call = client.newCall(request);
+    call.enqueue(callback);
+    RecordedResponse recordedResponse = callback.await(server.url("/"));
+    assertEquals("canceled due to java.lang.RuntimeException: boom!",
+        recordedResponse.failure.getMessage());
+    assertTrue(call.isCanceled());
+    assertSame(boom, executor.takeException());
   }
 
   @Test public void applicationInterceptorReturnsNull() throws Exception {
