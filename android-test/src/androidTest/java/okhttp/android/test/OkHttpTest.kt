@@ -23,12 +23,16 @@ import okhttp3.Call
 import okhttp3.CertificatePinner
 import okhttp3.Connection
 import okhttp3.EventListener
+import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
 import okhttp3.Protocol
 import okhttp3.RecordingEventListener
 import okhttp3.Request
 import okhttp3.TlsVersion
+import okhttp3.dnsoverhttps.DnsOverHttps
+import okhttp3.internal.asFactory
 import okhttp3.internal.platform.Platform
+import okhttp3.logging.LoggingEventListener
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import okhttp3.tls.internal.TlsUtil.localhost
@@ -306,6 +310,37 @@ class OkHttpTest {
 
     assertEquals(2, sessionIds.size)
     assertEquals(sessionIds[0], sessionIds[1])
+  }
+
+  @Test
+  fun testDnsOverHttps() {
+    assumeNetwork()
+
+    client = client.newBuilder()
+        .eventListenerFactory(LoggingEventListener.Factory())
+        .build()
+
+    val dohDns = buildCloudflareIp(client)
+    val dohEnabledClient =
+        client.newBuilder().eventListenerFactory(EventListener.NONE.asFactory()).dns(dohDns).build()
+
+    dohEnabledClient.get("https://www.twitter.com/robots.txt")
+    dohEnabledClient.get("https://www.facebook.com/robots.txt")
+  }
+
+  private fun OkHttpClient.get(url: String) {
+    val request = Request.Builder().url(url).build()
+    val response = this.newCall(request).execute()
+
+    response.use {
+      assertEquals(200, response.code)
+    }
+  }
+
+  fun buildCloudflareIp(bootstrapClient: OkHttpClient): DnsOverHttps {
+    return DnsOverHttps.Builder().client(bootstrapClient)
+        .url("https://1.1.1.1/dns-query".toHttpUrl())
+        .build()
   }
 
   private fun enableTls() {
