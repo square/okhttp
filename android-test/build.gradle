@@ -25,16 +25,20 @@ android {
     versionName "1.0"
 
     testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+    testInstrumentationRunnerArguments(['notClass': 'org.conscrypt.KitKatPlatformOpenSSLSocketImplAdapter'])
   }
 }
 
 dependencies {
   implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:${versions.kotlin}"
+  implementation "org.jetbrains.kotlin:kotlin-reflect:${versions.kotlin}"
   implementation project(':okhttp')
   testImplementation 'junit:junit:4.12'
   androidTestImplementation(project(':okhttp-testing-support')) {
-     exclude group: 'org.openjsse', module: 'openjsse'
+    exclude group: 'org.openjsse', module: 'openjsse'
+    exclude group: 'org.conscrypt', module: 'conscrypt-openjdk-uber'
   }
+  androidTestImplementation "org.conscrypt:conscrypt-android:2.2.1"
   androidTestImplementation project(':mockwebserver')
   androidTestImplementation project(':okhttp-tls')
   androidTestImplementation 'com.android.support.test:runner:1.0.2'
