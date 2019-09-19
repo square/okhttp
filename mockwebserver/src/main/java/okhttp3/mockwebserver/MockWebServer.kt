@@ -719,7 +719,7 @@ class MockWebServer : ExternalResource(), Closeable {
     } else if (chunked) {
       hasBody = true
       while (true) {
-        val chunkSize = Integer.parseInt(source.readUtf8LineStrict().trim(), 16)
+        val chunkSize = source.readUtf8LineStrict().trim().toInt(16)
         if (chunkSize == 0) {
           readEmptyLine(source)
           break
@@ -762,7 +762,7 @@ class MockWebServer : ExternalResource(), Closeable {
         .build()
     val statusParts = response.status.split(' ', limit = 3)
     val fancyResponse = Response.Builder()
-        .code(Integer.parseInt(statusParts[1]))
+        .code(statusParts[1].toInt())
         .message(statusParts[2])
         .headers(response.headers)
         .request(fancyRequest)

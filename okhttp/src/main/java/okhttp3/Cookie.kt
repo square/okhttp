@@ -501,19 +501,19 @@ class Cookie private constructor(
 
         when {
           hour == -1 && matcher.usePattern(TIME_PATTERN).matches() -> {
-            hour = Integer.parseInt(matcher.group(1))
-            minute = Integer.parseInt(matcher.group(2))
-            second = Integer.parseInt(matcher.group(3))
+            hour = matcher.group(1).toInt()
+            minute = matcher.group(2).toInt()
+            second = matcher.group(3).toInt()
           }
           dayOfMonth == -1 && matcher.usePattern(DAY_OF_MONTH_PATTERN).matches() -> {
-            dayOfMonth = Integer.parseInt(matcher.group(1))
+            dayOfMonth = matcher.group(1).toInt()
           }
           month == -1 && matcher.usePattern(MONTH_PATTERN).matches() -> {
             val monthString = matcher.group(1).toLowerCase(Locale.US)
             month = MONTH_PATTERN.pattern().indexOf(monthString) / 4 // Sneaky! jan=1, dec=12.
           }
           year == -1 && matcher.usePattern(YEAR_PATTERN).matches() -> {
-            year = Integer.parseInt(matcher.group(1))
+            year = matcher.group(1).toInt()
           }
         }
 

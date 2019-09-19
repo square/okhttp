@@ -1540,7 +1540,7 @@ class HttpUrl internal constructor(
         return try {
           // Canonicalize the port string to skip '\n' etc.
           val portString = input.canonicalize(pos = pos, limit = limit, encodeSet = "")
-          val i = Integer.parseInt(portString)
+          val i = portString.toInt()
           if (i in 1..65535) i else -1
         } catch (_: NumberFormatException) {
           -1 // Invalid port.
