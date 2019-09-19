@@ -152,7 +152,6 @@ class OkHttpTest {
   }
 
   @Test
-  @Ignore
   fun testHttpRequestNotBlockedOnLegacyAndroid() {
     assumeTrue(Build.VERSION.SDK_INT < 23)
 
