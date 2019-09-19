@@ -71,14 +71,7 @@ class OkPutHeadTest {
         .head()
         .build()
 
-    var lastRequestRan = true // workaround for MockWebServer bug
-    try {
-      client.newCall(request).execute()
-    } catch (e: Throwable) {
-      lastRequestRan = false
-      println("test shouldn't throw exception")
-      e.printStackTrace()
-    }
+    client.newCall(request).execute()
 
     var recordedRequest = server.takeRequest()
     assertEquals("PUT", recordedRequest.method)
@@ -86,10 +79,8 @@ class OkPutHeadTest {
     recordedRequest = server.takeRequest()
     assertEquals("HEAD", recordedRequest.method)
 
-    if (lastRequestRan) {
-      recordedRequest = server.takeRequest()
-      assertEquals("HEAD", recordedRequest.method)
-    }
+    recordedRequest = server.takeRequest()
+    assertEquals("HEAD", recordedRequest.method)
 
     server.shutdown()
   }
