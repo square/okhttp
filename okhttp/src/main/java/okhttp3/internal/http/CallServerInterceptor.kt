@@ -56,7 +56,12 @@ class CallServerInterceptor(private val forWebSocket: Boolean) : Interceptor {
         } else {
           // Write the request body if the "Expect: 100-continue" expectation was met.
           val bufferedRequestBody = exchange.createRequestBody(request, false).buffer()
-          requestBody.writeTo(bufferedRequestBody)
+          try {
+            requestBody.writeTo(bufferedRequestBody)
+          } catch (ioe: IOException) {
+            exchange.noNewExchangesOnConnection()
+            throw ioe
+          }
           bufferedRequestBody.close()
         }
       } else {
