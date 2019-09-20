@@ -17,6 +17,8 @@ package okhttp.android.test
 
 import android.os.Build
 import android.support.test.runner.AndroidJUnit4
+import com.squareup.moshi.Moshi
+import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import okhttp3.Call
 import okhttp3.CertificatePinner
 import okhttp3.Connection
@@ -26,6 +28,7 @@ import okhttp3.Protocol
 import okhttp3.RecordingEventListener
 import okhttp3.Request
 import okhttp3.TlsVersion
+import okhttp3.internal.platform.Platform
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import okhttp3.tls.internal.TlsUtil.localhost
@@ -37,6 +40,7 @@ import org.junit.Assert.fail
 import org.junit.Assume.assumeNoException
 import org.junit.Assume.assumeTrue
 import org.junit.Before
+import org.junit.Ignore
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -54,6 +58,10 @@ import okhttp3.internal.platform.AndroidQPlatform
 @RunWith(AndroidJUnit4::class)
 class OkHttpTest {
   private lateinit var client: OkHttpClient
+
+  private val moshi = Moshi.Builder()
+      .add(KotlinJsonAdapterFactory())
+      .build()
 
   @JvmField
   @Rule
@@ -149,6 +157,44 @@ class OkHttpTest {
       fail("expected cleartext blocking")
     } catch (_: java.net.UnknownServiceException) {
     }
+  }
+
+  data class HowsMySslResults(
+    val unknown_cipher_suite_supported: Boolean,
+    val beast_vuln: Boolean,
+    val session_ticket_supported: Boolean,
+    val tls_compression_supported: Boolean,
+    val ephemeral_keys_supported: Boolean,
+    val rating: String,
+    val tls_version: String,
+    val able_to_detect_n_minus_one_splitting: Boolean,
+    val insecure_cipher_suites: Map<String, List<String>>,
+    val given_cipher_suites: List<String>?
+  )
+
+  @Test
+  @Ignore
+  fun testSSLFeatures() {
+    assumeNetwork()
+
+    val request = Request.Builder().url("https://www.howsmyssl.com/a/check").build()
+
+    val response = client.newCall(request).execute()
+
+    val results = response.use {
+      moshi.adapter(HowsMySslResults::class.java).fromJson(response.body!!.string())!!
+    }
+
+    Platform.get().log(Platform.WARN, "results $results", null)
+
+    assertTrue(results.session_ticket_supported)
+    assertEquals("Probably Okay", results.rating)
+    // TODO map to expected versions automatically, test ignored for now.  Run manually.
+    assertEquals("TLS 1.3", results.tls_version)
+    assertEquals(0, results.insecure_cipher_suites.size)
+
+    assertEquals(TlsVersion.TLS_1_3, response.handshake?.tlsVersion)
+    assertEquals(Protocol.HTTP_2, response.protocol)
   }
 
   @Test

@@ -33,7 +33,6 @@ import okhttp3.Response
 import okhttp3.Route
 import okhttp3.internal.EMPTY_RESPONSE
 import okhttp3.internal.closeQuietly
-import okhttp3.internal.toHostHeader
 import okhttp3.internal.http.ExchangeCodec
 import okhttp3.internal.http1.Http1ExchangeCodec
 import okhttp3.internal.http2.ConnectionShutdownException
@@ -44,6 +43,7 @@ import okhttp3.internal.http2.Http2Stream
 import okhttp3.internal.http2.StreamResetException
 import okhttp3.internal.platform.Platform
 import okhttp3.internal.tls.OkHostnameVerifier
+import okhttp3.internal.toHostHeader
 import okhttp3.internal.userAgent
 import okhttp3.internal.ws.RealWebSocket
 import okio.BufferedSink
@@ -370,9 +370,18 @@ class RealConnection(
         }
       }
 
+      val certificatePinner = address.certificatePinner!!
+
+      handshake = Handshake(unverifiedHandshake.tlsVersion, unverifiedHandshake.cipherSuite,
+          unverifiedHandshake.localCertificates) {
+        certificatePinner.certificateChainCleaner!!.clean(unverifiedHandshake.peerCertificates,
+            address.url.host)
+      }
+
       // Check that the certificate pinner is satisfied by the certificates presented.
-      address.certificatePinner!!.check(address.url.host,
-          unverifiedHandshake.peerCertificates)
+      certificatePinner.check(address.url.host) {
+        handshake!!.peerCertificates.map { it as X509Certificate }
+      }
 
       // Success! Save the handshake and the ALPN protocol.
       val maybeProtocol = if (connectionSpec.supportsTlsExtensions) {
@@ -383,7 +392,6 @@ class RealConnection(
       socket = sslSocket
       source = sslSocket.source().buffer()
       sink = sslSocket.sink().buffer()
-      handshake = unverifiedHandshake
       protocol = if (maybeProtocol != null) Protocol.get(maybeProtocol) else Protocol.HTTP_1_1
       success = true
     } finally {

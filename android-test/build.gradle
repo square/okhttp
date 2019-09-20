@@ -39,4 +39,6 @@ dependencies {
   androidTestImplementation project(':okhttp-tls')
   androidTestImplementation 'com.android.support.test:runner:1.0.2'
   androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'
+  androidTestImplementation 'com.squareup.moshi:moshi:1.8.0'
+  androidTestImplementation 'com.squareup.moshi:moshi-kotlin:1.8.0'
 }

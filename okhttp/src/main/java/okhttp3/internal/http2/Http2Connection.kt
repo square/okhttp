@@ -138,7 +138,6 @@ class Http2Connection internal constructor(builder: Builder) : Closeable {
   var writeBytesMaximum: Long = peerSettings.initialWindowSize.toLong()
     private set
 
-  internal var receivedInitialPeerSettings = false
   internal val socket: Socket = builder.socket
   val writer = Http2Writer(builder.sink, client)
 
@@ -179,7 +178,7 @@ class Http2Connection internal constructor(builder: Builder) : Closeable {
 
   @Synchronized internal fun updateConnectionFlowControl(read: Long) {
     readBytesTotal += read
-    val readBytesToAcknowledge = (readBytesTotal - readBytesAcknowledged)
+    val readBytesToAcknowledge = readBytesTotal - readBytesAcknowledged
     if (readBytesToAcknowledge >= okHttpSettings.initialWindowSize / 2) {
       writeWindowUpdateLater(0, readBytesToAcknowledge)
       readBytesAcknowledged += readBytesToAcknowledge
@@ -660,43 +659,53 @@ class Http2Connection internal constructor(builder: Builder) : Closeable {
     }
 
     override fun settings(clearPrevious: Boolean, settings: Settings) {
+      writerExecutor.tryExecute("OkHttp $connectionName ACK Settings") {
+        applyAndAckSettings(clearPrevious, settings)
+      }
+    }
+
+    /**
+     * Apply inbound settings and send an acknowledgement to the peer that provided them.
+     *
+     * We need to apply the settings and ack them atomically. This is because some HTTP/2
+     * implementations (nghttp2) forbid peers from taking advantage of settings before they have
+     * acknowledged! In particular, we shouldn't send frames that assume a new `initialWindowSize`
+     * until we send the frame that acknowledges this new size.
+     *
+     * Since we can't ACK settings on the current reader thread (the reader thread can't write) we
+     * execute all peer settings logic on the writer thread. This relies on the fact that the
+     * writer executor won't reorder tasks; otherwise settings could be applied in the opposite
+     * order than received.
+     */
+    fun applyAndAckSettings(clearPrevious: Boolean, settings: Settings) {
       var delta = 0L
       var streamsToNotify: Array<Http2Stream>? = null
-      synchronized(this@Http2Connection) {
-        val priorWriteWindowSize = peerSettings.initialWindowSize
-        if (clearPrevious) peerSettings.clear()
-        peerSettings.merge(settings)
-        applyAndAckSettings(settings)
-        val peerInitialWindowSize = peerSettings.initialWindowSize
-        if (peerInitialWindowSize != -1 && peerInitialWindowSize != priorWriteWindowSize) {
-          delta = (peerInitialWindowSize - priorWriteWindowSize).toLong()
-          if (!receivedInitialPeerSettings) {
-            receivedInitialPeerSettings = true
-          }
-          if (streams.isNotEmpty()) {
-            streamsToNotify = streams.values.toTypedArray()
+      synchronized(writer) {
+        synchronized(this@Http2Connection) {
+          val priorWriteWindowSize = peerSettings.initialWindowSize
+          if (clearPrevious) peerSettings.clear()
+          peerSettings.merge(settings)
+          val peerInitialWindowSize = peerSettings.initialWindowSize
+          if (peerInitialWindowSize != -1 && peerInitialWindowSize != priorWriteWindowSize) {
+            delta = (peerInitialWindowSize - priorWriteWindowSize).toLong()
+            streamsToNotify = if (streams.isNotEmpty()) streams.values.toTypedArray() else null
           }
         }
-        listenerExecutor.execute("OkHttp $connectionName settings") {
-          listener.onSettings(this@Http2Connection)
+        try {
+          writer.applyAndAckSettings(peerSettings)
+        } catch (e: IOException) {
+          failConnection(e)
         }
       }
-      if (streamsToNotify != null && delta != 0L) {
+      if (streamsToNotify != null) {
         for (stream in streamsToNotify!!) {
           synchronized(stream) {
             stream.addBytesToWriteWindow(delta)
           }
         }
       }
-    }
-
-    private fun applyAndAckSettings(peerSettings: Settings) {
-      writerExecutor.tryExecute("OkHttp $connectionName ACK Settings") {
-        try {
-          writer.applyAndAckSettings(peerSettings)
-        } catch (e: IOException) {
-          failConnection(e)
-        }
+      listenerExecutor.execute("OkHttp $connectionName settings") {
+        listener.onSettings(this@Http2Connection)
       }
     }
 

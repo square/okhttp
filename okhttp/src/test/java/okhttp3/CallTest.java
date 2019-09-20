@@ -2318,7 +2318,7 @@ public final class CallTest {
     call.cancel();
     latch.countDown();
 
-    callback.await(server.url("/a")).assertFailure("Canceled", "Socket closed");
+    callback.await(server.url("/a")).assertFailure("Canceled", "Socket closed", "Socket is closed");
   }
 
   @Test public void cancelAll() throws Exception {
@@ -2327,7 +2327,7 @@ public final class CallTest {
         .build());
     call.enqueue(callback);
     client.dispatcher().cancelAll();
-    callback.await(server.url("/")).assertFailure("Canceled", "Socket closed");
+    callback.await(server.url("/")).assertFailure("Canceled", "Socket closed", "Socket is closed");
   }
 
   @Test

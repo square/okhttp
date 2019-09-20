@@ -55,7 +55,7 @@ public static final MediaType JSON
 OkHttpClient client = new OkHttpClient();
 
 String post(String url, String json) throws IOException {
-  RequestBody body = RequestBody.create(json, JSON);
+  RequestBody body = RequestBody.create(JSON, json);
   Request request = new Request.Builder()
       .url(url)
       .post(body)
@@ -100,7 +100,7 @@ Releases
 Our [change log][changelog] has release history.
 
 ```kotlin
-implementation("com.squareup.okhttp3:okhttp:4.1.1")
+implementation("com.squareup.okhttp3:okhttp:4.2.0")
 ```
 
 Snapshot builds are [available][snap].
@@ -120,7 +120,7 @@ MockWebServer
 OkHttp includes a library for testing HTTP, HTTPS, and HTTP/2 clients.
 
 ```kotlin
-testImplementation("com.squareup.okhttp3:mockwebserver:4.1.1")
+testImplementation("com.squareup.okhttp3:mockwebserver:4.2.0")
 ```
 
 

@@ -15,8 +15,8 @@
  */
 package okhttp3
 
-import okhttp3.internal.toImmutableList
 import okhttp3.internal.immutableListOf
+import okhttp3.internal.toImmutableList
 import java.io.IOException
 import java.security.Principal
 import java.security.cert.Certificate
@@ -31,7 +31,7 @@ import javax.net.ssl.SSLSession
  * This value object describes a completed handshake. Use [ConnectionSpec] to set policy for new
  * handshakes.
  */
-class Handshake private constructor(
+class Handshake internal constructor(
   /**
    * Returns the TLS version used for this connection. This value wasn't tracked prior to OkHttp
    * 3.0. For responses cached by preceding versions this returns [TlsVersion.SSL_3_0].
@@ -41,12 +41,15 @@ class Handshake private constructor(
   /** Returns the cipher suite used for the connection. */
   @get:JvmName("cipherSuite") val cipherSuite: CipherSuite,
 
-  /** Returns a possibly-empty list of certificates that identify the remote peer. */
-  @get:JvmName("peerCertificates") val peerCertificates: List<Certificate>,
-
   /** Returns a possibly-empty list of certificates that identify this peer. */
-  @get:JvmName("localCertificates") val localCertificates: List<Certificate>
+  @get:JvmName("localCertificates") val localCertificates: List<Certificate>,
+
+  // Delayed provider of peerCertificates, to allow lazy cleaning.
+  peerCertificatesFn: () -> List<Certificate>
 ) {
+  /** Returns a possibly-empty list of certificates that identify the remote peer. */
+  @get:JvmName("peerCertificates") val peerCertificates: List<Certificate> by lazy(
+      peerCertificatesFn)
 
   @JvmName("-deprecated_tlsVersion")
   @Deprecated(
@@ -137,35 +140,33 @@ class Handshake private constructor(
     @JvmName("get")
     fun SSLSession.handshake(): Handshake {
       val cipherSuiteString = checkNotNull(cipherSuite) { "cipherSuite == null" }
-      if ("SSL_NULL_WITH_NULL_NULL" == cipherSuiteString) {
-        throw IOException("cipherSuite == SSL_NULL_WITH_NULL_NULL")
+      val cipherSuite = when (cipherSuiteString) {
+        "TLS_NULL_WITH_NULL_NULL", "SSL_NULL_WITH_NULL_NULL" -> {
+          throw IOException("cipherSuite == $cipherSuiteString")
+        }
+        else -> CipherSuite.forJavaName(cipherSuiteString)
       }
-      val cipherSuite = CipherSuite.forJavaName(cipherSuiteString)
 
       val tlsVersionString = checkNotNull(protocol) { "tlsVersion == null" }
       if ("NONE" == tlsVersionString) throw IOException("tlsVersion == NONE")
       val tlsVersion = TlsVersion.forJavaName(tlsVersionString)
 
-      val peerCertificates: Array<Certificate>? = try {
-        peerCertificates
+      val peerCertificatesCopy = try {
+        peerCertificates.toImmutableList()
       } catch (_: SSLPeerUnverifiedException) {
-        null
+        listOf<Certificate>()
       }
 
-      val peerCertificatesList = if (peerCertificates != null) {
-        immutableListOf(*peerCertificates)
+      return Handshake(tlsVersion, cipherSuite,
+          localCertificates.toImmutableList()) { peerCertificatesCopy }
+    }
+
+    private fun Array<out Certificate>?.toImmutableList(): List<Certificate> {
+      return if (this != null) {
+        immutableListOf(*this)
       } else {
         emptyList()
       }
-
-      val localCertificates = localCertificates
-      val localCertificatesList = if (localCertificates != null) {
-        immutableListOf(*localCertificates)
-      } else {
-        emptyList()
-      }
-
-      return Handshake(tlsVersion, cipherSuite, peerCertificatesList, localCertificatesList)
     }
 
     @Throws(IOException::class)
@@ -183,8 +184,10 @@ class Handshake private constructor(
       peerCertificates: List<Certificate>,
       localCertificates: List<Certificate>
     ): Handshake {
-      return Handshake(tlsVersion, cipherSuite, peerCertificates.toImmutableList(),
-          localCertificates.toImmutableList())
+      val peerCertificatesCopy = peerCertificates.toImmutableList()
+      return Handshake(tlsVersion, cipherSuite, localCertificates.toImmutableList()) {
+        peerCertificatesCopy
+      }
     }
   }
 }
