@@ -8,6 +8,7 @@ commands:
         type: string
       testjdk:
         type: string
+        default: ""
     steps:
       - restore_cache:
           keys:
