@@ -210,7 +210,7 @@ workflows:
           filters:
             branches:
               only: master
-      - checkjdk8:
+      - checkjdk11:
           filters:
             branches:
               only: master
