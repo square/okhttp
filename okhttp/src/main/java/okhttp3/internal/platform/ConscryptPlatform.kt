@@ -67,7 +67,7 @@ class ConscryptPlatform private constructor() : Platform() {
     protocols: List<@JvmSuppressWildcards Protocol>
   ) {
     if (Conscrypt.isConscrypt(sslSocket)) {
-      // Enable SNI and session tickets.
+      // Enable session tickets.
       Conscrypt.setUseSessionTickets(sslSocket, true)
 
       // Enable ALPN.

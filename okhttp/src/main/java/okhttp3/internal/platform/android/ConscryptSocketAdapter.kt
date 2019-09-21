@@ -47,7 +47,7 @@ object ConscryptSocketAdapter : SocketAdapter {
   ) {
     // No TLS extensions if the socket class is custom.
     if (matchesSocket(sslSocket)) {
-      // Enable SNI and session tickets.
+      // Enable session tickets.
       Conscrypt.setUseSessionTickets(sslSocket, true)
 
       // Enable ALPN.

@@ -128,7 +128,7 @@ jobs:
 
       - runtests:
           platform: jdk8
-          testjdk: -Dtest.java.home=/usr/lib/jvm/java-8-openjdk-amd64 -Dalpn.boot.version=8.1.13.v20181017
+          testjdk: -Dtest.java.home=/usr/lib/jvm/java-8-openjdk-amd64
 
   testjdk8alpn:
     docker:
@@ -158,7 +158,7 @@ jobs:
 
       - runtests:
           platform: openjsse
-          testjdk: -Dtest.java.home=/usr/lib/jvm/java-8-openjdk-amd64 -Dalpn.boot.version=8.1.13.v20181017
+          testjdk: -Dtest.java.home=/usr/lib/jvm/java-8-openjdk-amd64
 
   testjdk11:
     docker:
