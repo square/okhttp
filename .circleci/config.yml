@@ -214,17 +214,17 @@ workflows:
       - checkjdk11:
           filters:
             branches:
-              only: master
+              ignore:
+                - master
+                - gh-pages
       - testjdk8:
           filters:
             branches:
-              ignore:
-                - gh-pages
+              only: master
       - testjdk8alpn:
           filters:
             branches:
-              ignore:
-                - gh-pages
+              only: master
       - testopenjsse:
           filters:
             branches:

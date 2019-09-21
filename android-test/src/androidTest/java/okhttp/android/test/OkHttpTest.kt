@@ -75,9 +75,7 @@ class OkHttpTest {
 
   @After
   fun cleanup() {
-    if (this::client.isInitialized) {
-      client.dispatcher.executorService.shutdownNow()
-    }
+    client.dispatcher.executorService.shutdownNow()
   }
 
   @Test
