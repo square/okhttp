@@ -31,7 +31,6 @@ class OkPutHeadTest {
 
   @Test
   @Throws(Exception::class)
-  @Flaky
   fun testHeadAfterPut() {
     val server = MockWebServer()
     server.enqueue(MockResponse().apply {
@@ -77,7 +76,7 @@ class OkPutHeadTest {
     try {
       client.newCall(request).execute()
       fail("test should always throw exception")
-    } catch (ex: IOException) {
+    } catch (_: IOException) {
       // NOTE: expected
     }
 
