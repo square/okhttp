@@ -40,26 +40,16 @@ import javax.net.ssl.X509TrustManager
 /**
  * Access to platform-specific features.
  *
- * ### Server name indication (SNI)
- *
- * Supported on Android 2.3+.
- *
- * Supported on OpenJDK 7+
- *
  * ### Session Tickets
  *
  * Supported on Android 2.3+.
- *
- * ### Android Traffic Stats (Socket Tagging)
- *
- * Supported on Android 4.0+.
+ * Supported on JDK 8+ via Conscrypt.
  *
  * ### ALPN (Application Layer Protocol Negotiation)
  *
- * Supported on Android 5.0+. The APIs were present in Android 4.4, but that implementation was
- * unstable.
+ * Supported on Android 5.0+.
  *
- * Supported on OpenJDK 8 via the JettyALPN-boot library.
+ * Supported on OpenJDK 8 via the JettyALPN-boot library or Conscrypt.
  *
  * Supported on OpenJDK 9+ via SSLParameters and SSLSocket features.
  *
@@ -67,6 +57,8 @@ import javax.net.ssl.X509TrustManager
  *
  * Supported on Android 2.3+ and OpenJDK 7+. There are no public APIs to recover the trust
  * manager that was used to create an [SSLSocketFactory].
+ *
+ * Not supported by choice on JDK9+ due to access checks.
  *
  * ### Android Cleartext Permit Detection
  *
