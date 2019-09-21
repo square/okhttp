@@ -33,6 +33,7 @@ import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import okhttp3.tls.internal.TlsUtil.localhost
 import okio.ByteString.Companion.toByteString
+import org.conscrypt.Conscrypt
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -46,6 +47,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import java.net.InetAddress
 import java.net.UnknownHostException
+import java.security.Security
 import javax.net.ssl.SSLPeerUnverifiedException
 import javax.net.ssl.SSLSocket
 
@@ -86,6 +88,36 @@ class OkHttpTest {
 
     response.use {
       assertEquals(200, response.code)
+    }
+  }
+
+  @Test
+  fun testConscryptRequest() {
+    assumeNetwork()
+
+    try {
+      Security.insertProviderAt(Conscrypt.newProviderBuilder().build(), 1)
+
+      val request = Request.Builder().url("https://facebook.com/robots.txt").build()
+
+      var socketClass: String? = null
+
+      client = OkHttpClient.Builder().eventListener(object : EventListener() {
+        override fun connectionAcquired(call: Call, connection: Connection) {
+          socketClass = connection.socket().javaClass.name
+        }
+      }).build()
+
+      val response = client.newCall(request).execute()
+
+      response.use {
+        assertEquals(Protocol.HTTP_2, response.protocol)
+        assertEquals(TlsVersion.TLS_1_3, response.handshake?.tlsVersion)
+        assertEquals(200, response.code)
+        assertEquals("org.conscrypt.Java8FileDescriptorSocket", socketClass)
+      }
+    } finally {
+      Security.removeProvider("Conscrypt")
     }
   }
 
