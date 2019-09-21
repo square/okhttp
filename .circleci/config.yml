@@ -210,8 +210,7 @@ workflows:
       - compile:
           filters:
             branches:
-              ignore:
-                - gh-pages
+              only: master
       - checkjdk11:
           filters:
             branches:
