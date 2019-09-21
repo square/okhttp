@@ -73,7 +73,7 @@ jobs:
           name: Run tests
           command: ./gradlew --parallel --build-cache test
           environment:
-            GRADLE_OPTS: -Dorg.gradle.daemon=false -Dorg.gradle.workers.max=3 -Xmx1G
+            GRADLE_OPTS: -Dorg.gradle.daemon=false -Dokhttp.platform=jdk9 -Dorg.gradle.workers.max=3 -Xmx1G
 
       - save_cache:
           paths:
