@@ -15,7 +15,6 @@
  */
 package okhttp3.internal.platform;
 
-import java.lang.reflect.Method;
 import okhttp3.testing.PlatformRule;
 import org.junit.Rule;
 import org.junit.Test;
@@ -31,16 +30,7 @@ public class Jdk9PlatformTest {
   }
 
   @Test
-  public void findsAlpnMethods() {
-    Jdk9Platform platform = Jdk9Platform.Companion.buildIfSupported();
-
-    assertThat(platform.getProtocolMethod.getName()).isEqualTo("getApplicationProtocol");
-    assertThat(platform.setProtocolMethod.getName()).isEqualTo("setApplicationProtocols");
-  }
-
-  @Test
   public void testToStringIsClassname() throws NoSuchMethodException {
-    Method method = this.getClass().getMethod("toString");
-    assertThat(new Jdk9Platform(method, method).toString()).isEqualTo("Jdk9Platform");
+    assertThat(new Jdk9Platform().toString()).isEqualTo("Jdk9Platform");
   }
 }

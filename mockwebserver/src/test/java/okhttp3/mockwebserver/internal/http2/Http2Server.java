@@ -92,7 +92,7 @@ public final class Http2Server extends Http2Connection.Listener {
     SSLSocket sslSocket = (SSLSocket) sslSocketFactory.createSocket(
         socket, socket.getInetAddress().getHostAddress(), socket.getPort(), true);
     sslSocket.setUseClientMode(false);
-    Platform.get().configureTlsExtensions(sslSocket, null,
+    Platform.get().configureTlsExtensions(sslSocket,
         Collections.singletonList(Protocol.HTTP_2));
     sslSocket.startHandshake();
     return sslSocket;

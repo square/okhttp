@@ -507,7 +507,7 @@ class MockWebServer : ExternalResource(), Closeable {
           openClientSockets.add(socket)
 
           if (protocolNegotiationEnabled) {
-            Platform.get().configureTlsExtensions(sslSocket, null, protocols)
+            Platform.get().configureTlsExtensions(sslSocket, protocols)
           }
 
           sslSocket.startHandshake()

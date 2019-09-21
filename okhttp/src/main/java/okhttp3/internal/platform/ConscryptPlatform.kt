@@ -64,21 +64,17 @@ class ConscryptPlatform private constructor() : Platform() {
 
   override fun configureTlsExtensions(
     sslSocket: SSLSocket,
-    hostname: String?,
-    protocols: List<Protocol>
+    protocols: List<@JvmSuppressWildcards Protocol>
   ) {
     if (Conscrypt.isConscrypt(sslSocket)) {
-      // Enable SNI and session tickets.
-      if (hostname != null) {
-        Conscrypt.setUseSessionTickets(sslSocket, true)
-        Conscrypt.setHostname(sslSocket, hostname)
-      }
+      // Enable session tickets.
+      Conscrypt.setUseSessionTickets(sslSocket, true)
 
       // Enable ALPN.
       val names = alpnProtocolNames(protocols)
       Conscrypt.setApplicationProtocols(sslSocket, names.toTypedArray())
     } else {
-      super.configureTlsExtensions(sslSocket, hostname, protocols)
+      super.configureTlsExtensions(sslSocket, protocols)
     }
   }
 

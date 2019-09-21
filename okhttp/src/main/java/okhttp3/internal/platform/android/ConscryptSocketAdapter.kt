@@ -43,16 +43,12 @@ object ConscryptSocketAdapter : SocketAdapter {
 
   override fun configureTlsExtensions(
     sslSocket: SSLSocket,
-    hostname: String?,
     protocols: List<Protocol>
   ) {
     // No TLS extensions if the socket class is custom.
     if (matchesSocket(sslSocket)) {
-      // Enable SNI and session tickets.
-      if (hostname != null) {
-        Conscrypt.setUseSessionTickets(sslSocket, true)
-        Conscrypt.setHostname(sslSocket, hostname)
-      }
+      // Enable session tickets.
+      Conscrypt.setUseSessionTickets(sslSocket, true)
 
       // Enable ALPN.
       val names = Platform.alpnProtocolNames(protocols)

@@ -110,7 +110,6 @@ open class Platform {
    */
   open fun configureTlsExtensions(
     sslSocket: SSLSocket,
-    hostname: String?,
     protocols: List<@JvmSuppressWildcards Protocol>
   ) {
   }
@@ -208,6 +207,12 @@ open class Platform {
 
     /** Attempt to match the host runtime to a capable Platform implementation. */
     private fun findPlatform(): Platform {
+      val androidQ = AndroidQPlatform.buildIfSupported()
+
+      if (androidQ != null) {
+        return androidQ
+      }
+
       val android = AndroidPlatform.buildIfSupported()
 
       if (android != null) {
