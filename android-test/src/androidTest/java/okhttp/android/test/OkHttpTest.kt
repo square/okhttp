@@ -80,7 +80,6 @@ class OkHttpTest {
     }
   }
 
-
   @Test
   fun testPlatform() {
     if (Build.VERSION.SDK_INT >= 29) {

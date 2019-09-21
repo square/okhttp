@@ -45,10 +45,9 @@ class AndroidSocketAdapterTest(private val adapter: SocketAdapter) {
   val context by lazy {
     val provider: Provider = Conscrypt.newProviderBuilder().provideTrustManager(true).build()
 
-    val context = SSLContext.getInstance("TLS", provider)
-    context.init(null, null, null)
-
-    context
+    SSLContext.getInstance("TLS", provider).apply {
+      init(null, null, null)
+    }
   }
 
   @Test
