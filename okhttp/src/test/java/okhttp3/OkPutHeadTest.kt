@@ -18,7 +18,6 @@ package okhttp3
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
-import okhttp3.testing.Flaky
 import okio.BufferedSink
 import org.junit.Assert.assertEquals
 import org.junit.Assert.fail
