@@ -67,7 +67,7 @@ jobs:
           name: Compile
           command: ./gradlew --parallel --build-cache downloadDependencies testClasses
           environment:
-            GRADLE_OPTS: -Dorg.gradle.daemon=false -Dorg.gradle.workers.max=3 -Xmx768m
+            GRADLE_OPTS: -Dorg.gradle.daemon=false -Dokhttp.platform=jdk9 -Dorg.gradle.workers.max=3 -Xmx768m
 
       - run:
           name: Run tests
@@ -210,7 +210,8 @@ workflows:
       - compile:
           filters:
             branches:
-              only: master
+              ignore:
+                - gh-pages
       - checkjdk11:
           filters:
             branches:
