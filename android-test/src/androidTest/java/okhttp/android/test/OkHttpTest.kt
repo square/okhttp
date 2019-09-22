@@ -54,7 +54,6 @@ import java.net.UnknownHostException
 import java.security.Security
 import javax.net.ssl.SSLPeerUnverifiedException
 import javax.net.ssl.SSLSocket
-import okhttp3.internal.platform.Platform
 import okhttp3.internal.platform.AndroidPlatform
 import okhttp3.internal.platform.AndroidQPlatform
 

@@ -20,22 +20,10 @@ import android.security.NetworkSecurityPolicy
 import okhttp3.internal.platform.AndroidPlatform.Companion.isAndroid
 import okhttp3.internal.platform.android.AndroidQCertificateChainCleaner
 import okhttp3.internal.tls.CertificateChainCleaner
-import java.io.IOException
-import java.net.InetSocketAddress
-import java.net.Socket
 import javax.net.ssl.X509TrustManager
 
 /** Android 29+. */
 class AndroidQPlatform : Jdk9Platform() {
-  @Throws(IOException::class)
-  override fun connectSocket(
-    socket: Socket,
-    address: InetSocketAddress,
-    connectTimeout: Int
-  ) {
-    socket.connect(address, connectTimeout)
-  }
-
   override fun isCleartextTrafficPermitted(hostname: String): Boolean =
       NetworkSecurityPolicy.getInstance().isCleartextTrafficPermitted(hostname)
 
