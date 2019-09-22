@@ -45,9 +45,43 @@ abstract class Task(
   val name: String,
   val daemon: Boolean = true
 ) {
+  // Guarded by the TaskRunner.
+  internal var queue: TaskQueue? = null
+
+  /** Undefined unless this is in [TaskQueue.futureTasks]. */
+  internal var nextExecuteNanoTime = -1L
+
+  internal var runRunnable: Runnable? = null
+  internal var cancelRunnable: Runnable? = null
+
   /** Returns the delay in nanoseconds until the next execution, or -1L to not reschedule. */
   abstract fun runOnce(): Long
 
   /** Return true to skip the scheduled execution. */
   open fun tryCancel(): Boolean = false
+
+  internal fun initQueue(queue: TaskQueue) {
+    if (this.queue === queue) return
+
+    check(this.queue === null) { "task is in multiple queues" }
+    this.queue = queue
+
+    this.runRunnable = Runnable {
+      var delayNanos = -1L
+      try {
+        delayNanos = runOnce()
+      } finally {
+        queue.runCompleted(this, delayNanos)
+      }
+    }
+
+    this.cancelRunnable = Runnable {
+      var skipExecution = false
+      try {
+        skipExecution = tryCancel()
+      } finally {
+        queue.tryCancelCompleted(this, skipExecution)
+      }
+    }
+  }
 }

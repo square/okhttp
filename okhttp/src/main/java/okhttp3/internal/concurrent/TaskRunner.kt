@@ -15,6 +15,15 @@
  */
 package okhttp3.internal.concurrent
 
+import okhttp3.internal.addIfAbsent
+import okhttp3.internal.notify
+import okhttp3.internal.objectWaitNanos
+import okhttp3.internal.threadFactory
+import java.util.concurrent.Executor
+import java.util.concurrent.SynchronousQueue
+import java.util.concurrent.ThreadPoolExecutor
+import java.util.concurrent.TimeUnit
+
 /**
  * A set of worker threads that are shared among a set of task queues.
  *
@@ -27,12 +36,130 @@ package okhttp3.internal.concurrent
  *
  * Most applications should share a process-wide [TaskRunner] and use queues for per-client work.
  */
-interface TaskRunner {
-  fun newQueue(owner: Any): TaskQueue
+class TaskRunner(
+  val backend: Backend = RealBackend()
+) {
+  // All state in all tasks and queues is guarded by this.
+
+  private var coordinatorRunning = false
+  private val activeQueues = mutableListOf<TaskQueue>()
+  private val coordinator = Runnable { coordinate() }
+
+  fun newQueue(owner: Any) = TaskQueue(this, owner)
 
   /**
    * Returns a snapshot of queues that currently have tasks scheduled. The task runner does not
    * necessarily track queues that have no tasks scheduled.
    */
-  fun activeQueues(): List<TaskQueue>
+  fun activeQueues(): List<TaskQueue> {
+    synchronized(this) {
+      return activeQueues.toList()
+    }
+  }
+
+  internal fun kickCoordinator(queue: TaskQueue) {
+    check(Thread.holdsLock(this))
+
+    if (queue.isActive()) {
+      activeQueues.addIfAbsent(queue)
+    } else {
+      activeQueues.remove(queue)
+    }
+
+    if (coordinatorRunning) {
+      backend.coordinatorNotify(this)
+    } else {
+      coordinatorRunning = true
+      backend.executeCoordinator(coordinator)
+    }
+  }
+
+  private fun coordinate() {
+    synchronized(this) {
+      while (true) {
+        val now = backend.nanoTime()
+        val delayNanos = executeReadyTasks(now)
+
+        if (delayNanos == -1L) {
+          coordinatorRunning = false
+          return
+        }
+
+        try {
+          backend.coordinatorWait(this, delayNanos)
+        } catch (_: InterruptedException) {
+          // Will cause the coordinator to exit unless other tasks are scheduled!
+          cancelAll()
+        }
+      }
+    }
+  }
+
+  /**
+   * Start executing the next available tasks for all queues.
+   *
+   * Returns the delay until the next call to this method, -1L for no further calls, or
+   * [Long.MAX_VALUE] to wait indefinitely.
+   */
+  private fun executeReadyTasks(now: Long): Long {
+    var result = -1L
+
+    for (queue in activeQueues) {
+      val delayNanos = queue.executeReadyTask(now)
+      if (delayNanos == -1L) continue
+      result = if (result == -1L) delayNanos else minOf(result, delayNanos)
+    }
+
+    return result
+  }
+
+  private fun cancelAll() {
+    for (queue in activeQueues) {
+      queue.cancelAll()
+    }
+  }
+
+  interface Backend {
+    fun executeCoordinator(runnable: Runnable)
+    fun executeTask(runnable: Runnable)
+    fun nanoTime(): Long
+    fun coordinatorNotify(taskRunner: TaskRunner)
+    fun coordinatorWait(taskRunner: TaskRunner, nanos: Long)
+  }
+
+  class RealBackend : Backend {
+    private val coordinatorExecutor: Executor = ThreadPoolExecutor(
+        0, // corePoolSize.
+        1, // maximumPoolSize.
+        60L, TimeUnit.SECONDS, // keepAliveTime.
+        SynchronousQueue(),
+        threadFactory("OkHttp Task Coordinator", false)
+    )
+
+    private val taskExecutor: Executor = ThreadPoolExecutor(
+        0, // corePoolSize.
+        Int.MAX_VALUE, // maximumPoolSize.
+        60L, TimeUnit.SECONDS, // keepAliveTime.
+        SynchronousQueue(),
+        threadFactory("OkHttp Task", true)
+    )
+
+    override fun executeCoordinator(runnable: Runnable) {
+      coordinatorExecutor.execute(runnable)
+    }
+
+    override fun executeTask(runnable: Runnable) {
+      taskExecutor.execute(runnable)
+    }
+
+    override fun nanoTime() = System.nanoTime()
+
+    override fun coordinatorNotify(taskRunner: TaskRunner) {
+      taskRunner.notify()
+    }
+
+    override fun coordinatorWait(taskRunner: TaskRunner, nanos: Long) {
+      taskRunner.objectWaitNanos(nanos)
+    }
+  }
 }
