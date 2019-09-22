@@ -21,7 +21,7 @@ import javax.net.ssl.SSLSocketFactory
 import javax.net.ssl.X509TrustManager
 
 /** OpenJDK 9+. */
-open class Jdk9Platform() : Platform() {
+open class Jdk9Platform : Platform() {
   override fun configureTlsExtensions(
     sslSocket: SSLSocket,
     protocols: List<@JvmSuppressWildcards Protocol>

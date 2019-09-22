@@ -97,8 +97,6 @@ open class Platform {
 
   /**
    * Configure TLS extensions on `sslSocket` for `route`.
-   *
-   * @param hostname non-null for client-side handshakes; null for server-side handshakes.
    */
   open fun configureTlsExtensions(
     sslSocket: SSLSocket,
