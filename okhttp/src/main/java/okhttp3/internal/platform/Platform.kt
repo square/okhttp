@@ -197,10 +197,10 @@ open class Platform {
 
     /** Attempt to match the host runtime to a capable Platform implementation. */
     private fun findPlatform(): Platform {
-      val androidQ = AndroidQPlatform.buildIfSupported()
+      val android10 = Android10Platform.buildIfSupported()
 
-      if (androidQ != null) {
-        return androidQ
+      if (android10 != null) {
+        return android10
       }
 
       val android = AndroidPlatform.buildIfSupported()

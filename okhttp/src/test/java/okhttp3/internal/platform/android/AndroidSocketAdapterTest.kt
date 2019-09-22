@@ -97,11 +97,11 @@ class AndroidSocketAdapterTest(private val adapter: SocketAdapter) {
     @JvmStatic
     @Parameterized.Parameters(name = "{0}")
     fun data(): Collection<SocketAdapter> {
-      return listOf(
-          ConscryptSocketAdapter,
+      return listOfNotNull(
+          ConscryptSocketAdapter.buildIfSupported(),
           DeferredSocketAdapter("org.conscrypt"),
-          AndroidSocketAdapter.buildIfSupported("org.conscrypt")!!,
-          StandardAndroidSocketAdapter.buildIfSupported("org.conscrypt")!!
+          AndroidSocketAdapter.buildIfSupported("org.conscrypt"),
+          StandardAndroidSocketAdapter.buildIfSupported("org.conscrypt")
       )
     }
   }

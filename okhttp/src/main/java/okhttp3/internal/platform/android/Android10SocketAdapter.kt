@@ -15,49 +15,55 @@
  */
 package okhttp3.internal.platform.android
 
+import android.net.SSLCertificateSocketFactory
+import android.os.Build
 import okhttp3.Protocol
-import okhttp3.internal.platform.ConscryptPlatform
+import okhttp3.internal.platform.AndroidPlatform.Companion.isAndroid
 import okhttp3.internal.platform.Platform
-import org.conscrypt.Conscrypt
 import javax.net.ssl.SSLSocket
 import javax.net.ssl.SSLSocketFactory
 import javax.net.ssl.X509TrustManager
 
 /**
- * Simple non-reflection SocketAdapter for Conscrypt.
+ * Simple non-reflection SocketAdapter for Android Q.
  */
-class ConscryptSocketAdapter : SocketAdapter {
+class Android10SocketAdapter : SocketAdapter {
+  private val socketFactory =
+      SSLCertificateSocketFactory.getDefault(10000) as SSLCertificateSocketFactory
+
   override fun trustManager(sslSocketFactory: SSLSocketFactory): X509TrustManager? = null
 
   override fun matchesSocketFactory(sslSocketFactory: SSLSocketFactory): Boolean = false
 
-  override fun matchesSocket(sslSocket: SSLSocket): Boolean = Conscrypt.isConscrypt(sslSocket)
+  override fun matchesSocket(sslSocket: SSLSocket): Boolean = sslSocket.javaClass.name.startsWith(
+      "com.android.org.conscrypt")
 
-  override fun isSupported(): Boolean = ConscryptPlatform.isSupported
+  override fun isSupported(): Boolean = Companion.isSupported()
 
   override fun getSelectedProtocol(sslSocket: SSLSocket): String? =
-      when {
-        matchesSocket(sslSocket) -> Conscrypt.getApplicationProtocol(sslSocket)
-        else -> null // No TLS extensions if the socket class is custom.
+      when (val protocol = sslSocket.applicationProtocol) {
+        null, "" -> null
+        else -> protocol
       }
 
   override fun configureTlsExtensions(
     sslSocket: SSLSocket,
     protocols: List<Protocol>
   ) {
-    // No TLS extensions if the socket class is custom.
-    if (matchesSocket(sslSocket)) {
-      // Enable session tickets.
-      Conscrypt.setUseSessionTickets(sslSocket, true)
+    socketFactory.setUseSessionTickets(sslSocket, true)
 
-      // Enable ALPN.
-      val names = Platform.alpnProtocolNames(protocols)
-      Conscrypt.setApplicationProtocols(sslSocket, names.toTypedArray())
-    }
+    val sslParameters = sslSocket.sslParameters
+
+    // Enable ALPN.
+    sslParameters.applicationProtocols = Platform.alpnProtocolNames(protocols).toTypedArray()
+
+    sslSocket.sslParameters = sslParameters
   }
 
   companion object {
     fun buildIfSupported(): SocketAdapter? =
-        if (ConscryptPlatform.isSupported) ConscryptSocketAdapter() else null
+        if (isSupported()) Android10SocketAdapter() else null
+
+    fun isSupported() = isAndroid && Build.VERSION.SDK_INT >= 29
   }
 }
