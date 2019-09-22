@@ -27,7 +27,7 @@ import javax.net.ssl.X509TrustManager
 /**
  * Simple non-reflection SocketAdapter for Android Q.
  */
-class AndroidQSocketAdapter : SocketAdapter {
+class Android10SocketAdapter : SocketAdapter {
   private val socketFactory =
       SSLCertificateSocketFactory.getDefault(10000) as SSLCertificateSocketFactory
 
@@ -62,7 +62,7 @@ class AndroidQSocketAdapter : SocketAdapter {
 
   companion object {
     fun buildIfSupported(): SocketAdapter? =
-        if (isSupported()) AndroidQSocketAdapter() else null
+        if (isSupported()) Android10SocketAdapter() else null
 
     fun isSupported() = isAndroid && Build.VERSION.SDK_INT >= 29
   }

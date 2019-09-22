@@ -19,8 +19,8 @@ import android.os.Build
 import android.security.NetworkSecurityPolicy
 import okhttp3.Protocol
 import okhttp3.internal.platform.AndroidPlatform.Companion.isAndroid
-import okhttp3.internal.platform.android.AndroidQCertificateChainCleaner
-import okhttp3.internal.platform.android.AndroidQSocketAdapter
+import okhttp3.internal.platform.android.Android10CertificateChainCleaner
+import okhttp3.internal.platform.android.Android10SocketAdapter
 import okhttp3.internal.platform.android.ConscryptSocketAdapter
 import okhttp3.internal.platform.android.DeferredSocketAdapter
 import okhttp3.internal.platform.android.androidLog
@@ -30,9 +30,9 @@ import javax.net.ssl.SSLSocketFactory
 import javax.net.ssl.X509TrustManager
 
 /** Android 29+. */
-class AndroidQPlatform : Platform() {
+class Android10Platform : Platform() {
   private val socketAdapters = listOfNotNull(
-      AndroidQSocketAdapter.buildIfSupported(),
+      Android10SocketAdapter.buildIfSupported(),
       ConscryptSocketAdapter.buildIfSupported(),
       DeferredSocketAdapter("com.google.android.gms.org.conscrypt")
   ).filter { it.isSupported() }
@@ -59,11 +59,11 @@ class AndroidQPlatform : Platform() {
       NetworkSecurityPolicy.getInstance().isCleartextTrafficPermitted(hostname)
 
   override fun buildCertificateChainCleaner(trustManager: X509TrustManager): CertificateChainCleaner =
-      AndroidQCertificateChainCleaner(trustManager)
+      Android10CertificateChainCleaner(trustManager)
 
   companion object {
     val isSupported: Boolean = isAndroid && Build.VERSION.SDK_INT >= 29
 
-    fun buildIfSupported(): Platform? = if (isSupported) AndroidQPlatform() else null
+    fun buildIfSupported(): Platform? = if (isSupported) Android10Platform() else null
   }
 }
