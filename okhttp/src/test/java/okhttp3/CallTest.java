@@ -71,7 +71,6 @@ import okhttp3.mockwebserver.MockWebServer;
 import okhttp3.mockwebserver.QueueDispatcher;
 import okhttp3.mockwebserver.RecordedRequest;
 import okhttp3.mockwebserver.SocketPolicy;
-import okhttp3.testing.Flaky;
 import okhttp3.testing.PlatformRule;
 import okhttp3.tls.HandshakeCertificates;
 import okhttp3.tls.HeldCertificate;
@@ -947,23 +946,22 @@ public final class CallTest {
     server.enqueue(new MockResponse());
 
     client = client.newBuilder()
-        .addInterceptor(new Interceptor() {
-          @Override public Response intercept(Chain chain) throws IOException {
-            Response response = chain.proceed(chain.request());
-            try {
-              chain.proceed(chain.request());
-              fail();
-            } catch (IllegalStateException expected) {
-              assertThat(expected).hasMessageContaining("please call response.close()");
-            }
-            return response;
+        .addInterceptor(chain -> {
+          Response response = chain.proceed(chain.request());
+          try {
+            chain.proceed(chain.request());
+            fail();
+          } catch (IllegalStateException expected) {
+            assertThat(expected).hasMessageContaining("please call response.close()");
           }
+          return response;
         })
         .build();
 
     Request request = new Request.Builder()
         .url(server.url("/"))
         .build();
+
     executeSynchronously(request)
         .assertCode(200)
         .assertBody("abc");
