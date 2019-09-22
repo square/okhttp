@@ -946,22 +946,23 @@ public final class CallTest {
     server.enqueue(new MockResponse());
 
     client = client.newBuilder()
-        .addInterceptor(chain -> {
-          Response response = chain.proceed(chain.request());
-          try {
-            chain.proceed(chain.request());
-            fail();
-          } catch (IllegalStateException expected) {
-            assertThat(expected).hasMessageContaining("please call response.close()");
+        .addInterceptor(new Interceptor() {
+          @Override public Response intercept(Chain chain) throws IOException {
+            Response response = chain.proceed(chain.request());
+            try {
+              chain.proceed(chain.request());
+              fail();
+            } catch (IllegalStateException expected) {
+              assertThat(expected).hasMessageContaining("please call response.close()");
+            }
+            return response;
           }
-          return response;
         })
         .build();
 
     Request request = new Request.Builder()
         .url(server.url("/"))
         .build();
-
     executeSynchronously(request)
         .assertCode(200)
         .assertBody("abc");
