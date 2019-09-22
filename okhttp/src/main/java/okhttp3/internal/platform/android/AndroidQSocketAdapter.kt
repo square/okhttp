@@ -15,31 +15,28 @@
  */
 package okhttp3.internal.platform.android
 
+import android.net.SSLCertificateSocketFactory
 import android.os.Build
 import okhttp3.Protocol
 import okhttp3.internal.platform.AndroidPlatform.Companion.isAndroid
 import okhttp3.internal.platform.Platform
-import java.lang.reflect.InvocationTargetException
-import java.lang.reflect.Method
 import javax.net.ssl.SSLSocket
 import javax.net.ssl.SSLSocketFactory
 import javax.net.ssl.X509TrustManager
 
 /**
- * Simple (mostly) non-reflection SocketAdapter for Android Q.
+ * Simple non-reflection SocketAdapter for Android Q.
  */
 class AndroidQSocketAdapter : SocketAdapter {
-  private val socketClass = Class.forName("com.android.org.conscrypt.OpenSSLSocketImpl")
-  private val setUseSessionTickets: Method =
-      socketClass.getDeclaredMethod("setUseSessionTickets", Boolean::class.javaPrimitiveType)
+  private val socketFactory =
+      SSLCertificateSocketFactory.getDefault(10000) as SSLCertificateSocketFactory
 
   override fun trustManager(sslSocketFactory: SSLSocketFactory): X509TrustManager? = null
 
   override fun matchesSocketFactory(sslSocketFactory: SSLSocketFactory): Boolean = false
 
-  override fun matchesSocket(sslSocket: SSLSocket): Boolean {
-    return socketClass.isInstance(sslSocket)
-  }
+  override fun matchesSocket(sslSocket: SSLSocket): Boolean = sslSocket.javaClass.name.startsWith(
+      "com.android.org.conscrypt")
 
   override fun isSupported(): Boolean = Companion.isSupported()
 
@@ -53,7 +50,7 @@ class AndroidQSocketAdapter : SocketAdapter {
     sslSocket: SSLSocket,
     protocols: List<Protocol>
   ) {
-    enableSessionTickets(sslSocket)
+    socketFactory.setUseSessionTickets(sslSocket, true)
 
     val sslParameters = sslSocket.sslParameters
 
@@ -61,17 +58,6 @@ class AndroidQSocketAdapter : SocketAdapter {
     sslParameters.applicationProtocols = Platform.alpnProtocolNames(protocols).toTypedArray()
 
     sslSocket.sslParameters = sslParameters
-  }
-
-  private fun enableSessionTickets(sslSocket: SSLSocket) {
-    try {
-      // Enable session tickets.
-      setUseSessionTickets.invoke(sslSocket, true)
-    } catch (e: IllegalAccessException) {
-      throw AssertionError(e)
-    } catch (e: InvocationTargetException) {
-      throw AssertionError(e)
-    }
   }
 
   companion object {
