@@ -26,7 +26,7 @@ import javax.net.ssl.X509TrustManager
 /**
  * Simple non-reflection SocketAdapter for Conscrypt.
  */
-object ConscryptSocketAdapter : SocketAdapter {
+class ConscryptSocketAdapter : SocketAdapter {
   override fun trustManager(sslSocketFactory: SSLSocketFactory): X509TrustManager? = null
 
   override fun matchesSocketFactory(sslSocketFactory: SSLSocketFactory): Boolean = false
@@ -56,6 +56,8 @@ object ConscryptSocketAdapter : SocketAdapter {
     }
   }
 
-  fun buildIfSupported(): SocketAdapter? =
-      if (ConscryptPlatform.isSupported) ConscryptSocketAdapter else null
+  companion object {
+    fun buildIfSupported(): SocketAdapter? =
+        if (ConscryptPlatform.isSupported) ConscryptSocketAdapter() else null
+  }
 }

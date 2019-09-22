@@ -17,23 +17,42 @@ package okhttp3.internal.platform
 
 import android.os.Build
 import android.security.NetworkSecurityPolicy
+import okhttp3.Protocol
 import okhttp3.internal.platform.AndroidPlatform.Companion.isAndroid
 import okhttp3.internal.platform.android.AndroidQCertificateChainCleaner
+import okhttp3.internal.platform.android.AndroidQSocketAdapter
+import okhttp3.internal.platform.android.ConscryptSocketAdapter
+import okhttp3.internal.platform.android.DeferredSocketAdapter
+import okhttp3.internal.platform.android.androidLog
 import okhttp3.internal.tls.CertificateChainCleaner
-import java.io.IOException
-import java.net.InetSocketAddress
-import java.net.Socket
+import javax.net.ssl.SSLSocket
+import javax.net.ssl.SSLSocketFactory
 import javax.net.ssl.X509TrustManager
 
 /** Android 29+. */
-class AndroidQPlatform : Jdk9Platform() {
-  @Throws(IOException::class)
-  override fun connectSocket(
-    socket: Socket,
-    address: InetSocketAddress,
-    connectTimeout: Int
-  ) {
-    socket.connect(address, connectTimeout)
+class AndroidQPlatform : Platform() {
+  private val socketAdapters = listOfNotNull(
+      AndroidQSocketAdapter.buildIfSupported(),
+      ConscryptSocketAdapter.buildIfSupported(),
+      DeferredSocketAdapter("com.google.android.gms.org.conscrypt")
+  ).filter { it.isSupported() }
+
+  override fun trustManager(sslSocketFactory: SSLSocketFactory): X509TrustManager? =
+      socketAdapters.find { it.matchesSocketFactory(sslSocketFactory) }
+          ?.trustManager(sslSocketFactory)
+
+  override fun configureTlsExtensions(sslSocket: SSLSocket, protocols: List<Protocol>) {
+    // No TLS extensions if the socket class is custom.
+    socketAdapters.find { it.matchesSocket(sslSocket) }
+        ?.configureTlsExtensions(sslSocket, protocols)
+  }
+
+  override fun getSelectedProtocol(sslSocket: SSLSocket) =
+      // No TLS extensions if the socket class is custom.
+      socketAdapters.find { it.matchesSocket(sslSocket) }?.getSelectedProtocol(sslSocket)
+
+  override fun log(level: Int, message: String, t: Throwable?) {
+    androidLog(level, message, t)
   }
 
   override fun isCleartextTrafficPermitted(hostname: String): Boolean =

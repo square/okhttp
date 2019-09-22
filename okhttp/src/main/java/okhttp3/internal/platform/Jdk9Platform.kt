@@ -35,10 +35,10 @@ open class Jdk9Platform() : Platform() {
     sslSocket.sslParameters = sslParameters
   }
 
-  override fun getSelectedProtocol(socket: SSLSocket): String? {
+  override fun getSelectedProtocol(sslSocket: SSLSocket): String? {
     // SSLSocket.getApplicationProtocol returns "" if application protocols values will not
     // be used. Observed if you didn't specify SSLParameters.setApplicationProtocols
-    return when (val protocol = socket.applicationProtocol) {
+    return when (val protocol = sslSocket.applicationProtocol) {
       null, "" -> null
       else -> protocol
     }
