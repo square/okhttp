@@ -93,7 +93,7 @@ class AndroidPlatform : Platform() {
     val reported = closeGuard.warnIfOpen(stackTrace)
     if (!reported) {
       // Unable to report via CloseGuard. As a last-ditch effort, send it to the logger.
-      log(WARN, message, null)
+      log(WARN, message)
     }
   }
 

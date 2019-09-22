@@ -126,7 +126,7 @@ open class Platform {
     socket.connect(address, connectTimeout)
   }
 
-  open fun log(level: Int, message: String, t: Throwable?) {
+  open fun log(level: Int = INFO, message: String, t: Throwable? = null) {
     val logLevel = if (level == WARN) Level.WARNING else Level.INFO
     logger.log(logLevel, message, t)
   }
