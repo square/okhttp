@@ -55,7 +55,7 @@ import java.security.Security
 import javax.net.ssl.SSLPeerUnverifiedException
 import javax.net.ssl.SSLSocket
 import okhttp3.internal.platform.AndroidPlatform
-import okhttp3.internal.platform.AndroidQPlatform
+import okhttp3.internal.platform.Android10Platform
 
 /**
  * Run with "./gradlew :android-test:connectedCheck" and make sure ANDROID_SDK_ROOT is set.
@@ -86,7 +86,7 @@ class OkHttpTest {
   @Test
   fun testPlatform() {
     if (Build.VERSION.SDK_INT >= 29) {
-      assertTrue(Platform.get() is AndroidQPlatform)
+      assertTrue(Platform.get() is Android10Platform)
     } else {
       assertTrue(Platform.get() is AndroidPlatform)
     }
