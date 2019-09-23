@@ -194,22 +194,26 @@ class AndroidPlatform : Platform() {
     val isAndroid: Boolean = try {
       // Trigger an early exception over a fatal error, prefer a RuntimeException over Error.
       Class.forName("com.android.org.conscrypt.OpenSSLSocketImpl")
+
+      // account for android-all
+      check(Build.VERSION.SDK_INT > 0)
+
       true
     } catch (_: ClassNotFoundException) {
+      false
+    } catch (_: UnsatisfiedLinkError) {
       false
     }
 
-    val isSupported: Boolean = try {
-      // Trigger an early exception over a fatal error, prefer a RuntimeException over Error.
-      Class.forName("com.android.org.conscrypt.OpenSSLSocketImpl")
+    val isSupported: Boolean = when {
+      !isAndroid -> false
+      else -> {
+        // Fail Fast
+        check(
+            Build.VERSION.SDK_INT >= 21) { "Expected Android API level 21+ but was ${Build.VERSION.SDK_INT}" }
 
-      // Fail Fast
-      check(
-          Build.VERSION.SDK_INT >= 21) { "Expected Android API level 21+ but was ${Build.VERSION.SDK_INT}" }
-
-      true
-    } catch (_: ClassNotFoundException) {
-      false
+        true
+      }
     }
 
     fun buildIfSupported(): Platform? = if (isSupported) AndroidPlatform() else null
