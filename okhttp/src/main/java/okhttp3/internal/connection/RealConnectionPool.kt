@@ -20,19 +20,18 @@ import okhttp3.Address
 import okhttp3.ConnectionPool
 import okhttp3.Route
 import okhttp3.internal.closeQuietly
+import okhttp3.internal.concurrent.Task
+import okhttp3.internal.concurrent.TaskQueue
+import okhttp3.internal.concurrent.TaskRunner
 import okhttp3.internal.connection.Transmitter.TransmitterReference
-import okhttp3.internal.lockAndWaitNanos
-import okhttp3.internal.notifyAll
 import okhttp3.internal.platform.Platform
-import okhttp3.internal.threadFactory
 import java.io.IOException
 import java.net.Proxy
 import java.util.ArrayDeque
-import java.util.concurrent.SynchronousQueue
-import java.util.concurrent.ThreadPoolExecutor
 import java.util.concurrent.TimeUnit
 
 class RealConnectionPool(
+  taskRunner: TaskRunner,
   /** The maximum number of idle connections for each address. */
   private val maxIdleConnections: Int,
   keepAliveDuration: Long,
@@ -40,24 +39,14 @@ class RealConnectionPool(
 ) {
   private val keepAliveDurationNs: Long = timeUnit.toNanos(keepAliveDuration)
 
-  private val cleanupRunnable = object : Runnable {
-    override fun run() {
-      while (true) {
-        val waitNanos = cleanup(System.nanoTime())
-        if (waitNanos == -1L) return
-        try {
-          this@RealConnectionPool.lockAndWaitNanos(waitNanos)
-        } catch (ie: InterruptedException) {
-          // Will cause the thread to exit unless other connections are created!
-          evictAll()
-        }
-      }
-    }
+  private val cleanupQueue: TaskQueue = taskRunner.newQueue(this)
+  private val cleanupTask = object : Task("OkHttp ConnectionPool") {
+    override fun runOnce() = cleanup(System.nanoTime())
+    override fun tryCancel() = true
   }
 
   private val connections = ArrayDeque<RealConnection>()
   val routeDatabase = RouteDatabase()
-  var cleanupRunning: Boolean = false
 
   init {
     // Put a floor on the keep alive duration, otherwise cleanup will spin loop.
@@ -98,11 +87,8 @@ class RealConnectionPool(
 
   fun put(connection: RealConnection) {
     assert(Thread.holdsLock(this))
-    if (!cleanupRunning) {
-      cleanupRunning = true
-      executor.execute(cleanupRunnable)
-    }
     connections.add(connection)
+    cleanupQueue.schedule(cleanupTask)
   }
 
   /**
@@ -113,10 +99,10 @@ class RealConnectionPool(
     assert(Thread.holdsLock(this))
     return if (connection.noNewExchanges || maxIdleConnections == 0) {
       connections.remove(connection)
+      if (connections.isEmpty()) cleanupQueue.cancelAll()
       true
     } else {
-      // Awake the cleanup thread: we may have exceeded the idle connection limit.
-      this.notifyAll()
+      cleanupQueue.schedule(cleanupTask)
       false
     }
   }
@@ -133,6 +119,7 @@ class RealConnectionPool(
           i.remove()
         }
       }
+      if (connections.isEmpty()) cleanupQueue.cancelAll()
     }
 
     for (connection in evictedConnections) {
@@ -144,8 +131,8 @@ class RealConnectionPool(
    * Performs maintenance on this pool, evicting the connection that has been idle the longest if
    * either it has exceeded the keep alive limit or the idle connections limit.
    *
-   * Returns the duration in nanos to sleep until the next scheduled call to this method. Returns
-   * -1 if no further cleanups are required.
+   * Returns the duration in nanoseconds to sleep until the next scheduled call to this method.
+   * Returns -1 if no further cleanups are required.
    */
   fun cleanup(now: Long): Long {
     var inUseConnectionCount = 0
@@ -178,6 +165,7 @@ class RealConnectionPool(
           // We've found a connection to evict. Remove it from the list, then close it below
           // (outside of the synchronized block).
           connections.remove(longestIdleConnection)
+          if (connections.isEmpty()) cleanupQueue.cancelAll()
         }
         idleConnectionCount > 0 -> {
           // A connection will be ready to evict soon.
@@ -190,7 +178,6 @@ class RealConnectionPool(
         }
         else -> {
           // No connections, idle or in use.
-          cleanupRunning = false
           return -1
         }
       }
@@ -199,7 +186,7 @@ class RealConnectionPool(
     longestIdleConnection!!.socket().closeQuietly()
 
     // Cleanup again immediately.
-    return 0
+    return 0L
   }
 
   /**
@@ -250,19 +237,6 @@ class RealConnectionPool(
   }
 
   companion object {
-    /**
-     * Background threads are used to cleanup expired connections. There will be at most a single
-     * thread running per connection pool. The thread pool executor permits the pool itself to be
-     * garbage collected.
-     */
-    private val executor = ThreadPoolExecutor(
-        0, // corePoolSize.
-        Int.MAX_VALUE, // maximumPoolSize.
-        60L, TimeUnit.SECONDS, // keepAliveTime.
-        SynchronousQueue(),
-        threadFactory("OkHttp ConnectionPool", true)
-    )
-
     fun get(connectionPool: ConnectionPool): RealConnectionPool = connectionPool.delegate
   }
 }

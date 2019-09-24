@@ -30,12 +30,16 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Route;
 import okhttp3.internal.RecordingOkAuthenticator;
+import okhttp3.internal.concurrent.TaskRunner;
+import okhttp3.internal.concurrent.TaskRunnerTest;
 import org.junit.Test;
 
 import static okhttp3.TestUtil.awaitGarbageCollection;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public final class ConnectionPoolTest {
+  /** The fake task runner prevents the cleanup runnable from being started. */
+  private final TaskRunner taskRunner = new TaskRunner(new TaskRunnerTest.FakeBackend());
   private final Address addressA = newAddress("a");
   private final Route routeA1 = newRoute(addressA);
   private final Address addressB = newAddress("b");
@@ -44,8 +48,8 @@ public final class ConnectionPoolTest {
   private final Route routeC1 = newRoute(addressC);
 
   @Test public void connectionsEvictedWhenIdleLongEnough() throws Exception {
-    RealConnectionPool pool = new RealConnectionPool(Integer.MAX_VALUE, 100L, TimeUnit.NANOSECONDS);
-    pool.setCleanupRunning(true); // Prevent the cleanup runnable from being started.
+    RealConnectionPool pool = new RealConnectionPool(
+        taskRunner, Integer.MAX_VALUE, 100L, TimeUnit.NANOSECONDS);
 
     RealConnection c1 = newConnection(pool, routeA1, 50L);
 
@@ -76,9 +80,9 @@ public final class ConnectionPoolTest {
   }
 
   @Test public void inUseConnectionsNotEvicted() throws Exception {
-    ConnectionPool poolApi = new ConnectionPool(Integer.MAX_VALUE, 100L, TimeUnit.NANOSECONDS);
-    RealConnectionPool pool = RealConnectionPool.Companion.get(poolApi);
-    pool.setCleanupRunning(true); // Prevent the cleanup runnable from being started.
+    RealConnectionPool pool = new RealConnectionPool(
+        taskRunner, Integer.MAX_VALUE, 100L, TimeUnit.NANOSECONDS);
+    ConnectionPool poolApi = new ConnectionPool(pool);
 
     RealConnection c1 = newConnection(pool, routeA1, 50L);
     synchronized (pool) {
@@ -108,8 +112,8 @@ public final class ConnectionPoolTest {
   }
 
   @Test public void cleanupPrioritizesEarliestEviction() throws Exception {
-    RealConnectionPool pool = new RealConnectionPool(Integer.MAX_VALUE, 100L, TimeUnit.NANOSECONDS);
-    pool.setCleanupRunning(true); // Prevent the cleanup runnable from being started.
+    RealConnectionPool pool = new RealConnectionPool(
+        taskRunner, Integer.MAX_VALUE, 100L, TimeUnit.NANOSECONDS);
 
     RealConnection c1 = newConnection(pool, routeA1, 75L);
     RealConnection c2 = newConnection(pool, routeB1, 50L);
@@ -140,8 +144,8 @@ public final class ConnectionPoolTest {
   }
 
   @Test public void oldestConnectionsEvictedIfIdleLimitExceeded() throws Exception {
-    RealConnectionPool pool = new RealConnectionPool(2, 100L, TimeUnit.NANOSECONDS);
-    pool.setCleanupRunning(true); // Prevent the cleanup runnable from being started.
+    RealConnectionPool pool = new RealConnectionPool(
+        taskRunner, 2, 100L, TimeUnit.NANOSECONDS);
 
     RealConnection c1 = newConnection(pool, routeA1, 50L);
     RealConnection c2 = newConnection(pool, routeB1, 75L);
@@ -164,9 +168,9 @@ public final class ConnectionPoolTest {
   }
 
   @Test public void leakedAllocation() throws Exception {
-    ConnectionPool poolApi = new ConnectionPool(Integer.MAX_VALUE, 100L, TimeUnit.NANOSECONDS);
-    RealConnectionPool pool = RealConnectionPool.Companion.get(poolApi);
-    pool.setCleanupRunning(true); // Prevent the cleanup runnable from being started.
+    RealConnectionPool pool = new RealConnectionPool(
+        taskRunner, Integer.MAX_VALUE, 100L, TimeUnit.NANOSECONDS);
+    ConnectionPool poolApi = new ConnectionPool(pool);
 
     RealConnection c1 = newConnection(pool, routeA1, 0L);
     allocateAndLeakAllocation(poolApi, c1);
@@ -180,24 +184,26 @@ public final class ConnectionPoolTest {
   }
 
   @Test public void interruptStopsThread() throws Exception {
-    RealConnectionPool pool = new RealConnectionPool(2, 100L, TimeUnit.NANOSECONDS);
+    TaskRunner realTaskRunner = TaskRunner.Companion.getINSTANCE();
+    RealConnectionPool pool = new RealConnectionPool(
+        realTaskRunner, 2, 100L, TimeUnit.NANOSECONDS);
     RealConnection c1 = newConnection(pool, routeA1, Long.MAX_VALUE);
 
-    assertThat(pool.getCleanupRunning()).isTrue();
+    assertThat(realTaskRunner.activeQueues()).isNotEmpty();
 
     Thread.sleep(100);
 
     Thread[] threads = new Thread[Thread.activeCount() * 2];
     Thread.enumerate(threads);
     for (Thread t: threads) {
-      if (t != null && t.getName().equals("OkHttp ConnectionPool")) {
+      if (t != null && t.getName().equals("OkHttp Task Coordinator")) {
         t.interrupt();
       }
     }
 
     Thread.sleep(100);
 
-    assertThat(pool.getCleanupRunning()).isFalse();
+    assertThat(realTaskRunner.activeQueues()).isEmpty();
   }
 
   /** Use a helper method so there's no hidden reference remaining on the stack. */

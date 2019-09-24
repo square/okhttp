@@ -37,7 +37,7 @@ class TaskRunnerRealBackendTest {
   @Test fun test() {
     val t1 = System.nanoTime() / 1e6
 
-    queue.schedule(object : Task("task", false) {
+    queue.schedule(object : Task("task") {
       val delays = mutableListOf(TimeUnit.MILLISECONDS.toNanos(1000), -1L)
       override fun runOnce(): Long {
         log.put("runOnce delays.size=${delays.size}")
@@ -53,6 +53,6 @@ class TaskRunnerRealBackendTest {
     val t3 = System.nanoTime() / 1e6 - t1
     assertThat(t3).isCloseTo(1750.0, Offset.offset(250.0))
 
-    backend.shutDown()
+    backend.shutdown()
   }
 }
