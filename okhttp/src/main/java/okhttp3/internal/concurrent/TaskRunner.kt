@@ -163,7 +163,7 @@ class TaskRunner(
 
     fun shutDown() {
       coordinatorExecutor.shutdown()
-      coordinatorExecutor.shutdown()
+      taskExecutor.shutdown()
     }
   }
 }
