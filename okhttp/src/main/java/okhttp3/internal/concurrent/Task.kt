@@ -67,20 +67,30 @@ abstract class Task(
     this.queue = queue
 
     this.runRunnable = Runnable {
+      val currentThread = Thread.currentThread()
+      val oldName = currentThread.name
+      currentThread.name = name
+
       var delayNanos = -1L
       try {
         delayNanos = runOnce()
       } finally {
         queue.runCompleted(this, delayNanos)
+        currentThread.name = oldName
       }
     }
 
     this.cancelRunnable = Runnable {
+      val currentThread = Thread.currentThread()
+      val oldName = currentThread.name
+      currentThread.name = name
+
       var skipExecution = false
       try {
         skipExecution = tryCancel()
       } finally {
         queue.tryCancelCompleted(this, skipExecution)
+        currentThread.name = oldName
       }
     }
   }

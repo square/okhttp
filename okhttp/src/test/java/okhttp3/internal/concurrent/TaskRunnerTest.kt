@@ -17,14 +17,9 @@ package okhttp3.internal.concurrent
 
 import okhttp3.internal.concurrent.TaskRunnerTest.FakeBackend
 import okhttp3.internal.notify
-import okhttp3.internal.threadFactory
 import okhttp3.internal.wait
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Test
-import java.util.concurrent.Executor
-import java.util.concurrent.SynchronousQueue
-import java.util.concurrent.ThreadPoolExecutor
-import java.util.concurrent.TimeUnit
 
 /**
  * This test uses [FakeBackend] so that everything is sequential and deterministic.
@@ -241,6 +236,57 @@ class TaskRunnerTest {
     backend.assertNoMoreTasks()
   }
 
+  @Test fun interruptingCoordinatorAttemptsToCancelsAndSucceeds() {
+    redQueue.schedule(object : Task("task", false) {
+      override fun runOnce(): Long {
+        log += "run@${backend.nanoTime()}"
+        return -1L
+      }
+
+      override fun tryCancel(): Boolean {
+        log += "cancel@${backend.nanoTime()}"
+        return true
+      }
+    }, 100L)
+
+    backend.advanceUntil(0L)
+    assertThat(log).isEmpty()
+
+    backend.interruptCoordinatorThread()
+
+    backend.advanceUntil(0L)
+    assertThat(log).containsExactly("cancel@0")
+
+    backend.assertNoMoreTasks()
+  }
+
+  @Test fun interruptingCoordinatorAttemptsToCancelsAndFails() {
+    redQueue.schedule(object : Task("task", false) {
+      override fun runOnce(): Long {
+        log += "run@${backend.nanoTime()}"
+        return -1L
+      }
+
+      override fun tryCancel(): Boolean {
+        log += "cancel@${backend.nanoTime()}"
+        return false
+      }
+    }, 100L)
+
+    backend.advanceUntil(0L)
+    assertThat(log).isEmpty()
+
+    backend.interruptCoordinatorThread()
+
+    backend.advanceUntil(0L)
+    assertThat(log).containsExactly("cancel@0")
+
+    backend.advanceUntil(100L)
+    assertThat(log).containsExactly("cancel@0", "run@100")
+
+    backend.assertNoMoreTasks()
+  }
+
   /** Inspect how many runnables have been enqueued. If none then we're truly sequential. */
   @Test fun singleQueueIsSerial() {
     redQueue.schedule(object : Task("task one", false) {
@@ -404,15 +450,49 @@ class TaskRunnerTest {
     backend.assertNoMoreTasks()
   }
 
+  @Test fun taskNameIsUsedForThreadNameWhenRunning() {
+    redQueue.schedule(object : Task("lucky task", false) {
+      override fun runOnce(): Long {
+        log += "run threadName:${Thread.currentThread().name}"
+        return -1L
+      }
+    }, 0L)
+
+    backend.advanceUntil(0L)
+    assertThat(log).containsExactly("run threadName:lucky task")
+
+    backend.assertNoMoreTasks()
+  }
+
+  @Test fun taskNameIsUsedForThreadNameWhenCanceling() {
+    redQueue.schedule(object : Task("lucky task", false) {
+      override fun tryCancel(): Boolean {
+        log += "cancel threadName:${Thread.currentThread().name}"
+        return true
+      }
+
+      override fun runOnce() = -1L
+    }, 100L)
+
+    backend.advanceUntil(0L)
+    assertThat(log).isEmpty()
+
+    redQueue.cancelAll()
+
+    backend.advanceUntil(0L)
+    assertThat(log).containsExactly("cancel threadName:lucky task")
+
+    backend.assertNoMoreTasks()
+  }
+
   class FakeBackend : TaskRunner.Backend {
-    private val coordinatorExecutor: Executor = ThreadPoolExecutor(
-        0, // corePoolSize.
-        1, // maximumPoolSize.
-        100, TimeUnit.MILLISECONDS, // keepAliveTime.
-        SynchronousQueue(),
-        threadFactory("TaskRunner.FakeBackend", true)
-    )
-    private var coordinatorToExecute: Runnable? = null
+    /** Null unless there's a coordinator runnable that needs to be started. */
+    private var coordinatorToRun: Runnable? = null
+
+    /** Null unless there's a coordinator thread currently executing. */
+    var coordinatorThread: Thread? = null
+
+    /** Tasks to be executed by the test thread. */
     private val tasks = mutableListOf<Runnable>()
 
     /** How many tasks can be executed immediately. */
@@ -428,14 +508,8 @@ class TaskRunnerTest {
     private var coordinatorWaitingUntilTime = Long.MAX_VALUE
 
     override fun executeCoordinator(runnable: Runnable) {
-      check(coordinatorToExecute == null)
-      coordinatorToExecute = Runnable {
-        runnable.run()
-        synchronized(taskRunner) {
-          coordinatorWaitingUntilTime = Long.MAX_VALUE
-          taskRunner.notify() // Release the waiting advanceUntil() or runRunnables() call.
-        }
-      }
+      check(coordinatorToRun == null)
+      coordinatorToRun = runnable
     }
 
     override fun executeTask(runnable: Runnable) {
@@ -488,9 +562,22 @@ class TaskRunnerTest {
 
     /** Returns true if anything was executed. */
     private fun runRunnables() {
-      if (coordinatorToExecute != null) {
-        coordinatorExecutor.execute(coordinatorToExecute!!)
-        coordinatorToExecute = null
+      check(Thread.holdsLock(taskRunner))
+
+      if (coordinatorToRun != null) {
+        coordinatorThread = object : Thread() {
+          val runnable = coordinatorToRun!!
+          override fun run() {
+            runnable.run()
+            synchronized(taskRunner) {
+              coordinatorThread = null
+              coordinatorWaitingUntilTime = Long.MAX_VALUE
+              taskRunner.notify() // Release the waiting advanceUntil() or runRunnables() call.
+            }
+          }
+        }
+        coordinatorThread!!.start()
+        coordinatorToRun = null
         taskRunner.wait() // Wait for the coordinator to stall.
       }
 
@@ -501,9 +588,18 @@ class TaskRunnerTest {
     }
 
     fun assertNoMoreTasks() {
-      assertThat(coordinatorToExecute).isNull()
+      assertThat(coordinatorToRun).isNull()
       assertThat(tasks).isEmpty()
       assertThat(coordinatorWaitingUntilTime).isEqualTo(Long.MAX_VALUE)
+    }
+
+    fun interruptCoordinatorThread() {
+      check(!Thread.holdsLock(taskRunner))
+
+      synchronized(taskRunner) {
+        coordinatorThread!!.interrupt()
+        taskRunner.wait() // Wait for the coordinator to stall.
+      }
     }
   }
 }
