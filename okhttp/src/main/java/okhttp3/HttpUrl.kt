@@ -1785,6 +1785,13 @@ class HttpUrl internal constructor(
     ): String {
       var codePoint: Int
       var i = pos
+      var equalSignExists = false
+      var ampersandSignExists = false
+      var urlCharList = this.toList()
+      val charactersMap = mutableMapOf<Int, String>()
+      urlCharList.forEachIndexed { index, value ->
+        if (value == '&' || value == '=') charactersMap[index] = value.toString()
+      }
       while (i < limit) {
         codePoint = codePointAt(i)
         if (codePoint < 0x20 ||
@@ -1793,7 +1800,8 @@ class HttpUrl internal constructor(
             codePoint.toChar() in encodeSet ||
             codePoint == '%'.toInt() &&
             (!alreadyEncoded || strict && !isPercentEncoded(i, limit)) ||
-            codePoint == '+'.toInt() && plusIsSpace) {
+            codePoint == '+'.toInt() && plusIsSpace ||
+            codePoint.toChar() == '&' && equalSignExists) {
           // Slow path: the character at i requires encoding!
           val out = Buffer()
           out.writeUtf8(this, pos, i)
@@ -1806,9 +1814,15 @@ class HttpUrl internal constructor(
               strict = strict,
               plusIsSpace = plusIsSpace,
               unicodeAllowed = unicodeAllowed,
-              charset = charset
+              charset = charset,
+              equalSignExists = equalSignExists,
+              specialCharMap = charactersMap
           )
           return out.readUtf8()
+        } else if (codePoint.toChar() == '=' && ampersandSignExists) {
+          equalSignExists = true
+        } else if (codePoint.toChar() == '&') {
+          ampersandSignExists = true
         }
         i += Character.charCount(codePoint)
       }
@@ -1826,11 +1840,14 @@ class HttpUrl internal constructor(
       strict: Boolean,
       plusIsSpace: Boolean,
       unicodeAllowed: Boolean,
-      charset: Charset?
+      charset: Charset?,
+      equalSignExists: Boolean,
+      specialCharMap: MutableMap<Int, String>
     ) {
       var encodedCharBuffer: Buffer? = null // Lazily allocated.
       var codePoint: Int
       var i = pos
+      var equalSignExist = equalSignExists
       while (i < limit) {
         codePoint = input.codePointAt(i)
         if (alreadyEncoded && (codePoint == '\t'.toInt() || codePoint == '\n'.toInt() ||
@@ -1863,8 +1880,26 @@ class HttpUrl internal constructor(
             writeByte(HEX_DIGITS[b and 0xf].toInt())
           }
         } else {
-          // This character doesn't need encoding. Just copy it over.
-          writeUtf8CodePoint(codePoint)
+          if (codePoint.toChar() == '&' && codePoint.toChar() !in encodeSet && equalSignExist) {
+            var charMapList = specialCharMap.toList()
+            var newFilteredList = charMapList.filter {
+              it.first > i
+            }
+            if (newFilteredList.isEmpty()) {
+              writeUtf8("%26")
+              equalSignExist = false
+            } else {
+              if (newFilteredList[0].second == "&") {
+                writeUtf8("%26")
+              } else {
+                writeUtf8("&")
+              }
+              equalSignExist = false
+            }
+          } else {
+            // This character doesn't need encoding. Just copy it over.
+            writeUtf8CodePoint(codePoint)
+          }
         }
         i += Character.charCount(codePoint)
       }

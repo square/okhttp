@@ -1712,6 +1712,12 @@ public final class HttpUrlTest {
     assertThat(parse("https://127.0.0.1").topPrivateDomain()).isNull();
   }
 
+  @Test public void encodeAmpersandInQueryParameter() throws Exception {
+    HttpUrl url = parse("http://host/?foo=Foo&bar=Bar&Co&baz=Baz");
+    assertThat(url.querySize()).isEqualTo(3);
+    assertThat(url.toString()).isEqualTo("http://host/?foo=Foo&bar=Bar%26Co&baz=Baz");
+  }
+
   private void assertInvalid(String string, String exceptionMessage) {
     if (useGet) {
       try {
