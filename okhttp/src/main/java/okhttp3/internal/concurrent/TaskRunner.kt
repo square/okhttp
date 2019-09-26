@@ -19,6 +19,7 @@ import okhttp3.internal.addIfAbsent
 import okhttp3.internal.notify
 import okhttp3.internal.objectWaitNanos
 import okhttp3.internal.threadFactory
+import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.SynchronousQueue
 import java.util.concurrent.ThreadPoolExecutor
 import java.util.concurrent.TimeUnit
@@ -126,13 +127,13 @@ class TaskRunner(
     fun coordinatorWait(taskRunner: TaskRunner, nanos: Long)
   }
 
-  class RealBackend : Backend {
+  internal class RealBackend : Backend {
     private val coordinatorExecutor = ThreadPoolExecutor(
         0, // corePoolSize.
         1, // maximumPoolSize.
         60L, TimeUnit.SECONDS, // keepAliveTime.
-        SynchronousQueue(),
-        threadFactory("OkHttp Task Coordinator", false)
+        LinkedBlockingQueue<Runnable>(),
+        threadFactory("OkHttp Task Coordinator", true)
     )
 
     private val taskExecutor = ThreadPoolExecutor(
@@ -161,9 +162,13 @@ class TaskRunner(
       taskRunner.objectWaitNanos(nanos)
     }
 
-    fun shutDown() {
+    fun shutdown() {
       coordinatorExecutor.shutdown()
       taskExecutor.shutdown()
     }
+  }
+
+  companion object {
+    val INSTANCE = TaskRunner(RealBackend())
   }
 }

@@ -42,8 +42,7 @@ package okhttp3.internal.concurrent
  * within it never execute concurrently. It is an error to use a task in multiple queues.
  */
 abstract class Task(
-  val name: String,
-  val daemon: Boolean = true
+  val name: String
 ) {
   // Guarded by the TaskRunner.
   internal var queue: TaskQueue? = null

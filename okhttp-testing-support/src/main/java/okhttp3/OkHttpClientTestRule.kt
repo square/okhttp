@@ -15,6 +15,9 @@
  */
 package okhttp3
 
+import okhttp3.internal.concurrent.Task
+import okhttp3.internal.concurrent.TaskQueue
+import okhttp3.internal.concurrent.TaskRunner
 import okhttp3.testing.Flaky
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.rules.TestRule
@@ -22,6 +25,8 @@ import org.junit.runner.Description
 import org.junit.runners.model.Statement
 import java.net.InetAddress
 import java.util.concurrent.ConcurrentLinkedDeque
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
 
 /** Apply this rule to tests that need an OkHttpClient instance. */
 class OkHttpClientTestRule : TestRule {
@@ -59,6 +64,14 @@ class OkHttpClientTestRule : TestRule {
     }
   }
 
+  private fun ensureAllTaskQueuesIdle() {
+    for (queue in TaskRunner.INSTANCE.activeQueues()) {
+      assertThat(queue.awaitIdle(500L, TimeUnit.MILLISECONDS))
+          .withFailMessage("Queue ${queue.owner} still active after 500ms")
+          .isTrue()
+    }
+  }
+
   override fun apply(base: Statement, description: Description): Statement {
     return object : Statement() {
       override fun evaluate() {
@@ -72,6 +85,7 @@ class OkHttpClientTestRule : TestRule {
         } finally {
           ensureAllConnectionsReleased()
           releaseClient()
+          ensureAllTaskQueuesIdle()
         }
       }
 
@@ -117,6 +131,19 @@ class OkHttpClientTestRule : TestRule {
       it.dispatcher.executorService.shutdownNow()
       it.connectionPool.evictAll()
     }
+  }
+
+  /** Returns true if this queue became idle before the timeout elapsed. */
+  private fun TaskQueue.awaitIdle(timeout: Long, timeUnit: TimeUnit): Boolean {
+    val latch = CountDownLatch(1)
+    schedule(object : Task("awaitIdle") {
+      override fun runOnce(): Long {
+        latch.countDown()
+        return -1L
+      }
+    })
+
+    return latch.await(timeout, timeUnit)
   }
 
   companion object {

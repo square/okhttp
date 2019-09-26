@@ -36,32 +36,28 @@ class TaskRunnerTest {
   private val blueQueue = taskRunner.newQueue("blue")
   private val greenQueue = taskRunner.newQueue("green")
 
-  init {
-    backend.taskRunner = taskRunner
-  }
-
   @Test fun executeDelayed() {
-    redQueue.schedule(object : Task("task", false) {
+    redQueue.schedule(object : Task("task") {
       override fun runOnce(): Long {
         log += "run@${backend.nanoTime()}"
         return -1L
       }
     }, 100L)
 
-    backend.advanceUntil(0L)
+    backend.advanceUntil(taskRunner, 0L)
     assertThat(log).containsExactly()
 
-    backend.advanceUntil(99L)
+    backend.advanceUntil(taskRunner, 99L)
     assertThat(log).containsExactly()
 
-    backend.advanceUntil(100L)
+    backend.advanceUntil(taskRunner, 100L)
     assertThat(log).containsExactly("run@100")
 
     backend.assertNoMoreTasks()
   }
 
   @Test fun executeRepeated() {
-    redQueue.schedule(object : Task("task", false) {
+    redQueue.schedule(object : Task("task") {
       val delays = mutableListOf(50L, 150L, -1L)
       override fun runOnce(): Long {
         log += "run@${backend.nanoTime()}"
@@ -69,19 +65,19 @@ class TaskRunnerTest {
       }
     }, 100L)
 
-    backend.advanceUntil(0L)
+    backend.advanceUntil(taskRunner, 0L)
     assertThat(log).containsExactly()
 
-    backend.advanceUntil(100L)
+    backend.advanceUntil(taskRunner, 100L)
     assertThat(log).containsExactly("run@100")
 
-    backend.advanceUntil(150L)
+    backend.advanceUntil(taskRunner, 150L)
     assertThat(log).containsExactly("run@100", "run@150")
 
-    backend.advanceUntil(299L)
+    backend.advanceUntil(taskRunner, 299L)
     assertThat(log).containsExactly("run@100", "run@150")
 
-    backend.advanceUntil(300L)
+    backend.advanceUntil(taskRunner, 300L)
     assertThat(log).containsExactly("run@100", "run@150", "run@300")
 
     backend.assertNoMoreTasks()
@@ -89,7 +85,7 @@ class TaskRunnerTest {
 
   /** Repeat with a delay of 200 but schedule with a delay of 50. The schedule wins. */
   @Test fun executeScheduledEarlierReplacesRepeatedLater() {
-    redQueue.schedule(object : Task("task", false) {
+    redQueue.schedule(object : Task("task") {
       val schedules = mutableListOf(50L)
       val delays = mutableListOf(200L, -1L)
       override fun runOnce(): Long {
@@ -101,13 +97,13 @@ class TaskRunnerTest {
       }
     }, 100L)
 
-    backend.advanceUntil(0L)
+    backend.advanceUntil(taskRunner, 0L)
     assertThat(log).isEmpty()
 
-    backend.advanceUntil(100L)
+    backend.advanceUntil(taskRunner, 100L)
     assertThat(log).containsExactly("run@100")
 
-    backend.advanceUntil(150L)
+    backend.advanceUntil(taskRunner, 150L)
     assertThat(log).containsExactly("run@100", "run@150")
 
     backend.assertNoMoreTasks()
@@ -115,7 +111,7 @@ class TaskRunnerTest {
 
   /** Schedule with a delay of 200 but repeat with a delay of 50. The repeat wins. */
   @Test fun executeRepeatedEarlierReplacesScheduledLater() {
-    redQueue.schedule(object : Task("task", false) {
+    redQueue.schedule(object : Task("task") {
       val schedules = mutableListOf(200L)
       val delays = mutableListOf(50L, -1L)
       override fun runOnce(): Long {
@@ -127,20 +123,20 @@ class TaskRunnerTest {
       }
     }, 100L)
 
-    backend.advanceUntil(0L)
+    backend.advanceUntil(taskRunner, 0L)
     assertThat(log).isEmpty()
 
-    backend.advanceUntil(100L)
+    backend.advanceUntil(taskRunner, 100L)
     assertThat(log).containsExactly("run@100")
 
-    backend.advanceUntil(150L)
+    backend.advanceUntil(taskRunner, 150L)
     assertThat(log).containsExactly("run@100", "run@150")
 
     backend.assertNoMoreTasks()
   }
 
   @Test fun cancelReturnsTruePreventsNextExecution() {
-    redQueue.schedule(object : Task("task", false) {
+    redQueue.schedule(object : Task("task") {
       override fun runOnce(): Long {
         log += "run@${backend.nanoTime()}"
         return -1L
@@ -152,19 +148,19 @@ class TaskRunnerTest {
       }
     }, 100L)
 
-    backend.advanceUntil(0L)
+    backend.advanceUntil(taskRunner, 0L)
     assertThat(log).isEmpty()
 
     redQueue.cancelAll()
 
-    backend.advanceUntil(99L)
+    backend.advanceUntil(taskRunner, 99L)
     assertThat(log).containsExactly("cancel@99")
 
     backend.assertNoMoreTasks()
   }
 
   @Test fun cancelReturnsFalseDoesNotCancel() {
-    redQueue.schedule(object : Task("task", false) {
+    redQueue.schedule(object : Task("task") {
       override fun runOnce(): Long {
         log += "run@${backend.nanoTime()}"
         return -1L
@@ -176,22 +172,22 @@ class TaskRunnerTest {
       }
     }, 100L)
 
-    backend.advanceUntil(0L)
+    backend.advanceUntil(taskRunner, 0L)
     assertThat(log).isEmpty()
 
     redQueue.cancelAll()
 
-    backend.advanceUntil(99L)
+    backend.advanceUntil(taskRunner, 99L)
     assertThat(log).containsExactly("cancel@99")
 
-    backend.advanceUntil(100L)
+    backend.advanceUntil(taskRunner, 100L)
     assertThat(log).containsExactly("cancel@99", "run@100")
 
     backend.assertNoMoreTasks()
   }
 
   @Test fun cancelWhileExecutingPreventsRepeat() {
-    redQueue.schedule(object : Task("task", false) {
+    redQueue.schedule(object : Task("task") {
       override fun runOnce(): Long {
         log += "run@${backend.nanoTime()}"
         redQueue.cancelAll()
@@ -204,17 +200,17 @@ class TaskRunnerTest {
       }
     }, 100L)
 
-    backend.advanceUntil(0L)
+    backend.advanceUntil(taskRunner, 0L)
     assertThat(log).isEmpty()
 
-    backend.advanceUntil(100L)
+    backend.advanceUntil(taskRunner, 100L)
     assertThat(log).containsExactly("run@100", "cancel@100")
 
     backend.assertNoMoreTasks()
   }
 
   @Test fun cancelWhileExecutingDoesNothingIfTaskDoesNotRepeat() {
-    redQueue.schedule(object : Task("task", false) {
+    redQueue.schedule(object : Task("task") {
       override fun runOnce(): Long {
         log += "run@${backend.nanoTime()}"
         redQueue.cancelAll()
@@ -227,17 +223,17 @@ class TaskRunnerTest {
       }
     }, 100L)
 
-    backend.advanceUntil(0L)
+    backend.advanceUntil(taskRunner, 0L)
     assertThat(log).isEmpty()
 
-    backend.advanceUntil(100L)
+    backend.advanceUntil(taskRunner, 100L)
     assertThat(log).containsExactly("run@100")
 
     backend.assertNoMoreTasks()
   }
 
   @Test fun interruptingCoordinatorAttemptsToCancelsAndSucceeds() {
-    redQueue.schedule(object : Task("task", false) {
+    redQueue.schedule(object : Task("task") {
       override fun runOnce(): Long {
         log += "run@${backend.nanoTime()}"
         return -1L
@@ -249,19 +245,19 @@ class TaskRunnerTest {
       }
     }, 100L)
 
-    backend.advanceUntil(0L)
+    backend.advanceUntil(taskRunner, 0L)
     assertThat(log).isEmpty()
 
-    backend.interruptCoordinatorThread()
+    backend.interruptCoordinatorThread(taskRunner)
 
-    backend.advanceUntil(0L)
+    backend.advanceUntil(taskRunner, 0L)
     assertThat(log).containsExactly("cancel@0")
 
     backend.assertNoMoreTasks()
   }
 
   @Test fun interruptingCoordinatorAttemptsToCancelsAndFails() {
-    redQueue.schedule(object : Task("task", false) {
+    redQueue.schedule(object : Task("task") {
       override fun runOnce(): Long {
         log += "run@${backend.nanoTime()}"
         return -1L
@@ -273,15 +269,15 @@ class TaskRunnerTest {
       }
     }, 100L)
 
-    backend.advanceUntil(0L)
+    backend.advanceUntil(taskRunner, 0L)
     assertThat(log).isEmpty()
 
-    backend.interruptCoordinatorThread()
+    backend.interruptCoordinatorThread(taskRunner)
 
-    backend.advanceUntil(0L)
+    backend.advanceUntil(taskRunner, 0L)
     assertThat(log).containsExactly("cancel@0")
 
-    backend.advanceUntil(100L)
+    backend.advanceUntil(taskRunner, 100L)
     assertThat(log).containsExactly("cancel@0", "run@100")
 
     backend.assertNoMoreTasks()
@@ -289,31 +285,31 @@ class TaskRunnerTest {
 
   /** Inspect how many runnables have been enqueued. If none then we're truly sequential. */
   @Test fun singleQueueIsSerial() {
-    redQueue.schedule(object : Task("task one", false) {
+    redQueue.schedule(object : Task("task one") {
       override fun runOnce(): Long {
         log += "one:run@${backend.nanoTime()} tasksSize=${backend.tasksSize}"
         return -1L
       }
     }, 100L)
 
-    redQueue.schedule(object : Task("task two", false) {
+    redQueue.schedule(object : Task("task two") {
       override fun runOnce(): Long {
         log += "two:run@${backend.nanoTime()} tasksSize=${backend.tasksSize}"
         return -1L
       }
     }, 100L)
 
-    redQueue.schedule(object : Task("task three", false) {
+    redQueue.schedule(object : Task("task three") {
       override fun runOnce(): Long {
         log += "three:run@${backend.nanoTime()} tasksSize=${backend.tasksSize}"
         return -1L
       }
     }, 100L)
 
-    backend.advanceUntil(0L)
+    backend.advanceUntil(taskRunner, 0L)
     assertThat(log).isEmpty()
 
-    backend.advanceUntil(100L)
+    backend.advanceUntil(taskRunner, 100L)
     assertThat(log).containsExactly(
         "one:run@100 tasksSize=0",
         "two:run@100 tasksSize=0",
@@ -325,31 +321,31 @@ class TaskRunnerTest {
 
   /** Inspect how many runnables have been enqueued. If non-zero then we're truly parallel. */
   @Test fun differentQueuesAreParallel() {
-    redQueue.schedule(object : Task("task one", false) {
+    redQueue.schedule(object : Task("task one") {
       override fun runOnce(): Long {
         log += "one:run@${backend.nanoTime()} tasksSize=${backend.tasksSize}"
         return -1L
       }
     }, 100L)
 
-    blueQueue.schedule(object : Task("task two", false) {
+    blueQueue.schedule(object : Task("task two") {
       override fun runOnce(): Long {
         log += "two:run@${backend.nanoTime()} tasksSize=${backend.tasksSize}"
         return -1L
       }
     }, 100L)
 
-    greenQueue.schedule(object : Task("task three", false) {
+    greenQueue.schedule(object : Task("task three") {
       override fun runOnce(): Long {
         log += "three:run@${backend.nanoTime()} tasksSize=${backend.tasksSize}"
         return -1L
       }
     }, 100L)
 
-    backend.advanceUntil(0L)
+    backend.advanceUntil(taskRunner, 0L)
     assertThat(log).isEmpty()
 
-    backend.advanceUntil(100L)
+    backend.advanceUntil(taskRunner, 100L)
     assertThat(log).containsExactly(
         "one:run@100 tasksSize=2",
         "two:run@100 tasksSize=1",
@@ -361,13 +357,13 @@ class TaskRunnerTest {
 
   /** Test the introspection method [TaskQueue.scheduledTasks]. */
   @Test fun scheduledTasks() {
-    redQueue.schedule(object : Task("task one", false) {
+    redQueue.schedule(object : Task("task one") {
       override fun runOnce(): Long = -1L
 
       override fun toString() = "one"
     }, 100L)
 
-    redQueue.schedule(object : Task("task two", false) {
+    redQueue.schedule(object : Task("task two") {
       override fun runOnce(): Long = -1L
 
       override fun toString() = "two"
@@ -381,7 +377,7 @@ class TaskRunnerTest {
    * cumbersome to implement properly because the active task might be a cancel.
    */
   @Test fun scheduledTasksDoesNotIncludeRunningTask() {
-    redQueue.schedule(object : Task("task one", false) {
+    redQueue.schedule(object : Task("task one") {
       val schedules = mutableListOf(200L)
       override fun runOnce(): Long {
         if (schedules.isNotEmpty()) {
@@ -394,7 +390,7 @@ class TaskRunnerTest {
       override fun toString() = "one"
     }, 100L)
 
-    redQueue.schedule(object : Task("task two", false) {
+    redQueue.schedule(object : Task("task two") {
       override fun runOnce(): Long {
         log += "scheduledTasks=${redQueue.scheduledTasks}"
         return -1L
@@ -403,18 +399,18 @@ class TaskRunnerTest {
       override fun toString() = "two"
     }, 200L)
 
-    backend.advanceUntil(100L)
+    backend.advanceUntil(taskRunner, 100L)
     assertThat(log).containsExactly(
         "scheduledTasks=[two, one]"
     )
 
-    backend.advanceUntil(200L)
+    backend.advanceUntil(taskRunner, 200L)
     assertThat(log).containsExactly(
         "scheduledTasks=[two, one]",
         "scheduledTasks=[one]"
     )
 
-    backend.advanceUntil(300L)
+    backend.advanceUntil(taskRunner, 300L)
     assertThat(log).containsExactly(
         "scheduledTasks=[two, one]",
         "scheduledTasks=[one]",
@@ -430,42 +426,42 @@ class TaskRunnerTest {
    * queues have work scheduled.
    */
   @Test fun activeQueuesContainsOnlyQueuesWithScheduledTasks() {
-    redQueue.schedule(object : Task("task one", false) {
+    redQueue.schedule(object : Task("task one") {
       override fun runOnce() = -1L
     }, 100L)
 
-    blueQueue.schedule(object : Task("task two", false) {
+    blueQueue.schedule(object : Task("task two") {
       override fun runOnce() = -1L
     }, 200L)
 
-    backend.advanceUntil(0L)
+    backend.advanceUntil(taskRunner, 0L)
     assertThat(taskRunner.activeQueues()).containsExactly(redQueue, blueQueue)
 
-    backend.advanceUntil(100L)
+    backend.advanceUntil(taskRunner, 100L)
     assertThat(taskRunner.activeQueues()).containsExactly(blueQueue)
 
-    backend.advanceUntil(200L)
+    backend.advanceUntil(taskRunner, 200L)
     assertThat(taskRunner.activeQueues()).isEmpty()
 
     backend.assertNoMoreTasks()
   }
 
   @Test fun taskNameIsUsedForThreadNameWhenRunning() {
-    redQueue.schedule(object : Task("lucky task", false) {
+    redQueue.schedule(object : Task("lucky task") {
       override fun runOnce(): Long {
         log += "run threadName:${Thread.currentThread().name}"
         return -1L
       }
-    }, 0L)
+    })
 
-    backend.advanceUntil(0L)
+    backend.advanceUntil(taskRunner, 0L)
     assertThat(log).containsExactly("run threadName:lucky task")
 
     backend.assertNoMoreTasks()
   }
 
   @Test fun taskNameIsUsedForThreadNameWhenCanceling() {
-    redQueue.schedule(object : Task("lucky task", false) {
+    redQueue.schedule(object : Task("lucky task") {
       override fun tryCancel(): Boolean {
         log += "cancel threadName:${Thread.currentThread().name}"
         return true
@@ -474,12 +470,12 @@ class TaskRunnerTest {
       override fun runOnce() = -1L
     }, 100L)
 
-    backend.advanceUntil(0L)
+    backend.advanceUntil(taskRunner, 0L)
     assertThat(log).isEmpty()
 
     redQueue.cancelAll()
 
-    backend.advanceUntil(0L)
+    backend.advanceUntil(taskRunner, 0L)
     assertThat(log).containsExactly("cancel threadName:lucky task")
 
     backend.assertNoMoreTasks()
@@ -498,9 +494,6 @@ class TaskRunnerTest {
     /** How many tasks can be executed immediately. */
     val tasksSize: Int get() = tasks.size
 
-    /** The task runner to lock on. */
-    lateinit var taskRunner: TaskRunner
-
     /** Guarded by taskRunner. */
     private var nanoTime = 0L
 
@@ -513,12 +506,10 @@ class TaskRunnerTest {
     }
 
     override fun executeTask(runnable: Runnable) {
-      check(Thread.holdsLock(taskRunner))
       tasks += runnable
     }
 
     override fun nanoTime(): Long {
-      check(Thread.holdsLock(taskRunner))
       return nanoTime
     }
 
@@ -540,14 +531,14 @@ class TaskRunnerTest {
     }
 
     /** Advance the simulated clock and run anything ready at the new time. */
-    fun advanceUntil(newTime: Long) {
+    fun advanceUntil(taskRunner: TaskRunner, newTime: Long) {
       check(!Thread.holdsLock(taskRunner))
 
       synchronized(taskRunner) {
         nanoTime = newTime
 
         while (true) {
-          runRunnables()
+          runRunnables(taskRunner)
 
           if (coordinatorWaitingUntilTime <= nanoTime) {
             // Let the coordinator do its business at the new time.
@@ -561,7 +552,7 @@ class TaskRunnerTest {
     }
 
     /** Returns true if anything was executed. */
-    private fun runRunnables() {
+    private fun runRunnables(taskRunner: TaskRunner) {
       check(Thread.holdsLock(taskRunner))
 
       if (coordinatorToRun != null) {
@@ -593,7 +584,7 @@ class TaskRunnerTest {
       assertThat(coordinatorWaitingUntilTime).isEqualTo(Long.MAX_VALUE)
     }
 
-    fun interruptCoordinatorThread() {
+    fun interruptCoordinatorThread(taskRunner: TaskRunner) {
       check(!Thread.holdsLock(taskRunner))
 
       synchronized(taskRunner) {

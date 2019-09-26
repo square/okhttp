@@ -62,7 +62,7 @@ class TaskQueue internal constructor(
    * is running when that time is reached, that task is allowed to complete before this task is
    * started. Similarly the task will be delayed if the host lacks compute resources.
    */
-  fun schedule(task: Task, delayNanos: Long) {
+  fun schedule(task: Task, delayNanos: Long = 0L) {
     task.initQueue(this)
 
     synchronized(taskRunner) {
