@@ -21,6 +21,7 @@ import okhttp3.internal.cache.CacheRequest
 import okhttp3.internal.cache.CacheStrategy
 import okhttp3.internal.cache.DiskLruCache
 import okhttp3.internal.closeQuietly
+import okhttp3.internal.concurrent.TaskRunner
 import okhttp3.internal.http.HttpMethod
 import okhttp3.internal.http.StatusLine
 import okhttp3.internal.io.FileSystem
@@ -142,8 +143,14 @@ class Cache internal constructor(
   maxSize: Long,
   fileSystem: FileSystem
 ) : Closeable, Flushable {
-  internal val cache: DiskLruCache =
-      DiskLruCache.create(fileSystem, directory, VERSION, ENTRY_COUNT, maxSize)
+  internal val cache = DiskLruCache(
+      fileSystem = fileSystem,
+      directory = directory,
+      appVersion = VERSION,
+      valueCount = ENTRY_COUNT,
+      maxSize = maxSize,
+      taskRunner = TaskRunner.INSTANCE
+  )
 
   // read and write statistics, all guarded by 'this'.
   internal var writeSuccessCount = 0

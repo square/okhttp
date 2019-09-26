@@ -30,8 +30,8 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Route;
 import okhttp3.internal.RecordingOkAuthenticator;
+import okhttp3.internal.concurrent.TaskFaker;
 import okhttp3.internal.concurrent.TaskRunner;
-import okhttp3.internal.concurrent.TaskRunnerTest;
 import org.junit.Test;
 
 import static okhttp3.TestUtil.awaitGarbageCollection;
@@ -39,7 +39,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 public final class ConnectionPoolTest {
   /** The fake task runner prevents the cleanup runnable from being started. */
-  private final TaskRunner taskRunner = new TaskRunner(new TaskRunnerTest.FakeBackend());
+  private final TaskRunner taskRunner = new TaskFaker().getTaskRunner();
   private final Address addressA = newAddress("a");
   private final Route routeA1 = newRoute(addressA);
   private final Address addressB = newAddress("b");
@@ -184,7 +184,7 @@ public final class ConnectionPoolTest {
   }
 
   @Test public void interruptStopsThread() throws Exception {
-    TaskRunner realTaskRunner = TaskRunner.Companion.getINSTANCE();
+    TaskRunner realTaskRunner = TaskRunner.INSTANCE;
     RealConnectionPool pool = new RealConnectionPool(
         realTaskRunner, 2, 100L, TimeUnit.NANOSECONDS);
     RealConnection c1 = newConnection(pool, routeA1, Long.MAX_VALUE);
