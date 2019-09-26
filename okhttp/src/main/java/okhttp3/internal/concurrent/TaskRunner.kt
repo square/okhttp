@@ -17,7 +17,6 @@ package okhttp3.internal.concurrent
 
 import okhttp3.internal.addIfAbsent
 import okhttp3.internal.notify
-import okhttp3.internal.objectWaitNanos
 import okhttp3.internal.threadFactory
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.SynchronousQueue
@@ -158,8 +157,18 @@ class TaskRunner(
       taskRunner.notify()
     }
 
+    /**
+     * Wait a duration in nanoseconds. Unlike [java.lang.Object.wait] this interprets 0 as
+     * "don't wait" instead of "wait forever".
+     */
+    @Throws(InterruptedException::class)
+    @Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN")
     override fun coordinatorWait(taskRunner: TaskRunner, nanos: Long) {
-      taskRunner.objectWaitNanos(nanos)
+      val ms = nanos / 1_000_000L
+      val ns = nanos - (ms * 1_000_000L)
+      if (ms > 0L || nanos > 0) {
+        (taskRunner as Object).wait(ms, ns.toInt())
+      }
     }
 
     fun shutdown() {

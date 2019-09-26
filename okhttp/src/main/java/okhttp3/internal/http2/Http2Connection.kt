@@ -18,9 +18,10 @@ package okhttp3.internal.http2
 import okhttp3.internal.EMPTY_BYTE_ARRAY
 import okhttp3.internal.EMPTY_HEADERS
 import okhttp3.internal.closeQuietly
+import okhttp3.internal.concurrent.Task
+import okhttp3.internal.concurrent.TaskRunner
 import okhttp3.internal.connectionName
 import okhttp3.internal.execute
-import okhttp3.internal.format
 import okhttp3.internal.http2.ErrorCode.REFUSED_STREAM
 import okhttp3.internal.http2.Settings.Companion.DEFAULT_INITIAL_WINDOW_SIZE
 import okhttp3.internal.ignoreIoExceptions
@@ -28,9 +29,7 @@ import okhttp3.internal.notifyAll
 import okhttp3.internal.platform.Platform
 import okhttp3.internal.platform.Platform.Companion.INFO
 import okhttp3.internal.threadFactory
-import okhttp3.internal.threadName
 import okhttp3.internal.toHeaders
-import okhttp3.internal.tryExecute
 import okhttp3.internal.wait
 import okio.Buffer
 import okio.BufferedSink
@@ -43,12 +42,9 @@ import java.io.Closeable
 import java.io.IOException
 import java.io.InterruptedIOException
 import java.net.Socket
-import java.util.concurrent.LinkedBlockingQueue
-import java.util.concurrent.ScheduledThreadPoolExecutor
 import java.util.concurrent.SynchronousQueue
 import java.util.concurrent.ThreadPoolExecutor
 import java.util.concurrent.TimeUnit
-import java.util.concurrent.TimeUnit.MILLISECONDS
 
 /**
  * A socket connection to a remote peer. A connection hosts streams which can send and receive
@@ -91,13 +87,10 @@ class Http2Connection internal constructor(builder: Builder) : Closeable {
     internal set
 
   /** Asynchronously writes frames to the outgoing socket. */
-  private val writerExecutor = ScheduledThreadPoolExecutor(1,
-      threadFactory(format("OkHttp %s Writer", connectionName), false))
+  private val writerQueue = builder.taskRunner.newQueue("$connectionName Writer")
 
   /** Ensures push promise callbacks events are sent in order per stream. */
-  // Like newSingleThreadExecutor, except lazy creates the thread.
-  private val pushExecutor = ThreadPoolExecutor(0, 1, 60L, TimeUnit.SECONDS, LinkedBlockingQueue(),
-      threadFactory(format("OkHttp %s Push Observer", connectionName), true))
+  private val pushQueue = builder.taskRunner.newQueue("$connectionName Push")
 
   /** User code to run in response to push promise events. */
   private val pushObserver: PushObserver = builder.pushObserver
@@ -149,11 +142,15 @@ class Http2Connection internal constructor(builder: Builder) : Closeable {
 
   init {
     if (builder.pingIntervalMillis != 0) {
-      writerExecutor.scheduleAtFixedRate({
-        threadName("OkHttp $connectionName ping") {
+      val pingIntervalNanos = TimeUnit.MILLISECONDS.toNanos(builder.pingIntervalMillis.toLong())
+      writerQueue.schedule(object : Task("OkHttp $connectionName ping") {
+        override fun runOnce(): Long {
           writePing(false, 0, 0)
+          return pingIntervalNanos
         }
-      }, builder.pingIntervalMillis.toLong(), builder.pingIntervalMillis.toLong(), MILLISECONDS)
+
+        override fun tryCancel() = true
+      }, pingIntervalNanos)
     }
   }
 
@@ -328,13 +325,18 @@ class Http2Connection internal constructor(builder: Builder) : Closeable {
     streamId: Int,
     errorCode: ErrorCode
   ) {
-    writerExecutor.tryExecute("OkHttp $connectionName stream $streamId") {
-      try {
-        writeSynReset(streamId, errorCode)
-      } catch (e: IOException) {
-        failConnection(e)
+    writerQueue.trySchedule(object : Task("OkHttp $connectionName stream $streamId") {
+      override fun runOnce(): Long {
+        try {
+          writeSynReset(streamId, errorCode)
+        } catch (e: IOException) {
+          failConnection(e)
+        }
+        return -1L
       }
-    }
+
+      override fun tryCancel() = true
+    })
   }
 
   @Throws(IOException::class)
@@ -349,13 +351,18 @@ class Http2Connection internal constructor(builder: Builder) : Closeable {
     streamId: Int,
     unacknowledgedBytesRead: Long
   ) {
-    writerExecutor.tryExecute("OkHttp Window Update $connectionName stream $streamId") {
-      try {
-        writer.windowUpdate(streamId, unacknowledgedBytesRead)
-      } catch (e: IOException) {
-        failConnection(e)
+    writerQueue.trySchedule(object : Task("OkHttp Window Update $connectionName stream $streamId") {
+      override fun runOnce(): Long {
+        try {
+          writer.windowUpdate(streamId, unacknowledgedBytesRead)
+        } catch (e: IOException) {
+          failConnection(e)
+        }
+        return -1L
       }
-    }
+
+      override fun tryCancel() = true
+    })
   }
 
   fun writePing(
@@ -467,8 +474,8 @@ class Http2Connection internal constructor(builder: Builder) : Closeable {
     }
 
     // Release the threads.
-    writerExecutor.shutdown()
-    pushExecutor.shutdown()
+    writerQueue.shutdown()
+    pushQueue.shutdown()
   }
 
   private fun failConnection(e: IOException?) {
@@ -511,7 +518,8 @@ class Http2Connection internal constructor(builder: Builder) : Closeable {
 
   class Builder(
     /** True if this peer initiated the connection; false if this peer accepted the connection. */
-    internal var client: Boolean
+    internal var client: Boolean,
+    internal val taskRunner: TaskRunner
   ) {
     internal lateinit var socket: Socket
     internal lateinit var connectionName: String
@@ -659,9 +667,14 @@ class Http2Connection internal constructor(builder: Builder) : Closeable {
     }
 
     override fun settings(clearPrevious: Boolean, settings: Settings) {
-      writerExecutor.tryExecute("OkHttp $connectionName ACK Settings") {
-        applyAndAckSettings(clearPrevious, settings)
-      }
+      writerQueue.trySchedule(object : Task("OkHttp $connectionName ACK Settings") {
+        override fun runOnce(): Long {
+          applyAndAckSettings(clearPrevious, settings)
+          return -1L
+        }
+
+        override fun tryCancel() = true
+      })
     }
 
     /**
@@ -725,9 +738,14 @@ class Http2Connection internal constructor(builder: Builder) : Closeable {
         }
       } else {
         // Send a reply to a client ping if this is a server and vice versa.
-        writerExecutor.tryExecute("OkHttp $connectionName ping") {
-          writePing(true, payload1, payload2)
-        }
+        writerQueue.trySchedule(object : Task("OkHttp $connectionName ping") {
+          override fun runOnce(): Long {
+            writePing(true, payload1, payload2)
+            return -1L
+          }
+
+          override fun tryCancel() = true
+        })
       }
     }
 
@@ -812,8 +830,8 @@ class Http2Connection internal constructor(builder: Builder) : Closeable {
       }
       currentPushRequests.add(streamId)
     }
-    if (!isShutdown) {
-      pushExecutor.tryExecute("OkHttp $connectionName Push Request[$streamId]") {
+    pushQueue.trySchedule(object : Task("OkHttp $connectionName Push Request[$streamId]") {
+      override fun runOnce(): Long {
         val cancel = pushObserver.onRequest(streamId, requestHeaders)
         ignoreIoExceptions {
           if (cancel) {
@@ -823,8 +841,11 @@ class Http2Connection internal constructor(builder: Builder) : Closeable {
             }
           }
         }
+        return -1L
       }
-    }
+
+      override fun tryCancel() = true
+    })
   }
 
   internal fun pushHeadersLater(
@@ -832,8 +853,8 @@ class Http2Connection internal constructor(builder: Builder) : Closeable {
     requestHeaders: List<Header>,
     inFinished: Boolean
   ) {
-    if (!isShutdown) {
-      pushExecutor.tryExecute("OkHttp $connectionName Push Headers[$streamId]") {
+    pushQueue.trySchedule(object : Task("OkHttp $connectionName Push Headers[$streamId]") {
+      override fun runOnce(): Long {
         val cancel = pushObserver.onHeaders(streamId, requestHeaders, inFinished)
         ignoreIoExceptions {
           if (cancel) writer.rstStream(streamId, ErrorCode.CANCEL)
@@ -843,8 +864,11 @@ class Http2Connection internal constructor(builder: Builder) : Closeable {
             }
           }
         }
+        return -1L
       }
-    }
+
+      override fun tryCancel() = true
+    })
   }
 
   /**
@@ -861,8 +885,8 @@ class Http2Connection internal constructor(builder: Builder) : Closeable {
     val buffer = Buffer()
     source.require(byteCount.toLong()) // Eagerly read the frame before firing client thread.
     source.read(buffer, byteCount.toLong())
-    if (!isShutdown) {
-      pushExecutor.execute("OkHttp $connectionName Push Data[$streamId]") {
+    pushQueue.trySchedule(object : Task("OkHttp $connectionName Push Data[$streamId]") {
+      override fun runOnce(): Long {
         ignoreIoExceptions {
           val cancel = pushObserver.onData(streamId, buffer, byteCount, inFinished)
           if (cancel) writer.rstStream(streamId, ErrorCode.CANCEL)
@@ -872,19 +896,23 @@ class Http2Connection internal constructor(builder: Builder) : Closeable {
             }
           }
         }
+        return -1L
       }
-    }
+
+      override fun tryCancel() = true
+    })
   }
 
   internal fun pushResetLater(streamId: Int, errorCode: ErrorCode) {
-    if (!isShutdown) {
-      pushExecutor.execute("OkHttp $connectionName Push Reset[$streamId]") {
+    pushQueue.trySchedule(object : Task("OkHttp $connectionName Push Reset[$streamId]") {
+      override fun runOnce(): Long {
         pushObserver.onReset(streamId, errorCode)
         synchronized(this@Http2Connection) {
           currentPushRequests.remove(streamId)
         }
+        return -1L
       }
-    }
+    })
   }
 
   /** Listener of streams and settings initiated by the peer. */

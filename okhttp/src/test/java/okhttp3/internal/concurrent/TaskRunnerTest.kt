@@ -16,7 +16,9 @@
 package okhttp3.internal.concurrent
 
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.Assert.fail
 import org.junit.Test
+import java.util.concurrent.RejectedExecutionException
 
 class TaskRunnerTest {
   private val taskFaker = TaskFaker()
@@ -467,6 +469,81 @@ class TaskRunnerTest {
 
     taskFaker.advanceUntil(0L)
     assertThat(log).containsExactly("cancel threadName:lucky task")
+
+    taskFaker.assertNoMoreTasks()
+  }
+
+  @Test fun shutdownSuccessfullyCancelsScheduledTasks() {
+    redQueue.schedule(object : Task("task") {
+      override fun runOnce(): Long {
+        log += "run@${taskFaker.nanoTime}"
+        return -1L
+      }
+
+      override fun tryCancel(): Boolean {
+        log += "cancel@${taskFaker.nanoTime}"
+        return true
+      }
+    }, 100L)
+
+    taskFaker.advanceUntil(0L)
+    assertThat(log).isEmpty()
+
+    redQueue.shutdown()
+
+    taskFaker.advanceUntil(99L)
+    assertThat(log).containsExactly("cancel@99")
+
+    taskFaker.assertNoMoreTasks()
+  }
+
+  @Test fun shutdownFailsToCancelsScheduledTasks() {
+    redQueue.schedule(object : Task("task") {
+      override fun runOnce(): Long {
+        log += "run@${taskFaker.nanoTime}"
+        return 50L
+      }
+
+      override fun tryCancel(): Boolean {
+        log += "cancel@${taskFaker.nanoTime}"
+        return false
+      }
+    }, 100L)
+
+    taskFaker.advanceUntil(0L)
+    assertThat(log).isEmpty()
+
+    redQueue.shutdown()
+
+    taskFaker.advanceUntil(99L)
+    assertThat(log).containsExactly("cancel@99")
+
+    taskFaker.advanceUntil(100L)
+    assertThat(log).containsExactly("cancel@99", "run@100")
+
+    taskFaker.assertNoMoreTasks()
+  }
+
+  @Test fun scheduleDiscardsTaskWhenShutdown() {
+    redQueue.shutdown()
+
+    redQueue.trySchedule(object : Task("task") {
+      override fun runOnce() = -1L
+    }, 100L)
+
+    taskFaker.assertNoMoreTasks()
+  }
+
+  @Test fun scheduleThrowsWhenShutdown() {
+    redQueue.shutdown()
+
+    try {
+      redQueue.schedule(object : Task("task") {
+        override fun runOnce() = -1L
+      }, 100L)
+      fail()
+    } catch (_: RejectedExecutionException) {
+    }
 
     taskFaker.assertNoMoreTasks()
   }
