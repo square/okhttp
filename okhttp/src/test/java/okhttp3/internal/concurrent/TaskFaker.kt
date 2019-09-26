@@ -40,7 +40,7 @@ class TaskFaker {
   /** How many tasks can be executed immediately. */
   val tasksSize: Int get() = tasks.size
 
-  /** Guarded by taskRunner. */
+  /** Guarded by [taskRunner]. */
   var nanoTime = 0L
     private set
 
@@ -143,7 +143,9 @@ class TaskFaker {
   fun assertNoMoreTasks() {
     assertThat(coordinatorToRun).isNull()
     assertThat(tasks).isEmpty()
-    assertThat(coordinatorWaitingUntilTime).isEqualTo(Long.MAX_VALUE)
+    assertThat(coordinatorWaitingUntilTime)
+        .withFailMessage("tasks are scheduled to run at $coordinatorWaitingUntilTime")
+        .isEqualTo(Long.MAX_VALUE)
   }
 
   fun interruptCoordinatorThread() {

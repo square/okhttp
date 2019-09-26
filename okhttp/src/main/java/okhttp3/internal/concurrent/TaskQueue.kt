@@ -16,6 +16,9 @@
 package okhttp3.internal.concurrent
 
 import okhttp3.internal.addIfAbsent
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.RejectedExecutionException
+import java.util.concurrent.TimeUnit
 
 /**
  * A set of tasks that are executed in sequential order.
@@ -32,6 +35,8 @@ class TaskQueue internal constructor(
    */
   val owner: Any
 ) {
+  private var shutdown = false
+
   /** This queue's currently-executing task, or null if none is currently executing. */
   private var activeTask: Task? = null
 
@@ -61,19 +66,55 @@ class TaskQueue internal constructor(
    * The target execution time is implemented on a best-effort basis. If another task in this queue
    * is running when that time is reached, that task is allowed to complete before this task is
    * started. Similarly the task will be delayed if the host lacks compute resources.
+   *
+   * @throws RejectedExecutionException if the queue is shut down.
    */
   fun schedule(task: Task, delayNanos: Long = 0L) {
-    task.initQueue(this)
-
     synchronized(taskRunner) {
+      if (shutdown) throw RejectedExecutionException()
+
       if (scheduleAndDecide(task, delayNanos)) {
         taskRunner.kickCoordinator(this)
       }
     }
   }
 
+  /** Like [schedule], but this silently discard the task if the queue is shut down. */
+  fun trySchedule(task: Task, delayNanos: Long = 0L) {
+    synchronized(taskRunner) {
+      if (shutdown) return
+
+      if (scheduleAndDecide(task, delayNanos)) {
+        taskRunner.kickCoordinator(this)
+      }
+    }
+  }
+
+  /** Returns true if this queue became idle before the timeout elapsed. */
+  fun awaitIdle(delayNanos: Long): Boolean {
+    val latch = CountDownLatch(1)
+
+    val task = object : Task("awaitIdle") {
+      override fun runOnce(): Long {
+        latch.countDown()
+        return -1L
+      }
+    }
+
+    // Don't delegate to schedule because that has to honor shutdown rules.
+    synchronized(taskRunner) {
+      if (scheduleAndDecide(task, 0L)) {
+        taskRunner.kickCoordinator(this)
+      }
+    }
+
+    return latch.await(delayNanos, TimeUnit.NANOSECONDS)
+  }
+
   /** Adds [task] to run in [delayNanos]. Returns true if the coordinator should run. */
   private fun scheduleAndDecide(task: Task, delayNanos: Long): Boolean {
+    task.initQueue(this)
+
     val now = taskRunner.backend.nanoTime()
     val executeNanoTime = now + delayNanos
 
@@ -100,7 +141,20 @@ class TaskQueue internal constructor(
    * be removed from the execution schedule.
    */
   fun cancelAll() {
+    check(!Thread.holdsLock(this))
+
     synchronized(taskRunner) {
+      if (cancelAllAndDecide()) {
+        taskRunner.kickCoordinator(this)
+      }
+    }
+  }
+
+  fun shutdown() {
+    check(!Thread.holdsLock(this))
+
+    synchronized(taskRunner) {
+      shutdown = true
       if (cancelAllAndDecide()) {
         taskRunner.kickCoordinator(this)
       }
@@ -160,7 +214,7 @@ class TaskQueue internal constructor(
     synchronized(taskRunner) {
       check(activeTask === task)
 
-      if (delayNanos != -1L) {
+      if (delayNanos != -1L && !shutdown) {
         scheduleAndDecide(task, delayNanos)
       } else if (!futureTasks.contains(task)) {
         cancelTasks.remove(task) // We don't need to cancel it because it isn't scheduled.
