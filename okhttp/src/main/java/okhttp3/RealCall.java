@@ -210,6 +210,13 @@ final class RealCall implements Call {
           eventListener.callFailed(RealCall.this, e);
           responseCallback.onFailure(RealCall.this, e);
         }
+      } catch (Throwable t) {
+        cancel();
+        if (!signalledCallback) {
+          IOException canceledException = new IOException("canceled due to " + t);
+          responseCallback.onFailure(RealCall.this, canceledException);
+        }
+        throw t;
       } finally {
         client.dispatcher().finished(this);
       }
