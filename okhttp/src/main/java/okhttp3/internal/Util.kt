@@ -49,7 +49,6 @@ import java.util.LinkedHashMap
 import java.util.Locale
 import java.util.TimeZone
 import java.util.concurrent.Executor
-import java.util.concurrent.RejectedExecutionException
 import java.util.concurrent.ThreadFactory
 import java.util.concurrent.TimeUnit
 import kotlin.text.Charsets.UTF_32BE
@@ -393,14 +392,6 @@ inline fun Executor.execute(name: String, crossinline block: () -> Unit) {
   }
 }
 
-/** Executes [block] unless this executor has been shutdown, in which case this does nothing. */
-inline fun Executor.tryExecute(name: String, crossinline block: () -> Unit) {
-  try {
-    execute(name, block)
-  } catch (_: RejectedExecutionException) {
-  }
-}
-
 fun Buffer.skipAll(b: Byte): Int {
   var count = 0
   while (!exhausted() && this[0] == b) {
@@ -510,33 +501,8 @@ fun Long.toHexString(): String = java.lang.Long.toHexString(this)
 
 fun Int.toHexString(): String = Integer.toHexString(this)
 
-/**
- * Lock and wait a duration in nanoseconds. Unlike [java.lang.Object.wait] this interprets 0 as
- * "don't wait" instead of "wait forever".
- */
-@Throws(InterruptedException::class)
-fun Any.lockAndWaitNanos(nanos: Long) {
-  synchronized(this) {
-    objectWaitNanos(nanos)
-  }
-}
-
 @Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN", "NOTHING_TO_INLINE")
 inline fun Any.wait() = (this as Object).wait()
-
-/**
- * Wait a duration in nanoseconds. Unlike [java.lang.Object.wait] this interprets 0 as "don't wait"
- * instead of "wait forever".
- */
-@Throws(InterruptedException::class)
-@Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN")
-fun Any.objectWaitNanos(nanos: Long) {
-  val ms = nanos / 1_000_000L
-  val ns = nanos - (ms * 1_000_000L)
-  if (ms > 0L || nanos > 0) {
-    (this as Object).wait(ms, ns.toInt())
-  }
-}
 
 @Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN", "NOTHING_TO_INLINE")
 inline fun Any.notify() = (this as Object).notify()
