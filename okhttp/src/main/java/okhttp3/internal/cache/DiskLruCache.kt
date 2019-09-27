@@ -94,7 +94,7 @@ class DiskLruCache internal constructor(
   maxSize: Long,
 
   /** Used for asynchronous journal rebuilds. */
-  taskRunner: TaskRunner = TaskRunner.INSTANCE
+  taskRunner: TaskRunner
 ) : Closeable, Flushable {
   /** The maximum number of bytes that this cache should use to store its data. */
   @get:Synchronized @set:Synchronized var maxSize: Long = maxSize

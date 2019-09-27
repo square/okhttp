@@ -30,7 +30,6 @@ import java.util.Map;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import okhttp3.mockwebserver.RecordedRequest;
-import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 
@@ -45,11 +44,7 @@ public class CookiesTest {
   @Rule public final MockWebServer server = new MockWebServer();
   @Rule public final OkHttpClientTestRule clientTestRule = new OkHttpClientTestRule();
 
-  private OkHttpClient client;
-
-  @Before public void setUp() {
-    client = clientTestRule.newClient();
-  }
+  private OkHttpClient client = clientTestRule.newClient();
 
   @Test
   public void testNetscapeResponse() throws Exception {
