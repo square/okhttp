@@ -23,16 +23,12 @@ import okhttp3.Request;
 import okhttp3.Response;
 
 public final class CertificatePinning {
-  private final OkHttpClient client;
-
-  public CertificatePinning() {
-    client = new OkHttpClient.Builder()
-        .certificatePinner(
-            new CertificatePinner.Builder()
-                .add("publicobject.com", "sha256/afwiKY3RxoMmLkuRW1l7QsPZTJPwDS2pdDROQjXw8ig=")
-                .build())
-        .build();
-  }
+  private final OkHttpClient client = new OkHttpClient.Builder()
+      .certificatePinner(
+          new CertificatePinner.Builder()
+              .add("publicobject.com", "sha256/afwiKY3RxoMmLkuRW1l7QsPZTJPwDS2pdDROQjXw8ig=")
+              .build())
+      .build();
 
   public void run() throws Exception {
     Request request = new Request.Builder()

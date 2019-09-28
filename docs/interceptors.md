@@ -29,7 +29,7 @@ Interceptors can be chained. Suppose you have both a compressing interceptor and
 
 ![Interceptors Diagram](images/interceptors@2x.png)
 
-#### Application Interceptors
+### Application Interceptors
 
 Interceptors are registered as either _application_ or _network_ interceptors. We'll use the `LoggingInterceptor` defined above to show the difference.
 
@@ -64,7 +64,7 @@ Connection: keep-alive
 
 We can see that we were redirected because `response.request().url()` is different from `request.url()`. The two log statements log two different URLs.
 
-#### Network Interceptors
+### Network Interceptors
 
 Registering a network interceptor is quite similar. Call `addNetworkInterceptor()` instead of `addInterceptor()`:
 
@@ -113,7 +113,7 @@ Connection: keep-alive
 
 The network requests also contain more data, such as the `Accept-Encoding: gzip` header added by OkHttp to advertise support for response compression. The network interceptor's `Chain` has a non-null `Connection` that can be used to interrogate the IP address and TLS configuration that were used to connect to the webserver.
 
-#### Choosing between application and network interceptors
+### Choosing between application and network interceptors
 
 Each interceptor chain has relative merits.
 
@@ -132,7 +132,7 @@ Each interceptor chain has relative merits.
  * Observe the data just as it will be transmitted over the network.
  * Access to the `Connection` that carries the request.
 
-#### Rewriting Requests
+### Rewriting Requests
 
 Interceptors can add, remove, or replace request headers. They can also transform the body of those requests that have one. For example, you can use an application interceptor to add request body compression if you're connecting to a webserver known to support it.
 
@@ -172,7 +172,7 @@ final class GzipRequestInterceptor implements Interceptor {
 }
 ```
 
-#### Rewriting Responses
+### Rewriting Responses
 
 Symmetrically, interceptors can rewrite response headers and transform the response body. This is generally more dangerous than rewriting request headers because it may violate the webserver's expectations!
 
