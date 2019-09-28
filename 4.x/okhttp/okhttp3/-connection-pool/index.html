@@ -117,7 +117,7 @@
             </span>
             <span class="md-header-nav__topic">
               
-                Home
+                ConnectionPool
               
             </span>
           
@@ -647,8 +647,8 @@
                   <a href="https://github.com/square/okhttp/edit/master/docs/4.x/okhttp/okhttp3/-connection-pool/index.md" title="Edit this page" class="md-icon md-content__icon">&#xE3C9;</a>
                 
                 
-                <p><a href="../../">okhttp</a> / <a href="../">okhttp3</a> / <a href="./">ConnectionPool</a></p>
-<h1 id="connectionpool">ConnectionPool<a class="headerlink" href="#connectionpool" title="Permanent link">&para;</a></h1>
+                <h1 id="connectionpool">ConnectionPool<a class="headerlink" href="#connectionpool" title="Permanent link">&para;</a></h1>
+<p><a href="../../">okhttp</a> / <a href="../">okhttp3</a> / <a href="./">ConnectionPool</a></p>
 <p><code>class ConnectionPool</code></p>
 <p>Manages reuse of HTTP and HTTP/2 connections for reduced network latency. HTTP requests that
 share the same <a href="../-address/">Address</a> may share a <a href="../-connection/">Connection</a>. This class implements the policy
@@ -664,7 +664,7 @@ of which connections to keep open for future use.</p>
 <tbody>
 <tr>
 <td><a href="-init-/">&lt;init&gt;</a></td>
-<td><code>ConnectionPool()``ConnectionPool(maxIdleConnections:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><code>Int</code></a><code>, keepAliveDuration:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html"><code>Long</code></a><code>, timeUnit:</code><a href="https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/TimeUnit.html"><code>TimeUnit</code></a><code>)</code><br>Create a new connection pool with tuning parameters appropriate for a single-user application. The tuning parameters in this pool are subject to change in future OkHttp releases. Currently this pool holds up to 5 idle connections which will be evicted after 5 minutes of inactivity.</td>
+<td><code>ConnectionPool(maxIdleConnections:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html"><code>Int</code></a><code>, keepAliveDuration:</code><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-long/index.html"><code>Long</code></a><code>, timeUnit:</code><a href="https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/TimeUnit.html"><code>TimeUnit</code></a><code>)</code><br><code>ConnectionPool()</code></td>
 </tr>
 </tbody>
 </table>
