@@ -21,7 +21,6 @@ import okhttp3.OkHttpClient
 import okhttp3.Response
 import okhttp3.internal.http.promisesBody
 import okhttp3.internal.platform.Platform
-import okhttp3.internal.platform.Platform.Companion.INFO
 import okio.Buffer
 import okio.GzipSource
 import java.io.IOException
