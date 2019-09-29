@@ -37,6 +37,7 @@ buildscript {
       'junit': "junit:junit:${versions.junit}",
       'kotlinStdlib': "org.jetbrains.kotlin:kotlin-stdlib:${versions.kotlin}",
       'moshi': "com.squareup.moshi:moshi:${versions.moshi}",
+      'moshiKotlin': "com.squareup.moshi:moshi-kotlin-codegen:${versions.moshi}",
       'okio': "com.squareup.okio:okio:${versions.okio}",
       'openjsse': "org.openjsse:openjsse:${versions.openjsse}"
   ]

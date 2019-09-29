@@ -3,7 +3,7 @@ Connections
 
 Although you provide only the URL, OkHttp plans its connection to your webserver using three types: URL, Address, and Route.
 
-#### [URLs](http://square.github.io/okhttp/4.x/okhttp/okhttp3/-http-url/)
+### [URLs](http://square.github.io/okhttp/4.x/okhttp/okhttp3/-http-url/)
 
 URLs (like `https://github.com/square/okhttp`) are fundamental to HTTP and the Internet. In addition to being a universal, decentralized naming scheme for everything on the web, they also specify how to access web resources.
 
@@ -14,7 +14,7 @@ URLs are abstract:
 
 They're also concrete: each URL identifies a specific path (like `/square/okhttp`) and query (like `?q=sharks&lang=en`). Each webserver hosts many URLs.
 
-#### [Addresses](http://square.github.io/okhttp/4.x/okhttp/okhttp3/-address/)
+### [Addresses](http://square.github.io/okhttp/4.x/okhttp/okhttp3/-address/)
 
 Addresses specify a webserver (like `github.com`) and all of the **static** configuration necessary to connect to that server: the port number, HTTPS settings, and preferred network protocols (like HTTP/2 or SPDY).
 
@@ -22,13 +22,13 @@ URLs that share the same address may also share the same underlying TCP socket c
 
 In OkHttp some fields of the address come from the URL (scheme, hostname, port) and the rest come from the [OkHttpClient](http://square.github.io/okhttp/4.x/okhttp/okhttp3/-ok-http-client/).
 
-#### [Routes](http://square.github.io/okhttp/4.x/okhttp/okhttp3/-route/)
+### [Routes](http://square.github.io/okhttp/4.x/okhttp/okhttp3/-route/)
 
 Routes supply the **dynamic** information necessary to actually connect to a webserver. This is the specific IP address to attempt (as discovered by a DNS query), the exact proxy server to use (if a [ProxySelector](http://developer.android.com/reference/java/net/ProxySelector.html) is in use), and which version of TLS to negotiate (for HTTPS connections).
 
 There may be many routes for a single address. For example, a webserver that is hosted in multiple datacenters may yield multiple IP addresses in its DNS response.
 
-#### [Connections](http://square.github.io/okhttp/4.x/okhttp/okhttp3/-connection/)
+### [Connections](http://square.github.io/okhttp/4.x/okhttp/okhttp3/-connection/)
 
 When you request a URL with OkHttp, here's what it does:
 

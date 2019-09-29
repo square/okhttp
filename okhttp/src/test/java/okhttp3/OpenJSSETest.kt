@@ -36,13 +36,11 @@ class OpenJSSETest {
   @JvmField @Rule var platform = PlatformRule()
   @JvmField @Rule val clientTestRule = OkHttpClientTestRule()
   @JvmField @Rule val server = MockWebServer()
-  lateinit var client: OkHttpClient
+  var client = clientTestRule.newClient()
 
   @Before
   fun setUp() {
     platform.assumeOpenJSSE()
-
-    client = clientTestRule.newClient()
   }
 
   @Test

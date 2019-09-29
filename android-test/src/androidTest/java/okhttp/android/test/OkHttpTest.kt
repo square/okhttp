@@ -54,9 +54,8 @@ import java.net.UnknownHostException
 import java.security.Security
 import javax.net.ssl.SSLPeerUnverifiedException
 import javax.net.ssl.SSLSocket
-import okhttp3.internal.platform.Platform
 import okhttp3.internal.platform.AndroidPlatform
-import okhttp3.internal.platform.AndroidQPlatform
+import okhttp3.internal.platform.Android10Platform
 
 /**
  * Run with "./gradlew :android-test:connectedCheck" and make sure ANDROID_SDK_ROOT is set.
@@ -87,7 +86,7 @@ class OkHttpTest {
   @Test
   fun testPlatform() {
     if (Build.VERSION.SDK_INT >= 29) {
-      assertTrue(Platform.get() is AndroidQPlatform)
+      assertTrue(Platform.get() is Android10Platform)
     } else {
       assertTrue(Platform.get() is AndroidPlatform)
     }
@@ -129,7 +128,12 @@ class OkHttpTest {
         assertEquals(Protocol.HTTP_2, response.protocol)
         assertEquals(TlsVersion.TLS_1_3, response.handshake?.tlsVersion)
         assertEquals(200, response.code)
-        assertEquals("org.conscrypt.Java8FileDescriptorSocket", socketClass)
+        // see https://github.com/google/conscrypt/blob/b9463b2f74df42d85c73715a5f19e005dfb7b802/android/src/main/java/org/conscrypt/Platform.java#L613
+        if (Build.VERSION.SDK_INT >= 24) {
+          assertEquals("org.conscrypt.Java8FileDescriptorSocket", socketClass)
+        } else {
+          assertEquals("org.conscrypt.ConscryptFileDescriptorSocket", socketClass)
+        }
       }
     } finally {
       Security.removeProvider("Conscrypt")

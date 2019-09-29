@@ -30,7 +30,7 @@ import javax.net.ssl.X509TrustManager
  * This is the best way to get a clean chain on Android because it uses the same code as the TLS
  * handshake.
  */
-internal class AndroidQCertificateChainCleaner(
+internal class Android10CertificateChainCleaner(
   trustManager: X509TrustManager
 ) : CertificateChainCleaner() {
   val extensions = X509TrustManagerExtensions(trustManager)
@@ -48,7 +48,7 @@ internal class AndroidQCertificateChainCleaner(
   }
 
   override fun equals(other: Any?): Boolean =
-      other is AndroidQCertificateChainCleaner // All instances are equivalent.
+      other is Android10CertificateChainCleaner // All instances are equivalent.
 
   override fun hashCode(): Int = 1
 }

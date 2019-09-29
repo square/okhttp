@@ -29,6 +29,7 @@ import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
 import okhttp3.Headers;
 import okhttp3.Protocol;
+import okhttp3.internal.concurrent.TaskRunner;
 import okhttp3.internal.http2.Header;
 import okhttp3.internal.http2.Http2Connection;
 import okhttp3.internal.http2.Http2Stream;
@@ -69,7 +70,7 @@ public final class Http2Server extends Http2Connection.Listener {
         if (protocol != Protocol.HTTP_2) {
           throw new ProtocolException("Protocol " + protocol + " unsupported");
         }
-        Http2Connection connection = new Http2Connection.Builder(false)
+        Http2Connection connection = new Http2Connection.Builder(false, TaskRunner.INSTANCE)
             .socket(sslSocket)
             .listener(this)
             .build();

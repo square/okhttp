@@ -191,6 +191,8 @@ class HttpLoggingInterceptor @JvmOverloads constructor(
         logger.log("--> END ${request.method} (encoded body omitted)")
       } else if (requestBody.isDuplex()) {
         logger.log("--> END ${request.method} (duplex request body omitted)")
+      } else if (requestBody.isOneShot()) {
+        logger.log("--> END ${request.method} (one-shot body omitted)")
       } else {
         val buffer = Buffer()
         requestBody.writeTo(buffer)
