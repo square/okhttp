@@ -19,6 +19,7 @@ import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import okhttp3.testing.PlatformRule
+import okhttp3.tls.internal.TlsUtil.localhost
 import okio.BufferedSink
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Assert.assertEquals
@@ -28,6 +29,7 @@ import org.junit.Test
 import org.junit.rules.TestRule
 import org.junit.rules.Timeout
 import java.io.IOException
+import java.security.cert.X509Certificate
 import java.util.concurrent.TimeUnit
 
 class CallKotlinTest {
@@ -37,6 +39,7 @@ class CallKotlinTest {
   @JvmField @Rule val clientTestRule = OkHttpClientTestRule()
 
   private var client = clientTestRule.newClient()
+  private val handshakeCertificates = localhost()
 
   @Test
   fun legalToExecuteTwiceCloning() {
@@ -55,6 +58,31 @@ class CallKotlinTest {
 
     assertThat("abc").isEqualTo(response1.body!!.string())
     assertThat("def").isEqualTo(response2.body!!.string())
+  }
+
+  @Test
+  fun testMockWebserverRequest() {
+    enableTls()
+
+    server.enqueue(MockResponse().setBody("abc"))
+
+    val request = Request.Builder().url(server.url("/")).build()
+
+    val response = client.newCall(request).execute()
+
+    response.use {
+      assertEquals(200, response.code)
+      assertEquals("CN=localhost",
+          (response.handshake!!.peerCertificates.single() as X509Certificate).subjectDN.name)
+    }
+  }
+
+  private fun enableTls() {
+    client = client.newBuilder()
+        .sslSocketFactory(
+            handshakeCertificates.sslSocketFactory(), handshakeCertificates.trustManager)
+        .build()
+    server.useHttps(handshakeCertificates.sslSocketFactory(), false)
   }
 
   @Test

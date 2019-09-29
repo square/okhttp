@@ -51,6 +51,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import java.net.InetAddress
 import java.net.UnknownHostException
+import java.security.cert.X509Certificate
 import java.security.Security
 import javax.net.ssl.SSLPeerUnverifiedException
 import javax.net.ssl.SSLSocket
@@ -246,6 +247,8 @@ class OkHttpTest {
 
     response.use {
       assertEquals(200, response.code)
+      assertEquals("CN=localhost",
+          (response.handshake!!.peerCertificates.single() as X509Certificate).subjectDN.name)
     }
   }
 
@@ -294,9 +297,9 @@ class OkHttpTest {
   fun testEventListener() {
     val eventListener = RecordingEventListener()
 
-    client = client.newBuilder().eventListener(eventListener).build()
-
     enableTls()
+
+    client = client.newBuilder().eventListener(eventListener).build()
 
     server.enqueue(MockResponse().setBody("abc1"))
     server.enqueue(MockResponse().setBody("abc2"))
@@ -329,6 +332,8 @@ class OkHttpTest {
   fun testSessionReuse() {
     val sessionIds = mutableListOf<String>()
 
+    enableTls()
+
     client = client.newBuilder().eventListener(object : EventListener() {
       override fun connectionAcquired(call: Call, connection: Connection) {
         val sslSocket = connection.socket() as SSLSocket
@@ -336,8 +341,6 @@ class OkHttpTest {
         sessionIds.add(sslSocket.session.id.toByteString().hex())
       }
     }).build()
-
-    enableTls()
 
     server.enqueue(MockResponse().setBody("abc1"))
     server.enqueue(MockResponse().setBody("abc2"))

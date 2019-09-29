@@ -21,6 +21,7 @@ import java.lang.reflect.Method
 import java.security.cert.Certificate
 import java.security.cert.X509Certificate
 import javax.net.ssl.SSLPeerUnverifiedException
+import javax.net.ssl.X509TrustManager
 
 /**
  * Legacy Android implementation of CertificateChainCleaner relying on reflection.
@@ -30,6 +31,7 @@ import javax.net.ssl.SSLPeerUnverifiedException
  * handshake.
  */
 internal class AndroidCertificateChainCleaner(
+  private val trustManager: X509TrustManager,
   private val x509TrustManagerExtensions: Any,
   private val checkServerTrusted: Method
 ) : CertificateChainCleaner() {
@@ -48,7 +50,8 @@ internal class AndroidCertificateChainCleaner(
   }
 
   override fun equals(other: Any?): Boolean =
-      other is AndroidCertificateChainCleaner // All instances are equivalent.
+      other is AndroidCertificateChainCleaner &&
+          other.trustManager === this.trustManager
 
-  override fun hashCode(): Int = 0
+  override fun hashCode(): Int = System.identityHashCode(trustManager.hashCode())
 }

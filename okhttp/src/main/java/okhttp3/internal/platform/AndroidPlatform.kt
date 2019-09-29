@@ -150,7 +150,7 @@ class AndroidPlatform : Platform() {
         val checkServerTrusted = extensionsClass.getMethod(
             "checkServerTrusted", Array<X509Certificate>::class.java, String::class.java,
             String::class.java)
-        AndroidCertificateChainCleaner(extensions, checkServerTrusted)
+        AndroidCertificateChainCleaner(trustManager, extensions, checkServerTrusted)
       } catch (_: Exception) {
         super.buildCertificateChainCleaner(trustManager)
       }
