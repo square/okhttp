@@ -758,7 +758,7 @@
 <p>A call to <code>chain.proceed(request)</code> is a critical part of each interceptor’s implementation. This simple-looking method is where all the HTTP work happens, producing a response to satisfy the request. If <code>chain.proceed(request)</code> is being called more than once previous response bodies must be closed.</p>
 <p>Interceptors can be chained. Suppose you have both a compressing interceptor and a checksumming interceptor: you&rsquo;ll need to decide whether data is compressed and then checksummed, or checksummed and then compressed. OkHttp uses lists to track interceptors, and interceptors are called in order.</p>
 <p><img alt="Interceptors Diagram" src="../images/interceptors@2x.png" /></p>
-<h4 id="application-interceptors">Application Interceptors<a class="headerlink" href="#application-interceptors" title="Permanent link">&para;</a></h4>
+<h3 id="application-interceptors">Application Interceptors<a class="headerlink" href="#application-interceptors" title="Permanent link">&para;</a></h3>
 <p>Interceptors are registered as either <em>application</em> or <em>network</em> interceptors. We&rsquo;ll use the <code>LoggingInterceptor</code> defined above to show the difference.</p>
 <p>Register an <em>application</em> interceptor by calling <code>addInterceptor()</code> on <code>OkHttpClient.Builder</code>:</p>
 <div class="codehilite"><pre><span></span><span class="n">OkHttpClient</span> <span class="n">client</span> <span class="o">=</span> <span class="k">new</span> <span class="n">OkHttpClient</span><span class="o">.</span><span class="na">Builder</span><span class="o">()</span>
@@ -786,7 +786,7 @@ Connection: keep-alive
 </pre></div>
 
 <p>We can see that we were redirected because <code>response.request().url()</code> is different from <code>request.url()</code>. The two log statements log two different URLs.</p>
-<h4 id="network-interceptors">Network Interceptors<a class="headerlink" href="#network-interceptors" title="Permanent link">&para;</a></h4>
+<h3 id="network-interceptors">Network Interceptors<a class="headerlink" href="#network-interceptors" title="Permanent link">&para;</a></h3>
 <p>Registering a network interceptor is quite similar. Call <code>addNetworkInterceptor()</code> instead of <code>addInterceptor()</code>:</p>
 <div class="codehilite"><pre><span></span><span class="n">OkHttpClient</span> <span class="n">client</span> <span class="o">=</span> <span class="k">new</span> <span class="n">OkHttpClient</span><span class="o">.</span><span class="na">Builder</span><span class="o">()</span>
     <span class="o">.</span><span class="na">addNetworkInterceptor</span><span class="o">(</span><span class="k">new</span> <span class="n">LoggingInterceptor</span><span class="o">())</span>
@@ -829,7 +829,7 @@ Connection: keep-alive
 </pre></div>
 
 <p>The network requests also contain more data, such as the <code>Accept-Encoding: gzip</code> header added by OkHttp to advertise support for response compression. The network interceptor&rsquo;s <code>Chain</code> has a non-null <code>Connection</code> that can be used to interrogate the IP address and TLS configuration that were used to connect to the webserver.</p>
-<h4 id="choosing-between-application-and-network-interceptors">Choosing between application and network interceptors<a class="headerlink" href="#choosing-between-application-and-network-interceptors" title="Permanent link">&para;</a></h4>
+<h3 id="choosing-between-application-and-network-interceptors">Choosing between application and network interceptors<a class="headerlink" href="#choosing-between-application-and-network-interceptors" title="Permanent link">&para;</a></h3>
 <p>Each interceptor chain has relative merits.</p>
 <p><strong>Application interceptors</strong></p>
 <ul>
@@ -846,7 +846,7 @@ Connection: keep-alive
 <li>Observe the data just as it will be transmitted over the network.</li>
 <li>Access to the <code>Connection</code> that carries the request.</li>
 </ul>
-<h4 id="rewriting-requests">Rewriting Requests<a class="headerlink" href="#rewriting-requests" title="Permanent link">&para;</a></h4>
+<h3 id="rewriting-requests">Rewriting Requests<a class="headerlink" href="#rewriting-requests" title="Permanent link">&para;</a></h3>
 <p>Interceptors can add, remove, or replace request headers. They can also transform the body of those requests that have one. For example, you can use an application interceptor to add request body compression if you&rsquo;re connecting to a webserver known to support it.</p>
 <div class="codehilite"><pre><span></span><span class="cm">/** This interceptor compresses the HTTP request body. Many webservers can&#39;t handle this! */</span>
 <span class="kd">final</span> <span class="kd">class</span> <span class="nc">GzipRequestInterceptor</span> <span class="kd">implements</span> <span class="n">Interceptor</span> <span class="o">{</span>
@@ -883,7 +883,7 @@ Connection: keep-alive
 <span class="o">}</span>
 </pre></div>
 
-<h4 id="rewriting-responses">Rewriting Responses<a class="headerlink" href="#rewriting-responses" title="Permanent link">&para;</a></h4>
+<h3 id="rewriting-responses">Rewriting Responses<a class="headerlink" href="#rewriting-responses" title="Permanent link">&para;</a></h3>
 <p>Symmetrically, interceptors can rewrite response headers and transform the response body. This is generally more dangerous than rewriting request headers because it may violate the webserver&rsquo;s expectations!</p>
 <p>If you&rsquo;re in a tricky situation and prepared to deal with the consequences, rewriting response headers is a powerful way to work around problems. For example, you can fix a server&rsquo;s misconfigured <code>Cache-Control</code> response header to enable better response caching:</p>
 <div class="codehilite"><pre><span></span><span class="cm">/** Dangerous interceptor that rewrites the server&#39;s cache-control header. */</span>
