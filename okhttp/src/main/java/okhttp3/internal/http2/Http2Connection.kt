@@ -433,7 +433,7 @@ class Http2Connection internal constructor(builder: Builder) : Closeable {
 
   /**
    * Closes this connection. This cancels all open streams and unanswered pings. It closes the
-   * underlying input and output streams and shuts down internal executor services.
+   * underlying input and output streams and shuts down internal executor services and task queues.
    */
   override fun close() {
     close(ErrorCode.NO_ERROR, ErrorCode.CANCEL, null)
@@ -687,7 +687,7 @@ class Http2Connection internal constructor(builder: Builder) : Closeable {
      *
      * Since we can't ACK settings on the current reader thread (the reader thread can't write) we
      * execute all peer settings logic on the writer thread. This relies on the fact that the
-     * writer executor won't reorder tasks; otherwise settings could be applied in the opposite
+     * writer task queue won't reorder tasks; otherwise settings could be applied in the opposite
      * order than received.
      */
     fun applyAndAckSettings(clearPrevious: Boolean, settings: Settings) {

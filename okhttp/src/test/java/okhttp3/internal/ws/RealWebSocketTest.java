@@ -24,6 +24,7 @@ import java.util.concurrent.TimeUnit;
 import okhttp3.Protocol;
 import okhttp3.Request;
 import okhttp3.Response;
+import okhttp3.internal.concurrent.TaskRunner;
 import okio.ByteString;
 import okio.Okio;
 import okio.Pipe;
@@ -372,7 +373,8 @@ public final class RealWebSocketTest {
           .request(new Request.Builder().url(url).build())
           .protocol(Protocol.HTTP_1_1)
           .build();
-      webSocket = new RealWebSocket(response.request(), listener, random, pingIntervalMillis);
+      webSocket = new RealWebSocket(
+          TaskRunner.INSTANCE, response.request(), listener, random, pingIntervalMillis);
       webSocket.initReaderAndWriter(name, this);
     }
 
