@@ -27,6 +27,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import okhttp3.Headers;
 import okhttp3.internal.Util;
+import okhttp3.internal.concurrent.TaskRunner;
 import okhttp3.internal.http2.MockHttp2Peer.InFrame;
 import okio.AsyncTimeout;
 import okio.Buffer;
@@ -498,7 +499,7 @@ public final class Http2ConnectionTest {
 
     String longString = repeat('a', Http2.INITIAL_MAX_FRAME_SIZE + 1);
     Socket socket = peer.openSocket();
-    Http2Connection connection = new Http2Connection.Builder(true)
+    Http2Connection connection = new Http2Connection.Builder(true, TaskRunner.INSTANCE)
         .socket(socket)
         .pushObserver(IGNORE)
         .build();
@@ -1786,7 +1787,7 @@ public final class Http2ConnectionTest {
     peer.acceptFrame(); // GOAWAY
     peer.play();
 
-    Http2Connection connection = new Http2Connection.Builder(true)
+    Http2Connection connection = new Http2Connection.Builder(true, TaskRunner.INSTANCE)
         .socket(peer.openSocket())
         .build();
     connection.start(false);
@@ -1857,7 +1858,7 @@ public final class Http2ConnectionTest {
   /** Builds a new connection to {@code peer} with settings acked. */
   private Http2Connection connect(MockHttp2Peer peer, PushObserver pushObserver,
       Http2Connection.Listener listener) throws Exception {
-    Http2Connection connection = new Http2Connection.Builder(true)
+    Http2Connection connection = new Http2Connection.Builder(true, TaskRunner.INSTANCE)
         .socket(peer.openSocket())
         .pushObserver(pushObserver)
         .listener(listener)

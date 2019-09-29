@@ -20,16 +20,15 @@ public final class DispatcherTest {
   RecordingWebSocketListener webSocketListener = new RecordingWebSocketListener();
   Dispatcher dispatcher = new Dispatcher(executor);
   RecordingEventListener listener = new RecordingEventListener();
-  OkHttpClient client;
+  OkHttpClient client = clientTestRule.newClientBuilder()
+      .dispatcher(dispatcher)
+      .eventListener(listener)
+      .build();
 
   @Before public void setUp() throws Exception {
     dispatcher.setMaxRequests(20);
     dispatcher.setMaxRequestsPerHost(10);
     listener.forbidLock(dispatcher);
-    client = clientTestRule.newClientBuilder()
-        .dispatcher(dispatcher)
-        .eventListener(listener)
-        .build();
   }
 
   @Test public void maxRequestsZero() throws Exception {

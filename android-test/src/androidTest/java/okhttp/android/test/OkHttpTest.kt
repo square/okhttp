@@ -222,7 +222,7 @@ class OkHttpTest {
       moshi.adapter(HowsMySslResults::class.java).fromJson(response.body!!.string())!!
     }
 
-    Platform.get().log(Platform.WARN, "results $results", null)
+    Platform.get().log("results $results", Platform.WARN)
 
     assertTrue(results.session_ticket_supported)
     assertEquals("Probably Okay", results.rating)

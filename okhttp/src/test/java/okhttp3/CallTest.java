@@ -110,7 +110,9 @@ public final class CallTest {
 
   private RecordingEventListener listener = new RecordingEventListener();
   private HandshakeCertificates handshakeCertificates = localhost();
-  private OkHttpClient client;
+  private OkHttpClient client = clientTestRule.newClientBuilder()
+      .eventListener(listener)
+      .build();
   private RecordingCallback callback = new RecordingCallback();
   private TestLogHandler logHandler = new TestLogHandler();
   private Cache cache = new Cache(new File("/cache/"), Integer.MAX_VALUE, fileSystem);
@@ -120,9 +122,6 @@ public final class CallTest {
     platform.assumeNotOpenJSSE();
 
     logger.addHandler(logHandler);
-    client = clientTestRule.newClientBuilder()
-        .eventListener(listener)
-        .build();
   }
 
   @After public void tearDown() throws Exception {

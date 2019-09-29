@@ -21,7 +21,6 @@ import okhttp3.OkHttpClient
 import okhttp3.Response
 import okhttp3.internal.http.promisesBody
 import okhttp3.internal.platform.Platform
-import okhttp3.internal.platform.Platform.Companion.INFO
 import okio.Buffer
 import okio.GzipSource
 import java.io.IOException
@@ -113,7 +112,7 @@ class HttpLoggingInterceptor @JvmOverloads constructor(
       @JvmField
       val DEFAULT: Logger = object : Logger {
         override fun log(message: String) {
-          Platform.get().log(INFO, message, null)
+          Platform.get().log(message)
         }
       }
     }
@@ -191,6 +190,8 @@ class HttpLoggingInterceptor @JvmOverloads constructor(
         logger.log("--> END ${request.method} (encoded body omitted)")
       } else if (requestBody.isDuplex()) {
         logger.log("--> END ${request.method} (duplex request body omitted)")
+      } else if (requestBody.isOneShot()) {
+        logger.log("--> END ${request.method} (one-shot body omitted)")
       } else {
         val buffer = Buffer()
         requestBody.writeTo(buffer)

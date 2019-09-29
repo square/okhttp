@@ -44,7 +44,7 @@ public final class WebSocketRecorder extends WebSocketListener {
   }
 
   @Override public void onOpen(WebSocket webSocket, Response response) {
-    Platform.get().log(Platform.INFO, "[WS " + name + "] onOpen", null);
+    Platform.get().log("[WS " + name + "] onOpen", Platform.INFO, null);
 
     WebSocketListener delegate = this.delegate;
     if (delegate != null) {
@@ -56,7 +56,7 @@ public final class WebSocketRecorder extends WebSocketListener {
   }
 
   @Override public void onMessage(WebSocket webSocket, ByteString bytes) {
-    Platform.get().log(Platform.INFO, "[WS " + name + "] onMessage", null);
+    Platform.get().log("[WS " + name + "] onMessage", Platform.INFO, null);
 
     WebSocketListener delegate = this.delegate;
     if (delegate != null) {
@@ -69,7 +69,7 @@ public final class WebSocketRecorder extends WebSocketListener {
   }
 
   @Override public void onMessage(WebSocket webSocket, String text) {
-    Platform.get().log(Platform.INFO, "[WS " + name + "] onMessage", null);
+    Platform.get().log("[WS " + name + "] onMessage", Platform.INFO, null);
 
     WebSocketListener delegate = this.delegate;
     if (delegate != null) {
@@ -82,7 +82,7 @@ public final class WebSocketRecorder extends WebSocketListener {
   }
 
   @Override public void onClosing(WebSocket webSocket, int code, String reason) {
-    Platform.get().log(Platform.INFO, "[WS " + name + "] onClosing " + code, null);
+    Platform.get().log("[WS " + name + "] onClosing " + code, Platform.INFO, null);
 
     WebSocketListener delegate = this.delegate;
     if (delegate != null) {
@@ -94,7 +94,7 @@ public final class WebSocketRecorder extends WebSocketListener {
   }
 
   @Override public void onClosed(WebSocket webSocket, int code, String reason) {
-    Platform.get().log(Platform.INFO, "[WS " + name + "] onClosed " + code, null);
+    Platform.get().log("[WS " + name + "] onClosed " + code, Platform.INFO, null);
 
     WebSocketListener delegate = this.delegate;
     if (delegate != null) {
@@ -106,7 +106,7 @@ public final class WebSocketRecorder extends WebSocketListener {
   }
 
   @Override public void onFailure(WebSocket webSocket, Throwable t, @Nullable Response response)  {
-    Platform.get().log(Platform.INFO, "[WS " + name + "] onFailure", t);
+    Platform.get().log("[WS " + name + "] onFailure", Platform.INFO, t);
 
     WebSocketListener delegate = this.delegate;
     if (delegate != null) {

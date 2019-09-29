@@ -72,28 +72,23 @@ public final class WebSocketHttpTest {
   private final WebSocketRecorder clientListener = new WebSocketRecorder("client");
   private final WebSocketRecorder serverListener = new WebSocketRecorder("server");
   private final Random random = new Random(0);
-  private OkHttpClient client;
+  private OkHttpClient client = clientTestRule.newClientBuilder()
+      .writeTimeout(500, TimeUnit.MILLISECONDS)
+      .readTimeout(500, TimeUnit.MILLISECONDS)
+      .addInterceptor(chain -> {
+        Response response = chain.proceed(chain.request());
+        // Ensure application interceptors never see a null body.
+        assertThat(response.body()).isNotNull();
+        return response;
+      })
+      .build();
 
   @Before public void setUp() {
     platform.assumeNotOpenJSSE();
-
-    client = clientTestRule.newClientBuilder()
-        .writeTimeout(500, TimeUnit.MILLISECONDS)
-        .readTimeout(500, TimeUnit.MILLISECONDS)
-        .addInterceptor(chain -> {
-          Response response = chain.proceed(chain.request());
-          // Ensure application interceptors never see a null body.
-          assertThat(response.body()).isNotNull();
-          return response;
-        })
-        .build();
   }
 
   @After public void tearDown() {
     clientListener.assertExhausted();
-
-    // TODO: assert all connections are released once leaks are fixed
-    clientTestRule.abandonClient();
   }
 
   @Test public void textMessage() {

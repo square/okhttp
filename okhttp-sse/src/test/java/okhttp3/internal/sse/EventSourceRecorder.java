@@ -31,24 +31,24 @@ public final class EventSourceRecorder extends EventSourceListener {
   private final BlockingQueue<Object> events = new LinkedBlockingDeque<>();
 
   @Override public void onOpen(EventSource eventSource, Response response) {
-    Platform.get().log(Platform.INFO, "[ES] onOpen", null);
+    Platform.get().log("[ES] onOpen", Platform.INFO, null);
     events.add(new Open(eventSource, response));
   }
 
   @Override public void onEvent(EventSource eventSource, @Nullable String id, @Nullable String type,
       String data) {
-    Platform.get().log(Platform.INFO, "[ES] onEvent", null);
+    Platform.get().log("[ES] onEvent", Platform.INFO, null);
     events.add(new Event(id, type, data));
   }
 
   @Override public void onClosed(EventSource eventSource) {
-    Platform.get().log(Platform.INFO, "[ES] onClosed", null);
+    Platform.get().log("[ES] onClosed", Platform.INFO, null);
     events.add(new Closed());
   }
 
   @Override
   public void onFailure(EventSource eventSource, @Nullable Throwable t, @Nullable Response response) {
-    Platform.get().log(Platform.INFO, "[ES] onFailure", t);
+    Platform.get().log("[ES] onFailure", Platform.INFO, t);
     events.add(new Failure(t, response));
   }
 

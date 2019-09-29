@@ -23,7 +23,8 @@ import java.util.Deque;
 import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
-import java.util.concurrent.Executor;
+import okhttp3.internal.concurrent.TaskFaker;
+import okhttp3.internal.concurrent.TaskRunner;
 import okhttp3.internal.io.FaultyFileSystem;
 import okhttp3.internal.io.FileSystem;
 import okio.BufferedSink;
@@ -54,7 +55,8 @@ public final class DiskLruCacheTest {
   private File cacheDir;
   private File journalFile;
   private File journalBkpFile;
-  private final TestExecutor executor = new TestExecutor();
+  private final TaskFaker taskFaker = new TaskFaker();
+  private final TaskRunner taskRunner = taskFaker.getTaskRunner();
 
   private DiskLruCache cache;
   private final Deque<DiskLruCache> toClose = new ArrayDeque<>();
@@ -64,7 +66,7 @@ public final class DiskLruCacheTest {
   }
 
   private void createNewCacheWithSize(int maxSize) throws IOException {
-    cache = new DiskLruCache(fileSystem, cacheDir, appVersion, 2, maxSize, executor);
+    cache = new DiskLruCache(fileSystem, cacheDir, appVersion, 2, maxSize, taskRunner);
     synchronized (cache) {
       cache.initialize();
     }
@@ -102,7 +104,7 @@ public final class DiskLruCacheTest {
     fileSystem.setFaultyDelete(new File(cacheDir, "k1.0.tmp"), true);
     fileSystem.setFaultyDelete(cacheDir, true);
 
-    cache = new DiskLruCache(fileSystem, cacheDir, appVersion, 2, Integer.MAX_VALUE, executor);
+    cache = new DiskLruCache(fileSystem, cacheDir, appVersion, 2, Integer.MAX_VALUE, taskRunner);
     toClose.add(cache);
 
     try {
@@ -539,7 +541,7 @@ public final class DiskLruCacheTest {
     set("b", "bb", "bbbb"); // size 6
     set("c", "c", "c"); // size 12
     cache.setMaxSize(10);
-    assertThat(executor.jobs.size()).isEqualTo(1);
+    assertThat(taskFaker.isIdle()).isFalse();
   }
 
   @Test public void evictOnInsert() throws Exception {
@@ -662,7 +664,7 @@ public final class DiskLruCacheTest {
 
   @Test public void constructorDoesNotAllowZeroCacheSize() throws Exception {
     try {
-      DiskLruCache.Companion.create(fileSystem, cacheDir, appVersion, 2, 0);
+      new DiskLruCache(fileSystem, cacheDir, appVersion, 2, 0, taskRunner);
       fail();
     } catch (IllegalArgumentException expected) {
     }
@@ -670,7 +672,7 @@ public final class DiskLruCacheTest {
 
   @Test public void constructorDoesNotAllowZeroValuesPerEntry() throws Exception {
     try {
-      DiskLruCache.Companion.create(fileSystem, cacheDir, appVersion, 0, 10);
+      new DiskLruCache(fileSystem, cacheDir, appVersion, 0, 10, taskRunner);
       fail();
     } catch (IllegalArgumentException expected) {
     }
@@ -690,18 +692,18 @@ public final class DiskLruCacheTest {
   @Test public void rebuildJournalOnRepeatedReads() throws Exception {
     set("a", "a", "a");
     set("b", "b", "b");
-    while (executor.jobs.isEmpty()) {
+    while (taskFaker.isIdle()) {
       assertValue("a", "a", "a");
       assertValue("b", "b", "b");
     }
   }
 
   @Test public void rebuildJournalOnRepeatedEdits() throws Exception {
-    while (executor.jobs.isEmpty()) {
+    while (taskFaker.isIdle()) {
       set("a", "a", "a");
       set("b", "b", "b");
     }
-    executor.jobs.removeFirst().run();
+    taskFaker.runNextTask();
 
     // Sanity check that a rebuilt journal behaves normally.
     assertValue("a", "a", "a");
@@ -712,7 +714,7 @@ public final class DiskLruCacheTest {
   @Test public void rebuildJournalOnRepeatedReadsWithOpenAndClose() throws Exception {
     set("a", "a", "a");
     set("b", "b", "b");
-    while (executor.jobs.isEmpty()) {
+    while (taskFaker.isIdle()) {
       assertValue("a", "a", "a");
       assertValue("b", "b", "b");
       cache.close();
@@ -722,7 +724,7 @@ public final class DiskLruCacheTest {
 
   /** @see <a href="https://github.com/JakeWharton/DiskLruCache/issues/28">Issue #28</a> */
   @Test public void rebuildJournalOnRepeatedEditsWithOpenAndClose() throws Exception {
-    while (executor.jobs.isEmpty()) {
+    while (taskFaker.isIdle()) {
       set("a", "a", "a");
       set("b", "b", "b");
       cache.close();
@@ -731,14 +733,14 @@ public final class DiskLruCacheTest {
   }
 
   @Test public void rebuildJournalFailurePreventsEditors() throws Exception {
-    while (executor.jobs.isEmpty()) {
+    while (taskFaker.isIdle()) {
       set("a", "a", "a");
       set("b", "b", "b");
     }
 
     // Cause the rebuild action to fail.
     fileSystem.setFaultyRename(new File(cacheDir, DiskLruCache.JOURNAL_FILE_BACKUP), true);
-    executor.jobs.removeFirst().run();
+    taskFaker.runNextTask();
 
     // Don't allow edits under any circumstances.
     assertThat(cache.edit("a")).isNull();
@@ -749,33 +751,33 @@ public final class DiskLruCacheTest {
   }
 
   @Test public void rebuildJournalFailureIsRetried() throws Exception {
-    while (executor.jobs.isEmpty()) {
+    while (taskFaker.isIdle()) {
       set("a", "a", "a");
       set("b", "b", "b");
     }
 
     // Cause the rebuild action to fail.
     fileSystem.setFaultyRename(new File(cacheDir, DiskLruCache.JOURNAL_FILE_BACKUP), true);
-    executor.jobs.removeFirst().run();
+    taskFaker.runNextTask();
 
     // The rebuild is retried on cache hits and on cache edits.
     DiskLruCache.Snapshot snapshot = cache.get("b");
     snapshot.close();
     assertThat(cache.edit("d")).isNull();
-    assertThat(executor.jobs.size()).isEqualTo(2);
+    assertThat(taskFaker.isIdle()).isFalse();
 
     // On cache misses, no retry job is queued.
     assertThat(cache.get("c")).isNull();
-    assertThat(executor.jobs.size()).isEqualTo(2);
+    assertThat(taskFaker.isIdle()).isFalse();
 
     // Let the rebuild complete successfully.
     fileSystem.setFaultyRename(new File(cacheDir, DiskLruCache.JOURNAL_FILE_BACKUP), false);
-    executor.jobs.removeFirst().run();
+    taskFaker.runNextTask();
     assertJournalEquals("CLEAN a 1 1", "CLEAN b 1 1");
   }
 
   @Test public void rebuildJournalFailureWithInFlightEditors() throws Exception {
-    while (executor.jobs.isEmpty()) {
+    while (taskFaker.isIdle()) {
       set("a", "a", "a");
       set("b", "b", "b");
     }
@@ -785,7 +787,7 @@ public final class DiskLruCacheTest {
 
     // Cause the rebuild action to fail.
     fileSystem.setFaultyRename(new File(cacheDir, DiskLruCache.JOURNAL_FILE_BACKUP), true);
-    executor.jobs.removeFirst().run();
+    taskFaker.runNextTask();
 
     // In-flight editors can commit and have their values retained.
     setString(commitEditor, 0, "c");
@@ -797,12 +799,12 @@ public final class DiskLruCacheTest {
 
     // Let the rebuild complete successfully.
     fileSystem.setFaultyRename(new File(cacheDir, DiskLruCache.JOURNAL_FILE_BACKUP), false);
-    executor.jobs.removeFirst().run();
+    taskFaker.runNextTask();
     assertJournalEquals("CLEAN a 1 1", "CLEAN b 1 1", "DIRTY e", "CLEAN c 1 1");
   }
 
   @Test public void rebuildJournalFailureWithEditorsInFlightThenClose() throws Exception {
-    while (executor.jobs.isEmpty()) {
+    while (taskFaker.isIdle()) {
       set("a", "a", "a");
       set("b", "b", "b");
     }
@@ -812,7 +814,7 @@ public final class DiskLruCacheTest {
 
     // Cause the rebuild action to fail.
     fileSystem.setFaultyRename(new File(cacheDir, DiskLruCache.JOURNAL_FILE_BACKUP), true);
-    executor.jobs.removeFirst().run();
+    taskFaker.runNextTask();
 
     setString(commitEditor, 0, "c");
     setString(commitEditor, 1, "c");
@@ -834,34 +836,34 @@ public final class DiskLruCacheTest {
   }
 
   @Test public void rebuildJournalFailureAllowsRemovals() throws Exception {
-    while (executor.jobs.isEmpty()) {
+    while (taskFaker.isIdle()) {
       set("a", "a", "a");
       set("b", "b", "b");
     }
 
     // Cause the rebuild action to fail.
     fileSystem.setFaultyRename(new File(cacheDir, DiskLruCache.JOURNAL_FILE_BACKUP), true);
-    executor.jobs.removeFirst().run();
+    taskFaker.runNextTask();
 
     assertThat(cache.remove("a")).isTrue();
     assertAbsent("a");
 
     // Let the rebuild complete successfully.
     fileSystem.setFaultyRename(new File(cacheDir, DiskLruCache.JOURNAL_FILE_BACKUP), false);
-    executor.jobs.removeFirst().run();
+    taskFaker.runNextTask();
 
     assertJournalEquals("CLEAN b 1 1");
   }
 
   @Test public void rebuildJournalFailureWithRemovalThenClose() throws Exception {
-    while (executor.jobs.isEmpty()) {
+    while (taskFaker.isIdle()) {
       set("a", "a", "a");
       set("b", "b", "b");
     }
 
     // Cause the rebuild action to fail.
     fileSystem.setFaultyRename(new File(cacheDir, DiskLruCache.JOURNAL_FILE_BACKUP), true);
-    executor.jobs.removeFirst().run();
+    taskFaker.runNextTask();
 
     assertThat(cache.remove("a")).isTrue();
     assertAbsent("a");
@@ -878,14 +880,14 @@ public final class DiskLruCacheTest {
   }
 
   @Test public void rebuildJournalFailureAllowsEvictAll() throws Exception {
-    while (executor.jobs.isEmpty()) {
+    while (taskFaker.isIdle()) {
       set("a", "a", "a");
       set("b", "b", "b");
     }
 
     // Cause the rebuild action to fail.
     fileSystem.setFaultyRename(new File(cacheDir, DiskLruCache.JOURNAL_FILE_BACKUP), true);
-    executor.jobs.removeFirst().run();
+    taskFaker.runNextTask();
 
     cache.evictAll();
 
@@ -906,18 +908,18 @@ public final class DiskLruCacheTest {
   }
 
   @Test public void rebuildJournalFailureWithCacheTrim() throws Exception {
-    while (executor.jobs.isEmpty()) {
+    while (taskFaker.isIdle()) {
       set("a", "aa", "aa");
       set("b", "bb", "bb");
     }
 
     // Cause the rebuild action to fail.
     fileSystem.setFaultyRename(new File(cacheDir, DiskLruCache.JOURNAL_FILE_BACKUP), true);
-    executor.jobs.removeFirst().run();
+    taskFaker.runNextTask();
 
     // Trigger a job to trim the cache.
     cache.setMaxSize(4);
-    executor.jobs.removeFirst().run();
+    taskFaker.runNextTask();
 
     assertAbsent("a");
     assertValue("b", "bb", "bb");
@@ -978,7 +980,7 @@ public final class DiskLruCacheTest {
   @Test public void openCreatesDirectoryIfNecessary() throws Exception {
     cache.close();
     File dir = tempDir.newFolder("testOpenCreatesDirectoryIfNecessary");
-    cache = DiskLruCache.Companion.create(fileSystem, dir, appVersion, 2, Integer.MAX_VALUE);
+    cache = new DiskLruCache(fileSystem, dir, appVersion, 2, Integer.MAX_VALUE, taskRunner);
     set("a", "a", "a");
     assertThat(fileSystem.exists(new File(dir, "a.0"))).isTrue();
     assertThat(fileSystem.exists(new File(dir, "a.1"))).isTrue();
@@ -1287,7 +1289,7 @@ public final class DiskLruCacheTest {
 
   @Test public void isClosed_uninitializedCache() throws Exception {
     // Create an uninitialized cache.
-    cache = new DiskLruCache(fileSystem, cacheDir, appVersion, 2, Integer.MAX_VALUE, executor);
+    cache = new DiskLruCache(fileSystem, cacheDir, appVersion, 2, Integer.MAX_VALUE, taskRunner);
     toClose.add(cache);
 
     assertThat(cache.isClosed()).isFalse();
@@ -1309,7 +1311,7 @@ public final class DiskLruCacheTest {
 
     // Confirm that the fault didn't corrupt entries stored before the fault was introduced.
     cache.close();
-    cache = new DiskLruCache(fileSystem, cacheDir, appVersion, 2, Integer.MAX_VALUE, executor);
+    cache = new DiskLruCache(fileSystem, cacheDir, appVersion, 2, Integer.MAX_VALUE, taskRunner);
     assertValue("a", "a", "a");
     assertValue("b", "b", "b");
     assertAbsent("c");
@@ -1337,7 +1339,7 @@ public final class DiskLruCacheTest {
 
     // Confirm that the fault didn't corrupt entries stored before the fault was introduced.
     cache.close();
-    cache = new DiskLruCache(fileSystem, cacheDir, appVersion, 2, Integer.MAX_VALUE, executor);
+    cache = new DiskLruCache(fileSystem, cacheDir, appVersion, 2, Integer.MAX_VALUE, taskRunner);
     assertValue("a", "a", "a");
     assertValue("b", "b", "b");
     assertAbsent("c");
@@ -1361,7 +1363,7 @@ public final class DiskLruCacheTest {
 
     // Confirm that the fault didn't corrupt entries stored before the fault was introduced.
     cache.close();
-    cache = new DiskLruCache(fileSystem, cacheDir, appVersion, 2, Integer.MAX_VALUE, executor);
+    cache = new DiskLruCache(fileSystem, cacheDir, appVersion, 2, Integer.MAX_VALUE, taskRunner);
     assertValue("a", "a", "a");
     assertValue("b", "b", "b");
     assertAbsent("c");
@@ -1379,20 +1381,20 @@ public final class DiskLruCacheTest {
     // Confirm that the entry was still removed.
     fileSystem.setFaultyWrite(journalFile, false);
     cache.close();
-    cache = new DiskLruCache(fileSystem, cacheDir, appVersion, 2, Integer.MAX_VALUE, executor);
+    cache = new DiskLruCache(fileSystem, cacheDir, appVersion, 2, Integer.MAX_VALUE, taskRunner);
     assertAbsent("a");
     assertValue("b", "b", "b");
   }
 
   @Test public void cleanupTrimFailurePreventsNewEditors() throws Exception {
     cache.setMaxSize(8);
-    executor.jobs.pop();
+    taskFaker.runNextTask();
     set("a", "aa", "aa");
     set("b", "bb", "bbb");
 
     // Cause the cache trim job to fail.
     fileSystem.setFaultyDelete(new File(cacheDir, "a.0"), true);
-    executor.jobs.pop().run();
+    taskFaker.runNextTask();
 
     // Confirm that edits are prevented after a cache trim failure.
     assertThat(cache.edit("a")).isNull();
@@ -1405,36 +1407,36 @@ public final class DiskLruCacheTest {
 
   @Test public void cleanupTrimFailureRetriedOnEditors() throws Exception {
     cache.setMaxSize(8);
-    executor.jobs.pop();
+    taskFaker.runNextTask();
     set("a", "aa", "aa");
     set("b", "bb", "bbb");
 
     // Cause the cache trim job to fail.
     fileSystem.setFaultyDelete(new File(cacheDir, "a.0"), true);
-    executor.jobs.pop().run();
+    taskFaker.runNextTask();
 
     // An edit should now add a job to clean up if the most recent trim failed.
     assertThat(cache.edit("b")).isNull();
-    executor.jobs.pop().run();
+    taskFaker.runNextTask();
 
     // Confirm a successful cache trim now allows edits.
     fileSystem.setFaultyDelete(new File(cacheDir, "a.0"), false);
     assertThat(cache.edit("c")).isNull();
-    executor.jobs.pop().run();
+    taskFaker.runNextTask();
     set("c", "cc", "cc");
     assertValue("c", "cc", "cc");
   }
 
   @Test public void cleanupTrimFailureWithInFlightEditor() throws Exception {
     cache.setMaxSize(8);
-    executor.jobs.pop();
+    taskFaker.runNextTask();
     set("a", "aa", "aaa");
     set("b", "bb", "bb");
     DiskLruCache.Editor inFlightEditor = cache.edit("c");
 
     // Cause the cache trim job to fail.
     fileSystem.setFaultyDelete(new File(cacheDir, "a.0"), true);
-    executor.jobs.pop().run();
+    taskFaker.runNextTask();
 
     // The in-flight editor can still write after a trim failure.
     setString(inFlightEditor, 0, "cc");
@@ -1443,19 +1445,19 @@ public final class DiskLruCacheTest {
 
     // Confirm the committed values are present after a successful cache trim.
     fileSystem.setFaultyDelete(new File(cacheDir, "a.0"), false);
-    executor.jobs.pop().run();
+    taskFaker.runNextTask();
     assertValue("c", "cc", "cc");
   }
 
   @Test public void cleanupTrimFailureAllowsSnapshotReads() throws Exception {
     cache.setMaxSize(8);
-    executor.jobs.pop();
+    taskFaker.runNextTask();
     set("a", "aa", "aa");
     set("b", "bb", "bbb");
 
     // Cause the cache trim job to fail.
     fileSystem.setFaultyDelete(new File(cacheDir, "a.0"), true);
-    executor.jobs.pop().run();
+    taskFaker.runNextTask();
 
     // Confirm we still allow snapshot reads after a trim failure.
     assertValue("a", "aa", "aa");
@@ -1467,13 +1469,13 @@ public final class DiskLruCacheTest {
 
   @Test public void cleanupTrimFailurePreventsSnapshotWrites() throws Exception {
     cache.setMaxSize(8);
-    executor.jobs.pop();
+    taskFaker.runNextTask();
     set("a", "aa", "aa");
     set("b", "bb", "bbb");
 
     // Cause the cache trim job to fail.
     fileSystem.setFaultyDelete(new File(cacheDir, "a.0"), true);
-    executor.jobs.pop().run();
+    taskFaker.runNextTask();
 
     // Confirm snapshot writes are prevented after a trim failure.
     DiskLruCache.Snapshot snapshot1 = cache.get("a");
@@ -1489,13 +1491,13 @@ public final class DiskLruCacheTest {
 
   @Test public void evictAllAfterCleanupTrimFailure() throws Exception {
     cache.setMaxSize(8);
-    executor.jobs.pop();
+    taskFaker.runNextTask();
     set("a", "aa", "aa");
     set("b", "bb", "bbb");
 
     // Cause the cache trim job to fail.
     fileSystem.setFaultyDelete(new File(cacheDir, "a.0"), true);
-    executor.jobs.pop().run();
+    taskFaker.runNextTask();
 
     // Confirm we prevent edits after a trim failure.
     assertThat(cache.edit("c")).isNull();
@@ -1509,13 +1511,13 @@ public final class DiskLruCacheTest {
 
   @Test public void manualRemovalAfterCleanupTrimFailure() throws Exception {
     cache.setMaxSize(8);
-    executor.jobs.pop();
+    taskFaker.runNextTask();
     set("a", "aa", "aa");
     set("b", "bb", "bbb");
 
     // Cause the cache trim job to fail.
     fileSystem.setFaultyDelete(new File(cacheDir, "a.0"), true);
-    executor.jobs.pop().run();
+    taskFaker.runNextTask();
 
     // Confirm we prevent edits after a trim failure.
     assertThat(cache.edit("c")).isNull();
@@ -1529,13 +1531,13 @@ public final class DiskLruCacheTest {
 
   @Test public void flushingAfterCleanupTrimFailure() throws Exception {
     cache.setMaxSize(8);
-    executor.jobs.pop();
+    taskFaker.runNextTask();
     set("a", "aa", "aa");
     set("b", "bb", "bbb");
 
     // Cause the cache trim job to fail.
     fileSystem.setFaultyDelete(new File(cacheDir, "a.0"), true);
-    executor.jobs.pop().run();
+    taskFaker.runNextTask();
 
     // Confirm we prevent edits after a trim failure.
     assertThat(cache.edit("c")).isNull();
@@ -1549,13 +1551,13 @@ public final class DiskLruCacheTest {
 
   @Test public void cleanupTrimFailureWithPartialSnapshot() throws Exception {
     cache.setMaxSize(8);
-    executor.jobs.pop();
+    taskFaker.runNextTask();
     set("a", "aa", "aa");
     set("b", "bb", "bbb");
 
     // Cause the cache trim to fail on the second value leaving a partial snapshot.
     fileSystem.setFaultyDelete(new File(cacheDir, "a.1"), true);
-    executor.jobs.pop().run();
+    taskFaker.runNextTask();
 
     // Confirm the partial snapshot is not returned.
     assertThat(cache.get("a")).isNull();
@@ -1565,7 +1567,7 @@ public final class DiskLruCacheTest {
 
     // Confirm the partial snapshot is not returned after a successful trim.
     fileSystem.setFaultyDelete(new File(cacheDir, "a.1"), false);
-    executor.jobs.pop().run();
+    taskFaker.runNextTask();
     assertThat(cache.get("a")).isNull();
   }
 
@@ -1823,13 +1825,5 @@ public final class DiskLruCacheTest {
     sink.writeAll(source);
     source.close();
     sink.close();
-  }
-
-  private static class TestExecutor implements Executor {
-    final Deque<Runnable> jobs = new ArrayDeque<>();
-
-    @Override public void execute(Runnable command) {
-      jobs.addLast(command);
-    }
   }
 }

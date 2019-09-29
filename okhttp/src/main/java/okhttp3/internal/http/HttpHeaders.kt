@@ -64,7 +64,7 @@ fun Headers.parseChallenges(headerName: String): List<Challenge> {
       try {
         header.readChallengeHeader(result)
       } catch (e: EOFException) {
-        Platform.get().log(Platform.WARN, "Unable to parse challenge", e)
+        Platform.get().log("Unable to parse challenge", Platform.WARN, e)
       }
     }
   }

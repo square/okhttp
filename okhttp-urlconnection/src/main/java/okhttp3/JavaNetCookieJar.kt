@@ -37,7 +37,7 @@ class JavaNetCookieJar(private val cookieHandler: CookieHandler) : CookieJar {
     try {
       cookieHandler.put(url.toUri(), multimap)
     } catch (e: IOException) {
-      Platform.get().log(WARN, "Saving cookies failed for " + url.resolve("/...")!!, e)
+      Platform.get().log("Saving cookies failed for " + url.resolve("/...")!!, WARN, e)
     }
   }
 
@@ -46,7 +46,7 @@ class JavaNetCookieJar(private val cookieHandler: CookieHandler) : CookieJar {
       // The RI passes all headers. We don't have 'em, so we don't pass 'em!
       cookieHandler.get(url.toUri(), emptyMap<String, List<String>>())
     } catch (e: IOException) {
-      Platform.get().log(WARN, "Loading cookies failed for " + url.resolve("/...")!!, e)
+      Platform.get().log("Loading cookies failed for " + url.resolve("/...")!!, WARN, e)
       return emptyList()
     }
 

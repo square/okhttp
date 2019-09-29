@@ -17,10 +17,11 @@ package okhttp3.internal.cache
 
 import okhttp3.internal.cache.DiskLruCache.Editor
 import okhttp3.internal.closeQuietly
+import okhttp3.internal.concurrent.Task
+import okhttp3.internal.concurrent.TaskRunner
 import okhttp3.internal.io.FileSystem
 import okhttp3.internal.platform.Platform
 import okhttp3.internal.platform.Platform.Companion.WARN
-import okhttp3.internal.threadFactory
 import okio.BufferedSink
 import okio.Sink
 import okio.Source
@@ -35,10 +36,6 @@ import java.io.IOException
 import java.util.ArrayList
 import java.util.LinkedHashMap
 import java.util.NoSuchElementException
-import java.util.concurrent.Executor
-import java.util.concurrent.LinkedBlockingQueue
-import java.util.concurrent.ThreadPoolExecutor
-import java.util.concurrent.TimeUnit
 
 /**
  * A cache that uses a bounded amount of space on a filesystem. Each cache entry has a string key
@@ -76,6 +73,12 @@ import java.util.concurrent.TimeUnit
  * corresponding entries will be dropped from the cache. If an error occurs while writing a cache
  * value, the edit will fail silently. Callers should handle other problems by catching
  * `IOException` and responding appropriately.
+ *
+ * @constructor Create a cache which will reside in [directory]. This cache is lazily initialized on
+ *     first access and will be created if it does not exist.
+ * @param directory a writable directory.
+ * @param valueCount the number of values per cache entry. Must be positive.
+ * @param maxSize the maximum number of bytes this cache should use to store.
  */
 class DiskLruCache internal constructor(
   internal val fileSystem: FileSystem,
@@ -90,16 +93,15 @@ class DiskLruCache internal constructor(
   /** Returns the maximum number of bytes that this cache should use to store its data. */
   maxSize: Long,
 
-  /** Used to run 'cleanupRunnable' for journal rebuilds. */
-  private val executor: Executor
-
+  /** Used for asynchronous journal rebuilds. */
+  taskRunner: TaskRunner
 ) : Closeable, Flushable {
   /** The maximum number of bytes that this cache should use to store its data. */
   @get:Synchronized @set:Synchronized var maxSize: Long = maxSize
     set(value) {
       field = value
       if (initialized) {
-        executor.execute(cleanupRunnable) // Trim the existing store if necessary.
+        cleanupQueue.schedule(cleanupTask) // Trim the existing store if necessary.
       }
     }
 
@@ -165,31 +167,39 @@ class DiskLruCache internal constructor(
    */
   private var nextSequenceNumber: Long = 0
 
-  private val cleanupRunnable = Runnable {
-    synchronized(this@DiskLruCache) {
-      if (!initialized || closed) {
-        return@Runnable // Nothing to do
-      }
-
-      try {
-        trimToSize()
-      } catch (_: IOException) {
-        mostRecentTrimFailed = true
-      }
-
-      try {
-        if (journalRebuildRequired()) {
-          rebuildJournal()
-          redundantOpCount = 0
+  private val cleanupQueue = taskRunner.newQueue(this)
+  private val cleanupTask = object : Task("OkHttp DiskLruCache") {
+    override fun runOnce(): Long {
+      synchronized(this@DiskLruCache) {
+        if (!initialized || closed) {
+          return -1L // Nothing to do.
         }
-      } catch (_: IOException) {
-        mostRecentRebuildFailed = true
-        journalWriter = blackholeSink().buffer()
+
+        try {
+          trimToSize()
+        } catch (_: IOException) {
+          mostRecentTrimFailed = true
+        }
+
+        try {
+          if (journalRebuildRequired()) {
+            rebuildJournal()
+            redundantOpCount = 0
+          }
+        } catch (_: IOException) {
+          mostRecentRebuildFailed = true
+          journalWriter = blackholeSink().buffer()
+        }
+
+        return -1L
       }
     }
   }
 
   init {
+    require(maxSize > 0L) { "maxSize <= 0" }
+    require(valueCount > 0) { "valueCount <= 0" }
+
     this.journalFile = File(directory, JOURNAL_FILE)
     this.journalFileTmp = File(directory, JOURNAL_FILE_TEMP)
     this.journalFileBackup = File(directory, JOURNAL_FILE_BACKUP)
@@ -221,8 +231,9 @@ class DiskLruCache internal constructor(
         initialized = true
         return
       } catch (journalIsCorrupt: IOException) {
-        Platform.get().log(WARN,
+        Platform.get().log(
             "DiskLruCache $directory is corrupt: ${journalIsCorrupt.message}, removing",
+            WARN,
             journalIsCorrupt)
       }
 
@@ -419,7 +430,7 @@ class DiskLruCache internal constructor(
         .writeUtf8(key)
         .writeByte('\n'.toInt())
     if (journalRebuildRequired()) {
-      executor.execute(cleanupRunnable)
+      cleanupQueue.schedule(cleanupTask)
     }
 
     return snapshot
@@ -449,7 +460,7 @@ class DiskLruCache internal constructor(
       // the journal rebuild failed, the journal writer will not be active, meaning we will not be
       // able to record the edit, causing file leaks. In both cases, we want to retry the clean up
       // so we can get out of this state!
-      executor.execute(cleanupRunnable)
+      cleanupQueue.schedule(cleanupTask)
       return null
     }
 
@@ -541,7 +552,7 @@ class DiskLruCache internal constructor(
     }
 
     if (size > maxSize || journalRebuildRequired()) {
-      executor.execute(cleanupRunnable)
+      cleanupQueue.schedule(cleanupTask)
     }
   }
 
@@ -591,7 +602,7 @@ class DiskLruCache internal constructor(
     lruEntries.remove(entry.key)
 
     if (journalRebuildRequired()) {
-      executor.execute(cleanupRunnable)
+      cleanupQueue.schedule(cleanupTask)
     }
 
     return true
@@ -974,30 +985,5 @@ class DiskLruCache internal constructor(
     @JvmField val DIRTY = "DIRTY"
     @JvmField val REMOVE = "REMOVE"
     @JvmField val READ = "READ"
-
-    /**
-     * Create a cache which will reside in [directory]. This cache is lazily initialized on first
-     * access and will be created if it does not exist.
-     *
-     * @param directory a writable directory
-     * @param valueCount the number of values per cache entry. Must be positive.
-     * @param maxSize the maximum number of bytes this cache should use to store
-     */
-    fun create(
-      fileSystem: FileSystem,
-      directory: File,
-      appVersion: Int,
-      valueCount: Int,
-      maxSize: Long
-    ): DiskLruCache {
-      require(maxSize > 0L) { "maxSize <= 0" }
-      require(valueCount > 0) { "valueCount <= 0" }
-
-      // Use a single background thread to evict entries.
-      val executor = ThreadPoolExecutor(0, 1, 60L, TimeUnit.SECONDS,
-          LinkedBlockingQueue(), threadFactory("OkHttp DiskLruCache", true))
-
-      return DiskLruCache(fileSystem, directory, appVersion, valueCount, maxSize, executor)
-    }
   }
 }
