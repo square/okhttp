@@ -51,14 +51,13 @@ public final class DuplexTest {
 
   private RecordingEventListener listener = new RecordingEventListener();
   private HandshakeCertificates handshakeCertificates = localhost();
-  private OkHttpClient client;
+  private OkHttpClient client = clientTestRule.newClientBuilder()
+      .eventListener(listener)
+      .build();
 
   @Before public void setUp() {
     platform.assumeNotOpenJSSE();
     platform.assumeHttp2Support();
-    client = clientTestRule.newClientBuilder()
-        .eventListener(listener)
-        .build();
   }
 
   @Test public void http1DoesntSupportDuplex() throws IOException {

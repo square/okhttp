@@ -35,11 +35,10 @@ class ConscryptTest {
 
   @JvmField @Rule val clientTestRule = OkHttpClientTestRule()
 
-  private lateinit var client: OkHttpClient
+  private val client = clientTestRule.newClient()
 
   @Before fun setUp() {
     platform.assumeConscrypt()
-    client = clientTestRule.newClient()
   }
 
   @Test

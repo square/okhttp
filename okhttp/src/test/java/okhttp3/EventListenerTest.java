@@ -82,15 +82,13 @@ public final class EventListenerTest {
   private final RecordingEventListener listener = new RecordingEventListener();
   private final HandshakeCertificates handshakeCertificates = localhost();
 
-  private OkHttpClient client;
+  private OkHttpClient client = clientTestRule.newClientBuilder()
+      .eventListener(listener)
+      .build();
   private SocksProxy socksProxy;
 
   @Before public void setUp() {
     platform.assumeNotOpenJSSE();
-
-    client = clientTestRule.newClientBuilder()
-        .eventListener(listener)
-        .build();
 
     listener.forbidLock(RealConnectionPool.Companion.get(client.connectionPool()));
     listener.forbidLock(client.dispatcher());

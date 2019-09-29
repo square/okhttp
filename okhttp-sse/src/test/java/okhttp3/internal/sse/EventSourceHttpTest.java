@@ -24,7 +24,6 @@ import okhttp3.mockwebserver.MockWebServer;
 import okhttp3.sse.EventSource;
 import okhttp3.sse.EventSources;
 import org.junit.After;
-import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 
@@ -35,11 +34,7 @@ public final class EventSourceHttpTest {
   @Rule public final OkHttpClientTestRule clientTestRule = new OkHttpClientTestRule();
 
   private final EventSourceRecorder listener = new EventSourceRecorder();
-  private OkHttpClient client;
-
-  @Before public void setUp() {
-    client = clientTestRule.newClient();
-  }
+  private OkHttpClient client = clientTestRule.newClient();
 
   @After public void after() {
     listener.assertExhausted();
