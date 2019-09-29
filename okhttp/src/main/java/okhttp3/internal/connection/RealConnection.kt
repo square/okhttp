@@ -41,6 +41,7 @@ import okhttp3.internal.http2.ErrorCode
 import okhttp3.internal.http2.Http2Connection
 import okhttp3.internal.http2.Http2ExchangeCodec
 import okhttp3.internal.http2.Http2Stream
+import okhttp3.internal.http2.Settings
 import okhttp3.internal.http2.StreamResetException
 import okhttp3.internal.platform.Platform
 import okhttp3.internal.tls.OkHostnameVerifier
@@ -189,6 +190,7 @@ class RealConnection(
         handshake = null
         protocol = null
         http2Connection = null
+        allocationLimit = 1
 
         eventListener.connectFailed(call, route.socketAddress, route.proxy, null, e)
 
@@ -207,13 +209,6 @@ class RealConnection(
     if (route.requiresTunnel() && rawSocket == null) {
       throw RouteException(ProtocolException(
           "Too many tunnel connections attempted: $MAX_TUNNEL_ATTEMPTS"))
-    }
-
-    val http2Connection = this.http2Connection
-    if (http2Connection != null) {
-      synchronized(connectionPool) {
-        allocationLimit = http2Connection.maxConcurrentStreams()
-      }
     }
   }
 
@@ -328,6 +323,7 @@ class RealConnection(
         .pingIntervalMillis(pingIntervalMillis)
         .build()
     this.http2Connection = http2Connection
+    this.allocationLimit = Http2Connection.DEFAULT_SETTINGS.getMaxConcurrentStreams()
     http2Connection.start()
   }
 
@@ -645,9 +641,9 @@ class RealConnection(
   }
 
   /** When settings are received, adjust the allocation limit. */
-  override fun onSettings(connection: Http2Connection) {
+  override fun onSettings(connection: Http2Connection, settings: Settings) {
     synchronized(connectionPool) {
-      allocationLimit = connection.maxConcurrentStreams()
+      allocationLimit = settings.getMaxConcurrentStreams()
     }
   }
 
