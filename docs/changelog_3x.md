@@ -1,6 +1,19 @@
 OkHttp 3.x Change Log
 =====================
 
+## Version 3.14.4
+
+_2019-09-29_
+
+ *  Fix: Cancel calls that fail due to unexpected exceptions. We had a bug where an enqueued call
+    would never call back if it crashed with an unchecked throwable, such as a
+    `NullPointerException` or `OutOfMemoryError`. We now call `Callback.onFailure()` with an
+    `IOException` that reports the call as canceled. The triggering exception is still delivered to
+    the thread's `UncaughtExceptionHandler`.
+ *  Fix: Don't evict incomplete entries when iterating the cache. We had a bug where iterating
+    `Cache.urls()` would prevent in-flight entries from being written.
+
+
 ## Version 3.14.3
 
 _2019-09-10_
@@ -161,6 +174,19 @@ _2019-02-04_
  *  New: API to access headers as `java.time.Instant`.
  *  New: Fail fast if a `SSLSocketFactory` is used as a `SocketFactory`.
  *  New: Log the TLS handshake in `LoggingEventListener`.
+
+
+## Version 3.12.6
+
+_2019-09-29_
+
+ *  Fix: Cancel calls that fail due to unexpected exceptions. We had a bug where an enqueued call
+    would never call back if it crashed with an unchecked throwable, such as a
+    `NullPointerException` or `OutOfMemoryError`. We now call `Callback.onFailure()` with an
+    `IOException` that reports the call as canceled. The triggering exception is still delivered to
+    the thread's `UncaughtExceptionHandler`.
+ *  Fix: Don't evict incomplete entries when iterating the cache. We had a bug where iterating
+    `Cache.urls()` would prevent in-flight entries from being written.
 
 
 ## Version 3.12.5
