@@ -51,7 +51,7 @@ class Android10Platform : Platform() {
       // No TLS extensions if the socket class is custom.
       socketAdapters.find { it.matchesSocket(sslSocket) }?.getSelectedProtocol(sslSocket)
 
-  override fun log(level: Int, message: String, t: Throwable?) {
+  override fun log(message: String, level: Int, t: Throwable?) {
     androidLog(level, message, t)
   }
 

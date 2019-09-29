@@ -125,7 +125,7 @@ public final class Http2Server extends Http2Connection.Listener {
         send404(stream, path);
       }
     } catch (IOException e) {
-      Platform.get().log(INFO, "Failure serving Http2Stream: " + e.getMessage(), null);
+      Platform.get().log("Failure serving Http2Stream: " + e.getMessage(), INFO, null);
     }
   }
 

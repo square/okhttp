@@ -643,7 +643,7 @@ class Http2Connection internal constructor(builder: Builder) : Closeable {
             try {
               listener.onStream(newStream)
             } catch (e: IOException) {
-              Platform.get().log(INFO, "Http2Connection.Listener failure for $connectionName", e)
+              Platform.get().log("Http2Connection.Listener failure for $connectionName", INFO, e)
               ignoreIoExceptions {
                 newStream.close(ErrorCode.PROTOCOL_ERROR, e)
               }

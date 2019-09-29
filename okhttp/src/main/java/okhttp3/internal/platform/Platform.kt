@@ -116,7 +116,7 @@ open class Platform {
     socket.connect(address, connectTimeout)
   }
 
-  open fun log(level: Int = INFO, message: String, t: Throwable? = null) {
+  open fun log(message: String, level: Int = INFO, t: Throwable? = null) {
     val logLevel = if (level == WARN) Level.WARNING else Level.INFO
     logger.log(logLevel, message, t)
   }
@@ -141,7 +141,7 @@ open class Platform {
       logMessage += " To see where this was allocated, set the OkHttpClient logger level to " +
           "FINE: Logger.getLogger(OkHttpClient.class.getName()).setLevel(Level.FINE);"
     }
-    log(WARN, logMessage, stackTrace as Throwable?)
+    log(logMessage, WARN, stackTrace as Throwable?)
   }
 
   open fun buildCertificateChainCleaner(trustManager: X509TrustManager): CertificateChainCleaner =

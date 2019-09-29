@@ -83,7 +83,7 @@ class AndroidPlatform : Platform() {
       // No TLS extensions if the socket class is custom.
       socketAdapters.find { it.matchesSocket(sslSocket) }?.getSelectedProtocol(sslSocket)
 
-  override fun log(level: Int, message: String, t: Throwable?) {
+  override fun log(message: String, level: Int, t: Throwable?) {
     androidLog(level, message, t)
   }
 
@@ -93,7 +93,7 @@ class AndroidPlatform : Platform() {
     val reported = closeGuard.warnIfOpen(stackTrace)
     if (!reported) {
       // Unable to report via CloseGuard. As a last-ditch effort, send it to the logger.
-      log(WARN, message)
+      log(message, WARN)
     }
   }
 
