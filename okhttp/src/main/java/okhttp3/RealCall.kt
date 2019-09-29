@@ -139,7 +139,7 @@ internal class RealCall private constructor(
         } catch (e: IOException) {
           if (signalledCallback) {
             // Do not signal the callback twice!
-            Platform.get().log(INFO, "Callback failure for ${toLoggableString()}", e)
+            Platform.get().log("Callback failure for ${toLoggableString()}", INFO, e)
           } else {
             responseCallback.onFailure(this@RealCall, e)
           }

@@ -178,7 +178,7 @@ class PublicSuffixDatabase {
           Thread.interrupted() // Temporarily clear the interrupted state.
           interrupted = true
         } catch (e: IOException) {
-          Platform.get().log(Platform.WARN, "Failed to read public suffix list", e)
+          Platform.get().log("Failed to read public suffix list", Platform.WARN, e)
           return
         }
       }

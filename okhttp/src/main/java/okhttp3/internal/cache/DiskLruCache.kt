@@ -231,8 +231,9 @@ class DiskLruCache internal constructor(
         initialized = true
         return
       } catch (journalIsCorrupt: IOException) {
-        Platform.get().log(WARN,
+        Platform.get().log(
             "DiskLruCache $directory is corrupt: ${journalIsCorrupt.message}, removing",
+            WARN,
             journalIsCorrupt)
       }
 

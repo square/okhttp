@@ -22,7 +22,10 @@ private const val MAX_LOG_LENGTH = 4000
 
 internal fun androidLog(level: Int, message: String, t: Throwable?) {
   var logMessage = message
-  val logLevel = if (level == Platform.WARN) Log.WARN else Log.DEBUG
+  val logLevel = when (level) {
+    Platform.WARN -> Log.WARN
+    else -> Log.DEBUG
+  }
   if (t != null) logMessage = logMessage + '\n'.toString() + Log.getStackTraceString(t)
 
   // Split by line, then ensure each line can fit into Log's maximum length.
