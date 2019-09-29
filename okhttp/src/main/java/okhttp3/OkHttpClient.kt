@@ -19,6 +19,7 @@ import okhttp3.Protocol.HTTP_1_1
 import okhttp3.Protocol.HTTP_2
 import okhttp3.internal.asFactory
 import okhttp3.internal.checkDuration
+import okhttp3.internal.concurrent.TaskRunner
 import okhttp3.internal.immutableListOf
 import okhttp3.internal.platform.Platform
 import okhttp3.internal.proxy.NullProxySelector
@@ -244,7 +245,13 @@ open class OkHttpClient internal constructor(
 
   /** Uses [request] to connect a new web socket. */
   override fun newWebSocket(request: Request, listener: WebSocketListener): WebSocket {
-    val webSocket = RealWebSocket(request, listener, Random(), pingIntervalMillis.toLong())
+    val webSocket = RealWebSocket(
+        TaskRunner.INSTANCE,
+        request,
+        listener,
+        Random(),
+        pingIntervalMillis.toLong()
+    )
     webSocket.connect(this)
     return webSocket
   }

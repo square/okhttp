@@ -36,6 +36,7 @@ import okhttp3.Response;
 import okhttp3.TestLogHandler;
 import okhttp3.WebSocket;
 import okhttp3.WebSocketListener;
+import okhttp3.internal.concurrent.TaskRunner;
 import okhttp3.mockwebserver.Dispatcher;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
@@ -798,7 +799,7 @@ public final class WebSocketHttpTest {
 
   private RealWebSocket newWebSocket(Request request) {
     RealWebSocket webSocket = new RealWebSocket(
-        request, clientListener, random, client.pingIntervalMillis());
+        TaskRunner.INSTANCE, request, clientListener, random, client.pingIntervalMillis());
     webSocket.connect(client);
     return webSocket;
   }

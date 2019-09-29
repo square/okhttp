@@ -781,7 +781,13 @@ class MockWebServer : ExternalResource(), Closeable {
     val streams = object : RealWebSocket.Streams(false, source, sink) {
       override fun close() = connectionClose.countDown()
     }
-    val webSocket = RealWebSocket(fancyRequest, response.webSocketListener!!, SecureRandom(), 0)
+    val webSocket = RealWebSocket(
+        taskRunner = taskRunner,
+        originalRequest = fancyRequest,
+        listener = response.webSocketListener!!,
+        random = SecureRandom(),
+        pingIntervalMillis = 0
+    )
     response.webSocketListener!!.onOpen(webSocket, fancyResponse)
     val name = "MockWebServer WebSocket ${request.path!!}"
     webSocket.initReaderAndWriter(name, streams)
