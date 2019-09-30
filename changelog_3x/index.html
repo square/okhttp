@@ -615,6 +615,13 @@
     <ul class="md-nav__list" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#version-3144" title="Version 3.14.4" class="md-nav__link">
+    Version 3.14.4
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#version-3143" title="Version 3.14.3" class="md-nav__link">
     Version 3.14.3
   </a>
@@ -652,6 +659,13 @@
         <li class="md-nav__item">
   <a href="#version-3130" title="Version 3.13.0" class="md-nav__link">
     Version 3.13.0
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#version-3126" title="Version 3.12.6" class="md-nav__link">
+    Version 3.12.6
   </a>
   
 </li>
@@ -879,6 +893,17 @@
                 
                 
                 <h1 id="okhttp-3x-change-log">OkHttp 3.x Change Log<a class="headerlink" href="#okhttp-3x-change-log" title="Permanent link">&para;</a></h1>
+<h2 id="version-3144">Version 3.14.4<a class="headerlink" href="#version-3144" title="Permanent link">&para;</a></h2>
+<p><em>2019-09-29</em></p>
+<ul>
+<li>Fix: Cancel calls that fail due to unexpected exceptions. We had a bug where an enqueued call
+    would never call back if it crashed with an unchecked throwable, such as a
+    <code>NullPointerException</code> or <code>OutOfMemoryError</code>. We now call <code>Callback.onFailure()</code> with an
+    <code>IOException</code> that reports the call as canceled. The triggering exception is still delivered to
+    the thread&rsquo;s <code>UncaughtExceptionHandler</code>.</li>
+<li>Fix: Don&rsquo;t evict incomplete entries when iterating the cache. We had a bug where iterating
+    <code>Cache.urls()</code> would prevent in-flight entries from being written.</li>
+</ul>
 <h2 id="version-3143">Version 3.14.3<a class="headerlink" href="#version-3143" title="Permanent link">&para;</a></h2>
 <p><em>2019-09-10</em></p>
 <ul>
@@ -1046,6 +1071,17 @@ difficult we will backport critical fixes to the 3.12.x branch through December 
 <li>New: API to access headers as <code>java.time.Instant</code>.</li>
 <li>New: Fail fast if a <code>SSLSocketFactory</code> is used as a <code>SocketFactory</code>.</li>
 <li>New: Log the TLS handshake in <code>LoggingEventListener</code>.</li>
+</ul>
+<h2 id="version-3126">Version 3.12.6<a class="headerlink" href="#version-3126" title="Permanent link">&para;</a></h2>
+<p><em>2019-09-29</em></p>
+<ul>
+<li>Fix: Cancel calls that fail due to unexpected exceptions. We had a bug where an enqueued call
+    would never call back if it crashed with an unchecked throwable, such as a
+    <code>NullPointerException</code> or <code>OutOfMemoryError</code>. We now call <code>Callback.onFailure()</code> with an
+    <code>IOException</code> that reports the call as canceled. The triggering exception is still delivered to
+    the thread&rsquo;s <code>UncaughtExceptionHandler</code>.</li>
+<li>Fix: Don&rsquo;t evict incomplete entries when iterating the cache. We had a bug where iterating
+    <code>Cache.urls()</code> would prevent in-flight entries from being written.</li>
 </ul>
 <h2 id="version-3125">Version 3.12.5<a class="headerlink" href="#version-3125" title="Permanent link">&para;</a></h2>
 <p><em>2019-09-10</em></p>
