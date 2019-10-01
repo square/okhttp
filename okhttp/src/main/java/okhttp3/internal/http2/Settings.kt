@@ -74,9 +74,9 @@ class Settings {
     return if (bit and set != 0) values[ENABLE_PUSH] == 1 else defaultValue
   }
 
-  fun getMaxConcurrentStreams(defaultValue: Int): Int {
+  fun getMaxConcurrentStreams(): Int {
     val bit = 1 shl MAX_CONCURRENT_STREAMS
-    return if (bit and set != 0) values[MAX_CONCURRENT_STREAMS] else defaultValue
+    return if (bit and set != 0) values[MAX_CONCURRENT_STREAMS] else Int.MAX_VALUE
   }
 
   fun getMaxFrameSize(defaultValue: Int): Int {
