@@ -162,9 +162,9 @@ open class OkHttpClient internal constructor(
 
   @get:JvmName("proxySelector") val proxySelector: ProxySelector =
       when {
-        // Avoid possible SecurityException from ProxySelector.getDefault
-        builder.proxy != null -> NullProxySelector()
-        else -> builder.proxySelector ?: ProxySelector.getDefault() ?: NullProxySelector()
+        // Defer calls to ProxySelector.getDefault() because it can throw a SecurityException.
+        builder.proxy != null -> NullProxySelector
+        else -> builder.proxySelector ?: ProxySelector.getDefault() ?: NullProxySelector
       }
 
   @get:JvmName("proxyAuthenticator") val proxyAuthenticator: Authenticator =

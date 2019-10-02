@@ -24,7 +24,7 @@ import java.net.URI
 /**
  * A proxy selector that always returns the [Proxy.NO_PROXY].
  */
-open class NullProxySelector : ProxySelector() {
+object NullProxySelector : ProxySelector() {
   override fun select(uri: URI?): List<Proxy> {
     requireNotNull(uri) { "uri must not be null" }
     return listOf(Proxy.NO_PROXY)
